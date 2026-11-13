@@ -39,7 +39,7 @@ export const priyaExpected: PersonaExpected = {
 /** 8% sacrifice leaves adjusted net income 112,000 x 0.92 = 103,040, inside the trap. */
 export const priyaTrapExpected: TaxTrapExpectation = {
   isInTaxTrap: true, // above 100,000 and below 125,140
-  isNearTaxTrap: false, // near means 95,000 to 100,000
+  isNearTaxTrap: false, // near means 90,000 to 100,000
   adjustedNetIncome: 103040, // 112,000 - 8,960
   excessOver100k: 3040, // 103,040 - 100,000
   personalAllowanceTaper: 1520, // floor(3,040 / 2): GBP 1 lost per GBP 2 over 100,000

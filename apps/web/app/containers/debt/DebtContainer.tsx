@@ -19,6 +19,7 @@ import { type FC, useMemo, useState } from "react";
 import { Link, useFetcher, useLoaderData } from "react-router";
 import { AddDebtDialog } from "~/features/debt/components/AddDebtDialog";
 import { DebtAccountsList } from "~/features/debt/components/DebtAccountsList";
+import { DebtHelpLink } from "~/features/debt/components/DebtHelpLink";
 import { DebtSummary } from "~/features/debt/components/DebtSummary";
 import { DebtToWealthBridgeCard } from "~/features/debt/components/DebtToWealthBridgeCard";
 import { PayoffStrategySwitcher } from "~/features/debt/components/PayoffStrategySwitcher";
@@ -382,6 +383,9 @@ export const DebtContainer: FC = () => {
       <div {...panelProps("instruments")}>
         <UkDebtInstrumentsCard />
       </div>
+
+      {/* Shown to every user in the same place, never triggered by their figures (R3 exception, R4). */}
+      <DebtHelpLink />
 
       <ConfirmDialog
         confirmLabel="Delete debt"

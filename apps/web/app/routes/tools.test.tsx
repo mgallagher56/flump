@@ -54,6 +54,23 @@ describe("Tools Routes", () => {
     expect(hrefs[0]).not.toBe("/tools/uk-100k-tax-trap-calculator");
   });
 
+  it("lists the calculators in marketing's canonical order, the tax trap as an ordinary card (E31)", () => {
+    const { container } = render(<ToolsIndex />);
+    const cardHrefs = Array.from(container.querySelectorAll("a"))
+      // A tool card ends in "Open calculator"; footer links do not.
+      .filter((a) => a.textContent?.includes("Open calculator"))
+      .map((a) => a.getAttribute("href"));
+    expect(cardHrefs).toEqual([
+      "/tools/uk-debt-snowball-vs-avalanche-calculator",
+      "/tools/0-percent-balance-transfer-payoff-calculator",
+      "/tools/overdraft-cost-and-payoff-calculator",
+      "/tools/mortgage-overpay-vs-isa",
+      "/tools/uk-student-loan-overpay-or-invest-calculator",
+      "/tools/uk-100k-tax-trap-calculator",
+      "/tools/section-24-landlord-calculator",
+    ]);
+  });
+
   it("slug loader returns the requested tool or throws 404", async () => {
     const res = await slugLoader({
       params: { slug: "uk-100k-tax-trap-calculator" },

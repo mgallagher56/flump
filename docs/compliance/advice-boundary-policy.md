@@ -75,6 +75,14 @@ Replace the instruction with a statement of fact about the user's figures, in th
 | `packages/finance-engine/src/health-score.ts:137-138` "Move low-yielding current account cash to a top-tier Cash ISA or high-yield notice account." | "Liquid savings earn 1.2% AER on this account. The figure comes from the rate you entered."                                                                             |
 | `apps/web/app/components/dialogs/addEditAccountsDialog/AddEditAccountsDialog.tsx:51` "Invest, Stocks ISA & CFD sync"                                | Reword to describe the connection ("Syncs a Trading 212 account's cash balance") and drop the product promotion. Name only because it is an integration the user picks. |
 
+**Exception: MoneyHelper debt advice (owner decision, 2026-11-13, E31).** The debt page shows one neutral line, "Free, impartial debt help is available from MoneyHelper", linking to MoneyHelper's debt advice locator with an external-link cue (`apps/web/app/features/debt/components/DebtHelpLink`). Conditions:
+
+- MoneyHelper is the only named service. No other debt-advice provider, charity or commercial firm is named anywhere.
+- Every user sees the same line in the same place, with or without debts. It is never triggered, moved, reworded or emphasised by balances, arrears, missed payments, APRs or any other signal (R4). The component takes no props so it cannot be.
+- The wording is a factual signpost, not a recommendation (R2) and not a judgement (copy guide 7b).
+
+**Universal Credit and other benefits (owner decision, 2026-11-13, E31).** Flump does not model benefits. If a surface mentions them, it signposts only, with no eligibility or amount estimate.
+
 ## R4. No segment-based nudges
 
 **Rule.** A computed segment (lifecycle stage, persona, income band, debt status) may only choose **which modules or widgets show by default**. It never selects:

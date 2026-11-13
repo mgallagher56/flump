@@ -67,27 +67,38 @@ describe("SandboxRoute", () => {
     ).toBe("false");
   });
 
-  it("renders Persona A by default and switches between Persona B and Persona C", () => {
+  it("defaults to the renting persona and lists personas in order, the higher earner last", () => {
     mockSearchParams = new URLSearchParams();
     render(<SandboxRoute />);
 
     expect(screen.getByText(/Demo sandbox \(read-only\)/i)).toBeDefined();
-    expect(screen.getByText("Clearing £8k debt")).toBeDefined();
-    expect(screen.getByText("£45k earner, no debt")).toBeDefined();
-    expect(screen.getByText("£100k high earner")).toBeDefined();
-
-    expect(screen.getByTestId("total-debt").textContent).toBe("8000");
-    expect(screen.getByText("Clearing £8k debt").getAttribute("aria-pressed")).toBe("true");
-
-    // Switch to Persona B (£45k earner, no debt)
-    fireEvent.click(screen.getByText("£45k earner, no debt"));
+    const labels = Array.from(document.querySelectorAll("fieldset button")).map(
+      (button) => button.textContent,
+    );
+    expect(labels).toEqual(["Renting", "Paying off debts", "Higher earner"]);
+    expect(screen.getByText("Renting").getAttribute("aria-pressed")).toBe("true");
     expect(screen.getByTestId("total-debt").textContent).toBe("0");
     expect(screen.getByTestId("net-worth").textContent).toBe("43300");
 
-    // Switch to Persona C (£100k high earner)
-    fireEvent.click(screen.getByText("£100k high earner"));
+    fireEvent.click(screen.getByText("Paying off debts"));
+    expect(screen.getByTestId("total-debt").textContent).toBe("8000");
+
+    fireEvent.click(screen.getByText("Higher earner"));
     expect(screen.getByTestId("total-debt").textContent).toBe("0");
     expect(screen.getByTestId("net-worth").textContent).toBe("441500");
+  });
+
+  it("persona names follow the no-shaming rules (no income bands, no judgement)", () => {
+    mockSearchParams = new URLSearchParams();
+    render(<SandboxRoute />);
+    const text = document.querySelector("fieldset")?.textContent ?? "";
+    expect(text).not.toMatch(/£|100k|high earner|clearing|struggl|only|just|still/i);
+  });
+
+  it("boots in the debt persona if ?persona=debt", () => {
+    mockSearchParams = new URLSearchParams("persona=debt");
+    render(<SandboxRoute />);
+    expect(screen.getByTestId("total-debt").textContent).toBe("8000");
   });
 
   it("boots directly in wealth persona if ?persona=wealth", () => {

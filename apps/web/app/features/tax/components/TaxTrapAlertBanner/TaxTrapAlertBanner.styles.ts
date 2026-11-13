@@ -30,11 +30,10 @@ export const iconTile = cva({
   },
   variants: {
     tone: {
-      danger: { backgroundColor: "status.danger.bg", color: "status.danger.text" },
-      warning: { backgroundColor: "status.warning.bg", color: "status.warning.text" },
+      info: { backgroundColor: "status.info.bg", color: "status.info.text" },
     },
   },
-  defaultVariants: { tone: "warning" },
+  defaultVariants: { tone: "info" },
 });
 
 export const titleRow = cva({
@@ -69,50 +68,13 @@ export const lostTile = cva({
     paddingY: "2",
     paddingX: "4",
     borderRadius: "lg",
-    backgroundColor: "status.danger.bg",
+    backgroundColor: "surface.subtle",
     border: "1px solid",
-    borderColor: "status.danger.border",
+    borderColor: "border.subtle",
     fontVariantNumeric: "tabular-nums",
   },
 });
 
 export const caption = cva({
   base: { textStyle: "body.sm", color: "text.secondary", fontVariantNumeric: "tabular-nums" },
-});
-
-export const sacrificeBox = cva({
-  base: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "4",
-    padding: "4",
-    borderRadius: "lg",
-    border: "1px solid",
-    borderColor: "border.subtle",
-    backgroundColor: "surface.canvas",
-  },
-});
-
-export const metrics = cva({
-  base: {
-    display: "grid",
-    gridTemplateColumns: { base: "minmax(0, 1fr)", sm: "repeat(3, minmax(0, 1fr))" },
-    gap: "3",
-    paddingTop: "3",
-    borderTop: "1px solid",
-    borderColor: "border.subtle",
-    fontVariantNumeric: "tabular-nums",
-  },
-});
-
-export const metric = cva({
-  base: { display: "flex", flexDirection: "column", gap: "1" },
-});
-
-export const unit = cva({
-  base: { textStyle: "body.sm", color: "text.secondary", marginLeft: "1" },
-});
-
-export const actionRow = cva({
-  base: { display: "flex", justifyContent: "flex-end" },
 });

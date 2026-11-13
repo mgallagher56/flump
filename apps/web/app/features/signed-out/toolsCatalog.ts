@@ -20,7 +20,8 @@ export interface ToolTileData {
 
 /**
  * Calculators that exist in `routes/tools.$slug.tsx`. Lead order follows what typical visitors
- * need first (debt, then mortgage); every tile is the same size, no tool is featured.
+ * need first (debt, then mortgage), matching marketing's CANONICAL_TOOL_SLUGS (E31); every tile
+ * is the same size, no tool is featured.
  * Budget, buffer and pension calculators have no signed-out tool yet, so they are not listed.
  */
 export const TOOL_TILES: readonly ToolTileData[] = [
@@ -61,8 +62,16 @@ export const TOOL_TILES: readonly ToolTileData[] = [
     shortTitle: "Student loan",
     title: "UK student loan: overpay vs invest calculator",
     description:
-      "Check whether voluntary repayments save money before the loan is cancelled, or whether investing could do more.",
+      "See how a Plan 1, 2, 4 or 5 student loan balance develops with and without voluntary overpayments.",
     icon: GraduationCap,
+  },
+  {
+    slug: "uk-100k-tax-trap-calculator",
+    shortTitle: "£100k tax trap",
+    title: "£100k–£125k tax trap calculator",
+    description:
+      "See how the Personal Allowance taper between £100,000 and £125,140 changes the marginal rate, and what a pension contribution would change.",
+    icon: Percent,
   },
   {
     slug: "section-24-landlord-calculator",
@@ -71,13 +80,5 @@ export const TOOL_TILES: readonly ToolTileData[] = [
     description:
       "Estimate buy-to-let tax under Section 24 rules, including the 20% basic rate finance cost credit.",
     icon: Building2,
-  },
-  {
-    slug: "uk-100k-tax-trap-calculator",
-    shortTitle: "£100k tax trap",
-    title: "£100k–£125k tax trap calculator",
-    description:
-      "Estimate the Personal Allowance taper and the pension contribution that would reduce it.",
-    icon: Percent,
   },
 ];

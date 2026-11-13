@@ -34,7 +34,7 @@ export const trapEdgeTrapExpected: Record<
 > = {
   at100k: {
     isInTaxTrap: false, // the trap is strictly above 100,000
-    isNearTaxTrap: true, // 95,000 to 100,000 inclusive
+    isNearTaxTrap: true, // 90,000 to 100,000 inclusive
     adjustedNetIncome: 100000, // no pension
     excessOver100k: 0,
     personalAllowanceTaper: 0, // full allowance retained at exactly 100,000

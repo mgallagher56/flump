@@ -23,6 +23,7 @@ import {
   calculateUKTakeHome,
   calculateUkTax,
   getTaxYearRemainingDays,
+  isInTaxTrapAlertBand,
   STUDENT_LOAN_THRESHOLDS,
   toStudentLoanPlanKey,
 } from "./uk-tax.js";
@@ -74,6 +75,25 @@ describe("uk-tax module", () => {
       expect(() => analyzeTaxTrap(110000, "ENGLAND_NI_WALES", "2027/28")).toThrow(
         UnsupportedUkTaxYearError,
       );
+    });
+  });
+
+  describe("tax trap alert band (E31: £90,000 to £125,140 inclusive)", () => {
+    it.each([
+      [89_999, false],
+      [90_000, true],
+      [100_000, true],
+      [125_140, true],
+      [125_141, false],
+    ])("adjusted net income %d in band: %s", (income, expected) => {
+      expect(isInTaxTrapAlertBand(income)).toBe(expected);
+    });
+
+    it("isNearTaxTrap starts at £90,000", () => {
+      expect(analyzeTaxTrap(89_999).isNearTaxTrap).toBe(false);
+      expect(analyzeTaxTrap(90_000).isNearTaxTrap).toBe(true);
+      expect(analyzeTaxTrap(100_000).isNearTaxTrap).toBe(true);
+      expect(analyzeTaxTrap(100_001).isNearTaxTrap).toBe(false);
     });
   });
 

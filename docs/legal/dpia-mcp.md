@@ -51,7 +51,7 @@ Registered in `packages/mcp/src/`, served by `McpController` (`apps/backend/src/
 
 **Resources:** `flump://context/accounts` (`resources/accounts.resource.ts:10`), `flump://context/executive-snapshot` and `flump://context/baseline` (`resources/baseline.resource.ts:10,35`), `flump://context/budget` (`resources/budget.resource.ts:10`), `flump://context/tax-ledger` (`resources/tax-ledger.resource.ts:10`). The static `flump://rules/uk-fiscal-guardrails` resource was removed in E17-N5; E17-N14 adds `flump://tax-rules/{taxYear}`.
 
-**Prompts:** `uk-financial-health-audit`, `escape-100k-tax-trap`, `crush-high-apr-debt` (`packages/mcp/src/prompts/uk-advisor.prompts.ts:9,37,62`). Their wording is outside the scope of this DPIA but is addressed by the advice-boundary work (E29-T1, T6).
+**Prompts:** `uk-financial-health-audit`, `uk-marginal-tax-and-pension` (renamed from `escape-100k-tax-trap` in E31), `crush-high-apr-debt` (`packages/mcp/src/prompts/uk-advisor.prompts.ts`). Their wording is outside the scope of this DPIA but is addressed by the advice-boundary work (E29-T1, T6).
 
 ### 2.2 Data categories (from `data-map.md`)
 
