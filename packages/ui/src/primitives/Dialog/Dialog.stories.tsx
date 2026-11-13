@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import { expect, userEvent, waitFor, within } from "@storybook/test";
 import { useState } from "react";
+import { Button } from "../Button";
 import { Dialog } from "./Dialog";
 
 const Demo = (args: Partial<React.ComponentProps<typeof Dialog>>) => {
@@ -52,5 +53,52 @@ export const EscapeCloses: Story = {
 };
 
 export const Large: Story = { args: { size: "lg" } };
+
+export const WithFooter: Story = {
+  args: {
+    footer: (
+      <>
+        <Button type="button" variant="outline">
+          Cancel
+        </Button>
+        <Button type="button">Add account</Button>
+      </>
+    ),
+  },
+};
+
+export const LongContent: Story = {
+  args: {
+    title: "Review your 2026 to 2027 tax summary",
+    description: "Figures use the 2026 to 2027 UK tax year and are estimates, not advice.",
+    children: (
+      <ol>
+        {Array.from({ length: 30 }, (_, i) => (
+          <li key={`line-${i + 1}`}>Payment {i + 1}: £1,234.56 on 1 March 2027</li>
+        ))}
+      </ol>
+    ),
+  },
+};
+
+export const FocusTrapAndReturn: Story = {
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const body = within(canvasElement.ownerDocument.body);
+    await body.findByRole("dialog");
+    await userEvent.keyboard("{Escape}");
+    await waitFor(() => expect(body.queryByRole("dialog")).toBeNull());
+    const opener = canvas.getByRole("button", { name: "Open dialog" });
+    await userEvent.click(opener);
+    const dialog = await body.findByRole("dialog");
+    for (let i = 0; i < 6; i += 1) {
+      await userEvent.tab();
+      await expect(dialog.contains(canvasElement.ownerDocument.activeElement)).toBe(true);
+    }
+    await userEvent.keyboard("{Escape}");
+    await waitFor(() => expect(body.queryByRole("dialog")).toBeNull());
+    await waitFor(() => expect(opener).toHaveFocus());
+  },
+};
 
 export const Dark: Story = { ...Default, globals: { theme: "dark" } };

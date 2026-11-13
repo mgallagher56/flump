@@ -16,20 +16,25 @@ export const dialogOverlayRecipe = cva({
 
 export const dialogContentRecipe = cva({
   base: {
-    backgroundColor: "surface.card",
+    backgroundColor: "surface.overlay",
     color: "text.primary",
-    borderRadius: "xl",
+    borderRadius: "tray",
     border: "1px solid",
-    borderColor: "border",
+    borderColor: "border.subtle",
     boxShadow: "overlay",
     width: "100%",
     maxHeight: { base: "94vh", md: "85vh" },
     overflowY: "auto",
-    padding: { base: "5 4", sm: "6" },
+    padding: { base: "5", sm: "7" },
     display: "flex",
     flexDirection: "column",
-    gap: "4",
+    gap: "5",
     outline: "none",
+    _motionSafe: {
+      animationName: "scaleIn",
+      animationDuration: "base",
+      animationTimingFunction: "enter",
+    },
   },
   variants: {
     size: {
@@ -56,6 +61,18 @@ export const dialogTitleRecipe = cva({
 
 export const dialogDescriptionRecipe = cva({
   base: { textStyle: "body.sm", color: "text.muted", marginTop: "1", marginBottom: 0 },
+});
+
+/** Footer action row: primary last on desktop, stacked full width (primary on top) on a phone. */
+export const dialogFooterRecipe = cva({
+  base: {
+    display: "flex",
+    flexDirection: { base: "column-reverse", sm: "row" },
+    justifyContent: "flex-end",
+    gap: "3",
+    marginTop: "2",
+    "& > *": { width: { base: "100%", sm: "auto" } },
+  },
 });
 
 export const dialogCloseRecipe = cva({

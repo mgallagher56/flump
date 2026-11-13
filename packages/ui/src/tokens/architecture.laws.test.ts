@@ -124,12 +124,13 @@ describe("Architecture & Design System Laws", () => {
         "Money",
         "PercentInput",
         "Text",
+        "Sheet",
         "TextInput",
       ]) {
         expect(primitives).toContain(expected);
       }
       const patterns = getSubdirectories(PATTERNS_DIR);
-      for (const expected of ["CoachCard", "EmptyState", "KpiStrip"]) {
+      for (const expected of ["CoachCard", "ConfirmDialog", "EmptyState", "KpiStrip"]) {
         expect(patterns).toContain(expected);
       }
     });

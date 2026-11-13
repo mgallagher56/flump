@@ -38,6 +38,43 @@ const ReturnHarness = ({ removable = false }: { removable?: boolean }) => {
   );
 };
 
+describe("Dialog primitive ARIA and footer", () => {
+  it("is labelled by its title and described by its description", () => {
+    render(
+      <Dialog open onOpenChange={() => {}} title="Add liability" description="Log a debt">
+        x
+      </Dialog>,
+    );
+    const dialog = screen.getByRole("dialog");
+    const label = document.getElementById(dialog.getAttribute("aria-labelledby") as string);
+    const desc = document.getElementById(dialog.getAttribute("aria-describedby") as string);
+    expect(label?.textContent).toBe("Add liability");
+    expect(desc?.textContent).toBe("Log a debt");
+  });
+
+  it("keeps the title in the accessibility tree when hideTitle is set", () => {
+    render(
+      <Dialog open onOpenChange={() => {}} title="Filters" hideTitle>
+        x
+      </Dialog>,
+    );
+    expect(screen.getByRole("dialog", { name: "Filters" })).toBeDefined();
+  });
+
+  it("renders the footer action row after the content", () => {
+    render(
+      <Dialog open onOpenChange={() => {}} title="T" footer={<button type="button">Save</button>}>
+        <p>body</p>
+      </Dialog>,
+    );
+    const save = screen.getByRole("button", { name: "Save" });
+    expect(screen.getByRole("dialog").contains(save)).toBe(true);
+    expect(screen.getByText("body").compareDocumentPosition(save)).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    );
+  });
+});
+
 describe("Dialog primitive", () => {
   it("renders nothing while closed", () => {
     render(
