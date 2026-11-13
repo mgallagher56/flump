@@ -3,6 +3,7 @@ import { MemoryRouter } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 import { ErrorShell } from "./ErrorShell";
 
+// The shared setup stubs Link to render only its children; the logo link needs the real anchor.
 vi.mock("react-router", async () => await vi.importActual("react-router"));
 
 describe("ErrorShell", () => {

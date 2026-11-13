@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { RouteErrorState } from "./RouteErrorState";
 
 describe("RouteErrorState", () => {
-  it("renders the unavailable heading and calls onRetry from 'Try again'", () => {
+  it("renders the server heading and calls onRetry from 'Try again'", () => {
     const onRetry = vi.fn();
     render(<RouteErrorState kind="server" onRetry={onRetry} />);
 

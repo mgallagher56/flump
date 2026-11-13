@@ -102,7 +102,8 @@ export const RouteErrorState: FC<RouteErrorStateProps> = ({
   const copy = copyFor(kind);
   const Heading = headingLevel;
   const headingRef = useRef<HTMLHeadingElement>(null);
-  // Move focus to the heading so keyboard and screen reader users land on what happened.
+  // Move focus to the heading so keyboard and screen reader users land on what happened. Focus is
+  // the one announcement: the section is not also a live region, or the error would be read twice.
   useEffect(() => {
     headingRef.current?.focus({ preventScroll: true });
   }, []);
@@ -113,7 +114,7 @@ export const RouteErrorState: FC<RouteErrorStateProps> = ({
     kind !== "not-invited";
 
   return (
-    <section className={cx(errorStateContainer(), className)} role="alert" id="route-error-state">
+    <section className={cx(errorStateContainer(), className)} id="route-error-state">
       <div className={errorStateIllustration()}>
         <Illustration scene={copy.scene} size="sm" />
       </div>

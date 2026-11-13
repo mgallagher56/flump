@@ -47,6 +47,9 @@ export const personaSet = cva({
   },
 });
 
+/** The small button size keeps the chip compact; the 44px minimum keeps the hit area (WCAG 2.5.8). */
+export const barButton = cva({ base: { minHeight: "44px" } });
+
 export const barHint = cva({
   base: { textStyle: "body.sm", color: "text.muted", display: { base: "none", md: "inline" } },
 });

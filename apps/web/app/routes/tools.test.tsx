@@ -83,11 +83,14 @@ describe("Tools Routes", () => {
     expect(
       screen.getByRole("heading", {
         level: 1,
-        name: /uk £100k–£125k tax trap & childcare threshold calculator/i,
+        name: /uk £100k–£125k tax trap and childcare threshold calculator/i,
       }),
     ).toBeDefined();
     expect(screen.getByText(/what is the uk £100,000 tax trap\?/i)).toBeDefined();
     expect(screen.getByText(/illustration only/i)).toBeDefined();
+    const calculator = screen.getByRole("region", { name: "Calculator, illustration" });
+    expect(calculator.getAttribute("aria-describedby")).toBe("tool-sample-data-label");
+    expect(document.getElementById("tool-sample-data-label")).not.toBeNull();
     expect(screen.getAllByText(/frequently asked questions/i).length).toBeGreaterThan(0);
   });
 
@@ -103,7 +106,7 @@ describe("Tools Routes", () => {
     expect(
       screen.getByRole("heading", {
         level: 1,
-        name: /mortgage overpayment vs\. stocks & shares isa calculator/i,
+        name: /mortgage overpayment vs stocks and shares isa calculator/i,
       }),
     ).toBeDefined();
   });
@@ -120,7 +123,7 @@ describe("Tools Routes", () => {
     expect(
       screen.getByRole("heading", {
         level: 1,
-        name: /section 24 landlord mortgage relief & tax calculator/i,
+        name: /section 24 landlord mortgage relief and tax calculator/i,
       }),
     ).toBeDefined();
   });

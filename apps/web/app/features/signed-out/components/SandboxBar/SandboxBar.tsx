@@ -1,6 +1,7 @@
 import { Button, Icon } from "@repo/ui";
 import { ArrowRight, Lock } from "lucide-react";
 import {
+  barButton,
   barGroup,
   barHint,
   barRoot,
@@ -39,6 +40,7 @@ export const SandboxBar = <Key extends string>({
         {personas.map((persona) => (
           <Button
             aria-pressed={active === persona.key}
+            className={barButton()}
             key={persona.key}
             onClick={() => onSelect(persona.key)}
             size="sm"
@@ -55,6 +57,7 @@ export const SandboxBar = <Key extends string>({
       <span className={barHint()}>Ready to use your own bank feeds and HMRC data?</span>
       <Button
         aria-label="Save my numbers and create account"
+        className={barButton()}
         onClick={onSave}
         size="sm"
         type="button"

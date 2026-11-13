@@ -1,10 +1,11 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import { createRoutesStub, data } from "react-router";
+import { expect, within } from "storybook/test";
 import { RouteErrorBoundary } from "../RouteErrorBoundary";
 import { ErrorShell } from "./ErrorShell";
 
 const meta: Meta<typeof ErrorShell> = {
-  title: "3. Financial Patterns & Sections/ErrorShell",
+  title: "Feedback/ErrorShell",
   component: ErrorShell,
   // The Storybook decorator renders every story side by side in Light and Dark by default.
   parameters: { layout: "fullscreen" },
@@ -35,4 +36,19 @@ const Missing = (): React.ReactElement => {
   return <Stub initialEntries={["/"]} />;
 };
 
-export const NotFoundDocument: Story = { render: () => <Missing /> };
+export const NotFoundDocument: Story = {
+  render: () => <Missing />,
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    // The side-by-side theme decorator renders the story in each pane, so check the first one.
+    const [skip] = await canvas.findAllByRole("link", { name: "Skip to content" });
+    await expect(skip.getAttribute("href")).toBe("#main-content");
+    const [heading] = await canvas.findAllByRole("heading", {
+      level: 1,
+      name: "We couldn't find that",
+    });
+    await expect(heading).toBeVisible();
+    const [main] = canvas.getAllByRole("main");
+    await expect(main.contains(heading)).toBe(true);
+  },
+};

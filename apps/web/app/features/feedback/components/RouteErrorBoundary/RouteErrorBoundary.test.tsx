@@ -26,6 +26,18 @@ function renderWithLoader(loader: () => unknown, path = "/") {
       Component: RouteContent,
       ErrorBoundary: RouteErrorBoundary,
     },
+    {
+      path: "/app/tax/receipts/:id",
+      loader: loader as never,
+      Component: RouteContent,
+      ErrorBoundary: RouteErrorBoundary,
+    },
+    {
+      path: "*",
+      loader: loader as never,
+      Component: RouteContent,
+      ErrorBoundary: RouteErrorBoundary,
+    },
   ]);
   return render(<Stub initialEntries={[path]} />);
 }
@@ -121,12 +133,55 @@ describe("RouteErrorBoundary", () => {
     expect(link.getAttribute("href")).toBe("/app/accounts");
   });
 
-  it("forbidden looks identical to not-found", async () => {
+  it("forbidden looks identical to not-found, status included", async () => {
     renderWithLoader(() => {
       throw data({ kind: "forbidden" }, { status: 403 });
     });
     expect(await screen.findByRole("heading", { name: "We couldn't find that" })).toBeDefined();
     expect(screen.queryByText("You don't have access to this")).toBeNull();
+    expect(screen.queryByText("Error 403")).toBeNull();
+    expect(screen.getByText("Error 404")).toBeDefined();
+  });
+
+  it("treats Safari's 'Load failed' as a connection problem", async () => {
+    renderWithLoader(() => {
+      throw new TypeError("Load failed");
+    });
+    expect(await screen.findByRole("heading", { name: "We couldn't reach Flump" })).toBeDefined();
+  });
+
+  it("renders the heading as the page h1, since it replaces the route's PageHeader", async () => {
+    renderWithLoader(() => {
+      throw data({ kind: "server" }, { status: 500 });
+    });
+    expect(
+      await screen.findByRole("heading", { level: 1, name: "We couldn't load your data" }),
+    ).toBeDefined();
+  });
+
+  it("does not make the error state a live region, so focus is the single announcement", async () => {
+    renderWithLoader(() => {
+      throw data({ kind: "server" }, { status: 500 });
+    });
+    await screen.findByRole("heading", { name: "We couldn't load your data" });
+    expect(screen.queryByRole("alert")).toBeNull();
+  });
+
+  it.each([
+    ["/app/accounts/acc_123", "[/app/accounts/:id]"],
+    ["/app/tax/receipts/rcpt-42", "[/app/tax/receipts/:id]"],
+    ["/app/tax/receipts/plain", "[/app/tax/receipts/:id]"],
+    ["/app/things/550e8400-e29b-41d4-a716-446655440000/edit", "[/app/things/:id/edit]"],
+    ["/app/things/12345", "[/app/things/:id]"],
+    ["/app/things/a1b2c3d4e5f6", "[/app/things/:id]"],
+    ["/app/take-home", "[/app/take-home]"],
+  ])("strips record ids from the feedback subject on %s", async (path, subject) => {
+    renderWithLoader(() => {
+      throw data({ kind: "server" }, { status: 500 });
+    }, path);
+    const link = await screen.findByRole("link", { name: "Report this problem by email" });
+    const href = decodeURIComponent(link.getAttribute("href") ?? "");
+    expect(href).toContain(subject);
   });
 
   it("renders a sign-in form posting to /logout for 401", async () => {
