@@ -1,5 +1,32 @@
 # Changelog
 
+## [1.27.0](https://github.com/mgallagher56/flump/compare/flump/backend-v1.26.0...flump/backend-v1.27.0) (2026-11-13)
+
+
+### Features ✨
+
+* **backend:** structured JSON logs and request ids (E18-N4) ([c413b31](https://github.com/mgallagher56/flump/commit/c413b31e6f3600130bfeb3303efa9af8313d6cee))
+* **backend:** validate tax receipts (MIME, magic bytes, size, filename) (E20-N14) ([f545735](https://github.com/mgallagher56/flump/commit/f5457352ab89861154e99f7b276be8007e44e6bd))
+
+
+### Bug Fixes 🪲
+
+* **backend:** harden receipt filename and normalise receipt fields (E20-N14 review) ([cfe19a8](https://github.com/mgallagher56/flump/commit/cfe19a88f945b330314cf09b26c6819154bebbfc))
+* **backend:** log aborted requests, harden route and format handling (E18-N4 review) ([5ee95f1](https://github.com/mgallagher56/flump/commit/5ee95f19c20b7bbcffc05a7bfdbc266941eb49c3))
+
+
+### Refactor 🔥
+
+* **web:** remove dead forecast module key and normalise stored enabledPages (T-IA-8) ([df5a54e](https://github.com/mgallagher56/flump/commit/df5a54ea7a5d3dc1da4aa0d2d79f0f8ddb96c3d8))
+
+
+### Tests 🧪
+
+* **backend:** authz review fixes: dev-bypass, /mcp, /v1 alias, harness hardening (E20-N22) ([f8d35c4](https://github.com/mgallagher56/flump/commit/f8d35c43ca500562484b70d526c0563d8605721a))
+* **backend:** generate JWKS test keypairs once per file ([f0e0dfe](https://github.com/mgallagher56/flump/commit/f0e0dfe04a8e252c84f3f272f8ca7d7e7394db5f))
+* **backend:** two-user IDOR harness, route-coverage meta-test, finance and budget matrix (E20-N22) ([81abaa5](https://github.com/mgallagher56/flump/commit/81abaa58cc373e00ca318a1c917260d26d643437))
+* **web:** cover forecast checklist step and fall back to default widget sizes (T-IA-8) ([8f067bd](https://github.com/mgallagher56/flump/commit/8f067bd78cd474bde033ba8aa91c04fcd60f8b7b))
+
 ## [1.26.0](https://github.com/mgallagher56/flump/compare/flump/backend-v1.25.0...flump/backend-v1.26.0) (2026-11-13)
 
 

@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.27.0](https://github.com/mgallagher56/flump/compare/flump/marketing-v1.26.0...flump/marketing-v1.27.0) (2026-11-13)
+
+
+### Features ✨
+
+* **marketing:** cookieless page counts behind a two-key flag (E24-T9) ([4815253](https://github.com/mgallagher56/flump/commit/48152533da4100ef79bb716e46d85af2ec999853))
+* **marketing:** deliberate indexing, canonical URLs and sitemap module (E24-T6) ([1513035](https://github.com/mgallagher56/flump/commit/15130354dcb669b514dcbfb92eb210c8b4e3fe37))
+
+
+### Bug Fixes 🪲
+
+* **marketing:** canonical only for real pages, pure head-meta helper, stricter flag warning ([8ea62a3](https://github.com/mgallagher56/flump/commit/8ea62a3fcf152b7a4b1362ab3dae1939ba2d0723))
+* **marketing:** harden pageview logging and rollup per security review (E24-T9) ([f936b56](https://github.com/mgallagher56/flump/commit/f936b56e339f8d2d9e6ca098c35520b9a9717ba8))
+
 ## [1.26.0](https://github.com/mgallagher56/flump/compare/flump/marketing-v1.25.0...flump/marketing-v1.26.0) (2026-11-13)
 
 
