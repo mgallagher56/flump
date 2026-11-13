@@ -35,9 +35,36 @@ describe("RouteErrorBoundary", () => {
     renderWithLoader(() => {
       throw data({ kind: "unavailable" }, { status: 503 });
     });
+    expect(await screen.findByRole("heading", { name: "We couldn't reach Flump" })).toBeDefined();
+    expect(screen.getByText("Error 503")).toBeDefined();
+  });
+
+  it("renders the server state with a retry and the status for a 500", async () => {
+    renderWithLoader(() => {
+      throw data({ kind: "server" }, { status: 500 });
+    });
     expect(
       await screen.findByRole("heading", { name: "We couldn't load your data" }),
     ).toBeDefined();
+    expect(screen.getByRole("button", { name: "Try again" })).toBeDefined();
+    expect(screen.getByRole("link", { name: "Report this problem by email" })).toBeDefined();
+    expect(screen.getByText("Error 500")).toBeDefined();
+  });
+
+  it("treats a failed fetch as a connection problem without leaking the message", async () => {
+    renderWithLoader(() => {
+      throw new TypeError("Failed to fetch https://api.internal/secret");
+    });
+    expect(await screen.findByRole("heading", { name: "We couldn't reach Flump" })).toBeDefined();
+    expect(screen.queryByText(/internal/)).toBeNull();
+  });
+
+  it("focuses the heading when the boundary renders", async () => {
+    renderWithLoader(() => {
+      throw data({ kind: "server" }, { status: 500 });
+    });
+    const heading = await screen.findByRole("heading", { name: "We couldn't load your data" });
+    await waitFor(() => expect(document.activeElement).toBe(heading));
   });
 
   it("Try again re-runs the loader and renders the route on success", async () => {
@@ -72,6 +99,7 @@ describe("RouteErrorBoundary", () => {
     });
     expect(await screen.findByRole("heading", { name: "We couldn't find that" })).toBeDefined();
     expect(screen.getByRole("link", { name: "Go to Flump" }).getAttribute("href")).toBe("/");
+    expect(screen.getByText("Error 404")).toBeDefined();
     expect(screen.queryByRole("link", { name: "Go to dashboard" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Try again" })).toBeNull();
   });

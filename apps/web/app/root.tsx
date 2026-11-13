@@ -16,6 +16,7 @@ import { AppBottomBar } from "./components/navigation/AppBottomBar";
 import { NavigationProgress } from "./components/navigation/NavigationProgress";
 import Header from "./components/structure/header/Header";
 import { ResponsiveProvider } from "./context/ResponsiveContext";
+import { ErrorShell } from "./features/feedback/components/ErrorShell";
 import { RouteErrorBoundary } from "./features/feedback/components/RouteErrorBoundary";
 import { useTheme } from "./hooks/useTheme";
 import type { UserProfile } from "./hooks/useUserProfile";
@@ -201,10 +202,11 @@ export function ErrorBoundary() {
           backgroundColor: "surface.canvas",
           color: "text.primary",
           minHeight: "100vh",
-          padding: { base: "24px", md: "48px" },
         })}
       >
-        <RouteErrorBoundary />
+        <ErrorShell>
+          <RouteErrorBoundary headingLevel="h1" />
+        </ErrorShell>
         <ScrollRestoration nonce={nonce} />
         <Scripts nonce={nonce} />
       </body>

@@ -40,6 +40,20 @@ export const errorStateHeading = cva({
     fontSize: "xl",
     fontWeight: "bold",
     color: "text.primary",
+    _focus: { outline: "none" },
+  },
+});
+
+export const errorStateIllustration = cva({
+  base: { display: "flex", justifyContent: "flex-start", width: "100%" },
+});
+
+export const errorStateStatus = cva({
+  base: {
+    margin: 0,
+    fontSize: "xs",
+    color: "text.muted",
+    fontVariantNumeric: "tabular-nums",
   },
 });
 

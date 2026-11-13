@@ -9,6 +9,7 @@ import {
   EmptyState,
   FormField,
   Icon,
+  Illustration,
   Money,
   StatusBadge,
   Table,
@@ -109,6 +110,7 @@ export const TaxRecordsTable: FC<TaxRecordsTableProps> = ({
     return (
       <EmptyState
         headingLevel="h3"
+        illustration={<Illustration scene="empty-accounts" size="sm" />}
         title="No records yet"
         description="Add income or a cost and it will appear here, with every tax year it counts towards."
         action={

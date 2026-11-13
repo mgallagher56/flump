@@ -1,10 +1,7 @@
 import type { OnboardingSeedPayload } from "@flump/finance-engine";
 import { persistOnboardingSeed } from "@flump/finance-engine";
-import { css } from "@repo/ui/styled-system/css";
-import { flex } from "@repo/ui/styled-system/patterns";
 import { useSetAtom } from "jotai";
 import { useEffect, useState } from "react";
-import { FiArrowRight, FiLock } from "react-icons/fi";
 import {
   type LoaderFunctionArgs,
   type MetaFunction,
@@ -14,6 +11,9 @@ import {
 } from "react-router";
 import { SampleModeProvider } from "~/context/SampleModeContext";
 import { HomeDashboard } from "~/features/dashboard/components/HomeDashboard";
+import { SampleDataNote } from "~/features/signed-out/components/SampleDataNote";
+import { SandboxBar } from "~/features/signed-out/components/SandboxBar";
+import { sandboxPage } from "~/features/signed-out/components/SandboxBar/SandboxBar.styles";
 import { financialBaselineAtom, writeOnboardingSeedCookie } from "~/state/baseline.store";
 import { getAuthSession } from "~/utils/auth.server";
 import { getSandboxPersonaData } from "~/utils/demoData";
@@ -22,57 +22,6 @@ export const meta: MetaFunction = () => [
   { title: "Live Demo Sandbox | Flump (Read-Only)" },
   { name: "robots", content: "noindex, nofollow" },
 ];
-
-const bannerStyle = css({
-  // Sticky only from md up: on phones the banner would otherwise cover a third of the screen.
-  position: { base: "static", md: "sticky" },
-  top: 0,
-  zIndex: 40,
-  backgroundColor: "surface",
-  color: "text.primary",
-  padding: { base: "8px 12px", md: "10px 16px" },
-  borderRadius: "lg",
-  boxShadow: "card",
-  border: "1px solid",
-  borderColor: "border",
-  transition: "background-color 0.2s ease, border-color 0.2s ease",
-});
-
-const pillStyle = (active: boolean) =>
-  css({
-    fontSize: "12px",
-    fontWeight: "700",
-    // 44px hit area (WCAG 2.5.8) without a taller visual chip on desktop.
-    minHeight: "44px",
-    padding: "5px 12px",
-    borderRadius: "full",
-    border: "1px solid",
-    borderColor: active ? "primary" : "border",
-    backgroundColor: active ? "primary.solid" : "transparent",
-    color: active ? "primary.foreground" : "text.primary",
-    cursor: "pointer",
-    transition: "all 0.15s ease",
-    _hover: {
-      borderColor: "primary",
-    },
-  });
-
-const saveButtonStyle = css({
-  backgroundColor: "status.positive.solid",
-  color: "text.onContrast",
-  border: "none",
-  borderRadius: "lg",
-  minHeight: "44px",
-  padding: "6px 14px",
-  fontSize: "12px",
-  fontWeight: "700",
-  cursor: "pointer",
-  display: "inline-flex",
-  alignItems: "center",
-  gap: "6px",
-  transition: "opacity 0.15s ease",
-  _hover: { opacity: 0.9 },
-});
 
 // The sandbox is for signed-out visitors only: signed-in users already have real data.
 export const loader = async (args: LoaderFunctionArgs) => {
@@ -159,103 +108,19 @@ export default function SandboxRoute() {
   };
 
   return (
-    <div
-      className={css({
-        display: "flex",
-        flexDirection: "column",
-        gap: { base: "3", md: "6" },
-        paddingTop: { base: "2", md: "4" },
-        paddingBottom: "12",
-        width: "100%",
-        maxWidth: "1536px",
-        margin: "0 auto",
-      })}
-    >
+    <div className={sandboxPage()}>
       {/* The single "Guidance, not advice" ProjectionNotice is rendered by HomeDashboard. */}
-      {/* Sticky Sandbox Header Banner */}
-      <div className={bannerStyle}>
-        <div
-          className={flex({
-            justify: "space-between",
-            align: "center",
-            flexWrap: "wrap",
-            gap: "3",
-            width: "100%",
-          })}
-        >
-          <div className={flex({ align: "center", gap: "3", flexWrap: "wrap" })}>
-            <span
-              className={css({
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "6px",
-                fontSize: "12px",
-                fontWeight: "700",
-                color: "text.primary",
-              })}
-            >
-              <FiLock size={14} className={css({ color: "primary" })} />
-              Demo sandbox (read-only)
-            </span>
+      <SandboxBar
+        active={activePersona}
+        onSave={handleSaveAndCreateAccount}
+        onSelect={setActivePersona}
+        personas={PERSONAS}
+      />
 
-            {/* Persona Switcher */}
-            <fieldset
-              className={flex({
-                gap: "2",
-                flexWrap: "wrap",
-                border: "none",
-                padding: 0,
-                margin: 0,
-              })}
-            >
-              <legend className={css({ srOnly: true })}>Sample persona</legend>
-              {PERSONAS.map((persona) => (
-                <button
-                  key={persona.key}
-                  type="button"
-                  aria-pressed={activePersona === persona.key}
-                  className={pillStyle(activePersona === persona.key)}
-                  onClick={() => setActivePersona(persona.key)}
-                >
-                  {persona.label}
-                </button>
-              ))}
-            </fieldset>
-          </div>
-
-          <div className={flex({ align: "center", gap: "3" })}>
-            <span
-              className={css({
-                fontSize: "11px",
-                color: "text.muted",
-                display: { base: "none", md: "inline" },
-              })}
-            >
-              Ready to use your own bank feeds & HMRC data?
-            </span>
-            <button
-              type="button"
-              aria-label="Save my numbers and create account"
-              className={saveButtonStyle}
-              onClick={handleSaveAndCreateAccount}
-            >
-              Save my numbers <FiArrowRight size={13} />
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <p
-        className={css({
-          fontSize: "xs",
-          color: "text.muted",
-          px: { base: "1", md: "4" },
-          py: { base: "0", md: "2" },
-        })}
-        id="sandbox-sample-data-label"
-      >
+      <SampleDataNote id="sandbox-sample-data-label">
         Sample data: illustrative figures, not yours. Tax due and take-home here are examples.
-      </p>
+        Nothing here is saved to an account.
+      </SampleDataNote>
 
       {/* Actual SPA Dashboard View */}
       <SampleModeProvider value>

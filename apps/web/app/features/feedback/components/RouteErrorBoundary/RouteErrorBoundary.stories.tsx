@@ -51,3 +51,5 @@ export const NotFound: Story = { render: withThrow("not-found", 404) };
 export const Forbidden: Story = { render: withThrow("forbidden", 403) };
 
 export const Unauthorised: Story = { render: withThrow("unauthorised", 401) };
+
+export const Server: Story = { render: withThrow("server", 500) };
