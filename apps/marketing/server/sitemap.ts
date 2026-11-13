@@ -1,5 +1,5 @@
 import express, { type Router } from "express";
-import { CANONICAL_TOOL_SLUGS, STATIC_PATHS } from "../src/utils/toolSlugs";
+import { CANONICAL_TOOL_SLUGS, STATIC_PATHS, TOOL_SLUG_ALIASES } from "../src/utils/toolSlugs";
 
 type Env = Record<string, string | undefined>;
 
@@ -10,8 +10,16 @@ type Env = Record<string, string | undefined>;
 export const isIndexingAllowed = (env: Env): boolean =>
   env.ALLOW_INDEXING === "true" && env.FLUMP_LAUNCH === "true";
 
-/** Returns a warning message when exactly one of the two indexing flags is set, else undefined. */
+/**
+ * Returns a warning when the two indexing flags disagree, or when either is set to something other
+ * than exactly "true" (e.g. "1", "TRUE"), which silently stays noindex. Undefined when fine.
+ */
 export function indexingFlagWarning(env: Env): string | undefined {
+  const flags = ["ALLOW_INDEXING", "FLUMP_LAUNCH"] as const;
+  const bad = flags.filter((f) => env[f] !== undefined && env[f] !== "" && env[f] !== "true");
+  if (bad.length > 0) {
+    return `[ops] Indexing stays OFF: ${bad.join(" and ")} must be exactly "true" (got ${bad.map((f) => JSON.stringify(env[f])).join(", ")}).`;
+  }
   const allow = env.ALLOW_INDEXING === "true";
   const launch = env.FLUMP_LAUNCH === "true";
   if (allow === launch) return undefined;
@@ -41,20 +49,37 @@ const escapeAttr = (s: string) =>
   s.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
 /**
- * `<link rel="canonical">` for a request URL, query and hash stripped. Returns "" when SITE_URL
- * is not a valid https origin (canonicals were removed until a domain exists).
+ * The canonical path for a request URL, or undefined when it is not a real page. Query, hash,
+ * duplicate and trailing slashes, case and percent-encoding are normalised, and tool-slug aliases
+ * map to their canonical slug. The result always comes from the known route list.
+ */
+export function canonicalPath(requestUrl: string): string | undefined {
+  let raw = requestUrl.split(/[?#]/)[0] || "/";
+  try {
+    raw = decodeURIComponent(raw);
+  } catch {
+    return undefined;
+  }
+  const lower = raw.toLowerCase().replace(/\/{2,}/g, "/");
+  const path = lower.length > 1 ? lower.replace(/\/+$/, "") || "/" : lower;
+  if ((STATIC_PATHS as readonly string[]).includes(path)) return path;
+  const match = /^\/tools\/([^/]+)$/.exec(path);
+  const slug = match?.[1];
+  if (!slug) return undefined;
+  if ((CANONICAL_TOOL_SLUGS as readonly string[]).includes(slug)) return path;
+  const target = Object.hasOwn(TOOL_SLUG_ALIASES, slug) ? TOOL_SLUG_ALIASES[slug] : undefined;
+  return target ? `/tools/${target}` : undefined;
+}
+
+/**
+ * `<link rel="canonical">` for a request URL. Returns "" when SITE_URL is not a valid https origin
+ * (canonicals were removed until a domain exists) or the URL is not a real page (404s).
  */
 export function canonicalLinkTag(siteUrl: string | undefined, requestUrl: string): string {
   const origin = normaliseSiteUrl(siteUrl);
-  if (!origin) return "";
-  let pathname = "/";
-  try {
-    pathname = new URL(requestUrl, "http://localhost").pathname;
-  } catch {
-    // fall back to the root
-  }
-  if (pathname.length > 1) pathname = pathname.replace(/\/+$/, "") || "/";
-  return `<link rel="canonical" href="${escapeAttr(origin + pathname)}" />`;
+  const path = canonicalPath(requestUrl);
+  if (!origin || !path) return "";
+  return `<link rel="canonical" href="${escapeAttr(origin + path)}" />`;
 }
 
 /** GET /sitemap.xml: real 404 unless indexing is allowed and SITE_URL is a valid https origin. */

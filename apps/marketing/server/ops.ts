@@ -2,8 +2,6 @@ import express, { type RequestHandler, type Router } from "express";
 import { buildSecurityTxt, normaliseSecurityContact } from "./security";
 import { indexingFlagWarning, isIndexingAllowed, normaliseSiteUrl, sitemapRouter } from "./sitemap";
 
-export { buildSitemap, normaliseSiteUrl } from "./sitemap";
-
 type Env = Record<string, string | undefined>;
 
 /** Sets X-Robots-Tag: noindex, nofollow on every response unless ALLOW_INDEXING and FLUMP_LAUNCH are both exactly "true". */
