@@ -29,30 +29,29 @@ export const Populated: Story = {
       canvas.getAllByLabelText("Monthly overpayment range slider").length,
     ).toBeGreaterThan(0);
     await expect(canvas.getAllByText(/early repayment charge/).length).toBeGreaterThan(0);
-    // "Time shaved off" is the page's single hero card (one per theme in the side-by-side decorator).
-    const hero = canvasElement.querySelectorAll("[data-tone='hero']");
-    await expect(hero.length).toBeGreaterThan(0);
-    await expect(hero[0]?.textContent).toContain("Time shaved off");
+    // "Time shaved off" is a scenario outcome, so it is a plain card and never the hero surface.
+    await expect(canvasElement.querySelectorAll("[data-tone='hero']")).toHaveLength(0);
+    await expect(canvas.getAllByText("Time shaved off").length).toBeGreaterThan(0);
   },
 };
 
 export const InterestOnly: Story = {
   args: { mortgageType: "interest-only", overpayment: 500 },
   play: async ({ canvasElement }) => {
-    // Interest-only saves no time, so the hero moves to "Bullet balance reduced".
-    const hero = canvasElement.querySelectorAll("[data-tone='hero']");
-    await expect(hero.length).toBeGreaterThan(0);
-    await expect(hero[0]?.textContent).toContain("Bullet balance reduced");
+    // Interest-only saves no time, so the headline card becomes "Bullet balance reduced".
+    await expect(canvasElement.querySelectorAll("[data-tone='hero']")).toHaveLength(0);
+    await expect(
+      within(canvasElement).getAllByText("Bullet balance reduced").length,
+    ).toBeGreaterThan(0);
   },
 };
 
 export const ZeroOverpayment: Story = {
   args: { overpayment: 0 },
   play: async ({ canvasElement }) => {
-    // With no overpayment the hero says so plainly instead of showing a zero-month result.
-    const hero = canvasElement.querySelectorAll("[data-tone='hero']");
-    await expect(hero.length).toBeGreaterThan(0);
-    await expect(hero[0]?.textContent).toContain("No change yet");
+    // With no overpayment the card says so plainly instead of showing a zero-month result.
+    await expect(canvasElement.querySelectorAll("[data-tone='hero']")).toHaveLength(0);
+    await expect(canvasElement.textContent).toContain("No change yet");
     await expect(canvasElement.textContent).not.toMatch(/\b0 months?\b/);
   },
 };
