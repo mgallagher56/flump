@@ -45,21 +45,24 @@ A component or page task is NOT complete until:
 1. It follows the colocated directory structure.
 2. It has a `.stories.tsx` file rendering in both Light and Dark mode with zero `@storybook/addon-a11y` violations.
 3. Interactive states are covered by a `.test.tsx` or Storybook `play()` test.
-4. `bun run lint`, `bun run check-types`, `bun run test`, and `bun run build` pass with zero errors.
+4. The local fast checks in section 5 pass, and every CI check on the PR is green (CI runs the full tests, build, Storybook a11y and E2E).
 
-## 5. MANDATORY CI PRE-FLIGHT LAW (BEFORE CREATING OR UPDATING A PR)
+## 5. PRE-FLIGHT LAW (LOCAL FAST CHECKS, THEN CI)
 
-Before creating or pushing to any Pull Request, agents MUST run and verify all five CI checks locally:
+CI runs the full suite on every PR in a few minutes, and nothing merges unless it is green and up to date with `main`. So local checks are the fast ones only; the slow ones belong to CI.
+
+**Run locally before creating or pushing to a PR:**
 
 1. `bun run lint` (zero Biome lint/format errors)
 2. `bun run check-types` (zero TypeScript errors across all monorepo packages)
-3. `bun run test` (100% passing tests across all packages)
-4. `bun run build` (successful compilation across all packages and apps)
-5. `bun run check:laws` (design tokens, tabular numbers, react icons and dependency versions; CI runs it, so run it locally too)
+3. `bun run check:laws` (design tokens, tabular numbers, react icons and dependency versions)
+4. The tests for what you changed only: `bunx vitest run <paths>` or `bun run test --filter=<package>` for each package the change touches. Do not run the whole monorepo suite locally.
 
 When a change removes violations, the baselines go stale and CI fails. Regenerate them with `bun scripts/check-design-tokens.ts --write-baseline`, `bun scripts/check-tabular-nums.ts --write-baseline` and `bun scripts/check-react-icons.ts --write-baseline`, then commit the updated baseline files.
 
-Never open, push, or ask the user to merge a PR without executing this exact 5-step sequence and confirming all checks pass with zero errors.
+**Leave to CI:** the full `bun run test`, `bun run build`, Storybook a11y (light and dark), the E2E smoke test and the Docker images. Run one of these locally only to reproduce or debug a CI failure.
+
+**After pushing:** wait for CI on the pushed commit. A PR is ready to merge only when every CI check on its latest commit is green; say so only then. If CI fails, read the failing job (`gh run view <id> --log-failed`), fix it and push again. Never ask for a merge on pending or failing CI, and never merge on the strength of local checks alone.
 
 ## 6. SUBAGENT MODEL LAW
 
@@ -96,7 +99,7 @@ A per-spawn `model` parameter overrides both frontmatter and the default. In wor
 - Run `rtk discover` to see which of your commands missed the proxy.
 - Not applicable: interactive commands, long-running dev servers (`bun run dev`, `storybook`), and commands whose raw output is itself the deliverable.
 - If a command's compressed output hides something needed (e.g. a full stack trace), use `rtk bypass <cmd>` for the raw output.
-- The Section 5 CI pre-flight checks must still be executed and verified; `rtk` only changes how their output is displayed (e.g. `rtk bun run lint`).
+- The Section 5 pre-flight checks must still be executed and verified; `rtk` only changes how their output is displayed (e.g. `rtk bun run lint`).
 - If `rtk` is not installed, install it (`brew install rtk`, or the official install script, which installs to `~/.local/bin` — ensure that is on `PATH`) and run `rtk init -g` for the Claude Code hook; fall back to the plain command only if installation is impossible.
 
 ## 8. CONTEXT AND TOKEN EFFICIENCY LAW
