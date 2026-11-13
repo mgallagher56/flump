@@ -239,6 +239,31 @@ describe("securityMiddleware session refresh cookies (E20-N2)", () => {
       expect(policy).toMatch(/form-action 'self' https:\/\/api\.workos\.com https?:\/\/[^;*]+;/);
     });
 
+    it("allows only the exact Sentry ingest origin from SENTRY_DSN in connect-src", async () => {
+      vi.stubEnv("SENTRY_DSN", "https://pubkey@o123.ingest.de.sentry.io/456");
+      try {
+        const res = await run(new Request(`${APP}/app`), html);
+        const policy = res.headers.get("content-security-policy-report-only") ?? "";
+        expect(policy).toContain("connect-src 'self' https://o123.ingest.de.sentry.io;");
+        expect(policy).not.toContain("*");
+        expect(policy).not.toContain("pubkey");
+      } finally {
+        vi.unstubAllEnvs();
+      }
+    });
+
+    it("omits any Sentry connect-src entry without a valid DSN", async () => {
+      vi.stubEnv("SENTRY_DSN", "");
+      try {
+        const res = await run(new Request(`${APP}/app`), html);
+        expect(res.headers.get("content-security-policy-report-only")).toContain(
+          "connect-src 'self';",
+        );
+      } finally {
+        vi.unstubAllEnvs();
+      }
+    });
+
     it("skips non-document responses", async () => {
       const data = () =>
         Promise.resolve(new Response("[]", { headers: { "Content-Type": "text/x-script" } }));

@@ -14,6 +14,7 @@ export const MAX_REPORT_BYTES = 8 * 1024;
 const MAX_REPORTS_PER_BODY = 10;
 export const RATE_LIMIT_MAX = 60;
 export const RATE_LIMIT_WINDOW_MS = 60_000;
+export const GLOBAL_RATE_LIMIT_MAX = 600;
 const MAX_TRACKED_CLIENTS = 5000;
 
 /**
@@ -23,13 +24,27 @@ const MAX_TRACKED_CLIENTS = 5000;
  */
 export class ReportRateLimiter {
   private readonly windows = new Map<string, { start: number; count: number }>();
+  private globalWindow = { start: 0, count: 0 };
 
   constructor(
     private readonly max = RATE_LIMIT_MAX,
     private readonly windowMs = RATE_LIMIT_WINDOW_MS,
+    private readonly globalMax = GLOBAL_RATE_LIMIT_MAX,
   ) {}
 
+  /** Per-client limit AND a per-process cap across all keys, so key rotation cannot multiply logs. */
   take(key: string, now: number): boolean {
+    return this.takeKey(key, now) && this.takeGlobal(now);
+  }
+
+  private takeGlobal(now: number): boolean {
+    if (now - this.globalWindow.start >= this.windowMs)
+      this.globalWindow = { start: now, count: 0 };
+    this.globalWindow.count += 1;
+    return this.globalWindow.count <= this.globalMax;
+  }
+
+  private takeKey(key: string, now: number): boolean {
     const entry = this.windows.get(key);
     if (!entry || now - entry.start >= this.windowMs) {
       this.prune(now);

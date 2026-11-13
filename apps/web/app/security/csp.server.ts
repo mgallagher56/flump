@@ -15,9 +15,6 @@ export const FULL_CSP_HEADER_NAME = "Content-Security-Policy-Report-Only";
 /** Same-origin endpoint that receives violation reports (`routes/csp-report.ts`). */
 export const CSP_REPORT_PATH = "/csp-report";
 
-/** Sentry EU ingest, which `entry.client.tsx` loads lazily. */
-export const SENTRY_INGEST_ORIGIN = "https://*.ingest.de.sentry.io";
-
 /** Per-request nonce, written by the root middleware and read by `entry.server.tsx`. */
 export const nonceContext = createContext<string>("");
 
@@ -28,11 +25,35 @@ export function generateNonce(): string {
 
 type Env = Record<string, string | undefined>;
 
+/**
+ * Only plain `scheme://host[:port]` origins may enter a policy. The URL parser accepts characters
+ * such as `;` and `,` in a host, which would end a directive or start a second policy, so the
+ * normalised origin is re-checked; IPv6 literals and anything else are dropped (never thrown).
+ */
+const SAFE_ORIGIN = /^https?:\/\/[A-Za-z0-9.-]+(:\d+)?$/;
+
 function toOrigin(value: string | undefined): string | null {
   if (!value) return null;
   try {
     const origin = new URL(value).origin;
-    return origin === "null" ? null : origin;
+    return SAFE_ORIGIN.test(origin) ? origin : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * The exact Sentry ingest origin (`https://oNNN.ingest.de.sentry.io`) taken from `SENTRY_DSN`,
+ * which is already public through `window.ENV`. Only scheme and host are used (never the key in
+ * the userinfo or the project id in the path). https only. `null` (no `connect-src` entry at all)
+ * when the DSN is unset or invalid.
+ */
+export function sentryConnectOrigin(env: Env): string | null {
+  const dsn = env.SENTRY_DSN?.trim();
+  if (!dsn) return null;
+  try {
+    const url = new URL(dsn);
+    return url.protocol === "https:" ? toOrigin(`${url.protocol}//${url.host}`) : null;
   } catch {
     return null;
   }
@@ -54,17 +75,23 @@ export interface CspOptions {
   nonce: string;
   /** Extra exact origins for `form-action`, after `'self'`. */
   formActionOrigins: readonly string[];
+  /** Extra exact origins for `connect-src` (the Sentry ingest origin, when configured). */
+  connectOrigins?: readonly string[];
 }
 
 /** The full policy. `script-src` carries the nonce and never `'unsafe-inline'`. */
-export function buildCsp({ nonce, formActionOrigins: formOrigins }: CspOptions): string {
+export function buildCsp({
+  nonce,
+  formActionOrigins: formOrigins,
+  connectOrigins = [],
+}: CspOptions): string {
   return [
     "default-src 'self'",
     `script-src 'self' 'nonce-${nonce}'`,
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: blob: https:",
     "font-src 'self'",
-    `connect-src 'self' ${SENTRY_INGEST_ORIGIN}`,
+    `connect-src 'self' ${connectOrigins.join(" ")}`.trim(),
     `form-action 'self' ${formOrigins.join(" ")}`.trim(),
     "frame-ancestors 'none'",
     "object-src 'none'",

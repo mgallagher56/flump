@@ -5,6 +5,7 @@ import {
   FULL_CSP_HEADER_NAME,
   formActionOrigins,
   generateNonce,
+  sentryConnectOrigin,
 } from "./csp.server";
 
 const MARKETING = "https://marketing.flump.test";
@@ -44,10 +45,21 @@ describe("buildCsp", () => {
     expect(policy.match(/unsafe-inline/g)).toHaveLength(1);
   });
 
-  it("allows exactly self and the Sentry EU ingest host for connect-src", () => {
-    expect(directive(policy, "connect-src")).toBe(
-      "connect-src 'self' https://*.ingest.de.sentry.io",
+  it("has connect-src self only when no connect origin is configured (no wildcard anywhere)", () => {
+    expect(directive(policy, "connect-src")).toBe("connect-src 'self'");
+    expect(policy).not.toContain("*");
+  });
+
+  it("adds exactly the configured connect origin", () => {
+    const withSentry = buildCsp({
+      nonce: "n",
+      formActionOrigins: [],
+      connectOrigins: ["https://o123.ingest.de.sentry.io"],
+    });
+    expect(directive(withSentry, "connect-src")).toBe(
+      "connect-src 'self' https://o123.ingest.de.sentry.io",
     );
+    expect(withSentry).not.toContain("*");
   });
 
   it("lists exact form-action origins with no wildcard", () => {
@@ -79,6 +91,58 @@ describe("formActionOrigins", () => {
     expect(formActionOrigins({ WORKOS_API_HOSTNAME: "workos.example.test" }, "not a url")).toEqual([
       "https://workos.example.test",
     ]);
+  });
+});
+
+describe("origin validation (nothing can break out of a directive)", () => {
+  const origins = (url: string) =>
+    formActionOrigins({}, url).filter((o) => o !== "https://api.workos.com");
+
+  it.each([
+    "https://a.com;script-src",
+    "https://a.com,b",
+    "https://a b.com",
+    "https://[::1]",
+    "https://[2001:db8::1]:8443",
+    "javascript:alert(1)",
+    "ftp://a.com",
+    "not a url",
+  ])("drops %j without throwing", (value) => {
+    expect(origins(value)).toEqual([]);
+  });
+
+  it("drops a host that carries ; or , even when the parser accepts it", () => {
+    const policy = buildCsp({ nonce: "n", formActionOrigins: origins("https://a.com;script-src") });
+    expect(policy.split("; ")).toHaveLength(11);
+    expect(policy).not.toContain("a.com");
+  });
+
+  it("normalises userinfo, path, uppercase hosts and CR/LF to a plain origin", () => {
+    expect(origins("https://user:pw@a.com/path?q=1")).toEqual(["https://a.com"]);
+    expect(origins("HTTPS://A.COM:8443")).toEqual(["https://a.com:8443"]);
+    expect(origins("https://a.com\r\n/x")).toEqual(["https://a.com"]);
+  });
+});
+
+describe("sentryConnectOrigin", () => {
+  it("returns only scheme and host from the DSN (no key, no project id)", () => {
+    expect(sentryConnectOrigin({ SENTRY_DSN: "https://pubkey@o123.ingest.de.sentry.io/456" })).toBe(
+      "https://o123.ingest.de.sentry.io",
+    );
+  });
+
+  it("is null (no connect-src entry) when unset, blank, invalid or not https", () => {
+    for (const SENTRY_DSN of [
+      undefined,
+      "",
+      "  ",
+      "nonsense",
+      "http://k@o1.ingest.de.sentry.io/1",
+      "https://k@[::1]/1",
+      "https://k@a.com;x/1",
+    ]) {
+      expect(sentryConnectOrigin({ SENTRY_DSN })).toBeNull();
+    }
   });
 });
 

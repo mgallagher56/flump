@@ -5,6 +5,7 @@ import {
   clientKey,
   extractReports,
   formatReportLine,
+  GLOBAL_RATE_LIMIT_MAX,
   handleCspReport,
   MAX_REPORT_BYTES,
   RATE_LIMIT_MAX,
@@ -191,9 +192,29 @@ describe("clientKey", () => {
 
 describe("ReportRateLimiter", () => {
   it("bounds the number of tracked clients", () => {
-    const limiter = new ReportRateLimiter();
+    const limiter = new ReportRateLimiter(60, RATE_LIMIT_WINDOW_MS, Number.POSITIVE_INFINITY);
     for (let i = 0; i < 6000; i++) limiter.take(`ip-${i}`, i);
     expect(limiter.take("ip-0", 6001)).toBe(true);
+  });
+
+  it("caps all keys together so rotating the client key cannot multiply log lines", async () => {
+    const lines: string[] = [];
+    const limiter = new ReportRateLimiter();
+    const deps = { limiter, now: () => 5_000, log: (line: string) => lines.push(line) };
+    for (let i = 0; i < GLOBAL_RATE_LIMIT_MAX + 50; i++) {
+      const res = await handleCspReport(
+        post(JSON.stringify(legacy), { "x-forwarded-for": `198.51.${i >> 8}.${i & 255}` }),
+        deps,
+      );
+      expect(res.status).toBe(204);
+    }
+    expect(lines).toHaveLength(GLOBAL_RATE_LIMIT_MAX);
+    // The next window starts fresh.
+    await handleCspReport(post(JSON.stringify(legacy), { "x-forwarded-for": "192.0.2.77" }), {
+      ...deps,
+      now: () => 5_000 + RATE_LIMIT_WINDOW_MS,
+    });
+    expect(lines).toHaveLength(GLOBAL_RATE_LIMIT_MAX + 1);
   });
 });
 
