@@ -365,6 +365,44 @@ describe.each(cases)("$route action, intent $intent", (c) => {
   });
 });
 
+describe("tax action, bulk-create-transactions chunking", () => {
+  const bulkArgs = (records: unknown[], cap: unknown[]) =>
+    makeArgs({
+      route: "tax",
+      action: taxAction,
+      intent: "bulk-create-transactions",
+      fields: { records: JSON.stringify(records), capPreviousRecordIds: JSON.stringify(cap) },
+      method: "POST",
+      path: "/tax-records/bulk",
+    });
+
+  it("splits more than 500 records and cap ids across requests of at most 500 each", async () => {
+    const fetchMock = respond(200, []);
+    globalThis.fetch = fetchMock;
+    const records = Array.from({ length: 1100 }, (_, i) => ({ name: `r${i}` }));
+    const cap = Array.from({ length: 501 }, (_, i) => ({ id: `id${i}`, endDate: "2025-03-31" }));
+    const res: any = await taxAction(bulkArgs(records, cap));
+    expect(res.data).toMatchObject({ success: true });
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+    const bodies = fetchMock.mock.calls.map(([, init]) => JSON.parse(init.body));
+    for (const b of bodies) {
+      expect(b.records.length).toBeLessThanOrEqual(500);
+      expect(b.capPreviousRecordIds.length).toBeLessThanOrEqual(500);
+    }
+    expect(bodies.flatMap((b) => b.records)).toEqual(records);
+    expect(bodies.flatMap((b) => b.capPreviousRecordIds)).toEqual(cap);
+  });
+
+  it("stops at the first failing chunk", async () => {
+    const fetchMock = respond(503);
+    globalThis.fetch = fetchMock;
+    const records = Array.from({ length: 600 }, (_, i) => ({ name: `r${i}` }));
+    const res: any = await taxAction(bulkArgs(records, []));
+    expect(res.init.status).toBe(503);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+});
+
 describe("accounts action, connectBank", () => {
   it("returns a not-available error for OAuth even when the backend call fails", async () => {
     globalThis.fetch = respond(503);
