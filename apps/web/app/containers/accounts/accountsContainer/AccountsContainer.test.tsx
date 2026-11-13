@@ -130,6 +130,21 @@ describe("<AccountsContainer />", () => {
     expect(text).toContain("Property");
   });
 
+  test("counts Owed (money owed to the user) as an asset, not a liability", () => {
+    mocks.mockUseLoaderData.mockReturnValue({
+      accounts: [
+        { id: "a1", name: "Current", type: "Current", balance: 5000 },
+        { id: "w1", name: "John Smith", type: "Owed", balance: 500 },
+        { id: "m1", name: "Card", type: "Credit Card", balance: -1000 },
+      ],
+      accountDetails: [],
+    });
+    const text = openOverview().container.textContent ?? "";
+    // assets 5,500, liabilities 1,000, net worth 4,500
+    expect(text).toContain("£5,500");
+    expect(text).toContain("£4,500");
+  });
+
   test("excludes a Student Loan from net worth and shows it on its own line", () => {
     mocks.mockUseLoaderData.mockReturnValue({
       accounts: [

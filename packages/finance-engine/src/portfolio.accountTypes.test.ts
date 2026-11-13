@@ -37,4 +37,19 @@ describe("E23 account types", () => {
     expect(snap.getTotalConsumerDebt()).toBe(1500);
     expect(snap.toDebtItems()[0]?.type).toBe("overdraft");
   });
+
+  it("treats Owed (money owed to the user) as a non-liquid asset, never a debt", () => {
+    const base = new PortfolioSnapshot(accounts);
+    const withIou = new PortfolioSnapshot([
+      ...accounts,
+      { id: "w", name: "John Smith", type: "Owed", balance: 500 },
+    ]);
+    expect(categorizeAccountType("Owed")).toBe("other");
+    expect(withIou.getTotalAssets()).toBe(base.getTotalAssets() + 500);
+    expect(withIou.getTotalNetWorth()).toBe(base.getTotalNetWorth() + 500);
+    expect(withIou.getTotalLiabilities()).toBe(base.getTotalLiabilities());
+    expect(withIou.getTotalConsumerDebt()).toBe(base.getTotalConsumerDebt());
+    expect(withIou.getTotalLiquidCash()).toBe(base.getTotalLiquidCash());
+    expect(withIou.toDebtItems().map((d) => d.id)).not.toContain("w");
+  });
 });
