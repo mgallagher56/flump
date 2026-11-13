@@ -19,7 +19,7 @@ export interface BudgetTotals {
   debtPayments: number;
   /** True when at least one income row exists. */
   hasIncome: boolean;
-  /** True when at least one essential row exists. */
+  /** True when at least one essential row has an amount above 0 (a £0 suggestion is not one). */
   hasEssentials: boolean;
 }
 
@@ -62,7 +62,7 @@ export function selectBudgetTotals(budget: readonly BudgetEntryItem[]): Figure<B
     if (row.category === SAVINGS_CATEGORY) {
       savings += monthly;
     } else if (row.isEssential) {
-      hasEssentials = true;
+      if (monthly > 0) hasEssentials = true;
       essentials += monthly;
     } else {
       discretionary += monthly;

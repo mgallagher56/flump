@@ -193,7 +193,10 @@ export const loader = async (args: LoaderFunctionArgs) => {
       monthlyIncome,
       // Essentials plus discretionary; planned savings is its own line.
       monthlyExpenses: monthlyOutgoings,
-      monthlySurplus: budget?.surplus ?? 0,
+      // Without an income row a surplus would only be minus the spending: unknown, as in MCP.
+      monthlySurplus: budget?.hasIncome ? budget.surplus : null,
+      // Essential commitments months of cover divides (essentials plus deduplicated debt).
+      monthlyEssentials: monthsOfCover?.monthlyEssentials ?? null,
       budgetedSavings,
       livingExpenses: monthlyOutgoings,
       savingsRatePct:
@@ -205,6 +208,7 @@ export const loader = async (args: LoaderFunctionArgs) => {
           : 0,
       safeToSpendWeekly: safeToSpend?.weekly ?? null,
       safeToSpendShortfall: safeToSpend?.monthlyShortfall ?? null,
+      takeHomeMonthly: knownOrNull(picture.takeHome)?.monthly ?? null,
       monthsOfCover: monthsOfCover?.months ?? null,
     },
     savingsData: {
@@ -289,7 +293,8 @@ const Index = (): ReactElement => {
       budgetKnown: false,
       monthlyIncome: 0,
       monthlyExpenses: 0,
-      monthlySurplus: 0,
+      monthlySurplus: null,
+      monthlyEssentials: null,
       budgetedSavings: 0,
       livingExpenses: 0,
       savingsRatePct: 0,

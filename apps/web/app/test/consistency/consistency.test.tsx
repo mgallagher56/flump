@@ -9,7 +9,12 @@
  *
  * Shared test infrastructure, not a component, so the colocation law does not apply.
  */
-import { buildFinancialPicture, type FinancialPicture, isFigureKnown } from "@flump/finance-engine";
+import {
+  buildFinancialPicture,
+  type FinancialPicture,
+  financialPictureInputFromRows,
+  isFigureKnown,
+} from "@flump/finance-engine";
 import { PERSONAS, type PersonaFixture, type PersonaName } from "@flump/finance-engine/testing";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import type { LoaderFunctionArgs } from "react-router";
@@ -24,6 +29,7 @@ vi.mock("react-router", async () => {
     Link: ({ children }: { children: unknown }) => children,
     useLoaderData: () => loaderState.data,
     useNavigate: () => vi.fn(),
+    useFetcher: () => ({ state: "idle", data: undefined, submit: vi.fn(), load: vi.fn() }),
   };
 });
 
@@ -57,12 +63,23 @@ vi.mock("recharts", async () => {
 });
 
 import BudgetContainer from "~/containers/budget/BudgetContainer";
+import { DebtContainer } from "~/containers/debt/DebtContainer";
 import { HomeDashboard } from "~/features/dashboard/components/HomeDashboard";
 import { loader as dashboardLoader } from "~/routes/_index";
 import { loader as debtLoader } from "~/routes/app.debt";
 import { loadWorkspaceSnapshot } from "~/services/backend-client.server";
 
-const NAMES = Object.keys(PERSONAS) as PersonaName[];
+type CaseName = PersonaName | "noIncomeRows";
+
+/** The nine personas, plus one budget with essentials but no income row (suggested-rows shape). */
+const CASES = {
+  ...Object.fromEntries(Object.entries(PERSONAS).map(([k, v]) => [k, v.fixture])),
+  noIncomeRows: {
+    ...PERSONAS.sam.fixture,
+    budget: PERSONAS.sam.fixture.budget.filter((b) => !b.isIncome),
+  },
+} as Record<CaseName, PersonaFixture>;
+const NAMES = Object.keys(CASES) as CaseName[];
 
 /** The persona's rows as the backend returns them to a loader. */
 function workspace(fixture: PersonaFixture) {
@@ -112,10 +129,10 @@ function expectedFigures(picture: FinancialPicture): Record<string, number | nul
     netWorth: picture.netWorth.netWorth,
     liquidCash: picture.netWorth.liquidCash,
     "debt.total": picture.debt.consumerDebt,
-    "budget.income": budget?.income ?? null,
+    "budget.income": budget?.hasIncome ? budget.income : null,
     "budget.outgoings": budget?.outgoings ?? null,
     "budget.savings": budget?.savings ?? null,
-    "budget.surplus": budget?.surplus ?? null,
+    "budget.surplus": budget?.hasIncome ? budget.surplus : null,
     "safeToSpend.weekly": isFigureKnown(picture.safeToSpend)
       ? picture.safeToSpend.value.weekly
       : null,
@@ -134,6 +151,9 @@ interface Reading {
 /** Reads en-GB figures: "£1,888", "+£800", "minus £300", "4.7 months", "£264.69". */
 function parseFigure(el: Element): { value: number; decimals: number } {
   const text = el.textContent ?? "";
+  // "10+ years" is any figure over 120 months: read it as its lower bound, marked with -1.
+  const years = text.match(/^(\d+)\+ years$/);
+  if (years) return { value: Number(years[1]) * 12, decimals: -1 };
   const match = text.replace(/,/g, "").match(/\d+(\.\d+)?/);
   if (!match) throw new Error(`no number in figure text "${text}"`);
   const negative = /minus|−|-£|^-/.test(text) || el.getAttribute("data-figure-sign") === "-1";
@@ -152,6 +172,7 @@ function collect(container: HTMLElement, surface: string): Reading[] {
 
 /** A displayed figure matches when it equals the engine value at the precision shown. */
 function matches(reading: Reading, expected: number): boolean {
+  if (reading.decimals === -1) return expected > 120 && expected >= reading.value;
   const factor = 10 ** reading.decimals;
   return Math.round(expected * factor) / factor === reading.value;
 }
@@ -167,9 +188,22 @@ afterEach(() => {
 });
 
 describe.each(NAMES)("persona %s: one figure, every surface", (name) => {
-  const { fixture } = PERSONAS[name];
-  const picture = buildFinancialPicture(fixture);
+  const fixture = CASES[name];
+  // Built through the shared row mapper from the rows the loaders get, so a mapping bug shows up.
+  const rows = workspace(fixture);
+  const picture = buildFinancialPicture(
+    financialPictureInputFromRows({
+      profile: rows.userProfile,
+      accounts: rows.accounts,
+      accountDetails: rows.accountDetails,
+      budgetEntries: rows.budgetEntries,
+    }),
+  );
   const expected = expectedFigures(picture);
+
+  it("the shared row mapper gives the same picture as the fixture input", () => {
+    expect(picture).toEqual(buildFinancialPicture(fixture));
+  });
 
   beforeEach(() => {
     vi.mocked(loadWorkspaceSnapshot).mockResolvedValue(workspace(fixture) as never);
@@ -181,13 +215,14 @@ describe.each(NAMES)("persona %s: one figure, every surface", (name) => {
     expect(data.accountsData.liquidCash).toBe(expected.liquidCash);
     expect(data.budgetData.safeToSpendWeekly).toBe(expected["safeToSpend.weekly"]);
     expect(data.budgetData.monthsOfCover).toBe(expected.monthsOfCover);
-    if (expected["budget.income"] !== null) {
-      expect(data.budgetData.monthlyIncome).toBe(expected["budget.income"]);
-      expect(data.budgetData.monthlyExpenses).toBe(expected["budget.outgoings"]);
-      expect(data.budgetData.budgetedSavings).toBe(expected["budget.savings"]);
-      expect(data.budgetData.monthlySurplus).toBe(expected["budget.surplus"]);
-    } else {
-      expect(data.budgetData.budgetKnown).toBe(false);
+    const totals = isFigureKnown(picture.budget) ? picture.budget.value : null;
+    expect(data.budgetData.budgetKnown).toBe(totals !== null);
+    if (totals) {
+      expect(data.budgetData.monthlyIncome).toBe(totals.income);
+      expect(data.budgetData.monthlyExpenses).toBe(totals.outgoings);
+      expect(data.budgetData.budgetedSavings).toBe(totals.savings);
+      // A surplus needs an income row; without one it is unknown, as in MCP.
+      expect(data.budgetData.monthlySurplus).toBe(totals.hasIncome ? totals.surplus : null);
     }
     expect(data.debtData?.totalDebt ?? 0).toBe(expected["debt.total"]);
   });
@@ -196,7 +231,18 @@ describe.each(NAMES)("persona %s: one figure, every surface", (name) => {
     const data = await payload(await debtLoader(args("/app/debt")));
     expect(data.debtInputs.totalDebt).toBe(expected["debt.total"]);
     expect(data.debtInputs.liquidSavings).toBe(expected.liquidCash);
-    expect(data.debtInputs.monthlySurplus).toBe(expected["budget.surplus"]);
+    const totals = isFigureKnown(picture.budget) ? picture.budget.value : null;
+    expect(data.debtInputs.monthlySurplus).toBe(totals?.hasIncome ? totals.surplus : null);
+  });
+
+  it("the Debt page shows the picture's total debt", async () => {
+    if (expected["debt.total"] === 0) return;
+    loaderState.data = await payload(await debtLoader(args("/app/debt")));
+    const page = render(<DebtContainer />);
+    const readings = collect(page.container, "debt page").filter((r) => r.key === "debt.total");
+    expect(readings.length).toBeGreaterThan(0);
+    for (const r of readings) expect(matches(r, expected["debt.total"] as number)).toBe(true);
+    page.unmount();
   });
 
   it("every rendered figure on the dashboard and Budget page equals the picture", async () => {
@@ -250,6 +296,6 @@ describe.each(NAMES)("persona %s: one figure, every surface", (name) => {
     if (fixture.accounts.length > 0) expect(shown).toContain("netWorth");
     if (expected["safeToSpend.weekly"] !== null) expect(shown).toContain("safeToSpend.weekly");
     if (expected.monthsOfCover !== null) expect(shown).toContain("monthsOfCover");
-    if (expected["budget.income"] !== null) expect(shown).toContain("budget.surplus");
+    if (expected["budget.surplus"] !== null) expect(shown).toContain("budget.surplus");
   });
 });

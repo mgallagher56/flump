@@ -1,4 +1,10 @@
-import { type Figure, isFigureKnown, type MonthsOfCover } from "@flump/finance-engine";
+import {
+  DEBT_CATEGORY,
+  type Figure,
+  isFigureKnown,
+  type MonthsOfCover,
+  PortfolioSnapshot,
+} from "@flump/finance-engine";
 import {
   Button,
   Card,
@@ -17,7 +23,7 @@ import { formatMonthsOfCover } from "~/features/dashboard/components/BudgetWidge
 import type { BudgetEntry } from "~/types/budget";
 import { CATEGORY_LABELS, toMonthly } from "~/types/budget";
 import { buildWorkspacePicture } from "~/utils/financialPicture";
-import { isCashAccountType, type RunwayScenario } from "~/utils/runwayStorage";
+import type { RunwayScenario } from "~/utils/runwayStorage";
 import {
   breakdownList,
   breakdownRow,
@@ -80,7 +86,6 @@ export interface RunwayCalculatorProps {
 }
 
 const EXPENSE_CATEGORIES: BudgetEntry["category"][] = ["housing", "bills", "expenses"];
-const POOL_TYPES = new Set(["current", "saving", "savings", "investment", "investments"]);
 
 interface ToggleItemProps {
   name: string;
@@ -169,30 +174,22 @@ export const RunwayCalculator: FC<RunwayCalculatorProps> = ({
     ? Math.max(0, saved.commitments.debtCommitment - saved.commitments.budgetDebtPayments)
     : 0;
 
-  const getLatestBalance = (accountId: string, fallback: number): number => {
-    const details = accountDetails
-      .filter((d: any) => (d.account_id || d.accountId) === accountId)
-      .sort((a, b) => (a.year !== b.year ? b.year - a.year : b.month - a.month));
-    if (details.length > 0) {
-      const val = Number(details[0].value);
-      if (Number.isFinite(val)) return val;
-    }
-    const bal = Number(fallback);
-    return Number.isFinite(bal) ? bal : 0;
-  };
+  // Balances and account categories come from the engine's snapshot, exactly as in the saved
+  // figure. Current and savings start switched on; investments start off and can be switched on.
+  const snapshot = useMemo(
+    () => new PortfolioSnapshot(accounts as never, accountDetails as never),
+    [accounts, accountDetails],
+  );
+  const categoryOf = (id: string) => snapshot.getAccount(id)?.category;
+  const getLatestBalance = (accountId: string): number => snapshot.getLatestBalance(accountId);
 
-  // Accounts that can be counted in the illustration. Current and savings start switched on (as
-  // in the saved figure); investments start off and can be switched on to see the difference.
   const poolAccounts = useMemo(
     () =>
-      accounts.filter((a) =>
-        POOL_TYPES.has(
-          String(a.type ?? "")
-            .toLowerCase()
-            .trim(),
-        ),
-      ),
-    [accounts],
+      accounts.filter((a) => {
+        const category = snapshot.getAccount(a.id)?.category;
+        return category === "cash" || category === "savings" || category === "investments";
+      }),
+    [accounts, snapshot],
   );
 
   const nonPrimaryIncome = useMemo(
@@ -208,8 +205,14 @@ export const RunwayCalculator: FC<RunwayCalculatorProps> = ({
   const initialScenario = scenario ?? null;
 
   const defaultAccounts = useMemo(
-    () => Object.fromEntries(poolAccounts.map((a) => [a.id, isCashAccountType(a.type)])),
-    [poolAccounts],
+    () =>
+      Object.fromEntries(
+        poolAccounts.map((a) => {
+          const category = categoryOf(a.id);
+          return [a.id, category === "cash" || category === "savings"];
+        }),
+      ),
+    [poolAccounts, snapshot],
   );
   // Income stopping is the question, so other income starts excluded; switch it on to keep it.
   const defaultIncome = useMemo(
@@ -217,7 +220,11 @@ export const RunwayCalculator: FC<RunwayCalculatorProps> = ({
     [nonPrimaryIncome],
   );
   const defaultExpenses = useMemo(
-    () => Object.fromEntries(expenseEntries.map((e) => [e.id, e.isEssential])),
+    // Debt-payment rows always count in the saved figure, whatever their essential flag.
+    () =>
+      Object.fromEntries(
+        expenseEntries.map((e) => [e.id, e.isEssential || e.category === DEBT_CATEGORY]),
+      ),
     [expenseEntries],
   );
 
@@ -340,8 +347,8 @@ export const RunwayCalculator: FC<RunwayCalculatorProps> = ({
       poolAccounts
         .filter((a) => includedAccounts[a.id])
         // An overdrawn account is debt, not negative cash (as in the saved figure).
-        .reduce((s, a) => s + Math.max(0, getLatestBalance(a.id, a.balance)), 0),
-    [poolAccounts, includedAccounts, accountDetails],
+        .reduce((s, a) => s + Math.max(0, getLatestBalance(a.id)), 0),
+    [poolAccounts, includedAccounts, snapshot],
   );
 
   const totalKeptIncome = useMemo(
@@ -367,10 +374,13 @@ export const RunwayCalculator: FC<RunwayCalculatorProps> = ({
   const barPct = Math.min((coverMonths / displayMax) * 100, 100);
 
   const groupedExpenses = useMemo(() => {
-    return EXPENSE_CATEGORIES.map((cat) => ({
-      cat,
-      entries: expenseEntries.filter((e) => e.category === cat),
-    })).filter((g) => g.entries.length > 0);
+    // Standard categories first, then debt and custom ones, so every counted row can be switched.
+    const extra = expenseEntries
+      .map((e) => e.category)
+      .filter((c, i, all) => !EXPENSE_CATEGORIES.includes(c) && all.indexOf(c) === i);
+    return [...EXPENSE_CATEGORIES, ...extra]
+      .map((cat) => ({ cat, entries: expenseEntries.filter((e) => e.category === cat) }))
+      .filter((g) => g.entries.length > 0);
   }, [expenseEntries]);
 
   const resultsCopy =
@@ -411,7 +421,7 @@ export const RunwayCalculator: FC<RunwayCalculatorProps> = ({
             return (
               <ToggleItem
                 key={acc.id}
-                amount={<Money size="sm" value={getLatestBalance(acc.id, acc.balance)} />}
+                amount={<Money size="sm" value={getLatestBalance(acc.id)} />}
                 checked={isIncluded}
                 meta={
                   <>
@@ -562,9 +572,9 @@ export const RunwayCalculator: FC<RunwayCalculatorProps> = ({
       {groupedExpenses.map(({ cat, entries: catEntries }) => (
         <Card key={cat} padding="lg">
           <div className={cardHeader()}>
-            <h2 className={cardTitle()}>{CATEGORY_LABELS[cat]}</h2>
+            <h2 className={cardTitle()}>{CATEGORY_LABELS[cat] ?? cat}</h2>
             <BulkButtons
-              label={String(CATEGORY_LABELS[cat]).toLowerCase()}
+              label={String(CATEGORY_LABELS[cat] ?? cat).toLowerCase()}
               onAll={() => setCategoryExpenses(catEntries, true)}
               onNone={() => setCategoryExpenses(catEntries, false)}
             />

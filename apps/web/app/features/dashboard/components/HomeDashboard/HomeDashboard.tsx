@@ -77,9 +77,12 @@ export const HomeDashboard: FC<HomeDashboardProps> = ({
   // Optimistic copy of dashboardWidgets while a change is saving, or the whole truth when not saved.
   const [visibilityOverride, setVisibilityOverride] = useState<DashboardWidgetKey[] | null>(null);
 
-  // An empty budget means surplus, essentials and runway are unknown, not zero.
+  // An empty budget means surplus, essentials and months of cover are unknown, not zero. The
+  // loader's picture decides; sample data (no budgetKnown field) falls back to its own totals.
   const budgetKnown =
-    (budgetData?.monthlyIncome ?? 0) > 0 || (budgetData?.monthlyExpenses ?? 0) > 0;
+    typeof budgetData?.budgetKnown === "boolean"
+      ? budgetData.budgetKnown
+      : (budgetData?.monthlyIncome ?? 0) > 0 || (budgetData?.monthlyExpenses ?? 0) > 0;
 
   // Financial Lifecycle Stage evaluation
   const financialStage = useMemo(() => {
@@ -89,9 +92,10 @@ export const HomeDashboard: FC<HomeDashboardProps> = ({
     const debts = debtData?.debts ?? [];
     const stage = evaluateFinancialStage({
       debts,
+      // The picture's figures: liquid cash and the essential commitments months of cover uses.
       monthlySurplus: budgetData?.monthlySurplus ?? 0,
-      liquidSavings: savingsData?.totalSavingsBalance ?? accountsData?.typeTotals?.Saving ?? 0,
-      monthlyEssentialExpenses: budgetData?.monthlyExpenses ?? 0,
+      liquidSavings: accountsData?.liquidCash ?? 0,
+      monthlyEssentialExpenses: budgetData?.monthlyEssentials ?? budgetData?.monthlyExpenses ?? 0,
     });
     // Without a budget only the debt-driven stage is real; buffer/optimise depend on runway.
     return budgetKnown || stage.stage === "stabilize" ? stage : null;
@@ -100,6 +104,7 @@ export const HomeDashboard: FC<HomeDashboardProps> = ({
   // Weekly safe to spend comes from the loader's financial picture (owner decision D-6-A);
   // null means it cannot be worked out yet, never a guessed split of living costs.
   const weeklySafeToSpend = finiteOrNull(budgetData?.safeToSpendWeekly);
+  const safeToSpendShortfall = finiteOrNull(budgetData?.safeToSpendShortfall);
 
   // Enabled pages according to UserProfile, in the fixed canonical order.
   const enabledPages = useMemo<AppPageKey[]>(() => {
@@ -256,6 +261,7 @@ export const HomeDashboard: FC<HomeDashboardProps> = ({
           netWorth={hasAccounts ? finiteOrNull(accountsData?.netWorth) : null}
           totalAssets={hasAccounts ? finiteOrNull(accountsData?.totalAssets) : null}
           totalLiabilities={hasAccounts ? finiteOrNull(accountsData?.totalLiabilities) : null}
+          safeToSpendShortfall={safeToSpendShortfall}
           weeklySafeToSpend={weeklySafeToSpend}
         />
       </SectionBand>

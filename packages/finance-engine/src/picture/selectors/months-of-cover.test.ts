@@ -63,3 +63,17 @@ describe("selectMonthsOfCover", () => {
     expect(fig.value.months).toBe(0);
   });
 });
+
+describe("selectMonthsOfCover agrees with safe to spend on missing essentials", () => {
+  it("is unknown with only debt minimums and £0 rows", () => {
+    const snap = new PortfolioSnapshot([
+      { id: "s", name: "S", type: "Saving", balance: 100 },
+      { id: "c", name: "C", type: "Credit Card", balance: 900, monthlyContribution: 40 },
+    ]);
+    expect(selectMonthsOfCover([row({ amount: 0 })], snap)).toEqual({
+      status: "unknown",
+      missing: ["budgetEssentials"],
+      reason: "not-set",
+    });
+  });
+});

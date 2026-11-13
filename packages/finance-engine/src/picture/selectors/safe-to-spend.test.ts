@@ -104,3 +104,13 @@ describe("selectSafeToSpend", () => {
     expect(fig.assumptions).toEqual(["Assuming no student loan.", ESTIMATED_MINIMUMS_NOTE]);
   });
 });
+
+describe("selectSafeToSpend with only £0 suggested rows", () => {
+  it("is unknown, never take-home less debt presented as safe to spend", () => {
+    expect(selectSafeToSpend(takeHome(2000), [row({ amount: 0 })], empty)).toEqual({
+      status: "unknown",
+      missing: ["budgetEssentials"],
+      reason: "not-set",
+    });
+  });
+});

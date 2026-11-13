@@ -268,3 +268,44 @@ describe("RunwayCalculator", () => {
     expect(outcome().getByText("6.3 months")).toBeDefined();
   });
 });
+
+describe("RunwayCalculator untouched illustration equals the saved figure", () => {
+  it("counts a non-essential debt row and a custom category as the saved figure does", () => {
+    const row = (id: string, category: string, amount: number, isEssential: boolean) => ({
+      id,
+      userId: "u",
+      name: id,
+      category,
+      amount,
+      frequency: "monthly" as const,
+      isIncome: false,
+      isPrimaryIncome: false,
+      isEssential,
+      notes: null,
+      isDefault: false,
+      createdAt: "2026-01-01",
+      updatedAt: "2026-01-01",
+    });
+    render(
+      <RunwayCalculator
+        accountDetails={[]}
+        accounts={[{ id: "s", name: "Saver", type: "Saving", balance: 6000, currency: "GBP" }]}
+        entries={[
+          row("rent", "housing", 900, true),
+          row("card", "debt", 100, false),
+          row("pets", "pets", 50, true),
+        ]}
+        onNavigateToForecast={vi.fn()}
+      />,
+    );
+    // £6,000 over £1,050 = 5.7 months in both places; the debt and pets rows can be switched.
+    expect(screen.getByText("Your months of cover").closest("[data-tone]")?.textContent).toContain(
+      "5.7 months",
+    );
+    expect(
+      within(screen.getByRole("region", { name: "Illustration results" })).getByText("5.7 months"),
+    ).toBeDefined();
+    expect(screen.getByRole("switch", { name: "Keep card expense" })).toBeDefined();
+    expect(screen.getByRole("switch", { name: "Keep pets expense" })).toBeDefined();
+  });
+});

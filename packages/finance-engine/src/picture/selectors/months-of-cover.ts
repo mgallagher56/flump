@@ -24,9 +24,10 @@ export function selectMonthsOfCover(
 ): Figure<MonthsOfCover> {
   const totals = selectBudgetTotals(budget);
   if (!isFigureKnown(totals)) return figureUnknown(["budget"], "not-set");
+  // No essential spending entered (or only £0 suggestions): unknown, never "infinite". The same
+  // rule as safe to spend, so the two figures are known or unknown together.
+  if (!totals.value.hasEssentials) return figureUnknown(["budgetEssentials"], "not-set");
   const commitments = essentialCommitments(budget, snapshot);
-  // No essentials means nothing to divide by: unknown, never "infinite".
-  if (commitments.total <= 0) return figureUnknown(["budgetEssentials"], "not-set");
   const liquidCash = snapshot.getTotalLiquidCash();
   return figureKnown<MonthsOfCover>({
     months: Math.round((liquidCash / commitments.total) * 10) / 10,

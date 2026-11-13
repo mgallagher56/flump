@@ -26,8 +26,11 @@ export interface BudgetWidgetData {
   annualSalary?: number | null;
   /** Essentials plus discretionary (savings is its own line). */
   monthlyExpenses: number;
-  monthlySurplus: number;
+  /** null when there is no income row (a surplus would only be minus the spending). */
+  monthlySurplus: number | null;
   savingsRatePct: number;
+  /** From the loader's picture: whether any budget row exists. Sample data may omit it. */
+  budgetKnown?: boolean;
   /** Months of cover from saved data only, or null when it cannot be worked out. */
   monthsOfCover: number | null;
   budgetedSavings?: number;
@@ -53,8 +56,10 @@ export const formatMonthsOfCover = (months: number): string => {
 export const BudgetWidget: FC<BudgetWidgetProps> = ({ data }) => {
   const income = data && finite(data.monthlyIncome) ? data.monthlyIncome : 0;
   const expenses = data && finite(data.monthlyExpenses) ? data.monthlyExpenses : 0;
-  // With neither income nor expenses entered, surplus and runway are unknown, not zero.
-  const budgetKnown = income > 0 || expenses > 0;
+  // With no budget rows, surplus and months of cover are unknown, not zero. The loader's picture
+  // decides; sample data without the flag falls back to its own totals.
+  const budgetKnown =
+    typeof data?.budgetKnown === "boolean" ? data.budgetKnown : income > 0 || expenses > 0;
   const incomeKnown = income > 0;
 
   const monthsOfCover = data && finite(data.monthsOfCover) ? data.monthsOfCover : null;
@@ -74,7 +79,7 @@ export const BudgetWidget: FC<BudgetWidgetProps> = ({ data }) => {
     );
   }
 
-  const surplus = finite(data.monthlySurplus) ? data.monthlySurplus : income - expenses;
+  const surplus = finite(data.monthlySurplus) ? data.monthlySurplus : 0;
   const budgetedSavings =
     finite(data.budgetedSavings) && data.budgetedSavings > 0 ? data.budgetedSavings : 0;
   const salary =

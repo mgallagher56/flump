@@ -3,7 +3,7 @@ import type { BudgetEntry } from "~/types/budget";
 import { buildWorkspacePicture, knownOrNull } from "~/utils/financialPicture";
 
 export interface DebtInputs {
-  /** The budget's monthly surplus, or null when the user has no budget entries. */
+  /** The budget's monthly surplus, or null with no budget entries or no income row. */
   monthlySurplus: number | null;
   /** Current plus saving account balances (liquid cash). */
   liquidSavings: number;
@@ -22,7 +22,7 @@ export function buildDebtInputs(
   const picture = buildWorkspacePicture({ accounts, accountDetails, budgetEntries });
   const budget = knownOrNull(picture.budget);
   return {
-    monthlySurplus: budget?.surplus ?? null,
+    monthlySurplus: budget?.hasIncome ? budget.surplus : null,
     liquidSavings: picture.netWorth.liquidCash,
     monthlyEssentialExpenses: budget?.essentials ?? null,
     totalDebt: picture.debt.consumerDebt,
