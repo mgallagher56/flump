@@ -8,9 +8,9 @@
     "packages/*"
   ],
   "overrides": {
-    "@nestjs/core": "12.4.1",
-    "@nestjs/common": "12.4.1",
-    "@nestjs/platform-express": "12.4.1"
+    "@nestjs/core": "12.4.2",
+    "@nestjs/common": "12.4.2",
+    "@nestjs/platform-express": "12.4.2"
   },
   "scripts": {
     "build": "turbo run build",
@@ -35,7 +35,7 @@
     "prepare": "husky"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.6.5",
+    "@biomejs/biome": "2.6.6",
     "@types/node": "26.6.6",
     "@typescript/typescript6": "6.0.2",
     "@vitest/coverage-v8": "5.1.0",

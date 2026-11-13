@@ -23,10 +23,10 @@
     "@flump/finance-engine": "workspace:*",
     "@flump/mcp": "workspace:*",
     "@flump/observability": "workspace:*",
-    "@nestjs/common": "12.4.1",
+    "@nestjs/common": "12.4.2",
     "@nestjs/config": "12.1.1",
-    "@nestjs/core": "12.4.1",
-    "@nestjs/platform-express": "12.4.1",
+    "@nestjs/core": "12.4.2",
+    "@nestjs/platform-express": "12.4.2",
     "@nestjs/typeorm": "12.0.3",
     "@sentry/node": "10.78.0",
     "@workos-inc/node": "12.2.0",
@@ -39,7 +39,7 @@
     "typeorm": "1.1.2"
   },
   "devDependencies": {
-    "@nestjs/testing": "12.4.1",
+    "@nestjs/testing": "12.4.2",
     "@repo/typescript-config": "workspace:*",
     "@types/express": "5.0.6",
     "@types/node": "26.6.6",
