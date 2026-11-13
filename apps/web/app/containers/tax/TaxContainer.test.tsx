@@ -162,7 +162,7 @@ describe("TaxContainer & Calculation Tools", () => {
   it("renders page title and 4 collapsible income sections", () => {
     render(<TaxContainer />);
 
-    expect(screen.getByRole("heading", { level: 1, name: "Your tax" })).toBeDefined();
+    expect(screen.getByRole("heading", { level: 1, name: "Self Assessment" })).toBeDefined();
     expect(screen.getByText("Employment (PAYE)")).toBeDefined();
     expect(screen.getByText("Rental property")).toBeDefined();
     expect(screen.getByText("Self-employed and freelance")).toBeDefined();
