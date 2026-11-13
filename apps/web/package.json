@@ -84,7 +84,6 @@
     "test": "vitest run --project unit",
     "test:coverage": "vitest run --project unit --coverage",
     "test:server": "REQUIRE_WEB_BUILD=1 vitest run --project unit server/server.integration.test.ts",
-    "test:ui": "vitest --ui --project unit",
     "typecheck": "react-router typegen && tsc",
     "check-types": "bun run typecheck",
     "prepare": "panda codegen && react-router typegen",
