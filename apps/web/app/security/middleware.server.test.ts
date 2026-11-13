@@ -50,22 +50,50 @@ describe("securityMiddleware", () => {
     }
   });
 
-  it("sends no-store on the 403 CSRF rejection and keeps public pages cacheable", async () => {
+  it("sends no-store on /tools and /tools.data for a signed-in cookie request", async () => {
+    for (const path of ["/tools", "/tools.data", "/tools/mortgage", "/tools/mortgage.data"]) {
+      const res = await run(
+        new Request(`${APP}${path}`, { headers: { cookie: "__Host-wos-session=abc" } }),
+        ok,
+      );
+      expect(res.headers.get("cache-control"), path).toBe("no-store");
+    }
+  });
+
+  it("sends no-store on anonymous /tools too (no public-cacheable routes)", async () => {
+    const res = await run(new Request(`${APP}/tools`), ok);
+    expect(res.headers.get("cache-control")).toBe("no-store");
+  });
+
+  it("sends no-store on a response that sets a cookie, via refresh or the route itself", async () => {
+    const context = {};
+    recordRefreshedCookies(context, { "Set-Cookie": "__Host-wos-session=n; Path=/; Secure" });
+    const refreshed = await run(new Request(`${APP}/tools`), ok, context);
+    expect(refreshed.headers.get("cache-control")).toBe("no-store");
+    const own = () =>
+      Promise.resolve(
+        new Response("ok", { headers: { "Set-Cookie": "a=1", "Cache-Control": "private" } }),
+      );
+    expect((await run(new Request(`${APP}/x`), own)).headers.get("cache-control")).toBe("no-store");
+  });
+
+  it("overrides a weak route Cache-Control and keeps the API proxy's no-store", async () => {
+    const weak = () =>
+      Promise.resolve(new Response("{}", { headers: { "Cache-Control": "public, max-age=600" } }));
+    const res = await run(new Request(`${APP}/tools`), weak);
+    expect(res.headers.get("cache-control")).toBe("no-store");
+    const proxied = () =>
+      Promise.resolve(new Response("{}", { headers: { "Cache-Control": "no-store" } }));
+    const api = await run(new Request(`${APP}/api/accounts`), proxied);
+    expect(api.headers.get("cache-control")).toBe("no-store");
+  });
+
+  it("sends no-store on the 403 CSRF rejection", async () => {
     const rejected = await run(
       new Request(`${APP}/logout`, { method: "POST", headers: { origin: "https://evil.example" } }),
       ok,
     );
     expect(rejected.headers.get("cache-control")).toBe("no-store");
-    const pub = await run(new Request(`${APP}/tools/mortgage`), ok);
-    expect(pub.headers.has("cache-control")).toBe(false);
-  });
-
-  it("keeps the API proxy's own no-store untouched", async () => {
-    const proxied = () =>
-      Promise.resolve(new Response("{}", { headers: { "Cache-Control": "no-store" } }));
-    const res = await run(new Request(`${APP}/api/accounts`), proxied);
-    expect(res.headers.get("cache-control")).toBe("no-store");
-    expect(res.headers.has("pragma")).toBe(false);
   });
 
   it("leaves GET unaffected without Origin (callback and OAuth redirects)", async () => {

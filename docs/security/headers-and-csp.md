@@ -23,11 +23,21 @@ Generic 400 bodies for non-auth errors, `WWW-Authenticate` on 401, `Retry-After`
 
 ## Web caching and response-header coverage
 
-`apps/web/app/security/middleware.server.ts` sets `Cache-Control: no-store` and `Pragma: no-cache` on every document and `.data` response except public paths (`PUBLIC_CACHEABLE_PREFIXES` in `headers.server.ts`, currently `/tools`) and responses that already declare their own `Cache-Control` (`/healthz`, `/robots.txt`, the `/api/*` proxy). A new route is therefore private by default. Static files (`/assets`, `public/`) are served by `react-router-serve` before the middleware and keep their `max-age` headers.
+`apps/web/app/security/middleware.server.ts` applies `applyCachePolicy` (in `headers.server.ts`) to every document, `.data` and resource-route response. There is no public-cacheable allow-list: the root loader returns the user, profile and access token for every route (including `/tools`) and may append a refreshed session `Set-Cookie`, so every HTML and `.data` response is user-specific.
 
-Known gaps, because React Router builds these responses outside the middleware pipeline: the document-request CSRF 400 and last-resort 500, `/__manifest` responses and static files carry no security headers. `.data` responses are covered through `handleDataRequest` in `entry.server.tsx`. Closing the rest needs a small custom `@react-router/express` server (it would also add an allow-listed access log, OD-4); that is deferred.
+- Default is `Cache-Control: no-store` plus `Pragma: no-cache`.
+- A response that sets a cookie is always `no-store`.
+- A route's own `Cache-Control` is kept only if it already contains `no-store` or `private`; a weaker value (`public`, `max-age`, ...) is replaced with `no-store`.
+- Anything not `no-store` (a kept `private`) gets `Vary: Cookie`, keeping existing `Vary` values.
+- A future cacheable public page needs an explicit, reviewed opt-in (a route that loads no user data plus a change to this policy), never an implicit default.
 
-ZAP baseline findings treated as expected (`.zap/rules.tsv`, IGNORE): COEP (90004) because `Cross-Origin-Embedder-Policy` would block third-party resources for no isolation benefit we use, and storable/cacheable content (10049) because public pages and hashed assets are meant to be cacheable and the personal-data routes are `no-store`. The CSP wildcard finding (10055) stays open for E20-N11.
+Static files (`/assets`, `public/`) are served by `react-router-serve` before the middleware and keep their `max-age` headers.
+
+Known gaps, because React Router builds these responses outside the middleware pipeline: the document-request CSRF 400 and last-resort 500, `/__manifest` responses and static files carry no security headers. `.data` responses are covered through `handleDataRequest` in `entry.server.tsx`. Closing the rest needs a small custom `@react-router/express` server (it would also add an allow-listed access log, OD-4); that is deferred. `react-router-serve` already disables `X-Powered-By`.
+
+`Cross-Origin-Resource-Policy: same-origin` is sent with the other headers: nothing cross-origin embeds the app's documents (the marketing site only links to it; Sentry and WorkOS are outbound).
+
+ZAP baseline (`.zap/rules.tsv`): rule 90004 is ignored only for the missing COEP, which would block third-party resources for no isolation benefit we use; the web app sends COOP and CORP. The marketing site does not send COOP or CORP yet, which the ignore also hides for that target. Rule 10049 (storable and cacheable content) stays at the default WARN: the cache policy above is the real control, and a remaining finding points at a response worth checking (static assets are expected to be cacheable). The CSP wildcard finding (10055) stays open for E20-N11.
 
 ## Planned (Tier B, not in this PR)
 
