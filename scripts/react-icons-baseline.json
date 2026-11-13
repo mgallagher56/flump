@@ -17,8 +17,6 @@
   "apps/marketing/src/pages/ToolsIndexPage.tsx": 1,
   "apps/web/app/components/accounts/BankConnectionsList.tsx": 1,
   "apps/web/app/components/accounts/MonthlyBalanceCheckInDrawer.tsx": 1,
-  "apps/web/app/components/budget/BudgetSetupWizard.tsx": 1,
-  "apps/web/app/components/budget/RunwayCalculator.tsx": 1,
   "apps/web/app/components/budget/UserProfilePanel.tsx": 1,
   "apps/web/app/components/core/dialogs/TaxDisclaimerButton.tsx": 1,
   "apps/web/app/components/core/disclosure/CollapsibleSection.tsx": 1,

@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { BudgetEntry } from "~/types/budget";
-import BudgetSetupWizard from "./BudgetSetupWizard";
+import { BudgetSetupWizard } from "./BudgetSetupWizard";
 
 const mockEntries: BudgetEntry[] = [
   {
@@ -56,17 +56,17 @@ describe("BudgetSetupWizard", () => {
       />,
     );
 
-    expect(screen.getByText("Welcome to Budget Setup")).toBeDefined();
+    expect(screen.getByText("Set up your budget")).toBeDefined();
 
     // Click Next to go to Defaults step
     fireEvent.click(screen.getByRole("button", { name: /next/i }));
-    expect(await screen.findByText(/suggested defaults template/i)).toBeDefined();
+    expect(await screen.findByText(/start with a template/i)).toBeDefined();
 
     // Click Start blank to go to Income step
     fireEvent.click(screen.getByRole("button", { name: /start blank/i }));
 
     expect(await screen.findByText("Salary")).toBeDefined();
-    expect(screen.getByText("Add Income item")).toBeDefined();
+    expect(screen.getByText("Add income item")).toBeDefined();
   });
 
   it("allows removing an item", async () => {
@@ -158,13 +158,13 @@ describe("BudgetSetupWizard", () => {
     await screen.findByText("Salary");
 
     // Click Add item button
-    fireEvent.click(screen.getByText("Add Income item"));
+    fireEvent.click(screen.getByText("Add income item"));
 
     // Fill in new item form
-    const nameInput = screen.getByPlaceholderText("e.g. Side Gig, Freelance");
+    const nameInput = screen.getByLabelText("Name");
     fireEvent.change(nameInput, { target: { value: "Freelance" } });
 
-    const amountInput = screen.getByPlaceholderText("0");
+    const amountInput = screen.getByLabelText("Amount a month");
     fireEvent.change(amountInput, { target: { value: "500" } });
 
     // Submit
