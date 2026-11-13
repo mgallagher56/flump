@@ -41,11 +41,12 @@ export const getDebtOverview = defineFlumpTool({
       const acct = byId.get(d.id);
       const id = m.idOf("acc", d.id);
       const label = acct ? m.labelOf(acct) : "Debt";
+      const ref = acct ? m.refOf(acct) : "Debt account";
       if (!d.aprKnown) {
         aprMissing.push({
           field: `debts.${id}.aprPct`,
-          why: `The APR on ${label} is not recorded, so interest cost cannot be worked out.`,
-          askUser: `What is the APR on your ${label}?`,
+          why: `The APR on ${ref} (${id}) is not recorded, so interest cost cannot be worked out.`,
+          askUser: `What is the APR on your ${ref}?`,
         });
       }
       return {
