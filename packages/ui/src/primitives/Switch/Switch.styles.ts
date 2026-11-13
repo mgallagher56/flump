@@ -44,6 +44,8 @@ export const switchRecipe = sva({
       textStyle: "body.sm",
       color: "text.secondary",
       margin: 0,
+      mt: "-1",
+      pb: "2",
     },
     track: {
       position: "relative",

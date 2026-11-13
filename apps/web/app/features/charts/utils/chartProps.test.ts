@@ -28,6 +28,11 @@ describe("chartProps", () => {
     expect(chartYAxisProps.tickFormatter(-3400)).toBe("-£3.4k");
   });
 
+  it("gives the y axis room for large figures, and lets screens override the width", () => {
+    expect(chartYAxisProps.width).toBe(64);
+    expect({ ...chartYAxisProps, width: 80 }.width).toBe(80);
+  });
+
   it("draws series from chart tokens with a solid line by default", () => {
     const props = chartLineProps("wealth");
     expect(props.stroke).toBe("var(--colors-chart-wealth)");

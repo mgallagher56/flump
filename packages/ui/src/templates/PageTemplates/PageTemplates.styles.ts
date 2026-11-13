@@ -96,7 +96,7 @@ export const chartSvg = css({ width: "100%", height: "auto", display: "block" })
 export const chartGrid = css({ stroke: "chart.grid", strokeWidth: "1" });
 export const chartAxisText = css({
   fill: "text.muted",
-  fontSize: "12px",
+  fontSize: "16px",
   fontVariantNumeric: "tabular-nums",
 });
 export const chartBand = css({ fill: "chart.band" });

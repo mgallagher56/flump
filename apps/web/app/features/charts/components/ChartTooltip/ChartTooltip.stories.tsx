@@ -135,3 +135,5 @@ export const NetWorthWithProjection: Story = {
 };
 
 export const SampleData: Story = { args: { sample: true } };
+
+export const Dark: Story = { ...NetWorthWithProjection, globals: { theme: "dark" } };

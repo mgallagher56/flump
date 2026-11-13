@@ -41,11 +41,6 @@ export const Switch: FC<SwitchProps> = ({
       >
         <span className={classes.text}>
           <span className={classes.label}>{label}</span>
-          {hint ? (
-            <span className={classes.hint} id={hintId}>
-              {hint}
-            </span>
-          ) : null}
         </span>
         <input
           {...inputProps}
@@ -65,6 +60,11 @@ export const Switch: FC<SwitchProps> = ({
           </span>
         </span>
       </label>
+      {hint ? (
+        <p className={classes.hint} id={hintId}>
+          {hint}
+        </p>
+      ) : null}
     </div>
   );
 };

@@ -31,6 +31,14 @@ describe("Switch", () => {
     ).toBeTruthy();
   });
 
+  it("keeps the hint outside the label and still describes the switch with it", () => {
+    render(<Switch hint="Reminders arrive by email" label="Reminder" />);
+    const sw = screen.getByRole("switch", { name: "Reminder" });
+    const hint = screen.getByText("Reminders arrive by email");
+    expect(hint.closest("label")).toBeNull();
+    expect(sw.getAttribute("aria-describedby")).toBe(hint.id);
+  });
+
   it("supports disabled", () => {
     render(<Switch disabled label="Alerts" />);
     expect((screen.getByRole("switch") as HTMLInputElement).disabled).toBe(true);

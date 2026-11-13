@@ -43,6 +43,17 @@ describe("ChartTooltipContent", () => {
     expect(screen.getByText("£12.50")).toBeDefined();
   });
 
+  it("derives id and data-testid from the id prop", () => {
+    render(
+      <ChartTooltipContent
+        id="nw-tooltip"
+        rows={[{ id: "a", label: "A", color: "primary", value: 1 }]}
+      />,
+    );
+    const tip = screen.getByTestId("nw-tooltip");
+    expect(tip.id).toBe("nw-tooltip");
+  });
+
   it("omits the title when none is given", () => {
     const { container } = render(
       <ChartTooltipContent rows={[{ id: "a", label: "A", color: "primary", value: 1 }]} />,

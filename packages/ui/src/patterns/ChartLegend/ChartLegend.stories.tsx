@@ -69,3 +69,5 @@ export const ManySeriesWrap: Story = {
     ],
   },
 };
+
+export const Dark: Story = { ...Default, globals: { theme: "dark" } };

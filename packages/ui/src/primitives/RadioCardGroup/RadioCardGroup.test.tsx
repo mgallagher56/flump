@@ -26,6 +26,16 @@ describe("RadioCardGroup", () => {
     expect(radios.every((r) => r.type === "radio")).toBe(true);
   });
 
+  it("leaves arrow-key and Tab behaviour to the browser (shared name, no tabindex override)", () => {
+    // Real Tab and ArrowDown behaviour is asserted in the stories' play() in the browser; the DOM
+    // test environment has no native radio navigation, so here we pin the preconditions for it.
+    render(<RadioCardGroup defaultValue="avalanche" legend="Payoff strategy" options={options} />);
+    const radios = screen.getAllByRole("radio") as HTMLInputElement[];
+    expect(new Set(radios.map((r) => r.name)).size).toBe(1);
+    expect(radios.every((r) => !r.hasAttribute("tabindex"))).toBe(true);
+    expect(radios.filter((r) => r.checked)).toHaveLength(1);
+  });
+
   it("describes each radio with its description", () => {
     render(<RadioCardGroup legend="Payoff strategy" options={options} />);
     expect(

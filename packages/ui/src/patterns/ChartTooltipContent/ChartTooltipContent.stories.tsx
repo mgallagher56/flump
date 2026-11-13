@@ -52,3 +52,5 @@ export const NotSetAndLongLabel: Story = {
     await expect(canvas.getByText("-£1,860.75")).toBeInTheDocument();
   },
 };
+
+export const Dark: Story = { ...Default, globals: { theme: "dark" } };
