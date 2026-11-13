@@ -1,4 +1,4 @@
-import { BadRequestException } from "@nestjs/common";
+import { BadRequestException, ParseUUIDPipe } from "@nestjs/common";
 import { describe, expect, it, vi } from "vitest";
 import { AuthGuard } from "./auth/auth.guard";
 import { McpController } from "./mcp.controller";
@@ -88,5 +88,15 @@ describe("McpController", () => {
         expect(guards).not.toContain(McpKillSwitchGuard);
       }
     });
+  });
+
+  it("the revoke route validates its id as a UUID", () => {
+    const params = Reflect.getMetadata(
+      "__routeArguments__",
+      McpController,
+      "revokeToken",
+    ) as Record<string, { data: string; pipes: unknown[] }>;
+    const idArg = Object.values(params).find((a) => a.data === "id");
+    expect(idArg?.pipes.some((p) => p instanceof ParseUUIDPipe)).toBe(true);
   });
 });
