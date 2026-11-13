@@ -7,6 +7,12 @@ import {
 } from "./mortgage.js";
 
 describe("mortgage module", () => {
+  describe("unknown property value", () => {
+    it("returns no LTV milestones rather than reporting every band as achieved", () => {
+      expect(calculateLtvMilestones(0, 180000)).toEqual([]);
+    });
+  });
+
   describe("calculateMonthlyMortgagePayment", () => {
     it("calculates monthly repayment for standard UK repayment mortgage", () => {
       // £250,000 at 4.5% over 25 years (300 months)

@@ -53,8 +53,10 @@ const accountTypeArray = [
   STUDENT_LOAN,
   OWED,
 ];
-const studentLoanPlans = { items: STUDENT_LOAN_PLAN_OPTIONS.map((p) => ({ ...p })) };
-const DEFAULT_STUDENT_LOAN_PLAN = "PLAN_2";
+const studentLoanPlans = {
+  items: [{ id: "", name: "Select a plan" }, ...STUDENT_LOAN_PLAN_OPTIONS.map((p) => ({ ...p }))],
+};
+const PLAN_REQUIRED_MESSAGE = "Choose a repayment plan";
 const accountTypes = {
   items: accountTypeArray.map((type) => ({ id: type, name: type })),
 };
@@ -145,6 +147,14 @@ const saveErrorStyle = css({
   borderRadius: "md",
 });
 
+interface AccountOption {
+  id?: string;
+  name?: string;
+  type?: AccountType;
+  balance?: number;
+  studentLoanPlan?: string | null;
+}
+
 interface AddEditAccountsDialogBtnProp {
   accountId?: string;
   isEditAccount?: boolean;
@@ -162,13 +172,7 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
     accounts = [],
     bankConnectionsEnabled = false,
   }: {
-    accounts?: {
-      id?: string;
-      name?: string;
-      type?: AccountType;
-      balance?: number;
-      studentLoanPlan?: string | null;
-    }[];
+    accounts?: AccountOption[];
     bankConnectionsEnabled?: boolean;
   } = useLoaderData<typeof loader>();
   const { t } = useTranslation();
@@ -181,6 +185,7 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
   const [bankAuthType, setBankAuthType] = useState<"token" | "oauth">("token");
   const [bankToken, setBankToken] = useState<string>("");
   const [bankError, setBankError] = useState<string | null>(null);
+  const [planError, setPlanError] = useState<string | null>(null);
   const accountName = accounts.find((account) => account.id === accountId)?.name;
   const editLabel = accountName ? `${t("editAccount")}: ${accountName}` : t("editAccount");
   const isConnecting = fetcher.state === "submitting" || fetcher.state === "loading";
@@ -242,14 +247,10 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
     }
   }, [fetcher.data, handleCloseModal, bankAuthType]);
 
-  const selectedAccount = useMemo(
-    () =>
-      accounts?.find(
-        (account: { id?: string; name?: string; type?: AccountType; balance?: number }) =>
-          account.id === accountId,
-      ),
+  const selectedAccount: AccountOption = useMemo(
+    () => accounts?.find((account) => account.id === accountId),
     [accounts, accountId],
-  ) ?? { name: "", type: accountTypeArray[0], balance: undefined };
+  ) ?? { name: "", type: accountTypeArray[0], balance: undefined, studentLoanPlan: null };
 
   const [formInput, setFormInput] = useState<{
     name: string;
@@ -259,10 +260,7 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
   }>({
     name: selectedAccount.name || "",
     type: [selectedAccount.type || accountTypeArray[0]],
-    studentLoanPlan: [
-      (selectedAccount as { studentLoanPlan?: string | null }).studentLoanPlan ||
-        DEFAULT_STUDENT_LOAN_PLAN,
-    ],
+    studentLoanPlan: [selectedAccount.studentLoanPlan || ""],
     balance: selectedAccount.balance !== undefined ? String(selectedAccount.balance) : "",
   });
 
@@ -274,16 +272,13 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
       setBankAuthType("token");
       setBankToken("");
       setBankError(null);
+      setPlanError(null);
       dismissSave();
       dismissDelete();
       setFormInput({
         name: isEditAccount ? selectedAccount.name || "" : "",
         type: [isEditAccount ? selectedAccount.type || accountTypeArray[0] : accountTypeArray[0]],
-        studentLoanPlan: [
-          (isEditAccount &&
-            (selectedAccount as { studentLoanPlan?: string | null }).studentLoanPlan) ||
-            DEFAULT_STUDENT_LOAN_PLAN,
-        ],
+        studentLoanPlan: [(isEditAccount && selectedAccount.studentLoanPlan) || ""],
         balance:
           isEditAccount && selectedAccount.balance !== undefined
             ? String(selectedAccount.balance)
@@ -291,7 +286,7 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
       });
       setModalOpen(true);
     },
-    [isEditAccount, selectedAccount.balance, selectedAccount, dismissSave, dismissDelete],
+    [isEditAccount, selectedAccount, dismissSave, dismissDelete],
   );
 
   const onChangeNameInput = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
@@ -309,11 +304,16 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
   }, []);
 
   const onChangePlanInput = useCallback((e: { value: string[] }) => {
+    setPlanError(null);
     setFormInput((prevState) => ({ ...prevState, studentLoanPlan: e.value }));
   }, []);
 
   const onAddAccount = useCallback(() => {
     const { name, type, balance, studentLoanPlan } = formInput;
+    if (type?.[0] === STUDENT_LOAN && !studentLoanPlan[0]) {
+      setPlanError(PLAN_REQUIRED_MESSAGE);
+      return;
+    }
     bankFlowRef.current = false;
     saveOutcome.begin();
     fetcher.submit(
@@ -359,6 +359,10 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
 
   const onEditAccount = useCallback(() => {
     const { name, type, balance, studentLoanPlan } = formInput;
+    if (type?.[0] === STUDENT_LOAN && !studentLoanPlan[0]) {
+      setPlanError(PLAN_REQUIRED_MESSAGE);
+      return;
+    }
     bankFlowRef.current = false;
     saveOutcome.begin();
     fetcher.submit(
@@ -583,6 +587,7 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
             {formInput.type?.[0] === STUDENT_LOAN ? (
               <FLPSelect
                 collection={studentLoanPlans}
+                error={planError ?? undefined}
                 label="Repayment plan"
                 name="studentLoanPlan"
                 value={formInput.studentLoanPlan}

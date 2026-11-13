@@ -131,4 +131,69 @@ describe("AddEditAccountsDialog action outcomes", () => {
       },
     );
   });
+
+  describe("student loan repayment plan", () => {
+    const planAccounts = [
+      { id: "sl1", name: "SLC", type: "Student Loan", balance: -40000, studentLoanPlan: "PLAN_5" },
+      { id: "c1", name: "Current", type: "Current", balance: 10, studentLoanPlan: null },
+    ];
+    const lastSubmit = () =>
+      mocks.mockFetcherSubmit.mock.calls.at(-1)?.[0] as Record<string, string>;
+
+    beforeEach(() => {
+      mocks.mockUseLoaderData.mockReturnValue({
+        accounts: planAccounts,
+        bankConnectionsEnabled: false,
+      });
+    });
+
+    test("the plan select appears only for Student Loan", async () => {
+      const { getByText, getByLabelText, queryByLabelText, user } = customRender(
+        <AddEditAccountsDialogBtn />,
+      );
+      await user.click(getByText("addAccount"));
+      expect(queryByLabelText("Repayment plan")).toBeNull();
+      await user.selectOptions(getByLabelText("Account Type"), "Student Loan");
+      expect(getByLabelText("Repayment plan")).toBeDefined();
+      await user.selectOptions(getByLabelText("Account Type"), "Loan");
+      expect(queryByLabelText("Repayment plan")).toBeNull();
+    });
+
+    test("blocks submit with a visible error until a plan is chosen, then submits it", async () => {
+      const { getByText, getAllByText, getByLabelText, getByRole, user } = customRender(
+        <AddEditAccountsDialogBtn />,
+      );
+      await user.click(getByText("addAccount"));
+      await user.type(getByLabelText("Name"), "Plan loan");
+      await user.selectOptions(getByLabelText("Account Type"), "Student Loan");
+      expect((getByLabelText("Repayment plan") as HTMLSelectElement).value).toBe("");
+      await user.click(getAllByText("addAccount").at(-1) as HTMLElement);
+      expect(mocks.mockFetcherSubmit).not.toHaveBeenCalled();
+      expect(getByRole("alert").textContent).toBe("Choose a repayment plan");
+
+      await user.selectOptions(getByLabelText("Repayment plan"), "PLAN_2");
+      await user.click(getAllByText("addAccount").at(-1) as HTMLElement);
+      expect(mocks.mockFetcherSubmit).toHaveBeenCalledTimes(1);
+      expect(lastSubmit()).toMatchObject({ type: "Student Loan", studentLoanPlan: "PLAN_2" });
+    });
+
+    test("prefills the plan when editing a Student Loan", async () => {
+      const { getByText, getAllByText, getByLabelText, user } = customRender(
+        <AddEditAccountsDialogBtn isEditAccount accountId="sl1" />,
+      );
+      await user.click(getByText("edit"));
+      expect((getByLabelText("Repayment plan") as HTMLSelectElement).value).toBe("PLAN_5");
+      await user.click(getAllByText("save")[0]);
+      expect(lastSubmit()).toMatchObject({ studentLoanPlan: "PLAN_5" });
+    });
+
+    test("does not send a plan for other account types", async () => {
+      const { getByText, getAllByText, user } = customRender(
+        <AddEditAccountsDialogBtn isEditAccount accountId="c1" />,
+      );
+      await user.click(getByText("edit"));
+      await user.click(getAllByText("save")[0]);
+      expect(lastSubmit()).not.toHaveProperty("studentLoanPlan");
+    });
+  });
 });

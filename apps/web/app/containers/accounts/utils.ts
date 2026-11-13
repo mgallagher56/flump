@@ -33,9 +33,13 @@ const LIABILITY_TYPES: string[] = [
   AccountTypeEnum.LOAN,
   AccountTypeEnum.CREDIT_CARD,
   AccountTypeEnum.OVERDRAFT,
+  AccountTypeEnum.STUDENT_LOAN,
 ];
 
-/** Mortgages, loans, credit cards and overdrafts are liabilities. */
+/**
+ * Mortgages, loans, credit cards, overdrafts and student loans are shown as amounts owed.
+ * (A student loan is still excluded from headline net worth, see DECISIONS E23 D-5-B.)
+ */
 export const isLiabilityType = (type?: string | null): boolean =>
   LIABILITY_TYPES.includes(type ?? "");
 
