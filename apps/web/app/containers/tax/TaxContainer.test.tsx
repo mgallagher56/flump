@@ -10,6 +10,7 @@ import {
 } from "@flump/finance-engine";
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import type { ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 
 const mockRecords: TaxRecord[] = [
@@ -129,6 +130,11 @@ const mockSubmit = vi.fn();
 const fetcherData = { current: null as unknown };
 
 vi.mock("react-router", () => ({
+  Link: ({ children, to, className }: { children: ReactNode; to: string; className?: string }) => (
+    <a href={to} className={className}>
+      {children}
+    </a>
+  ),
   useInRouterContext: () => false,
   useLoaderData: () => ({
     records: mockLoaderRecords,
