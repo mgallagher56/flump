@@ -34,6 +34,8 @@ export function calculateLtvMilestones(
   mortgageFixExpiryDate?: string,
   referenceDate = new Date(),
 ): LtvMilestone[] {
+  // An unknown property value (0) has no LTV: never report bands as achieved.
+  if (!(propertyValueGbp > 0)) return [];
   const bands = [85, 80, 75, 60];
   const currentLtv = propertyValueGbp > 0 ? (currentBalanceGbp / propertyValueGbp) * 100 : 0;
 

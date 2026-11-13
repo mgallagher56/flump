@@ -105,4 +105,56 @@ describe("<AccountsContainer />", () => {
     expect(text).toContain("£3,500");
     expect(text).not.toContain("£-");
   });
+
+  const openOverview = () => {
+    const view = customRender(<AccountsContainer />);
+    fireEvent.mouseDown(view.getByText("Overview"));
+    fireEvent.click(view.getByText("Overview"));
+    return view;
+  };
+
+  test("counts Property as an asset, not a liability", () => {
+    mocks.mockUseLoaderData.mockReturnValue({
+      accounts: [
+        { id: "a1", name: "Current", type: "Current", balance: 5000 },
+        { id: "p1", name: "House", type: "Property", balance: 250000 },
+        { id: "m1", name: "Mortgage", type: "Mortgage", balance: -100000 },
+      ],
+      accountDetails: [],
+    });
+    const { container } = openOverview();
+    const text = container.textContent ?? "";
+    // assets 255,000, liabilities 100,000, net worth 155,000
+    expect(text).toContain("£255,000");
+    expect(text).toContain("£155,000");
+    expect(text).toContain("Property");
+  });
+
+  test("excludes a Student Loan from net worth and shows it on its own line", () => {
+    mocks.mockUseLoaderData.mockReturnValue({
+      accounts: [
+        { id: "a1", name: "Current", type: "Current", balance: 5000 },
+        { id: "s1", name: "SLC", type: "Student Loan", balance: -40000 },
+      ],
+      accountDetails: [],
+    });
+    const { container, getByTestId } = openOverview();
+    const line = getByTestId("student-loans-line");
+    expect(line.textContent).toContain("Student loans (not in net worth): £40,000");
+    expect(line.textContent).toContain("written off");
+    const text = container.textContent ?? "";
+    expect(text).toContain("Total net worth");
+    expect(text).toContain("£5,000");
+    expect(text).not.toContain("£-35,000");
+    expect(text).not.toContain("£35,000");
+  });
+
+  test("hides the student loan line when there is no student loan", () => {
+    mocks.mockUseLoaderData.mockReturnValue({
+      accounts: [{ id: "a1", name: "Current", type: "Current", balance: 5000 }],
+      accountDetails: [],
+    });
+    const { queryByTestId } = openOverview();
+    expect(queryByTestId("student-loans-line")).toBeNull();
+  });
 });

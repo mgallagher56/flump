@@ -150,6 +150,44 @@ describe("AccountIntakeService (Deep Module)", () => {
         service.updateAccount("userA", "a1", { studentLoanPlan: "nope" as never }),
       ).rejects.toThrow(/studentLoanPlan/);
     });
+
+    it("ignores a plan on create for a non-Student-Loan type (stores null)", async () => {
+      await service.createAccount("userA", {
+        name: "Cash",
+        type: "Current",
+        balance: 10,
+        currency: "GBP",
+        studentLoanPlan: "PLAN_2",
+      });
+      expect(mockAccountRepo.create.mock.calls[0][0]).toMatchObject({ studentLoanPlan: null });
+    });
+
+    it("clears the plan when an update changes the type away from Student Loan", async () => {
+      const existing = {
+        id: "a1",
+        userId: "userA",
+        type: "Student Loan",
+        studentLoanPlan: "PLAN_2",
+      };
+      mockAccountRepo.findOne.mockResolvedValueOnce(existing);
+      await service.updateAccount("userA", "a1", { type: "Loan" });
+      expect(mockAccountRepo.save.mock.calls[0][0]).toMatchObject({
+        type: "Loan",
+        studentLoanPlan: null,
+      });
+    });
+
+    it("keeps the plan on an update that does not change the type", async () => {
+      const existing = {
+        id: "a1",
+        userId: "userA",
+        type: "Student Loan",
+        studentLoanPlan: "PLAN_2",
+      };
+      mockAccountRepo.findOne.mockResolvedValueOnce(existing);
+      await service.updateAccount("userA", "a1", { name: "Renamed" });
+      expect(mockAccountRepo.save.mock.calls[0][0]).toMatchObject({ studentLoanPlan: "PLAN_2" });
+    });
   });
 
   describe("mortgage term fields", () => {

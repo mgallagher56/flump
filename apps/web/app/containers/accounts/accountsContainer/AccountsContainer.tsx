@@ -1,3 +1,4 @@
+import { PortfolioSnapshot, type RawAccount, type RawAccountDetail } from "@flump/finance-engine";
 import { chartColor } from "@repo/ui";
 import { css } from "@repo/ui/styled-system/css";
 import { type FC, Fragment, useMemo, useState } from "react";
@@ -29,11 +30,21 @@ import type { Account } from "~/containers/accounts/types";
 import { AccountTypeEnum, isAccountTypeValid } from "~/containers/accounts/utils";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import type { loader } from "~/routes/app.accounts._index";
-import { isFutureMonth, monthYearSort } from "~/utils/accounts";
-import { currentMonth, currentYear } from "~/utils/utils";
+import { isFutureMonth } from "~/utils/accounts";
 
-const { CURRENT, SAVING, MORTGAGE, CREDIT_CARD, LOAN, OVERDRAFT, OWED, INVESTMENT, PENSION } =
-  AccountTypeEnum;
+const {
+  CURRENT,
+  SAVING,
+  MORTGAGE,
+  CREDIT_CARD,
+  LOAN,
+  OVERDRAFT,
+  OWED,
+  INVESTMENT,
+  PENSION,
+  PROPERTY,
+  STUDENT_LOAN,
+} = AccountTypeEnum;
 
 const AccountsContainer: FC = () => {
   const { formatCurrency } = useFormatCurrency();
@@ -49,100 +60,62 @@ const AccountsContainer: FC = () => {
     bankConnectionsEnabled = false,
   } = useLoaderData<typeof loader>();
 
-  // Calculate Net Worth, Assets, Liabilities, Liquid Cash, and Weighted Yield
+  // Totals come from the finance engine so Property, Student Loan and Overdraft are classified
+  // in one place (D-5-B: a student loan is never in net worth or liabilities).
+  const snapshot = useMemo(
+    () =>
+      new PortfolioSnapshot(
+        accounts as RawAccount[],
+        (accountDetails as RawAccountDetail[]).filter(
+          (detail) => !isFutureMonth(detail.month, detail.year),
+        ),
+      ),
+    [accounts, accountDetails],
+  );
+
   const stats = useMemo(() => {
-    let totalAssets = 0;
-    let totalLiabilities = 0;
-    let liquidCash = 0;
     let weightedYieldSum = 0;
     let yieldingCashSum = 0;
     let isaUsed = 0;
 
-    accounts.forEach((acc: Account) => {
-      const accDetails = accountDetails
-        .filter((detail: any) => (detail.account_id || detail.accountId) === acc.id)
-        .filter((detail: any) => !isFutureMonth(detail.month, detail.year))
-        .sort(monthYearSort);
-
-      let balance = Number(acc.balance) || 0;
-      if (accDetails.length > 0) {
-        const curIndex = accDetails.findIndex(
-          (detail: any) => detail.month === currentMonth && detail.year === currentYear,
-        );
-        if (curIndex !== -1) {
-          balance = Number(accDetails[curIndex]?.value) ?? balance;
-        } else {
-          balance = Number(accDetails[accDetails.length - 1]?.value) ?? balance;
-        }
+    for (const acc of snapshot.getResolvedAccounts()) {
+      if (!acc.isAsset) continue;
+      const balance = acc.nominalBalance;
+      const isLiquid = acc.category === "cash" || acc.category === "savings";
+      if (isLiquid && acc.interestRate > 0 && balance > 0) {
+        weightedYieldSum += balance * acc.interestRate;
+        yieldingCashSum += balance;
       }
-
-      const isAsset = [CURRENT, SAVING, OWED, INVESTMENT, PENSION].includes(
-        acc.type as AccountTypeEnum,
-      );
-      if (isAsset) {
-        totalAssets += balance;
-        if (acc.type === CURRENT || acc.type === SAVING) {
-          liquidCash += balance;
-        }
-        const apr = Number(acc.interestRate ?? 0);
-        if (apr > 0 && balance > 0) {
-          weightedYieldSum += balance * apr;
-          yieldingCashSum += balance;
-        }
-        if (acc.name.toLowerCase().includes("isa") || acc.type === INVESTMENT) {
-          isaUsed += balance;
-        }
-      } else {
-        // Liabilities are stored as minus the amount owed.
-        totalLiabilities += Math.abs(balance);
+      if (acc.name.toLowerCase().includes("isa") || acc.category === "investments") {
+        isaUsed += balance;
       }
-    });
+    }
 
     const weightedAvgApy =
       yieldingCashSum > 0 ? Math.round((weightedYieldSum / yieldingCashSum) * 100) / 100 : 0;
 
     return {
-      assets: totalAssets,
-      liabilities: totalLiabilities,
-      netWorth: totalAssets - totalLiabilities,
-      liquidCash,
+      assets: snapshot.getTotalAssets(),
+      liabilities: snapshot.getTotalLiabilities(),
+      netWorth: snapshot.getTotalNetWorth(),
+      property: snapshot.getTotalProperty(),
+      studentLoans: snapshot.getTotalStudentLoans(),
+      liquidCash: snapshot.getTotalLiquidCash(),
       weightedAvgApy,
       isaUsed: Math.min(20000, isaUsed),
     };
-  }, [accounts, accountDetails]);
+  }, [snapshot]);
 
-  // Asset allocation preview bar
+  // Asset allocation preview bar: assets only (Property included, Student Loan excluded)
   const allocationSegments = useMemo(() => {
-    let totalAssets = 0;
     const typeTotals: { [key: string]: number } = {};
+    let totalAssets = 0;
 
-    accounts.forEach((acc: Account) => {
-      const accDetails = accountDetails
-        .filter((detail: any) => (detail.account_id || detail.accountId) === acc.id)
-        .filter((detail: any) => !isFutureMonth(detail.month, detail.year))
-        .sort(monthYearSort);
-
-      let balance = Number(acc.balance) || 0;
-      if (accDetails.length > 0) {
-        const curIndex = accDetails.findIndex(
-          (detail: any) => detail.month === currentMonth && detail.year === currentYear,
-        );
-        balance =
-          curIndex !== -1
-            ? (Number(accDetails[curIndex]?.value) ?? balance)
-            : (Number(accDetails[accDetails.length - 1]?.value) ?? balance);
-      } else {
-        balance = Number(acc.balance) ?? 0;
-      }
-
-      const isAsset = [CURRENT, SAVING, OWED, INVESTMENT, PENSION].includes(
-        acc.type as AccountTypeEnum,
-      );
-      if (isAsset && balance > 0) {
-        totalAssets += balance;
-        typeTotals[acc.type] = (typeTotals[acc.type] || 0) + balance;
-      }
-    });
+    for (const acc of snapshot.getResolvedAccounts()) {
+      if (!acc.isAsset || acc.nominalBalance <= 0) continue;
+      totalAssets += acc.nominalBalance;
+      typeTotals[acc.rawType] = (typeTotals[acc.rawType] || 0) + acc.nominalBalance;
+    }
 
     // Institutional restrained palette
     const colorsMap: { [key: string]: string } = {
@@ -150,7 +123,7 @@ const AccountsContainer: FC = () => {
       [SAVING]: chartColor("wealth"),
       [INVESTMENT]: chartColor("accentCyan"),
       [PENSION]: chartColor("accentPurple"),
-      [OWED]: chartColor("baseline"),
+      [PROPERTY]: chartColor("series5"),
     };
 
     return Object.entries(typeTotals).map(([type, val]) => {
@@ -162,7 +135,7 @@ const AccountsContainer: FC = () => {
         color: colorsMap[type] || chartColor("primary"),
       };
     });
-  }, [accounts, accountDetails]);
+  }, [snapshot]);
 
   const getAccountTypeIcon = (type: string) => {
     const iconStyle = css({
@@ -182,6 +155,7 @@ const AccountsContainer: FC = () => {
         return <FaShieldAlt className={iconStyle} style={{ color: chartColor("accentPurple") }} />;
       case CREDIT_CARD:
         return <FaCreditCard className={iconStyle} style={{ color: chartColor("debt") }} />;
+      case PROPERTY:
       case MORTGAGE:
         return <FaHome className={iconStyle} style={{ color: chartColor("debt") }} />;
       case OVERDRAFT:
@@ -386,7 +360,7 @@ const AccountsContainer: FC = () => {
                               variant: "neutral",
                             }}
                             label="Total assets"
-                            subtext="Cash, savings, investments & pensions"
+                            subtext="Cash, savings, investments, pensions & property"
                             tone="positive"
                             value={formatCurrency(stats.assets)}
                           />
@@ -423,6 +397,26 @@ const AccountsContainer: FC = () => {
                           />
                         </div>
                       </div>
+
+                      {stats.studentLoans > 0 && (
+                        <div
+                          className={css({
+                            color: "text.muted",
+                            fontSize: "sm",
+                            fontVariantNumeric: "tabular-nums",
+                          })}
+                          id="student-loans-line"
+                        >
+                          <p className={css({ margin: 0 })}>
+                            Student loans (not in net worth):{" "}
+                            <strong>{formatCurrency(stats.studentLoans)}</strong>
+                          </p>
+                          <p className={css({ margin: 0, fontSize: "xs" })}>
+                            Repayments come out of your pay as you earn, and any balance left is
+                            written off after the repayment term, so it is shown separately.
+                          </p>
+                        </div>
+                      )}
 
                       {/* UK ISA Allowance Strip */}
                       <div>
@@ -593,10 +587,12 @@ const AccountsContainer: FC = () => {
                     SAVING,
                     INVESTMENT,
                     PENSION,
+                    PROPERTY,
                     CREDIT_CARD,
                     MORTGAGE,
                     LOAN,
                     OVERDRAFT,
+                    STUDENT_LOAN,
                     OWED,
                   ])}
                 </FLPBox>

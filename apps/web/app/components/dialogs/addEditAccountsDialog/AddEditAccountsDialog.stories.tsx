@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react";
+import { expect, screen, userEvent, waitFor } from "storybook/test";
 import { AccountTypeEnum } from "~/containers/accounts/utils";
 import AddEditAccountsDialogBtn from "./AddEditAccountsDialog";
 
@@ -40,5 +41,24 @@ export const EditAccount: Story = {
     router: {
       loaderData: mockLoaderData,
     },
+  },
+};
+
+export const StudentLoanAccount: Story = {
+  args: {
+    isEditAccount: false,
+    btnSize: "md",
+  },
+  parameters: {
+    router: {
+      loaderData: mockLoaderData,
+    },
+  },
+  play: async () => {
+    await userEvent.click(await screen.findByRole("button", { name: /addAccount|add account/i }));
+    const typeSelect = await screen.findByLabelText("Account Type");
+    expect(screen.queryByLabelText("Repayment plan")).toBeNull();
+    await userEvent.selectOptions(typeSelect, AccountTypeEnum.STUDENT_LOAN);
+    await waitFor(() => expect(screen.getByLabelText("Repayment plan")).toBeInTheDocument());
   },
 };

@@ -144,7 +144,17 @@ export class AccountIntakeService implements IAccountIntake {
    * Allow-list of client-writable account fields. `id`, `userId` and
    * `connectionId` are never copied from a request body.
    */
-  private pickAccountFields(body: CreateAccountDto | UpdateAccountDto): Partial<Account> {
+  private pickAccountFields(
+    body: CreateAccountDto | UpdateAccountDto,
+    isCreate = false,
+  ): Partial<Account> {
+    // The repayment plan only applies to Student Loans. Any other type stores null: an update
+    // that sets a different type clears it, and a create ignores a supplied plan.
+    const validatedPlan = validateStudentLoanPlan(body.studentLoanPlan);
+    let studentLoanPlan = validatedPlan;
+    if (body.type !== undefined && body.type !== "Student Loan") {
+      studentLoanPlan = isCreate && validatedPlan === undefined ? undefined : null;
+    }
     const fields = {
       name: body.name,
       type: body.type,
@@ -154,7 +164,7 @@ export class AccountIntakeService implements IAccountIntake {
       monthlyContribution: body.monthlyContribution,
       termMonths: validateTermMonths(body.termMonths),
       fixedRateEndDate: validateFixedRateEndDate(body.fixedRateEndDate),
-      studentLoanPlan: validateStudentLoanPlan(body.studentLoanPlan),
+      studentLoanPlan,
       isCurrent: body.isCurrent,
       externalAccountId: body.externalAccountId,
     };
@@ -267,7 +277,7 @@ export class AccountIntakeService implements IAccountIntake {
   }
 
   async createAccount(userId: string, body: CreateAccountDto): Promise<Account> {
-    const fields = this.pickAccountFields(body);
+    const fields = this.pickAccountFields(body, true);
     if (body.connectionId) {
       const connection = await this.bankConnectionRepository.findOne({
         where: { id: body.connectionId, userId },

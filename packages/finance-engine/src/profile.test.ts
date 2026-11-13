@@ -45,6 +45,15 @@ describe("profile domain module", () => {
   });
 
   describe("userProfileToFinancialBaseline", () => {
+    it("leaves propertyValue at 0 when the home value is unknown, never inventing one", () => {
+      const baseline = userProfileToFinancialBaseline({
+        userId: "user_123",
+        housingStatus: "mortgage",
+        mortgageBalance: 200000,
+      } as never);
+      expect(baseline.propertyValue).toBe(0);
+    });
+
     it("maps user profile fields to baseline with STAGE_2_BUFFER_BUILD default", () => {
       const baseline = userProfileToFinancialBaseline({
         userId: "user_123",
