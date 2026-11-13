@@ -123,7 +123,10 @@ export default defineConfig(({ mode }) => ({
           env: loadEnv("test", process.cwd(), ""),
           environment: "happy-dom",
           globals: true,
-          include: ["./app/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}"],
+          include: [
+            "./app/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}",
+            "./server/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}",
+          ],
           logHeapUsage: true,
           setupFiles: ["./test/setup-test-env.ts", "./test/vitest.setup.ts"],
           useAtomics: true,

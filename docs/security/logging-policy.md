@@ -48,6 +48,14 @@ Known gaps:
 - Output that bypasses Nest's logger (a direct `console.*` call, a library writing to stdout, Node's uncaught exception printer) is not scrubbed. `cors.config.ts` still prints one static boot-time `console.error` that contains no request data.
 - A frame line whose path contains spaces is treated as text and fully redacted, so it loses its path.
 
-The web app's access log is the morgan log that `react-router-serve` writes, which includes the request path and query string. For the beta this is accepted (decision OD-4), on the condition that no web route reads a secret from a query string. A custom `@react-router/express` server with a route-template access log replaces it at the domain cutover, or earlier if logs leave Railway or a query string starts carrying secrets.
+### Web access log (implemented)
+
+The web app runs on a custom Express server (`apps/web/server.ts`, see `docs/security/headers-and-csp.md`) whose access log replaces the `morgan("tiny")` line of `react-router-serve`, which printed raw URLs including the query string. This supersedes the earlier OD-4 A acceptance of that log (`docs/audit/plans/E18-no-owner-plan.md`); the reversal is recorded in round 7 of `docs/audit/plans/DECISIONS.md`.
+
+One line per response: `requestId`, `method`, `route`, `status` and `durationMs` (`aborted: true` when the client left early). JSON when `NODE_ENV=production` (`{"level":"info","context":"HttpAccess",...}`), plain text otherwise (`GET /debts/:id 200 4.2ms <id>`). `route` is the request path without the query string or fragment, with dynamic-looking segments (UUIDs, digits, long hex or token-like strings) collapsed to `:id`; React Router's route template is not available at the Express layer. The method and route also pass through `redactString` from `@flump/observability` as defence in depth. Never logged: the query string, headers, cookies, body or client IP. Successful `/healthz` probes and successful `/assets/*` requests are not logged; failures are.
+
+Request id: a UUID `x-request-id` from the client is kept, otherwise a strict-charset (`[A-Za-z0-9_-]{8,64}`) `x-railway-request-id`, otherwise a fresh UUID. It is echoed as the `x-request-id` response header. It is for correlation only, never for authorisation.
+
+Code and tests: `apps/web/server/accessLog.ts`, `accessLog.test.ts` (query values never appear; invalid ids are replaced) and `server.integration.test.ts` (the real server's log line for `/callback?code=...&state=...`).
 
 Planned guard (not built yet): a test that lists the `searchParams.get` keys allowed in web routes and fails when a route reads any other key, so a new query-string parameter has to be reviewed against this policy.
