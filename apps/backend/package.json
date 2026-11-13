@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "NODE_ENV=development bun --watch src/main.ts",
-    "build": "tsc",
+    "build": "rm -rf dist && tsc -p tsconfig.build.json",
     "format": "biome check --write .",
     "start": "node dist/main",
     "start:dev": "NODE_ENV=development bun --watch src/main.ts",
