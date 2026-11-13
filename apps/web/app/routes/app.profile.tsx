@@ -2,7 +2,7 @@ import type { ReactElement } from "react";
 import { useEffect } from "react";
 import type { LoaderFunctionArgs } from "react-router";
 import { data, useLoaderData } from "react-router";
-import UserProfilePanel from "~/components/budget/UserProfilePanel";
+import { SettingsPage } from "~/features/settings/components/SettingsPage";
 import type { UserProfile } from "~/hooks/useUserProfile";
 import { useUserProfile } from "~/hooks/useUserProfile";
 import { backendFetch } from "~/services/backend-client.server";
@@ -33,7 +33,7 @@ const ProfileRoute = (): ReactElement => {
     if (userProfile) setProfile(userProfile);
   }, [userProfile, setProfile]);
 
-  return <UserProfilePanel initialProfile={userProfile} user={user} />;
+  return <SettingsPage initialProfile={userProfile} user={user} />;
 };
 
 export default ProfileRoute;
