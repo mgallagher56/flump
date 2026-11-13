@@ -29,7 +29,7 @@ describe("NotSet", () => {
     render(
       <>
         <NotSet href="/app/profile" subject="salary" />
-        <NotSet href="/app/tax" subject="income" />
+        <NotSet href="/app/self-assessment" subject="income" />
       </>,
     );
 
@@ -40,7 +40,7 @@ describe("NotSet", () => {
 
   it("accepts an explicit id", () => {
     inRouter.current = false;
-    render(<NotSet href="/app/tax" id="tax-not-set" subject="income" />);
+    render(<NotSet href="/app/self-assessment" id="tax-not-set" subject="income" />);
     expect(screen.getByRole("link", { name: "Add income" }).id).toBe("tax-not-set");
   });
 
@@ -58,7 +58,7 @@ describe("NotSet", () => {
 
   it("supports a custom label", () => {
     inRouter.current = false;
-    render(<NotSet href="/app/tax" label="Not calculated yet" subject="income" />);
+    render(<NotSet href="/app/self-assessment" label="Not calculated yet" subject="income" />);
     expect(screen.getByText("Not calculated yet")).toBeDefined();
   });
 });

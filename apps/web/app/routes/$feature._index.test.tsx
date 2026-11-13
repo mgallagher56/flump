@@ -12,7 +12,7 @@ describe("$feature._index redirect route", () => {
       { feature: "onboarding", expected: "/app/onboarding" },
       { feature: "pension", expected: "/app/pension" },
       { feature: "profile", expected: "/app/profile" },
-      { feature: "tax", expected: "/app/tax" },
+      { feature: "tax", expected: "/app/self-assessment" },
     ];
 
     for (const { feature, expected } of routes) {

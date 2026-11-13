@@ -68,7 +68,7 @@ export const AUTH_NAV_ROUTES: NavRouteItem[] = [
       {
         key: "tax",
         label: "selfAssessment",
-        route: "/app/tax",
+        route: "/app/self-assessment",
         description: "navTaxDesc",
         icon: FileText,
       },

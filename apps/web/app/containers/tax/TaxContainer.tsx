@@ -54,7 +54,7 @@ import { ConfirmDialog } from "~/features/feedback/components/ConfirmDialog";
 import { NotSet } from "~/features/feedback/components/NotSet";
 import { useFetcherOutcome } from "~/features/feedback/hooks/useFetcherOutcome";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
-import type { loader } from "~/routes/app.tax";
+import type { loader } from "~/routes/app.self-assessment";
 import { useFinancialBaseline } from "~/state/baseline.store";
 import { getKnownTrapRegion } from "~/utils/taxTrapCopy";
 

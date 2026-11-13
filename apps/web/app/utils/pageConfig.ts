@@ -89,7 +89,7 @@ export const APP_PAGES: Record<AppPageKey, AppPageConfig> = {
   tax: {
     key: "tax",
     label: "Self Assessment",
-    route: "/app/tax",
+    route: "/app/self-assessment",
     description: "Self-employed and rental property P&L logs with UK tax liability estimates",
     category: "planning",
     badgeColor: "var(--colors-chart-series2)",

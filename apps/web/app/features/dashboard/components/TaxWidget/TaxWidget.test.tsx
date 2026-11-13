@@ -28,7 +28,7 @@ describe("<TaxWidget />", () => {
     expect(screen.getByText("Not set")).toBeDefined();
     expect(screen.getByText("Calculated once tax estimates are verified")).toBeDefined();
     expect(screen.getByRole("link", { name: "Review tax records" }).getAttribute("href")).toBe(
-      "/app/tax",
+      "/app/self-assessment",
     );
     // The only £0-like figures would be an invented tax due.
     expect(screen.queryByText("£0")).toBeNull();
@@ -36,7 +36,9 @@ describe("<TaxWidget />", () => {
 
   it("offers to add income when there are no records", () => {
     renderWidget({ ...data, recordsCount: 0, totalIncome: 0, totalExpenses: 0, netProfit: 0 });
-    expect(screen.getByRole("link", { name: "Add income" }).getAttribute("href")).toBe("/app/tax");
+    expect(screen.getByRole("link", { name: "Add income" }).getAttribute("href")).toBe(
+      "/app/self-assessment",
+    );
   });
 
   it("always shows net profit as a plain row, with no metric toggle", () => {
