@@ -165,7 +165,6 @@ exports[`<AccountDetailContainer /> > should render 1`] = `
                   aria-hidden="true"
                   class="d_inline-flex ai_center gap_1 flex-sh_0 textStyle_label.sm fw_semibold c_primary"
                 >
-                  ▼
                   <span
                     aria-hidden="true"
                     class="d_inline-flex motionSafe:trs_transform_token(durations.base)_token(easings.standard)"
