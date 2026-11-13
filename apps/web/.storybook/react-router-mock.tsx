@@ -59,6 +59,13 @@ export const useNavigate = () => {
   return context.navigate;
 };
 
+// Stories have no data router, so navigation is never blocked.
+export const useBlocker = () => ({
+  state: "unblocked" as const,
+  proceed: undefined,
+  reset: undefined,
+});
+
 export const useLocation = () => {
   const context = useContext(StorybookRouterContext);
   return context.location || { pathname: "/", search: "", hash: "", state: null, key: "default" };
