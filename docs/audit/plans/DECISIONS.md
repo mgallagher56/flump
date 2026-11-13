@@ -273,3 +273,14 @@ The owner delegated these to agents. Straightforward decisions (low stakes, reve
 2. **Carry-forward is read-time only; deltas are current minus previous with identical wording up or down.** No streaks, no badges, no auto-recalibration of assumptions.
 3. **Delivery in four PRs** (backend and engine, web, mailer and reminders, v2 views), per the owner's fewer-larger-PRs preference. Details and the five owner questions (email provider, beta reminders before the PECR view, priority against E25 to E28, property value and co-owner share in v1, CSV import of sheet history) are in [E30-monthly-snapshots-plan.md](E30-monthly-snapshots-plan.md) and remain **open**.
 4. **Owner actions:** run the E18 backup drill before the PR1 migration reaches staging; choose the email provider; obtain the PECR opinion before reminders reach the beta.
+
+# Round 9 (2026-11-13): E17 MCP re-plan approved
+
+On 2026-11-13 the owner approved the fable re-plan of the MCP surface and its recommendations. The plan is [E17-mcp-replan-2026-11.md](E17-mcp-replan-2026-11.md).
+
+1. **Only the user commits writes, in the Flump UI.** An MCP token can stage an import but never commit it; a commit needs a signed-in web session. This **amends E17 D3-B** (propose and confirm through MCP): the "confirm" step moves out of MCP into the Flump review page, with batch-level undo instead of a 24-hour per-change undo.
+2. **Data-entry writes under E17 are gated by the DPIA and terms addendum, not by a written opinion.** The recorded FCA trigger ("E26 gains writes or names products") is read as covering E26, not E17 data entry. **Owner action:** confirm this reading with the launch solicitor in one line.
+3. **The pruning list is approved:** delete `evaluate_student_loan_overpayment`, the three advisor prompts and four of the five resources; replace the two legacy tax tools with one `get_tax_year_position`; keep `simulate_debt_payoff` and `project_net_worth`; deprecate `compare_mortgage_overpay_vs_invest` (first to cut).
+4. **Owner-only writes are allowed before the round 3 interviews**, rolled out through `MCP_ALLOWED_USER_IDS`.
+5. **The in-app CSV import shares the staging pipeline:** one import primitive (stage, review, commit, revert) with two front ends.
+6. **E26 is folded into E17** (EPICS.md). E17-N12 as three tools, N13 and N14 are cancelled or superseded (E17-next-phases-plan.md).
