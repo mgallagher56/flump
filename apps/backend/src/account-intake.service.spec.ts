@@ -480,6 +480,40 @@ describe("AccountIntakeService (Deep Module)", () => {
       expect(accounts.save).not.toHaveBeenCalled();
     });
 
+    it("matches an uppercase uuid to the stored lowercase id", async () => {
+      const { svc } = build();
+      const result = await svc.updateBalances("userA", {
+        balances: [{ id: A.toUpperCase(), balance: 9 }],
+      });
+      expect(result[0]?.id).toBe(A);
+    });
+
+    it.each([
+      ["string", "5"],
+      ["null", null],
+      ["NaN", Number.NaN],
+      ["Infinity", Number.POSITIVE_INFINITY],
+      ["huge", 1e10],
+    ])("updateAccount rejects a %s balance with 400 and writes nothing", async (_l, balance) => {
+      const { svc, accounts, details } = build();
+      await expect(svc.updateAccount("userA", A, { balance } as any)).rejects.toBeInstanceOf(
+        BadRequestException,
+      );
+      expect(accounts.save).not.toHaveBeenCalled();
+      expect(details.rows).toHaveLength(0);
+    });
+
+    it("refuses to run non-transactionally in production", async () => {
+      const prev = process.env.NODE_ENV;
+      process.env.NODE_ENV = "production";
+      try {
+        const { svc } = build();
+        await expect(svc.updateAccount("userA", A, { balance: 1 })).rejects.toThrow(/manager/);
+      } finally {
+        process.env.NODE_ENV = prev;
+      }
+    });
+
     it("accepts exactly 100 entries", async () => {
       const ids = Array.from(
         { length: 100 },

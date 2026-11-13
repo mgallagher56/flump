@@ -126,6 +126,15 @@ export interface UpdateBalancesDto {
   balances: BalanceUpdateDto[];
 }
 
+/** A balance must be a finite number below 10 billion in magnitude (numeric(12,2) column). */
+function validateBalance(value: unknown): number | undefined {
+  if (value === undefined) return undefined;
+  if (typeof value !== "number" || !Number.isFinite(value) || Math.abs(value) >= 1e10) {
+    throw new BadRequestException("balance must be a finite number below 10 billion");
+  }
+  return value;
+}
+
 /** Validates the PATCH /accounts/balances body; throws 400 on anything malformed. */
 export function validateBalanceUpdates(body: unknown): BalanceUpdateDto[] {
   const balances = (body as { balances?: unknown } | null | undefined)?.balances;
@@ -141,15 +150,16 @@ export function validateBalanceUpdates(body: unknown): BalanceUpdateDto[] {
     if (typeof id !== "string" || !UUID_PATTERN.test(id)) {
       throw new BadRequestException("each balance entry needs a uuid id");
     }
-    if (typeof balance !== "number" || !Number.isFinite(balance) || Math.abs(balance) >= 1e10) {
+    if (typeof balance !== "number") {
       throw new BadRequestException("each balance must be a finite number below 10 billion");
     }
+    validateBalance(balance);
     const key = id.toLowerCase();
     if (seen.has(key)) {
       throw new BadRequestException("each account may appear once in balances");
     }
     seen.add(key);
-    return { id, balance };
+    return { id: key, balance };
   });
 }
 
@@ -205,7 +215,7 @@ export class AccountIntakeService implements IAccountIntake {
     const fields = {
       name: body.name,
       type: body.type,
-      balance: body.balance,
+      balance: validateBalance(body.balance),
       currency: body.currency,
       interestRate: body.interestRate,
       monthlyContribution: body.monthlyContribution,
@@ -351,7 +361,12 @@ export class AccountIntakeService implements IAccountIntake {
     work: (accounts: Repository<Account>, details: Repository<AccountDetail>) => Promise<T>,
   ): Promise<T> {
     const manager = this.accountRepository.manager;
-    if (!manager?.transaction) return work(this.accountRepository, this.accountDetailRepository);
+    if (!manager?.transaction) {
+      if (process.env.NODE_ENV === "production") {
+        throw new Error("Account writes need a TypeORM manager to run transactionally");
+      }
+      return work(this.accountRepository, this.accountDetailRepository);
+    }
     return manager.transaction((em) =>
       work(em.getRepository(Account), em.getRepository(AccountDetail)),
     );
