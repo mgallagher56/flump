@@ -22,8 +22,8 @@ describe("MonthlyPictureSection", () => {
     expect(screen.getByText("6.4 months")).toBeDefined();
   });
 
-  it("leaves the cover target to the reader", () => {
+  it("does not set a cover target for the reader", () => {
     render(<MonthlyPictureSection />);
-    expect(screen.getByText(/You choose the target that suits you/)).toBeDefined();
+    expect(screen.getByText(/does not set a target for you/)).toBeDefined();
   });
 });

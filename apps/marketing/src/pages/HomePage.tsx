@@ -100,8 +100,8 @@ export const HomePage: FC = () => {
                 margin: 0,
               }}
             >
-              Enter about six rough numbers, no bank login needed. See your months of cover and
-              what's safe to spend, then model what a change would do under UK rules.
+              Enter six rough numbers, no bank login needed. See your months of cover and what's
+              safe to spend, then model what a change would do under UK rules.
             </p>
 
             <div className={flex({ gap: "4", flexWrap: "wrap", justify: "center" })}>
@@ -195,7 +195,7 @@ export const HomePage: FC = () => {
                 lineHeight: "1.6",
               }}
             >
-              Start with your 6-number baseline. No bank login needed.
+              Start with six rough numbers. No bank login needed.
             </p>
             <div className={flex({ gap: "4", justify: "center", flexWrap: "wrap" })}>
               <a href={cta.href} style={{ textDecoration: "none" }}>

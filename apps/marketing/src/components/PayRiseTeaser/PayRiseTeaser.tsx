@@ -31,6 +31,7 @@ const TAPER_START_GBP = 100_000;
 const TAPER_END_GBP = 125_140;
 
 const gbp = (value: number) => formatMoney(value, { fractionDigits: 0 }).text;
+const pct = new Intl.NumberFormat("en-GB", { maximumFractionDigits: 0 });
 
 export interface PayRiseResult {
   keptAnnual: number;
@@ -106,19 +107,23 @@ export const PayRiseTeaser: FC = () => {
               onChange={setRise}
             />
             <p className={teaserFootnote()}>
-              Example only. Uses {result.taxYear} bands for England, Wales and Northern Ireland,
-              with no pension contribution or student loan. Your own figures may differ.
+              Unverified example for the {result.taxYear} tax year, using the bands for England,
+              Wales and Northern Ireland, with no pension contribution or student loan. Your own
+              figures may differ.
             </p>
           </div>
 
-          <div className={teaserOutcome()} aria-live="polite" data-testid="pay-rise-outcome">
+          <div className={teaserOutcome()} data-testid="pay-rise-outcome">
             <span className={outcomeLabel()}>Estimated take-home from the rise</span>
-            <p className={outcomeHeadline()}>
-              {gbp(result.keptAnnual)} a year of {gbp(rise)}
-            </p>
-            <p className={outcomeSub()}>
-              About {gbp(result.keptMonthly)} a month, or {result.keptPct.toFixed(0)}% of the rise.
-            </p>
+            <div aria-live="polite" aria-atomic="true">
+              <p className={outcomeHeadline()}>
+                {gbp(result.keptAnnual)} a year of {gbp(rise)}
+              </p>
+              <p className={outcomeSub()}>
+                About {gbp(result.keptMonthly)} a month, or {pct.format(result.keptPct)}% of the
+                rise.
+              </p>
+            </div>
 
             <dl className={breakdownList()}>
               <div className={breakdownRow()}>

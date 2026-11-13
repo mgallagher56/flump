@@ -157,7 +157,7 @@ const ENTRIES: Record<ToolCatalogEntry["slug"], Omit<ToolCatalogEntry, "slug">> 
   },
   "mortgage-overpayment-vs-isa-calculator": {
     title: "Mortgage overpayment vs Stocks and Shares ISA",
-    desc: "Compare the interest saved by paying down your UK mortgage with possible equity market growth over 5–25 years. Guidance, not advice.",
+    desc: "Compare the interest saved by paying down your UK mortgage with possible equity market growth over 5 to 25 years. Guidance, not advice.",
     icon: <FiTrendingUp size={22} aria-hidden="true" />,
     badge: "Mortgages and wealth",
   },
@@ -169,7 +169,7 @@ const ENTRIES: Record<ToolCatalogEntry["slug"], Omit<ToolCatalogEntry, "slug">> 
   },
   "uk-100k-tax-trap-calculator": {
     title: "£100k–£125k tax trap and childcare calculator",
-    desc: "Model how the Personal Allowance taper creates an effective 60% marginal rate, and the pension contribution at which adjusted net income reaches £100,000, alongside 30 hours free childcare eligibility.",
+    desc: "Model how the Personal Allowance taper changes the effective marginal rate between £100,000 and £125,140, and how a pension contribution changes adjusted net income, alongside 30 hours free childcare eligibility.",
     icon: <FiPercent size={22} aria-hidden="true" />,
     badge: "HMRC income tax",
   },
@@ -204,7 +204,7 @@ export const ToolsIndexPage: FC = () => {
             <h1 className={pageTitleStyle}>Free UK financial calculators</h1>
             <p className={pageLeadStyle}>
               Calculators that run in your browser, with no sign-up. Each one answers a specific UK
-              question about debt, housing, student loans or tax.
+              question about debt, mortgages, student loans or tax.
             </p>
           </div>
 
