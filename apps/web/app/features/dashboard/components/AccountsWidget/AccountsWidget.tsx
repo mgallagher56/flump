@@ -1,6 +1,5 @@
 import { Money, Num } from "@repo/ui";
 import type { FC } from "react";
-import { NotSet } from "~/features/feedback/components/NotSet";
 import {
   content,
   headline,
@@ -13,6 +12,7 @@ import {
   statValue,
 } from "../../widgetBody.styles";
 import { WIDGET_ICONS } from "../../widgetIcons";
+import { NotSetValue } from "../NotSetValue";
 import { WidgetCard } from "../WidgetCard";
 import {
   allocation,
@@ -95,7 +95,7 @@ export const AccountsWidget: FC<AccountsWidgetProps> = ({ data }) => {
             </>
           ) : (
             <p className={notSetWrap()}>
-              <NotSet href="/app/accounts" subject="an account" />
+              <NotSetValue href="/app/accounts" subject="an account" />
             </p>
           )}
         </div>

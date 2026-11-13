@@ -3,7 +3,7 @@ import { cva } from "@repo/ui/styled-system/css";
 export const widgetCard = cva({
   base: {
     backgroundColor: "surface.card",
-    borderRadius: "xl",
+    borderRadius: "card",
     borderWidth: "1px",
     borderStyle: "solid",
     borderColor: "border.subtle",
@@ -34,9 +34,9 @@ export const widgetTitleRow = cva({
   base: {
     display: "flex",
     alignItems: "center",
-    gap: "8px",
+    gap: "10px",
     minWidth: 0,
-    color: "text.secondary",
+    color: "primary",
   },
 });
 

@@ -13,6 +13,7 @@ import {
   useRouteError,
 } from "react-router";
 import { AppBottomBar } from "./components/navigation/AppBottomBar";
+import { NavigationProgress } from "./components/navigation/NavigationProgress";
 import Header from "./components/structure/header/Header";
 import { ResponsiveProvider } from "./context/ResponsiveContext";
 import { RouteErrorBoundary } from "./features/feedback/components/RouteErrorBoundary";
@@ -134,6 +135,7 @@ export default function App() {
             <VisuallyHidden as="a" focusable href="#main-content">
               Skip to content
             </VisuallyHidden>
+            <NavigationProgress />
             <Header />
             <div
               className={css({
@@ -148,7 +150,7 @@ export default function App() {
                 className={css({
                   paddingBottom: {
                     base: user ? "calc(72px + env(safe-area-inset-bottom, 0px))" : "0",
-                    md: "0",
+                    lg: "0",
                   },
                 })}
               >

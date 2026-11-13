@@ -1,5 +1,4 @@
-import { Button, EmptyState, Icon } from "@repo/ui";
-import { LayoutDashboard } from "lucide-react";
+import { Button, EmptyState, Illustration } from "@repo/ui";
 import type { FC } from "react";
 import { SampleAwareLink } from "~/components/navigation/SampleAwareLink";
 import { emptyStateSlot } from "./DashboardEmptyState.styles";
@@ -22,8 +21,8 @@ export const DashboardEmptyState: FC<DashboardEmptyStateProps> = ({ reason, onCh
           </Button>
         }
         description="Every widget is hidden. Choose the ones you want back."
-        icon={<Icon icon={LayoutDashboard} size="lg" />}
         id="dashboard-empty-state"
+        illustration={<Illustration scene="empty-goals" size="md" />}
         title="No widgets showing"
       />
     ) : (
@@ -34,8 +33,8 @@ export const DashboardEmptyState: FC<DashboardEmptyStateProps> = ({ reason, onCh
           </Button>
         }
         description="Finish the steps in the checklist above. Each widget appears here as soon as its section has your figures."
-        icon={<Icon icon={LayoutDashboard} size="lg" />}
         id="dashboard-empty-state"
+        illustration={<Illustration scene="empty-accounts" size="md" />}
         secondaryAction={
           <Button asChild size="sm" variant="ghost">
             <SampleAwareLink to="/app/budget">Add your budget</SampleAwareLink>

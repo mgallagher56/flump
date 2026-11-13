@@ -2,7 +2,7 @@ import { cva } from "@repo/ui/styled-system/css";
 
 export const panel = cva({
   base: {
-    borderRadius: "xl",
+    borderRadius: "card",
     border: "1px solid",
     borderColor: "primary.border",
     backgroundColor: "primary.subtle",

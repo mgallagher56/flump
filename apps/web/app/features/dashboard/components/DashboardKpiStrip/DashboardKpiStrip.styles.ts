@@ -14,3 +14,8 @@ export const kpiSubtext = cva({
 export const kpiSeparator = cva({
   base: { fontVariantNumeric: "tabular-nums" },
 });
+
+/** The hero headline block above the four-figure row. */
+export const kpiStack = cva({
+  base: { display: "flex", flexDirection: "column", gap: { base: "12px", md: "16px" } },
+});
