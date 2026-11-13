@@ -6,6 +6,7 @@ import { assertLaunchReady } from "@flump/business-details";
 import express from "express";
 import { createServer as createViteServer, type ViteDevServer } from "vite";
 import { analyticsMiddleware } from "./server/analytics";
+import { applyServerHardening } from "./server/hardening";
 import { buildHeadMeta } from "./server/headMeta";
 import { registerOps } from "./server/ops";
 import { rateLimit } from "./server/rateLimit";
@@ -17,6 +18,7 @@ async function createServer() {
   // Public launch (indexing allowed) must not boot with placeholder business details.
   assertLaunchReady(process.env);
   const app = express();
+  applyServerHardening(app);
   const isProd = process.env.NODE_ENV === "production";
   // Railway terminates TLS one hop in front; needed so req.ip is the client, not the proxy.
   if (isProd) app.set("trust proxy", 1);
