@@ -3,25 +3,18 @@ import { act } from "react";
 import { hydrateRoot } from "react-dom/client";
 import { renderToString } from "react-dom/server";
 import { I18nextProvider, initReactI18next, useTranslation } from "react-i18next";
-import { getInitialNamespaces } from "remix-i18next/client";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import i18nOptions from "./i18n";
 import { NonceProvider } from "./security/nonce";
 
-vi.mock("./i18n.server", () => ({
-  default: { getLocale: vi.fn(async () => "en"), getRouteNamespaces: vi.fn(() => ["common"]) },
-}));
-vi.mock("./utils/auth.server", () => ({ getAuthSession: vi.fn() }));
 vi.mock("react-i18next", async () => await vi.importActual("react-i18next"));
 
-import * as rootModule from "./root";
-
 // React #418 on /tools and /sandbox (E20-N11 follow-up). Root cause: the shell (Header, footer) uses
-// the `common` i18n namespace, but only a few routes declared `handle.i18n`. remix-i18next picks the
-// namespaces to preload from route handles on both sides, so on every other route the server (sync
-// fs backend) rendered "Home" while the client (async http backend) rendered the key "home" before
-// `common.json` arrived. This test hydrates real server markup with the real development React build
-// and the real client namespace derivation, and fails on any hydration error.
+// the `common` i18n namespace. If the client did not preload it, the server (sync fs backend) would
+// render "Home" while the client (async http backend) rendered the key "home" before `common.json`
+// arrived. Both sides now use the static `ns` from app/i18n.ts, so every route preloads `common`.
+// This test hydrates real server markup with the real development React build and fails on any
+// hydration error.
 
 const RESOURCES = { en: { common: { home: "Home" } } };
 
@@ -55,7 +48,7 @@ function tree(instance: I18n, nonce: string) {
 }
 
 async function serverMarkup(): Promise<string> {
-  // Mirrors entry.server.tsx: namespaces from the route modules, resources available synchronously.
+  // Mirrors entry.server.tsx: namespaces from the shared i18n config, resources available synchronously.
   const server = createInstance();
   await server.use(initReactI18next).init({
     ...i18nOptions,
@@ -67,7 +60,7 @@ async function serverMarkup(): Promise<string> {
 }
 
 async function clientInstance(namespaces: string[]): Promise<I18n> {
-  // Mirrors entry.client.tsx: http-like backend, namespaces from `getInitialNamespaces()`.
+  // Mirrors entry.client.tsx: http-like backend, namespaces from the shared i18n config.
   const client = createInstance();
   await client
     .use(initReactI18next)
@@ -104,28 +97,15 @@ async function hydrationProblems(html: string, ui: React.ReactNode): Promise<str
   return problems.filter((p) => /hydrat|did not match|didn't match|server rendered/i.test(p));
 }
 
-describe("root route i18n namespaces", () => {
-  beforeEach(() => {
-    (window as unknown as { __reactRouterRouteModules: unknown }).__reactRouterRouteModules = {
-      // A route that declares nothing, like /tools and /sandbox.
-      "routes/tools._index": { default: () => null },
-      root: rootModule,
-    };
-  });
-  afterEach(() => {
-    (window as unknown as { __reactRouterRouteModules?: unknown }).__reactRouterRouteModules =
-      undefined;
-  });
-
-  it("declares the common namespace on the root so every route preloads it", () => {
-    expect(rootModule.handle).toEqual({ i18n: ["common"] });
-    expect(getInitialNamespaces()).toContain("common");
+describe("i18n namespaces on hydration", () => {
+  it("declares the common namespace in the shared config so every route preloads it", () => {
+    expect(i18nOptions.ns).toContain("common");
   });
 
   it("hydrates server markup with no mismatch when the client preloads the root namespaces", async () => {
     const html = await serverMarkup();
     expect(html).toContain(">Home<");
-    const client = await clientInstance(getInitialNamespaces());
+    const client = await clientInstance(i18nOptions.ns);
     expect(await hydrationProblems(html, tree(client, ""))).toEqual([]);
   });
 
