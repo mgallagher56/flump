@@ -20,9 +20,6 @@ export const widgetGrid = cva({
     gridTemplateColumns: { base: "minmax(0, 1fr)", md: "repeat(2, minmax(0, 1fr))" },
     alignItems: "stretch",
     gap: { base: "12px", md: "20px" },
-    // The legacy widget cards still render their own settings cog (it is not gated on edit mode).
-    // Hide it here so no per-widget configuration is reachable until the widgets move to WidgetCard.
-    "& [title='Customise widget']": { display: "none" },
   },
 });
 
