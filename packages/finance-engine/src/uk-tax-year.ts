@@ -353,7 +353,7 @@ export function getUkStatePensionRules(year: string): UkStatePensionRules {
 /** Full new State Pension annual amount for a number of qualifying years: pro rata, 0 under 10, capped at 35. */
 export function calculateNewStatePensionAnnual(qualifyingYears: number, year: string): number {
   const rules = getUkStatePensionRules(year);
-  const years = Math.floor(Math.max(0, qualifyingYears));
+  const years = Number.isFinite(qualifyingYears) ? Math.floor(Math.max(0, qualifyingYears)) : 0;
   if (years < rules.minQualifyingYears) return 0;
   return roundPence(
     rules.fullNewAnnual *

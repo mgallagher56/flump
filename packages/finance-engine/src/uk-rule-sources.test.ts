@@ -200,6 +200,8 @@ describe("UK rule sources registry (E25-T1)", () => {
     expect(calculateNewStatePensionAnnual(35, "2026/27")).toBe(12547.6);
     expect(calculateNewStatePensionAnnual(40, "2026/27")).toBe(12547.6);
     expect(calculateNewStatePensionAnnual(9, "2026/27")).toBe(0);
+    expect(calculateNewStatePensionAnnual(Number.NaN, "2026/27")).toBe(0);
+    expect(calculateNewStatePensionAnnual(-3, "2026/27")).toBe(0);
     expect(calculateNewStatePensionAnnual(10, "2026/27")).toBe(3585.03);
     expect(calculateNewStatePensionAnnual(35, "2027/28")).toBe(13036.4);
   });
