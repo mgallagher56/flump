@@ -45,6 +45,7 @@ import {
   DEFAULT_ENABLED_PAGES,
   stripRetiredKeys,
 } from "~/utils/pageConfig";
+import { REGION_ASSUMPTION_LABEL } from "~/utils/taxTrapCopy";
 
 export const loader = async (args: LoaderFunctionArgs) => {
   const { user, accessToken } = await getAuthSession(args, { ensureSignedIn: true });
@@ -274,7 +275,11 @@ export default function OnboardingRoute() {
       // Balances (cash, pension pot, cards, mortgage) are saved as account rows below, not here.
       // The server profile is the only store: no client baseline is written (D31).
       await updateProfile({
-        birthYear: age !== null ? new Date().getFullYear() - age : undefined,
+        // A typed age outside 16-100 or with decimals is left unset rather than failing the save.
+        birthYear:
+          age !== null && Number.isInteger(age) && age >= 16 && age <= 100
+            ? new Date().getFullYear() - age
+            : undefined,
         annualSalary: incomeMode === "gross" ? salary : takeHomeNet * 12,
         monthlyTakeHome: liveTakeHome.monthlyTakeHome,
         employmentType,
@@ -781,13 +786,15 @@ export default function OnboardingRoute() {
                   aria-describedby="baseline-tax-region-help"
                   value={taxRegion ?? ""}
                   onChange={(e) => setTaxRegion((e.target.value || null) as TaxRegion | null)}
-                  style={{
+                  className={css({
                     padding: "8px 12px",
                     borderRadius: "8px",
-                    border: "1px solid var(--colors-border)",
-                    backgroundColor: "var(--colors-surface)",
-                    color: "inherit",
-                  }}
+                    borderWidth: "1px",
+                    borderStyle: "solid",
+                    borderColor: "border.input",
+                    backgroundColor: "surface.card",
+                    color: "text.primary",
+                  })}
                 >
                   <option value="">Choose where you live</option>
                   <option value="ENGLAND">England</option>
@@ -1251,6 +1258,14 @@ export default function OnboardingRoute() {
               >
                 £{liveTakeHome.monthlyTakeHome.toLocaleString("en-GB")}/mo
               </div>
+              {taxRegion === null && incomeMode === "gross" && (
+                <span
+                  id="onboarding-take-home-assumption"
+                  className={css({ fontSize: "11px", color: "text.muted" })}
+                >
+                  {REGION_ASSUMPTION_LABEL}
+                </span>
+              )}
             </div>
             <div>
               <span

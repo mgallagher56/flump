@@ -211,6 +211,18 @@ describe("OnboardingRoute (3-Step Baseline Flow)", () => {
     expect(screen.queryByTestId("finish-income-hint")).toBeNull();
   });
 
+  it("leaves birth year unset for a fractional or out-of-range age instead of failing the save", async () => {
+    render(<OnboardingRoute />);
+    typeInto(/annual gross salary/i, "45000");
+    chooseRegion();
+    typeInto(/current age/i, "32.5");
+    fireEvent.click(screen.getByText("Next: Housing and outgoings →"));
+    fireEvent.click(screen.getByText("Next: Savings, pension and debt →"));
+    fireEvent.click(screen.getByRole("button", { name: /finish setup and launch dashboard/i }));
+    await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith("/"));
+    expect(mockUpdateProfile.mock.calls[0][0].birthYear).toBeUndefined();
+  });
+
   it("keeps Finish disabled until a tax region is chosen (D-4-C) and says why", () => {
     render(<OnboardingRoute />);
     typeInto(/annual gross salary/i, "45000");
@@ -233,7 +245,11 @@ describe("OnboardingRoute (3-Step Baseline Flow)", () => {
   it("uses Scottish income-tax bands for the live take-home when Scotland is chosen (D06)", () => {
     render(<OnboardingRoute />);
     typeInto(/annual gross salary/i, "50000");
+    expect(screen.getByTestId("onboarding-take-home-assumption").textContent).toMatch(
+      /assuming england, wales and northern ireland/i,
+    );
     chooseRegion("ENGLAND");
+    expect(screen.queryByTestId("onboarding-take-home-assumption")).toBeNull();
     const england = screen.getByTestId("onboarding-take-home").textContent;
     chooseRegion("SCOTLAND");
     const scotland = screen.getByTestId("onboarding-take-home").textContent;
