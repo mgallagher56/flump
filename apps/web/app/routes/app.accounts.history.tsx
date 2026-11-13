@@ -10,8 +10,7 @@ import { SnapshotHistoryPage } from "~/features/snapshot/components/SnapshotHist
 import { londonMonth } from "~/features/snapshot/snapshotModel";
 import { useSaveSnapshot } from "~/features/snapshot/useSaveSnapshot";
 import { loadWorkspaceSnapshot } from "~/services/backend-client.server";
-import { toMonthly } from "~/types/budget";
-import { calculateRunwayStats } from "~/utils/runwayStorage";
+import { buildWorkspacePicture, knownOrNull } from "~/utils/financialPicture";
 
 export const meta: MetaFunction = () => [{ title: "Net worth history | Flump" }];
 
@@ -23,23 +22,14 @@ export const loader = async (args: LoaderFunctionArgs) => {
   const { accounts, accountDetails, budgetEntries } = await loadWorkspaceSnapshot(args, {
     includeBudget: true,
   });
-  const entries = Array.isArray(budgetEntries) ? budgetEntries : [];
-  const income = entries.filter((e: any) => e.isIncome).reduce((s, e: any) => s + toMonthly(e), 0);
-  const spending = entries
-    .filter((e: any) => !e.isIncome)
-    .reduce((s, e: any) => s + toMonthly(e), 0);
-  const runway = calculateRunwayStats({
-    entries,
-    accounts,
-    accountDetails,
-    savedSettings: null,
-  });
+  // Surplus and months of cover come from the one financial picture (E23), never recomputed here.
+  const picture = buildWorkspacePicture({ accounts, accountDetails, budgetEntries });
   return data({
     accounts,
     accountDetails,
     currentMonth: londonMonth(),
-    monthlySurplus: entries.length > 0 ? Math.round((income - spending) * 100) / 100 : null,
-    monthsOfCover: runway.monthlyBurn > 0 ? runway.runwayMonths : null,
+    monthlySurplus: knownOrNull(picture.budget)?.surplus ?? null,
+    monthsOfCover: knownOrNull(picture.monthsOfCover)?.months ?? null,
   });
 };
 
