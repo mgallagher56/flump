@@ -111,7 +111,7 @@ export function registerFinancialAuditTools(
                 score: healthScore.overallScore,
                 grade: healthScore.grade,
                 components: healthScore.components,
-                recommendations: healthScore.topRecommendations,
+                observations: healthScore.observations,
               },
               financialStage: {
                 stage: stage.stage,
