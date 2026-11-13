@@ -30,7 +30,6 @@ import {
   heroLabel,
   heroSample,
   heroTop,
-  hideNarrow,
   legendItem,
   legendList,
   legendSwatch,
@@ -43,8 +42,6 @@ import {
   signoffSectionTitle,
   signoffTwoColumn,
   signoffWide,
-  tableCellSub,
-  tableCellText,
 } from "./DirectionCSignoff.styles";
 
 const SAMPLE = "Sample data";
@@ -245,22 +242,17 @@ export const DirectionCSignoff: FC<DirectionCSignoffProps> = ({ onFinishSetup })
                 <tr>
                   <Th>Account</Th>
                   <Th numeric>Balance</Th>
-                  <Th className={hideNarrow()} numeric>
-                    Change
-                  </Th>
+                  <Th numeric>Change</Th>
                 </tr>
               </THead>
               <TBody>
                 {ACCOUNTS.map((a) => (
                   <tr key={a.name}>
-                    <Td>
-                      <span className={tableCellText()}>{a.name}</span>
-                      <span className={tableCellSub()}>{a.kind}</span>
-                    </Td>
-                    <Td numeric>
+                    <Td secondary={a.kind}>{a.name}</Td>
+                    <Td label="Balance" numeric>
                       <Money fractionDigits={2} size="sm" value={a.balance} />
                     </Td>
-                    <Td className={hideNarrow()} numeric>
+                    <Td label="Change" numeric>
                       <Money fractionDigits={2} signDisplay="always" size="sm" value={a.change} />
                     </Td>
                   </tr>

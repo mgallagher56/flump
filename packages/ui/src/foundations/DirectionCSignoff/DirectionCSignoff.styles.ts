@@ -183,19 +183,6 @@ export const badgeRow = cva({
   base: { display: "flex", flexWrap: "wrap", gap: "3", alignItems: "center" },
 });
 
-export const tableCellSub = cva({
-  base: { display: "block", textStyle: "body.sm", color: "text.muted" },
-});
-
-export const tableCellText = cva({
-  base: { color: "text.primary", fontWeight: "medium" },
-});
-
-/** The change column is dropped at phone width so the compact table fits its panel. */
-export const hideNarrow = cva({
-  base: { display: { base: "none", sm: "table-cell" } },
-});
-
 export const emptyWrap = cva({
   base: { maxWidth: "560px" },
 });

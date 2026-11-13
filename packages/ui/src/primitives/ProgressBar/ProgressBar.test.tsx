@@ -16,7 +16,51 @@ describe("ProgressBar Primitive", () => {
 
     const bar = screen.getByRole("progressbar");
     expect(bar.getAttribute("aria-valuenow")).toBe("15000");
+    expect(bar.getAttribute("aria-valuemin")).toBe("0");
     expect(bar.getAttribute("aria-valuemax")).toBe("20000");
+    expect(bar.getAttribute("aria-valuetext")).toBe("75%");
     expect(screen.getByText("75%")).toBeDefined();
+  });
+
+  it("formats the default value text en-GB and speaks it as 'X of Y'", () => {
+    render(<ProgressBar label="Emergency fund" max={12000} value={4500} />);
+    expect(screen.getByText("4,500 / 12,000")).toBeDefined();
+    expect(screen.getByRole("progressbar").getAttribute("aria-valuetext")).toBe("4,500 of 12,000");
+  });
+
+  it("uses a custom valueText and valueDisplay", () => {
+    render(
+      <ProgressBar
+        label="ISA"
+        max={20000}
+        value={5000}
+        valueDisplay="£5,000 of £20,000"
+        valueText="£5,000 of £20,000 used"
+      />,
+    );
+    expect(screen.getByRole("progressbar").getAttribute("aria-valuetext")).toBe(
+      "£5,000 of £20,000 used",
+    );
+  });
+
+  it("clamps out of range values and keeps the fill width in a custom property only", () => {
+    const { container } = render(<ProgressBar max={100} value={250} />);
+    const bar = screen.getByRole("progressbar");
+    expect(bar.getAttribute("aria-valuenow")).toBe("100");
+    const fill = bar.firstElementChild as HTMLElement;
+    expect(fill.getAttribute("style")).toContain("--progress-value: 100%");
+    expect(container.querySelectorAll("[style]")).toHaveLength(1);
+  });
+
+  it("treats a non-positive max as 100 and a negative value as 0", () => {
+    render(<ProgressBar max={0} value={-5} />);
+    const bar = screen.getByRole("progressbar");
+    expect(bar.getAttribute("aria-valuemax")).toBe("100");
+    expect(bar.getAttribute("aria-valuenow")).toBe("0");
+  });
+
+  it("still accepts the deprecated height prop", () => {
+    render(<ProgressBar height={4} value={10} />);
+    expect(screen.getByRole("progressbar")).toBeDefined();
   });
 });
