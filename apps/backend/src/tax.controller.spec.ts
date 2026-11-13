@@ -1,4 +1,4 @@
-import { NotFoundException } from "@nestjs/common";
+import { BadRequestException, NotFoundException } from "@nestjs/common";
 import { describe, expect, it, vi } from "vitest";
 import { TaxController } from "./tax.controller";
 import { createInMemoryRepository } from "./testing/in-memory-repository";
@@ -200,5 +200,54 @@ describe("TaxController", () => {
         name: "Renamed",
       });
     });
+  });
+});
+
+describe("TaxController receipt validation (E20-N14)", () => {
+  const makeController = () => {
+    const repo = {
+      create: vi.fn((r) => r),
+      save: vi.fn((r) => Promise.resolve(r)),
+      findOne: vi.fn().mockResolvedValue({ id: "r1", userId: "u1" }),
+      update: vi.fn(),
+    };
+    return { repo, controller: new TaxController(repo as any, {} as any) };
+  };
+  const req = { user: { id: "u1" } };
+  const base = {
+    name: "x",
+    amount: 1,
+    date: "2025-04-01",
+    type: "income" as const,
+    source: "paye" as const,
+    category: "c",
+  };
+  const html = `data:text/html;base64,${Buffer.from("<script>").toString("base64")}`;
+
+  it("rejects a bad receipt on create, patch and bulk with 400", async () => {
+    const { controller, repo } = makeController();
+    await expect(controller.createTaxRecord(req, { ...base, receiptData: html })).rejects.toThrow(
+      BadRequestException,
+    );
+    await expect(controller.updateTaxRecord(req, "r1", { receiptData: html })).rejects.toThrow(
+      BadRequestException,
+    );
+    await expect(
+      controller.createBulkTaxRecords(req, { records: [{ ...base, receiptFilename: "../x.pdf" }] }),
+    ).rejects.toThrow(BadRequestException);
+    expect(repo.save).not.toHaveBeenCalled();
+  });
+
+  it("accepts a valid PDF receipt", async () => {
+    const { controller } = makeController();
+    const pdf = `data:application/pdf;base64,${Buffer.from("%PDF-1.4 body").toString("base64")}`;
+    await expect(
+      controller.createTaxRecord(req, {
+        ...base,
+        receiptFilename: "a.pdf",
+        receiptMimeType: "application/pdf",
+        receiptData: pdf,
+      }),
+    ).resolves.toBeDefined();
   });
 });

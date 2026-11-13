@@ -58,9 +58,7 @@ import type { loader } from "~/routes/app.tax";
 import { useFinancialBaseline } from "~/state/baseline.store";
 import { getKnownTrapRegion } from "~/utils/taxTrapCopy";
 
-/** Receipt types the API accepts (mirrors @flump/api-contract RECEIPT_MIME_TYPES). */
-const RECEIPT_MIME_TYPES = ["image/png", "image/jpeg", "image/webp", "application/pdf"] as const;
-const RECEIPT_ACCEPT = RECEIPT_MIME_TYPES.join(",");
+import { isAcceptableReceiptFile, RECEIPT_ACCEPT } from "./receipt-file";
 
 const numeric = css({ fontVariantNumeric: "tabular-nums" });
 
@@ -255,8 +253,8 @@ const TaxContainer: FC = () => {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    // The API accepts png, jpeg, webp and pdf receipts only (HEIC or GIF would be rejected).
-    if (!RECEIPT_MIME_TYPES.includes(file.type as (typeof RECEIPT_MIME_TYPES)[number])) {
+    // The API accepts png, jpeg, webp and pdf receipts up to 5 MB (HEIC or GIF would be rejected).
+    if (!isAcceptableReceiptFile(file)) {
       e.target.value = "";
       return;
     }

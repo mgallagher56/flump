@@ -16,6 +16,7 @@ import { AuthGuard } from "./auth/auth.guard";
 import { TaxRecord } from "./entities/tax-record.entity";
 import { UserProfile } from "./entities/user-profile.entity";
 import { RateLimit } from "./security/rate-limit.decorator";
+import { validateReceipt } from "./security/receipt-validation";
 
 /**
  * Allow-list of client-writable tax record fields. `id`, `userId`,
@@ -41,6 +42,7 @@ const pickTaxRecordFields = (body: Partial<TaxRecord> | undefined): Partial<TaxR
   for (const key of TAX_RECORD_FIELDS) {
     if (body?.[key] !== undefined) picked[key] = body[key];
   }
+  validateReceipt(picked);
   return picked as Partial<TaxRecord>;
 };
 
