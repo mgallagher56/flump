@@ -31,9 +31,17 @@ Generic 400 bodies for non-auth errors, `WWW-Authenticate` on 401, `Retry-After`
 - Anything not `no-store` (a kept `private`) gets `Vary: Cookie`, keeping existing `Vary` values.
 - A future cacheable public page needs an explicit, reviewed opt-in (a route that loads no user data plus a change to this policy), never an implicit default.
 
-Static files (`/assets`, `public/`) are served by `react-router-serve` before the middleware and keep their `max-age` headers.
+### Web server (`apps/web/server.ts`)
 
-Known gaps, because React Router builds these responses outside the middleware pipeline: the document-request CSRF 400 and last-resort 500, `/__manifest` responses and static files carry no security headers. `.data` responses are covered through `handleDataRequest` in `entry.server.tsx`. Closing the rest needs a small custom `@react-router/express` server (it would also add an allow-listed access log, OD-4); that is deferred. `react-router-serve` already disables `X-Powered-By`.
+The web app runs on a small custom Express server (`@react-router/express`, a near-verbatim port of `react-router-serve` 7.18.5) instead of `react-router-serve`. It exists so the response headers cover every response, including those React Router builds outside any hook: the document-request CSRF 400, document-level catch 500s, `/__manifest` responses, and static files from `express.static`.
+
+- `apps/web/server/securityHeaders.ts` is the first middleware. It sets the whole `SECURITY_HEADERS` set (imported from `app/security/headers.server.ts`, the single source) plus `frame-ancestors 'none'` on every response. When the app sets one of those headers itself (E20-N11 will add a nonce CSP in `entry.server.tsx`), the app's value replaces the default instead of being appended next to it.
+- `app.disable("x-powered-by")` and `trust proxy` 1 (Railway terminates TLS one hop in front).
+- `Cache-Control` for documents stays with `applyCachePolicy`. Static files keep exactly the values `react-router-serve` used: `/assets` `public, max-age=31536000, immutable`, everything else in `public/` and `build/client` the `express.static` defaults and a 1 hour `max-age` for `public/`. The `compression` middleware is unchanged.
+- Shutdown: SIGTERM and SIGINT stop accepting connections, let in-flight requests finish and exit 0; a drain that exceeds 14 seconds is forced to exit 1 (Railway drains for 15 seconds, `apps/web/railway.json`).
+- The access log is described in `docs/security/logging-policy.md`.
+
+`.data` responses are still also covered through `handleDataRequest` in `entry.server.tsx`. Tests: unit tests in `apps/web/server/*.test.ts`, and `apps/web/server/server.integration.test.ts`, which spawns the built server and checks the headers on every response kind (CI: the E2E smoke job runs `bun run --cwd apps/web test:server` after the build). Rollback: redeploy the previous deployment, or restore the previous start command (`react-router-serve ./build/server/index.js`) in `apps/web/Dockerfile` (`CMD`) and `apps/web/package.json` (`start`); `@react-router/serve` stays installed for one release.
 
 `Cross-Origin-Resource-Policy: same-origin` is sent with the other headers: nothing cross-origin embeds the app's documents (the marketing site only links to it; Sentry and WorkOS are outbound).
 

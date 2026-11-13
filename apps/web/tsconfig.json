@@ -3,6 +3,8 @@
   "exclude": ["node_modules"],
   "include": [
     "app",
+    "server",
+    "server.ts",
     "__mocks__",
     "db_types.ts",
     ".react-router/types/**/*",

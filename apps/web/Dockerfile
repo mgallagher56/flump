@@ -51,5 +51,8 @@ USER bun
 # Liveness probe for local runs and CI (Railway ignores Docker HEALTHCHECK).
 HEALTHCHECK --interval=30s --timeout=3s --start-period=15s CMD ["bun", "-e", "fetch('http://127.0.0.1:'+(process.env.PORT||3000)+'/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
 
-# Exec form so SIGTERM reaches the server directly.
-CMD ["bun", "node_modules/.bin/react-router-serve", "./build/server/index.js"]
+# Exec form so SIGTERM reaches the server directly. server.ts is the custom Express server (a port
+# of react-router-serve plus security headers on every response and a query-free access log).
+# Rollback: revert this line to ["bun", "node_modules/.bin/react-router-serve", "./build/server/index.js"]
+# (@react-router/serve stays installed for one release).
+CMD ["bun", "server.ts"]
