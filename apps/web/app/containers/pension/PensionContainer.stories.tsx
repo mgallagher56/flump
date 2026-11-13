@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { expect, within } from "storybook/test";
+import { expect, fireEvent, userEvent, within } from "storybook/test";
 import PensionContainer from "./PensionContainer";
 
 const accounts = [
@@ -78,5 +78,23 @@ export const TaxTrap: Story = {
     await expect(
       (await canvas.findAllByRole("button", { name: "Model this contribution" })).length,
     ).toBeGreaterThan(0);
+  },
+};
+
+export const ScenarioZone: Story = {
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const zone = await canvas.findByRole("region", { name: "Model a change to your pension" });
+    await expect(within(zone).getByText("Illustration, not saved")).toBeDefined();
+    await expect(zone.querySelectorAll("[data-tone='hero']").length).toBe(0);
+    const heroBefore = canvasElement.querySelector("[data-tone='hero']")?.textContent;
+    fireEvent.change(within(zone).getByLabelText("Extra each month range slider"), {
+      target: { value: "300" },
+    });
+    await userEvent.click(
+      await within(zone).findByRole("button", { name: "Reset to saved figures" }),
+    );
+    await expect(canvasElement.querySelector("[data-tone='hero']")?.textContent).toBe(heroBefore);
+    await expect(canvas.queryByText(/sync/i)).toBeNull();
   },
 };

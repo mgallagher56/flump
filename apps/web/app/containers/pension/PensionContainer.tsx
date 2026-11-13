@@ -7,32 +7,21 @@ import {
   profileFactsFromProfile,
   selectTakeHome,
 } from "@flump/finance-engine";
-import {
-  Button,
-  Card,
-  Icon,
-  LiveRegion,
-  PageHeader,
-  ProjectionNotice,
-  StatusBadge,
-} from "@repo/ui";
-import {
-  Check,
-  LineChart,
-  Pencil,
-  PiggyBank,
-  Plus,
-  ShieldCheck,
-  TriangleAlert,
-  X,
-} from "lucide-react";
+import { Button, Icon, LiveRegion, PageHeader, StatusBadge } from "@repo/ui";
+import { LineChart, PiggyBank, Plus, ShieldCheck, TriangleAlert } from "lucide-react";
 import { type FC, useEffect, useMemo, useState } from "react";
 import { Link, useLoaderData, useLocation } from "react-router";
-import AddPensionAccountDialog from "~/components/pension/AddPensionAccountDialog";
-import PensionAccountsList from "~/components/pension/PensionAccountsList";
-import PensionForecasterCard from "~/components/pension/PensionForecasterCard";
 import type { Account } from "~/containers/accounts/types";
+import { AddPensionAccountDialog } from "~/features/pension/components/AddPensionAccountDialog";
+import { PensionAccountsList } from "~/features/pension/components/PensionAccountsList";
+import {
+  PensionDetails,
+  type PensionDetailsSaveValues,
+} from "~/features/pension/components/PensionDetails";
+import { PensionForecast } from "~/features/pension/components/PensionForecast";
+import { PENSION_SCENARIO_ZONE_ID } from "~/features/pension/components/PensionScenarioZone";
 import { PensionSummary } from "~/features/pension/components/PensionSummary";
+import { usePensionScenario } from "~/features/pension/usePensionScenario";
 import { AnnualAllowancePill } from "~/features/savings/components/AnnualAllowancePill";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import { useUserProfile } from "~/hooks/useUserProfile";
@@ -47,31 +36,9 @@ import {
   regionLinkStyle,
 } from "~/utils/taxTrapCopy";
 import {
-  assumedLabel,
-  buttonRow,
-  checkHint,
-  checkRow,
-  checkStack,
-  dot,
-  employeeSegment,
-  employerSegment,
-  fieldLabel,
-  inlineEditGrid,
-  inlineInput,
-  legendGroup,
-  legendItem,
-  legendRow,
   mutedNote,
-  niNote,
-  noteLink,
   pageRoot,
   panelStack,
-  promptCard,
-  proportionBar,
-  rulesActions,
-  rulesCard,
-  rulesHeader,
-  rulesTitle,
   strong,
   tabButton,
   tabList,
@@ -83,12 +50,8 @@ import {
 
 type PensionTab = "forecaster" | "pots" | "rules";
 
-const ASSUMED_RATE_LABEL = "Default: auto-enrolment minimum. Change in your pension details";
-const DEFAULT_GROWTH_NOTE =
-  "No growth rate is set on your pots, so the forecast uses a 5% placeholder. Edit a pot to set its rate.";
-
-const percentFormat = new Intl.NumberFormat("en-GB", { maximumFractionDigits: 1 });
-const formatPercent = (value: number) => `${percentFormat.format(value)}%`;
+/** Highest extra monthly payment the what-if lever offers. */
+const MAX_EXTRA_MONTHLY = 5000;
 
 export const PensionContainer: FC = () => {
   const loaderData = useLoaderData<typeof loader>();
@@ -98,6 +61,10 @@ export const PensionContainer: FC = () => {
 
   const { formatCurrency } = useFormatCurrency();
   const { profile, setProfile, updateProfile, markChecklistStep } = useUserProfile();
+  const updatedAt: string | null =
+    (profile as { updatedAt?: string }).updatedAt ||
+    (userProfile as { updatedAt?: string } | undefined)?.updatedAt ||
+    null;
   const { baseline } = useFinancialBaseline();
 
   useEffect(() => {
@@ -107,28 +74,11 @@ export const PensionContainer: FC = () => {
   }, [userProfile, setProfile]);
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [showWizard, setShowWizard] = useState(false);
-  const [wizardDismissed, setWizardDismissed] = useState(false);
+  const [activeTab, setActiveTab] = useState<PensionTab>("forecaster");
+  const [isEditingDetails, setIsEditingDetails] = useState(false);
+  // Bumped by "Model this contribution" so the page scrolls to the scenario zone.
+  const [scrollToZone, setScrollToZone] = useState(0);
   const { hash } = useLocation();
-  // The dashboard links to #pension-details, which lives on the rules tab.
-  const [activeTab, setActiveTab] = useState<PensionTab>(
-    hash === "#pension-details" ? "rules" : "forecaster",
-  );
-  useEffect(() => {
-    if (hash !== "#pension-details") return;
-    setActiveTab("rules");
-    // Wait a frame so the rules tab is visible before scrolling to its details card.
-    const frame = requestAnimationFrame(() => {
-      const target = document.getElementById("pension-details");
-      target?.scrollIntoView?.({ block: "start" });
-      target?.focus?.({ preventScroll: true });
-    });
-    return () => cancelAnimationFrame(frame);
-  }, [hash]);
-  const [whatIfRequest, setWhatIfRequest] = useState<{
-    employeePercent: number;
-    id: number;
-  } | null>(null);
 
   // Filter pension accounts and calculate current balances
   const pensionAccounts = useMemo(() => {
@@ -263,31 +213,9 @@ export const PensionContainer: FC = () => {
     userProfile,
   ]);
 
-  // Inline editing state for the Contributions Breakdown card
-  const [isEditingRates, setIsEditingRates] = useState(false);
-  // Held as strings so clearing a field does not snap it back to 0 while typing.
-  const [editSalary, setEditSalary] = useState(String(annualSalary));
-  const [editEmployeePct, setEditEmployeePct] = useState(String(employeePercent));
-  const [editEmployerPct, setEditEmployerPct] = useState(String(employerPercent));
-  const [editSalarySacrifice, setEditSalarySacrifice] = useState(isSalarySacrifice);
-  const [editSalarySacrificeEmployerNi, setEditSalarySacrificeEmployerNi] = useState(
-    isSalarySacrificeEmployerNi,
-  );
-  const [isSavingRates, setIsSavingRates] = useState(false);
-
-  useEffect(() => {
-    setEditSalary(String(annualSalary));
-    setEditEmployeePct(String(employeePercent));
-    setEditEmployerPct(String(employerPercent));
-    setEditSalarySacrifice(isSalarySacrifice);
-    setEditSalarySacrificeEmployerNi(isSalarySacrificeEmployerNi);
-  }, [
-    annualSalary,
-    employeePercent,
-    employerPercent,
-    isSalarySacrifice,
-    isSalarySacrificeEmployerNi,
-  ]);
+  // Scenario inputs live in memory only: no storage, no URL, no network. Seeded from saved data.
+  const savedGrowthRate = weightedReturnRate > 0 ? Number(weightedReturnRate.toFixed(1)) : 5;
+  const scenario = usePensionScenario(savedGrowthRate);
 
   // Mark setup checklist step as completed if accounts exist
   useEffect(() => {
@@ -296,44 +224,39 @@ export const PensionContainer: FC = () => {
     }
   }, [pensionAccounts.length, markChecklistStep]);
 
-  const handleSyncContributions = async (
-    newEmployeePct: number,
-    newEmployerPct: number,
-    newSalary?: number,
-    newSalarySacrifice?: boolean,
-    newEmployerNi?: boolean,
-  ) => {
-    try {
-      await updateProfile({
-        pensionPercent: roundTo2dp(newEmployeePct),
-        pensionEmployerPercent: roundTo2dp(newEmployerPct),
-        ...(newSalary ? { annualSalary: newSalary } : {}),
-        ...(newSalarySacrifice !== undefined ? { isSalarySacrifice: newSalarySacrifice } : {}),
-        ...(newEmployerNi !== undefined ? { isSalarySacrificeEmployerNi: newEmployerNi } : {}),
-      });
-    } catch (err) {
-      console.error("Failed to sync pension rates to profile:", err);
-    }
+  const handleSaveDetails = async (values: PensionDetailsSaveValues) => {
+    const salaryValue = Math.max(0, values.annualSalary ?? 0);
+    await updateProfile({
+      ...(salaryValue > 0 ? { annualSalary: salaryValue } : {}),
+      pensionPercent: roundTo2dp(Math.max(0, values.employeePercent ?? 0)),
+      pensionEmployerPercent: roundTo2dp(Math.max(0, values.employerPercent ?? 0)),
+      isSalarySacrifice: values.isSalarySacrifice,
+      isSalarySacrificeEmployerNi: values.isSalarySacrifice && values.isSalarySacrificeEmployerNi,
+    });
   };
 
-  const handleSaveInlineRates = async () => {
-    setIsSavingRates(true);
-    const salaryValue = Math.max(0, Number(editSalary) || 0);
-    try {
-      await updateProfile({
-        ...(salaryValue > 0 ? { annualSalary: salaryValue } : {}),
-        pensionPercent: roundTo2dp(Math.max(0, Number(editEmployeePct) || 0)),
-        pensionEmployerPercent: roundTo2dp(Math.max(0, Number(editEmployerPct) || 0)),
-        isSalarySacrifice: editSalarySacrifice,
-        isSalarySacrificeEmployerNi: editSalarySacrifice && editSalarySacrificeEmployerNi,
-      });
-      setIsEditingRates(false);
-    } catch (err) {
-      console.error("Failed to save inline pension rates:", err);
-    } finally {
-      setIsSavingRates(false);
-    }
+  // Opens the normal edit form (saved values) and brings it into view.
+  const handleEditDetails = () => {
+    setIsEditingDetails(true);
+    document.getElementById("pension-details")?.scrollIntoView?.({ block: "start" });
   };
+
+  // The dashboard links to #pension-details. The details card sits above the tabs, so the link
+  // only needs to scroll to it and move focus there.
+  useEffect(() => {
+    if (hash !== "#pension-details") return;
+    const frame = requestAnimationFrame(() => {
+      const target = document.getElementById("pension-details");
+      target?.scrollIntoView?.({ block: "start" });
+      target?.focus?.({ preventScroll: true });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [hash]);
+
+  useEffect(() => {
+    if (scrollToZone === 0) return;
+    document.getElementById(PENSION_SCENARIO_ZONE_ID)?.scrollIntoView?.({ block: "start" });
+  }, [scrollToZone]);
 
   const effectiveSalary =
     baseline.annualGrossSalary > 0 ? baseline.annualGrossSalary : annualSalary;
@@ -352,17 +275,13 @@ export const PensionContainer: FC = () => {
   }, [effectiveSalary, effectiveEmployeePct, effectiveIsSalarySacrifice, knownRegion]);
   const trapCopy = getTaxTrapCopy(taxTrap);
 
-  // Pre-fills the forecaster what-if only. Nothing is saved to the profile (advice boundary R5).
+  // Seeds the zone's extra-monthly lever only. Nothing is saved (advice boundary R5).
   const handleModelTaxTrapContribution = (contributionReq: number) => {
     if (!effectiveSalary || effectiveSalary <= 0) return;
-    const currentMonthlyEmployee = (effectiveSalary * (effectiveEmployeePct / 100)) / 12;
-    const extraMonthly = Math.round(contributionReq / 12);
-    const targetMonthly = currentMonthlyEmployee + extraMonthly;
-    const newEmployeePct = Math.min(
-      100,
-      Number((((targetMonthly * 12) / effectiveSalary) * 100).toFixed(1)),
-    );
-    setWhatIfRequest((prev) => ({ employeePercent: newEmployeePct, id: (prev?.id ?? 0) + 1 }));
+    const extraMonthly = Math.min(MAX_EXTRA_MONTHLY, Math.max(0, Math.round(contributionReq / 12)));
+    scenario.set("extraMonthly", extraMonthly);
+    setActiveTab("forecaster");
+    setScrollToZone((n) => n + 1);
   };
 
   // Headline outcome only; empty (nothing announced) when salary or contribution is not set.
@@ -374,7 +293,7 @@ export const PensionContainer: FC = () => {
       : "";
 
   const tabItems: { id: PensionTab; label: string; icon: typeof LineChart }[] = [
-    { id: "forecaster", label: "Retirement forecast", icon: LineChart },
+    { id: "forecaster", label: "Forecast", icon: LineChart },
     { id: "pots", label: `Your pots (${pensionAccounts.length})`, icon: PiggyBank },
     { id: "rules", label: "Contributions and allowances", icon: ShieldCheck },
   ];
@@ -385,8 +304,6 @@ export const PensionContainer: FC = () => {
     id: `pension-panel-${id}`,
     role: "tabpanel" as const,
   });
-  const employeeShare = (employeePercent / (employeePercent + employerPercent || 1)) * 100;
-  const employerShare = (employerPercent / (employeePercent + employerPercent || 1)) * 100;
 
   return (
     <div className={pageRoot}>
@@ -401,7 +318,6 @@ export const PensionContainer: FC = () => {
         title="Your pension"
       />
       <LiveRegion debounceMs={1000} message={pensionHeadline} visuallyHidden />
-      <ProjectionNotice />
 
       {/* £100k-£125k Personal Allowance taper: stated as fact, with a button to model it. */}
       {taxTrap.isInTaxTrap && (
@@ -468,6 +384,23 @@ export const PensionContainer: FC = () => {
         weightedReturnRate={weightedReturnRate}
       />
 
+      <PensionDetails
+        annualSalary={annualSalary}
+        employeePercent={employeePercent}
+        employerPercent={employerPercent}
+        hasSalary={hasSalary}
+        isEditing={isEditingDetails}
+        isSalarySacrifice={isSalarySacrifice}
+        isSalarySacrificeEmployerNi={isSalarySacrificeEmployerNi}
+        monthlyEmployeeContrib={monthlyEmployeeContrib}
+        monthlyEmployerNiContrib={monthlyEmployerNiContrib}
+        ratesAssumed={ratesAssumed}
+        standardMonthlyEmployerContrib={standardMonthlyEmployerContrib}
+        updatedAt={updatedAt}
+        onEditingChange={setIsEditingDetails}
+        onSave={handleSaveDetails}
+      />
+
       {/* Roving-tabindex tabs on plain buttons, as on the mortgage and debt pages.
           TODO(E15 Phase 2): adopt @repo/ui SegmentedTabs once it renders its panels. */}
       <div aria-label="Pension tools" className={tabList()} role="tablist">
@@ -507,42 +440,29 @@ export const PensionContainer: FC = () => {
         ))}
       </div>
 
-      {/* Panels stay mounted (hidden) so in-progress edits survive a tab switch. */}
+      {/* Panels stay mounted (hidden) so scenario inputs survive a tab switch. */}
       <div {...panelProps("forecaster")}>
-        {hasSalary && growthRateIsPlaceholder && pensionAccounts.length > 0 && (
-          <p className={mutedNote}>{DEFAULT_GROWTH_NOTE}</p>
-        )}
-        {hasSalary ? (
-          <PensionForecasterCard
-            currentPotTotal={totalValue}
-            directMonthlyContrib={directMonthlyContrib}
-            initialEmployeePercent={employeePercent}
-            initialEmployerPercent={employerPercent}
-            initialEmployerNiPassThrough={isSalarySacrificeEmployerNi}
-            initialSalary={annualSalary}
-            initialSalarySacrifice={isSalarySacrifice}
-            portfolioReturnRate={weightedReturnRate}
-            onSyncToProfile={handleSyncContributions}
-            whatIfRequest={whatIfRequest}
-          />
-        ) : (
-          <Card padding="md">
-            <p className={promptCard}>
-              Add your salary in{" "}
-              <Link className={noteLink} to="/app/profile">
-                Profile
-              </Link>{" "}
-              to project your pension.
-            </p>
-          </Card>
-        )}
+        <PensionForecast
+          currentPotTotal={totalValue}
+          directMonthlyContrib={directMonthlyContrib}
+          employeePercent={employeePercent}
+          employerPercent={employerPercent}
+          growthRateIsPlaceholder={growthRateIsPlaceholder}
+          hasPots={pensionAccounts.length > 0}
+          hasSalary={hasSalary}
+          isSalarySacrifice={isSalarySacrifice}
+          passEmployerNi={isSalarySacrificeEmployerNi}
+          portfolioReturnRate={weightedReturnRate}
+          salary={annualSalary}
+          scenario={scenario}
+          onEditDetails={handleEditDetails}
+        />
       </div>
 
       <div {...panelProps("pots")}>
         <PensionAccountsList
           accounts={pensionAccounts}
           onOpenAddModal={() => setIsAddModalOpen(true)}
-          onOpenWizard={() => setShowWizard(true)}
         />
       </div>
 
@@ -557,191 +477,9 @@ export const PensionContainer: FC = () => {
             12
           }
         />
-
-        <section
-          aria-labelledby="pension-rules-title"
-          className={rulesCard}
-          data-testid="pension-details"
-          id="pension-details"
-          tabIndex={-1}
-        >
-          <div className={rulesHeader}>
-            <h2 className={rulesTitle} id="pension-rules-title">
-              <Icon icon={ShieldCheck} size="sm" />
-              Your current contributions (UK auto-enrolment)
-            </h2>
-            <div className={rulesActions}>
-              <p className={mutedNote}>Standard: 5% employee + 3% employer = 8% total</p>
-              {!isEditingRates ? (
-                <Button
-                  size="sm"
-                  type="button"
-                  variant="outline"
-                  onClick={() => setIsEditingRates(true)}
-                >
-                  <Icon icon={Pencil} size="sm" />
-                  Edit rates
-                </Button>
-              ) : (
-                <div className={buttonRow}>
-                  <Button
-                    size="sm"
-                    type="button"
-                    variant="ghost"
-                    onClick={() => setIsEditingRates(false)}
-                  >
-                    <Icon icon={X} size="sm" />
-                    Cancel
-                  </Button>
-                  <Button
-                    disabled={isSavingRates}
-                    size="sm"
-                    type="button"
-                    onClick={handleSaveInlineRates}
-                  >
-                    <Icon icon={Check} size="sm" />
-                    {isSavingRates ? "Saving…" : "Save to profile"}
-                  </Button>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {isEditingRates && (
-            <div className={inlineEditGrid}>
-              <div>
-                <label className={fieldLabel} htmlFor="inline-pension-salary">
-                  Annual salary (£)
-                </label>
-                <input
-                  className={inlineInput}
-                  id="inline-pension-salary"
-                  min="0"
-                  step="500"
-                  type="number"
-                  value={editSalary}
-                  onChange={(e) => setEditSalary(e.target.value)}
-                />
-              </div>
-              <div>
-                <label className={fieldLabel} htmlFor="inline-employee-pct">
-                  Your contribution (%)
-                </label>
-                <input
-                  className={inlineInput}
-                  id="inline-employee-pct"
-                  max="100"
-                  min="0"
-                  step="0.5"
-                  type="number"
-                  value={editEmployeePct}
-                  onChange={(e) => setEditEmployeePct(e.target.value)}
-                />
-              </div>
-              <div>
-                <label className={fieldLabel} htmlFor="inline-employer-pct">
-                  Employer contribution (%)
-                </label>
-                <input
-                  className={inlineInput}
-                  id="inline-employer-pct"
-                  max="100"
-                  min="0"
-                  step="0.5"
-                  type="number"
-                  value={editEmployerPct}
-                  onChange={(e) => setEditEmployerPct(e.target.value)}
-                />
-              </div>
-              <div className={checkStack}>
-                <label className={checkRow} htmlFor="pension-salary-sacrifice-checkbox">
-                  <input
-                    checked={editSalarySacrifice}
-                    id="pension-salary-sacrifice-checkbox"
-                    type="checkbox"
-                    onChange={(e) => {
-                      setEditSalarySacrifice(e.target.checked);
-                      if (!e.target.checked) {
-                        setEditSalarySacrificeEmployerNi(false);
-                      }
-                    }}
-                  />
-                  <span>Salary sacrifice (saves NI)</span>
-                </label>
-                <label
-                  className={checkRow}
-                  data-disabled={!editSalarySacrifice}
-                  htmlFor="pension-employer-ni-checkbox"
-                >
-                  <input
-                    checked={editSalarySacrifice && editSalarySacrificeEmployerNi}
-                    disabled={!editSalarySacrifice}
-                    id="pension-employer-ni-checkbox"
-                    type="checkbox"
-                    onChange={(e) => setEditSalarySacrificeEmployerNi(e.target.checked)}
-                  />
-                  <span>
-                    Pass on employer NI
-                    <span className={checkHint}>
-                      {editSalarySacrifice
-                        ? "Employer reinvests their NI saving into your pot"
-                        : "Requires salary sacrifice"}
-                    </span>
-                  </span>
-                </label>
-              </div>
-            </div>
-          )}
-
-          {/* SVG rect widths are attributes, so the split needs no inline style. */}
-          <svg
-            aria-hidden="true"
-            className={proportionBar}
-            preserveAspectRatio="none"
-            viewBox="0 0 100 12"
-          >
-            <rect className={employeeSegment} height="12" width={employeeShare} x="0" />
-            <rect className={employerSegment} height="12" width={employerShare} x={employeeShare} />
-          </svg>
-
-          <div className={legendRow}>
-            <div className={legendGroup}>
-              <span className={legendItem}>
-                <span aria-hidden="true" className={dot({ series: "employee" })} />
-                <span>
-                  <strong>Employee:</strong> {formatPercent(employeePercent)} (
-                  {formatCurrency(monthlyEmployeeContrib)}
-                  /mo)
-                  {ratesAssumed && <span className={assumedLabel}>{ASSUMED_RATE_LABEL}</span>}
-                </span>
-              </span>
-              <span className={legendItem}>
-                <span aria-hidden="true" className={dot({ series: "employer" })} />
-                <span>
-                  <strong>Employer:</strong> {formatPercent(employerPercent)} (
-                  {formatCurrency(standardMonthlyEmployerContrib)}/mo
-                  {monthlyEmployerNiContrib > 0 && (
-                    <span className={niNote}>
-                      + {formatCurrency(monthlyEmployerNiContrib)}/mo NI
-                    </span>
-                  )}
-                  ){ratesAssumed && <span className={assumedLabel}>{ASSUMED_RATE_LABEL}</span>}
-                </span>
-              </span>
-            </div>
-
-            <p className={mutedNote}>
-              Salary:{" "}
-              <strong>{hasSalary ? `${formatCurrency(annualSalary)}/yr` : "not set"}</strong> ·{" "}
-              {isSalarySacrifice
-                ? isSalarySacrificeEmployerNi
-                  ? "Salary sacrifice + employer NI"
-                  : "Salary sacrifice"
-                : "Net pay"}{" "}
-              · Synced with your profile
-            </p>
-          </div>
-        </section>
+        <p className={mutedNote}>
+          Auto-enrolment minimum: 5% from you and 3% from your employer, 8% in total.
+        </p>
       </div>
 
       <AddPensionAccountDialog isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} />
