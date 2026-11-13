@@ -1,4 +1,4 @@
-import { canonicalLinkTag } from "./sitemap";
+import { canonicalLinkTag, ogUrlTag } from "./sitemap";
 
 type HelmetPart = { toString(): string } | undefined;
 
@@ -19,11 +19,13 @@ export function buildHeadMeta({
   status,
 }: HeadMetaInput): string {
   const canonical = status === 200 ? canonicalLinkTag(siteUrl, url) : "";
+  const ogUrl = status === 200 ? ogUrlTag(siteUrl, url) : "";
   return `
         ${helmet?.title?.toString() || ""}
         ${helmet?.meta?.toString() || ""}
         ${helmet?.link?.toString() || ""}
         ${canonical}
+        ${ogUrl}
         ${appUrlScript}
       `;
 }

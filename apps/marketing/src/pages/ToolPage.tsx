@@ -10,11 +10,11 @@ import {
 } from "@repo/ui/calculators";
 import { css } from "@repo/ui/styled-system/css";
 import type { FC } from "react";
-import { Helmet } from "react-helmet-async";
 import { FiArrowLeft } from "react-icons/fi";
 import { Link, useParams } from "react-router-dom";
 import { Footer } from "../components/Footer";
 import { Header } from "../components/Header";
+import { PageMeta } from "../components/PageMeta";
 import { isKnownToolSlug, TOOL_SLUG_ALIASES } from "../utils/toolSlugs";
 import { getAppUrl } from "../utils/url";
 import { NotFoundPage } from "./NotFoundPage";
@@ -45,10 +45,10 @@ export const ToolPage: FC = () => {
 
   return (
     <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
-      <Helmet>
-        <title>{toolMeta.title} | Free UK Calculator | Flump</title>
-        <meta name="description" content={toolMeta.desc} />
-      </Helmet>
+      <PageMeta
+        title={`${toolMeta.title} | Free UK Calculator | Flump`}
+        description={toolMeta.desc}
+      />
 
       <Header />
 

@@ -1,7 +1,6 @@
 import { css } from "@repo/ui/styled-system/css";
 import { grid } from "@repo/ui/styled-system/patterns";
 import type { FC } from "react";
-import { Helmet } from "react-helmet-async";
 import {
   FiArrowRight,
   FiCreditCard,
@@ -13,6 +12,7 @@ import {
 import { Link } from "react-router-dom";
 import { Footer } from "../components/Footer";
 import { Header } from "../components/Header";
+import { PageMeta } from "../components/PageMeta";
 
 const containerStyle = css({
   maxWidth: "6xl",
@@ -144,13 +144,10 @@ export const TOOLS_CATALOG = [
 export const ToolsIndexPage: FC = () => {
   return (
     <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
-      <Helmet>
-        <title>Free UK financial and tax calculators | Flump</title>
-        <meta
-          name="description"
-          content="Free standalone UK personal finance calculators: £100k tax trap, debt avalanche vs snowball, Section 24 landlord tax, and mortgage vs ISA."
-        />
-      </Helmet>
+      <PageMeta
+        title="Free UK financial and tax calculators | Flump"
+        description="Free standalone UK personal finance calculators: £100k tax trap, debt avalanche vs snowball, Section 24 landlord tax, and mortgage vs ISA."
+      />
 
       <Header />
 
