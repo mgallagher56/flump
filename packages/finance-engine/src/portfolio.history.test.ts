@@ -121,11 +121,25 @@ describe("E23 D17: asset signs", () => {
     expect(overdrawn.getAccount("cur")?.nominalBalance).toBe(-1500);
   });
 
-  it("lists the overdrawn portion as an overdraft debt item", () => {
-    const items = new PortfolioSnapshot([current(-1500)], []).toDebtItems();
-    expect(items).toHaveLength(1);
-    expect(items[0]).toMatchObject({ id: "cur", type: "overdraft", balance: 1500 });
-    expect(new PortfolioSnapshot([current(250)], []).toDebtItems()).toEqual([]);
+  it("never emits cash or savings accounts as debt items", () => {
+    const snapshot = new PortfolioSnapshot(
+      [
+        current(-1500),
+        saving(-20, "sav2"),
+        saving(900),
+        { id: "cc", type: "Credit Card", balance: -50 },
+      ],
+      [],
+    );
+    expect(snapshot.toDebtItems().map((d) => d.id)).toEqual(["cc"]);
+    expect(snapshot.getTotalConsumerDebt()).toBe(1500 + 50);
+  });
+
+  it("liquid cash never nets an overdraft against savings", () => {
+    const snapshot = new PortfolioSnapshot([saving(1000), current(-300)], []);
+    expect(snapshot.getTotalLiquidCash()).toBe(1000);
+    expect(snapshot.getTotalConsumerDebt()).toBe(300);
+    expect(new PortfolioSnapshot([current(-300)], []).getTotalLiquidCash()).toBe(0);
   });
 
   it("liabilities are normalised by type whatever the stored sign", () => {

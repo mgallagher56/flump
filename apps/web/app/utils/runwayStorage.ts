@@ -95,6 +95,9 @@ export function calculateRunwayStats({
     pool = liquidAccounts.reduce((sum, a) => sum + snapshot.getLatestBalance(a.id), 0);
   }
 
+  // An overdrawn account must never produce a negative runway.
+  pool = Math.max(0, pool);
+
   const incomeEntries = (entries || []).filter((e) => e.isIncome);
   const hasExplicitPrimary = incomeEntries.some((e) => e.isPrimaryIncome);
   const primaryId = hasExplicitPrimary

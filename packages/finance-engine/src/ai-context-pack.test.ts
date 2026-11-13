@@ -141,3 +141,19 @@ describe("budget notes anonymisation (E17-N4)", () => {
     expect("notes" in (pack.budgetSummary.entries[0] ?? {})).toBe(false);
   });
 });
+
+describe("overdrawn accounts in the markdown (E23 C-15)", () => {
+  it("formats a negative cash balance as -£120 and labels it overdrawn", () => {
+    const pack = buildFlumpAiContextPack(
+      {
+        baseline: { ...DEFAULT_FINANCIAL_BASELINE, userId: "u", annualGrossSalary: 40000 },
+        accounts: [{ id: "c1", name: "Everyday", type: "Current", balance: -120 }],
+        budgetEntries: [],
+      },
+      { anonymizeInstitutions: true },
+    );
+    const md = formatAiContextPackMarkdown(pack);
+    expect(md).toContain("-£120 (overdrawn)");
+    expect(md).not.toContain("£-120");
+  });
+});
