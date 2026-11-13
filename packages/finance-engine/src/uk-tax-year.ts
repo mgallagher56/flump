@@ -36,7 +36,9 @@ import {
   ruleSourceUrls,
   ruleUnverifiedNotes,
   UK_RULE_SOURCES,
+  UK_STATE_PENSION_SOURCES,
   type UkRuleSources,
+  type UkStatePensionYear,
 } from "./uk-rule-sources.js";
 
 export { SUPPORTED_UK_TAX_YEARS };
@@ -298,6 +300,67 @@ const PENSION_ANNUAL_ALLOWANCE: Record<UkTaxYear, number> = {
 // year, the maximum you can save in ISAs is 20,000"). Other years UNVERIFIED in the registry.
 const ISA_ALLOWANCE = 20000;
 
+// State Pension. Weekly rates per tax year, from the GOV.UK benefit and pension rates publications
+// (see UK_STATE_PENSION_SOURCES). 2020/21 to 2022/23 are UNVERIFIED in the registry. The annual
+// figure is weekly x 52 (GOV.UK/owner: 241.30 -> 12,547.60, 250.70 -> 13,036.40).
+export interface UkStatePensionRules {
+  /** Full new State Pension, pounds per week. */
+  fullNewWeekly: number;
+  /** Full new State Pension, pounds per year (weekly x 52, to the penny). */
+  fullNewAnnual: number;
+  /** Old basic State Pension (category A or B), pounds per week. */
+  basicWeekly: number;
+  /** Qualifying years needed for the full new State Pension. */
+  qualifyingYearsForFull: 35;
+  /** Minimum qualifying years for any new State Pension (pro rata below 35). */
+  minQualifyingYears: 10;
+}
+
+const STATE_PENSION_WEEKLY: Record<UkStatePensionYear, { fullNew: number; basic: number }> = {
+  "2020/21": { fullNew: 175.2, basic: 134.25 },
+  "2021/22": { fullNew: 179.6, basic: 137.6 },
+  "2022/23": { fullNew: 185.15, basic: 141.85 },
+  "2023/24": { fullNew: 203.85, basic: 156.2 },
+  "2024/25": { fullNew: 221.2, basic: 169.5 },
+  "2025/26": { fullNew: 230.25, basic: 176.45 },
+  "2026/27": { fullNew: 241.3, basic: 184.9 },
+  "2027/28": { fullNew: 250.7, basic: 192.1 },
+};
+
+/** State Pension age today: 67 (66 for people born 6 Apr 1960 to 5 Mar 1961 while it phases up). UNVERIFIED in the registry. */
+export const UK_STATE_PENSION_AGE = 67;
+
+export function isUkStatePensionYear(year: string): year is UkStatePensionYear {
+  return Object.hasOwn(UK_STATE_PENSION_SOURCES, year);
+}
+
+/**
+ * State Pension rates for a tax year, including the announced 2027/28 rate which is not yet a
+ * supported tax year for the other calculators. Throws for any other year.
+ */
+export function getUkStatePensionRules(year: string): UkStatePensionRules {
+  if (!isUkStatePensionYear(year)) throw new UnsupportedUkTaxYearError(year, "State Pension");
+  const w = STATE_PENSION_WEEKLY[year];
+  return {
+    fullNewWeekly: w.fullNew,
+    fullNewAnnual: roundPence(w.fullNew * 52),
+    basicWeekly: w.basic,
+    qualifyingYearsForFull: 35,
+    minQualifyingYears: 10,
+  };
+}
+
+/** Full new State Pension annual amount for a number of qualifying years: pro rata, 0 under 10, capped at 35. */
+export function calculateNewStatePensionAnnual(qualifyingYears: number, year: string): number {
+  const rules = getUkStatePensionRules(year);
+  const years = Math.floor(Math.max(0, qualifyingYears));
+  if (years < rules.minQualifyingYears) return 0;
+  return roundPence(
+    rules.fullNewAnnual *
+      (Math.min(years, rules.qualifyingYearsForFull) / rules.qualifyingYearsForFull),
+  );
+}
+
 // ---------------------------------------------------------------------------
 // Rules
 // ---------------------------------------------------------------------------
@@ -320,6 +383,8 @@ export interface UkTaxYearRules {
   pensionAnnualAllowance: number;
   /** ISA subscription allowance across all ISAs. */
   isaAllowance: number;
+  /** State Pension rates for this tax year. */
+  statePension: UkStatePensionRules;
   /**
    * Adjusted net income at which the personal allowance is fully lost:
    * taper start + 2 x personal allowance (GBP1 lost per GBP2).
@@ -359,6 +424,7 @@ export function getUkTaxYearRules(year: UkTaxYear): UkTaxYearRules {
     ruleSources: UK_RULE_SOURCES[year],
     pensionAnnualAllowance: PENSION_ANNUAL_ALLOWANCE[year],
     isaAllowance: ISA_ALLOWANCE,
+    statePension: getUkStatePensionRules(year),
     taperEnd: ewni.personalAllowanceTaperStart + 2 * ewni.personalAllowance,
     verified: unverified.length === 0,
     unverified,
