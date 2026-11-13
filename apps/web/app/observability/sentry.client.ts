@@ -39,7 +39,7 @@ export function init(env: ClientSentryEnv | undefined): boolean {
     dsn,
     environment: env?.SENTRY_ENVIRONMENT || "unknown",
     release: env?.SENTRY_RELEASE || undefined,
-    // v11 removed `sendDefaultPii`; `dataCollection` replaces it (Sentry v11 migration guide, "Data collection").
+    // v11 removed `sendDefaultPii`; `dataCollection` replaces it (see `@sentry/core` 11.11.0 `datacollection.d.ts` and `resolveDataCollectionOptions`).
     // Every v11 default is ON, so every category is switched off explicitly:
     // user/IP, cookies, headers, bodies, query strings, local variables, DB and queue data, AI/GraphQL/MCP content.
     dataCollection: PRIVATE_DATA_COLLECTION,

@@ -45,6 +45,8 @@ test.skipIf(!observabilityBuilt)(
     expect(envelope).not.toContain(sentinel);
     expect(envelope).not.toContain("SENTINELQUERYVALUE3");
     expect(envelope).not.toContain("SENTINELCOOKIEVALUE2");
+    const { assertNoLeakedKeys } = await import("../../apps/backend/test/support/envelope-keys");
+    expect(() => assertNoLeakedKeys(bodies)).not.toThrow();
   },
   30_000,
 );

@@ -16,7 +16,6 @@ const ALLOWED_INTEGRATIONS = new Set([
   "FunctionToString",
   "LinkedErrors",
   "Dedupe",
-  "ContextLines",
 ]);
 
 let initialised = false;
@@ -32,7 +31,7 @@ export function initSentry(env: Env): boolean {
     environment: SENTRY_ENVIRONMENT || "unknown",
     release: SENTRY_RELEASE || undefined,
     serverName: "web",
-    // v11 removed `sendDefaultPii`; `dataCollection` replaces it (Sentry v11 migration guide, "Data collection").
+    // v11 removed `sendDefaultPii`; `dataCollection` replaces it (see `@sentry/core` 11.11.0 `datacollection.d.ts` and `resolveDataCollectionOptions`).
     // Every v11 default is ON, so every category is switched off explicitly:
     // user/IP, cookies, headers, bodies, query strings, local variables, DB and queue data, AI/GraphQL/MCP content.
     dataCollection: PRIVATE_DATA_COLLECTION,
@@ -48,6 +47,8 @@ export function initSentry(env: Env): boolean {
     // v11 default is ON: it registers module-loader hooks that rewrite application modules so that
     // instrumentation channels fire. Nothing here uses them, so no code transformation at load time.
     enableRuntimeChannelInjection: false,
+    // SENTRY_SPOTLIGHT in the environment would otherwise enable the Spotlight sidecar integration.
+    spotlight: false,
     defaultIntegrations: false,
     integrations: [
       ...Sentry.getDefaultIntegrations({}).filter((i) => ALLOWED_INTEGRATIONS.has(i.name)),

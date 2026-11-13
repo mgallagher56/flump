@@ -61,6 +61,7 @@ describe("sentry.server", () => {
       environment: "unknown",
       enableOpenTelemetrySetup: false,
       enableRuntimeChannelInjection: false,
+      spotlight: false,
       defaultIntegrations: false,
       includeLocalVariables: false,
       tracesSampleRate: 0,
@@ -80,7 +81,6 @@ describe("sentry.server", () => {
     const names = opts.integrations.map((i) => i.name);
     expect([...names].sort()).toEqual(
       [
-        "ContextLines",
         "Dedupe",
         "EventFilters",
         "FunctionToString",

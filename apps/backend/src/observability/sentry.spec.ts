@@ -37,6 +37,7 @@ describe("initSentry", () => {
       environment: "unknown",
       enableOpenTelemetrySetup: false,
       enableRuntimeChannelInjection: false,
+      spotlight: false,
       includeLocalVariables: false,
       tracesSampleRate: 0,
       traceLifecycle: "static",
@@ -56,7 +57,6 @@ describe("initSentry", () => {
     expect(opts.defaultIntegrations).toBe(false);
     expect([...names].sort()).toEqual(
       [
-        "ContextLines",
         "Dedupe",
         "EventFilters",
         "FunctionToString",
@@ -72,6 +72,7 @@ describe("initSentry", () => {
       "RequestData",
       "NodeSystemError",
       "ConversationId",
+      "ContextLines",
       "Context",
       "Modules",
       "LocalVariablesAsync",

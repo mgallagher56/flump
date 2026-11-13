@@ -2,6 +2,10 @@ export interface SafeOptionsInput {
   /** v10 option, removed in v11. Tolerated only when absent or `false`. */
   sendDefaultPii?: unknown;
   dataCollection?: unknown;
+  defaultIntegrations?: unknown;
+  enableRuntimeChannelInjection?: unknown;
+  traceLifecycle?: unknown;
+  spotlight?: unknown;
   tracesSampleRate?: unknown;
   tracesSampler?: unknown;
   profilesSampleRate?: unknown;
@@ -17,13 +21,23 @@ export interface SafeOptionsInput {
   beforeBreadcrumb?: unknown;
 }
 
+/** Freezes an object graph so no Sentry init can mutate a shared constant. Typed as the input. */
+function deepFreeze<T>(value: T): T {
+  if (typeof value === "object" && value !== null) {
+    for (const child of Object.values(value)) deepFreeze(child);
+    Object.freeze(value);
+  }
+  return value;
+}
+
 /**
  * The v11 replacement for `sendDefaultPii: false`: every automatic data category switched off.
  * In v11 each of these defaults to ON (see the `dataCollection` option in the Sentry v11
- * migration guide), so each one must be set explicitly. Shared by the backend, the web server
+ * `@sentry/core` 11.11.0 `datacollection.d.ts` and `resolveDataCollectionOptions`), so each one must
+ * be set explicitly. The SDK only reads this object, so it is deep-frozen. Shared by the backend, the web server
  * and the web client. `assertSafeOptions` enforces exactly this contract.
  */
-export const PRIVATE_DATA_COLLECTION = {
+export const PRIVATE_DATA_COLLECTION = deepFreeze({
   userInfo: false,
   cookies: false,
   httpHeaders: false,
@@ -35,7 +49,8 @@ export const PRIVATE_DATA_COLLECTION = {
   databaseQueryData: false,
   queues: false,
   stackFrameVariables: false,
-} as const;
+  frameContextLines: 0,
+});
 
 const FORBIDDEN_INTEGRATION = /tracing|replay|feedback|profil/i;
 
@@ -82,6 +97,7 @@ function assertDataCollectionOff(dataCollection: unknown): void {
   if (dc.databaseQueryData !== false) fail("dataCollection.databaseQueryData must be false");
   if (dc.queues !== false) fail("dataCollection.queues must be false");
   if (dc.stackFrameVariables !== false) fail("dataCollection.stackFrameVariables must be false");
+  if (dc.frameContextLines !== 0) fail("dataCollection.frameContextLines must be 0");
 }
 
 function fail(reason: string): never {
@@ -95,6 +111,16 @@ export function assertSafeOptions(opts: SafeOptionsInput): void {
     fail("sendDefaultPii must be false");
   }
   assertDataCollectionOff(opts.dataCollection);
+  if (opts.defaultIntegrations !== false) fail("defaultIntegrations must be false");
+  if (opts.traceLifecycle !== "static") fail("traceLifecycle must be 'static'");
+  // Only dangerous values are rejected: the browser inits do not set these server-only options.
+  if (
+    opts.enableRuntimeChannelInjection !== undefined &&
+    opts.enableRuntimeChannelInjection !== false
+  ) {
+    fail("enableRuntimeChannelInjection must be false");
+  }
+  if (opts.spotlight !== undefined && opts.spotlight !== false) fail("spotlight must be false");
   if (isPositive(opts.tracesSampleRate) || opts.tracesSampler !== undefined || opts.enableTracing) {
     fail("tracing must be disabled");
   }
