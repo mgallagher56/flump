@@ -27,7 +27,7 @@ permissions:
 
 jobs:
   lint:
-    name: ⬣ Lint
+    name: ⬣ Lint & Type Check
     if: github.event_name != 'schedule'
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -98,31 +98,21 @@ jobs:
       - name: 🧪 Test repo scripts
         run: bun run test:scripts
 
-  check-types:
-    name: 🔎 Type Check
-    if: github.event_name != 'schedule'
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    permissions:
-      actions: write
-      contents: read
-
-    steps:
-      - name: ⬇️ Checkout repo
-        uses: actions/checkout@v7.0.1
-
-      - name: ⚙️ Setup Bun and install dependencies
-        uses: ./.github/actions/bun-setup
-        with:
-          turbo: true
-          ghToken: ${{ secrets.GITHUB_TOKEN }}
-          turboToken: ${{ env.TURBO_TOKEN }}
-
       - name: 🔎 Type check all packages
         run: bun run check-types
 
-  vitest:
-    name: ⚡ Vitest Tests
+  # Vitest runs as two parallel shards (web, backend + packages) so neither is the critical path.
+  # Both need the throwaway Postgres: the web unit project includes the backend contract suite
+  # (apps/web/app/contract), which boots the backend against a real database.
+  # Throwaway Postgres for the real-database suites. The job runs on the runner (not in a
+  # container), so localhost:5432 reaches the service. The password is a literal for this
+  # disposable container, not a secret. The database name must contain "test" as a whole word,
+  # e.g. flump_ci_test (assertSafeTestDatabase). REQUIRE_DB_TESTS=1 makes the suites fail at
+  # collection instead of skipping if TEST_DATABASE_URL ever goes missing. turbo.json lists both
+  # variables under `env` for the test tasks so turbo passes them to vitest and includes them in
+  # the task hash.
+  vitest-shard:
+    name: ⚡ Vitest ${{ matrix.name }}
     if: github.event_name != 'schedule'
     runs-on: ubuntu-latest
     timeout-minutes: 25
@@ -131,14 +121,15 @@ jobs:
       actions: write
       contents: read
       pull-requests: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: web
+            filter: "--filter=@flump/web"
+          - name: backend and packages
+            filter: "--filter=!@flump/web"
 
-    # Throwaway Postgres for the real-database migration suite. The job runs on the
-    # runner (not in a container), so localhost:5432 reaches the service. The password
-    # is a literal for this disposable container, not a secret. The database name must
-    # contain "test" as a whole word, e.g. flump_ci_test (assertSafeTestDatabase). REQUIRE_DB_TESTS=1 makes the suite fail
-    # at collection instead of skipping if TEST_DATABASE_URL ever goes missing.
-    # turbo.json lists both variables under `env` for the test tasks so turbo passes
-    # them to vitest and includes them in the task hash.
     services:
       postgres:
         image: postgres:18-alpine
@@ -170,19 +161,70 @@ jobs:
           turboToken: ${{ env.TURBO_TOKEN }}
 
       - name: ⚡ Run vitest with coverage floors
-        run: bun run test:coverage
-
-      # Ops script tests (scripts/ops): the DB-backed ones run against the Postgres service above
-      # through the runner's own psql. REQUIRE_DB_TESTS=1 makes them fail instead of skip.
-      - name: 🧰 Run ops script tests
-        run: bun test ./scripts/ops
+        run: bunx turbo run test:coverage ${{ matrix.filter }}
 
       - name: "Report Coverage"
-        if: always()
+        if: always() && matrix.name == 'web'
         uses: davelosert/vitest-coverage-report-action@v2.13.2
         with:
           working-directory: "apps/web"
           threshold-icons: '{"0": "🔴", "80": "🟢"}'
+
+  # Stable required-check name: branch protection keeps pointing at "⚡ Vitest Tests" while the
+  # work happens in the shards above.
+  vitest:
+    name: ⚡ Vitest Tests
+    if: always() && github.event_name != 'schedule'
+    needs: [vitest-shard]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: ✅ All Vitest shards passed
+        env:
+          RESULT: ${{ needs.vitest-shard.result }}
+        run: |
+          echo "vitest-shard: $RESULT"
+          [ "$RESULT" = "success" ]
+
+  # Ops script tests (scripts/ops): the DB-backed ones run against a Postgres service through the
+  # runner's own psql. REQUIRE_DB_TESTS=1 makes them fail instead of skip. Only needs installed
+  # dependencies, no turbo.
+  ops-scripts:
+    name: 🧰 Ops script tests
+    if: github.event_name != 'schedule'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: flump_ci_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d flump_ci_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+
+    env:
+      TEST_DATABASE_URL: postgres://postgres:postgres@localhost:5432/flump_ci_test
+      REQUIRE_DB_TESTS: "1"
+
+    steps:
+      - name: ⬇️ Checkout repo
+        uses: actions/checkout@v7.0.1
+
+      - name: ⚙️ Setup Bun and install dependencies
+        uses: ./.github/actions/bun-setup
+
+      - name: 🧰 Run ops script tests
+        run: bun test ./scripts/ops
 
   build:
     name: 🏗️ Build
@@ -210,7 +252,7 @@ jobs:
   # E8 Storybook a11y gate. Non-required while it beds in: continue-on-error keeps a failure here
   # from turning the pipeline red.
   # Remove continue-on-error and make this job required on 2026-11-25 (owner: mgallagher56) if green on main for the two weeks before.
-  # Light, dark and the build smoke run as parallel matrix legs, each through turbo so an
+  # Light (plus the build smoke) and dark run as parallel matrix legs, each through turbo so an
   # unchanged web app (and its workspace deps) replays from the remote cache.
   storybook-a11y:
     name: ♿ Storybook ${{ matrix.name }}
@@ -225,16 +267,14 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          # The light leg also runs the build smoke: the Storybook production build (--test)
+          # must still compile. It shares this leg's install, setup and turbo replay.
           - name: a11y (light)
             task: test:storybook
-            browser: true
+            smoke: true
           - name: a11y (dark)
             task: test:storybook:dark
-            browser: true
-          # Smoke: the Storybook production build (--test) must still compile.
-          - name: build smoke
-            task: build-storybook:test
-            browser: false
+            smoke: false
 
     steps:
       - name: ⬇️ Checkout repo
@@ -248,7 +288,6 @@ jobs:
           turboToken: ${{ env.TURBO_TOKEN }}
 
       - name: 🗂️ Cache Playwright browsers
-        if: matrix.browser
         id: playwright-cache
         uses: actions/cache@v6.1.0
         with:
@@ -256,7 +295,6 @@ jobs:
           key: playwright-${{ runner.os }}-${{ hashFiles('bun.lock') }}
 
       - name: 🌐 Install Chromium
-        if: matrix.browser
         working-directory: apps/web
         run: |
           if [ "${{ steps.playwright-cache.outputs.cache-hit }}" = "true" ]; then
@@ -269,6 +307,10 @@ jobs:
       # the stories import (e.g. @flump/finance-engine) are built (or replayed) first.
       - name: ♿ Storybook ${{ matrix.name }}
         run: bunx turbo run ${{ matrix.task }} --filter=@flump/web
+
+      - name: 🏭 Storybook build smoke
+        if: matrix.smoke
+        run: bunx turbo run build-storybook:test --filter=@flump/web
 
   # Playwright smoke suite (apps/e2e): the built backend, web and marketing apps against a real
   # Postgres, signed in through the test-only cookie session (E2E_DEV_SESSION, development
