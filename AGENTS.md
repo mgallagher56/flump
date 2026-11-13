@@ -86,7 +86,25 @@ A per-spawn `model` parameter overrides both frontmatter and the default. In wor
 
 - Applicable: `git` (status, diff, log, ...), `gh`, `bun`/`npm`/`pnpm` scripts (`lint`, `check-types`, `test`, `build`), `tsc`, `vitest`, `playwright`, `docker`, and file/search builtins (`ls`, `grep`, `find`, `cat`/read).
   - Example: `rtk git status`, `rtk bun run test`, `rtk bun run build`.
+- The hook only rewrites a command at the start of a line. Inside pipes, loops, subshells, `&&` chains and wrappers it does nothing, so type the prefix yourself there: `for n in 1 2; do rtk gh pr view "$n"; done`, `lockf /tmp/flump-gate.lock rtk bunx vitest run`.
+- The most-missed commands (from `rtk discover`): `git show` (use `rtk git show`), `grep -n` (`rtk grep`), `gh pr` (`rtk gh pr`), `tail`/`cat` on logs (`rtk read` or `rtk log`), `bunx biome` (`rtk bunx biome`), `ls -la` (`rtk ls`), `wc -l` (`rtk wc`).
+- To read a file as it is on main, read it in your own up-to-date worktree (rebase first) with the Read tool rather than `git show origin/main:<path>`. If you must use `git show`, prefix it.
+- When you only need failures, use `rtk err <cmd>` (errors and warnings only) or `rtk test <cmd>` (failing tests only) instead of the full output.
+- Run `rtk discover` to see which of your commands missed the proxy.
 - Not applicable: interactive commands, long-running dev servers (`bun run dev`, `storybook`), and commands whose raw output is itself the deliverable.
 - If a command's compressed output hides something needed (e.g. a full stack trace), use `rtk bypass <cmd>` for the raw output.
 - The Section 5 CI pre-flight checks must still be executed and verified; `rtk` only changes how their output is displayed (e.g. `rtk bun run lint`).
 - If `rtk` is not installed, install it (`brew install rtk`, or the official install script, which installs to `~/.local/bin` — ensure that is on `PATH`) and run `rtk init -g` for the Claude Code hook; fall back to the plain command only if installation is impossible.
+
+## 8. CONTEXT AND TOKEN EFFICIENCY LAW
+
+Every token an agent reads is paid for again on each later turn of that session, so keep contexts small.
+
+- **One task per session.** When a session's task is merged, it reports its follow-ups and stops. New work starts in a fresh session with a short brief, never in a long-running one.
+- **Fewer, larger PRs.** Bundle related tickets into one PR and do not stack PRs on other open PRs.
+- **Lean subagent reports.** Ask subagents for conclusions with file paths and line numbers, with a word limit, not file dumps or full logs. Do not read a subagent's transcript file.
+- **Read narrowly.** Read the part of a file you need (offset and limit), search before reading, and do not re-read a file you just edited.
+- **Do not poll.** Wait for the notification from a background command, subagent or session instead of re-checking it. Run long commands in the background.
+- **Pick the cheapest model that fits** (section 6), and give mechanical work to `sonnet`.
+- **Keep command output short.** Use `rtk` (section 7), `--json` with a `-q` filter on `gh`, and `| tail` or `| head` on anything long.
+
