@@ -270,6 +270,85 @@ jobs:
       - name: ♿ Storybook ${{ matrix.name }}
         run: bunx turbo run ${{ matrix.task }} --filter=@flump/web
 
+  # Playwright smoke suite (apps/e2e): the built backend, web and marketing apps against a real
+  # Postgres, signed in through the test-only cookie session (E2E_DEV_SESSION, development
+  # builds only; see apps/e2e/README.md). Playwright starts the three servers itself.
+  e2e-smoke:
+    name: 🎭 E2E smoke
+    if: github.event_name != 'schedule'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      actions: write
+      contents: read
+
+    # Throwaway Postgres; the password is a literal for this disposable container, not a secret.
+    # The database name must contain the word e2e (apps/e2e refuses any other).
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: flump_e2e
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d flump_e2e"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+
+    env:
+      CI: "true"
+      E2E_DATABASE_URL: postgres://postgres:postgres@localhost:5432/flump_e2e
+
+    steps:
+      - name: ⬇️ Checkout repo
+        uses: actions/checkout@v7.0.1
+
+      - name: ⚙️ Setup Bun and install dependencies
+        uses: ./.github/actions/bun-setup
+        with:
+          turbo: true
+          ghToken: ${{ secrets.GITHUB_TOKEN }}
+          turboToken: ${{ env.TURBO_TOKEN }}
+
+      - name: 🗂️ Cache Playwright browsers
+        id: playwright-cache
+        uses: actions/cache@v6.1.0
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('bun.lock') }}
+
+      - name: 🌐 Install Chromium
+        working-directory: apps/e2e
+        run: |
+          if [ "${{ steps.playwright-cache.outputs.cache-hit }}" = "true" ]; then
+            bunx playwright install-deps chromium
+          else
+            bunx playwright install --with-deps chromium
+          fi
+
+      - name: 🏗️ Build all packages
+        run: bun run build
+
+      - name: 🎭 Run E2E smoke tests
+        run: bun run test:e2e
+
+      # Trace, screenshots and the HTML report only matter when something failed.
+      - name: 📎 Upload Playwright report and traces
+        if: failure()
+        # actions/upload-artifact v7.0.2
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: playwright-report
+          path: |
+            apps/e2e/playwright-report
+            apps/e2e/test-results
+          retention-days: 7
+          if-no-files-found: ignore
+
   # A new workspace must never silently break the Railway images (E12 T2.23). The three
   # server Dockerfiles install only the workspaces they need; build them whenever a
   # manifest, the lockfile or a Dockerfile changes.

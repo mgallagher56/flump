@@ -119,6 +119,8 @@ Rows come from the code (`process.env.X`, `env.X` and `configService.get("X")` i
 | `WORKOS_REDIRECT_URI`                 | `<production web>/callback`                                              | `<staging web>/callback`     | generate fresh   | no      |
 | `VITE_WORKOS_REDIRECT_URI`            | `<production web>/callback`                                              | `<staging web>/callback`     | generate fresh   | no      |
 | `AUTH_DEV_BYPASS`                     | unset                                                                    | unset                        | unset            | no      |
+| `E2E_DEV_SESSION`                     | unset (the web server refuses to boot with it set outside development)   | unset                        | unset            | no      |
+| `RAILWAY_ENVIRONMENT`                 | Railway-injected                                                         | Railway-injected             | unset (platform) | no      |
 | `VITE_SB_THEME`                       | Storybook only, unset                                                    | unset                        | unset            | no      |
 | `ALLOW_INDEXING`                      | `true` only at public launch                                             | unset                        | unset            | no      |
 | `SENTRY_DSN`                          | production DSN (after N2/N3/N4)                                          | staging DSN (after N2/N3/N4) | generate fresh   | yes     |

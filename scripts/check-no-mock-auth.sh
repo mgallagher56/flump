@@ -24,7 +24,8 @@ read -r -a SCAN_ROOTS <<<"${SCAN_ROOTS:-apps packages}"
 set +e
 candidates=$(grep -rlE "$PATTERN" "${SCAN_ROOTS[@]}" \
   --exclude-dir=node_modules --exclude-dir=dist --exclude-dir=build \
-  --exclude-dir=coverage --exclude-dir=.react-router)
+  --exclude-dir=coverage --exclude-dir=.react-router \
+  --exclude-dir=playwright-report --exclude-dir=test-results)
 status=$?
 set -e
 if [ "$status" -gt 1 ]; then
