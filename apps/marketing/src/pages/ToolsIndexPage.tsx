@@ -167,6 +167,12 @@ const ENTRIES: Record<ToolCatalogEntry["slug"], Omit<ToolCatalogEntry, "slug">> 
     icon: <FiBookOpen size={22} aria-hidden="true" />,
     badge: "Student finance",
   },
+  "uk-pay-rise-take-home-calculator": {
+    title: "What you keep from a pay rise",
+    desc: "Estimate how much of the next £1,000 of pay is take-home after Income Tax, National Insurance, student loan and the Child Benefit charge, with each threshold from £0 to £150,000 marked. Unverified estimate.",
+    icon: <FiPercent size={22} aria-hidden="true" />,
+    badge: "Income tax",
+  },
   "uk-100k-tax-trap-calculator": {
     title: "£100k–£125k tax trap and childcare calculator",
     desc: "Model how the Personal Allowance taper changes the effective marginal rate between £100,000 and £125,140, and how a pension contribution changes adjusted net income, alongside 30 hours free childcare eligibility.",

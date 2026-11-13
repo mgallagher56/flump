@@ -1,6 +1,7 @@
 import { ProjectionNotice } from "@repo/ui";
 import {
   DebtSnowballCalculator,
+  MarginalRateExplorerStandalone,
   MortgageVsIsaCalculator,
   OverdraftCostCalculator,
   Section24Calculator,
@@ -171,6 +172,10 @@ export const ToolPage: FC = () => {
               onSaveAndContinue={handleContinue}
               persistSeed={persistSeed}
             />
+          )}
+
+          {normalizedSlug === "uk-pay-rise-take-home-calculator" && (
+            <MarginalRateExplorerStandalone />
           )}
 
           {(normalizedSlug === "uk-student-loan-overpay-or-invest-calculator" ||

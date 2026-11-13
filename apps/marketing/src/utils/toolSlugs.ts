@@ -8,6 +8,7 @@ export const CANONICAL_TOOL_SLUGS = [
   "overdraft-cost-and-payoff-calculator",
   "mortgage-overpayment-vs-isa-calculator",
   "uk-student-loan-overpay-or-invest-calculator",
+  "uk-pay-rise-take-home-calculator",
   "uk-100k-tax-trap-calculator",
   "section-24-landlord-tax-calculator",
 ] as const;
