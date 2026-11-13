@@ -13,6 +13,7 @@ import { HydratedRouter } from "react-router/dom";
 import { getInitialNamespaces } from "remix-i18next/client";
 
 import i18n from "./i18n";
+import { NonceProvider, readNonceFromDom } from "./security/nonce";
 
 type ClientEnv = { SENTRY_DSN?: string; SENTRY_ENVIRONMENT?: string; SENTRY_RELEASE?: string };
 
@@ -47,11 +48,13 @@ async function hydrate(): Promise<void> {
   startTransition(() => {
     hydrateRoot(
       document,
-      <I18nextProvider i18n={i18next}>
-        <StrictMode>
-          <HydratedRouter onError={(error) => captureClientError?.(error)} />
-        </StrictMode>
-      </I18nextProvider>,
+      <NonceProvider nonce={readNonceFromDom()}>
+        <I18nextProvider i18n={i18next}>
+          <StrictMode>
+            <HydratedRouter onError={(error) => captureClientError?.(error)} />
+          </StrictMode>
+        </I18nextProvider>
+      </NonceProvider>,
     );
   });
 }

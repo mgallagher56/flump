@@ -36,6 +36,14 @@ export const links = () => [{ rel: "stylesheet", href: styles }];
 
 export const middleware = [securityMiddleware];
 
+// remix-i18next reads route `handle.i18n` on BOTH the server (`getRouteNamespaces`) and the client
+// (`getInitialNamespaces`) to choose the namespaces to preload. The shared shell (Header, footer)
+// uses `common`, but only a few routes declared it, so on any other route (`/tools`, `/sandbox`) the
+// server (sync fs backend) rendered "Home" while the client (async http backend) rendered the key
+// "home" before `common.json` arrived: a text mismatch (React #418). Declaring it on the root
+// makes every route preload it before hydration.
+export const handle = { i18n: ["common"] };
+
 export const loader = async (args: LoaderFunctionArgs) => {
   const locale = await i18next.getLocale(args.request);
   const session = await getAuthSession(args, { ensureSignedIn: false });

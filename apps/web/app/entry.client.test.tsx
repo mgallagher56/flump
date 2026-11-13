@@ -68,10 +68,17 @@ describe("entry.client Sentry wiring", () => {
     expect(sentryModuleLoaded).toHaveBeenCalledOnce();
 
     // hydrateRoot received the element tree; render it shallowly to reach HydratedRouter's props.
+    // Tree: NonceProvider > I18nextProvider > StrictMode > HydratedRouter.
     const element = hydrateRoot.mock.calls[0]?.[1] as {
-      props: { children: { props: { children: { props: { onError: (e: unknown) => void } } } } };
+      props: {
+        children: {
+          props: {
+            children: { props: { children: { props: { onError: (e: unknown) => void } } } };
+          };
+        };
+      };
     };
-    const router = element.props.children.props.children;
+    const router = element.props.children.props.children.props.children;
     const error = new Error("render failed");
     await vi.waitFor(() => {
       router.props.onError(error);
