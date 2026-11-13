@@ -82,6 +82,13 @@ describe("assertToolOutputPolicy (unit)", () => {
     expect(() =>
       assertToolOutputPolicy({ ...good, a: "Vanguardian is not a provider name" }),
     ).not.toThrow();
+    for (const text of [
+      "The nationwide average rate is 4.5%.",
+      "A starling flew past.",
+      "Marcus is a first name.",
+    ]) {
+      expect(() => assertToolOutputPolicy({ ...good, a: text }), text).not.toThrow();
+    }
   });
 });
 
@@ -141,6 +148,14 @@ const ALLOW_LIST: AllowEntry[] = [
     owner: "E17-N11",
     expires: EXPIRES,
   },
+  // mortgage-isa.tool.ts early return when there is no mortgage balance.
+  {
+    surface: "tool:compare_mortgage_overpay_vs_isa",
+    kind: "banned-key",
+    detail: "recommendation",
+    owner: "E17-N11",
+    expires: EXPIRES,
+  },
   // financial-audit.tool.ts: healthScore.recommendations, student loan `recommendation`.
   {
     surface: "tool:evaluate_cashflow_runway_and_health",
@@ -165,21 +180,24 @@ const ALLOW_LIST: AllowEntry[] = [
     expires: EXPIRES,
   },
   // uk-advisor.prompts.ts: prompt text and the escape-100k description.
-  {
+  ...["recommend", "high-impact"].map((detail) => ({
     surface: "prompt:uk-financial-health-audit",
-    kind: "advice-language",
+    kind: "advice-language" as const,
+    detail,
     owner: "E17-N14",
     expires: EXPIRES,
-  },
+  })),
   {
     surface: "prompt:escape-100k-tax-trap",
     kind: "advice-language",
+    detail: "maximise",
     owner: "E17-N14",
     expires: EXPIRES,
   },
   {
     surface: "prompt-desc:escape-100k-tax-trap",
     kind: "advice-language",
+    detail: "optimal",
     owner: "E17-N14",
     expires: EXPIRES,
   },
@@ -193,17 +211,21 @@ const matches = (e: AllowEntry, surface: string, v: PolicyViolation) =>
   e.kind === v.kind &&
   (e.detail === undefined || e.detail === v.detail);
 
-/** Minimal valid arguments per tool, as in the N1 harness (`output-size.test.ts`). */
-const TOOL_CALLS: Record<string, Record<string, unknown>> = {
-  simulate_debt_payoff: { strategy: "COMPARE_BOTH" },
-  simulate_uk_tax_and_pension_sacrifice: { employeePensionPct: 5 },
-  compare_mortgage_overpay_vs_isa: {},
-  calculate_self_assessment_and_section24: { taxYear: "2025/26" },
-  project_wealth_scenario: {},
-  evaluate_cashflow_runway_and_health: {},
-  evaluate_uk_student_loan: { currentBalanceGbp: 30000 },
-  query_transactions_and_spending: {},
-};
+/**
+ * Minimal valid arguments per tool, as in the N1 harness (`output-size.test.ts`), plus extra
+ * calls that reach early-return branches no persona hits (zero mortgage balance).
+ */
+const TOOL_CALLS: Array<{ name: string; args: Record<string, unknown> }> = [
+  { name: "simulate_debt_payoff", args: { strategy: "COMPARE_BOTH" } },
+  { name: "simulate_uk_tax_and_pension_sacrifice", args: { employeePensionPct: 5 } },
+  { name: "compare_mortgage_overpay_vs_isa", args: {} },
+  { name: "compare_mortgage_overpay_vs_isa", args: { hypotheticalMortgageBalanceGbp: 0 } },
+  { name: "calculate_self_assessment_and_section24", args: { taxYear: "2025/26" } },
+  { name: "project_wealth_scenario", args: {} },
+  { name: "evaluate_cashflow_runway_and_health", args: {} },
+  { name: "evaluate_uk_student_loan", args: { currentBalanceGbp: 30000 } },
+  { name: "query_transactions_and_spending", args: {} },
+];
 
 describe("MCP surface output policy (E29-T6)", () => {
   it("every tool result, tool description, prompt and prompt description is policy-clean apart from the expiring allow-list", async () => {
@@ -214,15 +236,19 @@ describe("MCP surface output policy (E29-T6)", () => {
       try {
         const { tools } = await h.client.listTools();
         // A new tool must be added to TOOL_CALLS so it cannot escape the policy.
-        expect(tools.map((t) => t.name).sort()).toEqual(Object.keys(TOOL_CALLS).sort());
+        expect(tools.map((t) => t.name).sort()).toEqual(
+          [...new Set(TOOL_CALLS.map((c) => c.name))].sort(),
+        );
 
         for (const t of tools) {
           for (const v of collectDescriptionViolations(t.description ?? "")) {
             found.push({ surface: `tool-desc:${t.name}`, v });
           }
-          const output = await h.callJson(t.name, TOOL_CALLS[t.name]);
+        }
+        for (const { name, args } of TOOL_CALLS) {
+          const output = await h.callJson(name, args);
           for (const v of collectToolOutputViolations(output)) {
-            found.push({ surface: `tool:${t.name}`, v });
+            found.push({ surface: `tool:${name}`, v });
           }
         }
 
