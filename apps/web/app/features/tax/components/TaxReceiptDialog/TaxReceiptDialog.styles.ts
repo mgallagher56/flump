@@ -7,6 +7,7 @@ export const body = cva({
     alignItems: "center",
     gap: "4",
     marginTop: "4",
+    fontVariantNumeric: "tabular-nums",
   },
 });
 
