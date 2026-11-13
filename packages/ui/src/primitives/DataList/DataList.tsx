@@ -2,7 +2,6 @@ import { type FC, type ReactNode, useEffect, useRef, useState } from "react";
 import { cx } from "../../../styled-system/css";
 import { Button } from "../Button";
 import { Money, type MoneyProps } from "../Money";
-import { VisuallyHidden } from "../VisuallyHidden";
 import {
   dataListCount,
   dataListFooter,
@@ -40,7 +39,7 @@ export interface DataListProps {
   noun?: { one: string; other: string };
   /** Accessible name for the list. */
   label?: string;
-  /** Start with every row shown. */
+  /** Start with every row shown. Once expanded the list does not collapse again. */
   defaultExpanded?: boolean;
   className?: string;
 }
@@ -57,7 +56,9 @@ export const DataList: FC<DataListProps> = ({
   className,
 }) => {
   const [expanded, setExpanded] = useState(defaultExpanded);
-  const [announcement, setAnnouncement] = useState("");
+  // Id of the row that was just focused programmatically; it is only focusable (tabIndex -1)
+  // until focus leaves it, so it never becomes a permanent tab stop.
+  const [focusTarget, setFocusTarget] = useState<string | null>(null);
   const firstRevealedRef = useRef<HTMLLIElement | null>(null);
   const justExpanded = useRef(false);
 
@@ -68,7 +69,8 @@ export const DataList: FC<DataListProps> = ({
   const nounText = pluralRules.select(total) === "one" ? noun.one : noun.other;
 
   // Moving focus to the first newly revealed row keeps keyboard and screen reader users in place,
-  // because the button that was focused disappears.
+  // because the button that was focused disappears. Screen readers read the row on focus, so
+  // there is deliberately no separate live region (it would announce the change twice).
   useEffect(() => {
     if (expanded && justExpanded.current) {
       justExpanded.current = false;
@@ -78,8 +80,8 @@ export const DataList: FC<DataListProps> = ({
 
   const showAll = () => {
     justExpanded.current = true;
+    setFocusTarget(items[cap]?.id ?? null);
     setExpanded(true);
-    setAnnouncement(`Showing all ${countFormat.format(total)} ${nounText}`);
   };
 
   return (
@@ -92,7 +94,8 @@ export const DataList: FC<DataListProps> = ({
               className={dataListRow()}
               key={item.id}
               ref={isFirstRevealed ? firstRevealedRef : undefined}
-              tabIndex={isFirstRevealed ? -1 : undefined}
+              onBlur={focusTarget === item.id ? () => setFocusTarget(null) : undefined}
+              tabIndex={focusTarget === item.id ? -1 : undefined}
             >
               <div className={dataListText()}>
                 <span className={dataListLabel()}>{item.label}</span>
@@ -126,9 +129,6 @@ export const DataList: FC<DataListProps> = ({
           </Button>
         </div>
       ) : null}
-      <VisuallyHidden aria-atomic="true" aria-live="polite" role="status">
-        {announcement}
-      </VisuallyHidden>
     </div>
   );
 };

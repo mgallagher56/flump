@@ -21,7 +21,7 @@ export interface ProgressBarProps {
   valueDisplay?: ReactNode;
   /** Track thickness: 6px, 10px (default) or 14px. */
   size?: ProgressBarSize;
-  /** @deprecated Use `size`. Mapped to the nearest size (up to 6 sm, up to 10 md, else lg). */
+  /** @deprecated Use `size`. Still honoured as an exact pixel height. */
   height?: number;
   showPercent?: boolean;
   /**
@@ -33,9 +33,6 @@ export interface ProgressBarProps {
 }
 
 const numberFormat = new Intl.NumberFormat("en-GB");
-
-const sizeFromHeight = (height: number): ProgressBarSize =>
-  height <= 6 ? "sm" : height <= 10 ? "md" : "lg";
 
 export const ProgressBar: FC<ProgressBarProps> = ({
   value,
@@ -52,7 +49,9 @@ export const ProgressBar: FC<ProgressBarProps> = ({
   const safeMax = max <= 0 ? 100 : max;
   const safeValue = Math.min(safeMax, Math.max(0, Number.isFinite(value) ? value : 0));
   const percentage = (safeValue / safeMax) * 100;
-  const resolvedSize = size ?? (height === undefined ? "md" : sizeFromHeight(height));
+  const resolvedSize = size ?? "md";
+  const trackStyle =
+    height === undefined ? undefined : ({ "--progress-height": `${height}px` } as CSSProperties);
 
   const defaultText = showPercent
     ? `${Math.round(percentage)}%`
@@ -85,6 +84,7 @@ export const ProgressBar: FC<ProgressBarProps> = ({
         aria-valuetext={spokenValue}
         className={cx(progressTrackRecipe({ size: resolvedSize }))}
         role="progressbar"
+        style={trackStyle}
       >
         <div className={cx(progressFillRecipe({ variant }))} style={fillStyle} />
       </div>

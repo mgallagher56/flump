@@ -34,17 +34,18 @@ export const progressTrackRecipe = cva({
   },
   variants: {
     size: {
-      sm: { height: "6px" },
-      md: { height: "10px" },
-      lg: { height: "14px" },
+      sm: { height: "var(--progress-height, 6px)" },
+      md: { height: "var(--progress-height, 10px)" },
+      lg: { height: "var(--progress-height, 14px)" },
     },
   },
   defaultVariants: { size: "md" },
 });
 
 /**
- * The fill width comes from the `--progress-value` custom property, set once on the fill element
- * (the only inline style in the component, a dynamic length cannot be a static class).
+ * Dynamic lengths cannot be static classes, so two custom properties carry them and are the only
+ * inline styles in the component: `--progress-value` on the fill (its width) and, only for the
+ * deprecated `height` prop, `--progress-height` on the track (an exact legacy pixel height).
  */
 export const progressFillRecipe = cva({
   base: {

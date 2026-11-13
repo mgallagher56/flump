@@ -3,7 +3,7 @@ import { expect, within } from "@storybook/test";
 import { css } from "../../../styled-system/css";
 import { Money } from "../Money";
 import { StatusBadge } from "../StatusBadge";
-import { Table, TBody, Td, THead, Th } from "./Table";
+import { Table, TBody, Td, THead, Th, Tr } from "./Table";
 
 const panel = css({
   backgroundColor: "surface.card",
@@ -35,18 +35,18 @@ type Story = StoryObj<typeof Table>;
 
 export const Default: Story = {
   render: () => (
-    <Table caption="Debts by APR">
+    <Table appearance="soft" caption="Debts by APR" stacked>
       <THead>
-        <tr>
+        <Tr>
           <Th>Debt name</Th>
           <Th>Type</Th>
           <Th numeric>APR</Th>
           <Th numeric>Balance</Th>
           <Th numeric>Minimum payment</Th>
-        </tr>
+        </Tr>
       </THead>
       <TBody>
-        <tr>
+        <Tr>
           <Td>Barclaycard Platinum</Td>
           <Td label="Type">Credit card</Td>
           <Td label="APR" numeric>
@@ -58,8 +58,8 @@ export const Default: Story = {
           <Td label="Minimum payment" numeric>
             £80/mo
           </Td>
-        </tr>
-        <tr>
+        </Tr>
+        <Tr>
           <Td>Lloyds Overdraft</Td>
           <Td label="Type">Overdraft</Td>
           <Td label="APR" numeric>
@@ -71,7 +71,7 @@ export const Default: Story = {
           <Td label="Minimum payment" numeric>
             £40/mo
           </Td>
-        </tr>
+        </Tr>
       </TBody>
     </Table>
   ),
@@ -99,18 +99,23 @@ const ACCOUNTS = [
 /** The "Accounts (sample data)" table from the Direction C sign-off frame. */
 export const Accounts: Story = {
   render: () => (
-    <Table caption="Sample accounts with balance and change since last month" showCaption>
+    <Table
+      appearance="soft"
+      caption="Sample accounts with balance and change since last month"
+      showCaption
+      stacked
+    >
       <THead>
-        <tr>
+        <Tr>
           <Th>Account</Th>
           <Th numeric>Balance</Th>
           <Th numeric>Change</Th>
           <Th>Status</Th>
-        </tr>
+        </Tr>
       </THead>
       <TBody>
         {ACCOUNTS.map((a, index) => (
-          <tr key={a.name}>
+          <Tr key={a.name}>
             <Td secondary={a.kind}>{a.name}</Td>
             <Td label="Balance" numeric>
               <Money fractionDigits={2} size="sm" value={a.balance} />
@@ -133,7 +138,7 @@ export const Accounts: Story = {
                 </StatusBadge>
               )}
             </Td>
-          </tr>
+          </Tr>
         ))}
       </TBody>
     </Table>
@@ -154,25 +159,25 @@ const MANY = Array.from({ length: 24 }, (_, i) => ({
 }));
 
 export const StickyHeader: Story = {
-  args: { stickyHeader: true },
+  args: { appearance: "soft", stickyHeader: true, stacked: true },
   render: (args) => (
     <Table {...args} caption="Recent transactions">
       <THead>
-        <tr>
+        <Tr>
           <Th>Payee</Th>
           <Th>Date</Th>
           <Th numeric>Amount</Th>
-        </tr>
+        </Tr>
       </THead>
       <TBody>
         {MANY.map((row) => (
-          <tr key={row.id}>
+          <Tr key={row.id}>
             <Td>{row.payee}</Td>
             <Td label="Date">{row.date}</Td>
             <Td label="Amount" numeric>
               <Money fractionDigits={2} size="sm" value={row.amount} />
             </Td>
-          </tr>
+          </Tr>
         ))}
       </TBody>
     </Table>
@@ -180,13 +185,13 @@ export const StickyHeader: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     await expect(canvas.getAllByRole("row")).toHaveLength(25);
+    await expect(canvas.getAllByRole("cell")[0]).toBeInTheDocument();
   },
 };
 
-export const NotStacked: Story = {
-  args: { stacked: false },
-  render: (args) => (
-    <Table {...args} caption="Tax bands">
+export const Classic: Story = {
+  render: () => (
+    <Table caption="Tax bands">
       <THead>
         <tr>
           <Th>Band</Th>

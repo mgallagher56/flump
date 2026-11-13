@@ -394,7 +394,8 @@ describe("Architecture & Design System Laws", () => {
         },
         "packages/ui/src/primitives/Stepper/Stepper.styles.ts": {
           count: 3,
-          reason: "step connector and phone progress segments (graphic, no text)",
+          reason:
+            "Stepper.styles.ts: step connector (::after) and phone progress segments, graphic only, no text",
         },
         "apps/web/app/components/navigation/NavMenu/NavMenu.styles.ts": {
           count: 1,

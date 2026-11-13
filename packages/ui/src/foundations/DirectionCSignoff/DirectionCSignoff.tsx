@@ -11,7 +11,7 @@ import { Illustration } from "../../primitives/Illustration/Illustration";
 import { KpiCard } from "../../primitives/KpiCard/KpiCard";
 import { formatMoney, Money } from "../../primitives/Money/Money";
 import { StatusBadge } from "../../primitives/StatusBadge/StatusBadge";
-import { Table, TBody, Td, THead, Th } from "../../primitives/Table/Table";
+import { Table, TBody, Td, THead, Th, Tr } from "../../primitives/Table/Table";
 import {
   badgeRow,
   chartAssets,
@@ -237,17 +237,21 @@ export const DirectionCSignoff: FC<DirectionCSignoffProps> = ({ onFinishSetup })
         <div className={signoffNarrow()}>
           <div className={signoffPanel()} data-density="compact">
             <h3 className={signoffPanelTitle()}>Accounts (sample data)</h3>
-            <Table caption="Sample accounts with balance and change since last month">
+            <Table
+              appearance="soft"
+              caption="Sample accounts with balance and change since last month"
+              stacked
+            >
               <THead>
-                <tr>
+                <Tr>
                   <Th>Account</Th>
                   <Th numeric>Balance</Th>
                   <Th numeric>Change</Th>
-                </tr>
+                </Tr>
               </THead>
               <TBody>
                 {ACCOUNTS.map((a) => (
-                  <tr key={a.name}>
+                  <Tr key={a.name}>
                     <Td secondary={a.kind}>{a.name}</Td>
                     <Td label="Balance" numeric>
                       <Money fractionDigits={2} size="sm" value={a.balance} />
@@ -255,7 +259,7 @@ export const DirectionCSignoff: FC<DirectionCSignoffProps> = ({ onFinishSetup })
                     <Td label="Change" numeric>
                       <Money fractionDigits={2} signDisplay="always" size="sm" value={a.change} />
                     </Td>
-                  </tr>
+                  </Tr>
                 ))}
               </TBody>
             </Table>

@@ -72,7 +72,6 @@ export const ShowAllWithPointer: Story = {
     await userEvent.click(canvas.getByRole("button", { name: "Show all 12 accounts" }));
     await waitFor(() => expect(canvas.getAllByRole("listitem")).toHaveLength(12));
     await expect(canvas.queryByRole("button")).toBeNull();
-    await expect(canvas.getByRole("status")).toHaveTextContent("Showing all 12 accounts");
   },
 };
 

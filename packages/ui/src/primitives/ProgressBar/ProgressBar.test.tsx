@@ -59,8 +59,20 @@ describe("ProgressBar Primitive", () => {
     expect(bar.getAttribute("aria-valuenow")).toBe("0");
   });
 
-  it("still accepts the deprecated height prop", () => {
+  it("sets the fill width through --progress-value", () => {
+    render(<ProgressBar max={200} value={50} />);
+    const fill = screen.getByRole("progressbar").firstElementChild as HTMLElement;
+    expect(fill.style.getPropertyValue("--progress-value")).toBe("25%");
+  });
+
+  it("honours the deprecated height prop as an exact pixel height", () => {
     render(<ProgressBar height={4} value={10} />);
-    expect(screen.getByRole("progressbar")).toBeDefined();
+    const bar = screen.getByRole("progressbar");
+    expect(bar.style.getPropertyValue("--progress-height")).toBe("4px");
+  });
+
+  it("sets no height property when height is not given", () => {
+    render(<ProgressBar value={10} />);
+    expect(screen.getByRole("progressbar").hasAttribute("style")).toBe(false);
   });
 });

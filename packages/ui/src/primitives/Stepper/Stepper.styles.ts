@@ -94,7 +94,9 @@ export const stepperMarker = cva({
     state: {
       complete: {
         backgroundColor: "primary.subtle",
-        borderColor: "primary.border",
+        // Full-strength teal edge and tick: 3:1 or better against the card in light and dark
+        // (the tick on primary.subtle measures 5.4:1 light and 6.6:1 dark).
+        borderColor: "primary",
         color: "primary",
       },
       current: {

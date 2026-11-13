@@ -1,8 +1,9 @@
 import { cva } from "../../../styled-system/css";
 
 /**
- * Scroll container. With `sticky` it also gets a height cap so the header row has something to
- * stick to; without it the table simply grows (and scrolls sideways if it must).
+ * Scroll container. `classic` is the original bordered card; `soft` is the Direction C look and
+ * leaves the surface to the parent panel. With `sticky` it gets a height cap so the header row
+ * has something to stick to.
  */
 export const tableWrapper = cva({
   base: {
@@ -16,12 +17,22 @@ export const tableWrapper = cva({
     },
   },
   variants: {
+    appearance: {
+      classic: {
+        borderRadius: "xl",
+        borderWidth: "1px",
+        borderStyle: "solid",
+        borderColor: "border.subtle",
+        backgroundColor: "surface.card",
+      },
+      soft: {},
+    },
     sticky: {
       true: { overflowY: "auto", maxHeight: "480px" },
       false: {},
     },
   },
-  defaultVariants: { sticky: false },
+  defaultVariants: { appearance: "classic", sticky: false },
 });
 
 /** Stacked below `md`: every row becomes a card-like list of label and value pairs. */
@@ -37,6 +48,7 @@ const stackedBelowMd = {
   "& tbody tr": {
     display: { base: "block", md: "table-row" },
     paddingBlock: { base: "12px", md: "0" },
+    paddingInline: { base: "14px", md: "0" },
     borderBottomWidth: { base: "1px", md: "0" },
     borderBottomStyle: "solid",
     borderBottomColor: "border.subtle",
@@ -48,8 +60,8 @@ const stackedBelowMd = {
     alignItems: "baseline",
     gap: { base: "16px", md: "0" },
     borderBottomWidth: { base: "0", md: "1px" },
-    paddingBlock: { base: "6px", md: "16px" },
-    paddingInline: { base: "0", md: "16px" },
+    paddingBlock: { base: "6px", md: "var(--table-cell-py)" },
+    paddingInline: { base: "0", md: "var(--table-cell-px)" },
     whiteSpace: { base: "normal", md: "nowrap" },
   },
   "& tbody td[data-label]::before": {
@@ -63,27 +75,46 @@ const stackedBelowMd = {
   // The first, unlabelled cell of a stacked row acts as the row title.
   "& tbody td:not([data-label]), & tbody th": {
     display: { base: "block", md: "table-cell" },
-    paddingBlockEnd: { base: "8px", md: "16px" },
+    paddingBlockEnd: { base: "8px", md: "var(--table-cell-py)" },
   },
 } as const;
 
 export const tableElement = cva({
   base: {
     width: "100%",
-    borderCollapse: "separate",
-    borderSpacing: "0",
     textAlign: "start",
-    fontSize: "sm",
     color: "text.primary",
     fontVariantNumeric: "tabular-nums",
-    "& thead th": {
-      backgroundColor: "surface.sunken",
-      color: "text.secondary",
-    },
-    "& thead th:first-of-type": { borderStartStartRadius: "lg", borderEndStartRadius: "lg" },
-    "& thead th:last-of-type": { borderStartEndRadius: "lg", borderEndEndRadius: "lg" },
   },
   variants: {
+    appearance: {
+      classic: {
+        borderCollapse: "collapse",
+        fontSize: "xs",
+        "--table-cell-py": "12px",
+        "--table-cell-px": "14px",
+        "& thead": {
+          backgroundColor: "surface.subtle",
+          borderBottomWidth: "1px",
+          borderBottomStyle: "solid",
+          borderBottomColor: "border.subtle",
+        },
+        "& thead th": { color: "text.muted" },
+      },
+      soft: {
+        borderCollapse: "separate",
+        borderSpacing: "0",
+        fontSize: "sm",
+        "--table-cell-py": "16px",
+        "--table-cell-px": "16px",
+        "& thead th": {
+          backgroundColor: "surface.sunken",
+          color: "text.secondary",
+        },
+        "& thead th:first-of-type": { borderStartStartRadius: "lg", borderEndStartRadius: "lg" },
+        "& thead th:last-of-type": { borderStartEndRadius: "lg", borderEndEndRadius: "lg" },
+      },
+    },
     stacked: {
       true: stackedBelowMd,
       false: {},
@@ -95,7 +126,7 @@ export const tableElement = cva({
       false: {},
     },
   },
-  defaultVariants: { stacked: true, sticky: false },
+  defaultVariants: { appearance: "classic", stacked: false, sticky: false },
 });
 
 /** A caption that is read out by default and drawn only when asked for. */
@@ -115,7 +146,7 @@ export const theadRecipe = cva({
 
 export const tbodyRecipe = cva({
   base: {
-    "& tr:hover": { md: { backgroundColor: "surface.subtle" } },
+    "& tr:hover": { backgroundColor: "surface.subtle" },
     "& tr:last-child td, & tr:last-child th": { borderBottomWidth: "0" },
   },
 });
@@ -128,21 +159,25 @@ const alignVariants = {
 
 export const thRecipe = cva({
   base: {
-    paddingBlock: "12px",
-    paddingInline: "16px",
-    fontSize: "sm",
+    paddingInline: "var(--table-cell-px)",
     fontWeight: "semibold",
     letterSpacing: "0.01em",
     whiteSpace: "nowrap",
   },
-  variants: { align: alignVariants },
-  defaultVariants: { align: "start" },
+  variants: {
+    align: alignVariants,
+    appearance: {
+      classic: { paddingBlock: "10px" },
+      soft: { paddingBlock: "12px" },
+    },
+  },
+  defaultVariants: { align: "start", appearance: "classic" },
 });
 
 export const tdRecipe = cva({
   base: {
-    paddingBlock: "16px",
-    paddingInline: "16px",
+    paddingBlock: "var(--table-cell-py)",
+    paddingInline: "var(--table-cell-px)",
     borderBottomWidth: "1px",
     borderBottomStyle: "solid",
     borderBottomColor: "border.subtle",
@@ -150,9 +185,13 @@ export const tdRecipe = cva({
   },
   variants: {
     align: alignVariants,
+    appearance: {
+      classic: { whiteSpace: "nowrap" },
+      soft: {},
+    },
     numeric: { true: { whiteSpace: "nowrap", fontVariantNumeric: "tabular-nums" }, false: {} },
   },
-  defaultVariants: { align: "start", numeric: false },
+  defaultVariants: { align: "start", appearance: "classic", numeric: false },
 });
 
 export const cellPrimary = cva({
