@@ -25,14 +25,14 @@ describe("apiFetch", () => {
     expect(init.method).toBe("GET");
   });
 
-  it("ignores a legacy accessToken and never sends it", async () => {
+  it("has no token option and relies on the same-origin session cookie", async () => {
     fetchMock.mockImplementation(async () => respond(200, "{}"));
+    // @ts-expect-error E20-N9: the deprecated accessToken option is gone
     await apiFetch("/x", { accessToken: "tok" });
-    await apiFetch("/x", { accessToken: null });
-    for (const [, init] of fetchMock.mock.calls) {
-      expect(JSON.stringify(init)).not.toContain("tok");
-      expect(init.headers.Authorization).toBeUndefined();
-    }
+    const [, init] = fetchMock.mock.calls[0];
+    expect(JSON.stringify(init)).not.toContain("tok");
+    expect(init.headers.Authorization).toBeUndefined();
+    expect(init.credentials).toBe("same-origin");
   });
 
   it("sends a JSON body with the method", async () => {
