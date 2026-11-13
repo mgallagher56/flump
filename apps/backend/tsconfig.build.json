@@ -1,0 +1,12 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "rootDir": "./src",
+    "outDir": "./dist"
+  },
+  "include": ["src"],
+  // Production emit only: test-support code and specs never ship in dist. Specs are excluded as
+  // well because they import the testing helpers, which would otherwise pull them back in.
+  // Type-checking still covers everything via tsconfig.json and tsconfig.test.json.
+  "exclude": ["node_modules", "dist", "src/**/testing/**", "src/**/*.spec.ts"]
+}
