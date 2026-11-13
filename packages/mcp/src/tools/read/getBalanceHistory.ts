@@ -8,10 +8,12 @@ import { ACCOUNT_CATEGORIES, loadAccountIndex, type Missing, round2 } from "./co
 
 /** Most periods one series may have; past this the caller must widen the interval or narrow the range. */
 export const MAX_PERIODS = 120;
-/** Most points in one response page, across all series. */
-export const MAX_POINTS_PER_PAGE = 200;
+/** Most points in one response page, across all series (detailed points carry more fields). */
+export const MAX_POINTS_PER_PAGE = { concise: 200, detailed: 120 } as const;
 
-const MONTH = z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/, "Use YYYY-MM, such as 2025-04");
+const MONTH = z
+  .string()
+  .regex(/^(19|2[01])\d{2}-(0[1-9]|1[0-2])$/, "Use YYYY-MM from 1900 to 2199, such as 2025-04");
 
 const point = z.object({
   /** "YYYY-MM", "YYYY-Qn" or "YYYY". */
@@ -24,6 +26,10 @@ const point = z.object({
   source: z.string(),
   /** Detailed format, delta metrics only: the balance at the end of the period. */
   balance: z.number().optional(),
+  /** Present when the range cuts the quarter or year short, so it covers fewer months. */
+  partial: z.literal(true).optional(),
+  /** Delta metrics: accounts in the group with no value before the period, whose whole balance is in the change. */
+  accountsAdded: z.number().optional(),
 });
 
 const result = z.object({
@@ -56,6 +62,8 @@ interface Period {
   /** First and last month index of the period, clipped to the requested range. */
   start: number;
   end: number;
+  /** True when the range clips the period's natural start or end. */
+  partial: boolean;
 }
 
 function periods(from: number, to: number, interval: Interval): Period[] {
@@ -64,21 +72,25 @@ function periods(from: number, to: number, interval: Interval): Period[] {
   while (cursor <= to) {
     const year = Math.floor(cursor / 12);
     const month = cursor % 12;
+    let naturalStart: number;
     let naturalEnd: number;
     let label: string;
     if (interval === "month") {
+      naturalStart = cursor;
       naturalEnd = cursor;
       label = monthLabel(cursor);
     } else if (interval === "quarter") {
       const q = Math.floor(month / 3);
-      naturalEnd = year * 12 + q * 3 + 2;
+      naturalStart = year * 12 + q * 3;
+      naturalEnd = naturalStart + 2;
       label = `${year}-Q${q + 1}`;
     } else {
+      naturalStart = year * 12;
       naturalEnd = year * 12 + 11;
       label = String(year);
     }
     const end = Math.min(naturalEnd, to);
-    out.push({ label, start: cursor, end });
+    out.push({ label, start: cursor, end, partial: cursor !== naturalStart || end !== naturalEnd });
     cursor = end + 1;
   }
   return out;
@@ -89,6 +101,12 @@ export const SNAPSHOT_SOURCES = ["onboarding", "manual", "connected", "backfill"
 
 export function safeSnapshotSource(source: string): string {
   return (SNAPSHOT_SOURCES as readonly string[]).includes(source) ? source : "other";
+}
+
+function periodCount(from: number, to: number, interval: Interval): number {
+  if (interval === "month") return to - from + 1;
+  const size = interval === "quarter" ? 3 : 12;
+  return Math.floor(to / size) - Math.floor(from / size) + 1;
 }
 
 interface Cell {
@@ -149,9 +167,11 @@ function groupAt(grid: Map<number, Map<string, Cell>>, g: Group, idx: number) {
   let any = false;
   let carried = false;
   const sources = new Set<string>();
+  const ids = new Set<string>();
   for (const a of g.members) {
     const c = cells.get(a.id);
     if (!c) continue;
+    ids.add(a.id);
     any = true;
     carried ||= c.carried;
     sources.add(c.source);
@@ -160,6 +180,7 @@ function groupAt(grid: Map<number, Map<string, Cell>>, g: Group, idx: number) {
   if (!any) return null;
   return {
     value: round2(total),
+    ids,
     carried,
     source: sources.size === 1 ? ([...sources][0] as string) : "mixed",
   };
@@ -169,7 +190,7 @@ export const getBalanceHistory = defineFlumpTool({
   name: "get_balance_history",
   title: "Balance history",
   description:
-    "Month-end balances recorded in Flump between two months, per account, per category or as a net-worth total, at monthly, quarterly or yearly intervals. metric balance gives the value at the end of each period; delta gives the change from the end of the previous period (current minus previous, up or down); pctDelta gives that change as a percentage. Liabilities are the amount owed as a positive number. A month with no recorded value carries the last known value forward and is flagged carriedForward; source says how each value was recorded. Student loans are excluded. Results are paged: ask for the next page while page is below totalPages.",
+    "Month-end balances recorded in Flump between two months, per account, per category or as a net-worth total, at monthly, calendar-quarter or calendar-year intervals (a period cut short by the range is flagged partial). metric balance gives the value at the end of each period; delta gives the change from the end of the previous period (current minus previous, up or down); pctDelta gives that change as a percentage. Liabilities are the amount owed as a positive number. A month with no recorded value carries the last known value forward and is flagged carriedForward; source says how each value was recorded. Student loans are excluded. Results are paged: ask for the next page while page is below totalPages.",
   input: {
     from: MONTH.describe("First month, YYYY-MM"),
     to: MONTH.describe("Last month, YYYY-MM"),
@@ -198,14 +219,16 @@ export const getBalanceHistory = defineFlumpTool({
         hint: "Swap the months or pick a later to.",
       });
     }
-    const grid = periods(from, to, input.interval);
-    if (grid.length > MAX_PERIODS) {
+    // Counted arithmetically first, so a huge range is rejected without building it.
+    const count = periodCount(from, to, input.interval);
+    if (count > MAX_PERIODS) {
       throw new FlumpToolError(
         "INVALID_ARGUMENT",
-        `That range has ${grid.length} periods; the most is ${MAX_PERIODS}.`,
+        `That range has ${count} periods; the most is ${MAX_PERIODS}.`,
         { field: "interval", hint: "Use a quarter or year interval, or a shorter range." },
       );
     }
+    const grid = periods(from, to, input.interval);
 
     const index = await loadAccountIndex(ctx);
     let selected = index.accounts.filter((a) => a.category !== "studentLoans");
@@ -278,9 +301,10 @@ export const getBalanceHistory = defineFlumpTool({
             ];
     }
 
-    const perPage = Math.max(1, Math.floor(MAX_POINTS_PER_PAGE / grid.length));
+    const budget = MAX_POINTS_PER_PAGE[responseFormat];
+    const perPage = Math.max(1, Math.floor(budget / grid.length));
     const totalPages = Math.ceil(groups.length / perPage);
-    if (totalPages > 0 && input.page > totalPages) {
+    if (input.page > Math.max(1, totalPages)) {
       throw new FlumpToolError("INVALID_ARGUMENT", `There are only ${totalPages} page(s).`, {
         field: "page",
         hint: "Ask for page 1.",
@@ -299,6 +323,7 @@ export const getBalanceHistory = defineFlumpTool({
             value: end.value,
             carriedForward: end.carried,
             source: end.source,
+            ...(p.partial ? { partial: true as const } : {}),
           });
           continue;
         }
@@ -310,12 +335,15 @@ export const getBalanceHistory = defineFlumpTool({
             : delta === null || !prev || prev.value === 0
               ? null
               : round2((delta / Math.abs(prev.value)) * 100);
+        const added = prev ? [...end.ids].filter((id) => !prev.ids.has(id)).length : 0;
         points.push({
           period: p.label,
           value,
           carriedForward: end.carried,
           source: end.source,
           ...(responseFormat === "detailed" ? { balance: end.value } : {}),
+          ...(p.partial ? { partial: true as const } : {}),
+          ...(added > 0 ? { accountsAdded: added } : {}),
         });
       }
       return {
@@ -346,12 +374,15 @@ export const getBalanceHistory = defineFlumpTool({
     const notes = [
       "Values are month-end balances recorded in Flump; a month with no recorded value repeats the last known value (carriedForward true).",
       "A quarter or year shows the balance at its last month within the range; a delta compares it with the month before the period starts.",
-      "An account's first recorded month adds its whole balance, so a delta there is partly a new account rather than a change.",
+      "An account's first recorded month adds its whole balance, so a delta there is partly a new account rather than a change; accountsAdded counts such accounts.",
+      "Quarters and years are calendar periods, not UK tax years.",
       ...(input.groupBy === "total"
         ? ["The total is assets minus liabilities for the selected accounts."]
         : []),
       ...(index.accounts.some((a) => a.category === "studentLoans")
-        ? ["Student loans are income-contingent and excluded."]
+        ? [
+            "Student loans are income-contingent and not kept in monthly history, so they never appear here, even when asked for by id or category.",
+          ]
         : []),
     ];
 

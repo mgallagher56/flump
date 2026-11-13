@@ -1,4 +1,5 @@
 import "reflect-metadata";
+import { inMemoryQueries } from "@flump/mcp";
 import request from "supertest";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { AgentDataService } from "../../src/agent/agent-data.service";
@@ -206,6 +207,7 @@ describe.skipIf(dbMode === "skip")("authz: /mcp transport (real Postgres)", () =
       category: "housing",
       name: "A secret rent",
       amount: 913.37,
+      notes: "A budget note",
     });
     expect(budget.status).toBe(201);
     const taxRecord = await h.call("post", "/tax-records", h.tokens.a, {
@@ -254,6 +256,7 @@ describe.skipIf(dbMode === "skip")("authz: /mcp transport (real Postgres)", () =
       const asA = await callTool(patA.rawToken, name, args);
       expect(asA.text, name).not.toContain(receipt);
       expect(asA.text, name).not.toContain("A secret note");
+      expect(asA.text, name).not.toContain("A budget note");
       expect(asA.text, name).not.toContain(saver);
     }
 
@@ -340,6 +343,12 @@ describe.skipIf(dbMode === "skip")("authz: /mcp transport (real Postgres)", () =
       ]);
       const b1 = await createAccount(h.tokens.b, { name: "b1", type: "Saving", balance: 1 });
       await insertDetails(b1, USER_B, [[2025, 3, 999, "manual"]]);
+      // A row mislabelled with A's user id but pointing at B's account must not count for A.
+      await h.dataSource.query(
+        `INSERT INTO account_details (account_id, user_id, year, month, value, as_of_date, source)
+         VALUES ($1, $2, 2025, 5, 888, '2025-05-01', 'manual')`,
+        [b1, USER_A],
+      );
 
       expect(await provider().getDataCoverage(USER_A)).toEqual([
         {
@@ -398,6 +407,21 @@ describe.skipIf(dbMode === "skip")("authz: /mcp transport (real Postgres)", () =
       expect(
         await provider().getTaxRecords(USER_B, { fromDate: "2025-04-01", toDate: "2026-03-31" }),
       ).toEqual([]);
+
+      // Same answer as the in-memory provider used by stdio, including 1 to 5 April edges.
+      const edgeMonthly = await make({
+        frequency: "monthly",
+        date: "2024-06-01",
+        endDate: "2025-04-03",
+      });
+      const edgeOneOff = await make({ frequency: "one-off", date: "2025-04-03" });
+      const range = { fromDate: "2025-04-01", toDate: "2026-03-31" };
+      const fromDb = (await provider().getTaxRecords(USER_A, range)).map((r) => r.id).sort();
+      const all = (await provider().getUserFinancialData(USER_A)).taxRecords ?? [];
+      const memory = inMemoryQueries(async () => ({ baseline: {} as never, taxRecords: all }));
+      const fromMemory = (await memory.getTaxRecords(USER_A, range)).map((r) => r.id).sort();
+      expect(fromDb).toEqual(fromMemory);
+      expect(fromDb).toEqual(expect.arrayContaining([edgeMonthly, edgeOneOff]));
     });
   });
 

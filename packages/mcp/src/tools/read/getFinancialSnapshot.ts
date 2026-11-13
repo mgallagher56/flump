@@ -1,4 +1,9 @@
-import { MCP_NOTICE, PortfolioSnapshot, selectNetWorthSeries } from "@flump/finance-engine";
+import {
+  getUkCalendarDate,
+  MCP_NOTICE,
+  PortfolioSnapshot,
+  selectNetWorthSeries,
+} from "@flump/finance-engine";
 import { z } from "zod";
 import { defineFlumpTool } from "../../define-tool.js";
 import { FlumpToolError } from "../../errors.js";
@@ -6,10 +11,10 @@ import { monthLabel, parseMonth } from "../../provider/in-memory.js";
 import type { McpServerContext } from "../../types.js";
 import {
   ASK_NO_ACCOUNTS,
+  indexAccounts,
   loadReadModel,
   MISSING_INCOME,
   type Missing,
-  type ReadModel,
   round2,
   summariseBudget,
 } from "./common.js";
@@ -53,8 +58,9 @@ export const getFinancialSnapshot = defineFlumpTool({
   result,
   maxTokens: 1500,
   async handler({ asOfMonth }, ctx) {
+    // A past month needs only the accounts and that month's rows, never the whole history.
+    if (asOfMonth) return historicalSnapshot(ctx, asOfMonth);
     const m = await loadReadModel(ctx);
-    if (asOfMonth) return historicalSnapshot(ctx, m, asOfMonth);
     const s = m.snapshot;
     const budget = summariseBudget(m.raw.budgetEntries ?? []);
     const missing: Missing[] = [];
@@ -143,15 +149,17 @@ export const getFinancialSnapshot = defineFlumpTool({
 });
 
 /** Balances as at the end of a past month, from the recorded monthly rows (carry-forward, E30). */
-async function historicalSnapshot(ctx: McpServerContext, m: ReadModel, asOfMonth: string) {
+async function historicalSnapshot(ctx: McpServerContext, asOfMonth: string) {
   const asOf = parseMonth(asOfMonth) as number;
-  const now = new Date();
-  if (asOf > now.getUTCFullYear() * 12 + now.getUTCMonth()) {
+  // Month keys are Europe/London months (E30), so "now" is the London month too.
+  if (asOf > (parseMonth(getUkCalendarDate(new Date()).slice(0, 7)) as number)) {
     throw new FlumpToolError("INVALID_ARGUMENT", "asOfMonth is in the future.", {
       field: "asOfMonth",
       hint: "Use a past or the current month, or omit it for current balances.",
     });
   }
+  const rawAccounts = await ctx.dataProvider.getAccounts(ctx.token.userId);
+  const m = indexAccounts(ctx, new PortfolioSnapshot(rawAccounts, []).getResolvedAccounts());
   const tracked = m.accounts.filter((a) => a.category !== "studentLoans");
   const rows =
     tracked.length === 0
@@ -168,7 +176,7 @@ async function historicalSnapshot(ctx: McpServerContext, m: ReadModel, asOfMonth
   );
   const point = series.find((p) => p.month === asOfMonth);
   const values = new Map((point?.accounts ?? []).map((v) => [v.accountId, v.value]));
-  const raw = (m.raw.accounts ?? []).filter((a) => values.has(String(a.id)));
+  const raw = rawAccounts.filter((a) => values.has(String(a.id)));
   const s = new PortfolioSnapshot(
     raw.map((a) => ({ ...a, balance: values.get(String(a.id)) })),
     [],

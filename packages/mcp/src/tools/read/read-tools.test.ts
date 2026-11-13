@@ -286,9 +286,9 @@ describe("read tools v2: oversized fixtures", () => {
       });
       const parsed = JSON.parse(hist) as Env;
       expect(estimateTokens(hist)).toBeLessThanOrEqual(6000);
-      // 20 series of 24 months: 8 series per 200-point page, so 3 pages.
-      expect(parsed.result.totalPages).toBe(3);
-      expect(parsed.result.series).toHaveLength(8);
+      // 20 series of 24 months: 5 series per 120-point detailed page, so 4 pages.
+      expect(parsed.result.totalPages).toBe(4);
+      expect(parsed.result.series).toHaveLength(5);
       expect(estimateTokens(await h.callText("get_financial_snapshot"))).toBeLessThanOrEqual(1500);
     } finally {
       await h.close();

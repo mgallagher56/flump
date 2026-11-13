@@ -72,13 +72,19 @@ export const listTaxRecords = defineFlumpTool({
       .string()
       .max(40)
       .optional()
-      .describe("Only this category id, such as rental_income or mortgage_interest"),
+      .describe(
+        "Only this category id, such as rental_income or mortgage_interest; other selects records with an unrecognised category",
+      ),
     groupBy: z.enum(["month", "category"]).default("category"),
   },
   result,
   maxTokens: 5000,
   async handler(input, ctx, { responseFormat }) {
-    if (input.category !== undefined && !TAX_CATEGORY_IDS.has(input.category)) {
+    if (
+      input.category !== undefined &&
+      input.category !== "other" &&
+      !TAX_CATEGORY_IDS.has(input.category)
+    ) {
       throw new FlumpToolError("INVALID_ARGUMENT", "Unknown tax record category.", {
         field: "category",
         hint: "Leave category out to see every category id used in this tax year.",
