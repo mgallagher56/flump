@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import type { FC } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { usePensionScenario } from "../../usePensionScenario";
@@ -38,9 +38,10 @@ const facts: Omit<PensionForecastProps, "scenario"> = {
   hasPots: true,
 };
 
+const onEditDetails = vi.fn();
 const Harness: FC<Partial<typeof facts>> = (over) => {
   const scenario = usePensionScenario(5.4);
-  return <PensionForecast {...facts} {...over} scenario={scenario} onEditDetails={vi.fn()} />;
+  return <PensionForecast {...facts} {...over} scenario={scenario} onEditDetails={onEditDetails} />;
 };
 
 describe("<PensionForecast />", () => {
@@ -75,5 +76,41 @@ describe("<PensionForecast />", () => {
       "to project your pension.",
     );
     expect(screen.queryByLabelText("Extra each month range slider")).toBeNull();
+  });
+
+  it("'Update your details' opens the saved details and carries no scenario values", () => {
+    onEditDetails.mockClear();
+    render(<Harness />);
+    fireEvent.change(screen.getByLabelText("Extra each month range slider"), {
+      target: { value: "200" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Update your details" }));
+    expect(onEditDetails).toHaveBeenCalledTimes(1);
+    // Only the click event is passed: no scenario values travel with it.
+    const args = onEditDetails.mock.calls[0] ?? [];
+    expect(
+      args.every((arg) => arg === undefined || arg instanceof Event || "nativeEvent" in arg),
+    ).toBe(true);
+  });
+
+  it("announces an 'Illustration:' outcome only after a lever moves, once the debounce passes", () => {
+    vi.useFakeTimers();
+    try {
+      render(<Harness />);
+      const region = screen.getByRole("status");
+      act(() => {
+        vi.advanceTimersByTime(1000);
+      });
+      expect(region.textContent).toBe("");
+      fireEvent.change(screen.getByLabelText("Extra each month range slider"), {
+        target: { value: "200" },
+      });
+      act(() => {
+        vi.advanceTimersByTime(500);
+      });
+      expect(region.textContent).toMatch(/^Illustration: projected pot £[\d,]+ in 25 years/);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

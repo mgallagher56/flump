@@ -285,7 +285,12 @@ describe("PensionContainer", () => {
 
       expect(document.body.textContent).toContain("Adjusted net income above £100,000");
       expect(document.body.textContent).not.toContain("Actionable");
+      const scrolled: (string | undefined)[] = [];
+      Element.prototype.scrollIntoView = function (this: Element) {
+        scrolled.push(this.id);
+      };
       fireEvent.click(screen.getByRole("button", { name: "Model this contribution" }));
+      expect(scrolled).toContain("pension-scenario-zone");
 
       expect(Number(extra().value)).toBeGreaterThan(0);
       // Back on the forecast tab, which holds the scenario zone.
