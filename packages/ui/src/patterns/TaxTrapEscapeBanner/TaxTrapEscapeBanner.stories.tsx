@@ -22,7 +22,7 @@ export const InTrap: Story = {
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    await expect(canvas.getByText("UK £100k–£125k 60% Tax Trap Active")).toBeInTheDocument();
+    await expect(canvas.getByText("Income in the £100,000 to £125,140 band")).toBeInTheDocument();
   },
 };
 

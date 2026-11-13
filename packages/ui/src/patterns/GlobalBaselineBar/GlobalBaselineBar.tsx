@@ -22,7 +22,7 @@ export const GlobalBaselineBar: FC<GlobalBaselineBarProps> = ({
   pensionPct,
   isSalarySacrifice = true,
   region = "UK PAYE",
-  stageName = "Stage 2: Buffer & Protect",
+  stageName = "Your baseline",
   stageVariant = "warning",
   isWhatIfActive = false,
   onCommit,

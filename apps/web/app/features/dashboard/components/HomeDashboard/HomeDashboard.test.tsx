@@ -366,7 +366,7 @@ describe("HomeDashboard", () => {
       accountsData: { ...dummyProps.accountsData, totalLiabilities: 200000 },
       debtData: null,
     });
-    expect(screen.queryByText(/Stage 1: stabilise/)).toBeNull();
+    expect(screen.queryByText(/Your unsecured debt and payoff date/)).toBeNull();
     expect(screen.queryByText(/of unsecured debt remaining/)).toBeNull();
   });
 
@@ -389,7 +389,7 @@ describe("HomeDashboard", () => {
 
     it("does not show a £0 weekly allowance invented from an empty budget", () => {
       renderDashboard(noBudget as any);
-      expect(screen.getByText(/Stage 1: stabilise/)).toBeDefined();
+      expect(screen.getByText(/Your unsecured debt and payoff date/)).toBeDefined();
       expect(screen.queryByText(/Safe to spend:/)).toBeNull();
       expect(screen.getByText(/Add your budget to see your safe to spend/)).toBeDefined();
       // Surplus and weekly safe to spend are both Not set.
@@ -406,7 +406,7 @@ describe("HomeDashboard", () => {
           debts: [{ id: "d1", name: "Loan", balance: 3000, apr: 3, minimumPayment: 90 }],
         },
       });
-      expect(screen.queryByText(/Stage 1: stabilise/)).toBeNull();
+      expect(screen.queryByText(/Your unsecured debt and payoff date/)).toBeNull();
     });
   });
 });

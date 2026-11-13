@@ -28,10 +28,10 @@ import {
 
 const TOKEN_EXPIRY_DAYS = [7, 30, 90, 365] as const;
 const EXPIRY_LABELS: Record<(typeof TOKEN_EXPIRY_DAYS)[number], string> = {
-  7: "7 Days",
-  30: "30 Days",
-  90: "90 Days (Recommended)",
-  365: "1 Year",
+  7: "7 days",
+  30: "30 days",
+  90: "90 days (default)",
+  365: "1 year",
 };
 
 export interface McpTokenItem {

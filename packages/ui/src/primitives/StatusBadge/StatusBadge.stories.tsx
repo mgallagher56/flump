@@ -14,7 +14,7 @@ const meta: Meta<typeof StatusBadge> = {
     layout: "centered",
   },
   args: {
-    children: "Mathematically optimal",
+    children: "Highest rate first",
     variant: "positive",
   },
 };

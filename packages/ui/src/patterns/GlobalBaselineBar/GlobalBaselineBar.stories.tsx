@@ -13,7 +13,7 @@ const meta: Meta<typeof GlobalBaselineBar> = {
     pensionPct: 7.5,
     isSalarySacrifice: true,
     region: "UK PAYE",
-    stageName: "Stage 3: Wealth Optimize",
+    stageName: "No unsecured debt",
     stageVariant: "brand",
     isWhatIfActive: false,
   },
@@ -26,7 +26,7 @@ export const Default: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     await expect(canvas.getByText("£62,000")).toBeInTheDocument();
-    await expect(canvas.getByText("Stage 3: Wealth Optimize")).toBeInTheDocument();
+    await expect(canvas.getByText("No unsecured debt")).toBeInTheDocument();
   },
 };
 

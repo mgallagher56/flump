@@ -353,7 +353,7 @@ const ConnectBankWizard: FC<ConnectBankWizardProps> = ({ onSuccess }) => {
             <Icon icon={KeyRound} size="md" />
           </span>
           <span className={methodCardBody()}>
-            <span className={cardTitle()}>Personal access token (recommended)</span>
+            <span className={cardTitle()}>Personal access token</span>
             <span className={cardMeta()}>
               Preview: paste your own read-only access token from your provider.
             </span>

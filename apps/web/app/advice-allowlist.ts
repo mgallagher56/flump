@@ -24,14 +24,6 @@ export const ADVICE_ALLOWLIST: AdviceAllowEntry[] = [
     owner: "E29-T3",
   },
   {
-    file: "apps/web/app/components/dialogs/connectBankWizard/ConnectBankWizard.tsx",
-    patternId: "recommend",
-    kind: "permanent",
-    reason:
-      "Technical choice ('Personal Access Token (Recommended)'), not a financial recommendation.",
-    owner: "E29-T3",
-  },
-  {
     file: "apps/web/app/components/dialogs/addEditAccountsDialog/AddEditAccountsDialog.tsx",
     patternId: "move-into-wrapper",
     kind: "permanent",
@@ -60,15 +52,6 @@ export const ADVICE_ALLOWLIST: AdviceAllowEntry[] = [
     reason:
       "Eval fixture: a user question ('put the money in my ISA') the model must not answer with a product recommendation.",
     owner: "E17-N21",
-  },
-
-  // Temporary: product setting that E17-N18 rewrites.
-  {
-    file: "apps/web/app/features/ai-connections/components/McpConnectionCard/McpConnectionCard.tsx",
-    patternId: "recommend",
-    kind: "temporary",
-    reason: "'90 Days (Recommended)' token expiry label.",
-    owner: "E17-N18",
   },
 
   // Temporary: E15 lanes (packages/ui; hand off, do not edit).

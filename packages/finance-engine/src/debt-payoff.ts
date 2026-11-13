@@ -619,8 +619,8 @@ export function compareAvalancheAndSnowball(
   );
 
   const quickWinText = snowball.quickWinDebtName
-    ? `Clear your ${snowball.quickWinDebtName} with Snowball momentum`
-    : "Achieve your first payoff milestone quickly";
+    ? `Snowball pays off ${snowball.quickWinDebtName} first`
+    : "Snowball pays off the smallest balance first";
 
   return {
     avalanche,

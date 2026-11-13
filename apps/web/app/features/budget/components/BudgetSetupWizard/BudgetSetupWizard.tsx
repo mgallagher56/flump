@@ -482,9 +482,9 @@ export const BudgetSetupWizard: FC<BudgetSetupWizardProps> = ({
               {monthlyTakeHome ? (
                 <div className={callout()}>
                   <p className={calloutText()}>
-                    Your profile has a monthly take-home of{" "}
-                    <strong>{formatCurrency(Math.abs(monthlyTakeHome))}</strong>. Update the salary
-                    entry below to match.
+                    Your profile has an estimated monthly take-home of{" "}
+                    <strong>{formatCurrency(Math.abs(monthlyTakeHome))}</strong>. You can use it for
+                    the salary entry below.
                   </p>
                   {incomeEntries.length > 0 && (
                     <Button
@@ -502,7 +502,7 @@ export const BudgetSetupWizard: FC<BudgetSetupWizardProps> = ({
                         }
                       }}
                     >
-                      Apply {formatCurrency(Math.abs(monthlyTakeHome))}
+                      Use {formatCurrency(Math.abs(monthlyTakeHome))}
                     </Button>
                   )}
                 </div>

@@ -14,15 +14,24 @@ const renderCard = (props: StageCoachCardProps) =>
   );
 
 describe("<StageCoachCard />", () => {
-  it("shows the stage, the debt and the debt-free target", () => {
+  it("shows the debt and the projected debt-free date as plain facts", () => {
     renderCard({ unsecuredDebt: 3000, debtFreeDate: "March 2029", weeklyAllowance: 120 });
-    expect(screen.getByText("Stage 1: stabilise and clear")).toBeDefined();
+    expect(screen.getByText("Your unsecured debt and payoff date")).toBeDefined();
     expect(screen.getByText(/£3,000 of unsecured debt remaining/)).toBeDefined();
-    expect(screen.getByText(/Debt-free target: March 2029/)).toBeDefined();
+    expect(screen.getByText(/Projected debt-free date: March 2029/)).toBeDefined();
     expect(screen.getByText(/Safe to spend: £120 a week/)).toBeDefined();
     expect(screen.getByRole("link", { name: "Open debt payoff" }).getAttribute("href")).toBe(
       "/app/debt",
     );
+  });
+
+  it("is a labelled summary with links only: no action button and no stage wording (R4)", () => {
+    renderCard({ unsecuredDebt: 3000, debtFreeDate: "March 2029", weeklyAllowance: 120 });
+    expect(
+      screen.getByRole("region", { name: "Your unsecured debt and payoff date" }),
+    ).toBeDefined();
+    expect(screen.queryByRole("button")).toBeNull();
+    expect(document.body.textContent).not.toMatch(/stage|clear your|first\b/i);
   });
 
   it("asks for a budget instead of inventing an allowance", () => {
