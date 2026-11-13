@@ -1,5 +1,39 @@
 # Changelog
 
+## [1.28.0](https://github.com/mgallagher56/flump/compare/flump/backend-v1.27.0...flump/backend-v1.28.0) (2026-11-13)
+
+
+### Features ✨
+
+* **backend:** pin the WorkOS issuer to the user_management form (E20-N24) ([628403d](https://github.com/mgallagher56/flump/commit/628403d3f2a071846184f9477d7e608b13b07905))
+* **e23:** store onboarding region, birth year, student loan and housing answers (D06, D07, D31) ([7c6319b](https://github.com/mgallagher56/flump/commit/7c6319b69c4743b2272151972d58554691985643))
+* **mcp:** count usage per tools/call and key the limiter by token (E17-N6) ([882a624](https://github.com/mgallagher56/flump/commit/882a62420fd654944cbd59ccb40846b291963c1b))
+* **tax:** serve receipts through an owner-scoped download route (E20-N15) ([1012547](https://github.com/mgallagher56/flump/commit/1012547486526ef632cf0fb653ef5e08b8d7eb91))
+
+
+### Bug Fixes 🪲
+
+* **backend:** reject userinfo, query and fragment in WORKOS_ISSUER ([eb13ab2](https://github.com/mgallagher56/flump/commit/eb13ab2781b3edafda762b104ce51c4d7aeb29ad))
+* **backend:** scrub everything Nest prints to stdout ([3bb4a97](https://github.com/mgallagher56/flump/commit/3bb4a97514b90427d618c77b2e8837ed578eae3c))
+* **deps:** update all non-major third-party dependencies ([70c65ea](https://github.com/mgallagher56/flump/commit/70c65ea34b66b7b89a8054ee00dbcf189dcaae0c))
+* **deps:** update sentry-javascript monorepo to v11 ([d8d43ad](https://github.com/mgallagher56/flump/commit/d8d43ad7ea09849b9b377266c08f78bacce1053a))
+* **e23:** label the assumed region on onboarding take-home, guard odd ages, token-styled region select ([40af362](https://github.com/mgallagher56/flump/commit/40af362cd5d0edfa93e619ba66af9c36a108da2a))
+* **mcp:** record usage only for allowed requests, cap body and batch size (E17-N6) ([c12bea1](https://github.com/mgallagher56/flump/commit/c12bea1203aef09a8d2b85d80efaebd32d35e0c7))
+* **observability:** harden Sentry v11 options after security review ([bc278f3](https://github.com/mgallagher56/flump/commit/bc278f32f65327b1c6ec623f3042616111ef3633))
+* **observability:** migrate Sentry setup to v11 dataCollection with the same privacy stance ([1b84e6b](https://github.com/mgallagher56/flump/commit/1b84e6b6346b4101b7d1ee8fb315c4b7ecf8f1be))
+* **security:** rate-limit marketing SSR route, use randomUUID for fallback account ids ([772d692](https://github.com/mgallagher56/flump/commit/772d692d139f6ea54f5a8ea28146c210916be4a9))
+* **tax:** harden receipt route, add manifest entry, test backendFetchBytes (E20-N15) ([a735ee5](https://github.com/mgallagher56/flump/commit/a735ee535eeea12e7b709fee1e9770aaeab8e88f))
+
+
+### Build 🛠️
+
+* **backend:** keep testing helpers and specs out of dist ([b5e156a](https://github.com/mgallagher56/flump/commit/b5e156a5bb04f22426140deb57c4c2c9e52eb4ac))
+
+
+### Tests 🧪
+
+* **backend:** assert no x-powered-by header on real responses ([8480341](https://github.com/mgallagher56/flump/commit/848034181ee76083777e1750ae0feb480f7aa916))
+
 ## [1.27.0](https://github.com/mgallagher56/flump/compare/flump/backend-v1.26.0...flump/backend-v1.27.0) (2026-11-13)
 
 
