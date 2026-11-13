@@ -9,6 +9,7 @@ import {
 } from "@flump/finance-engine";
 import type { ReactElement } from "react";
 import { type LoaderFunctionArgs, type MetaFunction, redirect, useLoaderData } from "react-router";
+import { isLiabilityType } from "~/containers/accounts/utils";
 import { HomeDashboard } from "~/features/dashboard/components/HomeDashboard";
 import { loadWorkspaceSnapshot } from "~/services/backend-client.server";
 import { toMonthly } from "~/types/budget";
@@ -113,7 +114,9 @@ export const loader = async (args: LoaderFunctionArgs) => {
   if (Array.isArray(accounts)) {
     accounts.forEach((a: any) => {
       const t = a.type || "Other";
-      typeTotals[t] = (typeTotals[t] || 0) + Math.abs(Number(a.balance) || 0);
+      const balance = Number(a.balance) || 0;
+      // Liabilities show the amount owed; assets keep their real sign (overdrawn is negative).
+      typeTotals[t] = (typeTotals[t] || 0) + (isLiabilityType(t) ? Math.abs(balance) : balance);
     });
   }
 
