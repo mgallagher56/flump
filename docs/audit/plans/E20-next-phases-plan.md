@@ -111,6 +111,7 @@ Every ticket finishes with `rtk bun run lint`, `rtk bun run check-types`, `rtk b
   - A test with a mocked `authkitLoader` that returns `init.headers` shows one `Set-Cookie` on the response.
   - Staging: after the access token expires, a second request does not refresh again (log count).
 - **Risks:** duplicate cookies, or overwriting the logout `destroySession`. Skip when the response already has `Set-Cookie` for `wos-session`.
+- **As built (PR #509):** the WeakMap is keyed on the router context, not `Request` (a conscious deviation: React Router gives each loader a fresh `Request`, so the middleware would never match). The load context must be per request. `getAuthSession` is single-flight per context so parallel root and child loaders refresh once with the single-use refresh token. Staging must check the intra-request case (one refresh and one `Set-Cookie` per document request after the access token expires). Un-awaited deferred `getAuthSession` calls lose their cookie.
 
 **E20-N3. Remove vestigial Emotion, and fix the raw render-error log (Q16, part of L2)**
 - **Files:**

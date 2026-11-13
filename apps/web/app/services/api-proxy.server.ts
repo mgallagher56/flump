@@ -1,6 +1,7 @@
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { apiConfig } from "~/config.server";
 import { expectedOrigin } from "~/security/csrf.server";
+import { readSetCookies } from "~/security/session-cookies.server";
 import { getAuthSession } from "~/utils/auth.server";
 import { BackendError, kindFromStatus } from "./backend-error";
 
@@ -130,19 +131,11 @@ export type SessionResolver = (
   args: LoaderFunctionArgs | ActionFunctionArgs,
 ) => Promise<ProxySession | null>;
 
-function splitSetCookie(headers: unknown): string[] {
-  if (!headers) return [];
-  const h = new Headers(headers as HeadersInit);
-  if (typeof h.getSetCookie === "function") return h.getSetCookie();
-  const single = h.get("set-cookie");
-  return single ? [single] : [];
-}
-
 /** Default resolver: reuses the loader auth helper. No session means null, never a redirect. */
 export const resolveSession: SessionResolver = async (args) => {
   const { user, accessToken, headers } = await getAuthSession(args, { ensureSignedIn: false });
   if (!user || !accessToken) return null;
-  return { userId: String(user.id), accessToken, cookies: splitSetCookie(headers) };
+  return { userId: String(user.id), accessToken, cookies: readSetCookies(headers) };
 };
 
 export interface ProxyDeps {

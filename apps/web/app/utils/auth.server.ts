@@ -42,36 +42,85 @@ export function authHeader(session: { accessToken: string | null }): { Authoriza
   return { Authorization: `Bearer ${requireAccessToken(session)}` };
 }
 
+type AuthSession = { user: any; accessToken: string | null; headers: unknown };
+
+/**
+ * Single-flight per request (E20-N2). Root and child loaders run in parallel and each calls
+ * `getAuthSession`; authkit does not memoise, so after the access token expires each would refresh
+ * with the same (single-use) refresh token and the loser would destroy the session. The key is the
+ * router context, which must be created per request (never a singleton `getLoadContext`), because
+ * React Router hands each loader a fresh `Request`.
+ * Deferred (un-awaited) `getAuthSession` calls that settle after the response is sent lose their
+ * cookie, so always await it in the loader.
+ */
+const inFlight = new WeakMap<object, Promise<AuthSession>>();
+
+async function loadSession(args: LoaderFunctionArgs | ActionFunctionArgs): Promise<AuthSession> {
+  const response = await authkitLoader(
+    args,
+    async ({ getAccessToken }) => {
+      return { accessToken: getAccessToken() };
+    },
+    { ensureSignedIn: false },
+  );
+
+  let data: any;
+  if (response && typeof response === "object" && "data" in response) {
+    data = (response as any).data;
+  } else if (typeof (response as any)?.json === "function") {
+    data = await (response as any).json();
+  } else {
+    data = response;
+  }
+
+  const headers = (response as any)?.init?.headers || (response as any)?.headers;
+  // Forwarded by the root middleware, once per request.
+  recordRefreshedCookies(args.context, headers);
+
+  return {
+    user: data?.user || null,
+    accessToken: (data?.accessToken as string) || null,
+    headers,
+  };
+}
+
+function loadSessionOnce(args: LoaderFunctionArgs | ActionFunctionArgs): Promise<AuthSession> {
+  const key = args.context as object | undefined;
+  if (!key || typeof key !== "object") {
+    if (process.env.NODE_ENV === "development") {
+      console.warn("getAuthSession called without a router context; refresh cookie not forwarded");
+    }
+    return loadSession(args);
+  }
+  let pending = inFlight.get(key);
+  if (!pending) {
+    pending = loadSession(args);
+    inFlight.set(key, pending);
+    // A rejected attempt (redirect, refresh failure) must not poison later calls.
+    pending.catch(() => {
+      if (inFlight.get(key) === pending) inFlight.delete(key);
+    });
+  }
+  return pending;
+}
+
 export async function getAuthSession(
   args: LoaderFunctionArgs | ActionFunctionArgs,
   options: { ensureSignedIn: boolean } = { ensureSignedIn: true },
 ) {
   try {
-    const response = await authkitLoader(
-      args,
-      async ({ getAccessToken }) => {
-        return { accessToken: getAccessToken() };
-      },
-      { ensureSignedIn: options.ensureSignedIn },
-    );
-
-    let data: any;
-    if (response && typeof response === "object" && "data" in response) {
-      data = (response as any).data;
-    } else if (typeof (response as any)?.json === "function") {
-      data = await (response as any).json();
-    } else {
-      data = response;
-    }
-
-    const headers = (response as any)?.init?.headers || (response as any)?.headers;
-    // Forwarded by the root middleware (E20-N2); keyed on the context shared with it.
-    recordRefreshedCookies(args.context ?? args.request, headers);
-
+    const session = await loadSessionOnce(args);
+    if (session.user || !options.ensureSignedIn) return { ...session };
+    // No session: nothing was refreshed, so the real ensureSignedIn redirect is safe to run.
+    const response = await authkitLoader(args, async () => ({ accessToken: null }), {
+      ensureSignedIn: true,
+    });
+    // authkit redirects when signed out; reaching here means a session appeared, so read it.
+    const data = (response as any)?.data ?? response;
     return {
       user: data?.user || null,
       accessToken: (data?.accessToken as string) || null,
-      headers,
+      headers: undefined,
     };
   } catch (error) {
     if (error instanceof Response) {
@@ -82,7 +131,7 @@ export async function getAuthSession(
     }
     if (isDevBypass(process.env)) {
       console.warn("authkitLoader failed, using dev bypass session:", safeErrorSummary(error));
-      return { user: DEV_SESSION_USER, accessToken: DEV_ACCESS_TOKEN };
+      return { user: DEV_SESSION_USER, accessToken: DEV_ACCESS_TOKEN, headers: undefined };
     }
     throw error;
   }
