@@ -58,11 +58,14 @@ export const Dialog: FC<DialogProps> = ({
             }}
             onCloseAutoFocus={(event) => {
               const target = returnFocusRef.current;
-              if (target?.isConnected) {
+              returnFocusRef.current = null;
+              // Only restore when focus has nowhere better to be (body), so a late close can never
+              // steal focus from something the user has already moved to.
+              const active = document.activeElement;
+              if (target?.isConnected && (!active || active === document.body)) {
                 event.preventDefault();
                 target.focus();
               }
-              returnFocusRef.current = null;
             }}
             {...(description ? {} : { "aria-describedby": undefined })}
             className={cx(dialogContentRecipe({ size }), className)}
