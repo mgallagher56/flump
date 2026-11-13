@@ -60,7 +60,7 @@ export const Neutral: Story = {
 };
 
 export const Brand: Story = {
-  args: { variant: "brand", children: "Recommended" },
+  args: { variant: "brand", children: "Sample data" },
 };
 
 /** The status labels from the Direction C sign-off frame: icon plus words, every one. */

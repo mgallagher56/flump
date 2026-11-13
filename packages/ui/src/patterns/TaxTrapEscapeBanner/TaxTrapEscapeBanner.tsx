@@ -51,7 +51,7 @@ export const TaxTrapEscapeBanner: FC<TaxTrapEscapeBannerProps> = ({ grossIncome,
                 ? "Income in the £100,000 to £125,140 band"
                 : "Income outside the £100,000 to £125,140 band"}
             </h3>
-            <StatusBadge size="sm" variant={isInTrap ? "danger" : "warning"}>
+            <StatusBadge size="sm" variant="neutral">
               62% marginal rate in the band
             </StatusBadge>
           </div>
@@ -66,8 +66,9 @@ export const TaxTrapEscapeBanner: FC<TaxTrapEscapeBannerProps> = ({ grossIncome,
           >
             Between £100,000 and £125,140 of adjusted net income, the Personal Allowance reduces by
             £1 for every £2 of income. With 40% higher rate tax and 2% National Insurance, the
-            effective marginal rate in this band is <strong>62%</strong>. Funded childcare hours for
-            working parents and Tax-Free Childcare are not available above £100,000.
+            effective marginal rate in this band is <strong>62%</strong>. In England, funded
+            childcare hours for working parents, and Tax-Free Childcare across the UK, are not
+            available if either parent's adjusted net income is over £100,000.
           </p>
         </div>
       </div>
@@ -104,7 +105,7 @@ export const TaxTrapEscapeBanner: FC<TaxTrapEscapeBannerProps> = ({ grossIncome,
             </label>
             <div className={css({ fontSize: "11px", color: "text.muted" })}>
               Gross contribution modelled. A contribution equal to the income above £100,000 brings
-              adjusted net income to £100,000 in this estimate.
+              adjusted net income to £100,000 in this estimate. Unverified estimate.
             </div>
           </div>
           <div

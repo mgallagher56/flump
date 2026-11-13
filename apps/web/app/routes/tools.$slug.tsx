@@ -48,13 +48,13 @@ const TOOLS_DATA: Record<string, ToolContent> = {
         heading: "What is the UK £100,000 tax trap?",
         body: [
           "In the UK, once your adjusted net income crosses £100,000, your tax-free Personal Allowance (£12,570 in 2026/27) is withdrawn at a rate of £1 for every £2 of income earned above £100,000.",
-          "Because you are paying 40% higher-rate tax on the additional income plus losing allowance that would otherwise have been tax-free (taxed at 40%), your effective marginal income tax rate on this £25,140 band jumps to 60%. When you add 2% Employee National Insurance, your true marginal deduction rate reaches 62%.",
+          "Because you are paying 40% higher-rate tax on the additional income plus losing allowance that would otherwise have been tax-free (taxed at 40%), your effective marginal income tax rate on this £25,140 band jumps to 60%. When you add 2% Employee National Insurance, your marginal deduction rate reaches 62%.",
         ],
       },
       {
         heading: "Funded childcare and the £100,000 limit",
         body: [
-          "In England, working parents of children aged 9 months to 4 years can get up to 30 hours of funded childcare a week. A family is not eligible if either parent expects adjusted net income over £100,000 for the tax year. The same limit applies to Tax-Free Childcare, which tops up childcare costs by up to £2,000 per child a year (£4,000 for a disabled child). The 15 hours a week available for all 3 and 4 year olds does not depend on income. Rules differ in Scotland, Wales and Northern Ireland; check GOV.UK for current eligibility.",
+          "In England, working parents of children aged 9 months to 4 years can get up to 30 hours of funded childcare a week. A family is not eligible if either parent expects adjusted net income over £100,000 for the tax year. The same limit applies across the UK to Tax-Free Childcare, which tops up childcare costs by up to £2,000 per child a year (£4,000 for a disabled child). In England, the 15 hours a week available for all 3 and 4 year olds does not depend on income. Funded hours work differently in Scotland, Wales and Northern Ireland; check GOV.UK for current eligibility.",
           "Because the limit is a single figure, a small change in income near £100,000, such as a bonus, can change eligibility for both schemes. The value of that support depends on the number of children, their ages and childcare costs.",
         ],
       },
@@ -107,7 +107,7 @@ const TOOLS_DATA: Record<string, ToolContent> = {
         ],
       },
       {
-        heading: "LTV milestones and remortgage protection",
+        heading: "Loan-to-value bands at remortgage",
         body: [
           "Lenders price mortgages in Loan-to-Value (LTV) bands, such as 80%, 75% or 60%. A lower balance when a fixed rate ends can move a mortgage into a lower band, where rates offered are often lower. Rates depend on the lender and your circumstances.",
         ],
@@ -159,7 +159,7 @@ const TOOLS_DATA: Record<string, ToolContent> = {
           "This calculator models property held by an individual. Some other rules change the tax on rental income, and each has its own costs and conditions:",
           "1. **Pension contributions:** personal pension contributions extend the basic-rate band and reduce adjusted net income. The money is normally not accessible until minimum pension age, and the annual allowance limits tax relief.",
           "2. **Joint ownership (Form 17):** married couples and civil partners who own a property jointly are taxed 50:50 on the income by default. Form 17 lets them be taxed on their actual shares of beneficial ownership. It applies only where the beneficial shares are actually unequal.",
-          "3. **Limited companies:** Section 24 does not apply to companies, which deduct finance costs for Corporation Tax. Companies have different tax on profits taken out, and moving a property into one can trigger Capital Gains Tax and Stamp Duty Land Tax.",
+          "3. **Limited companies:** Section 24 does not apply to companies, which deduct finance costs for Corporation Tax. Companies have different tax on profits taken out, and moving a property into one can trigger Capital Gains Tax and Stamp Duty Land Tax (or the Scottish or Welsh equivalent).",
           "A qualified tax adviser can explain how any of these apply to a particular case.",
         ],
       },
@@ -167,7 +167,7 @@ const TOOLS_DATA: Record<string, ToolContent> = {
     faqs: [
       {
         q: "Does Section 24 apply to commercial property or furnished holiday lets?",
-        a: "Section 24 applies to residential lettings held by individuals, partnerships and trusts. It does not apply to commercial property or to companies.",
+        a: "Section 24 applies to residential lettings held by individuals, partnerships and trusts. Since 6 April 2025 furnished holiday lets are treated like other residential lettings, so it applies to them too. It does not apply to commercial property or to companies.",
       },
       {
         q: "What expenses can I still deduct against rental income?",
@@ -175,7 +175,7 @@ const TOOLS_DATA: Record<string, ToolContent> = {
       },
       {
         q: "How does Section 24 interact with Payments on Account?",
-        a: "Because Section 24 inflates your self-assessment tax bill, HMRC often requires you to make advance Payments on Account in January and July (each 50% of your prior year's tax liability).",
+        a: "Because Section 24 increases your self-assessment tax bill, HMRC often requires you to make advance Payments on Account in January and July (each 50% of your prior year's tax liability).",
       },
     ],
   },
@@ -228,7 +228,7 @@ const TOOLS_DATA: Record<string, ToolContent> = {
     component: "zero-percent-cliff",
     guideSections: [
       {
-        heading: "Understanding the UK 0% balance transfer cliff",
+        heading: "When a 0% balance transfer period ends",
         body: [
           "A 0% balance transfer card charges no interest on the transferred balance for a set period. A transfer fee is often charged at the start.",
           "When the period ends, any balance left is charged the card's standard rate, often 24.9% to 29.9% APR. The calculator shows the monthly payment that clears the balance before then.",
@@ -263,7 +263,7 @@ const TOOLS_DATA: Record<string, ToolContent> = {
     ],
     faqs: [
       {
-        q: "Is an arranged overdraft considered high-priority debt?",
+        q: "How does an arranged overdraft rate compare with other borrowing?",
         a: "At an EAR of around 40%, an arranged overdraft costs more than most other borrowing. Each pound repaid avoids interest at that rate, which is usually higher than savings rates.",
       },
     ],

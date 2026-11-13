@@ -7,7 +7,6 @@ import {
   allowanceNote,
   summaryBody,
   summaryDescription,
-  summaryEyebrow,
   summaryIcon,
   summaryLinks,
   summaryRoot,
@@ -52,10 +51,9 @@ export const StageCoachCard: FC<StageCoachCardProps> = ({
         <Icon icon={CreditCard} size="lg" />
       </div>
       <div className={summaryBody()}>
-        <p className={summaryEyebrow()}>Unsecured debt</p>
-        <h2 className={summaryTitle()} id="stage-coach-card-title">
+        <h3 className={summaryTitle()} id="stage-coach-card-title">
           Your unsecured debt and payoff date
-        </h2>
+        </h3>
         <p className={summaryDescription()}>
           {debt} of unsecured debt remaining. {target}
         </p>

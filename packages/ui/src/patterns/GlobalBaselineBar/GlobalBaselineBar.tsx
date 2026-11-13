@@ -23,7 +23,7 @@ export const GlobalBaselineBar: FC<GlobalBaselineBarProps> = ({
   isSalarySacrifice = true,
   region = "UK PAYE",
   stageName = "Your baseline",
-  stageVariant = "warning",
+  stageVariant = "neutral",
   isWhatIfActive = false,
   onCommit,
   onReset,

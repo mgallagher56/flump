@@ -31,7 +31,7 @@ const mockComparison: AvalancheVsSnowballComparison = {
   interestSavedAvalancheVsMin: 880,
   monthsShavedAvalancheVsMin: 18,
   interestSavedAvalancheVsSnowball: 70,
-  snowballFirstWinDescription: "Clear your Klarna in 2 months",
+  snowballFirstWinDescription: "Snowball pays off Klarna first",
 };
 
 const baseProps = {
