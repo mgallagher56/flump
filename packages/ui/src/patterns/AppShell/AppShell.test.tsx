@@ -1,5 +1,5 @@
-import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { fireEvent, render, screen } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
 import { AppShell } from "./AppShell";
 import { sampleNavItems } from "./AppShell.fixtures";
 
@@ -48,5 +48,53 @@ describe("AppShell", () => {
     );
     expect(screen.queryByRole("navigation", { name: "Section navigation" })).toBeNull();
     expect(screen.getByText("Body copy")).toBeDefined();
+  });
+
+  it("limits the mobile bar to mobileItems", () => {
+    render(
+      <AppShell items={sampleNavItems} mobileItems={sampleNavItems.slice(0, 2)}>
+        <p>Body</p>
+      </AppShell>,
+    );
+    const bar = screen.getByRole("navigation", { name: "Primary mobile" });
+    expect(bar.querySelectorAll("a").length).toBe(2);
+  });
+
+  it("wires onMenuClick to the top bar menu button", () => {
+    const onMenuClick = vi.fn();
+    render(
+      <AppShell items={sampleNavItems} onMenuClick={onMenuClick}>
+        <p>Body</p>
+      </AppShell>,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Open menu" }));
+    expect(onMenuClick).toHaveBeenCalledOnce();
+  });
+
+  it("forwards aria-current to renderLink", () => {
+    const seen: Array<string | undefined> = [];
+    render(
+      <AppShell
+        activeKey="home"
+        items={sampleNavItems.slice(0, 2)}
+        renderLink={(item, className, children, ariaCurrent) => {
+          if (item.key === "home") seen.push(ariaCurrent);
+          return (
+            <a aria-current={ariaCurrent} className={className} href={item.href}>
+              {children}
+            </a>
+          );
+        }}
+      >
+        <p>Body</p>
+      </AppShell>,
+    );
+    expect(seen.length).toBeGreaterThan(0);
+    expect(seen.every((v) => v === "page")).toBe(true);
+  });
+
+  it("keeps the mobile bar visible up to lg so tablets always have navigation", async () => {
+    const { mobileBottomBarRoot } = await import("../MobileBottomBar/MobileBottomBar.styles");
+    expect(mobileBottomBarRoot()).toContain("lg:d_none");
   });
 });

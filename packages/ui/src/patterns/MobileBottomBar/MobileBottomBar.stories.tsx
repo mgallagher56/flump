@@ -31,3 +31,10 @@ export const Dark: Story = {
   parameters: { viewport: { defaultViewport: "mobile1" } },
   play,
 };
+
+/** 768 to 1023px: no inline top bar items, so the bottom bar must still be present. */
+export const Tablet: Story = {
+  globals: { theme: "light" },
+  parameters: { viewport: { defaultViewport: "tablet" } },
+  play,
+};

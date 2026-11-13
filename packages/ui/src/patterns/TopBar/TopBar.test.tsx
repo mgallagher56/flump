@@ -64,4 +64,23 @@ describe("TopBar", () => {
     expect(screen.getByText("Flump")).toBeDefined();
     expect(screen.getByRole("button", { name: "Theme" })).toBeDefined();
   });
+
+  it("closes the flyout on Escape pressed on the trigger", () => {
+    render(<TopBar items={sampleNavItems} />);
+    const trigger = screen.getByRole("button", { name: "Plan" });
+    fireEvent.click(trigger);
+    fireEvent.keyDown(trigger, { key: "Escape" });
+    expect(trigger.getAttribute("aria-expanded")).toBe("false");
+  });
+
+  it("closes the flyout when focus leaves the group, but not when moving inside it", () => {
+    render(<TopBar items={sampleNavItems} />);
+    const trigger = screen.getByRole("button", { name: "Plan" });
+    fireEvent.click(trigger);
+    const inside = screen.getByRole("link", { name: /Forecast/ });
+    fireEvent.blur(trigger, { relatedTarget: inside });
+    expect(trigger.getAttribute("aria-expanded")).toBe("true");
+    fireEvent.blur(inside, { relatedTarget: screen.getByRole("link", { name: "Home" }) });
+    expect(trigger.getAttribute("aria-expanded")).toBe("false");
+  });
 });
