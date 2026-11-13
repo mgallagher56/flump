@@ -99,10 +99,16 @@ export function inMemoryQueries(load: (userId: string) => Promise<BuildContextPa
     },
     async getTaxRecords(userId, { fromDate, toDate }) {
       const records = ((await load(userId)).taxRecords ?? []) as unknown as McpTaxRecord[];
+      // Compare the date part only, so a timestamp form ("2026-03-31T00:00:00Z") still matches.
+      const day = (d: string | null | undefined) => (d ? String(d).slice(0, 10) : null);
       return records.filter((r) => {
-        if (r.date > toDate) return false;
-        if (r.frequency === "monthly") return !r.endDate || r.endDate >= fromDate;
-        return r.date >= fromDate;
+        const date = day(r.date) as string;
+        if (date > toDate) return false;
+        if (r.frequency === "monthly") {
+          const end = day(r.endDate);
+          return !end || end >= fromDate;
+        }
+        return date >= fromDate;
       });
     },
   };

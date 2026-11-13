@@ -86,7 +86,8 @@ export const getTaxYearPosition = defineFlumpTool({
     const { records } = await loadTaxYearRecords(ctx, taxYear);
     const salary = Math.max(0, Number(baseline.annualGrossSalary) || 0);
     const share = Number(baseline.propertyOwnershipSharePct);
-    const ownershipShare = Number.isFinite(share) && share > 0 && share <= 100 ? share : 100;
+    // As on the Tax page, a stored 0 is kept (no share of the rent); only a missing value means 100.
+    const ownershipShare = Number.isFinite(share) && share >= 0 && share <= 100 ? share : 100;
 
     // The Tax page's own calculation, so the figures match the app.
     const ledger = calculateUKTax(taxYear, records, salary, ownershipShare);
@@ -151,7 +152,10 @@ export const getTaxYearPosition = defineFlumpTool({
           payeSalaryGbp: round2(ledger.effectivePayeSalary),
           selfEmployedProfitGbp: round2(ledger.seProfit),
           rentalProfitShareGbp: round2(ledger.rentalProfitBeforeInterestShare),
-          savingsInterestGbp: round2(ledger.savingsInterestGross),
+          // Net of investment fees, as it enters total income.
+          savingsInterestGbp: round2(
+            Math.max(0, ledger.savingsInterestGross - ledger.savingsExpenses),
+          ),
           dividendsGbp: round2(ledger.dividendIncomeGross),
           totalGbp: round2(total),
         },

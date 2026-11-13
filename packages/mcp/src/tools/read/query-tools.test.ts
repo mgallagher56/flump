@@ -225,9 +225,101 @@ describe("query reads (re-plan PR B)", () => {
         responseFormat: "detailed",
       });
       expect(y.result.series[0].points).toEqual([
-        { period: "2024", value: null, carriedForward: false, source: "onboarding", balance: 6000 },
-        { period: "2025", value: 1300, carriedForward: false, source: "connected", balance: 7300 },
+        {
+          period: "2024",
+          value: null,
+          carriedForward: false,
+          source: "onboarding",
+          balance: 6000,
+          partial: true,
+        },
+        {
+          period: "2025",
+          value: 1300,
+          carriedForward: false,
+          source: "connected",
+          balance: 7300,
+          partial: true,
+        },
       ]);
+    });
+
+    it("flags clipped periods as partial and counts accounts added inside a delta", async () => {
+      const q = await call("get_balance_history", {
+        from: "2025-02",
+        to: "2025-06",
+        interval: "quarter",
+        metric: "delta",
+        category: "savings",
+        accountIds: [acc(ID.saver), acc(ID.card)],
+      });
+      // accountIds and category combine: only the saver is both.
+      expect(q.result.seriesCount).toBe(1);
+      expect(
+        q.result.series[0].points.map((p: any) => [p.period, p.value, p.partial ?? false]),
+      ).toEqual([
+        ["2025-Q1", 200, true],
+        ["2025-Q2", 600, false],
+      ]);
+      // Total net worth: the card and mortgage first appear in 2025-01, after the saver.
+      const t = await call("get_balance_history", {
+        from: "2025-01",
+        to: "2025-01",
+        metric: "delta",
+      });
+      expect(t.result.series[0].points[0]).toMatchObject({ accountsAdded: 2 });
+    });
+
+    it("rejects a page past the first when there is no data", async () => {
+      const empty = await connectTestClient(emptyUser);
+      try {
+        const res = await empty.client.callTool({
+          name: "get_balance_history",
+          arguments: { from: "2025-01", to: "2025-02", page: 2 },
+        });
+        expect(res.isError).toBe(true);
+        const ok = (await empty.callJson("get_balance_history", {
+          from: "2025-01",
+          to: "2025-02",
+        })) as Env;
+        expect(ok.result).toMatchObject({ page: 1, totalPages: 0, series: [] });
+      } finally {
+        await empty.close();
+      }
+    });
+
+    it("a worst-case detailed page fits the token budget without truncation", async () => {
+      const accounts = Array.from({ length: 40 }, (_, i) => ({
+        id: `w${i}`,
+        name: `W${i}`,
+        type: i % 2 ? "Credit Card" : "Saving",
+        balance: 1,
+      }));
+      const accountDetails = accounts.flatMap((a, i) =>
+        Array.from({ length: 120 }, (_, m) => ({
+          accountId: a.id,
+          year: 2016 + Math.floor(m / 12),
+          month: (m % 12) + 1,
+          value: -123456.78 + i + m,
+          source: m % 3 ? "connected" : "manual",
+        })),
+      );
+      const big = await connectTestClient({ ...emptyUser, accounts, accountDetails });
+      try {
+        const text = await big.callText("get_balance_history", {
+          from: "2016-01",
+          to: "2025-12",
+          groupBy: "account",
+          metric: "pctDelta",
+          responseFormat: "detailed",
+        });
+        const e = JSON.parse(text) as Env & { truncated: boolean };
+        expect(e.truncated).toBe(false);
+        expect(e.result.series).toHaveLength(1);
+        expect(e.result.totalPages).toBe(40);
+      } finally {
+        await big.close();
+      }
     });
 
     it("rejects unknown or foreign account ids without revealing anything", async () => {
@@ -262,6 +354,17 @@ describe("query reads (re-plan PR B)", () => {
       expect(
         await errorOf("get_balance_history", { from: "2025-01", to: "2025-02", page: 9 }),
       ).toMatchObject({ code: "INVALID_ARGUMENT", field: "page" });
+      // Years outside 1900 to 2199 are refused by the schema, before any work.
+      for (const [from, to] of [
+        ["0000-01", "9999-12"],
+        ["1899-12", "2025-01"],
+      ]) {
+        const bad = await h.client.callTool({
+          name: "get_balance_history",
+          arguments: { from, to },
+        });
+        expect(bad.isError).toBe(true);
+      }
       // A long range is fine at a wider interval.
       const ok = await call("get_balance_history", {
         from: "2010-01",
@@ -298,7 +401,34 @@ describe("query reads (re-plan PR B)", () => {
       expect(byId[acc(ID.mortgage)].sources).toEqual(["backfill", "other"]);
       expect(byId[acc(ID.current)]).toMatchObject({ recordedMonths: 0, firstMonth: null });
       expect(e.result.accountsWithHistory).toBe(4);
-      expect(collectToolOutputViolations(e)).toEqual([]);
+      expect(e.result).toMatchObject({ page: 1, totalPages: 1 });
+    });
+
+    it("filters by category and pages at 25 accounts", async () => {
+      const debts = await call("get_data_coverage", { category: "debt" });
+      expect(debts.result.accounts.map((a: any) => a.id)).toEqual([acc(ID.card)]);
+      const many = await connectTestClient({
+        ...emptyUser,
+        accounts: Array.from({ length: 30 }, (_, i) => ({
+          id: `a${i}`,
+          name: `n${i}`,
+          type: "Saving",
+          balance: 1,
+        })),
+      });
+      try {
+        const p2 = (await many.callJson("get_data_coverage", { page: 2 })) as Env;
+        expect(p2.result).toMatchObject({ page: 2, totalPages: 2 });
+        expect(p2.result.accounts).toHaveLength(5);
+        const res = await many.client.callTool({
+          name: "get_data_coverage",
+          arguments: { page: 3 },
+        });
+        expect(res.isError).toBe(true);
+      } finally {
+        await many.close();
+      }
+      expect(collectToolOutputViolations(debts)).toEqual([]);
     });
   });
 
@@ -324,6 +454,12 @@ describe("query reads (re-plan PR B)", () => {
       }
       expect(e.result.rows[0].id).toMatch(/^tax_[0-9a-f]{12}$/);
       expect(collectToolOutputViolations(e)).toEqual([]);
+    });
+
+    it("can filter to the records shown as other", async () => {
+      const e = await call("list_tax_records", { taxYear: "2025/26", category: "other" });
+      expect(e.result.rowCount).toBe(1);
+      expect(e.result.totals.expensesGbp).toBe(50);
     });
 
     it("groups by month and filters by category", async () => {
@@ -402,6 +538,53 @@ describe("query reads (re-plan PR B)", () => {
       expect(collectToolOutputViolations(e)).toEqual([]);
     });
 
+    it("income parts add up to the total, with savings net of investment fees", async () => {
+      const records = [
+        taxRecord({
+          id: "s1",
+          source: "savings",
+          category: "savings_interest",
+          amount: 2000,
+          frequency: "one-off",
+          date: "2025-05-01",
+        }),
+        taxRecord({
+          id: "s2",
+          source: "savings",
+          type: "expense",
+          category: "investment_fees",
+          amount: 300,
+          frequency: "one-off",
+          date: "2025-05-01",
+        }),
+        taxRecord({
+          id: "s3",
+          source: "savings",
+          category: "dividend_income",
+          amount: 1500,
+          frequency: "one-off",
+          date: "2025-06-01",
+        }),
+      ];
+      const sav = await connectTestClient({ ...persona, taxRecords: records as never });
+      try {
+        const e = (await sav.callJson("get_tax_year_position", { taxYear: "2025/26" })) as Env;
+        const i = e.result.income;
+        expect(i.savingsInterestGbp).toBe(1700);
+        expect(
+          i.payeSalaryGbp +
+            i.selfEmployedProfitGbp +
+            i.rentalProfitShareGbp +
+            i.savingsInterestGbp +
+            i.dividendsGbp,
+        ).toBe(i.totalGbp);
+        const ledger = calculateUKTax("2025/26", records, 98000, 100);
+        expect(i.totalGbp).toBe(Math.round(ledger.totalGrossIncome * 100) / 100);
+      } finally {
+        await sav.close();
+      }
+    });
+
     it("uses Scottish bands for a Scottish taxpayer and labels an assumed region", async () => {
       const scot = await connectTestClient({
         ...persona,
@@ -443,6 +626,31 @@ describe("query reads (re-plan PR B)", () => {
   });
 
   describe("get_financial_snapshot asOfMonth", () => {
+    it("keeps signs: overdrawn cash is negative, a liability stored negative is owed", async () => {
+      const p = await connectTestClient({
+        ...emptyUser,
+        accounts: [
+          { id: "c1", name: "c", type: "Current", balance: 1 },
+          { id: "l1", name: "l", type: "Loan", balance: 1 },
+        ],
+        accountDetails: [
+          { accountId: "c1", year: 2025, month: 3, value: -250 },
+          { accountId: "l1", year: 2025, month: 3, value: -4000 },
+        ],
+      });
+      try {
+        const e = (await p.callJson("get_financial_snapshot", { asOfMonth: "2025-03" })) as Env;
+        // The engine counts an overdraft as consumer debt, as everywhere in the app.
+        expect(e.result).toMatchObject({
+          consumerDebtGbp: 4250,
+          liquidCashGbp: 0,
+          netWorthGbp: -4250,
+        });
+      } finally {
+        await p.close();
+      }
+    });
+
     it("rebuilds totals from monthly history with carry-forward", async () => {
       const e = await call("get_financial_snapshot", { asOfMonth: "2025-04" });
       // Saver 6400 (carried), card owed 1500 (carried), mortgage 202000 (carried).
@@ -517,17 +725,7 @@ describe("query reads (re-plan PR B)", () => {
       expect(text).toMatch(/amount owed as a positive number/);
       expect(text).not.toMatch(/Monzo|Barclays|22222222|98000/);
       expect(Object.keys(SCHEMA_DOCUMENT.tools).sort()).toEqual(
-        (await h.client.listTools()).tools
-          .map((t) => t.name)
-          .filter(
-            (n) =>
-              ![
-                "simulate_debt_payoff",
-                "project_net_worth",
-                "compare_mortgage_overpay_vs_invest",
-              ].includes(n),
-          )
-          .sort(),
+        (await h.client.listTools()).tools.map((t) => t.name).sort(),
       );
     });
   });

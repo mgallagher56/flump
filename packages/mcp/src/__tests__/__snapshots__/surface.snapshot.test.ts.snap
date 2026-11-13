@@ -306,7 +306,7 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
       "openWorldHint": false,
       "readOnlyHint": true,
     },
-    "description": "Month-end balances recorded in Flump between two months, per account, per category or as a net-worth total, at monthly, quarterly or yearly intervals. metric balance gives the value at the end of each period; delta gives the change from the end of the previous period (current minus previous, up or down); pctDelta gives that change as a percentage. Liabilities are the amount owed as a positive number. A month with no recorded value carries the last known value forward and is flagged carriedForward; source says how each value was recorded. Student loans are excluded. Results are paged: ask for the next page while page is below totalPages.",
+    "description": "Month-end balances recorded in Flump between two months, per account, per category or as a net-worth total, at monthly, calendar-quarter or calendar-year intervals (a period cut short by the range is flagged partial). metric balance gives the value at the end of each period; delta gives the change from the end of the previous period (current minus previous, up or down); pctDelta gives that change as a percentage. Liabilities are the amount owed as a positive number. A month with no recorded value carries the last known value forward and is flagged carriedForward; source says how each value was recorded. Student loans are excluded. Results are paged: ask for the next page while page is below totalPages.",
     "execution": {
       "taskSupport": "forbidden",
     },
@@ -339,7 +339,7 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
         },
         "from": {
           "description": "First month, YYYY-MM",
-          "pattern": "^\\d{4}-(0[1-9]|1[0-2])$",
+          "pattern": "^(19|2[01])\\d{2}-(0[1-9]|1[0-2])$",
           "type": "string",
         },
         "groupBy": {
@@ -388,7 +388,7 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
         },
         "to": {
           "description": "Last month, YYYY-MM",
-          "pattern": "^\\d{4}-(0[1-9]|1[0-2])$",
+          "pattern": "^(19|2[01])\\d{2}-(0[1-9]|1[0-2])$",
           "type": "string",
         },
       },
@@ -557,10 +557,17 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
                     "items": {
                       "additionalProperties": false,
                       "properties": {
+                        "accountsAdded": {
+                          "type": "number",
+                        },
                         "balance": {
                           "type": "number",
                         },
                         "carriedForward": {
+                          "type": "boolean",
+                        },
+                        "partial": {
+                          "const": true,
                           "type": "boolean",
                         },
                         "period": {
@@ -675,13 +682,35 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
       "openWorldHint": false,
       "readOnlyHint": true,
     },
-    "description": "For each account, which months have a recorded month-end balance: the first and last recorded month, how many months are recorded, the gaps in between, and how the values were recorded (onboarding, manual, connected or backfill). Use it to see which months are missing before reading or adding history.",
+    "description": "For each account, which months have a recorded month-end balance: the first and last recorded month, how many months are recorded, the gaps in between, and how the values were recorded (onboarding, manual, connected or backfill). Use it to see which months are missing before reading or adding history. Paged at 25 accounts; ask for the next page while page is below totalPages.",
     "execution": {
       "taskSupport": "forbidden",
     },
     "inputSchema": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "properties": {
+        "category": {
+          "description": "Only accounts in this category",
+          "enum": [
+            "cash",
+            "savings",
+            "investments",
+            "pensions",
+            "debt",
+            "mortgages",
+            "property",
+            "studentLoans",
+            "other",
+          ],
+          "type": "string",
+        },
+        "page": {
+          "default": 1,
+          "description": "Result page, from 1",
+          "maximum": 1000,
+          "minimum": 1,
+          "type": "integer",
+        },
         "responseFormat": {
           "default": "concise",
           "description": "concise (default) keeps the answer short; detailed returns the full breakdown",
@@ -889,10 +918,18 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
               },
               "type": "array",
             },
+            "page": {
+              "type": "number",
+            },
+            "totalPages": {
+              "type": "number",
+            },
           },
           "required": [
             "accounts",
             "accountsWithHistory",
+            "page",
+            "totalPages",
             "notes",
           ],
           "type": "object",
@@ -1740,7 +1777,7 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
       "$schema": "http://json-schema.org/draft-07/schema#",
       "properties": {
         "category": {
-          "description": "Only this category id, such as rental_income or mortgage_interest",
+          "description": "Only this category id, such as rental_income or mortgage_interest; other selects records with an unrecognised category",
           "maxLength": 40,
           "type": "string",
         },

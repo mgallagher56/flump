@@ -68,6 +68,10 @@ export const SCHEMA_DOCUMENT = {
     get_debt_overview: "Debts, APRs and minimum payments.",
     list_tax_records: "Tax records and totals for a tax year.",
     get_tax_year_position: "Income, allowances and tax estimates for a tax year.",
+    simulate_debt_payoff: "Debt payoff timeline under a given strategy and extra payment.",
+    project_net_worth: "Net worth projection at a given return, with optional events.",
+    compare_mortgage_overpay_vs_invest:
+      "Deprecated: overpaying a mortgage beside investing the same amount.",
   },
 } as const;
 

@@ -1,12 +1,15 @@
 import { MCP_NOTICE } from "@flump/finance-engine";
 import { z } from "zod";
 import { defineFlumpTool } from "../../define-tool.js";
+import { FlumpToolError } from "../../errors.js";
 import { parseMonth } from "../../provider/in-memory.js";
 import { ACCOUNT_CATEGORIES, ASK_NO_ACCOUNTS, loadAccountIndex, type Missing } from "./common.js";
 import { SNAPSHOT_SOURCES, safeSnapshotSource } from "./getBalanceHistory.js";
 
 /** Most gap ranges listed per account; the count still covers them all. */
 export const MAX_GAPS_PER_ACCOUNT = 12;
+/** Accounts per response page. */
+export const ACCOUNTS_PER_PAGE = 25;
 
 const SOURCES = [...SNAPSHOT_SOURCES, "other"] as const;
 
@@ -29,6 +32,8 @@ const result = z.object({
     }),
   ),
   accountsWithHistory: z.number(),
+  page: z.number(),
+  totalPages: z.number(),
   notes: z.array(z.string()),
 });
 
@@ -36,11 +41,14 @@ export const getDataCoverage = defineFlumpTool({
   name: "get_data_coverage",
   title: "Data coverage",
   description:
-    "For each account, which months have a recorded month-end balance: the first and last recorded month, how many months are recorded, the gaps in between, and how the values were recorded (onboarding, manual, connected or backfill). Use it to see which months are missing before reading or adding history.",
-  input: {},
+    "For each account, which months have a recorded month-end balance: the first and last recorded month, how many months are recorded, the gaps in between, and how the values were recorded (onboarding, manual, connected or backfill). Use it to see which months are missing before reading or adding history. Paged at 25 accounts; ask for the next page while page is below totalPages.",
+  input: {
+    category: z.enum(ACCOUNT_CATEGORIES).optional().describe("Only accounts in this category"),
+    page: z.number().int().min(1).max(1000).default(1).describe("Result page, from 1"),
+  },
   result,
-  maxTokens: 3000,
-  async handler(_input, ctx) {
+  maxTokens: 5000,
+  async handler({ category, page }, ctx) {
     const index = await loadAccountIndex(ctx);
     const coverage = new Map(
       (await ctx.dataProvider.getDataCoverage(ctx.token.userId)).map((c) => [c.accountId, c]),
@@ -48,7 +56,17 @@ export const getDataCoverage = defineFlumpTool({
     const missing: Missing[] = [];
     if (index.accounts.length === 0) missing.push(ASK_NO_ACCOUNTS);
 
-    const accounts = index.accounts.map((a) => {
+    const selected = index.accounts.filter((a) => !category || a.category === category);
+    const totalPages = Math.ceil(selected.length / ACCOUNTS_PER_PAGE);
+    if (totalPages > 0 && page > totalPages) {
+      throw new FlumpToolError("INVALID_ARGUMENT", `There are only ${totalPages} page(s).`, {
+        field: "page",
+        hint: "Ask for page 1.",
+      });
+    }
+    const pageAccounts = selected.slice((page - 1) * ACCOUNTS_PER_PAGE, page * ACCOUNTS_PER_PAGE);
+    const withHistory = selected.filter((a) => coverage.has(a.id)).length;
+    const accounts = pageAccounts.map((a) => {
       const c = coverage.get(a.id);
       if (!c) {
         return {
@@ -83,8 +101,7 @@ export const getDataCoverage = defineFlumpTool({
       };
     });
 
-    const withHistory = accounts.filter((a) => a.recordedMonths > 0).length;
-    if (index.accounts.length > 0 && withHistory === 0) {
+    if (selected.length > 0 && withHistory === 0) {
       missing.push({
         field: "accountHistory",
         why: "No month-end balance is recorded for any account.",
@@ -97,6 +114,8 @@ export const getDataCoverage = defineFlumpTool({
       result: {
         accounts,
         accountsWithHistory: withHistory,
+        page,
+        totalPages,
         notes: [
           "A month with no recorded value is shown elsewhere as the last known value carried forward; it is still counted as missing here.",
         ],
