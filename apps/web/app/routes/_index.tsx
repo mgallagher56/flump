@@ -1,8 +1,10 @@
 import {
+  type TaxRecord as EngineTaxRecord,
   type FactKey,
   getCurrentUKTaxYear,
-  getTaxYearForRecordDate,
+  getRecordAnnualTotalForTaxYear,
   isFigureKnown,
+  isRecordActiveInTaxYear,
   PortfolioSnapshot,
   profileFactsFromProfile,
   selectTakeHome,
@@ -155,18 +157,22 @@ export const loader = async (args: LoaderFunctionArgs) => {
   const mortgageTermYears: number | null = null;
 
   // Tax data
-  // Only records dated in the current tax year (an annual record belongs to the year containing
-  // its date, decision D-7-A); other years must not leak into the headline figures.
+  // The engine decides what each record contributes to the current tax year (an annual record
+  // counts once, in the year containing its date, decision D-7-A); other years must not leak in.
   const currentTaxYear = getCurrentUKTaxYear();
-  const currentYearRecords = (Array.isArray(taxRecords) ? taxRecords : []).filter(
-    (r: any) => getTaxYearForRecordDate(r.date) === currentTaxYear,
+  const currentYearRecords = (Array.isArray(taxRecords) ? taxRecords : []).filter((r: any) =>
+    isRecordActiveInTaxYear(r as EngineTaxRecord, currentTaxYear),
   );
-  const totalTaxIncome = currentYearRecords
-    .filter((r: any) => r.type === "income")
-    .reduce((sum: number, r: any) => sum + (Number(r.amount) || 0), 0);
-  const totalTaxExpenses = currentYearRecords
-    .filter((r: any) => r.type === "expense")
-    .reduce((sum: number, r: any) => sum + (Number(r.amount) || 0), 0);
+  const taxRecordTotal = (type: string) =>
+    currentYearRecords
+      .filter((r: any) => r.type === type)
+      .reduce(
+        (sum: number, r: any) =>
+          sum + getRecordAnnualTotalForTaxYear(r as EngineTaxRecord, currentTaxYear),
+        0,
+      );
+  const totalTaxIncome = taxRecordTotal("income");
+  const totalTaxExpenses = taxRecordTotal("expense");
   const netProfit = Math.max(0, totalTaxIncome - totalTaxExpenses);
   // Not calculated yet: the old flat 29% across every year's records was an invented figure.
   const estimatedTaxDue: number | null = null;

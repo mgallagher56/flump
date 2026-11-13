@@ -1,3 +1,4 @@
+import { getAnnualRecordEndDate } from "@flump/finance-engine";
 import {
   BadRequestException,
   Body,
@@ -67,6 +68,23 @@ const pickTaxRecordFields = (body: Partial<TaxRecord> | undefined): Partial<TaxR
     picked.receiptFilename = null;
   }
   return picked as Partial<TaxRecord>;
+};
+
+/**
+ * E23 D16 / D-7-A: an annual record belongs to the tax year containing its `date`, and its stored
+ * `end_date` says so (5 April closing that year, the same value the backfill migration writes).
+ * An explicit end date from the client is kept; only a missing or null one is filled.
+ */
+const withAnnualEndDate = <T extends Partial<TaxRecord>>(record: T): T => {
+  if (
+    record.frequency === "annual" &&
+    !record.endDate &&
+    typeof record.date === "string" &&
+    /^\d{4}-\d{2}/.test(record.date)
+  ) {
+    record.endDate = getAnnualRecordEndDate(record.date);
+  }
+  return record;
 };
 
 /** Tax record as returned to clients: never carries the receipt bytes. */
@@ -198,7 +216,7 @@ export class TaxController {
       }
     }
     const picked = Array.isArray(body.records)
-      ? body.records.map((r) => ({ ...pickTaxRecordFields(r), userId }))
+      ? body.records.map((r) => withAnnualEndDate({ ...pickTaxRecordFields(r), userId }))
       : [];
 
     // Not wrapped in a transaction: this controller only holds a repository, so caps are applied
@@ -219,10 +237,12 @@ export class TaxController {
   @Post()
   async createTaxRecord(@Req() req: any, @Body() body: any): Promise<TaxRecordResponse> {
     const userId = req.user.id;
-    const record = this.taxRecordRepository.create({
-      ...pickTaxRecordFields(body),
-      userId,
-    });
+    const record = this.taxRecordRepository.create(
+      withAnnualEndDate({
+        ...pickTaxRecordFields(body),
+        userId,
+      }),
+    );
     return toResponse(await this.taxRecordRepository.save(record));
   }
 
@@ -239,6 +259,7 @@ export class TaxController {
     }
     // receiptData is not loaded (select: false), so an omitted field keeps the stored bytes.
     Object.assign(record, pickTaxRecordFields(body));
+    withAnnualEndDate(record);
     return toResponse(await this.taxRecordRepository.save(record));
   }
 

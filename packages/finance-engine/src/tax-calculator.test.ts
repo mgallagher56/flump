@@ -2,7 +2,9 @@ import { describe, expect, it } from "vitest";
 import {
   buildCopiedRecordForTaxYear,
   calculateUKTax,
+  getAnnualRecordEndDate,
   getMonthsForTaxYear,
+  getRecordAnnualTotalForTaxYear,
   getTaxYearForRecordDate,
   type TaxRecord,
 } from "./tax-calculator.js";
@@ -185,5 +187,73 @@ describe("buildCopiedRecordForTaxYear derives the source year by month bucketing
       "2025/26",
     );
     expect(copy.endDate).toBe("2026-03-31");
+  });
+});
+
+describe("annual records count once, in the tax year containing their date (E23 D16)", () => {
+  const salary = (
+    id: string,
+    amount: number,
+    date: string,
+    endDate: string | null = null,
+  ): TaxRecord => ({
+    ...dividendRecord(amount, date),
+    id,
+    source: "paye",
+    category: "paye_salary",
+    name: `Salary ${id}`,
+    frequency: "annual",
+    endDate,
+  });
+  const monthly = (): TaxRecord => ({
+    ...dividendRecord(100, "2022-04-10"),
+    id: "m",
+    source: "paye",
+    category: "paye_bonus",
+    frequency: "monthly",
+    endDate: null,
+  });
+  const years = ["2022/23", "2023/24", "2024/25", "2025/26"] as const;
+  const records = [
+    salary("a", 40000, "2022-05-01"),
+    salary("b", 42000, "2023-05-01"),
+    salary("c", 45000, "2024-05-01"),
+    salary("d", 48000, "2025-05-01"),
+  ];
+
+  it("four yearly salary records give four separate tax years, one salary each", () => {
+    const expected = [40000, 42000, 45000, 48000];
+    years.forEach((y, i) => {
+      const r = calculateUKTax(y, [...records, monthly()], 0, 100);
+      expect(r.payeIncomeGross, y).toBe(expected[i]! + 1200);
+    });
+  });
+
+  it("an annual record never repeats on later anniversaries", () => {
+    const one = salary("a", 40000, "2022-05-01");
+    expect(getRecordAnnualTotalForTaxYear(one, "2022/23")).toBe(40000);
+    expect(getRecordAnnualTotalForTaxYear(one, "2023/24")).toBe(0);
+    expect(getRecordAnnualTotalForTaxYear(one, "2025/26")).toBe(0);
+  });
+
+  it("a record with an explicit later endDate still counts once", () => {
+    const one = salary("a", 40000, "2022-05-01", "2030-04-05");
+    expect(getRecordAnnualTotalForTaxYear(one, "2022/23")).toBe(40000);
+    expect(getRecordAnnualTotalForTaxYear(one, "2024/25")).toBe(0);
+  });
+
+  it("record rule boundary: 5 April and 6 April both file under the year starting that April; March ends the earlier year", () => {
+    expect(getRecordAnnualTotalForTaxYear(salary("x", 1000, "2024-04-05"), "2024/25")).toBe(1000);
+    expect(getRecordAnnualTotalForTaxYear(salary("x", 1000, "2024-04-05"), "2023/24")).toBe(0);
+    expect(getRecordAnnualTotalForTaxYear(salary("y", 1000, "2024-04-06"), "2024/25")).toBe(1000);
+    expect(getRecordAnnualTotalForTaxYear(salary("z", 1000, "2024-03-31"), "2023/24")).toBe(1000);
+  });
+
+  it("getAnnualRecordEndDate is 5 April closing the record-rule tax year", () => {
+    expect(getAnnualRecordEndDate("2024-03-31")).toBe("2024-04-05");
+    expect(getAnnualRecordEndDate("2024-04-01")).toBe("2025-04-05");
+    expect(getAnnualRecordEndDate("2024-04-05")).toBe("2025-04-05");
+    expect(getAnnualRecordEndDate("2024-04-06")).toBe("2025-04-05");
+    expect(getAnnualRecordEndDate("2024-12-31")).toBe("2025-04-05");
   });
 });
