@@ -402,18 +402,6 @@ describe("Architecture & Design System Laws", () => {
           count: 1,
           reason: "checklist progress fill (graphic)",
         },
-        "apps/web/app/components/dashboard/widgets/AccountsWidget.tsx": {
-          count: 1,
-          reason: "toggle switch track, knob is the label (graphic)",
-        },
-        "apps/web/app/components/dashboard/widgets/BudgetWidget.tsx": {
-          count: 1,
-          reason: "toggle switch track (graphic)",
-        },
-        "apps/web/app/components/dashboard/widgets/SavingsWidget.tsx": {
-          count: 1,
-          reason: "toggle switch track (graphic)",
-        },
         "apps/web/app/components/budget/UserProfilePanel.tsx": {
           count: 1,
           reason: "toggle switch track (graphic)",
