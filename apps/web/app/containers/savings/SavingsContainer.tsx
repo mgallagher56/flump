@@ -1,79 +1,17 @@
 import { PortfolioSnapshot } from "@flump/finance-engine";
-import { ProjectionNotice } from "@repo/ui";
-import { css } from "@repo/ui/styled-system/css";
+import { Button, Icon, PageHeader, ProjectionNotice, SegmentedTabs } from "@repo/ui";
+import { Plus } from "lucide-react";
 import { type FC, useEffect, useMemo, useState } from "react";
-import { useTranslation } from "react-i18next";
-import { FaPiggyBank, FaPlus } from "react-icons/fa";
 import { useLoaderData, useNavigate } from "react-router";
-import FLPButton from "~/components/core/buttons/FLPButton";
-import FLPHeading from "~/components/core/typography/FLPHeading";
-import FLPText from "~/components/core/typography/FLPText";
-import AddSavingsAccountDialog from "~/components/savings/AddSavingsAccountDialog";
-import AnnualAllowancePill from "~/components/savings/AnnualAllowancePill";
-import SavingsAccountsList, {
-  calculateOneYearCompoundInterest,
-} from "~/components/savings/SavingsAccountsList";
 import SavingsForecasterCard from "~/components/savings/SavingsForecasterCard";
-import SavingsSummaryCards from "~/components/savings/SavingsSummaryCards";
 import type { Account } from "~/containers/accounts/types";
+import { AddSavingsAccountDialog } from "~/features/savings/components/AddSavingsAccountDialog";
+import { AnnualAllowancePill } from "~/features/savings/components/AnnualAllowancePill";
+import { SavingsAccountsList } from "~/features/savings/components/SavingsAccountsList";
+import { SavingsSummaryCards } from "~/features/savings/components/SavingsSummaryCards";
+import { calculateOneYearCompoundInterest } from "~/features/savings/interest";
 import { useUserProfile } from "~/hooks/useUserProfile";
-import type { loader } from "~/routes/app.savings";
-import { currentMonth, currentYear } from "~/utils/utils";
-
-const containerStyle = css({
-  display: "flex",
-  flexDirection: "column",
-  gap: "24px",
-  paddingBottom: "48px",
-});
-
-const headerContainerStyle = css({
-  display: "flex",
-  justifyContent: "space-between",
-  alignItems: "center",
-  flexWrap: "wrap",
-  gap: "16px",
-  marginTop: "16px",
-  marginBottom: "8px",
-});
-
-const segmentedControlStyle = css({
-  display: "inline-flex",
-  alignItems: "center",
-  backgroundColor: "surface.sunken",
-  padding: "4px",
-  borderRadius: "xl",
-  borderWidth: "1px",
-  borderStyle: "solid",
-  borderColor: "border.subtle",
-  gap: "4px",
-  maxWidth: "100%",
-  overflowX: "auto",
-  width: "fit-content",
-});
-
-const segmentedTabStyle = (active: boolean) =>
-  css({
-    padding: "8px 18px",
-    minHeight: "38px",
-    display: "inline-flex",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: "6px",
-    whiteSpace: "nowrap",
-    fontSize: "sm",
-    fontWeight: active ? "semibold" : "medium",
-    color: active ? "text.primary" : "text.muted",
-    backgroundColor: active ? "surface" : "transparent",
-    borderRadius: "lg",
-    border: "none",
-    cursor: "pointer",
-    boxShadow: active ? "var(--shadows-card)" : "none",
-    transition: "all 0.15s ease",
-    _hover: {
-      color: "text.primary",
-    },
-  });
+import { pageRoot, tabPanel, tabsRoot } from "./SavingsContainer.styles";
 
 /** Monthly pay rise handed over from Take-home pay as `?payRise=`; 0 when absent or invalid. */
 export const parsePayRise = (search: string): number => {
@@ -82,7 +20,6 @@ export const parsePayRise = (search: string): number => {
 };
 
 export const SavingsContainer: FC = () => {
-  const { t } = useTranslation();
   const loaderData = useLoaderData<any>();
   const accounts: Account[] = loaderData?.accounts || [];
   const accountDetails: any[] = loaderData?.accountDetails || [];
@@ -208,29 +145,26 @@ export const SavingsContainer: FC = () => {
     return b;
   }, [savingsAccounts, totalSavingsBalance, weightedInterestRate, totalMonthlySavings]);
 
+  const tabItems = [
+    { value: "forecaster", label: "Forecast" },
+    { value: "accounts", label: `Accounts (${savingsAccounts.length})` },
+    { value: "allowance", label: "Allowances" },
+  ];
+
   return (
-    <div className={containerStyle}>
-      {/* Page Header */}
+    <div className={pageRoot()}>
       <ProjectionNotice />
-      <div className={headerContainerStyle}>
-        <div>
-          <FLPHeading as="h1" color="text.primary" size="2xl">
-            Savings and compound growth
-          </FLPHeading>
-          <FLPText color="text.muted" fontSize="sm" style={{ marginTop: "4px" }}>
-            Track balances across savings accounts, plan regular monthly contributions, and forecast
-            your wealth with compound interest.
-          </FLPText>
-        </div>
+      <PageHeader
+        actions={
+          <Button onClick={() => setIsAddModalOpen(true)}>
+            <Icon icon={Plus} size="sm" />
+            Add account
+          </Button>
+        }
+        subtitle="Your balances, what you save each month and where it could get to."
+        title="Your savings"
+      />
 
-        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-          <FLPButton size="sm" variant="primary" onClick={() => setIsAddModalOpen(true)}>
-            <FaPlus style={{ marginRight: "6px" }} /> Add account
-          </FLPButton>
-        </div>
-      </div>
-
-      {/* Key Metric Summary Cards (Single 4-column compact row) */}
       <SavingsSummaryCards
         accountCount={savingsAccounts.length}
         estimatedAnnualInterest={estimatedAnnualInterest}
@@ -241,98 +175,38 @@ export const SavingsContainer: FC = () => {
         weightedInterestRate={weightedInterestRate}
       />
 
-      {/* Unified Segmented Workspace Tabs */}
-      <div>
-        <div className={segmentedControlStyle}>
-          <button
-            type="button"
-            onClick={() => setActiveTab("forecaster")}
-            className={segmentedTabStyle(activeTab === "forecaster")}
-          >
-            Growth Forecaster & Simulator
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab("accounts")}
-            className={segmentedTabStyle(activeTab === "accounts")}
-          >
-            Savings & Investment Accounts ({savingsAccounts.length})
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab("allowance")}
-            className={segmentedTabStyle(activeTab === "allowance")}
-          >
-            Annual Allowances & Setup
-          </button>
-        </div>
-      </div>
+      <SegmentedTabs
+        aria-label="Savings views"
+        className={tabsRoot()}
+        items={tabItems}
+        panelClassName={tabPanel()}
+        panels={{
+          forecaster: (
+            <SavingsForecasterCard
+              accounts={savingsAccounts}
+              monthlyContribution={totalMonthlySavings + payRiseMonthly}
+              portfolioInterestRate={weightedInterestRate}
+              startingBalance={totalSavingsBalance}
+            />
+          ),
+          accounts: (
+            <SavingsAccountsList
+              accounts={savingsAccounts}
+              onOpenAddModal={() => setIsAddModalOpen(true)}
+            />
+          ),
+          allowance: (
+            <AnnualAllowancePill
+              currentAmount={totalSavingsBalance}
+              savingsInterest={estimatedAnnualInterest}
+              type="isa"
+            />
+          ),
+        }}
+        value={activeTab}
+        onValueChange={(value) => setActiveTab(value as typeof activeTab)}
+      />
 
-      {/* Tab 1: Compound Interest Forecaster with Scenarios */}
-      <div
-        style={
-          activeTab === "forecaster"
-            ? undefined
-            : {
-                height: 0,
-                overflow: "hidden",
-                opacity: 0,
-                position: "absolute",
-                pointerEvents: "none",
-              }
-        }
-      >
-        <SavingsForecasterCard
-          accounts={savingsAccounts}
-          monthlyContribution={totalMonthlySavings + payRiseMonthly}
-          portfolioInterestRate={weightedInterestRate}
-          startingBalance={totalSavingsBalance}
-        />
-      </div>
-
-      {/* Tab 2: Accounts List & Management */}
-      <div
-        style={
-          activeTab === "accounts"
-            ? undefined
-            : {
-                height: 0,
-                overflow: "hidden",
-                opacity: 0,
-                position: "absolute",
-                pointerEvents: "none",
-              }
-        }
-      >
-        <SavingsAccountsList
-          accounts={savingsAccounts}
-          onOpenAddModal={() => setIsAddModalOpen(true)}
-        />
-      </div>
-
-      {/* Tab 3: UK Annual ISA Allowance Pill */}
-      <div
-        style={
-          activeTab === "allowance"
-            ? { display: "flex", flexDirection: "column", gap: "20px" }
-            : {
-                height: 0,
-                overflow: "hidden",
-                opacity: 0,
-                position: "absolute",
-                pointerEvents: "none",
-              }
-        }
-      >
-        {/* UK Annual ISA Allowance Pill */}
-        <AnnualAllowancePill
-          type="isa"
-          currentAmount={totalSavingsBalance}
-          savingsInterest={estimatedAnnualInterest}
-        />
-      </div>
-
-      {/* Modal Dialog for Adding Accounts */}
       <AddSavingsAccountDialog isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} />
     </div>
   );
