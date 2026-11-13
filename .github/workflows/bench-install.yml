@@ -1,0 +1,42 @@
+name: bench-install
+on:
+  pull_request:
+    paths: [".github/workflows/bench-install.yml"]
+jobs:
+  bench:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        variant: [bun-cache, no-cache, node-modules-cache]
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: oven-sh/setup-bun@v2.2.0
+        with:
+          bun-version: 1.4.4
+      - name: cache bun global
+        if: matrix.variant == 'bun-cache'
+        id: c1
+        uses: actions/cache@v6.1.0
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-bun-
+      - name: cache node_modules
+        if: matrix.variant == 'node-modules-cache'
+        id: c2
+        uses: actions/cache@v6.1.0
+        with:
+          path: |
+            node_modules
+            apps/*/node_modules
+            packages/*/node_modules
+          key: ${{ runner.os }}-nm-bun144-${{ hashFiles('bun.lock') }}
+      - name: install (timed)
+        run: |
+          s=$(date +%s.%N)
+          bun install --frozen-lockfile
+          e=$(date +%s.%N)
+          echo "INSTALL_SECONDS ${{ matrix.variant }} hit=${{ steps.c1.outputs.cache-hit }}${{ steps.c2.outputs.cache-hit }} $(echo "$e - $s" | bc)"
+          echo "### ${{ matrix.variant }} install: $(echo "$e - $s" | bc)s (cache-hit=${{ steps.c1.outputs.cache-hit }}${{ steps.c2.outputs.cache-hit }})" >> "$GITHUB_STEP_SUMMARY"
