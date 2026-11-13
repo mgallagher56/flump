@@ -70,7 +70,7 @@ export const PartialSave: Story = {
 export const Saving: Story = {
   args: { ...COMPLETE, isSubmitting: true },
   play: async ({ canvasElement, args }) => {
-    const finish = within(canvasElement).getByRole("button", { name: /saving/i });
+    const finish = within(canvasElement).getByRole("button", { name: /^saving/i });
     await expect(finish).toHaveAttribute("aria-disabled", "true");
     await expect(finish).toBeEnabled();
     await userEvent.click(finish);
