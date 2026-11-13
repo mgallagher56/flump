@@ -173,6 +173,8 @@ describe("McpService.getContextPack for a brand-new user", () => {
       transactions as never,
       finance,
       profileService,
+      accounts as never,
+      details as never,
     );
     const service = new McpService(
       new McpTokenService(mcpTokens as never),

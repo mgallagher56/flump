@@ -98,22 +98,4 @@ export const ADVICE_ALLOWLIST: AdviceAllowEntry[] = [
       owner: "E15",
     }),
   ),
-
-  // Temporary: MCP (E17 removes or rewrites; E29-T6 enforces the policy on the surface).
-  {
-    file: "packages/mcp/src/tools/uk-tax-trap.tool.ts",
-    patternId: "optimal",
-    kind: "temporary",
-    reason: "'optimal pension salary sacrifice' in the tool description.",
-    owner: "E17-N12",
-  },
-  ...["recommend", "high-impact", "optimal", "maximise"].map(
-    (patternId): AdviceAllowEntry => ({
-      file: "packages/mcp/src/prompts/uk-advisor.prompts.ts",
-      patternId,
-      kind: "temporary",
-      reason: "Advice-style prompt text.",
-      owner: "E17-N14",
-    }),
-  ),
 ];

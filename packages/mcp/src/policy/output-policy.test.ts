@@ -1,7 +1,13 @@
 import { MCP_NOTICE } from "@flump/finance-engine";
 import { describe, expect, it } from "vitest";
 import { connectTestClient } from "../testing/client.js";
-import { emptyUser, mortgageAndIsa, renterWithUnknownAprCard } from "../testing/personas.js";
+import {
+  emptyUser,
+  mixedAccountsWithHistory,
+  mortgageAndIsa,
+  renterWithUnknownAprCard,
+} from "../testing/personas.js";
+import { MINIMAL_TOOL_ARGS } from "../testing/tool-args.js";
 import {
   assertDescriptionPolicy,
   assertToolOutputPolicy,
@@ -129,55 +135,9 @@ interface AllowEntry {
   expires: string;
 }
 
-const EXPIRES = "2027-03-31";
-const ALLOW_LIST: AllowEntry[] = [
-  // Read tools v2 (E17-N9) carry their own notice text, not MCP_NOTICE, until E17-N14 aligns it.
-  { surface: "tool:get_*", kind: "notice", owner: "E17-N14", expires: EXPIRES },
-  { surface: "tool:list_accounts", kind: "notice", owner: "E17-N14", expires: EXPIRES },
-  // Tax tools v1 have no notice field until E17-N12 replaces them.
-  {
-    surface: "tool:simulate_uk_tax_and_pension_sacrifice",
-    kind: "notice",
-    owner: "E17-N12",
-    expires: EXPIRES,
-  },
-  {
-    surface: "tool:calculate_self_assessment_and_section24",
-    kind: "notice",
-    owner: "E17-N12",
-    expires: EXPIRES,
-  },
-  // uk-tax-trap.tool.ts description ("optimal pension salary sacrifice").
-  {
-    surface: "tool-desc:simulate_uk_tax_and_pension_sacrifice",
-    kind: "advice-language",
-    detail: "optimal",
-    owner: "E17-N12",
-    expires: EXPIRES,
-  },
-  // uk-advisor.prompts.ts: prompt text and the escape-100k description.
-  ...["recommend", "high-impact"].map((detail) => ({
-    surface: "prompt:uk-financial-health-audit",
-    kind: "advice-language" as const,
-    detail,
-    owner: "E17-N14",
-    expires: EXPIRES,
-  })),
-  {
-    surface: "prompt:escape-100k-tax-trap",
-    kind: "advice-language",
-    detail: "maximise",
-    owner: "E17-N14",
-    expires: EXPIRES,
-  },
-  {
-    surface: "prompt-desc:escape-100k-tax-trap",
-    kind: "advice-language",
-    detail: "optimal",
-    owner: "E17-N14",
-    expires: EXPIRES,
-  },
-];
+// Empty since the 2026-11 re-plan PR A+B: the advisor prompts and legacy tax tools are deleted, and
+// every read tool now carries MCP_NOTICE (its caveats moved to `result.notes`).
+const ALLOW_LIST: AllowEntry[] = [];
 
 const surfaceMatches = (entry: string, surface: string) =>
   entry.endsWith("*") ? surface.startsWith(entry.slice(0, -1)) : entry === surface;
@@ -192,33 +152,40 @@ const matches = (e: AllowEntry, surface: string, v: PolicyViolation) =>
  * calls that reach early-return branches no persona hits (zero mortgage balance).
  */
 const TOOL_CALLS: Array<{ name: string; args: Record<string, unknown> }> = [
-  { name: "simulate_uk_tax_and_pension_sacrifice", args: { employeePensionPct: 5 } },
-  {
-    name: "compare_mortgage_overpay_vs_invest",
-    args: { monthlyAmountGbp: 300, expectedReturnPct: 5 },
-  },
+  ...Object.entries(MINIMAL_TOOL_ARGS).map(([name, args]) => ({ name, args })),
   { name: "simulate_debt_payoff", args: { includeSchedule: "yearly", extraMonthlyGbp: 50 } },
   {
     name: "project_net_worth",
     args: { expectedReturnPct: 5, events: [{ label: "Car", startYear: 2, lumpSumCostGbp: 15000 }] },
   },
   {
-    name: "evaluate_student_loan_overpayment",
-    args: { plan: "plan2", balanceGbp: 30000, annualSalaryGbp: 40000 },
+    name: "get_balance_history",
+    args: {
+      from: "2024-01",
+      to: "2026-10",
+      groupBy: "account",
+      metric: "pctDelta",
+      interval: "quarter",
+      responseFormat: "detailed",
+    },
   },
-  { name: "calculate_self_assessment_and_section24", args: { taxYear: "2025/26" } },
-  { name: "get_financial_snapshot", args: {} },
-  { name: "get_net_worth_history", args: {} },
-  { name: "list_accounts", args: {} },
-  { name: "get_budget_summary", args: {} },
-  { name: "get_debt_overview", args: {} },
+  { name: "get_financial_snapshot", args: { asOfMonth: "2026-09" } },
+  {
+    name: "list_tax_records",
+    args: { taxYear: "2025/26", groupBy: "month", responseFormat: "detailed" },
+  },
 ];
 
 describe("MCP surface output policy (E29-T6)", () => {
   it("every tool result, tool description, prompt and prompt description is policy-clean apart from the expiring allow-list", async () => {
     const found: Array<{ surface: string; v: PolicyViolation }> = [];
 
-    for (const persona of [mortgageAndIsa, renterWithUnknownAprCard, emptyUser]) {
+    for (const persona of [
+      mortgageAndIsa,
+      renterWithUnknownAprCard,
+      emptyUser,
+      mixedAccountsWithHistory,
+    ]) {
       const h = await connectTestClient(persona);
       try {
         const { tools } = await h.client.listTools();
@@ -239,20 +206,8 @@ describe("MCP surface output policy (E29-T6)", () => {
           }
         }
 
-        const { prompts } = await h.client.listPrompts();
-        expect(prompts.length).toBeGreaterThan(0);
-        for (const p of prompts) {
-          for (const v of collectDescriptionViolations(p.description ?? "")) {
-            found.push({ surface: `prompt-desc:${p.name}`, v });
-          }
-          const result = await h.client.getPrompt({ name: p.name });
-          for (const m of result.messages) {
-            const text = m.content.type === "text" ? m.content.text : "";
-            for (const v of collectDescriptionViolations(text)) {
-              found.push({ surface: `prompt:${p.name}`, v });
-            }
-          }
-        }
+        // No prompts are registered (re-plan PR A); PR D's prompts must be added to this walk.
+        expect(h.client.getServerCapabilities()?.prompts).toBeUndefined();
       } finally {
         await h.close();
       }

@@ -29,14 +29,16 @@ describe("personas", () => {
 });
 
 describe("golden tasks", () => {
-  it("has 40 tasks with unique ids", () => {
-    expect(GOLDEN_TASKS).toHaveLength(40);
-    expect(new Set(GOLDEN_TASKS.map((t) => t.id)).size).toBe(40);
+  // 2026-11 re-plan: the student-loan (J11) and salary-sacrifice calculator tasks went with their
+  // tools, and J10 moved from transaction search (cancelled) to history, coverage and tax records.
+  it("has 36 tasks with unique ids", () => {
+    expect(GOLDEN_TASKS).toHaveLength(36);
+    expect(new Set(GOLDEN_TASKS.map((t) => t.id)).size).toBe(36);
   });
 
-  it("covers every journey J1 to J11", () => {
+  it("covers every journey J1 to J10", () => {
     const journeys = new Set(GOLDEN_TASKS.map((t) => t.journey));
-    for (let i = 1; i <= 11; i++) expect(journeys.has(`J${i}` as never)).toBe(true);
+    for (let i = 1; i <= 10; i++) expect(journeys.has(`J${i}` as never)).toBe(true);
   });
 
   it("references only known personas and catalogue tools", () => {
@@ -75,7 +77,7 @@ describe("oracle transcripts", () => {
     const summary = gradeSuite(GOLDEN_TASKS, transcripts);
     const failures = summary.grades.filter((g) => !g.passed);
     expect(failures).toEqual([]);
-    expect(summary.passed).toBe(40);
+    expect(summary.passed).toBe(36);
   });
 
   it("pass every golden task in selection mode", () => {
@@ -213,6 +215,6 @@ describe("graders catch bad agents", () => {
 
   it("reports a missing transcript as a failure", () => {
     const summary = gradeSuite(GOLDEN_TASKS, []);
-    expect(summary.failed).toBe(40);
+    expect(summary.failed).toBe(36);
   });
 });

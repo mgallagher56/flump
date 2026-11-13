@@ -9,9 +9,9 @@ import {
 } from "../../testing/personas.js";
 import { READ_TOOLS } from "./index.js";
 
+/** The summary reads (no arguments needed). The query reads are covered in query-tools.test.ts. */
 const NAMES = [
   "get_financial_snapshot",
-  "get_net_worth_history",
   "list_accounts",
   "get_budget_summary",
   "get_debt_overview",
@@ -29,8 +29,17 @@ const call = async (h: TestHarness, name: string, args: Record<string, unknown> 
   (await h.callJson(name, args)) as Env;
 
 describe("read tools v2: registration", () => {
-  it("registers the five tools in a fixed order", () => {
-    expect(READ_TOOLS.map((t) => t.name)).toEqual(NAMES);
+  it("registers the eight read tools in a fixed order", () => {
+    expect(READ_TOOLS.map((t) => t.name)).toEqual([
+      "get_financial_snapshot",
+      "get_balance_history",
+      "get_data_coverage",
+      "list_accounts",
+      "get_budget_summary",
+      "get_debt_overview",
+      "list_tax_records",
+      "get_tax_year_position",
+    ]);
   });
 });
 
@@ -61,6 +70,8 @@ describe("read tools v2: mixed persona golden outputs", () => {
       monthlyEssentialSpendGbp: 1120,
       monthlySurplusAfterStoredMinimumsGbp: 3200 - 1120 - 216.67 - 200,
       emergencyRunwayMonths: 9,
+      asOfMonth: null,
+      notes: expect.arrayContaining([expect.stringMatching(/Student loans/)]),
     });
     // The card has no stored minimum: it is excluded and the response says so.
     expect(e.assumptions).toEqual([
@@ -69,26 +80,20 @@ describe("read tools v2: mixed persona golden outputs", () => {
     expect(e.missing.map((m) => m.field)).toContain("debts.minimumPayment");
   });
 
-  it("get_net_worth_history", async () => {
-    const e = await call(h, "get_net_worth_history", { months: 3 });
-    expect(e.result.points.map((p: { month: string }) => p.month)).toEqual([
+  it("get_balance_history total matches the E30 net-worth series (replaces get_net_worth_history)", async () => {
+    const e = await call(h, "get_balance_history", { from: "2026-08", to: "2026-10" });
+    const points = e.result.series[0].points;
+    expect(points.map((p: { period: string }) => p.period)).toEqual([
       "2026-08",
       "2026-09",
       "2026-10",
     ]);
-    expect(e.result.monthsCovered).toBe(3);
-    expect(e.result.changeGbp).toBe(
-      e.result.points[2].netWorthGbp - e.result.points[0].netWorthGbp,
-    );
-    // Two of four accounts have no history rows; the latest point can differ from current net worth.
+    // Saver 7000/7500/8000 minus loan 6600/6600 (carried)/6000.
+    expect(points.map((p: { value: number }) => p.value)).toEqual([400, 900, 2000]);
+    expect(points[1].carriedForward).toBe(true);
+    // Two of four accounts have no history rows.
     expect(e.missing.map((m) => m.field)).toEqual(["accountHistory.accounts"]);
     expect(e.missing[0]).toMatchObject({ why: expect.stringContaining("2 of 4") });
-    expect((e as unknown as { notice: string }).notice).toMatch(/differ from current net worth/);
-    const detailed = await call(h, "get_net_worth_history", {
-      months: 3,
-      responseFormat: "detailed",
-    });
-    expect(detailed.result.points[0]).toHaveProperty("assetsGbp");
   });
 
   it("list_accounts uses short ids and generic labels, with a filter", async () => {
@@ -260,7 +265,7 @@ describe("read tools v2: oversized fixtures", () => {
     }
   });
 
-  it("fits get_net_worth_history and get_financial_snapshot for large inputs", async () => {
+  it("fits get_balance_history and get_financial_snapshot for large inputs", async () => {
     const accounts = many(150);
     const accountDetails = accounts.slice(0, 20).flatMap((a) =>
       Array.from({ length: 24 }, (_, i) => ({
@@ -272,11 +277,18 @@ describe("read tools v2: oversized fixtures", () => {
     );
     const h = await connectTestClient({ ...emptyUser, accounts, accountDetails });
     try {
-      const hist = await h.callText("get_net_worth_history", {
-        months: 120,
+      const hist = await h.callText("get_balance_history", {
+        from: "2024-01",
+        to: "2025-12",
+        groupBy: "account",
+        metric: "delta",
         responseFormat: "detailed",
       });
-      expect(estimateTokens(hist)).toBeLessThanOrEqual(1500);
+      const parsed = JSON.parse(hist) as Env;
+      expect(estimateTokens(hist)).toBeLessThanOrEqual(6000);
+      // 20 series of 24 months: 8 series per 200-point page, so 3 pages.
+      expect(parsed.result.totalPages).toBe(3);
+      expect(parsed.result.series).toHaveLength(8);
       expect(estimateTokens(await h.callText("get_financial_snapshot"))).toBeLessThanOrEqual(1500);
     } finally {
       await h.close();

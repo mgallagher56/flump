@@ -49,7 +49,7 @@ export const compareMortgageOverpayVsInvest = defineFlumpTool({
   name: "compare_mortgage_overpay_vs_invest",
   title: "Compare mortgage overpayment with investing",
   description:
-    "Sets the interest saved by overpaying a recorded mortgage by a fixed monthly amount beside the growth on the same amount invested at an expected annual return. Reads the mortgage balance, interest rate and remaining term from the mortgage account; anything not recorded is listed in missing[] and the comparison is left null rather than guessed. The expected return is required and is a single constant rate. The result states both outcomes and their difference; it does not choose between them.",
+    "Deprecated: first tool to be removed from this server. Sets the interest saved by overpaying a recorded mortgage by a fixed monthly amount beside the growth on the same amount invested at an expected annual return. Reads the mortgage balance, interest rate and remaining term from the mortgage account; anything not recorded is listed in missing[] and the comparison is left null rather than guessed. The expected return is required and is a single constant rate. The result states both outcomes and their difference; it does not choose between them.",
   input: {
     monthlyAmountGbp: gbpInput("Monthly amount in GBP to compare (up to 100,000)", 100_000),
     expectedReturnPct: pctInput(

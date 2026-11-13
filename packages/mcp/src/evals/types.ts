@@ -8,18 +8,7 @@ export type JsonValue =
   | JsonValue[]
   | { [key: string]: JsonValue };
 
-export type JourneyId =
-  | "J1"
-  | "J2"
-  | "J3"
-  | "J4"
-  | "J5"
-  | "J6"
-  | "J7"
-  | "J8"
-  | "J9"
-  | "J10"
-  | "J11";
+export type JourneyId = "J1" | "J2" | "J3" | "J4" | "J5" | "J6" | "J7" | "J8" | "J9" | "J10";
 
 export type AccountCategory =
   | "cash"

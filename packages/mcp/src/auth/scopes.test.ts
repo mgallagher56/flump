@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { connectTestClient } from "../testing/client.js";
 import { mortgageAndIsa } from "../testing/personas.js";
+import { MINIMAL_TOOL_ARGS } from "../testing/tool-args.js";
 import {
   effectiveAnonymize,
   filterKnownScopes,
@@ -13,19 +14,7 @@ import {
 } from "./scopes.js";
 import { hashPatToken, TokenVerifier, type VerifiedToken } from "./token-verifier.js";
 
-const CALL_ARGS: Record<string, Record<string, unknown>> = {
-  simulate_uk_tax_and_pension_sacrifice: { employeePensionPct: 5 },
-  calculate_self_assessment_and_section24: { taxYear: "2025/26" },
-  compare_mortgage_overpay_vs_invest: { monthlyAmountGbp: 300, expectedReturnPct: 5 },
-  simulate_debt_payoff: {},
-  project_net_worth: { expectedReturnPct: 5 },
-  evaluate_student_loan_overpayment: { plan: "plan5", balanceGbp: 30000, annualSalaryGbp: 40000 },
-  get_financial_snapshot: {},
-  get_net_worth_history: {},
-  list_accounts: {},
-  get_budget_summary: {},
-  get_debt_overview: {},
-};
+const CALL_ARGS = MINIMAL_TOOL_ARGS;
 function token(scopes: VerifiedToken["scopes"]): VerifiedToken {
   return { userId: "u1", scopes, anonymizeInstitutions: true, type: "pat" };
 }
@@ -43,10 +32,15 @@ describe("scope helpers", () => {
     expect(hasScopes(["mcp:simulate"], sim)).toBe(false);
     expect(hasScopes(["mcp:read:full"], sim)).toBe(false);
     expect(hasScopes(["mcp:read:full", "mcp:simulate"], sim)).toBe(true);
-    expect(hasScopes(["mcp:read:anonymized"], requirementFor("resource", "budget"))).toBe(true);
-    expect(hasScopes(["mcp:simulate"], requirementFor("prompt", "crush-high-apr-debt"))).toBe(
-      false,
-    );
+    expect(hasScopes(["mcp:read:anonymized"], requirementFor("resource", "schema"))).toBe(true);
+    expect(hasScopes(["mcp:simulate"], requirementFor("resource", "schema"))).toBe(false);
+    expect(hasScopes(["mcp:read:full"], requirementFor("tool", "get_balance_history"))).toBe(true);
+    // Deleted primitives (2026-11 re-plan PR A) are unlisted, so denied.
+    for (const name of ["evaluate_student_loan_overpayment", "get_net_worth_history"]) {
+      expect(requirementFor("tool", name)).toBeUndefined();
+    }
+    expect(requirementFor("resource", "tax-ledger")).toBeUndefined();
+    expect(requirementFor("prompt", "crush-high-apr-debt")).toBeUndefined();
   });
 
   it("denies unlisted names at runtime", () => {
@@ -67,9 +61,10 @@ describe("scope helpers", () => {
     expect(() =>
       (scoped.registerTool as (...a: unknown[]) => void)("simulate_debt_payoff", {}),
     ).toThrow("must be a function");
-    expect(() =>
-      scoped.resource("budget", "flump://context/budget", async () => ({})),
-    ).not.toThrow();
+    expect(() => scoped.resource("schema", "flump://schema", async () => ({}))).not.toThrow();
+    expect(() => scoped.resource("budget", "flump://context/budget", async () => ({}))).toThrow(
+      "no scope entry",
+    );
   });
 
   it("computes effective anonymisation", () => {
@@ -117,11 +112,7 @@ describe("TokenVerifier scope handling", () => {
 });
 
 const RESOURCE_URIS: Record<string, string> = {
-  "executive-snapshot": "flump://context/executive-snapshot",
-  baseline: "flump://context/baseline",
-  accounts: "flump://context/accounts",
-  budget: "flump://context/budget",
-  "tax-ledger": "flump://context/tax-ledger",
+  schema: "flump://schema",
 };
 const ALL: VerifiedToken["scopes"] = ["mcp:read:anonymized", "mcp:read:full", "mcp:simulate"];
 
@@ -142,10 +133,11 @@ describe("scope enforcement through the MCP server", () => {
     await withToken(ALL, async (h) => {
       const tools = (await h.client.listTools()).tools.map((t) => t.name).sort();
       const resources = (await h.client.listResources()).resources.map((r) => r.name).sort();
-      const prompts = (await h.client.listPrompts()).prompts.map((p) => p.name).sort();
       expect(tools).toEqual(Object.keys(TOOL_SCOPES).sort());
       expect(resources).toEqual(Object.keys(RESOURCE_SCOPES).sort());
-      expect(prompts).toEqual(Object.keys(PROMPT_SCOPES).sort());
+      // No prompts are registered, so the server does not advertise the capability at all.
+      expect(Object.keys(PROMPT_SCOPES)).toEqual([]);
+      expect(h.client.getServerCapabilities()?.prompts).toBeUndefined();
       expect(Object.keys(RESOURCE_URIS).sort()).toEqual(resources);
     });
   });

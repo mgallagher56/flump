@@ -52,13 +52,20 @@ describe("simulate tools v2", () => {
   const call = async (name: string, args: Record<string, unknown> = {}) =>
     (await h?.callJson(name, args)) as Env;
 
-  it("registers four tools needing the simulate scope", () => {
+  it("registers three tools needing the simulate scope (student loan tool deleted in re-plan PR A)", () => {
     expect(SIMULATE_TOOLS.map((t) => t.name)).toEqual([
       "compare_mortgage_overpay_vs_invest",
       "simulate_debt_payoff",
       "project_net_worth",
-      "evaluate_student_loan_overpayment",
     ]);
+  });
+
+  it("marks compare_mortgage_overpay_vs_invest deprecated in its description", async () => {
+    h = await connectTestClient(emptyUser);
+    const { tools } = await h.client.listTools();
+    expect(tools.find((t) => t.name === "compare_mortgage_overpay_vs_invest")?.description).toMatch(
+      /^Deprecated/,
+    );
   });
 
   it("denies every simulate tool to a read-only token", async () => {
@@ -69,7 +76,6 @@ describe("simulate tools v2", () => {
       compare_mortgage_overpay_vs_invest: { monthlyAmountGbp: 1, expectedReturnPct: 1 },
       simulate_debt_payoff: {},
       project_net_worth: { expectedReturnPct: 1 },
-      evaluate_student_loan_overpayment: { plan: "plan2" },
     };
     for (const t of SIMULATE_TOOLS) {
       expect(await h.callText(t.name, valid[t.name]), t.name).toContain("INSUFFICIENT_SCOPE");
@@ -339,49 +345,6 @@ describe("simulate tools v2", () => {
     });
   });
 
-  describe("evaluate_student_loan_overpayment", () => {
-    const supplied = { plan: "plan2", balanceGbp: 31000, annualSalaryGbp: 36000 };
-
-    it("reports the projected outcome with verification and the tax year", async () => {
-      h = await connectTestClient(emptyUser);
-      const e = await call("evaluate_student_loan_overpayment", supplied);
-      expect(e.result.projectedOutcome).toMatch(/repaid_before_write_off|written_off_first/);
-      expect(e.result.annualRepaymentGbp).toBeGreaterThan(0);
-      expect(e.verification?.status).toBeDefined();
-      expect((e as unknown as { taxYear: string }).taxYear).toMatch(/^\d{4}\/\d{2}$/);
-      expect(e.missing).toEqual([]);
-      expect(collectToolOutputViolations(e)).toEqual([]);
-      expect(JSON.stringify(e)).not.toContain("consider_overpaying");
-    });
-
-    it("requires the plan", async () => {
-      h = await connectTestClient(emptyUser);
-      const res = await h.client.callTool({
-        name: "evaluate_student_loan_overpayment",
-        arguments: { balanceGbp: 1000 },
-      });
-      expect(res.isError).toBe(true);
-    });
-
-    it("lists missing balance and salary instead of defaulting", async () => {
-      h = await connectTestClient(emptyUser);
-      const e = await call("evaluate_student_loan_overpayment", { plan: "plan2" });
-      expect(e.result.projectedOutcome).toBeNull();
-      expect(e.missing.map((m) => m.field)).toEqual(["balanceGbp", "annualSalaryGbp"]);
-    });
-
-    it("reads salary from the profile and balance from a student loan account", async () => {
-      h = await connectTestClient({
-        ...homeowner,
-        accounts: [{ id: "sl1", name: "SLC", type: "Student Loan", balance: 28000 }],
-      });
-      const e = await call("evaluate_student_loan_overpayment", { plan: "plan2" });
-      expect(e.result.balanceGbp).toBe(28000);
-      expect(e.result.annualSalaryGbp).toBe(52000);
-      expect(e.assumptions.filter((a) => a.source === "user_profile")).toHaveLength(2);
-    });
-  });
-
   describe("policy, notice and golden tasks", () => {
     it.each([
       ["anonymised", TEST_TOKEN],
@@ -395,7 +358,6 @@ describe("simulate tools v2", () => {
         }),
         await h.callText("simulate_debt_payoff", { includeSchedule: "monthly" }),
         await h.callText("project_net_worth", { expectedReturnPct: 5, responseFormat: "detailed" }),
-        await h.callText("evaluate_student_loan_overpayment", { plan: "plan2" }),
       ];
       for (const text of outputs) {
         expect(text).not.toMatch(/Monzo|Barclays|Amex|Santander|Halifax|Acme/);
@@ -408,7 +370,6 @@ describe("simulate tools v2", () => {
         ["compare_mortgage_overpay_vs_invest", { monthlyAmountGbp: 100, expectedReturnPct: 4 }],
         ["simulate_debt_payoff", { includeSchedule: "monthly" }],
         ["project_net_worth", { expectedReturnPct: 5 }],
-        ["evaluate_student_loan_overpayment", { plan: "plan5", balanceGbp: 1, annualSalaryGbp: 1 }],
       ];
       for (const [name, args] of calls) {
         expect(collectToolOutputViolations(await h.callJson(name, args)), name).toEqual([]);
@@ -422,7 +383,7 @@ describe("simulate tools v2", () => {
       for (const task of GOLDEN_TASKS) {
         for (const [tool, args] of Object.entries(task.requiredArgs ?? {})) {
           const live = byName.get(tool);
-          if (!live || !SIMULATE_TOOLS.some((t) => t.name === tool)) continue;
+          if (!live) continue;
           const props = Object.keys(
             (live.inputSchema as { properties: Record<string, unknown> }).properties,
           );
@@ -538,16 +499,5 @@ describe("simulate tools v2: review edge cases", () => {
     const e = await call("project_net_worth", { expectedReturnPct: 5 });
     expect(e.result.notes.join(" ")).toContain("deficit");
     expect(e.assumptions.find((a) => a.field === "monthlySavingGbp")?.value).toBe(-500);
-  });
-
-  it("reports zero repayment below the threshold", async () => {
-    h = await connectTestClient(emptyUser);
-    const e = await call("evaluate_student_loan_overpayment", {
-      plan: "plan2",
-      balanceGbp: 20000,
-      annualSalaryGbp: 15000,
-    });
-    expect(e.result.annualRepaymentGbp).toBe(0);
-    expect(e.result.projectedOutcome).toBe("written_off_first");
   });
 });

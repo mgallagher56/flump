@@ -1,4 +1,5 @@
 import type { BuildContextPackInput } from "@flump/finance-engine";
+import { inMemoryQueries } from "../provider/in-memory.js";
 import type { McpUserDataProvider } from "../types.js";
 
 // biome-ignore lint/complexity/noBannedTypes: no options yet; kept so call sites stay stable.
@@ -20,12 +21,15 @@ export function createFakeProvider(
   _options: FakeProviderOptions = {},
 ): FakeProvider {
   const calls: FakeProviderCall[] = [];
+  const forUser = async (userId: string) => ({ ...data, baseline: { ...data.baseline, userId } });
+  const queries = inMemoryQueries(forUser);
   const provider: FakeProvider = {
     calls,
     async getUserFinancialData(userId, opts) {
       calls.push({ userId, anonymizeInstitutions: opts?.anonymizeInstitutions });
-      return { ...data, baseline: { ...data.baseline, userId } };
+      return forUser(userId);
     },
+    ...queries,
   };
   return provider;
 }

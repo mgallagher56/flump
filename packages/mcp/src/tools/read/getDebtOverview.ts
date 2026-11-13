@@ -1,3 +1,4 @@
+import { MCP_NOTICE } from "@flump/finance-engine";
 import { z } from "zod";
 import { defineFlumpTool } from "../../define-tool.js";
 import { ASK_NO_ACCOUNTS, capMissing, loadReadModel, type Missing, round2 } from "./common.js";
@@ -21,6 +22,7 @@ const result = z.object({
   weightedAprPct: z.number().nullable(),
   mortgageGbp: z.number(),
   studentLoanGbp: z.number(),
+  notes: z.array(z.string()),
 });
 
 export const getDebtOverview = defineFlumpTool({
@@ -81,7 +83,7 @@ export const getDebtOverview = defineFlumpTool({
         : null;
 
     const hasEstimated = debts.some((d) => d.minimumPaymentStatus === "estimated");
-    const notices = [
+    const notes = [
       "Student loans are income-contingent and not counted as debt here.",
       ...(known.length < debts.length ? ["Weighted APR covers debts with a known APR only."] : []),
       ...(hasEstimated
@@ -98,10 +100,11 @@ export const getDebtOverview = defineFlumpTool({
         weightedAprPct: weightedApr,
         mortgageGbp: round2(m.snapshot.getTotalMortgageBalance()),
         studentLoanGbp: round2(m.snapshot.getTotalStudentLoans()),
+        notes,
       },
       provenance: { debts: "account_balances" },
       missing,
-      notice: notices.join(" "),
+      notice: MCP_NOTICE,
     };
   },
 });

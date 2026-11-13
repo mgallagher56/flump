@@ -27,6 +27,8 @@ describe("AgentDataService.getUserFinancialData never exposes receipts (E20-N16,
       {} as never,
       { getAccounts: async () => [], getAccountDetails: async () => [] } as never,
       { getProfile: async () => ({}) } as never,
+      {} as never,
+      {} as never,
     );
     return { service, taxFind };
   }
@@ -62,6 +64,8 @@ describe("AgentDataService.getUserFinancialData profile facts (E23)", () => {
       {} as never,
       { getAccounts: async () => [], getAccountDetails: async () => [] } as never,
       { getProfile: async () => profile } as never,
+      {} as never,
+      {} as never,
     );
   }
 
@@ -91,6 +95,108 @@ describe("AgentDataService.getUserFinancialData profile facts (E23)", () => {
       taxRegion: "SCOTLAND",
       studentLoanPlans: ["PLAN_2"],
       pensionPercent: 5,
+    });
+  });
+});
+
+describe("AgentDataService ranged MCP reads (E17 re-plan PR B, unit)", () => {
+  function build(query = vi.fn(async (): Promise<unknown[]> => [])) {
+    const qb = {
+      select: vi.fn().mockReturnThis(),
+      where: vi.fn().mockReturnThis(),
+      andWhere: vi.fn().mockReturnThis(),
+      orderBy: vi.fn().mockReturnThis(),
+      getMany: vi.fn(async () => []),
+    };
+    const accountFind = vi.fn(async () => [
+      {
+        id: "a1",
+        name: "n",
+        type: "Mortgage",
+        balance: "10.5",
+        interestRate: null,
+        monthlyContribution: "3",
+        termMonths: 12,
+        fixedRateEndDate: null,
+        currency: "GBP",
+        isCurrent: null,
+      },
+    ]);
+    const service = new AgentDataService(
+      {} as never,
+      { createQueryBuilder: () => qb } as never,
+      {} as never,
+      {} as never,
+      { getProfile: async () => ({}) } as never,
+      { find: accountFind } as never,
+      { query } as never,
+    );
+    return { service, query, qb, accountFind };
+  }
+
+  it("binds the user id as $1 and never queries for an empty or inverted range", async () => {
+    const { service, query } = build();
+    expect(await service.getAccountSnapshots("u1", { from: "2025-06", to: "2025-01" })).toEqual([]);
+    expect(await service.getAccountSnapshots("u1", { from: "bad", to: "2025-01" })).toEqual([]);
+    expect(
+      await service.getAccountSnapshots("u1", { from: "2025-01", to: "2025-02", accountIds: [] }),
+    ).toEqual([]);
+    expect(query).not.toHaveBeenCalled();
+    await service.getAccountSnapshots("u1", { from: "2025-01", to: "2025-02", accountIds: ["x"] });
+    const [sql, params] = query.mock.calls[0] as unknown as [string, unknown[]];
+    expect(params).toEqual(["u1", 2025 * 12, 2025 * 12 + 1, ["x"]]);
+    expect(sql).toContain('a."user_id" = $1');
+    expect(sql).toContain('d."user_id" = $1');
+  });
+
+  it("maps coverage rows, including the text form of a Postgres array", async () => {
+    const query = vi
+      .fn()
+      .mockResolvedValueOnce([
+        {
+          accountId: "a1",
+          first: 24300,
+          last: 24305,
+          recorded: "3",
+          sources: "{manual,connected}",
+        },
+      ])
+      .mockResolvedValueOnce([{ accountId: "a1", from: 24301, to: 24303 }]);
+    const { service } = build(query);
+    expect(await service.getDataCoverage("u1")).toEqual([
+      {
+        accountId: "a1",
+        firstMonth: "2025-01",
+        lastMonth: "2025-06",
+        recordedMonths: 3,
+        gaps: [{ from: "2025-02", to: "2025-04" }],
+        sources: ["connected", "manual"],
+      },
+    ]);
+  });
+
+  it("selects tax-record columns explicitly, with no receipt or notes column", async () => {
+    const { service, qb } = build();
+    expect(await service.getTaxRecords("u1", { fromDate: "x", toDate: "2026-03-31" })).toEqual([]);
+    await service.getTaxRecords("u1", { fromDate: "2025-04-01", toDate: "2026-03-31" });
+    const cols = (qb.select.mock.calls[0] as unknown as [string[]])[0];
+    expect(cols).toContain("t.id");
+    expect(cols.filter((c) => /receipt|notes/i.test(c))).toEqual([]);
+    expect(qb.where).toHaveBeenCalledWith("t.user_id = :userId", { userId: "u1" });
+  });
+
+  it("returns accounts without connection ids and with numbers", async () => {
+    const { service, accountFind } = build();
+    const [a] = await service.getAccounts("u1");
+    expect(a).toMatchObject({
+      balance: 10.5,
+      monthlyContribution: 3,
+      interestRate: null,
+      isCurrent: true,
+    });
+    expect(a).not.toHaveProperty("connectionId");
+    expect((accountFind.mock.calls[0] as unknown as [{ where: unknown }])[0].where).toEqual({
+      userId: "u1",
     });
   });
 });

@@ -7,6 +7,7 @@ import {
   type McpTokenStoreAdapter,
   TokenVerifier,
 } from "./auth/token-verifier.js";
+import { inMemoryQueries } from "./provider/in-memory.js";
 import { createFlumpMcpServer } from "./server.js";
 import type { McpUserDataProvider } from "./types.js";
 
@@ -105,44 +106,44 @@ describe("TokenVerifier", () => {
 });
 
 describe("Flump McpServer Tools & Resources", () => {
-  const mockDataProvider: McpUserDataProvider = {
-    async getUserFinancialData(userId, options) {
-      return {
-        baseline: {
-          ...DEFAULT_FINANCIAL_BASELINE,
-          userId,
-          annualGrossSalary: 110000,
-          pensionContributionPct: 5,
-          isSalarySacrifice: true,
-        },
-        accounts: [
-          {
-            id: "acc_1",
-            name: "Barclays Current Account",
-            type: "Current",
-            balance: 2500,
-          },
-          {
-            id: "acc_2",
-            name: "Monzo Credit Card",
-            type: "Credit Card",
-            balance: 1800,
-            interestRate: 22.9,
-          },
-        ],
-        budgetEntries: [
-          {
-            id: "b_1",
-            category: "housing",
-            name: "Rent",
-            amount: 1000,
-            frequency: "monthly",
-            isIncome: false,
-            isEssential: true,
-          },
-        ],
-      };
+  const load = async (userId: string) => ({
+    baseline: {
+      ...DEFAULT_FINANCIAL_BASELINE,
+      userId,
+      annualGrossSalary: 110000,
+      pensionContributionPct: 5,
+      isSalarySacrifice: true,
     },
+    accounts: [
+      {
+        id: "acc_1",
+        name: "Barclays Current Account",
+        type: "Current",
+        balance: 2500,
+      },
+      {
+        id: "acc_2",
+        name: "Monzo Credit Card",
+        type: "Credit Card",
+        balance: 1800,
+        interestRate: 22.9,
+      },
+    ],
+    budgetEntries: [
+      {
+        id: "b_1",
+        category: "housing",
+        name: "Rent",
+        amount: 1000,
+        frequency: "monthly",
+        isIncome: false,
+        isEssential: true,
+      },
+    ],
+  });
+  const mockDataProvider: McpUserDataProvider = {
+    getUserFinancialData: load,
+    ...inMemoryQueries(load),
   };
 
   it("initializes McpServer and registers all tools and resources without collision", () => {
