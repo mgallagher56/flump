@@ -16,6 +16,7 @@ import type { BudgetEntry } from "~/types/budget";
 import {
   loadRunwaySettings,
   type RunwaySavedSettings,
+  type RunwayScenario,
   saveRunwaySettings,
 } from "~/utils/runwayStorage";
 import { errorBanner, pageActions, pageRoot, tabContent } from "./BudgetContainer.styles";
@@ -82,6 +83,10 @@ const BudgetContainer: FC = () => {
   const [runwaySettings, setRunwaySettings] = useState<RunwaySavedSettings | null>(() =>
     loadRunwaySettings(),
   );
+
+  // Runway scenario inputs (severance, extra cuts, dropped lines) are session-only: held here so
+  // they survive tab switches, cleared on reload, never saved and never read by a headline.
+  const [runwayScenario, setRunwayScenario] = useState<RunwayScenario | null>(null);
 
   const handleUpdateRunwaySettings = (updated: RunwaySavedSettings) => {
     setRunwaySettings(updated);
@@ -325,6 +330,8 @@ const BudgetContainer: FC = () => {
           accounts={accountsWithBalances}
           entries={entries}
           savedSettings={runwaySettings}
+          scenario={runwayScenario}
+          onScenarioChange={setRunwayScenario}
           onSaveSettings={handleUpdateRunwaySettings}
           onNavigateToForecast={() => navigate("/app/savings#forecast")}
         />

@@ -208,3 +208,13 @@ export const whatIfGrid = cva({
 export const ctaRow = cva({
   base: { marginTop: "4px" },
 });
+
+export const scenarioValue = cva({
+  base: {
+    textStyle: "numeric.kpi",
+    color: "text.primary",
+    fontVariantNumeric: "tabular-nums",
+    margin: 0,
+    marginBottom: "4px",
+  },
+});

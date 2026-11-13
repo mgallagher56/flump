@@ -10,13 +10,15 @@ import {
   SimulatorSplitLayout,
   StatusBadge,
 } from "@repo/ui";
-import { ArrowRight, CheckCircle2, RotateCcw } from "lucide-react";
+import { ArrowRight, CheckCircle2 } from "lucide-react";
 import { type FC, type ReactNode, useEffect, useMemo, useState } from "react";
+import { ScenarioZone } from "~/features/scenario/components/ScenarioZone";
 import type { BudgetEntry } from "~/types/budget";
 import { CATEGORY_LABELS, toMonthly } from "~/types/budget";
 import {
   loadRunwaySettings,
   type RunwaySavedSettings,
+  type RunwayScenario,
   saveRunwaySettings,
 } from "~/utils/runwayStorage";
 import {
@@ -29,13 +31,12 @@ import {
   ctaRow,
   heroSubtext,
   heroValue,
-  introActions,
   introCard,
   introText,
   mutedNote,
   rowList,
   runwayRoot,
-  savedNote,
+  scenarioValue,
   statusCopy,
   statusRow,
   switchButton,
@@ -69,8 +70,15 @@ export interface RunwayCalculatorProps {
   accounts: Account[];
   accountDetails: AccountDetail[];
   onNavigateToForecast: () => void;
+  /** Saved preference: which accounts count towards the pool. */
   savedSettings?: RunwaySavedSettings | null;
   onSaveSettings?: (settings: RunwaySavedSettings) => void;
+  /**
+   * Session-only scenario inputs (severance, extra cuts, dropped lines). Held by the container so
+   * they survive tab switches and clear on reload. Never saved, never read by a headline.
+   */
+  scenario?: RunwayScenario | null;
+  onScenarioChange?: (scenario: RunwayScenario) => void;
 }
 
 const EXPENSE_CATEGORIES: BudgetEntry["category"][] = ["housing", "bills", "expenses"];
@@ -159,6 +167,21 @@ const BulkButtons: FC<BulkProps> = ({ onAll, onNone, label }) => (
   </div>
 );
 
+const describeRunway = (pool: number, monthlyBurn: number) => {
+  const months = monthlyBurn > 0 ? pool / monthlyBurn : Number.POSITIVE_INFINITY;
+  const whole = Math.floor(months % 12);
+  const years = Math.floor(months / 12);
+  const label =
+    monthlyBurn === 0
+      ? "Indefinitely (no expenses)"
+      : months > 120
+        ? `${Math.floor(months / 12)}+ years`
+        : years > 0
+          ? `${years} yr${years !== 1 ? "s" : ""} ${whole} mo${whole !== 1 ? "s" : ""}`
+          : `${Math.floor(months)} months`;
+  return { months, label };
+};
+
 export const RunwayCalculator: FC<RunwayCalculatorProps> = ({
   entries,
   accounts,
@@ -166,6 +189,8 @@ export const RunwayCalculator: FC<RunwayCalculatorProps> = ({
   onNavigateToForecast,
   savedSettings,
   onSaveSettings,
+  scenario,
+  onScenarioChange,
 }) => {
   const isSavingsOrInvestmentAccount = (type?: string) => {
     if (!type) return false;
@@ -213,6 +238,8 @@ export const RunwayCalculator: FC<RunwayCalculatorProps> = ({
   const initialSettings = useMemo(() => {
     return savedSettings ?? loadRunwaySettings();
   }, [savedSettings]);
+  // Scenario inputs start from the container's session memory, never from storage.
+  const initialScenario = scenario ?? null;
 
   const [includedAccounts, setIncludedAccounts] = useState<Record<string, boolean>>(() => {
     const stored = initialSettings?.includedAccounts;
@@ -224,7 +251,7 @@ export const RunwayCalculator: FC<RunwayCalculatorProps> = ({
   });
 
   const [keptIncome, setKeptIncome] = useState<Record<string, boolean>>(() => {
-    const stored = initialSettings?.keptIncome;
+    const stored = initialScenario?.keptIncome;
     const initial: Record<string, boolean> = {};
     for (const e of nonPrimaryIncome) {
       initial[e.id] = stored && stored[e.id] !== undefined ? !!stored[e.id] : true;
@@ -233,7 +260,7 @@ export const RunwayCalculator: FC<RunwayCalculatorProps> = ({
   });
 
   const [keptExpenses, setKeptExpenses] = useState<Record<string, boolean>>(() => {
-    const stored = initialSettings?.keptExpenses;
+    const stored = initialScenario?.keptExpenses;
     const initial: Record<string, boolean> = {};
     for (const e of expenseEntries) {
       initial[e.id] = stored && stored[e.id] !== undefined ? !!stored[e.id] : e.isEssential;
@@ -242,10 +269,10 @@ export const RunwayCalculator: FC<RunwayCalculatorProps> = ({
   });
 
   const [severanceLump, setSeveranceLump] = useState<number>(
-    () => initialSettings?.severanceLump ?? 0,
+    () => initialScenario?.severanceLump ?? 0,
   );
   const [extraMonthlyCut, setExtraMonthlyCut] = useState<number>(
-    () => initialSettings?.extraMonthlyCut ?? 0,
+    () => initialScenario?.extraMonthlyCut ?? 0,
   );
 
   // Sync state if new accounts/entries are added
@@ -291,7 +318,7 @@ export const RunwayCalculator: FC<RunwayCalculatorProps> = ({
     });
   }, [expenseEntries]);
 
-  // Persist helper
+  // Only the account preference is saved. Scenario inputs go to session memory (the container).
   const persistSettings = (
     newAccounts: Record<string, boolean>,
     newIncome: Record<string, boolean>,
@@ -299,15 +326,17 @@ export const RunwayCalculator: FC<RunwayCalculatorProps> = ({
     newSeverance: number,
     newExtraCut: number,
   ) => {
-    const payload: RunwaySavedSettings = {
-      includedAccounts: newAccounts,
+    if (newAccounts !== includedAccounts) {
+      const payload: RunwaySavedSettings = { includedAccounts: newAccounts };
+      saveRunwaySettings(payload);
+      onSaveSettings?.(payload);
+    }
+    onScenarioChange?.({
       keptIncome: newIncome,
       keptExpenses: newExpenses,
       severanceLump: newSeverance,
       extraMonthlyCut: newExtraCut,
-    };
-    saveRunwaySettings(payload);
-    onSaveSettings?.(payload);
+    });
   };
 
   // Toggle & change handlers
@@ -370,22 +399,29 @@ export const RunwayCalculator: FC<RunwayCalculatorProps> = ({
     persistSettings(includedAccounts, keptIncome, keptExpenses, severanceLump, clamped);
   };
 
-  const handleClearWhatIf = () => {
-    setSeveranceLump(0);
-    setExtraMonthlyCut(0);
-    persistSettings(includedAccounts, keptIncome, keptExpenses, 0, 0);
-  };
+  const defaultIncome = useMemo(
+    () => Object.fromEntries(nonPrimaryIncome.map((e) => [e.id, true])),
+    [nonPrimaryIncome],
+  );
+  const defaultExpenses = useMemo(
+    () => Object.fromEntries(expenseEntries.map((e) => [e.id, e.isEssential])),
+    [expenseEntries],
+  );
+  const sameFlags = (current: Record<string, boolean>, defaults: Record<string, boolean>) =>
+    Object.keys(defaults).every((id) => (current[id] ?? defaults[id]) === defaults[id]);
+  const isScenarioModified =
+    severanceLump !== 0 ||
+    extraMonthlyCut !== 0 ||
+    !sameFlags(keptIncome, defaultIncome) ||
+    !sameFlags(keptExpenses, defaultExpenses);
 
-  const handleResetToDefaults = () => {
-    const defaultAccounts = Object.fromEntries(savingsAccounts.map((a) => [a.id, true]));
-    const defaultIncome = Object.fromEntries(nonPrimaryIncome.map((e) => [e.id, true]));
-    const defaultExpenses = Object.fromEntries(expenseEntries.map((e) => [e.id, e.isEssential]));
-    setIncludedAccounts(defaultAccounts);
+  // Resets the illustration only. The saved account preference is left as it is.
+  const handleResetScenario = () => {
     setKeptIncome(defaultIncome);
     setKeptExpenses(defaultExpenses);
     setSeveranceLump(0);
     setExtraMonthlyCut(0);
-    persistSettings(defaultAccounts, defaultIncome, defaultExpenses, 0, 0);
+    persistSettings(includedAccounts, defaultIncome, defaultExpenses, 0, 0);
   };
 
   const totalSavings = useMemo(
@@ -436,15 +472,81 @@ export const RunwayCalculator: FC<RunwayCalculatorProps> = ({
   }, [expenseEntries]);
 
   const statusBadge = STATUS_BADGE[status];
+  // Headline baseline: saved account preference and the default budget lines only. It never reads
+  // the scenario inputs above.
+  const baseline = useMemo(() => {
+    const expenses = expenseEntries
+      .filter((e) => e.isEssential)
+      .reduce((sum, e) => sum + toMonthly(e), 0);
+    const income = nonPrimaryIncome.reduce((sum, e) => sum + toMonthly(e), 0);
+    const burn = Math.max(0, expenses - income);
+    return { pool: totalSavings, monthlyBurn: burn, ...describeRunway(totalSavings, burn) };
+  }, [expenseEntries, nonPrimaryIncome, totalSavings]);
   const resultsCopy =
     monthlyBurn > 0 ? (
       <span className={heroSubtext()}>
         <span>At a monthly burn of</span>
-        <Money size="sm" tone="onContrast" value={monthlyBurn} />
+        <Money size="sm" value={monthlyBurn} />
       </span>
     ) : (
       "No monthly spending, so the runway has no end"
     );
+
+  const savedPool = (
+    <Card padding="lg">
+      <div className={cardHeader()}>
+        <div className={cardTitleRow()}>
+          <h2 className={cardTitle()}>Savings pool</h2>
+          <StatusBadge variant="brand">
+            <Money size="sm" value={totalSavings} />
+          </StatusBadge>
+          <StatusBadge icon={<Icon icon={CheckCircle2} size="sm" />} variant="neutral">
+            Saved preference
+          </StatusBadge>
+        </div>
+        {savingsAccounts.length > 0 && (
+          <BulkButtons
+            label="accounts"
+            onAll={() => setAllAccounts(true)}
+            onNone={() => setAllAccounts(false)}
+          />
+        )}
+      </div>
+      <p className={mutedNote()}>Which accounts count towards your runway. Saved automatically.</p>
+      {savingsAccounts.length === 0 ? (
+        <p className={mutedNote()}>
+          No saving, current or investment accounts found. Connect or add accounts first.
+        </p>
+      ) : (
+        <div className={rowList()}>
+          {savingsAccounts.map((acc) => {
+            const isIncluded = !!includedAccounts[acc.id];
+            return (
+              <ToggleItem
+                key={acc.id}
+                amount={<Money size="sm" value={getLatestBalance(acc.id, acc.balance)} />}
+                checked={isIncluded}
+                meta={
+                  <>
+                    <span>{acc.type}</span>
+                    <span aria-hidden="true">·</span>
+                    <span>{isIncluded ? "included" : "excluded"}</span>
+                  </>
+                }
+                name={acc.name}
+                switchLabel={`Include ${acc.name} in savings pool`}
+                onToggle={() => toggleAccount(acc.id)}
+              />
+            );
+          })}
+          <div className={totalRow()}>
+            <span>Total pool</span>
+            <Money size="md" value={totalSavings} />
+          </div>
+        </div>
+      )}
+    </Card>
+  );
 
   const controls = (
     <>
@@ -453,11 +555,6 @@ export const RunwayCalculator: FC<RunwayCalculatorProps> = ({
           <div className={cardTitleRow()}>
             <h2 className={cardTitle()}>What if</h2>
           </div>
-          {(severanceLump > 0 || extraMonthlyCut > 0) && (
-            <Button size="sm" variant="ghost" onClick={handleClearWhatIf}>
-              Clear scenarios
-            </Button>
-          )}
         </div>
         <div className={whatIfGrid()}>
           <FormField hint="A one-off payment added to your pool" label="Severance or lump sum">
@@ -484,69 +581,15 @@ export const RunwayCalculator: FC<RunwayCalculatorProps> = ({
           </FormField>
         </div>
       </Card>
-
-      <Card padding="lg">
-        <div className={cardHeader()}>
-          <div className={cardTitleRow()}>
-            <h2 className={cardTitle()}>Savings pool</h2>
-            <StatusBadge variant="brand">
-              <Money size="sm" value={totalSavings} />
-            </StatusBadge>
-          </div>
-          {savingsAccounts.length > 0 && (
-            <BulkButtons
-              label="accounts"
-              onAll={() => setAllAccounts(true)}
-              onNone={() => setAllAccounts(false)}
-            />
-          )}
-        </div>
-        {savingsAccounts.length === 0 ? (
-          <p className={mutedNote()}>
-            No saving, current or investment accounts found. Connect or add accounts first.
-          </p>
-        ) : (
-          <div className={rowList()}>
-            {savingsAccounts.map((acc) => {
-              const isIncluded = !!includedAccounts[acc.id];
-              return (
-                <ToggleItem
-                  key={acc.id}
-                  amount={<Money size="sm" value={getLatestBalance(acc.id, acc.balance)} />}
-                  checked={isIncluded}
-                  meta={
-                    <>
-                      <span>{acc.type}</span>
-                      <span aria-hidden="true">·</span>
-                      <span>{isIncluded ? "included" : "excluded"}</span>
-                    </>
-                  }
-                  name={acc.name}
-                  switchLabel={`Include ${acc.name} in savings pool`}
-                  onToggle={() => toggleAccount(acc.id)}
-                />
-              );
-            })}
-            <div className={totalRow()}>
-              <span>Total pool</span>
-              <Money size="md" value={totalSavings} />
-            </div>
-          </div>
-        )}
-      </Card>
     </>
   );
 
   const content = (
     <>
-      <KpiCard
-        label="Your runway"
-        subtext={resultsCopy}
-        tone="hero"
-        value={<span className={heroValue()}>{runwayLabel}</span>}
-      />
-
       <Card padding="lg">
+        <h2 className={cardTitle()}>Runway in this illustration</h2>
+        <p className={scenarioValue()}>{runwayLabel}</p>
+        <p className={statusCopy()}>{resultsCopy}</p>
         <div className={statusRow()}>
           <StatusBadge variant={statusBadge.variant}>{statusBadge.label}</StatusBadge>
           <p className={statusCopy()}>Based on the accounts and spending you have switched on.</p>
@@ -673,32 +716,51 @@ export const RunwayCalculator: FC<RunwayCalculatorProps> = ({
       <Card padding="md">
         <div className={introCard()}>
           <p className={introText()}>
-            Switch on the accounts you would use, the income you would keep and the spending you
-            would not cut. Your choices save automatically. Your main salary is left out.
+            Your runway counts the accounts you switch on below, and that choice is saved. Anything
+            you change under the illustration stays on this page for this visit and is not saved.
+            Your main salary is left out.
           </p>
-          <div className={introActions()}>
-            <span className={savedNote()}>
-              <Icon icon={CheckCircle2} size="sm" />
-              Auto-saved
-            </span>
-            <Button
-              size="sm"
-              title="Reset the scenario to its default settings"
-              variant="outline"
-              onClick={handleResetToDefaults}
-            >
-              <Icon icon={RotateCcw} size="sm" />
-              Reset
-            </Button>
-          </div>
         </div>
       </Card>
-      <SimulatorSplitLayout
-        content={content}
-        controls={controls}
-        contentLabel="Runway results"
-        controlsLabel="Runway scenario"
+
+      <KpiCard
+        label="Your runway"
+        subtext={
+          baseline.monthlyBurn === 0 ? (
+            "No monthly spending, so the runway has no end"
+          ) : (
+            <span className={heroSubtext()}>
+              <span>At a monthly burn of</span>
+              <Money size="sm" tone="onContrast" value={baseline.monthlyBurn} />
+              <span>from a pool of</span>
+              <Money size="sm" tone="onContrast" value={baseline.pool} />
+            </span>
+          )
+        }
+        tone="hero"
+        value={<span className={heroValue()}>{baseline.label}</span>}
       />
+
+      {savedPool}
+
+      <ScenarioZone
+        basis={
+          <>
+            {baseline.label} of runway, from a pool of <Money size="sm" value={baseline.pool} /> and
+            a monthly burn of <Money size="sm" value={baseline.monthlyBurn} />
+          </>
+        }
+        isModified={isScenarioModified}
+        title="Model a change to your budget"
+        onReset={handleResetScenario}
+      >
+        <SimulatorSplitLayout
+          content={content}
+          contentLabel="Illustration results"
+          controls={controls}
+          controlsLabel="Runway illustration"
+        />
+      </ScenarioZone>
     </div>
   );
 };

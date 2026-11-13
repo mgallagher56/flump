@@ -1,8 +1,16 @@
 import { PortfolioSnapshot } from "@flump/finance-engine";
 import { toMonthly } from "~/types/budget";
 
+/** The one saved runway preference: which accounts count towards the pool. */
 export interface RunwaySavedSettings {
   includedAccounts: Record<string, boolean>;
+}
+
+/**
+ * Session-only scenario inputs. They live in component or container memory, are never written to
+ * storage and never feed a headline figure (scenario-zone spec).
+ */
+export interface RunwayScenario {
   keptIncome: Record<string, boolean>;
   keptExpenses: Record<string, boolean>;
   severanceLump: number;
@@ -18,13 +26,9 @@ export function loadRunwaySettings(): RunwaySavedSettings | null {
     if (!raw) return null;
     const parsed = JSON.parse(raw);
     if (typeof parsed !== "object" || parsed === null) return null;
-    return {
-      includedAccounts: parsed.includedAccounts || {},
-      keptIncome: parsed.keptIncome || {},
-      keptExpenses: parsed.keptExpenses || {},
-      severanceLump: Number(parsed.severanceLump) || 0,
-      extraMonthlyCut: Number(parsed.extraMonthlyCut) || 0,
-    };
+    // Older versions also stored scenario inputs here. They are ignored: only the account
+    // preference is a saved fact.
+    return { includedAccounts: parsed.includedAccounts || {} };
   } catch {
     return null;
   }
@@ -33,7 +37,8 @@ export function loadRunwaySettings(): RunwaySavedSettings | null {
 export function saveRunwaySettings(settings: RunwaySavedSettings): void {
   if (typeof window === "undefined") return;
   try {
-    window.localStorage.setItem(RUNWAY_STORAGE_KEY, JSON.stringify(settings));
+    const saved: RunwaySavedSettings = { includedAccounts: settings.includedAccounts };
+    window.localStorage.setItem(RUNWAY_STORAGE_KEY, JSON.stringify(saved));
   } catch {
     // Ignore storage quota or disabled errors
   }
@@ -75,6 +80,7 @@ export interface RunwayCalculationResult {
   shortLabel: string;
 }
 
+/** Baseline runway: saved account preference only, never scenario inputs. */
 export function calculateRunwayStats({
   entries,
   accounts,
@@ -86,11 +92,9 @@ export function calculateRunwayStats({
 
   let pool = 0;
   if (savedSettings?.includedAccounts) {
-    pool =
-      liquidAccounts
-        .filter((a) => savedSettings.includedAccounts[a.id] !== false)
-        .reduce((sum, a) => sum + snapshot.getLatestBalance(a.id), 0) +
-      (savedSettings.severanceLump || 0);
+    pool = liquidAccounts
+      .filter((a) => savedSettings.includedAccounts[a.id] !== false)
+      .reduce((sum, a) => sum + snapshot.getLatestBalance(a.id), 0);
   } else {
     pool = liquidAccounts.reduce((sum, a) => sum + snapshot.getLatestBalance(a.id), 0);
   }
@@ -108,9 +112,6 @@ export function calculateRunwayStats({
     .filter((e) => {
       if (!e.isIncome) return false;
       if (hasExplicitPrimary ? e.isPrimaryIncome : e.id === primaryId) return false;
-      if (savedSettings?.keptIncome) {
-        return savedSettings.keptIncome[e.id] !== false;
-      }
       return true;
     })
     .reduce((s, e) => s + toMonthly(e), 0);
@@ -118,16 +119,12 @@ export function calculateRunwayStats({
   const expenses = (entries || [])
     .filter((e) => {
       if (e.isIncome) return false;
-      if (savedSettings?.keptExpenses) {
-        return !!savedSettings.keptExpenses[e.id];
-      }
       // By default: ONLY essential expenses, and EXCLUDE savings transfers
       return e.isEssential && e.category !== "savings";
     })
     .reduce((s, e) => s + toMonthly(e), 0);
 
-  const extraCut = savedSettings?.extraMonthlyCut || 0;
-  const monthlyBurn = Math.max(0, expenses - nonPrimaryIncome - extraCut);
+  const monthlyBurn = Math.max(0, expenses - nonPrimaryIncome);
   const runwayMonths = monthlyBurn > 0 ? pool / monthlyBurn : Number.POSITIVE_INFINITY;
 
   const years = Math.floor(runwayMonths / 12);

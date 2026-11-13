@@ -2,11 +2,11 @@ import { PortfolioSnapshot } from "@flump/finance-engine";
 import { Button, Icon, PageHeader, ProjectionNotice, SegmentedTabs } from "@repo/ui";
 import { Plus } from "lucide-react";
 import { type FC, useEffect, useMemo, useState } from "react";
-import { useLoaderData, useNavigate } from "react-router";
-
+import { useLoaderData, useLocation, useNavigate } from "react-router";
 import type { Account } from "~/containers/accounts/types";
 import { AddSavingsAccountDialog } from "~/features/savings/components/AddSavingsAccountDialog";
 import { AnnualAllowancePill } from "~/features/savings/components/AnnualAllowancePill";
+import { PayRiseScenario } from "~/features/savings/components/PayRiseScenario";
 import { SavingsAccountsList } from "~/features/savings/components/SavingsAccountsList";
 import { SavingsForecasterCard } from "~/features/savings/components/SavingsForecasterCard";
 import { SavingsSummaryCards } from "~/features/savings/components/SavingsSummaryCards";
@@ -14,9 +14,12 @@ import { calculateOneYearCompoundInterest } from "~/features/savings/interest";
 import { useUserProfile } from "~/hooks/useUserProfile";
 import { pageRoot, tabPanel, tabsRoot } from "./SavingsContainer.styles";
 
-/** Monthly pay rise handed over from Take-home pay as `?payRise=`; 0 when absent or invalid. */
-export const parsePayRise = (search: string): number => {
-  const value = Number(new URLSearchParams(search).get("payRise"));
+/**
+ * Monthly pay rise handed over from Take-home pay in router state (never the URL); 0 when absent
+ * or invalid.
+ */
+export const parsePayRise = (state: unknown): number => {
+  const value = Number((state as { payRise?: unknown } | null)?.payRise);
   return Number.isFinite(value) && value > 0 ? Math.round(value) : 0;
 };
 
@@ -36,10 +39,19 @@ export const SavingsContainer: FC = () => {
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"forecaster" | "accounts" | "allowance">("forecaster");
-  // Monthly extra from the take-home calculator's "apply to forecast" (arrives as ?payRise=), added
-  // to real contributions.
-  const [payRiseMonthly, setPayRiseMonthly] = useState(0);
+  // Scenario input only: the extra monthly take-home from a pay rise modelled on Take-home pay
+  // (arrives in router state). It feeds the forecaster, never the saved figures above it.
+  const location = useLocation();
+  const [payRiseMonthly, setPayRiseMonthly] = useState(() => parsePayRise(location?.state));
   const navigate = useNavigate();
+  const removePayRise = () => {
+    setPayRiseMonthly(0);
+    // Clear the handed-over state so a reload does not bring the pay rise back.
+    navigate(`${location?.pathname ?? "/app/savings"}${location?.hash ?? ""}`, {
+      replace: true,
+      state: null,
+    });
+  };
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -48,9 +60,12 @@ export const SavingsContainer: FC = () => {
       navigate("/app/take-home", { replace: true });
       return;
     }
-    const payRise = parsePayRise(window.location.search);
-    if (payRise > 0) setPayRiseMonthly(payRise);
   }, [navigate]);
+
+  useEffect(() => {
+    const payRise = parsePayRise(location?.state);
+    if (payRise > 0) setPayRiseMonthly(payRise);
+  }, [location?.state]);
   const savingsAccounts = useMemo(() => {
     const snapshot = new PortfolioSnapshot(accounts, accountDetails);
     return accounts
@@ -183,12 +198,17 @@ export const SavingsContainer: FC = () => {
         panelClassName={tabPanel()}
         panels={{
           forecaster: (
-            <SavingsForecasterCard
-              accounts={savingsAccounts}
-              monthlyContribution={totalMonthlySavings + payRiseMonthly}
-              portfolioInterestRate={weightedInterestRate}
-              startingBalance={totalSavingsBalance}
-            />
+            <>
+              {payRiseMonthly > 0 && (
+                <PayRiseScenario monthlyIncrease={payRiseMonthly} onRemove={removePayRise} />
+              )}
+              <SavingsForecasterCard
+                accounts={savingsAccounts}
+                monthlyContribution={totalMonthlySavings + payRiseMonthly}
+                portfolioInterestRate={weightedInterestRate}
+                startingBalance={totalSavingsBalance}
+              />
+            </>
           ),
           accounts: (
             <SavingsAccountsList
