@@ -3,9 +3,9 @@ import {
   type OnboardingSeedPayload,
   persistOnboardingSeed,
 } from "@flump/finance-engine";
-import { Button, Card, formatMoney, InlineAlert, SectionBand, SliderField } from "@repo/ui";
+import { Button, Card, formatMoney, Icon, InlineAlert, SectionBand, SliderField } from "@repo/ui";
+import { ArrowRight } from "lucide-react";
 import { type FC, useMemo, useState } from "react";
-import { FiArrowRight } from "react-icons/fi";
 import { signupCta } from "../../utils/site";
 import {
   breakdownList,
@@ -145,7 +145,7 @@ export const PayRiseTeaser: FC = () => {
 
             <Button size="md" variant="primary" onClick={handleSave} className={teaserButton()}>
               {cta.external ? "Save this salary baseline" : cta.label}{" "}
-              <FiArrowRight aria-hidden="true" />
+              <Icon icon={ArrowRight} size="sm" />
             </Button>
           </div>
         </div>

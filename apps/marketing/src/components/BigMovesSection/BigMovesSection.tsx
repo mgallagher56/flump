@@ -1,6 +1,6 @@
-import { Card, SectionBand } from "@repo/ui";
+import { Card, Icon, SectionBand } from "@repo/ui";
+import { CreditCard, House, Sunrise } from "lucide-react";
 import type { FC, ReactNode } from "react";
-import { FiCreditCard, FiHome, FiSunrise } from "react-icons/fi";
 import { Link } from "react-router-dom";
 import {
   moveCard,
@@ -35,7 +35,7 @@ export const BIG_MOVES: BigMove[] = [
   {
     id: "home",
     title: "Rent or mortgage",
-    icon: <FiHome aria-hidden="true" size={20} />,
+    icon: <Icon icon={House} size="md" />,
     situations: [
       {
         label: "Renting",
@@ -54,7 +54,7 @@ export const BIG_MOVES: BigMove[] = [
   {
     id: "debts",
     title: "Debts",
-    icon: <FiCreditCard aria-hidden="true" size={20} />,
+    icon: <Icon icon={CreditCard} size="md" />,
     situations: [
       {
         label: "Paying off a card or loan",
@@ -69,7 +69,7 @@ export const BIG_MOVES: BigMove[] = [
   {
     id: "pension",
     title: "Pension",
-    icon: <FiSunrise aria-hidden="true" size={20} />,
+    icon: <Icon icon={Sunrise} size="md" />,
     situations: [
       {
         label: "Checking a pension",
