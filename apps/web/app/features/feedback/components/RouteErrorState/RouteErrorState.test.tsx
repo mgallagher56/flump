@@ -91,18 +91,27 @@ describe("RouteErrorState", () => {
     const { unmount } = render(
       <RouteErrorState kind="unavailable" onRetry={() => {}} routeKey="/app/debt" />,
     );
-    const link = screen.getByRole("link", { name: "Report this problem" });
+    const link = screen.getByRole("link", { name: "Report this problem by email" });
     const href = link.getAttribute("href") ?? "";
     expect(href.startsWith("mailto:")).toBe(true);
     expect(decodeURIComponent(href)).toContain("[/app/debt]");
     unmount();
 
     render(<RouteErrorState kind="not-invited" />);
-    expect(screen.getByRole("link", { name: "Report this problem" })).toBeDefined();
+    expect(screen.getByRole("link", { name: "Report this problem by email" })).toBeDefined();
   });
 
   it("does not offer the report link on the signed-out state", () => {
     render(<RouteErrorState kind="unauthorised" />);
-    expect(screen.queryByRole("link", { name: "Report this problem" })).toBeNull();
+    expect(screen.queryByRole("link", { name: "Report this problem by email" })).toBeNull();
+  });
+
+  it("shows the report link for the unknown kind but not for not-found", () => {
+    const { unmount } = render(<RouteErrorState kind="unknown" />);
+    expect(screen.getByRole("link", { name: "Report this problem by email" })).toBeDefined();
+    unmount();
+
+    render(<RouteErrorState kind="not-found" />);
+    expect(screen.queryByRole("link", { name: "Report this problem by email" })).toBeNull();
   });
 });
