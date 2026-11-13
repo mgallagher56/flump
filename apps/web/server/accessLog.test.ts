@@ -19,6 +19,24 @@ describe("normalisePath", () => {
     expect(normalisePath("/h/0123456789abcdef0123")).toBe("/h/:id");
   });
 
+  it("drops scheme and authority from absolute-form targets", () => {
+    expect(normalisePath("http://user:pass@host.example/debt/payoff?x=1")).toBe("/debt/payoff");
+    expect(normalisePath("https://user:pass@host.example")).toBe("/");
+    expect(normalisePath("http://user:pass@host.example?code=1")).toBe("/");
+  });
+
+  it("keeps real slugs but still collapses tokens (long-slug behaviour)", () => {
+    expect(normalisePath("/tools/mortgage-overpayment-calculator")).toBe(
+      "/tools/mortgage-overpayment-calculator",
+    );
+    // Slugs of 32+ characters, digits, hex and mixed case still collapse.
+    expect(normalisePath("/t/aaaaaaaa-bbbbbbbb-cccccccc-dddddddd-eeee")).toBe("/t/:id");
+    expect(normalisePath("/t/0123456789abcdef01234567")).toBe("/t/:id");
+    expect(normalisePath("/t/AbCdEfGhIjKlMnOpQrStUv")).toBe("/t/:id");
+    expect(normalisePath("/t/abcdefghijklmnopqrstuvwx")).toBe("/t/:id");
+    expect(normalisePath("/t/some-slug-with-digit-2024-abc")).toBe("/t/:id");
+  });
+
   it("keeps ordinary segments and the root", () => {
     expect(normalisePath("/")).toBe("/");
     expect(normalisePath("/debt/payoff")).toBe("/debt/payoff");

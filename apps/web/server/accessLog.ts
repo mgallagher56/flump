@@ -9,6 +9,12 @@ const SAFE_ID = /^[A-Za-z0-9_-]{8,64}$/;
 const DIGITS_SEGMENT = /^\d+$/;
 const TOKEN_SEGMENT = /^[A-Za-z0-9_-]{20,}$/;
 const HEX_SEGMENT = /^[0-9a-f]{12,}$/i;
+// A real slug: lowercase words joined by single hyphens, no digits, under 32 characters (the
+// length at which `redactString` blanks anything token-like anyway, so it stays the backstop).
+// Without this, /tools/mortgage-overpayment-calculator would log as /tools/:id.
+const SLUG_SEGMENT = /^[a-z]+(?:-[a-z]+)+$/;
+const MAX_SLUG_LENGTH = 31;
+const SCHEME_AUTHORITY = /^[a-z][a-z0-9+.-]*:\/\/[^/?#]*/i;
 
 /** A UUID x-request-id is kept; otherwise a strict-charset x-railway-request-id; else a fresh UUID. */
 export function resolveRequestId(headers: Request["headers"]): string {
@@ -26,14 +32,17 @@ export function resolveRequestId(headers: Request["headers"]): string {
  * layer, so this stands in for it.
  */
 export function normalisePath(url: string): string {
-  const raw = url.split(/[?#]/, 1)[0] ?? "";
+  // Absolute-form request targets (`GET http://user:pass@host/x`) carry credentials in the
+  // authority; drop scheme and authority first.
+  const raw = url.replace(SCHEME_AUTHORITY, "").split(/[?#]/, 1)[0] || "/";
   const segments = raw.split("/").map((segment) => {
     if (segment === "") return segment;
     if (
       UUID.test(segment) ||
       DIGITS_SEGMENT.test(segment) ||
       HEX_SEGMENT.test(segment) ||
-      TOKEN_SEGMENT.test(segment)
+      (TOKEN_SEGMENT.test(segment) &&
+        !(SLUG_SEGMENT.test(segment) && segment.length <= MAX_SLUG_LENGTH))
     ) {
       return ":id";
     }

@@ -56,8 +56,11 @@ export function installShutdown(
     server.closeIdleConnections?.();
   };
   if (listen) {
-    process.once("SIGTERM", () => handler("SIGTERM"));
-    process.once("SIGINT", () => handler("SIGINT"));
+    // `on`, not `once`: with `once` the handler is removed after the first signal and a second
+    // SIGTERM/SIGINT would hit the default action and kill the process mid-drain. Here a repeat
+    // signal during the drain is ignored by the guard above; the 14s timer is the only force exit.
+    process.on("SIGTERM", () => handler("SIGTERM"));
+    process.on("SIGINT", () => handler("SIGINT"));
   }
   return handler;
 }
