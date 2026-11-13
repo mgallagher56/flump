@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { MemoryRouter, useNavigate } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { DEFAULT_PROFILE } from "~/hooks/useUserProfile";
 import * as avatarUtils from "~/utils/avatar";
@@ -25,6 +26,15 @@ vi.mock("~/hooks/useUserProfile", async () => {
     }),
   };
 });
+
+const GoToAi = () => {
+  const navigate = useNavigate();
+  return (
+    <button type="button" onClick={() => navigate("/app/profile?tab=ai_connections")}>
+      go
+    </button>
+  );
+};
 
 describe("<UserProfilePanel />", () => {
   beforeEach(() => {
@@ -362,5 +372,18 @@ describe("Self Assessment module toggle", () => {
       "true",
     );
     window.history.pushState({}, "", "/");
+  });
+
+  it("switches to the AI tab when already on the page and the search changes", () => {
+    render(
+      <MemoryRouter initialEntries={["/app/profile"]}>
+        <GoToAi />
+        <UserProfilePanel initialProfile={DEFAULT_PROFILE} />
+      </MemoryRouter>,
+    );
+    const tab = () => screen.getByRole("tab", { name: "AI & MCP Access" });
+    expect(tab().getAttribute("aria-selected")).toBe("false");
+    fireEvent.click(screen.getByText("go"));
+    expect(tab().getAttribute("aria-selected")).toBe("true");
   });
 });

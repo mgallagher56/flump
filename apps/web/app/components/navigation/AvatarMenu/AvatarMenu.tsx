@@ -31,11 +31,11 @@ const AvatarMenu: FC<AvatarMenuProps> = ({ user }) => {
     if (!open) return;
     const items = rootRef.current?.querySelectorAll<HTMLElement>('[role="menuitem"]');
     items?.[0]?.focus();
-    const onPointerDown = (event: MouseEvent) => {
+    const onPointerDown = (event: PointerEvent) => {
       if (!rootRef.current?.contains(event.target as Node)) setOpen(false);
     };
-    document.addEventListener("mousedown", onPointerDown);
-    return () => document.removeEventListener("mousedown", onPointerDown);
+    document.addEventListener("pointerdown", onPointerDown);
+    return () => document.removeEventListener("pointerdown", onPointerDown);
   }, [open]);
 
   const onMenuKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
@@ -45,7 +45,7 @@ const AvatarMenu: FC<AvatarMenuProps> = ({ user }) => {
       return;
     }
     if (event.key === "Tab") {
-      setOpen(false);
+      close(true);
       return;
     }
     if (event.key !== "ArrowDown" && event.key !== "ArrowUp") return;
