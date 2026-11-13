@@ -9,7 +9,7 @@ import {
   bootAuthzHarness,
   MISSING_ID,
   probeBody,
-  TRUNCATE_ALL,
+  truncateAll,
   USER_A,
   USER_B,
 } from "./support";
@@ -50,7 +50,8 @@ describe.skipIf(dbMode === "skip")("authz: budget controller (real Postgres)", (
   });
 
   beforeEach(async () => {
-    await h.dataSource.query(TRUNCATE_ALL);
+    await truncateAll(h.dataSource);
+    h.resetRateLimits();
     const created = await h.call("post", "/budget-entries", h.tokens.a, {
       category: "housing",
       name: "A rent",
@@ -114,11 +115,14 @@ describe.skipIf(dbMode === "skip")("authz: budget controller (real Postgres)", (
     ];
 
     it.each(routes.map((r) => [r.key, r] as const))(
-      "%s: no token and expired token get 401, data unchanged",
+      "%s: no, expired and dev-bypass tokens get 401, data unchanged",
       async (_key, route) => {
-        for (const token of [undefined, h.tokens.expired]) {
+        for (const token of [undefined, h.tokens.expired, h.tokens.dev]) {
           const res = await h.call(route.method, route.path(), token, route.body);
-          expect(res.status, `${route.key} with ${token ? "expired" : "no"} token`).toBe(401);
+          expect(
+            res.status,
+            `${route.key} with ${token === undefined ? "no" : token === h.tokens.dev ? "dev-bypass" : "expired"} token`,
+          ).toBe(401);
         }
         await expectEntryUntouched();
         expect(await entries().count()).toBe(1);
@@ -209,5 +213,45 @@ describe.skipIf(dbMode === "skip")("authz: budget controller (real Postgres)", (
       "holidays",
     ]);
     ran("POST /budget-entries/categories");
+  });
+  describe("/v1 alias (any case) gets the same answers as the unversioned path", () => {
+    it.each(["/v1", "/V1"])(
+      "%s: 401 without a valid token, A reaches own row, B gets the same 404",
+      async (prefix) => {
+        const paths: Array<["get" | "patch" | "delete", string, object | undefined]> = [
+          ["get", `${prefix}/budget-entries`, undefined],
+          ["patch", `${prefix}/budget-entries/${entryId}`, { name: "pwned" }],
+          ["delete", `${prefix}/budget-entries/${entryId}`, undefined],
+        ];
+        for (const [method, path, body] of paths) {
+          for (const token of [undefined, h.tokens.expired, h.tokens.dev]) {
+            const res = await h.call(method, path, token, body);
+            expect(res.status, `${method} ${path}`).toBe(401);
+          }
+        }
+        await expectEntryUntouched();
+
+        const own = await h.call("get", `${prefix}/budget-entries`, h.tokens.a);
+        expect(own.status).toBe(200);
+        expect(own.body).toHaveLength(1);
+        const list = await h.call("get", `${prefix}/budget-entries`, h.tokens.b);
+        expect(list.body).toEqual([]);
+        const asB = await h.call("patch", `${prefix}/budget-entries/${entryId}`, h.tokens.b, {
+          name: "pwned",
+        });
+        const missing = await h.call(
+          "patch",
+          `${prefix}/budget-entries/${MISSING_ID}`,
+          h.tokens.b,
+          { name: "pwned" },
+        );
+        expect(asB.status).toBe(404);
+        expect(asB.body).toEqual(missing.body);
+        const delB = await h.call("delete", `${prefix}/budget-entries/${entryId}`, h.tokens.b);
+        expect(delB.status).toBe(404);
+        expect(delB.body).toEqual(missing.body);
+        await expectEntryUntouched();
+      },
+    );
   });
 });
