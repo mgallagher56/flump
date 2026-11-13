@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 import express from "express";
 import { afterEach, describe, expect, it } from "vitest";
 import { noindexMiddleware, opsRouter } from "./ops";
+import { sitemapRouter } from "./sitemap";
 
 type Env = Record<string, string | undefined>;
 
@@ -14,6 +15,7 @@ async function start(env: Env) {
   const app = express();
   app.use(noindexMiddleware(env));
   app.use(opsRouter(env));
+  app.use(sitemapRouter(env));
   app.use((_req, res) => {
     res.status(200).type("html").end("<html>spa</html>");
   });
@@ -47,17 +49,25 @@ describe("ops routes", () => {
   });
 
   it("serves an allow-all /robots.txt when ALLOW_INDEXING=true", async () => {
-    const base = await start({ ALLOW_INDEXING: "true" });
+    const base = await start({ ALLOW_INDEXING: "true", FLUMP_LAUNCH: "true" });
     const res = await fetch(`${base}/robots.txt`);
     expect(await res.text()).toBe("User-agent: *\nAllow: /\n");
   });
 
   it("adds a Sitemap line to robots.txt only when indexing is on and SITE_URL is https", async () => {
-    const on = await start({ ALLOW_INDEXING: "true", SITE_URL: "https://flump.example/x" });
+    const on = await start({
+      ALLOW_INDEXING: "true",
+      FLUMP_LAUNCH: "true",
+      SITE_URL: "https://flump.example/x",
+    });
     expect(await (await fetch(`${on}/robots.txt`)).text()).toBe(
       "User-agent: *\nAllow: /\nSitemap: https://flump.example/sitemap.xml\n",
     );
-    const bad = await start({ ALLOW_INDEXING: "true", SITE_URL: "http://flump.example" });
+    const bad = await start({
+      ALLOW_INDEXING: "true",
+      FLUMP_LAUNCH: "true",
+      SITE_URL: "http://flump.example",
+    });
     expect(await (await fetch(`${bad}/robots.txt`)).text()).toBe("User-agent: *\nAllow: /\n");
     const off = await start({ SITE_URL: "https://flump.example" });
     expect(await (await fetch(`${off}/robots.txt`)).text()).toBe("User-agent: *\nDisallow: /\n");
@@ -71,6 +81,26 @@ describe("ops routes", () => {
   });
 });
 
+describe("indexing flag combinations", () => {
+  const cases: [string, Env, boolean][] = [
+    ["neither", {}, false],
+    ["ALLOW_INDEXING only", { ALLOW_INDEXING: "true" }, false],
+    ["FLUMP_LAUNCH only", { FLUMP_LAUNCH: "true" }, false],
+    ["both", { ALLOW_INDEXING: "true", FLUMP_LAUNCH: "true" }, true],
+  ];
+  for (const [name, env, allowed] of cases) {
+    it(`${name}: indexing ${allowed ? "allowed" : "blocked"}`, async () => {
+      const base = await start({ ...env, SITE_URL: "https://flump.example" });
+      const robots = await (await fetch(`${base}/robots.txt`)).text();
+      expect(
+        robots.startsWith(allowed ? "User-agent: *\nAllow: /" : "User-agent: *\nDisallow: /"),
+      ).toBe(true);
+      expect((await fetch(`${base}/x`)).headers.has("x-robots-tag")).toBe(!allowed);
+      expect((await fetch(`${base}/sitemap.xml`)).status).toBe(allowed ? 200 : 404);
+    });
+  }
+});
+
 describe("noindexMiddleware", () => {
   it("adds X-Robots-Tag to ops routes and catch-all by default", async () => {
     const base = await start({});
@@ -81,7 +111,7 @@ describe("noindexMiddleware", () => {
   });
 
   it("omits the header when ALLOW_INDEXING=true", async () => {
-    const base = await start({ ALLOW_INDEXING: "true" });
+    const base = await start({ ALLOW_INDEXING: "true", FLUMP_LAUNCH: "true" });
     for (const path of ["/healthz", "/anything"]) {
       expect((await fetch(`${base}${path}`)).headers.has("x-robots-tag")).toBe(false);
     }
@@ -125,12 +155,18 @@ describe("server.ts wiring", () => {
     }
   });
 
+  it("injects the canonical link from SITE_URL after the helmet output", () => {
+    expect(source).toContain("canonicalLinkTag(process.env.SITE_URL, url)");
+  });
+
   it("404s /sitemap.xml unless indexing is on and SITE_URL is https", async () => {
     for (const env of [
       {},
-      { ALLOW_INDEXING: "true" },
+      { ALLOW_INDEXING: "true", FLUMP_LAUNCH: "true" },
+      { ALLOW_INDEXING: "true", SITE_URL: "https://flump.example" },
+      { FLUMP_LAUNCH: "true", SITE_URL: "https://flump.example" },
       { SITE_URL: "https://flump.example" },
-      { ALLOW_INDEXING: "true", SITE_URL: "http://flump.example" },
+      { ALLOW_INDEXING: "true", FLUMP_LAUNCH: "true", SITE_URL: "http://flump.example" },
     ]) {
       const base = await start(env);
       expect((await fetch(`${base}/sitemap.xml`)).status).toBe(404);
@@ -138,7 +174,11 @@ describe("server.ts wiring", () => {
   });
 
   it("serves a generated /sitemap.xml with every canonical page", async () => {
-    const base = await start({ ALLOW_INDEXING: "true", SITE_URL: "https://flump.example/x" });
+    const base = await start({
+      ALLOW_INDEXING: "true",
+      FLUMP_LAUNCH: "true",
+      SITE_URL: "https://flump.example/x",
+    });
     const res = await fetch(`${base}/sitemap.xml`);
     expect(res.status).toBe(200);
     expect(res.headers.get("content-type")).toContain("xml");

@@ -136,6 +136,7 @@ Rows come from the code (`process.env.X`, `env.X` and `configService.get("X")` i
 | `SITE_URL`                | public https origin, used for sitemap and robots when indexing is on | unset              | unset            | no      |
 | `VITE_SHOW_PLACEHOLDERS`  | unset (build-time; `true` previews placeholder copy)                 | unset              | unset            | no      |
 | `ALLOW_INDEXING`          | `true` only at public launch                                         | unset              | unset            | no      |
+| `FLUMP_LAUNCH`            | `true` only at public launch; indexing also needs `ALLOW_INDEXING`   | unset              | unset            | no      |
 | `APP_URL`                 | fallback when `VITE_APP_URL` is unset                                | unset              | unset            | no      |
 | `RAILWAY_PUBLIC_DOMAIN`   | Railway-injected                                                     | Railway-injected   | unset (platform) | no      |
 | `RAILWAY_SERVICE_WEB_URL` | Railway-injected                                                     | Railway-injected   | unset (platform) | no      |
