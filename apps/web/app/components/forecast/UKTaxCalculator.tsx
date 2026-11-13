@@ -260,6 +260,11 @@ const UKTaxCalculator: FC<UKTaxCalculatorProps> = ({ initialSalary, onApplyIncre
     width: "100%",
     maxWidth: "100%",
     overflowX: "auto",
+    _focusVisible: {
+      outline: "2px solid",
+      outlineColor: "border.focusRing",
+      outlineOffset: "2px",
+    },
   });
 
   const breakdownTable = css({
@@ -549,7 +554,16 @@ const UKTaxCalculator: FC<UKTaxCalculatorProps> = ({ initialSalary, onApplyIncre
                 <FLPHeading as="h4" size="sm">
                   Salary Deductions Breakdown
                 </FLPHeading>
-                <div className={breakdownTableScroll} id="breakdown-table-scroll">
+                {/* biome-ignore lint/a11y/useSemanticElements: a scrollable table wrapper has no semantic element; role=region names it */}
+                <div
+                  className={breakdownTableScroll}
+                  id="breakdown-table-scroll"
+                  data-testid="breakdown-table-scroll"
+                  role="region"
+                  aria-label="Salary deductions breakdown"
+                  // biome-ignore lint/a11y/noNoninteractiveTabindex: scrollable region must be keyboard-focusable (axe scrollable-region-focusable)
+                  tabIndex={0}
+                >
                   <table className={breakdownTable}>
                     <thead>
                       <tr>

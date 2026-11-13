@@ -7,7 +7,8 @@ export const themeToggleGroup = cva({
     gap: "2px",
     margin: "0",
     minWidth: "0",
-    padding: "2px",
+    // Room for the 2px focus ring + 2px offset on the 44px options below md.
+    padding: { base: "4px", md: "2px" },
     borderRadius: "full",
     borderWidth: "1px",
     borderStyle: "solid",
@@ -45,6 +46,7 @@ export const themeToggleOption = cva({
       color: "primary",
       boxShadow: "xs",
     },
+    // Keeps 44px on touch devices at any width, including md and up (tablets).
     "@media (pointer: coarse)": {
       width: "44px",
       height: "44px",

@@ -63,10 +63,11 @@ describe("<UKTaxCalculator /> editing the salary", () => {
 
 describe("<UKTaxCalculator />", () => {
   test("wraps the deductions breakdown table in a horizontal scroll wrapper", () => {
-    const { getByTestId } = customRender(
+    const { getByRole } = customRender(
       <UKTaxCalculator initialSalary={45000} onApplyIncrease={vi.fn()} />,
     );
-    const wrapper = getByTestId("breakdown-table-scroll");
+    const wrapper = getByRole("region", { name: "Salary deductions breakdown" });
+    expect(wrapper.getAttribute("tabindex")).toBe("0");
     expect(wrapper.querySelector("table")).not.toBeNull();
   });
 
