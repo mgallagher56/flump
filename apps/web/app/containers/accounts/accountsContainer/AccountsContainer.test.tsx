@@ -18,6 +18,12 @@ vi.mock("react-router", async () => {
     ...actual,
     useLoaderData: mocks.mockUseLoaderData,
     useRevalidator: mocks.mockUseRevalidator,
+
+    Link: ({ to, children, ...rest }: { to: string; children: React.ReactNode }) => (
+      <a href={to} {...rest}>
+        {children}
+      </a>
+    ),
     useLocation: () => ({ search: "", pathname: "/app/accounts" }),
     useSearchParams: () => [new URLSearchParams(), vi.fn()],
     Form: ({ children }: { children: ReactNode }) => <form>{children}</form>,
@@ -31,8 +37,6 @@ vi.mock("react-router", async () => {
   };
 });
 
-vi.mock("app/components/core/cards/AccountsCard", () => ({ default: () => "AccountsCard" }));
-vi.mock("app/components/core/input/FLPInput", () => ({ default: () => "FLPInput" }));
 vi.mock("~/hooks/useFormatCurrency", () => ({
   useFormatCurrency: () => ({
     formatCurrency: (val: number) => `£${val?.toLocaleString()}`,
@@ -40,13 +44,14 @@ vi.mock("~/hooks/useFormatCurrency", () => ({
 }));
 
 describe("<AccountsContainer />", () => {
-  test("should render as expected when no accounts exist", () => {
+  test("shows an empty state with an add button when no accounts exist", () => {
     mocks.mockUseLoaderData.mockReturnValue({ accounts: [] });
-    const { container } = customRender(<AccountsContainer />);
-    expect(container).toMatchSnapshot();
+    const { getByText, queryByText } = customRender(<AccountsContainer />);
+    expect(getByText("No accounts yet")).toBeDefined();
+    expect(queryByText("Where you stand")).toBeNull();
   });
 
-  test("should render as expected when accounts exist", () => {
+  test("renders one hero, a four-figure strip and accounts grouped by type", () => {
     mocks.mockUseLoaderData.mockReturnValue({
       accounts: mockAccounts,
       accountDetails: [
@@ -57,24 +62,14 @@ describe("<AccountsContainer />", () => {
           year: currentYear,
           value: 1000,
         },
-        {
-          id: 2,
-          account_id: mockAccounts[6].id,
-          month: currentMonth,
-          year: currentYear,
-          value: 500,
-        },
-        {
-          id: 3,
-          account_id: mockAccounts[1].id,
-          month: currentMonth - 1 || 12,
-          year: currentMonth - 1 === 0 ? currentYear - 1 : currentYear,
-          value: 800,
-        },
       ],
     });
-    const { container } = customRender(<AccountsContainer />);
-    expect(container).toMatchSnapshot();
+    const { getByRole, getAllByRole } = customRender(<AccountsContainer />);
+    expect(getByRole("heading", { level: 1, name: "Your accounts" })).toBeDefined();
+    expect(getByRole("heading", { name: "Where you stand" })).toBeDefined();
+    // Each type present in the data gets its own heading.
+    const groupHeadings = getAllByRole("heading", { level: 2 }).map((h) => h.textContent);
+    expect(groupHeadings).toContain("Current");
   });
 
   test("should open modal to add an account", async () => {
@@ -97,21 +92,14 @@ describe("<AccountsContainer />", () => {
       ],
       accountDetails: [],
     });
-    const { container, getByText } = customRender(<AccountsContainer />);
-    fireEvent.mouseDown(getByText("Overview"));
-    fireEvent.click(getByText("Overview"));
+    const { container } = customRender(<AccountsContainer />);
     const text = container.textContent ?? "";
     expect(text).toContain("£1,500");
     expect(text).toContain("£3,500");
     expect(text).not.toContain("£-");
   });
 
-  const openOverview = () => {
-    const view = customRender(<AccountsContainer />);
-    fireEvent.mouseDown(view.getByText("Overview"));
-    fireEvent.click(view.getByText("Overview"));
-    return view;
-  };
+  const openOverview = () => customRender(<AccountsContainer />);
 
   test("counts Property as an asset, not a liability", () => {
     mocks.mockUseLoaderData.mockReturnValue({
@@ -158,7 +146,7 @@ describe("<AccountsContainer />", () => {
     expect(line.textContent).toContain("Student loans (not in net worth): £40,000");
     expect(line.textContent).toContain("written off");
     const text = container.textContent ?? "";
-    expect(text).toContain("Total net worth");
+    expect(text).toContain("Net worth");
     expect(text).toContain("£5,000");
     expect(text).not.toContain("£-35,000");
     expect(text).not.toContain("£35,000");

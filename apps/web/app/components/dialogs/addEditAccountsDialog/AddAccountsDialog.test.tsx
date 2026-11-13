@@ -39,7 +39,7 @@ describe("<AddAccountDialogBtn", () => {
 
     const nameInput = getByText("Name");
     expect(nameInput).toBeDefined();
-    const accountTypeInput = getByText("Account Type");
+    const accountTypeInput = getByText("Account type");
     expect(accountTypeInput).toBeDefined();
 
     await user.type(nameInput, "Starling");
@@ -63,8 +63,8 @@ describe("<AddAccountDialogBtn", () => {
     );
     await user.click(getByText("addAccount"));
 
-    // Switch to Connect to Bank
-    await user.click(getByText("Connect to Bank"));
+    // Switch to Connect to bank
+    await user.click(getByText("Connect to bank"));
 
     // Verify popular banks and Trading 212 are listed
     expect(getByText("Monzo Bank")).toBeDefined();
@@ -78,7 +78,7 @@ describe("<AddAccountDialogBtn", () => {
     await user.click(getByText("Trading 212"));
 
     // Verify Trading 212 API Key prompt
-    expect(getByText("Trading 212 API Key")).toBeDefined();
+    expect(getByText("Trading 212 API key")).toBeDefined();
 
     // Enter API key
     const tokenInput = getByPlaceholderText(/Trading 212 app/i);
@@ -104,7 +104,7 @@ describe("<AddAccountDialogBtn", () => {
       <AddEditAccountsDialogBtn accountId="123456" />,
     );
     await user.click(getByText("addAccount"));
-    await user.click(getByText("Connect to Bank"));
+    await user.click(getByText("Connect to bank"));
 
     // Select Monzo
     await user.click(getByText("Monzo Bank"));
@@ -131,13 +131,13 @@ describe("<AddAccountDialogBtn", () => {
     mocks.mockUseLoaderData.mockReturnValue({ user: mockUser, bankConnectionsEnabled: true });
     const { getByText, user } = customRender(<AddEditAccountsDialogBtn accountId="123456" />);
     await user.click(getByText("addAccount"));
-    await user.click(getByText("Connect to Bank"));
+    await user.click(getByText("Connect to bank"));
 
-    // Select OAuth Portal
-    await user.click(getByText("OAuth Portal"));
+    // Select OAuth portal
+    await user.click(getByText("OAuth portal"));
 
-    // Click Authorize via Monzo Bank
-    await user.click(getByText("Authorize via Monzo Bank"));
+    // Click Authorise via Monzo Bank
+    await user.click(getByText("Authorise via Monzo Bank"));
 
     expect(mocks.mockFetcherSubmit).toHaveBeenCalledWith(
       {
@@ -153,6 +153,6 @@ describe("<AddAccountDialogBtn", () => {
     mocks.mockUseLoaderData.mockReturnValue({ user: mockUser, bankConnectionsEnabled: false });
     const { queryByText, getByText, user } = customRender(<AddEditAccountsDialogBtn />);
     await user.click(getByText("addAccount"));
-    expect(queryByText("Connect to Bank")).toBeNull();
+    expect(queryByText("Connect to bank")).toBeNull();
   });
 });

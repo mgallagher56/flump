@@ -99,9 +99,9 @@ describe("AddEditAccountsDialog action outcomes", () => {
       const ui = () => <AddEditAccountsDialogBtn />;
       const view = customRender(ui());
       await view.user.click(view.getByText("addAccount"));
-      await view.user.click(view.getByText("Connect to Bank"));
-      await view.user.click(view.getByText("OAuth Portal"));
-      await view.user.click(view.getByRole("button", { name: /Authorize via/ }));
+      await view.user.click(view.getByText("Connect to bank"));
+      await view.user.click(view.getByText("OAuth portal"));
+      await view.user.click(view.getByRole("button", { name: /Authorise via/ }));
       return { ...view, ui };
     };
 
@@ -153,9 +153,9 @@ describe("AddEditAccountsDialog action outcomes", () => {
       );
       await user.click(getByText("addAccount"));
       expect(queryByLabelText("Repayment plan")).toBeNull();
-      await user.selectOptions(getByLabelText("Account Type"), "Student Loan");
+      await user.selectOptions(getByLabelText("Account type"), "Student Loan");
       expect(getByLabelText("Repayment plan")).toBeDefined();
-      await user.selectOptions(getByLabelText("Account Type"), "Loan");
+      await user.selectOptions(getByLabelText("Account type"), "Loan");
       expect(queryByLabelText("Repayment plan")).toBeNull();
     });
 
@@ -165,7 +165,7 @@ describe("AddEditAccountsDialog action outcomes", () => {
       );
       await user.click(getByText("addAccount"));
       await user.type(getByLabelText("Name"), "Plan loan");
-      await user.selectOptions(getByLabelText("Account Type"), "Student Loan");
+      await user.selectOptions(getByLabelText("Account type"), "Student Loan");
       expect((getByLabelText("Repayment plan") as HTMLSelectElement).value).toBe("");
       await user.click(getAllByText("addAccount").at(-1) as HTMLElement);
       expect(mocks.mockFetcherSubmit).not.toHaveBeenCalled();

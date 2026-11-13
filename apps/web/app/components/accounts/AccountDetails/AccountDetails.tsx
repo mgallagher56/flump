@@ -1,0 +1,252 @@
+import {
+  Card,
+  CollapsibleDrawer,
+  EmptyState,
+  Illustration,
+  Money,
+  SegmentedTabs,
+  Table,
+  TBody,
+  Td,
+  THead,
+  Th,
+  Tr,
+} from "@repo/ui";
+import type { FC } from "react";
+import { useMemo, useState } from "react";
+import { useLoaderData } from "react-router";
+import AccountDetailChart from "~/components/charts/AccountDetailChart";
+import { toDisplayBalance } from "~/containers/accounts/utils";
+import type { loader } from "~/routes/app.accounts.$account";
+import { isFutureMonth } from "~/utils/accounts";
+import {
+  chartBox,
+  chartEmpty,
+  detailsRoot,
+  drawerWrap,
+  monthCell,
+  mutedFigure,
+  panel,
+  section,
+  sectionTitle,
+} from "./AccountDetails.styles";
+
+type DetailsTab = "chart" | "ledger";
+
+/** Law 3: a ledger over eight rows keeps the rest behind a drawer. */
+const VISIBLE_ROWS = 8;
+
+const monthName = (month: number, year: number) =>
+  new Intl.DateTimeFormat("en-GB", { month: "long", year: "numeric" }).format(
+    new Date(year, month - 1, 1),
+  );
+
+interface LedgerRow {
+  key: string;
+  label: string;
+  balance: number;
+  change: number | null;
+}
+
+interface YearRow {
+  year: number;
+  yearEnd: number;
+  average: number;
+  change: number;
+}
+
+/** Balance history as a chart, and the month-by-month ledger on its own tab. */
+const AccountDetails: FC = () => {
+  const { accountDetails = [], account } = useLoaderData<typeof loader>();
+  const [tab, setTab] = useState<DetailsTab>("chart");
+
+  const { chartDetails, ledgerRows, yearRows } = useMemo(() => {
+    const sorted = [...accountDetails]
+      .map((d: any) => ({
+        month: Number(d.month),
+        year: Number(d.year),
+        value: toDisplayBalance(account?.type, Number(d.value)),
+      }))
+      .sort((a, b) => (a.year !== b.year ? a.year - b.year : a.month - b.month));
+
+    const ledger: LedgerRow[] = sorted.map((detail, index) => ({
+      key: `${detail.year}-${detail.month}`,
+      label: monthName(detail.month, detail.year),
+      balance: detail.value,
+      change: index > 0 ? detail.value - sorted[index - 1].value : null,
+    }));
+
+    const years: YearRow[] = [];
+    for (const year of Array.from(new Set(sorted.map((d) => d.year))).sort((a, b) => b - a)) {
+      const known = sorted.filter((d) => d.year === year && d.value !== 0);
+      if (known.length === 0) continue;
+      years.push({
+        year,
+        yearEnd: known[known.length - 1].value,
+        average: known.reduce((sum, d) => sum + d.value, 0) / known.length,
+        change: known[known.length - 1].value - known[0].value,
+      });
+    }
+
+    return {
+      chartDetails: sorted.filter((d) => !isFutureMonth(d.month, d.year)),
+      ledgerRows: ledger.reverse(),
+      yearRows: years,
+    };
+  }, [accountDetails, account?.type]);
+
+  if (!accountDetails || accountDetails.length === 0) {
+    return (
+      <Card padding="none">
+        <EmptyState
+          description="Record this account's balance each month and its history shows here."
+          headingLevel="h3"
+          illustration={<Illustration scene="onboarding" />}
+          title="No balance history yet"
+        />
+      </Card>
+    );
+  }
+
+  const ledgerTable = (rows: LedgerRow[], caption: string) => (
+    <Table appearance="soft" caption={caption} stacked>
+      <THead>
+        <Tr>
+          <Th>Month</Th>
+          <Th numeric>Balance</Th>
+          <Th numeric>Change on last month</Th>
+        </Tr>
+      </THead>
+      <TBody>
+        {rows.map((row) => (
+          <Tr key={row.key}>
+            <Td>
+              <span className={monthCell()}>{row.label}</span>
+            </Td>
+            <Td label="Balance" numeric>
+              <Money fractionDigits={2} size="sm" value={row.balance} />
+            </Td>
+            <Td label="Change on last month" numeric>
+              {row.change === null ? (
+                <span className={mutedFigure()}>First month</span>
+              ) : (
+                <Money
+                  fractionDigits={2}
+                  signDisplay="always"
+                  size="sm"
+                  tone="muted"
+                  value={row.change}
+                />
+              )}
+            </Td>
+          </Tr>
+        ))}
+      </TBody>
+    </Table>
+  );
+
+  const visible = ledgerRows.slice(0, VISIBLE_ROWS);
+  const rest = ledgerRows.slice(VISIBLE_ROWS);
+
+  return (
+    <div className={detailsRoot()}>
+      <SegmentedTabs
+        aria-label="Account history views"
+        items={[
+          { value: "chart", label: "Balance over time" },
+          { value: "ledger", label: "Monthly ledger" },
+        ]}
+        panelClassName={panel()}
+        panels={{
+          chart: (
+            <Card>
+              <div className={chartBox()}>
+                {chartDetails.length > 0 ? (
+                  <AccountDetailChart
+                    accountDetails={chartDetails}
+                    showAxes
+                    title={`${account?.name ?? "Account"} balance history`}
+                  />
+                ) : (
+                  <div className={chartEmpty()}>Not enough data to draw the chart yet.</div>
+                )}
+              </div>
+            </Card>
+          ),
+          ledger: (
+            <>
+              <section aria-labelledby="account-ledger-heading" className={section()}>
+                <h2 className={sectionTitle()} id="account-ledger-heading">
+                  Month by month
+                </h2>
+                <Card padding="none">
+                  {ledgerTable(visible, "Monthly balances, newest first")}
+                  {rest.length > 0 && (
+                    <div className={drawerWrap()}>
+                      <CollapsibleDrawer
+                        closedLabel="Show all"
+                        itemCount={rest.length}
+                        itemNoun={{ one: "month", other: "months" }}
+                        openLabel="Show fewer"
+                        title="Earlier months"
+                      >
+                        {ledgerTable(rest, "Earlier monthly balances")}
+                      </CollapsibleDrawer>
+                    </div>
+                  )}
+                </Card>
+              </section>
+              {yearRows.length > 0 && (
+                <section aria-labelledby="account-years-heading" className={section()}>
+                  <h2 className={sectionTitle()} id="account-years-heading">
+                    Year by year
+                  </h2>
+                  <Card padding="none">
+                    <Table appearance="soft" caption="Balance by year" stacked>
+                      <THead>
+                        <Tr>
+                          <Th>Year</Th>
+                          <Th numeric>Year-end balance</Th>
+                          <Th numeric>Monthly average</Th>
+                          <Th numeric>Change in year</Th>
+                        </Tr>
+                      </THead>
+                      <TBody>
+                        {yearRows.map((row) => (
+                          <Tr key={row.year}>
+                            <Td>
+                              <span className={monthCell()}>{row.year}</span>
+                            </Td>
+                            <Td label="Year-end balance" numeric>
+                              <Money fractionDigits={2} size="sm" value={row.yearEnd} />
+                            </Td>
+                            <Td label="Monthly average" numeric>
+                              <Money fractionDigits={2} size="sm" value={row.average} />
+                            </Td>
+                            <Td label="Change in year" numeric>
+                              <Money
+                                fractionDigits={2}
+                                signDisplay="always"
+                                size="sm"
+                                tone="muted"
+                                value={row.change}
+                              />
+                            </Td>
+                          </Tr>
+                        ))}
+                      </TBody>
+                    </Table>
+                  </Card>
+                </section>
+              )}
+            </>
+          ),
+        }}
+        value={tab}
+        onValueChange={(value) => setTab(value as DetailsTab)}
+      />
+    </div>
+  );
+};
+
+export default AccountDetails;
