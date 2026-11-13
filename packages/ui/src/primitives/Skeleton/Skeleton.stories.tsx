@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import { expect, within } from "@storybook/test";
+import { css } from "../../../styled-system/css";
 import { Skeleton } from "./Skeleton";
 
 const meta: Meta<typeof Skeleton> = {
@@ -17,7 +18,7 @@ export const Default: Story = {
 
 export const Shapes: Story = {
   render: () => (
-    <div style={{ display: "grid", gap: 16, maxWidth: 420 }}>
+    <div className={css({ display: "grid", gap: "4", maxWidth: "420px" })}>
       <Skeleton shape="line" />
       <Skeleton shape="text" lines={3} />
       <Skeleton shape="block" size="sm" />
@@ -28,7 +29,7 @@ export const Shapes: Story = {
 
 export const Sizes: Story = {
   render: () => (
-    <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
+    <div className={css({ display: "flex", gap: "4", alignItems: "center" })}>
       <Skeleton shape="circle" size="sm" />
       <Skeleton shape="circle" size="md" />
       <Skeleton shape="circle" size="lg" />

@@ -17,4 +17,11 @@ describe("Spinner", () => {
     const { container } = render(<Spinner size="sm" tone="inherit" />);
     expect(container.querySelector("[aria-hidden='true']")).toBeTruthy();
   });
+
+  it("announce=false hides the spinner entirely with no role or label", () => {
+    const { container } = render(<Spinner announce={false} />);
+    expect(screen.queryByRole("status")).toBeNull();
+    expect(container.firstElementChild?.getAttribute("aria-hidden")).toBe("true");
+    expect(container.textContent).toBe("");
+  });
 });
