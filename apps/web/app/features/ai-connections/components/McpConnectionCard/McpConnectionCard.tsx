@@ -26,6 +26,14 @@ import {
   tokenTableHeader,
 } from "./McpConnectionCard.styles";
 
+const TOKEN_EXPIRY_DAYS = [7, 30, 90, 365] as const;
+const EXPIRY_LABELS: Record<(typeof TOKEN_EXPIRY_DAYS)[number], string> = {
+  7: "7 Days",
+  30: "30 Days",
+  90: "90 Days (Recommended)",
+  365: "1 Year",
+};
+
 export interface McpTokenItem {
   id: string;
   name: string;
@@ -100,9 +108,7 @@ export const McpConnectionCard: FC<McpConnectionCardProps> = ({
     setGenerating(true);
     try {
       // The API only issues expiring tokens (E17 D5-A, E20-N16): 7, 30, 90 or 365 days.
-      const expiryDays = [7, 30, 365].includes(Number(expirySelection))
-        ? Number(expirySelection)
-        : 90;
+      const expiryDays = TOKEN_EXPIRY_DAYS.find((d) => String(d) === expirySelection) ?? 90;
 
       // Tokens are only ever issued by the backend. With no handler wired there is nothing to
       // create (E16 D8-A: the old client-side random token was fake and has been removed).
@@ -379,6 +385,12 @@ export const McpConnectionCard: FC<McpConnectionCardProps> = ({
                 Replaces bank names (e.g. &quot;Monzo&quot;) with generic indexed labels (e.g.
                 &quot;Current Account #1&quot;).
               </span>
+              <span
+                className={css({ fontSize: "11px", color: "text.muted", display: "block" })}
+                data-testid="mcp-token-anonymise-hint"
+              >
+                Tokens always anonymise institution names until step-up verification is available.
+              </span>
             </div>
           </div>
 
@@ -580,10 +592,11 @@ export const McpConnectionCard: FC<McpConnectionCardProps> = ({
                   value={expirySelection}
                   onChange={(e) => setExpirySelection(e.target.value)}
                 >
-                  <option value="7">7 Days</option>
-                  <option value="30">30 Days</option>
-                  <option value="90">90 Days (Recommended)</option>
-                  <option value="365">1 Year</option>
+                  {TOKEN_EXPIRY_DAYS.map((d) => (
+                    <option key={d} value={d}>
+                      {EXPIRY_LABELS[d]}
+                    </option>
+                  ))}
                 </select>
               </div>
             </div>

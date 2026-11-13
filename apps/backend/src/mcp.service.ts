@@ -156,9 +156,18 @@ export class McpService implements McpTokenStoreAdapter, McpUserDataProvider {
         notes: b.notes,
       })),
       // Receipts (base64 blobs) are never sent to MCP clients (E20-N15/N16).
-      taxRecords: taxRecords.map(
-        ({ receiptData: _d, receiptFilename: _f, receiptMimeType: _m, ...rest }) => rest,
-      ) as any,
+      taxRecords: taxRecords.map((t) => ({
+        id: t.id,
+        type: t.type,
+        source: t.source,
+        category: t.category,
+        name: t.name,
+        amount: t.amount,
+        frequency: t.frequency,
+        date: t.date,
+        endDate: t.endDate,
+        notes: t.notes,
+      })) as any,
     };
   }
 
@@ -208,10 +217,15 @@ export class McpService implements McpTokenStoreAdapter, McpUserDataProvider {
     options: {
       expiryDays?: number | null;
       anonymizeInstitutions?: boolean;
-      scopes?: string[];
     } = {},
   ) {
-    const cleanName = (name ?? "").trim();
+    if (typeof name !== "string") {
+      throw new BadRequestException("Token name must be a string.");
+    }
+    const cleanName = name.normalize("NFC").trim();
+    if (/[\p{Cc}\p{Cf}\p{Zl}\p{Zp}]/u.test(cleanName)) {
+      throw new BadRequestException("Token name must not contain control or invisible characters.");
+    }
     if (cleanName.length < 1 || cleanName.length > 64) {
       throw new BadRequestException("Token name must be 1 to 64 characters.");
     }
@@ -227,6 +241,12 @@ export class McpService implements McpTokenStoreAdapter, McpUserDataProvider {
       );
     }
 
+    if (
+      options.anonymizeInstitutions !== undefined &&
+      typeof options.anonymizeInstitutions !== "boolean"
+    ) {
+      throw new BadRequestException("anonymizeInstitutions must be a boolean.");
+    }
     if (options.anonymizeInstitutions === false) {
       throw new BadRequestException(
         "Tokens must anonymise institution names. Revealing them needs step-up verification, which is not available yet.",
@@ -240,7 +260,7 @@ export class McpService implements McpTokenStoreAdapter, McpUserDataProvider {
     const tokenHash = hashPatToken(rawToken);
     const tokenPrefix = `flump_pat_${randomSecret.slice(0, 4)}...${randomSecret.slice(-4)}`;
 
-    const scopes = options.scopes || ["mcp:read:anonymized", "mcp:simulate"];
+    const scopes = ["mcp:read:anonymized", "mcp:simulate"];
     const expiresAt = new Date(Date.now() + expiryDays * 86400 * 1000);
 
     const token = this.mcpTokenRepository.create({

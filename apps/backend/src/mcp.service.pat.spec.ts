@@ -74,6 +74,48 @@ describe("McpService.createPatToken lifecycle rules (E20-N16)", () => {
   });
 });
 
+describe("McpService.createPatToken name hygiene (E20-N16)", () => {
+  it.each(["a\u0000b", "a\nb", "a\u200bb", "a\u202eb", "a\u2028b", "a\u2029b"])(
+    "rejects control or invisible characters in %j",
+    async (n) => {
+      const { service } = buildTokenService();
+      await expect(service.createPatToken("u1", n)).rejects.toBeInstanceOf(BadRequestException);
+    },
+  );
+
+  it("normalises the name to NFC", async () => {
+    const { service } = buildTokenService();
+    const res = await service.createPatToken("u1", "Cafe\u0301");
+    expect(res.name).toBe("Caf\u00e9");
+  });
+});
+
+describe("McpService.createPatToken type guards (E20-N16)", () => {
+  it.each([undefined, null, 5, {}, ["a"]])("rejects non-string name %s with 400", async (n) => {
+    const { service } = buildTokenService();
+    await expect(service.createPatToken("u1", n as never)).rejects.toBeInstanceOf(
+      BadRequestException,
+    );
+  });
+
+  it.each(["90", "7", true, {}])("rejects non-number expiryDays %s with 400", async (d) => {
+    const { service } = buildTokenService();
+    await expect(
+      service.createPatToken("u1", "A", { expiryDays: d as never }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it.each(["false", "true", 0, 1, null])(
+    "rejects non-boolean anonymizeInstitutions %s with 400",
+    async (a) => {
+      const { service } = buildTokenService();
+      await expect(
+        service.createPatToken("u1", "A", { anonymizeInstitutions: a as never }),
+      ).rejects.toBeInstanceOf(BadRequestException);
+    },
+  );
+});
+
 describe("McpService.getUserFinancialData never exposes receipts (E20-N16)", () => {
   it("strips receiptData, receiptFilename and receiptMimeType from tax records", async () => {
     const record = {
@@ -109,6 +151,7 @@ describe("McpService.getUserFinancialData never exposes receipts (E20-N16)", () 
     const json = JSON.stringify(data.taxRecords);
     expect(json).not.toContain("BASE64BLOB");
     expect(json).not.toContain("receipt");
+    expect(json).not.toContain("userId");
     expect(data.taxRecords?.[0]).toMatchObject({ id: "t1", name: "Train", amount: 12 });
   });
 });
