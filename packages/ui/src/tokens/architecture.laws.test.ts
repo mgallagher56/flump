@@ -122,6 +122,7 @@ describe("Architecture & Design System Laws", () => {
         "Heading",
         "Illustration",
         "Money",
+        "PercentInput",
         "Text",
         "TextInput",
       ]) {

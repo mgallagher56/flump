@@ -10,19 +10,30 @@ export const textInputRecipe = sva({
       width: "100%",
       minWidth: 0,
       px: "density.controlPadX",
-      backgroundColor: "surface.card",
-      borderWidth: "1px",
+      backgroundColor: "surface.subtle",
+      borderWidth: "1.5px",
       borderStyle: "solid",
       borderColor: "border.input",
-      borderRadius: "md",
+      borderRadius: "lg",
       color: "text.primary",
+      _motionSafe: {
+        transitionProperty: "border-color, background-color, box-shadow",
+        transitionDuration: "fast",
+        transitionTimingFunction: "standard",
+      },
+      _hover: { borderColor: "border.strong" },
       _focusWithin: {
+        backgroundColor: "surface.card",
+        borderColor: "border.focusRing",
         outlineWidth: "2px",
         outlineStyle: "solid",
         outlineColor: "border.focusRing",
         outlineOffset: "1px",
       },
-      "&[data-invalid=true]": { borderColor: "status.danger.solid" },
+      "&[data-invalid=true]": {
+        borderColor: "status.danger.solid",
+        _focusWithin: { borderColor: "status.danger.solid" },
+      },
       "&[data-disabled=true]": { backgroundColor: "surface.sunken", color: "text.muted" },
     },
     input: {
@@ -52,13 +63,13 @@ export const textInputRecipe = sva({
     size: {
       sm: {
         root: {
-          minHeight: "density.control.sm",
+          minHeight: "density.control.md",
           "@media (pointer: coarse)": { minHeight: "touch" },
         },
       },
       md: {
         root: {
-          minHeight: "density.control.md",
+          minHeight: "density.control.lg",
           "@media (pointer: coarse)": { minHeight: "touch" },
         },
       },

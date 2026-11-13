@@ -40,6 +40,7 @@ export * from "./primitives/Illustration";
 export * from "./primitives/KpiCard";
 export { LiveRegion, type LiveRegionProps } from "./primitives/LiveRegion";
 export * from "./primitives/Money";
+export * from "./primitives/PercentInput";
 export * from "./primitives/ProgressBar";
 export * from "./primitives/SegmentedTabs";
 export * from "./primitives/SliderField";

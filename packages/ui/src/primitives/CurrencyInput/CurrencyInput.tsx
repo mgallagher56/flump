@@ -1,13 +1,9 @@
-import { type ChangeEvent, type FC, useEffect, useState } from "react";
+import type { FC } from "react";
 import { cx } from "../../../styled-system/css";
 import { TextInput, type TextInputProps } from "../TextInput/TextInput";
 import { currencyInputRecipe } from "./CurrencyInput.styles";
-import {
-  ALLOWED_CHARS,
-  formatCurrencyInput,
-  parseCurrencyInput,
-  roundToPennies,
-} from "./parseCurrency";
+import { formatCurrencyInput, roundToPennies } from "./parseCurrency";
+import { useNumericText } from "./useNumericText";
 
 export interface CurrencyInputProps
   extends Omit<
@@ -23,8 +19,8 @@ export interface CurrencyInputProps
   value?: number | null;
   /**
    * Called with the parsed number, or `null` when the field is empty or not a number. On blur the
-   * value is rounded to whole pence and emitted again if rounding changed it, so the display and
-   * the model always agree.
+   * value is rounded to whole pence, clamped to `min`/`max` and emitted again if that changed it,
+   * so the display and the model always agree.
    */
   onValueChange?: (value: number | null) => void;
   /**
@@ -33,41 +29,32 @@ export interface CurrencyInputProps
    * `onValueChange`.
    */
   onInvalid?: (raw: string) => void;
+  /** Optional lower bound applied on blur (typing is never blocked). */
+  min?: number;
+  /** Optional upper bound applied on blur. */
+  max?: number;
 }
-
-const toText = (value: number | null | undefined): string =>
-  value === null || value === undefined ? "" : formatCurrencyInput(value);
 
 export const CurrencyInput: FC<CurrencyInputProps> = ({
   value,
   onValueChange,
   onInvalid,
   onBlur,
+  min,
+  max,
   prefix = "£",
   className,
   ...rest
 }) => {
-  const [text, setText] = useState(() => toText(value));
-
-  // Follow external changes, but never clobber text that already parses to the same number
-  // (so "12." or "1,234.50" survive while typing).
-  useEffect(() => {
-    if (value === undefined) return;
-    setText((current) => {
-      const parsed = parseCurrencyInput(current);
-      if (value === null || !Number.isFinite(value)) return parsed === null ? current : "";
-      return parsed === value ? current : formatCurrencyInput(value);
-    });
-  }, [value]);
-
-  const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const raw = event.target.value;
-    if (!ALLOWED_CHARS.test(raw)) return;
-    setText(raw);
-    const parsed = parseCurrencyInput(raw);
-    if (parsed === null && raw.trim() !== "") onInvalid?.(raw);
-    onValueChange?.(parsed);
-  };
+  const { text, handleChange, handleBlur } = useNumericText({
+    value,
+    onValueChange,
+    onInvalid,
+    format: formatCurrencyInput,
+    round: roundToPennies,
+    min,
+    max,
+  });
 
   return (
     <TextInput
@@ -75,12 +62,7 @@ export const CurrencyInput: FC<CurrencyInputProps> = ({
       className={cx(currencyInputRecipe(), className)}
       inputMode="decimal"
       onBlur={(event) => {
-        const parsed = parseCurrencyInput(text);
-        if (parsed !== null) {
-          const rounded = roundToPennies(parsed);
-          setText(formatCurrencyInput(rounded));
-          if (rounded !== parsed) onValueChange?.(rounded);
-        }
+        handleBlur(event);
         onBlur?.(event);
       }}
       onChange={handleChange}
