@@ -43,6 +43,9 @@ const SCENARIO_TOOLS = [
 const isScenarioTool = (value: string | null): value is ScenarioTool =>
   SCENARIO_TOOLS.some((tool) => tool.id === value);
 
+const rateFormat = new Intl.NumberFormat("en-GB", { maximumFractionDigits: 2 });
+const termFormat = new Intl.NumberFormat("en-GB", { maximumFractionDigits: 1 });
+
 const SCENARIO_ZONE_ID = "mortgage-scenario";
 
 const scrollToId = (id: string) => {
@@ -369,9 +372,9 @@ const MortgageContainer: FC = () => {
 
   const savedBasis =
     loanAmount > 0 && interestRate > 0 && (remainingTerm > 0 || propertyCategory === "btl")
-      ? `Starting from your figures: ${formatCurrency(loanAmount)} at ${interestRate}%${
+      ? `Starting from your figures: ${formatCurrency(loanAmount)} at ${rateFormat.format(interestRate)}%${
           remainingTerm > 0
-            ? `, ${Math.round(remainingTerm * 10) / 10} ${remainingTerm === 1 ? "year" : "years"} left`
+            ? `, ${termFormat.format(remainingTerm)} ${remainingTerm === 1 ? "year" : "years"} left`
             : ""
         }`
       : "Some of your figures are not saved yet, so set the starting figures below.";

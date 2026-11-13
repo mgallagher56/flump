@@ -46,7 +46,7 @@ export const MortgageScenarioInputs: FC<MortgageScenarioInputsProps> = ({
       <div>
         <SliderField
           label="Balance to try"
-          max={1000000}
+          max={Math.max(1000000, values.loanAmount)}
           min={0}
           step={5000}
           unitPrefix="£"
@@ -58,7 +58,7 @@ export const MortgageScenarioInputs: FC<MortgageScenarioInputsProps> = ({
       <div>
         <SliderField
           label="Rate to try"
-          max={15}
+          max={Math.max(15, values.interestRate)}
           min={0}
           step={0.05}
           unitSuffix="%"
@@ -70,7 +70,7 @@ export const MortgageScenarioInputs: FC<MortgageScenarioInputsProps> = ({
       <div>
         <SliderField
           label="Term to try"
-          max={40}
+          max={Math.max(40, Math.ceil(values.remainingTerm))}
           min={0}
           step={1}
           unitSuffix="yrs"

@@ -32,6 +32,8 @@ import {
   unsavedNote,
 } from "./MortgageSummary.styles";
 
+const termFormat = new Intl.NumberFormat("en-GB", { maximumFractionDigits: 1 });
+
 export type MortgageKind = "repayment" | "interest-only";
 
 export interface MortgageSummaryProps {
@@ -275,7 +277,7 @@ export const MortgageSummary: FC<MortgageSummaryProps> = ({
             value={
               remainingTerm > 0 ? (
                 <span className={termValue()}>
-                  {remainingTerm} {remainingTerm === 1 ? "year" : "years"}
+                  {termFormat.format(remainingTerm)} {remainingTerm === 1 ? "year" : "years"}
                 </span>
               ) : null
             }
