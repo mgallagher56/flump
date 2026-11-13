@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { SegmentedTabs } from "./SegmentedTabs";
 
@@ -91,16 +91,16 @@ describe("SegmentedTabs Primitive", () => {
     ).toBe(hidden.id);
   });
 
-  it("selects on arrow focus by default (automatic activation)", () => {
+  it("selects on arrow focus by default (automatic activation)", async () => {
     const onValueChange = vi.fn();
     render(<SegmentedTabs items={items} value="avalanche" onValueChange={onValueChange} />);
     const first = screen.getByRole("tab", { name: "Avalanche (Highest APR)" });
     first.focus();
     fireEvent.keyDown(first, { key: "ArrowRight" });
-    expect(onValueChange).toHaveBeenCalledWith("snowball");
+    await waitFor(() => expect(onValueChange).toHaveBeenCalledWith("snowball"));
   });
 
-  it("only moves focus on arrow keys with activationMode manual", () => {
+  it("only moves focus on arrow keys with activationMode manual", async () => {
     const onValueChange = vi.fn();
     render(
       <SegmentedTabs
@@ -113,6 +113,12 @@ describe("SegmentedTabs Primitive", () => {
     const first = screen.getByRole("tab", { name: "Avalanche (Highest APR)" });
     first.focus();
     fireEvent.keyDown(first, { key: "ArrowRight" });
+    // Focus moves (Radix does it on a timer), selection does not.
+    await waitFor(() =>
+      expect(screen.getByRole("tab", { name: "Snowball (Lowest Balance)" })).toBe(
+        document.activeElement,
+      ),
+    );
     expect(onValueChange).not.toHaveBeenCalled();
   });
 });
