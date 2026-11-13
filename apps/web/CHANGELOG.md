@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.29.1](https://github.com/mgallagher56/flump/compare/flump/web-v1.29.0...flump/web-v1.29.1) (2026-11-13)
+
+
+### Bug Fixes 🪲
+
+* **web:** move mortgage hero to time saved, raise sandbox nav outline contrast ([e25f871](https://github.com/mgallagher56/flump/commit/e25f871d0458865b400a018ebc19549ef5f97f96))
+
+
+### Tests 🧪
+
+* **e2e:** Playwright smoke suite with test-only dev session and CI job ([9c58020](https://github.com/mgallagher56/flump/commit/9c580204dee384a454042f53bc0c8b470870b138))
+
 ## [1.29.0](https://github.com/mgallagher56/flump/compare/flump/web-v1.28.0...flump/web-v1.29.0) (2026-11-13)
 
 
