@@ -31,12 +31,18 @@ const ADVICE_EXTRA_DIRS = [
   join(appRoot, "..", "..", "packages", "ui", "src"),
 ];
 
+// The MCP output policy (E29-T6) defines the banned keys and explains them, so its own text
+// names the guarded words, as the advice lexicon in `compliance` does. Skipped by exact path.
+const MCP_POLICY_DIR = join(appRoot, "..", "..", "packages", "mcp", "src", "policy");
+
 function files(dir: string): string[] {
   return readdirSync(dir).flatMap((name) => {
     const p = join(dir, name);
     // `compliance` holds the advice lexicon itself, whose rule text names the banned words.
     if (statSync(p).isDirectory()) {
-      return name === "node_modules" || name === "compliance" ? [] : files(p);
+      return name === "node_modules" || name === "compliance" || p === MCP_POLICY_DIR
+        ? []
+        : files(p);
     }
     return /\.tsx?$/.test(p) && !/\.(test|stories)\.tsx?$/.test(p) ? [p] : [];
   });

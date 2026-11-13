@@ -24,12 +24,11 @@ test("unmatched multi-segment paths run the middleware and are not cacheable", a
   expect(headers["cache-control"]).toBe("no-store");
 });
 
-test("a single-segment unmatched path redirects with no-store, not a cacheable 301/302", async ({
+test("a single-segment unmatched path is a no-store 404, not a cacheable redirect (R-14)", async ({
   request,
 }) => {
   const response = await request.get("/definitely-not-a-route", { maxRedirects: 0 });
-  expect(response.status()).toBeGreaterThanOrEqual(300);
-  expect(response.status()).toBeLessThan(400);
+  expect(response.status()).toBe(404);
   expect(response.headers()["cache-control"]).toBe("no-store");
   expect(response.headers()["x-frame-options"]).toBe("DENY");
 });
