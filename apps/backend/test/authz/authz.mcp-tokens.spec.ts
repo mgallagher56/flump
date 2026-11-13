@@ -27,7 +27,7 @@ const dbMode = resolveDbTestMode(process.env);
 describe.skipIf(dbMode === "skip")("authz: mcp-tokens controller (real Postgres)", () => {
   let h: AuthzHarness;
   const exercised = new Set<string>();
-  const ran = (key: string) => exercised.add(key);
+  const ran = (key: string, kind: "authn" | "idor" = "idor") => exercised.add(`${key}:${kind}`);
 
   let tokenA: { id: string; rawToken: string };
 
@@ -40,7 +40,7 @@ describe.skipIf(dbMode === "skip")("authz: mcp-tokens controller (real Postgres)
   afterAll(async () => {
     const expected = Object.entries(ROUTE_MATRIX)
       .filter(([, row]) => row.status === "covered" && row.spec === "mcp-tokens")
-      .map(([key]) => key)
+      .flatMap(([key]) => [`${key}:authn`, `${key}:idor`])
       .sort();
     expect([...exercised].sort()).toEqual(expected);
     await h?.close();
@@ -98,7 +98,7 @@ describe.skipIf(dbMode === "skip")("authz: mcp-tokens controller (real Postgres)
         }
         await expectTokenAUntouched();
         expect(await tokens().count()).toBe(1);
-        ran(route.key);
+        ran(route.key, "authn");
       },
     );
   });
@@ -153,10 +153,9 @@ describe.skipIf(dbMode === "skip")("authz: mcp-tokens controller (real Postgres)
     ran("DELETE /mcp-tokens/:id");
   });
 
-  it("DELETE /mcp-tokens/:id: a non-uuid id is a client error, not a server error", async () => {
+  it("DELETE /mcp-tokens/:id: a non-uuid id is a 400, not a server error", async () => {
     const res = await h.call("delete", "/mcp-tokens/not-a-uuid", h.tokens.b);
-    expect(res.status).toBeGreaterThanOrEqual(400);
-    expect(res.status).toBeLessThan(500);
+    expect(res.status).toBe(400);
     await expectTokenAUntouched();
   });
 

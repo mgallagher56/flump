@@ -37,7 +37,7 @@ const dbMode = resolveDbTestMode(process.env);
 describe.skipIf(dbMode === "skip")("authz: user-profile controller (real Postgres)", () => {
   let h: AuthzHarness;
   const exercised = new Set<string>();
-  const ran = (key: string) => exercised.add(key);
+  const ran = (key: string, kind: "authn" | "idor" = "idor") => exercised.add(`${key}:${kind}`);
 
   let profileAId: string;
 
@@ -67,7 +67,7 @@ describe.skipIf(dbMode === "skip")("authz: user-profile controller (real Postgre
   afterAll(async () => {
     const expected = Object.entries(ROUTE_MATRIX)
       .filter(([, row]) => row.status === "covered" && row.spec === "user-profile")
-      .map(([key]) => key)
+      .flatMap(([key]) => [`${key}:authn`, `${key}:idor`])
       .sort();
     expect([...exercised].sort()).toEqual(expected);
     await h?.close();
@@ -178,7 +178,7 @@ describe.skipIf(dbMode === "skip")("authz: user-profile controller (real Postgre
         expect(await tax().countBy({ userId: USER_A })).toBe(1);
         expect(lookedUp).toEqual([]);
         expect(resetSentTo).toEqual([]);
-        ran(route.key);
+        ran(route.key, "authn");
       },
     );
   });

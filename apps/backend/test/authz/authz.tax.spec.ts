@@ -43,7 +43,7 @@ const recordBody = (name: string, extra: object = {}) => ({
 describe.skipIf(dbMode === "skip")("authz: tax controller (real Postgres)", () => {
   let h: AuthzHarness;
   const exercised = new Set<string>();
-  const ran = (key: string) => exercised.add(key);
+  const ran = (key: string, kind: "authn" | "idor" = "idor") => exercised.add(`${key}:${kind}`);
 
   let recordId: string;
 
@@ -56,7 +56,7 @@ describe.skipIf(dbMode === "skip")("authz: tax controller (real Postgres)", () =
   afterAll(async () => {
     const expected = Object.entries(ROUTE_MATRIX)
       .filter(([, row]) => row.status === "covered" && row.spec === "tax")
-      .map(([key]) => key)
+      .flatMap(([key]) => [`${key}:authn`, `${key}:idor`])
       .sort();
     expect([...exercised].sort()).toEqual(expected);
     await h?.close();
@@ -145,7 +145,7 @@ describe.skipIf(dbMode === "skip")("authz: tax controller (real Postgres)", () =
         }
         await expectRecordUntouched();
         expect(await records().count()).toBe(1);
-        ran(route.key);
+        ran(route.key, "authn");
       },
     );
   });
