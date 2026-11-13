@@ -238,7 +238,7 @@ describe("TaxController annual record end date (E23 D16)", () => {
     expect(c.endDate).toBe("2026-04-05");
   });
 
-  it("keeps an explicit end date and leaves other frequencies alone", async () => {
+  it("derives an annual end date even when the client sends one, and leaves other frequencies alone", async () => {
     const controller = setup();
     const explicit = await controller.createTaxRecord(req, {
       ...base,
@@ -246,13 +246,42 @@ describe("TaxController annual record end date (E23 D16)", () => {
       date: "2024-06-01",
       endDate: "2030-04-05",
     });
-    expect(explicit.endDate).toBe("2030-04-05");
+    expect(explicit.endDate).toBe("2025-04-05");
     const monthly = await controller.createTaxRecord(req, {
       ...base,
       frequency: "monthly",
       date: "2024-06-01",
     });
     expect(monthly.endDate ?? null).toBeNull();
+  });
+
+  it("recomputes the annual end date when PATCH moves the date (no stale end date)", async () => {
+    const controller = setup();
+    const created = await controller.createTaxRecord(req, {
+      ...base,
+      frequency: "annual",
+      date: "2024-06-01",
+    });
+    expect(created.endDate).toBe("2025-04-05");
+    const moved = await controller.updateTaxRecord(req, created.id, { date: "2025-06-01" });
+    expect(moved.endDate).toBe("2026-04-05");
+  });
+
+  it("rejects a malformed or impossible date with 400 instead of a database 500", async () => {
+    const controller = setup();
+    for (const date of ["2024-13-45", "2024-06-xx", "2024-02-30", "not a date"]) {
+      await expect(
+        controller.createTaxRecord(req, { ...base, frequency: "annual", date }),
+      ).rejects.toThrow(BadRequestException);
+    }
+    await expect(
+      controller.createTaxRecord(req, {
+        ...base,
+        frequency: "monthly",
+        date: "2024-06-01",
+        endDate: "2024-02-31",
+      }),
+    ).rejects.toThrow(BadRequestException);
   });
 
   it("fills end_date on bulk create", async () => {
