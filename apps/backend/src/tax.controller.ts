@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -20,6 +21,13 @@ import { TaxRecord } from "./entities/tax-record.entity";
 import { UserProfile } from "./entities/user-profile.entity";
 import { RateLimit } from "./security/rate-limit.decorator";
 import { sniffReceiptMime, validateReceipt } from "./security/receipt-validation";
+
+/**
+ * Maximum tax records accepted by one `POST tax-records/bulk` request. A copied tax year or CSV
+ * import is a few dozen rows; 500 leaves ample headroom (and matches the api-contract cap) while
+ * bounding the work done per request even though the route accepts an 8mb body.
+ */
+export const MAX_BULK_TAX_RECORDS = 500;
 
 /**
  * Allow-list of client-writable tax record fields. `id`, `userId`,
@@ -163,6 +171,20 @@ export class TaxController {
     },
   ): Promise<TaxRecordResponse[]> {
     const userId = req.user.id;
+
+    if (Array.isArray(body.records) && body.records.length > MAX_BULK_TAX_RECORDS) {
+      throw new BadRequestException(
+        `A bulk request may contain at most ${MAX_BULK_TAX_RECORDS} tax records`,
+      );
+    }
+    if (
+      Array.isArray(body.capPreviousRecordIds) &&
+      body.capPreviousRecordIds.length > MAX_BULK_TAX_RECORDS
+    ) {
+      throw new BadRequestException(
+        `A bulk request may cap at most ${MAX_BULK_TAX_RECORDS} previous tax records`,
+      );
+    }
 
     if (body.capPreviousRecordIds && Array.isArray(body.capPreviousRecordIds)) {
       for (const item of body.capPreviousRecordIds) {

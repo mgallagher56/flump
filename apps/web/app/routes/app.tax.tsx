@@ -7,6 +7,15 @@ import { actionErrorResponse } from "~/services/route-error.server";
 import { getAuthSession, requireAccessToken } from "~/utils/auth.server";
 import { roundTo2dp } from "~/utils/roundTo2dp";
 
+/** Mirrors the backend and api-contract per-request cap on `POST /tax-records/bulk`. */
+const BULK_TAX_RECORDS_CHUNK = 500;
+
+const chunk = <T,>(items: T[], size: number): T[][] => {
+  const out: T[][] = [];
+  for (let i = 0; i < items.length; i += size) out.push(items.slice(i, i + size));
+  return out;
+};
+
 export const action = async (args: ActionFunctionArgs) => {
   const { accessToken } = await getAuthSession(args, { ensureSignedIn: true });
   const token = requireAccessToken({ accessToken });
@@ -124,11 +133,20 @@ export const action = async (args: ActionFunctionArgs) => {
         throw new SyntaxError("records and capPreviousRecordIds must be arrays");
       }
 
-      await backendFetch(`/tax-records/bulk`, {
-        accessToken: token,
-        method: "POST",
-        body: { records, capPreviousRecordIds },
-      });
+      // Sequential requests of at most BULK_TAX_RECORDS_CHUNK each; a small import is one request.
+      const recordChunks = chunk(records, BULK_TAX_RECORDS_CHUNK);
+      const capChunks = chunk(capPreviousRecordIds, BULK_TAX_RECORDS_CHUNK);
+      const requests = Math.max(recordChunks.length, capChunks.length, 1);
+      for (let i = 0; i < requests; i++) {
+        await backendFetch(`/tax-records/bulk`, {
+          accessToken: token,
+          method: "POST",
+          body: {
+            records: recordChunks[i] ?? [],
+            capPreviousRecordIds: capChunks[i] ?? [],
+          },
+        });
+      }
     }
     return data({ success: true });
   } catch (error) {

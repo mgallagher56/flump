@@ -5,7 +5,7 @@ import {
   StreamableFile,
 } from "@nestjs/common";
 import { describe, expect, it, vi } from "vitest";
-import { TaxController } from "./tax.controller";
+import { MAX_BULK_TAX_RECORDS, TaxController } from "./tax.controller";
 import { createInMemoryRepository } from "./testing/in-memory-repository";
 
 describe("TaxController", () => {
@@ -241,6 +241,25 @@ describe("TaxController receipt validation (E20-N14)", () => {
       controller.createBulkTaxRecords(req, { records: [{ ...base, receiptFilename: "../x.pdf" }] }),
     ).rejects.toThrow(BadRequestException);
     expect(repo.save).not.toHaveBeenCalled();
+  });
+
+  it("rejects a bulk batch over the record cap with 400 before touching the database", async () => {
+    const { controller, repo } = makeController();
+    const records = Array.from({ length: MAX_BULK_TAX_RECORDS + 1 }, () => ({ ...base }));
+    await expect(controller.createBulkTaxRecords(req, { records })).rejects.toThrow(
+      BadRequestException,
+    );
+    await expect(controller.createBulkTaxRecords(req, { records })).rejects.toThrow(
+      `at most ${MAX_BULK_TAX_RECORDS}`,
+    );
+    expect(repo.save).not.toHaveBeenCalled();
+  });
+
+  it("accepts a bulk batch exactly at the record cap", async () => {
+    const { controller, repo } = makeController();
+    const records = Array.from({ length: MAX_BULK_TAX_RECORDS }, () => ({ ...base }));
+    await controller.createBulkTaxRecords(req, { records });
+    expect(repo.save).toHaveBeenCalledTimes(1);
   });
 
   it("accepts a valid PDF receipt", async () => {
