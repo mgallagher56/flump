@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { useState } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { Dialog } from "./Dialog";
@@ -8,6 +8,20 @@ const Harness = () => {
   return (
     <>
       <button type="button">outside</button>
+      <Dialog open={open} onOpenChange={setOpen} title="T">
+        <button type="button">inside</button>
+      </Dialog>
+    </>
+  );
+};
+
+const ReturnHarness = () => {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <button type="button" onClick={() => setOpen(true)}>
+        open
+      </button>
       <Dialog open={open} onOpenChange={setOpen} title="T">
         <button type="button">inside</button>
       </Dialog>
@@ -64,5 +78,15 @@ describe("Dialog primitive", () => {
     expect(dialog.contains(document.activeElement)).toBe(true);
     // Focus guards are rendered by Radix's FocusScope (trapped) while open.
     expect(document.querySelectorAll("[data-radix-focus-guard]").length).toBeGreaterThan(0);
+  });
+
+  it("returns focus to the previously focused element on close", async () => {
+    render(<ReturnHarness />);
+    const opener = screen.getByRole("button", { name: "open" });
+    opener.focus();
+    fireEvent.click(opener);
+    fireEvent.keyDown(screen.getByRole("dialog"), { key: "Escape", code: "Escape" });
+    expect(screen.queryByRole("dialog")).toBeNull();
+    await waitFor(() => expect(document.activeElement).toBe(opener));
   });
 });
