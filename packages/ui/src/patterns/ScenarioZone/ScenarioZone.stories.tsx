@@ -164,8 +164,6 @@ const WithTabs = () => {
 };
 
 export const WithToolTabs: Story = {
-  // E8 waiver: aria-valid-attr-value (Radix tabs, same as SegmentedTabs stories)
-  parameters: { a11y: { config: { rules: [{ id: "aria-valid-attr-value", enabled: false }] } } },
   render: () => <WithTabs />,
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
