@@ -282,7 +282,11 @@ export const MonthlyBalanceCheckInDrawer: FC<MonthlyBalanceCheckInDrawerProps> =
               ref={successRef}
               tabIndex={-1}
               className={css({
-                outline: "none",
+                _focusVisible: {
+                  outline: "2px solid",
+                  outlineColor: "border.focusRing",
+                  outlineOffset: "2px",
+                },
                 padding: "32px",
                 textAlign: "center",
                 display: "flex",
