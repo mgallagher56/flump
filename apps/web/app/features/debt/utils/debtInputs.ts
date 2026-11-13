@@ -1,44 +1,30 @@
-import { PortfolioSnapshot, type RawAccount, type RawAccountDetail } from "@flump/finance-engine";
-import { type BudgetEntry, toMonthly } from "~/types/budget";
+import type { RawAccount, RawAccountDetail } from "@flump/finance-engine";
+import type { BudgetEntry } from "~/types/budget";
+import { buildWorkspacePicture, knownOrNull } from "~/utils/financialPicture";
 
 export interface DebtInputs {
-  /** Monthly income minus monthly expenses, or null when the user has no budget entries. */
+  /** The budget's monthly surplus, or null when the user has no budget entries. */
   monthlySurplus: number | null;
-  /** Current plus saving account balances. */
+  /** Current plus saving account balances (liquid cash). */
   liquidSavings: number;
-  /** Monthly total of essential non-income entries, or null when the user has no budget entries. */
+  /** Monthly essential spending, or null when the user has no budget entries. */
   monthlyEssentialExpenses: number | null;
+  /** Total debt: cards, loans and overdrawn current accounts (the dashboard's figure too). */
+  totalDebt: number;
 }
 
+/** Debt-page inputs, read from the one financial picture so they match every other page. */
 export function buildDebtInputs(
   accounts: RawAccount[] | null | undefined,
   accountDetails: RawAccountDetail[] | null | undefined,
   budgetEntries: BudgetEntry[] | null | undefined,
 ): DebtInputs {
-  const snapshot = new PortfolioSnapshot(accounts ?? [], accountDetails ?? []);
-  const liquidSavings = snapshot.getTotalLiquidCash();
-  const entries = budgetEntries ?? [];
-
-  if (entries.length === 0) {
-    return { monthlySurplus: null, liquidSavings, monthlyEssentialExpenses: null };
-  }
-
-  let income = 0;
-  let expenses = 0;
-  let essential = 0;
-  for (const entry of entries) {
-    const monthly = toMonthly(entry);
-    if (entry.isIncome) {
-      income += monthly;
-    } else {
-      expenses += monthly;
-      if (entry.isEssential) essential += monthly;
-    }
-  }
-
+  const picture = buildWorkspacePicture({ accounts, accountDetails, budgetEntries });
+  const budget = knownOrNull(picture.budget);
   return {
-    monthlySurplus: income - expenses,
-    liquidSavings,
-    monthlyEssentialExpenses: essential,
+    monthlySurplus: budget?.surplus ?? null,
+    liquidSavings: picture.netWorth.liquidCash,
+    monthlyEssentialExpenses: budget?.essentials ?? null,
+    totalDebt: picture.debt.consumerDebt,
   };
 }

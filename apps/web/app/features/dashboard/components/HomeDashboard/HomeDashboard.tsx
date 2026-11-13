@@ -1,4 +1,4 @@
-import { calculateSafeToSpend, evaluateFinancialStage } from "@flump/finance-engine";
+import { evaluateFinancialStage } from "@flump/finance-engine";
 import { Button, Icon, PageHeader, ProjectionNotice, SectionBand } from "@repo/ui";
 import { SlidersHorizontal } from "lucide-react";
 import { type FC, useMemo, useRef, useState } from "react";
@@ -97,16 +97,9 @@ export const HomeDashboard: FC<HomeDashboardProps> = ({
     return budgetKnown || stage.stage === "stabilize" ? stage : null;
   }, [debtData, accountsData, budgetData, savingsData, budgetKnown]);
 
-  // Safe-to-spend weekly allowance metric.
-  // TODO(E16 T-FIX-7): the 60/40 split of living costs here is unchanged from the old dashboard;
-  // E16 owns its definition. Do not alter the maths in this file.
-  const safeToSpend = useMemo(() => {
-    if (!budgetData || !budgetKnown) return null;
-    const income = budgetData.monthlyIncome || 0;
-    const living = budgetData.livingExpenses || budgetData.monthlyExpenses || 0;
-    const minDebt = debtData?.monthlyMinimumTotal || 0;
-    return calculateSafeToSpend(income, living * 0.6, minDebt, living * 0.4);
-  }, [budgetData, debtData, budgetKnown]);
+  // Weekly safe to spend comes from the loader's financial picture (owner decision D-6-A);
+  // null means it cannot be worked out yet, never a guessed split of living costs.
+  const weeklySafeToSpend = finiteOrNull(budgetData?.safeToSpendWeekly);
 
   // Enabled pages according to UserProfile, in the fixed canonical order.
   const enabledPages = useMemo<AppPageKey[]>(() => {
@@ -204,10 +197,8 @@ export const HomeDashboard: FC<HomeDashboardProps> = ({
 
   // KPI figures: unknown stays null (rendered "Not set"); only a real zero is £0.
   const hasAccounts = Boolean(checklistProps.hasAccounts || (accountsData?.accountsCount ?? 0) > 0);
-  const savingsTotal =
-    (savingsData?.accountsCount ?? 0) > 0
-      ? finiteOrNull(savingsData?.totalSavingsBalance)
-      : finiteOrNull(accountsData?.typeTotals?.Saving);
+  // Liquid cash (current and savings accounts) is the same figure months of cover divides.
+  const liquidCash = hasAccounts ? finiteOrNull(accountsData?.liquidCash) : null;
 
   const showCoachCard = financialStage?.stage === "stabilize" && (debtData?.totalDebt ?? 0) > 0;
 
@@ -253,19 +244,19 @@ export const HomeDashboard: FC<HomeDashboardProps> = ({
           <StageCoachCard
             debtFreeDate={debtData?.debtFreeDate ?? null}
             unsecuredDebt={financialStage?.totalUnsecuredDebt || debtData?.totalDebt || 0}
-            weeklyAllowance={safeToSpend ? finiteOrNull(safeToSpend.weeklyAllowance) : null}
+            weeklyAllowance={weeklySafeToSpend}
           />
         </SectionBand>
       )}
 
       <SectionBand id="dashboard-stand" title="Where you stand" variant="app">
         <DashboardKpiStrip
-          liquidCash={savingsTotal}
+          liquidCash={liquidCash}
           monthlySurplus={budgetKnown ? finiteOrNull(budgetData?.monthlySurplus) : null}
           netWorth={hasAccounts ? finiteOrNull(accountsData?.netWorth) : null}
           totalAssets={hasAccounts ? finiteOrNull(accountsData?.totalAssets) : null}
           totalLiabilities={hasAccounts ? finiteOrNull(accountsData?.totalLiabilities) : null}
-          weeklySafeToSpend={safeToSpend ? finiteOrNull(safeToSpend.weeklyAllowance) : null}
+          weeklySafeToSpend={weeklySafeToSpend}
         />
       </SectionBand>
 

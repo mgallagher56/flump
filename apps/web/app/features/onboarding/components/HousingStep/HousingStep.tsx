@@ -33,7 +33,7 @@ export const HousingStep: FC<HousingStepProps> = ({
   const status = values.housingStatus;
   return (
     <StepFrame
-      description="Regular costs give your monthly surplus and emergency runway."
+      description="Regular costs give your monthly surplus and months of cover."
       focusOnMount={focusOnMount}
       id="housing"
       onBack={onBack}

@@ -29,6 +29,11 @@ export const danExpected: PersonaExpected = {
     discretionary: 350,
     surplus: 1197.5, // 4,000 - (2,202.5 + 250 + 350)
   },
+  cover: {
+    monthsOfCover: 5.2, // 11,400 / 2,202.5
+    essentialCommitments: 2202.5,
+    safeToSpendMonthly: 447.5, // 2,900 PAYE take-home - 2,202.5 - 250; rental income is not take-home
+  },
 };
 
 /** Record sums per tax year. Pure addition of the fixture records; no tax rates involved. */

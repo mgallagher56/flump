@@ -30,6 +30,11 @@ export const debtStressedExpected: PersonaExpected = {
     discretionary: 90,
     surplus: -80, // 1,888 - (1,878 + 0 + 90): spending exceeds income
   },
+  cover: {
+    monthsOfCover: 0.1, // 120 / (1,460 + max(418 minimums, 418 budgeted))
+    essentialCommitments: 1878,
+    safeToSpendMonthly: 10, // 1,888 - 1,878 - 0
+  },
 };
 
 /** Card B has no stored APR or payment: the engine reports it unknown instead of inventing it. */

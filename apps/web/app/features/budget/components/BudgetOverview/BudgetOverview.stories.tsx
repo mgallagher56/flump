@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import { expect, fn, userEvent, within } from "storybook/test";
+import { buildWorkspacePicture } from "~/utils/financialPicture";
 import { sampleBudgetEntries } from "../../sampleBudgetEntries";
 import { BudgetOverview } from "./BudgetOverview";
 
@@ -23,8 +24,8 @@ export const Default: Story = {
   play: async ({ canvasElement, args }) => {
     const canvas = within(canvasElement);
     await expect(canvas.getAllByText("Where you stand")[0]).toBeDefined();
-    const runway = canvas.getAllByRole("button", { name: "See your runway" })[0];
-    if (!runway) throw new Error("Runway button missing");
+    const runway = canvas.getAllByRole("button", { name: "See your months of cover" })[0];
+    if (!runway) throw new Error("Months of cover button missing");
     await userEvent.click(runway);
     await expect(args.onNavigateToRunway).toHaveBeenCalled();
   },
@@ -43,4 +44,26 @@ export const Deficit: Story = {
 
 export const FewCategories: Story = {
   args: { entries: sampleBudgetEntries().slice(0, 6), customCategories: [] },
+};
+
+/** With saved pay details, safe to spend comes from take-home (owner decision D-6-A). */
+export const WithTakeHome: Story = {
+  args: {
+    picture: buildWorkspacePicture({
+      userProfile: {
+        annualSalary: 38000,
+        employmentType: "employed",
+        taxRegion: "ENGLAND",
+        studentLoanPlans: [],
+        pensionPercent: 5,
+        isSalarySacrifice: false,
+      },
+      budgetEntries: sampleBudgetEntries(),
+    }),
+  },
+  play: async ({ canvasElement }) => {
+    await expect(
+      within(canvasElement).getAllByText(/a day after essentials, debt payments and planned/)[0],
+    ).toBeDefined();
+  },
 };

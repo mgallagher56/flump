@@ -22,4 +22,5 @@ export const newUserExpected: PersonaExpected = {
     debtItemIds: [],
   },
   budget: { income: 0, essentials: 0, savings: 0, discretionary: 0, surplus: 0 },
+  cover: { monthsOfCover: null, essentialCommitments: null, safeToSpendMonthly: null }, // no budget
 };

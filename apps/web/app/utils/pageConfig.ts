@@ -49,7 +49,7 @@ export const APP_PAGES: Record<AppPageKey, AppPageConfig> = {
     key: "budget",
     label: "Budget",
     route: "/app/budget",
-    description: "Income and expense categorisation, cash flow surplus, and runway calculator",
+    description: "Income and expense categorisation, cash flow surplus, and months of cover",
     category: "core",
     badgeColor: "var(--colors-chart-warning)",
   },

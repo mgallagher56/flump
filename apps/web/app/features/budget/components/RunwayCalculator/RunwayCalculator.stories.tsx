@@ -30,7 +30,6 @@ const meta: Meta<typeof RunwayCalculator> = {
     ],
     accountDetails: [],
     onNavigateToForecast: fn(),
-    onSaveSettings: fn(),
   },
 };
 
@@ -42,7 +41,7 @@ export const Default: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     const toggle = canvas.getAllByRole("switch", {
-      name: "Include Monzo current in savings pool",
+      name: "Include Monzo current in this illustration",
     })[0];
     if (!toggle) throw new Error("Switch missing");
     await userEvent.click(toggle);

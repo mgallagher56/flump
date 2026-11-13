@@ -35,6 +35,11 @@ export const heavyExpected: PersonaExpected = {
     discretionary: 650, // 250+220+55+45+80
     surplus: 2195, // 6,990 - (3,245 + 900 + 650)
   },
+  cover: {
+    monthsOfCover: 7.7, // 27,050 / (3,245 - 120 budgeted debt + max(410 minimums, 120))
+    essentialCommitments: 3535,
+    safeToSpendMonthly: 955, // 5,390 - 3,535 - 900
+  },
 };
 
 /**

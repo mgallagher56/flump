@@ -1,4 +1,8 @@
-import { type BuildContextPackInput, userProfileToFinancialBaseline } from "@flump/finance-engine";
+import {
+  type BuildContextPackInput,
+  profileFactsFromProfile,
+  userProfileToFinancialBaseline,
+} from "@flump/finance-engine";
 import type { McpUserDataProvider } from "@flump/mcp";
 import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
@@ -69,6 +73,8 @@ export class AgentDataService implements McpUserDataProvider {
 
     return {
       baseline,
+      // Saved facts without defaults: safe to spend needs real take-home, not the baseline's.
+      profileFacts: profileFactsFromProfile(profile),
       accounts,
       accountDetails,
       budgetEntries: budgetEntries.map((b) => ({

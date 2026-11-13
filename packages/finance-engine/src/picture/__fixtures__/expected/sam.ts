@@ -29,4 +29,9 @@ export const samExpected: PersonaExpected = {
     discretionary: 200,
     surplus: 752, // 2,382 - (1,280 + 150 + 200)
   },
+  cover: {
+    monthsOfCover: 4.7, // 6,050 / 1,280 essentials
+    essentialCommitments: 1280,
+    safeToSpendMonthly: 952, // 2,382 take-home - 1,280 - 150 savings
+  },
 };

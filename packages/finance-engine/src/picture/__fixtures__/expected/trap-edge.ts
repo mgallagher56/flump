@@ -24,6 +24,7 @@ export const trapEdgeExpected: PersonaExpected = {
     debtItemIds: [],
   },
   budget: { income: 0, essentials: 0, savings: 0, discretionary: 0, surplus: 0 },
+  cover: { monthsOfCover: null, essentialCommitments: null, safeToSpendMonthly: null }, // no budget
 };
 
 /** Keyed by salary. Rates are statutory (40/45 bands, 1.5x taper factor, 2% NI above 50,270). */

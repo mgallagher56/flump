@@ -113,7 +113,7 @@ const STEP_TITLES: Record<WizardStep, string> = {
 };
 
 const STEP_DESCRIPTIONS: Record<WizardStep, string> = {
-  welcome: "Set up your monthly budget to see where your money goes and how long your runway is.",
+  welcome: "Set up your monthly budget to see where your money goes and your months of cover.",
   defaults: "Start from a standard UK template, or build from scratch.",
   income: "Enter your take-home pay and any other income sources.",
   housing: "Rent, mortgage, insurance and other home costs.",
@@ -135,7 +135,7 @@ const WELCOME_POINTS = [
   "Enter your income and monthly spending",
   "Review the pre-filled defaults and edit them to match your situation",
   "See what is left over each month",
-  "See how long your money lasts on the Runway tab",
+  "See how long your money lasts on the Months of cover tab",
 ];
 
 type NewEntry = Omit<BudgetEntry, "id" | "userId" | "createdAt" | "updatedAt">;
@@ -157,13 +157,15 @@ const defaultItem = (
   isDefault: true,
 });
 
+// Suggested rows are names only: the amount starts at 0 for the person to fill in, so no
+// invented figure reaches budget totals, safe to spend or months of cover (E23).
 const DEFAULT_ITEMS: NewEntry[] = [
-  defaultItem("Rent / Mortgage", 1200, "housing", true),
-  defaultItem("Council Tax", 160, "bills", true),
-  defaultItem("Gas & Electricity", 150, "bills", true),
-  defaultItem("Water", 40, "bills", true),
-  defaultItem("Broadband", 35, "bills", false),
-  defaultItem("Groceries", 350, "expenses", true),
+  defaultItem("Rent / Mortgage", 0, "housing", true),
+  defaultItem("Council Tax", 0, "bills", true),
+  defaultItem("Gas & Electricity", 0, "bills", true),
+  defaultItem("Water", 0, "bills", true),
+  defaultItem("Broadband", 0, "bills", false),
+  defaultItem("Groceries", 0, "expenses", true),
 ];
 
 export const BudgetSetupWizard: FC<BudgetSetupWizardProps> = ({

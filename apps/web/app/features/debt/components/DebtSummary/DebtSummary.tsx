@@ -64,7 +64,11 @@ export const DebtSummary: FC<DebtSummaryProps> = ({
             "No card, overdraft or 6.5%+ APR debt"
           )
         }
-        value={<Money size="lg" value={totalDebt} />}
+        value={
+          <span data-figure="debt.total">
+            <Money size="lg" value={totalDebt} />
+          </span>
+        }
       />
       <KpiCard
         label="Paying each month"

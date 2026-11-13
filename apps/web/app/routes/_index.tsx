@@ -1,10 +1,10 @@
 import {
   type TaxRecord as EngineTaxRecord,
-  type FactKey,
   getCurrentUKTaxYear,
   getRecordAnnualTotalForTaxYear,
   isFigureKnown,
   isRecordActiveInTaxYear,
+  type MissingKey,
   PortfolioSnapshot,
   profileFactsFromProfile,
   selectTakeHome,
@@ -14,11 +14,10 @@ import { type LoaderFunctionArgs, type MetaFunction, redirect, useLoaderData } f
 import { isLiabilityType } from "~/containers/accounts/utils";
 import { HomeDashboard } from "~/features/dashboard/components/HomeDashboard";
 import { loadWorkspaceSnapshot } from "~/services/backend-client.server";
-import { toMonthly } from "~/types/budget";
 import { buildDebtSummary } from "~/utils/debtSummary";
 import { isDemoMode } from "~/utils/demoData";
+import { buildWorkspacePicture, knownOrNull } from "~/utils/financialPicture";
 import { getMarketingUrl } from "~/utils/marketingUrl";
-import { calculateRunwayStats } from "~/utils/runwayStorage";
 
 export const meta: MetaFunction = (): { title: string }[] => [
   { title: "Flump | UK Net Worth, Tax and Debt Calculators" },
@@ -26,7 +25,7 @@ export const meta: MetaFunction = (): { title: string }[] => [
 
 type TakeHomeProfile = Parameters<typeof profileFactsFromProfile>[0];
 
-const MISSING_LABELS: Partial<Record<FactKey, string>> = {
+const MISSING_LABELS: Partial<Record<MissingKey, string>> = {
   employmentType: "employment type",
   pensionPercent: "pension percentage",
   isSalarySacrifice: "salary sacrifice status",
@@ -49,20 +48,12 @@ export function describeMissingTakeHome(profile: TakeHomeProfile | undefined): s
 }
 
 export const loader = async (args: LoaderFunctionArgs) => {
-  const {
-    accounts,
-    userProfile,
-    budgetEntries,
-    accountDetails,
-    taxRecords,
-    user,
-    portfolioSnapshot: preloadedSnapshot,
-  } = await loadWorkspaceSnapshot(args, {
-    ensureSignedIn: false,
-    includeBudget: true,
-    includeTax: true,
-    includePortfolioSnapshot: true,
-  });
+  const { accounts, userProfile, budgetEntries, accountDetails, taxRecords, user } =
+    await loadWorkspaceSnapshot(args, {
+      ensureSignedIn: false,
+      includeBudget: true,
+      includeTax: true,
+    });
 
   if (!user) {
     // Demo is a single experience at /sandbox; signed-in users never see demo data.
@@ -79,33 +70,20 @@ export const loader = async (args: LoaderFunctionArgs) => {
 
   const completedSteps = (userProfile?.setupChecklistCompletedSteps as string[]) ?? [];
 
+  // Every derived figure (net worth, debt, budget totals, safe to spend, months of cover) comes
+  // from the one financial picture, built once from saved rows (E23 section 2).
   const portfolioSnapshot = new PortfolioSnapshot(accounts, accountDetails);
-  const totalAssets = preloadedSnapshot?.totalAssets ?? portfolioSnapshot.getTotalAssets();
-  const totalLiabilities =
-    preloadedSnapshot?.totalLiabilities ?? portfolioSnapshot.getTotalLiabilities();
-
-  const monthlyIncome = Array.isArray(budgetEntries)
-    ? budgetEntries
-        .filter((e: any) => e.isIncome)
-        .reduce((sum: number, e: any) => sum + toMonthly(e), 0)
-    : 0;
-  const monthlyExpenses = Array.isArray(budgetEntries)
-    ? budgetEntries
-        .filter((e: any) => !e.isIncome)
-        .reduce((sum: number, e: any) => sum + toMonthly(e), 0)
-    : 0;
-
-  const budgetedSavings = Array.isArray(budgetEntries)
-    ? budgetEntries
-        .filter((e: any) => !e.isIncome && e.category === "savings")
-        .reduce((sum: number, e: any) => sum + toMonthly(e), 0)
-    : 0;
-
-  const livingExpenses = Array.isArray(budgetEntries)
-    ? budgetEntries
-        .filter((e: any) => !e.isIncome && e.category !== "savings")
-        .reduce((sum: number, e: any) => sum + toMonthly(e), 0)
-    : 0;
+  const picture = buildWorkspacePicture(
+    { userProfile, accounts, accountDetails, budgetEntries },
+    { snapshot: portfolioSnapshot },
+  );
+  const { totalAssets, totalLiabilities, netWorth, liquidCash } = picture.netWorth;
+  const budget = knownOrNull(picture.budget);
+  const monthlyIncome = budget?.income ?? 0;
+  const monthlyOutgoings = budget?.outgoings ?? 0;
+  const budgetedSavings = budget?.savings ?? 0;
+  const safeToSpend = knownOrNull(picture.safeToSpend);
+  const monthsOfCover = knownOrNull(picture.monthsOfCover);
 
   // Accounts Breakdown
   const typeTotals: Record<string, number> = {};
@@ -190,13 +168,6 @@ export const loader = async (args: LoaderFunctionArgs) => {
         )
       : null;
 
-  const defaultRunway = calculateRunwayStats({
-    entries: budgetEntries,
-    accounts,
-    accountDetails,
-    savedSettings: null,
-  });
-
   return {
     user,
     hasAccounts: Array.isArray(accounts) && accounts.length > 0,
@@ -210,30 +181,31 @@ export const loader = async (args: LoaderFunctionArgs) => {
     hasRunForecast: completedSteps.includes("forecast"),
     completedSteps,
     accountsData: {
-      netWorth: totalAssets - totalLiabilities,
+      netWorth,
       totalAssets,
       totalLiabilities,
+      liquidCash,
       accountsCount: Array.isArray(accounts) ? accounts.length : 0,
       typeTotals,
     },
     budgetData: {
+      budgetKnown: budget !== null,
       monthlyIncome,
-      monthlyExpenses,
-      monthlySurplus: monthlyIncome - monthlyExpenses,
+      // Essentials plus discretionary; planned savings is its own line.
+      monthlyExpenses: monthlyOutgoings,
+      monthlySurplus: budget?.surplus ?? 0,
       budgetedSavings,
-      livingExpenses,
+      livingExpenses: monthlyOutgoings,
       savingsRatePct:
         monthlyIncome > 0
           ? Math.min(
               100,
-              Math.max(0, Math.round(((monthlyIncome - livingExpenses) / monthlyIncome) * 100)),
+              Math.max(0, Math.round(((monthlyIncome - monthlyOutgoings) / monthlyIncome) * 100)),
             )
           : 0,
-      runwayMonths: defaultRunway.runwayMonths,
-      runwayLabel: defaultRunway.shortLabel,
-      rawEntries: budgetEntries,
-      rawAccounts: accounts,
-      rawAccountDetails: accountDetails,
+      safeToSpendWeekly: safeToSpend?.weekly ?? null,
+      safeToSpendShortfall: safeToSpend?.monthlyShortfall ?? null,
+      monthsOfCover: monthsOfCover?.months ?? null,
     },
     savingsData: {
       totalSavingsBalance,
@@ -263,7 +235,7 @@ export const loader = async (args: LoaderFunctionArgs) => {
     },
     forecastData: {
       totalAssets,
-      monthlySavingRate: Math.max(0, monthlyIncome - livingExpenses),
+      monthlySavingRate: Math.max(0, monthlyIncome - monthlyOutgoings),
       annualSalary: userProfile?.annualSalary ?? null,
       estimatedTakeHome: takeHome?.monthly ?? null,
       takeHomeMissing: takeHome ? undefined : describeMissingTakeHome(userProfile),
@@ -308,22 +280,22 @@ const Index = (): ReactElement => {
       netWorth: 0,
       totalAssets: 0,
       totalLiabilities: 0,
+      liquidCash: 0,
       accountsCount: 0,
       typeTotals: {},
     };
 
     const safeBudgetData = budgetData || {
+      budgetKnown: false,
       monthlyIncome: 0,
       monthlyExpenses: 0,
       monthlySurplus: 0,
       budgetedSavings: 0,
       livingExpenses: 0,
       savingsRatePct: 0,
-      runwayMonths: 0,
-      runwayLabel: "0 mo",
-      rawEntries: [],
-      rawAccounts: [],
-      rawAccountDetails: [],
+      safeToSpendWeekly: null,
+      safeToSpendShortfall: null,
+      monthsOfCover: null,
     };
 
     return (

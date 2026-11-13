@@ -72,7 +72,7 @@ Replace outdated or melodramatic names with clear, professional names:
 | :--------------------------- | :----------------------------------------- | :------------------------------------------------------------------------- |
 | **60-second baseline**       | 60-Second Wealth Engine / Baseline Station | The 6-figure setup that produces the initial financial picture             |
 | **Debt payoff**              | Debt Crusher / Debt Elimination Engine     | The module comparing avalanche and snowball payoff schedules               |
-| **Emergency runway**         | Survival Runway / Survival Gauge           | Liquid cash divided by monthly essential outgoings                         |
+| **Months of cover**          | Emergency runway / Survival Runway / Gauge | Liquid cash divided by monthly essential outgoings                         |
 | **Safe to spend**            | Safe-to-Spend / Guilt-Free Cash Allowance  | Weekly discretionary cash buffer after ring-fencing obligations            |
 | **Cashflow allocation**      | Cashflow Waterfall / Dynamic Cash Engine   | Proportional breakdown of tax, fixed bills, flexible spending, and surplus |
 | **Promotional expiry alert** | Promotional Cliff / 0% Cliff Alert         | Clear notice when a 0% credit card or transfer rate is ending              |

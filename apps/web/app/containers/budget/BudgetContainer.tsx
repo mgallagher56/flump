@@ -13,12 +13,8 @@ import { useUserProfile } from "~/hooks/useUserProfile";
 import type { loader } from "~/routes/app.budget";
 import { apiFetch } from "~/services/api-client";
 import type { BudgetEntry } from "~/types/budget";
-import {
-  loadRunwaySettings,
-  type RunwaySavedSettings,
-  type RunwayScenario,
-  saveRunwaySettings,
-} from "~/utils/runwayStorage";
+import { buildWorkspacePicture } from "~/utils/financialPicture";
+import { clearRunwaySettings, type RunwayScenario } from "~/utils/runwayStorage";
 import { errorBanner, pageActions, pageRoot, tabContent } from "./BudgetContainer.styles";
 
 type BudgetTab =
@@ -80,18 +76,15 @@ const BudgetContainer: FC = () => {
     return [...STANDARD_CATEGORIES, ...customCategories];
   }, [customCategories]);
 
-  const [runwaySettings, setRunwaySettings] = useState<RunwaySavedSettings | null>(() =>
-    loadRunwaySettings(),
-  );
-
-  // Runway scenario inputs (severance, extra cuts, dropped lines) are session-only: held here so
-  // they survive tab switches, cleared on reload, never saved and never read by a headline.
+  // Months-of-cover scenario inputs (accounts counted, severance, cuts, dropped lines) are
+  // session-only: held here so they survive tab switches, cleared on reload, never saved and
+  // never read by a headline.
   const [runwayScenario, setRunwayScenario] = useState<RunwayScenario | null>(null);
 
-  const handleUpdateRunwaySettings = (updated: RunwaySavedSettings) => {
-    setRunwaySettings(updated);
-    saveRunwaySettings(updated);
-  };
+  // Older versions saved an account preference in the browser; it no longer feeds any figure.
+  useEffect(() => {
+    clearRunwaySettings();
+  }, []);
 
   // Normalize accountDetails to support both snake_case and camelCase
   const normalizedAccountDetails = useMemo(() => {
@@ -115,6 +108,13 @@ const BudgetContainer: FC = () => {
       };
     });
   }, [accounts, accountDetails]);
+
+  // The same engine builder the loaders use, run on the live entries so an edit updates every
+  // figure on this page at once (E23 section 2).
+  const picture = useMemo(
+    () => buildWorkspacePicture({ userProfile, accounts, accountDetails, budgetEntries: entries }),
+    [userProfile, accounts, accountDetails, entries],
+  );
 
   const isBudgetEmpty = useMemo(() => {
     if (entries.length === 0) return true;
@@ -304,6 +304,7 @@ const BudgetContainer: FC = () => {
           <BudgetOverview
             customCategories={customCategories}
             entries={entries}
+            picture={picture}
             onNavigateToCategory={(cat) => setActiveTab(cat as BudgetTab)}
             onNavigateToRunway={handleOpenRunway}
           />
@@ -328,11 +329,10 @@ const BudgetContainer: FC = () => {
         <RunwayCalculator
           accountDetails={normalizedAccountDetails}
           accounts={accountsWithBalances}
+          baseline={picture.monthsOfCover}
           entries={entries}
-          savedSettings={runwaySettings}
           scenario={runwayScenario}
           onScenarioChange={setRunwayScenario}
-          onSaveSettings={handleUpdateRunwaySettings}
           onNavigateToForecast={() => navigate("/app/savings#forecast")}
         />
       )}

@@ -60,6 +60,16 @@ describe("BudgetController", () => {
     expect(budgetRepo.rows.some((r) => r.name === "Salary (Take Home)")).toBe(false);
   });
 
+  it("suggested defaults carry no invented amounts (E23)", async () => {
+    const budgetRepo = createInMemoryRepository();
+    const controller = new BudgetController(budgetRepo as any, createInMemoryRepository() as any);
+
+    await controller.seedDefaultBudgetEntries({ user: { id: "user-123" } });
+
+    expect(budgetRepo.rows.length).toBeGreaterThan(0);
+    expect(budgetRepo.rows.every((r) => Number(r.amount) === 0)).toBe(true);
+  });
+
   it("should add custom category to user profile and validate input", async () => {
     const mockBudgetRepo = {};
     const mockProfileRepo = {

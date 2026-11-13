@@ -32,11 +32,15 @@ interface DefaultSeed {
   isDefault: boolean;
 }
 
+/**
+ * Suggested rows are names only. Amounts start at 0 so no invented figure ever reaches the
+ * budget totals, safe to spend or months of cover (E23); the person fills in their own.
+ */
 const DEFAULT_BUDGET_SEEDS: DefaultSeed[] = [
   {
     category: "housing",
     name: "Rent / Mortgage",
-    amount: 1200,
+    amount: 0,
     frequency: "monthly",
     isIncome: false,
     isPrimaryIncome: false,
@@ -46,7 +50,7 @@ const DEFAULT_BUDGET_SEEDS: DefaultSeed[] = [
   {
     category: "housing",
     name: "Home Insurance",
-    amount: 30,
+    amount: 0,
     frequency: "monthly",
     isIncome: false,
     isPrimaryIncome: false,
@@ -56,7 +60,7 @@ const DEFAULT_BUDGET_SEEDS: DefaultSeed[] = [
   {
     category: "bills",
     name: "Electricity",
-    amount: 80,
+    amount: 0,
     frequency: "monthly",
     isIncome: false,
     isPrimaryIncome: false,
@@ -66,7 +70,7 @@ const DEFAULT_BUDGET_SEEDS: DefaultSeed[] = [
   {
     category: "bills",
     name: "Gas",
-    amount: 60,
+    amount: 0,
     frequency: "monthly",
     isIncome: false,
     isPrimaryIncome: false,
@@ -76,7 +80,7 @@ const DEFAULT_BUDGET_SEEDS: DefaultSeed[] = [
   {
     category: "bills",
     name: "Water",
-    amount: 30,
+    amount: 0,
     frequency: "monthly",
     isIncome: false,
     isPrimaryIncome: false,
@@ -86,7 +90,7 @@ const DEFAULT_BUDGET_SEEDS: DefaultSeed[] = [
   {
     category: "bills",
     name: "Council Tax",
-    amount: 150,
+    amount: 0,
     frequency: "monthly",
     isIncome: false,
     isPrimaryIncome: false,
@@ -96,7 +100,7 @@ const DEFAULT_BUDGET_SEEDS: DefaultSeed[] = [
   {
     category: "bills",
     name: "Broadband",
-    amount: 40,
+    amount: 0,
     frequency: "monthly",
     isIncome: false,
     isPrimaryIncome: false,
@@ -106,7 +110,7 @@ const DEFAULT_BUDGET_SEEDS: DefaultSeed[] = [
   {
     category: "expenses",
     name: "Mobile Phone",
-    amount: 35,
+    amount: 0,
     frequency: "monthly",
     isIncome: false,
     isPrimaryIncome: false,
@@ -116,7 +120,7 @@ const DEFAULT_BUDGET_SEEDS: DefaultSeed[] = [
   {
     category: "expenses",
     name: "Gym",
-    amount: 40,
+    amount: 0,
     frequency: "monthly",
     isIncome: false,
     isPrimaryIncome: false,
@@ -126,7 +130,7 @@ const DEFAULT_BUDGET_SEEDS: DefaultSeed[] = [
   {
     category: "expenses",
     name: "Netflix",
-    amount: 18,
+    amount: 0,
     frequency: "monthly",
     isIncome: false,
     isPrimaryIncome: false,
@@ -136,7 +140,7 @@ const DEFAULT_BUDGET_SEEDS: DefaultSeed[] = [
   {
     category: "expenses",
     name: "Spotify",
-    amount: 11,
+    amount: 0,
     frequency: "monthly",
     isIncome: false,
     isPrimaryIncome: false,
@@ -146,7 +150,7 @@ const DEFAULT_BUDGET_SEEDS: DefaultSeed[] = [
   {
     category: "expenses",
     name: "Car Insurance",
-    amount: 60,
+    amount: 0,
     frequency: "monthly",
     isIncome: false,
     isPrimaryIncome: false,
@@ -156,7 +160,7 @@ const DEFAULT_BUDGET_SEEDS: DefaultSeed[] = [
   {
     category: "savings",
     name: "Emergency Fund",
-    amount: 200,
+    amount: 0,
     frequency: "monthly",
     isIncome: false,
     isPrimaryIncome: false,
@@ -166,7 +170,7 @@ const DEFAULT_BUDGET_SEEDS: DefaultSeed[] = [
   {
     category: "savings",
     name: "ISA / Investments",
-    amount: 300,
+    amount: 0,
     frequency: "monthly",
     isIncome: false,
     isPrimaryIncome: false,

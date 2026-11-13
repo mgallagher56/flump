@@ -15,7 +15,7 @@ const meta: Meta<typeof BudgetWidget> = {
       budgetedSavings: 300,
       livingExpenses: 2100,
       savingsRatePct: 34,
-      runwayMonths: 6.5,
+      monthsOfCover: 6.5,
     },
   },
 };
@@ -29,6 +29,7 @@ export const Populated: Story = {
     const canvas = within(canvasElement);
     await expect(canvas.getAllByText("+£800")[0]).toBeDefined();
     await expect(canvas.getAllByRole("progressbar")[0]).toBeDefined();
+    await expect(canvas.getAllByText("6.5 months")[0]).toBeDefined();
   },
 };
 
@@ -39,7 +40,7 @@ export const Deficit: Story = {
       monthlyExpenses: 2300,
       monthlySurplus: -300,
       savingsRatePct: 0,
-      runwayMonths: 0.8,
+      monthsOfCover: 0.8,
     },
   },
   play: async ({ canvasElement }) => {
@@ -54,7 +55,7 @@ export const NotSet: Story = {
       monthlyExpenses: 0,
       monthlySurplus: 0,
       savingsRatePct: 0,
-      runwayMonths: null,
+      monthsOfCover: null,
     },
   },
   play: async ({ canvasElement }) => {
