@@ -35,7 +35,7 @@ exports[`<Header /> > renders as expected by default 1`] = `
             <button
               aria-label="System theme"
               aria-pressed="true"
-              class="d_inline-flex ai_center jc_center w_32px h_32px bdr_full bd_none bg-c_transparent c_text.muted cursor_pointer motionSafe:trs-prop_background-color,_color motionSafe:trs-dur_fast motionSafe:trs-tmf_standard hover:c_text.primary focusVisible:ring_2px_solid focusVisible:ring-c_border.focusRing focusVisible:ring-o_2px [&[aria-pressed='true']]:bg-c_surface.card [&[aria-pressed='true']]:c_primary [&[aria-pressed='true']]:bx-sh_xs [@media_(pointer:_coarse)]:w_44px [@media_(pointer:_coarse)]:h_44px"
+              class="d_inline-flex ai_center jc_center w_44px md:w_32px h_44px md:h_32px bdr_full bd_none bg-c_transparent c_text.muted cursor_pointer motionSafe:trs-prop_background-color,_color motionSafe:trs-dur_fast motionSafe:trs-tmf_standard hover:c_text.primary focusVisible:ring_2px_solid focusVisible:ring-c_border.focusRing focusVisible:ring-o_2px [&[aria-pressed='true']]:bg-c_surface.card [&[aria-pressed='true']]:c_primary [&[aria-pressed='true']]:bx-sh_xs [@media_(pointer:_coarse)]:w_44px [@media_(pointer:_coarse)]:h_44px"
               type="button"
             >
               <svg
@@ -76,7 +76,7 @@ exports[`<Header /> > renders as expected by default 1`] = `
             <button
               aria-label="Light theme"
               aria-pressed="false"
-              class="d_inline-flex ai_center jc_center w_32px h_32px bdr_full bd_none bg-c_transparent c_text.muted cursor_pointer motionSafe:trs-prop_background-color,_color motionSafe:trs-dur_fast motionSafe:trs-tmf_standard hover:c_text.primary focusVisible:ring_2px_solid focusVisible:ring-c_border.focusRing focusVisible:ring-o_2px [&[aria-pressed='true']]:bg-c_surface.card [&[aria-pressed='true']]:c_primary [&[aria-pressed='true']]:bx-sh_xs [@media_(pointer:_coarse)]:w_44px [@media_(pointer:_coarse)]:h_44px"
+              class="d_inline-flex ai_center jc_center w_44px md:w_32px h_44px md:h_32px bdr_full bd_none bg-c_transparent c_text.muted cursor_pointer motionSafe:trs-prop_background-color,_color motionSafe:trs-dur_fast motionSafe:trs-tmf_standard hover:c_text.primary focusVisible:ring_2px_solid focusVisible:ring-c_border.focusRing focusVisible:ring-o_2px [&[aria-pressed='true']]:bg-c_surface.card [&[aria-pressed='true']]:c_primary [&[aria-pressed='true']]:bx-sh_xs [@media_(pointer:_coarse)]:w_44px [@media_(pointer:_coarse)]:h_44px"
               type="button"
             >
               <svg
@@ -127,7 +127,7 @@ exports[`<Header /> > renders as expected by default 1`] = `
             <button
               aria-label="Dark theme"
               aria-pressed="false"
-              class="d_inline-flex ai_center jc_center w_32px h_32px bdr_full bd_none bg-c_transparent c_text.muted cursor_pointer motionSafe:trs-prop_background-color,_color motionSafe:trs-dur_fast motionSafe:trs-tmf_standard hover:c_text.primary focusVisible:ring_2px_solid focusVisible:ring-c_border.focusRing focusVisible:ring-o_2px [&[aria-pressed='true']]:bg-c_surface.card [&[aria-pressed='true']]:c_primary [&[aria-pressed='true']]:bx-sh_xs [@media_(pointer:_coarse)]:w_44px [@media_(pointer:_coarse)]:h_44px"
+              class="d_inline-flex ai_center jc_center w_44px md:w_32px h_44px md:h_32px bdr_full bd_none bg-c_transparent c_text.muted cursor_pointer motionSafe:trs-prop_background-color,_color motionSafe:trs-dur_fast motionSafe:trs-tmf_standard hover:c_text.primary focusVisible:ring_2px_solid focusVisible:ring-c_border.focusRing focusVisible:ring-o_2px [&[aria-pressed='true']]:bg-c_surface.card [&[aria-pressed='true']]:c_primary [&[aria-pressed='true']]:bx-sh_xs [@media_(pointer:_coarse)]:w_44px [@media_(pointer:_coarse)]:h_44px"
               type="button"
             >
               <svg
@@ -245,7 +245,7 @@ exports[`<Header /> > renders correctly when user logged in 1`] = `
             <button
               aria-label="System theme"
               aria-pressed="true"
-              class="d_inline-flex ai_center jc_center w_32px h_32px bdr_full bd_none bg-c_transparent c_text.muted cursor_pointer motionSafe:trs-prop_background-color,_color motionSafe:trs-dur_fast motionSafe:trs-tmf_standard hover:c_text.primary focusVisible:ring_2px_solid focusVisible:ring-c_border.focusRing focusVisible:ring-o_2px [&[aria-pressed='true']]:bg-c_surface.card [&[aria-pressed='true']]:c_primary [&[aria-pressed='true']]:bx-sh_xs [@media_(pointer:_coarse)]:w_44px [@media_(pointer:_coarse)]:h_44px"
+              class="d_inline-flex ai_center jc_center w_44px md:w_32px h_44px md:h_32px bdr_full bd_none bg-c_transparent c_text.muted cursor_pointer motionSafe:trs-prop_background-color,_color motionSafe:trs-dur_fast motionSafe:trs-tmf_standard hover:c_text.primary focusVisible:ring_2px_solid focusVisible:ring-c_border.focusRing focusVisible:ring-o_2px [&[aria-pressed='true']]:bg-c_surface.card [&[aria-pressed='true']]:c_primary [&[aria-pressed='true']]:bx-sh_xs [@media_(pointer:_coarse)]:w_44px [@media_(pointer:_coarse)]:h_44px"
               type="button"
             >
               <svg
@@ -286,7 +286,7 @@ exports[`<Header /> > renders correctly when user logged in 1`] = `
             <button
               aria-label="Light theme"
               aria-pressed="false"
-              class="d_inline-flex ai_center jc_center w_32px h_32px bdr_full bd_none bg-c_transparent c_text.muted cursor_pointer motionSafe:trs-prop_background-color,_color motionSafe:trs-dur_fast motionSafe:trs-tmf_standard hover:c_text.primary focusVisible:ring_2px_solid focusVisible:ring-c_border.focusRing focusVisible:ring-o_2px [&[aria-pressed='true']]:bg-c_surface.card [&[aria-pressed='true']]:c_primary [&[aria-pressed='true']]:bx-sh_xs [@media_(pointer:_coarse)]:w_44px [@media_(pointer:_coarse)]:h_44px"
+              class="d_inline-flex ai_center jc_center w_44px md:w_32px h_44px md:h_32px bdr_full bd_none bg-c_transparent c_text.muted cursor_pointer motionSafe:trs-prop_background-color,_color motionSafe:trs-dur_fast motionSafe:trs-tmf_standard hover:c_text.primary focusVisible:ring_2px_solid focusVisible:ring-c_border.focusRing focusVisible:ring-o_2px [&[aria-pressed='true']]:bg-c_surface.card [&[aria-pressed='true']]:c_primary [&[aria-pressed='true']]:bx-sh_xs [@media_(pointer:_coarse)]:w_44px [@media_(pointer:_coarse)]:h_44px"
               type="button"
             >
               <svg
@@ -337,7 +337,7 @@ exports[`<Header /> > renders correctly when user logged in 1`] = `
             <button
               aria-label="Dark theme"
               aria-pressed="false"
-              class="d_inline-flex ai_center jc_center w_32px h_32px bdr_full bd_none bg-c_transparent c_text.muted cursor_pointer motionSafe:trs-prop_background-color,_color motionSafe:trs-dur_fast motionSafe:trs-tmf_standard hover:c_text.primary focusVisible:ring_2px_solid focusVisible:ring-c_border.focusRing focusVisible:ring-o_2px [&[aria-pressed='true']]:bg-c_surface.card [&[aria-pressed='true']]:c_primary [&[aria-pressed='true']]:bx-sh_xs [@media_(pointer:_coarse)]:w_44px [@media_(pointer:_coarse)]:h_44px"
+              class="d_inline-flex ai_center jc_center w_44px md:w_32px h_44px md:h_32px bdr_full bd_none bg-c_transparent c_text.muted cursor_pointer motionSafe:trs-prop_background-color,_color motionSafe:trs-dur_fast motionSafe:trs-tmf_standard hover:c_text.primary focusVisible:ring_2px_solid focusVisible:ring-c_border.focusRing focusVisible:ring-o_2px [&[aria-pressed='true']]:bg-c_surface.card [&[aria-pressed='true']]:c_primary [&[aria-pressed='true']]:bx-sh_xs [@media_(pointer:_coarse)]:w_44px [@media_(pointer:_coarse)]:h_44px"
               type="button"
             >
               <svg
@@ -468,7 +468,7 @@ exports[`<Header /> > renders without ColorModeSwitch 1`] = `
             <button
               aria-label="System theme"
               aria-pressed="true"
-              class="d_inline-flex ai_center jc_center w_32px h_32px bdr_full bd_none bg-c_transparent c_text.muted cursor_pointer motionSafe:trs-prop_background-color,_color motionSafe:trs-dur_fast motionSafe:trs-tmf_standard hover:c_text.primary focusVisible:ring_2px_solid focusVisible:ring-c_border.focusRing focusVisible:ring-o_2px [&[aria-pressed='true']]:bg-c_surface.card [&[aria-pressed='true']]:c_primary [&[aria-pressed='true']]:bx-sh_xs [@media_(pointer:_coarse)]:w_44px [@media_(pointer:_coarse)]:h_44px"
+              class="d_inline-flex ai_center jc_center w_44px md:w_32px h_44px md:h_32px bdr_full bd_none bg-c_transparent c_text.muted cursor_pointer motionSafe:trs-prop_background-color,_color motionSafe:trs-dur_fast motionSafe:trs-tmf_standard hover:c_text.primary focusVisible:ring_2px_solid focusVisible:ring-c_border.focusRing focusVisible:ring-o_2px [&[aria-pressed='true']]:bg-c_surface.card [&[aria-pressed='true']]:c_primary [&[aria-pressed='true']]:bx-sh_xs [@media_(pointer:_coarse)]:w_44px [@media_(pointer:_coarse)]:h_44px"
               type="button"
             >
               <svg
@@ -509,7 +509,7 @@ exports[`<Header /> > renders without ColorModeSwitch 1`] = `
             <button
               aria-label="Light theme"
               aria-pressed="false"
-              class="d_inline-flex ai_center jc_center w_32px h_32px bdr_full bd_none bg-c_transparent c_text.muted cursor_pointer motionSafe:trs-prop_background-color,_color motionSafe:trs-dur_fast motionSafe:trs-tmf_standard hover:c_text.primary focusVisible:ring_2px_solid focusVisible:ring-c_border.focusRing focusVisible:ring-o_2px [&[aria-pressed='true']]:bg-c_surface.card [&[aria-pressed='true']]:c_primary [&[aria-pressed='true']]:bx-sh_xs [@media_(pointer:_coarse)]:w_44px [@media_(pointer:_coarse)]:h_44px"
+              class="d_inline-flex ai_center jc_center w_44px md:w_32px h_44px md:h_32px bdr_full bd_none bg-c_transparent c_text.muted cursor_pointer motionSafe:trs-prop_background-color,_color motionSafe:trs-dur_fast motionSafe:trs-tmf_standard hover:c_text.primary focusVisible:ring_2px_solid focusVisible:ring-c_border.focusRing focusVisible:ring-o_2px [&[aria-pressed='true']]:bg-c_surface.card [&[aria-pressed='true']]:c_primary [&[aria-pressed='true']]:bx-sh_xs [@media_(pointer:_coarse)]:w_44px [@media_(pointer:_coarse)]:h_44px"
               type="button"
             >
               <svg
@@ -560,7 +560,7 @@ exports[`<Header /> > renders without ColorModeSwitch 1`] = `
             <button
               aria-label="Dark theme"
               aria-pressed="false"
-              class="d_inline-flex ai_center jc_center w_32px h_32px bdr_full bd_none bg-c_transparent c_text.muted cursor_pointer motionSafe:trs-prop_background-color,_color motionSafe:trs-dur_fast motionSafe:trs-tmf_standard hover:c_text.primary focusVisible:ring_2px_solid focusVisible:ring-c_border.focusRing focusVisible:ring-o_2px [&[aria-pressed='true']]:bg-c_surface.card [&[aria-pressed='true']]:c_primary [&[aria-pressed='true']]:bx-sh_xs [@media_(pointer:_coarse)]:w_44px [@media_(pointer:_coarse)]:h_44px"
+              class="d_inline-flex ai_center jc_center w_44px md:w_32px h_44px md:h_32px bdr_full bd_none bg-c_transparent c_text.muted cursor_pointer motionSafe:trs-prop_background-color,_color motionSafe:trs-dur_fast motionSafe:trs-tmf_standard hover:c_text.primary focusVisible:ring_2px_solid focusVisible:ring-c_border.focusRing focusVisible:ring-o_2px [&[aria-pressed='true']]:bg-c_surface.card [&[aria-pressed='true']]:c_primary [&[aria-pressed='true']]:bx-sh_xs [@media_(pointer:_coarse)]:w_44px [@media_(pointer:_coarse)]:h_44px"
               type="button"
             >
               <svg

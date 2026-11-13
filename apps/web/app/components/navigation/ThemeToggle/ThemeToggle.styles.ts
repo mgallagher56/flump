@@ -21,8 +21,9 @@ export const themeToggleOption = cva({
     display: "inline-flex",
     alignItems: "center",
     justifyContent: "center",
-    width: "32px",
-    height: "32px",
+    // 44px hit area on small screens (WCAG 2.5.5/2.5.8, audit R-17); compact 32px from md up.
+    width: { base: "44px", md: "32px" },
+    height: { base: "44px", md: "32px" },
     borderRadius: "full",
     border: "none",
     backgroundColor: "transparent",
