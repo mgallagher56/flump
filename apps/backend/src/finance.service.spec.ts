@@ -1,5 +1,5 @@
 import { BankSyncOrchestrator, encryptBankingToken } from "@flump/banking/server";
-import { BadRequestException, NotFoundException } from "@nestjs/common";
+import { BadRequestException, Logger, NotFoundException } from "@nestjs/common";
 import { describe, expect, it, vi } from "vitest";
 import { FinanceService } from "./finance.service";
 import { createInMemoryRepository } from "./testing/in-memory-repository";
@@ -216,7 +216,7 @@ describe("FinanceService", () => {
     it("connectBank token path hides provider error text and saves status error", async () => {
       const { service, provider, bankRepo } = createBankService([]);
       provider.fetchAccounts.mockRejectedValueOnce(new Error("Bearer abc123 rejected"));
-      const spy = vi.spyOn(console, "error").mockImplementation(() => {});
+      const spy = vi.spyOn(Logger.prototype, "error").mockImplementation(() => {});
 
       const error = await service
         .connectBank("userA", { institutionId: "monzo", token: "raw-token" })

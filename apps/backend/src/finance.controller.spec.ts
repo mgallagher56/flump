@@ -1,5 +1,5 @@
 import { BankSyncOrchestrator } from "@flump/banking/server";
-import { BadRequestException, NotFoundException } from "@nestjs/common";
+import { BadRequestException, Logger, NotFoundException } from "@nestjs/common";
 import { describe, expect, it, vi } from "vitest";
 import { FinanceController } from "./finance.controller";
 import { FinanceService } from "./finance.service";
@@ -232,7 +232,7 @@ describe("FinanceController & FinanceService", () => {
 
   it("logs a failed token sync without the token or the provider response body (E19 A5)", async () => {
     const { controller, mockProvider } = createMocks();
-    const logged = vi.spyOn(console, "error").mockImplementation(() => {});
+    const logged = vi.spyOn(Logger.prototype, "error").mockImplementation(() => {});
     mockProvider.fetchAccounts.mockRejectedValueOnce(
       new Error('Failed to fetch Starling accounts: {"balance":987654,"token":"tok-secret-xyz"}'),
     );

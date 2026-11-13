@@ -1,6 +1,12 @@
 import { randomUUID } from "node:crypto";
 import { BankSyncOrchestrator } from "@flump/banking/server";
-import { BadRequestException, Injectable, NotFoundException, Optional } from "@nestjs/common";
+import {
+  BadRequestException,
+  Injectable,
+  Logger,
+  NotFoundException,
+  Optional,
+} from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
@@ -21,6 +27,7 @@ import { BankProviderRegistry } from "./providers/provider.registry";
 
 @Injectable()
 export class FinanceService {
+  private readonly logger = new Logger(FinanceService.name);
   private readonly accountIntakeService: AccountIntakeService;
 
   constructor(
@@ -190,7 +197,7 @@ export class FinanceService {
       } catch (err) {
         savedConn.status = "error";
         await this.bankConnectionRepository.save(savedConn);
-        console.error("Token sync verification failed:", safeErrorSummary(err));
+        this.logger.error(`Token sync verification failed: ${safeErrorSummary(err)}`);
         throw new BadRequestException(
           "Token sync verification failed. Check the token and try again.",
         );
@@ -268,9 +275,8 @@ export class FinanceService {
         BankSyncOrchestrator.decryptToken(connection.accessToken as string);
         if (connection.refreshToken) BankSyncOrchestrator.decryptToken(connection.refreshToken);
       } catch (err) {
-        console.error(
-          `Stored tokens unusable for ${connection.institutionName}:`,
-          safeErrorSummary(err),
+        this.logger.error(
+          `Stored tokens unusable for ${connection.institutionName}: ${safeErrorSummary(err)}`,
         );
         await this.failNeedingReconnect(connection);
       }
@@ -326,7 +332,9 @@ export class FinanceService {
           message: `Sync'd ${accountsCount} accounts.`,
         };
       } catch (err) {
-        console.error(`API Sync failed for ${connection.institutionName}:`, safeErrorSummary(err));
+        this.logger.error(
+          `API Sync failed for ${connection.institutionName}: ${safeErrorSummary(err)}`,
+        );
         connection.status = "error";
         await this.bankConnectionRepository.save(connection);
         // Provider error text is logged, not returned: it can echo credentials or internals.

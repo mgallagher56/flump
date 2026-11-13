@@ -1,4 +1,4 @@
-import { ServiceUnavailableException } from "@nestjs/common";
+import { Logger, ServiceUnavailableException } from "@nestjs/common";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { InMemoryIdentityAdapter } from "./identity/identity.adapter";
 import { UserProfileService } from "./user-profile.service";
@@ -270,7 +270,7 @@ describe("UserProfileService (Deep Module)", () => {
     vi.spyOn(identityAdapter, "getUserEmail").mockRejectedValue(
       Object.assign(new Error("secret@pii.com not found"), { code: "entity_not_found" }),
     );
-    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const warn = vi.spyOn(Logger.prototype, "warn").mockImplementation(() => {});
     const err = await service.sendPasswordReset("user-123").catch((e) => e);
     expect(err).toBeInstanceOf(ServiceUnavailableException);
     expect(JSON.stringify(err.getResponse())).not.toContain("pii.com");
@@ -283,7 +283,7 @@ describe("UserProfileService (Deep Module)", () => {
   it("fails (503) when sending the reset throws", async () => {
     identityAdapter.emails.set("user-123", "me@example.com");
     vi.spyOn(identityAdapter, "sendPasswordReset").mockRejectedValue(new Error("boom me@x"));
-    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const warn = vi.spyOn(Logger.prototype, "warn").mockImplementation(() => {});
     await expect(service.sendPasswordReset("user-123")).rejects.toBeInstanceOf(
       ServiceUnavailableException,
     );
