@@ -14,6 +14,8 @@ export const RATE_LIMIT_POLICIES = {
   destructive: [{ limit: 10, windowMs: HOUR }],
   tokenMint: [{ limit: 5, windowMs: HOUR }],
   bank: [{ limit: 10, windowMs: HOUR }],
+  /** Bulk record writes (copy tax year); a large copy is several chunked requests. */
+  bulkWrite: [{ limit: 30, windowMs: HOUR }],
   write: [{ limit: 120, windowMs: MINUTE }],
   read: [{ limit: 600, windowMs: MINUTE }],
   /** Receipt downloads move up to 5 MB each, so they get a tighter read class. */

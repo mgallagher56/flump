@@ -24,7 +24,8 @@ import { sniffReceiptMime, validateReceipt } from "./security/receipt-validation
 
 /**
  * Maximum tax records accepted by one `POST tax-records/bulk` request. A copied tax year or CSV
- * import is a few dozen rows; 500 leaves ample headroom (and matches the api-contract cap) while
+ * import is a few dozen rows; 500 leaves ample headroom (and matches the literal `.max(500)` on
+ * `BulkCreateTaxRecordsRequest` in packages/api-contract, which is not exported) while
  * bounding the work done per request even though the route accepts an 8mb body.
  */
 export const MAX_BULK_TAX_RECORDS = 500;
@@ -161,7 +162,7 @@ export class TaxController {
   }
 
   @Post("bulk")
-  @RateLimit("bank")
+  @RateLimit("bulkWrite")
   async createBulkTaxRecords(
     @Req() req: any,
     @Body()
@@ -186,24 +187,31 @@ export class TaxController {
       );
     }
 
-    if (body.capPreviousRecordIds && Array.isArray(body.capPreviousRecordIds)) {
-      for (const item of body.capPreviousRecordIds) {
-        if (item.id && item.endDate) {
-          await this.taxRecordRepository.update({ id: item.id, userId }, { endDate: item.endDate });
-        }
+    // Validate everything before any write, so a bad record or cap item leaves no caps applied.
+    const caps = Array.isArray(body.capPreviousRecordIds) ? body.capPreviousRecordIds : [];
+    for (const item of caps) {
+      if (item === null || typeof item !== "object") {
+        throw new BadRequestException("Each capPreviousRecordIds item must be an object");
+      }
+      if (typeof item.id !== "string" || !item.id || typeof item.endDate !== "string") {
+        throw new BadRequestException("Each capPreviousRecordIds item needs an id and an endDate");
       }
     }
+    const picked = Array.isArray(body.records)
+      ? body.records.map((r) => ({ ...pickTaxRecordFields(r), userId }))
+      : [];
 
-    if (!body.records || !Array.isArray(body.records) || body.records.length === 0) {
+    // Not wrapped in a transaction: this controller only holds a repository, so caps are applied
+    // one by one (callers send creates before cap-only chunks).
+    for (const item of caps) {
+      await this.taxRecordRepository.update({ id: item.id, userId }, { endDate: item.endDate });
+    }
+
+    if (picked.length === 0) {
       return [];
     }
 
-    const created = this.taxRecordRepository.create(
-      body.records.map((r) => ({
-        ...pickTaxRecordFields(r),
-        userId,
-      })),
-    );
+    const created = this.taxRecordRepository.create(picked);
     const saved = await this.taxRecordRepository.save(created);
     return saved.map(toResponse);
   }
