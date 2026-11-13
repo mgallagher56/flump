@@ -1,7 +1,6 @@
-import { Button, Icon, Money } from "@repo/ui";
+import { Button, Icon, Money, ScenarioZone } from "@repo/ui";
 import { X } from "lucide-react";
 import type { FC } from "react";
-import { ScenarioZone } from "~/features/scenario/components/ScenarioZone";
 import { removeLabel, rowRoot, rowText } from "./PayRiseScenario.styles";
 
 export interface PayRiseScenarioProps {
@@ -15,7 +14,7 @@ export interface PayRiseScenarioProps {
  * forecaster only; the saved figures above never include it.
  */
 export const PayRiseScenario: FC<PayRiseScenarioProps> = ({ monthlyIncrease, onRemove }) => (
-  <ScenarioZone showNotice={false} title="Model a change to your savings">
+  <ScenarioZone title="Model a change to your savings">
     <div className={rowRoot()}>
       <p className={rowText()}>
         Pay rise from take-home: <Money size="md" value={Math.round(monthlyIncrease * 12)} /> a year

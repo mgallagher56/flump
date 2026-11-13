@@ -112,26 +112,25 @@ describe("<TakeHomeCalculator /> saved figures and the illustration", () => {
 
   test("changing an illustration input leaves the headline alone, sends no request, and resets", () => {
     const fetchSpy = vi.spyOn(globalThis, "fetch");
-    const { container, getByLabelText, getByRole, getByText } = customRender(
+    const { container, getByLabelText, getByRole, getByText, queryByRole } = customRender(
       <TakeHomeCalculator initialSalary={45000} onApplyIncrease={vi.fn()} />,
     );
     const saved = headline(container);
     expect(saved).toContain("Estimated monthly take-home");
     expect(getByText("Illustration, not saved")).toBeDefined();
     expect(getByText(/Starting from your figures: £45,000 gross salary/)).toBeDefined();
-    const reset = getByRole("button", { name: "Reset to saved figures" }) as HTMLButtonElement;
-    expect(reset.disabled).toBe(true);
+    // Nothing to reset until an input differs from the saved figures.
+    expect(queryByRole("button", { name: "Reset to saved figures" })).toBeNull();
 
     fireEvent.change(getByLabelText("Gross salary range slider"), { target: { value: "90000" } });
     fireEvent.change(getByLabelText("Pension contribution range slider"), {
       target: { value: "12" },
     });
     expect(headline(container)).toBe(saved);
-    expect(reset.disabled).toBe(false);
     expect(fetchSpy).not.toHaveBeenCalled();
 
-    fireEvent.click(reset);
-    expect(reset.disabled).toBe(true);
+    fireEvent.click(getByRole("button", { name: "Reset to saved figures" }));
+    expect(queryByRole("button", { name: "Reset to saved figures" })).toBeNull();
     expect((getByLabelText("Gross salary input") as HTMLInputElement).value).toBe("£45,000");
     fetchSpy.mockRestore();
   });

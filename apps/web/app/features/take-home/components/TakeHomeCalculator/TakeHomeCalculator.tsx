@@ -3,9 +3,9 @@ import {
   Card,
   KpiCard,
   KpiStrip,
-  LiveRegion,
   Money,
   Num,
+  ScenarioZone,
   SimulatorSplitLayout,
   TaxRatesStatusBanner,
 } from "@repo/ui";
@@ -14,7 +14,6 @@ import { Link, useInRouterContext } from "react-router";
 import TaxDisclaimerButton from "~/components/core/dialogs/TaxDisclaimerButton";
 import TaxEstimateNote from "~/components/tax/TaxEstimateNote";
 import { NotSet } from "~/features/feedback/components/NotSet";
-import { ScenarioZone } from "~/features/scenario/components/ScenarioZone";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import { useUserProfile } from "~/hooks/useUserProfile";
 import { calculateUKTax } from "../../calculateUKTax";
@@ -212,13 +211,6 @@ export const TakeHomeCalculator: FC<TakeHomeCalculatorProps> = ({
   return (
     <div className={calculatorRoot()}>
       <TaxRatesStatusBanner {...ratesContext} />
-      {salaryKnown && (
-        <LiveRegion
-          debounceMs={1000}
-          message={`Scenario: estimated monthly take-home ${formatCurrencyDecimal(taxResults.netPay / 12)}`}
-          visuallyHidden
-        />
-      )}
 
       {savedKnown ? (
         <>
@@ -272,10 +264,15 @@ export const TakeHomeCalculator: FC<TakeHomeCalculatorProps> = ({
       )}
 
       <ScenarioZone
+        announcement={
+          isModified && salaryKnown
+            ? `estimated monthly take-home ${formatCurrencyDecimal(taxResults.netPay / 12)}`
+            : undefined
+        }
         basis={
           savedKnown
-            ? `${formatCurrency(savedSalary)} gross salary, ${DEFAULT_PENSION_PERCENT}% pension`
-            : "no saved salary yet"
+            ? `Starting from your figures: ${formatCurrency(savedSalary)} gross salary, ${DEFAULT_PENSION_PERCENT}% pension`
+            : "Starting from your figures: no saved salary yet"
         }
         footer={
           inRouter ? (

@@ -7,12 +7,12 @@ import {
   KpiCard,
   Money,
   ProgressBar,
+  ScenarioZone,
   SimulatorSplitLayout,
   StatusBadge,
 } from "@repo/ui";
 import { ArrowRight, CheckCircle2 } from "lucide-react";
 import { type FC, type ReactNode, useEffect, useMemo, useState } from "react";
-import { ScenarioZone } from "~/features/scenario/components/ScenarioZone";
 import type { BudgetEntry } from "~/types/budget";
 import { CATEGORY_LABELS, toMonthly } from "~/types/budget";
 import {
@@ -746,8 +746,9 @@ export const RunwayCalculator: FC<RunwayCalculatorProps> = ({
       <ScenarioZone
         basis={
           <>
-            {baseline.label} of runway, from a pool of <Money size="sm" value={baseline.pool} /> and
-            a monthly burn of <Money size="sm" value={baseline.monthlyBurn} />
+            Starting from your figures: {baseline.label} of runway, from a pool of{" "}
+            <Money size="sm" value={baseline.pool} /> and a monthly burn of{" "}
+            <Money size="sm" value={baseline.monthlyBurn} />
           </>
         }
         isModified={isScenarioModified}
