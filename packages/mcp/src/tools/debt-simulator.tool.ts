@@ -8,7 +8,7 @@ import {
 } from "@flump/finance-engine";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import { type Assumption, assumption } from "../assumptions.js";
+import { type Assumption, assumption, derivedAssumption } from "../assumptions.js";
 import type { McpServerContext } from "../types.js";
 import { summariseComparison } from "./payoff-summary.js";
 
@@ -126,9 +126,8 @@ export function registerDebtSimulatorTool(
               );
             }
             assumptions.push(
-              assumption(
+              derivedAssumption(
                 `${label} minimumPaymentGbp`,
-                min,
                 "Minimum payment estimated as 2.5% of the balance, at least 25.",
               ),
             );

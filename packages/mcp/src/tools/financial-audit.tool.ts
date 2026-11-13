@@ -9,7 +9,7 @@ import {
 } from "@flump/finance-engine";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import { type Assumption, assumption } from "../assumptions.js";
+import { type Assumption, accountLabels, assumption, derivedAssumption } from "../assumptions.js";
 import type { McpServerContext } from "../types.js";
 
 export function registerFinancialAuditTools(
@@ -49,7 +49,9 @@ export function registerFinancialAuditTools(
     },
     async (args) => {
       const ctx = await getContext();
-      const rawData = await ctx.dataProvider.getUserFinancialData(ctx.token.userId);
+      const rawData = await ctx.dataProvider.getUserFinancialData(ctx.token.userId, {
+        anonymizeInstitutions: ctx.token.anonymizeInstitutions,
+      });
       const b = rawData.baseline;
       const budget = rawData.budgetEntries ?? [];
 
@@ -94,9 +96,8 @@ export function registerFinancialAuditTools(
         } else {
           netIncome = (b.annualGrossSalary / 12) * 0.72;
           assumptions.push(
-            assumption(
+            derivedAssumption(
               "monthlyIncomeGbp",
-              Math.round(netIncome),
               "No take-home pay on file, so it was estimated as 72% of gross salary divided by 12.",
             ),
           );
@@ -119,6 +120,7 @@ export function registerFinancialAuditTools(
         }
       }
 
+      const labels = accountLabels(rawData.accounts ?? [], ctx.token.anonymizeInstitutions);
       const debts = (rawData.accounts ?? [])
         .filter((a) => {
           const t = (a.type || "").toLowerCase();
@@ -126,7 +128,7 @@ export function registerFinancialAuditTools(
         })
         .map((a, i) => {
           const nom = Math.abs(Number(a.balance) || 0);
-          const name = a.name || `Debt #${i + 1}`;
+          const name = labels.get(a) ?? `Debt #${i + 1}`;
           if (!Number(a.interestRate)) {
             assumptions.push(
               assumption(
@@ -137,9 +139,8 @@ export function registerFinancialAuditTools(
             );
           }
           assumptions.push(
-            assumption(
+            derivedAssumption(
               `${name} minimumPaymentGbp`,
-              Math.max(25, Math.round(nom * 0.025)),
               "Minimum payment estimated as 2.5% of the balance, at least 25.",
             ),
           );

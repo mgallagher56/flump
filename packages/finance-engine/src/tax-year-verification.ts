@@ -10,7 +10,10 @@ export type TaxVerification = { status: "verified" | "unverified"; detail: strin
 export function getTaxYearVerification(year: string): TaxVerification {
   const status = yearVerification(year, UK_TAX_VECTORS);
   return status === "verified"
-    ? { status, detail: `Every ${year} tax test vector has been signed off by the owner.` }
+    ? {
+        status,
+        detail: `The signed-off test vectors for ${year} all pass owner sign-off. Feature-level verification is not reported yet.`,
+      }
     : {
         status,
         detail: `${year} tax rules are not yet fully signed off by the owner. Treat figures as an estimate and check them against HMRC.`,

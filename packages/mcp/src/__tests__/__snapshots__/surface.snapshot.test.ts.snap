@@ -607,6 +607,6 @@ exports[`per-tool output size (E17-N1) > calls every registered tool and pins th
   "project_wealth_scenario": 1500,
   "query_transactions_and_spending": 500,
   "simulate_debt_payoff": 1500,
-  "simulate_uk_tax_and_pension_sacrifice": 1000,
+  "simulate_uk_tax_and_pension_sacrifice": 1500,
 }
 `;

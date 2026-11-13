@@ -5,7 +5,7 @@ import {
 } from "@flump/finance-engine";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import { type Assumption, assumption } from "../assumptions.js";
+import { type Assumption, assumption, derivedAssumption } from "../assumptions.js";
 import type { McpServerContext } from "../types.js";
 
 const lifeEventEnum = z.enum([
@@ -173,9 +173,8 @@ export function registerLifeEventsTool(
         assumptions.push(assumption("age", 32, "No age on file, so 32 was assumed."));
       }
       assumptions.push(
-        assumption(
+        derivedAssumption(
           "initialIsaGbp",
-          Math.max(0, totalCash - 5000),
           "Starting ISA balance assumed to be cash savings above a 5,000 buffer.",
         ),
       );
