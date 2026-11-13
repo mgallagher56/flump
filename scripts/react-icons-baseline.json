@@ -20,7 +20,6 @@
   "apps/web/app/containers/accounts/accountDetailContainer/AccountDetailContainer.tsx": 1,
   "apps/web/app/containers/accounts/accountsContainer/AccountsContainer.tsx": 1,
   "apps/web/app/features/ai-connections/components/McpConnectionCard/McpConnectionCard.tsx": 1,
-  "apps/web/app/routes/app.onboarding.tsx": 1,
   "apps/web/app/routes/sandbox.tsx": 1,
   "apps/web/app/routes/tools.$slug.tsx": 1,
   "apps/web/app/routes/tools._index.tsx": 2,

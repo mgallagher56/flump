@@ -9,7 +9,6 @@
   "apps/web/app/components/dialogs/addEditAccountsDialog/AddEditAccountsDialog.tsx": 10,
   "apps/web/app/components/dialogs/connectBankWizard/ConnectBankWizard.tsx": 10,
   "apps/web/app/components/navigation/UserAvatar.tsx": 3,
-  "apps/web/app/routes/app.onboarding.tsx": 15,
   "packages/ui/src/calculators/DebtSnowballCalculator/DebtSnowballCalculator.tsx": 2,
   "packages/ui/src/calculators/MortgageVsIsaCalculator/MortgageVsIsaCalculator.styles.ts": 1,
   "packages/ui/src/calculators/MortgageVsIsaCalculator/MortgageVsIsaCalculator.tsx": 1,
