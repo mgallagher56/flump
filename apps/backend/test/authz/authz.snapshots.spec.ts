@@ -127,7 +127,8 @@ describe.skipIf(dbMode === "skip")("authz: snapshots controller (real Postgres)"
 
   it("rejects non-UUID account ids without a 500", async () => {
     const res = await put(PAST, h.tokens.a, { values: [{ accountId: "not-a-uuid", value: 1 }] });
-    expect(res.status).toBe(404);
+    // The contract rejects it at the boundary (enforce is the default, E21).
+    expect(res.status).toBe(400);
   });
 
   it("treats an upper-case account id as the same account (one row, lower-case key)", async () => {

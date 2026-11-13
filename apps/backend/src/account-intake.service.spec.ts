@@ -282,6 +282,38 @@ describe("AccountIntakeService (Deep Module)", () => {
       expect(saved.id).toBe("acc-new");
     });
 
+    it.each(["checking", "current", "", null, 42])(
+      "rejects account type %j on create and update, even without the contract",
+      async (type) => {
+        await expect(
+          service.createAccount("userA", { ...valid, type } as any),
+        ).rejects.toBeInstanceOf(BadRequestException);
+        mockAccountRepo.findOne.mockResolvedValueOnce({
+          id: "a1",
+          userId: "userA",
+          type: "Saving",
+        });
+        await expect(service.updateAccount("userA", "a1", { type } as any)).rejects.toBeInstanceOf(
+          BadRequestException,
+        );
+        expect(mockAccountRepo.save).not.toHaveBeenCalled();
+      },
+    );
+
+    it("createAccount returns every account key, null where unset", async () => {
+      const result = await service.createAccount("userA", valid as any);
+      expect(result).toMatchObject({
+        interestRate: null,
+        monthlyContribution: null,
+        termMonths: null,
+        fixedRateEndDate: null,
+        studentLoanPlan: null,
+        connectionId: null,
+        externalAccountId: null,
+        isCurrent: true,
+      });
+    });
+
     it("createAccount defaults the currency to GBP when the body omits it", async () => {
       await service.createAccount("userA", { name: "Cash", type: "Saving", balance: 5 } as any);
 

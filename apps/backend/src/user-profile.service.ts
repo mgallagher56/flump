@@ -99,7 +99,7 @@ export interface ProfileLifecycle {
   updateProfile(userId: string, body: any, email?: string): Promise<any>;
   resetFinancialData(userId: string, email?: string): Promise<any>;
   sendPasswordReset(userId: string): Promise<any>;
-  updateChecklist(userId: string, step: string, completed: boolean): Promise<any>;
+  updateChecklist(userId: string, step: string, completed: boolean, email?: string): Promise<any>;
 }
 
 @Injectable()
@@ -134,6 +134,11 @@ export class UserProfileService implements ProfileLifecycle {
   formatProfile(profile: UserProfile): any {
     return {
       ...profile,
+      // Nullable columns with no DB default are absent from a just-inserted entity; pin them to
+      // null so every response has the same keys (E21 contract).
+      displayName: profile.displayName ?? null,
+      avatarUrl: profile.avatarUrl ?? null,
+      employmentType: profile.employmentType ?? null,
       firstName: profile.firstName ?? null,
       lastName: profile.lastName ?? null,
       taxRegion: profile.taxRegion ?? null,
@@ -552,7 +557,12 @@ export class UserProfileService implements ProfileLifecycle {
     };
   }
 
-  async updateChecklist(userId: string, step: string, completed: boolean): Promise<any> {
+  async updateChecklist(
+    userId: string,
+    step: string,
+    completed: boolean,
+    email?: string,
+  ): Promise<any> {
     const profile = await this.findOrCreateProfile(userId, {
       userId,
       displayName: null,
@@ -594,7 +604,8 @@ export class UserProfileService implements ProfileLifecycle {
 
     profile.setupChecklistCompletedSteps = steps;
     const saved = await this.userProfileRepository.save(profile);
-    return this.formatProfile(saved);
+    // Same shape as GET /user-profile, email included (E21).
+    return { ...this.formatProfile(saved), email: email || null };
   }
 
   /**

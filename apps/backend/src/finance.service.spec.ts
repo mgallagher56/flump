@@ -277,6 +277,21 @@ describe("FinanceService", () => {
       });
     });
 
+    it("stores a client timestamp as a Date and rejects an unparseable one", async () => {
+      const { service, transactionRepo, accountRepo } = createService();
+      accountRepo.findOne.mockResolvedValue({ id: "acc-1", userId: "userA" });
+      const body = { accountId: "acc-1", amount: 1, description: "x", category: "y" };
+
+      await service.createTransaction("userA", { ...body, timestamp: "2026-01-01T10:00:00Z" });
+      expect(transactionRepo.create.mock.calls[0][0].timestamp).toEqual(
+        new Date("2026-01-01T10:00:00Z"),
+      );
+
+      await expect(
+        service.createTransaction("userA", { ...body, timestamp: "not a date" }),
+      ).rejects.toBeInstanceOf(BadRequestException);
+    });
+
     it("rejects a transaction against an account the caller does not own and saves nothing", async () => {
       const { service, transactionRepo, accountRepo } = createService();
       accountRepo.findOne.mockResolvedValue(null);

@@ -1,11 +1,12 @@
 import "reflect-metadata";
 import { Logger } from "@nestjs/common";
 import { of } from "rxjs";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   ContractShadowInterceptor,
   resolveContractMode,
   resolveEnforcedGroups,
+  shouldCheckResponse,
   shouldLogOccurrence,
 } from "./contract-shadow.interceptor";
 
@@ -27,6 +28,10 @@ const warnings = (spy: { mock: { calls: unknown[][] } }): Array<Record<string, a
   spy.mock.calls.map(([message]) => JSON.parse(message as string));
 
 describe("ContractShadowInterceptor", () => {
+  // These cases pin shadow behaviour; enforce is the default and has its own block below.
+  beforeEach(() => {
+    process.env.CONTRACT_MODE = "shadow";
+  });
   afterEach(() => {
     vi.restoreAllMocks();
     delete process.env.CONTRACT_MODE;
@@ -107,15 +112,88 @@ describe("ContractShadowInterceptor", () => {
     expect(next.handle).toHaveBeenCalledOnce();
   });
 
-  it("resolves the mode from env", () => {
-    expect(resolveContractMode({})).toBe("shadow");
+  it("resolves the mode from env: enforce unless shadow or off is asked for", () => {
+    expect(resolveContractMode({})).toBe("enforce");
     expect(resolveContractMode({ CONTRACT_MODE: "OFF" })).toBe("off");
-    expect(resolveContractMode({ CONTRACT_MODE: "enforce" })).toBe("enforce");
+    expect(resolveContractMode({ CONTRACT_MODE: "shadow" })).toBe("shadow");
+    expect(resolveContractMode({ CONTRACT_MODE: "shdow" })).toBe("enforce");
+  });
+});
+
+describe("response shape check", () => {
+  const listAccounts = { method: "GET", route: { path: "/accounts" }, params: {}, query: {} };
+  const respond = (body: unknown, req: Record<string, unknown> = listAccounts) => {
+    const next = { handle: vi.fn(() => of(body)) };
+    const context = { getType: () => "http", switchToHttp: () => ({ getRequest: () => req }) };
+    let received: unknown;
+    new ContractShadowInterceptor().intercept(context as never, next).subscribe((value) => {
+      received = value;
+    });
+    return received;
+  };
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    delete process.env.CONTRACT_MODE;
+  });
+
+  it("logs a response violation, paths and codes only, and still returns the body untouched", () => {
+    const warn = vi.spyOn(Logger.prototype, "warn").mockImplementation(() => undefined);
+    const body = [{ id: "secret-id", name: "secret-name" }];
+    expect(respond(body)).toBe(body);
+    const [violation] = warnings(warn);
+    expect(violation).toMatchObject({
+      event: "contract_response_violation",
+      routeId: "accounts.list",
+      part: "response",
+      count: 1,
+    });
+    expect(JSON.stringify(violation)).not.toContain("secret-name");
+  });
+
+  it("stays quiet for a valid body", () => {
+    const warn = vi.spyOn(Logger.prototype, "warn").mockImplementation(() => undefined);
+    respond([]);
+    expect(warn).not.toHaveBeenCalled();
+  });
+
+  it("does nothing when CONTRACT_MODE=off, and never throws on an unserialisable body", () => {
+    const warn = vi.spyOn(Logger.prototype, "warn").mockImplementation(() => undefined);
+    const cyclic: Record<string, unknown> = {};
+    cyclic.self = cyclic;
+    expect(respond(cyclic)).toBe(cyclic);
+    expect(String(warn.mock.calls[0]?.[0])).toContain("contract response check failed");
+
+    warn.mockClear();
+    process.env.CONTRACT_MODE = "off";
+    respond([{ wrong: true }]);
+    expect(warn).not.toHaveBeenCalled();
+  });
+});
+
+describe("response check sampling", () => {
+  it("checks every response outside production", () => {
+    for (const n of [1, 21, 49, 1000])
+      expect(shouldCheckResponse(n, { NODE_ENV: "test" })).toBe(true);
+  });
+
+  it("checks the first 20 per route in production, then 1 in 50", () => {
+    const prod = { NODE_ENV: "production" };
+    const checked = Array.from({ length: 200 }, (_, i) => i + 1).filter((n) =>
+      shouldCheckResponse(n, prod),
+    );
+    expect(checked).toEqual([...Array.from({ length: 20 }, (_, i) => i + 1), 50, 100, 150, 200]);
   });
 });
 
 describe("log volume limits", () => {
-  afterEach(() => vi.restoreAllMocks());
+  beforeEach(() => {
+    process.env.CONTRACT_MODE = "shadow";
+  });
+  afterEach(() => {
+    vi.restoreAllMocks();
+    delete process.env.CONTRACT_MODE;
+  });
 
   it("logs only the 1st, 2nd and 10th occurrence, then every 100th", () => {
     const logged = Array.from({ length: 300 }, (_, i) => i + 1).filter(shouldLogOccurrence);
@@ -191,7 +269,7 @@ describe("log volume limits", () => {
 
     it("resolves modes and groups, ignoring unknown group names", () => {
       expect(resolveContractMode({ CONTRACT_MODE: " Enforce " })).toBe("enforce");
-      expect(resolveContractMode({})).toBe("shadow");
+      expect(resolveContractMode({})).toBe("enforce");
       expect(resolveEnforcedGroups({})).toEqual(
         new Set([
           "accounts",

@@ -4,9 +4,9 @@ import { API_VERSION } from "./version.js";
 
 type JsonObject = Record<string, unknown>;
 
-const toJsonSchema = (schema: z.ZodType): JsonObject => {
+const toJsonSchema = (schema: z.ZodType, io: "input" | "output" = "input"): JsonObject => {
   const { $schema: _ignored, ...rest } = z.toJSONSchema(schema, {
-    io: "input",
+    io,
     unrepresentable: "any",
     target: "draft-2020-12",
   }) as JsonObject;
@@ -45,7 +45,12 @@ const operationFor = (route: RouteDefinition): JsonObject => {
       ? { deprecated: true, description: `Deprecated alias of ${route.aliasOf}.` }
       : {}),
     responses: {
-      "200": { description: "Success. Response schemas are not yet part of the contract." },
+      "200": route.response
+        ? {
+            description: "Success.",
+            content: { "application/json": { schema: toJsonSchema(route.response, "output") } },
+          }
+        : { description: "Success. Not a JSON body (see NON_JSON_RESPONSE_ROUTES)." },
       "400": { description: "Request failed validation." },
       ...(route.auth === "public"
         ? {}

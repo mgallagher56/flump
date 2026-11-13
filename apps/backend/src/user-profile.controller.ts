@@ -86,6 +86,11 @@ export class UserProfileController {
     @Req() req: any,
     @Body() body: { step: string; completed: boolean },
   ): Promise<any> {
-    return this.userProfileService.updateChecklist(req.user.id, body.step, body.completed);
+    return this.userProfileService.updateChecklist(
+      req.user.id,
+      body.step,
+      body.completed,
+      req.user?.email,
+    );
   }
 }

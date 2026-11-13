@@ -13,17 +13,18 @@ import {
   Logger,
   type NestInterceptor,
 } from "@nestjs/common";
-import type { Observable } from "rxjs";
+import { type Observable, tap } from "rxjs";
 
 export type ContractMode = "off" | "shadow" | "enforce";
 
 /**
- * `CONTRACT_MODE=off` disables the check, `enforce` rejects invalid requests with 400 (see
- * `CONTRACT_ENFORCE_GROUPS`). Anything else, including unset, is shadow mode: log only.
+ * Enforce by default (E21 done): invalid requests get a 400 (see `CONTRACT_ENFORCE_GROUPS`).
+ * `CONTRACT_MODE=shadow` logs only and `off` disables the check; both are escape hatches for an
+ * incident, not a rollout state. An unrecognised value enforces, so a typo never turns it off.
  */
 export const resolveContractMode = (env: NodeJS.ProcessEnv = process.env): ContractMode => {
   const mode = env.CONTRACT_MODE?.trim().toLowerCase();
-  return mode === "off" ? "off" : mode === "enforce" ? "enforce" : "shadow";
+  return mode === "off" ? "off" : mode === "shadow" ? "shadow" : "enforce";
 };
 
 /**
@@ -57,16 +58,26 @@ export const resolveEnforcedGroups = (
 const MAX_ISSUES_LOGGED = 20;
 const MAX_PATH_CHARS = 80;
 
+/**
+ * Whether to check the `n`th response for a route. Outside production every response is checked
+ * (the contract and authz suites rely on that). In production the first 20 per route per process
+ * and then 1 in 50 are checked, so large bodies (transactions, the context pack) do not pay a
+ * second serialisation and a full parse on every request.
+ */
+export const shouldCheckResponse = (n: number, env: NodeJS.ProcessEnv = process.env): boolean =>
+  env.NODE_ENV !== "production" || n <= 20 || n % 50 === 0;
+
 /** Log the 1st, 2nd and 10th occurrence per route, then every 100th, so a bad client cannot flood the log. */
 export const shouldLogOccurrence = (count: number): boolean =>
   count === 1 || count === 2 || count === 10 || (count >= 100 && count % 100 === 0);
 
 export interface ContractViolation {
-  event: "contract_violation";
+  /** `contract_response_violation` when the backend's own 2xx body breaks the contract. */
+  event: "contract_violation" | "contract_response_violation";
   routeId: string;
   method: string;
   pathTemplate: string;
-  part: "params" | "query" | "body";
+  part: "params" | "query" | "body" | "response";
   issues: ValidationIssue[];
   /** Violations seen for this route since the process started. */
   count: number;
@@ -90,6 +101,7 @@ interface RequestLike {
 export class ContractShadowInterceptor implements NestInterceptor {
   private readonly logger = new Logger("ContractShadow");
   private readonly counts = new Map<string, number>();
+  private readonly responsesSeen = new Map<string, number>();
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
     const mode = resolveContractMode();
@@ -97,8 +109,10 @@ export class ContractShadowInterceptor implements NestInterceptor {
     let blocking: ValidationIssue[] = [];
     let enforced = false;
     let rejectedRoute: RouteDefinition | undefined;
+    let matched: RouteDefinition | undefined;
     try {
       const result = this.check(context.switchToHttp().getRequest<RequestLike>());
+      matched = result?.route;
       if (mode === "enforce" && result) {
         const groups = resolveEnforcedGroups();
         enforced = groups === "all" || groups.has(result.group);
@@ -134,7 +148,33 @@ export class ContractShadowInterceptor implements NestInterceptor {
         issues: blocking.slice(0, MAX_ISSUES_LOGGED),
       });
     }
-    return next.handle();
+    const responseSchema = matched?.response;
+    if (!matched || !responseSchema) return next.handle();
+    const route = matched;
+    return next
+      .handle()
+      .pipe(tap({ next: (body) => this.checkResponse(route, responseSchema, body) }));
+  }
+
+  /**
+   * Response-shape check (E21): logs `contract_response_violation`, paths and codes only. Never
+   * changes or fails the response, whatever the mode: a backend bug must not become a 500 for the
+   * user. The real-Postgres contract and authz suites fail on any of these lines instead.
+   */
+  private checkResponse(route: RouteDefinition, schema: RouteDefinition["params"], body: unknown) {
+    try {
+      if (!schema || body === undefined) return;
+      const seen = (this.responsesSeen.get(route.id) ?? 0) + 1;
+      this.responsesSeen.set(route.id, seen);
+      if (!shouldCheckResponse(seen)) return;
+      // What the client receives: dates become ISO strings, class instances plain objects.
+      const wire: unknown = JSON.parse(JSON.stringify(body));
+      this.validate(route, "response", schema, wire);
+    } catch (error) {
+      this.logger.warn(
+        `contract response check failed: ${error instanceof Error ? error.name : "error"}`,
+      );
+    }
   }
 
   private check(
@@ -167,11 +207,12 @@ export class ContractShadowInterceptor implements NestInterceptor {
         path: `${part}${issue.path === "(root)" ? "" : `.${issue.path}`}`.slice(0, MAX_PATH_CHARS),
         code: issue.code,
       }));
-    const count = (this.counts.get(route.id) ?? 0) + 1;
-    this.counts.set(route.id, count);
+    const key = part === "response" ? `${route.id}:response` : route.id;
+    const count = (this.counts.get(key) ?? 0) + 1;
+    this.counts.set(key, count);
     if (!shouldLogOccurrence(count)) return blocking;
     const violation: ContractViolation = {
-      event: "contract_violation",
+      event: part === "response" ? "contract_response_violation" : "contract_violation",
       routeId: route.id,
       method: route.method,
       pathTemplate: `/${route.path}`,

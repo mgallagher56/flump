@@ -116,11 +116,24 @@ export class FinanceService {
       amount: body.amount,
       description: body.description,
       category: body.category,
-      timestamp: body.timestamp as Date | undefined,
+      timestamp: this.parseTimestamp(body.timestamp),
     };
     return Object.fromEntries(
       Object.entries(fields).filter(([, value]) => value !== undefined),
     ) as Partial<Transaction>;
+  }
+
+  /**
+   * A client timestamp is stored as a Date, so the response carries the normalised ISO string
+   * rather than echoing whatever string was sent. Unparseable input is a 400, not a DB error.
+   */
+  private parseTimestamp(value: string | Date | undefined): Date | undefined {
+    if (value === undefined || value === null) return undefined;
+    const date = value instanceof Date ? value : new Date(value);
+    if (Number.isNaN(date.getTime())) {
+      throw new BadRequestException("timestamp must be a valid ISO date-time");
+    }
+    return date;
   }
 
   async createTransaction(userId: string, body: CreateTransactionDto) {

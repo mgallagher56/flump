@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { allRoutes, CONTRACT_GROUPS, findRoute } from "./manifest.js";
+import { allRoutes, CONTRACT_GROUPS, findRoute, NON_JSON_RESPONSE_ROUTES } from "./manifest.js";
 import { checkAgainst } from "./validate.js";
 
 describe("route manifest", () => {
@@ -30,6 +30,17 @@ describe("route manifest", () => {
       "profile.resetFinancialData",
       "profile.sendPasswordReset",
     ]);
+  });
+
+  it("every route declares a response schema, except the non-JSON ones (E21)", () => {
+    const missing = allRoutes
+      .filter((r) => !r.response)
+      .map((r) => r.id)
+      .sort();
+    expect(missing).toEqual([...NON_JSON_RESPONSE_ROUTES].sort());
+    for (const id of NON_JSON_RESPONSE_ROUTES) {
+      expect(allRoutes.find((r) => r.id === id)?.response).toBeUndefined();
+    }
   });
 
   it("findRoute matches on method and path template", () => {
@@ -71,6 +82,30 @@ describe("request schemas", () => {
     expect(checkAgainst(batch, { balances: Array(101).fill({ id, balance: 1 }) }).ok).toBe(false);
     expect(checkAgainst(batch, { balances: [{ id: "nope", balance: 1 }] }).ok).toBe(false);
     expect(checkAgainst(batch, { balances: [{ id, balance: "1" }] }).ok).toBe(false);
+  });
+
+  it("validates mortgage term fields and the transactions accountId filter", () => {
+    const create = { name: "Home", type: "Mortgage", balance: -200000 };
+    expect(
+      checkAgainst(body("accounts.create"), {
+        ...create,
+        termMonths: 300,
+        fixedRateEndDate: "2028-03-31",
+      }).ok,
+    ).toBe(true);
+    expect(checkAgainst(body("accounts.create"), { ...create, termMonths: 0 }).ok).toBe(false);
+    expect(checkAgainst(body("accounts.update"), { termMonths: 2.5 }).ok).toBe(false);
+    expect(checkAgainst(body("accounts.update"), { fixedRateEndDate: "2028-02-30" }).ok).toBe(
+      false,
+    );
+    expect(checkAgainst(body("accounts.update"), { termMonths: null }).ok).toBe(true);
+
+    const query = allRoutes.find((r) => r.id === "transactions.list")?.query as never;
+    expect(checkAgainst(query, {}).ok).toBe(true);
+    expect(checkAgainst(query, { accountId: "6f1c6a4e-5b0e-4a63-9d0a-3f2f2a9d1c11" }).ok).toBe(
+      true,
+    );
+    expect(checkAgainst(query, { accountId: "1 OR 1=1" }).ok).toBe(false);
   });
 
   it("never puts values in issues", () => {

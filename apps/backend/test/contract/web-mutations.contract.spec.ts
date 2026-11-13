@@ -8,6 +8,7 @@ import { AppModule } from "../../src/app.module";
 import { DEV_BYPASS_TOKEN } from "../../src/auth/dev-bypass.verifier";
 import { assertSafeTestDatabase } from "../../src/testing/assertSafeTestDatabase";
 import { resolveDbTestMode } from "../../src/testing/dbTestMode";
+import { parseResponseViolation } from "../authz/support";
 import {
   ACCOUNT_CREATE_PAYLOADS,
   ACCOUNT_UPDATE_PAYLOADS,
@@ -69,6 +70,8 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
     let dataSource: DataSource;
     // Shadow-mode violations (E21) seen while the web payloads are replayed.
     const shadowViolations = new Set<string>();
+    // E21 response check: every 2xx body in the replay must match the contract. Never grows.
+    const responseViolations = new Set<string>();
     const savedEnv = { ...process.env };
 
     beforeAll(async () => {
@@ -102,6 +105,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
 
       const warn = Logger.prototype.warn;
       vi.spyOn(Logger.prototype, "warn").mockImplementation(function (this: Logger, ...args) {
+        for (const line of parseResponseViolation(args[0])) responseViolations.add(line);
         try {
           const entry = JSON.parse(String(args[0]));
           if (entry.event === "contract_violation") {
@@ -123,6 +127,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
     }, 60_000);
 
     afterAll(async () => {
+      expect([...responseViolations].sort()).toEqual([]);
       // E21 shadow validator: the only mismatches between web payloads and the contract schemas
       // are the fields the backend drops. Shrink-only: remove entries as web or backend are fixed.
       expect([...shadowViolations].sort()).toEqual(

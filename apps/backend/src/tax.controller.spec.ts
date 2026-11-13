@@ -1,10 +1,16 @@
 import {
+  BulkCreateTaxRecordsRequest,
+  MAX_BULK_TAX_RECORDS as CONTRACT_MAX_BULK_TAX_RECORDS,
+  type TaxRecordCap,
+  TaxRecordDto,
+} from "@flump/api-contract";
+import {
   BadRequestException,
   NotFoundException,
   ParseUUIDPipe,
   StreamableFile,
 } from "@nestjs/common";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, expectTypeOf, it, vi } from "vitest";
 import { MAX_BULK_TAX_RECORDS, TaxController } from "./tax.controller";
 import { createInMemoryRepository } from "./testing/in-memory-repository";
 
@@ -93,7 +99,14 @@ describe("TaxController", () => {
     mockRepo.findOne.mockResolvedValueOnce(null);
     await expect(controller.getTaxRecord(req, "missing")).rejects.toThrow(NotFoundException);
     mockRepo.findOne.mockResolvedValueOnce({ id: "r1" });
-    expect(await controller.getTaxRecord(req, "r1")).toEqual({ id: "r1", hasReceipt: false });
+    expect(await controller.getTaxRecord(req, "r1")).toEqual({
+      id: "r1",
+      endDate: null,
+      notes: null,
+      receiptFilename: null,
+      receiptMimeType: null,
+      hasReceipt: false,
+    });
 
     // Create
     const created = await controller.createTaxRecord(req, { name: "Div", amount: 100 });
@@ -382,6 +395,30 @@ describe("TaxController receipt validation (E20-N14)", () => {
     },
   );
 
+  it("uses the contract's bulk cap, so the handler rejects what the contract rejects", () => {
+    expect(MAX_BULK_TAX_RECORDS).toBe(CONTRACT_MAX_BULK_TAX_RECORDS);
+    const records = Array.from({ length: MAX_BULK_TAX_RECORDS + 1 }, () => ({ ...base }));
+    expect(BulkCreateTaxRecordsRequest.safeParse({ records }).success).toBe(false);
+  });
+
+  it("types capPreviousRecordIds as the contract's { id, endDate }[]", () => {
+    type BulkBody = Parameters<TaxController["createBulkTaxRecords"]>[1];
+    expectTypeOf<NonNullable<BulkBody["capPreviousRecordIds"]>>().toEqualTypeOf<TaxRecordCap[]>();
+    expectTypeOf<TaxRecordCap>().toEqualTypeOf<{ id: string; endDate: string }>();
+  });
+
+  it("rejects a capPreviousRecordIds endDate that is not a calendar date, writing nothing", async () => {
+    const { controller, repo } = makeController();
+    await expect(
+      controller.createBulkTaxRecords(req, {
+        records: [{ ...base }],
+        capPreviousRecordIds: [{ id: "old", endDate: "2025-02-30" }],
+      }),
+    ).rejects.toThrow(BadRequestException);
+    expect(repo.update).not.toHaveBeenCalled();
+    expect(repo.save).not.toHaveBeenCalled();
+  });
+
   it("accepts a bulk batch exactly at the record cap", async () => {
     const { controller, repo } = makeController();
     const records = Array.from({ length: MAX_BULK_TAX_RECORDS }, () => ({ ...base }));
@@ -553,5 +590,49 @@ describe("TaxController receipt validation (E20-N14)", () => {
       await expect(controller.getReceipt(userA, "r-N")).rejects.toThrow(NotFoundException);
       await expect(controller.getReceipt(userA, "r-L")).rejects.toThrow(NotFoundException);
     });
+  });
+});
+
+describe("TaxController response shape (E21)", () => {
+  const req = { user: { id: "00000000-0000-4000-8000-000000000001" } };
+  const base = {
+    name: "Salary",
+    amount: 1234.5,
+    date: "2025-04-06",
+    type: "income" as const,
+    source: "paye" as const,
+    category: "salary",
+  };
+  /** Mimics an insert: generated columns filled, unset nullable columns left undefined. */
+  const saveLikeInsert = (r: any) => ({
+    ...r,
+    id: "00000000-0000-4000-8000-0000000000aa",
+    frequency: r.frequency ?? "one-off",
+    createdAt: new Date("2025-04-06T10:00:00Z"),
+    updatedAt: new Date("2025-04-06T10:00:00Z"),
+  });
+
+  it("returns every nullable key as null on create and bulk, matching TaxRecordDto", async () => {
+    const repo = {
+      create: vi.fn((r) => r),
+      save: vi.fn((r) =>
+        Promise.resolve(Array.isArray(r) ? r.map(saveLikeInsert) : saveLikeInsert(r)),
+      ),
+      update: vi.fn(),
+    };
+    const controller = new TaxController(repo as any, {} as any);
+    const created = await controller.createTaxRecord(req, { ...base });
+    const [bulk] = await controller.createBulkTaxRecords(req, { records: [{ ...base }] });
+    for (const record of [created, bulk]) {
+      expect(record).toMatchObject({
+        endDate: null,
+        notes: null,
+        receiptFilename: null,
+        receiptMimeType: null,
+        hasReceipt: false,
+      });
+      expect(record).not.toHaveProperty("receiptData");
+      expect(TaxRecordDto.safeParse(JSON.parse(JSON.stringify(record))).success).toBe(true);
+    }
   });
 });

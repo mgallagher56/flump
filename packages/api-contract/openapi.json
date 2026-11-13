@@ -17,7 +17,183 @@
         "tags": ["accounts"],
         "responses": {
           "200": {
-            "description": "Success. Response schemas are not yet part of the contract."
+            "description": "Success.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                      },
+                      "userId": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "name": {
+                        "type": "string"
+                      },
+                      "type": {
+                        "type": "string",
+                        "enum": [
+                          "Current",
+                          "Saving",
+                          "Mortgage",
+                          "Loan",
+                          "Credit Card",
+                          "Owed",
+                          "Investment",
+                          "Pension",
+                          "Property",
+                          "Student Loan",
+                          "Overdraft"
+                        ]
+                      },
+                      "balance": {
+                        "type": "number"
+                      },
+                      "interestRate": {
+                        "type": ["number", "null"]
+                      },
+                      "monthlyContribution": {
+                        "type": ["number", "null"]
+                      },
+                      "termMonths": {
+                        "anyOf": [
+                          {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "fixedRateEndDate": {
+                        "type": ["string", "null"]
+                      },
+                      "isCurrent": {
+                        "type": "boolean"
+                      },
+                      "currency": {
+                        "type": "string",
+                        "pattern": "^[A-Z]{3}$"
+                      },
+                      "studentLoanPlan": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "enum": ["PLAN_1", "PLAN_2", "PLAN_4", "PLAN_5", "POSTGRAD"]
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "connectionId": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "format": "uuid",
+                            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "externalAccountId": {
+                        "type": ["string", "null"]
+                      },
+                      "createdAt": {
+                        "type": "string"
+                      },
+                      "details": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991
+                            },
+                            "accountId": {
+                              "type": "string",
+                              "format": "uuid",
+                              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                            },
+                            "userId": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "year": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991
+                            },
+                            "month": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "maximum": 12
+                            },
+                            "value": {
+                              "type": "number"
+                            },
+                            "asOfDate": {
+                              "type": "string"
+                            },
+                            "source": {
+                              "type": "string",
+                              "enum": ["onboarding", "manual", "connected", "backfill"]
+                            },
+                            "updatedAt": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "accountId",
+                            "userId",
+                            "year",
+                            "month",
+                            "value",
+                            "asOfDate",
+                            "source",
+                            "updatedAt"
+                          ],
+                          "additionalProperties": false
+                        }
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "userId",
+                      "name",
+                      "type",
+                      "balance",
+                      "interestRate",
+                      "monthlyContribution",
+                      "termMonths",
+                      "fixedRateEndDate",
+                      "isCurrent",
+                      "currency",
+                      "studentLoanPlan",
+                      "connectionId",
+                      "externalAccountId",
+                      "createdAt",
+                      "details"
+                    ],
+                    "additionalProperties": false
+                  }
+                }
+              }
+            }
           },
           "400": {
             "description": "Request failed validation."
@@ -37,7 +213,122 @@
         "tags": ["accounts"],
         "responses": {
           "200": {
-            "description": "Success. Response schemas are not yet part of the contract."
+            "description": "Success.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                    },
+                    "userId": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "type": "string",
+                      "enum": [
+                        "Current",
+                        "Saving",
+                        "Mortgage",
+                        "Loan",
+                        "Credit Card",
+                        "Owed",
+                        "Investment",
+                        "Pension",
+                        "Property",
+                        "Student Loan",
+                        "Overdraft"
+                      ]
+                    },
+                    "balance": {
+                      "type": "number"
+                    },
+                    "interestRate": {
+                      "type": ["number", "null"]
+                    },
+                    "monthlyContribution": {
+                      "type": ["number", "null"]
+                    },
+                    "termMonths": {
+                      "anyOf": [
+                        {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "fixedRateEndDate": {
+                      "type": ["string", "null"]
+                    },
+                    "isCurrent": {
+                      "type": "boolean"
+                    },
+                    "currency": {
+                      "type": "string",
+                      "pattern": "^[A-Z]{3}$"
+                    },
+                    "studentLoanPlan": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "enum": ["PLAN_1", "PLAN_2", "PLAN_4", "PLAN_5", "POSTGRAD"]
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "connectionId": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "externalAccountId": {
+                      "type": ["string", "null"]
+                    },
+                    "createdAt": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "userId",
+                    "name",
+                    "type",
+                    "balance",
+                    "interestRate",
+                    "monthlyContribution",
+                    "termMonths",
+                    "fixedRateEndDate",
+                    "isCurrent",
+                    "currency",
+                    "studentLoanPlan",
+                    "connectionId",
+                    "externalAccountId",
+                    "createdAt"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
           },
           "400": {
             "description": "Request failed validation."
@@ -116,6 +407,21 @@
                   },
                   "isCurrent": {
                     "type": "boolean"
+                  },
+                  "termMonths": {
+                    "anyOf": [
+                      {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 600
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "fixedRateEndDate": {
+                    "type": ["string", "null"]
                   },
                   "connectionId": {
                     "anyOf": [
@@ -159,7 +465,68 @@
         "tags": ["accounts"],
         "responses": {
           "200": {
-            "description": "Success. Response schemas are not yet part of the contract."
+            "description": "Success.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "integer",
+                        "minimum": -9007199254740991,
+                        "maximum": 9007199254740991
+                      },
+                      "accountId": {
+                        "type": "string",
+                        "format": "uuid",
+                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                      },
+                      "userId": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "year": {
+                        "type": "integer",
+                        "minimum": -9007199254740991,
+                        "maximum": 9007199254740991
+                      },
+                      "month": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 12
+                      },
+                      "value": {
+                        "type": "number"
+                      },
+                      "asOfDate": {
+                        "type": "string"
+                      },
+                      "source": {
+                        "type": "string",
+                        "enum": ["onboarding", "manual", "connected", "backfill"]
+                      },
+                      "updatedAt": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "accountId",
+                      "userId",
+                      "year",
+                      "month",
+                      "value",
+                      "asOfDate",
+                      "source",
+                      "updatedAt"
+                    ],
+                    "additionalProperties": false
+                  }
+                }
+              }
+            }
           },
           "400": {
             "description": "Request failed validation."
@@ -181,7 +548,180 @@
         "tags": ["accounts"],
         "responses": {
           "200": {
-            "description": "Success. Response schemas are not yet part of the contract."
+            "description": "Success.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                    },
+                    "userId": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "type": "string",
+                      "enum": [
+                        "Current",
+                        "Saving",
+                        "Mortgage",
+                        "Loan",
+                        "Credit Card",
+                        "Owed",
+                        "Investment",
+                        "Pension",
+                        "Property",
+                        "Student Loan",
+                        "Overdraft"
+                      ]
+                    },
+                    "balance": {
+                      "type": "number"
+                    },
+                    "interestRate": {
+                      "type": ["number", "null"]
+                    },
+                    "monthlyContribution": {
+                      "type": ["number", "null"]
+                    },
+                    "termMonths": {
+                      "anyOf": [
+                        {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "fixedRateEndDate": {
+                      "type": ["string", "null"]
+                    },
+                    "isCurrent": {
+                      "type": "boolean"
+                    },
+                    "currency": {
+                      "type": "string",
+                      "pattern": "^[A-Z]{3}$"
+                    },
+                    "studentLoanPlan": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "enum": ["PLAN_1", "PLAN_2", "PLAN_4", "PLAN_5", "POSTGRAD"]
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "connectionId": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "externalAccountId": {
+                      "type": ["string", "null"]
+                    },
+                    "createdAt": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991
+                          },
+                          "accountId": {
+                            "type": "string",
+                            "format": "uuid",
+                            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                          },
+                          "userId": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "year": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991
+                          },
+                          "month": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 12
+                          },
+                          "value": {
+                            "type": "number"
+                          },
+                          "asOfDate": {
+                            "type": "string"
+                          },
+                          "source": {
+                            "type": "string",
+                            "enum": ["onboarding", "manual", "connected", "backfill"]
+                          },
+                          "updatedAt": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "accountId",
+                          "userId",
+                          "year",
+                          "month",
+                          "value",
+                          "asOfDate",
+                          "source",
+                          "updatedAt"
+                        ],
+                        "additionalProperties": false
+                      }
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "userId",
+                    "name",
+                    "type",
+                    "balance",
+                    "interestRate",
+                    "monthlyContribution",
+                    "termMonths",
+                    "fixedRateEndDate",
+                    "isCurrent",
+                    "currency",
+                    "studentLoanPlan",
+                    "connectionId",
+                    "externalAccountId",
+                    "createdAt",
+                    "details"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
           },
           "400": {
             "description": "Request failed validation."
@@ -215,7 +755,122 @@
         "description": "Deprecated alias of accounts.update.",
         "responses": {
           "200": {
-            "description": "Success. Response schemas are not yet part of the contract."
+            "description": "Success.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                    },
+                    "userId": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "type": "string",
+                      "enum": [
+                        "Current",
+                        "Saving",
+                        "Mortgage",
+                        "Loan",
+                        "Credit Card",
+                        "Owed",
+                        "Investment",
+                        "Pension",
+                        "Property",
+                        "Student Loan",
+                        "Overdraft"
+                      ]
+                    },
+                    "balance": {
+                      "type": "number"
+                    },
+                    "interestRate": {
+                      "type": ["number", "null"]
+                    },
+                    "monthlyContribution": {
+                      "type": ["number", "null"]
+                    },
+                    "termMonths": {
+                      "anyOf": [
+                        {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "fixedRateEndDate": {
+                      "type": ["string", "null"]
+                    },
+                    "isCurrent": {
+                      "type": "boolean"
+                    },
+                    "currency": {
+                      "type": "string",
+                      "pattern": "^[A-Z]{3}$"
+                    },
+                    "studentLoanPlan": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "enum": ["PLAN_1", "PLAN_2", "PLAN_4", "PLAN_5", "POSTGRAD"]
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "connectionId": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "externalAccountId": {
+                      "type": ["string", "null"]
+                    },
+                    "createdAt": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "userId",
+                    "name",
+                    "type",
+                    "balance",
+                    "interestRate",
+                    "monthlyContribution",
+                    "termMonths",
+                    "fixedRateEndDate",
+                    "isCurrent",
+                    "currency",
+                    "studentLoanPlan",
+                    "connectionId",
+                    "externalAccountId",
+                    "createdAt"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
           },
           "400": {
             "description": "Request failed validation."
@@ -306,6 +961,21 @@
                   },
                   "isCurrent": {
                     "type": "boolean"
+                  },
+                  "termMonths": {
+                    "anyOf": [
+                      {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 600
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "fixedRateEndDate": {
+                    "type": ["string", "null"]
                   },
                   "externalAccountId": {
                     "anyOf": [
@@ -334,7 +1004,122 @@
         "tags": ["accounts"],
         "responses": {
           "200": {
-            "description": "Success. Response schemas are not yet part of the contract."
+            "description": "Success.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                    },
+                    "userId": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "type": "string",
+                      "enum": [
+                        "Current",
+                        "Saving",
+                        "Mortgage",
+                        "Loan",
+                        "Credit Card",
+                        "Owed",
+                        "Investment",
+                        "Pension",
+                        "Property",
+                        "Student Loan",
+                        "Overdraft"
+                      ]
+                    },
+                    "balance": {
+                      "type": "number"
+                    },
+                    "interestRate": {
+                      "type": ["number", "null"]
+                    },
+                    "monthlyContribution": {
+                      "type": ["number", "null"]
+                    },
+                    "termMonths": {
+                      "anyOf": [
+                        {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "fixedRateEndDate": {
+                      "type": ["string", "null"]
+                    },
+                    "isCurrent": {
+                      "type": "boolean"
+                    },
+                    "currency": {
+                      "type": "string",
+                      "pattern": "^[A-Z]{3}$"
+                    },
+                    "studentLoanPlan": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "enum": ["PLAN_1", "PLAN_2", "PLAN_4", "PLAN_5", "POSTGRAD"]
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "connectionId": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "externalAccountId": {
+                      "type": ["string", "null"]
+                    },
+                    "createdAt": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "userId",
+                    "name",
+                    "type",
+                    "balance",
+                    "interestRate",
+                    "monthlyContribution",
+                    "termMonths",
+                    "fixedRateEndDate",
+                    "isCurrent",
+                    "currency",
+                    "studentLoanPlan",
+                    "connectionId",
+                    "externalAccountId",
+                    "createdAt"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
           },
           "400": {
             "description": "Request failed validation."
@@ -426,6 +1211,21 @@
                   "isCurrent": {
                     "type": "boolean"
                   },
+                  "termMonths": {
+                    "anyOf": [
+                      {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 600
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "fixedRateEndDate": {
+                    "type": ["string", "null"]
+                  },
                   "externalAccountId": {
                     "anyOf": [
                       {
@@ -453,7 +1253,22 @@
         "tags": ["accounts"],
         "responses": {
           "200": {
-            "description": "Success. Response schemas are not yet part of the contract."
+            "description": "Success.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "const": true
+                    }
+                  },
+                  "required": ["success"],
+                  "additionalProperties": false
+                }
+              }
+            }
           },
           "400": {
             "description": "Request failed validation."
@@ -487,7 +1302,68 @@
         "tags": ["accounts"],
         "responses": {
           "200": {
-            "description": "Success. Response schemas are not yet part of the contract."
+            "description": "Success.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "integer",
+                        "minimum": -9007199254740991,
+                        "maximum": 9007199254740991
+                      },
+                      "accountId": {
+                        "type": "string",
+                        "format": "uuid",
+                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                      },
+                      "userId": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "year": {
+                        "type": "integer",
+                        "minimum": -9007199254740991,
+                        "maximum": 9007199254740991
+                      },
+                      "month": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 12
+                      },
+                      "value": {
+                        "type": "number"
+                      },
+                      "asOfDate": {
+                        "type": "string"
+                      },
+                      "source": {
+                        "type": "string",
+                        "enum": ["onboarding", "manual", "connected", "backfill"]
+                      },
+                      "updatedAt": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "accountId",
+                      "userId",
+                      "year",
+                      "month",
+                      "value",
+                      "asOfDate",
+                      "source",
+                      "updatedAt"
+                    ],
+                    "additionalProperties": false
+                  }
+                }
+              }
+            }
           },
           "400": {
             "description": "Request failed validation."
@@ -521,7 +1397,236 @@
         "tags": ["accounts"],
         "responses": {
           "200": {
-            "description": "Success. Response schemas are not yet part of the contract."
+            "description": "Success.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "netWorth": {
+                      "type": "number"
+                    },
+                    "totalAssets": {
+                      "type": "number"
+                    },
+                    "totalLiabilities": {
+                      "type": "number"
+                    },
+                    "totalLiquidCash": {
+                      "type": "number"
+                    },
+                    "totalInvestments": {
+                      "type": "number"
+                    },
+                    "totalPensions": {
+                      "type": "number"
+                    },
+                    "totalConsumerDebt": {
+                      "type": "number"
+                    },
+                    "totalMortgageBalance": {
+                      "type": "number"
+                    },
+                    "totalProperty": {
+                      "type": "number"
+                    },
+                    "totalStudentLoans": {
+                      "type": "number"
+                    },
+                    "resolvedAccounts": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "rawType": {
+                            "type": "string",
+                            "enum": [
+                              "Current",
+                              "Saving",
+                              "Mortgage",
+                              "Loan",
+                              "Credit Card",
+                              "Owed",
+                              "Investment",
+                              "Pension",
+                              "Property",
+                              "Student Loan",
+                              "Overdraft"
+                            ]
+                          },
+                          "category": {
+                            "type": "string",
+                            "enum": [
+                              "cash",
+                              "savings",
+                              "investments",
+                              "pensions",
+                              "debt",
+                              "mortgages",
+                              "property",
+                              "studentLoans",
+                              "other"
+                            ]
+                          },
+                          "isAsset": {
+                            "type": "boolean"
+                          },
+                          "isLiability": {
+                            "type": "boolean"
+                          },
+                          "nominalBalance": {
+                            "type": "number"
+                          },
+                          "netWorthBalance": {
+                            "type": "number"
+                          },
+                          "latestBalance": {
+                            "type": "number"
+                          },
+                          "overdrawnAmount": {
+                            "type": "number"
+                          },
+                          "interestRate": {
+                            "type": "number"
+                          },
+                          "interestRateKnown": {
+                            "type": "boolean"
+                          },
+                          "monthlyContribution": {
+                            "type": "number"
+                          },
+                          "monthlyContributionKnown": {
+                            "type": "boolean"
+                          },
+                          "currency": {
+                            "type": "string",
+                            "pattern": "^[A-Z]{3}$"
+                          },
+                          "latestMonth": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 12
+                          },
+                          "latestYear": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991
+                          },
+                          "history": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "year": {
+                                  "type": "integer",
+                                  "minimum": -9007199254740991,
+                                  "maximum": 9007199254740991
+                                },
+                                "month": {
+                                  "type": "integer",
+                                  "minimum": 1,
+                                  "maximum": 12
+                                },
+                                "value": {
+                                  "type": "number"
+                                }
+                              },
+                              "required": ["year", "month", "value"],
+                              "additionalProperties": false
+                            }
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "name",
+                          "rawType",
+                          "category",
+                          "isAsset",
+                          "isLiability",
+                          "nominalBalance",
+                          "netWorthBalance",
+                          "latestBalance",
+                          "overdrawnAmount",
+                          "interestRate",
+                          "interestRateKnown",
+                          "monthlyContribution",
+                          "monthlyContributionKnown",
+                          "currency",
+                          "history"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "monthlyHistory": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "year": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991
+                          },
+                          "month": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 12
+                          },
+                          "label": {
+                            "type": "string"
+                          },
+                          "netWorth": {
+                            "type": "number"
+                          },
+                          "totalAssets": {
+                            "type": "number"
+                          },
+                          "totalLiabilities": {
+                            "type": "number"
+                          }
+                        },
+                        "required": [
+                          "year",
+                          "month",
+                          "label",
+                          "netWorth",
+                          "totalAssets",
+                          "totalLiabilities"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "currency": {
+                      "type": "string",
+                      "pattern": "^[A-Z]{3}$"
+                    }
+                  },
+                  "required": [
+                    "netWorth",
+                    "totalAssets",
+                    "totalLiabilities",
+                    "totalLiquidCash",
+                    "totalInvestments",
+                    "totalPensions",
+                    "totalConsumerDebt",
+                    "totalMortgageBalance",
+                    "totalProperty",
+                    "totalStudentLoans",
+                    "resolvedAccounts",
+                    "monthlyHistory",
+                    "currency"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
           },
           "400": {
             "description": "Request failed validation."
@@ -543,7 +1648,125 @@
         "tags": ["accounts"],
         "responses": {
           "200": {
-            "description": "Success. Response schemas are not yet part of the contract."
+            "description": "Success.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                      },
+                      "userId": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "name": {
+                        "type": "string"
+                      },
+                      "type": {
+                        "type": "string",
+                        "enum": [
+                          "Current",
+                          "Saving",
+                          "Mortgage",
+                          "Loan",
+                          "Credit Card",
+                          "Owed",
+                          "Investment",
+                          "Pension",
+                          "Property",
+                          "Student Loan",
+                          "Overdraft"
+                        ]
+                      },
+                      "balance": {
+                        "type": "number"
+                      },
+                      "interestRate": {
+                        "type": ["number", "null"]
+                      },
+                      "monthlyContribution": {
+                        "type": ["number", "null"]
+                      },
+                      "termMonths": {
+                        "anyOf": [
+                          {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "fixedRateEndDate": {
+                        "type": ["string", "null"]
+                      },
+                      "isCurrent": {
+                        "type": "boolean"
+                      },
+                      "currency": {
+                        "type": "string",
+                        "pattern": "^[A-Z]{3}$"
+                      },
+                      "studentLoanPlan": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "enum": ["PLAN_1", "PLAN_2", "PLAN_4", "PLAN_5", "POSTGRAD"]
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "connectionId": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "format": "uuid",
+                            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "externalAccountId": {
+                        "type": ["string", "null"]
+                      },
+                      "createdAt": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "userId",
+                      "name",
+                      "type",
+                      "balance",
+                      "interestRate",
+                      "monthlyContribution",
+                      "termMonths",
+                      "fixedRateEndDate",
+                      "isCurrent",
+                      "currency",
+                      "studentLoanPlan",
+                      "connectionId",
+                      "externalAccountId",
+                      "createdAt"
+                    ],
+                    "additionalProperties": false
+                  }
+                }
+              }
+            }
           },
           "400": {
             "description": "Request failed validation."
@@ -597,7 +1820,50 @@
         "tags": ["snapshots"],
         "responses": {
           "200": {
-            "description": "Success. Response schemas are not yet part of the contract."
+            "description": "Success.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "month": {
+                      "type": "string",
+                      "pattern": "^\\d{4}-(0[1-9]|1[0-2])$"
+                    },
+                    "values": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "accountId": {
+                            "type": "string",
+                            "format": "uuid",
+                            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                          },
+                          "value": {
+                            "type": "number"
+                          },
+                          "asOfDate": {
+                            "type": "string"
+                          },
+                          "source": {
+                            "type": "string",
+                            "const": "manual"
+                          }
+                        },
+                        "required": ["accountId", "value", "asOfDate", "source"],
+                        "additionalProperties": false
+                      }
+                    },
+                    "completed": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": ["month", "values", "completed"],
+                  "additionalProperties": false
+                }
+              }
+            }
           },
           "400": {
             "description": "Request failed validation."
@@ -667,7 +1933,55 @@
         "tags": ["transactions"],
         "responses": {
           "200": {
-            "description": "Success. Response schemas are not yet part of the contract."
+            "description": "Success.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                      },
+                      "accountId": {
+                        "type": "string",
+                        "format": "uuid",
+                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                      },
+                      "userId": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "amount": {
+                        "type": "number"
+                      },
+                      "description": {
+                        "type": "string"
+                      },
+                      "category": {
+                        "type": "string"
+                      },
+                      "timestamp": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "accountId",
+                      "userId",
+                      "amount",
+                      "description",
+                      "category",
+                      "timestamp"
+                    ],
+                    "additionalProperties": false
+                  }
+                }
+              }
+            }
           },
           "400": {
             "description": "Request failed validation."
@@ -676,6 +1990,18 @@
             "description": "Missing or invalid credentials."
           }
         },
+        "parameters": [
+          {
+            "name": "accountId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          }
+        ],
         "security": [
           {
             "bearerAuth": []
@@ -687,7 +2013,52 @@
         "tags": ["transactions"],
         "responses": {
           "200": {
-            "description": "Success. Response schemas are not yet part of the contract."
+            "description": "Success.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                    },
+                    "accountId": {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                    },
+                    "userId": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "amount": {
+                      "type": "number"
+                    },
+                    "description": {
+                      "type": "string"
+                    },
+                    "category": {
+                      "type": "string"
+                    },
+                    "timestamp": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "accountId",
+                    "userId",
+                    "amount",
+                    "description",
+                    "category",
+                    "timestamp"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
           },
           "400": {
             "description": "Request failed validation."
@@ -743,7 +2114,63 @@
         "tags": ["bank-connections"],
         "responses": {
           "200": {
-            "description": "Success. Response schemas are not yet part of the contract."
+            "description": "Success.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                      },
+                      "institutionId": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "institutionName": {
+                        "type": "string"
+                      },
+                      "status": {
+                        "type": "string",
+                        "enum": ["connected", "disconnected", "error"]
+                      },
+                      "authType": {
+                        "type": "string",
+                        "enum": ["oauth", "token"]
+                      },
+                      "expiresAt": {
+                        "type": ["string", "null"]
+                      },
+                      "lastSyncedAt": {
+                        "type": "string"
+                      },
+                      "createdAt": {
+                        "type": "string"
+                      },
+                      "updatedAt": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "institutionId",
+                      "institutionName",
+                      "status",
+                      "authType",
+                      "expiresAt",
+                      "lastSyncedAt",
+                      "createdAt",
+                      "updatedAt"
+                    ],
+                    "additionalProperties": false
+                  }
+                }
+              }
+            }
           },
           "400": {
             "description": "Request failed validation."
@@ -763,7 +2190,97 @@
         "tags": ["bank-connections"],
         "responses": {
           "200": {
-            "description": "Success. Response schemas are not yet part of the contract."
+            "description": "Success.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "success": {
+                          "type": "boolean",
+                          "const": true
+                        },
+                        "connection": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "format": "uuid",
+                              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                            },
+                            "institutionId": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "institutionName": {
+                              "type": "string"
+                            },
+                            "status": {
+                              "type": "string",
+                              "enum": ["connected", "disconnected", "error"]
+                            },
+                            "authType": {
+                              "type": "string",
+                              "enum": ["oauth", "token"]
+                            },
+                            "expiresAt": {
+                              "type": ["string", "null"]
+                            },
+                            "lastSyncedAt": {
+                              "type": "string"
+                            },
+                            "createdAt": {
+                              "type": "string"
+                            },
+                            "updatedAt": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "institutionId",
+                            "institutionName",
+                            "status",
+                            "authType",
+                            "expiresAt",
+                            "lastSyncedAt",
+                            "createdAt",
+                            "updatedAt"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["success", "connection", "message"],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "success": {
+                          "type": "boolean",
+                          "const": true
+                        },
+                        "oauth": {
+                          "type": "boolean",
+                          "const": true
+                        },
+                        "redirectUrl": {
+                          "type": "string",
+                          "format": "uri"
+                        }
+                      },
+                      "required": ["success", "oauth", "redirectUrl"],
+                      "additionalProperties": false
+                    }
+                  ]
+                }
+              }
+            }
           },
           "400": {
             "description": "Request failed validation."
@@ -813,7 +2330,21 @@
         "tags": ["bank-connections"],
         "responses": {
           "200": {
-            "description": "Success. Response schemas are not yet part of the contract."
+            "description": "Success.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "enabled": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": ["enabled"],
+                  "additionalProperties": false
+                }
+              }
+            }
           },
           "400": {
             "description": "Request failed validation."
@@ -835,7 +2366,141 @@
         "tags": ["bank-connections"],
         "responses": {
           "200": {
-            "description": "Success. Response schemas are not yet part of the contract."
+            "description": "Success.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "success": {
+                          "type": "boolean",
+                          "const": true
+                        },
+                        "connection": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "format": "uuid",
+                              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                            },
+                            "institutionId": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "institutionName": {
+                              "type": "string"
+                            },
+                            "status": {
+                              "type": "string",
+                              "enum": ["connected", "disconnected", "error"]
+                            },
+                            "authType": {
+                              "type": "string",
+                              "enum": ["oauth", "token"]
+                            },
+                            "expiresAt": {
+                              "type": ["string", "null"]
+                            },
+                            "lastSyncedAt": {
+                              "type": "string"
+                            },
+                            "createdAt": {
+                              "type": "string"
+                            },
+                            "updatedAt": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "institutionId",
+                            "institutionName",
+                            "status",
+                            "authType",
+                            "expiresAt",
+                            "lastSyncedAt",
+                            "createdAt",
+                            "updatedAt"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["success", "connection", "message"],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "success": {
+                          "type": "boolean",
+                          "const": false
+                        },
+                        "connection": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "format": "uuid",
+                              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                            },
+                            "institutionId": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "institutionName": {
+                              "type": "string"
+                            },
+                            "status": {
+                              "type": "string",
+                              "enum": ["connected", "disconnected", "error"]
+                            },
+                            "authType": {
+                              "type": "string",
+                              "enum": ["oauth", "token"]
+                            },
+                            "expiresAt": {
+                              "type": ["string", "null"]
+                            },
+                            "lastSyncedAt": {
+                              "type": "string"
+                            },
+                            "createdAt": {
+                              "type": "string"
+                            },
+                            "updatedAt": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "institutionId",
+                            "institutionName",
+                            "status",
+                            "authType",
+                            "expiresAt",
+                            "lastSyncedAt",
+                            "createdAt",
+                            "updatedAt"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "error": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["success", "connection", "error"],
+                      "additionalProperties": false
+                    }
+                  ]
+                }
+              }
+            }
           },
           "400": {
             "description": "Request failed validation."
@@ -871,7 +2536,141 @@
         "description": "Deprecated alias of bankConnections.refresh.",
         "responses": {
           "200": {
-            "description": "Success. Response schemas are not yet part of the contract."
+            "description": "Success.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "success": {
+                          "type": "boolean",
+                          "const": true
+                        },
+                        "connection": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "format": "uuid",
+                              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                            },
+                            "institutionId": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "institutionName": {
+                              "type": "string"
+                            },
+                            "status": {
+                              "type": "string",
+                              "enum": ["connected", "disconnected", "error"]
+                            },
+                            "authType": {
+                              "type": "string",
+                              "enum": ["oauth", "token"]
+                            },
+                            "expiresAt": {
+                              "type": ["string", "null"]
+                            },
+                            "lastSyncedAt": {
+                              "type": "string"
+                            },
+                            "createdAt": {
+                              "type": "string"
+                            },
+                            "updatedAt": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "institutionId",
+                            "institutionName",
+                            "status",
+                            "authType",
+                            "expiresAt",
+                            "lastSyncedAt",
+                            "createdAt",
+                            "updatedAt"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["success", "connection", "message"],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "success": {
+                          "type": "boolean",
+                          "const": false
+                        },
+                        "connection": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "format": "uuid",
+                              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                            },
+                            "institutionId": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "institutionName": {
+                              "type": "string"
+                            },
+                            "status": {
+                              "type": "string",
+                              "enum": ["connected", "disconnected", "error"]
+                            },
+                            "authType": {
+                              "type": "string",
+                              "enum": ["oauth", "token"]
+                            },
+                            "expiresAt": {
+                              "type": ["string", "null"]
+                            },
+                            "lastSyncedAt": {
+                              "type": "string"
+                            },
+                            "createdAt": {
+                              "type": "string"
+                            },
+                            "updatedAt": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "institutionId",
+                            "institutionName",
+                            "status",
+                            "authType",
+                            "expiresAt",
+                            "lastSyncedAt",
+                            "createdAt",
+                            "updatedAt"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "error": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["success", "connection", "error"],
+                      "additionalProperties": false
+                    }
+                  ]
+                }
+              }
+            }
           },
           "400": {
             "description": "Request failed validation."
@@ -905,7 +2704,22 @@
         "tags": ["bank-connections"],
         "responses": {
           "200": {
-            "description": "Success. Response schemas are not yet part of the contract."
+            "description": "Success.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "const": true
+                    }
+                  },
+                  "required": ["success"],
+                  "additionalProperties": false
+                }
+              }
+            }
           },
           "400": {
             "description": "Request failed validation."
@@ -939,7 +2753,77 @@
         "tags": ["budget"],
         "responses": {
           "200": {
-            "description": "Success. Response schemas are not yet part of the contract."
+            "description": "Success.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                      },
+                      "userId": {
+                        "type": "string"
+                      },
+                      "category": {
+                        "type": "string"
+                      },
+                      "name": {
+                        "type": "string"
+                      },
+                      "amount": {
+                        "type": "number"
+                      },
+                      "frequency": {
+                        "type": "string",
+                        "enum": ["monthly", "annual", "weekly"]
+                      },
+                      "isIncome": {
+                        "type": "boolean"
+                      },
+                      "isPrimaryIncome": {
+                        "type": "boolean"
+                      },
+                      "isEssential": {
+                        "type": "boolean"
+                      },
+                      "notes": {
+                        "type": ["string", "null"]
+                      },
+                      "isDefault": {
+                        "type": "boolean"
+                      },
+                      "createdAt": {
+                        "type": "string"
+                      },
+                      "updatedAt": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "userId",
+                      "category",
+                      "name",
+                      "amount",
+                      "frequency",
+                      "isIncome",
+                      "isPrimaryIncome",
+                      "isEssential",
+                      "notes",
+                      "isDefault",
+                      "createdAt",
+                      "updatedAt"
+                    ],
+                    "additionalProperties": false
+                  }
+                }
+              }
+            }
           },
           "400": {
             "description": "Request failed validation."
@@ -959,7 +2843,74 @@
         "tags": ["budget"],
         "responses": {
           "200": {
-            "description": "Success. Response schemas are not yet part of the contract."
+            "description": "Success.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                    },
+                    "userId": {
+                      "type": "string"
+                    },
+                    "category": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "amount": {
+                      "type": "number"
+                    },
+                    "frequency": {
+                      "type": "string",
+                      "enum": ["monthly", "annual", "weekly"]
+                    },
+                    "isIncome": {
+                      "type": "boolean"
+                    },
+                    "isPrimaryIncome": {
+                      "type": "boolean"
+                    },
+                    "isEssential": {
+                      "type": "boolean"
+                    },
+                    "notes": {
+                      "type": ["string", "null"]
+                    },
+                    "isDefault": {
+                      "type": "boolean"
+                    },
+                    "createdAt": {
+                      "type": "string"
+                    },
+                    "updatedAt": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "userId",
+                    "category",
+                    "name",
+                    "amount",
+                    "frequency",
+                    "isIncome",
+                    "isPrimaryIncome",
+                    "isEssential",
+                    "notes",
+                    "isDefault",
+                    "createdAt",
+                    "updatedAt"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
           },
           "400": {
             "description": "Request failed validation."
@@ -1033,7 +2984,77 @@
         "tags": ["budget"],
         "responses": {
           "200": {
-            "description": "Success. Response schemas are not yet part of the contract."
+            "description": "Success.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                      },
+                      "userId": {
+                        "type": "string"
+                      },
+                      "category": {
+                        "type": "string"
+                      },
+                      "name": {
+                        "type": "string"
+                      },
+                      "amount": {
+                        "type": "number"
+                      },
+                      "frequency": {
+                        "type": "string",
+                        "enum": ["monthly", "annual", "weekly"]
+                      },
+                      "isIncome": {
+                        "type": "boolean"
+                      },
+                      "isPrimaryIncome": {
+                        "type": "boolean"
+                      },
+                      "isEssential": {
+                        "type": "boolean"
+                      },
+                      "notes": {
+                        "type": ["string", "null"]
+                      },
+                      "isDefault": {
+                        "type": "boolean"
+                      },
+                      "createdAt": {
+                        "type": "string"
+                      },
+                      "updatedAt": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "userId",
+                      "category",
+                      "name",
+                      "amount",
+                      "frequency",
+                      "isIncome",
+                      "isPrimaryIncome",
+                      "isEssential",
+                      "notes",
+                      "isDefault",
+                      "createdAt",
+                      "updatedAt"
+                    ],
+                    "additionalProperties": false
+                  }
+                }
+              }
+            }
           },
           "400": {
             "description": "Request failed validation."
@@ -1055,7 +3076,28 @@
         "tags": ["budget"],
         "responses": {
           "200": {
-            "description": "Success. Response schemas are not yet part of the contract."
+            "description": "Success.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "categories": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "required": ["success", "categories"],
+                  "additionalProperties": false
+                }
+              }
+            }
           },
           "400": {
             "description": "Request failed validation."
@@ -1095,7 +3137,74 @@
         "tags": ["budget"],
         "responses": {
           "200": {
-            "description": "Success. Response schemas are not yet part of the contract."
+            "description": "Success.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                    },
+                    "userId": {
+                      "type": "string"
+                    },
+                    "category": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "amount": {
+                      "type": "number"
+                    },
+                    "frequency": {
+                      "type": "string",
+                      "enum": ["monthly", "annual", "weekly"]
+                    },
+                    "isIncome": {
+                      "type": "boolean"
+                    },
+                    "isPrimaryIncome": {
+                      "type": "boolean"
+                    },
+                    "isEssential": {
+                      "type": "boolean"
+                    },
+                    "notes": {
+                      "type": ["string", "null"]
+                    },
+                    "isDefault": {
+                      "type": "boolean"
+                    },
+                    "createdAt": {
+                      "type": "string"
+                    },
+                    "updatedAt": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "userId",
+                    "category",
+                    "name",
+                    "amount",
+                    "frequency",
+                    "isIncome",
+                    "isPrimaryIncome",
+                    "isEssential",
+                    "notes",
+                    "isDefault",
+                    "createdAt",
+                    "updatedAt"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
           },
           "400": {
             "description": "Request failed validation."
@@ -1178,7 +3287,22 @@
         "tags": ["budget"],
         "responses": {
           "200": {
-            "description": "Success. Response schemas are not yet part of the contract."
+            "description": "Success.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "const": true
+                    }
+                  },
+                  "required": ["success"],
+                  "additionalProperties": false
+                }
+              }
+            }
           },
           "400": {
             "description": "Request failed validation."
@@ -1212,7 +3336,99 @@
         "tags": ["tax"],
         "responses": {
           "200": {
-            "description": "Success. Response schemas are not yet part of the contract."
+            "description": "Success.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                      },
+                      "userId": {
+                        "type": "string"
+                      },
+                      "type": {
+                        "type": "string",
+                        "enum": ["income", "expense"]
+                      },
+                      "source": {
+                        "type": "string",
+                        "enum": ["paye", "self-employed", "rental", "savings"]
+                      },
+                      "category": {
+                        "type": "string"
+                      },
+                      "name": {
+                        "type": "string"
+                      },
+                      "amount": {
+                        "type": "number"
+                      },
+                      "frequency": {
+                        "type": "string",
+                        "enum": ["one-off", "monthly", "annual"]
+                      },
+                      "date": {
+                        "type": "string"
+                      },
+                      "endDate": {
+                        "type": ["string", "null"]
+                      },
+                      "notes": {
+                        "type": ["string", "null"]
+                      },
+                      "receiptFilename": {
+                        "type": ["string", "null"]
+                      },
+                      "receiptMimeType": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "enum": ["image/png", "image/jpeg", "image/webp", "application/pdf"]
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "hasReceipt": {
+                        "type": "boolean"
+                      },
+                      "createdAt": {
+                        "type": "string"
+                      },
+                      "updatedAt": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "userId",
+                      "type",
+                      "source",
+                      "category",
+                      "name",
+                      "amount",
+                      "frequency",
+                      "date",
+                      "endDate",
+                      "notes",
+                      "receiptFilename",
+                      "receiptMimeType",
+                      "hasReceipt",
+                      "createdAt",
+                      "updatedAt"
+                    ],
+                    "additionalProperties": false
+                  }
+                }
+              }
+            }
           },
           "400": {
             "description": "Request failed validation."
@@ -1232,7 +3448,96 @@
         "tags": ["tax"],
         "responses": {
           "200": {
-            "description": "Success. Response schemas are not yet part of the contract."
+            "description": "Success.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                    },
+                    "userId": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "type": "string",
+                      "enum": ["income", "expense"]
+                    },
+                    "source": {
+                      "type": "string",
+                      "enum": ["paye", "self-employed", "rental", "savings"]
+                    },
+                    "category": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "amount": {
+                      "type": "number"
+                    },
+                    "frequency": {
+                      "type": "string",
+                      "enum": ["one-off", "monthly", "annual"]
+                    },
+                    "date": {
+                      "type": "string"
+                    },
+                    "endDate": {
+                      "type": ["string", "null"]
+                    },
+                    "notes": {
+                      "type": ["string", "null"]
+                    },
+                    "receiptFilename": {
+                      "type": ["string", "null"]
+                    },
+                    "receiptMimeType": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "enum": ["image/png", "image/jpeg", "image/webp", "application/pdf"]
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "hasReceipt": {
+                      "type": "boolean"
+                    },
+                    "createdAt": {
+                      "type": "string"
+                    },
+                    "updatedAt": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "userId",
+                    "type",
+                    "source",
+                    "category",
+                    "name",
+                    "amount",
+                    "frequency",
+                    "date",
+                    "endDate",
+                    "notes",
+                    "receiptFilename",
+                    "receiptMimeType",
+                    "hasReceipt",
+                    "createdAt",
+                    "updatedAt"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
           },
           "400": {
             "description": "Request failed validation."
@@ -1334,7 +3639,96 @@
         "tags": ["tax"],
         "responses": {
           "200": {
-            "description": "Success. Response schemas are not yet part of the contract."
+            "description": "Success.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                    },
+                    "userId": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "type": "string",
+                      "enum": ["income", "expense"]
+                    },
+                    "source": {
+                      "type": "string",
+                      "enum": ["paye", "self-employed", "rental", "savings"]
+                    },
+                    "category": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "amount": {
+                      "type": "number"
+                    },
+                    "frequency": {
+                      "type": "string",
+                      "enum": ["one-off", "monthly", "annual"]
+                    },
+                    "date": {
+                      "type": "string"
+                    },
+                    "endDate": {
+                      "type": ["string", "null"]
+                    },
+                    "notes": {
+                      "type": ["string", "null"]
+                    },
+                    "receiptFilename": {
+                      "type": ["string", "null"]
+                    },
+                    "receiptMimeType": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "enum": ["image/png", "image/jpeg", "image/webp", "application/pdf"]
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "hasReceipt": {
+                      "type": "boolean"
+                    },
+                    "createdAt": {
+                      "type": "string"
+                    },
+                    "updatedAt": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "userId",
+                    "type",
+                    "source",
+                    "category",
+                    "name",
+                    "amount",
+                    "frequency",
+                    "date",
+                    "endDate",
+                    "notes",
+                    "receiptFilename",
+                    "receiptMimeType",
+                    "hasReceipt",
+                    "createdAt",
+                    "updatedAt"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
           },
           "400": {
             "description": "Request failed validation."
@@ -1366,7 +3760,96 @@
         "tags": ["tax"],
         "responses": {
           "200": {
-            "description": "Success. Response schemas are not yet part of the contract."
+            "description": "Success.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                    },
+                    "userId": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "type": "string",
+                      "enum": ["income", "expense"]
+                    },
+                    "source": {
+                      "type": "string",
+                      "enum": ["paye", "self-employed", "rental", "savings"]
+                    },
+                    "category": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "amount": {
+                      "type": "number"
+                    },
+                    "frequency": {
+                      "type": "string",
+                      "enum": ["one-off", "monthly", "annual"]
+                    },
+                    "date": {
+                      "type": "string"
+                    },
+                    "endDate": {
+                      "type": ["string", "null"]
+                    },
+                    "notes": {
+                      "type": ["string", "null"]
+                    },
+                    "receiptFilename": {
+                      "type": ["string", "null"]
+                    },
+                    "receiptMimeType": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "enum": ["image/png", "image/jpeg", "image/webp", "application/pdf"]
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "hasReceipt": {
+                      "type": "boolean"
+                    },
+                    "createdAt": {
+                      "type": "string"
+                    },
+                    "updatedAt": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "userId",
+                    "type",
+                    "source",
+                    "category",
+                    "name",
+                    "amount",
+                    "frequency",
+                    "date",
+                    "endDate",
+                    "notes",
+                    "receiptFilename",
+                    "receiptMimeType",
+                    "hasReceipt",
+                    "createdAt",
+                    "updatedAt"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
           },
           "400": {
             "description": "Request failed validation."
@@ -1477,7 +3960,22 @@
         "tags": ["tax"],
         "responses": {
           "200": {
-            "description": "Success. Response schemas are not yet part of the contract."
+            "description": "Success.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "const": true
+                    }
+                  },
+                  "required": ["success"],
+                  "additionalProperties": false
+                }
+              }
+            }
           },
           "400": {
             "description": "Request failed validation."
@@ -1511,7 +4009,7 @@
         "tags": ["tax"],
         "responses": {
           "200": {
-            "description": "Success. Response schemas are not yet part of the contract."
+            "description": "Success. Not a JSON body (see NON_JSON_RESPONSE_ROUTES)."
           },
           "400": {
             "description": "Request failed validation."
@@ -1545,7 +4043,99 @@
         "tags": ["tax"],
         "responses": {
           "200": {
-            "description": "Success. Response schemas are not yet part of the contract."
+            "description": "Success.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                      },
+                      "userId": {
+                        "type": "string"
+                      },
+                      "type": {
+                        "type": "string",
+                        "enum": ["income", "expense"]
+                      },
+                      "source": {
+                        "type": "string",
+                        "enum": ["paye", "self-employed", "rental", "savings"]
+                      },
+                      "category": {
+                        "type": "string"
+                      },
+                      "name": {
+                        "type": "string"
+                      },
+                      "amount": {
+                        "type": "number"
+                      },
+                      "frequency": {
+                        "type": "string",
+                        "enum": ["one-off", "monthly", "annual"]
+                      },
+                      "date": {
+                        "type": "string"
+                      },
+                      "endDate": {
+                        "type": ["string", "null"]
+                      },
+                      "notes": {
+                        "type": ["string", "null"]
+                      },
+                      "receiptFilename": {
+                        "type": ["string", "null"]
+                      },
+                      "receiptMimeType": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "enum": ["image/png", "image/jpeg", "image/webp", "application/pdf"]
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "hasReceipt": {
+                        "type": "boolean"
+                      },
+                      "createdAt": {
+                        "type": "string"
+                      },
+                      "updatedAt": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "userId",
+                      "type",
+                      "source",
+                      "category",
+                      "name",
+                      "amount",
+                      "frequency",
+                      "date",
+                      "endDate",
+                      "notes",
+                      "receiptFilename",
+                      "receiptMimeType",
+                      "hasReceipt",
+                      "createdAt",
+                      "updatedAt"
+                    ],
+                    "additionalProperties": false
+                  }
+                }
+              }
+            }
           },
           "400": {
             "description": "Request failed validation."
@@ -1675,7 +4265,297 @@
         "tags": ["profile"],
         "responses": {
           "200": {
-            "description": "Success. Response schemas are not yet part of the contract."
+            "description": "Success.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                    },
+                    "userId": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "email": {
+                      "type": ["string", "null"]
+                    },
+                    "displayName": {
+                      "type": ["string", "null"]
+                    },
+                    "firstName": {
+                      "type": ["string", "null"]
+                    },
+                    "lastName": {
+                      "type": ["string", "null"]
+                    },
+                    "avatarUrl": {
+                      "type": ["string", "null"]
+                    },
+                    "currency": {
+                      "type": "string"
+                    },
+                    "country": {
+                      "type": "string"
+                    },
+                    "employmentType": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "enum": ["employed", "self-employed", "other"]
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "annualSalary": {
+                      "type": ["number", "null"]
+                    },
+                    "monthlyTakeHome": {
+                      "type": ["number", "null"]
+                    },
+                    "hasSecondIncome": {
+                      "type": "boolean"
+                    },
+                    "secondIncomeMonthly": {
+                      "type": ["number", "null"]
+                    },
+                    "hasRentalIncome": {
+                      "type": "boolean"
+                    },
+                    "rentalIncomeMonthly": {
+                      "type": ["number", "null"]
+                    },
+                    "hasMortgage": {
+                      "type": "boolean"
+                    },
+                    "mortgageType": {
+                      "type": "string",
+                      "enum": ["repayment", "interest-only"]
+                    },
+                    "propertyOwnershipShare": {
+                      "type": "number"
+                    },
+                    "hasBuyToLet": {
+                      "type": "boolean"
+                    },
+                    "buyToLetCount": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    "buyToLetPropertyValue": {
+                      "type": ["number", "null"]
+                    },
+                    "buyToLetMonthlyRental": {
+                      "type": ["number", "null"]
+                    },
+                    "buyToLetMortgageBalance": {
+                      "type": ["number", "null"]
+                    },
+                    "buyToLetMortgageRate": {
+                      "type": ["number", "null"]
+                    },
+                    "buyToLetMortgageType": {
+                      "type": "string",
+                      "enum": ["repayment", "interest-only"]
+                    },
+                    "pensionPercent": {
+                      "type": "number"
+                    },
+                    "pensionEmployerPercent": {
+                      "type": "number"
+                    },
+                    "isSalarySacrifice": {
+                      "type": "boolean"
+                    },
+                    "isSalarySacrificeEmployerNi": {
+                      "type": "boolean"
+                    },
+                    "monthlySavingsTarget": {
+                      "type": ["number", "null"]
+                    },
+                    "savingsAllocationMode": {
+                      "type": "string",
+                      "enum": ["total", "per_account"]
+                    },
+                    "savingsDefaultInterestRate": {
+                      "type": "number"
+                    },
+                    "setupChecklistCompletedSteps": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "customBudgetCategories": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "enabledPages": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "dashboardWidgets": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "dashboardWidgetOrder": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "dashboardWidgetSizes": {
+                      "type": "object",
+                      "propertyNames": {
+                        "type": "string"
+                      },
+                      "additionalProperties": {
+                        "type": "string",
+                        "enum": ["normal", "wide"]
+                      }
+                    },
+                    "dashboardWidgetConfig": {
+                      "type": "object",
+                      "propertyNames": {
+                        "type": "string"
+                      },
+                      "additionalProperties": {}
+                    },
+                    "hasResetFinancialData": {
+                      "type": "boolean"
+                    },
+                    "onboardingCompleted": {
+                      "type": "boolean"
+                    },
+                    "taxRegion": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "enum": ["ENGLAND", "WALES", "SCOTLAND", "NORTHERN_IRELAND"]
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "birthYear": {
+                      "anyOf": [
+                        {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "studentLoanPlans": {
+                      "anyOf": [
+                        {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "enum": ["PLAN_1", "PLAN_2", "PLAN_4", "PLAN_5", "POSTGRAD"]
+                          }
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "housingStatus": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "enum": ["renting", "mortgage", "own_outright"]
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "monthlyHousingCost": {
+                      "type": ["number", "null"]
+                    },
+                    "monthlyOtherOutgoings": {
+                      "type": ["number", "null"]
+                    },
+                    "createdAt": {
+                      "type": "string"
+                    },
+                    "updatedAt": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "userId",
+                    "email",
+                    "displayName",
+                    "firstName",
+                    "lastName",
+                    "avatarUrl",
+                    "currency",
+                    "country",
+                    "employmentType",
+                    "annualSalary",
+                    "monthlyTakeHome",
+                    "hasSecondIncome",
+                    "secondIncomeMonthly",
+                    "hasRentalIncome",
+                    "rentalIncomeMonthly",
+                    "hasMortgage",
+                    "mortgageType",
+                    "propertyOwnershipShare",
+                    "hasBuyToLet",
+                    "buyToLetCount",
+                    "buyToLetPropertyValue",
+                    "buyToLetMonthlyRental",
+                    "buyToLetMortgageBalance",
+                    "buyToLetMortgageRate",
+                    "buyToLetMortgageType",
+                    "pensionPercent",
+                    "pensionEmployerPercent",
+                    "isSalarySacrifice",
+                    "isSalarySacrificeEmployerNi",
+                    "monthlySavingsTarget",
+                    "savingsAllocationMode",
+                    "savingsDefaultInterestRate",
+                    "setupChecklistCompletedSteps",
+                    "customBudgetCategories",
+                    "enabledPages",
+                    "dashboardWidgets",
+                    "dashboardWidgetOrder",
+                    "dashboardWidgetSizes",
+                    "dashboardWidgetConfig",
+                    "hasResetFinancialData",
+                    "onboardingCompleted",
+                    "taxRegion",
+                    "birthYear",
+                    "studentLoanPlans",
+                    "housingStatus",
+                    "monthlyHousingCost",
+                    "monthlyOtherOutgoings",
+                    "createdAt",
+                    "updatedAt"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
           },
           "400": {
             "description": "Request failed validation."
@@ -1695,7 +4575,297 @@
         "tags": ["profile"],
         "responses": {
           "200": {
-            "description": "Success. Response schemas are not yet part of the contract."
+            "description": "Success.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                    },
+                    "userId": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "email": {
+                      "type": ["string", "null"]
+                    },
+                    "displayName": {
+                      "type": ["string", "null"]
+                    },
+                    "firstName": {
+                      "type": ["string", "null"]
+                    },
+                    "lastName": {
+                      "type": ["string", "null"]
+                    },
+                    "avatarUrl": {
+                      "type": ["string", "null"]
+                    },
+                    "currency": {
+                      "type": "string"
+                    },
+                    "country": {
+                      "type": "string"
+                    },
+                    "employmentType": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "enum": ["employed", "self-employed", "other"]
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "annualSalary": {
+                      "type": ["number", "null"]
+                    },
+                    "monthlyTakeHome": {
+                      "type": ["number", "null"]
+                    },
+                    "hasSecondIncome": {
+                      "type": "boolean"
+                    },
+                    "secondIncomeMonthly": {
+                      "type": ["number", "null"]
+                    },
+                    "hasRentalIncome": {
+                      "type": "boolean"
+                    },
+                    "rentalIncomeMonthly": {
+                      "type": ["number", "null"]
+                    },
+                    "hasMortgage": {
+                      "type": "boolean"
+                    },
+                    "mortgageType": {
+                      "type": "string",
+                      "enum": ["repayment", "interest-only"]
+                    },
+                    "propertyOwnershipShare": {
+                      "type": "number"
+                    },
+                    "hasBuyToLet": {
+                      "type": "boolean"
+                    },
+                    "buyToLetCount": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    "buyToLetPropertyValue": {
+                      "type": ["number", "null"]
+                    },
+                    "buyToLetMonthlyRental": {
+                      "type": ["number", "null"]
+                    },
+                    "buyToLetMortgageBalance": {
+                      "type": ["number", "null"]
+                    },
+                    "buyToLetMortgageRate": {
+                      "type": ["number", "null"]
+                    },
+                    "buyToLetMortgageType": {
+                      "type": "string",
+                      "enum": ["repayment", "interest-only"]
+                    },
+                    "pensionPercent": {
+                      "type": "number"
+                    },
+                    "pensionEmployerPercent": {
+                      "type": "number"
+                    },
+                    "isSalarySacrifice": {
+                      "type": "boolean"
+                    },
+                    "isSalarySacrificeEmployerNi": {
+                      "type": "boolean"
+                    },
+                    "monthlySavingsTarget": {
+                      "type": ["number", "null"]
+                    },
+                    "savingsAllocationMode": {
+                      "type": "string",
+                      "enum": ["total", "per_account"]
+                    },
+                    "savingsDefaultInterestRate": {
+                      "type": "number"
+                    },
+                    "setupChecklistCompletedSteps": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "customBudgetCategories": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "enabledPages": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "dashboardWidgets": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "dashboardWidgetOrder": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "dashboardWidgetSizes": {
+                      "type": "object",
+                      "propertyNames": {
+                        "type": "string"
+                      },
+                      "additionalProperties": {
+                        "type": "string",
+                        "enum": ["normal", "wide"]
+                      }
+                    },
+                    "dashboardWidgetConfig": {
+                      "type": "object",
+                      "propertyNames": {
+                        "type": "string"
+                      },
+                      "additionalProperties": {}
+                    },
+                    "hasResetFinancialData": {
+                      "type": "boolean"
+                    },
+                    "onboardingCompleted": {
+                      "type": "boolean"
+                    },
+                    "taxRegion": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "enum": ["ENGLAND", "WALES", "SCOTLAND", "NORTHERN_IRELAND"]
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "birthYear": {
+                      "anyOf": [
+                        {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "studentLoanPlans": {
+                      "anyOf": [
+                        {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "enum": ["PLAN_1", "PLAN_2", "PLAN_4", "PLAN_5", "POSTGRAD"]
+                          }
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "housingStatus": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "enum": ["renting", "mortgage", "own_outright"]
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "monthlyHousingCost": {
+                      "type": ["number", "null"]
+                    },
+                    "monthlyOtherOutgoings": {
+                      "type": ["number", "null"]
+                    },
+                    "createdAt": {
+                      "type": "string"
+                    },
+                    "updatedAt": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "userId",
+                    "email",
+                    "displayName",
+                    "firstName",
+                    "lastName",
+                    "avatarUrl",
+                    "currency",
+                    "country",
+                    "employmentType",
+                    "annualSalary",
+                    "monthlyTakeHome",
+                    "hasSecondIncome",
+                    "secondIncomeMonthly",
+                    "hasRentalIncome",
+                    "rentalIncomeMonthly",
+                    "hasMortgage",
+                    "mortgageType",
+                    "propertyOwnershipShare",
+                    "hasBuyToLet",
+                    "buyToLetCount",
+                    "buyToLetPropertyValue",
+                    "buyToLetMonthlyRental",
+                    "buyToLetMortgageBalance",
+                    "buyToLetMortgageRate",
+                    "buyToLetMortgageType",
+                    "pensionPercent",
+                    "pensionEmployerPercent",
+                    "isSalarySacrifice",
+                    "isSalarySacrificeEmployerNi",
+                    "monthlySavingsTarget",
+                    "savingsAllocationMode",
+                    "savingsDefaultInterestRate",
+                    "setupChecklistCompletedSteps",
+                    "customBudgetCategories",
+                    "enabledPages",
+                    "dashboardWidgets",
+                    "dashboardWidgetOrder",
+                    "dashboardWidgetSizes",
+                    "dashboardWidgetConfig",
+                    "hasResetFinancialData",
+                    "onboardingCompleted",
+                    "taxRegion",
+                    "birthYear",
+                    "studentLoanPlans",
+                    "housingStatus",
+                    "monthlyHousingCost",
+                    "monthlyOtherOutgoings",
+                    "createdAt",
+                    "updatedAt"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
           },
           "400": {
             "description": "Request failed validation."
@@ -1996,7 +5166,22 @@
         "tags": ["profile"],
         "responses": {
           "200": {
-            "description": "Success. Response schemas are not yet part of the contract."
+            "description": "Success.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "const": true
+                    }
+                  },
+                  "required": ["success"],
+                  "additionalProperties": false
+                }
+              }
+            }
           },
           "400": {
             "description": "Request failed validation."
@@ -2018,7 +5203,311 @@
         "tags": ["profile"],
         "responses": {
           "200": {
-            "description": "Success. Response schemas are not yet part of the contract."
+            "description": "Success.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "profile": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                        },
+                        "userId": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "email": {
+                          "type": ["string", "null"]
+                        },
+                        "displayName": {
+                          "type": ["string", "null"]
+                        },
+                        "firstName": {
+                          "type": ["string", "null"]
+                        },
+                        "lastName": {
+                          "type": ["string", "null"]
+                        },
+                        "avatarUrl": {
+                          "type": ["string", "null"]
+                        },
+                        "currency": {
+                          "type": "string"
+                        },
+                        "country": {
+                          "type": "string"
+                        },
+                        "employmentType": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "enum": ["employed", "self-employed", "other"]
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "annualSalary": {
+                          "type": ["number", "null"]
+                        },
+                        "monthlyTakeHome": {
+                          "type": ["number", "null"]
+                        },
+                        "hasSecondIncome": {
+                          "type": "boolean"
+                        },
+                        "secondIncomeMonthly": {
+                          "type": ["number", "null"]
+                        },
+                        "hasRentalIncome": {
+                          "type": "boolean"
+                        },
+                        "rentalIncomeMonthly": {
+                          "type": ["number", "null"]
+                        },
+                        "hasMortgage": {
+                          "type": "boolean"
+                        },
+                        "mortgageType": {
+                          "type": "string",
+                          "enum": ["repayment", "interest-only"]
+                        },
+                        "propertyOwnershipShare": {
+                          "type": "number"
+                        },
+                        "hasBuyToLet": {
+                          "type": "boolean"
+                        },
+                        "buyToLetCount": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991
+                        },
+                        "buyToLetPropertyValue": {
+                          "type": ["number", "null"]
+                        },
+                        "buyToLetMonthlyRental": {
+                          "type": ["number", "null"]
+                        },
+                        "buyToLetMortgageBalance": {
+                          "type": ["number", "null"]
+                        },
+                        "buyToLetMortgageRate": {
+                          "type": ["number", "null"]
+                        },
+                        "buyToLetMortgageType": {
+                          "type": "string",
+                          "enum": ["repayment", "interest-only"]
+                        },
+                        "pensionPercent": {
+                          "type": "number"
+                        },
+                        "pensionEmployerPercent": {
+                          "type": "number"
+                        },
+                        "isSalarySacrifice": {
+                          "type": "boolean"
+                        },
+                        "isSalarySacrificeEmployerNi": {
+                          "type": "boolean"
+                        },
+                        "monthlySavingsTarget": {
+                          "type": ["number", "null"]
+                        },
+                        "savingsAllocationMode": {
+                          "type": "string",
+                          "enum": ["total", "per_account"]
+                        },
+                        "savingsDefaultInterestRate": {
+                          "type": "number"
+                        },
+                        "setupChecklistCompletedSteps": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "customBudgetCategories": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "enabledPages": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "dashboardWidgets": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "dashboardWidgetOrder": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "dashboardWidgetSizes": {
+                          "type": "object",
+                          "propertyNames": {
+                            "type": "string"
+                          },
+                          "additionalProperties": {
+                            "type": "string",
+                            "enum": ["normal", "wide"]
+                          }
+                        },
+                        "dashboardWidgetConfig": {
+                          "type": "object",
+                          "propertyNames": {
+                            "type": "string"
+                          },
+                          "additionalProperties": {}
+                        },
+                        "hasResetFinancialData": {
+                          "type": "boolean"
+                        },
+                        "onboardingCompleted": {
+                          "type": "boolean"
+                        },
+                        "taxRegion": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "enum": ["ENGLAND", "WALES", "SCOTLAND", "NORTHERN_IRELAND"]
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "birthYear": {
+                          "anyOf": [
+                            {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "studentLoanPlans": {
+                          "anyOf": [
+                            {
+                              "type": "array",
+                              "items": {
+                                "type": "string",
+                                "enum": ["PLAN_1", "PLAN_2", "PLAN_4", "PLAN_5", "POSTGRAD"]
+                              }
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "housingStatus": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "enum": ["renting", "mortgage", "own_outright"]
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "monthlyHousingCost": {
+                          "type": ["number", "null"]
+                        },
+                        "monthlyOtherOutgoings": {
+                          "type": ["number", "null"]
+                        },
+                        "createdAt": {
+                          "type": "string"
+                        },
+                        "updatedAt": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "userId",
+                        "email",
+                        "displayName",
+                        "firstName",
+                        "lastName",
+                        "avatarUrl",
+                        "currency",
+                        "country",
+                        "employmentType",
+                        "annualSalary",
+                        "monthlyTakeHome",
+                        "hasSecondIncome",
+                        "secondIncomeMonthly",
+                        "hasRentalIncome",
+                        "rentalIncomeMonthly",
+                        "hasMortgage",
+                        "mortgageType",
+                        "propertyOwnershipShare",
+                        "hasBuyToLet",
+                        "buyToLetCount",
+                        "buyToLetPropertyValue",
+                        "buyToLetMonthlyRental",
+                        "buyToLetMortgageBalance",
+                        "buyToLetMortgageRate",
+                        "buyToLetMortgageType",
+                        "pensionPercent",
+                        "pensionEmployerPercent",
+                        "isSalarySacrifice",
+                        "isSalarySacrificeEmployerNi",
+                        "monthlySavingsTarget",
+                        "savingsAllocationMode",
+                        "savingsDefaultInterestRate",
+                        "setupChecklistCompletedSteps",
+                        "customBudgetCategories",
+                        "enabledPages",
+                        "dashboardWidgets",
+                        "dashboardWidgetOrder",
+                        "dashboardWidgetSizes",
+                        "dashboardWidgetConfig",
+                        "hasResetFinancialData",
+                        "onboardingCompleted",
+                        "taxRegion",
+                        "birthYear",
+                        "studentLoanPlans",
+                        "housingStatus",
+                        "monthlyHousingCost",
+                        "monthlyOtherOutgoings",
+                        "createdAt",
+                        "updatedAt"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": ["success", "message", "profile"],
+                  "additionalProperties": false
+                }
+              }
+            }
           },
           "400": {
             "description": "Request failed validation."
@@ -2040,7 +5529,297 @@
         "tags": ["profile"],
         "responses": {
           "200": {
-            "description": "Success. Response schemas are not yet part of the contract."
+            "description": "Success.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                    },
+                    "userId": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "email": {
+                      "type": ["string", "null"]
+                    },
+                    "displayName": {
+                      "type": ["string", "null"]
+                    },
+                    "firstName": {
+                      "type": ["string", "null"]
+                    },
+                    "lastName": {
+                      "type": ["string", "null"]
+                    },
+                    "avatarUrl": {
+                      "type": ["string", "null"]
+                    },
+                    "currency": {
+                      "type": "string"
+                    },
+                    "country": {
+                      "type": "string"
+                    },
+                    "employmentType": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "enum": ["employed", "self-employed", "other"]
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "annualSalary": {
+                      "type": ["number", "null"]
+                    },
+                    "monthlyTakeHome": {
+                      "type": ["number", "null"]
+                    },
+                    "hasSecondIncome": {
+                      "type": "boolean"
+                    },
+                    "secondIncomeMonthly": {
+                      "type": ["number", "null"]
+                    },
+                    "hasRentalIncome": {
+                      "type": "boolean"
+                    },
+                    "rentalIncomeMonthly": {
+                      "type": ["number", "null"]
+                    },
+                    "hasMortgage": {
+                      "type": "boolean"
+                    },
+                    "mortgageType": {
+                      "type": "string",
+                      "enum": ["repayment", "interest-only"]
+                    },
+                    "propertyOwnershipShare": {
+                      "type": "number"
+                    },
+                    "hasBuyToLet": {
+                      "type": "boolean"
+                    },
+                    "buyToLetCount": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    "buyToLetPropertyValue": {
+                      "type": ["number", "null"]
+                    },
+                    "buyToLetMonthlyRental": {
+                      "type": ["number", "null"]
+                    },
+                    "buyToLetMortgageBalance": {
+                      "type": ["number", "null"]
+                    },
+                    "buyToLetMortgageRate": {
+                      "type": ["number", "null"]
+                    },
+                    "buyToLetMortgageType": {
+                      "type": "string",
+                      "enum": ["repayment", "interest-only"]
+                    },
+                    "pensionPercent": {
+                      "type": "number"
+                    },
+                    "pensionEmployerPercent": {
+                      "type": "number"
+                    },
+                    "isSalarySacrifice": {
+                      "type": "boolean"
+                    },
+                    "isSalarySacrificeEmployerNi": {
+                      "type": "boolean"
+                    },
+                    "monthlySavingsTarget": {
+                      "type": ["number", "null"]
+                    },
+                    "savingsAllocationMode": {
+                      "type": "string",
+                      "enum": ["total", "per_account"]
+                    },
+                    "savingsDefaultInterestRate": {
+                      "type": "number"
+                    },
+                    "setupChecklistCompletedSteps": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "customBudgetCategories": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "enabledPages": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "dashboardWidgets": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "dashboardWidgetOrder": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "dashboardWidgetSizes": {
+                      "type": "object",
+                      "propertyNames": {
+                        "type": "string"
+                      },
+                      "additionalProperties": {
+                        "type": "string",
+                        "enum": ["normal", "wide"]
+                      }
+                    },
+                    "dashboardWidgetConfig": {
+                      "type": "object",
+                      "propertyNames": {
+                        "type": "string"
+                      },
+                      "additionalProperties": {}
+                    },
+                    "hasResetFinancialData": {
+                      "type": "boolean"
+                    },
+                    "onboardingCompleted": {
+                      "type": "boolean"
+                    },
+                    "taxRegion": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "enum": ["ENGLAND", "WALES", "SCOTLAND", "NORTHERN_IRELAND"]
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "birthYear": {
+                      "anyOf": [
+                        {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "studentLoanPlans": {
+                      "anyOf": [
+                        {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "enum": ["PLAN_1", "PLAN_2", "PLAN_4", "PLAN_5", "POSTGRAD"]
+                          }
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "housingStatus": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "enum": ["renting", "mortgage", "own_outright"]
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "monthlyHousingCost": {
+                      "type": ["number", "null"]
+                    },
+                    "monthlyOtherOutgoings": {
+                      "type": ["number", "null"]
+                    },
+                    "createdAt": {
+                      "type": "string"
+                    },
+                    "updatedAt": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "userId",
+                    "email",
+                    "displayName",
+                    "firstName",
+                    "lastName",
+                    "avatarUrl",
+                    "currency",
+                    "country",
+                    "employmentType",
+                    "annualSalary",
+                    "monthlyTakeHome",
+                    "hasSecondIncome",
+                    "secondIncomeMonthly",
+                    "hasRentalIncome",
+                    "rentalIncomeMonthly",
+                    "hasMortgage",
+                    "mortgageType",
+                    "propertyOwnershipShare",
+                    "hasBuyToLet",
+                    "buyToLetCount",
+                    "buyToLetPropertyValue",
+                    "buyToLetMonthlyRental",
+                    "buyToLetMortgageBalance",
+                    "buyToLetMortgageRate",
+                    "buyToLetMortgageType",
+                    "pensionPercent",
+                    "pensionEmployerPercent",
+                    "isSalarySacrifice",
+                    "isSalarySacrificeEmployerNi",
+                    "monthlySavingsTarget",
+                    "savingsAllocationMode",
+                    "savingsDefaultInterestRate",
+                    "setupChecklistCompletedSteps",
+                    "customBudgetCategories",
+                    "enabledPages",
+                    "dashboardWidgets",
+                    "dashboardWidgetOrder",
+                    "dashboardWidgetSizes",
+                    "dashboardWidgetConfig",
+                    "hasResetFinancialData",
+                    "onboardingCompleted",
+                    "taxRegion",
+                    "birthYear",
+                    "studentLoanPlans",
+                    "housingStatus",
+                    "monthlyHousingCost",
+                    "monthlyOtherOutgoings",
+                    "createdAt",
+                    "updatedAt"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
           },
           "400": {
             "description": "Request failed validation."
@@ -2083,7 +5862,74 @@
         "tags": ["mcp-tokens"],
         "responses": {
           "200": {
-            "description": "Success. Response schemas are not yet part of the contract."
+            "description": "Success.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                      },
+                      "name": {
+                        "type": "string"
+                      },
+                      "tokenPrefix": {
+                        "type": "string",
+                        "pattern": "^flump_pat_[0-9a-f]{4}\\.\\.\\.[0-9a-f]{4}$"
+                      },
+                      "scopes": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "anonymizeInstitutions": {
+                        "type": "boolean"
+                      },
+                      "expiresAt": {
+                        "type": ["string", "null"]
+                      },
+                      "lastUsedAt": {
+                        "type": ["string", "null"]
+                      },
+                      "totalToolCalls": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991
+                      },
+                      "createdAt": {
+                        "type": "string"
+                      },
+                      "isRevoked": {
+                        "type": "boolean"
+                      },
+                      "isExpired": {
+                        "type": "boolean"
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "name",
+                      "tokenPrefix",
+                      "scopes",
+                      "anonymizeInstitutions",
+                      "expiresAt",
+                      "lastUsedAt",
+                      "totalToolCalls",
+                      "createdAt",
+                      "isRevoked",
+                      "isExpired"
+                    ],
+                    "additionalProperties": false
+                  }
+                }
+              }
+            }
           },
           "400": {
             "description": "Request failed validation."
@@ -2103,7 +5949,58 @@
         "tags": ["mcp-tokens"],
         "responses": {
           "200": {
-            "description": "Success. Response schemas are not yet part of the contract."
+            "description": "Success.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "tokenPrefix": {
+                      "type": "string",
+                      "pattern": "^flump_pat_[0-9a-f]{4}\\.\\.\\.[0-9a-f]{4}$"
+                    },
+                    "rawToken": {
+                      "type": "string",
+                      "pattern": "^flump_pat_[0-9a-f]{32}$"
+                    },
+                    "scopes": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "anonymizeInstitutions": {
+                      "type": "boolean"
+                    },
+                    "expiresAt": {
+                      "type": "string"
+                    },
+                    "createdAt": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "name",
+                    "tokenPrefix",
+                    "rawToken",
+                    "scopes",
+                    "anonymizeInstitutions",
+                    "expiresAt",
+                    "createdAt"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
           },
           "400": {
             "description": "Request failed validation."
@@ -2149,7 +6046,22 @@
         "tags": ["mcp-tokens"],
         "responses": {
           "200": {
-            "description": "Success. Response schemas are not yet part of the contract."
+            "description": "Success.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "const": true
+                    }
+                  },
+                  "required": ["success"],
+                  "additionalProperties": false
+                }
+              }
+            }
           },
           "400": {
             "description": "Request failed validation."
@@ -2183,7 +6095,445 @@
         "tags": ["mcp-tokens"],
         "responses": {
           "200": {
-            "description": "Success. Response schemas are not yet part of the contract."
+            "description": "Success.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "pack": {
+                      "type": "object",
+                      "properties": {
+                        "metadata": {
+                          "type": "object",
+                          "properties": {
+                            "generatedAt": {
+                              "type": "string"
+                            },
+                            "schemaVersion": {
+                              "type": "string",
+                              "const": "1.0.0"
+                            },
+                            "isAnonymized": {
+                              "type": "boolean"
+                            },
+                            "currency": {
+                              "type": "string"
+                            }
+                          },
+                          "required": ["generatedAt", "schemaVersion", "isAnonymized", "currency"],
+                          "additionalProperties": false
+                        },
+                        "baseline": {
+                          "type": "object",
+                          "propertyNames": {
+                            "type": "string"
+                          },
+                          "additionalProperties": {}
+                        },
+                        "stageEvaluation": {
+                          "type": "object",
+                          "propertyNames": {
+                            "type": "string"
+                          },
+                          "additionalProperties": {}
+                        },
+                        "healthScore": {
+                          "type": "object",
+                          "propertyNames": {
+                            "type": "string"
+                          },
+                          "additionalProperties": {}
+                        },
+                        "portfolio": {
+                          "type": "object",
+                          "properties": {
+                            "netWorth": {
+                              "type": "number"
+                            },
+                            "totalAssets": {
+                              "type": "number"
+                            },
+                            "totalLiabilities": {
+                              "type": "number"
+                            },
+                            "totalLiquidCash": {
+                              "type": "number"
+                            },
+                            "totalInvestments": {
+                              "type": "number"
+                            },
+                            "totalPensions": {
+                              "type": "number"
+                            },
+                            "totalConsumerDebt": {
+                              "type": "number"
+                            },
+                            "totalMortgageBalance": {
+                              "type": "number"
+                            },
+                            "weightedSavingsRate": {
+                              "type": "number"
+                            },
+                            "monthlyHistory": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "propertyNames": {
+                                  "type": "string"
+                                },
+                                "additionalProperties": {}
+                              }
+                            },
+                            "accounts": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "string",
+                                    "minLength": 1
+                                  },
+                                  "name": {
+                                    "type": "string"
+                                  },
+                                  "rawType": {
+                                    "type": "string",
+                                    "enum": [
+                                      "Current",
+                                      "Saving",
+                                      "Mortgage",
+                                      "Loan",
+                                      "Credit Card",
+                                      "Owed",
+                                      "Investment",
+                                      "Pension",
+                                      "Property",
+                                      "Student Loan",
+                                      "Overdraft"
+                                    ]
+                                  },
+                                  "category": {
+                                    "type": "string",
+                                    "enum": [
+                                      "cash",
+                                      "savings",
+                                      "investments",
+                                      "pensions",
+                                      "debt",
+                                      "mortgages",
+                                      "property",
+                                      "studentLoans",
+                                      "other"
+                                    ]
+                                  },
+                                  "isAsset": {
+                                    "type": "boolean"
+                                  },
+                                  "isLiability": {
+                                    "type": "boolean"
+                                  },
+                                  "nominalBalance": {
+                                    "type": "number"
+                                  },
+                                  "netWorthBalance": {
+                                    "type": "number"
+                                  },
+                                  "latestBalance": {
+                                    "type": "number"
+                                  },
+                                  "overdrawnAmount": {
+                                    "type": "number"
+                                  },
+                                  "interestRate": {
+                                    "type": "number"
+                                  },
+                                  "interestRateKnown": {
+                                    "type": "boolean"
+                                  },
+                                  "monthlyContribution": {
+                                    "type": "number"
+                                  },
+                                  "monthlyContributionKnown": {
+                                    "type": "boolean"
+                                  },
+                                  "currency": {
+                                    "type": "string",
+                                    "pattern": "^[A-Z]{3}$"
+                                  },
+                                  "latestMonth": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 12
+                                  },
+                                  "latestYear": {
+                                    "type": "integer",
+                                    "minimum": -9007199254740991,
+                                    "maximum": 9007199254740991
+                                  },
+                                  "history": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "object",
+                                      "properties": {
+                                        "year": {
+                                          "type": "integer",
+                                          "minimum": -9007199254740991,
+                                          "maximum": 9007199254740991
+                                        },
+                                        "month": {
+                                          "type": "integer",
+                                          "minimum": 1,
+                                          "maximum": 12
+                                        },
+                                        "value": {
+                                          "type": "number"
+                                        }
+                                      },
+                                      "required": ["year", "month", "value"],
+                                      "additionalProperties": false
+                                    }
+                                  }
+                                },
+                                "required": [
+                                  "id",
+                                  "name",
+                                  "rawType",
+                                  "category",
+                                  "isAsset",
+                                  "isLiability",
+                                  "nominalBalance",
+                                  "netWorthBalance",
+                                  "latestBalance",
+                                  "overdrawnAmount",
+                                  "interestRate",
+                                  "interestRateKnown",
+                                  "monthlyContribution",
+                                  "monthlyContributionKnown",
+                                  "currency",
+                                  "history"
+                                ],
+                                "additionalProperties": false
+                              }
+                            }
+                          },
+                          "required": [
+                            "netWorth",
+                            "totalAssets",
+                            "totalLiabilities",
+                            "totalLiquidCash",
+                            "totalInvestments",
+                            "totalPensions",
+                            "totalConsumerDebt",
+                            "totalMortgageBalance",
+                            "weightedSavingsRate",
+                            "monthlyHistory",
+                            "accounts"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "debtSummary": {
+                          "type": "object",
+                          "properties": {
+                            "consumerDebts": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "propertyNames": {
+                                  "type": "string"
+                                },
+                                "additionalProperties": {}
+                              }
+                            },
+                            "totalStartingDebtGbp": {
+                              "type": "number"
+                            },
+                            "avalancheVsSnowballComparison": {
+                              "type": "object",
+                              "propertyNames": {
+                                "type": "string"
+                              },
+                              "additionalProperties": {}
+                            },
+                            "promoCliffAlerts": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "propertyNames": {
+                                  "type": "string"
+                                },
+                                "additionalProperties": {}
+                              }
+                            },
+                            "studentLoanEvaluation": {
+                              "type": "object",
+                              "propertyNames": {
+                                "type": "string"
+                              },
+                              "additionalProperties": {}
+                            }
+                          },
+                          "required": [
+                            "consumerDebts",
+                            "totalStartingDebtGbp",
+                            "avalancheVsSnowballComparison",
+                            "promoCliffAlerts"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "budgetSummary": {
+                          "type": "object",
+                          "properties": {
+                            "monthlyIncome": {
+                              "type": ["number", "null"]
+                            },
+                            "essentialBillsMonthly": {
+                              "type": ["number", "null"]
+                            },
+                            "discretionarySpendMonthly": {
+                              "type": ["number", "null"]
+                            },
+                            "plannedSavingsMonthly": {
+                              "type": ["number", "null"]
+                            },
+                            "monthlySurplus": {
+                              "type": ["number", "null"]
+                            },
+                            "safeToSpend": {
+                              "anyOf": [
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "weeklyAllowance": {
+                                      "type": "number"
+                                    },
+                                    "dailyAllowance": {
+                                      "type": "number"
+                                    },
+                                    "monthlyDiscretionary": {
+                                      "type": "number"
+                                    },
+                                    "fixedCommitments": {
+                                      "type": "number"
+                                    }
+                                  },
+                                  "required": [
+                                    "weeklyAllowance",
+                                    "dailyAllowance",
+                                    "monthlyDiscretionary",
+                                    "fixedCommitments"
+                                  ],
+                                  "additionalProperties": false
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "emergencyRunwayMonths": {
+                              "type": ["number", "null"]
+                            },
+                            "entries": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "string"
+                                  },
+                                  "category": {
+                                    "type": "string"
+                                  },
+                                  "name": {
+                                    "type": "string"
+                                  },
+                                  "amount": {
+                                    "type": "number"
+                                  },
+                                  "frequency": {
+                                    "type": "string"
+                                  },
+                                  "isIncome": {
+                                    "type": "boolean"
+                                  },
+                                  "isEssential": {
+                                    "type": "boolean"
+                                  },
+                                  "notes": {
+                                    "type": ["string", "null"]
+                                  }
+                                },
+                                "required": [
+                                  "id",
+                                  "category",
+                                  "name",
+                                  "amount",
+                                  "frequency",
+                                  "isIncome",
+                                  "isEssential"
+                                ],
+                                "additionalProperties": false
+                              }
+                            }
+                          },
+                          "required": [
+                            "monthlyIncome",
+                            "essentialBillsMonthly",
+                            "discretionarySpendMonthly",
+                            "plannedSavingsMonthly",
+                            "monthlySurplus",
+                            "safeToSpend",
+                            "emergencyRunwayMonths",
+                            "entries"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "taxSummary": {
+                          "type": "object",
+                          "properties": {
+                            "currentTaxYear": {
+                              "type": "string"
+                            },
+                            "ukTaxCalculation": {
+                              "type": "object",
+                              "propertyNames": {
+                                "type": "string"
+                              },
+                              "additionalProperties": {}
+                            },
+                            "selfAssessmentLedgerSummary": {
+                              "type": "object",
+                              "propertyNames": {
+                                "type": "string"
+                              },
+                              "additionalProperties": {}
+                            }
+                          },
+                          "required": ["currentTaxYear", "ukTaxCalculation"],
+                          "additionalProperties": false
+                        }
+                      },
+                      "required": [
+                        "metadata",
+                        "baseline",
+                        "stageEvaluation",
+                        "healthScore",
+                        "portfolio",
+                        "debtSummary",
+                        "budgetSummary",
+                        "taxSummary"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "markdown": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["pack", "markdown"],
+                  "additionalProperties": false
+                }
+              }
+            }
           },
           "400": {
             "description": "Request failed validation."
@@ -2215,7 +6565,7 @@
         "tags": ["app"],
         "responses": {
           "200": {
-            "description": "Success. Response schemas are not yet part of the contract."
+            "description": "Success. Not a JSON body (see NON_JSON_RESPONSE_ROUTES)."
           },
           "400": {
             "description": "Request failed validation."
@@ -2235,7 +6585,7 @@
         "tags": ["app"],
         "responses": {
           "200": {
-            "description": "Success. Response schemas are not yet part of the contract."
+            "description": "Success. Not a JSON body (see NON_JSON_RESPONSE_ROUTES)."
           },
           "400": {
             "description": "Request failed validation."
@@ -2257,7 +6607,7 @@
         "tags": ["app"],
         "responses": {
           "200": {
-            "description": "Success. Response schemas are not yet part of the contract."
+            "description": "Success. Not a JSON body (see NON_JSON_RESPONSE_ROUTES)."
           },
           "400": {
             "description": "Request failed validation."
@@ -2272,7 +6622,22 @@
         "tags": ["app"],
         "responses": {
           "200": {
-            "description": "Success. Response schemas are not yet part of the contract."
+            "description": "Success.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "const": "ok"
+                    }
+                  },
+                  "required": ["status"],
+                  "additionalProperties": false
+                }
+              }
+            }
           },
           "400": {
             "description": "Request failed validation."
@@ -2287,7 +6652,46 @@
         "tags": ["app"],
         "responses": {
           "200": {
-            "description": "Success. Response schemas are not yet part of the contract."
+            "description": "Success.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "status": {
+                          "type": "string",
+                          "const": "ok"
+                        },
+                        "version": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "commit": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 7
+                        }
+                      },
+                      "required": ["status", "version", "commit"],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "status": {
+                          "type": "string",
+                          "const": "unavailable"
+                        }
+                      },
+                      "required": ["status"],
+                      "additionalProperties": false
+                    }
+                  ]
+                }
+              }
+            }
           },
           "400": {
             "description": "Request failed validation."
