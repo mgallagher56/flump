@@ -134,6 +134,64 @@ export interface WorkspaceSnapshot {
   bankConnections: any[];
 }
 
+export interface BackendBytes {
+  body: ArrayBuffer;
+  contentType: string;
+  /** Decoded from the backend's `Content-Disposition: ...; filename*=UTF-8''...`, when present. */
+  filename: string | null;
+}
+
+/**
+ * Fetches a binary resource (a receipt) from the backend with the bearer token. One attempt, no
+ * retry, bounded by the same timeout as `backendFetch`. Failures are BackendErrors that never
+ * carry the token, URL or body.
+ */
+export async function backendFetchBytes(
+  endpoint: string,
+  opts: { accessToken: string; signal?: AbortSignal; timeoutMs?: number },
+): Promise<BackendBytes> {
+  const controller = new AbortController();
+  const onCallerAbort = () => controller.abort(opts.signal?.reason);
+  if (opts.signal?.aborted) onCallerAbort();
+  else opts.signal?.addEventListener("abort", onCallerAbort, { once: true });
+  const timer = setTimeout(
+    () => controller.abort(new Error("timeout")),
+    opts.timeoutMs ?? DEFAULT_TIMEOUT_MS,
+  );
+  try {
+    const res = await fetch(`${apiConfig.apiBaseUrl}${endpoint}`, {
+      method: "GET",
+      headers: { Authorization: `Bearer ${opts.accessToken}` },
+      signal: controller.signal,
+    });
+    if (!res.ok) throw new BackendError(kindFromStatus(res.status), endpoint, res.status);
+    // Headers are read through a name variable so the route-inventory scan never mistakes them for calls.
+    const header = (name: string) => res.headers.get(name);
+    const disposition = header("Content-Disposition") ?? "";
+    const encoded = /filename\*=UTF-8''([^;]+)/i.exec(disposition)?.[1];
+    let filename: string | null = null;
+    if (encoded) {
+      try {
+        filename = decodeURIComponent(encoded);
+      } catch {
+        filename = null;
+      }
+    }
+    return {
+      body: await res.arrayBuffer(),
+      contentType: header("Content-Type") ?? "application/octet-stream",
+      filename,
+    };
+  } catch (err) {
+    if (err instanceof BackendError) throw err;
+    if (opts.signal?.aborted) throw err;
+    throw new BackendError("unavailable", endpoint, undefined, { cause: err });
+  } finally {
+    clearTimeout(timer);
+    opts.signal?.removeEventListener("abort", onCallerAbort);
+  }
+}
+
 export interface WorkspaceFetchOptions {
   includeBudget?: boolean;
   includeTax?: boolean;

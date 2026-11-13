@@ -73,6 +73,7 @@ export const action = async (args: ActionFunctionArgs) => {
       const receiptFilename = formData.get("receiptFilename") || null;
       const receiptMimeType = formData.get("receiptMimeType") || null;
       const receiptData = formData.get("receiptData") || null;
+      const receiptClear = formData.get("receiptClear") === "1";
 
       await backendFetch(`/tax-records/${encodeURIComponent(String(id ?? ""))}`, {
         accessToken: token,
@@ -89,7 +90,8 @@ export const action = async (args: ActionFunctionArgs) => {
           notes,
           receiptFilename,
           receiptMimeType,
-          receiptData,
+          // Omitting receiptData keeps the stored receipt (E20-N15); null clears it.
+          ...(receiptData ? { receiptData } : receiptClear ? { receiptData: null } : {}),
         },
       });
     } else if (intent === "delete-transaction") {

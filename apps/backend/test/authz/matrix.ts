@@ -61,6 +61,7 @@ export const ROUTE_MATRIX: Readonly<Record<string, MatrixRow>> = {
   // Tax, user-profile and mcp-tokens: pending N23.
   "GET /tax-records": pending("tax controller"),
   "GET /tax-records/:id": pending("tax controller"),
+  "GET /tax-records/:id/receipt": pending("tax controller receipt download (E20-N15)"),
   "POST /tax-records/bulk": pending("tax controller, capPreviousRecordIds across users"),
   "POST /tax-records": pending("tax controller"),
   "PATCH /tax-records/:id": pending("tax controller"),

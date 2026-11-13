@@ -186,7 +186,8 @@ const TaxScreen: FC = () => {
       notes: formNotes || null,
       receiptFilename: editingRecord?.receiptFilename || null,
       receiptMimeType: editingRecord?.receiptMimeType || null,
-      receiptData: editingRecord?.receiptData || null,
+      // receiptData is omitted on purpose: the API no longer returns it and omitting keeps the
+      // stored receipt (E20-N15). The mobile app does not upload or clear receipts.
     };
 
     try {

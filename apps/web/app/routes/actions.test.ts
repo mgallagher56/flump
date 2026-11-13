@@ -281,7 +281,6 @@ const cases: Case[] = [
       notes: "note",
       receiptFilename: null,
       receiptMimeType: null,
-      receiptData: null,
     },
   },
   {
@@ -473,6 +472,36 @@ describe("onboarding action", () => {
     globalThis.fetch = respond(503);
     const res: any = await onboardingAction(args());
     expect(res.init.status).toBe(503);
+  });
+});
+
+describe("tax action, receipts on update (E20-N15)", () => {
+  const send = async (fields: Record<string, string>) => {
+    const fetchMock = respond(200, { success: true });
+    globalThis.fetch = fetchMock;
+    await taxAction(
+      makeArgs({
+        intent: "update-transaction",
+        fields: { id: "t1", ...fields },
+      } as unknown as Case),
+    );
+    return JSON.parse(fetchMock.mock.calls[0][1].body);
+  };
+
+  it("omits receiptData when the form has none, so the stored receipt is kept", async () => {
+    const body = await send({ receiptFilename: "a.png", receiptMimeType: "image/png" });
+    expect(body).not.toHaveProperty("receiptData");
+    expect(body.receiptFilename).toBe("a.png");
+  });
+
+  it("sends receiptData for a newly chosen file", async () => {
+    const body = await send({ receiptData: "data:image/png;base64,AAAA" });
+    expect(body.receiptData).toBe("data:image/png;base64,AAAA");
+  });
+
+  it("sends null receiptData only when the clear flag is set", async () => {
+    const body = await send({ receiptClear: "1" });
+    expect(body.receiptData).toBeNull();
   });
 });
 

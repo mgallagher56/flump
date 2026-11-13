@@ -167,7 +167,9 @@ const TaxContainer: FC = () => {
   // Receipt upload base64 states
   const [receiptFilename, setReceiptFilename] = useState<string | null>(null);
   const [receiptMimeType, setReceiptMimeType] = useState<string | null>(null);
+  // Only a newly chosen file's data lives here; stored receipts are fetched from the receipt route.
   const [receiptData, setReceiptData] = useState<string | null>(null);
+  const [receiptCleared, setReceiptCleared] = useState(false);
 
   // View receipt modal state
   const [activeReceiptRecord, setActiveReceiptRecord] = useState<TaxRecord | null>(null);
@@ -199,6 +201,7 @@ const TaxContainer: FC = () => {
     setReceiptFilename(null);
     setReceiptMimeType(null);
     setReceiptData(null);
+    setReceiptCleared(false);
     setIsModalOpen(true);
   };
 
@@ -215,7 +218,8 @@ const TaxContainer: FC = () => {
     setFormNotes(record.notes || "");
     setReceiptFilename(record.receiptFilename);
     setReceiptMimeType(record.receiptMimeType);
-    setReceiptData(record.receiptData);
+    setReceiptData(null);
+    setReceiptCleared(false);
     setIsModalOpen(true);
   };
 
@@ -261,6 +265,7 @@ const TaxContainer: FC = () => {
 
     setReceiptFilename(file.name);
     setReceiptMimeType(file.type);
+    setReceiptCleared(false);
 
     const reader = new FileReader();
     reader.onloadend = () => {
@@ -273,6 +278,7 @@ const TaxContainer: FC = () => {
     setReceiptFilename(null);
     setReceiptMimeType(null);
     setReceiptData(null);
+    setReceiptCleared(true);
   };
 
   // Perform UK tax calculations for all available tax years
@@ -338,6 +344,8 @@ const TaxContainer: FC = () => {
       receiptFilename: receiptFilename || undefined,
       receiptMimeType: receiptMimeType || undefined,
       receiptData: receiptData || undefined,
+      // An omitted receipt keeps the stored one; clearing must be said explicitly.
+      receiptClear: receiptCleared && !receiptData ? "1" : undefined,
     } as any;
 
     fetcher.submit(payload, { method: "POST" });
@@ -1819,7 +1827,7 @@ const TaxContainer: FC = () => {
                           {record.frequency}
                         </td>
                         <td className={tdStyle}>
-                          {record.receiptFilename ? (
+                          {record.hasReceipt ? (
                             <button
                               className={css({
                                 display: "flex",
@@ -2171,7 +2179,7 @@ const TaxContainer: FC = () => {
         onClose={() => setActiveReceiptRecord(null)}
         onConfirm={() => setActiveReceiptRecord(null)}
       >
-        {activeReceiptRecord?.receiptData ? (
+        {activeReceiptRecord?.hasReceipt ? (
           <div
             style={{
               display: "flex",
@@ -2202,10 +2210,10 @@ const TaxContainer: FC = () => {
                   {activeReceiptRecord.receiptFilename}
                 </span>
                 <span style={{ fontSize: "xs", color: "var(--colors-text-muted)" }}>
-                  PDF Document (Base64)
+                  PDF document
                 </span>
                 <a
-                  href={activeReceiptRecord.receiptData}
+                  href={`/app/tax/receipts/${encodeURIComponent(activeReceiptRecord.id)}`}
                   download={activeReceiptRecord.receiptFilename || "receipt.pdf"}
                   className={css({
                     marginTop: "16px",
@@ -2225,7 +2233,7 @@ const TaxContainer: FC = () => {
               </div>
             ) : (
               <img
-                src={activeReceiptRecord.receiptData}
+                src={`/app/tax/receipts/${encodeURIComponent(activeReceiptRecord.id)}`}
                 alt={activeReceiptRecord.name}
                 className={css({
                   maxWidth: "100%",

@@ -1,4 +1,4 @@
-import { BadRequestException, NotFoundException } from "@nestjs/common";
+import { BadRequestException, NotFoundException, StreamableFile } from "@nestjs/common";
 import { describe, expect, it, vi } from "vitest";
 import { TaxController } from "./tax.controller";
 import { createInMemoryRepository } from "./testing/in-memory-repository";
@@ -88,7 +88,7 @@ describe("TaxController", () => {
     mockRepo.findOne.mockResolvedValueOnce(null);
     await expect(controller.getTaxRecord(req, "missing")).rejects.toThrow(NotFoundException);
     mockRepo.findOne.mockResolvedValueOnce({ id: "r1" });
-    expect(await controller.getTaxRecord(req, "r1")).toEqual({ id: "r1" });
+    expect(await controller.getTaxRecord(req, "r1")).toEqual({ id: "r1", hasReceipt: false });
 
     // Create
     const created = await controller.createTaxRecord(req, { name: "Div", amount: 100 });
@@ -267,5 +267,109 @@ describe("TaxController receipt validation (E20-N14)", () => {
     expect(repo.create).toHaveBeenLastCalledWith(
       expect.objectContaining({ receiptData: null, receiptMimeType: null, receiptFilename: null }),
     );
+  });
+
+  describe("receipts (E20-N15)", () => {
+    const PNG_BYTES = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 1, 2, 3]);
+    const PNG_URL = `data:image/png;base64,${PNG_BYTES.toString("base64")}`;
+    const withReceipt = {
+      id: "r-A",
+      userId: "userA",
+      name: "Rent",
+      amount: 100,
+      receiptFilename: "rent.png",
+      receiptMimeType: "image/png",
+      receiptData: PNG_URL,
+    };
+    const userA = { user: { id: "userA" } };
+    const userB = { user: { id: "userB" } };
+    const read = async (file: StreamableFile): Promise<Buffer> => {
+      const chunks: Buffer[] = [];
+      for await (const chunk of file.getStream()) chunks.push(Buffer.from(chunk));
+      return Buffer.concat(chunks);
+    };
+
+    it("lists and details never expose receiptData but flag hasReceipt", async () => {
+      const repo = createInMemoryRepository([
+        withReceipt,
+        { id: "r-N", userId: "userA", name: "None", receiptFilename: null, receiptData: null },
+      ]);
+      const controller = new TaxController(repo as any, {} as any);
+
+      const list = await controller.getTaxRecords(userA);
+      expect(list.map((r) => r.hasReceipt).sort()).toEqual([false, true]);
+      for (const r of list) expect(r).not.toHaveProperty("receiptData");
+
+      const detail = await controller.getTaxRecord(userA, "r-A");
+      expect(detail.hasReceipt).toBe(true);
+      expect(detail).not.toHaveProperty("receiptData");
+    });
+
+    it("create and patch responses omit receiptData and report hasReceipt", async () => {
+      const repo = createInMemoryRepository([]);
+      const controller = new TaxController(repo as any, {} as any);
+      const created = await controller.createTaxRecord(userA, {
+        name: "x",
+        receiptFilename: "a.png",
+        receiptData: PNG_URL,
+      });
+      expect(created.hasReceipt).toBe(true);
+      expect(created).not.toHaveProperty("receiptData");
+
+      const patched = await controller.updateTaxRecord(userA, created.id, { amount: 5 });
+      expect(patched.hasReceipt).toBe(true);
+      expect(patched).not.toHaveProperty("receiptData");
+      expect(repo.rows[0].receiptData).toBe(PNG_URL);
+
+      const cleared = await controller.updateTaxRecord(userA, created.id, { receiptData: null });
+      expect(cleared.hasReceipt).toBe(false);
+      expect(repo.rows[0].receiptData).toBeNull();
+    });
+
+    it("PATCH keeps the stored receipt when the body omits it", async () => {
+      const repo = createInMemoryRepository([withReceipt]);
+      const controller = new TaxController(repo as any, {} as any);
+      await controller.updateTaxRecord(userA, "r-A", { name: "Renamed" });
+      expect(repo.rows[0]).toMatchObject({ name: "Renamed", receiptData: PNG_URL });
+    });
+
+    it("GET receipt returns the bytes with the sniffed type to the owner", async () => {
+      const controller = new TaxController(
+        createInMemoryRepository([withReceipt]) as any,
+        {} as any,
+      );
+      const file = await controller.getReceipt(userA, "r-A");
+      expect(file.getHeaders().type).toBe("image/png");
+      expect(await read(file)).toEqual(PNG_BYTES);
+      expect(file.getHeaders().disposition).toBe("attachment; filename*=UTF-8''rent.png");
+    });
+
+    it("GET receipt asks the repository explicitly for the select:false column", async () => {
+      const repo = createInMemoryRepository([withReceipt]);
+      const controller = new TaxController(repo as any, {} as any);
+      await controller.getReceipt(userA, "r-A");
+      const options = repo.findOne.mock.calls[0]?.[0] as any;
+      expect(options.where).toEqual({ id: "r-A", userId: "userA" });
+      expect(options.select.receiptData).toBe(true);
+    });
+
+    it("GET receipt is 404 for another user, a missing id, no receipt and legacy bad data", async () => {
+      const repo = createInMemoryRepository([
+        withReceipt,
+        { id: "r-N", userId: "userA", receiptData: null },
+        {
+          id: "r-L",
+          userId: "userA",
+          receiptFilename: "x.html",
+          receiptMimeType: "text/html",
+          receiptData: "data:text/html;base64,PGI+aGk8L2I+",
+        },
+      ]);
+      const controller = new TaxController(repo as any, {} as any);
+      await expect(controller.getReceipt(userB, "r-A")).rejects.toThrow(NotFoundException);
+      await expect(controller.getReceipt(userA, "nope")).rejects.toThrow(NotFoundException);
+      await expect(controller.getReceipt(userA, "r-N")).rejects.toThrow(NotFoundException);
+      await expect(controller.getReceipt(userA, "r-L")).rejects.toThrow(NotFoundException);
+    });
   });
 });

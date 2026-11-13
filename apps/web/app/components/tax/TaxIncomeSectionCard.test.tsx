@@ -89,7 +89,7 @@ describe("<TaxIncomeSectionCard />", () => {
       frequency: "one-off",
       receiptFilename: "invoice.pdf",
       receiptMimeType: "application/pdf",
-      receiptData: "data:application/pdf;base64,JVBERi0=",
+      hasReceipt: true,
     };
 
     const { getByText, getByPlaceholderText, getByTitle } = customRender(
