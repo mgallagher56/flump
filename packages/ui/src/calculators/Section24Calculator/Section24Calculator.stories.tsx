@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react";
+import { expect, within } from "@storybook/test";
 import { Section24Calculator } from "./Section24Calculator";
 
 const meta: Meta<typeof Section24Calculator> = {
@@ -9,7 +10,17 @@ const meta: Meta<typeof Section24Calculator> = {
 export default meta;
 type Story = StoryObj<typeof Section24Calculator>;
 
-export const Default: Story = {
-  // E8 waiver: color-contrast
-  parameters: { a11y: { config: { rules: [{ id: "color-contrast", enabled: false }] } } },
+const play: Story["play"] = async ({ canvasElement }) => {
+  const canvas = within(canvasElement);
+  await expect(canvas.getByTestId("section-24-tool")).toBeInTheDocument();
+};
+
+export const Light: Story = {
+  globals: { theme: "light" },
+  play,
+};
+
+export const Dark: Story = {
+  globals: { theme: "dark" },
+  play,
 };

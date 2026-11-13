@@ -1,15 +1,35 @@
 import { calculateTaxTrapRelief, persistOnboardingSeed } from "@flump/finance-engine";
+import { ArrowRight, CircleCheck, TriangleAlert } from "lucide-react";
 import type { FC } from "react";
 import { useMemo, useState } from "react";
-import { FiAlertTriangle, FiArrowRight, FiCheckCircle } from "react-icons/fi";
-import { Button } from "../../components/forms/Button.js";
+import { Button } from "../../primitives/Button";
+import { Icon } from "../../primitives/Icon";
 import { LiveRegion } from "../../primitives/LiveRegion";
 import {
+  badgeRowStyle,
+  badgeStyle,
   cardStyle,
+  childcareIconStyle,
+  childcareStyle,
+  ctaIconStyle,
+  ctaStyle,
+  estimateNoteStyle,
+  fieldLabelStyle,
+  fieldRowStyle,
+  headerStyle,
   inputGroupStyle,
+  introStyle,
   metricCard,
+  metricLabelStyle,
+  metricNoteStyle,
   metricsGridStyle,
+  metricValueStyle,
+  pillInputStyle,
+  pillPrefixStyle,
+  pillWrapStyle,
+  scaleLabelsStyle,
   sliderStyle,
+  titleStyle,
 } from "./TaxTrapCalculator.styles.js";
 
 export interface TaxTrapCalculatorProps {
@@ -47,6 +67,7 @@ export const TaxTrapCalculator: FC<TaxTrapCalculatorProps> = ({
   const maxSacrifice = Math.min(60000, Math.max(0, grossIncome - 20000));
   const isTrapZone = grossIncome > 100000;
   const netIncomeAfterSacrifice = Math.max(0, grossIncome - salarySacrifice);
+  const stillInTrap = isTrapZone && salarySacrifice < analysis.excessAbove100k;
   const childcareEligible = netIncomeAfterSacrifice <= 100000;
 
   const headline = `Estimated tax and NI saved £${totalTaxSaved.toLocaleString("en-GB")}`;
@@ -69,90 +90,37 @@ export const TaxTrapCalculator: FC<TaxTrapCalculatorProps> = ({
 
   return (
     <div className={cardStyle} data-testid="tax-trap-calculator-tool">
-      <div style={{ marginBottom: "24px" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
-          <span
-            style={{
-              padding: "3px 10px",
-              borderRadius: "9999px",
-              backgroundColor: "var(--colors-primary-subtle)",
-              color: "var(--colors-primary)",
-              fontSize: "12px",
-              fontWeight: 700,
-              textTransform: "uppercase",
-              letterSpacing: "0.05em",
-            }}
-          >
-            UK {TAX_YEAR} Tax Engine
-          </span>
+      <div className={headerStyle}>
+        <div className={badgeRowStyle}>
+          <span className={badgeStyle({ tone: "brand" })}>UK {TAX_YEAR} Tax Engine</span>
           {isTrapZone && (
-            <span
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "4px",
-                padding: "3px 10px",
-                borderRadius: "9999px",
-                backgroundColor: "var(--colors-status-danger-bg)",
-                color: "var(--colors-status-danger-text)",
-                fontSize: "12px",
-                fontWeight: 700,
-              }}
-            >
-              <FiAlertTriangle size={13} /> 60% trap active
+            <span className={badgeStyle({ tone: "danger" })}>
+              <Icon icon={TriangleAlert} size="sm" /> 60% trap active
             </span>
           )}
         </div>
-        <h2
-          style={{
-            fontSize: "1.25rem",
-            fontWeight: 700,
-            color: "var(--colors-text-primary)",
-            margin: "0 0 4px 0",
-          }}
-        >
-          Interactive £100k–£125k tax trap modeller
-        </h2>
-        <p style={{ fontSize: "0.875rem", color: "var(--colors-text-muted)", margin: 0 }}>
+        <h2 className={titleStyle}>Interactive £100k–£125k tax trap modeller</h2>
+        <p className={introStyle}>
           Slide your income and test how salary sacrifice or SIPP contributions reclaim your
           personal allowance and unlock tax-free childcare.
         </p>
       </div>
 
       <div className={inputGroupStyle}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <label htmlFor="gross-income-input" style={{ fontSize: "14px", fontWeight: 600 }}>
+        <div className={fieldRowStyle}>
+          <label htmlFor="gross-income-input" className={fieldLabelStyle}>
             Total gross UK income
           </label>
-          <div style={{ position: "relative", display: "inline-flex", alignItems: "center" }}>
-            <span
-              style={{
-                position: "absolute",
-                left: "8px",
-                fontSize: "13px",
-                color: "var(--colors-text-muted)",
-              }}
-            >
-              £
-            </span>
+          <div className={pillWrapStyle}>
+            <span className={pillPrefixStyle}>£</span>
             <input
               id="gross-income-input"
+              className={pillInputStyle({ tone: "primary" })}
               type="number"
               min={0}
               step={500}
               value={grossIncome}
               onChange={(e) => setGrossIncome(Number(e.target.value) || 0)}
-              style={{
-                width: "110px",
-                padding: "4px 8px 4px 20px",
-                fontSize: "15px",
-                fontWeight: 700,
-                textAlign: "right",
-                color: "var(--colors-primary)",
-                borderRadius: "8px",
-                border: "1px solid var(--colors-border-input)",
-                backgroundColor: "var(--colors-surface)",
-              }}
             />
           </div>
         </div>
@@ -167,14 +135,7 @@ export const TaxTrapCalculator: FC<TaxTrapCalculatorProps> = ({
           value={grossIncome}
           onChange={(e) => setGrossIncome(Number(e.target.value))}
         />
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            fontSize: "11px",
-            color: "var(--colors-text-muted)",
-          }}
-        >
+        <div className={scaleLabelsStyle}>
           <span>£90k (40% Higher Rate)</span>
           <span>£100k (Trap Starts)</span>
           <span>£125,140 (Zero Allowance)</span>
@@ -183,40 +144,21 @@ export const TaxTrapCalculator: FC<TaxTrapCalculatorProps> = ({
       </div>
 
       <div className={inputGroupStyle}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <label htmlFor="sacrifice-input" style={{ fontSize: "14px", fontWeight: 600 }}>
+        <div className={fieldRowStyle}>
+          <label htmlFor="sacrifice-input" className={fieldLabelStyle}>
             Annual pension salary sacrifice / SIPP contribution
           </label>
-          <div style={{ position: "relative", display: "inline-flex", alignItems: "center" }}>
-            <span
-              style={{
-                position: "absolute",
-                left: "8px",
-                fontSize: "13px",
-                color: "var(--colors-text-muted)",
-              }}
-            >
-              £
-            </span>
+          <div className={pillWrapStyle}>
+            <span className={pillPrefixStyle}>£</span>
             <input
               id="sacrifice-input"
+              className={pillInputStyle({ tone: "positive" })}
               type="number"
               min={0}
               max={maxSacrifice}
               step={500}
               value={salarySacrifice}
               onChange={(e) => setSalarySacrifice(Number(e.target.value) || 0)}
-              style={{
-                width: "110px",
-                padding: "4px 8px 4px 20px",
-                fontSize: "15px",
-                fontWeight: 700,
-                textAlign: "right",
-                color: "var(--colors-status-positive-text)",
-                borderRadius: "8px",
-                border: "1px solid var(--colors-border-input)",
-                backgroundColor: "var(--colors-surface)",
-              }}
             />
           </div>
         </div>
@@ -236,112 +178,47 @@ export const TaxTrapCalculator: FC<TaxTrapCalculatorProps> = ({
       <LiveRegion debounceMs={1000} message={headline} visuallyHidden />
       <div className={metricsGridStyle}>
         <div className={metricCard}>
-          <span style={{ fontSize: "12px", color: "var(--colors-text-muted)" }}>
-            Effective Marginal Rate
+          <span className={metricLabelStyle}>Effective Marginal Rate</span>
+          <span className={metricValueStyle({ tone: stillInTrap ? "danger" : "positive" })}>
+            {stillInTrap ? "62.0%" : "42.0%"}
           </span>
-          <span
-            style={{
-              fontSize: "24px",
-              fontWeight: 800,
-              color:
-                isTrapZone && salarySacrifice < analysis.excessAbove100k
-                  ? "var(--colors-status-danger-text)"
-                  : "var(--colors-status-positive-text)",
-              fontVariantNumeric: "tabular-nums",
-            }}
-          >
-            {isTrapZone && salarySacrifice < analysis.excessAbove100k ? "62.0%" : "42.0%"}
-          </span>
-          <span style={{ fontSize: "11px", color: "var(--colors-text-muted)" }}>
-            40% Income Tax + 20% Taper + 2% NI
-          </span>
+          <span className={metricNoteStyle}>40% Income Tax + 20% Taper + 2% NI</span>
         </div>
 
         <div className={metricCard}>
-          <span style={{ fontSize: "12px", color: "var(--colors-text-muted)" }}>
-            Estimated tax and NI saved
-          </span>
-          <span
-            style={{
-              fontSize: "24px",
-              fontWeight: 800,
-              color: "var(--colors-status-positive-text)",
-              fontVariantNumeric: "tabular-nums",
-            }}
-          >
-            {gbp(totalTaxSaved)}
-          </span>
-          <span style={{ fontSize: "11px", color: "var(--colors-text-muted)" }}>
-            Estimate, not a guarantee
-          </span>
+          <span className={metricLabelStyle}>Estimated tax and NI saved</span>
+          <span className={metricValueStyle({ tone: "positive" })}>{gbp(totalTaxSaved)}</span>
+          <span className={metricNoteStyle}>Estimate, not a guarantee</span>
         </div>
 
         <div className={metricCard}>
-          <span style={{ fontSize: "12px", color: "var(--colors-text-muted)" }}>
-            Personal allowance reclaimed
-          </span>
-          <span
-            style={{
-              fontSize: "24px",
-              fontWeight: 800,
-              color: "var(--colors-primary)",
-              fontVariantNumeric: "tabular-nums",
-            }}
-          >
-            {gbp(allowanceReclaimed)}
-          </span>
-          <span style={{ fontSize: "11px", color: "var(--colors-text-muted)" }}>
+          <span className={metricLabelStyle}>Personal allowance reclaimed</span>
+          <span className={metricValueStyle({ tone: "primary" })}>{gbp(allowanceReclaimed)}</span>
+          <span className={metricNoteStyle}>
             of {gbp(analysis.lostPersonalAllowance)} lost allowance
           </span>
         </div>
       </div>
 
-      <p
-        data-testid="tax-trap-estimate-note"
-        style={{
-          fontSize: "12px",
-          color: "var(--colors-text-muted)",
-          margin: "-8px 0 16px 0",
-          fontVariantNumeric: "tabular-nums",
-        }}
-      >
+      <p data-testid="tax-trap-estimate-note" className={estimateNoteStyle}>
         Estimate for {TAX_YEAR}, based on the figures you entered. Assumes {TAX_YEAR} England, Wales
         and Northern Ireland rates; Scotland differs.
       </p>
 
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: "10px",
-          padding: "12px 16px",
-          borderRadius: "12px",
-          backgroundColor: childcareEligible
-            ? "var(--colors-status-positive-bg)"
-            : "var(--colors-status-danger-bg)",
-          border: `1px solid ${childcareEligible ? "var(--colors-status-positive-border)" : "var(--colors-status-danger-border)"}`,
-          marginBottom: "24px",
-        }}
-      >
-        {childcareEligible ? (
-          <FiCheckCircle color="var(--colors-status-positive-solid)" size={18} />
-        ) : (
-          <FiAlertTriangle color="var(--colors-status-danger-solid)" size={18} />
-        )}
-        <span style={{ fontSize: "13px", fontWeight: 600 }}>
+      <div className={childcareStyle({ eligible: childcareEligible })}>
+        <Icon
+          icon={childcareEligible ? CircleCheck : TriangleAlert}
+          className={childcareIconStyle({ eligible: childcareEligible })}
+        />
+        <span>
           {childcareEligible
             ? "Eligible for 15–30 Hours Free Childcare & Tax-Free Childcare (Adjusted Net Income ≤ £100k)"
             : "Childcare Cliff Edge Triggered: Adjusted net income exceeds £100,000. All funded hours revoked."}
         </span>
       </div>
 
-      <Button
-        size="md"
-        style={{ width: "100%", justifyContent: "center" }}
-        variant="primary"
-        onClick={handleSave}
-      >
-        {ctaText} <FiArrowRight style={{ marginLeft: "8px" }} />
+      <Button className={ctaStyle} variant="primary" size="md" onClick={handleSave}>
+        {ctaText} <Icon icon={ArrowRight} size="sm" className={ctaIconStyle} />
       </Button>
     </div>
   );

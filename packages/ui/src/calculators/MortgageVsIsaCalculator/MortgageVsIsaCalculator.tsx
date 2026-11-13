@@ -2,15 +2,36 @@ import { persistOnboardingSeed } from "@flump/finance-engine";
 import type { FC } from "react";
 import { useMemo, useState } from "react";
 import { FiArrowRight, FiHome, FiTrendingUp } from "react-icons/fi";
-import { Button } from "../../components/forms/Button.js";
+import { Button } from "../../primitives/Button";
 import { LiveRegion } from "../../primitives/LiveRegion";
 import {
+  adornmentStyle,
+  badgeRowStyle,
+  badgeStyle,
   cardStyle,
+  ctaCopyStyle,
+  ctaIconStyle,
+  ctaNoteStyle,
+  ctaRowStyle,
+  ctaTitleStyle,
+  headerStyle,
   inputGridStyle,
   inputGroupStyle,
+  inputRowStyle,
+  inputWrapStyle,
+  labelStyle,
   metricCard,
+  metricHeaderStyle,
+  metricIconStyle,
+  metricLabelStyle,
+  metricNoteStyle,
   metricsGridStyle,
+  metricValueStyle,
+  numberInputStyle,
   sliderStyle,
+  subtitleStyle,
+  titleStyle,
+  unitStyle,
 } from "./MortgageVsIsaCalculator.styles.js";
 
 export interface MortgageVsIsaCalculatorProps {
@@ -111,34 +132,12 @@ export const MortgageVsIsaCalculator: FC<MortgageVsIsaCalculatorProps> = ({
 
   return (
     <div className={cardStyle} data-testid="mortgage-vs-isa-tool">
-      <div style={{ marginBottom: "24px" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
-          <span
-            style={{
-              padding: "3px 10px",
-              borderRadius: "9999px",
-              backgroundColor: "rgba(245, 158, 11, 0.12)",
-              color: "var(--colors-status-warning-solid)",
-              fontSize: "12px",
-              fontWeight: 700,
-              textTransform: "uppercase",
-              letterSpacing: "0.05em",
-            }}
-          >
-            UK Mortgage & Wealth Engine
-          </span>
+      <div className={headerStyle}>
+        <div className={badgeRowStyle}>
+          <span className={badgeStyle({ tone: "warning" })}>UK Mortgage & Wealth Engine</span>
         </div>
-        <h2
-          style={{
-            fontSize: "1.25rem",
-            fontWeight: 700,
-            color: "var(--colors-text-primary)",
-            margin: "0 0 4px 0",
-          }}
-        >
-          Mortgage overpayment vs stocks and shares ISA comparator
-        </h2>
-        <p style={{ fontSize: "0.875rem", color: "var(--colors-text-muted)", margin: 0 }}>
+        <h2 className={titleStyle}>Mortgage overpayment vs stocks and shares ISA comparator</h2>
+        <p className={subtitleStyle}>
           Mathematically compare the guaranteed interest savings of mortgage overpayments against
           the compound returns of a tax-sheltered UK Stocks & Shares ISA.
         </p>
@@ -146,39 +145,20 @@ export const MortgageVsIsaCalculator: FC<MortgageVsIsaCalculatorProps> = ({
 
       <div className={inputGridStyle}>
         <div className={inputGroupStyle}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <label htmlFor="mortgage-bal" style={{ fontSize: "13px", fontWeight: 600 }}>
+          <div className={inputRowStyle}>
+            <label className={labelStyle} htmlFor="mortgage-bal">
               Mortgage balance
             </label>
-            <div style={{ position: "relative", display: "inline-flex", alignItems: "center" }}>
-              <span
-                style={{
-                  position: "absolute",
-                  left: "8px",
-                  fontSize: "12px",
-                  color: "var(--colors-text-muted)",
-                }}
-              >
-                £
-              </span>
+            <div className={inputWrapStyle}>
+              <span className={adornmentStyle({ side: "start" })}>£</span>
               <input
+                className={numberInputStyle({ tone: "warning", width: "lg", adornment: "start" })}
                 id="mortgage-bal"
                 type="number"
                 min={0}
                 step={5000}
                 value={mortgageBalance}
                 onChange={(e) => setMortgageBalance(Number(e.target.value) || 0)}
-                style={{
-                  width: "100px",
-                  padding: "3px 6px 3px 20px",
-                  fontSize: "13px",
-                  fontWeight: 700,
-                  textAlign: "right",
-                  color: "var(--colors-status-warning-solid)",
-                  borderRadius: "6px",
-                  border: "1px solid var(--colors-border-input)",
-                  backgroundColor: "var(--colors-surface)",
-                }}
               />
             </div>
           </div>
@@ -196,12 +176,13 @@ export const MortgageVsIsaCalculator: FC<MortgageVsIsaCalculatorProps> = ({
         </div>
 
         <div className={inputGroupStyle}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <label htmlFor="mortgage-rate" style={{ fontSize: "13px", fontWeight: 600 }}>
+          <div className={inputRowStyle}>
+            <label className={labelStyle} htmlFor="mortgage-rate">
               Mortgage interest rate
             </label>
-            <div style={{ position: "relative", display: "inline-flex", alignItems: "center" }}>
+            <div className={inputWrapStyle}>
               <input
+                className={numberInputStyle({ tone: "warning", width: "sm", adornment: "end" })}
                 id="mortgage-rate"
                 type="number"
                 min={0}
@@ -209,28 +190,8 @@ export const MortgageVsIsaCalculator: FC<MortgageVsIsaCalculatorProps> = ({
                 step={0.1}
                 value={interestRate}
                 onChange={(e) => setInterestRate(Number(e.target.value) || 0)}
-                style={{
-                  width: "70px",
-                  padding: "3px 18px 3px 6px",
-                  fontSize: "13px",
-                  fontWeight: 700,
-                  textAlign: "right",
-                  color: "var(--colors-status-warning-solid)",
-                  borderRadius: "6px",
-                  border: "1px solid var(--colors-border-input)",
-                  backgroundColor: "var(--colors-surface)",
-                }}
               />
-              <span
-                style={{
-                  position: "absolute",
-                  right: "6px",
-                  fontSize: "12px",
-                  color: "var(--colors-text-muted)",
-                }}
-              >
-                %
-              </span>
+              <span className={adornmentStyle({ side: "end" })}>%</span>
             </div>
           </div>
           <input
@@ -247,45 +208,22 @@ export const MortgageVsIsaCalculator: FC<MortgageVsIsaCalculatorProps> = ({
         </div>
 
         <div className={inputGroupStyle}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <label htmlFor="monthly-extra" style={{ fontSize: "13px", fontWeight: 600 }}>
+          <div className={inputRowStyle}>
+            <label className={labelStyle} htmlFor="monthly-extra">
               Monthly extra cash
             </label>
-            <div style={{ position: "relative", display: "inline-flex", alignItems: "center" }}>
-              <span
-                style={{
-                  position: "absolute",
-                  left: "8px",
-                  fontSize: "12px",
-                  color: "var(--colors-text-muted)",
-                }}
-              >
-                £
-              </span>
+            <div className={inputWrapStyle}>
+              <span className={adornmentStyle({ side: "start" })}>£</span>
               <input
+                className={numberInputStyle({ tone: "primary", width: "md", adornment: "start" })}
                 id="monthly-extra"
                 type="number"
                 min={0}
                 step={25}
                 value={monthlyContribution}
                 onChange={(e) => setMonthlyContribution(Number(e.target.value) || 0)}
-                style={{
-                  width: "80px",
-                  padding: "3px 6px 3px 20px",
-                  fontSize: "13px",
-                  fontWeight: 700,
-                  textAlign: "right",
-                  color: "var(--colors-primary)",
-                  borderRadius: "6px",
-                  border: "1px solid var(--colors-border-input)",
-                  backgroundColor: "var(--colors-surface)",
-                }}
               />
-              <span
-                style={{ fontSize: "12px", color: "var(--colors-text-muted)", marginLeft: "4px" }}
-              >
-                /mo
-              </span>
+              <span className={unitStyle}>/mo</span>
             </div>
           </div>
           <input
@@ -302,12 +240,13 @@ export const MortgageVsIsaCalculator: FC<MortgageVsIsaCalculatorProps> = ({
         </div>
 
         <div className={inputGroupStyle}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <label htmlFor="isa-return" style={{ fontSize: "13px", fontWeight: 600 }}>
+          <div className={inputRowStyle}>
+            <label className={labelStyle} htmlFor="isa-return">
               Expected Stocks and Shares ISA return
             </label>
-            <div style={{ position: "relative", display: "inline-flex", alignItems: "center" }}>
+            <div className={inputWrapStyle}>
               <input
+                className={numberInputStyle({ tone: "positive", width: "sm", adornment: "end" })}
                 id="isa-return"
                 type="number"
                 min={0}
@@ -315,28 +254,8 @@ export const MortgageVsIsaCalculator: FC<MortgageVsIsaCalculatorProps> = ({
                 step={0.25}
                 value={isaExpectedReturn}
                 onChange={(e) => setIsaExpectedReturn(Number(e.target.value) || 0)}
-                style={{
-                  width: "70px",
-                  padding: "3px 18px 3px 6px",
-                  fontSize: "13px",
-                  fontWeight: 700,
-                  textAlign: "right",
-                  color: "var(--colors-status-positive-solid)",
-                  borderRadius: "6px",
-                  border: "1px solid var(--colors-border-input)",
-                  backgroundColor: "var(--colors-surface)",
-                }}
               />
-              <span
-                style={{
-                  position: "absolute",
-                  right: "6px",
-                  fontSize: "12px",
-                  color: "var(--colors-text-muted)",
-                }}
-              >
-                %
-              </span>
+              <span className={adornmentStyle({ side: "end" })}>%</span>
             </div>
           </div>
           <input
@@ -357,92 +276,46 @@ export const MortgageVsIsaCalculator: FC<MortgageVsIsaCalculatorProps> = ({
       <LiveRegion debounceMs={1000} message={headline} visuallyHidden />
       <div className={metricsGridStyle}>
         <div className={metricCard}>
-          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-            <FiHome color="var(--colors-status-warning-solid)" size={14} />
-            <span
-              style={{
-                fontSize: "12px",
-                color: "var(--colors-text-muted)",
-                fontWeight: 600,
-              }}
-            >
-              Mortgage Overpay
-            </span>
+          <div className={metricHeaderStyle}>
+            <FiHome aria-hidden="true" className={metricIconStyle({ tone: "warning" })} size={14} />
+            <span className={metricLabelStyle}>Mortgage Overpay</span>
           </div>
-          <span
-            className="tabular-nums"
-            style={{
-              fontSize: "22px",
-              fontWeight: 800,
-              color: "var(--colors-status-warning-solid)",
-            }}
-          >
+          <span className={metricValueStyle({ tone: "warning" })}>
             Save £{Math.round(simulation.interestSaved).toLocaleString("en-GB")}
           </span>
-          <span
-            className="tabular-nums"
-            style={{ fontSize: "12px", color: "var(--colors-text-muted)" }}
-          >
+          <span className={metricNoteStyle}>
             Shaves ~{simulation.yearsShaved} years off loan term
           </span>
         </div>
 
         <div className={metricCard}>
-          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-            <FiTrendingUp color="var(--colors-status-positive-solid)" size={14} />
-            <span
-              style={{
-                fontSize: "12px",
-                color: "var(--colors-text-muted)",
-                fontWeight: 600,
-              }}
-            >
-              Stocks and shares ISA pot
-            </span>
+          <div className={metricHeaderStyle}>
+            <FiTrendingUp
+              aria-hidden="true"
+              className={metricIconStyle({ tone: "positive" })}
+              size={14}
+            />
+            <span className={metricLabelStyle}>Stocks and shares ISA pot</span>
           </div>
-          <span
-            className="tabular-nums"
-            style={{
-              fontSize: "22px",
-              fontWeight: 800,
-              color: "var(--colors-status-positive-solid)",
-            }}
-          >
+          <span className={metricValueStyle({ tone: "positive" })}>
             £{Math.round(simulation.isaPot).toLocaleString("en-GB")}
           </span>
-          <span
-            className="tabular-nums"
-            style={{ fontSize: "12px", color: "var(--colors-text-muted)" }}
-          >
+          <span className={metricNoteStyle}>
             Includes £{Math.round(simulation.isaGrowth).toLocaleString("en-GB")} in tax-free returns
           </span>
         </div>
 
         <div className={metricCard}>
+          <span className={metricLabelStyle}>ISA net wealth spread</span>
           <span
-            style={{
-              fontSize: "12px",
-              color: "var(--colors-text-muted)",
-              fontWeight: 600,
-            }}
-          >
-            ISA net wealth spread
-          </span>
-          <span
-            className="tabular-nums"
-            style={{
-              fontSize: "22px",
-              fontWeight: 800,
-              color:
-                simulation.isaNetAdvantage >= 0
-                  ? "var(--colors-status-positive-solid)"
-                  : "var(--colors-status-danger-solid)",
-            }}
+            className={metricValueStyle({
+              tone: simulation.isaNetAdvantage >= 0 ? "positive" : "danger",
+            })}
           >
             {simulation.isaNetAdvantage >= 0 ? "+" : ""}£
             {Math.round(simulation.isaNetAdvantage).toLocaleString("en-GB")}
           </span>
-          <span style={{ fontSize: "12px", color: "var(--colors-text-muted)" }}>
+          <span className={metricNoteStyle}>
             {simulation.isaNetAdvantage >= 0
               ? "Expected net wealth gain from investing"
               : "Overpaying mortgage yields higher return"}
@@ -451,34 +324,18 @@ export const MortgageVsIsaCalculator: FC<MortgageVsIsaCalculatorProps> = ({
       </div>
 
       {/* CTA */}
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          flexWrap: "wrap",
-          gap: "16px",
-          paddingTop: "20px",
-          borderTop: "1px solid var(--colors-border)",
-        }}
-      >
-        <div style={{ maxWidth: "440px" }}>
-          <span
-            style={{
-              fontSize: "13px",
-              fontWeight: 600,
-              color: "var(--colors-text-primary)",
-            }}
-          >
+      <div className={ctaRowStyle}>
+        <div className={ctaCopyStyle}>
+          <span className={ctaTitleStyle}>
             Ready to track your mortgage deal expiry & live ISA yields?
           </span>
-          <p style={{ fontSize: "12px", color: "var(--colors-text-muted)", margin: 0 }}>
+          <p className={ctaNoteStyle}>
             Flump syncs your live balance and monitors fixed-rate renewal dates automatically.
           </p>
         </div>
 
         <Button onClick={handleSave} size="lg">
-          {ctaText} <FiArrowRight aria-hidden="true" style={{ marginLeft: "6px" }} />
+          {ctaText} <FiArrowRight aria-hidden="true" className={ctaIconStyle} />
         </Button>
       </div>
     </div>

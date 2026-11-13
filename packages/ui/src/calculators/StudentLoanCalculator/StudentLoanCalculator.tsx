@@ -1,16 +1,25 @@
 import { evaluateUkStudentLoan, persistOnboardingSeed } from "@flump/finance-engine";
 import type { FC } from "react";
 import { useMemo, useState } from "react";
-import { css } from "../../../styled-system/css/index.js";
-import { Button } from "../../components/forms/Button.js";
-
+import { Button } from "../../primitives/Button";
 import { LiveRegion } from "../../primitives/LiveRegion";
 import {
+  badgeRecipe,
+  calloutBodyRecipe,
+  calloutRecipe,
+  calloutTitleRecipe,
   cardStyle,
+  ctaStyle,
+  fieldLabelStyle,
+  figureRecipe,
   gridStyle,
+  headerStyle,
   inputGroupStyle,
+  introStyle,
+  noteStyle,
   resultsBoxStyle,
   textInputStyle,
+  titleStyle,
 } from "./StudentLoanCalculator.styles.js";
 
 export interface StudentLoanCalculatorProps {
@@ -29,6 +38,8 @@ export const StudentLoanCalculator: FC<StudentLoanCalculatorProps> = ({
   const evaluation = useMemo(() => {
     return evaluateUkStudentLoan(plan, salary, balance);
   }, [plan, salary, balance]);
+
+  const tone = evaluation.recommendation === "do_not_overpay" ? "danger" : "positive";
 
   const headline = `Repayment £${Math.round(evaluation.monthlyRepayment).toLocaleString(
     "en-GB",
@@ -51,33 +62,12 @@ export const StudentLoanCalculator: FC<StudentLoanCalculatorProps> = ({
 
   return (
     <div className={cardStyle} data-testid="student-loan-tool">
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "flex-start",
-          flexWrap: "wrap",
-          gap: "12px",
-        }}
-      >
+      <div className={headerStyle}>
         <div>
-          <h3
-            style={{
-              fontSize: "1.25rem",
-              fontWeight: 700,
-              margin: "0 0 4px 0",
-              color: "var(--colors-text-primary)",
-            }}
-          >
+          <h3 className={titleStyle}>
             UK Student Loan: Overpay or Invest? (Graduate Tax Calculator)
           </h3>
-          <p
-            style={{
-              fontSize: "0.875rem",
-              color: "var(--colors-text-muted)",
-              margin: 0,
-            }}
-          >
+          <p className={introStyle}>
             UK student loans are wiped after 25–40 years. Find out whether voluntary overpayments
             save you interest or act as a donation to HM Treasury.
           </p>
@@ -87,7 +77,7 @@ export const StudentLoanCalculator: FC<StudentLoanCalculatorProps> = ({
       <div className={gridStyle}>
         <div>
           <div className={inputGroupStyle}>
-            <span style={{ fontSize: "14px", fontWeight: "bold" }}>Student Loan Plan</span>
+            <span className={fieldLabelStyle}>Student Loan Plan</span>
             <select
               aria-label="Student Loan Plan"
               className={textInputStyle}
@@ -103,7 +93,7 @@ export const StudentLoanCalculator: FC<StudentLoanCalculatorProps> = ({
           </div>
 
           <div className={inputGroupStyle}>
-            <span style={{ fontSize: "14px", fontWeight: "bold" }}>Gross Annual Salary (£)</span>
+            <span className={fieldLabelStyle}>Gross Annual Salary (£)</span>
             <input
               aria-label="Annual Salary"
               className={textInputStyle}
@@ -116,9 +106,7 @@ export const StudentLoanCalculator: FC<StudentLoanCalculatorProps> = ({
           </div>
 
           <div className={inputGroupStyle}>
-            <span style={{ fontSize: "14px", fontWeight: "bold" }}>
-              Current Outstanding Loan Balance (£)
-            </span>
+            <span className={fieldLabelStyle}>Current Outstanding Loan Balance (£)</span>
             <input
               aria-label="Outstanding Balance"
               className={textInputStyle}
@@ -134,66 +122,29 @@ export const StudentLoanCalculator: FC<StudentLoanCalculatorProps> = ({
         <div className={resultsBoxStyle}>
           <LiveRegion debounceMs={1000} message={headline} visuallyHidden />
           <div>
-            <span
-              style={{
-                fontSize: "11px",
-                backgroundColor:
-                  evaluation.recommendation === "do_not_overpay"
-                    ? "var(--colors-status-danger-bg)"
-                    : "var(--colors-status-positive-bg)",
-                color:
-                  evaluation.recommendation === "do_not_overpay"
-                    ? "var(--colors-status-danger-text)"
-                    : "var(--colors-status-positive-text)",
-                padding: "2px 8px",
-                borderRadius: "4px",
-                fontWeight: "bold",
-              }}
-            >
+            <span className={badgeRecipe({ tone })}>
               {evaluation.recommendation === "do_not_overpay"
-                ? "🛑 Verdict: DO NOT OVERPAY"
-                : "⚡ Verdict: CONSIDER OVERPAYING"}
+                ? "Verdict: DO NOT OVERPAY"
+                : "Verdict: CONSIDER OVERPAYING"}
             </span>
-            <div style={{ fontSize: "24px", fontWeight: "bold", marginTop: "6px" }}>
-              £{Math.round(evaluation.monthlyRepayment)}/mo (
-              {Math.round(evaluation.annualRepayment)}/yr)
+            <div className={figureRecipe({ tone: "neutral" })}>
+              £{Math.round(evaluation.monthlyRepayment).toLocaleString("en-GB")}/mo (£
+              {Math.round(evaluation.annualRepayment).toLocaleString("en-GB")}/yr)
             </div>
-            <p
-              style={{
-                fontSize: "12px",
-                color: "var(--colors-text-muted)",
-                margin: "4px 0 0 0",
-              }}
-            >
+            <p className={noteStyle}>
               Statutory deduction from salary ({evaluation.rate}% above £
-              {evaluation.threshold.toLocaleString()})
+              {evaluation.threshold.toLocaleString("en-GB")})
             </p>
           </div>
 
-          <div
-            style={{
-              padding: "14px",
-              backgroundColor:
-                evaluation.recommendation === "do_not_overpay"
-                  ? "rgba(239,68,68,0.06)"
-                  : "rgba(16,185,129,0.06)",
-              borderRadius: "10px",
-              border: "1px solid",
-              borderColor: evaluation.recommendation === "do_not_overpay" ? "#fca5a5" : "#6ee7b7",
-            }}
-          >
-            <div style={{ fontSize: "12px", fontWeight: "bold" }}>Graduate Tax Reality Check</div>
-            <p
-              style={{
-                fontSize: "12px",
-                margin: "4px 0 0 0",
-              }}
-            >
-              {evaluation.reasoning}
-            </p>
+          <div className={calloutRecipe({ tone })}>
+            <div className={calloutTitleRecipe({ tone: "neutral" })}>
+              Graduate Tax Reality Check
+            </div>
+            <p className={calloutBodyRecipe({ tone: "positive" })}>{evaluation.reasoning}</p>
           </div>
 
-          <Button onClick={handleSave} size="md" style={{ width: "100%" }}>
+          <Button className={ctaStyle} onClick={handleSave} size="md">
             {ctaText}
           </Button>
         </div>

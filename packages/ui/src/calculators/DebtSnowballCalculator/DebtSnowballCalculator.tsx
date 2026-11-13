@@ -5,14 +5,36 @@ import {
 } from "@flump/finance-engine";
 import type { FC } from "react";
 import { useMemo, useState } from "react";
-import { Button } from "../../components/forms/Button.js";
+import { Button } from "../../primitives/Button";
 import { LiveRegion } from "../../primitives/LiveRegion";
 import {
+  captionStyle,
   cardStyle,
+  ctaStyle,
+  fieldLabelStyle,
   gridStyle,
+  headerRowStyle,
+  heroFigureStyle,
   inputGroupStyle,
+  introStyle,
+  liabilityCardStyle,
+  liabilityFieldsStyle,
+  liabilityTitleStyle,
+  pillInputStyle,
+  pillPrefixStyle,
+  pillSuffixStyle,
+  pillWrapStyle,
+  rangeStyle,
   resultsBoxStyle,
+  savedBoxStyle,
+  savedFigureStyle,
+  savedLabelStyle,
+  snowballWinStyle,
+  surplusLabelStyle,
+  surplusRowStyle,
+  tagStyle,
   textInputStyle,
+  titleStyle,
 } from "./DebtSnowballCalculator.styles.js";
 
 export interface DebtSnowballCalculatorProps {
@@ -83,27 +105,10 @@ export const DebtSnowballCalculator: FC<DebtSnowballCalculatorProps> = ({
 
   return (
     <div className={cardStyle} data-testid="debt-snowball-tool">
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "flex-start",
-          flexWrap: "wrap",
-          gap: "12px",
-        }}
-      >
+      <div className={headerRowStyle}>
         <div>
-          <h2
-            style={{
-              fontSize: "1.25rem",
-              fontWeight: 700,
-              margin: "0 0 4px 0",
-              color: "var(--colors-text-primary)",
-            }}
-          >
-            Debt payoff: snowball vs avalanche calculator
-          </h2>
-          <p style={{ fontSize: "0.875rem", color: "var(--colors-text-muted)", margin: 0 }}>
+          <h2 className={titleStyle}>Debt payoff: snowball vs avalanche calculator</h2>
+          <p className={introStyle}>
             Model exact interest savings and exit dates between mathematically optimal (avalanche)
             and psychological momentum (snowball).
           </p>
@@ -112,26 +117,11 @@ export const DebtSnowballCalculator: FC<DebtSnowballCalculatorProps> = ({
 
       <div className={gridStyle}>
         <div>
-          <div
-            style={{
-              padding: "14px",
-              backgroundColor: "rgba(99,99,241,0.05)",
-              borderRadius: "10px",
-              marginBottom: "16px",
-            }}
-          >
-            <div style={{ fontSize: "14px", fontWeight: "bold", marginBottom: "8px" }}>
-              Liability 1: Credit card
-            </div>
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(3, 1fr)",
-                gap: "10px",
-              }}
-            >
+          <div className={liabilityCardStyle}>
+            <div className={liabilityTitleStyle}>Liability 1: Credit card</div>
+            <div className={liabilityFieldsStyle}>
               <div className={inputGroupStyle}>
-                <span style={{ fontSize: "12px" }}>Balance (£)</span>
+                <span className={fieldLabelStyle}>Balance (£)</span>
                 <input
                   aria-label="Credit card balance"
                   className={textInputStyle}
@@ -141,7 +131,7 @@ export const DebtSnowballCalculator: FC<DebtSnowballCalculatorProps> = ({
                 />
               </div>
               <div className={inputGroupStyle}>
-                <span style={{ fontSize: "12px" }}>APR (%)</span>
+                <span className={fieldLabelStyle}>APR (%)</span>
                 <input
                   aria-label="Credit card APR"
                   className={textInputStyle}
@@ -152,7 +142,7 @@ export const DebtSnowballCalculator: FC<DebtSnowballCalculatorProps> = ({
                 />
               </div>
               <div className={inputGroupStyle}>
-                <span style={{ fontSize: "12px" }}>Min / mo (£)</span>
+                <span className={fieldLabelStyle}>Min / mo (£)</span>
                 <input
                   aria-label="Credit card minimum payment"
                   className={textInputStyle}
@@ -164,26 +154,11 @@ export const DebtSnowballCalculator: FC<DebtSnowballCalculatorProps> = ({
             </div>
           </div>
 
-          <div
-            style={{
-              padding: "14px",
-              backgroundColor: "rgba(99,99,241,0.05)",
-              borderRadius: "10px",
-              marginBottom: "16px",
-            }}
-          >
-            <div style={{ fontSize: "14px", fontWeight: "bold", marginBottom: "8px" }}>
-              Liability 2: Personal loan
-            </div>
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(3, 1fr)",
-                gap: "10px",
-              }}
-            >
+          <div className={liabilityCardStyle}>
+            <div className={liabilityTitleStyle}>Liability 2: Personal loan</div>
+            <div className={liabilityFieldsStyle}>
               <div className={inputGroupStyle}>
-                <span style={{ fontSize: "12px" }}>Balance (£)</span>
+                <span className={fieldLabelStyle}>Balance (£)</span>
                 <input
                   aria-label="Personal loan balance"
                   className={textInputStyle}
@@ -193,7 +168,7 @@ export const DebtSnowballCalculator: FC<DebtSnowballCalculatorProps> = ({
                 />
               </div>
               <div className={inputGroupStyle}>
-                <span style={{ fontSize: "12px" }}>APR (%)</span>
+                <span className={fieldLabelStyle}>APR (%)</span>
                 <input
                   aria-label="Personal loan APR"
                   className={textInputStyle}
@@ -204,7 +179,7 @@ export const DebtSnowballCalculator: FC<DebtSnowballCalculatorProps> = ({
                 />
               </div>
               <div className={inputGroupStyle}>
-                <span style={{ fontSize: "12px" }}>Min / mo (£)</span>
+                <span className={fieldLabelStyle}>Min / mo (£)</span>
                 <input
                   aria-label="Personal loan minimum payment"
                   className={textInputStyle}
@@ -217,54 +192,31 @@ export const DebtSnowballCalculator: FC<DebtSnowballCalculatorProps> = ({
           </div>
 
           <div className={inputGroupStyle}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <label htmlFor="extra-payment-input" style={{ fontSize: "14px", fontWeight: "bold" }}>
+            <div className={surplusRowStyle}>
+              <label htmlFor="extra-payment-input" className={surplusLabelStyle}>
                 Monthly overpayment surplus
               </label>
-              <div style={{ position: "relative", display: "inline-flex", alignItems: "center" }}>
-                <span
-                  style={{
-                    position: "absolute",
-                    left: "8px",
-                    fontSize: "12px",
-                    color: "var(--colors-text-muted)",
-                  }}
-                >
-                  +£
-                </span>
+              <div className={pillWrapStyle}>
+                <span className={pillPrefixStyle}>+£</span>
                 <input
                   id="extra-payment-input"
+                  className={pillInputStyle}
                   type="number"
                   min={0}
                   step={10}
                   value={extraPayment}
                   onChange={(e) => setExtraPayment(Number(e.target.value) || 0)}
-                  style={{
-                    width: "80px",
-                    padding: "3px 6px 3px 24px",
-                    fontSize: "13px",
-                    fontWeight: 700,
-                    textAlign: "right",
-                    color: "var(--colors-primary)",
-                    borderRadius: "6px",
-                    border: "1px solid var(--colors-border-input)",
-                    backgroundColor: "var(--colors-surface)",
-                  }}
                 />
-                <span
-                  style={{ fontSize: "12px", color: "var(--colors-text-muted)", marginLeft: "4px" }}
-                >
-                  /mo
-                </span>
+                <span className={pillSuffixStyle}>/mo</span>
               </div>
             </div>
             <input
               id="extra-payment-slider"
               aria-label="Monthly overpayment surplus slider"
+              className={rangeStyle}
               max={500}
               min={0}
               step={10}
-              style={{ width: "100%", accentColor: "var(--colors-primary)" }}
               type="range"
               value={extraPayment}
               onChange={(e) => setExtraPayment(Number(e.target.value))}
@@ -275,92 +227,35 @@ export const DebtSnowballCalculator: FC<DebtSnowballCalculatorProps> = ({
         <div className={resultsBoxStyle}>
           <LiveRegion debounceMs={1000} message={headline} visuallyHidden />
           <div>
-            <span
-              style={{
-                fontSize: "11px",
-                backgroundColor: "var(--colors-status-warning-bg)",
-                color: "var(--colors-status-warning-text)",
-                padding: "2px 8px",
-                borderRadius: "4px",
-                fontWeight: "bold",
-              }}
-            >
-              ⚡ Avalanche strategy (highest APR first)
+            <span className={tagStyle({ tone: "warning" })}>
+              Avalanche strategy (highest APR first)
             </span>
-            <div
-              style={{
-                fontSize: "24px",
-                fontWeight: "bold",
-                color: "var(--colors-status-positive-solid)",
-                marginTop: "4px",
-              }}
-            >
-              Debt free: {comparison.avalanche.debtFreeDate}
-            </div>
-            <p
-              style={{
-                fontSize: "12px",
-                color: "var(--colors-text-muted)",
-                margin: "4px 0 0 0",
-              }}
-            >
+            <div className={heroFigureStyle}>Debt free: {comparison.avalanche.debtFreeDate}</div>
+            <p className={captionStyle}>
               {comparison.avalanche.months} months total • Shaves{" "}
               {comparison.monthsShavedAvalancheVsMin} months off minimum payments
             </p>
           </div>
 
-          <div
-            style={{
-              padding: "12px",
-              backgroundColor: "surface.card",
-              borderRadius: "8px",
-              border: "1px solid var(--colors-border)",
-            }}
-          >
-            <span style={{ fontSize: "12px", color: "var(--colors-text-muted)" }}>
-              Total interest saved vs minimum payments:
-            </span>
-            <div
-              style={{
-                fontSize: "20px",
-                fontWeight: "bold",
-                color: "var(--colors-status-danger-solid)",
-                marginTop: "2px",
-              }}
-            >
-              £{Math.round(comparison.interestSavedAvalancheVsMin).toLocaleString()}
+          <div className={savedBoxStyle}>
+            <span className={savedLabelStyle}>Total interest saved vs minimum payments:</span>
+            <div className={savedFigureStyle}>
+              £{Math.round(comparison.interestSavedAvalancheVsMin).toLocaleString("en-GB")}
             </div>
           </div>
 
           <div>
-            <span
-              style={{
-                fontSize: "11px",
-                backgroundColor: "var(--colors-status-info-bg)",
-                color: "var(--colors-status-info-text)",
-                padding: "2px 8px",
-                borderRadius: "4px",
-                fontWeight: "bold",
-              }}
-            >
-              ❄️ Snowball strategy (smallest balance first)
+            <span className={tagStyle({ tone: "info" })}>
+              Snowball strategy (smallest balance first)
             </span>
-            <div style={{ fontSize: "18px", fontWeight: "bold", marginTop: "4px" }}>
-              {comparison.snowballFirstWinDescription}
-            </div>
-            <p
-              style={{
-                fontSize: "12px",
-                color: "var(--colors-text-muted)",
-                margin: "4px 0 0 0",
-              }}
-            >
+            <div className={snowballWinStyle}>{comparison.snowballFirstWinDescription}</div>
+            <p className={captionStyle}>
               Full payoff in {comparison.snowball.months} months (Total interest: £
-              {Math.round(comparison.snowball.totalInterest).toLocaleString()})
+              {Math.round(comparison.snowball.totalInterest).toLocaleString("en-GB")})
             </p>
           </div>
 
-          <Button onClick={handleSave} size="md" style={{ width: "100%" }}>
+          <Button className={ctaStyle} onClick={handleSave} size="md">
             {ctaText}
           </Button>
         </div>

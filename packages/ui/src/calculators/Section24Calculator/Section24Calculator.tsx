@@ -2,15 +2,33 @@ import { calculateSection24LandlordTax, persistOnboardingSeed } from "@flump/fin
 import type { FC } from "react";
 import { useMemo, useState } from "react";
 import { FiArrowRight } from "react-icons/fi";
-import { Button } from "../../components/forms/Button.js";
+import { Button } from "../../primitives/Button";
 import { LiveRegion } from "../../primitives/LiveRegion";
 import {
+  adornmentStyle,
+  badgeRowStyle,
+  badgeStyle,
   cardStyle,
+  ctaCopyStyle,
+  ctaIconStyle,
+  ctaNoteStyle,
+  ctaRowStyle,
+  ctaTitleStyle,
+  headerStyle,
   inputGridStyle,
   inputGroupStyle,
+  inputRowStyle,
+  inputWrapStyle,
+  labelStyle,
   metricCard,
+  metricLabelStyle,
+  metricNoteStyle,
   metricsGridStyle,
+  metricValueStyle,
+  numberInputStyle,
   sliderStyle,
+  subtitleStyle,
+  titleStyle,
 } from "./Section24Calculator.styles.js";
 
 export interface Section24CalculatorProps {
@@ -65,34 +83,12 @@ export const Section24Calculator: FC<Section24CalculatorProps> = ({
 
   return (
     <div className={cardStyle} data-testid="section-24-tool">
-      <div style={{ marginBottom: "24px" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
-          <span
-            style={{
-              padding: "3px 10px",
-              borderRadius: "9999px",
-              backgroundColor: "rgba(59, 130, 246, 0.12)",
-              color: "var(--colors-status-info-solid)",
-              fontSize: "12px",
-              fontWeight: 700,
-              textTransform: "uppercase",
-              letterSpacing: "0.05em",
-            }}
-          >
-            HMRC Landlord Tax Rules
-          </span>
+      <div className={headerStyle}>
+        <div className={badgeRowStyle}>
+          <span className={badgeStyle({ tone: "info" })}>HMRC Landlord Tax Rules</span>
         </div>
-        <h2
-          style={{
-            fontSize: "1.25rem",
-            fontWeight: 700,
-            color: "var(--colors-text-primary)",
-            margin: "0 0 4px 0",
-          }}
-        >
-          Section 24 buy-to-let mortgage relief calculator
-        </h2>
-        <p style={{ fontSize: "0.875rem", color: "var(--colors-text-muted)", margin: 0 }}>
+        <h2 className={titleStyle}>Section 24 buy-to-let mortgage relief calculator</h2>
+        <p className={subtitleStyle}>
           Calculate phantom taxable rental profit and the 20% basic rate tax credit reduction
           introduced by Section 24 of the Finance (No. 2) Act 2015.
         </p>
@@ -100,39 +96,20 @@ export const Section24Calculator: FC<Section24CalculatorProps> = ({
 
       <div className={inputGridStyle}>
         <div className={inputGroupStyle}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <label htmlFor="rental-income" style={{ fontSize: "13px", fontWeight: 600 }}>
+          <div className={inputRowStyle}>
+            <label className={labelStyle} htmlFor="rental-income">
               Gross annual rental income
             </label>
-            <div style={{ position: "relative", display: "inline-flex", alignItems: "center" }}>
-              <span
-                style={{
-                  position: "absolute",
-                  left: "8px",
-                  fontSize: "12px",
-                  color: "var(--colors-text-muted)",
-                }}
-              >
-                £
-              </span>
+            <div className={inputWrapStyle}>
+              <span className={adornmentStyle({ side: "start" })}>£</span>
               <input
+                className={numberInputStyle({ tone: "info", width: "lg", adornment: "start" })}
                 id="rental-income"
                 type="number"
                 min={0}
                 step={1000}
                 value={rentalIncome}
                 onChange={(e) => setRentalIncome(Number(e.target.value) || 0)}
-                style={{
-                  width: "100px",
-                  padding: "3px 6px 3px 20px",
-                  fontSize: "13px",
-                  fontWeight: 700,
-                  textAlign: "right",
-                  color: "var(--colors-status-info-solid)",
-                  borderRadius: "6px",
-                  border: "1px solid var(--colors-border-input)",
-                  backgroundColor: "var(--colors-surface)",
-                }}
               />
             </div>
           </div>
@@ -150,39 +127,20 @@ export const Section24Calculator: FC<Section24CalculatorProps> = ({
         </div>
 
         <div className={inputGroupStyle}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <label htmlFor="mortgage-interest" style={{ fontSize: "13px", fontWeight: 600 }}>
+          <div className={inputRowStyle}>
+            <label className={labelStyle} htmlFor="mortgage-interest">
               Annual mortgage interest paid
             </label>
-            <div style={{ position: "relative", display: "inline-flex", alignItems: "center" }}>
-              <span
-                style={{
-                  position: "absolute",
-                  left: "8px",
-                  fontSize: "12px",
-                  color: "var(--colors-text-muted)",
-                }}
-              >
-                £
-              </span>
+            <div className={inputWrapStyle}>
+              <span className={adornmentStyle({ side: "start" })}>£</span>
               <input
+                className={numberInputStyle({ tone: "danger", width: "lg", adornment: "start" })}
                 id="mortgage-interest"
                 type="number"
                 min={0}
                 step={500}
                 value={mortgageInterest}
                 onChange={(e) => setMortgageInterest(Number(e.target.value) || 0)}
-                style={{
-                  width: "100px",
-                  padding: "3px 6px 3px 20px",
-                  fontSize: "13px",
-                  fontWeight: 700,
-                  textAlign: "right",
-                  color: "var(--colors-status-danger-solid)",
-                  borderRadius: "6px",
-                  border: "1px solid var(--colors-border-input)",
-                  backgroundColor: "var(--colors-surface)",
-                }}
               />
             </div>
           </div>
@@ -200,39 +158,20 @@ export const Section24Calculator: FC<Section24CalculatorProps> = ({
         </div>
 
         <div className={inputGroupStyle}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <label htmlFor="allowable-expenses" style={{ fontSize: "13px", fontWeight: 600 }}>
+          <div className={inputRowStyle}>
+            <label className={labelStyle} htmlFor="allowable-expenses">
               Other allowable expenses (repairs, agent fees)
             </label>
-            <div style={{ position: "relative", display: "inline-flex", alignItems: "center" }}>
-              <span
-                style={{
-                  position: "absolute",
-                  left: "8px",
-                  fontSize: "12px",
-                  color: "var(--colors-text-muted)",
-                }}
-              >
-                £
-              </span>
+            <div className={inputWrapStyle}>
+              <span className={adornmentStyle({ side: "start" })}>£</span>
               <input
+                className={numberInputStyle({ tone: "neutral", width: "md", adornment: "start" })}
                 id="allowable-expenses"
                 type="number"
                 min={0}
                 step={250}
                 value={allowableExpenses}
                 onChange={(e) => setAllowableExpenses(Number(e.target.value) || 0)}
-                style={{
-                  width: "90px",
-                  padding: "3px 6px 3px 20px",
-                  fontSize: "13px",
-                  fontWeight: 700,
-                  textAlign: "right",
-                  color: "var(--colors-text-secondary)",
-                  borderRadius: "6px",
-                  border: "1px solid var(--colors-border-input)",
-                  backgroundColor: "var(--colors-surface)",
-                }}
               />
             </div>
           </div>
@@ -250,39 +189,20 @@ export const Section24Calculator: FC<Section24CalculatorProps> = ({
         </div>
 
         <div className={inputGroupStyle}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <label htmlFor="other-income" style={{ fontSize: "13px", fontWeight: 600 }}>
+          <div className={inputRowStyle}>
+            <label className={labelStyle} htmlFor="other-income">
               Other annual taxable income (salary / profits)
             </label>
-            <div style={{ position: "relative", display: "inline-flex", alignItems: "center" }}>
-              <span
-                style={{
-                  position: "absolute",
-                  left: "8px",
-                  fontSize: "12px",
-                  color: "var(--colors-text-muted)",
-                }}
-              >
-                £
-              </span>
+            <div className={inputWrapStyle}>
+              <span className={adornmentStyle({ side: "start" })}>£</span>
               <input
+                className={numberInputStyle({ tone: "primary", width: "lg", adornment: "start" })}
                 id="other-income"
                 type="number"
                 min={0}
                 step={2500}
                 value={otherIncome}
                 onChange={(e) => setOtherIncome(Number(e.target.value) || 0)}
-                style={{
-                  width: "100px",
-                  padding: "3px 6px 3px 20px",
-                  fontSize: "13px",
-                  fontWeight: 700,
-                  textAlign: "right",
-                  color: "var(--colors-primary)",
-                  borderRadius: "6px",
-                  border: "1px solid var(--colors-border-input)",
-                  backgroundColor: "var(--colors-surface)",
-                }}
               />
             </div>
           </div>
@@ -304,87 +224,31 @@ export const Section24Calculator: FC<Section24CalculatorProps> = ({
       <LiveRegion debounceMs={1000} message={headline} visuallyHidden />
       <div className={metricsGridStyle}>
         <div className={metricCard}>
-          <span
-            style={{
-              fontSize: "12px",
-              color: "var(--colors-text-muted)",
-              fontWeight: 600,
-            }}
-          >
-            HMRC tax due on rental
-          </span>
-          <span
-            className="tabular-nums"
-            style={{
-              fontSize: "22px",
-              fontWeight: 800,
-              color: "var(--colors-status-danger-solid)",
-            }}
-          >
+          <span className={metricLabelStyle}>HMRC tax due on rental</span>
+          <span className={metricValueStyle({ tone: "danger" })}>
             £{Math.round(calc.finalTaxDue).toLocaleString("en-GB")}
           </span>
-          <span
-            className="tabular-nums"
-            style={{ fontSize: "12px", color: "var(--colors-text-muted)" }}
-          >
+          <span className={metricNoteStyle}>
             (Gross tax £{Math.round(calc.grossTaxOnProperty).toLocaleString("en-GB")} minus £
             {Math.round(calc.financeCredit).toLocaleString("en-GB")} credit)
           </span>
         </div>
 
         <div className={metricCard}>
-          <span
-            style={{
-              fontSize: "12px",
-              color: "var(--colors-text-muted)",
-              fontWeight: 600,
-            }}
-          >
-            True effective tax rate
-          </span>
-          <span
-            className="tabular-nums"
-            style={{
-              fontSize: "22px",
-              fontWeight: 800,
-              color: "var(--colors-status-warning-solid)",
-            }}
-          >
-            {calc.effectiveTaxRate}%
-          </span>
-          <span
-            className="tabular-nums"
-            style={{ fontSize: "12px", color: "var(--colors-text-muted)" }}
-          >
+          <span className={metricLabelStyle}>True effective tax rate</span>
+          <span className={metricValueStyle({ tone: "warning" })}>{calc.effectiveTaxRate}%</span>
+          <span className={metricNoteStyle}>
             Tax paid relative to your £{Math.round(calc.actualCashProfit).toLocaleString("en-GB")}{" "}
             real cash profit
           </span>
         </div>
 
         <div className={metricCard}>
-          <span
-            style={{
-              fontSize: "12px",
-              color: "var(--colors-text-muted)",
-              fontWeight: 600,
-            }}
-          >
-            Net cash retained
-          </span>
-          <span
-            className="tabular-nums"
-            style={{
-              fontSize: "22px",
-              fontWeight: 800,
-              color: "var(--colors-status-positive-solid)",
-            }}
-          >
+          <span className={metricLabelStyle}>Net cash retained</span>
+          <span className={metricValueStyle({ tone: "positive" })}>
             £{Math.round(calc.netCashInPocket).toLocaleString("en-GB")} / yr
           </span>
-          <span
-            className="tabular-nums"
-            style={{ fontSize: "12px", color: "var(--colors-text-muted)" }}
-          >
+          <span className={metricNoteStyle}>
             £{Math.round(calc.netCashInPocket / 12).toLocaleString("en-GB")}/mo cash in pocket after
             tax & mortgage
           </span>
@@ -392,35 +256,19 @@ export const Section24Calculator: FC<Section24CalculatorProps> = ({
       </div>
 
       {/* CTA */}
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          flexWrap: "wrap",
-          gap: "16px",
-          paddingTop: "20px",
-          borderTop: "1px solid var(--colors-border)",
-        }}
-      >
-        <div style={{ maxWidth: "440px" }}>
-          <span
-            style={{
-              fontSize: "13px",
-              fontWeight: 600,
-              color: "var(--colors-text-primary)",
-            }}
-          >
+      <div className={ctaRowStyle}>
+        <div className={ctaCopyStyle}>
+          <span className={ctaTitleStyle}>
             Need automated HMRC Self-Assessment & property tax tracking?
           </span>
-          <p style={{ fontSize: "12px", color: "var(--colors-text-muted)", margin: 0 }}>
+          <p className={ctaNoteStyle}>
             Flump automatically models Section 24 adjustments, joint spousal splits, and Payments on
             Account.
           </p>
         </div>
 
         <Button onClick={handleSave} size="lg">
-          {ctaText} <FiArrowRight aria-hidden="true" style={{ marginLeft: "6px" }} />
+          {ctaText} <FiArrowRight aria-hidden="true" className={ctaIconStyle} />
         </Button>
       </div>
     </div>
