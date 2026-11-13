@@ -7,6 +7,13 @@ import {
 } from "typeorm";
 import { numericTransformer } from "./numeric.transformer";
 
+export const TAX_REGIONS = ["ENGLAND", "WALES", "SCOTLAND", "NORTHERN_IRELAND"] as const;
+export type TaxRegion = (typeof TAX_REGIONS)[number];
+export const STUDENT_LOAN_PLANS = ["PLAN_1", "PLAN_2", "PLAN_4", "PLAN_5", "POSTGRAD"] as const;
+export type StudentLoanPlan = (typeof STUDENT_LOAN_PLANS)[number];
+export const HOUSING_STATUSES = ["renting", "mortgage", "own_outright"] as const;
+export type HousingStatus = (typeof HOUSING_STATUSES)[number];
+
 @Entity("user_profiles")
 export class UserProfile {
   @PrimaryGeneratedColumn("uuid")
@@ -240,6 +247,42 @@ export class UserProfile {
 
   @Column({ name: "onboarding_completed", default: false })
   onboardingCompleted: boolean;
+
+  // E23 D06/D07 profile facts. Nullable with no default: null means "not set" (section 3.4).
+  /** One of TAX_REGIONS. England, Wales and NI share income-tax bands; Scotland does not. */
+  @Column({ name: "tax_region", type: "varchar", nullable: true })
+  taxRegion: TaxRegion | null;
+
+  /** E23 D-3-B: birth year, not a date of birth or a stored age. */
+  @Column({ name: "birth_year", type: "smallint", nullable: true })
+  birthYear: number | null;
+
+  /** Empty array = the user said "no student loan"; null = not answered. */
+  @Column({ name: "student_loan_plans", type: "simple-array", nullable: true })
+  studentLoanPlans: StudentLoanPlan[] | null;
+
+  @Column({ name: "housing_status", type: "varchar", nullable: true })
+  housingStatus: HousingStatus | null;
+
+  @Column({
+    name: "monthly_housing_cost",
+    type: "decimal",
+    precision: 12,
+    scale: 2,
+    nullable: true,
+    transformer: numericTransformer,
+  })
+  monthlyHousingCost: number | null;
+
+  @Column({
+    name: "monthly_other_outgoings",
+    type: "decimal",
+    precision: 12,
+    scale: 2,
+    nullable: true,
+    transformer: numericTransformer,
+  })
+  monthlyOtherOutgoings: number | null;
 
   @CreateDateColumn({ name: "created_at" })
   createdAt: Date;

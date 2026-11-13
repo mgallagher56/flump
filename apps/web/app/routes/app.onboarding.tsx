@@ -4,6 +4,7 @@ import {
   hydrateBaselineFromSeed,
   type OnboardingSeedPayload,
   readOnboardingSeed,
+  type UkStudentLoanPlan,
 } from "@flump/finance-engine";
 import { css } from "@repo/ui/styled-system/css";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -30,14 +31,13 @@ import FLPCard from "~/components/core/cards/FLPCard";
 import FLPHeading from "~/components/core/typography/FLPHeading";
 import FLPText from "~/components/core/typography/FLPText";
 import HomeLogo from "~/components/navigation/HomeLogo";
-import type { UserProfile } from "~/hooks/useUserProfile";
+import type { TaxRegion, UserProfile } from "~/hooks/useUserProfile";
 import { useUserProfile } from "~/hooks/useUserProfile";
 import { apiFetch } from "~/services/api-client";
 import { backendFetch } from "~/services/backend-client.server";
 import { BackendError } from "~/services/backend-error";
 import { buildOnboardingSeedJobs } from "~/services/onboarding-seed";
 import { actionErrorResponse, throwRouteError } from "~/services/route-error.server";
-import { useFinancialBaseline } from "~/state/baseline.store";
 import { getAuthSession, requireAccessToken } from "~/utils/auth.server";
 import {
   type AppPageKey,
@@ -104,7 +104,6 @@ export default function OnboardingRoute() {
   const [clientError, setClientError] = useState<string | null>(null);
   const seededRef = useRef<Set<string>>(new Set());
   const { updateProfile } = useUserProfile();
-  const { updateBaseline } = useFinancialBaseline();
 
   // Current Step: 1 = You & Income, 2 = Housing & Outgoings, 3 = Savings, Pension & Debt
   const [step, setStep] = useState<1 | 2 | 3>(1);
@@ -116,6 +115,8 @@ export default function OnboardingRoute() {
   const [grossSalary, setGrossSalary] = useState<number | null>(null);
   const [monthlyTakeHomeOverride, setMonthlyTakeHomeOverride] = useState<number | null>(null);
   const [studentLoanPlan, setStudentLoanPlan] = useState<string>("NONE");
+  // E23 D-4-C: region is required in onboarding (Scotland has its own income-tax bands).
+  const [taxRegion, setTaxRegion] = useState<TaxRegion | null>(null);
 
   // Step 2: Housing & Outgoings
   const [housingStatus, setHousingStatus] = useState<"renting" | "mortgage" | "own_outright">(
@@ -143,6 +144,12 @@ export default function OnboardingRoute() {
   const otherOutgoings = monthlyOtherOutgoings ?? 0;
   const sacrifice = isSalarySacrifice ?? false;
   const hasIncome = incomeMode === "gross" ? salary > 0 : takeHomeNet > 0;
+  const canFinish = hasIncome && taxRegion !== null;
+  const missingForFinish = !hasIncome
+    ? taxRegion === null
+      ? "Enter your income and choose where you pay tax"
+      : "Enter your income"
+    : "Choose where you pay tax";
 
   // Seed banner from tools/calculators
   const [seed, setSeed] = useState<OnboardingSeedPayload | null>(null);
@@ -216,14 +223,15 @@ export default function OnboardingRoute() {
       grossSalary: salary,
       pensionContributionPct: pensionPct,
       isSalarySacrifice: sacrifice,
-      studentLoanPlan: studentLoanPlan as any,
+      studentLoanPlan: studentLoanPlan as UkStudentLoanPlan,
+      region: taxRegion === "SCOTLAND" ? "SCOTLAND" : "ENGLAND_NI_WALES",
     });
     return {
       monthlyTakeHome: Math.round(taxResult.netTakeHomePayMonthlyGbp),
       annualTakeHome: Math.round(taxResult.netTakeHomePayAnnualGbp),
       trapAnalysis: taxResult.taxTrap,
     };
-  }, [incomeMode, salary, pensionPct, sacrifice, takeHomeNet, studentLoanPlan]);
+  }, [incomeMode, salary, pensionPct, sacrifice, takeHomeNet, studentLoanPlan, taxRegion]);
 
   // Live Summary Calculations
   const monthlyHousing = housingStatus === "own_outright" ? 0 : housingCost;
@@ -254,7 +262,7 @@ export default function OnboardingRoute() {
   ]);
 
   const handleFinish = async () => {
-    if (!hasIncome) return;
+    if (!canFinish) return;
     setIsSubmitting(true);
     setClientError(null);
     const pagesToSave = inferredModules;
@@ -263,21 +271,20 @@ export default function OnboardingRoute() {
 
     try {
       // 1. Update UserProfile
+      // Balances (cash, pension pot, cards, mortgage) are saved as account rows below, not here.
+      // The server profile is the only store: no client baseline is written (D31).
       await updateProfile({
-        age: age ?? undefined,
+        birthYear: age !== null ? new Date().getFullYear() - age : undefined,
         annualSalary: incomeMode === "gross" ? salary : takeHomeNet * 12,
         monthlyTakeHome: liveTakeHome.monthlyTakeHome,
         employmentType,
-        studentLoanPlan,
+        taxRegion: taxRegion ?? undefined,
+        studentLoanPlans: studentLoanPlan === "NONE" ? [] : [studentLoanPlan],
         housingStatus,
         monthlyHousingCost: monthlyHousing,
         monthlyOtherOutgoings: otherOutgoings,
-        totalCashSavings: cashSavings ?? undefined,
-        totalPensionPot: pensionPot ?? undefined,
-        totalUnsecuredDebt: unsecuredDebt,
         hasMortgage: housingStatus === "mortgage" || mortgageBalance > 0,
         homeValue: propertyValue > 0 ? propertyValue : null,
-        mortgageBalance: mortgageBalance > 0 ? mortgageBalance : null,
         pensionPercent: pensionPercent ?? undefined,
         isSalarySacrifice: isSalarySacrifice ?? undefined,
         enabledPages: pagesToSave,
@@ -285,38 +292,7 @@ export default function OnboardingRoute() {
         dashboardWidgetOrder,
       });
 
-      // 2. Update Central FinancialBaseline Store
-      updateBaseline({
-        ...(age !== null && { age }),
-        employmentStatus: employmentType === "self-employed" ? "SELF_EMPLOYED" : "PAYE",
-        annualGrossSalary: incomeMode === "gross" ? salary : takeHomeNet * 12,
-        monthlyTakeHomeOverride: incomeMode === "net" ? takeHomeNet : undefined,
-        housingStatus:
-          housingStatus === "renting"
-            ? "RENTING"
-            : housingStatus === "mortgage"
-              ? "MORTGAGE"
-              : "OWN_OUTRIGHT",
-        monthlyHousingCost: monthlyHousing,
-        propertyValue,
-        mortgageBalance,
-        monthlyOtherOutgoings: otherOutgoings,
-        totalCashSavings: cash,
-        totalPensionPot: pot,
-        totalUnsecuredDebt: unsecuredDebt,
-        ...(pensionPercent !== null && { pensionContributionPct: pensionPercent }),
-        ...(isSalarySacrifice !== null && { isSalarySacrifice }),
-        studentLoanPlan: studentLoanPlan as any,
-        financialStage:
-          unsecuredDebt > 0
-            ? "STAGE_1_DEBT_RECOVERY"
-            : salary >= 100000
-              ? "STAGE_3_WEALTH_OPTIMIZE"
-              : "STAGE_2_BUFFER_BUILD",
-        enabledModules: pagesToSave.filter((p): p is any => p !== "savings"),
-      });
-
-      // 3. Seed initial baseline accounts and budget entries
+      // 2. Seed initial baseline accounts and budget entries
       // Jobs that already succeeded are remembered so a retry never creates duplicates. The
       // backend is also asked what already exists, so a retry after a reload, a crash or a lost
       // response skips records an earlier attempt created. A failed lookup stops here (no guessing).
@@ -475,7 +451,7 @@ export default function OnboardingRoute() {
                     : "We've pre-loaded your savings baseline from the calculator."}
               </span>
             </div>
-            {!hasIncome && (
+            {!canFinish && (
               <FLPText
                 id="seed-income-hint"
                 data-testid="seed-income-hint"
@@ -483,7 +459,7 @@ export default function OnboardingRoute() {
                 color="text.muted"
                 fontSize="xs"
               >
-                Enter your income in step 1 to launch your dashboard.
+                {missingForFinish} in step 1 to launch your dashboard.
               </FLPText>
             )}
             <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
@@ -491,8 +467,8 @@ export default function OnboardingRoute() {
                 size="sm"
                 variant="primary"
                 onClick={handleFinish}
-                disabled={isSubmitting || !hasIncome}
-                aria-describedby={!hasIncome ? "seed-income-hint" : undefined}
+                disabled={isSubmitting || !canFinish}
+                aria-describedby={!canFinish ? "seed-income-hint" : undefined}
               >
                 {isSubmitting ? "Launching..." : "Launch dashboard with this baseline (10s) →"}
               </FLPButton>
@@ -792,6 +768,36 @@ export default function OnboardingRoute() {
                     }}
                   />
                 )}
+              </div>
+
+              {/* Tax region (E23 D06, D-4-C: required) */}
+              <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                <label htmlFor="baseline-tax-region" style={{ fontSize: "13px", fontWeight: 600 }}>
+                  Where do you pay tax?
+                </label>
+                <select
+                  id="baseline-tax-region"
+                  required
+                  aria-describedby="baseline-tax-region-help"
+                  value={taxRegion ?? ""}
+                  onChange={(e) => setTaxRegion((e.target.value || null) as TaxRegion | null)}
+                  style={{
+                    padding: "8px 12px",
+                    borderRadius: "8px",
+                    border: "1px solid var(--colors-border)",
+                    backgroundColor: "var(--colors-surface)",
+                    color: "inherit",
+                  }}
+                >
+                  <option value="">Choose where you live</option>
+                  <option value="ENGLAND">England</option>
+                  <option value="WALES">Wales</option>
+                  <option value="SCOTLAND">Scotland</option>
+                  <option value="NORTHERN_IRELAND">Northern Ireland</option>
+                </select>
+                <FLPText id="baseline-tax-region-help" color="text.muted" fontSize="xs">
+                  Scotland has its own income tax rates, so this changes your take-home pay.
+                </FLPText>
               </div>
 
               {/* Student Loan Plan */}
@@ -1178,7 +1184,7 @@ export default function OnboardingRoute() {
                 </FLPText>
               </div>
 
-              {!hasIncome && (
+              {!canFinish && (
                 <FLPText
                   id="finish-income-hint"
                   data-testid="finish-income-hint"
@@ -1186,7 +1192,7 @@ export default function OnboardingRoute() {
                   color="text.muted"
                   fontSize="xs"
                 >
-                  Enter your income in step 1 to finish setup.
+                  {missingForFinish} in step 1 to finish setup.
                 </FLPText>
               )}
 
@@ -1197,8 +1203,8 @@ export default function OnboardingRoute() {
                 <FLPButton
                   size="md"
                   variant="primary"
-                  disabled={isSubmitting || !hasIncome}
-                  aria-describedby={!hasIncome ? "finish-income-hint" : undefined}
+                  disabled={isSubmitting || !canFinish}
+                  aria-describedby={!canFinish ? "finish-income-hint" : undefined}
                   onClick={handleFinish}
                 >
                   {isSubmitting ? "Launching..." : "Finish setup and launch dashboard →"}
@@ -1233,14 +1239,17 @@ export default function OnboardingRoute() {
                 Net take-home
               </span>
               <div
+                id="onboarding-take-home"
+                data-figure="takeHome.monthly"
                 style={{
                   fontSize: "16px",
                   fontWeight: 800,
                   marginTop: "2px",
                   color: "var(--colors-primary)",
+                  fontVariantNumeric: "tabular-nums",
                 }}
               >
-                £{liveTakeHome.monthlyTakeHome.toLocaleString()}/mo
+                £{liveTakeHome.monthlyTakeHome.toLocaleString("en-GB")}/mo
               </div>
             </div>
             <div>

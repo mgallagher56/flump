@@ -224,4 +224,40 @@ describe("profile domain module", () => {
       expect(adapter.getSeed()).toBeNull();
     });
   });
+
+  describe("E23 profile facts (D06, D07)", () => {
+    it("maps the stored region; England, Wales and NI only when told, otherwise assumed", () => {
+      expect(userProfileToFinancialBaseline({ taxRegion: "SCOTLAND" })).toMatchObject({
+        ukRegion: "SCOTLAND",
+        ukRegionAssumed: false,
+      });
+      expect(userProfileToFinancialBaseline({ taxRegion: "WALES" })).toMatchObject({
+        ukRegion: "ENGLAND_NI_WALES",
+        ukRegionAssumed: false,
+      });
+      expect(userProfileToFinancialBaseline({ taxRegion: null })).toMatchObject({
+        ukRegion: "ENGLAND_NI_WALES",
+        ukRegionAssumed: true,
+      });
+    });
+
+    it("derives age from birth year, which wins over a legacy age", () => {
+      const year = new Date().getFullYear();
+      expect(userProfileToFinancialBaseline({ birthYear: year - 40, age: 25 }).age).toBe(40);
+    });
+
+    it("reads the stored plan list; an undergraduate plan wins over a postgraduate loan", () => {
+      expect(userProfileToFinancialBaseline({ studentLoanPlans: [] }).studentLoanPlan).toBe("NONE");
+      expect(
+        userProfileToFinancialBaseline({ studentLoanPlans: ["POSTGRAD", "PLAN_2"] })
+          .studentLoanPlan,
+      ).toBe("PLAN_2");
+      expect(
+        userProfileToFinancialBaseline({ studentLoanPlans: ["POSTGRAD"] }).studentLoanPlan,
+      ).toBe("POSTGRAD");
+      expect(userProfileToFinancialBaseline({ studentLoanPlan: "PLAN_1" }).studentLoanPlan).toBe(
+        "PLAN_1",
+      );
+    });
+  });
 });

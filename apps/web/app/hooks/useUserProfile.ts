@@ -6,6 +6,9 @@ import { BackendError } from "~/services/backend-error";
 import { financialBaselineAtom } from "~/state/baseline.store";
 import { stripRetiredKeys, stripRetiredRecordKeys } from "~/utils/pageConfig";
 
+/** E23 D06: the four UK nations as stored on the profile; null means not set. */
+export type TaxRegion = "ENGLAND" | "WALES" | "SCOTLAND" | "NORTHERN_IRELAND";
+
 export interface UserProfile {
   id: string;
   userId: string;
@@ -17,6 +20,10 @@ export interface UserProfile {
   currency: string;
   country: string;
   age?: number | null;
+  birthYear?: number | null;
+  taxRegion?: TaxRegion | null;
+  /** [] means "no student loan"; null means not answered. */
+  studentLoanPlans?: string[] | null;
   employmentType: "employed" | "self-employed" | "other" | null;
   annualSalary: number | null;
   monthlyTakeHome: number | null;
@@ -131,6 +138,9 @@ export const normalizeProfile = (p: Partial<UserProfile>): UserProfile => ({
   avatarUrl: p.avatarUrl !== undefined ? p.avatarUrl : DEFAULT_PROFILE.avatarUrl,
   age: p.age !== undefined && p.age !== null ? Number(p.age) : null,
   studentLoanPlan: p.studentLoanPlan !== undefined ? p.studentLoanPlan : null,
+  birthYear: p.birthYear !== undefined && p.birthYear !== null ? Number(p.birthYear) : null,
+  taxRegion: p.taxRegion ?? null,
+  studentLoanPlans: Array.isArray(p.studentLoanPlans) ? p.studentLoanPlans : null,
   housingStatus: p.housingStatus !== undefined ? p.housingStatus : null,
   monthlyHousingCost:
     p.monthlyHousingCost !== undefined && p.monthlyHousingCost !== null

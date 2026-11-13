@@ -1000,7 +1000,7 @@ const TaxContainer: FC = () => {
           >
             <TaxTrapAlertBanner
               grossIncome={activeYearData?.totalGrossIncome || payeSalary}
-              region={getKnownTrapRegion(baseline.ukRegion)}
+              region={getKnownTrapRegion(baseline)}
             />
             {activeYearData && (
               <PaymentsOnAccountCard
