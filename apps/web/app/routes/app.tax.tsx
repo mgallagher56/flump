@@ -3,11 +3,15 @@ import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { data } from "react-router";
 import TaxContainer from "~/containers/tax/TaxContainer";
 import { backendFetch, loadWorkspaceSnapshot } from "~/services/backend-client.server";
+import { BackendError } from "~/services/backend-error";
 import { actionErrorResponse } from "~/services/route-error.server";
 import { getAuthSession, requireAccessToken } from "~/utils/auth.server";
 import { roundTo2dp } from "~/utils/roundTo2dp";
 
-/** Mirrors the backend and api-contract per-request cap on `POST /tax-records/bulk`. */
+/**
+ * Mirrors the per-request cap on `POST /tax-records/bulk`: the backend `MAX_BULK_TAX_RECORDS` and
+ * `BulkCreateTaxRecordsRequest` in packages/api-contract (a literal there, not exported).
+ */
 const BULK_TAX_RECORDS_CHUNK = 500;
 
 const chunk = <T,>(items: T[], size: number): T[][] => {
@@ -133,19 +137,45 @@ export const action = async (args: ActionFunctionArgs) => {
         throw new SyntaxError("records and capPreviousRecordIds must be arrays");
       }
 
-      // Sequential requests of at most BULK_TAX_RECORDS_CHUNK each; a small import is one request.
-      const recordChunks = chunk(records, BULK_TAX_RECORDS_CHUNK);
-      const capChunks = chunk(capPreviousRecordIds, BULK_TAX_RECORDS_CHUNK);
-      const requests = Math.max(recordChunks.length, capChunks.length, 1);
-      for (let i = 0; i < requests; i++) {
-        await backendFetch(`/tax-records/bulk`, {
-          accessToken: token,
-          method: "POST",
-          body: {
-            records: recordChunks[i] ?? [],
-            capPreviousRecordIds: capChunks[i] ?? [],
-          },
-        });
+      // Requests are sequential and at most BULK_TAX_RECORDS_CHUNK each. A batch that fits goes
+      // as one request. Otherwise every record chunk is created first (empty cap list) and the
+      // cap-only chunks follow, so a mid-copy failure never leaves previous records capped with
+      // no successor.
+      type BulkBody = { records: unknown[]; capPreviousRecordIds: unknown[] };
+      const fits =
+        records.length <= BULK_TAX_RECORDS_CHUNK &&
+        capPreviousRecordIds.length <= BULK_TAX_RECORDS_CHUNK;
+      const bodies: BulkBody[] = fits
+        ? [{ records, capPreviousRecordIds }]
+        : [
+            ...chunk(records, BULK_TAX_RECORDS_CHUNK).map((r) => ({
+              records: r,
+              capPreviousRecordIds: [],
+            })),
+            ...chunk(capPreviousRecordIds, BULK_TAX_RECORDS_CHUNK).map((c) => ({
+              records: [],
+              capPreviousRecordIds: c,
+            })),
+          ];
+      let created = 0;
+      for (const body of bodies) {
+        try {
+          await backendFetch(`/tax-records/bulk`, {
+            accessToken: token,
+            method: "POST",
+            body,
+          });
+        } catch (error) {
+          if (created === 0 || !(error instanceof BackendError)) throw error;
+          return data(
+            {
+              success: false as const,
+              error: `The copy was only partly completed: ${created} of ${records.length} records were created. Check your tax records before trying again.`,
+            },
+            { status: error.status ?? 502 },
+          );
+        }
+        created += body.records.length;
       }
     }
     return data({ success: true });

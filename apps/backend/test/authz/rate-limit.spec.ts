@@ -25,7 +25,7 @@ describe("rate limit classes on real controllers", () => {
   it("tightens revoke, delete and bulk routes", () => {
     expect(classOf(McpController.prototype, "revokeToken")).toBe("destructive");
     expect(classOf(TaxController.prototype, "deleteTaxRecord")).toBe("destructive");
-    expect(classOf(TaxController.prototype, "createBulkTaxRecords")).toBe("bank");
+    expect(classOf(TaxController.prototype, "createBulkTaxRecords")).toBe("bulkWrite");
     expect(classOf(BudgetController.prototype, "deleteBudgetEntry")).toBe("destructive");
   });
 

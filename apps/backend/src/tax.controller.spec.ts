@@ -253,7 +253,49 @@ describe("TaxController receipt validation (E20-N14)", () => {
       `at most ${MAX_BULK_TAX_RECORDS}`,
     );
     expect(repo.save).not.toHaveBeenCalled();
+    expect(repo.create).not.toHaveBeenCalled();
+    expect(repo.update).not.toHaveBeenCalled();
   });
+
+  it("rejects an oversized capPreviousRecordIds with 400 and writes nothing", async () => {
+    const { controller, repo } = makeController();
+    const capPreviousRecordIds = Array.from({ length: MAX_BULK_TAX_RECORDS + 1 }, (_, i) => ({
+      id: `id${i}`,
+      endDate: "2025-03-31",
+    }));
+    await expect(
+      controller.createBulkTaxRecords(req, { records: [{ ...base }], capPreviousRecordIds }),
+    ).rejects.toThrow(BadRequestException);
+    expect(repo.update).not.toHaveBeenCalled();
+    expect(repo.create).not.toHaveBeenCalled();
+    expect(repo.save).not.toHaveBeenCalled();
+  });
+
+  it("applies no caps when a record in the same batch is invalid", async () => {
+    const { controller, repo } = makeController();
+    await expect(
+      controller.createBulkTaxRecords(req, {
+        records: [{ ...base, receiptFilename: "../x.pdf" }],
+        capPreviousRecordIds: [{ id: "old", endDate: "2025-03-31" }],
+      }),
+    ).rejects.toThrow(BadRequestException);
+    expect(repo.update).not.toHaveBeenCalled();
+  });
+
+  it.each([[null], [{}], [{ id: "old" }], ["x"]])(
+    "rejects a malformed capPreviousRecordIds item %j with 400",
+    async (item) => {
+      const { controller, repo } = makeController();
+      await expect(
+        controller.createBulkTaxRecords(req, {
+          records: [{ ...base }],
+          capPreviousRecordIds: [item as any],
+        }),
+      ).rejects.toThrow(BadRequestException);
+      expect(repo.update).not.toHaveBeenCalled();
+      expect(repo.save).not.toHaveBeenCalled();
+    },
+  );
 
   it("accepts a bulk batch exactly at the record cap", async () => {
     const { controller, repo } = makeController();

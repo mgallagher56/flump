@@ -376,21 +376,51 @@ describe("tax action, bulk-create-transactions chunking", () => {
       path: "/tax-records/bulk",
     });
 
-  it("splits more than 500 records and cap ids across requests of at most 500 each", async () => {
+  it("sends exactly 500 records and 500 cap ids as a single request", async () => {
+    const fetchMock = respond(200, []);
+    globalThis.fetch = fetchMock;
+    const records = Array.from({ length: 500 }, (_, i) => ({ name: `r${i}` }));
+    const cap = Array.from({ length: 500 }, (_, i) => ({ id: `id${i}`, endDate: "2025-03-31" }));
+    await taxAction(bulkArgs(records, cap));
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({
+      records,
+      capPreviousRecordIds: cap,
+    });
+  });
+
+  it("creates every record chunk before any cap chunk, each at most 500", async () => {
     const fetchMock = respond(200, []);
     globalThis.fetch = fetchMock;
     const records = Array.from({ length: 1100 }, (_, i) => ({ name: `r${i}` }));
     const cap = Array.from({ length: 501 }, (_, i) => ({ id: `id${i}`, endDate: "2025-03-31" }));
     const res: any = await taxAction(bulkArgs(records, cap));
     expect(res.data).toMatchObject({ success: true });
-    expect(fetchMock).toHaveBeenCalledTimes(3);
     const bodies = fetchMock.mock.calls.map(([, init]) => JSON.parse(init.body));
+    expect(bodies).toHaveLength(5);
     for (const b of bodies) {
       expect(b.records.length).toBeLessThanOrEqual(500);
       expect(b.capPreviousRecordIds.length).toBeLessThanOrEqual(500);
     }
+    expect(bodies.slice(0, 3).every((b) => b.capPreviousRecordIds.length === 0)).toBe(true);
+    expect(bodies.slice(3).every((b) => b.records.length === 0)).toBe(true);
     expect(bodies.flatMap((b) => b.records)).toEqual(records);
     expect(bodies.flatMap((b) => b.capPreviousRecordIds)).toEqual(cap);
+  });
+
+  it("reports a partial copy and never sends caps when a later chunk fails", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(new Response("[]", { status: 200 }))
+      .mockResolvedValue(new Response("{}", { status: 503 }));
+    globalThis.fetch = fetchMock;
+    const records = Array.from({ length: 600 }, (_, i) => ({ name: `r${i}` }));
+    const cap = [{ id: "old", endDate: "2025-03-31" }];
+    const res: any = await taxAction(bulkArgs(records, cap));
+    expect(res.init.status).toBe(503);
+    expect(res.data.success).toBe(false);
+    expect(res.data.error).toMatch(/partly completed: 500 of 600/);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
   it("stops at the first failing chunk", async () => {
