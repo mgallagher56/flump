@@ -101,13 +101,6 @@ export const ADVICE_ALLOWLIST: AdviceAllowEntry[] = [
 
   // Temporary: MCP (E17 removes or rewrites; E29-T6 enforces the policy on the surface).
   {
-    file: "packages/mcp/src/tools/mortgage-isa.tool.ts",
-    patternId: "recommend",
-    kind: "temporary",
-    reason: "`recommendation` output key.",
-    owner: "E17-N11",
-  },
-  {
     file: "packages/mcp/src/tools/uk-tax-trap.tool.ts",
     patternId: "optimal",
     kind: "temporary",
