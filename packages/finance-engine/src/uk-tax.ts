@@ -451,12 +451,10 @@ export function calculateUkTax(input: UkTaxCalculationInput): UkTaxCalculationRe
     taxYear,
   );
 
-  // Total deductions from salary
+  // Total deductions from salary. The pension leaves pay either way: under salary sacrifice the
+  // employee gives up that much salary, otherwise it is deducted from net pay (E23 D10).
   const totalDeductions =
-    incomeTax +
-    nationalInsurance +
-    studentLoanDeduction +
-    (isSalarySacrifice ? 0 : employeePensionContribution);
+    incomeTax + nationalInsurance + studentLoanDeduction + employeePensionContribution;
 
   const netTakeHomeAnnual = Math.round((totalGrossIncome - totalDeductions) * 100) / 100;
   const netTakeHomeMonthly = Math.round((netTakeHomeAnnual / 12) * 100) / 100;
