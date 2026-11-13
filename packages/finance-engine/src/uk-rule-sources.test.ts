@@ -93,17 +93,20 @@ describe("UK rule sources registry (E25-T1)", () => {
     );
   });
 
-  it("the annual allowance is UNVERIFIED for 2020/21 to 2022/23 and verified only for 2026/27", () => {
+  it("the annual allowance is verified for every year against the per-year HMRC table", () => {
+    for (const year of SUPPORTED_UK_TAX_YEARS) {
+      const src = UK_RULE_SOURCES[year].pensionAnnualAllowance;
+      expect(src.status, year).toBe("verified");
+      expect(src.url, year).toBe(
+        "https://www.gov.uk/government/publications/rates-and-allowances-pension-schemes/pension-schemes-rates",
+      );
+    }
     for (const year of ["2020/21", "2021/22", "2022/23"] as const) {
-      expect(UK_RULE_SOURCES[year].pensionAnnualAllowance.status, year).toBe("unverified");
       expect(getUkTaxYearRules(year).pensionAnnualAllowance, year).toBe(40000);
     }
-    for (const year of ["2023/24", "2024/25", "2025/26"] as const) {
-      expect(UK_RULE_SOURCES[year].pensionAnnualAllowance.status, year).toBe("unverified");
+    for (const year of ["2023/24", "2024/25", "2025/26", "2026/27"] as const) {
       expect(getUkTaxYearRules(year).pensionAnnualAllowance, year).toBe(60000);
     }
-    expect(UK_RULE_SOURCES["2026/27"].pensionAnnualAllowance.status).toBe("verified");
-    expect(getUkTaxYearRules("2026/27").pensionAnnualAllowance).toBe(60000);
   });
 
   it("rules expose registry-derived sources, notes and ruleSources", () => {

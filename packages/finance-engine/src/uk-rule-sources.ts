@@ -70,8 +70,9 @@ const TAX_ON_DIVIDENDS = "https://www.gov.uk/tax-on-dividends";
 const GIFT_AID = "https://www.gov.uk/donating-to-charity/gift-aid";
 // Current guidance, no tax year named: PSA 1,000 / 500 / 0.
 const PSA = "https://www.gov.uk/apply-tax-free-interest-on-savings/how-much-is-tax-free";
-// Page text read for E25-T1: "This is £60,000 this tax year." Current tax year only.
-const ANNUAL_ALLOWANCE = "https://www.gov.uk/tax-on-your-private-pension/annual-allowance";
+// HMRC per-year table, checked 2026-11-13: 40,000 for 2020/21 to 2022/23, 60,000 from 2023/24.
+const ANNUAL_ALLOWANCE =
+  "https://www.gov.uk/government/publications/rates-and-allowances-pension-schemes/pension-schemes-rates";
 // Page text read for E25-T1: "In the 2026 to 2027 tax year, the maximum you can save in ISAs is £20,000".
 const ISA = "https://www.gov.uk/individual-savings-accounts";
 
@@ -169,14 +170,7 @@ function buildYear(year: UkTaxYear): UkRuleSources {
     // (see the DIVIDENDS table comment in uk-tax-year.ts).
     dividends: verified(TAX_ON_DIVIDENDS, [INCOME_TAX_PAST]),
     giftAid: verified(GIFT_AID, [ADJUSTED_NET_INCOME]),
-    pensionAnnualAllowance: is2026
-      ? verified(ANNUAL_ALLOWANCE)
-      : unverified(
-          ANNUAL_ALLOWANCE,
-          pre2023
-            ? "pension annual allowance 40,000 is from memory (60,000 applies from 2023/24); the GOV.UK page states the current year only, so the owner must confirm it"
-            : "pension annual allowance 60,000 is only confirmed as current guidance (this tax year), not for this year",
-        ),
+    pensionAnnualAllowance: verified(ANNUAL_ALLOWANCE),
     isaAllowance: is2026
       ? verified(ISA)
       : unverified(

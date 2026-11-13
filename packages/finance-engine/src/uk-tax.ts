@@ -495,10 +495,10 @@ export function calculateUkTax(input: UkTaxCalculationInput): UkTaxCalculationRe
     isaAllowanceGbp: UK_TAX_CONSTANTS.ISA_ANNUAL_ALLOWANCE,
     isaAllowanceUsedGbp: 0,
     isaAllowanceRemainingGbp: UK_TAX_CONSTANTS.ISA_ANNUAL_ALLOWANCE,
-    pensionAnnualAllowanceGbp: UK_TAX_CONSTANTS.PENSION_ANNUAL_ALLOWANCE,
+    pensionAnnualAllowanceGbp: rules.pensionAnnualAllowance,
     pensionAllowanceUsedGbp: Math.round(totalPensionUsed),
     pensionAllowanceRemainingGbp: roundPence(
-      Math.max(0, UK_TAX_CONSTANTS.PENSION_ANNUAL_ALLOWANCE - totalPensionUsed),
+      Math.max(0, rules.pensionAnnualAllowance - totalPensionUsed),
     ),
     personalSavingsAllowanceGbp: personalSavingsAllowance,
     marginalIncomeTaxBand: marginalBand,
