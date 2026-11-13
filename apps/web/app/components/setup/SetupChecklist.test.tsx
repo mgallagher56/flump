@@ -98,4 +98,35 @@ describe("SetupChecklist", () => {
       screen.getByRole("button", { name: "Dismiss setup checklist" }).closest("h4"),
     ).toBeNull();
   });
+
+  describe("forecast step follows the Savings module", () => {
+    const base = {
+      completedSteps: [] as string[],
+      hasAccounts: false,
+      hasBudget: false,
+      hasMortgageAccount: false,
+      hasProfile: false,
+      hasRunForecast: false,
+      variant: "mobile" as const,
+    };
+    const expand = () => fireEvent.click(screen.getByText(/Refine and drill down your baseline/i));
+
+    it("shows the step when savings is enabled", () => {
+      render(<SetupChecklist {...base} enabledPages={["accounts", "savings"]} />);
+      expand();
+      expect(screen.getByRole("button", { name: /Model scenarios/i })).toBeDefined();
+    });
+
+    it("hides the step when savings is not enabled", () => {
+      render(<SetupChecklist {...base} enabledPages={["accounts", "budget"]} />);
+      expand();
+      expect(screen.queryByRole("button", { name: /Model scenarios/i })).toBeNull();
+    });
+
+    it("ignores a stray forecast key in enabledPages", () => {
+      render(<SetupChecklist {...base} enabledPages={["accounts", "forecast"]} />);
+      expand();
+      expect(screen.queryByRole("button", { name: /Model scenarios/i })).toBeNull();
+    });
+  });
 });

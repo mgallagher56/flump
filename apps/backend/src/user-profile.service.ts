@@ -43,6 +43,10 @@ export function withoutRetiredModuleKeys<V>(record: Record<string, V> | null | u
   ) as Record<string, V>;
 }
 
+function nonEmptyRecord<V>(record: Record<string, V> | null | undefined) {
+  return record && Object.keys(record).length > 0 ? record : undefined;
+}
+
 export interface ProfileLifecycle {
   getProfile(userId: string, email?: string): Promise<any>;
   updateProfile(userId: string, body: any, email?: string): Promise<any>;
@@ -166,7 +170,9 @@ export class UserProfileService implements ProfileLifecycle {
       dashboardWidgetOrder: Array.isArray(profile.dashboardWidgetOrder)
         ? withoutRetiredModules(profile.dashboardWidgetOrder)
         : ["accounts", "budget", "savings", "pension", "mortgage"],
-      dashboardWidgetSizes: withoutRetiredModuleKeys(profile.dashboardWidgetSizes) || {
+      dashboardWidgetSizes: nonEmptyRecord(
+        withoutRetiredModuleKeys(profile.dashboardWidgetSizes),
+      ) || {
         accounts: "wide",
       },
       dashboardWidgetConfig: withoutRetiredModuleKeys(profile.dashboardWidgetConfig) || {},
