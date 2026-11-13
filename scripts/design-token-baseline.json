@@ -13,7 +13,6 @@
   "apps/web/app/components/dashboard/DashboardWidgetCard.tsx": 5,
   "apps/web/app/components/dashboard/widgets/AccountsWidget.tsx": 12,
   "apps/web/app/components/dashboard/widgets/BudgetWidget.tsx": 15,
-  "apps/web/app/components/dashboard/widgets/ForecastWidget.tsx": 2,
   "apps/web/app/components/dashboard/widgets/MortgageWidget.tsx": 3,
   "apps/web/app/components/dashboard/widgets/PensionWidget.tsx": 1,
   "apps/web/app/components/dashboard/widgets/SavingsWidget.tsx": 1,
