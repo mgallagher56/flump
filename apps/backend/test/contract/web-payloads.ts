@@ -18,19 +18,17 @@ const ONBOARDING_PAGES = ["accounts", "budget", "savings", "debt", "pension", "m
 
 /** PATCH /user-profile sent first by onboarding handleFinish (after JSON serialisation). */
 export const ONBOARDING_PROFILE = {
+  birthYear: new Date().getFullYear() - 32,
   annualSalary: 45000,
-  monthlyTakeHome: 2843,
+  monthlyTakeHome: 2718,
   employmentType: "employed",
-  studentLoanPlan: "NONE",
+  taxRegion: "SCOTLAND",
+  studentLoanPlans: ["PLAN_2"],
   housingStatus: "mortgage",
   monthlyHousingCost: 900,
   monthlyOtherOutgoings: 700,
-  totalCashSavings: 5000,
-  totalPensionPot: 15000,
-  totalUnsecuredDebt: 2000,
   hasMortgage: true,
   homeValue: 300000,
-  mortgageBalance: 200000,
   pensionPercent: 5,
   enabledPages: ONBOARDING_PAGES,
   dashboardWidgets: ONBOARDING_PAGES,
@@ -50,7 +48,7 @@ export const ONBOARDING_BUDGET_ENTRIES = [
   {
     name: "Monthly Take-Home Income",
     category: "income",
-    amount: 2843,
+    amount: 2718,
     isIncome: true,
     frequency: "monthly",
   },
@@ -74,22 +72,12 @@ export const ONBOARDING_BUDGET_ENTRIES = [
 export const ONBOARDING_COMPLETE = { onboardingCompleted: true };
 
 /**
- * Profile fields the web sends during onboarding that the backend does not persist at all:
- * UserProfileService.updateProfile has no assignment for them and the entity has no column (D02b).
+ * Profile fields the web sends during onboarding that the backend does not persist at all.
  * The contract test asserts they are still dropped, so fixing the backend forces this list to
- * shrink rather than leaving a stale exemption.
+ * shrink rather than leaving a stale exemption. `homeValue` becomes a Property account row
+ * (E23 section 3.1, P1-3); every other onboarding answer is now stored (D07).
  */
-export const PROFILE_FIELDS_NOT_PERSISTED = [
-  "studentLoanPlan",
-  "housingStatus",
-  "monthlyHousingCost",
-  "monthlyOtherOutgoings",
-  "totalCashSavings",
-  "totalPensionPot",
-  "totalUnsecuredDebt",
-  "homeValue",
-  "mortgageBalance",
-] as const;
+export const PROFILE_FIELDS_NOT_PERSISTED = ["homeValue"] as const;
 
 /** Account create/update bodies, keyed by the web page that sends them. */
 export const ACCOUNT_CREATE_PAYLOADS = {

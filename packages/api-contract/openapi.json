@@ -1722,6 +1722,61 @@
                   },
                   "onboardingCompleted": {
                     "type": "boolean"
+                  },
+                  "taxRegion": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "enum": ["ENGLAND", "WALES", "SCOTLAND", "NORTHERN_IRELAND"]
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "birthYear": {
+                    "anyOf": [
+                      {
+                        "type": "integer",
+                        "minimum": 1900,
+                        "maximum": 2100
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "studentLoanPlans": {
+                    "anyOf": [
+                      {
+                        "maxItems": 5,
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "enum": ["PLAN_1", "PLAN_2", "PLAN_4", "PLAN_5", "POSTGRAD"]
+                        }
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "housingStatus": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "enum": ["renting", "mortgage", "own_outright"]
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "monthlyHousingCost": {
+                    "type": ["number", "null"]
+                  },
+                  "monthlyOtherOutgoings": {
+                    "type": ["number", "null"]
                   }
                 }
               }

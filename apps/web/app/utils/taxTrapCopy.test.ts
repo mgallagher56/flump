@@ -1,6 +1,6 @@
 import { calculateTaxTrapRelief } from "@flump/finance-engine";
 import { describe, expect, it } from "vitest";
-import { formatTrapRate, getTaxTrapCopy } from "./taxTrapCopy";
+import { formatTrapRate, getKnownTrapRegion, getTaxTrapCopy } from "./taxTrapCopy";
 
 describe("taxTrapCopy", () => {
   it("formats whole and fractional rates in en-GB", () => {
@@ -25,5 +25,15 @@ describe("taxTrapCopy", () => {
     expect(copy.incomeTaxRate).toBe("67.5%");
     expect(copy.effectiveRate).toBe("69.5%");
     expect(copy.breakdown).toBe("67.5% income tax, 69.5% including NI");
+  });
+
+  it("treats a region as known only when the user set it (E23 D-4)", () => {
+    expect(getKnownTrapRegion({ ukRegion: "SCOTLAND" })).toBe("SCOTLAND");
+    expect(getKnownTrapRegion({ ukRegion: "ENGLAND_NI_WALES" })).toBeNull();
+    expect(getKnownTrapRegion({ ukRegion: "ENGLAND_NI_WALES", ukRegionAssumed: true })).toBeNull();
+    expect(getKnownTrapRegion({ ukRegion: "ENGLAND_NI_WALES", ukRegionAssumed: false })).toBe(
+      "ENGLAND_NI_WALES",
+    );
+    expect(getKnownTrapRegion(null)).toBeNull();
   });
 });

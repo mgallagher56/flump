@@ -15,7 +15,7 @@ const PageKeyList = z.array(z.string().min(1).max(64)).max(20);
 
 /**
  * PATCH /user-profile: every field `UserProfileService.updateProfile` reads. Fields the web sends
- * that the backend ignores (age, housingStatus, ...) are deliberately absent: shadow mode reports
+ * that the backend ignores (homeValue, ...) are deliberately absent: shadow mode reports
  * them as unknown keys. Both `null` and absent are accepted on nullable columns.
  */
 export const UpdateProfileRequest = z.object({
@@ -56,6 +56,16 @@ export const UpdateProfileRequest = z.object({
   dashboardWidgetConfig: z.record(z.string(), z.unknown()).optional(),
   customBudgetCategories: z.array(z.string().min(1).max(64)).max(50).optional(),
   onboardingCompleted: z.boolean().optional(),
+  // E23 D06/D07 profile facts (null clears a fact back to "not set").
+  taxRegion: z.enum(["ENGLAND", "WALES", "SCOTLAND", "NORTHERN_IRELAND"]).nullish(),
+  birthYear: z.number().int().min(1900).max(2100).nullish(),
+  studentLoanPlans: z
+    .array(z.enum(["PLAN_1", "PLAN_2", "PLAN_4", "PLAN_5", "POSTGRAD"]))
+    .max(5)
+    .nullish(),
+  housingStatus: z.enum(["renting", "mortgage", "own_outright"]).nullish(),
+  monthlyHousingCost: Money.nullish(),
+  monthlyOtherOutgoings: Money.nullish(),
 });
 
 export const UpdateChecklistRequest = z.object({

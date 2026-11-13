@@ -357,7 +357,7 @@ export const PensionContainer: FC = () => {
     baseline.pensionContributionPct > 0 ? baseline.pensionContributionPct : employeePercent;
   const effectiveIsSalarySacrifice = baseline.isSalarySacrifice ?? isSalarySacrifice;
 
-  const knownRegion = getKnownTrapRegion(baseline.ukRegion);
+  const knownRegion = getKnownTrapRegion(baseline);
   const taxTrap = useMemo(() => {
     return calculate100kTaxTrap(
       effectiveSalary,

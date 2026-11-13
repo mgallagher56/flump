@@ -14,7 +14,13 @@ import { BankConnection } from "./entities/bank-connection.entity";
 import { BudgetEntry } from "./entities/budget-entry.entity";
 import { TaxRecord } from "./entities/tax-record.entity";
 import { Transaction } from "./entities/transaction.entity";
-import { UserProfile } from "./entities/user-profile.entity";
+import {
+  HOUSING_STATUSES,
+  STUDENT_LOAN_PLANS,
+  type StudentLoanPlan,
+  TAX_REGIONS,
+  UserProfile,
+} from "./entities/user-profile.entity";
 import { USER_IDENTITY_ADAPTER, type UserIdentityAdapter } from "./identity/identity.adapter";
 import { safeErrorSummary } from "./log-safe";
 
@@ -46,6 +52,44 @@ export function withoutRetiredModuleKeys<V>(record: Record<string, V> | null | u
 
 function nonEmptyRecord<V>(record: Record<string, V> | null | undefined) {
   return record && Object.keys(record).length > 0 ? record : undefined;
+}
+
+// E23 profile facts: validated here so a bad value is a 400, never a CHECK-violation 500.
+function oneOfOrNull<T extends string>(
+  value: unknown,
+  allowed: readonly T[],
+  field: string,
+): T | null {
+  if (value === null) return null;
+  if (typeof value === "string" && (allowed as readonly string[]).includes(value))
+    return value as T;
+  throw new BadRequestException(`${field} must be one of ${allowed.join(", ")} or null`);
+}
+
+function birthYearOrNull(value: unknown): number | null {
+  if (value === null) return null;
+  const thisYear = new Date().getUTCFullYear();
+  if (typeof value === "number" && Number.isInteger(value) && value >= 1900 && value <= thisYear) {
+    return value;
+  }
+  throw new BadRequestException(`birthYear must be a whole year from 1900 to ${thisYear} or null`);
+}
+
+function studentLoanPlansOrNull(value: unknown): StudentLoanPlan[] | null {
+  if (value === null) return null;
+  if (!Array.isArray(value)) {
+    throw new BadRequestException("studentLoanPlans must be an array or null");
+  }
+  const plans = value.map((plan) => oneOfOrNull(plan, STUDENT_LOAN_PLANS, "studentLoanPlans[]"));
+  return [...new Set(plans.filter((plan): plan is StudentLoanPlan => plan !== null))];
+}
+
+function moneyOrNull(value: unknown, field: string): number | null {
+  if (value === null) return null;
+  if (typeof value === "number" && Number.isFinite(value) && value >= 0 && value < 1e10) {
+    return Math.round(value * 100) / 100;
+  }
+  throw new BadRequestException(`${field} must be a non-negative amount or null`);
 }
 
 export interface ProfileLifecycle {
@@ -87,6 +131,12 @@ export class UserProfileService implements ProfileLifecycle {
       ...profile,
       firstName: profile.firstName ?? null,
       lastName: profile.lastName ?? null,
+      taxRegion: profile.taxRegion ?? null,
+      birthYear: profile.birthYear ?? null,
+      studentLoanPlans: profile.studentLoanPlans ?? null,
+      housingStatus: profile.housingStatus ?? null,
+      monthlyHousingCost: profile.monthlyHousingCost ?? null,
+      monthlyOtherOutgoings: profile.monthlyOtherOutgoings ?? null,
       annualSalary:
         profile.annualSalary !== null && profile.annualSalary !== undefined
           ? Number(profile.annualSalary)
@@ -344,6 +394,25 @@ export class UserProfileService implements ProfileLifecycle {
         : [];
     if (body.onboardingCompleted !== undefined)
       profile.onboardingCompleted = Boolean(body.onboardingCompleted);
+    if (body.taxRegion !== undefined) {
+      profile.taxRegion = oneOfOrNull(body.taxRegion, TAX_REGIONS, "taxRegion");
+    }
+    if (body.birthYear !== undefined) profile.birthYear = birthYearOrNull(body.birthYear);
+    if (body.studentLoanPlans !== undefined) {
+      profile.studentLoanPlans = studentLoanPlansOrNull(body.studentLoanPlans);
+    }
+    if (body.housingStatus !== undefined) {
+      profile.housingStatus = oneOfOrNull(body.housingStatus, HOUSING_STATUSES, "housingStatus");
+    }
+    if (body.monthlyHousingCost !== undefined) {
+      profile.monthlyHousingCost = moneyOrNull(body.monthlyHousingCost, "monthlyHousingCost");
+    }
+    if (body.monthlyOtherOutgoings !== undefined) {
+      profile.monthlyOtherOutgoings = moneyOrNull(
+        body.monthlyOtherOutgoings,
+        "monthlyOtherOutgoings",
+      );
+    }
 
     const saved = await this.userProfileRepository.save(profile);
 

@@ -47,6 +47,12 @@ export interface UserProfileData {
   currency?: string;
   country?: string;
   age?: number | null;
+  /** E23 D-3-B: stored instead of age. */
+  birthYear?: number | null;
+  /** E23 D06: the four UK nations; null means not set. */
+  taxRegion?: "ENGLAND" | "WALES" | "SCOTLAND" | "NORTHERN_IRELAND" | null;
+  /** E23 D07: [] means "no student loan"; null means not answered. */
+  studentLoanPlans?: string[] | null;
   employmentType?: "employed" | "self-employed" | "other" | null;
   annualSalary?: number | null;
   monthlyTakeHome?: number | null;
@@ -108,6 +114,14 @@ export function normalizeStudentLoanPlan(plan?: string | null): UkStudentLoanPla
   if (p === "PLAN_5" || p === "PLAN5") return "PLAN_5";
   if (p === "POSTGRAD" || p === "POSTGRADUATE") return "POSTGRAD";
   return "NONE";
+}
+
+/**
+ * The engine applies one plan. A postgraduate loan repays alongside an undergraduate plan, so
+ * the undergraduate plan wins until the engine sums concurrent plans (E23 D07 follow-up).
+ */
+function pickEnginePlan(plans: string[]): string | null {
+  return plans.find((plan) => normalizeStudentLoanPlan(plan) !== "POSTGRAD") ?? plans[0] ?? null;
 }
 
 /**
@@ -182,10 +196,14 @@ export function userProfileToFinancialBaseline(
   return {
     ...DEFAULT_FINANCIAL_BASELINE,
     userId: profile.userId ?? profile.id ?? fallbackUserId,
+    ukRegion: profile.taxRegion === "SCOTLAND" ? "SCOTLAND" : "ENGLAND_NI_WALES",
+    ukRegionAssumed: !profile.taxRegion,
     age:
-      profile.age !== null && profile.age !== undefined
-        ? Number(profile.age)
-        : DEFAULT_FINANCIAL_BASELINE.age,
+      profile.birthYear !== null && profile.birthYear !== undefined
+        ? new Date().getFullYear() - Number(profile.birthYear)
+        : profile.age !== null && profile.age !== undefined
+          ? Number(profile.age)
+          : DEFAULT_FINANCIAL_BASELINE.age,
     employmentStatus: normalizeEmploymentStatus(profile.employmentType),
     annualGrossSalary,
     monthlyTakeHomeOverride:
@@ -230,7 +248,11 @@ export function userProfileToFinancialBaseline(
         ? Number(profile.pensionEmployerPercent)
         : DEFAULT_FINANCIAL_BASELINE.employerPensionMatchPct,
     isSalarySacrifice: profile.isSalarySacrifice ?? DEFAULT_FINANCIAL_BASELINE.isSalarySacrifice,
-    studentLoanPlan: normalizeStudentLoanPlan(profile.studentLoanPlan),
+    studentLoanPlan: normalizeStudentLoanPlan(
+      Array.isArray(profile.studentLoanPlans)
+        ? pickEnginePlan(profile.studentLoanPlans)
+        : profile.studentLoanPlan,
+    ),
     propertyOwnershipSharePct:
       profile.propertyOwnershipShare !== null && profile.propertyOwnershipShare !== undefined
         ? Number(profile.propertyOwnershipShare)

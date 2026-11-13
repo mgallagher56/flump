@@ -31,9 +31,14 @@ export function getTaxTrapCopy(analysis: TaxTrapAnalysis): TaxTrapCopy {
 export const REGION_ASSUMPTION_LABEL = "Assuming England, Wales and Northern Ireland rates.";
 
 /**
- * Only Scotland can be known today: the baseline always carries a default ukRegion and region is
- * not yet captured (E23 T-FIX-2), so England, Wales and NI is an assumption until it is.
+ * The region the user told us, or null when England, Wales and NI is only the labelled
+ * assumption (E23 D-4). Scotland is only ever stored from the user's own answer, so it is
+ * always known; a baseline without `ukRegionAssumed: false` is treated as assumed.
  */
-export function getKnownTrapRegion(ukRegion: UkTaxRegion | undefined | null): UkTaxRegion | null {
-  return ukRegion === "SCOTLAND" ? "SCOTLAND" : null;
+export function getKnownTrapRegion(
+  baseline: { ukRegion?: UkTaxRegion | null; ukRegionAssumed?: boolean } | null | undefined,
+): UkTaxRegion | null {
+  if (!baseline?.ukRegion) return null;
+  if (baseline.ukRegion === "SCOTLAND") return "SCOTLAND";
+  return baseline.ukRegionAssumed === false ? baseline.ukRegion : null;
 }

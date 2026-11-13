@@ -261,6 +261,45 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
           ).toBeUndefined();
         }
       });
+
+      // D06/D07: the profile facts round-trip, read as null until set, and clear back to null.
+      it("stores region, birth year, student loan plans and housing, null until set (D06, D07)", async () => {
+        const fresh = (await get("/user-profile")).body;
+        expect(fresh).toMatchObject({
+          taxRegion: null,
+          birthYear: null,
+          studentLoanPlans: null,
+          housingStatus: null,
+          monthlyHousingCost: null,
+          monthlyOtherOutgoings: null,
+        });
+
+        expect2xx(
+          await send("patch", "/user-profile", { studentLoanPlans: [], monthlyHousingCost: 812.5 }),
+          "PATCH /user-profile (facts)",
+        );
+        const saved = (await get("/user-profile")).body;
+        expect(saved.studentLoanPlans).toEqual([]);
+        expect(saved.monthlyHousingCost).toBe(812.5);
+
+        expect2xx(
+          await send("patch", "/user-profile", { taxRegion: "WALES" }),
+          "PATCH /user-profile (region)",
+        );
+        expect2xx(
+          await send("patch", "/user-profile", { taxRegion: null }),
+          "PATCH /user-profile (clear region)",
+        );
+        expect((await get("/user-profile")).body.taxRegion).toBeNull();
+      });
+
+      it("rejects an unknown region or plan with 400, never a 500", async () => {
+        expect((await send("patch", "/user-profile", { taxRegion: "MARS" })).status).toBe(400);
+        expect(
+          (await send("patch", "/user-profile", { studentLoanPlans: ["PLAN_9"] })).status,
+        ).toBe(400);
+        expect((await send("patch", "/user-profile", { birthYear: 1850 })).status).toBe(400);
+      });
     });
 
     describe("accounts", () => {

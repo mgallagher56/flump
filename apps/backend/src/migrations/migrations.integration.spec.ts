@@ -6,6 +6,7 @@ import { assertSafeTestDatabase } from "../testing/assertSafeTestDatabase";
 import { resolveDbTestMode } from "../testing/dbTestMode";
 import { discoverMigrations, type MigrationClass } from "../testing/discoverMigrations";
 import { AddMortgageTermColumns1794355600000 } from "./AddMortgageTermColumns1794355600000";
+import { AddProfileFacts1794355723000 } from "./AddProfileFacts1794355723000";
 import { Baseline1794355200000 } from "./Baseline1794355200000";
 import { ClearBankTokens1794355300000 } from "./ClearBankTokens1794355300000";
 import { DeleteSyncedTransactions1794355500000 } from "./DeleteSyncedTransactions1794355500000";
@@ -606,6 +607,116 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
         await runner.release();
       }
       expect(await termColumns()).toEqual([]);
+    });
+  });
+
+  describe("AddProfileFacts1794355723000", () => {
+    const MIGRATION = "AddProfileFacts1794355723000";
+    const FACT_COLUMNS = [
+      "birth_year",
+      "housing_status",
+      "monthly_housing_cost",
+      "monthly_other_outgoings",
+      "student_loan_plans",
+      "tax_region",
+    ];
+
+    const factColumns = (): Promise<unknown[]> =>
+      ds.query(
+        `SELECT column_name, data_type, is_nullable, column_default FROM information_schema.columns
+         WHERE table_schema = 'public' AND table_name = 'user_profiles'
+           AND column_name = ANY($1)
+         ORDER BY column_name`,
+        [FACT_COLUMNS],
+      );
+
+    const rerunWithoutColumns = async (): Promise<void> => {
+      await ds.query(`DELETE FROM migrations WHERE name = '${MIGRATION}'`);
+      for (const column of FACT_COLUMNS) {
+        await ds.query(`ALTER TABLE "user_profiles" DROP COLUMN "${column}"`);
+      }
+    };
+
+    it("adds nullable columns with no default and leaves existing profiles not set", async () => {
+      await ds.runMigrations();
+      await rerunWithoutColumns();
+      await ds.query("INSERT INTO user_profiles (user_id) VALUES ('u1')");
+
+      await ds.runMigrations();
+
+      expect(await factColumns()).toEqual([
+        {
+          column_name: "birth_year",
+          data_type: "smallint",
+          is_nullable: "YES",
+          column_default: null,
+        },
+        {
+          column_name: "housing_status",
+          data_type: "character varying",
+          is_nullable: "YES",
+          column_default: null,
+        },
+        {
+          column_name: "monthly_housing_cost",
+          data_type: "numeric",
+          is_nullable: "YES",
+          column_default: null,
+        },
+        {
+          column_name: "monthly_other_outgoings",
+          data_type: "numeric",
+          is_nullable: "YES",
+          column_default: null,
+        },
+        {
+          column_name: "student_loan_plans",
+          data_type: "text",
+          is_nullable: "YES",
+          column_default: null,
+        },
+        {
+          column_name: "tax_region",
+          data_type: "character varying",
+          is_nullable: "YES",
+          column_default: null,
+        },
+      ]);
+      expect(
+        await ds.query("SELECT tax_region, birth_year, student_loan_plans FROM user_profiles"),
+      ).toEqual([{ tax_region: null, birth_year: null, student_loan_plans: null }]);
+      expect(await applied()).toContain(MIGRATION);
+    });
+
+    it("rejects a region or housing status outside the allowed values", async () => {
+      await ds.runMigrations();
+      await expect(
+        ds.query("INSERT INTO user_profiles (user_id, tax_region) VALUES ('u1', 'MARS')"),
+      ).rejects.toThrow(/CHK_user_profiles_tax_region/);
+      await expect(
+        ds.query("INSERT INTO user_profiles (user_id, housing_status) VALUES ('u2', 'castle')"),
+      ).rejects.toThrow(/CHK_user_profiles_housing_status/);
+      await ds.query("INSERT INTO user_profiles (user_id, tax_region) VALUES ('u3', 'SCOTLAND')");
+    });
+
+    it("is idempotent when the columns already exist (synchronize-built database)", async () => {
+      await ds.synchronize();
+      await expect(runUpInTransaction(new AddProfileFacts1794355723000())).resolves.toBe(undefined);
+      await expect(runUpInTransaction(new AddProfileFacts1794355723000())).resolves.toBe(undefined);
+      expect(await factColumns()).toHaveLength(FACT_COLUMNS.length);
+    });
+
+    it("down drops every column and constraint", async () => {
+      await ds.runMigrations();
+      const runner = ds.createQueryRunner();
+      try {
+        await runner.startTransaction();
+        await new AddProfileFacts1794355723000().down(runner);
+        await runner.commitTransaction();
+      } finally {
+        await runner.release();
+      }
+      expect(await factColumns()).toEqual([]);
     });
   });
 });

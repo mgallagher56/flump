@@ -41,6 +41,11 @@ export interface FinancialBaseline {
   age?: number;
   taxYear: UkTaxYear;
   ukRegion: UkTaxRegion;
+  /**
+   * True when the user has not told us their region, so `ukRegion` is the labelled
+   * England, Wales and NI assumption (E23 D-4). Absent is treated as assumed.
+   */
+  ukRegionAssumed?: boolean;
   employmentStatus: UkEmploymentStatus;
   annualGrossSalary: number;
   monthlyTakeHomeOverride?: number;

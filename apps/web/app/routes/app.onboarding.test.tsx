@@ -41,6 +41,9 @@ vi.mock("~/state/baseline.store", () => ({
   }),
 }));
 
+const chooseRegion = (region = "ENGLAND") =>
+  fireEvent.change(screen.getByLabelText(/where do you pay tax/i), { target: { value: region } });
+
 // Lists (GET) answer with an empty array; creates (POST) answer with a record.
 const okFetch = async (_url: string, init?: RequestInit) =>
   new Response(init?.method === "POST" ? JSON.stringify({ success: true }) : "[]", { status: 200 });
@@ -100,6 +103,7 @@ describe("OnboardingRoute (3-Step Baseline Flow)", () => {
   it("advances from Step 2 to Step 3 and finishes setup to launch dashboard", async () => {
     render(<OnboardingRoute />);
     fireEvent.change(screen.getByLabelText(/annual gross salary/i), { target: { value: "45000" } });
+    chooseRegion();
 
     // Step 1 -> Step 2
     fireEvent.click(screen.getByText("Next: Housing and outgoings →"));
@@ -121,7 +125,8 @@ describe("OnboardingRoute (3-Step Baseline Flow)", () => {
         }),
       );
       expect(mockUpdateProfile).toHaveBeenLastCalledWith({ onboardingCompleted: true });
-      expect(mockUpdateBaseline).toHaveBeenCalled();
+      // D31: the server profile is the only store; onboarding writes no client baseline.
+      expect(mockUpdateBaseline).not.toHaveBeenCalled();
       expect(mockNavigate).toHaveBeenCalledWith("/");
     });
   });
@@ -152,6 +157,7 @@ describe("OnboardingRoute (3-Step Baseline Flow)", () => {
     render(<OnboardingRoute />);
 
     expect(screen.getByText(/we've pre-loaded your £75,000 salary/i)).toBeDefined();
+    chooseRegion("SCOTLAND");
     const quickLaunchBtn = screen.getByText(/launch dashboard with this baseline \(10s\) →/i);
     fireEvent.click(quickLaunchBtn);
 
@@ -197,11 +203,41 @@ describe("OnboardingRoute (3-Step Baseline Flow)", () => {
     render(<OnboardingRoute />);
     fireEvent.click(screen.getByRole("button", { name: /monthly net/i }));
     typeInto(/monthly net|take-home/i, "3000");
+    chooseRegion("WALES");
     fireEvent.click(screen.getByText("Next: Housing and outgoings →"));
     fireEvent.click(screen.getByText("Next: Savings, pension and debt →"));
     const finishBtn = screen.getByRole("button", { name: /finish setup and launch dashboard/i });
     expect((finishBtn as HTMLButtonElement).disabled).toBe(false);
     expect(screen.queryByTestId("finish-income-hint")).toBeNull();
+  });
+
+  it("keeps Finish disabled until a tax region is chosen (D-4-C) and says why", () => {
+    render(<OnboardingRoute />);
+    typeInto(/annual gross salary/i, "45000");
+    fireEvent.click(screen.getByText("Next: Housing and outgoings →"));
+    fireEvent.click(screen.getByText("Next: Savings, pension and debt →"));
+    const finishBtn = () =>
+      screen.getByRole("button", {
+        name: /finish setup and launch dashboard/i,
+      }) as HTMLButtonElement;
+    expect(finishBtn().disabled).toBe(true);
+    expect(screen.getByTestId("finish-income-hint").textContent).toMatch(/where you pay tax/i);
+    fireEvent.click(screen.getByRole("button", { name: /back/i }));
+    fireEvent.click(screen.getByRole("button", { name: /back/i }));
+    chooseRegion("NORTHERN_IRELAND");
+    fireEvent.click(screen.getByText("Next: Housing and outgoings →"));
+    fireEvent.click(screen.getByText("Next: Savings, pension and debt →"));
+    expect(finishBtn().disabled).toBe(false);
+  });
+
+  it("uses Scottish income-tax bands for the live take-home when Scotland is chosen (D06)", () => {
+    render(<OnboardingRoute />);
+    typeInto(/annual gross salary/i, "50000");
+    chooseRegion("ENGLAND");
+    const england = screen.getByTestId("onboarding-take-home").textContent;
+    chooseRegion("SCOTLAND");
+    const scotland = screen.getByTestId("onboarding-take-home").textContent;
+    expect(england).not.toBe(scotland);
   });
 
   const typeInto = (label: RegExp, value: string) =>
@@ -210,6 +246,7 @@ describe("OnboardingRoute (3-Step Baseline Flow)", () => {
   const finish = (opts: { cash?: string; pot?: string } = { cash: "5000", pot: "15000" }) => {
     render(<OnboardingRoute />);
     typeInto(/annual gross salary/i, "45000");
+    chooseRegion();
     fireEvent.click(screen.getByText("Next: Housing and outgoings →"));
     fireEvent.click(screen.getByText("Next: Savings, pension and debt →"));
     if (opts.cash) typeInto(/total cash and isa savings/i, opts.cash);
@@ -350,6 +387,7 @@ describe("OnboardingRoute (3-Step Baseline Flow)", () => {
     fireEvent.click(screen.getByRole("button", { name: /back/i }));
     fireEvent.click(screen.getByRole("button", { name: /back/i }));
     typeInto(/annual gross salary/i, "45000");
+    chooseRegion();
     fireEvent.click(screen.getByText("Next: Housing and outgoings →"));
     fireEvent.click(screen.getByText("Next: Savings, pension and debt →"));
     expect(
@@ -368,9 +406,8 @@ describe("OnboardingRoute (3-Step Baseline Flow)", () => {
     await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith("/"));
     expect(posts(fetchMock, "/accounts")).toHaveLength(0);
     const profile = mockUpdateProfile.mock.calls[0][0];
-    expect(profile.totalCashSavings).toBeUndefined();
     expect(profile.pensionPercent).toBeUndefined();
-    expect(profile.age).toBeUndefined();
+    expect(profile.birthYear).toBeUndefined();
   });
 
   // Consumer half of the web-to-backend contract pair (E23 P0-3). These literals are duplicated in
@@ -382,6 +419,9 @@ describe("OnboardingRoute (3-Step Baseline Flow)", () => {
     globalThis.fetch = fetchMock as any;
     render(<OnboardingRoute />);
     typeInto(/annual gross salary/i, "45000");
+    chooseRegion("SCOTLAND");
+    typeInto(/current age/i, "32");
+    fireEvent.change(screen.getByLabelText(/student loan plan/i), { target: { value: "PLAN_2" } });
     fireEvent.click(screen.getByText("Next: Housing and outgoings →"));
     fireEvent.click(screen.getByRole("button", { name: /mortgage/i }));
     typeInto(/monthly mortgage payment/i, "900");
@@ -408,7 +448,7 @@ describe("OnboardingRoute (3-Step Baseline Flow)", () => {
       {
         name: "Monthly Take-Home Income",
         category: "income",
-        amount: 2843,
+        amount: 2718,
         isIncome: true,
         frequency: "monthly",
       },
@@ -429,19 +469,17 @@ describe("OnboardingRoute (3-Step Baseline Flow)", () => {
     ]);
     // JSON round trip: undefined fields are dropped on the wire, exactly as the backend sees them.
     expect(JSON.parse(JSON.stringify(mockUpdateProfile.mock.calls[0][0]))).toEqual({
+      birthYear: new Date().getFullYear() - 32,
       annualSalary: 45000,
-      monthlyTakeHome: 2843,
+      monthlyTakeHome: 2718,
       employmentType: "employed",
-      studentLoanPlan: "NONE",
+      taxRegion: "SCOTLAND",
+      studentLoanPlans: ["PLAN_2"],
       housingStatus: "mortgage",
       monthlyHousingCost: 900,
       monthlyOtherOutgoings: 700,
-      totalCashSavings: 5000,
-      totalPensionPot: 15000,
-      totalUnsecuredDebt: 2000,
       hasMortgage: true,
       homeValue: 300000,
-      mortgageBalance: 200000,
       pensionPercent: 5,
       enabledPages: ["accounts", "budget", "savings", "debt", "pension", "mortgage"],
       dashboardWidgets: ["accounts", "budget", "savings", "debt", "pension", "mortgage"],
