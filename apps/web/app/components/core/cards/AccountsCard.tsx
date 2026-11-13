@@ -218,7 +218,8 @@ const AccountsCard: FC<AccountsCardProp> = ({
   });
 
   const balanceValueStyle = css({
-    fontFamily: "var(--fonts-display, 'Plus Jakarta Sans', sans-serif)",
+    fontFamily:
+      "var(--fonts-display, 'Plus Jakarta Sans Variable', 'Plus Jakarta Sans', sans-serif)",
     fontSize: { base: "20px", md: "24px" },
     fontWeight: "bold",
     letterSpacing: "-0.02em",

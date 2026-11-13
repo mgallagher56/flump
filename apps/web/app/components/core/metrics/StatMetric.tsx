@@ -83,7 +83,8 @@ export const StatMetric: FC<StatMetricProps> = ({
   });
 
   const heroValueStyle = css({
-    fontFamily: "var(--fonts-display, 'Plus Jakarta Sans', sans-serif)",
+    fontFamily:
+      "var(--fonts-display, 'Plus Jakarta Sans Variable', 'Plus Jakarta Sans', sans-serif)",
     fontWeight: "bold",
     letterSpacing: "-0.02em",
     fontVariantNumeric: "tabular-nums",
