@@ -21,7 +21,7 @@ describe("banking core: sign-enforcement", () => {
     expect(isLiabilityCategory("MORTGAGE_RESIDENTIAL")).toBe(true);
   });
 
-  it("enforces SIGN CONVENTION LAW on assets: netWorth positive, principalOwed 0", () => {
+  it("enforces SIGN CONVENTION LAW on assets: real sign kept, principalOwed 0", () => {
     const rawAsset: NormalizedAccount = {
       externalAccountId: "acc-1",
       provider: "manual",
@@ -29,14 +29,14 @@ describe("banking core: sign-enforcement", () => {
       name: "Current",
       category: "CURRENT",
       currency: "GBP",
-      netWorthImpactGbp: -2500, // mistakenly entered as negative
+      netWorthImpactGbp: -2500, // overdrawn current account
       principalOwedGbp: 2500,
       isTaxFreeIsaWrapper: false,
       lastSyncedAt: new Date().toISOString(),
     };
 
     const enforced = enforceSignConvention(rawAsset);
-    expect(enforced.netWorthImpactGbp).toBe(2500);
+    expect(enforced.netWorthImpactGbp).toBe(-2500);
     expect(enforced.principalOwedGbp).toBe(0);
     expect(validateSignConvention(enforced)).toBe(true);
   });
