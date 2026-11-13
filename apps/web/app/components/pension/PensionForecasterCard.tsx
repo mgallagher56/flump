@@ -55,7 +55,8 @@ const UK_QUALIFYING_UPPER = 50270;
 const UK_ANNUAL_ALLOWANCE = 60000;
 const UK_LUMP_SUM_ALLOWANCE = 268275;
 // Full new State Pension for the current tax year (sourced, per-year registry in finance-engine).
-const UK_STATE_PENSION_ANNUAL = getUkTaxYearRules(resolveUkTaxYear()).statePension.fullNewAnnual;
+const currentStatePensionAnnual = (): number =>
+  getUkTaxYearRules(resolveUkTaxYear()).statePension.fullNewAnnual;
 const INFLATION_RATE = 2.5;
 // Drawdown rate behind the "estimated retirement income" figure. Shown next to the figure.
 const SAFE_WITHDRAWAL_RATE = 0.04;
@@ -388,12 +389,14 @@ export const PensionForecasterCard: FC<PensionForecasterCardProps> = ({
       horizonYears,
     ]);
 
+  const statePensionAnnual = currentStatePensionAnnual();
+
   // 25% Tax-Free Lump Sum (capped at UK £268,275 LSA) & 4% Safe Withdrawal Rate
   const taxFreeLumpSum = Math.min(Math.round(finalBalance * 0.25), UK_LUMP_SUM_ALLOWANCE);
   const drawdownPotAfterLumpSum = Math.max(0, finalBalance - taxFreeLumpSum);
   const baseAnnualDrawdown = Math.round(finalBalance * SAFE_WITHDRAWAL_RATE);
   const annualRetirementIncome =
-    baseAnnualDrawdown + (includeStatePension ? UK_STATE_PENSION_ANNUAL : 0);
+    baseAnnualDrawdown + (includeStatePension ? statePensionAnnual : 0);
   const monthlyRetirementIncome = Math.round(annualRetirementIncome / 12);
 
   // PLSA Standard status
@@ -1123,7 +1126,7 @@ export const PensionForecasterCard: FC<PensionForecasterCardProps> = ({
             annual drawdown rate and uses fixed allowances that are not updated each tax year: a{" "}
             {formatCurrency(UK_LUMP_SUM_ALLOWANCE)} lump sum allowance, a{" "}
             {formatCurrency(UK_ANNUAL_ALLOWANCE)} annual allowance and a{" "}
-            {formatCurrency(UK_STATE_PENSION_ANNUAL)}/yr state pension when included.
+            {formatCurrency(statePensionAnnual)}/yr state pension when included.
           </p>
 
           {/* Visual Stacked Area Chart */}
