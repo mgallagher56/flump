@@ -5,10 +5,7 @@ import { type FC, useMemo, useRef, useState } from "react";
 import { AccountsWidget } from "~/components/dashboard/widgets/AccountsWidget";
 import { BudgetWidget } from "~/components/dashboard/widgets/BudgetWidget";
 import { DebtWidget } from "~/components/dashboard/widgets/DebtWidget";
-import { MortgageWidget } from "~/components/dashboard/widgets/MortgageWidget";
-import { PensionWidget } from "~/components/dashboard/widgets/PensionWidget";
 import { SavingsWidget } from "~/components/dashboard/widgets/SavingsWidget";
-import { TaxWidget } from "~/components/dashboard/widgets/TaxWidget";
 import SetupChecklist, { type SetupChecklistProps } from "~/components/setup/SetupChecklist";
 import { normalizeProfile, type UserProfile, useUserProfile } from "~/hooks/useUserProfile";
 import type { DebtSummary } from "~/utils/debtSummary";
@@ -21,7 +18,10 @@ import {
 } from "~/utils/pageConfig";
 import { DashboardEmptyState } from "../DashboardEmptyState";
 import { DashboardKpiStrip } from "../DashboardKpiStrip";
+import { MortgageWidget } from "../MortgageWidget";
+import { PensionWidget } from "../PensionWidget";
 import { StageCoachCard } from "../StageCoachCard";
+import { TaxWidget } from "../TaxWidget";
 import { WidgetVisibilityPanel } from "../WidgetVisibilityPanel";
 import { dashboardPage, showHideButton, widgetGrid } from "./HomeDashboard.styles";
 
@@ -325,29 +325,14 @@ export const HomeDashboard: FC<HomeDashboardProps> = ({
                 return (
                   <PensionWidget
                     key="pension"
-                    {...commonProps}
-                    config={widgetConfig("pension")}
                     data={pensionData}
+                    targetRetirementAge={finiteOrNull(widgetConfig("pension").targetRetirementAge)}
                   />
                 );
               case "mortgage":
-                return (
-                  <MortgageWidget
-                    key="mortgage"
-                    {...commonProps}
-                    config={widgetConfig("mortgage")}
-                    data={mortgageData}
-                  />
-                );
+                return <MortgageWidget key="mortgage" data={mortgageData} />;
               case "tax":
-                return (
-                  <TaxWidget
-                    key="tax"
-                    {...commonProps}
-                    config={widgetConfig("tax")}
-                    data={taxData}
-                  />
-                );
+                return <TaxWidget key="tax" data={taxData} />;
               default:
                 return null;
             }

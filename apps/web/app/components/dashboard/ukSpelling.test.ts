@@ -22,6 +22,9 @@ const collect = (dir: string): string[] =>
 
 const files = [
   ...collect(path.join(DASHBOARD_DIR, "widgets")),
+  ...["MortgageWidget", "PensionWidget", "TaxWidget"].flatMap((name) =>
+    collect(path.join(APP_DIR, "features/dashboard/components", name)),
+  ),
   path.join(DASHBOARD_DIR, "DashboardWidgetCard.tsx"),
   path.join(DASHBOARD_DIR, "WidgetSettingsModal.tsx"),
   path.join(APP_DIR, "components/debt/AddDebtDialog.tsx"),
@@ -44,7 +47,10 @@ describe("UK spelling in widget, sandbox and debt dialog copy", () => {
   );
 
   it("replaced the abbreviated pension badge copy", () => {
-    const pension = readFileSync(path.join(DASHBOARD_DIR, "widgets/PensionWidget.tsx"), "utf8");
+    const pension = readFileSync(
+      path.join(APP_DIR, "features/dashboard/components/PensionWidget/PensionWidget.tsx"),
+      "utf8",
+    );
     expect(pension).not.toContain("Sal Sacrifice");
     expect(pension).toContain("Salary sacrifice");
   });

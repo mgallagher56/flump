@@ -410,14 +410,6 @@ describe("Architecture & Design System Laws", () => {
           count: 1,
           reason: "toggle switch track (graphic)",
         },
-        "apps/web/app/components/dashboard/widgets/MortgageWidget.tsx": {
-          count: 1,
-          reason: "toggle switch track (graphic)",
-        },
-        "apps/web/app/components/dashboard/widgets/PensionWidget.tsx": {
-          count: 1,
-          reason: "toggle switch track (graphic)",
-        },
         "apps/web/app/components/dashboard/widgets/SavingsWidget.tsx": {
           count: 1,
           reason: "toggle switch track (graphic)",
