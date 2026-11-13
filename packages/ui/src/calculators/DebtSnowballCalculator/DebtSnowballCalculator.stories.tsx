@@ -12,7 +12,8 @@ type Story = StoryObj<typeof DebtSnowballCalculator>;
 
 const play: Story["play"] = async ({ canvasElement }) => {
   const canvas = within(canvasElement);
-  await expect(canvas.getByLabelText("Credit card balance")).toBeInTheDocument();
+  const card = canvas.getByRole("group", { name: /Credit card/ });
+  await expect(within(card).getByLabelText("Balance (£)")).toBeInTheDocument();
   await expect(canvas.getByText(/Debt free:/)).toBeInTheDocument();
 };
 

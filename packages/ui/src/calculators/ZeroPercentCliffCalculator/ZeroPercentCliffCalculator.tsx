@@ -75,9 +75,11 @@ export const ZeroPercentCliffCalculator: FC<ZeroPercentCliffCalculatorProps> = (
       <div className={gridStyle}>
         <div>
           <div className={inputGroupStyle}>
-            <span className={fieldLabelStyle}>Current 0% card balance (£)</span>
+            <label className={fieldLabelStyle} htmlFor="zero-percent-balance">
+              Current 0% card balance (£)
+            </label>
             <input
-              aria-label="0% card balance"
+              id="zero-percent-balance"
               className={textInputStyle}
               min={100}
               type="number"
@@ -87,9 +89,11 @@ export const ZeroPercentCliffCalculator: FC<ZeroPercentCliffCalculatorProps> = (
           </div>
 
           <div className={inputGroupStyle}>
-            <span className={fieldLabelStyle}>Months remaining on 0% offer</span>
+            <label className={fieldLabelStyle} htmlFor="zero-percent-months">
+              Months remaining on 0% offer
+            </label>
             <input
-              aria-label="Months remaining on 0% offer"
+              id="zero-percent-months"
               className={textInputStyle}
               max={48}
               min={1}
@@ -100,9 +104,11 @@ export const ZeroPercentCliffCalculator: FC<ZeroPercentCliffCalculatorProps> = (
           </div>
 
           <div className={inputGroupStyle}>
-            <span className={fieldLabelStyle}>Revert APR after offer ends (%)</span>
+            <label className={fieldLabelStyle} htmlFor="zero-percent-revert-apr">
+              Revert APR after offer ends (%)
+            </label>
             <input
-              aria-label="Revert APR"
+              id="zero-percent-revert-apr"
               className={textInputStyle}
               step="0.1"
               type="number"

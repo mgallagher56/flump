@@ -34,6 +34,11 @@ import {
   unitStyle,
 } from "./MortgageVsIsaCalculator.styles.js";
 
+const oneDecimalFormatter = new Intl.NumberFormat("en-GB", {
+  minimumFractionDigits: 1,
+  maximumFractionDigits: 1,
+});
+
 export interface MortgageVsIsaCalculatorProps {
   onSaveAndContinue?: (payload: any) => void;
   ctaText?: string;
@@ -87,7 +92,7 @@ export const MortgageVsIsaCalculator: FC<MortgageVsIsaCalculatorProps> = ({
 
     const interestSaved = Math.max(0, totalStandardInterest - totalInterestOverpay);
     const monthsShaved = Math.max(0, months - monthsToZero);
-    const yearsShaved = (monthsShaved / 12).toFixed(1);
+    const yearsShaved = monthsShaved / 12;
 
     // 2. ISA compound investment pot
     let isaPot = 0;
@@ -278,13 +283,13 @@ export const MortgageVsIsaCalculator: FC<MortgageVsIsaCalculatorProps> = ({
         <div className={metricCard}>
           <div className={metricHeaderStyle}>
             <FiHome aria-hidden="true" className={metricIconStyle({ tone: "warning" })} size={14} />
-            <span className={metricLabelStyle}>Mortgage Overpay</span>
+            <span className={metricLabelStyle}>Mortgage overpay</span>
           </div>
           <span className={metricValueStyle({ tone: "warning" })}>
             Save £{Math.round(simulation.interestSaved).toLocaleString("en-GB")}
           </span>
           <span className={metricNoteStyle}>
-            Shaves ~{simulation.yearsShaved} years off loan term
+            Shaves ~{oneDecimalFormatter.format(simulation.yearsShaved)} years off loan term
           </span>
         </div>
 

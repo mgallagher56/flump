@@ -22,6 +22,11 @@ import {
   titleStyle,
 } from "./OverdraftCostCalculator.styles.js";
 
+const penceFormatter = new Intl.NumberFormat("en-GB", {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
 export interface OverdraftCostCalculatorProps {
   onSaveAndContinue?: (payload: any) => void;
   ctaText?: string;
@@ -29,7 +34,7 @@ export interface OverdraftCostCalculatorProps {
 
 export const OverdraftCostCalculator: FC<OverdraftCostCalculatorProps> = ({
   onSaveAndContinue,
-  ctaText = "Eliminate Your Overdraft with Flump →",
+  ctaText = "Eliminate your overdraft with Flump →",
 }) => {
   const [balance, setBalance] = useState<number>(1200);
   const [earRate, setEarRate] = useState<number>(39.9);
@@ -72,9 +77,11 @@ export const OverdraftCostCalculator: FC<OverdraftCostCalculatorProps> = ({
       <div className={gridStyle}>
         <div>
           <div className={inputGroupStyle}>
-            <span className={fieldLabelStyle}>Average Overdraft Balance Used (£)</span>
+            <label className={fieldLabelStyle} htmlFor="overdraft-balance">
+              Average overdraft balance used (£)
+            </label>
             <input
-              aria-label="Overdraft Balance"
+              id="overdraft-balance"
               className={textInputStyle}
               min={50}
               type="number"
@@ -84,9 +91,11 @@ export const OverdraftCostCalculator: FC<OverdraftCostCalculatorProps> = ({
           </div>
 
           <div className={inputGroupStyle}>
-            <span className={fieldLabelStyle}>Bank EAR Rate (%) (UK standard is ~39.9%)</span>
+            <label className={fieldLabelStyle} htmlFor="overdraft-ear-rate">
+              Bank EAR rate (%) (UK standard is ~39.9%)
+            </label>
             <input
-              aria-label="Bank EAR Rate"
+              id="overdraft-ear-rate"
               className={textInputStyle}
               step="0.1"
               type="number"
@@ -104,8 +113,8 @@ export const OverdraftCostCalculator: FC<OverdraftCostCalculatorProps> = ({
               £{Math.round(cost.annualPoundCost).toLocaleString("en-GB")} / year
             </div>
             <p className={noteStyle}>
-              Directly debited as ~£{cost.monthlyPoundCost.toFixed(2)}/month from your regular
-              checking balance.
+              Directly debited as ~£{penceFormatter.format(cost.monthlyPoundCost)}/month from your
+              regular checking balance.
             </p>
           </div>
 

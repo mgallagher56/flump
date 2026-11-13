@@ -155,11 +155,4 @@ export const calloutBodyRecipe = cva({
   defaultVariants: { tone: "neutral" },
 });
 
-export const alertHeadingStyle = css({
-  display: "flex",
-  alignItems: "center",
-  gap: "8px",
-  color: "status.danger.text",
-});
-
 export const ctaStyle = css({ width: "100%" });

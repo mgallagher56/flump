@@ -29,7 +29,7 @@ export interface StudentLoanCalculatorProps {
 
 export const StudentLoanCalculator: FC<StudentLoanCalculatorProps> = ({
   onSaveAndContinue,
-  ctaText = "Model Full Career Trajectory in Flump →",
+  ctaText = "Model your full career trajectory in Flump →",
 }) => {
   const [plan, setPlan] = useState<"plan1" | "plan2" | "plan4" | "plan5" | "postgrad">("plan2");
   const [salary, setSalary] = useState<number>(38000);
@@ -64,9 +64,9 @@ export const StudentLoanCalculator: FC<StudentLoanCalculatorProps> = ({
     <div className={cardStyle} data-testid="student-loan-tool">
       <div className={headerStyle}>
         <div>
-          <h3 className={titleStyle}>
-            UK Student Loan: Overpay or Invest? (Graduate Tax Calculator)
-          </h3>
+          <h2 className={titleStyle}>
+            UK student loan: overpay or invest? (graduate tax calculator)
+          </h2>
           <p className={introStyle}>
             UK student loans are wiped after 25–40 years. Find out whether voluntary overpayments
             save you interest or act as a donation to HM Treasury.
@@ -77,9 +77,11 @@ export const StudentLoanCalculator: FC<StudentLoanCalculatorProps> = ({
       <div className={gridStyle}>
         <div>
           <div className={inputGroupStyle}>
-            <span className={fieldLabelStyle}>Student Loan Plan</span>
+            <label className={fieldLabelStyle} htmlFor="student-loan-plan">
+              Student loan plan
+            </label>
             <select
-              aria-label="Student Loan Plan"
+              id="student-loan-plan"
               className={textInputStyle}
               value={plan}
               onChange={(e) => setPlan(e.target.value as any)}
@@ -93,9 +95,11 @@ export const StudentLoanCalculator: FC<StudentLoanCalculatorProps> = ({
           </div>
 
           <div className={inputGroupStyle}>
-            <span className={fieldLabelStyle}>Gross Annual Salary (£)</span>
+            <label className={fieldLabelStyle} htmlFor="student-loan-salary">
+              Gross annual salary (£)
+            </label>
             <input
-              aria-label="Annual Salary"
+              id="student-loan-salary"
               className={textInputStyle}
               min={15000}
               step={1000}
@@ -106,9 +110,11 @@ export const StudentLoanCalculator: FC<StudentLoanCalculatorProps> = ({
           </div>
 
           <div className={inputGroupStyle}>
-            <span className={fieldLabelStyle}>Current Outstanding Loan Balance (£)</span>
+            <label className={fieldLabelStyle} htmlFor="student-loan-balance">
+              Current outstanding loan balance (£)
+            </label>
             <input
-              aria-label="Outstanding Balance"
+              id="student-loan-balance"
               className={textInputStyle}
               min={1000}
               step={1000}
@@ -124,8 +130,8 @@ export const StudentLoanCalculator: FC<StudentLoanCalculatorProps> = ({
           <div>
             <span className={badgeRecipe({ tone })}>
               {evaluation.recommendation === "do_not_overpay"
-                ? "Verdict: DO NOT OVERPAY"
-                : "Verdict: CONSIDER OVERPAYING"}
+                ? "Verdict: do not overpay"
+                : "Verdict: consider overpaying"}
             </span>
             <div className={figureRecipe({ tone: "neutral" })}>
               £{Math.round(evaluation.monthlyRepayment).toLocaleString("en-GB")}/mo (£
@@ -138,10 +144,8 @@ export const StudentLoanCalculator: FC<StudentLoanCalculatorProps> = ({
           </div>
 
           <div className={calloutRecipe({ tone })}>
-            <div className={calloutTitleRecipe({ tone: "neutral" })}>
-              Graduate Tax Reality Check
-            </div>
-            <p className={calloutBodyRecipe({ tone: "positive" })}>{evaluation.reasoning}</p>
+            <div className={calloutTitleRecipe({ tone })}>Graduate tax reality check</div>
+            <p className={calloutBodyRecipe({ tone })}>{evaluation.reasoning}</p>
           </div>
 
           <Button className={ctaStyle} onClick={handleSave} size="md">

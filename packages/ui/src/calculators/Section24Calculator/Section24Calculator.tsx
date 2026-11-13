@@ -31,6 +31,11 @@ import {
   titleStyle,
 } from "./Section24Calculator.styles.js";
 
+const oneDecimalFormatter = new Intl.NumberFormat("en-GB", {
+  minimumFractionDigits: 1,
+  maximumFractionDigits: 1,
+});
+
 export interface Section24CalculatorProps {
   onSaveAndContinue?: (payload: any) => void;
   ctaText?: string;
@@ -85,7 +90,7 @@ export const Section24Calculator: FC<Section24CalculatorProps> = ({
     <div className={cardStyle} data-testid="section-24-tool">
       <div className={headerStyle}>
         <div className={badgeRowStyle}>
-          <span className={badgeStyle({ tone: "info" })}>HMRC Landlord Tax Rules</span>
+          <span className={badgeStyle({ tone: "info" })}>HMRC landlord tax rules</span>
         </div>
         <h2 className={titleStyle}>Section 24 buy-to-let mortgage relief calculator</h2>
         <p className={subtitleStyle}>
@@ -236,7 +241,9 @@ export const Section24Calculator: FC<Section24CalculatorProps> = ({
 
         <div className={metricCard}>
           <span className={metricLabelStyle}>True effective tax rate</span>
-          <span className={metricValueStyle({ tone: "warning" })}>{calc.effectiveTaxRate}%</span>
+          <span className={metricValueStyle({ tone: "warning" })}>
+            {oneDecimalFormatter.format(calc.effectiveTaxRate)}%
+          </span>
           <span className={metricNoteStyle}>
             Tax paid relative to your £{Math.round(calc.actualCashProfit).toLocaleString("en-GB")}{" "}
             real cash profit
@@ -259,7 +266,7 @@ export const Section24Calculator: FC<Section24CalculatorProps> = ({
       <div className={ctaRowStyle}>
         <div className={ctaCopyStyle}>
           <span className={ctaTitleStyle}>
-            Need automated HMRC Self-Assessment & property tax tracking?
+            Need automated HMRC Self Assessment and property tax tracking?
           </span>
           <p className={ctaNoteStyle}>
             Flump automatically models Section 24 adjustments, joint spousal splits, and Payments on

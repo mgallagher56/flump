@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import {
   DebtSnowballCalculator,
@@ -25,24 +25,26 @@ describe("UI Calculators", () => {
       expect(screen.getAllByDisplayValue("150").length).toBeGreaterThan(0);
 
       // Adjust card and loan balance
-      const cardBalance = screen.getByLabelText("Credit card balance");
+      const card = within(screen.getByRole("group", { name: /Credit card/ }));
+      const loan = within(screen.getByRole("group", { name: /Personal loan/ }));
+      const cardBalance = card.getByLabelText("Balance (£)");
       fireEvent.change(cardBalance, { target: { value: "4000" } });
       expect(screen.getByDisplayValue("4000")).toBeDefined();
 
-      const cardApr = screen.getByLabelText("Credit card APR");
+      const cardApr = card.getByLabelText("APR (%)");
       fireEvent.change(cardApr, { target: { value: "29.9" } });
 
-      const cardMin = screen.getByLabelText("Credit card minimum payment");
+      const cardMin = card.getByLabelText("Min / mo (£)");
       fireEvent.change(cardMin, { target: { value: "120" } });
 
-      const loanBalance = screen.getByLabelText("Personal loan balance");
+      const loanBalance = loan.getByLabelText("Balance (£)");
       fireEvent.change(loanBalance, { target: { value: "6000" } });
       expect(screen.getByDisplayValue("6000")).toBeDefined();
 
-      const loanApr = screen.getByLabelText("Personal loan APR");
+      const loanApr = loan.getByLabelText("APR (%)");
       fireEvent.change(loanApr, { target: { value: "7.5" } });
 
-      const loanMin = screen.getByLabelText("Personal loan minimum payment");
+      const loanMin = loan.getByLabelText("Min / mo (£)");
       fireEvent.change(loanMin, { target: { value: "180" } });
 
       const cta = screen.getByRole("button", { name: /Save and continue/i });
@@ -79,7 +81,7 @@ describe("UI Calculators", () => {
       expect(screen.getByText(/Overdraft interest cost calculator/i)).toBeDefined();
       expect(screen.getByText(/Annual bank interest cost/i)).toBeDefined();
 
-      const input = screen.getByLabelText("Overdraft Balance");
+      const input = screen.getByLabelText("Average overdraft balance used (£)");
       fireEvent.change(input, { target: { value: "1500" } });
       expect(screen.getByDisplayValue("1500")).toBeDefined();
 
@@ -130,11 +132,11 @@ describe("UI Calculators", () => {
 
       expect(screen.getByText(/UK Student Loan: Overpay or Invest\?/i)).toBeDefined();
 
-      const input = screen.getByLabelText("Annual Salary");
+      const input = screen.getByLabelText("Gross annual salary (£)");
       fireEvent.change(input, { target: { value: "52000" } });
       expect(screen.getByDisplayValue("52000")).toBeDefined();
 
-      const planSelect = screen.getByLabelText("Student Loan Plan");
+      const planSelect = screen.getByLabelText("Student loan plan");
       fireEvent.change(planSelect, { target: { value: "plan2" } });
 
       const cta = screen.getByRole("button", { name: /Save and continue/i });
@@ -171,7 +173,7 @@ describe("UI Calculators", () => {
       expect(screen.getByText(/Target monthly payment/i)).toBeDefined();
       expect(screen.getByText(/Revert APR alert/i)).toBeDefined();
 
-      const input = screen.getByLabelText("0% card balance");
+      const input = screen.getByLabelText("Current 0% card balance (£)");
       fireEvent.change(input, { target: { value: "3500" } });
       expect(screen.getByDisplayValue("3500")).toBeDefined();
 
