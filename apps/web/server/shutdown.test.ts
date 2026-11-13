@@ -23,6 +23,20 @@ describe("installShutdown", () => {
     expect(await exited).toBe(0);
   });
 
+  it("ignores a second signal during the drain", async () => {
+    const server = createServer((_req, res) => res.end("ok"));
+    await new Promise<void>((r) => server.listen(0, r));
+    const close = vi.spyOn(server, "close");
+    const exit = vi.fn();
+    const handler = installShutdown(server, { listen: false, exit, log: () => {} });
+    handler("SIGTERM");
+    handler("SIGTERM");
+    expect(close).toHaveBeenCalledTimes(1);
+    await new Promise((r) => setTimeout(r, 100));
+    expect(exit).toHaveBeenCalledTimes(1);
+    expect(exit).toHaveBeenCalledWith(0);
+  });
+
   it("forces exit 1 when the drain exceeds the limit", async () => {
     const server = createServer(() => {
       // never responds

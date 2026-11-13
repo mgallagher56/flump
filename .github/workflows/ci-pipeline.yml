@@ -457,6 +457,40 @@ jobs:
           echo "backend did not become ready within 60s"
           exit 1
 
+      # Boots the web production image (`bun server.ts`, the custom Express server) with dummy
+      # WorkOS settings and NODE_ENV=production, which also proves the server runs under the
+      # image's pinned Bun. /healthz needs no backend. One security header must be present on
+      # the response and X-Powered-By must be absent.
+      - name: 🚀 Web container boot smoke
+        if: steps.changed.outputs.run == 'true'
+        run: |
+          set -e
+          trap 'docker logs flump-web-smoke 2>&1 | tail -n 60; docker rm -f flump-web-smoke >/dev/null 2>&1 || true' EXIT
+          docker run -d --name flump-web-smoke --network host \
+            -e NODE_ENV=production \
+            -e PORT=3100 \
+            -e WORKOS_API_KEY="sk_ci_$(openssl rand -hex 8)" \
+            -e WORKOS_CLIENT_ID=client_ci_dummy \
+            -e WORKOS_COOKIE_PASSWORD="$(openssl rand -hex 32)" \
+            -e WORKOS_REDIRECT_URI=https://web.example.invalid/callback \
+            -e VITE_API_URL=https://api.example.invalid \
+            flump-web-ci
+          for i in $(seq 1 30); do
+            code=$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3100/healthz || true)
+            if [ "$code" = "200" ]; then
+              echo "ready after ~$((i * 2))s"
+              headers=$(curl -s -D - -o /dev/null http://127.0.0.1:3100/healthz)
+              echo "$headers" | grep -qi '^x-frame-options: DENY' || { echo "missing X-Frame-Options"; echo "$headers"; exit 1; }
+              echo "$headers" | grep -qi '^content-security-policy: frame-ancestors' || { echo "missing CSP"; echo "$headers"; exit 1; }
+              if echo "$headers" | grep -qi '^x-powered-by'; then echo "X-Powered-By is set"; exit 1; fi
+              exit 0
+            fi
+            [ "$(docker inspect -f '{{.State.Running}}' flump-web-smoke)" = "true" ] || { echo "web container exited"; exit 1; }
+            sleep 2
+          done
+          echo "web did not become ready within 60s"
+          exit 1
+
   audit:
     name: 🛡️ Dependency audit
     runs-on: ubuntu-latest
