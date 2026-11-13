@@ -31,7 +31,7 @@ describe("<ForecasterControls />", () => {
     });
     expect(current.values.extraMonthly).toBe(150);
     expect(current.isModified).toBe(true);
-    expect(screen.getByText(/Edited\. Nothing extra is saved/)).toBeDefined();
+    expect(screen.getByText(/Edited\. Not saved\./)).toBeDefined();
   });
 
   it("quick growth rates set the rate and mark the pressed one", () => {
