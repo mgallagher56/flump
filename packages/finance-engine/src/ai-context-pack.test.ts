@@ -90,3 +90,33 @@ describe("FlumpAiContextPack Builder & Markdown Formatter", () => {
     expect(md).not.toMatch(/Recommendation:/i);
   });
 });
+
+describe("budget notes anonymisation (E17-N4)", () => {
+  const entry = {
+    id: "b_n",
+    category: "housing",
+    name: "Rent via Starling",
+    amount: 1100,
+    frequency: "monthly",
+    isIncome: false,
+    isEssential: true,
+    notes: "Landlord is J Smith, 12 High St",
+  };
+
+  it("drops notes when anonymised", () => {
+    const pack = buildFlumpAiContextPack(
+      { baseline: DEFAULT_FINANCIAL_BASELINE, budgetEntries: [entry] },
+      { anonymizeInstitutions: true },
+    );
+    expect(JSON.stringify(pack)).not.toContain("Landlord");
+    expect(pack.budgetSummary.entries[0]?.name).toBe("Rent via Bank");
+  });
+
+  it("keeps notes when not anonymised", () => {
+    const pack = buildFlumpAiContextPack(
+      { baseline: DEFAULT_FINANCIAL_BASELINE, budgetEntries: [entry] },
+      { anonymizeInstitutions: false },
+    );
+    expect(pack.budgetSummary.entries[0]?.notes).toBe(entry.notes);
+  });
+});

@@ -47,3 +47,12 @@ describe("simulate_debt_payoff (E17-N1)", () => {
     expect(body.totalStartingDebtGbp).toBe(0);
   });
 });
+
+describe("simulate_debt_payoff anonymisation (E17-N4)", () => {
+  it("replaces debt names with generic labels when the token is anonymised", async () => {
+    const h = await connectTestClient(renterWithUnknownAprCard);
+    const text = await h.callText("simulate_debt_payoff", { strategy: "COMPARE_BOTH" });
+    await h.close();
+    expect(text).not.toContain("Test Credit Card");
+  });
+});

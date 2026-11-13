@@ -4,6 +4,7 @@ import {
   evaluateFinancialStage,
   evaluateUkStudentLoan,
   filterConsumerDebts,
+  scrubInstitutionNames,
   type UkStudentLoanPlan,
 } from "@flump/finance-engine";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
@@ -244,10 +245,7 @@ export function registerFinancialAuditTools(
       const sanitizedTxs = txs.map((tx) => {
         let desc = tx.description;
         if (ctx.token.anonymizeInstitutions) {
-          desc = desc.replace(
-            /monzo|starling|barclays|hsbc|santander|natwest|lloyds|halifax|amex/gi,
-            "Bank",
-          );
+          desc = scrubInstitutionNames(desc);
         }
         return {
           ...tx,
