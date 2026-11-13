@@ -1,6 +1,7 @@
 import { Button } from "@repo/ui";
 import { cx } from "@repo/ui/styled-system/css";
 import type { FC } from "react";
+import { APP_VERSION, feedbackMailto } from "~/utils/support";
 import type { BackendErrorKind } from "../../../../services/backend-error";
 import {
   errorStateActions,
@@ -8,6 +9,7 @@ import {
   errorStateBody,
   errorStateContainer,
   errorStateHeading,
+  errorStateReport,
 } from "./RouteErrorState.styles";
 
 export interface RouteErrorStateProps {
@@ -18,6 +20,8 @@ export interface RouteErrorStateProps {
   primaryLabel?: string;
   /** Where the 'Sign in again' form posts. Defaults to '/logout'. */
   signInAction?: string;
+  /** Route identifier for the feedback subject. Never include account ids or amounts. */
+  routeKey?: string;
   className?: string;
 }
 
@@ -71,6 +75,7 @@ export const RouteErrorState: FC<RouteErrorStateProps> = ({
   primaryHref,
   primaryLabel = "Go back",
   signInAction = "/logout",
+  routeKey = "unknown",
   className,
 }) => {
   const copy = copyFor(kind);
@@ -109,6 +114,11 @@ export const RouteErrorState: FC<RouteErrorStateProps> = ({
           <Button asChild variant="outline">
             <a href={primaryHref}>{primaryLabel}</a>
           </Button>
+        ) : null}
+        {kind === "not-invited" || showRetry ? (
+          <a className={errorStateReport()} href={feedbackMailto(routeKey, APP_VERSION)}>
+            Report this problem
+          </a>
         ) : null}
       </div>
     </section>

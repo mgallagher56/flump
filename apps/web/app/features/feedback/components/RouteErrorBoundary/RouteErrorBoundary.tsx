@@ -6,6 +6,11 @@ import { boundaryRoot } from "./RouteErrorBoundary.styles";
 
 const ACCOUNT_DETAIL = /^\/app\/accounts\/[^/]+/;
 
+/** Strips ids so the feedback subject names the page, not the record. */
+function routeKeyFor(pathname: string): string {
+  return pathname.replace(ACCOUNT_DETAIL, "/app/accounts/:id");
+}
+
 function kindFromError(error: unknown): RouteErrorStateProps["kind"] {
   if (!isRouteErrorResponse(error)) return "unknown";
   const kind = (error.data as { kind?: unknown } | null)?.kind;
@@ -30,6 +35,7 @@ export function RouteErrorBoundary(): ReactElement {
         kind={kind}
         onRetry={revalidator.revalidate}
         retrying={revalidator.state === "loading"}
+        routeKey={routeKeyFor(pathname)}
         primaryHref={onAccountDetail ? "/app/accounts" : "/"}
         primaryLabel={onAccountDetail ? "Back to accounts" : "Go to dashboard"}
       />
