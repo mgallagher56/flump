@@ -41,6 +41,8 @@ export const ToolPage: FC = () => {
   const ctaText = cta.external
     ? "Open this calculation in your Flump workspace →"
     : `${cta.label} →`;
+  // Only hand figures to the web app when sign-up is open; an invite request has nowhere to restore them.
+  const persistSeed = cta.external;
 
   const handleContinue = () => {
     if (typeof window !== "undefined") {
@@ -121,35 +123,63 @@ export const ToolPage: FC = () => {
 
           {/* Render Active Modular Calculator */}
           {normalizedSlug === "uk-100k-tax-trap-calculator" && (
-            <TaxTrapCalculator ctaText={ctaText} onSaveAndContinue={handleContinue} />
+            <TaxTrapCalculator
+              ctaText={ctaText}
+              onSaveAndContinue={handleContinue}
+              persistSeed={persistSeed}
+            />
           )}
 
           {normalizedSlug === "uk-debt-snowball-vs-avalanche-calculator" && (
-            <DebtSnowballCalculator ctaText={ctaText} onSaveAndContinue={handleContinue} />
+            <DebtSnowballCalculator
+              ctaText={ctaText}
+              onSaveAndContinue={handleContinue}
+              persistSeed={persistSeed}
+            />
           )}
 
           {(normalizedSlug === "0-percent-balance-transfer-payoff-calculator" ||
             normalizedSlug === "zero-percent-balance-transfer-calculator") && (
-            <ZeroPercentCliffCalculator ctaText={ctaText} onSaveAndContinue={handleContinue} />
+            <ZeroPercentCliffCalculator
+              ctaText={ctaText}
+              onSaveAndContinue={handleContinue}
+              persistSeed={persistSeed}
+            />
           )}
 
           {(normalizedSlug === "section-24-landlord-tax-calculator" ||
             normalizedSlug === "landlord-section-24-tax-calculator") && (
-            <Section24Calculator ctaText={ctaText} onSaveAndContinue={handleContinue} />
+            <Section24Calculator
+              ctaText={ctaText}
+              onSaveAndContinue={handleContinue}
+              persistSeed={persistSeed}
+            />
           )}
 
           {normalizedSlug === "mortgage-overpayment-vs-isa-calculator" && (
-            <MortgageVsIsaCalculator ctaText={ctaText} onSaveAndContinue={handleContinue} />
+            <MortgageVsIsaCalculator
+              ctaText={ctaText}
+              onSaveAndContinue={handleContinue}
+              persistSeed={persistSeed}
+            />
           )}
 
           {(normalizedSlug === "overdraft-cost-and-payoff-calculator" ||
             normalizedSlug === "overdraft-interest-calculator") && (
-            <OverdraftCostCalculator ctaText={ctaText} onSaveAndContinue={handleContinue} />
+            <OverdraftCostCalculator
+              ctaText={ctaText}
+              onSaveAndContinue={handleContinue}
+              persistSeed={persistSeed}
+            />
           )}
 
           {(normalizedSlug === "uk-student-loan-overpay-or-invest-calculator" ||
             normalizedSlug === "student-loan-plan-2-calculator") && (
-            <StudentLoanCalculator ctaText={ctaText} onSaveAndContinue={handleContinue} />
+            <StudentLoanCalculator
+              ctaText={ctaText}
+              onSaveAndContinue={handleContinue}
+              persistSeed={persistSeed}
+            />
           )}
         </section>
       </main>

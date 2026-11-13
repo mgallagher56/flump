@@ -35,6 +35,8 @@ import {
 export interface TaxTrapCalculatorProps {
   onSaveAndContinue?: (payload: any) => void;
   ctaText?: string;
+  /** When false, entered figures are not written to the onboarding seed in local storage. Default true. */
+  persistSeed?: boolean;
   /** Tax year the figures are for. Defaults to the year the trap maths is written for. */
   taxYear?: string;
 }
@@ -46,6 +48,7 @@ const DEFAULT_TAX_YEAR = "2026/27";
 export const TaxTrapCalculator: FC<TaxTrapCalculatorProps> = ({
   onSaveAndContinue,
   ctaText = "Save scenario and continue free →",
+  persistSeed = true,
   taxYear: TAX_YEAR = DEFAULT_TAX_YEAR,
 }) => {
   const [grossIncome, setGrossIncome] = useState<number>(115000);
@@ -80,7 +83,7 @@ export const TaxTrapCalculator: FC<TaxTrapCalculatorProps> = ({
       inferredModules: ["tax", "pension", "forecast"],
       timestamp: Date.now(),
     };
-    persistOnboardingSeed(payload as any);
+    if (persistSeed) persistOnboardingSeed(payload as any);
     if (onSaveAndContinue) {
       onSaveAndContinue(payload);
     } else if (typeof window !== "undefined") {

@@ -39,11 +39,14 @@ const oneDecimalFormatter = new Intl.NumberFormat("en-GB", {
 export interface Section24CalculatorProps {
   onSaveAndContinue?: (payload: any) => void;
   ctaText?: string;
+  /** When false, entered figures are not written to the onboarding seed in local storage. Default true. */
+  persistSeed?: boolean;
 }
 
 export const Section24Calculator: FC<Section24CalculatorProps> = ({
   onSaveAndContinue,
   ctaText = "Track your properties in Flump free →",
+  persistSeed = true,
 }) => {
   const [rentalIncome, setRentalIncome] = useState<number>(18000);
   const [mortgageInterest, setMortgageInterest] = useState<number>(8000);
@@ -78,7 +81,7 @@ export const Section24Calculator: FC<Section24CalculatorProps> = ({
       inferredModules: ["tax", "mortgage", "forecast"],
       timestamp: Date.now(),
     };
-    persistOnboardingSeed(payload as any);
+    if (persistSeed) persistOnboardingSeed(payload as any);
     if (onSaveAndContinue) {
       onSaveAndContinue(payload);
     } else if (typeof window !== "undefined") {

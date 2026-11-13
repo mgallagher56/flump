@@ -27,11 +27,14 @@ import {
 export interface ZeroPercentCliffCalculatorProps {
   onSaveAndContinue?: (payload: any) => void;
   ctaText?: string;
+  /** When false, entered figures are not written to the onboarding seed in local storage. Default true. */
+  persistSeed?: boolean;
 }
 
 export const ZeroPercentCliffCalculator: FC<ZeroPercentCliffCalculatorProps> = ({
   onSaveAndContinue,
   ctaText = "Track 0% expiry dates in Flump free →",
+  persistSeed = true,
 }) => {
   const [balance, setBalance] = useState<number>(3600);
   const [months, setMonths] = useState<number>(18);
@@ -52,7 +55,7 @@ export const ZeroPercentCliffCalculator: FC<ZeroPercentCliffCalculatorProps> = (
       inferredModules: ["accounts", "debt", "budget"],
       timestamp: Date.now(),
     };
-    persistOnboardingSeed(payload as any);
+    if (persistSeed) persistOnboardingSeed(payload as any);
     if (onSaveAndContinue) {
       onSaveAndContinue(payload);
     } else if (typeof window !== "undefined") {
