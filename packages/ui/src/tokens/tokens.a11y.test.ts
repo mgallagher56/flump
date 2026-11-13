@@ -285,6 +285,10 @@ const PASSING_PAIRS: Pair[] = [
   // Round 5: the deep-teal hero block carries text.onContrast, and stays a visible block on every
   // page surface (graphic, 1.4.11 does not apply to a fill, but 3:1 keeps it unmistakable).
   { fg: "text.onContrast", bg: "surface.hero", themes: BOTH, min: 4.5, role: "text" },
+  // Focus ring on the hero block (KpiCard tone="hero"): the teal ring only clears 3:1 in dark, so
+  // hero descendants switch to a text.onContrast outline (see KpiCard.styles.ts).
+  { fg: "border.focusRing", bg: "surface.hero", themes: ["dark"], min: 3, role: "ui" },
+  { fg: "text.onContrast", bg: "surface.hero", themes: BOTH, min: 3, role: "ui" },
   ...["surface.canvas", "surface.card"].map(
     (bg): Pair => ({ fg: "surface.hero", bg, themes: BOTH, min: 1.5, role: "graphic" }),
   ),

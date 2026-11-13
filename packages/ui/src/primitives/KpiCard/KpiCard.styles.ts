@@ -24,6 +24,8 @@ export const kpiCardContainer = cva({
         backgroundColor: "surface.hero",
         borderColor: "surface.hero",
         color: "text.onContrast",
+        // border.focusRing is under 3:1 on the light hero, so descendants use the label colour.
+        "& :focus-visible": { outlineColor: "text.onContrast" },
       },
     },
   },

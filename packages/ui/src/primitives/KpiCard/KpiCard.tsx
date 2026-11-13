@@ -34,6 +34,8 @@ export interface KpiCardProps {
    * `hero` paints the card as the page's one deep-teal headline block (`surface.hero`). Use it at
    * most once per page. Figures inside should use `tone="onContrast"`. Falls back to the default
    * card while loading or when the value is unknown, so "Not set" keeps its muted contrast.
+   * Action children (`action`, `emptyAction`) are not contrast-checked on the hero; avoid
+   * interactive children until they are.
    */
   tone?: KpiCardTone;
   /** `null` or `undefined` renders "Not set" (never a zero). */
