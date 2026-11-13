@@ -79,22 +79,28 @@ export function securityHeaders() {
 
     const writeHead = res.writeHead.bind(res) as (...args: WriteHeadArgs) => Response;
     res.writeHead = ((...args: WriteHeadArgs) => {
-      const headersArg = args.find((arg) => typeof arg === "object" && arg !== null);
-      // A raw header array cannot be inspected cheaply; never touch the default in that case.
-      const appSetCsp =
-        headerFromObject(headersArg, CSP) !== undefined || Array.isArray(headersArg);
-      if (
-        !res.headersSent &&
-        !appSetCsp &&
-        pending.has(CSP) &&
-        res.getHeader(CSP) === DEFAULT_CSP &&
-        wantsNonDocumentCsp(
-          headerFromObject(headersArg, "content-type") ??
-            String(res.getHeader("content-type") ?? ""),
-          typeof args[0] === "number" ? args[0] : res.statusCode,
-        )
-      ) {
-        res.setHeader(CSP, NON_DOCUMENT_CSP);
+      // Never throw into the request path: if the decision logic fails for any reason the
+      // response simply keeps the default header (the original writeHead still runs below).
+      try {
+        const headersArg = args.find((arg) => typeof arg === "object" && arg !== null);
+        // A raw header array cannot be inspected cheaply; never touch the default in that case.
+        const appSetCsp =
+          headerFromObject(headersArg, CSP) !== undefined || Array.isArray(headersArg);
+        if (
+          !res.headersSent &&
+          !appSetCsp &&
+          pending.has(CSP) &&
+          res.getHeader(CSP) === DEFAULT_CSP &&
+          wantsNonDocumentCsp(
+            headerFromObject(headersArg, "content-type") ??
+              String(res.getHeader("content-type") ?? ""),
+            typeof args[0] === "number" ? args[0] : res.statusCode,
+          )
+        ) {
+          res.setHeader(CSP, NON_DOCUMENT_CSP);
+        }
+      } catch {
+        // keep the default CSP
       }
       return writeHead(...args);
     }) as Response["writeHead"];
