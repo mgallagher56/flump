@@ -20,7 +20,7 @@ import { RouteErrorBoundary } from "./features/feedback/components/RouteErrorBou
 import { useTheme } from "./hooks/useTheme";
 import type { UserProfile } from "./hooks/useUserProfile";
 import { useUserProfile } from "./hooks/useUserProfile";
-import i18next from "./i18n.server";
+import i18n from "./i18n";
 import "@repo/ui/fonts.css";
 import styles from "./index.css?url";
 import { sentryPublicEnv } from "./observability/env";
@@ -46,7 +46,7 @@ export const middleware = [securityMiddleware];
 export const handle = { i18n: ["common"] };
 
 export const loader = async (args: LoaderFunctionArgs) => {
-  const locale = await i18next.getLocale(args.request);
+  const locale = i18n.lng;
   const session = await getAuthSession(args, { ensureSignedIn: false });
   // A user without an access token is treated as signed out; never invent a token.
   const user = session.accessToken ? session.user : null;

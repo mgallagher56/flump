@@ -10,7 +10,6 @@ vi.mock("~/utils/auth.server", () => ({
     Authorization: `Bearer ${accessToken}`,
   }),
 }));
-vi.mock("~/i18n.server", () => ({ default: { getLocale: vi.fn().mockResolvedValue("en") } }));
 
 import { redirect } from "react-router";
 import { apiConfig } from "~/config.server";

@@ -4,10 +4,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // The global test setup stubs parts of react-router; the root boundary needs the real router.
 vi.mock("react-router", async () => await vi.importActual("react-router"));
-vi.mock("./i18n.server", () => ({ default: { getLocale: vi.fn() } }));
 vi.mock("./utils/auth.server", () => ({ getAuthSession: vi.fn() }));
 
-import i18next from "./i18n.server";
 import App, { ErrorBoundary, loader } from "./root";
 import { getAuthSession } from "./utils/auth.server";
 
@@ -95,7 +93,6 @@ describe("root loader", () => {
   });
 
   beforeEach(() => {
-    vi.mocked(i18next.getLocale).mockResolvedValue("en");
     vi.mocked(getAuthSession).mockResolvedValue({ user: { id: "u" }, accessToken: "tok" } as any);
     vi.spyOn(console, "error").mockImplementation(() => {});
   });

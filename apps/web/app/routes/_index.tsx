@@ -24,10 +24,6 @@ export const meta: MetaFunction = (): { title: string }[] => [
   { title: "Flump | UK Net Worth, Tax and Debt Calculators" },
 ];
 
-export const handle = {
-  i18n: ["common"],
-};
-
 type TakeHomeProfile = Parameters<typeof profileFactsFromProfile>[0];
 
 const MISSING_LABELS: Partial<Record<FactKey, string>> = {
