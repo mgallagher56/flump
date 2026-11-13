@@ -21,6 +21,10 @@ export const shellMain = cva({
   base: {
     maxWidth: "1536px",
     marginX: "auto",
-    outline: "none",
+    _focusVisible: {
+      outline: "2px solid",
+      outlineColor: "border.focusRing",
+      outlineOffset: "2px",
+    },
   },
 });

@@ -38,9 +38,7 @@ describe("root ErrorBoundary", () => {
   it("renders the shared unavailable state as a single document without inline styles", async () => {
     renderRootBoundary(data({ kind: "unavailable" }, { status: 503 }));
 
-    expect(
-      await screen.findByRole("heading", { name: "We couldn't load your data" }),
-    ).toBeDefined();
+    expect(await screen.findByRole("heading", { name: "We couldn't reach Flump" })).toBeDefined();
     expect(document.querySelectorAll("html")).toHaveLength(1);
     expect(document.querySelectorAll("[style]")).toHaveLength(0);
     expect(document.body.textContent).not.toMatch(/Uh oh/);
