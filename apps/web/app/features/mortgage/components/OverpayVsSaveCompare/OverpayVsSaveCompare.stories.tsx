@@ -24,7 +24,7 @@ export const Populated: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     // The Storybook decorator renders a light and a dark copy, so take the first of each.
-    await expect(canvas.getAllByText(/Verdict: Overpay mortgage/)[0]).toBeInTheDocument();
+    await expect(canvasElement.textContent).toMatch(/overpaying the mortgage gives a total/);
     await expect(
       canvas.getAllByText(/early repayment charge \(ERC\) may apply/)[0],
     ).toBeInTheDocument();
@@ -34,7 +34,7 @@ export const Populated: Story = {
     await expect(canvas.getAllByLabelText("Savings interest rate range slider")[0]).toHaveValue(
       "6",
     );
-    await expect(canvas.getAllByText(/Verdict: Save in account/)[0]).toBeInTheDocument();
+    await expect(canvasElement.textContent).toMatch(/saving the money gives a total/);
   },
 };
 

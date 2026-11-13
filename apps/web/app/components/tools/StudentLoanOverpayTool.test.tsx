@@ -8,8 +8,8 @@ describe("<StudentLoanOverpayTool />", () => {
     const { getByText, getByRole, getByDisplayValue } = customRender(<StudentLoanOverpayTool />);
 
     expect(getByRole("heading", { name: /UK Student Loan/i })).toBeDefined();
-    expect(getByText(/Verdict:/i)).toBeDefined();
-    expect(getByText(/Graduate Tax Reality Check/i)).toBeDefined();
+    expect(getByText(/Projected outcome:/i)).toBeDefined();
+    expect(getByText(/How the projection works out/i)).toBeDefined();
 
     // Select different plan
     const select = document.querySelector("select") as HTMLSelectElement;

@@ -22,7 +22,7 @@ const play: Story["play"] = async ({ canvasElement }) => {
   const plan = canvas.getByLabelText("Student loan plan");
   await userEvent.selectOptions(plan, "plan5");
   await expect(plan).toHaveValue("plan5");
-  await expect(canvas.getByText(/^Verdict: /)).toBeInTheDocument();
+  await expect(canvas.getByText(/^Projected outcome: /)).toBeInTheDocument();
 };
 
 export const Default: Story = { play };

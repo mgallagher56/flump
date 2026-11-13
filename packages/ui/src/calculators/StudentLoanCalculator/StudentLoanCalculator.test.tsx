@@ -8,7 +8,7 @@ describe("StudentLoanCalculator", () => {
     expect(container).toBeDefined();
   });
 
-  it("changes the verdict content when the salary changes", () => {
+  it("changes the projected outcome content when the salary changes", () => {
     render(<StudentLoanCalculator />);
     const initial = screen.getByTestId("student-loan-tool").textContent;
     fireEvent.change(screen.getByLabelText("Gross annual salary (£)"), {
@@ -25,9 +25,12 @@ describe("StudentLoanCalculator", () => {
     expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ studentLoanPlan: "plan5" }));
   });
 
-  it("uses an h2 title and a sentence-case verdict", () => {
+  it("uses an h2 title and states a projected outcome, not a verdict (R1, R2)", () => {
     render(<StudentLoanCalculator />);
     expect(screen.getByRole("heading", { level: 2, name: /UK student loan/ })).toBeDefined();
-    expect(screen.getByText(/^Verdict: (do not overpay|consider overpaying)$/)).toBeDefined();
+    expect(
+      screen.getByText(/^Projected outcome: (written off first|repaid before write-off)$/),
+    ).toBeDefined();
+    expect(screen.queryByText(/verdict|overpay or invest/i)).toBeNull();
   });
 });

@@ -215,8 +215,8 @@ export const TaxTrapCalculator: FC<TaxTrapCalculatorProps> = ({
         />
         <span>
           {childcareEligible
-            ? "Eligible for 15–30 hours of funded childcare and Tax-Free Childcare (adjusted net income ≤ £100k)"
-            : "Childcare cliff edge triggered: adjusted net income exceeds £100,000, so all funded hours are lost."}
+            ? "Adjusted net income is within the £100,000 limit for funded childcare for working parents (England) and Tax-Free Childcare"
+            : "Adjusted net income is over £100,000, the limit for funded childcare for working parents (England) and Tax-Free Childcare."}
         </span>
       </div>
 

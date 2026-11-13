@@ -97,8 +97,8 @@ export const Section24Calculator: FC<Section24CalculatorProps> = ({
         </div>
         <h2 className={titleStyle}>Section 24 buy-to-let mortgage relief calculator</h2>
         <p className={subtitleStyle}>
-          Calculate phantom taxable rental profit and the 20% basic rate tax credit reduction
-          introduced by Section 24 of the Finance (No. 2) Act 2015.
+          Estimate taxable rental profit and the 20% basic rate tax credit under the finance cost
+          restriction introduced by Section 24 of the Finance (No. 2) Act 2015.
         </p>
       </div>
 

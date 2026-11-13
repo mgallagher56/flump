@@ -12,7 +12,7 @@ import {
   SimulatorSplitLayout,
   SliderField,
 } from "@repo/ui";
-import { CircleCheck, Coins, Info } from "lucide-react";
+import { Coins, Info, Scale } from "lucide-react";
 import { type FC, useId, useMemo, useState } from "react";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
@@ -337,29 +337,18 @@ export const OverpayVsSaveCompare: FC<OverpayVsSaveCompareProps> = ({
             <>
               <div className={verdictPanel({ outcome })}>
                 <h4 className={verdictTitle({ outcome })}>
-                  <Icon icon={CircleCheck} size="md" />
+                  <Icon icon={Scale} size="md" />
                   <span>
-                    Verdict: {isOverpayBetter ? "Overpay mortgage" : "Save in account / ISA"}
+                    Difference over {actualHorizon} years: {formatCurrency(difference)}
                   </span>
                 </h4>
                 <p className={verdictText}>
-                  {isOverpayBetter ? (
-                    <>
-                      Your mortgage rate of <strong>{pct(interestRate)}</strong> is higher than your
-                      tax-adjusted net savings rate of <strong>{pct(netSavingsRate)}</strong>. By
-                      overpaying your mortgage, you avoid paying more interest than you would earn
-                      by saving, resulting in an estimated net gain of{" "}
-                      <strong>{formatCurrency(difference)}</strong> over {actualHorizon} years.
-                    </>
-                  ) : (
-                    <>
-                      Your tax-adjusted net savings rate of <strong>{pct(netSavingsRate)}</strong>{" "}
-                      is higher than your mortgage rate of <strong>{pct(interestRate)}</strong>. By
-                      putting your extra budget into savings, you earn more in interest than you
-                      save on your mortgage, resulting in an estimated net gain of{" "}
-                      <strong>{formatCurrency(difference)}</strong> over {actualHorizon} years.
-                    </>
-                  )}
+                  Mortgage rate <strong>{pct(interestRate)}</strong>, tax-adjusted net savings rate{" "}
+                  <strong>{pct(netSavingsRate)}</strong>. Overpaying the mortgage is worth{" "}
+                  <strong>{formatCurrency(debtReduction)}</strong> and saving the money is worth{" "}
+                  <strong>{formatCurrency(savingsBalance)}</strong> over {actualHorizon} years. In
+                  this estimate, {isOverpayBetter ? "overpaying the mortgage" : "saving the money"}{" "}
+                  gives a total <strong>{formatCurrency(difference)}</strong> higher.
                 </p>
                 <div className={noteRow}>
                   <Icon className={noteIcon} icon={Info} size="sm" />
@@ -407,7 +396,7 @@ export const OverpayVsSaveCompare: FC<OverpayVsSaveCompareProps> = ({
                 }
                 summary={`Over ${actualHorizon} years, ${
                   isOverpayBetter ? "overpaying the mortgage" : "saving the money"
-                } comes out ahead by ${formatCurrency(difference)}. Overpaying is worth ${formatCurrency(debtReduction)} and saving is worth ${formatCurrency(savingsBalance)}.`}
+                } gives a total ${formatCurrency(difference)} higher in this estimate. Overpaying is worth ${formatCurrency(debtReduction)} and saving is worth ${formatCurrency(savingsBalance)}.`}
                 hideTitle
                 title="Overpay or save comparison"
               >

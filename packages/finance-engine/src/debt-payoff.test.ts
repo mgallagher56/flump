@@ -319,13 +319,12 @@ describe("debt-payoff module", () => {
       expect(sl.writeOffYears).toBe(30);
     });
 
-    it("evaluateUkStudentLoan reports a projectedOutcome alongside the deprecated recommendation", () => {
+    it("evaluateUkStudentLoan reports a projectedOutcome and no recommendation field", () => {
       const written = evaluateUkStudentLoan("plan2", 35000, 90000, "2025/26");
       expect(written.projectedOutcome).toBe("written_off_first");
-      expect(written.recommendation).toBe("do_not_overpay");
+      expect("recommendation" in written).toBe(false);
       const repaid = evaluateUkStudentLoan("plan2", 80000, 5000, "2025/26");
       expect(repaid.projectedOutcome).toBe("repaid_before_write_off");
-      expect(repaid.recommendation).toBe("consider_overpaying");
     });
 
     it("evaluateUkStudentLoan reasoning states the projected outcome without imperatives or advice wording", () => {

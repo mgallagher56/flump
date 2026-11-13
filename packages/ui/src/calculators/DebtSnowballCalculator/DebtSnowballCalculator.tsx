@@ -112,8 +112,8 @@ export const DebtSnowballCalculator: FC<DebtSnowballCalculatorProps> = ({
         <div>
           <h2 className={titleStyle}>Debt payoff: snowball vs avalanche calculator</h2>
           <p className={introStyle}>
-            Model exact interest savings and exit dates between mathematically optimal (avalanche)
-            and psychological momentum (snowball).
+            Compare total interest and debt-free dates when paying the highest rate first
+            (avalanche) or the smallest balance first (snowball).
           </p>
         </div>
       </div>

@@ -139,14 +139,9 @@ export const verdictPanel = cva({
   },
   variants: {
     outcome: {
-      overpay: {
-        borderColor: "status.positive.border",
-        backgroundColor: "status.positive.bg",
-      },
-      save: {
-        borderColor: "status.info.border",
-        backgroundColor: "status.info.bg",
-      },
+      // Same weight for both outcomes (R1): neither result is coloured as the "good" one.
+      overpay: { borderColor: "border.subtle", backgroundColor: "surface.subtle" },
+      save: { borderColor: "border.subtle", backgroundColor: "surface.subtle" },
     },
   },
   defaultVariants: { outcome: "overpay" },
@@ -163,8 +158,8 @@ export const verdictTitle = cva({
   },
   variants: {
     outcome: {
-      overpay: { color: "status.positive.text" },
-      save: { color: "status.info.text" },
+      overpay: { color: "text.primary" },
+      save: { color: "text.primary" },
     },
   },
   defaultVariants: { outcome: "overpay" },
