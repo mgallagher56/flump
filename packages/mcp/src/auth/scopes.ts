@@ -34,6 +34,12 @@ const SIMULATE: ScopeRequirement = {
 };
 
 export const TOOL_SCOPES: Readonly<Record<string, ScopeRequirement>> = {
+  // Read tools v2 (E17-N9). Old names stay until E17-N11.
+  get_financial_snapshot: READ,
+  get_net_worth_history: READ,
+  list_accounts: READ,
+  get_budget_summary: READ,
+  get_debt_overview: READ,
   simulate_debt_payoff: SIMULATE,
   simulate_uk_tax_and_pension_sacrifice: SIMULATE,
   compare_mortgage_overpay_vs_isa: SIMULATE,

@@ -61,3 +61,83 @@ export const mortgageAndIsa: BuildContextPackInput = {
   ],
   budgetEntries: [],
 };
+
+/** A saver with named institutions, history, a known-APR loan, an unknown-APR card and a budget (E17-N9). */
+export const mixedAccountsWithHistory: BuildContextPackInput = {
+  baseline: { ...BASE, age: 34, annualGrossSalary: 52000, housingStatus: "RENTING" },
+  accounts: [
+    {
+      id: "11111111-aaaa-4aaa-8aaa-000000000001",
+      name: "Monzo Current",
+      type: "Current",
+      balance: 2100,
+    },
+    {
+      id: "11111111-aaaa-4aaa-8aaa-000000000002",
+      name: "Barclays Saver",
+      type: "Saving",
+      balance: 8000,
+      interestRate: 4.2,
+    },
+    {
+      id: "11111111-aaaa-4aaa-8aaa-000000000003",
+      name: "Amex Card",
+      type: "Credit Card",
+      balance: 3000,
+    },
+    {
+      id: "11111111-aaaa-4aaa-8aaa-000000000004",
+      name: "Santander Loan",
+      type: "Loan",
+      balance: 6000,
+      interestRate: 7.9,
+      monthlyContribution: 200,
+    },
+  ],
+  accountDetails: [
+    { accountId: "11111111-aaaa-4aaa-8aaa-000000000002", year: 2026, month: 8, value: 7000 },
+    { accountId: "11111111-aaaa-4aaa-8aaa-000000000002", year: 2026, month: 9, value: 7500 },
+    { accountId: "11111111-aaaa-4aaa-8aaa-000000000002", year: 2026, month: 10, value: 8000 },
+    { accountId: "11111111-aaaa-4aaa-8aaa-000000000004", year: 2026, month: 8, value: 6600 },
+    { accountId: "11111111-aaaa-4aaa-8aaa-000000000004", year: 2026, month: 10, value: 6000 },
+  ],
+  budgetEntries: [
+    {
+      id: "b1",
+      category: "Salary",
+      name: "Acme Ltd salary",
+      amount: 3200,
+      frequency: "monthly",
+      isIncome: true,
+      isEssential: false,
+    },
+    {
+      id: "b2",
+      category: "Housing",
+      name: "Rent",
+      amount: 1100,
+      frequency: "monthly",
+      isIncome: false,
+      isEssential: true,
+    },
+    {
+      id: "b3",
+      category: "Insurance",
+      name: "Barclays contents cover",
+      amount: 240,
+      frequency: "annual",
+      isIncome: false,
+      isEssential: true,
+    },
+    {
+      id: "b4",
+      category: "Fun",
+      name: "Eating out",
+      amount: 50,
+      frequency: "weekly",
+      isIncome: false,
+      isEssential: false,
+      notes: "secret note",
+    },
+  ],
+};

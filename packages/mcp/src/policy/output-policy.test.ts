@@ -219,6 +219,11 @@ const TOOL_CALLS: Array<{ name: string; args: Record<string, unknown> }> = [
   { name: "evaluate_cashflow_runway_and_health", args: {} },
   { name: "evaluate_uk_student_loan", args: { plan: "PLAN_5", currentBalanceGbp: 30000 } },
   { name: "query_transactions_and_spending", args: {} },
+  { name: "get_financial_snapshot", args: {} },
+  { name: "get_net_worth_history", args: {} },
+  { name: "list_accounts", args: {} },
+  { name: "get_budget_summary", args: {} },
+  { name: "get_debt_overview", args: {} },
 ];
 
 describe("MCP surface output policy (E29-T6)", () => {

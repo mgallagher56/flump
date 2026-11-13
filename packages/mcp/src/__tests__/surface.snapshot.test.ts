@@ -43,6 +43,11 @@ const TOOL_CALLS: Record<string, Record<string, unknown>> = {
   evaluate_cashflow_runway_and_health: {},
   evaluate_uk_student_loan: { plan: "PLAN_5", currentBalanceGbp: 30000 },
   query_transactions_and_spending: {},
+  get_financial_snapshot: {},
+  get_net_worth_history: {},
+  list_accounts: {},
+  get_budget_summary: {},
+  get_debt_overview: {},
 };
 
 describe("per-tool output size (E17-N1)", () => {
@@ -85,6 +90,11 @@ describe("default-leak table (E17-N1)", () => {
     compare_mortgage_overpay_vs_isa: [350000, 220000, 4.5, 240],
     evaluate_cashflow_runway_and_health: [5000],
     evaluate_uk_student_loan: [],
+    get_budget_summary: [],
+    get_debt_overview: [],
+    get_financial_snapshot: [],
+    get_net_worth_history: [],
+    list_accounts: [],
     project_wealth_scenario: [5000, 15000],
     query_transactions_and_spending: [],
     simulate_debt_payoff: [],
