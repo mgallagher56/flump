@@ -32,7 +32,7 @@ describe("<DebtSummary />", () => {
     expect(container.querySelectorAll("[data-tone='hero']")).toHaveLength(0);
     expect(container.textContent).not.toContain("Aug 2028");
     expect(container.textContent).not.toContain("£640");
-    expect(getAllByText("Not calculated")).toHaveLength(2);
+    expect(getAllByText("Not set")).toHaveLength(2);
     expect(getAllByText("Add each debt's APR to calculate this")).toHaveLength(2);
   });
 

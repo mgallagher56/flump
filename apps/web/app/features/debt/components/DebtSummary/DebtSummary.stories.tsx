@@ -34,7 +34,7 @@ export const AprNotSet: Story = {
   play: async ({ canvasElement }) => {
     // No hero and no invented date while an APR is missing.
     await expect(canvasElement.querySelectorAll("[data-tone='hero']").length).toBe(0);
-    await expect(canvasElement.textContent).toContain("Not calculated");
+    await expect(canvasElement.textContent).toContain("Not set");
   },
 };
 

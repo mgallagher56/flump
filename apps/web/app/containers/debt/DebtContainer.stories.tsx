@@ -55,7 +55,7 @@ export const AprNotSet: Story = {
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    await expect((await canvas.findAllByText("Not calculated")).length).toBeGreaterThan(0);
+    await expect((await canvas.findAllByText("Not set")).length).toBeGreaterThan(0);
     await expect(canvasElement.querySelectorAll("[data-tone='hero']").length).toBe(0);
   },
 };
