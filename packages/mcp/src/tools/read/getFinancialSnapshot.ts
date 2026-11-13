@@ -24,7 +24,8 @@ const result = z.object({
   debtCount: z.number(),
   monthlyIncomeGbp: z.number().nullable(),
   monthlyEssentialSpendGbp: z.number().nullable(),
-  monthlySurplusGbp: z.number().nullable(),
+  /** Income minus essential and discretionary spend minus STORED debt minimums only. */
+  monthlySurplusAfterStoredMinimumsGbp: z.number().nullable(),
   emergencyRunwayMonths: z.number().nullable(),
 });
 
@@ -50,19 +51,36 @@ export const getFinancialSnapshot = defineFlumpTool({
 
     const income = budget.monthlyIncome;
     const essential = budget.hasEntries ? budget.essentialMonthly : null;
+    const assumptions: Array<{ field: string; source: "default"; reason: string }> = [];
     let surplus: number | null = null;
     let runway: number | null = null;
     if (income === null) {
       missing.push(MISSING_INCOME);
       provenance.monthlyIncomeGbp = "not_available";
-      provenance.monthlySurplusGbp = "not_available";
+      provenance.monthlySurplusAfterStoredMinimumsGbp = "not_available";
     } else {
-      const minDebt = s
-        .toDebtItems()
-        .reduce((sum, d) => sum + (d.minimumPaymentGbp ?? d.minimumPayment ?? 0), 0);
-      surplus = round2(income - budget.essentialMonthly - budget.discretionaryMonthly - minDebt);
+      const debts = s.toDebtItems();
+      const stored = debts.filter((d) => !d.minimumPaymentEstimated);
+      const estimatedCount = debts.length - stored.length;
+      const minStored = stored.reduce(
+        (sum, d) => sum + (d.minimumPaymentGbp ?? d.minimumPayment ?? 0),
+        0,
+      );
+      surplus = round2(income - budget.essentialMonthly - budget.discretionaryMonthly - minStored);
       provenance.monthlyIncomeGbp = "budget_entries";
-      provenance.monthlySurplusGbp = "budget_entries_and_debt_minimums";
+      provenance.monthlySurplusAfterStoredMinimumsGbp = "budget_entries_and_stored_debt_minimums";
+      if (estimatedCount > 0) {
+        assumptions.push({
+          field: "monthlySurplusAfterStoredMinimumsGbp",
+          source: "default",
+          reason: `${estimatedCount} debt(s) have no stored minimum payment, so no minimum is subtracted for them; the surplus is overstated by their minimums.`,
+        });
+        missing.push({
+          field: "debts.minimumPayment",
+          why: `${estimatedCount} debt(s) have no recorded minimum payment, so the surplus excludes them.`,
+          askUser: "What is the minimum monthly payment on each of your debts?",
+        });
+      }
     }
     if (essential !== null && essential > 0) {
       runway = Math.round((s.getTotalLiquidCash() / essential) * 10) / 10;
@@ -92,13 +110,14 @@ export const getFinancialSnapshot = defineFlumpTool({
         debtCount: s.toDebtItems().length,
         monthlyIncomeGbp: income,
         monthlyEssentialSpendGbp: essential,
-        monthlySurplusGbp: surplus,
+        monthlySurplusAfterStoredMinimumsGbp: surplus,
         emergencyRunwayMonths: runway,
       },
       provenance,
       missing,
+      assumptions,
       notice:
-        "Student loans are income-contingent and excluded from net worth and debt totals. Monthly surplus is after minimum debt payments.",
+        "Student loans are income-contingent and excluded from net worth and debt totals. Monthly surplus is after stored (not estimated) minimum debt payments.",
     };
   },
 });

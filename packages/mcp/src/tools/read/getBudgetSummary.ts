@@ -14,7 +14,8 @@ const result = z.object({
   monthlyIncomeGbp: z.number().nullable(),
   essentialMonthlyGbp: z.number(),
   discretionaryMonthlyGbp: z.number(),
-  monthlySurplusGbp: z.number().nullable(),
+  /** Income minus essential and discretionary spend, before any debt payments. */
+  monthlySurplusBeforeDebtGbp: z.number().nullable(),
   entryCount: z.number(),
   categories: z.array(
     z.object({ category: z.string(), monthlyGbp: z.number(), essential: z.boolean() }),
@@ -31,6 +32,20 @@ const result = z.object({
     )
     .optional(),
 });
+
+/** Scrubbing can make two categories identical; merge them so rows stay unique. */
+function mergeCategories<T extends { category: string; monthlyGbp: number; essential: boolean }>(
+  rows: T[],
+): T[] {
+  const merged = new Map<string, T>();
+  for (const r of rows) {
+    const k = `${r.category}|${r.essential}`;
+    const cur = merged.get(k);
+    if (cur) cur.monthlyGbp = round2(cur.monthlyGbp + r.monthlyGbp);
+    else merged.set(k, { ...r });
+  }
+  return [...merged.values()].sort((a, b) => b.monthlyGbp - a.monthlyGbp);
+}
 
 export const getBudgetSummary = defineFlumpTool({
   name: "get_budget_summary",
@@ -80,18 +95,21 @@ export const getBudgetSummary = defineFlumpTool({
         monthlyIncomeGbp: b.monthlyIncome,
         essentialMonthlyGbp: b.essentialMonthly,
         discretionaryMonthlyGbp: b.discretionaryMonthly,
-        monthlySurplusGbp: surplus,
+        monthlySurplusBeforeDebtGbp: surplus,
         entryCount: entries.length,
-        categories: b.byCategory.map((c) => ({
-          category: safeText(c.category, m.anonymise),
-          monthlyGbp: c.monthly,
-          essential: c.essential,
-        })),
+        categories: mergeCategories(
+          b.byCategory.map((c) => ({
+            category: safeText(c.category, m.anonymise),
+            monthlyGbp: c.monthly,
+            essential: c.essential,
+          })),
+        ),
         ...(detail ? { entries: detail } : {}),
       },
       provenance: { totals: "budget_entries" },
       missing,
-      notice: "Surplus is before debt minimum payments; see get_debt_overview for those.",
+      notice:
+        "Surplus here is before any debt payments (get_financial_snapshot gives the figure after stored minimums); see get_debt_overview for minimums.",
     };
   },
 });

@@ -758,7 +758,7 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
                 "null",
               ],
             },
-            "monthlySurplusGbp": {
+            "monthlySurplusAfterStoredMinimumsGbp": {
               "type": [
                 "number",
                 "null",
@@ -795,7 +795,7 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
             "debtCount",
             "monthlyIncomeGbp",
             "monthlyEssentialSpendGbp",
-            "monthlySurplusGbp",
+            "monthlySurplusAfterStoredMinimumsGbp",
             "emergencyRunwayMonths",
           ],
           "type": "object",
@@ -1245,19 +1245,18 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
                   "balanceGbp",
                   "isLiability",
                   "interestRatePct",
-                  "aprStatus",
                 ],
                 "type": "object",
               },
               "type": "array",
             },
-            "total": {
+            "returnedCount": {
               "type": "number",
             },
           },
           "required": [
             "accounts",
-            "total",
+            "returnedCount",
           ],
           "type": "object",
         },
@@ -1495,7 +1494,7 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
                 "null",
               ],
             },
-            "monthlySurplusGbp": {
+            "monthlySurplusBeforeDebtGbp": {
               "type": [
                 "number",
                 "null",
@@ -1506,7 +1505,7 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
             "monthlyIncomeGbp",
             "essentialMonthlyGbp",
             "discretionaryMonthlyGbp",
-            "monthlySurplusGbp",
+            "monthlySurplusBeforeDebtGbp",
             "entryCount",
             "categories",
           ],

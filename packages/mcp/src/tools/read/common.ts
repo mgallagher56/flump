@@ -55,6 +55,24 @@ export async function loadReadModel(ctx: McpServerContext): Promise<ReadModel> {
   };
 }
 
+export const MAX_MISSING = 5;
+
+/** Keeps at most `MAX_MISSING` entries; past that, folds them into one aggregate entry. */
+export function capMissing(
+  list: Missing[],
+  aggregate: Omit<Missing, "field"> & { field: string },
+): Missing[] {
+  if (list.length <= MAX_MISSING) return list;
+  return [
+    ...list.slice(0, MAX_MISSING - 1),
+    {
+      field: aggregate.field,
+      why: `${aggregate.why} (${list.length - (MAX_MISSING - 1)} more not listed.)`,
+      askUser: aggregate.askUser,
+    },
+  ];
+}
+
 export const ASK_NO_ACCOUNTS: Missing = {
   field: "accounts",
   why: "No accounts are recorded, so balances, net worth and debts are empty rather than zero.",

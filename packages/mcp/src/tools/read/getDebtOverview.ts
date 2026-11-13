@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { defineFlumpTool } from "../../define-tool.js";
-import { ASK_NO_ACCOUNTS, loadReadModel, type Missing, round2 } from "./common.js";
+import { ASK_NO_ACCOUNTS, capMissing, loadReadModel, type Missing, round2 } from "./common.js";
 
 const result = z.object({
   debts: z.array(
@@ -35,14 +35,14 @@ export const getDebtOverview = defineFlumpTool({
     const m = await loadReadModel(ctx);
     const items = m.snapshot.toDebtItems();
     const byId = new Map(m.accounts.map((a) => [a.id, a]));
-    const missing: Missing[] = m.accounts.length === 0 ? [ASK_NO_ACCOUNTS] : [];
+    const aprMissing: Missing[] = [];
 
     const debts = items.map((d) => {
       const acct = byId.get(d.id);
       const id = m.idOf("acc", d.id);
       const label = acct ? m.labelOf(acct) : "Debt";
       if (!d.aprKnown) {
-        missing.push({
+        aprMissing.push({
           field: `debts.${id}.aprPct`,
           why: `The APR on ${label} is not recorded, so interest cost cannot be worked out.`,
           askUser: `What is the APR on your ${label}?`,
@@ -62,6 +62,14 @@ export const getDebtOverview = defineFlumpTool({
       };
     });
 
+    const missing: Missing[] = [
+      ...(m.accounts.length === 0 ? [ASK_NO_ACCOUNTS] : []),
+      ...capMissing(aprMissing, {
+        field: "debts.aprPct",
+        why: "Several debts have no recorded APR, so interest cost cannot be worked out.",
+        askUser: "What is the APR on each of your debts?",
+      }),
+    ];
     const known = debts.filter((d) => d.aprPct !== null);
     const knownBalance = known.reduce((s, d) => s + d.balanceGbp, 0);
     const weightedApr =
