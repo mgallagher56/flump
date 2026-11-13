@@ -209,6 +209,17 @@
   }
 }
 
+/* The page canvas follows the active theme, so the area behind and below the content is never the
+   UA default (dark charcoal under an OS dark preference while the app is in light mode). */
+html {
+  background-color: var(--colors-surface-canvas);
+  color-scheme: light;
+}
+
+html[data-theme="dark"] {
+  color-scheme: dark;
+}
+
 html {
   scroll-padding-top: var(--header-height, 64px);
 }

@@ -998,7 +998,7 @@ const RunwayCalculator: FC<RunwayCalculatorProps> = ({
             </div>
 
             {/* Timeline bar */}
-            <div style={{ backgroundColor: "var(--colors-background)", padding: "20px 24px" }}>
+            <div style={{ backgroundColor: "var(--colors-surface-canvas)", padding: "20px 24px" }}>
               <div style={{ position: "relative", marginBottom: "8px" }}>
                 <div
                   style={{
@@ -1114,7 +1114,7 @@ const RunwayCalculator: FC<RunwayCalculatorProps> = ({
             {/* What-if sliders */}
             <div
               style={{
-                backgroundColor: "var(--colors-background)",
+                backgroundColor: "var(--colors-surface-canvas)",
                 padding: "20px 24px",
                 borderTop: "1px solid var(--colors-border)",
               }}
