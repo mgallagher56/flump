@@ -71,8 +71,8 @@ export const HomeFooter: FC = () => {
             Flump
           </FLPHeading>
           <FLPText color="text.muted" fontSize="sm" lineHeight="1.6" style={{ maxWidth: "380px" }}>
-            The UK wealth intelligence, tax optimisation, and long-term financial decision platform.
-            Open-source architecture engineered for clarity and privacy.
+            UK net worth, tax and debt calculators. Open-source architecture engineered for clarity
+            and privacy.
           </FLPText>
         </div>
 

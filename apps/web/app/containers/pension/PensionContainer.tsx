@@ -149,6 +149,10 @@ export const PensionContainer: FC = () => {
   const [showWizard, setShowWizard] = useState(false);
   const [wizardDismissed, setWizardDismissed] = useState(false);
   const [activeTab, setActiveTab] = useState<"forecaster" | "pots" | "rules">("forecaster");
+  const [whatIfRequest, setWhatIfRequest] = useState<{
+    employeePercent: number;
+    id: number;
+  } | null>(null);
 
   // Filter pension accounts and calculate current balances
   const pensionAccounts = useMemo(() => {
@@ -364,7 +368,8 @@ export const PensionContainer: FC = () => {
   }, [effectiveSalary, effectiveEmployeePct, effectiveIsSalarySacrifice, knownRegion]);
   const trapCopy = getTaxTrapCopy(taxTrap);
 
-  const handleOptimizeTaxTrap = async (contributionReq: number) => {
+  // Pre-fills the forecaster what-if only. Nothing is saved to the profile (advice boundary R5).
+  const handleModelTaxTrapContribution = (contributionReq: number) => {
     if (!effectiveSalary || effectiveSalary <= 0) return;
     const currentMonthlyEmployee = (effectiveSalary * (effectiveEmployeePct / 100)) / 12;
     const extraMonthly = Math.round(contributionReq / 12);
@@ -373,7 +378,7 @@ export const PensionContainer: FC = () => {
       100,
       Number((((targetMonthly * 12) / effectiveSalary) * 100).toFixed(1)),
     );
-    await handleSyncContributions(newEmployeePct, employerPercent, effectiveSalary);
+    setWhatIfRequest((prev) => ({ employeePercent: newEmployeePct, id: (prev?.id ?? 0) + 1 }));
   };
 
   // Headline outcome only; empty (nothing announced) when salary or contribution is not set.
@@ -444,18 +449,20 @@ export const PensionContainer: FC = () => {
             }}
           >
             <div style={{ fontSize: "12px", maxWidth: "600px" }}>
-              💡 <strong>Actionable optimisation:</strong> Increase pension contributions or make a
-              SIPP contribution of{" "}
-              <strong>{formatCurrency(taxTrap.contributionRequiredToEscapeGbp)}</strong> to recover
-              your full £12,570 Personal Allowance and reclaim{" "}
-              {formatCurrency(taxTrap.estimatedTaxSavedByEscapingGbp)} in tax relief.
+              Adjusted net income above £100,000 reduces the personal allowance. A contribution of{" "}
+              <strong style={{ fontVariantNumeric: "tabular-nums" }}>
+                {formatCurrency(taxTrap.contributionRequiredToEscapeGbp)}
+              </strong>{" "}
+              would bring it to £100,000 in this estimate.
             </div>
             <FLPButton
               size="sm"
               variant="primary"
-              onClick={() => handleOptimizeTaxTrap(taxTrap.contributionRequiredToEscapeGbp)}
+              onClick={() =>
+                handleModelTaxTrapContribution(taxTrap.contributionRequiredToEscapeGbp)
+              }
             >
-              Reclaim Allowance (SIPP {formatCurrency(taxTrap.contributionRequiredToEscapeGbp)}) →
+              Model this contribution
             </FLPButton>
           </div>
         </div>
@@ -566,6 +573,7 @@ export const PensionContainer: FC = () => {
             initialSalarySacrifice={isSalarySacrifice}
             portfolioReturnRate={weightedReturnRate}
             onSyncToProfile={handleSyncContributions}
+            whatIfRequest={whatIfRequest}
           />
         ) : (
           <FLPCard>

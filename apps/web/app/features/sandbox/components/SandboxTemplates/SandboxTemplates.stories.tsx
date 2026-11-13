@@ -31,7 +31,7 @@ export const Stage1DebtRecoveryDesktop: Story = {
   render: () => <Stage1View />,
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    await expect(canvas.getByText("Stage 1: Stabilise & Clear")).toBeInTheDocument();
+    await expect(canvas.getByText("Debt payoff scenario")).toBeInTheDocument();
     await expect(canvas.getByText("Total Debt")).toBeInTheDocument();
   },
 };
@@ -64,7 +64,7 @@ export const Stage2CrossoverDesktop: Story = {
   render: () => <Stage2View />,
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    await expect(canvas.getByText("Stage 2: Crossover & Accumulate")).toBeInTheDocument();
+    await expect(canvas.getByText("Crossover scenario")).toBeInTheDocument();
   },
 };
 
@@ -88,9 +88,7 @@ export const Stage3TaxTrapDesktop: Story = {
   render: () => <Stage3View />,
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    await expect(
-      canvas.getByText("Stage 3: Tax Trap Escape & Wealth Acceleration"),
-    ).toBeInTheDocument();
+    await expect(canvas.getByText("Personal allowance taper scenario")).toBeInTheDocument();
   },
 };
 

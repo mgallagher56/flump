@@ -269,6 +269,6 @@ describe("AddDebtDialog accessibility (R-15)", () => {
 
   it("uses UK spelling in its description", () => {
     render(<AddDebtDialog isOpen onAddDebt={vi.fn()} onClose={vi.fn()} />);
-    expect(screen.getByText(/payoff optimisation/)).toBeDefined();
+    expect(screen.getByText(/to model payoff/)).toBeDefined();
   });
 });

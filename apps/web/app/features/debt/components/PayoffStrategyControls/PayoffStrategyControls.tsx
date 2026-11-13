@@ -106,13 +106,8 @@ export const PayoffStrategyControls: FC<PayoffStrategyControlsProps> = ({
             </span>
           </div>
           <span className={css({ fontSize: "11px", color: "text.muted", textAlign: "left" })}>
-            Targets highest interest rates first. Maximises mathematically pure interest savings.
+            Pays the highest interest rate first.
           </span>
-          <div style={{ marginTop: "4px" }}>
-            <StatusBadge size="sm" variant="brand">
-              Mathematically Optimal
-            </StatusBadge>
-          </div>
         </button>
 
         <button
@@ -128,7 +123,7 @@ export const PayoffStrategyControls: FC<PayoffStrategyControlsProps> = ({
             </span>
           </div>
           <span className={css({ fontSize: "11px", color: "text.muted", textAlign: "left" })}>
-            Targets smallest balances first. Builds rapid psychological momentum with quick wins.
+            Pays the smallest balance first.
           </span>
           <div style={{ marginTop: "4px" }}>
             <StatusBadge size="sm" variant="info">

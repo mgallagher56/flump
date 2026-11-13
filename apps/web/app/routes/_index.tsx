@@ -15,7 +15,7 @@ import { getMarketingUrl } from "~/utils/marketingUrl";
 import { calculateRunwayStats } from "~/utils/runwayStorage";
 
 export const meta: MetaFunction = (): { title: string }[] => [
-  { title: "Flump | UK Wealth, Tax Optimization & Net Worth Engine" },
+  { title: "Flump | UK Net Worth, Tax and Debt Calculators" },
 ];
 
 export const handle = {
