@@ -29,6 +29,10 @@ describe("rate limit classes on real controllers", () => {
     expect(classOf(BudgetController.prototype, "deleteBudgetEntry")).toBe("destructive");
   });
 
+  it("puts receipt downloads in the tighter receiptRead class", () => {
+    expect(classOf(TaxController.prototype, "getReceipt")).toBe("receiptRead");
+  });
+
   it("exempts the health controller", () => {
     expect(Reflect.getMetadata(RATE_LIMIT_SKIP, HealthController)).toBe(true);
   });

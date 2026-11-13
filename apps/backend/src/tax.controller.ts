@@ -6,6 +6,7 @@ import {
   Header,
   NotFoundException,
   Param,
+  ParseUUIDPipe,
   Patch,
   Post,
   Req,
@@ -45,6 +46,12 @@ const pickTaxRecordFields = (body: Partial<TaxRecord> | undefined): Partial<TaxR
     if (body?.[key] !== undefined) picked[key] = body[key];
   }
   const mime = validateReceipt(picked);
+  // Receipt metadata only changes together with the data: a bare filename or MIME type from the
+  // client is ignored, so metadata can never disagree with the stored bytes.
+  if (picked.receiptData === undefined) {
+    delete picked.receiptFilename;
+    delete picked.receiptMimeType;
+  }
   if (mime) picked.receiptMimeType = mime;
   else if (picked.receiptData === null) {
     picked.receiptMimeType = null;
@@ -86,7 +93,10 @@ export class TaxController {
   }
 
   @Get(":id")
-  async getTaxRecord(@Req() req: any, @Param("id") id: string): Promise<TaxRecordResponse> {
+  async getTaxRecord(
+    @Req() req: any,
+    @Param("id", new ParseUUIDPipe()) id: string,
+  ): Promise<TaxRecordResponse> {
     const userId = req.user.id;
     const record = await this.taxRecordRepository.findOne({ where: { id, userId } });
     if (!record) {
@@ -102,7 +112,12 @@ export class TaxController {
   @Get(":id/receipt")
   @Header("Cache-Control", "private, no-store")
   @Header("X-Content-Type-Options", "nosniff")
-  async getReceipt(@Req() req: any, @Param("id") id: string): Promise<StreamableFile> {
+  @Header("Content-Security-Policy", "sandbox; default-src 'none'")
+  @RateLimit("receiptRead")
+  async getReceipt(
+    @Req() req: any,
+    @Param("id", new ParseUUIDPipe()) id: string,
+  ): Promise<StreamableFile> {
     const userId = req.user.id;
     const record = await this.taxRecordRepository.findOne({
       where: { id, userId },
@@ -184,7 +199,7 @@ export class TaxController {
   @Patch(":id")
   async updateTaxRecord(
     @Req() req: any,
-    @Param("id") id: string,
+    @Param("id", new ParseUUIDPipe()) id: string,
     @Body() body: any,
   ): Promise<TaxRecordResponse> {
     const userId = req.user.id;
@@ -199,7 +214,10 @@ export class TaxController {
 
   @Delete(":id")
   @RateLimit("destructive")
-  async deleteTaxRecord(@Req() req: any, @Param("id") id: string): Promise<{ success: boolean }> {
+  async deleteTaxRecord(
+    @Req() req: any,
+    @Param("id", new ParseUUIDPipe()) id: string,
+  ): Promise<{ success: boolean }> {
     const userId = req.user.id;
     const record = await this.taxRecordRepository.findOne({ where: { id, userId } });
     if (!record) {

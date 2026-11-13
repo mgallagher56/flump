@@ -1,4 +1,9 @@
-import { BadRequestException, NotFoundException, StreamableFile } from "@nestjs/common";
+import {
+  BadRequestException,
+  NotFoundException,
+  ParseUUIDPipe,
+  StreamableFile,
+} from "@nestjs/common";
 import { describe, expect, it, vi } from "vitest";
 import { TaxController } from "./tax.controller";
 import { createInMemoryRepository } from "./testing/in-memory-repository";
@@ -324,6 +329,37 @@ describe("TaxController receipt validation (E20-N14)", () => {
       const cleared = await controller.updateTaxRecord(userA, created.id, { receiptData: null });
       expect(cleared.hasReceipt).toBe(false);
       expect(repo.rows[0].receiptData).toBeNull();
+    });
+
+    it("PATCH ignores a client-sent filename or MIME type without receiptData", async () => {
+      const repo = createInMemoryRepository([withReceipt]);
+      const controller = new TaxController(repo as any, {} as any);
+      await controller.updateTaxRecord(userA, "r-A", {
+        receiptFilename: "evil.pdf",
+        receiptMimeType: "application/pdf",
+      });
+      expect(repo.rows[0]).toMatchObject({
+        receiptFilename: "rent.png",
+        receiptMimeType: "image/png",
+      });
+    });
+
+    it("route ids are validated as UUIDs and the receipt route sets the CSP", () => {
+      const params = Reflect.getMetadata(
+        "__routeArguments__",
+        TaxController,
+        "getReceipt",
+      ) as Record<string, { data: string; pipes: unknown[] }>;
+      const idArg = Object.values(params).find((a) => a.data === "id");
+      expect(idArg?.pipes.some((p) => p instanceof ParseUUIDPipe)).toBe(true);
+      const headers = Reflect.getMetadata("__headers__", TaxController.prototype.getReceipt) as {
+        name: string;
+        value: string;
+      }[];
+      expect(headers).toContainEqual({
+        name: "Content-Security-Policy",
+        value: "sandbox; default-src 'none'",
+      });
     });
 
     it("PATCH keeps the stored receipt when the body omits it", async () => {
