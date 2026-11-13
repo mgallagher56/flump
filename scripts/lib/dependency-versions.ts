@@ -26,25 +26,28 @@ export function findMismatches(
   workspaces: WorkspaceManifest[],
   allow: Record<string, string> = ALLOWED_MISMATCHES,
 ): Mismatch[] {
-  const byName = new Map<string, Map<string, string>>();
+  const byName = new Map<string, { dir: string; version: string }[]>();
   for (const { dir, manifest } of workspaces) {
     for (const section of COMPARED_SECTIONS) {
       for (const [name, version] of Object.entries(manifest[section] ?? {})) {
-        const entry = byName.get(name) ?? new Map<string, string>();
-        entry.set(dir, version);
-        byName.set(name, entry);
+        const entries = byName.get(name) ?? [];
+        entries.push({ dir, version });
+        byName.set(name, entries);
       }
     }
   }
   const out: Mismatch[] = [];
-  for (const [name, perDir] of [...byName].sort(([a], [b]) => a.localeCompare(b))) {
-    if (perDir.size < 2 || name in allow) continue;
-    if (new Set(perDir.values()).size < 2) continue;
+  for (const [name, entries] of [...byName].sort(([a], [b]) => a.localeCompare(b))) {
+    if (name in allow) continue;
+    // Compare every declaration, so one workspace listing a package in two sections with different versions is caught too.
+    if (new Set(entries.map((e) => e.dir)).size < 2 && entries.length < 2) continue;
+    if (new Set(entries.map((e) => e.version)).size < 2) continue;
+    const unique = new Map(entries.map((e) => [`${e.dir}\0${e.version}`, e]));
     out.push({
       name,
-      versions: [...perDir]
-        .map(([dir, version]) => ({ dir, version }))
-        .sort((a, b) => a.dir.localeCompare(b.dir)),
+      versions: [...unique.values()].sort(
+        (x, y) => x.dir.localeCompare(y.dir) || x.version.localeCompare(y.version),
+      ),
     });
   }
   return out;

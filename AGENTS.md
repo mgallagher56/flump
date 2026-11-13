@@ -114,5 +114,5 @@ Every token an agent reads is paid for again on each later turn of that session,
 ## 9. DEPENDENCY VERSIONS
 
 - A dependency declared in two or more workspace `package.json` files (root, `apps/*`, `packages/*`) must use the same version string everywhere. `bun scripts/check-dependency-versions.ts` enforces this in `check:laws` (and so in CI); peerDependencies ranges are not compared. Deliberate exceptions go in `ALLOWED_MISMATCHES` in `scripts/lib/dependency-versions.ts`, each with a reason.
-- Renovate raises one PR per package across all workspaces, so bump every workspace that declares it together.
+- Renovate groups non-major updates into one PR and raises major updates one PR per package; each covers every workspace that declares the package. When bumping by hand, bump every workspace together.
 - Bun catalogs (`workspaces.catalog` and `"catalog:"` references) are deferred: Renovate's bun manager does not extract catalog entries ([`lib/modules/manager/bun/extract.ts`](https://github.com/renovatebot/renovate/blob/main/lib/modules/manager/bun/extract.ts) only reads `workspaces.packages`), so catalog versions would never get upgrade PRs. Revisit when Renovate adds support.

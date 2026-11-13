@@ -55,6 +55,19 @@ describe("findMismatches", () => {
     expect(r).toEqual([]);
   });
 
+  test("catches one workspace declaring a package in two sections with different versions", () => {
+    const r = findMismatches([
+      ws("apps/web", { dependencies: { zod: "4.0.0" }, devDependencies: { zod: "4.1.0" } }),
+      ws("packages/ui", { dependencies: { zod: "4.1.0" } }),
+    ]);
+    expect(r).toHaveLength(1);
+    expect(r[0]?.versions).toEqual([
+      { dir: "apps/web", version: "4.0.0" },
+      { dir: "apps/web", version: "4.1.0" },
+      { dir: "packages/ui", version: "4.1.0" },
+    ]);
+  });
+
   test("honours the allow-list", () => {
     const set = [
       ws("a", { dependencies: { foo: "1.0.0" } }),
