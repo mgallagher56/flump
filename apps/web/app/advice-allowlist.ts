@@ -62,33 +62,12 @@ export const ADVICE_ALLOWLIST: AdviceAllowEntry[] = [
     owner: "E17-N21",
   },
 
-  // Temporary: web copy (E29-T4 rewrites).
-  ...[
-    [
-      "apps/web/app/features/debt/components/PayoffStrategyControls/PayoffStrategyControls.tsx",
-      "optimal",
-    ],
-    ["apps/web/app/components/debt/PayoffStrategySwitcher.tsx", "optimal"],
-    ["apps/web/app/components/debt/UkDebtInstrumentsCard.tsx", "recommend"],
-    ["apps/web/app/containers/debt/DebtContainer.tsx", "optimal"],
-    ["apps/web/app/containers/pension/PensionContainer.tsx", "actionable"],
-    ["apps/web/app/routes/tools.$slug.tsx", "move-into-wrapper"],
-    ["apps/web/app/routes/tools.$slug.tsx", "optimal"],
-    ["apps/web/app/routes/tools.$slug.tsx", "you-should"],
-  ].map(
-    ([file, patternId]): AdviceAllowEntry => ({
-      file: file as string,
-      patternId: patternId as string,
-      kind: "temporary",
-      reason: "Advice-style wording in the E29 inventory.",
-      owner: "E29-T4",
-    }),
-  ),
   {
     file: "apps/web/app/routes/tools.$slug.tsx",
     patternId: "recommend",
-    kind: "temporary",
-    reason: "FAQ answer says 'not a recommendation'. Reword or keep as a permanent entry at T4.",
+    kind: "permanent",
+    reason:
+      "FAQ disclaimer: 'This is general information, not a recommendation for your situation.'",
     owner: "E29-T4",
   },
 

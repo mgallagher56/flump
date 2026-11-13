@@ -368,7 +368,7 @@ export const UkDebtInstrumentsCard: FC = () => {
 
               <FLPText color="text.muted" fontSize="xs">
                 Unlike a fixed loan payment, overdraft fees feel invisible because they are deducted
-                directly from your account balance. Prioritize clearing this buffer in Stage 1!
+                directly from your account balance.
               </FLPText>
             </div>
           </div>
@@ -425,7 +425,7 @@ export const UkDebtInstrumentsCard: FC = () => {
                   paddingBottom: "8px",
                 }}
               >
-                <FLPText fontSize="sm">Recommended Monthly Sinking Fund:</FLPText>
+                <FLPText fontSize="sm">Monthly amount to spread the cost:</FLPText>
                 <FLPText color="primary" fontSize="sm" fontWeight="bold">
                   {formatCurrency(balloonResult.monthlySinkingFundNeeded)}/mo
                 </FLPText>
@@ -503,23 +503,24 @@ export const UkDebtInstrumentsCard: FC = () => {
                 Graduate Tax Guardrail
               </FLPText>
 
-              {studentResult.recommendation === "do_not_overpay" ? (
+              {studentResult.projectedOutcome === "written_off_first" ? (
                 <div className={safeBannerStyle}>
                   <FaInfoCircle size={18} style={{ flexShrink: 0, marginTop: "2px" }} />
                   <div>
-                    <strong>Do NOT Overpay:</strong> UK Student loans are wiped after{" "}
-                    {studentResult.writeOffYears} years. Because repayments are capped at{" "}
-                    {studentResult.rate}% above {formatCurrency(studentResult.threshold)}, any
-                    voluntary overpayment is likely lost to HM Treasury.
+                    <strong>Projected outcome:</strong> UK student loans are written off after{" "}
+                    {studentResult.writeOffYears} years. Repayments are capped at{" "}
+                    {studentResult.rate}% above {formatCurrency(studentResult.threshold)}, and in
+                    this projection the balance is written off before it is repaid.
                   </div>
                 </div>
               ) : (
                 <div className={alertBannerStyle}>
                   <FaInfoCircle size={18} style={{ flexShrink: 0, marginTop: "2px" }} />
                   <div>
-                    <strong>High Earner Exception:</strong> At your current income trajectory, you
-                    may clear the principal prior to write-off. Compare returns against ISAs and
-                    pensions before overpaying.
+                    <strong>Projected outcome:</strong> Repayments are capped at{" "}
+                    {studentResult.rate}% above {formatCurrency(studentResult.threshold)}, and in
+                    this projection the balance is repaid before the write-off date after{" "}
+                    {studentResult.writeOffYears} years.
                   </div>
                 </div>
               )}

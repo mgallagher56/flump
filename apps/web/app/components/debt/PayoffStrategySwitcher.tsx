@@ -303,12 +303,11 @@ export const PayoffStrategySwitcher: FC<PayoffStrategySwitcherProps> = ({
                   whiteSpace: "nowrap",
                 }}
               >
-                Mathematically optimal
+                Highest APR first
               </span>
             </div>
             <FLPText color="text.muted" fontSize="xs">
-              Targets highest APR debts first. Maximizes pure interest savings across your entire
-              liability portfolio.
+              Pays the highest APR debt first.
             </FLPText>
             <div style={{ marginTop: "6px", display: "flex", flexDirection: "column", gap: "4px" }}>
               <FLPText fontSize="sm">
@@ -373,12 +372,11 @@ export const PayoffStrategySwitcher: FC<PayoffStrategySwitcherProps> = ({
                   whiteSpace: "nowrap",
                 }}
               >
-                Psychologically optimal
+                Smallest balance first
               </span>
             </div>
             <FLPText color="text.muted" fontSize="xs">
-              Targets smallest balances first to generate immediate momentum and knock out
-              individual accounts fast.
+              Pays the smallest balance first.
             </FLPText>
             <div style={{ marginTop: "6px", display: "flex", flexDirection: "column", gap: "4px" }}>
               <FLPText fontSize="sm">

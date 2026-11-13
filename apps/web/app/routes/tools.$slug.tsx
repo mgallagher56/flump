@@ -91,7 +91,7 @@ const TOOLS_DATA: Record<string, ToolContent> = {
     slug: "mortgage-overpay-vs-isa",
     metaTitle: "UK Mortgage Overpayment vs Stocks & Shares ISA Calculator | Flump",
     metaDescription:
-      "Should you overpay your UK mortgage or invest into a tax-sheltered Stocks & Shares ISA? Accurately model interest saved vs compound investment returns over 5 to 25 years.",
+      "Compare interest saved by overpaying a UK mortgage with a projected Stocks & Shares ISA balance over 5 to 25 years.",
     title: "Mortgage Overpayment vs. Stocks & Shares ISA Calculator",
     subtitle:
       "A mathematical and psychological comparison: compare the interest saved by overpaying a mortgage with the possible tax-free growth of global equities inside a UK ISA.",
@@ -187,7 +187,7 @@ const TOOLS_DATA: Record<string, ToolContent> = {
     slug: "uk-debt-snowball-vs-avalanche-calculator",
     metaTitle: "UK Debt Snowball vs Avalanche Calculator (Interest Saved & Exit Date) | Flump",
     metaDescription:
-      "Compare the mathematically optimal Debt Avalanche vs psychologically rewarding Debt Snowball method for UK credit cards, personal loans, and overdrafts.",
+      "Compare Debt Avalanche and Debt Snowball payoff orders for UK credit cards, personal loans, and overdrafts.",
     title: "UK Debt Snowball vs. Avalanche Payoff Calculator",
     subtitle:
       "Model how allocating spare cash into high-APR debts (Avalanche) vs smallest balances (Snowball) changes your debt-free date and total interest paid.",
@@ -276,7 +276,7 @@ const TOOLS_DATA: Record<string, ToolContent> = {
     slug: "uk-student-loan-overpay-or-invest-calculator",
     metaTitle: "UK Student Loan: Should You Overpay or Invest? (Plan 2 & 5) | Flump",
     metaDescription:
-      "Find out whether you should ever make voluntary overpayments on your UK student loan (Plan 1, Plan 2, Plan 4, or Plan 5) or invest the cash instead.",
+      "See how a UK student loan balance (Plan 1, Plan 2, Plan 4, or Plan 5) develops with and without voluntary overpayments.",
     title: "UK Student Loan: Overpay or Invest? (Graduate Tax Calculator)",
     subtitle:
       "Evaluate whether voluntary student loan overpayments save you money or act as a needless donation to HM Treasury before statutory cancellation.",

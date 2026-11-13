@@ -195,6 +195,26 @@ describe("PensionContainer", () => {
       expect(container.textContent).not.toContain("effective 60% marginal tax rate");
     });
 
+    it("Model this contribution pre-fills the what-if and makes no save call", () => {
+      setProfile({
+        annualSalary: 110000,
+        pensionPercent: 5,
+        pensionEmployerPercent: 3,
+        setupChecklistCompletedSteps: ["pension"],
+      });
+      mockUpdateProfile.mockClear();
+      const { container } = render(<PensionContainer />);
+      const input = container.querySelector("#pension-forecast-employee-pct") as HTMLInputElement;
+      expect(input.value).toBe("5");
+
+      expect(container.textContent).toContain("Adjusted net income above £100,000");
+      expect(container.textContent).not.toContain("Actionable");
+      fireEvent.click(screen.getByRole("button", { name: "Model this contribution" }));
+
+      expect(Number(input.value)).toBeGreaterThan(5);
+      expect(mockUpdateProfile).not.toHaveBeenCalled();
+    });
+
     it("tax trap callout uses Scottish rates for a Scottish baseline, else labels the assumption", async () => {
       const { getDefaultStore } = await import("jotai");
       const { financialBaselineAtom, NO_SALARY_BASELINE } = await import("~/state/baseline.store");

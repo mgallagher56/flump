@@ -41,6 +41,8 @@ export interface PensionForecasterCardProps {
   initialEmployerNiPassThrough?: boolean;
   directMonthlyContrib?: number;
   portfolioReturnRate?: number;
+  /** Pre-fills the employee percentage what-if. Each new `id` re-applies it; nothing is saved. */
+  whatIfRequest?: { employeePercent: number; id: number } | null;
   onSyncToProfile?: (
     employeePct: number,
     employerPct: number,
@@ -237,6 +239,7 @@ export const PensionForecasterCard: FC<PensionForecasterCardProps> = ({
   initialEmployerNiPassThrough,
   directMonthlyContrib = 0,
   portfolioReturnRate,
+  whatIfRequest,
   onSyncToProfile,
 }) => {
   const { formatCurrency } = useFormatCurrency();
@@ -284,6 +287,10 @@ export const PensionForecasterCard: FC<PensionForecasterCardProps> = ({
       setEmployeePercent(initialEmployeePercent);
     }
   }, [initialEmployeePercent]);
+
+  useEffect(() => {
+    if (whatIfRequest) setEmployeePercent(whatIfRequest.employeePercent);
+  }, [whatIfRequest]);
 
   useEffect(() => {
     if (initialEmployerPercent !== undefined) {

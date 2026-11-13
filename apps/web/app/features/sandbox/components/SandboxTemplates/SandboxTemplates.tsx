@@ -31,8 +31,8 @@ export const Stage1View: FC = () => {
   return (
     <div className={sandboxLayoutRecipe({ stage: 1 })}>
       <PageHeader
-        subtitle="Prioritise high-APR clearing and model the crossover bridge into ISAs."
-        title="Stage 1: Stabilise & Clear"
+        subtitle="Model high-APR clearing and the crossover into ISAs."
+        title="Debt payoff scenario"
       />
       <div style={{ marginBottom: "24px" }}>
         <KpiStrip columns={4}>
@@ -50,7 +50,7 @@ export const Stage1View: FC = () => {
             value="Year 1.5"
           />
           <KpiCard
-            deltaText="Optimised"
+            deltaText="Modelled"
             deltaVariant="brand"
             label="Interest Saved"
             value="£2,140"
@@ -137,8 +137,8 @@ export const Stage1View: FC = () => {
 export const Stage2View: FC = () => (
   <div className={sandboxLayoutRecipe({ stage: 2 })}>
     <PageHeader
-      subtitle="Redirect liability repayments directly into compound wealth vehicles."
-      title="Stage 2: Crossover & Accumulate"
+      subtitle="Model liability repayments redirected into long-term wealth vehicles."
+      title="Crossover scenario"
     />
     <div style={{ marginBottom: "24px" }}>
       <KpiStrip columns={4}>
@@ -209,8 +209,8 @@ export const Stage2View: FC = () => (
 export const Stage3View: FC = () => (
   <div className={sandboxLayoutRecipe({ stage: 3 })}>
     <PageHeader
-      subtitle="Mitigate personal allowance taper and optimise lifetime wealth retention."
-      title="Stage 3: Tax Trap Escape & Wealth Acceleration"
+      subtitle="Model the personal allowance taper."
+      title="Personal allowance taper scenario"
     />
     <div style={{ marginBottom: "24px" }}>
       <TaxTrapEscapeBanner grossIncome={112000} />

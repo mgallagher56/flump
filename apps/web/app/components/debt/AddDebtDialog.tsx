@@ -113,7 +113,7 @@ export const AddDebtDialog: FC<AddDebtDialogProps> = ({
 
   const description = isEdit
     ? "Leave the APR or minimum payment blank if you don't know it yet."
-    : "Log an unsecured debt, credit card, or overdraft for payoff optimisation. Only the name and balance are required.";
+    : "Log an unsecured debt, credit card, or overdraft to model payoff. Only the name and balance are required.";
 
   return (
     <Dialog

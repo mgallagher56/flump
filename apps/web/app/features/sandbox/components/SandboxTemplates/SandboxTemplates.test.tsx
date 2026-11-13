@@ -5,19 +5,19 @@ import { SandboxTemplates } from "./SandboxTemplates";
 describe("SandboxTemplates", () => {
   it("renders Stage 1 by default", () => {
     render(<SandboxTemplates stage={1} />);
-    expect(screen.getByText("Stage 1: Stabilise & Clear")).toBeDefined();
+    expect(screen.getByText("Debt payoff scenario")).toBeDefined();
     expect(screen.getByText("Total Debt")).toBeDefined();
   });
 
   it("renders Stage 2 Crossover view", () => {
     render(<SandboxTemplates stage={2} />);
-    expect(screen.getByText("Stage 2: Crossover & Accumulate")).toBeDefined();
+    expect(screen.getByText("Crossover scenario")).toBeDefined();
     expect(screen.getByText("Stocks & Shares ISA")).toBeDefined();
   });
 
   it("renders Stage 3 Tax Trap view", () => {
     render(<SandboxTemplates stage={3} />);
-    expect(screen.getByText("Stage 3: Tax Trap Escape & Wealth Acceleration")).toBeDefined();
+    expect(screen.getByText("Personal allowance taper scenario")).toBeDefined();
   });
 
   it("labels every stage as sample data", () => {
