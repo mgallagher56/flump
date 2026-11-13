@@ -1,28 +1,14 @@
 import { signOut } from "@workos-inc/authkit-react-router";
 import type { ActionFunctionArgs } from "react-router";
 import { redirect } from "react-router";
-import { ensureSessionStorage, getAuthSession } from "~/utils/auth.server";
+import { ensureSessionStorage } from "~/utils/auth.server";
 import { devSessionClearCookie, isDevSessionEnabled } from "~/utils/devSession.server";
 import { getMarketingUrl } from "~/utils/marketingUrl";
 import { safeErrorSummary } from "~/utils/safeErrorSummary";
+import { hasSealedSession } from "~/utils/sessionCookie.server";
 import { legacySessionCookieClear, sessionCookieClear } from "~/utils/sessionPolicy.server";
 
-/**
- * True only when there is a live session. An expired session whose refresh fails makes authkit
- * throw a redirect Response (to WorkOS, carrying a PKCE cookie we must not forward); any other
- * failure to read the session also means there is nothing to sign out of.
- */
-const hasSession = async (args: ActionFunctionArgs): Promise<boolean> => {
-  try {
-    const session = await getAuthSession(args, { ensureSignedIn: false });
-    return Boolean(session.user);
-  } catch {
-    return false;
-  }
-};
-
-const handleSignOut = async (args: ActionFunctionArgs) => {
-  const { request } = args;
+const handleSignOut = async (request: Request) => {
   const url = new URL(request.url);
   const marketingUrl = getMarketingUrl(request.url);
 
@@ -39,9 +25,9 @@ const handleSignOut = async (args: ActionFunctionArgs) => {
   const secure = url.protocol === "https:" || behindHttpsProxy ? "; Secure" : "";
   const clearPresenceCookie = `flump_has_session=; Path=/; SameSite=Lax; Max-Age=0${secure}`;
 
-  // Logout must never 500: with no usable session, or if signOut itself fails, still send the
-  // browser home with every session cookie cleared. The session cookie clear is appended before
-  // the presence and legacy clears; the root middleware skips a refreshed cookie of the same name.
+  // Logout must never 500: with no sealed session cookie (authkit's signOut would crash on it),
+  // or if signOut itself fails, still send the browser home with every session cookie cleared.
+  // Nothing here reads or refreshes the session, so no refreshed cookie can resurrect it.
   const clearedRedirect = () => {
     const headers = new Headers({ Location: marketingUrl });
     headers.append("Set-Cookie", sessionCookieClear(process.env));
@@ -52,7 +38,7 @@ const handleSignOut = async (args: ActionFunctionArgs) => {
   };
 
   await ensureSessionStorage(request);
-  if (!(await hasSession(args))) return clearedRedirect();
+  if (!(await hasSealedSession(request))) return clearedRedirect();
 
   let response: unknown;
   try {
@@ -80,8 +66,8 @@ const handleSignOut = async (args: ActionFunctionArgs) => {
 // GET must never sign out or set cookies (logout CSRF); sign-out is POST-only.
 export const loader = async () => redirect("/");
 
-export const action = async (args: ActionFunctionArgs) => {
-  return handleSignOut(args);
+export const action = async ({ request }: ActionFunctionArgs) => {
+  return handleSignOut(request);
 };
 
 export default function LogoutIndex() {
