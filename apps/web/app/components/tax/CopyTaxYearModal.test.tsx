@@ -1,5 +1,6 @@
 import type { TaxRecord } from "@flump/finance-engine";
-import { fireEvent } from "@testing-library/react";
+import { fireEvent, screen, waitFor } from "@testing-library/react";
+import { useState } from "react";
 import { describe, expect, test, vi } from "vitest";
 import customRender from "~/testUtils/customRender";
 import { CopyTaxYearModal, type CopyTaxYearModalProps } from "./CopyTaxYearModal";
@@ -16,6 +17,18 @@ vi.mock("react-router", async () => {
     }),
   };
 });
+
+const Harness = ({ modalProps }: { modalProps: CopyTaxYearModalProps }) => {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <button type="button" onClick={() => setOpen(true)}>
+        open copy
+      </button>
+      <CopyTaxYearModal {...modalProps} open={open} onClose={() => setOpen(false)} />
+    </>
+  );
+};
 
 describe("<CopyTaxYearModal />", () => {
   const mockRecords: TaxRecord[] = [
@@ -85,5 +98,43 @@ describe("<CopyTaxYearModal />", () => {
     const cancelBtn = getByText("Cancel");
     fireEvent.click(cancelBtn);
     expect(defaultProps.onClose).toHaveBeenCalled();
+  });
+
+  test("is a modal dialog with an accessible name and description", () => {
+    customRender(<CopyTaxYearModal {...defaultProps} />);
+    const dialog = screen.getByRole("dialog", { name: "Copy Figures & Populate Tax Year" });
+    expect(dialog.getAttribute("aria-modal")).toBe("true");
+    expect(dialog.getAttribute("aria-describedby")).toBeTruthy();
+  });
+
+  test("closes on Escape and via the labelled close button", () => {
+    const onClose = vi.fn();
+    customRender(<CopyTaxYearModal {...defaultProps} onClose={onClose} />);
+    fireEvent.keyDown(screen.getByRole("dialog"), { key: "Escape", code: "Escape" });
+    expect(onClose).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getByRole("button", { name: "Close" }));
+    expect(onClose).toHaveBeenCalledTimes(2);
+  });
+
+  test("keeps the wide records table inside a horizontal scroll wrapper", () => {
+    customRender(<CopyTaxYearModal {...defaultProps} />);
+    const table = screen.getByRole("dialog").querySelector("table");
+    expect(table).not.toBeNull();
+    expect((table as HTMLElement).style.minWidth).toBe("500px");
+    const wrapper = (table as HTMLElement).parentElement as HTMLElement;
+    expect(wrapper.className).toMatch(/ov-x_auto|overflow-x_auto/);
+  });
+
+  test("traps focus inside and returns it to the trigger on close", async () => {
+    customRender(<Harness modalProps={defaultProps} />);
+    const trigger = screen.getByRole("button", { name: "open copy" });
+    trigger.focus();
+    fireEvent.click(trigger);
+    const dialog = screen.getByRole("dialog");
+    expect(dialog.contains(document.activeElement)).toBe(true);
+    expect(document.querySelectorAll("[data-radix-focus-guard]").length).toBeGreaterThan(0);
+    fireEvent.keyDown(dialog, { key: "Escape", code: "Escape" });
+    expect(screen.queryByRole("dialog")).toBeNull();
+    await waitFor(() => expect(document.activeElement).toBe(trigger));
   });
 });

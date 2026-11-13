@@ -1,6 +1,6 @@
 import * as RadixDialog from "@radix-ui/react-dialog";
 import { X } from "lucide-react";
-import type { FC, ReactNode } from "react";
+import { type FC, type ReactNode, useRef } from "react";
 import { cx } from "../../../styled-system/css";
 import { Icon } from "../Icon";
 import {
@@ -41,37 +41,53 @@ export const Dialog: FC<DialogProps> = ({
   closeLabel = "Close",
   id,
   className,
-}) => (
-  <RadixDialog.Root open={open} onOpenChange={onOpenChange}>
-    <RadixDialog.Portal>
-      <RadixDialog.Overlay className={dialogOverlayRecipe()}>
-        <RadixDialog.Content
-          id={id}
-          data-testid={id}
-          aria-modal="true"
-          {...(description ? {} : { "aria-describedby": undefined })}
-          className={cx(dialogContentRecipe({ size }), className)}
-        >
-          <div className={dialogHeaderRecipe()}>
-            <div>
-              <RadixDialog.Title className={dialogTitleRecipe()}>{title}</RadixDialog.Title>
-              {description ? (
-                <RadixDialog.Description className={dialogDescriptionRecipe()}>
-                  {description}
-                </RadixDialog.Description>
-              ) : null}
+}) => {
+  // Controlled dialogs have no Radix Trigger, so remember what had focus and restore it on close.
+  const returnFocusRef = useRef<HTMLElement | null>(null);
+  return (
+    <RadixDialog.Root open={open} onOpenChange={onOpenChange}>
+      <RadixDialog.Portal>
+        <RadixDialog.Overlay className={dialogOverlayRecipe()}>
+          <RadixDialog.Content
+            id={id}
+            data-testid={id}
+            aria-modal="true"
+            onOpenAutoFocus={() => {
+              returnFocusRef.current =
+                document.activeElement instanceof HTMLElement ? document.activeElement : null;
+            }}
+            onCloseAutoFocus={(event) => {
+              const target = returnFocusRef.current;
+              if (target?.isConnected) {
+                event.preventDefault();
+                target.focus();
+              }
+              returnFocusRef.current = null;
+            }}
+            {...(description ? {} : { "aria-describedby": undefined })}
+            className={cx(dialogContentRecipe({ size }), className)}
+          >
+            <div className={dialogHeaderRecipe()}>
+              <div>
+                <RadixDialog.Title className={dialogTitleRecipe()}>{title}</RadixDialog.Title>
+                {description ? (
+                  <RadixDialog.Description className={dialogDescriptionRecipe()}>
+                    {description}
+                  </RadixDialog.Description>
+                ) : null}
+              </div>
+              <RadixDialog.Close asChild>
+                <button type="button" aria-label={closeLabel} className={dialogCloseRecipe()}>
+                  <Icon icon={X} size="sm" />
+                </button>
+              </RadixDialog.Close>
             </div>
-            <RadixDialog.Close asChild>
-              <button type="button" aria-label={closeLabel} className={dialogCloseRecipe()}>
-                <Icon icon={X} size="sm" />
-              </button>
-            </RadixDialog.Close>
-          </div>
-          {children}
-        </RadixDialog.Content>
-      </RadixDialog.Overlay>
-    </RadixDialog.Portal>
-  </RadixDialog.Root>
-);
+            {children}
+          </RadixDialog.Content>
+        </RadixDialog.Overlay>
+      </RadixDialog.Portal>
+    </RadixDialog.Root>
+  );
+};
 
 export default Dialog;
