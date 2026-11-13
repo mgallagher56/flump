@@ -91,10 +91,50 @@ describe("SimulatorSplitLayout Pattern", () => {
     expect(adjust.getAttribute("aria-expanded")).toBe("false");
   });
 
+  it("without a summary: no Adjust control and the controls are never collapsed", () => {
+    render(<SimulatorSplitLayout content={<div>Chart</div>} controls={<div>Controls</div>} />);
+    expect(screen.queryByRole("button", { name: "Adjust" })).toBeNull();
+    expect(screen.queryByTestId("simulator-summary-bar")).toBeNull();
+    const controls = screen.getByRole("region", { name: "Parameters" });
+    // Visible at every width: no responsive display:none on the controls.
+    expect(controls.className).not.toContain("d_none");
+    // Controls come before the results in the DOM (stacked above the content).
+    const results = screen.getByRole("region", { name: "Results" });
+    expect(
+      controls.compareDocumentPosition(results) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
+  it("with a summary the controls collapse under lg", () => {
+    render(
+      <SimulatorSplitLayout
+        content={<div>Chart</div>}
+        controls={<div>Controls</div>}
+        summary="Outcome"
+      />,
+    );
+    expect(screen.getByRole("region", { name: "Parameters" }).className).toContain("d_none");
+  });
+
+  it("offsets both sticky elements by --app-header-offset", () => {
+    render(
+      <SimulatorSplitLayout
+        content={<div>Chart</div>}
+        controls={<div>Controls</div>}
+        summary="Outcome"
+      />,
+    );
+    expect(screen.getByTestId("simulator-summary-bar").className).toContain("app-header-offset");
+    expect(screen.getByRole("region", { name: "Parameters" }).className).toContain(
+      "app-header-offset",
+    );
+  });
+
   it("supports a custom Adjust label", () => {
     render(
       <SimulatorSplitLayout
         adjustLabel="Change inputs"
+        summary="Outcome"
         content={<div>Chart</div>}
         controls={<div>Controls</div>}
       />,
@@ -112,6 +152,7 @@ describe("SimulatorSplitLayout Pattern", () => {
       <SimulatorSplitLayout
         content={<div>Chart</div>}
         controls={<div>Controls</div>}
+        summary="Outcome"
         renderControlsContainer={({ open, id, label, children }) => (
           <div aria-label={label} data-open={String(open)} id={id} role="dialog">
             {children}
@@ -135,6 +176,7 @@ describe("SimulatorSplitLayout Pattern", () => {
       <SimulatorSplitLayout
         content={<div>Chart</div>}
         controls={<div>Controls</div>}
+        summary="Outcome"
         renderControlsContainer={() => <div role="dialog">Sheet</div>}
       />,
     );

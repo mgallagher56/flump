@@ -27,6 +27,8 @@ describe("CollapsibleDrawer Primitive", () => {
     );
     const trigger = screen.getByRole("button");
     expect(trigger.getAttribute("aria-expanded")).toBe("false");
+    // Nothing to point at while collapsed.
+    expect(trigger.getAttribute("aria-controls")).toBeNull();
     fireEvent.click(trigger);
     const controls = trigger.getAttribute("aria-controls");
     expect(controls).toBeTruthy();

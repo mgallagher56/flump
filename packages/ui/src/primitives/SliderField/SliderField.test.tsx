@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { colors } from "../../tokens";
-import { SliderField } from "./SliderField";
+import { parseSliderEntry, SliderField } from "./SliderField";
 import { sliderPillInput } from "./SliderField.styles";
 
 function lum(hex: string): number {
@@ -235,5 +235,33 @@ describe("SliderField Primitive", () => {
     );
     fireEvent.keyDown(screen.getByRole("slider"), { key: "ArrowRight" });
     expect(handleChange).toHaveBeenCalledWith(0.3);
+  });
+
+  it("parses only plain en-GB numbers", () => {
+    expect(parseSliderEntry("£1,250")).toBe(1250);
+    expect(parseSliderEntry("4.5%")).toBe(4.5);
+    expect(parseSliderEntry("-3")).toBe(-3);
+    expect(parseSliderEntry("1e3")).toBeNull();
+    expect(parseSliderEntry("0x10")).toBeNull();
+    expect(parseSliderEntry("1,5")).toBeNull();
+    expect(parseSliderEntry("--1")).toBeNull();
+    expect(parseSliderEntry("")).toBeNull();
+    expect(parseSliderEntry(".")).toBeNull();
+  });
+
+  it("renders the track fill with the element (no effect needed)", () => {
+    render(<SliderField label="Rate" max={100} min={0} value={25} onChange={vi.fn()} />);
+    const slider = screen.getByRole("slider") as HTMLInputElement;
+    expect(slider.style.getPropertyValue("--slider-fill")).toBe("25%");
+  });
+
+  it("cancels the pending select frame on blur", () => {
+    const cancel = vi.spyOn(window, "cancelAnimationFrame");
+    render(<SliderField label="Rate" max={100} min={0} value={25} onChange={vi.fn()} />);
+    const input = screen.getByLabelText("Rate input");
+    fireEvent.focus(input);
+    fireEvent.blur(input);
+    expect(cancel).toHaveBeenCalled();
+    cancel.mockRestore();
   });
 });
