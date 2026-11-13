@@ -13,6 +13,7 @@ import type { ReactElement } from "react";
 import { type LoaderFunctionArgs, type MetaFunction, redirect, useLoaderData } from "react-router";
 import { isLiabilityType } from "~/containers/accounts/utils";
 import { HomeDashboard } from "~/features/dashboard/components/HomeDashboard";
+import { latestRecordedMonth, londonMonth } from "~/features/snapshot/snapshotModel";
 import { loadWorkspaceSnapshot } from "~/services/backend-client.server";
 import { toMonthly } from "~/types/budget";
 import { buildDebtSummary } from "~/utils/debtSummary";
@@ -199,6 +200,11 @@ export const loader = async (args: LoaderFunctionArgs) => {
 
   return {
     user,
+    // E30: the dashboard's monthly check-in card. Month keys only, no figures.
+    checkIn: {
+      currentMonth: londonMonth(),
+      lastRecordedMonth: latestRecordedMonth(Array.isArray(accountDetails) ? accountDetails : []),
+    },
     hasAccounts: Array.isArray(accounts) && accounts.length > 0,
     hasBudget:
       completedSteps.includes("budget") ||
@@ -301,6 +307,7 @@ const Index = (): ReactElement => {
     forecastData,
     taxData,
     debtData,
+    checkIn,
   } = data as any;
 
   if (user) {
@@ -330,6 +337,7 @@ const Index = (): ReactElement => {
       <HomeDashboard
         accountsData={safeAccountsData}
         budgetData={safeBudgetData}
+        checkIn={checkIn}
         checklistProps={{
           hasAccounts,
           hasBudget,
