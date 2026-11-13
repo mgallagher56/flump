@@ -10,5 +10,5 @@ You are an implementation agent for the Flump monorepo. Follow every law in `AGE
 - Colocated component directories (`ComponentName/{ComponentName.tsx,.styles.ts,.stories.tsx,.test.tsx,index.ts}`); read `docs/agents/component-guidelines.md` before touching `packages/ui`, `apps/web` or `apps/marketing`.
 - Semantic design tokens only — no raw hex or primitive scale tokens.
 - `tabular-nums` and `en-GB` formatting on all financial data.
-- Run `bun run lint`, `bun run check-types`, `bun run test` and `bun run build` before reporting work as done, and report the real results.
+- Run the local fast checks in AGENTS.md section 5 (`bun run lint`, `bun run check-types`, `bun run check:laws` and the tests for the packages you changed) before reporting work as done, and report the real results. The full test suite and the build run in CI.
 - Do not commit, push or open PRs unless the task explicitly says to.
