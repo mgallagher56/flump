@@ -8,6 +8,7 @@ import {
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import type { McpServerContext } from "../types.js";
+import { summariseComparison } from "./payoff-summary.js";
 
 export const debtSimulatorSchema = {
   strategy: z
@@ -53,6 +54,7 @@ export function registerDebtSimulatorTool(
   server.registerTool(
     "simulate_debt_payoff",
     {
+      title: "Simulate UK debt payoff",
       description:
         "Simulates deterministic UK consumer debt payoff schedules (Avalanche vs Snowball), 0% promotional transfer cliff alerts, and 5-year post-debt ISA wealth crossover projections via @flump/finance-engine.",
       inputSchema: debtSimulatorSchema,
@@ -124,18 +126,14 @@ export function registerDebtSimulatorTool(
           content: [
             {
               type: "text",
-              text: JSON.stringify(
-                {
-                  comparison,
-                  excludedStudentLoansCount: excludedStudentLoans.length,
-                  studentLoansNotice:
-                    excludedStudentLoans.length > 0
-                      ? "Student loans are income-contingent graduate taxes and evaluated separately from commercial debt."
-                      : undefined,
-                },
-                null,
-                2,
-              ),
+              text: JSON.stringify({
+                comparison: summariseComparison(comparison),
+                excludedStudentLoansCount: excludedStudentLoans.length,
+                studentLoansNotice:
+                  excludedStudentLoans.length > 0
+                    ? "Student loans are income-contingent graduate taxes and evaluated separately from commercial debt."
+                    : undefined,
+              }),
             },
           ],
         };
@@ -158,24 +156,20 @@ export function registerDebtSimulatorTool(
         content: [
           {
             type: "text",
-            text: JSON.stringify(
-              {
-                strategy: result.strategy,
-                totalStartingDebtGbp: result.totalStartingDebtGbp,
-                debtFreeDate: result.debtFreeDate,
-                monthsToPayoff: result.monthsToPayoff,
-                totalInterestPaidGbp: result.totalInterestPaidGbp,
-                interestSavedVsMinimumGbp: result.interestSavedVsMinimumGbp,
-                firstQuickWinDebtName: result.firstQuickWinDebtName,
-                firstQuickWinDate: result.firstQuickWinDate,
-                promoCliffAlerts: result.promoCliffAlerts,
-                fiveYearPostDebtWealthGbp: result.fiveYearPostDebtWealthGbp,
-                overdraftAnnualCosts: overdraftCosts.length > 0 ? overdraftCosts : undefined,
-                excludedStudentLoansCount: excludedStudentLoans.length,
-              },
-              null,
-              2,
-            ),
+            text: JSON.stringify({
+              strategy: result.strategy,
+              totalStartingDebtGbp: result.totalStartingDebtGbp,
+              debtFreeDate: result.debtFreeDate,
+              monthsToPayoff: result.monthsToPayoff,
+              totalInterestPaidGbp: result.totalInterestPaidGbp,
+              interestSavedVsMinimumGbp: result.interestSavedVsMinimumGbp,
+              firstQuickWinDebtName: result.firstQuickWinDebtName,
+              firstQuickWinDate: result.firstQuickWinDate,
+              promoCliffAlerts: result.promoCliffAlerts,
+              fiveYearPostDebtWealthGbp: result.fiveYearPostDebtWealthGbp,
+              overdraftAnnualCosts: overdraftCosts.length > 0 ? overdraftCosts : undefined,
+              excludedStudentLoansCount: excludedStudentLoans.length,
+            }),
           },
         ],
       };

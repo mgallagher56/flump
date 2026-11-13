@@ -49,6 +49,7 @@ export function registerUkTaxTrapTool(
   server.registerTool(
     "simulate_uk_tax_and_pension_sacrifice",
     {
+      title: "UK tax trap and pension sacrifice",
       description:
         "Calculates UK income tax, National Insurance, Scottish bands, and the £100k-£125,140 60% tax trap. Simulates optimal pension salary sacrifice and Gift Aid contributions to reclaim the £12,570 Personal Allowance.",
       inputSchema: ukTaxTrapSchema,
@@ -110,41 +111,37 @@ export function registerUkTaxTrapTool(
         content: [
           {
             type: "text",
-            text: JSON.stringify(
-              {
-                taxYear: simulatedResult.taxYear,
-                region,
-                grossIncomeGbp: simulatedResult.grossIncomeGbp,
-                adjustedNetIncomeGbp: simulatedResult.adjustedNetIncomeGbp,
-                netTakeHomeAnnualGbp: simulatedResult.netTakeHomePayAnnualGbp,
-                netTakeHomeMonthlyGbp: simulatedResult.netTakeHomePayMonthlyGbp,
-                incomeTaxGbp: simulatedResult.incomeTaxGbp,
-                nationalInsuranceGbp: simulatedResult.nationalInsuranceGbp,
-                totalDeductionsGbp: simulatedResult.totalDeductionsGbp,
-                effectiveTaxRatePct: simulatedResult.effectiveTaxRatePct,
-                taxSavedVsBaselineGbp: taxSavedVsBaseline,
-                personalAllowanceReclaimedGbp: personalAllowanceReclaimed,
-                employerNiSavingsGbp: simulatedResult.employerNiSavingsGbp ?? 0,
-                taxTrapStatus: {
-                  isInTaxTrap: simulatedResult.taxTrap.isInTaxTrap,
-                  effectivePersonalAllowanceGbp:
-                    simulatedResult.taxTrap.effectivePersonalAllowanceGbp,
-                  lostPersonalAllowanceGbp: simulatedResult.taxTrap.lostPersonalAllowance,
-                  marginalRatePct: simulatedResult.taxTrap.marginalRatePct,
-                  contributionRequiredToEscapeGbp:
-                    simulatedResult.taxTrap.contributionRequiredToEscapeGbp,
-                  taxSavedByEscapingGbp: simulatedResult.taxTrap.estimatedTaxSavedByEscapingGbp,
-                },
-                allowancesStatus: {
-                  remainingPensionAllowanceGbp:
-                    simulatedResult.allowances.pensionAllowanceRemainingGbp,
-                  usedPensionAllowanceGbp: simulatedResult.allowances.pensionAllowanceUsedGbp,
-                  remainingIsaAllowanceGbp: simulatedResult.allowances.isaAllowanceRemainingGbp,
-                },
+            text: JSON.stringify({
+              taxYear: simulatedResult.taxYear,
+              region,
+              grossIncomeGbp: simulatedResult.grossIncomeGbp,
+              adjustedNetIncomeGbp: simulatedResult.adjustedNetIncomeGbp,
+              netTakeHomeAnnualGbp: simulatedResult.netTakeHomePayAnnualGbp,
+              netTakeHomeMonthlyGbp: simulatedResult.netTakeHomePayMonthlyGbp,
+              incomeTaxGbp: simulatedResult.incomeTaxGbp,
+              nationalInsuranceGbp: simulatedResult.nationalInsuranceGbp,
+              totalDeductionsGbp: simulatedResult.totalDeductionsGbp,
+              effectiveTaxRatePct: simulatedResult.effectiveTaxRatePct,
+              taxSavedVsBaselineGbp: taxSavedVsBaseline,
+              personalAllowanceReclaimedGbp: personalAllowanceReclaimed,
+              employerNiSavingsGbp: simulatedResult.employerNiSavingsGbp ?? 0,
+              taxTrapStatus: {
+                isInTaxTrap: simulatedResult.taxTrap.isInTaxTrap,
+                effectivePersonalAllowanceGbp:
+                  simulatedResult.taxTrap.effectivePersonalAllowanceGbp,
+                lostPersonalAllowanceGbp: simulatedResult.taxTrap.lostPersonalAllowance,
+                marginalRatePct: simulatedResult.taxTrap.marginalRatePct,
+                contributionRequiredToEscapeGbp:
+                  simulatedResult.taxTrap.contributionRequiredToEscapeGbp,
+                taxSavedByEscapingGbp: simulatedResult.taxTrap.estimatedTaxSavedByEscapingGbp,
               },
-              null,
-              2,
-            ),
+              allowancesStatus: {
+                remainingPensionAllowanceGbp:
+                  simulatedResult.allowances.pensionAllowanceRemainingGbp,
+                usedPensionAllowanceGbp: simulatedResult.allowances.pensionAllowanceUsedGbp,
+                remainingIsaAllowanceGbp: simulatedResult.allowances.isaAllowanceRemainingGbp,
+              },
+            }),
           },
         ],
       };

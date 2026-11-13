@@ -56,6 +56,7 @@ export function registerMortgageIsaTool(
   server.registerTool(
     "compare_mortgage_overpay_vs_isa",
     {
+      title: "Compare mortgage overpayment with ISA",
       description:
         "Compares overpaying an active UK mortgage (interest saved and unlocking next 85%/80%/75%/60% LTV tiers) against compounding surplus cash inside a tax-free Stocks & Shares or Cash ISA.",
       inputSchema: mortgageIsaSchema,
@@ -81,16 +82,11 @@ export function registerMortgageIsaTool(
           content: [
             {
               type: "text",
-              text: JSON.stringify(
-                {
-                  message:
-                    "No active mortgage balance found, so there is no overpayment to compare.",
-                  recommendation:
-                    "Not applicable: with no mortgage there is nothing to compare. This is a calculation, not advice.",
-                },
-                null,
-                2,
-              ),
+              text: JSON.stringify({
+                message: "No active mortgage balance found, so there is no overpayment to compare.",
+                recommendation:
+                  "Not applicable: with no mortgage there is nothing to compare. This is a calculation, not advice.",
+              }),
             },
           ],
         };
@@ -118,38 +114,34 @@ export function registerMortgageIsaTool(
         content: [
           {
             type: "text",
-            text: JSON.stringify(
-              {
-                currentMortgage: {
-                  propertyValueGbp: propertyValue,
-                  balanceGbp: mortgageBalance,
-                  currentLtvPct: amortization.currentLtvPct,
-                  standardMonthlyPaymentGbp: amortization.monthlyPaymentGbp,
-                  standardTotalInterestGbp: amortization.totalInterestStandardGbp,
-                },
-                overpaymentImpact: {
-                  monthlyOverpaymentGbp: args.monthlySurplusToAllocateGbp,
-                  guaranteedInterestSavedGbp: amortization.interestSavedGbp,
-                  monthsSaved: amortization.monthsSaved,
-                  yearsSaved: vsIsa.yearsShaved,
-                  newPayoffDate: amortization.payoffDate,
-                },
-                isaAlternative: {
-                  expectedApyPct: args.cashOrStocksIsaApyPct,
-                  projectedIsaPotGbp: vsIsa.isaAccumulatedValue,
-                  totalContributedGbp: vsIsa.totalIsaContributed,
-                  pureIsaGrowthGbp: vsIsa.isaGrowth,
-                  netWealthDeltaGbp: vsIsa.netWealthDelta,
-                  favorsOption:
-                    vsIsa.netWealthDelta > 0
-                      ? "TAX_FREE_ISA_COMPOUNDING"
-                      : "GUARANTEED_MORTGAGE_OVERPAYMENT",
-                },
-                ltvMilestonesBeforeFixExpiry: amortization.targetLtvMilestones,
+            text: JSON.stringify({
+              currentMortgage: {
+                propertyValueGbp: propertyValue,
+                balanceGbp: mortgageBalance,
+                currentLtvPct: amortization.currentLtvPct,
+                standardMonthlyPaymentGbp: amortization.monthlyPaymentGbp,
+                standardTotalInterestGbp: amortization.totalInterestStandardGbp,
               },
-              null,
-              2,
-            ),
+              overpaymentImpact: {
+                monthlyOverpaymentGbp: args.monthlySurplusToAllocateGbp,
+                guaranteedInterestSavedGbp: amortization.interestSavedGbp,
+                monthsSaved: amortization.monthsSaved,
+                yearsSaved: vsIsa.yearsShaved,
+                newPayoffDate: amortization.payoffDate,
+              },
+              isaAlternative: {
+                expectedApyPct: args.cashOrStocksIsaApyPct,
+                projectedIsaPotGbp: vsIsa.isaAccumulatedValue,
+                totalContributedGbp: vsIsa.totalIsaContributed,
+                pureIsaGrowthGbp: vsIsa.isaGrowth,
+                netWealthDeltaGbp: vsIsa.netWealthDelta,
+                favorsOption:
+                  vsIsa.netWealthDelta > 0
+                    ? "TAX_FREE_ISA_COMPOUNDING"
+                    : "GUARANTEED_MORTGAGE_OVERPAYMENT",
+              },
+              ltvMilestonesBeforeFixExpiry: amortization.targetLtvMilestones,
+            }),
           },
         ],
       };

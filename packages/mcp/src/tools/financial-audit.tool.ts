@@ -18,6 +18,7 @@ export function registerFinancialAuditTools(
   server.registerTool(
     "evaluate_cashflow_runway_and_health",
     {
+      title: "Cashflow runway and financial health",
       description:
         "Evaluates the user's stage-weighted Financial Health Score (0-100), Adaptive Lifecycle Stage (STAGE_1_DEBT_RECOVERY, STAGE_2_BUFFER_BUILD, STAGE_3_WEALTH_OPTIMIZE), weekly Safe-to-Spend, and emergency runway months with optional what-if changes to expenses or liquid reserves.",
       inputSchema: {
@@ -104,34 +105,30 @@ export function registerFinancialAuditTools(
         content: [
           {
             type: "text",
-            text: JSON.stringify(
-              {
-                healthScore: {
-                  score: healthScore.overallScore,
-                  grade: healthScore.grade,
-                  components: healthScore.components,
-                  recommendations: healthScore.topRecommendations,
-                },
-                financialStage: {
-                  stage: stage.stage,
-                  canonicalStage: stage.canonicalStage,
-                  headline: stage.headline,
-                  subline: stage.subline,
-                  primaryHeroMetric: stage.primaryHeroMetric,
-                  starterBufferMet: stage.starterBufferMet,
-                  emergencyRunwayMonths: stage.emergencyRunwayMonths,
-                },
-                cashFlow: {
-                  monthlyNetIncomeGbp: Math.round(netIncome),
-                  monthlyEssentialBillsGbp: Math.round(essentialBills),
-                  monthlyDebtMinimumsGbp: Math.round(minDebt),
-                  monthlySurplusGbp: Math.round(monthlySurplus),
-                  safeToSpend,
-                },
+            text: JSON.stringify({
+              healthScore: {
+                score: healthScore.overallScore,
+                grade: healthScore.grade,
+                components: healthScore.components,
+                recommendations: healthScore.topRecommendations,
               },
-              null,
-              2,
-            ),
+              financialStage: {
+                stage: stage.stage,
+                canonicalStage: stage.canonicalStage,
+                headline: stage.headline,
+                subline: stage.subline,
+                primaryHeroMetric: stage.primaryHeroMetric,
+                starterBufferMet: stage.starterBufferMet,
+                emergencyRunwayMonths: stage.emergencyRunwayMonths,
+              },
+              cashFlow: {
+                monthlyNetIncomeGbp: Math.round(netIncome),
+                monthlyEssentialBillsGbp: Math.round(essentialBills),
+                monthlyDebtMinimumsGbp: Math.round(minDebt),
+                monthlySurplusGbp: Math.round(monthlySurplus),
+                safeToSpend,
+              },
+            }),
           },
         ],
       };
@@ -142,6 +139,7 @@ export function registerFinancialAuditTools(
   server.registerTool(
     "evaluate_uk_student_loan",
     {
+      title: "UK student loan evaluation",
       description:
         "Evaluates whether a UK student loan (Plan 1, Plan 2, Plan 4 Scotland, Plan 5, or Postgraduate) should be voluntarily overpaid vs allowing statutory write-off after 25-40 years.",
       inputSchema: {
@@ -174,7 +172,7 @@ export function registerFinancialAuditTools(
         content: [
           {
             type: "text",
-            text: JSON.stringify(evalResult, null, 2),
+            text: JSON.stringify(evalResult),
           },
         ],
       };
@@ -185,6 +183,7 @@ export function registerFinancialAuditTools(
   server.registerTool(
     "query_transactions_and_spending",
     {
+      title: "Transactions and spending query",
       description:
         "Queries recent bank transactions with category rollups, spending velocity, and merchant data (PII-scrubbed based on token privacy scope).",
       inputSchema: {
@@ -224,14 +223,10 @@ export function registerFinancialAuditTools(
           content: [
             {
               type: "text",
-              text: JSON.stringify(
-                {
-                  message: "Transaction querying is not available for this connection mode.",
-                  transactions: [],
-                },
-                null,
-                2,
-              ),
+              text: JSON.stringify({
+                message: "Transaction querying is not available for this connection mode.",
+                transactions: [],
+              }),
             },
           ],
         };
@@ -283,15 +278,11 @@ export function registerFinancialAuditTools(
         content: [
           {
             type: "text",
-            text: JSON.stringify(
-              {
-                returnedCount: sanitizedTxs.length,
-                categoryVelocitySummary: categoryTotals,
-                transactions: sanitizedTxs,
-              },
-              null,
-              2,
-            ),
+            text: JSON.stringify({
+              returnedCount: sanitizedTxs.length,
+              categoryVelocitySummary: categoryTotals,
+              transactions: sanitizedTxs,
+            }),
           },
         ],
       };
