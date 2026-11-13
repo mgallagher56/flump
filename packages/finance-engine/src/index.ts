@@ -11,6 +11,7 @@ export * from "./picture/index.js";
 export * from "./portfolio.js";
 export * from "./profile.js";
 export * from "./section24.js";
+export * from "./snapshots.js";
 export * from "./tax-calculator.js";
 export * from "./tax-rules.js";
 export * from "./tax-year-verification.js";

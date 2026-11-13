@@ -264,3 +264,10 @@ The owner delegated these to agents. Straightforward decisions (low stakes, reve
 3. **Conditions to revisit.** If the server needs more than headers, a log and static serving (for example custom routing, WebSockets or a build-tool change), reconsider whether it should live in the app or in an edge layer. If `react-router-serve` gains header and access-log hooks, a return is possible. A future nonce CSP (E20-N11) is applied in `entry.server.tsx` and wins over the server's default.
 4. **Rollout.** Staging soak for 48 hours, then production. **Rollback:** redeploy the previous deployment, or revert the `CMD` in `apps/web/Dockerfile` and `start` in `apps/web/package.json` to `react-router-serve ./build/server/index.js`. `@react-router/serve` stays installed for one release.
 5. Docs updated: `docs/security/headers-and-csp.md` (the "known gaps" paragraph is replaced by the server description) and `docs/security/logging-policy.md` (web access log is implemented).
+
+# Round 8 (2026-11-13): E30 monthly snapshots (Fable recommendation, agent-decided)
+
+1. **Evolve `account_details`; do not add a history table.** One history source. Columns `user_id`, `as_of_date`, `source` (`onboarding|manual|connected|backfill`) and `updated_at` are added, existing duplicates are collapsed (latest write wins), then `UNIQUE (account_id, year, month)`. The month key comes from `as_of_date` in Europe/London.
+2. **Carry-forward is read-time only; deltas are current minus previous with identical wording up or down.** No streaks, no badges, no auto-recalibration of assumptions.
+3. **Delivery in four PRs** (backend and engine, web, mailer and reminders, v2 views), per the owner's fewer-larger-PRs preference. Details and the five owner questions (email provider, beta reminders before the PECR view, priority against E25 to E28, property value and co-owner share in v1, CSV import of sheet history) are in [E30-monthly-snapshots-plan.md](E30-monthly-snapshots-plan.md) and remain **open**.
+4. **Owner actions:** run the E18 backup drill before the PR1 migration reaches staging; choose the email provider; obtain the PECR opinion before reminders reach the beta.

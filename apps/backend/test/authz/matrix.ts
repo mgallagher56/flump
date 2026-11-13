@@ -9,7 +9,10 @@
  * Keys are "METHOD /path" with Nest's `:param` syntax.
  */
 export type MatrixRow =
-  | { status: "covered"; spec: "finance" | "budget" | "tax" | "user-profile" | "mcp-tokens" }
+  | {
+      status: "covered";
+      spec: "finance" | "budget" | "tax" | "user-profile" | "mcp-tokens" | "snapshots";
+    }
   | { status: "public"; reason: string; spec?: "mcp" };
 
 const finance = { status: "covered", spec: "finance" } as const;
@@ -17,6 +20,7 @@ const budget = { status: "covered", spec: "budget" } as const;
 const tax = { status: "covered", spec: "tax" } as const;
 const userProfile = { status: "covered", spec: "user-profile" } as const;
 const mcpTokens = { status: "covered", spec: "mcp-tokens" } as const;
+const snapshots = { status: "covered", spec: "snapshots" } as const;
 const mcpTransport = {
   status: "public",
   reason: "MCP transport, authenticates with a PAT itself (authz.mcp.spec.ts)",
@@ -74,6 +78,9 @@ export const ROUTE_MATRIX: Readonly<Record<string, MatrixRow>> = {
   "POST /user-profile/send-password-reset": userProfile,
   "POST /user-profile/reset-financial-data": userProfile,
   "PATCH /user-profile/checklist": userProfile,
+
+  // Monthly snapshots (E30).
+  "PUT /snapshots/:month": snapshots,
 
   // MCP token management (E20-N23). The /mcp transport itself is public, see above.
   "GET /mcp-tokens": mcpTokens,

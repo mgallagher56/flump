@@ -200,6 +200,7 @@ describe("log volume limits", () => {
           "profile",
           "bank-connections",
           "transactions",
+          "snapshots",
           "mcp-tokens",
           "app",
         ]),

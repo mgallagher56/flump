@@ -227,6 +227,7 @@ E4 D2-a is decided. The canonical convention in the engine:
 - The check-in drawer makes one submit. It shows success only on a 2xx and shows the delta ("Net worth up £N since <last month>") from `selectNetWorthHistory`.
 - G-04: under E16 D12-B the edit UI is removed (T-CUT-4, owned by E16). E23 adds nothing back; the route inventory test keeps missing endpoints out.
 - Property and pension accounts take part in the check-in, so net worth over time includes them.
+- **E30 PR1 delivers part of this section** ([E30-monthly-snapshots-plan.md](E30-monthly-snapshots-plan.md)): `account_details` gains `user_id`, `as_of_date`, `source`, `updated_at` and `UNIQUE (account_id, year, month)`; `PUT /snapshots/:month` is the batch upsert; the engine selectors for carry-forward flags and month-on-month deltas (current minus previous) live in `packages/finance-engine/src/snapshots.ts`. The two `portfolio.ts` fixes named above (current figure from `balance`, no `abs` on assets in `getMonthlyHistory`) were already landed by E23; E30 PR1 only adds regression tests. The `updateAccount` same-transaction upsert should reuse the E30 upsert helper.
 
 ---
 

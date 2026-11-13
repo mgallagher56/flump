@@ -2,6 +2,7 @@ import { BankSyncOrchestrator, encryptBankingToken } from "@flump/banking/server
 import { BadRequestException, Logger, NotFoundException } from "@nestjs/common";
 import { describe, expect, it, vi } from "vitest";
 import { FinanceService } from "./finance.service";
+import { londonDate } from "./snapshots/london-date";
 import { createInMemoryRepository } from "./testing/in-memory-repository";
 
 const createService = () => {
@@ -111,6 +112,72 @@ describe("FinanceService", () => {
       const rows = await run("2026-06-30T23:30:00Z");
       expect(rows).toHaveLength(1);
       expect(rows[0]).toMatchObject({ year: 2026, month: 7 });
+    });
+  });
+
+  describe("syncProviderAccounts snapshots (E30)", () => {
+    const run = async (existingDetail: any, existingAccount: any = null) => {
+      const savedDetails: any[] = [];
+      const accountRepo = {
+        findOne: vi.fn().mockResolvedValue(existingAccount),
+        create: vi.fn((a) => ({ id: "acc-1", ...a })),
+        save: vi.fn((a) => Promise.resolve(a)),
+      };
+      const detailRepo = {
+        findOne: vi.fn().mockResolvedValue(existingDetail),
+        upsert: vi.fn((d) => {
+          savedDetails.push(d);
+          return Promise.resolve();
+        }),
+      };
+      const provider = {
+        fetchAccounts: vi.fn().mockResolvedValue([
+          {
+            externalAccountId: "e1",
+            name: "Bank",
+            type: "current",
+            balance: 500,
+            currency: "GBP",
+          },
+        ]),
+      };
+      const service = new FinanceService(
+        accountRepo as any,
+        {} as any,
+        detailRepo as any,
+        {} as any,
+        {} as any,
+        { getProvider: vi.fn().mockReturnValue(provider) } as any,
+        { get: vi.fn() } as any,
+      );
+      await service.syncProviderAccounts({ id: "c1", institutionId: "monzo" } as any, "u1", "tok");
+      return { savedDetails, accountRepo };
+    };
+
+    it("tags new rows source=connected with the owner and a London date", async () => {
+      const { savedDetails } = await run(null);
+      expect(savedDetails).toHaveLength(1);
+      expect(savedDetails[0]).toMatchObject({
+        userId: "u1",
+        source: "connected",
+        value: 500,
+        asOfDate: londonDate(),
+      });
+    });
+
+    it("refreshes an existing connected row", async () => {
+      const row = { source: "connected", value: 1, asOfDate: "2000-01-01" };
+      const { savedDetails } = await run(row, { id: "acc-1", balance: 1 });
+      expect(savedDetails[0]).toMatchObject({ source: "connected", value: 500 });
+    });
+
+    it("never overwrites a manual value for the month, nor the account balance it mirrors", async () => {
+      const row = { source: "manual", value: 123 };
+      const account = { id: "acc-1", balance: 123, name: "Old" };
+      const { savedDetails, accountRepo } = await run(row, account);
+      expect(savedDetails).toHaveLength(0);
+      expect(row.value).toBe(123);
+      expect(accountRepo.save.mock.calls[0]?.[0]).toMatchObject({ balance: 123, name: "Bank" });
     });
   });
 

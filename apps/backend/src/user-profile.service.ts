@@ -12,6 +12,7 @@ import { Account } from "./entities/account.entity";
 import { AccountDetail } from "./entities/account-detail.entity";
 import { BankConnection } from "./entities/bank-connection.entity";
 import { BudgetEntry } from "./entities/budget-entry.entity";
+import { SnapshotCheckin } from "./entities/snapshot-checkin.entity";
 import { TaxRecord } from "./entities/tax-record.entity";
 import { Transaction } from "./entities/transaction.entity";
 import {
@@ -23,6 +24,7 @@ import {
 } from "./entities/user-profile.entity";
 import { USER_IDENTITY_ADAPTER, type UserIdentityAdapter } from "./identity/identity.adapter";
 import { safeErrorSummary } from "./log-safe";
+import { writeOnboardingSnapshot } from "./snapshots/first-snapshot";
 
 const PG_UNIQUE_VIOLATION = "23505";
 
@@ -124,6 +126,9 @@ export class UserProfileService implements ProfileLifecycle {
     private readonly identityAdapter?: UserIdentityAdapter,
     @Optional()
     private readonly dataSource?: DataSource,
+    @Optional()
+    @InjectRepository(SnapshotCheckin)
+    private readonly snapshotCheckinRepository?: Repository<SnapshotCheckin>,
   ) {}
 
   formatProfile(profile: UserProfile): any {
@@ -392,6 +397,7 @@ export class UserProfileService implements ProfileLifecycle {
       profile.customBudgetCategories = Array.isArray(body.customBudgetCategories)
         ? body.customBudgetCategories
         : [];
+    const wasOnboarded = Boolean(profile.onboardingCompleted);
     if (body.onboardingCompleted !== undefined)
       profile.onboardingCompleted = Boolean(body.onboardingCompleted);
     if (body.taxRegion !== undefined) {
@@ -415,6 +421,16 @@ export class UserProfileService implements ProfileLifecycle {
     }
 
     const saved = await this.userProfileRepository.save(profile);
+
+    // E30 D8: finishing onboarding records the first monthly snapshot of the user's accounts.
+    if (!wasOnboarded && saved.onboardingCompleted) {
+      try {
+        await writeOnboardingSnapshot(this.accountRepository, this.accountDetailRepository, userId);
+      } catch (err: any) {
+        // The profile is already saved; a missed first snapshot is recoverable in the check-in.
+        this.logger.warn(`First snapshot warning: ${safeErrorSummary(err)}`);
+      }
+    }
 
     // Synchronize first/last name with identity provider
     if (this.identityAdapter && (body.firstName !== undefined || body.lastName !== undefined)) {
@@ -444,15 +460,20 @@ export class UserProfileService implements ProfileLifecycle {
       budgetRepo: Repository<BudgetEntry>,
       taxRepo: Repository<TaxRecord>,
       profileRepo: Repository<UserProfile>,
+      checkinRepo: Repository<SnapshotCheckin> | undefined,
     ) => {
       const accounts = await accountRepo.find({
         where: { userId },
         select: { id: true },
       });
+      // Monthly history carries user_id (E30), so it is erased by owner; the account-id delete
+      // stays as a belt and braces for any row whose user_id somehow differs.
+      await detailRepo.delete({ userId });
       if (accounts.length > 0) {
         const accountIds = accounts.map((a) => a.id);
         await detailRepo.delete({ accountId: In(accountIds) });
       }
+      await checkinRepo?.delete({ userId });
 
       await txRepo.delete({ userId });
       await accountRepo.delete({ userId });
@@ -505,6 +526,7 @@ export class UserProfileService implements ProfileLifecycle {
           manager.getRepository(BudgetEntry),
           manager.getRepository(TaxRecord),
           manager.getRepository(UserProfile),
+          manager.getRepository(SnapshotCheckin),
         );
       });
     } else {
@@ -516,6 +538,7 @@ export class UserProfileService implements ProfileLifecycle {
         this.budgetEntryRepository,
         this.taxRecordRepository,
         this.userProfileRepository,
+        this.snapshotCheckinRepository,
       );
     }
 
