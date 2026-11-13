@@ -7,7 +7,6 @@ import { describe, expect, it } from "vitest";
 // lowercase or Capitalised words match, so camelCase identifiers such as `fontSize` or
 // `onToggleSize` are ignored.
 const APP_DIR = path.resolve(__dirname, "../..");
-const DASHBOARD_DIR = path.join(APP_DIR, "components/dashboard");
 const DASHBOARD_FEATURE_DIR = path.join(APP_DIR, "features/dashboard");
 
 const US_SPELLING = /\b[A-Z]?[a-z]{2,}(?:iz(?:e|es|ed|ing)|ization)\b/g;
@@ -26,10 +25,7 @@ const collect = (dir: string): string[] =>
 const ENGINE_STAGE_KEY = /"stabilize"/g;
 
 const files = [
-  ...collect(path.join(DASHBOARD_DIR, "widgets")),
   ...collect(DASHBOARD_FEATURE_DIR),
-  path.join(DASHBOARD_DIR, "DashboardWidgetCard.tsx"),
-  path.join(DASHBOARD_DIR, "WidgetSettingsModal.tsx"),
   path.join(APP_DIR, "components/debt/AddDebtDialog.tsx"),
   path.join(APP_DIR, "routes/sandbox.tsx"),
 ];
