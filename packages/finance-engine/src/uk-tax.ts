@@ -20,6 +20,7 @@ import {
   calculateIncomeTaxOnTaxable,
   calculatePersonalAllowanceForYear,
   calculateStudentLoanRepayment,
+  getLatestSupportedUkTaxYear,
   getUkTaxYearRules,
   isSupportedUkTaxYear,
   resolveUkTaxYear,
@@ -29,20 +30,28 @@ import {
   type UkTaxYearRules,
 } from "./uk-tax-year.js";
 
+const LATEST_RULES = getUkTaxYearRules(getLatestSupportedUkTaxYear());
+
+/**
+ * @deprecated Year-less constants (E25-T1). Values are derived from the latest supported tax
+ * year's rules (`getUkTaxYearRules`), so they can no longer drift from the per-year tables.
+ * New code must read the rules for the year it is computing; the callers below are migrated by
+ * the later E25 tickets. Not year-correct for earlier years (e.g. 2020/21 taper ends at 125,000).
+ */
 export const UK_TAX_CONSTANTS = {
-  PERSONAL_ALLOWANCE_DEFAULT: 12570,
-  TAX_TRAP_LOWER_THRESHOLD: 100000,
-  TAX_TRAP_UPPER_THRESHOLD: 125140,
-  ISA_ANNUAL_ALLOWANCE: 20000,
-  PENSION_ANNUAL_ALLOWANCE: 60000,
-  PSA_BASIC_RATE: 1000,
-  PSA_HIGHER_RATE: 500,
-  PSA_ADDITIONAL_RATE: 0,
-  NI_PRIMARY_THRESHOLD: 12570,
-  NI_UPPER_EARNINGS_LIMIT: 50270,
-  NI_MAIN_RATE: 0.08,
-  NI_HIGHER_RATE: 0.02,
-} as const;
+  PERSONAL_ALLOWANCE_DEFAULT: LATEST_RULES.ewni.personalAllowance,
+  TAX_TRAP_LOWER_THRESHOLD: LATEST_RULES.ewni.personalAllowanceTaperStart,
+  TAX_TRAP_UPPER_THRESHOLD: LATEST_RULES.taperEnd,
+  ISA_ANNUAL_ALLOWANCE: LATEST_RULES.isaAllowance,
+  PENSION_ANNUAL_ALLOWANCE: LATEST_RULES.pensionAnnualAllowance,
+  PSA_BASIC_RATE: LATEST_RULES.savings.psaBasic,
+  PSA_HIGHER_RATE: LATEST_RULES.savings.psaHigher,
+  PSA_ADDITIONAL_RATE: LATEST_RULES.savings.psaAdditional,
+  NI_PRIMARY_THRESHOLD: LATEST_RULES.ni.class1.primaryThreshold,
+  NI_UPPER_EARNINGS_LIMIT: LATEST_RULES.ni.class1.upperEarningsLimit,
+  NI_MAIN_RATE: LATEST_RULES.ni.class1.mainRate,
+  NI_HIGHER_RATE: LATEST_RULES.ni.class1.upperRate,
+};
 
 export { getCurrentUKTaxYear };
 

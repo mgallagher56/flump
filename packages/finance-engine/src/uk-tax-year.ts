@@ -32,6 +32,12 @@ import {
   type UKStudentLoanYear,
 } from "./tax-rules.js";
 import { SUPPORTED_UK_TAX_YEARS, type UkTaxRegion, type UkTaxYear } from "./types.js";
+import {
+  ruleSourceUrls,
+  ruleUnverifiedNotes,
+  UK_RULE_SOURCES,
+  type UkRuleSources,
+} from "./uk-rule-sources.js";
 
 export { SUPPORTED_UK_TAX_YEARS };
 
@@ -275,67 +281,23 @@ const DIVIDENDS: Record<UkTaxYear, UkDividendRules> = {
   "2026/27": { allowance: 500, basicRate: 0.1075, higherRate: 0.3575, additionalRate: 0.3935 },
 };
 
-const PRE_2023 = ["2020/21", "2021/22", "2022/23"];
+// Pension annual allowance (E25-T1). 60,000 is stated by
+// https://www.gov.uk/tax-on-your-private-pension/annual-allowance for the current year only
+// (2026/27 verified). 40,000 to 2022/23 and 60,000 for 2023/24 to 2025/26 are UNVERIFIED in
+// the registry (uk-rule-sources.ts) until read from a per-year GOV.UK page.
+const PENSION_ANNUAL_ALLOWANCE: Record<UkTaxYear, number> = {
+  "2020/21": 40000,
+  "2021/22": 40000,
+  "2022/23": 40000,
+  "2023/24": 60000,
+  "2024/25": 60000,
+  "2025/26": 60000,
+  "2026/27": 60000,
+};
 
-/** Figures in the tables that are not (or not yet) confirmed against GOV.UK. */
-function unverifiedFor(year: UkTaxYear): string[] {
-  const notes: string[] = [];
-  if (year !== "2026/27") {
-    notes.push(
-      "UNVERIFIED: personal savings allowance 1,000 / 500 / 0 is only confirmed as current guidance, not for this year",
-    );
-  }
-  if (PRE_2023.includes(year)) {
-    notes.push(
-      "UNVERIFIED: personal allowance taper rate (GBP1 per GBP2) is not stated on the archived GOV.UK pages",
-    );
-  }
-  if (year === "2020/21" || year === "2021/22") {
-    notes.push(
-      "UNVERIFIED: Class 1 lower earnings limit 6,240 and all Class 4 figures (no GOV.UK page reached)",
-    );
-  }
-  if (year === "2020/21") {
-    notes.push(
-      "UNVERIFIED: Plan 4 student loan threshold is not on the 2020 to 2021 employer page",
-    );
-  }
-  if (year === "2022/23") {
-    notes.push(
-      "UNVERIFIED: Class 1 NI is a full-year approximation of mid-year changes. Primary threshold 11,908 and rates 12.73% / 2.73% are the annual-method figures GOV.UK prints for directors, applied to all employees; per-period figures are PT 9,880 then 12,570 and 13.25% then 12%. Employer 14.53% is likewise the directors' annual blend (15.05% then 13.8%). Class 4 unconfirmed",
-    );
-  }
-  if (year === "2023/24") {
-    notes.push(
-      "UNVERIFIED: Class 1 main rate 11.5% is printed on the GOV.UK 2023 to 2024 employer page as the directors' whole-year rate; applying it to ordinary employees (12% to 5 Jan 2024, then 10%) is an approximation",
-    );
-  }
-  if (year === "2023/24" || year === "2024/25" || year === "2025/26") {
-    notes.push(
-      "UNVERIFIED: Plan 5 threshold 25,000 is not listed on this year's GOV.UK employer page",
-    );
-  }
-  if (year === "2026/27") {
-    notes.push(
-      "UNVERIFIED: Scottish advanced/top boundary 125,140 is a published figure but its frame (taxable vs gross) is ambiguous between GOV.UK pages",
-    );
-  }
-  return notes;
-}
-
-function sourcesFor(year: UkTaxYear): string[] {
-  const [a, b] = year.split("/");
-  const slug = `${a}-to-${(a?.slice(0, 2) ?? "20") + b}`;
-  const sources = [
-    `https://www.gov.uk/guidance/rates-and-thresholds-for-employers-${slug}`,
-    "https://www.gov.uk/income-tax-rates",
-    "https://www.gov.uk/government/publications/rates-and-allowances-income-tax/income-tax-rates-and-allowances-current-and-past",
-    "https://www.gov.uk/government/publications/rates-and-allowances-national-insurance-contributions/rates-and-allowances-national-insurance-contributions",
-    "https://www.gov.uk/tax-on-dividends",
-    "https://www.gov.uk/guidance/adjusted-net-income",
-  ];
-  return sources;
-}
+// ISA allowance 20,000: https://www.gov.uk/individual-savings-accounts ("In the 2026 to 2027 tax
+// year, the maximum you can save in ISAs is 20,000"). Other years UNVERIFIED in the registry.
+const ISA_ALLOWANCE = 20000;
 
 // ---------------------------------------------------------------------------
 // Rules
@@ -351,7 +313,19 @@ export interface UkTaxYearRules {
   savings: UkSavingsRules;
   dividends: UkDividendRules;
   giftAidGrossUp: 1.25;
+  /** Unique source URLs, derived from `ruleSources`. */
   sources: string[];
+  /** Per-figure-group source URL and verification status (E25-T1). */
+  ruleSources: UkRuleSources;
+  /** Annual allowance for pensions (gross contributions, before tapering). */
+  pensionAnnualAllowance: number;
+  /** ISA subscription allowance across all ISAs. */
+  isaAllowance: number;
+  /**
+   * Adjusted net income at which the personal allowance is fully lost:
+   * taper start + 2 x personal allowance (GBP1 lost per GBP2).
+   */
+  taperEnd: number;
   /** True only when `unverified` is empty. */
   verified: boolean;
   /** One "UNVERIFIED: <reason>" line per figure not confirmed on GOV.UK. */
@@ -371,7 +345,7 @@ export function getUkTaxYearRules(year: UkTaxYear): UkTaxYearRules {
   if (!ni) throw new UnsupportedUkTaxYearError(year, "National Insurance");
   if (!employerNi) throw new UnsupportedUkTaxYearError(year, "employer National Insurance");
   if (!studentLoans) throw new UnsupportedUkTaxYearError(year, "student loan");
-  const unverified = unverifiedFor(year);
+  const unverified = ruleUnverifiedNotes(year);
   return {
     year,
     ewni,
@@ -382,7 +356,11 @@ export function getUkTaxYearRules(year: UkTaxYear): UkTaxYearRules {
     savings: SAVINGS,
     dividends: DIVIDENDS[year],
     giftAidGrossUp: 1.25,
-    sources: sourcesFor(year),
+    sources: ruleSourceUrls(year),
+    ruleSources: UK_RULE_SOURCES[year],
+    pensionAnnualAllowance: PENSION_ANNUAL_ALLOWANCE[year],
+    isaAllowance: ISA_ALLOWANCE,
+    taperEnd: ewni.personalAllowanceTaperStart + 2 * ewni.personalAllowance,
     verified: unverified.length === 0,
     unverified,
   };

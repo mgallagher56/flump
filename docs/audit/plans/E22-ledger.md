@@ -14,4 +14,4 @@
 3. **Future-clock CI job.** Run the test suite with the clock set to 6 April 2027 to find crash paths and clock-dependent tests.
 4. **Hard-coded years and figures outside the engine** (copy, MCP defaults `2024/25`, baseline `2025/26`): see the E22 plan section 10 (E17 and E23 interplay).
 5. **2027/28 table.** Only after the owner completes `docs/runbooks/tax-2027-28-verification-checklist.md`; load as provisional with a source per figure.
-6. **Rates registry refactor** (one sourced table per year) and the GOV.UK drift workflow: plan sections 3.1 and 7.
+6. **Rates registry refactor** (one sourced table per year) and the GOV.UK drift workflow: plan sections 3.1 and 7. **Registry half DONE by E25-T1** (`uk-rule-sources.ts`: per-figure source URL and status per year; `sources` and `unverified` are derived from it). The GOV.UK drift workflow is still open.
