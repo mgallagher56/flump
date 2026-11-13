@@ -129,7 +129,7 @@ export const PaymentsOnAccountCard: FC<PaymentsOnAccountCardProps> = ({
             padding: "14px 16px",
             borderRadius: "12px",
             border: "1px solid var(--colors-border)",
-            backgroundColor: "var(--colors-background)",
+            backgroundColor: "var(--colors-surface-canvas)",
           }}
         >
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -161,7 +161,7 @@ export const PaymentsOnAccountCard: FC<PaymentsOnAccountCardProps> = ({
             padding: "14px 16px",
             borderRadius: "12px",
             border: "1px solid var(--colors-border)",
-            backgroundColor: "var(--colors-background)",
+            backgroundColor: "var(--colors-surface-canvas)",
           }}
         >
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>

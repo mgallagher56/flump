@@ -109,7 +109,7 @@ export default function App() {
       </head>
       <body
         style={{
-          backgroundColor: "var(--colors-background)",
+          backgroundColor: "var(--colors-surface-canvas)",
           color: "var(--colors-text-primary)",
           fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
           margin: 0,

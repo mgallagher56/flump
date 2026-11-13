@@ -111,7 +111,7 @@ export const DebtToWealthBridgeCard: FC<DebtToWealthBridgeCardProps> = ({
                 padding: "4px 8px",
                 borderRadius: "6px",
                 border: "1px solid var(--colors-border)",
-                backgroundColor: "var(--colors-background)",
+                backgroundColor: "var(--colors-surface-canvas)",
                 fontSize: "12px",
               }}
               value={returnRate}
