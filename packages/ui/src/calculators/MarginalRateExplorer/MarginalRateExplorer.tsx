@@ -10,13 +10,13 @@ import {
   whatIfGrossChange,
   whatIfSacrificeChange,
 } from "@flump/finance-engine";
-import { type FC, useCallback, useMemo, useState } from "react";
+import { type FC, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { cx } from "../../../styled-system/css";
-import { KpiStrip } from "../../patterns/KpiStrip/KpiStrip";
 import { MarginalRateChart } from "../../patterns/MarginalRateChart/MarginalRateChart";
 import { SimulatorSplitLayout } from "../../patterns/SimulatorSplitLayout/SimulatorSplitLayout";
 import {
   chartSummary,
+  DELTA_PANEL_COPY,
   EXPLORER_COPY,
   liveTakeHomeMessage,
   STEPPED_ZONE_LABEL,
@@ -42,7 +42,9 @@ import {
   explorerFieldset,
   explorerLegend,
   explorerNumeric,
+  explorerOutcomes,
   explorerRoot,
+  explorerUnverified,
 } from "./MarginalRateExplorer.styles";
 
 export type MarginalRateExplorerRegion = "ENGLAND_NI_WALES" | "SCOTLAND";
@@ -67,21 +69,28 @@ export type MarginalRateExplorerValues = {
   extraPension: number;
 };
 
-export const MARGINAL_RATE_EXPLORER_DEFAULTS: MarginalRateExplorerValues = {
-  grossPay: 39_000,
-  bonus: 0,
-  region: "ENGLAND_NI_WALES",
-  pensionMethod: "none",
-  pensionAmount: 0,
-  studentLoans: "",
-  childBenefit: false,
-  children: 1,
-  taxYear: getUkTaxYearContext().ratesYear,
-  extraPension: 0,
-};
+/**
+ * Example starting values. The tax year is worked out when this is called (not at module load), so
+ * a server render and the browser agree on the day they render.
+ */
+export function getMarginalRateExplorerDefaults(now?: Date): MarginalRateExplorerValues {
+  return {
+    grossPay: 39_000,
+    bonus: 0,
+    region: "ENGLAND_NI_WALES",
+    pensionMethod: "none",
+    pensionAmount: 0,
+    studentLoans: "",
+    childBenefit: false,
+    children: 1,
+    taxYear: getUkTaxYearContext(now).ratesYear,
+    extraPension: 0,
+  };
+}
 
 const DELTA_GROSS = 1000;
 const CURVE_MAX = 150_000;
+const EXTRA_PENSION_START = 1000;
 const PLAN_ORDER: readonly UkStudentLoanPlanKey[] = [
   "plan1",
   "plan2",
@@ -179,16 +188,42 @@ export const MarginalRateExplorer: FC<MarginalRateExplorerProps> = ({
     ],
   );
 
-  // About 600 take-home runs: memoised on the scenario, never on the extra pension slider.
+  // The curve's shape does not depend on your own pay, so it is worked out (about 600 take-home
+  // runs) only when another input changes, never while the gross pay or bonus sliders move.
+  const curveScenario = useMemo(
+    () =>
+      explorerScenario({
+        grossPay: 0,
+        bonus: 0,
+        region,
+        pensionMethod,
+        pensionAmount,
+        studentLoans,
+        childBenefit,
+        children,
+        taxYear,
+        extraPension: 0,
+      }),
+    [region, pensionMethod, pensionAmount, studentLoans, childBenefit, children, taxYear],
+  );
   const curve = useMemo(
-    () => marginalRateCurve(scenario, { from: 0, to: CURVE_MAX, step: 250 }),
-    [scenario],
+    () => marginalRateCurve(curveScenario, { from: 0, to: CURVE_MAX, step: 250 }),
+    [curveScenario],
   );
   const delta = useMemo(() => whatIfGrossChange(scenario, DELTA_GROSS), [scenario]);
   const pension = useMemo(
     () => (extraPension > 0 ? whatIfSacrificeChange(scenario, extraPension) : null),
     [scenario, extraPension],
   );
+
+  // Once opened, the extra pension slider stays mounted when dragged to £0 (so focus is kept). It
+  // closes again when the value returns to 0 from outside, such as a scenario reset.
+  const [pensionOpen, setPensionOpen] = useState(extraPension > 0);
+  const zeroFromSlider = useRef(false);
+  useEffect(() => {
+    if (extraPension > 0) setPensionOpen(true);
+    else if (!zeroFromSlider.current) setPensionOpen(false);
+  }, [extraPension]);
 
   const plansForYear = useMemo(
     () => availableStudentLoanPlans(getUkTaxYearRules(resolveYear(taxYear))),
@@ -218,12 +253,13 @@ export const MarginalRateExplorer: FC<MarginalRateExplorerProps> = ({
     [curve],
   );
 
-  const yourGross = curve.yourPay.gross;
-  const yourRate = curve.yourPay.next.effectiveMarginalRatePct;
+  const yourGross = delta.before.grossPay;
+  const yourRate = delta.effectiveMarginalRatePct;
+  const inRange = yourGross <= CURVE_MAX;
   const summary = chartSummary(
     formatMoney(CURVE_MAX).text,
-    yourGross <= CURVE_MAX ? formatMoney(yourGross).text : null,
-    yourGross <= CURVE_MAX
+    inRange ? formatMoney(yourGross).text : null,
+    inRange
       ? formatNumber(yourRate, { kind: "percent", fractionDigits: pctDigits(yourRate) }).text
       : null,
   );
@@ -231,6 +267,7 @@ export const MarginalRateExplorer: FC<MarginalRateExplorerProps> = ({
   const announcement = liveTakeHomeMessage(
     formatMoney(delta.deltaTakeHome, { fractionDigits: takeHomeDigits }).text,
   );
+  const unverified = delta.before.isUnverifiedEstimate || delta.after.isUnverifiedEstimate;
 
   const set = onChange;
 
@@ -295,6 +332,7 @@ export const MarginalRateExplorer: FC<MarginalRateExplorerProps> = ({
         />
       ) : null}
 
+      {/* Named by its title, "More details"; the visible action text is left out. */}
       <CollapsibleDrawer closedLabel="" openLabel="" title={EXPLORER_COPY.moreDetails}>
         <div className={explorerDetails()}>
           <fieldset className={explorerFieldset()}>
@@ -337,7 +375,7 @@ export const MarginalRateExplorer: FC<MarginalRateExplorerProps> = ({
         </div>
       </CollapsibleDrawer>
 
-      {extraPension > 0 ? (
+      {pensionOpen || extraPension > 0 ? (
         <SliderField
           format="currency"
           label={EXPLORER_COPY.extraPension}
@@ -345,7 +383,10 @@ export const MarginalRateExplorer: FC<MarginalRateExplorerProps> = ({
           min={0}
           step={100}
           value={extraPension}
-          onChange={(v) => set("extraPension", v)}
+          onChange={(v) => {
+            zeroFromSlider.current = v === 0;
+            set("extraPension", v);
+          }}
         />
       ) : (
         <Button
@@ -353,7 +394,9 @@ export const MarginalRateExplorer: FC<MarginalRateExplorerProps> = ({
           type="button"
           variant="secondary"
           onClick={() => {
-            if (extraPension === 0) set("extraPension", 1000);
+            zeroFromSlider.current = false;
+            setPensionOpen(true);
+            if (extraPension === 0) set("extraPension", EXTRA_PENSION_START);
           }}
         >
           {EXPLORER_COPY.modelPension}
@@ -364,45 +407,45 @@ export const MarginalRateExplorer: FC<MarginalRateExplorerProps> = ({
 
   const content = (
     <div className={explorerContent()}>
-      <KpiStrip
-        items={[
-          <KpiCard
-            key="next"
-            label={EXPLORER_COPY.kpiNextThousand}
-            value={<Money fractionDigits={takeHomeDigits} size="lg" value={delta.deltaTakeHome} />}
-          />,
-          <KpiCard
-            key="rate"
-            label={EXPLORER_COPY.kpiNextPound}
-            value={
-              <Num
-                fractionDigits={pctDigits(delta.effectiveMarginalRatePct)}
-                kind="percent"
-                size="lg"
-                value={delta.effectiveMarginalRatePct}
-              />
-            }
-          />,
-          <KpiCard
-            key="year"
-            label={EXPLORER_COPY.kpiTakeHome}
-            value={<Money size="lg" value={delta.before.takeHome} />}
-          />,
-          <KpiCard
-            key="tax-year"
-            label={EXPLORER_COPY.kpiTaxYear}
-            value={<span className={explorerNumeric()}>{delta.before.ratesYear}</span>}
-          />,
-        ]}
-      />
+      {/* Scenario outcomes, not saved figures, so plain outcome cards rather than a KpiStrip. */}
+      <div className={explorerOutcomes()} data-density="compact" data-testid="explorer-outcomes">
+        <KpiCard
+          label={EXPLORER_COPY.kpiNextThousand}
+          value={<Money fractionDigits={takeHomeDigits} size="lg" value={delta.deltaTakeHome} />}
+        />
+        <KpiCard
+          label={EXPLORER_COPY.kpiNextPound}
+          value={
+            <Num
+              fractionDigits={pctDigits(delta.effectiveMarginalRatePct)}
+              kind="percent"
+              size="lg"
+              value={delta.effectiveMarginalRatePct}
+            />
+          }
+        />
+        <KpiCard
+          label={EXPLORER_COPY.kpiTakeHome}
+          value={<Money size="lg" value={delta.before.takeHome} />}
+        />
+        <KpiCard
+          label={EXPLORER_COPY.kpiTaxYear}
+          value={<span className={explorerNumeric()}>{delta.before.ratesYear}</span>}
+        />
+      </div>
       <MarginalRateChart
         headingLevel={headingLevel}
+        notice={
+          unverified ? (
+            <p className={explorerUnverified()}>{DELTA_PANEL_COPY.unverifiedBanner}</p>
+          ) : undefined
+        }
         points={points}
         steppedZones={zones}
         summary={summary}
         thresholds={thresholds}
         title={EXPLORER_COPY.chartTitle}
-        yourPay={yourGross}
+        yourPay={inRange ? yourGross : undefined}
       />
       <TakeHomeDeltaPanel
         assumptions={pension ? pension.after.assumptions : delta.before.assumptions}
@@ -411,7 +454,7 @@ export const MarginalRateExplorer: FC<MarginalRateExplorerProps> = ({
         deltaGross={delta.deltaGross}
         headingLevel={headingLevel}
         isFallback={delta.before.isFallback}
-        isUnverifiedEstimate={delta.before.isUnverifiedEstimate || delta.after.isUnverifiedEstimate}
+        isUnverifiedEstimate={unverified}
         pensionPreview={
           pension
             ? {
@@ -429,7 +472,11 @@ export const MarginalRateExplorer: FC<MarginalRateExplorerProps> = ({
   );
 
   return (
-    <div className={cx(explorerRoot(), className)} data-testid="marginal-rate-explorer">
+    <div
+      className={cx(explorerRoot(), className)}
+      data-testid="marginal-rate-explorer"
+      id="marginal-rate-explorer"
+    >
       <SimulatorSplitLayout
         content={content}
         contentLabel={EXPLORER_COPY.contentLabel}
@@ -453,7 +500,7 @@ export const MarginalRateExplorerStandalone: FC<MarginalRateExplorerStandalonePr
   className,
 }) => {
   const [values, setValues] = useState<MarginalRateExplorerValues>(() => ({
-    ...MARGINAL_RATE_EXPLORER_DEFAULTS,
+    ...getMarginalRateExplorerDefaults(),
     ...initialValues,
   }));
   const onChange = useCallback<MarginalRateExplorerProps["onChange"]>((key, value) => {

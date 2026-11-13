@@ -6,6 +6,8 @@ const meta: Meta<typeof MarginalRateExplorerStandalone> = {
   title: "3. Calculators/MarginalRateExplorer",
   component: MarginalRateExplorerStandalone,
   parameters: { layout: "padded" },
+  // Pinned so the £720 check does not move with the calendar.
+  args: { initialValues: { taxYear: "2026/27" } },
 };
 
 export default meta;
@@ -30,12 +32,18 @@ export const Default: Story = {
 
 export const HigherEarnerWithChildBenefit: Story = {
   args: {
-    initialValues: { grossPay: 65_000, childBenefit: true, children: 2, studentLoans: "plan2" },
+    initialValues: {
+      taxYear: "2026/27",
+      grossPay: 65_000,
+      childBenefit: true,
+      children: 2,
+      studentLoans: "plan2",
+    },
   },
 };
 
 export const Scotland: Story = {
-  args: { initialValues: { region: "SCOTLAND", grossPay: 45_000 } },
+  args: { initialValues: { taxYear: "2026/27", region: "SCOTLAND", grossPay: 45_000 } },
 };
 
 export const Dark: Story = { ...Default, globals: { theme: "dark" } };

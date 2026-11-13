@@ -3,15 +3,17 @@ import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import {
   explorerScenario,
-  MARGINAL_RATE_EXPLORER_DEFAULTS,
+  getMarginalRateExplorerDefaults,
   MarginalRateExplorer,
   MarginalRateExplorerStandalone,
   parseStudentLoanPlans,
 } from "./MarginalRateExplorer";
 
+const DEFAULTS_2026 = { ...getMarginalRateExplorerDefaults(), taxYear: "2026/27" };
+
 describe("MarginalRateExplorer", () => {
   it("defaults to £39,000, no pension, no student loan and no Child Benefit", () => {
-    expect(MARGINAL_RATE_EXPLORER_DEFAULTS).toMatchObject({
+    expect(getMarginalRateExplorerDefaults()).toMatchObject({
       grossPay: 39_000,
       bonus: 0,
       region: "ENGLAND_NI_WALES",
@@ -24,21 +26,31 @@ describe("MarginalRateExplorer", () => {
   });
 
   it("shows the same next £1,000 as whatIfGrossChange for the default (£720)", () => {
-    render(<MarginalRateExplorerStandalone />);
-    const expected = whatIfGrossChange(explorerScenario(MARGINAL_RATE_EXPLORER_DEFAULTS), 1000);
+    render(<MarginalRateExplorerStandalone initialValues={{ taxYear: "2026/27" }} />);
+    const expected = whatIfGrossChange(explorerScenario(DEFAULTS_2026), 1000);
     expect(expected.deltaTakeHome).toBe(720);
     expect(screen.getByTestId("take-home-delta-sentence").textContent).toBe(
       "Of the next £1,000 of pay, an estimated £720 is take-home: £200 Income Tax and £80 National Insurance.",
     );
-    const strip = screen.getByText("Take-home from the next £1,000").closest("div")?.parentElement;
-    expect(strip?.textContent).toContain("£720");
+    const outcomes = screen.getByTestId("explorer-outcomes");
+    expect(outcomes.textContent).toContain("Estimated take-home from the next £1,000");
+    expect(outcomes.textContent).toContain("£720");
+    expect(outcomes.textContent).toContain("Estimated share deducted from the next £1,000");
     expect(screen.getByText("28%")).toBeDefined();
+    // The 2026/27 rules are not yet signed off: the chart carries the notice, and so does the panel.
+    const figure = screen.getByRole("figure", {
+      name: "Estimated share deducted from the next £1,000, by gross pay",
+    });
+    expect(within(figure).getByText(/^Unverified estimate\. These tax figures/)).toBeDefined();
+    expect(screen.getAllByText(/^Unverified estimate\. These tax figures/)).toHaveLength(2);
   });
 
   it("draws the chart with thresholds and your pay", () => {
-    render(<MarginalRateExplorerStandalone />);
+    render(<MarginalRateExplorerStandalone initialValues={{ taxYear: "2026/27" }} />);
     expect(
-      screen.getByRole("figure", { name: "Deducted from the next £1, by gross pay" }),
+      screen.getByRole("figure", {
+        name: "Estimated share deducted from the next £1,000, by gross pay",
+      }),
     ).toBeDefined();
     expect(screen.getAllByTestId("marginal-rate-threshold").length).toBeGreaterThan(3);
     expect(screen.getByTestId("marginal-rate-your-pay")).toBeDefined();
@@ -46,7 +58,7 @@ describe("MarginalRateExplorer", () => {
 
   it("is controlled: inputs call onChange and never change values by themselves", () => {
     const onChange = vi.fn();
-    render(<MarginalRateExplorer values={MARGINAL_RATE_EXPLORER_DEFAULTS} onChange={onChange} />);
+    render(<MarginalRateExplorer values={DEFAULTS_2026} onChange={onChange} />);
     fireEvent.change(screen.getByLabelText("Gross pay a year range slider"), {
       target: { value: "60000" },
     });
@@ -54,7 +66,7 @@ describe("MarginalRateExplorer", () => {
   });
 
   it("pre-fills the extra pension at £1,000 and previews it", () => {
-    render(<MarginalRateExplorerStandalone />);
+    render(<MarginalRateExplorerStandalone initialValues={{ taxYear: "2026/27" }} />);
     fireEvent.click(screen.getByRole("button", { name: "Model a pension contribution" }));
     const pill = screen.getByLabelText("Extra pension contribution input") as HTMLInputElement;
     expect(pill.value).toBe("£1,000");
@@ -67,7 +79,7 @@ describe("MarginalRateExplorer", () => {
   });
 
   it("offers the year's student loan plans under More details, closed by default", () => {
-    render(<MarginalRateExplorerStandalone />);
+    render(<MarginalRateExplorerStandalone initialValues={{ taxYear: "2026/27" }} />);
     expect(screen.queryByRole("group", { name: "Student loan plans" })).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "More details" }));
     const group = screen.getByRole("group", { name: "Student loan plans" });
@@ -80,6 +92,53 @@ describe("MarginalRateExplorer", () => {
   it("adds the Child Benefit charge zone when Child Benefit is on", () => {
     render(<MarginalRateExplorerStandalone initialValues={{ childBenefit: true, children: 2 }} />);
     expect(screen.getAllByTestId("marginal-rate-stepped-zone")).toHaveLength(1);
+  });
+
+  it("drops a plan the chosen tax year does not have before it reaches the engine", () => {
+    expect(
+      explorerScenario({ ...DEFAULTS_2026, taxYear: "2022/23", studentLoans: "plan5+plan2" })
+        .studentLoans,
+    ).toEqual(["plan2"]);
+    render(
+      <MarginalRateExplorerStandalone
+        initialValues={{ taxYear: "2026/27", studentLoans: "plan5" }}
+      />,
+    );
+    const sentence = () => screen.getByTestId("take-home-delta-sentence").textContent;
+    expect(sentence()).toContain("student loan");
+    fireEvent.click(screen.getByRole("button", { name: "More details" }));
+    fireEvent.change(screen.getByLabelText("Tax year"), { target: { value: "2022/23" } });
+    expect(sentence()).not.toContain("student loan");
+    expect(screen.queryByLabelText("Plan 5")).toBeNull();
+  });
+
+  it("keeps the extra pension slider when dragged to £0", () => {
+    render(<MarginalRateExplorerStandalone initialValues={{ taxYear: "2026/27" }} />);
+    fireEvent.click(screen.getByRole("button", { name: "Model a pension contribution" }));
+    fireEvent.change(screen.getByLabelText("Extra pension contribution range slider"), {
+      target: { value: "0" },
+    });
+    expect(screen.getByLabelText("Extra pension contribution range slider")).toBeDefined();
+    expect(screen.queryByRole("button", { name: "Model a pension contribution" })).toBeNull();
+  });
+
+  it("closes the extra pension slider when the value is reset from outside", () => {
+    const onChange = vi.fn();
+    const { rerender } = render(
+      <MarginalRateExplorer
+        values={{ ...DEFAULTS_2026, extraPension: 1000 }}
+        onChange={onChange}
+      />,
+    );
+    expect(screen.getByLabelText("Extra pension contribution range slider")).toBeDefined();
+    rerender(<MarginalRateExplorer values={DEFAULTS_2026} onChange={onChange} />);
+    expect(screen.getByRole("button", { name: "Model a pension contribution" })).toBeDefined();
+  });
+
+  it("does not use a KpiStrip for scenario outcomes", () => {
+    render(<MarginalRateExplorerStandalone initialValues={{ taxYear: "2026/27" }} />);
+    expect(screen.getByTestId("explorer-outcomes").children).toHaveLength(4);
+    expect(document.getElementById("marginal-rate-explorer")).not.toBeNull();
   });
 
   it("parses plan strings in a fixed order", () => {

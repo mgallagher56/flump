@@ -102,7 +102,7 @@ export function thresholdLabel(t: ThresholdLabelInput): string {
     case "hicbcEnd":
       return "Child Benefit charge reaches 100%";
     default:
-      return t.kind;
+      return "Threshold";
   }
 }
 
@@ -170,25 +170,24 @@ export const EXPLORER_COPY = {
   childBenefit: "Include Child Benefit",
   children: "Children receiving Child Benefit",
   taxYear: "Tax year",
-  kpiNextThousand: "Take-home from the next £1,000",
-  kpiNextPound: "Deducted from the next £1",
+  kpiNextThousand: "Estimated take-home from the next £1,000",
+  kpiNextPound: "Estimated share deducted from the next £1,000",
   kpiTakeHome: "Estimated take-home a year",
   kpiTaxYear: "Tax year",
-  chartTitle: "Deducted from the next £1, by gross pay",
+  chartTitle: "Estimated share deducted from the next £1,000, by gross pay",
   chartXAxis: "Gross pay",
-  chartYAxis: "Deducted from the next £1",
-  chartLine: "Deducted from the next £1",
+  chartYAxis: "Estimated share deducted from the next £1,000",
+  chartLine: "Estimated share deducted from the next £1,000",
   chartThresholds: "Thresholds",
   yourPay: "Your pay",
   tableGross: "Gross pay",
-  tableRate: "Deducted from the next £1",
+  tableRate: "Estimated share deducted from the next £1,000",
   modelPension: "Model a pension contribution",
   extraPension: "Extra pension contribution",
   tabYourTakeHome: "Your take-home",
   tabNextThousand: "The next £1,000",
   tabsLabel: "Take-home tools",
-  defaultBasis:
-    "Starting from your figures: no saved salary yet, so this uses an example gross pay of £39,000",
+  defaultBasis: "No saved salary yet, so this uses an example gross pay of £39,000",
 } as const;
 
 /** Chart text alternative. */
@@ -197,9 +196,9 @@ export function chartSummary(
   yourPay: string | null,
   yourRate: string | null,
 ): string {
-  const range = `How much of the next £1 of pay is deducted at each gross pay from £0 to ${maxGross}.`;
+  const range = `The estimated share of the next £1,000 of pay that is deducted, at each gross pay from £0 to ${maxGross}.`;
   return yourPay && yourRate
-    ? `${range} At your pay of ${yourPay}, an estimated ${yourRate} of the next £1 is deducted.`
+    ? `${range} At your pay of ${yourPay}, it is an estimated ${yourRate}.`
     : range;
 }
 

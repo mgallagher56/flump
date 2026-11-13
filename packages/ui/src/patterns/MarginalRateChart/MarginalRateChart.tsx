@@ -1,4 +1,12 @@
-import { type CSSProperties, type FC, type ReactNode, useMemo, useState } from "react";
+import {
+  type FC,
+  type KeyboardEvent,
+  type ReactNode,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { formatAxisCurrency } from "../../charts/formatAxisCurrency";
 import { formatMoney, formatNumber } from "../../primitives/Money/Money";
 import { Table, TBody, Td, THead, Th, Tr } from "../../primitives/Table/Table";
@@ -10,7 +18,6 @@ import {
   marginalRateAxisTitle,
   marginalRateBand,
   marginalRateChartArea,
-  marginalRateChartPlot,
   marginalRateGrid,
   marginalRateHitArea,
   marginalRateLine,
@@ -19,6 +26,7 @@ import {
   marginalRateThreshold,
   marginalRateThresholdHandle,
   marginalRateTooltip,
+  marginalRateTooltipFrame,
   marginalRateYourPay,
   marginalRateYourPayDot,
   marginalRateYourPayText,
@@ -26,7 +34,7 @@ import {
 
 export interface MarginalRatePoint {
   gross: number;
-  /** Per cent of the next £1 deducted (28 means 28%). */
+  /** Estimated per cent of the next £1,000 deducted (28 means 28%). */
   ratePct: number;
 }
 
@@ -57,13 +65,17 @@ export interface MarginalRateChartProps {
   className?: string;
 }
 
-const W = 600;
+/** Drawing width before the container is measured (server render, tests). */
+const DEFAULT_W = 600;
+const MIN_W = 300;
 const H = 280;
 const M = { top: 28, right: 14, bottom: 30, left: 46 };
-const PLOT_W = W - M.left - M.right;
 const PLOT_H = H - M.top - M.bottom;
 const Y_TICKS = [0, 25, 50, 75, 100];
 const TABLE_STEP = 5000;
+const HIT_W = 24;
+const TIP_W = 260;
+const TIP_H = 72;
 
 const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
 const pctText = (n: number, digits = 0) =>
@@ -71,7 +83,7 @@ const pctText = (n: number, digits = 0) =>
 
 interface MarkerGroup {
   gross: number;
-  labels: string[];
+  name: string;
 }
 
 /** Thresholds at the same gross pay (Income Tax and National Insurance at £12,570, say) share one marker. */
@@ -87,12 +99,37 @@ const groupThresholds = (
   }
   return [...groups.entries()]
     .sort(([a], [b]) => a - b)
-    .map(([gross, labels]) => ({ gross, labels }));
+    .map(([gross, labels]) => ({
+      gross,
+      name: thresholdTooltip(labels.join("; "), formatMoney(gross).text),
+    }));
 };
 
 const xTickStep = (max: number) => Math.max(10_000, Math.ceil(max / 3 / 10_000) * 10_000);
 
-/** Hand-written SVG line chart of the share of the next £1 deducted, by gross pay. */
+/**
+ * The drawing is sized to its container (1 SVG unit = 1 CSS pixel), so text set with font tokens
+ * stays readable on a phone instead of shrinking with a fixed viewBox.
+ */
+const useContainerWidth = () => {
+  const ref = useRef<HTMLDivElement>(null);
+  const [width, setWidth] = useState(DEFAULT_W);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    const measure = () => {
+      const w = Math.round(el.getBoundingClientRect().width);
+      if (w > 0) setWidth(Math.max(MIN_W, w));
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+  return { ref, width };
+};
+
+/** Hand-written SVG line chart of the estimated share of the next £1,000 deducted, by gross pay. */
 export const MarginalRateChart: FC<MarginalRateChartProps> = ({
   points,
   thresholds,
@@ -105,16 +142,15 @@ export const MarginalRateChart: FC<MarginalRateChartProps> = ({
   headingLevel,
   className,
 }) => {
-  const [active, setActive] = useState<number | null>(null);
+  // Keyed by gross pay so the open tooltip survives markers being added or removed.
+  const [activeGross, setActiveGross] = useState<number | null>(null);
+  const { ref, width: W } = useContainerWidth();
+  const plotW = W - M.left - M.right;
   const maxGross = Math.max(1, ...points.map((p) => p.gross));
-  const x = (g: number) => M.left + (clamp(g, 0, maxGross) / maxGross) * PLOT_W;
+  const x = (g: number) => M.left + (clamp(g, 0, maxGross) / maxGross) * plotW;
   const y = (r: number) => M.top + PLOT_H - (clamp(r, 0, 100) / 100) * PLOT_H;
 
-  const line = useMemo(
-    () => points.map((p) => `${x(p.gross).toFixed(1)},${y(p.ratePct).toFixed(1)}`).join(" "),
-    // x and y only depend on maxGross, which depends on points.
-    [points],
-  );
+  const line = points.map((p) => `${x(p.gross).toFixed(1)},${y(p.ratePct).toFixed(1)}`).join(" ");
   const markers = useMemo(() => groupThresholds(thresholds, maxGross), [thresholds, maxGross]);
   const xTicks: number[] = [];
   for (let g = 0; g <= maxGross + 1e-9; g += xTickStep(maxGross)) xTicks.push(g);
@@ -146,10 +182,23 @@ export const MarginalRateChart: FC<MarginalRateChartProps> = ({
     })),
   ];
 
-  const activeMarker = active === null ? null : markers[active];
+  const activeMarker = markers.find((m) => m.gross === activeGross) ?? null;
+  const tipW = Math.min(TIP_W, W - 16);
   const activeX = activeMarker ? x(activeMarker.gross) : 0;
   const tipAlign = activeX < W * 0.3 ? "start" : activeX > W * 0.7 ? "end" : "center";
-  const tipStyle = { "--tip-x": `${(activeX / W) * 100}%` } as CSSProperties;
+  const tipX = clamp(
+    tipAlign === "start"
+      ? activeX - 12
+      : tipAlign === "end"
+        ? activeX - tipW + 12
+        : activeX - tipW / 2,
+    0,
+    W - tipW,
+  );
+
+  const onKeyDown = (e: KeyboardEvent<HTMLButtonElement>) => {
+    if (e.key === "Escape") setActiveGross(null);
+  };
 
   return (
     <ChartFigure
@@ -184,135 +233,123 @@ export const MarginalRateChart: FC<MarginalRateChartProps> = ({
       summary={summary}
       title={title}
     >
-      <div className={marginalRateChartArea()} data-testid="marginal-rate-chart">
+      <div className={marginalRateChartArea()} data-testid="marginal-rate-chart" ref={ref}>
         <p className={marginalRateAxisTitle()}>{EXPLORER_COPY.chartYAxis}</p>
-        <div className={marginalRateChartPlot()}>
-          <svg
-            className={marginalRateSvg()}
-            focusable="false"
-            role="presentation"
-            viewBox={`0 0 ${W} ${H}`}
-          >
-            {steppedZones.map((z) => (
-              <rect
-                className={marginalRateBand()}
-                data-testid="marginal-rate-stepped-zone"
-                height={PLOT_H}
-                key={`${z.from}-${z.to}`}
-                width={Math.max(0, x(z.to) - x(z.from))}
-                x={x(z.from)}
-                y={M.top}
-              >
-                <title>{z.label}</title>
-              </rect>
-            ))}
-            {Y_TICKS.map((t) => (
-              <g key={t}>
-                <line
-                  className={marginalRateGrid()}
-                  x1={M.left}
-                  x2={W - M.right}
-                  y1={y(t)}
-                  y2={y(t)}
-                />
-                <text
-                  className={marginalRateAxisText()}
-                  textAnchor="end"
-                  x={M.left - 8}
-                  y={y(t) + 4}
-                >
-                  {pctText(t)}
-                </text>
-              </g>
-            ))}
-            {xTicks.map((g) => (
-              <text
-                className={marginalRateAxisText()}
-                key={g}
-                textAnchor={g === 0 ? "start" : g >= maxGross ? "end" : "middle"}
-                x={x(g)}
-                y={H - 8}
-              >
-                {formatAxisCurrency(g, { maxFractionDigits: 0 })}
+        <svg
+          className={marginalRateSvg()}
+          focusable="false"
+          height={H}
+          role="presentation"
+          viewBox={`0 0 ${W} ${H}`}
+          width={W}
+        >
+          {steppedZones.map((z) => (
+            <rect
+              className={marginalRateBand()}
+              data-testid="marginal-rate-stepped-zone"
+              height={PLOT_H}
+              key={`${z.from}-${z.to}`}
+              width={Math.max(0, x(z.to) - x(z.from))}
+              x={x(z.from)}
+              y={M.top}
+            >
+              <title>{z.label}</title>
+            </rect>
+          ))}
+          {Y_TICKS.map((t) => (
+            <g key={t}>
+              <line
+                className={marginalRateGrid()}
+                x1={M.left}
+                x2={W - M.right}
+                y1={y(t)}
+                y2={y(t)}
+              />
+              <text className={marginalRateAxisText()} textAnchor="end" x={M.left - 8} y={y(t) + 4}>
+                {pctText(t)}
               </text>
-            ))}
-            {markers.map((m, i) => {
-              const name = thresholdTooltip(m.labels.join("; "), formatMoney(m.gross).text);
-              return (
-                <g data-testid="marginal-rate-threshold" key={m.gross}>
-                  <title>{name}</title>
-                  <line
-                    className={marginalRateThreshold({ active: active === i })}
-                    x1={x(m.gross)}
-                    x2={x(m.gross)}
-                    y1={M.top}
-                    y2={M.top + PLOT_H}
-                  />
-                  <circle
-                    className={marginalRateThresholdHandle()}
-                    cx={x(m.gross)}
-                    cy={M.top}
-                    r="4"
-                  />
-                </g>
-              );
-            })}
-            <polyline
-              className={marginalRateLine()}
-              data-testid="marginal-rate-line"
-              points={line}
-            />
-            {showYourPay ? (
-              <g data-testid="marginal-rate-your-pay">
-                <title>{`${EXPLORER_COPY.yourPay}: ${formatMoney(yourPay).text}`}</title>
-                <line
-                  className={marginalRateYourPay()}
-                  x1={x(yourPay)}
-                  x2={x(yourPay)}
-                  y1={M.top - 4}
-                  y2={M.top + PLOT_H}
-                />
-                <circle className={marginalRateYourPayDot()} cx={x(yourPay)} cy={M.top - 4} r="4" />
-                <text
-                  className={marginalRateYourPayText()}
-                  textAnchor={
-                    x(yourPay) > W - 60 ? "end" : x(yourPay) < M.left + 30 ? "start" : "middle"
-                  }
-                  x={x(yourPay)}
-                  y={M.top - 12}
-                >
-                  {EXPLORER_COPY.yourPay}
-                </text>
-              </g>
-            ) : null}
-          </svg>
-          {markers.map((m, i) => (
-            <button
-              aria-label={thresholdTooltip(m.labels.join("; "), formatMoney(m.gross).text)}
-              className={marginalRateHitArea()}
-              data-testid="marginal-rate-threshold-hit"
-              key={m.gross}
-              style={{ "--mx": `${(x(m.gross) / W) * 100}%` } as CSSProperties}
-              type="button"
-              onBlur={() => setActive(null)}
-              onFocus={() => setActive(i)}
-              onMouseEnter={() => setActive(i)}
-              onMouseLeave={() => setActive((cur) => (cur === i ? null : cur))}
-            />
+            </g>
+          ))}
+          {xTicks.map((g) => (
+            <text
+              className={marginalRateAxisText()}
+              key={g}
+              textAnchor={g === 0 ? "start" : g >= maxGross ? "end" : "middle"}
+              x={x(g)}
+              y={H - 8}
+            >
+              {formatAxisCurrency(g, { maxFractionDigits: 0 })}
+            </text>
+          ))}
+          {markers.map((m) => (
+            <g data-testid="marginal-rate-threshold" key={m.gross}>
+              <title>{m.name}</title>
+              <line
+                className={marginalRateThreshold({ active: activeGross === m.gross })}
+                x1={x(m.gross)}
+                x2={x(m.gross)}
+                y1={M.top}
+                y2={M.top + PLOT_H}
+              />
+              <circle className={marginalRateThresholdHandle()} cx={x(m.gross)} cy={M.top} r="4" />
+            </g>
+          ))}
+          <polyline className={marginalRateLine()} data-testid="marginal-rate-line" points={line} />
+          {showYourPay ? (
+            <g data-testid="marginal-rate-your-pay">
+              <title>{`${EXPLORER_COPY.yourPay}: ${formatMoney(yourPay).text}`}</title>
+              <line
+                className={marginalRateYourPay()}
+                x1={x(yourPay)}
+                x2={x(yourPay)}
+                y1={M.top - 4}
+                y2={M.top + PLOT_H}
+              />
+              <circle className={marginalRateYourPayDot()} cx={x(yourPay)} cy={M.top - 4} r="4" />
+              <text
+                className={marginalRateYourPayText()}
+                textAnchor={
+                  x(yourPay) > W - 60 ? "end" : x(yourPay) < M.left + 30 ? "start" : "middle"
+                }
+                x={x(yourPay)}
+                y={M.top - 12}
+              >
+                {EXPLORER_COPY.yourPay}
+              </text>
+            </g>
+          ) : null}
+          {/* Hover and focus targets, 24px wide, over each threshold line. */}
+          {markers.map((m) => (
+            <foreignObject
+              height={PLOT_H + 8}
+              key={`hit-${m.gross}`}
+              width={HIT_W}
+              x={x(m.gross) - HIT_W / 2}
+              y={M.top - 8}
+            >
+              <button
+                aria-label={m.name}
+                className={marginalRateHitArea()}
+                data-testid="marginal-rate-threshold-hit"
+                type="button"
+                onBlur={() => setActiveGross(null)}
+                onFocus={() => setActiveGross(m.gross)}
+                onKeyDown={onKeyDown}
+                onMouseEnter={() => setActiveGross(m.gross)}
+                onMouseLeave={() => setActiveGross((cur) => (cur === m.gross ? null : cur))}
+              />
+            </foreignObject>
           ))}
           {activeMarker ? (
-            <div
-              className={marginalRateTooltip({ align: tipAlign })}
-              data-testid="marginal-rate-tooltip"
-              style={tipStyle}
-            >
-              {thresholdTooltip(
-                activeMarker.labels.join("; "),
-                formatMoney(activeMarker.gross).text,
-              )}
-            </div>
+            <foreignObject height={TIP_H} width={tipW} x={tipX} y={M.top + 4}>
+              <div className={marginalRateTooltipFrame({ align: tipAlign })}>
+                <div className={marginalRateTooltip()} data-testid="marginal-rate-tooltip">
+                  {activeMarker.name}
+                </div>
+              </div>
+            </foreignObject>
           ) : null}
-        </div>
+        </svg>
         <p className={marginalRateAxisTitle({ position: "end" })}>{EXPLORER_COPY.chartXAxis}</p>
       </div>
     </ChartFigure>

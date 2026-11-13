@@ -15,7 +15,7 @@ const renderChart = (props: Partial<React.ComponentProps<typeof MarginalRateChar
       steppedZones={SAMPLE_ZONES}
       summary={SAMPLE_SUMMARY}
       thresholds={SAMPLE_THRESHOLDS}
-      title="Deducted from the next £1, by gross pay"
+      title="Estimated share deducted from the next £1,000, by gross pay"
       yourPay={39_000}
       {...props}
     />,
@@ -25,7 +25,9 @@ describe("MarginalRateChart", () => {
   it("is a named figure with the caller's summary", () => {
     renderChart();
     expect(
-      screen.getByRole("figure", { name: "Deducted from the next £1, by gross pay" }),
+      screen.getByRole("figure", {
+        name: "Estimated share deducted from the next £1,000, by gross pay",
+      }),
     ).toBeDefined();
     expect(screen.getByText(SAMPLE_SUMMARY)).toBeDefined();
   });
@@ -65,6 +67,43 @@ describe("MarginalRateChart", () => {
     expect(screen.queryByTestId("marginal-rate-tooltip")).toBeNull();
   });
 
+  it("shows the tooltip on keyboard focus, closes it on Escape and on blur", () => {
+    renderChart();
+    const marker = screen.getAllByTestId("marginal-rate-threshold-hit")[0] as HTMLElement;
+    expect(marker.getAttribute("aria-label")).toBe(
+      "Income Tax starts; National Insurance starts: £12,570 gross pay",
+    );
+    fireEvent.focus(marker);
+    expect(screen.getByTestId("marginal-rate-tooltip").textContent).toContain("£12,570");
+    fireEvent.keyDown(marker, { key: "Escape" });
+    expect(screen.queryByTestId("marginal-rate-tooltip")).toBeNull();
+    fireEvent.focus(marker);
+    expect(screen.getByTestId("marginal-rate-tooltip")).toBeDefined();
+    fireEvent.blur(marker);
+    expect(screen.queryByTestId("marginal-rate-tooltip")).toBeNull();
+  });
+
+  it("keeps the open tooltip on the same threshold when markers change", () => {
+    const { rerender } = renderChart();
+    fireEvent.mouseEnter(screen.getAllByTestId("marginal-rate-threshold-hit")[1] as Element);
+    rerender(
+      <MarginalRateChart
+        points={SAMPLE_POINTS}
+        summary={SAMPLE_SUMMARY}
+        thresholds={SAMPLE_THRESHOLDS.slice(2)}
+        title="Estimated share deducted from the next £1,000, by gross pay"
+      />,
+    );
+    expect(screen.getByTestId("marginal-rate-tooltip").textContent).toContain("£50,270");
+  });
+
+  it("gives each hover target a 24px-wide area and uses no inline styles", () => {
+    const { container } = renderChart();
+    const hit = screen.getAllByTestId("marginal-rate-threshold-hit")[0] as HTMLElement;
+    expect(hit.parentElement?.getAttribute("width")).toBe("24");
+    expect(container.querySelector("[style]")).toBeNull();
+  });
+
   it("formats axis ticks en-GB", () => {
     renderChart();
     const svgText = Array.from(document.querySelectorAll("svg text")).map((t) => t.textContent);
@@ -79,7 +118,9 @@ describe("MarginalRateChart", () => {
     const table = screen.getByRole("table");
     expect(table.querySelectorAll("tbody tr")).toHaveLength(31);
     expect(screen.getByRole("columnheader", { name: "Gross pay" })).toBeDefined();
-    expect(screen.getByRole("columnheader", { name: "Deducted from the next £1" })).toBeDefined();
+    expect(
+      screen.getByRole("columnheader", { name: "Estimated share deducted from the next £1,000" }),
+    ).toBeDefined();
     expect(screen.getByRole("rowheader", { name: "£50,000" })).toBeDefined();
   });
 });

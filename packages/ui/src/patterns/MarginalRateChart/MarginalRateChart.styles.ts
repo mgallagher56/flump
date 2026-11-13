@@ -9,7 +9,7 @@ export const marginalRateGrid = cva({
 });
 
 export const marginalRateAxisText = cva({
-  base: { fill: "text.muted", fontSize: "14px", fontVariantNumeric: "tabular-nums" },
+  base: { fill: "text.muted", fontSize: "xs", fontVariantNumeric: "tabular-nums" },
 });
 
 export const marginalRateAxisTitle = cva({
@@ -21,15 +21,24 @@ export const marginalRateAxisTitle = cva({
 });
 
 export const marginalRateChartArea = cva({
-  base: { position: "relative", display: "flex", flexDirection: "column", gap: "1" },
+  base: { display: "flex", flexDirection: "column", gap: "1", width: "100%", minWidth: "0" },
+});
+
+/** Fills the tooltip's foreignObject and lines the box up with its marker. */
+export const marginalRateTooltipFrame = cva({
+  base: { display: "flex", width: "100%", pointerEvents: "none" },
+  variants: {
+    align: {
+      start: { justifyContent: "flex-start" },
+      center: { justifyContent: "center" },
+      end: { justifyContent: "flex-end" },
+    },
+  },
+  defaultVariants: { align: "center" },
 });
 
 export const marginalRateTooltip = cva({
   base: {
-    position: "absolute",
-    top: "0",
-    left: "var(--tip-x)",
-    maxWidth: "min(18rem, 90%)",
     paddingBlock: "1.5",
     paddingInline: "2.5",
     borderRadius: "md",
@@ -41,17 +50,7 @@ export const marginalRateTooltip = cva({
     boxShadow: "overlay",
     textStyle: "body.sm",
     fontVariantNumeric: "tabular-nums",
-    pointerEvents: "none",
-    zIndex: "1",
   },
-  variants: {
-    align: {
-      start: { transform: "translateX(-8px)" },
-      center: { transform: "translateX(-50%)" },
-      end: { transform: "translateX(calc(-100% + 8px))" },
-    },
-  },
-  defaultVariants: { align: "center" },
 });
 
 export const marginalRateBand = cva({
@@ -80,18 +79,12 @@ export const marginalRateThresholdHandle = cva({
   base: { fill: "surface.card", stroke: "chart.baseline", strokeWidth: "2" },
 });
 
-export const marginalRateChartPlot = cva({
-  base: { position: "relative" },
-});
-
-/** Transparent hover target over each threshold line (the plot spans 28/280 to 250/280 of the height). */
+/** Transparent hover and focus target filling its foreignObject over a threshold line. */
 export const marginalRateHitArea = cva({
   base: {
-    position: "absolute",
-    top: "7%",
-    height: "82%",
-    left: "calc(var(--mx) - 8px)",
-    width: "16px",
+    display: "block",
+    width: "100%",
+    height: "100%",
     padding: "0",
     border: "none",
     background: "transparent",
@@ -105,7 +98,7 @@ export const marginalRateYourPay = cva({
 });
 
 export const marginalRateYourPayText = cva({
-  base: { fill: "text.primary", fontSize: "14px", fontWeight: "bold" },
+  base: { fill: "text.primary", fontSize: "xs", fontWeight: "bold" },
 });
 
 export const marginalRateYourPayDot = cva({
