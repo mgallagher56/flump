@@ -1,8 +1,11 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import { expect, within } from "@storybook/test";
+import { css } from "../../../styled-system/css";
 import { Button } from "../../primitives/Button/Button";
 import { KpiCard } from "../../primitives/KpiCard/KpiCard";
 import { KpiStrip } from "./KpiStrip";
+
+const phoneWidth = css({ width: "100%", maxWidth: "343px" });
 
 const meta: Meta<typeof KpiStrip> = {
   title: "3. Financial Patterns & Sections/KpiStrip",
@@ -117,31 +120,85 @@ export const LongLabels: Story = {
   globals: { theme: "dark" },
 };
 
+const ItemsTupleStrip = () => (
+  <KpiStrip
+    items={[
+      <KpiCard key="nw" label="Net worth" tone="hero" value={184250} />,
+      <KpiCard
+        delta={{ direction: "down", text: "-£1,240 this month", polarity: "liability" }}
+        key="mortgage"
+        label="Mortgage balance"
+        value={182450}
+      />,
+      <KpiCard key="cash" label="Cash" value={12400} valueFormat={{ compact: true }} />,
+      <KpiCard
+        emptyAction={<Button size="sm">Add</Button>}
+        key="pension"
+        label="Pension"
+        value={null}
+      />,
+    ]}
+  />
+);
+
+const itemsPlay: Story["play"] = async ({ canvasElement }) => {
+  const canvas = within(canvasElement);
+  await expect(canvas.getAllByText("£184,250").length).toBeGreaterThan(0);
+  await expect(canvas.getAllByText("Not set").length).toBeGreaterThan(0);
+};
+
 export const ItemsTuple: Story = {
-  render: () => (
-    <KpiStrip
-      items={[
-        <KpiCard key="nw" label="Net worth" tone="hero" value={184250} />,
-        <KpiCard
-          delta={{ direction: "down", text: "-£1,240 this month", polarity: "liability" }}
-          key="mortgage"
-          label="Mortgage balance"
-          value={182450}
-        />,
-        <KpiCard key="cash" label="Cash" value={12400} valueFormat={{ compact: true }} />,
-        <KpiCard
-          emptyAction={<Button size="sm">Add</Button>}
-          key="pension"
-          label="Pension"
-          value={null}
-        />,
-      ]}
-    />
-  ),
+  render: () => <ItemsTupleStrip />,
   globals: { theme: "dark" },
+  play: itemsPlay,
+};
+
+export const ItemsTupleLight: Story = {
+  render: () => <ItemsTupleStrip />,
+  globals: { theme: "light" },
+  play: itemsPlay,
+};
+
+const LongValuesStrip = () => (
+  <KpiStrip
+    items={[
+      <KpiCard
+        delta={{ direction: "down", text: "-£12,400", polarity: "liability" }}
+        key="a"
+        label="Net worth"
+        value={-1234567}
+      />,
+      <KpiCard key="b" label="Mortgage balance" value={1234567} />,
+      <KpiCard key="c" label="Pension pot" value={-987654} />,
+      <KpiCard emptyAction={<Button size="sm">Add</Button>} key="d" label="Cash" value={null} />,
+    ]}
+  />
+);
+
+/** At 375px the strip is a 2x2 grid; no card may overflow horizontally. */
+export const PhoneLongValues: Story = {
+  render: () => <LongValuesStrip />,
+  globals: { theme: "light" },
+  parameters: { viewport: { defaultViewport: "mobile1" } },
+  decorators: [
+    (Story) => (
+      <div className={phoneWidth}>
+        <Story />
+      </div>
+    ),
+  ],
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    await expect(canvas.getByText("£184,250")).toBeInTheDocument();
-    await expect(canvas.getByText("Not set")).toBeInTheDocument();
+    await expect(canvas.getAllByText("minus £1,234,567").length).toBeGreaterThan(0);
+    // Skip the 1px visually-hidden spans: their spoken text is clipped, not overflowing.
+    const strips = canvasElement.querySelectorAll<HTMLElement>('[data-density="compact"]');
+    await expect(strips.length).toBeGreaterThan(0);
+    for (const strip of Array.from(strips)) {
+      await expect(strip.getBoundingClientRect().right).toBeLessThanOrEqual(window.innerWidth);
+      for (const el of Array.from(strip.querySelectorAll<HTMLElement>("*"))) {
+        if (el.getBoundingClientRect().width <= 1) continue;
+        await expect(el.scrollWidth).toBeLessThanOrEqual(el.clientWidth + 1);
+      }
+    }
   },
 };

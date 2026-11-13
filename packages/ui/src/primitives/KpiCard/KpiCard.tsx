@@ -137,7 +137,13 @@ export const KpiCard: FC<KpiCardProps> = ({
             <VisuallyHidden>Loading</VisuallyHidden>
           </>
         ) : isEmpty ? (
-          <Money notSetAction={emptyAction} notSetLabel={notSetLabel} size="kpi" value={null} />
+          <Money
+            className={kpiMoney()}
+            notSetAction={emptyAction}
+            notSetLabel={notSetLabel}
+            size="kpi"
+            value={null}
+          />
         ) : (
           renderValue(value, valueFormat, cardTone)
         )}

@@ -43,32 +43,36 @@ export const Floating: Story = {
   },
 };
 
-const Tones = () => (
+const Surfaces = () => (
   <div className={row}>
-    <Card as="section" tone="default">
+    <Card as="section" surface="default">
       Default card
     </Card>
-    <Card as="section" tone="subtle">
+    <Card as="section" surface="subtle">
       Subtle card
     </Card>
-    <Card as="section" tone="sunken">
+    <Card as="section" surface="sunken">
       Sunken card
     </Card>
   </div>
 );
 
-const tonesPlay: Story["play"] = async ({ canvasElement }) => {
+const surfacesPlay: Story["play"] = async ({ canvasElement }) => {
   const canvas = within(canvasElement);
   await expect(canvas.getByText("Sunken card").tagName).toBe("SECTION");
 };
 
 export const Light: Story = {
   globals: { theme: "light" },
-  render: () => <Tones />,
-  play: tonesPlay,
+  render: () => <Surfaces />,
+  play: surfacesPlay,
 };
 
-export const Dark: Story = { globals: { theme: "dark" }, render: () => <Tones />, play: tonesPlay };
+export const Dark: Story = {
+  globals: { theme: "dark" },
+  render: () => <Surfaces />,
+  play: surfacesPlay,
+};
 
 export const Padding: Story = {
   render: () => (

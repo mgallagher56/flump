@@ -79,7 +79,7 @@ const formatWith = (
   return { text: magnitude };
 };
 
-/** Compact notation (£97.8k, £1.2m). One decimal at most; en-GB prints "K" and "M", we use "k" and "m". */
+/** Compact notation (£97.8k, £1.2m). One decimal at most; en-GB prints "K", "M", "B", "T"; we use k, m, bn, tn. */
 const formatCompact = (
   value: number,
   options: Intl.NumberFormatOptions,
@@ -92,7 +92,9 @@ const formatCompact = (
     minimumFractionDigits: 0,
     maximumFractionDigits: 1,
   });
-  const lower = (text: string) => text.replace(/[KM]\b/, (unit) => unit.toLowerCase());
+  const units: Record<string, string> = { K: "k", M: "m", B: "bn", T: "tn" };
+  const lower = (text: string) =>
+    text.replace(/(?<=\d)(K|M|B|T)(?![A-Za-z])/, (u) => units[u] ?? u);
   const magnitude = lower(formatter.format(Math.abs(value)));
   // Anything that rounds to zero must not read as a signed figure.
   const isZero = Number(formatter.format(Math.abs(value)).replace(/[^0-9.]/g, "")) === 0;
@@ -132,8 +134,15 @@ export const formatNumber = (
     kind = "number",
     signDisplay = "auto",
     fractionDigits = 0,
-  }: { kind?: "number" | "percent"; signDisplay?: SignDisplay; fractionDigits?: number } = {},
+    compact = false,
+  }: {
+    kind?: "number" | "percent";
+    signDisplay?: SignDisplay;
+    fractionDigits?: number;
+    compact?: boolean;
+  } = {},
 ): Formatted => {
+  if (compact && kind === "number") return formatCompact(value, { style: "decimal" }, signDisplay);
   if (kind === "percent") {
     // value is already a percentage figure (4.5 means 4.5%), not a ratio.
     const f = formatWith(
@@ -248,6 +257,8 @@ export interface NumProps {
   value: number | null | undefined;
   kind?: "number" | "percent";
   fractionDigits?: number;
+  /** Short form (97.8k, 1.2m) for kind "number". Ignored for percentages. */
+  compact?: boolean;
   signDisplay?: SignDisplay;
   size?: MoneySize;
   tone?: MoneyTone;
@@ -262,6 +273,7 @@ export const Num: FC<NumProps> = ({
   value,
   kind = "number",
   fractionDigits = 0,
+  compact = false,
   signDisplay = "auto",
   size = "md",
   tone = "default",
@@ -286,7 +298,7 @@ export const Num: FC<NumProps> = ({
   return (
     <Known
       className={className}
-      formatted={formatNumber(value, { kind, signDisplay, fractionDigits })}
+      formatted={formatNumber(value, { kind, signDisplay, fractionDigits, compact })}
       id={id}
       size={size}
       testId={testId}
