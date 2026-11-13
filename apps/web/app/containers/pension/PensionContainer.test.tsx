@@ -1,5 +1,5 @@
-import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { fireEvent, render, screen, within } from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mockUpdateProfile = vi.fn().mockResolvedValue({});
 const mockMarkChecklistStep = vi.fn().mockResolvedValue({});
@@ -47,6 +47,9 @@ let testProfileData: any = {
   setupChecklistCompletedSteps: ["pension"],
 };
 
+const defaultLoaderData = testLoaderData;
+const defaultProfileData = testProfileData;
+
 vi.mock("react-router", () => ({
   Link: ({ children, to }: any) => <a href={to}>{children}</a>,
   useLoaderData: () => testLoaderData,
@@ -83,15 +86,20 @@ vi.mock("recharts", async () => {
 
 import PensionContainer from "./PensionContainer";
 
+const openTab = (name: RegExp) => fireEvent.click(screen.getByRole("tab", { name }));
+
 describe("PensionContainer", () => {
   it("renders contributions breakdown and toggles inline editing for employer NI", async () => {
     render(<PensionContainer />);
 
-    expect(screen.getByText("Pension and retirement tracking")).toBeDefined();
-    expect(screen.getByText("Current Contributions Breakdown (UK Auto-Enrolment)")).toBeDefined();
+    expect(screen.getByRole("heading", { level: 1, name: "Your pension" })).toBeDefined();
+    openTab(/Contributions and allowances/);
+    expect(
+      screen.getByRole("heading", { name: "Your current contributions (UK auto-enrolment)" }),
+    ).toBeDefined();
 
-    // Click Edit Rates button
-    const editBtn = screen.getByRole("button", { name: /Edit Rates/i });
+    // Click Edit rates button
+    const editBtn = screen.getByRole("button", { name: /Edit rates/i });
     fireEvent.click(editBtn);
 
     // Verify both Salary Sacrifice and Pass on Employer NI checkboxes exist
@@ -105,7 +113,7 @@ describe("PensionContainer", () => {
     expect((employerNiCheckbox as HTMLInputElement).checked).toBe(true);
 
     // Click Save to Profile
-    const saveBtn = screen.getByRole("button", { name: /Save to Profile/i });
+    const saveBtn = screen.getByRole("button", { name: /Save to profile/i });
     fireEvent.click(saveBtn);
 
     expect(mockUpdateProfile).toHaveBeenCalledWith(
@@ -119,10 +127,10 @@ describe("PensionContainer", () => {
   it("calculates total monthly inflow correctly, taking direct contributions only from current pots", () => {
     render(<PensionContainer />);
 
-    // Total monthly inflow should include £100 direct contribution from current pot, ignoring past pot
-    expect(screen.getByText("Total Monthly Inflow")).toBeDefined();
+    // Going in each month includes the £100 direct contribution from the current pot, not the past pot
+    expect(screen.getByText("Going in each month")).toBeDefined();
     expect(screen.getByText("£433")).toBeDefined();
-    expect(screen.getByText(/£100 direct/)).toBeDefined();
+    expect(screen.getByText(/plus payments into your pots/)).toBeDefined();
     expect(screen.getAllByText("Current Workplace Pot").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Old Employer Pot").length).toBeGreaterThan(0);
     expect(screen.getByText("Current Pot")).toBeDefined();
@@ -151,10 +159,67 @@ describe("PensionContainer", () => {
     };
 
     render(<PensionContainer />);
-    expect(screen.getByText("Total Pension Wealth")).toBeDefined();
-    expect(screen.getByText("Across 0 pension pots")).toBeDefined();
-    // Should show £0 Gross Salary and 0% contributions
-    expect(screen.getAllByText("£0").length).toBeGreaterThan(0);
+    // No pots and no salary: honest "not set" states, never a made-up zero or hero block.
+    expect(screen.getByText("No pots yet")).toBeDefined();
+    expect(screen.getByText("Add a pension pot to see its value")).toBeDefined();
+    expect(screen.getByText("Needs your salary and contribution rate")).toBeDefined();
+  });
+
+  describe("page shell", () => {
+    beforeEach(() => {
+      testLoaderData = defaultLoaderData;
+      testProfileData = defaultProfileData;
+    });
+
+    it("puts the h1 first, uses one hero block and a real tablist with hidden panels", () => {
+      const { container } = render(<PensionContainer />);
+      const headings = screen.getAllByRole("heading").map((h) => h.tagName);
+      expect(headings[0]).toBe("H1");
+      expect(container.querySelectorAll("[data-tone='hero']")).toHaveLength(1);
+
+      const tabs = screen.getAllByRole("tab");
+      expect(tabs.map((t) => t.textContent)).toEqual([
+        "Retirement forecast",
+        "Your pots (2)",
+        "Contributions and allowances",
+      ]);
+      expect(tabs[0].getAttribute("aria-selected")).toBe("true");
+      expect(tabs[0].getAttribute("tabindex")).toBe("0");
+      expect(tabs[1].getAttribute("tabindex")).toBe("-1");
+      expect(screen.getByRole("tabpanel", { name: "Retirement forecast" })).toBeDefined();
+      // Inactive panels are hidden from the accessibility tree.
+      expect(screen.queryByRole("tabpanel", { name: /Your pots/ })).toBeNull();
+      openTab(/Your pots/);
+      expect(screen.getByRole("tabpanel", { name: /Your pots/ })).toBeDefined();
+      expect(screen.queryByRole("tabpanel", { name: "Retirement forecast" })).toBeNull();
+    });
+
+    it("moves between tabs with the arrow, Home and End keys", () => {
+      render(<PensionContainer />);
+      const tabs = screen.getAllByRole("tab");
+      tabs[0].focus();
+      fireEvent.keyDown(tabs[0], { key: "ArrowRight" });
+      expect(tabs[1].getAttribute("aria-selected")).toBe("true");
+      expect(document.activeElement).toBe(tabs[1]);
+      fireEvent.keyDown(tabs[1], { key: "End" });
+      expect(tabs[2].getAttribute("aria-selected")).toBe("true");
+      fireEvent.keyDown(tabs[2], { key: "ArrowRight" });
+      expect(tabs[0].getAttribute("aria-selected")).toBe("true");
+      fireEvent.keyDown(tabs[0], { key: "ArrowLeft" });
+      expect(tabs[2].getAttribute("aria-selected")).toBe("true");
+      fireEvent.keyDown(tabs[2], { key: "Home" });
+      expect(tabs[0].getAttribute("aria-selected")).toBe("true");
+    });
+
+    it("lets the inline salary field be cleared without snapping back to 0", () => {
+      render(<PensionContainer />);
+      openTab(/Contributions and allowances/);
+      fireEvent.click(screen.getByRole("button", { name: /Edit rates/i }));
+      const panel = screen.getByRole("tabpanel", { name: /Contributions and allowances/ });
+      const salary = within(panel).getByLabelText(/Annual salary/i) as HTMLInputElement;
+      fireEvent.change(salary, { target: { value: "" } });
+      expect(salary.value).toBe("");
+    });
   });
 
   describe("assumptions", () => {

@@ -201,7 +201,7 @@ export const PensionAccountsList: FC<PensionAccountsListProps> = ({
       <FLPCard className={cardStyle}>
         <div className={headerRowStyle}>
           <div>
-            <FLPHeading as="h3" size="md">
+            <FLPHeading as="h2" size="md">
               Your Pension Pots
             </FLPHeading>
             <FLPText color="text.muted" fontSize="sm">
@@ -404,7 +404,7 @@ export const PensionAccountsList: FC<PensionAccountsListProps> = ({
                         {isCurrent ? "Current Pot" : "Past Pot"}
                       </span>
                     </div>
-                    <FLPHeading as="h5" isMobile size="md" style={{ color: "#8b5cf6" }}>
+                    <FLPHeading as="h3" isMobile size="md" style={{ color: "#8b5cf6" }}>
                       {formatCurrency(bal)}
                     </FLPHeading>
                   </div>
