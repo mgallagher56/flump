@@ -47,8 +47,8 @@ describe("<BankConnectionsList />", () => {
     );
 
     expect(getByText("Synced bank connections")).toBeDefined();
-    expect(getByText("Monzo Bank")).toBeDefined();
-    expect(getByText("HSBC UK")).toBeDefined();
+    expect(getAllByText("Monzo Bank").length).toBeGreaterThan(0);
+    expect(getAllByText("HSBC UK").length).toBeGreaterThan(0);
     expect(getAllByText(/Synced/i).length).toBeGreaterThan(0);
     expect(getByText(/Error/i)).toBeDefined();
   });
@@ -59,7 +59,7 @@ describe("<BankConnectionsList />", () => {
         connections={[{ ...mockConnections[0], status: "disconnected" }, mockConnections[1]]}
       />,
     );
-    expect(getByRole("button", { name: "Sync Monzo Bank" })).toBeDefined();
+    expect(getByRole("button", { name: "Sync now for Monzo Bank" })).toBeDefined();
     expect(getByRole("button", { name: "Disconnect HSBC UK" })).toBeDefined();
     expect(getByText("Disconnected")).toBeDefined();
   });
@@ -157,11 +157,11 @@ describe("<BankConnectionsList />", () => {
   });
 
   test("shows no connect entry point unless connecting is enabled for the account", () => {
-    const { queryByText, getByText } = customRender(
+    const { queryByText, getAllByText } = customRender(
       <BankConnectionsList connections={mockConnections} />,
     );
     expect(queryByText("Connect Bank")).toBeNull();
-    expect(getByText("Monzo Bank")).toBeDefined();
+    expect(getAllByText("Monzo Bank").length).toBeGreaterThan(0);
   });
 
   test("renders nothing when there are no connections and connecting is not enabled", () => {

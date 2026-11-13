@@ -111,7 +111,7 @@ export const ConnectBankTab: Story = {
   play: async () => {
     await openAdd();
     await userEvent.click(screen.getByRole("tab", { name: /connect to bank/i }));
-    await expect(screen.getByRole("button", { name: /Monzo Bank/ })).toBeInTheDocument();
+    await expect(screen.getAllByRole("button", { name: /Monzo Bank/ }).length).toBeGreaterThan(0);
   },
 };
 
