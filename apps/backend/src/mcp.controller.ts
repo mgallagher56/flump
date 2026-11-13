@@ -4,6 +4,7 @@ import {
   Delete,
   Get,
   Param,
+  ParseUUIDPipe,
   Post,
   Query,
   Req,
@@ -73,7 +74,7 @@ export class McpController {
   @Delete("mcp-tokens/:id")
   @RateLimit("destructive")
   @UseGuards(AuthGuard)
-  async revokeToken(@Req() req: any, @Param("id") id: string) {
+  async revokeToken(@Req() req: any, @Param("id", new ParseUUIDPipe()) id: string) {
     const userId = req.user.id;
     return this.mcpService.revokeToken(userId, id);
   }
