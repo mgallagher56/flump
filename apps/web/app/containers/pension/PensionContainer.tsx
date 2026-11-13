@@ -27,7 +27,7 @@ import {
   X,
 } from "lucide-react";
 import { type FC, useEffect, useMemo, useState } from "react";
-import { Link, useLoaderData } from "react-router";
+import { Link, useLoaderData, useLocation } from "react-router";
 import AddPensionAccountDialog from "~/components/pension/AddPensionAccountDialog";
 import PensionAccountsList from "~/components/pension/PensionAccountsList";
 import PensionForecasterCard from "~/components/pension/PensionForecasterCard";
@@ -109,7 +109,22 @@ export const PensionContainer: FC = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [showWizard, setShowWizard] = useState(false);
   const [wizardDismissed, setWizardDismissed] = useState(false);
-  const [activeTab, setActiveTab] = useState<PensionTab>("forecaster");
+  const { hash } = useLocation();
+  // The dashboard links to #pension-details, which lives on the rules tab.
+  const [activeTab, setActiveTab] = useState<PensionTab>(
+    hash === "#pension-details" ? "rules" : "forecaster",
+  );
+  useEffect(() => {
+    if (hash !== "#pension-details") return;
+    setActiveTab("rules");
+    // Wait a frame so the rules tab is visible before scrolling to its details card.
+    const frame = requestAnimationFrame(() => {
+      const target = document.getElementById("pension-details");
+      target?.scrollIntoView?.({ block: "start" });
+      target?.focus?.({ preventScroll: true });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [hash]);
   const [whatIfRequest, setWhatIfRequest] = useState<{
     employeePercent: number;
     id: number;
