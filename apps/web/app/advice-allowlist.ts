@@ -71,14 +71,7 @@ export const ADVICE_ALLOWLIST: AdviceAllowEntry[] = [
     owner: "E17-N18",
   },
 
-  // Temporary: E15 lanes (mortgage route and packages/ui; hand off, do not edit).
-  {
-    file: "apps/web/app/containers/mortgage/MortgageContainer.tsx",
-    patternId: "optimise-product",
-    kind: "temporary",
-    reason: "'optimise your savings strategy' (E15 lane).",
-    owner: "E15",
-  },
+  // Temporary: E15 lanes (packages/ui; hand off, do not edit).
   {
     file: "packages/ui/src/calculators/DebtSnowballCalculator/DebtSnowballCalculator.tsx",
     patternId: "optimal",

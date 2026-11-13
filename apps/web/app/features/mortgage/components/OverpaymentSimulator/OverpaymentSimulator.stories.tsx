@@ -24,7 +24,7 @@ type Story = StoryObj<typeof OverpaymentSimulator>;
 export const Populated: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    await expect(canvas.getAllByText("Amortisation projection").length).toBeGreaterThan(0);
+    await expect(canvas.getAllByText("How your balance falls").length).toBeGreaterThan(0);
     await expect(
       canvas.getAllByLabelText("Monthly overpayment range slider").length,
     ).toBeGreaterThan(0);

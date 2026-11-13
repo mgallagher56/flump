@@ -287,8 +287,8 @@ const MortgageContainer: FC = () => {
             </Button>
           </fieldset>
         }
-        subtitle="Track your payments, simulate overpayments and optimise your savings strategy."
-        title="Mortgage tools and calculator"
+        subtitle="Where you stand on your mortgage, and how a little extra each month could change your finish date."
+        title="Your mortgage"
       />
 
       <MortgageSummary

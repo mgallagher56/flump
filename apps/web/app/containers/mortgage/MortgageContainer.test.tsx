@@ -47,7 +47,7 @@ describe("<MortgageContainer />", () => {
     expect(container).toBeDefined();
 
     // Verify title and initial active tab (Mortgage tracker)
-    expect(getByText("Mortgage tools and calculator")).toBeDefined();
+    expect(getByText("Your mortgage")).toBeDefined();
     expect(container.querySelector("#mock-tracker")).toBeDefined();
     expect(container.querySelector("#mock-simulator")).toBeNull();
     expect(container.querySelector("#mock-compare")).toBeNull();

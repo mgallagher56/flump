@@ -9,9 +9,8 @@ import {
   Money,
   SimulatorSplitLayout,
   SliderField,
-  StatusBadge,
 } from "@repo/ui";
-import { PiggyBank } from "lucide-react";
+import { Info, Leaf, PiggyBank } from "lucide-react";
 import { type FC, useMemo } from "react";
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
@@ -25,11 +24,18 @@ import {
   dataCell,
   dataTable,
   durationValue,
+  ercCallout,
+  heroCard,
+  heroEyebrow,
+  heroValue,
   legendSwatch,
+  outcomeColumn,
+  projectionChip,
   resultsCard,
   resultsHeader,
   resultsHeaderText,
   scheduleSummary,
+  stateNote,
   summaryRow,
 } from "./OverpaymentSimulator.styles";
 
@@ -182,6 +188,8 @@ export const OverpaymentSimulator: FC<OverpaymentSimulatorProps> = ({
 
     return {
       monthlyScheduled,
+      standardTotalInterest,
+      overpayTotalInterest,
       interestSaved,
       monthsSaved,
       newTermMonths: overpayMonthsToZero,
@@ -200,12 +208,12 @@ export const OverpaymentSimulator: FC<OverpaymentSimulatorProps> = ({
       <div>
         <h3 className={cardHeading}>Overpayment</h3>
         <p className={cardSubtitle}>
-          Simulate paying extra each month to save interest and pay off earlier.
+          See how a little extra each month changes your finish date. Move the slider and take your
+          time.
         </p>
       </div>
 
       <SliderField
-        helperText={OVERPAYMENT_ERC_NOTE}
         label="Monthly overpayment"
         max={2500}
         min={0}
@@ -234,157 +242,220 @@ export const OverpaymentSimulator: FC<OverpaymentSimulatorProps> = ({
 
   const chartData = simulation?.chartData ?? [];
 
+  const hasOverpayment = overpayment > 0;
+  const standardTermLabel = formatDuration(remainingTerm * 12);
+  const heroSubtext =
+    simulation === null
+      ? undefined
+      : showBulletReduced
+        ? `Left to repay at the end of the term: ${formatCurrency(loanAmount - simulation.principalReduced)} instead of ${formatCurrency(loanAmount)}.`
+        : hasOverpayment && monthsSaved !== null && monthsSaved > 0
+          ? `Paid off in ${formatDuration(simulation.newTermMonths)} instead of ${standardTermLabel}.`
+          : `Add a monthly overpayment to see how much sooner you could finish. Today's term: ${standardTermLabel}.`;
+
+  const hero = showBulletReduced ? (
+    <KpiCard
+      className={heroCard}
+      label="Bullet balance reduced"
+      subtext={heroSubtext}
+      tone="hero"
+      value={
+        simulation === null ? null : (
+          <Money size="kpi" tone="onContrast" value={simulation.principalReduced} />
+        )
+      }
+    />
+  ) : (
+    <KpiCard
+      className={heroCard}
+      label="Time shaved off"
+      subtext={heroSubtext}
+      tone="hero"
+      value={
+        monthsSaved === null ? null : (
+          <span className={heroValue}>
+            {monthsSaved > 0
+              ? `Mortgage-free ${formatDuration(monthsSaved)} sooner`
+              : "No change yet"}
+          </span>
+        )
+      }
+    />
+  );
+
   const content = (
-    <div className={resultsCard()}>
-      <div className={resultsHeader()}>
-        <div className={resultsHeaderText}>
-          <h3 className={cardHeading}>Amortisation projection</h3>
-          <p className={cardSubtitle}>Estimate comparing scheduled balance reduction paths.</p>
-        </div>
-        {simulation && overpayment > 0 && interestSaved !== null && interestSaved > 0 && (
-          <StatusBadge size="sm" variant="positive">
-            Save {formatCurrency(interestSaved)} in total interest
-          </StatusBadge>
-        )}
-      </div>
+    <div className={outcomeColumn()}>
+      <p className={heroEyebrow()}>
+        <Icon icon={Leaf} size="sm" />
+        What this could mean
+      </p>
+      {hero}
 
-      {simulation ? (
-        <ChartFigure
-          dataTable={
-            <table className={dataTable()}>
-              <caption>Mortgage balance by year, standard plan and with overpayment</caption>
-              <thead>
-                <tr>
-                  <th scope="col">Year</th>
-                  <th scope="col">Standard plan</th>
-                  <th scope="col">With overpayment</th>
-                </tr>
-              </thead>
-              <tbody>
-                {chartData.map((row) => (
-                  <tr key={row.yearLabel}>
-                    <th scope="row">{row.yearLabel}</th>
-                    <td className={dataCell}>{formatCurrency(row["Standard Plan"])}</td>
-                    <td className={dataCell}>{formatCurrency(row["With Overpayment"])}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+      <KpiStrip columns={4}>
+        <KpiCard
+          label={isInterestOnly ? "Monthly interest payment" : "Monthly payment"}
+          subtext={hasOverpayment ? "With overpayment" : "Scheduled"}
+          value={
+            monthlyScheduled === null ? null : (
+              <Money size="lg" value={monthlyScheduled + overpayment} />
+            )
           }
-          summary={`Mortgage balance over ${remainingTerm} years. ${
-            overpayment > 0 && interestSaved !== null && interestSaved > 0
-              ? `Overpaying ${formatCurrency(overpayment)} a month saves ${formatCurrency(interestSaved)} in total interest${
-                  monthsSaved !== null && monthsSaved > 0
-                    ? ` and clears the mortgage ${Math.floor(monthsSaved / 12)} years and ${monthsSaved % 12} months sooner`
-                    : ""
-                }.`
-              : "Add a monthly overpayment to see the interest saved."
-          }`}
-          hideTitle
-          title="Mortgage balance projection"
-        >
-          <div className={chartWrap()}>
-            <ResponsiveContainer height="100%" width="100%">
-              <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="colorStandard" x1="0" x2="0" y1="0" y2="1">
-                    <stop offset="5%" stopColor={chartColor("debt")} stopOpacity={0.12} />
-                    <stop offset="95%" stopColor={chartColor("debt")} stopOpacity={0} />
-                  </linearGradient>
-                  <linearGradient id="colorOverpay" x1="0" x2="0" y1="0" y2="1">
-                    <stop offset="5%" stopColor={chartColor("wealth")} stopOpacity={0.15} />
-                    <stop offset="95%" stopColor={chartColor("wealth")} stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <XAxis
-                  axisLine={false}
-                  dataKey="yearLabel"
-                  fontSize={11}
-                  tickLine={false}
-                  tickMargin={8}
-                />
-                <YAxis
-                  axisLine={false}
-                  fontSize={11}
-                  tickFormatter={(val) => formatAxisCurrency(Number(val))}
-                  tickLine={false}
-                  tickMargin={8}
-                />
-                <Tooltip formatter={(value) => formatCurrency(Number(value))} />
-                <Area
-                  activeDot={{ r: 6 }}
-                  dataKey="Standard Plan"
-                  fill="url(#colorStandard)"
-                  isAnimationActive={false}
-                  stroke={chartColor("debt")}
-                  strokeWidth={2}
-                  type="monotone"
-                />
-                <Area
-                  activeDot={{ r: 6 }}
-                  dataKey="With Overpayment"
-                  fill="url(#colorOverpay)"
-                  isAnimationActive={false}
-                  stroke={chartColor("wealth")}
-                  strokeDasharray="5 5"
-                  strokeWidth={2}
-                  type="monotone"
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-          <div className={chartLegend()}>
-            <span className={chartLegendItem()}>
-              <span aria-hidden="true" className={legendSwatch({ kind: "standard" })} />
-              Standard plan
-            </span>
-            <span className={chartLegendItem()}>
-              <span aria-hidden="true" className={legendSwatch({ kind: "overpay" })} />
-              With overpayment
-            </span>
-          </div>
-        </ChartFigure>
-      ) : (
-        <EmptyState
-          description="Add your balance, interest rate and remaining term to see how overpaying could change your mortgage."
-          headingLevel="h3"
-          icon={<Icon icon={PiggyBank} />}
-          id="overpayment-empty"
-          size="sm"
-          title="Mortgage details not set"
-          tone="muted"
         />
-      )}
-
-      <KpiStrip columns={3}>
+        <KpiCard
+          label="Total interest, no overpayment"
+          subtext="Estimate"
+          value={
+            simulation === null ? null : (
+              <Money size="lg" value={simulation.standardTotalInterest} />
+            )
+          }
+        />
+        <KpiCard
+          label="Total interest with overpayment"
+          subtext="Estimate"
+          value={
+            simulation === null ? null : <Money size="lg" value={simulation.overpayTotalInterest} />
+          }
+        />
         <KpiCard
           label="Interest saved"
           subtext="Estimate"
           value={interestSaved === null ? null : <Money size="lg" value={interestSaved} />}
         />
-        <KpiCard
-          label="Time shaved off"
-          subtext="Estimate"
-          tone={showBulletReduced ? undefined : "hero"}
-          value={
-            monthsSaved === null ? null : (
-              <span className={durationValue}>{formatDuration(monthsSaved)}</span>
-            )
-          }
-        />
-        <KpiCard
-          label={showBulletReduced ? "Bullet balance reduced" : "New payoff term"}
-          subtext="Estimate"
-          tone={showBulletReduced ? "hero" : undefined}
-          value={
-            simulation === null ? null : showBulletReduced ? (
-              <Money size="lg" tone="onContrast" value={simulation.principalReduced} />
-            ) : (
-              <span className={durationValue}>{formatDuration(simulation.newTermMonths)}</span>
-            )
-          }
-        />
       </KpiStrip>
+
+      <div className={resultsCard()}>
+        <div className={resultsHeader()}>
+          <div className={resultsHeaderText}>
+            <h3 className={cardHeading}>How your balance falls</h3>
+            <p className={cardSubtitle}>Your balance each year, with and without overpaying.</p>
+          </div>
+          <span className={projectionChip()}>Projection</span>
+        </div>
+
+        {simulation ? (
+          <ChartFigure
+            dataTable={
+              <table className={dataTable()}>
+                <caption>Mortgage balance by year, no overpayment and with overpayment</caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Year</th>
+                    <th scope="col">Balance owed, no overpayment</th>
+                    <th scope="col">Balance owed, with overpayment</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {chartData.map((row) => (
+                    <tr key={row.yearLabel}>
+                      <th className={dataCell} scope="row">
+                        {row.yearLabel}
+                      </th>
+                      <td className={dataCell}>{formatCurrency(row["Standard Plan"])}</td>
+                      <td className={dataCell}>{formatCurrency(row["With Overpayment"])}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            }
+            summary={`Mortgage balance over ${remainingTerm} years. ${
+              hasOverpayment && interestSaved !== null && interestSaved > 0
+                ? `Overpaying ${formatCurrency(overpayment)} a month saves ${formatCurrency(interestSaved)} in total interest${
+                    monthsSaved !== null && monthsSaved > 0
+                      ? ` and clears the mortgage ${formatDuration(monthsSaved)} sooner`
+                      : ""
+                  }.`
+                : "Add a monthly overpayment to see the interest saved."
+            }`}
+            hideTitle
+            title="Mortgage balance projection"
+          >
+            <div className={chartLegend()}>
+              <span className={chartLegendItem()}>
+                <span aria-hidden="true" className={legendSwatch({ kind: "standard" })} />
+                No overpayment, ends after {standardTermLabel} (solid)
+              </span>
+              <span className={chartLegendItem()}>
+                <span aria-hidden="true" className={legendSwatch({ kind: "overpay" })} />
+                {hasOverpayment
+                  ? `With ${formatCurrency(overpayment)} a month extra${
+                      isInterestOnly
+                        ? ""
+                        : `, ends after ${formatDuration(simulation.newTermMonths)}`
+                    } (dashed)`
+                  : "With overpayment (dashed)"}
+              </span>
+            </div>
+            <div className={chartWrap()}>
+              <ResponsiveContainer height="100%" width="100%">
+                <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="colorStandard" x1="0" x2="0" y1="0" y2="1">
+                      <stop offset="5%" stopColor={chartColor("debt")} stopOpacity={0.12} />
+                      <stop offset="95%" stopColor={chartColor("debt")} stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <XAxis
+                    axisLine={false}
+                    dataKey="yearLabel"
+                    fontSize={11}
+                    tickLine={false}
+                    tickMargin={8}
+                  />
+                  <YAxis
+                    axisLine={false}
+                    fontSize={11}
+                    tickFormatter={(val) => formatAxisCurrency(Number(val))}
+                    tickLine={false}
+                    tickMargin={8}
+                  />
+                  <Tooltip formatter={(value) => formatCurrency(Number(value))} />
+                  <Area
+                    activeDot={{ r: 6 }}
+                    dataKey="Standard Plan"
+                    fill="url(#colorStandard)"
+                    isAnimationActive={false}
+                    name="No overpayment"
+                    stroke={chartColor("debt")}
+                    strokeWidth={3}
+                    type="monotone"
+                  />
+                  <Area
+                    activeDot={{ r: 6 }}
+                    dataKey="With Overpayment"
+                    fill="none"
+                    isAnimationActive={false}
+                    name="With overpayment"
+                    stroke={chartColor("projection")}
+                    strokeDasharray="7 6"
+                    strokeWidth={3}
+                    type="monotone"
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+            <p className={stateNote}>
+              Assumes the rate stays at {interestRate}% for the whole term. Projection, not a
+              forecast.
+            </p>
+          </ChartFigure>
+        ) : (
+          <EmptyState
+            description="Add your balance, interest rate and remaining term to see how overpaying could change your mortgage."
+            headingLevel="h3"
+            icon={<Icon icon={PiggyBank} />}
+            id="overpayment-empty"
+            size="sm"
+            title="Mortgage details not set"
+            tone="muted"
+          />
+        )}
+      </div>
+
+      <div className={ercCallout()}>
+        <Icon icon={Info} size="sm" />
+        <p>{OVERPAYMENT_ERC_NOTE}</p>
+      </div>
     </div>
   );
 
