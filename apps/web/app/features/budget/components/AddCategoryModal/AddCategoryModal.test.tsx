@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import AddCategoryModal from "./AddCategoryModal";
+import { AddCategoryModal } from "./AddCategoryModal";
 
 describe("AddCategoryModal", () => {
   it("renders when open and allows adding a new category", async () => {
@@ -16,7 +16,7 @@ describe("AddCategoryModal", () => {
       />,
     );
 
-    expect(screen.getByText("Add Budget Category")).toBeDefined();
+    expect(screen.getByText("Add budget category")).toBeDefined();
 
     const input = screen.getByTestId("new-category-name-input");
     fireEvent.change(input, { target: { value: "Subscriptions" } });

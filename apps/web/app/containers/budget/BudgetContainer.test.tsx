@@ -83,9 +83,9 @@ describe("BudgetContainer", () => {
     ) as any;
   });
 
-  it("renders the Budget Planner heading and custom category tab", () => {
+  it("renders the Your budget heading and custom category tab", () => {
     render(<BudgetContainer />);
-    expect(screen.getByText("Budget planner")).toBeDefined();
+    expect(screen.getByText("Your budget")).toBeDefined();
     // Custom category tab from user profile
     expect(screen.getByTestId("budget-tab-subscriptions")).toBeDefined();
   });
@@ -110,7 +110,7 @@ describe("BudgetContainer", () => {
     const addCatBtn = screen.getByTestId("add-category-btn");
     fireEvent.click(addCatBtn);
 
-    expect(screen.getByText("Add Budget Category")).toBeDefined();
+    expect(screen.getByText("Add budget category")).toBeDefined();
 
     const input = screen.getByTestId("new-category-name-input");
     fireEvent.change(input, { target: { value: "Holidays" } });

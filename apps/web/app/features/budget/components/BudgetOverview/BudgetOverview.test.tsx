@@ -1,16 +1,8 @@
-import { screen } from "@testing-library/react";
+import { fireEvent, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import customRender from "~/testUtils/customRender";
 import type { BudgetEntry } from "~/types/budget";
-import BudgetDashboard from "./BudgetDashboard";
-
-vi.mock("react-router", () => ({
-  Link: ({ children, to, className }: any) => (
-    <a className={className} href={to}>
-      {children}
-    </a>
-  ),
-}));
+import { BudgetOverview } from "./BudgetOverview";
 
 const entry = (overrides: Partial<BudgetEntry>): BudgetEntry => ({
   id: "e1",
@@ -30,10 +22,6 @@ const entry = (overrides: Partial<BudgetEntry>): BudgetEntry => ({
 });
 
 const baseProps = {
-  accounts: [],
-  accountDetails: [],
-  savingsBalance: 0,
-  mortgageBalance: 0,
   onNavigateToCategory: vi.fn(),
   onNavigateToRunway: vi.fn(),
 };
@@ -47,7 +35,7 @@ const income = entry({
   isEssential: false,
 });
 
-describe("<BudgetDashboard /> plan-only budget (no actuals)", () => {
+describe("<BudgetOverview /> plan-only budget (no actuals)", () => {
   const entries = [
     income,
     entry({}),
@@ -55,22 +43,42 @@ describe("<BudgetDashboard /> plan-only budget (no actuals)", () => {
   ];
 
   it("shows no month-to-date actuals and no connect-a-bank prompt", () => {
-    customRender(<BudgetDashboard {...baseProps} entries={entries} />);
+    customRender(<BudgetOverview {...baseProps} entries={entries} />);
     expect(screen.queryByText("MTD Settled Actuals")).toBeNull();
     expect(screen.queryByText(/Actual spending is not tracked yet/)).toBeNull();
   });
 
   it("never shows 92% of a £1,000 priority budget (£920)", () => {
-    customRender(<BudgetDashboard {...baseProps} entries={entries} />);
+    customRender(<BudgetOverview {...baseProps} entries={entries} />);
     expect(screen.queryByText("£920")).toBeNull();
     expect(screen.queryByText("£390")).toBeNull();
   });
+
+  it("has one hero, a Where you stand strip and a runway link", () => {
+    const { container } = customRender(<BudgetOverview {...baseProps} entries={entries} />);
+    expect(container.querySelectorAll('[data-tone="hero"]')).toHaveLength(1);
+    expect(screen.getByRole("heading", { name: "Where you stand" })).toBeDefined();
+    expect(screen.getByText("Left over each month")).toBeDefined();
+    fireEvent.click(screen.getByRole("button", { name: "See your runway" }));
+    expect(baseProps.onNavigateToRunway).toHaveBeenCalled();
+  });
 });
 
-describe("<BudgetDashboard /> expense chart accessibility", () => {
+describe("<BudgetOverview /> deficit", () => {
+  it("names the shortfall and offers debt support without telling the user what to do", () => {
+    customRender(
+      <BudgetOverview {...baseProps} entries={[{ ...income, amount: 500 }, entry({})]} />,
+    );
+    expect(screen.getByText("Monthly shortfall")).toBeDefined();
+    expect(screen.getByText("Your budget spends more than you bring in")).toBeDefined();
+    expect(screen.getByText("Free UK debt support")).toBeDefined();
+  });
+});
+
+describe("<BudgetOverview /> expense chart accessibility", () => {
   it("exposes the expense breakdown as a named figure with the formatted total", () => {
     customRender(
-      <BudgetDashboard
+      <BudgetOverview
         {...baseProps}
         entries={[
           income,

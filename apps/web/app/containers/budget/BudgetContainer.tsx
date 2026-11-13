@@ -1,28 +1,24 @@
 import { PortfolioSnapshot } from "@flump/finance-engine";
-import { ProjectionNotice } from "@repo/ui";
-import { css } from "@repo/ui/styled-system/css";
+import { Button, EmptyState, Icon, Illustration, PageHeader, ProjectionNotice } from "@repo/ui";
+import { ListChecks } from "lucide-react";
 import { type FC, useEffect, useMemo, useState } from "react";
-import { FaBalanceScale, FaChartBar, FaPlus, FaRocket } from "react-icons/fa";
 import { useLoaderData, useNavigate } from "react-router";
-import AddCategoryModal from "~/components/budget/AddCategoryModal";
-import BudgetCategoryTable from "~/components/budget/BudgetCategoryTable";
-import BudgetDashboard from "~/components/budget/BudgetDashboard";
 import BudgetSetupWizard from "~/components/budget/BudgetSetupWizard";
 import RunwayCalculator from "~/components/budget/RunwayCalculator";
-import FLPButton from "~/components/core/buttons/FLPButton";
-import FLPCard from "~/components/core/cards/FLPCard";
-import FLPHeading from "~/components/core/typography/FLPHeading";
-import FLPText from "~/components/core/typography/FLPText";
+import { AddCategoryModal } from "~/features/budget/components/AddCategoryModal";
+import { BudgetCategoryTable } from "~/features/budget/components/BudgetCategoryTable";
+import { BudgetNav } from "~/features/budget/components/BudgetNav";
+import { BudgetOverview } from "~/features/budget/components/BudgetOverview";
 import { useUserProfile } from "~/hooks/useUserProfile";
 import type { loader } from "~/routes/app.budget";
 import { apiFetch } from "~/services/api-client";
 import type { BudgetEntry } from "~/types/budget";
-import { CATEGORY_ICONS, CATEGORY_LABELS } from "~/types/budget";
 import {
   loadRunwaySettings,
   type RunwaySavedSettings,
   saveRunwaySettings,
 } from "~/utils/runwayStorage";
+import { errorBanner, pageActions, pageRoot, tabContent } from "./BudgetContainer.styles";
 
 type BudgetTab =
   | "dashboard"
@@ -92,18 +88,6 @@ const BudgetContainer: FC = () => {
     saveRunwaySettings(updated);
   };
 
-  const isSavingsOrInvestment = (type?: string) => {
-    if (!type) return false;
-    const t = type.toLowerCase().trim();
-    return (
-      t === "current" ||
-      t === "saving" ||
-      t === "savings" ||
-      t === "investment" ||
-      t === "investments"
-    );
-  };
-
   // Normalize accountDetails to support both snake_case and camelCase
   const normalizedAccountDetails = useMemo(() => {
     return accountDetails.map((d: any) => ({
@@ -126,17 +110,6 @@ const BudgetContainer: FC = () => {
       };
     });
   }, [accounts, accountDetails]);
-
-  // Calculate savings balance from accounts (includes Current, Saving, and Investment accounts)
-  const savingsBalance = accountsWithBalances
-    .filter((a: any) => isSavingsOrInvestment(a.type))
-    .reduce((sum: number, acc: any) => sum + Math.max(acc.balance, 0), 0);
-
-  const mortgageBalance = Math.abs(
-    accountsWithBalances
-      .filter((a: any) => a.type === "Mortgage")
-      .reduce((sum: number, acc: any) => sum + (Number(acc.balance) || 0), 0),
-  );
 
   const isBudgetEmpty = useMemo(() => {
     if (entries.length === 0) return true;
@@ -250,217 +223,42 @@ const BudgetContainer: FC = () => {
     }
   };
 
-  const primaryTabStyle = (active: boolean) =>
-    css({
-      display: "inline-flex",
-      alignItems: "center",
-      gap: "8px",
-      padding: "8px 18px",
-      minHeight: "38px",
-      fontSize: "sm",
-      fontWeight: active ? "semibold" : "medium",
-      borderRadius: "lg",
-      cursor: "pointer",
-      transition: "all 0.15s ease",
-      color: active ? "text.primary" : "text.muted",
-      backgroundColor: active ? "surface" : "transparent",
-      boxShadow: active ? "var(--shadows-card)" : "none",
-      border: "1px solid",
-      borderColor: active ? "border.subtle" : "transparent",
-      "&:hover": {
-        color: "text.primary",
-      },
-    });
-
-  const categoryPillStyle = (active: boolean) =>
-    css({
-      display: "inline-flex",
-      alignItems: "center",
-      gap: "6px",
-      padding: "6px 12px",
-      fontSize: "xs",
-      fontWeight: active ? "bold" : "medium",
-      borderRadius: "full",
-      cursor: "pointer",
-      whiteSpace: "nowrap",
-      transition: "all 0.15s ease",
-      color: active ? "primary" : "text.secondary",
-      backgroundColor: active
-        ? "color-mix(in srgb, var(--colors-primary) 10%, transparent)"
-        : "surface.subtle",
-      border: "1px solid",
-      borderColor: active ? "primary" : "border",
-      "&:hover": {
-        borderColor: "primary",
-        color: "primary",
-      },
-    });
-
   return (
-    <div
-      className={css({
-        paddingBottom: "48px",
-        display: "flex",
-        flexDirection: "column",
-        gap: "24px",
-      })}
-    >
-      {/* Page header */}
+    <div className={pageRoot()}>
       <ProjectionNotice />
-      <div
-        className={css({
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          marginTop: "16px",
-          marginBottom: "8px",
-          flexWrap: "wrap",
-          gap: "16px",
-        })}
-      >
-        <div>
-          <FLPHeading as="h1" color="text.primary" size="2xl">
-            Budget planner
-          </FLPHeading>
-          <FLPText color="text.muted" fontSize="sm" style={{ marginTop: "4px" }}>
-            Track income, expenses and plan your financial runway.
-          </FLPText>
-        </div>
-        <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", alignItems: "center" }}>
-          <FLPButton
-            id="setup-wizard-btn"
-            data-testid="setup-wizard-btn"
-            size="md"
-            variant="primary"
-            onClick={() => setActiveTab("wizard")}
-          >
-            <FaRocket size={13} style={{ marginRight: "6px" }} /> Create budget
-          </FLPButton>
-        </div>
-      </div>
+      <PageHeader
+        actions={
+          <div className={pageActions()}>
+            <Button
+              data-testid="setup-wizard-btn"
+              id="setup-wizard-btn"
+              onClick={() => setActiveTab("wizard")}
+            >
+              <Icon icon={ListChecks} size="sm" />
+              Create budget
+            </Button>
+          </div>
+        }
+        subtitle="Your income, spending and how long your money lasts."
+        title="Your budget"
+      />
 
       {actionError && (
-        <div
-          role="alert"
-          className={css({
-            padding: "12px 16px",
-            borderRadius: "12px",
-            fontSize: "sm",
-            backgroundColor: "status.danger.bg",
-            color: "status.danger.text",
-            border: "1px solid",
-            borderColor: "status.danger.border",
-          })}
-        >
+        <div role="alert" className={errorBanner()}>
           {actionError}
         </div>
       )}
 
-      {/* Unified Primary & Category Navigation Bar */}
       {activeTab !== "wizard" && (
-        <div
-          className={css({
-            display: "flex",
-            alignItems: "center",
-            gap: "10px",
-            backgroundColor: "card",
-            padding: "8px 12px",
-            borderRadius: "xl",
-            border: "1px solid",
-            borderColor: "border",
-            boxShadow: "xs",
-            overflowX: "auto",
-            WebkitOverflowScrolling: "touch",
-            maxWidth: "100%",
-          })}
-        >
-          {/* Primary View Switchers */}
-          <div style={{ display: "flex", alignItems: "center", gap: "6px", flexShrink: 0 }}>
-            <button
-              id="budget-tab-overview"
-              data-testid="budget-tab-overview"
-              className={primaryTabStyle(activeTab === "dashboard")}
-              type="button"
-              onClick={() => setActiveTab("dashboard")}
-            >
-              <FaChartBar size={13} /> Overview
-            </button>
-            <button
-              id="budget-tab-runway"
-              data-testid="budget-tab-runway"
-              className={primaryTabStyle(activeTab === "runway")}
-              type="button"
-              onClick={handleOpenRunway}
-            >
-              <FaBalanceScale size={13} /> Runway analysis
-            </button>
-          </div>
-
-          {/* Vertical Separator */}
-          <div
-            style={{
-              width: "1px",
-              height: "22px",
-              backgroundColor: "var(--colors-border)",
-              flexShrink: 0,
-              margin: "0 4px",
-            }}
-          />
-
-          {/* Category Ledgers Strip */}
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "6px",
-              flexShrink: 0,
-            }}
-          >
-            {categoryTabs.map((cat) => (
-              <button
-                key={cat}
-                id={`budget-tab-${cat}`}
-                data-testid={`budget-tab-${cat}`}
-                className={categoryPillStyle(activeTab === cat)}
-                type="button"
-                onClick={() => setActiveTab(cat as BudgetTab)}
-              >
-                <span style={{ fontSize: "13px" }}>{CATEGORY_ICONS[cat]}</span>
-                {CATEGORY_LABELS[cat] || cat.charAt(0).toUpperCase() + cat.slice(1)}
-              </button>
-            ))}
-            <button
-              id="add-category-btn"
-              data-testid="add-category-btn"
-              className={css({
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "4px",
-                padding: "5px 10px",
-                fontSize: "xs",
-                fontWeight: "semibold",
-                color: "primary",
-                cursor: "pointer",
-                whiteSpace: "nowrap",
-                background: "none",
-                border: "1px dashed",
-                borderColor: "primary",
-                borderRadius: "full",
-                transition: "all 0.15s ease",
-                _hover: {
-                  backgroundColor: "color-mix(in srgb, var(--colors-primary) 8%, transparent)",
-                },
-              })}
-              type="button"
-              onClick={() => setIsAddCategoryOpen(true)}
-            >
-              <FaPlus size={10} /> Add
-            </button>
-          </div>
-        </div>
+        <BudgetNav
+          activeTab={activeTab}
+          categoryTabs={categoryTabs}
+          onAddCategory={() => setIsAddCategoryOpen(true)}
+          onOpenRunway={handleOpenRunway}
+          onSelectTab={(tab) => setActiveTab(tab as BudgetTab)}
+        />
       )}
 
-      {/* Content */}
       {activeTab === "wizard" && (
         <BudgetSetupWizard
           entries={entries}
@@ -475,99 +273,50 @@ const BudgetContainer: FC = () => {
 
       {activeTab === "dashboard" &&
         (isBudgetEmpty ? (
-          <FLPCard
-            className={css({
-              padding: { base: "32px 20px", md: "48px 32px" },
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              textAlign: "center",
-              gap: "16px",
-              backgroundColor: "surface",
-              borderWidth: "1px",
-              borderStyle: "dashed",
-              borderColor: "border.subtle",
-              borderRadius: "xl",
-            })}
-          >
-            <div
-              className={css({
-                width: "56px",
-                height: "56px",
-                borderRadius: "full",
-                backgroundColor: "color-mix(in srgb, var(--colors-primary) 10%, transparent)",
-                color: "primary",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: "24px",
-              })}
-            >
-              <FaRocket />
-            </div>
-            <div>
-              <FLPHeading as="h2" size="md">
-                No budget created yet
-              </FLPHeading>
-              <FLPText
-                color="text.muted"
-                fontSize="sm"
-                style={{ maxWidth: "480px", margin: "6px auto 0" }}
-              >
-                Build your monthly budget to track living expenses, calculate your runway, and
-                direct surplus income into savings or debt clearance.
-              </FLPText>
-            </div>
-            <div
-              style={{
-                display: "flex",
-                gap: "12px",
-                flexWrap: "wrap",
-                justifyContent: "center",
-                marginTop: "8px",
-              }}
-            >
-              <FLPButton size="md" variant="primary" onClick={() => setActiveTab("wizard")}>
-                <FaRocket size={13} style={{ marginRight: "6px" }} /> Create budget
-              </FLPButton>
-              <FLPButton
-                id="add-suggested-defaults-btn"
+          <EmptyState
+            action={
+              <Button onClick={() => setActiveTab("wizard")}>
+                <Icon icon={ListChecks} size="sm" />
+                Create budget
+              </Button>
+            }
+            description="Add your income and what you spend each month to see what is left over and how long your money lasts."
+            illustration={<Illustration scene="onboarding" />}
+            secondaryAction={
+              <Button
                 data-testid="add-suggested-defaults-btn"
                 disabled={isSeedingDefaults}
-                size="md"
+                id="add-suggested-defaults-btn"
                 variant="outline"
                 onClick={handleAddSuggestedDefaults}
               >
-                {isSeedingDefaults ? "Adding..." : "Add suggested defaults"}
-              </FLPButton>
-            </div>
-          </FLPCard>
+                {isSeedingDefaults ? "Adding" : "Add suggested defaults"}
+              </Button>
+            }
+            title="No budget yet"
+          />
         ) : (
-          <BudgetDashboard
-            accounts={accountsWithBalances}
-            accountDetails={normalizedAccountDetails}
+          <BudgetOverview
             customCategories={customCategories}
             entries={entries}
-            mortgageBalance={mortgageBalance}
-            runwaySettings={runwaySettings}
-            savingsBalance={savingsBalance}
-            onAddSuggestedDefaults={handleAddSuggestedDefaults}
             onNavigateToCategory={(cat) => setActiveTab(cat as BudgetTab)}
             onNavigateToRunway={handleOpenRunway}
           />
         ))}
 
       {categoryTabs.includes(activeTab) && (
-        <BudgetCategoryTable
-          category={activeTab}
-          entries={entries.filter((e) => e.category === activeTab)}
-          onAdd={addEntry}
-          onDelete={deleteEntry}
-          onUpdate={updateEntry}
-          onDeleteCategory={
-            !STANDARD_CATEGORIES.includes(activeTab) ? handleDeleteCategory : undefined
-          }
-        />
+        <div className={tabContent()}>
+          <BudgetCategoryTable
+            category={activeTab}
+            entries={entries.filter((e) => e.category === activeTab)}
+            onAdd={addEntry}
+            onDelete={deleteEntry}
+            onUpdate={updateEntry}
+            onDeleteCategory={
+              !STANDARD_CATEGORIES.includes(activeTab) ? handleDeleteCategory : undefined
+            }
+          />
+        </div>
       )}
 
       {activeTab === "runway" && (
@@ -581,7 +330,6 @@ const BudgetContainer: FC = () => {
         />
       )}
 
-      {/* Add Category Dialog */}
       <AddCategoryModal
         open={isAddCategoryOpen}
         onClose={() => setIsAddCategoryOpen(false)}
