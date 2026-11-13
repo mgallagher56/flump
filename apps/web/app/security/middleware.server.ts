@@ -1,6 +1,12 @@
 import type { MiddlewareFunction } from "react-router";
 import { getMarketingUrl } from "~/utils/marketingUrl";
-import { applyFullCsp, formActionOrigins, generateNonce, nonceContext } from "./csp.server";
+import {
+  applyFullCsp,
+  formActionOrigins,
+  generateNonce,
+  nonceContext,
+  sentryConnectOrigin,
+} from "./csp.server";
 import { csrfRejection, isSameOriginRequest } from "./csrf.server";
 import { applyCachePolicy, applySecurityHeaders } from "./headers.server";
 import { applyRefreshedCookies } from "./session-cookies.server";
@@ -30,5 +36,6 @@ export const securityMiddleware: MiddlewareFunction<Response> = async (
   return applyFullCsp(response, {
     nonce,
     formActionOrigins: formActionOrigins(process.env, getMarketingUrl(request.url)),
+    connectOrigins: [sentryConnectOrigin(process.env)].filter((o): o is string => o !== null),
   });
 };
