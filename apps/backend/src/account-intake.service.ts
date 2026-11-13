@@ -1,4 +1,5 @@
 import {
+  getUkCalendarDate,
   type MonthlyPortfolioHistoryPoint,
   PortfolioSnapshot,
   type ResolvedAccount,
@@ -113,6 +114,51 @@ function validateStudentLoanPlan(value: unknown): string | null | undefined {
   );
 }
 
+export const MAX_BALANCE_BATCH = 100;
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export interface BalanceUpdateDto {
+  id: string;
+  balance: number;
+}
+
+export interface UpdateBalancesDto {
+  balances: BalanceUpdateDto[];
+}
+
+/** Validates the PATCH /accounts/balances body; throws 400 on anything malformed. */
+export function validateBalanceUpdates(body: unknown): BalanceUpdateDto[] {
+  const balances = (body as { balances?: unknown } | null | undefined)?.balances;
+  if (!Array.isArray(balances) || balances.length === 0) {
+    throw new BadRequestException("balances must be a non-empty array");
+  }
+  if (balances.length > MAX_BALANCE_BATCH) {
+    throw new BadRequestException(`balances must have at most ${MAX_BALANCE_BATCH} entries`);
+  }
+  const seen = new Set<string>();
+  return balances.map((entry: unknown) => {
+    const { id, balance } = (entry ?? {}) as Record<string, unknown>;
+    if (typeof id !== "string" || !UUID_PATTERN.test(id)) {
+      throw new BadRequestException("each balance entry needs a uuid id");
+    }
+    if (typeof balance !== "number" || !Number.isFinite(balance) || Math.abs(balance) >= 1e10) {
+      throw new BadRequestException("each balance must be a finite number below 10 billion");
+    }
+    const key = id.toLowerCase();
+    if (seen.has(key)) {
+      throw new BadRequestException("each account may appear once in balances");
+    }
+    seen.add(key);
+    return { id, balance };
+  });
+}
+
+/** Current year and month on the UK calendar (not the server's UTC date). */
+export function currentUkYearMonth(now: Date = new Date()): { year: number; month: number } {
+  const [year, month] = getUkCalendarDate(now).split("-").map(Number);
+  return { year: year as number, month: month as number };
+}
+
 export interface DeleteAccountResponse {
   success: boolean;
 }
@@ -123,6 +169,7 @@ export interface IAccountIntake {
   getAccountDetails(userId: string, accountId?: string): Promise<AccountDetail[]>;
   createAccount(userId: string, body: CreateAccountDto): Promise<Account>;
   updateAccount(userId: string, id: string, body: UpdateAccountDto): Promise<Account>;
+  updateBalances(userId: string, body: UpdateBalancesDto): Promise<Account[]>;
   deleteAccount(userId: string, id: string): Promise<DeleteAccountResponse>;
   getPortfolioSnapshot(userId: string): Promise<PortfolioSnapshotResponse>;
 }
@@ -296,16 +343,71 @@ export class AccountIntakeService implements IAccountIntake {
     return this.accountRepository.save(account);
   }
 
-  async updateAccount(userId: string, id: string, body: UpdateAccountDto): Promise<Account> {
-    const account = await this.accountRepository.findOne({
-      where: { id, userId },
-    });
-    if (!account) {
-      throw new NotFoundException("Account not found");
-    }
+  /**
+   * Runs `work` in one DB transaction with transaction-bound repositories. Test doubles without
+   * a TypeORM manager run it directly on the injected repositories.
+   */
+  private runInTransaction<T>(
+    work: (accounts: Repository<Account>, details: Repository<AccountDetail>) => Promise<T>,
+  ): Promise<T> {
+    const manager = this.accountRepository.manager;
+    if (!manager?.transaction) return work(this.accountRepository, this.accountDetailRepository);
+    return manager.transaction((em) =>
+      work(em.getRepository(Account), em.getRepository(AccountDetail)),
+    );
+  }
 
-    Object.assign(account, this.pickAccountFields(body));
-    return this.accountRepository.save(account);
+  /** Month-end snapshot for the current UK month: one row per account per month (E23 D22). */
+  private upsertCurrentMonthHistory(
+    details: Repository<AccountDetail>,
+    accountId: string,
+    value: number,
+  ): Promise<unknown> {
+    const { year, month } = currentUkYearMonth();
+    return details.upsert({ accountId, year, month, value }, ["accountId", "year", "month"]);
+  }
+
+  async updateAccount(userId: string, id: string, body: UpdateAccountDto): Promise<Account> {
+    return this.runInTransaction(async (accounts, details) => {
+      const account = await accounts.findOne({ where: { id, userId } });
+      if (!account) {
+        throw new NotFoundException("Account not found");
+      }
+
+      Object.assign(account, this.pickAccountFields(body));
+      const saved = await accounts.save(account);
+      if (body.balance !== undefined && body.balance !== null) {
+        await this.upsertCurrentMonthHistory(details, id, Number(saved.balance));
+      }
+      return saved;
+    });
+  }
+
+  /**
+   * Check-in: sets every listed balance and upserts its current-month history row in one
+   * transaction. An unknown or foreign id fails the whole batch with 404 and writes nothing.
+   */
+  async updateBalances(userId: string, body: UpdateBalancesDto): Promise<Account[]> {
+    const updates = validateBalanceUpdates(body);
+    return this.runInTransaction(async (accounts, details) => {
+      const owned = await accounts.find({
+        where: { id: In(updates.map((u) => u.id)), userId },
+      });
+      const byId = new Map(owned.map((a) => [a.id, a]));
+      if (updates.some((u) => !byId.has(u.id))) {
+        throw new NotFoundException("Account not found");
+      }
+
+      const result: Account[] = [];
+      for (const { id, balance } of updates) {
+        const account = byId.get(id) as Account;
+        account.balance = balance;
+        const saved = await accounts.save(account);
+        await this.upsertCurrentMonthHistory(details, id, Number(saved.balance));
+        result.push(saved);
+      }
+      return result;
+    });
   }
 
   async deleteAccount(userId: string, id: string): Promise<DeleteAccountResponse> {

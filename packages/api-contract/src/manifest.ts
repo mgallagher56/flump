@@ -1,5 +1,9 @@
 import { z } from "zod";
-import { CreateAccountRequest, UpdateAccountRequest } from "./domains/accounts.js";
+import {
+  CreateAccountRequest,
+  UpdateAccountRequest,
+  UpdateBalancesRequest,
+} from "./domains/accounts.js";
 import { ConnectBankRequest } from "./domains/bank-connections.js";
 import {
   AddBudgetCategoryRequest,
@@ -105,6 +109,16 @@ export const routes = {
       auth: "user",
       ownership: "user",
       body: CreateAccountRequest,
+      group: "accounts",
+    }),
+    // Declared before accounts/:id so Nest matches "balances" literally.
+    updateBalances: defineRoute({
+      id: "accounts.updateBalances",
+      method: "PATCH",
+      path: "accounts/balances",
+      auth: "user",
+      ownership: "user",
+      body: UpdateBalancesRequest,
       group: "accounts",
     }),
     replace: defineRoute({

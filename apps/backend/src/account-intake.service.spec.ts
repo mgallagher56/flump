@@ -22,6 +22,7 @@ describe("AccountIntakeService (Deep Module)", () => {
       find: vi.fn(),
       findOne: vi.fn(),
       delete: vi.fn().mockResolvedValue({ affected: 1 }),
+      upsert: vi.fn().mockResolvedValue(undefined),
       save: vi.fn((data) => Promise.resolve(data)),
     };
     mockUserProfileRepo = {
@@ -357,6 +358,148 @@ describe("AccountIntakeService (Deep Module)", () => {
       expect(result.userId).toBe("userA");
       expect(result.connectionId).toBe("conn-1");
       expect(result.balance).toBe(5);
+    });
+  });
+
+  describe("balance history (E23 D22, D23)", () => {
+    const A = "6f1c6a4e-5b0e-4a63-9d0a-3f2f2a9d1c11";
+    const B = "6f1c6a4e-5b0e-4a63-9d0a-3f2f2a9d1c22";
+    const FOREIGN = "6f1c6a4e-5b0e-4a63-9d0a-3f2f2a9d1c33";
+
+    // 30 Jun 2026 23:30 UTC is 1 Jul 00:30 BST, so the UK month is already July.
+    const withDate = async (iso: string, run: () => Promise<void>) => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date(iso));
+      try {
+        await run();
+      } finally {
+        vi.useRealTimers();
+      }
+    };
+
+    const build = () => {
+      const accounts = createInMemoryRepository([
+        { id: A, userId: "userA", name: "Current", balance: 100 },
+        { id: B, userId: "userA", name: "Saver", balance: 200 },
+        { id: FOREIGN, userId: "userB", name: "Theirs", balance: 999 },
+      ]);
+      const details = createInMemoryRepository();
+      const svc = new AccountIntakeService(
+        accounts as any,
+        details as any,
+        mockUserProfileRepo,
+        mockBankConnectionRepo,
+      );
+      return { svc, accounts, details };
+    };
+
+    it("updateAccount upserts the current month's history row when the balance changes", async () => {
+      await withDate("2026-03-15T12:00:00Z", async () => {
+        const { svc, details } = build();
+        await svc.updateAccount("userA", A, { balance: 150 });
+        await svc.updateAccount("userA", A, { balance: 175 });
+        expect(details.rows).toEqual([
+          expect.objectContaining({ accountId: A, year: 2026, month: 3, value: 175 }),
+        ]);
+      });
+    });
+
+    it("updateAccount writes no history when the balance is not part of the update", async () => {
+      const { svc, details } = build();
+      await svc.updateAccount("userA", A, { name: "Renamed" });
+      expect(details.rows).toHaveLength(0);
+    });
+
+    it("uses the UK calendar month, not the UTC one", async () => {
+      await withDate("2026-06-30T23:30:00Z", async () => {
+        const { svc, details } = build();
+        await svc.updateAccount("userA", A, { balance: 1 });
+        expect(details.rows[0]).toMatchObject({ year: 2026, month: 7 });
+      });
+    });
+
+    it("updateBalances sets every balance and writes one history row each", async () => {
+      await withDate("2026-03-15T12:00:00Z", async () => {
+        const { svc, accounts, details } = build();
+        const result = await svc.updateBalances("userA", {
+          balances: [
+            { id: A, balance: 110.5 },
+            { id: B, balance: -20 },
+          ],
+        });
+        expect(result.map((a) => [a.id, a.balance])).toEqual([
+          [A, 110.5],
+          [B, -20],
+        ]);
+        expect(accounts.rows.find((r) => r.id === A)?.balance).toBe(110.5);
+        expect(details.rows.map((r) => [r.accountId, r.month, r.value])).toEqual([
+          [A, 3, 110.5],
+          [B, 3, -20],
+        ]);
+      });
+    });
+
+    it("updateBalances 404s on a foreign or unknown id and writes nothing", async () => {
+      for (const bad of [FOREIGN, "6f1c6a4e-5b0e-4a63-9d0a-3f2f2a9d1c99"]) {
+        const { svc, accounts, details } = build();
+        await expect(
+          svc.updateBalances("userA", {
+            balances: [
+              { id: A, balance: 1 },
+              { id: bad, balance: 2 },
+            ],
+          }),
+        ).rejects.toBeInstanceOf(NotFoundException);
+        expect(accounts.save).not.toHaveBeenCalled();
+        expect(details.rows).toHaveLength(0);
+      }
+    });
+
+    it.each([
+      ["no body", undefined],
+      ["empty list", { balances: [] }],
+      ["too many", { balances: Array.from({ length: 101 }, () => ({ id: A, balance: 1 })) }],
+      ["non-uuid id", { balances: [{ id: "abc", balance: 1 }] }],
+      ["string balance", { balances: [{ id: A, balance: "5" }] }],
+      ["NaN balance", { balances: [{ id: A, balance: Number.NaN }] }],
+      ["infinite balance", { balances: [{ id: A, balance: Number.POSITIVE_INFINITY }] }],
+      [
+        "duplicate id",
+        {
+          balances: [
+            { id: A, balance: 1 },
+            { id: A, balance: 2 },
+          ],
+        },
+      ],
+    ])("updateBalances rejects %s with 400", async (_label, body) => {
+      const { svc, accounts } = build();
+      await expect(svc.updateBalances("userA", body as any)).rejects.toBeInstanceOf(
+        BadRequestException,
+      );
+      expect(accounts.save).not.toHaveBeenCalled();
+    });
+
+    it("accepts exactly 100 entries", async () => {
+      const ids = Array.from(
+        { length: 100 },
+        (_, i) => `6f1c6a4e-5b0e-4a63-9d0a-${String(i).padStart(12, "0")}`,
+      );
+      const accounts = createInMemoryRepository(
+        ids.map((id) => ({ id, userId: "userA", balance: 0 })),
+      );
+      const details = createInMemoryRepository();
+      const svc = new AccountIntakeService(
+        accounts as any,
+        details as any,
+        mockUserProfileRepo,
+        mockBankConnectionRepo,
+      );
+      const result = await svc.updateBalances("userA", {
+        balances: ids.map((id) => ({ id, balance: 1 })),
+      });
+      expect(result).toHaveLength(100);
+      expect(details.rows).toHaveLength(100);
     });
   });
 });

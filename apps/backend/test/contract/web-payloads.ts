@@ -178,3 +178,15 @@ export const BUDGET_FIELDS_NOT_PERSISTED = ["contractEndDate"] as const;
 
 /** POST /budget-entries/categories */
 export const BUDGET_CATEGORY_PAYLOAD = { category: "Pets" };
+
+/**
+ * PATCH /accounts/balances: the monthly check-in drawer sends one request for every account
+ * (E23 D23). `ids` are filled in by the caller once the accounts exist.
+ */
+export const CHECK_IN_ACCOUNTS = [
+  { name: "Everyday Current", type: "Current", balance: 1000 },
+  { name: "Easy Access Saver", type: "Saving", balance: 5000 },
+  { name: "Store Card", type: "Credit Card", balance: -800 },
+] as const;
+
+export const CHECK_IN_BALANCES = [1250.5, 5400, -650.25] as const;

@@ -32,6 +32,7 @@ describe("FinanceController & FinanceService", () => {
       findOne: vi.fn().mockResolvedValue(null),
       create: vi.fn((data) => ({ ...data })),
       count: vi.fn().mockResolvedValue(0),
+      upsert: vi.fn().mockResolvedValue(undefined),
       save: vi.fn((data) => Promise.resolve(data)),
       delete: vi.fn().mockResolvedValue(undefined),
     };
@@ -102,6 +103,18 @@ describe("FinanceController & FinanceService", () => {
       mockConfig,
     };
   };
+
+  it("PATCH accounts/balances scopes the batch to req.user.id and 404s for a foreign id", async () => {
+    const { controller, mockAccountRepo } = createMocks();
+    const id = "6f1c6a4e-5b0e-4a63-9d0a-3f2f2a9d1c11";
+    // The owner's lookup returns nothing for an account that belongs to someone else.
+    mockAccountRepo.find.mockResolvedValueOnce([]);
+    await expect(
+      controller.updateBalances({ user: { id: "userB" } }, { balances: [{ id, balance: 5 }] }),
+    ).rejects.toThrow(NotFoundException);
+    expect(mockAccountRepo.find.mock.calls[0][0].where.userId).toBe("userB");
+    expect(mockAccountRepo.save).not.toHaveBeenCalled();
+  });
 
   it("handles account CRUD without seeding", async () => {
     const { controller, mockAccountRepo, mockAccountDetailRepo } = createMocks();

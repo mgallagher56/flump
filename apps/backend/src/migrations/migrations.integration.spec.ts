@@ -18,6 +18,7 @@ import {
   SEEDED_BUDGET_ENTRIES,
   TAX_FINGERPRINT_SQL,
 } from "./RemoveSeededExampleData1794355400000";
+import { UniqueAccountDetailMonth1794356000000 } from "./UniqueAccountDetailMonth1794356000000";
 
 // These tests DROP the public schema. Run them against a throwaway database only:
 //   docker run --rm -d --name flump-e3-pg -e POSTGRES_PASSWORD=postgres \
@@ -872,6 +873,98 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
         await runner.release();
       }
       expect(await endDateOf(id)).toBe("2024-04-05");
+    });
+  });
+
+  describe("UniqueAccountDetailMonth1794356000000", () => {
+    const MIGRATION = "UniqueAccountDetailMonth1794356000000";
+    const INDEX = "UQ_account_details_account_year_month";
+
+    const uniqueIndex = (): Promise<{ indexdef: string }[]> =>
+      ds.query(
+        `SELECT indexdef FROM pg_indexes
+         WHERE schemaname = 'public' AND tablename = 'account_details' AND indexname = $1`,
+        [INDEX],
+      );
+
+    const insertDetail = (account: string, year: number, month: number, value: number) =>
+      ds.query(
+        "INSERT INTO account_details (account_id, year, month, value) VALUES ($1, $2, $3, $4)",
+        [account, year, month, value],
+      );
+
+    // Back to the state before this migration: no index, migration forgotten.
+    const rerun = async (): Promise<void> => {
+      await ds.query(`DROP INDEX "${INDEX}"`);
+      await ds.query(`DELETE FROM migrations WHERE name = '${MIGRATION}'`);
+    };
+
+    it("deletes duplicates keeping the max id per account and month, then creates the index", async () => {
+      await ds.runMigrations();
+      await rerun();
+      await insertDetail("a1", 2026, 1, 100); // dup, oldest
+      await insertDetail("a1", 2026, 1, 150); // dup, middle (highest value, not kept)
+      await insertDetail("a1", 2026, 1, 120); // dup, max id: kept
+      await insertDetail("a1", 2026, 2, 130); // different month
+      await insertDetail("a2", 2026, 1, 900); // different account
+      const keep: { id: number }[] = await ds.query(
+        "SELECT max(id) AS id FROM account_details WHERE account_id = 'a1' AND month = 1",
+      );
+
+      await ds.runMigrations();
+
+      const rows = await ds.query(
+        "SELECT id, account_id, year, month, value::float AS value FROM account_details ORDER BY account_id, month",
+      );
+      expect(rows).toEqual([
+        { id: keep[0]?.id, account_id: "a1", year: 2026, month: 1, value: 120 },
+        { id: expect.any(Number), account_id: "a1", year: 2026, month: 2, value: 130 },
+        { id: expect.any(Number), account_id: "a2", year: 2026, month: 1, value: 900 },
+      ]);
+      expect(await uniqueIndex()).toHaveLength(1);
+      expect((await uniqueIndex())[0]?.indexdef).toMatch(
+        /UNIQUE INDEX .* \(account_id, year, month\)/,
+      );
+      await expect(insertDetail("a1", 2026, 2, 1)).rejects.toThrow(/UQ_account_details/);
+      expect(await applied()).toContain(MIGRATION);
+    });
+
+    it("is idempotent when the index already exists (synchronize-built database)", async () => {
+      await ds.synchronize();
+      expect(await uniqueIndex()).toHaveLength(1);
+      await insertDetail("a1", 2026, 1, 5);
+      await expect(runUpInTransaction(new UniqueAccountDetailMonth1794356000000())).resolves.toBe(
+        undefined,
+      );
+      await expect(runUpInTransaction(new UniqueAccountDetailMonth1794356000000())).resolves.toBe(
+        undefined,
+      );
+      expect(await uniqueIndex()).toHaveLength(1);
+      expect(await ds.query("SELECT count(*)::int AS n FROM account_details")).toEqual([{ n: 1 }]);
+    });
+
+    it("is safe on an empty table", async () => {
+      await ds.runMigrations();
+      await rerun();
+      await expect(runUpInTransaction(new UniqueAccountDetailMonth1794356000000())).resolves.toBe(
+        undefined,
+      );
+      expect(await uniqueIndex()).toHaveLength(1);
+    });
+
+    it("down drops the index and allows duplicates again", async () => {
+      await ds.runMigrations();
+      const runner = ds.createQueryRunner();
+      try {
+        await runner.startTransaction();
+        await new UniqueAccountDetailMonth1794356000000().down(runner);
+        await runner.commitTransaction();
+      } finally {
+        await runner.release();
+      }
+      expect(await uniqueIndex()).toEqual([]);
+      await insertDetail("a1", 2026, 1, 1);
+      await insertDetail("a1", 2026, 1, 2);
     });
   });
 });

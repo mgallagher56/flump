@@ -14,6 +14,7 @@ import {
   AccountIntakeService,
   type CreateAccountDto,
   type UpdateAccountDto,
+  type UpdateBalancesDto,
 } from "./account-intake.service";
 import { toPublicConnection } from "./bank-connection.public";
 import { Account } from "./entities/account.entity";
@@ -78,6 +79,10 @@ export class FinanceService {
 
   async updateAccount(userId: string, id: string, body: UpdateAccountDto) {
     return this.accountIntakeService.updateAccount(userId, id, body);
+  }
+
+  async updateBalances(userId: string, body: UpdateBalancesDto) {
+    return this.accountIntakeService.updateBalances(userId, body);
   }
 
   async deleteAccount(userId: string, id: string) {

@@ -3,8 +3,8 @@ import { allRoutes, CONTRACT_GROUPS, findRoute } from "./manifest.js";
 import { checkAgainst } from "./validate.js";
 
 describe("route manifest", () => {
-  it("has 44 routes (44 in the E21 plan minus the two password routes E20 deleted, plus the E19 bank capability route, plus the E20 receipt download) with unique ids and unique method+path pairs", () => {
-    expect(allRoutes).toHaveLength(44);
+  it("has 45 routes (44 in the E21 plan minus the two password routes E20 deleted, plus the E19 bank capability route, plus the E20 receipt download, plus the E23 batch balances route) with unique ids and unique method+path pairs", () => {
+    expect(allRoutes).toHaveLength(45);
     expect(new Set(allRoutes.map((r) => r.id)).size).toBe(allRoutes.length);
     expect(new Set(allRoutes.map((r) => `${r.method} ${r.path}`)).size).toBe(allRoutes.length);
   });
@@ -61,6 +61,16 @@ describe("request schemas", () => {
         { path: "userId", code: "unrecognized_keys" },
       ]),
     });
+  });
+
+  it("accepts a check-in batch and rejects empty, oversized or malformed ones", () => {
+    const id = "6f1c6a4e-5b0e-4a63-9d0a-3f2f2a9d1c11";
+    const batch = body("accounts.updateBalances");
+    expect(checkAgainst(batch, { balances: [{ id, balance: -12.5 }] }).ok).toBe(true);
+    expect(checkAgainst(batch, { balances: [] }).ok).toBe(false);
+    expect(checkAgainst(batch, { balances: Array(101).fill({ id, balance: 1 }) }).ok).toBe(false);
+    expect(checkAgainst(batch, { balances: [{ id: "nope", balance: 1 }] }).ok).toBe(false);
+    expect(checkAgainst(batch, { balances: [{ id, balance: "1" }] }).ok).toBe(false);
   });
 
   it("never puts values in issues", () => {

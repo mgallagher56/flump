@@ -537,6 +537,60 @@
         ]
       }
     },
+    "/v1/accounts/balances": {
+      "patch": {
+        "operationId": "accounts.updateBalances",
+        "tags": ["accounts"],
+        "responses": {
+          "200": {
+            "description": "Success. Response schemas are not yet part of the contract."
+          },
+          "400": {
+            "description": "Request failed validation."
+          },
+          "401": {
+            "description": "Missing or invalid credentials."
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "balances": {
+                    "minItems": 1,
+                    "maxItems": 100,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                        },
+                        "balance": {
+                          "type": "number"
+                        }
+                      },
+                      "required": ["id", "balance"]
+                    }
+                  }
+                },
+                "required": ["balances"]
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
     "/v1/transactions": {
       "get": {
         "operationId": "transactions.list",
