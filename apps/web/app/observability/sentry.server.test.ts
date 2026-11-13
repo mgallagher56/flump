@@ -103,6 +103,17 @@ describe("sentry.server", () => {
       expect(console.error).toHaveBeenCalledExactlyOnceWith("Error (Backend failed)");
     });
 
+    it("reports the same error object once even if both handlers see it", async () => {
+      const { initSentry, reportServerError } = await load();
+      initSentry({ SENTRY_DSN: DSN });
+      const error = new Error("boom");
+      const request = new Request("http://localhost/");
+      reportServerError(error, request);
+      reportServerError(error, request);
+      expect(Sentry.captureException).toHaveBeenCalledOnce();
+      expect(console.error).toHaveBeenCalledOnce();
+    });
+
     it("ignores aborted requests", async () => {
       const { initSentry, reportServerError } = await load();
       initSentry({ SENTRY_DSN: DSN });

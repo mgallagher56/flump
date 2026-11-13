@@ -95,7 +95,7 @@ export default function App() {
         <Links />
         <script
           dangerouslySetInnerHTML={{
-            __html: `window.ENV = ${JSON.stringify(ENV)};`,
+            __html: `window.ENV = ${JSON.stringify(ENV).replace(/</g, "\\u003c")};`,
           }}
         />
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />

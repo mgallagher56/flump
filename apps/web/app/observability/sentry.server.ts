@@ -21,6 +21,7 @@ const ALLOWED_INTEGRATIONS = new Set([
 ]);
 
 let initialised = false;
+const reported = new WeakSet<object>();
 
 /** Initialises Sentry. Returns false (and does nothing) without a DSN. */
 export function initSentry(env: Env): boolean {
@@ -63,11 +64,21 @@ export function initSentry(env: Env): boolean {
 export function reportServerError(error: unknown, request: Request): void {
   if (request.signal?.aborted) return;
   if (error instanceof Response && error.status < 500) return;
+  // The same error can reach both handleError and the render onError; report it once.
+  if (typeof error === "object" && error !== null) {
+    if (reported.has(error)) return;
+    reported.add(error);
+  }
   console.error(safeErrorSummary(error));
   if (!initialised) return;
   Sentry.captureException(
     error instanceof Response ? new Error(`Thrown Response ${error.status}`) : error,
   );
+}
+
+/** Waits for queued events to be sent (used by the Bun runtime check). */
+export async function flushSentry(timeoutMs: number): Promise<boolean> {
+  return Sentry.flush(timeoutMs);
 }
 
 initSentry(process.env);
