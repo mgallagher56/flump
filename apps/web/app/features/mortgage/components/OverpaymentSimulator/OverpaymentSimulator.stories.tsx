@@ -46,6 +46,17 @@ export const InterestOnly: Story = {
   },
 };
 
+export const ZeroOverpayment: Story = {
+  args: { overpayment: 0 },
+  play: async ({ canvasElement }) => {
+    // With no overpayment the hero says so plainly instead of showing a zero-month result.
+    const hero = canvasElement.querySelectorAll("[data-tone='hero']");
+    await expect(hero.length).toBeGreaterThan(0);
+    await expect(hero[0]?.textContent).toContain("No change yet");
+    await expect(canvasElement.textContent).not.toMatch(/\b0 months?\b/);
+  },
+};
+
 export const NotSet: Story = {
   args: { loanAmount: 0, interestRate: 0, remainingTerm: 0, overpayment: 0 },
   play: async ({ canvasElement }) => {

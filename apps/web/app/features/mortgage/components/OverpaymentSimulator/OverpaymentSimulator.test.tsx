@@ -176,5 +176,8 @@ describe("<OverpaymentSimulator /> hero card", () => {
     const heroes = document.querySelectorAll("[data-tone='hero']");
     expect(heroes).toHaveLength(1);
     expect(heroes[0]?.contains(getByText("Bullet balance reduced"))).toBe(true);
+    // Interest-only balances never fall without overpaying, so the legend never claims an end date.
+    expect(document.body.textContent).toMatch(/the full £200,000 is due at the end/);
+    expect(document.body.textContent).not.toMatch(/No overpayment, ends after/);
   });
 });

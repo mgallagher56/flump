@@ -11,7 +11,7 @@ import {
   SliderField,
 } from "@repo/ui";
 import { Info, Leaf, PiggyBank } from "lucide-react";
-import { type FC, useMemo } from "react";
+import { type FC, useId, useMemo } from "react";
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import {
@@ -23,7 +23,6 @@ import {
   controlsCard,
   dataCell,
   dataTable,
-  durationValue,
   ercCallout,
   heroCard,
   heroEyebrow,
@@ -78,6 +77,7 @@ export const OverpaymentSimulator: FC<OverpaymentSimulatorProps> = ({
   mortgageType = "repayment",
 }) => {
   const { formatCurrency } = useFormatCurrency();
+  const gradientId = `overpay-standard-${useId().replace(/:/g, "")}`;
   const isInterestOnly = mortgageType === "interest-only";
   // A zero (or negative) input means the user has not told us that figure yet.
   const hasInputs = loanAmount > 0 && interestRate > 0 && remainingTerm > 0;
@@ -261,7 +261,9 @@ export const OverpaymentSimulator: FC<OverpaymentSimulatorProps> = ({
       tone="hero"
       value={
         simulation === null ? null : (
-          <Money size="kpi" tone="onContrast" value={simulation.principalReduced} />
+          <span className={heroValue}>
+            {formatCurrency(simulation.principalReduced)} less to repay
+          </span>
         )
       }
     />
@@ -373,7 +375,9 @@ export const OverpaymentSimulator: FC<OverpaymentSimulatorProps> = ({
             <div className={chartLegend()}>
               <span className={chartLegendItem()}>
                 <span aria-hidden="true" className={legendSwatch({ kind: "standard" })} />
-                No overpayment, ends after {standardTermLabel} (solid)
+                {isInterestOnly
+                  ? `No overpayment, the full ${formatCurrency(loanAmount)} is due at the end (solid)`
+                  : `No overpayment, ends after ${standardTermLabel} (solid)`}
               </span>
               <span className={chartLegendItem()}>
                 <span aria-hidden="true" className={legendSwatch({ kind: "overpay" })} />
@@ -390,7 +394,7 @@ export const OverpaymentSimulator: FC<OverpaymentSimulatorProps> = ({
               <ResponsiveContainer height="100%" width="100%">
                 <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
                   <defs>
-                    <linearGradient id="colorStandard" x1="0" x2="0" y1="0" y2="1">
+                    <linearGradient id={gradientId} x1="0" x2="0" y1="0" y2="1">
                       <stop offset="5%" stopColor={chartColor("debt")} stopOpacity={0.12} />
                       <stop offset="95%" stopColor={chartColor("debt")} stopOpacity={0} />
                     </linearGradient>
@@ -413,7 +417,7 @@ export const OverpaymentSimulator: FC<OverpaymentSimulatorProps> = ({
                   <Area
                     activeDot={{ r: 6 }}
                     dataKey="Standard Plan"
-                    fill="url(#colorStandard)"
+                    fill={`url(#${gradientId})`}
                     isAnimationActive={false}
                     name="No overpayment"
                     stroke={chartColor("debt")}
@@ -435,8 +439,9 @@ export const OverpaymentSimulator: FC<OverpaymentSimulatorProps> = ({
               </ResponsiveContainer>
             </div>
             <p className={stateNote}>
-              Assumes the rate stays at {interestRate}% for the whole term. Projection, not a
-              forecast.
+              Assumes the rate stays at{" "}
+              {new Intl.NumberFormat("en-GB", { maximumFractionDigits: 2 }).format(interestRate)}%
+              for the whole term. Projection, not a forecast.
             </p>
           </ChartFigure>
         ) : (
