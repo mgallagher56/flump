@@ -9,10 +9,6 @@ import { roundTo2dp } from "~/utils/roundTo2dp";
 
 export const meta: MetaFunction = () => [{ title: "Savings & Forecasting | Flump" }];
 
-export const handle = {
-  i18n: ["common"],
-};
-
 export const action = async (args: ActionFunctionArgs) => {
   const { accessToken } = await getAuthSession(args, { ensureSignedIn: true });
   const formData = await args.request.formData();

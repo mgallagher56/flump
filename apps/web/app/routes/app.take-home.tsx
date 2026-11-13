@@ -6,10 +6,6 @@ import { loadWorkspaceSnapshot } from "~/services/backend-client.server";
 
 export const meta: MetaFunction = () => [{ title: "Take-home pay | Flump" }];
 
-export const handle = {
-  i18n: ["common"],
-};
-
 export const loader = async (args: LoaderFunctionArgs) => {
   const { userProfile, user } = await loadWorkspaceSnapshot(args);
   return data({ userProfile, user });

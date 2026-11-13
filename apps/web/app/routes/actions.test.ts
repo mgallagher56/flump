@@ -11,7 +11,6 @@ vi.mock("~/utils/auth.server", () => ({
   }),
   requireAccessToken: ({ accessToken }: { accessToken?: string }) => accessToken,
 }));
-vi.mock("~/i18n.server", () => ({ default: { getLocale: vi.fn().mockResolvedValue("en") } }));
 
 import { BankSyncOrchestrator } from "@flump/banking/server";
 import { apiConfig } from "~/config.server";

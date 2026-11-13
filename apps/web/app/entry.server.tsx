@@ -11,7 +11,6 @@ import type { EntryContext, RouterContextProvider } from "react-router";
 import { ServerRouter } from "react-router";
 
 import i18n from "./i18n";
-import i18next from "./i18n.server";
 import { reportServerError } from "./observability/sentry.server";
 import { nonceContext } from "./security/csp.server";
 import { applyCachePolicy, applySecurityHeaders } from "./security/headers.server";
@@ -47,16 +46,14 @@ export default async function handleRequest(
   const callbackName = isbot(request.headers.get("user-agent")) ? "onAllReady" : "onShellReady";
 
   const instance = createInstance();
-  const lng = await i18next.getLocale(request);
-  const ns = i18next.getRouteNamespaces(reactRouterContext);
 
   await instance
     .use(initReactI18next)
     .use(Backend)
     .init({
       ...i18n,
-      lng,
-      ns,
+      lng: i18n.lng,
+      ns: i18n.ns,
       backend: { loadPath: resolve("./public/locales/{{lng}}/{{ns}}.json") },
     });
 

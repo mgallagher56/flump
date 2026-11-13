@@ -54,9 +54,6 @@ vi.mock("react-router", async () => {
   };
 });
 vi.mock("react-i18next", async () => await vi.importActual("react-i18next"));
-vi.mock("./i18n.server", () => ({
-  default: { getLocale: vi.fn(async () => "en"), getRouteNamespaces: vi.fn(() => ["common"]) },
-}));
 vi.mock("./utils/auth.server", () => ({ getAuthSession: vi.fn() }));
 
 import handleRequest from "./entry.server";

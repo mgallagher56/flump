@@ -22,7 +22,6 @@ vi.mock("~/utils/auth.server", async (importOriginal) => ({
   ...(await importOriginal<typeof import("~/utils/auth.server")>()),
   getAuthSession: (...a: unknown[]) => getAuthSession(...a),
 }));
-vi.mock("~/i18n.server", () => ({ default: { getLocale: vi.fn().mockResolvedValue("en") } }));
 vi.mock("@workos-inc/authkit-react-router", () => ({
   authLoader: () => async () => new Response(null, { status: 302, headers: { Location: "/app" } }),
   configure: vi.fn(),

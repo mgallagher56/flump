@@ -30,7 +30,6 @@ vi.mock("~/utils/auth.server", () => ({
   getAuthSession: async () => ({ accessToken: "mock-session-token", user: { id: "dev_user_123" } }),
   requireAccessToken: ({ accessToken }: { accessToken?: string }) => accessToken,
 }));
-vi.mock("~/i18n.server", () => ({ default: { getLocale: vi.fn().mockResolvedValue("en") } }));
 
 import { apiConfig } from "~/config.server";
 import { backendFetch } from "~/services/backend-client.server";

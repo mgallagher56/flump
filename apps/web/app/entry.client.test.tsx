@@ -25,7 +25,6 @@ vi.mock("react-i18next", () => ({
   I18nextProvider: ({ children }: { children: unknown }) => children,
   initReactI18next: {},
 }));
-vi.mock("remix-i18next/client", () => ({ getInitialNamespaces: () => [] }));
 
 type TestWindow = {
   ENV?: Record<string, string>;
