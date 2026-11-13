@@ -6,6 +6,12 @@
   "tasks": {
     "build": {
       "env": ["$TURBO_EXTENDS$", "RAILWAY_GIT_COMMIT_SHA", "GITHUB_SHA", "VITE_APP_VERSION"]
+    },
+    // The web contract suite (app/contract) boots apps/backend/src/main.ts, which imports the
+    // built workspace packages the backend depends on. Declare that so the web shard builds them
+    // without needing the backend's own tests in the same run.
+    "test:coverage": {
+      "dependsOn": ["$TURBO_EXTENDS$", "backend#^build"]
     }
   }
 }
