@@ -63,7 +63,7 @@ export const CollapsibleDrawer: FC<CollapsibleDrawerProps> = ({
   return (
     <div className={cx(drawerContainer(), className)}>
       <button
-        aria-controls={bodyId}
+        aria-controls={isOpen ? bodyId : undefined}
         aria-expanded={isOpen}
         className={cx(drawerHeaderButton())}
         type="button"

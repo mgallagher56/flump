@@ -1,5 +1,12 @@
 import { cva } from "../../../styled-system/css";
 
+/**
+ * Distance kept clear above sticky elements for an app header. A page or the app shell sets
+ * `--app-header-offset` (for example `css({ "--app-header-offset": "64px" })` on a wrapper); it
+ * falls back to 0 so the layout works without a header.
+ */
+const headerOffset = "var(--app-header-offset, 0px)";
+
 export const splitGrid = cva({
   base: {
     display: "grid",
@@ -18,7 +25,7 @@ export const splitSummaryBar = cva({
     justifyContent: "space-between",
     gap: "3",
     position: "sticky",
-    top: "0",
+    top: headerOffset,
     zIndex: "sticky",
     px: "4",
     py: "3",
@@ -65,12 +72,11 @@ export const splitLeftControls = cva({
     gridColumn: { base: "span 1", lg: "span 5" },
     flexDirection: "column",
     gap: "4",
+    display: "flex",
     position: { lg: "sticky" },
-    top: { lg: "4" },
-    // Under lg the controls are revealed by the Adjust control; from lg they are always shown.
-    display: { base: "none", lg: "flex" },
+    top: { lg: `calc(${headerOffset} + token(spacing.4))` },
     // The page may be taller than the viewport: let the sticky column scroll on its own.
-    maxHeight: { lg: "calc(100vh - 32px)" },
+    maxHeight: { lg: `calc(100vh - ${headerOffset} - 32px)` },
     overflowY: { lg: "auto" },
   },
   variants: {
@@ -78,14 +84,15 @@ export const splitLeftControls = cva({
       4: { gridColumn: { base: "span 1", lg: "span 4" } },
       5: { gridColumn: { base: "span 1", lg: "span 5" } },
     },
-    open: {
-      true: { display: "flex" },
+    // Under lg, with a summary bar, the controls stay hidden until Adjust is pressed.
+    collapsed: {
+      true: { display: { base: "none", lg: "flex" } },
       false: {},
     },
   },
   defaultVariants: {
     span: 5,
-    open: false,
+    collapsed: false,
   },
 });
 

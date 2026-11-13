@@ -143,19 +143,19 @@ exports[`<AccountDetailContainer /> > should render 1`] = `
               Balance history from 1/21 to 12/23: £1,000 at the start and £1,000 at the end, across 24 monthly balances.
             </figcaption>
             <div
-              class="bdr_xl bd-w_1px border-style_solid bd-c_border.subtle bg-c_surface.card ov_hidden trs_border-color_0.2s_ease"
+              class="bdr_2xl bd-w_1px border-style_solid bd-c_border.subtle bg-c_surface.card ov_hidden"
             >
               <button
                 aria-expanded="false"
-                class="w_100% d_flex ai_center jc_space-between p_14px_16px md:p_16px_20px bg-c_transparent bd_none cursor_pointer ta_left trs_background-color_0.15s_ease hover:bg-c_surface.subtle focusVisible:ring_2px_solid focusVisible:ring-c_border.focusRing focusVisible:ring-o_-2px"
+                class="w_100% d_flex ai_center jc_space-between gap_4 p_14px_16px md:p_16px_20px min-h_touch bg-c_transparent bd_none cursor_pointer ta_left c_text.primary motionSafe:trs_background-color_token(durations.fast)_token(easings.standard) hover:bg-c_surface.subtle focusVisible:ring_2px_solid focusVisible:ring-c_border.focusRing focusVisible:ring-o_-2px"
                 type="button"
               >
                 <div>
                   <div
-                    style="display: flex; align-items: center; gap: 8px;"
+                    class="d_flex ai_center flex-wrap_wrap gap_2"
                   >
                     <span
-                      class="fs_sm fw_semibold c_text.primary"
+                      class="textStyle_label.md fw_semibold c_text.primary"
                     >
                       Show data
                     </span>
@@ -163,9 +163,32 @@ exports[`<AccountDetailContainer /> > should render 1`] = `
                 </div>
                 <span
                   aria-hidden="true"
-                  class="fs_xs fw_semibold c_primary d_inline-flex ai_center gap_4px"
+                  class="d_inline-flex ai_center gap_1 flex-sh_0 textStyle_label.sm fw_semibold c_primary"
                 >
                   ▼
+                  <span
+                    aria-hidden="true"
+                    class="d_inline-flex motionSafe:trs_transform_token(durations.base)_token(easings.standard)"
+                  >
+                    <svg
+                      aria-hidden="true"
+                      class="lucide lucide-chevron-down d_inline-block flex-sh_0 c_currentColor va_middle w_16px h_16px"
+                      fill="none"
+                      focusable="false"
+                      height="16"
+                      stroke="currentColor"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="1.75"
+                      viewBox="0 0 24 24"
+                      width="16"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="m6 9 6 6 6-6"
+                      />
+                    </svg>
+                  </span>
                 </span>
               </button>
             </div>

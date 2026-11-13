@@ -1,10 +1,11 @@
 import {
   type ChangeEvent,
+  type CSSProperties,
   type FC,
   type FocusEvent,
   type KeyboardEvent,
+  useEffect,
   useId,
-  useLayoutEffect,
   useRef,
   useState,
 } from "react";
@@ -58,10 +59,14 @@ const decimalsOf = (n: number): number => {
 };
 
 /** Parses en-GB typed entry: strips currency and percent signs, grouping commas and spaces. */
+const PLAIN_NUMBER = /^-?\d+(\.\d+)?$/;
+// Commas are only accepted as thousands grouping ("1,250" yes, "1,5" no).
+const GROUPED_NUMBER = /^-?\d{1,3}(,\d{3})+(\.\d+)?$/;
+
 export const parseSliderEntry = (text: string): number | null => {
-  const cleaned = text.replace(/[£%,\s]/g, "");
-  if (cleaned === "" || cleaned === "-" || cleaned === ".") return null;
-  const parsed = Number(cleaned);
+  const cleaned = text.replace(/[£%\s]/g, "");
+  if (!PLAIN_NUMBER.test(cleaned) && !GROUPED_NUMBER.test(cleaned)) return null;
+  const parsed = Number(cleaned.replace(/,/g, ""));
   return Number.isFinite(parsed) ? parsed : null;
 };
 
@@ -86,7 +91,7 @@ export const SliderField: FC<SliderFieldProps> = ({
 }) => {
   const inputId = useId();
   const helperId = useId();
-  const rangeRef = useRef<HTMLInputElement>(null);
+  const selectFrame = useRef<number | null>(null);
   const [draft, setDraft] = useState<string | null>(null);
   const known = typeof value === "number" && Number.isFinite(value);
 
@@ -108,14 +113,19 @@ export const SliderField: FC<SliderFieldProps> = ({
       : `${unitPrefix}${formatBare(value)}${unitSuffix}`
     : "Not set";
 
-  useLayoutEffect(() => {
-    const el = rangeRef.current;
-    if (!el) return;
-    const current = known ? clamp(value, min, max) : min;
-    const span = max - min;
-    const pct = span > 0 ? ((current - min) / span) * 100 : 0;
-    el.style.setProperty("--slider-fill", `${pct}%`);
-  }, [known, value, min, max]);
+  const cancelSelect = () => {
+    if (selectFrame.current !== null) cancelAnimationFrame(selectFrame.current);
+    selectFrame.current = null;
+  };
+  useEffect(() => cancelSelect, []);
+
+  // The filled part of the track is driven by a custom property in the style attribute (same
+  // approach as ProgressBar's dynamic width). Rendering it with the element, rather than from an
+  // effect, means server-rendered markup already has the right fill and nothing flashes.
+  const current = known ? clamp(value, min, max) : min;
+  const span = max - min;
+  const fillPct = span > 0 ? ((current - min) / span) * 100 : 0;
+  const fillStyle = { "--slider-fill": `${fillPct}%` } as CSSProperties;
 
   const handleSliderChange = (e: ChangeEvent<HTMLInputElement>) => {
     setDraft(null);
@@ -127,9 +137,8 @@ export const SliderField: FC<SliderFieldProps> = ({
   // and testable.
   const handleSliderKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (disabled || e.altKey || e.ctrlKey || e.metaKey) return;
-    const current = known ? clamp(value, min, max) : min;
     const page = Math.max(step, Math.round((max - min) / 10 / step) * step);
-    let next: number | undefined;
+    let next: number;
     switch (e.key) {
       case "ArrowRight":
       case "ArrowUp":
@@ -171,12 +180,19 @@ export const SliderField: FC<SliderFieldProps> = ({
 
   const handlePillFocus = (e: FocusEvent<HTMLInputElement>) => {
     // Edit the plain number without symbols or grouping.
-    setDraft(known ? String(value) : "");
+    const initial = known ? String(value) : "";
+    setDraft(initial);
     const el = e.currentTarget;
-    requestAnimationFrame(() => el.select());
+    cancelSelect();
+    selectFrame.current = requestAnimationFrame(() => {
+      selectFrame.current = null;
+      // Only select the untouched text: never swallow characters the user has already typed.
+      if (el.value === initial) el.select();
+    });
   };
 
   const handlePillBlur = () => {
+    cancelSelect();
     if (draft === null) return;
     const parsed = parseSliderEntry(draft);
     if (parsed === null) {
@@ -219,7 +235,6 @@ export const SliderField: FC<SliderFieldProps> = ({
       </div>
 
       <input
-        ref={rangeRef}
         aria-describedby={helperText ? helperId : undefined}
         aria-label={`${label} range slider`}
         aria-valuetext={valueText}
@@ -229,8 +244,9 @@ export const SliderField: FC<SliderFieldProps> = ({
         max={max}
         min={min}
         step={step}
+        style={fillStyle}
         type="range"
-        value={known ? clamp(value, min, max) : min}
+        value={current}
         onChange={handleSliderChange}
         onKeyDown={handleSliderKeyDown}
       />

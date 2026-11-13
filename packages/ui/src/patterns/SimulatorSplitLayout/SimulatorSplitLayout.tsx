@@ -44,7 +44,12 @@ export interface SimulatorSplitLayoutProps {
   content: ReactNode;
   /**
    * Headline outcome shown in a sticky summary bar under `lg`, next to the Adjust control, so the
-   * result stays visible while the controls are open.
+   * result stays visible while the controls are open. Only when `summary` is provided do the
+   * controls collapse under `lg`; without it they stay visible, stacked above the results.
+   *
+   * Sticky offset: the bar and the sticky column read the CSS custom property
+   * `--app-header-offset` (fallback 0) so they sit below a sticky app header. Set it on a wrapper,
+   * for example `css({ "--app-header-offset": "64px" })`.
    */
   summary?: ReactNode;
   controlsSpan?: 4 | 5;
@@ -59,7 +64,10 @@ export interface SimulatorSplitLayoutProps {
   /**
    * Replaces the inline reveal under `lg` (for example with a bottom Sheet). Called only below
    * `lg`; from `lg` the controls always render in the sticky column. When omitted, the controls
-   * reveal inline above the results.
+   * reveal inline above the results. Only used together with `summary`.
+   *
+   * Note: the controls are mounted in one place at a time, so crossing the `lg` breakpoint
+   * remounts them (local state inside the controls is lost; keep parameter state in the parent).
    */
   renderControlsContainer?: (props: ControlsContainerRenderProps) => ReactNode;
   className?: string;
@@ -81,23 +89,27 @@ export const SimulatorSplitLayout: FC<SimulatorSplitLayoutProps> = ({
   const [open, setOpen] = useState(defaultControlsOpen);
   const controlsId = useId();
   const isDesktop = useSyncExternalStore(subscribeDesktop, getDesktop, () => true);
-  const custom = !isDesktop && renderControlsContainer !== undefined;
+  const hasSummary = summary !== undefined && summary !== null && summary !== false;
+  const custom = hasSummary && !isDesktop && renderControlsContainer !== undefined;
 
   return (
     <div className={cx(splitGrid(), className)}>
-      <div className={splitSummaryBar()} data-testid="simulator-summary-bar">
-        <div className={splitSummaryText()}>{summary}</div>
-        <button
-          aria-controls={controlsId}
-          aria-expanded={open}
-          className={splitAdjustButton()}
-          type="button"
-          onClick={() => setOpen((prev) => !prev)}
-        >
-          <Icon icon={SlidersHorizontal} size="sm" />
-          {adjustLabel}
-        </button>
-      </div>
+      {hasSummary && (
+        <div className={splitSummaryBar()} data-testid="simulator-summary-bar">
+          <div className={splitSummaryText()}>{summary}</div>
+          <button
+            // The container always exists inline; with a custom container it may only exist open.
+            aria-controls={custom && !open ? undefined : controlsId}
+            aria-expanded={open}
+            className={splitAdjustButton()}
+            type="button"
+            onClick={() => setOpen((prev) => !prev)}
+          >
+            <Icon icon={SlidersHorizontal} size="sm" />
+            {adjustLabel}
+          </button>
+        </div>
+      )}
 
       {custom ? (
         renderControlsContainer?.({
@@ -110,7 +122,7 @@ export const SimulatorSplitLayout: FC<SimulatorSplitLayoutProps> = ({
       ) : (
         <section
           aria-label={controlsLabel}
-          className={cx(splitLeftControls({ span: controlsSpan, open }))}
+          className={cx(splitLeftControls({ span: controlsSpan, collapsed: hasSummary && !open }))}
           id={controlsId}
         >
           {controls}

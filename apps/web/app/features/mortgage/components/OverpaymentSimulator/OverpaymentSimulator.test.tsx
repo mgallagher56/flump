@@ -13,9 +13,7 @@ describe("<OverpaymentSimulator />", () => {
   };
 
   test("renders parameter controls, stats, and amortisation savings", () => {
-    const { getByText, getAllByDisplayValue } = customRender(
-      <OverpaymentSimulator {...defaultProps} />,
-    );
+    const { getByText, getByLabelText } = customRender(<OverpaymentSimulator {...defaultProps} />);
 
     expect(getByText("Overpayment")).toBeDefined();
     expect(getByText("Amortisation projection")).toBeDefined();
@@ -29,12 +27,10 @@ describe("<OverpaymentSimulator />", () => {
     expect(defaultProps.onOverpaymentChange).toHaveBeenCalledWith(300);
 
     // Verify number input change
-    const numberInputs = getAllByDisplayValue("200");
-    const numberInput = numberInputs.find((el) => el.getAttribute("type") === "number");
-    if (numberInput) {
-      fireEvent.change(numberInput, { target: { value: "400" } });
-      expect(defaultProps.onOverpaymentChange).toHaveBeenCalledWith(400);
-    }
+    const numberInput = getByLabelText("Monthly overpayment input");
+    fireEvent.change(numberInput, { target: { value: "400" } });
+    fireEvent.blur(numberInput);
+    expect(defaultProps.onOverpaymentChange).toHaveBeenCalledWith(400);
   });
 
   test("renders with interest-only mortgage type", () => {
