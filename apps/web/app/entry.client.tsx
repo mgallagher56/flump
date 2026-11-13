@@ -41,7 +41,8 @@ async function hydrate(): Promise<void> {
         backend: { loadPath: "/locales/{{lng}}/{{ns}}.json" },
       });
 
-  await startSentry();
+  // Not awaited: error reporting must never delay hydration.
+  void startSentry();
 
   startTransition(() => {
     hydrateRoot(

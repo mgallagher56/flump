@@ -30,7 +30,8 @@ The web app currently sends no security headers from `entry.server.tsx`. Planned
 1. Phase 0 header set on document and `.data` responses: HSTS, `X-Frame-Options`, enforced `frame-ancestors 'none'`, nosniff, Referrer-Policy, Permissions-Policy, `Cross-Origin-Opener-Policy: same-origin`. No COEP.
 2. CSRF Origin check on non-GET requests.
 3. Nonce plumbing, then a report-only CSP with a `/csp-report` endpoint, at least 14 days of soak, then enforcement.
-4. Prerequisites: remove Emotion, remove the `window.ENV` script after Phase 1, self-host fonts (D11).
+4. Sentry (E18-N3): the E20-N11 `connect-src` must allow the Sentry EU ingest origin (`https://*.ingest.de.sentry.io`), or browser reports are blocked. `entry.client.tsx` wraps the lazy Sentry start in try/catch so error reporting can never stop hydration; this also hides a CSP failure, so check the browser console for blocked `connect-src` requests when verifying the CSP.
+5. Prerequisites: remove Emotion, remove the `window.ENV` script after Phase 1, self-host fonts (D11).
 
 ### HSTS preload
 

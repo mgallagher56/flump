@@ -29,6 +29,7 @@ describe("Sentry sources", () => {
     const code = stripComments(read("../entry.client.tsx"));
     expect(code).not.toMatch(/^import .*sentry/m);
     expect(code).not.toMatch(/@sentry\//);
+    expect(code).toMatch(/void startSentry\(\)/);
     expect(code).toMatch(/await import\("\.\/observability\/sentry\.client"\)/);
   });
 

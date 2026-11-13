@@ -64,8 +64,8 @@ describe("entry.client Sentry wiring", () => {
   it("positive control: loads and inits the module with a DSN, and routes errors to it", async () => {
     const env = { SENTRY_DSN: "http://public@127.0.0.1:9/1", SENTRY_ENVIRONMENT: "staging" };
     await boot(env);
+    await vi.waitFor(() => expect(init).toHaveBeenCalledExactlyOnceWith(env));
     expect(sentryModuleLoaded).toHaveBeenCalledOnce();
-    expect(init).toHaveBeenCalledExactlyOnceWith(env);
 
     // hydrateRoot received the element tree; render it shallowly to reach HydratedRouter's props.
     const element = hydrateRoot.mock.calls[0]?.[1] as {
@@ -73,7 +73,10 @@ describe("entry.client Sentry wiring", () => {
     };
     const router = element.props.children.props.children;
     const error = new Error("render failed");
-    router.props.onError(error);
+    await vi.waitFor(() => {
+      router.props.onError(error);
+      expect(captureClientError).toHaveBeenCalled();
+    });
     expect(captureClientError).toHaveBeenCalledExactlyOnceWith(error);
   });
 });

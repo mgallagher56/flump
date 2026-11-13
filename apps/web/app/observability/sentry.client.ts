@@ -23,7 +23,6 @@ export const DENY_URLS: RegExp[] = [
   /^moz-extension:\/\//i,
   /^safari-(web-)?extension:\/\//i,
   /^edge-extension:\/\//i,
-  /extensions\//i,
 ];
 
 export interface ClientSentryEnv {
