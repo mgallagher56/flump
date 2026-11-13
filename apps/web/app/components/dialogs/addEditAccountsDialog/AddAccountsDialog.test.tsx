@@ -110,7 +110,7 @@ describe("<AddAccountDialogBtn", () => {
     await user.click(getByText("Monzo Bank"));
 
     // Enter token
-    const tokenInput = getByPlaceholderText("Access token from developers.monzo.com...");
+    const tokenInput = getByPlaceholderText("Access token from developers.monzo.com…");
     await user.type(tokenInput, "secret-monzo-token");
 
     // Click Connect Monzo Bank

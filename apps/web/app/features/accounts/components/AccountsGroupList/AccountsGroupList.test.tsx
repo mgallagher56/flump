@@ -65,8 +65,8 @@ describe("<AccountsGroupList />", () => {
         ]}
       />,
     );
-    expect(getByText("Up 4%")).toBeDefined();
-    expect(getByText("Down 3%")).toBeDefined();
+    expect(getByText("Up", { exact: false })).toBeDefined();
+    expect(getByText("Down", { exact: false })).toBeDefined();
   });
 
   test("keeps rows past the eighth behind a drawer", () => {

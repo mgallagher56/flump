@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react";
+import { expect, within } from "storybook/test";
 import { AccountsSummary } from "./AccountsSummary";
 
 const meta: Meta<typeof AccountsSummary> = {
@@ -25,7 +26,13 @@ const meta: Meta<typeof AccountsSummary> = {
 export default meta;
 type Story = StoryObj<typeof AccountsSummary>;
 
-export const Default: Story = {};
+export const Default: Story = {
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(canvas.getByText("Net worth")).toBeDefined();
+    await expect(canvas.getByRole("heading", { name: "Where you stand" })).toBeDefined();
+  },
+};
 
 export const WithStudentLoan: Story = {
   args: {

@@ -33,9 +33,6 @@ interface BankConnection {
 
 export interface BankConnectionsListProps {
   connections: BankConnection[];
-  /** Kept for API compatibility: the layout now adapts to the width with CSS. */
-  isMobile?: boolean;
-  variant?: "desktop" | "mobile";
   /** Bank connection is owner-only (E19 D3-B); without this the connect entry points are hidden. */
   canConnect?: boolean;
 }
@@ -89,7 +86,9 @@ const BankConnectionsList: FC<BankConnectionsListProps> = ({
             Manage your connected bank credentials and balance feeds.
           </p>
         </div>
-        {canConnect && <ConnectBankWizard onSuccess={() => revalidator.revalidate()} />}
+        {canConnect && connections.length > 0 && (
+          <ConnectBankWizard onSuccess={() => revalidator.revalidate()} />
+        )}
       </div>
 
       <ConfirmDialog
@@ -131,7 +130,13 @@ const BankConnectionsList: FC<BankConnectionsListProps> = ({
                       </p>
                       <StatusBadge
                         size="sm"
-                        variant={conn.status === "connected" ? "positive" : "danger"}
+                        variant={
+                          conn.status === "connected"
+                            ? "positive"
+                            : conn.status === "disconnected"
+                              ? "warning"
+                              : "danger"
+                        }
                       >
                         {conn.status === "connected" ? (
                           <>
@@ -139,7 +144,8 @@ const BankConnectionsList: FC<BankConnectionsListProps> = ({
                           </>
                         ) : (
                           <>
-                            <Icon icon={CircleAlert} size="sm" /> Error
+                            <Icon icon={CircleAlert} size="sm" />{" "}
+                            {conn.status === "disconnected" ? "Disconnected" : "Error"}
                           </>
                         )}
                       </StatusBadge>
@@ -148,6 +154,7 @@ const BankConnectionsList: FC<BankConnectionsListProps> = ({
 
                   <div className={connectionActions()}>
                     <Button
+                      aria-label={`Sync ${conn.institutionName}`}
                       disabled={isSyncing}
                       size="sm"
                       variant="outline"
@@ -159,6 +166,7 @@ const BankConnectionsList: FC<BankConnectionsListProps> = ({
                       {isSyncing ? "Syncing" : "Sync now"}
                     </Button>
                     <Button
+                      aria-label={`Disconnect ${conn.institutionName}`}
                       size="sm"
                       variant="destructive"
                       onClick={() => setDisconnectTarget(conn)}

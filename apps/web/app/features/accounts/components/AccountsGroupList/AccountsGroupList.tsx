@@ -3,6 +3,7 @@ import {
   CollapsibleDrawer,
   Icon,
   Money,
+  Num,
   StatusBadge,
   Table,
   TBody,
@@ -100,7 +101,8 @@ const Change: FC<{ row: AccountRow }> = ({ row }) => {
   const up = row.changePercent > 0;
   return (
     <StatusBadge size="sm" variant={row.favourable ? "positive" : "danger"}>
-      {up ? "Up" : "Down"} {Math.abs(row.changePercent)}%
+      {up ? "Up" : "Down"}{" "}
+      <Num fractionDigits={0} kind="percent" size="sm" value={Math.abs(row.changePercent)} />
     </StatusBadge>
   );
 };
@@ -168,9 +170,9 @@ export const AccountsGroupList: FC<AccountsGroupListProps> = ({
         return (
           <section key={type} aria-labelledby={headingId} className={group()}>
             <div className={groupHeader()}>
-              <h2 className={groupTitle()} id={headingId}>
+              <h3 className={groupTitle()} id={headingId}>
                 {type}
-              </h2>
+              </h3>
               <p className={groupMeta()}>
                 {groupRows.length === 1 ? "1 account" : `${groupRows.length} accounts`},{" "}
                 <Money size="sm" tone="muted" value={total} />

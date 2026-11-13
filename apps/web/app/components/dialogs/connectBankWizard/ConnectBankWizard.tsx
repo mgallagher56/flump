@@ -267,12 +267,12 @@ const ConnectBankWizard: FC<ConnectBankWizardProps> = ({ onSuccess }) => {
     selectedBank?.id === "trading212" ? "Trading 212 API key" : "Developer access token";
   const tokenPlaceholder =
     selectedBank?.id === "monzo"
-      ? "Monzo access token (e.g. eyJ...)"
+      ? "Monzo access token (for example eyJ…)"
       : selectedBank?.id === "starling"
-        ? "Starling Bearer token starting with eyJ..."
+        ? "Starling bearer token starting with eyJ…"
         : selectedBank?.id === "trading212"
-          ? "Trading 212 API key..."
-          : "Read-only access token...";
+          ? "Trading 212 API key…"
+          : "Read-only access token…";
   const tokenHelp =
     selectedBank?.id === "monzo"
       ? "Sign in with your Monzo email at https://developers.monzo.com and copy your access token from the playground."
@@ -283,7 +283,7 @@ const ConnectBankWizard: FC<ConnectBankWizardProps> = ({ onSuccess }) => {
           : `Paste a read-only access token from ${selectedBank?.name}, or go back and choose the OAuth flow.`;
 
   // One dialog, one title per step: the step decides the title, description, body and footer.
-  let title = "Connect Bank Account";
+  let title = "Connect bank account";
   let description: string | undefined =
     "Choose your bank or financial institution. Bank connection is a preview.";
   let body: React.ReactNode = null;
@@ -297,7 +297,7 @@ const ConnectBankWizard: FC<ConnectBankWizardProps> = ({ onSuccess }) => {
             <TextInput
               {...controlProps(field)}
               name="search"
-              placeholder="Search your bank..."
+              placeholder="Search your bank…"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
@@ -344,7 +344,7 @@ const ConnectBankWizard: FC<ConnectBankWizardProps> = ({ onSuccess }) => {
       </Button>
     );
   } else if (step === "method" && selectedBank) {
-    title = "Choose Connection Mode";
+    title = "Choose how to connect";
     description = `Select how you want to connect to ${selectedBank.name}.`;
     body = (
       <div className={stack()}>
@@ -353,7 +353,7 @@ const ConnectBankWizard: FC<ConnectBankWizardProps> = ({ onSuccess }) => {
             <Icon icon={KeyRound} size="md" />
           </span>
           <span className={methodCardBody()}>
-            <span className={cardTitle()}>Personal Access Token (Recommended)</span>
+            <span className={cardTitle()}>Personal access token (recommended)</span>
             <span className={cardMeta()}>
               Preview: paste your own read-only access token from your provider.
             </span>
@@ -364,7 +364,7 @@ const ConnectBankWizard: FC<ConnectBankWizardProps> = ({ onSuccess }) => {
             <Icon icon={Globe} size="md" />
           </span>
           <span className={methodCardBody()}>
-            <span className={cardTitle()}>OAuth 2.0 Auth Flow</span>
+            <span className={cardTitle()}>OAuth 2.0 sign-in</span>
             <span className={cardMeta()}>
               Redirect to {selectedBank.name}&apos;s secure portal to authorise read-only access
               (requires server OAuth keys).
@@ -380,7 +380,7 @@ const ConnectBankWizard: FC<ConnectBankWizardProps> = ({ onSuccess }) => {
       </Button>
     );
   } else if (step === "tokenInput" && selectedBank) {
-    title = `${selectedBank.name} Developer Token`;
+    title = `${selectedBank.name} developer token`;
     description = "Preview: paste your own read-only access token from your provider.";
     body = (
       <div className={stack()}>
@@ -552,7 +552,7 @@ const ConnectBankWizard: FC<ConnectBankWizardProps> = ({ onSuccess }) => {
     <>
       <Button onClick={handleOpenModal}>
         <Icon icon={Landmark} size="sm" />
-        Connect Bank Account
+        Connect bank account
       </Button>
       <Dialog
         description={description}
