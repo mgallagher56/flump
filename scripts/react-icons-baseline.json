@@ -41,7 +41,6 @@
   "apps/web/app/components/savings/SavingsAccountsList.tsx": 1,
   "apps/web/app/components/savings/SavingsForecasterCard.tsx": 1,
   "apps/web/app/components/savings/SavingsSummaryCards.tsx": 1,
-  "apps/web/app/components/setup/SetupChecklist.tsx": 1,
   "apps/web/app/components/tax/CopyTaxYearModal.tsx": 1,
   "apps/web/app/components/tax/PaymentsOnAccountCard.tsx": 1,
   "apps/web/app/components/tax/TaxIncomeSectionCard.tsx": 1,

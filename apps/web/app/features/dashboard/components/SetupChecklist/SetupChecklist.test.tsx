@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import SetupChecklist from "./SetupChecklist";
+import { SETUP_CHECKLIST_DISMISSED_KEY, SetupChecklist } from "./SetupChecklist";
 
 const mockNavigate = vi.fn();
 
@@ -95,8 +95,86 @@ describe("SetupChecklist", () => {
     expect(heading.contains(toggle)).toBe(true);
     expect(toggle.querySelector("button, a, input")).toBeNull();
     expect(
-      screen.getByRole("button", { name: "Dismiss setup checklist" }).closest("h4"),
+      screen.getByRole("button", { name: "Dismiss setup checklist" }).closest("h2"),
     ).toBeNull();
+  });
+
+  describe("dismissal", () => {
+    const props = {
+      completedSteps: [] as string[],
+      hasAccounts: false,
+      hasBudget: false,
+      hasMortgageAccount: false,
+      hasProfile: false,
+      hasRunForecast: false,
+      variant: "mobile" as const,
+    };
+
+    it("stays hidden for a browser that already dismissed it", () => {
+      window.localStorage.setItem(SETUP_CHECKLIST_DISMISSED_KEY, "true");
+      const { container } = render(<SetupChecklist {...props} />);
+      expect(container.firstChild).toBeNull();
+    });
+
+    it("hides immediately and remembers the dismissal", () => {
+      render(<SetupChecklist {...props} />);
+      fireEvent.click(screen.getByRole("button", { name: "Dismiss setup checklist" }));
+      expect(screen.queryByRole("heading", { name: /refine and drill down/i })).toBeNull();
+      expect(window.localStorage.getItem(SETUP_CHECKLIST_DISMISSED_KEY)).toBe("true");
+    });
+
+    it("still works when storage is blocked", () => {
+      const getItem = vi.spyOn(Storage.prototype, "getItem").mockImplementation(() => {
+        throw new Error("blocked");
+      });
+      const setItem = vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
+        throw new Error("blocked");
+      });
+      try {
+        render(<SetupChecklist {...props} />);
+        expect(screen.getByRole("heading", { name: /refine and drill down/i })).toBeDefined();
+        fireEvent.click(screen.getByRole("button", { name: "Dismiss setup checklist" }));
+        expect(screen.queryByRole("heading", { name: /refine and drill down/i })).toBeNull();
+      } finally {
+        getItem.mockRestore();
+        setItem.mockRestore();
+      }
+    });
+  });
+
+  describe("progress", () => {
+    const base = {
+      hasAccounts: false,
+      hasBudget: false,
+      hasMortgageAccount: false,
+      hasProfile: false,
+      hasRunForecast: false,
+      variant: "mobile" as const,
+    };
+
+    it("announces the count through a status region and exposes a progress bar", () => {
+      render(<SetupChecklist {...base} completedSteps={["budget", "accounts"]} />);
+      expect(screen.getByRole("status").textContent).toBe("2 of 7 steps complete");
+      expect(screen.getByRole("progressbar").getAttribute("aria-valuenow")).toBe("2");
+    });
+
+    it("renders nothing once every step is complete", () => {
+      const { container } = render(
+        <SetupChecklist
+          {...base}
+          completedSteps={[
+            "budget",
+            "accounts",
+            "savings",
+            "pension",
+            "mortgage",
+            "forecast",
+            "tax",
+          ]}
+        />,
+      );
+      expect(container.firstChild).toBeNull();
+    });
   });
 
   describe("forecast step follows the Savings module", () => {

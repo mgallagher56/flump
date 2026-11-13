@@ -137,7 +137,7 @@ Flump is a monorepo managed with Turborepo (`turbo`) and Bun.
 
 ### 13. Setup Checklist Maintenance
 
-- **Checklist Currency**: Whenever a new user-facing feature is added (a new page, tool, or capability), the Setup Checklist component (`app/components/setup/SetupChecklist.tsx`) must be updated to include a corresponding onboarding step for that feature.
+- **Checklist Currency**: Whenever a new user-facing feature is added (a new page, tool, or capability), the Setup Checklist component (`app/features/dashboard/components/SetupChecklist/SetupChecklist.tsx`) must be updated to include a corresponding onboarding step for that feature.
 - **Checklist Steps**: Each new step should have:
   - A clear action label describing what the user should do
   - A completion condition (how we detect the step is done)
