@@ -100,12 +100,32 @@ describe("McpConnectionCard Feature Component", () => {
     });
 
     const select = screen.getByLabelText("Token Expiry") as HTMLSelectElement;
-    expect(Array.from(select.options).map((o) => o.value)).toEqual(["30", "90", "365"]);
+    expect(Array.from(select.options).map((o) => o.value)).toEqual(["7", "30", "90", "365"]);
     expect(screen.queryByText(/Never/)).toBeNull();
 
     fireEvent.change(select, { target: { value: "365" } });
     fireEvent.click(screen.getByTestId("confirm-generate-token"));
     await waitFor(() => expect(mockGenerate).toHaveBeenCalledWith("Client", true, 365));
+  });
+
+  it("always requests an anonymised token, even if the context-pack toggle is off", async () => {
+    const mockGenerate = vi.fn().mockResolvedValue({
+      id: "tok_a",
+      name: "Client",
+      rawToken: "flump_pat_secret_aaa",
+      tokenPrefix: "flump_pat_aa...aaa",
+      scopes: ["mcp:read:anonymized"],
+      anonymizeInstitutions: true,
+      expiresAt: "2027-11-12T00:00:00.000Z",
+    });
+    render(<McpConnectionCard onGenerateToken={mockGenerate} />);
+    fireEvent.click(screen.getByTestId("mcp-anonymize-toggle"));
+    fireEvent.click(screen.getByTestId("generate-token-trigger"));
+    fireEvent.change(screen.getByLabelText("Connection / Client Name"), {
+      target: { value: "Client" },
+    });
+    fireEvent.click(screen.getByTestId("confirm-generate-token"));
+    await waitFor(() => expect(mockGenerate).toHaveBeenCalledWith("Client", true, 90));
   });
 
   it("revokes an active token on user click", async () => {

@@ -34,6 +34,9 @@ import {
 } from "./mcp-access";
 import { UserProfileService } from "./user-profile.service";
 
+const PAT_EXPIRY_DAYS = [7, 30, 90, 365] as const;
+const DEFAULT_PAT_EXPIRY_DAYS = 90;
+
 @Injectable()
 export class McpService implements McpTokenStoreAdapter, McpUserDataProvider {
   private readonly logger = new Logger(McpService.name);
@@ -152,7 +155,10 @@ export class McpService implements McpTokenStoreAdapter, McpUserDataProvider {
         isEssential: b.isEssential,
         notes: b.notes,
       })),
-      taxRecords: taxRecords as any,
+      // Receipts (base64 blobs) are never sent to MCP clients (E20-N15/N16).
+      taxRecords: taxRecords.map(
+        ({ receiptData: _d, receiptFilename: _f, receiptMimeType: _m, ...rest }) => rest,
+      ) as any,
     };
   }
 
@@ -205,10 +211,28 @@ export class McpService implements McpTokenStoreAdapter, McpUserDataProvider {
       scopes?: string[];
     } = {},
   ) {
-    const cleanName = (name || "AI Agent Connection").trim();
-    if (!cleanName) {
-      throw new BadRequestException("Token name is required.");
+    const cleanName = (name ?? "").trim();
+    if (cleanName.length < 1 || cleanName.length > 64) {
+      throw new BadRequestException("Token name must be 1 to 64 characters.");
     }
+
+    const expiryDays =
+      options.expiryDays === undefined ? DEFAULT_PAT_EXPIRY_DAYS : options.expiryDays;
+    if (
+      typeof expiryDays !== "number" ||
+      !(PAT_EXPIRY_DAYS as readonly number[]).includes(expiryDays)
+    ) {
+      throw new BadRequestException(
+        `Token expiry must be one of ${PAT_EXPIRY_DAYS.join(", ")} days. Tokens that never expire are not allowed.`,
+      );
+    }
+
+    if (options.anonymizeInstitutions === false) {
+      throw new BadRequestException(
+        "Tokens must anonymise institution names. Revealing them needs step-up verification, which is not available yet.",
+      );
+    }
+    const anonymizeInstitutions = true;
 
     // Generate 32-hex cryptographically secure PAT
     const randomSecret = randomBytes(16).toString("hex");
@@ -217,12 +241,7 @@ export class McpService implements McpTokenStoreAdapter, McpUserDataProvider {
     const tokenPrefix = `flump_pat_${randomSecret.slice(0, 4)}...${randomSecret.slice(-4)}`;
 
     const scopes = options.scopes || ["mcp:read:anonymized", "mcp:simulate"];
-    const anonymizeInstitutions = options.anonymizeInstitutions ?? true;
-
-    let expiresAt: Date | null = null;
-    if (options.expiryDays && options.expiryDays > 0) {
-      expiresAt = new Date(Date.now() + options.expiryDays * 86400 * 1000);
-    }
+    const expiresAt = new Date(Date.now() + expiryDays * 86400 * 1000);
 
     const token = this.mcpTokenRepository.create({
       userId,
