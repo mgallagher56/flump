@@ -1,13 +1,8 @@
 import type { BuildContextPackInput } from "@flump/finance-engine";
 import type { McpUserDataProvider } from "../types.js";
 
-type Transactions = Awaited<ReturnType<NonNullable<McpUserDataProvider["queryTransactions"]>>>;
-
-export interface FakeProviderOptions {
-  transactions?: Transactions;
-  /** Omit `queryTransactions` entirely, to model a connection mode without it. */
-  withoutTransactions?: boolean;
-}
+// biome-ignore lint/complexity/noBannedTypes: no options yet; kept so call sites stay stable.
+export type FakeProviderOptions = {};
 
 export interface FakeProviderCall {
   userId: string;
@@ -22,7 +17,7 @@ export type FakeProvider = McpUserDataProvider & { calls: FakeProviderCall[] };
  */
 export function createFakeProvider(
   data: BuildContextPackInput,
-  options: FakeProviderOptions = {},
+  _options: FakeProviderOptions = {},
 ): FakeProvider {
   const calls: FakeProviderCall[] = [];
   const provider: FakeProvider = {
@@ -32,8 +27,5 @@ export function createFakeProvider(
       return { ...data, baseline: { ...data.baseline, userId } };
     },
   };
-  if (!options.withoutTransactions) {
-    provider.queryTransactions = async () => options.transactions ?? [];
-  }
   return provider;
 }

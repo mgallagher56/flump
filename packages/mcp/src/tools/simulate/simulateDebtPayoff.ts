@@ -233,6 +233,9 @@ export const simulateDebtPayoff = defineFlumpTool({
     const envelope = { assumptions, missing, provenance: { strategies: "account_balances" } };
 
     if (sim.length === 0 || startingDebtGbp <= 0) {
+      if (excluded.length === 0 && m.accounts.length > 0) {
+        notes.push("No consumer debts are recorded, so there is nothing to simulate.");
+      }
       return {
         result: {
           simulated: false,

@@ -79,7 +79,7 @@ export const projectNetWorth = defineFlumpTool({
   name: "project_net_worth",
   title: "Project net worth",
   description:
-    "Projects net worth year by year from the recorded account balances, with and without up to 10 events that each carry an explicit one-off and/or monthly cost. The expected investment return is required. Monthly saving defaults to the budget surplus when a budget exists and is otherwise reported in missing[] and set to zero. Cash, pension and property growth use fixed stated rates unless supplied. Mortgage repayments are not modelled, so equity grows only with property growth. Concise format returns every fifth year; detailed adds the balance breakdown.",
+    "Projects net worth year by year from the recorded account balances, with and without up to 10 events that each carry an explicit one-off and/or monthly cost. The expected investment return is required. Monthly saving defaults to the budget surplus when a budget exists and is otherwise reported in missing[] and set to zero. Cash (4%), pension (6.5%) and property (2.5%) growth use those rates unless supplied; each is listed in assumptions. Mortgage repayments are not modelled, so equity grows only with property growth. Concise format returns every fifth year; detailed adds the balance breakdown.",
   input: {
     horizonYears: z.number().int().min(1).max(MAX_HORIZON_YEARS).default(10),
     expectedReturnPct: pctInput(
@@ -116,6 +116,7 @@ export const projectNetWorth = defineFlumpTool({
       ),
     ];
     const missing: Missing[] = [];
+    const earlyNotes: string[] = [];
     if (m.accounts.length === 0) missing.push(ASK_NO_ACCOUNTS);
 
     let saving = input.monthlySavingGbp;
@@ -126,17 +127,20 @@ export const projectNetWorth = defineFlumpTool({
     } else {
       const budget = summariseBudget(m.raw.budgetEntries ?? []);
       if (budget.monthlyIncome !== null) {
-        saving = Math.max(
-          0,
-          round2(budget.monthlyIncome - budget.essentialMonthly - budget.discretionaryMonthly),
+        const surplus = round2(
+          budget.monthlyIncome - budget.essentialMonthly - budget.discretionaryMonthly,
         );
+        saving = Math.max(0, surplus);
         assumptions.push(
           derived(
             "monthlySavingGbp",
-            "Budget income minus essential and discretionary spending, before debt payments.",
-            saving,
+            "Budget income minus essential and discretionary spending. Debt minimums and pension contributions are not deducted or added; check the budget already includes them.",
+            surplus,
           ),
         );
+        if (surplus < 0) {
+          earlyNotes.push("The budget shows a monthly deficit, so zero saving was used.");
+        }
       } else {
         saving = 0;
         missing.push({
@@ -211,6 +215,10 @@ export const projectNetWorth = defineFlumpTool({
     );
     const last = forecast.trajectory[forecast.trajectory.length - 1];
     const notes = [
+      ...earlyNotes,
+      ...(s.getTotalProperty() < s.getTotalMortgageBalance()
+        ? ["Property is worth less than the mortgage; negative equity is counted as zero."]
+        : []),
       "Saving goes to debt first, then to investments (up to 20,000 pounds a year) and cash.",
       "Student loans are excluded. Mortgage repayments and inflation are not modelled.",
     ];

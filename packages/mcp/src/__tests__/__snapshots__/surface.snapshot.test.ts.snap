@@ -1602,8 +1602,8 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
                         "monthsSaved": {
                           "type": "number",
                         },
-                        "newPayoffDate": {
-                          "type": "string",
+                        "newTermMonths": {
+                          "type": "number",
                         },
                         "totalPaidInOverpaymentsGbp": {
                           "type": "number",
@@ -1612,7 +1612,7 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
                       "required": [
                         "interestSavedGbp",
                         "monthsSaved",
-                        "newPayoffDate",
+                        "newTermMonths",
                         "totalPaidInOverpaymentsGbp",
                       ],
                       "type": "object",
@@ -2074,7 +2074,7 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
       "openWorldHint": false,
       "readOnlyHint": true,
     },
-    "description": "Projects net worth year by year from the recorded account balances, with and without up to 10 events that each carry an explicit one-off and/or monthly cost. The expected investment return is required. Monthly saving defaults to the budget surplus when a budget exists and is otherwise reported in missing[] and set to zero. Cash, pension and property growth use fixed stated rates unless supplied. Mortgage repayments are not modelled, so equity grows only with property growth. Concise format returns every fifth year; detailed adds the balance breakdown.",
+    "description": "Projects net worth year by year from the recorded account balances, with and without up to 10 events that each carry an explicit one-off and/or monthly cost. The expected investment return is required. Monthly saving defaults to the budget surplus when a budget exists and is otherwise reported in missing[] and set to zero. Cash (4%), pension (6.5%) and property (2.5%) growth use those rates unless supplied; each is listed in assumptions. Mortgage repayments are not modelled, so equity grows only with property growth. Concise format returns every fifth year; detailed adds the balance breakdown.",
     "execution": {
       "taskSupport": "forbidden",
     },
@@ -2705,7 +2705,7 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
 exports[`per-tool output size (E17-N1) > calls every registered tool and pins the output size in bytes 1`] = `
 {
   "calculate_self_assessment_and_section24": 1000,
-  "compare_mortgage_overpay_vs_invest": 1000,
+  "compare_mortgage_overpay_vs_invest": 1500,
   "evaluate_student_loan_overpayment": 1500,
   "get_budget_summary": 1000,
   "get_debt_overview": 1000,

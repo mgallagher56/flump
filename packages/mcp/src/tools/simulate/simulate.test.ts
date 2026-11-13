@@ -434,3 +434,120 @@ describe("simulate tools v2", () => {
     });
   });
 });
+
+describe("simulate tools v2: review edge cases", () => {
+  let h: TestHarness | undefined;
+  afterEach(async () => {
+    await h?.close();
+    h = undefined;
+  });
+  const call = async (name: string, args: Record<string, unknown> = {}) =>
+    (await h?.callJson(name, args)) as Env;
+
+  it("overpayment total covers only the months actually overpaid", async () => {
+    h = await connectTestClient(homeowner);
+    const c = (
+      await call("compare_mortgage_overpay_vs_invest", {
+        monthlyAmountGbp: 500,
+        expectedReturnPct: 5,
+      })
+    ).result.comparison;
+    expect(c.overpay.monthsSaved).toBeGreaterThan(0);
+    expect(c.overpay.newTermMonths).toBe(c.termMonths - c.overpay.monthsSaved);
+    expect(c.overpay.totalPaidInOverpaymentsGbp).toBe(500 * c.overpay.newTermMonths);
+    expect(c.invest.totalContributedGbp).toBe(500 * c.termMonths);
+  });
+
+  it("handles a 0% mortgage rate", async () => {
+    h = await connectTestClient({
+      ...homeowner,
+      accounts: [
+        {
+          id: MORTGAGE_ID,
+          name: "M",
+          type: "Mortgage",
+          balance: 120000,
+          interestRate: 0,
+          termMonths: 240,
+        },
+      ],
+    });
+    const e = await call("compare_mortgage_overpay_vs_invest", {
+      monthlyAmountGbp: 100,
+      expectedReturnPct: 3,
+    });
+    expect(e.result.comparison.overpay.interestSavedGbp).toBe(0);
+  });
+
+  it("treats a term over 600 months as not recorded", async () => {
+    h = await connectTestClient({
+      ...homeowner,
+      accounts: [
+        {
+          id: MORTGAGE_ID,
+          name: "M",
+          type: "Mortgage",
+          balance: 1000,
+          interestRate: 4,
+          termMonths: 99999,
+        },
+      ],
+    });
+    const e = await call("compare_mortgage_overpay_vs_invest", {
+      monthlyAmountGbp: 10,
+      expectedReturnPct: 3,
+    });
+    expect(e.result.comparison).toBeNull();
+    expect(e.missing.map((m) => m.field)).toEqual([expect.stringContaining("termMonths")]);
+  });
+
+  it("runs a single strategy and honours a supplied minimum payment", async () => {
+    h = await connectTestClient(mixedAccountsWithHistory);
+    const e = await call("simulate_debt_payoff", { strategy: "snowball", extraMonthlyGbp: 50 });
+    expect(e.result.strategies.map((s: { strategy: string }) => s.strategy)).toEqual([
+      "snowball",
+      "minimum_only",
+    ]);
+    expect(e.result.scheduleStrategy).toBe("snowball");
+  });
+
+  it("flags a budget deficit instead of hiding it", async () => {
+    h = await connectTestClient({
+      ...homeowner,
+      budgetEntries: [
+        {
+          id: "i",
+          category: "Salary",
+          name: "Pay",
+          amount: 1000,
+          frequency: "monthly",
+          isIncome: true,
+          isEssential: false,
+        },
+        {
+          id: "e",
+          category: "Rent",
+          name: "Rent",
+          amount: 1500,
+          frequency: "monthly",
+          isIncome: false,
+          isEssential: true,
+        },
+      ],
+    });
+    const e = await call("project_net_worth", { expectedReturnPct: 5 });
+    expect(e.result.notes.join(" ")).toContain("deficit");
+    expect(e.assumptions.find((a) => a.field === "monthlySavingGbp")?.value).toBe(-500);
+  });
+
+  it("reports zero repayment below the threshold", async () => {
+    h = await connectTestClient(emptyUser);
+    const e = await call("evaluate_student_loan_overpayment", {
+      plan: "plan2",
+      balanceGbp: 20000,
+      annualSalaryGbp: 15000,
+    });
+    expect(e.result.annualRepaymentGbp).toBe(0);
+    expect(e.result.projectedOutcome).toBe("written_off_first");
+  });
+});
