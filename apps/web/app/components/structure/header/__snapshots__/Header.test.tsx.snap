@@ -29,7 +29,7 @@ exports[`<Header /> > renders as expected by default 1`] = `
         >
           <fieldset
             aria-label="Colour theme"
-            class="d_inline-flex ai_center gap_2px m_0 min-w_0 p_2px bdr_full bd-w_1px border-style_solid bd-c_border.subtle bg-c_surface.sunken"
+            class="d_inline-flex ai_center gap_2px m_0 min-w_0 p_4px md:p_2px bdr_full bd-w_1px border-style_solid bd-c_border.subtle bg-c_surface.sunken"
             id="theme-toggle"
           >
             <button
@@ -239,7 +239,7 @@ exports[`<Header /> > renders correctly when user logged in 1`] = `
         >
           <fieldset
             aria-label="Colour theme"
-            class="d_inline-flex ai_center gap_2px m_0 min-w_0 p_2px bdr_full bd-w_1px border-style_solid bd-c_border.subtle bg-c_surface.sunken"
+            class="d_inline-flex ai_center gap_2px m_0 min-w_0 p_4px md:p_2px bdr_full bd-w_1px border-style_solid bd-c_border.subtle bg-c_surface.sunken"
             id="theme-toggle"
           >
             <button
@@ -462,7 +462,7 @@ exports[`<Header /> > renders without ColorModeSwitch 1`] = `
         >
           <fieldset
             aria-label="Colour theme"
-            class="d_inline-flex ai_center gap_2px m_0 min-w_0 p_2px bdr_full bd-w_1px border-style_solid bd-c_border.subtle bg-c_surface.sunken"
+            class="d_inline-flex ai_center gap_2px m_0 min-w_0 p_4px md:p_2px bdr_full bd-w_1px border-style_solid bd-c_border.subtle bg-c_surface.sunken"
             id="theme-toggle"
           >
             <button

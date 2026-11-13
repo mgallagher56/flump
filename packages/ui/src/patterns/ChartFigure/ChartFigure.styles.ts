@@ -24,6 +24,8 @@ export const chartFigureSummary = cva({
     fontSize: "sm",
     color: "text.secondary",
     fontVariantNumeric: "tabular-nums",
+    // Wide data tables scroll inside the drawer instead of the page (audit R-17).
+    overflowX: "auto",
   },
 });
 
