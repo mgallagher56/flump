@@ -23,6 +23,7 @@ const hardeningHeaders = {
   "X-Content-Type-Options": "nosniff",
   "Content-Security-Policy": "sandbox; default-src 'none'",
   "Cache-Control": "private, no-store",
+  "Cross-Origin-Resource-Policy": "same-origin",
 } as const;
 
 export const loader = async (args: LoaderFunctionArgs) => {

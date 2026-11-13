@@ -16,6 +16,8 @@ export const RATE_LIMIT_POLICIES = {
   bank: [{ limit: 10, windowMs: HOUR }],
   write: [{ limit: 120, windowMs: MINUTE }],
   read: [{ limit: 600, windowMs: MINUTE }],
+  /** Receipt downloads move up to 5 MB each, so they get a tighter read class. */
+  receiptRead: [{ limit: 30, windowMs: MINUTE }],
 } as const satisfies Record<string, readonly RateLimitWindow[]>;
 
 /** Per-IP ceiling for every non-exempt request. Generous: the web server is one IP after Phase 1. */

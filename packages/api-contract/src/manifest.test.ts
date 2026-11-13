@@ -3,8 +3,8 @@ import { allRoutes, CONTRACT_GROUPS, findRoute } from "./manifest.js";
 import { checkAgainst } from "./validate.js";
 
 describe("route manifest", () => {
-  it("has 43 routes (44 in the E21 plan minus the two password routes E20 deleted, plus the E19 bank capability route) with unique ids and unique method+path pairs", () => {
-    expect(allRoutes).toHaveLength(43);
+  it("has 44 routes (44 in the E21 plan minus the two password routes E20 deleted, plus the E19 bank capability route, plus the E20 receipt download) with unique ids and unique method+path pairs", () => {
+    expect(allRoutes).toHaveLength(44);
     expect(new Set(allRoutes.map((r) => r.id)).size).toBe(allRoutes.length);
     expect(new Set(allRoutes.map((r) => `${r.method} ${r.path}`)).size).toBe(allRoutes.length);
   });

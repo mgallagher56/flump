@@ -50,6 +50,7 @@ describe("app.tax.receipts.$id loader", () => {
     expect(res.headers.get("X-Content-Type-Options")).toBe("nosniff");
     expect(res.headers.get("Content-Security-Policy")).toBe("sandbox; default-src 'none'");
     expect(res.headers.get("Cache-Control")).toBe("private, no-store");
+    expect(res.headers.get("Cross-Origin-Resource-Policy")).toBe("same-origin");
     expect(new Uint8Array(await res.arrayBuffer())).toEqual(new Uint8Array([1, 2, 3]));
   });
 

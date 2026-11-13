@@ -285,6 +285,15 @@ export const routes = {
       params: IdParams,
       group: "tax",
     }),
+    receipt: defineRoute({
+      id: "tax.receipt",
+      method: "GET",
+      path: "tax-records/:id/receipt",
+      auth: "user",
+      ownership: "user",
+      params: IdParams,
+      group: "tax",
+    }),
     bulkCreate: defineRoute({
       id: "tax.bulkCreate",
       method: "POST",
