@@ -24,6 +24,15 @@ export const Unavailable: Story = {
   },
 };
 
+export const NotInvited: Story = {
+  args: { kind: "not-invited", routeKey: "/app" },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const [report] = await canvas.findAllByRole("link", { name: "Report this problem" });
+    await expect(report.getAttribute("href")).toContain("mailto:");
+  },
+};
+
 export const Retrying: Story = {
   args: { kind: "unavailable", retrying: true },
 };

@@ -1,6 +1,7 @@
-import { act, fireEvent, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
+import { SUPPORT_EMAIL } from "~/utils/support";
 import HomeFooter from "./HomeFooter";
 
 vi.mock("react-router", () => ({
@@ -22,35 +23,12 @@ describe("HomeFooter", () => {
     expect(screen.getByRole("link", { name: "Snowball vs avalanche" })).toBeDefined();
   });
 
-  it("opens contact feedback modal, accepts input, and submits feedback", () => {
-    vi.useFakeTimers();
-    render(<HomeFooter />);
+  it("has no fake form and links feedback to a mailto", () => {
+    const { container } = render(<HomeFooter />);
 
-    const contactBtn = screen.getByRole("button", { name: /Contact and feedback/i });
-    fireEvent.click(contactBtn);
-
-    expect(screen.getByRole("heading", { name: "Contact and feedback" })).toBeDefined();
-
-    const subjectInput = screen.getByPlaceholderText(/e\.g\. Question about £100k tax trap/i);
-    const messageInput = screen.getByPlaceholderText(/Tell us what you're trying to model/i);
-    const submitBtn = screen.getByRole("button", { name: /Send feedback/i });
-
-    // When message is empty, submit is a no-op
-    fireEvent.click(submitBtn);
-    expect(screen.queryByText(/Thank you\. Your message has been received\./i)).toBeNull();
-
-    // Type feedback
-    fireEvent.change(subjectInput, { target: { value: "Feature Idea" } });
-    fireEvent.change(messageInput, {
-      target: { value: "Love the app! Please add crypto tracker." },
-    });
-    fireEvent.click(submitBtn);
-
-    expect(screen.getByText(/Thank you\. Your message has been received\./i)).toBeDefined();
-
-    act(() => {
-      vi.advanceTimersByTime(2000);
-    });
-    vi.useRealTimers();
+    expect(container.querySelector("form, textarea, input")).toBeNull();
+    expect(screen.queryByText(/message has been received/i)).toBeNull();
+    const link = screen.getByRole("link", { name: "Send feedback" });
+    expect(link.getAttribute("href")?.startsWith(`mailto:${SUPPORT_EMAIL}`)).toBe(true);
   });
 });

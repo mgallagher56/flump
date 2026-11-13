@@ -1,10 +1,9 @@
 import { css } from "@repo/ui/styled-system/css";
-import { type FC, useRef, useState } from "react";
-import { FiMail } from "react-icons/fi";
+import type { FC } from "react";
 import { Link as RouterLink } from "react-router";
-import FLPModal from "~/components/core/dialogs/FLPModal";
 import FLPHeading from "~/components/core/typography/FLPHeading";
 import FLPText from "~/components/core/typography/FLPText";
+import { APP_VERSION, feedbackMailto } from "~/utils/support";
 
 const footerContainerStyle = css({
   borderTop: "1px solid",
@@ -61,34 +60,6 @@ const bottomRowStyle = css({
 });
 
 export const HomeFooter: FC = () => {
-  const [isContactOpen, setIsContactOpen] = useState(false);
-  const [feedbackSent, setFeedbackSent] = useState(false);
-  const feedbackSentRef = useRef(false);
-  const [subject, setSubject] = useState("");
-  const [message, setMessage] = useState("");
-
-  const handleSendFeedback = () => {
-    if (message.trim()) {
-      feedbackSentRef.current = true;
-      setFeedbackSent(true);
-      setTimeout(() => {
-        setIsContactOpen(false);
-        setFeedbackSent(false);
-        feedbackSentRef.current = false;
-        setSubject("");
-        setMessage("");
-      }, 1500);
-    }
-  };
-
-  const handleClose = () => {
-    if (!feedbackSentRef.current) {
-      setIsContactOpen(false);
-      setSubject("");
-      setMessage("");
-    }
-  };
-
   return (
     <footer className={footerContainerStyle}>
       <div className={gridStyle}>
@@ -190,9 +161,9 @@ export const HomeFooter: FC = () => {
               </RouterLink>
             </li>
             <li>
-              <button className={linkStyle} type="button" onClick={() => setIsContactOpen(true)}>
-                Contact and feedback
-              </button>
+              <a className={linkStyle} href={feedbackMailto("home", APP_VERSION)}>
+                Send feedback
+              </a>
             </li>
             <li>
               <a
@@ -212,118 +183,6 @@ export const HomeFooter: FC = () => {
         <div>© {new Date().getFullYear()} Flump. Open-source personal finance platform.</div>
         <div>Built with React 19, React Router 7, Panda CSS, and WorkOS AuthKit.</div>
       </div>
-
-      {isContactOpen && (
-        <FLPModal
-          confirmButton={{
-            text: feedbackSent ? "Sent" : "Send feedback",
-          }}
-          disabled={!message.trim() || feedbackSent}
-          onClose={handleClose}
-          onConfirm={handleSendFeedback}
-          open={isContactOpen}
-          title="Contact and feedback"
-          triggerBtn={<span style={{ display: "none" }} />}
-        >
-          <div style={{ display: "flex", flexDirection: "column", gap: "16px", padding: "8px 0" }}>
-            <FLPText color="text.muted" fontSize="sm">
-              Have a question, feature request, or need help with UK tax modelling? We'd love to
-              hear from you.
-            </FLPText>
-
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "8px",
-                padding: "10px 14px",
-                backgroundColor: "color-mix(in srgb, var(--colors-primary) 8%, transparent)",
-                borderRadius: "8px",
-                fontSize: "14px",
-                color: "var(--colors-primary)",
-              }}
-            >
-              <FiMail />
-              <span>
-                Direct email: <strong>support@flump.app</strong>
-              </span>
-            </div>
-
-            {feedbackSent ? (
-              <div
-                style={{
-                  color: "var(--colors-status-positive-text)",
-                  fontWeight: 600,
-                  padding: "12px 0",
-                }}
-              >
-                Thank you. Your message has been received.
-              </div>
-            ) : (
-              <>
-                <div>
-                  <label
-                    htmlFor="contact-subject"
-                    style={{
-                      display: "block",
-                      fontSize: "12px",
-                      fontWeight: 600,
-                      marginBottom: "4px",
-                    }}
-                  >
-                    Subject
-                  </label>
-                  <input
-                    id="contact-subject"
-                    type="text"
-                    placeholder="e.g. Question about £100k tax trap or feature request"
-                    value={subject}
-                    onChange={(e) => setSubject(e.target.value)}
-                    style={{
-                      width: "100%",
-                      padding: "8px 12px",
-                      borderRadius: "6px",
-                      border: "1px solid var(--colors-border)",
-                      backgroundColor: "var(--colors-surface)",
-                      color: "inherit",
-                    }}
-                  />
-                </div>
-
-                <div>
-                  <label
-                    htmlFor="contact-message"
-                    style={{
-                      display: "block",
-                      fontSize: "12px",
-                      fontWeight: 600,
-                      marginBottom: "4px",
-                    }}
-                  >
-                    Message
-                  </label>
-                  <textarea
-                    id="contact-message"
-                    rows={4}
-                    placeholder="Tell us what you're trying to model or what we can improve..."
-                    value={message}
-                    onChange={(e) => setMessage(e.target.value)}
-                    style={{
-                      width: "100%",
-                      padding: "8px 12px",
-                      borderRadius: "6px",
-                      border: "1px solid var(--colors-border)",
-                      backgroundColor: "var(--colors-surface)",
-                      color: "inherit",
-                      resize: "vertical",
-                    }}
-                  />
-                </div>
-              </>
-            )}
-          </div>
-        </FLPModal>
-      )}
     </footer>
   );
 };

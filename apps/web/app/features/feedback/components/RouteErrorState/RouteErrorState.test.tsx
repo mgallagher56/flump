@@ -86,4 +86,23 @@ describe("RouteErrorState", () => {
       unmount();
     }
   });
+
+  it("offers a 'Report this problem' mailto link on error and invite-only states", () => {
+    const { unmount } = render(
+      <RouteErrorState kind="unavailable" onRetry={() => {}} routeKey="/app/debt" />,
+    );
+    const link = screen.getByRole("link", { name: "Report this problem" });
+    const href = link.getAttribute("href") ?? "";
+    expect(href.startsWith("mailto:")).toBe(true);
+    expect(decodeURIComponent(href)).toContain("[/app/debt]");
+    unmount();
+
+    render(<RouteErrorState kind="not-invited" />);
+    expect(screen.getByRole("link", { name: "Report this problem" })).toBeDefined();
+  });
+
+  it("does not offer the report link on the signed-out state", () => {
+    render(<RouteErrorState kind="unauthorised" />);
+    expect(screen.queryByRole("link", { name: "Report this problem" })).toBeNull();
+  });
 });

@@ -14,6 +14,8 @@ import { ADVICE_ALLOWLIST } from "./advice-allowlist";
 const BANNED: Array<[RegExp, string]> = [
   [/\bguarantee[ds]?\b/i, "promises an outcome"],
   [/\bFCA\b/, "refers to the FCA"],
+  [/flump\.app|flump\.co\.uk/i, "names a domain we do not own (E24-T5)"],
+  [/message has been received/i, "claims a message was sent when nothing is (E24-T5)"],
 ];
 
 const appRoot = resolve(__dirname, "..");

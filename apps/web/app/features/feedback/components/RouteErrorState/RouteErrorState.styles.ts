@@ -61,3 +61,14 @@ export const errorStateActions = cva({
     marginTop: "8px",
   },
 });
+
+export const errorStateReport = cva({
+  base: {
+    fontSize: "sm",
+    color: "primary",
+    textDecoration: "underline",
+    textUnderlineOffset: "2px",
+    _hover: { color: "primary.hover" },
+    _focusVisible: { outline: "2px solid", outlineColor: "border.focusRing", outlineOffset: "2px" },
+  },
+});
