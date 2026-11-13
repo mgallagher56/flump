@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import { expect, userEvent, waitFor, within } from "@storybook/test";
-import { type FC, type ReactNode, useState } from "react";
+import { type FC, type ReactNode, useEffect, useState } from "react";
 import { css } from "../../../styled-system/css";
 import { Button } from "../Button";
 import { Sheet, type SheetProps } from "./Sheet";
@@ -17,6 +17,20 @@ const field = css({
   borderRadius: "control",
   padding: "2",
 });
+
+/** Portalled content escapes the preview's themed wrapper, so theme the document root too. */
+const DarkRoot = ({ children }: { children: ReactNode }) => {
+  useEffect(() => {
+    const root = document.documentElement;
+    root.classList.add("dark");
+    root.setAttribute("data-theme", "dark");
+    return () => {
+      root.classList.remove("dark");
+      root.removeAttribute("data-theme");
+    };
+  }, []);
+  return children;
+};
 
 const Controls: FC = () => (
   <div className={grid}>
@@ -81,6 +95,19 @@ export const Default: Story = {
 };
 
 export const SideRight: Story = { args: { side: "right" } };
+
+/** Portalled content escapes the side-by-side frames, so dark gets its own story. */
+export const Dark: Story = {
+  ...Default,
+  globals: { theme: "dark" },
+  decorators: [
+    (Story) => (
+      <DarkRoot>
+        <Story />
+      </DarkRoot>
+    ),
+  ],
+};
 
 export const LongContent: Story = {
   args: {

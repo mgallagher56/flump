@@ -31,6 +31,8 @@ export interface ConfirmDialogProps {
   error?: string | null;
   /** When set, the confirm button stays disabled until the input matches (case-insensitive). */
   requireText?: string;
+  /** Stable id for the dialog (also data-testid). Buttons get `${id}-cancel` and `${id}-confirm`. */
+  id?: string;
 }
 
 /**
@@ -51,6 +53,7 @@ export const ConfirmDialog: FC<ConfirmDialogProps> = ({
   pendingLabel,
   error,
   requireText,
+  id = "confirm-dialog",
 }) => {
   const cancelRef = useRef<HTMLButtonElement>(null);
   const focusReturn = useDialogFocusReturn();
@@ -76,7 +79,8 @@ export const ConfirmDialog: FC<ConfirmDialogProps> = ({
         <RadixDialog.Overlay className={confirmOverlay()} />
         <RadixDialog.Content
           role="alertdialog"
-          id="confirm-dialog"
+          id={id}
+          data-testid={id}
           className={confirmContent()}
           onOpenAutoFocus={(event) => {
             focusReturn.onOpenAutoFocus();
@@ -117,7 +121,7 @@ export const ConfirmDialog: FC<ConfirmDialogProps> = ({
               ref={cancelRef}
               type="button"
               variant="outline"
-              id="confirm-dialog-cancel"
+              id={`${id}-cancel`}
               disabled={pending}
               onClick={() => handleOpenChange(false)}
             >
@@ -125,7 +129,7 @@ export const ConfirmDialog: FC<ConfirmDialogProps> = ({
             </Button>
             <Button
               type="button"
-              id="confirm-dialog-confirm"
+              id={`${id}-confirm`}
               variant={tone === "danger" ? "destructive" : "primary"}
               disabled={pending || !textMatches}
               aria-busy={pending || undefined}
