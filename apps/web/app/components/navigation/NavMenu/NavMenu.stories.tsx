@@ -46,3 +46,23 @@ export const Dark: Story = {
   globals: { theme: "dark" },
   args: { routes: [HOME, ...AUTH_NAV_ROUTES] },
 };
+
+const sandboxArgs = {
+  isMobile: true,
+  routes: [HOME, ...AUTH_NAV_ROUTES],
+  isRouteDisabled: (item: { key: string }) => item.key !== "home",
+};
+
+export const SandboxMobile: Story = {
+  args: sandboxArgs,
+  play: async ({ canvasElement }) => {
+    const item = within(canvasElement).getByTestId("nav-disabled-debt");
+    await expect(item).toHaveAttribute("aria-disabled", "true");
+    await expect(item).toHaveAccessibleDescription(/sign up to open/i);
+  },
+};
+
+export const SandboxMobileDark: Story = {
+  globals: { theme: "dark" },
+  args: sandboxArgs,
+};

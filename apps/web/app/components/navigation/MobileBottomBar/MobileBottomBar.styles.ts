@@ -51,7 +51,6 @@ export const tab = cva({
       transitionTimingFunction: "standard",
     },
     _hover: { color: "primary" },
-    _disabled: { cursor: "not-allowed", opacity: 0.6, _hover: { color: "text.muted" } },
     _focusVisible: {
       outline: "2px solid",
       outlineColor: "border.focusRing",
@@ -60,6 +59,31 @@ export const tab = cva({
   },
   variants: {
     active: { true: { color: "primary", fontWeight: "semibold" }, false: {} },
+    // Sandbox tab for a page that needs an account: full-contrast text, dashed lock cue (no fading).
+    locked: {
+      true: {
+        position: "relative",
+        cursor: "not-allowed",
+        color: "text.secondary",
+        _hover: { color: "text.secondary" },
+      },
+      false: {},
+    },
   },
   defaultVariants: { active: false },
+});
+
+export const lockIcon = cva({
+  base: { position: "absolute", top: "6px", right: "calc(50% - 22px)", color: "text.secondary" },
+});
+
+export const srOnly = cva({
+  base: {
+    position: "absolute",
+    width: "1px",
+    height: "1px",
+    overflow: "hidden",
+    clip: "rect(0 0 0 0)",
+    whiteSpace: "nowrap",
+  },
 });

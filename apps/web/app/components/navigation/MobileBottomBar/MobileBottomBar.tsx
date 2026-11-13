@@ -1,11 +1,11 @@
 import { Icon } from "@repo/ui";
-import { Ellipsis } from "lucide-react";
-import type { FC } from "react";
+import { Ellipsis, Lock } from "lucide-react";
+import { type FC, useId } from "react";
 import { useTranslation } from "react-i18next";
 import { NavLink } from "react-router";
 import { useResponsive } from "~/context/ResponsiveContext";
 import { BOTTOM_BAR_TABS, SANDBOX_ROUTE } from "../navConfig";
-import { bar, tab } from "./MobileBottomBar.styles";
+import { bar, lockIcon, srOnly, tab } from "./MobileBottomBar.styles";
 
 export interface MobileBottomBarProps {
   user?: unknown;
@@ -18,6 +18,7 @@ export interface MobileBottomBarProps {
 const MobileBottomBar: FC<MobileBottomBarProps> = ({ user, isMobile, onMoreClick, sandbox }) => {
   const { t } = useTranslation();
   const { toggleMobileDrawer, isMobileDrawerOpen } = useResponsive();
+  const hintId = useId();
 
   if (!user && !sandbox) return null;
 
@@ -30,21 +31,28 @@ const MobileBottomBar: FC<MobileBottomBarProps> = ({ user, isMobile, onMoreClick
       data-testid="mobile-bottom-bar"
       id="mobile-bottom-bar"
     >
+      {sandbox ? (
+        <span className={srOnly()} id={hintId}>
+          {t("signUpToOpen", "Sign up to open")}
+        </span>
+      ) : null}
       {BOTTOM_BAR_TABS.map((item) => {
         const label = t(item.key, item.label);
         if (sandbox && item.key !== "home") {
           return (
             <button
               key={item.key}
-              aria-label={`${label}, sign up to open`}
-              className={tab({ active: false })}
+              aria-describedby={hintId}
+              aria-disabled="true"
+              className={tab({ active: false, locked: true })}
               data-testid={`mobile-bottom-bar-${item.key}-disabled`}
-              disabled
-              title="Sign up to open"
+              id={`mobile-bottom-bar-${item.key}-disabled`}
               type="button"
+              onClick={(event) => event.preventDefault()}
             >
               <Icon icon={item.icon} />
               <span>{label}</span>
+              <Icon className={lockIcon()} icon={Lock} size="sm" />
             </button>
           );
         }

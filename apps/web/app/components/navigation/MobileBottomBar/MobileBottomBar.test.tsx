@@ -94,8 +94,10 @@ describe("<MobileBottomBar /> sandbox", () => {
     expect(links.map((l) => l.getAttribute("href"))).toEqual(["/sandbox"]);
     for (const name of [/accounts/i, /budget/i, /tax/i]) {
       const disabled = screen.getByRole("button", { name });
-      expect((disabled as HTMLButtonElement).disabled).toBe(true);
-      expect(disabled.getAttribute("aria-label")).toMatch(/sign up to open/i);
+      expect(disabled.getAttribute("aria-disabled")).toBe("true");
+      expect((disabled as HTMLButtonElement).disabled).toBe(false);
+      const hint = document.getElementById(disabled.getAttribute("aria-describedby") ?? "");
+      expect(hint?.textContent).toBe("signUpToOpen");
     }
     expect(screen.getByTestId("mobile-bottom-bar-more")).not.toBeNull();
   });

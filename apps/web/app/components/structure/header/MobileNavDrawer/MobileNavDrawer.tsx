@@ -2,6 +2,7 @@ import { Icon } from "@repo/ui";
 import { X } from "lucide-react";
 import { type FC, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import HomeLogo from "~/components/navigation/HomeLogo";
 import NavMenu from "~/components/navigation/NavMenu";
@@ -24,6 +25,7 @@ import {
   footer,
   footerRow,
   profileLink,
+  signUpLink,
 } from "./MobileNavDrawer.styles";
 
 export interface MobileNavDrawerProps {
@@ -34,8 +36,14 @@ export interface MobileNavDrawerProps {
   sandbox?: boolean;
 }
 
+// Every destination in the signed-in nav needs an account, so the sandbox disables exactly these.
+const SANDBOX_DISABLED_KEYS = new Set(
+  AUTH_NAV_ROUTES.flatMap((route) => (route.children ? route.children : [route]).map((r) => r.key)),
+);
+
 const MobileNavDrawer: FC<MobileNavDrawerProps> = ({ isOpen, onClose, user, sandbox }) => {
   const [mounted, setMounted] = useState(false);
+  const { t } = useTranslation();
   const { profile } = useUserProfile();
 
   const closeRef = useRef<HTMLButtonElement>(null);
@@ -132,10 +140,18 @@ const MobileNavDrawer: FC<MobileNavDrawerProps> = ({ isOpen, onClose, user, sand
               <Icon icon={X} />
             </button>
           </div>
+          {sandbox && !user ? (
+            <Link className={signUpLink()} to="/signup" onClick={onClose}>
+              {t("signUp", "Sign up")}
+              <span>{t("signUpToOpen", "Sign up to open")}</span>
+            </Link>
+          ) : null}
           <NavMenu
             isMobile
             routes={[sandbox && !user ? SANDBOX_HOME_NAV_ROUTE : HOME_NAV_ROUTE, ...authRoutes]}
-            isRouteDisabled={sandbox && !user ? (item) => item.key !== "home" : undefined}
+            isRouteDisabled={
+              sandbox && !user ? (item) => SANDBOX_DISABLED_KEYS.has(item.key) : undefined
+            }
             variant="mobile"
             onNavigate={onClose}
           />

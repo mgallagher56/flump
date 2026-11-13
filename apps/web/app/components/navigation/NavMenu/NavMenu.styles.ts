@@ -123,26 +123,3 @@ export const flyoutLabel = cva({
 export const flyoutDescription = cva({
   base: { textStyle: "body.sm", color: "text.muted", lineHeight: 1.35 },
 });
-
-/** A non-navigating mobile item shown in the signed-out sandbox. */
-export const disabledMobileItem = cva({
-  base: {
-    display: "flex",
-    alignItems: "center",
-    gap: "2",
-    width: "100%",
-    minHeight: "44px",
-    paddingX: "3",
-    border: "none",
-    background: "transparent",
-    textAlign: "left",
-    textStyle: "label.md",
-    color: "text.muted",
-    cursor: "not-allowed",
-    opacity: 0.7,
-  },
-});
-
-export const disabledHint = cva({
-  base: { marginLeft: "auto", textStyle: "label.sm", color: "text.muted" },
-});

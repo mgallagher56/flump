@@ -57,9 +57,9 @@ describe("<WidgetCard /> in the sandbox", () => {
         </SampleModeProvider>
       </MemoryRouter>,
     );
-    const item = screen.getByRole("button", { name: "Sign up to open Accounts" });
-    expect((item as HTMLButtonElement).disabled).toBe(true);
-    expect(item.textContent).toBe("Sign up to open");
+    const item = screen.getByRole("button", { name: "signUpToOpen Accounts" });
+    expect(item.getAttribute("aria-disabled")).toBe("true");
+    expect(item.textContent).toBe("signUpToOpen");
     expect(screen.queryByRole("link", { name: "Open Accounts" })).toBeNull();
   });
 });

@@ -6,11 +6,10 @@ import { NavLink as RouterNavLink, useLocation } from "react-router";
 import FLPButtonGroup from "~/components/core/buttons/FLPButtonGroup";
 import FLPLinkButton from "~/components/core/buttons/FLPLinkButton";
 import FLPBox from "~/components/core/structure/FLPBox";
+import { DisabledNavItem } from "../DisabledNavItem";
 import type { NavRouteItem } from "../navConfig";
 import {
   activeChildDot,
-  disabledHint,
-  disabledMobileItem,
   dropdownContainer,
   flyoutDescription,
   flyoutIconBox,
@@ -166,18 +165,11 @@ const DesktopDropdownGroup: FC<{
 const DisabledMobileItem: FC<{ item: NavRouteItem }> = ({ item }) => {
   const { t } = useTranslation();
   return (
-    <button
-      aria-label={`${t(item.key)}, sign up to open`}
-      className={disabledMobileItem()}
-      data-testid={`nav-disabled-${item.key}`}
+    <DisabledNavItem
+      icon={item.icon && <Icon icon={item.icon} size="sm" />}
       id={`nav-disabled-${item.key}`}
-      disabled
-      type="button"
-    >
-      {item.icon && <Icon icon={item.icon} size="sm" />}
-      <span>{t(item.key)}</span>
-      <span className={disabledHint()}>Sign up to open</span>
-    </button>
+      label={t(item.key)}
+    />
   );
 };
 

@@ -1,6 +1,7 @@
 import { Button, Icon } from "@repo/ui";
 import { ArrowRight, EyeOff, type LucideIcon } from "lucide-react";
 import type { FC, ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import { SampleAwareLink } from "~/components/navigation/SampleAwareLink";
 import {
   widgetActions,
@@ -25,6 +26,7 @@ export interface WidgetCardProps {
 
 /** The shell around a dashboard widget: title, Lucide icon, Open link, content slot, optional hide. */
 export const WidgetCard: FC<WidgetCardProps> = ({ title, icon, href, children, onHide, id }) => {
+  const { t } = useTranslation();
   const cardId = `widget-card-${id}`;
   return (
     <section
@@ -45,8 +47,7 @@ export const WidgetCard: FC<WidgetCardProps> = ({ title, icon, href, children, o
           <Button asChild size="sm" variant="ghost">
             <SampleAwareLink
               aria-label={`Open ${title}`}
-              sampleAriaLabel={`Sign up to open ${title}`}
-              sampleLabel="Sign up to open"
+              sampleAriaLabel={`${t("signUpToOpen", "Sign up to open")} ${title}`}
               to={href}
             >
               Open

@@ -28,3 +28,20 @@ export const Dark: Story = {
     await expect(within(canvasElement).getByTestId("mobile-bottom-bar")).toBeInTheDocument();
   },
 };
+
+export const Sandbox: Story = {
+  args: { user: null, sandbox: true },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(canvas.getByRole("link", { name: /home/i })).toBeInTheDocument();
+    await expect(canvas.getByTestId("mobile-bottom-bar-accounts-disabled")).toHaveAttribute(
+      "aria-disabled",
+      "true",
+    );
+  },
+};
+
+export const SandboxDark: Story = {
+  globals: { theme: "dark" },
+  args: { user: null, sandbox: true },
+};
