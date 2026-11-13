@@ -179,6 +179,55 @@ describe("BudgetContainer", () => {
     fireEvent.click(screen.getByTestId("setup-wizard-btn"));
   });
 
+  it("keeps runway scenario inputs for the visit only: not saved, not requested, not in the headline", async () => {
+    mockLoaderData = {
+      ...mockLoaderData,
+      budgetEntries: [
+        {
+          id: "b-1",
+          userId: "u1",
+          name: "Mortgage",
+          category: "housing",
+          amount: 1200,
+          frequency: "monthly",
+          isIncome: false,
+          isPrimaryIncome: false,
+          isEssential: true,
+          notes: null,
+          isDefault: false,
+          createdAt: "",
+          updatedAt: "",
+        },
+      ],
+    };
+    localStorage.clear();
+    const { unmount } = render(<BudgetContainer />);
+    fireEvent.click(screen.getByTestId("budget-tab-runway"));
+    const headline = () => screen.getByText("Your runway").closest("[data-tone]")?.textContent;
+    const savedHeadline = headline();
+    const requestsBefore = (global.fetch as ReturnType<typeof vi.fn>).mock.calls.length;
+
+    fireEvent.change(screen.getByLabelText(/Severance or lump sum/i), {
+      target: { value: "9000" },
+    });
+    expect(headline()).toBe(savedHeadline);
+    expect(localStorage.getItem("flump_runway_calculator_settings")).toBeNull();
+    expect((global.fetch as ReturnType<typeof vi.fn>).mock.calls.length).toBe(requestsBefore);
+
+    // Survives a tab switch...
+    fireEvent.click(screen.getByTestId("budget-tab-housing"));
+    fireEvent.click(screen.getByTestId("budget-tab-runway"));
+    expect((screen.getByLabelText(/Severance or lump sum/i) as HTMLInputElement).value).toContain(
+      "9,000",
+    );
+
+    // ...and is gone after a reload (a fresh mount).
+    unmount();
+    render(<BudgetContainer />);
+    fireEvent.click(screen.getByTestId("budget-tab-runway"));
+    expect((screen.getByLabelText(/Severance or lump sum/i) as HTMLInputElement).value).toBe("");
+  });
+
   it("keeps the row and shows an error when deleting an entry fails", async () => {
     const entry = {
       id: "b-1",

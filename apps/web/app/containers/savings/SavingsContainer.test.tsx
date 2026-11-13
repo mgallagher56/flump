@@ -2,6 +2,10 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 const mockNavigate = vi.hoisted(() => vi.fn());
+const mockSubmit = vi.hoisted(() => vi.fn());
+const mockLocation = vi.hoisted(() => ({
+  current: { pathname: "/app/savings", hash: "", state: null as unknown },
+}));
 
 vi.mock("react-router", () => ({
   useInRouterContext: () => false,
@@ -34,8 +38,9 @@ vi.mock("react-router", () => ({
     },
   }),
   useNavigate: () => mockNavigate,
+  useLocation: () => mockLocation.current,
   useFetcher: () => ({
-    submit: vi.fn(),
+    submit: mockSubmit,
     state: "idle",
     data: null,
   }),
@@ -111,10 +116,51 @@ describe("SavingsContainer", () => {
     window.location.hash = "";
   });
 
-  it("parses a pay rise handed over from Take-home pay", () => {
-    expect(parsePayRise("?payRise=150.4")).toBe(150);
-    expect(parsePayRise("")).toBe(0);
-    expect(parsePayRise("?payRise=-5")).toBe(0);
-    expect(parsePayRise("?payRise=abc")).toBe(0);
+  it("parses a pay rise handed over from Take-home pay in router state", () => {
+    expect(parsePayRise({ payRise: 150.4 })).toBe(150);
+    expect(parsePayRise(null)).toBe(0);
+    expect(parsePayRise({ payRise: -5 })).toBe(0);
+    expect(parsePayRise({ payRise: "abc" })).toBe(0);
+  });
+
+  describe("pay rise from take-home", () => {
+    afterEach(() => {
+      mockLocation.current = { pathname: "/app/savings", hash: "", state: null };
+    });
+
+    it("shows nothing when no pay rise was handed over", () => {
+      render(<SavingsContainer />);
+      expect(screen.queryByText(/Pay rise from take-home:/)).toBeNull();
+    });
+
+    it("shows it as a removable scenario input and leaves the saved figures alone", () => {
+      const { container, rerender } = render(<SavingsContainer />);
+      const savedFigures = screen.getByRole("heading", { name: "Where you stand" }).parentElement
+        ?.textContent;
+
+      mockLocation.current = {
+        pathname: "/app/savings",
+        hash: "#forecast",
+        state: { payRise: 230 },
+      };
+      mockSubmit.mockClear();
+      rerender(<SavingsContainer />);
+      expect(screen.getByText(/Pay rise from take-home:/)).toBeDefined();
+      expect(screen.getByText("£2,760")).toBeDefined();
+      expect(screen.getByText("Illustration, not saved")).toBeDefined();
+      expect(
+        screen.getByRole("heading", { name: "Where you stand" }).parentElement?.textContent,
+      ).toBe(savedFigures);
+      expect(mockSubmit).not.toHaveBeenCalled();
+
+      fireEvent.click(screen.getByRole("button", { name: /Remove/ }));
+      expect(screen.queryByText(/Pay rise from take-home:/)).toBeNull();
+      expect(mockNavigate).toHaveBeenCalledWith("/app/savings#forecast", {
+        replace: true,
+        state: null,
+      });
+      expect(mockSubmit).not.toHaveBeenCalled();
+      expect(container.textContent).not.toContain("?payRise");
+    });
   });
 });

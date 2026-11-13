@@ -1,6 +1,9 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { RunwayCalculator } from "./RunwayCalculator";
+
+const outcome = () => within(screen.getByRole("region", { name: "Illustration results" }));
+const headline = () => screen.getByText("Your runway").closest("[data-tone]") as HTMLElement;
 
 describe("RunwayCalculator", () => {
   beforeEach(() => {
@@ -87,17 +90,20 @@ describe("RunwayCalculator", () => {
     expect(toggleInvestmentBtn).toBeDefined();
 
     // Initially includes investment account (£25,000 / £1,500 monthly burn = 16.6 months -> 1 yr 4 mos)
-    expect(screen.getByText("1 yr 4 mos")).toBeDefined();
+    expect(outcome().getByText("1 yr 4 mos")).toBeDefined();
+    expect(headline().textContent).toContain("1 yr 4 mos");
 
-    // Toggle investment account OFF
+    // Toggle investment account OFF: a saved preference, so the headline moves too
     fireEvent.click(toggleInvestmentBtn);
 
     // Now pool is £10,000 / £1,500 monthly burn = 6.66 months -> 6 months
-    expect(screen.getByText("6 months")).toBeDefined();
+    expect(outcome().getByText("6 months")).toBeDefined();
+    expect(headline().textContent).toContain("6 months");
   });
 
-  it("renders non-primary income in Income you would keep with colored toggle states and updates on toggle", () => {
+  it("renders non-primary income in Income you would keep and treats toggling it as a scenario", () => {
     const onSaveSettings = vi.fn();
+    const onScenarioChange = vi.fn();
     const entriesWithIncome = [
       ...mockEntries,
       {
@@ -124,10 +130,10 @@ describe("RunwayCalculator", () => {
         entries={entriesWithIncome}
         onNavigateToForecast={vi.fn()}
         onSaveSettings={onSaveSettings}
+        onScenarioChange={onScenarioChange}
       />,
     );
 
-    // Section title and kept income amount
     expect(screen.getByText("Freelance Writing")).toBeDefined();
     expect(screen.getByText("kept")).toBeDefined();
 
@@ -136,71 +142,43 @@ describe("RunwayCalculator", () => {
     });
     expect(incomeToggleBtn.getAttribute("aria-checked")).toBe("true");
 
-    // With £300 kept income: monthly burn is £1,500 - £300 = £1,200. Pool = £25,000 -> 20.8 mos -> 1 yr 8 mos
-    expect(screen.getByText("1 yr 8 mos")).toBeDefined();
+    // With £300 kept income: burn £1,200, pool £25,000 -> 20.8 months -> 1 yr 8 mos
+    expect(outcome().getByText("1 yr 8 mos")).toBeDefined();
+    const savedHeadline = headline().textContent;
+    expect(savedHeadline).toContain("1 yr 8 mos");
 
-    // Toggle income OFF
+    // Toggle income OFF: the illustration moves, the headline does not
     fireEvent.click(incomeToggleBtn);
 
     expect(incomeToggleBtn.getAttribute("aria-checked")).toBe("false");
     expect(screen.getByText("excluded")).toBeDefined();
-    // Monthly burn increases back to £1,500 -> 1 yr 4 mos
-    expect(screen.getByText("1 yr 4 mos")).toBeDefined();
-    expect(onSaveSettings).toHaveBeenCalledWith(
-      expect.objectContaining({
-        keptIncome: expect.objectContaining({ "inc-1": false }),
-      }),
+    expect(outcome().getByText("1 yr 4 mos")).toBeDefined();
+    expect(headline().textContent).toBe(savedHeadline);
+    expect(onScenarioChange).toHaveBeenCalledWith(
+      expect.objectContaining({ keptIncome: expect.objectContaining({ "inc-1": false }) }),
     );
+    expect(onSaveSettings).not.toHaveBeenCalled();
+    expect(localStorage.getItem("flump_runway_calculator_settings")).toBeNull();
   });
 
-  it("supports batch All / None toggling and Reset for runway settings", () => {
-    const onSaveSettings = vi.fn();
-    const entriesWithIncome = [
-      ...mockEntries,
-      {
-        id: "inc-1",
-        userId: "user-1",
-        name: "Side Consulting",
-        category: "income" as const,
-        amount: 500,
-        frequency: "monthly" as const,
-        isIncome: true,
-        isPrimaryIncome: false,
-        isEssential: true,
-        notes: null,
-        isDefault: false,
-        createdAt: "2026-01-01T00:00:00Z",
-        updatedAt: "2026-01-01T00:00:00Z",
-      },
-    ];
-
+  it("labels the account choice as a saved preference and the rest as an illustration", () => {
     render(
       <RunwayCalculator
         accountDetails={[]}
         accounts={mockAccounts}
-        entries={entriesWithIncome}
+        entries={mockEntries}
         onNavigateToForecast={vi.fn()}
-        onSaveSettings={onSaveSettings}
       />,
     );
-
-    // Verify auto-saved badge is present
-    expect(screen.getAllByText(/Auto-saved/i).length).toBeGreaterThanOrEqual(1);
-
-    // Click Reset button
-    const resetBtn = screen.getByRole("button", { name: /Reset/i });
-    fireEvent.click(resetBtn);
-
-    expect(onSaveSettings).toHaveBeenCalledWith(
-      expect.objectContaining({
-        severanceLump: 0,
-        extraMonthlyCut: 0,
-      }),
-    );
+    expect(screen.getByText("Saved preference")).toBeDefined();
+    expect(screen.getByRole("region", { name: "Model a change to your budget" })).toBeDefined();
+    expect(screen.getByText("Illustration, not saved")).toBeDefined();
   });
 
-  it("updates runway when typing into What-If scenario inputs or clicking preset chips", () => {
+  it("saves only the account preference; scenario changes save nothing and send no request", () => {
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
     const onSaveSettings = vi.fn();
+    const onScenarioChange = vi.fn();
     render(
       <RunwayCalculator
         accountDetails={[]}
@@ -208,42 +186,55 @@ describe("RunwayCalculator", () => {
         entries={mockEntries}
         onNavigateToForecast={vi.fn()}
         onSaveSettings={onSaveSettings}
+        onScenarioChange={onScenarioChange}
       />,
     );
+    const savedHeadline = headline().textContent;
 
-    const severanceInput = screen.getByLabelText(/Severance or lump sum/i);
-    const extraCutInput = screen.getByLabelText(/Extra monthly spending cut/i);
-
-    expect(severanceInput).toBeDefined();
-    expect(extraCutInput).toBeDefined();
-
-    // Type severance of £5,000
-    fireEvent.change(severanceInput, { target: { value: "5000" } });
-    expect(onSaveSettings).toHaveBeenCalledWith(
-      expect.objectContaining({
-        severanceLump: 5000,
-      }),
+    fireEvent.change(screen.getByLabelText(/Severance or lump sum/i), {
+      target: { value: "5000" },
+    });
+    fireEvent.change(screen.getByLabelText(/Extra monthly spending cut/i), {
+      target: { value: "250" },
+    });
+    expect(onScenarioChange).toHaveBeenLastCalledWith(
+      expect.objectContaining({ severanceLump: 5000, extraMonthlyCut: 250 }),
     );
+    expect(headline().textContent).toBe(savedHeadline);
+    expect(onSaveSettings).not.toHaveBeenCalled();
+    expect(localStorage.getItem("flump_runway_calculator_settings")).toBeNull();
+    expect(fetchSpy).not.toHaveBeenCalled();
 
-    // Type extra monthly cut of £250
-    fireEvent.change(extraCutInput, { target: { value: "250" } });
+    // Switching an account off is the saved preference.
+    fireEvent.click(screen.getByRole("switch", { name: /Include Vanguard S&S ISA/i }));
+    expect(onSaveSettings).toHaveBeenCalledWith({
+      includedAccounts: expect.objectContaining({ "acc-3": false }),
+    });
+    const stored = JSON.parse(localStorage.getItem("flump_runway_calculator_settings") ?? "{}");
+    expect(Object.keys(stored)).toEqual(["includedAccounts"]);
+    fetchSpy.mockRestore();
+  });
 
-    expect(onSaveSettings).toHaveBeenCalledWith(
-      expect.objectContaining({
-        severanceLump: 5000,
-        extraMonthlyCut: 250,
-      }),
+  it("starts from the scenario held by the container and resets it without touching saved choices", () => {
+    const onScenarioChange = vi.fn();
+    render(
+      <RunwayCalculator
+        accountDetails={[]}
+        accounts={mockAccounts}
+        entries={mockEntries}
+        scenario={{ keptIncome: {}, keptExpenses: {}, severanceLump: 6000, extraMonthlyCut: 0 }}
+        onNavigateToForecast={vi.fn()}
+        onScenarioChange={onScenarioChange}
+      />,
     );
+    // Pool £25,000 + £6,000 severance over £1,500 burn is 20.6 months.
+    expect(outcome().getByText("1 yr 8 mos")).toBeDefined();
+    expect(headline().textContent).toContain("1 yr 4 mos");
 
-    // Clear scenarios
-    const clearBtn = screen.getByRole("button", { name: /Clear scenarios/i });
-    fireEvent.click(clearBtn);
-
-    expect(onSaveSettings).toHaveBeenCalledWith(
-      expect.objectContaining({
-        severanceLump: 0,
-        extraMonthlyCut: 0,
-      }),
+    fireEvent.click(screen.getByRole("button", { name: "Reset to saved figures" }));
+    expect(onScenarioChange).toHaveBeenLastCalledWith(
+      expect.objectContaining({ severanceLump: 0, extraMonthlyCut: 0 }),
     );
+    expect(outcome().getByText("1 yr 4 mos")).toBeDefined();
   });
 });

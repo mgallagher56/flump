@@ -16,13 +16,7 @@ describe("runwayStorage utilities", () => {
   it("loads, saves, and clears runway settings in localStorage", () => {
     expect(loadRunwaySettings()).toBeNull();
 
-    const settings = {
-      includedAccounts: { acc1: true, acc2: false },
-      keptIncome: { inc1: true },
-      keptExpenses: { exp1: true },
-      severanceLump: 5000,
-      extraMonthlyCut: 200,
-    };
+    const settings = { includedAccounts: { acc1: true, acc2: false } };
 
     saveRunwaySettings(settings);
     expect(loadRunwaySettings()).toEqual(settings);
@@ -36,6 +30,23 @@ describe("runwayStorage utilities", () => {
     saveRunwaySettings(settings);
     clearRunwaySettings();
     expect(loadRunwaySettings()).toBeNull();
+  });
+
+  it("never stores scenario inputs, even if they are passed in or found in old data", () => {
+    const withScenario = {
+      includedAccounts: { acc1: true },
+      keptIncome: { inc1: false },
+      keptExpenses: { exp1: true },
+      severanceLump: 5000,
+      extraMonthlyCut: 200,
+    };
+    saveRunwaySettings(withScenario);
+    expect(JSON.parse(window.localStorage.getItem(RUNWAY_STORAGE_KEY) ?? "{}")).toEqual({
+      includedAccounts: { acc1: true },
+    });
+
+    window.localStorage.setItem(RUNWAY_STORAGE_KEY, JSON.stringify(withScenario));
+    expect(loadRunwaySettings()).toEqual({ includedAccounts: { acc1: true } });
   });
 
   it("identifies liquid account types accurately", () => {
@@ -106,17 +117,11 @@ describe("runwayStorage utilities", () => {
           frequency: "monthly",
         },
       ],
-      savedSettings: {
-        includedAccounts: { a1: true, a2: true },
-        keptIncome: { i2: true },
-        keptExpenses: { e1: true, e2: true },
-        severanceLump: 2000,
-        extraMonthlyCut: 200,
-      },
+      savedSettings: { includedAccounts: { a1: true, a2: true } },
     });
-    // pool = 18000 + 2000 = 20000; expenses = 1800, nonPrimary = 500, cut = 200 => burn = 1100 => 18.18 months (1 yr 6 mos)
-    expect(resMid.pool).toBe(20000);
-    expect(resMid.monthlyBurn).toBe(1100);
+    // Baseline only: pool = 18000; essential expenses = 1500, other income = 500 => burn = 1000 => 18 months
+    expect(resMid.pool).toBe(18000);
+    expect(resMid.monthlyBurn).toBe(1000);
     expect(resMid.runwayLabel).toBe("1 year 6 months");
     expect(resMid.shortLabel).toBe("1 yr 6 mos");
 

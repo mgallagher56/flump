@@ -1,20 +1,10 @@
-import { css } from "@repo/ui/styled-system/css";
+import { PageHeader } from "@repo/ui";
 import { type FC, useEffect } from "react";
 import { useLoaderData, useNavigate } from "react-router";
-import FLPHeading from "~/components/core/typography/FLPHeading";
-import FLPText from "~/components/core/typography/FLPText";
-import UKTaxCalculator from "~/components/forecast/UKTaxCalculator";
+import { TakeHomeCalculator } from "~/features/take-home/components/TakeHomeCalculator";
 import { useUserProfile } from "~/hooks/useUserProfile";
 import { useFinancialBaseline } from "~/state/baseline.store";
-
-const containerStyle = css({
-  display: "flex",
-  flexDirection: "column",
-  gap: "24px",
-  paddingBottom: "48px",
-});
-
-const headerStyle = css({ marginTop: "16px", marginBottom: "8px" });
+import { pageRoot } from "./TakeHomeContainer.styles";
 
 /** Take-home pay, the £100k tax trap and pay-rise effect. Moved out of Savings (IA review T-IA-3). */
 export const TakeHomeContainer: FC = () => {
@@ -32,20 +22,16 @@ export const TakeHomeContainer: FC = () => {
     baseline.annualGrossSalary > 0 ? baseline.annualGrossSalary : Number(profile.annualSalary || 0);
 
   return (
-    <div className={containerStyle}>
-      <div className={headerStyle}>
-        <FLPHeading as="h1" color="text.primary" size="2xl">
-          Take-home pay
-        </FLPHeading>
-        <FLPText color="text.muted" fontSize="sm" style={{ marginTop: "4px" }}>
-          What you actually take home, what the £100k tax trap costs, and what a pay rise or salary
-          sacrifice changes.
-        </FLPText>
-      </div>
-      <UKTaxCalculator
+    <div className={pageRoot()}>
+      <PageHeader
+        subtitle="What you take home, what the £100k tax trap costs, and what a pay rise or salary sacrifice changes."
+        title="Your take-home pay"
+      />
+      <TakeHomeCalculator
         initialSalary={effectiveSalary}
         onApplyIncrease={(monthlyIncrease) =>
-          navigate(`/app/savings?payRise=${Math.round(monthlyIncrease)}#forecast`)
+          // Router state, not the URL: no money values in links or history entries.
+          navigate("/app/savings#forecast", { state: { payRise: Math.round(monthlyIncrease) } })
         }
       />
     </div>

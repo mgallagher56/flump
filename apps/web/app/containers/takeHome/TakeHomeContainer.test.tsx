@@ -12,8 +12,8 @@ vi.mock("~/hooks/useUserProfile", () => ({
 vi.mock("~/state/baseline.store", () => ({
   useFinancialBaseline: () => ({ baseline: { annualGrossSalary: 0 } }),
 }));
-vi.mock("~/components/forecast/UKTaxCalculator", () => ({
-  default: ({
+vi.mock("~/features/take-home/components/TakeHomeCalculator", () => ({
+  TakeHomeCalculator: ({
     initialSalary,
     onApplyIncrease,
   }: {
@@ -33,13 +33,13 @@ describe("<TakeHomeContainer />", () => {
 
   it("renders the page heading and seeds the calculator from the profile salary", () => {
     render(<TakeHomeContainer />);
-    expect(screen.getByRole("heading", { level: 1, name: "Take-home pay" })).toBeDefined();
+    expect(screen.getByRole("heading", { level: 1, name: "Your take-home pay" })).toBeDefined();
     expect(screen.getByText("calc 60000")).toBeDefined();
   });
 
-  it("sends 'apply to forecast' to the Savings forecaster with the monthly rise", () => {
+  it("sends 'model this' to the Savings forecaster with the monthly rise", () => {
     render(<TakeHomeContainer />);
     fireEvent.click(screen.getByText("calc 60000"));
-    expect(navigate).toHaveBeenCalledWith("/app/savings?payRise=123#forecast");
+    expect(navigate).toHaveBeenCalledWith("/app/savings#forecast", { state: { payRise: 123 } });
   });
 });
