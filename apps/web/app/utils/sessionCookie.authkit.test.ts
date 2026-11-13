@@ -1,4 +1,5 @@
 // @vitest-environment node
+// authkit's config is process-global: this file relies on vitest's default per-file module isolation (with isolate:false its `__Host-wos-session`/https setup would leak into other authkit tests).
 import { randomBytes } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 
