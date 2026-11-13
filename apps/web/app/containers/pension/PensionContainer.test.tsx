@@ -1,6 +1,7 @@
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+const mockSubmit = vi.hoisted(() => vi.fn());
 const mockUpdateProfile = vi.fn().mockResolvedValue({});
 const mockMarkChecklistStep = vi.fn().mockResolvedValue({});
 
@@ -55,8 +56,9 @@ vi.mock("react-router", () => ({
   useLocation: () => ({ hash: mockHash, pathname: "/app/pension", search: "" }),
   Link: ({ children, to }: any) => <a href={to}>{children}</a>,
   useLoaderData: () => testLoaderData,
+  useNavigate: () => vi.fn(),
   useFetcher: () => ({
-    submit: vi.fn(),
+    submit: mockSubmit,
     state: "idle",
   }),
 }));
@@ -91,7 +93,7 @@ import PensionContainer from "./PensionContainer";
 const openTab = (name: RegExp) => fireEvent.click(screen.getByRole("tab", { name }));
 
 describe("PensionContainer", () => {
-  it("opens the details card and scrolls to it for the #pension-details deep link", async () => {
+  it("scrolls to and focuses the details card for the #pension-details deep link", async () => {
     mockHash = "#pension-details";
     const scroll = vi.fn();
     Element.prototype.scrollIntoView = scroll;
@@ -99,43 +101,36 @@ describe("PensionContainer", () => {
       render(<PensionContainer />);
       await vi.waitFor(() => expect(scroll).toHaveBeenCalled());
       expect(document.getElementById("pension-details")).not.toBeNull();
+      expect(document.activeElement?.id).toBe("pension-details");
     } finally {
       mockHash = "";
     }
   });
 
-  it("renders contributions breakdown and toggles inline editing for employer NI", async () => {
+  it("shows saved details and edits employer NI pass-through, saving to the profile", async () => {
     render(<PensionContainer />);
 
     expect(screen.getByRole("heading", { level: 1, name: "Your pension" })).toBeDefined();
-    openTab(/Contributions and allowances/);
-    expect(
-      screen.getByRole("heading", { name: "Your current contributions (UK auto-enrolment)" }),
-    ).toBeDefined();
+    expect(screen.getByRole("heading", { level: 2, name: "Your details" })).toBeDefined();
 
-    // Click Edit rates button
-    const editBtn = screen.getByRole("button", { name: /Edit rates/i });
-    fireEvent.click(editBtn);
+    fireEvent.click(screen.getByRole("button", { name: /Edit details/i }));
 
-    // Verify both Salary Sacrifice and Pass on Employer NI checkboxes exist
+    // Both Salary Sacrifice and Pass on Employer NI checkboxes exist
     expect(screen.getByLabelText(/Salary Sacrifice \(saves NI\)/i)).toBeDefined();
     const employerNiCheckbox = screen.getByLabelText(/Pass on Employer NI/i);
-    expect(employerNiCheckbox).toBeDefined();
     expect((employerNiCheckbox as HTMLInputElement).checked).toBe(false);
-
-    // Toggle employer NI on
     fireEvent.click(employerNiCheckbox);
     expect((employerNiCheckbox as HTMLInputElement).checked).toBe(true);
 
-    // Click Save to Profile
-    const saveBtn = screen.getByRole("button", { name: /Save to profile/i });
-    fireEvent.click(saveBtn);
+    fireEvent.click(screen.getByRole("button", { name: /Save details/i }));
 
-    expect(mockUpdateProfile).toHaveBeenCalledWith(
-      expect.objectContaining({
-        isSalarySacrifice: true,
-        isSalarySacrificeEmployerNi: true,
-      }),
+    await waitFor(() =>
+      expect(mockUpdateProfile).toHaveBeenCalledWith(
+        expect.objectContaining({
+          isSalarySacrifice: true,
+          isSalarySacrificeEmployerNi: true,
+        }),
+      ),
     );
   });
 
@@ -148,8 +143,8 @@ describe("PensionContainer", () => {
     expect(screen.getByText(/plus payments into your pots/)).toBeDefined();
     expect(screen.getAllByText("Current Workplace Pot").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Old Employer Pot").length).toBeGreaterThan(0);
-    expect(screen.getByText("Current Pot")).toBeDefined();
-    expect(screen.getByText("Past Pot")).toBeDefined();
+    expect(screen.getAllByText("Current pot").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Past pot").length).toBeGreaterThan(0);
   });
 
   it("handles reset financial data state with zero values", () => {
@@ -194,19 +189,19 @@ describe("PensionContainer", () => {
 
       const tabs = screen.getAllByRole("tab");
       expect(tabs.map((t) => t.textContent)).toEqual([
-        "Retirement forecast",
+        "Forecast",
         "Your pots (2)",
         "Contributions and allowances",
       ]);
       expect(tabs[0].getAttribute("aria-selected")).toBe("true");
       expect(tabs[0].getAttribute("tabindex")).toBe("0");
       expect(tabs[1].getAttribute("tabindex")).toBe("-1");
-      expect(screen.getByRole("tabpanel", { name: "Retirement forecast" })).toBeDefined();
+      expect(screen.getByRole("tabpanel", { name: "Forecast" })).toBeDefined();
       // Inactive panels are hidden from the accessibility tree.
       expect(screen.queryByRole("tabpanel", { name: /Your pots/ })).toBeNull();
       openTab(/Your pots/);
       expect(screen.getByRole("tabpanel", { name: /Your pots/ })).toBeDefined();
-      expect(screen.queryByRole("tabpanel", { name: "Retirement forecast" })).toBeNull();
+      expect(screen.queryByRole("tabpanel", { name: "Forecast" })).toBeNull();
     });
 
     it("moves between tabs with the arrow, Home and End keys", () => {
@@ -226,12 +221,10 @@ describe("PensionContainer", () => {
       expect(tabs[0].getAttribute("aria-selected")).toBe("true");
     });
 
-    it("lets the inline salary field be cleared without snapping back to 0", () => {
+    it("lets the salary field be cleared without snapping back to 0", () => {
       render(<PensionContainer />);
-      openTab(/Contributions and allowances/);
-      fireEvent.click(screen.getByRole("button", { name: /Edit rates/i }));
-      const panel = screen.getByRole("tabpanel", { name: /Contributions and allowances/ });
-      const salary = within(panel).getByLabelText(/Annual salary/i) as HTMLInputElement;
+      fireEvent.click(screen.getByRole("button", { name: /Edit details/i }));
+      const salary = screen.getByLabelText(/Annual salary/i) as HTMLInputElement;
       fireEvent.change(salary, { target: { value: "" } });
       expect(salary.value).toBe("");
     });
@@ -258,7 +251,7 @@ describe("PensionContainer", () => {
         "/app/profile",
       );
       expect(screen.queryByText(/45,000/)).toBeNull();
-      expect(container.querySelector("#pension-forecast-salary")).toBeNull();
+      expect(container.querySelector("input[type='range']")).toBeNull();
     });
 
     it("tax trap callout reads both engine rates and never says 60% alone", () => {
@@ -275,7 +268,7 @@ describe("PensionContainer", () => {
       expect(container.textContent).not.toContain("effective 60% marginal tax rate");
     });
 
-    it("Model this contribution pre-fills the what-if and makes no save call", () => {
+    it("Model this contribution seeds the extra-contribution lever and makes no save call", () => {
       setProfile({
         annualSalary: 110000,
         pensionPercent: 5,
@@ -283,16 +276,25 @@ describe("PensionContainer", () => {
         setupChecklistCompletedSteps: ["pension"],
       });
       mockUpdateProfile.mockClear();
-      const { container } = render(<PensionContainer />);
-      const input = container.querySelector("#pension-forecast-employee-pct") as HTMLInputElement;
-      expect(input.value).toBe("5");
+      mockSubmit.mockClear();
+      render(<PensionContainer />);
+      openTab(/Your pots/);
+      const extra = () =>
+        screen.getByLabelText("Extra each month range slider") as HTMLInputElement;
+      expect(extra().value).toBe("0");
 
-      expect(container.textContent).toContain("Adjusted net income above £100,000");
-      expect(container.textContent).not.toContain("Actionable");
+      expect(document.body.textContent).toContain("Adjusted net income above £100,000");
+      expect(document.body.textContent).not.toContain("Actionable");
       fireEvent.click(screen.getByRole("button", { name: "Model this contribution" }));
 
-      expect(Number(input.value)).toBeGreaterThan(5);
+      expect(Number(extra().value)).toBeGreaterThan(0);
+      // Back on the forecast tab, which holds the scenario zone.
+      expect(screen.getByRole("tab", { name: "Forecast" }).getAttribute("aria-selected")).toBe(
+        "true",
+      );
+      expect(screen.getByRole("button", { name: "Reset to saved figures" })).toBeDefined();
       expect(mockUpdateProfile).not.toHaveBeenCalled();
+      expect(mockSubmit).not.toHaveBeenCalled();
     });
 
     it("tax trap callout uses Scottish rates for a Scottish baseline, else labels the assumption", async () => {
@@ -332,8 +334,7 @@ describe("PensionContainer", () => {
       });
       render(<PensionContainer />);
       expect(
-        screen.getAllByText("Default: auto-enrolment minimum. Change in your pension details")
-          .length,
+        screen.getAllByText("Default: auto-enrolment minimum. Edit to match your payslip").length,
       ).toBe(2);
     });
 
@@ -373,8 +374,90 @@ describe("PensionContainer", () => {
         setupChecklistCompletedSteps: ["pension"],
       });
       render(<PensionContainer />);
-      expect(screen.getByText(/Employee:/).parentElement?.textContent).toContain("0%");
+      expect(screen.getByText(/You:/).parentElement?.textContent).toContain("0%");
       expect(screen.queryByText(/Default: auto-enrolment minimum/)).toBeNull();
+    });
+  });
+
+  describe("scenario zone", () => {
+    beforeEach(() => {
+      testLoaderData = defaultLoaderData;
+      testProfileData = defaultProfileData;
+      mockSubmit.mockClear();
+      mockUpdateProfile.mockClear();
+    });
+
+    const summaryText = () =>
+      screen.getAllByText("Total in your pots")[0].closest("[data-density='compact']")?.textContent;
+    const detailsText = () => document.getElementById("pension-details")?.textContent;
+    const slider = (label: string) =>
+      screen.getByLabelText(`${label} range slider`) as HTMLInputElement;
+
+    it("changing every scenario lever leaves the saved KPIs and details alone and makes no request", () => {
+      const fetchSpy = vi.fn();
+      vi.stubGlobal("fetch", fetchSpy);
+      render(<PensionContainer />);
+      const kpis = summaryText();
+      const details = detailsText();
+      expect(kpis).toContain("£30,000");
+
+      fireEvent.change(slider("Extra each month"), { target: { value: "400" } });
+      fireEvent.change(slider("Years to retirement"), { target: { value: "10" } });
+      fireEvent.change(slider("Growth a year"), { target: { value: "9" } });
+      fireEvent.click(screen.getByRole("button", { name: "3%" }));
+      fireEvent.click(screen.getByLabelText(/Qualifying earnings only/));
+      fireEvent.click(screen.getByLabelText(/today's money/));
+      fireEvent.click(screen.getByLabelText(/full new State Pension/));
+
+      expect(screen.getByRole("button", { name: "Reset to saved figures" })).toBeDefined();
+      expect(summaryText()).toBe(kpis);
+      expect(detailsText()).toBe(details);
+      expect(mockSubmit).not.toHaveBeenCalled();
+      expect(mockUpdateProfile).not.toHaveBeenCalled();
+      expect(fetchSpy).not.toHaveBeenCalled();
+      vi.unstubAllGlobals();
+    });
+
+    it("has no Sync to profile or Apply control anywhere", () => {
+      render(<PensionContainer />);
+      expect(screen.queryByText(/sync/i)).toBeNull();
+      expect(screen.queryByRole("button", { name: /apply/i })).toBeNull();
+    });
+
+    it("Reset to saved figures returns every lever to the saved value", () => {
+      render(<PensionContainer />);
+      const before = ["Extra each month", "Years to retirement", "Growth a year"].map(
+        (l) => slider(l).value,
+      );
+      fireEvent.change(slider("Extra each month"), { target: { value: "400" } });
+      fireEvent.change(slider("Years to retirement"), { target: { value: "10" } });
+      fireEvent.change(slider("Growth a year"), { target: { value: "9" } });
+      fireEvent.click(screen.getByLabelText(/today's money/));
+      fireEvent.click(screen.getByRole("button", { name: "Reset to saved figures" }));
+      expect(
+        ["Extra each month", "Years to retirement", "Growth a year"].map((l) => slider(l).value),
+      ).toEqual(before);
+      expect((screen.getByLabelText(/today's money/) as HTMLInputElement).checked).toBe(false);
+      expect(screen.queryByRole("button", { name: "Reset to saved figures" })).toBeNull();
+    });
+
+    it("keeps the scenario when switching tabs and back", () => {
+      render(<PensionContainer />);
+      fireEvent.change(slider("Extra each month"), { target: { value: "250" } });
+      openTab(/Your pots/);
+      openTab(/^Forecast$/);
+      expect(slider("Extra each month").value).toBe("250");
+    });
+
+    it("puts the saved details before the scenario zone, and uses one hero", () => {
+      const { container } = render(<PensionContainer />);
+      const details = document.getElementById("pension-details");
+      const zone = screen.getByRole("region", { name: "Model a change to your pension" });
+      expect(
+        details && zone && details.compareDocumentPosition(zone) & Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
+      expect(container.querySelectorAll("[data-tone='hero']")).toHaveLength(1);
+      expect(zone.querySelectorAll("[data-tone='hero']")).toHaveLength(0);
     });
   });
 });

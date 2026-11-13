@@ -468,10 +468,6 @@ describe("Architecture & Design System Laws", () => {
           count: 1,
           reason: "active child dot (graphic)",
         },
-        "apps/web/app/components/pension/PensionForecasterCard.tsx": {
-          count: 1,
-          reason: "PLSA progress fill (graphic)",
-        },
         "apps/web/app/components/budget/UserProfilePanel.tsx": {
           count: 1,
           reason: "toggle switch track (graphic)",
