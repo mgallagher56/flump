@@ -2,7 +2,6 @@ import { calculateSafeToSpend, evaluateFinancialStage } from "@flump/finance-eng
 import { Button, Icon, PageHeader, ProjectionNotice, VisuallyHidden } from "@repo/ui";
 import { SlidersHorizontal } from "lucide-react";
 import { type FC, useMemo, useRef, useState } from "react";
-import SetupChecklist, { type SetupChecklistProps } from "~/components/setup/SetupChecklist";
 import { normalizeProfile, type UserProfile, useUserProfile } from "~/hooks/useUserProfile";
 import type { DebtSummary } from "~/utils/debtSummary";
 import {
@@ -20,6 +19,7 @@ import { DebtWidget } from "../DebtWidget";
 import { MortgageWidget } from "../MortgageWidget";
 import { PensionWidget } from "../PensionWidget";
 import { SavingsWidget } from "../SavingsWidget";
+import { SetupChecklist, type SetupChecklistProps } from "../SetupChecklist";
 import { StageCoachCard } from "../StageCoachCard";
 import { TaxWidget } from "../TaxWidget";
 import { WidgetVisibilityPanel } from "../WidgetVisibilityPanel";
