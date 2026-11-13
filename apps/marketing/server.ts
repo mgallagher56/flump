@@ -6,6 +6,7 @@ import express from "express";
 import { createServer as createViteServer, type ViteDevServer } from "vite";
 import { registerOps } from "./server/ops";
 import { buildCsp, genericServerError, injectThemeNonce, resolveAppUrl } from "./server/security";
+import { canonicalLinkTag } from "./server/sitemap";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -83,6 +84,7 @@ async function createServer() {
         ${helmet?.title?.toString() || ""}
         ${helmet?.meta?.toString() || ""}
         ${helmet?.link?.toString() || ""}
+        ${canonicalLinkTag(process.env.SITE_URL, url)}
         ${appUrlScript}
       `;
 
