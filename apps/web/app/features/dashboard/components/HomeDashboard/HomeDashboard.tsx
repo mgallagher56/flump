@@ -2,10 +2,6 @@ import { calculateSafeToSpend, evaluateFinancialStage } from "@flump/finance-eng
 import { Button, Icon, PageHeader, ProjectionNotice, VisuallyHidden } from "@repo/ui";
 import { SlidersHorizontal } from "lucide-react";
 import { type FC, useMemo, useRef, useState } from "react";
-import { AccountsWidget } from "~/components/dashboard/widgets/AccountsWidget";
-import { BudgetWidget } from "~/components/dashboard/widgets/BudgetWidget";
-import { DebtWidget } from "~/components/dashboard/widgets/DebtWidget";
-import { SavingsWidget } from "~/components/dashboard/widgets/SavingsWidget";
 import SetupChecklist, { type SetupChecklistProps } from "~/components/setup/SetupChecklist";
 import { normalizeProfile, type UserProfile, useUserProfile } from "~/hooks/useUserProfile";
 import type { DebtSummary } from "~/utils/debtSummary";
@@ -16,10 +12,14 @@ import {
   DEFAULT_DASHBOARD_WIDGETS,
   DEFAULT_ENABLED_PAGES,
 } from "~/utils/pageConfig";
+import { AccountsWidget } from "../AccountsWidget";
+import { BudgetWidget } from "../BudgetWidget";
 import { DashboardEmptyState } from "../DashboardEmptyState";
 import { DashboardKpiStrip } from "../DashboardKpiStrip";
 import { MortgageWidget } from "../MortgageWidget";
 import { PensionWidget } from "../PensionWidget";
+import { DebtWidget } from "../DebtWidget";
+import { SavingsWidget } from "../SavingsWidget";
 import { StageCoachCard } from "../StageCoachCard";
 import { TaxWidget } from "../TaxWidget";
 import { WidgetVisibilityPanel } from "../WidgetVisibilityPanel";
@@ -209,18 +209,8 @@ export const HomeDashboard: FC<HomeDashboardProps> = ({
       ? finiteOrNull(savingsData?.totalSavingsBalance)
       : finiteOrNull(accountsData?.typeTotals?.Saving);
 
-  // Widgets keep their own edit controls until PR2 to PR4 replace them; they are unreachable here.
-  const noop = () => {};
   // Saved per-widget settings (read-only here) still apply; editing them is gone.
   const widgetConfig = (key: DashboardWidgetKey) => profile.dashboardWidgetConfig?.[key] ?? {};
-  const commonProps = {
-    editMode: false,
-    size: "normal" as const,
-    onToggleSize: noop,
-    onHide: noop,
-    onMoveUp: noop,
-    onMoveDown: noop,
-  };
 
   return (
     <div className={dashboardPage()}>
@@ -282,20 +272,11 @@ export const HomeDashboard: FC<HomeDashboardProps> = ({
           {visibleWidgets.map((key) => {
             switch (key) {
               case "accounts":
-                return (
-                  <AccountsWidget
-                    key="accounts"
-                    {...commonProps}
-                    config={widgetConfig("accounts")}
-                    data={accountsData}
-                  />
-                );
+                return <AccountsWidget key="accounts" data={accountsData} />;
               case "budget":
                 return (
                   <BudgetWidget
                     key="budget"
-                    {...commonProps}
-                    config={widgetConfig("budget")}
                     data={{
                       ...budgetData,
                       annualSalary:
@@ -304,19 +285,11 @@ export const HomeDashboard: FC<HomeDashboardProps> = ({
                   />
                 );
               case "debt":
-                return (
-                  <DebtWidget
-                    key="debt"
-                    {...commonProps}
-                    config={widgetConfig("debt")}
-                    data={debtData}
-                  />
-                );
+                return <DebtWidget key="debt" data={debtData} />;
               case "savings":
                 return (
                   <SavingsWidget
                     key="savings"
-                    {...commonProps}
                     config={widgetConfig("savings")}
                     data={savingsData}
                   />
