@@ -50,9 +50,9 @@ describe("runwayStorage utilities", () => {
 
   it("calculates runway stats across multiple burn and horizon scenarios", () => {
     const accounts = [
-      { id: "a1", type: "Current" },
-      { id: "a2", type: "Savings" },
-      { id: "a3", type: "Mortgage" },
+      { id: "a1", type: "Current", balance: 6000 },
+      { id: "a2", type: "Savings", balance: 12000 },
+      { id: "a3", type: "Mortgage", balance: 200000 },
     ];
     const accountDetails = [
       { accountId: "a1", value: 6000, date: "2026-01-01" },
@@ -62,7 +62,7 @@ describe("runwayStorage utilities", () => {
 
     // Standard burn (< 1 year)
     const resShort = calculateRunwayStats({
-      accounts: [{ id: "a1", type: "Current" }],
+      accounts: [{ id: "a1", type: "Current", balance: 4000 }],
       accountDetails: [{ accountId: "a1", value: 4000, date: "2026-01-01" }],
       entries: [
         { id: "i1", isIncome: true, isPrimaryIncome: true, amount: 3000, frequency: "monthly" },
@@ -122,7 +122,7 @@ describe("runwayStorage utilities", () => {
 
     // Exact years (e.g. 24 months = 2 years)
     const resExactYears = calculateRunwayStats({
-      accounts: [{ id: "a1", type: "Savings" }],
+      accounts: [{ id: "a1", type: "Savings", balance: 24000 }],
       accountDetails: [{ accountId: "a1", value: 24000, date: "2026-01-01" }],
       entries: [
         {
@@ -140,7 +140,7 @@ describe("runwayStorage utilities", () => {
 
     // > 120 months (10+ years)
     const resLong = calculateRunwayStats({
-      accounts: [{ id: "a1", type: "Savings" }],
+      accounts: [{ id: "a1", type: "Savings", balance: 150000 }],
       accountDetails: [{ accountId: "a1", value: 150000, date: "2026-01-01" }],
       entries: [
         {

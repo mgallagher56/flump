@@ -61,9 +61,16 @@ export interface ResolvedAccount {
   category: AccountCategory;
   isAsset: boolean;
   isLiability: boolean;
-  nominalBalance: number; // Always positive magnitude
-  netWorthBalance: number; // Signed (+ for assets, - for liabilities)
-  latestBalance: number; // Contextual balance (positive magnitude)
+  /**
+   * Display balance for the current figure (`account.balance`): the real sign for assets (an
+   * overdrawn current account is negative) and the positive amount owed for liabilities.
+   */
+  nominalBalance: number;
+  /** Signed contribution to net worth: real sign for assets, -owed for liabilities, 0 for student loans. */
+  netWorthBalance: number;
+  latestBalance: number; // Same as nominalBalance
+  /** Portion of a negative asset balance (overdrawn current account), as a positive amount. */
+  overdrawnAmount: number;
   interestRate: number;
   /** False when the stored interest rate is null or missing (0 is a known rate). */
   interestRateKnown: boolean;
@@ -83,6 +90,29 @@ export interface MonthlyPortfolioHistoryPoint {
   netWorth: number;
   totalAssets: number;
   totalLiabilities: number;
+}
+
+const MONTH_NAMES = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
+];
+
+function isValidHistoryYear(year: number): boolean {
+  return Number.isInteger(year) && year >= 1900 && year <= 2200;
+}
+
+function isValidHistoryMonth(month: number): boolean {
+  return Number.isInteger(month) && month >= 1 && month <= 12;
 }
 
 function hasStoredNumber(value: number | string | null | undefined): boolean {
@@ -124,28 +154,56 @@ export class PortfolioSnapshot {
   private readonly accountsById: Map<string, ResolvedAccount>;
 
   constructor(accounts: RawAccount[] = [], accountDetails: RawAccountDetail[] = []) {
-    // 1. Group account details by account ID
-    const detailsByAccount = new Map<
+    // At most one row per (account, year, month): a later row replaces an earlier one, so
+    // duplicates are never double counted. Rows without a valid year, month or value are skipped.
+    const rowsByAccount = new Map<
       string,
-      Array<{ year: number; month: number; value: number }>
+      Map<number, { year: number; month: number; value: number }>
     >();
 
     for (const d of accountDetails) {
       const accId = String(d.accountId || d.account_id || "");
       if (!accId) continue;
 
-      const numVal = Number(d.value) || 0;
-      const numMonth = Number(d.month) || 1;
-      const numYear = Number(d.year) || 2025;
+      const rawMonth = d.month as unknown;
+      const rawYear = d.year as unknown;
+      const rawValue = d.value as unknown;
+      if (
+        rawMonth === null ||
+        rawMonth === undefined ||
+        rawMonth === "" ||
+        rawYear === null ||
+        rawYear === undefined ||
+        rawYear === "" ||
+        rawValue === null ||
+        rawValue === undefined ||
+        rawValue === ""
+      ) {
+        continue;
+      }
+      const numMonth = Number(rawMonth);
+      const numYear = Number(rawYear);
+      const numVal = Number(rawValue);
+      if (!isValidHistoryYear(numYear) || !isValidHistoryMonth(numMonth)) continue;
+      if (!Number.isFinite(numVal)) continue;
 
-      const list = detailsByAccount.get(accId) ?? [];
-      list.push({ year: numYear, month: numMonth, value: numVal });
-      detailsByAccount.set(accId, list);
+      const rows =
+        rowsByAccount.get(accId) ??
+        new Map<number, { year: number; month: number; value: number }>();
+      rows.set(numYear * 12 + (numMonth - 1), { year: numYear, month: numMonth, value: numVal });
+      rowsByAccount.set(accId, rows);
     }
 
-    // Sort each account's details chronologically ascending
-    for (const list of detailsByAccount.values()) {
-      list.sort((a, b) => a.year * 12 + a.month - (b.year * 12 + b.month));
+    // Each account's details, chronologically ascending
+    const detailsByAccount = new Map<
+      string,
+      Array<{ year: number; month: number; value: number }>
+    >();
+    for (const [accId, rows] of rowsByAccount) {
+      detailsByAccount.set(
+        accId,
+        [...rows.entries()].sort((a, b) => a[0] - b[0]).map(([, row]) => row),
+      );
     }
 
     // 2. Resolve each account
@@ -158,22 +216,25 @@ export class PortfolioSnapshot {
       const isAsset = !isLiability && category !== "studentLoans";
 
       const history = detailsByAccount.get(accId) ?? [];
-      let latestRawVal: number;
       let latestMonth: number | undefined;
       let latestYear: number | undefined;
 
+      // The current figure is always `account.balance` ("now"). History rows only describe past
+      // months, so a PATCHed balance must win even when history exists (D22).
+      const rawBalance = Number(acc.balance);
+      const currentValue = Number.isFinite(rawBalance) ? rawBalance : 0;
+
       if (history.length > 0) {
         const latest = history[history.length - 1]!;
-        latestRawVal = latest.value;
         latestMonth = latest.month;
         latestYear = latest.year;
-      } else {
-        latestRawVal = Number(acc.balance) || 0;
       }
 
-      const nominalBalance = Math.abs(latestRawVal);
+      // Assets keep their real sign (C-15); liabilities are normalised by type.
+      const nominalBalance = isAsset ? currentValue : Math.abs(currentValue);
       const netWorthBalance =
         category === "studentLoans" ? 0 : isLiability ? -nominalBalance : nominalBalance;
+      const overdrawnAmount = isAsset && currentValue < 0 ? -currentValue : 0;
       const interestRate = Number(acc.interestRate) || 0;
       const interestRateKnown = hasStoredNumber(acc.interestRate);
       const monthlyContribution = Number(acc.monthlyContribution) || 0;
@@ -190,6 +251,7 @@ export class PortfolioSnapshot {
         nominalBalance,
         netWorthBalance,
         latestBalance: nominalBalance,
+        overdrawnAmount,
         interestRate,
         interestRateKnown,
         monthlyContribution,
@@ -224,16 +286,19 @@ export class PortfolioSnapshot {
     return this.resolvedAccounts.reduce((sum, a) => sum + a.netWorthBalance, 0);
   }
 
+  /** Positive asset balances only; an overdrawn account counts under liabilities instead. */
   getTotalAssets(): number {
     return this.resolvedAccounts
       .filter((a) => a.isAsset)
-      .reduce((sum, a) => sum + a.nominalBalance, 0);
+      .reduce((sum, a) => sum + Math.max(0, a.nominalBalance), 0);
   }
 
+  /** Amounts owed plus any overdrawn asset balances, so assets minus liabilities is net worth. */
   getTotalLiabilities(): number {
-    return this.resolvedAccounts
-      .filter((a) => a.isLiability)
-      .reduce((sum, a) => sum + a.nominalBalance, 0);
+    return this.resolvedAccounts.reduce(
+      (sum, a) => sum + (a.isLiability ? a.nominalBalance : a.overdrawnAmount),
+      0,
+    );
   }
 
   getTotalLiquidCash(): number {
@@ -254,10 +319,14 @@ export class PortfolioSnapshot {
       .reduce((sum, a) => sum + a.nominalBalance, 0);
   }
 
+  /** Consumer debt plus the overdrawn portion of current accounts. */
   getTotalConsumerDebt(): number {
-    return this.resolvedAccounts
-      .filter((a) => a.category === "debt")
-      .reduce((sum, a) => sum + a.nominalBalance, 0);
+    return this.resolvedAccounts.reduce(
+      (sum, a) =>
+        sum +
+        (a.category === "debt" ? a.nominalBalance : a.category === "cash" ? a.overdrawnAmount : 0),
+      0,
+    );
   }
 
   /** Property value counts towards net worth but is not liquid. */
@@ -299,11 +368,18 @@ export class PortfolioSnapshot {
    */
   toDebtItems(): DebtItem[] {
     return this.resolvedAccounts
-      .filter((a) => a.category === "debt")
-      .map((a) => {
+      .filter((a) => a.category === "debt" || (a.category === "cash" && a.overdrawnAmount > 0))
+      .map((rawAccount) => {
+        // An overdrawn current account is an overdraft debt for the overdrawn amount.
+        const isOverdrawnCash = rawAccount.category === "cash";
+        const a = isOverdrawnCash
+          ? { ...rawAccount, nominalBalance: rawAccount.overdrawnAmount }
+          : rawAccount;
         const rawLower = a.rawType.toLowerCase();
         let type: DebtType = "loan";
-        if (rawLower.includes("card")) {
+        if (isOverdrawnCash) {
+          type = "overdraft";
+        } else if (rawLower.includes("card")) {
           type = "credit_card";
         } else if (rawLower.includes("overdraft")) {
           type = "overdraft";
@@ -338,63 +414,70 @@ export class PortfolioSnapshot {
 
   /**
    * Generates a timeline of portfolio history across recent months.
+   *
+   * Every month between the first and last recorded month is present. Each account carries its
+   * last known value forward (C-16) and contributes nothing before its first row. Assets keep
+   * their real sign: a negative asset value counts as a liability so assets minus liabilities
+   * is the signed sum. Student loans are excluded.
    */
   getMonthlyHistory(monthsCount = 12): MonthlyPortfolioHistoryPoint[] {
-    const monthMap = new Map<
-      string,
-      { year: number; month: number; assets: number; liabilities: number }
-    >();
+    const tracked = this.resolvedAccounts.filter(
+      (a) => a.category !== "studentLoans" && a.history.length > 0,
+    );
+    if (tracked.length === 0) return [];
 
-    for (const acc of this.resolvedAccounts) {
-      if (acc.category === "studentLoans") continue;
+    let first = Number.POSITIVE_INFINITY;
+    let last = Number.NEGATIVE_INFINITY;
+    for (const acc of tracked) {
       for (const h of acc.history) {
-        const key = `${h.year}-${String(h.month).padStart(2, "0")}`;
-        const existing = monthMap.get(key) ?? {
-          year: h.year,
-          month: h.month,
-          assets: 0,
-          liabilities: 0,
-        };
-
-        const val = Math.abs(h.value);
-        if (acc.isLiability) {
-          existing.liabilities += val;
-        } else {
-          existing.assets += val;
-        }
-        monthMap.set(key, existing);
+        const idx = h.year * 12 + (h.month - 1);
+        if (idx < first) first = idx;
+        if (idx > last) last = idx;
       }
     }
 
-    const sortedKeys = Array.from(monthMap.keys()).sort();
-    const recentKeys = sortedKeys.slice(-monthsCount);
+    const start = Math.max(first, last - Math.max(0, Math.floor(monthsCount)) + 1);
+    const pointers = new Map<string, number>(); // accountId -> index of last row at or before idx
+    const lastKnown = new Map<string, number>();
+    const points: MonthlyPortfolioHistoryPoint[] = [];
 
-    const monthNames = [
-      "Jan",
-      "Feb",
-      "Mar",
-      "Apr",
-      "May",
-      "Jun",
-      "Jul",
-      "Aug",
-      "Sep",
-      "Oct",
-      "Nov",
-      "Dec",
-    ];
+    for (let idx = first; idx <= last; idx++) {
+      let assets = 0;
+      let liabilities = 0;
+      for (const acc of tracked) {
+        let p = pointers.get(acc.id) ?? 0;
+        while (p < acc.history.length) {
+          const row = acc.history[p]!;
+          if (row.year * 12 + (row.month - 1) > idx) break;
+          lastKnown.set(acc.id, row.value);
+          p++;
+        }
+        pointers.set(acc.id, p);
 
-    return recentKeys.map((key) => {
-      const data = monthMap.get(key)!;
-      const label = `${monthNames[(data.month - 1) % 12]} ${data.year}`;
-      return {
-        year: data.year,
-        month: data.month,
-        label,
-        netWorth: data.assets - data.liabilities,
-        totalAssets: data.assets,
-        totalLiabilities: data.liabilities,
-      };
-    });
+        const value = lastKnown.get(acc.id);
+        if (value === undefined) continue;
+        if (acc.isLiability) {
+          liabilities += Math.abs(value);
+        } else if (value >= 0) {
+          assets += value;
+        } else {
+          liabilities += -value;
+        }
+      }
+
+      if (idx < start) continue;
+      const year = Math.floor(idx / 12);
+      const month = (idx % 12) + 1;
+      points.push({
+        year,
+        month,
+        label: `${MONTH_NAMES[month - 1]} ${year}`,
+        netWorth: assets - liabilities,
+        totalAssets: assets,
+        totalLiabilities: liabilities,
+      });
+    }
+
+    return points;
   }
 }

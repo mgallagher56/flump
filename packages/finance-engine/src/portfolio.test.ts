@@ -92,12 +92,12 @@ describe("PortfolioSnapshot domain module", () => {
   });
 
   describe("balance resolution", () => {
-    it("prefers latest chronological AccountDetail over static Account.balance", () => {
+    it("uses account.balance as the current figure; history only describes past months", () => {
       const snapshot = new PortfolioSnapshot(sampleAccounts, sampleDetails);
 
-      expect(snapshot.getLatestBalance("acc_1")).toBe(1800);
-      expect(snapshot.getLatestBalance("acc_2")).toBe(11500);
-      expect(snapshot.getLatestBalance("acc_5")).toBe(2200);
+      expect(snapshot.getLatestBalance("acc_1")).toBe(1500);
+      expect(snapshot.getLatestBalance("acc_2")).toBe(10000);
+      expect(snapshot.getLatestBalance("acc_5")).toBe(2400);
       expect(snapshot.getLatestBalance("acc_3")).toBe(25000);
     });
 
@@ -106,8 +106,8 @@ describe("PortfolioSnapshot domain module", () => {
 
       const creditCard = snapshot.getAccount("acc_5");
       expect(creditCard?.isLiability).toBe(true);
-      expect(creditCard?.nominalBalance).toBe(2200);
-      expect(creditCard?.netWorthBalance).toBe(-2200);
+      expect(creditCard?.nominalBalance).toBe(2400);
+      expect(creditCard?.netWorthBalance).toBe(-2400);
 
       const mortgage = snapshot.getAccount("acc_6");
       expect(mortgage?.isLiability).toBe(true);
@@ -119,26 +119,26 @@ describe("PortfolioSnapshot domain module", () => {
   describe("aggregations", () => {
     it("calculates total liquid cash", () => {
       const snapshot = new PortfolioSnapshot(sampleAccounts, sampleDetails);
-      expect(snapshot.getTotalLiquidCash()).toBe(13300);
+      expect(snapshot.getTotalLiquidCash()).toBe(11500);
     });
 
     it("calculates specific asset and liability categories", () => {
       const snapshot = new PortfolioSnapshot(sampleAccounts, sampleDetails);
       expect(snapshot.getTotalInvestments()).toBe(25000);
       expect(snapshot.getTotalPensions()).toBe(45000);
-      expect(snapshot.getTotalConsumerDebt()).toBe(2200 + 500 + 8000);
+      expect(snapshot.getTotalConsumerDebt()).toBe(2400 + 500 + 8000);
       expect(snapshot.getTotalMortgageBalance()).toBe(210000);
     });
 
     it("calculates total assets and liabilities", () => {
       const snapshot = new PortfolioSnapshot(sampleAccounts, sampleDetails);
-      expect(snapshot.getTotalAssets()).toBe(83300);
-      expect(snapshot.getTotalLiabilities()).toBe(212200 + 500 + 8000);
+      expect(snapshot.getTotalAssets()).toBe(81500);
+      expect(snapshot.getTotalLiabilities()).toBe(210000 + 2400 + 500 + 8000);
     });
 
     it("calculates weighted savings interest rate", () => {
       const snapshot = new PortfolioSnapshot(sampleAccounts, sampleDetails);
-      expect(snapshot.getWeightedSavingsRate()).toBeCloseTo(6.31, 2);
+      expect(snapshot.getWeightedSavingsRate()).toBeCloseTo(6.37, 2);
 
       const emptySnapshot = new PortfolioSnapshot([], []);
       expect(emptySnapshot.getWeightedSavingsRate(4.5)).toBe(4.5);
