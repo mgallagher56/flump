@@ -250,4 +250,22 @@ describe("TaxController receipt validation (E20-N14)", () => {
       }),
     ).resolves.toBeDefined();
   });
+
+  it("normalises the MIME type and nulls receipt fields when data is cleared", async () => {
+    const { controller, repo } = makeController();
+    const pdf = `data:APPLICATION/PDF;base64,${Buffer.from("%PDF-1.4 body").toString("base64")}`;
+    await controller.createTaxRecord(req, { ...base, receiptData: pdf });
+    expect(repo.create).toHaveBeenLastCalledWith(
+      expect.objectContaining({ receiptMimeType: "application/pdf" }),
+    );
+    await controller.createTaxRecord(req, {
+      ...base,
+      receiptData: null,
+      receiptMimeType: "application/pdf",
+      receiptFilename: "a.pdf",
+    });
+    expect(repo.create).toHaveBeenLastCalledWith(
+      expect.objectContaining({ receiptData: null, receiptMimeType: null, receiptFilename: null }),
+    );
+  });
 });

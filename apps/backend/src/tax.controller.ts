@@ -42,7 +42,12 @@ const pickTaxRecordFields = (body: Partial<TaxRecord> | undefined): Partial<TaxR
   for (const key of TAX_RECORD_FIELDS) {
     if (body?.[key] !== undefined) picked[key] = body[key];
   }
-  validateReceipt(picked);
+  const mime = validateReceipt(picked);
+  if (mime) picked.receiptMimeType = mime;
+  else if (picked.receiptData === null) {
+    picked.receiptMimeType = null;
+    picked.receiptFilename = null;
+  }
   return picked as Partial<TaxRecord>;
 };
 
