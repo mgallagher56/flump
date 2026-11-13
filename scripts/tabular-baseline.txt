@@ -16,7 +16,6 @@ apps/web/app/containers/accounts/accountDetailContainer/AccountDetailContainer.t
 apps/web/app/containers/pension/PensionContainer.tsx
 apps/web/app/features/debt/components/PayoffStrategyControls/PayoffStrategyControls.tsx
 apps/web/app/routes/_index.tsx
-apps/web/app/routes/app.onboarding.tsx
 packages/ui/src/calculators/DebtSnowballCalculator/DebtSnowballCalculator.tsx
 packages/ui/src/calculators/OverdraftCostCalculator/OverdraftCostCalculator.tsx
 packages/ui/src/calculators/StudentLoanCalculator/StudentLoanCalculator.tsx
