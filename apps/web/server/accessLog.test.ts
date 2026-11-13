@@ -25,11 +25,13 @@ describe("normalisePath", () => {
     expect(normalisePath("http://user:pass@host.example?code=1")).toBe("/");
   });
 
-  it("keeps real slugs but still collapses tokens (long-slug behaviour)", () => {
-    expect(normalisePath("/tools/mortgage-overpayment-calculator")).toBe(
-      "/tools/mortgage-overpayment-calculator",
-    );
-    // Slugs of 32+ characters, digits, hex and mixed case still collapse.
+  it("collapses long slugs by design and keeps short static routes", () => {
+    expect(normalisePath("/tools/mortgage-overpay-vs-isa")).toBe("/tools/:id");
+    expect(normalisePath("/r/correct-horse-battery-staple")).toBe("/r/:id");
+    for (const route of ["/app/budget", "/tools/mortgage", "/login", "/callback"]) {
+      expect(normalisePath(route)).toBe(route);
+    }
+    // 32+ characters, digits, hex and mixed case collapse too.
     expect(normalisePath("/t/aaaaaaaa-bbbbbbbb-cccccccc-dddddddd-eeee")).toBe("/t/:id");
     expect(normalisePath("/t/0123456789abcdef01234567")).toBe("/t/:id");
     expect(normalisePath("/t/AbCdEfGhIjKlMnOpQrStUv")).toBe("/t/:id");

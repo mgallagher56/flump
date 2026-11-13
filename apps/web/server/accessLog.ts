@@ -9,11 +9,9 @@ const SAFE_ID = /^[A-Za-z0-9_-]{8,64}$/;
 const DIGITS_SEGMENT = /^\d+$/;
 const TOKEN_SEGMENT = /^[A-Za-z0-9_-]{20,}$/;
 const HEX_SEGMENT = /^[0-9a-f]{12,}$/i;
-// A real slug: lowercase words joined by single hyphens, no digits, under 32 characters (the
-// length at which `redactString` blanks anything token-like anyway, so it stays the backstop).
-// Without this, /tools/mortgage-overpayment-calculator would log as /tools/:id.
-const SLUG_SEGMENT = /^[a-z]+(?:-[a-z]+)+$/;
-const MAX_SLUG_LENGTH = 31;
+// By design every segment of 20+ characters collapses, including long kebab-case slugs: a
+// passphrase-style segment (`correct-horse-battery-staple`) is indistinguishable from one, and
+// short static route names (/app/budget, /login) stay readable.
 const SCHEME_AUTHORITY = /^[a-z][a-z0-9+.-]*:\/\/[^/?#]*/i;
 
 /** A UUID x-request-id is kept; otherwise a strict-charset x-railway-request-id; else a fresh UUID. */
@@ -41,8 +39,7 @@ export function normalisePath(url: string): string {
       UUID.test(segment) ||
       DIGITS_SEGMENT.test(segment) ||
       HEX_SEGMENT.test(segment) ||
-      (TOKEN_SEGMENT.test(segment) &&
-        !(SLUG_SEGMENT.test(segment) && segment.length <= MAX_SLUG_LENGTH))
+      TOKEN_SEGMENT.test(segment)
     ) {
       return ":id";
     }
