@@ -274,7 +274,11 @@ export const TaxIncomeSectionCard: FC<TaxIncomeSectionCardProps> = ({
                   Income
                 </span>
                 <span
-                  style={{ fontSize: "13px", fontWeight: 700, color: "var(--colors-success-500)" }}
+                  style={{
+                    fontSize: "13px",
+                    fontWeight: 700,
+                    color: "var(--colors-status-positive-text)",
+                  }}
                 >
                   +{formatCurrencyDecimal(totalIncome)}
                 </span>
@@ -625,7 +629,7 @@ export const TaxIncomeSectionCard: FC<TaxIncomeSectionCardProps> = ({
                           textAlign: "right",
                           fontWeight: 500,
                           color: isIncome
-                            ? "var(--colors-success-500)"
+                            ? "var(--colors-status-positive-text)"
                             : "var(--colors-text-primary)",
                         }}
                       >
@@ -649,7 +653,7 @@ export const TaxIncomeSectionCard: FC<TaxIncomeSectionCardProps> = ({
                           textAlign: "right",
                           fontWeight: 700,
                           color: isIncome
-                            ? "var(--colors-success-500)"
+                            ? "var(--colors-status-positive-text)"
                             : "var(--colors-destructive)",
                         }}
                       >

@@ -156,28 +156,29 @@ vi.mock("react-router", () => ({
 
 import TaxContainer from "./TaxContainer";
 
+const openTab = (name: string) => fireEvent.click(screen.getByRole("tab", { name }));
+
 describe("TaxContainer & Calculation Tools", () => {
   it("renders page title and 4 collapsible income sections", () => {
     render(<TaxContainer />);
 
-    expect(screen.getByText("Income & Self Assessment Tax Planner")).toBeDefined();
-    expect(screen.getByText("Employment Income (PAYE)")).toBeDefined();
+    expect(screen.getByRole("heading", { level: 1, name: "Your tax" })).toBeDefined();
+    expect(screen.getByText("Employment (PAYE)")).toBeDefined();
     expect(screen.getByText("Rental property")).toBeDefined();
-    expect(screen.getByText("Self-Employed & Freelance Business")).toBeDefined();
-    expect(screen.getByText("Savings & Dividend Income")).toBeDefined();
+    expect(screen.getByText("Self-employed and freelance")).toBeDefined();
+    expect(screen.getByText("Savings and dividends")).toBeDefined();
   });
 
   it("renders top summary cards and comparison table", () => {
     render(<TaxContainer />);
 
     expect(screen.getByText(/Estimated Self Assessment due/i)).toBeDefined();
-    expect(screen.getAllByText(/Total Gross Income/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/Rental Profit Share/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/Self-Employed Profit/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Total income").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Your share of rental profit").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Self-employed profit").length).toBeGreaterThan(0);
 
-    const compareTab = screen.getByText("Multi-Year Comparison");
-    fireEvent.click(compareTab);
-    expect(screen.getByText("P&L & Tax Comparison Table")).toBeDefined();
+    openTab("Year by year");
+    expect(screen.getByRole("table", { name: "Income and tax by tax year" })).toBeDefined();
   });
 
   it("labels every top KPI as an estimate for the tax year and keeps their values out of the heading outline", () => {
@@ -194,13 +195,12 @@ describe("TaxContainer & Calculation Tools", () => {
     expect(headingTexts.some((t) => t.includes("£"))).toBe(false);
   });
 
-  it("allows switching tabs to Detailed Transaction Log", () => {
+  it("allows switching tabs to All records", () => {
     render(<TaxContainer />);
 
-    const logTab = screen.getByText("Detailed Transaction Log");
-    fireEvent.click(logTab);
+    openTab("All records");
 
-    expect(screen.getByText("Showing 6 records")).toBeDefined();
+    expect(screen.getByText("Showing 1 to 6 of 6 records")).toBeDefined();
     expect(screen.getByText("Flat rent (2024/25)")).toBeDefined();
   });
 
@@ -219,7 +219,7 @@ describe("TaxContainer & Calculation Tools", () => {
     mockProfileSalary = null;
     const { container, unmount } = render(<TaxContainer />);
 
-    expect(container.textContent).toMatch(/Profile salary baseline:\s*Not set/);
+    expect(container.textContent).toMatch(/Salary in your profile:\s*Not set/);
     expect(container.textContent).not.toContain("45,000");
     const links = screen.getAllByRole("link", { name: "Add salary" });
     expect(links.length).toBeGreaterThan(0);
@@ -246,40 +246,59 @@ describe("TaxContainer & Calculation Tools", () => {
     mockLoaderRecords = mockRecords;
   });
 
-  it("renders Tax Trap & HMRC Reserve tab and syncs tax parameters", () => {
+  it("renders the Payments and reserve tab and saves tax inputs to the profile", () => {
+    mockSubmit.mockClear();
     render(<TaxContainer />);
 
-    fireEvent.click(screen.getByText("Tax Trap & HMRC Reserve"));
-    expect(screen.getByText("Tax Parameters")).toBeDefined();
-    expect(screen.getByText(/Tax Calculations breakdown/i)).toBeDefined();
+    openTab("Payments and reserve");
+    expect(screen.getByRole("heading", { name: "Your inputs" })).toBeDefined();
+    expect(screen.getByText(/How the estimate is worked out/i)).toBeDefined();
 
-    const salaryInputs = screen.getAllByRole("spinbutton");
-    if (salaryInputs.length >= 2) {
-      fireEvent.change(salaryInputs[0], { target: { value: "110000" } });
-      fireEvent.change(salaryInputs[1], { target: { value: "50" } });
-    }
-
-    const syncBtn = screen.getByRole("button", { name: /Sync parameters/i });
-    fireEvent.click(syncBtn);
-    expect(mockSubmit).toHaveBeenCalled();
+    fireEvent.change(screen.getByLabelText("Property ownership share"), {
+      target: { value: "50" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Save to profile" }));
+    expect(mockSubmit).toHaveBeenCalledWith(
+      { intent: "update-profile", annualSalary: "60000", propertyOwnershipShare: "50" },
+      { method: "POST" },
+    );
   });
 
   it("opens Add Record modal and submits new record", () => {
     render(<TaxContainer />);
 
-    const addRecordBtns = screen.getAllByRole("button", { name: /Add Record/i });
-    fireEvent.click(addRecordBtns[0]);
+    mockSubmit.mockClear();
+    fireEvent.click(screen.getByRole("button", { name: "Add a record" }));
 
-    const nameInput = screen.getByLabelText("Transaction Name");
-    fireEvent.change(nameInput, { target: { value: "New Consulting Invoice" } });
+    const dialog = screen.getByRole("dialog", { name: "Add a record" });
+    fireEvent.change(within(dialog).getByLabelText(/^Name/), {
+      target: { value: "New Consulting Invoice" },
+    });
+    fireEvent.change(within(dialog).getByLabelText(/^Amount/), { target: { value: "1500" } });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Add record" }));
 
-    const amountInput = screen.getByLabelText("Amount (£)");
-    fireEvent.change(amountInput, { target: { value: "1500" } });
+    expect(mockSubmit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        intent: "create-transaction",
+        name: "New Consulting Invoice",
+        amount: "1500",
+        source: "rental",
+        type: "income",
+      }),
+      { method: "POST" },
+    );
+  });
 
-    const modalAddBtns = screen.getAllByRole("button", { name: /Add Record/i, hidden: true });
-    fireEvent.click(modalAddBtns[modalAddBtns.length - 1]);
+  it("does not submit a record with no name or amount and says what is missing", () => {
+    mockSubmit.mockClear();
+    render(<TaxContainer />);
+    fireEvent.click(screen.getByRole("button", { name: "Add a record" }));
+    const dialog = screen.getByRole("dialog", { name: "Add a record" });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Add record" }));
 
-    expect(mockSubmit).toHaveBeenCalled();
+    expect(mockSubmit).not.toHaveBeenCalled();
+    expect(within(dialog).getByText("Enter a name for this record.")).toBeDefined();
+    expect(within(dialog).getByText("Enter an amount above £0.")).toBeDefined();
   });
 
   // Kept ahead of the destructive-confirmation tests, which leave module-level state
@@ -287,22 +306,23 @@ describe("TaxContainer & Calculation Tools", () => {
   it("tax record can be edited from the keyboard", async () => {
     const user = userEvent.setup();
     render(<TaxContainer />);
-    fireEvent.click(screen.getByText("Detailed Transaction Log"));
+    openTab("All records");
 
-    const editBtn = screen.getByRole("button", { name: "Edit Flat rent (2024/25)" });
-    editBtn.focus();
-    expect(document.activeElement).toBe(editBtn);
+    // The record name is itself a button, so Tab reaches it and Enter opens the editor (J-03).
+    const nameBtn = screen.getByRole("button", { name: "Flat rent (2024/25)" });
+    nameBtn.focus();
+    expect(document.activeElement).toBe(nameBtn);
     await user.keyboard("{Enter}");
-    expect(await screen.findByRole("button", { name: /Save Record/i, hidden: true })).toBeDefined();
+    expect(await screen.findByRole("button", { name: "Save changes" })).toBeDefined();
   });
 
   it("delete does not open edit", () => {
     render(<TaxContainer />);
-    fireEvent.click(screen.getByText("Detailed Transaction Log"));
+    openTab("All records");
 
-    fireEvent.click(screen.getAllByTitle("Delete record")[0]);
-    expect(screen.getByText("Delete transaction?")).toBeDefined();
-    expect(screen.queryByRole("button", { name: /Save Record/i, hidden: true })).toBeNull();
+    fireEvent.click(screen.getAllByTitle("Delete")[0]);
+    expect(screen.getByText("Delete this record?")).toBeDefined();
+    expect(screen.queryByRole("button", { name: "Save changes" })).toBeNull();
   });
 
   describe("destructive confirmations", () => {
@@ -318,13 +338,13 @@ describe("TaxContainer & Calculation Tools", () => {
     it("confirms a transaction delete in a dialog, not window.confirm", () => {
       const { confirmSpy, alertSpy } = stubDialogs();
       render(<TaxContainer />);
-      fireEvent.click(screen.getByText("Detailed Transaction Log"));
+      openTab("All records");
 
-      fireEvent.click(screen.getAllByTitle("Delete record")[0]);
+      fireEvent.click(screen.getAllByTitle("Delete")[0]);
       expect(mockSubmit).not.toHaveBeenCalled();
-      expect(screen.getByText("Delete transaction?")).toBeDefined();
+      expect(screen.getByText("Delete this record?")).toBeDefined();
 
-      fireEvent.click(screen.getByRole("button", { name: "Delete transaction" }));
+      fireEvent.click(screen.getByRole("button", { name: "Delete record" }));
       expect(mockSubmit).toHaveBeenCalledTimes(1);
       expect(mockSubmit).toHaveBeenCalledWith(
         { intent: "delete-transaction", id: expect.any(String) },
@@ -338,9 +358,9 @@ describe("TaxContainer & Calculation Tools", () => {
       stubDialogs();
       fetcherData.current = null;
       const { rerender } = render(<TaxContainer />);
-      fireEvent.click(screen.getByText("Detailed Transaction Log"));
-      fireEvent.click(screen.getAllByTitle("Delete record")[0]);
-      fireEvent.click(screen.getByRole("button", { name: "Delete transaction" }));
+      openTab("All records");
+      fireEvent.click(screen.getAllByTitle("Delete")[0]);
+      fireEvent.click(screen.getByRole("button", { name: "Delete record" }));
 
       fetcherData.current = {
         success: false,
@@ -351,7 +371,7 @@ describe("TaxContainer & Calculation Tools", () => {
         "We couldn't reach the server. Please try again.",
       );
 
-      fireEvent.click(screen.getByRole("button", { name: "Delete transaction" }));
+      fireEvent.click(screen.getByRole("button", { name: "Delete record" }));
       fetcherData.current = { success: true };
       rerender(<TaxContainer />);
       expect(screen.queryByRole("alertdialog")).toBeNull();
@@ -385,9 +405,9 @@ describe("TaxContainer & Calculation Tools", () => {
     it("cancelling a transaction delete submits nothing", () => {
       stubDialogs();
       render(<TaxContainer />);
-      fireEvent.click(screen.getByText("Detailed Transaction Log"));
+      openTab("All records");
 
-      fireEvent.click(screen.getAllByTitle("Delete record")[0]);
+      fireEvent.click(screen.getAllByTitle("Delete")[0]);
       fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
 
       expect(mockSubmit).not.toHaveBeenCalled();
@@ -441,10 +461,10 @@ describe("TaxContainer & Calculation Tools", () => {
     mockSubmit.mockClear();
     render(<TaxContainer />);
 
-    fireEvent.click(screen.getByText("Detailed Transaction Log"));
-    fireEvent.click(screen.getByText("Flat rent (2024/25)"));
+    openTab("All records");
+    fireEvent.click(screen.getByRole("button", { name: "Flat rent (2024/25)" }));
 
-    const saveBtn = screen.getByRole("button", { name: /Save Record/i, hidden: true });
+    const saveBtn = screen.getByRole("button", { name: "Save changes" });
     fireEvent.click(saveBtn);
     expect(mockSubmit).toHaveBeenCalled();
   });
@@ -464,13 +484,13 @@ describe("TaxContainer & Calculation Tools", () => {
       mockLoaderRecords = [withReceipt];
       mockSubmit.mockClear();
       render(<TaxContainer />);
-      fireEvent.click(screen.getByText("Detailed Transaction Log"));
-      fireEvent.click(screen.getByText("Flat repairs (2024/25)"));
+      openTab("All records");
+      fireEvent.click(screen.getByRole("button", { name: "Flat repairs (2024/25)" }));
     };
 
     it("saves an edit without sending receipt bytes or a clear flag", () => {
       openEdit();
-      fireEvent.click(screen.getByRole("button", { name: /Save Record/i, hidden: true }));
+      fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
       const payload = lastPayload();
       expect(payload.intent).toBe("update-transaction");
       expect(payload.receiptData).toBeUndefined();
@@ -481,8 +501,8 @@ describe("TaxContainer & Calculation Tools", () => {
 
     it("says so explicitly when the receipt is removed", () => {
       openEdit();
-      fireEvent.click(screen.getByRole("button", { name: "Remove", hidden: true }));
-      fireEvent.click(screen.getByRole("button", { name: /Save Record/i, hidden: true }));
+      fireEvent.click(screen.getByRole("button", { name: "Remove" }));
+      fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
       const payload = lastPayload();
       expect(payload.receiptClear).toBe("1");
       expect(payload.receiptData).toBeUndefined();
@@ -493,8 +513,10 @@ describe("TaxContainer & Calculation Tools", () => {
     it("views the receipt through the receipt route, never an inline data URL", () => {
       mockLoaderRecords = [withReceipt];
       const { container } = render(<TaxContainer />);
-      fireEvent.click(screen.getByText("Detailed Transaction Log"));
-      fireEvent.click(screen.getByRole("button", { name: "View" }));
+      openTab("All records");
+      fireEvent.click(
+        screen.getByRole("button", { name: "View receipt for Flat repairs (2024/25)" }),
+      );
       const img = document.body.querySelector('img[src="/app/tax/receipts/rec-receipt"]');
       expect(img).not.toBeNull();
       expect(container.innerHTML + document.body.innerHTML).not.toContain("data:");
@@ -528,7 +550,7 @@ describe("TaxContainer & Calculation Tools", () => {
     expect(screen.queryByRole("button", { name: "2023/24" })).toBeNull();
 
     fireEvent.click(screen.getByRole("button", { name: "2024/25" }));
-    fireEvent.click(screen.getByText("Detailed Transaction Log"));
+    openTab("All records");
     expect(screen.getByText("Flat rent (2024/25)")).toBeDefined();
 
     unmount();

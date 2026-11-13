@@ -9,7 +9,7 @@
   "apps/marketing/src/pages/ToolPage.tsx": 2,
   "apps/marketing/src/pages/ToolsIndexPage.tsx": 14,
   "apps/web/app/components/accounts/BankConnectionsList.tsx": 13,
-  "apps/web/app/components/core/dialogs/TaxDisclaimerButton.tsx": 3,
+  "apps/web/app/components/core/dialogs/TaxDisclaimerButton.tsx": 2,
   "apps/web/app/components/dialogs/addEditAccountsDialog/AddEditAccountsDialog.tsx": 10,
   "apps/web/app/components/dialogs/connectBankWizard/ConnectBankWizard.tsx": 10,
   "apps/web/app/components/navigation/UserAvatar.tsx": 3,
