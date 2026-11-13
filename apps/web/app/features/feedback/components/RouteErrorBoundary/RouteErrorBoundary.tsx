@@ -6,7 +6,10 @@ import { boundaryRoot } from "./RouteErrorBoundary.styles";
 
 const ACCOUNT_DETAIL = /^\/app\/accounts\/[^/]+/;
 
-/** Strips ids so the feedback subject names the page, not the record. */
+/**
+ * Strips ids so the feedback subject names the page, not the record. Every new dynamic route
+ * segment (an id, slug or token) must be stripped here, or it leaks into the mailto subject.
+ */
 function routeKeyFor(pathname: string): string {
   return pathname.replace(ACCOUNT_DETAIL, "/app/accounts/:id");
 }

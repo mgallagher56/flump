@@ -116,7 +116,11 @@ export const RouteErrorState: FC<RouteErrorStateProps> = ({
           </Button>
         ) : null}
         {kind === "not-invited" || showRetry ? (
-          <a className={errorStateReport()} href={feedbackMailto(routeKey, APP_VERSION)}>
+          <a
+            aria-label="Report this problem by email"
+            className={errorStateReport()}
+            href={feedbackMailto(routeKey, APP_VERSION)}
+          >
             Report this problem
           </a>
         ) : null}
