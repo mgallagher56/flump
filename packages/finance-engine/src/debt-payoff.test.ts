@@ -328,6 +328,16 @@ describe("debt-payoff module", () => {
       expect(repaid.recommendation).toBe("consider_overpaying");
     });
 
+    it("evaluateUkStudentLoan reasoning states the projected outcome without imperatives or advice wording", () => {
+      const written = evaluateUkStudentLoan("plan2", 35000, 90000, "2025/26");
+      expect(written.reasoning).toContain("written off before it is repaid");
+      expect(written.reasoning).not.toMatch(/gift|prioritise|should|consider/i);
+      const repaid = evaluateUkStudentLoan("plan2", 80000, 5000, "2025/26");
+      expect(repaid.reasoning).toContain(
+        "projected to clear the balance before statutory write-off",
+      );
+    });
+
     it("evaluateUkStudentLoan agrees for PLAN_2 and plan2 spellings", () => {
       for (const year of ["2024/25", "2025/26", "2026/27"]) {
         expect(evaluateUkStudentLoan("PLAN_2", 35000, 40000, year)).toEqual(

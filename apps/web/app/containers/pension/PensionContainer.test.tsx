@@ -190,7 +190,7 @@ describe("PensionContainer", () => {
       });
       const { container } = render(<PensionContainer />);
 
-      expect(container.textContent).toContain("60% marginal tax trap active");
+      expect(container.textContent).toContain("60% marginal rate (unverified estimate)");
       expect(container.textContent).toContain("60% income tax, 62% including NI");
       expect(container.textContent).not.toContain("effective 60% marginal tax rate");
     });

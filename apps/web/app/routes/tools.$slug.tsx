@@ -43,10 +43,10 @@ const TOOLS_DATA: Record<string, ToolContent> = {
     slug: "uk-100k-tax-trap-calculator",
     metaTitle: "UK £100k–£125k Tax Trap Calculator (60% Marginal Rate) | Flump",
     metaDescription:
-      "Calculate your marginal tax rate between £100,000 and £125,140, personal allowance loss, and exact pension sacrifice required to reclaim allowance and free childcare.",
-    title: "UK £100k–£125k Tax Trap & Childcare Escape Calculator",
+      "Calculate your marginal tax rate between £100,000 and £125,140, personal allowance loss, and the pension contribution that would bring adjusted net income to £100,000, with the effect on allowance and free childcare.",
+    title: "UK £100k–£125k Tax Trap & Childcare Threshold Calculator",
     subtitle:
-      "Model how HMRC's Personal Allowance taper creates an effective 60% marginal tax rate on income between £100,000 and £125,140, and calculate the exact pension contribution to reclaim it.",
+      "Model how HMRC's Personal Allowance taper creates an effective 60% marginal tax rate on income between £100,000 and £125,140, and model the pension contribution that would bring adjusted net income back to £100,000.",
     category: "UK Tax & Salary Sacrifice",
     component: "tax-trap",
     guideSections: [
@@ -58,14 +58,14 @@ const TOOLS_DATA: Record<string, ToolContent> = {
         ],
       },
       {
-        heading: "The 15–30 Hours Free Childcare Cliff Edge",
+        heading: "The 15–30 Hours Free Childcare Threshold",
         body: [
-          "For families with young children in the UK, earning £100,001 is a catastrophic financial cliff edge. If either parent has an adjusted net income of even £1 over £100,000, eligibility for 15 to 30 hours of government-funded childcare and Tax-Free Childcare (£2,000 per child/year) is abruptly eliminated.",
+          "For families with young children in the UK, adjusted net income of £100,001 sits just above the childcare eligibility limit. If either parent has an adjusted net income of even £1 over £100,000, eligibility for 15 to 30 hours of government-funded childcare and Tax-Free Childcare (£2,000 per child/year) is abruptly eliminated.",
           "A parent receiving an annual bonus taking them from £99,000 to £102,000 can lose £5,000 to £8,000 in childcare subsidies, resulting in a net negative income from working harder.",
         ],
       },
       {
-        heading: "How to Reclaim Your Allowance via Pension Contributions",
+        heading: "How Pension Contributions Affect the Personal Allowance",
         body: [
           "HMRC calculates the Personal Allowance taper based on 'Adjusted Net Income'. Gross pension contributions (via workplace salary sacrifice or personal SIPP contributions grossed up by 20% basic rate relief) directly reduce your adjusted net income pound-for-pound.",
           "For example, if you earn £110,000 gross and contribute £10,000 into a qualifying pension, your adjusted net income drops to exactly £100,000. You restore 100% of your £12,570 personal allowance, save £4,000 in higher-rate income tax and £2,000 in reclaimed allowance tax, plus you preserve full entitlement to funded childcare.",
@@ -78,8 +78,8 @@ const TOOLS_DATA: Record<string, ToolContent> = {
         a: "Adjusted Net Income includes gross salary, bonuses, taxable benefits in kind (e.g., company car, private healthcare), savings interest, dividends, and net rental profits. It is reduced by gross pension contributions and Gift Aid donations.",
       },
       {
-        q: "Is workplace salary sacrifice better than paying into a SIPP?",
-        a: "Salary sacrifice is usually superior because it also saves Employee National Insurance (2%) and often Employer National Insurance (up to 13.8% or 15%), which some employers pass back to you as an additional pension booster.",
+        q: "How does salary sacrifice differ from a personal SIPP contribution for National Insurance?",
+        a: "Salary sacrifice also reduces employee National Insurance (2% above the upper earnings limit) and employer National Insurance (15% in 2026/27); a personal SIPP contribution does not.",
       },
       {
         q: "Can I contribute more than £60,000 into my pension?",
@@ -130,7 +130,7 @@ const TOOLS_DATA: Record<string, ToolContent> = {
       },
       {
         q: "Can I do both?",
-        a: "Yes. Many prudent UK homeowners split their surplus cash 50/50: half directed into monthly mortgage overpayments for psychological peace of mind, and half into a Stocks & Shares ISA for liquid wealth growth.",
+        a: "Yes. The calculator can model any split between overpayments and ISA contributions.",
       },
     ],
   },
@@ -195,7 +195,7 @@ const TOOLS_DATA: Record<string, ToolContent> = {
     component: "debt-snowball",
     guideSections: [
       {
-        heading: "Avalanche vs. Snowball: Which UK Payoff Method is Superior?",
+        heading: "Avalanche vs. Snowball: How Do the UK Payoff Methods Compare?",
         body: [
           "The Debt Avalanche strategy targets the account with the highest APR first while paying minimums on the rest. On the figures you enter, it results in the least total interest paid and the shortest time to clear the debts, if you keep to the plan.",
           "The Debt Snowball strategy targets the smallest balance first regardless of interest rate. While it costs slightly more in overall interest, it delivers quick psychological wins that keep borrowers committed to their repayment plans.",
@@ -211,12 +211,12 @@ const TOOLS_DATA: Record<string, ToolContent> = {
     ],
     faqs: [
       {
-        q: "Should I include my mortgage in the debt snowball?",
-        a: "No. Low-interest secured borrowing like UK mortgages should be kept separate from high-cost unsecured consumer debt.",
+        q: "Is a mortgage included in the debt snowball?",
+        a: "The calculator covers unsecured consumer debts such as credit cards, personal loans and overdrafts. Mortgages are modelled separately, on the mortgage calculator.",
       },
       {
         q: "What if I have a 0% balance transfer card?",
-        a: "During the 0% window, the APR is zero, so Avalanche orders it last. However, you must ensure it is cleared before the promotional revert APR triggers.",
+        a: "During the 0% window, the APR is zero, so Avalanche orders it last. The balance is charged the revert APR if it is not cleared before the promotional period ends.",
       },
     ],
   },
@@ -224,10 +224,10 @@ const TOOLS_DATA: Record<string, ToolContent> = {
     slug: "0-percent-balance-transfer-payoff-calculator",
     metaTitle: "0% Balance Transfer Card Payoff & Cliff Calculator | Flump",
     metaDescription:
-      "Avoid credit card promotional cliffs. Calculate the exact monthly payment to clear your 0% balance transfer before the 24.9%+ revert rate slams shut.",
+      "Model the monthly payment that would clear a 0% balance transfer before the promotional period ends and a revert rate of 24.9% or more applies.",
     title: "0% Balance Transfer Payoff & Revert Cliff Calculator",
     subtitle:
-      "Avoid the high-interest revert trap: calculate your mandatory monthly repayment to extinguish balances before 0% promotional windows expire.",
+      "Model the monthly repayment that clears a balance before a 0% promotional period expires and the revert rate applies.",
     category: "UK Credit Cards",
     component: "zero-percent-cliff",
     guideSections: [
@@ -253,7 +253,7 @@ const TOOLS_DATA: Record<string, ToolContent> = {
       "Living in your bank overdraft? Calculate the true annual pound cost of ~39.9% EAR interest and find out how much you save by clearing it.",
     title: "UK Arranged Overdraft Cost & Payoff Calculator",
     subtitle:
-      "Calculate the stealth annual pound cost of living in an arranged overdraft charged at UK banks' standard 35%–39.9% EAR.",
+      "Calculate the annual pound cost of staying in an arranged overdraft charged at UK banks' standard 35%–39.9% EAR.",
     category: "UK Banking & Overdrafts",
     component: "overdraft-cost",
     guideSections: [
@@ -261,7 +261,7 @@ const TOOLS_DATA: Record<string, ToolContent> = {
         heading: "The True Cost of a 39.9% EAR Bank Overdraft",
         body: [
           "Most major UK banks now charge a single interest rate on arranged overdrafts, commonly around 39.9% EAR. Check your own bank's rate.",
-          "Living continuously in a £1,000 overdraft costs approximately £399 per year in stealth interest deducted directly from your wages.",
+          "Living continuously in a £1,000 overdraft costs approximately £399 per year in interest.",
         ],
       },
     ],
@@ -277,9 +277,9 @@ const TOOLS_DATA: Record<string, ToolContent> = {
     metaTitle: "UK Student Loan Overpayment Calculator (Plan 1, 2, 4 & 5) | Flump",
     metaDescription:
       "See whether a UK student loan balance is projected to be repaid or written off first, for Plan 1, Plan 2, Plan 4, or Plan 5.",
-    title: "UK Student Loan: Overpay or Invest? (Graduate Tax Calculator)",
+    title: "UK Student Loan Overpayment Calculator (Graduate Tax)",
     subtitle:
-      "Evaluate whether voluntary student loan overpayments save you money or act as a needless donation to HM Treasury before statutory cancellation.",
+      "Model whether the projected repayments clear a student loan balance before statutory cancellation.",
     category: "UK Student Finance",
     component: "student-loan",
     guideSections: [
@@ -293,8 +293,8 @@ const TOOLS_DATA: Record<string, ToolContent> = {
     ],
     faqs: [
       {
-        q: "Who should consider overpaying a UK student loan?",
-        a: "Only very high earners in early-career positions (e.g. corporate law, investment banking, software engineering on £80k+ rising quickly) who will mathematically clear the balance before write-off.",
+        q: "When is a student loan repaid before write-off?",
+        a: "When projected repayments over the plan's term exceed the balance plus interest. The calculator shows this for the figures you enter.",
       },
     ],
   },
