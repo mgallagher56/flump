@@ -181,7 +181,8 @@ export class BankSyncOrchestrator {
 
   /**
    * Normalizes account balances to comply with the Flump Sign Convention Law:
-   * - Assets (Current, Saving, Investment) have positive balance.
+   * - Assets (Current, Saving, Investment) keep their real sign: an overdrawn current account
+   *   is negative and lowers net worth (E23 C-15).
    * - Liabilities (Mortgage, Credit Card, Loan, Overdraft) have negative balance.
    */
   static normalizeAccountBalance(
@@ -197,7 +198,7 @@ export class BankSyncOrchestrator {
     if (isLiability) {
       return -Math.abs(rawBalance);
     }
-    return Math.abs(rawBalance);
+    return rawBalance;
   }
 
   /**

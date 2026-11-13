@@ -19,8 +19,9 @@ describe("BankSyncOrchestrator", () => {
   });
 
   it("normalizes balances enforcing sign convention law", () => {
-    // Assets must be positive
-    expect(BankSyncOrchestrator.normalizeAccountBalance("Current", -1500)).toBe(1500);
+    // Assets keep their real sign: an overdrawn current account stays negative (F-02)
+    expect(BankSyncOrchestrator.normalizeAccountBalance("Current", -1500)).toBe(-1500);
+    expect(BankSyncOrchestrator.normalizeAccountBalance("Current", 1500)).toBe(1500);
     expect(BankSyncOrchestrator.normalizeAccountBalance("Saving", 3000)).toBe(3000);
     expect(BankSyncOrchestrator.normalizeAccountBalance("Investment", 25000)).toBe(25000);
 

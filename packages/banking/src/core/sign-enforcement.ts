@@ -30,7 +30,8 @@ export function isLiabilityCategory(category: FlumpAccountCategory): boolean {
 
 /**
  * Enforces the Flump SIGN CONVENTION LAW on an account:
- * - Assets (Current, Savings, ISA, Pension) are POSITIVE for Net Worth, principalOwedGbp is 0.
+ * - Assets (Current, Savings, ISA, Pension) keep their real sign for Net Worth (an overdrawn
+ *   current account is negative), principalOwedGbp is 0.
  * - Liabilities (Credit Card, Overdraft, Loan, Mortgage) are NEGATIVE for Net Worth,
  *   while principalOwedGbp is POSITIVE for payoff engines.
  */
@@ -38,10 +39,8 @@ export function enforceSignConvention(account: NormalizedAccount): NormalizedAcc
   const isAsset = isAssetCategory(account.category);
 
   if (isAsset) {
-    const rawValue = Math.abs(account.netWorthImpactGbp);
     return {
       ...account,
-      netWorthImpactGbp: rawValue,
       principalOwedGbp: 0,
     };
   }
@@ -64,7 +63,7 @@ export function enforceSignConvention(account: NormalizedAccount): NormalizedAcc
  */
 export function validateSignConvention(account: NormalizedAccount): boolean {
   if (isAssetCategory(account.category)) {
-    return account.netWorthImpactGbp >= 0 && account.principalOwedGbp === 0;
+    return account.principalOwedGbp === 0;
   }
   if (isLiabilityCategory(account.category)) {
     return (
