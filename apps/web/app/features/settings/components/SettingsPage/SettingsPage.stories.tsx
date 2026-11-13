@@ -30,6 +30,9 @@ export const Default: Story = {
   },
 };
 
+/** The page as first opened, on the Profile tab. */
+export const ProfileTabOpen: Story = {};
+
 export const UnsavedChangesPrompt: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
