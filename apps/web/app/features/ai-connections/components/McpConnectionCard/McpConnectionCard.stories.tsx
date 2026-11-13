@@ -34,12 +34,9 @@ export const Default: Story = {
   parameters: { a11y: { config: { rules: [{ id: "aria-valid-attr-value", enabled: false }] } } },
   args: {
     initialTokens: [],
+    onGenerateToken: fn(),
   },
-};
-
-export const ExpiryOptions: Story = {
-  parameters: { a11y: { config: { rules: [{ id: "aria-valid-attr-value", enabled: false }] } } },
-  args: { initialTokens: [], onGenerateToken: fn() },
+  // Covers the PAT expiry choices (E20-N16).
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     await userEvent.click(canvas.getByTestId("generate-token-trigger"));
