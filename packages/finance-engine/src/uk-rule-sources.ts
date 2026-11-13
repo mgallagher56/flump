@@ -27,7 +27,8 @@ export type UkRuleKey =
   | "dividends"
   | "giftAid"
   | "pensionAnnualAllowance"
-  | "isaAllowance";
+  | "isaAllowance"
+  | "statePension";
 
 export type UkRuleStatus = "verified" | "unverified";
 
@@ -58,6 +59,7 @@ export const UK_RULE_KEYS: readonly UkRuleKey[] = [
   "giftAid",
   "pensionAnnualAllowance",
   "isaAllowance",
+  "statePension",
 ];
 
 const INCOME_TAX_PAST =
@@ -103,6 +105,73 @@ const NOTE_NI_2022_23 =
   "Class 1 NI is a full-year approximation of mid-year changes. Primary threshold 11,908 and rates 12.73% / 2.73% are the annual-method figures GOV.UK prints for directors, applied to all employees; per-period figures are PT 9,880 then 12,570 and 13.25% then 12%. Employer 14.53% is likewise the directors' annual blend (15.05% then 13.8%). Class 4 unconfirmed";
 const NOTE_NI_2023_24 =
   "Class 1 main rate 11.5% is printed on the GOV.UK 2023 to 2024 employer page as the directors' whole-year rate; applying it to ordinary employees (12% to 5 Jan 2024, then 10%) is an approximation";
+
+const NEW_SP_WHAT_YOULL_GET = "https://www.gov.uk/new-state-pension/what-youll-get";
+const NEW_SP_ELIGIBILITY = "https://www.gov.uk/new-state-pension/eligibility";
+const STATE_PENSION_AGE_PAGE = "https://www.gov.uk/state-pension-age";
+const benefitRatesPage = (range: string) =>
+  `https://www.gov.uk/government/publications/benefit-and-pension-rates-${range}`;
+
+/** Years with a full new State Pension rate. 2027/28 is announced but not yet a supported tax year. */
+export const UK_STATE_PENSION_YEARS = [
+  "2020/21",
+  "2021/22",
+  "2022/23",
+  "2023/24",
+  "2024/25",
+  "2025/26",
+  "2026/27",
+  "2027/28",
+] as const;
+export type UkStatePensionYear = (typeof UK_STATE_PENSION_YEARS)[number];
+
+const NOTE_SP_EARLY =
+  "full new State Pension and basic State Pension weekly rates for 2020/21 to 2022/23 are not on a GOV.UK page reached for this check (the cited pages start at 2023/24)";
+
+function statePensionSource(year: UkStatePensionYear): UkRuleSource {
+  switch (year) {
+    case "2020/21":
+    case "2021/22":
+    case "2022/23":
+      return unverified(NEW_SP_WHAT_YOULL_GET, NOTE_SP_EARLY, [benefitRatesPage("2023-to-2024")]);
+    case "2023/24":
+    case "2024/25":
+      // The 2024 to 2025 page prints the 2023/24 and 2024/25 columns.
+      return verified(benefitRatesPage("2024-to-2025/benefit-and-pension-rates-2024-to-2025"));
+    case "2025/26":
+      return verified(benefitRatesPage("2025-to-2026/benefit-and-pension-rates-2025-to-2026"));
+    case "2026/27":
+      return verified(NEW_SP_WHAT_YOULL_GET, [
+        benefitRatesPage("2026-to-2027/proposed-benefit-and-pension-rates-2026-to-2027"),
+      ]);
+    case "2027/28":
+      // Read 2026-11-13 on the 2027 to 2028 rates page (published 2026-11-11): full rate 250.70, basic 192.10.
+      return verified(
+        benefitRatesPage("2027-to-2028/proposed-benefit-and-pension-rates-2027-to-2028"),
+      );
+  }
+}
+
+/** Registry entry for every State Pension year, including 2027/28 which is not a supported tax year. */
+export const UK_STATE_PENSION_SOURCES: Record<UkStatePensionYear, UkRuleSource> =
+  Object.fromEntries(UK_STATE_PENSION_YEARS.map((y) => [y, statePensionSource(y)])) as Record<
+    UkStatePensionYear,
+    UkRuleSource
+  >;
+
+/**
+ * State Pension age (67, phasing up from 66 for people born 6 Apr 1960 to 5 Mar 1961) and the
+ * qualifying-years rules. Qualifying years (35 full, 10 minimum) are confirmed on the eligibility and
+ * what-you'll-get pages. The age figure itself is only reachable through GOV.UK's calculator, so it is
+ * unverified.
+ */
+export const UK_STATE_PENSION_RULE_SOURCES = {
+  qualifyingYears: verified(NEW_SP_WHAT_YOULL_GET, [NEW_SP_ELIGIBILITY]),
+  statePensionAge: unverified(
+    STATE_PENSION_AGE_PAGE,
+    "State Pension age 67 (66 phasing up for people born 6 April 1960 to 5 March 1961) is not stated in text on the GOV.UK page, which is a calculator",
+  ),
+} as const;
 
 function buildYear(year: UkTaxYear): UkRuleSources {
   const employer = employerPage(year);
@@ -177,6 +246,7 @@ function buildYear(year: UkTaxYear): UkRuleSources {
           ISA,
           "ISA allowance 20,000 is only confirmed for 2026/27 on GOV.UK, not for this year",
         ),
+    statePension: UK_STATE_PENSION_SOURCES[year],
   };
 }
 

@@ -14,6 +14,8 @@ Related runbooks (some land in parallel PRs, so a link may not resolve until tho
 
 ## 1. Shape
 
+> **Owner decision, 2026-11-13 (DECISIONS round 6):** the current Railway environment is the long-lived **staging** environment. Its existing services (backend, web, marketing and Postgres) are staging: set `SENTRY_ENVIRONMENT=staging`, and the ZAP baseline targets (`ZAP_TARGET_URLS`) are the current web and marketing URLs. A separate `production` environment will be created later; until then there is no production site. The sections below describe the target two-environment layout.
+
 - One persistent Railway environment named `staging`, in the same project as production, created with Duplicate Environment.
 - Region: **EU West** for every service and for Postgres (round 3, item 8). Production moves to EU West through the region-move runbook, so both environments end up in the same region.
 - A duplicate of production: backend, web, marketing and Postgres. Postgres has its **own** volume and its own `DATABASE_URL`. Staging never points at the production database.

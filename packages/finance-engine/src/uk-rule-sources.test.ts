@@ -10,10 +10,19 @@ import {
   ruleUnverifiedNotes,
   UK_RULE_KEYS,
   UK_RULE_SOURCES,
+  UK_STATE_PENSION_RULE_SOURCES,
+  UK_STATE_PENSION_SOURCES,
+  UK_STATE_PENSION_YEARS,
   type UkRuleKey,
 } from "./uk-rule-sources.js";
 import { UK_TAX_CONSTANTS } from "./uk-tax.js";
-import { getUkTaxYearRules, SUPPORTED_UK_TAX_YEARS } from "./uk-tax-year.js";
+import {
+  calculateNewStatePensionAnnual,
+  getUkStatePensionRules,
+  getUkTaxYearRules,
+  SUPPORTED_UK_TAX_YEARS,
+  UK_STATE_PENSION_AGE,
+} from "./uk-tax-year.js";
 
 /** Same pattern as the vector catalogue (uk-tax.vectors.test.ts). */
 const GOV_URL = /^https:\/\/www\.(gov\.(uk|scot)|legislation\.gov\.uk)\//;
@@ -42,6 +51,7 @@ const NO_VECTOR_YET: readonly UkRuleKey[] = [
   "savingsAllowance",
   "pensionAnnualAllowance",
   "isaAllowance",
+  "statePension",
 ];
 
 describe("UK rule sources registry (E25-T1)", () => {
@@ -151,6 +161,47 @@ describe("UK rule sources registry (E25-T1)", () => {
         year === "2026/27" ? "verified" : "unverified",
       );
     }
+  });
+
+  it("State Pension rates are per year, weekly x 52", () => {
+    const expected: Record<string, [number, number, number]> = {
+      "2023/24": [203.85, 10600.2, 156.2],
+      "2024/25": [221.2, 11502.4, 169.5],
+      "2025/26": [230.25, 11973, 176.45],
+      "2026/27": [241.3, 12547.6, 184.9],
+      "2027/28": [250.7, 13036.4, 192.1],
+    };
+    for (const [year, [weekly, annual, basic]] of Object.entries(expected)) {
+      const r = getUkStatePensionRules(year);
+      expect(r.fullNewWeekly, year).toBe(weekly);
+      expect(r.fullNewAnnual, year).toBe(annual);
+      expect(r.basicWeekly, year).toBe(basic);
+      expect(UK_STATE_PENSION_SOURCES[year as keyof typeof UK_STATE_PENSION_SOURCES].status).toBe(
+        "verified",
+      );
+    }
+    expect(getUkTaxYearRules("2026/27").statePension.fullNewAnnual).toBe(12547.6);
+    expect(getUkTaxYearRules("2025/26").statePension.fullNewAnnual).toBe(11973);
+    expect(() => getUkStatePensionRules("2028/29")).toThrow();
+  });
+
+  it("State Pension for 2020/21 to 2022/23 is flagged UNVERIFIED and surfaced on the rules", () => {
+    for (const year of ["2020/21", "2021/22", "2022/23"] as const) {
+      expect(UK_RULE_SOURCES[year].statePension.status, year).toBe("unverified");
+      expect(getUkTaxYearRules(year).unverified.join("\n"), year).toMatch(/State Pension/);
+    }
+    expect(UK_STATE_PENSION_YEARS).toHaveLength(8);
+  });
+
+  it("qualifying years: 35 for full, 10 minimum, pro rata between", () => {
+    expect(UK_STATE_PENSION_RULE_SOURCES.qualifyingYears.status).toBe("verified");
+    expect(UK_STATE_PENSION_RULE_SOURCES.statePensionAge.status).toBe("unverified");
+    expect(UK_STATE_PENSION_AGE).toBe(67);
+    expect(calculateNewStatePensionAnnual(35, "2026/27")).toBe(12547.6);
+    expect(calculateNewStatePensionAnnual(40, "2026/27")).toBe(12547.6);
+    expect(calculateNewStatePensionAnnual(9, "2026/27")).toBe(0);
+    expect(calculateNewStatePensionAnnual(10, "2026/27")).toBe(3585.03);
+    expect(calculateNewStatePensionAnnual(35, "2027/28")).toBe(13036.4);
   });
 
   it("deprecated UK_TAX_CONSTANTS keep their values, now derived from the latest year's rules", () => {

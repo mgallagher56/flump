@@ -1,4 +1,8 @@
-import { calculateEmployerNISavings } from "@flump/finance-engine";
+import {
+  calculateEmployerNISavings,
+  getUkTaxYearRules,
+  resolveUkTaxYear,
+} from "@flump/finance-engine";
 import { ChartFigure } from "@repo/ui";
 import { css } from "@repo/ui/styled-system/css";
 import { type FC, useEffect, useMemo, useState } from "react";
@@ -50,7 +54,8 @@ const UK_QUALIFYING_LOWER = 6240;
 const UK_QUALIFYING_UPPER = 50270;
 const UK_ANNUAL_ALLOWANCE = 60000;
 const UK_LUMP_SUM_ALLOWANCE = 268275;
-const UK_STATE_PENSION_ANNUAL = 11502;
+// Full new State Pension for the current tax year (sourced, per-year registry in finance-engine).
+const UK_STATE_PENSION_ANNUAL = getUkTaxYearRules(resolveUkTaxYear()).statePension.fullNewAnnual;
 const INFLATION_RATE = 2.5;
 // Drawdown rate behind the "estimated retirement income" figure. Shown next to the figure.
 const SAFE_WITHDRAWAL_RATE = 0.04;

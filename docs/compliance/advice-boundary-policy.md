@@ -1,13 +1,13 @@
 # Advice boundary policy (E29-T1)
 
-> **DRAFT, agent-drafted, unreviewed, not legal advice; owner reviews and signs later.**
-> Version 0.1, 2026-11-12. The E29b solicitor view supersedes this document.
+> **APPROVED by the owner on 2026-11-13. Not legal advice.**
+> Version 1.0, 2026-11-13 (drafted by an agent as v0.1 on 2026-11-12). A later solicitor view (E29b) may supersede this document.
 
 This is the single numbered rule set for how Flump words and presents anything that could be read as a personal recommendation. The advice-language guard (E29-T3), the MCP output policy (E29-T6), the E25 tax copy, the E26 tools and every copy review cite these rules by id (R1 to R8) instead of inventing ad-hoc wording.
 
 The rules are deliberately stricter than the likely legal line. Loosening a rule later is cheap. Walking back a shipped nudge is not.
 
-**Status of the rules.** Sign-off is recorded in the table at the end. Until the owner signs, the rules are the working standard for agents, not a settled position.
+**Status of the rules.** The owner approved this policy on 2026-11-13 (v1.0); sign-off is recorded in the table at the end. The rules are the working standard for agents. A solicitor view (E29b) may supersede them later.
 
 **Scope.** Every surface that shows a computed result or explanatory text to a user: `apps/web`, `apps/marketing`, `packages/ui`, `packages/finance-engine` (strings that flow into the UI, the context pack and MCP), `packages/mcp` (tool descriptions, prompts, results), the AI context pack, emails and any future agent. Tax-rule explanations are in scope for R2 and R6 treated here as in scope for wording, pending E29b, because the wording reaches the same reader.
 
@@ -180,7 +180,7 @@ Preferred:
 
 ## Sign-off
 
-| Role                     | Name | Date | Notes |
-| ------------------------ | ---- | ---- | ----- |
-| Owner                    |      |      |       |
-| Solicitor (E29b, launch) |      |      |       |
+| Role                     | Name  | Date       | Notes         |
+| ------------------------ | ----- | ---------- | ------------- |
+| Owner                    | Owner | 2026-11-13 | Approved v1.0 |
+| Solicitor (E29b, launch) |       |            |               |
