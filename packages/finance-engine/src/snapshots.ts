@@ -22,8 +22,13 @@ export type SnapshotAccount = Pick<RawAccount, "id" | "type">;
 
 export interface SnapshotAccountValue {
   accountId: string;
-  /** The recorded value, or the last known value when `carried`. */
+  /**
+   * The recorded value (or the last known value when `carried`). Assets keep their real sign;
+   * liabilities are the amount owed as a positive number whatever sign was stored, so a change
+   * is always "current minus previous" of what the figure shows.
+   */
   value: number;
+  isLiability: boolean;
   /** True when no row exists for this month and the value comes from an earlier month. */
   carried: boolean;
 }
@@ -56,7 +61,7 @@ export interface MonthDelta {
 
 export interface AccountDelta {
   accountId: string;
-  /** current minus previous, on the recorded values (a falling mortgage balance is negative). */
+  /** current minus previous of the amount shown (a falling mortgage balance is negative). */
   change: number;
   current: number;
   previous: number;
@@ -141,8 +146,14 @@ export function selectNetWorthSeries(
       }
       const value = known.get(id);
       if (value === undefined) continue;
-      values.push({ accountId: id, value, carried: recorded === undefined });
-      if (isLiabilityCategory(categorizeAccountType(types.get(id)))) {
+      const liability = isLiabilityCategory(categorizeAccountType(types.get(id)));
+      values.push({
+        accountId: id,
+        value: liability ? Math.abs(value) : value,
+        isLiability: liability,
+        carried: recorded === undefined,
+      });
+      if (liability) {
         liabilities += Math.abs(value);
       } else if (value >= 0) {
         assets += value;

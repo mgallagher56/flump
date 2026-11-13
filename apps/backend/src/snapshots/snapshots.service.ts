@@ -1,4 +1,3 @@
-import { BankSyncOrchestrator } from "@flump/banking/server";
 import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
 import { InjectDataSource } from "@nestjs/typeorm";
 import { DataSource, In } from "typeorm";
@@ -14,6 +13,7 @@ import {
   parseMonthKey,
   type YearMonth,
 } from "./london-date";
+import { storedBalance } from "./stored-balance";
 
 /** Earliest month a snapshot may be written for (back-filling a spreadsheet history). */
 export const EARLIEST_SNAPSHOT: YearMonth = { year: 2000, month: 1 };
@@ -133,10 +133,7 @@ export class SnapshotsService {
         for (const a of owned) types.set(a.id, a.type);
         // Liabilities are stored negative, as connected sync does, whatever sign was typed.
         for (const r of rows) {
-          r.value = BankSyncOrchestrator.normalizeAccountBalance(
-            types.get(r.accountId) ?? "",
-            r.value,
-          );
+          r.value = storedBalance(types.get(r.accountId) ?? "", r.value);
         }
       }
       if (rows.length > 0) {

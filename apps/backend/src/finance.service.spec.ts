@@ -116,68 +116,105 @@ describe("FinanceService", () => {
   });
 
   describe("syncProviderAccounts snapshots (E30)", () => {
-    const run = async (existingDetail: any, existingAccount: any = null) => {
-      const savedDetails: any[] = [];
-      const accountRepo = {
-        findOne: vi.fn().mockResolvedValue(existingAccount),
-        create: vi.fn((a) => ({ id: "acc-1", ...a })),
-        save: vi.fn((a) => Promise.resolve(a)),
-      };
-      const detailRepo = {
-        findOne: vi.fn().mockResolvedValue(existingDetail),
-        upsert: vi.fn((d) => {
-          savedDetails.push(d);
-          return Promise.resolve();
-        }),
-      };
-      const provider = {
-        fetchAccounts: vi.fn().mockResolvedValue([
-          {
-            externalAccountId: "e1",
-            name: "Bank",
-            type: "current",
-            balance: 500,
-            currency: "GBP",
-          },
-        ]),
-      };
-      const service = new FinanceService(
-        accountRepo as any,
-        {} as any,
-        detailRepo as any,
-        {} as any,
-        {} as any,
-        { getProvider: vi.fn().mockReturnValue(provider) } as any,
-        { get: vi.fn() } as any,
-      );
-      await service.syncProviderAccounts({ id: "c1", institutionId: "monzo" } as any, "u1", "tok");
-      return { savedDetails, accountRepo };
+    const run = async (
+      opts: {
+        detail?: Record<string, unknown>;
+        account?: Record<string, unknown>;
+        type?: string;
+      } = {},
+      iso = "2026-03-15T12:00:00Z",
+    ) => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date(iso));
+      try {
+        const accounts = createInMemoryRepository(
+          opts.account
+            ? [
+                {
+                  id: "acc-1",
+                  userId: "u1",
+                  connectionId: "c1",
+                  externalAccountId: "e1",
+                  ...opts.account,
+                },
+              ]
+            : [],
+        );
+        const details = createInMemoryRepository(
+          opts.detail ? [{ accountId: "acc-1", ...opts.detail }] : [],
+        );
+        const provider = {
+          fetchAccounts: vi.fn().mockResolvedValue([
+            {
+              externalAccountId: "e1",
+              name: "Bank",
+              type: opts.type ?? "Current",
+              balance: 500,
+              currency: "GBP",
+            },
+          ]),
+        };
+        const service = new FinanceService(
+          accounts as any,
+          {} as any,
+          details as any,
+          {} as any,
+          {} as any,
+          { getProvider: vi.fn().mockReturnValue(provider) } as any,
+          { get: vi.fn() } as any,
+        );
+        await service.syncProviderAccounts(
+          { id: "c1", institutionId: "monzo" } as any,
+          "u1",
+          "tok",
+        );
+        return { accounts: accounts.rows, details: details.rows };
+      } finally {
+        vi.useRealTimers();
+      }
     };
 
     it("tags new rows source=connected with the owner and a London date", async () => {
-      const { savedDetails } = await run(null);
-      expect(savedDetails).toHaveLength(1);
-      expect(savedDetails[0]).toMatchObject({
+      const { details } = await run();
+      expect(details).toHaveLength(1);
+      expect(details[0]).toMatchObject({
         userId: "u1",
         source: "connected",
         value: 500,
-        asOfDate: londonDate(),
+        year: 2026,
+        month: 3,
+        asOfDate: "2026-03-15",
       });
     });
 
-    it("refreshes an existing connected row", async () => {
-      const row = { source: "connected", value: 1, asOfDate: "2000-01-01" };
-      const { savedDetails } = await run(row, { id: "acc-1", balance: 1 });
-      expect(savedDetails[0]).toMatchObject({ source: "connected", value: 500 });
+    it("refreshes an existing connected row and the balance", async () => {
+      const { details, accounts } = await run({
+        detail: { source: "connected", value: 1, year: 2026, month: 3, asOfDate: "2026-03-01" },
+        account: { balance: 1, name: "Old", type: "Current" },
+      });
+      expect(details).toHaveLength(1);
+      expect(details[0]).toMatchObject({ source: "connected", value: 500, asOfDate: "2026-03-15" });
+      expect(accounts[0]).toMatchObject({ balance: 500, name: "Bank" });
     });
 
     it("never overwrites a manual value for the month, nor the account balance it mirrors", async () => {
-      const row = { source: "manual", value: 123 };
-      const account = { id: "acc-1", balance: 123, name: "Old" };
-      const { savedDetails, accountRepo } = await run(row, account);
-      expect(savedDetails).toHaveLength(0);
-      expect(row.value).toBe(123);
-      expect(accountRepo.save.mock.calls[0]?.[0]).toMatchObject({ balance: 123, name: "Bank" });
+      const { details, accounts } = await run({
+        detail: { source: "manual", value: 123, year: 2026, month: 3, asOfDate: "2026-03-10" },
+        account: { balance: 123, name: "Old", type: "Current" },
+      });
+      expect(details).toHaveLength(1);
+      expect(details[0]).toMatchObject({ source: "manual", value: 123 });
+      expect(accounts[0]).toMatchObject({ balance: 123, name: "Bank" });
+    });
+
+    it("stores a liability negative", async () => {
+      const { details } = await run({ type: "Credit Card" });
+      expect(details[0]?.value).toBe(-500);
+    });
+
+    it("reads the clock once: at 00:30 BST on the 1st the key and the date agree", async () => {
+      const { details } = await run({}, "2026-06-30T23:30:00Z");
+      expect(details[0]).toMatchObject({ year: 2026, month: 7, asOfDate: "2026-07-01" });
     });
   });
 

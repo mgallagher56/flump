@@ -149,6 +149,18 @@ describe("deltas (E30): current minus previous", () => {
     expect(selectMonthDeltas(series.slice(0, 1))).toEqual([]);
   });
 
+  it("gives the same per-account change for a liability stored negative or positive", () => {
+    for (const sign of [1, -1]) {
+      const s = selectNetWorthSeries(accounts, [
+        row("mort", 2026, 1, sign * 100000),
+        row("mort", 2026, 2, sign * 99000),
+      ]);
+      expect(selectAccountDeltas(s[0]!, s[1]!)).toEqual([
+        { accountId: "mort", change: -1000, current: 99000, previous: 100000 },
+      ]);
+    }
+  });
+
   it("gives per-account changes on recorded values", () => {
     const s = selectNetWorthSeries(accounts, [
       row("mort", 2026, 1, 100000),
