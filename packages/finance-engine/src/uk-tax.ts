@@ -205,7 +205,8 @@ export function analyzeTaxTrap(
   const taperStart = rules.ewni.personalAllowanceTaperStart;
   const taperEnd = rules.taperEnd;
   const isInTaxTrap = adjustedNetIncome > taperStart && adjustedNetIncome <= taperEnd;
-  const isNearTaxTrap = adjustedNetIncome >= TAX_TRAP_ALERT_FLOOR_GBP && adjustedNetIncome <= taperStart;
+  const isNearTaxTrap =
+    adjustedNetIncome >= TAX_TRAP_ALERT_FLOOR_GBP && adjustedNetIncome <= taperStart;
 
   const excessOver100k = Math.max(0, adjustedNetIncome - taperStart);
   const excessAbove100k = Math.min(excessOver100k, taperEnd - taperStart);

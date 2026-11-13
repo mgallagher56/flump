@@ -15,7 +15,7 @@ const setup = () => {
       <TaxReservePanel
         taxYear="2026/27"
         result={taxResultFixture}
-        trapAdjustedNetIncome={taxResultFixture.totalGrossIncome}
+        trapIncome={taxResultFixture.totalGrossIncome}
         trapRegion={null}
         payeSalary={52000}
         ownershipSharePct={50}
