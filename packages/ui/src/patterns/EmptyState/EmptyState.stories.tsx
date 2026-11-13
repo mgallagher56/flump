@@ -4,6 +4,7 @@ import { AlertTriangle, BarChart3, PiggyBank } from "lucide-react";
 import { css } from "../../../styled-system/css";
 import { Button } from "../../primitives/Button/Button";
 import { Icon } from "../../primitives/Icon/Icon";
+import { Illustration as SceneIllustration } from "../../primitives/Illustration/Illustration";
 import { EmptyState } from "./EmptyState";
 
 const onAction = fn();
@@ -125,4 +126,37 @@ export const WithIllustrationAndIcon: Story = {
     illustration: <Illustration />,
   },
   globals: { theme: "dark" },
+};
+
+const goalsArgs = {
+  title: "No goals yet",
+  description: "Goals you add will appear here. This is sample data, so nothing has been saved.",
+  illustration: <SceneIllustration scene="empty-goals" size="lg" />,
+  action: <Button>Add a goal</Button>,
+  secondaryAction: <Button variant="secondary">Not now</Button>,
+};
+
+export const DirectionCGoals: Story = {
+  args: goalsArgs,
+  globals: { theme: "light" },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(canvas.getByRole("button", { name: "Add a goal" })).toBeInTheDocument();
+    await expect(canvas.getByRole("button", { name: "Not now" })).toBeInTheDocument();
+  },
+};
+
+export const DirectionCGoalsDark: Story = {
+  args: goalsArgs,
+  globals: { theme: "dark" },
+};
+
+export const LongContent: Story = {
+  args: {
+    title: "No overpayments modelled for the 2026/27 tax year yet",
+    description:
+      "Once you add a mortgage or a loan, you can test regular and one-off overpayments here and see how each one changes your balance, monthly payment and total interest over the remaining term.",
+    illustration: <SceneIllustration scene="empty-accounts" />,
+  },
+  globals: { theme: "light" },
 };

@@ -86,3 +86,76 @@ export const FocusWithinPill: Story = {
     await expect(pillInput.parentElement?.className).toContain("focusWithin:");
   },
 };
+
+export const Currency: Story = {
+  args: {
+    label: "Mortgage balance",
+    value: 250000,
+    min: 0,
+    max: 600000,
+    step: 1000,
+    format: "currency",
+    unitPrefix: "",
+    unitSuffix: "",
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const input = canvas.getByLabelText("Mortgage balance input") as HTMLInputElement;
+    await expect(input.value).toBe("£250,000");
+    await userEvent.clear(input);
+    await userEvent.type(input, "9,999,999");
+    await userEvent.tab();
+    // Clamps to max on blur and reformats.
+    await expect(input.value).toBe("£600,000");
+  },
+};
+
+export const KeyboardSteps: Story = {
+  args: { value: 100, min: 0, max: 500, step: 10 },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const slider = canvas.getByRole("slider") as HTMLInputElement;
+    slider.focus();
+    await userEvent.keyboard("{ArrowRight}");
+    await expect(slider.value).toBe("110");
+    await userEvent.keyboard("{ArrowLeft}{ArrowLeft}");
+    await expect(slider.value).toBe("90");
+    await userEvent.keyboard("{Home}");
+    await expect(slider.value).toBe("0");
+    await userEvent.keyboard("{End}");
+    await expect(slider.value).toBe("500");
+    await userEvent.keyboard("{PageDown}");
+    await expect(Number(slider.value)).toBeLessThan(500);
+    await userEvent.keyboard("{PageUp}");
+    await expect(slider.value).toBe("500");
+  },
+};
+
+export const NotSet: Story = {
+  args: {
+    value: null,
+    label: "Interest rate",
+    min: 0,
+    max: 15,
+    step: 0.1,
+    format: "percent",
+    unitPrefix: "",
+    unitSuffix: "",
+  },
+  play: async ({ canvasElement }) => {
+    const input = within(canvasElement).getByLabelText("Interest rate input") as HTMLInputElement;
+    await expect(input.value).toBe("");
+  },
+};
+
+export const Disabled: Story = {
+  args: { disabled: true, value: 200, helperText: "Locked while the plan is fixed." },
+};
+
+export const LongLabel: Story = {
+  args: {
+    label: "Monthly overpayment you could comfortably afford after essential bills",
+    value: 250,
+    helperText: "Based on your sample surplus of £610 a month.",
+  },
+};

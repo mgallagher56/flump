@@ -113,3 +113,38 @@ export const sectionSubtitleRecipe = cva({
     contrast: false,
   },
 });
+
+/** App variant: left-aligned section heading as on the Direction C frame ("Where you stand"). */
+export const appBandRecipe = cva({
+  base: { display: "flex", flexDirection: "column", gap: "4", width: "100%" },
+});
+
+export const appHeadingGroup = cva({
+  base: { display: "flex", flexDirection: "column", gap: "1" },
+});
+
+export const appTitleRecipe = cva({
+  base: { textStyle: "heading.md", color: "text.primary", margin: 0 },
+});
+
+export const appSubtitleRecipe = cva({
+  base: { textStyle: "body.sm", color: "text.secondary", margin: 0, maxWidth: "720px" },
+});
+
+export const marketingInnerRecipe = cva({
+  base: {
+    maxWidth: "6xl",
+    mx: "auto",
+    py: { base: "14", md: "20" },
+    px: { base: "4", sm: "6" },
+  },
+});
+
+export const marketingHeaderRecipe = cva({
+  base: {
+    textAlign: "center",
+    mb: { base: "10", md: "14" },
+    maxWidth: "760px",
+    mx: "auto",
+  },
+});

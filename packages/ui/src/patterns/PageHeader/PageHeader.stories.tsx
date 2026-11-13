@@ -10,10 +10,9 @@ const meta: Meta<typeof PageHeader> = {
     layout: "padded",
   },
   args: {
-    title: "Debt Payoff & Recovery",
-    subtitle:
-      "Model mathematically optimal clearance strategies, defuse promotional cliffs, and bridge liabilities into long-term ISA wealth.",
-    actions: <Button size="sm">Add Liability</Button>,
+    title: "Debt payoff",
+    description: "See how extra payments change your payoff date and the interest you pay.",
+    actions: <Button size="sm">Add debt</Button>,
   },
 };
 
@@ -23,7 +22,34 @@ type Story = StoryObj<typeof PageHeader>;
 export const Default: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    await expect(canvas.getByText("Debt Payoff & Recovery")).toBeInTheDocument();
-    await expect(canvas.getByRole("button", { name: "Add Liability" })).toBeInTheDocument();
+    await expect(
+      canvas.getByRole("heading", { level: 1, name: "Debt payoff" }),
+    ).toBeInTheDocument();
+    await expect(canvas.getByRole("button", { name: "Add debt" })).toBeInTheDocument();
+  },
+};
+
+export const SampleDataBadge: Story = {
+  args: {
+    title: "Home",
+    description: "Where you stand this month. Sample data.",
+    badge: "Sample data",
+    actions: undefined,
+  },
+  play: async ({ canvasElement }) => {
+    await expect(within(canvasElement).getByText("Sample data")).toBeInTheDocument();
+  },
+};
+
+export const TitleOnly: Story = {
+  args: { description: undefined, actions: undefined },
+};
+
+export const LongContent: Story = {
+  args: {
+    title: "Mortgage overpayment and remortgage planning for 2026/27",
+    description:
+      "Compare overpaying with saving, test a higher renewal rate and see what each choice does to your balance, monthly payment and total interest over the term.",
+    badge: "Sample data",
   },
 };
