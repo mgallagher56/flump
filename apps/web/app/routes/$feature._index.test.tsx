@@ -22,6 +22,11 @@ describe("$feature._index redirect route", () => {
     }
   });
 
+  it("redirects legacy paths case-insensitively", async () => {
+    const response = await loader({ params: { feature: "Debt" } } as any);
+    expect(response.headers.get("Location")).toBe("/app/debt");
+  });
+
   it("throws a 404 for an unknown top-level URL instead of redirecting to login", async () => {
     let thrown: unknown;
     try {

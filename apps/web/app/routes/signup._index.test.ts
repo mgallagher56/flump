@@ -17,6 +17,16 @@ describe("signup route", () => {
     expect(response.headers.get("Location")).toBe("/signup?ref=x");
   });
 
+  it.each([
+    ["/signup/", "/signup"],
+    ["/SIGNUP", "/signup"],
+    ["/signUp?plan=pro&ref=x", "/signup?plan=pro&ref=x"],
+  ])("redirects %s to %s with a 301", async (path, expected) => {
+    const response = (await call(path)) as Response;
+    expect(response.status).toBe(301);
+    expect(response.headers.get("Location")).toBe(expected);
+  });
+
   it("sends the canonical /signup to AuthKit", async () => {
     const response = (await call("/signup")) as Response;
     expect(response.status).toBe(302);

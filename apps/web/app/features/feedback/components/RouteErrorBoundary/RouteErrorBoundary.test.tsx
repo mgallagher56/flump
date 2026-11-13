@@ -71,7 +71,9 @@ describe("RouteErrorBoundary", () => {
       throw data({ kind: "not-found" }, { status: 404 });
     });
     expect(await screen.findByRole("heading", { name: "We couldn't find that" })).toBeDefined();
-    expect(screen.getByRole("link", { name: "Go to dashboard" }).getAttribute("href")).toBe("/");
+    expect(screen.getByRole("link", { name: "Go to Flump" }).getAttribute("href")).toBe("/");
+    expect(screen.queryByRole("link", { name: "Go to dashboard" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Try again" })).toBeNull();
   });
 
   it("renders not-found copy for a bare 404 response from the catch-all route", async () => {
@@ -79,6 +81,8 @@ describe("RouteErrorBoundary", () => {
       throw new Response("Not Found", { status: 404, statusText: "Not Found" });
     });
     expect(await screen.findByRole("heading", { name: "We couldn't find that" })).toBeDefined();
+    expect(screen.queryByRole("button", { name: "Try again" })).toBeNull();
+    expect(screen.getByRole("link", { name: "Go to Flump" }).getAttribute("href")).toBe("/");
   });
 
   it("links back to accounts on the account detail route", async () => {
