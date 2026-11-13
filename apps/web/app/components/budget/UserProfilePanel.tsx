@@ -149,7 +149,6 @@ const UserProfilePanel: FC<UserProfilePanelProps> = ({ initialProfile, user }) =
   const effectiveProfile = profile.id ? profile : initialProfile;
 
   const [form, setForm] = useState<UserProfileUpdate>({
-    displayName: effectiveProfile.displayName,
     firstName:
       effectiveProfile.firstName ?? user?.firstName ?? user?.user_metadata?.first_name ?? null,
     lastName: effectiveProfile.lastName ?? user?.lastName ?? user?.user_metadata?.last_name ?? null,
@@ -435,7 +434,6 @@ const UserProfilePanel: FC<UserProfilePanelProps> = ({ initialProfile, user }) =
                 bordered
                 profile={{
                   ...effectiveProfile,
-                  displayName: form.displayName,
                   firstName: form.firstName,
                   lastName: form.lastName,
                   avatarUrl: form.avatarUrl,
@@ -559,20 +557,6 @@ const UserProfilePanel: FC<UserProfilePanelProps> = ({ initialProfile, user }) =
                   type="text"
                   value={form.lastName ?? ""}
                   onChange={(e) => setForm((p) => ({ ...p, lastName: e.target.value || null }))}
-                />
-              </div>
-              <div className={fieldGroupStyle}>
-                <label className={labelStyle} htmlFor="display-name-input">
-                  Display Name
-                </label>
-                <input
-                  className={inputStyle}
-                  id="display-name-input"
-                  data-testid="display-name-input"
-                  placeholder="Your display name"
-                  type="text"
-                  value={form.displayName ?? ""}
-                  onChange={(e) => setForm((p) => ({ ...p, displayName: e.target.value || null }))}
                 />
               </div>
             </div>

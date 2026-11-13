@@ -33,14 +33,17 @@ describe("<PensionWidget />", () => {
     renderWidget({ data: { ...data, employeePercent: null, employerPercent: null } });
     expect(screen.queryByText(/total contribution/)).toBeNull();
     expect(screen.getByRole("link", { name: "Add contribution rates" }).getAttribute("href")).toBe(
-      "/app/profile",
+      "/app/pension#pension-details",
     );
   });
 
   it("labels the backend default 5% + 3% rates", () => {
     renderWidget({ data: { ...data, employeePercent: 5, employerPercent: 3 } });
     expect(screen.getByText(/Default: auto-enrolment minimum/)).toBeDefined();
-    expect(screen.getByRole("link", { name: "Change in profile" })).toBeDefined();
+    expect(
+      screen.getByRole("link", { name: "Change in your pension details" }).getAttribute("href"),
+    ).toBe("/app/pension#pension-details");
+    expect(screen.queryByText(/in profile/i)).toBeNull();
   });
 
   it("does not label non-default rates", () => {

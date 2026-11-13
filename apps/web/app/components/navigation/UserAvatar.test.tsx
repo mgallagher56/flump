@@ -4,16 +4,16 @@ import UserAvatar from "./UserAvatar";
 
 describe("<UserAvatar />", () => {
   it("renders user initials when no image is provided", () => {
-    render(<UserAvatar profile={{ displayName: "Jane Doe" }} size={32} />);
+    render(<UserAvatar profile={{ firstName: "Jane", lastName: "Doe" }} size={32} />);
     const fallback = screen.getByTestId("user-avatar-fallback");
     expect(fallback).toBeDefined();
     expect(fallback.textContent).toBe("JD");
   });
 
-  it("renders initials derived from user object email when profile display name is missing", () => {
+  it("renders initials derived from user object email when profile name is missing", () => {
     render(
       <UserAvatar
-        profile={{ displayName: null }}
+        profile={{ firstName: null }}
         size={28}
         user={{ email: "marcgallagher@example.com" }}
       />,
@@ -25,13 +25,13 @@ describe("<UserAvatar />", () => {
   it("renders Avatar image when avatarUrl is present in profile", () => {
     const avatarUrl =
       "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==";
-    render(<UserAvatar profile={{ displayName: "Jane Doe", avatarUrl }} size={40} />);
+    render(<UserAvatar profile={{ firstName: "Jane", lastName: "Doe", avatarUrl }} size={40} />);
     const root = screen.getByTestId("user-avatar");
     expect(root).toBeDefined();
   });
 
   it("renders fallback U when no profile or user is provided", () => {
-    render(<UserAvatar profile={{ displayName: null, avatarUrl: null }} user={null} />);
+    render(<UserAvatar profile={{ firstName: null, avatarUrl: null }} user={null} />);
     const fallback = screen.getByTestId("user-avatar-fallback");
     expect(fallback.textContent).toBe("U");
   });

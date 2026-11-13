@@ -3,7 +3,7 @@ import { expect, userEvent, waitFor, within } from "storybook/test";
 import { HomeDashboard } from "./HomeDashboard";
 
 const userProfile = {
-  displayName: "Alex",
+  firstName: "Alex",
   enabledPages: ["accounts", "budget", "debt", "savings", "pension", "mortgage"],
   dashboardWidgets: ["accounts", "budget", "savings", "pension", "mortgage"],
 };

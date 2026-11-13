@@ -46,7 +46,8 @@ describe("<UserProfilePanel />", () => {
       <UserProfilePanel
         initialProfile={{
           ...DEFAULT_PROFILE,
-          displayName: "Jane Doe",
+          firstName: "Jane",
+          lastName: "Doe",
           avatarUrl: null,
         }}
       />,
@@ -64,7 +65,8 @@ describe("<UserProfilePanel />", () => {
       <UserProfilePanel
         initialProfile={{
           ...DEFAULT_PROFILE,
-          displayName: "Jane Doe",
+          firstName: "Jane",
+          lastName: "Doe",
           avatarUrl: "https://example.com/photo.jpg",
         }}
       />,
@@ -83,7 +85,8 @@ describe("<UserProfilePanel />", () => {
       <UserProfilePanel
         initialProfile={{
           ...DEFAULT_PROFILE,
-          displayName: "Jane Doe",
+          firstName: "Jane",
+          lastName: "Doe",
           avatarUrl: null,
         }}
       />,
@@ -106,7 +109,8 @@ describe("<UserProfilePanel />", () => {
       <UserProfilePanel
         initialProfile={{
           ...DEFAULT_PROFILE,
-          displayName: "Jane Doe",
+          firstName: "Jane",
+          lastName: "Doe",
           avatarUrl: "data:image/jpeg;base64,existingImage",
         }}
       />,
@@ -127,12 +131,11 @@ describe("<UserProfilePanel />", () => {
     expect(screen.getByRole("button", { name: /Go to Mortgage Tracker/i })).toBeDefined();
   });
 
-  it("allows user to edit first name, last name, and display name and save", async () => {
+  it("allows user to edit first name and last name and save, with no display name field", async () => {
     render(
       <UserProfilePanel
         initialProfile={{
           ...DEFAULT_PROFILE,
-          displayName: "Original Display",
           firstName: "John",
           lastName: "Doe",
         }}
@@ -141,15 +144,14 @@ describe("<UserProfilePanel />", () => {
 
     const firstNameInput = screen.getByTestId("first-name-input") as HTMLInputElement;
     const lastNameInput = screen.getByTestId("last-name-input") as HTMLInputElement;
-    const displayNameInput = screen.getByTestId("display-name-input") as HTMLInputElement;
+    expect(screen.queryByTestId("display-name-input")).toBeNull();
+    expect(screen.queryByLabelText(/display name/i)).toBeNull();
 
     expect(firstNameInput.value).toBe("John");
     expect(lastNameInput.value).toBe("Doe");
-    expect(displayNameInput.value).toBe("Original Display");
 
     fireEvent.change(firstNameInput, { target: { value: "Johnny" } });
     fireEvent.change(lastNameInput, { target: { value: "Smith" } });
-    fireEvent.change(displayNameInput, { target: { value: "Johnny S" } });
 
     const saveBtn = screen.getByRole("button", { name: /Save Profile/i });
     fireEvent.click(saveBtn);
@@ -159,9 +161,9 @@ describe("<UserProfilePanel />", () => {
         expect.objectContaining({
           firstName: "Johnny",
           lastName: "Smith",
-          displayName: "Johnny S",
         }),
       );
+      expect(mockUpdateProfile.mock.calls.at(-1)?.[0]).not.toHaveProperty("displayName");
     });
   });
 

@@ -316,9 +316,10 @@ describe("PensionContainer", () => {
         setupChecklistCompletedSteps: ["pension"],
       });
       render(<PensionContainer />);
-      expect(screen.getAllByText("Default: auto-enrolment minimum. Change in Profile").length).toBe(
-        2,
-      );
+      expect(
+        screen.getAllByText("Default: auto-enrolment minimum. Change in your pension details")
+          .length,
+      ).toBe(2);
     });
 
     it("non-default rates do not show the default label", () => {
