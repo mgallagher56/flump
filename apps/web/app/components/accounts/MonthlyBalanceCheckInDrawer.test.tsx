@@ -48,11 +48,10 @@ describe("MonthlyBalanceCheckInDrawer", () => {
     // Still waiting: no success message, button disabled against double submits.
     fetcherState = { state: "submitting", data: undefined };
     view.rerender(<MonthlyBalanceCheckInDrawer accounts={accounts as any} />);
-    expect(screen.queryByText(/Balances Updated Successfully!/i)).toBeNull();
-    expect(
-      (screen.getByRole("button", { name: /Save All Current Balances/i }) as HTMLButtonElement)
-        .disabled,
-    ).toBe(true);
+    expect(screen.queryByText(/Balances updated/i)).toBeNull();
+    const saving = screen.getByRole("button", { name: "Saving…" }) as HTMLButtonElement;
+    expect(saving.disabled).toBe(true);
+    expect(saving.getAttribute("aria-busy")).toBe("true");
   });
 
   it("shows success and the net worth change only after a 2xx result", () => {
@@ -66,7 +65,7 @@ describe("MonthlyBalanceCheckInDrawer", () => {
     fetcherState = { state: "idle", data: { success: true } };
     view.rerender(<MonthlyBalanceCheckInDrawer accounts={accounts as any} />);
 
-    expect(screen.getByText(/Balances Updated Successfully!/i)).toBeTruthy();
+    expect(screen.getByText(/Balances updated/i)).toBeTruthy();
     expect(screen.getByText("Net worth up £300.50 since your last update")).toBeTruthy();
   });
 
@@ -81,10 +80,49 @@ describe("MonthlyBalanceCheckInDrawer", () => {
     };
     view.rerender(<MonthlyBalanceCheckInDrawer accounts={accounts as any} />);
 
-    expect(screen.queryByText(/Balances Updated Successfully!/i)).toBeNull();
+    expect(screen.queryByText(/Balances updated/i)).toBeNull();
     expect(screen.getByRole("alert").textContent).toContain("couldn't reach the server");
     // The form stays so the user can retry.
     expect(screen.getAllByRole("spinbutton").length).toBe(2);
+  });
+
+  it("moves focus to the success panel, announces the change once, and Done closes the drawer", () => {
+    const view = render(<MonthlyBalanceCheckInDrawer accounts={accounts as any} />);
+    open();
+    fireEvent.change(screen.getAllByRole("spinbutton")[0] as HTMLElement, {
+      target: { value: "1500.5" },
+    });
+    save();
+    fetcherState = { state: "idle", data: { success: true } };
+    view.rerender(<MonthlyBalanceCheckInDrawer accounts={accounts as any} />);
+
+    const heading = screen.getByText("Balances updated");
+    expect(document.activeElement).toBe(heading.closest("[tabindex='-1']"));
+    expect(screen.getAllByRole("status")).toHaveLength(1);
+
+    fireEvent.click(screen.getByRole("button", { name: "Done" }));
+    expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
+  it("re-enables Save after a failure, focuses the alert, and clears the error on retry", () => {
+    const view = render(<MonthlyBalanceCheckInDrawer accounts={accounts as any} />);
+    open();
+    save();
+    fetcherState = { state: "idle", data: { success: false, error: "Nope." } };
+    view.rerender(<MonthlyBalanceCheckInDrawer accounts={accounts as any} />);
+
+    const alert = screen.getByRole("alert");
+    expect(document.activeElement).toBe(alert);
+    const saveButton = screen.getByRole("button", {
+      name: /Save All Current Balances/i,
+    }) as HTMLButtonElement;
+    expect(saveButton.disabled).toBe(false);
+
+    fireEvent.click(saveButton);
+    expect(mockSubmit).toHaveBeenCalledTimes(2);
+    fetcherState = { state: "submitting", data: fetcherState.data };
+    view.rerender(<MonthlyBalanceCheckInDrawer accounts={accounts as any} />);
+    expect(screen.queryByRole("alert")).toBeNull();
   });
 
   it("ignores the previous submission's result when saving again", () => {
@@ -92,7 +130,7 @@ describe("MonthlyBalanceCheckInDrawer", () => {
     render(<MonthlyBalanceCheckInDrawer accounts={accounts as any} />);
     open();
     save();
-    expect(screen.queryByText(/Balances Updated Successfully!/i)).toBeNull();
+    expect(screen.queryByText(/Balances updated/i)).toBeNull();
   });
 
   it("does not submit when a balance is blank", () => {
@@ -104,6 +142,7 @@ describe("MonthlyBalanceCheckInDrawer", () => {
     save();
     expect(mockSubmit).not.toHaveBeenCalled();
     expect(screen.getByRole("alert").textContent).toContain("Marcus Saver");
+    expect(document.activeElement).toBe(screen.getAllByRole("spinbutton")[1]);
   });
 
   it("drawer is named", () => {

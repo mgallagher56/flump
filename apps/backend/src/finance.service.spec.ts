@@ -51,7 +51,7 @@ describe("FinanceService", () => {
       const service = new FinanceService(
         accountRepo as any,
         {} as any,
-        {} as any,
+        { upsert: vi.fn() } as any,
         {} as any,
         {} as any,
         { getProvider: vi.fn().mockReturnValue(provider) } as any,
@@ -64,6 +64,53 @@ describe("FinanceService", () => {
       expect(saved).toHaveLength(2);
       for (const a of saved) expect(a.id).toMatch(uuid);
       expect(saved[0].id).not.toBe(saved[1].id);
+    });
+  });
+
+  describe("sync and check-in share one history row per UK month (E23 D22)", () => {
+    const run = async (iso: string) => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date(iso));
+      try {
+        const accounts = createInMemoryRepository();
+        const details = createInMemoryRepository();
+        const provider = {
+          fetchAccounts: vi
+            .fn()
+            .mockResolvedValue([
+              { externalAccountId: "e1", name: "A", type: "Current", balance: 10, currency: "GBP" },
+            ]),
+        };
+        const service = new FinanceService(
+          accounts as any,
+          {} as any,
+          details as any,
+          {} as any,
+          {} as any,
+          { getProvider: vi.fn().mockReturnValue(provider) } as any,
+          { get: vi.fn() } as any,
+        );
+        const conn = { id: "c1", institutionId: "monzo" } as any;
+        await service.syncProviderAccounts(conn, "u1", "tok");
+        const id = accounts.rows[0]?.id as string;
+        await service.updateAccount("u1", id, { balance: 55 });
+        await service.syncProviderAccounts(conn, "u1", "tok");
+        return details.rows;
+      } finally {
+        vi.useRealTimers();
+      }
+    };
+
+    it("writes one row for sync, check-in edit and a second sync in the same month", async () => {
+      const rows = await run("2026-03-15T12:00:00Z");
+      expect(rows).toHaveLength(1);
+      expect(rows[0]).toMatchObject({ year: 2026, month: 3 });
+    });
+
+    it("uses the UK month at 00:30 BST on the 1st (still June in UTC)", async () => {
+      const rows = await run("2026-06-30T23:30:00Z");
+      expect(rows).toHaveLength(1);
+      expect(rows[0]).toMatchObject({ year: 2026, month: 7 });
     });
   });
 

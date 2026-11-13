@@ -13,6 +13,7 @@ import { Repository } from "typeorm";
 import {
   AccountIntakeService,
   type CreateAccountDto,
+  currentUkYearMonth,
   type UpdateAccountDto,
   type UpdateBalancesDto,
 } from "./account-intake.service";
@@ -397,9 +398,7 @@ export class FinanceService {
     if (!provider) return 0;
 
     const providerAccounts = await provider.fetchAccounts(accessToken);
-    const now = new Date();
-    const currentYear = now.getFullYear();
-    const currentMonth = now.getMonth() + 1;
+    const { year: currentYear, month: currentMonth } = currentUkYearMonth();
 
     for (const pa of providerAccounts) {
       const normalizedBalance = BankSyncOrchestrator.normalizeAccountBalance(pa.type, pa.balance);
@@ -442,33 +441,16 @@ export class FinanceService {
       }
       const savedAcc = (await this.accountRepository.save(targetAccount)) || targetAccount;
 
-      const detail = this.accountDetailRepository.findOne
-        ? await this.accountDetailRepository.findOne({
-            where: { accountId: savedAcc.id, month: currentMonth, year: currentYear },
-          })
-        : null;
-      let targetDetail: AccountDetail;
-      if (!detail) {
-        targetDetail = this.accountDetailRepository.create
-          ? this.accountDetailRepository.create({
-              accountId: savedAcc.id,
-              month: currentMonth,
-              year: currentYear,
-              value: savedAcc.balance,
-            })
-          : ({
-              accountId: savedAcc.id,
-              month: currentMonth,
-              year: currentYear,
-              value: savedAcc.balance,
-            } as any);
-      } else {
-        detail.value = savedAcc.balance;
-        targetDetail = detail;
-      }
-      if (this.accountDetailRepository.save) {
-        await this.accountDetailRepository.save(targetDetail);
-      }
+      // One row per account per UK month, shared with the check-in (unique index, E23 D22).
+      await this.accountDetailRepository.upsert(
+        {
+          accountId: savedAcc.id,
+          month: currentMonth,
+          year: currentYear,
+          value: Number(savedAcc.balance),
+        },
+        ["accountId", "year", "month"],
+      );
 
       // E19 D8-A: synced transactions are deliberately not stored. Balances are enough for
       // net worth and debt, and merchant descriptions are high-risk personal data.

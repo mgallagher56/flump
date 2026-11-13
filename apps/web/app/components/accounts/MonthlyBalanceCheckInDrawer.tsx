@@ -1,7 +1,7 @@
 import { PortfolioSnapshot, type RawAccount, type RawAccountDetail } from "@flump/finance-engine";
 import * as Dialog from "@radix-ui/react-dialog";
 import { css } from "@repo/ui/styled-system/css";
-import { type FC, useRef, useState } from "react";
+import { type FC, useEffect, useRef, useState } from "react";
 import { FaCheckCircle, FaClock, FaTimes } from "react-icons/fa";
 import { useFetcher } from "react-router";
 import FLPButton from "~/components/core/buttons/FLPButton";
@@ -115,6 +115,15 @@ export const MonthlyBalanceCheckInDrawer: FC<MonthlyBalanceCheckInDrawerProps> =
   const serverError = responded && fetcher.data?.success !== true;
   const isSaving = phase === "saving" && !responded;
 
+  // Focus follows the outcome: the success panel, or the server error alert.
+  const successRef = useRef<HTMLDivElement>(null);
+  const alertRef = useRef<HTMLDivElement>(null);
+  const inputRefs = useRef<Record<string, HTMLInputElement | null>>({});
+  useEffect(() => {
+    if (savedSuccess) successRef.current?.focus();
+    else if (serverError) alertRef.current?.focus();
+  }, [savedSuccess, serverError]);
+
   const handleOpen = (open: boolean) => {
     if (open) {
       const initial: Record<string, string> = {};
@@ -140,6 +149,7 @@ export const MonthlyBalanceCheckInDrawer: FC<MonthlyBalanceCheckInDrawerProps> =
       const value = raw === undefined || raw.trim() === "" ? Number.NaN : Number(raw);
       if (!Number.isFinite(value)) {
         setFormError(`Enter a balance for ${acc.name}.`);
+        inputRefs.current[acc.id as string]?.focus();
         return;
       }
       updated[acc.id as string] = roundTo2dp(value);
@@ -269,7 +279,10 @@ export const MonthlyBalanceCheckInDrawer: FC<MonthlyBalanceCheckInDrawerProps> =
 
           {savedSuccess ? (
             <div
+              ref={successRef}
+              tabIndex={-1}
               className={css({
+                outline: "none",
                 padding: "32px",
                 textAlign: "center",
                 display: "flex",
@@ -278,12 +291,16 @@ export const MonthlyBalanceCheckInDrawer: FC<MonthlyBalanceCheckInDrawerProps> =
                 gap: "12px",
               })}
             >
-              <FaCheckCircle className={css({ fontSize: "40px", color: "status.positive.text" })} />
+              <FaCheckCircle
+                aria-hidden="true"
+                className={css({ fontSize: "40px", color: "status.positive.text" })}
+              />
               <FLPHeading as="h3" size="md">
-                Balances Updated Successfully!
+                Balances updated
               </FLPHeading>
               {change ? (
                 <FLPText
+                  role="status"
                   color="text.muted"
                   fontSize="sm"
                   className={css({ fontVariantNumeric: "tabular-nums" })}
@@ -293,6 +310,9 @@ export const MonthlyBalanceCheckInDrawer: FC<MonthlyBalanceCheckInDrawerProps> =
                     : `Net worth ${change.delta > 0 ? "up" : "down"} ${formatCurrencyDecimal(Math.abs(change.delta))} since ${change.since}`}
                 </FLPText>
               ) : null}
+              <Dialog.Close asChild>
+                <FLPButton variant="primary">Done</FLPButton>
+              </Dialog.Close>
             </div>
           ) : (
             <>
@@ -335,6 +355,9 @@ export const MonthlyBalanceCheckInDrawer: FC<MonthlyBalanceCheckInDrawerProps> =
                       <div className={css({ display: "flex", alignItems: "center", gap: "6px" })}>
                         <span className={css({ fontSize: "sm", color: "text.muted" })}>£</span>
                         <input
+                          ref={(el) => {
+                            inputRefs.current[acc.id as string] = el;
+                          }}
                           type="number"
                           step="0.01"
                           value={balanceMap[acc.id] ?? ""}
@@ -364,11 +387,13 @@ export const MonthlyBalanceCheckInDrawer: FC<MonthlyBalanceCheckInDrawerProps> =
               </div>
 
               {formError || serverError ? (
-                <FLPText role="alert" color="status.danger.text" fontSize="sm">
-                  {formError ??
-                    fetcher.data?.error ??
-                    "We couldn't save your balances. Please try again."}
-                </FLPText>
+                <div ref={alertRef} role="alert" tabIndex={-1} className={css({ outline: "none" })}>
+                  <FLPText color="status.danger.text" fontSize="sm">
+                    {formError ??
+                      fetcher.data?.error ??
+                      "We couldn't save your balances. Please try again."}
+                  </FLPText>
+                </div>
               ) : null}
               <div
                 className={css({
@@ -387,8 +412,9 @@ export const MonthlyBalanceCheckInDrawer: FC<MonthlyBalanceCheckInDrawerProps> =
                   variant="primary"
                   onClick={handleSaveAll}
                   disabled={accounts.length === 0 || isSaving}
+                  aria-busy={isSaving}
                 >
-                  Save All Current Balances
+                  {isSaving ? "Saving…" : "Save All Current Balances"}
                 </FLPButton>
               </div>
             </>
