@@ -59,10 +59,14 @@ describe("read tools v2: mixed persona golden outputs", () => {
       debtCount: 2,
       monthlyIncomeGbp: 3200,
       monthlyEssentialSpendGbp: 1120,
-      monthlySurplusGbp: 3200 - 1120 - 216.67 - 200 - 75,
+      monthlySurplusAfterStoredMinimumsGbp: 3200 - 1120 - 216.67 - 200,
       emergencyRunwayMonths: 9,
     });
-    expect(e.assumptions).toEqual([]);
+    // The card has no stored minimum: it is excluded and the response says so.
+    expect(e.assumptions).toEqual([
+      expect.objectContaining({ field: "monthlySurplusAfterStoredMinimumsGbp", source: "default" }),
+    ]);
+    expect(e.missing.map((m) => m.field)).toContain("debts.minimumPayment");
   });
 
   it("get_net_worth_history", async () => {
@@ -76,6 +80,10 @@ describe("read tools v2: mixed persona golden outputs", () => {
     expect(e.result.changeGbp).toBe(
       e.result.points[2].netWorthGbp - e.result.points[0].netWorthGbp,
     );
+    // Two of four accounts have no history rows; the latest point can differ from current net worth.
+    expect(e.missing.map((m) => m.field)).toEqual(["accountHistory.accounts"]);
+    expect(e.missing[0]).toMatchObject({ why: expect.stringContaining("2 of 4") });
+    expect((e as unknown as { notice: string }).notice).toMatch(/differ from current net worth/);
     const detailed = await call(h, "get_net_worth_history", {
       months: 3,
       responseFormat: "detailed",
@@ -85,7 +93,7 @@ describe("read tools v2: mixed persona golden outputs", () => {
 
   it("list_accounts uses short ids and generic labels, with a filter", async () => {
     const e = await call(h, "list_accounts");
-    expect(e.result.total).toBe(4);
+    expect(e.result.returnedCount).toBe(4);
     expect(e.result.accounts.map((a: { label: string }) => a.label)).toEqual([
       "Current Account #1",
       "Saving Account #1",
@@ -104,7 +112,7 @@ describe("read tools v2: mixed persona golden outputs", () => {
     expect(e.result.monthlyIncomeGbp).toBe(3200);
     expect(e.result.essentialMonthlyGbp).toBe(1120);
     expect(e.result.discretionaryMonthlyGbp).toBe(216.67);
-    expect(e.result.monthlySurplusGbp).toBe(1863.33);
+    expect(e.result.monthlySurplusBeforeDebtGbp).toBe(1863.33);
     const text = JSON.stringify(e);
     expect(text).not.toMatch(/Acme|Barclays|secret note/);
     expect(e.result.entries[0].name).toBe("Income #1");
@@ -164,7 +172,7 @@ describe("read tools v2: empty user", () => {
       }
       const snap = await call(h, "get_financial_snapshot");
       expect(snap.result.monthlyIncomeGbp).toBeNull();
-      expect(snap.result.monthlySurplusGbp).toBeNull();
+      expect(snap.result.monthlySurplusAfterStoredMinimumsGbp).toBeNull();
       expect(snap.result.netWorthGbp).toBe(0);
     } finally {
       await h.close();
@@ -200,7 +208,103 @@ describe("read tools v2: size and scopes", () => {
   });
 });
 
+describe("read tools v2: oversized fixtures", () => {
+  const many = (n: number) =>
+    Array.from({ length: n }, (_, i) => ({
+      id: `acc-${i}`,
+      name: `Barclays Card ${i}`,
+      type: "Credit Card",
+      balance: 100 + i,
+    }));
+
+  it("caps missing[] at five entries and truncates list_accounts and get_debt_overview", async () => {
+    const h = await connectTestClient({ ...emptyUser, accounts: many(150) });
+    try {
+      for (const name of ["list_accounts", "get_debt_overview"]) {
+        const text = await h.callText(name);
+        const e = JSON.parse(text) as Env & { notice?: string };
+        expect(estimateTokens(text), name).toBeLessThanOrEqual(1500);
+        expect(e.truncated, name).toBe(true);
+        expect(e.missing.length, name).toBeLessThanOrEqual(5);
+        expect(e.missing.at(-1)?.why, name).toMatch(/more not listed/);
+      }
+    } finally {
+      await h.close();
+    }
+  });
+
+  it("truncates get_budget_summary and merges categories that scrub to the same name", async () => {
+    const budgetEntries = Array.from({ length: 400 }, (_, i) => ({
+      id: `b${i}`,
+      category: i < 2 ? (i === 0 ? "Monzo" : "Barclays") : `Category ${i}`,
+      name: `Item ${i}`,
+      amount: 10,
+      frequency: "monthly",
+      isIncome: false,
+      isEssential: true,
+    }));
+    const h = await connectTestClient({ ...emptyUser, budgetEntries });
+    try {
+      const text = await h.callText("get_budget_summary", { responseFormat: "detailed" });
+      expect(estimateTokens(text)).toBeLessThanOrEqual(1500);
+      expect((JSON.parse(text) as Env).truncated).toBe(true);
+      const small = await call(
+        await connectTestClient({ ...emptyUser, budgetEntries: budgetEntries.slice(0, 2) }),
+        "get_budget_summary",
+      );
+      expect(small.result.categories).toEqual([
+        { category: "Bank", monthlyGbp: 20, essential: true },
+      ]);
+    } finally {
+      await h.close();
+    }
+  });
+
+  it("fits get_net_worth_history and get_financial_snapshot for large inputs", async () => {
+    const accounts = many(150);
+    const accountDetails = accounts.slice(0, 20).flatMap((a) =>
+      Array.from({ length: 24 }, (_, i) => ({
+        accountId: a.id,
+        year: 2024 + Math.floor(i / 12),
+        month: (i % 12) + 1,
+        value: 50 + i,
+      })),
+    );
+    const h = await connectTestClient({ ...emptyUser, accounts, accountDetails });
+    try {
+      const hist = await h.callText("get_net_worth_history", {
+        months: 120,
+        responseFormat: "detailed",
+      });
+      expect(estimateTokens(hist)).toBeLessThanOrEqual(1500);
+      expect(estimateTokens(await h.callText("get_financial_snapshot"))).toBeLessThanOrEqual(1500);
+    } finally {
+      await h.close();
+    }
+  });
+});
+
 describe("short ids", () => {
+  it("falls back to the user id for a dev token without a token id", async () => {
+    const { shortIdKey } = await import("../../short-ids.js");
+    expect(shortIdKey({ userId: "u1" })).toBe("user:u1");
+    expect(shortIdKey({ userId: "u1", tokenId: "tok" })).toBe("tok");
+    expect(shortId(shortIdKey({ userId: "u1" }), "acc", "x")).not.toBe(
+      shortId(shortIdKey({ userId: "u2" }), "acc", "x"),
+    );
+    const h1 = await connectTestClient(mixedAccountsWithHistory, {
+      token: { userId: "u", scopes: ["mcp:read:full"], anonymizeInstitutions: true, type: "dev" },
+    });
+    try {
+      const a = await call(h1, "list_accounts");
+      const b = await call(h1, "list_accounts");
+      expect(a.result.accounts[0].id).toBe(b.result.accounts[0].id);
+      expect(a.result.accounts[0].id).toMatch(/^acc_[0-9a-f]{10}$/);
+    } finally {
+      await h1.close();
+    }
+  });
+
   const uuid = "11111111-aaaa-4aaa-8aaa-000000000001";
   it("is stable per token, differs between tokens and kinds, and reveals no uuid", () => {
     expect(shortId("tok_1", "acc", uuid)).toBe(shortId("tok_1", "acc", uuid));
@@ -214,5 +318,10 @@ describe("short ids", () => {
     expect(resolveShortId("tok_1", "acc", records, id)).toBe(records[0]);
     expect(resolveShortId("tok_2", "acc", records, id)).toBeUndefined();
     expect(resolveShortId("tok_1", "acc", [], id)).toBeUndefined();
+    // Scoped by kind: a debt id never resolves an account.
+    expect(resolveShortId("tok_1", "debt", records, id)).toBeUndefined();
+    // An id for another user's record (not in the caller's list) never resolves.
+    const foreign = shortId("tok_1", "acc", "someone-elses-uuid");
+    expect(resolveShortId("tok_1", "acc", records, foreign)).toBeUndefined();
   });
 });

@@ -35,6 +35,18 @@ export const getNetWorthHistory = defineFlumpTool({
     const m = await loadReadModel(ctx);
     const history = m.snapshot.getMonthlyHistory(months);
     const missing: Missing[] = [];
+    // Student loans never enter history, so they are not "missing" history.
+    const noHistory = m.accounts.filter(
+      (a) => a.category !== "studentLoans" && a.history.length === 0,
+    );
+    if (history.length > 0 && noHistory.length > 0) {
+      missing.push({
+        field: "accountHistory.accounts",
+        why: `${noHistory.length} of ${m.accounts.length} account(s) have no history rows, so they are left out of every point.`,
+        askUser:
+          "Would you like to record month-end balances for the accounts that have no history?",
+      });
+    }
     if (history.length === 0) {
       missing.push({
         field: "accountHistory",
@@ -62,7 +74,7 @@ export const getNetWorthHistory = defineFlumpTool({
       provenance: { points: "account_history" },
       missing,
       notice:
-        "Student loans are excluded. A month with no recorded value carries the last known value forward.",
+        "Student loans are excluded. A month with no recorded value carries the last known value forward. The latest point is built from history rows only and can differ from current net worth (get_financial_snapshot), which uses current balances.",
     };
   },
 });

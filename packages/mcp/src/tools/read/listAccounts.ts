@@ -1,7 +1,7 @@
 import type { AccountCategory } from "@flump/finance-engine";
 import { z } from "zod";
 import { defineFlumpTool } from "../../define-tool.js";
-import { ASK_NO_ACCOUNTS, loadReadModel, type Missing, round2 } from "./common.js";
+import { ASK_NO_ACCOUNTS, capMissing, loadReadModel, type Missing, round2 } from "./common.js";
 
 const CATEGORIES = [
   "cash",
@@ -24,10 +24,12 @@ const result = z.object({
       balanceGbp: z.number(),
       isLiability: z.boolean(),
       interestRatePct: z.number().nullable(),
-      aprStatus: z.enum(["known", "unknown"]),
+      /** Debts only. */
+      aprStatus: z.enum(["known", "unknown"]).optional(),
     }),
   ),
-  total: z.number(),
+  /** Number of accounts in this response (after the category filter), not the user's total. */
+  returnedCount: z.number(),
 });
 
 export const listAccounts = defineFlumpTool({
@@ -56,18 +58,28 @@ export const listAccounts = defineFlumpTool({
         balanceGbp: round2(a.nominalBalance),
         isLiability: a.isLiability,
         interestRatePct: a.interestRateKnown ? a.interestRate : null,
-        aprStatus: a.interestRateKnown ? ("known" as const) : ("unknown" as const),
+        ...(a.category === "debt"
+          ? { aprStatus: a.interestRateKnown ? ("known" as const) : ("unknown" as const) }
+          : {}),
       }));
-    const unknownDebt = rows.filter((r) => r.aprStatus === "unknown" && r.category === "debt");
+    const unknownDebt = rows.filter((r) => r.aprStatus === "unknown");
+    const debtMissing: Missing[] = [];
     for (const r of unknownDebt) {
-      missing.push({
+      debtMissing.push({
         field: `accounts.${r.id}.interestRatePct`,
         why: `The interest rate on ${r.label} is not recorded.`,
         askUser: `What is the APR on your ${r.label}?`,
       });
     }
+    missing.push(
+      ...capMissing(debtMissing, {
+        field: "accounts.interestRatePct",
+        why: "Several debts have no recorded interest rate.",
+        askUser: "What is the APR on each of your debts?",
+      }),
+    );
     return {
-      result: { accounts: rows, total: rows.length },
+      result: { accounts: rows, returnedCount: rows.length },
       provenance: { accounts: "account_balances" },
       missing,
     };
