@@ -3,7 +3,8 @@ import { MIGRATION_LOCK_KEY } from "../config/migration-lock";
 
 // E23 D06/D07 (plan section 3.1, DECISIONS E23 D-3-B and D-4-C): the onboarding answers that were
 // sent and silently dropped. Every column is nullable with no default, so adding them is
-// metadata-only and existing rows read as "not set". CHECKs are added NOT VALID then validated.
+// metadata-only and existing rows read as "not set". CHECKs are added NOT VALID then validated
+// (same transaction, so no lock benefit; the table is tiny and every new column is NULL).
 const CHECKS: Array<[name: string, expr: string]> = [
   [
     "CHK_user_profiles_tax_region",
