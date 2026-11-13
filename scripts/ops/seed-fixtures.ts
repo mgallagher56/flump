@@ -83,7 +83,7 @@ export async function buildSyntheticDatabase(client: Client): Promise<void> {
     monthlyContribution: null,
   });
   await client.query(
-    "INSERT INTO account_details (account_id, month, value, year) VALUES ($1, 1, 5.00, 2025), ($1, 2, 6.00, 2025)",
+    "INSERT INTO account_details (account_id, user_id, month, value, year, as_of_date) VALUES ($1, 'user_mock', 1, 5.00, 2025, '2025-01-31'), ($1, 'user_mock', 2, 6.00, 2025, '2025-02-28')",
     [mockWithDetails],
   );
   await client.query(

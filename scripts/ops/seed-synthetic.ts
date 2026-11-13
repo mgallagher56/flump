@@ -32,6 +32,7 @@ import {
 // transactions.account_id are plain varchars), but the order stays child-before-parent.
 export const USER_DATA_TABLES = [
   "transactions",
+  "snapshot_checkins",
   "account_details",
   "accounts",
   "bank_connections",
@@ -115,8 +116,9 @@ async function insertPersona(db: SeedClient, persona: SyntheticPersona, userId: 
     const accountId = rows[0]?.id as string;
     for (const h of a.history ?? []) {
       await db.query(
-        "INSERT INTO account_details (account_id, year, month, value) VALUES ($1,$2,$3,$4)",
-        [accountId, h.year, h.month, h.value],
+        `INSERT INTO account_details (account_id, user_id, year, month, value, as_of_date, source)
+         VALUES ($1,$2,$3,$4,$5, make_date($3::int, $4::int, 1), 'backfill')`,
+        [accountId, userId, h.year, h.month, h.value],
       );
     }
   }
