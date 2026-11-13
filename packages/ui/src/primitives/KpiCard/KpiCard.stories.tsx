@@ -6,6 +6,7 @@ import { Money } from "../Money/Money";
 import { KpiCard } from "./KpiCard";
 
 const frame = css({ width: "20rem", maxWidth: "100%" });
+const compactFrame = css({ width: "14rem", maxWidth: "100%" });
 
 const meta: Meta<typeof KpiCard> = {
   title: "2. Primitives/KpiCard",
@@ -34,8 +35,8 @@ type Story = StoryObj<typeof KpiCard>;
 
 const defaultPlay: Story["play"] = async ({ canvasElement }) => {
   const canvas = within(canvasElement);
-  await expect(canvas.getByText("Debt-free horizon")).toBeInTheDocument();
-  await expect(canvas.getByText("August 2026")).toBeInTheDocument();
+  await expect(canvas.getAllByText("Debt-free horizon").length).toBeGreaterThan(0);
+  await expect(canvas.getAllByText("August 2026").length).toBeGreaterThan(0);
 };
 
 export const Default: Story = { play: defaultPlay };
@@ -132,3 +133,44 @@ const heroPlay: Story["play"] = async ({ canvasElement }) => {
 export const Hero: Story = { args: heroArgs, globals: { theme: "light" }, play: heroPlay };
 
 export const HeroDark: Story = { args: heroArgs, globals: { theme: "dark" }, play: heroPlay };
+
+const numericArgs = {
+  label: "Net worth",
+  value: -1234567,
+  deltaText: undefined,
+  delta: { direction: "down" as const, text: "-£12,400 this year" },
+  subtext: "Numbers are formatted by Money",
+};
+
+const numericPlay: Story["play"] = async ({ canvasElement }) => {
+  const canvas = within(canvasElement);
+  await expect(canvas.getByText("minus £1,234,567")).toBeInTheDocument();
+};
+
+export const NumericValue: Story = {
+  args: numericArgs,
+  globals: { theme: "light" },
+  play: numericPlay,
+};
+
+export const NumericValueDark: Story = {
+  args: numericArgs,
+  globals: { theme: "dark" },
+  play: numericPlay,
+};
+
+export const Compact: Story = {
+  args: { label: "Pension pot", value: 97800, deltaText: undefined, subtext: "Compact notation" },
+  render: (args) => (
+    <div className={compactFrame} data-density="compact">
+      <KpiCard {...args} valueFormat={{ compact: true }} />
+    </div>
+  ),
+  globals: { theme: "light" },
+};
+
+export const NotSetWithAction: Story = {
+  args: { ...emptyArgs, subtext: undefined },
+  globals: { theme: "dark" },
+  play: emptyPlay,
+};

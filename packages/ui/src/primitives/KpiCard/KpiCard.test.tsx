@@ -113,4 +113,27 @@ describe("KpiCard Primitive", () => {
     rerender(<KpiCard label="Net worth" loading tone="hero" value="£1" />);
     expect(container.querySelector('[data-tone="hero"]')).toBeNull();
   });
+
+  it("renders a numeric value through Money with en-GB formatting", () => {
+    const { container } = render(<KpiCard label="Net worth" value={1234567} />);
+    expect(container.textContent).toContain("£1,234,567");
+  });
+
+  it("reads a negative numeric value as minus for screen readers", () => {
+    render(<KpiCard label="Net worth" value={-1234} />);
+    expect(screen.getByText("minus £1,234")).toBeDefined();
+  });
+
+  it("renders a real numeric zero as £0, not Not set", () => {
+    const { container } = render(<KpiCard label="Debt" value={0} />);
+    expect(container.textContent).toContain("£0");
+    expect(screen.queryByText("Not set")).toBeNull();
+  });
+
+  it("supports compact valueFormat", () => {
+    const { container } = render(
+      <KpiCard label="Pot" value={97800} valueFormat={{ compact: true }} />,
+    );
+    expect(container.textContent).toContain("£97.8k");
+  });
 });

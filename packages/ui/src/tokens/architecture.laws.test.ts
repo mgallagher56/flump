@@ -119,8 +119,10 @@ describe("Architecture & Design System Laws", () => {
         "CurrencyInput",
         "FlumpLogo",
         "FormField",
+        "Heading",
         "Illustration",
         "Money",
+        "Text",
         "TextInput",
       ]) {
         expect(primitives).toContain(expected);

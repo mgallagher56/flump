@@ -128,3 +128,12 @@ export const kpiDeltaContent = cva({
     fontVariantNumeric: "tabular-nums",
   },
 });
+
+/** A numeric value may wrap inside a narrow (2x2 phone) card instead of overflowing it. */
+export const kpiMoney = cva({
+  base: {
+    minWidth: 0,
+    whiteSpace: "normal",
+    overflowWrap: "anywhere",
+  },
+});

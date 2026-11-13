@@ -34,6 +34,7 @@ export * from "./primitives/CurrencyInput";
 export * from "./primitives/Dialog";
 export * from "./primitives/FlumpLogo";
 export * from "./primitives/FormField";
+export * from "./primitives/Heading";
 export * from "./primitives/Icon";
 export * from "./primitives/Illustration";
 export * from "./primitives/KpiCard";
@@ -44,6 +45,7 @@ export * from "./primitives/SegmentedTabs";
 export * from "./primitives/SliderField";
 export * from "./primitives/StatusBadge";
 export * from "./primitives/Table";
+export * from "./primitives/Text";
 export * from "./primitives/TextInput";
 // Explicit names shadow Panda's generated visually-hidden JSX pattern (star-export ambiguity).
 export { VisuallyHidden, type VisuallyHiddenProps } from "./primitives/VisuallyHidden";

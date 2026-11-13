@@ -141,3 +141,26 @@ describe("Num", () => {
     expect(container.innerHTML).toContain("text.onContrast");
   });
 });
+
+describe("Money compact", () => {
+  it.each([
+    [97800, "£97.8k"],
+    [1200000, "£1.2m"],
+    [950, "£950"],
+    [-97800, "-£97.8k"],
+  ])("formats %d as %s", (value, expected) => {
+    const { container } = render(<Money compact value={value} />);
+    const visible = container.querySelector("[aria-hidden]") ?? container;
+    expect(visible.textContent).toBe(expected);
+  });
+
+  it("never renders a negative zero", () => {
+    const { container } = render(<Money compact value={-0.04} />);
+    expect(container.textContent).toBe("£0");
+  });
+
+  it("reads negative compact figures as minus", () => {
+    render(<Money compact value={-97800} />);
+    expect(screen.getByText("minus £97.8k")).toBeDefined();
+  });
+});
