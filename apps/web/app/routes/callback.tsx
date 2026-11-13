@@ -83,6 +83,8 @@ export default function CallbackRoute() {
             <a href="/login">Try signing in again</a>
           </Button>
         }
+        // The error replaces the whole page, so its heading is the page's h1.
+        headingLevel="h1"
         description="Something went wrong while signing you in, so we haven't started a session. Try signing in again. If it keeps happening, report it and we'll look into it."
         id="callback-error"
         illustration={<Illustration scene="empty-accounts" size="sm" />}

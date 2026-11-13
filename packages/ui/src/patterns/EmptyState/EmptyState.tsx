@@ -9,7 +9,8 @@ export interface EmptyStateProps {
   illustration?: ReactNode;
   action?: ReactNode;
   secondaryAction?: ReactNode;
-  headingLevel?: "h2" | "h3";
+  /** `h1` only where the empty state replaces the whole page, so it is the page heading. */
+  headingLevel?: "h1" | "h2" | "h3";
   /** `muted` drops the tinted fill for places where the empty state should recede. */
   tone?: "default" | "muted";
   size?: "md" | "sm";

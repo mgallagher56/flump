@@ -8,6 +8,13 @@ describe("EmptyState Pattern", () => {
     expect(screen.getByRole("heading", { level: 2, name: "No debts yet" })).toBeDefined();
   });
 
+  it("renders an h1 when it stands in for the page heading", () => {
+    render(<EmptyState headingLevel="h1" title="We couldn't sign you in" />);
+    expect(
+      screen.getByRole("heading", { level: 1, name: "We couldn't sign you in" }),
+    ).toBeDefined();
+  });
+
   it("renders the title at the requested heading level", () => {
     render(<EmptyState headingLevel="h3" title="No debts yet" />);
     expect(screen.getByRole("heading", { level: 3, name: "No debts yet" })).toBeDefined();

@@ -38,28 +38,28 @@ const TOOLS_DATA: Record<string, ToolContent> = {
     metaTitle: "UK £100k–£125k Tax Trap Calculator (60% Marginal Rate) | Flump",
     metaDescription:
       "Calculate your marginal tax rate between £100,000 and £125,140, personal allowance loss, and the pension contribution that would bring adjusted net income to £100,000, with the effect on allowance and free childcare.",
-    title: "UK £100k–£125k Tax Trap & Childcare Threshold Calculator",
+    title: "UK £100k–£125k tax trap and childcare threshold calculator",
     subtitle:
       "Model how HMRC's Personal Allowance taper creates an effective 60% marginal tax rate on income between £100,000 and £125,140, and the pension contribution that would bring adjusted net income back to £100,000. Unverified estimate.",
-    category: "UK Tax & Salary Sacrifice",
+    category: "UK tax and salary sacrifice",
     component: "tax-trap",
     guideSections: [
       {
-        heading: "What is the UK £100,000 Tax Trap?",
+        heading: "What is the UK £100,000 tax trap?",
         body: [
           "In the UK, once your adjusted net income crosses £100,000, your tax-free Personal Allowance (£12,570 in 2026/27) is withdrawn at a rate of £1 for every £2 of income earned above £100,000.",
           "Because you are paying 40% higher-rate tax on the additional income plus losing allowance that would otherwise have been tax-free (taxed at 40%), your effective marginal income tax rate on this £25,140 band jumps to 60%. When you add 2% Employee National Insurance, your true marginal deduction rate reaches 62%.",
         ],
       },
       {
-        heading: "The 15–30 Hours Free Childcare Threshold",
+        heading: "The 15–30 hours free childcare threshold",
         body: [
           "For families with young children in the UK, adjusted net income of £100,001 sits just above the childcare eligibility limit. If either parent has an adjusted net income of even £1 over £100,000, eligibility for 15 to 30 hours of government-funded childcare and Tax-Free Childcare (£2,000 per child/year) is abruptly eliminated.",
           "A parent receiving an annual bonus taking them from £99,000 to £102,000 can lose £5,000 to £8,000 in childcare subsidies, resulting in a net negative income from working harder.",
         ],
       },
       {
-        heading: "How Pension Contributions Affect the Personal Allowance",
+        heading: "How pension contributions affect the Personal Allowance",
         body: [
           "HMRC calculates the Personal Allowance taper based on 'Adjusted Net Income'. Gross pension contributions (via workplace salary sacrifice or personal SIPP contributions grossed up by 20% basic rate relief) directly reduce your adjusted net income pound-for-pound.",
           "For example, if you earn £110,000 gross and contribute £10,000 into a qualifying pension, your adjusted net income drops to exactly £100,000. You restore 100% of your £12,570 personal allowance, save £4,000 in higher-rate income tax and £2,000 in reclaimed allowance tax, plus you preserve full entitlement to funded childcare.",
@@ -86,28 +86,28 @@ const TOOLS_DATA: Record<string, ToolContent> = {
     metaTitle: "UK Mortgage Overpayment vs Stocks & Shares ISA Calculator | Flump",
     metaDescription:
       "Compare interest saved by overpaying a UK mortgage with a projected Stocks & Shares ISA balance over 5 to 25 years.",
-    title: "Mortgage Overpayment vs. Stocks & Shares ISA Calculator",
+    title: "Mortgage overpayment vs stocks and shares ISA calculator",
     subtitle:
       "A mathematical and psychological comparison: compare the interest saved by overpaying a mortgage with the possible tax-free growth of global equities inside a UK ISA.",
-    category: "Mortgages & Investing",
+    category: "Mortgages and investing",
     component: "mortgage-isa",
     guideSections: [
       {
-        heading: "The Great Debate: Paying Down Debt vs. Compounding in an ISA",
+        heading: "The great debate: paying down debt vs compounding in an ISA",
         body: [
           "Deciding whether to overpay a mortgage or invest spare monthly cash into a Stocks & Shares ISA is one of the most significant wealth decisions a UK homeowner faces.",
           "Overpaying a mortgage reduces the interest you pay, which works out like a return equal to your mortgage rate (check for early repayment charges first). For example, overpaying on a 4.5% mortgage avoids interest at 4.5%. Investing in a global index fund inside an ISA may grow by more or less than that, and gains and income inside an ISA are free of UK tax. Past performance is not a guide to the future and your capital is at risk.",
         ],
       },
       {
-        heading: "Liquidity vs. Illiquid Brick-and-Mortar Equity",
+        heading: "Liquidity vs illiquid brick-and-mortar equity",
         body: [
           "Money paid into your mortgage disappears into home equity. Unless you sell the property or remortgage, accessing that capital during an emergency or job loss can be difficult or impossible.",
           "Funds held in an ISA remain 100% liquid. Flexible ISAs also allow you to withdraw and replace cash within the same tax year without consuming your annual £20,000 ISA allowance.",
         ],
       },
       {
-        heading: "LTV Milestones and Remortgage Protection",
+        heading: "LTV milestones and remortgage protection",
         body: [
           "Overpaying can be exceptionally powerful if it moves you across key Loan-to-Value (LTV) boundaries (such as 80%, 75%, or 60% LTV) right before a fixed deal expires, qualifying you for significantly lower lender rates across your entire remaining loan balance.",
         ],
@@ -133,28 +133,28 @@ const TOOLS_DATA: Record<string, ToolContent> = {
     metaTitle: "UK Section 24 Landlord Tax Calculator (Mortgage Interest Relief) | Flump",
     metaDescription:
       "Model the exact impact of HMRC Section 24 mortgage interest relief restriction on your buy-to-let properties. Calculate phantom taxable profit, 20% basic rate credit, and effective tax liability.",
-    title: "Section 24 Landlord Mortgage Relief & Tax Calculator",
+    title: "Section 24 landlord mortgage relief and tax calculator",
     subtitle:
       "See how the Section 24 finance restriction taxes landlords on rental turnover rather than true profit, and calculate your effective tax burden under current HMRC rules.",
-    category: "Property & Buy-to-Let Tax",
+    category: "Property and buy-to-let tax",
     component: "section-24",
     guideSections: [
       {
-        heading: "Understanding HMRC Section 24 Restrictions",
+        heading: "Understanding HMRC Section 24 restrictions",
         body: [
           "Prior to Section 24 (Finance (No. 2) Act 2015), landlords could deduct 100% of their mortgage interest and financing fees from rental turnover as an allowable business expense before calculating taxable profit.",
           "Under Section 24, financing costs are no longer deductible from property income. Instead, landlords pay income tax on total rental turnover (less allowable running costs), and receive a flat 20% basic-rate tax reduction on their finance costs at the end.",
         ],
       },
       {
-        heading: "The Danger of 'Phantom Profits' for Higher-Rate Taxpayers",
+        heading: "The danger of 'phantom profits' for higher-rate taxpayers",
         body: [
           "Because mortgage interest is excluded from initial expenses, your declared taxable income increases dramatically. This frequently pushes basic-rate earners into the 40% higher-rate bracket or triggers the £100,000 Personal Allowance trap.",
           "In extreme cases where mortgage rates rise to 5% or 6%, higher-rate landlords find that tax owed to HMRC exceeds their entire net cash flow, resulting in an effective tax rate over 100% of real profits.",
         ],
       },
       {
-        heading: "Mitigation Strategies for UK Property Investors",
+        heading: "Mitigation strategies for UK property investors",
         body: [
           "1. **Pension Contributions / SIPP:** Making gross pension contributions expands your basic-rate tax band, offsetting higher-rate property tax and preserving your personal allowance.",
           "2. **Spousal Beneficial Interest (Form 17):** If your spouse or civil partner pays a lower marginal tax rate, transferring beneficial ownership of the property can shift income into a 20% basic-rate tier.",
@@ -182,21 +182,21 @@ const TOOLS_DATA: Record<string, ToolContent> = {
     metaTitle: "UK Debt Snowball vs Avalanche Calculator (Interest Saved & Exit Date) | Flump",
     metaDescription:
       "Compare Debt Avalanche and Debt Snowball payoff orders for UK credit cards, personal loans, and overdrafts.",
-    title: "UK Debt Snowball vs. Avalanche Payoff Calculator",
+    title: "UK debt snowball vs avalanche payoff calculator",
     subtitle:
       "Model how allocating spare cash into high-APR debts (Avalanche) vs smallest balances (Snowball) changes your debt-free date and total interest paid.",
-    category: "UK Debt Management",
+    category: "UK debt management",
     component: "debt-snowball",
     guideSections: [
       {
-        heading: "Avalanche vs. Snowball: How Do the UK Payoff Methods Compare?",
+        heading: "Avalanche vs snowball: how do the UK payoff methods compare?",
         body: [
           "The Debt Avalanche strategy targets the account with the highest APR first while paying minimums on the rest. On the figures you enter, it results in the least total interest paid and the shortest time to clear the debts, if you keep to the plan.",
           "The Debt Snowball strategy targets the smallest balance first regardless of interest rate. While it costs slightly more in overall interest, it delivers quick psychological wins that keep borrowers committed to their repayment plans.",
         ],
       },
       {
-        heading: "The Power of the 'Extra £50' Surplus",
+        heading: "The power of the 'extra £50' surplus",
         body: [
           "UK credit card minimum repayments are typically calculated as 1% to 2.5% of the outstanding balance plus interest. Paying only minimums keeps borrowers in compounding debt for 15 to 25 years.",
           "Adding even a fixed £50 to £100 per month above minimums collapses repayment timelines by years and saves thousands of pounds in compounding bank interest.",
@@ -219,14 +219,14 @@ const TOOLS_DATA: Record<string, ToolContent> = {
     metaTitle: "0% Balance Transfer Card Payoff & Cliff Calculator | Flump",
     metaDescription:
       "Model the monthly payment that would clear a 0% balance transfer before the promotional period ends and the card's revert rate applies.",
-    title: "0% Balance Transfer Payoff & Revert Cliff Calculator",
+    title: "0% balance transfer payoff and revert cliff calculator",
     subtitle:
       "Model the monthly repayment that clears a balance before a 0% promotional period expires and the revert rate applies.",
-    category: "UK Credit Cards",
+    category: "UK credit cards",
     component: "zero-percent-cliff",
     guideSections: [
       {
-        heading: "Understanding the UK 0% Balance Transfer Cliff",
+        heading: "Understanding the UK 0% balance transfer cliff",
         body: [
           "A 0% balance transfer credit card is one of the most effective UK borrowing tools, but banks rely on consumers failing to clear the balance before the promotional term ends.",
           "When the promotional window closes, remaining balances immediately jump to standard revert APRs, often 24.9% to 29.9% EAR, wiping out previous interest savings within months.",
@@ -245,14 +245,14 @@ const TOOLS_DATA: Record<string, ToolContent> = {
     metaTitle: "UK Arranged Overdraft Cost & EAR Calculator (~39.9% Rate) | Flump",
     metaDescription:
       "Living in your bank overdraft? Calculate the true annual pound cost of ~39.9% EAR interest and find out how much you save by clearing it.",
-    title: "UK Arranged Overdraft Cost & Payoff Calculator",
+    title: "UK arranged overdraft cost and payoff calculator",
     subtitle:
       "Calculate the annual pound cost of staying in an arranged overdraft charged at UK banks' standard 35%–39.9% EAR.",
-    category: "UK Banking & Overdrafts",
+    category: "UK banking and overdrafts",
     component: "overdraft-cost",
     guideSections: [
       {
-        heading: "The True Cost of a 39.9% EAR Bank Overdraft",
+        heading: "The true cost of a 39.9% EAR bank overdraft",
         body: [
           "Most major UK banks now charge a single interest rate on arranged overdrafts, commonly around 39.9% EAR. Check your own bank's rate.",
           "Living continuously in a £1,000 overdraft costs approximately £399 per year in interest.",
@@ -271,17 +271,17 @@ const TOOLS_DATA: Record<string, ToolContent> = {
     metaTitle: "UK Student Loan Overpayment Calculator (Plan 1, 2, 4 & 5) | Flump",
     metaDescription:
       "See whether a UK student loan balance is projected to be repaid or written off first, for Plan 1, Plan 2, Plan 4, or Plan 5.",
-    title: "UK Student Loan Overpayment Calculator (Graduate Tax)",
+    title: "UK student loan overpayment calculator (graduate tax)",
     subtitle:
       "Model whether the projected repayments clear a student loan balance before statutory cancellation.",
-    category: "UK Student Finance",
+    category: "UK student finance",
     component: "student-loan",
     guideSections: [
       {
-        heading: "Why UK Student Loans Function Like a Graduate Tax",
+        heading: "Why UK student loans function like a graduate tax",
         body: [
           "UK student loans do not behave like commercial loans. Repayments are strictly linked to income (9% above statutory thresholds) regardless of your balance, and uncollected debt is completely wiped after 25 to 40 years.",
-          "For the vast majority of Plan 2 and Plan 5 graduates, the interest rate does not determine total lifetime repayments—only your career salary trajectory does.",
+          "For the vast majority of Plan 2 and Plan 5 graduates, the interest rate does not determine total lifetime repayments – only your career salary trajectory does.",
         ],
       },
     ],
@@ -334,14 +334,16 @@ export const ToolDetailPage: FC = () => {
         enter is saved.
       </SampleDataNote>
 
-      {/* Interactive Tool Widget */}
-      {tool.component === "tax-trap" && <TaxTrapCalculatorTool />}
-      {tool.component === "mortgage-isa" && <MortgageVsIsaTool />}
-      {tool.component === "section-24" && <Section24Tool />}
-      {tool.component === "debt-snowball" && <DebtSnowballVsAvalancheTool />}
-      {tool.component === "zero-percent-cliff" && <ZeroPercentCliffTool />}
-      {tool.component === "overdraft-cost" && <OverdraftCostTool />}
-      {tool.component === "student-loan" && <StudentLoanOverpayTool />}
+      {/* The calculator's outputs are worked from example figures, so the region points at the note. */}
+      <section aria-describedby="tool-sample-data-label" aria-label="Calculator, illustration">
+        {tool.component === "tax-trap" && <TaxTrapCalculatorTool />}
+        {tool.component === "mortgage-isa" && <MortgageVsIsaTool />}
+        {tool.component === "section-24" && <Section24Tool />}
+        {tool.component === "debt-snowball" && <DebtSnowballVsAvalancheTool />}
+        {tool.component === "zero-percent-cliff" && <ZeroPercentCliffTool />}
+        {tool.component === "overdraft-cost" && <OverdraftCostTool />}
+        {tool.component === "student-loan" && <StudentLoanOverpayTool />}
+      </section>
 
       <ToolGuide faqs={tool.faqs} guideSections={tool.guideSections} />
     </SignedOutPage>
