@@ -62,15 +62,6 @@ export const ADVICE_ALLOWLIST: AdviceAllowEntry[] = [
     owner: "E17-N21",
   },
 
-  {
-    file: "apps/web/app/routes/tools.$slug.tsx",
-    patternId: "recommend",
-    kind: "permanent",
-    reason:
-      "FAQ disclaimer: 'This is general information, not a recommendation for your situation.'",
-    owner: "E29-T4",
-  },
-
   // Temporary: product setting that E17-N18 rewrites.
   {
     file: "apps/web/app/features/ai-connections/components/McpConnectionCard/McpConnectionCard.tsx",

@@ -453,7 +453,7 @@ export const PensionContainer: FC = () => {
               <strong style={{ fontVariantNumeric: "tabular-nums" }}>
                 {formatCurrency(taxTrap.contributionRequiredToEscapeGbp)}
               </strong>{" "}
-              would bring it to £100,000 in this estimate.
+              would bring adjusted net income to £100,000 in this estimate.
             </div>
             <FLPButton
               size="sm"

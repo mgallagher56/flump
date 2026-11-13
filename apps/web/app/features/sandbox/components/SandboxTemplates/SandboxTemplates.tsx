@@ -137,7 +137,7 @@ export const Stage1View: FC = () => {
 export const Stage2View: FC = () => (
   <div className={sandboxLayoutRecipe({ stage: 2 })}>
     <PageHeader
-      subtitle="Model liability repayments redirected into long-term wealth vehicles."
+      subtitle="Model former debt repayments redirected into a Stocks & Shares ISA."
       title="Crossover scenario"
     />
     <div style={{ marginBottom: "24px" }}>

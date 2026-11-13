@@ -125,11 +125,6 @@ export const PayoffStrategyControls: FC<PayoffStrategyControlsProps> = ({
           <span className={css({ fontSize: "11px", color: "text.muted", textAlign: "left" })}>
             Pays the smallest balance first.
           </span>
-          <div style={{ marginTop: "4px" }}>
-            <StatusBadge size="sm" variant="info">
-              Psychological Wins
-            </StatusBadge>
-          </div>
         </button>
       </div>
     </div>

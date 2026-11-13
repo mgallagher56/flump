@@ -268,15 +268,15 @@ const TOOLS_DATA: Record<string, ToolContent> = {
     faqs: [
       {
         q: "Is an arranged overdraft considered high-priority debt?",
-        a: "It is often one of the most expensive debts people hold. At an EAR of around 40%, paying off an overdraft avoids interest at that rate, which is usually higher than savings rates. This is general information, not a recommendation for your situation.",
+        a: "It is often one of the most expensive debts people hold. At an EAR of around 40%, paying off an overdraft avoids interest at that rate, which is usually higher than savings rates.",
       },
     ],
   },
   "uk-student-loan-overpay-or-invest-calculator": {
     slug: "uk-student-loan-overpay-or-invest-calculator",
-    metaTitle: "UK Student Loan: Should You Overpay or Invest? (Plan 2 & 5) | Flump",
+    metaTitle: "UK Student Loan Overpayment Calculator (Plan 1, 2, 4 & 5) | Flump",
     metaDescription:
-      "See how a UK student loan balance (Plan 1, Plan 2, Plan 4, or Plan 5) develops with and without voluntary overpayments.",
+      "See whether a UK student loan balance is projected to be repaid or written off first, for Plan 1, Plan 2, Plan 4, or Plan 5.",
     title: "UK Student Loan: Overpay or Invest? (Graduate Tax Calculator)",
     subtitle:
       "Evaluate whether voluntary student loan overpayments save you money or act as a needless donation to HM Treasury before statutory cancellation.",
