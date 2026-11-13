@@ -13,6 +13,9 @@ export const SIGNUP_MODE: SignupMode = "invite-only";
 
 export const SUPPORT_EMAIL = BUSINESS_DETAILS.supportEmail.value;
 
+/** Becomes privacy@ when that mailbox exists (DECISIONS round 3 item 11). Support until then. */
+export const PRIVACY_EMAIL = SUPPORT_EMAIL;
+
 /** Page and anchor where a visitor asks for a beta invite. */
 export const BETA_INVITE_PATH = "/contact#beta";
 

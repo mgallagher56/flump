@@ -18,7 +18,14 @@ describe("ContactPage", () => {
   it("renders the page heading and every section", () => {
     renderPage();
     expect(screen.getByRole("heading", { level: 1, name: "Contact Flump" })).toBeDefined();
-    for (const name of ["Support", "Feedback", "Request a beta invite", "Security", "Complaints"]) {
+    for (const name of [
+      "Support",
+      "Feedback",
+      "Request a beta invite",
+      "Security",
+      "Privacy and your data",
+      "Complaints",
+    ]) {
       expect(screen.getByRole("heading", { level: 2, name })).toBeDefined();
     }
   });
