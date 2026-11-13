@@ -1,4 +1,5 @@
 import type { TaxTrapAnalysis, UkTaxRegion } from "@flump/finance-engine";
+import { css } from "@repo/ui/styled-system/css";
 
 /**
  * Tax trap copy for every surface. The two rates come from the engine's named fields
@@ -32,6 +33,13 @@ export const REGION_ASSUMPTION_LABEL = "Assuming England, Wales and Northern Ire
 
 /** Where a user sets their tax region after onboarding (profile settings, E23 D-4-C). */
 export const REGION_SETTINGS_PATH = "/app/profile";
+
+/** The "Set your region" link after the assumption label: primary colour and a visible focus ring. */
+export const regionLinkStyle = css({
+  color: "primary",
+  textDecoration: "underline",
+  _focusVisible: { outline: "2px solid", outlineColor: "border.focusRing", outlineOffset: "2px" },
+});
 
 /**
  * The region the user told us, or null when England, Wales and NI is only the labelled

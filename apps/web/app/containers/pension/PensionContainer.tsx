@@ -35,6 +35,7 @@ import {
   getTaxTrapCopy,
   REGION_ASSUMPTION_LABEL,
   REGION_SETTINGS_PATH,
+  regionLinkStyle,
 } from "~/utils/taxTrapCopy";
 import { currentMonth, currentYear } from "~/utils/utils";
 
@@ -447,7 +448,7 @@ export const PensionContainer: FC = () => {
           {!knownRegion && (
             <FLPText fontSize="xs" color="text.muted">
               {REGION_ASSUMPTION_LABEL}{" "}
-              <Link to={REGION_SETTINGS_PATH} className={css({ textDecoration: "underline" })}>
+              <Link to={REGION_SETTINGS_PATH} className={regionLinkStyle}>
                 Set your region
               </Link>
             </FLPText>
