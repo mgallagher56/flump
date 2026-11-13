@@ -79,6 +79,24 @@ describe("validateReceipt", () => {
     ).toThrow(BadRequestException);
   });
 
+  it("rejects a trailing newline in the base64 and a charset parameter", () => {
+    expect(() => validateReceipt({ receiptData: `${dataUrl("application/pdf", PDF)}\n` })).toThrow(
+      BadRequestException,
+    );
+    expect(() =>
+      validateReceipt({
+        receiptData: `data:application/pdf;charset=utf-8;base64,${PDF.toString("base64")}`,
+      }),
+    ).toThrow(BadRequestException);
+  });
+
+  it("accepts an uppercase MIME and returns it lowercased", () => {
+    expect(validateReceipt({ receiptData: dataUrl("APPLICATION/PDF", PDF) })).toBe(
+      "application/pdf",
+    );
+    expect(validateReceipt({ receiptData: null })).toBeNull();
+  });
+
   it("enforces the 5 MB decoded limit", () => {
     const six = Buffer.concat([PDF, Buffer.alloc(6 * 1024 * 1024)]);
     expect(() => validateReceipt({ receiptData: dataUrl("application/pdf", six) })).toThrow(/5 MB/);
@@ -97,12 +115,26 @@ describe("validateReceiptFilename", () => {
   it("accepts ordinary names", () => {
     expect(() => validateReceiptFilename("Receipt 2025 (1).pdf")).not.toThrow();
   });
-  it.each(["../x.pdf", "a/b.pdf", "a\\b.pdf", "a\u0000b.pdf", "a\nb.pdf", "", "x".repeat(256)])(
-    "rejects %j",
-    (name) => {
-      expect(() => validateReceiptFilename(name)).toThrow(BadRequestException);
-    },
-  );
+  it.each([
+    "../x.pdf",
+    "a/b.pdf",
+    "a\\b.pdf",
+    "a\u0000b.pdf",
+    "a\nb.pdf",
+    "a\u202eb.exe",
+    "a\u200bb.pdf",
+    "a\u0085b.pdf",
+    "\ufeffa.pdf",
+    "..",
+    ". .",
+    "",
+    "x".repeat(256),
+  ])("rejects %j", (name) => {
+    expect(() => validateReceiptFilename(name)).toThrow(BadRequestException);
+  });
+  it("allows dots inside a name", () => {
+    expect(() => validateReceiptFilename("Receipt..pdf")).not.toThrow();
+  });
   it("accepts a 255 character name", () => {
     expect(() => validateReceiptFilename("x".repeat(255))).not.toThrow();
   });

@@ -27,10 +27,20 @@ const isAllowedMime = (mime: string): mime is ReceiptMimeType =>
 export const sniffReceiptMime = (bytes: Buffer): ReceiptMimeType | null =>
   RECEIPT_MIME_TYPES.find((mime) => SNIFFERS[mime](bytes)) ?? null;
 
-const hasControlChar = (value: string): boolean => {
+// C0/C1 controls, zero-width and bidi formatting characters, BOM.
+const FORBIDDEN_RANGES: [number, number][] = [
+  [0x0000, 0x001f],
+  [0x007f, 0x009f],
+  [0x200b, 0x200f],
+  [0x202a, 0x202e],
+  [0x2066, 0x2069],
+  [0xfeff, 0xfeff],
+];
+
+const hasForbiddenNameChar = (value: string): boolean => {
   for (let i = 0; i < value.length; i++) {
     const code = value.charCodeAt(i);
-    if (code <= 0x1f || code === 0x7f) return true;
+    if (FORBIDDEN_RANGES.some(([lo, hi]) => code >= lo && code <= hi)) return true;
   }
   return false;
 };
@@ -40,25 +50,28 @@ export const validateReceiptFilename = (name: unknown): void => {
   if (name.length === 0 || name.length > RECEIPT_FILENAME_MAX) {
     throw new BadRequestException("Invalid receipt filename length");
   }
-  if (/[/\\]/.test(name) || name.includes("..") || hasControlChar(name)) {
+  // Separators are rejected, so "Receipt..pdf" is harmless; names made only of
+  // dots and spaces ("..", ". .") are not real filenames.
+  if (/[/\\]/.test(name) || hasForbiddenNameChar(name) || /^[. ]+$/.test(name)) {
     throw new BadRequestException("Invalid receipt filename");
   }
 };
 
 /**
  * Validates the receipt fields of a tax record write. Null or absent data is
- * allowed (clearing a receipt). Throws 400 on any failure.
+ * allowed (clearing a receipt). Throws 400 on any failure. Returns the validated,
+ * lowercased MIME type when data is present, otherwise null.
  */
 export const validateReceipt = (fields: {
   receiptFilename?: unknown;
   receiptMimeType?: unknown;
   receiptData?: unknown;
-}): void => {
+}): ReceiptMimeType | null => {
   const { receiptFilename, receiptMimeType, receiptData } = fields;
   if (receiptFilename !== undefined && receiptFilename !== null) {
     validateReceiptFilename(receiptFilename);
   }
-  if (receiptData === undefined || receiptData === null) return;
+  if (receiptData === undefined || receiptData === null) return null;
   if (typeof receiptData !== "string") throw new BadRequestException("Invalid receipt data");
 
   const match = DATA_URL.exec(receiptData);
@@ -78,4 +91,5 @@ export const validateReceipt = (fields: {
   if (sniffReceiptMime(bytes) !== declared) {
     throw new BadRequestException("Receipt content does not match its declared type");
   }
+  return declared;
 };
