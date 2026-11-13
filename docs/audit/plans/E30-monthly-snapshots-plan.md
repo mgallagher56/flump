@@ -42,6 +42,8 @@ Recorded here as decided (opus/fable subagent recommendations, not the owner). I
 | D15 | **Existing rows are backfilled as `source=backfill`**, `as_of_date` = last day of the month. Duplicates keep the highest `id` (the latest write). | Provenance of old rows is unknown; "latest write wins" is the only consistent rule. |
 | D16 | **A check-in for the current London month also sets each listed account's current `balance`; past months never do.** A manual value for the month stops sync overwriting the account balance as well as the snapshot row. | `accounts.balance` is "now"; leaving it behind a check-in would show two figures for one account (E23 D10 class of bug). |
 | D17 | **`PUT /snapshots/:month` is a new controller (`SnapshotsController`), not part of `FinanceController`.** It carries its own authz spec (`authz.snapshots.spec.ts`) and matrix row. | The finance controller has a legacy positional constructor; a separate controller avoids touching it (and E23's files). |
+| D18 | **Liability values (Mortgage, Credit Card, Loan, Overdraft) are stored negative on write, as connected sync does, whatever sign the client sends.** Account ids are lower-cased on write. | One sign convention per row; mixed signs made per-account deltas flip. |
+| D19 | **Only `manual` is sticky against sync; `onboarding` rows are refreshed by a later sync in the same month.** Known residual: sync's read-then-write is not atomic, so a manual PUT landing between its read and save can be overwritten; PR3 should make the sync write conditional (`ON CONFLICT ... WHERE source <> 'manual'`). | Simple rule now; the race window is small and self-correcting on the next check-in. |
 
 ## 4. MVP and v2 cut
 

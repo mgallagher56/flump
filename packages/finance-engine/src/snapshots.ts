@@ -35,6 +35,12 @@ export interface NetWorthPoint {
   totalAssets: number;
   totalLiabilities: number;
   accounts: SnapshotAccountValue[];
+  /**
+   * Accounts whose first recorded value is this month. Their whole value enters the series here,
+   * so a change in this month is partly a new account, not growth; callers wording a delta
+   * should account for it.
+   */
+  addedAccountIds: string[];
   /** No account has a recorded row this month: every figure is carried forward. */
   allCarried: boolean;
 }
@@ -125,9 +131,11 @@ export function selectNetWorthSeries(
     let liabilities = 0;
     let anyRecorded = false;
     const values: SnapshotAccountValue[] = [];
+    const added: string[] = [];
     for (const id of ids) {
       const recorded = byAccount.get(id)?.get(idx);
       if (recorded !== undefined) {
+        if (!known.has(id)) added.push(id);
         known.set(id, recorded);
         anyRecorded = true;
       }
@@ -148,6 +156,7 @@ export function selectNetWorthSeries(
       totalAssets: round2(assets),
       totalLiabilities: round2(liabilities),
       accounts: values,
+      addedAccountIds: idx === first ? [] : added,
       allCarried: !anyRecorded,
     });
   }

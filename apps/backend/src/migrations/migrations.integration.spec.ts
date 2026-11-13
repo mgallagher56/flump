@@ -547,6 +547,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
       await legacyRow(b, 2026, 2, 300);
       await legacyRow("00000000-0000-0000-0000-000000000000", 2026, 2, 999); // orphan
       await legacyRow(a, 2026, 14, 1); // impossible month
+      await legacyRow(a, 2999, 1, 1); // future month
 
       await ds.runMigrations();
 

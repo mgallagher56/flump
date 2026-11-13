@@ -591,6 +591,76 @@
         ]
       }
     },
+    "/v1/snapshots/{month}": {
+      "put": {
+        "operationId": "snapshots.upsert",
+        "tags": ["snapshots"],
+        "responses": {
+          "200": {
+            "description": "Success. Response schemas are not yet part of the contract."
+          },
+          "400": {
+            "description": "Request failed validation."
+          },
+          "401": {
+            "description": "Missing or invalid credentials."
+          }
+        },
+        "parameters": [
+          {
+            "name": "month",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{4}-(0[1-9]|1[0-2])$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "values": {
+                    "maxItems": 200,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "accountId": {
+                          "type": "string",
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                        },
+                        "value": {
+                          "type": "number"
+                        },
+                        "asOfDate": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["accountId", "value"]
+                    }
+                  },
+                  "complete": {
+                    "type": "boolean"
+                  }
+                },
+                "required": ["values"]
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
     "/v1/transactions": {
       "get": {
         "operationId": "transactions.list",

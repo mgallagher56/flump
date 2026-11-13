@@ -129,6 +129,35 @@ describe.skipIf(dbMode === "skip")("authz: snapshots controller (real Postgres)"
     expect(res.status).toBe(404);
   });
 
+  it("treats an upper-case account id as the same account (one row, lower-case key)", async () => {
+    const res = await put(PAST, h.tokens.a, {
+      values: [{ accountId: accountA.toUpperCase(), value: 11 }],
+    });
+    expect(res.status).toBe(200);
+    const dup = await put(PAST, h.tokens.a, {
+      values: [
+        { accountId: accountA.toUpperCase(), value: 1 },
+        { accountId: accountA, value: 2 },
+      ],
+    });
+    expect(dup.status).toBe(400);
+    const rows = await rowsFor(accountA);
+    expect(rows).toHaveLength(1);
+    expect(Number(rows[0]?.value)).toBe(11);
+  });
+
+  it("stores liabilities negative, like connected sync, whatever sign was sent", async () => {
+    const card = await h.call("post", "/accounts", h.tokens.a, {
+      name: "Card",
+      type: "Credit Card",
+      balance: -300,
+    });
+    const id = card.body.id as string;
+    await put(THIS_MONTH, h.tokens.a, { values: [{ accountId: id, value: 450 }] });
+    expect(Number((await rowsFor(id))[0]?.value)).toBe(-450);
+    expect(Number((await accounts().findOneBy({ id }))?.balance)).toBe(-450);
+  });
+
   it("partial batch leaves unlisted accounts alone", async () => {
     await put(PAST, h.tokens.a, { values: [{ accountId: accountA, value: 10 }] });
     expect(await rowsFor(accountA2)).toHaveLength(0);
