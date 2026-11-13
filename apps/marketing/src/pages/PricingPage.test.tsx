@@ -19,8 +19,8 @@ describe("PricingPage", () => {
     const href = screen
       .getAllByText("Get started")
       .map((el) => el.closest("a")?.getAttribute("href"))
-      .find((h) => h?.endsWith("/signUp"));
-    expect(href?.endsWith("/signUp")).toBe(true);
+      .find((h) => h?.endsWith("/signup"));
+    expect(href?.endsWith("/signup")).toBe(true);
     expect(href).not.toContain("plan=");
     expect(screen.getByText("Pricing coming soon").closest("a")).toBeNull();
     expect((screen.getByText("Pricing coming soon") as HTMLButtonElement).disabled).toBe(true);

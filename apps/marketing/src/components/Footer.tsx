@@ -130,7 +130,7 @@ export const Footer: FC = () => {
             <a href={`${appUrl}/login`} className={linkStyle}>
               Sign in to web app
             </a>
-            <a href={`${appUrl}/signUp`} className={linkStyle}>
+            <a href={`${appUrl}/signup`} className={linkStyle}>
               Create an account
             </a>
           </div>

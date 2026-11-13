@@ -39,7 +39,7 @@ export const ToolPage: FC = () => {
 
   const handleContinue = () => {
     if (typeof window !== "undefined") {
-      window.location.href = `${appUrl}/signUp`;
+      window.location.href = `${appUrl}/signup`;
     }
   };
 

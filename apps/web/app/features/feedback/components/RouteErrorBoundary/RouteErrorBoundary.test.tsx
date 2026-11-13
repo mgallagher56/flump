@@ -74,6 +74,13 @@ describe("RouteErrorBoundary", () => {
     expect(screen.getByRole("link", { name: "Go to dashboard" }).getAttribute("href")).toBe("/");
   });
 
+  it("renders not-found copy for a bare 404 response from the catch-all route", async () => {
+    renderWithLoader(() => {
+      throw new Response("Not Found", { status: 404, statusText: "Not Found" });
+    });
+    expect(await screen.findByRole("heading", { name: "We couldn't find that" })).toBeDefined();
+  });
+
   it("links back to accounts on the account detail route", async () => {
     renderWithLoader(() => {
       throw data({ kind: "not-found" }, { status: 404 });

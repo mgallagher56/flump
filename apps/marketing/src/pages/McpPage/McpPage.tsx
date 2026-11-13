@@ -301,7 +301,7 @@ export const McpPage: FC = () => {
                   Open your profile in the app →
                 </Button>
               </a>
-              <a href={`${appUrl}/signUp`} className={linkReset()}>
+              <a href={`${appUrl}/signup`} className={linkReset()}>
                 <Button size="lg" variant="ghost">
                   Create an account
                 </Button>

@@ -249,7 +249,7 @@ export const Header: FC = () => {
                     <span className={css({ display: { base: "inline", sm: "none" } })}>Log in</span>
                   </Button>
                 </a>
-                <a href={`${appUrl}/signUp`} style={{ textDecoration: "none" }}>
+                <a href={`${appUrl}/signup`} style={{ textDecoration: "none" }}>
                   <Button
                     variant="primary"
                     size="sm"
@@ -375,7 +375,7 @@ export const Header: FC = () => {
             ) : (
               <>
                 <a
-                  href={`${appUrl}/signUp`}
+                  href={`${appUrl}/signup`}
                   style={{ textDecoration: "none", width: "100%" }}
                   onClick={() => setMobileMenuOpen(false)}
                 >

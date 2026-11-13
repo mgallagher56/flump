@@ -155,7 +155,7 @@ export default function SandboxRoute() {
     writeOnboardingSeedCookie(seed);
     persistOnboardingSeed(seed as any);
 
-    navigate("/signUp");
+    navigate("/signup");
   };
 
   return (

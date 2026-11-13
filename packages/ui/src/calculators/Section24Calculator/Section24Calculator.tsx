@@ -59,7 +59,7 @@ export const Section24Calculator: FC<Section24CalculatorProps> = ({
     if (onSaveAndContinue) {
       onSaveAndContinue(payload);
     } else if (typeof window !== "undefined") {
-      window.location.href = "/signUp";
+      window.location.href = "/signup";
     }
   };
 

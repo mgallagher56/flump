@@ -44,7 +44,7 @@ export const OverdraftCostCalculator: FC<OverdraftCostCalculatorProps> = ({
     if (onSaveAndContinue) {
       onSaveAndContinue(payload);
     } else if (typeof window !== "undefined") {
-      window.location.href = "/signUp";
+      window.location.href = "/signup";
     }
   };
 

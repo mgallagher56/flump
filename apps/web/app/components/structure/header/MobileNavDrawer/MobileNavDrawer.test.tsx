@@ -124,7 +124,7 @@ describe("<MobileNavDrawer /> sandbox", () => {
 
   test("puts a Sign up link first and keeps disabled items inside the focus trap", () => {
     customRender(<MobileNavDrawer sandbox isOpen={true} user={null} onClose={vi.fn()} />);
-    const signUp = screen.getByRole("link", { name: /signUp/ });
+    const signUp = screen.getByRole("link", { name: /signup/ });
     expect(signUp.getAttribute("href")).toBe("/signup");
     const dialog = screen.getByTestId("mobile-nav-drawer");
     const focusable = Array.from(

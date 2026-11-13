@@ -28,7 +28,7 @@ describe("MortgageVsIsaTool", () => {
     expect(screen.getAllByDisplayValue("500").length).toBeGreaterThan(0);
   });
 
-  it("persists seed and redirects to /signUp on CTA", () => {
+  it("persists seed and redirects to /signup on CTA", () => {
     const setItemSpy = vi.spyOn(Storage.prototype, "setItem");
     render(<MortgageVsIsaTool />);
 
@@ -36,6 +36,6 @@ describe("MortgageVsIsaTool", () => {
     fireEvent.click(ctaButton);
 
     expect(setItemSpy).toHaveBeenCalledWith("flump_onboarding_seed", expect.any(String));
-    expect(mockNavigate).toHaveBeenCalledWith("/signUp");
+    expect(mockNavigate).toHaveBeenCalledWith("/signup");
   });
 });

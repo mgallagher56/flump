@@ -22,9 +22,14 @@ describe("$feature._index redirect route", () => {
     }
   });
 
-  it("redirects unknown feature to root /", async () => {
-    const response = await loader({ params: { feature: "unknown-xyz" } } as any);
-    expect(response.status).toBe(302);
-    expect(response.headers.get("Location")).toBe("/");
+  it("throws a 404 for an unknown top-level URL instead of redirecting to login", async () => {
+    let thrown: unknown;
+    try {
+      await loader({ params: { feature: "unknown-xyz" } } as any);
+    } catch (error) {
+      thrown = error;
+    }
+    expect(thrown).toBeInstanceOf(Response);
+    expect((thrown as Response).status).toBe(404);
   });
 });

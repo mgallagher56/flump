@@ -98,14 +98,14 @@ describe("SandboxRoute", () => {
     expect(screen.getByTestId("net-worth").textContent).toBe("441500");
   });
 
-  it("clicking Save my numbers commits seed and navigates to /signUp", () => {
+  it("clicking Save my numbers commits seed and navigates to /signup", () => {
     mockSearchParams = new URLSearchParams();
     render(<SandboxRoute />);
 
     const saveBtn = screen.getByRole("button", { name: /Save my numbers and create account/i });
     fireEvent.click(saveBtn);
 
-    expect(mockNavigate).toHaveBeenCalledWith("/signUp");
+    expect(mockNavigate).toHaveBeenCalledWith("/signup");
   });
 
   it("save seed carries modules and stage but no salary", () => {
