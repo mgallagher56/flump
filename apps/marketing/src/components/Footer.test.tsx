@@ -32,6 +32,14 @@ describe("Footer", () => {
     expect(screen.queryAllByRole("heading", { level: 4 })).toHaveLength(0);
   });
 
+  it("links to the contact page and the shared sign-up CTA", () => {
+    renderFooter();
+    expect(screen.getByRole("link", { name: "Contact" }).getAttribute("href")).toBe("/contact");
+    expect(screen.getByRole("link", { name: "Request an invite" }).getAttribute("href")).toBe(
+      "/contact#beta",
+    );
+  });
+
   it("links to the security page", () => {
     renderFooter();
     expect(screen.getByRole("link", { name: "Security and privacy" }).getAttribute("href")).toBe(

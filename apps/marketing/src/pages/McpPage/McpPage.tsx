@@ -5,6 +5,7 @@ import { FiCpu, FiEyeOff, FiLock, FiRefreshCw, FiShield, FiTerminal } from "reac
 import { Footer } from "../../components/Footer";
 import { Header } from "../../components/Header";
 import { PageMeta } from "../../components/PageMeta";
+import { signupCta } from "../../utils/site";
 import { getAppUrl } from "../../utils/url";
 import {
   cardBody,
@@ -48,25 +49,25 @@ const MCP_TOOLS: ToolCatalogEntry[] = [
     name: "simulate_debt_payoff",
     description:
       "Compares Avalanche (highest APR) vs Snowball (lowest balance) payoff schedules. Flags Promotional expiry alerts and projects 5-year post-debt compounding.",
-    samplePrompt: "Which debt should I clear first to save the most interest?",
+    samplePrompt: "What is the total interest under avalanche and under snowball for my debts?",
   },
   {
     name: "simulate_uk_tax_and_pension_sacrifice",
     description:
-      "Calculates net take-home pay, NI savings, £100k–£125k tax trap escape, and Gift Aid tax reclamations.",
-    samplePrompt: "How much bonus should I sacrifice to reclaim my Personal Allowance?",
+      "Calculates net take-home pay, the National Insurance effect of salary sacrifice, the £100k–£125k Personal Allowance taper, and Gift Aid tax relief.",
+    samplePrompt: "What is my adjusted net income at a £10,000 pension contribution?",
   },
   {
     name: "compare_mortgage_overpay_vs_isa",
     description:
-      "Compares paying down a fixed mortgage vs investing in a Stocks and Shares ISA, factoring in LTV bracket unlocks (85%, 80%, 75%, 60%) before fix expiry.",
-    samplePrompt: "Will overpaying £300/mo unlock a better mortgage rate tier next year?",
+      "Compares paying down a fixed mortgage vs investing in a Stocks and Shares ISA, showing the LTV brackets (85%, 80%, 75%, 60%) reached before fix expiry.",
+    samplePrompt: "What is my LTV at fix expiry if I overpay £300 a month?",
   },
   {
     name: "calculate_self_assessment_and_section24",
     description:
       "Calculates landlord Section 24 20% finance cost reducers and computes 31 January and 31 July Payments on Account (POA) reserves for Self Assessment.",
-    samplePrompt: "What should my monthly tax pot reserve be for buy-to-let rent?",
+    samplePrompt: "What are my Payments on Account for buy-to-let rent?",
   },
   {
     name: "project_wealth_scenario",
@@ -83,7 +84,7 @@ const MCP_TOOLS: ToolCatalogEntry[] = [
   {
     name: "evaluate_uk_student_loan",
     description:
-      "Simulates UK Student Loan (Plans 1, 2, 4, 5, and Postgraduate) write-off vs voluntary overpayment mathematics against ISA opportunity cost.",
+      "Simulates UK Student Loan (Plans 1, 2, 4, 5, and Postgraduate) write-off against voluntary overpayment, alongside an ISA growth comparison.",
     samplePrompt: "Will my Plan 2 student loan be written off before I repay it in full?",
   },
   {
@@ -96,6 +97,7 @@ const MCP_TOOLS: ToolCatalogEntry[] = [
 
 export const McpPage: FC = () => {
   const appUrl = getAppUrl();
+  const cta = signupCta();
 
   return (
     <div className={pageShell()} id="mcp-marketing-page" data-testid="mcp-marketing-page">
@@ -298,9 +300,9 @@ export const McpPage: FC = () => {
                   Open your profile in the app →
                 </Button>
               </a>
-              <a href={`${appUrl}/signup`} className={linkReset()}>
+              <a href={cta.href} className={linkReset()}>
                 <Button size="lg" variant="ghost">
-                  Create an account
+                  {cta.label}
                 </Button>
               </a>
             </div>

@@ -31,6 +31,10 @@ const BANNED: Array<[RegExp, string]> = [
   [/\bFCA\b/, "B"],
   [/hallucinat/i, "E"],
   [/\bnpx\b/, "E"],
+  [
+    /escapedTaxTrap|optimalSacrifice|reclaim your|tax trap escape/i,
+    "E29-T4 (R2 advice-shaped copy)",
+  ],
   [/No credit card/i, "E"],
   [
     /safe harbou?r|we will not (take|pursue) legal/i,
@@ -55,13 +59,34 @@ describe("claims guard", () => {
 });
 
 /**
+ * Sign-up CTA guard (E24-T3). The web app sign-up path appears only in utils/site.ts, so no CTA
+ * can link to a sign-up that the invite-only beta refuses.
+ */
+describe("sign-up CTA guard", () => {
+  it("keeps the /signup path inside utils/site.ts", () => {
+    const hits = files(join(__dirname))
+      .filter((f) => !f.endsWith(join("utils", "site.ts")))
+      .filter((f) => /\/sign-?up\b/i.test(readFileSync(f, "utf8")))
+      .map((f) => f.slice(__dirname.length + 1));
+    expect(hits).toEqual([]);
+  });
+});
+
+describe("contact page guard (E7 S9)", () => {
+  const text = readFileSync(join(__dirname, "pages/ContactPage/ContactPage.tsx"), "utf8");
+  it("makes no response-time promise", () => {
+    expect(text).not.toMatch(
+      /business days?|within \d+|24 hours|48 hours|same day|quickly|promptly/i,
+    );
+  });
+});
+
+/**
  * Advice-language ratchet (E29-T3). Rows map to advice boundary rule ids (R1 to R8,
  * docs/compliance/advice-boundary-policy.md) instead of E7 register rows. A new hit fails, and so
  * does a stale entry below, so the list only shrinks. Rewrites are E29-T4.
  */
-const ADVICE_ALLOWLIST: Array<{ file: string; patternId: string; owner: string }> = [
-  { file: "pages/ToolsIndexPage.tsx", patternId: "optimal", owner: "E29-T4" },
-];
+const ADVICE_ALLOWLIST: Array<{ file: string; patternId: string; owner: string }> = [];
 
 describe("advice-language guard", () => {
   const found = new Set<string>();

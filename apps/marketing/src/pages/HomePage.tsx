@@ -13,16 +13,18 @@ import { InteractiveFinancialTeaser } from "../components/InteractiveFinancialTe
 import { McpSpotlightSection } from "../components/McpSpotlightSection";
 import { PageMeta } from "../components/PageMeta";
 import { SecurityPrivacySection } from "../components/SecurityPrivacySection";
+import { signupCta } from "../utils/site";
 import { getAppUrl } from "../utils/url";
 
 export const HomePage: FC = () => {
   const appUrl = getAppUrl();
+  const cta = signupCta();
 
   return (
     <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
       <PageMeta
         title="Flump | UK wealth, tax planning and net worth"
-        description="Get your complete UK financial picture in 60 seconds. Know your net worth, safe to spend, emergency runway, and tax savings – built specifically for UK rules."
+        description="Get your complete UK financial picture in 60 seconds. Know your net worth, safe to spend, emergency runway, and tax – built specifically for UK rules."
       />
 
       <Header />
@@ -105,7 +107,7 @@ export const HomePage: FC = () => {
             </p>
 
             <div className={flex({ gap: "4", flexWrap: "wrap", justify: "center" })}>
-              <a href={`${appUrl}/signup`} style={{ textDecoration: "none" }}>
+              <a href={cta.href} style={{ textDecoration: "none" }}>
                 <Button
                   size="lg"
                   variant="primary"
@@ -117,7 +119,7 @@ export const HomePage: FC = () => {
                     boxShadow: "0 10px 28px -4px rgba(99, 102, 241, 0.45)",
                   }}
                 >
-                  Get your free baseline →
+                  {cta.label} →
                 </Button>
               </a>
               <a
@@ -201,9 +203,9 @@ export const HomePage: FC = () => {
               Start with your 6-number baseline. No bank login needed.
             </p>
             <div className={flex({ gap: "4", justify: "center", flexWrap: "wrap" })}>
-              <a href={`${appUrl}/signup`} style={{ textDecoration: "none" }}>
+              <a href={cta.href} style={{ textDecoration: "none" }}>
                 <Button size="lg" variant="primary">
-                  Start your free baseline →
+                  {cta.label} →
                 </Button>
               </a>
               <Link to="/tools" style={{ textDecoration: "none" }}>

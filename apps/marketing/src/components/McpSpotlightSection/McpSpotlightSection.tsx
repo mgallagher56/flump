@@ -118,7 +118,8 @@ export const McpSpotlightSection: FC = () => {
               </div>
 
               <div className={terminalPromptLine()}>
-                &gt; "Can I escape the £100k tax trap this year with salary sacrifice?"
+                &gt; "What is my Personal Allowance at a £14,200 pension contribution on a £114,200
+                salary?"
               </div>
 
               <div className={terminalToolLine()}>
@@ -137,24 +138,24 @@ export const McpSpotlightSection: FC = () => {
                 <br />
                 <span className={payloadBracket()}>{"{"}</span>
                 <br />
-                &nbsp;&nbsp;<span className={payloadKey()}>"escapedTaxTrap":</span>{" "}
-                <span className={payloadBool()}>true</span>,
+                &nbsp;&nbsp;<span className={payloadKey()}>"taperApplies":</span>{" "}
+                <span className={payloadBool()}>false</span>,
                 <br />
                 &nbsp;&nbsp;
-                <span className={payloadKey()}>"personalAllowanceReclaimedGbp":</span>{" "}
+                <span className={payloadKey()}>"personalAllowanceTaperRemovedGbp":</span>{" "}
                 <span className={payloadNum()}>7100</span>,
                 <br />
                 &nbsp;&nbsp;
                 <span className={payloadKey()}>"effectivePersonalAllowanceGbp":</span>{" "}
                 <span className={payloadNum()}>12570</span>,
                 <br />
-                &nbsp;&nbsp;<span className={payloadKey()}>"taxAndNiSavedGbp":</span>{" "}
+                &nbsp;&nbsp;<span className={payloadKey()}>"taxAndNiDifferenceGbp":</span>{" "}
                 <span className={payloadNum()}>8804</span>,
                 <br />
                 &nbsp;&nbsp;<span className={payloadKey()}>"effectiveTaxReliefPct":</span>{" "}
                 <span className={payloadNum()}>62.0</span>,
                 <br />
-                &nbsp;&nbsp;<span className={payloadKey()}>"optimalSacrificeGbp":</span>{" "}
+                &nbsp;&nbsp;<span className={payloadKey()}>"contributionAtThresholdGbp":</span>{" "}
                 <span className={payloadNum()}>14200</span>
                 <br />
                 <span className={payloadBracket()}>{"}"}</span>
@@ -162,10 +163,10 @@ export const McpSpotlightSection: FC = () => {
 
               <div className={terminalSummary()}>
                 <strong className={terminalSummaryStrong()}>Example output:</strong> for an
-                illustrative £114,200 gross salary, sacrificing £14,200 into a pension would reclaim
-                £7,100 of tapered Personal Allowance (restoring the full £12,570 allowance), saving
-                £8,804 in Income Tax and NI at an effective 62% marginal rate. These figures are an
-                example, not advice.
+                illustrative £114,200 gross salary, a £14,200 pension contribution brings adjusted
+                net income to £100,000. The £7,100 Personal Allowance taper is then removed, so the
+                full £12,570 allowance applies, and Income Tax and NI are £8,804 lower at an
+                effective 62% marginal rate. These figures are an example, not advice.
               </div>
             </div>
           </div>

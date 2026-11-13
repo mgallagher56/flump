@@ -3,6 +3,7 @@ import { fireEvent, render, screen, waitFor, within } from "@testing-library/rea
 import { HelmetProvider } from "react-helmet-async";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { signupCta } from "../../utils/site";
 import { PricingPage } from "./PricingPage";
 
 const renderPage = () =>
@@ -34,10 +35,10 @@ describe("PricingPage", () => {
     expect(container.textContent).not.toMatch(/coming soon|Introductory/i);
   });
 
-  it("asks for an invite by email, not a closed sign-up link", () => {
+  it("asks for an invite through the shared sign-up CTA, not a closed sign-up link", () => {
     renderPage();
-    const link = screen.getByText("Request an invite").closest("a");
-    expect(link?.getAttribute("href")).toContain(`mailto:${BUSINESS_DETAILS.supportEmail.value}`);
+    const link = within(screen.getByRole("main")).getByText("Request an invite").closest("a");
+    expect(link?.getAttribute("href")).toBe(signupCta().href);
     const main = screen.getByRole("main");
     expect(within(main).queryByText("Get started")).toBeNull();
     expect(main.querySelector('a[href$="/signUp"], a[href$="/signup"]')).toBeNull();
@@ -92,7 +93,7 @@ describe("PricingPage", () => {
       expect(text).not.toContain(formatPrice(BUSINESS_DETAILS.price.value.annual));
       expect(text).not.toMatch(/£X|£Y|Example figure only/);
       expect(screen.getByText("Free today")).toBeDefined();
-      expect(screen.getByText("Request an invite")).toBeDefined();
+      expect(within(screen.getByRole("main")).getByText("Request an invite")).toBeDefined();
     });
   });
 });

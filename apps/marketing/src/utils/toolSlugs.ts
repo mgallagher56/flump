@@ -1,5 +1,5 @@
 /** Pure data (no React) so the Express server can read it for the sitemap. */
-export const STATIC_PATHS = ["/", "/tools", "/pricing", "/security", "/mcp"] as const;
+export const STATIC_PATHS = ["/", "/tools", "/pricing", "/security", "/mcp", "/contact"] as const;
 
 export const CANONICAL_TOOL_SLUGS = [
   "uk-100k-tax-trap-calculator",

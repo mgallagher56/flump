@@ -11,6 +11,7 @@ const PAGES = [
   "/pricing",
   "/security",
   "/mcp",
+  "/contact",
 ];
 
 const SINGLE = [

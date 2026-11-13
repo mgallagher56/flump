@@ -8,7 +8,7 @@ import { Button } from "@repo/ui";
 import { css } from "@repo/ui/styled-system/css";
 import { type FC, useId, useMemo, useState } from "react";
 import { FiAlertCircle, FiArrowRight, FiPercent, FiTrendingUp } from "react-icons/fi";
-import { getAppUrl } from "../utils/url";
+import { signupCta } from "../utils/site";
 
 const containerStyle = css({
   maxWidth: "5xl",
@@ -207,7 +207,7 @@ export const InteractiveFinancialTeaser: FC = () => {
   const mortgageBalanceId = useId();
   const interestRateId = useId();
   const overpaymentId = useId();
-  const appUrl = getAppUrl();
+  const cta = signupCta();
 
   const taxResults = useMemo(() => {
     const gross = Math.max(0, income);
@@ -255,8 +255,9 @@ export const InteractiveFinancialTeaser: FC = () => {
       annualGrossSalary: gross,
       inferredModules: ["budget", "tax", "forecast"],
     };
-    persistOnboardingSeed(payload);
-    window.location.href = `${appUrl}/signup`;
+    // Invite-only: skip the onboarding hand-off, sign-up is closed (E24-T3).
+    if (cta.external) persistOnboardingSeed(payload);
+    window.location.href = cta.href;
   };
 
   const handleSaveMortgageSeed = (balance: number) => {
@@ -266,8 +267,9 @@ export const InteractiveFinancialTeaser: FC = () => {
       housingStatus: "MORTGAGE",
       inferredModules: ["mortgage", "budget", "forecast"],
     };
-    persistOnboardingSeed(payload);
-    window.location.href = `${appUrl}/signup`;
+    // Invite-only: skip the onboarding hand-off, sign-up is closed (E24-T3).
+    if (cta.external) persistOnboardingSeed(payload);
+    window.location.href = cta.href;
   };
 
   return (
@@ -472,7 +474,8 @@ export const InteractiveFinancialTeaser: FC = () => {
                         gap: "6px",
                       }}
                     >
-                      Save this salary baseline <FiArrowRight aria-hidden="true" />
+                      {cta.external ? "Save this salary baseline" : cta.label}{" "}
+                      <FiArrowRight aria-hidden="true" />
                     </Button>
                   </div>
                 </div>
@@ -607,7 +610,8 @@ export const InteractiveFinancialTeaser: FC = () => {
                         gap: "6px",
                       }}
                     >
-                      Save this mortgage baseline <FiArrowRight aria-hidden="true" />
+                      {cta.external ? "Save this mortgage baseline" : cta.label}{" "}
+                      <FiArrowRight aria-hidden="true" />
                     </Button>
                   </div>
                 </div>

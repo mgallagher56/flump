@@ -74,7 +74,7 @@ export const FeaturePillars: FC = () => {
                 fontFamily: "var(--fonts-mono, monospace)",
               }}
             >
-              Stage 1
+              Debt
             </span>
           </div>
 
@@ -98,8 +98,8 @@ export const FeaturePillars: FC = () => {
                 lineHeight: "1.5",
               }}
             >
-              Clear debt faster by comparing avalanche and snowball schedules, with alerts before 0%
-              promotional rates expire.
+              Compare avalanche and snowball payoff schedules, with alerts before 0% promotional
+              rates expire.
             </p>
           </div>
 
@@ -199,8 +199,8 @@ export const FeaturePillars: FC = () => {
                 lineHeight: "1.5",
               }}
             >
-              Navigate the £100k Personal Allowance taper and calculate salary sacrifice National
-              Insurance savings.
+              Model the £100k Personal Allowance taper and the National Insurance effect of salary
+              sacrifice.
             </p>
           </div>
 

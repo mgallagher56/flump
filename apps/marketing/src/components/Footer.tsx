@@ -4,6 +4,7 @@ import { flex, grid, stack } from "@repo/ui/styled-system/patterns";
 import type { FC } from "react";
 import { FiExternalLink } from "react-icons/fi";
 import { Link } from "react-router-dom";
+import { mailto, signupCta } from "../utils/site";
 import { getAppUrl } from "../utils/url";
 
 const footerStyle = css({
@@ -67,6 +68,7 @@ const placeholderStyle = css({
 
 export const Footer: FC = () => {
   const appUrl = getAppUrl();
+  const cta = signupCta();
   const currentYear = new Date().getFullYear();
 
   return (
@@ -87,8 +89,7 @@ export const Footer: FC = () => {
               </span>
             </div>
             <p className={taglineStyle}>
-              A UK personal finance planner for tax thresholds, pension optimisation and debt
-              payoff.
+              A UK personal finance planner for tax thresholds, pensions and debt.
             </p>
           </div>
 
@@ -130,16 +131,19 @@ export const Footer: FC = () => {
             <a href={`${appUrl}/login`} className={linkStyle}>
               Sign in to web app
             </a>
-            <a href={`${appUrl}/signup`} className={linkStyle}>
-              Create an account
+            <a href={cta.href} className={linkStyle}>
+              {cta.label}
             </a>
           </div>
 
           {/* Security and privacy */}
           <div className={stack({ gap: "3" })}>
-            <h2 className={sectionTitleStyle}>Security and privacy</h2>
+            <h2 className={sectionTitleStyle}>Security and support</h2>
             <Link to="/security" className={linkStyle}>
               Security and privacy
+            </Link>
+            <Link to="/contact" className={linkStyle}>
+              Contact
             </Link>
           </div>
         </div>
@@ -152,7 +156,7 @@ export const Footer: FC = () => {
             >
               {companyLine(currentYear)}
             </span>
-            <a href={`mailto:${BUSINESS_DETAILS.supportEmail.value}`} className={linkStyle}>
+            <a href={mailto(BUSINESS_DETAILS.supportEmail.value)} className={linkStyle}>
               {BUSINESS_DETAILS.supportEmail.value}
             </a>
           </div>

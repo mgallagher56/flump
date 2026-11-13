@@ -93,7 +93,7 @@ export const TOOLS_CATALOG = [
   {
     slug: "uk-100k-tax-trap-calculator",
     title: "£100k–£125k tax trap and childcare calculator",
-    desc: "Model how the Personal Allowance taper creates an effective 60% marginal rate and estimate the pension salary sacrifice to reclaim your allowance and 30 hours free childcare.",
+    desc: "Model how the Personal Allowance taper creates an effective 60% marginal rate, and the pension contribution at which adjusted net income reaches £100,000, alongside 30 hours free childcare eligibility.",
     icon: <FiPercent size={22} color="#6363f1" />,
     badge: "HMRC income tax",
   },
@@ -114,7 +114,7 @@ export const TOOLS_CATALOG = [
   {
     slug: "section-24-landlord-tax-calculator",
     title: "Section 24 buy-to-let landlord tax calculator",
-    desc: "Model how mortgage interest relief restriction impacts higher-rate landlords and see how pension contributions restore basic tax bands.",
+    desc: "Model how mortgage interest relief restriction impacts higher-rate landlords and see how pension contributions change the taxable bands.",
     icon: <FiHome size={22} color="#8b5cf6" />,
     badge: "Property tax",
   },
@@ -128,14 +128,14 @@ export const TOOLS_CATALOG = [
   {
     slug: "overdraft-cost-and-payoff-calculator",
     title: "Arranged overdraft cost and payoff modeller",
-    desc: "Expose the compound cost of arranged UK overdrafts (often 39.9% EAR) and plan a clear exit strategy with regular payments.",
+    desc: "Model the compound cost of arranged UK overdrafts (often 39.9% EAR) and how regular payments change the time taken to clear the balance.",
     icon: <FiDollarSign size={22} color="#ef4444" />,
     badge: "Banking fees",
   },
   {
     slug: "uk-student-loan-overpay-or-invest-calculator",
-    title: "Student loan (Plan 2 / Plan 5) overpay or invest",
-    desc: "Analyse whether treating your UK student loan as a graduate tax or paying it down is mathematically optimal based on salary growth.",
+    title: "Student loan (Plan 2 / Plan 5) overpayment comparison",
+    desc: "Compare a UK student loan treated as a graduate tax with paying it down, using salary growth assumptions.",
     icon: <FiPercent size={22} color="#06b6d4" />,
     badge: "Student finance",
   },
@@ -324,7 +324,7 @@ export const ToolsIndexPage: FC = () => {
                     color: "var(--colors-text-primary)",
                   }}
                 >
-                  Bridge the £100k–£125k tax trap and protect childcare
+                  The £100k–£125k tax trap and childcare eligibility
                 </h2>
                 <p
                   style={{
@@ -335,8 +335,8 @@ export const ToolsIndexPage: FC = () => {
                   }}
                 >
                   Model how Personal Allowance reduction combined with student loan and childcare
-                  loss creates a 60%+ marginal tax trap – and estimate the salary sacrifice to
-                  bridge across it safely.
+                  loss creates a 60%+ marginal tax trap – and the pension contribution at which
+                  adjusted net income reaches £100,000.
                 </p>
                 <div className={ctaLinkStyle} style={{ marginTop: "4px" }}>
                   Run £100k tax trap simulation <FiArrowRight />

@@ -5,6 +5,7 @@ import { flex } from "@repo/ui/styled-system/patterns";
 import { type FC, useEffect, useState } from "react";
 import { FiExternalLink, FiMenu, FiX } from "react-icons/fi";
 import { Link, useLocation } from "react-router-dom";
+import { signupCta } from "../utils/site";
 import { getAppUrl } from "../utils/url";
 import { ThemeToggle } from "./ThemeToggle";
 
@@ -125,6 +126,7 @@ export const Header: FC = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
   const appUrl = getAppUrl();
+  const cta = signupCta();
 
   useEffect(() => {
     setHasSession(hasSessionPresenceCookie());
@@ -249,7 +251,7 @@ export const Header: FC = () => {
                     <span className={css({ display: { base: "inline", sm: "none" } })}>Log in</span>
                   </Button>
                 </a>
-                <a href={`${appUrl}/signup`} style={{ textDecoration: "none" }}>
+                <a href={cta.href} style={{ textDecoration: "none" }}>
                   <Button
                     variant="primary"
                     size="sm"
@@ -259,10 +261,10 @@ export const Header: FC = () => {
                     })}
                   >
                     <span className={css({ display: { base: "none", sm: "inline" } })}>
-                      Get started
+                      {cta.label}
                     </span>
                     <span className={css({ display: { base: "inline", sm: "none" } })}>
-                      Sign up
+                      {cta.shortLabel}
                     </span>
                   </Button>
                 </a>
@@ -375,12 +377,12 @@ export const Header: FC = () => {
             ) : (
               <>
                 <a
-                  href={`${appUrl}/signup`}
+                  href={cta.href}
                   style={{ textDecoration: "none", width: "100%" }}
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   <Button variant="primary" size="md" style={{ width: "100%" }}>
-                    Get started
+                    {cta.label}
                   </Button>
                 </a>
                 <a
