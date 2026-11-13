@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { assertSafeOptions } from "./sentry-options.js";
+import { assertSafeOptions, PRIVATE_DATA_COLLECTION } from "./sentry-options.js";
 
 const safe = {
-  sendDefaultPii: false,
+  dataCollection: PRIVATE_DATA_COLLECTION,
   tracesSampleRate: 0,
   includeLocalVariables: false,
   beforeSend: () => null,
@@ -20,14 +20,72 @@ describe("assertSafeOptions", () => {
         replaysSessionSampleRate: 0,
         profilesSampleRate: 0,
         profileSessionSampleRate: 0,
-        integrations: [{ name: "Dedupe" }, "InboundFilters", 5],
+        integrations: [{ name: "Dedupe" }, "EventFilters", 5],
       }),
     ).not.toThrow();
     expect(() => assertSafeOptions({ ...safe, tracesSampleRate: null })).not.toThrow();
   });
 
-  it.each([undefined, true, "false"])("rejects sendDefaultPii %j", (sendDefaultPii) => {
+  it("tolerates the v10 sendDefaultPii only when it is false", () => {
+    expect(() => assertSafeOptions({ ...safe, sendDefaultPii: false })).not.toThrow();
+  });
+
+  it.each([true, "false", 1, null])("rejects the v10 sendDefaultPii %j", (sendDefaultPii) => {
     expect(() => assertSafeOptions({ ...safe, sendDefaultPii })).toThrow(/sendDefaultPii/);
+  });
+
+  it.each([undefined, null, "off", true, [], 5])("requires dataCollection, rejects %j", (v) => {
+    expect(() => assertSafeOptions({ ...safe, dataCollection: v })).toThrow(/dataCollection/);
+  });
+
+  it("accepts httpHeaders as a per-direction object that is off", () => {
+    const dataCollection = {
+      ...PRIVATE_DATA_COLLECTION,
+      httpHeaders: { request: false, response: false },
+    };
+    expect(() => assertSafeOptions({ ...safe, dataCollection })).not.toThrow();
+  });
+
+  it.each([
+    ["userInfo", true],
+    ["userInfo", undefined],
+    ["cookies", true],
+    ["cookies", { allow: ["a"] }],
+    ["cookies", undefined],
+    ["httpHeaders", true],
+    ["httpHeaders", { deny: [] }],
+    ["httpHeaders", { request: false }],
+    ["httpHeaders", { request: false, response: true }],
+    ["httpHeaders", { request: true, response: false }],
+    ["httpHeaders", undefined],
+    ["httpBodies", ["incomingRequest"]],
+    ["httpBodies", undefined],
+    ["httpBodies", "none"],
+    ["urlQueryParams", true],
+    ["urlQueryParams", { deny: [] }],
+    ["urlQueryParams", undefined],
+    ["graphQL", undefined],
+    ["graphQL", { document: true, variables: false }],
+    ["graphQL", { document: false, variables: true }],
+    ["graphQL", { document: false }],
+    ["genAI", { inputs: true, outputs: false }],
+    ["genAI", { inputs: false, outputs: true }],
+    ["genAI", undefined],
+    ["mcp", { inputs: true, outputs: false }],
+    ["mcp", { inputs: false, outputs: true }],
+    ["mcp", undefined],
+    ["databaseQueryData", true],
+    ["databaseQueryData", undefined],
+    ["queues", true],
+    ["queues", undefined],
+    ["stackFrameVariables", true],
+    ["stackFrameVariables", { deny: ["password"] }],
+    ["stackFrameVariables", undefined],
+  ])("rejects dataCollection.%s = %j", (key, value) => {
+    const dataCollection = { ...PRIVATE_DATA_COLLECTION, [key]: value };
+    expect(() => assertSafeOptions({ ...safe, dataCollection })).toThrow(
+      new RegExp(`dataCollection\\.${key}`),
+    );
   });
 
   it.each([
