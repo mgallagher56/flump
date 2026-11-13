@@ -37,6 +37,19 @@ export const Default: Story = {
   },
 };
 
+export const ExpiryOptions: Story = {
+  parameters: { a11y: { config: { rules: [{ id: "aria-valid-attr-value", enabled: false }] } } },
+  args: { initialTokens: [], onGenerateToken: fn() },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(canvas.getByTestId("generate-token-trigger"));
+    const select = canvas.getByLabelText("Token Expiry") as HTMLSelectElement;
+    await expect(Array.from(select.options).map((o) => o.value)).toEqual(["7", "30", "90", "365"]);
+    await expect(select.value).toBe("90");
+    await expect(canvas.queryByText(/Never/)).toBeNull();
+  },
+};
+
 export const WithActiveTokens: Story = {
   // E8 waiver: aria-valid-attr-value
   parameters: { a11y: { config: { rules: [{ id: "aria-valid-attr-value", enabled: false }] } } },

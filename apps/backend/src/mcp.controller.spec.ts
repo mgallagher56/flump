@@ -1,3 +1,4 @@
+import { BadRequestException } from "@nestjs/common";
 import { describe, expect, it, vi } from "vitest";
 import { AuthGuard } from "./auth/auth.guard";
 import { McpController } from "./mcp.controller";
@@ -46,6 +47,17 @@ describe("McpController", () => {
     );
     expect(res.rawToken).toBeDefined();
     expect(res.name).toBe("Cursor AI");
+  });
+
+  it("surfaces the service's BadRequestException as a 400", async () => {
+    vi.mocked(mockMcpService.createPatToken).mockRejectedValueOnce(
+      new BadRequestException("Token expiry must be one of 7, 30, 90, 365 days."),
+    );
+    const err = await controller
+      .createToken({ user: { id: "u_1" } }, { name: "x", expiryDays: null })
+      .catch((e) => e);
+    expect(err).toBeInstanceOf(BadRequestException);
+    expect(err.getStatus()).toBe(400);
   });
 
   it("revokes an active token", async () => {
