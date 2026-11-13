@@ -10,6 +10,7 @@ export function registerUkAdvisorPrompts(
     "uk-financial-health-audit",
     {
       title: "UK financial health audit",
+      argsSchema: {},
       description:
         "Comprehensive UK personal financial health audit, evaluating net worth, emergency runway, high-APR debt burn, and tax efficiency.",
     },
@@ -41,6 +42,7 @@ export function registerUkAdvisorPrompts(
     "escape-100k-tax-trap",
     {
       title: "Escape the 100k tax trap",
+      argsSchema: {},
       description:
         "Analyzes whether gross salary + bonuses enter the UK £100k-£125,140 60% (or 69.5% Scottish) tax trap and models optimal pension sacrifice.",
     },
@@ -69,6 +71,7 @@ Please call the tool 'simulate_uk_tax_and_pension_sacrifice' to calculate whethe
     "crush-high-apr-debt",
     {
       title: "Crush high APR debt",
+      argsSchema: {},
       description:
         "Inspects all credit cards, 0% promotional balance transfers, and arranged overdrafts, generating an aggressive Avalanche vs Snowball payoff plan.",
     },
