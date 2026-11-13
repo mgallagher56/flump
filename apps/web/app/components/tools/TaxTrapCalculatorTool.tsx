@@ -4,7 +4,7 @@ import { useNavigate } from "react-router";
 
 export const TaxTrapCalculatorTool: FC = () => {
   const navigate = useNavigate();
-  return <TaxTrapCalculator onSaveAndContinue={() => navigate("/signUp")} />;
+  return <TaxTrapCalculator onSaveAndContinue={() => navigate("/signup")} />;
 };
 
 export default TaxTrapCalculatorTool;

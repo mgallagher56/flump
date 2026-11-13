@@ -4,6 +4,11 @@ import { redirect } from "react-router";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const reqUrl = new URL(request.url);
+  // Route matching is case-insensitive, so /signUp (the legacy marketing casing) lands here.
+  // Canonical casing is /signup; send every other casing there so old links keep working.
+  if (reqUrl.pathname !== "/signup") {
+    return redirect(`/signup${reqUrl.search}`, 301);
+  }
   if (
     process.env.NODE_ENV === "development" &&
     (reqUrl.hostname === "localhost" || reqUrl.hostname === "127.0.0.1")

@@ -154,7 +154,7 @@ export const HomeFooter: FC = () => {
           </FLPHeading>
           <ul className={linkListStyle}>
             <li>
-              <RouterLink className={linkStyle} to="/signUp">
+              <RouterLink className={linkStyle} to="/signup">
                 Sign up
               </RouterLink>
             </li>

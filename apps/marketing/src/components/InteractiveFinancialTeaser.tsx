@@ -256,7 +256,7 @@ export const InteractiveFinancialTeaser: FC = () => {
       inferredModules: ["budget", "tax", "forecast"],
     };
     persistOnboardingSeed(payload);
-    window.location.href = `${appUrl}/signUp`;
+    window.location.href = `${appUrl}/signup`;
   };
 
   const handleSaveMortgageSeed = (balance: number) => {
@@ -267,7 +267,7 @@ export const InteractiveFinancialTeaser: FC = () => {
       inferredModules: ["mortgage", "budget", "forecast"],
     };
     persistOnboardingSeed(payload);
-    window.location.href = `${appUrl}/signUp`;
+    window.location.href = `${appUrl}/signup`;
   };
 
   return (

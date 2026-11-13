@@ -4,7 +4,7 @@ import { useNavigate } from "react-router";
 
 export const MortgageVsIsaTool: FC = () => {
   const navigate = useNavigate();
-  return <MortgageVsIsaCalculator onSaveAndContinue={() => navigate("/signUp")} />;
+  return <MortgageVsIsaCalculator onSaveAndContinue={() => navigate("/signup")} />;
 };
 
 export default MortgageVsIsaTool;

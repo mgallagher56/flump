@@ -208,7 +208,7 @@ export const PricingPage: FC = () => {
                 </ul>
               </div>
 
-              <a href={`${appUrl}/signUp`} style={{ textDecoration: "none" }}>
+              <a href={`${appUrl}/signup`} style={{ textDecoration: "none" }}>
                 <Button
                   size="lg"
                   variant="outline"

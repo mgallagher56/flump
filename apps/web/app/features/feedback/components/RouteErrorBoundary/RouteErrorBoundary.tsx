@@ -21,7 +21,8 @@ function kindFromError(error: unknown): RouteErrorStateProps["kind"] {
     // A page the user may not open looks exactly like a page that does not exist.
     return kind === "forbidden" ? "not-found" : (kind as BackendErrorKind);
   }
-  return "unknown";
+  // A bare 404 (the catch-all splat route) is a missing page, not an unknown failure.
+  return error.status === 404 ? "not-found" : "unknown";
 }
 
 /** Shared route ErrorBoundary: reads the thrown payload and never renders raw error messages. */

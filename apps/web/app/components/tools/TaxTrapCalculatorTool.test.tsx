@@ -26,7 +26,7 @@ describe("TaxTrapCalculatorTool", () => {
     expect(screen.getAllByDisplayValue("105000").length).toBeGreaterThan(0);
   });
 
-  it("saves scenario seed to localStorage and navigates to /signUp on CTA click", () => {
+  it("saves scenario seed to localStorage and navigates to /signup on CTA click", () => {
     const setItemSpy = vi.spyOn(Storage.prototype, "setItem");
     render(<TaxTrapCalculatorTool />);
 
@@ -34,6 +34,6 @@ describe("TaxTrapCalculatorTool", () => {
     fireEvent.click(ctaButton);
 
     expect(setItemSpy).toHaveBeenCalledWith("flump_onboarding_seed", expect.any(String));
-    expect(mockNavigate).toHaveBeenCalledWith("/signUp");
+    expect(mockNavigate).toHaveBeenCalledWith("/signup");
   });
 });

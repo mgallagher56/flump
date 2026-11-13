@@ -19,7 +19,8 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
   if (target) {
     return redirect(target);
   }
-  return redirect("/");
+  // Unknown top-level URLs are a real 404, not a bounce to "/" (which lands on login or marketing).
+  throw new Response("Not Found", { status: 404, statusText: "Not Found" });
 };
 
 export default function FeatureRedirectRoute() {

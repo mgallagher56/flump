@@ -108,7 +108,7 @@ export const HomePage: FC = () => {
             </p>
 
             <div className={flex({ gap: "4", flexWrap: "wrap", justify: "center" })}>
-              <a href={`${appUrl}/signUp`} style={{ textDecoration: "none" }}>
+              <a href={`${appUrl}/signup`} style={{ textDecoration: "none" }}>
                 <Button
                   size="lg"
                   variant="primary"
@@ -204,7 +204,7 @@ export const HomePage: FC = () => {
               Start with your 6-number baseline. No bank login needed.
             </p>
             <div className={flex({ gap: "4", justify: "center", flexWrap: "wrap" })}>
-              <a href={`${appUrl}/signUp`} style={{ textDecoration: "none" }}>
+              <a href={`${appUrl}/signup`} style={{ textDecoration: "none" }}>
                 <Button size="lg" variant="primary">
                   Start your free baseline →
                 </Button>
