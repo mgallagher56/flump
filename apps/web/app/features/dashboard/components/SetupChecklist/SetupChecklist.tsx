@@ -167,7 +167,7 @@ const buildSteps = (
     tone: "series",
     isComplete: Boolean(props.hasTax || props.completedSteps.includes("tax")),
     actionLabel: "Open tax tracker",
-    onAction: () => navigate("/app/tax"),
+    onAction: () => navigate("/app/self-assessment"),
   },
 ];
 

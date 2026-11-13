@@ -22,12 +22,18 @@ export interface TaxWidgetProps {
 export const TaxWidget: FC<TaxWidgetProps> = ({ data, onHide }) => {
   const taxDue = data.estimatedTaxDue;
   return (
-    <WidgetCard href="/app/tax" icon={Receipt} id="tax" title="Self Assessment" onHide={onHide}>
+    <WidgetCard
+      href="/app/self-assessment"
+      icon={Receipt}
+      id="tax"
+      title="Self Assessment"
+      onHide={onHide}
+    >
       <div className={widgetContent()}>
         <KpiCard
           emptyAction={
             <Button asChild size="sm" variant="ghost">
-              <SampleAwareLink to="/app/tax">
+              <SampleAwareLink to="/app/self-assessment">
                 {data.recordsCount === 0 ? "Add income" : "Review tax records"}
               </SampleAwareLink>
             </Button>

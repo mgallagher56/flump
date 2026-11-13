@@ -94,7 +94,9 @@ describe("<NavMenu />", () => {
   });
 
   it("renders the label key instead of the module key when a route sets one", () => {
-    customRender(<NavMenu routes={[{ key: "tax", label: "selfAssessment", route: "/app/tax" }]} />);
+    customRender(
+      <NavMenu routes={[{ key: "tax", label: "selfAssessment", route: "/app/self-assessment" }]} />,
+    );
     expect(screen.getByText("selfAssessment")).toBeDefined();
     expect(screen.queryByText("tax")).toBeNull();
   });

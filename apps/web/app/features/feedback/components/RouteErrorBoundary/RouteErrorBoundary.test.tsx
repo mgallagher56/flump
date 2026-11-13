@@ -132,7 +132,7 @@ describe("route modules", () => {
     "app.pension",
     "app.profile",
     "app.savings",
-    "app.tax",
+    "app.self-assessment",
     "app.take-home",
     "app.onboarding",
   ];

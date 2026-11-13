@@ -803,7 +803,7 @@ const UserProfilePanel: FC<UserProfilePanelProps> = ({ initialProfile, user }) =
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={() => navigate("/app/tax")}
+                  onClick={() => navigate("/app/self-assessment")}
                 >
                   <FaBriefcase style={{ marginRight: "6px" }} />
                   Go to Tax & Take-Home

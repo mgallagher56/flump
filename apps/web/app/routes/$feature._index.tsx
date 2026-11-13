@@ -11,7 +11,7 @@ const LEGACY_REDIRECTS: Record<string, string> = {
   pension: "/app/pension",
   profile: "/app/profile",
   savings: "/app/savings",
-  tax: "/app/tax",
+  tax: "/app/self-assessment",
 };
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {

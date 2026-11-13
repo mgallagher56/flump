@@ -21,5 +21,5 @@ export const Default: Story = {
 };
 
 export const CustomLabel: Story = {
-  args: { label: "Not calculated yet", href: "/app/tax", subject: "income" },
+  args: { label: "Not calculated yet", href: "/app/self-assessment", subject: "income" },
 };

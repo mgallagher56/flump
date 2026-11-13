@@ -78,7 +78,7 @@ Flump is a monorepo managed with Turborepo (`turbo`) and Bun.
 - **Navigation Scalability**: The desktop header must not exceed 5 top-level interactive items to avoid layout breaking on 1024px–1440px viewports.
 - **Grouped Domain Pillars**: Keep primary high-frequency links direct (`Budget`, `Accounts`), and organize specialized tools into grouped dropdown pillars:
   - **Wealth**: Savings (`/app/savings`), Pension (`/app/pension`), Mortgage (`/app/mortgage`).
-  - **Planning**: Tax (`/app/tax`).
+  - **Planning**: Tax (`/app/self-assessment`).
 - **Multi-platform Sync**: When adding or re-organizing tools, ensure `AUTH_DESKTOP_NAV_ROUTES` in `Header.tsx`, `MobileNavDrawer.tsx`, and `MobileBottomBar.tsx` are updated in sync, including localization keys in `en/common.json` and `es/common.json`.
 
 ### 6. Type-Safe API Client

@@ -20,7 +20,7 @@ import { action as debtAction } from "./app.debt";
 import { action as onboardingAction } from "./app.onboarding";
 import { action as pensionAction } from "./app.pension";
 import { action as savingsAction } from "./app.savings";
-import { action as taxAction } from "./app.tax";
+import { action as taxAction } from "./app.self-assessment";
 
 type Action = (args: any) => Promise<any>;
 

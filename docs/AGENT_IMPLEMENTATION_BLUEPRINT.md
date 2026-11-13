@@ -350,12 +350,12 @@ Build `apps/web/src/routes/debt/index.tsx`:
 - Add inline **Actual MTD Spend** progress bars mapped from `@flump/banking` transactions.
 - Add optional `contractEndDate` badge on Bills rows to flag broadband/mobile/insurance renewal cliffs 30 days prior.
 
-### 5.4 Upgrades to `/app/forecast`, `/app/pension`, `/app/mortgage`, and `/app/tax`
+### 5.4 Upgrades to `/app/forecast`, `/app/pension`, `/app/mortgage`, and `/app/self-assessment`
 
 - **`/app/forecast`:** Add toggleable **Life Event Scenario Chips** below the 30-year chart (`+ Buy a Home`, `+ Have a Child`, `+ Remortgage Rate Shock`, `+ Retire Early Bridge`). Render a contextual **£100k–£125k 60% Tax Trap Banner** with a single escape slider whenever projected adjusted net income exceeds £95,000.
 - **`/app/pension`:** Add the **£60,000 Annual Allowance Progress Pill** at the top of the page.
 - **`/app/mortgage`:** Add `mortgageFixExpiryDate` and a **Target LTV Milestone Badge** (showing how much overpayment is needed before renewal to hit the next LTV band: 85% → 80% → 75% → 60%).
-- **`/app/tax`:** Add a **Monthly HMRC Tax Reserve Card** showing the exact monthly transfer needed to cover 31 January and 31 July Self-Assessment + Payments on Account bills.
+- **`/app/self-assessment`:** Add a **Monthly HMRC Tax Reserve Card** showing the exact monthly transfer needed to cover 31 January and 31 July Self-Assessment + Payments on Account bills.
 
 ### 5.5 Zero-Signup Live Sandbox (`/sandbox`)
 
