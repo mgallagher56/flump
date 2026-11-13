@@ -1,4 +1,3 @@
-apps/web/app/components/accounts/BankConnectionsList.tsx
 apps/web/app/containers/accounts/accountDetailContainer/AccountDetailContainer.tsx
 apps/web/app/routes/_index.tsx
 packages/ui/src/foundations/ColorPalette/ColorPalette.tsx

@@ -41,7 +41,7 @@ type Story = StoryObj<typeof BankConnectionsList>;
 export const Default: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    await expect(canvas.getByRole("button", { name: "Sync Monzo Bank" })).toBeDefined();
+    await expect(canvas.getByRole("button", { name: "Sync now for Monzo Bank" })).toBeDefined();
     await expect(canvas.getByText("Disconnected")).toBeDefined();
   },
 };

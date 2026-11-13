@@ -1,4 +1,4 @@
-import { Button, Card, EmptyState, Icon, StatusBadge } from "@repo/ui";
+import { Button, Card, EmptyState, Icon, StatusBadge, VisuallyHidden } from "@repo/ui";
 import { CircleAlert, CircleCheck, Landmark, RefreshCw, Trash2 } from "lucide-react";
 import { type FC, useState } from "react";
 import { useFetcher, useRevalidator } from "react-router";
@@ -154,7 +154,6 @@ const BankConnectionsList: FC<BankConnectionsListProps> = ({
 
                   <div className={connectionActions()}>
                     <Button
-                      aria-label={`Sync ${conn.institutionName}`}
                       disabled={isSyncing}
                       size="sm"
                       variant="outline"
@@ -164,15 +163,16 @@ const BankConnectionsList: FC<BankConnectionsListProps> = ({
                         <Icon icon={RefreshCw} size="sm" />
                       </span>
                       {isSyncing ? "Syncing" : "Sync now"}
+                      <VisuallyHidden> for {conn.institutionName}</VisuallyHidden>
                     </Button>
                     <Button
-                      aria-label={`Disconnect ${conn.institutionName}`}
                       size="sm"
                       variant="destructive"
                       onClick={() => setDisconnectTarget(conn)}
                     >
                       <Icon icon={Trash2} size="sm" />
                       Disconnect
+                      <VisuallyHidden> {conn.institutionName}</VisuallyHidden>
                     </Button>
                   </div>
                 </Card>
