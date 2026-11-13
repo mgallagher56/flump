@@ -104,10 +104,16 @@ export class McpService implements McpTokenStoreAdapter, McpUserDataProvider {
   }
 
   async recordRequest(tokenId: string, toolCalls: number): Promise<void> {
-    if (toolCalls > 0) {
-      await this.mcpTokenRepository.increment({ id: tokenId }, "totalToolCalls", toolCalls);
-    }
-    await this.mcpTokenRepository.update({ id: tokenId }, { lastUsedAt: new Date() });
+    await this.mcpTokenRepository
+      .createQueryBuilder()
+      .update(McpToken)
+      .set({
+        totalToolCalls: () => "total_tool_calls + :n",
+        lastUsedAt: () => "now()",
+      })
+      .where("id = :id", { id: tokenId })
+      .setParameter("n", toolCalls)
+      .execute();
   }
 
   // --- McpUserDataProvider implementation ---

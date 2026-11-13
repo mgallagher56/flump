@@ -255,3 +255,33 @@ describe("McpService.findTokenByHash allowlist (E29-T8)", () => {
     }
   });
 });
+
+describe("McpService.recordRequest (E17-N6)", () => {
+  it("issues one atomic UPDATE adding the count and setting lastUsedAt", async () => {
+    const qb: any = {};
+    for (const m of ["update", "set", "where", "setParameter"]) qb[m] = vi.fn(() => qb);
+    qb.execute = vi.fn().mockResolvedValue(undefined);
+    const repo = { createQueryBuilder: vi.fn(() => qb) };
+    const nothing = {} as never;
+    const service = new McpService(
+      repo as never,
+      nothing,
+      nothing,
+      nothing,
+      nothing,
+      nothing,
+      nothing,
+      nothing,
+      nothing,
+      { get: vi.fn() } as never,
+      "workos",
+    );
+    await service.recordRequest("tok_1", 3);
+    const set = qb.set.mock.calls[0][0];
+    expect(set.totalToolCalls()).toBe("total_tool_calls + :n");
+    expect(set.lastUsedAt()).toBe("now()");
+    expect(qb.setParameter).toHaveBeenCalledWith("n", 3);
+    expect(qb.where).toHaveBeenCalledWith("id = :id", { id: "tok_1" });
+    expect(qb.execute).toHaveBeenCalledTimes(1);
+  });
+});
