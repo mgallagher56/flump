@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import { expect, fn, userEvent, within } from "@storybook/test";
+import { css } from "../../../styled-system/css";
 import { Button } from "../Button";
 import { Banner, InlineAlert, type InlineAlertTone } from "./InlineAlert";
 
@@ -26,7 +27,7 @@ const TONES: InlineAlertTone[] = ["info", "positive", "warning", "danger", "neut
 
 export const Tones: Story = {
   render: () => (
-    <div style={{ display: "grid", gap: 12 }}>
+    <div className={css({ display: "grid", gap: "3" })}>
       {TONES.map((tone) => (
         <InlineAlert key={tone} tone={tone} title={`This is a ${tone} message`}>
           Short supporting sentence in sentence case.

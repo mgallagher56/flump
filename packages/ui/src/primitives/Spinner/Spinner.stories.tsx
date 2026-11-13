@@ -20,7 +20,7 @@ export const Default: Story = {
 
 export const Sizes: Story = {
   render: () => (
-    <div style={{ display: "flex", gap: 24, alignItems: "center" }}>
+    <div className={css({ display: "flex", gap: "6", alignItems: "center" })}>
       <Spinner size="sm" label="Loading small" />
       <Spinner size="md" label="Loading medium" />
       <Spinner size="lg" label="Loading large" />

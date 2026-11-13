@@ -4,6 +4,7 @@ import {
   type FC,
   type FocusEvent,
   type KeyboardEvent,
+  type PointerEvent,
   type ReactNode,
   useCallback,
   useContext,
@@ -29,6 +30,18 @@ import {
 
 export type ToastTone = InlineAlertTone;
 
+/**
+ * Setup: render `<ToastProvider>` once, in `apps/web/app/root.tsx`, around the app. Components
+ * then call `useToast().toast(...)`.
+ *
+ * A toast must never be the only route to an action or to information the user needs: it can be
+ * missed, times out, and is gone on navigation. Mirror every toast action elsewhere on the page.
+ *
+ * Phone placement: the stack sits above `var(--app-bottom-bar-offset, 0px)` plus the safe-area
+ * inset. The app shell sets `--app-bottom-bar-offset` to the mobile bottom bar height (as it does
+ * `--app-header-offset`); without it the offset is 0.
+ */
+
 /** Default auto-dismiss delay for non-error toasts. */
 export const TOAST_DEFAULT_DURATION_MS = 5000;
 
@@ -40,8 +53,9 @@ export interface ToastOptions {
   /** Optional action, usually a small `Button`. */
   action?: ReactNode;
   /**
-   * Auto-dismiss delay in ms. Defaults to 5000. `0` keeps the toast until dismissed. Error
-   * (`danger`) toasts never auto-dismiss, whatever this is set to.
+   * Auto-dismiss delay in ms. By default 5000, except that a toast with an `action` or long text
+   * (over 80 characters) persists until dismissed. `0` always persists. Error (`danger`) toasts
+   * never auto-dismiss, whatever this is set to. Timers pause while the document is hidden.
    */
   durationMs?: number;
 }
@@ -54,6 +68,15 @@ export interface ToastApi {
 }
 
 const ToastContext = createContext<ToastApi | null>(null);
+
+/** Text longer than this is too slow to read in 5 s, so the toast persists by default. */
+export const TOAST_LONG_TEXT_CHARS = 80;
+
+/** Time each queued announcement holds a region: the LiveRegion debounce plus settle time. */
+export const TOAST_ANNOUNCE_DEBOUNCE_MS = 50;
+export const TOAST_ANNOUNCE_SLOT_MS = 350;
+
+const NBSP = "\u00A0";
 
 export const useToast = (): ToastApi => {
   const api = useContext(ToastContext);
@@ -74,13 +97,22 @@ interface ToastItemProps {
 const ToastItem: FC<ToastItemProps> = ({ entry, dismissLabel, onDismiss }) => {
   const tone = entry.tone ?? "neutral";
   const meta = INLINE_ALERT_TONE_META[tone];
-  const duration = tone === "danger" ? 0 : (entry.durationMs ?? TOAST_DEFAULT_DURATION_MS);
+  const longText = entry.title.length + (entry.description?.length ?? 0) > TOAST_LONG_TEXT_CHARS;
+  const defaultDuration = entry.action || longText ? 0 : TOAST_DEFAULT_DURATION_MS;
+  const duration = tone === "danger" ? 0 : (entry.durationMs ?? defaultDuration);
   const [hovered, setHovered] = useState(false);
   const [focused, setFocused] = useState(false);
-  const paused = hovered || focused;
+  const [docHidden, setDocHidden] = useState(typeof document !== "undefined" && document.hidden);
+  const paused = hovered || focused || docHidden;
   const remaining = useRef(duration);
   const onDismissRef = useRef(onDismiss);
   onDismissRef.current = onDismiss;
+
+  useEffect(() => {
+    const onVisibility = () => setDocHidden(document.hidden);
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => document.removeEventListener("visibilitychange", onVisibility);
+  }, []);
 
   // Pausing keeps the unspent time, so the toast resumes where it left off.
   useEffect(() => {
@@ -92,6 +124,15 @@ const ToastItem: FC<ToastItemProps> = ({ entry, dismissLabel, onDismiss }) => {
       remaining.current = Math.max(0, remaining.current - (Date.now() - startedAt));
     };
   }, [paused, duration, entry.id]);
+
+  // Only a mouse hovers. A tap fires pointerenter on touch and no pointerleave until the next
+  // tap elsewhere, which would otherwise pin the toast open.
+  const handlePointerEnter = (event: PointerEvent<HTMLLIElement>) => {
+    if (event.pointerType === "mouse") setHovered(true);
+  };
+  const handlePointerLeave = (event: PointerEvent<HTMLLIElement>) => {
+    if (event.pointerType === "mouse") setHovered(false);
+  };
 
   const handleBlur = (event: FocusEvent<HTMLLIElement>) => {
     if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setFocused(false);
@@ -106,8 +147,8 @@ const ToastItem: FC<ToastItemProps> = ({ entry, dismissLabel, onDismiss }) => {
     <li
       className={toastRecipe({ tone })}
       data-tone={tone}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
+      onPointerEnter={handlePointerEnter}
+      onPointerLeave={handlePointerLeave}
       onFocus={() => setFocused(true)}
       onBlur={handleBlur}
       onKeyDown={handleKeyDown}
@@ -137,15 +178,64 @@ export interface ToastProviderProps {
   /** Accessible name for the toast list. */
   label?: string;
   dismissLabel?: string;
-  /** Cap on simultaneously visible toasts; the oldest drops first. */
+  /** Cap on simultaneously visible toasts; the oldest non-error toast drops first. */
   maxVisible?: number;
   viewportClassName?: string;
 }
 
-interface Announcement {
-  polite: string;
-  assertive: string;
-}
+/**
+ * Sequential announcer for one live region. Messages queue and drain one per slot, so two toasts
+ * raised in the same tick are both spoken (LiveRegion would otherwise drop the first). A message
+ * equal to the one before gets a trailing no-break space so the region text actually changes.
+ */
+const useAnnouncer = () => {
+  const [message, setMessage] = useState("");
+  const queue = useRef<string[]>([]);
+  const busy = useRef(false);
+  const lastRaw = useRef<string | null>(null);
+  const lastEmitted = useRef("");
+  const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+
+  const drain = useCallback(() => {
+    const next = queue.current.shift();
+    if (next === undefined) {
+      busy.current = false;
+      return;
+    }
+    busy.current = true;
+    let text = next;
+    if (next === lastRaw.current) {
+      text = lastEmitted.current.endsWith(NBSP) ? next : `${next}${NBSP}`;
+    }
+    lastRaw.current = next;
+    lastEmitted.current = text;
+    setMessage(text);
+    timer.current = setTimeout(drain, TOAST_ANNOUNCE_SLOT_MS);
+  }, []);
+
+  const announce = useCallback(
+    (text: string) => {
+      queue.current.push(text);
+      if (!busy.current) drain();
+    },
+    [drain],
+  );
+
+  useEffect(() => () => clearTimeout(timer.current), []);
+
+  return { message, announce };
+};
+
+/** Drops the oldest non-error toast first; errors only go when nothing else can. */
+const evict = (list: ToastEntry[], max: number): ToastEntry[] => {
+  const next = [...list];
+  while (next.length > max) {
+    const older = next.slice(0, -1);
+    const index = older.findIndex((t) => t.tone !== "danger");
+    next.splice(index === -1 ? 0 : index, 1);
+  }
+  return next;
+};
 
 export const ToastProvider: FC<ToastProviderProps> = ({
   children,
@@ -155,8 +245,11 @@ export const ToastProvider: FC<ToastProviderProps> = ({
   viewportClassName,
 }) => {
   const [toasts, setToasts] = useState<ToastEntry[]>([]);
-  const [announcement, setAnnouncement] = useState<Announcement>({ polite: "", assertive: "" });
+  const polite = useAnnouncer();
+  const assertive = useAnnouncer();
   const counter = useRef(0);
+  const announcePolite = polite.announce;
+  const announceAssertive = assertive.announce;
 
   const dismiss = useCallback((id: string) => {
     setToasts((current) => current.filter((t) => t.id !== id));
@@ -168,16 +261,16 @@ export const ToastProvider: FC<ToastProviderProps> = ({
       const opts = typeof options === "string" ? { title: options } : options;
       counter.current += 1;
       const id = `toast-${counter.current}`;
-      setToasts((current) => [...current, { ...opts, id }].slice(-maxVisible));
-      const spoken = opts.description ? `${opts.title}. ${opts.description}` : opts.title;
-      // LiveRegion ignores an unchanged message, so alternate a trailing no-break space to let the
-      // same text (for example "Copied" twice) be announced again.
-      const message = counter.current % 2 === 0 ? `${spoken} ` : spoken;
-      const channel = opts.tone === "danger" ? "assertive" : "polite";
-      setAnnouncement((current) => ({ ...current, [channel]: message }));
+      setToasts((current) => evict([...current, { ...opts, id }], maxVisible));
+      const tone = opts.tone ?? "neutral";
+      const body = opts.description ? `${opts.title}. ${opts.description}` : opts.title;
+      // Same tone word as InlineAlert, so meaning does not rest on the icon colour.
+      const spoken = tone === "neutral" ? body : `${INLINE_ALERT_TONE_META[tone].label}: ${body}`;
+      if (tone === "danger") announceAssertive(spoken);
+      else announcePolite(spoken);
       return id;
     },
-    [maxVisible],
+    [maxVisible, announcePolite, announceAssertive],
   );
 
   const api = useMemo<ToastApi>(
@@ -189,16 +282,16 @@ export const ToastProvider: FC<ToastProviderProps> = ({
     <ToastContext.Provider value={api}>
       {children}
       <LiveRegion
-        message={announcement.polite}
+        message={polite.message}
         politeness="polite"
-        debounceMs={50}
+        debounceMs={TOAST_ANNOUNCE_DEBOUNCE_MS}
         announceInitial
         visuallyHidden
       />
       <LiveRegion
-        message={announcement.assertive}
+        message={assertive.message}
         politeness="assertive"
-        debounceMs={50}
+        debounceMs={TOAST_ANNOUNCE_DEBOUNCE_MS}
         announceInitial
         visuallyHidden
       />

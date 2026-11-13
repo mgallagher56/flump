@@ -17,7 +17,7 @@ export const toastViewportRecipe = cva({
     pointerEvents: "none",
     left: "4",
     right: "4",
-    bottom: "calc(env(safe-area-inset-bottom, 0px) + 1rem)",
+    bottom: "calc(var(--app-bottom-bar-offset, 0px) + env(safe-area-inset-bottom, 0px) + 1rem)",
     alignItems: "center",
     md: {
       left: "auto",

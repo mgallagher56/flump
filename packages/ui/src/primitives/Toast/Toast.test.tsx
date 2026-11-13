@@ -1,6 +1,6 @@
-import { act, fireEvent, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { type ToastOptions, ToastProvider, useToast } from "./Toast";
+import { TOAST_ANNOUNCE_SLOT_MS, type ToastOptions, ToastProvider, useToast } from "./Toast";
 
 const Trigger = ({
   options,
@@ -13,6 +13,37 @@ const Trigger = ({
   return (
     <button type="button" onClick={() => toast(options)}>
       {label}
+    </button>
+  );
+};
+
+const Burst = () => {
+  const { toast } = useToast();
+  return (
+    <button
+      type="button"
+      onClick={() => {
+        toast("First");
+        toast("Second");
+      }}
+    >
+      Burst
+    </button>
+  );
+};
+
+const Many = () => {
+  const { toast } = useToast();
+  return (
+    <button
+      type="button"
+      onClick={() => {
+        toast({ title: "Err", tone: "danger" });
+        toast("One");
+        toast("Two");
+      }}
+    >
+      Many
     </button>
   );
 };
@@ -52,7 +83,7 @@ describe("Toast", () => {
     setup({ title: "Could not save", tone: "danger" });
     show();
     advance(100);
-    expect(screen.getByRole("alert").textContent).toBe("Could not save");
+    expect(screen.getByRole("alert").textContent).toBe("Error: Could not save");
     expect(screen.getByRole("status").textContent).toBe("");
   });
 
@@ -84,10 +115,10 @@ describe("Toast", () => {
     show();
     const item = screen.getByRole("listitem");
     advance(3000);
-    fireEvent.mouseEnter(item);
+    fireEvent.pointerEnter(item, { pointerType: "mouse" });
     advance(60_000);
     expect(screen.queryByRole("list")).not.toBeNull();
-    fireEvent.mouseLeave(item);
+    fireEvent.pointerLeave(item, { pointerType: "mouse" });
     advance(1900);
     expect(screen.queryByRole("list")).not.toBeNull();
     advance(200);
@@ -95,7 +126,11 @@ describe("Toast", () => {
   });
 
   it("pauses while focus is inside the toast", () => {
-    setup({ title: "Copied", action: <button type="button">Undo</button> });
+    setup({
+      title: "Copied",
+      durationMs: 5000,
+      action: <button type="button">Undo</button>,
+    });
     show();
     fireEvent.focus(screen.getByRole("button", { name: "Undo" }));
     advance(60_000);
@@ -115,13 +150,127 @@ describe("Toast", () => {
     expect(screen.queryByRole("list")).toBeNull();
   });
 
-  it("announces the same text again on a second trigger", () => {
+  it("announces identical polite text again with a no-break space", () => {
     setup("Copied");
     show();
     advance(100);
+    expect(screen.getByRole("status").textContent).toBe("Copied");
+    advance(TOAST_ANNOUNCE_SLOT_MS);
     show();
     advance(100);
-    expect(screen.getByRole("status").textContent).toBe("Copied ");
+    expect(screen.getByRole("status").textContent).toBe("Copied\u00A0");
+    advance(TOAST_ANNOUNCE_SLOT_MS);
+    show();
+    advance(100);
+    // Third in a row: must differ from the previous emitted text, so the space is dropped.
+    expect(screen.getByRole("status").textContent).toBe("Copied");
+  });
+
+  it("re-announces identical danger text, per channel", () => {
+    setup({ title: "Could not save", tone: "danger" });
+    show();
+    advance(100);
+    expect(screen.getByRole("alert").textContent).toBe("Error: Could not save");
+    advance(TOAST_ANNOUNCE_SLOT_MS);
+    show();
+    advance(100);
+    expect(screen.getByRole("alert").textContent).toBe("Error: Could not save\u00A0");
+  });
+
+  it("does not add a space when the previous message on that channel differs", () => {
+    render(
+      <ToastProvider>
+        <Trigger options="Copied" label="A" />
+        <Trigger options={{ title: "Saved" }} label="B" />
+        <Trigger options={{ title: "Copied", tone: "danger" }} label="C" />
+      </ToastProvider>,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "A" }));
+    advance(TOAST_ANNOUNCE_SLOT_MS + 100);
+    fireEvent.click(screen.getByRole("button", { name: "B" }));
+    advance(100);
+    expect(screen.getByRole("status").textContent).toBe("Saved");
+    advance(TOAST_ANNOUNCE_SLOT_MS);
+    fireEvent.click(screen.getByRole("button", { name: "A" }));
+    advance(100);
+    expect(screen.getByRole("status").textContent).toBe("Copied");
+    // A polite "Copied" earlier does not affect the assertive channel.
+    fireEvent.click(screen.getByRole("button", { name: "C" }));
+    advance(100);
+    expect(screen.getByRole("alert").textContent).toBe("Error: Copied");
+  });
+
+  it("announces two toasts raised in the same tick one after the other", () => {
+    render(
+      <ToastProvider>
+        <Burst />
+      </ToastProvider>,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Burst" }));
+    advance(100);
+    expect(screen.getByRole("status").textContent).toBe("First");
+    advance(TOAST_ANNOUNCE_SLOT_MS);
+    advance(100);
+    expect(screen.getByRole("status").textContent).toBe("Second");
+  });
+
+  it("prefixes non-neutral announcements with the tone word", () => {
+    setup({ title: "Payment plan saved", tone: "positive" });
+    show();
+    advance(100);
+    expect(screen.getByRole("status").textContent).toBe("Success: Payment plan saved");
+  });
+
+  it("persists toasts with an action or long text by default", () => {
+    setup({ title: "Moved to archive", action: <button type="button">Undo</button> });
+    show();
+    advance(60_000);
+    expect(screen.getAllByRole("listitem")).toHaveLength(1);
+    fireEvent.click(screen.getByRole("button", { name: "Dismiss" }));
+    cleanup();
+    setup("A".repeat(81));
+    show();
+    advance(60_000);
+    expect(screen.getAllByRole("listitem")).toHaveLength(1);
+  });
+
+  it("pauses while the document is hidden", () => {
+    setup("Copied");
+    show();
+    advance(2000);
+    Object.defineProperty(document, "hidden", { configurable: true, value: true });
+    act(() => {
+      document.dispatchEvent(new Event("visibilitychange"));
+    });
+    advance(60_000);
+    expect(screen.queryByRole("list")).not.toBeNull();
+    Object.defineProperty(document, "hidden", { configurable: true, value: false });
+    act(() => {
+      document.dispatchEvent(new Event("visibilitychange"));
+    });
+    advance(3100);
+    expect(screen.queryByRole("list")).toBeNull();
+  });
+
+  it("a touch pointer does not pause the timer", () => {
+    setup("Copied");
+    show();
+    fireEvent.pointerEnter(screen.getByRole("listitem"), { pointerType: "touch" });
+    advance(5100);
+    expect(screen.queryByRole("list")).toBeNull();
+  });
+
+  it("evicts the oldest non-error toast first when over maxVisible", () => {
+    render(
+      <ToastProvider maxVisible={2}>
+        <Many />
+      </ToastProvider>,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Many" }));
+    const items = screen.getAllByRole("listitem").map((li) => li.textContent);
+    expect(items).toHaveLength(2);
+    expect(items[0]).toContain("Err");
+    expect(items[1]).toContain("Two");
   });
 
   it("caps visible toasts at maxVisible", () => {
