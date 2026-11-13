@@ -83,7 +83,7 @@ describe("SavingsContainer", () => {
     expect(screen.getByText("Total savings")).toBeDefined();
     expect(screen.getByRole("heading", { name: "Where you stand" })).toBeDefined();
     expect(screen.getByText("Your accounts")).toBeDefined();
-    expect(screen.getByText("Compound Interest Growth Forecaster")).toBeDefined();
+    expect(screen.getByText("Savings projection")).toBeDefined();
   });
 
   it("displays savings accounts in the list and switches tabs", () => {

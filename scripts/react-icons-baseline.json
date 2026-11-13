@@ -29,7 +29,6 @@
   "apps/web/app/components/pension/PensionForecasterCard.tsx": 1,
   "apps/web/app/components/pension/PensionQuickStartWizard.tsx": 1,
   "apps/web/app/components/pension/PensionSummaryCards.tsx": 1,
-  "apps/web/app/components/savings/SavingsForecasterCard.tsx": 1,
   "apps/web/app/components/tax/CopyTaxYearModal.tsx": 1,
   "apps/web/app/components/tax/PaymentsOnAccountCard.tsx": 1,
   "apps/web/app/components/tax/TaxIncomeSectionCard.tsx": 1,

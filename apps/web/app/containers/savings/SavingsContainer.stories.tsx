@@ -53,13 +53,20 @@ const openAccounts = async (canvasElement: HTMLElement) => {
 };
 
 // The Storybook decorator renders light and dark side by side, so queries use the first match.
-// The forecast panel is restyled in the next PR, so these stories open the accounts panel.
 export const Overview: Story = {
   play: async ({ canvasElement }) => {
     const canvas = await openAccounts(canvasElement);
     await expect(canvas.getAllByRole("heading", { name: "Your savings" })[0]).toBeDefined();
     await expect(canvas.getAllByText("Where you stand")[0]).toBeDefined();
     await expect(canvas.getAllByText("Your accounts")[0]).toBeDefined();
+  },
+};
+
+export const Forecast: Story = {
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(canvas.getAllByText("Savings projection")[0]).toBeDefined();
+    await expect(canvas.getAllByText("Forecast settings")[0]).toBeDefined();
   },
 };
 
