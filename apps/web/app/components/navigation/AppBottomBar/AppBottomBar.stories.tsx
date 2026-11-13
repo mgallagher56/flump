@@ -1,7 +1,10 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { MemoryRouter } from "react-router";
 import { expect, within } from "storybook/test";
 import { AppBottomBar } from "./AppBottomBar";
+
+const at = (pathname: string) => ({
+  router: { location: { pathname, search: "", hash: "", state: null, key: pathname } },
+});
 
 const meta: Meta<typeof AppBottomBar> = {
   title: "Navigation/AppBottomBar",
@@ -13,13 +16,7 @@ type Story = StoryObj<typeof AppBottomBar>;
 
 export const SignedIn: Story = {
   args: { user: { id: "1" } },
-  decorators: [
-    (Story) => (
-      <MemoryRouter initialEntries={["/app/budget"]}>
-        <Story />
-      </MemoryRouter>
-    ),
-  ],
+  parameters: at("/app/budget"),
   play: async ({ canvasElement }) => {
     await expect(within(canvasElement).getByTestId("mobile-bottom-bar")).toBeInTheDocument();
   },
@@ -27,14 +24,14 @@ export const SignedIn: Story = {
 
 export const SandboxSignedOut: Story = {
   args: { user: null },
-  decorators: [
-    (Story) => (
-      <MemoryRouter initialEntries={["/sandbox"]}>
-        <Story />
-      </MemoryRouter>
-    ),
-  ],
+  parameters: at("/sandbox"),
   play: async ({ canvasElement }) => {
     await expect(within(canvasElement).getByTestId("mobile-bottom-bar")).toBeInTheDocument();
   },
+};
+
+export const SandboxSignedOutDark: Story = {
+  globals: { theme: "dark" },
+  args: { user: null },
+  parameters: at("/sandbox"),
 };
