@@ -35,7 +35,7 @@ const CASES: {
   {
     name: "OverdraftCostCalculator",
     element: <OverdraftCostCalculator />,
-    control: () => screen.getByLabelText("Overdraft Balance"),
+    control: () => screen.getByLabelText("Average overdraft balance used (£)"),
     value: "2000",
     expected: /Overdraft costs £798 a year/,
   },
@@ -49,7 +49,7 @@ const CASES: {
   {
     name: "StudentLoanCalculator",
     element: <StudentLoanCalculator />,
-    control: () => screen.getByLabelText("Annual Salary"),
+    control: () => screen.getByLabelText("Gross annual salary (£)"),
     value: "50000",
     expected: /Repayment £[\d,]+ a month, £[\d,]+ a year/,
   },
@@ -63,7 +63,7 @@ const CASES: {
   {
     name: "ZeroPercentCliffCalculator",
     element: <ZeroPercentCliffCalculator />,
-    control: () => screen.getByLabelText("0% card balance"),
+    control: () => screen.getByLabelText("Current 0% card balance (£)"),
     value: "4800",
     expected: /Pay £267 a month to clear the balance/,
   },

@@ -70,17 +70,24 @@ export const introStyle = css({
 export const liabilityCardStyle = css({
   padding: "3",
   backgroundColor: "primary.subtle",
+  border: "none",
   borderRadius: "lg",
+  margin: "0",
   marginBottom: "4",
+  minWidth: "0",
 });
 
 export const liabilityTitleStyle = css({
   textStyle: "label.md",
   color: "text.primary",
+  float: "left",
+  width: "100%",
+  padding: "0",
   marginBottom: "2",
 });
 
 export const liabilityFieldsStyle = css({
+  clear: "both",
   display: "grid",
   gridTemplateColumns: "repeat(3, 1fr)",
   gap: "3",

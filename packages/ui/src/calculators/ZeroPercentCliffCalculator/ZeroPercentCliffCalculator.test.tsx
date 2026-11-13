@@ -20,7 +20,9 @@ describe("ZeroPercentCliffCalculator", () => {
   it("calls onSaveAndContinue with the balance", () => {
     const onSave = vi.fn();
     render(<ZeroPercentCliffCalculator ctaText="Go" onSaveAndContinue={onSave} />);
-    fireEvent.change(screen.getByLabelText("0% card balance"), { target: { value: "5000" } });
+    fireEvent.change(screen.getByLabelText("Current 0% card balance (£)"), {
+      target: { value: "5000" },
+    });
     fireEvent.click(screen.getByRole("button", { name: "Go" }));
     expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ totalUnsecuredDebt: 5000 }));
   });

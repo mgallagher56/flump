@@ -117,13 +117,15 @@ export const DebtSnowballCalculator: FC<DebtSnowballCalculatorProps> = ({
 
       <div className={gridStyle}>
         <div>
-          <div className={liabilityCardStyle}>
-            <div className={liabilityTitleStyle}>Liability 1: Credit card</div>
+          <fieldset className={liabilityCardStyle}>
+            <legend className={liabilityTitleStyle}>Liability 1: Credit card</legend>
             <div className={liabilityFieldsStyle}>
               <div className={inputGroupStyle}>
-                <span className={fieldLabelStyle}>Balance (£)</span>
+                <label className={fieldLabelStyle} htmlFor="debt-card-balance">
+                  Balance (£)
+                </label>
                 <input
-                  aria-label="Credit card balance"
+                  id="debt-card-balance"
                   className={textInputStyle}
                   type="number"
                   value={cardBalance}
@@ -131,9 +133,11 @@ export const DebtSnowballCalculator: FC<DebtSnowballCalculatorProps> = ({
                 />
               </div>
               <div className={inputGroupStyle}>
-                <span className={fieldLabelStyle}>APR (%)</span>
+                <label className={fieldLabelStyle} htmlFor="debt-card-apr">
+                  APR (%)
+                </label>
                 <input
-                  aria-label="Credit card APR"
+                  id="debt-card-apr"
                   className={textInputStyle}
                   step="0.1"
                   type="number"
@@ -142,9 +146,11 @@ export const DebtSnowballCalculator: FC<DebtSnowballCalculatorProps> = ({
                 />
               </div>
               <div className={inputGroupStyle}>
-                <span className={fieldLabelStyle}>Min / mo (£)</span>
+                <label className={fieldLabelStyle} htmlFor="debt-card-min">
+                  Min / mo (£)
+                </label>
                 <input
-                  aria-label="Credit card minimum payment"
+                  id="debt-card-min"
                   className={textInputStyle}
                   type="number"
                   value={cardMin}
@@ -152,15 +158,17 @@ export const DebtSnowballCalculator: FC<DebtSnowballCalculatorProps> = ({
                 />
               </div>
             </div>
-          </div>
+          </fieldset>
 
-          <div className={liabilityCardStyle}>
-            <div className={liabilityTitleStyle}>Liability 2: Personal loan</div>
+          <fieldset className={liabilityCardStyle}>
+            <legend className={liabilityTitleStyle}>Liability 2: Personal loan</legend>
             <div className={liabilityFieldsStyle}>
               <div className={inputGroupStyle}>
-                <span className={fieldLabelStyle}>Balance (£)</span>
+                <label className={fieldLabelStyle} htmlFor="debt-loan-balance">
+                  Balance (£)
+                </label>
                 <input
-                  aria-label="Personal loan balance"
+                  id="debt-loan-balance"
                   className={textInputStyle}
                   type="number"
                   value={loanBalance}
@@ -168,9 +176,11 @@ export const DebtSnowballCalculator: FC<DebtSnowballCalculatorProps> = ({
                 />
               </div>
               <div className={inputGroupStyle}>
-                <span className={fieldLabelStyle}>APR (%)</span>
+                <label className={fieldLabelStyle} htmlFor="debt-loan-apr">
+                  APR (%)
+                </label>
                 <input
-                  aria-label="Personal loan APR"
+                  id="debt-loan-apr"
                   className={textInputStyle}
                   step="0.1"
                   type="number"
@@ -179,9 +189,11 @@ export const DebtSnowballCalculator: FC<DebtSnowballCalculatorProps> = ({
                 />
               </div>
               <div className={inputGroupStyle}>
-                <span className={fieldLabelStyle}>Min / mo (£)</span>
+                <label className={fieldLabelStyle} htmlFor="debt-loan-min">
+                  Min / mo (£)
+                </label>
                 <input
-                  aria-label="Personal loan minimum payment"
+                  id="debt-loan-min"
                   className={textInputStyle}
                   type="number"
                   value={loanMin}
@@ -189,7 +201,7 @@ export const DebtSnowballCalculator: FC<DebtSnowballCalculatorProps> = ({
                 />
               </div>
             </div>
-          </div>
+          </fieldset>
 
           <div className={inputGroupStyle}>
             <div className={surplusRowStyle}>

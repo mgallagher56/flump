@@ -92,7 +92,7 @@ export const TaxTrapCalculator: FC<TaxTrapCalculatorProps> = ({
     <div className={cardStyle} data-testid="tax-trap-calculator-tool">
       <div className={headerStyle}>
         <div className={badgeRowStyle}>
-          <span className={badgeStyle({ tone: "brand" })}>UK {TAX_YEAR} Tax Engine</span>
+          <span className={badgeStyle({ tone: "brand" })}>UK {TAX_YEAR} tax engine</span>
           {isTrapZone && (
             <span className={badgeStyle({ tone: "danger" })}>
               <Icon icon={TriangleAlert} size="sm" /> 60% trap active
@@ -136,9 +136,9 @@ export const TaxTrapCalculator: FC<TaxTrapCalculatorProps> = ({
           onChange={(e) => setGrossIncome(Number(e.target.value))}
         />
         <div className={scaleLabelsStyle}>
-          <span>£90k (40% Higher Rate)</span>
-          <span>£100k (Trap Starts)</span>
-          <span>£125,140 (Zero Allowance)</span>
+          <span>£90k (40% higher rate)</span>
+          <span>£100k (trap starts)</span>
+          <span>£125,140 (zero allowance)</span>
           <span>£150k</span>
         </div>
       </div>
@@ -178,11 +178,11 @@ export const TaxTrapCalculator: FC<TaxTrapCalculatorProps> = ({
       <LiveRegion debounceMs={1000} message={headline} visuallyHidden />
       <div className={metricsGridStyle}>
         <div className={metricCard}>
-          <span className={metricLabelStyle}>Effective Marginal Rate</span>
+          <span className={metricLabelStyle}>Effective marginal rate</span>
           <span className={metricValueStyle({ tone: stillInTrap ? "danger" : "positive" })}>
             {stillInTrap ? "62.0%" : "42.0%"}
           </span>
-          <span className={metricNoteStyle}>40% Income Tax + 20% Taper + 2% NI</span>
+          <span className={metricNoteStyle}>40% income tax + 20% taper + 2% NI</span>
         </div>
 
         <div className={metricCard}>
@@ -212,8 +212,8 @@ export const TaxTrapCalculator: FC<TaxTrapCalculatorProps> = ({
         />
         <span>
           {childcareEligible
-            ? "Eligible for 15–30 Hours Free Childcare & Tax-Free Childcare (Adjusted Net Income ≤ £100k)"
-            : "Childcare Cliff Edge Triggered: Adjusted net income exceeds £100,000. All funded hours revoked."}
+            ? "Eligible for 15–30 hours of funded childcare and Tax-Free Childcare (adjusted net income ≤ £100k)"
+            : "Childcare cliff edge triggered: adjusted net income exceeds £100,000, so all funded hours are lost."}
         </span>
       </div>
 
