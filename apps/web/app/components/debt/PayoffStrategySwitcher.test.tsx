@@ -59,6 +59,41 @@ describe("PayoffStrategySwitcher", () => {
     expect(handleSelect).toHaveBeenCalledWith("snowball");
   });
 
+  it("shows the same interest-vs-minimum field for Avalanche and Snowball", () => {
+    render(
+      <PayoffStrategySwitcher
+        budgetSurplus={150}
+        comparison={mockComparison}
+        extraPayment={50}
+        selectedStrategy="avalanche"
+        onChangeExtraPayment={vi.fn()}
+        onSelectStrategy={vi.fn()}
+      />,
+    );
+    // Avalanche 1,520 - 640 = 880; Snowball 1,520 - 710 = 810.
+    expect(screen.getByText(/£880(\.00)? lower/)).toBeDefined();
+    expect(screen.getByText(/£810(\.00)? lower/)).toBeDefined();
+    expect(screen.queryByText(/Quick Win/i)).toBeNull();
+  });
+
+  it("never shows a negative interest-vs-minimum figure for Snowball", () => {
+    const worse = {
+      ...mockComparison,
+      snowball: { ...mockComparison.snowball, totalInterest: 2000 },
+    };
+    render(
+      <PayoffStrategySwitcher
+        budgetSurplus={150}
+        comparison={worse}
+        extraPayment={50}
+        selectedStrategy="avalanche"
+        onChangeExtraPayment={vi.fn()}
+        onSelectStrategy={vi.fn()}
+      />,
+    );
+    expect(screen.getByText(/£0(\.00)? lower/)).toBeDefined();
+  });
+
   it("handles slider input changes", () => {
     const handleExtra = vi.fn();
 

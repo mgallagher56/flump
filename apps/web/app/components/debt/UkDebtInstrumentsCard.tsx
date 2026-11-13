@@ -217,7 +217,7 @@ export const UkDebtInstrumentsCard: FC = () => {
             type="button"
             onClick={() => setActiveTab("student")}
           >
-            <FaGraduationCap /> UK Student Loan Guardrail
+            <FaGraduationCap /> UK Student Loan Outlook
           </button>
         </div>
 
@@ -307,15 +307,17 @@ export const UkDebtInstrumentsCard: FC = () => {
                   paddingBottom: "8px",
                 }}
               >
-                <FLPText fontSize="sm">Estimated penalty interest if left unpaid year 1:</FLPText>
+                <FLPText fontSize="sm">
+                  Estimated first-year interest at the revert APR if not cleared:
+                </FLPText>
                 <FLPText color="status.danger.text" fontSize="sm" fontWeight="bold">
                   {formatCurrency(cliffResult.penaltyInterestFirstYearIfUnpaid)}
                 </FLPText>
               </div>
 
               <FLPText color="text.muted" fontSize="xs">
-                💡 Note: Never make only the minimum repayment on a 0% card, or you will revert to
-                the full APR with an unaddressed balance.
+                Note: minimum repayments alone may not clear the balance before the promotional
+                period ends. Any balance remaining is then charged the revert APR.
               </FLPText>
             </div>
           </div>
@@ -378,8 +380,8 @@ export const UkDebtInstrumentsCard: FC = () => {
               </div>
 
               <FLPText color="text.muted" fontSize="xs">
-                Unlike a fixed loan payment, overdraft interest is deducted directly from the
-                account balance.
+                Unlike a fixed loan payment, overdraft interest is charged to the account, which
+                increases the overdrawn balance.
               </FLPText>
             </div>
           </div>
@@ -457,9 +459,9 @@ export const UkDebtInstrumentsCard: FC = () => {
               </div>
 
               <FLPText color="text.muted" fontSize="xs">
-                Saving {formatCurrency(balloonResult.monthlySinkingFundNeeded)}/month would build up
-                the full {formatCurrency(balloonAmount)} by the time the contract expires, for
-                comparison with the cost of a final payment if the car is purchased.
+                Setting aside {formatCurrency(balloonResult.monthlySinkingFundNeeded)}/month for the
+                remaining term adds up to {formatCurrency(balloonAmount)}, the optional final
+                payment if the car is purchased. Interest on savings is not included.
               </FLPText>
             </div>
           </div>

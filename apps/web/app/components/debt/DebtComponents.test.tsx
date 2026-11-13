@@ -241,7 +241,7 @@ describe("Debt Components: AddDebtDialog, PayoffStrategySwitcher, UkDebtInstrume
     fireEvent.change(balloonInputs[1], { target: { value: "18" } });
     fireEvent.change(balloonInputs[2], { target: { value: "9000" } });
 
-    // Tab 4: UK Student Loan Guardrail
+    // Tab 4: UK Student Loan Outlook
     fireEvent.click(screen.getByRole("button", { name: /UK Student Loan Distinction/i }));
     fireEvent.change(screen.getByLabelText("Student Loan Plan"), {
       target: { value: "plan1" },
