@@ -1,6 +1,7 @@
+import { PortfolioSnapshot, type RawAccount, type RawAccountDetail } from "@flump/finance-engine";
 import * as Dialog from "@radix-ui/react-dialog";
 import { css } from "@repo/ui/styled-system/css";
-import { type FC, useState } from "react";
+import { type FC, useRef, useState } from "react";
 import { FaCheckCircle, FaClock, FaTimes } from "react-icons/fa";
 import { useFetcher } from "react-router";
 import FLPButton from "~/components/core/buttons/FLPButton";
@@ -8,16 +9,89 @@ import FLPHeading from "~/components/core/typography/FLPHeading";
 import FLPText from "~/components/core/typography/FLPText";
 import type { Account } from "~/containers/accounts/types";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
+import { roundTo2dp } from "~/utils/roundTo2dp";
 import { currentMonth, currentYear } from "~/utils/utils";
 
 interface MonthlyBalanceCheckInDrawerProps {
   accounts: Account[];
+  /** Month-end history rows; lets the drawer compare against last month's net worth. */
+  accountDetails?: RawAccountDetail[];
 }
 
-export const MonthlyBalanceCheckInDrawer: FC<MonthlyBalanceCheckInDrawerProps> = ({ accounts }) => {
+const MONTH_NAMES = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+];
+
+export interface CheckInChange {
+  /** Signed net worth change in pounds. */
+  delta: number;
+  /** What the change is measured against, for example "October" or "your last update". */
+  since: string;
+}
+
+/**
+ * Net worth after the check-in minus the baseline. The baseline is last month's month-end net
+ * worth when every account (student loans aside, they are outside net worth) has history, and
+ * otherwise the net worth from the balances before this check-in.
+ */
+export function computeCheckInChange(
+  accounts: Account[],
+  details: RawAccountDetail[],
+  updatedBalances: Record<string, number>,
+  now: { year: number; month: number } = { year: currentYear, month: currentMonth },
+): CheckInChange {
+  const before = new PortfolioSnapshot(accounts as RawAccount[], details);
+  const after = new PortfolioSnapshot(
+    accounts.map((a) => ({
+      ...a,
+      balance: updatedBalances[a.id as string] ?? a.balance,
+    })) as RawAccount[],
+    details,
+  );
+  const afterNetWorth = after.getTotalNetWorth();
+
+  const withHistory = new Set(details.map((d) => String(d.accountId ?? d.account_id)));
+  const everyAccountTracked = accounts
+    .filter((a) => a.type !== "Student Loan")
+    .every((a) => withHistory.has(String(a.id)));
+  const nowIndex = now.year * 12 + now.month;
+  const lastMonth = everyAccountTracked
+    ? before
+        .getMonthlyHistory(120)
+        .filter((p) => p.year * 12 + p.month < nowIndex)
+        .at(-1)
+    : undefined;
+
+  if (lastMonth) {
+    return {
+      delta: roundTo2dp(afterNetWorth - lastMonth.netWorth),
+      since: MONTH_NAMES[lastMonth.month - 1] ?? "last month",
+    };
+  }
+  return {
+    delta: roundTo2dp(afterNetWorth - before.getTotalNetWorth()),
+    since: "your last update",
+  };
+}
+
+export const MonthlyBalanceCheckInDrawer: FC<MonthlyBalanceCheckInDrawerProps> = ({
+  accounts,
+  accountDetails = [],
+}) => {
   const [isOpen, setIsOpen] = useState(false);
-  const { formatCurrency } = useFormatCurrency();
-  const fetcher = useFetcher();
+  const { formatCurrency, formatCurrencyDecimal } = useFormatCurrency();
+  const fetcher = useFetcher<{ success?: boolean; error?: string }>();
 
   // Local state for updated balances
   const [balanceMap, setBalanceMap] = useState<Record<string, string>>(() => {
@@ -28,7 +102,18 @@ export const MonthlyBalanceCheckInDrawer: FC<MonthlyBalanceCheckInDrawerProps> =
     return initial;
   });
 
-  const [savedSuccess, setSavedSuccess] = useState(false);
+  // saving: waiting for the batch response. A result only counts once the fetcher is idle with
+  // data that is not the response to an earlier submission.
+  const [phase, setPhase] = useState<"editing" | "saving">("editing");
+  const [formError, setFormError] = useState<string | null>(null);
+  const [change, setChange] = useState<CheckInChange | null>(null);
+  const dataAtSubmit = useRef<unknown>(undefined);
+
+  const responded =
+    phase === "saving" && fetcher.state === "idle" && fetcher.data !== dataAtSubmit.current;
+  const savedSuccess = responded && fetcher.data?.success === true;
+  const serverError = responded && fetcher.data?.success !== true;
+  const isSaving = phase === "saving" && !responded;
 
   const handleOpen = (open: boolean) => {
     if (open) {
@@ -37,7 +122,9 @@ export const MonthlyBalanceCheckInDrawer: FC<MonthlyBalanceCheckInDrawerProps> =
         initial[acc.id] = String(acc.balance ?? 0);
       }
       setBalanceMap(initial);
-      setSavedSuccess(false);
+      setPhase("editing");
+      setFormError(null);
+      setChange(null);
     }
     setIsOpen(open);
   };
@@ -47,44 +134,33 @@ export const MonthlyBalanceCheckInDrawer: FC<MonthlyBalanceCheckInDrawerProps> =
   };
 
   const handleSaveAll = () => {
-    // Submit each updated account balance
+    const updated: Record<string, number> = {};
     for (const acc of accounts) {
-      const updatedVal = balanceMap[acc.id];
-      if (updatedVal !== undefined && Number(updatedVal) !== Number(acc.balance)) {
-        fetcher.submit(
-          {
-            intent: "update",
-            accountId: acc.id,
-            name: acc.name,
-            type: acc.type,
-            balance: updatedVal,
-          },
-          { method: "post" },
-        );
+      const raw = balanceMap[acc.id as string];
+      const value = raw === undefined || raw.trim() === "" ? Number.NaN : Number(raw);
+      if (!Number.isFinite(value)) {
+        setFormError(`Enter a balance for ${acc.name}.`);
+        return;
       }
+      updated[acc.id as string] = roundTo2dp(value);
     }
-    setSavedSuccess(true);
-    setTimeout(() => {
-      setIsOpen(false);
-      setSavedSuccess(false);
-    }, 1200);
+    setFormError(null);
+    setChange(computeCheckInChange(accounts, accountDetails, updated));
+    dataAtSubmit.current = fetcher.data;
+    setPhase("saving");
+    // One request for every account: the backend applies it in a single transaction.
+    fetcher.submit(
+      {
+        intent: "checkIn",
+        balances: JSON.stringify(
+          accounts.map((acc) => ({ id: acc.id, balance: updated[acc.id as string] })),
+        ),
+      },
+      { method: "post" },
+    );
   };
 
-  const monthNames = [
-    "January",
-    "February",
-    "March",
-    "April",
-    "May",
-    "June",
-    "July",
-    "August",
-    "September",
-    "October",
-    "November",
-    "December",
-  ];
-  const currentMonthName = monthNames[currentMonth] || "Current Month";
+  const currentMonthName = MONTH_NAMES[currentMonth - 1] || "Current Month";
 
   return (
     <Dialog.Root open={isOpen} onOpenChange={handleOpen}>
@@ -206,9 +282,17 @@ export const MonthlyBalanceCheckInDrawer: FC<MonthlyBalanceCheckInDrawerProps> =
               <FLPHeading as="h3" size="md">
                 Balances Updated Successfully!
               </FLPHeading>
-              <FLPText color="text.muted" fontSize="sm">
-                Your Net Worth and allocation figures have been refreshed.
-              </FLPText>
+              {change ? (
+                <FLPText
+                  color="text.muted"
+                  fontSize="sm"
+                  className={css({ fontVariantNumeric: "tabular-nums" })}
+                >
+                  {change.delta === 0
+                    ? `Net worth unchanged since ${change.since}`
+                    : `Net worth ${change.delta > 0 ? "up" : "down"} ${formatCurrencyDecimal(Math.abs(change.delta))} since ${change.since}`}
+                </FLPText>
+              ) : null}
             </div>
           ) : (
             <>
@@ -266,6 +350,7 @@ export const MonthlyBalanceCheckInDrawer: FC<MonthlyBalanceCheckInDrawerProps> =
                             fontSize: "sm",
                             textAlign: "right",
                             fontWeight: "medium",
+                            fontVariantNumeric: "tabular-nums",
                             _focus: {
                               borderColor: "primary",
                               outline: "none",
@@ -278,6 +363,13 @@ export const MonthlyBalanceCheckInDrawer: FC<MonthlyBalanceCheckInDrawerProps> =
                 )}
               </div>
 
+              {formError || serverError ? (
+                <FLPText role="alert" color="status.danger.text" fontSize="sm">
+                  {formError ??
+                    fetcher.data?.error ??
+                    "We couldn't save your balances. Please try again."}
+                </FLPText>
+              ) : null}
               <div
                 className={css({
                   display: "flex",
@@ -294,7 +386,7 @@ export const MonthlyBalanceCheckInDrawer: FC<MonthlyBalanceCheckInDrawerProps> =
                 <FLPButton
                   variant="primary"
                   onClick={handleSaveAll}
-                  disabled={accounts.length === 0}
+                  disabled={accounts.length === 0 || isSaving}
                 >
                   Save All Current Balances
                 </FLPButton>

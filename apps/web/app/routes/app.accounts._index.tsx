@@ -47,6 +47,23 @@ export const action = async (args: ActionFunctionArgs) => {
         ...(studentLoanPlan !== undefined ? { studentLoanPlan } : {}),
         ...(balance !== undefined ? { balance } : {}),
       });
+    } else if (intent === "checkIn") {
+      // Monthly check-in: one request for every account (the backend applies it atomically).
+      let balances: unknown;
+      try {
+        balances = JSON.parse(String(formData.get("balances") ?? ""));
+      } catch {
+        balances = undefined;
+      }
+      if (!Array.isArray(balances)) {
+        return data({ success: false, error: "We couldn't read those balances." }, { status: 400 });
+      }
+      await send("/accounts/balances", "PATCH", {
+        balances: balances.map((entry: { id?: unknown; balance?: unknown }) => ({
+          id: entry?.id,
+          balance: typeof entry?.balance === "number" ? roundTo2dp(entry.balance) : entry?.balance,
+        })),
+      });
     } else if (intent === "delete") {
       await send(`/accounts/${encodeURIComponent(String(accountId ?? ""))}`, "DELETE");
     } else if (intent === "syncConnection") {
