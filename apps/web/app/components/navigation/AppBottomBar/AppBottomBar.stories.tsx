@@ -18,7 +18,9 @@ export const SignedIn: Story = {
   args: { user: { id: "1" } },
   parameters: at("/app/budget"),
   play: async ({ canvasElement }) => {
-    await expect(within(canvasElement).getByTestId("mobile-bottom-bar")).toBeInTheDocument();
+    await expect(
+      within(canvasElement).getByRole("navigation", { name: "Mobile Bottom Navigation" }),
+    ).toBeInTheDocument();
   },
 };
 
@@ -26,7 +28,9 @@ export const SandboxSignedOut: Story = {
   args: { user: null },
   parameters: at("/sandbox"),
   play: async ({ canvasElement }) => {
-    await expect(within(canvasElement).getByTestId("mobile-bottom-bar")).toBeInTheDocument();
+    await expect(
+      within(canvasElement).getByRole("navigation", { name: "Mobile Bottom Navigation" }),
+    ).toBeInTheDocument();
   },
 };
 
