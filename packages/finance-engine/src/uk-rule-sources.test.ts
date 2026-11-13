@@ -6,6 +6,10 @@ import {
   type UkTaxVectorRegion,
 } from "./test-vectors/uk-tax.vectors.js";
 import {
+  selectUkWhatIfVectors,
+  type UkWhatIfVectorKind,
+} from "./test-vectors/uk-whatif.vectors.js";
+import {
   ruleSourceUrls,
   ruleUnverifiedNotes,
   UK_RULE_KEYS,
@@ -47,6 +51,12 @@ const VECTOR_FOR_KEY: Partial<
   dividends: { kind: "dividends" },
 };
 
+/** Keys exercised by the E25-T2 catalogue (`uk-whatif.vectors.ts`), which has its own kinds. */
+const WHATIF_VECTOR_FOR_KEY: Partial<Record<UkRuleKey, UkWhatIfVectorKind>> = {
+  hicbc: "hicbc",
+  childBenefit: "hicbc",
+};
+
 const NO_VECTOR_YET: readonly UkRuleKey[] = [
   "savingsAllowance",
   "pensionAnnualAllowance",
@@ -79,6 +89,17 @@ describe("UK rule sources registry (E25-T1)", () => {
 
   it("every key maps to a vector kind that has vectors for every year, or is listed as pending", () => {
     for (const key of UK_RULE_KEYS) {
+      const whatIfKind = WHATIF_VECTOR_FOR_KEY[key];
+      if (whatIfKind) {
+        expect(NO_VECTOR_YET, key).not.toContain(key);
+        for (const taxYear of UK_TAX_VECTOR_YEARS) {
+          expect(
+            selectUkWhatIfVectors({ taxYear, kind: whatIfKind }).length,
+            `${taxYear} ${key}`,
+          ).toBeGreaterThan(0);
+        }
+        continue;
+      }
       const link = VECTOR_FOR_KEY[key];
       if (!link) {
         expect(NO_VECTOR_YET, key).toContain(key);
@@ -91,6 +112,17 @@ describe("UK rule sources registry (E25-T1)", () => {
           `${taxYear} ${key}`,
         ).toBeGreaterThan(0);
       }
+    }
+  });
+
+  it("HICBC thresholds are verified for every year; Child Benefit rates are unverified for 2020/21 and 2021/22 only (E25-T2)", () => {
+    for (const year of SUPPORTED_UK_TAX_YEARS) {
+      expect(UK_RULE_SOURCES[year].hicbc.status, year).toBe("verified");
+      expect(UK_RULE_SOURCES[year].hicbc.url, year).toBe(
+        "https://www.gov.uk/child-benefit-tax-charge",
+      );
+      const expected = year === "2020/21" || year === "2021/22" ? "unverified" : "verified";
+      expect(UK_RULE_SOURCES[year].childBenefit.status, year).toBe(expected);
     }
   });
 

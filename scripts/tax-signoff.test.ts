@@ -4,6 +4,7 @@ import {
   UK_TAX_VECTORS,
   type UkTaxVector,
 } from "../packages/finance-engine/src/test-vectors/uk-tax.vectors";
+import { UK_WHATIF_VECTORS } from "../packages/finance-engine/src/test-vectors/uk-whatif.vectors";
 import { applySignoff, generateSheet, parseTicked } from "./lib/tax-signoff";
 
 const v = UK_TAX_VECTORS.find((x) => x.status === "VERIFIED") as UkTaxVector;
@@ -77,5 +78,31 @@ describe("CLI guards", () => {
         .exitCode,
     ).toBe(2);
     expect(run(["apply", "--year", "2026/27", "--sheet", "x"], { CI: "" }).exitCode).toBe(2);
+  });
+});
+
+describe("E25 what-if catalogue sign-off", () => {
+  const w = UK_WHATIF_VECTORS[0] as (typeof UK_WHATIF_VECTORS)[number];
+  test("the sheet lists what-if vectors alongside the core ones", () => {
+    const all = [...UK_TAX_VECTORS, ...UK_WHATIF_VECTORS];
+    const sheet = generateSheet(w.taxYear, all);
+    expect(sheet).toContain(`\`${w.id}\``);
+    expect(sheet.match(/^- \[ \] /gm)?.length).toBe(
+      all.filter((x) => x.taxYear === w.taxYear).length,
+    );
+  });
+  test("an UNVERIFIED what-if vector is skipped without a ruling and signed with one", () => {
+    const file = fake(w.id);
+    const skipped = applySignoff(file, w.taxYear, [{ id: w.id }], UK_WHATIF_VECTORS, "2026-12-01");
+    expect(skipped.signed).toEqual([]);
+    expect(skipped.skipped[0]?.reason).toContain("needs a ruling");
+    const signed = applySignoff(
+      file,
+      w.taxYear,
+      [{ id: w.id, ruling: "owner ruled" }],
+      UK_WHATIF_VECTORS,
+      "2026-12-01",
+    );
+    expect(signed.signed).toEqual([w.id]);
   });
 });
