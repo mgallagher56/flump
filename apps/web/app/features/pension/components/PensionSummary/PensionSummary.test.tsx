@@ -37,7 +37,7 @@ describe("<PensionSummary />", () => {
       <PensionSummary {...props} potsCount={0} totalValue={0} />,
     );
     expect(container.querySelectorAll("[data-tone='hero']")).toHaveLength(0);
-    expect(getByText("No pots yet")).toBeDefined();
+    expect(getByText("Add a pension pot to see its value")).toBeDefined();
     expect(container.textContent).not.toContain("5.4%");
   });
 

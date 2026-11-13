@@ -22,9 +22,14 @@ export interface PensionSummaryProps {
 
 /**
  * Pension page KPI strip (E15 T3.5). Four cards at most. "Total in your pots" is the page's
- * single `surface.hero` block and falls back to a plain "No pots yet" card when there are none.
+ * single `surface.hero` block and falls back to a plain "Not set" card when there are none.
  * Anything that cannot be worked out is passed as null so the card says so instead of showing 0.
  */
+const pctFormat = new Intl.NumberFormat("en-GB", {
+  minimumFractionDigits: 1,
+  maximumFractionDigits: 1,
+});
+
 export const PensionSummary: FC<PensionSummaryProps> = ({
   totalValue,
   potsCount,
@@ -40,6 +45,7 @@ export const PensionSummary: FC<PensionSummaryProps> = ({
   growthRateIsPlaceholder = false,
 }) => {
   const hasPots = potsCount > 0;
+  const pct = (n: number) => `${pctFormat.format(n)}%`;
   // Without a salary the employee and employer amounts are unknown; direct pot payments still count.
   const monthlyTotal = hasSalary
     ? monthlyEmployeeContrib + monthlyEmployerContrib + directMonthlyContrib
@@ -52,7 +58,6 @@ export const PensionSummary: FC<PensionSummaryProps> = ({
     <KpiStrip columns={4}>
       <KpiCard
         label="Total in your pots"
-        notSetLabel="No pots yet"
         subtext={
           hasPots
             ? `Across ${potsCount} ${potsCount === 1 ? "pension pot" : "pension pots"}`
@@ -67,7 +72,7 @@ export const PensionSummary: FC<PensionSummaryProps> = ({
           monthlyTotal === null
             ? "Add your salary to include your own and your employer's contributions"
             : hasSalary
-              ? `You ${employeePercent.toFixed(1)}% and your employer ${employerPercent.toFixed(1)}% of salary${
+              ? `You ${pct(employeePercent)} and your employer ${pct(employerPercent)} of salary${
                   directMonthlyContrib > 0 ? ", plus payments into your pots" : ""
                 }`
               : "Payments into your pots only; salary not set"
@@ -115,9 +120,7 @@ export const PensionSummary: FC<PensionSummaryProps> = ({
               ? "A 5% placeholder: no growth rate is set on your pots"
               : "Average across your pots, weighted by value"
         }
-        value={
-          hasPots ? <span className={figure}>{weightedReturnRate.toFixed(1)}% a year</span> : null
-        }
+        value={hasPots ? <span className={figure}>{pct(weightedReturnRate)} a year</span> : null}
       />
     </KpiStrip>
   );
