@@ -34,4 +34,60 @@ describe("SegmentedTabs Primitive", () => {
     const tab = screen.getByRole("tab", { name: "Snowball (Lowest Balance)" });
     expect(document.getElementById(tab.getAttribute("aria-controls") ?? "")).not.toBeNull();
   });
+
+  it("names the tab list with aria-label", () => {
+    render(
+      <SegmentedTabs
+        aria-label="Sections"
+        items={items}
+        value="avalanche"
+        onValueChange={vi.fn()}
+      />,
+    );
+    expect(screen.getByRole("tablist", { name: "Sections" })).toBeDefined();
+  });
+
+  it("does not emit a dangling aria-controls when no panels are given", () => {
+    render(<SegmentedTabs items={items} value="avalanche" onValueChange={vi.fn()} />);
+    for (const tab of screen.getAllByRole("tab")) {
+      expect(tab.hasAttribute("aria-controls")).toBe(false);
+    }
+  });
+
+  it("links the active tab to a real panel via the panels prop", () => {
+    render(
+      <SegmentedTabs
+        items={items}
+        value="snowball"
+        onValueChange={vi.fn()}
+        panels={{ avalanche: "A", snowball: "S", minimum: "M" }}
+      />,
+    );
+    const tab = screen.getByRole("tab", { name: "Snowball (Lowest Balance)" });
+    const panel = screen.getByRole("tabpanel");
+    expect(tab.getAttribute("aria-controls")).toBe(panel.id);
+    expect(panel.getAttribute("aria-labelledby")).toBe(tab.id);
+    expect(panel.textContent).toBe("S");
+    // Radix keeps inactive panels in the DOM (hidden, empty), so aria-controls still resolves.
+    const inactive = screen.getByRole("tab", { name: "Minimum Only" });
+    const target = document.getElementById(inactive.getAttribute("aria-controls") ?? "");
+    expect(target?.hasAttribute("hidden")).toBe(true);
+  });
+
+  it("supports SegmentedTabs.Panel children and keepMounted", () => {
+    render(
+      <SegmentedTabs items={items} value="avalanche" onValueChange={vi.fn()}>
+        <SegmentedTabs.Panel value="avalanche">First</SegmentedTabs.Panel>
+        <SegmentedTabs.Panel value="snowball" keepMounted>
+          Second
+        </SegmentedTabs.Panel>
+      </SegmentedTabs>,
+    );
+    expect(screen.getByText("First")).toBeDefined();
+    const hidden = screen.getByText("Second", { selector: "[role=tabpanel]" });
+    expect(hidden.getAttribute("data-state")).toBe("inactive");
+    expect(
+      screen.getByRole("tab", { name: "Snowball (Lowest Balance)" }).getAttribute("aria-controls"),
+    ).toBe(hidden.id);
+  });
 });
