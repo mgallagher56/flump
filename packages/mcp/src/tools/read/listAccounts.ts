@@ -49,6 +49,7 @@ export const listAccounts = defineFlumpTool({
     const m = await loadReadModel(ctx);
     const missing: Missing[] = [];
     if (m.accounts.length === 0) missing.push(ASK_NO_ACCOUNTS);
+    const refs = new Map(m.accounts.map((a) => [m.idOf("acc", a.id), m.refOf(a)]));
     const rows = m.accounts
       .filter((a) => !category || a.category === category)
       .map((a) => ({
@@ -67,8 +68,8 @@ export const listAccounts = defineFlumpTool({
     for (const r of unknownDebt) {
       debtMissing.push({
         field: `accounts.${r.id}.interestRatePct`,
-        why: `The interest rate on ${r.label} is not recorded.`,
-        askUser: `What is the APR on your ${r.label}?`,
+        why: `The interest rate on ${refs.get(r.id) ?? "Debt account"} (${r.id}) is not recorded.`,
+        askUser: `What is the APR on your ${refs.get(r.id) ?? "Debt account"}?`,
       });
     }
     missing.push(

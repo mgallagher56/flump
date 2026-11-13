@@ -1,4 +1,5 @@
 import {
+  type AccountCategory,
   anonymiseDescription,
   type BudgetEntryItem,
   type BuildContextPackInput,
@@ -13,6 +14,47 @@ import type { McpServerContext } from "../../types.js";
 
 export type Missing = NonNullable<ToolOutput<unknown>["missing"]>[number];
 
+const CATEGORY_NAMES: Record<AccountCategory, string> = {
+  cash: "Current",
+  savings: "Saving",
+  investments: "Investment",
+  pensions: "Pension",
+  debt: "Debt",
+  mortgages: "Mortgage",
+  property: "Property",
+  studentLoans: "Student Loan",
+  other: "Other",
+};
+
+const MAX_TEXT = 60;
+
+function isUnsafe(code: number): boolean {
+  return (
+    code <= 0x1f ||
+    (code >= 0x7f && code <= 0x9f) ||
+    code === 0x2028 ||
+    code === 0x2029 ||
+    (code >= 0x200b && code <= 0x200f) ||
+    (code >= 0x202a && code <= 0x202e) ||
+    (code >= 0x2066 && code <= 0x2069) ||
+    code === 0xfeff
+  );
+}
+
+/**
+ * Prompt-injection hardening for any user-controlled string echoed to the model (account, budget
+ * and category names): removes control characters and newlines, collapses whitespace and caps the
+ * length. It does not make text trustworthy, so such text only ever appears as a data value, never
+ * inside `askUser`, `why` or `notice`.
+ */
+export function sanitiseText(text: string, max: number = MAX_TEXT): string {
+  const clean = Array.from(text, (ch) => (isUnsafe(ch.charCodeAt(0)) ? " " : ch))
+    .join("")
+    .replace(/\s+/g, " ")
+    .trim();
+  return clean.length > max ? `${clean.slice(0, max - 1)}…` : clean;
+}
+
 export const round2 = (n: number): number => Math.round(n * 100) / 100;
 
 export interface ReadModel {
@@ -22,8 +64,13 @@ export interface ReadModel {
   anonymise: boolean;
   /** Short id for a record, per kind, keyed on the token. */
   idOf(kind: "acc" | "debt", uuid: string): string;
-  /** Label shown to the agent: a generic per-type label when anonymised, else the account name. */
+  /** Label shown to the agent: a generic per-category label when anonymised, else the sanitised name. */
   labelOf(account: ResolvedAccount): string;
+  /**
+   * Fixed-vocabulary reference ("Debt account #2") safe to put in `missing[]` text: it never
+   * contains user-controlled text, in either the anonymised or the full-read path.
+   */
+  refOf(account: ResolvedAccount): string;
 }
 
 /** Reads the user's data once and builds the shared view every read tool works from. */
@@ -36,13 +83,18 @@ export async function loadReadModel(ctx: McpServerContext): Promise<ReadModel> {
   const accounts = snapshot.getResolvedAccounts();
   const key = shortIdKey(ctx.token);
 
-  // Per-type ordinals over all accounts in stored order, so a label is stable across tools.
+  // Per-category ordinals over all accounts in stored order, so a label is stable across tools.
+  // The category comes from the engine's closed enum, not from the free-text stored `type`
+  // (the backend `account.type` column is an unvalidated varchar), so nothing user-typed leaks.
   const ordinals = new Map<string, number>();
   const labels = new Map<string, string>();
+  const refs = new Map<string, string>();
   for (const a of accounts) {
-    const n = (ordinals.get(a.rawType) ?? 0) + 1;
-    ordinals.set(a.rawType, n);
-    labels.set(a.id, anonymise ? genericAccountLabel(a.rawType, n) : a.name);
+    const n = (ordinals.get(a.category) ?? 0) + 1;
+    ordinals.set(a.category, n);
+    const generic = genericAccountLabel(CATEGORY_NAMES[a.category], n);
+    refs.set(a.id, `${CATEGORY_NAMES[a.category]} account #${n}`);
+    labels.set(a.id, anonymise ? generic : sanitiseText(a.name) || generic);
   }
 
   return {
@@ -52,6 +104,7 @@ export async function loadReadModel(ctx: McpServerContext): Promise<ReadModel> {
     anonymise,
     idOf: (kind, uuid) => shortId(key, kind, uuid),
     labelOf: (a) => labels.get(a.id) ?? "Account",
+    refOf: (a) => refs.get(a.id) ?? "Account",
   };
 }
 
@@ -138,5 +191,5 @@ export const MISSING_INCOME: Missing = {
 
 /** Category and entry names are free text: scrub them when anonymised. */
 export function safeText(text: string, anonymise: boolean): string {
-  return anonymise ? anonymiseDescription(text) : text;
+  return sanitiseText(anonymise ? anonymiseDescription(text) : text);
 }
