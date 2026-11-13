@@ -9,22 +9,20 @@ import {
   RESOURCE_SCOPES,
   requirementFor,
   TOOL_SCOPES,
+  withScopeEnforcement,
 } from "./scopes.js";
 import { hashPatToken, TokenVerifier, type VerifiedToken } from "./token-verifier.js";
 
-const SIMULATE_TOOLS: Record<string, Record<string, unknown>> = {
+const CALL_ARGS: Record<string, Record<string, unknown>> = {
   simulate_debt_payoff: { strategy: "COMPARE_BOTH" },
   simulate_uk_tax_and_pension_sacrifice: { employeePensionPct: 5 },
   compare_mortgage_overpay_vs_isa: {},
   calculate_self_assessment_and_section24: { taxYear: "2025/26" },
   project_wealth_scenario: {},
   evaluate_uk_student_loan: { currentBalanceGbp: 30000 },
-};
-const READ_TOOLS: Record<string, Record<string, unknown>> = {
   evaluate_cashflow_runway_and_health: {},
   query_transactions_and_spending: {},
 };
-
 function token(scopes: VerifiedToken["scopes"]): VerifiedToken {
   return { userId: "u1", scopes, anonymizeInstitutions: true, type: "pat" };
 }
@@ -48,10 +46,27 @@ describe("scope helpers", () => {
     );
   });
 
-  it("falls back to the read requirement for unlisted names", () => {
-    expect(hasScopes(["mcp:read:anonymized"], requirementFor("tool", "nope"))).toBe(true);
-    expect(hasScopes(["mcp:simulate"], requirementFor("tool", "nope"))).toBe(false);
-    expect(hasScopes(["mcp:read:full"], requirementFor("tool", "__proto__"))).toBe(true);
+  it("denies unlisted names at runtime", () => {
+    expect(requirementFor("tool", "nope")).toBeUndefined();
+    expect(hasScopes(["mcp:read:full", "mcp:simulate"], requirementFor("tool", "nope"))).toBe(
+      false,
+    );
+    expect(hasScopes(["mcp:read:full"], requirementFor("tool", "__proto__"))).toBe(false);
+  });
+
+  it("throws at construction for unlisted names or non-function handlers", () => {
+    const fake = {
+      registerTool: () => undefined,
+      resource: () => undefined,
+    };
+    const scoped = withScopeEnforcement(fake, ["mcp:read:full"]);
+    expect(() => scoped.registerTool("unlisted", {}, async () => ({}))).toThrow("no scope entry");
+    expect(() =>
+      (scoped.registerTool as (...a: unknown[]) => void)("simulate_debt_payoff", {}),
+    ).toThrow("must be a function");
+    expect(() =>
+      scoped.resource("budget", "flump://context/budget", async () => ({})),
+    ).not.toThrow();
   });
 
   it("computes effective anonymisation", () => {
@@ -59,12 +74,6 @@ describe("scope helpers", () => {
     expect(effectiveAnonymize(false, ["mcp:read:full"])).toBe(false);
     expect(effectiveAnonymize(false, ["mcp:read:anonymized"])).toBe(true);
     expect(effectiveAnonymize(undefined, ["mcp:read:full"])).toBe(true);
-  });
-
-  it("lists every registered primitive", () => {
-    expect(Object.keys(TOOL_SCOPES).length).toBe(8);
-    expect(Object.keys(RESOURCE_SCOPES).length).toBe(6);
-    expect(Object.keys(PROMPT_SCOPES).length).toBe(3);
   });
 });
 
@@ -104,6 +113,16 @@ describe("TokenVerifier scope handling", () => {
   });
 });
 
+const RESOURCE_URIS: Record<string, string> = {
+  "executive-snapshot": "flump://context/executive-snapshot",
+  baseline: "flump://context/baseline",
+  accounts: "flump://context/accounts",
+  budget: "flump://context/budget",
+  "tax-ledger": "flump://context/tax-ledger",
+  "uk-fiscal-guardrails": "flump://rules/uk-fiscal-guardrails",
+};
+const ALL: VerifiedToken["scopes"] = ["mcp:read:anonymized", "mcp:read:full", "mcp:simulate"];
+
 describe("scope enforcement through the MCP server", () => {
   async function withToken<T>(
     scopes: VerifiedToken["scopes"],
@@ -117,26 +136,35 @@ describe("scope enforcement through the MCP server", () => {
     }
   }
 
-  for (const [name, args] of Object.entries(SIMULATE_TOOLS)) {
-    it(`${name}: needs read plus mcp:simulate`, async () => {
+  it("scope tables match the real server surface exactly", async () => {
+    await withToken(ALL, async (h) => {
+      const tools = (await h.client.listTools()).tools.map((t) => t.name).sort();
+      const resources = (await h.client.listResources()).resources.map((r) => r.name).sort();
+      const prompts = (await h.client.listPrompts()).prompts.map((p) => p.name).sort();
+      expect(tools).toEqual(Object.keys(TOOL_SCOPES).sort());
+      expect(resources).toEqual(Object.keys(RESOURCE_SCOPES).sort());
+      expect(prompts).toEqual(Object.keys(PROMPT_SCOPES).sort());
+      expect(Object.keys(RESOURCE_URIS).sort()).toEqual(resources);
+    });
+  });
+
+  it("has call args for every listed tool", () => {
+    expect(Object.keys(CALL_ARGS).sort()).toEqual(Object.keys(TOOL_SCOPES).sort());
+  });
+
+  for (const [name, req] of Object.entries(TOOL_SCOPES)) {
+    const needsSimulate = req.allOf.includes("mcp:simulate");
+    it(`${name}: enforces ${needsSimulate ? "read plus mcp:simulate" : "read only"}`, async () => {
+      const args = CALL_ARGS[name] ?? {};
       await withToken(["mcp:simulate"], async (h) => {
         expect(await h.callText(name, args)).toContain("INSUFFICIENT_SCOPE");
       });
       await withToken(["mcp:read:anonymized"], async (h) => {
-        expect(await h.callText(name, args)).toContain("INSUFFICIENT_SCOPE");
+        const text = await h.callText(name, args);
+        if (needsSimulate) expect(text).toContain("INSUFFICIENT_SCOPE");
+        else expect(text).not.toContain("INSUFFICIENT_SCOPE");
       });
       await withToken(["mcp:read:anonymized", "mcp:simulate"], async (h) => {
-        expect(await h.callText(name, args)).not.toContain("INSUFFICIENT_SCOPE");
-      });
-    });
-  }
-
-  for (const [name, args] of Object.entries(READ_TOOLS)) {
-    it(`${name}: needs read only`, async () => {
-      await withToken(["mcp:simulate"], async (h) => {
-        expect(await h.callText(name, args)).toContain("INSUFFICIENT_SCOPE");
-      });
-      await withToken(["mcp:read:anonymized"], async (h) => {
         expect(await h.callText(name, args)).not.toContain("INSUFFICIENT_SCOPE");
       });
     });
@@ -149,28 +177,34 @@ describe("scope enforcement through the MCP server", () => {
         arguments: {},
       });
       expect(res.isError).toBe(true);
-      const { tools } = await h.client.listTools();
-      expect(tools.length).toBe(8);
+      expect((await h.client.listTools()).tools.length).toBe(Object.keys(TOOL_SCOPES).length);
     });
   });
 
-  it("denies resources and prompts without a read scope", async () => {
-    await withToken(["mcp:simulate"], async (h) => {
-      await expect(h.client.readResource({ uri: "flump://context/budget" })).rejects.toThrow(
-        "INSUFFICIENT_SCOPE",
-      );
-      await expect(
-        h.client.getPrompt({ name: "uk-financial-health-audit", arguments: {} }),
-      ).rejects.toThrow("INSUFFICIENT_SCOPE");
+  for (const name of Object.keys(RESOURCE_SCOPES)) {
+    it(`resource ${name}: denied without read, allowed with read`, async () => {
+      const uri = RESOURCE_URIS[name] as string;
+      await withToken(["mcp:simulate"], async (h) => {
+        await expect(h.client.readResource({ uri })).rejects.toThrow("INSUFFICIENT_SCOPE");
+      });
+      await withToken(["mcp:read:anonymized"], async (h) => {
+        expect((await h.client.readResource({ uri })).contents.length).toBeGreaterThan(0);
+      });
     });
-  });
+  }
 
-  it("allows resources and prompts with a read scope", async () => {
-    await withToken(["mcp:read:anonymized"], async (h) => {
-      const r = await h.client.readResource({ uri: "flump://context/budget" });
-      expect(r.contents.length).toBeGreaterThan(0);
-      const p = await h.client.getPrompt({ name: "crush-high-apr-debt", arguments: {} });
-      expect(p.messages.length).toBeGreaterThan(0);
+  for (const name of Object.keys(PROMPT_SCOPES)) {
+    it(`prompt ${name}: denied without read, allowed with read`, async () => {
+      await withToken(["mcp:simulate"], async (h) => {
+        await expect(h.client.getPrompt({ name, arguments: {} })).rejects.toThrow(
+          "INSUFFICIENT_SCOPE",
+        );
+      });
+      await withToken(["mcp:read:anonymized"], async (h) => {
+        expect((await h.client.getPrompt({ name, arguments: {} })).messages.length).toBeGreaterThan(
+          0,
+        );
+      });
     });
-  });
+  }
 });

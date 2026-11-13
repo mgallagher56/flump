@@ -2,8 +2,12 @@
  * MCP scope enforcement (E20-N17, using today's scope names).
  *
  * Every tool, resource and prompt needs `mcp:read:anonymized` or `mcp:read:full`.
- * Simulation tools additionally need `mcp:simulate`. A name that is not listed
- * falls back to the read requirement.
+ * Simulation tools additionally need `mcp:simulate`. Every registered primitive
+ * must have an entry in the tables below (fail closed): the facade throws at
+ * construction otherwise, and a runtime lookup of an unlisted name is denied.
+ *
+ * Known limit: `RegisteredTool.update({ callback })` replaces the handler and
+ * bypasses the guard. Nothing calls it today; E17-N8 (define-tool) must handle it.
  */
 
 export const MCP_SCOPES = ["mcp:read:anonymized", "mcp:read:full", "mcp:simulate"] as const;
@@ -68,12 +72,17 @@ export function filterKnownScopes(scopes: readonly string[]): McpScope[] {
   return scopes.filter((s): s is McpScope => known.has(s));
 }
 
-export function requirementFor(kind: McpPrimitiveKind, name: string): ScopeRequirement {
+/** Returns undefined for an unlisted name; callers must treat that as denied. */
+export function requirementFor(kind: McpPrimitiveKind, name: string): ScopeRequirement | undefined {
   const table = TABLES[kind];
-  return Object.hasOwn(table, name) ? (table[name] as ScopeRequirement) : READ;
+  return Object.hasOwn(table, name) ? table[name] : undefined;
 }
 
-export function hasScopes(held: readonly string[], required: ScopeRequirement): boolean {
+export function hasScopes(
+  held: readonly string[],
+  required: ScopeRequirement | undefined,
+): boolean {
+  if (!required) return false;
   return (
     required.anyOf.some((s) => held.includes(s)) && required.allOf.every((s) => held.includes(s))
   );
@@ -89,6 +98,7 @@ export function effectiveAnonymize(
 
 export function insufficientScopeMessage(kind: McpPrimitiveKind, name: string): string {
   const req = requirementFor(kind, name);
+  if (!req) return `${INSUFFICIENT_SCOPE}: ${kind} "${name}" has no scope entry.`;
   const needs = [`one of ${req.anyOf.join(" | ")}`, ...req.allOf].join(" and ");
   return `${INSUFFICIENT_SCOPE}: ${kind} "${name}" requires ${needs}.`;
 }
@@ -101,7 +111,14 @@ function wrapLast(
 ): unknown[] {
   const idx = args.length - 1;
   const handler = args[idx];
-  if (typeof handler !== "function") return args;
+  if (!requirementFor(kind, name)) {
+    throw new Error(
+      `MCP ${kind} "${name}" has no scope entry; add it to ${kind.toUpperCase()}_SCOPES.`,
+    );
+  }
+  if (typeof handler !== "function") {
+    throw new Error(`MCP ${kind} "${name}": last registration argument must be a function.`);
+  }
   const original = handler as (...a: unknown[]) => unknown;
   const guarded = (...handlerArgs: unknown[]) => {
     if (!hasScopes(held, requirementFor(kind, name))) {

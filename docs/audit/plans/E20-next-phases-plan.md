@@ -372,6 +372,7 @@ Every ticket finishes with `rtk bun run lint`, `rtk bun run check-types`, `rtk b
   - These need read only: `evaluate_cashflow_runway_and_health`, `query_transactions_and_spending`.
   - Effective anonymisation is `record.anonymizeInstitutions || !scopes.includes("mcp:read:full")`.
   - Unknown scope strings are dropped.
+  - Every registered primitive must have an entry in `TOOL_SCOPES`, `RESOURCE_SCOPES` or `PROMPT_SCOPES`; the facade throws at construction if one is missing or the handler argument is not a function, and an unlisted lookup at runtime is denied.
   - A missing scope returns a tool error `INSUFFICIENT_SCOPE`. `tools/list` is not filtered (E17 section 8).
 - **Exact files (for dedupe with E17):**
   - NEW `packages/mcp/src/auth/scopes.ts`: `TOOL_SCOPES`, `RESOURCE_SCOPES`, `PROMPT_SCOPES`, `hasScopes`, `effectiveAnonymize`.
