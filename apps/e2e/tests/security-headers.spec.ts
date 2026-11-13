@@ -12,23 +12,35 @@ test("document responses carry the security headers", async ({ request }) => {
   expect(headers["x-powered-by"]).toBeUndefined();
 });
 
-test("unmatched paths run the middleware and are not cacheable", async ({ request }) => {
-  const response = await request.get("/definitely-not-a-route");
+test("unmatched multi-segment paths run the middleware and are not cacheable", async ({
+  request,
+}) => {
+  // Multi-segment so it hits the `$.tsx` splat; a single segment is caught by the legacy
+  // `$feature._index` redirect instead.
+  const response = await request.get("/no/such/page");
   expect(response.status()).toBe(404);
   const headers = response.headers();
   expect(headers["x-frame-options"]).toBe("DENY");
   expect(headers["cache-control"]).toBe("no-store");
 });
 
-test("personal-data documents are no-store, public tools pages are not forced", async ({
+test("a single-segment unmatched path redirects with no-store, not a cacheable 301/302", async ({
   request,
 }) => {
-  const sandbox = await request.get("/sandbox");
-  expect(sandbox.headers()["cache-control"]).toBe("no-store");
+  const response = await request.get("/definitely-not-a-route", { maxRedirects: 0 });
+  expect(response.status()).toBeGreaterThanOrEqual(300);
+  expect(response.status()).toBeLessThan(400);
+  expect(response.headers()["cache-control"]).toBe("no-store");
+  expect(response.headers()["x-frame-options"]).toBe("DENY");
+});
 
-  const tools = await request.get("/tools");
-  expect(tools.status()).toBe(200);
-  expect(tools.headers()["cache-control"]).toBeUndefined();
+test("HTML and .data responses are no-store, including the public tools pages", async ({
+  request,
+}) => {
+  for (const path of ["/sandbox", "/tools", "/tools.data"]) {
+    const response = await request.get(path, { maxRedirects: 0 });
+    expect(response.headers()["cache-control"], path).toBe("no-store");
+  }
 });
 
 test("healthz keeps its own no-store", async ({ request }) => {

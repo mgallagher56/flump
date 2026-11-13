@@ -1,12 +1,7 @@
 // @vitest-environment node
 // Node's Response.redirect has immutable headers (like authkit/fetch responses); happy-dom's does not.
 import { describe, expect, it } from "vitest";
-import {
-  applyCachePolicy,
-  applySecurityHeaders,
-  isPublicCacheablePath,
-  SECURITY_HEADERS,
-} from "./headers.server";
+import { applyCachePolicy, applySecurityHeaders, SECURITY_HEADERS } from "./headers.server";
 
 describe("applySecurityHeaders", () => {
   it("sets the full header set", () => {
@@ -22,6 +17,7 @@ describe("applySecurityHeaders", () => {
       "camera=(), microphone=(), geolocation=(), payment=(), usb=()",
     );
     expect(res.headers.get("cross-origin-opener-policy")).toBe("same-origin");
+    expect(res.headers.get("cross-origin-resource-policy")).toBe("same-origin");
   });
 
   it("never preloads HSTS", () => {
@@ -62,57 +58,54 @@ describe("applySecurityHeaders", () => {
   });
 });
 
-describe("isPublicCacheablePath", () => {
-  it.each(["/tools", "/tools/", "/tools/mortgage", "/tools.data", "/tools/mortgage.data"])(
-    "treats %s as public",
-    (path) => expect(isPublicCacheablePath(path)).toBe(true),
-  );
-
-  it.each([
-    "/",
-    "/_root.data",
-    "/app",
-    "/app/accounts/1",
-    "/app.data",
-    "/api/accounts",
-    "/login",
-    "/signUp",
-    "/callback",
-    "/logout",
-    "/sandbox",
-    "/toolsmith",
-    "/anything/else",
-  ])("treats %s as private", (path) => expect(isPublicCacheablePath(path)).toBe(false));
-});
-
 describe("applyCachePolicy", () => {
-  it.each(["/", "/app/profile", "/app/profile.data", "/callback", "/logout", "/login", "/nope"])(
-    "sets no-store and Pragma on %s",
-    (path) => {
-      const res = applyCachePolicy(new Response("x"), path);
+  it("sets no-store and Pragma by default", () => {
+    const res = applyCachePolicy(new Response("x"));
+    expect(res.headers.get("cache-control")).toBe("no-store");
+    expect(res.headers.get("pragma")).toBe("no-cache");
+    expect(res.headers.has("vary")).toBe(false);
+  });
+
+  it("makes a response that sets a cookie no-store, even with a private Cache-Control", () => {
+    const res = new Response("x", { headers: { "Cache-Control": "private, max-age=60" } });
+    res.headers.append("Set-Cookie", "wos-session=abc; Path=/; HttpOnly");
+    const out = applyCachePolicy(res);
+    expect(out.headers.get("cache-control")).toBe("no-store");
+    expect(out.headers.getSetCookie()).toEqual(["wos-session=abc; Path=/; HttpOnly"]);
+  });
+
+  it.each(["public, max-age=3600", "max-age=60", "s-maxage=60", "public"])(
+    "replaces the weak value %s with no-store",
+    (value) => {
+      const res = applyCachePolicy(new Response("x", { headers: { "Cache-Control": value } }));
       expect(res.headers.get("cache-control")).toBe("no-store");
       expect(res.headers.get("pragma")).toBe("no-cache");
     },
   );
 
-  it("leaves a public page without a Cache-Control header", () => {
-    const res = applyCachePolicy(new Response("x"), "/tools/mortgage");
-    expect(res.headers.has("cache-control")).toBe(false);
-    expect(res.headers.has("pragma")).toBe(false);
+  it("keeps an existing no-store untouched", () => {
+    const res = applyCachePolicy(new Response("x", { headers: { "Cache-Control": "no-store" } }));
+    expect(res.headers.get("cache-control")).toBe("no-store");
+    expect(res.headers.has("vary")).toBe(false);
   });
 
-  it("keeps a Cache-Control the route already set", () => {
+  it("keeps private and adds Vary: Cookie, preserving existing Vary values", () => {
     const res = applyCachePolicy(
-      new Response("x", { headers: { "Cache-Control": "public, max-age=60" } }),
-      "/robots.txt",
+      new Response("x", { headers: { "Cache-Control": "private, max-age=60", Vary: "Accept" } }),
     );
-    expect(res.headers.get("cache-control")).toBe("public, max-age=60");
-    expect(res.headers.has("pragma")).toBe(false);
+    expect(res.headers.get("cache-control")).toBe("private, max-age=60");
+    expect(res.headers.get("vary")).toBe("Accept, Cookie");
+  });
+
+  it("does not duplicate Vary: Cookie", () => {
+    const res = applyCachePolicy(
+      new Response("x", { headers: { "Cache-Control": "private", Vary: "Cookie" } }),
+    );
+    expect(res.headers.get("vary")).toBe("Cookie");
   });
 
   it("copies an immutable-headers redirect and keeps Location", () => {
-    const original = Response.redirect("https://example.com/next", 302);
-    const out = applyCachePolicy(original, "/app");
+    const out = applyCachePolicy(Response.redirect("https://example.com/next", 302));
     expect(out.status).toBe(302);
     expect(out.headers.get("location")).toBe("https://example.com/next");
     expect(out.headers.get("cache-control")).toBe("no-store");

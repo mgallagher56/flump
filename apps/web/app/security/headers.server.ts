@@ -13,6 +13,7 @@ export const SECURITY_HEADERS: Readonly<Record<string, string>> = {
   "Referrer-Policy": "strict-origin-when-cross-origin",
   "Permissions-Policy": "camera=(), microphone=(), geolocation=(), payment=(), usb=()",
   "Cross-Origin-Opener-Policy": "same-origin",
+  "Cross-Origin-Resource-Policy": "same-origin",
 };
 
 function withHeaders(response: Response, apply: (headers: Headers) => void): Response {
@@ -41,30 +42,34 @@ export function applySecurityHeaders(response: Response): Response {
 }
 
 /**
- * Path prefixes whose HTML/`.data` responses hold no personal data and keep their existing
- * caching behaviour. Everything else (the dashboard at `/`, `/app/*`, `/api/*`, `/login`,
- * `/callback`, `/logout`, `/sandbox`, unmatched paths, ...) defaults to `no-store`, so a new
- * route is private until it is listed here.
+ * Cache policy for everything that runs through the middleware pipeline (documents, `.data`,
+ * resource routes). There is deliberately NO public-cacheable allow-list: the root loader returns
+ * the user, profile and access token for every route (including `/tools`) and may append a
+ * refreshed session `Set-Cookie`, so every HTML and `.data` response is user-specific. Static
+ * assets are served before the middleware and keep their own caching.
+ *
+ * Rules, in order:
+ * 1. A response that sets a cookie is always `no-store`.
+ * 2. A route's own Cache-Control is kept only if it already contains `no-store` or `private`.
+ *    A weaker value (`public`, `max-age`, ...) is replaced with `no-store`.
+ * 3. Anything not marked `no-store` (a kept `private`) gets `Vary: Cookie`, so a cache can never
+ *    serve one visitor's response to another.
+ *
+ * A future cacheable public page needs an explicit, reviewed opt-in (a route that does not load
+ * user data plus a change here), never an implicit default.
  */
-export const PUBLIC_CACHEABLE_PREFIXES: readonly string[] = ["/tools"];
-
-export function isPublicCacheablePath(pathname: string): boolean {
-  const path = pathname.endsWith(".data") ? pathname.slice(0, -".data".length) : pathname;
-  return PUBLIC_CACHEABLE_PREFIXES.some(
-    (prefix) => path === prefix || path.startsWith(`${prefix}/`),
-  );
-}
-
-/**
- * Adds `Cache-Control: no-store` (and `Pragma: no-cache`) to a response on a non-public path.
- * A response that already declares its own Cache-Control (healthz, robots.txt, the API proxy,
- * resource files) is left as the route set it. Static assets are served before the middleware
- * pipeline and never reach this.
- */
-export function applyCachePolicy(response: Response, pathname: string): Response {
-  if (isPublicCacheablePath(pathname) || response.headers.has("Cache-Control")) return response;
+export function applyCachePolicy(response: Response): Response {
+  const cacheControl = response.headers.get("Cache-Control") ?? "";
+  const setsCookie = response.headers.getSetCookie().length > 0;
+  const keepsOwn = !setsCookie && /\b(no-store|private)\b/i.test(cacheControl);
+  const noStore = !keepsOwn || /\bno-store\b/i.test(cacheControl);
+  if (keepsOwn && noStore) return response;
   return withHeaders(response, (headers) => {
-    headers.set("Cache-Control", "no-store");
-    headers.set("Pragma", "no-cache");
+    if (!keepsOwn) {
+      headers.set("Cache-Control", "no-store");
+      headers.set("Pragma", "no-cache");
+    } else if (!/\bcookie\b/i.test(headers.get("Vary") ?? "")) {
+      headers.append("Vary", "Cookie");
+    }
   });
 }

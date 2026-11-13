@@ -26,8 +26,8 @@ export function handleError(error: unknown, { request }: { request: Request }): 
 
 // Runs on every `.data` response. Single-fetch builds some of them outside the middleware
 // pipeline (its own CSRF 400, last-resort 500), which would otherwise miss these headers.
-export function handleDataRequest(response: Response, { request }: { request: Request }): Response {
-  return applySecurityHeaders(applyCachePolicy(response, new URL(request.url).pathname));
+export function handleDataRequest(response: Response): Response {
+  return applySecurityHeaders(applyCachePolicy(response));
 }
 
 // Reject/cancel all pending promises after 5 seconds
