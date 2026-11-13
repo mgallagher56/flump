@@ -161,10 +161,11 @@ export const McpSpotlightSection: FC = () => {
 
               <div className={terminalSummary()}>
                 <strong className={terminalSummaryStrong()}>Example output:</strong> for an
-                illustrative £39,000 salary in England with 5% paid into a pension by salary
-                sacrifice, £1,950 a year goes into the pension and monthly take-home is an estimated
-                £2,516, which is £117 a month less than with no contribution. These figures are an
-                unverified example for the 2026/27 tax year, not advice.
+                illustrative £39,000 salary in England, Wales or Northern Ireland with 5% paid into
+                a pension by salary sacrifice, £1,950 a year goes into the pension and monthly
+                take-home is an estimated £2,516, which is £117 a month less than with no
+                contribution. These figures are an unverified example for the 2026/27 tax year, not
+                advice.
               </div>
             </div>
           </div>

@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { DEFAULT_SALARY_GBP, PayRiseTeaser, payRiseResult } from "./PayRiseTeaser";
 
 describe("payRiseResult", () => {
@@ -42,8 +42,42 @@ describe("PayRiseTeaser", () => {
     expect(screen.getByText("Personal Allowance taper")).toBeDefined();
   });
 
-  it("labels the figures as an example", () => {
+  it("labels the figures as an unverified example (R6)", () => {
     render(<PayRiseTeaser />);
-    expect(screen.getByText(/Example only/)).toBeDefined();
+    expect(screen.getByText(/Unverified example for the/)).toBeDefined();
+  });
+});
+
+const { persistOnboardingSeed, cta } = vi.hoisted(() => ({
+  persistOnboardingSeed: vi.fn(),
+  cta: { current: { href: "/contact#beta", label: "Request an invite", external: false } },
+}));
+
+vi.mock("@flump/finance-engine", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@flump/finance-engine")>()),
+  persistOnboardingSeed,
+}));
+
+vi.mock("../../utils/site", () => ({ signupCta: () => cta.current }));
+
+describe("PayRiseTeaser save button", () => {
+  afterEach(() => {
+    persistOnboardingSeed.mockClear();
+  });
+
+  it("invite-only: shows the invite label and stores nothing", () => {
+    cta.current = { href: "/contact#beta", label: "Request an invite", external: false };
+    render(<PayRiseTeaser />);
+    fireEvent.click(screen.getByRole("button", { name: /Request an invite/ }));
+    expect(persistOnboardingSeed).not.toHaveBeenCalled();
+  });
+
+  it("open sign-up: stores only the visitor's own salary as the seed", () => {
+    cta.current = { href: "https://app.example/signup", label: "Get started", external: true };
+    render(<PayRiseTeaser />);
+    fireEvent.click(screen.getByRole("button", { name: /Save this salary baseline/ }));
+    expect(persistOnboardingSeed).toHaveBeenCalledWith(
+      expect.objectContaining({ annualGrossSalary: DEFAULT_SALARY_GBP }),
+    );
   });
 });

@@ -3,6 +3,16 @@ import type { FC } from "react";
 import { FiArrowUpRight, FiCheckCircle, FiShield } from "react-icons/fi";
 import { getAppUrl } from "../utils/url";
 
+const coverFigureStyle = css({
+  fontSize: "1.75rem",
+  fontWeight: "800",
+  color: "text.primary",
+  lineHeight: "1.15",
+  fontVariantNumeric: "tabular-nums",
+});
+
+const coverUnitStyle = css({ fontSize: "13px", fontWeight: "600" });
+
 const previewCardContainer = css({
   backgroundColor: "card",
   border: "1px solid",
@@ -149,7 +159,7 @@ export const BaselineSnapshotPreview: FC = () => {
             £68,400
           </div>
           <span style={{ fontSize: "12px", color: "var(--colors-text-muted)" }}>
-            Cash, ISAs, pensions, and property equity
+            Cash, savings and pensions, minus debts
           </span>
         </div>
 
@@ -228,16 +238,8 @@ export const BaselineSnapshotPreview: FC = () => {
           >
             Months of cover
           </span>
-          <div
-            className="tabular-nums"
-            style={{
-              fontSize: "1.75rem",
-              fontWeight: "800",
-              color: "var(--colors-text-primary)",
-              lineHeight: 1.15,
-            }}
-          >
-            6.4 <span style={{ fontSize: "13px", fontWeight: "600" }}>months</span>
+          <div className={coverFigureStyle}>
+            6.4 <span className={coverUnitStyle}>months</span>
           </div>
           <span style={{ fontSize: "12px", color: "var(--colors-text-muted)" }}>
             Essential costs your savings would cover

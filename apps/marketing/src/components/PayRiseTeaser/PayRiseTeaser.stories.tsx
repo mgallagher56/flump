@@ -28,14 +28,19 @@ export const Dark: Story = {
   play: assertTeaser,
 };
 
+const assertTaper: Story["play"] = async ({ canvasElement }) => {
+  const canvas = within(canvasElement);
+  fireEvent.change(canvas.getByLabelText("Current salary (before tax) range slider"), {
+    target: { value: "99500" },
+  });
+  await expect(canvas.getByText("Personal Allowance taper")).toBeInTheDocument();
+};
+
 /** A visitor's own salary inside the taper band shows the factual note. */
-export const TaperBandReached: Story = {
-  globals: { theme: "light" },
-  play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement);
-    fireEvent.change(canvas.getByLabelText("Current salary (before tax) range slider"), {
-      target: { value: "99500" },
-    });
-    await expect(canvas.getByText("Personal Allowance taper")).toBeInTheDocument();
-  },
+export const TaperBandReached: Story = { globals: { theme: "light" }, play: assertTaper };
+
+export const TaperBandReachedDark: Story = {
+  globals: { theme: "dark" },
+  parameters: { backgrounds: { default: "dark" } },
+  play: assertTaper,
 };

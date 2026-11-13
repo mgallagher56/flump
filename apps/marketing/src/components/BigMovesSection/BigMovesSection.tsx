@@ -39,7 +39,7 @@ export const BIG_MOVES: BigMove[] = [
     situations: [
       {
         label: "Renting",
-        body: "Your rent sits in your monthly picture, so you can see how a rent change or a move would affect safe to spend and months of cover.",
+        body: "Your rent sits in your monthly picture with your bills, and counts towards safe to spend and months of cover.",
       },
       {
         label: "Paying a mortgage",
@@ -47,7 +47,7 @@ export const BIG_MOVES: BigMove[] = [
       },
       {
         label: "Saving for a first home",
-        body: "Track a deposit pot alongside your other savings and see how much you are putting aside each month.",
+        body: "Add the savings you are building for a deposit as an account and see the balance change month to month.",
       },
     ],
   },

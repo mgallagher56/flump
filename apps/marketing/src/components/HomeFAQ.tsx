@@ -55,7 +55,7 @@ const FAQS = [
   },
   {
     q: "How does the starting baseline work?",
-    a: "Enter 6 rough numbers: your salary, rent or mortgage, core bills, savings, pension balance, and any debts. Flump estimates your net worth, weekly safe to spend, and months of cover straight away. You can add detail whenever you want.",
+    a: "Enter six rough numbers: your salary, rent or mortgage, core bills, savings, pension balance, and any debts. Flump estimates your net worth, weekly safe to spend, and months of cover straight away. You can add detail whenever you want.",
   },
   {
     q: "Is Flump free?",
