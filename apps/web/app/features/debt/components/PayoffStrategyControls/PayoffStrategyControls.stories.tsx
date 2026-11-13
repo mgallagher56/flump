@@ -22,7 +22,9 @@ type Story = StoryObj<typeof PayoffStrategyControls>;
 export const Default: Story = {
   play: async ({ canvasElement, args }) => {
     const canvas = within(canvasElement);
-    const snowballBtn = canvas.getByRole("button", { name: /^Snowball \(Smallest Pot\)/ });
+    const snowballBtn = canvas.getByRole("button", {
+      name: /^Smallest balance first \(snowball\)/,
+    });
     await expect(snowballBtn).toBeInTheDocument();
     await userEvent.click(snowballBtn);
     await expect(args.onSelectStrategy).toHaveBeenCalledWith("snowball");

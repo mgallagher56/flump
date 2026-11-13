@@ -17,10 +17,12 @@ describe("PayoffStrategyControls Feature Component", () => {
       />,
     );
 
-    expect(screen.getByText("Payoff Strategy: Avalanche vs. Snowball")).toBeDefined();
-    expect(screen.getByText("£2,450 Saved")).toBeDefined();
+    expect(screen.getByText("Payoff order")).toBeDefined();
+    expect(screen.getByText("£2,450 saved")).toBeDefined();
 
-    const snowballBtn = screen.getByRole("button", { name: /^Snowball \(Smallest Pot\)/ });
+    const snowballBtn = screen.getByRole("button", {
+      name: /^Smallest balance first \(snowball\)/,
+    });
     fireEvent.click(snowballBtn);
     expect(handleSelect).toHaveBeenCalledWith("snowball");
   });
@@ -35,7 +37,7 @@ describe("PayoffStrategyControls Feature Component", () => {
       />,
     );
     expect(screen.queryByTestId("interest-saved-badge")).toBeNull();
-    expect(screen.queryByText(/Saved/)).toBeNull();
+    expect(screen.queryByText(/saved/)).toBeNull();
     expect(screen.queryByText(/months ahead/)).toBeNull();
   });
 });

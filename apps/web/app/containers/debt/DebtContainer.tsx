@@ -186,10 +186,9 @@ export const DebtContainer: FC = () => {
     },
     { id: "instruments", label: "UK debt rules and help", icon: BookOpen },
   ];
-  const selectedTab: DebtTab = activeTab;
   const panelProps = (id: DebtTab) => ({
     "aria-labelledby": `debt-tab-${id}`,
-    hidden: selectedTab !== id,
+    hidden: activeTab !== id,
     id: `debt-panel-${id}`,
     role: "tabpanel" as const,
     tabIndex: 0,
@@ -287,12 +286,12 @@ export const DebtContainer: FC = () => {
         {tabItems.map((tab, index) => (
           <button
             aria-controls={`debt-panel-${tab.id}`}
-            aria-selected={selectedTab === tab.id}
-            className={tabButton({ active: selectedTab === tab.id })}
+            aria-selected={activeTab === tab.id}
+            className={tabButton({ active: activeTab === tab.id })}
             id={`debt-tab-${tab.id}`}
             key={tab.id}
             role="tab"
-            tabIndex={selectedTab === tab.id ? 0 : -1}
+            tabIndex={activeTab === tab.id ? 0 : -1}
             type="button"
             onClick={() => setActiveTab(tab.id)}
             onKeyDown={(event) => {
@@ -350,6 +349,10 @@ export const DebtContainer: FC = () => {
           }, ${formatCurrency(totalMin)} a month in minimums`}
           isModified={isScenarioModified}
           onReset={resetScenario}
+          onUpdateDetails={() => {
+            setActiveTab("accounts");
+            document.getElementById("debt-tab-accounts")?.focus();
+          }}
         >
           <LiveRegion announceInitial debounceMs={1000} message={debtHeadline} visuallyHidden />
           <SimulatorSplitLayout
