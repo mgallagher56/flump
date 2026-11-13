@@ -354,6 +354,16 @@ describe("DebtContainer scenario zone", () => {
     expect(within(zone).queryByRole("button", { name: "Reset to saved figures" })).toBeNull();
   });
 
+  it("'Update your details' opens the saved debts tab and moves focus to it", () => {
+    render(<DebtContainer />);
+    openTab(/UK debt rules and help/i);
+    fireEvent.click(screen.getByRole("button", { name: "Update your details" }));
+    const savedTab = screen.getByRole("tab", { name: /Your debts \(/i });
+    expect(savedTab.getAttribute("aria-selected")).toBe("true");
+    expect(document.activeElement).toBe(savedTab);
+    expect(fetcherState.submit).not.toHaveBeenCalled();
+  });
+
   it("changing the extra payment or order leaves the KPI strip unchanged and makes no request", () => {
     const fetchSpy = vi.spyOn(globalThis, "fetch");
     render(<DebtContainer />);
