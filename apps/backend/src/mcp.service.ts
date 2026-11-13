@@ -103,8 +103,10 @@ export class McpService implements McpTokenStoreAdapter, McpUserDataProvider {
     };
   }
 
-  async recordUsage(tokenId: string): Promise<void> {
-    await this.mcpTokenRepository.increment({ id: tokenId }, "totalToolCalls", 1);
+  async recordRequest(tokenId: string, toolCalls: number): Promise<void> {
+    if (toolCalls > 0) {
+      await this.mcpTokenRepository.increment({ id: tokenId }, "totalToolCalls", toolCalls);
+    }
     await this.mcpTokenRepository.update({ id: tokenId }, { lastUsedAt: new Date() });
   }
 
