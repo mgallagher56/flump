@@ -1,5 +1,26 @@
 # Changelog
 
+## [1.28.0](https://github.com/mgallagher56/flump/compare/flump/marketing-v1.27.0...flump/marketing-v1.28.0) (2026-11-13)
+
+
+### Features ✨
+
+* central placeholder business details with launch guard (R-09) ([210ab03](https://github.com/mgallagher56/flump/commit/210ab033edf1ac4a170fcdf50c61a69980d89120))
+* **marketing:** Open Graph and Twitter card tags per page (R-13) ([d262b39](https://github.com/mgallagher56/flump/commit/d262b393377cd35e14c1ca918028a6afdaa8facd))
+
+
+### Bug Fixes 🪲
+
+* **deps:** update all non-major third-party dependencies ([70c65ea](https://github.com/mgallagher56/flump/commit/70c65ea34b66b7b89a8054ee00dbcf189dcaae0c))
+* **marketing:** disable the X-Powered-By header on the marketing server ([8abe3ef](https://github.com/mgallagher56/flump/commit/8abe3ef31a00f05539077e73bab7bfc1caada4e5))
+* **marketing:** evict oldest limiter entry instead of clearing all ([7a5bc49](https://github.com/mgallagher56/flump/commit/7a5bc49913b3d34e4a423fb83a395127820ced57))
+* **marketing:** move hoisted title/meta tags into head and add PageMeta story ([6013e77](https://github.com/mgallagher56/flump/commit/6013e77cda970baa7cc5843e45c34b7625c4208f))
+* **marketing:** only evict limiter entries for new clients ([0199e06](https://github.com/mgallagher56/flump/commit/0199e06132e3af3522e101697981495bbebd76d4))
+* **marketing:** update disclosure story for configured security contact ([55c3a68](https://github.com/mgallagher56/flump/commit/55c3a68472d18f420c636746a77ab1912062b2e9))
+* review follow-ups (tabular-nums, web footer copy, drop unused ICO field, docs) ([1dc0a03](https://github.com/mgallagher56/flump/commit/1dc0a034edfbfeeba403cd75698d929b8f977ea4))
+* **security:** rate-limit marketing SSR route, use randomUUID for fallback account ids ([772d692](https://github.com/mgallagher56/flump/commit/772d692d139f6ea54f5a8ea28146c210916be4a9))
+* **web,marketing:** one /signup casing and a real 404 for unknown URLs (R-14) ([7b19701](https://github.com/mgallagher56/flump/commit/7b197010f97910a634c1416df36e85ca0395f1ed))
+
 ## [1.27.0](https://github.com/mgallagher56/flump/compare/flump/marketing-v1.26.0...flump/marketing-v1.27.0) (2026-11-13)
 
 

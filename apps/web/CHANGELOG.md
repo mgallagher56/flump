@@ -1,5 +1,73 @@
 # Changelog
 
+## [1.30.0](https://github.com/mgallagher56/flump/compare/flump/web-v1.29.1...flump/web-v1.30.0) (2026-11-13)
+
+
+### Features ✨
+
+* central placeholder business details with launch guard (R-09) ([210ab03](https://github.com/mgallagher56/flump/commit/210ab033edf1ac4a170fcdf50c61a69980d89120))
+* **e23:** selectTakeHome engine selector, region and student-loan aware, used for signed-in take-home (D06, D08, D10) ([9eef456](https://github.com/mgallagher56/flump/commit/9eef456f0a4661db56b03cfc1a78064ca3b619d3))
+* **e23:** set tax region and student loan in profile settings; link the region assumption there (D06, D-4-C) ([c9351d7](https://github.com/mgallagher56/flump/commit/c9351d73ec26853d2deafc0d83dcb24b9f1da07d))
+* **e23:** store onboarding region, birth year, student loan and housing answers (D06, D07, D31) ([7c6319b](https://github.com/mgallagher56/flump/commit/7c6319b69c4743b2272151972d58554691985643))
+* **tax:** serve receipts through an owner-scoped download route (E20-N15) ([1012547](https://github.com/mgallagher56/flump/commit/1012547486526ef632cf0fb653ef5e08b8d7eb91))
+* **web:** move accounts, budget, debt and savings widgets to features/dashboard (E15 T3.1) ([6445dec](https://github.com/mgallagher56/flump/commit/6445dec7f255e7235025cd17d32df931a8606424))
+* **web:** move pension, mortgage and tax dashboard widgets onto WidgetCard (E15 T3.1) ([46eb5c7](https://github.com/mgallagher56/flump/commit/46eb5c727302d39cca477593e01ea51288eca7d7))
+* **web:** neutral advice-boundary copy for debt, pension, sandbox and tools (E29-T4) ([2b6345b](https://github.com/mgallagher56/flump/commit/2b6345b0c4625bf0a4d03a04a1e9d6d781bd3144))
+* **web:** onboarding stops reading the access token (E20-N7) ([02b5c2d](https://github.com/mgallagher56/flump/commit/02b5c2df04a0fe517df14f74b715f28a6e87cd86))
+* **web:** regroup nav into Tax and pay, Savings and pension, Borrowing with one-item collapse (T-IA-5) ([114d355](https://github.com/mgallagher56/flump/commit/114d35506f546a233bcd6acc5157552eba9507c9))
+* **web:** replace react-router-serve with a custom Express server ([4af47e4](https://github.com/mgallagher56/flump/commit/4af47e4a353c103cbc560292e1dd3002027fe436))
+* **web:** restyle dashboard SetupChecklist with ui primitives and semantic tokens ([7cedcab](https://github.com/mgallagher56/flump/commit/7cedcab92b89f88034fdad2e3244a553fde5f324))
+* **web:** root loader stops exposing the access token and VITE_API_URL, add no-browser-token guard (E20-N8) ([863a9fd](https://github.com/mgallagher56/flump/commit/863a9fdb464c5a7d5f29998030511c7ae01ba69f))
+
+
+### Bug Fixes 🪲
+
+* **build:** require explicit VITE_APP_VERSION to look like a release string, explain the sha in the web turbo env ([72b6d7b](https://github.com/mgallagher56/flump/commit/72b6d7b6d9e079ce036598c5e8722d8f369ac2a5))
+* compute State Pension per render, guard NaN years, soften 2027/28 wording ([d8f6b49](https://github.com/mgallagher56/flump/commit/d8f6b49f3aa94ab6f80e8dce24d9a95196a7c9aa))
+* **deps:** update all non-major third-party dependencies ([70c65ea](https://github.com/mgallagher56/flump/commit/70c65ea34b66b7b89a8054ee00dbcf189dcaae0c))
+* **deps:** update dependency react-i18next to v18 ([125847d](https://github.com/mgallagher56/flump/commit/125847d01312bb04cc2fa3678ce3b804f9b100f5))
+* **deps:** update sentry-javascript monorepo to v11 ([d8d43ad](https://github.com/mgallagher56/flump/commit/d8d43ad7ea09849b9b377266c08f78bacce1053a))
+* **e23:** label the assumed region on onboarding take-home, guard odd ages, token-styled region select ([40af362](https://github.com/mgallagher56/flump/commit/40af362cd5d0edfa93e619ba66af9c36a108da2a))
+* **e23:** readable selects, keep several stored loan plans, focusable region links ([83ed156](https://github.com/mgallagher56/flump/commit/83ed1563d105d1b24d84282814b6596033d1722f))
+* **finance-engine:** sourced per-year State Pension rates; record owner decisions of 2026-11-13 ([b78f839](https://github.com/mgallagher56/flump/commit/b78f83902da76b5391cf435d6d3170ae2672a932))
+* **mcp:** surface health observations instead of recommendations (E29-T5) ([3c1afb8](https://github.com/mgallagher56/flump/commit/3c1afb83cf7c39d9f3e14bdd7ef4d5e3c408a947))
+* **observability:** harden Sentry v11 options after security review ([bc278f3](https://github.com/mgallagher56/flump/commit/bc278f32f65327b1c6ec623f3042616111ef3633))
+* **observability:** migrate Sentry setup to v11 dataCollection with the same privacy stance ([1b84e6b](https://github.com/mgallagher56/flump/commit/1b84e6b6346b4101b7d1ee8fb315c4b7ecf8f1be))
+* review follow-ups (tabular-nums, web footer copy, drop unused ICO field, docs) ([1dc0a03](https://github.com/mgallagher56/flump/commit/1dc0a034edfbfeeba403cd75698d929b8f977ea4))
+* **tax:** harden receipt route, add manifest entry, test backendFetchBytes (E20-N15) ([a735ee5](https://github.com/mgallagher56/flump/commit/a735ee535eeea12e7b709fee1e9770aaeab8e88f))
+* **test:** reconcile copy guard and e2e with merged E29-T6 and R-14 ([7dc5cf7](https://github.com/mgallagher56/flump/commit/7dc5cf78ee8b1407a7227079613fca79bd06a49d))
+* **web,marketing:** one /signup casing and a real 404 for unknown URLs (R-14) ([7b19701](https://github.com/mgallagher56/flump/commit/7b197010f97910a634c1416df36e85ca0395f1ed))
+* **web:** 44px theme toggle targets on mobile and scroll wrapper for tax breakdown (R-17) ([48492a4](https://github.com/mgallagher56/flump/commit/48492a40b35a080797f85515fe53cc0e4617404b))
+* **web:** address R-14 review (docs, case-insensitive legacy redirects, 404 title and label) ([ba8f033](https://github.com/mgallagher56/flump/commit/ba8f033af3f960162aafc4cc67602be233038f81))
+* **web:** address review on CopyTaxYearModal dialog (R-15) ([d27e101](https://github.com/mgallagher56/flump/commit/d27e1017943b6296fd1823a6d21937e47aedc165))
+* **web:** apply copy review edits to E29-T4 follow-up ([fdb91ac](https://github.com/mgallagher56/flump/commit/fdb91acb87f586ece2c35f84928df049b35f74d2))
+* **web:** apply decider edits to E29-T4 copy ([655e259](https://github.com/mgallagher56/flump/commit/655e259c4715878c81c85d44897f6f884ad98901))
+* **web:** budget widget shows surplus as Not set when income is unknown ([6beafe9](https://github.com/mgallagher56/flump/commit/6beafe928e26427c7ad6211721d5b0489289c7f0))
+* **web:** collapse every long segment in the access log (no slug exemption) ([72cb5e4](https://github.com/mgallagher56/flump/commit/72cb5e4af29ab05622e85bb310f05333c460281d))
+* **web:** document PORT/HOST in the staging runbook; production-safe integration test env ([4160423](https://github.com/mgallagher56/flump/commit/41604238197691d6d3aadfdf7c907af7d4d610ed))
+* **web:** focusable named scroll region, focus-ring room, scrollable chart data tables (R-17) ([3fd357e](https://github.com/mgallagher56/flump/commit/3fd357ebdc0960147b51e9cbdadb5afa8be7efcd))
+* **web:** inject a release version string into VITE_APP_VERSION at build ([d75ba19](https://github.com/mgallagher56/flump/commit/d75ba193466e3d8af7cf3facd2f07e6dd7adace7))
+* **web:** migrate CopyTaxYearModal to the shared Dialog (R-15) ([c05f7e5](https://github.com/mgallagher56/flump/commit/c05f7e58309d553c2f04255c67d32ae02acebc42))
+* **web:** no public-cacheable routes, harden cache policy, add CORP (E20) ([232f5b2](https://github.com/mgallagher56/flump/commit/232f5b2ad63ece37922691ef1eba0ed52b8e8174))
+* **web:** no-store on personal-data routes and headers on .data errors (E20) ([6737a71](https://github.com/mgallagher56/flump/commit/6737a71b775f10b8e50dc168eb46bef88d426431))
+* **web:** rewrite remaining advice-shaped copy and student-loan reasoning (E29-T4) ([2370870](https://github.com/mgallagher56/flump/commit/23708708841d475613312dd95040e05676b9fcc8))
+* **web:** server review fixes (listen errors, PORT, lock, docker smoke, docs) ([13f10ed](https://github.com/mgallagher56/flump/commit/13f10edd064500f4e49b055255155c90cffa1e9c))
+
+
+### Tests 🧪
+
+* **e23:** exact Class 4, salary sacrifice and Scotland+loan take-home values; clearer Figure helper names ([434c0cc](https://github.com/mgallagher56/flump/commit/434c0ccacf3a252a1267b27fade1a1e36b2524af))
+* **web:** cover nav label key and collapse branches (T-IA-5) ([3b1929b](https://github.com/mgallagher56/flump/commit/3b1929bd796ca1df4a8ee1172b41807c3509149e))
+* **web:** point claims guard at the moved SetupChecklist ([37a5a52](https://github.com/mgallagher56/flump/commit/37a5a52b08b74aeec62e6e486a6c4c0e01f39ae8))
+* **web:** restore signUp translation-key matcher in MobileNavDrawer test ([974f246](https://github.com/mgallagher56/flump/commit/974f246adbac386804e3420960dcb3d732cbfa11))
+* **web:** the onboarding loader no longer returns the access token (E20-N7) ([2896544](https://github.com/mgallagher56/flump/commit/2896544703a600289f013818b4eb7553c68833b4))
+* **web:** token sweep records return vs throw with per-endpoint fixtures, success-only leak control, wider identifier scan (E20-N8) ([4e39852](https://github.com/mgallagher56/flump/commit/4e3985266e89f4046bfc5ca445656059a0796a6b))
+
+
+### Miscellaneous 🙃
+
+* **web:** remove legacy DashboardWidgetCard, WidgetSettingsModal and cog-hiding CSS ([726e045](https://github.com/mgallagher56/flump/commit/726e045f9016e340b71f82dbcbc62963505cf209))
+
 ## [1.29.1](https://github.com/mgallagher56/flump/compare/flump/web-v1.29.0...flump/web-v1.29.1) (2026-11-13)
 
 
