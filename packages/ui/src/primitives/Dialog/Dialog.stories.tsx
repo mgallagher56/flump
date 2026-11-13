@@ -1,8 +1,22 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import { expect, userEvent, waitFor, within } from "@storybook/test";
-import { useState } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 import { Button } from "../Button";
 import { Dialog } from "./Dialog";
+
+/** Portalled content escapes the preview's themed wrapper, so theme the document root too. */
+const DarkRoot = ({ children }: { children: ReactNode }) => {
+  useEffect(() => {
+    const root = document.documentElement;
+    root.classList.add("dark");
+    root.setAttribute("data-theme", "dark");
+    return () => {
+      root.classList.remove("dark");
+      root.removeAttribute("data-theme");
+    };
+  }, []);
+  return children;
+};
 
 const Demo = (args: Partial<React.ComponentProps<typeof Dialog>>) => {
   const [open, setOpen] = useState(true);
@@ -101,4 +115,14 @@ export const FocusTrapAndReturn: Story = {
   },
 };
 
-export const Dark: Story = { ...Default, globals: { theme: "dark" } };
+export const Dark: Story = {
+  ...Default,
+  globals: { theme: "dark" },
+  decorators: [
+    (Story) => (
+      <DarkRoot>
+        <Story />
+      </DarkRoot>
+    ),
+  ],
+};

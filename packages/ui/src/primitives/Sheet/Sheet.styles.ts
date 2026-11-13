@@ -51,11 +51,12 @@ export const sheetContentRecipe = cva({
       // Bottom at every width; from md it is a centred sheet.
       bottom: {
         md: {
-          left: "50%",
-          right: "auto",
+          // No transform: the enter animation owns it.
+          left: "0",
+          right: "0",
+          marginX: "auto",
           width: "100%",
           maxWidth: "640px",
-          transform: "translateX(-50%)",
           paddingX: "7",
         },
       },

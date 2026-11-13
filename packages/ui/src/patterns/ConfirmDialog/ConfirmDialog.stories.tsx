@@ -1,7 +1,21 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { useState } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 import { expect, fn, screen, userEvent, waitFor } from "storybook/test";
 import { ConfirmDialog, type ConfirmDialogProps } from "./ConfirmDialog";
+
+/** Portalled content escapes the preview's themed wrapper, so theme the document root too. */
+const DarkRoot = ({ children }: { children: ReactNode }) => {
+  useEffect(() => {
+    const root = document.documentElement;
+    root.classList.add("dark");
+    root.setAttribute("data-theme", "dark");
+    return () => {
+      root.classList.remove("dark");
+      root.removeAttribute("data-theme");
+    };
+  }, []);
+  return children;
+};
 
 const meta: Meta<typeof ConfirmDialog> = {
   title: "3. Financial Patterns & Sections/ConfirmDialog",
@@ -24,6 +38,19 @@ type Story = StoryObj<typeof ConfirmDialog>;
 export const Default: Story = {};
 
 export const Danger: Story = { args: { tone: "danger" } };
+
+/** Portalled content escapes the side-by-side frames, so dark gets its own story. */
+export const DangerDark: Story = {
+  args: { tone: "danger" },
+  globals: { theme: "dark" },
+  decorators: [
+    (Story) => (
+      <DarkRoot>
+        <Story />
+      </DarkRoot>
+    ),
+  ],
+};
 
 export const WithError: Story = {
   args: { tone: "danger", error: "We couldn't reach the server. Please try again." },
