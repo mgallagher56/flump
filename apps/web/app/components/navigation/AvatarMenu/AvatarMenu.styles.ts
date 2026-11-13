@@ -74,3 +74,5 @@ export const item = cva({
 export const divider = cva({
   base: { height: "1px", margin: "1 0", backgroundColor: "border.subtle" },
 });
+
+export const srOnly = cva({ base: { srOnly: true } });

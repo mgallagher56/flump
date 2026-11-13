@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 import { Form, Link } from "react-router";
 import { CONNECT_AI_ROUTE } from "../navConfig";
 import UserAvatar from "../UserAvatar";
-import { container, divider, item, panel, trigger } from "./AvatarMenu.styles";
+import { container, divider, item, panel, srOnly, trigger } from "./AvatarMenu.styles";
 
 export interface AvatarMenuProps {
   user: unknown;
@@ -64,7 +64,6 @@ const AvatarMenu: FC<AvatarMenuProps> = ({ user }) => {
         aria-controls={open ? menuId : undefined}
         aria-expanded={open}
         aria-haspopup="menu"
-        aria-label={t("accountMenu", "Account menu")}
         className={trigger()}
         id="avatar-menu-trigger"
         ref={triggerRef}
@@ -74,6 +73,7 @@ const AvatarMenu: FC<AvatarMenuProps> = ({ user }) => {
         <span aria-hidden="true">
           <UserAvatar bordered size={26} user={user} />
         </span>
+        <span className={srOnly()}>{t("accountMenu", "Account menu")}</span>
         <Icon icon={ChevronDown} size="sm" />
       </button>
       {open && (
