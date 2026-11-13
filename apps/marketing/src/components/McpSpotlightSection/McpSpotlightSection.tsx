@@ -118,8 +118,8 @@ export const McpSpotlightSection: FC = () => {
               </div>
 
               <div className={terminalPromptLine()}>
-                &gt; "What is my Personal Allowance at a £14,200 pension contribution on a £114,200
-                salary?"
+                &gt; "What is my Personal Allowance with £14,200 of salary sacrifice into a pension
+                on a £114,200 salary?"
               </div>
 
               <div className={terminalToolLine()}>
@@ -155,7 +155,7 @@ export const McpSpotlightSection: FC = () => {
                 &nbsp;&nbsp;<span className={payloadKey()}>"effectiveTaxReliefPct":</span>{" "}
                 <span className={payloadNum()}>62.0</span>,
                 <br />
-                &nbsp;&nbsp;<span className={payloadKey()}>"contributionAtThresholdGbp":</span>{" "}
+                &nbsp;&nbsp;<span className={payloadKey()}>"contributionToThresholdGbp":</span>{" "}
                 <span className={payloadNum()}>14200</span>
                 <br />
                 <span className={payloadBracket()}>{"}"}</span>
@@ -163,10 +163,11 @@ export const McpSpotlightSection: FC = () => {
 
               <div className={terminalSummary()}>
                 <strong className={terminalSummaryStrong()}>Example output:</strong> for an
-                illustrative £114,200 gross salary, a £14,200 pension contribution brings adjusted
-                net income to £100,000. The £7,100 Personal Allowance taper is then removed, so the
-                full £12,570 allowance applies, and Income Tax and NI are £8,804 lower at an
-                effective 62% marginal rate. These figures are an example, not advice.
+                illustrative £114,200 gross salary, £14,200 of salary sacrifice into a pension
+                brings adjusted net income to £100,000. The £7,100 Personal Allowance taper is then
+                removed, so the full £12,570 allowance applies, and Income Tax and NI are £8,804
+                lower at an effective 62% marginal rate. These figures are an unverified example,
+                not advice.
               </div>
             </div>
           </div>

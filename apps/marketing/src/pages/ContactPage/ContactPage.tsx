@@ -5,7 +5,7 @@ import { Link } from "react-router-dom";
 import { Footer } from "../../components/Footer";
 import { Header } from "../../components/Header";
 import { PageMeta } from "../../components/PageMeta";
-import { mailto, SUPPORT_EMAIL } from "../../utils/site";
+import { mailto, PRIVACY_EMAIL, SUPPORT_EMAIL } from "../../utils/site";
 import {
   bodyStyle,
   buttonLinkStyle,
@@ -24,6 +24,7 @@ import {
 const INVITE_SUBJECT = "Flump beta invite request";
 const SUPPORT_SUBJECT = "Flump support";
 const FEEDBACK_SUBJECT = "Flump feedback";
+const PRIVACY_SUBJECT = "Flump privacy request";
 const COMPLAINT_SUBJECT = "Flump complaint";
 
 /**
@@ -47,6 +48,12 @@ export const ContactPage: FC = () => (
         <p className={introStyle()}>
           Flump is a free, invite-only beta. Email is the only way to reach us for now.
         </p>
+        {BUSINESS_DETAILS.supportEmail.isPlaceholder && (
+          <p className={noteStyle()}>
+            The email address on this page is a placeholder while we finish setting up, so it is not
+            monitored yet.
+          </p>
+        )}
 
         <section className={sectionStyle()} aria-labelledby="contact-support">
           <h2 id="contact-support" className={sectionHeadingStyle()}>
@@ -60,11 +67,6 @@ export const ContactPage: FC = () => (
             with a question or a problem. Please do not include account numbers, balances or other
             financial details in your message.
           </p>
-          {BUSINESS_DETAILS.supportEmail.isPlaceholder && (
-            <p className={noteStyle()}>
-              This is a placeholder address while we finish setting up, so it is not monitored yet.
-            </p>
-          )}
         </section>
 
         <section className={sectionStyle()} aria-labelledby="contact-feedback">
@@ -105,6 +107,17 @@ export const ContactPage: FC = () => (
               Security and privacy
             </Link>
             .
+          </p>
+        </section>
+
+        <section className={sectionStyle()} aria-labelledby="contact-privacy">
+          <h2 id="contact-privacy" className={sectionHeadingStyle()}>
+            Privacy and your data
+          </h2>
+          <p className={bodyStyle()}>
+            <a href={mailto(PRIVACY_EMAIL, PRIVACY_SUBJECT)} className={linkStyle()}>
+              {PRIVACY_EMAIL}
+            </a>
           </p>
         </section>
 
