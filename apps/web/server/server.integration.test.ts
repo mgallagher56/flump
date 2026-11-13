@@ -1,12 +1,12 @@
 // @vitest-environment node
 import { type ChildProcess, spawn } from "node:child_process";
 import { randomBytes } from "node:crypto";
-import { existsSync, readdirSync, statSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { request } from "node:http";
 import { createServer } from "node:net";
 import path from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { SECURITY_HEADERS } from "../app/security/headers.server";
+import { NON_DOCUMENT_CSP, SECURITY_HEADERS } from "../app/security/headers.server";
 
 /**
  * Spawns the real `server.ts` against the production build (`build/server/index.js`) with dummy
@@ -76,10 +76,20 @@ function send(
   });
 }
 
-function assertSecurityHeaders(res: Reply) {
+/**
+ * `csp` defaults to the enforced document value; a non-document response the app did not give a
+ * CSP (static JSON, fonts, CSS, the CSRF 400) carries `NON_DOCUMENT_CSP` instead.
+ */
+function assertSecurityHeaders(res: Reply, csp = SECURITY_HEADERS["Content-Security-Policy"]) {
   for (const [name, value] of Object.entries(SECURITY_HEADERS)) {
-    expect(res.headers.get(name), name).toBe(value);
+    const expected = name === "Content-Security-Policy" ? csp : value;
+    expect(res.headers.get(name), name).toBe(expected);
   }
+  // Exactly one enforced CSP header, never a doubled default.
+  const cspCount = res.rawHeaders.filter(
+    (h, i) => i % 2 === 0 && h.toLowerCase() === "content-security-policy",
+  ).length;
+  expect(cspCount).toBe(1);
   expect(res.headers.get("x-powered-by")).toBeNull();
 }
 
@@ -212,7 +222,20 @@ describe.skipIf(!buildReady)("web express server (built)", () => {
   it("stamps /__manifest responses", async () => {
     const res = await send(`${base}/__manifest`);
     expect([204, 400]).toContain(res.status);
-    assertSecurityHeaders(res);
+    // A 204 has no Content-Type and keeps the default; a 400 body is plain text or JSON.
+    assertSecurityHeaders(res, res.status === 204 ? undefined : NON_DOCUMENT_CSP);
+  });
+
+  it("serves the JSON /__manifest patch response with the restrictive non-document CSP", async () => {
+    const dir = path.join(webDir, "build/client/assets");
+    const version = readdirSync(dir)
+      .map((f) => /^manifest-([a-f0-9]+)\.js$/.exec(f)?.[1])
+      .find(Boolean);
+    expect(version).toBeDefined();
+    const res = await send(`${base}/__manifest?paths=%2Ftools&version=${version}`);
+    expect(res.status).toBe(200);
+    expect(res.headers.get("content-type")).toMatch(/^application\/json/);
+    assertSecurityHeaders(res, NON_DOCUMENT_CSP);
   });
 
   it("stamps the document-level CSRF 400 (POST with a foreign Origin)", async () => {
@@ -225,7 +248,8 @@ describe.skipIf(!buildReady)("web express server (built)", () => {
       body: "a=b",
     });
     expect(res.status).toBe(400);
-    assertSecurityHeaders(res);
+    // Under Bun the text/plain default is added at serialisation, so the header may be absent.
+    assertSecurityHeaders(res, NON_DOCUMENT_CSP);
   });
 
   it("stamps an error response from a failing route (/callback without a cookie)", async () => {
@@ -246,8 +270,25 @@ describe.skipIf(!buildReady)("web express server (built)", () => {
   it("stamps files from public/", async () => {
     const res = await send(`${base}/favicon.ico`);
     expect(res.status).toBe(200);
+    expect(res.headers.get("content-type") ?? "").toMatch(/^image\//);
+    // Images keep the frame-ancestors-only default (the image viewer needs inline styles).
     assertSecurityHeaders(res);
     expect(res.headers.get("cache-control")).toMatch(/^public, max-age=\d+/);
+  });
+
+  it("serves hashed fonts as real files with the restrictive CSP, never inlined (font-src 'self')", async () => {
+    const dir = path.join(webDir, "build/client/assets");
+    const font = readdirSync(dir).find((f) => f.endsWith(".woff2"));
+    expect(font).toBeDefined();
+    const res = await send(`${base}/assets/${font}`);
+    expect(res.status).toBe(200);
+    expect(res.headers.get("content-type")).toMatch(/^font\/woff2/);
+    assertSecurityHeaders(res, NON_DOCUMENT_CSP);
+    expect(res.headers.get("cache-control")).toBe("public, max-age=31536000, immutable");
+    // No stylesheet in the client build may embed a data: font.
+    for (const css of readdirSync(dir).filter((f) => f.endsWith(".css"))) {
+      expect(readFileSync(path.join(dir, css), "utf8")).not.toMatch(/data:(font|application)/);
+    }
   });
 
   it("never writes query values to the access log", async () => {

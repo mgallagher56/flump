@@ -16,6 +16,14 @@ export const SECURITY_HEADERS: Readonly<Record<string, string>> = {
   "Cross-Origin-Resource-Policy": "same-origin",
 };
 
+/**
+ * Default policy for responses that are not documents and that the app did not give a CSP
+ * (E20-N11 follow-up, see "Responses outside the middleware" in docs/security/headers-and-csp.md).
+ * Applied only by `server/securityHeaders.ts`, in place of the `frame-ancestors`-only default,
+ * and only for the content types it lists. Never part of `SECURITY_HEADERS`.
+ */
+export const NON_DOCUMENT_CSP = "default-src 'none'; frame-ancestors 'none'; base-uri 'none'";
+
 function withHeaders(response: Response, apply: (headers: Headers) => void): Response {
   try {
     apply(response.headers);
