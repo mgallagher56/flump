@@ -1,5 +1,83 @@
 # Changelog
 
+## [1.28.0](https://github.com/mgallagher56/flump/compare/flump/web-v1.27.0...flump/web-v1.28.0) (2026-11-13)
+
+
+### Features ✨
+
+* advice-language guard with ratcheting allow-list (E29-T3) ([780f75e](https://github.com/mgallagher56/flump/commit/780f75e47d675f7820ff741d4e211cafe22fe153))
+* **backend:** add nullable term_months and fixed_rate_end_date to accounts ([8606712](https://github.com/mgallagher56/flump/commit/8606712773eb3a9df17af5c68a742cf5f1b673e1))
+* **finance-engine:** neutral observations, stage labels and student-loan outcome (E29-T5) ([5ce0444](https://github.com/mgallagher56/flump/commit/5ce0444287e7d403bb26de36671ef0cc55e4874c))
+* **ops:** Railway config as code, inert until config paths are set (E18-N8) ([44ee0b1](https://github.com/mgallagher56/flump/commit/44ee0b114c2ecce10aa956d8959abb3463d50426))
+* **ui:** illustrations, teal logo, housekeeping CoachCard copy (E15 round 5 PR 6) ([14f119b](https://github.com/mgallagher56/flump/commit/14f119be63a27e7b633f814e6ba5ca2203e7e7cf))
+* **web:** bottom bar Home | Accounts | Budget | Tax and pay | More (T-IA-4) ([7dd11c9](https://github.com/mgallagher56/flump/commit/7dd11c96ac9b4d062a82c2e165ba9f15f0be7868))
+* **web:** E15 dashboard shell on ui primitives (KPI strip, show/hide widgets, stage coach card) ([f96daa0](https://github.com/mgallagher56/flump/commit/f96daa07ffda60c529aa2586728fbf40903e9447))
+* **web:** E15 mortgage pilot on ui primitives (calm ledger, compact density) ([c711558](https://github.com/mgallagher56/flump/commit/c71155873b2552ea7507bfaeefa1a0762da3dcc0))
+* **web:** extract take-home pay into /app/take-home (T-IA-3) ([880c7e0](https://github.com/mgallagher56/flump/commit/880c7e039abe01b66dabddd110c472674474c260))
+* **web:** plain UK English nav labels and Settings naming (T-IA-2) ([d112701](https://github.com/mgallagher56/flump/commit/d112701cedfa01f71a81a77713804033fc83e1ae))
+* **web:** remove vestigial Emotion and log render errors safely (E20-N3) ([ea8d4d0](https://github.com/mgallagher56/flump/commit/ea8d4d013802bf6ff4affe927f0539cd1c5477b1))
+* **web:** same-origin /api proxy and token-less apiFetch (E20-N4) ([afbc8d0](https://github.com/mgallagher56/flump/commit/afbc8d0c94c473ae758c60771790ea2fa2a3ed19))
+* **web:** security headers and CSRF Origin check via root middleware (E20-N1) ([75a62ef](https://github.com/mgallagher56/flump/commit/75a62efaa589fb7bd6d9897cee00cf42e5b276d1))
+* **web:** session lifetime policy and __Host- cookie in production (E20-N19) ([560c972](https://github.com/mgallagher56/flump/commit/560c9720a6511ca518b5e780de9f1f6c68247f44))
+
+
+### Bug Fixes 🪲
+
+* remove all references to the flump.co.uk domain ([6a5d86a](https://github.com/mgallagher56/flump/commit/6a5d86a9912cf43847a17a717b17a6562e685618))
+* **web,finance-engine:** reconcile web payloads with the contract so tax and mcp-tokens enforce (E21) ([f7f1f8b](https://github.com/mgallagher56/flump/commit/f7f1f8b26710a3bf904e3127e8508537af485d1f))
+* **web,ui:** drop duplicate live regions, fix badge contrast, show estimate note once ([86ac280](https://github.com/mgallagher56/flump/commit/86ac280b77e8440be466bbf89ca3b5da2cb9a625))
+* **web,ui:** label tax and pension figures as estimates, use semantic tokens, KPI values as paragraphs ([e7cfe0c](https://github.com/mgallagher56/flump/commit/e7cfe0c46e0185094a9ea2c9f910fa0bd3fff2f0))
+* **web:** address review of mortgage pilot ([9a667e4](https://github.com/mgallagher56/flump/commit/9a667e48aef982c6f16752ed2552461047e99af6))
+* **web:** allow-list E17-N21 eval grader and fixture hits (E29-T3) ([d7d40be](https://github.com/mgallagher56/flump/commit/d7d40beeec0f332051395f2baf137b995ec370ec))
+* **web:** bottom bar labels wrap cleanly on narrow phones; Storybook NavLink honours className fn (T-IA-4) ([44f0cb3](https://github.com/mgallagher56/flump/commit/44f0cb3cf872d8cdcdbb32e38374d67570c82a8e))
+* **web:** clear legacy wos-session cookie, align presence cookie age, harden policy tests (E20-N19) ([8607dbf](https://github.com/mgallagher56/flump/commit/8607dbf7d3cd973a69167b7baa9a1527583006dc))
+* **web:** harden /api proxy (case-sensitive paths, aborted bodies, Sec-Fetch-Site) ([e7c3ecc](https://github.com/mgallagher56/flump/commit/e7c3ecc981c06d924d60ad5635bd8aa9743daa48))
+* **web:** keep a reachable Home link below md, add server mobile hint to avoid post-hydration reflow ([0550e68](https://github.com/mgallagher56/flump/commit/0550e68e1be82796122a523db031057af20e42b3))
+* **web:** lint-clean single-api-client guard fixtures ([73dc522](https://github.com/mgallagher56/flump/commit/73dc5227e455b3ee38c6f190423f948de99e50fb))
+* **web:** make useIsMobile and useTheme hydration-safe (R-08, React [#418](https://github.com/mgallagher56/flump/issues/418)) ([8d44eb1](https://github.com/mgallagher56/flump/commit/8d44eb1abec56b953e2390b62f4ce490f51e460e))
+* **web:** mortgage pilot follow-ups (tab keys, horizon rule, shock sim reseed) ([ac992f8](https://github.com/mgallagher56/flump/commit/ac992f82b94c40afc68435a711cea77595c3e057))
+* **web:** raise Dialog above nav layers, semantic persona group, story and notice tests ([2685851](https://github.com/mgallagher56/flump/commit/26858511c3250669f22c054330f14ca2ecc94a57))
+* **web:** round every remaining account/profile money and percent send; cover token expiry options ([70f4ec7](https://github.com/mgallagher56/flump/commit/70f4ec76e247cff884dd8c464c11e35a138873a7))
+* **web:** run security headers on unmatched paths via splat route and cover cookie/redirect cases (E20-N1) ([0036870](https://github.com/mgallagher56/flump/commit/003687002e93d067f73e8c0021e85d1cc8845544))
+* **web:** sandbox chrome, accessible dialogs and UK widget copy (R-07, R-11, R-15, R-17) ([b7f6145](https://github.com/mgallagher56/flump/commit/b7f61455df8c5c0ea2bb528685f6eb09a848e17f))
+* **web:** scrim/shadow tokens, distinct budget palette, AA text colours (review fixes) ([f43b6c6](https://github.com/mgallagher56/flump/commit/f43b6c6a556cc621f068d9c3cf3cfbc6dc2e481d))
+* **web:** tested payRise parser, Header snapshot, forecast description (T-IA-3) ([745b3cb](https://github.com/mgallagher56/flump/commit/745b3cb9d747f7c9fdeca922048b90c8fc0f10b1))
+* **web:** token sweep to semantic/chart tokens, en-GB debt promo figure (R-12, R-18) ([542782e](https://github.com/mgallagher56/flump/commit/542782e5645d187fc9e740d4eb4c0c9dc06483a0))
+
+
+### Build 🛠️
+
+* **docker:** make the CI Expo guard see bun's .bun layout, widen change filter, pass base ref via env ([c3297f2](https://github.com/mgallagher56/flump/commit/c3297f2690f4c7157da684d77b3bfc6b7a2c114e))
+* **docker:** workspace-proof the three server Dockerfiles and add a CI image check (E12 T0.8, T2.23) ([e9455f8](https://github.com/mgallagher56/flump/commit/e9455f8b08fe6da287ac45866a61bc70adc04675))
+
+
+### Performance ⚡️
+
+* **web:** replace 1.3MB logo PNGs with 1KB hashed SVG, fix logo link semantics (R-04, R-16) ([543ffbe](https://github.com/mgallagher56/flump/commit/543ffbee7200824d58c8a522779efaf258ab9383))
+
+
+### Refactor 🔥
+
+* **web:** budget route and container stop using the browser token (E20-N6) ([193c9b1](https://github.com/mgallagher56/flump/commit/193c9b16bcff4e343426235c7e52eca2e7646aef))
+* **web:** profile hook stops reading the browser token (E20-N5) ([33cadef](https://github.com/mgallagher56/flump/commit/33cadef0a318e6600582ae95c9b6af97a813b176))
+
+
+### Tests 🧪
+
+* **web:** budget colour test expects token vars ([b308142](https://github.com/mgallagher56/flump/commit/b30814244ccab5a20c305d53e9a68f350b223b5e))
+* **web:** contract suite calls the backend via backendFetch, not the browser /api client ([d244b4e](https://github.com/mgallagher56/flump/commit/d244b4e6a89c7c64df3545a46e17ea1308a51b24))
+* **web:** query projection notice by data-testid ([6da91f9](https://github.com/mgallagher56/flump/commit/6da91f9704c543703ea35d9c59ce5d37d3745316))
+* **web:** refresh snapshots, regenerate token baseline ([354c77e](https://github.com/mgallagher56/flump/commit/354c77e69f7bfa32dd38ba195020556fe2da74bc))
+* **web:** update FLPInput/FLPModal snapshots after token sweep ([6fb1a18](https://github.com/mgallagher56/flump/commit/6fb1a18c416bda6308a6dc4dba007006955c6f74))
+* **web:** update snapshots after token sweep; leave CopyTaxYearModal to [#461](https://github.com/mgallagher56/flump/issues/461) ([450e00b](https://github.com/mgallagher56/flump/commit/450e00b509e3d84792f70e32e5492e9be9a4d7e5))
+
+
+### Miscellaneous 🙃
+
+* **docker:** harden images (non-root, healthcheck, exec-form CMD, dockerignore) and assert in CI (E18-N6) ([d5a63bc](https://github.com/mgallagher56/flump/commit/d5a63bceedda43730b1d6921c0b8a780865d8850))
+* **launch:** FLUMP_LAUNCH placeholder build guard for web and marketing (E24-T1) ([f2d83eb](https://github.com/mgallagher56/flump/commit/f2d83eb4bf13e062809fea342bbc19a592117871))
+* remove JetBrains Mono (keep Inter + Plus Jakarta Sans only) ([15ad262](https://github.com/mgallagher56/flump/commit/15ad262bbdd40dc0012f746d3a74fadd43e1cc10))
+
 ## [1.27.0](https://github.com/mgallagher56/flump/compare/flump/web-v1.26.0...flump/web-v1.27.0) (2026-11-12)
 
 
