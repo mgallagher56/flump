@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { describe, expect, it } from "vitest";
-import { buildHeadMeta } from "../server/headMeta";
+import { buildHeadMeta, splitHoistables } from "../server/headMeta";
 import { render } from "./entry-server";
 
 const PAGES = [
@@ -25,12 +25,15 @@ const SINGLE = [
   'name="twitter:description"',
 ];
 
-// react-helmet-async 3 on React 19 renders tags inline in the app HTML (helmet context is empty),
-// so the document a crawler sees is the injected head meta plus the rendered app HTML.
-const head = (url: string, siteUrl: string | undefined) => {
+// react-helmet-async 3 on React 19 renders tags as a leading run of the app HTML (helmet context
+// is empty); server.ts splits that run into <head>. head is what lands in <head>, body the rest.
+const parts = (url: string, siteUrl: string | undefined) => {
   const { html, helmet, status } = render(url);
-  return `${buildHeadMeta({ helmet, appUrlScript: "", siteUrl, url, status })}${html}`;
+  const { hoisted, rest } = splitHoistables(html);
+  const head = buildHeadMeta({ hoisted, helmet, appUrlScript: "", siteUrl, url, status });
+  return { head, body: rest };
 };
+const head = (url: string, siteUrl: string | undefined) => parts(url, siteUrl).head;
 
 const stripSvg = (s: string) => s.replace(/<svg[\s\S]*?<\/svg>/g, "");
 const count = (haystack: string, needle: string) => haystack.split(needle).length - 1;
@@ -39,7 +42,9 @@ describe("SSR social meta per page", () => {
   for (const url of PAGES) {
     it(`${url} emits each tag exactly once, with og:url from SITE_URL`, () => {
       const out = head(url, "https://flump.example");
-      expect(count(stripSvg(out), "<title")).toBe(1);
+      expect(count(out, "<title")).toBe(1);
+      const { body } = parts(url, "https://flump.example");
+      expect(stripSvg(body)).not.toMatch(/<(title|meta|link)\b/);
       for (const key of SINGLE) expect(count(out, key)).toBe(1);
       expect(count(out, 'property="og:url"')).toBe(1);
       expect(count(out, 'rel="canonical"')).toBe(1);
@@ -63,6 +68,12 @@ describe("SSR social meta per page", () => {
     const out = head("/pricing", undefined);
     expect(out).toContain("<title>Pricing and plans | Flump</title>");
     expect(out).toContain('property="og:title" content="Pricing and plans | Flump"');
+  });
+
+  it("keeps the NotFoundPage title in head with noindex", () => {
+    const out = head("/does-not-exist", undefined);
+    expect(out).toContain("<title>Page not found | Flump</title>");
+    expect(out).toContain('name="robots" content="noindex"');
   });
 
   it("does not emit og:url on a 404", () => {

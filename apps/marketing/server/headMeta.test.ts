@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { describe, expect, it } from "vitest";
-import { buildHeadMeta } from "./headMeta";
+import { buildHeadMeta, splitHoistables } from "./headMeta";
 
 const base = {
   helmet: { title: "<title>T</title>", meta: '<meta name="d" />', link: "" },
@@ -49,5 +49,21 @@ describe("buildHeadMeta", () => {
 
   it("tolerates a missing helmet", () => {
     expect(buildHeadMeta({ ...base, helmet: undefined })).toContain("<script>x</script>");
+  });
+});
+
+describe("splitHoistables", () => {
+  it("splits only the leading run of title/meta/link tags", () => {
+    const html =
+      '<title>A &amp; B</title><meta name="d" content="x"/><link rel="x" href="/y"/><div><title>svg</title><meta name="z"/></div>';
+    const { hoisted, rest } = splitHoistables(html);
+    expect(hoisted).toBe(
+      '<title>A &amp; B</title><meta name="d" content="x"/><link rel="x" href="/y"/>',
+    );
+    expect(rest).toBe('<div><title>svg</title><meta name="z"/></div>');
+  });
+
+  it("returns the html untouched when it does not start with hoistables", () => {
+    expect(splitHoistables("<div>x</div>")).toEqual({ hoisted: "", rest: "<div>x</div>" });
   });
 });
