@@ -156,14 +156,8 @@ const ALLOW_LIST: AllowEntry[] = [
     owner: "E17-N11",
     expires: EXPIRES,
   },
-  // financial-audit.tool.ts: healthScore.recommendations, student loan `recommendation`.
-  {
-    surface: "tool:evaluate_cashflow_runway_and_health",
-    kind: "banned-key",
-    detail: "recommendations",
-    owner: "E17-N11",
-    expires: EXPIRES,
-  },
+  // financial-audit.tool.ts student loan `recommendation`. (healthScore.recommendations was
+  // renamed to observations by E29-T5, #553, so its entry is gone.)
   {
     surface: "tool:evaluate_uk_student_loan",
     kind: "banned-key",
