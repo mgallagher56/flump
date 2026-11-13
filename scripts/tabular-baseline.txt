@@ -1,6 +1,5 @@
 apps/marketing/src/components/InteractiveFinancialTeaser.tsx
 apps/web/app/components/accounts/BankConnectionsList.tsx
-apps/web/app/components/debt/UkDebtInstrumentsCard.tsx
 apps/web/app/components/pension/PensionAccountsList.tsx
 apps/web/app/components/pension/PensionQuickStartWizard.tsx
 apps/web/app/containers/accounts/accountDetailContainer/AccountDetailContainer.tsx
