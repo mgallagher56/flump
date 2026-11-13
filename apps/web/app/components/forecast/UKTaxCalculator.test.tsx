@@ -62,6 +62,14 @@ describe("<UKTaxCalculator /> editing the salary", () => {
 });
 
 describe("<UKTaxCalculator />", () => {
+  test("wraps the deductions breakdown table in a horizontal scroll wrapper", () => {
+    const { getByTestId } = customRender(
+      <UKTaxCalculator initialSalary={45000} onApplyIncrease={vi.fn()} />,
+    );
+    const wrapper = getByTestId("breakdown-table-scroll");
+    expect(wrapper.querySelector("table")).not.toBeNull();
+  });
+
   test("renders correctly with gross salary and elements", () => {
     const { container, getAllByText } = customRender(
       <UKTaxCalculator initialSalary={45000} onApplyIncrease={vi.fn()} />,

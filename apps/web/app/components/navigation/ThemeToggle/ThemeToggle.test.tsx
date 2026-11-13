@@ -4,6 +4,7 @@ import type { ThemePreference } from "~/hooks/useTheme";
 import { ThemeContext } from "~/ThemeContext";
 import customRender from "~/testUtils/customRender";
 import ThemeToggle from "./ThemeToggle";
+import { themeToggleOption } from "./ThemeToggle.styles";
 
 function renderToggle(preference: ThemePreference) {
   const setPreference = vi.fn();
@@ -40,5 +41,17 @@ describe("<ThemeToggle />", () => {
     expect(setPreference).toHaveBeenCalledWith("dark");
     fireEvent.click(screen.getByRole("button", { name: "System theme" }));
     expect(setPreference).toHaveBeenCalledWith("system");
+  });
+});
+
+describe("ThemeToggle touch targets", () => {
+  test("options are at least 44px on small screens and compact from md up", () => {
+    const raw = themeToggleOption.raw() as {
+      width: { base: string; md: string };
+      height: { base: string; md: string };
+    };
+    expect(raw.width.base).toBe("44px");
+    expect(raw.height.base).toBe("44px");
+    expect(raw.width.md).toBe("32px");
   });
 });

@@ -256,11 +256,18 @@ const UKTaxCalculator: FC<UKTaxCalculatorProps> = ({ initialSalary, onApplyIncre
     marginBottom: "24px",
   });
 
+  const breakdownTableScroll = css({
+    width: "100%",
+    maxWidth: "100%",
+    overflowX: "auto",
+  });
+
   const breakdownTable = css({
     width: "100%",
     borderCollapse: "collapse",
     fontSize: "sm",
     marginTop: "16px",
+    minWidth: "320px",
   });
 
   const thStyle = css({
@@ -542,89 +549,98 @@ const UKTaxCalculator: FC<UKTaxCalculatorProps> = ({ initialSalary, onApplyIncre
                 <FLPHeading as="h4" size="sm">
                   Salary Deductions Breakdown
                 </FLPHeading>
-                <table className={breakdownTable}>
-                  <thead>
-                    <tr>
-                      <th className={thStyle}>Deduction</th>
-                      <th className={thStyle}>Annual</th>
-                      <th className={thStyle}>Monthly</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td className={tdStyle}>Gross Income</td>
-                      <td className={tdStyle}>{formatCurrency(grossSalary)}</td>
-                      <td className={tdStyle}>{formatCurrency(grossSalary / 12)}</td>
-                    </tr>
-                    {taxResults.pension > 0 && (
+                <div className={breakdownTableScroll} id="breakdown-table-scroll">
+                  <table className={breakdownTable}>
+                    <thead>
                       <tr>
-                        <td className={tdStyle} style={{ color: "var(--colors-primary)" }}>
-                          Pension {isSalarySacrifice ? "(Sacrifice)" : "(Relief at source)"}
-                        </td>
-                        <td className={tdStyle}>-{formatCurrency(taxResults.pension)}</td>
-                        <td className={tdStyle}>-{formatCurrency(taxResults.pension / 12)}</td>
+                        <th className={thStyle}>Deduction</th>
+                        <th className={thStyle}>Annual</th>
+                        <th className={thStyle}>Monthly</th>
                       </tr>
-                    )}
-                    {taxResults.employerNiSaving > 0 && (
+                    </thead>
+                    <tbody>
                       <tr>
-                        <td
-                          className={tdStyle}
-                          style={{ color: "var(--colors-status-positive-text)" }}
-                        >
-                          + Employer NI to Pension
-                        </td>
-                        <td className={tdStyle}>+{formatCurrency(taxResults.employerNiSaving)}</td>
-                        <td className={tdStyle}>
-                          +{formatCurrency(taxResults.employerNiSaving / 12)}
-                        </td>
+                        <td className={tdStyle}>Gross Income</td>
+                        <td className={tdStyle}>{formatCurrency(grossSalary)}</td>
+                        <td className={tdStyle}>{formatCurrency(grossSalary / 12)}</td>
                       </tr>
-                    )}
-                    {taxResults.incomeTax > 0 && (
-                      <tr>
-                        <td
-                          className={tdStyle}
-                          style={{ color: "var(--colors-status-danger-text)" }}
-                        >
-                          Income Tax
-                        </td>
-                        <td className={tdStyle}>-{formatCurrency(taxResults.incomeTax)}</td>
-                        <td className={tdStyle}>-{formatCurrency(taxResults.incomeTax / 12)}</td>
+                      {taxResults.pension > 0 && (
+                        <tr>
+                          <td className={tdStyle} style={{ color: "var(--colors-primary)" }}>
+                            Pension {isSalarySacrifice ? "(Sacrifice)" : "(Relief at source)"}
+                          </td>
+                          <td className={tdStyle}>-{formatCurrency(taxResults.pension)}</td>
+                          <td className={tdStyle}>-{formatCurrency(taxResults.pension / 12)}</td>
+                        </tr>
+                      )}
+                      {taxResults.employerNiSaving > 0 && (
+                        <tr>
+                          <td
+                            className={tdStyle}
+                            style={{ color: "var(--colors-status-positive-text)" }}
+                          >
+                            + Employer NI to Pension
+                          </td>
+                          <td className={tdStyle}>
+                            +{formatCurrency(taxResults.employerNiSaving)}
+                          </td>
+                          <td className={tdStyle}>
+                            +{formatCurrency(taxResults.employerNiSaving / 12)}
+                          </td>
+                        </tr>
+                      )}
+                      {taxResults.incomeTax > 0 && (
+                        <tr>
+                          <td
+                            className={tdStyle}
+                            style={{ color: "var(--colors-status-danger-text)" }}
+                          >
+                            Income Tax
+                          </td>
+                          <td className={tdStyle}>-{formatCurrency(taxResults.incomeTax)}</td>
+                          <td className={tdStyle}>-{formatCurrency(taxResults.incomeTax / 12)}</td>
+                        </tr>
+                      )}
+                      {taxResults.ni > 0 && (
+                        <tr>
+                          <td
+                            className={tdStyle}
+                            style={{ color: "var(--colors-status-warning-text)" }}
+                          >
+                            National Insurance
+                          </td>
+                          <td className={tdStyle}>-{formatCurrency(taxResults.ni)}</td>
+                          <td className={tdStyle}>-{formatCurrency(taxResults.ni / 12)}</td>
+                        </tr>
+                      )}
+                      {taxResults.studentLoan > 0 && (
+                        <tr>
+                          <td
+                            className={tdStyle}
+                            style={{ color: "var(--colors-status-info-text)" }}
+                          >
+                            Student Loan
+                          </td>
+                          <td className={tdStyle}>-{formatCurrency(taxResults.studentLoan)}</td>
+                          <td className={tdStyle}>
+                            -{formatCurrency(taxResults.studentLoan / 12)}
+                          </td>
+                        </tr>
+                      )}
+                      <tr
+                        style={{
+                          borderTop: "2px solid",
+                          borderTopColor: "border",
+                          fontWeight: "bold",
+                        }}
+                      >
+                        <td className={tdStyle}>Estimated net take-home</td>
+                        <td className={tdStyle}>{formatCurrency(taxResults.netPay)}</td>
+                        <td className={tdStyle}>{formatCurrency(taxResults.netPay / 12)}</td>
                       </tr>
-                    )}
-                    {taxResults.ni > 0 && (
-                      <tr>
-                        <td
-                          className={tdStyle}
-                          style={{ color: "var(--colors-status-warning-text)" }}
-                        >
-                          National Insurance
-                        </td>
-                        <td className={tdStyle}>-{formatCurrency(taxResults.ni)}</td>
-                        <td className={tdStyle}>-{formatCurrency(taxResults.ni / 12)}</td>
-                      </tr>
-                    )}
-                    {taxResults.studentLoan > 0 && (
-                      <tr>
-                        <td className={tdStyle} style={{ color: "var(--colors-status-info-text)" }}>
-                          Student Loan
-                        </td>
-                        <td className={tdStyle}>-{formatCurrency(taxResults.studentLoan)}</td>
-                        <td className={tdStyle}>-{formatCurrency(taxResults.studentLoan / 12)}</td>
-                      </tr>
-                    )}
-                    <tr
-                      style={{
-                        borderTop: "2px solid",
-                        borderTopColor: "border",
-                        fontWeight: "bold",
-                      }}
-                    >
-                      <td className={tdStyle}>Estimated net take-home</td>
-                      <td className={tdStyle}>{formatCurrency(taxResults.netPay)}</td>
-                      <td className={tdStyle}>{formatCurrency(taxResults.netPay / 12)}</td>
-                    </tr>
-                  </tbody>
-                </table>
+                    </tbody>
+                  </table>
+                </div>
               </div>
 
               {/* Allocation Donut */}
