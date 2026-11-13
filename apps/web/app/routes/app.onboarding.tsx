@@ -55,7 +55,8 @@ export const loader = async (args: LoaderFunctionArgs) => {
       accessToken,
       signal: args.request.signal,
     });
-    return data({ userProfile, user, accessToken });
+    // The access token stays on the server: browser calls go through the same-origin /api proxy.
+    return data({ userProfile, user });
   } catch (error) {
     throwRouteError(error);
   }
@@ -97,7 +98,7 @@ const numOrNull = (value: string): number | null => (value === "" ? null : Numbe
 const FINISH_ERROR = "We couldn't save your details. Check your connection and try again.";
 
 export default function OnboardingRoute() {
-  const { userProfile, user, accessToken } = useLoaderData<typeof loader>();
+  const { userProfile, user } = useLoaderData<typeof loader>();
   const navigate = useNavigate();
   const actionData = useActionData<typeof action>();
   const actionError =
@@ -302,7 +303,7 @@ export default function OnboardingRoute() {
       // backend is also asked what already exists, so a retry after a reload, a crash or a lost
       // response skips records an earlier attempt created. A failed lookup stops here (no guessing).
       const existingNames = async (endpoint: string) => {
-        const rows = await apiFetch<Array<Record<string, unknown>>>(endpoint, { accessToken });
+        const rows = await apiFetch<Array<Record<string, unknown>>>(endpoint);
         if (!Array.isArray(rows)) throw new BackendError("bad-response", endpoint);
         return rows.flatMap((row) => (typeof row.name === "string" ? [row.name] : []));
       };
@@ -329,7 +330,6 @@ export default function OnboardingRoute() {
         seedJobs.map(async (job) => {
           if (!job.enabled || seededRef.current.has(job.key)) return;
           await apiFetch<unknown>(job.endpoint, {
-            accessToken,
             method: "POST",
             body: job.payload,
           });
