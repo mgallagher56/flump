@@ -13,11 +13,18 @@ const observabilityBuilt = existsSync(
 test.skipIf(!observabilityBuilt)(
   "Sentry envelope under Bun carries the exception and no sentinels",
   async () => {
-    const { assertEnvelopeClean, assertNestLoggerRestored, runEnvelopeScenario } = await import(
-      "../../apps/backend/test/support/sentry-envelope"
-    );
+    const {
+      assertEnvelopeClean,
+      assertNestLoggerRestored,
+      assertNoLeakedKeys,
+      runEnvelopeScenario,
+      runUnhardenedEnvelope,
+    } = await import("../../apps/backend/test/support/sentry-envelope");
     const result = await runEnvelopeScenario();
     expect(() => assertEnvelopeClean(result)).not.toThrow();
+    // Positive control: the same key assertion must fire on an unhardened SDK envelope.
+    const unhardened = await runUnhardenedEnvelope();
+    expect(() => assertNoLeakedKeys(unhardened)).toThrow(/envelope contains/);
     // The scenario boots a Nest app with logger:false; later test files in this process must still see Nest logs.
     expect(() => assertNestLoggerRestored()).not.toThrow();
   },

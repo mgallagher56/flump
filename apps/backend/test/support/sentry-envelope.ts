@@ -1,4 +1,4 @@
-import { createServer } from "node:http";
+import { createServer, type Server } from "node:http";
 import type { AddressInfo } from "node:net";
 import {
   BadRequestException,
@@ -13,6 +13,9 @@ import * as Sentry from "@sentry/node";
 import request from "supertest";
 import { ObservabilityModule } from "../../src/observability/observability.module";
 import { initSentry, WITHHELD } from "../../src/observability/sentry";
+import { assertNoLeakedKeys } from "./envelope-keys";
+
+export { assertNoLeakedKeys, LEAKY_KEYS } from "./envelope-keys";
 
 /** Strings that must never appear in an envelope. */
 export const SENTINELS = {
@@ -47,6 +50,44 @@ for (const name of ["boom", "provider", "bad"] as const) {
   );
 }
 
+/** Local envelope sink: collects every request body Sentry sends. */
+export async function startSink(): Promise<{
+  envelopes: string[];
+  sink: Server;
+  port: number;
+}> {
+  const envelopes: string[] = [];
+  const sink = createServer((req, res) => {
+    const chunks: Buffer[] = [];
+    req.on("data", (c: Buffer) => chunks.push(c));
+    req.on("end", () => {
+      envelopes.push(Buffer.concat(chunks).toString("utf8"));
+      res.writeHead(200, { "content-type": "application/json" });
+      res.end("{}");
+    });
+  });
+  await new Promise<void>((resolve) => sink.listen(0, "127.0.0.1", resolve));
+  return { envelopes, sink, port: (sink.address() as AddressInfo).port };
+}
+
+/**
+ * Positive control for `assertNoLeakedKeys`: an UNHARDENED `Sentry.init({ dsn })` (SDK defaults)
+ * sends host, device, runtime, module and source-context data. Run the same assertion over this
+ * envelope and it must throw, proving the absent-key check discriminates.
+ */
+export async function runUnhardenedEnvelope(): Promise<string[]> {
+  const { envelopes, sink, port } = await startSink();
+  try {
+    Sentry.init({ dsn: `http://public@127.0.0.1:${port}/1` });
+    Sentry.captureException(new Error("unhardened control"));
+    await Sentry.flush(5000);
+    return envelopes;
+  } finally {
+    await Sentry.close(2000);
+    await new Promise<void>((resolve) => sink.close(() => resolve()));
+  }
+}
+
 export type Route = "boom" | "provider" | "bad";
 
 export interface EnvelopeResult {
@@ -62,18 +103,7 @@ export async function runEnvelopeScenario(
   extraEnv: Record<string, string> = {},
   route: Route = "boom",
 ): Promise<EnvelopeResult> {
-  const envelopes: string[] = [];
-  const sink = createServer((req, res) => {
-    const chunks: Buffer[] = [];
-    req.on("data", (c: Buffer) => chunks.push(c));
-    req.on("end", () => {
-      envelopes.push(Buffer.concat(chunks).toString("utf8"));
-      res.writeHead(200, { "content-type": "application/json" });
-      res.end("{}");
-    });
-  });
-  await new Promise<void>((resolve) => sink.listen(0, "127.0.0.1", resolve));
-  const port = (sink.address() as AddressInfo).port;
+  const { envelopes, sink, port } = await startSink();
 
   // createNestApplication({ logger: false }) sets Nest's static Logger instance to undefined for
   // the whole process. Under `bun test ./scripts` every test file shares one process, so keep the
@@ -121,35 +151,7 @@ export function assertEnvelopeClean(result: EnvelopeResult, expectedMessage = WI
   for (const leak of ["SENTINELBEARERTOKEN9", "John Smith", "Tesco"]) {
     if (all.includes(leak)) throw new Error(`envelope leaked ${leak}`);
   }
-  const keys = ['"request"', '"headers"', '"query_string"', '"data"', '"cookies"', '"user"'];
-  // v11 can add host, device, locale and IP-inference metadata that v10 did not send. None of it
-  // may appear: the event carries only the exception, the release, the runtime name and a request id.
-  const v11Keys = [
-    '"os"',
-    '"device"',
-    '"culture"',
-    '"cloud_resource"',
-    '"app"',
-    '"modules"',
-    '"ip_address"',
-    '"infer_ip"',
-    '"settings"',
-    '"vars"',
-    '"pre_context"',
-    '"post_context"',
-    '"dsc"',
-  ];
-  for (const key of [...keys, ...v11Keys, '"server_name"']) {
-    if (all.includes(key)) throw new Error(`envelope contains ${key}`);
-  }
-  for (const envelope of result.envelopes) {
-    const header = JSON.parse(envelope.split("\n")[0] ?? "{}") as Record<string, unknown>;
-    if ("trace" in header) throw new Error("envelope header carries a dynamic sampling context");
-    const sdkKeys = Object.keys((header.sdk ?? {}) as Record<string, unknown>).sort();
-    if (sdkKeys.join() !== "name,version") {
-      throw new Error(`envelope sdk header has unexpected keys: ${sdkKeys.join()}`);
-    }
-  }
+  assertNoLeakedKeys(result.envelopes);
   if (!all.includes(expectedMessage)) throw new Error(`envelope lacks ${expectedMessage}`);
   if (!all.includes("req-envelope-1")) throw new Error("request id tag missing");
 }

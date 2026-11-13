@@ -3,6 +3,8 @@ import { assertSafeOptions, PRIVATE_DATA_COLLECTION } from "./sentry-options.js"
 
 const safe = {
   dataCollection: PRIVATE_DATA_COLLECTION,
+  defaultIntegrations: false,
+  traceLifecycle: "static",
   tracesSampleRate: 0,
   includeLocalVariables: false,
   beforeSend: () => null,
@@ -24,6 +26,44 @@ describe("assertSafeOptions", () => {
       }),
     ).not.toThrow();
     expect(() => assertSafeOptions({ ...safe, tracesSampleRate: null })).not.toThrow();
+  });
+
+  it("deep-freezes the shared constant, including the httpBodies array", () => {
+    expect(Object.isFrozen(PRIVATE_DATA_COLLECTION)).toBe(true);
+    expect(Object.isFrozen(PRIVATE_DATA_COLLECTION.httpBodies)).toBe(true);
+    expect(Object.isFrozen(PRIVATE_DATA_COLLECTION.graphQL)).toBe(true);
+    expect(Object.isFrozen(PRIVATE_DATA_COLLECTION.genAI)).toBe(true);
+    expect(Object.isFrozen(PRIVATE_DATA_COLLECTION.mcp)).toBe(true);
+    expect(() => {
+      (PRIVATE_DATA_COLLECTION as { userInfo: boolean }).userInfo = true;
+    }).toThrow(TypeError);
+    expect(() => (PRIVATE_DATA_COLLECTION.httpBodies as string[]).push("x")).toThrow(TypeError);
+  });
+
+  it.each([undefined, true, "static2", "stream"])("rejects traceLifecycle %j", (traceLifecycle) => {
+    expect(() => assertSafeOptions({ ...safe, traceLifecycle })).toThrow(/traceLifecycle/);
+  });
+
+  it.each([undefined, true, 0])("requires defaultIntegrations false, rejects %j", (v) => {
+    expect(() => assertSafeOptions({ ...safe, defaultIntegrations: v })).toThrow(
+      /defaultIntegrations/,
+    );
+  });
+
+  it.each([true, "true", null])("rejects enableRuntimeChannelInjection %j", (v) => {
+    expect(() => assertSafeOptions({ ...safe, enableRuntimeChannelInjection: v })).toThrow(
+      /enableRuntimeChannelInjection/,
+    );
+  });
+
+  it.each([true, "http://localhost:8969/stream", null])("rejects spotlight %j", (v) => {
+    expect(() => assertSafeOptions({ ...safe, spotlight: v })).toThrow(/spotlight/);
+  });
+
+  it("accepts the server-only options when they are off", () => {
+    expect(() =>
+      assertSafeOptions({ ...safe, enableRuntimeChannelInjection: false, spotlight: false }),
+    ).not.toThrow();
   });
 
   it("tolerates the v10 sendDefaultPii only when it is false", () => {
@@ -81,6 +121,8 @@ describe("assertSafeOptions", () => {
     ["stackFrameVariables", true],
     ["stackFrameVariables", { deny: ["password"] }],
     ["stackFrameVariables", undefined],
+    ["frameContextLines", 5],
+    ["frameContextLines", undefined],
   ])("rejects dataCollection.%s = %j", (key, value) => {
     const dataCollection = { ...PRIVATE_DATA_COLLECTION, [key]: value };
     expect(() => assertSafeOptions({ ...safe, dataCollection })).toThrow(
