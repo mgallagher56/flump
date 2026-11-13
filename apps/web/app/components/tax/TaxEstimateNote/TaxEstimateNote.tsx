@@ -7,14 +7,24 @@ export interface TaxEstimateNoteProps {
   /** Extra assumption to state next to the figure, e.g. "Assumes a 4% drawdown rate." */
   assumption?: string;
   className?: string;
+  /** `onContrast` when the note sits on the hero surface. */
+  tone?: "default" | "onContrast";
 }
 
 /**
  * The one shared line under every tax-derived figure: says it is an estimate, for which tax
  * year, and that it rests on what the user entered. Not advice, not an exact liability.
  */
-export const TaxEstimateNote: FC<TaxEstimateNoteProps> = ({ taxYear, assumption, className }) => (
-  <p className={`${taxEstimateNote()} ${className ?? ""}`.trim()} data-testid="tax-estimate-note">
+export const TaxEstimateNote: FC<TaxEstimateNoteProps> = ({
+  taxYear,
+  assumption,
+  className,
+  tone = "default",
+}) => (
+  <p
+    className={`${taxEstimateNote({ tone })} ${className ?? ""}`.trim()}
+    data-testid="tax-estimate-note"
+  >
     Estimate for {taxYear}, based on the figures you entered
     {assumption ? `. ${assumption}` : ""}
   </p>

@@ -61,7 +61,7 @@ const TaxDisclaimerButton: FC<TaxDisclaimerButtonProps> = ({ showShortText = fal
     borderRadius: "sm",
     fontSize: "xs",
     transition: "color 0.15s",
-    _hover: { color: "warning.500" },
+    _hover: { color: "text.primary" },
   });
 
   const closeBtnStyle = css({
@@ -83,7 +83,12 @@ const TaxDisclaimerButton: FC<TaxDisclaimerButtonProps> = ({ showShortText = fal
   return (
     <Dialog.Root open={open} onOpenChange={setOpen}>
       <Dialog.Trigger asChild>
-        <button type="button" className={triggerBtnStyle} aria-label="View full tax disclaimer">
+        <button
+          type="button"
+          className={triggerBtnStyle}
+          // With the short text visible, that text is the name (WCAG 2.5.3 label in name).
+          aria-label={showShortText ? undefined : "View full tax disclaimer"}
+        >
           <FaInfoCircle size={13} />
           {showShortText && <span>{TAX_DISCLAIMER.short}</span>}
           {!showShortText && <span>Tax disclaimer</span>}

@@ -5,7 +5,14 @@ export const taxEstimateNote = cva({
     margin: 0,
     fontSize: "xs",
     lineHeight: 1.5,
-    color: "text.muted",
     fontVariantNumeric: "tabular-nums",
   },
+  variants: {
+    tone: {
+      default: { color: "text.muted" },
+      /** On `surface.hero` or `surface.contrast`. */
+      onContrast: { color: "text.onContrast" },
+    },
+  },
+  defaultVariants: { tone: "default" },
 });
