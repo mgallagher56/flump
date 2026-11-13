@@ -38,7 +38,7 @@ export const appShellMain = cva({
     minWidth: 0,
     px: { base: "4", md: "6", lg: "10" },
     pt: { base: "5", lg: "8" },
-    pb: { base: "calc(88px + env(safe-area-inset-bottom))", md: "14" },
+    pb: { base: "calc(88px + env(safe-area-inset-bottom))", lg: "14" },
     _focusVisible: { outline: "none" },
   },
 });

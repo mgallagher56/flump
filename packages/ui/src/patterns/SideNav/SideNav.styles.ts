@@ -41,7 +41,11 @@ export const sideNavLink = cva({
     fontWeight: "semibold",
     textDecoration: "none",
     cursor: "pointer",
-    transition: "background-color 0.15s ease, color 0.15s ease",
+    _motionSafe: {
+      transitionProperty: "background-color, color",
+      transitionDuration: "fast",
+      transitionTimingFunction: "standard",
+    },
     _hover: { backgroundColor: "surface.sunken", color: "text.primary" },
     _focusVisible: {
       outline: "2px solid",

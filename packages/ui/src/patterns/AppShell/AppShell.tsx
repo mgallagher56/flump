@@ -55,9 +55,9 @@ export const AppShell: FC<AppShellProps> = ({
     />
     <div className={appShellBody()}>
       {showSideNav && (
-        <aside className={appShellSide()}>
+        <div className={appShellSide()}>
           <SideNav activeKey={activeKey} items={items} renderLink={renderLink} />
-        </aside>
+        </div>
       )}
       <main className={appShellMain()} id={mainId} tabIndex={-1}>
         {children}

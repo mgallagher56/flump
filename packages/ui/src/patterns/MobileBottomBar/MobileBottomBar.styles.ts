@@ -2,7 +2,7 @@ import { cva } from "../../../styled-system/css";
 
 export const mobileBottomBarRoot = cva({
   base: {
-    display: { base: "block", md: "none" },
+    display: { base: "block", lg: "none" },
     position: "fixed",
     bottom: "0",
     left: "0",
@@ -45,7 +45,11 @@ export const mobileBottomBarLink = cva({
     fontWeight: "semibold",
     textDecoration: "none",
     textAlign: "center",
-    transition: "background-color 0.15s ease, color 0.15s ease",
+    _motionSafe: {
+      transitionProperty: "background-color, color",
+      transitionDuration: "fast",
+      transitionTimingFunction: "standard",
+    },
     _hover: { color: "text.primary" },
     _focusVisible: {
       outline: "2px solid",

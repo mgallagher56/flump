@@ -1,6 +1,8 @@
+import { Menu } from "lucide-react";
 import { type FC, type ReactNode, useEffect, useId, useRef, useState } from "react";
 import { cx } from "../../../styled-system/css";
 import { Button } from "../../primitives/Button/Button";
+import { Icon } from "../../primitives/Icon/Icon";
 import {
   type AppNavChild,
   type AppNavItem,
@@ -69,6 +71,10 @@ const FlyoutGroup: FC<FlyoutGroupProps> = ({ item, active, activeKey, renderLink
   return (
     <li
       className={topBarNavItem()}
+      onBlur={(event) => {
+        const next = event.relatedTarget as Node | null;
+        if (open && next && !event.currentTarget.contains(next)) setOpen(false);
+      }}
       onKeyDown={(event) => {
         if (event.key === "Escape" && open) {
           event.stopPropagation();
@@ -136,14 +142,7 @@ export const TopBar: FC<TopBarProps> = ({
           type="button"
           variant="ghost"
         >
-          <svg aria-hidden="true" fill="none" height="20" viewBox="0 0 24 24" width="20">
-            <path
-              d="M4 7h16M4 12h16M4 17h16"
-              stroke="currentColor"
-              strokeLinecap="round"
-              strokeWidth="1.75"
-            />
-          </svg>
+          <Icon icon={Menu} />
         </Button>
       )}
       {logo && <div className={topBarLogo()}>{logo}</div>}

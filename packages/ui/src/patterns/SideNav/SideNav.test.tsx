@@ -28,4 +28,10 @@ describe("SideNav", () => {
     render(<SideNav items={sampleNavItems} />);
     expect(screen.getByText("2")).toBeDefined();
   });
+
+  it("does not mark the group heading as current when a child is active", () => {
+    render(<SideNav activeKey="pension" items={sampleNavItems} />);
+    const current = screen.getAllByRole("link").filter((l) => l.getAttribute("aria-current"));
+    expect(current.map((l) => l.textContent)).toEqual(["PensionProject your retirement pot"]);
+  });
 });
