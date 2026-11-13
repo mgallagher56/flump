@@ -92,4 +92,10 @@ describe("<NavMenu />", () => {
     expect(screen.getByText("savings")).toBeDefined();
     expect(screen.getByText("pension")).toBeDefined();
   });
+
+  it("renders the label key instead of the module key when a route sets one", () => {
+    customRender(<NavMenu routes={[{ key: "tax", label: "selfAssessment", route: "/app/tax" }]} />);
+    expect(screen.getByText("selfAssessment")).toBeDefined();
+    expect(screen.queryByText("tax")).toBeNull();
+  });
 });

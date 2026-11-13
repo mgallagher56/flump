@@ -50,11 +50,27 @@ describe("navConfig", () => {
 
   it("collapses Borrowing to the single page left and drops empty groups", () => {
     const onlyDebt = filterNavRoutes(AUTH_NAV_ROUTES, ["debt"], isPageEnabled);
-    expect(onlyDebt.find((r) => r.key === "debt")?.route).toBe("/app/debt");
+    const debt = onlyDebt.find((r) => r.key === "debt");
+    expect(debt?.route).toBe("/app/debt");
+    expect(debt?.children).toBeUndefined();
     expect(topLevel(onlyDebt)).not.toContain("borrowing");
     expect(topLevel(onlyDebt)).not.toContain("savingsAndPension");
     const none = filterNavRoutes(AUTH_NAV_ROUTES, ["budget"], isPageEnabled);
     expect(topLevel(none)).toEqual(["budget", "taxAndPay"]);
+  });
+
+  it("collapses to the page's own label by default and to the group's when collapseTo is group", () => {
+    const enabledAll = () => true;
+    const child = { key: "a", route: "/a" };
+    const [byChild] = filterNavRoutes([{ key: "g", children: [child] }], [], enabledAll);
+    expect(byChild.key).toBe("a");
+    const [byGroup] = filterNavRoutes(
+      [{ key: "g", collapseTo: "group", children: [child] }],
+      [],
+      enabledAll,
+    );
+    expect(byGroup.key).toBe("g");
+    expect(byGroup.route).toBe("/a");
   });
 
   it("labels the Self Assessment page by its plain name, not the module key", () => {
