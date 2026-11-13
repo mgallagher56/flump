@@ -26,14 +26,9 @@ runs:
       with:
         bun-version: 1.4.4
 
-    - name: Cache Bun Cache Directory
-      uses: actions/cache@v6.1.0
-      with:
-        path: ~/.bun/install/cache
-        key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
-        restore-keys: |
-          ${{ runner.os }}-bun-
-
+    # No dependency cache on purpose: measured on real runs, restoring bun's global cache took
+    # ~12 s (plus ~5 s to save it) against 5 s warm vs 7-8 s cold for the install itself.
+    # Caching node_modules was no faster (10 s install plus a 6 s save).
     - name: Install dependencies
       shell: bash
       run: bun install --frozen-lockfile

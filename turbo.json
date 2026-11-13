@@ -24,7 +24,7 @@
       "outputs": ["coverage/**", "sonar-report.xml"]
     },
     "test:coverage": {
-      "dependsOn": ["^build", "^test:coverage", "generate", "^generate"],
+      "dependsOn": ["^build", "generate", "^generate"],
       "env": ["TEST_DATABASE_URL", "REQUIRE_DB_TESTS"],
       "outputs": ["coverage/**", "sonar-report.xml"]
     },
