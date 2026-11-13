@@ -15,4 +15,11 @@ describe("uk advisor prompts (E17-N4)", () => {
     }
     await h.close();
   });
+
+  it("escape-100k-tax-trap does not read user data", async () => {
+    const h = await connectTestClient(renterWithUnknownAprCard);
+    await h.client.getPrompt({ name: "escape-100k-tax-trap" });
+    expect(h.provider.calls).toEqual([]);
+    await h.close();
+  });
 });

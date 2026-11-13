@@ -1,4 +1,4 @@
-import { scrubInstitutionNames } from "./anonymise.js";
+import { anonymiseDescription, genericAccountLabel } from "./anonymise.js";
 import {
   calculateDebtSchedule,
   compareAvalancheAndSnowball,
@@ -126,12 +126,11 @@ export function buildFlumpAiContextPack(
   const accountNameMap = new Map<string, string>();
 
   const sanitizedRawAccounts: RawAccount[] = rawAccounts.map((acc, idx) => {
-    const rawType = (acc.type || "other").toString();
-    const typeKey = rawType.replace(/\s+/g, " ");
+    const typeKey = genericAccountLabel(acc.type, 0).replace(/ Account #0$/, "");
 
     if (isAnonymized) {
       categoryCounters[typeKey] = (categoryCounters[typeKey] ?? 0) + 1;
-      const genericName = `${typeKey} Account #${categoryCounters[typeKey]}`;
+      const genericName = genericAccountLabel(acc.type, categoryCounters[typeKey]);
       accountNameMap.set(acc.id || `acc_${idx}`, genericName);
       return {
         ...acc,
@@ -166,17 +165,18 @@ export function buildFlumpAiContextPack(
   }
 
   // 5. Budget & Runway Evaluation
+  let incomeOrdinal = 0;
   const budgetEntries = (input.budgetEntries ?? []).map((entry, idx) => {
     let name = entry.name;
-    if (isAnonymized && !entry.isIncome) {
-      // Keep category clean, scrub sensitive names if any
-      name = scrubInstitutionNames(entry.name);
+    if (isAnonymized) {
+      // Income names can carry an employer; use a generic label. Other names are scrubbed.
+      name = entry.isIncome ? `Income #${++incomeOrdinal}` : anonymiseDescription(entry.name);
     }
     // Free-text notes can hold anything, so they are dropped when anonymised.
     const { notes, ...rest } = entry;
     return {
       ...rest,
-      ...(isAnonymized ? {} : { notes }),
+      ...(isAnonymized || notes === undefined ? {} : { notes }),
       id: entry.id || `b_${idx}`,
       name,
     };

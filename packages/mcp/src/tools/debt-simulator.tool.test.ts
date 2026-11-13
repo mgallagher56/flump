@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { connectTestClient, type TestHarness } from "../testing/client.js";
+import { connectTestClient, TEST_TOKEN, type TestHarness } from "../testing/client.js";
 import { emptyUser, renterWithUnknownAprCard } from "../testing/personas.js";
 
 describe("simulate_debt_payoff (E17-N1)", () => {
@@ -49,10 +49,20 @@ describe("simulate_debt_payoff (E17-N1)", () => {
 });
 
 describe("simulate_debt_payoff anonymisation (E17-N4)", () => {
-  it("replaces debt names with generic labels when the token is anonymised", async () => {
+  it("uses the pack's generic label when the token is anonymised", async () => {
     const h = await connectTestClient(renterWithUnknownAprCard);
     const text = await h.callText("simulate_debt_payoff", { strategy: "COMPARE_BOTH" });
     await h.close();
     expect(text).not.toContain("Test Credit Card");
+    expect(text).toContain("Credit Card Account #1");
+  });
+
+  it("keeps the real name when the token is not anonymised", async () => {
+    const h = await connectTestClient(renterWithUnknownAprCard, {
+      token: { ...TEST_TOKEN, anonymizeInstitutions: false },
+    });
+    const text = await h.callText("simulate_debt_payoff", { strategy: "COMPARE_BOTH" });
+    await h.close();
+    expect(text).toContain("Test Credit Card");
   });
 });

@@ -1,10 +1,10 @@
 import {
+  anonymiseDescription,
   calculateFinancialHealthScore,
   calculateSafeToSpend,
   evaluateFinancialStage,
   evaluateUkStudentLoan,
   filterConsumerDebts,
-  scrubInstitutionNames,
   type UkStudentLoanPlan,
 } from "@flump/finance-engine";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
@@ -245,7 +245,7 @@ export function registerFinancialAuditTools(
       const sanitizedTxs = txs.map((tx) => {
         let desc = tx.description;
         if (ctx.token.anonymizeInstitutions) {
-          desc = scrubInstitutionNames(desc);
+          desc = anonymiseDescription(desc);
         }
         return {
           ...tx,

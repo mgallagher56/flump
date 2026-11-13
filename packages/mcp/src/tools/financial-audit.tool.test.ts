@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { connectTestClient, type TestHarness } from "../testing/client.js";
+import { connectTestClient, TEST_TOKEN, type TestHarness } from "../testing/client.js";
 import { emptyUser, renterWithUnknownAprCard } from "../testing/personas.js";
 
 describe("financial audit tools (E17-N1)", () => {
@@ -112,5 +112,39 @@ describe("financial audit tools (E17-N1)", () => {
       expect(body.message).toContain("not available");
       expect(body.transactions).toEqual([]);
     });
+  });
+});
+
+describe("query_transactions_and_spending anonymisation (E17-N4)", () => {
+  const transactions = [
+    {
+      id: "t1",
+      accountId: "cur_1",
+      amount: -3.5,
+      description: "Monzo coffee 12-34-56 ref 12345678",
+      category: "eating_out",
+      timestamp: "2026-01-01T00:00:00Z",
+    },
+  ];
+
+  it("scrubs institutions and account numbers when anonymised", async () => {
+    const h = await connectTestClient(renterWithUnknownAprCard, { transactions });
+    const body = (await h.callJson("query_transactions_and_spending", {})) as {
+      transactions: Array<{ description: string }>;
+    };
+    await h.close();
+    expect(body.transactions[0]?.description).toBe("Bank coffee [redacted] ref [redacted]");
+  });
+
+  it("returns the original text when not anonymised", async () => {
+    const h = await connectTestClient(renterWithUnknownAprCard, {
+      transactions,
+      token: { ...TEST_TOKEN, anonymizeInstitutions: false },
+    });
+    const body = (await h.callJson("query_transactions_and_spending", {})) as {
+      transactions: Array<{ description: string }>;
+    };
+    await h.close();
+    expect(body.transactions[0]?.description).toBe(transactions[0]?.description);
   });
 });
