@@ -26,14 +26,14 @@ export const SkipEverything: Story = {
     await userEvent.click(canvas.getByRole("button", { name: /^next/i }));
     await userEvent.click(canvas.getByRole("button", { name: "Skip this step" }));
     await userEvent.click(canvas.getByRole("button", { name: "Skip this step" }));
-    // From the bank step, jump to the review from the stepper.
-    const steps = canvas.getByRole("list", { name: "Setup progress" });
-    await userEvent.click(within(steps).getByRole("button", { name: /Step 5 of 5: Review/ }));
+    // Skipping savings lands on the review: there is no bank step.
+    await expect(canvas.getByRole("heading", { name: "Review what will be saved" })).toBeVisible();
     await expect(canvas.getByRole("button", { name: /finish and open dashboard/i })).toBeDisabled();
     // Skipped steps are never shown as complete; only income was left with Next.
     const progress = canvas.getByRole("list", { name: "Setup progress" });
     await expect(within(progress).getAllByText("Complete")).toHaveLength(1);
-    await expect(within(progress).getAllByText("Skipped")).toHaveLength(3);
+    await expect(within(progress).getAllByText("Skipped")).toHaveLength(2);
+    await expect(within(progress).queryByText(/bank/i)).toBeNull();
   },
 };
 

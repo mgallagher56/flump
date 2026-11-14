@@ -1,3 +1,4 @@
+import { ToastProvider } from "@repo/ui";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { SecurityTab } from "./SecurityTab";
@@ -53,6 +54,17 @@ describe("<SecurityTab />", () => {
     );
   });
 
+  it("raises a toast as well as the status line when the email is sent", async () => {
+    render(
+      <ToastProvider>
+        <SecurityTab email="user@example.com" />
+      </ToastProvider>,
+    );
+    fireEvent.click(screen.getByTestId("change-password-trigger"));
+    expect(await screen.findByTestId("password-reset-status")).toBeDefined();
+    expect(await screen.findByText("Email sent")).toBeDefined();
+  });
+
   it("shows the fixed error, never the server's message, when the email fails", async () => {
     mockSendResetEmail.mockRejectedValueOnce(new Error("Failed to send password reset email"));
     render(<SecurityTab email="user@example.com" />);
@@ -62,9 +74,11 @@ describe("<SecurityTab />", () => {
     );
   });
 
-  it("holds the MCP connection card", () => {
+  it("holds the AI connection sections, one h2 each", () => {
     render(<SecurityTab email="user@example.com" />);
-    expect(screen.getByText("AI connections (preview)")).toBeDefined();
+    expect(
+      screen.getByRole("heading", { level: 2, name: "AI connections (preview)" }),
+    ).toBeDefined();
     expect(screen.getByTestId("offline-context-pack-card")).toBeDefined();
   });
 

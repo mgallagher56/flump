@@ -129,11 +129,13 @@ describe("RouteErrorState", () => {
         kind="not-found"
         onRetry={() => {}}
         primaryHref="/"
-        primaryLabel="Go to Flump"
+        primaryLabel="Go to the home page"
       />,
     );
     expect(screen.queryByRole("button", { name: "Try again" })).toBeNull();
-    expect(screen.getByRole("link", { name: "Go to Flump" }).getAttribute("href")).toBe("/");
+    expect(screen.getByRole("link", { name: "Go to the home page" }).getAttribute("href")).toBe(
+      "/",
+    );
     expect(container.querySelector("svg")?.getAttribute("data-scene")).toBe("not-found");
   });
 

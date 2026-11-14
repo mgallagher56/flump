@@ -19,32 +19,11 @@ export const errorStateContainer = cva({
   },
 });
 
-export const errorStateBadge = cva({
-  base: {
-    display: "inline-flex",
-    alignItems: "center",
-    px: "10px",
-    py: "4px",
-    borderRadius: "full",
-    fontSize: "xs",
-    fontWeight: "semibold",
-  },
-  variants: {
-    tone: {
-      // A missing page is not a failure of the user's or Flump's: a quiet badge, no alarm colour.
-      neutral: { backgroundColor: "status.neutral.bg", color: "status.neutral.text" },
-      danger: { backgroundColor: "status.danger.bg", color: "status.danger.text" },
-    },
-  },
-  defaultVariants: { tone: "danger" },
-});
-
 export const errorStateHeading = cva({
   base: {
     margin: 0,
-    fontFamily: "display",
-    fontSize: "xl",
-    fontWeight: "bold",
+    // The marketing 404's heading style, so both sites' not-found cards read the same (R2-9).
+    textStyle: "heading.lg",
     color: "text.primary",
     // Focus lands here by script so screen readers announce what happened; the heading is not a
     // control, so it draws no focus ring.

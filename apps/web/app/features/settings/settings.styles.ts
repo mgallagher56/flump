@@ -9,6 +9,20 @@ export const tabStack = cva({
   base: { display: "flex", flexDirection: "column", gap: "6", minWidth: 0 },
 });
 
+/**
+ * Two columns of section cards from lg, so the tabs use the standard page width (R2-9) without
+ * stretching a form across it.
+ */
+export const tabGrid = cva({
+  base: {
+    display: "grid",
+    gridTemplateColumns: { base: "minmax(0, 1fr)", lg: "repeat(2, minmax(0, 1fr))" },
+    alignItems: "start",
+    gap: "6",
+    minWidth: 0,
+  },
+});
+
 export const sectionCard = cva({
   base: { display: "flex", flexDirection: "column", gap: "4", minWidth: 0 },
 });
@@ -39,15 +53,4 @@ export const statusText = cva({
     },
   },
   defaultVariants: { tone: "muted" },
-});
-
-/** Save bar at the foot of a tab that has its own save. */
-export const saveBar = cva({
-  base: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "flex-end",
-    flexWrap: "wrap",
-    gap: "3",
-  },
 });

@@ -1,29 +1,40 @@
-import { Button, Icon, SegmentedTabs, StatusBadge, Switch } from "@repo/ui";
-import { css, cx } from "@repo/ui/styled-system/css";
-import { flex, stack } from "@repo/ui/styled-system/patterns";
 import {
-  Bot,
-  Check,
-  CircleCheck,
-  Copy,
-  Download,
-  KeyRound,
-  Lock,
-  ShieldCheck,
-  Trash2,
-} from "lucide-react";
-import { type FC, useState } from "react";
+  Button,
+  Card,
+  ConfirmDialog,
+  controlProps,
+  FormField,
+  Icon,
+  InlineAlert,
+  Select,
+  StatusBadge,
+  Switch,
+  TextInput,
+  useOptionalToast,
+} from "@repo/ui";
+import { cx } from "@repo/ui/styled-system/css";
+import { Check, Copy, Download, KeyRound } from "lucide-react";
+import { type FC, useCallback, useState } from "react";
 import {
-  codeSnippetBox,
-  connectionCard,
-  connectionContainer,
-  copyButton,
-  headerRow,
-  toggleKnob,
-  toggleSwitch,
-  tokenTable,
-  tokenTableCell,
-  tokenTableHeader,
+  sectionCard,
+  sectionHeading,
+  sectionLead,
+  statusText,
+  tabStack,
+} from "~/features/settings/settings.styles";
+import {
+  actionRow,
+  factList,
+  formActions,
+  formGrid,
+  formStack,
+  setupNote,
+  tokenCell,
+  tokenLabel,
+  tokenList,
+  tokenPrefix,
+  tokenRow,
+  tokenValue,
 } from "./McpConnectionCard.styles";
 
 const TOKEN_EXPIRY_DAYS = [7, 30, 90, 365] as const;
@@ -41,12 +52,17 @@ export const STAGE_SCOPE = "write:stage";
 export const STAGING_TOGGLE_LABEL = "Let this connection prepare imports for you to review";
 export const STAGING_TOGGLE_HINT =
   "The assistant can prepare balances, such as from a spreadsheet, as an import. Nothing is saved until you review it and confirm in Flump. It cannot confirm imports or delete anything. Off by default.";
-const EXPIRY_LABELS: Record<(typeof TOKEN_EXPIRY_DAYS)[number], string> = {
-  7: "7 days",
-  30: "30 days",
-  90: "90 days (default)",
-  365: "1 year",
-};
+const EXPIRY_OPTIONS = TOKEN_EXPIRY_DAYS.map((d) => ({
+  value: String(d),
+  label: { 7: "7 days", 30: "30 days", 90: "90 days (default)", 365: "1 year" }[d],
+}));
+
+/** Facts about every connection, said once (RESCORE Settings 3). */
+const REQUESTS_PER_MINUTE = 60;
+const countFormat = new Intl.NumberFormat("en-GB");
+const pluralRules = new Intl.PluralRules("en-GB");
+const requestCount = (n: number) =>
+  `${countFormat.format(n)} ${pluralRules.select(n) === "one" ? "request" : "requests"}`;
 
 export interface McpTokenItem {
   id: string;
@@ -86,6 +102,25 @@ export interface McpConnectionCardProps {
   className?: string;
 }
 
+/** A positive toast through the app's ToastProvider; a no-op without one (isolated tests). */
+const useNotify = () => {
+  const toast = useOptionalToast()?.toast;
+  return useCallback((title: string) => toast?.({ title, tone: "positive" }), [toast]);
+};
+
+const downloadFile = (contents: string, type: string, extension: string) => {
+  const url = URL.createObjectURL(new Blob([contents], { type }));
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `flump-context-pack-${new Date().toISOString().slice(0, 10)}.${extension}`;
+  a.click();
+  URL.revokeObjectURL(url);
+};
+
+/**
+ * Two Security-tab sections: AI connections (facts, tokens and their setup) and the summary
+ * export. Every completed action shows on the card and also raises a toast.
+ */
 export const McpConnectionCard: FC<McpConnectionCardProps> = ({
   initialTokens = [],
   onGenerateToken,
@@ -93,8 +128,8 @@ export const McpConnectionCard: FC<McpConnectionCardProps> = ({
   onFetchContextPack,
   className,
 }) => {
+  const notify = useNotify();
   const [tokens, setTokens] = useState<McpTokenItem[]>(initialTokens);
-  const [activeTab, setActiveTab] = useState<string>("local_cli");
   const [anonymizeInstitutions, setAnonymizeInstitutions] = useState<boolean>(true);
   const [showGenerateForm, setShowGenerateForm] = useState<boolean>(false);
   const [tokenName, setTokenName] = useState<string>("Claude Desktop");
@@ -102,26 +137,24 @@ export const McpConnectionCard: FC<McpConnectionCardProps> = ({
   const [allowStaging, setAllowStaging] = useState<boolean>(false);
   const [generating, setGenerating] = useState<boolean>(false);
   const [newlyCreatedToken, setNewlyCreatedToken] = useState<string | null>(null);
-
   const [copiedToken, setCopiedToken] = useState<boolean>(false);
   const [exportingContextPack, setExportingContextPack] = useState<boolean>(false);
   const [exportedSuccess, setExportedSuccess] = useState<boolean>(false);
-  /** A safe, user-facing message from the last failed create, revoke or export. */
+  /** A safe, user-facing message from the last failed create or export. */
   const [actionError, setActionError] = useState<string | null>(null);
+  /** The token waiting on the disconnect confirmation. */
+  const [revokeTarget, setRevokeTarget] = useState<McpTokenItem | null>(null);
+  const [revoking, setRevoking] = useState<boolean>(false);
+  const [revokeError, setRevokeError] = useState<string | null>(null);
   const errorText = (e: unknown, fallback: string) =>
     e instanceof Error && SAFE_MESSAGES.has(e.message) ? e.message : fallback;
 
-  const activeTokenPlaceholder =
-    newlyCreatedToken ||
-    tokens.find((t) => !t.isRevoked && !t.isExpired)?.tokenPrefix ||
-    "flump_pat_YOUR_TOKEN_HERE";
-
-  const handleCopy = (text: string, setCopied: (v: boolean) => void) => {
-    if (navigator.clipboard) {
-      navigator.clipboard.writeText(text);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    }
+  const handleCopyToken = async (text: string) => {
+    if (!navigator.clipboard) return;
+    await navigator.clipboard.writeText(text);
+    setCopiedToken(true);
+    notify("Token copied");
+    setTimeout(() => setCopiedToken(false), 2000);
   };
 
   const handleCreateToken = async () => {
@@ -169,60 +202,51 @@ export const McpConnectionCard: FC<McpConnectionCardProps> = ({
     }
   };
 
-  const handleRevoke = async (id: string) => {
-    setActionError(null);
+  const handleConfirmRevoke = async () => {
+    if (!revokeTarget) return;
+    const { id } = revokeTarget;
+    setRevoking(true);
+    setRevokeError(null);
     try {
       if (onRevokeToken) await onRevokeToken(id);
     } catch (e) {
-      setActionError(errorText(e, REVOKE_FAILED));
+      setRevokeError(errorText(e, REVOKE_FAILED));
       return;
+    } finally {
+      setRevoking(false);
     }
     setTokens((prev) => prev.map((t) => (t.id === id ? { ...t, isRevoked: true } : t)));
+    setRevokeTarget(null);
+    notify("Token disconnected");
   };
 
   const handleExportContextPack = async (format: "clipboard" | "json" | "markdown") => {
     setExportingContextPack(true);
     setActionError(null);
     try {
-      let data: { pack: any; markdown: string };
-      if (onFetchContextPack) {
-        data = await onFetchContextPack(anonymizeInstitutions);
-      } else {
-        data = {
-          pack: {
-            metadata: {
-              isAnonymized: anonymizeInstitutions,
-              generatedAt: new Date().toISOString(),
+      const data: { pack: any; markdown: string } = onFetchContextPack
+        ? await onFetchContextPack(anonymizeInstitutions)
+        : {
+            pack: {
+              metadata: {
+                isAnonymized: anonymizeInstitutions,
+                generatedAt: new Date().toISOString(),
+              },
             },
-          },
-          markdown: `# Flump context pack\nAnonymised: ${anonymizeInstitutions ? "yes" : "no"}\n`,
-        };
-      }
+            markdown: `# Flump context pack\nAnonymised: ${anonymizeInstitutions ? "yes" : "no"}\n`,
+          };
 
       if (format === "clipboard") {
         if (navigator.clipboard) {
           await navigator.clipboard.writeText(data.markdown);
           setExportedSuccess(true);
+          notify("Summary copied");
           setTimeout(() => setExportedSuccess(false), 2500);
         }
       } else if (format === "json") {
-        const blob = new Blob([JSON.stringify(data.pack, null, 2)], {
-          type: "application/json",
-        });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `flump-context-pack-${new Date().toISOString().slice(0, 10)}.json`;
-        a.click();
-        URL.revokeObjectURL(url);
-      } else if (format === "markdown") {
-        const blob = new Blob([data.markdown], { type: "text/markdown" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `flump-context-pack-${new Date().toISOString().slice(0, 10)}.md`;
-        a.click();
-        URL.revokeObjectURL(url);
+        downloadFile(JSON.stringify(data.pack, null, 2), "application/json", "json");
+      } else {
+        downloadFile(data.markdown, "text/markdown", "md");
       }
     } catch {
       setActionError(EXPORT_FAILED);
@@ -231,216 +255,97 @@ export const McpConnectionCard: FC<McpConnectionCardProps> = ({
     }
   };
 
+  const tokenRows =
+    tokens.length > 0 ? (
+      <ul
+        aria-label="Connection tokens"
+        className={tokenList()}
+        data-testid="active-tokens-table"
+        id="active-tokens-table"
+      >
+        {tokens.map((tok) => (
+          <li
+            className={tokenRow()}
+            data-testid={`token-row-${tok.id}`}
+            id={`token-row-${tok.id}`}
+            key={tok.id}
+          >
+            <div className={tokenCell({ part: "name" })}>
+              <span className={tokenLabel()}>{tok.name}</span>
+              <StatusBadge size="sm" variant="neutral">
+                {tok.isRevoked ? "Disconnected" : tok.isExpired ? "Expired" : "Active"}
+              </StatusBadge>
+            </div>
+            <div className={tokenCell()}>
+              <code className={tokenPrefix()}>{tok.tokenPrefix}</code>
+            </div>
+            <div className={tokenCell()}>
+              <StatusBadge size="sm" variant="neutral">
+                {tok.anonymizeInstitutions ? "Names hidden" : "Names shown"}
+              </StatusBadge>
+              {tok.scopes.includes(STAGE_SCOPE) ? (
+                <StatusBadge size="sm" variant="neutral">
+                  Can prepare imports
+                </StatusBadge>
+              ) : null}
+            </div>
+            <div className={tokenCell({ part: "usage" })}>
+              <span>
+                {tok.lastUsedAt
+                  ? `Last used ${new Date(tok.lastUsedAt).toLocaleDateString("en-GB")}`
+                  : "Not used yet"}
+              </span>
+              <span>{requestCount(tok.totalToolCalls)}</span>
+            </div>
+            {!tok.isRevoked && !tok.isExpired ? (
+              <div className={tokenCell({ part: "action" })}>
+                <Button
+                  aria-label={`Disconnect ${tok.name}`}
+                  data-testid={`revoke-token-${tok.id}`}
+                  id={`revoke-token-${tok.id}`}
+                  size="sm"
+                  type="button"
+                  variant="ghost"
+                  onClick={() => {
+                    setRevokeError(null);
+                    setRevokeTarget(tok);
+                  }}
+                >
+                  Disconnect
+                </Button>
+              </div>
+            ) : null}
+          </li>
+        ))}
+      </ul>
+    ) : null;
+
   return (
-    <div className={cx(connectionContainer(), className)}>
-      {/* Card 1: Connect Live via MCP */}
-      <div className={connectionCard()}>
-        <div className={headerRow()}>
-          <div className={flex({ align: "center", gap: "2.5" })}>
-            <div
-              className={css({
-                width: "36px",
-                height: "36px",
-                borderRadius: "lg",
-                backgroundColor: "primary.subtle",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                color: "primary",
-              })}
-            >
-              <Icon icon={Bot} size="md" />
-            </div>
-            <div>
-              <h3
-                className={css({
-                  fontFamily: "display",
-                  fontSize: "md",
-                  fontWeight: "bold",
-                  color: "text.primary",
-                  margin: 0,
-                })}
-              >
-                AI connections (preview)
-              </h3>
-              <p
-                className={css({
-                  fontSize: "xs",
-                  color: "text.muted",
-                  margin: "2px 0 0 0",
-                })}
-              >
-                Preview: the tools read the figures you have saved in Flump.
-              </p>
-            </div>
-          </div>
+    <div className={cx(tabStack(), className)}>
+      <Card
+        aria-labelledby="ai-connections-heading"
+        as="section"
+        className={sectionCard()}
+        data-testid="ai-connections-card"
+        id="ai-connections-card"
+      >
+        <h2 className={sectionHeading()} id="ai-connections-heading">
+          AI connections (preview)
+        </h2>
+        <p className={sectionLead()}>
+          Create a token to let an AI assistant read the figures you have saved in Flump.
+        </p>
 
-          <StatusBadge size="sm" variant="brand">
-            Official MCP SDK v1.0
-          </StatusBadge>
-        </div>
-
-        {/* Features & Benefits Strip */}
-        <div
-          className={css({
-            display: "grid",
-            gridTemplateColumns: { base: "1fr", sm: "1fr 1fr", md: "1fr 1fr 1fr 1fr" },
-            gap: "10px",
-          })}
-        >
-          <div
-            className={css({
-              padding: "10px 12px",
-              borderRadius: "md",
-              backgroundColor: "surface.sunken",
-              borderWidth: "1px",
-              borderStyle: "solid",
-              borderColor: "border.subtle",
-              display: "flex",
-              flexDirection: "column",
-              gap: "2px",
-            })}
-          >
-            <span
-              className={css({ fontSize: "xs", fontWeight: "semibold", color: "text.primary" })}
-            >
-              Calculated by Flump
-            </span>
-            <span className={css({ fontSize: "11px", color: "text.muted" })}>
-              Flump calculates the figures it sends to the AI assistant
-            </span>
-          </div>
-
-          <div
-            className={css({
-              padding: "10px 12px",
-              borderRadius: "md",
-              backgroundColor: "surface.sunken",
-              borderWidth: "1px",
-              borderStyle: "solid",
-              borderColor: "border.subtle",
-              display: "flex",
-              flexDirection: "column",
-              gap: "2px",
-            })}
-          >
-            <span
-              className={css({ fontSize: "xs", fontWeight: "semibold", color: "text.primary" })}
-            >
-              Bank names hidden
-            </span>
-            <span className={css({ fontSize: "11px", color: "text.muted" })}>
-              Bank and provider names are replaced with generic labels by default
-            </span>
-          </div>
-
-          <div
-            className={css({
-              padding: "10px 12px",
-              borderRadius: "md",
-              backgroundColor: "surface.sunken",
-              borderWidth: "1px",
-              borderStyle: "solid",
-              borderColor: "border.subtle",
-              display: "flex",
-              flexDirection: "column",
-              gap: "2px",
-            })}
-          >
-            <span
-              className={css({ fontSize: "xs", fontWeight: "semibold", color: "text.primary" })}
-            >
-              No payment features
-            </span>
-            <span className={css({ fontSize: "11px", color: "text.muted" })}>
-              Flump has no feature to make payments
-            </span>
-          </div>
-
-          <div
-            className={css({
-              padding: "10px 12px",
-              borderRadius: "md",
-              backgroundColor: "surface.sunken",
-              borderWidth: "1px",
-              borderStyle: "solid",
-              borderColor: "border.subtle",
-              display: "flex",
-              flexDirection: "column",
-              gap: "2px",
-            })}
-          >
-            <span
-              className={css({ fontSize: "xs", fontWeight: "semibold", color: "text.primary" })}
-            >
-              Request limit
-            </span>
-            <span className={css({ fontSize: "11px", color: "text.muted" })}>
-              Up to 60 requests a minute
-            </span>
-          </div>
-        </div>
-
-        {/* Anonymization Toggle Switch */}
-        <div
-          className={css({
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            padding: "12px 16px",
-            borderRadius: "lg",
-            backgroundColor: "surface.sunken",
-            borderWidth: "1px",
-            borderStyle: "solid",
-            borderColor: "border.subtle",
-          })}
-        >
-          <div className={flex({ align: "center", gap: "2.5" })}>
-            <Icon icon={ShieldCheck} size="sm" className={css({ color: "primary" })} />
-            <div>
-              <span
-                className={css({
-                  fontSize: "xs",
-                  fontWeight: "semibold",
-                  color: "text.primary",
-                  display: "block",
-                })}
-              >
-                Hide bank and provider names from AI assistants
-              </span>
-              <span
-                className={css({
-                  fontSize: "11px",
-                  color: "text.muted",
-                  display: "block",
-                })}
-              >
-                Replaces bank names with generic labels.
-              </span>
-              <span
-                className={css({ fontSize: "11px", color: "text.muted", display: "block" })}
-                data-testid="mcp-token-anonymise-hint"
-              >
-                For now, bank and provider names are always hidden, whatever this setting says.
-              </span>
-            </div>
-          </div>
-
-          <button
-            aria-label="Hide bank and provider names"
-            className={toggleSwitch({ checked: anonymizeInstitutions })}
-            id="mcp-anonymize-toggle"
-            data-testid="mcp-anonymize-toggle"
-            type="button"
-            onClick={() => setAnonymizeInstitutions((v) => !v)}
-          >
-            <div className={toggleKnob({ checked: anonymizeInstitutions })} />
-          </button>
-        </div>
+        <ul className={factList()} data-testid="ai-connection-facts" id="ai-connection-facts">
+          <li>Flump calculates the figures it sends to the assistant.</li>
+          <li>Bank and provider names are always replaced with generic labels.</li>
+          <li>Flump has no feature to make payments.</li>
+          <li>Each connection can make up to {REQUESTS_PER_MINUTE} requests a minute.</li>
+        </ul>
 
         {actionError ? (
           <p
-            className={css({ margin: 0, fontSize: "sm", color: "status.danger.text" })}
+            className={statusText({ tone: "danger" })}
             data-testid="mcp-token-error"
             id="mcp-token-error"
             role="alert"
@@ -449,204 +354,72 @@ export const McpConnectionCard: FC<McpConnectionCardProps> = ({
           </p>
         ) : null}
 
-        {/* Newly Created Token Alert */}
-        {newlyCreatedToken && (
-          <div
-            className={css({
-              padding: "14px 16px",
-              borderRadius: "lg",
-              backgroundColor: "status.positive.bg",
-              borderWidth: "1px",
-              borderStyle: "solid",
-              borderColor: "status.positive.border",
-              display: "flex",
-              flexDirection: "column",
-              gap: "8px",
-            })}
-            id="new-token-banner"
-            data-testid="new-token-banner"
-          >
-            <div className={flex({ align: "center", gap: "1.5" })}>
-              <Icon
-                icon={CircleCheck}
+        {newlyCreatedToken ? (
+          <InlineAlert
+            action={
+              <Button
                 size="sm"
-                className={css({ color: "status.positive.text" })}
-              />
-              <span
-                className={css({
-                  fontSize: "xs",
-                  fontWeight: "bold",
-                  color: "status.positive.text",
-                })}
-              >
-                Token created. Copy it now. It will not be shown again.
-              </span>
-            </div>
-            <div
-              className={css({
-                display: "flex",
-                alignItems: "center",
-                gap: "8px",
-                backgroundColor: "surface.card",
-                padding: "8px 12px",
-                borderRadius: "md",
-                fontFamily: "mono",
-                fontSize: "xs",
-                color: "text.primary",
-                fontVariantNumeric: "tabular-nums",
-                wordBreak: "break-all",
-              })}
-            >
-              <span>{newlyCreatedToken}</span>
-              <button
-                aria-label="Copy secret token"
-                className={css({
-                  marginLeft: "auto",
-                  padding: "4px 8px",
-                  borderRadius: "sm",
-                  backgroundColor: "surface.sunken",
-                  border: "1px solid",
-                  borderColor: "border.subtle",
-                  cursor: "pointer",
-                  fontSize: "xs",
-                  color: "text.primary",
-                })}
                 type="button"
-                onClick={() => handleCopy(newlyCreatedToken, setCopiedToken)}
+                variant="outline"
+                onClick={() => handleCopyToken(newlyCreatedToken)}
               >
-                {copiedToken ? <Icon icon={Check} size="sm" /> : <Icon icon={Copy} size="sm" />}
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Generate Token Form or Trigger */}
-        {!onGenerateToken ? (
-          <p
-            className={css({ fontSize: "sm", color: "text.muted" })}
-            data-testid="token-creation-unavailable"
+                <Icon icon={copiedToken ? Check : Copy} size="sm" />
+                {copiedToken ? "Copied" : "Copy"}
+              </Button>
+            }
+            data-testid="new-token-banner"
+            id="new-token-banner"
+            title="Token created"
+            tone="positive"
           >
-            Connection tokens are not available yet. You can export a summary below, with bank names
-            hidden, to share with an AI assistant.
+            Copy it now. It will not be shown again.
+            <code className={tokenValue()}>{newlyCreatedToken}</code>
+          </InlineAlert>
+        ) : null}
+
+        {!onGenerateToken ? (
+          <p className={statusText()} data-testid="token-creation-unavailable">
+            Connection tokens are not available yet. You can still export a summary below.
           </p>
         ) : !showGenerateForm ? (
-          <div className={flex({ justify: "flex-start" })}>
+          <div className={actionRow()}>
             <Button
-              id="generate-token-trigger"
               data-testid="generate-token-trigger"
+              id="generate-token-trigger"
               size="sm"
-              variant="outline"
+              variant="primary"
               onClick={() => setShowGenerateForm(true)}
             >
-              <Icon icon={KeyRound} size="sm" className={css({ mr: "1.5" })} />
+              <Icon icon={KeyRound} size="sm" />
               Create token
             </Button>
           </div>
         ) : (
-          <div
-            className={css({
-              display: "flex",
-              flexDirection: "column",
-              gap: "12px",
-              padding: "16px",
-              borderRadius: "lg",
-              backgroundColor: "surface.sunken",
-              borderWidth: "1px",
-              borderStyle: "solid",
-              borderColor: "border.subtle",
-            })}
-            id="token-generate-form"
-            data-testid="token-generate-form"
-          >
-            <div
-              className={css({
-                display: "grid",
-                gridTemplateColumns: { base: "1fr", sm: "2fr 1fr" },
-                gap: "12px",
-              })}
-            >
-              <div>
-                <label
-                  className={css({
-                    fontSize: "xs",
-                    fontWeight: "semibold",
-                    color: "text.muted",
-                    display: "block",
-                    marginBottom: "4px",
-                  })}
-                  htmlFor="mcp-token-name"
-                >
-                  Connection name
-                </label>
-                <input
-                  className={css({
-                    width: "100%",
-                    padding: "8px 12px",
-                    borderRadius: "md",
-                    borderWidth: "1px",
-                    borderStyle: "solid",
-                    borderColor: "border.input",
-                    backgroundColor: "surface.card",
-                    color: "text.primary",
-                    fontSize: "xs",
-                    outline: "none",
-                    _focusVisible: {
-                      outline: "2px solid",
-                      outlineColor: "border.focusRing",
-                      outlineOffset: "2px",
-                    },
-                  })}
-                  id="mcp-token-name"
-                  placeholder="For example, Claude Desktop"
-                  type="text"
-                  value={tokenName}
-                  onChange={(e) => setTokenName(e.target.value)}
-                />
-              </div>
-
-              <div>
-                <label
-                  className={css({
-                    fontSize: "xs",
-                    fontWeight: "semibold",
-                    color: "text.muted",
-                    display: "block",
-                    marginBottom: "4px",
-                  })}
-                  htmlFor="mcp-token-expiry"
-                >
-                  Token expires after
-                </label>
-                <select
-                  className={css({
-                    width: "100%",
-                    padding: "8px 12px",
-                    borderRadius: "md",
-                    borderWidth: "1px",
-                    borderStyle: "solid",
-                    borderColor: "border.input",
-                    backgroundColor: "surface.card",
-                    color: "text.primary",
-                    fontSize: "xs",
-                    outline: "none",
-                    _focusVisible: {
-                      outline: "2px solid",
-                      outlineColor: "border.focusRing",
-                      outlineOffset: "2px",
-                    },
-                    cursor: "pointer",
-                  })}
-                  id="mcp-token-expiry"
-                  value={expirySelection}
-                  onChange={(e) => setExpirySelection(e.target.value)}
-                >
-                  {TOKEN_EXPIRY_DAYS.map((d) => (
-                    <option key={d} value={d}>
-                      {EXPIRY_LABELS[d]}
-                    </option>
-                  ))}
-                </select>
-              </div>
+          <div className={formStack()} data-testid="token-generate-form" id="token-generate-form">
+            <div className={formGrid()}>
+              <FormField id="mcp-token-name" label="Connection name">
+                {(field) => (
+                  <TextInput
+                    {...controlProps(field)}
+                    placeholder="For example, Claude Desktop"
+                    size="sm"
+                    type="text"
+                    value={tokenName}
+                    onChange={(e) => setTokenName(e.target.value)}
+                  />
+                )}
+              </FormField>
+              <FormField id="mcp-token-expiry" label="Token expires after">
+                {(field) => (
+                  <Select
+                    {...controlProps(field)}
+                    options={EXPIRY_OPTIONS}
+                    size="sm"
+                    value={expirySelection}
+                    onChange={(e) => setExpirySelection(e.target.value)}
+                  />
+                )}
+              </FormField>
             </div>
 
             <Switch
@@ -658,269 +431,107 @@ export const McpConnectionCard: FC<McpConnectionCardProps> = ({
               onChange={(e) => setAllowStaging(e.target.checked)}
             />
 
-            <div className={flex({ justify: "flex-end", gap: "2" })}>
+            <div className={formActions()}>
               <Button size="sm" variant="ghost" onClick={() => setShowGenerateForm(false)}>
                 Cancel
               </Button>
               <Button
-                id="confirm-generate-token"
                 data-testid="confirm-generate-token"
-                disabled={generating || !tokenName.trim()}
+                disabled={!tokenName.trim()}
+                id="confirm-generate-token"
+                pending={generating}
                 size="sm"
                 variant="primary"
                 onClick={handleCreateToken}
               >
-                {generating ? "Creating…" : "Create token"}
+                Create token
               </Button>
             </div>
           </div>
         )}
 
-        {/* 3-Tab Setup Snippet Box */}
-        <div className={stack({ gap: "2.5" })}>
-          <SegmentedTabs
-            aria-label="AI connection setup"
-            items={[
-              { value: "local_cli", label: "Run it yourself (preview)" },
-              {
-                value: "active_tokens",
-                label: `Active tokens (${tokens.filter((t) => !t.isRevoked && !t.isExpired).length})`,
-              },
-            ]}
-            value={activeTab}
-            onValueChange={setActiveTab}
-          />
+        {tokenRows}
 
-          {/* Tab A: Local CLI (preview) */}
-          {activeTab === "local_cli" && (
-            <div
-              className={css({
-                display: "flex",
-                flexDirection: "column",
-                gap: "6px",
-                padding: "12px 14px",
-                borderRadius: "md",
-                backgroundColor: "surface.sunken",
-                borderWidth: "1px",
-                borderStyle: "solid",
-                borderColor: "border.subtle",
-                fontSize: "xs",
-              })}
-              data-testid="local-cli-preview"
-              id="local-cli-preview"
-            >
-              <span className={css({ fontWeight: "semibold", color: "text.primary" })}>
-                Run Flump's MCP server yourself (preview)
-              </span>
-              <span className={css({ color: "text.secondary" })}>
-                You can run Flump's MCP server from the source code on your own computer. There is
-                no setup guide yet.
-              </span>
-            </div>
-          )}
+        <p className={setupNote()} data-testid="set-up-panel" id="set-up-panel">
+          There is no setup guide yet. You can run Flump's Model Context Protocol (MCP) server
+          yourself, from the source code on your own computer.
+        </p>
+      </Card>
 
-          {/* Tab C: Active Tokens & Audit Log */}
-          {activeTab === "active_tokens" && (
-            <div
-              className={css({
-                overflowX: "auto",
-                borderRadius: "lg",
-                borderWidth: "1px",
-                borderStyle: "solid",
-                borderColor: "border.subtle",
-              })}
-              id="active-tokens-table"
-              data-testid="active-tokens-table"
-            >
-              <table className={tokenTable()}>
-                <thead>
-                  <tr>
-                    <th className={tokenTableHeader()}>Connection name</th>
-                    <th className={tokenTableHeader()}>Token starts with</th>
-                    <th className={tokenTableHeader()}>What it can see and do</th>
-                    <th className={tokenTableHeader()}>Last used</th>
-                    <th className={tokenTableHeader()}>Requests</th>
-                    <th className={tokenTableHeader()}>Status</th>
-                    <th className={cx(tokenTableHeader(), css({ textAlign: "right" }))}>Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {tokens.length === 0 ? (
-                    <tr>
-                      <td
-                        className={cx(tokenTableCell(), css({ textAlign: "center", p: "5" }))}
-                        colSpan={7}
-                      >
-                        <span className={css({ color: "text.muted" })}>No tokens created</span>
-                      </td>
-                    </tr>
-                  ) : (
-                    tokens.map((tok) => (
-                      <tr key={tok.id}>
-                        <td className={tokenTableCell()}>{tok.name}</td>
-                        <td className={tokenTableCell()}>
-                          <code className={css({ fontSize: "11px" })}>{tok.tokenPrefix}</code>
-                        </td>
-                        <td className={tokenTableCell()}>
-                          <div className={flex({ gap: "1", flexWrap: "wrap" })}>
-                            <StatusBadge
-                              size="sm"
-                              variant={tok.anonymizeInstitutions ? "info" : "warning"}
-                            >
-                              {tok.anonymizeInstitutions ? "Names hidden" : "Names shown"}
-                            </StatusBadge>
-                            {tok.scopes.includes(STAGE_SCOPE) ? (
-                              <StatusBadge size="sm" variant="neutral">
-                                Can prepare imports
-                              </StatusBadge>
-                            ) : null}
-                          </div>
-                        </td>
-                        <td className={tokenTableCell()}>
-                          {tok.lastUsedAt
-                            ? new Date(tok.lastUsedAt).toLocaleDateString("en-GB")
-                            : "Never"}
-                        </td>
-                        <td className={tokenTableCell()}>{tok.totalToolCalls} calls</td>
-                        <td className={tokenTableCell()}>
-                          {tok.isRevoked ? (
-                            <StatusBadge size="sm" variant="danger">
-                              Disconnected
-                            </StatusBadge>
-                          ) : tok.isExpired ? (
-                            <StatusBadge size="sm" variant="warning">
-                              Expired
-                            </StatusBadge>
-                          ) : (
-                            <StatusBadge size="sm" variant="positive">
-                              Active
-                            </StatusBadge>
-                          )}
-                        </td>
-                        <td className={cx(tokenTableCell(), css({ textAlign: "right" }))}>
-                          {!tok.isRevoked && (
-                            <button
-                              aria-label={`Disconnect ${tok.name}`}
-                              className={css({
-                                border: "none",
-                                background: "none",
-                                color: "status.danger.text",
-                                cursor: "pointer",
-                                padding: "4px 8px",
-                                borderRadius: "sm",
-                                fontSize: "xs",
-                                _hover: { backgroundColor: "status.danger.bg" },
-                              })}
-                              id={`revoke-token-${tok.id}`}
-                              data-testid={`revoke-token-${tok.id}`}
-                              type="button"
-                              onClick={() => handleRevoke(tok.id)}
-                            >
-                              <Icon icon={Trash2} size="sm" className={css({ mr: "1" })} />
-                              Disconnect
-                            </button>
-                          )}
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Card 2: Offline AI Context Pack Exporter */}
-      <div
-        className={connectionCard()}
-        id="offline-context-pack-card"
+      <Card
+        aria-labelledby="context-pack-heading"
+        as="section"
+        className={sectionCard()}
         data-testid="offline-context-pack-card"
+        id="offline-context-pack-card"
       >
-        <div className={headerRow()}>
-          <div className={flex({ align: "center", gap: "2.5" })}>
-            <div
-              className={css({
-                width: "36px",
-                height: "36px",
-                borderRadius: "lg",
-                backgroundColor: "status.info.bg",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                color: "status.info.text",
-              })}
-            >
-              <Icon icon={Lock} size="md" />
-            </div>
-            <div>
-              <h3
-                className={css({
-                  fontFamily: "display",
-                  fontSize: "md",
-                  fontWeight: "bold",
-                  color: "text.primary",
-                  margin: 0,
-                })}
-              >
-                Export a summary for an AI assistant
-              </h3>
-              <p
-                className={css({
-                  fontSize: "xs",
-                  color: "text.muted",
-                  margin: "2px 0 0 0",
-                })}
-              >
-                Export a summary of your figures to paste into any AI assistant, without connecting
-                one.
-              </p>
-            </div>
-          </div>
-        </div>
+        <h2 className={sectionHeading()} id="context-pack-heading">
+          Export a summary for an AI assistant
+        </h2>
+        <p className={sectionLead()}>
+          Copy a summary of your figures to paste into any AI assistant, without connecting one.
+        </p>
 
-        <div className={flex({ gap: "3", flexWrap: "wrap", align: "center" })}>
+        <Switch
+          checked={anonymizeInstitutions}
+          data-testid="mcp-anonymize-toggle"
+          id="mcp-anonymize-toggle"
+          label="Hide bank and provider names in the summary"
+          onChange={(e) => setAnonymizeInstitutions(e.target.checked)}
+        />
+
+        <div className={actionRow()}>
           <Button
-            id="copy-context-pack-btn"
             data-testid="copy-context-pack-btn"
             disabled={exportingContextPack}
+            id="copy-context-pack-btn"
             size="sm"
-            variant="primary"
+            variant="secondary"
             onClick={() => handleExportContextPack("clipboard")}
           >
-            {exportedSuccess ? (
-              <Icon icon={Check} size="sm" className={css({ mr: "1.5" })} />
-            ) : (
-              <Icon icon={Copy} size="sm" className={css({ mr: "1.5" })} />
-            )}
+            <Icon icon={exportedSuccess ? Check : Copy} size="sm" />
             {exportedSuccess ? "Copied" : "Copy summary"}
           </Button>
-
           <Button
-            id="download-md-btn"
             data-testid="download-md-btn"
             disabled={exportingContextPack}
+            id="download-md-btn"
             size="sm"
             variant="outline"
             onClick={() => handleExportContextPack("markdown")}
           >
-            <Icon icon={Download} size="sm" className={css({ mr: "1.5" })} />
+            <Icon icon={Download} size="sm" />
             Download as Markdown
           </Button>
-
           <Button
-            id="download-json-btn"
             data-testid="download-json-btn"
             disabled={exportingContextPack}
+            id="download-json-btn"
             size="sm"
             variant="outline"
             onClick={() => handleExportContextPack("json")}
           >
-            <Icon icon={Download} size="sm" className={css({ mr: "1.5" })} />
+            <Icon icon={Download} size="sm" />
             Download as JSON
           </Button>
         </div>
-      </div>
+      </Card>
+
+      <ConfirmDialog
+        confirmLabel="Disconnect"
+        description="The assistant using this token loses access straight away. This cannot be undone."
+        error={revokeError}
+        id="revoke-token-dialog"
+        open={revokeTarget !== null}
+        pending={revoking}
+        pendingLabel="Disconnecting"
+        title={revokeTarget ? `Disconnect ${revokeTarget.name}?` : "Disconnect this token?"}
+        tone="danger"
+        onConfirm={handleConfirmRevoke}
+        onOpenChange={(open) => {
+          if (!open && !revoking) setRevokeTarget(null);
+        }}
+      />
     </div>
   );
 };

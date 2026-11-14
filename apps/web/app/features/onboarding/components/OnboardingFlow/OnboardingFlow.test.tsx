@@ -60,7 +60,7 @@ describe("<OnboardingFlow />", () => {
   it("jumps to a step from the stepper itself", () => {
     render(<OnboardingFlow />);
     const list = screen.getByRole("list", { name: /setup progress/i });
-    fireEvent.click(within(list).getByRole("button", { name: /Step 3 of 5: Savings/ }));
+    fireEvent.click(within(list).getByRole("button", { name: /Step 3 of 4: Savings/ }));
     expect(list.querySelector("[aria-current='step']")?.textContent).toContain("Savings");
   });
 
@@ -69,23 +69,33 @@ describe("<OnboardingFlow />", () => {
     const labels = Array.from(
       screen.getByRole("list", { name: /setup progress/i }).querySelectorAll("[data-step-label]"),
     ).map((el) => el.textContent?.replace(/^Step \d of \d: /, ""));
-    expect(labels).toEqual(["Income", "Housing", "Savings", "Bank", "Review"]);
+    expect(labels).toEqual(["Income", "Housing", "Savings", "Review"]);
     expect(screen.queryByRole("navigation", { name: /go to a step/i })).toBeNull();
     expect(screen.queryByRole("navigation")).toBeNull();
   });
 
   it("never labels a skipped or unvisited step complete", () => {
     render(<OnboardingFlow />);
-    fireEvent.click(stepButton(/Step 2 of 5: Housing/));
+    fireEvent.click(stepButton(/Step 2 of 4: Housing/));
     expect(progressItems()[0]?.getAttribute("data-state")).toBe("skipped");
     fireEvent.click(screen.getByRole("button", { name: "Skip this step" }));
     expect(progressItems()[1]?.getAttribute("data-state")).toBe("skipped");
     // Jump past savings without visiting it.
-    fireEvent.click(stepButton(/Step 4 of 5: Bank/));
+    fireEvent.click(stepButton(/Step 4 of 4: Review/));
     expect(progressItems()[2]?.getAttribute("data-state")).toBe("skipped");
     expect(
       within(screen.getByRole("list", { name: /setup progress/i })).queryByText("Complete"),
     ).toBeNull();
+  });
+
+  it("says Skipped on the review for a skipped step with nothing entered", () => {
+    render(<OnboardingFlow />);
+    fireEvent.click(screen.getByRole("button", { name: /^next/i }));
+    fireEvent.click(screen.getByRole("button", { name: "Skip this step" }));
+    fireEvent.click(screen.getByRole("button", { name: "Skip this step" }));
+    const review = screen.getByTestId("onboarding-finish-summary");
+    expect(within(review).getAllByText("Skipped")).toHaveLength(2);
+    expect(within(review).queryByText("Nothing added yet.")).toBeNull();
   });
 
   it("keeps entered values when a step is skipped", () => {
@@ -94,20 +104,20 @@ describe("<OnboardingFlow />", () => {
     fireEvent.click(screen.getByRole("radio", { name: /renting/i }));
     fireEvent.change(screen.getByLabelText(/monthly rent/i), { target: { value: "900" } });
     fireEvent.click(screen.getByRole("button", { name: "Skip this step" }));
-    fireEvent.click(stepButton(/Step 2 of 5: Housing/));
+    fireEvent.click(stepButton(/Step 2 of 4: Housing/));
     expect((screen.getByLabelText(/monthly rent/i) as HTMLInputElement).value).toBe("900");
   });
 
   it("hides the live summary on the review step so figures appear once", () => {
     render(<OnboardingFlow />);
     expect(screen.getByTestId("onboarding-take-home")).toBeDefined();
-    for (let i = 0; i < 4; i++) fireEvent.click(screen.getByRole("button", { name: /^next/i }));
+    for (let i = 0; i < 3; i++) fireEvent.click(screen.getByRole("button", { name: /^next/i }));
     expect(screen.queryByTestId("onboarding-take-home")).toBeNull();
   });
 
   it("marks the missing fields when the review sends the user back", () => {
     render(<OnboardingFlow />);
-    fireEvent.click(stepButton(/Step 5 of 5: Review/));
+    fireEvent.click(stepButton(/Step 4 of 4: Review/));
     fireEvent.click(screen.getByRole("button", { name: /^Edit you and income$/ }));
     expect(screen.getByText(MISSING_GROSS_ERROR)).toBeDefined();
     expect(
@@ -122,7 +132,7 @@ describe("<OnboardingFlow />", () => {
 
   it("does not mark missing fields on an ordinary visit to the first step", () => {
     render(<OnboardingFlow />);
-    fireEvent.click(stepButton(/Step 5 of 5: Review/));
+    fireEvent.click(stepButton(/Step 4 of 4: Review/));
     fireEvent.click(screen.getByRole("button", { name: "Edit You and income" }));
     expect(screen.queryByText(MISSING_GROSS_ERROR)).toBeNull();
   });

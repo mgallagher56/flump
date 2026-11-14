@@ -77,3 +77,19 @@ export const Saving: Story = {
     await expect(args.onFinish).not.toHaveBeenCalled();
   },
 };
+
+/** Housing and savings skipped with nothing entered: they read "Skipped", and one notice shows. */
+export const SkippedSteps: Story = {
+  args: {
+    ...make({ grossSalary: 45000, taxRegion: "ENGLAND" }),
+    stepStates: { income: "complete", housing: "skipped", savings: "skipped" },
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(canvas.getAllByText("Skipped")).toHaveLength(2);
+    await expect(canvas.queryByText("Complete")).toBeNull();
+    await expect(canvas.getAllByRole("note")).toHaveLength(1);
+  },
+};
+
+export const SkippedStepsDark: Story = { ...SkippedSteps, globals: { theme: "dark" } };

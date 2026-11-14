@@ -2,7 +2,6 @@
   "fontSize": {
     "apps/web/app/components/charts/AccountDetailChart.tsx": 2,
     "apps/web/app/components/navigation/UserAvatar.tsx": 3,
-    "apps/web/app/features/ai-connections/components/McpConnectionCard/McpConnectionCard.tsx": 7,
     "apps/web/app/features/charts/utils/chartProps.ts": 1,
     "apps/web/app/features/charts/utils/legacyTooltipStyles.ts": 3,
     "apps/web/app/features/mortgage/components/OverpayVsSaveCompare/OverpayVsSaveCompare.styles.ts": 3,
@@ -14,7 +13,6 @@
   "duration": {
     "apps/web/app/components/accounts/BankConnectionsList/BankConnectionsList.styles.ts": 1,
     "apps/web/app/components/dialogs/connectBankWizard/ConnectBankWizard.styles.ts": 1,
-    "apps/web/app/features/ai-connections/components/McpConnectionCard/McpConnectionCard.styles.ts": 3,
     "apps/web/app/features/budget/components/AddCategoryModal/AddCategoryModal.styles.ts": 2,
     "apps/web/app/features/debt/components/PayoffStrategyControls/PayoffStrategyControls.styles.ts": 1,
     "apps/web/app/root.tsx": 2

@@ -1,219 +1,230 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { ToastProvider } from "@repo/ui";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { McpConnectionCard } from "./McpConnectionCard";
+import { McpConnectionCard, type McpTokenItem } from "./McpConnectionCard";
 
-describe("McpConnectionCard Feature Component", () => {
-  it("renders connection card and toggles anonymization switch", () => {
-    render(<McpConnectionCard />);
+// Sample values only, built at runtime with no entropy: never a real token.
+const SAMPLE_TOKEN = `flump_pat_${"x".repeat(32)}`;
+const samplePrefix = (c: string) => `flump_pat_${c.repeat(4)}...${c.repeat(4)}`;
 
-    expect(screen.getByText("AI connections (preview)")).toBeDefined();
-    expect(screen.getByText("Hide bank and provider names from AI assistants")).toBeDefined();
+const token = (overrides: Partial<McpTokenItem> = {}): McpTokenItem => ({
+  id: "tok_1",
+  name: "Claude Desktop",
+  tokenPrefix: samplePrefix("a"),
+  scopes: ["mcp:read:anonymized"],
+  anonymizeInstitutions: true,
+  expiresAt: null,
+  lastUsedAt: null,
+  totalToolCalls: 1234,
+  createdAt: "2026-11-01T00:00:00.000Z",
+  isRevoked: false,
+  isExpired: false,
+  ...overrides,
+});
 
-    const toggle = screen.getByRole("button", { name: "Hide bank and provider names" });
-    fireEvent.click(toggle);
-    // Toggled without throwing
-    expect(toggle).toBeDefined();
+const created = (overrides: Record<string, unknown> = {}) => ({
+  id: "tok_new",
+  name: "Client",
+  rawToken: SAMPLE_TOKEN,
+  tokenPrefix: samplePrefix("x"),
+  scopes: ["mcp:read:anonymized"],
+  anonymizeInstitutions: true,
+  expiresAt: "2027-11-12T00:00:00.000Z",
+  ...overrides,
+});
+
+describe("McpConnectionCard", () => {
+  it("is two settings sections, each with one h2 and no version or SDK jargon", () => {
+    const { container } = render(<McpConnectionCard />);
+    const headings = screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent);
+    expect(headings).toEqual(["AI connections (preview)", "Export a summary for an AI assistant"]);
+    const text = container.textContent ?? "";
+    expect(text).not.toMatch(/SDK|v1\.0|baseline|sample data/i);
   });
 
-  it("switches tabs between Local CLI preview and Active Tokens", () => {
-    const initialTokens = [
-      {
-        id: "tok_1",
-        name: "Cursor AI",
-        tokenPrefix: "flump_pat_1122...3344",
-        scopes: ["mcp:read:anonymized"],
-        anonymizeInstitutions: true,
-        expiresAt: null,
-        lastUsedAt: null,
-        totalToolCalls: 4,
-        createdAt: new Date().toISOString(),
-        isRevoked: false,
-        isExpired: false,
-      },
-    ];
+  it("states each fact once, as a plain list", () => {
+    const { container } = render(<McpConnectionCard />);
+    const facts = within(screen.getByTestId("ai-connection-facts")).getAllByRole("listitem");
+    expect(facts.map((li) => li.textContent)).toEqual([
+      "Flump calculates the figures it sends to the assistant.",
+      "Bank and provider names are always replaced with generic labels.",
+      "Flump has no feature to make payments.",
+      "Each connection can make up to 60 requests a minute.",
+    ]);
+    const text = container.textContent ?? "";
+    expect(text.match(/generic labels/g)).toHaveLength(1);
+    expect(text).not.toMatch(/whatever this setting says/);
+    expect(text).not.toMatch(/hallucinat|PII Scrubbed|account numbers|read-only safe/i);
+  });
 
-    render(<McpConnectionCard initialTokens={initialTokens} />);
-
-    // Default tab shows the Local CLI preview note, with no npx snippet or remote URL
-    expect(screen.getByText("Run Flump's MCP server yourself (preview)")).toBeDefined();
-    expect(
-      screen.getByText(
-        "You can run Flump's MCP server from the source code on your own computer. There is no setup guide yet.",
-      ),
-    ).toBeDefined();
+  it("has no inner tabs and shows the setup line once, as a muted line", () => {
+    render(<McpConnectionCard />);
+    expect(screen.queryByRole("tab")).toBeNull();
+    expect(screen.queryByRole("tablist")).toBeNull();
+    expect(screen.getByTestId("set-up-panel").textContent).toContain(
+      "There is no setup guide yet.",
+    );
     expect(screen.queryByText(/npx/)).toBeNull();
     expect(screen.queryByText(/OAuth 2\.1/)).toBeNull();
-    expect(screen.queryByRole("tab", { name: /Remote MCP/ })).toBeNull();
-
-    // Click Active Tokens tab
-    const activeTab = screen.getByRole("tab", { name: /Active tokens/i });
-    fireEvent.keyDown(activeTab, { key: "Enter", code: "Enter" });
-    expect(screen.getByTestId("active-tokens-table")).toBeDefined();
-    expect(screen.getByText("Cursor AI")).toBeDefined();
-    expect(screen.getByText("4 calls")).toBeDefined();
   });
 
-  it("handles token creation flow and displays generated token alert", async () => {
-    const mockGenerate = vi.fn().mockResolvedValue({
-      id: "tok_new",
-      name: "ChatGPT Action",
-      rawToken: "flump_pat_secret_abc123456789",
-      tokenPrefix: "flump_pat_se...6789",
-      scopes: ["mcp:read:anonymized"],
-      anonymizeInstitutions: true,
-      expiresAt: null,
+  it("shows no token list when there are no tokens", () => {
+    render(<McpConnectionCard />);
+    expect(screen.queryByTestId("active-tokens-table")).toBeNull();
+    expect(screen.queryByText(/No tokens yet/)).toBeNull();
+  });
+
+  it("lists each token as one row with en-GB counts and neutral badges", () => {
+    render(
+      <McpConnectionCard
+        initialTokens={[
+          token({ lastUsedAt: "2026-11-09T14:30:00.000Z" }),
+          token({ id: "tok_2", name: "Old", isRevoked: true, totalToolCalls: 1 }),
+          token({ id: "tok_3", name: "Stale", isExpired: true }),
+        ]}
+      />,
+    );
+    const list = screen.getByTestId("active-tokens-table");
+    expect(list.tagName).toBe("UL");
+    expect(within(list).getAllByRole("listitem")).toHaveLength(3);
+    const first = screen.getByTestId("token-row-tok_1");
+    expect(within(first).getByText("Claude Desktop")).toBeDefined();
+    expect(within(first).getByText("1,234 requests")).toBeDefined();
+    expect(within(first).getByText("Last used 09/11/2026")).toBeDefined();
+    expect(within(first).getByText("Active")).toBeDefined();
+    expect(within(first).getByText("Names hidden")).toBeDefined();
+    expect(within(screen.getByTestId("token-row-tok_2")).getByText("1 request")).toBeDefined();
+    expect(within(screen.getByTestId("token-row-tok_2")).getByText("Not used yet")).toBeDefined();
+    // Disconnected and expired tokens keep their badge and lose the Disconnect button.
+    expect(screen.getByText("Disconnected")).toBeDefined();
+    expect(screen.getByText("Expired")).toBeDefined();
+    expect(screen.getByTestId("revoke-token-tok_1")).toBeDefined();
+    expect(screen.queryByTestId("revoke-token-tok_2")).toBeNull();
+    expect(screen.queryByTestId("revoke-token-tok_3")).toBeNull();
+    expect(screen.getByRole("button", { name: "Disconnect Claude Desktop" })).toBeDefined();
+  });
+
+  it("creates a token, shows it once and raises a toast", async () => {
+    const mockGenerate = vi.fn().mockResolvedValue(created({ name: "ChatGPT Action" }));
+    render(
+      <ToastProvider>
+        <McpConnectionCard onGenerateToken={mockGenerate} />
+      </ToastProvider>,
+    );
+    fireEvent.click(screen.getByTestId("generate-token-trigger"));
+    fireEvent.change(screen.getByLabelText("Connection name"), {
+      target: { value: "ChatGPT Action" },
     });
-
-    render(<McpConnectionCard onGenerateToken={mockGenerate} />);
-
-    const openBtn = screen.getByTestId("generate-token-trigger");
-    fireEvent.click(openBtn);
-
-    const nameInput = screen.getByLabelText("Connection name");
-    fireEvent.change(nameInput, { target: { value: "ChatGPT Action" } });
-
-    const submitBtn = screen.getByTestId("confirm-generate-token");
-    fireEvent.click(submitBtn);
-
-    await waitFor(() => {
-      expect(mockGenerate).toHaveBeenCalledWith("ChatGPT Action", true, 90, false);
-    });
-
-    expect(screen.getByTestId("new-token-banner")).toBeDefined();
-    expect(screen.getByText("flump_pat_secret_abc123456789")).toBeDefined();
+    fireEvent.click(screen.getByTestId("confirm-generate-token"));
+    await waitFor(() =>
+      expect(mockGenerate).toHaveBeenCalledWith("ChatGPT Action", true, 90, false),
+    );
+    const banner = await screen.findByTestId("new-token-banner");
+    expect(banner.textContent).toContain(SAMPLE_TOKEN);
+    expect(banner.textContent).toContain("It will not be shown again.");
+    // The banner is the confirmation: no toast repeats it.
+    expect(screen.getAllByText("Token created")).toHaveLength(1);
   });
 
   it("offers only expiring tokens and sends the chosen expiry", async () => {
-    const mockGenerate = vi.fn().mockResolvedValue({
-      id: "tok_exp",
-      name: "Client",
-      rawToken: "flump_pat_secret_zzz",
-      tokenPrefix: "flump_pat_zz...zzz",
-      scopes: ["mcp:read:anonymized"],
-      anonymizeInstitutions: true,
-      expiresAt: "2027-11-12T00:00:00.000Z",
-    });
+    const mockGenerate = vi.fn().mockResolvedValue(created());
     render(<McpConnectionCard onGenerateToken={mockGenerate} />);
     fireEvent.click(screen.getByTestId("generate-token-trigger"));
-    fireEvent.change(screen.getByLabelText("Connection name"), {
-      target: { value: "Client" },
-    });
-
+    fireEvent.change(screen.getByLabelText("Connection name"), { target: { value: "Client" } });
     const select = screen.getByLabelText("Token expires after") as HTMLSelectElement;
     expect(Array.from(select.options).map((o) => o.value)).toEqual(["7", "30", "90", "365"]);
-    expect(screen.queryByText(/Never/)).toBeNull();
-
     fireEvent.change(select, { target: { value: "365" } });
     fireEvent.click(screen.getByTestId("confirm-generate-token"));
     await waitFor(() => expect(mockGenerate).toHaveBeenCalledWith("Client", true, 365, false));
   });
 
-  it("always requests an anonymised token, even if the context-pack toggle is off", async () => {
-    const mockGenerate = vi.fn().mockResolvedValue({
-      id: "tok_a",
-      name: "Client",
-      rawToken: "flump_pat_secret_aaa",
-      tokenPrefix: "flump_pat_aa...aaa",
-      scopes: ["mcp:read:anonymized"],
-      anonymizeInstitutions: true,
-      expiresAt: "2027-11-12T00:00:00.000Z",
-    });
+  it("always requests an anonymised token, even if the summary switch is off", async () => {
+    const mockGenerate = vi.fn().mockResolvedValue(created());
     render(<McpConnectionCard onGenerateToken={mockGenerate} />);
     fireEvent.click(screen.getByTestId("mcp-anonymize-toggle"));
     fireEvent.click(screen.getByTestId("generate-token-trigger"));
-    fireEvent.change(screen.getByLabelText("Connection name"), {
-      target: { value: "Client" },
-    });
     fireEvent.click(screen.getByTestId("confirm-generate-token"));
-    await waitFor(() => expect(mockGenerate).toHaveBeenCalledWith("Client", true, 90, false));
+    await waitFor(() =>
+      expect(mockGenerate).toHaveBeenCalledWith("Claude Desktop", true, 90, false),
+    );
   });
 
   it("asks for the staging scope only when the user turns it on, and labels such tokens", async () => {
-    const mockGenerate = vi.fn().mockResolvedValue({
-      id: "tok_s",
-      name: "Client",
-      rawToken: "flump_pat_secret_sss",
-      tokenPrefix: "flump_pat_ss...sss",
-      scopes: ["mcp:read:anonymized", "write:stage"],
-      anonymizeInstitutions: true,
-      expiresAt: "2027-11-12T00:00:00.000Z",
-    });
+    const mockGenerate = vi
+      .fn()
+      .mockResolvedValue(created({ scopes: ["mcp:read:anonymized", "write:stage"] }));
     render(<McpConnectionCard onGenerateToken={mockGenerate} />);
     fireEvent.click(screen.getByTestId("generate-token-trigger"));
     const toggle = screen.getByRole("switch", {
       name: "Let this connection prepare imports for you to review",
     }) as HTMLInputElement;
     expect(toggle.checked).toBe(false);
-    fireEvent.change(screen.getByLabelText("Connection name"), {
-      target: { value: "Client" },
-    });
     fireEvent.click(toggle);
     fireEvent.click(screen.getByTestId("confirm-generate-token"));
-    await waitFor(() => expect(mockGenerate).toHaveBeenCalledWith("Client", true, 90, true));
-    fireEvent.keyDown(screen.getByRole("tab", { name: /Active tokens/ }), { key: "Enter" });
-    expect(screen.getByText("Can prepare imports")).toBeDefined();
+    await waitFor(() =>
+      expect(mockGenerate).toHaveBeenCalledWith("Claude Desktop", true, 90, true),
+    );
+    expect(await screen.findByText("Can prepare imports")).toBeDefined();
   });
 
-  it("revokes an active token on user click", async () => {
+  it("asks before disconnecting, then marks the token and raises a toast", async () => {
     const mockRevoke = vi.fn().mockResolvedValue(undefined);
-    const initialTokens = [
-      {
-        id: "tok_rev_1",
-        name: "Claude Desktop",
-        tokenPrefix: "flump_pat_aaaa...bbbb",
-        scopes: ["mcp:read:anonymized"],
-        anonymizeInstitutions: true,
-        expiresAt: null,
-        lastUsedAt: null,
-        totalToolCalls: 12,
-        createdAt: new Date().toISOString(),
-        isRevoked: false,
-        isExpired: false,
-      },
-    ];
-
-    render(<McpConnectionCard initialTokens={initialTokens} onRevokeToken={mockRevoke} />);
-
-    const activeTab = screen.getByRole("tab", { name: /Active tokens/i });
-    fireEvent.keyDown(activeTab, { key: "Enter", code: "Enter" });
-
-    const revokeBtn = screen.getByTestId("revoke-token-tok_rev_1");
-    fireEvent.click(revokeBtn);
-
-    await waitFor(() => {
-      expect(mockRevoke).toHaveBeenCalledWith("tok_rev_1");
-    });
+    render(
+      <ToastProvider>
+        <McpConnectionCard initialTokens={[token()]} onRevokeToken={mockRevoke} />
+      </ToastProvider>,
+    );
+    fireEvent.click(screen.getByTestId("revoke-token-tok_1"));
+    const dialog = screen.getByRole("alertdialog");
+    expect(within(dialog).getByText("Disconnect Claude Desktop?")).toBeDefined();
+    expect(mockRevoke).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByTestId("revoke-token-dialog-confirm"));
+    await waitFor(() => expect(mockRevoke).toHaveBeenCalledWith("tok_1"));
+    await waitFor(() => expect(screen.queryByRole("alertdialog")).toBeNull());
+    expect(screen.getByText("Disconnected")).toBeDefined();
+    expect(await screen.findByText("Token disconnected")).toBeDefined();
   });
 
-  it("states that Flump has no payment features", () => {
-    render(<McpConnectionCard />);
-    expect(screen.getByText("No payment features")).toBeDefined();
-    expect(screen.queryByText(/read-only safe/i)).toBeNull();
+  it("does nothing when the disconnect is cancelled", () => {
+    const mockRevoke = vi.fn();
+    render(<McpConnectionCard initialTokens={[token()]} onRevokeToken={mockRevoke} />);
+    fireEvent.click(screen.getByTestId("revoke-token-tok_1"));
+    fireEvent.click(screen.getByTestId("revoke-token-dialog-cancel"));
+    expect(mockRevoke).not.toHaveBeenCalled();
+    expect(screen.getByText("Active")).toBeDefined();
   });
 
-  it("describes calculations and anonymisation without overclaiming", () => {
-    const { container } = render(<McpConnectionCard />);
-    expect(
-      screen.getByText("Flump calculates the figures it sends to the AI assistant"),
-    ).toBeDefined();
-    expect(
-      screen.getByText("Bank and provider names are replaced with generic labels by default"),
-    ).toBeDefined();
-    expect(container.textContent ?? "").not.toMatch(/hallucinat|PII Scrubbed|account numbers/i);
+  it("keeps a token active and shows an error when disconnecting fails", async () => {
+    const revoke = vi.fn().mockRejectedValue(new Error("boom"));
+    render(<McpConnectionCard initialTokens={[token()]} onRevokeToken={revoke} />);
+    fireEvent.click(screen.getByTestId("revoke-token-tok_1"));
+    fireEvent.click(screen.getByTestId("revoke-token-dialog-confirm"));
+    expect((await screen.findByRole("alert")).textContent).toContain(
+      "The token could not be disconnected. Try again in a moment.",
+    );
+    expect(screen.queryByText("Disconnected")).toBeNull();
   });
 
-  it("renders the offline context pack exporter card", () => {
-    const mockFetchPack = vi.fn().mockResolvedValue({
-      pack: { metadata: { isAnonymized: true } },
-      markdown: "# Flump Context Pack",
-    });
-
-    render(<McpConnectionCard onFetchContextPack={mockFetchPack} />);
-
-    expect(screen.getByTestId("offline-context-pack-card")).toBeDefined();
-    expect(screen.getByTestId("copy-context-pack-btn")).toBeDefined();
+  it("exports the summary with names hidden unless the switch is turned off", async () => {
+    const mockFetchPack = vi.fn().mockResolvedValue({ pack: {}, markdown: "# Flump" });
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, "clipboard", { value: { writeText }, configurable: true });
+    render(
+      <ToastProvider>
+        <McpConnectionCard onFetchContextPack={mockFetchPack} />
+      </ToastProvider>,
+    );
     expect(screen.getByTestId("download-md-btn")).toBeDefined();
     expect(screen.getByTestId("download-json-btn")).toBeDefined();
+    fireEvent.click(screen.getByTestId("copy-context-pack-btn"));
+    await waitFor(() => expect(mockFetchPack).toHaveBeenCalledWith(true));
+    await waitFor(() => expect(writeText).toHaveBeenCalledWith("# Flump"));
+    expect(await screen.findByText("Summary copied")).toBeDefined();
+    fireEvent.click(
+      screen.getByRole("switch", { name: "Hide bank and provider names in the summary" }),
+    );
+    fireEvent.click(screen.getByTestId("copy-context-pack-btn"));
+    await waitFor(() => expect(mockFetchPack).toHaveBeenLastCalledWith(false));
   });
 
   it("shows a known safe message when creating fails, and a fixed line for anything else", async () => {
@@ -233,31 +244,5 @@ describe("McpConnectionCard Feature Component", () => {
         "The token could not be created. Try again in a moment.",
       ),
     );
-  });
-
-  it("keeps a token active and shows an error when revoking fails", async () => {
-    const revoke = vi.fn().mockRejectedValue(new Error("boom"));
-    const tokens = [
-      {
-        id: "tok_rev_1",
-        name: "Claude Desktop",
-        tokenPrefix: "flump_pat_aaaa...bbbb",
-        scopes: ["mcp:read:anonymized"],
-        anonymizeInstitutions: true,
-        expiresAt: null,
-        lastUsedAt: null,
-        totalToolCalls: 1,
-        createdAt: "2026-11-01T00:00:00.000Z",
-        isRevoked: false,
-        isExpired: false,
-      },
-    ];
-    render(<McpConnectionCard initialTokens={tokens} onRevokeToken={revoke} />);
-    fireEvent.keyDown(screen.getByRole("tab", { name: /Active tokens/i }), { key: "Enter" });
-    fireEvent.click(screen.getByTestId("revoke-token-tok_rev_1"));
-    expect((await screen.findByRole("alert")).textContent).toBe(
-      "The token could not be disconnected. Try again in a moment.",
-    );
-    expect(screen.queryByText("Revoked")).toBeNull();
   });
 });

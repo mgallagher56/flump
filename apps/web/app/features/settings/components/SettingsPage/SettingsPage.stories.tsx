@@ -29,8 +29,7 @@ export const Default: Story = {
     await expect(canvasElement.querySelector('[data-tone="hero"]')).toBeNull();
     // Scope to one page tree: the side-by-side theme view renders the page twice.
     expectPageRules(canvasElement.querySelector("#settings-page") ?? canvasElement);
-    const save = canvas.getByRole("button", { name: "Save changes" }) as HTMLButtonElement;
-    await expect(save.disabled).toBe(true);
+    await expect(canvas.queryByRole("button", { name: "Save changes" })).toBeNull();
     await userEvent.click(canvas.getByRole("tab", { name: "Data" }));
     await expect(canvas.getByTestId("reset-financial-data-trigger")).toBeDefined();
   },
@@ -38,18 +37,3 @@ export const Default: Story = {
 
 /** The page as first opened, on the Profile tab. */
 export const ProfileTabOpen: Story = {};
-
-export const UnsavedChangesPrompt: Story = {
-  play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement);
-    await userEvent.type(canvas.getByLabelText("First name"), "t");
-    await userEvent.click(canvas.getByRole("tab", { name: "Security" }));
-    const body = within(document.body);
-    await expect(await body.findByText("Discard unsaved changes?")).toBeDefined();
-    await userEvent.click(body.getByRole("button", { name: "Discard changes" }));
-    await expect(await canvas.findByTestId("settings-security-tab")).toBeDefined();
-    await expect(canvas.getByRole("tab", { name: "Security" }).getAttribute("aria-selected")).toBe(
-      "true",
-    );
-  },
-};

@@ -104,8 +104,7 @@ export const DeleteAccountSection: FC<DeleteAccountSectionProps> = ({ status, on
             <span>This deletes the following for good:</span>
             <ul className={deleteList()}>
               <li>Your profile and settings</li>
-              <li>Your financial accounts, balances and transactions</li>
-              <li>Your bank connections</li>
+              <li>Your accounts and their balance history</li>
               <li>Your budget, savings and tax records</li>
               <li>Your check-ins and any imports not yet finished</li>
               <li>Your AI connections and their activity log</li>

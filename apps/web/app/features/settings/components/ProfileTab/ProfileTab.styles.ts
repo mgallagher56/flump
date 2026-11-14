@@ -6,12 +6,6 @@ export const avatarRow = cva({
     alignItems: "center",
     flexWrap: { base: "wrap", sm: "nowrap" },
     gap: "5",
-    padding: "4",
-    borderRadius: "lg",
-    backgroundColor: "surface.sunken",
-    borderWidth: "1px",
-    borderStyle: "solid",
-    borderColor: "border.subtle",
   },
 });
 

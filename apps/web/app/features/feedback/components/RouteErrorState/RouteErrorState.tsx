@@ -5,7 +5,6 @@ import { APP_VERSION, feedbackMailto } from "~/utils/support";
 import type { BackendErrorKind } from "../../../../services/backend-error";
 import {
   errorStateActions,
-  errorStateBadge,
   errorStateBody,
   errorStateContainer,
   errorStateHeading,
@@ -32,14 +31,12 @@ export interface RouteErrorStateProps {
 }
 
 interface Copy {
-  badge: string;
   heading: string;
   body: string;
   scene: IllustrationScene;
 }
 
 const GENERIC: Copy = {
-  badge: "Could not load",
   heading: "We could not load this page",
   body: "This is a problem on our side. Try again in a moment, or report it if it keeps happening.",
   scene: "empty-accounts",
@@ -49,35 +46,30 @@ function copyFor(kind: RouteErrorStateProps["kind"]): Copy {
   switch (kind) {
     case "unauthorised":
       return {
-        badge: "Signed out",
         heading: "Your session has ended",
         body: "For your security you've been signed out. Sign in again to carry on where you left off.",
         scene: "empty-accounts",
       };
     case "forbidden":
       return {
-        badge: "No access",
         heading: "You do not have access to this page",
         body: "Your account cannot open this page. If that looks wrong, contact support.",
         scene: "not-found",
       };
     case "not-invited":
       return {
-        badge: "Invite only",
         heading: "Flump is invite-only for now",
         body: "You are signed in, but this account has not been invited to the beta. Sign out and use an invited account, or ask the person who invited you.",
         scene: "onboarding",
       };
     case "not-found":
       return {
-        badge: "Not found",
         heading: "We cannot find that page",
         body: "The page may have moved, or the link may be out of date.",
         scene: "not-found",
       };
     case "unavailable":
       return {
-        badge: "Connection problem",
         heading: "We could not reach Flump",
         body: "Check your connection, then try again. If you are online, Flump may be down for a short time.",
         scene: "empty-accounts",
@@ -126,14 +118,12 @@ export const RouteErrorState: FC<RouteErrorStateProps> = ({
       <div className={errorStateIllustration()}>
         <Illustration scene={copy.scene} size="sm" />
       </div>
-      <span className={errorStateBadge({ tone: kind === "not-found" ? "neutral" : "danger" })}>
-        {copy.badge}
-      </span>
       <Heading ref={headingRef} className={errorStateHeading()} tabIndex={-1}>
         {copy.heading}
       </Heading>
       <p className={errorStateBody()}>{copy.body}</p>
-      {status ? <p className={errorStateStatus()}>Error {status}</p> : null}
+      {/* "Not found" is said once, by the heading; other failures keep their code for support. */}
+      {status && kind !== "not-found" ? <p className={errorStateStatus()}>Error {status}</p> : null}
       <div className={errorStateActions()}>
         {kind === "unauthorised" ? (
           <form method="post" action={signInAction}>
@@ -154,7 +144,8 @@ export const RouteErrorState: FC<RouteErrorStateProps> = ({
             {retrying ? "Trying again…" : "Try again"}
           </Button>
         ) : null}
-        {primaryHref ? (
+        {/* One way back (P12.3): a retryable failure offers "Try again", and the header has Home. */}
+        {primaryHref && !(showRetry && onRetry) ? (
           <Button asChild variant="outline">
             <a href={primaryHref}>{primaryLabel}</a>
           </Button>

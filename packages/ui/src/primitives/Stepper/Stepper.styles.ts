@@ -148,6 +148,13 @@ export const stepperMarker = cva({
         borderColor: "border.strong",
         color: "text.secondary",
       },
+      // Quieter than complete and told apart from upcoming by its dashed edge, not colour alone.
+      skipped: {
+        backgroundColor: "surface.card",
+        borderColor: "border.strong",
+        borderStyle: "dashed",
+        color: "text.secondary",
+      },
     },
   },
 });

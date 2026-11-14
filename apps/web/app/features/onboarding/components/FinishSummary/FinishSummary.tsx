@@ -1,5 +1,5 @@
 import { Button, Heading, Icon, KpiCard, ProjectionNotice, StatusBadge } from "@repo/ui";
-import { ArrowLeft, Info, TriangleAlert } from "lucide-react";
+import { ArrowLeft, TriangleAlert } from "lucide-react";
 import type { FC } from "react";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import type { AppPageKey } from "~/utils/pageConfig";
@@ -7,8 +7,15 @@ import { REGION_ASSUMPTION_LABEL } from "~/utils/taxTrapCopy";
 import { birthYearFromAge } from "../../age";
 import type { OnboardingSummary } from "../../deriveOnboardingSummary";
 import { MODULE_LABELS } from "../../inferModules";
-import { type HousingStatus, type OnboardingValues, ownsHome, STEP_LABELS } from "../../types";
+import {
+  type HousingStatus,
+  type OnboardingValues,
+  ownsHome,
+  STEP_LABELS,
+  type StepId,
+} from "../../types";
 import type { FinishSaveState } from "../../useFinishOnboarding";
+import type { StepOutcome } from "../../useOnboardingForm";
 import { TAKE_HOME_LABEL } from "../LiveSummaryBar";
 import { finishSummaryRecipe } from "./FinishSummary.styles";
 
@@ -30,6 +37,11 @@ export interface FinishSummaryProps {
   error?: string | null;
   /** What the account holds after the last attempt; drives the saved note. */
   saveState?: FinishSaveState;
+  /**
+   * How each step was left, as the stepper shows it. A skipped step with nothing entered reads
+   * "Skipped" rather than "Nothing added yet".
+   */
+  stepStates?: Partial<Record<StepId, StepOutcome>>;
 }
 
 const REGIONS: Record<string, string> = {
@@ -66,6 +78,7 @@ const percent = new Intl.NumberFormat("en-GB", { style: "percent", maximumFracti
 
 export const SECTIONS_TITLE = "Sections we have set up for you";
 export const NOTHING_ADDED = "Nothing added yet.";
+export const SKIPPED = "Skipped";
 
 export const SAVED_NOTES: Record<FinishSaveState, string> = {
   idle: "Held in this browser tab until you finish. Nothing is saved to your account yet.",
@@ -91,6 +104,7 @@ export const FinishSummary: FC<FinishSummaryProps> = ({
   onFixMissing,
   error = null,
   saveState = "idle",
+  stepStates = {},
 }) => {
   const classes = finishSummaryRecipe();
   const { formatCurrency } = useFormatCurrency();
@@ -103,8 +117,9 @@ export const FinishSummary: FC<FinishSummaryProps> = ({
   const status = values.housingStatus;
   const housingCostLabel = status ? HOUSING_COST_LABEL[status] : undefined;
 
-  const groups: { step: number; title: string; rows: Row[] }[] = [
+  const groups: { id: StepId; step: number; title: string; rows: Row[] }[] = [
     {
+      id: "income",
       step: 1,
       title: STEP_LABELS.income,
       rows: entered([
@@ -121,6 +136,7 @@ export const FinishSummary: FC<FinishSummaryProps> = ({
       ]),
     },
     {
+      id: "housing",
       step: 2,
       title: STEP_LABELS.housing,
       rows: entered([
@@ -132,6 +148,7 @@ export const FinishSummary: FC<FinishSummaryProps> = ({
       ]),
     },
     {
+      id: "savings",
       step: 3,
       title: STEP_LABELS.savings,
       rows: entered([
@@ -190,7 +207,9 @@ export const FinishSummary: FC<FinishSummaryProps> = ({
               ))}
             </dl>
           ) : (
-            <p className={classes.empty}>{NOTHING_ADDED}</p>
+            <p className={classes.empty}>
+              {stepStates[group.id] === "skipped" ? SKIPPED : NOTHING_ADDED}
+            </p>
           )}
         </div>
       ))}
@@ -213,9 +232,7 @@ export const FinishSummary: FC<FinishSummaryProps> = ({
           id="finish-income-hint"
           role="status"
         >
-          <span>
-            <Icon icon={TriangleAlert} size="sm" /> {summary.missingForFinish} to finish setting up.
-          </span>
+          <span>{summary.missingForFinish} to finish setting up.</span>
           <Button
             onClick={onFixMissing ?? (() => onEdit(1))}
             size="sm"
@@ -227,11 +244,9 @@ export const FinishSummary: FC<FinishSummaryProps> = ({
         </div>
       ) : null}
 
+      {/* Plain body copy, not a notice: the projection notice is this step's one notice (P4). */}
       <p className={classes.saved} data-testid="onboarding-saved-note" id="onboarding-saved-note">
-        <span className={classes.savedIcon}>
-          <Icon icon={Info} size="sm" />
-        </span>
-        <span>{SAVED_NOTES[saveState]}</span>
+        {SAVED_NOTES[saveState]}
       </p>
 
       <ProjectionNotice />

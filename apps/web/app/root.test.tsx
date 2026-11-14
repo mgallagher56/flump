@@ -171,7 +171,7 @@ describe("root App 404", () => {
     expect(screen.getByRole("navigation", { name: "Primary" })).toBeDefined();
     expect(screen.getByRole("link", { name: "logIn" })).toBeDefined();
     expect(
-      within(screen.getByRole("main")).getByRole("link", { name: "Go to Flump" }),
+      within(screen.getByRole("main")).getByRole("link", { name: "Go to the home page" }),
     ).toBeDefined();
   });
 });

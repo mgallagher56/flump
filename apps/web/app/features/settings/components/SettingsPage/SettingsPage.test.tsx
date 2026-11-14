@@ -68,7 +68,7 @@ describe("<SettingsPage />", () => {
     window.history.pushState({}, "", "/");
   });
 
-  it("has one h1 'Settings', no hero and one primary button (page rules)", () => {
+  it("has one h1 'Settings', no hero and no save button: the Profile tab saves on change", () => {
     const { container } = render(
       <SettingsPage initialProfile={profile} user={{ email: "j@example.com" }} />,
     );
@@ -78,9 +78,8 @@ describe("<SettingsPage />", () => {
     expect(container.querySelector('[data-tone="hero"]')).toBeNull();
     expect(screen.queryByTestId("settings-hero")).toBeNull();
     expectPageRules(container);
-    const primaries = container.querySelectorAll('button[data-variant="primary"]');
-    expect(primaries).toHaveLength(1);
-    expect(primaries[0]?.textContent).toBe("Save changes");
+    expect(container.querySelectorAll('button[data-variant="primary"]')).toHaveLength(0);
+    expect(screen.queryByRole("button", { name: "Save changes" })).toBeNull();
   });
 
   it("shows the email once, on the Security tab", () => {
@@ -100,18 +99,6 @@ describe("<SettingsPage />", () => {
         expect(select.className).not.toBe("");
       }
     }
-  });
-
-  it("keeps Save changes disabled until a field changes", () => {
-    render(<SettingsPage initialProfile={profile} />);
-    const save = screen.getByRole("button", { name: "Save changes" }) as HTMLButtonElement;
-    expect(save.disabled).toBe(true);
-    fireEvent.change(screen.getByTestId("tax-region-select"), { target: { value: "SCOTLAND" } });
-    expect(save.disabled).toBe(false);
-    fireEvent.change(screen.getByTestId("tax-region-select"), { target: { value: "" } });
-    expect(save.disabled).toBe(true);
-    edit();
-    expect(save.disabled).toBe(false);
   });
 
   it("offers Profile, Security and Data tabs, starting on Profile", () => {
@@ -172,111 +159,18 @@ describe("<SettingsPage />", () => {
     expect(screen.getByRole("tab", { name: "Profile" }).getAttribute("aria-selected")).toBe("true");
   });
 
-  describe("unsaved changes guard", () => {
-    it("puts ?tab= back when Keep editing is chosen after a link asked for another tab", async () => {
-      const router = createMemoryRouter(
-        [
-          {
-            path: "/app/profile",
-            element: <SettingsPage initialProfile={profile} user={{ email: "j@example.com" }} />,
-          },
-        ],
-        { initialEntries: ["/app/profile"] },
-      );
-      render(<RouterProvider router={router} />);
-      edit();
-      await act(async () => {
-        await router.navigate("/app/profile?tab=security");
-      });
-      expect(await screen.findByRole("alertdialog")).toBeDefined();
-      fireEvent.click(screen.getByRole("button", { name: "Keep editing" }));
-      await waitFor(() => expect(router.state.location.search).toBe("?tab=profile"));
-      expect(screen.queryByRole("alertdialog")).toBeNull();
-      expect((screen.getByTestId("first-name-input") as HTMLInputElement).value).toBe("Janet");
-    });
-
-    it("switches tabs without asking when nothing changed", () => {
-      render(<SettingsPage initialProfile={profile} />);
-      pressTab("Data");
-      expect(screen.queryByRole("alertdialog")).toBeNull();
-      expect(screen.getByRole("tab", { name: "Data" }).getAttribute("aria-selected")).toBe("true");
-    });
-
-    it("asks before leaving the Profile tab with edits, and Keep editing stays put", () => {
-      render(<SettingsPage initialProfile={profile} />);
-      edit();
-      pressTab("Security");
-      expect(screen.getByRole("alertdialog")).toBeDefined();
-      expect(screen.getByText("Discard unsaved changes?")).toBeDefined();
-      fireEvent.click(screen.getByRole("button", { name: "Keep editing" }));
-      expect(screen.queryByRole("alertdialog")).toBeNull();
-      expect(screen.getByRole("tab", { name: "Profile" }).getAttribute("aria-selected")).toBe(
-        "true",
-      );
-      expect((screen.getByTestId("first-name-input") as HTMLInputElement).value).toBe("Janet");
-    });
-
-    it("discards the edits and moves on when confirmed", () => {
-      render(<SettingsPage initialProfile={profile} />);
-      edit();
-      pressTab("Data");
-      fireEvent.click(screen.getByRole("button", { name: "Discard changes" }));
-      expect(screen.getByRole("tab", { name: "Data" }).getAttribute("aria-selected")).toBe("true");
-      expect(mockUpdateProfile).not.toHaveBeenCalled();
-      // Back on Profile the form starts clean, so there is no prompt next time.
-      pressTab("Profile");
-      expect(screen.queryByRole("alertdialog")).toBeNull();
-      expect((screen.getByTestId("first-name-input") as HTMLInputElement).value).toBe("Jane");
-    });
-
-    it("does not ask again once the Profile tab has been saved", async () => {
-      render(<SettingsPage initialProfile={profile} />);
-      edit();
-      fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
-      await waitFor(() => expect(mockUpdateProfile).toHaveBeenCalledTimes(1));
-      await screen.findByTestId("profile-saved");
-      // Let the dirty-state effect reach the page before the next interaction.
-      await act(async () => {});
-      pressTab("Security");
-      expect(screen.queryByRole("alertdialog")).toBeNull();
-    });
-
-    it("blocks leaving the page through the router while dirty (useBlocker)", async () => {
-      const router = renderInRouter();
-      edit();
-      await act(async () => {
-        await router.navigate("/app/elsewhere");
-      });
-      expect(router.state.location.pathname).toBe("/app/profile");
-      expect(screen.getByRole("alertdialog")).toBeDefined();
-
-      fireEvent.click(screen.getByRole("button", { name: "Keep editing" }));
-      expect(router.state.location.pathname).toBe("/app/profile");
-
-      await act(async () => {
-        await router.navigate("/app/elsewhere");
-      });
-      fireEvent.click(await screen.findByRole("button", { name: "Discard changes" }));
-      await waitFor(() => expect(router.state.location.pathname).toBe("/app/elsewhere"));
-    });
-
-    it("lets the router navigate freely when nothing is unsaved", async () => {
-      const router = renderInRouter();
-      await act(async () => {
-        await router.navigate("/app/elsewhere");
-      });
-      expect(router.state.location.pathname).toBe("/app/elsewhere");
-    });
-
-    it("warns on browser close or refresh only while dirty", () => {
-      render(<SettingsPage initialProfile={profile} />);
-      const clean = new Event("beforeunload", { cancelable: true });
-      window.dispatchEvent(clean);
-      expect(clean.defaultPrevented).toBe(false);
-      edit();
-      const dirty = new Event("beforeunload", { cancelable: true });
-      window.dispatchEvent(dirty);
-      expect(dirty.defaultPrevented).toBe(true);
-    });
+  it("switches tabs straight after an edit: a name saves when its field is left", async () => {
+    render(<SettingsPage initialProfile={profile} />);
+    const first = screen.getByTestId("first-name-input");
+    edit();
+    fireEvent.blur(first);
+    pressTab("Security");
+    expect(await screen.findByTestId("settings-security-tab")).toBeDefined();
+    expect(screen.queryByText("Discard unsaved changes?")).toBeNull();
+    await waitFor(() =>
+      expect(mockUpdateProfile).toHaveBeenCalledWith(
+        expect.objectContaining({ firstName: "Janet" }),
+      ),
+    );
   });
 });

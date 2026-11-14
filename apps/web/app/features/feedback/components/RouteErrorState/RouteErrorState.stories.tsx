@@ -62,6 +62,6 @@ export const RootDocumentHeading: Story = {
     headingLevel: "h1",
     status: 404,
     primaryHref: "/",
-    primaryLabel: "Go to Flump",
+    primaryLabel: "Go to the home page",
   },
 };

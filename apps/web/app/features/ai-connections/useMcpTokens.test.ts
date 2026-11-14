@@ -78,4 +78,23 @@ describe("useMcpTokens", () => {
       schema: ContextPackResponse,
     });
   });
+  it("keeps the shared list current after create and revoke, so the Imports link can show", async () => {
+    apiFetch.mockResolvedValueOnce([]);
+    const { result } = renderHook(() => useMcpTokens());
+    await waitFor(() => expect(result.current.tokens).toEqual([]));
+    apiFetch.mockResolvedValueOnce({
+      id: "t9",
+      name: "Laptop",
+      tokenPrefix: "flump_pat_ab",
+      scopes: ["read", "write:stage"],
+      anonymizeInstitutions: true,
+      expiresAt: null,
+      rawToken: `flump_pat_${"x".repeat(8)}`,
+    });
+    await act(() => result.current.create("Laptop", true, 90, true));
+    expect(result.current.tokens?.[0]).toMatchObject({ id: "t9", scopes: ["read", "write:stage"] });
+    apiFetch.mockResolvedValueOnce(undefined);
+    await act(() => result.current.revoke("t9"));
+    expect(result.current.tokens?.[0]?.isRevoked).toBe(true);
+  });
 });

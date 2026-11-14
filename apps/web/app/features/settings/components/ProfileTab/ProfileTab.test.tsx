@@ -1,8 +1,9 @@
+import { ToastProvider } from "@repo/ui";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { DEFAULT_PROFILE } from "~/hooks/useUserProfile";
 import * as avatarUtils from "~/utils/avatar";
-import { ProfileTab } from "./ProfileTab";
+import { PROFILE_SAVE_FAILED, PROFILE_SAVED_MESSAGE, ProfileTab } from "./ProfileTab";
 
 const mockUpdateProfile = vi.fn().mockResolvedValue(undefined);
 
@@ -14,8 +15,6 @@ vi.mock("~/hooks/useUserProfile", async () => {
     useUserProfile: () => ({ profile: actual.DEFAULT_PROFILE, updateProfile: mockUpdateProfile }),
   };
 });
-
-const saveButton = () => screen.getByRole("button", { name: "Save changes" }) as HTMLButtonElement;
 
 describe("<ProfileTab />", () => {
   beforeEach(() => {
@@ -84,7 +83,7 @@ describe("<ProfileTab />", () => {
   });
 
   it("points to the tax, pension and mortgage pages with text links, not buttons", () => {
-    render(<ProfileTab profile={DEFAULT_PROFILE} />);
+    render(<ProfileTab profile={{ ...DEFAULT_PROFILE, housingStatus: "mortgage" }} />);
     const links = [
       ["Tax and take-home pay", "/app/self-assessment"],
       ["Your pension", "/app/pension"],
@@ -114,42 +113,49 @@ describe("<ProfileTab />", () => {
     expect(screen.queryByText(/module/i)).toBeNull();
   });
 
-  it("saves only when something changed, and sends only this tab's fields", async () => {
-    const onDirtyChange = vi.fn();
-    render(
-      <ProfileTab
-        profile={{ ...DEFAULT_PROFILE, firstName: "John", lastName: "Doe" }}
-        onDirtyChange={onDirtyChange}
-      />,
-    );
-    expect(saveButton().disabled).toBe(true);
-    expect(onDirtyChange).toHaveBeenLastCalledWith(false);
+  it("saves a name when the field is left, only if it changed, with this tab's fields only", async () => {
+    render(<ProfileTab profile={{ ...DEFAULT_PROFILE, firstName: "John", lastName: "Doe" }} />);
+    expect(screen.queryByRole("button", { name: "Save changes" })).toBeNull();
+    const first = screen.getByTestId("first-name-input");
+    fireEvent.blur(first);
+    expect(mockUpdateProfile).not.toHaveBeenCalled();
 
-    fireEvent.change(screen.getByTestId("first-name-input"), { target: { value: "Johnny" } });
-    fireEvent.change(screen.getByTestId("last-name-input"), { target: { value: "Smith" } });
-    expect(onDirtyChange).toHaveBeenLastCalledWith(true);
-    expect(saveButton().disabled).toBe(false);
-
-    fireEvent.click(saveButton());
+    fireEvent.change(first, { target: { value: "Johnny" } });
+    fireEvent.blur(first);
     await waitFor(() => expect(mockUpdateProfile).toHaveBeenCalledTimes(1));
     const payload = mockUpdateProfile.mock.calls[0][0];
-    expect(payload).toMatchObject({
-      firstName: "Johnny",
-      lastName: "Smith",
-      country: "GB",
-      currency: "GBP",
+    expect(payload).toEqual({ firstName: "Johnny", country: "GB", currency: "GBP" });
+  });
+
+  it("saves a name on Enter", async () => {
+    render(<ProfileTab profile={{ ...DEFAULT_PROFILE, lastName: "Doe" }} />);
+    const last = screen.getByTestId("last-name-input");
+    fireEvent.change(last, { target: { value: "Smith" } });
+    fireEvent.keyDown(last, { key: "Enter" });
+    await waitFor(() =>
+      expect(mockUpdateProfile).toHaveBeenCalledWith(
+        expect.objectContaining({ lastName: "Smith" }),
+      ),
+    );
+  });
+
+  it("raises a Saved toast after a save", async () => {
+    render(
+      <ToastProvider>
+        <ProfileTab profile={DEFAULT_PROFILE} />
+      </ToastProvider>,
+    );
+    fireEvent.change(screen.getByLabelText(/where do you pay tax/i), {
+      target: { value: "WALES" },
     });
-    expect(payload).not.toHaveProperty("displayName");
-    expect(payload).not.toHaveProperty("annualSalary");
-    expect((await screen.findByRole("status")).textContent).toBe("Saved");
-    expect(onDirtyChange).toHaveBeenLastCalledWith(false);
-    expect(saveButton().disabled).toBe(true);
+    expect(await screen.findByText(PROFILE_SAVED_MESSAGE)).toBeDefined();
   });
 
   it("always saves country GB and currency GBP", async () => {
     render(<ProfileTab profile={{ ...DEFAULT_PROFILE, country: "US", currency: "USD" }} />);
-    fireEvent.change(screen.getByTestId("first-name-input"), { target: { value: "A" } });
-    fireEvent.click(saveButton());
+    const first = screen.getByTestId("first-name-input");
+    fireEvent.change(first, { target: { value: "A" } });
+    fireEvent.blur(first);
     await waitFor(() =>
       expect(mockUpdateProfile).toHaveBeenCalledWith(
         expect.objectContaining({ country: "GB", currency: "GBP" }),
@@ -157,66 +163,60 @@ describe("<ProfileTab />", () => {
     );
   });
 
-  it("keeps the edits and shows an error when saving fails", async () => {
+  it("puts the saved value back and says so on the card when a save fails", async () => {
     mockUpdateProfile.mockRejectedValueOnce(new Error("boom"));
-    const onDirtyChange = vi.fn();
-    render(<ProfileTab profile={DEFAULT_PROFILE} onDirtyChange={onDirtyChange} />);
-    fireEvent.change(screen.getByTestId("first-name-input"), { target: { value: "A" } });
-    fireEvent.click(saveButton());
-    expect((await screen.findByRole("alert")).textContent).toContain("could not save");
-    expect(onDirtyChange).toHaveBeenLastCalledWith(true);
-  });
-
-  it("discards edits back to the last saved state", () => {
     render(<ProfileTab profile={{ ...DEFAULT_PROFILE, firstName: "John" }} />);
-    const input = screen.getByTestId("first-name-input") as HTMLInputElement;
-    fireEvent.change(input, { target: { value: "Zed" } });
-    fireEvent.click(screen.getByRole("button", { name: "Discard changes" }));
-    expect(input.value).toBe("John");
-    expect(saveButton().disabled).toBe(true);
+    const first = screen.getByTestId("first-name-input") as HTMLInputElement;
+    fireEvent.change(first, { target: { value: "Zed" } });
+    fireEvent.blur(first);
+    const alert = await screen.findByTestId("profile-details-error");
+    expect(alert.getAttribute("role")).toBe("alert");
+    expect(alert.textContent).toBe(PROFILE_SAVE_FAILED);
+    await waitFor(() => expect(first.value).toBe("John"));
   });
 
-  it("lets a user set region and student loan (E23 D-4-C)", async () => {
+  it("saves region and student loan as soon as they change (E23 D-4-C)", async () => {
     render(<ProfileTab profile={{ ...DEFAULT_PROFILE, taxRegion: null }} />);
     const region = screen.getByLabelText(/where do you pay tax/i) as HTMLSelectElement;
     const loan = screen.getByLabelText(/student loan plan/i) as HTMLSelectElement;
     expect(region.value).toBe("");
     expect(loan.value).toBe("");
     fireEvent.change(region, { target: { value: "SCOTLAND" } });
-    fireEvent.change(loan, { target: { value: "NONE" } });
-    fireEvent.click(saveButton());
     await waitFor(() =>
       expect(mockUpdateProfile).toHaveBeenCalledWith(
-        expect.objectContaining({ taxRegion: "SCOTLAND", studentLoanPlans: [] }),
+        expect.objectContaining({ taxRegion: "SCOTLAND" }),
+      ),
+    );
+    fireEvent.change(loan, { target: { value: "NONE" } });
+    await waitFor(() =>
+      expect(mockUpdateProfile).toHaveBeenCalledWith(
+        expect.objectContaining({ studentLoanPlans: [] }),
       ),
     );
   });
 
-  it("keeps several stored student loan plans unless the user picks one", async () => {
+  it("keeps several stored student loan plans: saving a name does not send them", async () => {
     render(
       <ProfileTab profile={{ ...DEFAULT_PROFILE, studentLoanPlans: ["PLAN_2", "POSTGRAD"] }} />,
     );
     const loan = screen.getByLabelText(/student loan plan/i) as HTMLSelectElement;
     expect(loan.selectedOptions[0]?.textContent).toBe("Plan 2 and Postgraduate loan");
-    fireEvent.change(screen.getByTestId("first-name-input"), { target: { value: "A" } });
-    fireEvent.click(saveButton());
-    await waitFor(() =>
-      expect(mockUpdateProfile).toHaveBeenCalledWith(
-        expect.objectContaining({ studentLoanPlans: ["PLAN_2", "POSTGRAD"] }),
-      ),
-    );
+    const first = screen.getByTestId("first-name-input");
+    fireEvent.change(first, { target: { value: "A" } });
+    fireEvent.blur(first);
+    await waitFor(() => expect(mockUpdateProfile).toHaveBeenCalledTimes(1));
+    expect(mockUpdateProfile.mock.calls[0][0]).not.toHaveProperty("studentLoanPlans");
   });
 
   it("clearing a stored region saves null", async () => {
     render(<ProfileTab profile={{ ...DEFAULT_PROFILE, taxRegion: "WALES" }} />);
     fireEvent.change(screen.getByLabelText(/where do you pay tax/i), { target: { value: "" } });
-    fireEvent.click(saveButton());
     await waitFor(() =>
       expect(mockUpdateProfile).toHaveBeenCalledWith(expect.objectContaining({ taxRegion: null })),
     );
   });
 
-  it("opts in to the Self Assessment module straight away, without the form save", async () => {
+  it("opts in to the Self Assessment module straight away", async () => {
     render(<ProfileTab profile={DEFAULT_PROFILE} />);
     const toggle = screen.getByRole("switch", { name: "Self Assessment" }) as HTMLInputElement;
     expect(toggle.checked).toBe(false);
@@ -230,17 +230,39 @@ describe("<ProfileTab />", () => {
         }),
       ),
     );
-    expect(saveButton().disabled).toBe(true);
   });
 
   it("tells the user when the Self Assessment module could not be updated", async () => {
     mockUpdateProfile.mockRejectedValueOnce(new Error("boom"));
     render(<ProfileTab profile={DEFAULT_PROFILE} />);
     fireEvent.click(screen.getByTestId("self-assessment-module-toggle"));
-    const alert = await screen.findByTestId("module-save-error");
+    const alert = await screen.findByTestId("profile-modules-error");
     expect(alert.getAttribute("role")).toBe("alert");
     expect(alert.textContent).toBe(
       "We could not change the Self Assessment section. Nothing has changed. Try again.",
     );
+  });
+
+  it("leaves the name fields empty when no name is saved, with no placeholder", () => {
+    render(<ProfileTab profile={{ ...DEFAULT_PROFILE, firstName: null, lastName: null }} />);
+    const last = screen.getByTestId("last-name-input") as HTMLInputElement;
+    expect(last.value).toBe("");
+    expect(last.getAttribute("placeholder")).toBeNull();
+  });
+  it("saves once when Enter is followed by leaving the field", async () => {
+    let resolve: () => void = () => {};
+    mockUpdateProfile.mockImplementationOnce(() => new Promise<void>((r) => (resolve = r)));
+    render(<ProfileTab profile={{ ...DEFAULT_PROFILE, firstName: "John" }} />);
+    const first = screen.getByTestId("first-name-input");
+    fireEvent.change(first, { target: { value: "Jon" } });
+    fireEvent.keyDown(first, { key: "Enter" });
+    fireEvent.blur(first);
+    resolve();
+    await waitFor(() => expect(mockUpdateProfile).toHaveBeenCalledTimes(1));
+  });
+  it("does not send a renter to the mortgage page", () => {
+    render(<ProfileTab profile={{ ...DEFAULT_PROFILE, housingStatus: "renting" }} />);
+    expect(screen.queryByRole("link", { name: "Your mortgage" })).toBeNull();
+    expect(screen.getByRole("link", { name: "Your pension" })).toBeDefined();
   });
 });
