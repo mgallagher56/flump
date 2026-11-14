@@ -10,12 +10,20 @@ export const controlsStack = cva({
 });
 
 export const optionsStack = cva({
+  base: { display: "flex", flexDirection: "column", gap: "6", paddingTop: "2" },
+});
+
+/** Switches fill the zone's width: 1 column on a phone, up to 3 on a wide screen. */
+export const optionItems = cva({
   base: {
     display: "grid",
-    gridTemplateColumns: { base: "1fr", md: "repeat(3, minmax(0, 1fr))" },
-    gap: "6",
-    paddingTop: "2",
-    alignItems: "start",
+    gridTemplateColumns: {
+      base: "1fr",
+      md: "repeat(2, minmax(0, 1fr))",
+      lg: "repeat(3, minmax(0, 1fr))",
+    },
+    columnGap: "8",
+    rowGap: "2",
   },
 });
 

@@ -2,7 +2,6 @@ import { type FinancialPicture, isFigureKnown } from "@flump/finance-engine";
 import { HeroFigure, KpiCard, KpiStrip } from "@repo/ui";
 import { type FC, useMemo } from "react";
 import { SampleAwareLink } from "~/components/navigation/SampleAwareLink";
-import { formatMonthsOfCover } from "~/features/dashboard/components/BudgetWidget";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import type { BudgetEntry } from "~/types/budget";
 import { buildWorkspacePicture } from "~/utils/financialPicture";
@@ -15,14 +14,14 @@ export interface BudgetOverviewProps {
    * loaders use). The overview never adds rows up itself (E23 section 2). Saved data only: no
    * scenario input ever reaches these figures.
    */
-  picture?: Pick<FinancialPicture, "budget" | "safeToSpend" | "monthsOfCover">;
+  picture?: Pick<FinancialPicture, "budget" | "safeToSpend">;
 }
 
 /**
  * The budget page's first view (E16 R2-6): one headline, "Left over each month", with weekly safe
- * to spend as its sub-line, then 2 supporting figures: money in (income is not a spending
- * category, so it shows here and nowhere else) and the saved months of cover, which the scenario
- * zone below starts from. 4 figures in all (N1 4). Facts only, in the usual colours: a budget
+ * to spend as its sub-line, then 2 supporting figures that explain it: money in (income is not a
+ * spending category, so it shows here and nowhere else) and going out. Months of cover is the
+ * scenario zone's outcome, so it shows once. 4 figures in all (N1 4). Facts only, in the usual colours: a budget
  * that is short each month says so plainly, with no alarm styling and no list of services.
  */
 export const BudgetOverview: FC<BudgetOverviewProps> = ({ entries, picture: pictureProp }) => {
@@ -34,7 +33,8 @@ export const BudgetOverview: FC<BudgetOverviewProps> = ({ entries, picture: pict
     [pictureProp, entries],
   );
   const budget = isFigureKnown(picture.budget) ? picture.budget.value : null;
-  const cover = isFigureKnown(picture.monthsOfCover) ? picture.monthsOfCover.value : null;
+  // Bills, spending and savings: money in minus going out is the hero, so the strip explains it.
+  const goingOut = budget ? budget.essentials + budget.discretionary + budget.savings : null;
   const safeToSpend = isFigureKnown(picture.safeToSpend) ? picture.safeToSpend.value : null;
   const salaryMissing =
     !isFigureKnown(picture.safeToSpend) &&
@@ -85,10 +85,8 @@ export const BudgetOverview: FC<BudgetOverviewProps> = ({ entries, picture: pict
       <KpiStrip
         // One prompt only when both figures are unknown; a known figure is never hidden.
         emptyPrompt={
-          !hasIncome && !cover
-            ? {
-                title: "Add your income and essential spending to see money in and months of cover",
-              }
+          !hasIncome && goingOut === null
+            ? { title: "Add your income and spending to see money in and going out" }
             : undefined
         }
         items={[
@@ -99,16 +97,10 @@ export const BudgetOverview: FC<BudgetOverviewProps> = ({ entries, picture: pict
             valueFormat={{ fractionDigits: 0 }}
           />,
           <KpiCard
-            explain="An estimate of how long your current and savings accounts would last if your income stopped, covering essential spending and minimum debt payments."
-            key="cover"
-            label="Months of cover"
-            value={
-              cover ? (
-                <span className={figure()} data-figure="monthsOfCover">
-                  {formatMonthsOfCover(cover.months)}
-                </span>
-              ) : null
-            }
+            key="out"
+            label="Going out each month"
+            value={goingOut}
+            valueFormat={{ fractionDigits: 0 }}
           />,
         ]}
       />
