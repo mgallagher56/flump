@@ -72,3 +72,26 @@ describe("deriveOnboardingSummary", () => {
     expect(s.hasNetWorthInputs).toBe(true);
   });
 });
+
+describe("onboarding take-home is the engine's one selector (E16 PR 3)", () => {
+  it("equals selectTakeHome on the same facts at every step, with a note once deductions apply", async () => {
+    const { selectTakeHome } = await import("@flump/finance-engine");
+    const { onboardingTakeHomeFacts } = await import("./deriveOnboardingSummary");
+    const step1 = v({ grossSalary: 45000, taxRegion: "ENGLAND", studentLoanPlan: "PLAN_2" });
+    const step3 = { ...step1, pensionPercent: 5 };
+    for (const values of [step1, step3]) {
+      const fig = selectTakeHome(onboardingTakeHomeFacts(values));
+      if (fig.status !== "known") throw new Error("expected known");
+      expect(deriveOnboardingSummary(values).monthlyTakeHome).toBe(fig.value.monthly);
+    }
+    expect(deriveOnboardingSummary(step1).takeHomeNote).toBe("Now includes your student loan");
+    expect(deriveOnboardingSummary(step3).takeHomeNote).toBe(
+      "Now includes your 5% pension and student loan",
+    );
+    expect(deriveOnboardingSummary(v({ grossSalary: 45000 })).takeHomeNote).toBeNull();
+    expect(
+      deriveOnboardingSummary(v({ incomeMode: "net", monthlyTakeHome: 2000, pensionPercent: 5 }))
+        .takeHomeNote,
+    ).toBeNull();
+  });
+});

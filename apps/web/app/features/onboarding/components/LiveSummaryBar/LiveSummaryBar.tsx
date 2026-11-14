@@ -51,6 +51,15 @@ export const LiveSummaryBar: FC<LiveSummaryBarProps> = ({ summary, assumingRegio
             {REGION_ASSUMPTION_LABEL}
           </span>
         ) : null}
+        {summary.hasIncome && summary.takeHomeNote ? (
+          <span
+            className={takeHomeClasses.note}
+            data-testid="onboarding-take-home-note"
+            id="onboarding-take-home-note"
+          >
+            {summary.takeHomeNote}
+          </span>
+        ) : null}
       </div>
       <div className={surplusClasses.cell}>
         <span className={surplusClasses.label}>Monthly surplus</span>
