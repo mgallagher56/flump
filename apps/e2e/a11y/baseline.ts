@@ -1,6 +1,6 @@
 /**
  * Known-failures baseline for the page-level accessibility gate. Pure logic, no Playwright, so
- * `scripts/a11y-baseline.test.ts` can unit-test it.
+ * `scripts/a11y-gate.test.ts` can unit-test it.
  *
  * Shape: route name -> Playwright project -> check -> rule -> count. For axe the rule is the axe
  * rule id and the count is the number of failing nodes; for the other checks the rule is a fixed

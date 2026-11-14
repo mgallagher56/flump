@@ -143,5 +143,5 @@ records and writes the baseline instead of failing, so the first run produces it
 It runs in its own workflow, `.github/workflows/a11y-gate.yml` ("Accessibility gate"), on pull
 requests and by hand. It is **advisory**: `continue-on-error: true` and not a required check.
 Make it required the same way as the visual suite once the baseline has stayed stable for about
-20 pull requests. Unlike screenshots the findings do not depend on the OS, so a local run is a
-fair preview of CI; pick free `E2E_*_PORT` values and a database whose name contains `e2e`.
+20 pull requests. The committed baseline is generated in the CI container (Linux): contrast and reflow counts
+can differ a little on macOS because fonts differ, so treat a local run as a preview; pick free `E2E_*_PORT` values and a database whose name contains `e2e`.

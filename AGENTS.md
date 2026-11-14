@@ -59,14 +59,14 @@ CI runs the full suite on every PR in a few minutes, and nothing merges unless i
 
 1. `bun run lint` (zero Biome lint/format errors)
 2. `bun run check-types` (zero TypeScript errors across all monorepo packages)
-3. `bun run check:laws` (design tokens, tabular numbers, react icons, style literals, dependency versions and copy)
+3. `bun run check:laws` (design tokens, tabular numbers, react icons, style literals, number inputs, judgement colours, dependency versions and copy)
 4. The tests for what you changed only: `bunx vitest run <paths>` or `bun run test --filter=<package>` for each package the change touches. Do not run the whole monorepo suite locally.
 
-When a change removes violations, the baselines go stale and CI fails. Regenerate them with `bun scripts/check-design-tokens.ts --write-baseline`, `bun scripts/check-tabular-nums.ts --write-baseline`, `bun scripts/check-react-icons.ts --write-baseline`, `bun scripts/check-style-literals.ts --write-baseline` and `bun scripts/check-copy.ts --write-baseline`, then commit the updated baseline files.
+When a change removes violations, the baselines go stale and CI fails. Regenerate them with `bun scripts/check-design-tokens.ts --write-baseline`, `bun scripts/check-tabular-nums.ts --write-baseline`, `bun scripts/check-react-icons.ts --write-baseline`, `bun scripts/check-style-literals.ts --write-baseline` and `bun scripts/check-copy.ts --write-baseline`, then commit the updated baseline files. The number-input and judgement checks (`scripts/check-input-types.ts`, `scripts/check-judgement-tokens.ts`) fail only when a count rises; a fall prints `IMPROVED` and passes, so regenerating their baselines is optional.
 
 **Leave to CI:** the full `bun run test`, `bun run build`, Storybook a11y (light and dark), the E2E smoke test and the Docker images. Run one of these locally only to reproduce or debug a CI failure.
 
-**After pushing:** wait for CI on the pushed commit. A PR is ready to merge only when every CI check on its latest commit is green; say so only then. If CI fails, read the failing job (`gh run view <id> --log-failed`), fix it and push again. Never ask for a merge on pending or failing CI, and never merge on the strength of local checks alone.
+**After pushing:** wait for CI on the pushed commit. A PR is ready to merge only when every CI check on its latest commit is green; say so only then. The two advisory jobs, "Visual regression" and "Accessibility gate", are the exception: they do not block a merge, but read a red one and say in the PR what it found. If CI fails, read the failing job (`gh run view <id> --log-failed`), fix it and push again. Never ask for a merge on pending or failing CI, and never merge on the strength of local checks alone.
 
 ## 6. SUBAGENT MODEL LAW
 
