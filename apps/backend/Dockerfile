@@ -39,6 +39,9 @@ WORKDIR /app
 COPY --from=build --chown=bun:bun /app/node_modules ./node_modules
 COPY --from=build --chown=bun:bun /app/packages ./packages
 # Only the compiled server and its manifest (health reads the version from package.json); no src.
+# Migrations run at boot from dist. The package.json migration scripts point at src, so a manual
+# revert inside the container uses dist instead:
+#   bun ./node_modules/typeorm/cli.js -d dist/data-source.js migration:revert
 COPY --from=build --chown=bun:bun /app/apps/backend/dist ./apps/backend/dist
 COPY --from=build --chown=bun:bun /app/apps/backend/package.json ./apps/backend/package.json
 COPY --from=build --chown=bun:bun /app/apps/backend/node_modules ./apps/backend/node_modules

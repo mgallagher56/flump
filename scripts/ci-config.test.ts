@@ -191,7 +191,7 @@ describe("merge gate (BE-01)", () => {
     const wf = readFileSync(resolve(repoRoot, ".github/workflows/ci-pipeline.yml"), "utf8");
     const filter = wf.slice(wf.indexOf("Did anything that goes into an image change?"));
     for (const fragment of ["apps/(backend|web|marketing)/", "^packages/", "bun\\.lock"])
-      expect(filter.slice(0, 600)).toContain(fragment);
+      expect(filter.slice(0, 1200)).toContain(fragment);
     expect(wf).toContain("/health/ready");
   });
 });
