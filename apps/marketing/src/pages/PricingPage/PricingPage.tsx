@@ -24,8 +24,11 @@ import {
   planName,
 } from "./PricingPage.styles";
 
-/** The pricing statement. The home FAQ and the contact page say the same in their own words. */
-export const BETA_STATEMENT = "Nothing is charged during the beta.";
+/**
+ * The intro. "Free during the beta" is said once, in the plan card (R2-10); the home FAQ says the
+ * same in its own words.
+ */
+export const BETA_STATEMENT = "One plan today.";
 
 /** What the beta includes: three things that exist today (E7, copy guide 7.4). */
 export const BETA_FEATURES = [
@@ -87,9 +90,7 @@ export const PricingPage: FC = () => {
                 Paid plan
               </h2>
               <span className={paidPrice()}>{PRICING.display}</span>
-              <p className={paidNote()}>
-                A possible future plan. It cannot be bought today and nothing is charged.
-              </p>
+              <p className={paidNote()}>A possible future plan. It cannot be bought today.</p>
             </section>
           )}
         </div>

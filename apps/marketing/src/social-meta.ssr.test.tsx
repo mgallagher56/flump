@@ -71,9 +71,17 @@ describe("SSR social meta per page", () => {
     expect(out).toContain('property="og:title" content="Pricing | Flump"');
   });
 
+  it("carries the tagline in the home title, share titles and description", () => {
+    const out = head("/", undefined);
+    expect(out).toContain("<title>Flump: finance without the fog</title>");
+    expect(out).toContain('property="og:title" content="Flump: finance without the fog"');
+    expect(out).toContain('name="twitter:title" content="Flump: finance without the fog"');
+    expect(out).toMatch(/name="description" content="Flump: finance without the fog\. /);
+  });
+
   it("keeps the NotFoundPage title in head with noindex", () => {
     const out = head("/does-not-exist", undefined);
-    expect(out).toContain("<title>Page not found | Flump</title>");
+    expect(out).toContain("<title>We cannot find that page | Flump</title>");
     expect(out).toContain('name="robots" content="noindex"');
   });
 

@@ -16,7 +16,6 @@ import { Link } from "react-router-dom";
 import { signupCta } from "../../utils/site";
 import { MarketingSection } from "../MarketingSection";
 import {
-  assumptionsText,
   breakdownList,
   breakdownRow,
   breakdownTerm,
@@ -167,11 +166,17 @@ export const PayRiseTeaser: FC = () => {
             </div>
           </div>
         </div>
-        <p className={assumptionsText()} data-testid="pay-rise-assumptions">
-          Uses the {taxYearInWords(result.taxYear)} tax year and the bands for England, Wales and
-          Northern Ireland, with no pension contribution or student loan.
-        </p>
-        <ProjectionNotice lead={DELTA_PANEL_COPY.unverifiedBanner} />
+        <ProjectionNotice
+          lead={
+            <>
+              {DELTA_PANEL_COPY.unverifiedBanner}{" "}
+              <span data-testid="pay-rise-assumptions">
+                Uses the {taxYearInWords(result.taxYear)} tax year and the bands for England, Wales
+                and Northern Ireland, with no pension contribution or student loan.
+              </span>
+            </>
+          }
+        />
       </Card>
     </MarketingSection>
   );

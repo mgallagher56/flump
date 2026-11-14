@@ -26,21 +26,16 @@ export const DisclosurePolicySection: FC = () => (
       <a className={disclosureLink()} href={`mailto:${contact}`}>
         {contact}
       </a>
-      {BUSINESS_DETAILS.securityContact.isPlaceholder ? (
-        <span className={disclosurePlaceholder()}>
-          {" "}
-          (a placeholder address while we finish setting up, so it is not monitored yet).
-        </span>
-      ) : (
-        "."
+      .{" "}
+      {BUSINESS_DETAILS.securityContact.isPlaceholder && (
+        <span className={disclosurePlaceholder()}>Not monitored yet. </span>
       )}
+      We do not run a paid bug bounty.
     </p>
     <ul className={disclosureList()}>
-      <li>Describe what you found and the steps to reproduce it.</li>
-      <li>Please hold off sharing details publicly until we have had a chance to respond.</li>
-      <li>Please do not access, change or delete data that belongs to other people.</li>
-      <li>Please do not run tests that could degrade the service for others.</li>
-      <li>We do not run a paid bug bounty programme.</li>
+      <li>Describe what you found and how to reproduce it.</li>
+      <li>Give us time to respond before sharing it.</li>
+      <li>Do not access other people's data or degrade the service.</li>
     </ul>
   </section>
 );

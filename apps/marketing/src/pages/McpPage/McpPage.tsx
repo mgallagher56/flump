@@ -68,9 +68,9 @@ export const McpPage: FC = () => {
               Ask an AI assistant about your figures
             </h1>
             <p className={lead()}>
-              Flump MCP (short for Model Context Protocol) links an AI assistant, such as Claude
-              Desktop or Cursor, to the figures you have saved in Flump, so it can answer your
-              questions. Tax and debt figures are calculated by Flump, not by the AI model.
+              The AI connection links an AI assistant to the figures you have saved in Flump, so it
+              can answer your questions. Tax and debt figures are calculated by Flump, not by the AI
+              model.
             </p>
             <Button asChild size="lg" variant="primary">
               <a href={cta.href}>{cta.label}</a>
@@ -101,10 +101,7 @@ export const McpPage: FC = () => {
                   : `${cta.label} and sign in to Flump.`}
               </li>
               <li>Create an access token in your profile (you can revoke it any time).</li>
-              <li>
-                Add Flump to your AI assistant with that token. For now it runs from source code,
-                with no installer or setup guide yet.
-              </li>
+              <li>Add Flump to your AI assistant with that token.</li>
             </ol>
           </section>
 
@@ -114,6 +111,11 @@ export const McpPage: FC = () => {
                 <div className={section()}>
                   <h3 className={techHeading()}>How it works</h3>
                   <ul className={techList()}>
+                    <li>
+                      The AI connection is Flump MCP, short for Model Context Protocol. It works
+                      with AI assistants that support MCP, such as Claude Desktop or Cursor.
+                    </li>
+                    <li>For now it runs from source code, with no installer or setup guide yet.</li>
                     <li>
                       Tools run the same calculation code as the Flump app, so the same inputs
                       always give the same tax, debt and net worth figures.

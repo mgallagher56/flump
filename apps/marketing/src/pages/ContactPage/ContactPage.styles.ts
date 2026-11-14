@@ -33,12 +33,12 @@ export const placeholderNote = cva({
   base: { color: "text.muted" },
 });
 
-export const cardGrid = cva({
-  base: { display: "flex", flexDirection: "column", gap: "6" },
+export const card = cva({
+  base: { display: "flex", flexDirection: "column", gap: "3", scrollMarginTop: "24" },
 });
 
-export const card = cva({
-  base: { display: "flex", flexDirection: "column", gap: "4" },
+export const addressLine = cva({
+  base: { textStyle: "body.lg", color: "text.primary", margin: 0 },
 });
 
 export const cardHeading = cva({

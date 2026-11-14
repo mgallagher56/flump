@@ -63,11 +63,18 @@ export const finalCta = cva({
     alignItems: "center",
     gap: "4",
     textAlign: "center",
+    // Sits under the FAQ in the same band, separated by space and a hairline, not a second band.
+    mt: { base: "12", md: "16" },
+    pt: { base: "10", md: "12" },
+    borderTopWidth: "1px",
+    borderTopStyle: "solid",
+    borderTopColor: "border.subtle",
+    scrollMarginTop: "24",
   },
 });
 
 export const finalCtaTitle = cva({
-  base: { textStyle: "heading.xl", color: "text.primary", margin: 0 },
+  base: { textStyle: "heading.lg", color: "text.primary", margin: 0 },
 });
 
 export const finalCtaBody = cva({

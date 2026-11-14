@@ -38,7 +38,7 @@ describe("ToolPage", () => {
         name: getToolEntry("uk-100k-tax-trap-calculator").title,
       }),
     ).toBeTruthy();
-    expect(screen.queryByText("Page not found")).toBeNull();
+    expect(screen.queryByText("We cannot find that page")).toBeNull();
   });
 
   it.each(TOOL_CATALOGUE.map((tool) => tool.slug))(
@@ -71,12 +71,14 @@ describe("ToolPage", () => {
         name: getToolEntry("overdraft-cost-and-payoff-calculator").title,
       }),
     ).toBeTruthy();
-    expect(screen.queryByText("Page not found")).toBeNull();
+    expect(screen.queryByText("We cannot find that page")).toBeNull();
   });
 
   it("renders the not-found page for an unknown slug", () => {
     renderAt("/tools/not-a-real-tool");
-    expect(screen.getByRole("heading", { level: 1, name: "Page not found" })).toBeTruthy();
+    expect(
+      screen.getByRole("heading", { level: 1, name: "We cannot find that page" }),
+    ).toBeTruthy();
   });
 
   it("maps the legacy mortgage slug to the current catalogue entry", () => {

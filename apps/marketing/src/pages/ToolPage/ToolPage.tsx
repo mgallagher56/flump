@@ -58,7 +58,7 @@ export const ToolPage: FC = () => {
   const { slug: rawSlug } = useParams<{ slug: string }>();
   const cta = signupCta();
   // Lower-cased like the router, the HTTP status and the canonical, so /tools/UK-… is the page,
-  // not a "Page not found" served with 200.
+  // not a "We cannot find that page" served with 200.
   const slug = rawSlug?.toLowerCase();
   const normalizedSlug = resolveToolSlug(slug);
 

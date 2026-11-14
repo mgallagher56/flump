@@ -24,7 +24,9 @@ type Story = StoryObj<typeof NotFoundPage>;
 
 const assertPage: Story["play"] = async ({ canvasElement }) => {
   const canvas = within(canvasElement);
-  await expect(canvas.getByRole("heading", { name: "Page not found" })).toBeInTheDocument();
+  await expect(
+    canvas.getByRole("heading", { name: "We cannot find that page" }),
+  ).toBeInTheDocument();
 };
 
 export const Light: Story = { play: assertPage };

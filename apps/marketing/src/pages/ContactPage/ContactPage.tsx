@@ -7,9 +7,9 @@ import { Header } from "../../components/Header";
 import { PageMeta } from "../../components/PageMeta";
 import { mailto, SUPPORT_EMAIL } from "../../utils/site";
 import {
+  addressLine,
   body,
   card,
-  cardGrid,
   cardHeading,
   container,
   headerBlock,
@@ -24,15 +24,16 @@ import {
 const SUPPORT_SUBJECT = "Flump support";
 
 /**
- * Contact (E16 PR 12): two cards in one column, general and security. One mailbox, one mailto
- * link per card and no response-time promise. Privacy requests and complaints go to the same
- * mailbox (E19 holds any further wording). Mail subjects never carry financial data.
+ * Contact (E16 PR 12, R2-10): one card with the address on its own line and one short note, then
+ * the security route as a plain line. One mailbox, one mailto link and no response-time promise.
+ * Privacy requests and complaints go to the same mailbox (E19 holds any further wording). Mail
+ * subjects never carry financial data.
  */
 export const ContactPage: FC = () => (
   <div className={pageShell()}>
     <PageMeta
       title="Contact | Flump"
-      description="Contact Flump for support or feedback, to ask for a beta invite, or to raise a complaint."
+      description="Email Flump to ask for a beta invite, with a question or feedback, or to raise a complaint."
     />
 
     <Header />
@@ -41,52 +42,40 @@ export const ContactPage: FC = () => (
       <div className={container()}>
         <div className={headerBlock()}>
           <h1 className={heading()}>Contact Flump</h1>
-          <p className={intro()}>Flump is free during the beta. You can reach us by email.</p>
+          <p className={intro()}>Email us for an invite, with a question or with feedback.</p>
         </div>
 
-        <div className={cardGrid()}>
-          <Card
-            aria-labelledby="contact-general"
-            as="section"
-            className={card()}
-            id="beta"
-            padding="lg"
-          >
-            <h2 className={cardHeading()} id="contact-general">
-              General
-            </h2>
-            <p className={body()}>
-              Email{" "}
-              <a className={link()} href={mailto(SUPPORT_EMAIL, SUPPORT_SUBJECT)}>
-                {SUPPORT_EMAIL}
-              </a>{" "}
-              to ask for an invite (sign-up is invite-only), or with a question, a problem,
-              feedback, a privacy request or a complaint.
-              {BUSINESS_DETAILS.supportEmail.isPlaceholder && (
-                <span className={placeholderNote()}>
-                  {" "}
-                  This is a placeholder address while we finish setting up, so it is not monitored
-                  yet.
-                </span>
-              )}{" "}
-              Please do not include account numbers, balances or other financial details in your
-              message.
-            </p>
-          </Card>
+        <Card
+          aria-labelledby="contact-email"
+          as="section"
+          className={card()}
+          id="beta"
+          padding="lg"
+        >
+          <h2 className={cardHeading()} id="contact-email">
+            Email
+          </h2>
+          <p className={addressLine()}>
+            <a className={link()} href={mailto(SUPPORT_EMAIL, SUPPORT_SUBJECT)}>
+              {SUPPORT_EMAIL}
+            </a>
+            {BUSINESS_DETAILS.supportEmail.isPlaceholder && (
+              <span className={placeholderNote()}> A placeholder, not monitored yet.</span>
+            )}
+          </p>
+          <p className={body()}>
+            Sign-up is invite-only, so ask here. Privacy requests and complaints come here too.
+            Please leave out account numbers, balances and other financial details.
+          </p>
+        </Card>
 
-          <Card aria-labelledby="contact-security" as="section" className={card()} padding="lg">
-            <h2 className={cardHeading()} id="contact-security">
-              Security
-            </h2>
-            <p className={body()}>
-              To report a vulnerability, see{" "}
-              <Link className={link()} to="/security">
-                Security and privacy
-              </Link>
-              .
-            </p>
-          </Card>
-        </div>
+        <p className={body()}>
+          To report a security issue, see{" "}
+          <Link className={link()} to="/security">
+            Security and privacy
+          </Link>
+          .
+        </p>
       </div>
     </main>
 

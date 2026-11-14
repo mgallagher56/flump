@@ -14,39 +14,44 @@ export const mainContent = cva({
   base: {
     flex: "1",
     width: "100%",
-    maxWidth: "2xl",
-    mx: "auto",
-    py: { base: "16", md: "24" },
     px: "4",
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    gap: "4",
-    textAlign: "center",
+    py: { base: "6", md: "12" },
     _focus: { outline: "none" },
   },
 });
 
-export const headingStyle = cva({
-  base: { textStyle: "heading.xl", color: "text.primary", margin: 0 },
-});
-
-export const bodyStyle = cva({
-  base: { textStyle: "body.lg", color: "text.secondary", margin: 0 },
-});
-
-export const homeLinkStyle = cva({
+/** The web app's not-found card (`RouteErrorState`): same width, surface, radius and spacing. */
+export const notFoundCard = cva({
   base: {
-    color: "text.primary",
-    fontWeight: "semibold",
-    textDecoration: "underline",
-    textUnderlineOffset: "3px",
-    _hover: { color: "primary.hover" },
-    _focusVisible: {
-      outlineWidth: "2px",
-      outlineStyle: "solid",
-      outlineColor: "border.focusRing",
-      outlineOffset: "2px",
-    },
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "flex-start",
+    gap: "3",
+    maxWidth: "560px",
+    width: "100%",
+    mx: "auto",
+    p: { base: "5", md: "7" },
+    backgroundColor: "surface.card",
+    borderRadius: "xl",
+    borderWidth: "1px",
+    borderStyle: "solid",
+    borderColor: "border",
+    boxShadow: "card",
   },
+});
+
+export const notFoundIllustration = cva({
+  base: { display: "flex", justifyContent: "flex-start", width: "100%" },
+});
+
+export const notFoundHeading = cva({
+  base: { textStyle: "heading.lg", color: "text.primary", margin: 0 },
+});
+
+export const notFoundBody = cva({
+  base: { textStyle: "body.sm", color: "text.secondary", margin: 0 },
+});
+
+export const notFoundActions = cva({
+  base: { display: "flex", flexWrap: "wrap", alignItems: "center", gap: "3", mt: "2" },
 });

@@ -22,4 +22,10 @@ describe("DisclosurePolicySection", () => {
     );
     expect(text).toMatch(/do not run a paid bug bounty/i);
   });
+
+  it("keeps the contact to one line and the asks to three short items", () => {
+    render(<DisclosurePolicySection />);
+    expect(screen.getAllByRole("listitem")).toHaveLength(3);
+    expect(document.body.textContent).not.toMatch(/Please/);
+  });
 });

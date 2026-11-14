@@ -1,5 +1,5 @@
 import { expectPageRules } from "@repo/ui/testing";
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import { HelmetProvider } from "react-helmet-async";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it } from "vitest";
@@ -39,7 +39,7 @@ describe("Marketing HomePage (E16 PR 12)", () => {
     expectPageRules(screen.getByTestId("home-final-cta"), { projectionNotices: 0 });
   });
 
-  it("follows the plan's five steps: hero, what you can see, pay rise, security, FAQ and final CTA", () => {
+  it("has five bands: hero, what you can see, pay rise, security, then FAQ with the final CTA", () => {
     const { container } = renderHome();
     const sections = Array.from(main().children).filter((el) => el.tagName === "SECTION");
     expect(sections.map((s) => s.id || s.getAttribute("data-testid"))).toEqual([
@@ -48,18 +48,28 @@ describe("Marketing HomePage (E16 PR 12)", () => {
       "pay-rise",
       "security",
       "faq",
-      "get-started",
     ]);
-    // FAQ and final call to action are two bands of the fifth step; the CTA band is tinted.
-    expect(container.querySelector("#get-started")?.getAttribute("data-tone-band")).toBe("sage");
+    // The final call to action sits inside the FAQ band, which is the page's one sage band.
+    const faq = container.querySelector("#faq") as HTMLElement;
+    expect(faq.getAttribute("data-tone-band")).toBe("sage");
+    expect(within(faq).getByTestId("home-final-cta").id).toBe("get-started");
     expect(
       within(screen.getByTestId("home-final-cta"))
         .getByRole("link", { name: "Request an invite" })
         .getAttribute("data-variant"),
     ).toBe("primary");
-    expect(screen.getByRole("region", { name: "Ready to see where you stand?" }).tagName).toBe(
-      "SECTION",
-    );
+    expect(
+      screen.getByRole("heading", { level: 3, name: "Ready to see where you stand?" }),
+    ).toBeDefined();
+    // At most one sage and one apricot band (D16 b).
+    expect(container.querySelectorAll('[data-tone-band="sage"]')).toHaveLength(1);
+    expect(container.querySelectorAll('[data-tone-band="apricot"]')).toHaveLength(1);
+  });
+
+  it("states the tagline in the title, never in the h1", async () => {
+    renderHome();
+    await waitFor(() => expect(document.title).toBe("Flump: finance without the fog"));
+    expect(screen.getByRole("heading", { level: 1 }).textContent).not.toMatch(/fog/i);
   });
 
   it("shows 'Request an invite' exactly twice in the page body: hero and end", () => {

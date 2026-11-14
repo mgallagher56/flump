@@ -51,6 +51,11 @@ describe("Footer", () => {
     expect(screen.queryByRole("heading", { name: "Calculators" })).toBeNull();
   });
 
+  it("states the tagline as the brand line under the name", () => {
+    const { container } = renderFooter();
+    expect(container.querySelector("footer")?.textContent).toContain("Finance without the fog.");
+  });
+
   it("names its product column 'Product', not the brand again", () => {
     renderFooter();
     expect(screen.getByRole("heading", { name: "Product" })).toBeDefined();
@@ -58,9 +63,7 @@ describe("Footer", () => {
 
   it("links to the AI connection page, which has left the home page (D13)", () => {
     renderFooter();
-    expect(screen.getByRole("link", { name: "AI connection (MCP)" }).getAttribute("href")).toBe(
-      "/mcp",
-    );
+    expect(screen.getByRole("link", { name: "AI connection" }).getAttribute("href")).toBe("/mcp");
   });
 
   it("shows placeholder business details as quiet text, with no warning colour or outline", () => {

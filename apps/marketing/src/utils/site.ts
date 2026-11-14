@@ -8,6 +8,15 @@ import { getAppUrl } from "./url";
  */
 export type SignupMode = "invite-only" | "open";
 
+/**
+ * The brand tagline (owner ruling, 14 Nov 2026). Exact wording, sentence case, a colon after the
+ * name and no dash. It never replaces the home h1. Copy guide section 1.1 holds the rules.
+ */
+export const TAGLINE = "Finance without the fog";
+
+/** The tagline written with the name, for the home title, share titles and the footer. */
+export const SITE_TAGLINE = "Flump: finance without the fog";
+
 /** Sign-up stays invite-only until the owner opens it (E24 round 3 item 15). */
 export const SIGNUP_MODE: SignupMode = "invite-only";
 
