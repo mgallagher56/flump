@@ -1,5 +1,27 @@
 # Changelog
 
+## [1.38.0](https://github.com/mgallagher56/flump/compare/flump/web-v1.37.0...flump/web-v1.38.0) (2026-11-14)
+
+
+### Features ✨
+
+* **polish:** R2-8 pension, savings, take-home and self assessment ([2f0139d](https://github.com/mgallagher56/flump/commit/2f0139d87b17b62007969763e47ae2f5e198a2ec))
+* **polish:** R2-8 round 3 from the independent re-score ([ef351cb](https://github.com/mgallagher56/flump/commit/ef351cb873c5ada167439ba4c2eacc5aeb9f11cf))
+* **polish:** R2-8 round 4 from the second re-score ([0399095](https://github.com/mgallagher56/flump/commit/0399095ece624eed2487d016b0865d1f4a426340))
+* **polish:** R2-8 round 5: fewer year ticks on narrow charts, compact pay section, one Select, whole pounds ([f4fdf27](https://github.com/mgallagher56/flump/commit/f4fdf273c49e749aebb25ad4339b6480ef9c08b4))
+* **web,ui:** round 3 budget: edit in place, two-up KPI cap, Reset only when changed ([ccbf847](https://github.com/mgallagher56/flump/commit/ccbf8474bebb882386ffc0517c7b2a62fddde151))
+* **web:** R2-9 settings, onboarding, error and 404 polish ([45d0f58](https://github.com/mgallagher56/flump/commit/45d0f58ab848e93a7ade7d5fab965b62120987a4))
+
+
+### Bug Fixes 🪲
+
+* **polish:** R2-8 review fixes: flat-series axis, engine take-home in the strip, keep the record dialog open on a failed save, no £0 cards ([98c6b9c](https://github.com/mgallagher56/flump/commit/98c6b9c5ca165af26ee35023861b60e82e0677cb))
+* **take-home:** graphic-only rule uses chart.primary (token law) ([d4666ca](https://github.com/mgallagher56/flump/commit/d4666ca1f82914d3524a0269ccbcd7903caff2ba))
+* **web:** round 3 editor: add rows open from a quiet button, no essential switch on savings ([2497072](https://github.com/mgallagher56/flump/commit/249707232b3b0ec970d601e4a77ec8390e5e393e))
+* **web:** round 3 re-score fixes: one save toast at a time, whole pounds, no repeated single-entry figure ([eaa539f](https://github.com/mgallagher56/flump/commit/eaa539f2747a39111517b1c79d85cf08a418ed60))
+* **web:** round 3 review fixes: focus after delete and add, one income rule, copy ([1907e30](https://github.com/mgallagher56/flump/commit/1907e308c9e44c821096d3ff4de1aa07a2f1c806))
+* **web:** round 3: indented, smaller entry amounts; no blank slot on single entries; save toast clears on finish ([24bb60f](https://github.com/mgallagher56/flump/commit/24bb60fdba47a97e5db7bc70455af9c9ca543531))
+
 ## [1.37.0](https://github.com/mgallagher56/flump/compare/flump/web-v1.36.0...flump/web-v1.37.0) (2026-11-14)
 
 

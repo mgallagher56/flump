@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.32.2](https://github.com/mgallagher56/flump/compare/flump/backend-v1.32.1...flump/backend-v1.32.2) (2026-11-14)
+
+
+### Documentation 📙
+
+* **backend:** say why getUserFinancialData ignores its options ([ab8ded4](https://github.com/mgallagher56/flump/commit/ab8ded4c7f479a8408dd18682fabb841c98def8f))
+
+
+### Refactor 🔥
+
+* **backend:** BE-14 strict types and dead code ([cd2c49c](https://github.com/mgallagher56/flump/commit/cd2c49ca5a7da5f4b04ec7ee11035f231b720d9f))
+
 ## [1.32.1](https://github.com/mgallagher56/flump/compare/flump/backend-v1.32.0...flump/backend-v1.32.1) (2026-11-14)
 
 
