@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 import { FinanceService } from "./finance.service";
 import { londonDate } from "./snapshots/london-date";
 import { createInMemoryRepository } from "./testing/in-memory-repository";
+import { withManager } from "./testing/with-manager";
 
 const createService = () => {
   const accountRepo = {
@@ -20,6 +21,11 @@ const createService = () => {
     find: vi.fn().mockResolvedValue([]),
     delete: vi.fn().mockResolvedValue(undefined),
   };
+  withManager(accountRepo, {
+    Account: accountRepo,
+    AccountDetail: accountDetailRepo,
+    Transaction: transactionRepo,
+  });
   const service = new FinanceService(
     accountRepo as any,
     transactionRepo as any,
