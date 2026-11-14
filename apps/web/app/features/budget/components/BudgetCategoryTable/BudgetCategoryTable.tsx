@@ -46,6 +46,11 @@ export interface BudgetCategoryTableProps {
   onUpdate: (id: string, update: Partial<BudgetEntry>) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
   onDeleteCategory?: (category: string) => void;
+  /**
+   * Shown under its row in the category list, which already names the category and its total:
+   * the heading and total are left out and only the actions and entries show.
+   */
+  embedded?: boolean;
 }
 
 /** Law 3: a table over eight rows keeps the rest behind a drawer. */
@@ -60,11 +65,11 @@ const RenewalBadge: FC<{ entry: BudgetEntry }> = ({ entry }) => {
   const days = getDaysUntilContractEnd(entry.contractEndDate);
   if (days === null) return null;
   const unit = (n: number) => `${n} ${n === 1 ? "day" : "days"}`;
-  if (days === 0) return <StatusBadge variant="danger">Ends today</StatusBadge>;
+  // A date, not a verdict: one neutral badge whatever the distance (UX-GUIDELINES T2).
+  if (days === 0) return <StatusBadge variant="neutral">Ends today</StatusBadge>;
   if (days < 0) {
-    return <StatusBadge variant="danger">Ended {unit(Math.abs(days))} ago</StatusBadge>;
+    return <StatusBadge variant="neutral">Ended {unit(Math.abs(days))} ago</StatusBadge>;
   }
-  if (days <= 30) return <StatusBadge variant="warning">Renews in {unit(days)}</StatusBadge>;
   return <StatusBadge variant="neutral">Renews in {unit(days)}</StatusBadge>;
 };
 
@@ -75,6 +80,7 @@ export const BudgetCategoryTable: FC<BudgetCategoryTableProps> = ({
   onUpdate,
   onDelete,
   onDeleteCategory,
+  embedded = false,
 }) => {
   const { formatCurrency } = useFormatCurrency();
   const [editing, setEditing] = useState<EditingState | null>(null);
@@ -152,7 +158,7 @@ export const BudgetCategoryTable: FC<BudgetCategoryTableProps> = ({
 
   const frequencyDetail = (entry: BudgetEntry) => {
     const raw = formatCurrency(Number(entry.amount) || 0);
-    if (entry.frequency === "annual") return `Annual, ${raw} a year`;
+    if (entry.frequency === "annual") return `Yearly, ${raw} a year`;
     if (entry.frequency === "weekly") return `Weekly, ${raw} a week`;
     return "Monthly";
   };
@@ -163,7 +169,7 @@ export const BudgetCategoryTable: FC<BudgetCategoryTableProps> = ({
         <tr>
           <Th>Name</Th>
           <Th>How often</Th>
-          <Th numeric>Per month</Th>
+          <Th numeric>Amount a month</Th>
           <Th>
             <VisuallyHidden>Actions</VisuallyHidden>
           </Th>
@@ -178,7 +184,7 @@ export const BudgetCategoryTable: FC<BudgetCategoryTableProps> = ({
                 <div className={badgeRow()}>
                   {!isIncome && (
                     <StatusBadge variant={entry.isEssential ? "info" : "neutral"}>
-                      {entry.isEssential ? "Essential" : "Discretionary"}
+                      {entry.isEssential ? "Essential" : "Flexible"}
                     </StatusBadge>
                   )}
                   {entry.isPrimaryIncome && <StatusBadge variant="brand">Main income</StatusBadge>}
@@ -229,21 +235,23 @@ export const BudgetCategoryTable: FC<BudgetCategoryTableProps> = ({
   return (
     <div className={tableRoot()}>
       <div className={tableHeader()}>
-        <div className={headerIdentity()}>
-          <span className={headerIcon()}>
-            <Icon icon={categoryIcon(category)} size="md" />
-          </span>
-          <div>
-            <h2 className={headerTitle()}>{label}</h2>
-            <p className={headerMeta()}>
-              <span>{entries.length === 1 ? "1 item" : `${entries.length} items`}</span>
-              <span aria-hidden="true">·</span>
-              <span>Total</span>
-              <Money size="sm" value={Number.isFinite(total) ? total : 0} />
-              <span>a month</span>
-            </p>
+        {embedded ? null : (
+          <div className={headerIdentity()}>
+            <span className={headerIcon()}>
+              <Icon icon={categoryIcon(category)} size="md" />
+            </span>
+            <div>
+              <h2 className={headerTitle()}>{label}</h2>
+              <p className={headerMeta()}>
+                <span>{entries.length === 1 ? "1 item" : `${entries.length} items`}</span>
+                <span aria-hidden="true">·</span>
+                <span>Total</span>
+                <Money size="sm" value={Number.isFinite(total) ? total : 0} />
+                <span>a month</span>
+              </p>
+            </div>
           </div>
-        </div>
+        )}
         <div className={headerActions()}>
           {onDeleteCategory && entries.length === 0 && (
             <Button
@@ -256,7 +264,7 @@ export const BudgetCategoryTable: FC<BudgetCategoryTableProps> = ({
               Delete category
             </Button>
           )}
-          <Button id="add-entry-btn" size="sm" onClick={startNew}>
+          <Button id="add-entry-btn" size="sm" variant="outline" onClick={startNew}>
             <Icon icon={Plus} size="sm" />
             Add entry
           </Button>
@@ -267,8 +275,8 @@ export const BudgetCategoryTable: FC<BudgetCategoryTableProps> = ({
         {entries.length === 0 ? (
           <EmptyState
             action={
-              <Button size="sm" onClick={startNew}>
-                Add an entry
+              <Button size="sm" variant="outline" onClick={startNew}>
+                Add entry
               </Button>
             }
             description={`Add the ${label.toLowerCase()} you pay or receive and it will show in your budget.`}
@@ -310,7 +318,7 @@ export const BudgetCategoryTable: FC<BudgetCategoryTableProps> = ({
 
       <ConfirmDialog
         confirmLabel="Delete entry"
-        description="This removes the entry from your budget. This can't be undone."
+        description="This entry will be deleted from your budget. This cannot be undone."
         open={entryToDelete !== undefined}
         pending={deleting}
         title={`Delete ${entryToDelete?.name ?? "entry"}?`}

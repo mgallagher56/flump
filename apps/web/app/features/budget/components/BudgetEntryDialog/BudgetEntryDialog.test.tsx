@@ -38,7 +38,7 @@ describe("<BudgetEntryDialog />", () => {
 
   it("hides the essential switch for income and the contract date outside bills", () => {
     setup({ isIncome: true, showContractDate: false, categoryLabel: "Income" });
-    expect(screen.queryByLabelText("Essential expense")).toBeNull();
+    expect(screen.queryByLabelText("Essential spending")).toBeNull();
     expect(screen.queryByLabelText(/Contract end date/)).toBeNull();
   });
 

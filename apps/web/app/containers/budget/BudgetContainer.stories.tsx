@@ -30,10 +30,18 @@ type Story = StoryObj<typeof BudgetContainer>;
 export const Overview: Story = {
   play: async ({ canvasElement }) => {
     await expect(within(canvasElement).getAllByText("Your budget")[0]).toBeDefined();
-    await expect(within(canvasElement).getAllByText("Where you stand")[0]).toBeDefined();
+    await expect(within(canvasElement).getAllByText("Left over each month")[0]).toBeDefined();
+    await expect(
+      within(canvasElement).getAllByRole("button", { name: "Edit budget" })[0],
+    ).toBeDefined();
   },
 };
 
 export const Empty: Story = {
   parameters: { router: { loaderData: { ...loaderData, budgetEntries: [] } } },
+  play: async ({ canvasElement }) => {
+    await expect(
+      within(canvasElement).getAllByRole("button", { name: "Set up your budget" })[0],
+    ).toBeDefined();
+  },
 };

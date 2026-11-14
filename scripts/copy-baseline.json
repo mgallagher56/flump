@@ -15,8 +15,6 @@
   "apps/web/app/features/accounts/components/AccountsSummary/AccountsSummary.tsx": 5,
   "apps/web/app/features/ai-connections/components/McpConnectionCard/McpConnectionCard.tsx": 1,
   "apps/web/app/features/budget/components/AddCategoryModal/AddCategoryModal.tsx": 1,
-  "apps/web/app/features/budget/components/BudgetSetupWizard/BudgetSetupWizard.tsx": 1,
-  "apps/web/app/features/budget/components/WizardEntryRow/WizardEntryRow.tsx": 1,
   "apps/web/app/features/dashboard/components/AccountsWidget/AccountsWidget.tsx": 5,
   "apps/web/app/features/dashboard/components/DashboardEmptyState/DashboardEmptyState.tsx": 4,
   "apps/web/app/features/dashboard/components/DashboardKpiStrip/DashboardKpiStrip.tsx": 4,

@@ -3,8 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { RunwayCalculator } from "./RunwayCalculator";
 
 const outcome = () => within(screen.getByRole("region", { name: "Illustration results" }));
-const headline = () =>
-  screen.getByText("Your months of cover").closest("[data-tone]") as HTMLElement;
+const headline = () => screen.getByTestId("runway-basis");
 
 describe("RunwayCalculator", () => {
   beforeEach(() => {
@@ -51,7 +50,7 @@ describe("RunwayCalculator", () => {
     },
   ];
 
-  it("headlines the engine's saved figure: current and savings cash over essentials", () => {
+  it("starts from the engine's saved figure: current and savings cash over essentials", () => {
     render(
       <RunwayCalculator
         accountDetails={[]}
@@ -109,8 +108,8 @@ describe("RunwayCalculator", () => {
         onNavigateToForecast={vi.fn()}
       />,
     );
-    // An unknown figure falls back from the hero card; it shows Not set, never 0 or infinity.
-    expect(screen.getAllByText("Not set").length).toBeGreaterThan(0);
+    // An unknown figure is never shown as 0 or infinity.
+    expect(headline().textContent).toMatch(/shows once your budget has essential spending/);
     expect(document.querySelector('[data-figure="monthsOfCover"]')).toBeNull();
   });
 
@@ -189,6 +188,9 @@ describe("RunwayCalculator", () => {
     );
     expect(screen.getByRole("region", { name: "Model a change to your budget" })).toBeDefined();
     expect(screen.getByText("Illustration, not saved")).toBeDefined();
+    // The page's one notice sits in the zone footer, and no hero is drawn in the zone.
+    expect(document.querySelectorAll('[data-notice="projection"]')).toHaveLength(1);
+    expect(document.querySelector('[data-tone="hero"]')).toBeNull();
     expect(screen.queryByText(/Critical|Healthy|Caution/)).toBeNull();
   });
 
@@ -205,10 +207,10 @@ describe("RunwayCalculator", () => {
       />,
     );
     const savedHeadline = headline().textContent;
-    fireEvent.change(screen.getByLabelText(/Severance or lump sum/i), {
+    fireEvent.change(screen.getByLabelText(/Redundancy pay or lump sum/i), {
       target: { value: "5000" },
     });
-    fireEvent.change(screen.getByLabelText(/Extra monthly spending cut/i), {
+    fireEvent.change(screen.getByLabelText(/Spending you would cut, a month/i), {
       target: { value: "250" },
     });
     expect(onScenarioChange).toHaveBeenLastCalledWith(
@@ -299,9 +301,7 @@ describe("RunwayCalculator untouched illustration equals the saved figure", () =
       />,
     );
     // £6,000 over £1,050 = 5.7 months in both places; the debt and pets rows can be switched.
-    expect(screen.getByText("Your months of cover").closest("[data-tone]")?.textContent).toContain(
-      "5.7 months",
-    );
+    expect(headline().textContent).toContain("5.7 months");
     expect(
       within(screen.getByRole("region", { name: "Illustration results" })).getByText("5.7 months"),
     ).toBeDefined();

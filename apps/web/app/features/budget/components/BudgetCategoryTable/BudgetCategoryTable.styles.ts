@@ -85,7 +85,3 @@ export const actionsCell = cva({
 export const drawerWrap = cva({
   base: { marginTop: "4px" },
 });
-
-export const errorNote = cva({
-  base: { textStyle: "body.sm", color: "status.danger.text", margin: 0 },
-});

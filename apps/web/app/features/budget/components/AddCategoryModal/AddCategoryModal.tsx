@@ -56,7 +56,11 @@ export const AddCategoryModal: FC<AddCategoryModalProps> = ({
       setCategoryName("");
       onClose();
     } catch (err) {
-      setError(err instanceof Error && err.message ? err.message : "We couldn't add that category");
+      setError(
+        err instanceof Error && err.message
+          ? err.message
+          : "We could not add that category. Nothing has changed. Try again.",
+      );
     } finally {
       setSaving(false);
     }

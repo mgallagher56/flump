@@ -103,7 +103,7 @@ const STEP_LABELS: Record<WizardStep, string> = {
 
 const STEP_TITLES: Record<WizardStep, string> = {
   welcome: "Set up your budget",
-  defaults: "Start with a template",
+  defaults: "Start with example figures",
   income: "Income",
   housing: "Housing",
   bills: "Bills",
@@ -114,7 +114,7 @@ const STEP_TITLES: Record<WizardStep, string> = {
 
 const STEP_DESCRIPTIONS: Record<WizardStep, string> = {
   welcome: "Set up your monthly budget to see where your money goes and your months of cover.",
-  defaults: "Start from a standard UK template, or build from scratch.",
+  defaults: "Start from example figures, or from a blank budget.",
   income: "Enter your take-home pay and any other income sources.",
   housing: "Rent, mortgage, insurance and other home costs.",
   bills: "Gas, electricity, water, council tax and broadband.",
@@ -133,9 +133,9 @@ const ADD_PLACEHOLDERS: Partial<Record<WizardStep, string>> = {
 
 const WELCOME_POINTS = [
   "Enter your income and monthly spending",
-  "Review the pre-filled defaults and edit them to match your situation",
+  "Check any example figures and change them to match yours",
   "See what is left over each month",
-  "See how long your money lasts on the Months of cover tab",
+  "See your months of cover",
 ];
 
 type NewEntry = Omit<BudgetEntry, "id" | "userId" | "createdAt" | "updatedAt">;
@@ -320,7 +320,7 @@ export const BudgetSetupWizard: FC<BudgetSetupWizardProps> = ({
           }}
         >
           <Icon icon={Plus} size="sm" />
-          Add {stepLabel.toLowerCase()} item
+          Add {stepLabel.toLowerCase()} entry
         </Button>
       );
     }
@@ -365,7 +365,7 @@ export const BudgetSetupWizard: FC<BudgetSetupWizardProps> = ({
               type="checkbox"
               onChange={(e) => setNewIsEssential(e.target.checked)}
             />
-            Essential expense. Untick if it is discretionary.
+            Essential spending. Untick for flexible spending.
           </label>
         )}
         <div className={addActions()}>
@@ -373,7 +373,7 @@ export const BudgetSetupWizard: FC<BudgetSetupWizardProps> = ({
             Cancel
           </Button>
           <Button disabled={adding || !newName.trim()} type="button" onClick={handleAddItem}>
-            {adding ? "Adding" : "Add item"}
+            {adding ? "Adding…" : "Add entry"}
           </Button>
         </div>
       </div>
@@ -451,16 +451,16 @@ export const BudgetSetupWizard: FC<BudgetSetupWizardProps> = ({
             <div className={choiceGrid()}>
               <div className={choiceCard({ featured: true })}>
                 <div>
-                  <h3 className={choiceTitle()}>Standard UK template</h3>
+                  <h3 className={choiceTitle()}>Example figures</h3>
                   <p className={choiceText()}>
-                    Fills in common UK costs: rent or mortgage (£1,200), council tax (£160), gas and
-                    electricity (£150), water (£40), broadband (£35) and groceries (£350). You can
-                    change every figure in the next steps.
+                    Example: rent or mortgage £1,200, council tax £160, gas and electricity £150,
+                    water £40, broadband £35 and groceries £350 a month. These are examples, not
+                    your figures. You can change each one in the next steps.
                   </p>
                 </div>
                 <Button disabled={saving} type="button" onClick={applyDefaults}>
                   <Icon icon={Rocket} size="sm" />
-                  {saving ? "Adding" : "Use suggested defaults"}
+                  {saving ? "Adding…" : "Use example figures"}
                 </Button>
               </div>
               <div className={choiceCard()}>
@@ -482,8 +482,9 @@ export const BudgetSetupWizard: FC<BudgetSetupWizardProps> = ({
               {monthlyTakeHome ? (
                 <div className={callout()}>
                   <p className={calloutText()}>
-                    Your profile has an estimated monthly take-home of{" "}
-                    <strong>{formatCurrency(Math.abs(monthlyTakeHome))}</strong>. You can use it for
+                    Estimate from your saved details:{" "}
+                    <strong>{formatCurrency(Math.abs(monthlyTakeHome))}</strong> take-home pay a
+                    month. Select "Use {formatCurrency(Math.abs(monthlyTakeHome))}" to copy it into
                     the salary entry below.
                   </p>
                   {incomeEntries.length > 0 && (
@@ -517,15 +518,15 @@ export const BudgetSetupWizard: FC<BudgetSetupWizardProps> = ({
             currentStep === "expenses" ||
             currentStep === "savings") && (
             <div>
-              {renderEntries(currentStep, "Nothing here yet. Add an item below.")}
+              {renderEntries(currentStep, "Nothing here yet. Add an entry below.")}
               {renderAddSection()}
               {currentStep === "savings" && (
                 <div className={tipBox()}>
                   <Icon icon={PiggyBank} size="md" />
                   <span>
-                    You can track savings accounts, interest rates and growth in the{" "}
+                    Savings accounts, their interest rates and growth are on the{" "}
                     <Link className={tipLink()} to="/app/savings">
-                      Savings Hub
+                      savings page
                     </Link>
                     .
                   </span>
@@ -549,14 +550,14 @@ export const BudgetSetupWizard: FC<BudgetSetupWizardProps> = ({
                 </span>
               </div>
               <div className={summaryRow()}>
-                <span>{surplus >= 0 ? "Left over each month" : "Monthly shortfall"}</span>
+                <span>{surplus >= 0 ? "Left over each month" : "Short each month"}</span>
                 <span>
                   <Money size="lg" value={Math.abs(surplus)} /> a month
                 </span>
               </div>
               <p className={summaryNote()}>
-                You can edit individual entries from the Budget page. Your changes are saved as you
-                move through each step.
+                You can edit each entry on the budget page. Your changes are saved as you move
+                through each step.
               </p>
             </div>
           )}
@@ -595,7 +596,7 @@ export const BudgetSetupWizard: FC<BudgetSetupWizardProps> = ({
 
       <ConfirmDialog
         confirmLabel="Delete entry"
-        description="This removes the entry from your budget. This can't be undone."
+        description="This entry will be deleted from your budget. This cannot be undone."
         open={pendingDeleteEntry !== undefined}
         title={`Delete ${pendingDeleteEntry?.name ?? "entry"}?`}
         tone="danger"
