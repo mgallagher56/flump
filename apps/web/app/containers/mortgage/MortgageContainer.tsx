@@ -51,6 +51,7 @@ import {
   plainFigures,
   plainFigureValue,
   promptBlock,
+  promptDivider,
   promptStatus,
   promptText,
   promptTitle,
@@ -667,22 +668,24 @@ const MortgageContainer: FC = () => {
                 ))}
               </dl>
             ) : null}
-            <h2 className={promptTitle()} id="mortgage-prompt-title">
-              {prompt.title}
-            </h2>
-            {prompt.text ? <p className={promptText()}>{prompt.text}</p> : null}
-            <div>
-              {noAccount ? (
-                <Button onClick={() => navigate("/app/accounts")}>Add mortgage account</Button>
-              ) : (
-                <Button onClick={startEditing}>Add mortgage details</Button>
-              )}
+            <div className={known.length > 0 ? promptDivider() : undefined}>
+              <h2 className={promptTitle()} id="mortgage-prompt-title">
+                {prompt.title}
+              </h2>
+              {prompt.text ? <p className={promptText()}>{prompt.text}</p> : null}
+              <div>
+                {noAccount ? (
+                  <Button onClick={() => navigate("/app/accounts")}>Add mortgage account</Button>
+                ) : (
+                  <Button onClick={startEditing}>Add mortgage details</Button>
+                )}
+              </div>
+              {saveMessage ? (
+                <p className={promptStatus()} role="status">
+                  {saveMessage}
+                </p>
+              ) : null}
             </div>
-            {saveMessage ? (
-              <p className={promptStatus()} role="status">
-                {saveMessage}
-              </p>
-            ) : null}
           </section>
         </div>
       </PageBody>

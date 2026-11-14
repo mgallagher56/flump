@@ -23,15 +23,40 @@ export const partialStack = cva({
   base: { display: "flex", flexDirection: "column", minWidth: 0 },
 });
 
-/** The partial state: up to two plain figures and one prompt, on the page surface (no card). */
+/**
+ * The partial state: up to two saved figures and one prompt, grouped in one card (common region)
+ * so the figures read as the user's mortgage and the prompt as the one next step.
+ */
 export const promptBlock = cva({
   base: {
     display: "flex",
     flexDirection: "column",
     alignItems: "flex-start",
-    gap: "12px",
+    gap: "16px",
     minWidth: 0,
-    maxWidth: "70ch",
+    maxWidth: "720px",
+    backgroundColor: "surface.card",
+    borderRadius: "xl",
+    borderWidth: "1px",
+    borderStyle: "solid",
+    borderColor: "border",
+    boxShadow: "card",
+    p: { base: "20px", md: "24px" },
+  },
+});
+
+/** Separates the saved figures from the prompt inside the partial-state card. */
+export const promptDivider = cva({
+  base: {
+    alignSelf: "stretch",
+    borderTopWidth: "1px",
+    borderTopStyle: "solid",
+    borderTopColor: "border",
+    pt: "16px",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "flex-start",
+    gap: "12px",
   },
 });
 
@@ -55,7 +80,7 @@ export const plainFigureLabel = cva({
 export const plainFigureValue = cva({
   base: {
     margin: 0,
-    textStyle: "numeric.md",
+    textStyle: "numeric.lg",
     color: "text.primary",
     fontVariantNumeric: "tabular-nums",
   },
