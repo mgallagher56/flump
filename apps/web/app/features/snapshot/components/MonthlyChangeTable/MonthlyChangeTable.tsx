@@ -66,7 +66,18 @@ export const MonthlyChangeTable: FC<MonthlyChangeTableProps> = (props) => {
               <Td className={wideOnly()} numeric>
                 {formatCurrency(r.previous)}
               </Td>
-              <Td numeric secondary={r.carried ? "Carried forward" : undefined}>
+              <Td
+                numeric
+                secondary={
+                  r.carried
+                    ? "Carried forward"
+                    : r.currentSource === "calculated"
+                      ? "Calculated"
+                      : r.currentSource === "confirmed"
+                        ? "No change"
+                        : undefined
+                }
+              >
                 {formatCurrency(r.current)}
               </Td>
               <Td numeric>

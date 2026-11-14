@@ -98,6 +98,8 @@ export interface AccountChange {
   previous: number;
   change: number;
   carried: boolean;
+  /** How this month's figure was given, when not typed: "calculated" or "confirmed" (R2-5). */
+  currentSource?: "calculated" | "confirmed" | null;
 }
 
 export interface MonthChangeRow {
@@ -177,6 +179,16 @@ export function buildSnapshotHistory(
   const previousRecorded = recorded.at(-2) ?? null;
   // Sorted by name, then id: the engine returns rows in account-id order, and ids are random, so
   // without this the table order changed from one user (and one test run) to the next.
+  const sourceAt = (accountId: string, month: MonthKey): AccountChange["currentSource"] => {
+    const [y, m] = month.split("-").map(Number);
+    const row = (details ?? []).find(
+      (d) =>
+        String(d.accountId ?? d.account_id ?? "").toLowerCase() === accountId &&
+        Number(d.year) === y &&
+        Number(d.month) === m,
+    );
+    return row?.source === "calculated" || row?.source === "confirmed" ? row.source : null;
+  };
   const accountChanges: AccountChange[] =
     latestRecorded && previousRecorded
       ? selectAccountDeltas(previousRecorded, latestRecorded)
@@ -190,6 +202,7 @@ export function buildSnapshotHistory(
               previous: d.previous,
               change: d.change,
               carried: a?.carried ?? false,
+              currentSource: a?.carried ? null : sourceAt(d.accountId, latestRecorded.month),
             };
           })
           .sort(
