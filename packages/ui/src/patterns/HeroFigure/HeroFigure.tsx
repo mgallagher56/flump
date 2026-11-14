@@ -89,7 +89,7 @@ const renderValue = (
 
 /**
  * The page's one headline figure (E16 P2), placed directly under `PageHeader`. Draws the single
- * `surface.hero` block on the page (`data-tone="hero"`) with one soft decorative shape. It never
+ * `surface.hero` block on the page (`data-tone="hero"`), with no decoration (E16 round 4: the disc crossed the sub-line on a phone). It never
  * holds an estimate or a scenario outcome. When the value is unknown it falls back to a plain card
  * with "Not set" and one setup prompt, and the hero is not drawn.
  */
@@ -144,7 +144,6 @@ export const HeroFigure: FC<HeroFigureProps> = ({
       id={id}
       role="group"
     >
-      <span aria-hidden="true" className={slots.shape} data-decorative="true" />
       <div className={slots.content}>
         <div className={slots.labelRow}>
           <p className={slots.label} id={labelId}>

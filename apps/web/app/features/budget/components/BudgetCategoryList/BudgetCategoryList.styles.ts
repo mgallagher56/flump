@@ -22,7 +22,7 @@ export const categoryList = sva({
     },
     row: {
       display: "flex",
-      flexDirection: "column",
+      alignItems: "center",
       gap: "2",
       width: "100%",
       py: "3",
@@ -35,6 +35,7 @@ export const categoryList = sva({
       border: "none",
       borderRadius: "md",
       color: "text.primary",
+      textDecoration: "none",
       _hover: { backgroundColor: "surface.subtle" },
       _focusVisible: {
         outline: "2px solid",
@@ -76,11 +77,6 @@ export const rowEnd = cva({
 export const chevron = cva({
   base: { display: "inline-flex", color: "text.muted" },
   variants: { open: { true: { transform: "rotate(180deg)" }, false: {} } },
-});
-
-/** The thin proportion bar under each row: a share of money in. */
-export const shareBar = cva({
-  base: { pb: "3", mt: "-1" },
 });
 
 /** The opened entries, indented under their category so they read as its parts. */

@@ -14,6 +14,7 @@ import { type FC, type FormEvent, useEffect, useRef, useState } from "react";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import { type BudgetEntry, getCategoryLabel } from "~/types/budget";
 import { INCOME_CATEGORY as INCOME, isIncomeEntry } from "../../income";
+import { rankCategories } from "../BudgetCategoryList";
 import {
   addAmount,
   addRow,
@@ -347,7 +348,13 @@ export const BudgetEditor: FC<BudgetEditorProps> = ({
   const editor = budgetEditor();
   const section = editorSection();
 
-  const sectionOrder = [INCOME, ...categories.filter((c) => c !== INCOME)];
+  // The read view's order: money in first, then spending ranked by amount, empty categories at the
+  // foot. Taken once on opening, so a section never jumps while its amount is being typed; a
+  // category added while editing joins the foot.
+  const [rankedOrder] = useState(() => rankCategories(categories, entries).map((r) => r.category));
+  const sectionOrder = Array.from(
+    new Set([INCOME, ...rankedOrder.filter((c) => categories.includes(c)), ...categories]),
+  );
 
   const entriesFor = (category: string) =>
     category === INCOME
@@ -380,7 +387,7 @@ export const BudgetEditor: FC<BudgetEditorProps> = ({
         notes: null,
         isDefault: false,
       });
-      toast?.toast({ title: "Entry added" });
+      // The new row on the page is the confirmation, so no message.
       return true;
     } catch {
       return false;

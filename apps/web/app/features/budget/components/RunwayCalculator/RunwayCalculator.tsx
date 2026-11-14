@@ -396,7 +396,7 @@ export const RunwayCalculator: FC<RunwayCalculatorProps> = ({
     </CollapsibleDrawer>
   );
 
-  // One outcome and two supporting figures (P1.7).
+  // One outcome and one supporting figure (P1.7).
   const content = (
     <div className={outcome()}>
       {/* Untouched, this is the saved figure (its one place on the page); changed, an illustration. */}
@@ -422,12 +422,6 @@ export const RunwayCalculator: FC<RunwayCalculatorProps> = ({
             <Money size="sm" value={pool} />
           </dd>
         </div>
-        <div className={breakdownRow()}>
-          <dt>Essential spending to cover each month</dt>
-          <dd>
-            <Money size="sm" value={monthlyBurn} />
-          </dd>
-        </div>
       </dl>
     </div>
   );
@@ -436,13 +430,6 @@ export const RunwayCalculator: FC<RunwayCalculatorProps> = ({
     <div className={runwayRoot()}>
       <ScenarioZone
         announcement={isScenarioModified ? `${coverLabel} of cover` : ""}
-        basis={
-          <span data-testid="runway-basis" id="runway-basis">
-            {saved
-              ? "Starting from your saved budget and your current and savings accounts."
-              : "Starting from your budget entries. Months of cover shows once your budget has essential spending."}
-          </span>
-        }
         isModified={isScenarioModified}
         notice={<ProjectionNotice />}
         title="Model a change to your budget"

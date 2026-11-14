@@ -1,6 +1,5 @@
 import { Button, CurrencyInput, controlProps, Dialog, FormField } from "@repo/ui";
 import { type FC, type FormEvent, useEffect, useState } from "react";
-import { SampleAwareLink } from "~/components/navigation/SampleAwareLink";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import { housingDetails } from "./HousingDetails.styles";
 
@@ -61,8 +60,8 @@ function copyFor(status: HousingTenure, hasAmount: boolean): Copy | null {
         field: "What you pay each month",
         allowZero: true,
       };
+    // A mortgage row links to the mortgage page itself, so it opens no panel.
     case "mortgage":
-      return { text: "Your balance, rate and term are on the mortgage page." };
     case "own_outright":
       return null;
     default:
@@ -138,22 +137,16 @@ export const HousingDetails: FC<HousingDetailsProps> = ({
   return (
     <div className={slots.root} data-testid="housing-details" id="housing-details">
       <p className={slots.text}>{text}</p>
-      {housingStatus === "mortgage" ? (
-        <SampleAwareLink className={slots.link} to="/app/mortgage">
-          Open the mortgage page
-        </SampleAwareLink>
-      ) : (
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={() => {
-            setError(undefined);
-            setOpen(true);
-          }}
-        >
-          {copy.action}
-        </Button>
-      )}
+      <Button
+        size="sm"
+        variant="outline"
+        onClick={() => {
+          setError(undefined);
+          setOpen(true);
+        }}
+      >
+        {copy.action}
+      </Button>
 
       {copy.field ? (
         <Dialog

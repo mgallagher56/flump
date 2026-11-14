@@ -27,7 +27,11 @@ const mockProfileData = {
 };
 
 vi.mock("react-router", () => ({
-  Link: ({ children, to }: { children: ReactNode; to: string }) => <a href={to}>{children}</a>,
+  Link: ({ children, to, ...rest }: { children: ReactNode; to: string }) => (
+    <a href={to} {...rest}>
+      {children}
+    </a>
+  ),
   useLoaderData: () => mockLoaderData,
   useNavigate: () => vi.fn(),
 }));
@@ -400,8 +404,8 @@ describe("BudgetContainer", () => {
     mockLoaderData = withHousing(null);
     render(<BudgetContainer />);
     const housingRow = screen.getByTestId("budget-category-housing");
-    // No tenure to name, so the row keeps its entry count.
-    expect(within(housingRow).getByText("1 entry")).toBeDefined();
+    // No tenure to name, so the row shows its name and amount only.
+    expect(within(housingRow).queryByText(/entr(y|ies)/)).toBeNull();
     fireEvent.click(housingRow);
     fireEvent.click(screen.getByRole("button", { name: "Add your rent" }));
     fireEvent.change(await screen.findByLabelText("Rent each month"), {
@@ -416,15 +420,20 @@ describe("BudgetContainer", () => {
     );
   });
 
-  it("owners with a mortgage: the row says Mortgage and points to the mortgage page", () => {
+  it("owners with a mortgage: the housing row is a link to the mortgage page", () => {
     mockLoaderData = withHousing("mortgage", 1200);
     render(<BudgetContainer />);
     expect(screen.getAllByTestId("budget-category-housing")).toHaveLength(1);
     const housingRow = screen.getByTestId("budget-category-housing");
     expect(within(housingRow).getByText("Mortgage")).toBeDefined();
     expect(screen.queryByRole("heading", { name: "Your details" })).toBeNull();
-    fireEvent.click(housingRow);
-    expect(screen.getByRole("link", { name: "Open the mortgage page" })).toBeDefined();
+    expect(housingRow.tagName).toBe("A");
+    expect(housingRow.getAttribute("href")).toBe("/app/mortgage");
+    expect(housingRow.textContent).toMatch(
+      /^Housing\s*Mortgage\s*£[\d,]+ a month, open the mortgage page$/,
+    );
+    // No panel opens: no housing details and no rent form.
+    expect(screen.queryByTestId("housing-details")).toBeNull();
     expect(screen.queryByRole("button", { name: /Edit your rent|Add your rent/ })).toBeNull();
   });
 
