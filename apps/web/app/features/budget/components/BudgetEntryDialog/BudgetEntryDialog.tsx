@@ -77,7 +77,7 @@ export const BudgetEntryDialog: FC<BudgetEntryDialogProps> = ({
           {(field) => (
             <TextInput
               {...controlProps(field)}
-              placeholder="For example, Netflix"
+              placeholder="For example, TV subscription"
               value={values.name}
               onChange={(e) => set("name", e.target.value)}
             />
@@ -102,13 +102,13 @@ export const BudgetEntryDialog: FC<BudgetEntryDialogProps> = ({
                 onChange={(e) => set("frequency", e.target.value as BudgetEntry["frequency"])}
               >
                 <option value="monthly">Monthly</option>
-                <option value="annual">Annual</option>
+                <option value="annual">Yearly</option>
                 <option value="weekly">Weekly</option>
               </select>
             )}
           </FormField>
         </div>
-        <FormField label="Notes" hint="Optional">
+        <FormField label="Notes (optional)">
           {(field) => (
             <TextInput
               {...controlProps(field)}
@@ -118,7 +118,10 @@ export const BudgetEntryDialog: FC<BudgetEntryDialogProps> = ({
           )}
         </FormField>
         {showContractDate && (
-          <FormField label="Contract end date" hint="Optional. We flag renewals 30 days ahead.">
+          <FormField
+            label="Contract end date (optional)"
+            hint="We show a renewal note 30 days before this date."
+          >
             {(field) => (
               <TextInput
                 {...controlProps(field)}
@@ -137,7 +140,7 @@ export const BudgetEntryDialog: FC<BudgetEntryDialogProps> = ({
               type="checkbox"
               onChange={(e) => set("isEssential", e.target.checked)}
             />
-            Essential expense
+            Essential spending
           </label>
         )}
         <div className={formActions()}>

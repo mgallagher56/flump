@@ -60,13 +60,13 @@ describe("BudgetSetupWizard", () => {
 
     // Click Next to go to Defaults step
     fireEvent.click(screen.getByRole("button", { name: /next/i }));
-    expect(await screen.findByText(/start with a template/i)).toBeDefined();
+    expect(await screen.findByText(/start with example figures/i)).toBeDefined();
 
     // Click Start blank to go to Income step
     fireEvent.click(screen.getByRole("button", { name: /start blank/i }));
 
     expect(await screen.findByText("Salary")).toBeDefined();
-    expect(screen.getByText("Add income item")).toBeDefined();
+    expect(screen.getByText("Add income entry")).toBeDefined();
   });
 
   it("allows removing an item", async () => {
@@ -157,8 +157,8 @@ describe("BudgetSetupWizard", () => {
     fireEvent.click(await screen.findByRole("button", { name: /start blank/i }));
     await screen.findByText("Salary");
 
-    // Click Add item button
-    fireEvent.click(screen.getByText("Add income item"));
+    // Click Add entry button
+    fireEvent.click(screen.getByText("Add income entry"));
 
     // Fill in new item form
     const nameInput = screen.getByLabelText("Name");
@@ -168,7 +168,7 @@ describe("BudgetSetupWizard", () => {
     fireEvent.change(amountInput, { target: { value: "500" } });
 
     // Submit
-    fireEvent.click(screen.getByRole("button", { name: /add item/i }));
+    fireEvent.click(screen.getByRole("button", { name: "Add entry" }));
 
     await waitFor(() => {
       expect(onAddEntry).toHaveBeenCalledWith(
@@ -182,7 +182,7 @@ describe("BudgetSetupWizard", () => {
     });
   });
 
-  it("allows applying suggested defaults from the defaults step", async () => {
+  it("allows applying example figures from the defaults step", async () => {
     const onAddEntry = vi.fn().mockResolvedValue(undefined);
 
     render(
@@ -200,7 +200,7 @@ describe("BudgetSetupWizard", () => {
     // Advance to Defaults step
     fireEvent.click(screen.getByRole("button", { name: /next/i }));
     const useDefaultsBtn = await screen.findByRole("button", {
-      name: /use suggested defaults/i,
+      name: /use example figures/i,
     });
     fireEvent.click(useDefaultsBtn);
 

@@ -1,33 +1,33 @@
 import { PortfolioSnapshot } from "@flump/finance-engine";
-import { Button, EmptyState, Icon, Illustration, PageHeader, ProjectionNotice } from "@repo/ui";
+import {
+  Button,
+  EmptyState,
+  Icon,
+  Illustration,
+  InlineAlert,
+  PageBody,
+  PageHeader,
+} from "@repo/ui";
 import { ListChecks } from "lucide-react";
-import { type FC, useEffect, useMemo, useState } from "react";
+import { type FC, useEffect, useMemo, useRef, useState } from "react";
 import { useLoaderData, useNavigate } from "react-router";
 import { AddCategoryModal } from "~/features/budget/components/AddCategoryModal";
+import { BudgetCategoryList } from "~/features/budget/components/BudgetCategoryList";
 import { BudgetCategoryTable } from "~/features/budget/components/BudgetCategoryTable";
-import { BudgetNav } from "~/features/budget/components/BudgetNav";
 import { BudgetOverview } from "~/features/budget/components/BudgetOverview";
 import { BudgetSetupWizard } from "~/features/budget/components/BudgetSetupWizard";
+import { HousingDetailsCard } from "~/features/budget/components/HousingDetailsCard";
 import { RunwayCalculator } from "~/features/budget/components/RunwayCalculator";
-import { HousingCostCard } from "~/features/housing/components/HousingCostCard";
+import { DebtHelpLink } from "~/features/debt/components/DebtHelpLink";
 import { useUserProfile } from "~/hooks/useUserProfile";
 import type { loader } from "~/routes/app.budget";
 import { apiFetch } from "~/services/api-client";
 import type { BudgetEntry } from "~/types/budget";
 import { buildWorkspacePicture } from "~/utils/financialPicture";
 import { clearRunwaySettings, type RunwayScenario } from "~/utils/runwayStorage";
-import { errorBanner, pageActions, pageRoot, tabContent } from "./BudgetContainer.styles";
 
-type BudgetTab =
-  | "dashboard"
-  | "wizard"
-  | "housing"
-  | "bills"
-  | "expenses"
-  | "savings"
-  | "income"
-  | "runway"
-  | string;
+/** The page shows the budget, or the setup wizard in its place. */
+type BudgetView = "budget" | "wizard";
 
 const STANDARD_CATEGORIES: string[] = ["housing", "bills", "expenses", "savings", "income"];
 
@@ -47,7 +47,9 @@ const BudgetContainer: FC = () => {
     if (userProfile) setProfile(userProfile);
   }, [userProfile, setProfile]);
 
-  const [activeTab, setActiveTab] = useState<BudgetTab>("dashboard");
+  const [view, setView] = useState<BudgetView>("budget");
+  // The one category whose entries are open in the list (E16 PR 5: rows open their entries).
+  const [openCategory, setOpenCategory] = useState<string | null>(null);
   const [entries, setEntries] = useState<BudgetEntry[]>(budgetEntries);
   const [isAddCategoryOpen, setIsAddCategoryOpen] = useState(false);
   const [isSeedingDefaults, setIsSeedingDefaults] = useState(false);
@@ -73,14 +75,21 @@ const BudgetContainer: FC = () => {
     }
   }, [userProfile?.customBudgetCategories]);
 
-  const categoryTabs = useMemo(() => {
+  const allCategories = useMemo(() => {
     return [...STANDARD_CATEGORIES, ...customCategories];
   }, [customCategories]);
 
   // Months-of-cover scenario inputs (accounts counted, severance, cuts, dropped lines) are
-  // session-only: held here so they survive tab switches, cleared on reload, never saved and
-  // never read by a headline.
+  // session-only: held here, cleared on reload, never saved and never read by the hero or strip.
   const [runwayScenario, setRunwayScenario] = useState<RunwayScenario | null>(null);
+  const runwayStepMarked = useRef(false);
+  const handleScenarioChange = (next: RunwayScenario) => {
+    setRunwayScenario(next);
+    if (!runwayStepMarked.current) {
+      runwayStepMarked.current = true;
+      markChecklistStep("runway", true).catch(() => {});
+    }
+  };
 
   // Older versions saved an account preference in the browser; it no longer feeds any figure.
   useEffect(() => {
@@ -163,7 +172,7 @@ const BudgetContainer: FC = () => {
       setActionError(null);
       setEntries((prev) => [...prev, created]);
     } catch (err) {
-      setActionError("We couldn't add that entry. Please try again.");
+      setActionError("We could not add that entry. Nothing has changed. Try again.");
       throw err;
     }
   };
@@ -177,7 +186,7 @@ const BudgetContainer: FC = () => {
       setActionError(null);
       setEntries((prev) => prev.map((e) => (e.id === id ? updated : e)));
     } catch (err) {
-      setActionError("We couldn't save your changes. Please try again.");
+      setActionError("We could not save your changes. Nothing has changed. Try again.");
       throw err;
     }
   };
@@ -190,7 +199,7 @@ const BudgetContainer: FC = () => {
       });
     } catch {
       // Keep the row: the server still has it.
-      setActionError("We couldn't delete that entry. Please try again.");
+      setActionError("We could not delete that entry. Nothing has changed. Try again.");
       return;
     }
     setActionError(null);
@@ -199,12 +208,7 @@ const BudgetContainer: FC = () => {
 
   const handleWizardComplete = async () => {
     await markChecklistStep("budget", true);
-    setActiveTab("dashboard");
-  };
-
-  const handleOpenRunway = () => {
-    setActiveTab("runway");
-    markChecklistStep("runway", true).catch(() => {});
+    setView("budget");
   };
 
   const handleAddSuggestedDefaults = async () => {
@@ -217,7 +221,7 @@ const BudgetContainer: FC = () => {
       setActionError(null);
       setEntries(updated);
     } catch {
-      setActionError("We couldn't add the suggested defaults. Please try again.");
+      setActionError("We could not add the example figures. Nothing has changed. Try again.");
     } finally {
       setIsSeedingDefaults(false);
     }
@@ -242,57 +246,54 @@ const BudgetContainer: FC = () => {
       await updateProfile({ customBudgetCategories: updatedCategories });
       setActionError(null);
     } catch {
-      setActionError("We couldn't save your new category. Please try again.");
+      setActionError("We could not save your new category. Nothing has changed. Try again.");
     }
-    setActiveTab(trimmed);
+    setOpenCategory(trimmed);
   };
 
   const handleDeleteCategory = async (catToDelete: string) => {
     const updated = customCategories.filter((c) => c !== catToDelete);
     setCustomCategories(updated);
     await updateProfile({ customBudgetCategories: updated });
-    if (activeTab === catToDelete) {
-      setActiveTab("dashboard");
+    if (openCategory === catToDelete) {
+      setOpenCategory(null);
     }
   };
 
+  const renderEntries = (category: string) => (
+    <BudgetCategoryTable
+      category={category}
+      embedded
+      entries={entries.filter((e) => e.category === category)}
+      onAdd={addEntry}
+      onDelete={deleteEntry}
+      onUpdate={updateEntry}
+      onDeleteCategory={!STANDARD_CATEGORIES.includes(category) ? handleDeleteCategory : undefined}
+    />
+  );
+
   return (
-    <div className={pageRoot()}>
-      <ProjectionNotice />
+    <PageBody>
       <PageHeader
         actions={
-          <div className={pageActions()}>
+          view === "budget" ? (
             <Button
               data-testid="setup-wizard-btn"
               id="setup-wizard-btn"
-              onClick={() => setActiveTab("wizard")}
+              onClick={() => setView("wizard")}
             >
               <Icon icon={ListChecks} size="sm" />
-              Create budget
+              {isBudgetEmpty ? "Set up your budget" : "Edit budget"}
             </Button>
-          </div>
+          ) : undefined
         }
         subtitle="Your income, spending and how long your money lasts."
         title="Your budget"
       />
 
-      {actionError && (
-        <div role="alert" className={errorBanner()}>
-          {actionError}
-        </div>
-      )}
+      {actionError && <InlineAlert tone="danger">{actionError}</InlineAlert>}
 
-      {activeTab !== "wizard" && (
-        <BudgetNav
-          activeTab={activeTab}
-          categoryTabs={categoryTabs}
-          onAddCategory={() => setIsAddCategoryOpen(true)}
-          onOpenRunway={handleOpenRunway}
-          onSelectTab={(tab) => setActiveTab(tab as BudgetTab)}
-        />
-      )}
-
-      {activeTab === "wizard" && (
+      {view === "wizard" ? (
         <BudgetSetupWizard
           entries={entries}
           monthlyTakeHome={
@@ -300,90 +301,78 @@ const BudgetContainer: FC = () => {
           }
           onAddEntry={addEntry}
           onDeleteEntry={deleteEntry}
-          onCancel={() => setActiveTab("dashboard")}
+          onCancel={() => setView("budget")}
           onComplete={handleWizardComplete}
           onUpdateEntry={updateEntry}
         />
-      )}
+      ) : (
+        <>
+          {isBudgetEmpty ? (
+            <EmptyState
+              action={
+                <Button
+                  data-testid="add-suggested-defaults-btn"
+                  disabled={isSeedingDefaults}
+                  id="add-suggested-defaults-btn"
+                  variant="outline"
+                  onClick={handleAddSuggestedDefaults}
+                >
+                  {isSeedingDefaults ? "Adding…" : "Add example figures"}
+                </Button>
+              }
+              description="Add your income and what you spend each month to see what is left over and how long your money lasts."
+              illustration={<Illustration scene="onboarding" />}
+              title="No budget yet"
+            />
+          ) : (
+            <BudgetOverview entries={entries} picture={picture} />
+          )}
 
-      {activeTab === "dashboard" && showHousingCost && (
-        <HousingCostCard
-          housingCost={picture.housingCost}
-          savedRent={
-            housingStatus === "renting" ? (pictureProfile?.monthlyHousingCost ?? null) : null
-          }
-          onSaveRent={handleSaveRent}
-        />
-      )}
+          {showHousingCost && (
+            <HousingDetailsCard
+              housingCost={picture.housingCost}
+              savedRent={
+                housingStatus === "renting" ? (pictureProfile?.monthlyHousingCost ?? null) : null
+              }
+              onSaveRent={handleSaveRent}
+            />
+          )}
 
-      {activeTab === "dashboard" &&
-        (isBudgetEmpty ? (
-          <EmptyState
-            action={
-              <Button onClick={() => setActiveTab("wizard")}>
-                <Icon icon={ListChecks} size="sm" />
-                Create budget
-              </Button>
-            }
-            description="Add your income and what you spend each month to see what is left over and how long your money lasts."
-            illustration={<Illustration scene="onboarding" />}
-            secondaryAction={
-              <Button
-                data-testid="add-suggested-defaults-btn"
-                disabled={isSeedingDefaults}
-                id="add-suggested-defaults-btn"
-                variant="outline"
-                onClick={handleAddSuggestedDefaults}
-              >
-                {isSeedingDefaults ? "Adding" : "Add suggested defaults"}
-              </Button>
-            }
-            title="No budget yet"
-          />
-        ) : (
-          <BudgetOverview
-            customCategories={customCategories}
-            entries={entries}
-            picture={picture}
-            onNavigateToCategory={(cat) => setActiveTab(cat as BudgetTab)}
-            onNavigateToRunway={handleOpenRunway}
-          />
-        ))}
+          {!isBudgetEmpty && (
+            <BudgetCategoryList
+              categories={allCategories}
+              entries={entries}
+              openCategory={openCategory}
+              renderEntries={renderEntries}
+              onAddCategory={() => setIsAddCategoryOpen(true)}
+              onToggleCategory={(cat) => setOpenCategory((prev) => (prev === cat ? null : cat))}
+            />
+          )}
 
-      {categoryTabs.includes(activeTab) && (
-        <div className={tabContent()}>
-          <BudgetCategoryTable
-            category={activeTab}
-            entries={entries.filter((e) => e.category === activeTab)}
-            onAdd={addEntry}
-            onDelete={deleteEntry}
-            onUpdate={updateEntry}
-            onDeleteCategory={
-              !STANDARD_CATEGORIES.includes(activeTab) ? handleDeleteCategory : undefined
-            }
-          />
-        </div>
-      )}
+          {!isBudgetEmpty && (
+            <RunwayCalculator
+              accountDetails={normalizedAccountDetails}
+              accounts={accountsWithBalances}
+              baseline={picture.monthsOfCover}
+              entries={entries}
+              scenario={runwayScenario}
+              onScenarioChange={handleScenarioChange}
+              onNavigateToForecast={() => navigate("/app/savings#forecast")}
+            />
+          )}
 
-      {activeTab === "runway" && (
-        <RunwayCalculator
-          accountDetails={normalizedAccountDetails}
-          accounts={accountsWithBalances}
-          baseline={picture.monthsOfCover}
-          entries={entries}
-          scenario={runwayScenario}
-          onScenarioChange={setRunwayScenario}
-          onNavigateToForecast={() => navigate("/app/savings#forecast")}
-        />
+          {/* The same line for every user, never triggered by their figures (ruling 1, R3, R4). */}
+          <DebtHelpLink />
+        </>
       )}
 
       <AddCategoryModal
         open={isAddCategoryOpen}
         onClose={() => setIsAddCategoryOpen(false)}
         onAddCategory={handleAddCategory}
-        existingCategories={categoryTabs}
+        existingCategories={allCategories}
       />
-    </div>
+    </PageBody>
   );
 };
 

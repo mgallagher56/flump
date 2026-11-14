@@ -152,7 +152,7 @@ describe("<BudgetCategoryTable />", () => {
     );
     expect(getByText(/Renews in \d+ days/)).toBeDefined();
     expect(getByText(/Ended \d+ days ago/)).toBeDefined();
-    expect(getByText("Annual, £1,200 a year")).toBeDefined();
+    expect(getByText("Yearly, £1,200 a year")).toBeDefined();
   });
 
   test("keeps rows beyond eight behind a drawer", () => {

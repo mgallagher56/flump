@@ -1,5 +1,5 @@
-import { fireEvent, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { screen } from "@testing-library/react";
+import { describe, expect, it } from "vitest";
 import customRender from "~/testUtils/customRender";
 import type { BudgetEntry } from "~/types/budget";
 import { buildWorkspacePicture } from "~/utils/financialPicture";
@@ -22,11 +22,6 @@ const entry = (overrides: Partial<BudgetEntry>): BudgetEntry => ({
   ...overrides,
 });
 
-const baseProps = {
-  onNavigateToCategory: vi.fn(),
-  onNavigateToRunway: vi.fn(),
-};
-
 const income = entry({
   id: "i1",
   category: "income",
@@ -36,131 +31,72 @@ const income = entry({
   isEssential: false,
 });
 
-describe("<BudgetOverview /> plan-only budget (no actuals)", () => {
-  const entries = [
-    income,
-    entry({}),
-    entry({ id: "e2", category: "expenses", name: "Dining", amount: 500, isEssential: false }),
-  ];
+const profile = {
+  annualSalary: 38000,
+  employmentType: "employed",
+  taxRegion: "ENGLAND",
+  studentLoanPlans: [],
+  pensionPercent: 5,
+  isSalarySacrifice: false,
+};
 
-  it("shows no month-to-date actuals and no connect-a-bank prompt", () => {
-    customRender(<BudgetOverview {...baseProps} entries={entries} />);
-    expect(screen.queryByText("MTD Settled Actuals")).toBeNull();
-    expect(screen.queryByText(/Actual spending is not tracked yet/)).toBeNull();
-  });
+const entries = [
+  income,
+  entry({}),
+  entry({ id: "e2", category: "expenses", name: "Dining", amount: 500, isEssential: false }),
+  entry({ id: "isa", category: "savings", name: "ISA", amount: 200, isEssential: false }),
+];
 
-  it("never shows 92% of a £1,000 priority budget (£920)", () => {
-    customRender(<BudgetOverview {...baseProps} entries={entries} />);
-    expect(screen.queryByText("£920")).toBeNull();
-    expect(screen.queryByText("£390")).toBeNull();
-  });
-
-  it("has one hero, a Where you stand strip and a months of cover link", () => {
-    const picture = buildWorkspacePicture({
-      userProfile: {
-        annualSalary: 38000,
-        employmentType: "employed",
-        taxRegion: "ENGLAND",
-        studentLoanPlans: [],
-        pensionPercent: 5,
-        isSalarySacrifice: false,
-      },
-      budgetEntries: entries,
-    });
-    const { container } = customRender(
-      <BudgetOverview {...baseProps} entries={entries} picture={picture} />,
-    );
+describe("<BudgetOverview />", () => {
+  it("leads with Left over each month in the one hero, then money in, essentials and flexible", () => {
+    const { container } = customRender(<BudgetOverview entries={entries} />);
     expect(container.querySelectorAll('[data-tone="hero"]')).toHaveLength(1);
-    expect(screen.getByRole("heading", { name: "Where you stand" })).toBeDefined();
     expect(screen.getByText("Left over each month")).toBeDefined();
-    fireEvent.click(screen.getByRole("button", { name: "See your months of cover" }));
-    expect(baseProps.onNavigateToRunway).toHaveBeenCalled();
+    // 3,000 - 1,000 - 500 - 200
+    expect(container.querySelector('[data-figure="budget.surplus"]')?.textContent).toBe("£1,300");
+    expect(screen.getByText("Money in")).toBeDefined();
+    expect(screen.getByText("Bills and essentials")).toBeDefined();
+    expect(screen.getByText("Flexible spending")).toBeDefined();
+    expect(screen.getByText("£3,000")).toBeDefined();
+    expect(screen.getByText("£1,000")).toBeDefined();
+    expect(screen.getByText("£500")).toBeDefined();
   });
-});
 
-describe("<BudgetOverview /> figures come from the financial picture (E23)", () => {
-  const profile = {
-    annualSalary: 38000,
-    employmentType: "employed",
-    taxRegion: "ENGLAND",
-    studentLoanPlans: [],
-    pensionPercent: 5,
-    isSalarySacrifice: false,
-  };
-  const entries = [
-    income,
-    entry({}),
-    entry({ id: "card", category: "debt", name: "Card payment", amount: 100 }),
-    entry({ id: "isa", category: "savings", name: "ISA", amount: 200, isEssential: false }),
-  ];
-
-  it("shows the picture's weekly safe to spend and the budget totals", () => {
+  it("shows weekly safe to spend as the hero's sub-line, from the picture", () => {
     const picture = buildWorkspacePicture({ userProfile: profile, budgetEntries: entries });
     if (picture.safeToSpend.status !== "known") throw new Error("expected known");
-    const { container } = customRender(
-      <BudgetOverview {...baseProps} entries={entries} picture={picture} />,
-    );
-    const weekly = container.querySelector('[data-figure="safeToSpend.weekly"]');
-    // Money shows whole pounds; the figure is the engine's weekly value.
+    const { container } = customRender(<BudgetOverview entries={entries} picture={picture} />);
+    const hero = container.querySelector('[data-tone="hero"]');
+    const weekly = hero?.querySelector('[data-figure="safeToSpend.weekly"]');
     expect(weekly?.textContent).toBe(
       `£${Math.round(picture.safeToSpend.value.weekly).toLocaleString("en-GB")}`,
     );
-    expect(container.querySelector('[data-figure="budget.outgoings"]')?.textContent).toBe("£1,100");
-    expect(container.querySelector('[data-figure="budget.savings"]')?.textContent).toBe("£200");
+    expect(hero?.textContent).not.toMatch(/a day/);
   });
 
-  it("does not guess safe to spend from names: a 'card' row in bills is just a bill", () => {
-    const picture = buildWorkspacePicture({
-      userProfile: profile,
-      budgetEntries: [income, entry({ category: "bills", name: "Card insurance", amount: 50 })],
-    });
-    if (picture.safeToSpend.status !== "known") throw new Error("expected known");
-    expect(picture.safeToSpend.value.commitments.debtCommitment).toBe(0);
-  });
-
-  it("shows Not set and a pay-details link when take-home is unknown", () => {
-    customRender(<BudgetOverview {...baseProps} entries={entries} />);
-    expect(screen.getAllByText("Not set").length).toBeGreaterThan(0);
+  it("asks for a salary when take-home is unknown", () => {
+    customRender(<BudgetOverview entries={entries} />);
     // The global test setup renders links as their children.
-    expect(screen.getByText("Add your pay details")).toBeDefined();
+    expect(
+      screen.getByText(/Add your salary to see what is safe to spend each week/),
+    ).toBeDefined();
   });
-});
 
-describe("<BudgetOverview /> with no income rows", () => {
-  it("shows income and left over as Not set, not £0 and a shortfall", () => {
-    const { container } = customRender(<BudgetOverview {...baseProps} entries={[entry({})]} />);
-    expect(container.querySelector('[data-figure="budget.income"]')).toBeNull();
+  it("shows income and left over as Not set without an income row, not £0", () => {
+    const { container } = customRender(<BudgetOverview entries={[entry({})]} />);
     expect(container.querySelector('[data-figure="budget.surplus"]')).toBeNull();
-    expect(screen.queryByText("Monthly shortfall")).toBeNull();
-    expect(screen.queryByText("Your budget spends more than you bring in")).toBeNull();
+    expect(container.querySelector('[data-tone="hero"]')).toBeNull();
+    expect(screen.getByText("Add your income to see what is left over each month.")).toBeDefined();
   });
-});
 
-describe("<BudgetOverview /> deficit", () => {
-  it("names the shortfall and offers debt support without telling the user what to do", () => {
-    customRender(
-      <BudgetOverview {...baseProps} entries={[{ ...income, amount: 500 }, entry({})]} />,
+  it("states a short budget plainly: no alarm, no charities, no ranking of bills", () => {
+    const { container } = customRender(
+      <BudgetOverview entries={[{ ...income, amount: 500 }, entry({})]} />,
     );
-    expect(screen.getByText("Monthly shortfall")).toBeDefined();
-    expect(screen.getByText("Your budget spends more than you bring in")).toBeDefined();
-    expect(screen.getByText("Free UK debt support")).toBeDefined();
-  });
-});
-
-describe("<BudgetOverview /> expense chart accessibility", () => {
-  it("exposes the expense breakdown as a named figure with the formatted total", () => {
-    customRender(
-      <BudgetOverview
-        {...baseProps}
-        entries={[
-          income,
-          entry({}),
-          entry({ id: "e2", category: "expenses", name: "Dining", amount: 500 }),
-        ]}
-      />,
-    );
-
-    const figure = screen.getByRole("figure", { name: "Expense breakdown by category" });
-    expect(figure.textContent).toMatch(/Monthly expenses total £1,500/);
+    expect(screen.getByText("Short each month")).toBeDefined();
+    expect(container.querySelector('[data-figure="budget.surplus"]')?.textContent).toBe("£500");
+    expect(screen.queryByText(/StepChange|National Debtline|Citizens Advice/)).toBeNull();
+    expect(screen.queryByText(/priority bills/i)).toBeNull();
+    expect(container.querySelector('[class*="danger"], [class*="warning"]')).toBeNull();
   });
 });

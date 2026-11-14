@@ -7,13 +7,12 @@ import {
 } from "@flump/finance-engine";
 import {
   Button,
-  Card,
   CurrencyInput,
   FormField,
   Icon,
-  KpiCard,
   Money,
   ProgressBar,
+  ProjectionNotice,
   ScenarioZone,
   SimulatorSplitLayout,
 } from "@repo/ui";
@@ -32,21 +31,18 @@ import {
   cardTitle,
   cardTitleRow,
   ctaRow,
-  heroSubtext,
-  heroValue,
-  introCard,
   introText,
   mutedNote,
   rowList,
   runwayRoot,
   scenarioValue,
-  statusCopy,
   switchButton,
   toggleEnd,
   toggleInfo,
   toggleMeta,
   toggleName,
   toggleRow,
+  toolGroup,
   totalRow,
   whatIfGrid,
 } from "./RunwayCalculator.styles";
@@ -134,10 +130,10 @@ interface BulkProps {
 
 const BulkButtons: FC<BulkProps> = ({ onAll, onNone, label }) => (
   <div className={bulkActions()}>
-    <Button aria-label={`Select all ${label}`} size="sm" variant="ghost" onClick={onAll}>
+    <Button aria-label={`Include all your ${label}`} size="sm" variant="ghost" onClick={onAll}>
       All
     </Button>
-    <Button aria-label={`Select none ${label}`} size="sm" variant="ghost" onClick={onNone}>
+    <Button aria-label={`Include none of your ${label}`} size="sm" variant="ghost" onClick={onNone}>
       None
     </Button>
   </div>
@@ -383,22 +379,11 @@ export const RunwayCalculator: FC<RunwayCalculatorProps> = ({
       .filter((g) => g.entries.length > 0);
   }, [expenseEntries]);
 
-  const resultsCopy =
-    monthlyBurn > 0 ? (
-      <span className={heroSubtext()}>
-        <span>Spending</span>
-        <Money size="sm" value={monthlyBurn} />
-        <span>a month</span>
-      </span>
-    ) : (
-      "No monthly spending in this illustration, so there is no end date"
-    );
-
   const poolCard = (
-    <Card padding="lg">
+    <div className={toolGroup()}>
       <div className={cardHeader()}>
         <div className={cardTitleRow()}>
-          <h2 className={cardTitle()}>Money to draw on</h2>
+          <h3 className={cardTitle()}>Money to draw on</h3>
         </div>
         {poolAccounts.length > 0 && (
           <BulkButtons
@@ -442,22 +427,22 @@ export const RunwayCalculator: FC<RunwayCalculatorProps> = ({
           </div>
         </div>
       )}
-    </Card>
+    </div>
   );
 
   const controls = (
     <>
       {poolCard}
-      <Card padding="lg">
+      <div className={toolGroup()}>
         <div className={cardHeader()}>
           <div className={cardTitleRow()}>
-            <h2 className={cardTitle()}>What if</h2>
+            <h3 className={cardTitle()}>What if</h3>
           </div>
         </div>
         <div className={whatIfGrid()}>
           <FormField
             hint="A one-off payment added to what you can draw on"
-            label="Severance or lump sum"
+            label="Redundancy pay or lump sum"
           >
             {(field) => (
               <CurrencyInput
@@ -469,7 +454,7 @@ export const RunwayCalculator: FC<RunwayCalculatorProps> = ({
               />
             )}
           </FormField>
-          <FormField hint="Spending you would cut each month" label="Extra monthly spending cut">
+          <FormField label="Spending you would cut, a month">
             {(field) => (
               <CurrencyInput
                 id={field.id}
@@ -481,16 +466,20 @@ export const RunwayCalculator: FC<RunwayCalculatorProps> = ({
             )}
           </FormField>
         </div>
-      </Card>
+      </div>
     </>
   );
 
   const content = (
     <>
-      <Card padding="lg">
-        <h2 className={cardTitle()}>Months of cover in this illustration</h2>
+      <div className={toolGroup()}>
+        <p className={introText()}>
+          Months of cover is how long your current and savings accounts would last if your income
+          stopped. It counts essential spending and minimum debt payments. Changes you make in the
+          illustration are not saved.
+        </p>
+        <h3 className={cardTitle()}>Months of cover in this illustration</h3>
         <p className={scenarioValue()}>{coverLabel}</p>
-        <p className={statusCopy()}>{resultsCopy}</p>
         <div className={breakdownList()}>
           <ProgressBar
             label="Months of cover, up to 24 months"
@@ -515,7 +504,7 @@ export const RunwayCalculator: FC<RunwayCalculatorProps> = ({
           </div>
           {debtNotInBudget > 0 && (
             <div className={breakdownRow()}>
-              <span>Debt minimums not in your budget, a month</span>
+              <span>Minimum debt payments not in your budget, a month</span>
               <Money size="sm" value={debtNotInBudget} />
             </div>
           )}
@@ -526,17 +515,17 @@ export const RunwayCalculator: FC<RunwayCalculatorProps> = ({
         </div>
         <div className={ctaRow()}>
           <Button variant="outline" onClick={onNavigateToForecast}>
-            See your Savings forecast
+            Open the savings page
             <Icon icon={ArrowRight} size="sm" />
           </Button>
         </div>
-      </Card>
+      </div>
 
       {nonPrimaryIncome.length > 0 && (
-        <Card padding="lg">
+        <div className={toolGroup()}>
           <div className={cardHeader()}>
             <div className={cardTitleRow()}>
-              <h2 className={cardTitle()}>Income you would keep</h2>
+              <h3 className={cardTitle()}>Income you would keep</h3>
             </div>
             <BulkButtons
               label="income"
@@ -566,13 +555,13 @@ export const RunwayCalculator: FC<RunwayCalculatorProps> = ({
               );
             })}
           </div>
-        </Card>
+        </div>
       )}
 
       {groupedExpenses.map(({ cat, entries: catEntries }) => (
-        <Card key={cat} padding="lg">
+        <div className={toolGroup()} key={cat}>
           <div className={cardHeader()}>
-            <h2 className={cardTitle()}>{CATEGORY_LABELS[cat] ?? cat}</h2>
+            <h3 className={cardTitle()}>{CATEGORY_LABELS[cat] ?? cat}</h3>
             <BulkButtons
               label={String(CATEGORY_LABELS[cat] ?? cat).toLowerCase()}
               onAll={() => setCategoryExpenses(catEntries, true)}
@@ -589,7 +578,7 @@ export const RunwayCalculator: FC<RunwayCalculatorProps> = ({
                     <Money size="sm" tone="muted" value={toMonthly(e)} />
                     <span>a month</span>
                     <span aria-hidden="true">·</span>
-                    <span>{e.isEssential ? "essential" : "discretionary"}</span>
+                    <span>{e.isEssential ? "essential" : "flexible"}</span>
                   </>
                 }
                 name={e.name}
@@ -599,7 +588,7 @@ export const RunwayCalculator: FC<RunwayCalculatorProps> = ({
               />
             ))}
           </div>
-        </Card>
+        </div>
       ))}
     </>
   );
@@ -608,54 +597,23 @@ export const RunwayCalculator: FC<RunwayCalculatorProps> = ({
 
   return (
     <div className={runwayRoot()}>
-      <Card padding="md">
-        <div className={introCard()}>
-          <p className={introText()}>
-            Months of cover is how long your current and savings accounts would cover your essential
-            spending and debt minimums if your income stopped. Anything you change under the
-            illustration stays on this page for this visit and is not saved.
-          </p>
-        </div>
-      </Card>
-
-      <KpiCard
-        label="Your months of cover"
-        notSetLabel="Not set"
-        subtext={
-          saved ? (
-            <span className={heroSubtext()}>
-              <Money size="sm" tone="onContrast" value={saved.liquidCash} />
-              <span>in current and savings accounts, over</span>
-              <Money size="sm" tone="onContrast" value={saved.monthlyEssentials} />
-              <span>of essentials a month</span>
-            </span>
-          ) : (
-            "Worked out once your budget has essential spending."
-          )
-        }
-        tone="hero"
-        value={
-          savedLabel ? (
-            <span className={heroValue()} data-figure="monthsOfCover">
-              {savedLabel}
-            </span>
-          ) : null
-        }
-      />
-
       <ScenarioZone
         basis={
-          saved ? (
-            <>
-              Starting from your figures: {savedLabel}, from{" "}
-              <Money size="sm" value={saved.liquidCash} /> and essentials of{" "}
-              <Money size="sm" value={saved.monthlyEssentials} /> a month
-            </>
-          ) : (
-            "Starting from your budget lines"
-          )
+          // The saved figure, from saved data only: the illustration below never changes it.
+          <span data-testid="runway-basis" id="runway-basis">
+            {saved ? (
+              <>
+                Starting from your saved months of cover:{" "}
+                <span data-figure="monthsOfCover">{savedLabel}</span>, from{" "}
+                <Money size="sm" value={saved.liquidCash} /> in current and savings accounts
+              </>
+            ) : (
+              "Starting from your budget entries. Months of cover shows once your budget has essential spending."
+            )}
+          </span>
         }
         isModified={isScenarioModified}
+        notice={<ProjectionNotice />}
         title="Model a change to your budget"
         onReset={handleResetScenario}
       >

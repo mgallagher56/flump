@@ -4,44 +4,8 @@ export const runwayRoot = cva({
   base: { display: "flex", flexDirection: "column", gap: "24px" },
 });
 
-export const introCard = cva({
-  base: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    flexWrap: "wrap",
-    gap: "12px",
-  },
-});
-
 export const introText = cva({
   base: { textStyle: "body.sm", color: "text.secondary", margin: 0, maxWidth: "60ch" },
-});
-
-export const introActions = cva({
-  base: { display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" },
-});
-
-export const savedNote = cva({
-  base: {
-    display: "inline-flex",
-    alignItems: "center",
-    gap: "4px",
-    textStyle: "label.sm",
-    color: "status.positive.text",
-  },
-});
-
-export const heroValue = cva({
-  base: {
-    textStyle: "numeric.kpi",
-    color: "text.onContrast",
-    fontVariantNumeric: "tabular-nums",
-  },
-});
-
-export const heroSubtext = cva({
-  base: { display: "inline-flex", alignItems: "baseline", gap: "6px", flexWrap: "wrap" },
 });
 
 export const cardHeader = cva({
@@ -172,10 +136,6 @@ export const statusRow = cva({
   base: { display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" },
 });
 
-export const statusCopy = cva({
-  base: { textStyle: "body.sm", color: "text.secondary", margin: 0 },
-});
-
 export const thresholds = cva({
   base: {
     display: "flex",
@@ -217,4 +177,9 @@ export const scenarioValue = cva({
     margin: 0,
     marginBottom: "4px",
   },
+});
+
+/** A group of inputs or results on the scenario zone surface: no nested card (E16 PR 2). */
+export const toolGroup = cva({
+  base: { display: "flex", flexDirection: "column", gap: "3", paddingBlock: "2" },
 });

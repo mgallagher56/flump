@@ -39,11 +39,11 @@ export const WizardEntryRow: FC<WizardEntryRowProps> = ({
           <button
             aria-pressed={entry.isEssential}
             className={essentialToggle()}
-            title="Switch between essential and discretionary"
+            title="Switch between essential and flexible spending"
             type="button"
             onClick={() => onUpdate(entry.id, { isEssential: !entry.isEssential })}
           >
-            {entry.isEssential ? "Essential" : "Discretionary"}
+            {entry.isEssential ? "Essential" : "Flexible"}
           </button>
         )}
       </div>
