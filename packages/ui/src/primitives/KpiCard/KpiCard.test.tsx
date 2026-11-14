@@ -179,9 +179,11 @@ describe("KpiCard value size (R2-2)", () => {
     expect(values[0]?.className).toContain("textStyle_numeric.kpi");
   });
 
-  it("lets a long value wrap rather than overflow", () => {
+  it("lets a long text value wrap at words, and never splits a money figure", () => {
     const { container } = render(<KpiCard label="Date" value="December 2029" />);
-    expect(container.querySelector("[data-kpi-value]")?.className).toContain("ov-wrap_anywhere");
+    expect(container.querySelector("[data-kpi-value]")?.className).toContain("ov-wrap_break-word");
+    const money = render(<KpiCard label="Total" value={1234567} />).container;
+    expect(money.querySelector("[data-kpi-value] > *")?.className).toContain("white-space_nowrap");
   });
 
   it("explains a computed figure in an InfoTip named by the label", () => {

@@ -59,12 +59,13 @@ export const mobileBottomBarLink = cva({
       outlineOffset: "-2px",
     },
     '&[aria-current="page"]': { backgroundColor: "primary.subtle", color: "primary" },
-    // A third child (the sandbox's lock icon after the label) sits beside the item icon as a
-    // badge, not in a row under the label, so every label shares one baseline (RESCORE B7).
-    "& > :nth-child(3)": {
+    // Anything after the label (the sandbox's lock icon) sits beside the item icon as a badge,
+    // not in a row under the label, so every label shares one baseline (RESCORE B7). The label
+    // carries `data-nav-label`, so this does not depend on whether the item has an icon.
+    "& > [data-nav-label] ~ *": {
       position: "absolute",
       insetBlockStart: "1",
-      insetInlineStart: "calc(50% + 0.5rem)",
+      insetInlineStart: "calc(50% + 0.75rem)",
       color: "text.muted",
     },
   },

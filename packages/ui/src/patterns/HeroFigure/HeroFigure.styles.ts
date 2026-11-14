@@ -113,7 +113,7 @@ export const heroFigure = sva({
             backgroundColor: "Canvas",
             borderColor: "CanvasText",
             color: "CanvasText",
-            "& *": { color: "CanvasText" },
+            "& *:not(a)": { color: "CanvasText" },
             "& :focus-visible": { outlineColor: "Highlight" },
           },
         },
