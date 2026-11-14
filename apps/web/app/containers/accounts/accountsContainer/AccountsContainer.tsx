@@ -1,9 +1,4 @@
-import {
-  HOME_ESTIMATE_LABEL,
-  PortfolioSnapshot,
-  type RawAccount,
-  type RawAccountDetail,
-} from "@flump/finance-engine";
+import { PortfolioSnapshot, type RawAccount, type RawAccountDetail } from "@flump/finance-engine";
 import { Button, Card, EmptyState, Illustration, PageHeader } from "@repo/ui";
 import { type FC, useMemo, useState } from "react";
 import { Link, useLoaderData } from "react-router";
@@ -51,7 +46,7 @@ const AccountsContainer: FC = () => {
   );
 
   // Net worth and its parts come from the one financial picture (E23), built on the same
-  // snapshot, so the profile home estimate (D3) counts here exactly as on the dashboard.
+  // snapshot, so the seeded home Property account (D3) counts here exactly as on the dashboard.
   const netWorth = useMemo(
     () => buildWorkspacePicture({ userProfile, accounts }, { snapshot }).netWorth,
     [userProfile, accounts, snapshot],
@@ -96,10 +91,6 @@ const AccountsContainer: FC = () => {
       if (!acc.isAsset || acc.nominalBalance <= 0) continue;
       totalAssets += acc.nominalBalance;
       typeTotals[acc.rawType] = (typeTotals[acc.rawType] || 0) + acc.nominalBalance;
-    }
-    if (netWorth.homeEstimate > 0) {
-      totalAssets += netWorth.homeEstimate;
-      typeTotals[HOME_ESTIMATE_LABEL] = netWorth.homeEstimate;
     }
     return Object.entries(typeTotals).map(([type, value]) => ({
       type,
