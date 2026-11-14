@@ -92,21 +92,6 @@ export const panelRowHint = cva({
   base: { textStyle: "body.sm", color: "text.muted" },
 });
 
-export const panelError = cva({
-  base: {
-    margin: 0,
-    px: "12px",
-    py: "8px",
-    textStyle: "body.sm",
-    color: "status.danger.text",
-    backgroundColor: "status.danger.bg",
-    borderWidth: "1px",
-    borderStyle: "solid",
-    borderColor: "status.danger.border",
-    borderRadius: "md",
-  },
-});
-
 export const panelFooter = cva({
   base: { display: "flex", justifyContent: "flex-end", marginTop: "8px" },
 });

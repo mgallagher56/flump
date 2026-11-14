@@ -26,39 +26,15 @@ type Story = StoryObj<typeof DebtWidget>;
 // The Storybook decorator renders light and dark side by side, so queries use the first match.
 export const Populated: Story = {
   play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement);
-    await expect(canvas.getAllByText("£8,200")[0]).toBeDefined();
-    await expect(canvas.getAllByText("December 2027")[0]).toBeDefined();
+    await expect(within(canvasElement).getAllByText("December 2027")[0]).toBeDefined();
   },
 };
 
-export const NotCalculated: Story = {
+export const NotPaidOffAtMinimums: Story = {
   args: { data: { ...summary, debtFreeDate: null } },
   play: async ({ canvasElement }) => {
-    await expect(within(canvasElement).getAllByText("Not calculated")[0]).toBeDefined();
+    await expect(within(canvasElement).getAllByText("Not set")[0]).toBeDefined();
   },
 };
 
-export const AprNotSet: Story = {
-  args: {
-    data: {
-      ...summary,
-      debtFreeDate: null,
-      debts: [{ id: "card", name: "Credit card", aprKnown: false }],
-    },
-  },
-  play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement);
-    await expect(canvas.getAllByText("Not set")[0]).toBeDefined();
-    await expect(canvas.getAllByRole("link", { name: "Add APR" })[0]).toBeDefined();
-  },
-};
-
-export const NoDebts: Story = {
-  args: { data: null },
-  play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement);
-    await expect(canvas.getAllByText("No debts added")[0]).toBeDefined();
-    await expect(canvas.getAllByRole("link", { name: "Add a debt" })[0]).toBeDefined();
-  },
-};
+export const NoDebt: Story = { args: { data: null } };

@@ -1,11 +1,23 @@
-import { evaluateFinancialStage } from "@flump/finance-engine";
-import { Button, Icon, PageHeader, ProjectionNotice, SectionBand } from "@repo/ui";
+import { HOME_ESTIMATE_LABEL } from "@flump/finance-engine";
+import {
+  Button,
+  DELTA_PANEL_COPY,
+  formatMoney,
+  HeroFigure,
+  Icon,
+  PageBody,
+  PageHeader,
+  ProjectionNotice,
+  VisuallyHidden,
+} from "@repo/ui";
 import { SlidersHorizontal } from "lucide-react";
-import { type FC, useMemo, useRef, useState } from "react";
+import { type FC, type ReactNode, useMemo, useRef, useState } from "react";
+import { SampleAwareLink } from "~/components/navigation/SampleAwareLink";
 import {
   MonthlyCheckInCard,
   type MonthlyCheckInCardProps,
 } from "~/features/snapshot/components/MonthlyCheckInCard";
+import { londonMonth } from "~/features/snapshot/snapshotModel";
 import { normalizeProfile, type UserProfile, useUserProfile } from "~/hooks/useUserProfile";
 import type { DebtSummary } from "~/utils/debtSummary";
 import {
@@ -15,114 +27,148 @@ import {
   DEFAULT_DASHBOARD_WIDGETS,
   DEFAULT_ENABLED_PAGES,
 } from "~/utils/pageConfig";
+import { netWorthDelta, type PriorNetWorth } from "../../netWorthDelta";
 import { AccountsWidget } from "../AccountsWidget";
 import { BudgetWidget } from "../BudgetWidget";
 import { DashboardEmptyState } from "../DashboardEmptyState";
-import { DashboardKpiStrip } from "../DashboardKpiStrip";
-import { DebtWidget } from "../DebtWidget";
+import { DashboardKpiStrip, stripShowsDebt } from "../DashboardKpiStrip";
+import { DebtWidget, debtCardShowsEstimate } from "../DebtWidget";
 import { MortgageWidget } from "../MortgageWidget";
 import { PensionWidget } from "../PensionWidget";
 import { SavingsWidget } from "../SavingsWidget";
 import { SetupChecklist, type SetupChecklistProps } from "../SetupChecklist";
-import { StageCoachCard } from "../StageCoachCard";
-import { TaxWidget } from "../TaxWidget";
+import { TaxWidget, taxCardShowsEstimate } from "../TaxWidget";
 import { WidgetVisibilityPanel } from "../WidgetVisibilityPanel";
-import { dashboardPage, showHideButton, widgetGrid } from "./HomeDashboard.styles";
+import { sectionHeading, sectionsRegion, showHideButton, widgetGrid } from "./HomeDashboard.styles";
 
 export interface HomeDashboardProps {
-  user: any;
+  user?: unknown;
   checklistProps: SetupChecklistProps;
-  /** E30 monthly check-in card; omitted in the signed-out sandbox. */
+  /** E30 monthly check-in; omitted in the signed-out sandbox. */
   checkIn?: MonthlyCheckInCardProps | null;
+  /** The latest recorded month before this one, for the hero's one delta. */
+  netWorthPrior?: PriorNetWorth | null;
   userProfile?: Partial<UserProfile> | UserProfile;
   accountsData: any;
   budgetData: any;
   savingsData: any;
   pensionData: any;
   mortgageData: any;
-  forecastData: any;
+  forecastData?: unknown;
   taxData: any;
   debtData?: DebtSummary | null;
   /**
-   * Whether show or hide choices are saved to the user's profile. `false` keeps them in this
-   * session only and never calls the backend (the signed-out sandbox).
+   * Whether "Choose what shows here" choices are saved to the user's profile. `false` keeps them
+   * in this session only and never calls the backend (the signed-out sandbox).
    */
   persistVisibility?: boolean;
-  /** Illustrative persona data (the sandbox): swaps the greeting for an "Example snapshot" heading. */
+  /** Illustrative persona data (the sandbox). */
   isSample?: boolean;
+  /** Drawn first inside the page body (the sandbox's sample-data bar). */
+  banner?: ReactNode;
+  /** Drawn last inside the page body (the sandbox's closing sign-up). */
+  footer?: ReactNode;
 }
+
+/** At most four section cards render (plan D1, E16 P1.8). */
+export const MAX_SECTION_CARDS = 4;
+
+/**
+ * Which sections are most useful on the dashboard, first to last. Debt, mortgage, savings and
+ * pension show figures found nowhere else on the page; budget and accounts mostly repeat the hero
+ * and the KPI strip, so they come last.
+ */
+export const SECTION_PRIORITY: readonly DashboardWidgetKey[] = [
+  "debt",
+  "mortgage",
+  "savings",
+  "pension",
+  "tax",
+  "budget",
+  "accounts",
+];
+
+/** The cards to draw: the most relevant `max` of `available`, in the fixed dashboard order. */
+export const selectSectionCards = (
+  available: readonly DashboardWidgetKey[],
+  max = MAX_SECTION_CARDS,
+): DashboardWidgetKey[] => {
+  const chosen = new Set(SECTION_PRIORITY.filter((k) => available.includes(k)).slice(0, max));
+  return ALL_PAGE_KEYS.filter((k) => chosen.has(k));
+};
 
 const finiteOrNull = (value: unknown): number | null =>
   typeof value === "number" && Number.isFinite(value) ? value : null;
 
+/** The hero value with its `data-figure` hook; a minus is spoken as "minus". */
+const heroValue = (netWorth: number) => {
+  const formatted = formatMoney(netWorth, { fractionDigits: 0 });
+  return (
+    <span data-figure="netWorth">
+      {formatted.spoken ? (
+        <>
+          <span aria-hidden="true">{formatted.text}</span>
+          <VisuallyHidden>{formatted.spoken}</VisuallyHidden>
+        </>
+      ) : (
+        formatted.text
+      )}
+    </span>
+  );
+};
+
+/**
+ * The dashboard (E16 PR 4): h1, the net worth hero with at most one delta, a strip of three
+ * supporting figures, the setup and check-in rows when they apply, then up to four section cards
+ * with one notice at their foot when a card shows an estimate. Every figure is a saved fact or
+ * labelled as an estimate, and none repeats.
+ */
 export const HomeDashboard: FC<HomeDashboardProps> = ({
-  user,
   checklistProps,
   checkIn = null,
+  netWorthPrior = null,
   userProfile,
   accountsData,
   budgetData,
   savingsData,
   pensionData,
   mortgageData,
-  forecastData,
   taxData,
   debtData,
   persistVisibility = true,
   isSample = false,
+  banner,
+  footer,
 }) => {
   const { profile: hookProfile, updateProfile } = useUserProfile();
-  const profile = useMemo(() => {
-    if (userProfile) {
-      return normalizeProfile(userProfile);
-    }
-    return hookProfile;
-  }, [userProfile, hookProfile]);
+  const profile = useMemo(
+    () => (userProfile ? normalizeProfile(userProfile) : hookProfile),
+    [userProfile, hookProfile],
+  );
 
   const [panelOpen, setPanelOpen] = useState(false);
   const [visibilityError, setVisibilityError] = useState<string | null>(null);
   // Optimistic copy of dashboardWidgets while a change is saving, or the whole truth when not saved.
   const [visibilityOverride, setVisibilityOverride] = useState<DashboardWidgetKey[] | null>(null);
 
-  // An empty budget means surplus, essentials and months of cover are unknown, not zero. The
+  // An empty budget means what is left over and months of cover are unknown, not zero. The
   // loader's picture decides; sample data (no budgetKnown field) falls back to its own totals.
   const budgetKnown =
     typeof budgetData?.budgetKnown === "boolean"
       ? budgetData.budgetKnown
       : (budgetData?.monthlyIncome ?? 0) > 0 || (budgetData?.monthlyExpenses ?? 0) > 0;
 
-  // Financial Lifecycle Stage evaluation
-  const financialStage = useMemo(() => {
-    if (!debtData && !(accountsData?.totalLiabilities > 0)) {
-      return null;
-    }
-    const debts = debtData?.debts ?? [];
-    const stage = evaluateFinancialStage({
-      debts,
-      // The picture's figures: liquid cash and the essential commitments months of cover uses.
-      monthlySurplus: budgetData?.monthlySurplus ?? 0,
-      liquidSavings: accountsData?.liquidCash ?? 0,
-      monthlyEssentialExpenses: budgetData?.monthlyEssentials ?? budgetData?.monthlyExpenses ?? 0,
-    });
-    // Without a budget only the debt-driven stage is real; buffer/optimise depend on runway.
-    return budgetKnown || stage.stage === "stabilize" ? stage : null;
-  }, [debtData, accountsData, budgetData, savingsData, budgetKnown]);
-
-  // Weekly safe to spend comes from the loader's financial picture (owner decision D-6-A);
-  // null means it cannot be worked out yet, never a guessed split of living costs.
-  const weeklySafeToSpend = finiteOrNull(budgetData?.safeToSpendWeekly);
-  const safeToSpendShortfall = finiteOrNull(budgetData?.safeToSpendShortfall);
-
   // Enabled pages according to UserProfile, in the fixed canonical order.
-  const enabledPages = useMemo<AppPageKey[]>(() => {
-    return (profile.enabledPages as AppPageKey[]) || DEFAULT_ENABLED_PAGES;
-  }, [profile.enabledPages]);
+  const enabledPages = useMemo<AppPageKey[]>(
+    () => (profile.enabledPages as AppPageKey[]) || DEFAULT_ENABLED_PAGES,
+    [profile.enabledPages],
+  );
   const applicableKeys = useMemo<DashboardWidgetKey[]>(
     () => ALL_PAGE_KEYS.filter((k) => enabledPages.includes(k)),
     [enabledPages],
   );
 
-  // Widgets the user has chosen to show.
+  // Sections the user has chosen to show.
   const dashboardWidgets = useMemo<DashboardWidgetKey[]>(() => {
     const raw =
       visibilityOverride ??
@@ -149,7 +195,7 @@ export const HomeDashboard: FC<HomeDashboardProps> = ({
       return;
     }
     try {
-      // Only dashboardWidgets is written: order, sizes and per-widget config are left alone.
+      // Only dashboardWidgets is written: order, sizes and per-section config are left alone.
       await updateProfile({ dashboardWidgets: next });
       confirmedRef.current = next;
       // A newer toggle owns the override now; otherwise the saved profile is the truth again.
@@ -157,76 +203,56 @@ export const HomeDashboard: FC<HomeDashboardProps> = ({
     } catch {
       if (seq !== saveSeqRef.current) return;
       setVisibilityOverride(confirmedRef.current);
-      setVisibilityError("We could not save that change. Try again.");
+      setVisibilityError("We could not save that change. Your dashboard is unchanged. Try again.");
     }
   };
 
-  const isModuleConfigured = (key: DashboardWidgetKey): boolean => {
+  const hasAccounts = Boolean(checklistProps.hasAccounts || (accountsData?.accountsCount ?? 0) > 0);
+
+  const hasData = (key: DashboardWidgetKey): boolean => {
     switch (key) {
       case "accounts":
-        return Boolean(checklistProps.hasAccounts || (accountsData?.accountsCount ?? 0) > 0);
+        return hasAccounts;
       case "budget":
-        return Boolean(
-          checklistProps.hasBudget ||
-            budgetData?.monthlyIncome > 0 ||
-            budgetData?.monthlyExpenses > 0 ||
-            checklistProps.completedSteps?.includes("budget"),
-        );
+        return Boolean(checklistProps.hasBudget || budgetKnown);
       case "savings":
-        return Boolean(
-          (savingsData?.accountsCount ?? 0) > 0 ||
-            checklistProps.hasSavings ||
-            checklistProps.completedSteps?.includes("savings"),
-        );
+        return Boolean((savingsData?.accountsCount ?? 0) > 0 || checklistProps.hasSavings);
       case "pension":
-        return Boolean(
-          (pensionData?.potsCount ?? 0) > 0 ||
-            checklistProps.hasPension ||
-            checklistProps.completedSteps?.includes("pension"),
-        );
+        return Boolean((pensionData?.potsCount ?? 0) > 0 || checklistProps.hasPension);
       case "mortgage":
         return Boolean(
-          (mortgageData?.hasMortgageAccount && mortgageData?.mortgageBalance > 0) ||
-            checklistProps.hasMortgageAccount ||
-            checklistProps.completedSteps?.includes("mortgage"),
+          (mortgageData?.hasMortgageAccount && mortgageData?.mortgageBalance) ||
+            checklistProps.hasMortgageAccount,
         );
       case "tax":
         return Boolean(checklistProps.hasTax || (taxData?.recordsCount ?? 0) > 0);
       case "debt":
-        return Boolean(
-          (debtData?.totalDebt ?? 0) > 0 || checklistProps.completedSteps?.includes("debt"),
-        );
+        return (debtData?.totalDebt ?? 0) > 0;
       default:
         return false;
     }
   };
 
-  // Shown widgets that are set up, in the fixed canonical order.
-  const visibleWidgets = ALL_PAGE_KEYS.filter(
-    (k) => dashboardWidgets.includes(k) && isModuleConfigured(k),
-  );
+  const cards = selectSectionCards(dashboardWidgets.filter(hasData));
   const anyShown = dashboardWidgets.length > 0;
 
-  // KPI figures: unknown stays null (rendered "Not set"); only a real zero is £0.
-  const hasAccounts = Boolean(checklistProps.hasAccounts || (accountsData?.accountsCount ?? 0) > 0);
-  // Liquid cash (current and savings accounts) is the same figure months of cover divides.
-  const liquidCash = hasAccounts ? finiteOrNull(accountsData?.liquidCash) : null;
+  // Figures: unknown stays null (rendered "Not set"); only a real zero is £0.
+  const netWorth = hasAccounts ? finiteOrNull(accountsData?.netWorth) : null;
+  const homeEstimate = hasAccounts ? finiteOrNull(accountsData?.homeEstimate) : null;
+  const totalOwed = finiteOrNull(debtData?.totalDebt);
+  const pensionPot =
+    (pensionData?.potsCount ?? 0) > 0 ? finiteOrNull(pensionData?.totalPensionBalance) : null;
+  const currentMonth = checkIn?.currentMonth ?? londonMonth();
+  const delta = netWorthDelta(netWorth, netWorthPrior, currentMonth);
 
-  const showCoachCard = financialStage?.stage === "stabilize" && (debtData?.totalDebt ?? 0) > 0;
-
-  // Greeting name comes from the WorkOS name (profile mirrors it); never a free-text display name.
-  const greetingName =
-    profile.firstName?.trim() ||
-    user?.firstName?.trim() ||
-    user?.user_metadata?.first_name?.trim() ||
-    null;
-
-  // Saved per-widget settings (read-only here) still apply; editing them is gone.
-  const widgetConfig = (key: DashboardWidgetKey) => profile.dashboardWidgetConfig?.[key] ?? {};
+  const showsTaxEstimate = cards.includes("tax") && taxCardShowsEstimate(taxData);
+  const showsDebtEstimate = cards.includes("debt") && debtCardShowsEstimate(debtData);
+  // The sandbox always carries the one projection notice beside its bar (E16 P4.4).
+  const showNotice = isSample || showsTaxEstimate || showsDebtEstimate;
 
   return (
-    <div className={dashboardPage()}>
-      <ProjectionNotice />
+    <PageBody data-testid="dashboard-page" id="dashboard-page">
+      {banner}
       <PageHeader
         actions={
           <Button
@@ -238,103 +264,94 @@ export const HomeDashboard: FC<HomeDashboardProps> = ({
             onClick={() => setPanelOpen(true)}
           >
             <Icon icon={SlidersHorizontal} size="sm" />
-            Show or hide widgets
+            Choose what shows here
           </Button>
         }
-        subtitle={
-          isSample
-            ? "Sample data: illustrative figures, not yours."
-            : "Your live financial snapshot across your active modules."
-        }
-        title={
-          // Neutral on a first visit straight after onboarding as much as on a later one.
-          isSample ? "Example snapshot" : greetingName ? `Hi, ${greetingName}` : "Your dashboard"
-        }
+        title={isSample ? "Example figures" : "Your money"}
       />
 
-      {showCoachCard && (
-        <SectionBand id="dashboard-next" title="Unsecured debt" variant="app">
-          <StageCoachCard
-            debtFreeDate={debtData?.debtFreeDate ?? null}
-            unsecuredDebt={financialStage?.totalUnsecuredDebt || debtData?.totalDebt || 0}
-            weeklyAllowance={weeklySafeToSpend}
-          />
-        </SectionBand>
+      {delta ? (
+        <HeroFigure
+          delta={delta}
+          label="Net worth"
+          value={netWorth === null ? null : heroValue(netWorth)}
+        />
+      ) : (
+        <HeroFigure
+          emptyAction={
+            <Button asChild size="sm" variant="ghost">
+              <SampleAwareLink to="/app/accounts">Add an account</SampleAwareLink>
+            </Button>
+          }
+          emptyPrompt="Add an account to see your net worth."
+          label="Net worth"
+          subline={
+            homeEstimate !== null && homeEstimate > 0
+              ? `Includes ${HOME_ESTIMATE_LABEL}`
+              : undefined
+          }
+          value={netWorth === null ? null : heroValue(netWorth)}
+        />
       )}
 
-      <SectionBand id="dashboard-stand" title="Where you stand" variant="app">
-        <DashboardKpiStrip
-          homeEstimate={hasAccounts ? finiteOrNull(accountsData?.homeEstimate) : null}
-          liquidCash={liquidCash}
-          monthlySurplus={budgetKnown ? finiteOrNull(budgetData?.monthlySurplus) : null}
-          netWorth={hasAccounts ? finiteOrNull(accountsData?.netWorth) : null}
-          totalAssets={hasAccounts ? finiteOrNull(accountsData?.totalAssets) : null}
-          totalLiabilities={hasAccounts ? finiteOrNull(accountsData?.totalLiabilities) : null}
-          safeToSpendShortfall={safeToSpendShortfall}
-          weeklySafeToSpend={weeklySafeToSpend}
-        />
-        {checkIn && hasAccounts ? <MonthlyCheckInCard {...checkIn} /> : null}
-      </SectionBand>
+      <DashboardKpiStrip
+        budgetKnown={budgetKnown}
+        monthlySurplus={budgetKnown ? finiteOrNull(budgetData?.monthlySurplus) : null}
+        monthsOfCover={finiteOrNull(budgetData?.monthsOfCover)}
+        pensionPot={pensionPot}
+        totalOwed={totalOwed}
+      />
 
-      {/* Onboarding Checklist */}
-      <SetupChecklist {...checklistProps} enabledPages={enabledPages} />
+      {isSample ? null : <SetupChecklist {...checklistProps} enabledPages={enabledPages} />}
+      {!isSample && checkIn && hasAccounts ? <MonthlyCheckInCard {...checkIn} /> : null}
 
-      <SectionBand id="dashboard-plans" title="Your plans at a glance" variant="app">
-        {visibleWidgets.length === 0 ? (
+      <section aria-labelledby="dashboard-sections-title" className={sectionsRegion()}>
+        <h2 className={sectionHeading()} id="dashboard-sections-title">
+          Your sections
+        </h2>
+        {cards.length === 0 ? (
           <DashboardEmptyState
             reason={anyShown ? "setup" : "hidden"}
             onChooseWidgets={() => setPanelOpen(true)}
           />
         ) : (
           <div className={widgetGrid()}>
-            {visibleWidgets.map((key) => {
+            {cards.map((key) => {
               switch (key) {
                 case "accounts":
-                  return <AccountsWidget key="accounts" data={accountsData} />;
+                  return <AccountsWidget data={accountsData} key="accounts" />;
                 case "budget":
-                  return (
-                    <BudgetWidget
-                      key="budget"
-                      data={{
-                        ...budgetData,
-                        annualSalary:
-                          profile.annualSalary ??
-                          forecastData?.annualSalary ??
-                          taxData?.totalIncome,
-                      }}
-                    />
-                  );
+                  return <BudgetWidget data={budgetData} key="budget" />;
                 case "debt":
-                  return <DebtWidget key="debt" data={debtData} />;
+                  return <DebtWidget data={debtData} key="debt" />;
                 case "savings":
-                  return (
-                    <SavingsWidget
-                      key="savings"
-                      config={widgetConfig("savings")}
-                      data={savingsData}
-                    />
-                  );
+                  return <SavingsWidget data={savingsData} key="savings" />;
                 case "pension":
                   return (
                     <PensionWidget
-                      key="pension"
                       data={pensionData}
-                      targetRetirementAge={finiteOrNull(
-                        widgetConfig("pension").targetRetirementAge,
-                      )}
+                      key="pension"
+                      potInStrip={!stripShowsDebt(totalOwed)}
                     />
                   );
                 case "mortgage":
-                  return <MortgageWidget key="mortgage" data={mortgageData} />;
+                  return <MortgageWidget data={mortgageData} key="mortgage" />;
                 case "tax":
-                  return <TaxWidget key="tax" data={taxData} />;
+                  return <TaxWidget data={taxData} key="tax" />;
                 default:
                   return null;
               }
             })}
           </div>
         )}
-      </SectionBand>
+        {showNotice ? (
+          <ProjectionNotice
+            lead={showsTaxEstimate ? DELTA_PANEL_COPY.unverifiedBanner : undefined}
+          />
+        ) : null}
+      </section>
+
+      {footer}
 
       <WidgetVisibilityPanel
         error={visibilityError}
@@ -344,6 +361,6 @@ export const HomeDashboard: FC<HomeDashboardProps> = ({
         onOpenChange={setPanelOpen}
         onToggle={handleToggleWidget}
       />
-    </div>
+    </PageBody>
   );
 };

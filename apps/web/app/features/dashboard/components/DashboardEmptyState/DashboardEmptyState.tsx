@@ -4,26 +4,26 @@ import { SampleAwareLink } from "~/components/navigation/SampleAwareLink";
 import { emptyStateSlot } from "./DashboardEmptyState.styles";
 
 export interface DashboardEmptyStateProps {
-  /** `setup`: nothing is configured yet. `hidden`: widgets exist but the user hid them all. */
+  /** `setup`: nothing has figures yet. `hidden`: sections exist but the user hid them all. */
   reason: "setup" | "hidden";
-  /** Opens the show or hide checklist. Used by the `hidden` reason. */
+  /** Opens "Choose what shows here". Used by the `hidden` reason. */
   onChooseWidgets?: () => void;
 }
 
-/** Shown when the widget grid would be empty. Always offers a next action. */
+/** Shown when the section grid would be empty. One button, always a next action. */
 export const DashboardEmptyState: FC<DashboardEmptyStateProps> = ({ reason, onChooseWidgets }) => (
   <div className={emptyStateSlot()}>
     {reason === "hidden" ? (
       <EmptyState
         action={
           <Button id="dashboard-empty-choose" size="sm" onClick={onChooseWidgets}>
-            Show or hide widgets
+            Choose what shows here
           </Button>
         }
-        description="Every widget is hidden. Choose the ones you want back."
+        description="Every section is hidden. Choose which ones to show."
         id="dashboard-empty-state"
         illustration={<Illustration scene="empty-goals" size="md" />}
-        title="No widgets showing"
+        title="Nothing to show yet"
       />
     ) : (
       <EmptyState
@@ -32,15 +32,10 @@ export const DashboardEmptyState: FC<DashboardEmptyStateProps> = ({ reason, onCh
             <SampleAwareLink to="/app/accounts">Add an account</SampleAwareLink>
           </Button>
         }
-        description="Finish the steps in the checklist above. Each widget appears here as soon as its section has your figures."
+        description="Add an account or your budget. Each section appears here once it has your figures."
         id="dashboard-empty-state"
         illustration={<Illustration scene="empty-accounts" size="md" />}
-        secondaryAction={
-          <Button asChild size="sm" variant="ghost">
-            <SampleAwareLink to="/app/budget">Add your budget</SampleAwareLink>
-          </Button>
-        }
-        title="Build your dashboard"
+        title="Nothing to show yet"
       />
     )}
   </div>

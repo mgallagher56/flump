@@ -15,7 +15,7 @@ const base = (over: Partial<WidgetVisibilityPanelProps> = {}): WidgetVisibilityP
 describe("<WidgetVisibilityPanel />", () => {
   it("lists each widget as a checkbox reflecting its visibility", () => {
     render(<WidgetVisibilityPanel {...base()} />);
-    expect(screen.getByRole("dialog", { name: "Show or hide widgets" })).toBeDefined();
+    expect(screen.getByRole("dialog", { name: "Choose what shows here" })).toBeDefined();
     const accounts = screen.getByRole("checkbox", { name: /^Accounts/ });
     const debt = screen.getByRole("checkbox", { name: /^Debt/ });
     expect((accounts as HTMLInputElement).checked).toBe(true);
@@ -31,7 +31,7 @@ describe("<WidgetVisibilityPanel />", () => {
 
   it("shows a save error inline", () => {
     render(<WidgetVisibilityPanel {...base({ error: "Could not save." })} />);
-    expect(screen.getByRole("alert").textContent).toBe("Could not save.");
+    expect(screen.getByRole("alert").textContent).toContain("Could not save.");
   });
 
   it("closes from the Done button", () => {

@@ -155,6 +155,51 @@ describe("_index route", () => {
     expect(data.accountsData.homeEstimate).toBe(310000);
   });
 
+  it("passes the latest earlier recorded month for the hero delta, and nothing else", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-11-14T12:00:00Z"));
+    try {
+      vi.mocked(loadWorkspaceSnapshot).mockResolvedValueOnce({
+        user: { id: "u1", email: "real@example.com" },
+        accounts: [{ id: "c", name: "Cash", type: "Saving", balance: 5320 }],
+        accountDetails: [
+          { accountId: "c", year: 2026, month: 9, value: 4800 },
+          { accountId: "c", year: 2026, month: 10, value: 5000 },
+        ],
+        budgetEntries: [],
+        taxRecords: [],
+        userProfile: { onboardingCompleted: true },
+        portfolioSnapshot: undefined,
+      } as any);
+      const data = (await loader({
+        request: new Request("http://localhost/"),
+        params: {},
+        context: {},
+      } as any)) as any;
+      expect(data.netWorthPrior).toEqual({ month: "2026-10", netWorth: 5000 });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("has no earlier month for the hero delta without a history", async () => {
+    vi.mocked(loadWorkspaceSnapshot).mockResolvedValueOnce({
+      user: { id: "u1", email: "real@example.com" },
+      accounts: [{ id: "c", name: "Cash", type: "Saving", balance: 5320 }],
+      accountDetails: [],
+      budgetEntries: [],
+      taxRecords: [],
+      userProfile: { onboardingCompleted: true },
+      portfolioSnapshot: undefined,
+    } as any);
+    const data = (await loader({
+      request: new Request("http://localhost/"),
+      params: {},
+      context: {},
+    } as any)) as any;
+    expect(data.netWorthPrior).toBeNull();
+  });
+
   it("rejects when the workspace snapshot fails instead of returning zeroed data", async () => {
     const failure = new Error("snapshot failed");
     vi.mocked(loadWorkspaceSnapshot).mockRejectedValueOnce(failure);

@@ -1,92 +1,70 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { describe, expect, it, vi } from "vitest";
-import { DashboardKpiStrip, type DashboardKpiStripProps } from "./DashboardKpiStrip";
+import {
+  DashboardKpiStrip,
+  type DashboardKpiStripProps,
+  stripShowsDebt,
+} from "./DashboardKpiStrip";
 
-// The global test setup stubs Link to its children; these tests need real anchors.
 vi.mock("react-router", async () => await vi.importActual("react-router"));
 
-const known: DashboardKpiStripProps = {
-  netWorth: 50000,
-  totalAssets: 60000,
-  totalLiabilities: 10000,
+const base: DashboardKpiStripProps = {
+  budgetKnown: true,
   monthlySurplus: 1500,
-  weeklySafeToSpend: 320,
-  liquidCash: 12500,
+  monthsOfCover: 4.7,
+  totalOwed: null,
+  pensionPot: 30000,
 };
 
-const unknown: DashboardKpiStripProps = {
-  netWorth: null,
-  totalAssets: null,
-  totalLiabilities: null,
-  monthlySurplus: null,
-  weeklySafeToSpend: null,
-  liquidCash: null,
-};
-
-const renderStrip = (props: DashboardKpiStripProps) =>
+const renderStrip = (overrides: Partial<DashboardKpiStripProps> = {}) =>
   render(
     <MemoryRouter>
-      <DashboardKpiStrip {...props} />
+      <DashboardKpiStrip {...base} {...overrides} />
     </MemoryRouter>,
   );
 
-describe("<DashboardKpiStrip />", () => {
-  it("shows exactly the four KPIs with en-GB formatted figures", () => {
-    renderStrip(known);
-    for (const label of ["Monthly surplus", "Weekly safe to spend", "Liquid cash"]) {
-      expect(screen.getByText(label)).toBeDefined();
-    }
-    // Net worth is both the hero headline and the first figure in the row.
-    expect(screen.getAllByText("Net worth")).toHaveLength(2);
-    expect(screen.getAllByText("£50,000")).toHaveLength(2);
-    expect(screen.getByText("£1,500")).toBeDefined();
-    expect(screen.getByText("£12,500")).toBeDefined();
+describe("DashboardKpiStrip", () => {
+  it("shows left over, months of cover and the pension pots when there is no debt", () => {
+    const { container } = renderStrip();
+    expect(screen.getByText("Left over each month")).toBeTruthy();
+    expect(screen.getByText("£1,500")).toBeTruthy();
+    expect(screen.getByText("4.7 months")).toBeTruthy();
+    expect(screen.getByText("Pension pots")).toBeTruthy();
+    expect(screen.queryByText(/net worth/i)).toBeNull();
+    expect(container.textContent).not.toContain("+");
+  });
+
+  it("shows what you owe instead of the pension when there is debt", () => {
+    renderStrip({ totalOwed: 8000 });
+    expect(screen.getByText("What you owe")).toBeTruthy();
+    expect(screen.getByText("£8,000")).toBeTruthy();
+    expect(screen.queryByText("Pension pots")).toBeNull();
+    expect(stripShowsDebt(8000)).toBe(true);
+    expect(stripShowsDebt(0)).toBe(false);
+  });
+
+  it("calls a negative figure a shortfall in the usual colour, with a minus sign", () => {
+    const { container } = renderStrip({ monthlySurplus: -250 });
+    expect(screen.getByText("Monthly shortfall")).toBeTruthy();
+    const figure = container.querySelector('[data-figure="budget.surplus"]');
+    expect(figure?.textContent).toMatch(/−£250|-£250/);
+    expect(figure?.innerHTML).not.toMatch(/danger|positive/);
+  });
+
+  it("replaces the strip with one prompt when most figures are unknown", () => {
+    renderStrip({ budgetKnown: false, monthlySurplus: null, monthsOfCover: null });
+    expect(
+      screen.getByText(
+        "Add your budget to see what is left over each month and your months of cover",
+      ),
+    ).toBeTruthy();
     expect(screen.queryByText("Not set")).toBeNull();
   });
 
-  it("renders Not set with an action for every unknown value, never £0", () => {
-    renderStrip(unknown);
-    expect(screen.getAllByText("Not set")).toHaveLength(4);
-    expect(screen.queryByText("£0")).toBeNull();
-    expect(screen.getByRole("link", { name: "Add an account" }).getAttribute("href")).toBe(
-      "/app/accounts",
-    );
-    expect(screen.getAllByRole("link", { name: "Add your budget" })).toHaveLength(2);
-    expect(screen.getByRole("link", { name: "Add a savings account" })).toBeDefined();
-  });
-
-  it("shows a real zero as £0 rather than Not set", () => {
-    renderStrip({ ...known, liquidCash: 0, monthlySurplus: 0 });
-    expect(screen.getAllByText("£0")).toHaveLength(2);
-    expect(screen.queryByText("Not set")).toBeNull();
-  });
-  it("makes net worth the single hero block and leaves the other cards plain", () => {
-    const { container } = renderStrip(known);
-    const heroes = container.querySelectorAll('[data-tone="hero"]');
-    expect(heroes).toHaveLength(1);
-    expect(heroes[0]?.textContent).toContain("Net worth");
-    expect(heroes[0]?.textContent).toContain("£50,000");
-  });
-
-  it("does not paint the hero block when net worth is unknown", () => {
-    const { container } = renderStrip(unknown);
-    expect(container.querySelector('[data-tone="hero"]')).toBeNull();
-  });
-
-  it("names a shortfall in plain words instead of a bare £0 safe to spend", () => {
-    renderStrip({ ...known, weeklySafeToSpend: 0, safeToSpendShortfall: 120 });
-    expect(screen.getByText(/a month more than take-home/)).toBeDefined();
-    expect(screen.queryByText("Discretionary allowance")).toBeNull();
-  });
-
-  it("labels the home estimate inside net worth, and shows nothing without one", () => {
-    renderStrip({ ...known, netWorth: 241000, totalAssets: 427000, homeEstimate: 310000 });
-    const line = screen.getByTestId("kpi-home-estimate");
-    expect(line.textContent).toContain("including Home (your estimate)");
-    expect(line.textContent).toContain("£310,000");
-    cleanup();
-    renderStrip({ ...known, homeEstimate: 0 });
-    expect(screen.queryByTestId("kpi-home-estimate")).toBeNull();
+  it('shows one "Not set" with one link when a single figure is unknown', () => {
+    renderStrip({ pensionPot: null });
+    expect(screen.getAllByText("Not set")).toHaveLength(1);
+    expect(screen.getByRole("link", { name: "Add a pension" })).toBeTruthy();
   });
 });

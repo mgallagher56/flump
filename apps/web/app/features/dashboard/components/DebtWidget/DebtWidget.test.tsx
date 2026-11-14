@@ -2,9 +2,8 @@ import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 import type { DebtSummary } from "~/utils/debtSummary";
-import { DebtWidget } from "./DebtWidget";
+import { DebtWidget, debtCardShowsEstimate } from "./DebtWidget";
 
-// The global test setup stubs Link to its children; these tests need real anchors.
 vi.mock("react-router", async () => await vi.importActual("react-router"));
 
 const summary: DebtSummary = {
@@ -25,68 +24,36 @@ const renderWidget = (data?: DebtSummary | null) =>
   );
 
 describe("DebtWidget", () => {
-  it("shows no invented figures when there is no data", () => {
-    renderWidget();
-
-    expect(screen.queryByText("August 2026")).toBeNull();
-    expect(screen.queryByText("£4,650")).toBeNull();
-    expect(screen.queryByText(/Interest saved/i)).toBeNull();
-    expect(screen.queryByText(/\+£50\/mo/)).toBeNull();
-    expect(screen.queryByText("£0")).toBeNull();
-  });
-
-  it("shows an empty state with an action to add a debt", () => {
-    renderWidget(null);
-    expect(screen.getByText("No debts added")).toBeDefined();
-    expect(screen.getByRole("link", { name: "Add a debt" }).getAttribute("href")).toBe(
-      "/app/accounts",
-    );
-  });
-
-  it("renders the summary figures with tabular numbers and no heading for the total", () => {
+  it("shows the debt-free date as an estimate, with no badge and no total", () => {
     renderWidget(summary);
-
-    expect(screen.getByText("Total unsecured debt")).toBeDefined();
-    expect(screen.getByText("£8,200").className).toContain("tabular-nums");
-    expect(screen.getByText("December 2027").className).toContain("tabular-nums");
-    expect(screen.getByText(/3 high APR accounts/i)).toBeDefined();
-    expect(screen.queryByText(/Interest saved/i)).toBeNull();
-    expect(screen.getAllByRole("heading").map((h) => h.textContent)).toEqual(["Debt"]);
-    expect(screen.getByRole("status").textContent).toContain("£8,200");
+    expect(screen.getByText("Debt-free date (estimate)")).toBeTruthy();
+    expect(screen.getByText("December 2027")).toBeTruthy();
+    expect(screen.queryByText(/high APR/i)).toBeNull();
+    expect(screen.queryByText("£8,200")).toBeNull();
+    expect(screen.getByText("Assumes you pay the minimum on each debt every month.")).toBeTruthy();
+    expect(screen.getAllByRole("link")).toHaveLength(1);
+    expect(debtCardShowsEstimate(summary)).toBe(true);
   });
 
-  it("uses the singular for one high APR account", () => {
-    renderWidget({ ...summary, highInterestCount: 1 });
-    expect(screen.getByText(/1 high APR account$/i)).toBeDefined();
-  });
-
-  it("labels minimums as estimated only when the summary flag is set", () => {
-    const { unmount } = renderWidget(summary);
-    expect(screen.queryByText("Monthly minimums (estimated)")).toBeNull();
-    expect(screen.getByText("Monthly minimums")).toBeDefined();
-    unmount();
-    renderWidget({ ...summary, monthlyMinimumEstimated: true });
-    expect(screen.getByText("Monthly minimums (estimated)")).toBeDefined();
-  });
-
-  it("shows 'Not calculated' when the debt-free date is null and every APR is known", () => {
-    renderWidget({ ...summary, debtFreeDate: null });
-    expect(screen.getByText("Not calculated")).toBeDefined();
-  });
-
-  it("shows Not set linking to Accounts when any APR is unknown", () => {
-    renderWidget({
+  it("asks for the APR instead of modelling an unknown rate", () => {
+    const data = {
       ...summary,
-      debtFreeDate: null,
-      debts: [
-        { id: "a", name: "Card", aprKnown: false },
-        { id: "b", name: "Loan", aprKnown: true },
-      ],
-    });
-    expect(screen.getByText("Not set")).toBeDefined();
-    expect(screen.queryByText("Not calculated")).toBeNull();
-    expect(screen.getByRole("link", { name: "Add APR" }).getAttribute("href")).toBe(
-      "/app/accounts",
-    );
+      debts: [{ aprKnown: false } as unknown as DebtSummary["debts"][number]],
+    };
+    renderWidget(data);
+    expect(screen.getByText("Not set")).toBeTruthy();
+    expect(screen.getByRole("link", { name: /Add your rates/ })).toBeTruthy();
+    expect(debtCardShowsEstimate(data)).toBe(false);
+  });
+
+  it('reads "Not set" when the minimums never clear the debt', () => {
+    renderWidget({ ...summary, debtFreeDate: null });
+    expect(screen.getByText("Not set")).toBeTruthy();
+  });
+
+  it("offers to add a debt when there is none", () => {
+    renderWidget(null);
+    expect(screen.getByRole("link", { name: /Add a debt/ })).toBeTruthy();
+    expect(debtCardShowsEstimate(null)).toBe(false);
   });
 });

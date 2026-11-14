@@ -1,23 +1,11 @@
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { describe, expect, it, vi } from "vitest";
-import { BudgetWidget, type BudgetWidgetData, formatMonthsOfCover } from "./BudgetWidget";
+import { BudgetWidget, formatMonthsOfCover } from "./BudgetWidget";
 
-// The global test setup stubs Link to its children; these tests need real anchors.
 vi.mock("react-router", async () => await vi.importActual("react-router"));
 
-const baseData: BudgetWidgetData = {
-  monthlyIncome: 6680,
-  annualSalary: 100000,
-  monthlyExpenses: 4950,
-  monthlySurplus: 1730,
-  budgetedSavings: 1200,
-  livingExpenses: 3750,
-  savingsRatePct: 44,
-  monthsOfCover: 12,
-};
-
-const renderWidget = (data: BudgetWidgetData | null) =>
+const renderWidget = (data: Parameters<typeof BudgetWidget>[0]["data"]) =>
   render(
     <MemoryRouter>
       <BudgetWidget data={data} />
@@ -25,121 +13,25 @@ const renderWidget = (data: BudgetWidgetData | null) =>
   );
 
 describe("BudgetWidget", () => {
-  it("shows Not set with an action, not £0 or 0 mos, when no budget is entered", () => {
-    renderWidget({
-      monthlyIncome: 0,
-      monthlyExpenses: 0,
-      monthlySurplus: 0,
-      budgetedSavings: 0,
-      livingExpenses: 0,
-      savingsRatePct: 0,
-      monthsOfCover: null,
-    });
-    expect(screen.getByText("Not set")).toBeDefined();
-    expect(screen.queryByText("0 mos")).toBeNull();
-    expect(screen.queryByText("£0")).toBeNull();
-    expect(screen.queryByText(/0%/)).toBeNull();
-    expect(screen.getByRole("link", { name: "Add your budget" }).getAttribute("href")).toBe(
-      "/app/budget",
-    );
+  it("shows spending each month as its one figure", () => {
+    renderWidget({ budgetKnown: true, monthlyIncome: 3000, monthlyExpenses: 2150 });
+    expect(screen.getByText("Spending each month")).toBeTruthy();
+    expect(screen.getByText("£2,150")).toBeTruthy();
+    expect(screen.getAllByRole("link")).toHaveLength(1);
   });
 
-  it("shows Not set when there is no data", () => {
-    renderWidget(null);
-    expect(screen.getByText("Not set")).toBeDefined();
-  });
-
-  it("shows surplus, budgeted income and savings rate in en-GB; no headline is a heading", () => {
-    renderWidget(baseData);
-    expect(screen.getByText("Monthly surplus")).toBeDefined();
-    expect(screen.getByText("+£1,730")).toBeDefined();
-    // Budgeted income in the tile and the "in" figure under the spending bar.
-    expect(screen.getAllByText("£6,680")).toHaveLength(2);
-    expect(screen.getByText("44%")).toBeDefined();
-    expect(screen.getByRole("status").textContent).toContain("+£1,730");
-    expect(screen.getAllByRole("heading").map((h) => h.textContent)).toEqual(["Budget"]);
-  });
-
-  it("labels a negative surplus as a deficit with a minus sign", () => {
-    renderWidget({ ...baseData, monthlySurplus: -300, monthlyExpenses: 6980 });
-    expect(screen.getByText("Monthly deficit")).toBeDefined();
-    expect(screen.getByText("minus £300")).toBeDefined();
-  });
-
-  it("shows savings rate as Not set when income is 0 even if expenses exist", () => {
-    renderWidget({
-      ...baseData,
-      monthlyIncome: 0,
-      monthlySurplus: -4950,
-      savingsRatePct: 0,
-    });
-    expect(screen.queryByText("0%")).toBeNull();
-    expect(screen.queryByText("Monthly deficit")).toBeNull();
-    expect(screen.queryByText(/4,950/)).toBeNull();
-    expect(screen.getAllByText("Not set").length).toBeGreaterThanOrEqual(3);
-    expect(screen.getAllByRole("link", { name: "Add income" }).length).toBe(3);
-  });
-
-  it("shows months of cover from the loader, with no target colour", () => {
-    renderWidget({ ...baseData, monthsOfCover: 4.7 });
-    expect(screen.getByText("Months of cover")).toBeDefined();
-    const figure = document.querySelector('[data-figure="monthsOfCover"]');
-    expect(figure?.textContent).toBe("4.7 months");
-    expect(screen.queryByText(/runway/i)).toBeNull();
-  });
-
-  it("shows a budget with only savings rows, using the loader's budgetKnown", () => {
-    renderWidget({
-      budgetKnown: true,
-      monthlyIncome: 0,
-      monthlyExpenses: 0,
-      monthlySurplus: null,
-      budgetedSavings: 200,
-      savingsRatePct: 0,
-      monthsOfCover: null,
-    });
-    expect(screen.queryByRole("link", { name: "Add your budget" })).toBeNull();
-    expect(screen.getAllByRole("link", { name: "Add income" }).length).toBeGreaterThan(0);
-  });
-
-  it("shows Not set when months of cover cannot be worked out", () => {
-    renderWidget({ ...baseData, monthsOfCover: null });
-    expect(screen.getByRole("link", { name: "Add essential spending" })).toBeDefined();
-  });
-
-  it("never reads a saved runway preference from the browser", () => {
-    window.localStorage.setItem(
-      "flump_runway_calculator_settings",
-      JSON.stringify({ includedAccounts: { a: false } }),
-    );
-    renderWidget({ ...baseData, monthsOfCover: 3 });
-    expect(document.querySelector('[data-figure="monthsOfCover"]')?.textContent).toBe("3 months");
-    window.localStorage.removeItem("flump_runway_calculator_settings");
-  });
-
-  it("exposes spending against income as a labelled progress bar", () => {
-    renderWidget(baseData);
-    const bar = screen.getByRole("progressbar", { name: "Spending as a share of income" });
-    expect(bar.getAttribute("aria-valuenow")).toBe("4950");
-    expect(bar.getAttribute("aria-valuemax")).toBe("6680");
-    expect(screen.getByText("74% of income")).toBeDefined();
-  });
-
-  it("omits the gross salary line when the salary is unknown", () => {
-    renderWidget({ ...baseData, annualSalary: null, budgetedSavings: 0 });
-    expect(screen.queryByText(/Gross salary/)).toBeNull();
+  it('reads "Not set" with one link when there is no budget', () => {
+    renderWidget({ budgetKnown: false, monthlyExpenses: 0 });
+    expect(screen.getByText("Not set")).toBeTruthy();
+    expect(screen.getByRole("link", { name: /Add your budget/ })).toBeTruthy();
   });
 });
 
 describe("formatMonthsOfCover", () => {
-  it.each([
-    [0, "0 months"],
-    [0.7, "0.7 months"],
-    [1, "1 month"],
-    [7.5, "7.5 months"],
-    [18, "18 months"],
-    [130, "10+ years"],
-  ])("formats %s months as %s", (months, expected) => {
-    expect(formatMonthsOfCover(months)).toBe(expected);
+  it("formats months and long runways in plain words", () => {
+    expect(formatMonthsOfCover(1)).toBe("1 month");
+    expect(formatMonthsOfCover(4.74)).toBe("4.7 months");
+    expect(formatMonthsOfCover(130)).toBe("10+ years");
+    expect(formatMonthsOfCover(-2)).toBe("0 months");
   });
 });

@@ -1,5 +1,5 @@
 import * as Dialog from "@radix-ui/react-dialog";
-import { Button, Icon } from "@repo/ui";
+import { Button, Icon, InlineAlert } from "@repo/ui";
 import type { FC } from "react";
 import { DASHBOARD_WIDGET_METAS, type DashboardWidgetKey } from "~/utils/pageConfig";
 import { WIDGET_ICONS } from "../../widgetIcons";
@@ -7,7 +7,6 @@ import {
   panelCheckbox,
   panelContent,
   panelDescription,
-  panelError,
   panelFooter,
   panelList,
   panelOverlay,
@@ -21,16 +20,16 @@ import {
 export interface WidgetVisibilityPanelProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  /** Widgets the user can choose between, in the fixed dashboard order. */
+  /** Sections the user can choose between, in the fixed dashboard order. */
   widgetKeys: DashboardWidgetKey[];
-  /** Widgets currently shown. */
+  /** Sections currently chosen. */
   visibleKeys: DashboardWidgetKey[];
   onToggle: (key: DashboardWidgetKey) => void;
   /** Failure copy from the last save. Shown inline; the checklist keeps the user's choice. */
   error?: string | null;
 }
 
-/** Show or hide checklist. It only ever changes which widgets appear, never their order. */
+/** "Choose what shows here": only ever changes which sections appear, never their order. */
 export const WidgetVisibilityPanel: FC<WidgetVisibilityPanelProps> = ({
   open,
   onOpenChange,
@@ -43,15 +42,12 @@ export const WidgetVisibilityPanel: FC<WidgetVisibilityPanelProps> = ({
     <Dialog.Portal>
       <Dialog.Overlay className={panelOverlay()} />
       <Dialog.Content className={panelContent()} data-focus-managed id="widget-visibility-panel">
-        <Dialog.Title className={panelTitle()}>Show or hide widgets</Dialog.Title>
+        <Dialog.Title className={panelTitle()}>Choose what shows here</Dialog.Title>
         <Dialog.Description className={panelDescription()}>
-          Choose which widgets appear on your dashboard. They always keep the same order.
+          Choose which sections appear on your dashboard. Up to four show at a time, and the order
+          stays the same.
         </Dialog.Description>
-        {error ? (
-          <p className={panelError()} role="alert">
-            {error}
-          </p>
-        ) : null}
+        {error ? <InlineAlert tone="danger">{error}</InlineAlert> : null}
         <ul className={panelList()}>
           {widgetKeys.map((key) => {
             const meta = DASHBOARD_WIDGET_METAS[key];

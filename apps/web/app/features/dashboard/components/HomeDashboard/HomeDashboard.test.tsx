@@ -1,13 +1,20 @@
+import { countFigures, expectPageRules } from "@repo/ui/testing";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { HomeDashboard, type HomeDashboardProps } from "./HomeDashboard";
+import { SampleModeProvider } from "~/context/SampleModeContext";
+import type { DebtSummary } from "~/utils/debtSummary";
+import {
+  HomeDashboard,
+  type HomeDashboardProps,
+  MAX_SECTION_CARDS,
+  selectSectionCards,
+} from "./HomeDashboard";
 
 // The global test setup stubs Link to its children; these tests need real anchors.
 vi.mock("react-router", async () => await vi.importActual("react-router"));
 
 const mockUpdateProfile = vi.hoisted(() => vi.fn());
-const profileOverrides = vi.hoisted(() => ({ extraWidgets: [] as string[] }));
 
 vi.mock("~/hooks/useUserProfile", async (importOriginal) => {
   const actual: any = await importOriginal();
@@ -18,11 +25,11 @@ vi.mock("~/hooks/useUserProfile", async (importOriginal) => {
       const [widgets, setWidgets] = useState<string[]>([
         "accounts",
         "budget",
+        "debt",
         "savings",
         "pension",
         "mortgage",
         "tax",
-        ...profileOverrides.extraWidgets,
       ]);
       return {
         profile: {
@@ -34,9 +41,7 @@ vi.mock("~/hooks/useUserProfile", async (importOriginal) => {
           dashboardWidgets: widgets,
           dashboardWidgetOrder: ["tax", "accounts"],
           dashboardWidgetSizes: { accounts: "wide" },
-          dashboardWidgetConfig: {
-            accounts: { showAllocationBar: false },
-          },
+          dashboardWidgetConfig: {},
         },
         updateProfile: async (updates: { dashboardWidgets?: string[] }) => {
           await mockUpdateProfile(updates);
@@ -47,18 +52,18 @@ vi.mock("~/hooks/useUserProfile", async (importOriginal) => {
   };
 });
 
-const debtSummary = {
-  totalDebt: 3000,
-  debtCount: 1,
+const debtSummary: DebtSummary = {
+  totalDebt: 8000,
+  debtCount: 2,
   highInterestCount: 1,
-  monthlyMinimumTotal: 90,
+  monthlyMinimumTotal: 250,
   monthlyMinimumEstimated: false,
   debtFreeDate: "March 2029",
   debts: [],
 };
 
-const dummyProps = {
-  user: { id: "u1" },
+/** A user with savings, a pension, a mortgage, tax records and no consumer debt. */
+const noDebt: HomeDashboardProps = {
   checklistProps: {
     hasAccounts: true,
     hasProfile: true,
@@ -66,349 +71,260 @@ const dummyProps = {
     hasSavings: true,
     hasPension: true,
     hasMortgageAccount: true,
-    hasRunForecast: true,
-    completedSteps: ["accounts", "budget", "profile", "savings", "pension", "mortgage"],
+    hasRunForecast: false,
+    hasTax: true,
+    completedSteps: ["accounts", "budget", "savings", "pension", "mortgage", "tax"],
   },
-  accountsData: {
-    netWorth: 50000,
-    totalAssets: 60000,
-    totalLiabilities: 10000,
-    accountsCount: 3,
-    typeTotals: { Current: 10000, Saving: 50000 },
-  },
+  checkIn: { currentMonth: "2026-11", lastRecordedMonth: "2026-10" },
+  netWorthPrior: { month: "2026-10", netWorth: 49680 },
+  accountsData: { netWorth: 50000, homeEstimate: 0, accountsCount: 5 },
   budgetData: {
+    budgetKnown: true,
     monthlyIncome: 4000,
     monthlyExpenses: 2500,
     monthlySurplus: 1500,
-    savingsRatePct: 38,
-    runwayMonths: 12,
+    monthsOfCover: 6.2,
   },
-  savingsData: {
-    totalSavingsBalance: 50000,
-    totalMonthlyContributions: 500,
-    weightedInterestRate: 4.5,
-    accountsCount: 2,
-  },
+  savingsData: { totalSavingsBalance: 20000, accountsCount: 2 },
   pensionData: {
     totalPensionBalance: 30000,
     potsCount: 1,
     employeePercent: 5,
     employerPercent: 3,
-    isSalarySacrifice: true,
-    monthlyContributionEst: 400,
   },
-  mortgageData: {
-    mortgageBalance: 150000,
-    interestRate: 4.2,
-    remainingTermYears: 22,
-    hasMortgageAccount: true,
-  },
-  forecastData: {
-    totalAssets: 60000,
-    monthlySavingRate: 1500,
-    annualSalary: 55000,
-    estimatedTakeHome: 3200,
-  },
-  taxData: {
-    taxYear: "2024/25",
-    totalIncome: 12000,
-    totalExpenses: 2000,
-    netProfit: 10000,
-    estimatedTaxDue: null,
-    recordsCount: 5,
-  },
+  mortgageData: { mortgageBalance: 150000, hasMortgageAccount: true },
+  taxData: { estimatedTaxDue: 2400, recordsCount: 5 },
+  debtData: null,
 };
 
-const renderDashboard = (props: Partial<HomeDashboardProps> = {}) =>
-  render(
-    <MemoryRouter>
-      <HomeDashboard {...(dummyProps as any)} {...props} />
-    </MemoryRouter>,
-  );
-
-const openPanel = () => {
-  fireEvent.click(screen.getByRole("button", { name: /Show or hide widgets/ }));
-  return screen.getByRole("dialog", { name: "Show or hide widgets" });
+/** The same user paying off cards and a loan. */
+const withDebt: HomeDashboardProps = {
+  ...noDebt,
+  accountsData: { netWorth: -2000, homeEstimate: 0, accountsCount: 4 },
+  debtData: debtSummary,
 };
 
-const unconfigured = {
+/** Straight after onboarding: nothing added yet. */
+const nearEmpty: HomeDashboardProps = {
   checklistProps: {
     hasAccounts: false,
-    hasProfile: false,
+    hasProfile: true,
     hasBudget: false,
-    hasSavings: false,
-    hasPension: false,
     hasMortgageAccount: false,
     hasRunForecast: false,
     completedSteps: [],
   },
-  accountsData: { ...dummyProps.accountsData, accountsCount: 0 },
-  budgetData: { ...dummyProps.budgetData, monthlyIncome: 0, monthlyExpenses: 0 },
-  savingsData: { ...dummyProps.savingsData, accountsCount: 0 },
-  pensionData: { ...dummyProps.pensionData, potsCount: 0 },
-  mortgageData: { ...dummyProps.mortgageData, hasMortgageAccount: false, mortgageBalance: 0 },
-  forecastData: { ...dummyProps.forecastData },
-  taxData: { ...dummyProps.taxData, recordsCount: 0 },
+  checkIn: { currentMonth: "2026-11", lastRecordedMonth: null },
+  accountsData: { netWorth: 0, accountsCount: 0 },
+  budgetData: { budgetKnown: false, monthlyIncome: 0, monthlyExpenses: 0, monthlySurplus: null },
+  savingsData: { totalSavingsBalance: 0, accountsCount: 0 },
+  pensionData: {
+    totalPensionBalance: 0,
+    potsCount: 0,
+    employeePercent: null,
+    employerPercent: null,
+  },
+  mortgageData: { mortgageBalance: 0, hasMortgageAccount: false },
+  taxData: { estimatedTaxDue: null, recordsCount: 0 },
+  debtData: null,
 };
+
+const renderDashboard = (props: HomeDashboardProps, sample = false) =>
+  render(
+    <MemoryRouter>
+      <SampleModeProvider value={sample}>
+        <HomeDashboard {...props} isSample={sample} persistVisibility={!sample} />
+      </SampleModeProvider>
+    </MemoryRouter>,
+  );
+
+const FORBIDDEN = /module|widget|baseline|Welcome back|bank feeds/i;
+
+/** Every word a person can see or hear: text, aria-labels and titles. */
+const userFacingText = (root: HTMLElement): string =>
+  [
+    root.textContent ?? "",
+    ...Array.from(root.querySelectorAll("[aria-label],[title]")).map(
+      (el) => `${el.getAttribute("aria-label") ?? ""} ${el.getAttribute("title") ?? ""}`,
+    ),
+  ].join(" ");
+
+/** The h1, the hero and the KPI strip: what fits in the first view. */
+const firstViewFigures = (container: HTMLElement): number => {
+  const hero = screen.getByTestId("hero-figure");
+  const strip = hero.nextElementSibling as HTMLElement;
+  const h1 = container.querySelector("h1") as HTMLElement;
+  return countFigures(h1) + countFigures(hero) + countFigures(strip);
+};
+
+/** Net worth as a figure, and as a label beside a figure. */
+const netWorthCount = (container: HTMLElement) =>
+  container.querySelectorAll('[data-figure="netWorth"]').length;
+const netWorthLabels = () => screen.queryAllByText(/^Net worth$/).length;
+
+describe.each([
+  ["with debt", withDebt],
+  ["without debt", noDebt],
+])("HomeDashboard, a user %s", (_name, props) => {
+  beforeEach(() => window.localStorage.clear());
+
+  it("keeps to the page rules: figure budget, one hero, one notice after the h1", () => {
+    const { container } = renderDashboard(props);
+    expectPageRules(container, { maxFigures: 10, maxNotSet: 3, projectionNotices: 1 });
+    // The hero plus its one delta and three supporting figures.
+    expect(firstViewFigures(container)).toBeLessThanOrEqual(5);
+  });
+
+  it('is "Your money" with nothing above the h1 and no forbidden words', () => {
+    const { container } = renderDashboard(props);
+    const h1 = screen.getByRole("heading", { level: 1 });
+    expect(h1.textContent).toContain("Your money");
+    expect(container.querySelector("[data-notice]")?.compareDocumentPosition(h1)).toBe(
+      Node.DOCUMENT_POSITION_PRECEDING,
+    );
+    expect(userFacingText(container)).not.toMatch(FORBIDDEN);
+  });
+
+  it("shows net worth once, in the hero, with one delta", () => {
+    const { container } = renderDashboard(props);
+    expect(netWorthCount(container)).toBe(1);
+    expect(netWorthLabels()).toBe(1);
+    expect(
+      screen
+        .getByTestId("hero-figure")
+        .contains(container.querySelector('[data-figure="netWorth"]') as HTMLElement),
+    ).toBe(true);
+    expect(screen.getByTestId("hero-figure").textContent).toMatch(/since October/);
+  });
+
+  it("draws at most four section cards, each with one link", () => {
+    const { container } = renderDashboard(props);
+    const cards = container.querySelectorAll("[data-section-card]");
+    expect(cards.length).toBeLessThanOrEqual(MAX_SECTION_CARDS);
+    for (const card of Array.from(cards)) {
+      expect(within(card as HTMLElement).getAllByRole("link")).toHaveLength(1);
+    }
+  });
+
+  it("never colours money red or green and never adds a plus sign", () => {
+    const { container } = renderDashboard(props);
+    for (const el of Array.from(container.querySelectorAll("[data-tone]"))) {
+      expect(el.getAttribute("data-tone")).not.toMatch(/danger|positive/);
+    }
+    expect(container.textContent).not.toMatch(/\+£/);
+  });
+});
 
 describe("HomeDashboard", () => {
   beforeEach(() => {
+    window.localStorage.clear();
     mockUpdateProfile.mockReset();
     mockUpdateProfile.mockResolvedValue(undefined);
-    profileOverrides.extraWidgets = [];
   });
 
-  it("renders welcome header and widgets for all enabled pages", () => {
-    renderDashboard();
-    expect(screen.getByRole("heading", { level: 1, name: "Hi, Alex" })).toBeDefined();
-    // Straight after a first onboarding there is no "back" to welcome the user to.
-    expect(screen.queryByText(/Welcome back/)).toBeNull();
-    expect(screen.getByText("Accounts")).toBeDefined();
-    expect(screen.getByText("Budget")).toBeDefined();
-    expect(screen.getByText("Savings")).toBeDefined();
-    expect(screen.getByText("Pension")).toBeDefined();
-    expect(screen.getByText("Mortgage")).toBeDefined();
-    expect(screen.queryByText("Growth forecast")).toBeNull();
-    expect(screen.getByText("Self Assessment")).toBeDefined();
+  it("shows the debt card instead of a band above the hero, with no judgement", () => {
+    const { container } = renderDashboard(withDebt);
+    expect(screen.getByTestId("widget-card-debt")).toBeTruthy();
+    expect(screen.queryByText(/Unsecured debt/i)).toBeNull();
+    expect(container.textContent).not.toMatch(/high APR/i);
+    expect(screen.getByText("What you owe")).toBeTruthy();
   });
 
-  it("groups the page into plain-language bands", () => {
-    renderDashboard();
-    for (const name of ["Where you stand", "Your plans at a glance"]) {
-      expect(screen.getByRole("heading", { level: 2, name })).toBeDefined();
-    }
+  it("picks the four most relevant sections the user has figures for", () => {
+    renderDashboard(withDebt);
+    expect(screen.getByTestId("widget-card-debt")).toBeTruthy();
+    expect(screen.getByTestId("widget-card-mortgage")).toBeTruthy();
+    expect(screen.getByTestId("widget-card-savings")).toBeTruthy();
+    expect(screen.getByTestId("widget-card-pension")).toBeTruthy();
+    expect(screen.queryByTestId("widget-card-accounts")).toBeNull();
+    expect(selectSectionCards(["accounts", "budget", "tax"])).toEqual([
+      "accounts",
+      "budget",
+      "tax",
+    ]);
   });
 
-  it("labels sandbox data as an example instead of welcoming the user back", () => {
-    renderDashboard({ isSample: true });
-    expect(screen.getByRole("heading", { level: 1, name: "Example snapshot" })).toBeDefined();
-    expect(screen.queryByText(/Hi, Alex/)).toBeNull();
-    expect(screen.getByText(/Sample data: illustrative figures/)).toBeDefined();
-    expect(document.querySelectorAll('[data-testid="projection-notice"]')).toHaveLength(1);
+  it("folds the unverified tax estimate into the one notice", () => {
+    renderDashboard({
+      ...noDebt,
+      savingsData: { totalSavingsBalance: 0, accountsCount: 0 },
+      checklistProps: { ...noDebt.checklistProps, hasSavings: false },
+    });
+    expect(screen.getByTestId("widget-card-tax")).toBeTruthy();
+    expect(document.querySelectorAll('[data-notice="projection"]')).toHaveLength(1);
+    expect(
+      (document.querySelector('[data-notice="projection"]') as HTMLElement).textContent,
+    ).toMatch(/^Unverified estimate\./);
   });
 
-  it("shows the four KPIs with real figures", () => {
-    renderDashboard();
-    for (const label of ["Net worth", "Monthly surplus", "Weekly safe to spend", "Liquid cash"]) {
-      expect(screen.getAllByText(label).length).toBeGreaterThan(0);
-    }
-    // Widgets may still say "Not set" (for example the mortgage term); the KPI figures never do.
-    const hero = document.querySelector('[data-tone="hero"]');
-    expect(hero?.textContent).toContain("£50,000");
-    expect(hero?.textContent).not.toContain("Not set");
+  it("shows no notice when every card is a saved fact", () => {
+    renderDashboard({ ...noDebt, taxData: { estimatedTaxDue: null, recordsCount: 0 } });
+    expect(document.querySelector('[data-notice="projection"]')).toBeNull();
   });
 
-  it("has no drag, resize, move or per-widget settings controls", () => {
-    renderDashboard();
-    expect(screen.queryByText(/Customi[sz]e Dashboard/)).toBeNull();
-    expect(screen.queryByLabelText("Drag to reorder")).toBeNull();
-    expect(screen.queryByLabelText("Move widget up")).toBeNull();
-    expect(screen.queryByLabelText("Move widget down")).toBeNull();
-    expect(screen.queryByLabelText(/Switch to .* width/)).toBeNull();
-    expect(screen.queryByText(/Reorder mode active/)).toBeNull();
+  it("shows the setup row and the check-in row when they apply", () => {
+    renderDashboard({
+      ...noDebt,
+      checklistProps: { ...noDebt.checklistProps, completedSteps: [], hasSavings: false },
+    });
+    expect(screen.getByRole("button", { name: /Finish setting up: \d of \d done/ })).toBeTruthy();
+    expect(screen.getByTestId("monthly-check-in-card")).toBeTruthy();
   });
 
-  it("hides a widget from the checklist and writes only dashboardWidgets", async () => {
-    renderDashboard();
-    const dialog = openPanel();
-    fireEvent.click(within(dialog).getByRole("checkbox", { name: /^Budget/ }));
+  it("hides the check-in row once this month is recorded", () => {
+    renderDashboard({
+      ...noDebt,
+      checkIn: { currentMonth: "2026-11", lastRecordedMonth: "2026-11" },
+    });
+    expect(screen.queryByTestId("monthly-check-in-card")).toBeNull();
+  });
 
+  it("keeps a near-empty dashboard to one hero prompt, one strip prompt and one empty state", () => {
+    const { container } = renderDashboard(nearEmpty);
+    expectPageRules(container, { maxFigures: 0, maxNotSet: 1, projectionNotices: 0 });
+    expect(screen.getByText("Add an account to see your net worth.")).toBeTruthy();
+    expect(
+      screen.getByText(
+        "Add your budget to see what is left over each month and your months of cover",
+      ),
+    ).toBeTruthy();
+    expect(screen.getByText("Nothing to show yet")).toBeTruthy();
+    expect(container.querySelector('[data-tone="hero"]')).toBeNull();
+    expect(userFacingText(container)).not.toMatch(FORBIDDEN);
+  });
+
+  it("hides a section through Choose what shows here and writes only dashboardWidgets", async () => {
+    renderDashboard(withDebt);
+    fireEvent.click(screen.getByRole("button", { name: /Choose what shows here/ }));
+    const dialog = screen.getByRole("dialog", { name: "Choose what shows here" });
+    fireEvent.click(within(dialog).getByRole("checkbox", { name: /^Debt/ }));
     await waitFor(() => expect(mockUpdateProfile).toHaveBeenCalledTimes(1));
     const payload = mockUpdateProfile.mock.calls[0]?.[0];
     expect(Object.keys(payload)).toEqual(["dashboardWidgets"]);
-    expect(payload.dashboardWidgets).not.toContain("budget");
-    expect(payload.dashboardWidgets).toContain("accounts");
+    expect(payload.dashboardWidgets).not.toContain("debt");
     fireEvent.click(within(dialog).getByRole("button", { name: "Done" }));
-    await waitFor(() => expect(screen.queryByText("Budget")).toBeNull());
+    await waitFor(() => expect(screen.queryByTestId("widget-card-debt")).toBeNull());
   });
 
-  it("no longer renders a growth forecast widget for the retired forecast module", () => {
-    renderDashboard();
-    expect(screen.queryByText(/20yr Wealth Projection/)).toBeNull();
-  });
-
-  it("reverts a failed save to the last confirmed list, not the original", async () => {
-    renderDashboard();
-    let dialog = openPanel();
-    fireEvent.click(within(dialog).getByRole("checkbox", { name: /^Budget/ }));
-    await waitFor(() => expect(mockUpdateProfile).toHaveBeenCalledTimes(1));
+  it("restores the choice and says the dashboard is unchanged when saving fails", async () => {
     mockUpdateProfile.mockRejectedValueOnce(new Error("offline"));
-    dialog = screen.getByRole("dialog", { name: "Show or hide widgets" });
-    fireEvent.click(within(dialog).getByRole("checkbox", { name: /^Savings/ }));
-    await screen.findByRole("alert");
+    renderDashboard(withDebt);
+    fireEvent.click(screen.getByRole("button", { name: /Choose what shows here/ }));
+    const dialog = screen.getByRole("dialog", { name: "Choose what shows here" });
+    fireEvent.click(within(dialog).getByRole("checkbox", { name: /^Debt/ }));
+    expect((await screen.findByRole("alert")).textContent).toMatch(
+      /We could not save that change\. Your dashboard is unchanged\. Try again\./,
+    );
     expect(
-      (within(dialog).getByRole("checkbox", { name: /^Budget/ }) as HTMLInputElement).checked,
-    ).toBe(false);
-    expect(
-      (within(dialog).getByRole("checkbox", { name: /^Savings/ }) as HTMLInputElement).checked,
+      (within(dialog).getByRole("checkbox", { name: /^Debt/ }) as HTMLInputElement).checked,
     ).toBe(true);
   });
 
-  it("never writes widget order, sizes or config", async () => {
-    renderDashboard({ debtData: debtSummary });
-    const dialog = openPanel();
-    fireEvent.click(within(dialog).getByRole("checkbox", { name: /^Debt/ }));
-    await waitFor(() => expect(mockUpdateProfile).toHaveBeenCalledTimes(1));
-    fireEvent.click(within(dialog).getByRole("checkbox", { name: /^Self Assessment/ }));
-    await waitFor(() => expect(mockUpdateProfile).toHaveBeenCalledTimes(2));
-    for (const [payload] of mockUpdateProfile.mock.calls) {
-      expect(payload).not.toHaveProperty("dashboardWidgetOrder");
-      expect(payload).not.toHaveProperty("dashboardWidgetSizes");
-      expect(payload).not.toHaveProperty("dashboardWidgetConfig");
-    }
-  });
-
-  it("re-shows a hidden widget in the fixed canonical order, not at the bottom", async () => {
-    renderDashboard({ debtData: debtSummary });
-    const dialog = openPanel();
-    fireEvent.click(within(dialog).getByRole("checkbox", { name: /^Debt/ }));
-    await waitFor(() => expect(mockUpdateProfile).toHaveBeenCalledTimes(1));
-    const shown: string[] = mockUpdateProfile.mock.calls[0]?.[0].dashboardWidgets;
-    expect(shown.indexOf("debt")).toBe(shown.indexOf("budget") + 1);
-  });
-
-  it("keeps show or hide choices local and never calls the backend when not persisting", async () => {
-    renderDashboard({ persistVisibility: false });
-    const dialog = openPanel();
-    fireEvent.click(within(dialog).getByRole("checkbox", { name: /^Budget/ }));
-    fireEvent.click(within(dialog).getByRole("button", { name: "Done" }));
-    await waitFor(() => expect(screen.queryByText("Budget")).toBeNull());
-    expect(mockUpdateProfile).not.toHaveBeenCalled();
-  });
-
-  it("restores the widget and shows an error when saving fails", async () => {
-    mockUpdateProfile.mockRejectedValueOnce(new Error("offline"));
-    renderDashboard();
-    const dialog = openPanel();
-    fireEvent.click(within(dialog).getByRole("checkbox", { name: /^Budget/ }));
-    expect((await screen.findByRole("alert")).textContent).toMatch(/could not save/i);
-    const box = within(dialog).getByRole("checkbox", { name: /^Budget/ });
-    expect((box as HTMLInputElement).checked).toBe(true);
-  });
-
-  it("does not render widgets when modules are unconfigured and shows the empty state", () => {
-    renderDashboard(unconfigured as any);
-
-    expect(screen.queryByText("Accounts")).toBeNull();
-    expect(screen.queryByText("Budget")).toBeNull();
-    expect(screen.queryByText("Savings")).toBeNull();
-    expect(screen.queryByText("Pension")).toBeNull();
-    expect(screen.queryByText("Debt")).toBeNull();
-    expect(screen.queryByText("Mortgage")).toBeNull();
-    expect(screen.queryByText("Growth forecast")).toBeNull();
-    expect(screen.queryByText("Self Assessment")).toBeNull();
-
-    expect(screen.getByRole("heading", { name: "Build your dashboard" })).toBeDefined();
-    expect(screen.getAllByRole("link", { name: "Add an account" }).length).toBeGreaterThan(0);
-  });
-
-  it("shows Not set with actions for unknown KPIs instead of zero", () => {
-    renderDashboard({
-      ...(unconfigured as any),
-      accountsData: {
-        netWorth: 0,
-        totalAssets: 0,
-        totalLiabilities: 0,
-        accountsCount: 0,
-        typeTotals: {},
-      },
-      savingsData: { accountsCount: 0, totalSavingsBalance: 0 },
-    });
-    expect(screen.getAllByText("Not set")).toHaveLength(4);
-    expect(screen.getAllByRole("link", { name: "Add your budget" }).length).toBeGreaterThan(0);
-  });
-
-  it("shows an all-hidden empty state that offers the checklist", async () => {
-    renderDashboard({ persistVisibility: false });
-    const dialog = openPanel();
-    for (const box of within(dialog).getAllByRole("checkbox")) {
-      if ((box as HTMLInputElement).checked) fireEvent.click(box);
-    }
-    fireEvent.click(within(dialog).getByRole("button", { name: "Done" }));
-    await waitFor(() =>
-      expect(screen.getByRole("heading", { name: "No widgets showing" })).toBeDefined(),
-    );
-  });
-
-  it("unlocks only the configured widgets dynamically", () => {
-    renderDashboard({
-      ...(unconfigured as any),
-      checklistProps: {
-        ...unconfigured.checklistProps,
-        hasAccounts: true,
-        completedSteps: ["accounts"],
-      },
-      accountsData: { ...dummyProps.accountsData, accountsCount: 1 },
-    });
-
-    expect(screen.getByText("Accounts")).toBeDefined();
-    expect(screen.queryByText("Budget")).toBeNull();
-    expect(screen.queryByText("Savings")).toBeNull();
-    expect(screen.queryByText("Pension")).toBeNull();
-  });
-
-  it("mortgage-only user does not see the debt widget", () => {
-    profileOverrides.extraWidgets = ["debt"];
-    renderDashboard({
-      checklistProps: { ...dummyProps.checklistProps, completedSteps: ["accounts"] },
-      accountsData: { ...dummyProps.accountsData, totalLiabilities: 200000 },
-      debtData: null,
-    });
-    expect(screen.queryByText("Debt")).toBeNull();
-  });
-
-  it("shows the debt widget when there is consumer debt", () => {
-    profileOverrides.extraWidgets = ["debt"];
-    renderDashboard({ debtData: debtSummary });
-    expect(screen.getByText("Debt")).toBeDefined();
-  });
-
-  it("mortgage-only user does not see the Stage 1 unsecured debt card", () => {
-    renderDashboard({
-      accountsData: { ...dummyProps.accountsData, totalLiabilities: 200000 },
-      debtData: null,
-    });
-    expect(screen.queryByText(/Your unsecured debt and payoff date/)).toBeNull();
-    expect(screen.queryByText(/of unsecured debt remaining/)).toBeNull();
-  });
-
-  describe("with no budget entered", () => {
-    const noBudget = {
-      budgetData: {
-        monthlyIncome: 0,
-        monthlyExpenses: 0,
-        monthlySurplus: 0,
-        savingsRatePct: 0,
-        runwayMonths: 0,
-      },
-      accountsData: { ...dummyProps.accountsData, totalLiabilities: 3000 },
-      debtData: {
-        ...debtSummary,
-        debtFreeDate: null,
-        debts: [{ id: "d1", name: "Card", balance: 3000, apr: 22, minimumPayment: 90 }],
-      },
-    };
-
-    it("does not show a £0 weekly allowance invented from an empty budget", () => {
-      renderDashboard(noBudget as any);
-      expect(screen.getByText(/Your unsecured debt and payoff date/)).toBeDefined();
-      expect(screen.queryByText(/Safe to spend:/)).toBeNull();
-      expect(screen.getByText(/Add your budget to see your safe to spend/)).toBeDefined();
-      // Surplus and weekly safe to spend are both Not set.
-      expect(
-        screen.getAllByRole("link", { name: "Add your budget" }).length,
-      ).toBeGreaterThanOrEqual(2);
-    });
-
-    it("hides the Stage 1 card when only a zero-surplus budget would imply it", () => {
-      renderDashboard({
-        ...(noBudget as any),
-        debtData: {
-          ...noBudget.debtData,
-          debts: [{ id: "d1", name: "Loan", balance: 3000, apr: 3, minimumPayment: 90 }],
-        },
-      });
-      expect(screen.queryByText(/Your unsecured debt and payoff date/)).toBeNull();
-    });
+  it("shows the all-hidden empty state that reopens the choices", async () => {
+    renderDashboard(noDebt);
+    fireEvent.click(screen.getByRole("button", { name: /Choose what shows here/ }));
+    const dialog = screen.getByRole("dialog", { name: "Choose what shows here" });
+    for (const box of within(dialog).getAllByRole("checkbox")) fireEvent.click(box);
+    await waitFor(() => expect(screen.getByText(/Every section is hidden/)).toBeTruthy());
   });
 });

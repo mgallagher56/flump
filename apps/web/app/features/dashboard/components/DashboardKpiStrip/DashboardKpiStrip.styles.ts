@@ -1,21 +1,10 @@
 import { cva } from "@repo/ui/styled-system/css";
 
-export const kpiSubtext = cva({
+/** Wraps a KPI figure so it keeps its own `data-figure` hook; tabular like every figure. */
+export const kpiFigure = cva({
   base: {
-    textStyle: "body.sm",
+    textStyle: "numeric.kpi",
+    color: "text.primary",
     fontVariantNumeric: "tabular-nums",
-    display: "inline-flex",
-    flexWrap: "wrap",
-    alignItems: "baseline",
-    gap: "4px",
   },
-});
-
-export const kpiSeparator = cva({
-  base: { fontVariantNumeric: "tabular-nums" },
-});
-
-/** The hero headline block above the four-figure row. */
-export const kpiStack = cva({
-  base: { display: "flex", flexDirection: "column", gap: { base: "12px", md: "16px" } },
 });
