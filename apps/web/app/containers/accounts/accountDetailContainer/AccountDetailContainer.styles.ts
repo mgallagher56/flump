@@ -1,15 +1,5 @@
 import { cva } from "@repo/ui/styled-system/css";
 
-export const pageRoot = cva({
-  base: {
-    display: "flex",
-    flexDirection: "column",
-    gap: { base: "24px", md: "32px" },
-    paddingBottom: "48px",
-    minWidth: 0,
-  },
-});
-
 export const backLink = cva({
   base: {
     display: "inline-flex",

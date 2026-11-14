@@ -11,37 +11,45 @@ const points = [
 
 describe("NetWorthHistoryChart", () => {
   it("labels recorded and carried-forward months in the key and the data table", () => {
-    render(<NetWorthHistoryChart points={points} summary="Net worth over 4 months." />);
+    render(<NetWorthHistoryChart points={points} recordedMonths={3} summary="Net worth." />);
+    expect(screen.getByTestId("net-worth-history-chart")).toBeDefined();
     const legend = screen.getByTestId("net-worth-history-legend");
     expect(legend.textContent).toContain("Recorded");
     expect(legend.textContent).toContain("Carried forward (no check-in)");
-    expect(legend.textContent).not.toContain("Projection");
     fireEvent.click(screen.getByRole("button", { name: /Show data/ }));
+    expect(screen.getByRole("columnheader", { name: "Source" })).toBeDefined();
     const sep = screen.getByRole("rowheader", { name: "September 2026" }).closest("tr");
     expect(sep?.textContent).toContain("Carried forward");
     expect(sep?.textContent).toContain("£1,100");
   });
 
-  it("adds a projection series from a single recorded month", () => {
+  it("has no key when every month is recorded", () => {
     render(
       <NetWorthHistoryChart
-        points={[
-          { month: "2026-10", label: "Oct 26", netWorth: 1000, recorded: 1000, carried: null },
-        ]}
-        projection={[
-          { month: "2026-10", label: "Oct 26", projected: 1000 },
-          { month: "2026-11", label: "Nov 26", projected: 1250 },
-        ]}
-        summary="One month."
+        points={points.map((p) => ({ ...p, recorded: p.netWorth, carried: null }))}
+        recordedMonths={4}
+        summary="Net worth."
       />,
     );
-    expect(screen.getByTestId("net-worth-history-legend").textContent).toContain("Projection");
-    fireEvent.click(screen.getByRole("button", { name: /Show data/ }));
+    expect(screen.queryByTestId("net-worth-history-legend")).toBeNull();
+  });
+
+  it("draws no chart with fewer than 3 recorded months, only the summary and the prompt", () => {
+    render(
+      <NetWorthHistoryChart
+        notEnoughDataText="You have two months of history. The chart appears after your third check-in."
+        points={points.slice(0, 2)}
+        recordedMonths={2}
+        summary="Net worth recorded for August 2026: £1,100."
+      />,
+    );
+    expect(screen.queryByTestId("net-worth-history-chart")).toBeNull();
+    expect(screen.queryByRole("button", { name: /Show data/ })).toBeNull();
+    expect(screen.getByText("Net worth recorded for August 2026: £1,100.")).toBeDefined();
     expect(
-      screen.getByRole("rowheader", { name: "October 2026" }).closest("tr")?.textContent,
-    ).toContain("Recorded");
-    expect(
-      screen.getByRole("rowheader", { name: "November 2026" }).closest("tr")?.textContent,
-    ).toContain("Projection");
+      screen.getByText(
+        "You have two months of history. The chart appears after your third check-in.",
+      ),
+    ).toBeDefined();
   });
 });

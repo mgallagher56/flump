@@ -10,7 +10,6 @@ import { SnapshotHistoryPage } from "~/features/snapshot/components/SnapshotHist
 import { londonMonth } from "~/features/snapshot/snapshotModel";
 import { useSaveSnapshot } from "~/features/snapshot/useSaveSnapshot";
 import { loadWorkspaceSnapshot } from "~/services/backend-client.server";
-import { buildWorkspacePicture, knownOrNull } from "~/utils/financialPicture";
 
 export const meta: MetaFunction = () => [{ title: "Net worth history | Flump" }];
 
@@ -19,23 +18,14 @@ export const meta: MetaFunction = () => [{ title: "Net worth history | Flump" }]
  * the browser through the same-origin `/api` proxy (`PUT /snapshots/:month`), then revalidates.
  */
 export const loader = async (args: LoaderFunctionArgs) => {
-  const { accounts, accountDetails, budgetEntries } = await loadWorkspaceSnapshot(args, {
-    includeBudget: true,
-  });
-  // Surplus and months of cover come from the one financial picture (E23), never recomputed here.
-  const picture = buildWorkspacePicture({ accounts, accountDetails, budgetEntries });
-  return data({
-    accounts,
-    accountDetails,
-    currentMonth: londonMonth(),
-    monthlySurplus: knownOrNull(picture.budget)?.surplus ?? null,
-    monthsOfCover: knownOrNull(picture.monthsOfCover)?.months ?? null,
-  });
+  // Recorded balances only (E16 PR 5): months of cover moved to Budget and the single-month
+  // projection went with the chart rule (P10.6), so the budget is no longer loaded here.
+  const { accounts, accountDetails } = await loadWorkspaceSnapshot(args);
+  return data({ accounts, accountDetails, currentMonth: londonMonth() });
 };
 
 const AccountsHistory = (): ReactElement => {
-  const { accounts, accountDetails, currentMonth, monthlySurplus, monthsOfCover } =
-    useLoaderData<typeof loader>();
+  const { accounts, accountDetails, currentMonth } = useLoaderData<typeof loader>();
   const [params] = useSearchParams();
   const onSave = useSaveSnapshot();
   return (
@@ -44,8 +34,6 @@ const AccountsHistory = (): ReactElement => {
       accounts={accounts}
       currentMonth={currentMonth}
       initialSheet={params.get("checkIn") === "1" ? "checkIn" : null}
-      monthlySurplus={monthlySurplus}
-      monthsOfCover={monthsOfCover}
       onSave={onSave}
     />
   );

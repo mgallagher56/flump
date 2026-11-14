@@ -1,11 +1,11 @@
 import type { ReactElement } from "react";
-import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
+import type { LoaderFunctionArgs } from "react-router";
 import { data } from "react-router";
 import AccountDetailContainer from "~/containers/accounts/accountDetailContainer/AccountDetailContainer";
 import { backendFetch } from "~/services/backend-client.server";
 import { BackendError } from "~/services/backend-error";
-import { actionErrorResponse, throwRouteError } from "~/services/route-error.server";
-import { getAuthSession, requireAccessToken } from "~/utils/auth.server";
+import { throwRouteError } from "~/services/route-error.server";
+import { getAuthSession } from "~/utils/auth.server";
 
 export const loader = async (args: LoaderFunctionArgs) => {
   const { user, accessToken } = await getAuthSession(args, { ensureSignedIn: true });

@@ -1,17 +1,15 @@
 import {
   Card,
   CollapsibleDrawer,
-  Icon,
+  IconTile,
+  type IconTileDomain,
   Money,
-  Num,
-  StatusBadge,
   Table,
   TBody,
   Td,
   THead,
   Th,
   Tr,
-  VisuallyHidden,
 } from "@repo/ui";
 import {
   CreditCard,
@@ -27,27 +25,29 @@ import {
 } from "lucide-react";
 import type { FC } from "react";
 import { Link } from "react-router";
-import AddEditAccountsDialogBtn from "~/components/dialogs/addEditAccountsDialog/AddEditAccountsDialog";
 import { AccountTypeEnum, isLiabilityType } from "~/containers/accounts/utils";
 import type { AccountRow } from "../../accountRows";
 import {
   accountCell,
-  accountIcon,
   accountLink,
-  actionsCell,
-  drawerWrap,
   group,
   groupHeader,
-  groupMeta,
   groupTitle,
   listRoot,
-  noChange,
+  mutedText,
+  note,
+  totalLabel,
+  totalRow,
+  typeCell,
 } from "./AccountsGroupList.styles";
 
 export interface AccountsGroupListProps {
   rows: AccountRow[];
-  /** Group order. Types with no accounts are skipped. */
-  order?: string[];
+  /** Everything owned, from the financial picture (the home estimate included). */
+  totalOwn: number;
+  /** Everything owed that counts in net worth (student loans excluded, E23 D-5-B). */
+  totalOwe: number;
+  netWorth: number;
 }
 
 const {
@@ -56,96 +56,125 @@ const {
   INVESTMENT,
   PENSION,
   PROPERTY,
+  OWED,
   CREDIT_CARD,
   MORTGAGE,
   LOAN,
   OVERDRAFT,
   STUDENT_LOAN,
-  OWED,
 } = AccountTypeEnum;
 
-export const DEFAULT_GROUP_ORDER: string[] = [
+/** Row order inside each group: by type, then as saved. Unknown types sort last. */
+export const TYPE_ORDER: string[] = [
   CURRENT,
   SAVING,
   INVESTMENT,
   PENSION,
   PROPERTY,
-  CREDIT_CARD,
+  OWED,
   MORTGAGE,
+  CREDIT_CARD,
   LOAN,
   OVERDRAFT,
   STUDENT_LOAN,
-  OWED,
 ];
+
+/** Plain names for the stored types (copy guide 6.1: sentence case, no jargon). */
+export const TYPE_LABEL: Record<string, string> = {
+  [CURRENT]: "Current account",
+  [SAVING]: "Savings",
+  [INVESTMENT]: "Investments",
+  [PENSION]: "Pension",
+  [PROPERTY]: "Property",
+  [OWED]: "Owed to you",
+  [MORTGAGE]: "Mortgage",
+  [CREDIT_CARD]: "Credit card",
+  [LOAN]: "Loan",
+  [OVERDRAFT]: "Overdraft",
+  [STUDENT_LOAN]: "Student loan",
+};
 
 const TYPE_ICON: Record<string, LucideIcon> = {
   [CURRENT]: Wallet,
   [SAVING]: PiggyBank,
   [INVESTMENT]: LineChart,
   [PENSION]: ShieldCheck,
-  [CREDIT_CARD]: CreditCard,
   [PROPERTY]: Home,
-  [MORTGAGE]: Home,
-  [OVERDRAFT]: Landmark,
-  [LOAN]: HandCoins,
-  [STUDENT_LOAN]: HandCoins,
   [OWED]: Users,
+  [MORTGAGE]: Home,
+  [CREDIT_CARD]: CreditCard,
+  [LOAN]: HandCoins,
+  [OVERDRAFT]: Landmark,
+  [STUDENT_LOAN]: HandCoins,
+};
+
+const TYPE_DOMAIN: Record<string, IconTileDomain> = {
+  [CURRENT]: "savings",
+  [SAVING]: "savings",
+  [INVESTMENT]: "savings",
+  [PENSION]: "pension",
+  [PROPERTY]: "mortgage",
+  [OWED]: "savings",
+  [MORTGAGE]: "mortgage",
+  [CREDIT_CARD]: "debt",
+  [LOAN]: "debt",
+  [OVERDRAFT]: "debt",
+  [STUDENT_LOAN]: "debt",
 };
 
 /** Law 3: a table over eight rows keeps the rest behind a drawer. */
-const VISIBLE_ROWS = 8;
+export const VISIBLE_ROWS = 8;
 
-const Change: FC<{ row: AccountRow }> = ({ row }) => {
-  if (row.changePercent === null) return <span className={noChange()}>No earlier month</span>;
-  if (row.changePercent === 0) return <StatusBadge size="sm">No change</StatusBadge>;
-  const up = row.changePercent > 0;
-  return (
-    <StatusBadge size="sm" variant={row.favourable ? "positive" : "danger"}>
-      {up ? "Up" : "Down"}{" "}
-      <Num fractionDigits={0} kind="percent" size="sm" value={Math.abs(row.changePercent)} />
-    </StatusBadge>
-  );
+/** An ISA is named as one by the user; its allowance lives on the savings page. */
+const isIsa = (row: AccountRow) => /\bisas?\b/i.test(row.name);
+
+const byType = (a: AccountRow, b: AccountRow) => {
+  const rank = (row: AccountRow) => {
+    const index = TYPE_ORDER.indexOf(row.type);
+    return index === -1 ? TYPE_ORDER.length : index;
+  };
+  return rank(a) - rank(b);
 };
 
-const renderRows = (rows: AccountRow[], caption: string) => (
+const renderTable = (rows: AccountRow[], caption: string, amountLabel: string) => (
   <Table appearance="soft" caption={caption} stacked>
     <THead>
       <Tr>
         <Th>Account</Th>
-        <Th numeric>Balance</Th>
-        <Th>Change on last month</Th>
-        <Th>
-          <VisuallyHidden>Actions</VisuallyHidden>
-        </Th>
+        <Th>Type</Th>
+        <Th numeric>{amountLabel}</Th>
       </Tr>
     </THead>
     <TBody>
       {rows.map((row) => (
-        <Tr key={row.id}>
+        <Tr data-list-row="" key={row.id}>
           <Td>
             <div className={accountCell()}>
-              <span aria-hidden="true" className={accountIcon()}>
-                <Icon icon={TYPE_ICON[row.type] ?? Wallet} size="md" />
-              </span>
+              <IconTile
+                domain={TYPE_DOMAIN[row.type] ?? "net-worth"}
+                icon={TYPE_ICON[row.type] ?? Wallet}
+              />
               <Link className={accountLink()} to={`/app/accounts/${row.id}`}>
                 {row.name}
               </Link>
             </div>
           </Td>
-          <Td label={isLiabilityType(row.type) ? "Owed" : "Balance"} numeric>
+          <Td label="Type">
+            <span className={typeCell()}>
+              <span>{TYPE_LABEL[row.type] ?? row.type}</span>
+              {isIsa(row) ? (
+                <Link className={accountLink()} to="/app/savings">
+                  See your ISA allowance
+                </Link>
+              ) : null}
+            </span>
+          </Td>
+          <Td label={amountLabel} numeric>
             {row.balance !== undefined ? (
               <Money size="sm" value={row.balance} />
             ) : (
-              <span className={noChange()}>Not set</span>
+              <span className={mutedText()}>Not set</span>
             )}
-          </Td>
-          <Td label="Change on last month">
-            <Change row={row} />
-          </Td>
-          <Td label="Actions">
-            <div className={actionsCell()}>
-              <AddEditAccountsDialogBtn accountId={row.id} isEditAccount isIconButton />
-            </div>
           </Td>
         </Tr>
       ))}
@@ -153,48 +182,101 @@ const renderRows = (rows: AccountRow[], caption: string) => (
   </Table>
 );
 
-/** Accounts grouped by type, one card per group, never a wall of cards. */
+interface GroupProps {
+  id: string;
+  title: string;
+  amountLabel: string;
+  totalText: string;
+  total: number;
+  rows: AccountRow[];
+  footnote?: string;
+}
+
+const Group: FC<GroupProps> = ({ id, title, amountLabel, totalText, total, rows, footnote }) => {
+  const visible = rows.slice(0, VISIBLE_ROWS);
+  const rest = rows.slice(VISIBLE_ROWS);
+  return (
+    <section aria-labelledby={id} className={group()}>
+      <div className={groupHeader()}>
+        <h2 className={groupTitle()} id={id}>
+          {title}
+        </h2>
+      </div>
+      <Card padding="none">
+        {renderTable(visible, title, amountLabel)}
+        {rest.length > 0 ? (
+          <CollapsibleDrawer
+            title={`Show ${rest.length} more ${rest.length === 1 ? "account" : "accounts"}`}
+            variant="quiet"
+          >
+            {renderTable(rest, `${title}, more accounts`, amountLabel)}
+          </CollapsibleDrawer>
+        ) : null}
+        <dl className={totalRow()}>
+          <dt className={totalLabel()}>{totalText}</dt>
+          <dd>
+            <Money size="sm" value={total} />
+          </dd>
+        </dl>
+      </Card>
+      {footnote ? <p className={note()}>{footnote}</p> : null}
+    </section>
+  );
+};
+
+/**
+ * The accounts list (E16 PR 5): what you own, then what you owe, each one table with a type column
+ * and its total, then net worth once. Change on last month lives on each account's own page.
+ */
 export const AccountsGroupList: FC<AccountsGroupListProps> = ({
   rows,
-  order = DEFAULT_GROUP_ORDER,
+  totalOwn,
+  totalOwe,
+  netWorth,
 }) => {
-  const types = order.filter((type) => rows.some((row) => row.type === type));
+  const own = rows.filter((row) => !isLiabilityType(row.type)).sort(byType);
+  const owe = rows.filter((row) => isLiabilityType(row.type)).sort(byType);
+  const hasStudentLoan = owe.some((row) => row.type === STUDENT_LOAN);
+
   return (
     <div className={listRoot()}>
-      {types.map((type) => {
-        const groupRows = rows.filter((row) => row.type === type);
-        const total = groupRows.reduce((sum, row) => sum + (row.balance ?? 0), 0);
-        const visible = groupRows.slice(0, VISIBLE_ROWS);
-        const rest = groupRows.slice(VISIBLE_ROWS);
-        const headingId = `accounts-group-${type.replace(/\s+/g, "-").toLowerCase()}`;
-        return (
-          <section key={type} aria-labelledby={headingId} className={group()}>
-            <div className={groupHeader()}>
-              <h3 className={groupTitle()} id={headingId}>
-                {type}
-              </h3>
-              <p className={groupMeta()}>
-                {groupRows.length === 1 ? "1 account" : `${groupRows.length} accounts`},{" "}
-                <Money size="sm" tone="muted" value={total} />
-              </p>
-            </div>
-            <Card padding="none">
-              {renderRows(visible, `${type} accounts`)}
-              {rest.length > 0 && (
-                <div className={drawerWrap()}>
-                  <CollapsibleDrawer
-                    closedLabel="Show all"
-                    openLabel="Show fewer"
-                    title={`${rest.length} more ${rest.length === 1 ? "account" : "accounts"}`}
-                  >
-                    {renderRows(rest, `More ${type} accounts`)}
-                  </CollapsibleDrawer>
-                </div>
-              )}
-            </Card>
-          </section>
-        );
-      })}
+      {own.length > 0 ? (
+        <Group
+          amountLabel="Balance"
+          id="accounts-own-heading"
+          rows={own}
+          title="What you own"
+          total={totalOwn}
+          totalText="Total you own"
+        />
+      ) : null}
+      {owe.length > 0 ? (
+        <Group
+          amountLabel="Amount owed"
+          footnote={
+            hasStudentLoan
+              ? "Student loans are not in this total or your net worth. Repayments come out of your pay as you earn. Any balance left at the end of the repayment term is written off, so it is shown separately."
+              : undefined
+          }
+          id="accounts-owe-heading"
+          rows={owe}
+          title="What you owe"
+          total={totalOwe}
+          totalText="Total you owe"
+        />
+      ) : null}
+      <Card padding="none">
+        <dl
+          className={totalRow({ emphasis: true })}
+          data-testid="accounts-net-worth"
+          id="accounts-net-worth"
+        >
+          <dt className={totalLabel({ emphasis: true })}>Net worth</dt>
+          <dd>
+            <Money size="md" value={netWorth} />
+          </dd>
+        </dl>
+      </Card>
     </div>
   );
 };

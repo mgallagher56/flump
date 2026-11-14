@@ -43,7 +43,8 @@ export const MonthlyChangeTable: FC<MonthlyChangeTableProps> = (props) => {
   let table: ReactNode;
   if (props.variant === "accounts") {
     title = "Change by account";
-    note = `${formatMonth(props.previousMonth)} to ${formatMonth(props.month)}. Debts show the amount owed.`;
+    // The column headers name both months, so the note does not repeat them.
+    note = "Debts show the amount owed.";
     table = (
       <Table
         stacked
@@ -59,7 +60,7 @@ export const MonthlyChangeTable: FC<MonthlyChangeTableProps> = (props) => {
         </THead>
         <TBody>
           {props.rows.map((r) => (
-            <Tr key={r.accountId}>
+            <Tr data-list-row="" key={r.accountId}>
               <Th scope="row">
                 {r.name}
                 {r.isLiability ? " (owed)" : ""}
@@ -96,7 +97,7 @@ export const MonthlyChangeTable: FC<MonthlyChangeTableProps> = (props) => {
         </THead>
         <TBody>
           {props.rows.map((r) => (
-            <Tr key={r.month}>
+            <Tr data-list-row="" key={r.month}>
               <Th scope="row">{formatMonth(r.month)}</Th>
               <Td
                 label="Net worth"
@@ -125,17 +126,17 @@ export const MonthlyChangeTable: FC<MonthlyChangeTableProps> = (props) => {
     return (
       <CollapsibleDrawer
         className={tableCard()}
-        closedLabel="Show table"
         itemCount={props.rows.length}
         itemNoun={
           props.variant === "accounts"
             ? { one: "account", other: "accounts" }
             : { one: "month", other: "months" }
         }
-        openLabel="Hide table"
-        subtitle={note}
+        openLabel={`Hide ${title.toLowerCase()}`}
         title={title}
+        variant="quiet"
       >
+        <p className={tableNote()}>{note}</p>
         {table}
       </CollapsibleDrawer>
     );

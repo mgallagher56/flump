@@ -46,22 +46,22 @@ describe("<BankConnectionsList />", () => {
       <BankConnectionsList connections={mockConnections} />,
     );
 
-    expect(getByText("Synced bank connections")).toBeDefined();
+    expect(getByText("Connected banks")).toBeDefined();
     expect(getAllByText("Monzo Bank").length).toBeGreaterThan(0);
     expect(getAllByText("HSBC UK").length).toBeGreaterThan(0);
-    expect(getAllByText(/Synced/i).length).toBeGreaterThan(0);
-    expect(getByText(/Error/i)).toBeDefined();
+    expect(getAllByText(/^Connected$/).length).toBeGreaterThan(0);
+    expect(getByText("Could not update")).toBeDefined();
   });
 
-  test("names each action after its bank and labels a disconnected feed as Disconnected", () => {
+  test("names each action after its bank and labels a disconnected feed as Not connected", () => {
     const { getByRole, getByText } = customRender(
       <BankConnectionsList
         connections={[{ ...mockConnections[0], status: "disconnected" }, mockConnections[1]]}
       />,
     );
-    expect(getByRole("button", { name: "Sync now for Monzo Bank" })).toBeDefined();
+    expect(getByRole("button", { name: "Update now for Monzo Bank" })).toBeDefined();
     expect(getByRole("button", { name: "Disconnect HSBC UK" })).toBeDefined();
-    expect(getByText("Disconnected")).toBeDefined();
+    expect(getByText("Not connected")).toBeDefined();
   });
 
   test("shows one connect entry point when the list is empty", () => {
@@ -72,7 +72,7 @@ describe("<BankConnectionsList />", () => {
   test("allows syncing a connection", () => {
     const { getAllByText } = customRender(<BankConnectionsList connections={mockConnections} />);
 
-    const syncButtons = getAllByText("Sync now");
+    const syncButtons = getAllByText("Update now");
     fireEvent.click(syncButtons[0]);
     expect(mockSubmit).toHaveBeenCalledWith(
       { intent: "syncConnection", connectionId: "conn-1" },
@@ -91,7 +91,7 @@ describe("<BankConnectionsList />", () => {
     fireEvent.click(getAllByText("Disconnect")[0]);
     const dialog = getByRole("alertdialog", { name: "Disconnect Monzo Bank?" });
     expect(dialog.textContent).toContain(
-      "Synced accounts and transactions from this bank will be removed.",
+      "Accounts and transactions that came from this bank will be removed from Flump.",
     );
     expect(mockSubmit).not.toHaveBeenCalled();
     expect(confirmSpy).not.toHaveBeenCalled();
@@ -115,7 +115,7 @@ describe("<BankConnectionsList />", () => {
     );
     fireEvent.click(getAllByText("Disconnect")[1]);
     const dialog = getByRole("alertdialog", { name: "Disconnect HSBC UK?" });
-    fireEvent.click(within(dialog).getByRole("button", { name: "Disconnect" }));
+    fireEvent.click(within(dialog).getByRole("button", { name: "Disconnect bank" }));
     expect(mockSubmit).toHaveBeenCalledTimes(1);
     expect(mockSubmit).toHaveBeenCalledWith(
       { intent: "disconnectConnection", connectionId: "conn-2" },
@@ -131,7 +131,7 @@ describe("<BankConnectionsList />", () => {
     fireEvent.click(getAllByText("Disconnect")[0]);
     fireEvent.click(
       within(getByRole("alertdialog", { name: "Disconnect Monzo Bank?" })).getByRole("button", {
-        name: "Disconnect",
+        name: "Disconnect bank",
       }),
     );
 
@@ -144,7 +144,9 @@ describe("<BankConnectionsList />", () => {
       "We couldn't reach the server. Please try again.",
     );
 
-    fireEvent.click(within(getByRole("alertdialog")).getByRole("button", { name: "Disconnect" }));
+    fireEvent.click(
+      within(getByRole("alertdialog")).getByRole("button", { name: "Disconnect bank" }),
+    );
     fetcherData.current = { success: true };
     rerender(ui());
     expect(queryByRole("alertdialog")).toBeNull();

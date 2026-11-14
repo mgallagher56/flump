@@ -18,27 +18,19 @@ async function run() {
 describe("app.accounts.history loader", () => {
   beforeEach(() => loadWorkspaceSnapshot.mockReset());
 
-  it("returns saved accounts, history, the London month, surplus and months of cover", async () => {
+  it("returns saved accounts, history and the London month, and no budget figures", async () => {
     loadWorkspaceSnapshot.mockResolvedValue({
       accounts,
       accountDetails: [{ accountId: "a1", year: 2026, month: 10, value: 3000 }],
-      budgetEntries: [
-        { isIncome: true, amount: 2500, frequency: "monthly" },
-        { isIncome: false, isEssential: true, amount: 1000, frequency: "monthly" },
-      ],
+      budgetEntries: [],
     });
     const data = await run();
-    expect(loadWorkspaceSnapshot).toHaveBeenCalledWith(args, { includeBudget: true });
+    expect(loadWorkspaceSnapshot).toHaveBeenCalledWith(args);
     expect(data.currentMonth).toMatch(/^\d{4}-(0[1-9]|1[0-2])$/);
-    expect(data.monthlySurplus).toBe(1500);
-    expect(data.monthsOfCover).toBe(3);
     expect(data.accounts).toBe(accounts);
-  });
-
-  it("leaves surplus and cover unknown without a budget, never zero", async () => {
-    loadWorkspaceSnapshot.mockResolvedValue({ accounts, accountDetails: [], budgetEntries: [] });
-    const data = await run();
-    expect(data.monthlySurplus).toBeNull();
-    expect(data.monthsOfCover).toBeNull();
+    expect(data.accountDetails).toEqual([{ accountId: "a1", year: 2026, month: 10, value: 3000 }]);
+    // Months of cover belongs to Budget now (E16 PR 5).
+    expect(data).not.toHaveProperty("monthsOfCover");
+    expect(data).not.toHaveProperty("monthlySurplus");
   });
 });

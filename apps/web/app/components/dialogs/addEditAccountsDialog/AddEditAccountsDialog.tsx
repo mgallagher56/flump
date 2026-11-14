@@ -148,6 +148,8 @@ interface AddEditAccountsDialogBtnProp {
   isEditAccount?: boolean;
   btnSize?: "sm" | "md" | "lg" | "icon";
   isIconButton?: boolean;
+  /** Style of the text button. The page's one primary action passes "primary" (E16 P7.4). */
+  variant?: "primary" | "outline";
 }
 
 const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
@@ -155,6 +157,7 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
   btnSize = "md",
   isEditAccount,
   isIconButton = false,
+  variant = "outline",
 }) => {
   const {
     accounts = [],
@@ -468,7 +471,7 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
       ) : (
         <Button
           size={btnSize === "icon" ? "md" : btnSize}
-          variant="outline"
+          variant={variant}
           onClick={handleOpenModal}
         >
           {t(isEditAccount ? "edit" : "addAccount")}

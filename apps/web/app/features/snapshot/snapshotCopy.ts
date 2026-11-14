@@ -48,8 +48,8 @@ export function savedToast(
 }
 
 export const SAVE_ERROR_TOAST = {
-  title: "Your balances weren't saved",
-  description: "Nothing has changed. Please try again.",
+  title: "We could not save your balances",
+  description: "Nothing has changed. Try again.",
 } as const;
 
 export function statusText(

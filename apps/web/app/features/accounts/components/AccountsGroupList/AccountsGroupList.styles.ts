@@ -14,53 +14,27 @@ export const group = cva({
 });
 
 export const groupHeader = cva({
-  base: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    flexWrap: "wrap",
-    gap: "8px",
-  },
+  base: { display: "flex", alignItems: "center", gap: "8px" },
 });
 
 export const groupTitle = cva({
   base: { textStyle: "heading.md", color: "text.primary", margin: 0 },
 });
 
-export const groupMeta = cva({
-  base: {
-    textStyle: "body.sm",
-    color: "text.muted",
-    fontVariantNumeric: "tabular-nums",
-    margin: 0,
-  },
-});
-
 export const accountCell = cva({
   base: { display: "flex", alignItems: "center", gap: "12px", minWidth: 0 },
-});
-
-export const accountIcon = cva({
-  base: {
-    display: "inline-flex",
-    alignItems: "center",
-    justifyContent: "center",
-    width: "36px",
-    height: "36px",
-    borderRadius: "lg",
-    backgroundColor: "primary.subtle",
-    color: "primary",
-    flexShrink: 0,
-  },
 });
 
 export const accountLink = cva({
   base: {
     textStyle: "label.md",
     color: "text.primary",
-    textDecoration: "none",
+    textDecoration: "underline",
+    textDecorationColor: "border.strong",
+    textUnderlineOffset: "3px",
     borderRadius: "sm",
-    _hover: { color: "primary", textDecoration: "underline" },
+    overflowWrap: "anywhere",
+    _hover: { color: "primary", textDecorationColor: "currentColor" },
     _focusVisible: {
       outline: "2px solid",
       outlineColor: "border.focusRing",
@@ -69,14 +43,48 @@ export const accountLink = cva({
   },
 });
 
-export const actionsCell = cva({
-  base: { display: "flex", justifyContent: "flex-end" },
+export const typeCell = cva({
+  base: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "2px",
+    textStyle: "body.sm",
+    color: "text.secondary",
+  },
 });
 
-export const noChange = cva({
+export const mutedText = cva({
   base: { color: "text.muted", textStyle: "body.sm" },
 });
 
-export const drawerWrap = cva({
-  base: { marginTop: "4px" },
+/** A total line under a table. A real top border, so it survives forced colours. */
+export const totalRow = cva({
+  base: {
+    display: "flex",
+    alignItems: "baseline",
+    justifyContent: "space-between",
+    gap: "16px",
+    margin: 0,
+    paddingBlock: "16px",
+    paddingInline: "16px",
+    borderTopWidth: "1px",
+    borderTopStyle: "solid",
+    borderTopColor: "border",
+    fontVariantNumeric: "tabular-nums",
+    "& dd": { margin: 0 },
+  },
+  variants: {
+    emphasis: { true: { borderTopWidth: 0 } },
+  },
+});
+
+export const totalLabel = cva({
+  base: { textStyle: "label.md", color: "text.primary" },
+  variants: {
+    emphasis: { true: { textStyle: "heading.sm" } },
+  },
+});
+
+export const note = cva({
+  base: { textStyle: "body.sm", color: "text.secondary", margin: 0, maxWidth: "65ch" },
 });
