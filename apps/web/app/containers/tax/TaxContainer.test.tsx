@@ -126,7 +126,9 @@ const mockRecords: TaxRecord[] = [
 
 let mockLoaderRecords: TaxRecord[] = mockRecords;
 const mockProfileSalary: number | null = 60000;
-let mockEnabledPages: string[] = ["accounts", "budget", "tax"];
+let mockEnabledPages: string[] | null = ["accounts", "budget", "tax"];
+let mockDashboardWidgets: string[] | null = ["accounts"];
+let mockDashboardWidgetOrder: string[] | null = ["accounts"];
 const mockSubmit = vi.fn();
 const mockRevalidate = vi.fn();
 const mockUpdateProfile = vi.fn(async () => {});
@@ -147,8 +149,8 @@ vi.mock("react-router", () => ({
       propertyOwnershipShare: 100,
       country: "GB",
       enabledPages: mockEnabledPages,
-      dashboardWidgets: ["accounts"],
-      dashboardWidgetOrder: ["accounts"],
+      dashboardWidgets: mockDashboardWidgets,
+      dashboardWidgetOrder: mockDashboardWidgetOrder,
     },
     accounts: [],
   }),
@@ -159,7 +161,8 @@ vi.mock("react-router", () => ({
   }),
 }));
 
-vi.mock("~/hooks/useUserProfile", () => ({
+vi.mock("~/hooks/useUserProfile", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("~/hooks/useUserProfile")>()),
   useUserProfile: () => ({ updateProfile: mockUpdateProfile }),
 }));
 
@@ -184,8 +187,8 @@ describe("TaxContainer, opted in", () => {
     expect(hero.textContent).toContain(`Income for ${getCurrentUKTaxYear()}`);
     expect(hero.textContent).not.toMatch(/estimate/i);
     // The estimate is the first KPI, marked as one.
-    const kpis = screen.getAllByText(/^(Estimated bill|Next payment date)$/);
-    expect(kpis.map((k) => k.textContent)).toEqual(["Estimated bill", "Next payment date"]);
+    const kpis = screen.getAllByText(/^(Estimated bill|Bill due)$/);
+    expect(kpis.map((k) => k.textContent)).toEqual(["Estimated bill", "Bill due"]);
   });
 
   it("meets the page rules in the first view", () => {
@@ -440,6 +443,18 @@ describe("TaxContainer, opted in", () => {
     });
   });
 
+  it("shows no Unverified estimate notice for a year with costs only", () => {
+    const start = getCurrentUKTaxYear().split("/")[0];
+    mockLoaderRecords = [
+      { ...mockRecords[1], id: "rec-cost-only", date: `${start}-04-06`, endDate: null },
+    ];
+    const { container, unmount } = render(<TaxContainer />);
+    expect(container.textContent).not.toMatch(/Unverified estimate/);
+    expectPageRules(container, { projectionNotices: 0, maxNotSet: 1 });
+    unmount();
+    mockLoaderRecords = mockRecords;
+  });
+
   it("files a record dated 1 April under the tax year ending that 5 April", () => {
     // The UK tax year starts on 6 April, so a record dated 1 April 2024 belongs to 2023/24.
     mockLoaderRecords = [{ ...mockRecords[0], id: "rec-apr1", date: "2024-04-01" }];
@@ -494,6 +509,45 @@ describe("TaxContainer, not opted in (PAYE only)", () => {
     expect(await screen.findByText("Estimated bill")).toBeDefined();
     unmount();
     mockEnabledPages = ["accounts", "budget", "tax"];
+  });
+
+  it("keeps stored empty lists empty and only adds tax, as the settings toggle does", async () => {
+    mockEnabledPages = [];
+    mockDashboardWidgets = [];
+    mockDashboardWidgetOrder = [];
+    mockUpdateProfile.mockClear();
+    const user = userEvent.setup();
+    const { unmount } = render(<TaxContainer />);
+    await user.click(screen.getByRole("button", { name: "Turn on Self Assessment" }));
+    expect(mockUpdateProfile).toHaveBeenCalledWith({
+      enabledPages: ["tax"],
+      dashboardWidgets: ["tax"],
+      dashboardWidgetOrder: ["tax"],
+    });
+    unmount();
+    mockEnabledPages = ["accounts", "budget", "tax"];
+    mockDashboardWidgets = ["accounts"];
+    mockDashboardWidgetOrder = ["accounts"];
+  });
+
+  it("uses the toggle's profile default only for an absent list", async () => {
+    mockEnabledPages = null;
+    mockDashboardWidgets = [];
+    mockDashboardWidgetOrder = null;
+    mockUpdateProfile.mockClear();
+    const { DEFAULT_PROFILE } = await import("~/hooks/useUserProfile");
+    const user = userEvent.setup();
+    const { unmount } = render(<TaxContainer />);
+    await user.click(screen.getByRole("button", { name: "Turn on Self Assessment" }));
+    expect(mockUpdateProfile).toHaveBeenCalledWith({
+      enabledPages: [...DEFAULT_PROFILE.enabledPages, "tax"],
+      dashboardWidgets: ["tax"],
+      dashboardWidgetOrder: [...DEFAULT_PROFILE.dashboardWidgetOrder, "tax"],
+    });
+    unmount();
+    mockEnabledPages = ["accounts", "budget", "tax"];
+    mockDashboardWidgets = ["accounts"];
+    mockDashboardWidgetOrder = ["accounts"];
   });
 });
 

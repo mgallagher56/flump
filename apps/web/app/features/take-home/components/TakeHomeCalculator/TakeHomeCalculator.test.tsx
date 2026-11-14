@@ -7,6 +7,18 @@ import { DEFAULT_PROFILE, type UserProfile, userProfileAtom } from "~/hooks/useU
 import customRender from "~/testUtils/customRender";
 import { TakeHomeCalculator } from "./TakeHomeCalculator";
 
+const scenarioSpy = vi.hoisted(() => vi.fn());
+vi.mock("../NextPoundExplorer", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../NextPoundExplorer")>();
+  return {
+    ...actual,
+    useNextPoundScenario: (args: Parameters<typeof actual.useNextPoundScenario>[0]) => {
+      scenarioSpy(args);
+      return actual.useNextPoundScenario(args);
+    },
+  };
+});
+
 const SAVED: Partial<UserProfile> = {
   employmentType: "employed",
   pensionPercent: 5,
@@ -72,6 +84,21 @@ describe("<TakeHomeCalculator /> saved figures", () => {
       withProfile({ isSalarySacrifice: true, pensionEmployerPercent: 4 }),
     );
     expect(sacrifice.container.textContent).not.toBe(netText);
+  });
+
+  test("the explorer starts without salary sacrifice for a self-employed user, as the KPI does", () => {
+    scenarioSpy.mockClear();
+    customRender(
+      <TakeHomeCalculator initialSalary={45000} onApplyIncrease={vi.fn()} />,
+      withProfile({
+        employmentType: "self-employed",
+        isSalarySacrifice: true,
+        pensionEmployerPercent: 4,
+      }),
+    );
+    expect(scenarioSpy).toHaveBeenLastCalledWith(
+      expect.objectContaining({ isSalarySacrifice: false }),
+    );
   });
 
   test("says which rates are used when the calendar is past the latest supported year", () => {

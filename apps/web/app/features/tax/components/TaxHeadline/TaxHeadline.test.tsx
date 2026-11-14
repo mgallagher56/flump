@@ -13,7 +13,7 @@ describe("TaxHeadline", () => {
     expect(heroes[0].textContent).toContain("Income for 2026/27");
     expect(heroes[0].textContent).not.toMatch(/estimate/i);
     expect(screen.getByText("Estimated bill")).toBeDefined();
-    expect(screen.getByText("Next payment date")).toBeDefined();
+    expect(screen.getByText("Bill due")).toBeDefined();
     expect(screen.getByText("31 January 2028")).toBeDefined();
     expect(container.textContent).not.toMatch(/£[\d,]+\.\d{2}/);
   });

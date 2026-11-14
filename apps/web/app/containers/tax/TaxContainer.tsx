@@ -28,7 +28,7 @@ import { ConfirmDialog } from "~/features/feedback/components/ConfirmDialog";
 import { useFetcherOutcome } from "~/features/feedback/hooks/useFetcherOutcome";
 import { AddIncomeMenu } from "~/features/tax/components/AddIncomeMenu";
 import { CopyTaxYearModal } from "~/features/tax/components/CopyTaxYearModal";
-import { TaxHeadline } from "~/features/tax/components/TaxHeadline";
+import { nonPayeIncome, TaxHeadline } from "~/features/tax/components/TaxHeadline";
 import { TaxReceiptDialog } from "~/features/tax/components/TaxReceiptDialog";
 import { TaxRecordDialog, type TaxRecordDraft } from "~/features/tax/components/TaxRecordDialog";
 import { TaxRecordsTable } from "~/features/tax/components/TaxRecordsTable";
@@ -37,10 +37,10 @@ import { TaxSourcesPanel } from "~/features/tax/components/TaxSourcesPanel";
 import { TaxYearBar } from "~/features/tax/components/TaxYearBar";
 import { TaxYearComparison } from "~/features/tax/components/TaxYearComparison";
 import { recordAmount } from "~/features/tax/tax-labels";
-import { useUserProfile } from "~/hooks/useUserProfile";
+import { DEFAULT_PROFILE, useUserProfile } from "~/hooks/useUserProfile";
 import type { loader } from "~/routes/app.self-assessment";
 import { useFinancialBaseline } from "~/state/baseline.store";
-import { DEFAULT_ENABLED_PAGES, isPageEnabled } from "~/utils/pageConfig";
+import { isPageEnabled } from "~/utils/pageConfig";
 import {
   drawers,
   errorText,
@@ -93,8 +93,13 @@ const toNumber = (value: unknown): number | null => {
   return Number.isFinite(n) ? n : null;
 };
 
-const withTax = (list: string[] | null | undefined, fallback: readonly string[]) => [
-  ...(list && list.length > 0 ? list : fallback).filter((k) => k !== "tax"),
+/**
+ * Adds "tax" to a stored list exactly as the settings toggle does (ProfileTab): the list is kept
+ * as it is, an empty list included, since that is the user's choice. Only an absent list uses the
+ * default the toggle sees, the normalised profile default.
+ */
+const withTax = (list: string[] | null | undefined, absentDefault: readonly string[]) => [
+  ...(list ?? absentDefault).filter((k) => k !== "tax"),
   "tax",
 ];
 
@@ -118,9 +123,9 @@ const SelfAssessmentOff: FC<{
     setError(null);
     try {
       await updateProfile({
-        enabledPages: withTax(enabledPages, DEFAULT_ENABLED_PAGES),
-        dashboardWidgets: withTax(dashboardWidgets, DEFAULT_ENABLED_PAGES),
-        dashboardWidgetOrder: withTax(dashboardWidgetOrder, DEFAULT_ENABLED_PAGES),
+        enabledPages: withTax(enabledPages, DEFAULT_PROFILE.enabledPages),
+        dashboardWidgets: withTax(dashboardWidgets, DEFAULT_PROFILE.dashboardWidgets),
+        dashboardWidgetOrder: withTax(dashboardWidgetOrder, DEFAULT_PROFILE.dashboardWidgetOrder),
       });
       onEnabled();
     } catch {
@@ -339,7 +344,10 @@ const SelfAssessmentPage: FC<{
   const addIncome = (
     <AddIncomeMenu onAdd={onOpenAddModal} onCopyFromLastYear={() => setIsCopyModalOpen(true)} />
   );
-  const showEstimate = activeYearData !== undefined && hasRecordsInYear;
+  // The one "Unverified estimate" notice goes only where an estimate is shown: a year with
+  // income outside PAYE. A year with costs only has no estimate, so no notice.
+  const showEstimate =
+    activeYearData !== undefined && nonPayeIncome(initialRecords, selectedTaxYear) > 0;
 
   return (
     <PageBody className={pageRoot()} data-testid="tax-page">

@@ -53,6 +53,12 @@ const MISSING_LABELS: Partial<Record<MissingKey, string>> = {
   isSalarySacrifice: "pension method",
 };
 
+/** en-GB whole-number percentage, e.g. 0.234 to "23%". */
+const percentFormat = new Intl.NumberFormat("en-GB", {
+  style: "percent",
+  maximumFractionDigits: 0,
+});
+
 const listWords = (words: string[]): string =>
   words.length <= 1
     ? (words[0] ?? "")
@@ -111,7 +117,10 @@ export const TakeHomeCalculator: FC<TakeHomeCalculatorProps> = ({
     taxRegion: profile?.taxRegion,
     studentLoanPlans: profile?.studentLoanPlans,
     studentLoanPlan: profile?.studentLoanPlan,
-    isSalarySacrifice: facts.isSalarySacrifice ?? false,
+    // The same value selectTakeHome uses: salary sacrifice is a payroll arrangement, so it is off
+    // for self-employed people, and the explorer starts from the same take-home as the KPI.
+    isSalarySacrifice:
+      facts.employmentType === "self-employed" ? false : facts.isSalarySacrifice === true,
     pensionPercent: facts.pensionPercent ?? 0,
     taxYear,
   });
@@ -186,7 +195,7 @@ export const TakeHomeCalculator: FC<TakeHomeCalculatorProps> = ({
 
   const v = saved.value;
   const salary = savedSalary;
-  const shareNotTakenHome = salary > 0 ? Math.round(((salary - v.annual) / salary) * 100) : 0;
+  const shareNotTakenHome = salary > 0 ? (salary - v.annual) / salary : 0;
   const payAfterPension = Math.max(0, salary - v.pension);
 
   const details = (
@@ -194,7 +203,7 @@ export const TakeHomeCalculator: FC<TakeHomeCalculatorProps> = ({
       <dl className={detailList()}>
         <div className={detailItem()}>
           <dt className={detailLabel()}>Share of pay not taken home</dt>
-          <dd className={detailValue()}>{`${shareNotTakenHome}%`}</dd>
+          <dd className={detailValue()}>{percentFormat.format(shareNotTakenHome)}</dd>
           <dd className={detailHint()}>
             Tax, National Insurance, pension and student loan as a share of pay before tax
           </dd>
