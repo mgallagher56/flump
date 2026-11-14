@@ -102,16 +102,16 @@ test("a new user sets up, adds an account and a budget entry, and the dashboard 
     // Setup saved the take-home estimate as the budget's income, shown once as money in (R2-6).
     await expect(page.getByText("Money in each month", { exact: true })).toBeVisible();
     await expect(page.getByRole("button", { name: /^Income/ })).toHaveCount(0);
-    await page.getByRole("button", { name: /^Expenses No entries yet/ }).click();
-    await page.getByRole("button", { name: "Add entry", exact: true }).first().click();
-
-    const dialog = page.getByRole("dialog", { name: "Add to expenses" });
-    await dialog.getByRole("textbox", { name: "Name" }).fill(ENTRY.name);
-    await dialog.getByRole("textbox", { name: "Amount" }).fill(String(ENTRY.amount));
-    await expect(dialog.getByRole("combobox", { name: "How often" })).toHaveValue(/monthly/i);
-    await expect(dialog.getByRole("checkbox", { name: "Essential spending" })).toBeChecked();
-    await dialog.getByRole("button", { name: "Save", exact: true }).click();
-    await expect(dialog).toBeHidden();
+    // Entries are added in place with Edit budget (round 3); the change saves as you go.
+    await page.getByRole("button", { name: "Edit budget" }).click();
+    await page.getByRole("button", { name: "Add to expenses" }).click();
+    await page.getByRole("textbox", { name: "New entry name in Expenses" }).fill(ENTRY.name);
+    await page
+      .getByRole("textbox", { name: "New entry amount in Expenses" })
+      .fill(String(ENTRY.amount));
+    await page.getByRole("button", { name: "Add to Expenses" }).click();
+    await expect(page.getByLabel(`Amount for ${ENTRY.name}`)).toBeVisible();
+    await page.getByRole("button", { name: "Finish editing" }).click();
 
     await expect(page.getByRole("button", { name: /^Expenses 1 entry/ })).toContainText(
       ENTRY.shown,

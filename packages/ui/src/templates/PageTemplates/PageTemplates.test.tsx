@@ -92,12 +92,11 @@ describe("PageTemplates", () => {
     render(<SimulatorTemplate />);
     const outcome = screen.getByTestId("scenario-outcome");
     const before = outcome.textContent;
-    const reset = screen.getByRole("button", { name: "Reset to saved figures" });
-    expect((reset as HTMLButtonElement).disabled).toBe(true);
+    // Reset shows only once something differs from the saved plan (E16 round 3).
+    expect(screen.queryByRole("button", { name: "Reset to saved figures" })).toBeNull();
     fireEvent.click(screen.getByRole("radio", { name: /Smallest balance first/ }));
     expect(outcome.textContent).not.toEqual(before);
-    expect((reset as HTMLButtonElement).disabled).toBe(false);
-    fireEvent.click(reset);
+    fireEvent.click(screen.getByRole("button", { name: "Reset to saved figures" }));
     expect(outcome.textContent).toEqual(before);
     expect(screen.getByRole("figure", { name: "How your debt comes down" })).toBeDefined();
   });
