@@ -17,6 +17,12 @@ import { join } from "node:path";
 export const MAX_AGE_DAYS = 90;
 /** The owner runs the first drill before this date (docs/audit/backend-2026-11/OWNER-SETUP.md). */
 export const FIRST_DRILL_DUE = "2026-12-15";
+/**
+ * Advisory while Flump is in pre-production testing with no backups provisioned (owner decision,
+ * 2026-11-14): the law reports but never fails. Set to true when backups go live, so a stale or
+ * missing drill blocks pull requests again.
+ */
+export const ENFORCED = false;
 
 export interface DrillEntry {
   date: string; // YYYY-MM-DD
@@ -120,11 +126,13 @@ if (import.meta.main) {
   const verdict = checkFreshness(parseDrillLog(log), now);
   // Same policy as the tax-year guard: on a push to main it only warns, so a Railway
   // "Wait for CI" deploy (which may be the fix) is never blocked by the calendar.
-  const warnOnly = process.env.GITHUB_EVENT_NAME === "push";
+  const onPush = process.env.GITHUB_EVENT_NAME === "push";
+  const warnOnly = !ENFORCED || onPush;
   if (verdict.ok) console.log(verdict.message);
+  else if (!ENFORCED) console.error(`WARNING (advisory, not failing): ${verdict.message}`);
   else
     console.error(
-      warnOnly ? `WARNING (push to main, not failing): ${verdict.message}` : verdict.message,
+      onPush ? `WARNING (push to main, not failing): ${verdict.message}` : verdict.message,
     );
   process.exit(verdict.ok || warnOnly ? 0 : 1);
 }

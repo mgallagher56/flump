@@ -6,7 +6,7 @@ What the owner must provision, switch on or confirm, per PR. The PRs change the 
 
 Runbooks: [`backup-restore.md`](../../runbooks/backup-restore.md), [`uptime-and-alerts.md`](../../runbooks/uptime-and-alerts.md), [`incident.md`](../../runbooks/incident.md). Variables: [`scripts/ops/backup.env.example`](../../../scripts/ops/backup.env.example). Alert config: [`alert-rules.json`](../../runbooks/alert-rules.json).
 
-**Deadline:** the first restore drill must be logged by **2026-12-15**, when the restore-drill law starts failing pull requests, and in any case before BE-05 deploys (its sign backfill cannot be undone except from a backup).
+**Status (owner decision, 2026-11-14):** backups are deferred while Flump is in pre-production testing, so sections 1 to 8 below are not set up yet and the restore-drill law is advisory: it warns and never fails (`ENFORCED = false` in `scripts/backend-laws/check-restore-drill.ts`). When backups go live, complete this section, log the first drill and set `ENFORCED` to `true`. Until then, a migration that rewrites data (BE-05's liability sign backfill is the first) can only be undone through its own before-image table, not from a backup.
 
 ### 1. Point-in-time recovery
 
