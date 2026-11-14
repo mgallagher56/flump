@@ -1,5 +1,25 @@
 # Changelog
 
+## [1.37.0](https://github.com/mgallagher56/flump/compare/flump/web-v1.36.0...flump/web-v1.37.0) (2026-11-14)
+
+
+### Features ✨
+
+* **sweep:** first-view figures count only when their whole card shows; fold cuts between cards ([1e8fd88](https://github.com/mgallagher56/flump/commit/1e8fd88eadbeecfcb8695213d49e82ccc8449318))
+* **web:** R2-6 budget page: 4 figures, one-outcome zone, housing shown once ([788e5f0](https://github.com/mgallagher56/flump/commit/788e5f08ee7c3d96a4f7ad8396eef086bff01ce6))
+
+
+### Bug Fixes 🪲
+
+* **chrome:** current page marked in every nav form; phone drawer drops bar pages; whole labels at 320 ([d2a25bd](https://github.com/mgallagher56/flump/commit/d2a25bd21a9c2272ef94c76fef8470b179171dad))
+* **chrome:** R2-4b review fixes: marketing logo keeps its mark, sandbox logo not current, tall cards ([6023356](https://github.com/mgallagher56/flump/commit/6023356a20bc08b23f2c21e0fa40e9a1ca856892))
+* keep the dashboard budget card label; journey checks money in, not an income row ([bbefe06](https://github.com/mgallagher56/flump/commit/bbefe06601954287ea0ffce28906a5b16a47e6d3))
+* **web:** R2-6 four columns of switches on wide screens ([bd98f88](https://github.com/mgallagher56/flump/commit/bd98f88173a0488840785c627020ebab40f2324a))
+* **web:** R2-6 More options switches sit nearer their labels on wide screens ([9f8fe03](https://github.com/mgallagher56/flump/commit/9f8fe03192dbde939c3077050568f616555aac7d))
+* **web:** R2-6 re-score fixes: money in and going out, neutral badges, table fits a phone ([6c64b01](https://github.com/mgallagher56/flump/commit/6c64b01b8b8dfa328b70b007a7942e6e05456382))
+* **web:** R2-6 review fixes: saved housing figure, empty prompt, copy ([577d60c](https://github.com/mgallagher56/flump/commit/577d60c9cf2d8352452557945232151f0bece2ad))
+* **web:** R2-6 the untouched zone outcome carries the saved months-of-cover figure tag ([aed79be](https://github.com/mgallagher56/flump/commit/aed79be9fc86cebfad45dc8f8d1dd1968cc2c80f))
+
 ## [1.36.0](https://github.com/mgallagher56/flump/compare/flump/web-v1.35.0...flump/web-v1.36.0) (2026-11-14)
 
 

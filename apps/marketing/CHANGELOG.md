@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.34.1](https://github.com/mgallagher56/flump/compare/flump/marketing-v1.34.0...flump/marketing-v1.34.1) (2026-11-14)
+
+
+### Bug Fixes 🪲
+
+* **chrome:** current page marked in every nav form; phone drawer drops bar pages; whole labels at 320 ([d2a25bd](https://github.com/mgallagher56/flump/commit/d2a25bd21a9c2272ef94c76fef8470b179171dad))
+
 ## [1.34.0](https://github.com/mgallagher56/flump/compare/flump/marketing-v1.33.0...flump/marketing-v1.34.0) (2026-11-14)
 
 
