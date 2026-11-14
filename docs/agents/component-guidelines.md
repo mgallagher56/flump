@@ -116,7 +116,7 @@ Import and compose shared layout patterns from `@repo/ui`:
 
 ---
 
-## 4. UK Domain & Copy Standards (`docs/copy-style-guide.md`)
+## 4. UK Domain & Copy Standards (`docs/copy/COPY-GUIDE.md`)
 
 - **British English (`en-GB`)**: Use UK spelling across all UI copy, labels, and comments: `anonymise` / `anonymisation`, `optimise` / `optimisation`, `amortisation`, `modelling`, `categorisation`, `summarise`, `authorise`, `visualise`, `analyse`, `catalogue`, `enrolment`, `favourite`.
 - **Sentence case**: Use sentence case for all headings (`h1`–`h4`), buttons, tabs, badges, and table headers. Capitalise only proper nouns and statutory UK acronyms (`HMRC`, `FCA`, `PAYE`, `NI`, `ISA`, `SIPP`, `LTV`, `AER`, `APR`, `EAR`, `POA`, `Section 24`, `Self Assessment`, `Personal Allowance`).

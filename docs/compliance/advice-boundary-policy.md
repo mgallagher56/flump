@@ -79,7 +79,7 @@ Replace the instruction with a statement of fact about the user's figures, in th
 
 - MoneyHelper is the only named service. No other debt-advice provider, charity or commercial firm is named anywhere.
 - Every user sees the same line in the same place, with or without debts. It is never triggered, moved, reworded or emphasised by balances, arrears, missed payments, APRs or any other signal (R4). The component takes no props so it cannot be.
-- The wording is a factual signpost, not a recommendation (R2) and not a judgement (copy guide 7b).
+- The wording is a factual signpost, not a recommendation (R2) and not a judgement (copy guide 2.3, `docs/copy/COPY-GUIDE.md`).
 
 **Universal Credit and other benefits (owner decision, 2026-11-13, E31).** Flump does not model benefits. If a surface mentions them, it signposts only, with no eligibility or amount estimate.
 
@@ -159,7 +159,7 @@ Status: every row above is resolved. `mortgage-isa.tool.ts` and `financial-audit
 
 ## R8. Allowed vocabulary
 
-**Rule.** The guard bans advice **contexts**, not words, because the house spelling is "optimise" (`docs/copy-style-guide.md`). The exceptions are narrow and need a reason in the allow-list.
+**Rule.** The guard bans advice **contexts**, not words, because the house spelling is "optimise" (`docs/copy/COPY-GUIDE.md`). The exceptions are narrow and need a reason in the allow-list.
 
 Allowed:
 

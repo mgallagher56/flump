@@ -31,11 +31,12 @@
     "check:tax-calendar": "bun scripts/check-tax-year-calendar.ts",
     "check:launch": "bun scripts/check-launch-readiness.ts",
     "tax:signoff": "bun scripts/tax-signoff.ts",
-    "check:laws": "bun scripts/check-design-tokens.ts && bun scripts/check-tabular-nums.ts && bun scripts/check-react-icons.ts && bun scripts/check-dependency-versions.ts",
+    "check:laws": "bun scripts/check-design-tokens.ts && bun scripts/check-tabular-nums.ts && bun scripts/check-react-icons.ts && bun scripts/check-dependency-versions.ts && bun scripts/check-copy.ts",
     "verify": "turbo run verify",
     "prepare": "husky"
   },
   "devDependencies": {
+    "@babel/parser": "7.29.13",
     "@biomejs/biome": "2.6.6",
     "@types/node": "26.6.6",
     "@typescript/typescript6": "6.0.2",

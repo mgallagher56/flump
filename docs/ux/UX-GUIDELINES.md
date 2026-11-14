@@ -10,7 +10,7 @@ These are the standing rules for how Flump behaves. How it looks is in [STYLE-GU
 - **Check** says how each rule is held: **Enforced by** a named law or test; **Proposed check** for a check that does not exist yet (described in the assessment, section 6); or **Review only**.
 - **[PR n]** means the check or component arrives with that PR of the polish plan ([`docs/design/e16-polish/PLAN.md`](../design/e16-polish/PLAN.md)). The polish plan's principles P1 to P13 are the acceptance criteria for that work; this document restates the lasting ones as product rules and adds what the plan does not cover. Where both exist they agree, and the plan's id is given.
 - **Do and don't** examples are from our own screens on `main` at 2026-11-14 (frames in `docs/design/e16-polish/before/`, findings in the polish audit).
-- **Wording is not set here.** Words belong to the copy guide (`docs/copy/COPY-GUIDE.md` when it lands; until then [`docs/copy-style-guide.md`](../copy-style-guide.md)) and to the [advice boundary policy](../compliance/advice-boundary-policy.md) (rules R1 to R8). Where a rule below touches wording it points there.
+- **Wording is not set here.** Words belong to the copy guide ([`docs/copy/COPY-GUIDE.md`](../copy/COPY-GUIDE.md)) and to the [advice boundary policy](../compliance/advice-boundary-policy.md) (rules R1 to R8). Where a rule below touches wording it points there.
 - AGENTS.md laws and owner decisions in `docs/audit/plans/DECISIONS.md` outrank this document.
 
 ## 1. Principles

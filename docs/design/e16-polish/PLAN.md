@@ -141,6 +141,8 @@ Within a page, a figure appears once. A chart may plot it, but the legend, table
 
 ### P7. Copy
 
+> The full copy standard is now `docs/copy/COPY-GUIDE.md` (2026-11-14). The list below is kept there as section 6.2 and extended; `bun scripts/check-copy.ts` enforces it. Each page PR applies its rows from `docs/copy/COPY-AUDIT.md`.
+
 1. Plain words. Banned in user-facing strings, with replacements:
 
 | Banned                                                                | Use                                             |
