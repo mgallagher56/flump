@@ -237,12 +237,9 @@ export const TaxTrapCalculator: FC<TaxTrapCalculatorProps> = ({
         />
         <KpiCard
           label={TAX_TRAP_COPY.kpiTakeHome}
-          value={<Money signDisplay="exceptZero" size="lg" value={change.deltaTakeHome} />}
+          value={<Money size="lg" value={change.deltaTakeHome} />}
         />
-        <KpiCard
-          label={TAX_TRAP_COPY.kpiTaxAndNi}
-          value={<Money signDisplay="exceptZero" size="lg" value={taxAndNi} />}
-        />
+        <KpiCard label={TAX_TRAP_COPY.kpiTaxAndNi} value={<Money size="lg" value={taxAndNi} />} />
         <KpiCard
           label={TAX_TRAP_COPY.kpiAllowance}
           value={<Money size="lg" value={after.personalAllowance} />}
