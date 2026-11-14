@@ -85,7 +85,9 @@ export const ROUTE_MATRIX: Readonly<Record<string, MatrixRow>> = {
 
   // Import pipeline (E17 re-plan PR C).
   "POST /imports": imports,
+  "GET /imports": imports,
   "GET /imports/:id": imports,
+  "POST /imports/:id/preview": imports,
   "POST /imports/:id/commit": imports,
   "POST /imports/:id/revert": imports,
 

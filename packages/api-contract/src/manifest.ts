@@ -13,6 +13,7 @@ import {
 import {
   CommitImportRequest,
   ImportIdParams,
+  PreviewImportRequest,
   RevertImportRequest,
   StageImportRequest,
 } from "./domains/imports.js";
@@ -49,7 +50,9 @@ import {
   DeleteBudgetEntryResponse,
   DeleteTaxRecordResponse,
   HealthResponse,
+  ImportBatchListResponse,
   ImportBatchResponse,
+  ImportPreviewResponse,
   McpTokenListResponse,
   PortfolioSnapshotResponse,
   ReadinessResponse,
@@ -242,6 +245,15 @@ export const routes = {
       group: "imports",
       response: ImportBatchResponse,
     }),
+    list: defineRoute({
+      id: "imports.list",
+      method: "GET",
+      path: "imports",
+      auth: "user",
+      ownership: "user",
+      group: "imports",
+      response: ImportBatchListResponse,
+    }),
     get: defineRoute({
       id: "imports.get",
       method: "GET",
@@ -251,6 +263,17 @@ export const routes = {
       params: ImportIdParams,
       group: "imports",
       response: ImportBatchResponse,
+    }),
+    preview: defineRoute({
+      id: "imports.preview",
+      method: "POST",
+      path: "imports/:id/preview",
+      auth: "user",
+      ownership: "user",
+      params: ImportIdParams,
+      body: PreviewImportRequest,
+      group: "imports",
+      response: ImportPreviewResponse,
     }),
     commit: defineRoute({
       id: "imports.commit",
