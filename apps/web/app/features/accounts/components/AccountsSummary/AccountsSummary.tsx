@@ -1,3 +1,4 @@
+import { HOME_ESTIMATE_LABEL } from "@flump/finance-engine";
 import { Card, KpiCard, KpiStrip, Money, Num, ProgressBar } from "@repo/ui";
 import type { FC } from "react";
 import {
@@ -20,6 +21,8 @@ export interface AccountsSummaryStats {
   assets: number;
   liabilities: number;
   netWorth: number;
+  /** The user's own home estimate counted in net worth and assets (E16 D3); 0 when none. */
+  homeEstimate?: number;
   studentLoans: number;
   liquidCash: number;
   weightedAvgApy: number;
@@ -71,6 +74,17 @@ export const AccountsSummary: FC<AccountsSummaryProps> = ({ stats, allocation, a
           value={<Num fractionDigits={2} kind="percent" size="lg" value={stats.weightedAvgApy} />}
         />
       </KpiStrip>
+      {(stats.homeEstimate ?? 0) > 0 && (
+        <div className={studentLoanLine()} data-testid="home-estimate-line" id="home-estimate-line">
+          <p className={studentLoanNote()}>
+            {HOME_ESTIMATE_LABEL}: <Money size="sm" value={stats.homeEstimate ?? 0} />
+          </p>
+          <p className={studentLoanNote()}>
+            The value you gave for your home, counted in total assets and net worth. Add it as a
+            property account to keep it up to date.
+          </p>
+        </div>
+      )}
       {stats.studentLoans > 0 && (
         <div className={studentLoanLine()} id="student-loans-line" data-testid="student-loans-line">
           <p className={studentLoanNote()}>

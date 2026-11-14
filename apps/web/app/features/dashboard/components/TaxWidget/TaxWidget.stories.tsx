@@ -44,7 +44,7 @@ export const NotSet: Story = {
     const canvas = within(canvasElement);
     await expect(canvas.getAllByText("Not set")[0]).toBeDefined();
     await expect(
-      canvas.getAllByText("Calculated once tax estimates are verified")[0],
+      canvas.getAllByText("Shown once you add income not taxed through PAYE")[0],
     ).toBeDefined();
   },
 };

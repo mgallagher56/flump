@@ -57,7 +57,10 @@ export interface TaxWidgetProps {
     totalIncome: number;
     totalExpenses: number;
     netProfit: number;
-    /** `null` until a real, verified current-year estimate exists. Never an invented figure. */
+    /**
+     * The engine's self assessment estimate (tax on income outside PAYE) for the year; `null`
+     * when there is no such income to estimate. Never an invented figure.
+     */
     estimatedTaxDue: number | null;
     recordsCount: number;
     /** `null` or absent until salary, employment type and pension details are saved. */
@@ -66,7 +69,10 @@ export interface TaxWidgetProps {
   onHide?: () => void;
 }
 
-/** Dashboard tax summary for the current tax year. Tax due reads "Not set" until it is verified. */
+export const TAX_DUE_UNKNOWN_SUBTEXT = "Shown once you add income not taxed through PAYE";
+export const TAX_DUE_KNOWN_SUBTEXT = "Estimate of tax on income not taxed through PAYE";
+
+/** Dashboard tax summary for the current tax year. Tax due reads "Not set" with nothing to estimate. */
 export const TaxWidget: FC<TaxWidgetProps> = ({ data, onHide }) => {
   const taxDue = data.estimatedTaxDue;
   const marginal = data.marginal ?? null;
@@ -88,8 +94,14 @@ export const TaxWidget: FC<TaxWidgetProps> = ({ data, onHide }) => {
             </Button>
           }
           label={`Estimated tax due, ${data.taxYear}`}
-          subtext={taxDue === null ? "Calculated once tax estimates are verified" : "Estimate only"}
-          value={taxDue === null ? null : <Money size="lg" value={taxDue} />}
+          subtext={taxDue === null ? TAX_DUE_UNKNOWN_SUBTEXT : TAX_DUE_KNOWN_SUBTEXT}
+          value={
+            taxDue === null ? null : (
+              <span data-figure="tax.estimatedDue">
+                <Money size="lg" value={taxDue} />
+              </span>
+            )
+          }
         />
         <dl className={detailList()}>
           <div className={detailRow()}>

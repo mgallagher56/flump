@@ -62,6 +62,27 @@ describe("buildOnboardingSeedJobs", () => {
     ]);
   });
 
+  it("saves the home estimate as a Property account, only for an owner (E16 D3)", () => {
+    const owner = buildOnboardingSeedJobs({ ...input, propertyValue: 310000 });
+    const home = owner.find((j) => j.key === "account:Home (your estimate)");
+    expect(home?.payload).toEqual({
+      name: "Home (your estimate)",
+      type: "Property",
+      balance: 310000,
+      isCurrent: true,
+    });
+    expect(home?.enabled).toBe(true);
+    const renter = buildOnboardingSeedJobs({
+      ...input,
+      housingStatus: "renting",
+      propertyValue: 310000,
+    });
+    expect(renter.some((j) => j.key === "account:Home (your estimate)")).toBe(false);
+    expect(
+      buildOnboardingSeedJobs(input).some((j) => j.key === "account:Home (your estimate)"),
+    ).toBe(false);
+  });
+
   it("names the housing entry after the housing status", () => {
     const renting = buildOnboardingSeedJobs({ ...input, housingStatus: "renting" });
     expect(renting.some((j) => j.key === "entry:Rent Payment")).toBe(true);

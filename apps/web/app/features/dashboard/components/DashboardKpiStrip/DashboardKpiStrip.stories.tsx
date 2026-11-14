@@ -51,3 +51,13 @@ export const Shortfall: Story = {
     ).toBeDefined();
   },
 };
+
+/** A homeowner whose home is their own estimate: it is named inside assets (E16 D3). */
+export const WithHomeEstimate: Story = {
+  args: { netWorth: 241000, totalAssets: 427000, totalLiabilities: 186000, homeEstimate: 310000 },
+  play: async ({ canvasElement }) => {
+    await expect(
+      within(canvasElement).getAllByText(/including Home \(your estimate\)/)[0],
+    ).toBeDefined();
+  },
+};

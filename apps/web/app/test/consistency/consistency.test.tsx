@@ -29,6 +29,7 @@ vi.mock("react-router", async () => {
     Link: ({ children }: { children: unknown }) => children,
     useLoaderData: () => loaderState.data,
     useNavigate: () => vi.fn(),
+    useSearchParams: () => [new URLSearchParams(), vi.fn()],
     useFetcher: () => ({ state: "idle", data: undefined, submit: vi.fn(), load: vi.fn() }),
   };
 });
@@ -64,6 +65,7 @@ vi.mock("recharts", async () => {
 
 import BudgetContainer from "~/containers/budget/BudgetContainer";
 import { DebtContainer } from "~/containers/debt/DebtContainer";
+import MortgageContainer from "~/containers/mortgage/MortgageContainer";
 import { HomeDashboard } from "~/features/dashboard/components/HomeDashboard";
 import { loader as dashboardLoader } from "~/routes/_index";
 import { loader as debtLoader } from "~/routes/app.debt";
@@ -137,6 +139,9 @@ function expectedFigures(picture: FinancialPicture): Record<string, number | nul
       ? picture.safeToSpend.value.weekly
       : null,
     monthsOfCover: isFigureKnown(picture.monthsOfCover) ? picture.monthsOfCover.value.months : null,
+    "tax.estimatedDue": isFigureKnown(picture.estimatedTaxDue)
+      ? picture.estimatedTaxDue.value.amount
+      : null,
   };
 }
 
@@ -197,6 +202,7 @@ describe.each(NAMES)("persona %s: one figure, every surface", (name) => {
       accounts: rows.accounts,
       accountDetails: rows.accountDetails,
       budgetEntries: rows.budgetEntries,
+      taxRecords: rows.taxRecords,
     }),
   );
   const expected = expectedFigures(picture);
@@ -297,5 +303,51 @@ describe.each(NAMES)("persona %s: one figure, every surface", (name) => {
     if (expected["safeToSpend.weekly"] !== null) expect(shown).toContain("safeToSpend.weekly");
     if (expected.monthsOfCover !== null) expect(shown).toContain("monthsOfCover");
     if (expected["budget.surplus"] !== null) expect(shown).toContain("budget.surplus");
+  });
+
+  it("dashboard loader: net worth with the home estimate, take-home and estimated tax due", async () => {
+    const data = await payload(await dashboardLoader(args()));
+    expect(data.accountsData.homeEstimate).toBe(picture.netWorth.homeEstimate);
+    expect(data.accountsData.totalAssets).toBe(picture.netWorth.totalAssets);
+    expect(data.budgetData.takeHomeMonthly).toBe(
+      isFigureKnown(picture.takeHome) ? picture.takeHome.value.monthly : null,
+    );
+    expect(data.forecastData.estimatedTakeHome).toBe(data.budgetData.takeHomeMonthly);
+    expect(data.taxData.estimatedTaxDue).toBe(expected["tax.estimatedDue"]);
+  });
+
+  it("the Mortgage page shows the picture's loan to value, or none when it is unknown", () => {
+    loaderState.data = {
+      accounts: rows.accounts,
+      accountDetails: rows.accountDetails,
+      userProfile: rows.userProfile,
+    };
+    const page = render(<MortgageContainer />);
+    const heading = page.container.querySelector("#ltv-milestones-heading")?.textContent ?? "";
+    if (isFigureKnown(picture.loanToValue)) {
+      expect(heading).toContain(`Current LTV: ${picture.loanToValue.value.percent.toFixed(1)}%`);
+    } else {
+      expect(heading).toBe("");
+    }
+    page.unmount();
+  });
+});
+
+describe("renter and homeowner: the figures E16 PR 3 fixed", () => {
+  const pictureOf = (name: PersonaName) => buildFinancialPicture(PERSONAS[name].fixture);
+
+  it("the homeowner's net worth counts the home once, 241,000, and LTV is 60%", () => {
+    const p = pictureOf("homeowner");
+    expect(p.netWorth.netWorth).toBe(241000);
+    expect(p.netWorth.homeEstimate).toBe(310000);
+    expect(isFigureKnown(p.loanToValue) && p.loanToValue.value.percent).toBe(60);
+  });
+
+  it("the renter (Sam) has no home estimate and no LTV; neither has tax due", () => {
+    const p = pictureOf("sam");
+    expect(p.netWorth.homeEstimate).toBe(0);
+    expect(p.loanToValue.status).toBe("unknown");
+    expect(p.estimatedTaxDue.status).toBe("unknown");
+    expect(pictureOf("homeowner").estimatedTaxDue.status).toBe("unknown");
   });
 });

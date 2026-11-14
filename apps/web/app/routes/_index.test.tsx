@@ -84,6 +84,65 @@ describe("_index route", () => {
     expect(data.taxData.estimatedTaxDue).toBeNull();
   });
 
+  it("estimates tax due from the engine for current-year rental income (C-11)", async () => {
+    const year = getCurrentUKTaxYear();
+    const date = `${year.slice(0, 4)}-05-01`;
+    const record = (id: string, type: string, category: string, amount: number) => ({
+      id,
+      userId: "u1",
+      type,
+      source: "rental",
+      category,
+      name: category,
+      amount,
+      frequency: "annual",
+      date,
+      endDate: `${Number(year.slice(0, 4)) + 1}-04-05`,
+    });
+    vi.mocked(loadWorkspaceSnapshot).mockResolvedValueOnce({
+      user: { id: "u1", email: "real@example.com" },
+      accounts: [],
+      accountDetails: [],
+      budgetEntries: [],
+      taxRecords: [
+        record("r1", "income", "rental_income", 12000),
+        record("r2", "expense", "repairs_maintenance", 2000),
+      ],
+      userProfile: { onboardingCompleted: true, annualSalary: 30000, employmentType: "employed" },
+      portfolioSnapshot: undefined,
+    } as any);
+    const data = (await loader({
+      request: new Request("http://localhost/"),
+      params: {},
+      context: {},
+    } as any)) as any;
+    // 10,000 rental profit, all in the basic band on a 30,000 salary: 20%.
+    expect(data.taxData.estimatedTaxDue).toBe(2000);
+  });
+
+  it("counts the profile home estimate in net worth, labelled apart (D3)", async () => {
+    vi.mocked(loadWorkspaceSnapshot).mockResolvedValueOnce({
+      user: { id: "u1", email: "real@example.com" },
+      accounts: [
+        { id: "c", name: "Cash", type: "Saving", balance: 21000 },
+        { id: "p", name: "Pension", type: "Pension", balance: 96000 },
+        { id: "m", name: "Mortgage", type: "Mortgage", balance: 186000 },
+      ],
+      accountDetails: [],
+      budgetEntries: [],
+      taxRecords: [],
+      userProfile: { onboardingCompleted: true, housingStatus: "mortgage", homeValue: 310000 },
+      portfolioSnapshot: undefined,
+    } as any);
+    const data = (await loader({
+      request: new Request("http://localhost/"),
+      params: {},
+      context: {},
+    } as any)) as any;
+    expect(data.accountsData.netWorth).toBe(241000);
+    expect(data.accountsData.homeEstimate).toBe(310000);
+  });
+
   it("rejects when the workspace snapshot fails instead of returning zeroed data", async () => {
     const failure = new Error("snapshot failed");
     vi.mocked(loadWorkspaceSnapshot).mockRejectedValueOnce(failure);
