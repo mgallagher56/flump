@@ -13,9 +13,7 @@ import {
   Get,
   Headers,
   HttpCode,
-  Inject,
   Logger,
-  Optional,
   Patch,
   Post,
   Req,
@@ -23,23 +21,13 @@ import {
   ServiceUnavailableException,
   UseGuards,
 } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
-import { InjectRepository } from "@nestjs/typeorm";
 import type { Response } from "express";
-import { Repository } from "typeorm";
 import { AuthGuard } from "../../auth/auth.guard";
 import type { AuthenticatedRequest } from "../../auth/authenticated-request";
 import { AllowErasedAccount } from "../../auth/erased-account";
 import { assertRecentLogin } from "../../auth/recent-login";
 import { safeErrorSummary } from "../../common/log-safe";
 import { expectedVersion, setEtag } from "../../contract/etag";
-import { Account } from "../../entities/account.entity";
-import { AccountDetail } from "../../entities/account-detail.entity";
-import { BankConnection } from "../../entities/bank-connection.entity";
-import { BudgetEntry } from "../../entities/budget-entry.entity";
-import { TaxRecord } from "../../entities/tax-record.entity";
-import { Transaction } from "../../entities/transaction.entity";
-import { UserProfile } from "../../entities/user-profile.entity";
 import { RateLimit } from "../../security/rate-limit.decorator";
 import {
   ACCOUNT_DELETION_UNAVAILABLE,
@@ -56,39 +44,15 @@ import {
 @UseGuards(AuthGuard)
 export class UserProfileController {
   private readonly logger = new Logger(UserProfileController.name);
-  private readonly userProfileService: UserProfileService;
-
+  /**
+   * Plain injection (BE-13, audit M19). Deletion and export stay typed optional only so a unit
+   * test can reach the 503 branches; Nest still fails at boot when either provider is missing.
+   */
   constructor(
-    @Inject(UserProfileService)
-    userProfileRepositoryOrService: UserProfileService | Repository<UserProfile>,
-    @Optional() @InjectRepository(Account) accountRepository?: Repository<Account>,
-    @Optional() @InjectRepository(Transaction) transactionRepository?: Repository<Transaction>,
-    @Optional()
-    @InjectRepository(AccountDetail)
-    accountDetailRepository?: Repository<AccountDetail>,
-    @Optional()
-    @InjectRepository(BankConnection)
-    bankConnectionRepository?: Repository<BankConnection>,
-    @Optional() @InjectRepository(BudgetEntry) budgetEntryRepository?: Repository<BudgetEntry>,
-    @Optional() @InjectRepository(TaxRecord) taxRecordRepository?: Repository<TaxRecord>,
-    @Optional() @Inject(ConfigService) _configService?: ConfigService,
-    @Optional() private readonly accountDeletion?: AccountDeletionService,
-    @Optional() private readonly accountExport?: AccountExportService,
-  ) {
-    if (userProfileRepositoryOrService instanceof UserProfileService) {
-      this.userProfileService = userProfileRepositoryOrService;
-    } else {
-      this.userProfileService = new UserProfileService(
-        userProfileRepositoryOrService as Repository<UserProfile>,
-        accountRepository!,
-        transactionRepository!,
-        accountDetailRepository!,
-        bankConnectionRepository!,
-        budgetEntryRepository!,
-        taxRecordRepository!,
-      );
-    }
-  }
+    private readonly userProfileService: UserProfileService,
+    private readonly accountDeletion?: AccountDeletionService,
+    private readonly accountExport?: AccountExportService,
+  ) {}
 
   @Get("user-profile")
   @HttpCode(200)

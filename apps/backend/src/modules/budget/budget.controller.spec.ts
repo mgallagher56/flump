@@ -7,6 +7,11 @@ import { BadRequestException, NotFoundException } from "@nestjs/common";
 import { describe, expect, it, vi } from "vitest";
 import { createInMemoryRepository } from "../../testing/in-memory-repository";
 import { BudgetController } from "./budget.controller";
+import { BudgetService } from "./budget.service";
+
+/** Test wiring (BE-13): the controller takes the service; the service takes the repositories. */
+const budgetController = (budgetRepo: unknown, profileRepo: unknown) =>
+  new BudgetController(new BudgetService(budgetRepo as never, profileRepo as never));
 
 describe("BudgetController", () => {
   it("should be defined", () => {
@@ -16,7 +21,7 @@ describe("BudgetController", () => {
   it("getBudgetEntries returns [] for a new user and never saves", async () => {
     const budgetRepo = createInMemoryRepository();
     const profileRepo = createInMemoryRepository();
-    const controller = new BudgetController(budgetRepo as any, profileRepo as any);
+    const controller = budgetController(budgetRepo as any, profileRepo as any);
 
     const result = await controller.getBudgetEntries({ user: { id: "user-123" } });
 
@@ -28,7 +33,7 @@ describe("BudgetController", () => {
 
   it("seedDefaultBudgetEntries twice creates each template row once", async () => {
     const budgetRepo = createInMemoryRepository();
-    const controller = new BudgetController(budgetRepo as any, createInMemoryRepository() as any);
+    const controller = budgetController(budgetRepo as any, createInMemoryRepository() as any);
     const req = { user: { id: "user-123" } };
 
     const first = await controller.seedDefaultBudgetEntries(req);
@@ -46,7 +51,7 @@ describe("BudgetController", () => {
       { id: "u1", userId: "user-123", name: "Gym", isDefault: false, amount: 99 },
       { id: "d1", userId: "user-123", name: "Gas", isDefault: true, amount: 61 },
     ]);
-    const controller = new BudgetController(budgetRepo as any, createInMemoryRepository() as any);
+    const controller = budgetController(budgetRepo as any, createInMemoryRepository() as any);
 
     await controller.seedDefaultBudgetEntries({ user: { id: "user-123" } });
 
@@ -56,7 +61,7 @@ describe("BudgetController", () => {
 
   it("suggested defaults contain no income entry", async () => {
     const budgetRepo = createInMemoryRepository();
-    const controller = new BudgetController(budgetRepo as any, createInMemoryRepository() as any);
+    const controller = budgetController(budgetRepo as any, createInMemoryRepository() as any);
 
     await controller.seedDefaultBudgetEntries({ user: { id: "user-123" } });
 
@@ -67,7 +72,7 @@ describe("BudgetController", () => {
 
   it("suggested defaults carry no invented amounts (E23)", async () => {
     const budgetRepo = createInMemoryRepository();
-    const controller = new BudgetController(budgetRepo as any, createInMemoryRepository() as any);
+    const controller = budgetController(budgetRepo as any, createInMemoryRepository() as any);
 
     await controller.seedDefaultBudgetEntries({ user: { id: "user-123" } });
 
@@ -83,7 +88,7 @@ describe("BudgetController", () => {
       save: vi.fn((p) => Promise.resolve(p)),
     };
 
-    const controller = new BudgetController(mockBudgetRepo as any, mockProfileRepo as any);
+    const controller = budgetController(mockBudgetRepo as any, mockProfileRepo as any);
 
     await expect(
       controller.addCustomCategory({ user: { id: "user-123" } }, { category: "  " }),
@@ -105,7 +110,7 @@ describe("BudgetController", () => {
       create: vi.fn((p) => ({ ...p })),
       save: vi.fn((p) => Promise.resolve(p)),
     };
-    const controller = new BudgetController({} as any, mockProfileRepo as any);
+    const controller = budgetController({} as any, mockProfileRepo as any);
     const req = { user: { id: "u1" } };
 
     await expect(controller.addCustomCategory(req, { category: "One more" })).rejects.toThrow(
@@ -136,7 +141,7 @@ describe("BudgetController", () => {
       remove: vi.fn().mockResolvedValue(undefined),
     };
     const mockProfileRepo = {};
-    const controller = new BudgetController(mockBudgetRepo as any, mockProfileRepo as any);
+    const controller = budgetController(mockBudgetRepo as any, mockProfileRepo as any);
     const req = { user: { id: "u1" } };
 
     // Create
@@ -201,7 +206,7 @@ describe("BudgetController", () => {
       { id: "e-A", userId: "userA", category: "housing", name: "Rent", amount: 1500 },
     ]);
     const profileRepo = createInMemoryRepository();
-    const controller = new BudgetController(budgetRepo as any, profileRepo as any);
+    const controller = budgetController(budgetRepo as any, profileRepo as any);
     const userA = { user: { id: "userA" } };
     const userB = { user: { id: "userB" } };
 

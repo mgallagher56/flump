@@ -1,13 +1,38 @@
 import {
   MAX_BULK_TAX_RECORDS as CONTRACT_MAX_BULK_TAX_RECORDS,
+  type CreateTaxRecordRequest,
   type TaxRecordCap,
+  type UpdateTaxRecordRequest,
 } from "@flump/api-contract";
 import { getAnnualRecordEndDate } from "@flump/finance-engine";
-import { BadRequestException, Injectable } from "@nestjs/common";
+import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
+import { withVersionClaim } from "../../contract/etag";
+import {
+  type KeysetOrder,
+  keysetPage,
+  type Page,
+  type PageRequest,
+} from "../../contract/pagination";
 import { TaxRecord } from "../../entities/tax-record.entity";
-import { validateReceipt } from "../../security/receipt-validation";
+import { sniffReceiptMime, validateReceipt } from "../../security/receipt-validation";
+
+/** GET /tax-records order: newest date first, id as tiebreak (keyset pagination, BE-09). */
+const TAX_ORDER: KeysetOrder = {
+  keys: [
+    { column: '"t"."date"', kind: "date" },
+    { column: '"t"."id"', kind: "uuid" },
+  ],
+  direction: "DESC",
+};
+
+/** A stored receipt that passed re-validation, ready to stream. */
+export interface ReceiptFile {
+  bytes: Buffer;
+  type: string;
+  filename: string | null;
+}
 
 /**
  * Maximum tax records (and capPreviousRecordIds items) accepted by one `POST tax-records/bulk`
@@ -178,6 +203,92 @@ export class TaxService {
       const saved = await records.save(records.create(picked));
       return saved.map(toTaxRecordResponse);
     });
+  }
+
+  /** One keyset page of the user's records. */
+  async listRecords(userId: string, page: PageRequest): Promise<Page<TaxRecord>> {
+    const qb = this.taxRecordRepository
+      .createQueryBuilder("t")
+      .where("t.userId = :userId", { userId });
+    return keysetPage(qb, TAX_ORDER, page);
+  }
+
+  async getRecord(userId: string, id: string): Promise<TaxRecord> {
+    const record = await this.taxRecordRepository.findOne({ where: { id, userId } });
+    if (!record) {
+      throw new NotFoundException("Tax record not found");
+    }
+    return record;
+  }
+
+  /**
+   * The receipt bytes, scoped by `{ id, userId }`. Re-validates the stored data, so a legacy row
+   * that fails the N14 rules is a 404 rather than served content.
+   */
+  async readReceipt(userId: string, id: string): Promise<ReceiptFile> {
+    const record = await this.taxRecordRepository.findOne({
+      where: { id, userId },
+      select: { id: true, receiptFilename: true, receiptMimeType: true, receiptData: true },
+    });
+    const notFound = new NotFoundException("Receipt not found");
+    if (!record?.receiptData) throw notFound;
+    let mime: ReturnType<typeof validateReceipt>;
+    try {
+      mime = validateReceipt({
+        receiptFilename: record.receiptFilename,
+        receiptMimeType: record.receiptMimeType,
+        receiptData: record.receiptData,
+      });
+    } catch {
+      throw notFound;
+    }
+    const bytes = Buffer.from(
+      record.receiptData.slice(record.receiptData.indexOf(",") + 1),
+      "base64",
+    );
+    const type = mime ?? sniffReceiptMime(bytes);
+    if (!type) throw notFound;
+    return { bytes, type, filename: record.receiptFilename ?? null };
+  }
+
+  async createRecord(userId: string, body: CreateTaxRecordRequest): Promise<TaxRecordResponse> {
+    const record = this.taxRecordRepository.create(
+      withAnnualEndDate({
+        ...pickTaxRecordFields(body),
+        userId,
+      }),
+    );
+    return toTaxRecordResponse(await this.taxRecordRepository.save(record));
+  }
+
+  /** Conditional on `expected` when given (412 when stale, BE-09). */
+  async updateRecord(
+    userId: string,
+    id: string,
+    body: UpdateTaxRecordRequest,
+    expected: Date | undefined,
+  ): Promise<TaxRecord> {
+    const notFound = () => new NotFoundException("Tax record not found");
+    return withVersionClaim(
+      this.taxRecordRepository,
+      { id, user_id: userId },
+      expected,
+      notFound,
+      async (repository) => {
+        const record = await repository.findOne({ where: { id, userId } });
+        if (!record) throw notFound();
+        // receiptData is not loaded (select: false), so an omitted field keeps the stored bytes.
+        Object.assign(record, pickTaxRecordFields(body));
+        withAnnualEndDate(record);
+        return repository.save(record);
+      },
+    );
+  }
+
+  async deleteRecord(userId: string, id: string): Promise<{ success: boolean }> {
+    const record = await this.getRecord(userId, id);
+    await this.taxRecordRepository.remove(record);
+    return { success: true };
   }
 
   private inTransaction<T>(work: (records: Repository<TaxRecord>) => Promise<T>): Promise<T> {
