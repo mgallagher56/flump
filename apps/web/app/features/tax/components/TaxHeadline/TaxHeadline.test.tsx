@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { taxRecordsFixture, taxResultFixture } from "../../__fixtures__/taxRecords";
-import { billDueDate, TaxHeadline } from "./TaxHeadline";
+import { billDueDate, nonPayeCosts, nonPayeIncome, TaxHeadline } from "./TaxHeadline";
 
 describe("TaxHeadline", () => {
   it("puts what the user added in the hero and the estimate in the first KPI", () => {
@@ -16,7 +16,7 @@ describe("TaxHeadline", () => {
     expect(heroes[0].textContent).not.toMatch(/estimate/i);
     expect(screen.getByText("Estimated bill")).toBeDefined();
     expect(screen.getByText("Bill due")).toBeDefined();
-    expect(screen.getByText("Costs")).toBeDefined();
+    expect(screen.getByText("Income after costs")).toBeDefined();
     expect(container.querySelectorAll("[data-kpi-value]").length).toBe(3);
     expect(screen.getByText("31 January 2028")).toBeDefined();
     expect(container.textContent).not.toMatch(/£[\d,]+\.\d{2}/);
@@ -36,10 +36,23 @@ describe("TaxHeadline", () => {
     expect(screen.getByRole("button", { name: "Add income" })).toBeDefined();
   });
 
-  it("offers to add a cost instead of showing £0 when none are recorded", () => {
+  it("reconciles: income before costs in the hero, income less costs beside the bill", () => {
+    const { container } = render(
+      <TaxHeadline records={taxRecordsFixture} result={taxResultFixture} taxYear="2026/27" />,
+    );
+    const hero = container.querySelector('[data-tone="hero"]')?.textContent ?? "";
+    const before = Number(/£([\d,]+)/.exec(hero)?.[1]?.replace(/,/g, ""));
+    const after =
+      nonPayeIncome(taxRecordsFixture, "2026/27") - nonPayeCosts(taxRecordsFixture, "2026/27");
+    expect(before).toBe(nonPayeIncome(taxRecordsFixture, "2026/27"));
+    expect(screen.getByText("Your income less the costs you recorded")).toBeDefined();
+    expect(container.textContent).toContain(`£${Math.round(after).toLocaleString("en-GB")}`);
+  });
+
+  it("says when no costs are recorded and offers to add one", () => {
     const incomeOnly = taxRecordsFixture.filter((r) => r.type === "income");
     const onAddCost = vi.fn();
-    const { container } = render(
+    render(
       <TaxHeadline
         onAddCost={onAddCost}
         records={incomeOnly}
@@ -47,10 +60,9 @@ describe("TaxHeadline", () => {
         taxYear="2026/27"
       />,
     );
-    expect(screen.getByText("None recorded")).toBeDefined();
+    expect(screen.getByText("No costs recorded")).toBeDefined();
     fireEvent.click(screen.getByRole("button", { name: "Add a cost" }));
     expect(onAddCost).toHaveBeenCalledTimes(1);
-    expect(container.textContent).not.toMatch(/Costs£0/);
   });
 
   it("dates the bill to 31 January after the tax year ends", () => {

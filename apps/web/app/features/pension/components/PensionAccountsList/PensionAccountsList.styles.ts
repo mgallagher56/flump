@@ -1,15 +1,17 @@
 import { cva } from "@repo/ui/styled-system/css";
 
-/** Sits inside the "Your details" card, below the saved facts, separated by a hairline. */
+/** The pots in one card, the same as the savings accounts list. */
 export const listRoot = cva({
   base: {
     display: "flex",
     flexDirection: "column",
-    gap: "1",
-    pt: "2",
-    borderTopWidth: "1px",
-    borderTopStyle: "solid",
-    borderTopColor: "border.subtle",
+    minWidth: 0,
+    borderRadius: "xl",
+    borderWidth: "1px",
+    borderStyle: "solid",
+    borderColor: "border",
+    backgroundColor: "surface.card",
+    overflow: "hidden",
   },
 });
 
@@ -24,7 +26,8 @@ export const potRow = cva({
     flexWrap: "wrap",
     columnGap: "2",
     rowGap: "0",
-    py: "1.5",
+    px: "4",
+    py: "3",
     "&:not(:last-child)": {
       borderBottomWidth: "1px",
       borderBottomStyle: "solid",
@@ -74,4 +77,9 @@ export const potBalance = cva({
 /** Icon buttons keep their touch target but sit flush, so the row fits on one line at 375. */
 export const potActions = cva({
   base: { display: "flex", gap: "0", flexShrink: 0, mr: "-2" },
+});
+
+/** "Show all pots" inside the card, inset like the rows. */
+export const drawerWrap = cva({
+  base: { px: "4", pb: "2" },
 });

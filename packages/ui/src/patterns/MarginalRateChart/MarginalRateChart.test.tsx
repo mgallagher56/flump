@@ -217,6 +217,22 @@ describe("MarginalRateChart", () => {
     expect(names[1]).toMatch(/£60,000/);
   });
 
+  it("near-pay leaves out a threshold more than a fifth of the axis from your pay", () => {
+    // Without Child Benefit, at £85,000 the threshold above is £100,000 (£15,000 away, drawn) and
+    // the one below is £50,270 (£34,730 away, more than £30,000: left out).
+    renderChart({
+      thresholdFocus: "near-pay",
+      yourPay: 85_000,
+      thresholds: SAMPLE_THRESHOLDS.filter((t) => !t.label.startsWith("Child Benefit")),
+      steppedZones: [],
+    });
+    const names = screen
+      .getAllByTestId("marginal-rate-threshold-hit")
+      .map((b) => b.getAttribute("aria-label") ?? "");
+    expect(names).toHaveLength(1);
+    expect(names[0]).toMatch(/£100,000/);
+  });
+
   it("near-pay falls back to every threshold when your pay is not on the chart", () => {
     renderChart({ thresholdFocus: "near-pay", yourPay: undefined });
     expect(screen.getAllByTestId("marginal-rate-threshold")).toHaveLength(6);
@@ -227,6 +243,8 @@ describe("MarginalRateChart", () => {
     expect(markersNearPay(m, 25).map((x) => x.gross)).toEqual([20, 30]);
     expect(markersNearPay(m, 5).map((x) => x.gross)).toEqual([10]);
     expect(markersNearPay(m, 35).map((x) => x.gross)).toEqual([30]);
+    expect(markersNearPay(m, 25, 4).map((x) => x.gross)).toEqual([]);
+    expect(markersNearPay(m, 27, 4).map((x) => x.gross)).toEqual([30]);
   });
 
   it("puts a 31-row table, every £5,000, behind Show data", () => {

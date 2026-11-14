@@ -72,8 +72,9 @@ export interface MarginalRateChartProps {
   headingLevel?: "h2" | "h3" | "h4";
   /**
    * Which threshold markers to draw. "all" (default) draws every one. "near-pay" draws only the
-   * nearest threshold below and above `yourPay`, so the lines that matter to this pay are not lost
-   * among the others; with no `yourPay` on the chart it draws them all.
+   * nearest threshold below and above `yourPay`, each only within a fifth of the pay axis of it,
+   * so the lines that matter to this pay are not lost among the others; with no `yourPay` on the
+   * chart it draws them all.
    */
   thresholdFocus?: "all" | "near-pay";
   /**
@@ -164,12 +165,25 @@ const groupThresholds = (
     }));
 };
 
-/** The nearest marker below and the nearest above a pay (either may be missing). */
-export const markersNearPay = (markers: readonly MarkerGroup[], pay: number): MarkerGroup[] => {
+/**
+ * The nearest marker below and the nearest above a pay, each only when it is within `within` of
+ * the pay (either may be missing): a threshold far from the pay is not near it, and a lone hollow
+ * marker far off reads as noise.
+ */
+export const markersNearPay = (
+  markers: readonly MarkerGroup[],
+  pay: number,
+  within = Number.POSITIVE_INFINITY,
+): MarkerGroup[] => {
   const below = markers.filter((m) => m.gross <= pay).at(-1);
   const above = markers.find((m) => m.gross > pay);
-  return [below, above].filter((m): m is MarkerGroup => m !== undefined);
+  return [below, above].filter(
+    (m): m is MarkerGroup => m !== undefined && Math.abs(m.gross - pay) <= within,
+  );
 };
+
+/** "Near" your pay on the near-pay chart: within a fifth of the pay axis (£30,000 of £150,000). */
+const NEAR_SHARE = 0.2;
 
 /**
  * Y axis ticks every 25%, up to the first tick at or above the highest rate on the line (never past
@@ -271,7 +285,7 @@ export const MarginalRateChart: FC<MarginalRateChartProps> = ({
   const markers = useMemo(() => {
     const all = groupThresholds(thresholds, maxGross);
     return thresholdFocus === "near-pay" && showYourPay && yourPay !== undefined
-      ? markersNearPay(all, yourPay)
+      ? markersNearPay(all, yourPay, maxGross * NEAR_SHARE)
       : all;
   }, [thresholds, maxGross, thresholdFocus, showYourPay, yourPay]);
   const xTicks: number[] = [];

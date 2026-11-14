@@ -15,7 +15,7 @@ export interface TaxHeadlineProps {
   result: TaxCalculationResult | undefined;
   /** The page's "Add income" control, offered when the year has no income outside PAYE. */
   emptyAction?: ReactNode;
-  /** Opens the add dialog for a cost; offered on the costs card when none are recorded. */
+  /** Opens the add dialog for a cost; offered on the after-costs card when none are recorded. */
   onAddCost?: () => void;
 }
 
@@ -50,10 +50,10 @@ export const nonPayeCosts = (records: TaxRecord[], taxYear: string): number =>
 /**
  * The first view of the page. The hero holds a saved fact (the income recorded for the year),
  * never an estimate (copy audit ruling 7, coordinator D2). The estimated bill is the first KPI,
- * marked "Estimate", then the costs recorded and the date the bill is due: a strip of three, never
- * two. The tax year is in the year control beside the heading, so the hero label does not repeat
- * it and the first view holds four figures. With no costs the costs card offers to add one rather
- * than showing £0. With nothing added the
+ * marked "Estimate", then the income after costs (the total of what each source row shows) and the date the bill is due: a strip of three, never two. Before
+ * costs in the hero, after costs beside the bill, so the two reconcile at a glance and the first
+ * view holds four figures. The tax year is in the year control beside the heading. With no costs
+ * the card says so and offers to add one. With nothing added the
  * hero asks for income and no strip is drawn, so no £0 appears.
  */
 export const TaxHeadline: FC<TaxHeadlineProps> = ({
@@ -89,17 +89,16 @@ export const TaxHeadline: FC<TaxHeadlineProps> = ({
             valueFormat={{ fractionDigits: 0 }}
           />
           <KpiCard
-            emptyAction={
-              onAddCost ? (
+            action={
+              costs === 0 && onAddCost ? (
                 <Button size="sm" type="button" variant="link" onClick={onAddCost}>
                   Add a cost
                 </Button>
               ) : undefined
             }
-            label="Costs"
-            notSetLabel="None recorded"
-            subtext="Recorded against this income"
-            value={costs > 0 ? costs : null}
+            label="Income after costs"
+            subtext={costs > 0 ? "Your income less the costs you recorded" : "No costs recorded"}
+            value={Math.round(income - costs)}
             valueFormat={{ fractionDigits: 0 }}
           />
           <KpiCard

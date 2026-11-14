@@ -121,7 +121,8 @@ export function forecastOutcomeText(
 
 /**
  * How savings could grow (E16 PR 7): monthly amount, rate and years ahead, with today's money and
- * an optional goal behind "More options". One outcome, 2 supporting figures and one chart; no
+ * an optional goal behind "More options". One outcome figure and one chart (what you pay in and
+ * the interest sit behind "Show data"); no
  * chart when the line would be flat (P10.6). Lives inside the page's ScenarioZone: nothing here
  * is saved.
  */
@@ -237,17 +238,6 @@ export const SavingsForecast: FC<SavingsForecastProps> = ({
         >
           <p className={outcomeLabel()}>Estimated balance in {formatYears(values.years)}</p>
           <p className={outcomeValue()}>{formatEstimate(result.final)}</p>
-          <dl className={outcomeSupport()}>
-            <div className={outcomeSupportItem()}>
-              <dt>You pay in</dt>
-              <dd>{money(result.paidIn)}</dd>
-            </div>
-            <div className={outcomeSupportItem()}>
-              <dt>Interest</dt>
-              {/* An estimate, rounded like the balance. "You pay in" is plain arithmetic. */}
-              <dd>{formatEstimate(result.interest)}</dd>
-            </div>
-          </dl>
           {goalText ? (
             <p
               className={goalLine()}
@@ -261,24 +251,41 @@ export const SavingsForecast: FC<SavingsForecastProps> = ({
       )}
       <ChartFigure
         dataTable={
-          <Table caption="Estimated savings balance by year">
-            <THead>
-              <tr>
-                <Th>Year</Th>
-                <Th numeric>Estimated balance</Th>
-              </tr>
-            </THead>
-            <TBody>
-              {chartData.map((row) => (
-                <tr key={row.label}>
-                  <Td>{row.label}</Td>
-                  <Td numeric>
-                    <Money size="sm" value={row.balance} />
-                  </Td>
+          <>
+            {/* The split behind the one outcome figure: kept here so the outcome shows one figure. */}
+            <dl
+              className={outcomeSupport()}
+              data-testid="savings-forecast-split"
+              id="savings-forecast-split"
+            >
+              <div className={outcomeSupportItem()}>
+                <dt>You pay in</dt>
+                <dd>{money(result.paidIn)}</dd>
+              </div>
+              <div className={outcomeSupportItem()}>
+                <dt>Interest</dt>
+                <dd>{formatEstimate(result.interest)}</dd>
+              </div>
+            </dl>
+            <Table caption="Estimated savings balance by year">
+              <THead>
+                <tr>
+                  <Th>Year</Th>
+                  <Th numeric>Estimated balance</Th>
                 </tr>
-              ))}
-            </TBody>
-          </Table>
+              </THead>
+              <TBody>
+                {chartData.map((row) => (
+                  <tr key={row.label}>
+                    <Td>{row.label}</Td>
+                    <Td numeric>
+                      <Money size="sm" value={row.balance} />
+                    </Td>
+                  </tr>
+                ))}
+              </TBody>
+            </Table>
+          </>
         }
         notEnoughDataText={FORECAST_PROMPT}
         pointCount={result.flat ? 0 : chartData.length}

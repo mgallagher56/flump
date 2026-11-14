@@ -18,7 +18,7 @@ describe("nearDataAxis", () => {
     expect(axis.ticks[0]).toBe(0);
   });
 
-  it("always gives 3 to 5 ticks inside the domain", () => {
+  it("always gives 3 or 4 ticks inside the domain", () => {
     for (const range of [
       [3_200, 13_852],
       [9_000, 205_628],

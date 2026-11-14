@@ -187,8 +187,12 @@ describe("TaxContainer, opted in", () => {
     expect(hero.textContent).toContain("Income outside PAYE");
     expect(hero.textContent).not.toMatch(/estimate/i);
     // The estimate is the first KPI, marked as one.
-    const kpis = screen.getAllByText(/^(Estimated bill|Costs|Bill due)\s*$/);
-    expect(kpis.map((k) => k.textContent?.trim())).toEqual(["Estimated bill", "Costs", "Bill due"]);
+    const kpis = screen.getAllByText(/^(Estimated bill|Income after costs|Bill due)\s*$/);
+    expect(kpis.map((k) => k.textContent?.trim())).toEqual([
+      "Estimated bill",
+      "Income after costs",
+      "Bill due",
+    ]);
     expect(screen.getByText("Estimate")).toBeDefined();
   });
 

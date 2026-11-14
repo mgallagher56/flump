@@ -96,7 +96,7 @@ describe("SavingsContainer", () => {
     expect(screen.getByText("Saved each month")).toBeDefined();
     expect(screen.getByText("Average rate")).toBeDefined();
     expect(screen.getByText("4.0%")).toBeDefined();
-    expect(screen.getByText("ISA allowance used")).toBeDefined();
+    expect(screen.getByText("Paid into ISAs this tax year")).toBeDefined();
     // The allowance is shown once, as the KPI: no second ISA bar in the accounts card.
     expect(screen.queryByTestId("isa-allowance")).toBeNull();
     expect(container.textContent).not.toContain("unused");
