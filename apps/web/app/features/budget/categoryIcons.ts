@@ -1,5 +1,5 @@
 import type { LucideIcon } from "lucide-react";
-import { Briefcase, CreditCard, Folder, Home, PiggyBank, Zap } from "lucide-react";
+import { Briefcase, CreditCard, Folder, Home, Landmark, PiggyBank, Zap } from "lucide-react";
 
 const CATEGORY_ICON_MAP: Record<string, LucideIcon> = {
   housing: Home,
@@ -7,6 +7,8 @@ const CATEGORY_ICON_MAP: Record<string, LucideIcon> = {
   expenses: CreditCard,
   savings: PiggyBank,
   income: Briefcase,
+  // Debt payments moved here from a spending category (round 4).
+  debt: Landmark,
 };
 
 /** Line icon for a budget category. Custom categories share the folder icon. */
