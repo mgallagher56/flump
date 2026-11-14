@@ -8,7 +8,12 @@ import { useCheckIn } from "../../useCheckIn";
 import type { SaveSnapshot } from "../../useSaveSnapshot";
 import { CheckInStep, type CheckInStepLayout } from "./CheckInStep";
 
-const [everyday, , mortgage] = CHECK_IN_ACCOUNTS.map((a) => a.id) as [string, string, string];
+const [everyday, , mortgage, card] = CHECK_IN_ACCOUNTS.map((a) => a.id) as [
+  string,
+  string,
+  string,
+  string,
+];
 
 const Harness: FC<{
   accountId: string;
@@ -44,7 +49,9 @@ describe("CheckInStep", () => {
     render(<Harness accountId={everyday} onAnswer={vi.fn()} />);
     expect(screen.getByRole("heading", { name: "Everyday account" })).toBeDefined();
     expect(screen.getByText("Current balance: £3,360")).toBeDefined();
-    expect(screen.getByRole("textbox", { name: /New balance/ })).toBeDefined();
+    expect(
+      screen.getByRole("textbox", { name: "New balance in pounds, Everyday account" }),
+    ).toBeDefined();
     const update = screen.getByRole("button", { name: "Update" }) as HTMLButtonElement;
     expect(update.disabled).toBe(true);
     expect(screen.getByRole("button", { name: "No change" })).toBeDefined();
@@ -60,6 +67,16 @@ describe("CheckInStep", () => {
     expect(screen.getByRole("button", { name: "Change Everyday account" })).toBeDefined();
   });
 
+  it("names the field with its unit and the account, no leading comma", () => {
+    render(<Harness accountId={card} onAnswer={vi.fn()} />);
+    expect(
+      screen.getByRole("textbox", { name: "Amount owed now in pounds, Credit card" }),
+    ).toBeDefined();
+    for (const button of screen.getAllByRole("button")) {
+      expect(button.textContent?.trim() || button.getAttribute("aria-label")).toBeTruthy();
+    }
+  });
+
   it("shows a calculated figure that is kept with one press", async () => {
     const onAnswer = vi.fn();
     render(<Harness accountId={mortgage} onAnswer={onAnswer} />);
@@ -70,7 +87,10 @@ describe("CheckInStep", () => {
         "From your interest rate of 4.5% and monthly payment of £1,250 since October 2026.",
       ),
     ).toBeDefined();
-    expect(screen.queryByRole("textbox")).toBeNull();
+    // The same layout as every step: the field, Update, then Keep this figure in No change's place.
+    const buttons = screen.getAllByRole("button").map((b) => b.textContent);
+    expect(buttons).toEqual(["Update", "Keep this figure"]);
+    expect(screen.getByRole("textbox", { name: /Amount owed now in pounds/ })).toBeDefined();
     // The calculated figure stands alone: no saved balance beside it, open or done.
     expect(screen.queryByText(/Current balance/)).toBeNull();
     await userEvent.click(screen.getByRole("button", { name: "Keep this figure" }));
@@ -79,10 +99,9 @@ describe("CheckInStep", () => {
     expect(screen.queryByText(/Current balance/)).toBeNull();
   });
 
-  it("reveals the balance field to enter a different figure", async () => {
+  it("takes a different figure in the same field", async () => {
     const onAnswer = vi.fn();
     render(<Harness accountId={mortgage} onAnswer={onAnswer} />);
-    await userEvent.click(screen.getByRole("button", { name: "Enter a different figure" }));
     const field = screen.getByRole("textbox", { name: /Amount owed now/ });
     await userEvent.type(field, "185900");
     await userEvent.click(screen.getByRole("button", { name: "Update" }));

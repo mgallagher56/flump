@@ -100,7 +100,7 @@ describe("CheckInSheet", () => {
       // Against October: current +£300, mortgage £1,000 less owed. The connected account has no
       // October figure, so it compares with its saved balance (no change), as the list does.
       expect(screen.getByTestId("checkin-net-worth").textContent).toBe(
-        "Net worth: −£177,600, up £1,300 on October 2026.",
+        "Net worth−£177,600Up £1,300 on October 2026.",
       );
       // The summary keeps only the month in the description, not the step instructions.
       expect(screen.queryByText(/Update each balance or keep it as it is/)).toBeNull();
@@ -109,6 +109,50 @@ describe("CheckInSheet", () => {
       await userEvent.click(screen.getByRole("button", { name: "Done" }));
       expect(refresh).toHaveBeenCalledTimes(1);
       expect(onOpenChange).toHaveBeenCalledWith(false);
+    });
+
+    it("shows the instructions on the first card only", async () => {
+      phoneWidth();
+      setup();
+      expect(screen.getByText(/Update each balance or keep it as it is/)).toBeDefined();
+      await userEvent.click(screen.getByRole("button", { name: "No change" }));
+      await screen.findByText("2 of 2");
+      expect(screen.queryByText(/Update each balance or keep it as it is/)).toBeNull();
+      expect(screen.getByText("November 2026")).toBeDefined();
+    });
+
+    const allRecorded = [
+      ...details,
+      { accountId: CURRENT, year: 2026, month: 11, value: 1500 },
+      { accountId: MORTGAGE, year: 2026, month: 11, value: -180000 },
+    ];
+    // The side sheet carries a drag handle as its first child; a centred dialog does not.
+    const isSheet = (el: HTMLElement) =>
+      el.firstElementChild?.getAttribute("aria-hidden") === "true";
+
+    it("shows the summary in a dialog from md when every account is already recorded", async () => {
+      setup({ accountDetails: allRecorded });
+      const dialog = screen.getByRole("dialog", { name: "Monthly check-in" });
+      expect(isSheet(dialog)).toBe(false);
+      expect(screen.getByRole("heading", { name: "Check-in saved" })).toBeDefined();
+      // Back to the steps: the long task opens in the side sheet.
+      await userEvent.click(screen.getByRole("button", { name: "Change a balance" }));
+      await waitFor(() => expect(screen.getByTestId("checkin-list")).toBeDefined());
+      expect(isSheet(screen.getByRole("dialog", { name: "Monthly check-in" }))).toBe(true);
+      await waitFor(() => expect(document.activeElement?.id).toBe(`checkin-change-${CURRENT}`));
+    });
+
+    it("keeps the sheet for a check-in finished in this session, and on a phone", async () => {
+      setup();
+      await userEvent.click(screen.getByRole("button", { name: "No change to the rest" }));
+      await screen.findByRole("heading", { name: "Check-in saved" });
+      expect(isSheet(screen.getByRole("dialog", { name: "Monthly check-in" }))).toBe(true);
+    });
+
+    it("rises as the bottom sheet on a phone when every account is already recorded", () => {
+      phoneWidth();
+      setup({ accountDetails: allRecorded });
+      expect(isSheet(screen.getByRole("dialog", { name: "Monthly check-in" }))).toBe(true);
     });
 
     it("does not reload saved data when nothing was saved", async () => {

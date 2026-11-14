@@ -1,5 +1,5 @@
 import { Button, CurrencyInput, InlineAlert, StatusBadge, VisuallyHidden } from "@repo/ui";
-import { type FC, type KeyboardEvent, useState } from "react";
+import type { FC, KeyboardEvent } from "react";
 import { TYPE_LABEL } from "~/features/accounts/components/AccountsGroupList";
 import {
   type CheckInAnswer,
@@ -48,19 +48,17 @@ export const checkInFieldId = (accountId: string) => `checkin-value-${accountId}
 export const checkInKeepId = (accountId: string) => `checkin-keep-${accountId}`;
 export const checkInHeadingId = (accountId: string) => `checkin-name-${accountId}`;
 
-/** Focus a step's first control: its balance field, or "Keep this figure" on a calculated step. */
+/** Focus a step's balance field, so typing starts at once. */
 export function focusCheckInStep(accountId: string): void {
-  const el =
-    document.getElementById(checkInFieldId(accountId)) ??
-    document.getElementById(checkInKeepId(accountId));
-  el?.focus();
+  document.getElementById(checkInFieldId(accountId))?.focus();
 }
 
 /**
  * One account in the monthly check-in, worded and styled the same on a phone card and in the
- * desktop list: the account, its saved balance and two choices (Update or No change). A loan or
- * mortgage with a known rate and payment shows its calculated figure instead (no saved balance
- * beside it), kept with one press. A done step
+ * desktop list: the account, its saved balance, the balance field and two choices (Update or No
+ * change). A loan or mortgage with a known rate and payment shows its calculated figure instead
+ * (no saved balance beside it), with the same field and "Keep this figure" in No change's place.
+ * A done step
  * reads as a status ("Updated £3,400") with a Change button.
  */
 export const CheckInStep: FC<CheckInStepProps> = ({
@@ -71,7 +69,6 @@ export const CheckInStep: FC<CheckInStepProps> = ({
   onRetry,
   onFieldKeyDown,
 }) => {
-  const [typing, setTyping] = useState(false);
   const id = step.accountId;
   const label = TYPE_LABEL[step.type] ?? step.type;
   // "Current account" named "Current account" needs its type only once.
@@ -100,7 +97,6 @@ export const CheckInStep: FC<CheckInStepProps> = ({
         disabled={saving}
         id={`checkin-change-${id}`}
         onClick={() => {
-          setTyping(false);
           checkIn.edit(id);
           setTimeout(() => focusCheckInStep(id), 0);
         }}
@@ -150,7 +146,6 @@ export const CheckInStep: FC<CheckInStepProps> = ({
   }
 
   const calc = step.calculated;
-  const showField = !calc || typing;
   const fieldLabelText = step.isLiability ? CHECK_IN_COPY.owedNow : CHECK_IN_COPY.newBalance;
   const canRepeat = step.lastValue !== null;
 
@@ -179,39 +174,37 @@ export const CheckInStep: FC<CheckInStepProps> = ({
       ) : null}
 
       <div className={controls({ layout })}>
-        {showField ? (
-          <div className={fieldWrap({ layout })}>
-            <label className={fieldLabel()} htmlFor={checkInFieldId(id)}>
-              {fieldLabelText}
-              <VisuallyHidden>, {step.name}</VisuallyHidden>
-            </label>
-            <CurrencyInput
-              data-testid={checkInFieldId(id)}
-              id={checkInFieldId(id)}
-              min={0}
-              onKeyDown={onFieldKeyDown ? (event) => onFieldKeyDown(event, step) : undefined}
-              onValueChange={(v) => checkIn.setDraft(id, v)}
-              value={draft}
-            />
-          </div>
-        ) : null}
+        <div className={fieldWrap({ layout })}>
+          <label className={fieldLabel()} htmlFor={checkInFieldId(id)}>
+            {fieldLabelText}
+            {/* Read as "New balance in pounds, Current account": the unit, then the account. */}
+            <VisuallyHidden>{` in pounds, ${step.name}`}</VisuallyHidden>
+          </label>
+          <CurrencyInput
+            data-testid={checkInFieldId(id)}
+            id={checkInFieldId(id)}
+            min={0}
+            onKeyDown={onFieldKeyDown ? (event) => onFieldKeyDown(event, step) : undefined}
+            onValueChange={(v) => checkIn.setDraft(id, v)}
+            value={draft}
+          />
+        </div>
 
         <div className={actions({ layout })}>
-          {showField ? (
-            <Button
-              data-testid={`checkin-update-${id}`}
-              disabled={draft === null}
-              id={`checkin-update-${id}`}
-              onClick={() => {
-                if (draft !== null) onAnswer(step, { kind: "update", value: draft });
-              }}
-              pending={saving}
-              size="sm"
-              type="button"
-            >
-              {CHECK_IN_COPY.update}
-            </Button>
-          ) : null}
+          <Button
+            data-testid={`checkin-update-${id}`}
+            disabled={draft === null}
+            id={`checkin-update-${id}`}
+            onClick={() => {
+              if (draft !== null) onAnswer(step, { kind: "update", value: draft });
+            }}
+            pending={saving}
+            size="sm"
+            type="button"
+          >
+            {CHECK_IN_COPY.update}
+          </Button>
+          {/* A calculated step puts "Keep this figure" where No change sits: the same layout. */}
           {calc ? (
             <Button
               data-testid={checkInKeepId(id)}
@@ -220,7 +213,7 @@ export const CheckInStep: FC<CheckInStepProps> = ({
               onClick={() => onAnswer(step, { kind: "keepCalculated" })}
               size="sm"
               type="button"
-              variant={showField ? "secondary" : "primary"}
+              variant="secondary"
             >
               {CHECK_IN_COPY.keep}
             </Button>
@@ -238,21 +231,6 @@ export const CheckInStep: FC<CheckInStepProps> = ({
               {CHECK_IN_COPY.noChange}
             </Button>
           )}
-          {calc && !typing ? (
-            <Button
-              data-testid={`checkin-different-${id}`}
-              id={`checkin-different-${id}`}
-              onClick={() => {
-                setTyping(true);
-                setTimeout(() => document.getElementById(checkInFieldId(id))?.focus(), 0);
-              }}
-              size="sm"
-              type="button"
-              variant="secondary"
-            >
-              {CHECK_IN_COPY.enterDifferent}
-            </Button>
-          ) : null}
         </div>
       </div>
 

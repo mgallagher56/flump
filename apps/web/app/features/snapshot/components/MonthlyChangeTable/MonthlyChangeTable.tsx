@@ -1,30 +1,20 @@
 import { Table, TBody, Td, THead, Th, Tr, VisuallyHidden } from "@repo/ui";
-import type { FC, ReactNode } from "react";
+import type { FC } from "react";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import { formatSignedChange, spokenChange } from "../../snapshotCopy";
 import {
   type AccountChange,
   formatMonth,
   historySourceLabel,
-  type MonthChangeRow,
   type MonthKey,
 } from "../../snapshotModel";
-import {
-  changeCell,
-  changeTable,
-  tableBlock,
-  tableNote,
-  wideOnly,
-} from "./MonthlyChangeTable.styles";
+import { changeCell, changeTable, tableBlock, wideOnly } from "./MonthlyChangeTable.styles";
 
-export type MonthlyChangeTableProps =
-  | {
-      variant: "accounts";
-      rows: readonly AccountChange[];
-      month: MonthKey;
-      previousMonth: MonthKey;
-    }
-  | { variant: "months"; rows: readonly MonthChangeRow[] };
+export interface MonthlyChangeTableProps {
+  rows: readonly AccountChange[];
+  month: MonthKey;
+  previousMonth: MonthKey;
+}
 
 const Change: FC<{ value: number }> = ({ value }) => (
   <span className={changeCell()}>
@@ -34,38 +24,38 @@ const Change: FC<{ value: number }> = ({ value }) => (
 );
 
 /**
- * Month-on-month change, current minus previous, worded the same either way (advice policy R1).
- * `accounts` lists each account between the last two months; `months` lists the total per month.
- * Debts show the amount owed, so a smaller balance is a negative change. The table has no heading
- * or drawer of its own: the page shows it inside one quiet drawer, under a tab that names it
- * (AGENTS.md section 3). Neither table stacks into labelled cards on phones: the month table fits
- * in three columns, and the account table hides its earlier-month column under `md`.
+ * Each account between the last two recorded months, and its effect on net worth: what you own
+ * that grows and a debt that falls both read as a positive effect, worded the same either way
+ * (advice policy R1). Balances show as they are saved, so debts carry "(owed)" after the name.
+ * The table has no heading or drawer of its own: the page shows it inside one quiet drawer
+ * (AGENTS.md section 3). It never stacks into labelled cards on phones: the earlier month's
+ * column hides under `md`, leaving three columns.
  */
-export const MonthlyChangeTable: FC<MonthlyChangeTableProps> = (props) => {
+export const MonthlyChangeTable: FC<MonthlyChangeTableProps> = ({ rows, month, previousMonth }) => {
   const { formatCurrency } = useFormatCurrency();
 
-  let note: string;
-  let table: ReactNode;
-  if (props.variant === "accounts") {
-    // The column headers name both months, so the note does not repeat them.
-    note = "Debts show the amount owed.";
-    table = (
+  return (
+    <div
+      className={tableBlock()}
+      data-testid="snapshot-change-accounts"
+      id="snapshot-change-accounts"
+    >
       <Table
         className={changeTable()}
-        caption={`Change by account, ${formatMonth(props.previousMonth)} to ${formatMonth(props.month)}`}
+        caption={`Change by account, ${formatMonth(previousMonth)} to ${formatMonth(month)}`}
       >
         <THead>
           <Tr>
             <Th>Account</Th>
             <Th className={wideOnly()} numeric>
-              {formatMonth(props.previousMonth)}
+              {formatMonth(previousMonth)}
             </Th>
-            <Th numeric>{formatMonth(props.month)}</Th>
-            <Th numeric>Change</Th>
+            <Th numeric>{formatMonth(month)}</Th>
+            <Th numeric>Effect on net worth</Th>
           </Tr>
         </THead>
         <TBody>
-          {props.rows.map((r) => (
+          {rows.map((r) => (
             <Tr data-list-row="" key={r.accountId}>
               <Th scope="row">
                 {r.name}
@@ -81,58 +71,12 @@ export const MonthlyChangeTable: FC<MonthlyChangeTableProps> = (props) => {
                 {formatCurrency(r.current)}
               </Td>
               <Td numeric>
-                <Change value={r.change} />
+                <Change value={r.effect} />
               </Td>
             </Tr>
           ))}
         </TBody>
       </Table>
-    );
-  } else {
-    note = "Net worth at each month, and the change from the month before.";
-    table = (
-      <Table caption="Net worth change by month" className={changeTable()}>
-        <THead>
-          <Tr>
-            <Th>Month</Th>
-            <Th numeric>Net worth</Th>
-            <Th numeric>Change</Th>
-          </Tr>
-        </THead>
-        <TBody>
-          {props.rows.map((r) => (
-            <Tr data-list-row="" key={r.month}>
-              <Th scope="row">{formatMonth(r.month)}</Th>
-              <Td
-                numeric
-                secondary={
-                  r.allCarried
-                    ? "Carried forward"
-                    : r.addedAccounts > 0
-                      ? `Includes ${r.addedAccounts} new ${r.addedAccounts === 1 ? "account" : "accounts"}`
-                      : undefined
-                }
-              >
-                {formatCurrency(r.netWorth)}
-              </Td>
-              <Td numeric>
-                <Change value={r.change} />
-              </Td>
-            </Tr>
-          ))}
-        </TBody>
-      </Table>
-    );
-  }
-
-  return (
-    <div
-      className={tableBlock()}
-      data-testid={`snapshot-change-${props.variant}`}
-      id={`snapshot-change-${props.variant}`}
-    >
-      <p className={tableNote()}>{note}</p>
-      {table}
     </div>
   );
 };

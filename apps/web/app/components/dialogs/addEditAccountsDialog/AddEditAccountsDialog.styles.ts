@@ -50,3 +50,8 @@ export const deleteAction = cva({
     },
   },
 });
+
+/** The delete question's consequence, in the Edit dialog's body while it asks. */
+export const deleteConsequence = cva({
+  base: { margin: 0, textStyle: "body.md", color: "text.secondary" },
+});

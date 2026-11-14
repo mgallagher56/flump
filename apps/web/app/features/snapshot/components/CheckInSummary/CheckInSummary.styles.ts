@@ -53,6 +53,24 @@ export const changeFigure = cva({
   },
 });
 
+/** Net worth: the label, the summary's largest figure, then the change against last month. */
+export const netWorthBlock = cva({
+  base: { display: "flex", flexDirection: "column", gap: "2px", minWidth: 0 },
+});
+
+export const netWorthLabel = cva({
+  base: { margin: 0, textStyle: "label.md", color: "text.secondary" },
+});
+
+export const netWorthFigure = cva({
+  base: {
+    margin: 0,
+    textStyle: "numeric.lg",
+    color: "text.primary",
+    fontVariantNumeric: "tabular-nums",
+  },
+});
+
 export const summaryLine = cva({
   base: {
     margin: 0,

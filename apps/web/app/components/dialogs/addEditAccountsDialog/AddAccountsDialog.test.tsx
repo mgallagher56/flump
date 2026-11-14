@@ -73,6 +73,21 @@ describe("<AddAccountDialogBtn", () => {
   );
 });
 
+describe("Add account fields", () => {
+  test("have no placeholder repeating the label or a 0.00 balance, and every button is named", async () => {
+    mocks.mockUseLoaderData.mockReturnValue({ user: mockUser });
+    const { getByLabelText, getAllByRole, getByText, user } = customRender(
+      <AddEditAccountsDialogBtn />,
+    );
+    await user.click(getByText("addAccount"));
+    expect(getByLabelText("Name").hasAttribute("placeholder")).toBe(false);
+    expect(getByLabelText("Balance").hasAttribute("placeholder")).toBe(false);
+    for (const button of getAllByRole("button")) {
+      expect(button.textContent?.trim() || button.getAttribute("aria-label")).toBeTruthy();
+    }
+  });
+});
+
 describe("before hydration (#701)", () => {
   test("with fallbackHref the trigger is a real link, and a click opens the dialog in place", async () => {
     mocks.mockUseLoaderData.mockReturnValue({ user: mockUser });

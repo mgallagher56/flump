@@ -154,19 +154,13 @@ vi.mock("~/hooks/useFormatCurrency", () => ({
 }));
 
 describe("<AccountDetails />", () => {
-  test("shows the chart first and the ledger on its own tab, newest month first", async () => {
-    const { getByRole, getAllByRole, user } = customRender(<AccountDetails />);
-    expect(getByRole("tab", { name: "Balance over time" })).toBeDefined();
-    await user.click(getByRole("tab", { name: "Month by month" }));
-    const ledger = getByRole("table", { name: "Monthly balances, newest first" });
-    const firstMonth = getAllByRole("row", { hidden: true }).find((row) => ledger.contains(row));
-    expect(firstMonth).toBeDefined();
-    expect(getByRole("table", { name: "Balance by year", hidden: true })).toBeDefined();
-  });
-
-  test("keeps months beyond the first eight behind a drawer", () => {
-    const { getByText } = customRender(<AccountDetails />);
-    expect(getByText(/Show earlier months/)).toBeDefined();
+  test("shows one chart with its data table, and no tabs or year table", async () => {
+    const { getByRole, queryByRole, user } = customRender(<AccountDetails />);
+    expect(queryByRole("tab")).toBeNull();
+    expect(queryByRole("table", { name: "Balance by year" })).toBeNull();
+    expect(getByRole("figure", { name: "Monzo Current balance history" })).toBeDefined();
+    await user.click(getByRole("button", { name: "Show data" }));
+    expect(getByRole("table", { name: "Monzo Current balance history by month" })).toBeDefined();
   });
 
   test("is read-only: no inputs, delete-year buttons or edit controls", () => {
@@ -174,6 +168,41 @@ describe("<AccountDetails />", () => {
     expect(container.querySelector("input")).toBeNull();
     expect(queryByTitle("Delete 2023")).toBeNull();
     expect(mocks.mockFetcherSubmit).not.toHaveBeenCalled();
+  });
+});
+
+describe("accountChartRows", () => {
+  test("ends on this month's saved balance, carried, when this month is not recorded", async () => {
+    const { accountChartRows } = await import("./AccountDetails");
+    const rows = accountChartRows(
+      [
+        { month: 10, year: 2026, value: -180500, source: "calculated" },
+        { month: 9, year: 2026, value: -181000 },
+      ],
+      "Mortgage",
+      -180000,
+      "2026-11",
+    );
+    expect(rows.map((r) => [r.month, r.value, r.carried ?? false])).toEqual([
+      [9, 181000, false],
+      [10, 180500, false],
+      [11, 180000, true],
+    ]);
+  });
+
+  test("adds no saved point when this month is recorded", async () => {
+    const { accountChartRows } = await import("./AccountDetails");
+    const rows = accountChartRows(
+      [
+        { month: 10, year: 2026, value: 100 },
+        { month: 11, year: 2026, value: 120 },
+      ],
+      "Saving",
+      150,
+      "2026-11",
+    );
+    expect(rows).toHaveLength(2);
+    expect(rows.some((r) => r.carried)).toBe(false);
   });
 });
 

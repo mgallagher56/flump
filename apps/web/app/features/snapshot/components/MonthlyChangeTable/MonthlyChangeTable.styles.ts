@@ -4,15 +4,6 @@ export const tableBlock = cva({
   base: { display: "flex", flexDirection: "column", gap: "8px", minWidth: 0 },
 });
 
-export const tableNote = cva({
-  base: {
-    margin: 0,
-    textStyle: "body.sm",
-    color: "text.secondary",
-    fontVariantNumeric: "tabular-nums",
-  },
-});
-
 /**
  * On the table element. Headers (account names and months) wrap, so the three columns fit at 375
  * and the change column stays in view; figures keep `nowrap` from `Td numeric`. The table is a

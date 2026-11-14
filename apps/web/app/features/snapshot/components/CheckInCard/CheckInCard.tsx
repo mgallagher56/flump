@@ -1,35 +1,35 @@
-import { Button, InlineAlert, ProgressBar } from "@repo/ui";
-import { type FC, type KeyboardEvent, useEffect, useRef } from "react";
+import { Button, InlineAlert } from "@repo/ui";
+import { type FC, type KeyboardEvent, useEffect } from "react";
 import type { CheckInAnswer, CheckInStep as CheckInStepModel } from "../../checkInModel";
 import { CHECK_IN_COPY, checkInProgress } from "../../snapshotCopy";
 import type { CheckInController } from "../../useCheckIn";
-import { CheckInStep, checkInHeadingId } from "../CheckInStep";
-import { cardNav, cardRoot, cardSurface, restButton } from "./CheckInCard.styles";
+import { CheckInStep, checkInHeadingId, focusCheckInStep } from "../CheckInStep";
+import { cardNav, cardNavGroup, cardRoot, cardSurface, progress } from "./CheckInCard.styles";
 
 export interface CheckInCardProps {
   checkIn: CheckInController;
 }
 
 /**
- * The phone check-in (below md): one account at a time with "3 of 8", Back to the one before, and
- * "No change to the rest" under the card. A confirmed answer is saved before the next account
- * shows, so a failed save stays on its own card with the error.
+ * The phone check-in (below md): one account at a time with "3 of 8", then one row of quiet
+ * buttons: Back (and Next on a done account) and "No change to the rest". The balance field has
+ * the focus as each account opens, so typing starts at once and Enter saves it as Update. A
+ * confirmed answer is saved before the next account shows, so a failed save stays on its own card
+ * with the error.
  */
 export const CheckInCard: FC<CheckInCardProps> = ({ checkIn }) => {
   const { steps, index, setIndex } = checkIn;
   const step = steps[Math.min(index, steps.length - 1)];
-  const firstRender = useRef(true);
-
-  // Move focus to the new account's name when the card changes (not on first open: the sheet
-  // places focus itself).
+  // Each account opens with its balance field focused, the first one too (the sheet keeps focus
+  // that is already inside it). A done account (reached with Back, or with "Change a balance" from
+  // the summary) focuses its name instead. Only
+  // when the account changes: a save on the same account must not move focus.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: keyed on the account alone
   useEffect(() => {
     if (!step) return;
-    if (firstRender.current) {
-      firstRender.current = false;
-      return;
-    }
-    document.getElementById(checkInHeadingId(step.accountId))?.focus();
-  }, [step]);
+    if (!checkIn.isDone(step.accountId)) focusCheckInStep(step.accountId);
+    else document.getElementById(checkInHeadingId(step.accountId))?.focus();
+  }, [step?.accountId]);
 
   if (!step) return null;
   const position = steps.indexOf(step) + 1;
@@ -60,12 +60,9 @@ export const CheckInCard: FC<CheckInCardProps> = ({ checkIn }) => {
 
   return (
     <div className={cardRoot()} data-testid="checkin-card" id="checkin-card">
-      <ProgressBar
-        max={steps.length}
-        size="sm"
-        value={position}
-        valueDisplay={checkInProgress(position, steps.length)}
-      />
+      <p className={progress()} data-testid="checkin-progress" id="checkin-progress">
+        {checkInProgress(position, steps.length)}
+      </p>
       <section aria-labelledby={checkInHeadingId(step.accountId)} className={cardSurface()}>
         <CheckInStep
           checkIn={checkIn}
@@ -78,47 +75,46 @@ export const CheckInCard: FC<CheckInCardProps> = ({ checkIn }) => {
         />
       </section>
       <div className={cardNav()}>
-        {position > 1 ? (
+        <div className={cardNavGroup()}>
+          {position > 1 ? (
+            <Button
+              data-testid="checkin-back"
+              id="checkin-back"
+              onClick={() => setIndex(position - 2)}
+              size="sm"
+              type="button"
+              variant="ghost"
+            >
+              {CHECK_IN_COPY.back}
+            </Button>
+          ) : null}
+          {done && next !== -1 ? (
+            <Button
+              data-testid="checkin-next"
+              id="checkin-next"
+              onClick={() => setIndex(next)}
+              size="sm"
+              type="button"
+              variant="ghost"
+            >
+              {CHECK_IN_COPY.next}
+            </Button>
+          ) : null}
+        </div>
+        {anyOpen ? (
           <Button
-            data-testid="checkin-back"
-            id="checkin-back"
-            onClick={() => setIndex(position - 2)}
+            data-testid="checkin-rest"
+            id="checkin-rest"
+            onClick={() => void checkIn.rest()}
+            pending={checkIn.restSaving}
             size="sm"
             type="button"
-            variant="secondary"
+            variant="ghost"
           >
-            {CHECK_IN_COPY.back}
-          </Button>
-        ) : (
-          <span />
-        )}
-        {done && next !== -1 ? (
-          <Button
-            data-testid="checkin-next"
-            id="checkin-next"
-            onClick={() => setIndex(next)}
-            size="sm"
-            type="button"
-            variant="secondary"
-          >
-            {CHECK_IN_COPY.next}
+            {CHECK_IN_COPY.rest}
           </Button>
         ) : null}
       </div>
-      {anyOpen ? (
-        <Button
-          className={restButton()}
-          data-testid="checkin-rest"
-          id="checkin-rest"
-          onClick={() => void checkIn.rest()}
-          pending={checkIn.restSaving}
-          size="sm"
-          type="button"
-          variant="ghost"
-        >
-          {CHECK_IN_COPY.rest}
-        </Button>
-      ) : null}
       {checkIn.restError ? (
         <InlineAlert tone="danger">{CHECK_IN_COPY.restError}</InlineAlert>
       ) : null}

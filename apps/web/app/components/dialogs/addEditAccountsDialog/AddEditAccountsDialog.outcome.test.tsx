@@ -36,28 +36,27 @@ describe("AddEditAccountsDialog action outcomes", () => {
     mocks.fetcher.data = null;
   });
 
-  test("a failed delete shows the error in the confirm dialog and keeps both dialogs open", async () => {
+  test("a failed delete shows the error in the question and keeps the dialog open", async () => {
     const ui = () => <AddEditAccountsDialogBtn isEditAccount accountId="123456" />;
     const { getByText, getByRole, queryByRole, rerender, user } = customRender(ui());
     await user.click(getByText("edit"));
     await user.click(getByText("delete"));
-    await user.click(getByRole("button", { name: "Delete account" }));
+    const confirmName = /^Delete (?!.*\?)/;
+    await user.click(getByRole("button", { name: confirmName }));
     expect(mocks.mockFetcherSubmit).toHaveBeenCalledTimes(1);
-    // The edit modal has not been closed while the request is outstanding (hidden behind the alert).
-    expect(getByRole("dialog", { hidden: true })).toBeDefined();
-    expect(getByRole("alertdialog")).toBeDefined();
+    // The one dialog stays open on the question while the request is outstanding.
+    expect(queryByRole("alertdialog")).toBeNull();
+    expect(getByRole("dialog", { name: /^Delete .*\?$/ })).toBeDefined();
 
     mocks.fetcher.data = { success: false, error: SERVER_DOWN };
     rerender(ui());
     expect(getByRole("alert").textContent).toBe(SERVER_DOWN);
-    expect(getByRole("alertdialog")).toBeDefined();
-    expect(getByRole("dialog", { hidden: true })).toBeDefined();
+    expect(getByRole("dialog", { name: /^Delete .*\?$/ })).toBeDefined();
 
-    // Retry succeeds: only now does everything close.
-    await user.click(getByRole("button", { name: "Delete account" }));
+    // Retry succeeds: only now does it close.
+    await user.click(getByRole("button", { name: confirmName }));
     mocks.fetcher.data = { success: true };
     rerender(ui());
-    expect(queryByRole("alertdialog")).toBeNull();
     expect(queryByRole("dialog")).toBeNull();
   });
 

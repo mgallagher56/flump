@@ -9,7 +9,7 @@ import {
   TextInput,
 } from "@repo/ui";
 import { Pencil } from "lucide-react";
-import { type FC, useCallback, useMemo, useState } from "react";
+import { type FC, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useFetcher, useLoaderData } from "react-router";
 import {
@@ -19,11 +19,11 @@ import {
   STUDENT_LOAN_PLAN_OPTIONS,
 } from "~/containers/accounts/utils";
 import { TYPE_LABEL } from "~/features/accounts/components/AccountsGroupList";
-import { ConfirmDialog } from "~/features/feedback/components/ConfirmDialog";
 import { useFetcherOutcome } from "~/features/feedback/hooks/useFetcherOutcome";
 import type { loader } from "~/routes/app.accounts._index";
 import {
   deleteAction,
+  deleteConsequence,
   dialogFooterGroup,
   fieldStack,
   saveError,
@@ -109,6 +109,9 @@ interface AddEditAccountsDialogBtnProp {
 /**
  * Add or edit an account by hand. Bank connection is deferred (owner ruling), so the dialog is a
  * single manual form: it shows no bank tab or token form, whatever the bank connection flag says.
+ * Delete never stacks a second modal (STYLE-GUIDE 12.3): the Edit dialog's content becomes the
+ * confirmation (question, consequence, Cancel then "Delete {name}"), and Cancel goes back to the
+ * form.
  */
 const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
   accountId,
@@ -127,6 +130,20 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const [planError, setPlanError] = useState<string | null>(null);
   const accountName = (account ?? accounts.find((option) => option.id === accountId))?.name;
+  const deleteButtonRef = useRef<HTMLButtonElement>(null);
+  const cancelDeleteRef = useRef<HTMLButtonElement>(null);
+  // Focus follows the swap: Cancel when the question shows (Enter never deletes by accident), and
+  // back to Delete when the form returns.
+  const confirmShown = useRef(false);
+  useEffect(() => {
+    if (confirmDeleteOpen) {
+      confirmShown.current = true;
+      cancelDeleteRef.current?.focus();
+    } else if (confirmShown.current) {
+      confirmShown.current = false;
+      deleteButtonRef.current?.focus();
+    }
+  }, [confirmDeleteOpen]);
   const editLabel = accountName ? `${t("editAccount")}: ${accountName}` : t("editAccount");
 
   const handleCloseModal = useCallback(() => {
@@ -233,7 +250,15 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
     );
   }, [accountId, fetcher, deleteOutcome.begin]);
 
+  const cancelDelete = useCallback(() => {
+    if (deleteOutcome.pending) return;
+    setConfirmDeleteOpen(false);
+    dismissDelete();
+  }, [deleteOutcome.pending, dismissDelete]);
+
   const isConfirmDisabled = saveOutcome.pending || deleteOutcome.pending;
+  const deleteName = selectedAccount.name || "this account";
+  const confirming = Boolean(isEditAccount && confirmDeleteOpen);
   const isLiability = isLiabilityType(formInput.type?.[0]);
 
   return (
@@ -268,114 +293,140 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
       )}
       <Dialog
         footer={
-          <>
-            {isEditAccount ? (
-              <Button
-                className={deleteAction()}
-                type="button"
-                variant="ghost"
-                onClick={(e: React.MouseEvent) => {
-                  e.stopPropagation();
-                  setConfirmDeleteOpen(true);
-                }}
-              >
-                {t("delete")}
-              </Button>
-            ) : null}
+          confirming ? (
             <div className={dialogFooterGroup()}>
-              <Button type="button" variant="ghost" onClick={handleDismiss}>
+              <Button
+                disabled={deleteOutcome.pending}
+                id="account-delete-cancel"
+                onClick={cancelDelete}
+                ref={cancelDeleteRef}
+                type="button"
+                variant="outline"
+              >
                 Cancel
               </Button>
-              <Button disabled={isConfirmDisabled} type="button" onClick={onSave}>
-                {isEditAccount ? t("save") : t("addAccount")}
+              <Button
+                aria-busy={deleteOutcome.pending || undefined}
+                disabled={deleteOutcome.pending}
+                id="account-delete-confirm"
+                onClick={handleConfirmRemoveAccount}
+                type="button"
+                variant="destructive"
+              >
+                {`Delete ${deleteName}`}
               </Button>
             </div>
-          </>
+          ) : (
+            <>
+              {isEditAccount ? (
+                <Button
+                  className={deleteAction()}
+                  ref={deleteButtonRef}
+                  type="button"
+                  variant="ghost"
+                  onClick={(e: React.MouseEvent) => {
+                    e.stopPropagation();
+                    dismissDelete();
+                    setConfirmDeleteOpen(true);
+                  }}
+                >
+                  {t("delete")}
+                </Button>
+              ) : null}
+              <div className={dialogFooterGroup()}>
+                <Button type="button" variant="ghost" onClick={handleDismiss}>
+                  Cancel
+                </Button>
+                <Button disabled={isConfirmDisabled} type="button" onClick={onSave}>
+                  {isEditAccount ? t("save") : t("addAccount")}
+                </Button>
+              </div>
+            </>
+          )
         }
         id="account-dialog"
         open={modalOpen}
-        title={t(isEditAccount ? "editAccount" : "addAccount")}
+        title={
+          confirming ? `Delete ${deleteName}?` : t(isEditAccount ? "editAccount" : "addAccount")
+        }
         onOpenChange={(open) => {
-          if (!open) handleDismiss();
+          if (open) return;
+          // Escape or Close on the question goes back to the form; on the form it closes.
+          if (confirming) cancelDelete();
+          else handleDismiss();
         }}
       >
-        {isEditAccount && (
-          <ConfirmDialog
-            open={confirmDeleteOpen}
-            onOpenChange={(open) => {
-              setConfirmDeleteOpen(open);
-              if (!open) deleteOutcome.dismiss();
-            }}
-            pending={deleteOutcome.pending}
-            error={deleteOutcome.error}
-            title={`Delete ${selectedAccount.name || "this account"}?`}
-            description="Its balance history will be deleted too. This cannot be undone."
-            confirmLabel="Delete account"
-            tone="danger"
-            onConfirm={handleConfirmRemoveAccount}
-          />
-        )}
-
-        <form className={fieldStack()} id={accountId} onSubmit={(e) => e.preventDefault()}>
-          <FormField label="Name">
-            {(field) => (
-              <TextInput
-                {...controlProps(field)}
-                name="name"
-                placeholder={t("accountName")}
-                value={formInput.name}
-                onChange={onChangeNameInput}
-              />
-            )}
-          </FormField>
-          <FormField label="Account type">
-            {(field) => (
-              <Select
-                {...controlProps(field)}
-                name="type"
-                options={accountTypeArray.map((type) => ({
-                  value: type,
-                  label: TYPE_LABEL[type] ?? type,
-                }))}
-                value={formInput.type?.[0] ?? ""}
-                onChange={onChangeTypeInput}
-              />
-            )}
-          </FormField>
-          {formInput.type?.[0] === STUDENT_LOAN ? (
-            <FormField error={planError ?? undefined} label="Repayment plan">
+        {confirming ? (
+          <>
+            <p className={deleteConsequence()}>
+              Its balance history will be deleted too. This cannot be undone.
+            </p>
+            {deleteOutcome.error ? (
+              <p role="alert" className={saveError()}>
+                {deleteOutcome.error}
+              </p>
+            ) : null}
+          </>
+        ) : (
+          <form className={fieldStack()} id={accountId} onSubmit={(e) => e.preventDefault()}>
+            <FormField label="Name">
               {(field) => (
-                <Select
+                <TextInput
                   {...controlProps(field)}
-                  name="studentLoanPlan"
-                  options={studentLoanPlans.items.map((plan) => ({
-                    value: plan.id,
-                    label: plan.name,
-                  }))}
-                  value={formInput.studentLoanPlan[0] ?? ""}
-                  onChange={onChangePlanInput}
+                  name="name"
+                  value={formInput.name}
+                  onChange={onChangeNameInput}
                 />
               )}
             </FormField>
-          ) : null}
-          <FormField label={isLiability ? "Amount owed" : "Balance"}>
-            {(field) => (
-              <CurrencyInput
-                {...controlProps(field)}
-                min={isLiability ? 0 : undefined}
-                name="balance"
-                placeholder="0.00"
-                value={formInput.balance === "" ? null : Number(formInput.balance)}
-                onValueChange={onChangeBalanceInput}
-              />
-            )}
-          </FormField>
-          {saveOutcome.error ? (
-            <p role="alert" className={saveError()}>
-              {saveOutcome.error}
-            </p>
-          ) : null}
-        </form>
+            <FormField label="Account type">
+              {(field) => (
+                <Select
+                  {...controlProps(field)}
+                  name="type"
+                  options={accountTypeArray.map((type) => ({
+                    value: type,
+                    label: TYPE_LABEL[type] ?? type,
+                  }))}
+                  value={formInput.type?.[0] ?? ""}
+                  onChange={onChangeTypeInput}
+                />
+              )}
+            </FormField>
+            {formInput.type?.[0] === STUDENT_LOAN ? (
+              <FormField error={planError ?? undefined} label="Repayment plan">
+                {(field) => (
+                  <Select
+                    {...controlProps(field)}
+                    name="studentLoanPlan"
+                    options={studentLoanPlans.items.map((plan) => ({
+                      value: plan.id,
+                      label: plan.name,
+                    }))}
+                    value={formInput.studentLoanPlan[0] ?? ""}
+                    onChange={onChangePlanInput}
+                  />
+                )}
+              </FormField>
+            ) : null}
+            <FormField label={isLiability ? "Amount owed" : "Balance"}>
+              {(field) => (
+                <CurrencyInput
+                  {...controlProps(field)}
+                  min={isLiability ? 0 : undefined}
+                  name="balance"
+                  value={formInput.balance === "" ? null : Number(formInput.balance)}
+                  onValueChange={onChangeBalanceInput}
+                />
+              )}
+            </FormField>
+            {saveOutcome.error ? (
+              <p role="alert" className={saveError()}>
+                {saveOutcome.error}
+              </p>
+            ) : null}
+          </form>
+        )}
       </Dialog>
     </>
   );

@@ -2,6 +2,7 @@ import { DEFAULT_NET_WORTH_BASIS } from "@flump/finance-engine";
 import { describe, expect, it } from "vitest";
 import {
   addMonths,
+  changeSinceSentence,
   formatMonth,
   historyCountLabel,
   buildSnapshotHistory as historyFor,
@@ -11,6 +12,7 @@ import {
   nextCheckInDate,
   projectFromSnapshot,
   toChartPoints,
+  toLinePoints,
 } from "./snapshotModel";
 
 // These tests cover the default net worth choices; the choices themselves are tested below.
@@ -118,7 +120,8 @@ describe("buildSnapshotHistory", () => {
     const mortgage = h.accountChanges.find((c) => c.accountId === MORTGAGE);
     expect(mortgage).toMatchObject({ isLiability: true, previous: 180500, current: 180000 });
     expect(mortgage?.change).toBe(-500);
-    expect(h.monthChanges[0]).toMatchObject({ month: "2026-10", change: 500 });
+    // The effect on net worth: a debt that falls raises net worth.
+    expect(mortgage?.effect).toBe(500);
   });
 
   it("a growing card balance is a positive change for the account and lowers net worth", () => {
@@ -132,8 +135,7 @@ describe("buildSnapshotHistory", () => {
       [row(CARD, 2026, 9, -300), row(CARD, 2026, 10, -450)],
       "2026-10",
     );
-    expect(h.accountChanges[0]).toMatchObject({ accountId: CARD, change: 150 });
-    expect(h.monthChanges[0]?.change).toBe(-150);
+    expect(h.accountChanges[0]).toMatchObject({ accountId: CARD, change: 150, effect: -150 });
   });
 
   it("lists what you own first, then what you owe, each by name", () => {
@@ -162,18 +164,6 @@ describe("buildSnapshotHistory", () => {
     expect(historySourceLabel("confirmed")).toBe("Confirmed");
     expect(historySourceLabel("calculated")).toBe("Calculated");
     expect(historySourceLabel(null)).toBeUndefined();
-  });
-
-  it("lists month changes newest first and flags carried and new-account months", () => {
-    const h = buildSnapshotHistory(
-      historyOnly,
-      [row(CURRENT, 2026, 6, 1000), row(CURRENT, 2026, 8, 1200), row(ISA, 2026, 8, 5000)],
-      "2026-09",
-    );
-    expect(h.monthChanges.map((m) => m.month)).toEqual(["2026-09", "2026-08", "2026-07"]);
-    expect(h.monthChanges[0]).toMatchObject({ allCarried: true, change: 0 });
-    expect(h.monthChanges[1]).toMatchObject({ addedAccounts: 1, change: 5200 });
-    expect(h.monthChanges[2]).toMatchObject({ allCarried: true });
   });
 });
 
@@ -213,6 +203,41 @@ describe("toChartPoints", () => {
     const points = toChartPoints(h.series);
     expect(points.map((p) => p.recorded)).toEqual([1000, 1100, null, 1300]);
     expect(points.map((p) => p.carried)).toEqual([null, 1100, 1100, 1300]);
+  });
+});
+
+describe("toLinePoints", () => {
+  it("dashes the last segment when the end month is carried", () => {
+    const points = toLinePoints([
+      { month: "2026-09", value: 100, carried: false },
+      { month: "2026-10", value: 200, carried: false },
+      { month: "2026-11", value: 250, carried: true },
+    ]);
+    expect(points.map((p) => p.recorded)).toEqual([100, 200, null]);
+    expect(points.map((p) => p.carried)).toEqual([null, 200, 250]);
+    expect(points.map((p) => p.label)).toEqual(["Sep 26", "Oct 26", "Nov 26"]);
+  });
+});
+
+describe("changeSinceSentence", () => {
+  const gbp = (v: number) => `£${v.toLocaleString("en-GB")}`;
+  it("words the change from first to last point the same up or down", () => {
+    const up = [
+      { month: "2026-05", value: 200000 },
+      { month: "2026-11", value: 215000 },
+    ];
+    expect(changeSinceSentence(up, gbp)).toBe("Up £15,000 since May 2026.");
+    expect(changeSinceSentence([...up].reverse(), gbp)).toBe("Down £15,000 since November 2026.");
+    expect(
+      changeSinceSentence(
+        [
+          { month: "2026-05", value: 10 },
+          { month: "2026-06", value: 10.2 },
+        ],
+        gbp,
+      ),
+    ).toBe("No change since May 2026.");
+    expect(changeSinceSentence(up.slice(0, 1), gbp)).toBe("");
   });
 });
 

@@ -81,7 +81,6 @@ export const CHECK_IN_COPY = {
   update: "Update",
   noChange: "No change",
   keep: "Keep this figure",
-  enterDifferent: "Enter a different figure",
   calculated: "Calculated",
   rest: "No change to the rest",
   change: "Change",
@@ -96,6 +95,7 @@ export const CHECK_IN_COPY = {
   /** The summary heading; the month is already in the sheet subtitle. */
   saved: "Check-in saved",
   whatChanged: "What changed",
+  netWorth: "Net worth",
   showAll: "Show all",
   done: "Done",
   changeBalance: "Change a balance",
@@ -137,21 +137,26 @@ export function doneText(kind: "updated" | "noChange" | "calculated", value: num
   return `Updated ${checkInMoney(value)}`;
 }
 
+/** A whole-pound total with a true minus sign when negative (copy guide 4.1): "−£4,200". */
+export function checkInWholeTotal(value: number): string {
+  const whole = Math.round(value);
+  return whole < 0 ? `−${gbp(0).format(-whole)}` : gbp(0).format(whole);
+}
+
+/** One change in the summary: "£3,400 to £3,450", or the new figure alone with nothing before. */
+export function checkInChangeText(previous: number | null, value: number): string {
+  if (previous === null) return checkInWholeTotal(value);
+  return `${checkInWholeTotal(previous)} to ${checkInWholeTotal(value)}`;
+}
+
 /**
- * "Net worth: £231,400, up £1,250 on October 2026." The same sentence in both directions (R1);
- * with nothing to compare it states the figure alone.
+ * The line under the net worth figure: "Up £1,250 on October 2026." The same sentence in both
+ * directions (R1); null with nothing to compare.
  */
-export function checkInNetWorthText(
-  netWorth: number,
-  change: number | null,
-  since: MonthKey,
-): string {
-  const whole = Math.round(netWorth);
-  // A true minus sign on a negative total (copy guide 4.1).
-  const total = whole < 0 ? `−${gbp(0).format(-whole)}` : gbp(0).format(whole);
-  if (change === null) return `Net worth: ${total}.`;
+export function checkInNetWorthChange(change: number | null, since: MonthKey): string | null {
+  if (change === null) return null;
   const rounded = Math.round(change);
-  if (rounded === 0) return `Net worth: ${total}, the same as ${formatMonth(since)}.`;
-  const direction = rounded > 0 ? "up" : "down";
-  return `Net worth: ${total}, ${direction} ${gbp(0).format(Math.abs(rounded))} on ${formatMonth(since)}.`;
+  if (rounded === 0) return `The same as ${formatMonth(since)}.`;
+  const direction = rounded > 0 ? "Up" : "Down";
+  return `${direction} ${gbp(0).format(Math.abs(rounded))} on ${formatMonth(since)}.`;
 }

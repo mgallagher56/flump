@@ -1,4 +1,5 @@
-import { AccountResponse } from "@flump/api-contract";
+import { AccountResponse, UserProfileResponse } from "@flump/api-contract";
+import { netWorthBasisFromProfile } from "@flump/finance-engine";
 import type { ReactElement } from "react";
 import type { LoaderFunctionArgs } from "react-router";
 import { data } from "react-router";
@@ -14,14 +15,25 @@ export const loader = async (args: LoaderFunctionArgs) => {
   if (!accessToken) throwRouteError(new BackendError("unauthorised", `/accounts/${accountId}`));
 
   try {
-    const account = await backendFetch(`/accounts/${accountId}`, {
-      accessToken,
-      signal: args.request.signal,
-      schema: AccountResponse,
-    });
+    const [account, userProfile] = await Promise.all([
+      backendFetch(`/accounts/${accountId}`, {
+        accessToken,
+        signal: args.request.signal,
+        schema: AccountResponse,
+      }),
+      // The net worth choices only: without them the defaults apply, so a failure here never
+      // blocks the account page.
+      backendFetch("/user-profile", {
+        accessToken,
+        signal: args.request.signal,
+        schema: UserProfileResponse,
+      }).catch(() => null),
+    ]);
     if (!account) throw new BackendError("not-found", `/accounts/${accountId}`);
     const accountDetails = account.details || [];
-    return data({ account, accountDetails, user });
+    // Whether this account counts toward net worth follows the user's choices (net worth choices).
+    const basis = netWorthBasisFromProfile(userProfile);
+    return data({ account, accountDetails, basis, user });
   } catch (error) {
     throwRouteError(error);
   }

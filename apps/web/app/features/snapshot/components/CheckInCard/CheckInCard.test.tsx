@@ -44,6 +44,34 @@ describe("CheckInCard", () => {
     expect(screen.queryByRole("button", { name: "Back" })).toBeNull();
   });
 
+  it("shows the place as text, with no progress bar", () => {
+    setup();
+    expect(screen.getByTestId("checkin-progress").textContent).toBe("1 of 4");
+    expect(screen.queryByRole("progressbar")).toBeNull();
+  });
+
+  it("opens each account with its balance field focused, so typing and Enter save at once", async () => {
+    const { onSave } = setup();
+    const first = screen.getByRole("textbox", { name: "New balance in pounds, Everyday account" });
+    await waitFor(() => expect(document.activeElement).toBe(first));
+    await userEvent.keyboard("3400{Enter}");
+    await waitFor(() => expect(screen.getByText("2 of 4")).toBeDefined());
+    expect(onSave).toHaveBeenCalledTimes(1);
+    const next = screen.getByRole("textbox", { name: "Amount owed now in pounds, Credit card" });
+    await waitFor(() => expect(document.activeElement).toBe(next));
+  });
+
+  it("puts Back and No change to the rest in one row of quiet buttons", async () => {
+    setup();
+    await userEvent.click(screen.getByRole("button", { name: "No change" }));
+    await waitFor(() => expect(screen.getByText("2 of 4")).toBeDefined());
+    const back = screen.getByRole("button", { name: "Back" });
+    const rest = screen.getByRole("button", { name: "No change to the rest" });
+    expect(back.dataset.variant).toBe("ghost");
+    expect(rest.dataset.variant).toBe("ghost");
+    expect(back.parentElement?.parentElement).toBe(rest.parentElement);
+  });
+
   it("moves to the next account once the answer is saved, and back again", async () => {
     const { onSave } = setup();
     await userEvent.click(screen.getByRole("button", { name: "No change" }));

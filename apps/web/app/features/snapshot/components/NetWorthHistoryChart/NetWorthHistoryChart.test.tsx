@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { monthTicks, NetWorthHistoryChart, yTicks } from "./NetWorthHistoryChart";
+import { quietLink } from "./NetWorthHistoryChart.styles";
 
 const points = [
   { month: "2026-07", label: "Jul 26", netWorth: 1000, recorded: 1000, carried: null },
@@ -56,5 +57,26 @@ describe("NetWorthHistoryChart", () => {
         "You have two months of history. The chart appears after your third check-in.",
       ),
     ).toBeDefined();
+  });
+
+  it("puts the caller's quiet links in one row with Show data, the table opening below the row", () => {
+    render(
+      <NetWorthHistoryChart
+        dataActions={
+          <button className={quietLink()} type="button">
+            Add earlier months
+          </button>
+        }
+        points={points}
+        recordedMonths={3}
+        summary="Net worth."
+      />,
+    );
+    const showData = screen.getByRole("button", { name: "Show data" });
+    const link = screen.getByRole("button", { name: "Add earlier months" });
+    const row = link.parentElement?.parentElement;
+    expect(showData.parentElement?.parentElement).toBe(row);
+    fireEvent.click(showData);
+    expect(screen.getByRole("table", { name: "Net worth by month" })).toBeDefined();
   });
 });

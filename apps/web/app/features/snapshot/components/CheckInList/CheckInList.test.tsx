@@ -81,11 +81,22 @@ describe("CheckInList", () => {
     expect(values(onSave, 0)).toEqual([{ accountId: card, value: 700, source: "manual" }]);
   });
 
-  it("moves to Keep this figure on a calculated row", async () => {
-    setup();
+  it("opens with the first row's balance field focused, so typing starts at once", async () => {
+    const { onSave } = setup();
+    await waitFor(() => expect(document.activeElement).toBe(field(everyday)));
+    await userEvent.keyboard("3400{Enter}");
+    await waitFor(() => expect(document.activeElement).toBe(field(card)));
+    expect(values(onSave, 0)).toEqual([{ accountId: everyday, value: 3400, source: "manual" }]);
+  });
+
+  it("moves to the balance field on a calculated row too; an empty Enter keeps the figure", async () => {
+    const { onSave } = setup();
     await userEvent.click(field(isa));
     await userEvent.keyboard("{Enter}");
-    await waitFor(() => expect(document.activeElement?.id).toBe(`checkin-keep-${mortgage}`));
+    await waitFor(() => expect(document.activeElement).toBe(field(mortgage)));
+    await userEvent.keyboard("{Enter}");
+    await waitFor(() => expect(onSave).toHaveBeenCalledTimes(2));
+    expect(values(onSave, 1)?.[0]).toMatchObject({ accountId: mortgage, source: "calculated" });
   });
 
   it("reopens a saved row with Change", async () => {

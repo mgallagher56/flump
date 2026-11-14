@@ -1,5 +1,5 @@
 import { Button, InlineAlert } from "@repo/ui";
-import type { FC, KeyboardEvent } from "react";
+import { type FC, type KeyboardEvent, useEffect } from "react";
 import {
   answerValue,
   type CheckInAnswer,
@@ -17,7 +17,9 @@ export interface CheckInListProps {
 }
 
 /**
- * The desktop check-in (md and up): every account in one list. Keyboard: the focused row's field
+ * The desktop check-in (md and up): every account in one list. The first open row's balance field
+ * has the focus when the list opens, and each next open row's field as it becomes current, so
+ * typing starts at once. Keyboard: the focused row's field
  * takes a figure; Enter saves it (or, on an empty field, records No change) and moves to the next
  * open row; Tab saves a typed figure and moves on, and on an empty field just moves. Saved rows
  * collapse to a status with a Change button. Each answer is saved straight away; a failed save
@@ -25,6 +27,15 @@ export interface CheckInListProps {
  */
 export const CheckInList: FC<CheckInListProps> = ({ checkIn }) => {
   const { steps } = checkIn;
+
+  // On open, the first open row's field takes the focus (the sheet keeps focus already inside it).
+  // With every row done ("Change a balance" from the summary), the first row's Change button does.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: once, when the list opens
+  useEffect(() => {
+    const first = steps.find((s) => !checkIn.isDone(s.accountId));
+    if (first) focusCheckInStep(first.accountId);
+    else if (steps[0]) document.getElementById(`checkin-change-${steps[0].accountId}`)?.focus();
+  }, []);
 
   const moveOn = (step: CheckInStepModel) => {
     const n = checkIn.nextOpen(steps.indexOf(step), step.accountId);

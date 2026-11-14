@@ -622,6 +622,8 @@ export interface CheckInChange {
   name: string;
   /** As the user sees it: debts positive. */
   value: number;
+  /** The saved balance before the check-in (`step.lastValue`), debts positive; null when none. */
+  previous: number | null;
   calculated: boolean;
 }
 
@@ -692,6 +694,7 @@ export function buildCheckInSummary(
       accountId: step.accountId,
       name: step.name,
       value: answer.value,
+      previous: step.lastValue,
       calculated: answer.source === "calculated",
     });
   }

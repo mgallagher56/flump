@@ -199,3 +199,25 @@ describe("grouping while typing (R2-5)", () => {
     expect(input.value).toBe("1,234.5");
   });
 });
+
+describe("typing a decimal figure key by key (R2-5)", () => {
+  /** Inserts each character at the caret, as a browser does, and fires one change per key. */
+  const typeKeys = (input: HTMLInputElement, keys: string) => {
+    for (const key of keys) {
+      const start = input.selectionStart ?? input.value.length;
+      const end = input.selectionEnd ?? start;
+      const value = input.value.slice(0, start) + key + input.value.slice(end);
+      fireEvent.change(input, { target: { value } });
+    }
+  };
+
+  it("keeps the point and the pence", () => {
+    const onValueChange = vi.fn();
+    render(<CurrencyInput aria-label="Balance" onValueChange={onValueChange} value={null} />);
+    const input = screen.getByRole("textbox", { name: "Balance" }) as HTMLInputElement;
+    input.focus();
+    typeKeys(input, "3412.50");
+    expect(input.value).toBe("3,412.50");
+    expect(onValueChange).toHaveBeenLastCalledWith(3412.5);
+  });
+});

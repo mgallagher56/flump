@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
   CHECK_IN_COPY,
+  checkInChangeText,
   checkInMoney,
-  checkInNetWorthText,
+  checkInNetWorthChange,
   checkInProgress,
+  checkInWholeTotal,
   doneText,
   formatSignedChange,
   lastFigureText,
@@ -66,23 +68,24 @@ describe("check-in copy", () => {
 
   it("states net worth against last month the same way in both directions", () => {
     expect(CHECK_IN_COPY.saved).toBe("Check-in saved");
-    expect(checkInNetWorthText(231400, 1250, "2026-10")).toBe(
-      "Net worth: £231,400, up £1,250 on October 2026.",
-    );
-    expect(checkInNetWorthText(231400, -1250, "2026-10")).toBe(
-      "Net worth: £231,400, down £1,250 on October 2026.",
-    );
-    expect(checkInNetWorthText(231400, 0.3, "2026-10")).toBe(
-      "Net worth: £231,400, the same as October 2026.",
-    );
-    expect(checkInNetWorthText(-4200, null, "2026-10")).toBe("Net worth: −£4,200.");
+    expect(checkInWholeTotal(231400.4)).toBe("£231,400");
+    expect(checkInWholeTotal(-4200)).toBe("−£4,200");
+    expect(checkInNetWorthChange(1250, "2026-10")).toBe("Up £1,250 on October 2026.");
+    expect(checkInNetWorthChange(-1250, "2026-10")).toBe("Down £1,250 on October 2026.");
+    expect(checkInNetWorthChange(0.3, "2026-10")).toBe("The same as October 2026.");
+    expect(checkInNetWorthChange(null, "2026-10")).toBeNull();
+  });
+
+  it("states each change from the old figure to the new one in whole pounds", () => {
+    expect(checkInChangeText(3400, 3450.6)).toBe("£3,400 to £3,451");
+    expect(checkInChangeText(null, 3450)).toBe("£3,450");
   });
 
   it("uses no verdict words, exclamation marks, em dashes or ampersands", () => {
     const all = [
       ...Object.values(CHECK_IN_COPY),
-      checkInNetWorthText(1000, 50, "2026-10"),
-      checkInNetWorthText(1000, -50, "2026-10"),
+      checkInNetWorthChange(50, "2026-10"),
+      checkInNetWorthChange(-50, "2026-10"),
     ].join(" ");
     expect(all).not.toMatch(/well done|great|good|bad|only|just|congrat|behind|overdue/i);
     expect(all).not.toMatch(/[!—&]/);

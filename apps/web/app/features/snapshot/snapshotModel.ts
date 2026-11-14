@@ -7,7 +7,6 @@ import {
   type NetWorthPoint,
   type SnapshotAccountInput,
   selectAccountDeltas,
-  selectMonthDeltas,
   selectSavedNetWorthSeries,
   toSnapshotRows,
 } from "@flump/finance-engine";
@@ -96,7 +95,10 @@ export interface AccountChange {
   isLiability: boolean;
   current: number;
   previous: number;
+  /** Current minus previous, in the account's own terms: a debt that grows is a positive change. */
   change: number;
+  /** The change's effect on net worth: the same as `change`, with the sign flipped for a debt. */
+  effect: number;
   carried: boolean;
   /** How this month's figure was given, when not typed: "calculated" or "confirmed" (R2-5). */
   currentSource?: "calculated" | "confirmed" | null;
@@ -115,19 +117,6 @@ export function historySourceLabel(
   return undefined;
 }
 
-export interface MonthChangeRow {
-  month: MonthKey;
-  previousMonth: MonthKey;
-  netWorth: number;
-  change: number;
-  /** Every account value this month is carried forward from an earlier month. */
-  allCarried: boolean;
-  /** At least one account value this month is carried forward. */
-  someCarried: boolean;
-  /** Accounts first recorded this month, so part of the change is a new account. */
-  addedAccounts: number;
-}
-
 export interface SnapshotHistory {
   stage: HistoryStage;
   series: NetWorthPoint[];
@@ -138,8 +127,6 @@ export interface SnapshotHistory {
   latestRecorded: NetWorthPoint | null;
   /** The recorded month before `latestRecorded`, compared against it. */
   previousRecorded: NetWorthPoint | null;
-  /** Month-on-month rows, newest first. */
-  monthChanges: MonthChangeRow[];
   /** Per-account change between the last two recorded months, empty with fewer than two. */
   accountChanges: AccountChange[];
   firstMonth: MonthKey | null;
@@ -170,22 +157,6 @@ export function buildSnapshotHistory(
         : recordedMonths === 2
           ? "pair"
           : "trend";
-  const deltas = selectMonthDeltas(series);
-  const monthChanges: MonthChangeRow[] = deltas
-    .flatMap((d, i) => {
-      const point = series[i + 1];
-      if (!point) return [];
-      return {
-        month: d.month,
-        previousMonth: d.previousMonth,
-        netWorth: point.netWorth,
-        change: d.netWorthChange,
-        allCarried: point.allCarried,
-        someCarried: point.accounts.some((a) => a.carried),
-        addedAccounts: point.addedAccountIds.length,
-      };
-    })
-    .reverse();
   const latest = series.at(-1) ?? null;
   const recorded = series.filter((p) => !p.allCarried);
   const latestRecorded = recorded.at(-1) ?? null;
@@ -214,6 +185,8 @@ export function buildSnapshotHistory(
               current: d.current,
               previous: d.previous,
               change: d.change,
+              // `|| 0` so an unchanged debt never reads as -0.
+              effect: (a?.isLiability ? -d.change : d.change) || 0,
               carried: a?.carried ?? false,
               currentSource: a?.carried ? null : sourceAt(d.accountId, latestRecorded.month),
             };
@@ -233,7 +206,6 @@ export function buildSnapshotHistory(
     latest,
     latestRecorded,
     previousRecorded,
-    monthChanges,
     accountChanges,
     firstMonth: series[0]?.month ?? null,
   };
@@ -241,7 +213,8 @@ export function buildSnapshotHistory(
 
 /**
  * Chart points: a solid `recorded` line through months with a recorded value, and a dashed
- * `carried` line that bridges every carried month to its recorded neighbours.
+ * `carried` line that bridges every carried month to its recorded neighbours. `netWorth` is the
+ * plotted value (an account's balance on the account page).
  */
 export interface HistoryChartPoint {
   month: MonthKey;
@@ -251,18 +224,50 @@ export interface HistoryChartPoint {
   carried: number | null;
 }
 
-export function toChartPoints(series: readonly NetWorthPoint[]): HistoryChartPoint[] {
-  return series.map((p, i) => {
-    const prevCarried = i > 0 && series[i - 1]?.allCarried === true;
-    const nextCarried = i < series.length - 1 && series[i + 1]?.allCarried === true;
+/** One month on a line chart: its value, and whether it is carried (not recorded). */
+export interface LinePointInput {
+  month: MonthKey;
+  value: number;
+  carried: boolean;
+}
+
+/** Line chart points for any monthly series, net worth or one account's balance. */
+export function toLinePoints(rows: readonly LinePointInput[]): HistoryChartPoint[] {
+  return rows.map((p, i) => {
+    const prevCarried = i > 0 && rows[i - 1]?.carried === true;
+    const nextCarried = i < rows.length - 1 && rows[i + 1]?.carried === true;
     return {
       month: p.month,
       label: formatMonthShort(p.month),
-      netWorth: p.netWorth,
-      recorded: p.allCarried ? null : p.netWorth,
-      carried: p.allCarried || prevCarried || nextCarried ? p.netWorth : null,
+      netWorth: p.value,
+      recorded: p.carried ? null : p.value,
+      carried: p.carried || prevCarried || nextCarried ? p.value : null,
     };
   });
+}
+
+export function toChartPoints(series: readonly NetWorthPoint[]): HistoryChartPoint[] {
+  return toLinePoints(
+    series.map((p) => ({ month: p.month, value: p.netWorth, carried: p.allCarried })),
+  );
+}
+
+/**
+ * The chart's takeaway, worded the same up or down (advice policy R1): "Up £15,000 since May
+ * 2026.", "Down £1,200 since May 2026." or "No change since May 2026." Empty without two points.
+ */
+export function changeSinceSentence(
+  points: readonly { month: MonthKey; value: number }[],
+  format: (value: number) => string,
+): string {
+  const first = points[0];
+  const last = points.at(-1);
+  if (!first || !last || points.length < 2) return "";
+  // Whole pounds, so a few pence never reads as "Up £0".
+  const diff = Math.round(last.value - first.value);
+  const since = `since ${formatMonth(first.month)}.`;
+  if (diff === 0) return `No change ${since}`;
+  return `${diff > 0 ? "Up" : "Down"} ${format(Math.abs(diff))} ${since}`;
 }
 
 /**

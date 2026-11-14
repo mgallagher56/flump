@@ -57,28 +57,37 @@ describe("<EditAccountDialogBtn", () => {
     expect(baseElementConstant).toMatchSnapshot();
   });
 
-  test("delete opens a confirm dialog and submits nothing until confirmed", async () => {
+  test("delete swaps the edit dialog's content for the question; nothing stacks or submits until confirmed", async () => {
     mocks.mockUseLoaderData.mockReturnValue({
       accounts: [{ id: "123456", name: "Monzo Current", type: "Current", balance: 10 }],
     });
     mocks.mockFetcherSubmit.mockClear();
     const confirmSpy = vi.fn();
     window.confirm = confirmSpy;
-    const { getByText, getByRole, user } = customRender(
-      <AddEditAccountsDialogBtn isEditAccount accountId="123456" />,
-    );
+    const { getByText, getByRole, getAllByRole, queryByRole, queryByLabelText, user } =
+      customRender(<AddEditAccountsDialogBtn isEditAccount accountId="123456" />);
 
     await user.click(getByText("edit"));
     await user.click(getByText("delete"));
 
-    const dialog = getByRole("alertdialog", { name: "Delete Monzo Current?" });
+    // One modal only: the edit dialog now asks the question in place of the form.
+    expect(queryByRole("alertdialog")).toBeNull();
+    expect(getAllByRole("dialog")).toHaveLength(1);
+    const dialog = getByRole("dialog", { name: "Delete Monzo Current?" });
     expect(dialog.textContent).toContain(
       "Its balance history will be deleted too. This cannot be undone.",
     );
+    expect(queryByLabelText("Name")).toBeNull();
+    // Cancel first, then the destructive button naming the account; focus starts on Cancel.
+    const cancel = getByRole("button", { name: "Cancel" });
+    const confirm = getByRole("button", { name: "Delete Monzo Current" });
+    expect(cancel.compareDocumentPosition(confirm) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(confirm.dataset.variant).toBe("destructive");
+    await waitFor(() => expect(document.activeElement).toBe(cancel));
     expect(mocks.mockFetcherSubmit).not.toHaveBeenCalled();
     expect(confirmSpy).not.toHaveBeenCalled();
 
-    await user.click(getByRole("button", { name: "Delete account" }));
+    await user.click(confirm);
     expect(mocks.mockFetcherSubmit).toHaveBeenCalledTimes(1);
     expect(mocks.mockFetcherSubmit).toHaveBeenCalledWith(
       { intent: "delete", accountId: "123456" },
@@ -86,7 +95,26 @@ describe("<EditAccountDialogBtn", () => {
     );
   });
 
-  test("cancel leaves the edit modal open and submits nothing", async () => {
+  test("cancel goes back to the form, returns focus to Delete and submits nothing", async () => {
+    mocks.mockUseLoaderData.mockReturnValue({
+      accounts: [{ id: "123456", name: "Monzo Current", type: "Current", balance: 10 }],
+    });
+    mocks.mockFetcherSubmit.mockClear();
+    const { getByText, getByRole, getByLabelText, user } = customRender(
+      <AddEditAccountsDialogBtn isEditAccount accountId="123456" />,
+    );
+
+    await user.click(getByText("edit"));
+    await user.click(getByText("delete"));
+    await user.click(getByRole("button", { name: "Cancel" }));
+
+    expect(getByRole("dialog", { name: "editAccount" })).toBeDefined();
+    expect((getByLabelText("Name") as HTMLInputElement).value).toBe("Monzo Current");
+    await waitFor(() => expect(document.activeElement).toBe(getByText("delete").closest("button")));
+    expect(mocks.mockFetcherSubmit).not.toHaveBeenCalled();
+  });
+
+  test("Escape on the question goes back to the form; Escape again closes and releases the page", async () => {
     mocks.mockUseLoaderData.mockReturnValue({
       accounts: [{ id: "123456", name: "Monzo Current", type: "Current", balance: 10 }],
     });
@@ -97,36 +125,12 @@ describe("<EditAccountDialogBtn", () => {
 
     await user.click(getByText("edit"));
     await user.click(getByText("delete"));
-    await user.click(getByRole("button", { name: "Cancel" }));
-
-    expect(queryByRole("alertdialog")).toBeNull();
-    expect(getByRole("dialog")).toBeDefined();
-    expect(mocks.mockFetcherSubmit).not.toHaveBeenCalled();
-  });
-
-  test("Escape closes only the confirm dialog, returns focus and keeps the edit modal", async () => {
-    mocks.mockUseLoaderData.mockReturnValue({
-      accounts: [{ id: "123456", name: "Monzo Current", type: "Current", balance: 10 }],
-    });
-    mocks.mockFetcherSubmit.mockClear();
-    const { getByText, getByRole, queryByRole, user } = customRender(
-      <AddEditAccountsDialogBtn isEditAccount accountId="123456" />,
-    );
-
-    await user.click(getByText("edit"));
-    const deleteBtn = getByText("delete");
-    await user.click(deleteBtn);
-    expect(getByRole("alertdialog")).toBeDefined();
+    expect(getByRole("dialog", { name: "Delete Monzo Current?" })).toBeDefined();
 
     await user.keyboard("{Escape}");
-
-    expect(queryByRole("alertdialog")).toBeNull();
-    expect(getByRole("dialog")).toBeDefined();
-    await waitFor(() => expect(document.activeElement).toBe(deleteBtn.closest("button")));
+    expect(getByRole("dialog", { name: "editAccount" })).toBeDefined();
     expect(mocks.mockFetcherSubmit).not.toHaveBeenCalled();
 
-    // The outer modal is still open, so it legitimately keeps the scroll lock. Closing it
-    // must release everything the nested dialog stacked up.
     await user.keyboard("{Escape}");
     await waitFor(() => expect(queryByRole("dialog")).toBeNull());
     expect(document.body.style.pointerEvents).not.toBe("none");
@@ -239,7 +243,7 @@ describe("<EditAccountDialogBtn", () => {
     expect(getByRole("button", { name: "Cancel" }).dataset.variant).toBe("ghost");
 
     await user.click(deleteBtn);
-    const text = getByRole("alertdialog").textContent ?? "";
+    const text = getByRole("dialog").textContent ?? "";
     expect(text).not.toMatch(/transactions/i);
     expect(text).not.toMatch(/bank connections/i);
   });

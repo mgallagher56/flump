@@ -3,6 +3,7 @@ import {
   Button,
   CurrencyInput,
   controlProps,
+  Dialog,
   FormField,
   Select,
   Sheet,
@@ -56,6 +57,8 @@ export interface CheckInSheetProps {
   basis: NetWorthBasis;
 }
 
+const CHECK_IN_TITLE = "Monthly check-in";
+
 /** Earliest month the backend accepts (E30 PR1 `EARLIEST_SNAPSHOT`). */
 const EARLIEST_YEAR = 2000;
 
@@ -103,34 +106,54 @@ const MonthlyCheckInSheet: FC<CheckInSheetProps> = ({
     onOpenChange(next);
   };
 
+  const month = formatMonth(currentMonth);
+  // The instructions show on the first step only: the summary drops them, and on a phone so does
+  // every card after the first. The desktop list is one step.
+  const showInstructions = !summary && (!phone || checkIn.index === 0);
+  // The month leads the description: a title with it wraps at "check-" on a phone.
+  const description = showInstructions ? `${month}. ${CHECK_IN_COPY.description}` : month;
+  const body =
+    steps.length === 0 ? (
+      <p className={checkInIntro()}>{CHECK_IN_COPY.empty}</p>
+    ) : summary ? (
+      <CheckInSummary
+        onChangeBalance={checkIn.reopen}
+        onDone={() => handleOpenChange(false)}
+        summary={summary}
+      />
+    ) : phone ? (
+      <CheckInCard checkIn={checkIn} />
+    ) : (
+      <CheckInList checkIn={checkIn} />
+    );
+
+  // Opened with every account already recorded, only the short summary shows: from md that is a
+  // dialog, not a full-height side sheet (STYLE-GUIDE 12.3). On a phone both rise from the bottom.
+  if (summary && checkIn.openedFinished && !phone) {
+    return (
+      <Dialog
+        description={description}
+        id="snapshot-check-in"
+        onOpenChange={handleOpenChange}
+        open={open}
+        size="sm"
+        title={CHECK_IN_TITLE}
+      >
+        {body}
+      </Dialog>
+    );
+  }
+
   return (
     <Sheet
-      // The month leads the description: a title with it wraps at "check-" on a phone.
-      // The summary keeps only the month: the step instructions no longer apply.
-      description={
-        summary
-          ? formatMonth(currentMonth)
-          : `${formatMonth(currentMonth)}. ${CHECK_IN_COPY.description}`
-      }
+      description={description}
       id="snapshot-check-in"
       onOpenChange={handleOpenChange}
       open={open}
       side="right"
-      title="Monthly check-in"
+      title={CHECK_IN_TITLE}
     >
-      {steps.length === 0 ? (
-        <p className={checkInIntro()}>{CHECK_IN_COPY.empty}</p>
-      ) : summary ? (
-        <CheckInSummary
-          onChangeBalance={checkIn.reopen}
-          onDone={() => handleOpenChange(false)}
-          summary={summary}
-        />
-      ) : phone ? (
-        <CheckInCard checkIn={checkIn} />
-      ) : (
-        <CheckInList checkIn={checkIn} />
-      )}
+      {body}
     </Sheet>
   );
 };
