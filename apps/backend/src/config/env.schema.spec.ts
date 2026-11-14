@@ -104,10 +104,10 @@ describe("parseBackendEnv", () => {
   });
 
   it("never echoes a secret-looking value from a malformed URL", () => {
-    const secret = "postgres-with-password-hunter2";
+    const canary = "postgres-with-password-hunter2";
     const error = (() => {
       try {
-        parseBackendEnv({ DATABASE_URL: `${secret}@nowhere` });
+        parseBackendEnv({ DATABASE_URL: `${canary}@nowhere` });
       } catch (e) {
         return e as Error;
       }

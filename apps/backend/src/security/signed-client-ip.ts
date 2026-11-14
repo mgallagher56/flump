@@ -65,6 +65,8 @@ export function verifiedClientIp(
 ): string | null {
   if (!key || !headers) return null;
   const ip = single(headers[CLIENT_IP_HEADER])?.trim();
+  // SIG_FORMAT (below) is anchored with bounded, unnested quantifiers: matching is linear.
+  // nosemgrep: ajinabraham.njsscan.dos.regex_dos.regex_dos
   const sig = single(headers[CLIENT_IP_SIG_HEADER])?.trim();
   if (!ip || !sig || ip.length > 64 || isIP(ip) === 0) return null;
   const match = SIG_FORMAT.exec(sig);

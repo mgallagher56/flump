@@ -48,7 +48,7 @@ describe.skipIf(dbMode === "skip")("authz: mcp-tokens controller (real Postgres)
 
   beforeEach(async () => {
     await truncateAll(h.dataSource);
-    h.resetRateLimits();
+    await h.resetRateLimits();
     const res = await h.call("post", "/mcp-tokens", h.tokens.a, {
       name: "A agent",
       expiryDays: 30,

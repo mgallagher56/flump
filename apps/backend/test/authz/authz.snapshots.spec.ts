@@ -59,7 +59,7 @@ describe.skipIf(dbMode === "skip")("authz: snapshots controller (real Postgres)"
 
   beforeEach(async () => {
     await truncateAll(h.dataSource);
-    h.resetRateLimits();
+    await h.resetRateLimits();
     const create = async (token: string, name: string, balance: number) => {
       const res = await h.call("post", "/accounts", token, { name, type: "Saving", balance });
       expect(res.status).toBe(201);

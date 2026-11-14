@@ -260,7 +260,12 @@ describe.skipIf(!buildReady)("web express server (built)", () => {
   it("stamps an error response from a failing route (/callback without a cookie)", async () => {
     const res = await send(`${base}/callback?code=zzcode&state=zzstate`);
     expect(res.status).toBeGreaterThanOrEqual(400);
-    assertSecurityHeaders(res);
+    // The error boundary renders an HTML document, so it carries the full enforced policy (BE-07).
+    const policy = res.headers.get("content-security-policy") ?? "";
+    expect(res.headers.get("content-type") ?? "").toMatch(/^text\/html/);
+    expect(policy).toMatch(/^default-src 'self'; /);
+    expect(policy).toContain("frame-ancestors 'none'");
+    assertSecurityHeaders(res, policy);
   });
 
   it("keeps immutable caching and gzip for hashed assets, with the security headers", async () => {

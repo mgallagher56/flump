@@ -49,6 +49,9 @@ export const USER_DATA_TABLES = [
   // BE-04 deletion proofs: cleared too, so a persona id erased during staging testing can be seeded
   // again (a tombstone would otherwise refuse every request for that id).
   "account_deletion_tombstones",
+  // BE-07 shared rate-limit counters (keys built from user ids and client IPs, short windows):
+  // cleared so a reseed starts every persona with fresh limits.
+  "rate_limit_buckets",
 ] as const;
 
 export type PersonaAssignment = Partial<Record<PersonaKey, string>>;
