@@ -66,7 +66,7 @@ export function calculateBalance(
   });
 }
 
-/** "From your rate of 4.5% and monthly payment of £1,250 since October 2026." */
+/** "From your interest rate of 4.5% and monthly payment of £1,250 since October 2026." */
 export function calculatedExplain(c: CalculatedFigure): string {
   const pct = new Intl.NumberFormat("en-GB", { maximumFractionDigits: 2 }).format(c.interestRate);
   const pay = new Intl.NumberFormat("en-GB", {
@@ -75,7 +75,7 @@ export function calculatedExplain(c: CalculatedFigure): string {
     minimumFractionDigits: 0,
     maximumFractionDigits: 2,
   }).format(c.monthlyPayment);
-  return `From your rate of ${pct}% and monthly payment of ${pay} since ${formatMonth(c.baseMonth)}.`;
+  return `From your interest rate of ${pct}% and monthly payment of ${pay} since ${formatMonth(c.baseMonth)}.`;
 }
 
 /** The statement prompt's words. Plain, no alarm. */
