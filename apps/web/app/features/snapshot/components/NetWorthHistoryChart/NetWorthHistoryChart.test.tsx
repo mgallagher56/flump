@@ -1,7 +1,7 @@
+import { Button } from "@repo/ui";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import { monthTicks, NetWorthHistoryChart, yTicks } from "./NetWorthHistoryChart";
-import { quietLink } from "./NetWorthHistoryChart.styles";
+import { NetWorthHistoryChart } from "./NetWorthHistoryChart";
 
 const points = [
   { month: "2026-07", label: "Jul 26", netWorth: 1000, recorded: 1000, carried: null },
@@ -20,24 +20,6 @@ describe("NetWorthHistoryChart", () => {
     const sep = screen.getByRole("rowheader", { name: "September 2026" }).closest("tr");
     expect(sep?.textContent).toContain("Carried forward");
     expect(sep?.textContent).toContain("£1,100");
-  });
-
-  it("spaces x ticks evenly from the last month, at most the tick limit", () => {
-    const seven = ["May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov"];
-    expect(monthTicks(seven, 6)).toEqual(["May", "Jul", "Sep", "Nov"]);
-    expect(monthTicks(seven.slice(1), 6)).toEqual(seven.slice(1));
-    expect(
-      monthTicks(
-        Array.from({ length: 13 }, (_, i) => i),
-        6,
-      ),
-    ).toEqual([0, 3, 6, 9, 12]);
-  });
-
-  it("puts y ticks on round steps inside the domain", () => {
-    expect(yTicks([210000, 236000])).toEqual([210000, 220000, 230000]);
-    expect(yTicks([0, 20000])).toEqual([0, 5000, 10000, 15000, 20000]);
-    expect(yTicks([-10000, 10000])).toEqual([-10000, -5000, 0, 5000, 10000]);
   });
 
   it("draws no chart with fewer than 3 recorded months, only the summary and the prompt", () => {
@@ -63,10 +45,11 @@ describe("NetWorthHistoryChart", () => {
     render(
       <NetWorthHistoryChart
         dataActions={
-          <button className={quietLink()} type="button">
+          <Button size="sm" type="button" variant="link">
             Add earlier months
-          </button>
+          </Button>
         }
+        dataNote="Next check-in: 1 December 2026"
         points={points}
         recordedMonths={3}
         summary="Net worth."
@@ -74,9 +57,10 @@ describe("NetWorthHistoryChart", () => {
     );
     const showData = screen.getByRole("button", { name: "Show data" });
     const link = screen.getByRole("button", { name: "Add earlier months" });
-    const row = link.parentElement?.parentElement;
-    expect(showData.parentElement?.parentElement).toBe(row);
+    const row = link.parentElement?.parentElement as HTMLElement;
+    expect(row.contains(showData)).toBe(true);
+    expect(row.contains(screen.getByText("Next check-in: 1 December 2026"))).toBe(true);
     fireEvent.click(showData);
-    expect(screen.getByRole("table", { name: "Net worth by month" })).toBeDefined();
+    expect(row.contains(screen.getByRole("table", { name: "Net worth by month" }))).toBe(true);
   });
 });

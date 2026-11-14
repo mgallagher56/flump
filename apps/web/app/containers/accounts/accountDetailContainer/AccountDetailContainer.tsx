@@ -4,7 +4,7 @@ import {
   DEFAULT_NET_WORTH_BASIS,
   type NetWorthBasis,
 } from "@flump/finance-engine";
-import { HeroFigure, Icon, PageBody, PageHeader } from "@repo/ui";
+import { Button, HeroFigure, Icon, PageBody, PageHeader } from "@repo/ui";
 import { ArrowLeft } from "lucide-react";
 import { type FC, useMemo } from "react";
 import { Link, useLoaderData } from "react-router";
@@ -33,12 +33,21 @@ export const changeLine = (change: number | null, against?: string | null): stri
 /** "Not counted in your net worth.": said under the hero when the user's choices leave it out. */
 export const NOT_COUNTED_TEXT = "Not counted in your net worth.";
 
-/** Whether the user's net worth choices count this account (a student loan is left out by default). */
-export const accountCounts = (type: unknown, basis: NetWorthBasis | undefined): boolean =>
-  countsTowardNetWorth(
+/**
+ * Whether the user's net worth choices count this account (a student loan is left out by default).
+ * `undefined` applies the default choices; `null` means the choices could not be read, so the
+ * answer is unknown and this returns null.
+ */
+export const accountCounts = (
+  type: unknown,
+  basis: NetWorthBasis | null | undefined,
+): boolean | null => {
+  if (basis === null) return null;
+  return countsTowardNetWorth(
     categorizeAccountType(typeof type === "string" ? type : null),
     basis ?? DEFAULT_NET_WORTH_BASIS,
   );
+};
 
 /**
  * The type under the name, unless the name already says it: "Residential mortgage" hides
@@ -112,7 +121,8 @@ const AccountDetailContainer: FC = () => {
   const typeLabel = TYPE_LABEL[String(account.type ?? "")] ?? account.type ?? "Account";
   const owner = ownerPageFor(account.type);
   // Said quietly in the hero's subline, so no extra line sits between the hero and the chart.
-  const notCounted = accountCounts(account.type, basis) ? null : NOT_COUNTED_TEXT;
+  // Left out when the net worth choices could not be read (basis null): unknown is not "no".
+  const notCounted = accountCounts(account.type, basis) === false ? NOT_COUNTED_TEXT : null;
 
   return (
     <PageBody>
@@ -150,9 +160,11 @@ const AccountDetailContainer: FC = () => {
       <AccountDetails />
 
       {owner ? (
-        <Link className={ownerLink()} data-testid="account-owner-link" to={owner.to}>
-          {owner.label}
-        </Link>
+        <Button asChild className={ownerLink()} size="sm" variant="link">
+          <Link data-testid="account-owner-link" id="account-owner-link" to={owner.to}>
+            {owner.label}
+          </Link>
+        </Button>
       ) : null}
     </PageBody>
   );

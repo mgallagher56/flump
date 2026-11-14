@@ -7,7 +7,7 @@ export const sectionStack = cva({
   base: {
     display: "flex",
     flexDirection: "column",
-    gap: "16px",
+    gap: "4",
     minWidth: 0,
     fontVariantNumeric: "tabular-nums",
   },

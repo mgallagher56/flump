@@ -1,7 +1,7 @@
 import { cva } from "@repo/ui/styled-system/css";
 
 export const cardRoot = cva({
-  base: { display: "flex", flexDirection: "column", gap: "16px", minWidth: 0 },
+  base: { display: "flex", flexDirection: "column", gap: "4", minWidth: 0 },
 });
 
 /** "3 of 8": text alone, no bar. */
@@ -33,12 +33,12 @@ export const cardNav = cva({
     alignItems: "center",
     justifyContent: "space-between",
     flexWrap: "wrap",
-    gap: "8px",
+    gap: "2",
     minHeight: "density.control.md",
     "@media (pointer: coarse)": { minHeight: "touch" },
   },
 });
 
 export const cardNavGroup = cva({
-  base: { display: "flex", alignItems: "center", gap: "8px" },
+  base: { display: "flex", alignItems: "center", gap: "2" },
 });

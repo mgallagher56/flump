@@ -4,7 +4,7 @@ export const backLink = cva({
   base: {
     display: "inline-flex",
     alignItems: "center",
-    gap: "8px",
+    gap: "2",
     width: "fit-content",
     color: "text.secondary",
     textStyle: "label.md",
@@ -23,23 +23,10 @@ export const notFound = cva({
   base: { color: "text.secondary", textStyle: "body.md" },
 });
 
-/** The one quiet link to the page that owns this account's detail ("See your mortgage"). */
+/**
+ * Places the one quiet link to the page that owns this account's detail ("See your mortgage"). Its
+ * look is the shared `Button variant="link"`; this only keeps it from stretching across the page.
+ */
 export const ownerLink = cva({
-  base: {
-    display: "inline-flex",
-    alignItems: "center",
-    width: "fit-content",
-    minHeight: "touch",
-    textStyle: "label.sm",
-    fontWeight: "semibold",
-    color: "primary",
-    textDecoration: "none",
-    borderRadius: "md",
-    _hover: { textDecoration: "underline", textUnderlineOffset: "3px" },
-    _focusVisible: {
-      outline: "2px solid",
-      outlineColor: "border.focusRing",
-      outlineOffset: "2px",
-    },
-  },
+  base: { alignSelf: "flex-start" },
 });

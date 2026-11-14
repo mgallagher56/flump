@@ -1,6 +1,10 @@
+import { css } from "@repo/ui/styled-system/css";
 import type { Meta, StoryObj } from "@storybook/react";
 import { expect, within } from "storybook/test";
 import AccountDetailChart from "./AccountDetailChart";
+
+/** The width of the account page's content column. */
+const storyFrame = css({ maxWidth: "3xl" });
 
 const meta: Meta<typeof AccountDetailChart> = {
   title: "4. Charts/AccountDetailChart",
@@ -8,7 +12,7 @@ const meta: Meta<typeof AccountDetailChart> = {
   tags: ["autodocs"],
   decorators: [
     (Story) => (
-      <div style={{ maxWidth: "720px" }}>
+      <div className={storyFrame}>
         <Story />
       </div>
     ),
@@ -52,3 +56,5 @@ export const SavedEnd: Story = {
     await expect(canvas.getByText(/^Down £3,000 since May 2026\./)).toBeDefined();
   },
 };
+
+export const SavedEndDark: Story = { ...SavedEnd, globals: { theme: "dark" } };

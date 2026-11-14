@@ -1,13 +1,10 @@
 import { ChartFigure, Table, TBody, Td, THead, Th } from "@repo/ui";
-import { css, cx } from "@repo/ui/styled-system/css";
 import { type FC, useMemo } from "react";
-import {
-  ChartDataRow,
-  chartStack,
-  MonthLinePlot,
-} from "~/features/snapshot/components/NetWorthHistoryChart";
+import { ChartDataRow } from "~/components/charts/ChartDataRow";
+import { MonthLinePlot } from "~/components/charts/MonthLinePlot";
 import { changeSinceSentence, formatMonth, toLinePoints } from "~/features/snapshot/snapshotModel";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
+import { chartStack } from "./AccountDetailChart.styles";
 
 /** One month of an account's balance, oldest first. */
 export interface AccountChartRow {
@@ -26,9 +23,6 @@ interface AccountDetailChartProps {
   /** Accessible name for the chart (for example "Mortgage balance history"). */
   title?: string;
 }
-
-/** Every figure and month in the summary, label and table lines up (tabular-nums). */
-const figureNumbers = css({ fontVariantNumeric: "tabular-nums" });
 
 /** Fewest months worth a line on the account page. */
 const MIN_ACCOUNT_POINTS = 2;
@@ -90,7 +84,7 @@ const AccountDetailChart: FC<AccountDetailChartProps> = ({
   const whole = (v: number) => formatCurrency(v, { maximumFractionDigits: 0 });
 
   return (
-    <div className={cx(chartStack(), figureNumbers)}>
+    <div className={chartStack()}>
       <ChartFigure
         annotation={last ? { x: last.label, label: formatCurrency(last.netWorth) } : undefined}
         directLabels

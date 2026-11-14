@@ -189,11 +189,13 @@ describe("<AccountDetailContainer />", () => {
       account: { id: "m1", name: "Residential mortgage", type: "Mortgage", balance: -180000 },
       accountDetails: [],
     } as never);
-    const { queryByText, getByRole } = customRender(<AccountDetailContainer />);
+    const { queryByText, getByRole, getByTestId } = customRender(<AccountDetailContainer />);
     expect(queryByText("Mortgage", { exact: true })).toBeNull();
     expect(getByRole("link", { name: "See your mortgage" }).getAttribute("href")).toBe(
       "/app/mortgage",
     );
+    // The test id resolves (by id), so the current account's null query above proves absence.
+    expect(getByTestId("account-owner-link").textContent).toBe("See your mortgage");
   });
 
   test("says a student loan is not counted under the default choices, and links to debts", () => {
@@ -217,6 +219,18 @@ describe("<AccountDetailContainer />", () => {
     const { queryByText } = customRender(<AccountDetailContainer />);
     expect(queryByText(/Not counted/)).toBeNull();
   });
+
+  test("says nothing about net worth when the choices could not be read", () => {
+    mocks.mockUseLoaderData.mockReturnValueOnce({
+      account: { id: "s1", name: "Plan 2", type: "Student Loan", balance: -25000 },
+      accountDetails: [],
+      basis: null,
+    } as never);
+    const { getByTestId, queryByText } = customRender(<AccountDetailContainer />);
+    expect(queryByText(/Not counted/)).toBeNull();
+    expect(getByTestId("hero-figure").textContent).toContain("No monthly balances recorded yet");
+  });
+
   test("back to accounts is a real link", () => {
     const { getByRole } = customRender(<AccountDetailContainer />);
     expect(getByRole("link", { name: /back to accounts/i }).getAttribute("href")).toBe(
@@ -331,6 +345,7 @@ describe("accountCounts", () => {
       false,
     );
     expect(accountCounts("Current", undefined)).toBe(true);
+    expect(accountCounts("Student Loan", null)).toBeNull();
   });
 });
 
