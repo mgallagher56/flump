@@ -21,9 +21,10 @@ const CASES: {
   {
     name: "DebtSnowballCalculator",
     element: <DebtSnowballCalculator />,
-    control: () => screen.getByRole("slider", { name: /Extra each month slider/i }),
+    control: () => screen.getByRole("slider", { name: /Extra payment a month range slider/i }),
     value: "150",
-    expected: /^Debt-free by .+, total interest £[\d,]+$/,
+    expected:
+      /^Illustration: highest rate first, estimated debt-free date \w+ \d{4}, total interest £1,324\. Smallest balance first, estimated debt-free date \w+ \d{4}, total interest £1,324$/,
   },
   {
     name: "MortgageVsIsaCalculator",
@@ -65,9 +66,9 @@ const CASES: {
   {
     name: "ZeroPercentCliffCalculator",
     element: <ZeroPercentCliffCalculator />,
-    control: () => screen.getByLabelText("Current 0% card balance (£)"),
+    control: () => screen.getByLabelText("Balance on the 0% card range slider"),
     value: "4800",
-    expected: /About £267 a month would clear the balance/,
+    expected: /^Illustration: £267 a month pays off the balance before the 0% deal ends$/,
   },
 ];
 

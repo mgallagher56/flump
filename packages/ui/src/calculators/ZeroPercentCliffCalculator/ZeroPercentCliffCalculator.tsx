@@ -1,74 +1,129 @@
-import { calculateZeroPercentCliff, persistOnboardingSeed } from "@flump/finance-engine";
+import {
+  calculateZeroPercentCliff,
+  type OnboardingSeedPayload,
+  persistOnboardingSeed,
+} from "@flump/finance-engine";
+import { ArrowRight } from "lucide-react";
 import type { FC } from "react";
 import { useMemo, useState } from "react";
-import { FaExclamationTriangle } from "react-icons/fa";
-import { Button } from "../../primitives/Button";
-import { LiveRegion } from "../../primitives/LiveRegion";
+import { ProjectionNotice } from "../../patterns/ProjectionNotice/ProjectionNotice";
+import { SimulatorSplitLayout } from "../../patterns/SimulatorSplitLayout/SimulatorSplitLayout";
+import { Button } from "../../primitives/Button/Button";
+import { Icon } from "../../primitives/Icon";
+import { KpiCard } from "../../primitives/KpiCard/KpiCard";
+import { LiveRegion } from "../../primitives/LiveRegion/LiveRegion";
+import { formatMoney, Money } from "../../primitives/Money/Money";
+import { SliderField } from "../../primitives/SliderField/SliderField";
+import { ctaLabel } from "../ctaLabel";
 import {
-  alertHeadingStyle,
-  badgeRecipe,
-  calloutBodyRecipe,
-  calloutRecipe,
-  calloutTitleRecipe,
-  cardStyle,
-  ctaStyle,
-  fieldLabelStyle,
-  figureRecipe,
-  gridStyle,
-  headerStyle,
-  inputGroupStyle,
-  introStyle,
-  noteStyle,
-  resultsBoxStyle,
-  textInputStyle,
-  titleStyle,
-} from "./ZeroPercentCliffCalculator.styles.js";
+  zeroContent,
+  zeroControls,
+  zeroCta,
+  zeroExplainer,
+  zeroExplainerTitle,
+  zeroHeader,
+  zeroIntro,
+  zeroOutcomes,
+  zeroRoot,
+  zeroTitle,
+} from "./ZeroPercentCliffCalculator.styles";
 
-const currency = (digits: number) =>
-  new Intl.NumberFormat("en-GB", {
-    style: "currency",
-    currency: "GBP",
-    minimumFractionDigits: digits,
-    maximumFractionDigits: digits,
-  });
-const wholeFormatter = currency(0);
-const penceFormatter = currency(2);
+const percent = (n: number) => `${n.toLocaleString("en-GB", { maximumFractionDigits: 2 })}%`;
+
+const months = (n: number) => `${n} ${n === 1 ? "month" : "months"}`;
+
 /** £3,600 for whole pounds, £3,600.50 when there are pence. */
 const formatBalance = (n: number) =>
-  (Number.isInteger(n) ? wholeFormatter : penceFormatter).format(n);
-const wholePounds = (n: number) => `£${Math.round(n).toLocaleString("en-GB")}`;
+  formatMoney(n, { fractionDigits: Number.isInteger(n) ? 0 : 2 }).text;
+
+/** Every user-facing string, in one place (COPY-AUDIT, PR 10, 0% deal end rows). */
+export const ZERO_PERCENT_COPY = {
+  title: "When a 0% balance transfer ends",
+  intro: "Estimate the monthly payment that pays off a balance before the 0% deal ends.",
+  balance: "Balance on the 0% card",
+  months: "Months left on the 0% deal",
+  rate: "Interest rate after the 0% deal ends (APR)",
+  kpiPayment: "Estimated monthly payment",
+  kpiPaymentSubtext: (balance: number, n: number) =>
+    `Pays off the ${formatBalance(balance)} balance in ${months(n)}, before any interest is charged, as long as the 0% rate applies and no fees are added.`,
+  kpiLeft: "Left when the 0% deal ends, with minimum payments only",
+  kpiLeftSubtext: "Assumes a minimum of 2% of today's balance (at least £25) a month.",
+  kpiLeftClearedSubtext:
+    "A minimum of 2% of today's balance (at least £25) a month would clear it before the 0% rate ends.",
+  kpiInterest: (rate: number) => `Interest in the first year after, at ${percent(rate)} APR`,
+  kpiInterestSubtext: "On the amount left, if nothing more were paid.",
+  explainerTitle: "What happens when the 0% deal ends",
+  explainer:
+    "Any balance left when the 0% deal ends is charged interest at the card's standard rate. Fees, such as a balance transfer fee, are not included here.",
+  controlsLabel: "0% deal details",
+  contentLabel: "Estimated payment",
+} as const;
+
+export const ZERO_PERCENT_DEFAULT_CTA = "Continue to sign up";
+
+/** Spoken after inputs settle (COPY-AUDIT row for the live region). */
+export const zeroPercentAnnouncement = (monthly: string) =>
+  `Illustration: ${monthly} a month pays off the balance before the 0% deal ends`;
+
+const BALANCE_MAX = 20_000;
+const MONTHS_MIN = 1;
+const MONTHS_MAX = 48;
+const RATE_MAX = 60;
+
+const clampMonths = (n: number) =>
+  Math.min(MONTHS_MAX, Math.max(MONTHS_MIN, Math.round(n) || MONTHS_MIN));
+
+/** What the button pre-fills for sign-up: only the balance the visitor entered. */
+export type ZeroPercentSeedPayload = OnboardingSeedPayload & {
+  mode: "DEBT";
+  totalUnsecuredDebt: number;
+};
 
 export interface ZeroPercentCliffCalculatorProps {
-  onSaveAndContinue?: (payload: any) => void;
+  onSaveAndContinue?: (payload: ZeroPercentSeedPayload) => void;
   ctaText?: string;
   /** When false, entered figures are not written to the onboarding seed in local storage. Default true. */
   persistSeed?: boolean;
+  /** Starting values (examples, not anyone's saved figures). */
+  initialBalance?: number;
+  initialMonths?: number;
+  initialRate?: number;
 }
 
+/**
+ * Signed-out tool: the monthly payment that pays off a 0% balance before the deal ends, and what
+ * minimum payments alone would leave. Every figure comes from the engine's
+ * `calculateZeroPercentCliff`; this component only clamps inputs and formats results. The results
+ * are neutral facts, so no alarm styling.
+ */
 export const ZeroPercentCliffCalculator: FC<ZeroPercentCliffCalculatorProps> = ({
   onSaveAndContinue,
-  ctaText = "Track 0% expiry dates in Flump free →",
+  ctaText = ZERO_PERCENT_DEFAULT_CTA,
   persistSeed = true,
+  initialBalance = 3600,
+  initialMonths = 18,
+  initialRate = 24.9,
 }) => {
-  const [balance, setBalance] = useState<number>(3600);
-  const [months, setMonths] = useState<number>(18);
-  const [revertApr, setRevertApr] = useState<number>(24.9);
+  const [balance, setBalance] = useState(Math.max(0, initialBalance));
+  const [monthsLeft, setMonthsLeft] = useState(clampMonths(initialMonths));
+  const [rate, setRate] = useState(Math.max(0, initialRate));
 
-  const cliff = useMemo(() => {
-    return calculateZeroPercentCliff(balance, months, revertApr);
-  }, [balance, months, revertApr]);
-
-  const headline = `About ${wholePounds(cliff.requiredMonthlyPayment)} a month would clear the balance before the 0% offer ends`;
+  const cliff = useMemo(
+    () => calculateZeroPercentCliff(balance, monthsLeft, rate),
+    [balance, monthsLeft, rate],
+  );
   const minimumClears = cliff.balanceRemainingIfMinimum <= 0;
 
+  const announcement = zeroPercentAnnouncement(formatMoney(cliff.requiredMonthlyPayment).text);
+
   const handleSave = () => {
-    const payload = {
+    const payload: ZeroPercentSeedPayload = {
       mode: "DEBT",
       totalUnsecuredDebt: balance,
       inferredModules: ["accounts", "debt", "budget"],
       timestamp: Date.now(),
     };
-    if (persistSeed) persistOnboardingSeed(payload as any);
+    if (persistSeed) persistOnboardingSeed(payload);
     if (onSaveAndContinue) {
       onSaveAndContinue(payload);
     } else if (typeof window !== "undefined") {
@@ -76,103 +131,94 @@ export const ZeroPercentCliffCalculator: FC<ZeroPercentCliffCalculatorProps> = (
     }
   };
 
+  const controls = (
+    <div className={zeroControls()}>
+      <SliderField
+        format="currency"
+        label={ZERO_PERCENT_COPY.balance}
+        max={BALANCE_MAX}
+        min={0}
+        step={50}
+        value={balance}
+        onChange={(v) => setBalance(Math.max(0, v))}
+      />
+      <SliderField
+        label={ZERO_PERCENT_COPY.months}
+        max={MONTHS_MAX}
+        min={MONTHS_MIN}
+        step={1}
+        value={monthsLeft}
+        onChange={(v) => setMonthsLeft(clampMonths(v))}
+      />
+      <SliderField
+        format="percent"
+        fractionDigits={1}
+        label={ZERO_PERCENT_COPY.rate}
+        max={RATE_MAX}
+        min={0}
+        step={0.1}
+        value={rate}
+        onChange={(v) => setRate(Math.max(0, v))}
+      />
+    </div>
+  );
+
+  const content = (
+    <div className={zeroContent()}>
+      {/* Illustration outcomes, not saved figures. One outcome, then at most two supporting
+          figures; when the minimum alone clears the balance the interest card goes and the
+          lone supporting card spans the row. */}
+      <div className={zeroOutcomes()} data-density="compact" data-testid="zero-percent-outcomes">
+        <KpiCard
+          label={ZERO_PERCENT_COPY.kpiPayment}
+          subtext={ZERO_PERCENT_COPY.kpiPaymentSubtext(balance, monthsLeft)}
+          value={cliff.requiredMonthlyPayment}
+        />
+        <KpiCard
+          label={ZERO_PERCENT_COPY.kpiLeft}
+          subtext={
+            minimumClears
+              ? ZERO_PERCENT_COPY.kpiLeftClearedSubtext
+              : ZERO_PERCENT_COPY.kpiLeftSubtext
+          }
+          value={<Money size="lg" value={cliff.balanceRemainingIfMinimum} />}
+        />
+        {minimumClears ? null : (
+          <KpiCard
+            label={ZERO_PERCENT_COPY.kpiInterest(rate)}
+            subtext={ZERO_PERCENT_COPY.kpiInterestSubtext}
+            value={<Money size="lg" value={cliff.penaltyInterestFirstYearIfUnpaid} />}
+          />
+        )}
+      </div>
+
+      <div className={zeroExplainer()}>
+        <h3 className={zeroExplainerTitle()}>{ZERO_PERCENT_COPY.explainerTitle}</h3>
+        <p>{ZERO_PERCENT_COPY.explainer}</p>
+      </div>
+
+      <ProjectionNotice />
+      <LiveRegion debounceMs={1000} message={announcement} visuallyHidden />
+    </div>
+  );
+
   return (
-    <div className={cardStyle} data-testid="zero-percent-cliff-tool">
-      <div className={headerStyle}>
-        <div>
-          <h2 className={titleStyle}>0% balance transfer promotional expiry calculator</h2>
-          <p className={introStyle}>
-            Estimate the monthly payment that would clear your card before the 0% promotional rate
-            ends.
-          </p>
-        </div>
+    <div className={zeroRoot()} data-testid="zero-percent-cliff-tool">
+      <div className={zeroHeader()}>
+        <h2 className={zeroTitle()}>{ZERO_PERCENT_COPY.title}</h2>
+        <p className={zeroIntro()}>{ZERO_PERCENT_COPY.intro}</p>
       </div>
 
-      <div className={gridStyle}>
-        <div>
-          <div className={inputGroupStyle}>
-            <label className={fieldLabelStyle} htmlFor="zero-percent-balance">
-              Current 0% card balance (£)
-            </label>
-            <input
-              id="zero-percent-balance"
-              className={textInputStyle}
-              min={100}
-              type="number"
-              value={balance}
-              onChange={(e) => setBalance(Math.max(0, Number(e.target.value) || 0))}
-            />
-          </div>
+      <SimulatorSplitLayout
+        content={content}
+        contentLabel={ZERO_PERCENT_COPY.contentLabel}
+        controls={controls}
+        controlsLabel={ZERO_PERCENT_COPY.controlsLabel}
+      />
 
-          <div className={inputGroupStyle}>
-            <label className={fieldLabelStyle} htmlFor="zero-percent-months">
-              Months remaining on 0% offer
-            </label>
-            <input
-              id="zero-percent-months"
-              className={textInputStyle}
-              max={48}
-              min={1}
-              type="number"
-              value={months}
-              onChange={(e) =>
-                setMonths(Math.min(48, Math.max(1, Math.round(Number(e.target.value)) || 1)))
-              }
-            />
-          </div>
-
-          <div className={inputGroupStyle}>
-            <label className={fieldLabelStyle} htmlFor="zero-percent-revert-apr">
-              Revert APR after offer ends (%)
-            </label>
-            <input
-              id="zero-percent-revert-apr"
-              className={textInputStyle}
-              step="0.1"
-              type="number"
-              value={revertApr}
-              onChange={(e) => setRevertApr(Math.max(0, Number(e.target.value) || 0))}
-            />
-          </div>
-        </div>
-
-        <div className={resultsBoxStyle}>
-          <LiveRegion debounceMs={1000} message={headline} visuallyHidden />
-          <div>
-            <span className={badgeRecipe({ tone: "positive" })}>Target monthly payment</span>
-            <div className={figureRecipe({ tone: "positive" })}>
-              {wholePounds(cliff.requiredMonthlyPayment)} / month
-            </div>
-            <p className={noteStyle}>
-              Paying this each month would clear the {formatBalance(balance)} balance in {months}{" "}
-              {months === 1 ? "month" : "months"} with no interest, as long as the 0% rate applies
-              and no fees are added.
-            </p>
-          </div>
-
-          <div className={calloutRecipe({ tone: "danger" })}>
-            <div className={alertHeadingStyle}>
-              <FaExclamationTriangle aria-hidden="true" size={16} />
-              <strong className={calloutTitleRecipe({ tone: "danger" })}>
-                If you pay only the minimum
-              </strong>
-            </div>
-            <p className={calloutBodyRecipe({ tone: "danger" })}>
-              {minimumClears
-                ? "A minimum of 2% of today's balance (at least £25) a month would clear it before the 0% rate ends."
-                : `A minimum of 2% of today's balance (at least £25) a month would leave about ${wholePounds(
-                    cliff.balanceRemainingIfMinimum,
-                  )} when the 0% rate ends. At ${revertApr.toLocaleString("en-GB")}% that is about ${wholePounds(
-                    cliff.penaltyInterestFirstYearIfUnpaid,
-                  )} of interest over the next year if nothing more were paid.`}
-            </p>
-          </div>
-
-          <Button className={ctaStyle} onClick={handleSave} size="md">
-            {ctaText}
-          </Button>
-        </div>
-      </div>
+      <Button className={zeroCta()} size="md" variant="primary" onClick={handleSave}>
+        {ctaLabel(ctaText)} <Icon icon={ArrowRight} size="sm" />
+      </Button>
     </div>
   );
 };
