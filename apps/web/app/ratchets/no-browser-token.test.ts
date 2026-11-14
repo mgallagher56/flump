@@ -143,6 +143,10 @@ const backendFixture = (endpoint: string): unknown => {
   }
   if (/^\/accounts\/[^/]+$/.test(endpoint)) return accountFixture;
   if (endpoint === "/user-profile") return profileFixture;
+  if (endpoint === "/imports") return [];
+  if (/^\/imports\/[^/]+$/.test(endpoint)) {
+    return { batchId: "b0000000-0000-4000-8000-000000000001", status: "committed", counts: {} };
+  }
   if (endpoint === "/bank-connections/capability") return { enabled: false };
   if (endpoint === "/portfolio-snapshot") return null;
   if (["/budget-entries", "/tax-records", "/bank-connections"].includes(endpoint)) return [];
@@ -178,6 +182,7 @@ async function runLoader(loader: Loader, url: string): Promise<Outcome> {
     request: new Request(url, { headers: { "x-flump-request": "1", origin: new URL(url).origin } }),
     params: {
       account: "a1",
+      id: "b0000000-0000-4000-8000-000000000001",
       slug: "uk-100k-tax-trap-calculator",
       feature: "accounts",
       "*": "accounts",
