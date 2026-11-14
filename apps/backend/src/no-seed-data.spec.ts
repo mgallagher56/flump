@@ -22,7 +22,7 @@ describe("no seed data in product source", () => {
   it("scans a non-trivial set of source files", () => {
     const files = collectSourceFiles(SRC_DIR).map((f) => relative(SRC_DIR, f));
     expect(files.length).toBeGreaterThan(10);
-    expect(files).toContain("tax.controller.ts");
+    expect(files).toContain("modules/tax/tax.controller.ts");
     expect(files.some((f) => f.startsWith("migrations"))).toBe(false);
     expect(files.some((f) => f.endsWith(".spec.ts"))).toBe(false);
   });

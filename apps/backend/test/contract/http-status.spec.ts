@@ -4,6 +4,7 @@ import { RequestMethod } from "@nestjs/common";
 import { HTTP_CODE_METADATA, METHOD_METADATA, PATH_METADATA } from "@nestjs/common/constants";
 import { describe, expect, it } from "vitest";
 import { AppModule } from "../../src/app.module";
+import { moduleControllers } from "../../src/testing/module-controllers";
 
 /**
  * Success status codes (BE-09, audit M-API5): every controller route declares `@HttpCode`, and it
@@ -28,8 +29,7 @@ interface Handler {
 }
 
 function handlers(): Handler[] {
-  const controllers: Array<new (...args: never[]) => unknown> =
-    Reflect.getMetadata("controllers", AppModule) ?? [];
+  const controllers = moduleControllers(AppModule);
   const out: Handler[] = [];
   for (const controller of controllers) {
     const prefix = (Reflect.getMetadata(PATH_METADATA, controller) as string | undefined) ?? "/";

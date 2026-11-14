@@ -1,5 +1,7 @@
 import { Module } from "@nestjs/common";
 import { TypeOrmModule } from "@nestjs/typeorm";
+import { Account } from "../../entities/account.entity";
+import { AccountDetail } from "../../entities/account-detail.entity";
 import { AgentAuditEvent } from "../../entities/agent-audit-event.entity";
 import { BudgetEntry } from "../../entities/budget-entry.entity";
 import { McpToken } from "../../entities/mcp-token.entity";
@@ -19,7 +21,15 @@ import { McpTokenService } from "./mcp-token.service";
 /** The MCP server, its tokens and its audit trail. The top of the domain graph. */
 @Module({
   imports: [
-    TypeOrmModule.forFeature([AgentAuditEvent, BudgetEntry, McpToken, TaxRecord, Transaction]),
+    TypeOrmModule.forFeature([
+      Account,
+      AccountDetail,
+      AgentAuditEvent,
+      BudgetEntry,
+      McpToken,
+      TaxRecord,
+      Transaction,
+    ]),
     FinanceModule,
     ImportsModule,
     ProfileModule,

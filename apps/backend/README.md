@@ -1,5 +1,28 @@
 # Flump backend
 
+## Layout (BE-13)
+
+`src/` has three layers, and imports only point down:
+
+- **Composition root**: `main.ts` and `app.module.ts`. `AppModule` imports the platform modules and one Nest module per domain.
+- **Domain modules**: `src/modules/<name>/`, each with its own `<name>.module.ts` that registers the repositories it uses. A missing provider fails at boot.
+
+  | Module      | Holds                                                                                | May import                  |
+  | ----------- | ------------------------------------------------------------------------------------ | --------------------------- |
+  | `snapshots` | monthly account values (E30)                                                         | none                        |
+  | `budget`    | budget entries and categories                                                        | none                        |
+  | `tax`       | tax records and receipts                                                             | none                        |
+  | `banking`   | bank providers, registry, consent revocation (off behind `BANK_CONNECTIONS_ENABLED`) | snapshots                   |
+  | `imports`   | staged imports (E17)                                                                 | snapshots                   |
+  | `finance`   | accounts, history, transactions, bank connections                                    | banking, snapshots          |
+  | `privacy`   | account deletion and export                                                          | banking                     |
+  | `profile`   | profile, checklist, financial-data reset                                             | banking, privacy, snapshots |
+  | `agent`     | MCP server, tokens and audit                                                         | finance, imports, profile   |
+
+- **Platform**: everything else (`auth`, `config`, `contract`, `entities`, `security`, `observability`, `audit`, `identity`, `integrity`, `jobs`, `migrations`, `common`). Platform code never imports a domain module, and `entities/` imports only `entities/`.
+
+`scripts/backend-laws/check-module-boundaries.ts` enforces this in `check:laws`. A new edge between domain modules is a design decision: add it to `MODULE_DEPENDENCIES` there, in review. Controllers take their services by plain injection; specs build the service and pass it in, or use `Test.createTestingModule`.
+
 ## Rollout note: RemoveSeededExampleData1794355400000
 
 This migration runs on boot (`migrationsRun`) and **deletes rows irreversibly** (`down()` is a no-op):

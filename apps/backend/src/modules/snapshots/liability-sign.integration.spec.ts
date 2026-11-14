@@ -31,7 +31,7 @@ import { STORED_NEGATIVE_ACCOUNT_TYPES } from "./stored-balance";
 // and the database refuses a wrong-sign row. Real Postgres only; same throwaway-database rules
 // as migrations.integration.spec.ts (this suite DROPs the public schema):
 //   TEST_DATABASE_URL=postgres://postgres:postgres@localhost:55432/flump_e3_test \
-//     bunx vitest run src/snapshots/liability-sign.integration.spec.ts
+//     bunx vitest run src/modules/snapshots/liability-sign.integration.spec.ts
 const TEST_DATABASE_URL = process.env.TEST_DATABASE_URL;
 const MIGRATION_NAME = "LiabilitySignRule1794358050000";
 const NOW = new Date("2026-11-14T12:00:00Z");
