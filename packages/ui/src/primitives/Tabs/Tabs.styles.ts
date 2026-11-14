@@ -120,7 +120,7 @@ export const tabTrigger = cva({
       // tools row) has tighter side padding so a three-tool row ("Overpayment", "Rate change",
       // "Overpay or save") still fits the 343px a 375px screen leaves; a longer row scrolls in
       // `tabsScroller` with its edge fades. Targets stay touch-friendly: 32px (sm), 36px (md).
-      sm: { minHeight: "32px", paddingBlock: "1", paddingInline: "2", fontSize: "sm" },
+      sm: { minHeight: "32px", paddingBlock: "1", paddingInline: "1.5", fontSize: "sm" },
       md: { minHeight: "36px", paddingBlock: "2", paddingInline: "4", fontSize: "sm" },
     },
   },
