@@ -8,6 +8,7 @@ import type {
   ShouldRevalidateFunction,
 } from "react-router";
 import { data, useLoaderData } from "react-router";
+import { apiConfig } from "~/config.server";
 import { DELETE_ACCOUNT_INTENT } from "~/features/settings/account";
 import { deleteAccountAction } from "~/features/settings/account.server";
 import { SettingsPage } from "~/features/settings/components/SettingsPage";
@@ -34,6 +35,7 @@ export const loader = async (args: LoaderFunctionArgs) => {
       userProfile,
       user,
       aiGuideUrl: `${getMarketingUrl(args.request.url)}/mcp#setup`,
+      mcpServerUrl: `${apiConfig.apiBaseUrl.replace(/\/$/, "")}/mcp`,
     });
   } catch (error) {
     throwRouteError(error);
@@ -54,7 +56,7 @@ export const shouldRevalidate: ShouldRevalidateFunction = ({
 }) => (formData?.get("intent") === DELETE_ACCOUNT_INTENT ? false : defaultShouldRevalidate);
 
 const ProfileRoute = (): ReactElement => {
-  const { userProfile, user, aiGuideUrl } = useLoaderData<typeof loader>();
+  const { userProfile, user, aiGuideUrl, mcpServerUrl } = useLoaderData<typeof loader>();
   const { setProfile } = useUserProfile();
 
   // Seed the Jotai atom so other features get the current profile
@@ -62,7 +64,14 @@ const ProfileRoute = (): ReactElement => {
     if (userProfile) setProfile(userProfile);
   }, [userProfile, setProfile]);
 
-  return <SettingsPage aiGuideUrl={aiGuideUrl} initialProfile={userProfile} user={user} />;
+  return (
+    <SettingsPage
+      aiGuideUrl={aiGuideUrl}
+      initialProfile={userProfile}
+      mcpServerUrl={mcpServerUrl}
+      user={user}
+    />
+  );
 };
 
 export default ProfileRoute;

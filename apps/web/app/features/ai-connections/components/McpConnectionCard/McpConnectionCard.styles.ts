@@ -66,7 +66,25 @@ export const setupNote = cva({
 });
 
 export const setupSteps = cva({
-  base: { margin: 0, paddingInlineStart: "5", display: "flex", flexDirection: "column", gap: "2" },
+  base: {
+    margin: 0,
+    paddingInlineStart: "5",
+    listStyleType: "decimal",
+    display: "flex",
+    flexDirection: "column",
+    gap: "2",
+  },
+});
+
+export const serverRow = cva({
+  base: {
+    display: "flex",
+    alignItems: "center",
+    flexWrap: "wrap",
+    gap: "2",
+    minWidth: 0,
+    "& code": { overflowWrap: "anywhere" },
+  },
 });
 
 export const setupLink = cva({
@@ -126,7 +144,7 @@ export const tokenCell = cva({
 });
 
 export const tokenLabel = cva({
-  base: { textStyle: "label.sm", color: "text.primary", overflowWrap: "anywhere" },
+  base: { textStyle: "label.md", color: "text.primary", overflowWrap: "anywhere" },
 });
 
 export const tokenPrefix = cva({

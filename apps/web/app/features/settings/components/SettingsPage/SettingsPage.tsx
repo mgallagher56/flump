@@ -10,12 +10,15 @@ import {
   type SettingsTab,
 } from "~/features/settings/settings-tabs";
 import { type UserProfile, useUserProfile } from "~/hooks/useUserProfile";
+import { headerAndTabs } from "./SettingsPage.styles";
 
 export interface SettingsPageProps {
   /** The profile from the route loader. */
   initialProfile: UserProfile;
   /** The public AI connections page (marketing `/mcp#setup`), for the Security tab's steps. */
   aiGuideUrl?: string;
+  /** The address an AI assistant connects to (the backend's `/mcp`). */
+  mcpServerUrl?: string;
   /** The signed-in auth user. */
   user?: {
     email?: string;
@@ -30,7 +33,12 @@ export interface SettingsPageProps {
  * with no hero. The email shows once, on the Security tab. Every change on the Profile tab saves
  * straight away, so there is no save button and nothing unsaved to guard when switching tabs.
  */
-export const SettingsPage: FC<SettingsPageProps> = ({ initialProfile, user, aiGuideUrl }) => {
+export const SettingsPage: FC<SettingsPageProps> = ({
+  initialProfile,
+  user,
+  aiGuideUrl,
+  mcpServerUrl,
+}) => {
   const { profile } = useUserProfile();
   const effectiveProfile = profile.id ? profile : initialProfile;
   const email = user?.email || effectiveProfile.email;
@@ -51,25 +59,27 @@ export const SettingsPage: FC<SettingsPageProps> = ({ initialProfile, user, aiGu
 
   return (
     <PageBody id="settings-page" data-testid="settings-page">
-      <PageHeader title="Settings" description="Your details, how you sign in and your data." />
+      <div className={headerAndTabs()}>
+        <PageHeader title="Settings" description="Your details, how you sign in and your data." />
 
-      <Tabs
-        activationMode="manual"
-        aria-label="Settings sections"
-        items={[...SETTINGS_TAB_ITEMS]}
-        value={activeTab}
-        onValueChange={(value) => setActiveTab(value as SettingsTab)}
-      >
-        <Tabs.Panel value="profile">
-          <ProfileTab key={effectiveProfile.id} profile={effectiveProfile} user={user} />
-        </Tabs.Panel>
-        <Tabs.Panel value="security">
-          <SecurityTab email={email} guideUrl={aiGuideUrl} />
-        </Tabs.Panel>
-        <Tabs.Panel value="data">
-          <DataTab />
-        </Tabs.Panel>
-      </Tabs>
+        <Tabs
+          activationMode="manual"
+          aria-label="Settings sections"
+          items={[...SETTINGS_TAB_ITEMS]}
+          value={activeTab}
+          onValueChange={(value) => setActiveTab(value as SettingsTab)}
+        >
+          <Tabs.Panel value="profile">
+            <ProfileTab key={effectiveProfile.id} profile={effectiveProfile} user={user} />
+          </Tabs.Panel>
+          <Tabs.Panel value="security">
+            <SecurityTab email={email} guideUrl={aiGuideUrl} serverUrl={mcpServerUrl} />
+          </Tabs.Panel>
+          <Tabs.Panel value="data">
+            <DataTab />
+          </Tabs.Panel>
+        </Tabs>
+      </div>
     </PageBody>
   );
 };

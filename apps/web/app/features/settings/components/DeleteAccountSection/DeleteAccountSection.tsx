@@ -7,14 +7,7 @@ import {
 } from "~/features/settings/account";
 import { SignInAgainButton } from "~/features/settings/components/SignInAgainButton";
 import { sectionCard, sectionHeading, sectionLead } from "~/features/settings/settings.styles";
-import {
-  deleteCopy,
-  deleteDialogBody,
-  deleteList,
-  deleteRow,
-  deleteText,
-  deleteTitle,
-} from "./DeleteAccountSection.styles";
+import { deleteDialogBody, deleteList } from "./DeleteAccountSection.styles";
 
 export const IDENTITY_PENDING_MESSAGE =
   "Your data has been deleted, but we could not finish removing your login. Try again.";
@@ -73,18 +66,17 @@ export const DeleteAccountSection: FC<DeleteAccountSectionProps> = ({ status, on
       <h2 className={sectionHeading()} id="delete-account-heading">
         Delete your account
       </h2>
-      <p className={sectionLead()}>This deletes your Flump account and all your data.</p>
-      <div className={deleteRow()}>
-        <div className={deleteText()}>
-          <p className={deleteTitle()}>This cannot be undone</p>
-          <p className={deleteCopy()}>If you would like a copy of your data, download it first.</p>
-        </div>
+      <p className={sectionLead()}>
+        This deletes your Flump account and all your data. To keep a copy, download your data first.
+      </p>
+      {/* Danger styling only inside the confirmation (UX D3): at rest this is a plain button. */}
+      <div>
         <Button
           data-testid="delete-account-trigger"
           id="delete-account-trigger"
           size="sm"
           type="button"
-          variant="danger"
+          variant="outline"
           onClick={() => {
             setAttempted(false);
             setOpen(true);
@@ -108,7 +100,7 @@ export const DeleteAccountSection: FC<DeleteAccountSectionProps> = ({ status, on
               <li>Your budget, savings and tax records</li>
               <li>Your check-ins and any imports not yet finished</li>
               <li>Your AI connections and their activity log</li>
-              <li>Your login</li>
+              <li>Your sign-in</li>
             </ul>
             <span>
               We keep a short record that an account was deleted, with no personal details, for 24

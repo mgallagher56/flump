@@ -159,7 +159,8 @@ describe("OnboardingRoute (4-step flow)", () => {
     next();
     expect(screen.getByRole("button", { name: "Skip this step" })).toBeDefined();
     next();
-    expect(screen.queryByRole("button", { name: /skip/i })).toBeNull();
+    // Stepper steps can read "Skipped" now; only the step action is checked here.
+    expect(screen.queryByRole("button", { name: "Skip this step" })).toBeNull();
   });
 
   it("does not claim a setup time", () => {

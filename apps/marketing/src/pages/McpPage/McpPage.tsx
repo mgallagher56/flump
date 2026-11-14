@@ -115,7 +115,9 @@ export const McpPage: FC = () => {
                       The AI connection is Flump MCP, short for Model Context Protocol. It works
                       with AI assistants that support MCP, such as Claude Desktop or Cursor.
                     </li>
-                    <li>For now it runs from source code, with no installer or setup guide yet.</li>
+                    <li>
+                      The steps to connect are in the Flump app, under Settings, then Security.
+                    </li>
                     <li>
                       Tools run the same calculation code as the Flump app, so the same inputs
                       always give the same tax, debt and net worth figures.
