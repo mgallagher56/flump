@@ -1,105 +1,201 @@
 import {
   compareAvalancheAndSnowball,
   type DebtItem,
+  type OnboardingSeedPayload,
+  type PayoffResult,
   persistOnboardingSeed,
 } from "@flump/finance-engine";
+import { ArrowRight, Plus } from "lucide-react";
 import type { FC } from "react";
-import { useMemo, useState } from "react";
-import { Button } from "../../primitives/Button";
-import { LiveRegion } from "../../primitives/LiveRegion";
+import { useMemo, useRef, useState } from "react";
+import { ProjectionNotice } from "../../patterns/ProjectionNotice/ProjectionNotice";
+import { SimulatorSplitLayout } from "../../patterns/SimulatorSplitLayout/SimulatorSplitLayout";
+import { Button } from "../../primitives/Button/Button";
+import { CurrencyInput } from "../../primitives/CurrencyInput/CurrencyInput";
+import { controlProps, FormField } from "../../primitives/FormField/FormField";
+import { Icon } from "../../primitives/Icon";
+import { KpiCard } from "../../primitives/KpiCard/KpiCard";
+import { LiveRegion } from "../../primitives/LiveRegion/LiveRegion";
+import { formatMoney, Money } from "../../primitives/Money/Money";
+import { PercentInput } from "../../primitives/PercentInput/PercentInput";
+import { SliderField } from "../../primitives/SliderField/SliderField";
+import { ctaLabel } from "../ctaLabel";
 import {
-  captionStyle,
-  cardStyle,
-  ctaStyle,
-  fieldLabelStyle,
-  gridStyle,
-  headerRowStyle,
-  heroFigureStyle,
-  inputGroupStyle,
-  introStyle,
-  liabilityCardStyle,
-  liabilityFieldsStyle,
-  liabilityTitleStyle,
-  pillInputStyle,
-  pillPrefixStyle,
-  pillSuffixStyle,
-  pillWrapStyle,
-  rangeStyle,
-  resultsBoxStyle,
-  savedBoxStyle,
-  savedFigureStyle,
-  savedLabelStyle,
-  snowballWinStyle,
-  surplusLabelStyle,
-  surplusRowStyle,
-  tagStyle,
-  textInputStyle,
-  titleStyle,
-} from "./DebtSnowballCalculator.styles.js";
+  debtAddButton,
+  debtContent,
+  debtControls,
+  debtCta,
+  debtExplainer,
+  debtExplainerTitle,
+  debtHeader,
+  debtIntro,
+  debtList,
+  debtOutcomes,
+  debtRoot,
+  debtRow,
+  debtRowFields,
+  debtRowLegend,
+  debtRowRemove,
+  debtTitle,
+} from "./DebtSnowballCalculator.styles";
+
+/** Every user-facing string, in one place (COPY-AUDIT, PR 10, debt snowball rows). */
+export const DEBT_SNOWBALL_COPY = {
+  title: "Debt payoff methods compared",
+  intro:
+    "Compare the estimated debt-free date and total interest when the extra payment goes to the highest rate first (avalanche) or the smallest balance first (snowball).",
+  debtLegend: (n: number, kind?: string) => (kind ? `Debt ${n}: ${kind}` : `Debt ${n}`),
+  balance: "Balance",
+  rate: "Interest rate (APR)",
+  minimum: "Minimum payment a month",
+  remove: "Remove",
+  removeLabel: (n: number) => `Remove debt ${n}`,
+  add: "Add a debt",
+  extra: "Extra payment a month",
+  extraHelp: "Paid on top of every minimum payment.",
+  kpiDate: "Estimated debt-free date",
+  dateSame: "The same with either method.",
+  dateBoth: (avalanche: string, snowball: string) =>
+    `Highest rate first: ${avalanche}. Smallest balance first: ${snowball}.`,
+  notPaidOff: "Not paid off at these payments",
+  notPaidOffDetail: "The debts are not paid off at these payments.",
+  kpiAvalanche: "Total interest, highest rate first (avalanche)",
+  kpiSnowball: "Total interest, smallest balance first (snowball)",
+  paidOffIn: (duration: string) => `Paid off in ${duration}.`,
+  explainerTitle: "How the two methods differ",
+  explainer:
+    "Both methods pay every minimum and put the extra payment on one debt at a time. Highest rate first puts it on the debt with the highest interest rate; smallest balance first puts it on the smallest balance. When a debt is paid off, its payment moves to the next one.",
+  controlsLabel: "Your debts",
+  contentLabel: "Estimated payoff",
+} as const;
+
+export const DEBT_SNOWBALL_DEFAULT_CTA = "Continue to sign up";
+
+/** Spoken after inputs settle (COPY-AUDIT rows for the live region): both methods, same fields. */
+export const debtSnowballAnnouncement = (comparison: {
+  avalanche: PayoffResult;
+  snowball: PayoffResult;
+}): string => {
+  const { avalanche, snowball } = comparison;
+  if (!avalanche.payoffAchievable || !snowball.payoffAchievable) {
+    return "Illustration: the debts are not paid off at these payments";
+  }
+  return `Illustration: highest rate first, estimated debt-free date ${avalanche.debtFreeDate}, total interest ${money(
+    avalanche.totalInterest,
+  )}. Smallest balance first, estimated debt-free date ${snowball.debtFreeDate}, total interest ${money(
+    snowball.totalInterest,
+  )}`;
+};
+
+const money = (n: number) => formatMoney(n).text;
+
+const plural = (n: number, one: string) => `${n} ${one}${n === 1 ? "" : "s"}`;
+
+/** Copy guide 4.3: durations over 24 months read as years and months. */
+export const formatPayoffDuration = (months: number): string => {
+  if (months <= 24) return plural(months, "month");
+  const years = Math.floor(months / 12);
+  const rest = months % 12;
+  return rest === 0 ? plural(years, "year") : `${plural(years, "year")} ${plural(rest, "month")}`;
+};
+
+const EXTRA_MAX = 1_000;
+const RATE_MAX = 100;
+const MAX_DEBTS = 6;
+
+interface DebtRowState {
+  id: string;
+  /** Shown after "Debt n:" in the legend for the starting examples; a debt the visitor adds has none. */
+  kind?: string;
+  type: DebtItem["type"];
+  balance: number | null;
+  apr: number | null;
+  minimum: number | null;
+}
+
+const STARTING_DEBTS: DebtRowState[] = [
+  { id: "d1", kind: "credit card", type: "credit_card", balance: 3500, apr: 24.9, minimum: 90 },
+  { id: "d2", kind: "personal loan", type: "loan", balance: 5000, apr: 8.5, minimum: 140 },
+];
+
+/** An empty field is "not set" in the UI and counts as nothing in the sums; negatives never pass. */
+const amount = (n: number | null) => Math.max(0, n ?? 0);
+
+/** What the button pre-fills for sign-up: only the total the visitor entered. */
+export type DebtSnowballSeedPayload = OnboardingSeedPayload & {
+  mode: "DEBT";
+  totalUnsecuredDebt: number;
+};
 
 export interface DebtSnowballCalculatorProps {
-  onSaveAndContinue?: (payload: any) => void;
+  onSaveAndContinue?: (payload: DebtSnowballSeedPayload) => void;
   ctaText?: string;
   /** When false, entered figures are not written to the onboarding seed in local storage. Default true. */
   persistSeed?: boolean;
+  /** Starting extra payment a month (an example, not anyone's saved figure). */
+  initialExtraPayment?: number;
 }
 
+/**
+ * Signed-out tool: highest rate first (avalanche) and smallest balance first (snowball) side by
+ * side, with the same fields for each. Every figure comes from the engine's
+ * `compareAvalancheAndSnowball`; this component only clamps inputs and formats results.
+ */
 export const DebtSnowballCalculator: FC<DebtSnowballCalculatorProps> = ({
   onSaveAndContinue,
-  ctaText = "Track live in Flump free →",
+  ctaText = DEBT_SNOWBALL_DEFAULT_CTA,
   persistSeed = true,
+  initialExtraPayment = 75,
 }) => {
-  const [cardBalance, setCardBalance] = useState<number>(3500);
-  const [cardApr, setCardApr] = useState<number>(24.9);
-  const [cardMin, setCardMin] = useState<number>(90);
+  const [debts, setDebts] = useState<DebtRowState[]>(STARTING_DEBTS);
+  const [extraPayment, setExtraPayment] = useState(Math.max(0, initialExtraPayment));
+  const nextId = useRef(STARTING_DEBTS.length + 1);
 
-  const [loanBalance, setLoanBalance] = useState<number>(5000);
-  const [loanApr, setLoanApr] = useState<number>(8.5);
-  const [loanMin, setLoanMin] = useState<number>(140);
+  const updateDebt = (id: string, patch: Partial<DebtRowState>) =>
+    setDebts((rows) => rows.map((row) => (row.id === id ? { ...row, ...patch } : row)));
 
-  const [extraPayment, setExtraPayment] = useState<number>(75);
+  const addDebt = () => {
+    const id = `d${nextId.current++}`;
+    setDebts((rows) =>
+      rows.length >= MAX_DEBTS
+        ? rows
+        : [...rows, { id, type: "other", balance: null, apr: null, minimum: null }],
+    );
+  };
 
-  const debts = useMemo<DebtItem[]>(() => {
-    return [
-      {
-        id: "d1",
-        name: "credit card",
-        balance: cardBalance,
-        apr: cardApr,
-        minimumPayment: cardMin,
-        type: "credit_card",
-      },
-      {
-        id: "d2",
-        name: "personal loan",
-        balance: loanBalance,
-        apr: loanApr,
-        minimumPayment: loanMin,
-        type: "loan",
-      },
-    ];
-  }, [cardBalance, cardApr, cardMin, loanBalance, loanApr, loanMin]);
+  const removeDebt = (id: string) =>
+    setDebts((rows) => (rows.length > 1 ? rows.filter((row) => row.id !== id) : rows));
 
-  const comparison = useMemo(() => {
-    return compareAvalancheAndSnowball(debts, extraPayment);
-  }, [debts, extraPayment]);
+  const engineDebts = useMemo<DebtItem[]>(
+    () =>
+      debts.map((row, index) => ({
+        id: row.id,
+        name: row.kind ?? `debt ${index + 1}`,
+        balance: amount(row.balance),
+        apr: Math.min(RATE_MAX, amount(row.apr)),
+        minimumPayment: amount(row.minimum),
+        type: row.type,
+      })),
+    [debts],
+  );
 
-  const minimumsClear = comparison.minimumOnly.payoffAchievable;
-  const headline = comparison.avalanche.payoffAchievable
-    ? `Debt-free by ${comparison.avalanche.debtFreeDate}, total interest £${Math.round(
-        comparison.avalanche.totalInterest,
-      ).toLocaleString("en-GB")}`
-    : "These payments would not clear the debts";
+  const comparison = useMemo(
+    () => compareAvalancheAndSnowball(engineDebts, extraPayment),
+    [engineDebts, extraPayment],
+  );
+  const { avalanche, snowball } = comparison;
+  const bothPaidOff = avalanche.payoffAchievable && snowball.payoffAchievable;
+
+  const totalDebt = engineDebts.reduce((sum, d) => sum + (d.balance ?? 0), 0);
 
   const handleSave = () => {
-    const totalDebt = cardBalance + loanBalance;
-    const payload = {
+    const payload: DebtSnowballSeedPayload = {
       mode: "DEBT",
       totalUnsecuredDebt: totalDebt,
       inferredModules: ["accounts", "debt", "budget"],
       timestamp: Date.now(),
     };
-    if (persistSeed) persistOnboardingSeed(payload as any);
+    if (persistSeed) persistOnboardingSeed(payload);
     if (onSaveAndContinue) {
       onSaveAndContinue(payload);
     } else if (typeof window !== "undefined") {
@@ -107,197 +203,161 @@ export const DebtSnowballCalculator: FC<DebtSnowballCalculatorProps> = ({
     }
   };
 
+  // The earlier of the two dates (with the same total paid each month they are usually the same).
+  const earliest = avalanche.months <= snowball.months ? avalanche : snowball;
+  const dateValue = bothPaidOff ? earliest.debtFreeDate : DEBT_SNOWBALL_COPY.notPaidOff;
+  const dateSubtext = !bothPaidOff
+    ? DEBT_SNOWBALL_COPY.notPaidOffDetail
+    : avalanche.debtFreeDate === snowball.debtFreeDate
+      ? DEBT_SNOWBALL_COPY.dateSame
+      : DEBT_SNOWBALL_COPY.dateBoth(avalanche.debtFreeDate, snowball.debtFreeDate);
+
+  const methodCard = (label: string, result: PayoffResult) => (
+    <KpiCard
+      label={label}
+      subtext={
+        result.payoffAchievable
+          ? DEBT_SNOWBALL_COPY.paidOffIn(formatPayoffDuration(result.months))
+          : DEBT_SNOWBALL_COPY.notPaidOffDetail
+      }
+      value={
+        result.payoffAchievable ? (
+          <Money size="lg" value={result.totalInterest} />
+        ) : (
+          DEBT_SNOWBALL_COPY.notPaidOff
+        )
+      }
+    />
+  );
+
+  const controls = (
+    <div className={debtControls()}>
+      <div className={debtList()}>
+        {debts.map((row, index) => {
+          const n = index + 1;
+          return (
+            <fieldset className={debtRow()} key={row.id}>
+              {/* The legend stays the fieldset's first child so it names the group. */}
+              <legend className={debtRowLegend()}>
+                {DEBT_SNOWBALL_COPY.debtLegend(n, row.kind)}
+              </legend>
+              {debts.length > 1 ? (
+                <Button
+                  aria-label={DEBT_SNOWBALL_COPY.removeLabel(n)}
+                  className={debtRowRemove()}
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => removeDebt(row.id)}
+                >
+                  {DEBT_SNOWBALL_COPY.remove}
+                </Button>
+              ) : null}
+              <div className={debtRowFields()}>
+                <FormField label={DEBT_SNOWBALL_COPY.balance}>
+                  {(field) => (
+                    <CurrencyInput
+                      {...controlProps(field)}
+                      min={0}
+                      size="sm"
+                      value={row.balance}
+                      onValueChange={(v) =>
+                        updateDebt(row.id, { balance: v === null ? null : Math.max(0, v) })
+                      }
+                    />
+                  )}
+                </FormField>
+                <FormField label={DEBT_SNOWBALL_COPY.rate}>
+                  {(field) => (
+                    <PercentInput
+                      {...controlProps(field)}
+                      decimals={1}
+                      max={RATE_MAX}
+                      min={0}
+                      size="sm"
+                      value={row.apr}
+                      onValueChange={(v) =>
+                        updateDebt(row.id, {
+                          apr: v === null ? null : Math.min(RATE_MAX, Math.max(0, v)),
+                        })
+                      }
+                    />
+                  )}
+                </FormField>
+                <FormField label={DEBT_SNOWBALL_COPY.minimum}>
+                  {(field) => (
+                    <CurrencyInput
+                      {...controlProps(field)}
+                      min={0}
+                      size="sm"
+                      value={row.minimum}
+                      onValueChange={(v) =>
+                        updateDebt(row.id, { minimum: v === null ? null : Math.max(0, v) })
+                      }
+                    />
+                  )}
+                </FormField>
+              </div>
+            </fieldset>
+          );
+        })}
+      </div>
+
+      {debts.length < MAX_DEBTS ? (
+        <Button className={debtAddButton()} size="sm" variant="outline" onClick={addDebt}>
+          <Icon icon={Plus} size="sm" /> {DEBT_SNOWBALL_COPY.add}
+        </Button>
+      ) : null}
+
+      <SliderField
+        format="currency"
+        helperText={DEBT_SNOWBALL_COPY.extraHelp}
+        label={DEBT_SNOWBALL_COPY.extra}
+        max={EXTRA_MAX}
+        min={0}
+        step={10}
+        value={extraPayment}
+        onChange={(v) => setExtraPayment(Math.max(0, v))}
+      />
+    </div>
+  );
+
+  const content = (
+    <div className={debtContent()}>
+      {/* Illustration outcomes, not saved figures. One outcome, then the two methods with the
+          same fields (COPY-AUDIT R1). */}
+      <div className={debtOutcomes()} data-density="compact" data-testid="debt-snowball-outcomes">
+        <KpiCard label={DEBT_SNOWBALL_COPY.kpiDate} subtext={dateSubtext} value={dateValue} />
+        {methodCard(DEBT_SNOWBALL_COPY.kpiAvalanche, avalanche)}
+        {methodCard(DEBT_SNOWBALL_COPY.kpiSnowball, snowball)}
+      </div>
+
+      <div className={debtExplainer()}>
+        <h3 className={debtExplainerTitle()}>{DEBT_SNOWBALL_COPY.explainerTitle}</h3>
+        <p>{DEBT_SNOWBALL_COPY.explainer}</p>
+      </div>
+
+      <ProjectionNotice />
+      <LiveRegion debounceMs={1000} message={debtSnowballAnnouncement(comparison)} visuallyHidden />
+    </div>
+  );
+
   return (
-    <div className={cardStyle} data-testid="debt-snowball-tool">
-      <div className={headerRowStyle}>
-        <div>
-          <h2 className={titleStyle}>Debt payoff: snowball vs avalanche calculator</h2>
-          <p className={introStyle}>
-            Compare total interest and debt-free dates when paying the highest rate first
-            (avalanche) or the smallest balance first (snowball).
-          </p>
-        </div>
+    <div className={debtRoot()} data-testid="debt-snowball-tool">
+      <div className={debtHeader()}>
+        <h2 className={debtTitle()}>{DEBT_SNOWBALL_COPY.title}</h2>
+        <p className={debtIntro()}>{DEBT_SNOWBALL_COPY.intro}</p>
       </div>
 
-      <div className={gridStyle}>
-        <div>
-          <fieldset className={liabilityCardStyle}>
-            <legend className={liabilityTitleStyle}>Liability 1: Credit card</legend>
-            <div className={liabilityFieldsStyle}>
-              <div className={inputGroupStyle}>
-                <label className={fieldLabelStyle} htmlFor="debt-card-balance">
-                  Balance (£)
-                </label>
-                <input
-                  id="debt-card-balance"
-                  className={textInputStyle}
-                  type="number"
-                  value={cardBalance}
-                  onChange={(e) => setCardBalance(Math.max(0, Number(e.target.value) || 0))}
-                />
-              </div>
-              <div className={inputGroupStyle}>
-                <label className={fieldLabelStyle} htmlFor="debt-card-apr">
-                  APR (%)
-                </label>
-                <input
-                  id="debt-card-apr"
-                  className={textInputStyle}
-                  step="0.1"
-                  type="number"
-                  value={cardApr}
-                  onChange={(e) => setCardApr(Math.max(0, Number(e.target.value) || 0))}
-                />
-              </div>
-              <div className={inputGroupStyle}>
-                <label className={fieldLabelStyle} htmlFor="debt-card-min">
-                  Min / mo (£)
-                </label>
-                <input
-                  id="debt-card-min"
-                  className={textInputStyle}
-                  type="number"
-                  value={cardMin}
-                  onChange={(e) => setCardMin(Math.max(0, Number(e.target.value) || 0))}
-                />
-              </div>
-            </div>
-          </fieldset>
+      <SimulatorSplitLayout
+        content={content}
+        contentLabel={DEBT_SNOWBALL_COPY.contentLabel}
+        controls={controls}
+        controlsLabel={DEBT_SNOWBALL_COPY.controlsLabel}
+      />
 
-          <fieldset className={liabilityCardStyle}>
-            <legend className={liabilityTitleStyle}>Liability 2: Personal loan</legend>
-            <div className={liabilityFieldsStyle}>
-              <div className={inputGroupStyle}>
-                <label className={fieldLabelStyle} htmlFor="debt-loan-balance">
-                  Balance (£)
-                </label>
-                <input
-                  id="debt-loan-balance"
-                  className={textInputStyle}
-                  type="number"
-                  value={loanBalance}
-                  onChange={(e) => setLoanBalance(Math.max(0, Number(e.target.value) || 0))}
-                />
-              </div>
-              <div className={inputGroupStyle}>
-                <label className={fieldLabelStyle} htmlFor="debt-loan-apr">
-                  APR (%)
-                </label>
-                <input
-                  id="debt-loan-apr"
-                  className={textInputStyle}
-                  step="0.1"
-                  type="number"
-                  value={loanApr}
-                  onChange={(e) => setLoanApr(Math.max(0, Number(e.target.value) || 0))}
-                />
-              </div>
-              <div className={inputGroupStyle}>
-                <label className={fieldLabelStyle} htmlFor="debt-loan-min">
-                  Min / mo (£)
-                </label>
-                <input
-                  id="debt-loan-min"
-                  className={textInputStyle}
-                  type="number"
-                  value={loanMin}
-                  onChange={(e) => setLoanMin(Math.max(0, Number(e.target.value) || 0))}
-                />
-              </div>
-            </div>
-          </fieldset>
-
-          <div className={inputGroupStyle}>
-            <div className={surplusRowStyle}>
-              <label htmlFor="extra-payment-input" className={surplusLabelStyle}>
-                Extra each month, on top of the minimums
-              </label>
-              <div className={pillWrapStyle}>
-                <span className={pillPrefixStyle}>+£</span>
-                <input
-                  id="extra-payment-input"
-                  className={pillInputStyle}
-                  type="number"
-                  min={0}
-                  step={10}
-                  value={extraPayment}
-                  onChange={(e) => setExtraPayment(Math.max(0, Number(e.target.value) || 0))}
-                />
-                <span className={pillSuffixStyle}>/mo</span>
-              </div>
-            </div>
-            <input
-              id="extra-payment-slider"
-              aria-label="Extra each month slider"
-              className={rangeStyle}
-              max={500}
-              min={0}
-              step={10}
-              type="range"
-              value={extraPayment}
-              onChange={(e) => setExtraPayment(Number(e.target.value))}
-            />
-          </div>
-        </div>
-
-        <div className={resultsBoxStyle}>
-          <LiveRegion debounceMs={1000} message={headline} visuallyHidden />
-          <div>
-            <span className={tagStyle({ tone: "warning" })}>
-              Avalanche strategy (highest APR first)
-            </span>
-            {comparison.avalanche.payoffAchievable ? (
-              <>
-                <div className={heroFigureStyle}>
-                  Debt free: {comparison.avalanche.debtFreeDate}
-                </div>
-                <p className={captionStyle}>
-                  {comparison.avalanche.months} months, total interest £
-                  {Math.round(comparison.avalanche.totalInterest).toLocaleString("en-GB")}.{" "}
-                  {minimumsClear
-                    ? `${comparison.monthsShavedAvalancheVsMin} months sooner than paying only the minimums`
-                    : "Paying only the minimums would not clear these debts"}
-                </p>
-              </>
-            ) : (
-              <div className={heroFigureStyle}>These payments would not clear the debts</div>
-            )}
-          </div>
-          {/* The minimums-only run stops at 30 years; its figures mean nothing if it never clears. */}
-          {minimumsClear && comparison.avalanche.payoffAchievable && (
-            <div className={savedBoxStyle}>
-              <span className={savedLabelStyle}>
-                Interest saved compared with paying only the minimums
-              </span>
-              <div className={savedFigureStyle}>
-                £{Math.round(comparison.interestSavedAvalancheVsMin).toLocaleString("en-GB")}
-              </div>
-            </div>
-          )}
-
-          <div>
-            <span className={tagStyle({ tone: "info" })}>
-              Snowball strategy (smallest balance first)
-            </span>
-            <div className={snowballWinStyle}>
-              {comparison.snowball.quickWinDebtName
-                ? `Snowball clears the ${comparison.snowball.quickWinDebtName} first`
-                : comparison.snowballFirstWinDescription}
-            </div>
-            <p className={captionStyle}>
-              {comparison.snowball.payoffAchievable
-                ? `${comparison.snowball.months} months, total interest £${Math.round(
-                    comparison.snowball.totalInterest,
-                  ).toLocaleString("en-GB")}`
-                : "These payments would not clear the debts"}
-            </p>
-          </div>
-
-          <Button className={ctaStyle} onClick={handleSave} size="md">
-            {ctaText}
-          </Button>
-        </div>
-      </div>
+      <Button className={debtCta()} size="md" variant="primary" onClick={handleSave}>
+        {ctaLabel(ctaText)} <Icon icon={ArrowRight} size="sm" />
+      </Button>
     </div>
   );
 };

@@ -1,215 +1,132 @@
-import { css, cva } from "../../../styled-system/css/index.js";
+import { cva } from "../../../styled-system/css";
 
-export const cardStyle = css({
-  backgroundColor: "surface.card",
-  border: "1px solid",
-  borderColor: "border",
-  borderRadius: "2xl",
-  padding: { base: "20px", md: "32px" },
-  display: "flex",
-  flexDirection: "column",
-  gap: "24px",
-  boxShadow: "sm",
-});
-
-export const gridStyle = css({
-  display: "grid",
-  // minmax(0, …) lets the columns shrink below their inputs' intrinsic width on a phone.
-  gridTemplateColumns: { base: "minmax(0, 1fr)", lg: "minmax(0, 1.1fr) minmax(0, 0.9fr)" },
-  gap: "32px",
-});
-
-export const inputGroupStyle = css({
-  display: "flex",
-  flexDirection: "column",
-  gap: "8px",
-  marginBottom: "16px",
-  minWidth: "0",
-});
-
-export const textInputStyle = css({
-  padding: "10px 14px",
-  borderRadius: "lg",
-  border: "1px solid",
-  borderColor: "border.input",
-  backgroundColor: "surface.canvas",
-  color: "text.primary",
-  fontSize: "15px",
-  width: "100%",
-  minWidth: "0",
-  fontVariantNumeric: "tabular-nums",
-});
-
-export const resultsBoxStyle = css({
-  backgroundColor: "surface.canvas",
-  border: "1px solid",
-  borderColor: "border",
-  borderRadius: "xl",
-  padding: "24px",
-  display: "flex",
-  flexDirection: "column",
-  gap: "18px",
-});
-
-export const headerRowStyle = css({
-  display: "flex",
-  justifyContent: "space-between",
-  alignItems: "flex-start",
-  flexWrap: "wrap",
-  gap: "3",
-});
-
-export const titleStyle = css({
-  textStyle: "heading.md",
-  color: "text.primary",
-  margin: 0,
-  marginBottom: "1",
-});
-
-export const introStyle = css({
-  textStyle: "body.sm",
-  color: "text.muted",
-  margin: 0,
-});
-
-export const liabilityCardStyle = css({
-  padding: "3",
-  backgroundColor: "primary.subtle",
-  border: "none",
-  borderRadius: "lg",
-  margin: "0",
-  marginBottom: "4",
-  minWidth: "0",
-});
-
-export const liabilityTitleStyle = css({
-  textStyle: "label.md",
-  color: "text.primary",
-  float: "left",
-  width: "100%",
-  padding: "0",
-  marginBottom: "2",
-});
-
-export const liabilityFieldsStyle = css({
-  clear: "both",
-  display: "grid",
-  // Stacked on a phone (E-prerelease defect 10: 688px wide at 375); three across from sm up.
-  gridTemplateColumns: { base: "minmax(0, 1fr)", sm: "repeat(3, minmax(0, 1fr))" },
-  columnGap: "3",
-});
-
-export const fieldLabelStyle = css({
-  textStyle: "label.sm",
-  color: "text.secondary",
-});
-
-export const surplusRowStyle = css({
-  display: "flex",
-  justifyContent: "space-between",
-  alignItems: "center",
-});
-
-export const surplusLabelStyle = css({
-  textStyle: "label.md",
-  color: "text.primary",
-});
-
-export const pillWrapStyle = css({
-  position: "relative",
-  display: "inline-flex",
-  alignItems: "center",
-});
-
-export const pillPrefixStyle = css({
-  position: "absolute",
-  left: "2",
-  textStyle: "label.sm",
-  color: "text.muted",
-});
-
-export const pillSuffixStyle = css({
-  textStyle: "label.sm",
-  color: "text.muted",
-  marginLeft: "1",
-});
-
-export const pillInputStyle = css({
-  width: "20",
-  paddingY: "1",
-  paddingRight: "2",
-  paddingLeft: "6",
-  textStyle: "label.md",
-  fontWeight: "bold",
-  fontVariantNumeric: "tabular-nums",
-  textAlign: "right",
-  color: "primary",
-  borderRadius: "md",
-  border: "1px solid",
-  borderColor: "border.input",
-  backgroundColor: "surface.card",
-});
-
-export const rangeStyle = css({
-  width: "100%",
-  accentColor: "primary",
-});
-
-export const tagStyle = cva({
+/** The tool's card: one bordered surface holding the header, the split and the sign-up button. */
+export const debtRoot = cva({
   base: {
-    textStyle: "label.sm",
-    fontWeight: "bold",
-    paddingX: "2",
-    paddingY: "1",
-    borderRadius: "sm",
+    display: "flex",
+    flexDirection: "column",
+    gap: "5",
+    width: "100%",
+    minWidth: "0",
+    backgroundColor: "surface.card",
+    borderWidth: "1px",
+    borderStyle: "solid",
+    borderColor: "border",
+    borderRadius: "2xl",
+    padding: { base: "4", sm: "8" },
   },
-  variants: {
-    tone: {
-      warning: { backgroundColor: "status.warning.bg", color: "status.warning.text" },
-      info: { backgroundColor: "status.info.bg", color: "status.info.text" },
-    },
+});
+
+export const debtHeader = cva({
+  base: { display: "flex", flexDirection: "column", gap: "2" },
+});
+
+export const debtTitle = cva({
+  base: { textStyle: "heading.md", color: "text.primary", margin: "0" },
+});
+
+export const debtIntro = cva({
+  base: { textStyle: "body.md", color: "text.secondary", margin: "0", maxWidth: "70ch" },
+});
+
+/** Left column: the list of debts (the core input), then the one slider. */
+export const debtControls = cva({
+  base: { display: "flex", flexDirection: "column", gap: "4", minWidth: "0" },
+});
+
+export const debtList = cva({
+  base: { display: "flex", flexDirection: "column", gap: "3", minWidth: "0" },
+});
+
+/** One debt: legend and remove button on a row, the three fields below. */
+export const debtRow = cva({
+  base: {
+    display: "grid",
+    gridTemplateColumns: "minmax(0, 1fr) auto",
+    alignItems: "center",
+    columnGap: "2",
+    rowGap: "2",
+    minWidth: "0",
+    margin: "0",
+    padding: "3",
+    borderWidth: "1px",
+    borderStyle: "solid",
+    borderColor: "border.subtle",
+    borderRadius: "xl",
   },
 });
 
-export const heroFigureStyle = css({
-  textStyle: "numeric.lg",
-  fontVariantNumeric: "tabular-nums",
-  color: "status.positive.text",
-  marginTop: "1",
+/** Floated so the legend takes part in the row's grid instead of sitting on the border. */
+export const debtRowLegend = cva({
+  base: {
+    float: "left",
+    gridColumn: "1",
+    padding: "0",
+    textStyle: "label.md",
+    color: "text.primary",
+  },
 });
 
-export const captionStyle = css({
-  textStyle: "body.sm",
-  fontVariantNumeric: "tabular-nums",
-  color: "text.muted",
-  margin: 0,
-  marginTop: "1",
+export const debtRowRemove = cva({
+  base: { gridColumn: "2", justifySelf: "end" },
 });
 
-export const savedBoxStyle = css({
-  padding: "3",
-  backgroundColor: "surface.card",
-  borderRadius: "lg",
-  border: "1px solid",
-  borderColor: "border",
+/**
+ * The three fields wrap to as many columns as fit (one on a phone, three in a wide column), so a
+ * row never forces sideways scrolling at 375px (known #10).
+ */
+export const debtRowFields = cva({
+  base: {
+    gridColumn: "1 / -1",
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 8.5rem), 1fr))",
+    gap: "3",
+    minWidth: "0",
+    alignItems: "end",
+  },
 });
 
-export const savedLabelStyle = css({
-  textStyle: "body.sm",
-  color: "text.muted",
+export const debtAddButton = cva({
+  base: { alignSelf: "flex-start", gap: "2" },
 });
 
-export const savedFigureStyle = css({
-  textStyle: "numeric.md",
-  fontVariantNumeric: "tabular-nums",
-  color: "status.danger.text",
-  marginTop: "1",
+/** Right column: outcome, the two methods, the explainer, then the one notice. */
+export const debtContent = cva({
+  base: { display: "flex", flexDirection: "column", gap: "5", minWidth: "0" },
 });
 
-export const snowballWinStyle = css({
-  textStyle: "heading.sm",
-  color: "text.primary",
-  marginTop: "1",
+/**
+ * Outcome cards. The first card (the outcome) spans the full row; the supporting cards (at most
+ * two) share the row below from `sm`, and stack on a phone.
+ */
+export const debtOutcomes = cva({
+  base: {
+    display: "grid",
+    gridTemplateColumns: { base: "minmax(0, 1fr)", sm: "repeat(2, minmax(0, 1fr))" },
+    gap: "3",
+    fontVariantNumeric: "tabular-nums",
+    "& > :first-child": { gridColumn: "1 / -1" },
+    // A lone supporting figure takes the whole row instead of leaving a half-width gap.
+    "& > :nth-child(2):last-child": { gridColumn: "1 / -1" },
+  },
 });
 
-export const ctaStyle = css({ width: "100%" });
+export const debtExplainer = cva({
+  base: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "1",
+    margin: "0",
+    textStyle: "body.sm",
+    color: "text.secondary",
+    "& p": { margin: "0" },
+  },
+});
+
+export const debtExplainerTitle = cva({
+  base: { textStyle: "label.md", color: "text.primary", margin: "0" },
+});
+
+export const debtCta = cva({
+  base: { alignSelf: { base: "stretch", sm: "flex-start" }, gap: "2" },
+});
