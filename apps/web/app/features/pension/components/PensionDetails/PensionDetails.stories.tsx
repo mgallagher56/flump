@@ -46,5 +46,5 @@ export const Editing: Story = {
 };
 
 export const DefaultRates: Story = {
-  args: { ratesAssumed: true, employeePercent: 5, employerPercent: 3 },
+  args: { ratesAssumed: true, methodSet: false, employeePercent: 5, employerPercent: 3 },
 };

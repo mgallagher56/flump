@@ -115,8 +115,11 @@ describe("PensionContainer", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /Edit details/i }));
 
-    // Both Salary Sacrifice and Pass on Employer NI checkboxes exist
-    expect(screen.getByLabelText(/Salary Sacrifice \(saves NI\)/i)).toBeDefined();
+    // Both checkboxes exist. The stored true alongside the default 5% / 3% rates is the legacy
+    // column default, not a choice, so the method starts unticked until the user picks it.
+    const sacrifice = screen.getByLabelText(/Salary Sacrifice \(saves NI\)/i) as HTMLInputElement;
+    expect(sacrifice.checked).toBe(false);
+    fireEvent.click(sacrifice);
     const employerNiCheckbox = screen.getByLabelText(/Pass on Employer NI/i);
     expect((employerNiCheckbox as HTMLInputElement).checked).toBe(false);
     fireEvent.click(employerNiCheckbox);
@@ -132,6 +135,12 @@ describe("PensionContainer", () => {
         }),
       ),
     );
+  });
+
+  it("reads the contribution method as Not set while the pension facts are the defaults", () => {
+    render(<PensionContainer />);
+    expect(screen.getByText(/Contribution method: Not set/)).toBeDefined();
+    expect(screen.queryByText(/· Salary sacrifice$/)).toBeNull();
   });
 
   it("calculates total monthly inflow correctly, taking direct contributions only from current pots", () => {

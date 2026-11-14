@@ -61,11 +61,12 @@ describe("<PensionSummary />", () => {
     expect(container.textContent).not.toContain("£135");
   });
 
-  test("a growth placeholder is labelled as one", () => {
+  test("a placeholder growth rate stays out of the saved summary (scenario zone only)", () => {
     const { container } = customRender(
       <PensionSummary {...props} growthRateIsPlaceholder weightedReturnRate={5} />,
     );
-    expect(container.textContent).toContain("A 5% placeholder");
+    expect(container.textContent).toContain("No growth rate is set on your pots");
+    expect(container.textContent).not.toContain("5%");
   });
 
   test("keeps KPI values out of the heading outline", () => {

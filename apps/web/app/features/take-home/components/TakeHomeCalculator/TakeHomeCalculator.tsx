@@ -1,4 +1,8 @@
-import { getUkTaxYearContext, UK_STUDENT_LOANS } from "@flump/finance-engine";
+import {
+  getUkTaxYearContext,
+  salarySacrificeFromProfile,
+  UK_STUDENT_LOANS,
+} from "@flump/finance-engine";
 import {
   Card,
   EXPLORER_COPY,
@@ -61,8 +65,9 @@ export const TakeHomeCalculator: FC<TakeHomeCalculatorProps> = ({
   const inRouter = useInRouterContext();
   // Saved figures: the headline reads these only. The scenario below starts from them.
   const savedSalary = initialSalary && initialSalary > 0 ? initialSalary : 0;
-  // The method the user saved; when never chosen, net pay, as the dashboard and budget use.
-  const savedSacrifice = profile?.isSalarySacrifice ?? false;
+  // The method the user saved; when never chosen (or a legacy stored default), net pay, as the
+  // dashboard and budget use.
+  const savedSacrifice = salarySacrificeFromProfile(profile) ?? false;
   const savedEmployerNi = profile?.isSalarySacrificeEmployerNi ?? false;
   const savedPension =
     typeof profile?.pensionPercent === "number" && Number.isFinite(profile.pensionPercent)

@@ -12,10 +12,12 @@ vi.mock("~/hooks/useFormatCurrency", () => ({
 const Harness: FC<{
   onSave?: () => Promise<void>;
   ratesAssumed?: boolean;
+  methodSet?: boolean;
   updatedAt?: string | null;
 }> = ({
   onSave = vi.fn().mockResolvedValue(undefined),
   ratesAssumed = false,
+  methodSet = true,
   updatedAt = null,
 }) => {
   const [editing, setEditing] = useState(false);
@@ -30,6 +32,7 @@ const Harness: FC<{
       isSalarySacrificeEmployerNi={false}
       monthlyEmployeeContrib={250}
       monthlyEmployerNiContrib={0}
+      methodSet={methodSet}
       ratesAssumed={ratesAssumed}
       standardMonthlyEmployerContrib={167}
       updatedAt={updatedAt}
@@ -53,6 +56,12 @@ describe("<PensionDetails />", () => {
   it("labels the backend default rates as assumed", () => {
     render(<Harness ratesAssumed />);
     expect(screen.getAllByText(/Default: auto-enrolment minimum/)).toHaveLength(2);
+  });
+
+  it("reads the contribution method as Not set until the user saves one", () => {
+    render(<Harness methodSet={false} ratesAssumed />);
+    expect(screen.getByText(/Contribution method: Not set/)).toBeDefined();
+    expect(screen.queryByText(/Salary sacrifice$/)).toBeNull();
   });
 
   it("edits and saves the salary sacrifice settings", async () => {

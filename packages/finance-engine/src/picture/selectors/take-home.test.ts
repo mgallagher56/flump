@@ -240,3 +240,35 @@ describe("profileFactsFromProfile", () => {
     ).toEqual(["PLAN_1"]);
   });
 });
+
+describe("stored salary sacrifice the user may never have chosen (legacy true default)", () => {
+  it("reads a stored true with the default 5% / 3% pension rates as not set", () => {
+    const facts = profileFactsFromProfile({
+      isSalarySacrifice: true,
+      pensionPercent: 5,
+      pensionEmployerPercent: 3,
+    });
+    expect(facts.isSalarySacrifice).toBeNull();
+  });
+
+  it("keeps a stored true once the pension rates were changed, and always keeps false", () => {
+    expect(
+      profileFactsFromProfile({
+        isSalarySacrifice: true,
+        pensionPercent: 8,
+        pensionEmployerPercent: 3,
+      }).isSalarySacrifice,
+    ).toBe(true);
+    expect(
+      profileFactsFromProfile({
+        isSalarySacrifice: false,
+        pensionPercent: 5,
+        pensionEmployerPercent: 3,
+      }).isSalarySacrifice,
+    ).toBe(false);
+    expect(
+      profileFactsFromProfile({ isSalarySacrifice: true, pensionPercent: "5" as never })
+        .isSalarySacrifice,
+    ).toBe(true);
+  });
+});

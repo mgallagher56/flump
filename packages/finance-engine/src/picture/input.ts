@@ -75,6 +75,34 @@ const EMPLOYMENT = ["employed", "self-employed", "other"] as const;
 const HOUSING = ["renting", "mortgage", "own_outright"] as const;
 const MORTGAGE_TYPES = ["repayment", "interest-only"] as const;
 
+/**
+ * True when the stored pension rates are still the backend's row-creation defaults (5% employee,
+ * 3% employer), which the user may never have chosen. There is no "set by the user" flag, so
+ * this exact pair is the only signal (the same heuristic the pension page uses).
+ */
+export function hasDefaultPensionRates(
+  profile: Partial<UserProfileData> | null | undefined,
+): boolean {
+  const p = profile ?? {};
+  return toNumber(p.pensionPercent) === 5 && toNumber(p.pensionEmployerPercent) === 3;
+}
+
+/**
+ * The stored salary sacrifice flag, or null when it cannot be taken as the user's choice.
+ * `is_salary_sacrifice` is NOT NULL and used to default to true, so older rows carry `true`
+ * the user never chose. Rows are not backfilled (owner decision); instead a stored `true`
+ * alongside the untouched default pension rates is read as not set. A stored `false` is the
+ * new default and the net pay method, the one onboarding saves, so it is kept.
+ */
+export function salarySacrificeFromProfile(
+  profile: Partial<UserProfileData> | null | undefined,
+): boolean | null {
+  const value = profile?.isSalarySacrifice;
+  if (typeof value !== "boolean") return null;
+  if (value && hasDefaultPensionRates(profile)) return null;
+  return value;
+}
+
 /** Maps a stored profile to facts. Never invents a default: unanswered stays null. */
 export function profileFactsFromProfile(
   profile: Partial<UserProfileData> | null | undefined,
@@ -82,7 +110,7 @@ export function profileFactsFromProfile(
   const p = profile ?? {};
   const taxRegion = REGIONS.find((r) => r === p.taxRegion) ?? null;
   const employmentType = EMPLOYMENT.find((e) => e === p.employmentType) ?? null;
-  const isSalarySacrifice = typeof p.isSalarySacrifice === "boolean" ? p.isSalarySacrifice : null;
+  const isSalarySacrifice = salarySacrificeFromProfile(p);
   let studentLoanPlans: string[] | null = null;
   if (Array.isArray(p.studentLoanPlans)) {
     studentLoanPlans = p.studentLoanPlans.filter((x) => typeof x === "string" && x.trim() !== "");
