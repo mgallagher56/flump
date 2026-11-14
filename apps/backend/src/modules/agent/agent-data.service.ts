@@ -311,6 +311,8 @@ export class AgentDataService implements McpUserDataProvider {
 
   async getUserFinancialData(
     userId: string,
+    // Kept for the McpUserDataProvider interface: the raw input is the same either way, and
+    // buildFlumpAiContextPack applies anonymizeInstitutions when it builds the pack.
     _options: { anonymizeInstitutions?: boolean } = {},
   ): Promise<BuildContextPackInput> {
     const profile = wireProfile(await this.userProfileService.getProfile(userId));
