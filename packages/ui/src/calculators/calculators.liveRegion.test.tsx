@@ -35,9 +35,9 @@ const CASES: {
   {
     name: "OverdraftCostCalculator",
     element: <OverdraftCostCalculator />,
-    control: () => screen.getByLabelText("Average overdraft balance used (£)"),
+    control: () => screen.getByLabelText("Average amount overdrawn range slider"),
     value: "2000",
-    expected: /An estimated £798 a year in interest/,
+    expected: /^Illustration: estimated overdraft interest £798 a year$/,
   },
   {
     name: "Section24Calculator",

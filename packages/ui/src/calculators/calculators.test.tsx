@@ -79,12 +79,14 @@ describe("UI Calculators", () => {
       const onSave = vi.fn();
       render(<OverdraftCostCalculator ctaText="Save and continue" onSaveAndContinue={onSave} />);
 
-      expect(screen.getByText(/Arranged overdraft cost calculator/i)).toBeDefined();
+      expect(
+        screen.getByRole("heading", { name: /Arranged overdraft cost calculator/i }),
+      ).toBeDefined();
       expect(screen.getByText(/Estimated interest a year/i)).toBeDefined();
 
-      const input = screen.getByLabelText("Average overdraft balance used (£)");
-      fireEvent.change(input, { target: { value: "1500" } });
-      expect(screen.getByDisplayValue("1500")).toBeDefined();
+      const slider = screen.getByLabelText("Average amount overdrawn range slider");
+      fireEvent.change(slider, { target: { value: "1500" } });
+      expect(screen.getByDisplayValue("£1,500")).toBeDefined();
 
       const cta = screen.getByRole("button", { name: /Save and continue/i });
       fireEvent.click(cta);

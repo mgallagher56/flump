@@ -1,26 +1,41 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { expect, userEvent, within } from "@storybook/test";
-import { OverdraftCostCalculator } from "./OverdraftCostCalculator";
+import { expect, fn, userEvent, within } from "@storybook/test";
+import { OVERDRAFT_COPY, OverdraftCostCalculator } from "./OverdraftCostCalculator";
 
 const meta: Meta<typeof OverdraftCostCalculator> = {
   title: "3. Calculators/OverdraftCostCalculator",
   component: OverdraftCostCalculator,
+  parameters: { layout: "padded" },
+  args: { onSaveAndContinue: fn(), persistSeed: false },
 };
 
 export default meta;
 type Story = StoryObj<typeof OverdraftCostCalculator>;
 
-const play: Story["play"] = async ({ canvasElement }) => {
+const play: Story["play"] = async ({ canvasElement, args }) => {
   const canvas = within(canvasElement);
-  await expect(canvas.getByTestId("overdraft-cost-tool")).toBeInTheDocument();
-  const balance = canvas.getByLabelText("Average overdraft balance used (£)");
+  const outcomes = within(canvas.getByTestId("overdraft-outcomes"));
+  await expect(outcomes.getByText("£479")).toBeInTheDocument();
+
+  // Typing in the balance pill recalculates the outcome.
+  const balance = canvas.getByLabelText(`${OVERDRAFT_COPY.balance} input`);
   await userEvent.clear(balance);
   await userEvent.type(balance, "2000");
-  await expect(await canvas.findByText(/£798 \/ year/)).toBeInTheDocument();
+  await userEvent.tab();
+  await expect(await outcomes.findByText("£798")).toBeInTheDocument();
+
+  await userEvent.click(canvas.getByRole("button", { name: /Continue to sign up/ }));
+  await expect(args.onSaveAndContinue).toHaveBeenCalledWith(
+    expect.objectContaining({ totalUnsecuredDebt: 2000 }),
+  );
 };
 
 export const Default: Story = { play };
 
-export const Light: Story = { globals: { theme: "light" }, play };
+export const Light: Story = { ...Default, globals: { theme: "light" } };
 
-export const Dark: Story = { globals: { theme: "dark" }, play };
+export const Dark: Story = { ...Default, globals: { theme: "dark" } };
+
+export const Mobile: Story = {
+  parameters: { viewport: { defaultViewport: "mobile1" } },
+};
