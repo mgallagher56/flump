@@ -202,9 +202,17 @@ describe.each(NAMES.flatMap((name) => BASES.map((basis) => [name, basis] as cons
       }>;
       expect(e.result.netWorthLeavesOut).toEqual(leftOut);
       const points = e.result.series[0]?.points ?? [];
+      // The current London month (the clock is 2026-11) ends on the saved balances, as on the
+      // web history page, so it equals the picture's net worth; earlier months are the engine's.
+      const current = "2026-11";
       const expected = history
         .filter((p) => p.totalAssets !== 0 || p.totalLiabilities !== 0)
-        .map((p) => ({ period: month(p), value: Math.round(p.netWorth * 100) / 100 }));
+        .map((p) => ({
+          period: month(p),
+          value:
+            Math.round((month(p) === current ? picture().netWorth.netWorth : p.netWorth) * 100) /
+            100,
+        }));
       expect(points.map((p) => ({ period: p.period, value: p.value }))).toEqual(
         expect.arrayContaining(expected),
       );

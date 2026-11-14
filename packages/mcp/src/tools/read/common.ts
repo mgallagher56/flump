@@ -169,12 +169,12 @@ export function netWorthBasisNotes(basis: NetWorthBasis, leftOut: readonly NetWo
   const notes: string[] = [];
   notes.push(
     basis.countStudentLoan
-      ? "Student loans count as a debt in net worth and liabilitiesGbp under the user's settings. They are never in debt totals."
-      : "Student loans are not counted in net worth under the user's settings. They are never in debt totals.",
+      ? "Student loans count as a debt in net worth and liabilitiesGbp under the user's choices. They are never in debt totals."
+      : "Student loans are not counted in net worth under the user's choices. They are never in debt totals.",
   );
   if (!basis.countProperty && (leftOut.includes("property") || leftOut.includes("mortgage"))) {
     notes.push(
-      "Property values and mortgage balances are not counted in net worth under the user's settings. propertyGbp and mortgageGbp still show the saved amounts.",
+      "Property values and mortgage balances are not counted in net worth under the user's choices. propertyGbp and mortgageGbp still show the saved amounts.",
     );
   }
   if (leftOut.includes("homeValueMissing")) {

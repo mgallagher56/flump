@@ -149,6 +149,18 @@ describe("edge cases", () => {
     expect(totals(withBtl, basis(false, false)).netWorth).toBe(0);
   });
 
+  it("records current behaviour: buy-to-let is known by name only, so a plainly named property does not cover a buy-to-let mortgage", () => {
+    // The mortgage is named buy-to-let, its property is not, so they land in different groups:
+    // the property covers the (empty) home group and the buy-to-let group has no value.
+    const accounts: RawAccount[] = [
+      { id: "flat", name: "Flat in Leeds", type: "Property", balance: 200000 },
+      { id: "btlm", name: "Buy-to-let mortgage", type: "Mortgage", balance: 120000 },
+    ];
+    const on = totals(accounts, DEFAULT_NET_WORTH_BASIS);
+    expect(on.netWorth).toBe(80000);
+    expect(on.leftOut).toEqual(["homeValueMissing"]);
+  });
+
   it("other loans, including secured ones, always count", () => {
     const accounts: RawAccount[] = [
       { id: "sec", name: "Secured loan on the house", type: "Loan", balance: 15000 },

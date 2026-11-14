@@ -16,7 +16,7 @@ const CATEGORY_MEANING: Record<(typeof ACCOUNT_CATEGORIES)[number], string> = {
   mortgages: "Mortgages.",
   property: "Property value.",
   studentLoans:
-    "UK student loans. Income-contingent, so never in debt totals. In net worth and monthly history only when the user's settings count them (default: not counted).",
+    "UK student loans. Income-contingent, so never in debt totals. In net worth and monthly history only when the user's choices count them.",
   other: "Anything else.",
 };
 
@@ -29,7 +29,7 @@ export const SCHEMA_DOCUMENT = {
   currency: "GBP. Every money figure is in pounds sterling, rounded to the penny.",
   ids: "Accounts and tax records are named by short opaque ids (acc_..., tax_...) that are stable for one access token. Labels such as 'Saving #2' are generic unless the token has full read access.",
   signConvention:
-    "What is owned keeps its real sign (an overdrawn current account is negative). What is owed (debts, mortgages, student loans) is always the amount owed as a positive number, so a falling figure is a smaller debt. Net worth is what is owned minus what is owed, under the user's own settings: property values with their mortgages count unless the user turned that off, and student loans count only if the user turned that on. Other loans, including ones secured on a home, always count. Tools that report net worth list what it leaves out in netWorthLeavesOut.",
+    "What is owned keeps its real sign (an overdrawn current account is negative). What is owed (debts, mortgages, student loans) is always the amount owed as a positive number, so a falling figure is a smaller debt. Net worth is what is owned minus what is owed, under the user's choices: property values with their mortgages count unless the user turned that off, and student loans count only if the user turned that on. Other debts, including loans secured on a home, always count. Tools that report net worth list what it leaves out in netWorthLeavesOut.",
   accountCategories: ACCOUNT_CATEGORIES.map((id) => ({
     id,
     isLiability: LIABILITY_CATEGORIES.has(id),

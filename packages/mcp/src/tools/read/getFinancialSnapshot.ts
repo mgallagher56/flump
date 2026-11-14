@@ -1,5 +1,4 @@
 import {
-  countsTowardNetWorth,
   getUkCalendarDate,
   MCP_NOTICE,
   PortfolioSnapshot,
@@ -37,7 +36,7 @@ const result = z.object({
    * The saved student loan balance. Null for an asOfMonth answer unless the user counts student
    * loans in net worth, when it is the recorded month-end balance.
    */
-  studentLoanGbp: z.number().nullable(),
+  studentLoanGbp: z.number(),
   accountCount: z.number(),
   debtCount: z.number(),
   monthlyIncomeGbp: z.number().nullable(),
@@ -48,7 +47,7 @@ const result = z.object({
   /** "YYYY-MM" when the balances are as at a past month, else null (current balances). */
   asOfMonth: z.string().nullable(),
   /**
-   * What net worth leaves out under the user's own choices, in display order: property,
+   * What net worth leaves out under the user's choices, in display order: property,
    * mortgage, studentLoan; homeValueMissing means a mortgage counts with no home value saved.
    */
   netWorthLeavesOut: z.array(z.enum(NET_WORTH_LEFT_OUT_VALUES)),
@@ -59,7 +58,7 @@ export const getFinancialSnapshot = defineFlumpTool({
   name: "get_financial_snapshot",
   title: "Summary of your figures",
   description:
-    "Summary of the user's figures in one call: net worth, what they own (assetsGbp), what they owe (liabilitiesGbp), cash, investments, pensions, debts and, when a budget exists, the amount left over each month (monthlySurplusAfterStoredMinimumsGbp) and months of cover (emergencyRunwayMonths). Built only from recorded accounts and budget entries; anything not recorded is null and listed in missing[] with a question to ask the user. Pass asOfMonth (in the form 2025-04) for balances as at the end of a past month, from recorded monthly history (budget figures are then null, as the budget is not kept by month). Net worth follows the user's own settings for property and student loans; netWorthLeavesOut lists what it leaves out. Call this first for a summary.",
+    "Summary of the user's figures in one call: net worth, what they own (assetsGbp), what they owe (liabilitiesGbp), cash, investments, pensions, debts and, when a budget exists, the amount left over each month (monthlySurplusAfterStoredMinimumsGbp) and months of cover (emergencyRunwayMonths). Built only from recorded accounts and budget entries; anything not recorded is null and listed in missing[] with a question to ask the user. Pass asOfMonth (in the form 2025-04) for balances as at the end of a past month, from recorded monthly history (budget figures are then null, as the budget is not kept by month). Net worth follows the user's choices for property and student loans; netWorthLeavesOut lists what it leaves out. Call this first for a summary.",
   input: {
     asOfMonth: z
       .string()
@@ -163,6 +162,9 @@ export const getFinancialSnapshot = defineFlumpTool({
   },
 });
 
+/** A basis that counts every account, for reading each account's month-end value. */
+const COUNT_EVERY_ACCOUNT = { countProperty: true, countStudentLoan: true } as const;
+
 /** Balances as at the end of a past month, from the recorded monthly rows (carry-forward, E30). */
 async function historicalSnapshot(ctx: McpServerContext, asOfMonth: string) {
   const asOf = parseMonth(asOfMonth) as number;
@@ -179,7 +181,10 @@ async function historicalSnapshot(ctx: McpServerContext, asOfMonth: string) {
   ]);
   const m = indexAccounts(ctx, new PortfolioSnapshot(rawAccounts, []).getResolvedAccounts());
   const leftOut = resolveNetWorthScope(rawAccounts, basis).leftOut;
-  const tracked = m.accounts.filter((a) => countsTowardNetWorth(a.category, basis));
+  // Every account's month-end value is read, so the category parts (propertyGbp, mortgageGbp,
+  // studentLoanGbp) show the recorded amounts whatever the basis; only the net worth totals
+  // apply it, as on the current path.
+  const tracked = m.accounts;
   const rows =
     tracked.length === 0
       ? []
@@ -191,7 +196,7 @@ async function historicalSnapshot(ctx: McpServerContext, asOfMonth: string) {
   const series = selectNetWorthSeries(
     tracked.map((a) => ({ id: a.id, type: a.rawType })),
     rows,
-    basis,
+    COUNT_EVERY_ACCOUNT,
     { through: monthLabel(asOf) },
   );
   const point = series.find((p) => p.month === asOfMonth);
@@ -228,7 +233,7 @@ async function historicalSnapshot(ctx: McpServerContext, asOfMonth: string) {
       propertyGbp: round2(s.getTotalProperty()),
       consumerDebtGbp: round2(s.getTotalConsumerDebt()),
       mortgageGbp: round2(s.getTotalMortgageBalance()),
-      studentLoanGbp: basis.countStudentLoan ? round2(s.getTotalStudentLoans()) : null,
+      studentLoanGbp: round2(s.getTotalStudentLoans()),
       accountCount: values.size,
       debtCount: s.toDebtItems().length,
       monthlyIncomeGbp: null,
