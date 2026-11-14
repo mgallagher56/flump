@@ -6,6 +6,7 @@ import {
   inputsBody,
   inputsGrid,
   inputsHint,
+  termCell,
   termPair,
 } from "./MortgageScenarioInputs.styles";
 
@@ -82,7 +83,7 @@ export const MortgageScenarioInputs: FC<MortgageScenarioInputsProps> = ({
           />
           <EditedNote show={isEdited("interestRate")} />
         </div>
-        <div>
+        <div className={termCell()}>
           <div className={termPair()}>
             <SliderField
               formatValue={(v) => plural(v, "year")}

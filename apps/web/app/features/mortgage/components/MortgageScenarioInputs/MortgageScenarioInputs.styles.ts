@@ -12,14 +12,23 @@ export const inputsHint = cva({
 export const inputsGrid = cva({
   base: {
     display: "grid",
-    gridTemplateColumns: { base: "1fr", md: "repeat(3, minmax(0, 1fr))" },
+    gridTemplateColumns: { base: "1fr", md: "repeat(2, minmax(0, 1fr))" },
     gap: "16px",
   },
 });
 
-/** "Years" and "Months" side by side in the term's one grid cell. */
+/** The term gets a row of its own, so "Years left to try" and "Months" each have room. */
+export const termCell = cva({
+  base: { gridColumn: "1 / -1", minWidth: 0 },
+});
+
+/** "Years" and "Months" side by side from `sm`, stacked on the narrowest phones. */
 export const termPair = cva({
-  base: { display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: "4" },
+  base: {
+    display: "grid",
+    gridTemplateColumns: { base: "minmax(0, 1fr)", sm: "repeat(2, minmax(0, 1fr))" },
+    gap: "16px",
+  },
 });
 
 export const editedMark = cva({

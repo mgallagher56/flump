@@ -102,7 +102,7 @@ describe("<OverpaymentSimulator />", () => {
       <OverpaymentSimulator {...props} overpayment={0} />,
     );
     const outcome = getByTestId("overpayment-outcome");
-    expect(outcome.textContent).toBe("With no overpaymentMove the slider to see what changes");
+    expect(outcome.textContent).toBe("Move the slider to see what changes");
     expect(container.querySelectorAll("dl")).toHaveLength(0);
     expect(container.textContent).not.toMatch(
       /No change yet|Monthly payment with the extra|Less interest|Total each month|Usual monthly/,
