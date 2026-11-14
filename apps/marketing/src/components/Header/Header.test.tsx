@@ -46,10 +46,13 @@ describe("Header", () => {
     expect(screen.getByRole("link", { name: "AI connection" })).toBeDefined();
 
     expect(screen.getAllByText("Sign in").length).toBeGreaterThan(0);
-    // Full and compact labels now read the same ("Request an invite"), one link.
-    const invites = screen.getAllByText("Request an invite").map((el) => el.closest("a"));
-    expect(new Set(invites).size).toBe(1);
-    expect(invites[0]?.getAttribute("href")).toBe("/contact#beta");
+    // The compact label stays short so the header fits at 320px (a11y reflow gate).
+    expect(screen.getByText("Request an invite").closest("a")?.getAttribute("href")).toBe(
+      "/contact#beta",
+    );
+    expect(screen.getByText("Request invite").closest("a")?.getAttribute("href")).toBe(
+      "/contact#beta",
+    );
     expect(screen.getAllByRole("group", { name: "Colour theme" })).toHaveLength(1);
     expect(screen.queryByText("Go to dashboard")).toBeNull();
   });

@@ -141,7 +141,7 @@ export const Header: FC = () => {
                   <Button asChild className={headerButton()} size="sm" variant="primary">
                     <a href={cta.href}>
                       <span className={fullLabel()}>{cta.label}</span>
-                      <span className={shortLabel()}>{cta.label}</span>
+                      <span className={shortLabel()}>{cta.shortLabel}</span>
                     </a>
                   </Button>
                 </>
