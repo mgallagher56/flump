@@ -78,6 +78,28 @@ export function useMcpTokens(): McpTokensApi {
           schema: CreateMcpTokenResponse,
           body: { name, expiryDays, anonymizeInstitutions: anonymize, allowStaging },
         });
+        // Keep the shared list current, so what depends on it (the Imports link once a token can
+        // stage) shows without a reload. While the list is still loading it stays null: the card
+        // is keyed on loaded versus loading, and a remount would lose the token shown only once.
+        setTokens(
+          (prev) =>
+            prev && [
+              {
+                id: created.id,
+                name: created.name,
+                tokenPrefix: created.tokenPrefix,
+                scopes: created.scopes,
+                anonymizeInstitutions: created.anonymizeInstitutions,
+                expiresAt: created.expiresAt ?? null,
+                lastUsedAt: null,
+                totalToolCalls: 0,
+                createdAt: new Date().toISOString(),
+                isRevoked: false,
+                isExpired: false,
+              },
+              ...prev,
+            ],
+        );
         return created;
       } catch (error) {
         throw new Error(messageFor(error, CREATE_FAILED));
@@ -93,6 +115,7 @@ export function useMcpTokens(): McpTokensApi {
         schema: RevokeMcpTokenResponse,
         allowEmpty: true,
       });
+      setTokens((prev) => prev?.map((t) => (t.id === id ? { ...t, isRevoked: true } : t)) ?? prev);
     } catch (error) {
       throw new Error(messageFor(error, REVOKE_FAILED));
     }

@@ -58,9 +58,8 @@ const next = () => fireEvent.click(screen.getByRole("button", { name: /^next/i }
 const skip = () => fireEvent.click(screen.getByRole("button", { name: "Skip this step" }));
 const back = () => fireEvent.click(screen.getByRole("button", { name: "Back" }));
 const stepHeading = (name: string | RegExp) => screen.getByRole("heading", { level: 2, name });
-/** Income -> Housing -> Savings -> Bank -> Review. The bank step has Next only. */
+/** Income -> Housing -> Savings -> Review. */
 const goToReview = () => {
-  next();
   next();
   next();
   next();
@@ -79,7 +78,7 @@ const posts = (fetchMock: ReturnType<typeof vi.fn>, suffix: string) =>
     ([u, init]) => String(u).endsWith(suffix) && (init as RequestInit)?.method === "POST",
   );
 
-describe("OnboardingRoute (5-step flow)", () => {
+describe("OnboardingRoute (4-step flow)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     clearOnboardingSeed();
@@ -198,7 +197,7 @@ describe("OnboardingRoute (5-step flow)", () => {
     expect(screen.getByLabelText(/mortgage left to pay/i)).toBeDefined();
   });
 
-  it("walks through all five steps and finishes", async () => {
+  it("walks through all four steps and finishes", async () => {
     render(<OnboardingRoute />);
     typeInto(/yearly salary before tax/i, "45000");
     chooseRegion();
@@ -208,8 +207,6 @@ describe("OnboardingRoute (5-step flow)", () => {
     expect(screen.getByLabelText(/cash and isa savings/i)).toBeDefined();
     expect(screen.getByLabelText(/^pension pot/i)).toBeDefined();
     expect(screen.getByLabelText(/owed on credit cards and loans/i)).toBeDefined();
-    next();
-    expect(stepHeading("Bank connection")).toBeDefined();
     next();
     expect(stepHeading(/review what will be saved/i)).toBeDefined();
     clickFinish();
@@ -355,7 +352,6 @@ describe("OnboardingRoute (5-step flow)", () => {
     next();
     if (opts.cash) typeInto(/cash and isa savings/i, opts.cash);
     if (opts.pot) typeInto(/^pension pot/i, opts.pot);
-    next();
     next();
     clickFinish();
   };
@@ -522,7 +518,6 @@ describe("OnboardingRoute (5-step flow)", () => {
       skip();
       expect(stepHeading("Savings and debt")).toBeDefined();
       skip();
-      next();
       expect(stepHeading(/review what will be saved/i)).toBeDefined();
       expect(finishButton().disabled).toBe(true);
       const hint = screen.getByTestId("finish-income-hint");
@@ -545,12 +540,10 @@ describe("OnboardingRoute (5-step flow)", () => {
       typeInto(/monthly rent/i, "900");
       skip();
       skip();
-      next();
       fireEvent.click(screen.getByRole("button", { name: "Edit Housing and spending" }));
       expect((screen.getByLabelText(/monthly rent/i) as HTMLInputElement).value).toBe("900");
       skip();
       skip();
-      next();
       clickFinish();
       await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith("/"));
       expect(mockUpdateProfile.mock.calls[0][0].monthlyHousingCost).toBe(900);
@@ -565,22 +558,18 @@ describe("OnboardingRoute (5-step flow)", () => {
       next();
       next();
       skip();
-      next();
       clickFinish();
       await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith("/"));
       expect(posts(fetchMock, "/accounts")).toHaveLength(0);
     });
 
-    it("the bank step is optional: Next goes to review and nothing is connected", () => {
+    it("has no bank step: savings leads straight to the review and nothing mentions a bank", () => {
       const { container } = render(<OnboardingRoute />);
       next();
       next();
       next();
-      expect(stepHeading("Bank connection")).toBeDefined();
-      expect(screen.getByText("Optional")).toBeDefined();
-      expect(container.textContent).not.toMatch(/connected successfully/i);
-      next();
       expect(stepHeading(/review what will be saved/i)).toBeDefined();
+      expect(container.textContent).not.toMatch(/bank/i);
       expect(globalThis.fetch).not.toHaveBeenCalled();
     });
   });
@@ -632,7 +621,6 @@ describe("OnboardingRoute (5-step flow)", () => {
     typeInto(/^pension pot/i, "15000");
     typeInto(/pension contribution/i, "5");
     typeInto(/owed on credit cards and loans/i, "2000");
-    next();
     next();
     clickFinish();
     await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith("/"));

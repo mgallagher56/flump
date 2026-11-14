@@ -68,6 +68,19 @@ describe("Stepper", () => {
     expect(within(items[2] as HTMLElement).getByText("Complete")).toBeDefined();
   });
 
+  it("draws a skipped step with a numbered marker, not the complete tick, and its own marker style", () => {
+    render(<Stepper current={3} states={{ you: "skipped" }} steps={steps} />);
+    const items = within(screen.getByRole("list", { name: "Setup progress" })).getAllByRole(
+      "listitem",
+    );
+    const skippedMarker = items[0]?.querySelector('[aria-hidden="true"]');
+    const completeMarker = items[1]?.querySelector('[aria-hidden="true"]');
+    expect(skippedMarker?.textContent).toBe("1");
+    expect(skippedMarker?.querySelector("svg")).toBeNull();
+    expect(completeMarker?.querySelector("svg")).not.toBeNull();
+    expect(skippedMarker?.className).not.toBe(completeMarker?.className);
+  });
+
   it("can mark an earlier step upcoming instead of complete", () => {
     render(<Stepper current={3} states={{ home: "upcoming" }} steps={steps} />);
     expect(screen.getAllByText("Complete")).toHaveLength(1);

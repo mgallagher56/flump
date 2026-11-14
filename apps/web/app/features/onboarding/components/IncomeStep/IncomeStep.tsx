@@ -133,7 +133,6 @@ export const IncomeStep: FC<IncomeStepProps> = ({
       {gross ? (
         <FormField
           error={incomeError}
-          hint="We need this to finish setting up."
           id="baseline-income"
           label="Yearly salary before tax"
           required
@@ -167,13 +166,7 @@ export const IncomeStep: FC<IncomeStepProps> = ({
           )}
         </FormField>
       ) : (
-        <FormField
-          error={incomeError}
-          hint="We need this to finish setting up."
-          id="baseline-income"
-          label="Monthly take-home pay"
-          required
-        >
+        <FormField error={incomeError} id="baseline-income" label="Monthly take-home pay" required>
           {(field) => (
             <CurrencyInput
               {...controlProps(field)}
@@ -188,7 +181,7 @@ export const IncomeStep: FC<IncomeStepProps> = ({
 
       <FormField
         error={regionError}
-        hint="Scotland has its own Income Tax rates, so this changes your take-home pay. We need this to finish setting up."
+        hint="Scotland has its own income tax rates, so this changes your take-home pay."
         id="baseline-tax-region"
         label="Where do you pay tax?"
         required

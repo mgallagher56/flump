@@ -17,6 +17,18 @@
           "target-size": 2
         }
       }
+    },
+    "web-profile": {
+      "375-dark": {
+        "focus": {
+          "obscured": 1
+        }
+      },
+      "375-light": {
+        "focus": {
+          "obscured": 1
+        }
+      }
     }
   }
 }

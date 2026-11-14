@@ -3,8 +3,9 @@ import { describe, expect, it, vi } from "vitest";
 import { REGION_ASSUMPTION_LABEL } from "~/utils/taxTrapCopy";
 import { deriveOnboardingSummary } from "../../deriveOnboardingSummary";
 import { inferModules } from "../../inferModules";
-import { INITIAL_VALUES, type OnboardingValues } from "../../types";
+import { INITIAL_VALUES, type OnboardingValues, type StepId } from "../../types";
 import type { FinishSaveState } from "../../useFinishOnboarding";
+import type { StepOutcome } from "../../useOnboardingForm";
 import { FinishSummary, SAVED_NOTES } from "./FinishSummary";
 
 const setup = (
@@ -14,6 +15,7 @@ const setup = (
     error?: string | null;
     saveState?: FinishSaveState;
     onFixMissing?: () => void;
+    stepStates?: Partial<Record<StepId, StepOutcome>>;
   } = {},
 ) => {
   const values = { ...INITIAL_VALUES, ...patch };
@@ -24,6 +26,7 @@ const setup = (
       isSubmitting={extra.isSubmitting ?? false}
       onFixMissing={extra.onFixMissing}
       saveState={extra.saveState}
+      stepStates={extra.stepStates}
       modules={inferModules(values)}
       summary={deriveOnboardingSummary(values)}
       values={values}
@@ -93,6 +96,26 @@ describe("<FinishSummary />", () => {
     expect(screen.queryByText("Age", { selector: "dt" })).toBeNull();
     expect(screen.queryByText("Housing", { selector: "dt" })).toBeNull();
     expect(screen.getAllByText("Nothing added yet.")).toHaveLength(2);
+  });
+
+  it("says Skipped, never Complete, for a skipped step with nothing entered", () => {
+    setup(
+      { grossSalary: 45000, taxRegion: "ENGLAND", cashSavings: 5000 },
+      { stepStates: { housing: "skipped", savings: "skipped" } },
+    );
+    expect(screen.getAllByText("Skipped")).toHaveLength(1);
+    expect(screen.queryByText("Nothing added yet.")).toBeNull();
+    expect(screen.queryByText(/complete/i)).toBeNull();
+    // A skipped step keeps what was entered, so its rows still show.
+    expect(rowValue("Cash and ISA savings")).toBe("£5,000");
+  });
+
+  it("shows exactly one notice, the projection notice, with no warning box", () => {
+    setup({});
+    expect(screen.getAllByRole("note")).toHaveLength(1);
+    expect(screen.getByRole("note").getAttribute("data-notice")).toBe("projection");
+    expect(screen.getByTestId("finish-income-hint").querySelector("svg")).toBeNull();
+    expect(screen.getByTestId("onboarding-saved-note").querySelector("svg")).toBeNull();
   });
 
   it("calls the modules list Sections we have set up for you", () => {

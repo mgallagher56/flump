@@ -113,8 +113,7 @@ export const DataTab: FC = () => {
           <div className={dangerText()}>
             <p className={dangerTitle()}>This cannot be undone</p>
             <p className={dangerCopy()}>
-              Your accounts, transactions, connected banks, budget entries and tax records are
-              deleted.
+              Your accounts and balances, budget entries and tax records are deleted.
             </p>
           </div>
           <Button
@@ -150,8 +149,7 @@ export const DataTab: FC = () => {
           <div className={dialogBody()}>
             <span>This deletes the following for good:</span>
             <ul className={wipeList()}>
-              <li>All accounts, connected and added by hand</li>
-              <li>All transaction history and balances</li>
+              <li>All accounts and their balance history</li>
               <li>All budget entries and recurring rules</li>
               <li>All income and cost records by tax year</li>
               <li>Your property, salary and savings details</li>

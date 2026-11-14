@@ -23,7 +23,8 @@ export type StepState = "complete" | "current" | "upcoming";
 
 /**
  * A state a caller can give a step other than the current one. `skipped` reads "Skipped" and is
- * drawn like an upcoming step, so a step the user passed without finishing is never shown as done.
+ * drawn quieter than complete (an upcoming-style name with a dashed marker), so a step the user
+ * passed without finishing is never shown as done.
  */
 export type StepStateOverride = "complete" | "upcoming" | "skipped";
 
@@ -103,7 +104,7 @@ export const Stepper: FC<StepperProps> = ({
           const visual = visualState(state);
           const content = (
             <>
-              <span aria-hidden="true" className={stepperMarker({ state: visual })}>
+              <span aria-hidden="true" className={stepperMarker({ state })}>
                 {state === "complete" ? <Icon icon={Check} size="md" /> : index + 1}
               </span>
               <span className={stepperText()}>

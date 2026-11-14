@@ -9,9 +9,9 @@ describe("useOnboardingForm", () => {
     act(() => result.current.back());
     expect(result.current.step).toBe(1);
     act(() => result.current.goTo(99));
-    expect(result.current.step).toBe(5);
+    expect(result.current.step).toBe(4);
     act(() => result.current.next());
-    expect(result.current.step).toBe(5);
+    expect(result.current.step).toBe(4);
   });
 
   it("skip keeps what was entered and advances", () => {
@@ -21,6 +21,14 @@ describe("useOnboardingForm", () => {
     expect(result.current.values.grossSalary).toBe(1000);
     expect(result.current.values.taxRegion).toBe("WALES");
     expect(result.current.step).toBe(2);
+  });
+
+  it("marks a skipped step with answers as complete, so the stepper matches the review", () => {
+    const { result } = renderHook(() => useOnboardingForm());
+    act(() => result.current.goTo(2));
+    act(() => result.current.setHousingStatus("mortgage"));
+    act(() => result.current.skip(2));
+    expect(result.current.outcomes.housing).toBe("complete");
   });
 
   it("records whether each step was completed or skipped", () => {
@@ -33,7 +41,7 @@ describe("useOnboardingForm", () => {
 
   it("marks missing fields only after goToMissing, and clears that on any other move", () => {
     const { result } = renderHook(() => useOnboardingForm());
-    act(() => result.current.goTo(5));
+    act(() => result.current.goTo(4));
     expect(result.current.showMissing).toBe(false);
     act(() => result.current.goToMissing());
     expect(result.current.step).toBe(1);

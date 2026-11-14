@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { expect, fn, userEvent, within } from "storybook/test";
+import { expect, userEvent, within } from "storybook/test";
 import { DEFAULT_PROFILE } from "~/hooks/useUserProfile";
 import { ProfileTab } from "./ProfileTab";
 
@@ -9,7 +9,6 @@ const meta: Meta<typeof ProfileTab> = {
   parameters: { layout: "padded" },
   args: {
     profile: { ...DEFAULT_PROFILE, firstName: "Jane", lastName: "Doe", taxRegion: "ENGLAND" },
-    onDirtyChange: fn(),
   },
 };
 
@@ -17,13 +16,13 @@ export default meta;
 type Story = StoryObj<typeof ProfileTab>;
 
 export const Default: Story = {
-  play: async ({ canvasElement, args }) => {
+  play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    const save = canvas.getByRole("button", { name: "Save changes" }) as HTMLButtonElement;
-    await expect(save.disabled).toBe(true);
-    await userEvent.type(canvas.getByLabelText("First name"), "ie");
-    await expect(save.disabled).toBe(false);
-    await expect(args.onDirtyChange).toHaveBeenLastCalledWith(true);
+    // One save model: every change saves straight away, so there is no save button.
+    await expect(canvas.queryByRole("button", { name: "Save changes" })).toBeNull();
+    const first = canvas.getByLabelText("First name") as HTMLInputElement;
+    await userEvent.type(first, "ie");
+    await expect(first.value).toBe("Janeie");
   },
 };
 

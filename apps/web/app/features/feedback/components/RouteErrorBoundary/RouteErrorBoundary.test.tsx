@@ -112,8 +112,10 @@ describe("RouteErrorBoundary", () => {
       throw data({ kind: "not-found" }, { status: 404 });
     });
     expect(await screen.findByRole("heading", { name: "We cannot find that page" })).toBeDefined();
-    expect(screen.getByRole("link", { name: "Go to Flump" }).getAttribute("href")).toBe("/");
-    expect(screen.getByText("Error 404")).toBeDefined();
+    expect(screen.getByRole("link", { name: "Go to the home page" }).getAttribute("href")).toBe(
+      "/",
+    );
+    expect(screen.queryByText("Error 404")).toBeNull();
     expect(screen.queryByRole("link", { name: "Back to home" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Try again" })).toBeNull();
   });
@@ -124,7 +126,9 @@ describe("RouteErrorBoundary", () => {
     });
     expect(await screen.findByRole("heading", { name: "We cannot find that page" })).toBeDefined();
     expect(screen.queryByRole("button", { name: "Try again" })).toBeNull();
-    expect(screen.getByRole("link", { name: "Go to Flump" }).getAttribute("href")).toBe("/");
+    expect(screen.getByRole("link", { name: "Go to the home page" }).getAttribute("href")).toBe(
+      "/",
+    );
   });
 
   it("links back to accounts on the account detail route", async () => {
@@ -142,7 +146,7 @@ describe("RouteErrorBoundary", () => {
     expect(await screen.findByRole("heading", { name: "We cannot find that page" })).toBeDefined();
     expect(screen.queryByText("You do not have access to this page")).toBeNull();
     expect(screen.queryByText("Error 403")).toBeNull();
-    expect(screen.getByText("Error 404")).toBeDefined();
+    expect(screen.queryByText("Error 404")).toBeNull();
   });
 
   it("treats Safari's 'Load failed' as a connection problem", async () => {

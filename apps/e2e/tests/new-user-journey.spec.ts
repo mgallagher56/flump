@@ -53,9 +53,7 @@ test("a new user sets up, adds an account and a budget entry, and the dashboard 
     await housing.getByRole("button", { name: "Skip this step" }).click();
     const savings = page.getByRole("region", { name: "Savings and debt" });
     await savings.getByRole("button", { name: "Skip this step" }).click();
-    const bank = page.getByRole("region", { name: "Bank connection" });
-    await expect(bank.getByRole("heading", { name: "No bank connected" })).toBeVisible();
-    await bank.getByRole("button", { name: "Next", exact: true }).click();
+    // Skipping savings leads straight to the review: setup has no bank step.
 
     await expect(page.getByRole("heading", { name: "Review what will be saved" })).toBeVisible();
     await expect(page.getByRole("definition").filter({ hasText: "£36,000" })).toBeVisible();

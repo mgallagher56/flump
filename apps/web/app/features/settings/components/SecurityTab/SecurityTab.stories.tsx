@@ -21,3 +21,5 @@ export const Default: Story = {
     await expect(await canvas.findByTestId("password-reset-error")).toBeDefined();
   },
 };
+
+export const Dark: Story = { globals: { theme: "dark" } };

@@ -69,10 +69,18 @@ export function useOnboardingForm(initial: OnboardingValues = INITIAL_VALUES) {
     setStep((s) => Math.max(s - 1, 1));
   }, []);
 
-  /** "Skip this step": moves on and keeps whatever was entered; nothing is cleared. */
+  /**
+   * "Skip this step": moves on and keeps whatever was entered; nothing is cleared. A step with
+   * something entered is marked complete, so the stepper never says "Skipped" beside answers the
+   * review then lists.
+   */
   const skip = useCallback(
-    (stepNumber: number) => markAndAdvance(stepNumber, "skipped"),
-    [markAndAdvance],
+    (stepNumber: number) =>
+      markAndAdvance(
+        stepNumber,
+        stepHasEntries(STEP_IDS[stepNumber - 1], values) ? "complete" : "skipped",
+      ),
+    [markAndAdvance, values],
   );
 
   return {
@@ -110,4 +118,21 @@ export function stepperStates(
     else if (index + 1 < current) states[id] = "skipped";
   }
   return states;
+}
+
+const STEP_FIELDS: Partial<Record<StepId, (keyof OnboardingValues)[]>> = {
+  housing: [
+    "housingStatus",
+    "monthlyHousingCost",
+    "propertyValue",
+    "mortgageBalance",
+    "monthlyOtherOutgoings",
+  ],
+  savings: ["cashSavings", "pensionPot", "pensionPercent", "isSalarySacrifice", "unsecuredDebt"],
+};
+
+/** True when an optional step holds any answer (a field that is not null). */
+export function stepHasEntries(id: StepId | undefined, values: OnboardingValues): boolean {
+  if (!id) return false;
+  return (STEP_FIELDS[id] ?? []).some((field) => values[field] !== null);
 }

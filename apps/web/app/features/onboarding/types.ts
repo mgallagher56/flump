@@ -59,7 +59,7 @@ export const INITIAL_VALUES: OnboardingValues = {
   unsecuredDebt: null,
 };
 
-export const STEP_IDS = ["income", "housing", "savings", "bank", "review"] as const;
+export const STEP_IDS = ["income", "housing", "savings", "review"] as const;
 export type StepId = (typeof STEP_IDS)[number];
 
 /** Step titles, as headed on each step and on the review. */
@@ -67,7 +67,6 @@ export const STEP_LABELS: Record<StepId, string> = {
   income: "You and income",
   housing: "Housing and spending",
   savings: "Savings and debt",
-  bank: "Bank (optional)",
   review: "Review",
 };
 
@@ -76,12 +75,11 @@ export const STEPPER_LABELS: Record<StepId, string> = {
   income: "Income",
   housing: "Housing",
   savings: "Savings",
-  bank: "Bank",
   review: "Review",
 };
 
 /** Steps that can be skipped. "You and income" holds what Finish needs, so it has no skip. */
-export const OPTIONAL_STEPS: ReadonlySet<StepId> = new Set(["housing", "savings", "bank"]);
+export const OPTIONAL_STEPS: ReadonlySet<StepId> = new Set(["housing", "savings"]);
 
 /** Step numbers count from 1, matching the Stepper. */
 export const REVIEW_STEP = STEP_IDS.length;

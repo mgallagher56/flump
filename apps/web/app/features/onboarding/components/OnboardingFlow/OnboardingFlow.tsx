@@ -10,7 +10,6 @@ import { useFinishOnboarding } from "../../useFinishOnboarding";
 import { stepperStates, useOnboardingForm } from "../../useOnboardingForm";
 import { useSaveAndExit } from "../../useSaveAndExit";
 import { useSeedHydration } from "../../useSeedHydration";
-import { BankStep } from "../BankStep";
 import { FinishSummary } from "../FinishSummary";
 import { HousingStep } from "../HousingStep";
 import { IncomeStep } from "../IncomeStep";
@@ -134,7 +133,6 @@ export const OnboardingFlow: FC<OnboardingFlowProps> = ({
               values={values}
             />
           ) : null}
-          {step === 4 ? <BankStep {...common} onBack={back} onNext={next} /> : null}
           {step === REVIEW_STEP ? (
             <FinishSummary
               error={error}
@@ -145,6 +143,7 @@ export const OnboardingFlow: FC<OnboardingFlowProps> = ({
               onFinish={finish}
               onFixMissing={goToMissing}
               saveState={saveState}
+              stepStates={stepperStates(form.outcomes, REVIEW_STEP)}
               summary={summary}
               values={values}
             />

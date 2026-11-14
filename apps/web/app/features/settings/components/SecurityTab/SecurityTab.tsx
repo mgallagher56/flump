@@ -1,4 +1,4 @@
-import { Button, Card, Icon } from "@repo/ui";
+import { Button, Card, Icon, useOptionalToast } from "@repo/ui";
 import { KeyRound, Mail } from "lucide-react";
 import { type FC, useState } from "react";
 import {
@@ -30,6 +30,8 @@ export interface SecurityTabProps {
 /** Sign-in security and AI access: password reset by email and the MCP connection card. */
 export const SecurityTab: FC<SecurityTabProps> = ({ email }) => {
   const { sendPasswordResetEmail } = useUserProfile();
+  // A toast as well as the status line; a no-op when rendered without a ToastProvider.
+  const toast = useOptionalToast()?.toast;
   const mcp = useMcpTokens();
   // Imports are reached from here once a connection may stage them (owner-only rollout: a user who
   // cannot mint such a token never sees the link).
@@ -46,6 +48,7 @@ export const SecurityTab: FC<SecurityTabProps> = ({ email }) => {
       // Fixed copy on success too: the server's message is never shown (COPY-AUDIT PR 9).
       await sendPasswordResetEmail();
       setPasswordSuccess("We have emailed you a link to choose a new password.");
+      toast?.({ title: "Email sent", tone: "positive" });
     } catch {
       // Never a raw server message (COPY-AUDIT PR 9).
       setPasswordError("We could not send the email. Your password is unchanged. Try again.");
