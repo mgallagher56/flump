@@ -57,6 +57,18 @@ describe("<TaxWidget />", () => {
     expect(screen.getByText(/Estimated tax due/)).toBeDefined();
   });
 
+  it("shows the engine's assumption notes under a known tax due, and none when unknown", () => {
+    const note = "Uses England, Wales and Northern Ireland income tax bands.";
+    renderWidget({ ...data, estimatedTaxDue: 2900, estimatedTaxDueNotes: [note] });
+    expect(screen.getByText(note)).toBeDefined();
+  });
+
+  it("hides assumption notes while tax due is unknown", () => {
+    const note = "Uses England, Wales and Northern Ireland income tax bands.";
+    renderWidget({ ...data, estimatedTaxDue: null, estimatedTaxDueNotes: [note] });
+    expect(screen.queryByText(note)).toBeNull();
+  });
+
   it("keeps the title as the only heading", () => {
     renderWidget();
     const headings = screen.getAllByRole("heading");

@@ -108,7 +108,12 @@ describe("_index route", () => {
         record("r1", "income", "rental_income", 12000),
         record("r2", "expense", "repairs_maintenance", 2000),
       ],
-      userProfile: { onboardingCompleted: true, annualSalary: 30000, employmentType: "employed" },
+      userProfile: {
+        onboardingCompleted: true,
+        annualSalary: 30000,
+        employmentType: "employed",
+        taxRegion: "SCOTLAND",
+      },
       portfolioSnapshot: undefined,
     } as any);
     const data = (await loader({
@@ -118,20 +123,26 @@ describe("_index route", () => {
     } as any)) as any;
     // 10,000 rental profit, all in the basic band on a 30,000 salary: 20%.
     expect(data.taxData.estimatedTaxDue).toBe(2000);
+    // The engine's bands note travels with the figure, so the tax widget can show it.
+    expect(data.taxData.estimatedTaxDueNotes).toEqual([
+      "Uses England, Wales and Northern Ireland income tax bands.",
+    ]);
   });
 
-  it("counts the profile home estimate in net worth, labelled apart (D3)", async () => {
+  it("counts the seeded home Property account once in net worth, labelled (D3)", async () => {
     vi.mocked(loadWorkspaceSnapshot).mockResolvedValueOnce({
       user: { id: "u1", email: "real@example.com" },
       accounts: [
         { id: "c", name: "Cash", type: "Saving", balance: 21000 },
         { id: "p", name: "Pension", type: "Pension", balance: 96000 },
         { id: "m", name: "Mortgage", type: "Mortgage", balance: 186000 },
+        { id: "h", name: "Home (your estimate)", type: "Property", balance: 310000 },
       ],
       accountDetails: [],
       budgetEntries: [],
       taxRecords: [],
-      userProfile: { onboardingCompleted: true, housingStatus: "mortgage", homeValue: 310000 },
+      // A profile homeValue (never stored by the backend) is not added on top.
+      userProfile: { onboardingCompleted: true, housingStatus: "mortgage", homeValue: 500000 },
       portfolioSnapshot: undefined,
     } as any);
     const data = (await loader({
@@ -140,6 +151,7 @@ describe("_index route", () => {
       context: {},
     } as any)) as any;
     expect(data.accountsData.netWorth).toBe(241000);
+    expect(data.accountsData.totalAssets).toBe(427000);
     expect(data.accountsData.homeEstimate).toBe(310000);
   });
 

@@ -15,6 +15,7 @@ import type { FC } from "react";
 import { SampleAwareLink } from "~/components/navigation/SampleAwareLink";
 import { WidgetCard } from "../WidgetCard";
 import {
+  assumptionNote,
   detailLabel,
   detailList,
   detailRow,
@@ -62,6 +63,8 @@ export interface TaxWidgetProps {
      * when there is no such income to estimate. Never an invented figure.
      */
     estimatedTaxDue: number | null;
+    /** The engine's assumption notes for a known estimate (for example the bands it used). */
+    estimatedTaxDueNotes?: readonly string[];
     recordsCount: number;
     /** `null` or absent until salary, employment type and pension details are saved. */
     marginal?: TaxWidgetMarginal | null;
@@ -103,6 +106,13 @@ export const TaxWidget: FC<TaxWidgetProps> = ({ data, onHide }) => {
             )
           }
         />
+        {taxDue !== null
+          ? (data.estimatedTaxDueNotes ?? []).map((note) => (
+              <p key={note} className={assumptionNote()}>
+                {note}
+              </p>
+            ))
+          : null}
         <dl className={detailList()}>
           <div className={detailRow()}>
             <dt className={detailLabel()}>Income</dt>

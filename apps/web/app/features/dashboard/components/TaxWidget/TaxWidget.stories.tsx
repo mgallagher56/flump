@@ -28,6 +28,28 @@ export const EstimateKnown: Story = {
   },
 };
 
+/** A Scottish taxpayer's estimate names the England, Wales and Northern Ireland bands it uses. */
+export const EstimateWithBandsNote: Story = {
+  args: {
+    data: {
+      taxYear: "2026/27",
+      totalIncome: 12000,
+      totalExpenses: 2000,
+      netProfit: 10000,
+      estimatedTaxDue: 2000,
+      estimatedTaxDueNotes: ["Uses England, Wales and Northern Ireland income tax bands."],
+      recordsCount: 5,
+    },
+  },
+  play: async ({ canvasElement }) => {
+    await expect(
+      within(canvasElement).getAllByText(
+        "Uses England, Wales and Northern Ireland income tax bands.",
+      )[0],
+    ).toBeDefined();
+  },
+};
+
 /** No verified estimate yet: "Not set" with the reason, never £0 or an invented figure. */
 export const NotSet: Story = {
   args: {

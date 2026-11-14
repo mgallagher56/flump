@@ -39,6 +39,10 @@ export const detailValue = cva({
   },
 });
 
+export const assumptionNote = cva({
+  base: { margin: 0, textStyle: "body.sm", color: "text.muted" },
+});
+
 export const marginalBlock = cva({
   base: { display: "flex", flexDirection: "column", gap: "8px", minWidth: 0 },
 });
