@@ -14,7 +14,7 @@ test.describe("/api proxy", () => {
       page,
     }) => {
       await page.goto("/");
-      await expect(page.getByRole("heading", { name: /^(Hi, |Your dashboard)/ })).toBeVisible();
+      await expect(page.getByRole("heading", { name: "Your money" })).toBeVisible();
 
       const result = await page.evaluate(async () => {
         const response = await fetch("/api/accounts", { headers: { "x-flump-request": "1" } });

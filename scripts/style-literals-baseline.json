@@ -94,7 +94,6 @@
     "apps/web/app/components/core/typography/FLPHeading.tsx": 1,
     "apps/web/app/components/core/typography/FLPText.tsx": 1,
     "apps/web/app/components/navigation/UserAvatar.tsx": 2,
-    "apps/web/app/features/sandbox/components/SandboxTemplates/SandboxTemplates.tsx": 6,
     "apps/web/app/root.tsx": 1
   }
 }
