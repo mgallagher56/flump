@@ -32,13 +32,14 @@ import { FormField } from "../../primitives/FormField/FormField";
 import { Icon } from "../../primitives/Icon";
 import { KpiCard } from "../../primitives/KpiCard/KpiCard";
 import { LiveRegion } from "../../primitives/LiveRegion/LiveRegion";
-import { formatMoney, formatNumber, Num } from "../../primitives/Money/Money";
+import { formatMoney, Num } from "../../primitives/Money/Money";
 import { Select } from "../../primitives/Select/Select";
 import { SliderField } from "../../primitives/SliderField/SliderField";
 import { Switch } from "../../primitives/Switch/Switch";
 import { ctaLabel } from "../ctaLabel";
 import {
   explorerAction,
+  explorerCard,
   explorerContent,
   explorerControls,
   explorerCta,
@@ -289,14 +290,9 @@ export const MarginalRateExplorer: FC<MarginalRateExplorerProps> = ({
   );
 
   const yourGross = delta.before.grossPay;
-  const yourRate = delta.effectiveMarginalRatePct;
   const inRange = yourGross <= CURVE_MAX;
-  const summary = chartSummary(
-    inRange
-      ? formatNumber(yourRate, { kind: "percent", fractionDigits: pctDigits(yourRate) }).text
-      : null,
-    formatMoney(CURVE_MAX).text,
-  );
+  // No figure in the summary when your pay is on the chart: the headline cards show your rate.
+  const summary = chartSummary(inRange, formatMoney(CURVE_MAX).text);
   const takeHomeDigits = Number.isInteger(delta.deltaTakeHome) ? 0 : 2;
   const announcement = liveTakeHomeMessage(
     formatMoney(delta.deltaTakeHome, { fractionDigits: takeHomeDigits }).text,
@@ -584,22 +580,25 @@ export const MarginalRateExplorerStandalone: FC<MarginalRateExplorerStandalonePr
     }
   };
 
+  // The same outer card as the other calculators (only here: the signed-in take-home page renders
+  // MarginalRateExplorer inside its own layout).
   return (
-    <MarginalRateExplorer
-      className={className}
-      cta={
-        showCta ? (
-          <Button className={explorerCta()} size="md" variant="primary" onClick={handleSave}>
-            {ctaLabel(ctaText ?? PAY_RISE_DEFAULT_CTA)} <Icon icon={ArrowRight} size="sm" />
-          </Button>
-        ) : undefined
-      }
-      embedded={embedded}
-      headingLevel={headingLevel}
-      now={now}
-      values={values}
-      onChange={onChange}
-    />
+    <div className={cx(explorerCard(), className)} data-testid="pay-rise-tool">
+      <MarginalRateExplorer
+        cta={
+          showCta ? (
+            <Button className={explorerCta()} size="md" variant="primary" onClick={handleSave}>
+              {ctaLabel(ctaText ?? PAY_RISE_DEFAULT_CTA)} <Icon icon={ArrowRight} size="sm" />
+            </Button>
+          ) : undefined
+        }
+        embedded={embedded}
+        headingLevel={headingLevel}
+        now={now}
+        values={values}
+        onChange={onChange}
+      />
+    </div>
   );
 };
 

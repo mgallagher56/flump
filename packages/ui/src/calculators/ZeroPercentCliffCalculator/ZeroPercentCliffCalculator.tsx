@@ -42,10 +42,10 @@ export const ZERO_PERCENT_COPY = {
   nothingOwed: "No balance to repay",
   nothingOwedSubtext: "There is no balance on the 0% card to pay off.",
   kpiLeftNothingOwedSubtext: "Nothing is left when the 0% deal ends.",
-  kpiLeft: "Left when the 0% deal ends, with minimum payments only",
+  kpiLeft: "Left when the deal ends, minimum payments only",
   kpiLeftSubtext: "Assumes the minimum payment stays at the amount set by today's balance.",
   kpiLeftClearedSubtext: "Minimum payments alone would pay it off before the deal ends.",
-  kpiInterest: "Interest in the first year after the deal ends",
+  kpiInterest: "Estimated interest, first year after the deal",
   kpiInterestSubtext: "On the amount left, at the rate you entered, if nothing more were paid.",
   explainerTitle: "What happens when the 0% deal ends",
   explainer:

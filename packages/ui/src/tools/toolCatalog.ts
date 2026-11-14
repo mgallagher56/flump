@@ -63,7 +63,7 @@ const ENTRIES: Record<ToolSlug, Omit<ToolCatalogueEntry, "slug">> = {
     title: "When a 0% balance transfer ends",
     shortTitle: "0% balance transfer",
     description:
-      "Estimate the monthly payment that pays off a transferred balance before the interest-free deal ends.",
+      "Estimate the monthly payment that pays off a transferred balance before the 0% deal ends.",
     metaTitle: "0% balance transfer payoff calculator",
     domain: "debt",
     icon: "credit-card",
@@ -117,7 +117,7 @@ const ENTRIES: Record<ToolSlug, Omit<ToolCatalogueEntry, "slug">> = {
     title: "Pension contributions and income above £100,000",
     shortTitle: "Income above £100,000",
     description:
-      "Estimate how a pension contribution changes adjusted net income, the Personal Allowance and take-home pay above £100,000.",
+      "Estimate how a pension contribution changes adjusted net income, the Personal Allowance and take-home pay.",
     metaTitle: "Pension contributions and income above £100,000: calculator",
     domain: "tax",
     icon: "percent",

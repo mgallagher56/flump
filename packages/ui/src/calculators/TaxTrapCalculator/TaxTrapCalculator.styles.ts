@@ -13,7 +13,6 @@ export const taxTrapRoot = cva({
     borderColor: "border",
     borderRadius: "2xl",
     padding: { base: "5", sm: "8" },
-    marginBottom: "10",
   },
 });
 
@@ -54,21 +53,6 @@ export const taxTrapOutcomes = cva({
     "& > :first-child": { gridColumn: "1 / -1" },
     // A lone supporting figure takes the whole row instead of leaving a half-width gap.
     "& > :nth-child(2):last-child": { gridColumn: "1 / -1" },
-  },
-});
-
-/**
- * The worded headline at a heading size, so a sentence never takes the large figure style. A
- * block with its own line height, so it does not inherit the KPI value's tall line box.
- */
-export const taxTrapHeadline = cva({
-  base: {
-    display: "block",
-    textStyle: "heading.md",
-    lineHeight: "normal",
-    color: "text.primary",
-    margin: "0",
-    fontVariantNumeric: "tabular-nums",
   },
 });
 

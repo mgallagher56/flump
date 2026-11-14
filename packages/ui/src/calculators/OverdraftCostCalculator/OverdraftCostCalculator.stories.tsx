@@ -42,9 +42,10 @@ export const Embedded: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     await expect(canvas.queryByText(OVERDRAFT_COPY.title)).not.toBeInTheDocument();
+    // The working sits in a closed quiet drawer.
     await expect(
-      canvas.getByRole("heading", { level: 2, name: OVERDRAFT_COPY.explainerTitle }),
-    ).toBeInTheDocument();
+      canvas.getByRole("button", { name: OVERDRAFT_COPY.explainerTitle }),
+    ).toHaveAttribute("aria-expanded", "false");
   },
 };
 

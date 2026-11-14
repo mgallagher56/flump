@@ -87,12 +87,12 @@ describe("Section24Calculator", () => {
     expect(outcomes().getByText("-£2,000")).toBeDefined();
   });
 
-  it("has three visible inputs and exactly one notice, and says the tax is unverified", () => {
+  it("has three visible inputs and exactly one notice, with no badge repeating it", () => {
     render(<Section24Calculator />);
     expect(screen.getAllByRole("slider").length).toBeLessThanOrEqual(3);
     expect(screen.getAllByTestId("projection-notice")).toHaveLength(1);
     expect(screen.queryByTestId("tax-rates-status-banner")).toBeNull();
-    expect(screen.getAllByText(SECTION24_COPY.unverifiedBadge)).toHaveLength(1);
+    expect(screen.queryByText("Unverified estimate")).toBeNull();
   });
 
   it("leads the one notice with the full unverified estimate sentence", () => {
@@ -110,11 +110,10 @@ describe("Section24Calculator", () => {
     expect(button.compareDocumentPosition(notice) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
-  it("hides its own title and intro when embedded, keeps the badge, and skips no heading level", () => {
+  it("hides its own title and intro when embedded, and skips no heading level", () => {
     render(<Section24Calculator embedded />);
     expect(screen.queryByText(SECTION24_COPY.title)).toBeNull();
     expect(screen.queryByText(SECTION24_COPY.intro)).toBeNull();
-    expect(screen.getByText(SECTION24_COPY.unverifiedBadge)).toBeDefined();
     const levels = Array.from(
       screen.getByTestId("section-24-tool").querySelectorAll("h1, h2, h3, h4, h5, h6"),
     ).map((h) => Number(h.tagName.slice(1)));

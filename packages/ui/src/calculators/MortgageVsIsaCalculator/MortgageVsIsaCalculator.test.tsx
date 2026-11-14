@@ -20,7 +20,7 @@ describe("MortgageVsIsaCalculator", () => {
     // £36,349, ISA growth £99,388, so the ISA growth is £63,039 more.
     const res = calculateMortgageVsIsa(240000, 4.5, 20, 350, 7);
     const cards = outcomes();
-    expect(cards.getByText(MORTGAGE_ISA_COPY.kpiDifferenceIsa)).toBeDefined();
+    expect(cards.getByText(MORTGAGE_ISA_COPY.kpiDifference)).toBeDefined();
     expect(cards.getByText("£63,039")).toBeDefined();
     expect(cards.getByText(MORTGAGE_ISA_COPY.kpiInterestSaved)).toBeDefined();
     expect(cards.getByText(pounds(res.interestSaved))).toBeDefined();
@@ -38,16 +38,23 @@ describe("MortgageVsIsaCalculator", () => {
     expect(toolText()).not.toMatch(/\d\.\d years/);
   });
 
-  it("names overpaying as the larger when the interest saved is more than ISA growth", () => {
+  it("keeps the same headline label when the interest saved is more than ISA growth", () => {
     render(<MortgageVsIsaCalculator initialIsaGrowth={0} />);
     // No growth: interest saved £36,349 is the larger, by all of it.
-    expect(outcomes().getByText(MORTGAGE_ISA_COPY.kpiDifferenceOverpay)).toBeDefined();
+    expect(outcomes().getByText(MORTGAGE_ISA_COPY.kpiDifference)).toBeDefined();
     expect(outcomes().getAllByText("£36,349")).toHaveLength(2);
   });
 
-  it("reads as no difference when nothing is overpaid", () => {
+  it("keeps the same headline label when nothing is overpaid", () => {
     render(<MortgageVsIsaCalculator initialExtra={0} />);
-    expect(outcomes().getByText(MORTGAGE_ISA_COPY.kpiDifferenceEven)).toBeDefined();
+    expect(outcomes().getByText(MORTGAGE_ISA_COPY.kpiDifference)).toBeDefined();
+  });
+
+  it("says once, in the headline subtext, that ISA growth can be negative", () => {
+    render(<MortgageVsIsaCalculator />);
+    fireEvent.click(screen.getByRole("button", { name: MORTGAGE_ISA_COPY.explainerTitle }));
+    expect(MORTGAGE_ISA_COPY.kpiDifferenceSubtext).toContain("can be negative");
+    expect(toolText().match(/ISA growth is not fixed and can be negative/g)).toHaveLength(1);
   });
 
   it("recalculates when the extra money a month changes", () => {
@@ -60,9 +67,7 @@ describe("MortgageVsIsaCalculator", () => {
 
   it("keeps figures out of the card labels and captions", () => {
     for (const w of [
-      MORTGAGE_ISA_COPY.kpiDifferenceIsa,
-      MORTGAGE_ISA_COPY.kpiDifferenceOverpay,
-      MORTGAGE_ISA_COPY.kpiDifferenceEven,
+      MORTGAGE_ISA_COPY.kpiDifference,
       MORTGAGE_ISA_COPY.kpiDifferenceSubtext,
       MORTGAGE_ISA_COPY.kpiInterestSaved,
       MORTGAGE_ISA_COPY.kpiInterestSavedSubtext,
@@ -118,7 +123,7 @@ describe("MortgageVsIsaCalculator", () => {
     fireEvent.change(slider(MORTGAGE_ISA_COPY.isaGrowth), { target: { value: "0" } });
     // No growth: the ISA adds nothing to the money paid in.
     expect(outcomes().getByText("£0")).toBeDefined();
-    expect(outcomes().getByText(MORTGAGE_ISA_COPY.kpiDifferenceOverpay)).toBeDefined();
+    expect(outcomes().getByText(MORTGAGE_ISA_COPY.kpiDifference)).toBeDefined();
   });
 
   it("never passes a negative entry to the engine", () => {

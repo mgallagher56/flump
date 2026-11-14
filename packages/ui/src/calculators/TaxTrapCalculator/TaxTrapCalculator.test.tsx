@@ -10,7 +10,7 @@ import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { DELTA_PANEL_COPY } from "../../patterns/TakeHomeDeltaPanel/copy";
 import { formatMoney } from "../../primitives/Money/Money";
-import { allTaxTrapCopyStrings, outcomeHeadline, TAX_TRAP_COPY } from "./copy";
+import { allTaxTrapCopyStrings, factLine, TAX_TRAP_COPY } from "./copy";
 import { TaxTrapCalculator } from "./TaxTrapCalculator";
 
 /** Opens "Show details", where the table, taper, childcare and working now live. */
@@ -31,13 +31,17 @@ describe("TaxTrapCalculator", () => {
       { taxYear: "2026/27", region: "ENGLAND_NI_WALES", salary: 115_000 },
       10_000,
     );
-    // A contribution is framed as what reaches the pension and what it costs, not as a loss.
+    // The headline figure is the reduction in take-home pay, as a positive amount.
     expect(screen.getByTestId("tax-trap-headline").textContent).toBe(
-      outcomeHeadline(
-        formatMoney(expected.deltaPensionGross).text,
-        formatMoney(-expected.deltaTakeHome).text,
-      ),
+      formatMoney(-expected.deltaTakeHome).text,
     );
+    expect(outcome(TAX_TRAP_COPY.kpiTakeHomeReduction)).toContain(TAX_TRAP_COPY.kpiTakeHomeSubtext);
+    // The tax and NI change is a positive amount under a "reduction" label: no minus sign.
+    const taxAndNi = expected.components.incomeTax + expected.components.nationalInsurance;
+    expect(outcome(TAX_TRAP_COPY.kpiTaxAndNiReduction)).toContain(
+      formatMoney(Math.abs(taxAndNi)).text,
+    );
+    expect(screen.getByTestId("tax-trap-outcomes").textContent).not.toMatch(/[-−]£|£[-−]/);
     // The Personal Allowance is in the details table, not a third card (first view at most 3 figures).
     expect(screen.queryByText(TAX_TRAP_COPY.kpiPersonalAllowance)).toBeNull();
     expect(screen.queryByRole("table")).toBeNull();
@@ -78,6 +82,33 @@ describe("TaxTrapCalculator", () => {
     expect(table.textContent).toContain(formatMoney(scot.after.takeHome).text);
   });
 
+  it("shows £0 under a change label, with no figure in the subtext, when there is no contribution", () => {
+    render(<TaxTrapCalculator initialContribution={0} taxYear="2026/27" />);
+    expect(screen.getByTestId("tax-trap-headline").textContent).toBe("£0");
+    expect(outcome(TAX_TRAP_COPY.kpiTakeHomeChange)).toContain(TAX_TRAP_COPY.noContribution);
+    expect(outcome(TAX_TRAP_COPY.kpiTaxAndNiChange)).toContain("£0");
+    for (const s of [
+      TAX_TRAP_COPY.kpiTakeHomeSubtext,
+      TAX_TRAP_COPY.noContribution,
+      TAX_TRAP_COPY.kpiTakeHomeReduction,
+      TAX_TRAP_COPY.kpiTaxAndNiReduction,
+    ]) {
+      expect(s).not.toMatch(/[0-9£%]/);
+    }
+  });
+
+  it("names the taper threshold from the engine rules, never as the taper start", () => {
+    render(<TaxTrapCalculator taxYear="2026/27" />);
+    openDetails();
+    expect(screen.getByTestId("tax-trap-fact-line").textContent).toContain(
+      "Above £100,000 of adjusted net income",
+    );
+    expect(screen.getByTestId("tax-trap-taper-note").textContent).toContain(
+      "adjusted net income over £100,000",
+    );
+    expect(screen.getByTestId("tax-trap-calculator-tool").textContent).not.toMatch(/taper start/i);
+  });
+
   it("labels figures as an unverified estimate until the vectors are signed", () => {
     render(<TaxTrapCalculator taxYear="2026/27" />);
     const r = whatIfSacrificeChange(
@@ -85,12 +116,11 @@ describe("TaxTrapCalculator", () => {
       10_000,
     );
     const notice = screen.getByTestId("projection-notice").textContent ?? "";
+    // No badge repeats it: the one notice carries the full sentence.
+    expect(screen.queryByText("Unverified estimate")).toBeNull();
     if (r.after.isUnverifiedEstimate) {
-      expect(screen.getAllByText(TAX_TRAP_COPY.unverifiedBadge)).toHaveLength(1);
-      // The one notice leads with the full unverified estimate sentence, matching the badge.
       expect(notice.startsWith(DELTA_PANEL_COPY.unverifiedBanner)).toBe(true);
     } else {
-      expect(screen.queryByText(TAX_TRAP_COPY.unverifiedBadge)).toBeNull();
       expect(notice).not.toContain(DELTA_PANEL_COPY.unverifiedBanner);
     }
     expect(screen.getByText("As at tax year 2026/27")).toBeDefined();
@@ -136,8 +166,7 @@ describe("TaxTrapCalculator", () => {
     const cta = screen.getByRole("button", { name: "Continue to sign up" });
     const outcomes = screen.getByTestId("tax-trap-outcomes");
     expect(outcomes.compareDocumentPosition(cta) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(screen.getByTestId("tax-trap-fact-line").textContent).toBe(TAX_TRAP_COPY.factLine);
-    expect(screen.getByTestId("tax-trap-fact-line").textContent).not.toMatch(/\d/);
+    expect(screen.getByTestId("tax-trap-fact-line").textContent).toBe(factLine("£100,000"));
     expect(screen.queryByTestId("tax-trap-taper-note")).toBeNull();
     expect(screen.queryByTestId("tax-trap-childcare-status")).toBeNull();
   });

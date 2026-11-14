@@ -16,9 +16,10 @@ type Story = StoryObj<typeof MarginalRateExplorerStandalone>;
 export const Default: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
+    // Take-home shows in the headline card only; the table lists the deductions.
     await expect(
-      within(canvas.getByRole("table", { name: "Where the next £1,000 goes" })).getByText("£720"),
-    ).toBeInTheDocument();
+      within(canvas.getByRole("table", { name: "Where the next £1,000 goes" })).queryByText("£720"),
+    ).not.toBeInTheDocument();
     // Region, pension type, student loans, the tax year and the extra pension sit under More options.
     await userEvent.click(canvas.getByRole("button", { name: "More options" }));
     await expect(canvas.getByLabelText("Where you pay tax")).toBeInTheDocument();

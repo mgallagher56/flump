@@ -51,7 +51,23 @@ describe("DebtSnowballCalculator", () => {
     expect(cards.getByText(DEBT_SNOWBALL_COPY.kpiDate)).toBeDefined();
     // Engine: £1,863.89 over 32 months highest rate first, £2,130.69 over 33 months smallest
     // balance first, read in whole pounds.
-    expect(cards.getByText(DEBT_SNOWBALL_COPY.dateAvalancheSooner)).toBeDefined();
+    const engine = compareAvalancheAndSnowball(
+      STARTING_DEBTS.map((d) => ({
+        id: d.id,
+        name: d.kind ?? d.id,
+        type: d.type,
+        balance: d.balance ?? 0,
+        apr: d.apr ?? 0,
+        minimumPayment: d.minimum ?? 0,
+      })),
+      75,
+    );
+    // The caption gives the other method's date, in the same format as the headline.
+    expect(
+      cards.getByText(DEBT_SNOWBALL_COPY.dateAvalancheSooner(engine.snowball.debtFreeDate)),
+    ).toBeDefined();
+    expect(cards.getByText(engine.avalanche.debtFreeDate)).toBeDefined();
+    expect(toolText()).not.toMatch(/Sept\b|finishes later/);
     expect(cards.getByText(DEBT_SNOWBALL_COPY.kpiAvalanche)).toBeDefined();
     expect(cards.getByText(DEBT_SNOWBALL_COPY.kpiSnowball)).toBeDefined();
     expect(cards.getByText("£1,864")).toBeDefined();
@@ -100,19 +116,21 @@ describe("DebtSnowballCalculator", () => {
     const levels = [...container.querySelectorAll("h1, h2, h3, h4, h5, h6")].map((h) =>
       Number(h.tagName[1]),
     );
-    expect(levels.length).toBeGreaterThan(0);
-    expect(levels[0]).toBe(2);
+    // The explainer is a drawer now, so the embedded body may hold no heading at all.
+    if (levels.length > 0) expect(levels[0]).toBe(2);
     for (let i = 1; i < levels.length; i++) {
       expect((levels[i] ?? 0) - (levels[i - 1] ?? 0)).toBeLessThanOrEqual(1);
     }
   });
 
-  it("keeps its title and an h3 explainer outside a tool page", () => {
+  it("keeps its title outside a tool page, and the method explainer in a closed drawer", () => {
     render(<DebtSnowballCalculator />);
     expect(screen.getByRole("heading", { level: 2, name: DEBT_SNOWBALL_COPY.title })).toBeDefined();
-    expect(
-      screen.getByRole("heading", { level: 3, name: DEBT_SNOWBALL_COPY.explainerTitle }),
-    ).toBeDefined();
+    const drawer = screen.getByRole("button", { name: DEBT_SNOWBALL_COPY.explainerTitle });
+    expect(drawer.getAttribute("aria-expanded")).toBe("false");
+    expect(toolText()).not.toContain(DEBT_SNOWBALL_COPY.explainer);
+    fireEvent.click(drawer);
+    expect(toolText()).toContain(DEBT_SNOWBALL_COPY.explainer);
   });
 
   it("labels the debts Debt 1 and Debt 2, in sentence case", () => {

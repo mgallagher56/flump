@@ -122,7 +122,7 @@ describe("ZeroPercentCliffCalculator", () => {
     render(<ZeroPercentCliffCalculator />);
     fireEvent.change(balanceSlider(), { target: { value: "400" } });
     expect(toolText()).toContain(ZERO_PERCENT_COPY.kpiLeftClearedSubtext);
-    expect(outcomes().queryByText(/Interest in the first year after/)).toBeNull();
+    expect(outcomes().queryByText(/first year after the deal/)).toBeNull();
   });
 
   it("states the result as a neutral estimate, with no instruction or alarm wording", () => {

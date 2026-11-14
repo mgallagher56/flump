@@ -137,10 +137,6 @@ export const debtExplainer = cva({
   },
 });
 
-export const debtExplainerTitle = cva({
-  base: { textStyle: "label.md", color: "text.primary", margin: "0" },
-});
-
 export const debtDetails = cva({
   base: { fontVariantNumeric: "tabular-nums", overflowX: "auto" },
 });
