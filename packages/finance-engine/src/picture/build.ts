@@ -64,11 +64,11 @@ export function buildFinancialPicture(
     budget: selectBudgetTotals(input.budget),
     safeToSpend: selectSafeToSpend(takeHome, input.budget, snapshot),
     monthsOfCover: selectMonthsOfCover(input.budget, snapshot),
-    netWorth: selectNetWorth(snapshot, input.profile),
+    netWorth: selectNetWorth(snapshot),
     debt: selectDebtTotals(snapshot),
     housingCost: selectHousingCost(input.profile, takeHome, snapshot, input.accounts),
     fixedRateEnds: selectFixedRateEnds(input.accounts, opts.asOf ?? new Date()),
-    loanToValue: selectLoanToValue(snapshot, input.profile),
+    loanToValue: selectLoanToValue(snapshot),
     estimatedTaxDue: selectEstimatedTaxDue(input.profile, input.taxRecords, {
       taxYear: opts.taxYear,
     }),

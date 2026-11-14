@@ -1,11 +1,11 @@
 /**
- * E16 PR 3: property tests for net worth with the home estimate (fast-check, fixed seed).
+ * E16 PR 3: property tests for net worth and residential loan to value (fast-check, fixed seed).
  */
 import fc from "fast-check";
 import { describe, it } from "vitest";
 import { PortfolioSnapshot, type RawAccount } from "../../portfolio.js";
 import { selectLoanToValue } from "./loan-to-value.js";
-import { type HomeFacts, selectNetWorth } from "./portfolio-totals.js";
+import { HOME_ESTIMATE_LABEL, selectNetWorth } from "./portfolio-totals.js";
 
 const PARAMS = { seed: 20261114, numRuns: 300 } as const;
 
@@ -25,69 +25,56 @@ const account = fc.record({
   type: fc.constantFrom(...TYPES),
   balance: fc.integer({ min: -5000, max: 900000 }),
 });
+const NAMES = [HOME_ESTIMATE_LABEL, "Buy-to-let flat", "BTL mortgage", "Joint account"] as const;
 const accounts = fc
-  .array(account, { maxLength: 8 })
-  .map((rows): RawAccount[] => rows.map((r, i) => ({ id: `a${i}`, name: `A${i}`, ...r })));
-const facts: fc.Arbitrary<HomeFacts | null> = fc.option(
-  fc.record({
-    homeValue: fc.option(fc.integer({ min: -1000, max: 2000000 }), { nil: null }),
-    housingStatus: fc.constantFrom("renting", "mortgage", "own_outright", null),
-  }),
-  { nil: null },
-);
+  .array(fc.record({ row: account, name: fc.constantFrom(...NAMES) }), { maxLength: 8 })
+  .map((rows): RawAccount[] => rows.map(({ row, name }, i) => ({ id: `a${i}`, name, ...row })));
 
-describe("net worth with the home estimate (properties)", () => {
+describe("net worth and loan to value (properties)", () => {
   it("net worth is always total assets less total liabilities", () => {
     fc.assert(
-      fc.property(accounts, facts, (rows, f) => {
-        const nw = selectNetWorth(new PortfolioSnapshot(rows), f);
+      fc.property(accounts, (rows) => {
+        const nw = selectNetWorth(new PortfolioSnapshot(rows));
         return nw.totalAssets - nw.totalLiabilities === nw.netWorth;
       }),
       PARAMS,
     );
   });
 
-  it("the home is counted at most once: estimate and Property accounts never both", () => {
+  it("the home estimate is part of property, never added on top", () => {
     fc.assert(
-      fc.property(accounts, facts, (rows, f) => {
+      fc.property(accounts, (rows) => {
         const snap = new PortfolioSnapshot(rows);
-        const nw = selectNetWorth(snap, f);
-        const hasPropertyRow = rows.some((r) => r.type === "Property");
-        if (hasPropertyRow) return nw.homeEstimate === 0;
-        return nw.homeEstimate === 0 || nw.homeEstimate === f?.homeValue;
-      }),
-      PARAMS,
-    );
-  });
-
-  it("with no home value, net worth is unchanged from the account rows alone", () => {
-    fc.assert(
-      fc.property(accounts, facts, (rows, f) => {
-        const snap = new PortfolioSnapshot(rows);
-        const without = selectNetWorth(snap, f ? { ...f, homeValue: null } : null);
+        const nw = selectNetWorth(snap);
+        const labelled = rows
+          .filter((r) => r.type === "Property" && r.name === HOME_ESTIMATE_LABEL)
+          .reduce((sum, r) => sum + Number(r.balance), 0);
         return (
-          without.homeEstimate === 0 &&
-          without.netWorth === snap.getTotalNetWorth() &&
-          without.totalAssets === snap.getTotalAssets()
+          nw.netWorth === snap.getTotalNetWorth() &&
+          nw.totalAssets === snap.getTotalAssets() &&
+          nw.homeEstimate === labelled
         );
       }),
       PARAMS,
     );
   });
 
-  it("loan to value is unknown, or the mortgage over the home value net worth counts", () => {
+  it("loan to value is unknown, or residential mortgages over residential property", () => {
     fc.assert(
-      fc.property(accounts, facts, (rows, f) => {
+      fc.property(accounts, (rows) => {
         const snap = new PortfolioSnapshot(rows);
-        const fig = selectLoanToValue(snap, f);
+        const fig = selectLoanToValue(snap);
         if (fig.status === "unknown") return fig.missing.length > 0;
-        const nw = selectNetWorth(snap, f);
+        const residential = rows.filter((r) => !/buy-to-let|btl/i.test(String(r.name)));
+        const sum = (type: string, f: (n: number) => number) =>
+          residential
+            .filter((r) => r.type === type)
+            .reduce((total, r) => total + f(Number(r.balance)), 0);
         return (
           fig.value.homeValue > 0 &&
           fig.value.mortgageBalance > 0 &&
-          fig.value.percent >= 0 &&
-          fig.value.homeValue === nw.property + nw.homeEstimate &&
-          fig.value.mortgageBalance === snap.getTotalMortgageBalance()
+          fig.value.homeValue === sum("Property", (n) => n) &&
+          fig.value.mortgageBalance === sum("Mortgage", Math.abs)
         );
       }),
       PARAMS,

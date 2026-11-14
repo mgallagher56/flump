@@ -1,5 +1,4 @@
 import type { PortfolioSnapshot } from "../../portfolio.js";
-import type { ProfileFacts } from "../input.js";
 
 export interface NetWorthTotals {
   netWorth: number;
@@ -8,9 +7,13 @@ export interface NetWorthTotals {
   liquidCash: number;
   investments: number;
   pensions: number;
-  /** Property account rows. */
+  /** Property account rows (the onboarding home estimate is one of them). */
   property: number;
-  /** The profile home estimate, labelled "Home (your estimate)"; 0 when not counted. */
+  /**
+   * Of `property`, the account rows labelled HOME_ESTIMATE_LABEL that onboarding seeds from the
+   * user's own home estimate (D3), so pages can label it. Already inside `property`,
+   * `totalAssets` and `netWorth`; never added on top. 0 when there is none.
+   */
   homeEstimate: number;
   /** Income-contingent, so outside net worth and outside debt payoff (decision D-5-B). */
   studentLoans: number;
@@ -26,52 +29,32 @@ export interface DebtTotals {
   minimumsEstimated: boolean;
 }
 
-/** The label pages show beside `homeEstimate` (owner decision D3, option a). */
+/**
+ * The name onboarding gives the Property account it seeds from the user's home estimate, and the
+ * label pages show beside it (owner decision D3, option a). That account is the single source of
+ * the home's value: the profile never carries one into net worth.
+ */
 export const HOME_ESTIMATE_LABEL = "Home (your estimate)";
 
-/** The profile facts net worth reads: the home estimate and whether the user rents. */
-export type HomeFacts = Pick<ProfileFacts, "homeValue" | "housingStatus">;
-
-/** True when any account row holds a property, whatever its balance. */
-export function hasPropertyAccount(snapshot: PortfolioSnapshot): boolean {
-  return snapshot.getResolvedAccounts().some((a) => a.category === "property");
+/** Property account rows that carry the onboarding home estimate. */
+export function selectHomeEstimate(snapshot: PortfolioSnapshot): number {
+  return snapshot
+    .getAccountsByCategory("property")
+    .filter((a) => a.name === HOME_ESTIMATE_LABEL)
+    .reduce((sum, a) => sum + a.nominalBalance, 0);
 }
 
-/**
- * The home estimate counted in net worth, in pounds (0 when not counted). Owner decision D3 (a):
- * the user's own estimate counts at 100%. To count the home at most once:
- * - a Property account row always wins: when one exists the profile estimate is not added
- *   (the account is the home, entered on the accounts page or seeded by onboarding);
- * - a renter's estimate is not counted (it can be left over from an earlier answer);
- * - an estimate of 0 or less, or none, adds nothing.
- */
-export function selectHomeEstimate(snapshot: PortfolioSnapshot, facts?: HomeFacts | null): number {
-  const value = facts?.homeValue ?? null;
-  if (value === null || !(value > 0)) return 0;
-  if (facts?.housingStatus === "renting") return 0;
-  if (hasPropertyAccount(snapshot)) return 0;
-  return value;
-}
-
-/**
- * Net worth and its parts. Never unknown: no accounts is a real £0. `homeEstimate` is the
- * profile home estimate (see selectHomeEstimate), counted in `totalAssets` and `netWorth` and
- * kept apart from `property` (account rows) so pages can label it.
- */
-export function selectNetWorth(
-  snapshot: PortfolioSnapshot,
-  facts?: HomeFacts | null,
-): NetWorthTotals {
-  const homeEstimate = selectHomeEstimate(snapshot, facts);
+/** Net worth and its parts, from account rows only. Never unknown: no accounts is a real £0. */
+export function selectNetWorth(snapshot: PortfolioSnapshot): NetWorthTotals {
   return {
-    netWorth: snapshot.getTotalNetWorth() + homeEstimate,
-    totalAssets: snapshot.getTotalAssets() + homeEstimate,
+    netWorth: snapshot.getTotalNetWorth(),
+    totalAssets: snapshot.getTotalAssets(),
     totalLiabilities: snapshot.getTotalLiabilities(),
     liquidCash: snapshot.getTotalLiquidCash(),
     investments: snapshot.getTotalInvestments(),
     pensions: snapshot.getTotalPensions(),
     property: snapshot.getTotalProperty(),
-    homeEstimate,
+    homeEstimate: selectHomeEstimate(snapshot),
     studentLoans: snapshot.getTotalStudentLoans(),
   };
 }

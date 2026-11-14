@@ -19,11 +19,6 @@ export interface ProfileFacts {
   /** Saved monthly rent (renters) or mortgage payment (owners), as the user entered it. */
   monthlyHousingCost?: number | null;
   mortgageType?: "repayment" | "interest-only" | null;
-  /**
-   * D3 (E16): the user's own estimate of their home's value, counted at 100% in net worth as
-   * "Home (your estimate)" when no Property account holds the home. null when not given.
-   */
-  homeValue?: number | null;
   /** Share of rental property the user owns, in percent (self assessment). null means 100%. */
   propertyOwnershipShare?: number | null;
 }
@@ -43,6 +38,8 @@ export type MissingKey =
   | "mortgageDetails"
   /** A mortgage account with a balance (loan to value). */
   | "mortgageBalance"
+  /** A residential Property account with a value (loan to value). */
+  | "homeValue"
   /** Income records not taxed through PAYE (rental, self-employed, savings, dividends). */
   | "untaxedIncomeRecords"
   /** Self-employed income records (a self-employed user's trading income, estimated tax due). */
@@ -130,7 +127,6 @@ export function profileFactsFromProfile(
     housingStatus: HOUSING.find((h) => h === p.housingStatus) ?? null,
     monthlyHousingCost: toNumber(p.monthlyHousingCost),
     mortgageType: MORTGAGE_TYPES.find((t) => t === p.mortgageType) ?? null,
-    homeValue: toNumber(p.homeValue),
     propertyOwnershipShare: toNumber(p.propertyOwnershipShare),
   };
 }

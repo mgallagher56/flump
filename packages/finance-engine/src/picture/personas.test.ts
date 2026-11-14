@@ -113,10 +113,9 @@ describe.each(NAMES)("persona %s: portfolio totals", (name) => {
 
   it("matches the hand-derived totals", () => {
     const snap = snapshot(fixture);
-    // Account rows only: the profile home estimate (D3) is added by the picture, not the snapshot.
-    const home = p.homeEstimate ?? 0;
-    expect(snap.getTotalNetWorth()).toBe(p.netWorth - home);
-    expect(snap.getTotalAssets()).toBe(p.totalAssets - home);
+    // Net worth is account rows only: the home estimate is a Property account row (D3).
+    expect(snap.getTotalNetWorth()).toBe(p.netWorth);
+    expect(snap.getTotalAssets()).toBe(p.totalAssets);
     expect(snap.getTotalLiabilities()).toBe(p.totalLiabilities);
     expect(snap.getTotalConsumerDebt()).toBe(p.consumerDebt);
     expect(snap.getTotalLiquidCash()).toBe(p.liquidCash);
@@ -424,7 +423,6 @@ describe("new user", () => {
       housingStatus: null,
       monthlyHousingCost: null,
       mortgageType: null,
-      homeValue: null,
       propertyOwnershipShare: null,
     });
     expect(facts).toEqual(newUser.profile);
@@ -572,7 +570,7 @@ describe.each(NAMES)("persona %s: financial picture (E23 section 2)", (name) => 
     expect(picture.netWorth.netWorth).toBe(expected.portfolio.netWorth);
     expect(picture.netWorth.totalAssets).toBe(expected.portfolio.totalAssets);
     expect(picture.netWorth.homeEstimate).toBe(expected.portfolio.homeEstimate ?? 0);
-    // Net worth is always assets minus liabilities, home estimate included.
+    // Net worth is always assets minus liabilities.
     expect(picture.netWorth.totalAssets - picture.netWorth.totalLiabilities).toBe(
       picture.netWorth.netWorth,
     );
@@ -586,40 +584,36 @@ describe("E16 PR 3 homeowner: the home counts once, labelled (D3)", () => {
   const { fixture } = PERSONAS.homeowner;
   const picture = buildFinancialPicture(fixture, OPTS);
 
-  it("net worth is 310,000 + 21,000 + 96,000 - 186,000 = 241,000, with the home its own part", () => {
+  it("net worth is 310,000 + 21,000 + 96,000 - 186,000 = 241,000, the home counted once", () => {
     expect(picture.netWorth.netWorth).toBe(241000);
+    expect(picture.netWorth.property).toBe(310000);
     expect(picture.netWorth.homeEstimate).toBe(310000);
-    expect(picture.netWorth.property).toBe(0);
     expect(HOME_ESTIMATE_LABEL).toBe("Home (your estimate)");
   });
 
   it("loan to value is 186,000 / 310,000 = 60%, from the same home value", () => {
     expect(picture.loanToValue).toEqual({
       status: "known",
-      value: {
-        percent: 60,
-        homeValue: 310000,
-        mortgageBalance: 186000,
-        homeValueSource: "estimate",
-      },
+      value: { percent: 60, homeValue: 310000, mortgageBalance: 186000 },
       provenance: "derived",
     });
   });
 
-  it("is the same 241,000 when onboarding saved the home as a Property account instead", () => {
-    const asAccount: PersonaFixture = {
+  it("a profile homeValue is never counted: the Property account is the single source", () => {
+    const withProfileValue = {
       ...fixture,
-      accounts: [
-        ...fixture.accounts,
-        { id: "homeowner-home", name: HOME_ESTIMATE_LABEL, type: "Property", balance: 310000 },
-      ],
+      profile: { ...fixture.profile, homeValue: 500000 } as PersonaFixture["profile"],
     };
-    const p = buildFinancialPicture(asAccount, OPTS);
-    // The account wins; the profile estimate is not added on top (no double count).
-    expect(p.netWorth.netWorth).toBe(241000);
+    expect(buildFinancialPicture(withProfileValue, OPTS).netWorth.netWorth).toBe(241000);
+    // A sold home (account deleted) leaves nothing behind, whatever the profile once said.
+    const sold: PersonaFixture = {
+      ...withProfileValue,
+      accounts: fixture.accounts.filter((a) => a.type !== "Property"),
+    };
+    const p = buildFinancialPicture(sold, OPTS);
+    expect(p.netWorth.netWorth).toBe(241000 - 310000);
     expect(p.netWorth.homeEstimate).toBe(0);
-    expect(p.netWorth.property).toBe(310000);
-    expect(isFigureKnown(p.loanToValue) && p.loanToValue.value.percent).toBe(60);
+    expect(p.loanToValue.status).toBe("unknown");
   });
 
   it("has no estimated tax due: PAYE only, nothing outside PAYE to estimate", () => {
