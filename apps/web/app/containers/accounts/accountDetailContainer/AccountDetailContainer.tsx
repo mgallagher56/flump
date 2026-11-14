@@ -3,7 +3,7 @@ import { ArrowLeft } from "lucide-react";
 import { type FC, useMemo } from "react";
 import { Link, useLoaderData } from "react-router";
 import AccountDetails from "~/components/accounts/AccountDetails";
-import { isLiabilityType } from "~/containers/accounts/utils";
+import { type AccountType, isLiabilityType } from "~/containers/accounts/utils";
 import { lastUpdatedLabel, summariseAccountBalance } from "~/features/accounts/accountRows";
 import { AccountYourDetails } from "~/features/accounts/components/AccountYourDetails";
 import type { loader } from "~/routes/app.accounts.$account";
@@ -73,6 +73,16 @@ const AccountDetailContainer: FC = () => {
         balance={current}
         lastUpdated={lastUpdatedLabel(accountDetails as never[])}
         name={account.name ?? ""}
+        savedAccount={{
+          id: String(account.id ?? ""),
+          name: account.name ?? "",
+          type: account.type as AccountType | undefined,
+          balance:
+            account.balance === undefined || account.balance === null
+              ? undefined
+              : Number(account.balance),
+          studentLoanPlan: account.studentLoanPlan ?? null,
+        }}
         type={String(account.type ?? "")}
       />
 

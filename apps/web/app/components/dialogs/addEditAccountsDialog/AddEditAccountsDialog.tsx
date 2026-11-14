@@ -134,7 +134,7 @@ const POPULAR_BANKS = [
   },
 ];
 
-interface AccountOption {
+export interface AccountOption {
   id?: string;
   name?: string;
   type?: AccountType;
@@ -144,6 +144,11 @@ interface AccountOption {
 
 interface AddEditAccountsDialogBtnProp {
   accountId?: string;
+  /**
+   * The saved account to edit, as stored. Wins over the accounts list from the loader, which only
+   * the accounts index route returns (the account detail route returns one account).
+   */
+  account?: AccountOption;
   isEditAccount?: boolean;
   btnSize?: "sm" | "md" | "lg" | "icon";
   isIconButton?: boolean;
@@ -153,6 +158,7 @@ interface AddEditAccountsDialogBtnProp {
 
 const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
   accountId,
+  account,
   btnSize = "md",
   isEditAccount,
   isIconButton = false,
@@ -175,7 +181,7 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
   const [bankToken, setBankToken] = useState<string>("");
   const [bankError, setBankError] = useState<string | null>(null);
   const [planError, setPlanError] = useState<string | null>(null);
-  const accountName = accounts.find((account) => account.id === accountId)?.name;
+  const accountName = (account ?? accounts.find((option) => option.id === accountId))?.name;
   const editLabel = accountName ? `${t("editAccount")}: ${accountName}` : t("editAccount");
   const isConnecting = fetcher.state === "submitting" || fetcher.state === "loading";
 
@@ -237,8 +243,8 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
   }, [fetcher.data, handleCloseModal, bankAuthType]);
 
   const selectedAccount: AccountOption = useMemo(
-    () => accounts?.find((account) => account.id === accountId),
-    [accounts, accountId],
+    () => account ?? accounts?.find((option) => option.id === accountId),
+    [account, accounts, accountId],
   ) ?? { name: "", type: accountTypeArray[0], balance: undefined, studentLoanPlan: null };
 
   const [formInput, setFormInput] = useState<{

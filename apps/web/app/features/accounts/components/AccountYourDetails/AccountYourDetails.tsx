@@ -1,6 +1,8 @@
 import { Card, Money, StatusBadge } from "@repo/ui";
 import type { FC } from "react";
-import AddEditAccountsDialogBtn from "~/components/dialogs/addEditAccountsDialog/AddEditAccountsDialog";
+import AddEditAccountsDialogBtn, {
+  type AccountOption,
+} from "~/components/dialogs/addEditAccountsDialog/AddEditAccountsDialog";
 import { isLiabilityType } from "~/containers/accounts/utils";
 import {
   detailsCard,
@@ -21,6 +23,8 @@ export interface AccountYourDetailsProps {
   balance: number;
   /** For example "March 2026": the latest month with a recorded balance. */
   lastUpdated: string | null;
+  /** The saved account as stored, to prefill the Edit account dialog. */
+  savedAccount?: AccountOption;
 }
 
 /** Saved facts only. Nothing here is a scenario input and nothing here is changed by one. */
@@ -30,6 +34,7 @@ export const AccountYourDetails: FC<AccountYourDetailsProps> = ({
   type,
   balance,
   lastUpdated,
+  savedAccount,
 }) => (
   <Card className={detailsCard()}>
     <section aria-labelledby="account-your-details-heading">
@@ -45,7 +50,7 @@ export const AccountYourDetails: FC<AccountYourDetailsProps> = ({
             {lastUpdated ? <span>Last updated {lastUpdated}</span> : null}
           </p>
         </div>
-        <AddEditAccountsDialogBtn accountId={accountId} isEditAccount />
+        <AddEditAccountsDialogBtn account={savedAccount} accountId={accountId} isEditAccount />
       </div>
       <dl className={factList()}>
         <div className={fact()}>
