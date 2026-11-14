@@ -35,3 +35,9 @@ runs:
     - name: Install dependencies
       shell: bash
       run: bun install --frozen-lockfile --ignore-scripts
+
+    # Our own workspaces' `prepare` scripts are first-party codegen (Panda styled-system,
+    # react-router typegen) that the install used to run; run them explicitly instead.
+    - name: Generate workspace code
+      shell: bash
+      run: bun run --filter './apps/*' --filter './packages/*' prepare
