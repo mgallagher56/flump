@@ -148,6 +148,8 @@ export const AiContextPackDto = z.strictObject({
   portfolio: z.strictObject({
     netWorth: z.number(),
     totalAssets: z.number(),
+    /** The "Home (your estimate)" property account, already inside totalAssets (D3a). */
+    homeEstimate: z.number(),
     totalLiabilities: z.number(),
     totalLiquidCash: z.number(),
     totalInvestments: z.number(),

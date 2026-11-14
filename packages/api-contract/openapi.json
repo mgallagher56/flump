@@ -7782,6 +7782,9 @@
                             "totalAssets": {
                               "type": "number"
                             },
+                            "homeEstimate": {
+                              "type": "number"
+                            },
                             "totalLiabilities": {
                               "type": "number"
                             },
@@ -7948,6 +7951,7 @@
                           "required": [
                             "netWorth",
                             "totalAssets",
+                            "homeEstimate",
                             "totalLiabilities",
                             "totalLiquidCash",
                             "totalInvestments",
