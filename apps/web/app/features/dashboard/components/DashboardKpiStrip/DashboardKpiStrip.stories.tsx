@@ -7,9 +7,7 @@ const meta: Meta<typeof DashboardKpiStrip> = {
   component: DashboardKpiStrip,
   parameters: { layout: "padded" },
   args: {
-    budgetKnown: true,
     monthlySurplus: 1500,
-    monthsOfCover: 4.7,
     totalOwed: null,
     pensionPot: 30000,
   },
@@ -37,12 +35,19 @@ export const WithDebt: Story = {
 export const Shortfall: Story = { args: { monthlySurplus: -250 } };
 
 export const NoBudget: Story = {
-  args: { budgetKnown: false, monthlySurplus: null, monthsOfCover: null },
+  args: { monthlySurplus: null },
   play: async ({ canvasElement }) => {
     await expect(
-      within(canvasElement).getAllByText(
-        "Add your budget to see what is left over each month and your months of cover",
-      )[0],
+      within(canvasElement).getAllByText("Add your budget to see what is left over each month")[0],
     ).toBeDefined();
+  },
+};
+
+export const BudgetOnly: Story = {
+  args: { pensionPot: null },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(canvas.getAllByText("Left over each month")[0]).toBeDefined();
+    await expect(canvas.queryByText("Not set")).toBeNull();
   },
 };

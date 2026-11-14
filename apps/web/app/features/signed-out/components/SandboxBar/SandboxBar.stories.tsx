@@ -35,6 +35,15 @@ export const Default: Story = {
     const canvas = within(canvasElement);
     const tab = canvas.getAllByRole("tab", { name: "Paying off debts" })[0];
     if (!tab) throw new Error("Tab missing");
+    // The three household tabs are visible: none collapses to zero width (R2-4 sandbox item 1).
+    const bar = canvas.getAllByTestId("sandbox-bar")[0];
+    if (!bar) throw new Error("Bar missing");
+    const tabs = within(bar).getAllByRole("tab");
+    await expect(tabs).toHaveLength(3);
+    for (const each of tabs) {
+      await expect(each.getBoundingClientRect().width).toBeGreaterThan(0);
+      await expect(each).toBeVisible();
+    }
     await userEvent.click(tab);
     await expect(tab).toHaveAttribute("aria-selected", "true");
   },

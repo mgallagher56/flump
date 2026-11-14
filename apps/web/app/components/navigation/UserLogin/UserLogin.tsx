@@ -4,15 +4,20 @@ import type { FC } from "react";
 import { useTranslation } from "react-i18next";
 import { Form, Link, useRouteLoaderData } from "react-router";
 import type { loader } from "~/root";
-import { userLoginButton, userLoginGroup } from "./UserLogin.styles";
+import { userLoginButton, userLoginGroup, userLoginSignUp } from "./UserLogin.styles";
 
 export interface UserLoginProps {
   className?: string;
   size?: "sm" | "md";
+  /**
+   * Where "Sign up" shows: `always` (default, the drawer), `fromSm` (the top bar: on a phone the
+   * drawer offers it instead) or `never` (the sandbox has its own in the bar and at the page end).
+   */
+  signUp?: "always" | "fromSm" | "never";
 }
 
 /** Sign-in and sign-up links for a visitor, or the sign-out button (a POST form) once signed in. */
-const UserLogin: FC<UserLoginProps> = ({ className, size = "sm" }) => {
+const UserLogin: FC<UserLoginProps> = ({ className, size = "sm", signUp = "always" }) => {
   const { t } = useTranslation();
   // Read by route id so it works from any route and the root error boundary. Undefined only when
   // the root loader itself failed: treat as signed out.
@@ -28,9 +33,16 @@ const UserLogin: FC<UserLoginProps> = ({ className, size = "sm" }) => {
         </Form>
       ) : (
         <>
-          <ButtonLink asChild className={userLoginButton()} size={size} variant="ghost">
-            <Link to="/signup">{t("signUp", "Sign up")}</Link>
-          </ButtonLink>
+          {signUp !== "never" && (
+            <ButtonLink
+              asChild
+              className={signUp === "fromSm" ? userLoginSignUp() : userLoginButton()}
+              size={size}
+              variant="ghost"
+            >
+              <Link to="/signup">{t("signUp", "Sign up")}</Link>
+            </ButtonLink>
+          )}
           <ButtonLink asChild className={userLoginButton()} size={size} variant="ghost">
             <Link to="/login">{t("logIn", "Sign in")}</Link>
           </ButtonLink>

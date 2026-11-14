@@ -198,4 +198,37 @@ describe("Header", () => {
     expect(screen.getByText("Security and privacy")).toBeDefined();
     expect(screen.queryByText("FCA AISP")).toBeNull();
   });
+
+  it("on tablets keeps lower-priority items in the menu and shows one theme button", () => {
+    render(
+      <HelmetProvider>
+        <ThemeProvider>
+          <MemoryRouter>
+            <Header />
+          </MemoryRouter>
+        </ThemeProvider>
+      </HelmetProvider>,
+    );
+    const primary = screen.getByRole("navigation", { name: "Primary" });
+    // Inline only from navWide (1024px); below that they are in the drawer.
+    for (const name of [/AI connection/, /Sample data/]) {
+      expect(within(primary).getByRole("link", { name }).closest("li")?.className).toContain(
+        "navWide:d_list-item",
+      );
+    }
+    expect(screen.getAllByRole("link", { name: /Sign in/ })[0]?.className).toContain(
+      "navWide:d_inline-flex",
+    );
+    // The menu button stays up to navWide; the one-button theme switch shows below it.
+    expect(screen.getByRole("button", { name: /open navigation menu/i }).className).toContain(
+      "navWide:d_none",
+    );
+    expect(screen.getByRole("button", { name: /^Colour theme: / })).toBeDefined();
+    fireEvent.click(screen.getByRole("button", { name: /open navigation menu/i }));
+    const drawer = screen.getByRole("dialog");
+    expect(within(drawer).getByRole("link", { name: /AI connection/ })).toBeDefined();
+    expect(within(drawer).getByRole("link", { name: /Sign in/ })).toBeDefined();
+    // The theme switch lives in the top bar at every width, so the drawer leaves it out.
+    expect(within(drawer).queryByRole("group", { name: "Colour theme" })).toBeNull();
+  });
 });

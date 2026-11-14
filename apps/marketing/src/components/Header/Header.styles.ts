@@ -35,3 +35,10 @@ export const drawerCtas = cva({
 });
 
 export const drawerCta = cva({ base: { width: "100%", textDecoration: "none" } });
+
+/**
+ * Swap at the shared `navWide` condition (`NAV_WIDE_BREAKPOINT`, 1024px), never a raw breakpoint:
+ * the full header from there; on tablets and phones the lower-priority parts live in the menu.
+ */
+export const wideOnly = cva({ base: { display: "none", _navWide: { display: "inline-flex" } } });
+export const belowWide = cva({ base: { _navWide: { display: "none" } } });

@@ -43,8 +43,15 @@ export const barHint = cva({
   base: { textStyle: "body.sm", color: "text.secondary", display: { base: "none", md: "inline" } },
 });
 
-/** The household tabs scroll inside the bar rather than widening the page at 320px. */
-export const personaTabs = cva({ base: { minWidth: 0, maxWidth: "100%" } });
+/**
+ * The household tabs. The tab scroller uses `contain: inline-size`, so its content gives this flex
+ * item no width: the flex basis gives it one. It grows into the space between the title and the
+ * sign-up group, and wraps to a full row of its own when that space is under 20rem (375px). The
+ * tabs still scroll inside it rather than widening the page at 320px.
+ */
+export const personaTabs = cva({
+  base: { flex: "1 1 20rem", minWidth: 0, maxWidth: "100%" },
+});
 
 /** Page column for the sandbox route: the bar, the dashboard, then the closing sign-up. */
 export const sandboxPage = cva({

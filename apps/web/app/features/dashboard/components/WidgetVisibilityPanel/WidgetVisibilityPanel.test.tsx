@@ -1,6 +1,10 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { WidgetVisibilityPanel, type WidgetVisibilityPanelProps } from "./WidgetVisibilityPanel";
+import {
+  SECTION_COPY,
+  WidgetVisibilityPanel,
+  type WidgetVisibilityPanelProps,
+} from "./WidgetVisibilityPanel";
 
 const base = (over: Partial<WidgetVisibilityPanelProps> = {}): WidgetVisibilityPanelProps => ({
   open: true,
@@ -29,7 +33,35 @@ describe("<WidgetVisibilityPanel />", () => {
     expect(onToggle).toHaveBeenCalledWith("debt");
   });
 
-  it("disables the unticked boxes with one hint once four sections are ticked", () => {
+  it("says the rule once and has no jargon in the descriptions", () => {
+    render(<WidgetVisibilityPanel {...base()} />);
+    expect(
+      screen.getAllByText("Up to 4 sections show on your dashboard, in this order."),
+    ).toHaveLength(1);
+    const dialog = screen.getByRole("dialog");
+    expect(dialog.textContent?.match(/Up to 4/g)).toHaveLength(1);
+    for (const { label, description } of Object.values(SECTION_COPY)) {
+      expect(`${label} ${description}`).not.toMatch(/AER|salary sacrifice|0% deal/);
+    }
+  });
+
+  it("says which ticked sections show on the dashboard", () => {
+    render(
+      <WidgetVisibilityPanel
+        {...base({
+          widgetKeys: ["accounts", "budget", "debt", "savings", "pension", "mortgage"],
+          visibleKeys: ["accounts", "budget", "debt", "savings", "pension", "mortgage"],
+          shownKeys: ["debt", "savings", "pension", "mortgage"],
+        })}
+      />,
+    );
+    expect(screen.getByTestId("widget-visibility-debt-status").textContent).toBe("Showing");
+    expect(screen.getByTestId("widget-visibility-accounts-status").textContent).toBe("Not showing");
+    expect(screen.getAllByText("Showing")).toHaveLength(4);
+    expect(screen.getAllByText("Not showing")).toHaveLength(2);
+  });
+
+  it("disables the unticked boxes, pointing to the rule, once four sections are ticked", () => {
     render(
       <WidgetVisibilityPanel
         {...base({
@@ -40,17 +72,18 @@ describe("<WidgetVisibilityPanel />", () => {
     );
     const pension = screen.getByRole("checkbox", { name: /^Pension/ }) as HTMLInputElement;
     expect(pension.disabled).toBe(true);
-    expect(pension.getAttribute("aria-describedby")).toBe("widget-visibility-cap");
-    expect(screen.getAllByText("Up to 4 sections show here.")).toHaveLength(1);
+    expect(pension.getAttribute("aria-describedby")).toBe("widget-visibility-rule");
+    expect(document.getElementById("widget-visibility-rule")?.textContent).toBe(
+      "Up to 4 sections show on your dashboard, in this order.",
+    );
     // Ticked boxes stay usable, so a section can be swapped out.
     expect((screen.getByRole("checkbox", { name: /^Debt/ }) as HTMLInputElement).disabled).toBe(
       false,
     );
   });
 
-  it("shows no hint and disables nothing below the cap", () => {
+  it("disables nothing below the cap", () => {
     render(<WidgetVisibilityPanel {...base()} />);
-    expect(screen.queryByText(/Up to 4 sections/)).toBeNull();
     expect((screen.getByRole("checkbox", { name: /^Debt/ }) as HTMLInputElement).disabled).toBe(
       false,
     );

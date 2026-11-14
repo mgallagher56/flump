@@ -455,6 +455,9 @@ export const durations = {
   fast: 120,
   instant: 0,
   loop: 800,
+  pendingDelay: 200,
+  pendingMinimum: 400,
+  reveal: 150,
   slow: 320,
 } as const;
 
@@ -484,7 +487,7 @@ export const breakpoints = {
   "2xl": 1536,
   lg: 1024,
   md: 768,
-  nav: 1024,
+  nav: 768,
   sm: 640,
   xl: 1280,
 } as const;

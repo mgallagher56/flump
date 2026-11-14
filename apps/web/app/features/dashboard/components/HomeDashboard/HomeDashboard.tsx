@@ -14,10 +14,7 @@ import { SlidersHorizontal } from "lucide-react";
 import { type FC, type ReactNode, useMemo, useRef, useState } from "react";
 import { SampleAwareLink } from "~/components/navigation/SampleAwareLink";
 import { NetWorthBasisLine } from "~/features/accounts/components/NetWorthBasisLine";
-import {
-  MonthlyCheckInCard,
-  type MonthlyCheckInCardProps,
-} from "~/features/snapshot/components/MonthlyCheckInCard";
+import type { MonthlyCheckInCardProps } from "~/features/snapshot/components/MonthlyCheckInCard";
 import { londonMonth } from "~/features/snapshot/snapshotModel";
 import { normalizeProfile, type UserProfile, useUserProfile } from "~/hooks/useUserProfile";
 import type { DebtSummary } from "~/utils/debtSummary";
@@ -31,6 +28,7 @@ import {
 import { netWorthDelta, type PriorNetWorth } from "../../netWorthDelta";
 import { AccountsWidget } from "../AccountsWidget";
 import { BudgetWidget } from "../BudgetWidget";
+import { CheckInRow } from "../CheckInRow";
 import { DashboardEmptyState } from "../DashboardEmptyState";
 import { DashboardKpiStrip, stripShowsDebt } from "../DashboardKpiStrip";
 import { DebtWidget, debtCardShowsEstimate } from "../DebtWidget";
@@ -41,10 +39,13 @@ import { SetupChecklist, type SetupChecklistProps } from "../SetupChecklist";
 import { TaxWidget, taxCardShowsEstimate } from "../TaxWidget";
 import { WidgetVisibilityPanel } from "../WidgetVisibilityPanel";
 import {
+  dashboardHeader,
   housekeepingGroup,
+  noticeLeadLine,
   sectionHeading,
   sectionsRegion,
   showHideButton,
+  showHideText,
   widgetGrid,
 } from "./HomeDashboard.styles";
 
@@ -80,6 +81,9 @@ export interface HomeDashboardProps {
 export const HERO_LABEL = "Net worth";
 /** The hero label when net worth includes the home at the user's own estimate (D3). */
 export const HERO_LABEL_WITH_HOME = "Net worth, including your home estimate";
+
+/** The dashboard's one control for which sections show. */
+export const SHOW_HIDE_LABEL = "Choose what shows here";
 
 /** At most four section cards render (plan D1, E16 P1.8). */
 export const MAX_SECTION_CARDS = 4;
@@ -129,8 +133,8 @@ const heroValue = (netWorth: number) => {
 };
 
 /**
- * The dashboard (E16 PR 4): h1, the net worth hero with at most one delta, a strip of three
- * supporting figures, the setup and check-in rows when they apply, then up to four section cards
+ * The dashboard (E16 PR 4, R2-4): h1, the net worth hero with at most one delta, a strip of two
+ * supporting figures (number budget N1 4), the setup and check-in rows when they apply, then up to four section cards
  * with one notice at their foot when a card shows an estimate. Every figure is a saved fact or
  * labelled as an estimate, and none repeats.
  */
@@ -168,6 +172,21 @@ export const HomeDashboard: FC<HomeDashboardProps> = ({
     typeof budgetData?.budgetKnown === "boolean"
       ? budgetData.budgetKnown
       : (budgetData?.monthlyIncome ?? 0) > 0 || (budgetData?.monthlyExpenses ?? 0) > 0;
+
+  // Straight after onboarding the budget can hold take-home pay as income and no spending yet. The
+  // strip then shows that income and asks for spending; "left over" would be income minus nothing.
+  // Sample data (no flags) falls back to its totals.
+  const budgetIncome = finiteOrNull(budgetData?.monthlyIncome);
+  const budgetHasIncome =
+    typeof budgetData?.hasIncome === "boolean" ? budgetData.hasIncome : (budgetIncome ?? 0) > 0;
+  const budgetHasSpending =
+    typeof budgetData?.hasSpending === "boolean"
+      ? budgetData.hasSpending
+      : (budgetData?.monthlyExpenses ?? 0) > 0 || (budgetData?.budgetedSavings ?? 0) > 0;
+  const incomeOnly =
+    budgetKnown && budgetHasIncome && !budgetHasSpending && budgetIncome !== null
+      ? budgetIncome
+      : null;
 
   // Enabled pages according to UserProfile, in the fixed canonical order.
   const enabledPages = useMemo<AppPageKey[]>(
@@ -281,8 +300,11 @@ export const HomeDashboard: FC<HomeDashboardProps> = ({
       {banner}
       <PageHeader
         actions={
+          // An icon button below md, so the h1 keeps the first row at 375 (R2-4 dashboard item 1);
+          // the visible words return from md. The accessible name is the same at every width.
           <Button
             aria-haspopup="dialog"
+            aria-label={SHOW_HIDE_LABEL}
             className={showHideButton()}
             id="dashboard-show-hide"
             size="sm"
@@ -290,9 +312,12 @@ export const HomeDashboard: FC<HomeDashboardProps> = ({
             onClick={() => setPanelOpen(true)}
           >
             <Icon icon={SlidersHorizontal} size="sm" />
-            Choose what shows here
+            <span aria-hidden="true" className={showHideText()}>
+              {SHOW_HIDE_LABEL}
+            </span>
           </Button>
         }
+        className={dashboardHeader()}
         title={isSample ? "Example figures" : "Your money"}
       />
 
@@ -319,9 +344,10 @@ export const HomeDashboard: FC<HomeDashboardProps> = ({
       {isSample ? null : <NetWorthBasisLine id="dashboard-net-worth-basis" leftOut={leftOut} />}
 
       <DashboardKpiStrip
-        budgetKnown={budgetKnown}
-        monthlySurplus={budgetKnown ? finiteOrNull(budgetData?.monthlySurplus) : null}
-        monthsOfCover={finiteOrNull(budgetData?.monthsOfCover)}
+        incomeOnly={incomeOnly}
+        monthlySurplus={
+          budgetKnown && incomeOnly === null ? finiteOrNull(budgetData?.monthlySurplus) : null
+        }
         pensionPot={pensionPot}
         totalOwed={totalOwed}
       />
@@ -329,7 +355,7 @@ export const HomeDashboard: FC<HomeDashboardProps> = ({
       {isSample ? null : (
         <div className={housekeepingGroup()}>
           <SetupChecklist {...checklistProps} enabledPages={enabledPages} />
-          {checkIn && hasAccounts ? <MonthlyCheckInCard {...checkIn} /> : null}
+          {checkIn && hasAccounts ? <CheckInRow {...checkIn} /> : null}
         </div>
       )}
 
@@ -343,7 +369,7 @@ export const HomeDashboard: FC<HomeDashboardProps> = ({
             onChooseWidgets={() => setPanelOpen(true)}
           />
         ) : (
-          <div className={widgetGrid()}>
+          <div className={widgetGrid({ odd: cards.length % 2 === 1 })}>
             {cards.map((key) => {
               switch (key) {
                 case "accounts":
@@ -373,8 +399,14 @@ export const HomeDashboard: FC<HomeDashboardProps> = ({
           </div>
         )}
         {showNotice ? (
+          // Two fixed disclaimers in one notice: each on its own line, not run together (R2-4).
+          // Both wordings are fixed (copy guide 7.3), so they are not shortened here.
           <ProjectionNotice
-            lead={showsTaxEstimate ? DELTA_PANEL_COPY.unverifiedBanner : undefined}
+            lead={
+              showsTaxEstimate ? (
+                <span className={noticeLeadLine()}>{DELTA_PANEL_COPY.unverifiedBanner}</span>
+              ) : undefined
+            }
           />
         ) : null}
       </section>
@@ -385,6 +417,7 @@ export const HomeDashboard: FC<HomeDashboardProps> = ({
         error={visibilityError}
         maxVisible={MAX_SECTION_CARDS}
         open={panelOpen}
+        shownKeys={cards}
         visibleKeys={dashboardWidgets}
         widgetKeys={applicableKeys}
         onOpenChange={setPanelOpen}

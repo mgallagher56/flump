@@ -1,7 +1,8 @@
-import { DELTA_PANEL_COPY, Money } from "@repo/ui";
+import { DELTA_PANEL_COPY, Money, StatusBadge } from "@repo/ui";
 import type { FC } from "react";
 import { WIDGET_ICONS } from "../../widgetIcons";
 import { WidgetCard } from "../WidgetCard";
+import { taxFigure } from "./TaxWidget.styles";
 
 export interface TaxWidgetProps {
   data: {
@@ -14,16 +15,17 @@ export interface TaxWidgetProps {
   };
 }
 
-/** The label on the tax figure: every tax figure is an unverified estimate (ruling 3). */
-export const TAX_DUE_LABEL = `Tax due this tax year (${DELTA_PANEL_COPY.unverifiedBadge.toLowerCase()})`;
+/** The label on the tax figure. The "Unverified estimate" badge sits beside the figure (ruling 3). */
+export const TAX_DUE_LABEL = "Tax due this tax year";
 
 /** True when the card shows a tax figure, which needs the "Unverified estimate" notice. */
 export const taxCardShowsEstimate = (data: TaxWidgetProps["data"] | null | undefined): boolean =>
   typeof data?.estimatedTaxDue === "number" && Number.isFinite(data.estimatedTaxDue);
 
 /**
- * The Self Assessment section card: the estimated tax due on income not taxed through PAYE.
- * The full "Unverified estimate" sentence is in the page's one notice, not here.
+ * The Self Assessment section card: the estimated tax due on income not taxed through PAYE, with
+ * the standard "Unverified estimate" badge beside the figure. The full sentence is in the page's
+ * one notice, not here.
  */
 export const TaxWidget: FC<TaxWidgetProps> = ({ data }) => {
   const known = taxCardShowsEstimate(data);
@@ -32,8 +34,18 @@ export const TaxWidget: FC<TaxWidgetProps> = ({ data }) => {
       domain="tax"
       figure={
         known ? (
-          <span data-figure="tax.estimatedDue">
-            <Money fractionDigits={0} size="lg" value={data.estimatedTaxDue} />
+          <span className={taxFigure()}>
+            <span data-figure="tax.estimatedDue">
+              <Money fractionDigits={0} size="lg" value={data.estimatedTaxDue} />
+            </span>
+            <StatusBadge
+              data-testid="tax-unverified-badge"
+              id="tax-unverified-badge"
+              size="sm"
+              variant="neutral"
+            >
+              {DELTA_PANEL_COPY.unverifiedBadge}
+            </StatusBadge>
           </span>
         ) : null
       }

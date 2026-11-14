@@ -1,10 +1,9 @@
 import * as Dialog from "@radix-ui/react-dialog";
 import { Button, Icon, InlineAlert } from "@repo/ui";
 import type { FC } from "react";
-import { DASHBOARD_WIDGET_METAS, type DashboardWidgetKey } from "~/utils/pageConfig";
+import type { DashboardWidgetKey } from "~/utils/pageConfig";
 import { WIDGET_ICONS } from "../../widgetIcons";
 import {
-  panelCapHint,
   panelCheckbox,
   panelContent,
   panelDescription,
@@ -14,6 +13,7 @@ import {
   panelRow,
   panelRowHint,
   panelRowLabel,
+  panelRowStatus,
   panelRowText,
   panelTitle,
 } from "./WidgetVisibilityPanel.styles";
@@ -28,12 +28,32 @@ export interface WidgetVisibilityPanelProps {
   onToggle: (key: DashboardWidgetKey) => void;
   /** Failure copy from the last save. Shown inline; the checklist keeps the user's choice. */
   error?: string | null;
-  /** Most sections the dashboard draws. At the cap, unticked boxes are disabled with one hint. */
+  /** Most sections the dashboard draws. At the cap, unticked boxes are disabled. */
   maxVisible?: number;
+  /**
+   * The sections the dashboard draws now, so each ticked row can say whether it shows. A ticked
+   * section can be left out when the cap is reached or it has nothing to show yet.
+   */
+  shownKeys?: readonly DashboardWidgetKey[];
 }
 
-/** Shown once the cap is reached, and linked to each disabled box. */
-export const SECTION_CAP_HINT = (max: number) => `Up to ${max} sections show here.`;
+/** The panel's one rule, said once. Disabled boxes point to it. */
+export const SECTION_RULE = (max: number) =>
+  `Up to ${max} sections show on your dashboard, in this order.`;
+
+/** What each section card shows, in plain words (no "AER", "salary sacrifice" or "0% deal"). */
+export const SECTION_COPY: Record<DashboardWidgetKey, { label: string; description: string }> = {
+  accounts: { label: "Accounts", description: "How many accounts you have added" },
+  budget: { label: "Budget", description: "What you spend each month" },
+  debt: { label: "Debt", description: "What you owe and when it could be paid off" },
+  savings: { label: "Savings", description: "What you have in savings and investments" },
+  pension: { label: "Pension", description: "Your pension pots and what is paid in" },
+  mortgage: { label: "Mortgage", description: "What is left to pay on your mortgage" },
+  tax: { label: "Self Assessment", description: "An estimate of tax on income outside PAYE" },
+};
+
+export const SHOWING_LABEL = "Showing";
+export const NOT_SHOWING_LABEL = "Not showing";
 
 /** "Choose what shows here": only ever changes which sections appear, never their order. */
 export const WidgetVisibilityPanel: FC<WidgetVisibilityPanelProps> = ({
@@ -44,6 +64,7 @@ export const WidgetVisibilityPanel: FC<WidgetVisibilityPanelProps> = ({
   onToggle,
   error,
   maxVisible = 4,
+  shownKeys,
 }) => {
   const atCap = widgetKeys.filter((k) => visibleKeys.includes(k)).length >= maxVisible;
   return (
@@ -52,31 +73,27 @@ export const WidgetVisibilityPanel: FC<WidgetVisibilityPanelProps> = ({
         <Dialog.Overlay className={panelOverlay()} />
         <Dialog.Content className={panelContent()} data-focus-managed id="widget-visibility-panel">
           <Dialog.Title className={panelTitle()}>Choose what shows here</Dialog.Title>
-          <Dialog.Description className={panelDescription()}>
-            Choose which sections appear on your dashboard. Up to four show at a time, and the order
-            stays the same.
+          <Dialog.Description className={panelDescription()} id="widget-visibility-rule">
+            {SECTION_RULE(maxVisible)}
           </Dialog.Description>
           {error ? <InlineAlert tone="danger">{error}</InlineAlert> : null}
-          {atCap ? (
-            <p
-              className={panelCapHint()}
-              data-testid="widget-visibility-cap"
-              id="widget-visibility-cap"
-            >
-              {SECTION_CAP_HINT(maxVisible)}
-            </p>
-          ) : null}
           <ul className={panelList()}>
             {widgetKeys.map((key) => {
-              const meta = DASHBOARD_WIDGET_METAS[key];
+              const copy = SECTION_COPY[key];
               const inputId = `widget-visibility-${key}`;
               const checked = visibleKeys.includes(key);
               const disabled = atCap && !checked;
+              const status =
+                shownKeys && checked
+                  ? shownKeys.includes(key)
+                    ? SHOWING_LABEL
+                    : NOT_SHOWING_LABEL
+                  : null;
               return (
                 <li key={key}>
                   <label className={panelRow()} htmlFor={inputId}>
                     <input
-                      aria-describedby={disabled ? "widget-visibility-cap" : undefined}
+                      aria-describedby={disabled ? "widget-visibility-rule" : undefined}
                       checked={checked}
                       disabled={disabled}
                       className={panelCheckbox()}
@@ -87,9 +104,18 @@ export const WidgetVisibilityPanel: FC<WidgetVisibilityPanelProps> = ({
                     />
                     <Icon icon={WIDGET_ICONS[key]} size="md" />
                     <span className={panelRowText()}>
-                      <span className={panelRowLabel()}>{meta.label}</span>
-                      <span className={panelRowHint()}>{meta.description}</span>
+                      <span className={panelRowLabel()}>{copy.label}</span>
+                      <span className={panelRowHint()}>{copy.description}</span>
                     </span>
+                    {status ? (
+                      <span
+                        className={panelRowStatus({ shown: status === SHOWING_LABEL })}
+                        data-testid={`${inputId}-status`}
+                        id={`${inputId}-status`}
+                      >
+                        {status}
+                      </span>
+                    ) : null}
                   </label>
                 </li>
               );

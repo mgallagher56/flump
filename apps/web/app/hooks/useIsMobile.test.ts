@@ -36,8 +36,8 @@ describe("useIsMobile", () => {
     expect(renders[0]).toBe(false);
   });
 
-  test("follows the shared nav breakpoint (64rem, 1024px), not a separate 768px one", () => {
-    expect(NAV_COLLAPSED_MEDIA_QUERY).toBe("not all and (min-width: 64rem)");
+  test("follows the shared nav breakpoint (48rem, 768px: phones only)", () => {
+    expect(NAV_COLLAPSED_MEDIA_QUERY).toBe("not all and (min-width: 48rem)");
     stubViewport(true);
     renderHook(() => useIsMobile());
     expect(window.matchMedia).toHaveBeenCalledWith(NAV_COLLAPSED_MEDIA_QUERY);

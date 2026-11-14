@@ -91,7 +91,7 @@ describe("<Header />", () => {
     expect(screen.getByText("UserLogin")).not.toBeNull();
   });
 
-  test("signed-out visitors without a bottom bar open the drawer from the menu button", () => {
+  test("signed-out visitors open the drawer from the menu button", () => {
     mocks.mockUseLoaderData.mockReturnValue({ user: undefined });
     customRender(<Header isMobile variant="mobile" />);
     const toggleBtn = screen.getByLabelText("Open navigation menu");
@@ -114,14 +114,34 @@ describe("<Header />", () => {
         </ResponsiveProvider>,
       );
 
-    test("has exactly one navigation control: the bottom bar, with no header menu button", () => {
+    test("the top bar keeps its menu button beside the bottom bar (owner ruling)", () => {
       mocks.mockUseLoaderData.mockReturnValue({ user: mockUser });
       renderPhoneChrome();
-      expect(screen.queryByLabelText("Open navigation menu")).toBeNull();
+      expect(screen.getByRole("button", { name: "Open navigation menu" })).not.toBeNull();
       const bar = screen.getByRole("navigation", { name: "Main navigation" });
       const buttons = within(bar).getAllByRole("button");
       expect(buttons).toHaveLength(1);
       expect(buttons[0].getAttribute("aria-label")).toBe("More pages");
+    });
+
+    test("the menu button opens the drawer and focus returns to it on close", () => {
+      mocks.mockUseLoaderData.mockReturnValue({ user: mockUser });
+      renderPhoneChrome();
+      const menu = screen.getByRole("button", { name: "Open navigation menu" });
+      menu.focus();
+      fireEvent.click(menu);
+      expect(screen.getByTestId("mobile-nav-drawer")).not.toBeNull();
+      expect(menu.getAttribute("aria-expanded")).toBe("true");
+      fireEvent.click(screen.getByLabelText("Close navigation menu"));
+      expect(screen.queryByTestId("mobile-nav-drawer")).toBeNull();
+      expect(document.activeElement).toBe(menu);
+    });
+
+    test("the top bar carries the one-button theme switch", () => {
+      mocks.mockUseLoaderData.mockReturnValue({ user: mockUser });
+      renderPhoneChrome();
+      expect(screen.getByTestId("theme-toggle-compact").tagName).toBe("BUTTON");
+      expect(screen.getByRole("button", { name: /^Colour theme: / })).not.toBeNull();
     });
 
     test("the bottom bar's last item, More, opens and closes the drawer", () => {

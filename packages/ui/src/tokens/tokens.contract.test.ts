@@ -156,7 +156,7 @@ describe("Panda spec and the native theme agree", () => {
     for (const [k, n] of Object.entries(steps)) {
       expect(specValues(`breakpoints.${k}`).light.map(px), k).toEqual([n]);
     }
-    expect(nav).toBe(steps.lg);
+    expect(nav).toBe(steps.md);
   });
 
   it("know the same text style names", () => {

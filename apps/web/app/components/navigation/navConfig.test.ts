@@ -48,12 +48,13 @@ describe("navConfig", () => {
     ]);
   });
 
-  it("collapses Borrowing to the single page left and drops empty groups", () => {
+  it("keeps the Borrowing label when only the debt page is left, and drops empty groups", () => {
     const onlyDebt = filterNavRoutes(AUTH_NAV_ROUTES, ["debt"], isPageEnabled);
-    const debt = onlyDebt.find((r) => r.key === "debt");
-    expect(debt?.route).toBe("/app/debt");
-    expect(debt?.children).toBeUndefined();
-    expect(topLevel(onlyDebt)).not.toContain("borrowing");
+    // One nav label for the debt area for everyone (RESCORE R2-4): the group's, linking to debt.
+    const borrowing = onlyDebt.find((r) => r.key === "borrowing");
+    expect(borrowing?.route).toBe("/app/debt");
+    expect(borrowing?.children).toBeUndefined();
+    expect(topLevel(onlyDebt)).not.toContain("debt");
     expect(topLevel(onlyDebt)).not.toContain("savingsAndPension");
     const none = filterNavRoutes(AUTH_NAV_ROUTES, ["budget"], isPageEnabled);
     expect(topLevel(none)).toEqual(["budget", "taxAndPay"]);

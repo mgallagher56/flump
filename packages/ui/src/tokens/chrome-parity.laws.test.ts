@@ -99,8 +99,8 @@ describe("Shared chrome law (marketing and web)", () => {
   });
 
   describe("nav breakpoint", () => {
-    it("is defined once in the shared preset, at Panda's lg", () => {
-      expect(NAV_BREAKPOINT).toBe("64rem");
+    it("is defined once in the shared preset, at Panda's md", () => {
+      expect(NAV_BREAKPOINT).toBe("48rem");
       expect(navConditions.navInline).toContain(NAV_BREAKPOINT);
       expect(navConditions.navCollapsed).toContain(NAV_BREAKPOINT);
       expect(read("packages/ui/panda.preset.ts")).toContain("...navConditions");

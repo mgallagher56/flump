@@ -3,6 +3,7 @@ import { Bot, Calculator, ChevronDown, LogOut, Settings } from "lucide-react";
 import { type FC, type KeyboardEvent, useEffect, useId, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Form, Link } from "react-router";
+import { useHydrated } from "~/hooks/useHydrated";
 import { CONNECT_AI_ROUTE } from "../navConfig";
 import UserAvatar from "../UserAvatar";
 import { container, divider, item, panel, srOnly, trigger } from "./AvatarMenu.styles";
@@ -21,6 +22,8 @@ const AvatarMenu: FC<AvatarMenuProps> = ({ user }) => {
   const rootRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const menuId = useId();
+  // Before hydration a click cannot open the menu, so the trigger says so instead of ignoring it.
+  const hydrated = useHydrated();
 
   const close = (restoreFocus: boolean) => {
     setOpen(false);
@@ -62,13 +65,16 @@ const AvatarMenu: FC<AvatarMenuProps> = ({ user }) => {
     <div className={container()} ref={rootRef}>
       <button
         aria-controls={open ? menuId : undefined}
+        aria-disabled={hydrated ? undefined : true}
         aria-expanded={open}
         aria-haspopup="menu"
         className={trigger()}
         id="avatar-menu-trigger"
         ref={triggerRef}
         type="button"
-        onClick={() => setOpen((value) => !value)}
+        onClick={() => {
+          if (hydrated) setOpen((value) => !value);
+        }}
       >
         <span aria-hidden="true">
           <UserAvatar bordered size={26} user={user} />

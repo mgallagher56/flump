@@ -69,6 +69,26 @@ describe("_index route", () => {
     expect(data).not.toHaveProperty("isDemo");
   });
 
+  it("flags a budget that holds income but no spending yet (straight after onboarding)", async () => {
+    vi.mocked(loadWorkspaceSnapshot).mockResolvedValueOnce({
+      user: { id: "u1", email: "real@example.com" },
+      accounts: [],
+      accountDetails: [],
+      budgetEntries: [
+        { id: "b1", name: "Take-home pay", category: "income", amount: 2085, isIncome: true },
+      ],
+      taxRecords: [],
+      userProfile: { onboardingCompleted: true },
+      portfolioSnapshot: undefined,
+    } as any);
+    const request = new Request("http://localhost/");
+    const data = (await loader({ request, params: {}, context: {} } as any)) as any;
+    expect(data.budgetData.budgetKnown).toBe(true);
+    expect(data.budgetData.hasIncome).toBe(true);
+    expect(data.budgetData.hasSpending).toBe(false);
+    expect(data.budgetData.monthlyIncome).toBe(2085);
+  });
+
   it("never invents an estimated tax due figure from tax records", async () => {
     vi.mocked(loadWorkspaceSnapshot).mockResolvedValueOnce({
       user: { id: "u1", email: "real@example.com" },

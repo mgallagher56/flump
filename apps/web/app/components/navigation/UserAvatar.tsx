@@ -56,7 +56,7 @@ export const UserAvatar: FC<UserAvatarProps> = ({
     userSelect: "none",
     borderRadius: "full",
     flexShrink: 0,
-    backgroundColor: "surface.muted",
+    backgroundColor: "surface.sunken",
   });
 
   const borderedStyle = css({
@@ -76,8 +76,9 @@ export const UserAvatar: FC<UserAvatarProps> = ({
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    background: "linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%)",
-    color: "#ffffff",
+    // Semantic fill (P9), not a hard-coded indigo gradient.
+    backgroundColor: "primary.solid",
+    color: "primary.foreground",
     fontWeight: "semibold",
     textTransform: "uppercase",
     letterSpacing: "0.02em",

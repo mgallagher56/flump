@@ -8,3 +8,19 @@ export const kpiFigure = cva({
     fontVariantNumeric: "tabular-nums",
   },
 });
+
+/** The prompt under the income figure: a quiet text link that wraps, not a button. */
+export const kpiPromptLink = cva({
+  base: {
+    color: "text.primary",
+    textDecoration: "underline",
+    textUnderlineOffset: "2px",
+    _hover: { color: "text.secondary" },
+    _focusVisible: {
+      outline: "2px solid",
+      outlineColor: "border.focusRing",
+      outlineOffset: "2px",
+      borderRadius: "sm",
+    },
+  },
+});

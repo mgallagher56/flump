@@ -1,4 +1,5 @@
 import { HomeLogo, ThemeToggle, TopBar } from "@repo/ui";
+import { css } from "@repo/ui/styled-system/css";
 import { type FC, type ReactElement, useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useLocation, useRouteLoaderData } from "react-router";
@@ -16,6 +17,10 @@ import { isPageEnabled } from "~/utils/pageConfig";
 
 import MobileNavDrawer from "./MobileNavDrawer";
 
+// The theme switch swaps at the shared navWide condition, never a raw breakpoint.
+const compactOnly = css({ _navWide: { display: "none" } });
+const wideOnly = css({ display: "none", _navWide: { display: "flex" } });
+
 export interface HeaderProps {
   isMobile?: boolean;
   variant?: "desktop" | "mobile";
@@ -29,16 +34,9 @@ const Header: FC<HeaderProps> = ({ isMobile: propIsMobile, variant }): ReactElem
   const { profile } = useUserProfile();
   const { pathname } = useLocation();
   const sandbox = !user && isSandboxPath(pathname);
-  // Below the nav breakpoint the bottom bar is the navigation whenever it shows (signed in, or the
-  // signed-out sandbox) and its "More" opens the drawer, so the header drops its menu button: one
-  // navigation control at 375. Elsewhere signed out there is no bottom bar, so the button stays.
-  const hasBottomBar = !!user || sandbox;
-  const {
-    isMobile: contextIsMobile,
-    isMobileDrawerOpen,
-    setMobileDrawerOpen,
-    toggleMobileDrawer,
-  } = useResponsive();
+  // Below the nav breakpoint (phones) the top bar always keeps its menu button, beside the bottom
+  // bar where that shows (owner ruling 2026-11-14): both open the same drawer.
+  const { isMobile: contextIsMobile, isMobileDrawerOpen, setMobileDrawerOpen } = useResponsive();
   const [localDrawerOpen, setLocalDrawerOpen] = useState(false);
 
   const isMobileVariant = propIsMobile ?? (variant === "mobile" ? true : contextIsMobile);
@@ -59,9 +57,11 @@ const Header: FC<HeaderProps> = ({ isMobile: propIsMobile, variant }): ReactElem
   );
   const renderLink = useMemo(() => createRenderNavLink(), []);
 
+  // One open state for both openers (this menu button and the bottom bar's More).
   const handleToggleDrawer = () => {
-    toggleMobileDrawer();
-    setLocalDrawerOpen((prev) => !prev);
+    const next = !drawerOpen;
+    setMobileDrawerOpen(next);
+    setLocalDrawerOpen(next);
   };
 
   const handleCloseDrawer = useCallback(() => {
@@ -74,12 +74,22 @@ const Header: FC<HeaderProps> = ({ isMobile: propIsMobile, variant }): ReactElem
       <TopBar
         actions={
           <>
+            {/* Phones and tablets: one 44px button. From navWide the three-way switch shows. */}
+            <ThemeToggle
+              className={compactOnly}
+              id="theme-toggle-compact"
+              onChange={setPreference}
+              preference={preference}
+              variant="cycle"
+            />
+            <div className={wideOnly}>
+              <ThemeToggle onChange={setPreference} preference={preference} />
+            </div>
             {!!user && <AvatarMenu user={user} />}
-            {!user && <UserLogin />}
+            {!user && <UserLogin signUp={sandbox ? "never" : "fromSm"} />}
           </>
         }
         activeKey={findActiveNavKey(items, pathname)}
-        inlineActions={<ThemeToggle onChange={setPreference} preference={preference} />}
         items={items}
         logo={<HomeLogo decorative={!isMobileVariant} renderLink={renderHomeLogoLink} />}
         menuControls="mobile-nav-drawer"
@@ -87,7 +97,7 @@ const Header: FC<HeaderProps> = ({ isMobile: propIsMobile, variant }): ReactElem
         menuLabel="Open navigation menu"
         navLabel="Primary"
         renderLink={renderLink}
-        onMenuClick={hasBottomBar ? undefined : handleToggleDrawer}
+        onMenuClick={handleToggleDrawer}
       />
       <MobileNavDrawer
         isOpen={drawerOpen}

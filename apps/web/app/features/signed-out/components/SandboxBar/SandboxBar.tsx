@@ -30,14 +30,18 @@ export const SandboxBar = <Key extends string>({
     id="sandbox-bar"
     role="note"
   >
-    <div className={barGroup()}>
-      <span className={barTitle()}>
-        <Icon icon={Info} size="sm" />
-        Sample data: illustrative figures, not yours.
-      </span>
+    <span className={barTitle()}>
+      <Icon icon={Info} size="sm" />
+      Sample data: illustrative figures, not yours.
+    </span>
+    {/*
+      The household tabs are a direct child of the bar with a flex basis of their own: the tab
+      scroller uses `contain: inline-size`, so as a content-sized flex item it had no width and the
+      tabs disappeared (R2-4 sandbox item 1).
+    */}
+    <div className={personaTabs()} data-testid="sandbox-persona-tabs" id="sandbox-persona-tabs">
       <Tabs
         aria-label="Sample household"
-        className={personaTabs()}
         items={personas.map((p) => ({ value: p.key, label: p.label }))}
         size="sm"
         value={active}

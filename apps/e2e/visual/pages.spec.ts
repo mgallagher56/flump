@@ -1,5 +1,6 @@
 import { expect, type Page, type TestInfo, test } from "@playwright/test";
 import { AUTH_STATE } from "../support/auth";
+import { MARKETING_URL, WEB_URL } from "../support/env";
 import { horizontalOverflow, settle, syncBrowserClock } from "../support/page";
 import { RENTER_ROUTES, VISUAL_ROUTES, type VisualRoute } from "./routes";
 
@@ -77,5 +78,42 @@ for (const route of RENTER_ROUTES) {
         await shoot(page, testInfo, route, `${route.name}-renter`);
       },
     );
+  });
+}
+
+/**
+ * The top bars at the two nav widths (`NAV_BREAKPOINT` 768px, `NAV_WIDE_BREAKPOINT` 1024px), where
+ * the compact desktop bar starts and where everything fits. Header only, in the 1280 projects (their
+ * theme), at each width: no horizontal overflow, nothing clipped in the inline nav, and a baseline.
+ */
+const HEADER_CASES = [
+  { name: "marketing-header", url: `${MARKETING_URL}/`, signedIn: false },
+  { name: "web-header", url: `${WEB_URL}/`, signedIn: true },
+] as const;
+
+for (const header of HEADER_CASES) {
+  test.describe(header.name, () => {
+    if (header.signedIn) test.use({ storageState: AUTH_STATE });
+
+    for (const width of [768, 1024]) {
+      test(`${header.name} fits at ${width}px`, async ({ page }, testInfo) => {
+        test.skip(!testInfo.project.name.startsWith("1280"), "shot once per theme");
+        await page.setViewportSize({ width, height: 800 });
+        await syncBrowserClock(page);
+        await page.goto(header.url);
+        await settle(page);
+        const overflow = await horizontalOverflow(page);
+        expect(overflow.scrollWidth, `page overflow at ${width}px`).toBeLessThanOrEqual(width);
+        const clipped = await page.evaluate(() => {
+          const list = document.querySelector("header nav ul");
+          return list ? list.scrollWidth - list.clientWidth : 0;
+        });
+        expect(clipped, `inline nav clipped at ${width}px`).toBeLessThanOrEqual(0);
+        await expect(page.locator("header").first()).toHaveScreenshot(
+          `${header.name}-${width}.png`,
+          { mask: [page.locator(MASK_SELECTOR)] },
+        );
+      });
+    }
   });
 }

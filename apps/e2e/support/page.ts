@@ -14,6 +14,14 @@ export async function syncBrowserClock(page: Page): Promise<void> {
 }
 
 /** Waits until the page has stopped changing: network quiet, web fonts in, layout settled. */
+/**
+ * Waits for React to hydrate the web app (`html[data-hydrated]`, set by root.tsx), so a click on a
+ * script-driven control (the account menu, the theme switch) is not lost. Use it instead of a timeout.
+ */
+export async function waitForHydration(page: Page): Promise<void> {
+  await page.locator("html[data-hydrated]").waitFor({ state: "attached" });
+}
+
 export async function settle(page: Page): Promise<void> {
   await page.waitForLoadState("networkidle");
   await page.evaluate(async () => {

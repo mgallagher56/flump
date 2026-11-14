@@ -24,6 +24,8 @@ export const trigger = cva({
       outlineColor: "border.focusRing",
       outlineOffset: "2px",
     },
+    // Before hydration: cannot open yet, so no hover lift and a progress cursor.
+    '&[aria-disabled="true"]': { cursor: "progress", _hover: { boxShadow: "none" } },
   },
 });
 

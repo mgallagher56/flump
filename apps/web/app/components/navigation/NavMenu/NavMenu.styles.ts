@@ -10,9 +10,8 @@ export const mobileSection = cva({
 
 export const mobileSectionHeading = cva({
   base: {
+    // Sentence case, no tracking (P7.3): a quiet group label, not an eyebrow.
     textStyle: "label.sm",
-    textTransform: "uppercase",
-    letterSpacing: "0.06em",
     color: "text.muted",
     padding: "10px 16px 4px",
     marginTop: "1",
