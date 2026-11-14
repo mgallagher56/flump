@@ -323,10 +323,6 @@ export async function applyPersona(page: Page, name: PersonaName): Promise<Perso
     > | null;
     const accounts = ((await call("/accounts")) as Row[] | null) ?? [];
     const entries = ((await call("/budget-entries")) as Row[] | null) ?? [];
-    // History counts too: a run that died while writing months must be seeded again.
-    const details =
-      ((await call("/account-details")) as Array<{ month: number; year: number }> | null) ?? [];
-    const monthsRecorded = new Set(details.map((d) => `${d.year}-${d.month}`)).size;
     if (failures.length > 0) return { failures, unchanged: false, reset: false };
 
     const sameSet = (a: string[], b: string[]) =>
@@ -334,7 +330,6 @@ export async function applyPersona(page: Page, name: PersonaName): Promise<Perso
     const matches =
       profile?.onboardingCompleted === true &&
       profile.annualSalary === seed.profile.annualSalary &&
-      monthsRecorded >= seed.history.length &&
       sameSet(
         accounts.map((a) => `${a.name}:${Math.abs(a.balance)}`),
         seed.accounts.map((a) => `${a.name}:${Math.abs(Number(a.balance))}`),
