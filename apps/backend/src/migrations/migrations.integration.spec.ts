@@ -1088,6 +1088,9 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
         (await userIdIndexes()).find((b) => b.name === "IDX_transactions_account")?.valid,
       ).toBe(false);
 
+      // A crash mid-build never records the migration, so the next boot runs up() again.
+      await ds.query("DELETE FROM migrations WHERE name = 'AddUserIdIndexes1794357420000'");
+
       const runner = ds.createQueryRunner();
       try {
         await new AddUserIdIndexes1794357420000().up(runner);

@@ -1,5 +1,5 @@
 import type { MigrationInterface, QueryRunner } from "typeorm";
-import { MIGRATION_LOCK_KEY } from "../config/migration-lock";
+import { takeMigrationLock, withSessionMigrationLock } from "../config/migration-lock";
 
 // Backend audit H7: the six core tables had only primary keys, so every per-user read was a
 // sequential scan over every user's rows. Each index matches a real query shape: the leading
@@ -54,10 +54,14 @@ export class AddUserIdIndexes1794357420000 implements MigrationInterface {
   transaction = false;
 
   public async up(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query("SELECT pg_advisory_lock($1)", [MIGRATION_LOCK_KEY]);
-    try {
-      await queryRunner.query("SET statement_timeout = 0");
-      await queryRunner.query("SET lock_timeout = 0");
+    await withSessionMigrationLock(queryRunner, async () => {
+      // Another instance may have finished this migration while we waited for the lock; TypeORM
+      // computed its pending list before that, so skip rather than build again and record twice.
+      const recorded: unknown[] = await queryRunner.query(
+        "SELECT 1 FROM migrations WHERE name = $1",
+        [this.name],
+      );
+      if (recorded.length > 0) return;
       for (const index of USER_ID_INDEXES) {
         const invalid: unknown[] = await queryRunner.query(
           `SELECT 1 FROM pg_index i
@@ -74,16 +78,11 @@ export class AddUserIdIndexes1794357420000 implements MigrationInterface {
           `CREATE INDEX CONCURRENTLY IF NOT EXISTS "${index.name}" ON "${index.table}" (${columns})`,
         );
       }
-    } finally {
-      // RESET returns to the connection's startup values (the pool's limits).
-      await queryRunner.query("RESET statement_timeout");
-      await queryRunner.query("RESET lock_timeout");
-      await queryRunner.query("SELECT pg_advisory_unlock($1)", [MIGRATION_LOCK_KEY]);
-    }
+    });
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query("SELECT pg_advisory_xact_lock($1)", [MIGRATION_LOCK_KEY]);
+    await takeMigrationLock(queryRunner);
     for (const index of [...USER_ID_INDEXES].reverse()) {
       await queryRunner.query(`DROP INDEX IF EXISTS "${index.name}"`);
     }

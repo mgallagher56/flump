@@ -1,3 +1,4 @@
+import "./config/timezone";
 import "reflect-metadata";
 import { DataSource } from "typeorm";
 import { cliDataSourceOptions } from "./data-source.options";

@@ -5,6 +5,8 @@ export default defineConfig({
     globals: true,
     root: "./",
     environment: "node",
+    // Production pins the process to UTC (src/config/timezone.ts); tests run the same way.
+    env: { TZ: "UTC" },
     // The real-Postgres suites (migrations, contract) each reset the same TEST_DATABASE_URL schema,
     // so test files must not run concurrently.
     fileParallelism: false,
