@@ -494,16 +494,22 @@ export function calculateUKTax(
     }
   }
 
-  // Sum PAYE
+  // Sum PAYE. Salary records are kept apart from bonus, commission, overtime and benefits so
+  // the extras add to the salary instead of replacing it (C-10).
+  let payeSalaryRecords = 0;
+  let payeExtrasRecords = 0;
   for (const catId in payeRecordValues) {
     const arr = payeRecordValues[catId];
     const sum = arr ? arr.reduce((a, b) => a + b, 0) : 0;
     if (catId === "paye_pension") {
       payeExpenses += sum;
+    } else if (catId === "paye_salary") {
+      payeSalaryRecords += sum;
     } else {
-      payeIncomeGross += sum;
+      payeExtrasRecords += sum;
     }
   }
+  payeIncomeGross = payeSalaryRecords + payeExtrasRecords;
 
   // Sum Savings & Dividends
   for (const catId in savingsRecordValues) {
@@ -520,9 +526,11 @@ export function calculateUKTax(
     }
   }
 
-  // Effective PAYE salary: use logged records if provided, otherwise default to profile/param salary
-  const effectivePayeSalary =
-    payeIncomeGross > 0 ? Math.max(0, payeIncomeGross - payeExpenses) : payeSalary;
+  // Effective PAYE salary (C-10): the base is the logged salary records when there are any,
+  // otherwise the profile/param salary. Bonus, commission, overtime and benefit records add to
+  // that base (a lone bonus never replaces the salary); logged employee pension comes off.
+  const basePayeSalary = payeSalaryRecords > 0 ? payeSalaryRecords : payeSalary;
+  const effectivePayeSalary = Math.max(0, basePayeSalary + payeExtrasRecords - payeExpenses);
 
   // Calculate profits
   const rentalProfitBeforeInterest = Math.max(0, rentalIncomeGross - rentalExpensesExclInterest);

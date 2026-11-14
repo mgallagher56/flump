@@ -257,3 +257,68 @@ describe("annual records count once, in the tax year containing their date (E23 
     expect(getAnnualRecordEndDate("2024-12-31")).toBe("2025-04-05");
   });
 });
+
+describe("PAYE bonus records add to the salary, never replace it (C-10)", () => {
+  // 2026/27 England, Wales and NI: personal allowance 12,570, basic band 37,700 at 20%, higher
+  // rate 40%, allowance tapered by 1 for every 2 over 100,000. Hand-derived golden figures.
+  const Y = "2026/27";
+  const paye = (id: string, category: string, amount: number, date = "2026-06-01"): TaxRecord => ({
+    ...dividendRecord(amount, date),
+    id,
+    source: "paye",
+    category,
+    name: id,
+  });
+  const bonus = (amount: number) => paye("bonus", "paye_bonus", amount);
+  const loggedSalary = (amount: number) => ({
+    ...paye("salary", "paye_salary", amount, "2026-04-10"),
+    frequency: "annual" as const,
+    endDate: "2027-04-05",
+  });
+
+  it("salary only: 50,000 profile salary, 37,430 taxable at 20% = 7,486", () => {
+    const r = calculateUKTax(Y, [], 50000, 100);
+    expect(r.effectivePayeSalary).toBe(50000);
+    expect(r.payeTaxDue).toBe(7486);
+    expect(r.netAdditionalTaxToPay).toBe(0);
+  });
+
+  it("salary + bonus: 50,000 + 5,000 = 55,000; 7,540 + 4,730 x 40% = 9,432", () => {
+    const r = calculateUKTax(Y, [bonus(5000)], 50000, 100);
+    expect(r.effectivePayeSalary).toBe(55000);
+    expect(r.payeTaxDue).toBe(9432);
+    expect(r.netAdditionalTaxToPay).toBe(0);
+  });
+
+  it("bonus with no profile salary: the bonus alone, 8,000, inside the allowance", () => {
+    const r = calculateUKTax(Y, [bonus(8000)], 0, 100);
+    expect(r.effectivePayeSalary).toBe(8000);
+    expect(r.payeTaxDue).toBe(0);
+  });
+
+  it("logged salary + bonus: 40,000 logged replaces the 60,000 profile salary, bonus adds", () => {
+    const r = calculateUKTax(Y, [loggedSalary(40000), bonus(5000)], 60000, 100);
+    expect(r.effectivePayeSalary).toBe(45000);
+    // 45,000 - 12,570 = 32,430 x 20%
+    expect(r.payeTaxDue).toBe(6486);
+  });
+
+  it("logged salary alone still replaces the profile salary", () => {
+    const r = calculateUKTax(Y, [loggedSalary(40000)], 60000, 100);
+    expect(r.effectivePayeSalary).toBe(40000);
+  });
+
+  it("a bonus that crosses the higher-rate threshold: 48,000 + 4,000; 7,540 + 1,730 x 40% = 8,232", () => {
+    const r = calculateUKTax(Y, [bonus(4000)], 48000, 100);
+    expect(r.effectivePayeSalary).toBe(52000);
+    expect(r.payeTaxDue).toBe(8232);
+  });
+
+  it("a bonus that crosses 100,000 tapers the allowance: 95,000 + 15,000 = 110,000", () => {
+    const r = calculateUKTax(Y, [bonus(15000)], 95000, 100);
+    expect(r.effectivePayeSalary).toBe(110000);
+    // Allowance 12,570 - (10,000 / 2) = 7,570; taxable 102,430; 7,540 + 64,730 x 40% = 33,432
+    expect(r.personalAllowance).toBe(7570);
+    expect(r.payeTaxDue).toBe(33432);
+  });
+});
