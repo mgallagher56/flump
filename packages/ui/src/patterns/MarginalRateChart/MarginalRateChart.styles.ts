@@ -44,7 +44,7 @@ export const marginalRateTooltip = cva({
     borderRadius: "md",
     borderWidth: "1px",
     borderStyle: "solid",
-    borderColor: "border.DEFAULT",
+    borderColor: "border",
     backgroundColor: "surface.overlay",
     color: "text.primary",
     boxShadow: "overlay",

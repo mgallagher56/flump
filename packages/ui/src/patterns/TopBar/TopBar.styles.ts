@@ -117,7 +117,7 @@ export const topBarFlyout = cva({
     backgroundColor: "surface.overlay",
     borderWidth: "1px",
     borderStyle: "solid",
-    borderColor: "border.DEFAULT",
+    borderColor: "border",
     borderRadius: "card",
     boxShadow: "overlay",
   },

@@ -6,6 +6,7 @@ import {
   countInlineStyles,
   countStyleLiterals,
   isStyleScanExempt,
+  stripComments,
 } from "./lib/style-literals";
 
 describe("countFontSizeLiterals", () => {
@@ -88,5 +89,29 @@ describe("countInlineStyles and file scope", () => {
   test("token definition files are exempt", () => {
     expect(isStyleScanExempt("packages/ui/src/tokens/typography.ts")).toBe(true);
     expect(isStyleScanExempt("packages/ui/src/primitives/Card/Card.styles.ts")).toBe(false);
+  });
+});
+
+describe("review follow-ups", () => {
+  test("comment stripping keeps // and /* inside strings and templates", () => {
+    expect(stripComments(`const u = 'a//b'; css({ fontSize: "13px" })`)).toContain(`"13px"`);
+    expect(
+      countStyleLiterals(
+        "packages/ui/src/x.ts",
+        `const a = '/*'; css({ fontSize: "13px" }); const b = '*/';`,
+      ).fontSize,
+    ).toBe(1);
+    expect(stripComments("const h = `${scheme}//${host}`; // note")).toBe(
+      "const h = `${scheme}//${host}`; \n",
+    );
+  });
+  test("spring physics numbers in a transition are not durations", () => {
+    expect(
+      countDurationLiterals(
+        `<m.div transition={{ type: "spring", stiffness: 300, damping: 20 }} />`,
+      ),
+    ).toBe(0);
+    expect(countDurationLiterals(`css({ transitionDuration: 200 })`)).toBe(1);
+    expect(countDurationLiterals(`<m.div transition={{ duration: 0.3, delay: 0.1 }} />`)).toBe(2);
   });
 });

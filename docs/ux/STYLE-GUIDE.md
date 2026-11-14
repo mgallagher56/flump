@@ -48,7 +48,7 @@ The semantic namespaces are fixed: `surface`, `text`, `border`, `primary`, `stat
 | `surface.overlay`                                   | `#ffffff`                                     | `#36322d`                                     | Dialogs, sheets, menus, popovers                      |
 | `surface.contrast`                                  | `#22302c`                                     | `#3a352f`                                     | Rare inverted blocks                                  |
 | `surface.hero`                                      | `#12483f`                                     | `#1b5448`                                     | The one headline block on a page                      |
-| `surface.tint.teal` / `apricot` / `sage` **[PR 1]** | about `#e4f0eb` / `#fbecd9` / `#eaf0e2`       | about `#1f302c` / `#33281b` / `#262d22`       | Icon tiles; at most one tinted section per page       |
+| `surface.tint.teal` / `apricot` / `sage` **[PR 1]** | `#dcede6` / `#fae5cc` / `#e5edda`             | `#1f322d` / `#36291b` / `#272f22`             | Icon tiles; at most one tinted section per page       |
 | `surface.scrim`                                     | `rgba(43,38,32,.4)`                           | `rgba(8,6,4,.6)`                              | Backdrop behind dialogs and sheets; never behind text |
 | `text.primary` / `secondary` / `muted`              | `#2b2620` / `#564f46` / `#6a6258`             | `#f4efe7` / `#cbc3b7` / `#a59d90`             | Body, supporting, quiet                               |
 | `text.onContrast`                                   | `#f6f1e8`                                     | `#fffdf9`                                     | Text on `surface.hero` and `surface.contrast`         |
@@ -80,7 +80,7 @@ Each status has `text`, `bg`, `border` and `solid`. Values are in `tokens.md`.
 Light mode had only two colours in practice (sand and teal). The polish plan adds colour without tinting data:
 
 - About 60% sand canvas, 30% cards, 10% accent: the teal hero and buttons, apricot for debt, and the tint family on icon tiles.
-- Cards separate from the canvas by a visible 1px `border.DEFAULT` edge and a slightly stronger warm shadow **[PR 1]**, not by tint.
+- Cards separate from the canvas by a visible 1px `border` edge (the `border.DEFAULT` token; write `"border"` in code) and a slightly stronger warm shadow **[PR 1]**, not by tint.
 - Each domain has one colour, used on its icon tile and its chart series everywhere:
 
 | Domain                       | Colour  | Tokens                               |
@@ -196,7 +196,7 @@ Page order for every app page: `PageHeader`, `HeroFigure`, `KpiStrip`, "Your det
 | Level | Token                                                               | Used on                                       |
 | ----- | ------------------------------------------------------------------- | --------------------------------------------- |
 | 0     | none                                                                | Canvas, sunken wells, the scenario zone       |
-| 1     | `shadows.card` plus a 1px `border.DEFAULT` edge                     | Cards, KPI cards, tables                      |
+| 1     | `shadows.card` plus a 1px `border` edge                             | Cards, KPI cards, tables                      |
 | 2     | `shadows.raised`                                                    | A card on hover or while dragged; sticky bars |
 | 3     | `shadows.overlay`                                                   | Dialogs, sheets, menus, popovers, toasts      |
 | Focus | `shadows.focus` or a 2px `border.focusRing` outline with 2px offset | Any focused control                           |
