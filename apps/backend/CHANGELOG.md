@@ -1,5 +1,24 @@
 # Changelog
 
+## [1.32.1](https://github.com/mgallagher56/flump/compare/flump/backend-v1.32.0...flump/backend-v1.32.1) (2026-11-14)
+
+
+### Bug Fixes 🪲
+
+* **backend:** review findings for BE-13 ([19adc13](https://github.com/mgallagher56/flump/commit/19adc1382f8aaea8471f902a525d7a0925c6e69b))
+
+
+### Refactor 🔥
+
+* **backend:** move domain code into src/modules (BE-13) ([941f4d2](https://github.com/mgallagher56/flump/commit/941f4d2ab03ec511f1824e54a41eebfe40e51219))
+* **backend:** one Nest module per domain, services own the logic (BE-13) ([4410934](https://github.com/mgallagher56/flump/commit/4410934bb559f42dc06591097427091c70102fef))
+
+
+### Tests 🧪
+
+* **backend:** batched-writes spec names its owner id without a username literal (Semgrep) ([6e99a27](https://github.com/mgallagher56/flump/commit/6e99a2737c3b1aec3945de152cc52e357e3cac0b))
+* **backend:** controllers collected through domain modules; agent registers its repositories (BE-13) ([19de67c](https://github.com/mgallagher56/flump/commit/19de67ca486e741fb64f9ef764b00d89ff7bfc31))
+
 ## [1.32.0](https://github.com/mgallagher56/flump/compare/flump/backend-v1.31.0...flump/backend-v1.32.0) (2026-11-14)
 
 

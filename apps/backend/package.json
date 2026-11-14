@@ -1,6 +1,6 @@
 {
   "name": "backend",
-  "version": "1.32.0",
+  "version": "1.32.1",
   "private": true,
   "scripts": {
     "dev": "NODE_ENV=development bun --watch src/main.ts",
