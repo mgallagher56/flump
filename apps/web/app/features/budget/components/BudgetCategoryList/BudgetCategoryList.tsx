@@ -1,18 +1,12 @@
-import { Button, Card, Icon, Money, ProgressBar } from "@repo/ui";
-import { ChevronDown, Plus } from "lucide-react";
+import { Button, Card, Icon, Money, VisuallyHidden } from "@repo/ui";
+import { ArrowRight, ChevronDown, Plus } from "lucide-react";
 import { type FC, type ReactNode, useMemo } from "react";
+import { SampleAwareLink } from "~/components/navigation/SampleAwareLink";
 import type { BudgetEntry } from "~/types/budget";
 import { CATEGORY_LABELS, toMonthly } from "~/types/budget";
 import { categoryIcon } from "../../categoryIcons";
 import { INCOME_CATEGORY, isIncomeEntry } from "../../income";
-import {
-  categoryList,
-  chevron,
-  entriesPanel,
-  listFoot,
-  rowEnd,
-  shareBar,
-} from "./BudgetCategoryList.styles";
+import { categoryList, chevron, entriesPanel, listFoot, rowEnd } from "./BudgetCategoryList.styles";
 
 /** A safe id fragment from a category name (custom names may hold spaces or symbols). */
 function categorySlug(category: string): string {
@@ -36,10 +30,16 @@ export interface BudgetCategoryListProps {
   /** Shows an "Add category" button at the foot. Left out while categories are edited elsewhere. */
   onAddCategory?: () => void;
   /**
-   * Replaces a row's "3 entries" line, e.g. the housing row names how you pay for housing. The
+   * A quiet line under a row's name, e.g. the housing row names how you pay for housing. The
    * row's amount is still the one figure (housing cost shows once, here).
    */
   metaFor?: (category: string) => string | undefined;
+  /**
+   * Makes a row a link to another page in place of opening its entries, e.g. a mortgage
+   * holder's housing row opens the mortgage page. `page` names the destination, spoken after the
+   * row's amount ("£1,250 a month, open the mortgage page").
+   */
+  hrefFor?: (category: string) => { to: string; page: string } | undefined;
 }
 
 export interface CategoryRow {
@@ -84,13 +84,9 @@ export function rankCategories(categories: string[], entries: BudgetEntry[]): Ca
     .map(({ row }) => row);
 }
 
-const entryCount = (n: number) =>
-  n === 0 ? "No entries yet" : `${n} ${n === 1 ? "entry" : "entries"}`;
-
 /**
- * The budget's one category list (E16 PR 5, R2-6): one figure per row, a thin bar showing each
- * category's share of money in, and the row opens its entries. Neutral ink throughout: a share is
- * a fact, not a verdict.
+ * The budget's one category list (E16 PR 5, R2-6): one figure per row, and the row opens its
+ * entries, or links to the page that holds them. Neutral ink throughout.
  */
 export const BudgetCategoryList: FC<BudgetCategoryListProps> = ({
   categories,
@@ -100,15 +96,10 @@ export const BudgetCategoryList: FC<BudgetCategoryListProps> = ({
   renderEntries,
   onAddCategory,
   metaFor,
+  hrefFor,
 }) => {
   const slots = categoryList();
   const rows = useMemo(() => rankCategories(categories, entries), [categories, entries]);
-  // Bars show each category's share of money in; without income, of everything going out.
-  const scale = useMemo(() => {
-    const incoming = entries.filter(isIncomeEntry).reduce((s, e) => s + Math.abs(toMonthly(e)), 0);
-    const outgoing = rows.reduce((s, r) => s + r.total, 0);
-    return incoming > 0 ? incoming : outgoing;
-  }, [rows, entries]);
 
   return (
     <Card aria-labelledby="budget-categories-heading" as="section" padding="lg">
@@ -122,7 +113,49 @@ export const BudgetCategoryList: FC<BudgetCategoryListProps> = ({
           const open = openCategory === row.category;
           const slug = categorySlug(row.category);
           const panelId = `budget-category-${slug}-entries`;
-          const share = scale > 0 ? Math.min(100, (row.total / scale) * 100) : 0;
+          const meta = metaFor?.(row.category);
+          const link = hrefFor?.(row.category);
+          const identity = (end: ReactNode, spoken?: string) => (
+            <span className={slots.identity}>
+              <span className={slots.text}>
+                <span className={slots.icon}>
+                  <Icon icon={categoryIcon(row.category)} size="sm" />
+                </span>
+                <span className={slots.name}>
+                  <span>{row.label}</span>
+                  {meta ? <span className={slots.meta}>{meta}</span> : null}
+                </span>
+              </span>
+              <span className={rowEnd()}>
+                {row.count > 0 ? <Money size="sm" value={row.total} /> : null}
+                {spoken ? <VisuallyHidden>{spoken}</VisuallyHidden> : null}
+                {end}
+              </span>
+            </span>
+          );
+          if (link) {
+            // The visible name, tenure and amount, then what the link does, read as one name.
+            const spoken = `${row.count > 0 ? " a month" : ""}, open the ${link.page}`;
+            return (
+              <li className={slots.item} data-list-row="" key={row.category}>
+                <SampleAwareLink
+                  className={slots.row}
+                  data-testid={`budget-category-${row.category}`}
+                  id={`budget-category-${slug}`}
+                  sampleAriaLabel={`${row.label}, sign up to open the ${link.page}`}
+                  sampleLabel={identity(null)}
+                  to={link.to}
+                >
+                  {identity(
+                    <span className={chevron({ open: false })}>
+                      <Icon icon={ArrowRight} size="sm" />
+                    </span>,
+                    spoken,
+                  )}
+                </SampleAwareLink>
+              </li>
+            );
+          }
           return (
             <li className={slots.item} data-list-row="" key={row.category}>
               <button
@@ -134,32 +167,12 @@ export const BudgetCategoryList: FC<BudgetCategoryListProps> = ({
                 type="button"
                 onClick={() => onToggleCategory(row.category)}
               >
-                <span className={slots.identity}>
-                  <span className={slots.text}>
-                    <span className={slots.icon}>
-                      <Icon icon={categoryIcon(row.category)} size="sm" />
-                    </span>
-                    <span className={slots.name}>
-                      <span>{row.label}</span>
-                      <span className={slots.meta}>
-                        {metaFor?.(row.category) ?? entryCount(row.count)}
-                      </span>
-                    </span>
-                  </span>
-                  <span className={rowEnd()}>
-                    {row.count > 0 ? <Money size="sm" value={row.total} /> : null}
-                    <span className={chevron({ open })}>
-                      <Icon icon={ChevronDown} size="sm" />
-                    </span>
-                  </span>
-                </span>
+                {identity(
+                  <span className={chevron({ open })}>
+                    <Icon icon={ChevronDown} size="sm" />
+                  </span>,
+                )}
               </button>
-              {row.count > 0 ? (
-                // Decorative: the row's amount is the figure; the bar only shows its share.
-                <div aria-hidden="true" className={shareBar()}>
-                  <ProgressBar max={100} size="sm" value={share} variant="primary" />
-                </div>
-              ) : null}
               <div className={entriesPanel()} hidden={!open} id={panelId}>
                 {open ? renderEntries(row.category) : null}
               </div>

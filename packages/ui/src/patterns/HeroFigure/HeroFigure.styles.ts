@@ -2,13 +2,12 @@ import { sva } from "../../../styled-system/css";
 
 /**
  * E16 P2: the page's one headline figure. `hero` is the single deep-teal block per page
- * (`surface.hero`, text in `text.onContrast`) with one soft decorative shape. `plain` is the
+ * (`surface.hero`, text in `text.onContrast`), with no decoration. `plain` is the
  * fallback when the value is unknown: an ordinary card with a "Not set" prompt, never the hero.
  */
 export const heroFigure = sva({
   slots: [
     "root",
-    "shape",
     "content",
     "labelRow",
     "label",
@@ -29,24 +28,6 @@ export const heroFigure = sva({
       borderStyle: "solid",
       p: { base: "5", md: "6" },
       minWidth: "0",
-    },
-    shape: {
-      position: "absolute",
-      zIndex: "-1",
-      width: "16rem",
-      height: "16rem",
-      insetInlineEnd: "-5rem",
-      insetBlockStart: "-6rem",
-      borderRadius: "full",
-      // A graphic-only fill, so `chart.primary`, not `primary.solid` (a fill behind primary.foreground
-      // only). Light: the same teal at 18%. Dark: the lighter chart teal is louder on the dark hero,
-      // so it drops to 10% (R2-2), which keeps text.onContrast above 7:1 where they overlap. Both
-      // dark conditions: component styles do not inherit the JS-off dark mode from tokens (D30).
-      backgroundColor: "chart.primary",
-      opacity: { base: "0.18", _dark: "0.1", _systemDark: "0.1" },
-      pointerEvents: "none",
-      // Forced colours strip fills, so the disc would show as a solid system-colour block.
-      _highContrast: { display: "none" },
     },
     content: {
       display: "flex",

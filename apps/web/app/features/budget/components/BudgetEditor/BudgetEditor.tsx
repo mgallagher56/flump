@@ -14,6 +14,7 @@ import { type FC, type FormEvent, useEffect, useRef, useState } from "react";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import { type BudgetEntry, getCategoryLabel } from "~/types/budget";
 import { INCOME_CATEGORY as INCOME, isIncomeEntry } from "../../income";
+import { rankCategories } from "../BudgetCategoryList";
 import {
   addAmount,
   addRow,
@@ -21,8 +22,10 @@ import {
   budgetEditor,
   editorSection,
   entryRow,
+  essentialField,
   figure,
   frequencyField,
+  removeCell,
   rowControls,
 } from "./BudgetEditor.styles";
 
@@ -161,21 +164,22 @@ const EntryRow: FC<EntryRowProps> = ({ entry, onSave, onRemove }) => {
           />
         </div>
         {/* Savings count as savings whatever the flag, so only spending rows offer it. */}
-        {isIncomeEntry(entry) || entry.category === "savings" ? (
-          <span />
-        ) : (
-          <Switch
-            aria-label={`Essential: ${entry.name}`}
-            checked={entry.isEssential}
-            data-testid={`budget-editor-essential-${entry.id}`}
-            id={`budget-editor-essential-${entry.id}`}
-            label="Essential"
-            onChange={(event) => void onSave(entry.id, { isEssential: event.target.checked })}
-          />
-        )}
+        <div className={essentialField()}>
+          {isIncomeEntry(entry) || entry.category === "savings" ? null : (
+            <Switch
+              aria-label={`Essential: ${entry.name}`}
+              checked={entry.isEssential}
+              data-testid={`budget-editor-essential-${entry.id}`}
+              id={`budget-editor-essential-${entry.id}`}
+              label="Essential"
+              onChange={(event) => void onSave(entry.id, { isEssential: event.target.checked })}
+            />
+          )}
+        </div>
       </div>
       <Button
         aria-label={`Delete ${entry.name}`}
+        className={removeCell()}
         data-testid={`budget-editor-remove-${entry.id}`}
         id={`budget-editor-remove-${entry.id}`}
         size="sm"
@@ -344,7 +348,13 @@ export const BudgetEditor: FC<BudgetEditorProps> = ({
   const editor = budgetEditor();
   const section = editorSection();
 
-  const sectionOrder = [INCOME, ...categories.filter((c) => c !== INCOME)];
+  // The read view's order: money in first, then spending ranked by amount, empty categories at the
+  // foot. Taken once on opening, so a section never jumps while its amount is being typed; a
+  // category added while editing joins the foot.
+  const [rankedOrder] = useState(() => rankCategories(categories, entries).map((r) => r.category));
+  const sectionOrder = Array.from(
+    new Set([INCOME, ...rankedOrder.filter((c) => categories.includes(c)), ...categories]),
+  );
 
   const entriesFor = (category: string) =>
     category === INCOME
@@ -377,7 +387,7 @@ export const BudgetEditor: FC<BudgetEditorProps> = ({
         notes: null,
         isDefault: false,
       });
-      toast?.toast({ title: "Entry added" });
+      // The new row on the page is the confirmation, so no message.
       return true;
     } catch {
       return false;
@@ -428,8 +438,9 @@ export const BudgetEditor: FC<BudgetEditorProps> = ({
       aria-labelledby="budget-editor-heading"
       as="section"
       data-testid="budget-editor"
+      className={editor.root}
       id="budget-editor"
-      padding="lg"
+      padding="none"
     >
       <div className={editor.header}>
         <h2 className={editor.title} id="budget-editor-heading">

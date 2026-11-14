@@ -61,7 +61,7 @@ export const previewSupporting = cva({
   base: { display: { base: "flex", md: "contents" }, flexDirection: "column", gap: "4" },
 });
 
-/** The preview keeps the hero tile flat: no decorative shape behind the figure (round 3). */
+/** The hero tile spans the preview (HeroFigure draws no decoration since round 4). */
 export const previewHero = cva({
-  base: { gridColumn: { md: "1 / -1" }, "& [data-decorative]": { display: "none" } },
+  base: { gridColumn: { md: "1 / -1" } },
 });

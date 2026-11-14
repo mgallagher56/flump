@@ -181,6 +181,9 @@ export const pageBody = css({
   display: "flex",
   flexDirection: "column",
   gap: "page.section",
+  // The section gap is the only space between the header and the hero (P13: 32px). PageHeader's
+  // own bottom margin is for pages outside PageBody, so it does not stack on the gap here.
+  "& > header": { marginBottom: "0" },
   width: "100%",
   maxWidth: "page.max",
   marginInline: "auto",

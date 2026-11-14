@@ -113,9 +113,7 @@ test("a new user sets up, adds an account and a budget entry, and the dashboard 
     await expect(page.getByLabel(`Amount for ${ENTRY.name}`)).toBeVisible();
     await page.getByRole("button", { name: "Finish editing" }).click();
 
-    await expect(page.getByRole("button", { name: /^Expenses 1 entry/ })).toContainText(
-      ENTRY.shown,
-    );
+    await expect(page.getByRole("button", { name: /^Expenses/ })).toContainText(ENTRY.shown);
     await expect(page.getByRole("group", { name: "Left over each month" })).toContainText(
       pounds(takeHome - ENTRY.amount),
     );

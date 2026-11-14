@@ -34,6 +34,28 @@ describe("PageHeader Pattern", () => {
     expect(screen.getByText("Custom badge")).toBeDefined();
   });
 
+  it("below md, puts the h1 beside the actions and the description under both", () => {
+    const { container } = render(
+      <PageHeader
+        actions={<button type="button">Edit</button>}
+        description="About"
+        title="Budget"
+      />,
+    );
+    const header = container.querySelector("header") as HTMLElement;
+    expect(header.className).toContain("flex-wrap_wrap");
+    // The description is ordered after the actions and takes a full line of its own.
+    const description = screen.getByText("About");
+    expect(description.className).toContain("order_3");
+    expect(description.className).toContain("flex-b_100%");
+    // The h1 grows but never shrinks, so actions that do not fit wrap instead of crushing it.
+    const h1 = screen.getByRole("heading", { level: 1 }).className;
+    expect(h1).toContain("flex_1_1_auto");
+    // A long title wraps rather than running off a phone screen.
+    expect(h1).toContain("min-w_0");
+    expect(h1).toContain("ov-wrap_anywhere");
+  });
+
   it("omits the aside when there is no badge or action", () => {
     const { container } = render(<PageHeader title="Home" />);
     expect(container.querySelector("header")?.children.length).toBe(1);
