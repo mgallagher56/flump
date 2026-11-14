@@ -1,5 +1,53 @@
 # Changelog
 
+## [1.31.0](https://github.com/mgallagher56/flump/compare/flump/marketing-v1.30.0...flump/marketing-v1.31.0) (2026-11-14)
+
+
+### Features ✨
+
+* **backend,web:** BE-07 security, config and observability hardening ([1c5a385](https://github.com/mgallagher56/flump/commit/1c5a385f91072ba1342b705aed47d00ff0f8ca13))
+* **marketing:** E16 PR 12 marketing pages polish ([b734b0a](https://github.com/mgallagher56/flump/commit/b734b0a8851945e908f127baa2f9930c45a02c93))
+* **ui,web,marketing:** one shared chrome for the marketing site and the app ([c2105f1](https://github.com/mgallagher56/flump/commit/c2105f10d186e6148f47c6b1d34e0f55e6aecab9))
+* **ui:** rebuild TaxTrapCalculator on the E25 engine (E25-T11) ([bc9574d](https://github.com/mgallagher56/flump/commit/bc9574d13bcaa0a4dc6b5e53823c46ebaba4b806))
+* **web,marketing,ui:** E16 polish PR 11, one catalogue and tool pages ([e532141](https://github.com/mgallagher56/flump/commit/e5321411e24c1f3c711a878bd4b7f9b8fe796054))
+* **web,marketing:** connect the token card, link Imports, correct the read-only MCP copy ([6a80630](https://github.com/mgallagher56/flump/commit/6a80630a71fa6efbfc45a2cec1d4d29c834d3e0c))
+
+
+### Bug Fixes 🪲
+
+* **copy:** final sweep, strings only, with re-scored audit ([9ef943b](https://github.com/mgallagher56/flump/commit/9ef943b71fea360cb44c98327d0ea34eadaaa41e))
+* **marketing:** keep the short header invite label so the header fits at 320px ([b941b12](https://github.com/mgallagher56/flump/commit/b941b12525f8ba9648ae1a5f212b5e3b4aec9377))
+* **marketing:** pre-release pass: calculator claims and maths, contrast, tool lists ([43377a5](https://github.com/mgallagher56/flump/commit/43377a5d4f89844b59617f42bf383a81c4d2fe60))
+* plain sign display and keep the tax trap tool title ([305cade](https://github.com/mgallagher56/flump/commit/305cade355b65cfbd9849125c7706bfa9bbd18fb))
+* pre-release pass defects (tax band, 404, tool catalogue, debt payoff, donuts, take-home, titles, layout) ([5341239](https://github.com/mgallagher56/flump/commit/5341239d3dd745dff8af2ffa3f46799d6c9e0634))
+* **ui,web,marketing:** review fixes for shared chrome ([6614cb9](https://github.com/mgallagher56/flump/commit/6614cb96d523fd7251e9c9c558289810a2e9dfbf))
+* **ui,web,marketing:** theme toggle in the drawer below the nav breakpoint; parity screenshots ([6b3605e](https://github.com/mgallagher56/flump/commit/6b3605e010f7fe3408a1a68df55c4ebdf87692be))
+* **ui:** E16 PR 2 CI fixes: note-role notice query, tabs snapshot, no regex in quietOpenLabel ([ee041be](https://github.com/mgallagher56/flump/commit/ee041be1c079e45dc9f51215954b9613f5952c42))
+* **web,marketing,ui:** PR 11 review fixes ([1dbd7b1](https://github.com/mgallagher56/flump/commit/1dbd7b1387e87bde65e68fc53f342a8b1f2767de))
+* **web,marketing:** review fixes for the token card and MCP copy ([417483e](https://github.com/mgallagher56/flump/commit/417483ed1bddb7cb967aabc43fb4f60af2e8af60))
+
+
+### CI 🤖
+
+* **be-01:** merge gate, supply-chain hardening and readiness paths ([808ab8e](https://github.com/mgallagher56/flump/commit/808ab8e41bbc72e3d968c75d58482fa3da0a98f2))
+
+
+### Refactor 🔥
+
+* **web:** remove the legacy FLP component layer ([f98ddb1](https://github.com/mgallagher56/flump/commit/f98ddb1b2605ab01f48de33c2b7fd81421e38403))
+
+
+### Tests 🧪
+
+* **marketing:** bring the Footer and McpPage stories up to date ([9239b40](https://github.com/mgallagher56/flump/commit/9239b407290ce09b54e802ccbc107fc3d8dbaf11))
+* **marketing:** one notice test per tool page; refresh copy baseline ([a0ae270](https://github.com/mgallagher56/flump/commit/a0ae270f6748a0ad101327247ab29636bb3af3ab))
+
+
+### Miscellaneous 🙃
+
+* **storybook:** retitle marketing stories into the six groups ([229518e](https://github.com/mgallagher56/flump/commit/229518eed84b6672d0023c35bd04d040624d6c14))
+* **ui:** one notice per tool page, story group 5, caller tests and law baselines for PR 10 ([370104c](https://github.com/mgallagher56/flump/commit/370104c18218d02b1b61b9c73f01a6b7b91b76d2))
+
 ## [1.30.0](https://github.com/mgallagher56/flump/compare/flump/marketing-v1.29.0...flump/marketing-v1.30.0) (2026-11-14)
 
 
