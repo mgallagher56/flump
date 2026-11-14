@@ -350,10 +350,17 @@ describe.each(NAMES)("persona %s: one figure, every surface", (name) => {
     // E16 PR 6: loan to value is a KPI in the saved strip, shown once balance, rate and term are
     // saved. With any of them missing the page shows one prompt and no loan to value at all.
     const strip = page.container.querySelector("#mortgage-saved")?.textContent ?? "";
-    const prompt = page.container.querySelector("#mortgage-prompt");
+    // R2-7: with no mortgage at all the page shows its EmptyState instead of the prompt.
+    const prompt =
+      page.container.querySelector("#mortgage-prompt") ??
+      page.container.querySelector("#mortgage-empty");
     expect(strip !== "" || prompt !== null).toBe(true);
     if (strip !== "" && isFigureKnown(picture.loanToValue)) {
-      expect(strip).toContain(`Loan to value${picture.loanToValue.value.percent.toFixed(1)}%`);
+      // R2-7: shown as entered, at most one decimal and no trailing zero ("60%", "62.5%").
+      const ltv = new Intl.NumberFormat("en-GB", { maximumFractionDigits: 1 }).format(
+        picture.loanToValue.value.percent,
+      );
+      expect(strip).toMatch(new RegExp(`Loan to value[^\\d]*${ltv.replace(".", "\\.")}%`));
     }
     if (!isFigureKnown(picture.loanToValue)) {
       expect(strip).not.toMatch(/Loan to value\d/);
