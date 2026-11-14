@@ -10,6 +10,7 @@ import { AddAccountDeletionTombstones1794622492000 } from "./AddAccountDeletionT
 import { AddAccountStudentLoanPlanAndCurrencyDefault1794355800000 } from "./AddAccountStudentLoanPlanAndCurrencyDefault1794355800000";
 import { AddMortgageTermColumns1794355600000 } from "./AddMortgageTermColumns1794355600000";
 import { AddProfileFacts1794355723000 } from "./AddProfileFacts1794355723000";
+import { AddRateLimitBuckets1794632012000 } from "./AddRateLimitBuckets1794632012000";
 import { AddUserIdIndexes1794358100000, USER_ID_INDEXES } from "./AddUserIdIndexes1794358100000";
 import { BackfillAnnualTaxRecordEndDate1794355900000 } from "./BackfillAnnualTaxRecordEndDate1794355900000";
 import { Baseline1794355200000 } from "./Baseline1794355200000";
@@ -38,8 +39,9 @@ const TEST_DATABASE_URL = process.env.TEST_DATABASE_URL;
 let MIGRATIONS: MigrationClass[] = [];
 
 // Operational tables a migration creates that no entity maps (left out of the entity
-// comparisons): the BE-05 liability sign before-image (LiabilitySignRule1794358050000).
-const MIGRATION_ONLY_TABLES = "'migrations', 'liability_sign_backfill'";
+// comparisons): the BE-05 liability sign before-image (LiabilitySignRule1794358050000) and the
+// BE-07 shared rate-limit counters (AddRateLimitBuckets1794632012000).
+const MIGRATION_ONLY_TABLES = "'migrations', 'liability_sign_backfill', 'rate_limit_buckets'";
 
 const ENTITY_TABLES = [
   "account_deletion_tombstones",
@@ -1375,6 +1377,52 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
       );
       await ds.runMigrations();
       expect(await tables()).toEqual(ENTITY_TABLES);
+    });
+  });
+
+  describe("AddRateLimitBuckets1794632012000 (BE-07)", () => {
+    const bucketTable = async (): Promise<string[]> =>
+      (
+        await ds.query(
+          "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'rate_limit_buckets'",
+        )
+      ).map((r: { table_name: string }) => r.table_name);
+
+    it("creates the bucket table with a key primary key and an expiry index; down() drops it and up() runs again", async () => {
+      await ds.runMigrations();
+      expect(await bucketTable()).toEqual(["rate_limit_buckets"]);
+      const cols: { column_name: string; data_type: string; is_nullable: string }[] =
+        await ds.query(
+          "SELECT column_name, data_type, is_nullable FROM information_schema.columns WHERE table_name = 'rate_limit_buckets' ORDER BY column_name",
+        );
+      expect(cols).toEqual([
+        { column_name: "count", data_type: "integer", is_nullable: "NO" },
+        { column_name: "expires_at", data_type: "timestamp with time zone", is_nullable: "NO" },
+        { column_name: "key", data_type: "text", is_nullable: "NO" },
+        { column_name: "window_start", data_type: "timestamp with time zone", is_nullable: "NO" },
+      ]);
+      const indexes: { indexname: string }[] = await ds.query(
+        "SELECT indexname FROM pg_indexes WHERE tablename = 'rate_limit_buckets' ORDER BY indexname",
+      );
+      expect(indexes.map((i) => i.indexname)).toEqual([
+        "IDX_rate_limit_buckets_expires_at",
+        "PK_rate_limit_buckets",
+      ]);
+      await ds.query(
+        "INSERT INTO rate_limit_buckets (key, window_start, count, expires_at) VALUES ('k', now(), 1, now())",
+      );
+      await expect(
+        ds.query(
+          "INSERT INTO rate_limit_buckets (key, window_start, count, expires_at) VALUES ('k', now(), 1, now())",
+        ),
+      ).rejects.toThrow(/PK_rate_limit_buckets/);
+
+      await runMigrationDown(new AddRateLimitBuckets1794632012000());
+      expect(await bucketTable()).toEqual([]);
+      expect(await tables()).toEqual(ENTITY_TABLES);
+      await ds.query("DELETE FROM migrations WHERE name = 'AddRateLimitBuckets1794632012000'");
+      await ds.runMigrations();
+      expect(await bucketTable()).toEqual(["rate_limit_buckets"]);
     });
   });
 });

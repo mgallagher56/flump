@@ -28,6 +28,8 @@ const makeArgs = (url: string, method = "GET", headers?: Record<string, string>)
   ({ request: new Request(url, { method, headers }), params: {}, context: {} }) as any;
 
 const CLEAR_COOKIE = "flump_has_session=; Path=/; SameSite=Lax; Max-Age=0";
+// Added by the shared `sessionClearCookies` when authkit's response did not clear the session itself.
+const SESSION_CLEAR = "wos-session=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax";
 
 beforeEach(() => {
   mocks.order.length = 0;
@@ -146,7 +148,7 @@ describe("logout action", () => {
 
   it("clears the presence cookie host-only (no Domain) on localhost", async () => {
     const res = (await action(makeArgs("http://localhost:3000/logout", "POST"))) as Response;
-    expect(res.headers.getSetCookie()).toEqual([CLEAR_COOKIE]);
+    expect(res.headers.getSetCookie()).toEqual([SESSION_CLEAR, CLEAR_COOKIE]);
   });
 
   it("appends the legacy wos-session clear without clobbering authkit cookies in production", async () => {
@@ -170,16 +172,22 @@ describe("logout action", () => {
     vi.stubEnv("NODE_ENV", "production");
     vi.stubEnv("WORKOS_COOKIE_NAME", "wos-session");
     let res = (await action(makeArgs("https://web.example.test/logout", "POST"))) as Response;
-    expect(res.headers.getSetCookie()).toEqual([`${CLEAR_COOKIE}; Secure`]);
+    expect(res.headers.getSetCookie()).toEqual([
+      "wos-session=; Path=/; Max-Age=0; Secure; HttpOnly; SameSite=Lax",
+      `${CLEAR_COOKIE}; Secure`,
+    ]);
     vi.stubEnv("NODE_ENV", "development");
     vi.stubEnv("WORKOS_COOKIE_NAME", "__Host-wos-session");
     res = (await action(makeArgs("https://web.example.test/logout", "POST"))) as Response;
-    expect(res.headers.getSetCookie()).toEqual([`${CLEAR_COOKIE}; Secure`]);
+    expect(res.headers.getSetCookie()).toEqual([
+      "__Host-wos-session=; Path=/; Max-Age=0; Secure; HttpOnly; SameSite=Lax",
+      `${CLEAR_COOKIE}; Secure`,
+    ]);
   });
 
   it("clears the presence cookie host-only with Secure on https hosts", async () => {
     const res = (await action(makeArgs("https://web.example.test/logout", "POST"))) as Response;
-    expect(res.headers.getSetCookie()).toEqual([`${CLEAR_COOKIE}; Secure`]);
+    expect(res.headers.getSetCookie()).toEqual([SESSION_CLEAR, `${CLEAR_COOKIE}; Secure`]);
   });
 
   it("keeps WorkOS Set-Cookie headers and status", async () => {
@@ -204,14 +212,14 @@ describe("logout action", () => {
     const res = (await action(
       makeArgs("http://web.up.railway.app/logout", "POST", { "x-forwarded-proto": "https" }),
     )) as Response;
-    expect(res.headers.getSetCookie()).toEqual([`${CLEAR_COOKIE}; Secure`]);
+    expect(res.headers.getSetCookie()).toEqual([SESSION_CLEAR, `${CLEAR_COOKIE}; Secure`]);
   });
 
   it("does not add Secure when x-forwarded-proto is http", async () => {
     const res = (await action(
       makeArgs("http://localhost:3000/logout", "POST", { "x-forwarded-proto": "http" }),
     )) as Response;
-    expect(res.headers.getSetCookie()).toEqual([CLEAR_COOKIE]);
+    expect(res.headers.getSetCookie()).toEqual([SESSION_CLEAR, CLEAR_COOKIE]);
   });
 });
 

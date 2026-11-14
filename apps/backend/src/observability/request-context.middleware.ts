@@ -1,7 +1,9 @@
+import { AsyncResource } from "node:async_hooks";
 import { randomUUID } from "node:crypto";
 import { Logger } from "@nestjs/common";
+import { runInRequestScope } from "./report";
+import { isSafeRequestId, runWithRequestContext } from "./request-context";
 
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const logger = new Logger("HttpAccess");
 
 interface Req {
@@ -17,15 +19,29 @@ interface Res {
 }
 
 /**
- * Assigns a request id (a client-supplied x-request-id is kept only when it is a UUID), echoes it on the
- * response, stores it on `req.requestId`, and logs one access line when the response finishes. The line
- * carries the route template only: never the URL, query string, headers or body.
+ * Assigns a request id (a client-supplied x-request-id is kept only when it matches
+ * REQUEST_ID_PATTERN, otherwise a UUID is generated), echoes it on the response, stores it on
+ * `req.requestId` and in AsyncLocalStorage for the rest of the request (so every log line and
+ * Sentry event carries it), and logs one access line when the response finishes. The line carries
+ * the route template only: never the URL, query string, headers or body.
  */
 export function requestContextMiddleware(req: Req, res: Res, next: () => void): void {
   const supplied = req.headers["x-request-id"];
-  const requestId = typeof supplied === "string" && UUID.test(supplied) ? supplied : randomUUID();
+  const requestId = isSafeRequestId(supplied) ? supplied : randomUUID();
   req.requestId = requestId;
   res.setHeader("x-request-id", requestId);
+  runWithRequestContext({ requestId }, () =>
+    runInRequestScope(requestId, (scope) => handle(req, res, next, requestId, scope.finish)),
+  );
+}
+
+function handle(
+  req: Req,
+  res: Res,
+  next: () => void,
+  requestId: string,
+  finishScope: (name: string, status: number) => void,
+): void {
   const start = process.hrtime.bigint();
   let logged = false;
   const emit = (aborted: boolean) => {
@@ -33,8 +49,10 @@ export function requestContextMiddleware(req: Req, res: Res, next: () => void): 
     logged = true;
     const path = req.route?.path;
     const route = typeof path === "string" ? path : "unmatched";
-    // Probes hit /health* constantly; only failed or aborted probes are worth a line.
-    if (route.startsWith("/health") && res.statusCode < 400 && !aborted) return;
+    // Probes hit /health* constantly: no trace, and only failed or aborted probes are worth a line.
+    const probe = route.startsWith("/health");
+    if (!probe) finishScope(`${req.method} ${route}`, res.statusCode);
+    if (probe && res.statusCode < 400 && !aborted) return;
     logger.log({
       requestId,
       method: req.method,
@@ -44,8 +62,16 @@ export function requestContextMiddleware(req: Req, res: Res, next: () => void): 
       ...(aborted ? { aborted: true } : {}),
     });
   };
-  res.once("finish", () => emit(false));
+  // Bound so the access line is written inside this request's context (the socket emits these
+  // events from its own async context).
+  res.once(
+    "finish",
+    AsyncResource.bind(() => emit(false)),
+  );
   // `close` without a prior `finish` means the client went away before the response completed.
-  res.once("close", () => emit(true));
+  res.once(
+    "close",
+    AsyncResource.bind(() => emit(true)),
+  );
   next();
 }

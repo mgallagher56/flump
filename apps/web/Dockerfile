@@ -32,6 +32,13 @@ ARG ALLOW_INDEXING
 # Release string: Railway passes the commit sha only if declared here. vite.config.mts turns it into
 # VITE_APP_VERSION as "<apps/web version>+<7-char sha>". Public values only.
 ARG RAILWAY_GIT_COMMIT_SHA
+# Browser source maps (BE-07, L14): with all three set, the client build emits hidden maps,
+# uploads them to Sentry and deletes them, so none reach the runner stage. Unset: no maps, no
+# upload. These ARGs exist only in this build stage, never in the final image.
+ARG SENTRY_AUTH_TOKEN
+ARG SENTRY_ORG
+ARG SENTRY_PROJECT
+ARG SENTRY_URL
 # Build, then swap node_modules for a production-only install (M17): the runtime image carries
 # no devDependencies. The reinstall reuses the bun cache from the deps stage.
 RUN bun run --cwd apps/web prepare && bun turbo run build --filter=@flump/web... \

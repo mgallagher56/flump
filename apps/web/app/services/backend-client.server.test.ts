@@ -1,5 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { loadWorkspaceSnapshot } from "./backend-client.server";
+import { runWithRequestId } from "~/security/request-id.server";
+import { backendFetch, backendFetchBytes, loadWorkspaceSnapshot } from "./backend-client.server";
+import { CLIENT_IP_HEADER, CLIENT_IP_KEY_ENV, CLIENT_IP_SIG_HEADER } from "./client-ip.server";
 
 vi.mock("~/utils/auth.server", async (importOriginal) => ({
   ...(await importOriginal<typeof import("~/utils/auth.server")>()),
@@ -174,5 +176,53 @@ describe("backend-client.server", () => {
     });
     expect(snapshot.user).toBeNull();
     expect(fetchSpy).not.toHaveBeenCalled();
+  });
+});
+
+describe("signed client IP on backend calls (BE-07, M9)", () => {
+  // A made-up test key, not a real secret.
+  const KEY = "k".repeat(40);
+  const originalFetch = globalThis.fetch;
+  const saved = process.env[CLIENT_IP_KEY_ENV];
+  let fetchSpy: ReturnType<typeof vi.fn>;
+
+  beforeEach(() => {
+    process.env[CLIENT_IP_KEY_ENV] = KEY;
+    fetchSpy = vi.fn(async () => new Response("{}", { status: 200 }));
+    globalThis.fetch = fetchSpy as never;
+  });
+
+  afterEach(() => {
+    globalThis.fetch = originalFetch;
+    if (saved === undefined) delete process.env[CLIENT_IP_KEY_ENV];
+    else process.env[CLIENT_IP_KEY_ENV] = saved;
+  });
+
+  const sentHeaders = (i: number) =>
+    (fetchSpy.mock.calls[i] as unknown as [string, RequestInit])[1].headers as Record<
+      string,
+      string
+    >;
+
+  it("signs the request context's client address on backendFetch and backendFetchBytes", async () => {
+    await runWithRequestId(
+      "req-12345678",
+      async () => {
+        await backendFetch("/accounts", { accessToken: "t" });
+        await backendFetchBytes("/tax-records/x/receipt", { accessToken: "t" });
+      },
+      { clientIp: "203.0.113.7" },
+    );
+    for (const i of [0, 1]) {
+      expect(sentHeaders(i)[CLIENT_IP_HEADER]).toBe("203.0.113.7");
+      expect(sentHeaders(i)[CLIENT_IP_SIG_HEADER]).toMatch(/^v1=\d+\.[0-9a-f]{64}$/);
+      expect(sentHeaders(i)["x-request-id"]).toBe("req-12345678");
+    }
+  });
+
+  it("sends no client-IP headers outside a request or without a known address", async () => {
+    await backendFetch("/accounts", { accessToken: "t" });
+    await runWithRequestId("req-12345678", () => backendFetch("/accounts", { accessToken: "t" }));
+    for (const i of [0, 1]) expect(sentHeaders(i)[CLIENT_IP_HEADER]).toBeUndefined();
   });
 });

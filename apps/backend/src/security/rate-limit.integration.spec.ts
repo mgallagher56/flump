@@ -16,6 +16,12 @@ import { McpController } from "../../src/mcp.controller";
 import { RateLimit, SkipRateLimit } from "../../src/security";
 import { RATE_LIMIT_CLASS, RATE_LIMIT_SKIP } from "../../src/security/rate-limit.decorator";
 import { SecurityModule } from "../../src/security/security.module";
+import {
+  CLIENT_IP_HEADER,
+  CLIENT_IP_KEY_ENV,
+  CLIENT_IP_SIG_HEADER,
+  signClientIp,
+} from "../../src/security/signed-client-ip";
 import { UserProfileController } from "../../src/user-profile.controller";
 
 @Injectable()
@@ -143,6 +149,45 @@ describe("per-IP ceiling (E20-N13)", () => {
       const blocked = await fetch(url);
       expect(blocked.status).toBe(429);
       expect(Number(blocked.headers.get("retry-after"))).toBeGreaterThan(0);
+    } finally {
+      await fresh.close();
+    }
+  });
+});
+
+describe("per-IP ceiling keyed by the signed client IP (M9)", () => {
+  // A made-up test key, not a real secret.
+  const KEY = "k".repeat(40);
+  const saved = process.env[CLIENT_IP_KEY_ENV];
+
+  afterAll(() => {
+    if (saved === undefined) delete process.env[CLIENT_IP_KEY_ENV];
+    else process.env[CLIENT_IP_KEY_ENV] = saved;
+  });
+
+  it("gives each signed browser address its own bucket; a bad signature keys on the socket", async () => {
+    process.env[CLIENT_IP_KEY_ENV] = KEY;
+    const moduleRef = await Test.createTestingModule({
+      imports: [SecurityModule],
+      controllers: [ProbeController],
+    }).compile();
+    const fresh = moduleRef.createNestApplication();
+    await fresh.listen(0, "127.0.0.1");
+    try {
+      const url = `${await fresh.getUrl()}/things`;
+      const as = (ip: string, sig = signClientIp(KEY, ip)) =>
+        fetch(url, { headers: { [CLIENT_IP_HEADER]: ip, [CLIENT_IP_SIG_HEADER]: sig } });
+      let status: number[] = [];
+      for (let sent = 0; sent < 300; sent += 20) {
+        const batch = await Promise.all(Array.from({ length: 20 }, () => as("203.0.113.7")));
+        status = status.concat(batch.map((r) => r.status));
+      }
+      expect(status.every((c) => c === 200)).toBe(true);
+      expect((await as("203.0.113.7")).status).toBe(429);
+      // Another web user behind the same web server is unaffected.
+      expect((await as("198.51.100.9")).status).toBe(200);
+      // A forged header is ignored: the request counts against the socket address instead.
+      expect((await as("203.0.113.7", "v1=1.deadbeef")).status).toBe(200);
     } finally {
       await fresh.close();
     }

@@ -169,20 +169,25 @@ describe.skipIf(!buildReady)("web express server (built)", () => {
   it("stamps a document response (302 redirect) and echoes a request id", async () => {
     const res = await send(`${base}/`);
     expect([200, 302]).toContain(res.status);
-    assertSecurityHeaders(res);
+    // A 200 is an HTML document, whose CSP is the full enforced policy (BE-07, M8).
+    const documentCsp =
+      res.status === 200 ? (res.headers.get("content-security-policy") ?? "") : undefined;
+    assertSecurityHeaders(res, documentCsp);
     expect(res.headers.get("x-request-id")).toMatch(/^[0-9a-f-]{36}$/);
   });
 
-  it("sends a nonce report-only CSP once on a document, matching its inline scripts (E20-N11)", async () => {
+  it("enforces one nonce CSP on a document, matching its inline scripts (E20-N11, BE-07 M8)", async () => {
     const res = await send(`${base}/sandbox`);
     expect(res.status).toBe(200);
-    assertSecurityHeaders(res);
+    const policy = res.headers.get("content-security-policy") ?? "";
+    assertSecurityHeaders(res, policy);
     const count = (name: string) =>
       res.rawHeaders.filter((h, i) => i % 2 === 0 && h.toLowerCase() === name).length;
-    expect(count("content-security-policy-report-only")).toBe(1);
+    expect(count("content-security-policy-report-only")).toBe(0);
     expect(count("content-security-policy")).toBe(1);
-    expect(res.headers.get("content-security-policy")).toBe("frame-ancestors 'none'");
-    const policy = res.headers.get("content-security-policy-report-only") ?? "";
+    expect(policy).toMatch(/^default-src 'self'; /);
+    expect(policy).toContain("frame-ancestors 'none'");
+    expect(res.headers.get("reporting-endpoints")).toBe('csp-endpoint="/csp-report"');
     const nonce = /'nonce-([A-Za-z0-9_-]{22})'/.exec(policy)?.[1];
     expect(nonce).toBeDefined();
     expect(policy).toContain("report-uri /csp-report");
@@ -191,7 +196,7 @@ describe.skipIf(!buildReady)("web express server (built)", () => {
     for (const tag of scripts) expect(tag).toContain(`nonce="${nonce}"`);
     // A second request gets a different nonce.
     const again = await send(`${base}/sandbox`);
-    expect(again.headers.get("content-security-policy-report-only")).not.toBe(policy);
+    expect(again.headers.get("content-security-policy")).not.toBe(policy);
   });
 
   it("accepts a same-origin CSP report with 204 and rejects a cross-origin one with 403", async () => {

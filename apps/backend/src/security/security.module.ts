@@ -2,16 +2,19 @@ import { Inject, Logger, Module, type OnApplicationBootstrap } from "@nestjs/com
 import { APP_GUARD, APP_INTERCEPTOR, HttpAdapterHost } from "@nestjs/core";
 import { IpRateLimitGuard } from "./ip-rate-limit.guard";
 import { RateLimitStore } from "./rate-limit.store";
+import { SHARED_RATE_LIMIT_STORE, sharedRateLimitStoreProvider } from "./shared-rate-limit";
 import { UserRateLimitInterceptor } from "./user-rate-limit.interceptor";
 
 @Module({
   providers: [
     RateLimitStore,
+    sharedRateLimitStoreProvider,
     { provide: APP_GUARD, useClass: IpRateLimitGuard },
     { provide: APP_INTERCEPTOR, useClass: UserRateLimitInterceptor },
   ],
-  // Exported so the MCP import adapter shares the per-user importStage budget (E17 PR D).
-  exports: [RateLimitStore],
+  // RateLimitStore: the MCP import adapter shares the per-user importStage budget (E17 PR D).
+  // SHARED_RATE_LIMIT_STORE: McpService hands it to the MCP limiters as their LimitStore (M10).
+  exports: [RateLimitStore, SHARED_RATE_LIMIT_STORE],
 })
 export class SecurityModule implements OnApplicationBootstrap {
   constructor(@Inject(HttpAdapterHost) private readonly adapterHost: HttpAdapterHost) {}

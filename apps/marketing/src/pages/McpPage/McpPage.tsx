@@ -227,7 +227,7 @@ export const McpPage: FC = () => {
               <div className={iconBadge({ tone: "danger" })}>
                 <FiRefreshCw />
               </div>
-              <h3 className={cardTitle()}>Token-bucket safety limits</h3>
+              <h3 className={cardTitle()}>Fixed-window safety limits</h3>
               <p className={cardBody()}>
                 Enforces rate limits (60 tool calls/min, 300 calls/hr) per token to guard against
                 runaway autonomous loops and unintended server spam.

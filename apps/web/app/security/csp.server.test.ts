@@ -2,9 +2,11 @@ import { describe, expect, it } from "vitest";
 import {
   applyFullCsp,
   buildCsp,
-  FULL_CSP_HEADER_NAME,
+  ENFORCED_CSP_HEADER,
   formActionOrigins,
+  fullCspHeaderName,
   generateNonce,
+  REPORT_ONLY_CSP_HEADER,
   sentryConnectOrigin,
 } from "./csp.server";
 
@@ -76,6 +78,13 @@ describe("buildCsp", () => {
     expect(directive(policy, "object-src")).toBe("object-src 'none'");
     expect(directive(policy, "base-uri")).toBe("base-uri 'none'");
     expect(directive(policy, "report-uri")).toBe("report-uri /csp-report");
+    expect(directive(policy, "report-to")).toBe("report-to csp-endpoint");
+    expect(policy).not.toContain("upgrade-insecure-requests");
+  });
+
+  it("adds upgrade-insecure-requests only when asked (production)", () => {
+    const upgraded = buildCsp({ nonce: "n", formActionOrigins: [], upgradeInsecureRequests: true });
+    expect(upgraded.split("; ")).toContain("upgrade-insecure-requests");
   });
 });
 
@@ -113,7 +122,7 @@ describe("origin validation (nothing can break out of a directive)", () => {
 
   it("drops a host that carries ; or , even when the parser accepts it", () => {
     const policy = buildCsp({ nonce: "n", formActionOrigins: origins("https://a.com;script-src") });
-    expect(policy.split("; ")).toHaveLength(11);
+    expect(policy.split("; ")).toHaveLength(12);
     expect(policy).not.toContain("a.com");
   });
 
@@ -149,20 +158,40 @@ describe("sentryConnectOrigin", () => {
 describe("applyFullCsp", () => {
   const options = { nonce: "n1", formActionOrigins: [] };
 
-  it("sets the report-only header and leaves the enforced one alone", () => {
+  it("enforces by default, replacing the frame-ancestors-only default (BE-07, M8)", () => {
     const res = new Response("x", {
       headers: { "Content-Security-Policy": "frame-ancestors 'none'" },
     });
-    const out = applyFullCsp(res, options);
-    expect(FULL_CSP_HEADER_NAME).toBe("Content-Security-Policy-Report-Only");
+    const out = applyFullCsp(res, options, {});
+    const policy = out.headers.get("content-security-policy") ?? "";
+    expect(policy).toMatch(/^default-src 'self'; script-src 'self' 'nonce-n1'/);
+    expect(policy).toContain("frame-ancestors 'none'");
+    expect(out.headers.has("content-security-policy-report-only")).toBe(false);
+    expect(out.headers.get("reporting-endpoints")).toBe('csp-endpoint="/csp-report"');
+  });
+
+  it("goes back to report-only with CSP_REPORT_ONLY=true, keeping the enforced default", () => {
+    const res = new Response("x", {
+      headers: { "Content-Security-Policy": "frame-ancestors 'none'" },
+    });
+    const out = applyFullCsp(res, options, { CSP_REPORT_ONLY: "true" });
     expect(out.headers.get("content-security-policy-report-only")).toContain("'nonce-n1'");
     expect(out.headers.get("content-security-policy")).toBe("frame-ancestors 'none'");
+    expect(out.headers.get("reporting-endpoints")).toBe('csp-endpoint="/csp-report"');
+  });
+
+  it("only exactly `true` selects report-only", () => {
+    expect(fullCspHeaderName({})).toBe(ENFORCED_CSP_HEADER);
+    for (const value of ["1", "TRUE", "yes", ""]) {
+      expect(fullCspHeaderName({ CSP_REPORT_ONLY: value })).toBe(ENFORCED_CSP_HEADER);
+    }
+    expect(fullCspHeaderName({ CSP_REPORT_ONLY: "true" })).toBe(REPORT_ONLY_CSP_HEADER);
   });
 
   it("copies an immutable response", () => {
     const out = applyFullCsp(Response.redirect("https://x.test/", 302), options);
     expect(out.status).toBe(302);
     expect(out.headers.get("location")).toBe("https://x.test/");
-    expect(out.headers.has("content-security-policy-report-only")).toBe(true);
+    expect(out.headers.get("content-security-policy")).toContain("'nonce-n1'");
   });
 });

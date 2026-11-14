@@ -2,8 +2,9 @@
  * Security response headers (E20-N1). Applied by the root middleware to every document,
  * `.data` and resource-route response.
  *
- * HSTS has no `preload` (D8-B). The enforced CSP is `frame-ancestors 'none'` only; the full
- * policy lands later (E20-N11/N12).
+ * HSTS has no `preload` (D8-B). The CSP here is the `frame-ancestors 'none'` default for every
+ * response; HTML documents replace it with the full enforced nonce policy (`csp.server.ts`,
+ * BE-07 M8), which carries `frame-ancestors 'none'` itself.
  */
 export const SECURITY_HEADERS: Readonly<Record<string, string>> = {
   "Strict-Transport-Security": "max-age=31536000; includeSubDomains",

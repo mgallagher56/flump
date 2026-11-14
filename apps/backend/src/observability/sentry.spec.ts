@@ -1,7 +1,15 @@
 import { assertSafeOptions, PRIVATE_DATA_COLLECTION } from "@flump/observability";
 import * as Sentry from "@sentry/node";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { beforeSend, initSentry, WITHHELD, withholdMessages } from "./sentry";
+import {
+  beforeSend,
+  initSentry,
+  PRODUCTION_TRACES_SAMPLE_RATE,
+  resolveTracesSampleRate,
+  scrubTransaction,
+  WITHHELD,
+  withholdMessages,
+} from "./sentry";
 
 vi.mock("@sentry/node", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@sentry/node")>();
@@ -44,7 +52,15 @@ describe("initSentry", () => {
       dataCollection: PRIVATE_DATA_COLLECTION,
     });
     expect(opts).not.toHaveProperty("sendDefaultPii");
-    expect((opts.beforeSendTransaction as () => unknown)()).toBeNull();
+    expect(opts.beforeSendTransaction).toBe(scrubTransaction);
+  });
+
+  it("samples 2% of traces in production (D7)", () => {
+    initSentry({ SENTRY_DSN: DSN, NODE_ENV: "production" });
+    const opts = vi.mocked(Sentry.init).mock.calls[0]?.[0] as Record<string, unknown>;
+    expect(() => assertSafeOptions(opts)).not.toThrow();
+    expect(opts.tracesSampleRate).toBe(0.02);
+    expect(opts.traceLifecycle).toBe("static");
   });
 
   it("keeps only allow-listed integrations and drops the defaults", () => {
@@ -207,5 +223,102 @@ describe("instrument", () => {
     await import("./report.js");
     expect(loads).toBe(0);
     vi.doUnmock("@sentry/node");
+  });
+});
+
+describe("resolveTracesSampleRate", () => {
+  it("is 0.02 in production and 0 elsewhere, including test", () => {
+    expect(PRODUCTION_TRACES_SAMPLE_RATE).toBe(0.02);
+    expect(resolveTracesSampleRate({ NODE_ENV: "production" })).toBe(0.02);
+    expect(resolveTracesSampleRate({ NODE_ENV: "test" })).toBe(0);
+    expect(resolveTracesSampleRate({ NODE_ENV: "development" })).toBe(0);
+    expect(resolveTracesSampleRate({})).toBe(0);
+  });
+
+  it("takes SENTRY_TRACES_SAMPLE_RATE from 0 to 1 and ignores anything else", () => {
+    expect(
+      resolveTracesSampleRate({ NODE_ENV: "production", SENTRY_TRACES_SAMPLE_RATE: "0" }),
+    ).toBe(0);
+    expect(resolveTracesSampleRate({ SENTRY_TRACES_SAMPLE_RATE: "0.5" })).toBe(0.5);
+    expect(
+      resolveTracesSampleRate({ NODE_ENV: "production", SENTRY_TRACES_SAMPLE_RATE: "5" }),
+    ).toBe(0.02);
+    expect(resolveTracesSampleRate({ SENTRY_TRACES_SAMPLE_RATE: "lots" })).toBe(0);
+  });
+});
+
+describe("scrubTransaction", () => {
+  const SENTINEL = "SENTINEL-leak-7";
+  const transaction = {
+    type: "transaction",
+    event_id: "abc",
+    timestamp: 2,
+    start_timestamp: 1,
+    platform: "node",
+    environment: "production",
+    release: "0123456",
+    server_name: "backend",
+    sdk: { name: "sentry.javascript.node", version: "11.11.0" },
+    transaction: "GET /accounts/:id",
+    contexts: {
+      trace: {
+        trace_id: "t",
+        span_id: "s",
+        op: "http.server",
+        status: "ok",
+        data: { "http.response.status_code": 200, "url.full": `https://x/?q=${SENTINEL}` },
+      },
+      runtime: { name: SENTINEL },
+    },
+    tags: { request_id: "web-req-000001", other: SENTINEL },
+    request: {
+      url: `https://x/a?token=${SENTINEL}`,
+      query_string: SENTINEL,
+      headers: { authorization: SENTINEL },
+      cookies: { session: SENTINEL },
+      data: { secret: SENTINEL },
+    },
+    user: { id: SENTINEL },
+    extra: { body: SENTINEL },
+    breadcrumbs: [{ message: SENTINEL }],
+    measurements: { x: { value: 1 } },
+    spans: [{ description: `SELECT ${SENTINEL}` }],
+  };
+
+  it("keeps ids, timing, route name, status and request id, and drops everything else", () => {
+    const out = scrubTransaction(structuredClone(transaction));
+    expect(JSON.stringify(out)).not.toContain(SENTINEL);
+    expect(out).toEqual({
+      type: "transaction",
+      event_id: "abc",
+      timestamp: 2,
+      start_timestamp: 1,
+      platform: "node",
+      environment: "production",
+      release: "0123456",
+      server_name: "backend",
+      sdk: { name: "sentry.javascript.node", version: "11.11.0" },
+      transaction: "GET /accounts/:id",
+      contexts: {
+        trace: {
+          trace_id: "t",
+          span_id: "s",
+          op: "http.server",
+          status: "ok",
+          data: { "http.response.status_code": 200 },
+        },
+      },
+      tags: { request_id: "web-req-000001" },
+      spans: [],
+    });
+  });
+
+  it("replaces a name that is not a route template", () => {
+    const out = scrubTransaction({ ...transaction, transaction: `GET /a?token=${SENTINEL}` });
+    expect(out?.transaction).toBe("unmatched");
+  });
+
+  it("drops anything that is not a transaction", () => {
+    expect(scrubTransaction({ type: "event" })).toBeNull();
   });
 });

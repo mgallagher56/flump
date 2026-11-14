@@ -25,6 +25,7 @@ import { ImportsService } from "./imports/imports.service";
 import { McpController } from "./mcp.controller";
 import { McpService } from "./mcp.service";
 import { ObservabilityModule } from "./observability/observability.module";
+import { slowQueryOptions } from "./observability/slow-query.logger";
 import { AccountDeletionService } from "./privacy/account-deletion.service";
 import { AccountExportService } from "./privacy/account-export.service";
 import { BANK_CONSENT_REVOKER, ProviderBankConsentRevoker } from "./privacy/bank-consent-revoker";
@@ -50,7 +51,11 @@ import { UserProfileService } from "./user-profile.service";
     TypeOrmModule.forRootAsync({
       // Injecting BOOT_CONFIG makes boot validation run before any connection attempt.
       inject: [BOOT_CONFIG],
-      useFactory: () => typeOrmOptionsFromEnv(process.env),
+      // Slow-query log (M15) merged here so typeorm.options.ts stays the CLI's single source.
+      useFactory: () => ({
+        ...typeOrmOptionsFromEnv(process.env),
+        ...slowQueryOptions(process.env),
+      }),
     }),
     TypeOrmModule.forFeature(ENTITIES),
   ],

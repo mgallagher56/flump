@@ -19,7 +19,11 @@ export interface SafeOptionsInput {
   integrations?: unknown;
   beforeSend?: unknown;
   beforeBreadcrumb?: unknown;
+  beforeSendTransaction?: unknown;
 }
+
+/** Highest trace sample rate allowed (D7 sets 0.02 in production). */
+export const MAX_TRACES_SAMPLE_RATE = 0.05;
 
 /** Freezes an object graph so no Sentry init can mutate a shared constant. Typed as the input. */
 function deepFreeze<T>(value: T): T {
@@ -121,8 +125,18 @@ export function assertSafeOptions(opts: SafeOptionsInput): void {
     fail("enableRuntimeChannelInjection must be false");
   }
   if (opts.spotlight !== undefined && opts.spotlight !== false) fail("spotlight must be false");
-  if (isPositive(opts.tracesSampleRate) || opts.tracesSampler !== undefined || opts.enableTracing) {
-    fail("tracing must be disabled");
+  if (opts.tracesSampler !== undefined || opts.enableTracing) fail("tracing must be disabled");
+  if (isPositive(opts.tracesSampleRate)) {
+    // A low sample is allowed only with a scrubbing beforeSendTransaction (D7).
+    const rate = opts.tracesSampleRate;
+    if (typeof rate !== "number" || !(rate > 0 && rate <= MAX_TRACES_SAMPLE_RATE)) {
+      fail(
+        `tracing must be disabled or tracesSampleRate a number in (0, ${MAX_TRACES_SAMPLE_RATE}]`,
+      );
+    }
+    if (typeof opts.beforeSendTransaction !== "function") {
+      fail("tracing needs a beforeSendTransaction scrubber");
+    }
   }
   if (
     isPositive(opts.profilesSampleRate) ||

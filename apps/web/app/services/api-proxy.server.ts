@@ -1,9 +1,11 @@
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { apiConfig } from "~/config.server";
 import { expectedOrigin } from "~/security/csrf.server";
+import { withRequestIdHeader } from "~/security/request-id.server";
 import { readSetCookies } from "~/security/session-cookies.server";
 import { getAuthSession } from "~/utils/auth.server";
 import { BackendError, kindFromStatus } from "./backend-error";
+import { signedClientIpHeaders } from "./client-ip.server";
 
 /**
  * Same-origin `/api/*` proxy (E20-N4). The browser never holds the access token: it calls
@@ -43,33 +45,14 @@ const COMPILED = API_ALLOW_LIST.map((rule) => ({
 
 export const MAX_BODY_BYTES = 64 * 1024;
 export const PROXY_TIMEOUT_MS = 10_000;
-export const WRITE_LIMIT = 120;
-export const WRITE_WINDOW_MS = 60_000;
 
 const WRITE_METHODS = new Set(["POST", "PATCH", "PUT", "DELETE"]);
 
-/** Per-session-user sliding window of write timestamps. In memory, per server process. */
-const writeLog = new Map<string, number[]>();
-
-export function resetWriteLimiter(): void {
-  writeLog.clear();
-}
-
-function takeWriteSlot(userId: string, now: number): boolean {
-  const recent = (writeLog.get(userId) ?? []).filter((t) => now - t < WRITE_WINDOW_MS);
-  if (recent.length >= WRITE_LIMIT) {
-    writeLog.set(userId, recent);
-    return false;
-  }
-  recent.push(now);
-  writeLog.set(userId, recent);
-  if (writeLog.size > 5000) {
-    for (const [key, times] of writeLog) {
-      if (times.every((t) => now - t >= WRITE_WINDOW_MS)) writeLog.delete(key);
-    }
-  }
-  return true;
-}
+// Rate limits (BE-07, M10): none here. The proxy used to keep its own per-process write window;
+// the backend's per-user limits are authoritative (write 120 a minute, and the credential,
+// destructive and other sensitive classes in the shared Postgres store), and its per-IP ceiling
+// keys on the browser's address through the signed client-IP headers sent below (M9). A 429
+// from the backend passes through to the browser with its message.
 
 /**
  * Returns the normalised path below `/api`, or null when the raw path could be a traversal or
@@ -146,6 +129,8 @@ export interface ProxyDeps {
   baseUrl?: string;
   now?: () => number;
   timeoutMs?: number;
+  /** Where the client-IP signing key is read from (default process.env). */
+  env?: Record<string, string | undefined>;
 }
 
 /** Handles one `/api/*` request. Never throws; every failure is a JSON response. */
@@ -192,14 +177,7 @@ export async function handleApiProxy(
   const cookieHeaders = new Headers();
   for (const cookie of session.cookies) cookieHeaders.append("Set-Cookie", cookie);
 
-  // 4. Rate limit writes per session user.
-  if (WRITE_METHODS.has(method) && !takeWriteSlot(session.userId, now())) {
-    const limited = new Headers(cookieHeaders);
-    limited.set("Retry-After", String(Math.ceil(WRITE_WINDOW_MS / 1000)));
-    return json(429, {}, limited);
-  }
-
-  // 5. Body: capped, JSON only.
+  // 4. Body: capped, JSON only.
   let body: string | undefined;
   if (method !== "GET" && method !== "HEAD") {
     let text: string;
@@ -217,8 +195,12 @@ export async function handleApiProxy(
     }
   }
 
-  // 6. Forward. Only Content-Type and the Bearer token go upstream.
-  const headers: Record<string, string> = { Authorization: `Bearer ${session.accessToken}` };
+  // 5. Forward. Only Content-Type, the Bearer token, the request id and the signed client IP go
+  // upstream.
+  const headers: Record<string, string> = withRequestIdHeader({
+    Authorization: `Bearer ${session.accessToken}`,
+    ...signedClientIpHeaders(request, deps.env, now()),
+  });
   if (body !== undefined) headers["Content-Type"] = "application/json";
   const controller = new AbortController();
   const onAbort = () => controller.abort(request.signal.reason);
@@ -257,7 +239,11 @@ export async function handleApiProxy(
           // No usable error body
         }
       }
-      return json(res.status, message === undefined ? { kind } : { kind, message }, cookieHeaders);
+      const errorHeaders = new Headers(cookieHeaders);
+      // A backend 429 keeps its Retry-After, so the browser knows when to try again.
+      const retryAfter = res.status === 429 ? res.headers.get("retry-after") : null;
+      if (retryAfter && /^\d{1,6}$/.test(retryAfter)) errorHeaders.set("Retry-After", retryAfter);
+      return json(res.status, message === undefined ? { kind } : { kind, message }, errorHeaders);
     }
 
     if (res.status === 204) {

@@ -1,3 +1,5 @@
+import { type LimitStore, type LimitWindow, MemoryLimitStore } from "./limit-store.js";
+
 export interface RateLimitResult {
   allowed: boolean;
   limit: number;
@@ -7,95 +9,59 @@ export interface RateLimitResult {
   message?: string;
 }
 
-interface WindowBucket {
-  minuteCount: number;
-  minuteResetAt: number;
-  hourCount: number;
-  hourResetAt: number;
-}
+const MINUTE_MS = 60_000;
+const HOUR_MS = 3_600_000;
 
+/**
+ * Per-token fixed-window limit for authenticated MCP requests: `maxPerMinute` a minute and
+ * `maxPerHour` an hour. The counters live in the injected store (the backend passes its shared
+ * Postgres store); the default is in memory.
+ *
+ * Fails open: when the store throws, the request is allowed and the error logged. This is a
+ * general usage cap, and refusing every agent while the database blips would do more harm than a
+ * few uncounted calls. The pre-auth failed-attempt limiter is the one that fails closed.
+ */
 export class McpRateLimiter {
-  private readonly buckets = new Map<string, WindowBucket>();
-  private readonly maxPerMinute: number;
-  private readonly maxPerHour: number;
+  private readonly minute: LimitWindow;
+  private readonly hour: LimitWindow;
 
-  constructor(maxPerMinute = 60, maxPerHour = 300) {
-    this.maxPerMinute = maxPerMinute;
-    this.maxPerHour = maxPerHour;
+  constructor(
+    maxPerMinute = 60,
+    maxPerHour = 300,
+    private readonly store: LimitStore = new MemoryLimitStore(),
+  ) {
+    this.minute = { limit: maxPerMinute, windowMs: MINUTE_MS };
+    this.hour = { limit: maxPerHour, windowMs: HOUR_MS };
   }
 
-  checkLimit(key: string, now = Date.now()): RateLimitResult {
-    let bucket = this.buckets.get(key);
-    if (!bucket) {
-      bucket = {
-        minuteCount: 0,
-        minuteResetAt: now + 60_000,
-        hourCount: 0,
-        hourResetAt: now + 3_600_000,
-      };
-      this.buckets.set(key, bucket);
+  async checkLimit(key: string, now = Date.now()): Promise<RateLimitResult> {
+    let decision: Awaited<ReturnType<LimitStore["hit"]>>;
+    try {
+      decision = await this.store.hit(`mcp:${key}`, [this.minute, this.hour], now);
+    } catch (err) {
+      console.error(
+        `MCP rate-limit store failed, allowing the request: ${err instanceof Error ? err.name : "error"}`,
+      );
+      return { allowed: true, limit: this.minute.limit, remaining: 0, resetSeconds: 60 };
     }
 
-    // Reset minute window if expired
-    if (now >= bucket.minuteResetAt) {
-      bucket.minuteCount = 0;
-      bucket.minuteResetAt = now + 60_000;
-    }
-
-    // Reset hour window if expired
-    if (now >= bucket.hourResetAt) {
-      bucket.hourCount = 0;
-      bucket.hourResetAt = now + 3_600_000;
-    }
-
-    // Check per-minute cap
-    if (bucket.minuteCount >= this.maxPerMinute) {
-      const resetSeconds = Math.max(1, Math.ceil((bucket.minuteResetAt - now) / 1000));
+    if (!decision.allowed) {
+      const window = decision.exceeded ?? this.minute;
+      const per = window.windowMs >= HOUR_MS ? "an hour" : "a minute";
       return {
         allowed: false,
-        limit: this.maxPerMinute,
+        limit: window.limit,
         remaining: 0,
-        resetSeconds,
+        resetSeconds: decision.retryAfterSeconds,
         statusCode: 429,
-        message: `Too many requests. The limit is ${this.maxPerMinute} a minute. Try again in ${resetSeconds} seconds.`,
+        message: `Too many requests. The limit is ${window.limit} ${per}. Try again in ${decision.retryAfterSeconds} seconds.`,
       };
     }
-
-    // Check per-hour cap
-    if (bucket.hourCount >= this.maxPerHour) {
-      const resetSeconds = Math.max(1, Math.ceil((bucket.hourResetAt - now) / 1000));
-      return {
-        allowed: false,
-        limit: this.maxPerHour,
-        remaining: 0,
-        resetSeconds,
-        statusCode: 429,
-        message: `Too many requests. The limit is ${this.maxPerHour} an hour. Try again in ${resetSeconds} seconds.`,
-      };
-    }
-
-    bucket.minuteCount++;
-    bucket.hourCount++;
-
-    const remaining = Math.min(
-      this.maxPerMinute - bucket.minuteCount,
-      this.maxPerHour - bucket.hourCount,
-    );
-    const resetSeconds = Math.max(1, Math.ceil((bucket.minuteResetAt - now) / 1000));
-
     return {
       allowed: true,
-      limit: this.maxPerMinute,
-      remaining,
-      resetSeconds,
+      limit: this.minute.limit,
+      remaining: decision.remaining ?? 0,
+      resetSeconds: 60,
     };
-  }
-
-  reset(key: string): void {
-    this.buckets.delete(key);
-  }
-
-  clearAll(): void {
-    this.buckets.clear();
   }
 }

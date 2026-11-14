@@ -148,11 +148,11 @@ describe("HttpMcpHandler hardening", () => {
         checkLimit: () => ({ allowed: false, resetSeconds: 1, message: "x" }),
       } as never,
     });
-    limiter.recordFailure("7.7.7.7");
+    await limiter.recordFailure("7.7.7.7");
     const res = await handler.handleWebRequest(webReq("Bearer dev-secret", "7.7.7.7"));
     expect(res.status).toBe(429);
-    limiter.recordFailure("7.7.7.7");
-    expect(limiter.check("7.7.7.7").blocked).toBe(false);
+    await limiter.recordFailure("7.7.7.7");
+    expect((await limiter.check("7.7.7.7")).blocked).toBe(false);
   });
 
   it("clears the IP's failure count after a successful authentication (express)", async () => {
@@ -165,14 +165,14 @@ describe("HttpMcpHandler hardening", () => {
         checkLimit: () => ({ allowed: false, resetSeconds: 1, message: "x" }),
       } as never,
     });
-    limiter.recordFailure("7.7.7.8");
+    await limiter.recordFailure("7.7.7.8");
     const res: any = { status: () => res, setHeader: () => res, json: () => res };
     await handler.handleExpressRequest(
       { ip: "7.7.7.8", headers: { authorization: "Bearer dev-secret" } },
       res,
     );
-    limiter.recordFailure("7.7.7.8");
-    expect(limiter.check("7.7.7.8").blocked).toBe(false);
+    await limiter.recordFailure("7.7.7.8");
+    expect((await limiter.check("7.7.7.8")).blocked).toBe(false);
   });
 });
 
