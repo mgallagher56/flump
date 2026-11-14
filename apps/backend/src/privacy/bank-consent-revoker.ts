@@ -1,7 +1,7 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { In, Repository } from "typeorm";
-import { revokeConnectionConsent } from "../bank-connection-consent";
+import { revokeConnectionConsentDetailed } from "../bank-connection-consent";
 import { BankConnection } from "../entities/bank-connection.entity";
 import { safeErrorSummary } from "../log-safe";
 import { BankProviderRegistry } from "../providers/provider.registry";
@@ -44,16 +44,27 @@ export class ProviderBankConsentRevoker implements BankConsentRevoker {
   async revokeAll(userId: string, refs: readonly BankConnectionRef[]): Promise<void> {
     if (refs.length === 0) return;
     const counts = { revoked: 0, unsupported: 0, failed: 0, no_token: 0 };
+    const failures: Record<string, number> = {};
     try {
       const rows = await this.connections.find({
         where: { userId, id: In(refs.map((r) => r.id)) },
         select: { id: true, institutionId: true, accessToken: true },
       });
       for (const row of rows) {
-        counts[await revokeConnectionConsent(this.providers, row)] += 1;
+        const result = await revokeConnectionConsentDetailed(this.providers, row);
+        counts[result.outcome] += 1;
+        if (result.failure) failures[result.failure] = (failures[result.failure] ?? 0) + 1;
       }
+      // Audit event: counts, typed failure codes and institution ids only. No user id (the
+      // account may be being erased), tokens or provider text.
       this.logger.log(
-        JSON.stringify({ event: "bank_consent_revoke", connections: rows.length, ...counts }),
+        JSON.stringify({
+          event: "bank_consent_revoke",
+          connections: rows.length,
+          ...counts,
+          failures,
+          institutions: [...new Set(rows.map((r) => r.institutionId))].sort(),
+        }),
       );
     } catch (err) {
       this.logger.warn(`Bank consent revoke failed: ${safeErrorSummary(err)}`);

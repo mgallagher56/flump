@@ -1,4 +1,8 @@
-import { BankSyncOrchestrator, isBankProviderError } from "@flump/banking/server";
+import {
+  type BankProviderErrorCode,
+  BankSyncOrchestrator,
+  isBankProviderError,
+} from "@flump/banking/server";
 import { Logger } from "@nestjs/common";
 import type { Repository } from "typeorm";
 import { accessTokenAad } from "./bank-connection-sync";
@@ -28,10 +32,12 @@ export interface ProviderLookup {
 
 const logger = new Logger("BankConsent");
 
+class RevokeTimeoutError extends Error {}
+
 function withTimeout<T>(work: Promise<T>, ms: number): Promise<T> {
   let timer: ReturnType<typeof setTimeout> | undefined;
   const timeout = new Promise<never>((_, reject) => {
-    timer = setTimeout(() => reject(new Error(`revoke timed out after ${ms}ms`)), ms);
+    timer = setTimeout(() => reject(new RevokeTimeoutError(`revoke timed out after ${ms}ms`)), ms);
   });
   return Promise.race([work, timeout]).finally(() => clearTimeout(timer));
 }
@@ -44,8 +50,31 @@ export async function revokeConnectionConsent(
   providers: ProviderLookup,
   connection: Pick<BankConnection, "id" | "institutionId" | "accessToken">,
 ): Promise<ConsentRevokeOutcome> {
+  return (await revokeConnectionConsentDetailed(providers, connection)).outcome;
+}
+
+/**
+ * Why a revoke failed, for audit events: a typed provider error code, an unusable stored token,
+ * the overall time limit, or anything else. Never provider text.
+ */
+export type ConsentRevokeFailure =
+  | BankProviderErrorCode
+  | "TOKEN_UNUSABLE"
+  | "REVOKE_TIMEOUT"
+  | "UNEXPECTED";
+
+export interface ConsentRevokeResult {
+  outcome: ConsentRevokeOutcome;
+  failure?: ConsentRevokeFailure;
+}
+
+/** As revokeConnectionConsent, with the typed reason when it failed. Never throws. */
+export async function revokeConnectionConsentDetailed(
+  providers: ProviderLookup,
+  connection: Pick<BankConnection, "id" | "institutionId" | "accessToken">,
+): Promise<ConsentRevokeResult> {
   const provider = providers.getProvider(connection.institutionId);
-  if (!provider || !connection.accessToken) return "no_token";
+  if (!provider || !connection.accessToken) return { outcome: "no_token" };
 
   let accessToken: string;
   try {
@@ -55,7 +84,7 @@ export async function revokeConnectionConsent(
     );
   } catch (err) {
     logger.warn(`Consent revoke skipped, stored token unusable: ${safeErrorSummary(err)}`);
-    return "failed";
+    return { outcome: "failed", failure: "TOKEN_UNUSABLE" };
   }
 
   const attempt = () => withTimeout(provider.revokeConnection(accessToken), REVOKE_TIMEOUT_MS);
@@ -69,13 +98,18 @@ export async function revokeConnectionConsent(
     }
     if (result.revoked) {
       logger.log(`Consent revoked at ${connection.institutionId}`);
-      return "revoked";
+      return { outcome: "revoked" };
     }
     logger.log(`Consent revoke unsupported by ${connection.institutionId}`);
-    return "unsupported";
+    return { outcome: "unsupported" };
   } catch (err) {
     logger.warn(`Consent revoke failed at ${connection.institutionId}: ${safeErrorSummary(err)}`);
-    return "failed";
+    const failure: ConsentRevokeFailure = isBankProviderError(err)
+      ? err.code
+      : err instanceof RevokeTimeoutError
+        ? "REVOKE_TIMEOUT"
+        : "UNEXPECTED";
+    return { outcome: "failed", failure };
   }
 }
 
