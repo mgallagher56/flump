@@ -113,6 +113,54 @@ describe("DebtSnowballCalculator", () => {
     expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ totalUnsecuredDebt: 6000 }));
   });
 
+  it("moves focus to the new row's balance when a debt is added", () => {
+    render(<DebtSnowballCalculator />);
+    const add = screen.getByRole("button", { name: DEBT_SNOWBALL_COPY.add });
+    add.focus();
+    fireEvent.click(add);
+    expect(document.activeElement).toBe(
+      debtGroup(/^Debt 3$/).getByLabelText(DEBT_SNOWBALL_COPY.balance),
+    );
+  });
+
+  it("keeps focus on the new field when adding the sixth debt removes the Add button", () => {
+    render(<DebtSnowballCalculator />);
+    for (let i = 0; i < 4; i++) {
+      fireEvent.click(screen.getByRole("button", { name: DEBT_SNOWBALL_COPY.add }));
+    }
+    expect(screen.queryByRole("button", { name: DEBT_SNOWBALL_COPY.add })).toBeNull();
+    expect(document.activeElement).toBe(
+      debtGroup(/^Debt 6$/).getByLabelText(DEBT_SNOWBALL_COPY.balance),
+    );
+  });
+
+  it("moves focus to the previous row's first field when a debt is removed", () => {
+    render(<DebtSnowballCalculator />);
+    fireEvent.click(screen.getByRole("button", { name: DEBT_SNOWBALL_COPY.add }));
+    fireEvent.click(screen.getByRole("button", { name: DEBT_SNOWBALL_COPY.removeLabel(3) }));
+    expect(document.activeElement).toBe(
+      debtGroup(/^Debt 2/).getByLabelText(DEBT_SNOWBALL_COPY.balance),
+    );
+  });
+
+  it("moves focus to the new first row when the first debt is removed", () => {
+    render(<DebtSnowballCalculator />);
+    fireEvent.click(screen.getByRole("button", { name: DEBT_SNOWBALL_COPY.removeLabel(1) }));
+    expect(document.activeElement).toBe(
+      debtGroup(/^Debt 1: personal loan$/).getByLabelText(DEBT_SNOWBALL_COPY.balance),
+    );
+  });
+
+  it("says there is no balance to repay when every balance is zero", () => {
+    render(<DebtSnowballCalculator />);
+    enter(debtGroup(/Debt 1/).getByLabelText(DEBT_SNOWBALL_COPY.balance), "0");
+    enter(debtGroup(/Debt 2/).getByLabelText(DEBT_SNOWBALL_COPY.balance), "0");
+    expect(outcomes().getByText(DEBT_SNOWBALL_COPY.nothingOwed)).toBeDefined();
+    expect(outcomes().getByText(DEBT_SNOWBALL_COPY.nothingOwedDetail)).toBeDefined();
+    expect(outcomes().getAllByText(DEBT_SNOWBALL_COPY.nothingOwedInterest)).toHaveLength(2);
+    expect(toolText()).not.toMatch(/Paid off in 0|Not paid off/);
+  });
+
   it("keeps at least one debt", () => {
     render(<DebtSnowballCalculator />);
     fireEvent.click(screen.getByRole("button", { name: DEBT_SNOWBALL_COPY.removeLabel(2) }));

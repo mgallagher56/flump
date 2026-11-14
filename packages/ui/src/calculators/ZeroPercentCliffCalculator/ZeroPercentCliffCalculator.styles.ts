@@ -55,6 +55,11 @@ export const zeroOutcomes = cva({
   },
 });
 
+/** A worded outcome (no balance) at the same size as a figure, so the card keeps its rhythm. */
+export const zeroOutcomeText = cva({
+  base: { textStyle: "numeric.lg", color: "text.primary" },
+});
+
 export const zeroExplainer = cva({
   base: {
     display: "flex",

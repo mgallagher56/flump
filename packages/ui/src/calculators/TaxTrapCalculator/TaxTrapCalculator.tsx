@@ -20,6 +20,7 @@ import {
   DELTA_PANEL_COPY,
   pensionPreviewSentence,
 } from "../../patterns/TakeHomeDeltaPanel/copy";
+import { TaxRatesStatusBanner } from "../../patterns/TaxRatesStatusBanner/TaxRatesStatusBanner";
 import { Button } from "../../primitives/Button/Button";
 import { FormField } from "../../primitives/FormField/FormField";
 import { Icon } from "../../primitives/Icon";
@@ -103,6 +104,7 @@ export const TaxTrapCalculator: FC<TaxTrapCalculatorProps> = ({
   const [contribution, setContribution] = useState(Math.max(0, initialContribution));
   const [region, setRegion] = useState<TaxTrapRegion>(initialRegion);
 
+  const context = useMemo(() => getUkTaxYearContext(), []);
   const year = resolveYear(taxYear);
   const rules = useMemo(() => getUkTaxYearRules(year), [year]);
 
@@ -219,6 +221,14 @@ export const TaxTrapCalculator: FC<TaxTrapCalculatorProps> = ({
 
   const content = (
     <div className={taxTrapContent()}>
+      {/* Only when the rates are a fallback year, so a normal year still shows one notice. */}
+      {before.isFallback ? (
+        <TaxRatesStatusBanner
+          calendarYear={context.calendarYear}
+          isFallback={before.isFallback}
+          ratesYear={before.ratesYear}
+        />
+      ) : null}
       {/* Illustration outcomes, not saved figures, so plain outcome cards rather than a KpiStrip.
           One outcome, then two supporting figures; the Personal Allowance is in the table below. */}
       <div className={taxTrapOutcomes()} data-density="compact" data-testid="tax-trap-outcomes">

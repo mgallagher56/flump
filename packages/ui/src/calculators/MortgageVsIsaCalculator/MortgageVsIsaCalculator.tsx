@@ -51,6 +51,8 @@ export const MORTGAGE_ISA_COPY = {
   kpiInterestSaved: "Overpaying: estimated interest saved",
   kpiInterestSavedSubtext: (years: string) =>
     `Paid off about ${years} years sooner, if the rate stays the same.`,
+  kpiInterestSavedNoBalance: "No mortgage balance entered.",
+  kpiInterestSavedNoExtra: "No overpayment entered.",
   kpiIsaBalance: "ISA: estimated balance",
   kpiIsaBalanceSubtext: (growth: string, rate: string) =>
     `Includes ${growth} of growth at the ${rate}% a year you entered.`,
@@ -217,9 +219,15 @@ export const MortgageVsIsaCalculator: FC<MortgageVsIsaCalculatorProps> = ({
         />
         <KpiCard
           label={MORTGAGE_ISA_COPY.kpiInterestSaved}
-          subtext={MORTGAGE_ISA_COPY.kpiInterestSavedSubtext(
-            oneDecimal.format(Number(result.yearsShaved)),
-          )}
+          subtext={
+            balance <= 0
+              ? MORTGAGE_ISA_COPY.kpiInterestSavedNoBalance
+              : extra <= 0
+                ? MORTGAGE_ISA_COPY.kpiInterestSavedNoExtra
+                : MORTGAGE_ISA_COPY.kpiInterestSavedSubtext(
+                    oneDecimal.format(Number(result.yearsShaved)),
+                  )
+          }
           value={<Money size="lg" value={result.interestSaved} />}
         />
         <KpiCard
