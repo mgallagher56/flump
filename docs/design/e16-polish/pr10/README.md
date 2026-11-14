@@ -8,15 +8,15 @@ What changed: every calculator is on `SimulatorSplitLayout` with `SliderField` i
 
 Re-score (visual / simplicity, calculator body; page shell is PR 11):
 
-| Tool            | Before    | After     |
-| --------------- | --------- | --------- |
-| Overdraft       | 5.5 / 5.5 | 9 / 9.5   |
-| 0% deal end     | 5.5 / 5.5 | 9 / 9     |
-| Debt snowball   | 5.5 / 5   | 8.5 / 8   |
-| Mortgage vs ISA | 6 / 5.5   | 9 / 8.5   |
-| Student loan    | 5.5 / 5.5 | 9 / 9     |
-| Section 24      | 5.5 / 5.5 | 9 / 9     |
-| £100k taper     | 6.5 / 6   | 8.5 / 8   |
-| Pay rise        | 7 / 6.5   | 8 / 7.5   |
+| Tool            | Before    | After   |
+| --------------- | --------- | ------- |
+| Overdraft       | 5.5 / 5.5 | 9 / 9.5 |
+| 0% deal end     | 5.5 / 5.5 | 9 / 9   |
+| Debt snowball   | 5.5 / 5   | 8.5 / 8 |
+| Mortgage vs ISA | 6 / 5.5   | 9 / 8.5 |
+| Student loan    | 5.5 / 5.5 | 9 / 9   |
+| Section 24      | 5.5 / 5.5 | 9 / 9   |
+| £100k taper     | 6.5 / 6   | 8.5 / 8 |
+| Pay rise        | 7 / 6.5   | 8 / 7.5 |
 
 Below 9.5 because of: the page shell repeating the card's title and intro plus the category badge (PR 11); two notices on the pay-rise tool from `TakeHomeDeltaPanel` (patterns, PR 2); the debt list's six visible fields (a list-based tool, kept deliberately); the £100k tool's table, childcare section and method list all shown at once.
