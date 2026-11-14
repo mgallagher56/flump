@@ -306,32 +306,44 @@ const BudgetContainer: FC = () => {
   );
   const toastApi = useOptionalToast();
 
-  const keepDebtRow = (rowId: string) => {
-    setKeptDebtRows((prev) => {
-      const next = prev.includes(rowId) ? prev : [...prev, rowId];
-      writeKeptDebtRows(next);
-      return next;
-    });
+  // The note's buttons go away with it, so focus moves to the category row it sat under (UX A3).
+  const focusCategoryRow = (category: string) => {
+    const slug =
+      category
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-|-$/g, "") || "category";
+    requestAnimationFrame(() => document.getElementById(`budget-category-${slug}`)?.focus());
+  };
+
+  const keepDebtRow = (rowId: string, category: string) => {
+    const next = keptDebtRows.includes(rowId) ? keptDebtRows : [...keptDebtRows, rowId];
+    writeKeptDebtRows(next);
+    setKeptDebtRows(next);
+    focusCategoryRow(category);
   };
 
   const moveRowToDebts = async (rowId: string) => {
     await updateEntry(rowId, { category: DEBT_CATEGORY });
     toastApi?.toast({ title: "Saved" });
+    focusCategoryRow(DEBT_CATEGORY);
   };
 
+  // At most one quiet note per category (AGENTS.md section 3); the next shows once this one is
+  // answered.
   const renderDuplicateNotices = (category: string) => {
-    const inCategory = duplicateDebtRows.filter((c) => c.rowCategory === category);
-    if (inCategory.length === 0) return null;
-    return inCategory.map((c) => (
+    const c = duplicateDebtRows.find((d) => d.rowCategory === category);
+    if (!c) return null;
+    return (
       <DuplicateDebtNotice
         debtAccountName={c.debtAccountName}
         key={c.rowId}
         monthlyAmount={c.monthlyAmount}
         rowName={c.rowName}
-        onKeep={() => keepDebtRow(c.rowId)}
+        onKeep={() => keepDebtRow(c.rowId, category)}
         onMove={() => moveRowToDebts(c.rowId)}
       />
-    ));
+    );
   };
 
   const handleWizardComplete = async () => {

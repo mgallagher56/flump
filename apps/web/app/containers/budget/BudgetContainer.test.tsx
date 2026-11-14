@@ -518,6 +518,10 @@ describe("BudgetContainer", () => {
       expect(await screen.findByText("Saved")).toBeDefined();
       expect(screen.queryByRole("note", { name: /^About/ })).toBeNull();
       expect(screen.getByTestId("budget-category-debt")).toBeDefined();
+      // Focus follows the entry to its new Debt row, not the page body.
+      await waitFor(() =>
+        expect(document.activeElement).toBe(screen.getByTestId("budget-category-debt")),
+      );
     });
 
     it("a failed move keeps the note and shows the page error", async () => {
@@ -531,11 +535,15 @@ describe("BudgetContainer", () => {
       expect(screen.getByRole("note", { name: /^About/ })).toBeDefined();
     });
 
-    it("Keep it here hides the note and remembers it for the session", () => {
+    it("Keep it here hides the note and remembers it for the session", async () => {
       mockLoaderData = withDuplicate();
       const { unmount } = render(<BudgetContainer />);
       fireEvent.click(screen.getByRole("button", { name: "Keep it here" }));
       expect(screen.queryByRole("note", { name: /^About/ })).toBeNull();
+      // Focus moves to the category row the note sat under.
+      await waitFor(() =>
+        expect(document.activeElement?.getAttribute("data-testid")).toMatch(/^budget-category-/),
+      );
       expect(apiFetch).not.toHaveBeenCalled();
       expect(
         JSON.parse(window.sessionStorage.getItem("flump.budget.keptDebtRows") ?? "[]"),
