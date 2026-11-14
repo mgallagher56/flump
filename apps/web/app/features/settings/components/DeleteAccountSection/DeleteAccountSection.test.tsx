@@ -81,6 +81,19 @@ describe("<DeleteAccountSection />", () => {
     expect(screen.getByRole("alert").textContent).toContain("Wait a little");
   });
 
+  it("asks for a fresh sign-in when the backend needs a recent login", () => {
+    const { rerender } = setup();
+    typePhrase("DELETE");
+    fireEvent.click(screen.getByRole("button", { name: "Delete my account" }));
+    expect(screen.queryByRole("button", { name: "Sign in again" })).toBeNull();
+    rerender("submitting");
+    rerender("recent_login_required");
+    expect(screen.getByRole("alert").textContent).toBe(
+      "For your security, sign in again, then try once more.",
+    );
+    expect(screen.getByRole("button", { name: "Sign in again" })).toBeDefined();
+  });
+
   it("offers a retry when the login could not be removed", () => {
     const { onConfirm, rerender } = setup();
     typePhrase("DELETE");

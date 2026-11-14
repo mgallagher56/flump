@@ -132,7 +132,8 @@ describe("useUserProfile", () => {
     await expect(result.current.sendPasswordResetEmail()).rejects.toThrow(
       "We could not send the password reset email. Try again.",
     );
-    (global.fetch as any).mockResolvedValueOnce(jsonRes({ message: "boom" }, 403));
+    // A 403 on reset is the recent-login check (RecentLoginRequiredError, see useUserProfile.test.ts).
+    (global.fetch as any).mockResolvedValueOnce(jsonRes({ message: "boom" }, 401));
     await expect(result.current.resetFinancialData()).rejects.toThrow(
       "We could not reset your financial data. Try again.",
     );

@@ -1,6 +1,11 @@
 import { Button, Card, ConfirmDialog } from "@repo/ui";
 import { type FC, useEffect, useRef, useState } from "react";
-import { DELETE_ACCOUNT_CONFIRMATION, type DeleteAccountStatus } from "~/features/settings/account";
+import {
+  DELETE_ACCOUNT_CONFIRMATION,
+  type DeleteAccountStatus,
+  RECENT_LOGIN_MESSAGE,
+} from "~/features/settings/account";
+import { SignInAgainButton } from "~/features/settings/components/SignInAgainButton";
 import { sectionCard, sectionHeading, sectionLead } from "~/features/settings/settings.styles";
 import {
   deleteCopy,
@@ -16,6 +21,7 @@ export const IDENTITY_PENDING_MESSAGE =
 
 const FAILURE_MESSAGES: Partial<Record<DeleteAccountStatus, string>> = {
   rate_limited: "There have been several attempts in a short while. Wait a little, then try again.",
+  recent_login_required: RECENT_LOGIN_MESSAGE,
   failed: "We could not delete your account. Try again.",
 };
 
@@ -42,6 +48,7 @@ export const DeleteAccountSection: FC<DeleteAccountSectionProps> = ({ status, on
   }, [status]);
 
   const identityPending = status === "identity_pending";
+  const needsSignIn = attempted && status === "recent_login_required";
   const error = identityPending
     ? IDENTITY_PENDING_MESSAGE
     : attempted
@@ -105,6 +112,7 @@ export const DeleteAccountSection: FC<DeleteAccountSectionProps> = ({ status, on
               <li>Your login</li>
             </ul>
             <span>You will be signed out straight away.</span>
+            {needsSignIn ? <SignInAgainButton /> : null}
           </div>
         }
         confirmLabel={identityPending ? "Try again" : "Delete my account"}

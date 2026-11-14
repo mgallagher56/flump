@@ -79,6 +79,20 @@ describe("settings route action: delete account", () => {
     expect(res.init?.status).toBe(429);
   });
 
+  it("maps the recent-login 403 to recent_login_required", async () => {
+    backendFetch.mockRejectedValue(new BackendError("forbidden", "/user-profile", 403));
+    const res = (await deleteRequest(confirmFields)) as DataResult;
+    expect(res.data).toEqual({ outcome: "recent_login_required" });
+    expect(res.init?.status).toBe(403);
+  });
+
+  it("shows the generic failure when deletion is unavailable (503)", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => undefined);
+    backendFetch.mockRejectedValue(new BackendError("server", "/user-profile", 503));
+    const res = (await deleteRequest(confirmFields)) as DataResult;
+    expect(res.data).toEqual({ outcome: "failed" });
+  });
+
   it("maps any other backend failure to a generic failure", async () => {
     vi.spyOn(console, "error").mockImplementation(() => undefined);
     backendFetch.mockRejectedValue(new BackendError("server", "/user-profile", 500));
