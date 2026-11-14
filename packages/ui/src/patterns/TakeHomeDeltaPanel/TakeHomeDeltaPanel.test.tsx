@@ -18,6 +18,19 @@ const base: TakeHomeDeltaPanelProps = {
 const renderPanel = (props: Partial<TakeHomeDeltaPanelProps> = {}) =>
   render(<TakeHomeDeltaPanel {...base} {...props} />);
 
+describe("TakeHomeDeltaPanel mergeDisclosures", () => {
+  it("puts the table, the assumptions and the extra content in one closed disclosure", () => {
+    renderPanel({ mergeDisclosures: true, disclosureExtra: <p>chart data</p> });
+    expect(screen.getAllByRole("button")).toHaveLength(1);
+    expect(screen.queryByRole("table")).toBeNull();
+    expect(screen.queryByRole("heading")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "How this is worked out" }));
+    expect(screen.getByRole("table", { name: "Where the next £1,000 goes" })).toBeDefined();
+    expect(screen.getByRole("listitem")).toBeDefined();
+    expect(screen.getByText("chart data")).toBeDefined();
+  });
+});
+
 describe("TakeHomeDeltaPanel", () => {
   it("lists the next £1,000 in the table only, leaving out zero parts", () => {
     renderPanel();

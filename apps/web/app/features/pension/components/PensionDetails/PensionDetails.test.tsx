@@ -13,14 +13,17 @@ const Harness: FC<{
   onSave?: () => Promise<void>;
   ratesAssumed?: boolean;
   methodSet?: boolean;
+  factsOpen?: boolean;
 }> = ({
   onSave = vi.fn().mockResolvedValue(undefined),
   ratesAssumed = false,
   methodSet = true,
+  factsOpen = false,
 }) => {
   const [editing, setEditing] = useState(false);
   return (
     <PensionDetails
+      factsOpen={factsOpen}
       annualSalary={50000}
       employeePercent={6}
       employerPercent={4}
@@ -67,7 +70,8 @@ describe("<PensionDetails />", () => {
   it("edits and saves the salary sacrifice settings", async () => {
     const onSave = vi.fn().mockResolvedValue(undefined);
     render(<Harness onSave={onSave} />);
-    fireEvent.click(screen.getByRole("button", { name: "Edit details" }));
+    fireEvent.click(screen.getByRole("button", { name: "Salary and contributions" }));
+    fireEvent.click(screen.getByRole("button", { name: "Edit salary and contributions" }));
     expect(
       (screen.getByLabelText(/Employer adds its National Insurance/) as HTMLInputElement).checked,
     ).toBe(false);
@@ -89,7 +93,8 @@ describe("<PensionDetails />", () => {
   it("marks the method unchanged when only the salary is edited", async () => {
     const onSave = vi.fn().mockResolvedValue(undefined);
     render(<Harness onSave={onSave} />);
-    fireEvent.click(screen.getByRole("button", { name: "Edit details" }));
+    fireEvent.click(screen.getByRole("button", { name: "Salary and contributions" }));
+    fireEvent.click(screen.getByRole("button", { name: "Edit salary and contributions" }));
     fireEvent.change(screen.getByLabelText(/Yearly salary before tax/), {
       target: { value: "60000" },
     });
@@ -101,7 +106,8 @@ describe("<PensionDetails />", () => {
 
   it("lets the salary be cleared without snapping back to 0", () => {
     render(<Harness />);
-    fireEvent.click(screen.getByRole("button", { name: "Edit details" }));
+    fireEvent.click(screen.getByRole("button", { name: "Salary and contributions" }));
+    fireEvent.click(screen.getByRole("button", { name: "Edit salary and contributions" }));
     const salary = screen.getByLabelText(/Yearly salary before tax/) as HTMLInputElement;
     fireEvent.change(salary, { target: { value: "" } });
     expect(salary.value).toBe("");
@@ -111,12 +117,22 @@ describe("<PensionDetails />", () => {
     const error = vi.spyOn(console, "error").mockImplementation(() => {});
     const onSave = vi.fn().mockRejectedValue(new Error("nope"));
     render(<Harness onSave={onSave} />);
-    fireEvent.click(screen.getByRole("button", { name: "Edit details" }));
+    fireEvent.click(screen.getByRole("button", { name: "Salary and contributions" }));
+    fireEvent.click(screen.getByRole("button", { name: "Edit salary and contributions" }));
     fireEvent.click(screen.getByRole("button", { name: "Save details" }));
     await waitFor(() => expect(error).toHaveBeenCalled());
     expect(screen.getByRole("button", { name: "Save details" })).toBeDefined();
     fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
     expect(screen.queryByRole("button", { name: "Save details" })).toBeNull();
     error.mockRestore();
+  });
+
+  it("has one edit button, inside the drawer, and opens the drawer for the deep link", () => {
+    const { unmount } = render(<Harness />);
+    expect(screen.queryByRole("button", { name: /Edit details/ })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Edit salary and contributions" })).toBeNull();
+    unmount();
+    render(<Harness factsOpen />);
+    expect(screen.getByRole("button", { name: "Edit salary and contributions" })).toBeDefined();
   });
 });

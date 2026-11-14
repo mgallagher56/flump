@@ -76,15 +76,58 @@ export interface MarginalRateChartProps {
    * among the others; with no `yourPay` on the chart it draws them all.
    */
   thresholdFocus?: "all" | "near-pay";
+  /**
+   * Offer the data table behind the chart's own "Show data". Default true. Pass false only when
+   * the caller shows `MarginalRateDataTable` in another disclosure on the same view.
+   */
+  showDataTable?: boolean;
+  /**
+   * Show the one line under the chart that says what the dashed lines are. Default true. Pass
+   * false only when the caller shows `EXPLORER_COPY.chartThresholdsNote` elsewhere on the view.
+   */
+  showThresholdNote?: boolean;
   className?: string;
 }
+
+/** The chart's rows for a data table: the given rows, or the points every £5,000. */
+export const marginalRateTableRows = (
+  points: readonly MarginalRatePoint[],
+  dataTable?: readonly MarginalRatePoint[],
+): readonly MarginalRatePoint[] => dataTable ?? points.filter((p) => p.gross % TABLE_STEP === 0);
+
+/** The chart's figures as a table: pay before tax and the estimated share deducted. */
+export const MarginalRateDataTable: FC<{ caption: string; rows: readonly MarginalRatePoint[] }> = ({
+  caption,
+  rows,
+}) => (
+  <Table caption={caption} className={marginalRateTable()}>
+    <THead>
+      <Tr>
+        <Th scope="col">{EXPLORER_COPY.tableGross}</Th>
+        <Th numeric scope="col">
+          {EXPLORER_COPY.tableRate}
+        </Th>
+      </Tr>
+    </THead>
+    <TBody>
+      {rows.map((r) => (
+        <Tr key={r.gross}>
+          <Th scope="row">{formatMoney(r.gross).text}</Th>
+          <Td label={EXPLORER_COPY.tableRate} numeric>
+            {pctText(r.ratePct, Number.isInteger(r.ratePct) ? 0 : 1)}
+          </Td>
+        </Tr>
+      ))}
+    </TBody>
+  </Table>
+);
 
 /** Drawing width before the container is measured (server render, tests). */
 const DEFAULT_W = 600;
 const MIN_W = 300;
 /** Drawing height: shorter on a phone, where the plot is narrow and a tall one only adds scroll. */
 const H_WIDE = 280;
-const H_NARROW = 220;
+const H_NARROW = 200;
 const NARROW_W = 480;
 const M = { top: 28, right: 14, bottom: 30, left: 46 };
 const Y_STEP = 25;
@@ -206,6 +249,8 @@ export const MarginalRateChart: FC<MarginalRateChartProps> = ({
   dataTable,
   headingLevel,
   thresholdFocus = "all",
+  showDataTable = true,
+  showThresholdNote = true,
   className,
 }) => {
   // Keyed by gross pay so the open tooltip survives markers being added or removed.
@@ -232,7 +277,7 @@ export const MarginalRateChart: FC<MarginalRateChartProps> = ({
   const xTicks: number[] = [];
   for (let g = 0; g <= maxGross + 1e-9; g += xTickStep(maxGross)) xTicks.push(g);
 
-  const rows = dataTable ?? points.filter((p) => p.gross % TABLE_STEP === 0);
+  const rows = marginalRateTableRows(points, dataTable);
 
   // Direct labels (P10.2) in place of a legend: the line is named at its end, "Your pay" at its
   // marker and the stepped zone inside its band; the dashed thresholds get one quiet line below.
@@ -251,21 +296,64 @@ export const MarginalRateChart: FC<MarginalRateChartProps> = ({
         .filter((p) => x(p.gross) >= lx && x(p.gross) <= lx + labelW + LABEL_CLEARANCE)
         .map((p) => p.ratePct),
     );
-  const widest = lineLabelSpot(verticals, M.left, W - M.right, labelW);
-  // Among the gaps the label fits, the one where the line runs lowest, so the label never rises
-  // into the row above the plot where "Your pay" is written. Falls back to the widest gap.
+  // "Your pay" is written above the plot, centred on its marker (or anchored at an edge).
+  const yourPayBox = (() => {
+    if (!showYourPay || yourPay === undefined) return null;
+    const px = x(yourPay);
+    const w = EXPLORER_COPY.yourPay.length * LABEL_CHAR_W;
+    const from = px > W - 60 ? px - w : px < M.left + 30 ? px : px - w / 2;
+    return {
+      x1: from - LABEL_CLEARANCE,
+      x2: from + w + LABEL_CLEARANCE,
+      y1: M.top - 26,
+      y2: M.top - 6,
+    };
+  })();
+  // Whether a label starting at `lx` stays inside the drawing and off the "Your pay" text and the
+  // stepped-zone labels.
+  const spotFree = (lx: number) => {
+    const top = y(rateUnder(lx)) - 8 - 11;
+    if (top < 0) return false;
+    const hitsYourPay =
+      yourPayBox !== null &&
+      lx < yourPayBox.x2 &&
+      lx + labelW > yourPayBox.x1 &&
+      top < yourPayBox.y2 &&
+      top + 13 > yourPayBox.y1;
+    const hitsZoneLabel = steppedZones.some((z) => {
+      const cx = (x(z.from) + x(z.to)) / 2;
+      const half = (z.label.length * LABEL_CHAR_W) / 2;
+      return lx < cx + half && lx + labelW > cx - half && top + 13 > M.top + PLOT_H - 22;
+    });
+    return !hitsYourPay && !hitsZoneLabel;
+  };
+  // The widest gap between vertical lines first (on the pay rise curve, the higher rate plateau).
+  // When that gap is too narrow (a phone) or the label there would touch "Your pay", try every
+  // start along the plot: one clear of every vertical wins, then the one where the line runs
+  // lowest. The label may then cross a dashed line, but it never covers "Your pay".
   const labelSpot = (() => {
-    const inside = verticals.filter((v) => v > M.left && v < W - M.right).sort((a, b) => a - b);
-    const edges = [M.left, ...inside, W - M.right];
-    let best: { x: number; rate: number } | null = null;
-    for (let i = 1; i < edges.length; i++) {
-      const from = i === 1 ? M.left : (edges[i - 1] ?? M.left) + LABEL_CLEARANCE;
-      const to = i === edges.length - 1 ? W - M.right : (edges[i] ?? W - M.right) - LABEL_CLEARANCE;
-      if (to - from < labelW) continue;
-      const rate = rateUnder(from);
-      if (best === null || rate < best.rate) best = { x: from, rate };
+    const widest = lineLabelSpot(verticals, M.left, W - M.right, labelW);
+    if (widest.clear && spotFree(widest.x)) return { ...widest, hidden: false };
+    let best: { x: number; crosses: boolean; rate: number } | null = null;
+    const payX = showYourPay && yourPay !== undefined ? x(yourPay) : null;
+    for (let lx = M.left; lx <= W - M.right - labelW; lx += 4) {
+      if (!spotFree(lx)) continue;
+      // A dashed threshold may run through the label; the solid "Your pay" line may not.
+      if (payX !== null && payX >= lx - LABEL_CLEARANCE && payX <= lx + labelW + LABEL_CLEARANCE)
+        continue;
+      const rate = rateUnder(lx);
+      const crosses = verticals.some(
+        (v) => v >= lx - LABEL_CLEARANCE && v <= lx + labelW + LABEL_CLEARANCE,
+      );
+      if (
+        best === null ||
+        (best.crosses && !crosses) ||
+        (best.crosses === crosses && rate < best.rate)
+      ) {
+        best = { x: lx, crosses, rate };
+      }
     }
-    return best ? { x: best.x, clear: true } : widest;
+    return best ? { x: best.x, clear: !best.crosses, hidden: false } : { ...widest, hidden: true };
   })();
   const rateUnderLabel = rateUnder(labelSpot.x);
   const activeMarker = markers.find((m) => m.gross === activeGross) ?? null;
@@ -290,27 +378,8 @@ export const MarginalRateChart: FC<MarginalRateChartProps> = ({
     <ChartFigure
       className={cx(marginalRateFigure(), className)}
       dataTable={
-        rows.length > 0 ? (
-          <Table caption={title} className={marginalRateTable()}>
-            <THead>
-              <Tr>
-                <Th scope="col">{EXPLORER_COPY.tableGross}</Th>
-                <Th numeric scope="col">
-                  {EXPLORER_COPY.tableRate}
-                </Th>
-              </Tr>
-            </THead>
-            <TBody>
-              {rows.map((r) => (
-                <Tr key={r.gross}>
-                  <Th scope="row">{formatMoney(r.gross).text}</Th>
-                  <Td label={EXPLORER_COPY.tableRate} numeric>
-                    {pctText(r.ratePct, Number.isInteger(r.ratePct) ? 0 : 1)}
-                  </Td>
-                </Tr>
-              ))}
-            </TBody>
-          </Table>
+        showDataTable && rows.length > 0 ? (
+          <MarginalRateDataTable caption={title} rows={rows} />
         ) : undefined
       }
       directLabels
@@ -393,7 +462,9 @@ export const MarginalRateChart: FC<MarginalRateChartProps> = ({
             </text>
           ))}
           <polyline className={marginalRateLine()} data-testid="marginal-rate-line" points={line} />
-          {lastPoint ? (
+          {/* Left out only when no spot keeps it off "Your pay" (a narrow phone): the title
+              already names the line, so no label is better than one written over that line. */}
+          {lastPoint && !labelSpot.hidden ? (
             <text
               className={marginalRateDirectLabel({ tone: "line" })}
               data-testid="marginal-rate-line-label"
@@ -460,7 +531,7 @@ export const MarginalRateChart: FC<MarginalRateChartProps> = ({
           ) : null}
         </svg>
         <p className={marginalRateAxisTitle({ position: "end" })}>{EXPLORER_COPY.chartXAxis}</p>
-        {markers.length > 0 ? (
+        {showThresholdNote && markers.length > 0 ? (
           <p className={marginalRateNote()}>{EXPLORER_COPY.chartThresholdsNote}</p>
         ) : null}
       </div>

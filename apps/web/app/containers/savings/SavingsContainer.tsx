@@ -202,7 +202,7 @@ export const SavingsContainer: FC = () => {
             totalSavingsBalance={saved.total}
           />
 
-          <SavingsAccountsList accounts={savingsAccounts} isaUsed={saved.isaUsed} />
+          <SavingsAccountsList accounts={savingsAccounts} />
 
           <ScenarioZone
             announcement={announcement}

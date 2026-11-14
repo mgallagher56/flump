@@ -122,3 +122,8 @@ export const factValue = cva({
     wrap: { true: { whiteSpace: "normal" } },
   },
 });
+
+/** The one "Edit" for salary and contributions, at the foot of their drawer. */
+export const editRow = cva({
+  base: { display: "flex", justifyContent: "flex-start", mt: "2", ml: "-2" },
+});

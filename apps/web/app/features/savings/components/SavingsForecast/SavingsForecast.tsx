@@ -244,7 +244,8 @@ export const SavingsForecast: FC<SavingsForecastProps> = ({
             </div>
             <div className={outcomeSupportItem()}>
               <dt>Interest</dt>
-              <dd>{money(result.interest)}</dd>
+              {/* An estimate, rounded like the balance. "You pay in" is plain arithmetic. */}
+              <dd>{formatEstimate(result.interest)}</dd>
             </div>
           </dl>
           {goalText ? (

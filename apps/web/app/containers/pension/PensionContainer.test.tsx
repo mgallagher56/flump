@@ -229,7 +229,8 @@ describe("PensionContainer", () => {
 
   it("edits employer National Insurance, saving to the profile", async () => {
     render(<PensionContainer />);
-    fireEvent.click(screen.getByRole("button", { name: /Edit details/i }));
+    openDetails();
+    fireEvent.click(screen.getByRole("button", { name: "Edit salary and contributions" }));
     // The stored true alongside the default 5% / 3% rates is the legacy column default, not a
     // choice, so the method starts unticked until the user picks it.
     const sacrifice = screen.getByLabelText(/Paid by salary sacrifice/i) as HTMLInputElement;
@@ -249,7 +250,8 @@ describe("PensionContainer", () => {
   it("editing only the salary never saves the guessed contribution method", async () => {
     mockUpdateProfile.mockClear();
     render(<PensionContainer />);
-    fireEvent.click(screen.getByRole("button", { name: /Edit details/i }));
+    openDetails();
+    fireEvent.click(screen.getByRole("button", { name: "Edit salary and contributions" }));
     fireEvent.change(screen.getByLabelText(/Yearly salary before tax/), {
       target: { value: "60000" },
     });
@@ -272,7 +274,8 @@ describe("PensionContainer", () => {
     useFixture({ ...defaultLoaderData, userProfile: chosen });
     mockUpdateProfile.mockClear();
     render(<PensionContainer />);
-    fireEvent.click(screen.getByRole("button", { name: /Edit details/i }));
+    openDetails();
+    fireEvent.click(screen.getByRole("button", { name: "Edit salary and contributions" }));
     fireEvent.change(screen.getByLabelText(/Yearly salary before tax/), {
       target: { value: "60000" },
     });
@@ -283,7 +286,7 @@ describe("PensionContainer", () => {
     await waitFor(() =>
       expect(screen.getByRole("button", { name: "Salary and contributions" })).toBeDefined(),
     );
-    openDetails();
+    // After saving, the drawer comes back open where the user left it.
     expect(screen.getByText("Method").nextElementSibling?.textContent).toBe("Salary sacrifice");
   });
 

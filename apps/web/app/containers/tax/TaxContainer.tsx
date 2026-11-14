@@ -398,6 +398,23 @@ const SelfAssessmentPage: FC<{
 
       {showEstimate ? <ProjectionNotice lead={TAX_UNVERIFIED_LEAD} /> : null}
 
+      {/* How the estimate is worked out sits with the estimate, before the list of sources. */}
+      {showEstimate && activeYearData ? (
+        <CollapsibleDrawer title="How the estimate is worked out" variant="quiet">
+          <TaxReservePanel
+            taxYear={selectedTaxYear}
+            result={activeYearData}
+            totalIncome={activeYearData.totalGrossIncome || payeSalary}
+            payeSalary={payeSalary}
+            onPayeSalaryChange={setPayeSalary}
+            ownershipSharePct={propertyOwnershipShare}
+            onOwnershipShareChange={setPropertyOwnershipShare}
+            onSave={handleSaveProfile}
+            saving={isProfileSaving}
+          />
+        </CollapsibleDrawer>
+      ) : null}
+
       <TaxSourcesPanel action={addIncome} records={initialRecords} taxYear={selectedTaxYear} />
 
       <p className={textLink()}>
@@ -405,22 +422,6 @@ const SelfAssessmentPage: FC<{
       </p>
 
       <div className={drawers()}>
-        {showEstimate && activeYearData ? (
-          <CollapsibleDrawer title="How the estimate is worked out" variant="quiet">
-            <TaxReservePanel
-              taxYear={selectedTaxYear}
-              result={activeYearData}
-              totalIncome={activeYearData.totalGrossIncome || payeSalary}
-              payeSalary={payeSalary}
-              onPayeSalaryChange={setPayeSalary}
-              ownershipSharePct={propertyOwnershipShare}
-              onOwnershipShareChange={setPropertyOwnershipShare}
-              onSave={handleSaveProfile}
-              saving={isProfileSaving}
-            />
-          </CollapsibleDrawer>
-        ) : null}
-
         {initialRecords.length > 0 ? (
           <CollapsibleDrawer
             title={`All records (${countFormat.format(initialRecords.length)})`}

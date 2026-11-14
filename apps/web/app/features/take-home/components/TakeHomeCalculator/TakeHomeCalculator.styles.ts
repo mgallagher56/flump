@@ -51,3 +51,24 @@ export const zoneLink = cva({
     },
   },
 });
+
+/**
+ * The take-home card, the page's answer: a teal rule along its top edge, drawn as an overlay so
+ * the card's content sits at the same height as its neighbours.
+ */
+export const answerCard = cva({
+  base: {
+    position: "relative",
+    overflow: "hidden",
+    _before: {
+      content: '""',
+      position: "absolute",
+      top: 0,
+      left: 0,
+      right: 0,
+      height: "4px",
+      backgroundColor: "primary",
+      pointerEvents: "none",
+    },
+  },
+});

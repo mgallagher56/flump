@@ -39,8 +39,33 @@ describe("MarginalRateExplorer inside a ScenarioZone", () => {
     const outcome = screen.getByTestId("explorer-outcomes");
     expect(outcome.querySelector("[data-kpi-value]")).toBeNull();
     expect(within(outcome).getByText("Estimated take-home from the next £1,000")).toBeDefined();
-    expect(within(outcome).getByText(/^As at tax year/)).toBeDefined();
     expect(screen.getAllByTestId("marginal-rate-threshold")).toHaveLength(2);
+    // The tax year and the caption wait in the one disclosure, so the first view is the outcome.
+    expect(screen.queryByText(/^As at tax year/)).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "How this is worked out" }));
+    expect(screen.getByText(/^As at tax year/)).toBeDefined();
+    expect(screen.getByText("The rest goes to tax and other deductions.")).toBeDefined();
+  });
+
+  it("ends with one quiet disclosure holding the breakdown, the assumptions and the chart data", () => {
+    render(
+      <MarginalRateExplorer
+        inScenarioZone
+        showNotice={false}
+        values={{ ...DEFAULTS_2026, grossPay: 58_000 }}
+        onChange={vi.fn()}
+      />,
+    );
+    expect(screen.queryByRole("button", { name: "Show data" })).toBeNull();
+    expect(screen.queryByRole("button", { name: BREAKDOWN })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "How this is worked out" }));
+    expect(screen.getByRole("table", { name: BREAKDOWN })).toBeDefined();
+    expect(screen.getByRole("table", { name: CHART_TITLE })).toBeDefined();
+    // "More options" is the quiet text-link drawer here, named by its title open or closed.
+    fireEvent.click(screen.getByRole("button", { name: "More options" }));
+    expect(screen.getByRole("button", { name: "More options" }).getAttribute("aria-expanded")).toBe(
+      "true",
+    );
   });
 
   it("keeps the card and every threshold on the tool pages", () => {
