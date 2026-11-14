@@ -114,6 +114,27 @@ describe("root loader", () => {
     expect(result.user).toEqual({ id: "u" });
   });
 
+  it("sends an erased account (410) to finish the deletion", async () => {
+    globalThis.fetch = vi
+      .fn()
+      .mockResolvedValue(new Response('{"error":"account_deleted"}', { status: 410 }));
+    const thrown = await loader(args).catch((e: unknown) => e);
+    expect(thrown).toBeInstanceOf(Response);
+    expect((thrown as Response).status).toBe(302);
+    expect((thrown as Response).headers.get("Location")).toBe("/account-deleted?state=pending");
+  });
+
+  it("does not redirect a 410 while already on the account-deleted page", async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue(new Response("{}", { status: 410 }));
+    const onPage = {
+      request: new Request("http://localhost/account-deleted?state=pending"),
+      params: {},
+      context: {},
+    } as any;
+    const result = await loader(onPage);
+    expect(result.userProfile).toBeNull();
+  });
+
   it("logs only the kind and endpoint, never the token", async () => {
     globalThis.fetch = vi.fn().mockResolvedValue(new Response("x", { status: 500 }));
     await loader(args);

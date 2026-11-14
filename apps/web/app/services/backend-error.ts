@@ -33,6 +33,18 @@ export class BackendError extends Error {
   }
 }
 
+/**
+ * Where a signed-in person goes when the backend says their account is erased (BE-04: every
+ * authenticated route except DELETE /user-profile answers 410 `account_deleted`). Their data is
+ * gone but removing the login did not finish; that page lets them finish it.
+ */
+export const ACCOUNT_ERASED_PATH = "/account-deleted?state=pending";
+
+/** True for the backend's 410 "This account has been deleted." answer. */
+export function isAccountErased(err: unknown): boolean {
+  return err instanceof BackendError && err.status === 410;
+}
+
 export function kindFromStatus(status: number): BackendErrorKind {
   if (status === 401) return "unauthorised";
   if (status === 403) return "forbidden";

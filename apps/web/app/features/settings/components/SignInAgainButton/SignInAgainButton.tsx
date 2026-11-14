@@ -1,7 +1,7 @@
 import { Button } from "@repo/ui";
 import type { FC } from "react";
 import { useFetcher } from "react-router";
-import { REAUTH_RETURN_PATH } from "~/features/settings/account";
+import { type AllowedReturnPath, REAUTH_RETURN_PATH } from "~/features/settings/account";
 import { clearUserStorage } from "~/utils/userStorage";
 import { signInAgainWrap } from "./SignInAgainButton.styles";
 
@@ -12,7 +12,14 @@ import { signInAgainWrap } from "./SignInAgainButton.styles";
  * path: WorkOS logout, then `/login?returnTo=...`, then back to the Data tab. Submitted as a
  * fetcher so the cross-origin redirect is a plain navigation, not a form redirect chain.
  */
-export const SignInAgainButton: FC = () => {
+export interface SignInAgainButtonProps {
+  /** Where to land after signing in again; must be one of the allowed return paths. */
+  returnPath?: AllowedReturnPath;
+}
+
+export const SignInAgainButton: FC<SignInAgainButtonProps> = ({
+  returnPath = REAUTH_RETURN_PATH,
+}) => {
   const fetcher = useFetcher();
   const pending = fetcher.state !== "idle";
 
@@ -28,7 +35,7 @@ export const SignInAgainButton: FC = () => {
         onClick={() => {
           // Signing out wipes this browser's per-user storage, as every /logout form does.
           clearUserStorage();
-          void fetcher.submit({ next: REAUTH_RETURN_PATH }, { method: "post", action: "/logout" });
+          void fetcher.submit({ next: returnPath }, { method: "post", action: "/logout" });
         }}
       >
         Sign in again

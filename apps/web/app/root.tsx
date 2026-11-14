@@ -7,6 +7,7 @@ import {
   Links,
   Meta,
   Outlet,
+  redirect,
   Scripts,
   ScrollRestoration,
   useLoaderData,
@@ -27,7 +28,7 @@ import { sentryPublicEnv } from "./observability/env";
 import { securityMiddleware } from "./security/middleware.server";
 import { useNonce } from "./security/nonce";
 import { backendFetch } from "./services/backend-client.server";
-import { BackendError } from "./services/backend-error";
+import { ACCOUNT_ERASED_PATH, BackendError, isAccountErased } from "./services/backend-error";
 import { ThemeContext } from "./ThemeContext";
 import { getAuthSession } from "./utils/auth.server";
 import { watchLogoutForms } from "./utils/userStorage";
@@ -56,6 +57,13 @@ export const loader = async (args: LoaderFunctionArgs) => {
         signal: args.request.signal,
       });
     } catch (error) {
+      // An erased account (410) goes to the page that finishes the deletion, unless already there.
+      if (
+        isAccountErased(error) &&
+        !new URL(args.request.url).pathname.startsWith("/account-deleted")
+      ) {
+        throw redirect(ACCOUNT_ERASED_PATH);
+      }
       // Keep the shell up without a profile; log only the kind and endpoint, never the token.
       if (error instanceof BackendError) {
         console.error("Root loader profile failed", { kind: error.kind, endpoint: error.endpoint });

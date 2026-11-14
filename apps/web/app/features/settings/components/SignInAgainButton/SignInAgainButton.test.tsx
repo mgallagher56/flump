@@ -30,6 +30,15 @@ describe("<SignInAgainButton />", () => {
     expect(window.localStorage.getItem(FINANCIAL_BASELINE_STORAGE_KEY)).toBeNull();
   });
 
+  it("can return to the account deletion page instead", () => {
+    render(<SignInAgainButton returnPath="/account-deleted?state=pending" />);
+    fireEvent.click(screen.getByRole("button", { name: "Sign in again" }));
+    expect(fetcher.submit).toHaveBeenCalledWith(
+      { next: "/account-deleted?state=pending" },
+      { method: "post", action: "/logout" },
+    );
+  });
+
   it("shows a pending state while signing out", () => {
     fetcher.state = "submitting";
     render(<SignInAgainButton />);

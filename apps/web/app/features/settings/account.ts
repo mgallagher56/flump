@@ -1,3 +1,5 @@
+import { ACCOUNT_ERASED_PATH } from "~/services/backend-error";
+
 /**
  * Account deletion and data export (BE-04): shared between the settings UI and its server code.
  * The web app does not depend on @flump/api-contract, so the contract values are mirrored here
@@ -21,15 +23,19 @@ export const ACCOUNT_EXPORT_PATH = "/account/export";
 /** Signed-out page shown once an account is deleted. */
 export const ACCOUNT_DELETED_PATH = "/account-deleted";
 
-/**
- * Where a "Sign in again" round trip brings the person back to: the settings Data tab. It is the
- * only return path `/logout` and `/login` accept, so neither can be used as an open redirect.
- */
+/** Where a "Sign in again" round trip from the settings Data tab brings the person back to. */
 export const REAUTH_RETURN_PATH = "/app/profile?tab=data";
 
-/** True only for the one allowed return path. */
-export function isAllowedReturnPath(value: unknown): value is typeof REAUTH_RETURN_PATH {
-  return value === REAUTH_RETURN_PATH;
+/** Signed-in page that finishes an erased account's deletion (the backend answered 410). */
+export const ACCOUNT_DELETION_PENDING_PATH = ACCOUNT_ERASED_PATH;
+
+/** The only return paths `/logout` and `/login` accept, so neither is an open redirect. */
+export const ALLOWED_RETURN_PATHS = [REAUTH_RETURN_PATH, ACCOUNT_DELETION_PENDING_PATH] as const;
+export type AllowedReturnPath = (typeof ALLOWED_RETURN_PATHS)[number];
+
+/** True only for one of the allowed return paths, compared exactly. */
+export function isAllowedReturnPath(value: unknown): value is AllowedReturnPath {
+  return (ALLOWED_RETURN_PATHS as readonly unknown[]).includes(value);
 }
 
 /**

@@ -23,4 +23,10 @@ describe("<AccountDeletedNotice />", () => {
     expect(window.localStorage.getItem("flump_setup_checklist_dismissed")).toBeNull();
     expect(window.localStorage.getItem("unrelated")).toBe("kept");
   });
+
+  it("shows the last step instead of the confirmation when the deletion is pending", () => {
+    render(<AccountDeletedNotice homeUrl="/" pending />);
+    expect(screen.getByRole("heading", { name: "Finish deleting your account" })).toBeDefined();
+    expect(screen.queryByRole("heading", { name: "Your account has been deleted" })).toBeNull();
+  });
 });

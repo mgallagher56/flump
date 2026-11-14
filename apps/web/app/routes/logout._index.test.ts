@@ -67,6 +67,18 @@ describe("logout action", () => {
     });
   });
 
+  it("also accepts the account deletion page as the return path", async () => {
+    const body = new URLSearchParams({ next: "/account-deleted?state=pending" });
+    await action({
+      request: new Request("https://web.example.test/logout", { method: "POST", body }),
+      params: {},
+      context: {},
+    } as any);
+    expect(mocks.signOut.mock.calls[0][1]).toEqual({
+      returnTo: "https://web.example.test/login?returnTo=%2Faccount-deleted%3Fstate%3Dpending",
+    });
+  });
+
   it("ignores any other return path (no open redirect)", async () => {
     vi.stubEnv("VITE_MARKETING_URL", "https://marketing.example.test");
     const body = new URLSearchParams({ next: "https://evil.example/" });

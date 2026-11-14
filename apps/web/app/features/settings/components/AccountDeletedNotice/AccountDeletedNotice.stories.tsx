@@ -22,3 +22,13 @@ export const Default: Story = {
     await expect(home.getAttribute("href")).toBe("https://example.com");
   },
 };
+
+export const DeletionPending: Story = {
+  args: { pending: true },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(
+      canvas.getByRole("heading", { name: "Finish deleting your account" }),
+    ).toBeDefined();
+  },
+};

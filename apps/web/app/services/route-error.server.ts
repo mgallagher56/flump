@@ -1,5 +1,11 @@
-import { data } from "react-router";
-import { BackendError, type BackendErrorKind, type RouteErrorPayload } from "./backend-error";
+import { data, redirect } from "react-router";
+import {
+  ACCOUNT_ERASED_PATH,
+  BackendError,
+  type BackendErrorKind,
+  isAccountErased,
+  type RouteErrorPayload,
+} from "./backend-error";
 
 const STATUS_BY_KIND: Record<BackendErrorKind, number> = {
   unavailable: 503,
@@ -16,10 +22,13 @@ const STATUS_BY_KIND: Record<BackendErrorKind, number> = {
  * Turns a BackendError into a thrown route response for the route error boundary. The payload
  * carries only the kind and endpoint path, never the token, base URL, body or cause. An expired
  * backend session is a 401 state, not a redirect (D1 option B). Anything that is not a
- * BackendError, such as an authkit redirect Response, is rethrown by identity.
+ * BackendError, such as an authkit redirect Response, is rethrown by identity. A 410 (erased
+ * account) redirects to the page that finishes the deletion.
  */
 export function throwRouteError(err: unknown): never {
   if (!(err instanceof BackendError)) throw err;
+  // An erased account (410) is not an error page: send the person to finish the deletion.
+  if (isAccountErased(err)) throw redirect(ACCOUNT_ERASED_PATH);
   const payload: RouteErrorPayload = { kind: err.kind, endpoint: err.endpoint };
   throw data(payload, { status: STATUS_BY_KIND[err.kind] });
 }
