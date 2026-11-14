@@ -92,7 +92,7 @@ export const Section24Calculator: FC<Section24CalculatorProps> = ({
       <div className={headerStyle}>
         <div className={badgeRowStyle}>
           <span className={badgeStyle({ tone: "info" })}>
-            Estimate, England, Wales and NI rates
+            Estimate using England, Wales and Northern Ireland rates
           </span>
         </div>
         <h2 className={titleStyle}>Section 24 buy-to-let mortgage relief calculator</h2>

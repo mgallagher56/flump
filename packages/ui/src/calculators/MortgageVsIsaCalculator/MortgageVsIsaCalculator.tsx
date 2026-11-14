@@ -201,8 +201,8 @@ export const MortgageVsIsaCalculator: FC<MortgageVsIsaCalculatorProps> = ({
             className={sliderStyle}
             id="mortgage-term-slider"
             aria-label="Remaining mortgage term slider"
-            max={35}
-            min={5}
+            max={40}
+            min={1}
             onChange={(e) => setRemainingYears(Number(e.target.value))}
             step={1}
             type="range"

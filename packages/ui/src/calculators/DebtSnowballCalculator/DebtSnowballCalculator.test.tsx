@@ -62,4 +62,15 @@ describe("DebtSnowballCalculator", () => {
     expect(text).toContain("These payments would not clear the debts");
     expect(text).not.toMatch(/Debt free: Not payable/);
   });
+
+  it("hides the minimums-only comparison when the minimums alone would never clear the debts", () => {
+    render(<DebtSnowballCalculator />);
+    // £5 a month on a £3,500 card at 24.9% never clears (interest is about £73 a month).
+    fireEvent.change(document.getElementById("debt-card-min") as HTMLInputElement, {
+      target: { value: "5" },
+    });
+    const text = screen.getByTestId("debt-snowball-tool").textContent ?? "";
+    expect(text).toContain("Paying only the minimums would not clear these debts");
+    expect(text).not.toContain("Interest saved compared with paying only the minimums");
+  });
 });

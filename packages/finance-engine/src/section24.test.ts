@@ -92,4 +92,16 @@ describe("section24 module", () => {
     // £16,000 at 20% = £3,200, less £1,600 credit.
     expect(res.netRentalTaxLiabilityGbp).toBe(1600);
   });
+
+  it("counts no Section 24 penalty when there is no mortgage interest, even above £100,000", () => {
+    const res = calculateSection24Tax({
+      grossRentalIncomeGbp: 30000,
+      allowableExpensesGbp: 0,
+      mortgageInterestGbp: 0,
+      otherTaxableIncomeGbp: 90000,
+      taxYear: "2026/27",
+    });
+    expect(res.oldRulesTax).toBe(res.netRentalTaxLiabilityGbp);
+    expect(res.section24Penalty).toBe(0);
+  });
 });

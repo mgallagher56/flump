@@ -82,8 +82,12 @@ export function calculateSection24Tax(input: Section24Input): Section24Result {
   // Old rules (pre-Section 24) comparison
   const actualCashProfit = Math.max(0, netRentalProfitBeforeFinance - shareMortgageInterest);
   const isHigherRate = otherIncome >= 50270;
-  const taxRate = isHigherRate ? 0.4 : 0.2;
-  const oldRulesTax = Math.round(actualCashProfit * taxRate * 100) / 100;
+  // Pre-Section 24: interest was deducted, so the cash profit is the taxable slice. Same slice
+  // method and allowance taper as above, so the "penalty" is only the effect of Section 24.
+  const oldRulesTax =
+    Math.round(
+      (computeIncomeTax(otherIncome + actualCashProfit) - computeIncomeTax(otherIncome)) * 100,
+    ) / 100;
   const section24Penalty = Math.max(
     0,
     Math.round((netRentalTaxLiability - oldRulesTax) * 100) / 100,
