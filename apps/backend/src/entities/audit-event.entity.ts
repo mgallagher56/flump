@@ -13,6 +13,7 @@ export const AUDIT_ACTIONS = [
   "account.deleted",
   "financial_data.reset",
   "user.deleted",
+  "user.exported",
 ] as const;
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];
 

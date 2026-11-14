@@ -73,6 +73,19 @@ describe("UserRateLimitInterceptor shared buckets (M10)", () => {
     expect((err as HttpException).getStatus()).toBe(429);
   });
 
+  it("logs a 429 with a keyed user reference, never the user id (S6)", async () => {
+    const warn = vi.spyOn(Logger.prototype, "warn").mockImplementation(() => undefined);
+    const shared = new MemorySharedRateLimitStore();
+    const { ctx, reflector } = context("tokenMint");
+    const interceptor = new UserRateLimitInterceptor(reflector, new RateLimitStore(), shared);
+    for (let i = 0; i < 5; i++) await run(interceptor, ctx);
+    await run(interceptor, ctx).catch(() => undefined);
+    const lines = warn.mock.calls.map((c) => String(c[0]));
+    const line = lines.find((l) => l.startsWith("ratelimit_exceeded"));
+    expect(line).toMatch(/userRef=[0-9a-f]{16}/);
+    expect(lines.join("\n")).not.toContain("user-1");
+  });
+
   it.each(["credential", "tokenMint", "destructive"] as const)(
     "fails closed for %s: a store error answers 503",
     async (cls) => {

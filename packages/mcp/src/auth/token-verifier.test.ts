@@ -19,7 +19,7 @@ function storeWith(record: Partial<McpTokenRecord> | null): McpTokenStoreAdapter
         tokenHash: hash,
         scopes: ["mcp:read:anonymized", "mcp:simulate"],
         anonymizeInstitutions: true,
-        expiresAt: null,
+        expiresAt: new Date(Date.now() + 86_400_000),
         revokedAt: null,
         ...record,
       };
@@ -94,6 +94,15 @@ describe("TokenVerifier (PAT-only)", () => {
     await expect(verifier.verifyAuthorizationHeader(`Bearer   ${PAT}  `)).resolves.toMatchObject({
       userId: "user_abc",
     });
+  });
+
+  it("rejects a PAT whose row has no expiry or an unreadable one (S2)", async () => {
+    for (const expiresAt of [null, new Date(Number.NaN)]) {
+      const verifier = new TokenVerifier({ tokenStore: storeWith({ expiresAt }) });
+      const err = await verifier.verifyAuthorizationHeader(`Bearer ${PAT}`).catch((e) => e);
+      expect(err).toBeInstanceOf(AuthenticationError);
+      expect(err.message).toContain("no expiry");
+    }
   });
 
   it("rejects revoked, expired and unknown PATs", async () => {

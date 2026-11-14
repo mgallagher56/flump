@@ -1,4 +1,6 @@
 import {
+  AcceptTermsRequest,
+  type AcceptTermsResponse,
   DeleteUserRequest,
   type DeleteUserResponse,
   ResetFinancialDataRequest,
@@ -8,11 +10,13 @@ import {
 import {
   BadRequestException,
   Body,
+  ConflictException,
   Controller,
   Delete,
   Get,
   Headers,
   HttpCode,
+  Inject,
   Logger,
   Patch,
   Post,
@@ -27,6 +31,7 @@ import type { AuthenticatedRequest } from "../../auth/authenticated-request";
 import { AllowErasedAccount } from "../../auth/erased-account";
 import { assertRecentLogin } from "../../auth/recent-login";
 import { safeErrorSummary } from "../../common/log-safe";
+import { TERMS_VERSION_CONFIG } from "../../config/privacy.config";
 import { expectedVersion, setEtag } from "../../contract/etag";
 import { RateLimit } from "../../security/rate-limit.decorator";
 import { AccountDeletionService } from "../privacy/account-deletion.service";
@@ -46,6 +51,8 @@ export class UserProfileController {
     private readonly userProfileService: UserProfileService,
     private readonly accountDeletion: AccountDeletionService,
     private readonly accountExport: AccountExportService,
+    /** TERMS_VERSION, resolved once at boot; null turns terms acceptance off (BE-15). */
+    @Inject(TERMS_VERSION_CONFIG) private readonly termsVersion: string | null,
   ) {}
 
   @Get("user-profile")
@@ -137,6 +144,10 @@ export class UserProfileController {
    * The caller's data export (BE-04, H9): one JSON document, streamed as a download. Never cached.
    * Once the first byte is sent the status is 200; a failure after that ends the response early,
    * so the client gets a truncated (invalid) JSON document rather than a partial one that parses.
+   * The `user.exported` audit row is written before the first byte: if that write fails the
+   * request fails with the standard error before streaming starts, so no export is delivered
+   * without a record. A record may exist for an export that then failed mid-stream; never the
+   * reverse.
    */
   @Get("user-profile/export")
   @RateLimit("dataExport")
@@ -176,6 +187,42 @@ export class UserProfileController {
         res.destroy();
       }
     }
+  }
+
+  /**
+   * Records that the caller accepted the terms and privacy notice (BE-15, M-PRIV3). The version
+   * must be the one served now (`TERMS_VERSION`): 409 `terms_version_mismatch` otherwise, so a
+   * client showing an older notice re-fetches rather than recording the wrong text. 503
+   * `terms_not_configured` while TERMS_VERSION is unset. 200 either way it records (idempotent per
+   * version; `recorded` says whether this call wrote the row). Default write rate limit, as for the
+   * other profile writes.
+   */
+  @Post("user-profile/terms-acceptance")
+  @HttpCode(200)
+  async acceptTerms(
+    @Req() req: AuthenticatedRequest,
+    @Body() body: AcceptTermsRequest,
+  ): Promise<AcceptTermsResponse> {
+    if (this.termsVersion === null) {
+      throw new ServiceUnavailableException({
+        code: "terms_not_configured",
+        message: "Terms acceptance is not available right now. Try again later.",
+      });
+    }
+    // Checked here as well as by the contract interceptor, so a malformed body is still refused
+    // when contract enforcement is off (allowed outside production only).
+    const parsed = AcceptTermsRequest.safeParse(body);
+    if (!parsed.success) {
+      throw new BadRequestException("Send the terms version you accepted.");
+    }
+    if (parsed.data.version !== this.termsVersion) {
+      throw new ConflictException({
+        code: "terms_version_mismatch",
+        message: "The terms have changed. Reload to read the current version.",
+      });
+    }
+    const { recorded } = await this.userProfileService.acceptTerms(req.user.id, this.termsVersion);
+    return { version: this.termsVersion, recorded };
   }
 
   @Patch("user-profile/checklist")

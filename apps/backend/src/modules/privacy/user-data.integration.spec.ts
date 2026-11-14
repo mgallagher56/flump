@@ -460,7 +460,8 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("user data (real Post
     expect(doc.profile?.firstName).toBe("AFirst");
     for (const t of USER_DATA_REGISTRY) {
       if (t.key === "profile") continue;
-      expect((doc[t.key] as unknown[]).length, t.key).toBe(1);
+      // auditEvents also holds the user.exported row written just before this export.
+      expect((doc[t.key] as unknown[]).length, t.key).toBe(t.key === "auditEvents" ? 2 : 1);
     }
     expect(doc.accounts[0]).toMatchObject({ name: "A saver", balance: 1234.5 });
     expect(at(doc.taxRecords, 0).receiptData).toBe("data:image/png;base64,AAAA");
@@ -473,6 +474,46 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("user data (real Post
     expect(text).not.toContain("SECRET");
     expect(text).not.toContain("idem-A");
     expect(text).not.toContain("f".repeat(64));
+
+    // N3: the export left one audit row for the caller, written before the first byte, so the
+    // snapshot document already lists it.
+    const exported = await ds
+      .getRepository(AuditEvent)
+      .find({ where: { action: "user.exported" } });
+    expect(exported.map((e) => e.userId)).toEqual([USER_A]);
+    expect(doc.auditEvents.map((e) => (e as { action?: string }).action)).toContain(
+      "user.exported",
+    );
+  });
+
+  it("keeps the user.exported audit row when the export then fails mid-stream", async () => {
+    await seed(USER_A, "A");
+    await expect(
+      exporter.writeExport(USER_A, () => Promise.reject(new Error("client closed")), new Date()),
+    ).rejects.toThrow("client closed");
+    // A record may exist for an export that failed; never an export without a record.
+    expect(await ds.getRepository(AuditEvent).count({ where: { action: "user.exported" } })).toBe(
+      1,
+    );
+  });
+
+  it("writes nothing to the response when the audit insert fails", async () => {
+    await seed(USER_A, "A");
+    const insert = vi
+      .spyOn(ds.manager.getRepository(AuditEvent), "insert")
+      .mockRejectedValueOnce(new Error("audit write failed"));
+    const write = vi.fn(async () => {});
+    try {
+      await expect(exporter.writeExport(USER_A, write, new Date())).rejects.toThrow(
+        "audit write failed",
+      );
+    } finally {
+      insert.mockRestore();
+    }
+    expect(write).not.toHaveBeenCalled();
+    expect(await ds.getRepository(AuditEvent).count({ where: { action: "user.exported" } })).toBe(
+      0,
+    );
   });
 
   it("aborts a stalled export at the deadline, rolls back and frees the pooled connection", async () => {

@@ -215,6 +215,32 @@ export const DeleteUserResponse = z.strictObject({
 });
 export type DeleteUserResponse = z.infer<typeof DeleteUserResponse>;
 
+/** A terms and privacy notice version: a short identifier such as `2026-11-01`, no free text. */
+export const TermsVersion = z
+  .string()
+  .trim()
+  .min(1)
+  .max(64)
+  .regex(/^[A-Za-z0-9._-]+$/);
+
+/**
+ * POST /user-profile/terms-acceptance request body (BE-15, M-PRIV3). `version` must be the
+ * version the backend currently serves (`TERMS_VERSION`), or the request is refused with
+ * `terms_version_mismatch`.
+ */
+export const AcceptTermsRequest = z.strictObject({ version: TermsVersion });
+export type AcceptTermsRequest = z.infer<typeof AcceptTermsRequest>;
+
+/**
+ * POST /user-profile/terms-acceptance. `recorded` is false when this version was already accepted
+ * (the call is idempotent per version); a new version records a new acceptance.
+ */
+export const AcceptTermsResponse = z.strictObject({
+  version: TermsVersion,
+  recorded: z.boolean(),
+});
+export type AcceptTermsResponse = z.infer<typeof AcceptTermsResponse>;
+
 /** Version of the export document below. Bump on any breaking change to its shape. */
 export const ACCOUNT_EXPORT_SCHEMA_VERSION = 1;
 

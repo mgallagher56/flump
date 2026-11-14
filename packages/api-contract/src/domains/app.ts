@@ -18,6 +18,12 @@ export const ReadinessResponse = z.discriminatedUnion("status", [
     version: z.string().min(1),
     /** First 7 characters of the deploy SHA, or "unknown". */
     commit: z.string().min(1).max(7),
+    /**
+     * How many privacy variables are unset in production (BE-15, N1 and N2). A count only: the
+     * names are in the backend boot log, never on this public route. Zero when none; absent from
+     * older servers. The service is still ready: only the feature each one gates is off.
+     */
+    configWarnings: z.number().int().nonnegative().optional(),
   }),
   z.strictObject({ status: z.literal("unavailable") }),
 ]);

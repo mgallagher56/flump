@@ -122,10 +122,24 @@ const errorResponsesFor = (route: RouteDefinition): Record<string, JsonObject> =
     out["429"] = errorResponse("`rate_limited`: too many requests. See the Retry-After header.");
   }
   out["500"] = errorResponse("`internal_error`: an unexpected failure. Quote the requestId.");
-  if (route.auth !== "public") {
-    out["503"] = errorResponse(
-      "`service_unavailable`: busy or temporarily unavailable. See the Retry-After header.",
+  if (route.id === "profile.acceptTerms") {
+    out["409"] = errorResponse(
+      "`terms_version_mismatch`: the version sent is not the one currently served. Fetch the current version and ask again.",
     );
+  }
+  if (route.auth !== "public") {
+    out["503"] =
+      route.id === "profile.acceptTerms"
+        ? errorResponse(
+            "`terms_not_configured`: terms acceptance is not set up on this server. No Retry-After header is sent.",
+          )
+        : route.id === "profile.deleteUser"
+          ? errorResponse(
+              "`account_deletion_unavailable`: account deletion is not set up on this server. Nothing was deleted. No Retry-After header is sent.",
+            )
+          : errorResponse(
+              "`service_unavailable`: busy or temporarily unavailable. See the Retry-After header.",
+            );
   }
   return out;
 };

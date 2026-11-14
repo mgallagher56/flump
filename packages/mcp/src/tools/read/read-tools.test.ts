@@ -275,17 +275,70 @@ describe("read tools v2: oversized fixtures", () => {
         "Housing #1",
         "Housing #2",
         "Income #1",
-        "Leisure #1",
+        // "Salary" (the income entry's category) is custom too, so it took number 1.
+        "Custom category 2 #1",
       ]);
     } finally {
       await anon.close();
     }
   });
 
+  it("get_budget_summary: custom category names reach the model only with full read (M-PRIV4)", async () => {
+    const budgetEntries = [
+      { name: "Rent to J Smith", category: "Jane's nursery" },
+      { name: "Council tax", category: "bills" },
+      { name: "Swimming", category: "Kids clubs" },
+      { name: "Fees", category: "jane's nursery" },
+    ].map((e, i) => ({
+      id: `b${i}`,
+      ...e,
+      amount: 100,
+      frequency: "monthly",
+      isIncome: false,
+      isEssential: true,
+    }));
+    const data = { ...emptyUser, budgetEntries };
+    const anon = await connectTestClient(data);
+    const full = await connectTestClient(data, {
+      token: {
+        userId: "u",
+        tokenId: "t",
+        scopes: ["mcp:read:full"],
+        anonymizeInstitutions: false,
+        type: "pat",
+      },
+    });
+    try {
+      for (const responseFormat of ["concise", "detailed"] as const) {
+        const text = await anon.callText("get_budget_summary", { responseFormat });
+        expect(text, responseFormat).not.toMatch(/Rent to J Smith|Jane's nursery|Kids clubs/i);
+      }
+      const e = await call(anon, "get_budget_summary", { responseFormat: "detailed" });
+      expect(e.result.entries.map((x: { category: string }) => x.category)).toEqual([
+        "Custom category 1",
+        "bills",
+        "Custom category 2",
+        "Custom category 1",
+      ]);
+      expect(e.result.entries.map((x: { name: string }) => x.name)).toEqual([
+        "Custom category 1 #1",
+        "bills #1",
+        "Custom category 2 #1",
+        "Custom category 1 #2",
+      ]);
+      const fullText = await full.callText("get_budget_summary", { responseFormat: "detailed" });
+      expect(fullText).toContain("Rent to J Smith");
+      expect(fullText).toContain("Jane's nursery");
+    } finally {
+      await anon.close();
+      await full.close();
+    }
+  });
+
   it("truncates get_budget_summary and merges categories that scrub to the same name", async () => {
     const budgetEntries = Array.from({ length: 400 }, (_, i) => ({
       id: `b${i}`,
-      category: i < 2 ? (i === 0 ? "Monzo" : "Barclays") : `Category ${i}`,
+      category: i < 2 ? (i === 0 ? "Monzo nursery" : "monzo NURSERY ") : `Category ${i}`,
       name: `Item ${i}`,
       amount: 10,
       frequency: "monthly",
@@ -302,7 +355,7 @@ describe("read tools v2: oversized fixtures", () => {
         "get_budget_summary",
       );
       expect(small.result.categories).toEqual([
-        { category: "Bank", monthlyGbp: 20, essential: true },
+        { category: "Custom category 1", monthlyGbp: 20, essential: true },
       ]);
     } finally {
       await h.close();

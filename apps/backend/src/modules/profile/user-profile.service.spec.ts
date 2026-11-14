@@ -449,4 +449,27 @@ describe("UserProfileService (Deep Module)", () => {
     );
     warn.mockRestore();
   });
+
+  it("acceptTerms writes a terms consent under a per-user lock, once per version (M-PRIV3)", async () => {
+    const insert = vi.fn().mockResolvedValue(undefined);
+    const count = vi.fn().mockResolvedValueOnce(0).mockResolvedValueOnce(1);
+    const query = vi.fn().mockResolvedValue([]);
+    mockDataSource.transaction.mockImplementation(async (cb) =>
+      cb({ query, getRepository: () => ({ count, insert }) }),
+    );
+
+    await expect(service.acceptTerms("user-123", "2026-11-01")).resolves.toEqual({
+      recorded: true,
+    });
+    await expect(service.acceptTerms("user-123", "2026-11-01")).resolves.toEqual({
+      recorded: false,
+    });
+    expect(query).toHaveBeenCalledWith("SELECT pg_advisory_xact_lock(hashtext($1))", [
+      "terms:user-123",
+    ]);
+    expect(insert).toHaveBeenCalledTimes(1);
+    expect(insert).toHaveBeenCalledWith(
+      expect.objectContaining({ userId: "user-123", kind: "terms", version: "2026-11-01" }),
+    );
+  });
 });

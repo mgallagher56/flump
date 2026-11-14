@@ -1,5 +1,6 @@
 import { Module } from "@nestjs/common";
 import { TypeOrmModule } from "@nestjs/typeorm";
+import { resolveTermsVersion, TERMS_VERSION_CONFIG } from "../../config/privacy.config";
 import { Account } from "../../entities/account.entity";
 import { AccountDetail } from "../../entities/account-detail.entity";
 import { BankConnection } from "../../entities/bank-connection.entity";
@@ -36,7 +37,11 @@ import { UserProfileService } from "./user-profile.service";
     PrivacyModule,
   ],
   controllers: [UserProfileController],
-  providers: [UserProfileService],
+  providers: [
+    UserProfileService,
+    // BE-15 (M-PRIV3): the terms version, read once at boot; null while TERMS_VERSION is unset.
+    { provide: TERMS_VERSION_CONFIG, useFactory: () => resolveTermsVersion(process.env) },
+  ],
   exports: [UserProfileService],
 })
 export class ProfileModule {}

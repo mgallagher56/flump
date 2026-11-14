@@ -270,3 +270,39 @@ export const MISSING_INCOME: Missing = {
 export function safeText(text: string, anonymise: boolean): string {
   return sanitiseText(anonymise ? anonymiseDescription(text) : text);
 }
+
+/**
+ * Budget categories Flump itself offers (the web base categories and the onboarding seed). Any
+ * other category is one the user typed, compared case-insensitively.
+ */
+const BUILT_IN_BUDGET_CATEGORIES: ReadonlySet<string> = new Set([
+  "housing",
+  "bills",
+  "expenses",
+  "savings",
+  "income",
+  "living",
+  "lifestyle",
+  "debt",
+]);
+
+/**
+ * Labels budget categories for one response (M-PRIV4). Full scope: the category as saved (still
+ * sanitised). Anonymised: a built-in category stays as it is, and every custom category, which is
+ * free text the user typed ("Jane's nursery"), becomes "Custom category 1", "Custom category 2" in
+ * order of first appearance, stable within the response.
+ */
+export function budgetCategoryLabeller(anonymise: boolean): (category: string) => string {
+  if (!anonymise) return (category) => safeText(category, false);
+  const custom = new Map<string, number>();
+  return (category) => {
+    const key = category.trim().toLowerCase();
+    if (BUILT_IN_BUDGET_CATEGORIES.has(key)) return sanitiseText(category.trim());
+    let n = custom.get(key);
+    if (n === undefined) {
+      n = custom.size + 1;
+      custom.set(key, n);
+    }
+    return `Custom category ${n}`;
+  };
+}

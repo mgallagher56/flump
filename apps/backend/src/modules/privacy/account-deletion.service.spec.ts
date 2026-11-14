@@ -149,9 +149,15 @@ describe("AccountDeletionService", () => {
       identity,
       new LoggingBankConsentRevoker(),
     );
-    await expect(service.deleteAccount("user_A")).rejects.toBeInstanceOf(
-      ServiceUnavailableException,
-    );
+    const error = vi.spyOn(Logger.prototype, "error").mockImplementation(() => undefined);
+    const thrown = await service.deleteAccount("user_A").catch((e: unknown) => e);
+    expect(thrown).toBeInstanceOf(ServiceUnavailableException);
+    // N1: a stable code in the error envelope, and an operator log naming the variable only.
+    expect((thrown as ServiceUnavailableException).getResponse()).toMatchObject({
+      code: "account_deletion_unavailable",
+    });
+    expect(error).toHaveBeenCalledTimes(1);
+    expect(String(error.mock.calls[0]?.[0])).toContain(TOMBSTONE_KEY_ENV_VAR);
     expect(f.ds.transaction).not.toHaveBeenCalled();
     expect(identity.deletedUsers).toEqual([]);
     await expect(service.isErased("user_A")).resolves.toBe(false);

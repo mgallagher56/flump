@@ -1,11 +1,13 @@
 import {
   BadRequestException,
+  ConflictException,
   ForbiddenException,
   Logger,
   ServiceUnavailableException,
 } from "@nestjs/common";
 import { beforeEach, describe, expect, it, type Mock, vi } from "vitest";
 import { InMemoryIdentityAdapter } from "../../identity/identity.adapter";
+import { RATE_LIMIT_CLASS } from "../../security/rate-limit.decorator";
 import { at } from "../../testing/must";
 import { UserProfileController } from "./user-profile.controller";
 import { UserProfileService } from "./user-profile.service";
@@ -86,6 +88,7 @@ describe("UserProfileController", () => {
       ),
       {} as never,
       {} as never,
+      null,
     );
   });
 
@@ -215,7 +218,7 @@ describe("UserProfileController", () => {
       expect(mockUserProfileRepo.save).not.toHaveBeenCalled();
     });
 
-    it("logs one financial_data_reset event with the user id and row counts only", async () => {
+    it("logs one financial_data_reset event with row counts only, no user id", async () => {
       mockUserProfileRepo.findOne.mockResolvedValueOnce({
         userId: "user-123",
         annualSalary: 80000,
@@ -231,8 +234,9 @@ describe("UserProfileController", () => {
         .filter((m) => m.includes("financial_data_reset"));
       expect(events).toHaveLength(1);
       const event = JSON.parse(at(events, 0));
-      expect(Object.keys(event).sort()).toEqual(["event", "removed", "userId"]);
-      expect(event.userId).toBe("user-123");
+      // S6: no user id in the log line (the audit row holds it); row counts only.
+      expect(Object.keys(event).sort()).toEqual(["event", "removed"]);
+      expect(at(events, 0)).not.toContain("user-123");
       expect(event.removed).toEqual({
         accountDetails: 4,
         snapshotCheckins: 0,
@@ -336,7 +340,7 @@ describe("UserProfileController account deletion and export (BE-04)", () => {
   const fresh = { id: "user-123", authTime: Math.floor(Date.now() / 1000) - 30 };
   const stale = { id: "user-123", authTime: Math.floor(Date.now() / 1000) - 3600 };
   const make = (deletion?: object, exporter?: object) =>
-    new UserProfileController({} as never, deletion as never, exporter as never);
+    new UserProfileController({} as never, deletion as never, exporter as never, null);
 
   it.each([
     ["no body", undefined],
@@ -444,5 +448,65 @@ describe("UserProfileController account deletion and export (BE-04)", () => {
     }).exportData({ user: fresh }, late.res as never);
     expect(late.res.destroy).toHaveBeenCalled();
     expect(late.res.end).not.toHaveBeenCalled();
+  });
+});
+
+describe("UserProfileController terms acceptance (BE-15, M-PRIV3)", () => {
+  const user = { id: "user-123" };
+  const make = (termsVersion: string | null, acceptTerms = vi.fn()) =>
+    new UserProfileController({ acceptTerms } as never, {} as never, {} as never, termsVersion);
+
+  it("records the current version and reports whether this call wrote the row", async () => {
+    const acceptTerms = vi.fn().mockResolvedValue({ recorded: true });
+    const controller = make("2026-11-01", acceptTerms);
+    await expect(
+      controller.acceptTerms({ user } as never, { version: "2026-11-01" }),
+    ).resolves.toEqual({ version: "2026-11-01", recorded: true });
+    expect(acceptTerms).toHaveBeenCalledWith("user-123", "2026-11-01");
+  });
+
+  it("answers 503 terms_not_configured while TERMS_VERSION is unset, writing nothing", async () => {
+    const acceptTerms = vi.fn();
+    const thrown = await make(null, acceptTerms)
+      .acceptTerms({ user } as never, { version: "2026-11-01" })
+      .catch((e: unknown) => e);
+    expect(thrown).toBeInstanceOf(ServiceUnavailableException);
+    expect((thrown as ServiceUnavailableException).getResponse()).toMatchObject({
+      code: "terms_not_configured",
+    });
+    expect(acceptTerms).not.toHaveBeenCalled();
+  });
+
+  it("answers 409 terms_version_mismatch for any other version, writing nothing", async () => {
+    const acceptTerms = vi.fn();
+    const thrown = await make("2026-11-01", acceptTerms)
+      .acceptTerms({ user } as never, { version: "2026-01-01" })
+      .catch((e: unknown) => e);
+    expect(thrown).toBeInstanceOf(ConflictException);
+    expect((thrown as ConflictException).getResponse()).toMatchObject({
+      code: "terms_version_mismatch",
+    });
+    expect(acceptTerms).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ["no body", undefined],
+    ["an empty version", { version: "" }],
+    ["free text", { version: "I agree <b>" }],
+    ["an extra key", { version: "2026-11-01", userId: "user-other" }],
+  ])("refuses %s with a 400 even with contract enforcement off", async (_label, body) => {
+    const acceptTerms = vi.fn();
+    await expect(
+      make("2026-11-01", acceptTerms).acceptTerms({ user } as never, body as never),
+    ).rejects.toBeInstanceOf(BadRequestException);
+    expect(acceptTerms).not.toHaveBeenCalled();
+  });
+
+  it("is a 200 POST with the default write rate limit, like the other profile writes", () => {
+    const handler = UserProfileController.prototype.acceptTerms;
+    expect(Reflect.getMetadata("__httpCode__", handler)).toBe(200);
+    expect(Reflect.getMetadata("path", handler)).toBe("user-profile/terms-acceptance");
+    // No class override: the HTTP-method default (write) tier applies.
+    expect(Reflect.getMetadata(RATE_LIMIT_CLASS, handler)).toBeUndefined();
   });
 });

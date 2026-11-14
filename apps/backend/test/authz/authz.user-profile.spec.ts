@@ -3,6 +3,7 @@ import { AccountExportDocument } from "@flump/api-contract";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { Account } from "../../src/entities/account.entity";
 import { BudgetEntry } from "../../src/entities/budget-entry.entity";
+import { Consent } from "../../src/entities/consent.entity";
 import { TaxRecord } from "../../src/entities/tax-record.entity";
 import { UserProfile } from "../../src/entities/user-profile.entity";
 import {
@@ -55,7 +56,12 @@ describe.skipIf(dbMode === "skip")("authz: user-profile controller (real Postgre
   const resetSentTo: string[] = [];
   const deletedLogins: string[] = [];
 
+  // Read once at boot (BE-15), so it is set before the app starts and restored after.
+  const savedTermsVersion = process.env.TERMS_VERSION;
+  const TERMS = "2026-11-01";
+
   beforeAll(async () => {
+    process.env.TERMS_VERSION = TERMS;
     h = await bootAuthzHarness();
     const adapter = h.app.get<WorkOSIdentityAdapter>(USER_IDENTITY_ADAPTER);
     vi.spyOn(adapter, "getUserEmail").mockImplementation(async (userId) => {
@@ -78,6 +84,8 @@ describe.skipIf(dbMode === "skip")("authz: user-profile controller (real Postgre
       .sort();
     expect([...exercised].sort()).toEqual(expected);
     await h?.close();
+    if (savedTermsVersion === undefined) delete process.env.TERMS_VERSION;
+    else process.env.TERMS_VERSION = savedTermsVersion;
   });
 
   beforeEach(async () => {
@@ -175,6 +183,12 @@ describe.skipIf(dbMode === "skip")("authz: user-profile controller (real Postgre
         body: { confirmation: "DELETE" },
       },
       { key: "GET /user-profile/export", method: "get", path: "/user-profile/export" },
+      {
+        key: "POST /user-profile/terms-acceptance",
+        method: "post",
+        path: "/user-profile/terms-acceptance",
+        body: { version: TERMS },
+      },
     ];
 
     it.each(routes.map((r) => [r.key, r] as const))(
@@ -419,6 +433,44 @@ describe.skipIf(dbMode === "skip")("authz: user-profile controller (real Postgre
     expect(text).not.toContain("A Secret Name");
     expect(text).not.toContain("A saver");
     ran("GET /user-profile/export");
+  });
+
+  it("POST /user-profile/terms-acceptance: records only the caller's acceptance, once per version", async () => {
+    const termsRows = () =>
+      h.dataSource
+        .getRepository(Consent)
+        .find({ where: { kind: "terms" }, order: { grantedAt: "ASC" } });
+
+    // B's probe body (A's id and userId) is rejected and records nothing.
+    expectProbeRejected(
+      await h.call("post", "/user-profile/terms-acceptance", h.tokens.b, {
+        ...probeBody(profileAId),
+        version: TERMS,
+      }),
+    );
+    expect(await termsRows()).toEqual([]);
+
+    const first = await h.call("post", "/user-profile/terms-acceptance", h.tokens.b, {
+      version: TERMS,
+    });
+    expect(first.status).toBe(200);
+    expect(first.body).toEqual({ version: TERMS, recorded: true });
+    const again = await h.call("post", "/user-profile/terms-acceptance", h.tokens.b, {
+      version: TERMS,
+    });
+    expect(again.status).toBe(200);
+    expect(again.body).toEqual({ version: TERMS, recorded: false });
+
+    const stale = await h.call("post", "/user-profile/terms-acceptance", h.tokens.b, {
+      version: "2020-01-01",
+    });
+    expect(stale.status).toBe(409);
+    expect(stale.body.code).toBe("terms_version_mismatch");
+
+    const rows = await termsRows();
+    expect(rows.map((r) => [r.userId, r.version])).toEqual([[USER_B, TERMS]]);
+    await expectProfileAUntouched();
+    ran("POST /user-profile/terms-acceptance");
   });
 
   it("POST /user-profile/send-password-reset: resolves the caller's own address, body ignored", async () => {

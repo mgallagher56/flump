@@ -1,8 +1,9 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { Controller, Get, HttpCode, HttpStatus, Res } from "@nestjs/common";
+import { Controller, Get, HttpCode, HttpStatus, Inject, Res } from "@nestjs/common";
 import type { Response } from "express";
 import { DataSource } from "typeorm";
+import { BOOT_CONFIG, type BootConfig } from "../config/config.module";
 import { SkipRateLimit } from "../security/rate-limit.decorator";
 
 const READINESS_TIMEOUT_MS = 2000;
@@ -30,7 +31,10 @@ function readCommit(): string {
 @Controller("health")
 @SkipRateLimit()
 export class HealthController {
-  constructor(private readonly dataSource: DataSource) {}
+  constructor(
+    private readonly dataSource: DataSource,
+    @Inject(BOOT_CONFIG) private readonly bootConfig: BootConfig,
+  ) {}
 
   @Get()
   @HttpCode(200)
@@ -61,7 +65,14 @@ export class HealthController {
         res.status(HttpStatus.SERVICE_UNAVAILABLE);
         return { status: "unavailable" };
       }
-      return { status: "ok", version: VERSION, commit: readCommit() };
+      // BE-15 (N1, N2): privacy variables unset in production are counted, never named (the names are in the boot log). They do
+      // not make the service unready: every other route works without them.
+      return {
+        status: "ok",
+        version: VERSION,
+        commit: readCommit(),
+        configWarnings: this.bootConfig.privacyWarnings.length,
+      };
     } catch {
       res.status(HttpStatus.SERVICE_UNAVAILABLE);
       return { status: "unavailable" };

@@ -261,4 +261,32 @@ The retention purge is a command a Railway cron service runs once a day (ruling 
 
 - **Inactive-account erasure (D4).** Flump now records `last_active_at` and the job reports accounts past 24 months. Erasing them automatically needs a notice email some weeks before (no email sending exists yet) and a run of the account-deletion service from the job. The earliest any beta account can reach 24 months is late 2028.
 - **Restricted database role for `audit_events`.** The append-only trigger stops the app rewriting a row by mistake; it does not stop someone holding the app's database credential from deleting rows or dropping the trigger. A separate app role without DELETE or TRUNCATE on `audit_events` (with the retention job on its own role) closes that. Optional before public launch.
-- **Terms acceptance record (M-PRIV3).** The `consents` table has a `terms` kind, but the web app has no acceptance step to write it. Adding one needs the terms version from the legal pages and a small route.
+- **Terms acceptance record (M-PRIV3).** The backend route exists since BE-15 (`POST /v1/user-profile/terms-acceptance`, see below). The web acceptance step that calls it is still a follow-up.
+
+## BE-04 / BE-15: account deletion and privacy variables (findings N1, N2, N3, M-PRIV3)
+
+Four backend variables keep account deletion, the client-IP rate limit and terms acceptance working in production. None of them fails boot yet, so a deploy before they are set keeps every other route working. While one is unset in production, the backend logs one warning naming it at boot, and `GET /health/ready` still answers 200 but counts it in `configWarnings` (a number only: the public route never names a variable). SEC-A will add them to the production-required list, so boot fails without them, once they are set in Railway.
+
+### 1. Backend service variables (Railway, production)
+
+| Variable | What it does | What breaks while it is unset |
+|---|---|---|
+| `DELETION_TOMBSTONE_KEY` | HMAC key for the hashed user id kept after an account is erased (`openssl rand -hex 32`, at least 32 characters). **Never rotate it**: old tombstones become unfindable | Account deletion answers 503 with the code `account_deletion_unavailable`, and the backend logs an error naming the variable on each attempt |
+| `WEB_CLIENT_IP_HMAC_KEY` | Verifies the signed client-IP header from the web service (BE-07). Same value on the web service | Every web user shares the web server's per-IP rate-limit bucket |
+| `WORKOS_API_KEY` | Lets account deletion remove the WorkOS login, and lets the password reset and name updates reach WorkOS | An erasure deletes the data but stays `identity_pending` for good: the login is never removed (N2) |
+| `TERMS_VERSION` | The terms and privacy notice version people accept, for example `2026-11-01` (1 to 64 letters, digits, dots, dashes or underscores). Change it whenever the legal pages change | `POST /v1/user-profile/terms-acceptance` answers 503 `terms_not_configured`. A request naming any other version gets 409 `terms_version_mismatch` |
+
+### 2. Database
+
+The migration `AuditActionUserExported1794900000000` lets `audit_events` hold the new action `user.exported`: each completed data export now writes one audit row (N3). It changes only the CHECK constraint. Its `down()` never deletes audit rows: it refuses with an error while any `user.exported` row exists, so export or archive those rows before reverting.
+
+### Notes
+
+- While `BETA_ALLOWED_EMAILS` is set, removing someone from the beta does not stop their existing AI connection tokens. Revoke the tokens, or use the MCP allow-list.
+- Optional: rate-limit rows written before this release keep raw keys until they expire (about a day).
+
+### How to know it worked
+
+- [ ] `GET /health/ready` answers 200 with `"configWarnings": 0`. Date: ____ When it is not 0, the names are in the backend boot log (Railway, backend service, deploy logs) as `warn` lines, one per unset variable, in this form: `<VARIABLE_NAME> is not set in production. See docs/audit/backend-2026-11/OWNER-SETUP.md (BE-04 / BE-15).`
+- [ ] Download your data export in the web app, then in `railway connect Postgres`: `SELECT action FROM audit_events ORDER BY created_at DESC LIMIT 1;` shows `user.exported`.
+- [ ] Then tell the agent to start SEC-A, which makes these variables required.

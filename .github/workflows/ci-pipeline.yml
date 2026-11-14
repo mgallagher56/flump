@@ -542,6 +542,24 @@ jobs:
           echo "backend did not become ready within 60s"
           exit 1
 
+      # BE-15 (N8): the retention cron's real command (apps/backend/retention.railway.json) inside
+      # the built image, against this job's throwaway database, which the boot smoke above has just
+      # migrated. The command has no dry-run mode; every table here is empty, so it deletes nothing
+      # and proves the entry point loads, connects and exits 0. No heartbeat URL is set.
+      - name: 🧹 Backend retention command smoke
+        if: steps.changed.outputs.run == 'true'
+        run: |
+          set -e
+          timeout 120 docker run --rm --name flump-retention-smoke --network host \
+            -e NODE_ENV=production \
+            -e DATABASE_URL=postgres://flump_ci:flump-ci-not-a-secret@127.0.0.1:5432/flump_ci \
+            -e DB_SSL=false \
+            flump-backend-ci bun dist/jobs/retention-purge.js > retention.log 2>&1 \
+            || { status=$?; echo "retention command exited $status"; tail -n 40 retention.log; exit 1; }
+          cat retention.log
+          grep -q "retention inactive_accounts_due=" retention.log \
+            || { echo "retention command did not finish its run"; exit 1; }
+
       # Boots the web production image (`bun server.ts`, the custom Express server) with dummy
       # WorkOS settings and NODE_ENV=production, which also proves the server runs under the
       # image's pinned Bun. /healthz needs no backend. One security header must be present on

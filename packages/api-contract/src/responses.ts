@@ -41,6 +41,7 @@ export {
   RevokeMcpTokenResponse,
 } from "./domains/mcp-tokens.js";
 export {
+  AcceptTermsResponse,
   DeleteUserResponse,
   ResetFinancialDataResponse,
   SendPasswordResetResponse,
