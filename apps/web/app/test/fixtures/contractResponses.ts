@@ -89,6 +89,8 @@ export const profileFixture = {
   housingStatus: "mortgage",
   monthlyHousingCost: 812.5,
   monthlyOtherOutgoings: null,
+  netWorthCountsProperty: true,
+  netWorthCountsStudentLoan: false,
   createdAt: "2026-11-01T09:00:00.000Z",
   updatedAt: "2026-11-13T10:15:00.000Z",
 };
@@ -153,6 +155,7 @@ export const portfolioSnapshotFixture = {
   totalStudentLoans: 0,
   resolvedAccounts: [],
   monthlyHistory: [],
+  netWorthLeavesOut: [],
   currency: "GBP",
 };
 
