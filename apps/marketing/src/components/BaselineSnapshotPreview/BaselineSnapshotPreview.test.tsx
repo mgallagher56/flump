@@ -17,8 +17,7 @@ describe("BaselineSnapshotPreview", () => {
   it("emphasises one figure, with no decorative shape", () => {
     const { container } = render(<BaselineSnapshotPreview />);
     expect(container.querySelectorAll('[data-tone="hero"]')).toHaveLength(1);
-    const shape = container.querySelector("[data-decorative]");
-    expect(shape?.closest('[data-tone="hero"]')?.className).toMatch(/data-decorative/);
+    expect(container.querySelector("[data-decorative]")).toBeNull();
   });
 
   it("uses no status colour, glow or link to a live demo", () => {
