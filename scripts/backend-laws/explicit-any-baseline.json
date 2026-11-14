@@ -5,7 +5,7 @@
   "apps/backend/src/finance.controller.ts": 2,
   "apps/backend/src/finance.service.ts": 4,
   "apps/backend/src/identity/identity.adapter.ts": 1,
-  "apps/backend/src/mcp.controller.ts": 8,
+  "apps/backend/src/mcp.controller.ts": 9,
   "apps/backend/src/providers/monzo.provider.ts": 1,
   "apps/backend/src/providers/open-banking-standard.provider.ts": 2,
   "apps/backend/src/providers/provider.interface.ts": 1,

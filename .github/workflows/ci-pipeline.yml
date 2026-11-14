@@ -435,8 +435,13 @@ jobs:
         env:
           BASE_REF: ${{ github.base_ref }}
         run: |
-          if git diff --name-only "origin/$BASE_REF...HEAD" \
-            | grep -E '^apps/(backend|web|marketing)/|^packages/|(^|/)package\.json$|^bun\.lock$|^turbo\.json$|^\.npmrc$|^\.dockerignore$|^\.github/(workflows/ci-pipeline\.yml|actions/)'; then
+          set -eo pipefail
+          # Diff first, so a git error fails this required job instead of skipping the build.
+          changed=$(git diff --name-only "origin/$BASE_REF...HEAD")
+          # scripts/ and root tsconfig files: the image builds run root scripts (e.g. the
+          # launch-placeholder guard) and extend the root TypeScript config.
+          if printf '%s\n' "$changed" \
+            | grep -E '^apps/(backend|web|marketing)/|^packages/|^scripts/|^tsconfig[^/]*\.json$|(^|/)package\.json$|^bun\.lock$|^turbo\.json$|^\.npmrc$|^\.dockerignore$|^\.github/(workflows/ci-pipeline\.yml|actions/)'; then
             echo "run=true" >> "$GITHUB_OUTPUT"
           else
             echo "run=false" >> "$GITHUB_OUTPUT"

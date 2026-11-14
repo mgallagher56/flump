@@ -111,7 +111,11 @@ jobs:
               --exclude .turbo --exclude coverage" || status=$?
           echo "semgrep exit code: $status"
           if [ "$EVENT_NAME" = "pull_request" ]; then
-            [ "$status" = "0" ] || echo "::error title=Semgrep::This PR adds Semgrep findings (see the log above and the SARIF artifact). Fix them, or add // nosemgrep: <rule-id> with a reason."
+            case "$status" in
+              0) ;;
+              1) echo "::error title=Semgrep::This PR adds Semgrep findings (see the log above and the SARIF artifact). Fix them, or add // nosemgrep: <rule-id> with a reason." ;;
+              *) echo "::error title=Semgrep did not complete::Semgrep exited $status (rules download or scan error, not a finding). Re-run the job; if it persists, check the log." ;;
+            esac
             exit "$status"
           fi
           exit 0
