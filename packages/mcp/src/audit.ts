@@ -38,7 +38,9 @@ const PREFIX = { prompt: "prompt_get", resource: "resource_read" } as const;
  * the audit rule, only the generic prefix is used.
  */
 export function primitiveAuditName(kind: "prompt" | "resource", name: string): string {
-  const specific = `${PREFIX[kind]}_${name.replace(/-/g, "_")}`;
+  const specific = `${PREFIX[kind]}_${name.replaceAll("-", "_")}`;
+  if (specific.length > 64) return PREFIX[kind];
+  // nosemgrep: ajinabraham.njsscan.dos.regex_dos.regex_dos -- AUDIT_TOOL_NAME is anchored with one bounded character class (linear time), the input is a name we registered and is capped at 64 characters above.
   return AUDIT_TOOL_NAME.test(specific) ? specific : PREFIX[kind];
 }
 
