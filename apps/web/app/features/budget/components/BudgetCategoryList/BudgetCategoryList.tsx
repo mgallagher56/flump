@@ -13,6 +13,16 @@ import {
   shareBar,
 } from "./BudgetCategoryList.styles";
 
+/** A safe id fragment from a category name (custom names may hold spaces or symbols). */
+function categorySlug(category: string): string {
+  return (
+    category
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "") || "category"
+  );
+}
+
 export interface BudgetCategoryListProps {
   /** Every category to list, in their natural order (ties keep it). */
   categories: string[];
@@ -93,7 +103,8 @@ export const BudgetCategoryList: FC<BudgetCategoryListProps> = ({
       <ul className={slots.list}>
         {rows.map((row) => {
           const open = openCategory === row.category;
-          const panelId = `budget-category-${row.category}-entries`;
+          const slug = categorySlug(row.category);
+          const panelId = `budget-category-${slug}-entries`;
           const share = scale > 0 ? Math.min(100, (row.total / scale) * 100) : 0;
           return (
             <li className={slots.item} data-list-row="" key={row.category}>
@@ -102,7 +113,7 @@ export const BudgetCategoryList: FC<BudgetCategoryListProps> = ({
                 aria-expanded={open}
                 className={slots.row}
                 data-testid={`budget-category-${row.category}`}
-                id={`budget-category-${row.category}`}
+                id={`budget-category-${slug}`}
                 type="button"
                 onClick={() => onToggleCategory(row.category)}
               >
@@ -130,11 +141,9 @@ export const BudgetCategoryList: FC<BudgetCategoryListProps> = ({
                   <ProgressBar max={100} size="sm" value={share} variant="primary" />
                 </div>
               ) : null}
-              {open ? (
-                <div className={entriesPanel()} id={panelId}>
-                  {renderEntries(row.category)}
-                </div>
-              ) : null}
+              <div className={entriesPanel()} hidden={!open} id={panelId}>
+                {open ? renderEntries(row.category) : null}
+              </div>
             </li>
           );
         })}
