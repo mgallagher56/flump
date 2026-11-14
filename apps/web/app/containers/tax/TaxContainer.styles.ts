@@ -61,3 +61,14 @@ export const narrowOnly = cva({
 export const errorText = cva({
   base: { textStyle: "body.sm", color: "text.primary", margin: 0 },
 });
+
+/** "Other dates (N)": the records that count towards none of the years on offer. */
+export const otherDatesHeading = cva({
+  base: {
+    textStyle: "label.md",
+    color: "text.secondary",
+    fontVariantNumeric: "tabular-nums",
+    margin: 0,
+    marginTop: "4",
+  },
+});

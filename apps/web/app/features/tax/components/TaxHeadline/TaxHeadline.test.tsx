@@ -86,6 +86,7 @@ describe("TaxHeadline", () => {
     };
     rerender(<TaxHeadline records={taxRecordsFixture} result={without} taxYear="2026/27" />);
     expect(screen.queryByText("This year's bill and a first payment on account")).toBeNull();
+    expect(screen.getByText("Paid to HMRC")).toBeDefined();
   });
 
   it("dates the bill to 31 January after the tax year ends", () => {
@@ -111,6 +112,22 @@ describe("TaxHeadline", () => {
         taxYear="2026/27"
       />,
     );
-    expect(screen.getByText(/uses the trading allowance/)).toBeDefined();
+    // The allowance changes the bill, so the line is that card's subtext, in place of its default.
+    const billCard = screen
+      .getByText("Estimated bill")
+      .closest("[data-kpi-eyebrow]")?.parentElement;
+    expect(billCard?.textContent).toContain("uses the trading allowance");
+    const afterCard = screen
+      .getByText("Income after costs")
+      .closest("[data-kpi-eyebrow]")?.parentElement;
+    expect(afterCard?.textContent).not.toContain("allowance");
+    expect(screen.queryByText("Income Tax and National Insurance on this income")).toBeNull();
+    // The after-costs card keeps its own subtext.
+    expect(screen.getByText("Your income less the costs you recorded")).toBeDefined();
+  });
+
+  it("keeps the bill card's default subtext when no allowance was used", () => {
+    render(<TaxHeadline records={taxRecordsFixture} result={taxResultFixture} taxYear="2026/27" />);
+    expect(screen.getByText("Income Tax and National Insurance on this income")).toBeDefined();
   });
 });

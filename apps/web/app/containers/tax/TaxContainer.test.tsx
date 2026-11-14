@@ -388,6 +388,9 @@ describe("TaxContainer, opted in", () => {
       await pickFromMenu(user, "More for 2024/25", "Delete all records for 2024/25");
       const dialog = screen.getByRole("alertdialog");
       expect(dialog.textContent).toContain("Delete all 6 records for 2024/25?");
+      expect(dialog.textContent).toContain(
+        "Deletes the 6 records dated in 2024/25. Records that started in an earlier year and repeat into this one are kept.",
+      );
       expect(dialog.textContent).toContain("cannot be undone");
       fireEvent.click(screen.getByRole("button", { name: "Delete records" }));
       expect(mockSubmit).toHaveBeenCalledWith(
@@ -397,6 +400,43 @@ describe("TaxContainer, opted in", () => {
         },
         { method: "POST" },
       );
+    });
+
+    it("hides delete-all for a year whose records all started in an earlier year", () => {
+      // 2026/27 lists the two records that started in 2024 and carry on, but none is dated in it.
+      render(<TaxContainer />);
+      fireEvent.change(screen.getByLabelText("Tax year"), { target: { value: "2026/27" } });
+      openDrawer(/^Records$/);
+      expect(screen.getByRole("button", { name: "Software Consulting Retainer" })).toBeDefined();
+      expect(screen.queryByRole("button", { name: /^More for/ })).toBeNull();
+      expect(screen.queryByRole("button", { name: /^Delete all records/ })).toBeNull();
+    });
+
+    it("lists records dated outside the years on offer under Other dates, with their actions", async () => {
+      const user = userEvent.setup();
+      const oldRecord: TaxRecord = {
+        ...mockRecords[0],
+        id: "rec-old",
+        name: "Old invoice",
+        frequency: "one-off",
+        date: "2019-05-01",
+        endDate: null,
+      };
+      mockLoaderRecords = [...mockRecords, oldRecord];
+      const { unmount } = render(<TaxContainer />);
+      openRecords();
+      expect(screen.getByRole("heading", { name: "Other dates (1)" })).toBeDefined();
+      expect(screen.getByRole("table", { name: "Records on other dates" })).toBeDefined();
+      await pickFromMenu(user, "Actions for Old invoice", "Delete");
+      expect(screen.getByRole("alertdialog").textContent).toContain("Delete Old invoice?");
+      fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+      fireEvent.click(screen.getByRole("button", { name: "Old invoice" }));
+      expect(screen.getByRole("dialog", { name: "Edit record" })).toBeDefined();
+      unmount();
+      mockLoaderRecords = mockRecords;
+      render(<TaxContainer />);
+      openRecords();
+      expect(screen.queryByRole("heading", { name: /^Other dates/ })).toBeNull();
     });
 
     it("never offers a delete-year control for an empty year", () => {
@@ -473,6 +513,29 @@ describe("TaxContainer, opted in", () => {
       fetcherData.current = { success: true };
       rerender(<TaxContainer />);
       expect(screen.queryByRole("dialog", { name: "Edit record" })).toBeNull();
+      fetcherData.current = null;
+      mockLoaderRecords = mockRecords;
+    });
+
+    it("opens a new dialog without the alert from an earlier failed save", async () => {
+      const user = userEvent.setup();
+      fetcherData.current = null;
+      mockLoaderRecords = [withReceipt];
+      const { rerender } = render(<TaxContainer />);
+      openRecords();
+      fireEvent.click(screen.getByRole("button", { name: "Flat repairs (2024/25)" }));
+      fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+      fetcherData.current = { success: false, error: "We could not save that." };
+      rerender(<TaxContainer />);
+      const edit = screen.getByRole("dialog", { name: "Edit record" });
+      expect(within(edit).getByText("We could not save that.")).toBeDefined();
+      fireEvent.click(within(edit).getByRole("button", { name: "Cancel" }));
+      expect(screen.queryByText("We could not save that.")).toBeNull();
+      await user.click(screen.getByRole("button", { name: "Add income" }));
+      await user.click(await screen.findByRole("menuitem", { name: "Rental income" }));
+      const add = screen.getByRole("dialog", { name: "Add a record" });
+      expect(within(add).queryByRole("alert")).toBeNull();
+      expect(screen.queryByText("We could not save that.")).toBeNull();
       fetcherData.current = null;
       mockLoaderRecords = mockRecords;
     });

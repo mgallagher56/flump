@@ -28,6 +28,7 @@ import {
   STEPPED_ZONE_LABEL,
   STUDENT_LOAN_PLAN_LABELS,
   thresholdLabel,
+  zoneChartSummary,
 } from "../../patterns/TakeHomeDeltaPanel/copy";
 import { TakeHomeDeltaPanel } from "../../patterns/TakeHomeDeltaPanel/TakeHomeDeltaPanel";
 import { Button } from "../../primitives/Button/Button";
@@ -308,9 +309,16 @@ export const MarginalRateExplorer: FC<MarginalRateExplorerProps> = ({
 
   const yourGross = delta.before.grossPay;
   const inRange = yourGross <= CURVE_MAX;
-  // No figure in the summary when your pay is on the chart: the headline cards show your rate.
-  const summary = chartSummary(inRange, formatMoney(CURVE_MAX).text);
   const takeHomeDigits = Number.isInteger(delta.deltaTakeHome) ? 0 : 2;
+  // In a ScenarioZone the chart carries one visible line saying the outcome in words (P10.1).
+  // Elsewhere no figure is in the summary when your pay is on the chart: the cards show it.
+  const zoneSummary = inScenarioZone && inRange;
+  const summary = zoneSummary
+    ? zoneChartSummary(
+        formatMoney(DELTA_GROSS, { fractionDigits: 0 }).text,
+        formatMoney(delta.deltaTakeHome, { fractionDigits: 0 }).text,
+      )
+    : chartSummary(inRange, formatMoney(CURVE_MAX).text);
   const announcement = liveTakeHomeMessage(
     formatMoney(delta.deltaTakeHome, { fractionDigits: takeHomeDigits }).text,
   );
@@ -502,7 +510,7 @@ export const MarginalRateExplorer: FC<MarginalRateExplorerProps> = ({
       <MarginalRateChart
         headingLevel={sectionHeading}
         points={points}
-        showSummary={!inRange}
+        showSummary={zoneSummary || !inRange}
         steppedZones={zones}
         summary={summary}
         showDataTable={!inScenarioZone}

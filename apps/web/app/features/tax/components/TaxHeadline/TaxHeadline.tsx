@@ -4,7 +4,7 @@ import {
   type TaxCalculationResult,
   type TaxRecord,
 } from "@flump/finance-engine";
-import { Button, HeroFigure, KpiCard, KpiStrip, kpiMoney, StatusBadge } from "@repo/ui";
+import { Button, formatDate, HeroFigure, KpiCard, KpiStrip, kpiMoney, StatusBadge } from "@repo/ui";
 import { cx } from "@repo/ui/styled-system/css";
 import type { FC, ReactNode } from "react";
 import { date, root } from "./TaxHeadline.styles";
@@ -19,18 +19,14 @@ export interface TaxHeadlineProps {
   onAddCost?: () => void;
 }
 
-const dateFormat = new Intl.DateTimeFormat("en-GB", {
-  day: "numeric",
-  month: "short",
-  year: "numeric",
-  timeZone: "UTC",
-});
-
 /** The bill for tax year "2026/27" is due on 31 January after it ends: 31 Jan 2028. */
 export const billDueDate = (taxYear: string): Date => {
   const start = Number.parseInt(taxYear.split("/")[0] ?? "", 10);
   return new Date(Date.UTC(start + 2, 0, 31));
 };
+
+/** The due date as a calendar date ("2028-01-31"), so no time zone can move the day. */
+const billDueIso = (taxYear: string): string => billDueDate(taxYear).toISOString().slice(0, 10);
 
 /** Income outside PAYE that the user added for the year, before costs. */
 export const nonPayeIncome = (records: TaxRecord[], taxYear: string): number =>
@@ -106,7 +102,8 @@ export const TaxHeadline: FC<TaxHeadlineProps> = ({
             action={<StatusBadge variant="neutral">Estimate</StatusBadge>}
             explain={`Income Tax and National Insurance on your income outside PAYE, after costs, on top of your salary, at ${taxYear} rates.`}
             label="Estimated bill"
-            subtext="Income Tax and National Insurance on this income"
+            // The allowance changes this figure, so the line about it sits here.
+            subtext={allowance ?? "Income Tax and National Insurance on this income"}
             value={bill}
             valueFormat={{ fractionDigits: 0 }}
           />
@@ -121,9 +118,7 @@ export const TaxHeadline: FC<TaxHeadlineProps> = ({
             label="Income after costs"
             // With no costs recorded the figure would repeat the hero, so the card says so instead.
             notSetLabel="No costs recorded"
-            subtext={
-              allowance ?? (costs > 0 ? "Your income less the costs you recorded" : undefined)
-            }
+            subtext={costs > 0 ? "Your income less the costs you recorded" : undefined}
             value={costs === 0 ? null : Math.round(income - costs)}
             valueFormat={{ fractionDigits: 0 }}
           />
@@ -132,12 +127,10 @@ export const TaxHeadline: FC<TaxHeadlineProps> = ({
             subtext={
               result?.payments.paymentsOnAccountDue
                 ? "This year's bill and a first payment on account"
-                : undefined
+                : "Paid to HMRC"
             }
             value={
-              <span className={cx(kpiMoney(), date())}>
-                {dateFormat.format(billDueDate(taxYear))}
-              </span>
+              <span className={cx(kpiMoney(), date())}>{formatDate(billDueIso(taxYear))}</span>
             }
           />
         </KpiStrip>

@@ -174,12 +174,18 @@ export interface ThProps extends Omit<ThHTMLAttributes<HTMLTableCellElement>, "a
   numeric?: boolean;
   /** Logical alignment. Native `left`/`right` are not accepted: use `start`/`end`. */
   align?: CellAlign;
+  /**
+   * A word cell (names, categories): plain figures instead of tabular ones, because Inter's tnum
+   * also widens the hyphen ("Self - employed"). Never on money, counts, dates or years.
+   */
+  text?: boolean;
 }
 
 export const Th: FC<ThProps> = ({
   children,
   numeric = false,
   align,
+  text = false,
   className,
   scope,
   ...props
@@ -190,7 +196,7 @@ export const Th: FC<ThProps> = ({
   return (
     <th
       className={cx(
-        thRecipe({ align: align ?? (numeric ? "end" : "start"), appearance, numeric }),
+        thRecipe({ align: align ?? (numeric ? "end" : "start"), appearance, text }),
         className,
       )}
       role={stacked ? (resolvedScope === "row" ? "rowheader" : "columnheader") : undefined}
@@ -211,6 +217,11 @@ export interface TdProps extends Omit<TdHTMLAttributes<HTMLTableCellElement>, "a
   secondary?: ReactNode;
   /** Shown beside the value when the table stacks under `md`. Match the column header text. */
   label?: string;
+  /**
+   * A word cell (names, categories): plain figures instead of tabular ones, because Inter's tnum
+   * also widens the hyphen ("Self - employed"). Never on money, counts, dates or years.
+   */
+  text?: boolean;
 }
 
 export const Td: FC<TdProps> = ({
@@ -219,6 +230,7 @@ export const Td: FC<TdProps> = ({
   align,
   secondary,
   label,
+  text = false,
   className,
   ...props
 }) => {
@@ -243,7 +255,7 @@ export const Td: FC<TdProps> = ({
   return (
     <td
       className={cx(
-        tdRecipe({ align: align ?? (numeric ? "end" : "start"), appearance, numeric }),
+        tdRecipe({ align: align ?? (numeric ? "end" : "start"), appearance, numeric, text }),
         className,
       )}
       data-label={label}

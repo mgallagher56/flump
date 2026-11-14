@@ -22,4 +22,11 @@ describe("TaxYearBar", () => {
     render(<TaxYearBar years={["2026/27"]} selectedYear="2026/27" onSelectYear={vi.fn()} />);
     expect(screen.queryAllByRole("button")).toHaveLength(0);
   });
+
+  it("gives the years tabular figures through the select's wrapper class", () => {
+    render(<TaxYearBar years={["2026/27"]} selectedYear="2026/27" onSelectYear={vi.fn()} />);
+    const wrapper = screen.getByLabelText("Tax year").parentElement;
+    expect(wrapper?.className).toContain("fv-num_tabular-nums");
+    expect(wrapper?.className).toContain("[&_select]:fv-num_tabular-nums");
+  });
 });
