@@ -1,9 +1,19 @@
+import {
+  ContextPackResponse,
+  CreateMcpTokenResponse,
+  McpTokenListResponse,
+  RevokeMcpTokenResponse,
+} from "@flump/api-contract";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { BackendError } from "~/services/backend-error";
 
 const apiFetch = vi.fn();
-vi.mock("~/services/api-client", () => ({ apiFetch: (...a: unknown[]) => apiFetch(...a) }));
+// One mock for both: the list goes through apiFetchAll (it follows X-Next-Cursor).
+vi.mock("~/services/api-client", () => ({
+  apiFetch: (...a: unknown[]) => apiFetch(...a),
+  apiFetchAll: (...a: unknown[]) => apiFetch(...a),
+}));
 
 const { useMcpTokens, TOKENS_UNAVAILABLE, CREATE_FAILED, RATE_LIMITED, REVOKE_FAILED } =
   await import("./useMcpTokens");
@@ -15,8 +25,13 @@ describe("useMcpTokens", () => {
     apiFetch.mockResolvedValueOnce([{ id: "t1" }]);
     const { result } = renderHook(() => useMcpTokens());
     expect(result.current.tokens).toBeNull();
-    await waitFor(() => expect(result.current.tokens).toEqual([{ id: "t1" }]));
-    expect(apiFetch).toHaveBeenCalledWith("/mcp-tokens", { signal: expect.any(AbortSignal) });
+    await waitFor(() =>
+      expect(result.current.tokens).toEqual([{ id: "t1", expiresAt: null, lastUsedAt: null }]),
+    );
+    expect(apiFetch).toHaveBeenCalledWith("/mcp-tokens", {
+      signal: expect.any(AbortSignal),
+      schema: McpTokenListResponse,
+    });
 
     apiFetch.mockRejectedValueOnce(new BackendError("server", "/mcp-tokens", 500));
     const failed = renderHook(() => useMcpTokens());
@@ -31,6 +46,7 @@ describe("useMcpTokens", () => {
     });
     expect(apiFetch).toHaveBeenLastCalledWith("/mcp-tokens", {
       method: "POST",
+      schema: CreateMcpTokenResponse,
       body: { name: "Claude", expiryDays: 30, anonymizeInstitutions: true, allowStaging: true },
     });
   });
@@ -54,9 +70,12 @@ describe("useMcpTokens", () => {
     await result.current.revoke("t 1");
     expect(apiFetch).toHaveBeenCalledWith("/mcp-tokens/t%201", {
       method: "DELETE",
+      schema: RevokeMcpTokenResponse,
       allowEmpty: true,
     });
     await result.current.contextPack(false);
-    expect(apiFetch).toHaveBeenLastCalledWith("/mcp-tokens/context-pack?anonymize=false");
+    expect(apiFetch).toHaveBeenLastCalledWith("/mcp-tokens/context-pack?anonymize=false", {
+      schema: ContextPackResponse,
+    });
   });
 });

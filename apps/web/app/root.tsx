@@ -1,3 +1,4 @@
+import { UserProfileResponse } from "@flump/api-contract";
 import {
   PageSkeleton,
   THEME_INIT_SCRIPT,
@@ -61,9 +62,10 @@ export const loader = async (args: LoaderFunctionArgs) => {
 
   if (user && accessToken) {
     try {
-      userProfile = await backendFetch<UserProfile>("/user-profile", {
+      userProfile = await backendFetch("/user-profile", {
         accessToken,
         signal: args.request.signal,
+        schema: UserProfileResponse,
       });
     } catch (error) {
       // An erased account (410) goes to the page that finishes the deletion, unless already there.

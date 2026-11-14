@@ -11,6 +11,14 @@ const mockNotify = vi.fn();
 
 let mockActionData: unknown;
 let mockLoaderData: unknown;
+
+import {
+  accountWithDetailsFixture,
+  budgetEntryFixture,
+  contractBody,
+  jsonResponse,
+} from "~/test/fixtures/contractResponses";
+
 vi.mock("react-router", () => ({
   useActionData: () => mockActionData,
   useLoaderData: () => mockLoaderData,
@@ -61,9 +69,11 @@ const finishButton = () =>
   screen.getByRole("button", { name: /finish and open dashboard/i }) as HTMLButtonElement;
 const clickFinish = () => fireEvent.click(finishButton());
 
-// Lists (GET) answer with an empty array; creates (POST) answer with a record.
-const okFetch = async (_url: string, init?: RequestInit) =>
-  new Response(init?.method === "POST" ? JSON.stringify({ success: true }) : "[]", { status: 200 });
+// Lists (GET) answer with an empty array; creates (POST) answer with a contract-valid record.
+const okFetch = async (url: string, init?: RequestInit) =>
+  init?.method === "POST"
+    ? jsonResponse(contractBody("POST", new URL(url, "http://x").pathname.replace(/^\/api/, "")))
+    : new Response("[]", { status: 200 });
 const posts = (fetchMock: ReturnType<typeof vi.fn>, suffix: string) =>
   fetchMock.mock.calls.filter(
     ([u, init]) => String(u).endsWith(suffix) && (init as RequestInit)?.method === "POST",
@@ -404,12 +414,12 @@ describe("OnboardingRoute (5-step flow)", () => {
     const fetchMock = vi.fn().mockImplementation(async (url: string, init?: RequestInit) => {
       if (init?.method === "POST") return okFetch(url, init);
       if (String(url).endsWith("/accounts")) {
-        return new Response(
-          JSON.stringify([{ name: "Cash and emergency savings" }, { name: "Unrelated" }]),
-          { status: 200 },
-        );
+        return jsonResponse([
+          { ...accountWithDetailsFixture, name: "Cash and emergency savings" },
+          { ...accountWithDetailsFixture, name: "Unrelated" },
+        ]);
       }
-      return new Response(JSON.stringify([{ name: "Monthly Take-Home Income" }]), { status: 200 });
+      return jsonResponse([{ ...budgetEntryFixture, name: "Monthly Take-Home Income" }]);
     });
     globalThis.fetch = fetchMock as any;
     fillAndFinish();
@@ -671,7 +681,7 @@ describe("OnboardingRoute (5-step flow)", () => {
       monthlyHousingCost: 900,
       monthlyOtherOutgoings: 700,
       hasMortgage: true,
-      homeValue: 300000,
+      // No homeValue: the profile PATCH ignores it (the home is saved as a Property account).
       pensionPercent: 5,
       isSalarySacrifice: false,
       enabledPages: ["accounts", "budget", "savings", "debt", "pension", "mortgage"],

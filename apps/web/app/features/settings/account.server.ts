@@ -1,3 +1,4 @@
+import { DeleteUserResponse as DeleteUserResponseSchema } from "@flump/api-contract";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { data, redirectDocument } from "react-router";
 import { apiConfig } from "~/config.server";
@@ -39,9 +40,10 @@ export async function deleteAccountAction(args: ActionFunctionArgs, formData: Fo
   const token = requireAccessToken(await getAuthSession(args, { ensureSignedIn: true }));
   let result: DeleteUserResponse | undefined;
   try {
-    result = await backendFetch<DeleteUserResponse>("/user-profile", {
+    result = await backendFetch("/user-profile", {
       accessToken: token,
       method: "DELETE",
+      schema: DeleteUserResponseSchema,
       body: { confirmation: DELETE_ACCOUNT_CONFIRMATION },
       signal: args.request.signal,
       timeoutMs: DELETE_TIMEOUT_MS,

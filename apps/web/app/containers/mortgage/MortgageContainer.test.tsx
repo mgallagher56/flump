@@ -1,6 +1,7 @@
 import { countFigures, countNotSet, expectPageRules } from "@repo/ui/testing";
 import { act, fireEvent, screen, within } from "@testing-library/react";
 import { afterEach, vi } from "vitest";
+import { contractFetch } from "~/test/fixtures/contractResponses";
 import customRender from "~/testUtils/customRender";
 import MortgageContainer from "./MortgageContainer";
 
@@ -65,10 +66,7 @@ const setApiEnv = () => {
 };
 const patches = (fetchSpy: ReturnType<typeof vi.spyOn>) =>
   fetchSpy.mock.calls.filter(([, init]) => (init as RequestInit)?.method === "PATCH");
-const okFetch = () =>
-  vi
-    .spyOn(globalThis, "fetch")
-    .mockImplementation(async () => new Response(JSON.stringify({}), { status: 200 }));
+const okFetch = () => vi.spyOn(globalThis, "fetch").mockImplementation(contractFetch());
 
 /** Radix tabs select on mouse down, not click. */
 const selectTab = (name: string | RegExp) => fireEvent.mouseDown(screen.getByRole("tab", { name }));
@@ -589,10 +587,10 @@ describe("<MortgageContainer />", () => {
 
     test("shows an error and no success message when the account PATCH fails", async () => {
       setApiEnv();
-      vi.spyOn(globalThis, "fetch").mockImplementation(async (url) =>
+      vi.spyOn(globalThis, "fetch").mockImplementation(async (url, init) =>
         String(url).includes("/accounts/")
           ? new Response(JSON.stringify({ message: "nope" }), { status: 500 })
-          : new Response(JSON.stringify({}), { status: 200 }),
+          : contractFetch()(url, init),
       );
       const { getByLabelText, getByRole, findByRole, queryByText } = customRender(
         <MortgageContainer />,
@@ -643,10 +641,10 @@ describe("<MortgageContainer />", () => {
     test("a failed save leaves the saved figures as they were", async () => {
       setApiEnv();
       loaderData = loaded();
-      vi.spyOn(globalThis, "fetch").mockImplementation(async (url) =>
+      vi.spyOn(globalThis, "fetch").mockImplementation(async (url, init) =>
         String(url).includes("/accounts/")
           ? new Response(JSON.stringify({ message: "nope" }), { status: 500 })
-          : new Response(JSON.stringify({}), { status: 200 }),
+          : contractFetch()(url, init),
       );
       const { getByLabelText, getByRole, findByRole, container } = customRender(
         <MortgageContainer />,

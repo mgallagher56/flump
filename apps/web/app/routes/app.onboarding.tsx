@@ -1,3 +1,4 @@
+import { UpdateProfileResponse, UserProfileResponse } from "@flump/api-contract";
 import {
   type ActionFunctionArgs,
   data,
@@ -30,7 +31,8 @@ export const loader = async (args: LoaderFunctionArgs) => {
   const { user, accessToken } = await getAuthSession(args, { ensureSignedIn: true });
   if (!accessToken) throwRouteError(new BackendError("unauthorised", "/user-profile"));
   try {
-    const userProfile = await backendFetch<UserProfile>("/user-profile", {
+    const userProfile: UserProfile = await backendFetch("/user-profile", {
+      schema: UserProfileResponse,
       accessToken,
       signal: args.request.signal,
     });
@@ -55,6 +57,7 @@ export const action = async (args: ActionFunctionArgs) => {
 
   try {
     await backendFetch("/user-profile", {
+      schema: UpdateProfileResponse,
       accessToken: token,
       method: "PATCH",
       body: {

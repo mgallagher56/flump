@@ -1,3 +1,4 @@
+import { UserProfileResponse } from "@flump/api-contract";
 import type { ReactElement } from "react";
 import { useEffect } from "react";
 import type {
@@ -23,9 +24,10 @@ export const loader = async (args: LoaderFunctionArgs) => {
   const { user, accessToken } = await getAuthSession(args, { ensureSignedIn: true });
   if (!accessToken) throwRouteError(new BackendError("unauthorised", "/user-profile"));
   try {
-    const userProfile = await backendFetch<UserProfile>("/user-profile", {
+    const userProfile: UserProfile = await backendFetch("/user-profile", {
       accessToken,
       signal: args.request.signal,
+      schema: UserProfileResponse,
     });
     return data({ userProfile, user });
   } catch (error) {

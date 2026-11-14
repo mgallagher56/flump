@@ -107,10 +107,10 @@ export const invalidRowsLine = (n: number) =>
   `${formatCount(n)} ${n === 1 ? "row in the import was" : "rows in the import were"} not valid (for example a future month) and will not be saved.`;
 
 export function savedSentence(counts: {
-  new: number | null;
-  overwrite: number | null;
-  unchanged: number | null;
-  skipped: number | null;
+  new?: number | null;
+  overwrite?: number | null;
+  unchanged?: number | null;
+  skipped?: number | null;
 }): string {
   const n = (v: number | null) => v ?? 0;
   const parts = [

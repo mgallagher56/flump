@@ -43,8 +43,12 @@ const build = {
         default: () => null,
         loader: async () => {
           // Two calls, after an await, so the id must survive async continuations.
-          await backendFetch("/accounts", { accessToken: "tok" });
-          await backendFetch("/user-profile", { accessToken: "tok" });
+          await backendFetch("/accounts", { accessToken: "tok", schema: null, allowEmpty: true });
+          await backendFetch("/user-profile", {
+            accessToken: "tok",
+            schema: null,
+            allowEmpty: true,
+          });
           return null;
         },
       },
@@ -163,7 +167,7 @@ describe("request id across tiers", () => {
     const seen: IncomingHttpHeaders[] = [];
     await startBackend(seen);
     expect(getRequestId()).toBeUndefined();
-    await backendFetch("/accounts", { accessToken: "tok" });
+    await backendFetch("/accounts", { accessToken: "tok", schema: null, allowEmpty: true });
     expect(seen[0]?.["x-request-id"]).toBeUndefined();
   });
 });

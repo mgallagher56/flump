@@ -1,7 +1,9 @@
 #!/usr/bin/env node
 import { realpathSync } from "node:fs";
 import { pathToFileURL } from "node:url";
-import type { BuildContextPackInput } from "@flump/finance-engine";
+import { BackendError, callBackend } from "@flump/api-client";
+import { ContextPackResponse } from "@flump/api-contract";
+import type { BuildContextPackInput, FinancialBaseline } from "@flump/finance-engine";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { inMemoryQueries } from "../provider/in-memory.js";
 import { createFlumpMcpServer } from "../server.js";
@@ -17,14 +19,30 @@ export class PatRejectedError extends Error {
   }
 }
 
-type ContextPackResponse = {
-  baseline?: BuildContextPackInput["baseline"];
-  portfolio?: { accounts?: BuildContextPackInput["accounts"] };
-  budgetSummary?: { entries?: BuildContextPackInput["budgetEntries"] };
-  taxRecords?: BuildContextPackInput["taxRecords"];
-};
-
 const REQUEST_TIMEOUT_MS = 10_000;
+
+/**
+ * Feeds the in-memory provider from a parsed context pack. The pack is the engine's output, not
+ * its raw input: its baseline is an open record with the stage removed, and it carries no tax
+ * records. The baseline conversion below is a domain mapping of an already-validated body, not a
+ * response cast; a raw-input endpoint for PAT holders is a follow-up (see BE-10 PR).
+ */
+export function packToInput(pack: ContextPackResponse["pack"]): BuildContextPackInput {
+  return {
+    baseline: pack.baseline as unknown as FinancialBaseline,
+    accounts: pack.portfolio.accounts.map((a) => ({
+      id: a.id,
+      name: a.name,
+      type: a.rawType,
+      balance: a.nominalBalance,
+      interestRate: a.interestRateKnown ? a.interestRate : null,
+      monthlyContribution: a.monthlyContributionKnown ? a.monthlyContribution : null,
+      currency: a.currency,
+    })),
+    budgetEntries: pack.budgetSummary.entries,
+    taxRecords: [],
+  };
+}
 
 type Connect = (server: ReturnType<typeof createFlumpMcpServer>) => Promise<void>;
 
@@ -45,39 +63,43 @@ export async function runStdio(
   if (!pat) throw new PatRejectedError();
   const apiUrl = env.FLUMP_API_URL || "http://localhost:4000";
 
-  const fetchPack = async (): Promise<ContextPackResponse> => {
-    let res: Response;
+  const fetchPack = async (): Promise<ContextPackResponse["pack"]> => {
     try {
-      res = await fetchImpl(`${apiUrl}/mcp-tokens/context-pack`, {
-        headers: { Authorization: `Bearer ${pat}`, "Content-Type": "application/json" },
-        signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
-      });
+      // Contract-typed (BE-10): `/v1`, and a body that does not match ContextPackResponse is a
+      // typed bad-response rather than undefined fields deep in a tool.
+      const { data } = await callBackend(
+        {
+          baseUrl: apiUrl,
+          fetch: fetchImpl,
+          headers: () => ({ Authorization: `Bearer ${pat}` }),
+        },
+        "/mcp-tokens/context-pack",
+        { schema: ContextPackResponse, timeoutMs: REQUEST_TIMEOUT_MS },
+      );
+      return data.pack;
     } catch (err) {
-      const reason = err instanceof Error ? err.name : "error";
-      throw new Error(`Could not reach Flump API at ${apiUrl} (${reason})`);
-    }
-    if (!res.ok) throw new PatRejectedError();
-    try {
-      return (await res.json()) as ContextPackResponse;
-    } catch {
-      throw new Error(`Flump API at ${apiUrl} returned a response that is not valid JSON`);
+      if (!(err instanceof BackendError)) throw err;
+      if (err.kind === "unavailable") {
+        throw new Error(
+          `Could not reach Flump API at ${apiUrl} (${err.cause instanceof Error ? err.cause.name : "error"})`,
+        );
+      }
+      if (err.kind === "bad-response") {
+        throw new Error(
+          `Flump API at ${apiUrl} returned a response that does not match the contract${err.requestId ? ` (request ${err.requestId})` : ""}`,
+        );
+      }
+      throw new PatRejectedError();
     }
   };
 
   // Fail fast, before the transport opens, if the PAT does not work.
   const initial = await fetchPack();
-  const userId = initial.baseline?.userId;
-  if (!userId) throw new PatRejectedError();
+  const userId = initial.baseline.userId;
+  if (typeof userId !== "string" || userId === "") throw new PatRejectedError();
 
   const getUserFinancialData = async () => {
-    const data = await fetchPack();
-    if (!data.baseline) throw new PatRejectedError();
-    return {
-      baseline: data.baseline,
-      accounts: data.portfolio?.accounts,
-      budgetEntries: data.budgetSummary?.entries,
-      taxRecords: data.taxRecords,
-    };
+    return packToInput(await fetchPack());
   };
   // The context pack has no monthly rows, so history reads return empty with missing[] here.
   const dataProvider: McpUserDataProvider = {

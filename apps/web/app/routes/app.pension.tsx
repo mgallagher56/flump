@@ -1,3 +1,10 @@
+import {
+  CreateAccountResponse,
+  DeleteAccountResponse,
+  UpdateAccountResponse,
+  UpdateChecklistResponse,
+  UpdateProfileResponse,
+} from "@flump/api-contract";
 import type { ReactElement } from "react";
 import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "react-router";
 import { data } from "react-router";
@@ -28,6 +35,7 @@ export const action = async (args: ActionFunctionArgs) => {
       const isCurrentBool = isCurrent !== null ? isCurrent === "true" : true;
 
       await backendFetch(`/accounts`, {
+        schema: CreateAccountResponse,
         accessToken: token,
         method: "POST",
         body: {
@@ -69,12 +77,14 @@ export const action = async (args: ActionFunctionArgs) => {
       }
 
       await backendFetch(`/accounts/${encodeURIComponent(String(accountId ?? ""))}`, {
+        schema: UpdateAccountResponse,
         accessToken: token,
         method: "PATCH",
         body: updatePayload,
       });
     } else if (intent === "deletePensionAccount") {
       await backendFetch(`/accounts/${encodeURIComponent(String(accountId ?? ""))}`, {
+        schema: DeleteAccountResponse,
         accessToken: token,
         method: "DELETE",
       });
@@ -86,6 +96,7 @@ export const action = async (args: ActionFunctionArgs) => {
       const isSalarySacrificeEmployerNi = formData.get("isSalarySacrificeEmployerNi");
 
       await backendFetch(`/user-profile`, {
+        schema: UpdateProfileResponse,
         accessToken: token,
         method: "PATCH",
         body: {
@@ -117,6 +128,7 @@ export const action = async (args: ActionFunctionArgs) => {
 
       // 1. Create initial pot
       await backendFetch(`/accounts`, {
+        schema: CreateAccountResponse,
         accessToken: token,
         method: "POST",
         body: {
@@ -130,6 +142,7 @@ export const action = async (args: ActionFunctionArgs) => {
 
       // 2. Update user profile
       await backendFetch(`/user-profile`, {
+        schema: UpdateProfileResponse,
         accessToken: token,
         method: "PATCH",
         body: {
@@ -150,6 +163,7 @@ export const action = async (args: ActionFunctionArgs) => {
       // 3. Mark checklist step complete
       try {
         await backendFetch(`/user-profile/checklist`, {
+          schema: UpdateChecklistResponse,
           accessToken: token,
           method: "PATCH",
           body: { step: "pension", completed: true },

@@ -6,24 +6,26 @@
 
 export type ImportStatus = "staged" | "committed" | "reverted" | "expired";
 
+// Nullable fields are optional (`?:`) so a contract-parsed body assigns: with this app's
+// `strictNullChecks: false`, zod types a nullable key as optional (BE-10).
 export interface ImportBatch {
   batchId: string;
   status: ImportStatus;
   counts: {
     staged: number;
-    new: number | null;
-    overwrite: number | null;
-    unchanged: number | null;
-    skipped: number | null;
+    new?: number | null;
+    overwrite?: number | null;
+    unchanged?: number | null;
+    skipped?: number | null;
     errors: number;
   };
   rows: number;
   skippedManual: string[];
-  revert: { restored: number; removed: number; kept: number } | null;
+  revert?: { restored: number; removed: number; kept: number } | null;
   createdAt: string;
   expiresAt: string;
-  committedAt: string | null;
-  revertedAt: string | null;
+  committedAt?: string | null;
+  revertedAt?: string | null;
 }
 
 export type RowStatus = "new" | "overwrite" | "unchanged";
@@ -34,8 +36,8 @@ export interface PreviewRow {
   month: string;
   /** Signed as stored: debts are negative. */
   value: number;
-  prior: number | null;
-  priorSource: string | null;
+  prior?: number | null;
+  priorSource?: string | null;
   status: RowStatus;
   /** Commit skips the row unless it is ticked. */
   needsTick: boolean;
@@ -45,8 +47,8 @@ export interface PreviewAccount {
   ref: string;
   name: string;
   type: string;
-  mappedAccountId: string | null;
-  suggestedAccountId: string | null;
+  mappedAccountId?: string | null;
+  suggestedAccountId?: string | null;
 }
 
 export interface ImportPreview {

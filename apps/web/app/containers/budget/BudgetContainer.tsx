@@ -1,3 +1,10 @@
+import {
+  AddBudgetCategoryResponse,
+  BudgetEntryListResponse,
+  BudgetEntryResponse,
+  DeleteBudgetEntryResponse,
+  etagFor,
+} from "@flump/api-contract";
 import { PortfolioSnapshot } from "@flump/finance-engine";
 import {
   Button,
@@ -21,7 +28,8 @@ import { RunwayCalculator } from "~/features/budget/components/RunwayCalculator"
 import { DebtHelpLink } from "~/features/debt/components/DebtHelpLink";
 import { useUserProfile } from "~/hooks/useUserProfile";
 import type { loader } from "~/routes/app.budget";
-import { apiFetch } from "~/services/api-client";
+import { apiFetch, apiFetchAll } from "~/services/api-client";
+import { BackendError } from "~/services/backend-error";
 import type { BudgetEntry } from "~/types/budget";
 import { buildWorkspacePicture } from "~/utils/financialPicture";
 import { clearRunwaySettings, type RunwayScenario } from "~/utils/runwayStorage";
@@ -30,6 +38,20 @@ import { clearRunwaySettings, type RunwayScenario } from "~/utils/runwayStorage"
 type BudgetView = "budget" | "wizard";
 
 const STANDARD_CATEGORIES: string[] = ["housing", "bills", "expenses", "savings", "income"];
+
+/**
+ * Leaves out the keys the backend accepts and ignores on budget-entry writes (`isPrimaryIncome`
+ * and `isDefault` are server-owned, `contractEndDate` has no column), so they are never sent.
+ */
+function writableEntryFields<T extends Partial<BudgetEntry>>(entry: T) {
+  const {
+    isPrimaryIncome: _primary,
+    isDefault: _default,
+    contractEndDate: _end,
+    ...fields
+  } = entry;
+  return fields;
+}
 
 const BudgetContainer: FC = () => {
   const {
@@ -165,9 +187,10 @@ const BudgetContainer: FC = () => {
     entry: Omit<BudgetEntry, "id" | "userId" | "createdAt" | "updatedAt">,
   ) => {
     try {
-      const created = await apiFetch<BudgetEntry>("/budget-entries", {
+      const created = await apiFetch("/budget-entries", {
         method: "POST",
-        body: entry,
+        body: writableEntryFields(entry),
+        schema: BudgetEntryResponse,
       });
       setActionError(null);
       setEntries((prev) => [...prev, created]);
@@ -179,22 +202,33 @@ const BudgetContainer: FC = () => {
 
   const updateEntry = async (id: string, update: Partial<BudgetEntry>) => {
     try {
-      const updated = await apiFetch<BudgetEntry>(`/budget-entries/${id}`, {
+      const current = entries.find((e) => e.id === id);
+      const updated = await apiFetch(`/budget-entries/${id}`, {
         method: "PATCH",
-        body: update,
+        body: writableEntryFields(update),
+        schema: BudgetEntryResponse,
+        ifMatch: current?.updatedAt ? etagFor(current.updatedAt) : undefined,
       });
       setActionError(null);
       setEntries((prev) => prev.map((e) => (e.id === id ? updated : e)));
     } catch (err) {
       setActionError("We could not save your changes. Nothing has changed. Try again.");
+      // 412: the row changed elsewhere since it was loaded. Reload the rows so the next try sends
+      // the current version instead of failing until the page is reloaded.
+      if (err instanceof BackendError && err.status === 412) {
+        await apiFetchAll("/budget-entries", { schema: BudgetEntryListResponse })
+          .then(setEntries)
+          .catch(() => undefined);
+      }
       throw err;
     }
   };
 
   const deleteEntry = async (id: string) => {
     try {
-      await apiFetch<void>(`/budget-entries/${id}`, {
+      await apiFetch(`/budget-entries/${id}`, {
         method: "DELETE",
+        schema: DeleteBudgetEntryResponse,
         allowEmpty: true,
       });
     } catch {
@@ -214,9 +248,10 @@ const BudgetContainer: FC = () => {
   const handleAddSuggestedDefaults = async () => {
     setIsSeedingDefaults(true);
     try {
-      const updated = await apiFetch<BudgetEntry[]>("/budget-entries/seed-defaults", {
+      const updated = await apiFetch("/budget-entries/seed-defaults", {
         method: "POST",
         body: {},
+        schema: BudgetEntryListResponse,
       });
       setActionError(null);
       setEntries(updated);
@@ -233,9 +268,10 @@ const BudgetContainer: FC = () => {
 
     let updatedCategories = Array.from(new Set([...customCategories, trimmed]));
     try {
-      const data = await apiFetch<{ categories?: string[] }>("/budget-entries/categories", {
+      const data = await apiFetch("/budget-entries/categories", {
         method: "POST",
         body: { category: trimmed },
+        schema: AddBudgetCategoryResponse,
       });
       updatedCategories = data?.categories || updatedCategories;
     } catch (err) {

@@ -1,3 +1,13 @@
+import type { ContractSchema } from "@flump/api-client";
+import {
+  BankConnectionCapabilityResponse,
+  ConnectBankResponse,
+  CreateAccountResponse,
+  DeleteAccountResponse,
+  DeleteBankConnectionResponse,
+  SyncBankConnectionResponse,
+  UpdateAccountResponse,
+} from "@flump/api-contract";
 import type { ReactElement } from "react";
 import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "react-router";
 import { data } from "react-router";
@@ -29,33 +39,51 @@ export const action = async (args: ActionFunctionArgs) => {
       ? roundTo2dp(Number(rawBalance))
       : undefined;
 
-  const send = (endpoint: string, method: HttpMethod, body?: unknown) =>
-    backendFetch<any>(endpoint, { accessToken: token, method, body });
+  const send = <T,>(
+    endpoint: string,
+    method: HttpMethod,
+    schema: ContractSchema<T>,
+    body?: unknown,
+  ) => backendFetch(endpoint, { accessToken: token, method, body, schema });
 
   try {
     if (intent === "create") {
-      await send("/accounts", "POST", {
+      await send("/accounts", "POST", CreateAccountResponse, {
         name,
         type,
         ...(studentLoanPlan !== undefined ? { studentLoanPlan } : {}),
         ...(balance !== undefined ? { balance } : {}),
       });
     } else if (intent === "update") {
-      await send(`/accounts/${encodeURIComponent(String(accountId ?? ""))}`, "PATCH", {
-        name,
-        type,
-        ...(studentLoanPlan !== undefined ? { studentLoanPlan } : {}),
-        ...(balance !== undefined ? { balance } : {}),
-      });
+      await send(
+        `/accounts/${encodeURIComponent(String(accountId ?? ""))}`,
+        "PATCH",
+        UpdateAccountResponse,
+        {
+          name,
+          type,
+          ...(studentLoanPlan !== undefined ? { studentLoanPlan } : {}),
+          ...(balance !== undefined ? { balance } : {}),
+        },
+      );
     } else if (intent === "delete") {
-      await send(`/accounts/${encodeURIComponent(String(accountId ?? ""))}`, "DELETE");
+      await send(
+        `/accounts/${encodeURIComponent(String(accountId ?? ""))}`,
+        "DELETE",
+        DeleteAccountResponse,
+      );
     } else if (intent === "syncConnection") {
       await send(
         `/bank-connections/${encodeURIComponent(String(connectionId ?? ""))}/refresh`,
         "POST",
+        SyncBankConnectionResponse,
       );
     } else if (intent === "disconnectConnection") {
-      await send(`/bank-connections/${encodeURIComponent(String(connectionId ?? ""))}`, "DELETE");
+      await send(
+        `/bank-connections/${encodeURIComponent(String(connectionId ?? ""))}`,
+        "DELETE",
+        DeleteBankConnectionResponse,
+      );
     } else if (intent === "connectBank") {
       const institutionId = String(formData.get("institutionId") || "");
       const bankToken = formData.get("token");
@@ -64,7 +92,7 @@ export const action = async (args: ActionFunctionArgs) => {
 
       let backendData: any = null;
       try {
-        backendData = await send("/bank-connections", "POST", {
+        backendData = await send("/bank-connections", "POST", ConnectBankResponse, {
           institutionId,
           token: bankToken ? String(bankToken) : undefined,
         });
@@ -103,9 +131,10 @@ export const loader = async (args: LoaderFunctionArgs) => {
   let bankConnectionsEnabled = false;
   if (accessToken) {
     try {
-      const capability = await backendFetch<{ enabled?: boolean }>("/bank-connections/capability", {
+      const capability = await backendFetch("/bank-connections/capability", {
         accessToken,
         signal: args.request.signal,
+        schema: BankConnectionCapabilityResponse,
       });
       bankConnectionsEnabled = capability?.enabled === true;
     } catch {

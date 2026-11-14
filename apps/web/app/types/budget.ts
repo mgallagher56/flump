@@ -12,7 +12,7 @@ export interface BudgetEntry {
   isIncome: boolean;
   isPrimaryIncome: boolean;
   isEssential: boolean;
-  notes: string | null;
+  notes?: string | null;
   isDefault: boolean;
   contractEndDate?: string | null;
   createdAt: string;

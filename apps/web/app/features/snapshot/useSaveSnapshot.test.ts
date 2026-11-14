@@ -1,3 +1,4 @@
+import { UpsertSnapshotResponse } from "@flump/api-contract";
 import { act, renderHook } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -34,6 +35,7 @@ describe("useSaveSnapshot", () => {
     });
     expect(ok).toBe(true);
     expect(apiFetch).toHaveBeenCalledWith("/snapshots/2026-11", {
+      schema: UpsertSnapshotResponse,
       method: "PUT",
       body: args.payload,
     });

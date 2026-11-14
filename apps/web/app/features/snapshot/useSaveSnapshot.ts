@@ -1,3 +1,4 @@
+import { UpsertSnapshotResponse } from "@flump/api-contract";
 import { useOptionalToast } from "@repo/ui";
 import { useCallback } from "react";
 import { useRevalidator } from "react-router";
@@ -25,7 +26,11 @@ export function useSaveSnapshot(): SaveSnapshot {
   return useCallback<SaveSnapshot>(
     async ({ month, payload, saved, skipped }) => {
       try {
-        await apiFetch(`/snapshots/${month}`, { method: "PUT", body: payload });
+        await apiFetch(`/snapshots/${month}`, {
+          schema: UpsertSnapshotResponse,
+          method: "PUT",
+          body: payload,
+        });
       } catch {
         toast?.({ ...SAVE_ERROR_TOAST, tone: "danger" });
         return false;

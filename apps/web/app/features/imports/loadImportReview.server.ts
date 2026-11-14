@@ -1,5 +1,10 @@
+import {
+  AccountListResponse,
+  ImportBatchResponse,
+  ImportPreviewResponse,
+} from "@flump/api-contract";
 import type { LoaderFunctionArgs } from "react-router";
-import { backendFetch } from "~/services/backend-client.server";
+import { backendFetch, backendFetchAll } from "~/services/backend-client.server";
 import { BackendError } from "~/services/backend-error";
 import { throwRouteError } from "~/services/route-error.server";
 import { getAuthSession } from "~/utils/auth.server";
@@ -32,19 +37,17 @@ export async function loadImportReview(args: LoaderFunctionArgs): Promise<Import
 
   try {
     const [batch, accounts] = await Promise.all([
-      backendFetch<ImportBatch>(`/imports/${safeId}`, { accessToken, signal }),
-      backendFetch<Array<{ id: string; name: string; type: string }>>("/accounts", {
-        accessToken,
-        signal,
-      }),
+      backendFetch(`/imports/${safeId}`, { accessToken, signal, schema: ImportBatchResponse }),
+      backendFetchAll("/accounts", { accessToken, signal, schema: AccountListResponse }),
     ]);
     const existingAccounts = accounts.map((a) => ({ id: a.id, name: a.name, type: a.type }));
     if (batch.status !== "staged") return { batch, initialPreview: null, existingAccounts };
 
     const preview = (accountMap: Record<string, string | null>) =>
-      backendFetch<ImportPreview>(`/imports/${safeId}/preview`, {
+      backendFetch(`/imports/${safeId}/preview`, {
         accessToken,
         signal,
+        schema: ImportPreviewResponse,
         method: "POST",
         body: { accountMap },
       });
@@ -56,9 +59,10 @@ export async function loadImportReview(args: LoaderFunctionArgs): Promise<Import
     } catch (error) {
       // 409: the batch expired or was committed since it was read. Show its current state.
       if (error instanceof BackendError && error.status === 409) {
-        const fresh = await backendFetch<ImportBatch>(`/imports/${safeId}`, {
+        const fresh = await backendFetch(`/imports/${safeId}`, {
           accessToken,
           signal,
+          schema: ImportBatchResponse,
         });
         return { batch: fresh, initialPreview: null, existingAccounts };
       }

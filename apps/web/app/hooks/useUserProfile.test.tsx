@@ -1,5 +1,6 @@
 import { act, renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { profileFixture } from "~/test/fixtures/contractResponses";
 import {
   DEFAULT_PROFILE,
   normalizeProfile,
@@ -72,7 +73,7 @@ describe("useUserProfile", () => {
 
     // updateProfile success
     (global.fetch as any).mockResolvedValueOnce(
-      jsonRes({ ...DEFAULT_PROFILE, displayName: "Updated User" }),
+      jsonRes({ ...profileFixture, displayName: "Updated User" }),
     );
     await act(async () => {
       await result.current.updateProfile({ displayName: "Updated User" });
@@ -85,7 +86,7 @@ describe("useUserProfile", () => {
 
     // markChecklistStep success & failure
     (global.fetch as any).mockResolvedValueOnce(
-      jsonRes({ ...DEFAULT_PROFILE, setupChecklistCompletedSteps: ["budget"] }),
+      jsonRes({ ...profileFixture, setupChecklistCompletedSteps: ["budget"] }),
     );
     await act(async () => {
       await result.current.markChecklistStep("budget", true);
@@ -96,7 +97,7 @@ describe("useUserProfile", () => {
     await expect(result.current.markChecklistStep("budget", false)).rejects.toThrow(/server/);
 
     // sendPasswordResetEmail success & failure
-    (global.fetch as any).mockResolvedValueOnce(jsonRes({ success: true, message: "Reset sent" }));
+    (global.fetch as any).mockResolvedValueOnce(jsonRes({ success: true }));
     const resetRes = await result.current.sendPasswordResetEmail();
     expect(resetRes.success).toBe(true);
 
@@ -107,7 +108,11 @@ describe("useUserProfile", () => {
 
     // resetFinancialData success & failure
     (global.fetch as any).mockResolvedValueOnce(
-      jsonRes({ profile: { ...DEFAULT_PROFILE, hasResetFinancialData: true } }),
+      jsonRes({
+        success: true,
+        message: "Financial data reset",
+        profile: { ...profileFixture, hasResetFinancialData: true },
+      }),
     );
     await act(async () => {
       await result.current.resetFinancialData();
