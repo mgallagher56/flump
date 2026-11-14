@@ -1,5 +1,5 @@
 import { CurrencyInput, controlProps, FormField, PercentInput } from "@repo/ui";
-import type { FC } from "react";
+import type { FC, ReactNode } from "react";
 import type { OnboardingValues } from "../../types";
 import { StepFrame } from "../StepFrame";
 import { savingsDebtStepRecipe } from "./SavingsDebtStep.styles";
@@ -11,6 +11,8 @@ export interface SavingsDebtStepProps {
   onNext: () => void;
   onSkip: () => void;
   focusOnMount?: boolean;
+  /** The live take-home figure, passed through to the step frame. */
+  summary?: ReactNode;
 }
 
 export const SavingsDebtStep: FC<SavingsDebtStepProps> = ({
@@ -20,12 +22,14 @@ export const SavingsDebtStep: FC<SavingsDebtStepProps> = ({
   onNext,
   onSkip,
   focusOnMount,
+  summary,
 }) => {
   const classes = savingsDebtStepRecipe();
   return (
     <StepFrame
       description="Rough balances are enough to work out your net worth. Leave a box empty if you do not know the figure."
       focusOnMount={focusOnMount}
+      summary={summary}
       id="savings"
       onBack={onBack}
       onNext={onNext}
