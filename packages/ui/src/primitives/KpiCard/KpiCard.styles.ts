@@ -91,6 +91,16 @@ export const kpiHeroValue = cva({
     // Words ("December 2029") wrap at spaces; a word longer than the card breaks only as a last
     // resort. A money figure never splits: "£1,234,5" over "67" would read as two figures.
     overflowWrap: "break-word",
+    // A page may pass a node that sets its own size (`<Num size="lg">` on mortgage made "4.50%"
+    // smaller than "£1,250"). Everything inside the slot takes the slot's type; the doubled
+    // class outranks a child's single size class.
+    "&& *": {
+      fontFamily: "inherit",
+      fontSize: "inherit",
+      fontWeight: "inherit",
+      lineHeight: "inherit",
+      letterSpacing: "inherit",
+    },
   },
   variants: {
     tone: {
