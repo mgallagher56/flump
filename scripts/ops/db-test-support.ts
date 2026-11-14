@@ -62,8 +62,13 @@ export function pgQueryRunner(client: Client) {
 
 export async function runInTransaction(
   client: Client,
-  migration: { up: (qr: never) => Promise<void> },
+  migration: { up: (qr: never) => Promise<void>; transaction?: boolean },
 ): Promise<void> {
+  // Like TypeORM: a migration that sets `transaction = false` (CREATE INDEX CONCURRENTLY) runs bare.
+  if (migration.transaction === false) {
+    await migration.up(pgQueryRunner(client) as never);
+    return;
+  }
   await client.query("BEGIN");
   try {
     await migration.up(pgQueryRunner(client) as never);

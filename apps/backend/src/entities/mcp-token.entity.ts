@@ -1,6 +1,6 @@
 import { Column, CreateDateColumn, Entity, Index, PrimaryGeneratedColumn } from "typeorm";
 
-// A user's MCP tokens, newest first. (AddUserIdIndexes1794357420000)
+// A user's MCP tokens, newest first. (AddUserIdIndexes1794358100000)
 @Index("IDX_mcp_tokens_user_created", ["userId", "createdAt"])
 @Entity("mcp_tokens")
 export class McpToken {

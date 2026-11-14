@@ -9,7 +9,7 @@ export const MIGRATION_LOCK_KEY = "1794355200000";
  * statement and lock timeouts for that transaction only (SET LOCAL). Without that, a second
  * instance booting during a rolling deploy would give up on the advisory lock after the pool's
  * lock_timeout and crash, and a data migration on a large table would hit statement_timeout.
- * Every migration after AddUserIdIndexes1794357420000 must use this (or the session form
+ * Every migration after AddUserIdIndexes1794358100000 must use this (or the session form
  * below) instead of calling pg_advisory_xact_lock directly; migration-files.spec.ts enforces it.
  */
 export async function takeMigrationLock(queryRunner: QueryRunner): Promise<void> {

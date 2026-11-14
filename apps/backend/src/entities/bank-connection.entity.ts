@@ -7,7 +7,7 @@ import {
   UpdateDateColumn,
 } from "typeorm";
 
-// A user's connections, newest first. (AddUserIdIndexes1794357420000)
+// A user's connections, newest first. (AddUserIdIndexes1794358100000)
 @Index("IDX_bank_connections_user_created", ["userId", "createdAt"])
 @Entity("bank_connections")
 export class BankConnection {
