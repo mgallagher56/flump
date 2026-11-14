@@ -1,5 +1,5 @@
 import { ADVICE_PATTERNS } from "@flump/finance-engine";
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { allCopyStrings, chartSummary, thresholdLabel } from "./copy";
 import { TakeHomeDeltaPanel, type TakeHomeDeltaPanelProps } from "./TakeHomeDeltaPanel";
@@ -25,7 +25,8 @@ describe("TakeHomeDeltaPanel", () => {
     expect(screen.queryByTestId("take-home-delta-sentence")).toBeNull();
     expect(screen.queryByText(/Of the next £1,000 of pay/)).toBeNull();
     const rows = screen.getAllByRole("rowheader").map((r) => r.textContent);
-    expect(rows).toEqual(["Take-home", "Income Tax", "National Insurance"]);
+    // No take-home row: the headline card already shows it.
+    expect(rows).toEqual(["Income Tax", "National Insurance"]);
   });
 
   it("lists every non-zero part in order", () => {
@@ -41,7 +42,6 @@ describe("TakeHomeDeltaPanel", () => {
     });
     const rows = screen.getAllByRole("rowheader").map((r) => r.textContent);
     expect(rows).toEqual([
-      "Take-home",
       "Income Tax",
       "National Insurance",
       "Student loan",
@@ -55,7 +55,7 @@ describe("TakeHomeDeltaPanel", () => {
       components: { incomeTax: -5, nationalInsurance: 80, studentLoan: 0, hicbc: 0, pension: 120 },
     });
     const rows = screen.getAllByRole("rowheader").map((r) => r.textContent);
-    expect(rows).toEqual(["Take-home", "National Insurance", "Pension"]);
+    expect(rows).toEqual(["National Insurance", "Pension"]);
   });
 
   it("shows pence only when they matter", () => {
@@ -63,7 +63,9 @@ describe("TakeHomeDeltaPanel", () => {
       takeHome: 719.5,
       components: { incomeTax: 200.5, nationalInsurance: 80, studentLoan: 0, hicbc: 0, pension: 0 },
     });
-    expect(screen.getByText("£719.50")).toBeDefined();
+    // Take-home is not a row any more; a deduction with pence shows them on every row.
+    expect(screen.getByText("£200.50")).toBeDefined();
+    expect(screen.getByText("£80.00")).toBeDefined();
   });
 
   it("badges the tax year and an estimate", () => {
@@ -78,7 +80,8 @@ describe("TakeHomeDeltaPanel", () => {
       isUnverifiedEstimate: true,
       assumptions: [{ code: "childBenefitWeeks", unverified: true }],
     });
-    expect(screen.getByText("Unverified estimate")).toBeDefined();
+    // No badge: the full sentence is in the notice (P4.3).
+    expect(screen.queryByText("Unverified estimate")).toBeNull();
     // One notice: the unverified sentence leads the guidance note, with no amber block.
     const notices = document.querySelectorAll("[data-notice]");
     expect(notices).toHaveLength(1);
@@ -89,6 +92,10 @@ describe("TakeHomeDeltaPanel", () => {
     for (const p of Array.from(document.querySelectorAll("p"))) {
       expect(p.className).not.toContain("status.warning");
     }
+    // The working sits in a closed quiet drawer.
+    const drawer = screen.getByRole("button", { name: "How this is worked out" });
+    expect(drawer.getAttribute("aria-expanded")).toBe("false");
+    fireEvent.click(drawer);
     expect(screen.getByText("(not yet confirmed)")).toBeDefined();
     expect(screen.getByText(/Child Benefit is counted for 52 weeks a year/)).toBeDefined();
   });
@@ -113,8 +120,8 @@ describe("TakeHomeDeltaPanel", () => {
   it("drops the unverified sentence when the page's one notice already leads with it", () => {
     renderPanel({ showNotice: false, isUnverifiedEstimate: true, unverifiedInPageNotice: true });
     expect(screen.queryByText(/These tax figures have not yet been checked/)).toBeNull();
-    // The header badge still marks the figures as an unverified estimate.
-    expect(screen.getByText("Unverified estimate")).toBeDefined();
+    // The page's notice carries it, so no header badge repeats it either.
+    expect(screen.queryByText("Unverified estimate")).toBeNull();
   });
 
   it("renders the guidance notice by default and the fallback banner when rates are older", () => {
@@ -134,16 +141,14 @@ describe("TakeHomeDeltaPanel", () => {
 });
 
 describe("copy", () => {
-  it("keeps the chart summary to at most two figures", () => {
-    expect(chartSummary("28%", "£150,000")).toBe(
-      "At your pay, an estimated 28% of the next £1,000 is deducted.",
+  it("keeps the chart summary free of the rate the headline cards already show", () => {
+    expect(chartSummary(true, "£150,000")).toBe(
+      "Each step is a threshold where more of each extra pound is deducted.",
     );
-    expect(chartSummary(null, "£150,000")).toBe(
+    expect(chartSummary(true, "£150,000")).not.toMatch(/[0-9£%]/);
+    expect(chartSummary(false, "£150,000")).toBe(
       "Your pay is above the £150,000 the chart goes up to.",
     );
-    for (const s of [chartSummary("28%", "£150,000"), chartSummary(null, "£150,000")]) {
-      expect((s.match(/£[\d,]+|\d+%/g) ?? []).length).toBeLessThanOrEqual(2);
-    }
   });
 
   it("labels thresholds from the data", () => {

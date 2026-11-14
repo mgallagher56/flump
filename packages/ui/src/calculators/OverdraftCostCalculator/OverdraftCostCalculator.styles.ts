@@ -70,10 +70,6 @@ export const overdraftExplainer = cva({
   },
 });
 
-export const overdraftExplainerTitle = cva({
-  base: { textStyle: "label.md", color: "text.primary", margin: "0" },
-});
-
 export const overdraftCta = cva({
   base: { alignSelf: { base: "stretch", sm: "flex-start" }, gap: "2" },
 });

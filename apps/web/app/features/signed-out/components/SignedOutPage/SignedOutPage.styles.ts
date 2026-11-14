@@ -21,7 +21,10 @@ export const pageContent = cva({
     px: { base: "1", md: "0" },
     display: "flex",
     flexDirection: "column",
-    gap: { base: "6", md: "8" },
+    // PageHeader brings its own bottom margin, so the gap stays small; the same values as the
+    // marketing ToolPage and ToolsIndexPage containers. The guide gets extra room above it.
+    gap: "4",
+    "& > [data-tool-guide]": { marginTop: "4" },
   },
   variants: {
     width: {

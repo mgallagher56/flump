@@ -18,12 +18,16 @@ export const TAX_TRAP_COPY = {
     ENGLAND_NI_WALES: "England, Wales or Northern Ireland",
     SCOTLAND: "Scotland",
   },
-  kpiOutcome: "With this pension contribution",
-  noContribution: "With no pension contribution, take-home pay stays the same",
-  kpiTaxAndNi: "Estimated change in Income Tax and National Insurance",
+  /** Headline label when take-home pay goes down; the value is the reduction as a positive amount. */
+  kpiTakeHomeReduction: "Estimated reduction in take-home pay",
+  /** Headline label when take-home pay does not go down (value £0). */
+  kpiTakeHomeChange: "Estimated change in take-home pay",
+  kpiTakeHomeSubtext: "The whole contribution goes into your pension.",
+  noContribution: "With no pension contribution, take-home pay stays the same.",
+  /** Supporting card, shown as a positive amount so no minus sign appears. */
+  kpiTaxAndNiReduction: "Estimated reduction in Income Tax and National Insurance",
+  kpiTaxAndNiChange: "Estimated change in Income Tax and National Insurance",
   kpiPersonalAllowance: "Estimated Personal Allowance with this contribution",
-  factLine:
-    "Above the taper start, the Personal Allowance goes down as adjusted net income rises. A pension contribution lowers adjusted net income.",
   details: "Show details",
   factsHeading: "Before and with this contribution",
   factsCaption: "Estimated figures before and with this contribution",
@@ -34,26 +38,22 @@ export const TAX_TRAP_COPY = {
   factPersonalAllowance: "Personal Allowance",
   factTakeHome: "Take-home pay a year",
   factNextThousand: "Share deducted from the next £1,000",
-  taperNote:
-    "The Personal Allowance goes down by £1 for every £2 of adjusted net income over the taper start, until it reaches £0.",
   childcareHeading: "Childcare support",
   childcareNote:
     "Tax-Free Childcare and the extended funded childcare hours for working parents in England are not available if either parent's adjusted net income is over £100,000. The universal 15 hours for 3- and 4-year-olds are not income-tested.",
   childcareSource: "Childcare rules on GOV.UK (opens in a new tab)",
   assumptionsHeading: "How this is worked out",
-  unverifiedBadge: "Unverified estimate",
 } as const;
 
 export const TAX_TRAP_DEFAULT_CTA = "Continue to sign up";
 
-/**
- * The headline: what reaches the pension and what it costs in take-home, so a contribution is not
- * shown as a loss (RESCORE Appendix B, income above £100,000, item 2). Figures come from the engine.
- */
-export const outcomeHeadline = (pension: string, cost: string | null): string =>
-  cost === null
-    ? `${pension} reaches your pension with no change in take-home pay`
-    : `${pension} reaches your pension for an estimated ${cost} less take-home pay`;
+/** The one factual line outside the details. `threshold` is the taper start from the engine rules. */
+export const factLine = (threshold: string): string =>
+  `Above ${threshold} of adjusted net income, the Personal Allowance goes down as adjusted net income rises. A pension contribution lowers adjusted net income.`;
+
+/** How the taper works. `threshold` is the taper start from the engine rules. */
+export const taperNote = (threshold: string): string =>
+  `The Personal Allowance goes down by £1 for every £2 of adjusted net income over ${threshold}, until it reaches £0.`;
 
 /** The taper start and end, from the engine rules. */
 export const taperRange = (start: string, end: string): string =>
@@ -75,8 +75,8 @@ export function allTaxTrapCopyStrings(): string[] {
   out.push(
     TAX_TRAP_DEFAULT_CTA,
     taperRange("£100,000", "£125,140"),
-    outcomeHeadline("£10,000", "£3,800"),
-    outcomeHeadline("£10,000", null),
+    factLine("£100,000"),
+    taperNote("£100,000"),
     childcareStatus("£105,000", true),
     childcareStatus("£95,000", false),
   );

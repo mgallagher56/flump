@@ -8,6 +8,9 @@ export const mainStyle = css({ flex: "1" });
 export const containerStyle = css({
   maxWidth: "6xl",
   mx: "auto",
+  display: "flex",
+  flexDirection: "column",
+  gap: "4",
   pt: { base: "page.top.sm", lg: "page.top.lg" },
   pb: "12",
   px: { base: "page.gutter.sm", md: "page.gutter.md" },

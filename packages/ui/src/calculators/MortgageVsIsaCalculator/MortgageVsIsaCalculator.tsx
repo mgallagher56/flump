@@ -40,25 +40,22 @@ export const MORTGAGE_ISA_COPY = {
   moreOptions: "More options",
   isaGrowth: "Assumed ISA growth a year",
   term: "Years left on the mortgage",
-  /** Headline labels: the larger of the two outcomes, by how much. */
-  kpiDifferenceIsa: "Estimated ISA growth above the interest saved by overpaying",
-  kpiDifferenceOverpay: "Estimated interest saved by overpaying above ISA growth",
-  kpiDifferenceEven: "Estimated difference between overpaying and the ISA",
+  /** Headline label: one fixed label in every case, so neither option reads as the winner. */
+  kpiDifference: "Estimated difference between interest saved and ISA growth",
   kpiDifferenceSubtext:
-    "The same amount each month, either overpaid or paid into an ISA, over the years left.",
+    "The same amount each month, either overpaid or paid into an ISA, over the years left. ISA growth is not fixed and can be negative.",
   kpiInterestSaved: "Overpaying: estimated interest saved",
   kpiInterestSavedSubtext: "Paid off sooner, if the rate stays the same.",
   kpiInterestSavedNoBalance: "No mortgage balance entered.",
   kpiInterestSavedNoExtra: "No overpayment entered.",
   kpiIsaGrowth: "ISA: estimated growth",
-  kpiIsaGrowthSubtext:
-    "On top of the money paid in, at the growth rate you entered. ISA growth is not fixed and can be negative.",
+  kpiIsaGrowthSubtext: "On top of the money paid in, at the growth rate you entered.",
   explainerTitle: "How this is worked out",
   /** "Overpaying pays the mortgage off 5 years 4 months sooner, if the rate stays the same." */
   explainerSooner: (sooner: string) =>
     `Overpaying pays the mortgage off ${sooner} sooner, if the rate stays the same.`,
   explainer:
-    "Both are compared over the years left that you set. This does not count investing the mortgage payment once the mortgage is paid off early, charges, or early repayment limits on your mortgage. ISA growth is not fixed and can be negative.",
+    "Both are compared over the years left that you set. This does not count investing the mortgage payment once the mortgage is paid off early, charges, or early repayment limits on your mortgage.",
   controlsLabel: "Mortgage and ISA details",
   contentLabel: "Estimated interest saved and ISA growth",
 } as const;
@@ -135,15 +132,9 @@ export const MortgageVsIsaCalculator: FC<MortgageVsIsaCalculatorProps> = ({
     money(result.isaGrowth),
   );
 
-  // The engine's netWealthDelta is ISA growth less interest saved: its sign says which is larger.
-  // Under 50p either way reads as no difference.
+  // The engine's netWealthDelta is ISA growth less interest saved. The headline shows its size
+  // under one fixed label, so neither option is named as the larger.
   const delta = result.netWealthDelta;
-  const differenceLabel =
-    delta >= 0.5
-      ? MORTGAGE_ISA_COPY.kpiDifferenceIsa
-      : delta <= -0.5
-        ? MORTGAGE_ISA_COPY.kpiDifferenceOverpay
-        : MORTGAGE_ISA_COPY.kpiDifferenceEven;
 
   const handleSave = () => {
     const payload: MortgageVsIsaSeedPayload = {
@@ -227,7 +218,7 @@ export const MortgageVsIsaCalculator: FC<MortgageVsIsaCalculatorProps> = ({
         data-testid="mortgage-isa-outcomes"
       >
         <KpiCard
-          label={differenceLabel}
+          label={MORTGAGE_ISA_COPY.kpiDifference}
           subtext={MORTGAGE_ISA_COPY.kpiDifferenceSubtext}
           value={Math.abs(delta)}
         />

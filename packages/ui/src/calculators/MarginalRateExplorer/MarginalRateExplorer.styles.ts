@@ -4,6 +4,23 @@ export const explorerRoot = cva({
   base: { display: "flex", flexDirection: "column", gap: "4", width: "100%", minWidth: "0" },
 });
 
+/** The standalone tool's card: one bordered surface, as in the other calculators. */
+export const explorerCard = cva({
+  base: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "5",
+    width: "100%",
+    minWidth: "0",
+    backgroundColor: "surface.card",
+    borderWidth: "1px",
+    borderStyle: "solid",
+    borderColor: "border",
+    borderRadius: "2xl",
+    padding: { base: "4", sm: "8" },
+  },
+});
+
 export const explorerControls = cva({
   base: { display: "flex", flexDirection: "column", gap: "4", minWidth: "0" },
 });

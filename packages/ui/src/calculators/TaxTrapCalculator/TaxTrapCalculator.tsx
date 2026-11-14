@@ -35,9 +35,10 @@ import { Table, TBody, Td, THead, Th, Tr } from "../../primitives/Table/Table";
 import { ctaLabel } from "../ctaLabel";
 import {
   childcareStatus,
-  outcomeHeadline,
+  factLine,
   TAX_TRAP_COPY,
   TAX_TRAP_DEFAULT_CTA,
+  taperNote,
   taperRange,
 } from "./copy";
 import {
@@ -48,7 +49,6 @@ import {
   taxTrapCta,
   taxTrapDetails,
   taxTrapHeader,
-  taxTrapHeadline,
   taxTrapIntro,
   taxTrapLink,
   taxTrapNote,
@@ -155,14 +155,12 @@ export const TaxTrapCalculator: FC<TaxTrapCalculatorProps> = ({
 
   const { before, after } = change;
   const taxAndNi = change.components.incomeTax + change.components.nationalInsurance;
+  // Shown as positive amounts under a "reduction" label, so no minus sign appears. Under 50p
+  // either way reads as no change.
   const takeHomeCost = -change.deltaTakeHome;
-  const headline =
-    sacrifice > 0
-      ? outcomeHeadline(
-          money(change.deltaPensionGross),
-          takeHomeCost > 0 ? money(takeHomeCost) : null,
-        )
-      : TAX_TRAP_COPY.noContribution;
+  const takeHomeDown = sacrifice > 0 && takeHomeCost >= 0.5;
+  const taxAndNiDown = taxAndNi <= -0.5;
+  const threshold = money(rules.ewni.personalAllowanceTaperStart);
   const unverified = before.isUnverifiedEstimate || after.isUnverifiedEstimate;
   const childcareOver = after.adjustedNetIncome > CHILDCARE_LIMIT;
   const assumptions = after.assumptions.filter(
@@ -269,14 +267,22 @@ export const TaxTrapCalculator: FC<TaxTrapCalculatorProps> = ({
           Allowance and the before and after table are in the details. */}
       <div className={taxTrapOutcomes()} data-density="compact" data-testid="tax-trap-outcomes">
         <KpiCard
-          label={TAX_TRAP_COPY.kpiOutcome}
+          label={
+            takeHomeDown ? TAX_TRAP_COPY.kpiTakeHomeReduction : TAX_TRAP_COPY.kpiTakeHomeChange
+          }
+          subtext={sacrifice > 0 ? TAX_TRAP_COPY.kpiTakeHomeSubtext : TAX_TRAP_COPY.noContribution}
           value={
-            <span className={taxTrapHeadline()} data-testid="tax-trap-headline">
-              {headline}
+            <span data-testid="tax-trap-headline">
+              <Money size="lg" value={takeHomeDown ? takeHomeCost : 0} />
             </span>
           }
         />
-        <KpiCard label={TAX_TRAP_COPY.kpiTaxAndNi} value={<Money size="lg" value={taxAndNi} />} />
+        <KpiCard
+          label={
+            taxAndNiDown ? TAX_TRAP_COPY.kpiTaxAndNiReduction : TAX_TRAP_COPY.kpiTaxAndNiChange
+          }
+          value={<Money size="lg" value={Math.abs(taxAndNi)} />}
+        />
       </div>
 
       <Button className={taxTrapCta()} size="md" variant="primary" onClick={handleSave}>
@@ -284,7 +290,7 @@ export const TaxTrapCalculator: FC<TaxTrapCalculatorProps> = ({
       </Button>
 
       <p className={taxTrapNote()} data-testid="tax-trap-fact-line">
-        {TAX_TRAP_COPY.factLine}
+        {factLine(threshold)}
       </p>
 
       <CollapsibleDrawer title={TAX_TRAP_COPY.details} variant="quiet">
@@ -317,8 +323,7 @@ export const TaxTrapCalculator: FC<TaxTrapCalculatorProps> = ({
           </Table>
 
           <p className={taxTrapNote()} data-testid="tax-trap-taper-note">
-            {TAX_TRAP_COPY.taperNote}{" "}
-            {taperRange(money(rules.ewni.personalAllowanceTaperStart), money(rules.taperEnd))}
+            {taperNote(threshold)} {taperRange(threshold, money(rules.taperEnd))}
           </p>
 
           <div className={taxTrapNote()}>
@@ -354,8 +359,8 @@ export const TaxTrapCalculator: FC<TaxTrapCalculatorProps> = ({
         </div>
       </CollapsibleDrawer>
 
-      {/* The one notice. While the badge says "Unverified estimate", the notice leads with the
-          full sentence (P4.3), as Section 24 and the pay rise tool do. */}
+      {/* The one notice. For an unverified estimate it leads with the full sentence (P4.3), so
+          no separate badge repeats it. */}
       <ProjectionNotice lead={unverified ? DELTA_PANEL_COPY.unverifiedBanner : undefined} />
       <LiveRegion debounceMs={1000} message={announcement} visuallyHidden />
     </div>
@@ -366,9 +371,6 @@ export const TaxTrapCalculator: FC<TaxTrapCalculatorProps> = ({
       <div className={taxTrapHeader()}>
         <div className={taxTrapBadges()}>
           <StatusBadge variant="neutral">{asAtTaxYear(before.ratesYear)}</StatusBadge>
-          <StatusBadge variant={unverified ? "warning" : "info"}>
-            {unverified ? TAX_TRAP_COPY.unverifiedBadge : DELTA_PANEL_COPY.estimateBadge}
-          </StatusBadge>
         </div>
         {embedded ? null : (
           <>

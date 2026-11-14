@@ -1,16 +1,14 @@
 import { cva } from "../../../styled-system/css";
 
+/**
+ * Flat, with no card of its own: it always sits inside a calculator card or a scenario zone,
+ * and a card inside a card is what P5 and the ScenarioZone rule forbid.
+ */
 export const deltaPanelRoot = cva({
   base: {
     display: "flex",
     flexDirection: "column",
     gap: "4",
-    padding: { base: "4", md: "5" },
-    borderRadius: "xl",
-    borderWidth: "1px",
-    borderStyle: "solid",
-    borderColor: "border.subtle",
-    backgroundColor: "surface.card",
     color: "text.primary",
   },
 });
@@ -38,10 +36,6 @@ export const deltaPanelNumeric = cva({
 
 export const deltaPanelAssumptions = cva({
   base: { display: "flex", flexDirection: "column", gap: "2" },
-});
-
-export const deltaPanelAssumptionsTitle = cva({
-  base: { textStyle: "label.md", color: "text.secondary", margin: "0" },
 });
 
 export const deltaPanelAssumptionsList = cva({

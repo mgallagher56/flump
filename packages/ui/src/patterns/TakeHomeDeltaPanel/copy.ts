@@ -104,7 +104,6 @@ export const DELTA_PANEL_COPY = {
   tableCaption: "Where the next £1,000 goes",
   amountColumn: "Amount",
   partColumn: "Part",
-  takeHomeRow: "Take-home",
   estimateBadge: "Estimate",
   unverifiedBadge: "Unverified estimate",
   unverifiedBanner:
@@ -167,12 +166,12 @@ export const EXPLORER_COPY = {
 } as const;
 
 /**
- * Chart text alternative and visible summary: at most two figures (P10.1). The range of the axis
- * is left to the chart itself.
+ * Chart text alternative and visible summary. With your pay on the chart it carries no figure, as
+ * the headline cards already show your rate (RESCORE pay rise); above the chart's range it says so.
  */
-export function chartSummary(yourRate: string | null, maxGross: string): string {
-  return yourRate
-    ? `At your pay, an estimated ${yourRate} of the next £1,000 is deducted.`
+export function chartSummary(inRange: boolean, maxGross: string): string {
+  return inRange
+    ? "Each step is a threshold where more of each extra pound is deducted."
     : `Your pay is above the ${maxGross} the chart goes up to.`;
 }
 
@@ -218,8 +217,8 @@ export function allCopyStrings(): string[] {
   out.push(
     asAtTaxYear("2026/27"),
     pensionPreviewSentence("£1,000", "£550", "£1,000"),
-    chartSummary("28%", "£150,000"),
-    chartSummary(null, "£150,000"),
+    chartSummary(true, "£150,000"),
+    chartSummary(false, "£150,000"),
     thresholdTooltip("Higher rate (40%)", "£50,270"),
     liveTakeHomeMessage("£720"),
   );

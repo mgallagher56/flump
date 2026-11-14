@@ -22,10 +22,6 @@ export const section24Header = cva({
 });
 
 /** The one "Unverified estimate" label every tax figure carries (R6). */
-export const section24Badges = cva({
-  base: { display: "flex", flexWrap: "wrap", gap: "2" },
-});
-
 export const section24Title = cva({
   base: { textStyle: "heading.md", color: "text.primary", margin: "0" },
 });

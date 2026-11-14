@@ -121,7 +121,7 @@ describe("UI Calculators", () => {
       render(<TaxTrapCalculator ctaText="Save and continue" onSaveAndContinue={onSave} />);
 
       expect(screen.getByText(/Pensions and the Personal Allowance/i)).toBeDefined();
-      expect(screen.getByText(/Reaches your pension/i)).toBeDefined();
+      expect(screen.getByText(/Estimated reduction in take-home pay/i)).toBeDefined();
 
       const slider = screen.getByRole("slider", { name: /Pay before tax a year/i });
       fireEvent.change(slider, { target: { value: "110000" } });
@@ -142,7 +142,7 @@ describe("UI Calculators", () => {
         screen.getByRole("heading", { name: "When a 0% balance transfer ends" }),
       ).toBeDefined();
       expect(screen.getByText(/Estimated monthly payment/i)).toBeDefined();
-      expect(screen.getByText(/with minimum payments only/i)).toBeDefined();
+      expect(screen.getByText(/minimum payments only/i)).toBeDefined();
 
       const slider = screen.getByLabelText("Balance on the 0% card");
       fireEvent.change(slider, { target: { value: "3500" } });

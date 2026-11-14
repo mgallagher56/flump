@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { expect, within } from "@storybook/test";
+import { expect, userEvent, within } from "@storybook/test";
 import { TakeHomeDeltaPanel } from "./TakeHomeDeltaPanel";
 
 const meta: Meta<typeof TakeHomeDeltaPanel> = {
@@ -28,7 +28,8 @@ export const Default: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     const table = within(canvas.getByRole("table"));
-    await expect(table.getByText("£720")).toBeInTheDocument();
+    // No take-home row: the headline card shows it. The table lists the deductions.
+    await expect(table.queryByText("£720")).not.toBeInTheDocument();
     await expect(table.getByText("£200")).toBeInTheDocument();
     await expect(canvas.getByText("As at tax year 2026/27")).toBeInTheDocument();
   },
@@ -47,7 +48,12 @@ export const UnverifiedWithChildBenefit: Story = {
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    await expect(canvas.getByText("Unverified estimate")).toBeInTheDocument();
+    // The notice leads with the full unverified sentence; no badge repeats it.
+    await expect(
+      canvas.getByText(/These tax figures have not yet been checked/),
+    ).toBeInTheDocument();
+    // The working sits in a closed quiet drawer.
+    await userEvent.click(canvas.getByRole("button", { name: "How this is worked out" }));
     await expect(canvas.getByText("(not yet confirmed)")).toBeInTheDocument();
     // One notice: the unverified sentence leads the guidance note (E16 P4.1, P4.3).
     const notices = canvasElement.querySelectorAll("[data-notice]");

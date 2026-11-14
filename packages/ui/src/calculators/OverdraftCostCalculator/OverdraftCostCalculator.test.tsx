@@ -27,7 +27,7 @@ describe("OverdraftCostCalculator", () => {
     render(<OverdraftCostCalculator />);
     const button = screen.getByRole("button", { name: "Continue to sign up" });
     const notice = screen.getByTestId("projection-notice");
-    const explainer = screen.getByText(OVERDRAFT_COPY.explainerTitle);
+    const explainer = screen.getByRole("button", { name: OVERDRAFT_COPY.explainerTitle });
     expect(
       outcomes().compareDocumentPosition(button) & Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
@@ -44,18 +44,19 @@ describe("OverdraftCostCalculator", () => {
     const levels = Array.from(
       screen.getByTestId("overdraft-cost-tool").querySelectorAll("h1, h2, h3, h4, h5, h6"),
     ).map((h) => Number(h.tagName.slice(1)));
-    expect(levels[0]).toBe(2);
+    // The explainer is a drawer now, so the embedded body may hold no heading at all.
+    if (levels.length > 0) expect(levels[0]).toBe(2);
     for (let i = 1; i < levels.length; i++) {
       expect((levels[i] ?? 0) - (levels[i - 1] ?? 0)).toBeLessThanOrEqual(1);
     }
   });
 
-  it("shows its title as h2 and section headings as h3 when not embedded", () => {
+  it("shows its title as h2 when not embedded, and the working in a closed quiet drawer", () => {
     render(<OverdraftCostCalculator />);
     expect(screen.getByRole("heading", { level: 2, name: OVERDRAFT_COPY.title })).toBeDefined();
-    expect(
-      screen.getByRole("heading", { level: 3, name: OVERDRAFT_COPY.explainerTitle }),
-    ).toBeDefined();
+    const drawer = screen.getByRole("button", { name: OVERDRAFT_COPY.explainerTitle });
+    expect(drawer.getAttribute("aria-expanded")).toBe("false");
+    expect(toolText()).not.toContain(OVERDRAFT_COPY.explainer);
   });
 
   it("recalculates when the balance changes", () => {
@@ -96,6 +97,7 @@ describe("OverdraftCostCalculator", () => {
 
   it("uses factual copy with no fixed example figures or alarm words", () => {
     render(<OverdraftCostCalculator initialBalance={500} initialRate={35} />);
+    fireEvent.click(screen.getByRole("button", { name: OVERDRAFT_COPY.explainerTitle }));
     const text = toolText();
     expect(text).toContain(OVERDRAFT_COPY.explainer);
     expect(text).not.toMatch(/£1,200|39\.9|guaranteed|dangerous|stealth|checking|\/month|\/ year/i);

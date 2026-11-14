@@ -29,7 +29,6 @@ import {
   debtCta,
   debtDetails,
   debtExplainer,
-  debtExplainerTitle,
   debtHeader,
   debtIntro,
   debtList,
@@ -61,8 +60,12 @@ export const DEBT_SNOWBALL_COPY = {
   extraHelp: "Paid on top of every minimum payment.",
   kpiDate: "Estimated debt-free date",
   dateSame: "The same with either method.",
-  dateAvalancheSooner: "With the highest rate first. Smallest balance first finishes later.",
-  dateSnowballSooner: "With the smallest balance first. Highest rate first finishes later.",
+  /** "With the highest rate first. Smallest balance first: October 2029." */
+  dateAvalancheSooner: (snowballDate: string) =>
+    `With the highest rate first. Smallest balance first: ${snowballDate}.`,
+  /** "With the smallest balance first. Highest rate first: October 2029." */
+  dateSnowballSooner: (avalancheDate: string) =>
+    `With the smallest balance first. Highest rate first: ${avalancheDate}.`,
   notPaidOff: "Not paid off at these payments",
   notPaidOffDetail: "The debts are not paid off at these payments.",
   kpiAvalanche: "Total interest, highest rate first (avalanche)",
@@ -175,7 +178,6 @@ export const DebtSnowballCalculator: FC<DebtSnowballCalculatorProps> = ({
   initialExtraPayment = 75,
   embedded = false,
 }) => {
-  const SectionHeading = embedded ? "h2" : "h3";
   const [debts, setDebts] = useState<DebtRowState[]>(() => STARTING_DEBTS.map((d) => ({ ...d })));
   const [extraPayment, setExtraPayment] = useState(Math.max(0, initialExtraPayment));
   // Rows whose rate and minimum are open. All start closed, so about three inputs show (P1.7).
@@ -280,8 +282,8 @@ export const DebtSnowballCalculator: FC<DebtSnowballCalculatorProps> = ({
       : avalanche.months === snowball.months
         ? DEBT_SNOWBALL_COPY.dateSame
         : avalanche.months < snowball.months
-          ? DEBT_SNOWBALL_COPY.dateAvalancheSooner
-          : DEBT_SNOWBALL_COPY.dateSnowballSooner;
+          ? DEBT_SNOWBALL_COPY.dateAvalancheSooner(snowball.debtFreeDate)
+          : DEBT_SNOWBALL_COPY.dateSnowballSooner(avalanche.debtFreeDate);
 
   // Supporting cards carry no caption: the label says enough (P1.5), and each method's date and
   // time to pay off sit in "Show details".
@@ -474,6 +476,11 @@ export const DebtSnowballCalculator: FC<DebtSnowballCalculatorProps> = ({
         </CollapsibleDrawer>
       ) : null}
 
+      {/* Closed by default so the first view keeps to the outcome (P1). */}
+      <CollapsibleDrawer title={DEBT_SNOWBALL_COPY.explainerTitle} variant="quiet">
+        <p className={debtExplainer()}>{DEBT_SNOWBALL_COPY.explainer}</p>
+      </CollapsibleDrawer>
+
       <LiveRegion
         debounceMs={1000}
         message={debtSnowballAnnouncement(comparison, nothingOwed)}
@@ -497,13 +504,6 @@ export const DebtSnowballCalculator: FC<DebtSnowballCalculatorProps> = ({
         controls={controls}
         controlsLabel={DEBT_SNOWBALL_COPY.controlsLabel}
       />
-
-      <div className={debtExplainer()}>
-        <SectionHeading className={debtExplainerTitle()}>
-          {DEBT_SNOWBALL_COPY.explainerTitle}
-        </SectionHeading>
-        <p>{DEBT_SNOWBALL_COPY.explainer}</p>
-      </div>
 
       <ProjectionNotice />
     </div>

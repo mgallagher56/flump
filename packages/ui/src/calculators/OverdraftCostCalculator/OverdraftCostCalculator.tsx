@@ -9,6 +9,7 @@ import { useMemo, useState } from "react";
 import { ProjectionNotice } from "../../patterns/ProjectionNotice/ProjectionNotice";
 import { SimulatorSplitLayout } from "../../patterns/SimulatorSplitLayout/SimulatorSplitLayout";
 import { Button } from "../../primitives/Button/Button";
+import { CollapsibleDrawer } from "../../primitives/CollapsibleDrawer/CollapsibleDrawer";
 import { Icon } from "../../primitives/Icon";
 import { KpiCard } from "../../primitives/KpiCard/KpiCard";
 import { LiveRegion } from "../../primitives/LiveRegion/LiveRegion";
@@ -20,7 +21,6 @@ import {
   overdraftControls,
   overdraftCta,
   overdraftExplainer,
-  overdraftExplainerTitle,
   overdraftHeader,
   overdraftIntro,
   overdraftMonthLine,
@@ -91,9 +91,6 @@ export const OverdraftCostCalculator: FC<OverdraftCostCalculatorProps> = ({
   const [balance, setBalance] = useState(Math.max(0, initialBalance));
   const [rate, setRate] = useState(Math.max(0, initialRate));
 
-  // Embedded, the page's h1 sits directly above, so section headings step down to h2.
-  const SectionHeading = embedded ? "h2" : "h3";
-
   const cost = useMemo(() => calculateOverdraftCost(balance, rate), [balance, rate]);
 
   const announcement = overdraftAnnouncement(money(cost.annualPoundCost));
@@ -153,12 +150,10 @@ export const OverdraftCostCalculator: FC<OverdraftCostCalculatorProps> = ({
         {ctaLabel(ctaText)} <Icon icon={ArrowRight} size="sm" />
       </Button>
 
-      <div className={overdraftExplainer()}>
-        <SectionHeading className={overdraftExplainerTitle()}>
-          {OVERDRAFT_COPY.explainerTitle}
-        </SectionHeading>
-        <p>{OVERDRAFT_COPY.explainer}</p>
-      </div>
+      {/* Closed by default so the first view keeps to the outcome (P1). */}
+      <CollapsibleDrawer title={OVERDRAFT_COPY.explainerTitle} variant="quiet">
+        <p className={overdraftExplainer()}>{OVERDRAFT_COPY.explainer}</p>
+      </CollapsibleDrawer>
 
       <ProjectionNotice />
       <LiveRegion debounceMs={1000} message={announcement} visuallyHidden />

@@ -16,10 +16,8 @@ import { KpiCard } from "../../primitives/KpiCard/KpiCard";
 import { LiveRegion } from "../../primitives/LiveRegion/LiveRegion";
 import { formatMoney, Money, Num } from "../../primitives/Money/Money";
 import { SliderField } from "../../primitives/SliderField/SliderField";
-import { StatusBadge } from "../../primitives/StatusBadge/StatusBadge";
 import { ctaLabel } from "../ctaLabel";
 import {
-  section24Badges,
   section24Content,
   section24Controls,
   section24Cta,
@@ -37,7 +35,6 @@ export const SECTION24_COPY = {
   title: "Tax on rental income under Section 24",
   intro:
     "Estimate the tax on rental income when mortgage interest gets a 20% tax credit and is not deducted from profit.",
-  unverifiedBadge: "Unverified estimate",
   rentalIncome: "Rental income a year, before costs",
   mortgageInterest: "Mortgage interest a year",
   otherIncome: "Other taxable income a year (salary or profits)",
@@ -46,14 +43,14 @@ export const SECTION24_COPY = {
   kpiTax: "Estimated tax on rental income",
   kpiTaxSubtext: "After the tax credit for mortgage interest.",
   kpiCash: "Estimated cash left after costs, mortgage interest and tax",
-  kpiCashSubtext: "For the year. It can be below zero.",
+  kpiCashSubtext: "For the year. This figure can be below zero.",
   kpiRate: "Tax as a share of taxable profit",
   kpiRateSubtext: "Taxable profit is rent less costs. Mortgage interest is not deducted.",
   explainerTitle: "How Section 24 works",
   explainer:
     "Mortgage interest is not deducted from rental profit. Instead, the tax is reduced by 20% of the interest, up to 20% of the taxable rental profit. The estimate uses England, Wales and Northern Ireland rates for a sole owner. Flump does not file your tax return.",
   explainerLoss:
-    "Because tax is worked out before mortgage interest, the tax can be more than the cash the property makes, so the cash left can be below zero.",
+    "Tax is worked out before mortgage interest is taken off. So the tax can be more than the cash the property makes, and the cash left can be below zero.",
   controlsLabel: "Rental figures",
   contentLabel: "Estimated tax on rental income",
 } as const;
@@ -235,18 +232,13 @@ export const Section24Calculator: FC<Section24CalculatorProps> = ({
 
   return (
     <div className={section24Root()} data-testid="section-24-tool">
-      <div className={section24Header()}>
-        {/* The badge stays when embedded: every tax figure carries it (R6). */}
-        <div className={section24Badges()}>
-          <StatusBadge variant="warning">{SECTION24_COPY.unverifiedBadge}</StatusBadge>
+      {/* No "Unverified estimate" badge: the one notice carries the full sentence (P4.3). */}
+      {embedded ? null : (
+        <div className={section24Header()}>
+          <h2 className={section24Title()}>{SECTION24_COPY.title}</h2>
+          <p className={section24Intro()}>{SECTION24_COPY.intro}</p>
         </div>
-        {embedded ? null : (
-          <>
-            <h2 className={section24Title()}>{SECTION24_COPY.title}</h2>
-            <p className={section24Intro()}>{SECTION24_COPY.intro}</p>
-          </>
-        )}
-      </div>
+      )}
 
       <SimulatorSplitLayout
         content={content}

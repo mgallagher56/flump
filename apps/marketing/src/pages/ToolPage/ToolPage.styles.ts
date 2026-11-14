@@ -10,10 +10,10 @@ export const containerStyle = css({
   mx: "auto",
   display: "flex",
   flexDirection: "column",
-  gap: { base: "6", md: "8" },
+  gap: "4",
   pt: { base: "page.top.sm", lg: "page.top.lg" },
   pb: "12",
   px: { base: "page.gutter.sm", md: "page.gutter.md" },
 });
 
-export const guideStyle = css({ marginTop: "2" });
+export const guideStyle = css({ marginTop: "4" });

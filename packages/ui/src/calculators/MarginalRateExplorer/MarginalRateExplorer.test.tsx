@@ -39,9 +39,9 @@ describe("MarginalRateExplorer", () => {
     render(<MarginalRateExplorerStandalone initialValues={{ taxYear: "2026/27" }} />);
     const expected = whatIfGrossChange(explorerScenario(DEFAULTS_2026), 1000);
     expect(expected.deltaTakeHome).toBe(720);
-    // The figures show once in the card and once in the table, with no sentence repeating them.
+    // Take-home shows once, in the card: the table lists only the deductions.
     expect(screen.queryByText(/Of the next £1,000 of pay/)).toBeNull();
-    expect(breakdown()).toContain("£720");
+    expect(breakdown()).not.toContain("£720");
     expect(breakdown()).toContain("£200");
     expect(breakdown()).toContain("£80");
     const outcomes = screen.getByTestId("explorer-outcomes");
@@ -56,16 +56,22 @@ describe("MarginalRateExplorer", () => {
     expect(screen.getAllByText(/^Unverified estimate\. These tax figures/)).toHaveLength(1);
   });
 
-  it("draws the chart with thresholds and your pay, summarised in at most two figures", () => {
+  it("draws the chart with thresholds and your pay, with a summary that repeats no figure", () => {
     render(<MarginalRateExplorerStandalone initialValues={{ taxYear: "2026/27" }} />);
     const figure = screen.getByRole("figure", { name: CHART_TITLE });
     expect(figure.getAttribute("aria-describedby")).toBeTruthy();
     const summaryId = figure.getAttribute("aria-describedby") ?? "";
     expect(document.getElementById(summaryId)?.textContent).toBe(
-      "At your pay, an estimated 28% of the next £1,000 is deducted.",
+      "Each step is a threshold where more of each extra pound is deducted.",
     );
     expect(screen.getAllByTestId("marginal-rate-threshold").length).toBeGreaterThan(3);
     expect(screen.getByTestId("marginal-rate-your-pay")).toBeDefined();
+  });
+
+  it("sits in one outer card when standalone", () => {
+    render(<MarginalRateExplorerStandalone initialValues={{ taxYear: "2026/27" }} />);
+    const card = screen.getByTestId("pay-rise-tool");
+    expect(card.contains(screen.getByTestId("marginal-rate-explorer"))).toBe(true);
   });
 
   it("hides no sign-up button unless a caller asks for one", () => {
@@ -138,6 +144,7 @@ describe("MarginalRateExplorer", () => {
     expect(screen.getByTestId("take-home-delta-pension").textContent).toBe(
       "An extra £1,000 a year into your pension would lower take-home by an estimated £720, and £1,000 would reach your pension.",
     );
+    fireEvent.click(screen.getByRole("button", { name: "How this is worked out" }));
     expect(
       screen.getByText("The pension contribution is modelled as salary sacrifice."),
     ).toBeDefined();

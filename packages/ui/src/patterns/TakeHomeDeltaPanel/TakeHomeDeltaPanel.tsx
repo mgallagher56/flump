@@ -1,5 +1,6 @@
 import type { FC } from "react";
 import { cx } from "../../../styled-system/css";
+import { CollapsibleDrawer } from "../../primitives/CollapsibleDrawer/CollapsibleDrawer";
 import { formatMoney } from "../../primitives/Money/Money";
 import { StatusBadge } from "../../primitives/StatusBadge/StatusBadge";
 import { Table, TBody, Td, THead, Th, Tr } from "../../primitives/Table/Table";
@@ -17,7 +18,6 @@ import {
 import {
   deltaPanelAssumptions,
   deltaPanelAssumptionsList,
-  deltaPanelAssumptionsTitle,
   deltaPanelHeader,
   deltaPanelNumeric,
   deltaPanelRoot,
@@ -111,9 +111,11 @@ export const TakeHomeDeltaPanel: FC<TakeHomeDeltaPanelProps> = ({
       <div className={deltaPanelHeader()}>
         <Heading className={deltaPanelTitle()}>{DELTA_PANEL_COPY.heading}</Heading>
         <StatusBadge variant="neutral">{asAtTaxYear(ratesYear)}</StatusBadge>
-        <StatusBadge variant={isUnverifiedEstimate ? "warning" : "info"}>
-          {isUnverifiedEstimate ? DELTA_PANEL_COPY.unverifiedBadge : DELTA_PANEL_COPY.estimateBadge}
-        </StatusBadge>
+        {/* Unverified, the full sentence is in the notice (or the page's notice), so no badge
+            repeats it (P4.3). */}
+        {isUnverifiedEstimate ? null : (
+          <StatusBadge variant="info">{DELTA_PANEL_COPY.estimateBadge}</StatusBadge>
+        )}
       </div>
 
       <TaxRatesStatusBanner
@@ -122,8 +124,8 @@ export const TakeHomeDeltaPanel: FC<TakeHomeDeltaPanelProps> = ({
         ratesYear={ratesYear}
       />
 
-      {/* No sentence restating the table: the take-home figure is already the headline card and
-          the first row below (RESCORE Appendix B, pay rise item 1). */}
+      {/* No sentence restating the table, and no take-home row: the take-home figure is already
+          the headline card (RESCORE Appendix B, pay rise item 1). The table lists the deductions. */}
       <Table caption={DELTA_PANEL_COPY.tableCaption}>
         <THead>
           <Tr>
@@ -134,12 +136,6 @@ export const TakeHomeDeltaPanel: FC<TakeHomeDeltaPanelProps> = ({
           </Tr>
         </THead>
         <TBody>
-          <Tr>
-            <Th scope="row">{DELTA_PANEL_COPY.takeHomeRow}</Th>
-            <Td className={deltaPanelNumeric()} label={DELTA_PANEL_COPY.amountColumn} numeric>
-              {money(takeHome)}
-            </Td>
-          </Tr>
           {rows.map(({ key, label }) => (
             <Tr key={key}>
               <Th scope="row">{label}</Th>
@@ -169,22 +165,25 @@ export const TakeHomeDeltaPanel: FC<TakeHomeDeltaPanelProps> = ({
       ) : null}
 
       {known.length > 0 ? (
-        <div className={deltaPanelAssumptions()}>
-          <p className={deltaPanelAssumptionsTitle()}>{DELTA_PANEL_COPY.assumptionsHeading}</p>
-          <ul className={deltaPanelAssumptionsList()}>
-            {known.map((a) => (
-              <li key={a.code}>
-                {ASSUMPTION_COPY[a.code]}
-                {a.unverified ? (
-                  <>
-                    {" "}
-                    <span className={deltaPanelUnverified()}>{DELTA_PANEL_COPY.notConfirmed}</span>
-                  </>
-                ) : null}
-              </li>
-            ))}
-          </ul>
-        </div>
+        <CollapsibleDrawer title={DELTA_PANEL_COPY.assumptionsHeading} variant="quiet">
+          <div className={deltaPanelAssumptions()}>
+            <ul className={deltaPanelAssumptionsList()}>
+              {known.map((a) => (
+                <li key={a.code}>
+                  {ASSUMPTION_COPY[a.code]}
+                  {a.unverified ? (
+                    <>
+                      {" "}
+                      <span className={deltaPanelUnverified()}>
+                        {DELTA_PANEL_COPY.notConfirmed}
+                      </span>
+                    </>
+                  ) : null}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </CollapsibleDrawer>
       ) : null}
     </section>
   );
