@@ -1,3 +1,4 @@
+import type { NetWorthBasis } from "@flump/finance-engine";
 import {
   Button,
   CurrencyInput,
@@ -45,6 +46,8 @@ export interface CheckInSheetProps {
   /** "checkIn" records the current month; "backfill" lets the user pick any earlier month. */
   mode?: CheckInMode;
   onSave: SaveSnapshot;
+  /** The user's net worth choices: rows they leave out say "Not counted in net worth". */
+  basis: NetWorthBasis;
 }
 
 /** Earliest month the backend accepts (E30 PR1 `EARLIEST_SNAPSHOT`). */
@@ -71,14 +74,15 @@ export const CheckInSheet: FC<CheckInSheetProps> = ({
   currentMonth,
   mode = "checkIn",
   onSave,
+  basis,
 }) => {
   const { formatCurrencyDecimal } = useFormatCurrency();
   const isBackfill = mode === "backfill";
   const latestPast = addMonths(currentMonth, -1);
   const [month, setMonth] = useState<MonthKey>(isBackfill ? latestPast : currentMonth);
   const rows = useMemo(
-    () => buildCheckInRows(accounts, accountDetails, month, currentMonth),
-    [accounts, accountDetails, month, currentMonth],
+    () => buildCheckInRows(accounts, accountDetails, month, currentMonth, basis),
+    [accounts, accountDetails, month, currentMonth, basis],
   );
   const [values, setValues] = useState<Record<string, number | null>>({});
   const [pending, setPending] = useState(false);

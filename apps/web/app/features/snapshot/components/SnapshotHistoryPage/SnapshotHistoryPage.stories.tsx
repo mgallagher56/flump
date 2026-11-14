@@ -1,3 +1,4 @@
+import { DEFAULT_NET_WORTH_BASIS } from "@flump/finance-engine";
 import type { Meta, StoryObj } from "@storybook/react";
 import { expect, fn, within } from "storybook/test";
 import {
@@ -18,6 +19,7 @@ const meta: Meta<typeof SnapshotHistoryPage> = {
     accountDetails: [],
     currentMonth: "2026-11",
     onSave: fn(async () => true),
+    basis: DEFAULT_NET_WORTH_BASIS,
   },
 };
 

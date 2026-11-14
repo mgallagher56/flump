@@ -31,7 +31,7 @@ const AccountsContainer: FC = () => {
   const saveSnapshot = useSaveSnapshot();
 
   // Totals come from the finance engine so Property, Student Loan and Overdraft are classified
-  // in one place (D-5-B: a student loan is never in net worth or what you owe).
+  // in one place, under the user's net worth choices (saved on their profile).
   const snapshot = useMemo(
     () =>
       new PortfolioSnapshot(
@@ -80,6 +80,7 @@ const AccountsContainer: FC = () => {
               <CheckInSheet
                 accountDetails={accountDetails as RawAccountDetail[]}
                 accounts={accounts}
+                basis={netWorth.basis}
                 currentMonth={londonMonth()}
                 onOpenChange={setCheckInOpen}
                 onSave={saveSnapshot}
@@ -95,6 +96,7 @@ const AccountsContainer: FC = () => {
 
       {hasAccounts ? (
         <AccountsGroupList
+          leftOut={netWorth.leftOut}
           netWorth={netWorth.netWorth}
           rows={rows}
           totalOwe={netWorth.totalLiabilities}

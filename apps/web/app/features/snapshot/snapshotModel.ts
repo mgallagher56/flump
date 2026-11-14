@@ -1,6 +1,6 @@
 import {
   categorizeAccountType,
-  DEFAULT_NET_WORTH_BASIS,
+  countsTowardNetWorth,
   isLiabilityCategory,
   type NetWorthBasis,
   type NetWorthPoint,
@@ -149,7 +149,7 @@ export interface CheckInRow {
   name: string;
   type: string;
   isLiability: boolean;
-  /** Student loans are recorded but sit outside net worth. */
+  /** Recorded, but the user's net worth basis leaves this kind of account out. */
   outsideNetWorth: boolean;
   isConnected: boolean;
   status: CheckInStatus;
@@ -179,6 +179,7 @@ export function buildCheckInRows(
   details: readonly AccountDetailInput[],
   month: MonthKey,
   current: MonthKey,
+  basis: NetWorthBasis,
 ): CheckInRow[] {
   const rows = toSnapshotRows(details);
   const target = toIndex(month);
@@ -216,7 +217,7 @@ export function buildCheckInRows(
         name: String(a.name ?? "Account"),
         type,
         isLiability,
-        outsideNetWorth: category === "studentLoans",
+        outsideNetWorth: !countsTowardNetWorth(category, basis),
         isConnected,
         status,
         lastRecordedMonth,
@@ -308,7 +309,7 @@ export function buildSnapshotHistory(
   accounts: readonly SnapshotAccountInput[],
   details: readonly AccountDetailInput[],
   current: MonthKey,
-  basis: NetWorthBasis = DEFAULT_NET_WORTH_BASIS,
+  basis: NetWorthBasis,
 ): SnapshotHistory {
   const engineAccounts = (accounts ?? [])
     .filter((a) => a.id)

@@ -119,3 +119,8 @@ export const isaLink = cva({
     _focusVisible: { outline: "2px solid", outlineColor: "border.focusRing", outlineOffset: "2px" },
   },
 });
+
+/** Net worth and the one line under it about what counts. */
+export const netWorthBlock = cva({
+  base: { display: "flex", flexDirection: "column", gap: "8px", minWidth: 0 },
+});

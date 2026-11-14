@@ -1,3 +1,4 @@
+import { DEFAULT_NET_WORTH_BASIS } from "@flump/finance-engine";
 import { expectPageRules } from "@repo/ui/testing";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -33,6 +34,7 @@ const renderPage = (props: Partial<SnapshotHistoryPageProps> = {}) =>
       <SnapshotHistoryPage
         accountDetails={[]}
         accounts={accounts}
+        basis={DEFAULT_NET_WORTH_BASIS}
         currentMonth="2026-11"
         onSave={vi.fn(async () => true)}
         {...props}
@@ -183,5 +185,26 @@ describe("SnapshotHistoryPage", () => {
     renderPage({ accountDetails: [row(CURRENT, 2026, 10, 2000)] });
     await userEvent.click(screen.getByRole("button", { name: "Add earlier months" }));
     expect(screen.getByRole("dialog", { name: "Add an earlier month" })).toBeDefined();
+  });
+
+  describe("net worth choices", () => {
+    const twoMonths = [row(CURRENT, 2026, 9, 2000), row(CURRENT, 2026, 10, 2100)];
+
+    it("under the default choices with no student loan, no line shows", () => {
+      renderPage({ accountDetails: twoMonths });
+      expect(screen.queryByTestId("snapshot-net-worth-basis")).toBeNull();
+    });
+
+    it("with property switched off, the hero says what it leaves out and links to the choice", () => {
+      renderPage({
+        accountDetails: twoMonths,
+        basis: { countProperty: false, countStudentLoan: false },
+      });
+      const line = screen.getByTestId("snapshot-net-worth-basis");
+      expect(line.textContent).toContain("Not counting your mortgage.");
+      expect(
+        within(line).getByRole("link", { name: "Change what counts" }).getAttribute("href"),
+      ).toBe("/app/profile?tab=profile#net-worth");
+    });
   });
 });

@@ -44,6 +44,7 @@ const meta: Meta<typeof AccountsGroupList> = {
     totalOwn: 14850,
     totalOwe: 182640,
     netWorth: -167790,
+    leftOut: [],
   },
 };
 

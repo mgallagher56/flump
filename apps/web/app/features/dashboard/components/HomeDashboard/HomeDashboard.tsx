@@ -1,3 +1,4 @@
+import type { NetWorthLeftOut } from "@flump/finance-engine";
 import {
   Button,
   DELTA_PANEL_COPY,
@@ -12,6 +13,7 @@ import {
 import { SlidersHorizontal } from "lucide-react";
 import { type FC, type ReactNode, useMemo, useRef, useState } from "react";
 import { SampleAwareLink } from "~/components/navigation/SampleAwareLink";
+import { NetWorthBasisLine } from "~/features/accounts/components/NetWorthBasisLine";
 import {
   MonthlyCheckInCard,
   type MonthlyCheckInCardProps,
@@ -262,7 +264,12 @@ export const HomeDashboard: FC<HomeDashboardProps> = ({
   const delta = netWorthDelta(netWorth, netWorthPrior, currentMonth);
   // D3: when net worth counts the user's own home estimate, the hero label says so in every case,
   // so the label survives alongside the delta (the hero has room for a delta or a sub-line only).
-  const heroLabel = homeEstimate !== null && homeEstimate > 0 ? HERO_LABEL_WITH_HOME : HERO_LABEL;
+  // Net worth choices: what the figure leaves out. The home estimate is in the label only while
+  // property counts.
+  const leftOut: NetWorthLeftOut[] =
+    hasAccounts && Array.isArray(accountsData?.leftOut) ? accountsData.leftOut : [];
+  const homeCounted = homeEstimate !== null && homeEstimate > 0 && !leftOut.includes("property");
+  const heroLabel = homeCounted ? HERO_LABEL_WITH_HOME : HERO_LABEL;
 
   const showsTaxEstimate = cards.includes("tax") && taxCardShowsEstimate(taxData);
   const showsDebtEstimate = cards.includes("debt") && debtCardShowsEstimate(debtData);
@@ -307,6 +314,9 @@ export const HomeDashboard: FC<HomeDashboardProps> = ({
           value={netWorth === null ? null : heroValue(netWorth)}
         />
       )}
+
+      {/* One quiet line, only when the figure leaves something out (the sandbox has no choices). */}
+      {isSample ? null : <NetWorthBasisLine id="dashboard-net-worth-basis" leftOut={leftOut} />}
 
       <DashboardKpiStrip
         budgetKnown={budgetKnown}

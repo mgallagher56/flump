@@ -1,3 +1,4 @@
+import type { NetWorthLeftOut } from "@flump/finance-engine";
 import {
   Card,
   CollapsibleDrawer,
@@ -27,6 +28,7 @@ import type { FC } from "react";
 import { Link } from "react-router";
 import { AccountTypeEnum, isLiabilityType } from "~/containers/accounts/utils";
 import type { AccountRow } from "../../accountRows";
+import { NetWorthBasisLine } from "../NetWorthBasisLine";
 import {
   accountCell,
   accountLink,
@@ -37,6 +39,7 @@ import {
   isaLink,
   listRoot,
   mutedText,
+  netWorthBlock,
   note,
   phoneType,
   totalLabel,
@@ -49,10 +52,20 @@ export interface AccountsGroupListProps {
   rows: AccountRow[];
   /** Everything owned, from the financial picture (the home estimate included). */
   totalOwn: number;
-  /** Everything owed that counts in net worth (student loans excluded, E23 D-5-B). */
+  /** Everything owed that counts in net worth under the user's choices. */
   totalOwe: number;
   netWorth: number;
+  /** What net worth leaves out under the user's choices (`NetWorthTotals.leftOut`). */
+  leftOut: readonly NetWorthLeftOut[];
 }
+
+/** The student loan footnote follows the user's choice; the facts about repayment stay. */
+export const studentLoanFootnote = (counted: boolean): string =>
+  `${
+    counted
+      ? "Student loans are in this total and your net worth."
+      : "Student loans are not in this total or your net worth."
+  } Repayments come out of your pay as you earn, and any balance left at the end of the repayment term is written off.`;
 
 const {
   CURRENT,
@@ -238,6 +251,7 @@ export const AccountsGroupList: FC<AccountsGroupListProps> = ({
   totalOwn,
   totalOwe,
   netWorth,
+  leftOut,
 }) => {
   const own = rows.filter((row) => !isLiabilityType(row.type)).sort(byType);
   const owe = rows.filter((row) => isLiabilityType(row.type)).sort(byType);
@@ -259,9 +273,7 @@ export const AccountsGroupList: FC<AccountsGroupListProps> = ({
         <Group
           amountLabel="Amount owed"
           footnote={
-            hasStudentLoan
-              ? "Student loans are not in this total or your net worth. Repayments come out of your pay as you earn. Any balance left at the end of the repayment term is written off, so it is shown separately."
-              : undefined
+            hasStudentLoan ? studentLoanFootnote(!leftOut.includes("studentLoan")) : undefined
           }
           id="accounts-owe-heading"
           rows={owe}
@@ -270,18 +282,22 @@ export const AccountsGroupList: FC<AccountsGroupListProps> = ({
           totalText="Total you owe"
         />
       ) : null}
-      <Card padding="none">
-        <dl
-          className={totalRow({ emphasis: true })}
-          data-testid="accounts-net-worth"
-          id="accounts-net-worth"
-        >
-          <dt className={totalLabel({ emphasis: true })}>Net worth</dt>
-          <dd>
-            <Money size="md" value={netWorth} />
-          </dd>
-        </dl>
-      </Card>
+      <div className={netWorthBlock()}>
+        <Card padding="none">
+          <dl
+            className={totalRow({ emphasis: true })}
+            data-testid="accounts-net-worth"
+            id="accounts-net-worth"
+          >
+            <dt className={totalLabel({ emphasis: true })}>Net worth</dt>
+            <dd>
+              <Money size="md" value={netWorth} />
+            </dd>
+          </dl>
+        </Card>
+        {/* The one place the choice is always reachable from the figure, even with nothing left out. */}
+        <NetWorthBasisLine alwaysShowLink id="accounts-net-worth-basis" leftOut={leftOut} />
+      </div>
     </div>
   );
 };
