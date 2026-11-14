@@ -26,6 +26,8 @@ const pack = {
     totalMortgageBalance: 0,
     weightedSavingsRate: 0,
     monthlyHistory: [],
+    netWorthBasis: { countProperty: true, countStudentLoan: false },
+    netWorthLeavesOut: [],
     accounts: [
       {
         id: "6f1c6a4e-5b0e-4a63-9d0a-3f2f2a9d1c11",
