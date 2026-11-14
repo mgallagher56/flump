@@ -5,6 +5,7 @@ import {
   formatMonth,
   historyCountLabel,
   buildSnapshotHistory as historyFor,
+  historySourceLabel,
   latestRecordedMonth,
   londonMonth,
   nextCheckInDate,
@@ -133,6 +134,34 @@ describe("buildSnapshotHistory", () => {
     );
     expect(h.accountChanges[0]).toMatchObject({ accountId: CARD, change: 150 });
     expect(h.monthChanges[0]?.change).toBe(-150);
+  });
+
+  it("lists what you own first, then what you owe, each by name", () => {
+    const ids = ["c1", "c2", "c3", "c4"].map((n) => `a0000000-0000-4000-8000-0000000000${n}`);
+    const [card, savings, loan, current] = ids as [string, string, string, string];
+    const mixed = [
+      { id: card, name: "Amex", type: "Credit Card", balance: -300 },
+      { id: savings, name: "Savings", type: "Saving", balance: 5000 },
+      { id: loan, name: "Car loan", type: "Loan", balance: -8000 },
+      { id: current, name: "Current account", type: "Current", balance: 1000 },
+    ];
+    const h = buildSnapshotHistory(
+      mixed,
+      ids.flatMap((id, i) => [row(id, 2026, 9, (i + 1) * 100), row(id, 2026, 10, (i + 1) * 110)]),
+      "2026-10",
+    );
+    expect(h.accountChanges.map((c) => c.name)).toEqual([
+      "Current account",
+      "Savings",
+      "Amex",
+      "Car loan",
+    ]);
+  });
+
+  it("labels a confirmed figure Confirmed and a calculated one Calculated", () => {
+    expect(historySourceLabel("confirmed")).toBe("Confirmed");
+    expect(historySourceLabel("calculated")).toBe("Calculated");
+    expect(historySourceLabel(null)).toBeUndefined();
   });
 
   it("lists month changes newest first and flags carried and new-account months", () => {

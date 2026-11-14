@@ -106,7 +106,12 @@ const MonthlyCheckInSheet: FC<CheckInSheetProps> = ({
   return (
     <Sheet
       // The month leads the description: a title with it wraps at "check-" on a phone.
-      description={`${formatMonth(currentMonth)}. ${CHECK_IN_COPY.description}`}
+      // The summary keeps only the month: the step instructions no longer apply.
+      description={
+        summary
+          ? formatMonth(currentMonth)
+          : `${formatMonth(currentMonth)}. ${CHECK_IN_COPY.description}`
+      }
       id="snapshot-check-in"
       onOpenChange={handleOpenChange}
       open={open}

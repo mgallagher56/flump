@@ -97,11 +97,14 @@ describe("CheckInSheet", () => {
         skipped: 0,
         quiet: true,
       });
-      // Against October: current +£300, mortgage £1,000 less owed, and the connected account
-      // counts at its saved balance this month (+£900).
+      // Against October: current +£300, mortgage £1,000 less owed. The connected account has no
+      // October figure, so it compares with its saved balance (no change), as the list does.
       expect(screen.getByTestId("checkin-net-worth").textContent).toBe(
-        "Net worth: −£177,600, up £2,200 on October 2026.",
+        "Net worth: −£177,600, up £1,300 on October 2026.",
       );
+      // The summary keeps only the month in the description, not the step instructions.
+      expect(screen.queryByText(/Update each balance or keep it as it is/)).toBeNull();
+      expect(screen.getByText("November 2026")).toBeDefined();
       expect(refresh).not.toHaveBeenCalled();
       await userEvent.click(screen.getByRole("button", { name: "Done" }));
       expect(refresh).toHaveBeenCalledTimes(1);

@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import { monthTicks, NetWorthHistoryChart } from "./NetWorthHistoryChart";
+import { monthTicks, NetWorthHistoryChart, yTicks } from "./NetWorthHistoryChart";
 
 const points = [
   { month: "2026-07", label: "Jul 26", netWorth: 1000, recorded: 1000, carried: null },
@@ -31,6 +31,12 @@ describe("NetWorthHistoryChart", () => {
         6,
       ),
     ).toEqual([0, 3, 6, 9, 12]);
+  });
+
+  it("puts y ticks on round steps inside the domain", () => {
+    expect(yTicks([210000, 236000])).toEqual([210000, 220000, 230000]);
+    expect(yTicks([0, 20000])).toEqual([0, 5000, 10000, 15000, 20000]);
+    expect(yTicks([-10000, 10000])).toEqual([-10000, -5000, 0, 5000, 10000]);
   });
 
   it("draws no chart with fewer than 3 recorded months, only the summary and the prompt", () => {

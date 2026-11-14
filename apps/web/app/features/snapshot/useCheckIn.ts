@@ -203,9 +203,19 @@ export function useCheckIn({
 
   const rest = useCallback(async () => {
     // A step whose save failed keeps its typed answer and its retry: never overwrite it here.
+    // A typed but unsaved figure is never thrown away: it is saved as Update (manual) in the
+    // same request, including on a reopened step. Only steps with no figure and no draft get
+    // the rest answer.
     const values = steps
-      .filter((s) => !hasFigure(s) && !failed[s.accountId])
-      .map((s) => answerValue(s, restAnswer(s)))
+      .filter((s) => !failed[s.accountId])
+      .map((s) => {
+        const draft = drafts[s.accountId];
+        const open = !hasFigure(s) || Boolean(editing[s.accountId]);
+        if (open && typeof draft === "number" && Number.isFinite(draft)) {
+          return answerValue(s, { kind: "update", value: draft });
+        }
+        return hasFigure(s) ? null : answerValue(s, restAnswer(s));
+      })
       .filter((v): v is CheckInValue => v !== null);
     // The summary waits until every failed save has been retried.
     const anyFailed = Object.keys(failed).length > 0;
@@ -219,12 +229,17 @@ export function useCheckIn({
     const ok = await save(values);
     setRestSaving(false);
     if (ok) {
+      setDrafts((d) => {
+        let next = d;
+        for (const v of values) next = omit(next, v.accountId);
+        return next;
+      });
       if (!anyFailed) setFinished(true);
     } else {
       setRestError(true);
     }
     return ok;
-  }, [steps, hasFigure, failed, save]);
+  }, [steps, hasFigure, failed, drafts, editing, save]);
 
   const figure = useCallback(
     (accountId: string) => {

@@ -46,7 +46,9 @@ describe("MonthlyChangeTable", () => {
       />,
     );
     expect(screen.getByText("Calculated")).toBeDefined();
-    expect(screen.getByText("No change")).toBeDefined();
+    // "Confirmed", not "No change": a confirmed figure can sit beside a non-zero change.
+    expect(screen.getByText("Confirmed")).toBeDefined();
+    expect(screen.queryByText("No change")).toBeNull();
   });
 
   it("shows per-account changes with debts as the amount owed", () => {
