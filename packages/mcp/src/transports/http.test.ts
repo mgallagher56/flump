@@ -245,7 +245,7 @@ describe("usage counted per tools/call", () => {
     tokenHash: hashPatToken(PAT),
     scopes: ["mcp:read:anonymized"],
     anonymizeInstitutions: true,
-    expiresAt: null,
+    expiresAt: new Date(Date.now() + 86_400_000),
     revokedAt: null,
   });
   const setup = (allowed: boolean) => {
@@ -621,7 +621,7 @@ describe("audit and staging wiring (re-plan PR D)", () => {
           tokenHash: hashPatToken(PAT),
           scopes: ["mcp:read:anonymized"],
           anonymizeInstitutions: true,
-          expiresAt: null,
+          expiresAt: new Date(Date.now() + 86_400_000),
           revokedAt: null,
         }),
       },
@@ -673,7 +673,7 @@ describe("authenticateExpress (the checks every PAT route shares)", () => {
     tokenHash: hashPatToken(PAT),
     scopes: ["mcp:read:anonymized"],
     anonymizeInstitutions: true,
-    expiresAt: null,
+    expiresAt: new Date(Date.now() + 86_400_000),
     revokedAt: null,
   };
   const handlerWith = (overrides: object = {}) => {

@@ -123,6 +123,22 @@ describe.skipIf(dbMode === "skip")("authz: /mcp transport (real Postgres)", () =
       expect(revoke.status).toBe(200);
       expect((await mcp(verb, `Bearer ${patA.rawToken}`)).status).toBe(401);
     });
+
+    it("refuses a PAT row with no expiry (S2)", async () => {
+      await h.dataSource.getRepository(McpToken).update({ id: patA.id }, { expiresAt: null });
+      expect((await mcp(verb, `Bearer ${patA.rawToken}`)).status).toBe(401);
+    });
+
+    it("refuses the PAT of a user removed from the closed beta, without revoking it (S1)", async () => {
+      process.env.BETA_ALLOWED_USER_IDS = USER_B;
+      try {
+        expect((await mcp(verb, `Bearer ${patA.rawToken}`)).status).toBe(401);
+        const row = await h.dataSource.getRepository(McpToken).findOneBy({ id: patA.id });
+        expect(row?.revokedAt).toBeNull();
+      } finally {
+        delete process.env.BETA_ALLOWED_USER_IDS;
+      }
+    });
   });
 
   const readResource = (token: string, uri: string) =>
@@ -327,6 +343,18 @@ describe.skipIf(dbMode === "skip")("authz: /mcp transport (real Postgres)", () =
       const revoke = await h.call("delete", `/mcp-tokens/${patB.id}`, h.tokens.b);
       expect(revoke.status).toBe(200);
       expect((await input(`Bearer ${patB.rawToken}`)).status).toBe(401);
+    });
+
+    it("refuses a PAT with no expiry and the PAT of a user removed from the beta (S1, S2)", async () => {
+      await h.dataSource.getRepository(McpToken).update({ id: patA.id }, { expiresAt: null });
+      expect((await input(`Bearer ${patA.rawToken}`)).status).toBe(401);
+      expect((await input(`Bearer ${patB.rawToken}`)).status).toBe(200);
+      process.env.BETA_ALLOWED_USER_IDS = USER_A;
+      try {
+        expect((await input(`Bearer ${patB.rawToken}`)).status).toBe(401);
+      } finally {
+        delete process.env.BETA_ALLOWED_USER_IDS;
+      }
     });
 
     it("a PAT is still refused by the session-auth routes (no new way in)", async () => {

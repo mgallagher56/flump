@@ -1,6 +1,8 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { ReadinessResponse } from "@flump/api-contract";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type { BootConfig } from "../config/config.module";
 import { HealthController } from "./health.controller";
 
 const pkg = JSON.parse(readFileSync(join(__dirname, "../../package.json"), "utf8"));
@@ -12,13 +14,15 @@ function makeRes() {
 function makeController(
   query: () => Promise<unknown>,
   migrations: { loaded?: number; executed?: () => Promise<unknown> } = {},
+  privacyWarnings: BootConfig["privacyWarnings"] = [],
 ) {
   const { loaded = 1, executed = async () => [{ n: loaded }] } = migrations;
   const dataSource = {
     migrations: Array.from({ length: loaded }, () => ({})),
     query: vi.fn((sql: string) => (sql.includes("FROM migrations") ? executed() : query())),
   };
-  return { controller: new HealthController(dataSource as never), dataSource };
+  const bootConfig = { privacyWarnings } as unknown as BootConfig;
+  return { controller: new HealthController(dataSource as never, bootConfig), dataSource };
 }
 
 describe("HealthController", () => {
@@ -45,9 +49,30 @@ describe("HealthController", () => {
     const res = makeRes();
     const body = await controller.ready(res as never);
     expect(dataSource.query).toHaveBeenCalledWith("SELECT 1");
-    expect(body).toEqual({ status: "ok", version: pkg.version, commit: "abcdef1" });
+    expect(body).toEqual({
+      status: "ok",
+      version: pkg.version,
+      commit: "abcdef1",
+      configWarnings: 0,
+    });
     expect(res.status).not.toHaveBeenCalled();
     expect(res.setHeader).toHaveBeenCalledWith("Cache-Control", "no-store");
+  });
+
+  it("readiness stays 200 and counts unset privacy variables in configWarnings, without naming them (BE-15, N1)", async () => {
+    const { controller } = makeController(async () => [{ "?column?": 1 }], {}, [
+      "DELETION_TOMBSTONE_KEY",
+      "TERMS_VERSION",
+    ]);
+    const res = makeRes();
+    const body = await controller.ready(res as never);
+    expect(body).toMatchObject({
+      status: "ok",
+      configWarnings: 2,
+    });
+    expect(JSON.stringify(body)).not.toContain("DELETION_TOMBSTONE_KEY");
+    expect(ReadinessResponse.safeParse(body).success).toBe(true);
+    expect(res.status).not.toHaveBeenCalled();
   });
 
   it.each([undefined, "", "   "])("commit falls back to unknown for %j", async (sha) => {

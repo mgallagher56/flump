@@ -31,6 +31,22 @@ export function isBetaOpen(env: Record<string, string | undefined>): boolean {
   return env.BETA_OPEN?.trim().toLowerCase() === "true";
 }
 
+/**
+ * The beta decision for a caller known only by user id (an AI connection token carries no email).
+ * It refuses only when the answer is certain: the beta is gated by user ids alone and this id is
+ * not listed. While an email allowlist is set, an unlisted id may still be an invited email, which
+ * cannot be told from a token, so the token is left to its own expiry and revocation instead of
+ * locking every email-invited user out of their tokens.
+ */
+export function isBetaUserIdRemoved(
+  env: Record<string, string | undefined>,
+  userId: string,
+): boolean {
+  const ids = parseList(env.BETA_ALLOWED_USER_IDS, false);
+  if (ids.length === 0 || parseList(env.BETA_ALLOWED_EMAILS, true).length > 0) return false;
+  return !ids.includes(userId);
+}
+
 export function isBetaUserAllowed(
   env: Record<string, string | undefined>,
   user: AuthenticatedUser,

@@ -5,6 +5,7 @@ import { typeOrmOptionsFromEnv } from "../config/typeorm.options";
 import { assertSafeTestDatabase } from "../testing/assertSafeTestDatabase";
 import { resolveDbTestMode } from "../testing/dbTestMode";
 import { discoverMigrations } from "../testing/discoverMigrations";
+import { rateLimitStorageKey } from "./keyed-ref";
 import { PgRateLimitStore, SWEEP_EVERY } from "./pg-rate-limit.store";
 import { RATE_LIMIT_POLICIES } from "./rate-limit.decorator";
 
@@ -111,6 +112,20 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
       }
     });
 
+    it("stores only a keyed hash: no row key holds the IP or the user id (N4)", async () => {
+      const store = new PgRateLimitStore(ds);
+      const window = [{ limit: 5, windowMs: MINUTE }];
+      await store.hit("user:user_01SECRETID:credential", window, T0);
+      await store.hit("mcp:fail:203.0.113.7", window, T0);
+      const rows: { key: string }[] = await ds.query("SELECT key FROM rate_limit_buckets");
+      expect(rows).toHaveLength(2);
+      for (const { key } of rows) {
+        expect(key).toMatch(/^rl1:[0-9a-f]{32}$/);
+        expect(key).not.toContain("user_01SECRETID");
+        expect(key).not.toContain("203.0.113.7");
+      }
+    });
+
     it("rolls the window over in SQL: a full bucket opens again once its window has passed", async () => {
       const store = new PgRateLimitStore(ds);
       const window = [{ limit: 2, windowMs: MINUTE }];
@@ -144,7 +159,9 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
       await store.hit("r", [window], T0);
       expect((await store.hit("r", [window], T0)).allowed).toBe(false);
       await Promise.all([1, 2, 3].map(() => store.refund("r", window, T0)));
-      const [row] = await ds.query("SELECT count FROM rate_limit_buckets WHERE key = 'r|60000'");
+      const [row] = await ds.query("SELECT count FROM rate_limit_buckets WHERE key = $1", [
+        rateLimitStorageKey("r|60000"),
+      ]);
       expect(row.count).toBe(0);
       expect((await store.hit("r", [window], T0)).allowed).toBe(true);
     });

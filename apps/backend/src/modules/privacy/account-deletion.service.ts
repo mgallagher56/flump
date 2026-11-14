@@ -11,7 +11,12 @@ import { BankConnection } from "../../entities/bank-connection.entity";
 import { Transaction } from "../../entities/transaction.entity";
 import { USER_IDENTITY_ADAPTER, type UserIdentityAdapter } from "../../identity/identity.adapter";
 import { BANK_CONSENT_REVOKER, type BankConsentRevoker } from "../banking/bank-consent-revoker";
-import { resolveTombstoneKey, tombstoneExpiry, tombstoneSubjectHash } from "./tombstone-key";
+import {
+  resolveTombstoneKey,
+  TOMBSTONE_KEY_ENV_VAR,
+  tombstoneExpiry,
+  tombstoneSubjectHash,
+} from "./tombstone-key";
 import { type RemovedCounts, USER_DATA_REGISTRY } from "./user-data-registry";
 
 /** Bound on the in-process cache of erased user ids (cleared whole when full). */
@@ -19,6 +24,13 @@ const ERASED_CACHE_MAX = 10_000;
 
 const ACCOUNT_DELETION_UNAVAILABLE =
   "Account deletion is not available right now. Try again later.";
+
+/** 503 in the standard error envelope with a stable code (N1), so clients can branch on it. */
+const accountDeletionUnavailable = () =>
+  new ServiceUnavailableException({
+    code: "account_deletion_unavailable",
+    message: ACCOUNT_DELETION_UNAVAILABLE,
+  });
 
 /**
  * Erases an account (BE-04, finding C1): every row carrying the user id, in one transaction, then
@@ -97,7 +109,15 @@ export class AccountDeletionService implements ErasedAccountCheck {
 
   async deleteAccount(userId: string): Promise<DeleteUserResponse> {
     const key = this.key;
-    if (!key || !userId) throw new ServiceUnavailableException(ACCOUNT_DELETION_UNAVAILABLE);
+    if (!key) {
+      // N1: the operator needs to know which variable to set; the person gets a stable code and a
+      // plain message. The variable's name only, never a value.
+      this.logger.error(
+        `Account deletion refused: ${TOMBSTONE_KEY_ENV_VAR} is not set or too short. Set it (see OWNER-SETUP.md) to enable erasure.`,
+      );
+      throw accountDeletionUnavailable();
+    }
+    if (!userId) throw accountDeletionUnavailable();
     const subjectHash = tombstoneSubjectHash(key, userId);
 
     // (a) Bank consent, before Flump's copy of the connections goes. Never blocks the erasure.

@@ -79,6 +79,23 @@ describe("launch-readiness checklist (E24-T10)", () => {
   });
 });
 
+describe("retention command smoke (BE-15, N8)", () => {
+  test("the Docker job runs the retention cron's own command inside the built backend image", () => {
+    const ci = readFileSync(resolve(repoRoot, ".github/workflows/ci-pipeline.yml"), "utf8");
+    const job = ci.slice(ci.indexOf("  docker-build:"));
+    const step = job.slice(job.indexOf("Backend retention command smoke"));
+    const body = step.slice(0, step.indexOf("- name:", 1));
+    const { deploy } = readJson("apps/backend/retention.railway.json");
+    expect(deploy.startCommand).toBe("bun dist/jobs/retention-purge.js");
+    expect(body).toContain(`flump-backend-ci ${deploy.startCommand}`);
+    // It needs the boot smoke's migrated database, so it comes after it in the same job.
+    expect(job.indexOf("Backend container boot smoke")).toBeLessThan(
+      job.indexOf("Backend retention command smoke"),
+    );
+    expect(body).not.toContain("RETENTION_HEARTBEAT_URL");
+  });
+});
+
 describe("tax-year calendar guard (E22)", () => {
   test("CI runs the guard and the root script exists", () => {
     const { scripts } = readJson("package.json");

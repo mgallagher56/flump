@@ -13,7 +13,7 @@ import {
 import { InjectRepository } from "@nestjs/typeorm";
 import { DataSource, type EntityTarget, In, type ObjectLiteral, Repository } from "typeorm";
 import { recordAuditEvent } from "../../audit/audit-events";
-import { withdrawAllConsents } from "../../audit/consents";
+import { acceptTermsOnce, withdrawAllConsents } from "../../audit/consents";
 import { accountDeletedException } from "../../auth/recent-login";
 import { safeErrorSummary } from "../../common/log-safe";
 import { preconditionFailed, withVersionClaim } from "../../contract/etag";
@@ -398,13 +398,12 @@ export class UserProfileService implements ProfileLifecycle {
       return result;
     });
 
-    // Audit trail (security review): one structured event after the transaction has committed.
-    // The user id and row counts only; no amounts, names or email. A logging failure never turns
-    // a completed reset into an error.
+    // One structured event after the transaction has committed: row counts only, no user id (S6),
+    // amounts, names or email. The audit row written above holds the user id, and the request id
+    // the logger attaches joins this line to it. A logging failure never turns a completed reset
+    // into an error.
     try {
-      // A plain object, not a string: the log scrubber passes this exact shape through with the
-      // user id intact (isAuditEventEntry) and would blank the id inside a string.
-      this.logger.log({ event: "financial_data_reset", userId, removed: counts });
+      this.logger.log({ event: "financial_data_reset", removed: counts });
     } catch {
       // logging failure is ignored
     }
@@ -417,6 +416,19 @@ export class UserProfileService implements ProfileLifecycle {
         email: email || null,
       },
     };
+  }
+
+  /**
+   * Records the caller's acceptance of `version` (BE-15, M-PRIV3). The caller has already checked
+   * that it is the version currently served. Idempotent per user and version: a transaction-scoped
+   * advisory lock on the user serialises two concurrent acceptances, so the second finds the first.
+   */
+  async acceptTerms(userId: string, version: string): Promise<{ recorded: boolean }> {
+    const recorded = await this.dataSource.transaction(async (manager) => {
+      await manager.query("SELECT pg_advisory_xact_lock(hashtext($1))", [`terms:${userId}`]);
+      return acceptTermsOnce(manager, { userId, version });
+    });
+    return { recorded };
   }
 
   async updateChecklist(

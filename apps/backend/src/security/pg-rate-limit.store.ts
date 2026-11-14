@@ -1,5 +1,6 @@
 import { Logger } from "@nestjs/common";
 import type { DataSource, QueryRunner } from "typeorm";
+import { rateLimitStorageKey } from "./keyed-ref";
 import type { RateLimitDecision, RateLimitWindow, SharedRateLimitStore } from "./rate-limit.store";
 
 /** Every this many hits (per process), expired rows are swept in the background. */
@@ -51,7 +52,12 @@ DELETE FROM rate_limit_buckets WHERE key IN (
   SELECT key FROM rate_limit_buckets WHERE expires_at < now() LIMIT ${SWEEP_BATCH}
 )`;
 
-const bucketId = (key: string, w: RateLimitWindow) => `${key}|${w.windowMs}`;
+/**
+ * The stored row key (BE-15, N4): a keyed HMAC of the logical key and window length, never the
+ * logical key itself, which holds a user id or a client address. Every caller of the shared store
+ * (the per-user interceptor and the MCP limiters) goes through here.
+ */
+const bucketId = (key: string, w: RateLimitWindow) => rateLimitStorageKey(`${key}|${w.windowMs}`);
 const at = (now: number | undefined) => (now === undefined ? null : new Date(now));
 
 /**
@@ -65,8 +71,10 @@ const at = (now: number | undefined) => (now === undefined ? null : new Date(now
  * back when any window refuses, so a refused hit spends no quota in the others.
  *
  * Rows are disposable: an expired row is reset by the next hit, and every SWEEP_EVERY hits a
- * bounded background delete removes old ones. Keys hold a user id or an MCP client address and
- * live no longer than their window (at most a day) plus the next sweep.
+ * bounded background delete removes old ones. Logical keys name a user id or an MCP client address;
+ * the stored key is only their keyed hash (`rateLimitStorageKey`), and a row lives no longer than
+ * its window (at most a day) plus the next sweep. Rows written before BE-15 with raw keys simply
+ * expire.
  *
  * Errors propagate; the caller decides fail-open or fail-closed per bucket.
  */

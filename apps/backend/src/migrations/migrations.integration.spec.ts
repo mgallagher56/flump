@@ -15,6 +15,7 @@ import { AddNetWorthChoices1794800000000 } from "./AddNetWorthChoices17948000000
 import { AddProfileFacts1794355723000 } from "./AddProfileFacts1794355723000";
 import { AddRateLimitBuckets1794632012000 } from "./AddRateLimitBuckets1794632012000";
 import { AddUserIdIndexes1794358100000, USER_ID_INDEXES } from "./AddUserIdIndexes1794358100000";
+import { AuditActionUserExported1794900000000 } from "./AuditActionUserExported1794900000000";
 import { BackfillAnnualTaxRecordEndDate1794355900000 } from "./BackfillAnnualTaxRecordEndDate1794355900000";
 import { Baseline1794355200000 } from "./Baseline1794355200000";
 import { ClearBankTokens1794355300000 } from "./ClearBankTokens1794355300000";
@@ -1609,6 +1610,65 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
       expect(await hasColumns()).toBe(0);
       await runUpInTransaction(new AddNetWorthChoices1794800000000());
       expect(await hasColumns()).toBe(2);
+    });
+  });
+
+  describe("AuditActionUserExported1794900000000 (BE-15, N3)", () => {
+    const NAME = "AuditActionUserExported1794900000000";
+    const insertAction = (action: string): Promise<unknown> =>
+      ds.query("INSERT INTO audit_events (user_id, action) VALUES ('u1', $1)", [action]);
+    const actionCheck = async (): Promise<string> => {
+      const rows: Array<{ def: string }> = await ds.query(
+        `SELECT pg_get_constraintdef(oid) AS def FROM pg_constraint
+          WHERE conname = 'CHK_audit_events_action'`,
+      );
+      return at(rows, 0)?.def ?? "";
+    };
+    const auditActions = async (): Promise<string[]> => {
+      const rows: Array<{ action: string }> = await ds.query(
+        "SELECT action FROM audit_events ORDER BY action",
+      );
+      return rows.map((r) => r.action);
+    };
+
+    it("up allows user.exported and still rejects actions outside the list", async () => {
+      await ds.runMigrations();
+      await insertAction("user.exported");
+      await expect(insertAction("made.up")).rejects.toThrow(/CHK_audit_events_action/);
+    });
+
+    it("down with no user.exported rows restores the seven-value check", async () => {
+      await ds.runMigrations();
+      await insertAction("financial_data.reset");
+      await ds.undoLastMigration();
+      expect(await applied()).not.toContain(NAME);
+      expect(await actionCheck()).not.toContain("user.exported");
+      await expect(insertAction("user.exported")).rejects.toThrow(/CHK_audit_events_action/);
+      expect(await auditActions()).toEqual(["financial_data.reset"]);
+    });
+
+    it("down is refused while a user.exported row exists, and changes nothing", async () => {
+      await ds.runMigrations();
+      await insertAction("user.exported");
+      await insertAction("account.deleted");
+      await expect(ds.undoLastMigration()).rejects.toThrow(
+        "audit_events contains user.exported rows; export or archive them before reverting",
+      );
+      expect(await applied()).toContain(NAME);
+      expect(await actionCheck()).toContain("user.exported");
+      expect(await auditActions()).toEqual(["account.deleted", "user.exported"]);
+      await insertAction("user.exported");
+    });
+
+    it("up runs again after down, and is idempotent", async () => {
+      await ds.runMigrations();
+      await ds.undoLastMigration();
+      await ds.runMigrations();
+      expect(await applied()).toContain(NAME);
+      await expect(runUpInTransaction(new AuditActionUserExported1794900000000())).resolves.toBe(
+        undefined,
+      );
+      await insertAction("user.exported");
     });
   });
 });

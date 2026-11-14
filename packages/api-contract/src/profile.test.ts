@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   ACCOUNT_EXPORT_SCHEMA_VERSION,
   ACCOUNT_EXPORT_SECTIONS,
+  AcceptTermsRequest,
+  AcceptTermsResponse,
   AccountExportBankConnection,
   AccountExportDocument,
   AccountExportMcpToken,
@@ -12,6 +14,8 @@ import {
   UpdateChecklistRequest,
   UpdateProfileRequest,
 } from "./domains/profile.js";
+import { ERROR_CODES } from "./errors.js";
+import { routes } from "./manifest.js";
 
 describe("UpdateProfileRequest", () => {
   it("accepts https and image data-URL avatars, rejects other schemes", () => {
@@ -82,6 +86,52 @@ describe("DeleteUserRequest and DeleteUserResponse (BE-04)", () => {
     expect(DeleteUserResponse.safeParse({ status: "deleted" }).success).toBe(true);
     expect(DeleteUserResponse.safeParse({ status: "identity_pending" }).success).toBe(true);
     expect(DeleteUserResponse.safeParse({ status: "failed" }).success).toBe(false);
+  });
+});
+
+describe("AcceptTermsRequest and AcceptTermsResponse (BE-15, M-PRIV3)", () => {
+  it("accepts a short version identifier and nothing else", () => {
+    expect(AcceptTermsRequest.safeParse({ version: "2026-11-01" }).success).toBe(true);
+    expect(AcceptTermsRequest.safeParse({ version: "v1.2_b" }).success).toBe(true);
+    expect(AcceptTermsRequest.safeParse({ version: "" }).success).toBe(false);
+    expect(AcceptTermsRequest.safeParse({ version: "I agree" }).success).toBe(false);
+    expect(AcceptTermsRequest.safeParse({ version: "v".repeat(65) }).success).toBe(false);
+    expect(AcceptTermsRequest.safeParse({}).success).toBe(false);
+    expect(AcceptTermsRequest.safeParse({ version: "2026-11-01", userId: "x" }).success).toBe(
+      false,
+    );
+  });
+
+  it("answers the version and whether this call recorded it", () => {
+    expect(AcceptTermsResponse.safeParse({ version: "2026-11-01", recorded: true }).success).toBe(
+      true,
+    );
+    expect(AcceptTermsResponse.safeParse({ version: "2026-11-01", recorded: false }).success).toBe(
+      true,
+    );
+    expect(AcceptTermsResponse.safeParse({ version: "2026-11-01" }).success).toBe(false);
+  });
+
+  it("is a user-owned profile route with request and response schemas", () => {
+    const route = routes.profile.acceptTerms;
+    expect(route).toMatchObject({
+      method: "POST",
+      path: "user-profile/terms-acceptance",
+      auth: "user",
+      ownership: "user",
+    });
+    expect(route.body).toBe(AcceptTermsRequest);
+    expect(route.response).toBe(AcceptTermsResponse);
+  });
+
+  it("lists the BE-15 error codes", () => {
+    for (const code of [
+      "terms_not_configured",
+      "terms_version_mismatch",
+      "account_deletion_unavailable",
+    ]) {
+      expect(ERROR_CODES).toContain(code);
+    }
   });
 });
 

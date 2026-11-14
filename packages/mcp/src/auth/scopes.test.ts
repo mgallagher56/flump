@@ -94,7 +94,7 @@ describe("TokenVerifier scope handling", () => {
             tokenHash: hashPatToken(raw),
             scopes,
             anonymizeInstitutions,
-            expiresAt: null,
+            expiresAt: new Date(Date.now() + 86_400_000),
             revokedAt: null,
           };
         },

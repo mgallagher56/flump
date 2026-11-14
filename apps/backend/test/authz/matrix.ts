@@ -86,6 +86,7 @@ export const ROUTE_MATRIX: Readonly<Record<string, MatrixRow>> = {
   "PATCH /user-profile/checklist": userProfile,
   "DELETE /user-profile": userProfile,
   "GET /user-profile/export": userProfile,
+  "POST /user-profile/terms-acceptance": userProfile,
 
   // Monthly snapshots (E30).
   "PUT /snapshots/:month": snapshots,

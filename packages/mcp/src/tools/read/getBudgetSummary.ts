@@ -2,11 +2,11 @@ import { anonymousBudgetEntryLabels, MCP_NOTICE } from "@flump/finance-engine";
 import { z } from "zod";
 import { defineFlumpTool } from "../../define-tool.js";
 import {
+  budgetCategoryLabeller,
   loadReadModel,
   MISSING_INCOME,
   type Missing,
   round2,
-  safeText,
   sanitiseText,
   summariseBudget,
   toMonthly,
@@ -77,16 +77,22 @@ export const getBudgetSummary = defineFlumpTool({
       surplus = round2(b.monthlyIncome - b.essentialMonthly - b.discretionaryMonthly);
     }
 
-    // M-PRIV4: anonymised, an entry name ("Rent to J Smith") never reaches the agent; it becomes
-    // the category plus an ordinal ("Housing #2"), or "Income #1" for income.
+    // M-PRIV4: anonymised, neither an entry name ("Rent to J Smith") nor a custom category name
+    // ("Jane's nursery") reaches the agent. A custom category becomes "Custom category 1"; an
+    // entry becomes its (labelled) category plus an ordinal ("housing #2", "Custom category 1 #1"),
+    // or "Income #1" for income. One labeller per response keeps the numbering consistent.
+    const categoryLabel = budgetCategoryLabeller(m.anonymise);
     const generic = m.anonymise
-      ? anonymousBudgetEntryLabels(entries, (category) => sanitiseText(category, 48))
+      ? anonymousBudgetEntryLabels(
+          entries.map((e) => ({ category: categoryLabel(e.category), isIncome: e.isIncome })),
+          (category) => sanitiseText(category, 48),
+        )
       : undefined;
     const detail =
       responseFormat === "detailed"
         ? entries.map((e, i) => ({
             name: generic ? (generic[i] ?? "Budget entry") : sanitiseText(e.name),
-            category: safeText(e.category, m.anonymise),
+            category: categoryLabel(e.category),
             monthlyGbp: round2(toMonthly(e.amount, e.frequency)),
             isIncome: e.isIncome,
             isEssential: e.isEssential,
@@ -105,7 +111,7 @@ export const getBudgetSummary = defineFlumpTool({
         ],
         categories: mergeCategories(
           b.byCategory.map((c) => ({
-            category: safeText(c.category, m.anonymise),
+            category: categoryLabel(c.category),
             monthlyGbp: c.monthly,
             essential: c.essential,
           })),

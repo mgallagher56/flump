@@ -25,6 +25,9 @@ export const ERROR_CODES = [
   "service_unavailable",
   "mcp_disabled",
   "idempotency_key_reused",
+  "terms_not_configured",
+  "terms_version_mismatch",
+  "account_deletion_unavailable",
 ] as const;
 export type ErrorCode = (typeof ERROR_CODES)[number];
 

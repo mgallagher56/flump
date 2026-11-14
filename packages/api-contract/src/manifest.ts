@@ -19,6 +19,7 @@ import {
 } from "./domains/imports.js";
 import { CreateMcpTokenRequest, McpTokenActivityQuery } from "./domains/mcp-tokens.js";
 import {
+  AcceptTermsRequest,
   DeleteUserRequest,
   ResetFinancialDataRequest,
   UpdateChecklistRequest,
@@ -34,6 +35,7 @@ import { CreateTransactionRequest, TransactionListQuery } from "./domains/transa
 import { type PageKind, pageQuery } from "./pagination.js";
 import { Uuid } from "./primitives.js";
 import {
+  AcceptTermsResponse,
   AccountDetailListResponse,
   AccountListResponse,
   AccountResponse,
@@ -638,6 +640,17 @@ export const routes = {
       body: DeleteUserRequest,
       group: "profile",
       response: DeleteUserResponse,
+    }),
+    /** Records the caller's acceptance of the current terms version (BE-15, M-PRIV3). */
+    acceptTerms: defineRoute({
+      id: "profile.acceptTerms",
+      method: "POST",
+      path: "user-profile/terms-acceptance",
+      auth: "user",
+      ownership: "user",
+      body: AcceptTermsRequest,
+      group: "profile",
+      response: AcceptTermsResponse,
     }),
     export: defineRoute({
       id: "profile.export",

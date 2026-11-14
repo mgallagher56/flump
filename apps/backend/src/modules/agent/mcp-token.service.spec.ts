@@ -10,11 +10,11 @@ describe("McpTokenService.findTokenByHash allowlist (E29-T8)", () => {
     tokenHash: "h",
     scopes: [],
     anonymizeInstitutions: true,
-    expiresAt: null,
+    expiresAt: new Date(Date.now() + 86_400_000),
     revokedAt: null,
   };
-  function withRepo() {
-    const repo = { findOne: vi.fn().mockResolvedValue(row) };
+  function withRepo(overrides: Partial<typeof row> | { expiresAt: null } = {}) {
+    const repo = { findOne: vi.fn().mockResolvedValue({ ...row, ...overrides }) };
     return new McpTokenService(repo as never);
   }
   const original = process.env;
@@ -47,7 +47,7 @@ describe("McpTokenService.findTokenByHash allowlist (E29-T8)", () => {
     }
   });
 
-  it("logs the denial with token id and user id, never the hash", async () => {
+  it("logs the denial with the token id, never the user id or the hash (S6)", async () => {
     process.env = {
       ...original,
       NODE_ENV: "production",
@@ -58,7 +58,8 @@ describe("McpTokenService.findTokenByHash allowlist (E29-T8)", () => {
     try {
       await withRepo().findTokenByHash("secret-hash");
       const msgs = warn.mock.calls.map((c) => String(c[0]));
-      expect(msgs.some((m) => m.includes("tok_1") && m.includes("friend"))).toBe(true);
+      expect(msgs.some((m) => m.includes("tok_1"))).toBe(true);
+      expect(msgs.some((m) => m.includes("friend"))).toBe(false);
       expect(msgs.some((m) => m.includes("secret-hash"))).toBe(false);
     } finally {
       warn.mockRestore();
@@ -78,6 +79,64 @@ describe("McpTokenService.findTokenByHash allowlist (E29-T8)", () => {
       process.env = { ...original, NODE_ENV: "production", MCP_OPEN_ACCESS: "true" };
       expect((await withRepo().findTokenByHash("h"))?.id).toBe("tok_1");
     } finally {
+      process.env = original;
+    }
+  });
+
+  const openMcp = { NODE_ENV: "production", MCP_OPEN_ACCESS: "true" };
+
+  it("refuses a token whose owner was removed from the closed beta (S1)", async () => {
+    const warn = vi.spyOn(Logger.prototype, "warn").mockImplementation(() => undefined);
+    try {
+      process.env = { ...original, ...openMcp, BETA_ALLOWED_USER_IDS: "someone-else" };
+      delete process.env.BETA_ALLOWED_EMAILS;
+      expect(await withRepo().findTokenByHash("h")).toBeNull();
+      const msgs = warn.mock.calls.map((c) => String(c[0]));
+      expect(msgs.some((m) => m.includes("reason=beta_allowlist"))).toBe(true);
+      expect(msgs.some((m) => m.includes("friend"))).toBe(false);
+    } finally {
+      warn.mockRestore();
+      process.env = original;
+    }
+  });
+
+  it("does not judge a token by user id while an email allowlist is set: a token has no email (S1)", async () => {
+    vi.spyOn(Logger.prototype, "warn").mockImplementation(() => undefined);
+    try {
+      process.env = { ...original, ...openMcp, BETA_ALLOWED_EMAILS: "friend@example.com" };
+      delete process.env.BETA_ALLOWED_USER_IDS;
+      expect(await withRepo().findTokenByHash("h")).not.toBeNull();
+      process.env.BETA_ALLOWED_USER_IDS = "someone-else";
+      expect(await withRepo().findTokenByHash("h")).not.toBeNull();
+    } finally {
+      vi.restoreAllMocks();
+      process.env = original;
+    }
+  });
+
+  it("accepts a token whose owner is on the beta user-id list, or when the beta is open", async () => {
+    try {
+      process.env = { ...original, ...openMcp, BETA_ALLOWED_USER_IDS: "friend" };
+      delete process.env.BETA_ALLOWED_EMAILS;
+      expect((await withRepo().findTokenByHash("h"))?.id).toBe("tok_1");
+      process.env = { ...original, ...openMcp };
+      delete process.env.BETA_ALLOWED_EMAILS;
+      delete process.env.BETA_ALLOWED_USER_IDS;
+      expect((await withRepo().findTokenByHash("h"))?.id).toBe("tok_1");
+    } finally {
+      process.env = original;
+    }
+  });
+
+  it("refuses a row with no expiry (S2)", async () => {
+    vi.spyOn(Logger.prototype, "warn").mockImplementation(() => undefined);
+    try {
+      process.env = { ...original, ...openMcp };
+      delete process.env.BETA_ALLOWED_EMAILS;
+      delete process.env.BETA_ALLOWED_USER_IDS;
+      expect(await withRepo({ expiresAt: null }).findTokenByHash("h")).toBeNull();
+    } finally {
+      vi.restoreAllMocks();
       process.env = original;
     }
   });

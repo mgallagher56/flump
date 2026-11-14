@@ -10,6 +10,7 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { IsNull, Repository } from "typeorm";
 import { recordAuditEvent } from "../../audit/audit-events";
 import { grantConsent, withdrawConsent } from "../../audit/consents";
+import { isBetaUserIdRemoved } from "../../auth/beta-access";
 import { isMcpUserAllowed, readMcpAccessConfig } from "../../auth/mcp-access";
 import { type KeysetOrder, keysetPage, type PageRequest } from "../../contract/pagination";
 import { McpToken } from "../../entities/mcp-token.entity";
@@ -32,13 +33,25 @@ export class McpTokenService implements McpTokenStoreAdapter {
   async findTokenByHash(tokenHash: string): Promise<McpTokenRecord | null> {
     const found = await this.mcpTokenRepository.findOne({ where: { tokenHash } });
     if (!found) return null;
-    // E29-T8: a token is unusable while the kill switch is on, or when its owner is not
-    // allowlisted and MCP is not open. Listing and revoking tokens stays ungated on purpose so
-    // users can revoke during an outage. The /mcp handlers are gated by E20-N18, not here.
+    // E29-T8: a token is unusable while the kill switch is on, or when its owner is not on the MCP
+    // allowlist and MCP is not open. Listing and revoking tokens is not gated by the MCP
+    // allowlist so users can revoke during an outage (those routes sit behind AuthGuard).
     const access = readMcpAccessConfig(process.env);
     if (!access.enabled) return null;
     if (!isMcpUserAllowed(access, found.userId)) {
-      this.logger.warn(`mcp_token_denied tokenId=${found.id} userId=${found.userId}`);
+      this.logger.warn(`mcp_token_denied tokenId=${found.id} reason=mcp_allowlist`);
+      return null;
+    }
+    // BE-15 S1: a user removed from a beta gated by user ids loses MCP access at once (refused,
+    // not revoked). A token carries no email, so while BETA_ALLOWED_EMAILS is set the owner cannot
+    // be judged here and the token is left to expiry and revocation (see isBetaUserIdRemoved).
+    if (isBetaUserIdRemoved(process.env, found.userId)) {
+      this.logger.warn(`mcp_token_denied tokenId=${found.id} reason=beta_allowlist`);
+      return null;
+    }
+    // S2: a row without an expiry is refused here as well as in the verifier.
+    if (!found.expiresAt) {
+      this.logger.warn(`mcp_token_denied tokenId=${found.id} reason=no_expiry`);
       return null;
     }
     return {

@@ -46,6 +46,28 @@ export async function grantConsentOnce(
 }
 
 /**
+ * Records a `terms` acceptance of this version (M-PRIV3) unless the user already has an open one
+ * for it: idempotent per user and version, and a new version writes a new row (the earlier rows
+ * stay as the history of what was accepted when). Returns whether a row was written.
+ */
+export async function acceptTermsOnce(
+  manager: EntityManager,
+  grant: { userId: string; version: string },
+): Promise<boolean> {
+  const open = await manager.getRepository(Consent).count({
+    where: {
+      userId: grant.userId,
+      kind: "terms",
+      version: grant.version,
+      withdrawnAt: IsNull(),
+    },
+  });
+  if (open > 0) return false;
+  await grantConsent(manager, { userId: grant.userId, kind: "terms", version: grant.version });
+  return true;
+}
+
+/**
  * Marks the user's open consents of this kind for this target withdrawn. Idempotent: a second call
  * changes nothing. Returns how many rows it closed.
  */

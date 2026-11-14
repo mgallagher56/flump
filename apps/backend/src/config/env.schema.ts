@@ -138,6 +138,18 @@ const backendEnvSchema = z.looseObject({
   // left in Railway does not fail boot.
   AGENT_AUDIT_PURGE_ENABLED: bool(),
 
+  // Privacy (BE-15, M-PRIV3): the terms version people accept. Optional: terms acceptance answers
+  // `terms_not_configured` while unset. Same shape as the contract's TermsVersion.
+  TERMS_VERSION: optional(
+    z
+      .string()
+      .trim()
+      .regex(
+        /^[A-Za-z0-9._-]{1,64}$/,
+        "must be 1 to 64 letters, digits, dots, dashes or underscores",
+      ),
+  ),
+
   // Access gates
   BETA_ALLOWED_EMAILS: text(),
   BETA_ALLOWED_USER_IDS: text(),

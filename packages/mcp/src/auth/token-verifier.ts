@@ -131,7 +131,13 @@ export class TokenVerifier {
         throw new AuthenticationError("This AI connection token has been revoked.");
       }
 
-      if (record.expiresAt && new Date(record.expiresAt).getTime() < Date.now()) {
+      // S2: every token is minted with an expiry, so a row without one (or with an unreadable
+      // one) is refused rather than treated as never expiring.
+      const expiresAtMs = record.expiresAt ? new Date(record.expiresAt).getTime() : Number.NaN;
+      if (Number.isNaN(expiresAtMs)) {
+        throw new AuthenticationError("This AI connection token has no expiry. Create a new one.");
+      }
+      if (expiresAtMs < Date.now()) {
         throw new AuthenticationError("This AI connection token has expired.");
       }
 

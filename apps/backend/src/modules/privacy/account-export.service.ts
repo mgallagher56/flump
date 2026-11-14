@@ -5,6 +5,7 @@ import {
 } from "@flump/api-contract";
 import { Injectable } from "@nestjs/common";
 import { DataSource, type EntityManager, type FindOptionsOrder } from "typeorm";
+import { recordAuditEvent } from "../../audit/audit-events";
 import { USER_DATA_REGISTRY, type UserDataTable } from "./user-data-registry";
 
 /** Plain-English notes written into every export. */
@@ -77,6 +78,12 @@ export class AccountExportService {
         clearTimeout(timer);
       }
     };
+    // N3: the audit row is written BEFORE the first byte of the export, on its own connection (the
+    // export transaction below is read only). If the insert fails, this throws before anything has
+    // been written to the response, so the caller answers with the standard error. So an export is
+    // never delivered without a record. The reverse can happen: a record may exist for an export
+    // that then failed mid-stream.
+    await recordAuditEvent(this.dataSource.manager, { userId, action: "user.exported" });
     await this.dataSource.transaction("REPEATABLE READ", async (manager) => {
       await manager.query("SET TRANSACTION READ ONLY");
       // Server-side backstops, scoped to this transaction only.
