@@ -107,3 +107,16 @@ export const WithActiveTokens: Story = {
     await expect(args.onRevokeToken).toHaveBeenCalledWith("tok_existing_1");
   },
 };
+
+export const StagingOptIn: Story = {
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(canvas.getByTestId("generate-token-trigger"));
+    const toggle = canvas.getByRole("switch", {
+      name: "Let this connection stage imports for you to review",
+    }) as HTMLInputElement;
+    await expect(toggle.checked).toBe(false);
+    await userEvent.click(toggle);
+    await expect(toggle.checked).toBe(true);
+  },
+};
