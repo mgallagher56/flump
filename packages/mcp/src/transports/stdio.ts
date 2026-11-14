@@ -3,11 +3,7 @@ import { realpathSync } from "node:fs";
 import { pathToFileURL } from "node:url";
 import { BackendError, callBackend } from "@flump/api-client";
 import { ContextPackResponse } from "@flump/api-contract";
-import {
-  type BuildContextPackInput,
-  DEFAULT_NET_WORTH_BASIS,
-  type FinancialBaseline,
-} from "@flump/finance-engine";
+import type { BuildContextPackInput, FinancialBaseline } from "@flump/finance-engine";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { type McpLogger, stderrLogger } from "../logger.js";
 import { inMemoryQueries } from "../provider/in-memory.js";
@@ -46,8 +42,8 @@ export function packToInput(pack: ContextPackResponse["pack"]): BuildContextPack
     })),
     budgetEntries: pack.budgetSummary.entries,
     taxRecords: [],
-    // Older backends send no basis: the default is what they computed under.
-    netWorthBasis: { ...DEFAULT_NET_WORTH_BASIS },
+    // The figures in the pack were computed under these choices.
+    netWorthBasis: { ...pack.portfolio.netWorthBasis },
   };
 }
 
