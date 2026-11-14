@@ -26,8 +26,8 @@ const TEST_DATABASE_URL = process.env.TEST_DATABASE_URL;
 const FK_MIGRATION = "AccountIdForeignKeys1794358200000";
 const TAX_MIGRATION = "TaxRecordAprilEndDate1794358300000";
 const TZ_MIGRATION = "TimestampsWithTimeZone1794358500000";
-const USER_A = "user-a";
-const USER_B = "user-b";
+const OWNER_A = "user-a";
+const OWNER_B = "user-b";
 const MISSING = "00000000-0000-4000-8000-00000000dead";
 
 describe.skipIf(resolveDbTestMode(process.env) === "skip")(
@@ -106,19 +106,19 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
 
       /** Pre-migration fixtures: kept rows, plus one orphan of each kind per table. */
       const seed = async () => {
-        const a = await insertAccount(USER_A);
-        const b = await insertAccount(USER_B);
-        await insertDetail(a, USER_A, 1);
-        await insertDetail(a.toUpperCase(), USER_A, 2); // a uuid in upper case still names `a`
-        await insertDetail("legacy-1", USER_A, 3); // not a uuid
-        await insertDetail(MISSING, USER_A, 4); // account deleted without its history
-        await insertDetail(b, USER_A, 5); // another user's account
-        await insertDetail(b, USER_B, 6);
-        await insertTransaction(a, USER_A);
-        await insertTransaction("legacy-2", USER_A);
-        await insertTransaction(MISSING, USER_A);
-        await insertTransaction(b, USER_A);
-        await insertTransaction(b, USER_B);
+        const a = await insertAccount(OWNER_A);
+        const b = await insertAccount(OWNER_B);
+        await insertDetail(a, OWNER_A, 1);
+        await insertDetail(a.toUpperCase(), OWNER_A, 2); // a uuid in upper case still names `a`
+        await insertDetail("legacy-1", OWNER_A, 3); // not a uuid
+        await insertDetail(MISSING, OWNER_A, 4); // account deleted without its history
+        await insertDetail(b, OWNER_A, 5); // another user's account
+        await insertDetail(b, OWNER_B, 6);
+        await insertTransaction(a, OWNER_A);
+        await insertTransaction("legacy-2", OWNER_A);
+        await insertTransaction(MISSING, OWNER_A);
+        await insertTransaction(b, OWNER_A);
+        await insertTransaction(b, OWNER_B);
         return { a, b };
       };
 
@@ -144,9 +144,9 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
         expect(
           await ds.query("SELECT account_id, user_id, month FROM account_details ORDER BY month"),
         ).toEqual([
-          { account_id: a, user_id: USER_A, month: 1 },
-          { account_id: a, user_id: USER_A, month: 2 },
-          { account_id: b, user_id: USER_B, month: 6 },
+          { account_id: a, user_id: OWNER_A, month: 1 },
+          { account_id: a, user_id: OWNER_A, month: 2 },
+          { account_id: b, user_id: OWNER_B, month: 6 },
         ]);
         expect(await count("transactions WHERE account_id = $1", [a])).toBe(1);
         expect(await count("transactions WHERE account_id = $1", [b])).toBe(1);
@@ -160,10 +160,12 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
         for (const k of keys) expect(k.def).toMatch(/REFERENCES accounts\(id\) ON DELETE CASCADE/);
 
         // The keys hold: no row may name a missing account, and a delete cascades.
-        await expect(insertDetail(MISSING, USER_A, 7)).rejects.toThrow(
+        await expect(insertDetail(MISSING, OWNER_A, 7)).rejects.toThrow(
           /FK_account_details_account/,
         );
-        await expect(insertTransaction(MISSING, USER_A)).rejects.toThrow(/FK_transactions_account/);
+        await expect(insertTransaction(MISSING, OWNER_A)).rejects.toThrow(
+          /FK_transactions_account/,
+        );
         await ds.query("DELETE FROM accounts WHERE id = $1", [a]);
         expect(await count("account_details WHERE account_id = $1", [a])).toBe(0);
         expect(await count("transactions WHERE account_id = $1", [a])).toBe(0);
@@ -172,24 +174,24 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
 
       it("keeps BE-05's liability checks working on the uuid column", async () => {
         await ds.runMigrations();
-        const card = await insertAccount(USER_A, "Current", 50);
-        await insertDetail(card, USER_A, 1, 50);
+        const card = await insertAccount(OWNER_A, "Current", 50);
+        await insertDetail(card, OWNER_A, 1, 50);
         // A type change to a liability with positive history is refused (accounts trigger).
         await expect(
           ds.query("UPDATE accounts SET type = 'Overdraft', balance = -50 WHERE id = $1", [card]),
         ).rejects.toThrow(/liability history must be stored negative/);
         // A positive history row on a liability is refused (account_details trigger).
-        const loan = await insertAccount(USER_A, "Loan", -10);
-        await expect(insertDetail(loan, USER_A, 2, 10)).rejects.toThrow(
+        const loan = await insertAccount(OWNER_A, "Loan", -10);
+        await expect(insertDetail(loan, OWNER_A, 2, 10)).rejects.toThrow(
           /liability history must be stored negative/,
         );
       });
 
       it("is a no-op on an empty database, and down() restores varchar without the keys", async () => {
         await ds.runMigrations();
-        const a = await insertAccount(USER_A);
-        await insertDetail(a, USER_A, 1);
-        await insertTransaction(a, USER_A);
+        const a = await insertAccount(OWNER_A);
+        await insertDetail(a, OWNER_A, 1);
+        await insertTransaction(a, OWNER_A);
 
         await undoThrough(FK_MIGRATION);
         expect(await columnType("account_details")).toBe("character varying");
@@ -210,9 +212,9 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
 
       it("adds the keys to a synchronize-built database whose columns are already uuid", async () => {
         await ds.synchronize();
-        const a = await insertAccount(USER_A);
-        await insertDetail(a, USER_A, 1);
-        await insertDetail(MISSING, USER_A, 2);
+        const a = await insertAccount(OWNER_A);
+        await insertDetail(a, OWNER_A, 1);
+        await insertDetail(MISSING, OWNER_A, 2);
         await ds.runMigrations();
         expect((await foreignKeys()).map((k) => k.valid)).toEqual([true, true]);
         expect(await count("account_details")).toBe(1);
@@ -224,7 +226,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
         ds.query(
           `INSERT INTO tax_records (user_id, type, source, category, name, amount, frequency, date, end_date)
          VALUES ($1, 'income', 'paye', 'salary', $2, 100, $3, $4, $5)`,
-          [USER_A, `${frequency} ${date} ${endDate}`, frequency, date, endDate],
+          [OWNER_A, `${frequency} ${date} ${endDate}`, frequency, date, endDate],
         );
       const endDates = async (): Promise<Array<{ name: string; end: string | null }>> =>
         ds.query(
@@ -277,9 +279,9 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
 
         await undoThrough(TZ_MIGRATION);
         expect(await naiveColumns()).toEqual(TIMESTAMP_COLUMNS.map(([t, c]) => `${t}.${c}`).sort());
-        const a = await insertAccount(USER_A);
+        const a = await insertAccount(OWNER_A);
         await ds.query("UPDATE accounts SET created_at = '2026-06-01 12:34:56' WHERE id = $1", [a]);
-        await insertTransaction(a, USER_A);
+        await insertTransaction(a, OWNER_A);
         await ds.query(`UPDATE transactions SET "timestamp" = '2026-01-15 08:00:00'`);
         const nodes = {
           accounts: await fileNode("accounts"),
@@ -322,14 +324,14 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
 
       it("deletes the account with its history and transactions, leaving no orphans", async () => {
         await ds.runMigrations();
-        const a = await insertAccount(USER_A);
-        const keep = await insertAccount(USER_A);
-        await insertDetail(a, USER_A, 1);
-        await insertDetail(a, USER_A, 2);
-        await insertTransaction(a, USER_A);
-        await insertDetail(keep, USER_A, 1);
+        const a = await insertAccount(OWNER_A);
+        const keep = await insertAccount(OWNER_A);
+        await insertDetail(a, OWNER_A, 1);
+        await insertDetail(a, OWNER_A, 2);
+        await insertTransaction(a, OWNER_A);
+        await insertDetail(keep, OWNER_A, 1);
 
-        expect(await service().deleteAccount(USER_A, a)).toEqual({ success: true });
+        expect(await service().deleteAccount(OWNER_A, a)).toEqual({ success: true });
 
         expect(await count("accounts WHERE id = $1", [a])).toBe(0);
         expect(await children(a)).toEqual({ details: 0, transactions: 0 });
@@ -342,11 +344,11 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
 
       it("deletes nothing for another user's account id (404)", async () => {
         await ds.runMigrations();
-        const a = await insertAccount(USER_A);
-        await insertDetail(a, USER_A, 1);
-        await insertTransaction(a, USER_A);
+        const a = await insertAccount(OWNER_A);
+        await insertDetail(a, OWNER_A, 1);
+        await insertTransaction(a, OWNER_A);
 
-        await expect(service().deleteAccount(USER_B, a)).rejects.toBeInstanceOf(NotFoundException);
+        await expect(service().deleteAccount(OWNER_B, a)).rejects.toBeInstanceOf(NotFoundException);
 
         expect(await count("accounts WHERE id = $1", [a])).toBe(1);
         expect(await children(a)).toEqual({ details: 1, transactions: 1 });
@@ -354,9 +356,9 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
 
       it("rolls back every child delete when the account delete fails", async () => {
         await ds.runMigrations();
-        const a = await insertAccount(USER_A);
-        await insertDetail(a, USER_A, 1);
-        await insertTransaction(a, USER_A);
+        const a = await insertAccount(OWNER_A);
+        await insertDetail(a, OWNER_A, 1);
+        await insertTransaction(a, OWNER_A);
         await ds.query(
           `CREATE FUNCTION be08_refuse_delete() RETURNS trigger LANGUAGE plpgsql AS $$
          BEGIN RAISE EXCEPTION 'refused for the test'; END $$`,
@@ -366,7 +368,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
          FOR EACH ROW EXECUTE FUNCTION be08_refuse_delete()`,
         );
 
-        await expect(service().deleteAccount(USER_A, a)).rejects.toThrow(/refused for the test/);
+        await expect(service().deleteAccount(OWNER_A, a)).rejects.toThrow(/refused for the test/);
 
         expect(await count("accounts WHERE id = $1", [a])).toBe(1);
         expect(await children(a)).toEqual({ details: 1, transactions: 1 });
@@ -382,7 +384,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
         const previous = await records.save(
           records.create({
             ...base,
-            userId: USER_A,
+            userId: OWNER_A,
             name: "Old",
             frequency: "monthly",
             date: "2025-04-06",
@@ -391,7 +393,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
         const service = new TaxService(records);
 
         await expect(
-          service.createBulk(USER_A, {
+          service.createBulk(OWNER_A, {
             capPreviousRecordIds: [{ id: previous.id, endDate: "2026-04-05" }],
             records: [
               { ...base, name: "New 1", frequency: "monthly", date: "2026-04-06" },
@@ -401,7 +403,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
           }),
         ).rejects.toThrow(/null value in column "name"/);
 
-        expect(await count("tax_records WHERE user_id = $1", [USER_A])).toBe(1);
+        expect(await count("tax_records WHERE user_id = $1", [OWNER_A])).toBe(1);
         expect((await records.findOneByOrFail({ id: previous.id })).endDate).toBeNull();
       });
 
@@ -411,13 +413,13 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
         const previous = await records.save(
           records.create({
             ...base,
-            userId: USER_A,
+            userId: OWNER_A,
             name: "Old",
             frequency: "monthly",
             date: "2025-04-06",
           }),
         );
-        const created = await new TaxService(records).createBulk(USER_A, {
+        const created = await new TaxService(records).createBulk(OWNER_A, {
           capPreviousRecordIds: [{ id: previous.id, endDate: "2026-04-05" }],
           records: [{ ...base, name: "Annual", frequency: "annual", date: "2026-04-03" }],
         });

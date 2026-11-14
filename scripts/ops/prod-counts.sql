@@ -68,7 +68,7 @@ SELECT t.name || '|' || CASE
     OR (t.name = 'account_details' AND to_regclass('public.accounts') IS NULL) THEN 'missing'
   ELSE (xpath('/row/c/text()', query_to_xml(format('SELECT count(*) AS c FROM public.%I WHERE %s', t.name,
          CASE WHEN t.name = 'account_details'
-           THEN 'account_id IN (SELECT id::text FROM public.accounts WHERE user_id = ANY(ARRAY[''user_mock'', ''dev_user_123'']))'
+           THEN 'account_id::text IN (SELECT id::text FROM public.accounts WHERE user_id = ANY(ARRAY[''user_mock'', ''dev_user_123'']))'
            ELSE 'user_id = ANY(ARRAY[''user_mock'', ''dev_user_123''])' END),
          false, true, '')))[1]::text END
 FROM (VALUES ('account_details'), ('accounts'), ('bank_connections'), ('budget_entries'),
