@@ -23,7 +23,7 @@ export const OnboardingHeader: FC<OnboardingHeaderProps> = ({
         <Heading as="h1" size="md">
           Set up Flump
         </Heading>
-        <Text color="secondary" textStyle="body.sm">
+        <Text className={classes.lead} color="secondary" textStyle="body.sm">
           Add what you know. You can change your details later.
         </Text>
       </div>

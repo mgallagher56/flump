@@ -1,7 +1,7 @@
 import { sva } from "@repo/ui/styled-system/css";
 
 export const onboardingHeaderRecipe = sva({
-  slots: ["root", "text", "exit"],
+  slots: ["root", "text", "lead", "exit"],
   base: {
     root: {
       display: "flex",
@@ -13,6 +13,8 @@ export const onboardingHeaderRecipe = sva({
       borderBottomColor: "border.subtle",
     },
     text: { display: "flex", flexDirection: "column", gap: "0.5", minWidth: 0, flex: "1 1 auto" },
-    exit: { flex: "none", alignSelf: "flex-start" },
+    // On a phone the lead line would wrap beside the button; the heading says enough there.
+    lead: { display: { base: "none", sm: "block" } },
+    exit: { flex: "none", alignSelf: "center" },
   },
 });
