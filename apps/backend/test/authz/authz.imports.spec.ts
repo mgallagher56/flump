@@ -7,6 +7,7 @@ import { AgentAuditEvent } from "../../src/entities/agent-audit-event.entity";
 import { ImportBatch } from "../../src/entities/import-batch.entity";
 import { writeConnectedSnapshot } from "../../src/snapshots/connected-write";
 import { londonDate, londonYearMonth, monthKey } from "../../src/snapshots/london-date";
+import { writeSnapshotRows } from "../../src/snapshots/snapshot-write";
 import { resolveDbTestMode } from "../../src/testing/dbTestMode";
 import { ROUTE_MATRIX } from "./matrix";
 import { type AuthzHarness, bootAuthzHarness, MISSING_ID, truncateAll, USER_A } from "./support";
@@ -115,7 +116,7 @@ describe.skipIf(dbMode === "skip")("authz: imports controller (real Postgres)", 
     expect(res.status).toBe(201);
     expect(res.body).toMatchObject({
       status: "staged",
-      counts: { new: 2, overwrite: 0, unchanged: 0, errors: 0 },
+      counts: { staged: 2, new: null, overwrite: null, unchanged: null, skipped: null, errors: 0 },
       rows: 3,
       validationErrors: [],
       revert: null,
@@ -143,7 +144,14 @@ describe.skipIf(dbMode === "skip")("authz: imports controller (real Postgres)", 
       }),
     );
     expect(res.status).toBe(201);
-    expect(res.body.counts).toEqual({ new: 1, overwrite: 0, unchanged: 0, errors: 3 });
+    expect(res.body.counts).toEqual({
+      staged: 1,
+      new: null,
+      overwrite: null,
+      unchanged: null,
+      skipped: null,
+      errors: 3,
+    });
     expect(res.body.validationErrors).toEqual([
       { ref: "isa", month: FUTURE, code: "future_month" },
       { ref: "isa", month: "1999-12", code: "too_early" },
@@ -257,7 +265,7 @@ describe.skipIf(dbMode === "skip")("authz: imports controller (real Postgres)", 
     expect(done.status).toBe(201);
     expect(done.body).toMatchObject({
       status: "committed",
-      counts: { new: 3, overwrite: 0, unchanged: 0, errors: 0 },
+      counts: { staged: 3, new: 3, overwrite: 0, unchanged: 0, skipped: 0, errors: 0 },
     });
     const isa = await accounts().findOneByOrFail({ name: "New ISA", userId: USER_A });
     expect(Number(isa.interestRate)).toBe(4.5);
@@ -284,7 +292,7 @@ describe.skipIf(dbMode === "skip")("authz: imports controller (real Postgres)", 
     const first = await stage(h.tokens.a, simple());
     const res = await commit(h.tokens.a, first.body.batchId, { accountMap: { isa: accountA } });
     expect(res.body).toMatchObject({
-      counts: { new: 0, overwrite: 0, unchanged: 1, errors: 0 },
+      counts: { staged: 2, new: 0, overwrite: 0, unchanged: 1, skipped: 1, errors: 0 },
       skippedManual: ["isa:2020-01"],
     });
     expect(await rowFor(accountA, "2020-01")).toMatchObject({
@@ -437,6 +445,262 @@ describe.skipIf(dbMode === "skip")("authz: imports controller (real Postgres)", 
     expect(res.status).toBe(201);
     expect(await batches().countBy({ userId: USER_A })).toBe(0);
     expect(await batches().count()).toBe(1);
+  });
+
+  it("replay returns the original validation errors, also after commit; a key reused with another batchId is 409", async () => {
+    const body = simple({
+      balances: [
+        { accountRef: "isa", month: "2020-01", value: 1 },
+        { accountRef: "isa", month: FUTURE, value: 2 },
+      ],
+    });
+    const first = await stage(h.tokens.a, body);
+    const replay = await stage(h.tokens.a, body);
+    expect(replay.body.validationErrors).toEqual([
+      { ref: "isa", month: FUTURE, code: "future_month" },
+    ]);
+    const other = await stage(h.tokens.a, simple());
+    const clash = await stage(h.tokens.a, { ...body, batchId: other.body.batchId });
+    expect(clash.status).toBe(409);
+
+    await commit(h.tokens.a, first.body.batchId);
+    const afterCommit = await stage(h.tokens.a, body);
+    expect(afterCommit.body).toMatchObject({
+      batchId: first.body.batchId,
+      status: "committed",
+      rows: 2,
+      validationErrors: [{ ref: "isa", month: FUTURE, code: "future_month" }],
+    });
+    // Names and values are dropped once committed.
+    const stored = await batches().findOneByOrFail({ id: first.body.batchId });
+    expect(stored.payload.accounts).toEqual([]);
+    expect(stored.payload.balances).toEqual([]);
+    expect(JSON.stringify(stored)).not.toContain("Secret ISA name");
+  });
+
+  it("expiry drops staged names and values", async () => {
+    const res = await stage(h.tokens.a, simple());
+    await h.dataSource.query(`UPDATE "import_batches" SET "expires_at" = '2000-01-01'`);
+    expect((await getBatch(h.tokens.a, res.body.batchId)).body).toMatchObject({
+      status: "expired",
+      rows: 3,
+    });
+    const stored = await batches().findOneByOrFail({ id: res.body.batchId });
+    expect(JSON.stringify(stored.payload)).not.toContain("Secret ISA name");
+  });
+
+  it("caps accounts at 200 per batch across chunks, and refuses out-of-range details", async () => {
+    const accountsOf = (from: number, n: number) =>
+      Array.from({ length: n }, (_, i) => ({ ref: `a${from + i}`, name: "x", type: "Saving" }));
+    const first = await stage(h.tokens.a, {
+      idempotencyKey: key(),
+      accounts: accountsOf(0, 150),
+      balances: [],
+    });
+    expect(first.status).toBe(201);
+    const over = await stage(h.tokens.a, {
+      batchId: first.body.batchId,
+      idempotencyKey: key(),
+      accounts: accountsOf(150, 51),
+      balances: [],
+    });
+    expect(over.status).toBe(400);
+    const bad = await stage(
+      h.tokens.a,
+      simple({
+        accounts: [{ ref: "isa", name: "x", type: "Saving", details: { interestRate: 1000 } }],
+      }),
+    );
+    expect(bad.status).toBe(400);
+  });
+
+  it("commit refuses a duplicate accountMap target or an unknown ref with 400", async () => {
+    const res = await stage(
+      h.tokens.a,
+      simple({
+        accounts: [
+          { ref: "isa", name: "x", type: "Saving" },
+          { ref: "two", name: "y", type: "Saving" },
+        ],
+      }),
+    );
+    const id = res.body.batchId as string;
+    expect(
+      (await commit(h.tokens.a, id, { accountMap: { isa: accountA, two: accountA } })).status,
+    ).toBe(400);
+    expect((await commit(h.tokens.a, id, { accountMap: { ghost: accountA } })).status).toBe(400);
+    expect((await batches().findOneByOrFail({ id })).status).toBe("staged");
+  });
+
+  it("revert restores a current-month balance only with its row", async () => {
+    const body = () => ({
+      idempotencyKey: key(),
+      accounts: [{ ref: "isa", name: "x", type: "Saving" }],
+      balances: [{ accountRef: "isa", month: THIS_MONTH, value: 4321 }],
+    });
+    const balance = async () =>
+      Number((await accounts().findOneByOrFail({ id: accountA })).balance);
+
+    const one = await stage(h.tokens.a, body());
+    await commit(h.tokens.a, one.body.batchId, { accountMap: { isa: accountA } });
+    expect(await balance()).toBe(4321);
+    expect((await revert(h.tokens.a, one.body.batchId)).body.revert).toEqual({
+      restored: 0,
+      removed: 1,
+      kept: 0,
+    });
+    expect(await balance()).toBe(100);
+
+    // The user confirms the same value by hand: the row is theirs now, and so is the balance.
+    const two = await stage(h.tokens.a, body());
+    await commit(h.tokens.a, two.body.batchId, { accountMap: { isa: accountA } });
+    await h.call("put", `/snapshots/${THIS_MONTH}`, h.tokens.a, {
+      values: [{ accountId: accountA, value: 4321 }],
+    });
+    expect((await revert(h.tokens.a, two.body.batchId)).body.revert).toEqual({
+      restored: 0,
+      removed: 0,
+      kept: 1,
+    });
+    expect(await balance()).toBe(4321);
+    expect(await rowFor(accountA, THIS_MONTH)).toMatchObject({
+      source: "manual",
+      importBatchId: null,
+    });
+  });
+
+  it("a balance edit or check-in takes the row back from the batch", async () => {
+    const res = await stage(h.tokens.a, {
+      idempotencyKey: key(),
+      accounts: [{ ref: "isa", name: "x", type: "Saving" }],
+      balances: [{ accountRef: "isa", month: THIS_MONTH, value: 500 }],
+    });
+    await commit(h.tokens.a, res.body.batchId, { accountMap: { isa: accountA } });
+    const edit = await h.call("patch", "/accounts/balances", h.tokens.a, {
+      balances: [{ id: accountA, balance: 500 }],
+    });
+    expect(edit.status).toBe(200);
+    expect(await rowFor(accountA, THIS_MONTH)).toMatchObject({
+      source: "manual",
+      importBatchId: null,
+    });
+    expect((await revert(h.tokens.a, res.body.batchId)).body.revert).toEqual({
+      restored: 0,
+      removed: 0,
+      kept: 1,
+    });
+    expect(Number((await rowFor(accountA, THIS_MONTH))?.value)).toBe(500);
+  });
+
+  it("connected values and a connected account's current month are skipped unless ticked", async () => {
+    await h.dataSource.query(
+      `UPDATE "accounts" SET "connection_id" = uuid_generate_v4() WHERE "id" = $1`,
+      [accountA],
+    );
+    await writeConnectedSnapshot(details(), accounts(), {
+      accountId: accountA,
+      userId: USER_A,
+      year: 2020,
+      month: 1,
+      value: 10,
+      asOfDate: "2020-01-31",
+    });
+    const body = () => ({
+      idempotencyKey: key(),
+      accounts: [{ ref: "isa", name: "x", type: "Saving" }],
+      balances: [
+        { accountRef: "isa", month: "2020-01", value: 20 },
+        { accountRef: "isa", month: THIS_MONTH, value: 30 },
+      ],
+    });
+    const one = await stage(h.tokens.a, body());
+    const res = await commit(h.tokens.a, one.body.batchId, { accountMap: { isa: accountA } });
+    expect(res.body.skippedManual.sort()).toEqual([`isa:2020-01`, `isa:${THIS_MONTH}`].sort());
+    expect(res.body.counts).toMatchObject({ new: 0, overwrite: 0, skipped: 2 });
+    expect(await rowFor(accountA, "2020-01")).toMatchObject({ source: "connected" });
+    expect(await rowFor(accountA, THIS_MONTH)).toBeNull();
+
+    const two = await stage(h.tokens.a, body());
+    const ticked = await commit(h.tokens.a, two.body.batchId, {
+      accountMap: { isa: accountA },
+      overwriteManual: ["isa:2020-01", `isa:${THIS_MONTH}`],
+    });
+    expect(ticked.body.counts).toMatchObject({ new: 1, overwrite: 1, skipped: 0 });
+    expect(await rowFor(accountA, "2020-01")).toMatchObject({ source: "agent" });
+  });
+
+  it("overwrites an earlier batch's agent row without a tick, and revert gives it back", async () => {
+    const body = (value: number) => ({
+      idempotencyKey: key(),
+      accounts: [{ ref: "isa", name: "x", type: "Saving" }],
+      balances: [{ accountRef: "isa", month: "2020-01", value }],
+    });
+    const one = await stage(h.tokens.a, body(1000));
+    await commit(h.tokens.a, one.body.batchId, { accountMap: { isa: accountA } });
+    const two = await stage(h.tokens.a, body(2000));
+    const res = await commit(h.tokens.a, two.body.batchId, { accountMap: { isa: accountA } });
+    expect(res.body.counts).toMatchObject({ overwrite: 1, skipped: 0 });
+    await revert(h.tokens.a, two.body.batchId);
+    expect(await rowFor(accountA, "2020-01")).toMatchObject({
+      source: "agent",
+      importBatchId: one.body.batchId,
+    });
+    expect(Number((await rowFor(accountA, "2020-01"))?.value)).toBe(1000);
+  });
+
+  it("revert keeps a created account that has transactions", async () => {
+    const res = await stage(h.tokens.a, simple());
+    await commit(h.tokens.a, res.body.batchId);
+    const created = await accounts().findOneByOrFail({ name: "Secret ISA name", userId: USER_A });
+    await h.dataSource.query(
+      `INSERT INTO "transactions" ("account_id", "user_id", "amount", "description", "category")
+       VALUES ($1, $2, -5, 'x', 'Food')`,
+      [created.id, USER_A],
+    );
+    expect((await revert(h.tokens.a, res.body.batchId)).body.revert).toEqual({
+      restored: 0,
+      removed: 2,
+      kept: 0,
+    });
+    expect(await accounts().findOneBy({ id: created.id })).not.toBeNull();
+  });
+
+  it("a manual value that appears after staging survives a commit without a tick", async () => {
+    const res = await stage(h.tokens.a, simple());
+    await h.call("put", "/snapshots/2020-01", h.tokens.a, {
+      values: [{ accountId: accountA, value: 5 }],
+    });
+    const done = await commit(h.tokens.a, res.body.batchId, { accountMap: { isa: accountA } });
+    expect(done.body.skippedManual).toEqual(["isa:2020-01"]);
+    expect(Number((await rowFor(accountA, "2020-01"))?.value)).toBe(5);
+  });
+
+  it("the import upsert itself never replaces a non-agent row it was not told to (race guard)", async () => {
+    await h.call("put", "/snapshots/2020-04", h.tokens.a, {
+      values: [{ accountId: accountA, value: 5 }],
+    });
+    const row = { accountId: accountA, year: 2020, month: 4, value: 9, asOfDate: "2020-04-30" };
+    const written = await h.dataSource.transaction((m) =>
+      writeSnapshotRows(m, USER_A, [row, { ...row, month: 5, asOfDate: "2020-05-31" }], {
+        source: "agent",
+        importBatchId: null,
+        current: londonYearMonth(),
+        forceOverwrite: [],
+      }),
+    );
+    expect(written.map((w) => w.month)).toEqual([5]);
+    expect(await rowFor(accountA, "2020-04")).toMatchObject({ source: "manual" });
+    expect(Number((await rowFor(accountA, "2020-04"))?.value)).toBe(5);
+    const forced = await h.dataSource.transaction((m) =>
+      writeSnapshotRows(m, USER_A, [row], {
+        source: "agent",
+        importBatchId: null,
+        current: londonYearMonth(),
+        forceOverwrite: [{ accountId: accountA, year: 2020, month: 4 }],
+      }),
+    );
+    expect(forced).toHaveLength(1);
+    expect(Number((await rowFor(accountA, "2020-04"))?.value)).toBe(9);
   });
 
   it("agent audit: records identifiers and an HMAC only, and purges rows older than 13 months", async () => {

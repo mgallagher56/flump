@@ -17,7 +17,7 @@ import {
   type StagedAccount,
   type StagedBalance,
 } from "../entities/import-batch.entity";
-import { londonYearMonth } from "../snapshots/london-date";
+import { isRealDate, londonYearMonth } from "../snapshots/london-date";
 import {
   checkSnapshotMonth,
   defaultAsOfDate,
@@ -29,6 +29,7 @@ import { storedBalance } from "../snapshots/stored-balance";
 
 /** E17 re-plan section 7 caps. */
 export const MAX_IMPORT_ROWS = 5000;
+export const MAX_IMPORT_ACCOUNTS = 200;
 export const MAX_OPEN_BATCHES = 3;
 export const IMPORT_EXPIRY_MS = 7 * 24 * 60 * 60 * 1000;
 const MAX_ERRORS_LISTED = 100;
@@ -78,7 +79,7 @@ export interface CommitImportInput {
 export interface ImportBatchView {
   batchId: string;
   status: ImportBatch["status"];
-  counts: ImportCounts;
+  counts: Omit<ImportCounts, "rows">;
   rows: number;
   validationErrors: ImportValidationError[];
   skippedManual: string[];
@@ -90,13 +91,15 @@ export interface ImportBatchView {
 }
 
 const rowKey = (ref: string, month: string) => `${ref}:${month}`;
+const cellKey = (accountId: string, year: number, month: number) => `${accountId}|${year}|${month}`;
 const NOT_FOUND = "Import not found";
 
 /**
  * The import primitive (E17 re-plan sections 6 and 7; DECISIONS round 9): stage, commit, revert.
  * Staging validates with the E30 snapshot rules and stores the batch without touching live data.
  * Commit and revert run under a web session only, each in one transaction, and reuse the E30
- * upsert. Another user's batch is always the same 404 as a missing one.
+ * upsert. Every mutating call holds the per-user import lock, so stage, commit and revert of one
+ * user never interleave. Another user's batch is always the same 404 as a missing one.
  */
 @Injectable()
 export class ImportsService {
@@ -110,8 +113,7 @@ export class ImportsService {
     const { key, accounts, balances } = parseStageInput(input);
 
     return this.dataSource.transaction(async (m) => {
-      // One stage at a time per user, so the open-batch and row caps cannot be raced.
-      await m.query("SELECT pg_advisory_xact_lock(hashtext($1))", [`imports:${userId}`]);
+      await lockUser(m, userId);
       await expireStale(m, userId, now);
 
       const replayed: Array<{ id: string }> = await m.query(
@@ -122,13 +124,17 @@ export class ImportsService {
         [userId, key],
       );
       if (replayed.length > 0) {
+        // A key names one stage call. Reusing it with a different batchId is a client bug.
+        if (input.batchId !== undefined && input.batchId.toLowerCase() !== replayed[0].id) {
+          throw new ConflictException("idempotencyKey belongs to another import");
+        }
         const batch = await m.findOneByOrFail(ImportBatchEntity, { id: replayed[0].id });
-        return toView(batch);
+        return toView(batch, (batch.validationErrors[key] ?? []) as ImportValidationError[]);
       }
 
       let batch: ImportBatch | null = null;
       if (input.batchId !== undefined) {
-        batch = await findOwned(m, userId, input.batchId);
+        batch = await findOwned(m, userId, input.batchId, true);
         if (!batch) throw new NotFoundException(NOT_FOUND);
         if (batch.status !== "staged") throw new ConflictException("Import is not open");
       } else {
@@ -140,6 +146,9 @@ export class ImportsService {
 
       const accountByRef = new Map((batch?.payload.accounts ?? []).map((a) => [a.ref, a]));
       for (const a of accounts) accountByRef.set(a.ref, a);
+      if (accountByRef.size > MAX_IMPORT_ACCOUNTS) {
+        throw new BadRequestException(`At most ${MAX_IMPORT_ACCOUNTS} accounts per import`);
+      }
       const balanceByKey = new Map(
         (batch?.payload.balances ?? []).map((b) => [rowKey(b.accountRef, b.month), b]),
       );
@@ -179,17 +188,23 @@ export class ImportsService {
         balances: [...balanceByKey.values()],
         chunkKeys: batch ? [...batch.payload.chunkKeys, key] : [],
       };
-      // Nothing is mapped to an existing account until review, so every staged row is new.
+      // Nothing is mapped to an existing account until review, so new, overwrite, unchanged and
+      // skipped are unknown (null) until commit.
       const counts: ImportCounts = {
-        new: balanceByKey.size,
-        overwrite: 0,
-        unchanged: 0,
+        rows,
+        staged: balanceByKey.size,
+        new: null,
+        overwrite: null,
+        unchanged: null,
+        skipped: null,
         errors: (batch?.counts.errors ?? 0) + errors.length,
       };
+      const listed = errors.slice(0, MAX_ERRORS_LISTED);
       let saved: ImportBatch;
       if (batch) {
         batch.payload = payload;
         batch.counts = counts;
+        batch.validationErrors = { ...batch.validationErrors, [key]: listed };
         saved = await m.save(batch);
       } else {
         saved = await m.save(
@@ -199,6 +214,7 @@ export class ImportsService {
             idempotencyKey: key,
             payload,
             counts,
+            validationErrors: { [key]: listed },
             revertData: null,
             committedAt: null,
             revertedAt: null,
@@ -206,16 +222,16 @@ export class ImportsService {
           }),
         );
       }
-      return toView(saved, errors.slice(0, MAX_ERRORS_LISTED));
+      return toView(saved, listed);
     });
   }
 
   async get(userId: string, id: string, now: Date = new Date()): Promise<ImportBatchView> {
-    const batch = await findOwned(this.dataSource.manager, userId, id);
+    let batch = await findOwned(this.dataSource.manager, userId, id);
     if (!batch) throw new NotFoundException(NOT_FOUND);
     if (isExpired(batch, now)) {
       await expireStale(this.dataSource.manager, userId, now);
-      batch.status = "expired";
+      batch = (await findOwned(this.dataSource.manager, userId, id)) as ImportBatch;
     }
     return toView(batch);
   }
@@ -227,9 +243,10 @@ export class ImportsService {
     now: Date = new Date(),
   ): Promise<ImportBatchView> {
     const accountMap = parseAccountMap(input?.accountMap);
-    const overwrite = parseOverwrite(input?.overwriteManual);
+    const ticked = parseOverwrite(input?.overwriteManual);
 
     const result = await this.dataSource.transaction(async (m) => {
+      await lockUser(m, userId);
       const batch = await findOwned(m, userId, id, true);
       if (!batch) throw new NotFoundException(NOT_FOUND);
       if (isExpired(batch, now)) return { expired: true as const };
@@ -237,19 +254,21 @@ export class ImportsService {
 
       const refs = new Set(batch.payload.accounts.map((a) => a.ref));
       for (const ref of accountMap.keys()) {
-        if (!refs.has(ref))
+        if (!refs.has(ref)) {
           throw new BadRequestException("accountMap names a ref not in the import");
+        }
       }
 
       // Ownership of every mapped account, inside the transaction (same 404 as an unknown id).
-      const mappedIds = [...new Set([...accountMap.values()].filter((v): v is string => !!v))];
-      if (mappedIds.length !== [...accountMap.values()].filter(Boolean).length) {
+      const mappedValues = [...accountMap.values()].filter((v): v is string => !!v);
+      const mappedIds = [...new Set(mappedValues)];
+      if (mappedIds.length !== mappedValues.length) {
         throw new BadRequestException("an account can be mapped from one ref only");
       }
       const owned = mappedIds.length
         ? await m.find(Account, {
             where: { id: In(mappedIds), userId },
-            select: { id: true, type: true, balance: true },
+            select: { id: true, type: true, balance: true, connectionId: true },
           })
         : [];
       if (owned.length !== mappedIds.length) throw new NotFoundException("Account not found");
@@ -261,13 +280,13 @@ export class ImportsService {
         if (!prev || b.month > prev.month) latestByRef.set(b.accountRef, b);
       }
 
-      const accountByRef = new Map<string, { id: string; type: string }>();
+      const accountByRef = new Map<string, { id: string; type: string; connected: boolean }>();
       const createdAccountIds: string[] = [];
       for (const staged of batch.payload.accounts) {
         const mapped = accountMap.get(staged.ref);
         if (mapped) {
           const a = ownedById.get(mapped) as Account;
-          accountByRef.set(staged.ref, { id: a.id, type: a.type });
+          accountByRef.set(staged.ref, { id: a.id, type: a.type, connected: !!a.connectionId });
           continue;
         }
         const latest = latestByRef.get(staged.ref);
@@ -286,10 +305,11 @@ export class ImportsService {
           }),
         );
         createdAccountIds.push(created.id);
-        accountByRef.set(staged.ref, { id: created.id, type: created.type });
+        accountByRef.set(staged.ref, { id: created.id, type: created.type, connected: false });
       }
 
-      // Existing values for the mapped accounts, locked for the rest of the transaction.
+      // Existing values for the mapped accounts, locked for the rest of the transaction. Rows
+      // inserted after this read are protected by the conditional upsert instead.
       const existing = new Map<
         string,
         { value: number; asOfDate: string; source: string; importBatchId: string | null }
@@ -310,7 +330,7 @@ export class ImportsService {
           [mappedIds],
         );
         for (const r of rows) {
-          existing.set(`${r.account_id}|${r.year}|${r.month}`, {
+          existing.set(cellKey(r.account_id, r.year, r.month), {
             value: Number(r.value),
             asOfDate: r.as_of_date,
             source: r.source,
@@ -320,64 +340,102 @@ export class ImportsService {
       }
 
       const current = londonYearMonth(now);
-      const counts: ImportCounts = {
-        new: 0,
-        overwrite: 0,
-        unchanged: 0,
-        errors: batch.counts.errors,
-      };
-      const writes: SnapshotRowWrite[] = [];
-      const revertRows: RevertRow[] = [];
+      let errors = batch.counts.errors;
+      let unchanged = 0;
       const skippedManual: string[] = [];
+      const planned: Array<{ write: SnapshotRowWrite; key: string; prior: RevertRow["prior"] }> =
+        [];
+      const force: Array<{ accountId: string; year: number; month: number }> = [];
       for (const b of batch.payload.balances) {
         const month = checkSnapshotMonth(b.month, now);
         const account = accountByRef.get(b.accountRef);
         if (!month.ok || !account) {
-          counts.errors++;
+          errors++;
           continue;
         }
+        const key = rowKey(b.accountRef, b.month);
         const { year, month: mm } = month.target;
         const value = storedBalance(account.type, b.value);
-        const prior = existing.get(`${account.id}|${year}|${mm}`) ?? null;
+        const prior = existing.get(cellKey(account.id, year, mm)) ?? null;
         if (prior && prior.value === value) {
-          counts.unchanged++;
+          unchanged++;
           continue;
         }
-        if (prior && prior.source !== "agent" && !overwrite.has(rowKey(b.accountRef, b.month))) {
-          skippedManual.push(rowKey(b.accountRef, b.month));
+        const isTicked = ticked.has(key);
+        // A bank-connected account's current month belongs to sync unless the user ticks it.
+        const connectedNow = account.connected && year === current.year && mm === current.month;
+        if (!isTicked && (connectedNow || (prior && prior.source !== "agent"))) {
+          skippedManual.push(key);
           continue;
         }
-        if (prior) counts.overwrite++;
-        else counts.new++;
-        writes.push({
-          accountId: account.id,
-          year,
-          month: mm,
-          value,
-          asOfDate: defaultAsOfDate(month.target, now),
+        if (isTicked) force.push({ accountId: account.id, year, month: mm });
+        planned.push({
+          key,
+          prior,
+          write: {
+            accountId: account.id,
+            year,
+            month: mm,
+            value,
+            asOfDate: defaultAsOfDate(month.target, now),
+          },
         });
-        revertRows.push({ accountId: account.id, year, month: mm, written: value, prior });
       }
 
-      // Current-month writes move a mapped account's balance; keep the old one for revert.
+      const written = await writeSnapshotRows(
+        m,
+        userId,
+        planned.map((p) => p.write),
+        { source: "agent", importBatchId: batch.id, current, forceOverwrite: force },
+      );
+      const writtenKeys = new Set(written.map((w) => cellKey(w.accountId, w.year, w.month)));
+
+      let created = 0;
+      let overwritten = 0;
+      const revertRows: RevertRow[] = [];
       const balances: RevertData["balances"] = [];
-      for (const w of writes) {
+      for (const p of planned) {
+        const w = p.write;
+        if (!writtenKeys.has(cellKey(w.accountId, w.year, w.month))) {
+          // A protected value appeared after the read: the database kept it.
+          skippedManual.push(p.key);
+          continue;
+        }
+        if (p.prior) overwritten++;
+        else created++;
+        revertRows.push({
+          accountId: w.accountId,
+          year: w.year,
+          month: w.month,
+          written: w.value,
+          prior: p.prior,
+        });
         const a = ownedById.get(w.accountId);
         if (a && w.year === current.year && w.month === current.month) {
-          balances.push({ accountId: a.id, prior: Number(a.balance), written: w.value });
+          balances.push({
+            accountId: a.id,
+            year: w.year,
+            month: w.month,
+            prior: Number(a.balance),
+            written: w.value,
+          });
         }
       }
-
-      await writeSnapshotRows(m, userId, writes, {
-        source: "agent",
-        importBatchId: batch.id,
-        current,
-      });
 
       batch.status = "committed";
       batch.committedAt = now;
-      batch.counts = counts;
+      batch.counts = {
+        rows: batch.counts.rows,
+        staged: batch.counts.staged,
+        new: created,
+        overwrite: overwritten,
+        unchanged,
+        skipped: skippedManual.length,
+        errors,
+      };
       batch.revertData = { rows: revertRows, createdAccountIds, balances, skippedManual };
+      // Names and values are not kept once committed; revert_data holds what revert needs.
+      batch.payload = { accounts: [], balances: [], chunkKeys: batch.payload.chunkKeys };
       return { batch: await m.save(batch) };
     });
 
@@ -391,10 +449,12 @@ export class ImportsService {
   /**
    * Batch-level undo. Only rows still owned by the batch (stamped with it, source `agent` and
    * the value it wrote) are touched: a row with a prior value gets it back, a row the batch
-   * created is removed. Accounts the batch created are removed when nothing else refers to them.
+   * created is removed. A current-month balance goes back only with its row. Accounts the batch
+   * created are removed when nothing else refers to them.
    */
   async revert(userId: string, id: string): Promise<ImportBatchView> {
     return this.dataSource.transaction(async (m) => {
+      await lockUser(m, userId);
       const batch = await findOwned(m, userId, id, true);
       if (!batch) throw new NotFoundException(NOT_FOUND);
       if (batch.status !== "committed" || !batch.revertData) {
@@ -410,18 +470,21 @@ export class ImportsService {
         value: string;
       }> = await m.query(
         `SELECT "id", "account_id", "year", "month", "value"::text AS "value"
-           FROM "account_details"
-           WHERE "import_batch_id" = $1 AND "source" = 'agent' AND "user_id" = $2
-           ORDER BY "account_id", "year", "month" FOR UPDATE`,
+         FROM "account_details"
+         WHERE "import_batch_id" = $1 AND "source" = 'agent' AND "user_id" = $2
+         ORDER BY "account_id", "year", "month" FOR UPDATE`,
         [batch.id, userId],
       );
-      const stampedByKey = new Map(stamped.map((r) => [`${r.account_id}|${r.year}|${r.month}`, r]));
+      const stampedByKey = new Map(stamped.map((r) => [cellKey(r.account_id, r.year, r.month), r]));
 
       let restored = 0;
       const removeIds: number[] = [];
+      const undone = new Set<string>();
       for (const r of data.rows) {
-        const cur = stampedByKey.get(`${r.accountId}|${r.year}|${r.month}`);
+        const k = cellKey(r.accountId, r.year, r.month);
+        const cur = stampedByKey.get(k);
         if (!cur || Number(cur.value) !== r.written) continue;
+        undone.add(k);
         if (r.prior === null) {
           removeIds.push(cur.id);
           continue;
@@ -439,6 +502,7 @@ export class ImportsService {
         await m.query(`DELETE FROM "account_details" WHERE "id" = ANY($1::int[])`, [removeIds]);
       }
       for (const b of data.balances) {
+        if (!undone.has(cellKey(b.accountId, b.year, b.month))) continue;
         await m.query(
           `UPDATE "accounts" SET "balance" = $3 WHERE "id" = $1 AND "user_id" = $2 AND "balance" = $4`,
           [b.accountId, userId, b.prior, b.written],
@@ -457,8 +521,12 @@ export class ImportsService {
       const removed = removeIds.length;
       batch.status = "reverted";
       batch.revertedAt = new Date();
+      // Prior values are not kept after the undo; only the outcome is.
       batch.revertData = {
-        ...data,
+        rows: [],
+        createdAccountIds: [],
+        balances: [],
+        skippedManual: data.skippedManual,
         result: { restored, removed, kept: data.rows.length - restored - removed },
       };
       return toView(await m.save(batch));
@@ -466,14 +534,24 @@ export class ImportsService {
   }
 }
 
+/** Serialises every mutating import call of one user (stage, commit, revert). */
+async function lockUser(m: EntityManager, userId: string): Promise<void> {
+  await m.query("SELECT pg_advisory_xact_lock(hashtext($1))", [`imports:${userId}`]);
+}
+
 function isExpired(batch: ImportBatch, now: Date): boolean {
   return batch.status === "staged" && batch.expiresAt.getTime() <= now.getTime();
 }
 
-/** Lazy expiry (no scheduler in the app): staged batches past `expires_at` become `expired`. */
+/**
+ * Lazy expiry (no scheduler in the app): staged batches past `expires_at` become `expired`, and
+ * their staged names and values are dropped (counts and chunk keys stay).
+ */
 async function expireStale(m: EntityManager, userId: string, now: Date): Promise<void> {
   await m.query(
-    `UPDATE "import_batches" SET "status" = 'expired', "updated_at" = now()
+    `UPDATE "import_batches"
+     SET "status" = 'expired', "updated_at" = now(),
+         "payload" = jsonb_set(jsonb_set("payload", '{accounts}', '[]'), '{balances}', '[]')
      WHERE "user_id" = $1 AND "status" = 'staged' AND "expires_at" <= $2`,
     [userId, now],
   );
@@ -487,7 +565,7 @@ async function findOwned(
 ): Promise<ImportBatch | null> {
   if (typeof id !== "string" || !UUID.test(id)) return null;
   return m.findOne(ImportBatchEntity, {
-    where: { id, userId },
+    where: { id: id.toLowerCase(), userId },
     ...(lock ? { lock: { mode: "pessimistic_write" as const } } : {}),
   });
 }
@@ -496,16 +574,19 @@ function toView(
   batch: ImportBatch,
   validationErrors: ImportValidationError[] = [],
 ): ImportBatchView {
+  const c = batch.counts;
   return {
     batchId: batch.id,
     status: batch.status,
     counts: {
-      new: batch.counts.new,
-      overwrite: batch.counts.overwrite,
-      unchanged: batch.counts.unchanged,
-      errors: batch.counts.errors,
+      staged: c.staged,
+      new: c.new,
+      overwrite: c.overwrite,
+      unchanged: c.unchanged,
+      skipped: c.skipped,
+      errors: c.errors,
     },
-    rows: batch.payload.accounts.length + batch.payload.balances.length,
+    rows: c.rows,
     validationErrors,
     skippedManual: batch.revertData?.skippedManual ?? [],
     revert: batch.revertData?.result ?? null,
@@ -514,6 +595,51 @@ function toView(
     committedAt: batch.committedAt?.toISOString() ?? null,
     revertedAt: batch.revertedAt?.toISOString() ?? null,
   };
+}
+
+const twoDecimals = (v: number) => Math.abs(v * 100 - Math.round(v * 100)) < 1e-6;
+
+/** Account details, checked against the column ranges so a commit can never fail on them. */
+function parseDetails(d: unknown): StagedAccount["details"] | undefined {
+  if (d === undefined || d === null) return undefined;
+  if (typeof d !== "object" || Array.isArray(d)) {
+    throw new BadRequestException("account details must be an object");
+  }
+  const raw = d as Record<string, unknown>;
+  const out: NonNullable<StagedAccount["details"]> = {};
+  if (raw.interestRate !== undefined) {
+    const v = raw.interestRate;
+    if (typeof v !== "number" || !Number.isFinite(v) || v < 0 || v > 100 || !twoDecimals(v)) {
+      throw new BadRequestException("interestRate must be 0 to 100 with at most 2 decimals");
+    }
+    out.interestRate = v;
+  }
+  if (raw.monthlyContribution !== undefined) {
+    const v = raw.monthlyContribution;
+    if (!isValidSnapshotValue(v) || v < 0) {
+      throw new BadRequestException("monthlyContribution must be a non-negative amount");
+    }
+    out.monthlyContribution = v;
+  }
+  if (raw.termMonths !== undefined) {
+    const v = raw.termMonths;
+    if (typeof v !== "number" || !Number.isInteger(v) || v < 1 || v > 600) {
+      throw new BadRequestException("termMonths must be a whole number from 1 to 600");
+    }
+    out.termMonths = v;
+  }
+  if (raw.fixedRateEndDate !== undefined) {
+    const v = raw.fixedRateEndDate;
+    if (typeof v !== "string" || !isRealDate(v)) {
+      throw new BadRequestException("fixedRateEndDate must be a valid YYYY-MM-DD date");
+    }
+    out.fixedRateEndDate = v;
+  }
+  const extra = Object.keys(raw).filter(
+    (k) => !["interestRate", "monthlyContribution", "termMonths", "fixedRateEndDate"].includes(k),
+  );
+  if (extra.length > 0) throw new BadRequestException("account details has unknown fields");
+  return out;
 }
 
 /** Re-validates the request shape (the contract may run in shadow mode). */
@@ -535,37 +661,23 @@ function parseStageInput(input: StageImportInput): {
   if (!Array.isArray(input.accounts) || !Array.isArray(input.balances)) {
     throw new BadRequestException("accounts and balances must be arrays");
   }
+  if (input.accounts.length > MAX_IMPORT_ACCOUNTS) {
+    throw new BadRequestException(`At most ${MAX_IMPORT_ACCOUNTS} accounts per import`);
+  }
   if (input.accounts.length + input.balances.length > MAX_IMPORT_ROWS) {
     throw new BadRequestException(`At most ${MAX_IMPORT_ROWS} rows per import`);
   }
   const accounts = input.accounts.map((a): StagedAccount => {
-    const name = typeof a?.name === "string" ? a.name.trim() : "";
     if (!a || typeof a.ref !== "string" || !REF.test(a.ref)) {
       throw new BadRequestException("each account needs a valid ref");
     }
-    if (name.length < 1 || name.length > 120)
+    const name = typeof a.name === "string" ? a.name.trim() : "";
+    if (name.length < 1 || name.length > 120) {
       throw new BadRequestException("account name must be 1-120 characters");
+    }
     if (!ACCOUNT_TYPES.has(a.type)) throw new BadRequestException("account type is not recognised");
-    const d = a.details;
-    return {
-      ref: a.ref,
-      name,
-      type: a.type,
-      ...(d
-        ? {
-            details: {
-              ...(typeof d.interestRate === "number" ? { interestRate: d.interestRate } : {}),
-              ...(typeof d.monthlyContribution === "number"
-                ? { monthlyContribution: d.monthlyContribution }
-                : {}),
-              ...(Number.isInteger(d.termMonths) ? { termMonths: d.termMonths } : {}),
-              ...(typeof d.fixedRateEndDate === "string"
-                ? { fixedRateEndDate: d.fixedRateEndDate }
-                : {}),
-            },
-          }
-        : {}),
-    };
+    const details = parseDetails(a.details);
+    return { ref: a.ref, name, type: a.type, ...(details ? { details } : {}) };
   });
   const balances = input.balances.map((b): StagedBalance => {
     if (!b || typeof b.accountRef !== "string" || !REF.test(b.accountRef)) {

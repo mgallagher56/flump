@@ -13,6 +13,8 @@ import { SnapshotMonth } from "./snapshots.js";
 
 /** Rows (accounts plus balances) one import batch may hold across all its chunks. */
 export const MAX_IMPORT_ROWS = 5000;
+/** Accounts one import batch may hold across all its chunks. */
+export const MAX_IMPORT_ACCOUNTS = 200;
 
 /**
  * The caller's own id for an account in the sheet, never a Flump id. Letters, digits, `_`, `.`
@@ -50,14 +52,15 @@ export const ImportBalance = z.object({
 
 /**
  * POST /imports. Stages rows without touching live data. Same `idempotencyKey` replays the same
- * batch; `batchId` appends a chunk to an open (staged) batch of the caller's.
+ * batch (409 if sent with a different `batchId`); `batchId` appends a chunk to an open (staged)
+ * batch of the caller's.
  */
 export const StageImportRequest = z.object({
   batchId: Uuid.optional(),
   idempotencyKey: z
     .string()
     .regex(/^[A-Za-z0-9_.:-]{8,128}$/, "must be 8-128 of A-Z a-z 0-9 _ . : -"),
-  accounts: z.array(ImportAccount).max(MAX_IMPORT_ROWS),
+  accounts: z.array(ImportAccount).max(MAX_IMPORT_ACCOUNTS),
   balances: z.array(ImportBalance).max(MAX_IMPORT_ROWS),
 });
 
@@ -97,11 +100,25 @@ const Count = z.number().int().min(0);
 export const ImportBatchResponse = z.strictObject({
   batchId: Uuid,
   status: ImportBatchStatus,
-  /** At stage: against nothing mapped yet, so every row is new. After commit: what was written. */
-  counts: z.strictObject({ new: Count, overwrite: Count, unchanged: Count, errors: Count }),
+  /**
+   * `staged`: monthly values held by the batch. new, overwrite, unchanged and skipped are null
+   * until commit (nothing can be compared with live data before accounts are mapped), then say
+   * what the commit wrote, left alone because equal, or skipped as protected.
+   */
+  counts: z.strictObject({
+    staged: Count,
+    new: Count.nullable(),
+    overwrite: Count.nullable(),
+    unchanged: Count.nullable(),
+    skipped: Count.nullable(),
+    errors: Count,
+  }),
   /** Rows in the batch (accounts plus balances, across chunks). */
   rows: Count,
-  /** Rows refused by this stage call (empty on the other routes). At most 100 listed. */
+  /**
+   * Rows refused by this stage call, also on a replay of the same idempotency key (empty on the
+   * other routes). At most 100 listed.
+   */
   validationErrors: z.array(
     z.strictObject({
       ref: ImportRef,
@@ -109,7 +126,10 @@ export const ImportBatchResponse = z.strictObject({
       code: z.enum(IMPORT_VALIDATION_CODES),
     }),
   ),
-  /** Row keys the commit skipped because they would overwrite a non-import value. */
+  /**
+   * Row keys the commit skipped as protected: an existing non-import value, or the current month
+   * of a bank-connected account, not ticked in `overwriteManual`.
+   */
   skippedManual: z.array(ImportRowKey),
   /** Set once reverted: rows restored, rows removed, rows left alone (changed since commit). */
   revert: z.strictObject({ restored: Count, removed: Count, kept: Count }).nullable(),

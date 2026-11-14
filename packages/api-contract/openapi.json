@@ -2003,20 +2003,58 @@
                     "counts": {
                       "type": "object",
                       "properties": {
-                        "new": {
+                        "staged": {
                           "type": "integer",
                           "minimum": 0,
                           "maximum": 9007199254740991
+                        },
+                        "new": {
+                          "anyOf": [
+                            {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 9007199254740991
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
                         },
                         "overwrite": {
-                          "type": "integer",
-                          "minimum": 0,
-                          "maximum": 9007199254740991
+                          "anyOf": [
+                            {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 9007199254740991
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
                         },
                         "unchanged": {
-                          "type": "integer",
-                          "minimum": 0,
-                          "maximum": 9007199254740991
+                          "anyOf": [
+                            {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 9007199254740991
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "skipped": {
+                          "anyOf": [
+                            {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 9007199254740991
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
                         },
                         "errors": {
                           "type": "integer",
@@ -2024,7 +2062,7 @@
                           "maximum": 9007199254740991
                         }
                       },
-                      "required": ["new", "overwrite", "unchanged", "errors"],
+                      "required": ["staged", "new", "overwrite", "unchanged", "skipped", "errors"],
                       "additionalProperties": false
                     },
                     "rows": {
@@ -2151,7 +2189,7 @@
                     "pattern": "^[A-Za-z0-9_.:-]{8,128}$"
                   },
                   "accounts": {
-                    "maxItems": 5000,
+                    "maxItems": 200,
                     "type": "array",
                     "items": {
                       "type": "object",
@@ -2264,20 +2302,58 @@
                     "counts": {
                       "type": "object",
                       "properties": {
-                        "new": {
+                        "staged": {
                           "type": "integer",
                           "minimum": 0,
                           "maximum": 9007199254740991
+                        },
+                        "new": {
+                          "anyOf": [
+                            {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 9007199254740991
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
                         },
                         "overwrite": {
-                          "type": "integer",
-                          "minimum": 0,
-                          "maximum": 9007199254740991
+                          "anyOf": [
+                            {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 9007199254740991
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
                         },
                         "unchanged": {
-                          "type": "integer",
-                          "minimum": 0,
-                          "maximum": 9007199254740991
+                          "anyOf": [
+                            {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 9007199254740991
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "skipped": {
+                          "anyOf": [
+                            {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 9007199254740991
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
                         },
                         "errors": {
                           "type": "integer",
@@ -2285,7 +2361,7 @@
                           "maximum": 9007199254740991
                         }
                       },
-                      "required": ["new", "overwrite", "unchanged", "errors"],
+                      "required": ["staged", "new", "overwrite", "unchanged", "skipped", "errors"],
                       "additionalProperties": false
                     },
                     "rows": {
@@ -2438,20 +2514,58 @@
                     "counts": {
                       "type": "object",
                       "properties": {
-                        "new": {
+                        "staged": {
                           "type": "integer",
                           "minimum": 0,
                           "maximum": 9007199254740991
+                        },
+                        "new": {
+                          "anyOf": [
+                            {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 9007199254740991
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
                         },
                         "overwrite": {
-                          "type": "integer",
-                          "minimum": 0,
-                          "maximum": 9007199254740991
+                          "anyOf": [
+                            {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 9007199254740991
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
                         },
                         "unchanged": {
-                          "type": "integer",
-                          "minimum": 0,
-                          "maximum": 9007199254740991
+                          "anyOf": [
+                            {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 9007199254740991
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "skipped": {
+                          "anyOf": [
+                            {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 9007199254740991
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
                         },
                         "errors": {
                           "type": "integer",
@@ -2459,7 +2573,7 @@
                           "maximum": 9007199254740991
                         }
                       },
-                      "required": ["new", "overwrite", "unchanged", "errors"],
+                      "required": ["staged", "new", "overwrite", "unchanged", "skipped", "errors"],
                       "additionalProperties": false
                     },
                     "rows": {
@@ -2651,20 +2765,58 @@
                     "counts": {
                       "type": "object",
                       "properties": {
-                        "new": {
+                        "staged": {
                           "type": "integer",
                           "minimum": 0,
                           "maximum": 9007199254740991
+                        },
+                        "new": {
+                          "anyOf": [
+                            {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 9007199254740991
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
                         },
                         "overwrite": {
-                          "type": "integer",
-                          "minimum": 0,
-                          "maximum": 9007199254740991
+                          "anyOf": [
+                            {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 9007199254740991
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
                         },
                         "unchanged": {
-                          "type": "integer",
-                          "minimum": 0,
-                          "maximum": 9007199254740991
+                          "anyOf": [
+                            {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 9007199254740991
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "skipped": {
+                          "anyOf": [
+                            {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 9007199254740991
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
                         },
                         "errors": {
                           "type": "integer",
@@ -2672,7 +2824,7 @@
                           "maximum": 9007199254740991
                         }
                       },
-                      "required": ["new", "overwrite", "unchanged", "errors"],
+                      "required": ["staged", "new", "overwrite", "unchanged", "skipped", "errors"],
                       "additionalProperties": false
                     },
                     "rows": {

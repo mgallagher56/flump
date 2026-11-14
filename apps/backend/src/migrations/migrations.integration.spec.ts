@@ -1108,8 +1108,8 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
     };
     const batch = async (key = "k-1"): Promise<string> => {
       const rows: { id: string }[] = await ds.query(
-        `INSERT INTO import_batches (user_id, idempotency_key, payload, counts, expires_at)
-         VALUES ('user-a', $1, '{}', '{}', now() + interval '7 days') RETURNING id`,
+        `INSERT INTO import_batches (user_id, idempotency_key, payload, counts, validation_errors, expires_at)
+         VALUES ('user-a', $1, '{}', '{}', '{}', now() + interval '7 days') RETURNING id`,
         [key],
       );
       return rows[0].id;

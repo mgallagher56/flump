@@ -17,6 +17,10 @@ describe("AgentAuditService (E17-N17)", () => {
     expect(a).toMatch(/^[0-9a-f]{64}$/);
     expect(service.fingerprint({ x: 1 }, "k")).toBe(a);
     expect(service.fingerprint({ x: 2 }, "k")).not.toBe(a);
+    // Key order does not matter, at any depth.
+    expect(service.fingerprint({ a: 1, b: { c: 2, d: [1, { f: 1, e: 2 }] } }, "k")).toBe(
+      service.fingerprint({ b: { d: [1, { e: 2, f: 1 }], c: 2 }, a: 1 }, "k"),
+    );
     expect(service.fingerprint({ x: 1 }, undefined)).toBeNull();
     expect(service.fingerprint(undefined, "k")).toBeNull();
   });
