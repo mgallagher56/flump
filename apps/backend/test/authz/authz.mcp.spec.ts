@@ -1,4 +1,5 @@
 import "reflect-metadata";
+import { DEFAULT_NET_WORTH_BASIS } from "@flump/finance-engine";
 import { inMemoryQueries } from "@flump/mcp";
 import request from "supertest";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
@@ -420,7 +421,11 @@ describe.skipIf(dbMode === "skip")("authz: /mcp transport (real Postgres)", () =
       const range = { fromDate: "2025-04-01", toDate: "2026-03-31" };
       const fromDb = (await provider().getTaxRecords(USER_A, range)).map((r) => r.id).sort();
       const all = (await provider().getUserFinancialData(USER_A)).taxRecords ?? [];
-      const memory = inMemoryQueries(async () => ({ baseline: {} as never, taxRecords: all }));
+      const memory = inMemoryQueries(async () => ({
+        baseline: {} as never,
+        netWorthBasis: DEFAULT_NET_WORTH_BASIS,
+        taxRecords: all,
+      }));
       const fromMemory = (await memory.getTaxRecords(USER_A, range)).map((r) => r.id).sort();
       expect(fromDb).toEqual(fromMemory);
       expect(fromDb).toEqual(expect.arrayContaining([edgeMonthly, edgeOneOff]));

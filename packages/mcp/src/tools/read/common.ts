@@ -4,8 +4,11 @@ import {
   type BudgetEntryItem,
   type BuildContextPackInput,
   genericAccountLabel,
+  type NetWorthBasis,
+  type NetWorthLeftOut,
   PortfolioSnapshot,
   type ResolvedAccount,
+  resolveSnapshotNetWorthScope,
 } from "@flump/finance-engine";
 import { effectiveAnonymize } from "../../auth/scopes.js";
 import type { ToolOutput } from "../../envelope.js";
@@ -76,6 +79,10 @@ export interface AccountIndex {
 export interface ReadModel extends AccountIndex {
   raw: BuildContextPackInput;
   snapshot: PortfolioSnapshot;
+  /** What net worth counts for this user; every net worth figure uses it. */
+  basis: NetWorthBasis;
+  /** What net worth leaves out under the basis, in display order. */
+  netWorthLeavesOut: NetWorthLeftOut[];
 }
 
 /** The engine's closed account category for a stored account type (never the free-text type). */
@@ -134,7 +141,46 @@ export async function loadReadModel(ctx: McpServerContext): Promise<ReadModel> {
     anonymizeInstitutions: anonymise,
   });
   const snapshot = new PortfolioSnapshot(raw.accounts ?? [], raw.accountDetails ?? []);
-  return { raw, snapshot, ...indexAccounts(ctx, snapshot.getResolvedAccounts()) };
+  const basis = raw.netWorthBasis;
+  return {
+    raw,
+    snapshot,
+    basis,
+    netWorthLeavesOut: resolveSnapshotNetWorthScope(snapshot, basis).leftOut,
+    ...indexAccounts(ctx, snapshot.getResolvedAccounts()),
+  };
+}
+
+/** The values a net worth leave-out list can hold, for result schemas. */
+export const NET_WORTH_LEFT_OUT_VALUES = [
+  "property",
+  "mortgage",
+  "studentLoan",
+  "homeValueMissing",
+] as const satisfies readonly NetWorthLeftOut[];
+
+/**
+ * Neutral notes saying what net worth counts under the user's choices. They state the choice and
+ * never suggest one is better.
+ */
+export function netWorthBasisNotes(basis: NetWorthBasis, leftOut: readonly NetWorthLeftOut[]) {
+  const notes: string[] = [];
+  notes.push(
+    basis.countStudentLoan
+      ? "Student loans count as a debt in net worth and liabilitiesGbp, as the user chose. They are never in debt totals."
+      : "Student loans are not counted in net worth, as the user chose. They are never in debt totals.",
+  );
+  if (!basis.countProperty && (leftOut.includes("property") || leftOut.includes("mortgage"))) {
+    notes.push(
+      "Property values and mortgage balances are not counted in net worth, as the user chose. propertyGbp and mortgageGbp still show the saved amounts.",
+    );
+  }
+  if (leftOut.includes("homeValueMissing")) {
+    notes.push(
+      "A mortgage has no home value saved beside it, so net worth counts the mortgage without the home's value.",
+    );
+  }
+  return notes;
 }
 
 export const MAX_MISSING = 5;

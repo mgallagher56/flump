@@ -1,3 +1,4 @@
+import { DEFAULT_NET_WORTH_BASIS } from "../../../net-worth-basis.js";
 import { budgetEntry } from "../builders.js";
 import type { PersonaFixture } from "../types.js";
 
@@ -6,6 +7,7 @@ import type { PersonaFixture } from "../types.js";
  * GBP 640. Card B has no stored rate and no stored minimum payment: nothing is invented for it.
  */
 export const debtStressed: PersonaFixture = {
+  netWorthBasis: DEFAULT_NET_WORTH_BASIS,
   profile: {
     annualSalary: 27500,
     employmentType: "employed",

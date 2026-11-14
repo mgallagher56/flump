@@ -1,4 +1,5 @@
 import type { BudgetEntryItem } from "../../ai-context-pack.js";
+import type { NetWorthBasis } from "../../net-worth-basis.js";
 import type { RawAccount, RawAccountDetail } from "../../portfolio.js";
 import type { TaxRecord } from "../../tax-calculator.js";
 import type { UkTaxRegion } from "../../types.js";
@@ -8,6 +9,8 @@ import type { MissingKey, ProfileFacts } from "../input.js";
 /** The rows one persona feeds into the financial picture (E23 section 9.1). Data only. */
 export interface PersonaFixture {
   profile: ProfileFacts;
+  /** What net worth counts. Personas use DEFAULT_NET_WORTH_BASIS (no figure changes). */
+  netWorthBasis: NetWorthBasis;
   accounts: RawAccount[];
   details: RawAccountDetail[];
   budget: BudgetEntryItem[];

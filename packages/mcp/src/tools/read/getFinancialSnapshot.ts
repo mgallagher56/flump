@@ -1,7 +1,9 @@
 import {
+  countsTowardNetWorth,
   getUkCalendarDate,
   MCP_NOTICE,
   PortfolioSnapshot,
+  resolveNetWorthScope,
   selectNetWorthSeries,
 } from "@flump/finance-engine";
 import { z } from "zod";
@@ -15,6 +17,8 @@ import {
   loadReadModel,
   MISSING_INCOME,
   type Missing,
+  NET_WORTH_LEFT_OUT_VALUES,
+  netWorthBasisNotes,
   round2,
   summariseBudget,
 } from "./common.js";
@@ -29,7 +33,10 @@ const result = z.object({
   propertyGbp: z.number(),
   consumerDebtGbp: z.number(),
   mortgageGbp: z.number(),
-  /** Null for an asOfMonth answer: student loans are not kept in monthly history. */
+  /**
+   * The saved student loan balance. Null for an asOfMonth answer unless the user counts student
+   * loans in net worth, when it is the recorded month-end balance.
+   */
   studentLoanGbp: z.number().nullable(),
   accountCount: z.number(),
   debtCount: z.number(),
@@ -40,6 +47,11 @@ const result = z.object({
   emergencyRunwayMonths: z.number().nullable(),
   /** "YYYY-MM" when the balances are as at a past month, else null (current balances). */
   asOfMonth: z.string().nullable(),
+  /**
+   * What net worth leaves out under the user's own choices, in display order: property,
+   * mortgage, studentLoan; homeValueMissing means a mortgage counts with no home value saved.
+   */
+  netWorthLeavesOut: z.array(z.enum(NET_WORTH_LEFT_OUT_VALUES)),
   notes: z.array(z.string()),
 });
 
@@ -120,9 +132,9 @@ export const getFinancialSnapshot = defineFlumpTool({
 
     return {
       result: {
-        netWorthGbp: round2(s.getTotalNetWorth()),
-        assetsGbp: round2(s.getTotalAssets()),
-        liabilitiesGbp: round2(s.getTotalLiabilities()),
+        netWorthGbp: round2(s.getTotalNetWorth(m.basis)),
+        assetsGbp: round2(s.getTotalAssets(m.basis)),
+        liabilitiesGbp: round2(s.getTotalLiabilities(m.basis)),
         liquidCashGbp: round2(s.getTotalLiquidCash()),
         investmentsGbp: round2(s.getTotalInvestments()),
         pensionsGbp: round2(s.getTotalPensions()),
@@ -137,8 +149,9 @@ export const getFinancialSnapshot = defineFlumpTool({
         monthlySurplusAfterStoredMinimumsGbp: surplus,
         emergencyRunwayMonths: runway,
         asOfMonth: null,
+        netWorthLeavesOut: m.netWorthLeavesOut,
         notes: [
-          "Student loans are income-contingent and excluded from net worth and debt totals.",
+          ...netWorthBasisNotes(m.basis, m.netWorthLeavesOut),
           "The left-over figure is income minus spending and saved minimum debt payments. Estimated minimums are not subtracted.",
         ],
       },
@@ -160,9 +173,13 @@ async function historicalSnapshot(ctx: McpServerContext, asOfMonth: string) {
       hint: "Use a past or the current month, or omit it for current balances.",
     });
   }
-  const rawAccounts = await ctx.dataProvider.getAccounts(ctx.token.userId);
+  const [rawAccounts, basis] = await Promise.all([
+    ctx.dataProvider.getAccounts(ctx.token.userId),
+    ctx.dataProvider.getNetWorthBasis(ctx.token.userId),
+  ]);
   const m = indexAccounts(ctx, new PortfolioSnapshot(rawAccounts, []).getResolvedAccounts());
-  const tracked = m.accounts.filter((a) => a.category !== "studentLoans");
+  const leftOut = resolveNetWorthScope(rawAccounts, basis).leftOut;
+  const tracked = m.accounts.filter((a) => countsTowardNetWorth(a.category, basis));
   const rows =
     tracked.length === 0
       ? []
@@ -174,6 +191,7 @@ async function historicalSnapshot(ctx: McpServerContext, asOfMonth: string) {
   const series = selectNetWorthSeries(
     tracked.map((a) => ({ id: a.id, type: a.rawType })),
     rows,
+    basis,
     { through: monthLabel(asOf) },
   );
   const point = series.find((p) => p.month === asOfMonth);
@@ -201,16 +219,16 @@ async function historicalSnapshot(ctx: McpServerContext, asOfMonth: string) {
   const carried = (point?.accounts ?? []).filter((v) => v.carried).length;
   return {
     result: {
-      netWorthGbp: round2(s.getTotalNetWorth()),
-      assetsGbp: round2(s.getTotalAssets()),
-      liabilitiesGbp: round2(s.getTotalLiabilities()),
+      netWorthGbp: round2(s.getTotalNetWorth(basis)),
+      assetsGbp: round2(s.getTotalAssets(basis)),
+      liabilitiesGbp: round2(s.getTotalLiabilities(basis)),
       liquidCashGbp: round2(s.getTotalLiquidCash()),
       investmentsGbp: round2(s.getTotalInvestments()),
       pensionsGbp: round2(s.getTotalPensions()),
       propertyGbp: round2(s.getTotalProperty()),
       consumerDebtGbp: round2(s.getTotalConsumerDebt()),
       mortgageGbp: round2(s.getTotalMortgageBalance()),
-      studentLoanGbp: null,
+      studentLoanGbp: basis.countStudentLoan ? round2(s.getTotalStudentLoans()) : null,
       accountCount: values.size,
       debtCount: s.toDebtItems().length,
       monthlyIncomeGbp: null,
@@ -218,9 +236,11 @@ async function historicalSnapshot(ctx: McpServerContext, asOfMonth: string) {
       monthlySurplusAfterStoredMinimumsGbp: null,
       emergencyRunwayMonths: null,
       asOfMonth,
+      netWorthLeavesOut: leftOut,
       notes: [
         `Balances are month-end values recorded for ${asOfMonth}. Accounts repeating their last earlier value because nothing was recorded that month: ${carried} of ${values.size}.`,
-        "Student loans and budget figures are not kept by month, so they are null here.",
+        "Budget figures are not kept by month, so they are null here.",
+        ...netWorthBasisNotes(basis, leftOut),
       ],
     },
     provenance: { netWorthGbp: "account_history", monthlyIncomeGbp: "not_historical" },

@@ -1,4 +1,6 @@
-import { categorizeAccountType, isLiabilityCategory, type RawAccount } from "./portfolio.js";
+import { categorizeAccountType, isLiabilityCategory } from "./account-category.js";
+import { countsTowardNetWorth, type NetWorthBasis } from "./net-worth-basis.js";
+import type { RawAccount } from "./portfolio.js";
 
 /**
  * Monthly snapshot selectors (E30). Pure read-time functions over `account_details` rows:
@@ -7,8 +9,9 @@ import { categorizeAccountType, isLiabilityCategory, type RawAccount } from "./p
  *   account's last known value, flagged `carried`.
  * - Every change is **current minus previous**, whether the figure went up or down. Wording is
  *   the caller's job and must be the same in both directions (advice policy R1).
- * - Assets keep their real sign, liabilities (cards, loans, mortgages) count as the absolute
- *   value, student loans are excluded, matching `PortfolioSnapshot.getMonthlyHistory`.
+ * - Assets keep their real sign, liabilities (cards, loans, mortgages and, when the basis counts
+ *   them, student loans) count as the absolute value, and accounts the net worth basis leaves out
+ *   are excluded, matching `PortfolioSnapshot.getMonthlyHistory`.
  */
 
 export interface SnapshotRow {
@@ -84,20 +87,41 @@ function parseMonth(value: string): number | null {
   return match ? key(Number(match[1]), Number(match[2])) : null;
 }
 
+export interface SelectNetWorthSeriesOptions {
+  /** "YYYY-MM": extend the series to this month (usually the current month). */
+  through?: string;
+  /**
+   * Saved current balances (`account.balance`) by account id. In the `through` month, every
+   * counted account without a row that month shows its saved balance instead of a carried value,
+   * including accounts with no history, so the last point equals the picture's net worth. The
+   * month's `allCarried` still says whether any row was recorded. Ignored when `through` is not
+   * after the last recorded month or unset.
+   */
+  currentBalances?: ReadonlyMap<string, number>;
+}
+
+function isNetWorthLiability(category: ReturnType<typeof categorizeAccountType>): boolean {
+  return isLiabilityCategory(category) || category === "studentLoans";
+}
+
 /**
- * Net worth for every month from the first recorded month to `through` (default: the last
- * recorded month, so asking for the current month extends the series with carried values).
+ * Net worth under the basis for every month from the first recorded month to `through`
+ * (default: the last recorded month, so asking for the current month extends the series).
  * Duplicate rows for one account and month: the last one in the input wins. Rows with an invalid
- * year, month or value are skipped; accounts not in `accounts` are ignored.
+ * year, month or value are skipped; accounts not in `accounts` or left out by the basis are
+ * ignored.
  */
 export function selectNetWorthSeries(
   accounts: readonly SnapshotAccount[],
   rows: readonly SnapshotRow[],
-  options: { through?: string } = {},
+  basis: NetWorthBasis,
+  options: SelectNetWorthSeriesOptions = {},
 ): NetWorthPoint[] {
   const types = new Map<string, string>();
   for (const a of accounts) {
-    if (a.id) types.set(String(a.id), String(a.type ?? "other"));
+    if (!a.id) continue;
+    const type = String(a.type ?? "other");
+    if (countsTowardNetWorth(categorizeAccountType(type), basis)) types.set(String(a.id), type);
   }
 
   // account -> month index -> value
@@ -106,8 +130,7 @@ export function selectNetWorthSeries(
   let last = Number.NEGATIVE_INFINITY;
   for (const r of rows) {
     const id = String(r.accountId ?? "");
-    const type = types.get(id);
-    if (type === undefined || categorizeAccountType(type) === "studentLoans") continue;
+    if (!types.has(id)) continue;
     const year = Number(r.year);
     const month = Number(r.month);
     const value = Number(r.value);
@@ -127,8 +150,19 @@ export function selectNetWorthSeries(
 
   const through = options.through === undefined ? null : parseMonth(options.through);
   const end = through !== null && through > last ? through : last;
+  const balancesAt = through !== null && through >= last ? through : null;
 
-  const ids = [...byAccount.keys()].sort();
+  const idSet = new Set(byAccount.keys());
+  const current = new Map<string, number>();
+  if (balancesAt !== null && options.currentBalances) {
+    for (const [rawId, balance] of options.currentBalances) {
+      const id = String(rawId);
+      if (!types.has(id) || !Number.isFinite(balance)) continue;
+      current.set(id, balance);
+      idSet.add(id);
+    }
+  }
+  const ids = [...idSet].sort();
   const points: NetWorthPoint[] = [];
   const known = new Map<string, number>();
   for (let idx = first; idx <= end; idx++) {
@@ -143,10 +177,13 @@ export function selectNetWorthSeries(
         if (!known.has(id)) added.push(id);
         known.set(id, recorded);
         anyRecorded = true;
+      } else if (idx === balancesAt && current.has(id)) {
+        if (!known.has(id)) added.push(id);
+        known.set(id, current.get(id)!);
       }
       const value = known.get(id);
       if (value === undefined) continue;
-      const liability = isLiabilityCategory(categorizeAccountType(types.get(id)));
+      const liability = isNetWorthLiability(categorizeAccountType(types.get(id)));
       values.push({
         accountId: id,
         value: liability ? Math.abs(value) : value,

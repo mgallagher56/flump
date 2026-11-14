@@ -1,10 +1,23 @@
-import { MCP_NOTICE, type ResolvedAccount, selectNetWorthSeries } from "@flump/finance-engine";
+import {
+  countsTowardNetWorth,
+  MCP_NOTICE,
+  type NetWorthBasis,
+  type ResolvedAccount,
+  resolveNetWorthScope,
+  selectNetWorthSeries,
+} from "@flump/finance-engine";
 import { z } from "zod";
 import { defineFlumpTool } from "../../define-tool.js";
 import { FlumpToolError } from "../../errors.js";
 import { monthIndex, monthLabel, parseMonth } from "../../provider/in-memory.js";
 import type { AccountSnapshotRow } from "../../types.js";
-import { ACCOUNT_CATEGORIES, loadAccountIndex, type Missing, round2 } from "./common.js";
+import {
+  ACCOUNT_CATEGORIES,
+  loadAccountIndex,
+  type Missing,
+  NET_WORTH_LEFT_OUT_VALUES,
+  round2,
+} from "./common.js";
 
 /** Most periods one series may have; past this the caller must widen the interval or narrow the range. */
 export const MAX_PERIODS = 120;
@@ -52,6 +65,11 @@ const result = z.object({
   seriesCount: z.number(),
   page: z.number(),
   totalPages: z.number(),
+  /**
+   * What the net-worth total leaves out under the user's own choices, in display order;
+   * homeValueMissing means a mortgage counts with no home value saved.
+   */
+  netWorthLeavesOut: z.array(z.enum(NET_WORTH_LEFT_OUT_VALUES)),
   notes: z.array(z.string()),
 });
 
@@ -120,6 +138,7 @@ function buildGrid(
   accounts: readonly ResolvedAccount[],
   rows: readonly AccountSnapshotRow[],
   to: number,
+  basis: NetWorthBasis,
 ): Map<number, Map<string, Cell>> {
   const sourceAt = new Map<string, string>();
   for (const r of rows) {
@@ -128,6 +147,7 @@ function buildGrid(
   const series = selectNetWorthSeries(
     accounts.map((a) => ({ id: a.id, type: a.rawType })),
     rows,
+    basis,
     { through: monthLabel(to) },
   );
   const grid = new Map<number, Map<string, Cell>>();
@@ -159,6 +179,9 @@ interface Group {
   net: boolean;
 }
 
+/** Amounts owed: liabilities and student loans (shown only when the user counts them). */
+const owes = (a: ResolvedAccount): boolean => a.isLiability || a.category === "studentLoans";
+
 /** The group's balance at one month, or null when none of its accounts has a value yet. */
 function groupAt(grid: Map<number, Map<string, Cell>>, g: Group, idx: number) {
   const cells = grid.get(idx);
@@ -175,7 +198,7 @@ function groupAt(grid: Map<number, Map<string, Cell>>, g: Group, idx: number) {
     any = true;
     carried ||= c.carried;
     sources.add(c.source);
-    total += g.net && a.isLiability ? -c.value : c.value;
+    total += g.net && owes(a) ? -c.value : c.value;
   }
   if (!any) return null;
   return {
@@ -190,7 +213,7 @@ export const getBalanceHistory = defineFlumpTool({
   name: "get_balance_history",
   title: "Balance history",
   description:
-    "Month-end balances recorded in Flump between two months, per account, per category or as a net-worth total, at monthly, calendar-quarter or calendar-year intervals (a period cut short by the range is flagged partial). metric balance gives the value at the end of each period; delta gives the change from the end of the previous period (current minus previous, up or down); pctDelta gives that change as a percentage. Debts and mortgages are the amount owed as a positive number. A month with no recorded value carries the last known value forward and is flagged carriedForward; source says how each value was recorded. Student loans are excluded. Results are paged: ask for the next page while page is below totalPages.",
+    "Month-end balances recorded in Flump between two months, per account, per category or as a net-worth total, at monthly, calendar-quarter or calendar-year intervals (a period cut short by the range is flagged partial). metric balance gives the value at the end of each period; delta gives the change from the end of the previous period (current minus previous, up or down); pctDelta gives that change as a percentage. Debts and mortgages are the amount owed as a positive number. A month with no recorded value carries the last known value forward and is flagged carriedForward; source says how each value was recorded. Net worth follows the user's own choices of what counts (netWorthLeavesOut): student loans appear only when the user counts them, and property and mortgages are left out of the total when the user does not count them. Results are paged: ask for the next page while page is below totalPages.",
   input: {
     from: MONTH.describe("First month, in the form 2025-04"),
     to: MONTH.describe("Last month, in the form 2025-04"),
@@ -230,8 +253,26 @@ export const getBalanceHistory = defineFlumpTool({
     }
     const grid = periods(from, to, input.interval);
 
-    const index = await loadAccountIndex(ctx);
-    let selected = index.accounts.filter((a) => a.category !== "studentLoans");
+    const [index, basis] = await Promise.all([
+      loadAccountIndex(ctx),
+      ctx.dataProvider.getNetWorthBasis(ctx.token.userId),
+    ]);
+    // Per account and per category, property and mortgages are always available; the net-worth
+    // total follows the user's basis. Student loans follow the basis everywhere.
+    const listBasis: NetWorthBasis = {
+      countProperty: true,
+      countStudentLoan: basis.countStudentLoan,
+    };
+    const leftOut = resolveNetWorthScope(
+      index.accounts.map((a) => ({
+        id: a.id,
+        name: a.name,
+        type: a.rawType,
+        balance: a.nominalBalance,
+      })),
+      basis,
+    ).leftOut;
+    let selected = index.accounts.filter((a) => countsTowardNetWorth(a.category, listBasis));
     if (input.accountIds) {
       const wanted = new Set<string>();
       for (const id of input.accountIds) {
@@ -256,7 +297,7 @@ export const getBalanceHistory = defineFlumpTool({
             to: input.to,
             accountIds: selected.map((a) => a.id),
           });
-    const cells = buildGrid(selected, rows, to);
+    const cells = buildGrid(selected, rows, to, listBasis);
     const recorded = new Set(rows.map((r) => r.accountId));
     const withData = selected.filter((a) => recorded.has(a.id));
 
@@ -266,7 +307,7 @@ export const getBalanceHistory = defineFlumpTool({
         key: index.idOf("acc", a.id),
         label: index.labelOf(a),
         category: a.category,
-        isLiability: a.isLiability,
+        isLiability: owes(a),
         members: [a],
         net: false,
       }));
@@ -280,22 +321,23 @@ export const getBalanceHistory = defineFlumpTool({
             label: category,
             category,
             // One category is all assets or all liabilities, so its series is a plain sum.
-            isLiability: members[0]?.isLiability ?? false,
+            isLiability: members[0] ? owes(members[0]) : false,
             members,
             net: false,
           },
         ];
       });
     } else {
+      const counted = withData.filter((a) => countsTowardNetWorth(a.category, basis));
       groups =
-        withData.length === 0
+        counted.length === 0
           ? []
           : [
               {
                 key: "total",
                 label: "Net worth",
                 isLiability: false,
-                members: withData,
+                members: counted,
                 net: true,
               },
             ];
@@ -381,11 +423,20 @@ export const getBalanceHistory = defineFlumpTool({
       "An account's first recorded month adds its whole balance, so a delta there is partly a new account rather than a change; accountsAdded counts such accounts.",
       "Quarters and years are calendar periods, not UK tax years.",
       ...(input.groupBy === "total"
-        ? ["The total is what is owned minus what is owed, for the selected accounts."]
-        : []),
-      ...(index.accounts.some((a) => a.category === "studentLoans")
         ? [
-            "Student loans are income-contingent and not kept in monthly history, so they never appear here, even when asked for by id or category.",
+            "The total is what is owned minus what is owed, for the selected accounts that net worth counts.",
+          ]
+        : []),
+      ...(index.accounts.some((a) => a.category === "studentLoans") && !basis.countStudentLoan
+        ? [
+            "Student loans are not counted in net worth, as the user chose, so they do not appear here, even when asked for by id or category.",
+          ]
+        : []),
+      ...(input.groupBy === "total" &&
+      !basis.countProperty &&
+      (leftOut.includes("property") || leftOut.includes("mortgage"))
+        ? [
+            "Property values and mortgage balances are not counted in net worth, as the user chose, so the total leaves them out. Ask per account or per category to see them.",
           ]
         : []),
     ];
@@ -398,6 +449,7 @@ export const getBalanceHistory = defineFlumpTool({
         metric: input.metric,
         interval: input.interval,
         series,
+        netWorthLeavesOut: leftOut,
         seriesCount: groups.length,
         page: input.page,
         totalPages,

@@ -97,6 +97,10 @@ export interface UserProfileData {
   customBudgetCategories?: string[];
   hasResetFinancialData?: boolean;
   onboardingCompleted?: boolean;
+  /** Net worth choice: count Property values and Mortgage balances (default true). */
+  netWorthCountsProperty?: boolean;
+  /** Net worth choice: count student loans as a debt (default false, D-5-B). */
+  netWorthCountsStudentLoan?: boolean;
   createdAt?: string;
   updatedAt?: string;
 }

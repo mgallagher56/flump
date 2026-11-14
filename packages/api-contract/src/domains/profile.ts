@@ -72,6 +72,9 @@ export const UpdateProfileRequest = z.strictObject({
   housingStatus: HousingStatus.nullish(),
   monthlyHousingCost: Money.nullish(),
   monthlyOtherOutgoings: Money.nullish(),
+  /** Net worth choices: count property less its mortgage; count student loans as a debt. */
+  netWorthCountsProperty: z.boolean().optional(),
+  netWorthCountsStudentLoan: z.boolean().optional(),
 });
 export type UpdateProfileRequest = z.infer<typeof UpdateProfileRequest>;
 
@@ -143,6 +146,10 @@ export const UserProfileDto = z.strictObject({
   housingStatus: HousingStatus.nullable(),
   monthlyHousingCost: NullableAmount,
   monthlyOtherOutgoings: NullableAmount,
+  /** Net worth choice: Property values and Mortgage balances count (default true). */
+  netWorthCountsProperty: z.boolean(),
+  /** Net worth choice: student loans count as a debt (default false, D-5-B). */
+  netWorthCountsStudentLoan: z.boolean(),
   createdAt: IsoDateTime,
   updatedAt: IsoDateTime,
 });
@@ -275,6 +282,8 @@ export const AccountExportProfile = z.strictObject({
   monthlyOtherOutgoings: NullableNumber,
   /** Last authenticated request, day precision (BE-06: 24-month inactivity rule). */
   lastActiveAt: ExportTimestamp,
+  netWorthCountsProperty: z.boolean(),
+  netWorthCountsStudentLoan: z.boolean(),
   createdAt: ExportTimestamp,
   updatedAt: ExportTimestamp,
 });

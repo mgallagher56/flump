@@ -38,15 +38,15 @@ function figures(fixture: PersonaFixture) {
   const snapshot = new PortfolioSnapshot(fixture.accounts, fixture.details);
   const picture = buildFinancialPicture(fixture, { snapshot, taxYear: "2026/27", asOf: AS_OF });
   return {
-    netWorth: snapshot.getTotalNetWorth(),
-    totalAssets: snapshot.getTotalAssets(),
-    totalLiabilities: snapshot.getTotalLiabilities(),
+    netWorth: snapshot.getTotalNetWorth(fixture.netWorthBasis),
+    totalAssets: snapshot.getTotalAssets(fixture.netWorthBasis),
+    totalLiabilities: snapshot.getTotalLiabilities(fixture.netWorthBasis),
     totalLiquidCash: snapshot.getTotalLiquidCash(),
     totalConsumerDebt: snapshot.getTotalConsumerDebt(),
     totalMortgageBalance: snapshot.getTotalMortgageBalance(),
     totalStudentLoans: snapshot.getTotalStudentLoans(),
     totalProperty: snapshot.getTotalProperty(),
-    history: snapshot.getMonthlyHistory(24),
+    history: snapshot.getMonthlyHistory(fixture.netWorthBasis, 24),
     pictureNetWorth: picture.netWorth,
     pictureDebt: picture.debt,
   };

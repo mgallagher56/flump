@@ -1,4 +1,4 @@
-import type { BuildContextPackInput } from "@flump/finance-engine";
+import { type BuildContextPackInput, DEFAULT_NET_WORTH_BASIS } from "@flump/finance-engine";
 import type {
   AccountCoverage,
   AccountSnapshotRow,
@@ -52,6 +52,9 @@ export function inMemoryQueries(load: (userId: string) => Promise<BuildContextPa
     },
     async getBaseline(userId) {
       return (await load(userId)).baseline;
+    },
+    async getNetWorthBasis(userId) {
+      return (await load(userId)).netWorthBasis ?? { ...DEFAULT_NET_WORTH_BASIS };
     },
     async getAccountSnapshots(userId, range) {
       const from = parseMonth(range.from);

@@ -1,8 +1,10 @@
+import { DEFAULT_NET_WORTH_BASIS } from "../../../net-worth-basis.js";
 import { budgetEntry } from "../builders.js";
 import type { PersonaFixture } from "../types.js";
 
 /** P2 Priya: GBP 112,000, 8% salary sacrifice, repayment mortgage, two children. */
 export const priya: PersonaFixture = {
+  netWorthBasis: DEFAULT_NET_WORTH_BASIS,
   profile: {
     annualSalary: 112000,
     employmentType: "employed",
