@@ -175,3 +175,28 @@ export const ResetFinancialDataResponse = z.strictObject({
   profile: UserProfileDto,
 });
 export type ResetFinancialDataResponse = z.infer<typeof ResetFinancialDataResponse>;
+
+/**
+ * The phrase the person types to confirm account deletion (BE-04). The backend requires it in
+ * the request body too, so the confirmation is not only a browser check.
+ */
+export const DELETE_USER_CONFIRMATION = "DELETE";
+
+/** DELETE /user-profile request body. */
+export const DeleteUserRequest = z.strictObject({
+  confirmation: z.literal(DELETE_USER_CONFIRMATION),
+});
+export type DeleteUserRequest = z.infer<typeof DeleteUserRequest>;
+
+/**
+ * DELETE /user-profile. `deleted`: every stored row and the login are gone. `identity_pending`:
+ * every stored row is gone, but removing the login failed; repeating the same request is safe and
+ * finishes the job.
+ */
+export const DeleteUserResponse = z.strictObject({
+  status: z.enum(["deleted", "identity_pending"]),
+});
+export type DeleteUserResponse = z.infer<typeof DeleteUserResponse>;
+
+/** Version of the export document below. Bump on any breaking change to its shape. */
+export const ACCOUNT_EXPORT_SCHEMA_VERSION = 1;

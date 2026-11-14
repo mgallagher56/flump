@@ -3,8 +3,8 @@ import { allRoutes, CONTRACT_GROUPS, findRoute, NON_JSON_RESPONSE_ROUTES } from 
 import { checkAgainst } from "./validate.js";
 
 describe("route manifest", () => {
-  it("has 47 routes (44 in the E21 plan minus the two password routes E20 deleted, plus the E19 bank capability route, plus the E20 receipt download, plus the E23 batch balances route, plus the E30 snapshot upsert, plus the six E17 import routes, plus the E17 PR D token activity route) with unique ids and unique method+path pairs", () => {
-    expect(allRoutes).toHaveLength(53);
+  it("has 47 routes (44 in the E21 plan minus the two password routes E20 deleted, plus the E19 bank capability route, plus the E20 receipt download, plus the E23 batch balances route, plus the E30 snapshot upsert, plus the six E17 import routes, plus the E17 PR D token activity route, plus the BE-04 delete and export routes) with unique ids and unique method+path pairs", () => {
+    expect(allRoutes).toHaveLength(55);
     expect(new Set(allRoutes.map((r) => r.id)).size).toBe(allRoutes.length);
     expect(new Set(allRoutes.map((r) => `${r.method} ${r.path}`)).size).toBe(allRoutes.length);
   });

@@ -6641,6 +6641,59 @@
             "bearerAuth": []
           }
         ]
+      },
+      "delete": {
+        "operationId": "profile.deleteUser",
+        "tags": ["profile"],
+        "responses": {
+          "200": {
+            "description": "Success.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "enum": ["deleted", "identity_pending"]
+                    }
+                  },
+                  "required": ["status"],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Request failed validation."
+          },
+          "401": {
+            "description": "Missing or invalid credentials."
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "confirmation": {
+                    "type": "string",
+                    "const": "DELETE"
+                  }
+                },
+                "required": ["confirmation"],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/v1/user-profile/send-password-reset": {
@@ -7015,6 +7068,28 @@
                 "additionalProperties": false
               }
             }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v1/user-profile/export": {
+      "get": {
+        "operationId": "profile.export",
+        "tags": ["profile"],
+        "responses": {
+          "200": {
+            "description": "Success. Not a JSON body (see NON_JSON_RESPONSE_ROUTES)."
+          },
+          "400": {
+            "description": "Request failed validation."
+          },
+          "401": {
+            "description": "Missing or invalid credentials."
           }
         },
         "security": [

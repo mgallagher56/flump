@@ -19,6 +19,7 @@ import {
 } from "./domains/imports.js";
 import { CreateMcpTokenRequest, McpTokenActivityQuery } from "./domains/mcp-tokens.js";
 import {
+  DeleteUserRequest,
   ResetFinancialDataRequest,
   UpdateChecklistRequest,
   UpdateProfileRequest,
@@ -49,6 +50,7 @@ import {
   DeleteBankConnectionResponse,
   DeleteBudgetEntryResponse,
   DeleteTaxRecordResponse,
+  DeleteUserResponse,
   HealthResponse,
   ImportBatchListResponse,
   ImportBatchResponse,
@@ -553,6 +555,24 @@ export const routes = {
       group: "profile",
       response: ResetFinancialDataResponse,
     }),
+    deleteUser: defineRoute({
+      id: "profile.deleteUser",
+      method: "DELETE",
+      path: "user-profile",
+      auth: "user",
+      ownership: "user",
+      body: DeleteUserRequest,
+      group: "profile",
+      response: DeleteUserResponse,
+    }),
+    export: defineRoute({
+      id: "profile.export",
+      method: "GET",
+      path: "user-profile/export",
+      auth: "user",
+      ownership: "user",
+      group: "profile",
+    }),
     updateChecklist: defineRoute({
       id: "profile.updateChecklist",
       method: "PATCH",
@@ -674,6 +694,7 @@ export const NON_JSON_RESPONSE_ROUTES = [
   "app.hello",
   "mcp.get",
   "mcp.post",
+  "profile.export",
   "tax.receipt",
 ] as const;
 
