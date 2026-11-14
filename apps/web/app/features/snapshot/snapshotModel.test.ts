@@ -2,8 +2,6 @@ import { DEFAULT_NET_WORTH_BASIS } from "@flump/finance-engine";
 import { describe, expect, it } from "vitest";
 import {
   addMonths,
-  buildSnapshotPayload,
-  buildCheckInRows as checkInRowsFor,
   formatMonth,
   historyCountLabel,
   buildSnapshotHistory as historyFor,
@@ -15,13 +13,8 @@ import {
 } from "./snapshotModel";
 
 // These tests cover the default net worth choices; the choices themselves are tested below.
+// The check-in list form (`buildCheckInRows`, `buildSnapshotPayload`) is tested in the engine.
 type Args<F extends (...a: never[]) => unknown> = Parameters<F>;
-const buildCheckInRows = (
-  accounts: Args<typeof checkInRowsFor>[0],
-  details: Args<typeof checkInRowsFor>[1],
-  month: string,
-  current: string,
-) => checkInRowsFor(accounts, details, month, current, DEFAULT_NET_WORTH_BASIS);
 const buildSnapshotHistory = (
   accounts: Args<typeof historyFor>[0],
   details: Args<typeof historyFor>[1],
@@ -73,109 +66,6 @@ describe("month helpers", () => {
   it("finds the latest recorded month", () => {
     expect(latestRecordedMonth([])).toBeNull();
     expect(latestRecordedMonth([row(CURRENT, 2025, 12, 1), row(ISA, 2026, 2, 1)])).toBe("2026-02");
-  });
-});
-
-describe("buildCheckInRows", () => {
-  const details = [
-    row(CURRENT, 2026, 10, 1200),
-    row(ISA, 2026, 9, 19000),
-    row(MORTGAGE, 2026, 10, -181000),
-    row(BANK, 2026, 11, 950),
-  ];
-
-  it("prefills last month's value and marks each account's state", () => {
-    const rows = buildCheckInRows(accounts, details, "2026-11", "2026-11");
-    const by = Object.fromEntries(rows.map((r) => [r.accountId, r]));
-    expect(by[CURRENT]).toMatchObject({
-      status: "notUpdated",
-      lastRecordedMonth: "2026-10",
-      prefill: 1200,
-    });
-    expect(by[ISA]).toMatchObject({ status: "notUpdated", lastRecordedMonth: "2026-09" });
-    expect(by[BANK]).toMatchObject({ status: "connected", isConnected: true, prefill: 950 });
-  });
-
-  it("shows a liability as the amount owed, positive", () => {
-    const rows = buildCheckInRows(accounts, details, "2026-11", "2026-11");
-    expect(rows.find((r) => r.accountId === MORTGAGE)).toMatchObject({
-      isLiability: true,
-      prefill: 181000,
-    });
-  });
-
-  it("uses the month's own value when it is already recorded", () => {
-    const rows = buildCheckInRows(
-      accounts,
-      [...details, row(CURRENT, 2026, 11, 1600)],
-      "2026-11",
-      "2026-11",
-    );
-    expect(rows.find((r) => r.accountId === CURRENT)).toMatchObject({
-      status: "recorded",
-      prefill: 1600,
-    });
-  });
-
-  it("falls back to the current balance only for the current month", () => {
-    const current = buildCheckInRows(accounts, [], "2026-11", "2026-11");
-    expect(current.find((r) => r.accountId === ISA)).toMatchObject({
-      status: "noHistory",
-      prefill: 20000,
-    });
-    // Back-filling a month before any record never copies today's balance into the past.
-    const past = buildCheckInRows(accounts, details, "2024-03", "2026-11");
-    expect(past.find((r) => r.accountId === ISA)?.prefill).toBeNull();
-  });
-
-  it("matches account ids whatever their case", () => {
-    const rows = buildCheckInRows(
-      accounts,
-      [{ account_id: CURRENT.toUpperCase(), year: 2026, month: 10, value: "1200.50" }],
-      "2026-11",
-      "2026-11",
-    );
-    expect(rows.find((r) => r.accountId === CURRENT)?.prefill).toBe(1200.5);
-  });
-});
-
-describe("buildSnapshotPayload", () => {
-  const rows = buildCheckInRows(accounts, [], "2026-11", "2026-11");
-
-  it("sends every manual account, leaves connected ones to the sync, and completes the month", () => {
-    const { payload, saved, skipped } = buildSnapshotPayload(
-      rows,
-      { [CURRENT]: 1500, [ISA]: 20100, [MORTGAGE]: 179500, [BANK]: 1 },
-      { isCurrentMonth: true },
-    );
-    expect(saved).toBe(3);
-    expect(skipped).toBe(0);
-    expect(payload.complete).toBe(true);
-    expect(payload.values.map((v) => v.accountId)).not.toContain(BANK);
-    // The amount owed goes up positive; the backend signs it by account type (E30 D18).
-    expect(payload.values.find((v) => v.accountId === MORTGAGE)?.value).toBe(179500);
-  });
-
-  it("allows a partial save: empty fields are skipped and the month is not marked complete", () => {
-    const { payload, saved, skipped } = buildSnapshotPayload(
-      rows,
-      { [CURRENT]: 1500, [ISA]: null, [MORTGAGE]: undefined },
-      { isCurrentMonth: true },
-    );
-    expect(saved).toBe(1);
-    expect(skipped).toBe(2);
-    expect(payload).toEqual({ values: [{ accountId: CURRENT, value: 1500 }] });
-  });
-
-  it("never marks a back-filled month complete, and rounds to pence", () => {
-    const { payload } = buildSnapshotPayload(
-      rows,
-      { [CURRENT]: 10.005, [ISA]: 1, [MORTGAGE]: -2 },
-      { isCurrentMonth: false },
-    );
-    expect(payload.complete).toBeUndefined();
-    expect(payload.values.find((v) => v.accountId === CURRENT)?.value).toBe(10.01);
-    expect(payload.values.find((v) => v.accountId === MORTGAGE)?.value).toBe(2);
   });
 });
 
@@ -317,16 +207,6 @@ describe("net worth choices", () => {
   ];
   const BOTH_ON = { countProperty: true, countStudentLoan: true };
   const BOTH_OFF = { countProperty: false, countStudentLoan: false };
-
-  it("check-in rows are outside net worth exactly when the choices leave their kind out", () => {
-    const outside = (basis: typeof BOTH_ON) =>
-      checkInRowsFor(withLoan, [], "2026-11", "2026-11", basis)
-        .filter((r) => r.outsideNetWorth)
-        .map((r) => r.accountId);
-    expect(outside(DEFAULT_NET_WORTH_BASIS)).toEqual([LOAN]);
-    expect(outside(BOTH_ON)).toEqual([]);
-    expect(outside(BOTH_OFF)).toEqual([MORTGAGE, LOAN]);
-  });
 
   it("the history's current month follows the choices", () => {
     const latest = (basis: typeof BOTH_ON) =>

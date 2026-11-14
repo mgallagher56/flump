@@ -1,29 +1,42 @@
 import {
-  categorizeAccountType,
-  countsTowardNetWorth,
-  isLiabilityCategory,
+  type AccountDetailInput,
+  addCheckInMonths,
+  compareCheckInMonths,
+  isCheckInMonth,
   type NetWorthBasis,
   type NetWorthPoint,
-  type SnapshotRow,
+  type SnapshotAccountInput,
   selectAccountDeltas,
   selectMonthDeltas,
-  selectNetWorthSeries,
+  selectSavedNetWorthSeries,
+  toSnapshotRows,
 } from "@flump/finance-engine";
 import { formatMonthTick } from "@repo/ui";
 
 /**
  * Monthly snapshots (E30 PR2): the pure model behind the check-in sheet and the history page.
  * Everything here is saved data. Nothing is a scenario, and nothing writes until the user saves.
+ * The check-in's pure rules (month keys, the list form's rows and payload) live in
+ * `@flump/finance-engine` for the mobile app; they are re-exported here.
  */
+
+export {
+  type AccountDetailInput,
+  buildCheckInRows,
+  buildSnapshotPayload,
+  type CheckInRow,
+  type CheckInStatus,
+  type SnapshotAccountInput,
+  type SnapshotPayload,
+  toSnapshotRows,
+} from "@flump/finance-engine";
 
 /** "YYYY-MM". */
 export type MonthKey = string;
 
 const MONTH_RE = /^(\d{4})-(0[1-9]|1[0-2])$/;
 
-export function isMonthKey(value: unknown): value is MonthKey {
-  return typeof value === "string" && MONTH_RE.test(value);
-}
+export const isMonthKey: (value: unknown) => value is MonthKey = isCheckInMonth;
 
 /** The Europe/London calendar month of `now`, matching the backend's month key (E30 D3). */
 export function londonMonth(now: Date = new Date()): MonthKey {
@@ -37,24 +50,9 @@ export function londonMonth(now: Date = new Date()): MonthKey {
   return `${year}-${month}`;
 }
 
-function toIndex(month: MonthKey): number {
-  const m = MONTH_RE.exec(month);
-  if (!m) throw new Error(`Not a month key: ${month}`);
-  return Number(m[1]) * 12 + (Number(m[2]) - 1);
-}
+export const addMonths: (month: MonthKey, n: number) => MonthKey = addCheckInMonths;
 
-function fromIndex(index: number): MonthKey {
-  const year = Math.floor(index / 12);
-  return `${year}-${String((index % 12) + 1).padStart(2, "0")}`;
-}
-
-export function addMonths(month: MonthKey, n: number): MonthKey {
-  return fromIndex(toIndex(month) + n);
-}
-
-export function compareMonths(a: MonthKey, b: MonthKey): number {
-  return toIndex(a) - toIndex(b);
-}
+export const compareMonths: (a: MonthKey, b: MonthKey) => number = compareCheckInMonths;
 
 /** "November 2026". */
 export function formatMonth(month: MonthKey): string {
@@ -87,174 +85,6 @@ export function nextCheckInDate(current: MonthKey): string {
     year: "numeric",
     timeZone: "UTC",
   }).format(new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, 1)));
-}
-
-/** The account fields the snapshot feature reads. */
-export interface SnapshotAccountInput {
-  id?: string | null;
-  name?: string | null;
-  type?: string | null;
-  balance?: number | string | null;
-  connectionId?: string | null;
-}
-
-/** A history row as the backend returns it (`GET /account-details`). */
-export interface AccountDetailInput {
-  accountId?: string | null;
-  account_id?: string | null;
-  year?: number | string | null;
-  month?: number | string | null;
-  value?: number | string | null;
-  source?: string | null;
-}
-
-export function toSnapshotRows(details: readonly AccountDetailInput[]): SnapshotRow[] {
-  const rows: SnapshotRow[] = [];
-  for (const d of details ?? []) {
-    const accountId = String(d.accountId ?? d.account_id ?? "").toLowerCase();
-    if (!accountId) continue;
-    rows.push({
-      accountId,
-      year: Number(d.year),
-      month: Number(d.month),
-      value: d.value ?? "",
-    });
-  }
-  return rows;
-}
-
-function rowMonth(r: SnapshotRow): MonthKey | null {
-  const year = Number(r.year);
-  const month = Number(r.month);
-  if (!Number.isInteger(year) || !Number.isInteger(month) || month < 1 || month > 12) return null;
-  return `${year}-${String(month).padStart(2, "0")}`;
-}
-
-export type CheckInStatus =
-  /** A connected account: the bank sync fills it in. */
-  | "connected"
-  /** A value is already recorded for this month. */
-  | "recorded"
-  /** Nothing recorded this month; `lastRecordedMonth` is the latest earlier month. */
-  | "notUpdated"
-  /** No value has ever been recorded. */
-  | "noHistory";
-
-export interface CheckInRow {
-  accountId: string;
-  name: string;
-  type: string;
-  isLiability: boolean;
-  /** Recorded, but the user's net worth basis leaves this kind of account out. */
-  outsideNetWorth: boolean;
-  isConnected: boolean;
-  status: CheckInStatus;
-  /** Latest month before (or equal to) the target month that has a recorded value. */
-  lastRecordedMonth: MonthKey | null;
-  /**
-   * Prefill for the field, as the figure the user sees: liabilities as the amount owed (positive).
-   * Null leaves the field empty.
-   */
-  prefill: number | null;
-}
-
-const asNumber = (value: unknown): number | null => {
-  if (value === null || value === undefined || value === "") return null;
-  const n = Number(value);
-  return Number.isFinite(n) ? n : null;
-};
-
-/**
- * One row per account for the check-in of `month`. The prefill is the value already recorded for
- * that month, else the latest earlier recorded value, else (for the current month only) the
- * account's current balance. A month earlier than any record starts empty, so back-filling never
- * copies today's balance into the past.
- */
-export function buildCheckInRows(
-  accounts: readonly SnapshotAccountInput[],
-  details: readonly AccountDetailInput[],
-  month: MonthKey,
-  current: MonthKey,
-  basis: NetWorthBasis,
-): CheckInRow[] {
-  const rows = toSnapshotRows(details);
-  const target = toIndex(month);
-  return (accounts ?? [])
-    .filter((a) => a.id)
-    .map((a) => {
-      const accountId = String(a.id).toLowerCase();
-      const type = String(a.type ?? "other");
-      const category = categorizeAccountType(type);
-      const isLiability = isLiabilityCategory(category);
-      let atMonth: number | null = null;
-      let before: { index: number; value: number } | null = null;
-      for (const r of rows) {
-        if (r.accountId !== accountId) continue;
-        const key = rowMonth(r);
-        const value = asNumber(r.value);
-        if (!key || value === null) continue;
-        const idx = toIndex(key);
-        if (idx === target) atMonth = value;
-        else if (idx < target && (!before || idx >= before.index)) before = { index: idx, value };
-      }
-      const isConnected = Boolean(a.connectionId);
-      const lastRecordedMonth = atMonth !== null ? month : before ? fromIndex(before.index) : null;
-      let raw: number | null = atMonth ?? before?.value ?? null;
-      if (raw === null && month === current) raw = asNumber(a.balance);
-      const status: CheckInStatus = isConnected
-        ? "connected"
-        : atMonth !== null
-          ? "recorded"
-          : before
-            ? "notUpdated"
-            : "noHistory";
-      return {
-        accountId,
-        name: String(a.name ?? "Account"),
-        type,
-        isLiability,
-        outsideNetWorth: !countsTowardNetWorth(category, basis),
-        isConnected,
-        status,
-        lastRecordedMonth,
-        prefill: raw === null ? null : isLiability ? Math.abs(raw) : raw,
-      };
-    });
-}
-
-export interface SnapshotPayload {
-  /** `source` (check-in only): a typed figure, a confirmed "No change" or a kept calculated one. */
-  values: Array<{
-    accountId: string;
-    value: number;
-    source?: "manual" | "confirmed" | "calculated";
-  }>;
-  complete?: boolean;
-}
-
-/**
- * The `PUT /snapshots/:month` body. Connected accounts are left to the bank sync; an empty field
- * is skipped (a partial save). Liabilities are sent as the amount owed: the backend signs them by
- * account type (E30 D18). `complete` marks the month's check-in done only when this is the current
- * month and no manual account was skipped.
- */
-export function buildSnapshotPayload(
-  rows: readonly CheckInRow[],
-  values: Readonly<Record<string, number | null | undefined>>,
-  options: { isCurrentMonth: boolean },
-): { payload: SnapshotPayload; saved: number; skipped: number } {
-  const manual = rows.filter((r) => !r.isConnected);
-  const out: SnapshotPayload["values"] = [];
-  for (const r of manual) {
-    const v = values[r.accountId];
-    if (typeof v !== "number" || !Number.isFinite(v)) continue;
-    const rounded = Math.round(v * 100) / 100;
-    out.push({ accountId: r.accountId, value: r.isLiability ? Math.abs(rounded) : rounded });
-  }
-  const skipped = manual.length - out.length;
-  const payload: SnapshotPayload = { values: out };
-  if (options.isCurrentMonth && skipped === 0 && out.length > 0) payload.complete = true;
-  return { payload, saved: out.length, skipped };
 }
 
 /** History length decides what the page can show (E30 PR2 empty states). */
@@ -312,22 +142,10 @@ export function buildSnapshotHistory(
   current: MonthKey,
   basis: NetWorthBasis,
 ): SnapshotHistory {
-  const engineAccounts = (accounts ?? [])
-    .filter((a) => a.id)
-    .map((a) => ({ id: String(a.id).toLowerCase(), type: String(a.type ?? "other") }));
   const names = new Map(
     (accounts ?? []).filter((a) => a.id).map((a) => [String(a.id).toLowerCase(), a.name ?? ""]),
   );
-  const currentBalances = new Map<string, number>();
-  for (const a of accounts ?? []) {
-    if (!a.id || a.balance === null || a.balance === undefined || a.balance === "") continue;
-    const balance = Number(a.balance);
-    if (Number.isFinite(balance)) currentBalances.set(String(a.id).toLowerCase(), balance);
-  }
-  const series = selectNetWorthSeries(engineAccounts, toSnapshotRows(details), basis, {
-    through: current,
-    currentBalances,
-  });
+  const series = selectSavedNetWorthSeries(accounts, details, current, basis);
   const recordedMonths = series.filter((p) => !p.allCarried).length;
   const stage: HistoryStage =
     recordedMonths === 0
@@ -445,12 +263,13 @@ export function historyCountLabel(recordedMonths: number): string {
 
 /** The latest month with a recorded value, or null. */
 export function latestRecordedMonth(details: readonly AccountDetailInput[]): MonthKey | null {
-  let best: number | null = null;
+  let best: MonthKey | null = null;
   for (const r of toSnapshotRows(details)) {
-    const key = rowMonth(r);
-    if (!key) continue;
-    const idx = toIndex(key);
-    if (best === null || idx > best) best = idx;
+    const year = Number(r.year);
+    const month = Number(r.month);
+    if (!Number.isInteger(year) || !Number.isInteger(month) || month < 1 || month > 12) continue;
+    const key = `${year}-${String(month).padStart(2, "0")}`;
+    if (best === null || compareMonths(key, best) > 0) best = key;
   }
-  return best === null ? null : fromIndex(best);
+  return best;
 }

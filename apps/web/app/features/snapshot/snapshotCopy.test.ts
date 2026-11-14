@@ -52,11 +52,10 @@ describe("snapshot copy", () => {
 });
 
 describe("check-in copy", () => {
-  it("states last month's figure, the saved balance or no figure", () => {
-    expect(lastFigureText(3360, "2026-10")).toBe("October 2026: £3,360");
-    expect(lastFigureText(3412.5, "2026-10")).toBe("October 2026: £3,412.50");
-    expect(lastFigureText(1200, null)).toBe("Saved balance: £1,200");
-    expect(lastFigureText(null, null)).toBe("No balance recorded yet");
+  it("states the saved current balance that No change keeps, or no figure", () => {
+    expect(lastFigureText(3360)).toBe("Current balance: £3,360");
+    expect(lastFigureText(3412.5)).toBe("Current balance: £3,412.50");
+    expect(lastFigureText(null)).toBe("No balance recorded yet");
   });
 
   it("words a done step as a plain status", () => {

@@ -153,7 +153,15 @@
                         "type": "integer"
                       },
                       "source": {
-                        "enum": ["onboarding", "manual", "connected", "backfill", "agent"],
+                        "enum": [
+                          "onboarding",
+                          "manual",
+                          "connected",
+                          "backfill",
+                          "agent",
+                          "confirmed",
+                          "calculated"
+                        ],
                         "type": "string"
                       },
                       "updatedAt": {
@@ -360,7 +368,15 @@
                               "type": "integer"
                             },
                             "source": {
-                              "enum": ["onboarding", "manual", "connected", "backfill", "agent"],
+                              "enum": [
+                                "onboarding",
+                                "manual",
+                                "connected",
+                                "backfill",
+                                "agent",
+                                "confirmed",
+                                "calculated"
+                              ],
                               "type": "string"
                             },
                             "updatedAt": {
@@ -1383,7 +1399,15 @@
                             "type": "integer"
                           },
                           "source": {
-                            "enum": ["onboarding", "manual", "connected", "backfill", "agent"],
+                            "enum": [
+                              "onboarding",
+                              "manual",
+                              "connected",
+                              "backfill",
+                              "agent",
+                              "confirmed",
+                              "calculated"
+                            ],
                             "type": "string"
                           },
                           "updatedAt": {
@@ -2423,7 +2447,15 @@
                         "type": "integer"
                       },
                       "source": {
-                        "enum": ["onboarding", "manual", "connected", "backfill", "agent"],
+                        "enum": [
+                          "onboarding",
+                          "manual",
+                          "connected",
+                          "backfill",
+                          "agent",
+                          "confirmed",
+                          "calculated"
+                        ],
                         "type": "string"
                       },
                       "updatedAt": {
@@ -6365,7 +6397,15 @@
                           "priorSource": {
                             "anyOf": [
                               {
-                                "enum": ["onboarding", "manual", "connected", "backfill", "agent"],
+                                "enum": [
+                                  "onboarding",
+                                  "manual",
+                                  "connected",
+                                  "backfill",
+                                  "agent",
+                                  "confirmed",
+                                  "calculated"
+                                ],
                                 "type": "string"
                               },
                               {
@@ -9106,6 +9146,10 @@
                         "asOfDate": {
                           "type": "string"
                         },
+                        "source": {
+                          "enum": ["manual", "confirmed", "calculated"],
+                          "type": "string"
+                        },
                         "value": {
                           "description": "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.",
                           "type": "number"
@@ -9152,7 +9196,7 @@
                             "type": "string"
                           },
                           "source": {
-                            "const": "manual",
+                            "enum": ["manual", "confirmed", "calculated"],
                             "type": "string"
                           },
                           "value": {

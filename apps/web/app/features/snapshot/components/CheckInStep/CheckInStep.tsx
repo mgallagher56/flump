@@ -132,7 +132,7 @@ export const CheckInStep: FC<CheckInStepProps> = ({
         <div className={stepHead()}>
           {nameEl}
           {typeLabel ? <p className={stepMeta()}>{typeLabel}</p> : null}
-          <p className={stepMeta()}>{lastFigureText(step.lastValue, step.lastMonth)}</p>
+          <p className={stepMeta()}>{lastFigureText(step.lastValue)}</p>
         </div>
         <div className={doneRow()}>
           <p
@@ -158,7 +158,7 @@ export const CheckInStep: FC<CheckInStepProps> = ({
       <div className={stepHead()}>
         {nameEl}
         {typeLabel ? <p className={stepMeta()}>{typeLabel}</p> : null}
-        <p className={stepMeta()}>{lastFigureText(step.lastValue, step.lastMonth)}</p>
+        <p className={stepMeta()}>{lastFigureText(step.lastValue)}</p>
       </div>
 
       {calc ? (
