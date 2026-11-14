@@ -79,6 +79,28 @@ describe("MarginalRateChart", () => {
     expect(plateauY - labelY).toBeLessThan(20);
   });
 
+  it("never writes the line label over the Your pay text, even when the line runs near the top", () => {
+    // A line near 95% everywhere puts any label in the row where "Your pay" is written.
+    const flatHigh = Array.from({ length: 61 }, (_, i) => ({ gross: i * 2500, ratePct: 95 }));
+    renderChart({ points: flatHigh, thresholds: [], steppedZones: [], yourPay: 20_000 });
+    const label = screen.getByTestId("marginal-rate-line-label");
+    const yourPay = screen.getByTestId("marginal-rate-your-pay").querySelector("text") as Element;
+    const lx = Number(label.getAttribute("x"));
+    const labelW = "Share deducted".length * 7;
+    const px = Number(yourPay.getAttribute("x"));
+    const payHalf = ("Your pay".length * 7) / 2;
+    const overlapsX = lx < px + payHalf && lx + labelW > px - payHalf;
+    const labelY = Number(label.getAttribute("y"));
+    const payY = Number(yourPay.getAttribute("y"));
+    expect(overlapsX && Math.abs(labelY - payY) < 14).toBe(false);
+  });
+
+  it("can leave out its own Show data and thresholds line when the caller shows them", () => {
+    renderChart({ showDataTable: false, showThresholdNote: false });
+    expect(screen.queryByRole("button", { name: "Show data" })).toBeNull();
+    expect(screen.queryByText(/Each dashed line marks a threshold/)).toBeNull();
+  });
+
   it("can keep the summary for screen readers only", () => {
     renderChart({ showSummary: false });
     const figure = screen.getByRole("figure");

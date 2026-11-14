@@ -161,6 +161,9 @@ export const PensionForecast: FC<PensionForecastProps> = ({
   const showsTakeHomeTax =
     activeTool === "takeHome" && effect !== null && isTakeHomeEffectUnverified(effect);
   const whenLabel = retirementWhenLabel(currentAge, values.horizonYears);
+  // The age shows on the KPI and the slider only; the outcome names it in words (R2-8).
+  const outcomeWhen =
+    values.horizonYears === scenario.saved.horizonYears ? "at retirement" : "at the age you chose";
   const statePensionMonthly = Math.round(result.statePensionAnnual / 12);
 
   const retirementTool = (
@@ -171,15 +174,12 @@ export const PensionForecast: FC<PensionForecastProps> = ({
             inTodaysMoney={values.adjustForInflation}
             result={result}
             savedResult={savedResult}
-            whenLabel={whenLabel}
+            whenLabel={outcomeWhen}
           />
           <ForecastChart
             adjustForInflation={values.adjustForInflation}
-            annotationLabel={
-              currentAge !== null ? `Retire at ${currentAge + values.horizonYears}` : "Retire"
-            }
+            annotationLabel="Retirement"
             result={result}
-            whenLabel={whenLabel}
           />
         </div>
       }

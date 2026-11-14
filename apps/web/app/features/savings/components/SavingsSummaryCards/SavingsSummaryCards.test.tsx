@@ -35,7 +35,9 @@ describe("SavingsSummaryCards", () => {
       />,
     );
     expect(screen.queryByText("Average rate")).toBeNull();
-    expect(screen.queryByText("ISA allowance used")).toBeNull();
+    // No ISA saving is stated as a fact in words, never as £0.
+    expect(screen.getByText("ISA allowance used")).toBeDefined();
+    expect(screen.getByText("None")).toBeDefined();
     expect(container.textContent).not.toMatch(/£0(?![\d,])|0\.00%/);
   });
 

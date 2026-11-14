@@ -84,6 +84,7 @@ export const TaxHeadline: FC<TaxHeadlineProps> = ({
             action={<StatusBadge variant="neutral">Estimate</StatusBadge>}
             explain={`Income Tax and National Insurance on your income outside PAYE, after costs, on top of your salary, at ${taxYear} rates.`}
             label="Estimated bill"
+            subtext="Income Tax and National Insurance on this income"
             value={bill}
             valueFormat={{ fractionDigits: 0 }}
           />
@@ -97,6 +98,7 @@ export const TaxHeadline: FC<TaxHeadlineProps> = ({
             }
             label="Costs"
             notSetLabel="None recorded"
+            subtext="Recorded against this income"
             value={costs > 0 ? costs : null}
             valueFormat={{ fractionDigits: 0 }}
           />

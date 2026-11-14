@@ -16,7 +16,7 @@ export interface ForecasterResultsProps {
   result: ForecastResult;
   /** The same projection at the saved figures, for the comparison figure. */
   savedResult: ForecastResult;
-  /** "at 67" or "in 25 years": when the pot is drawn on. */
+  /** "at retirement" or "at the age you chose": when the pot is drawn on. */
   whenLabel: string;
   /** True when figures are shown in today's money. */
   inTodaysMoney: boolean;

@@ -386,6 +386,7 @@ export const PensionContainer: FC = () => {
         annualSalary={annualSalary}
         employeePercent={employeePercent}
         employerPercent={employerPercent}
+        factsOpen={hash === "#pension-details"}
         hasSalary={hasSalary}
         isEditing={isEditingDetails}
         isSalarySacrifice={isSalarySacrifice}

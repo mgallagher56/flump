@@ -10,12 +10,16 @@ export interface SavingsSummaryCardsProps {
   monthlySaving: number | null;
   /** Average AER across the accounts that store a rate. Null or 0 hides the card. */
   averageRate: number | null;
-  /** ISA allowance used this tax year. Null or 0 hides the card. */
+  /** ISA allowance used this tax year. Null or 0 reads "None this tax year". */
   isaUsed: number | null;
 }
 
 const isReal = (value: number | null): value is number =>
   value !== null && Number.isFinite(value) && value > 0;
+
+export const ISA_NONE = "None";
+export const ISA_EXPLAIN =
+  "Estimated from what you save each month into accounts with ISA in their name, since 6 April. The allowance is £20,000 a year.";
 
 export const KPI_PROMPT_TITLE =
   "Add what you save each month and your interest rates to see more here";
@@ -54,7 +58,9 @@ export const SavingsSummaryCards: FC<SavingsSummaryCardsProps> = ({
       />,
     );
   }
-  if (isReal(isaUsed)) {
+  // Shown whenever another fact is, so every strip holds three (R2-8). With no ISA saving it
+  // reads "None" (this tax year): a fact about the saved accounts, never a judgement.
+  if (cards.length > 0) {
     cards.push(
       <KpiCard
         key="isa"
@@ -63,9 +69,10 @@ export const SavingsSummaryCards: FC<SavingsSummaryCardsProps> = ({
             Estimate
           </StatusBadge>
         }
+        explain={ISA_EXPLAIN}
         label="ISA allowance used"
         subtext="This tax year, from your monthly saving into ISAs"
-        value={isaUsed}
+        value={isReal(isaUsed) ? isaUsed : <span className={kpiFigure()}>{ISA_NONE}</span>}
         valueFormat={{ fractionDigits: 0 }}
       />,
     );

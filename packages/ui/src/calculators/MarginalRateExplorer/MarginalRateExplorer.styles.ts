@@ -84,7 +84,8 @@ export const explorerOutcome = cva({
     flexDirection: "column",
     gap: "1",
     minWidth: "0",
-    fontVariantNumeric: "tabular-nums",
+    // No tabular-nums on the wrapper: Inter's tnum widens the hyphen ("take - home"). Money sets
+    // tabular-nums on the figure itself.
   },
 });
 
@@ -94,8 +95,4 @@ export const explorerOutcomeLabel = cva({
 
 export const explorerOutcomeCaption = cva({
   base: { textStyle: "body.sm", color: "text.secondary", margin: "0" },
-});
-
-export const explorerOutcomeHead = cva({
-  base: { display: "flex", flexWrap: "wrap", alignItems: "center", gap: "2" },
 });

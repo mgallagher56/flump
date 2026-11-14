@@ -104,6 +104,14 @@ export const TakeHomeBreakdown: FC<TakeHomeBreakdownProps> = ({ details, ...figu
     return { key: s.key, x, width };
   });
   const rows = TABLE_ORDER.filter((k) => k === "takeHome" || parts[k] > 0);
+  // The right end names what the grey part holds, in the order the strip shows it.
+  const offWords = [
+    "Tax",
+    "National Insurance",
+    ...(parts.pension > 0 ? ["pension"] : []),
+    ...(parts.studentLoan > 0 ? ["student loan"] : []),
+  ];
+  const offLabel = `${offWords.slice(0, -1).join(", ")} and ${offWords[offWords.length - 1]}`;
 
   return (
     <Card
@@ -147,7 +155,7 @@ export const TakeHomeBreakdown: FC<TakeHomeBreakdownProps> = ({ details, ...figu
         {/* Direct labels at the bar's two ends, in place of a legend. */}
         <div className={barLabels()}>
           <span className={barLabel({ tone: "takeHome" })}>{PAY_PART_LABELS.takeHome}</span>
-          <span className={barLabel()}>What comes off</span>
+          <span className={barLabel({ end: true })}>{offLabel}</span>
         </div>
       </div>
 

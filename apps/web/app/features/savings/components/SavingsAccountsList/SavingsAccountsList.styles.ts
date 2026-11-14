@@ -49,28 +49,6 @@ export const balance = cva({
   base: { fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap" },
 });
 
-export const isaFooter = cva({
-  base: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "2",
-    paddingX: "4",
-    paddingY: "4",
-    borderTopWidth: "1px",
-    borderTopStyle: "solid",
-    borderColor: "border.subtle",
-  },
-});
-
-export const isaNote = cva({
-  base: {
-    margin: 0,
-    textStyle: "body.sm",
-    color: "text.secondary",
-    fontVariantNumeric: "tabular-nums",
-  },
-});
-
 export const accountMeta = cva({
   base: { display: "flex", flexDirection: "column", gap: "2px", minWidth: "5rem", flex: "1 1 0" },
 });

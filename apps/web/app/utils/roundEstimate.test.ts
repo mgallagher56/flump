@@ -15,6 +15,8 @@ describe("roundEstimate", () => {
   it("keeps whole pounds under £1,000 and handles zero and bad input", () => {
     expect(roundEstimate(685.4)).toBe(685);
     expect(roundEstimate(0)).toBe(0);
+    // Never "-£0".
+    expect(roundEstimate(-0.4)).toBe(0);
     expect(roundEstimate(Number.NaN)).toBe(0);
     expect(roundEstimate(-13_852)).toBe(-13_900);
   });

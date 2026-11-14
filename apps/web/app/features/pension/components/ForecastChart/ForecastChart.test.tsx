@@ -39,19 +39,14 @@ const result = (horizonYears: number) =>
 
 const renderChart = (horizonYears = 25) =>
   render(
-    <ForecastChart
-      adjustForInflation
-      annotationLabel="Retire at 67"
-      result={result(horizonYears)}
-      whenLabel="at 67"
-    />,
+    <ForecastChart adjustForInflation annotationLabel="Retirement" result={result(horizonYears)} />,
   );
 
 describe("<ForecastChart />", () => {
   it("is a named figure with a one-sentence summary and no figures in the default view", () => {
     const { container } = renderChart();
     const figure = screen.getByRole("figure", { name: "Estimated pension pot" });
-    expect(figure.textContent).toContain("Your pot each year to 67, in today's money.");
+    expect(figure.textContent).toContain("Your pot each year to retirement, in today's money.");
     expect(screen.queryByText(/legend|Projected total/i)).toBeNull();
     expect(countFigures(container)).toBe(0);
   });

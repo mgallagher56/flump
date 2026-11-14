@@ -1,12 +1,4 @@
-import {
-  Button,
-  Card,
-  CollapsibleDrawer,
-  Icon,
-  Money,
-  ProgressBar,
-  VisuallyHidden,
-} from "@repo/ui";
+import { Button, Card, CollapsibleDrawer, Icon, Money, VisuallyHidden } from "@repo/ui";
 import { Pencil } from "lucide-react";
 import { type FC, useState } from "react";
 import { Link, useFetcher } from "react-router";
@@ -14,7 +6,6 @@ import type { Account } from "~/containers/accounts/types";
 import { ConfirmDialog } from "~/features/feedback/components/ConfirmDialog";
 import { useFetcherOutcome } from "~/features/feedback/hooks/useFetcherOutcome";
 import { AddSavingsAccountDialog } from "../AddSavingsAccountDialog";
-import { ISA_ALLOWANCE } from "./isaAllowance.utils";
 import {
   accountLink,
   accountMeta,
@@ -23,8 +14,6 @@ import {
   actionsCell,
   balance,
   drawerWrap,
-  isaFooter,
-  isaNote,
   listHeader,
   listRoot,
   listTitle,
@@ -35,18 +24,7 @@ import {
 
 export interface SavingsAccountsListProps {
   accounts: Account[];
-  /**
-   * Estimated ISA allowance used this tax year (the KPI above prints the figure). When above 0, a
-   * quiet bar sits at the foot of the card with one sentence about the allowance.
-   */
-  isaUsed?: number | null;
 }
-
-const pounds = new Intl.NumberFormat("en-GB", {
-  style: "currency",
-  currency: "GBP",
-  maximumFractionDigits: 0,
-});
 
 /** Law 3: a table over eight rows keeps the rest behind a drawer. */
 const VISIBLE_ROWS = 8;
@@ -58,7 +36,7 @@ const typeLabel = (acc: Account) => (acc.type === "Investment" ? "Investment" : 
  * as pension pots. The rate, the amount saved each month and "Delete account" live in the edit
  * dialog; deleting always asks for confirmation.
  */
-export const SavingsAccountsList: FC<SavingsAccountsListProps> = ({ accounts, isaUsed }) => {
+export const SavingsAccountsList: FC<SavingsAccountsListProps> = ({ accounts }) => {
   const fetcher = useFetcher();
   const [editingAccount, setEditingAccount] = useState<Account | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
@@ -132,19 +110,6 @@ export const SavingsAccountsList: FC<SavingsAccountsListProps> = ({ accounts, is
             </CollapsibleDrawer>
           </div>
         )}
-        {isaUsed !== null && isaUsed !== undefined && isaUsed > 0 ? (
-          <div className={isaFooter()} data-testid="isa-allowance" id="isa-allowance">
-            <ProgressBar
-              label="ISA allowance used this tax year"
-              max={ISA_ALLOWANCE}
-              size="sm"
-              value={Math.min(isaUsed, ISA_ALLOWANCE)}
-              valueDisplay=""
-              valueText={`Estimate: ${pounds.format(Math.min(isaUsed, ISA_ALLOWANCE))} of ${pounds.format(ISA_ALLOWANCE)} used`}
-            />
-            <p className={isaNote()}>The allowance resets each tax year on 6 April.</p>
-          </div>
-        ) : null}
       </Card>
 
       <ConfirmDialog

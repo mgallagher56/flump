@@ -22,14 +22,16 @@ describe("<PayRiseTool />", () => {
     expect(screen.getByText("a month")).toBeDefined();
   });
 
-  it("uses the currency input for the rise and treats a cleared field as nothing", () => {
+  it("uses a slider with an editable pill, never a number input, from £0 to £20,000", () => {
     const props = renderTool({ monthlyIncrease: 0 });
-    const input = screen.getByLabelText("Pay rise a year, before tax") as HTMLInputElement;
-    expect(input.type).not.toBe("number");
-    fireEvent.change(input, { target: { value: "7500" } });
+    const slider = screen.getByRole("slider");
+    expect(slider.getAttribute("max")).toBe("20000");
+    expect(slider.getAttribute("step")).toBe("500");
+    fireEvent.change(slider, { target: { value: "7500" } });
     expect(props.onSalaryIncreaseChange).toHaveBeenLastCalledWith(7500);
-    fireEvent.change(input, { target: { value: "" } });
-    expect(props.onSalaryIncreaseChange).toHaveBeenLastCalledWith(0);
+    const pill = screen.getByLabelText("Pay rise a year, before tax input") as HTMLInputElement;
+    expect(pill.type).not.toBe("number");
+    expect(pill.value).toBe("£5,000");
   });
 
   it("sends the monthly change to savings", () => {

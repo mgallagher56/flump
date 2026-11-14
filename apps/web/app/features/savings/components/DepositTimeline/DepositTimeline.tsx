@@ -57,11 +57,9 @@ export const depositRanges = (saved: DepositTimelineValues) => {
   const target = Math.max(0, saved.targetDeposit ?? defaultDepositTarget(start));
   const monthly = Math.max(0, saved.monthlySaving ?? 0);
   const targetMax = roundUp(Math.max(target * 2, start * 2), 20_000);
-  const startingMax = roundUp(start * 2, 10_000);
   const monthlyMax = roundUp(monthly * 2, 2_000);
   return {
     target: { max: targetMax, step: niceStep(targetMax / 200) },
-    starting: { max: startingMax, step: niceStep(startingMax / 200) },
     monthly: { max: monthlyMax, step: monthlyMax > 2_000 ? niceStep(monthlyMax / 100) : 25 },
   };
 };
@@ -110,8 +108,9 @@ export const reachedByMonth = (today: Date, months: number): string =>
 const money = (n: number) => formatMoney(n, { fractionDigits: 0 }).text;
 
 /**
- * How long a target takes at a monthly saving (E32, R2-8): three sliders like "How it could
- * grow", one outcome (the time) and two supporting figures. Plain arithmetic from the engine: no
+ * How long a target takes at a monthly saving (E32, R2-8): two sliders like "How it could
+ * grow", starting from the saved total (the zone says so), one outcome (the time) and two
+ * supporting figures. Plain arithmetic from the engine: no
  * interest. Lives inside a ScenarioZone, so nothing here is saved.
  */
 export const DepositTimeline: FC<DepositTimelineProps> = ({
@@ -146,16 +145,6 @@ export const DepositTimeline: FC<DepositTimelineProps> = ({
             value={values.monthlySaving}
             onChange={(value) => onChange("monthlySaving", value)}
             onClear={() => onChange("monthlySaving", null)}
-          />
-          <SliderField
-            format="currency"
-            label="Starting amount"
-            max={ranges.starting.max}
-            min={0}
-            step={ranges.starting.step}
-            value={values.startingAmount}
-            onChange={(value) => onChange("startingAmount", value)}
-            onClear={() => onChange("startingAmount", null)}
           />
         </div>
       }

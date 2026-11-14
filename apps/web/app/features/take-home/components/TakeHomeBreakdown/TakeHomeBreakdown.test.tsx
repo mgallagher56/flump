@@ -25,6 +25,33 @@ describe("monthlyPayParts", () => {
     const sum = Object.values(parts).reduce((a, b) => a + b, 0);
     expect(sum).toBe(Math.round(base.salary / 12));
   });
+
+  it("with the engine's take-home, shows it to the pound and keeps the sum to the monthly pay", () => {
+    const annual = base.salary - base.incomeTax - base.nationalInsurance - base.pension; // 33,670
+    const parts = monthlyPayParts({ ...base, takeHome: annual });
+    expect(parts.takeHome).toBe(Math.round(annual / 12)); // 2,806, not the derived 2,805
+    const sum = Object.values(parts).reduce((a, b) => a + b, 0);
+    expect(sum).toBe(Math.round(base.salary / 12));
+    // The pound of rounding comes off the largest deduction, Income Tax.
+    expect(parts.incomeTax).toBe(540);
+    expect(parts.nationalInsurance).toBe(216);
+  });
+
+  it("keeps the parts adding up across salaries when given the engine's take-home", () => {
+    for (const salary of [18_000, 32_000, 58_000, 123_456]) {
+      const f = {
+        salary,
+        incomeTax: salary * 0.17 + 0.4,
+        nationalInsurance: salary * 0.06 + 0.3,
+        pension: salary * 0.05,
+        studentLoan: salary > 30_000 ? (salary - 28_470) * 0.09 : 0,
+      };
+      const takeHome = salary - f.incomeTax - f.nationalInsurance - f.pension - f.studentLoan;
+      const parts = monthlyPayParts({ ...f, takeHome });
+      expect(parts.takeHome).toBe(Math.round(takeHome / 12));
+      expect(Object.values(parts).reduce((a, b) => a + b, 0)).toBe(Math.round(salary / 12));
+    }
+  });
 });
 
 describe("<TakeHomeBreakdown />", () => {
@@ -47,6 +74,7 @@ describe("<TakeHomeBreakdown />", () => {
 
   it("adds a student loan row only when there is a repayment", () => {
     render(<TakeHomeBreakdown {...base} studentLoan={1400} />);
+    expect(screen.getByText("Tax, National Insurance, pension and student loan")).toBeDefined();
     openDetails();
     expect(screen.getByRole("rowheader", { name: "Student loan" })).toBeDefined();
   });
@@ -57,7 +85,7 @@ describe("<TakeHomeBreakdown />", () => {
     expect(bar.closest('[aria-hidden="true"]')).not.toBeNull();
     expect(bar.querySelectorAll("rect")).toHaveLength(3);
     expect(screen.getByText("Take-home pay")).toBeDefined();
-    expect(screen.getByText("What comes off")).toBeDefined();
+    expect(screen.getByText("Tax, National Insurance and pension")).toBeDefined();
     expect(container.textContent).not.toMatch(/£/);
     expect(screen.getByRole("heading", { level: 2, name: "Where your pay goes" })).toBeDefined();
   });

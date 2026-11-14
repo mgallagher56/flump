@@ -14,7 +14,11 @@ import {
 import { ArrowRight } from "lucide-react";
 import { type FC, type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { cx } from "../../../styled-system/css";
-import { MarginalRateChart } from "../../patterns/MarginalRateChart/MarginalRateChart";
+import {
+  MarginalRateChart,
+  MarginalRateDataTable,
+  marginalRateTableRows,
+} from "../../patterns/MarginalRateChart/MarginalRateChart";
 import { SimulatorSplitLayout } from "../../patterns/SimulatorSplitLayout/SimulatorSplitLayout";
 import {
   asAtTaxYear,
@@ -51,7 +55,6 @@ import {
   explorerLegend,
   explorerOutcome,
   explorerOutcomeCaption,
-  explorerOutcomeHead,
   explorerOutcomeLabel,
   explorerOutcomes,
   explorerRoot,
@@ -337,10 +340,11 @@ export const MarginalRateExplorer: FC<MarginalRateExplorerProps> = ({
           input past the first two (gross pay and bonus), including the extra pension, with the
           state in the parent. */}
       <CollapsibleDrawer
-        closedLabel=""
+        closedLabel={inScenarioZone ? undefined : ""}
         defaultOpen={extraPension > 0}
-        openLabel=""
+        openLabel={inScenarioZone ? undefined : ""}
         title={EXPLORER_COPY.moreDetails}
+        variant={inScenarioZone ? "quiet" : undefined}
       >
         <div className={explorerDetails()}>
           <FormField label={EXPLORER_COPY.region}>
@@ -472,12 +476,8 @@ export const MarginalRateExplorer: FC<MarginalRateExplorerProps> = ({
           ScenarioZone it sits on the zone's own surface, with no card. */}
       {inScenarioZone ? (
         <div className={explorerOutcome()} data-testid="explorer-outcomes">
-          <div className={explorerOutcomeHead()}>
-            <p className={explorerOutcomeLabel()}>{EXPLORER_COPY.kpiNextThousand}</p>
-            <StatusBadge variant="neutral">{asAtTaxYear(delta.before.ratesYear)}</StatusBadge>
-          </div>
+          <p className={explorerOutcomeLabel()}>{EXPLORER_COPY.kpiNextThousand}</p>
           <Money fractionDigits={takeHomeDigits} size="kpi" value={delta.deltaTakeHome} />
-          <p className={explorerOutcomeCaption()}>{EXPLORER_COPY.kpiNextThousandSubtext}</p>
         </div>
       ) : (
         <div className={explorerOutcomes()} data-density="compact" data-testid="explorer-outcomes">
@@ -496,6 +496,8 @@ export const MarginalRateExplorer: FC<MarginalRateExplorerProps> = ({
         showSummary={!inRange}
         steppedZones={zones}
         summary={summary}
+        showDataTable={!inScenarioZone}
+        showThresholdNote={!inScenarioZone}
         thresholdFocus={inScenarioZone ? "near-pay" : "all"}
         thresholds={thresholds}
         title={EXPLORER_COPY.chartTitle}
@@ -506,6 +508,24 @@ export const MarginalRateExplorer: FC<MarginalRateExplorerProps> = ({
         calendarYear={context.calendarYear}
         collapseTable
         components={delta.components}
+        disclosureExtra={
+          inScenarioZone ? (
+            <>
+              {/* In the zone the tax year, the rest of the £1,000 and the dashed lines are
+                  explained here, so the first view keeps to the outcome and the chart. */}
+              <div className={explorerBadges()}>
+                <StatusBadge variant="neutral">{asAtTaxYear(delta.before.ratesYear)}</StatusBadge>
+              </div>
+              <p className={explorerOutcomeCaption()}>{EXPLORER_COPY.kpiNextThousandSubtext}</p>
+              <p className={explorerOutcomeCaption()}>{EXPLORER_COPY.chartThresholdsNote}</p>
+              <MarginalRateDataTable
+                caption={EXPLORER_COPY.chartTitle}
+                rows={marginalRateTableRows(points)}
+              />
+            </>
+          ) : undefined
+        }
+        mergeDisclosures={inScenarioZone}
         deltaGross={delta.deltaGross}
         headingLevel={sectionHeading}
         isFallback={isFallback}

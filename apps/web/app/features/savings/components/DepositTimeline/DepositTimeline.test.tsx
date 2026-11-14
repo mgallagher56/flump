@@ -60,7 +60,6 @@ describe("defaults and ranges", () => {
   it("sets slider ranges from the saved figures that hold them", () => {
     const ranges = depositRanges(values({ targetDeposit: 25000, startingAmount: 38000 }));
     expect(ranges.target.max).toBeGreaterThanOrEqual(76000);
-    expect(ranges.starting.max).toBeGreaterThanOrEqual(76000);
     expect(ranges.monthly.max).toBe(2000);
     expect(ranges.monthly.step).toBe(25);
   });
@@ -96,8 +95,9 @@ describe("<DepositTimeline />", () => {
     fireEvent.change(screen.getByLabelText("Target amount"), { target: { value: "20000" } });
     expect(onChange).toHaveBeenCalled();
     expect(screen.getByTestId("deposit-timeline-outcome").textContent).toBe("3 years 2 months");
-    // The zone already says "Starting from your saved accounts.", so the slider has no helper.
-    expect(screen.queryByText("The total in your savings and investment accounts")).toBeNull();
+    // The tool starts from the saved total, which the zone already states: two sliders only.
+    expect(screen.queryByLabelText("Starting amount")).toBeNull();
+    expect(screen.getAllByRole("slider")).toHaveLength(2);
     expect(
       screen.getByText("This estimate does not include interest or changes in investment value."),
     ).toBeDefined();

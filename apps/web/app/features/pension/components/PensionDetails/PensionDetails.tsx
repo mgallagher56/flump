@@ -19,6 +19,7 @@ import {
   detailsRoot,
   detailsTitle,
   editGrid,
+  editRow,
   factList,
   factRow,
   factValue,
@@ -55,6 +56,8 @@ export interface PensionDetailsProps {
   onSave: (values: PensionDetailsSaveValues) => Promise<void>;
   /** Shown under the saved facts inside the same card (the pots list). */
   children?: ReactNode;
+  /** Opens the "Salary and contributions" drawer on mount, for the #pension-details deep link. */
+  factsOpen?: boolean;
 }
 
 const percentFormat = new Intl.NumberFormat("en-GB", { maximumFractionDigits: 1 });
@@ -224,8 +227,15 @@ export const PensionDetails: FC<PensionDetailsProps> = ({
   onEditingChange,
   onSave,
   children,
+  factsOpen = false,
 }) => {
   const { formatCurrency } = useFormatCurrency();
+  // After an edit (saved or cancelled) the drawer comes back open, where the user left it.
+  const [reopenFacts, setReopenFacts] = useState(false);
+  const startEditing = () => {
+    setReopenFacts(true);
+    onEditingChange(true);
+  };
   const method = !methodSet
     ? NOT_SET
     : isSalarySacrifice
@@ -246,14 +256,11 @@ export const PensionDetails: FC<PensionDetailsProps> = ({
         <h2 className={detailsTitle()} id="pension-details-title">
           Your details
         </h2>
-        {!isEditing && (
-          <Button size="sm" type="button" variant="outline" onClick={() => onEditingChange(true)}>
-            <Icon icon={Pencil} size="sm" />
-            Edit details
-          </Button>
-        )}
       </div>
 
+      {children}
+      {/* Each thing has one edit button: pots on their rows, salary and contributions inside
+          their own drawer, which the form replaces while editing. */}
       {isEditing ? (
         <DetailsForm
           annualSalary={annualSalary}
@@ -264,12 +271,15 @@ export const PensionDetails: FC<PensionDetailsProps> = ({
           onEditingChange={onEditingChange}
           onSave={onSave}
         />
-      ) : null}
-      {children}
-      {/* The saved facts sit behind a quiet drawer, closed by default, so the first view keeps
-          to the headline and the strip (E16 P1.1). "Edit details" stays visible above. */}
-      {!isEditing && (
-        <CollapsibleDrawer title="Salary and contributions" variant="quiet">
+      ) : (
+        // The saved facts sit behind a quiet drawer, closed by default, so the first view keeps
+        // to the headline and the strip (E16 P1.1).
+        <CollapsibleDrawer
+          defaultOpen={factsOpen || reopenFacts}
+          key={factsOpen ? "open" : "closed"}
+          title="Salary and contributions"
+          variant="quiet"
+        >
           <dl className={factList()}>
             <div className={factRow()}>
               <dt>Salary</dt>
@@ -291,6 +301,18 @@ export const PensionDetails: FC<PensionDetailsProps> = ({
             </div>
           </dl>
           {ratesAssumed && <p className={mutedNote()}>{ASSUMED_RATE_LABEL}</p>}
+          <div className={editRow()}>
+            <Button
+              aria-label="Edit salary and contributions"
+              size="sm"
+              type="button"
+              variant="ghost"
+              onClick={startEditing}
+            >
+              <Icon icon={Pencil} size="sm" />
+              Edit
+            </Button>
+          </div>
         </CollapsibleDrawer>
       )}
     </section>

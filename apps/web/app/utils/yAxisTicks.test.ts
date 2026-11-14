@@ -34,6 +34,17 @@ describe("nearDataAxis", () => {
     }
   });
 
+  it("widens a flat series so the line sits inside a real range", () => {
+    for (const value of [5_000, 0]) {
+      const { domain, ticks } = nearDataAxis([value, value, value]);
+      expect(domain[0]).toBeLessThanOrEqual(value);
+      expect(domain[1]).toBeGreaterThan(value);
+      expect(domain[0]).toBeGreaterThanOrEqual(0);
+      expect(ticks.length).toBeGreaterThanOrEqual(2);
+      expect(ticks.length).toBeLessThanOrEqual(MAX_Y_TICKS);
+    }
+  });
+
   it("handles no data", () => {
     expect(nearDataAxis([])).toEqual({ domain: [0, 1], ticks: [0] });
   });

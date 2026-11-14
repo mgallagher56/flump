@@ -37,13 +37,13 @@ export const segment = cva({
   },
 });
 
+/** Two labels under the bar's two ends; the right one wraps onto a second line on a phone. */
 export const barLabels = cva({
   base: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "baseline",
-    flexWrap: "wrap",
-    gap: "4px 16px",
+    display: "grid",
+    gridTemplateColumns: "auto minmax(0, 1fr)",
+    alignItems: "start",
+    gap: "16px",
     marginTop: "8px",
   },
 });
@@ -54,6 +54,7 @@ export const barLabel = cva({
     tone: {
       takeHome: { color: "text.primary", fontWeight: "semibold" },
     },
+    end: { true: { textAlign: "right" } },
   },
 });
 

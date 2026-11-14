@@ -54,9 +54,7 @@ const NUMERIC_AXIS = "number" as const;
 export interface ForecastChartProps {
   result: ForecastResult;
   adjustForInflation: boolean;
-  /** "at 67" or "in 25 years": when the pot is drawn on. */
-  whenLabel: string;
-  /** Short annotation at the last point, for example "Retire at 67". */
+  /** Short annotation at the last point, for example "Retirement". */
   annotationLabel: string;
 }
 
@@ -68,7 +66,6 @@ export interface ForecastChartProps {
 export const ForecastChart: FC<ForecastChartProps> = ({
   result,
   adjustForInflation,
-  whenLabel,
   annotationLabel,
 }) => {
   const { formatCurrency } = useFormatCurrency();
@@ -84,12 +81,6 @@ export const ForecastChart: FC<ForecastChartProps> = ({
   const ticks = evenYearTicks(points.map((p) => p.calendarYear));
   const yAxis = useMemo(() => nearDataAxis(points.map((p) => p.totalPot)), [points]);
   const last = points[points.length - 1];
-  // "to 67" or "for 25 years": short, so the summary fits one line at 375.
-  const span = whenLabel.startsWith("at ")
-    ? `to ${whenLabel.slice(3)}`
-    : whenLabel.startsWith("in ")
-      ? `for ${whenLabel.slice(3)}`
-      : whenLabel;
 
   return (
     <div>
@@ -121,8 +112,8 @@ export const ForecastChart: FC<ForecastChartProps> = ({
         pointCount={points.length}
         summary={
           adjustForInflation
-            ? `Your pot each year ${span}, in today's money.`
-            : `Your pot each year ${span}, before inflation.`
+            ? "Your pot each year to retirement, in today's money."
+            : "Your pot each year to retirement, before inflation."
         }
         title="Estimated pension pot"
       >

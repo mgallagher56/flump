@@ -31,7 +31,7 @@ export const Saved: Story = {
     );
     await expect(canvas.getAllByText("Salary sacrifice")[0]).toBeDefined();
     await userEvent.click(
-      canvas.getAllByRole("button", { name: "Edit details" })[0] as HTMLElement,
+      canvas.getAllByRole("button", { name: "Edit salary and contributions" })[0] as HTMLElement,
     );
     await expect(args.onEditingChange).toHaveBeenCalledWith(true);
   },

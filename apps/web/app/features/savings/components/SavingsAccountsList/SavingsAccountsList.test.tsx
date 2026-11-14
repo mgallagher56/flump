@@ -51,21 +51,8 @@ describe("<SavingsAccountsList />", () => {
     );
   });
 
-  test("shows the ISA bar as a quiet footer with one sentence and no second figure", () => {
-    const { container } = customRender(
-      <SavingsAccountsList accounts={mockAccounts} isaUsed={1600} />,
-    );
-    const bar = screen.getByRole("progressbar", { name: "ISA allowance used this tax year" });
-    expect(bar.getAttribute("aria-valuetext")).toBe("Estimate: £1,600 of £20,000 used");
-    expect(screen.getByTestId("isa-allowance").textContent).toContain(
-      "The allowance resets each tax year on 6 April.",
-    );
-    expect(container.textContent).not.toContain("£1,600");
-    expect(container.textContent).not.toContain("unused");
-  });
-
-  test("leaves the ISA bar out when no use is known", () => {
-    customRender(<SavingsAccountsList accounts={mockAccounts} isaUsed={null} />);
+  test("has no ISA bar: the allowance is the KPI above, shown once", () => {
+    customRender(<SavingsAccountsList accounts={mockAccounts} />);
     expect(screen.queryByRole("progressbar")).toBeNull();
   });
 

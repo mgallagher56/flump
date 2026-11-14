@@ -8,7 +8,8 @@ export const pageRoot = cva({
     width: "100%",
     minWidth: 0,
     paddingBottom: { base: "6", md: "12" },
-    fontVariantNumeric: "tabular-nums",
+    // No page-wide tabular-nums: Inter's tnum feature also widens the hyphen, so words such as
+    // "Self-employed" read "Self - employed". Each figure sets tabular-nums itself (Money, KPI).
   },
 });
 

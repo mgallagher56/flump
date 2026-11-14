@@ -1,7 +1,11 @@
-import { Button, CurrencyInput, FormField, Icon, Money, SimulatorSplitLayout } from "@repo/ui";
+import { Button, Icon, Money, SimulatorSplitLayout, SliderField } from "@repo/ui";
 import { ArrowRight } from "lucide-react";
 import type { FC } from "react";
 import { actionRow, outcome, outcomeLabel, outcomeUnit, outcomeValue } from "./PayRiseTool.styles";
+
+/** The slider's range: £0 to £20,000 a year, in £500 steps. The pill takes any figure in range. */
+export const PAY_RISE_MAX = 20_000;
+export const PAY_RISE_STEP = 500;
 
 export interface PayRiseToolProps {
   /** Pay rise being tried, before tax, in pounds a year. */
@@ -37,20 +41,17 @@ export const PayRiseTool: FC<PayRiseToolProps> = ({
     }
     contentLabel="Illustration result"
     controls={
-      <FormField
-        hint="Enter a pay rise to see the estimated change in your monthly take-home pay."
+      // The same control as "The next £1,000": a slider with an editable value pill.
+      <SliderField
+        format="currency"
+        helperText="Move the slider or type a figure to see the estimated change in your monthly take-home pay."
         label="Pay rise a year, before tax"
-      >
-        {(field) => (
-          <CurrencyInput
-            id={field.id}
-            aria-describedby={field.describedBy}
-            placeholder="0"
-            value={salaryIncrease === 0 ? null : salaryIncrease}
-            onValueChange={(v) => onSalaryIncreaseChange(v ?? 0)}
-          />
-        )}
-      </FormField>
+        max={PAY_RISE_MAX}
+        min={0}
+        step={PAY_RISE_STEP}
+        value={salaryIncrease}
+        onChange={onSalaryIncreaseChange}
+      />
     }
     controlsLabel="Illustration inputs"
   />

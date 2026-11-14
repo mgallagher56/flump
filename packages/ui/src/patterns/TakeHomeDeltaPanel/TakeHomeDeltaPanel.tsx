@@ -1,4 +1,4 @@
-import type { FC } from "react";
+import type { FC, ReactNode } from "react";
 import { cx } from "../../../styled-system/css";
 import { CollapsibleDrawer } from "../../primitives/CollapsibleDrawer/CollapsibleDrawer";
 import { formatMoney } from "../../primitives/Money/Money";
@@ -66,6 +66,14 @@ export interface TakeHomeDeltaPanelProps {
    * Default false.
    */
   collapseTable?: boolean;
+  /**
+   * One quiet "How this is worked out" disclosure holding the table and the assumptions (and
+   * `disclosureExtra`), in place of two. Used inside a ScenarioZone, where stacked disclosures add
+   * length. Implies no header, like `collapseTable`. Default false.
+   */
+  mergeDisclosures?: boolean;
+  /** With `mergeDisclosures`: more content for the end of the one disclosure (a chart's data). */
+  disclosureExtra?: ReactNode;
   className?: string;
 }
 
@@ -87,6 +95,8 @@ export const TakeHomeDeltaPanel: FC<TakeHomeDeltaPanelProps> = ({
   unverifiedInPageNotice = false,
   showTaxYearBadge = true,
   collapseTable = false,
+  mergeDisclosures = false,
+  disclosureExtra,
   className,
 }) => {
   const Heading = headingLevel;
@@ -146,7 +156,7 @@ export const TakeHomeDeltaPanel: FC<TakeHomeDeltaPanelProps> = ({
       className={cx(deltaPanelRoot(), className)}
       data-testid="take-home-delta-panel"
     >
-      {collapseTable ? null : (
+      {collapseTable || mergeDisclosures ? null : (
         <div className={deltaPanelHeader()}>
           <Heading className={deltaPanelTitle()}>{DELTA_PANEL_COPY.heading}</Heading>
           {showTaxYearBadge ? (
@@ -166,7 +176,7 @@ export const TakeHomeDeltaPanel: FC<TakeHomeDeltaPanelProps> = ({
         ratesYear={ratesYear}
       />
 
-      {collapseTable ? (
+      {mergeDisclosures ? null : collapseTable ? (
         <CollapsibleDrawer title={DELTA_PANEL_COPY.tableCaption} variant="quiet">
           {table}
         </CollapsibleDrawer>
@@ -180,7 +190,31 @@ export const TakeHomeDeltaPanel: FC<TakeHomeDeltaPanelProps> = ({
         </p>
       ) : null}
 
-      {known.length > 0 ? (
+      {mergeDisclosures ? (
+        <CollapsibleDrawer title={DELTA_PANEL_COPY.assumptionsHeading} variant="quiet">
+          <div className={deltaPanelAssumptions()}>
+            {table}
+            {known.length > 0 ? (
+              <ul className={deltaPanelAssumptionsList()}>
+                {known.map((a) => (
+                  <li key={a.code}>
+                    {ASSUMPTION_COPY[a.code]}
+                    {a.unverified ? (
+                      <>
+                        {" "}
+                        <span className={deltaPanelUnverified()}>
+                          {DELTA_PANEL_COPY.notConfirmed}
+                        </span>
+                      </>
+                    ) : null}
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+            {disclosureExtra}
+          </div>
+        </CollapsibleDrawer>
+      ) : known.length > 0 ? (
         <CollapsibleDrawer title={DELTA_PANEL_COPY.assumptionsHeading} variant="quiet">
           <div className={deltaPanelAssumptions()}>
             <ul className={deltaPanelAssumptionsList()}>

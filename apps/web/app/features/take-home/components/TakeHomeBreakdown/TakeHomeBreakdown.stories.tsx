@@ -24,7 +24,7 @@ export const Default: Story = {
     const canvas = within(canvasElement);
     await expect(canvas.getAllByText("Where your pay goes")[0]).toBeDefined();
     await expect(canvas.getAllByText("Take-home pay")[0]).toBeDefined();
-    await expect(canvas.getAllByText("What comes off")[0]).toBeDefined();
+    await expect(canvas.getAllByText("Tax, National Insurance and pension")[0]).toBeDefined();
   },
 };
 

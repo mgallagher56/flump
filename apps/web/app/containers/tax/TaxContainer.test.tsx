@@ -419,6 +419,45 @@ describe("TaxContainer, opted in", () => {
       mockLoaderRecords = mockRecords;
     });
 
+    it("never sends a missing field as the text 'undefined'", () => {
+      openEdit();
+      fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+      const payload = lastPayload();
+      for (const value of Object.values(payload)) expect(value).not.toBe("undefined");
+      expect("notes" in payload).toBe(false);
+      mockLoaderRecords = mockRecords;
+    });
+
+    it("keeps the dialog open and says why when a save fails, and closes it on success", () => {
+      fetcherData.current = null;
+      mockLoaderRecords = [withReceipt];
+      mockSubmit.mockClear();
+      const { rerender } = render(<TaxContainer />);
+      openRecords();
+      fireEvent.click(screen.getByRole("button", { name: "Flat repairs (2024/25)" }));
+      fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+      expect(mockSubmit).toHaveBeenCalledTimes(1);
+      fetcherData.current = {
+        success: false,
+        error: "We could not save that. Check the details and try again.",
+      };
+      rerender(<TaxContainer />);
+      expect(screen.getByRole("dialog", { name: "Edit record" })).toBeDefined();
+      expect(
+        screen
+          .getAllByRole("alert")
+          .some(
+            (a) => a.textContent === "We could not save that. Check the details and try again.",
+          ),
+      ).toBe(true);
+      fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+      fetcherData.current = { success: true };
+      rerender(<TaxContainer />);
+      expect(screen.queryByRole("dialog", { name: "Edit record" })).toBeNull();
+      fetcherData.current = null;
+      mockLoaderRecords = mockRecords;
+    });
+
     it("says so explicitly when the receipt is removed", () => {
       openEdit();
       fireEvent.click(screen.getByRole("button", { name: "Remove receipt" }));
