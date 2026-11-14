@@ -1336,7 +1336,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
         `INSERT INTO accounts (user_id, name, type, balance, currency)
          VALUES ('user-a', 'Acc', 'Mortgage', -1000, 'GBP') RETURNING id`,
       );
-      return rows[0].id;
+      return at(rows, 0).id;
     };
     const insert = (id: string, month: number, source: string) =>
       ds.query(
