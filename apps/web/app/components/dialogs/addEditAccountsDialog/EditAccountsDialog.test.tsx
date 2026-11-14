@@ -132,4 +132,33 @@ describe("<EditAccountDialogBtn", () => {
     expect(document.body.style.pointerEvents).not.toBe("none");
     expect(document.body.hasAttribute("data-scroll-locked")).toBe(false);
   });
+
+  test("opened from the account page, prefills from the account passed in", async () => {
+    // The account detail route returns one account and no accounts list.
+    mocks.mockUseLoaderData.mockReturnValue({
+      account: { id: "123456", name: "Easy saver", type: "Saving", balance: 2500 },
+      accountDetails: [],
+    });
+    mocks.mockFetcherSubmit.mockClear();
+    const { getByText, getByDisplayValue, user } = customRender(
+      <AddEditAccountsDialogBtn
+        account={{ id: "123456", name: "Easy saver", type: "Saving", balance: 2500 }}
+        accountId="123456"
+        isEditAccount
+      />,
+    );
+
+    await user.click(getByText("edit"));
+    expect(getByDisplayValue("Easy saver")).toBeDefined();
+    await user.click(getByText("save"));
+    expect(mocks.mockFetcherSubmit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        intent: "update",
+        accountId: "123456",
+        name: "Easy saver",
+        type: "Saving",
+      }),
+      expect.anything(),
+    );
+  });
 });
