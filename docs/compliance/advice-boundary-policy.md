@@ -56,13 +56,13 @@ Replace the instruction with a statement of fact about the user's figures, in th
 
 **Before and after.**
 
-| Before (source)                                                                                                                                         | After                                                                                                |
-| ------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
-| `packages/finance-engine/src/health-score.ts:59-61` "Prioritize high-interest cards and overdrafts with Avalanche strategy to eliminate interest burn." | "£X of unsecured debt is at an APR above 20%."                                                       |
-| `packages/finance-engine/src/health-score.ts:166` "Maximize remaining £20,000 UK ISA allowance before 5 April."                                         | "£X of this tax year's £20,000 ISA allowance is unused. The allowance resets on 6 April."            |
-| `packages/finance-engine/src/health-score.ts:174-176` "Sacrifice £X into pension to reclaim your £12,570 personal allowance."                           | "Adjusted net income is £X, in the £100,000 to £125,140 band where the personal allowance tapers."   |
-| `packages/mcp/src/prompts/uk-advisor.prompts.ts:28` "Recommend the top 3 highest-impact mathematical actions ..."                                       | "Summarise the three largest figures in my net worth, runway and debt, and state the assumptions."   |
-| `apps/web/app/routes/tools.$slug.tsx:279` "Find out whether you should ever make voluntary overpayments ..."                                            | "See how a Plan 1, 2, 4 or 5 student loan balance develops with and without voluntary overpayments." |
+| Before (source)                                                                                                                                            | After                                                                                                |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `packages/finance-engine/src/health-score.ts:59-61` "Prioritize high-interest cards and overdrafts with Avalanche strategy to eliminate interest burn."    | "£X of unsecured debt is at an APR above 20%."                                                       |
+| `packages/finance-engine/src/health-score.ts:166` "Maximize remaining £20,000 UK ISA allowance before 5 April."                                            | "£X of this tax year's £20,000 ISA allowance is unused. The allowance resets on 6 April."            |
+| `packages/finance-engine/src/health-score.ts:174-176` "Sacrifice £X into pension to reclaim your £12,570 personal allowance."                              | "Adjusted net income is £X, in the £100,000 to £125,140 band where the personal allowance tapers."   |
+| Former MCP prompt, deleted in #637 (was `packages/mcp/src/prompts/uk-advisor.prompts.ts:28`) "Recommend the top 3 highest-impact mathematical actions ..." | "Summarise the three largest figures in my net worth, runway and debt, and state the assumptions."   |
+| `apps/web/app/routes/tools.$slug.tsx:279` "Find out whether you should ever make voluntary overpayments ..."                                               | "See how a Plan 1, 2, 4 or 5 student loan balance develops with and without voluntary overpayments." |
 
 ## R3. No product types with qualitative judgements, and no named providers
 

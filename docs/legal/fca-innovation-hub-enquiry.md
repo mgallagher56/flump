@@ -1,7 +1,7 @@
 # FCA Innovation Hub enquiry (draft for the owner to send)
 
 > **DRAFT, agent-drafted, unreviewed, not legal advice; owner reviews and signs later.**
-> Version 0.1, 2026-11-12. An agent wrote this text. **Nothing has been sent.** Agents never contact third parties. The owner reviews, edits, sends it from their own account, and records the send date in [`docs/compliance/E29-gate.md`](../compliance/E29-gate.md) (that date starts the 8-week clock for E26).
+> Version 0.2, 2026-11-14 (paragraph 3 corrected after the E17 re-plan: read access today, staged data entry planned). Version 0.1, 2026-11-12. An agent wrote this text. **Nothing has been sent.** Agents never contact third parties. The owner reviews, edits, sends it from their own account, and records the send date in [`docs/compliance/E29-gate.md`](../compliance/E29-gate.md) (that date starts the 8-week clock for E26).
 
 Everything above this line and the notes at the end are for the owner and are not part of the message. The message is the section between the two rules. It is written to fit about one and a half pages. Code facts that sit behind each statement, with path and line, are in [fca-perimeter-brief.md](fca-perimeter-brief.md).
 
@@ -27,7 +27,7 @@ I am an individual (not yet incorporated) building Flump, a UK personal finance 
 
 I have adopted written internal rules for this (no "you should" or "best" wording, no product or provider names, both options shown side by side, no one-click save prompted by a result, a notice on every projection) and an automated check on the text. Question: are those the right design constraints, and is there anything you would add?
 
-**3. Answers from third-party AI assistants.** A user can give their own AI assistant read-only access to their Flump figures through a connection (the Model Context Protocol). The assistant calls Flump's calculators and then writes its own reply. Flump does not control that reply. Question: where does responsibility sit if an assistant turns Flump's calculations into a personal recommendation, and what should Flump's tool outputs and terms say to stay on the right side of the line? Access to this is currently limited to the owner. [SEND ONLY AFTER E29-T8 LANDS / VERIFY: the allowlist has not landed at 73dc5227; delete this sentence if not true]
+**3. Answers from third-party AI assistants.** A user can connect their own AI assistant to their Flump figures (through the Model Context Protocol). Today the assistant can only read: it can look up the user's recorded balances, budget, debts and tax records, and run a small number of projections on them, and then it writes its own reply. Flump does not control that reply. I also plan to let the assistant help with data entry, for example copying a user's own spreadsheet of past balances into Flump. The assistant could only prepare an import, which Flump would hold for up to 7 days; nothing would change in the user's figures until the user checks it and confirms it in Flump, and the user could undo a confirmed import, except for figures changed since. Questions: where does responsibility sit if an assistant turns Flump's figures into a personal recommendation, and what should Flump's tool outputs and terms say to stay on the right side of the line? Does recording a user's own figures in this way raise any issue I should know about? Access to this is currently limited to the owner. [VERIFY on the day you send: the allowlist has landed in code (`apps/backend/src/mcp-access.ts`); confirm `MCP_ALLOWED_USER_IDS` is set in production and that no other user holds a token]
 
 **What I am not asking.** I am not asking for authorisation or for a formal opinion at this stage. I understand any reply is informal.
 
@@ -43,8 +43,9 @@ Kind regards,
 
 ## Notes for the owner (not part of the message)
 
-1. **Check every statement is true on the day you send it.** In particular "closed test", "handful of invited people", "limited to the owner's own account" and "MCP access limited to the owner". Bank connect is owner-allowlisted in code today (`apps/backend/src/bank-connections.access.ts:16-31`). The MCP allowlist (E29-T8) had not landed at `5cfe3ef0` (`apps/backend/src/mcp.controller.ts:49-51,80-86` have `AuthGuard` only), so do not send the sentence about MCP being limited to the owner until it has, or until you have confirmed no other user holds a token.
-2. **Wording about regulatory status.** The message makes no statement that Flump is or is not authorised, deliberately. If you add one, it is owner-only wording (E7).
-3. **After sending:** record the date in `E29-gate.md`, file the reply there, and note whether it is adverse (an adverse reply is a trigger for a separate written FCA opinion).
-4. **Attachments** are optional. The T1 rules ([advice-boundary-policy.md](../compliance/advice-boundary-policy.md)) are the document most worth offering.
-5. **Do not paste personal data** of any user into the message.
+1. **Check every statement is true on the day you send it.** In particular "closed test", "handful of invited people", "limited to the owner's own account" and "MCP access limited to the owner". Bank connect is owner-allowlisted in code today (`apps/backend/src/bank-connections.access.ts:16-31`). The MCP allowlist (E29-T8) has landed (`apps/backend/src/mcp-access.ts`; `McpAllowlistGuard` on `mcp.controller.ts:58-60,91-92`, checked 2026-11-14). Before sending the sentence about MCP being limited to the owner, confirm the production values and that no other user holds a token.
+2. **Data entry (added in v0.2).** Paragraph 3 now mentions staged data entry (E17 re-plan, DECISIONS round 9). That feature is **not built** yet; the paragraph describes it as a plan. If it has shipped by the time you send, change "I also plan to" to describe what exists.
+3. **Wording about regulatory status.** The message makes no statement that Flump is or is not authorised, deliberately. If you add one, it is owner-only wording (E7).
+4. **After sending:** record the date in `E29-gate.md`, file the reply there, and note whether it is adverse (an adverse reply is a trigger for a separate written FCA opinion).
+5. **Attachments** are optional. The T1 rules ([advice-boundary-policy.md](../compliance/advice-boundary-policy.md)) are the document most worth offering.
+6. **Do not paste personal data** of any user into the message.

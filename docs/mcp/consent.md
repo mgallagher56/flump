@@ -13,13 +13,15 @@ Used at token creation (AI connections) and on any future OAuth consent page.
 
 You are about to let **[CLIENT NAME]** read parts of your Flump data. It will be able to see:
 
-| Data category         | What the assistant can see                                                                                                                                              |
-| --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Accounts              | Account balances and types. Bank and card institution names are replaced with generic labels unless you turn anonymising off.                                           |
-| Budget                | Your budget summary and entries. Entries are sent with their free-text notes, and transaction descriptions are also sent, until E17 N4 and N9 exclude notes by default. |
-| Debts                 | Debts, rates and payments.                                                                                                                                              |
-| Forecast and planning | Net worth forecasts, pension and mortgage inputs you have saved.                                                                                                        |
-| Profile basics        | Region, birth year and similar planning inputs.                                                                                                                         |
+| Data category         | What the assistant can see                                                                                                                                |
+| --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Accounts              | Account balances and types. Account names are replaced with generic labels.                                                                               |
+| Budget                | Your budget summary and entries. Free-text notes are not sent. Bank names and account numbers are removed from entry names; the rest of the name is sent. |
+| Tax records           | Your tax records for a tax year and the totals worked out from them. Notes and receipts are never sent.                                                   |
+| Balance history       | Your recorded monthly balances for each account, and which months have no balance recorded.                                                               |
+| Debts                 | Debts, rates and payments.                                                                                                                                |
+| Forecast and planning | Net worth forecasts, pension and mortgage inputs you have saved.                                                                                          |
+| Profile basics        | Region, birth year and similar planning inputs.                                                                                                           |
 
 **Client:** [CLIENT NAME] (the app or tool holding this token). Only connect clients you trust.
 
@@ -39,7 +41,8 @@ For how we handle your data, see the privacy policy: [PLACEHOLDER: privacy polic
 
 ## 3. Notes for the owner
 
-- The data categories must match what the live tools and resources return when N9, N11 and N12 land. Re-check the table before signing.
+- The data categories must match what the live tools and resources return. The table was re-checked on 2026-11-14 against the surface after the E17 re-plan prune (#637); re-check it before signing.
+- When staged data entry ships (E17 re-plan PRs C to E), the token card needs separate copy for the opt-in `write:stage` scope, in line with the proposed terms line in `docs/legal/fca-perimeter-brief.md` and the DPIA addendum (`docs/legal/dpia-mcp.md` section 11). Draft it in PR E, not here.
 - Anonymising does not fully scrub free-text notes or transaction descriptions (see the E17 plan). Decide whether to disclose that here.
 - The privacy link waits for the privacy page ticket.
 - N18 shows this copy in the web UI and depends on this file being signed.
