@@ -1,6 +1,7 @@
 import { Money, Select, SimulatorSplitLayout, SliderField } from "@repo/ui";
 import { type FC, useEffect, useMemo, useRef, useState } from "react";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
+import { monthlyMortgagePayment } from "~/utils/mortgagePayment";
 import {
   fieldGroup,
   fieldLabel,
@@ -27,6 +28,8 @@ export interface RemortgageShockSimProps {
   fixEndDate?: string | null;
   /** The user's remaining term in years, when known. Seeds the term assumption. */
   remainingTermYears?: number;
+  /** Repayment or interest-only, as saved. The payment uses the same formula as the KPI. */
+  mortgageType?: "repayment" | "interest-only";
 }
 
 const MONTHS = [
@@ -84,6 +87,7 @@ export const RemortgageShockSim: FC<RemortgageShockSimProps> = ({
   propertyValue: rawPropertyValue,
   fixEndDate,
   remainingTermYears,
+  mortgageType = "repayment",
 }) => {
   const { formatCurrency } = useFormatCurrency();
 
@@ -137,13 +141,14 @@ export const RemortgageShockSim: FC<RemortgageShockSimProps> = ({
     return Math.max(1, diff);
   }, [fixEndYear, fixEndMonth]);
 
-  // Repayment formula over the term the user has chosen (default 25 years)
-  const calculateMonthly = (bal: number, ratePct: number) => {
-    const r = ratePct / 100 / 12;
-    const n = termYears * 12;
-    if (r === 0) return bal / n;
-    return (bal * (r * (1 + r) ** n)) / ((1 + r) ** n - 1);
-  };
+  // The same payment formula as the mortgage KPI (monthlyMortgagePayment), over the user's exact
+  // remaining term until they move the whole-year term slider, so both show one figure.
+  const paymentTerm =
+    !termEdited.current && remainingTermYears && remainingTermYears > 0
+      ? remainingTermYears
+      : termYears;
+  const calculateMonthly = (bal: number, ratePct: number) =>
+    monthlyMortgagePayment(bal, ratePct, paymentTerm, mortgageType);
 
   const currentMonthly = calculateMonthly(currentBalance, currentRate);
   const newMonthly = calculateMonthly(currentBalance, projectedNewRate);

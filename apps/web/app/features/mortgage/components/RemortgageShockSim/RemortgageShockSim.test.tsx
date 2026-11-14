@@ -1,5 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
+import { monthlyMortgagePayment } from "~/utils/mortgagePayment";
 import { RemortgageShockSim } from "./RemortgageShockSim";
 
 // Catches £0, £0.00 and £0,000 alike.
@@ -23,6 +24,35 @@ describe("RemortgageShockSim", () => {
     expect(document.body.textContent).not.toMatch(/shock|tier|bracket|\/mo\b/i);
     const change = screen.getByText("Change in monthly payment (estimate)").nextElementSibling;
     expect(change?.outerHTML ?? "").not.toMatch(/danger/);
+  });
+
+  it("shows the same current payment as the mortgage KPI, over the exact remaining term", () => {
+    // 218 months is 18.17 years: the whole-year slider shows 18, but the payment uses 218 months.
+    const remainingTermYears = 218 / 12;
+    const kpi = Math.round(monthlyMortgagePayment(186000, 4.5, remainingTermYears, "repayment"));
+    expect(kpi).toBe(1250);
+    render(
+      <RemortgageShockSim
+        currentBalance={186000}
+        currentRate={4.5}
+        mortgageType="repayment"
+        remainingTermYears={remainingTermYears}
+      />,
+    );
+    expect(document.body.textContent).toContain("£1,250");
+  });
+
+  it("uses the interest-only payment when the mortgage is interest-only", () => {
+    render(
+      <RemortgageShockSim
+        currentBalance={120000}
+        currentRate={5}
+        mortgageType="interest-only"
+        remainingTermYears={10}
+      />,
+    );
+    // 120,000 at 5% interest only is £500 a month.
+    expect(document.body.textContent).toContain("£500");
   });
 
   it("empty profile (zero balance and rate) shows no NaN or Infinity", () => {

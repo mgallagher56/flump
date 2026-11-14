@@ -842,6 +842,7 @@ const MortgageContainer: FC = () => {
                 currentBalance={scenarioValues.loanAmount}
                 currentRate={scenarioValues.interestRate}
                 fixEndDate={isBtl ? null : selectedFixEndDate}
+                mortgageType={mortgageType}
                 propertyValue={propertyValue || undefined}
                 remainingTermYears={
                   scenarioValues.remainingTerm > 0 ? scenarioValues.remainingTerm : undefined

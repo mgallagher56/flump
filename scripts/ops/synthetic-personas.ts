@@ -150,7 +150,8 @@ export const SYNTHETIC_PERSONAS: Record<PersonaKey, SyntheticPersona> = {
         type: "Pension",
         balance: 98000,
         interestRate: 5,
-        monthlyContribution: 750,
+        // No monthlyContribution: the salary percentages already pay into this pot, and the
+        // pension page adds a pot's own contribution on top (it would count twice).
         history: history(96000, 700),
       },
       {
