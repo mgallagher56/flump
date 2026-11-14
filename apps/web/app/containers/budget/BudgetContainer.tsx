@@ -34,7 +34,7 @@ import { useUserProfile } from "~/hooks/useUserProfile";
 import type { loader } from "~/routes/app.budget";
 import { apiFetch, apiFetchAll } from "~/services/api-client";
 import { BackendError } from "~/services/backend-error";
-import type { BudgetEntry } from "~/types/budget";
+import { type BudgetEntry, toMonthly } from "~/types/budget";
 import { buildWorkspacePicture } from "~/utils/financialPicture";
 import { clearRunwaySettings, type RunwayScenario } from "~/utils/runwayStorage";
 
@@ -309,6 +309,9 @@ const BudgetContainer: FC = () => {
       {category === "housing" && (
         <HousingDetails
           housingStatus={housingStatus}
+          rowTotal={entries
+            .filter((e) => e.category === "housing" && !e.isIncome)
+            .reduce((sum, e) => sum + Math.abs(toMonthly(e)), 0)}
           savedAmount={pictureProfile?.monthlyHousingCost ?? null}
           onSave={handleSaveHousing}
         />

@@ -50,10 +50,11 @@ export interface CategoryRow {
 /** Income is money in, not somewhere money goes: it shows once, as "Money in each month". */
 export const INCOME_CATEGORY = "income";
 
+/** True when a category holds nothing but income, so a stray spending row never hides. */
 const isIncomeCategory = (category: string, entries: BudgetEntry[]): boolean => {
-  if (category === INCOME_CATEGORY) return true;
   const inCategory = entries.filter((e) => e.category === category);
-  return inCategory.length > 0 && inCategory.every((e) => e.isIncome);
+  if (inCategory.some((e) => !e.isIncome)) return false;
+  return category === INCOME_CATEGORY || inCategory.length > 0;
 };
 
 /**

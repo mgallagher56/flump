@@ -1,7 +1,7 @@
 import { sva } from "@repo/ui/styled-system/css";
 
 export const housingDetails = sva({
-  slots: ["root", "text", "link", "form"],
+  slots: ["root", "text", "figure", "link", "form"],
   base: {
     root: {
       display: "flex",
@@ -12,6 +12,7 @@ export const housingDetails = sva({
       pb: "3",
     },
     text: { margin: "0", textStyle: "body.sm", color: "text.secondary", flex: "1 1 16rem" },
+    figure: { fontVariantNumeric: "tabular-nums", fontWeight: "semibold", color: "text.primary" },
     link: {
       textStyle: "label.md",
       color: "primary",
