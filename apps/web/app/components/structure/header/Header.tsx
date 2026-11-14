@@ -1,7 +1,7 @@
 import { HomeLogo, ThemeToggle, TopBar } from "@repo/ui";
 import { type FC, type ReactElement, useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useLoaderData, useLocation } from "react-router";
+import { useLocation, useRouteLoaderData } from "react-router";
 import AvatarMenu from "~/components/navigation/AvatarMenu";
 import { buildNavManifest, findActiveNavKey } from "~/components/navigation/buildNavManifest";
 import { isSandboxPath } from "~/components/navigation/navConfig";
@@ -22,8 +22,10 @@ export interface HeaderProps {
 }
 
 const Header: FC<HeaderProps> = ({ isMobile: propIsMobile, variant }): ReactElement<FC> => {
-  // Undefined in the root error boundary when the root loader itself failed: render signed out.
-  const user = useLoaderData<typeof loader>()?.user ?? null;
+  // Read by route id so the header sees the root loader's user from any route, including the root
+  // error boundary after a page below it failed. Undefined only when the root loader itself
+  // failed, and then the header renders signed out.
+  const user = useRouteLoaderData<typeof loader>("root")?.user ?? null;
   const { profile } = useUserProfile();
   const { pathname } = useLocation();
   const sandbox = !user && isSandboxPath(pathname);

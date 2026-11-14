@@ -121,8 +121,8 @@ describe("OnboardingRoute (5-step flow)", () => {
     chooseRegion();
     fireEvent.click(screen.getByRole("button", { name: "Save and exit" }));
     await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith("/app/accounts"));
+    // How the person earns was not touched, so a saved answer is left as it is.
     expect(mockUpdateProfile).toHaveBeenCalledWith({
-      employmentType: "employed",
       annualSalary: 45000,
       taxRegion: "ENGLAND",
     });

@@ -8,12 +8,22 @@ describe("draftFromValues", () => {
   it("keeps only the answers given and never marks setup finished", () => {
     const draft = draftFromValues(v({ grossSalary: 45000, taxRegion: "SCOTLAND" }));
     expect(draft).toEqual({
-      employmentType: "employed",
       annualSalary: 45000,
       taxRegion: "SCOTLAND",
     });
     expect(draft).not.toHaveProperty("onboardingCompleted");
     expect(draft).not.toHaveProperty("housingStatus");
+  });
+
+  it("sends how the person earns only when they answered it", () => {
+    // Untouched: a saved "other" on the profile must not be overwritten by the form default.
+    expect(draftFromValues(v({}))).not.toHaveProperty("employmentType");
+    expect(
+      draftFromValues(v({ employmentType: "employed" }), { employmentAnswered: true }),
+    ).toEqual({ employmentType: "employed" });
+    expect(
+      draftFromValues(v({ employmentType: "self-employed" }), { employmentAnswered: true }),
+    ).toEqual({ employmentType: "self-employed" });
   });
 
   it("saves living with family with a £0 amount", () => {

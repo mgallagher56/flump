@@ -16,7 +16,7 @@ vi.mock("react-router", async () => {
   const actual: Record<string, unknown> = await vi.importActual("react-router");
   return {
     ...actual,
-    useLoaderData: mocks.mockUseLoaderData,
+    useRouteLoaderData: mocks.mockUseLoaderData,
     useLocation: () => ({ pathname: "/" }),
     Link: ({ children, to }: any) => <a href={to}>{children}</a>,
   };

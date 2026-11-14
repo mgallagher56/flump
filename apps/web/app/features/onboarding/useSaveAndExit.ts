@@ -5,7 +5,7 @@ import { draftFromValues, SAVE_AND_EXIT_ERROR, SAVE_AND_EXIT_PATH } from "./draf
 import type { OnboardingValues } from "./types";
 
 /** "Save and exit": keeps the answers given so far on the profile, then leaves setup. */
-export function useSaveAndExit(values: OnboardingValues) {
+export function useSaveAndExit(values: OnboardingValues, employmentAnswered = false) {
   const navigate = useNavigate();
   const { updateProfile } = useUserProfile();
   const [isSaving, setIsSaving] = useState(false);
@@ -16,7 +16,7 @@ export function useSaveAndExit(values: OnboardingValues) {
     setIsSaving(true);
     setError(null);
     try {
-      await updateProfile(draftFromValues(values));
+      await updateProfile(draftFromValues(values, { employmentAnswered }));
       navigate(SAVE_AND_EXIT_PATH);
     } catch {
       setError(SAVE_AND_EXIT_ERROR);

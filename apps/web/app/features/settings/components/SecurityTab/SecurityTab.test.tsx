@@ -43,13 +43,13 @@ describe("<SecurityTab />", () => {
     expect(screen.queryByText("Verified")).toBeNull();
   });
 
-  it("sends a password reset email directly", async () => {
+  it("sends a password reset email directly and shows fixed copy, never the server's", async () => {
     render(<SecurityTab email="user@example.com" />);
     fireEvent.click(screen.getByTestId("change-password-trigger"));
     await waitFor(() => expect(mockSendResetEmail).toHaveBeenCalledTimes(1));
     expect(mockSendResetEmail).toHaveBeenCalledWith();
     expect((await screen.findByTestId("password-reset-status")).textContent).toBe(
-      "Reset email sent",
+      "We have emailed you a link to choose a new password.",
     );
   });
 
