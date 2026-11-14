@@ -32,7 +32,7 @@ import {
 } from "~/features/charts";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import { formatMonth, type HistoryChartPoint } from "../../snapshotModel";
-import { chartWrap } from "./NetWorthHistoryChart.styles";
+import { chartWrap, directLabel } from "./NetWorthHistoryChart.styles";
 
 /** Fewest recorded months worth drawing as a line (plan P10.6). */
 export const MIN_CHART_MONTHS = 3;
@@ -60,8 +60,7 @@ const DirectLabel: FC<DirectLabelProps> = ({ text, viewBox }) => {
   return (
     <text
       fill={CHART_INK.text}
-      fontSize={13}
-      fontWeight={600}
+      className={directLabel()}
       // tabular-nums is inherited from the chart wrapper.
       textAnchor="end"
       x={x}

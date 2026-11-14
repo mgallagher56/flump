@@ -8,3 +8,8 @@ export const chartWrap = cva({
     fontVariantNumeric: "tabular-nums",
   },
 });
+
+/** The end-point label on the chart (SVG text takes a class for its type size). */
+export const directLabel = cva({
+  base: { fontSize: "sm", fontWeight: "semibold" },
+});
