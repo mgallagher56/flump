@@ -71,3 +71,8 @@ export const explorerOutcomes = cva({
     "& > :nth-child(2):last-child": { gridColumn: "1 / -1" },
   },
 });
+
+/** The "As at tax year" badge at the top of the results, as in the tax trap tool. */
+export const explorerBadges = cva({
+  base: { display: "flex", flexWrap: "wrap", gap: "2" },
+});

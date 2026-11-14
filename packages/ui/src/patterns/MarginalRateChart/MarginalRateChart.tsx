@@ -61,6 +61,11 @@ export interface MarginalRateChartProps {
   title: string;
   /** Text alternative, built by the caller (en-GB figures). */
   summary: string;
+  /**
+   * Show the summary under the title. Default true; pass false when it says the same as the
+   * thresholds note under the chart (it stays the screen-reader text alternative).
+   */
+  showSummary?: boolean;
   notice?: ReactNode;
   /** Rows for the "Show data" table. Defaults to the points every £5,000. */
   dataTable?: readonly MarginalRatePoint[];
@@ -108,6 +113,32 @@ const groupThresholds = (
     }));
 };
 
+/** Rough width of one character of a direct label (xs, semibold), in px. */
+const LABEL_CHAR_W = 7;
+/** Clear space kept between a direct label and a vertical line. */
+const LABEL_CLEARANCE = 6;
+
+/**
+ * Where to draw the line's direct label so it crosses no vertical line (a dashed threshold or
+ * "Your pay"): the right-hand end of the right-most gap wide enough for it. Falls back to the end
+ * of the plot when no gap is wide enough (a very narrow chart).
+ */
+export const lineLabelSpot = (
+  verticals: readonly number[],
+  left: number,
+  right: number,
+  labelW: number,
+): { x: number; clear: boolean } => {
+  const inside = verticals.filter((v) => v > left && v < right).sort((a, b) => a - b);
+  const edges = [left, ...inside, right];
+  for (let i = edges.length - 1; i > 0; i--) {
+    const from = i - 1 === 0 ? left : (edges[i - 1] ?? left) + LABEL_CLEARANCE;
+    const to = i === edges.length - 1 ? right : (edges[i] ?? right) - LABEL_CLEARANCE;
+    if (to - from >= labelW) return { x: to, clear: true };
+  }
+  return { x: right, clear: false };
+};
+
 const xTickStep = (max: number) => Math.max(10_000, Math.ceil(max / 3 / 10_000) * 10_000);
 
 /**
@@ -140,6 +171,7 @@ export const MarginalRateChart: FC<MarginalRateChartProps> = ({
   yourPay,
   title,
   summary,
+  showSummary = true,
   notice,
   dataTable,
   headingLevel,
@@ -165,6 +197,24 @@ export const MarginalRateChart: FC<MarginalRateChartProps> = ({
   // Direct labels (P10.2) in place of a legend: the line is named at its end, "Your pay" at its
   // marker and the stepped zone inside its band; the dashed thresholds get one quiet line below.
   const lastPoint = points[points.length - 1];
+  const labelW = EXPLORER_COPY.chartLineLabel.length * LABEL_CHAR_W;
+  const labelSpot = lineLabelSpot(
+    [
+      ...markers.map((m) => x(m.gross)),
+      ...(showYourPay && yourPay !== undefined ? [x(yourPay)] : []),
+    ],
+    M.left,
+    W - M.right,
+    labelW,
+  );
+  // Sit above the highest point of the line under the label, so the label never covers it.
+  const rateUnderLabel = Math.max(
+    0,
+    ...points
+      .filter((p) => x(p.gross) >= labelSpot.x - labelW && x(p.gross) <= labelSpot.x)
+      .map((p) => p.ratePct),
+    lastPoint && !labelSpot.clear ? lastPoint.ratePct : 0,
+  );
   const activeMarker = markers.find((m) => m.gross === activeGross) ?? null;
   const tipW = Math.min(TIP_W, W - 16);
   const activeX = activeMarker ? x(activeMarker.gross) : 0;
@@ -213,6 +263,7 @@ export const MarginalRateChart: FC<MarginalRateChartProps> = ({
       directLabels
       headingLevel={headingLevel}
       notice={notice}
+      showSummary={showSummary}
       summary={summary}
       title={title}
     >
@@ -294,8 +345,8 @@ export const MarginalRateChart: FC<MarginalRateChartProps> = ({
               className={marginalRateDirectLabel({ tone: "line" })}
               data-testid="marginal-rate-line-label"
               textAnchor="end"
-              x={W - M.right}
-              y={y(lastPoint.ratePct) - 8}
+              x={labelSpot.x}
+              y={y(rateUnderLabel) - 8}
             >
               {EXPLORER_COPY.chartLineLabel}
             </text>

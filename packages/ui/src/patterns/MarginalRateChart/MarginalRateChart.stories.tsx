@@ -14,7 +14,7 @@ const meta: Meta<typeof MarginalRateChart> = {
   component: MarginalRateChart,
   parameters: { layout: "padded" },
   args: {
-    title: "Estimated share deducted from the next £1,000, by pay before tax",
+    title: "Estimated share deducted from the next £1,000, by pay",
     summary: SAMPLE_SUMMARY,
     points: SAMPLE_POINTS,
     thresholds: SAMPLE_THRESHOLDS,
@@ -32,7 +32,7 @@ export const Default: Story = {
     const canvas = within(canvasElement);
     await expect(
       canvas.getByRole("figure", {
-        name: "Estimated share deducted from the next £1,000, by pay before tax",
+        name: "Estimated share deducted from the next £1,000, by pay",
       }),
     ).toBeInTheDocument();
     // Direct labels in place of a legend (P10.2).

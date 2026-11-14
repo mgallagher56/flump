@@ -55,6 +55,11 @@ export interface TakeHomeDeltaPanelProps {
    * "Unverified estimate" sentence, so the panel does not repeat it as quiet text. Default false.
    */
   unverifiedInPageNotice?: boolean;
+  /**
+   * Shows the "As at tax year" badge in the header. Default true; pass false when the caller
+   * already shows it (the pay rise explorer shows it at the top of its results).
+   */
+  showTaxYearBadge?: boolean;
   className?: string;
 }
 
@@ -74,6 +79,7 @@ export const TakeHomeDeltaPanel: FC<TakeHomeDeltaPanelProps> = ({
   headingLevel = "h3",
   showNotice = true,
   unverifiedInPageNotice = false,
+  showTaxYearBadge = true,
   className,
 }) => {
   const Heading = headingLevel;
@@ -110,7 +116,9 @@ export const TakeHomeDeltaPanel: FC<TakeHomeDeltaPanelProps> = ({
     >
       <div className={deltaPanelHeader()}>
         <Heading className={deltaPanelTitle()}>{DELTA_PANEL_COPY.heading}</Heading>
-        <StatusBadge variant="neutral">{asAtTaxYear(ratesYear)}</StatusBadge>
+        {showTaxYearBadge ? (
+          <StatusBadge variant="neutral">{asAtTaxYear(ratesYear)}</StatusBadge>
+        ) : null}
         {/* Unverified, the full sentence is in the notice (or the page's notice), so no badge
             repeats it (P4.3). */}
         {isUnverifiedEstimate ? null : (

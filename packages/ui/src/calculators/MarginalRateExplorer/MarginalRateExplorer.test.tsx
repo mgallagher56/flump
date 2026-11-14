@@ -10,7 +10,7 @@ import {
 } from "./MarginalRateExplorer";
 
 const DEFAULTS_2026 = { ...getMarginalRateExplorerDefaults(), taxYear: "2026/27" };
-const CHART_TITLE = "Estimated share deducted from the next £1,000, by pay before tax";
+const CHART_TITLE = "Estimated share deducted from the next £1,000, by pay";
 
 /** The "Where the next £1,000 goes" breakdown table's text. */
 const breakdown = () =>
@@ -47,9 +47,10 @@ describe("MarginalRateExplorer", () => {
     const outcomes = screen.getByTestId("explorer-outcomes");
     expect(outcomes.textContent).toContain("Estimated take-home from the next £1,000");
     expect(outcomes.textContent).toContain("£720");
-    expect(outcomes.textContent).toContain("Estimated share deducted from the next £1,000");
+    // The share deducted is the rest of the £1,000: a caption with no figure, not a second card.
+    expect(outcomes.textContent).toContain("The rest goes to tax and other deductions.");
     expect(outcomes.textContent).not.toContain("Estimated take-home a year");
-    expect(within(outcomes).getByText("28%")).toBeDefined();
+    expect(outcomes.textContent).not.toContain("%");
     // The 2026/27 rules are not yet signed off: the panel says so once, and the chart does not repeat it.
     const figure = screen.getByRole("figure", { name: CHART_TITLE });
     expect(within(figure).queryByText(/^Unverified estimate\. These tax figures/)).toBeNull();
@@ -209,9 +210,31 @@ describe("MarginalRateExplorer", () => {
 
   it("does not use a KpiStrip for scenario outcomes", () => {
     render(<MarginalRateExplorerStandalone initialValues={{ taxYear: "2026/27" }} />);
-    // One outcome and one supporting figure; take-home a year answers a different question.
-    expect(screen.getByTestId("explorer-outcomes").children).toHaveLength(2);
+    // One outcome; the share deducted is its complement, so it is the caption.
+    expect(screen.getByTestId("explorer-outcomes").children).toHaveLength(1);
     expect(document.getElementById("marginal-rate-explorer")).not.toBeNull();
+  });
+
+  it("shows the tax year once, at the top of the results above the outcome card", () => {
+    render(<MarginalRateExplorerStandalone initialValues={{ taxYear: "2026/27" }} />);
+    const badges = screen.getAllByText("As at tax year 2026/27");
+    expect(badges).toHaveLength(1);
+    const outcomes = screen.getByTestId("explorer-outcomes");
+    expect(
+      badges[0]?.compareDocumentPosition(outcomes) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    // Not in the "next £1,000" panel header.
+    expect(
+      within(screen.getByTestId("take-home-delta-panel")).queryByText(/As at tax year/),
+    ).toBeNull();
+  });
+
+  it("keeps the chart summary for screen readers only, as the note under the chart says the same", () => {
+    render(<MarginalRateExplorerStandalone initialValues={{ taxYear: "2026/27" }} />);
+    const figure = screen.getByRole("figure", { name: CHART_TITLE });
+    const summary = document.getElementById(figure.getAttribute("aria-describedby") ?? "");
+    expect(summary?.className).not.toContain("textStyle_body.sm");
+    expect(screen.getByText(/Each dashed line marks a threshold/)).toBeDefined();
   });
 
   it("shows two inputs, with region, pension type and the extra pension under More options", () => {

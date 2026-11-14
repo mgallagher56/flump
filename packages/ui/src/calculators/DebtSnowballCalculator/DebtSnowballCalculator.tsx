@@ -28,6 +28,7 @@ import {
   debtControls,
   debtCta,
   debtDetails,
+  debtDrawers,
   debtExplainer,
   debtHeader,
   debtIntro,
@@ -443,43 +444,48 @@ export const DebtSnowballCalculator: FC<DebtSnowballCalculatorProps> = ({
         {ctaLabel(ctaText)} <Icon icon={ArrowRight} size="sm" />
       </Button>
 
-      {bothPaidOff && !nothingOwed ? (
-        <CollapsibleDrawer title={DEBT_SNOWBALL_COPY.details} variant="quiet">
-          <div className={debtDetails()}>
-            <Table caption={DEBT_SNOWBALL_COPY.detailsCaption}>
-              <THead>
-                <Tr>
-                  <Th scope="col">{DEBT_SNOWBALL_COPY.methodColumn}</Th>
-                  <Th scope="col">{DEBT_SNOWBALL_COPY.dateColumn}</Th>
-                  <Th scope="col">{DEBT_SNOWBALL_COPY.durationColumn}</Th>
-                  <Th numeric scope="col">
-                    {DEBT_SNOWBALL_COPY.interestColumn}
-                  </Th>
-                </Tr>
-              </THead>
-              <TBody>
-                {detailRows.map(({ label, result }) => (
-                  <Tr key={label}>
-                    <Th scope="row">{label}</Th>
-                    <Td label={DEBT_SNOWBALL_COPY.dateColumn}>{result.debtFreeDate}</Td>
-                    <Td label={DEBT_SNOWBALL_COPY.durationColumn}>
-                      {formatPayoffDuration(result.months)}
-                    </Td>
-                    <Td label={DEBT_SNOWBALL_COPY.interestColumn} numeric>
-                      {money(result.totalInterest)}
-                    </Td>
+      {/* Both quiet drawers in one column, so they sit with one even gap. */}
+      <div className={debtDrawers()}>
+        {bothPaidOff && !nothingOwed ? (
+          <CollapsibleDrawer title={DEBT_SNOWBALL_COPY.details} variant="quiet">
+            <div className={debtDetails()}>
+              <Table caption={DEBT_SNOWBALL_COPY.detailsCaption}>
+                <THead>
+                  <Tr>
+                    <Th scope="col">{DEBT_SNOWBALL_COPY.methodColumn}</Th>
+                    <Th scope="col">{DEBT_SNOWBALL_COPY.dateColumn}</Th>
+                    <Th scope="col">{DEBT_SNOWBALL_COPY.durationColumn}</Th>
+                    <Th numeric scope="col">
+                      {DEBT_SNOWBALL_COPY.interestColumn}
+                    </Th>
                   </Tr>
-                ))}
-              </TBody>
-            </Table>
-          </div>
-        </CollapsibleDrawer>
-      ) : null}
+                </THead>
+                <TBody>
+                  {detailRows.map(({ label, result }) => (
+                    <Tr key={label}>
+                      <Th scope="row">{label}</Th>
+                      <Td label={DEBT_SNOWBALL_COPY.dateColumn}>{result.debtFreeDate}</Td>
+                      <Td label={DEBT_SNOWBALL_COPY.durationColumn}>
+                        {formatPayoffDuration(result.months)}
+                      </Td>
+                      <Td label={DEBT_SNOWBALL_COPY.interestColumn} numeric>
+                        {money(result.totalInterest)}
+                      </Td>
+                    </Tr>
+                  ))}
+                </TBody>
+              </Table>
+            </div>
+          </CollapsibleDrawer>
+        ) : null}
 
-      {/* Closed by default so the first view keeps to the outcome (P1). */}
-      <CollapsibleDrawer title={DEBT_SNOWBALL_COPY.explainerTitle} variant="quiet">
-        <p className={debtExplainer()}>{DEBT_SNOWBALL_COPY.explainer}</p>
-      </CollapsibleDrawer>
+        {/* Closed by default so the first view keeps to the outcome (P1). */}
+        <CollapsibleDrawer title={DEBT_SNOWBALL_COPY.explainerTitle} variant="quiet">
+          <p className={debtExplainer()}>{DEBT_SNOWBALL_COPY.explainer}</p>
+        </CollapsibleDrawer>
+      </div>
+
+      <ProjectionNotice />
 
       <LiveRegion
         debounceMs={1000}
@@ -504,8 +510,6 @@ export const DebtSnowballCalculator: FC<DebtSnowballCalculatorProps> = ({
         controls={controls}
         controlsLabel={DEBT_SNOWBALL_COPY.controlsLabel}
       />
-
-      <ProjectionNotice />
     </div>
   );
 };

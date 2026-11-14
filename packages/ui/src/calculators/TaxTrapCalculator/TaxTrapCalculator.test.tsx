@@ -32,7 +32,7 @@ describe("TaxTrapCalculator", () => {
       10_000,
     );
     // The headline figure is the reduction in take-home pay, as a positive amount.
-    expect(screen.getByTestId("tax-trap-headline").textContent).toBe(
+    expect(outcome(TAX_TRAP_COPY.kpiTakeHomeReduction)).toContain(
       formatMoney(-expected.deltaTakeHome).text,
     );
     expect(outcome(TAX_TRAP_COPY.kpiTakeHomeReduction)).toContain(TAX_TRAP_COPY.kpiTakeHomeSubtext);
@@ -84,7 +84,7 @@ describe("TaxTrapCalculator", () => {
 
   it("shows £0 under a change label, with no figure in the subtext, when there is no contribution", () => {
     render(<TaxTrapCalculator initialContribution={0} taxYear="2026/27" />);
-    expect(screen.getByTestId("tax-trap-headline").textContent).toBe("£0");
+    expect(outcome(TAX_TRAP_COPY.kpiTakeHomeChange)).toContain("£0");
     expect(outcome(TAX_TRAP_COPY.kpiTakeHomeChange)).toContain(TAX_TRAP_COPY.noContribution);
     expect(outcome(TAX_TRAP_COPY.kpiTaxAndNiChange)).toContain("£0");
     for (const s of [
@@ -161,14 +161,26 @@ describe("TaxTrapCalculator", () => {
     expect(screen.queryByTestId("tax-rates-status-banner")).toBeNull();
   });
 
-  it("puts the sign-up button under the results and keeps one factual line outside the details", () => {
+  it("puts the sign-up button under the results and keeps the taper facts in the details", () => {
     render(<TaxTrapCalculator />);
     const cta = screen.getByRole("button", { name: "Continue to sign up" });
     const outcomes = screen.getByTestId("tax-trap-outcomes");
     expect(outcomes.compareDocumentPosition(cta) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(screen.getByTestId("tax-trap-fact-line").textContent).toBe(factLine("£100,000"));
+    expect(screen.queryByTestId("tax-trap-fact-line")).toBeNull();
     expect(screen.queryByTestId("tax-trap-taper-note")).toBeNull();
     expect(screen.queryByTestId("tax-trap-childcare-status")).toBeNull();
+    openDetails();
+    expect(screen.getByTestId("tax-trap-fact-line").textContent).toBe(factLine("£100,000"));
+  });
+
+  it("shows the tax year once, at the top of the results above the outcome cards", () => {
+    render(<TaxTrapCalculator embedded taxYear="2026/27" />);
+    const badges = screen.getAllByText("As at tax year 2026/27");
+    expect(badges).toHaveLength(1);
+    const outcomes = screen.getByTestId("tax-trap-outcomes");
+    expect(
+      badges[0]?.compareDocumentPosition(outcomes) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
   });
 
   it("hides its own title when embedded, with no skipped heading level", () => {

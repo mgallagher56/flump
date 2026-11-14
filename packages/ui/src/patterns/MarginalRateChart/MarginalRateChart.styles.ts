@@ -7,7 +7,9 @@ import { cva } from "../../../styled-system/css";
  */
 export const marginalRateFigure = cva({
   base: {
-    "& > figcaption > :is(h2, h3, h4)": { textStyle: "heading.sm" },
+    // The global heading style balances lines (text-wrap: balance), which split a title that
+    // nearly fits into two half lines; wrap normally so it keeps one line when it fits.
+    "& > figcaption > :is(h2, h3, h4)": { textStyle: "heading.sm", textWrap: "wrap" },
   },
 });
 
