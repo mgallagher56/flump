@@ -193,6 +193,35 @@ describe.skipIf(dbMode === "skip")("authz: snapshots controller (real Postgres)"
     expect(Number(rows[1]?.value)).toBe(-185447.5);
   });
 
+  it("R2-5 ruling (b): no calculated value when the saved balance differs from the latest record", async () => {
+    const created = await h.call("post", "/accounts", h.tokens.a, {
+      name: "A Car loan",
+      type: "Loan",
+      balance: 8400,
+      interestRate: 7.9,
+      monthlyContribution: 265,
+    });
+    expect(created.status).toBe(201);
+    const loan = created.body.id as string;
+    // A past month does not move the saved balance, so the record (8,610) and saved (8,400) differ.
+    expect(
+      (await put("2001-01", h.tokens.a, { values: [{ accountId: loan, value: 8610 }] })).status,
+    ).toBe(200);
+    const fromRecord = calculateCheckInBalance({
+      type: "Loan",
+      interestRate: 7.9,
+      monthlyPayment: 265,
+      base: { value: 8610, month: "2001-01" },
+      month: PAST,
+    });
+    expect(fromRecord).not.toBeNull();
+    const res = await put(PAST, h.tokens.a, {
+      values: [{ accountId: loan, value: fromRecord?.value, source: "calculated" }],
+    });
+    expect(res.status).toBe(400);
+    expect(await rowsFor(loan)).toHaveLength(1);
+  });
+
   it("rejects non-UUID account ids without a 500", async () => {
     const res = await put(PAST, h.tokens.a, { values: [{ accountId: "not-a-uuid", value: 1 }] });
     // The contract rejects it at the boundary (enforce is the default, E21).
