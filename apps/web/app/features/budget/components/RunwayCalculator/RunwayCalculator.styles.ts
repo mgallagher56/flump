@@ -1,172 +1,51 @@
 import { cva } from "@repo/ui/styled-system/css";
 
 export const runwayRoot = cva({
-  base: { display: "flex", flexDirection: "column", gap: "24px" },
+  base: { display: "flex", flexDirection: "column", gap: "6" },
 });
 
-export const introText = cva({
-  base: { textStyle: "body.sm", color: "text.secondary", margin: 0, maxWidth: "60ch" },
+/** The controls column: two inputs, then "More options". Sits on the zone surface (no card). */
+export const controlsStack = cva({
+  base: { display: "flex", flexDirection: "column", gap: "4" },
 });
 
-export const cardHeader = cva({
+export const optionsStack = cva({
+  base: {
+    display: "grid",
+    gridTemplateColumns: { base: "1fr", md: "repeat(3, minmax(0, 1fr))" },
+    gap: "6",
+    paddingTop: "2",
+    alignItems: "start",
+  },
+});
+
+export const optionGroup = cva({
   base: {
     display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    flexWrap: "wrap",
-    gap: "8px",
-    marginBottom: "16px",
+    flexDirection: "column",
+    gap: "2",
+    border: "none",
+    margin: 0,
+    padding: 0,
+    minWidth: 0,
   },
 });
 
-export const cardTitleRow = cva({
-  base: { display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" },
+export const optionLegend = cva({
+  base: { textStyle: "label.md", color: "text.secondary", padding: 0, marginBottom: "1" },
 });
 
-export const cardTitle = cva({
-  base: { textStyle: "heading.md", color: "text.primary", margin: 0 },
+export const optionHint = cva({
+  base: { fontVariantNumeric: "tabular-nums" },
 });
 
-export const bulkActions = cva({
-  base: { display: "flex", gap: "4px" },
+/** The one outcome: label, figure, one plain sentence, two supporting figures. */
+export const outcome = cva({
+  base: { display: "flex", flexDirection: "column", gap: "2" },
 });
 
-export const mutedNote = cva({
-  base: { textStyle: "body.sm", color: "text.muted", margin: 0 },
-});
-
-export const rowList = cva({
-  base: { display: "flex", flexDirection: "column", gap: "8px" },
-});
-
-export const toggleRow = cva({
-  base: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: "12px",
-    padding: "12px 14px",
-    borderRadius: "lg",
-    borderWidth: "1px",
-    borderStyle: "solid",
-    borderColor: "border.subtle",
-    backgroundColor: "surface.card",
-    transition: "background-color 0.15s ease, border-color 0.15s ease",
-  },
-  variants: {
-    on: {
-      true: { backgroundColor: "primary.subtle", borderColor: "primary.border" },
-      false: {},
-    },
-  },
-  defaultVariants: { on: false },
-});
-
-export const toggleInfo = cva({
-  base: { display: "flex", flexDirection: "column", gap: "2px", minWidth: 0 },
-});
-
-export const toggleName = cva({
-  base: { textStyle: "label.md", color: "text.primary", margin: 0 },
-});
-
-export const toggleMeta = cva({
-  base: {
-    display: "flex",
-    alignItems: "center",
-    flexWrap: "wrap",
-    gap: "6px",
-    textStyle: "body.sm",
-    color: "text.muted",
-    fontVariantNumeric: "tabular-nums",
-  },
-});
-
-export const toggleEnd = cva({
-  base: { display: "flex", alignItems: "center", gap: "12px", flexShrink: 0 },
-});
-
-export const switchButton = cva({
-  base: {
-    position: "relative",
-    width: "44px",
-    height: "26px",
-    flexShrink: 0,
-    borderRadius: "full",
-    borderWidth: "1px",
-    borderStyle: "solid",
-    borderColor: "border.strong",
-    backgroundColor: "surface.sunken",
-    cursor: "pointer",
-    transition: "background-color 0.15s ease",
-    "&[aria-checked='true']": { backgroundColor: "primary.solid", borderColor: "primary.solid" },
-    "&::after": {
-      content: '""',
-      position: "absolute",
-      top: "2px",
-      left: "2px",
-      width: "20px",
-      height: "20px",
-      borderRadius: "full",
-      backgroundColor: "surface.card",
-      boxShadow: "xs",
-      transition: "transform 0.15s ease",
-    },
-    "&[aria-checked='true']::after": { transform: "translateX(18px)" },
-    _focusVisible: {
-      outline: "2px solid",
-      outlineColor: "border.focusRing",
-      outlineOffset: "2px",
-    },
-  },
-});
-
-export const totalRow = cva({
-  base: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    padding: "10px 14px",
-    textStyle: "label.md",
-    color: "text.secondary",
-  },
-});
-
-export const statusRow = cva({
-  base: { display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" },
-});
-
-export const thresholds = cva({
-  base: {
-    display: "flex",
-    justifyContent: "space-between",
-    marginTop: "8px",
-    textStyle: "label.sm",
-    color: "text.muted",
-    fontVariantNumeric: "tabular-nums",
-  },
-});
-
-export const breakdownList = cva({
-  base: { display: "flex", flexDirection: "column", gap: "10px", marginTop: "20px" },
-});
-
-export const breakdownRow = cva({
-  base: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    textStyle: "body.sm",
-    color: "text.secondary",
-  },
-});
-
-export const whatIfGrid = cva({
-  base: { display: "flex", flexDirection: "column", gap: "16px" },
-});
-
-export const ctaRow = cva({
-  base: { marginTop: "4px" },
+export const outcomeLabel = cva({
+  base: { textStyle: "label.md", color: "text.secondary", margin: 0 },
 });
 
 export const scenarioValue = cva({
@@ -175,11 +54,36 @@ export const scenarioValue = cva({
     color: "text.primary",
     fontVariantNumeric: "tabular-nums",
     margin: 0,
-    marginBottom: "4px",
   },
 });
 
-/** A group of inputs or results on the scenario zone surface: no nested card (E16 PR 2). */
-export const toolGroup = cva({
-  base: { display: "flex", flexDirection: "column", gap: "3", paddingBlock: "2" },
+export const introText = cva({
+  base: { textStyle: "body.sm", color: "text.secondary", margin: 0, maxWidth: "60ch" },
+});
+
+export const breakdownList = cva({
+  base: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "2",
+    marginTop: "3",
+    marginBottom: 0,
+    paddingTop: "3",
+    borderTopWidth: "1px",
+    borderTopStyle: "solid",
+    borderTopColor: "border.subtle",
+  },
+});
+
+export const breakdownRow = cva({
+  base: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    gap: "4",
+    textStyle: "body.sm",
+    color: "text.secondary",
+    fontVariantNumeric: "tabular-nums",
+    "& dd": { margin: 0 },
+  },
 });

@@ -78,7 +78,7 @@ export const chevron = cva({
   variants: { open: { true: { transform: "rotate(180deg)" }, false: {} } },
 });
 
-/** The thin proportion bar under each row: a share of the larger of money in and money out. */
+/** The thin proportion bar under each row: a share of money in. */
 export const shareBar = cva({
   base: { pb: "3", mt: "-1" },
 });

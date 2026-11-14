@@ -16,7 +16,6 @@
     "apps/web/app/components/dialogs/connectBankWizard/ConnectBankWizard.styles.ts": 1,
     "apps/web/app/features/ai-connections/components/McpConnectionCard/McpConnectionCard.styles.ts": 3,
     "apps/web/app/features/budget/components/AddCategoryModal/AddCategoryModal.styles.ts": 2,
-    "apps/web/app/features/budget/components/RunwayCalculator/RunwayCalculator.styles.ts": 4,
     "apps/web/app/features/debt/components/PayoffStrategyControls/PayoffStrategyControls.styles.ts": 1,
     "apps/web/app/root.tsx": 2
   },

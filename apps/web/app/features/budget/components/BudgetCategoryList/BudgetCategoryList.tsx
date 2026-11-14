@@ -33,6 +33,11 @@ export interface BudgetCategoryListProps {
   /** Renders the open category's entries (the entry table) under its row. */
   renderEntries: (category: string) => ReactNode;
   onAddCategory: () => void;
+  /**
+   * Replaces a row's "3 entries" line, e.g. the housing row names how you pay for housing. The
+   * row's amount is still the one figure (housing cost shows once, here).
+   */
+  metaFor?: (category: string) => string | undefined;
 }
 
 export interface CategoryRow {
@@ -42,15 +47,26 @@ export interface CategoryRow {
   count: number;
 }
 
+/** Income is money in, not somewhere money goes: it shows once, as "Money in each month". */
+export const INCOME_CATEGORY = "income";
+
+const isIncomeCategory = (category: string, entries: BudgetEntry[]): boolean => {
+  if (category === INCOME_CATEGORY) return true;
+  const inCategory = entries.filter((e) => e.category === category);
+  return inCategory.length > 0 && inCategory.every((e) => e.isIncome);
+};
+
 /**
- * Categories ranked by their monthly amount, largest first; empty ones keep their order at the
- * foot. Income is a category like any other, so every entry is one tap away.
+ * Where the money goes: categories ranked by their monthly amount, largest first; empty ones keep
+ * their order at the foot. Income categories are left out (E16 R2-6).
  */
 export function rankCategories(categories: string[], entries: BudgetEntry[]): CategoryRow[] {
-  const all = Array.from(new Set([...categories, ...entries.map((e) => e.category)]));
+  const all = Array.from(new Set([...categories, ...entries.map((e) => e.category)])).filter(
+    (category) => !isIncomeCategory(category, entries),
+  );
   return all
     .map((category, index) => {
-      const inCategory = entries.filter((e) => e.category === category);
+      const inCategory = entries.filter((e) => e.category === category && !e.isIncome);
       const total = inCategory.reduce((s, e) => s + Math.abs(toMonthly(e)), 0);
       return {
         index,
@@ -70,9 +86,9 @@ const entryCount = (n: number) =>
   n === 0 ? "No entries yet" : `${n} ${n === 1 ? "entry" : "entries"}`;
 
 /**
- * The budget's one category list (E16 PR 5): one figure per row, a thin bar showing each
- * category's share, and the row opens its entries. Replaces the donut, its legend, the fixed and
- * flexible cards and the pill nav. Neutral ink throughout: a share is a fact, not a verdict.
+ * The budget's one category list (E16 PR 5, R2-6): one figure per row, a thin bar showing each
+ * category's share of money in, and the row opens its entries. Neutral ink throughout: a share is
+ * a fact, not a verdict.
  */
 export const BudgetCategoryList: FC<BudgetCategoryListProps> = ({
   categories,
@@ -81,23 +97,24 @@ export const BudgetCategoryList: FC<BudgetCategoryListProps> = ({
   onToggleCategory,
   renderEntries,
   onAddCategory,
+  metaFor,
 }) => {
   const slots = categoryList();
   const rows = useMemo(() => rankCategories(categories, entries), [categories, entries]);
-  // Bars share one scale: the larger of money in and money out, so income reads as a whole.
+  // Bars show each category's share of money in; without income, of everything going out.
   const scale = useMemo(() => {
-    const incoming = rows
-      .filter((r) => entries.some((e) => e.category === r.category && e.isIncome))
-      .reduce((s, r) => s + r.total, 0);
-    const outgoing = rows.reduce((s, r) => s + r.total, 0) - incoming;
-    return Math.max(incoming, outgoing, 0);
+    const incoming = entries
+      .filter((e) => e.isIncome)
+      .reduce((s, e) => s + Math.abs(toMonthly(e)), 0);
+    const outgoing = rows.reduce((s, r) => s + r.total, 0);
+    return incoming > 0 ? incoming : outgoing;
   }, [rows, entries]);
 
   return (
     <Card aria-labelledby="budget-categories-heading" as="section" padding="lg">
       <div className={slots.header}>
         <h2 className={slots.title} id="budget-categories-heading">
-          Your categories
+          Where your money goes
         </h2>
       </div>
       <ul className={slots.list}>
@@ -124,7 +141,9 @@ export const BudgetCategoryList: FC<BudgetCategoryListProps> = ({
                     </span>
                     <span className={slots.name}>
                       <span>{row.label}</span>
-                      <span className={slots.meta}>{entryCount(row.count)}</span>
+                      <span className={slots.meta}>
+                        {metaFor?.(row.category) ?? entryCount(row.count)}
+                      </span>
                     </span>
                   </span>
                   <span className={rowEnd()}>

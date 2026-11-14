@@ -17,15 +17,19 @@ import {
 } from "@repo/ui";
 import { ListChecks } from "lucide-react";
 import { type FC, useEffect, useMemo, useRef, useState } from "react";
-import { useLoaderData, useNavigate } from "react-router";
+import { useLoaderData } from "react-router";
 import { AddCategoryModal } from "~/features/budget/components/AddCategoryModal";
 import { BudgetCategoryList } from "~/features/budget/components/BudgetCategoryList";
 import { BudgetCategoryTable } from "~/features/budget/components/BudgetCategoryTable";
 import { BudgetOverview } from "~/features/budget/components/BudgetOverview";
 import { BudgetSetupWizard } from "~/features/budget/components/BudgetSetupWizard";
-import { HousingDetailsCard } from "~/features/budget/components/HousingDetailsCard";
 import { RunwayCalculator } from "~/features/budget/components/RunwayCalculator";
 import { DebtHelpLink } from "~/features/debt/components/DebtHelpLink";
+import {
+  HousingDetails,
+  type HousingTenure,
+  housingTenureLabel,
+} from "~/features/housing/components/HousingDetails";
 import { useUserProfile } from "~/hooks/useUserProfile";
 import type { loader } from "~/routes/app.budget";
 import { apiFetch, apiFetchAll } from "~/services/api-client";
@@ -61,7 +65,6 @@ const BudgetContainer: FC = () => {
     userProfile,
   } = useLoaderData<typeof loader>();
 
-  const navigate = useNavigate();
   const { profile, setProfile, updateProfile, markChecklistStep } = useUserProfile();
 
   // Sync profile from loader into atom
@@ -143,9 +146,9 @@ const BudgetContainer: FC = () => {
     });
   }, [accounts, accountDetails]);
 
-  // Rent saved on this page, laid over the loader profile until the next load (E32).
+  // Housing saved on this page, laid over the loader profile until the next load (E32).
   const [savedHousing, setSavedHousing] = useState<{
-    housingStatus: "renting";
+    housingStatus: Exclude<HousingTenure, null>;
     monthlyHousingCost: number;
   } | null>(null);
   const pictureProfile = useMemo(
@@ -166,13 +169,16 @@ const BudgetContainer: FC = () => {
     [pictureProfile, accounts, accountDetails, entries],
   );
 
-  // Renters, and anyone who has not said, see their housing cost here; owners with a mortgage see
-  // it on the mortgage page, and owning outright has no housing payment to show.
-  const housingStatus = pictureProfile?.housingStatus ?? null;
-  const showHousingCost = housingStatus === "renting" || housingStatus === null;
+  // Housing cost shows once: as the housing row in "Where your money goes". The row names the
+  // tenure, and opening it says where the saved figure lives (E16 R2-6).
+  const housingStatus = (pictureProfile?.housingStatus ?? null) as HousingTenure;
 
-  const handleSaveRent = async (monthly: number) => {
-    const update = { housingStatus: "renting" as const, monthlyHousingCost: monthly };
+  const handleSaveHousing = async (monthly: number) => {
+    // Someone who has not said yet is asked for their rent, as before (E32).
+    const update = {
+      housingStatus: housingStatus ?? ("renting" as const),
+      monthlyHousingCost: monthly,
+    };
     await updateProfile(update);
     setSavedHousing(update);
   };
@@ -299,15 +305,26 @@ const BudgetContainer: FC = () => {
   };
 
   const renderEntries = (category: string) => (
-    <BudgetCategoryTable
-      category={category}
-      embedded
-      entries={entries.filter((e) => e.category === category)}
-      onAdd={addEntry}
-      onDelete={deleteEntry}
-      onUpdate={updateEntry}
-      onDeleteCategory={!STANDARD_CATEGORIES.includes(category) ? handleDeleteCategory : undefined}
-    />
+    <>
+      {category === "housing" && (
+        <HousingDetails
+          housingStatus={housingStatus}
+          savedAmount={pictureProfile?.monthlyHousingCost ?? null}
+          onSave={handleSaveHousing}
+        />
+      )}
+      <BudgetCategoryTable
+        category={category}
+        embedded
+        entries={entries.filter((e) => e.category === category)}
+        onAdd={addEntry}
+        onDelete={deleteEntry}
+        onUpdate={updateEntry}
+        onDeleteCategory={
+          !STANDARD_CATEGORIES.includes(category) ? handleDeleteCategory : undefined
+        }
+      />
+    </>
   );
 
   return (
@@ -370,20 +387,11 @@ const BudgetContainer: FC = () => {
             <BudgetOverview entries={entries} picture={picture} />
           )}
 
-          {showHousingCost && (
-            <HousingDetailsCard
-              housingCost={picture.housingCost}
-              savedRent={
-                housingStatus === "renting" ? (pictureProfile?.monthlyHousingCost ?? null) : null
-              }
-              onSaveRent={handleSaveRent}
-            />
-          )}
-
           {!isBudgetEmpty && (
             <BudgetCategoryList
               categories={allCategories}
               entries={entries}
+              metaFor={(cat) => (cat === "housing" ? housingTenureLabel(housingStatus) : undefined)}
               openCategory={openCategory}
               renderEntries={renderEntries}
               onAddCategory={() => setIsAddCategoryOpen(true)}
@@ -399,7 +407,6 @@ const BudgetContainer: FC = () => {
               entries={entries}
               scenario={runwayScenario}
               onScenarioChange={handleScenarioChange}
-              onNavigateToForecast={() => navigate("/app/savings#forecast")}
             />
           )}
 
