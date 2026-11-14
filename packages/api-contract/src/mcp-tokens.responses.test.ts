@@ -50,6 +50,7 @@ const pack = {
   portfolio: {
     netWorth: 12500.5,
     totalAssets: 15000,
+    homeEstimate: 0,
     totalLiabilities: 2499.5,
     totalLiquidCash: 4000,
     totalInvestments: 6000,
