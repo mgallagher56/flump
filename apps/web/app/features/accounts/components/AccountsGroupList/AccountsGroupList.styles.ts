@@ -25,12 +25,13 @@ export const accountLink = cva({
   base: {
     textStyle: "label.md",
     color: "text.primary",
-    textDecoration: "underline",
-    textDecorationColor: "border.strong",
+    // A list of account names reads as a list of links without an underline on every row; the
+    // underline comes back on hover and focus.
+    textDecoration: "none",
     textUnderlineOffset: "3px",
     borderRadius: "sm",
     overflowWrap: "anywhere",
-    _hover: { color: "primary", textDecorationColor: "currentColor" },
+    _hover: { color: "primary", textDecoration: "underline" },
     _focusVisible: {
       outline: "2px solid",
       outlineColor: "border.focusRing",

@@ -146,7 +146,8 @@ const TYPE_DOMAIN: Record<string, IconTileDomain> = {
   [PENSION]: "pension",
   [PROPERTY]: "mortgage",
   [OWED]: "savings",
-  [MORTGAGE]: "mortgage",
+  // Under "What you owe" every debt shares one tint; the home itself keeps the mortgage tint.
+  [MORTGAGE]: "debt",
   [CREDIT_CARD]: "debt",
   [LOAN]: "debt",
   [OVERDRAFT]: "debt",
@@ -305,16 +306,16 @@ export const AccountsGroupList: FC<AccountsGroupListProps> = ({
             total={owe.length > 1 ? { text: "Total you owe", value: totalOwe } : undefined}
           />
         ) : null}
+        {notCounted.length > 0 ? (
+          <Group
+            // The heading and the line under net worth already say it is left out; keep the facts.
+            footnote={leftOutStudentLoan ? STUDENT_LOAN_FACTS : undefined}
+            id="accounts-not-counted-heading"
+            rows={notCounted}
+            title="Not counted in net worth"
+          />
+        ) : null}
       </div>
-      {notCounted.length > 0 ? (
-        <Group
-          // The heading and the line under net worth already say it is left out; keep the facts.
-          footnote={leftOutStudentLoan ? STUDENT_LOAN_FACTS : undefined}
-          id="accounts-not-counted-heading"
-          rows={notCounted}
-          title="Not counted in net worth"
-        />
-      ) : null}
     </div>
   );
 };
