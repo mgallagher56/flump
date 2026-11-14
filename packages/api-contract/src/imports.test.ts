@@ -1,8 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
   CommitImportRequest,
+  ImportBatchListResponse,
   ImportBatchResponse,
+  ImportPreviewResponse,
   MAX_IMPORT_ROWS,
+  PreviewImportRequest,
   StageImportRequest,
 } from "./domains/imports.js";
 import { allRoutes } from "./manifest.js";
@@ -31,18 +34,62 @@ const view = {
 };
 
 describe("import contract (E17 PR C)", () => {
-  it("registers four session-auth routes with request and response schemas", () => {
+  it("registers six session-auth routes with request and response schemas", () => {
     const ids = allRoutes.filter((r) => r.group === "imports").map((r) => r.id);
     expect(ids.sort()).toEqual([
       "imports.commit",
       "imports.get",
+      "imports.list",
+      "imports.preview",
       "imports.revert",
       "imports.stage",
     ]);
+    const expected: Record<string, unknown> = {
+      "imports.list": ImportBatchListResponse,
+      "imports.preview": ImportPreviewResponse,
+    };
     for (const r of allRoutes.filter((x) => x.group === "imports")) {
       expect(r.auth).toBe("user");
-      expect(r.response).toBe(ImportBatchResponse);
+      expect(r.response).toBe(expected[r.id] ?? ImportBatchResponse);
     }
+  });
+
+  it("accepts a preview request and a preview response, and rejects unknown keys", () => {
+    expect(checkAgainst(PreviewImportRequest, {}).ok).toBe(true);
+    expect(checkAgainst(PreviewImportRequest, { accountMap: { acc_1: BATCH, b: null } }).ok).toBe(
+      true,
+    );
+    expect(checkAgainst(PreviewImportRequest, { accountMap: { acc_1: "nope" } }).ok).toBe(false);
+    const preview = {
+      batchId: BATCH,
+      status: "staged",
+      expiresAt: "2026-11-21T10:00:00.000Z",
+      accounts: [
+        {
+          ref: "acc_1",
+          name: "Easy saver",
+          type: "Saving",
+          mappedAccountId: null,
+          suggestedAccountId: BATCH,
+        },
+      ],
+      rows: [
+        {
+          key: "acc_1:2026-01",
+          ref: "acc_1",
+          month: "2026-01",
+          value: 1200.5,
+          prior: 1100,
+          priorSource: "manual",
+          status: "overwrite",
+          needsTick: true,
+        },
+      ],
+      totals: { new: 0, overwrite: 1, unchanged: 0, needsTick: 1, errors: 0 },
+    };
+    expect(checkAgainst(ImportPreviewResponse, preview).ok).toBe(true);
+    expect(checkAgainst(ImportPreviewResponse, { ...preview, extra: 1 }).ok).toBe(false);
+    expect(checkAgainst(ImportBatchListResponse, [view]).ok).toBe(true);
   });
 
   it("accepts a stage chunk and rejects bad refs, keys, months, values and oversized arrays", () => {

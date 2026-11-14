@@ -1,8 +1,13 @@
-import { Body, Controller, Get, Param, Post, Req, UseGuards } from "@nestjs/common";
+import { Body, Controller, Get, HttpCode, Param, Post, Req, UseGuards } from "@nestjs/common";
 import { AuthGuard } from "../auth/auth.guard";
 import type { AuthenticatedRequest } from "../finance.controller";
 import { RateLimit } from "../security/rate-limit.decorator";
-import { type CommitImportInput, ImportsService, type StageImportInput } from "./imports.service";
+import {
+  type CommitImportInput,
+  ImportsService,
+  type PreviewImportInput,
+  type StageImportInput,
+} from "./imports.service";
 import { ImportsAccessGuard } from "./imports-access.guard";
 
 /**
@@ -20,9 +25,25 @@ export class ImportsController {
     return this.imports.stage(req.user.id, body);
   }
 
+  @Get("imports")
+  async list(@Req() req: AuthenticatedRequest) {
+    return this.imports.list(req.user.id);
+  }
+
   @Get("imports/:id")
   async get(@Req() req: AuthenticatedRequest, @Param("id") id: string) {
     return this.imports.get(req.user.id, id);
+  }
+
+  /** Dry run of a commit for the review page. Writes nothing. */
+  @Post("imports/:id/preview")
+  @HttpCode(200)
+  async preview(
+    @Req() req: AuthenticatedRequest,
+    @Param("id") id: string,
+    @Body() body: PreviewImportInput,
+  ) {
+    return this.imports.preview(req.user.id, id, body ?? {});
   }
 
   @Post("imports/:id/commit")

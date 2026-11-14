@@ -56,6 +56,14 @@ describe.skipIf(dbMode === "skip")("authz: imports controller (real Postgres)", 
     exercised.add("GET /imports/:id");
     return h.call("get", `/imports/${id}`, token);
   };
+  const list = (token: string | undefined) => {
+    exercised.add("GET /imports");
+    return h.call("get", "/imports", token);
+  };
+  const preview = (token: string | undefined, id: string, body: object = {}) => {
+    exercised.add("POST /imports/:id/preview");
+    return h.call("post", `/imports/${id}/preview`, token, body);
+  };
   const commit = (token: string | undefined, id: string, body: object = {}) => {
     exercised.add("POST /imports/:id/commit");
     return h.call("post", `/imports/${id}/commit`, token, body);
@@ -105,6 +113,8 @@ describe.skipIf(dbMode === "skip")("authz: imports controller (real Postgres)", 
     for (const token of [undefined, h.tokens.expired, h.tokens.dev]) {
       expect((await stage(token, simple())).status).toBe(401);
       expect((await getBatch(token, MISSING_ID)).status).toBe(401);
+      expect((await list(token)).status).toBe(401);
+      expect((await preview(token, MISSING_ID)).status).toBe(401);
       expect((await commit(token, MISSING_ID)).status).toBe(401);
       expect((await revert(token, MISSING_ID)).status).toBe(401);
     }
@@ -185,6 +195,7 @@ describe.skipIf(dbMode === "skip")("authz: imports controller (real Postgres)", 
     const id = a.body.batchId as string;
     const pairs = [
       [await getBatch(h.tokens.b, id), await getBatch(h.tokens.b, MISSING_ID)],
+      [await preview(h.tokens.b, id), await preview(h.tokens.b, MISSING_ID)],
       [await commit(h.tokens.b, id), await commit(h.tokens.b, MISSING_ID)],
       [await revert(h.tokens.b, id), await revert(h.tokens.b, MISSING_ID)],
       [
@@ -208,6 +219,170 @@ describe.skipIf(dbMode === "skip")("authz: imports controller (real Postgres)", 
     expect(await details().count()).toBe(0);
     expect(await accounts().count()).toBe(2);
     expect((await batches().findOneByOrFail({ id: a.body.batchId })).status).toBe("staged");
+  });
+
+  it("list returns only the caller's batches, newest first, with no names", async () => {
+    const first = await stage(h.tokens.a, simple());
+    const second = await stage(h.tokens.a, simple());
+    await stage(h.tokens.b, simple());
+    const res = await list(h.tokens.a);
+    expect(res.status).toBe(200);
+    expect(res.body.map((b: { batchId: string }) => b.batchId)).toEqual([
+      second.body.batchId,
+      first.body.batchId,
+    ]);
+    expect(JSON.stringify(res.body)).not.toContain("Secret ISA name");
+    expect((await list(h.tokens.b)).body).toHaveLength(1);
+  });
+
+  it("list marks a batch past its expiry as expired", async () => {
+    const res = await stage(h.tokens.a, simple());
+    await h.dataSource.query(
+      `UPDATE "import_batches" SET "expires_at" = '2000-01-01' WHERE "id" = $1`,
+      [res.body.batchId],
+    );
+    expect((await list(h.tokens.a)).body[0]).toMatchObject({ status: "expired" });
+  });
+
+  it("preview classifies each row as commit would, writes nothing, and matches the commit", async () => {
+    await h.call("put", "/snapshots/2020-01", h.tokens.a, {
+      values: [{ accountId: accountA, value: 50 }],
+    });
+    await h.call("put", "/snapshots/2020-02", h.tokens.a, {
+      values: [{ accountId: accountA, value: 1100 }],
+    });
+    const res = await stage(h.tokens.a, {
+      idempotencyKey: key(),
+      accounts: [
+        { ref: "isa", name: "Secret ISA name", type: "Saving" },
+        { ref: "saver", name: " a  saver ", type: "Saving" },
+        { ref: "card", name: "Card", type: "Credit Card" },
+      ],
+      balances: [
+        { accountRef: "isa", month: "2020-01", value: 1000 },
+        { accountRef: "isa", month: "2020-02", value: 1100 },
+        { accountRef: "isa", month: "2020-03", value: 1200 },
+        { accountRef: "card", month: "2020-01", value: 300 },
+      ],
+    });
+    const id = res.body.batchId as string;
+    const before = await details().count();
+
+    const unmapped = await preview(h.tokens.a, id);
+    expect(unmapped.status).toBe(200);
+    expect(unmapped.body.totals).toEqual({
+      new: 4,
+      overwrite: 0,
+      unchanged: 0,
+      needsTick: 0,
+      errors: 0,
+    });
+    // The session-only preview shows the user's own names; the suggestion is name plus type.
+    expect(unmapped.body.accounts).toEqual([
+      {
+        ref: "isa",
+        name: "Secret ISA name",
+        type: "Saving",
+        mappedAccountId: null,
+        suggestedAccountId: null,
+      },
+      {
+        ref: "saver",
+        name: "a  saver",
+        type: "Saving",
+        mappedAccountId: null,
+        suggestedAccountId: accountA,
+      },
+      {
+        ref: "card",
+        name: "Card",
+        type: "Credit Card",
+        mappedAccountId: null,
+        suggestedAccountId: null,
+      },
+    ]);
+    expect(unmapped.body.rows.find((r: { key: string }) => r.key === "card:2020-01")).toMatchObject(
+      {
+        value: -300,
+        prior: null,
+        status: "new",
+      },
+    );
+
+    const mapped = await preview(h.tokens.a, id, { accountMap: { isa: accountA } });
+    expect(mapped.body.accounts[0]).toMatchObject({ mappedAccountId: accountA });
+    expect(mapped.body.totals).toEqual({
+      new: 2,
+      overwrite: 1,
+      unchanged: 1,
+      needsTick: 1,
+      errors: 0,
+    });
+    expect(mapped.body.rows.slice(0, 2)).toEqual([
+      {
+        key: "card:2020-01",
+        ref: "card",
+        month: "2020-01",
+        value: -300,
+        prior: null,
+        priorSource: null,
+        status: "new",
+        needsTick: false,
+      },
+      {
+        key: "isa:2020-01",
+        ref: "isa",
+        month: "2020-01",
+        value: 1000,
+        prior: 50,
+        priorSource: "manual",
+        status: "overwrite",
+        needsTick: true,
+      },
+    ]);
+    expect(await details().count()).toBe(before);
+    expect(await accounts().count()).toBe(2);
+    expect((await batches().findOneByOrFail({ id })).status).toBe("staged");
+
+    // Commit with the same map and no ticks does exactly what the preview said.
+    const done = await commit(h.tokens.a, id, { accountMap: { isa: accountA } });
+    expect(done.body).toMatchObject({
+      counts: { new: 2, overwrite: 0, unchanged: 1, skipped: 1 },
+      skippedManual: ["isa:2020-01"],
+    });
+  });
+
+  it("preview flags the current month of a bank-connected account", async () => {
+    await h.dataSource.query(
+      `UPDATE "accounts" SET "connection_id" = '00000000-0000-4000-8000-0000000000c1' WHERE "id" = $1`,
+      [accountA],
+    );
+    const res = await stage(h.tokens.a, {
+      idempotencyKey: key(),
+      accounts: [{ ref: "isa", name: "ISA", type: "Saving" }],
+      balances: [{ accountRef: "isa", month: THIS_MONTH, value: 10 }],
+    });
+    const p = await preview(h.tokens.a, res.body.batchId, { accountMap: { isa: accountA } });
+    expect(p.body.rows[0]).toMatchObject({ status: "new", needsTick: true });
+  });
+
+  it("preview refuses another user's account (404), a bad map (400) and closed batches (409)", async () => {
+    const a = await stage(h.tokens.a, simple());
+    const id = a.body.batchId as string;
+    expect((await preview(h.tokens.a, id, { accountMap: { isa: accountB } })).status).toBe(404);
+    expect((await preview(h.tokens.a, id, { accountMap: { nope: null } })).status).toBe(400);
+    expect((await preview(h.tokens.a, id, { accountMap: { isa: "not-a-uuid" } })).status).toBe(400);
+
+    await commit(h.tokens.a, id);
+    expect((await preview(h.tokens.a, id)).status).toBe(409);
+
+    const b = await stage(h.tokens.a, simple());
+    await h.dataSource.query(
+      `UPDATE "import_batches" SET "expires_at" = '2000-01-01' WHERE "id" = $1`,
+      [b.body.batchId],
+    );
+    expect((await preview(h.tokens.a, b.body.batchId)).status).toBe(409);
+    expect((await getBatch(h.tokens.a, b.body.batchId)).body.status).toBe("expired");
   });
 
   it("caps a batch at 5,000 rows across chunks; the over-cap chunk stores nothing", async () => {

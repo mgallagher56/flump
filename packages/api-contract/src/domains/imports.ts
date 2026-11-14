@@ -8,7 +8,7 @@ import {
   Percent,
   Uuid,
 } from "../primitives.js";
-import { AccountType, TermMonths } from "./accounts.js";
+import { AccountDetailSource, AccountType, TermMonths } from "./accounts.js";
 import { SnapshotMonth } from "./snapshots.js";
 
 /** Rows (accounts plus balances) one import batch may hold across all its chunks. */
@@ -77,6 +77,14 @@ export const CommitImportRequest = z.object({
   overwriteManual: z.array(ImportRowKey).max(MAX_IMPORT_ROWS).optional(),
 });
 
+/**
+ * POST /imports/:id/preview. A dry run of a commit with this account map, for the review page.
+ * Writes nothing. Takes the same `accountMap` as commit; ticks are applied by the page.
+ */
+export const PreviewImportRequest = z.object({
+  accountMap: z.record(ImportRef, Uuid.nullable()).optional(),
+});
+
 /** POST /imports/:id/revert takes no options. */
 export const RevertImportRequest = z.object({});
 
@@ -139,3 +147,55 @@ export const ImportBatchResponse = z.strictObject({
   revertedAt: IsoDateTime.nullable(),
 });
 export type ImportBatchResponse = z.infer<typeof ImportBatchResponse>;
+
+/** GET /imports: the caller's batches, newest first, at most 50. */
+export const ImportBatchListResponse = z.array(ImportBatchResponse);
+export type ImportBatchListResponse = z.infer<typeof ImportBatchListResponse>;
+
+const ImportMonth = z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/);
+
+/**
+ * POST /imports/:id/preview. Session auth only (never an MCP token), so unlike the other import
+ * responses it carries the user's own staged account names and values for the review page.
+ */
+export const ImportPreviewResponse = z.strictObject({
+  batchId: Uuid,
+  status: z.literal("staged"),
+  expiresAt: IsoDateTime,
+  accounts: z.array(
+    z.strictObject({
+      ref: ImportRef,
+      name: z.string(),
+      type: AccountType,
+      /** The existing account this ref is mapped to in the request, or null for a new account. */
+      mappedAccountId: Uuid.nullable(),
+      /** An existing account with the same name and type, when exactly one matches. */
+      suggestedAccountId: Uuid.nullable(),
+    }),
+  ),
+  /** One per valid staged value, by month then ref. Values are signed as stored. */
+  rows: z.array(
+    z.strictObject({
+      key: ImportRowKey,
+      ref: ImportRef,
+      month: ImportMonth,
+      value: z.number(),
+      prior: z.number().nullable(),
+      priorSource: AccountDetailSource.nullable(),
+      status: z.enum(["new", "overwrite", "unchanged"]),
+      /**
+       * Commit skips this row unless its key is in `overwriteManual`: it would replace a value not
+       * written by an import, or the current month of a bank-connected account.
+       */
+      needsTick: z.boolean(),
+    }),
+  ),
+  totals: z.strictObject({
+    new: Count,
+    overwrite: Count,
+    unchanged: Count,
+    needsTick: Count,
+    errors: Count,
+  }),
+});
+export type ImportPreviewResponse = z.infer<typeof ImportPreviewResponse>;

@@ -90,6 +90,37 @@ export interface ImportBatchView {
   revertedAt: string | null;
 }
 
+export interface PreviewImportInput {
+  accountMap?: Record<string, string | null>;
+}
+
+/** POST /imports/:id/preview (session auth only): the review page's dry run of a commit. */
+export interface ImportPreviewView {
+  batchId: string;
+  status: "staged";
+  expiresAt: string;
+  accounts: Array<{
+    ref: string;
+    name: string;
+    type: string;
+    mappedAccountId: string | null;
+    suggestedAccountId: string | null;
+  }>;
+  rows: Array<{
+    key: string;
+    ref: string;
+    month: string;
+    /** Signed as stored (liabilities negative), as is `prior`. */
+    value: number;
+    prior: number | null;
+    priorSource: string | null;
+    status: "new" | "overwrite" | "unchanged";
+    needsTick: boolean;
+  }>;
+  totals: { new: number; overwrite: number; unchanged: number; needsTick: number; errors: number };
+}
+
+const MAX_LISTED_BATCHES = 50;
 const rowKey = (ref: string, month: string) => `${ref}:${month}`;
 const cellKey = (accountId: string, year: number, month: number) => `${accountId}|${year}|${month}`;
 const NOT_FOUND = "Import not found";
@@ -236,6 +267,99 @@ export class ImportsService {
     return toView(batch);
   }
 
+  /** The caller's batches, newest first (at most 50). Expired ones are marked as such first. */
+  async list(userId: string, now: Date = new Date()): Promise<ImportBatchView[]> {
+    await expireStale(this.dataSource.manager, userId, now);
+    const batches = await this.dataSource.manager.find(ImportBatchEntity, {
+      where: { userId },
+      order: { createdAt: "DESC" },
+      take: MAX_LISTED_BATCHES,
+    });
+    return batches.map((b) => toView(b));
+  }
+
+  /**
+   * Dry run of a commit for the review page: what each staged row would do with this account map,
+   * using the same classification as commit. Writes nothing and takes no locks. Session auth only,
+   * so it may show the user their own staged account names and values.
+   */
+  async preview(
+    userId: string,
+    id: string,
+    input: PreviewImportInput = {},
+    now: Date = new Date(),
+  ): Promise<ImportPreviewView> {
+    const accountMap = parseAccountMap(input?.accountMap);
+    const m = this.dataSource.manager;
+    const batch = await findOwned(m, userId, id);
+    if (!batch) throw new NotFoundException(NOT_FOUND);
+    if (isExpired(batch, now)) {
+      await expireStale(m, userId, now);
+      throw new ConflictException("Import has expired");
+    }
+    if (batch.status !== "staged") throw new ConflictException("Import is not open");
+
+    const { mappedIds, ownedById } = await resolveAccountMap(m, userId, batch, accountMap);
+    const existing = await readExisting(m, mappedIds, false);
+
+    const userAccounts = await m.find(Account, {
+      where: { userId },
+      select: { id: true, name: true, type: true },
+    });
+    const accountByRef = new Map<string, { id: string; type: string; connected: boolean }>();
+    const accounts: ImportPreviewView["accounts"] = [];
+    for (const staged of batch.payload.accounts) {
+      const mapped = accountMap.get(staged.ref) ?? null;
+      const owned = mapped ? ownedById.get(mapped) : undefined;
+      accountByRef.set(
+        staged.ref,
+        owned
+          ? { id: owned.id, type: owned.type, connected: !!owned.connectionId }
+          : // An unmapped ref becomes a new account: nothing to compare with, never connected.
+            { id: `new:${staged.ref}`, type: staged.type, connected: false },
+      );
+      accounts.push({
+        ref: staged.ref,
+        name: staged.name,
+        type: staged.type,
+        mappedAccountId: owned ? owned.id : null,
+        suggestedAccountId: suggestAccount(staged, userAccounts),
+      });
+    }
+
+    const rows: ImportPreviewView["rows"] = [];
+    const totals = { new: 0, overwrite: 0, unchanged: 0, needsTick: 0, errors: 0 };
+    for (const row of classifyRows(batch.payload.balances, accountByRef, existing, now)) {
+      if (row.status === "error") {
+        totals.errors++;
+        continue;
+      }
+      totals[row.status]++;
+      if (row.needsTick) totals.needsTick++;
+      rows.push({
+        key: row.key,
+        ref: row.ref,
+        month: row.month,
+        value: row.write.value,
+        prior: row.prior?.value ?? null,
+        priorSource: row.prior?.source ?? null,
+        status: row.status,
+        needsTick: row.needsTick,
+      });
+    }
+    rows.sort((a, b) =>
+      a.month === b.month ? a.ref.localeCompare(b.ref) : a.month < b.month ? -1 : 1,
+    );
+    return {
+      batchId: batch.id,
+      status: "staged",
+      expiresAt: batch.expiresAt.toISOString(),
+      accounts,
+      rows,
+      totals,
+    };
+  }
+
   async commit(
     userId: string,
     id: string,
@@ -252,27 +376,7 @@ export class ImportsService {
       if (isExpired(batch, now)) return { expired: true as const };
       if (batch.status !== "staged") throw new ConflictException("Import is not open");
 
-      const refs = new Set(batch.payload.accounts.map((a) => a.ref));
-      for (const ref of accountMap.keys()) {
-        if (!refs.has(ref)) {
-          throw new BadRequestException("accountMap names a ref not in the import");
-        }
-      }
-
-      // Ownership of every mapped account, inside the transaction (same 404 as an unknown id).
-      const mappedValues = [...accountMap.values()].filter((v): v is string => !!v);
-      const mappedIds = [...new Set(mappedValues)];
-      if (mappedIds.length !== mappedValues.length) {
-        throw new BadRequestException("an account can be mapped from one ref only");
-      }
-      const owned = mappedIds.length
-        ? await m.find(Account, {
-            where: { id: In(mappedIds), userId },
-            select: { id: true, type: true, balance: true, connectionId: true },
-          })
-        : [];
-      if (owned.length !== mappedIds.length) throw new NotFoundException("Account not found");
-      const ownedById = new Map(owned.map((a) => [a.id, a]));
+      const { mappedIds, ownedById } = await resolveAccountMap(m, userId, batch, accountMap);
 
       const latestByRef = new Map<string, StagedBalance>();
       for (const b of batch.payload.balances) {
@@ -310,34 +414,7 @@ export class ImportsService {
 
       // Existing values for the mapped accounts, locked for the rest of the transaction. Rows
       // inserted after this read are protected by the conditional upsert instead.
-      const existing = new Map<
-        string,
-        { value: number; asOfDate: string; source: string; importBatchId: string | null }
-      >();
-      if (mappedIds.length > 0) {
-        const rows: Array<{
-          account_id: string;
-          year: number;
-          month: number;
-          value: string;
-          as_of_date: string;
-          source: string;
-          import_batch_id: string | null;
-        }> = await m.query(
-          `SELECT "account_id", "year", "month", "value"::text AS "value",
-                  to_char("as_of_date", 'YYYY-MM-DD') AS "as_of_date", "source", "import_batch_id"
-           FROM "account_details" WHERE "account_id" = ANY($1::varchar[]) FOR UPDATE`,
-          [mappedIds],
-        );
-        for (const r of rows) {
-          existing.set(cellKey(r.account_id, r.year, r.month), {
-            value: Number(r.value),
-            asOfDate: r.as_of_date,
-            source: r.source,
-            importBatchId: r.import_batch_id,
-          });
-        }
-      }
+      const existing = await readExisting(m, mappedIds, true);
 
       const current = londonYearMonth(now);
       let errors = batch.counts.errors;
@@ -346,40 +423,23 @@ export class ImportsService {
       const planned: Array<{ write: SnapshotRowWrite; key: string; prior: RevertRow["prior"] }> =
         [];
       const force: Array<{ accountId: string; year: number; month: number }> = [];
-      for (const b of batch.payload.balances) {
-        const month = checkSnapshotMonth(b.month, now);
-        const account = accountByRef.get(b.accountRef);
-        if (!month.ok || !account) {
+      for (const row of classifyRows(batch.payload.balances, accountByRef, existing, now)) {
+        if (row.status === "error") {
           errors++;
           continue;
         }
-        const key = rowKey(b.accountRef, b.month);
-        const { year, month: mm } = month.target;
-        const value = storedBalance(account.type, b.value);
-        const prior = existing.get(cellKey(account.id, year, mm)) ?? null;
-        if (prior && prior.value === value) {
+        if (row.status === "unchanged") {
           unchanged++;
           continue;
         }
-        const isTicked = ticked.has(key);
-        // A bank-connected account's current month belongs to sync unless the user ticks it.
-        const connectedNow = account.connected && year === current.year && mm === current.month;
-        if (!isTicked && (connectedNow || (prior && prior.source !== "agent"))) {
-          skippedManual.push(key);
+        const isTicked = ticked.has(row.key);
+        if (!isTicked && row.needsTick) {
+          skippedManual.push(row.key);
           continue;
         }
-        if (isTicked) force.push({ accountId: account.id, year, month: mm });
-        planned.push({
-          key,
-          prior,
-          write: {
-            accountId: account.id,
-            year,
-            month: mm,
-            value,
-            asOfDate: defaultAsOfDate(month.target, now),
-          },
-        });
+        const w = row.write;
+        if (isTicked) force.push({ accountId: w.accountId, year: w.year, month: w.month });
+        planned.push({ key: row.key, prior: row.prior, write: w });
       }
 
       const written = await writeSnapshotRows(
@@ -532,6 +592,144 @@ export class ImportsService {
       return toView(await m.save(batch));
     });
   }
+}
+
+type ExistingCell = {
+  value: number;
+  asOfDate: string;
+  source: string;
+  importBatchId: string | null;
+};
+type RefAccount = { id: string; type: string; connected: boolean };
+
+/**
+ * Checks the account map against the batch and the caller's accounts (same 404 as an unknown id
+ * for an account that is not theirs). Each existing account can be mapped from one ref only.
+ */
+async function resolveAccountMap(
+  m: EntityManager,
+  userId: string,
+  batch: ImportBatch,
+  accountMap: Map<string, string | null>,
+): Promise<{ mappedIds: string[]; ownedById: Map<string, Account> }> {
+  const refs = new Set(batch.payload.accounts.map((a) => a.ref));
+  for (const ref of accountMap.keys()) {
+    if (!refs.has(ref)) {
+      throw new BadRequestException("accountMap names a ref not in the import");
+    }
+  }
+  const mappedValues = [...accountMap.values()].filter((v): v is string => !!v);
+  const mappedIds = [...new Set(mappedValues)];
+  if (mappedIds.length !== mappedValues.length) {
+    throw new BadRequestException("an account can be mapped from one ref only");
+  }
+  const owned = mappedIds.length
+    ? await m.find(Account, {
+        where: { id: In(mappedIds), userId },
+        select: { id: true, type: true, balance: true, connectionId: true },
+      })
+    : [];
+  if (owned.length !== mappedIds.length) throw new NotFoundException("Account not found");
+  return { mappedIds, ownedById: new Map(owned.map((a) => [a.id, a])) };
+}
+
+/** Stored monthly values of the given (already ownership-checked) accounts, by cell key. */
+async function readExisting(
+  m: EntityManager,
+  accountIds: string[],
+  lock: boolean,
+): Promise<Map<string, ExistingCell>> {
+  const existing = new Map<string, ExistingCell>();
+  if (accountIds.length === 0) return existing;
+  const rows: Array<{
+    account_id: string;
+    year: number;
+    month: number;
+    value: string;
+    as_of_date: string;
+    source: string;
+    import_batch_id: string | null;
+  }> = await m.query(
+    `SELECT "account_id", "year", "month", "value"::text AS "value",
+            to_char("as_of_date", 'YYYY-MM-DD') AS "as_of_date", "source", "import_batch_id"
+     FROM "account_details" WHERE "account_id" = ANY($1::varchar[])${lock ? " FOR UPDATE" : ""}`,
+    [accountIds],
+  );
+  for (const r of rows) {
+    existing.set(cellKey(r.account_id, r.year, r.month), {
+      value: Number(r.value),
+      asOfDate: r.as_of_date,
+      source: r.source,
+      importBatchId: r.import_batch_id,
+    });
+  }
+  return existing;
+}
+
+type ClassifiedRow =
+  | { status: "error" }
+  | {
+      status: "new" | "overwrite" | "unchanged";
+      key: string;
+      ref: string;
+      month: string;
+      prior: ExistingCell | null;
+      /** True when writing needs the user's tick: a non-import value, or a synced current month. */
+      needsTick: boolean;
+      write: SnapshotRowWrite;
+    };
+
+/**
+ * What each staged row would do against the stored values. The one classification shared by
+ * preview and commit, so the review page shows exactly what commit does.
+ */
+function classifyRows(
+  balances: StagedBalance[],
+  accountByRef: Map<string, RefAccount>,
+  existing: Map<string, ExistingCell>,
+  now: Date,
+): ClassifiedRow[] {
+  const current = londonYearMonth(now);
+  return balances.map((b): ClassifiedRow => {
+    const month = checkSnapshotMonth(b.month, now);
+    const account = accountByRef.get(b.accountRef);
+    if (!month.ok || !account) return { status: "error" };
+    const { year, month: mm } = month.target;
+    const value = storedBalance(account.type, b.value);
+    const prior = existing.get(cellKey(account.id, year, mm)) ?? null;
+    // A bank-connected account's current month belongs to sync unless the user ticks it.
+    const connectedNow = account.connected && year === current.year && mm === current.month;
+    const unchanged = !!prior && prior.value === value;
+    return {
+      status: unchanged ? "unchanged" : prior ? "overwrite" : "new",
+      key: rowKey(b.accountRef, b.month),
+      ref: b.accountRef,
+      month: b.month,
+      prior,
+      needsTick: !unchanged && (connectedNow || (!!prior && prior.source !== "agent")),
+      write: {
+        accountId: account.id,
+        year,
+        month: mm,
+        value,
+        asOfDate: defaultAsOfDate(month.target, now),
+      },
+    };
+  });
+}
+
+const normaliseName = (s: string) => s.trim().toLowerCase().replace(/\s+/g, " ");
+
+/** An existing account with the same name and type, when exactly one matches. */
+function suggestAccount(
+  staged: StagedAccount,
+  accounts: Array<Pick<Account, "id" | "name" | "type">>,
+): string | null {
+  const name = normaliseName(staged.name);
+  const matches = accounts.filter(
+    (a) => a.type === staged.type && normaliseName(a.name ?? "") === name,
+  );
+  return matches.length === 1 ? matches[0].id : null;
 }
 
 /** Serialises every mutating import call of one user (stage, commit, revert). */
