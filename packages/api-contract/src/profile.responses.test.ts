@@ -58,6 +58,8 @@ const profile = {
   housingStatus: "mortgage",
   monthlyHousingCost: 812.5,
   monthlyOtherOutgoings: null,
+  netWorthCountsProperty: true,
+  netWorthCountsStudentLoan: false,
   createdAt: "2026-11-01T09:00:00.000Z",
   updatedAt: "2026-11-13T10:15:00.000Z",
 };

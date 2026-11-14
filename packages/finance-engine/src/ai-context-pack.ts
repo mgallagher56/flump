@@ -173,7 +173,10 @@ export function buildFlumpAiContextPack(
 
   // 3. Resolve Portfolio Snapshot
   const snapshot = new PortfolioSnapshot(sanitizedRawAccounts, rawDetails);
-  const resolvedAccounts = snapshot.getResolvedAccounts();
+  // Each account's netWorthBalance is its contribution under the user's basis (0 when left out).
+  const resolvedAccounts = snapshot
+    .getResolvedAccounts()
+    .map((a) => ({ ...a, netWorthBalance: snapshot.netWorthBalanceOf(a, input.netWorthBasis) }));
 
   // 4. Resolve Debt Items and Debt Schedules
   const debtItems = snapshot.toDebtItems();

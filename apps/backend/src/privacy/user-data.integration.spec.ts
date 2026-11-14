@@ -4,6 +4,7 @@ import { AccountExportDocument } from "@flump/api-contract";
 import { Logger } from "@nestjs/common";
 import { DataSource, type DataSourceOptions } from "typeorm";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { AccountIntakeService } from "../account-intake.service";
 import { typeOrmOptionsFromEnv } from "../config/typeorm.options";
 import { Account } from "../entities/account.entity";
 import { AccountDeletionTombstone } from "../entities/account-deletion-tombstone.entity";
@@ -599,5 +600,138 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("user data (real Post
       hasResetFinancialData: true,
     });
     expect(await countsFor(USER_B)).toEqual(beforeB);
+  });
+
+  describe("net worth choices", () => {
+    const repo = <E extends object>(e: new () => E) => ds.getRepository(e);
+    const profiles = () =>
+      new UserProfileService(
+        repo(UserProfile),
+        repo(Account),
+        repo(Transaction),
+        repo(AccountDetail),
+        repo(BankConnection),
+        repo(BudgetEntry),
+        repo(TaxRecord),
+        identity,
+        ds,
+        repo(SnapshotCheckin),
+        repo(ImportBatch),
+        repo(McpToken),
+        new LoggingBankConsentRevoker(),
+      );
+    const intake = () =>
+      new AccountIntakeService(
+        repo(Account),
+        repo(AccountDetail),
+        repo(UserProfile),
+        repo(BankConnection),
+      );
+
+    it("a new profile has today's defaults: property counts, student loans do not", async () => {
+      const view = await profiles().getProfile(USER_A);
+      expect(view).toMatchObject({
+        netWorthCountsProperty: true,
+        netWorthCountsStudentLoan: false,
+      });
+      const row = await repo(UserProfile).findOneByOrFail({ userId: USER_A });
+      expect(row).toMatchObject({ netWorthCountsProperty: true, netWorthCountsStudentLoan: false });
+    });
+
+    it("an update creating the profile also gets the defaults", async () => {
+      const view = await profiles().updateProfile(USER_A, { firstName: "A" });
+      expect(view).toMatchObject({
+        netWorthCountsProperty: true,
+        netWorthCountsStudentLoan: false,
+      });
+    });
+
+    it("PATCH round trip: each choice saves alone and reads back", async () => {
+      const service = profiles();
+      await service.getProfile(USER_A);
+      const one = await service.updateProfile(USER_A, { netWorthCountsStudentLoan: true });
+      expect(one).toMatchObject({ netWorthCountsProperty: true, netWorthCountsStudentLoan: true });
+      const two = await service.updateProfile(USER_A, { netWorthCountsProperty: false });
+      expect(two).toMatchObject({ netWorthCountsProperty: false, netWorthCountsStudentLoan: true });
+      // An unrelated update leaves both alone.
+      await service.updateProfile(USER_A, { firstName: "Again" });
+      expect(await service.getProfile(USER_A)).toMatchObject({
+        netWorthCountsProperty: false,
+        netWorthCountsStudentLoan: true,
+      });
+    });
+
+    it("a financial data reset keeps the choices", async () => {
+      const service = profiles();
+      await service.updateProfile(USER_A, {
+        netWorthCountsProperty: false,
+        netWorthCountsStudentLoan: true,
+      });
+      const { profile } = await service.resetFinancialData(USER_A);
+      expect(profile).toMatchObject({
+        hasResetFinancialData: true,
+        netWorthCountsProperty: false,
+        netWorthCountsStudentLoan: true,
+      });
+    });
+
+    it("the export carries both choices", async () => {
+      await seed(USER_A, "A");
+      await profiles().updateProfile(USER_A, { netWorthCountsStudentLoan: true });
+      const doc = AccountExportDocument.parse(JSON.parse(await exportFor(USER_A)));
+      expect(doc.profile).toMatchObject({
+        netWorthCountsProperty: true,
+        netWorthCountsStudentLoan: true,
+      });
+    });
+
+    it.each([
+      [true, false, 134000, ["studentLoan"]],
+      [true, true, 109000, []],
+      [false, false, 20000, ["property", "mortgage", "studentLoan"]],
+      [false, true, -5000, ["property", "mortgage"]],
+    ] as const)(
+      "the portfolio snapshot follows the choices: property %s, student loan %s",
+      async (countProperty, countStudentLoan, netWorth, leftOut) => {
+        const m = ds.manager;
+        // Liabilities are stored negative (BE-05).
+        for (const [name, type, balance] of [
+          ["Home", "Property", 300000],
+          ["Residential Mortgage", "Mortgage", -186000],
+          ["Student loan", "Student Loan", -25000],
+          ["Savings", "Saving", 20000],
+          // B's accounts and choices never reach A's figures.
+        ] as const) {
+          await m.save(m.create(Account, { userId: USER_A, name, type, balance }));
+        }
+        await m.save(m.create(Account, { userId: USER_B, name: "B", type: "Saving", balance: 9 }));
+        await profiles().updateProfile(USER_A, {
+          netWorthCountsProperty: countProperty,
+          netWorthCountsStudentLoan: countStudentLoan,
+        });
+        await profiles().updateProfile(USER_B, {
+          netWorthCountsProperty: !countProperty,
+          netWorthCountsStudentLoan: !countStudentLoan,
+        });
+
+        const snap = await intake().getPortfolioSnapshot(USER_A);
+        expect(snap.netWorth).toBe(netWorth);
+        expect(snap.totalAssets - snap.totalLiabilities).toBe(netWorth);
+        expect(snap.netWorthLeavesOut).toEqual(leftOut);
+        expect(snap.resolvedAccounts.reduce((sum, a) => sum + a.netWorthBalance, 0)).toBe(netWorth);
+        expect(snap.totalProperty).toBe(300000);
+        expect(snap.totalStudentLoans).toBe(25000);
+      },
+    );
+
+    it("the portfolio snapshot uses the defaults when no profile exists", async () => {
+      const m = ds.manager;
+      await m.save(
+        m.create(Account, { userId: USER_A, name: "Loan", type: "Student Loan", balance: -100 }),
+      );
+      const snap = await intake().getPortfolioSnapshot(USER_A);
+      expect(snap.netWorth).toBe(0);
+      expect(snap.netWorthLeavesOut).toEqual(["studentLoan"]);
+    });
   });
 });
