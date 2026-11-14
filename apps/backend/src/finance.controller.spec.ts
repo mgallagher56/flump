@@ -9,6 +9,7 @@ import { describe, expect, it, vi } from "vitest";
 import { FinanceController } from "./finance.controller";
 import { FinanceService } from "./finance.service";
 import { createInMemoryRepository } from "./testing/in-memory-repository";
+import { withManager } from "./testing/with-manager";
 
 const ACC_1 = "00000000-0000-4000-8000-000000000001";
 
@@ -85,6 +86,11 @@ describe("FinanceController & FinanceService", () => {
       get: vi.fn().mockReturnValue(null),
     };
 
+    withManager(mockAccountRepo, {
+      Account: mockAccountRepo,
+      AccountDetail: mockAccountDetailRepo,
+      Transaction: mockTransactionRepo,
+    });
     const service = new FinanceService(
       mockAccountRepo as any,
       mockTransactionRepo as any,
@@ -347,6 +353,11 @@ describe("FinanceController & FinanceService", () => {
       const profileRepo = createInMemoryRepository([
         { userId: "userB", hasResetFinancialData: true },
       ]);
+      withManager(accountRepo, {
+        Account: accountRepo,
+        AccountDetail: accountDetailRepo,
+        Transaction: transactionRepo,
+      });
       const service = new FinanceService(
         accountRepo as any,
         transactionRepo as any,

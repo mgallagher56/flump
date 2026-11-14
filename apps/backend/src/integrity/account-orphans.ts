@@ -41,14 +41,14 @@ export interface AccountOrphanCounts {
 }
 
 interface SqlRunner {
-  query(sql: string, params?: unknown[]): Promise<any>;
+  query(sql: string, params?: unknown[]): Promise<unknown>;
 }
 
 /** Read-only: orphan counts per table. Shared by the migration log and the report script. */
 export async function countAccountOrphans(runner: SqlRunner): Promise<AccountOrphanCounts[]> {
   const result: AccountOrphanCounts[] = [];
   for (const { table } of ACCOUNT_CHILD_TABLES) {
-    const [row] = await runner.query(
+    const [row] = (await runner.query(
       `SELECT
          count(*) FILTER (WHERE c."account_id"::text !~* ${UUID_PATTERN_SQL})::int AS "notUuid",
          count(*) FILTER (WHERE c."account_id"::text ~* ${UUID_PATTERN_SQL}
@@ -58,7 +58,7 @@ export async function countAccountOrphans(runner: SqlRunner): Promise<AccountOrp
            WHERE a."id" = ${accountIdAsUuid("c")} AND a."user_id" <> c."user_id"))::int
            AS "otherUsersAccount"
        FROM "${table}" c`,
-    );
+    )) as Array<Partial<Record<keyof Omit<AccountOrphanCounts, "table">, unknown>>>;
     result.push({
       table,
       notUuid: Number(row?.notUuid ?? 0),
