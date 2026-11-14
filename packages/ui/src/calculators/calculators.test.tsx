@@ -59,14 +59,12 @@ describe("UI Calculators", () => {
       const onSave = vi.fn();
       render(<MortgageVsIsaCalculator ctaText="Save and continue" onSaveAndContinue={onSave} />);
 
-      expect(
-        screen.getByRole("heading", { name: /Mortgage overpayment vs Stocks and Shares ISA/i }),
-      ).toBeDefined();
-      expect(screen.getByText(/ISA returns are not guaranteed/i)).toBeDefined();
+      expect(screen.getByRole("heading", { name: /Mortgage overpayment or ISA/i })).toBeDefined();
+      expect(screen.getByText(/ISA growth is not fixed and can be negative/i)).toBeDefined();
 
-      const slider = screen.getByLabelText("Mortgage balance slider");
+      const slider = screen.getByLabelText("Mortgage balance range slider");
       fireEvent.change(slider, { target: { value: "300000" } });
-      expect(screen.getAllByDisplayValue("300000").length).toBeGreaterThan(0);
+      expect((slider as HTMLInputElement).value).toBe("300000");
 
       const cta = screen.getByRole("button", { name: /Save and continue/i });
       fireEvent.click(cta);
@@ -135,9 +133,9 @@ describe("UI Calculators", () => {
 
       expect(screen.getByText(/UK student loan repayment calculator/i)).toBeDefined();
 
-      const input = screen.getByLabelText("Gross annual salary (£)");
+      const input = screen.getByLabelText("Yearly salary before tax range slider");
       fireEvent.change(input, { target: { value: "52000" } });
-      expect(screen.getByDisplayValue("52000")).toBeDefined();
+      expect((input as HTMLInputElement).value).toBe("52000");
 
       const planSelect = screen.getByLabelText("Student loan plan");
       fireEvent.change(planSelect, { target: { value: "plan2" } });
