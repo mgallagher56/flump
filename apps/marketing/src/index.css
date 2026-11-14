@@ -80,7 +80,7 @@
   [role="switch"],
   [role="tab"],
   [tabindex]:not([tabindex="-1"])
-):not(:where([data-focus-managed], [data-focus-managed] *)):focus-visible {
+):not(:where([data-focus-managed], [data-focus-managed] *, [data-pointer-focus])):focus-visible {
   outline-style: solid;
   outline-width: 2px;
   outline-color: var(--colors-border-focus-ring);

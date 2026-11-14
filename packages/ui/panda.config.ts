@@ -1,5 +1,5 @@
 import { defineConfig } from "@pandacss/dev";
-import { flumpPreset } from "./panda.preset";
+import { colorSchemeConditions, flumpPreset } from "./panda.preset";
 
 export default defineConfig({
   // File extension for generated javascript files
@@ -20,7 +20,8 @@ export default defineConfig({
   // Useful for theme customization
   conditions: {
     extend: {
-      dark: ".dark &, [data-theme='dark'] &",
+      // Dark from the theme script, or from the system setting with JavaScript off (D30).
+      ...colorSchemeConditions,
       // Also declared in panda.preset.ts so consumers of the preset get it; kept here for clarity.
       compact: "[data-density=compact] &",
     },

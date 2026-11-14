@@ -8,16 +8,9 @@
     "apps/web/app/features/mortgage/components/OverpayVsSaveCompare/OverpayVsSaveCompare.styles.ts": 3,
     "apps/web/app/features/mortgage/components/OverpayVsSaveCompare/OverpayVsSaveCompare.tsx": 2,
     "apps/web/app/features/mortgage/components/OverpaymentSimulator/OverpaymentSimulator.tsx": 2,
-    "apps/web/app/features/pension/components/ForecastChart/ForecastChart.tsx": 2,
-    "packages/ui/src/foundations/ColorPalette/ColorPalette.tsx": 2,
-    "packages/ui/src/foundations/DirectionCSignoff/DirectionCSignoff.styles.ts": 1,
-    "packages/ui/src/foundations/SpacingAndRadii/SpacingAndRadii.tsx": 2,
-    "packages/ui/src/patterns/SectionBand/SectionBand.styles.ts": 3,
-    "packages/ui/src/primitives/KpiCard/KpiCard.styles.ts": 1
+    "apps/web/app/features/pension/components/ForecastChart/ForecastChart.tsx": 2
   },
-  "fontWeight": {
-    "packages/ui/src/patterns/SectionBand/SectionBand.styles.ts": 1
-  },
+  "fontWeight": {},
   "duration": {
     "apps/web/app/components/accounts/BankConnectionsList/BankConnectionsList.styles.ts": 1,
     "apps/web/app/components/dialogs/connectBankWizard/ConnectBankWizard.styles.ts": 1,
@@ -25,11 +18,7 @@
     "apps/web/app/features/budget/components/AddCategoryModal/AddCategoryModal.styles.ts": 2,
     "apps/web/app/features/budget/components/RunwayCalculator/RunwayCalculator.styles.ts": 4,
     "apps/web/app/features/debt/components/PayoffStrategyControls/PayoffStrategyControls.styles.ts": 1,
-    "apps/web/app/root.tsx": 2,
-    "packages/ui/src/primitives/Button/Button.styles.ts": 1,
-    "packages/ui/src/primitives/Card/Card.styles.ts": 2,
-    "packages/ui/src/primitives/ProgressBar/ProgressBar.styles.ts": 1,
-    "packages/ui/src/primitives/Spinner/Spinner.styles.ts": 1
+    "apps/web/app/root.tsx": 2
   },
   "inlineStyle": {
     "apps/web/app/components/charts/AccountDetailChart.tsx": 1,

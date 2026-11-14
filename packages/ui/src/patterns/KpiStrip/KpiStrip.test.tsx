@@ -209,3 +209,33 @@ describe("KpiStrip Pattern", () => {
     expect(screen.getByText("5")).toBeDefined();
   });
 });
+
+const MixedStrip = () => (
+  <KpiStrip columns={4}>
+    <KpiCard label="Monthly payment" value={305} valueFormat={{ fractionDigits: 0 }} />
+    <KpiCard label="Debt-free date" value="December 2029" />
+    <KpiCard label="Debts" value={<span>3</span>} />
+    <KpiCard label="Interest rate" subtext="Average across your debts" value="19.9%" />
+  </KpiStrip>
+);
+
+describe("KpiStrip one value size (R2-2)", () => {
+  it("gives every value the same numeric.kpi text style, whatever its content", () => {
+    const { container } = render(<MixedStrip />);
+    const values = [...container.querySelectorAll("[data-kpi-value]")];
+    expect(values).toHaveLength(4);
+    const classes = new Set(values.map((v) => v.className));
+    expect(classes.size).toBe(1);
+    expect(values[0]?.className).toContain("textStyle_numeric.kpi");
+    // The money value carries no size of its own that could outgrow the date beside it.
+    const money = screen.getByText("£305");
+    expect(money.className).not.toMatch(/fs_|fontSize|clamp/);
+  });
+
+  it("stretches cards to the row height and pins the caption to the bottom", () => {
+    const { container } = render(<MixedStrip />);
+    expect(container.firstElementChild?.className).toContain("ai_stretch");
+    const caption = screen.getByText("Average across your debts");
+    expect(caption.className).toContain("mt_auto");
+  });
+});

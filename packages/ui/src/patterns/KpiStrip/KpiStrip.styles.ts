@@ -11,6 +11,8 @@ export const kpiStripGrid = cva({
     display: "grid",
     gap: "density.gap",
     width: "100%",
+    // Every card is as tall as the row, so a card without a caption leaves no ragged bottom.
+    alignItems: "stretch",
   },
   variants: {
     columns: {

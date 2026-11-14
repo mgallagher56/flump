@@ -1,122 +1,76 @@
 import { cva } from "../../../styled-system/css";
 
+/**
+ * A full-width band (`marketing`) or an in-product section heading (`app`). Marketing bands use
+ * four tones: canvas and subtle are the quiet ones; sage and apricot are the two tinted bands the
+ * owner allowed in light mode (D16 b), at most one of each per page. Every tone is a semantic
+ * surface, so dark mode (Direction C) needs no extra rules. No eyebrow, index pill or monospace
+ * (E16 PR 12).
+ */
 export const sectionBandRecipe = cva({
   base: {
     width: "100%",
+    px: "4",
+    py: { base: "12", md: "16" },
   },
   variants: {
     tone: {
-      canvas: {
-        backgroundColor: "surface.canvas",
-      },
+      canvas: { backgroundColor: "surface.canvas" },
       subtle: {
         backgroundColor: "surface.subtle",
-        borderTopWidth: "1px",
-        borderBottomWidth: "1px",
+        borderBlockWidth: "1px",
         borderStyle: "solid",
         borderColor: "border.subtle",
       },
-      tinted: {
-        backgroundColor: "primary.subtle",
-        borderTopWidth: "1px",
-        borderBottomWidth: "1px",
+      sage: {
+        backgroundColor: "surface.tint.sage",
+        borderBlockWidth: "1px",
         borderStyle: "solid",
-        borderColor: "primary.border",
+        borderColor: "border.subtle",
       },
-      contrast: {
-        backgroundColor: "surface.contrast",
-        color: "text.onContrast",
-        borderTopWidth: "1px",
-        borderBottomWidth: "1px",
+      apricot: {
+        backgroundColor: "surface.tint.apricot",
+        borderBlockWidth: "1px",
         borderStyle: "solid",
-        borderColor: "border.strong",
+        borderColor: "border.subtle",
       },
     },
+    size: {
+      default: {},
+      compact: { py: { base: "10", md: "12" } },
+    },
   },
-  defaultVariants: {
-    tone: "canvas",
-  },
+  defaultVariants: { tone: "canvas", size: "default" },
 });
 
-export const indexBadgeRecipe = cva({
-  base: {
-    display: "inline-block",
-    fontFamily: "mono",
-    fontSize: "xs",
-    fontWeight: "600",
-    px: "3",
-    py: "1",
-    borderRadius: "full",
-    mb: "3",
-  },
+export const sectionBandInner = cva({
+  base: { maxWidth: "6xl", mx: "auto", display: "flex", flexDirection: "column", gap: "8" },
   variants: {
-    contrast: {
-      true: {
-        backgroundColor: "transparent",
-        borderWidth: "1px",
-        borderStyle: "solid",
-        borderColor: "currentColor",
-        // Text on the contrast band; chart.accentCyan is a graphic colour and failed AA as text
-        // (2.08:1 light, 3.67:1 dark).
-        color: "text.onContrast",
-      },
-      false: {
-        backgroundColor: "primary.subtle",
-        color: "primary",
-      },
+    width: {
+      wide: {},
+      narrow: { maxWidth: "3xl" },
     },
   },
-  defaultVariants: {
-    contrast: false,
-  },
+  defaultVariants: { width: "wide" },
 });
 
-export const sectionTitleRecipe = cva({
-  base: {
-    fontFamily: "display",
-    fontSize: { base: "2rem", sm: "2.5rem", md: "2.85rem" },
-    fontWeight: "800",
-    lineHeight: "1.15",
-    letterSpacing: "-0.03em",
-    margin: 0,
-  },
+export const sectionBandHeader = cva({
+  base: { display: "flex", flexDirection: "column", gap: "2", maxWidth: "3xl" },
   variants: {
-    contrast: {
-      true: {
-        color: "text.onContrast",
-      },
-      false: {
-        color: "text.primary",
-      },
+    align: {
+      start: { textAlign: "left" },
+      center: { textAlign: "center", mx: "auto" },
     },
   },
-  defaultVariants: {
-    contrast: false,
-  },
+  defaultVariants: { align: "start" },
 });
 
-export const sectionSubtitleRecipe = cva({
-  base: {
-    fontSize: { base: "md", md: "lg" },
-    lineHeight: "1.6",
-    mt: "3",
-    mb: 0,
-    mx: "auto",
-    maxWidth: "640px",
-  },
-  variants: {
-    contrast: {
-      true: {
-        color: "text.onContrast",
-      },
-      false: {
-        color: "text.muted",
-      },
-    },
-  },
-  defaultVariants: {
-    contrast: false,
-  },
+export const sectionBandTitle = cva({
+  base: { textStyle: "heading.xl", color: "text.primary", margin: 0 },
+});
+
+export const sectionBandSubtitle = cva({
+  base: { textStyle: "body.lg", color: "text.secondary", margin: 0 },
 });
 
 /** App variant: left-aligned section heading as on the Direction C frame ("Where you stand"). */
@@ -133,23 +87,5 @@ export const appTitleRecipe = cva({
 });
 
 export const appSubtitleRecipe = cva({
-  base: { textStyle: "body.sm", color: "text.secondary", margin: 0, maxWidth: "720px" },
-});
-
-export const marketingInnerRecipe = cva({
-  base: {
-    maxWidth: "6xl",
-    mx: "auto",
-    py: { base: "14", md: "20" },
-    px: { base: "4", sm: "6" },
-  },
-});
-
-export const marketingHeaderRecipe = cva({
-  base: {
-    textAlign: "center",
-    mb: { base: "10", md: "14" },
-    maxWidth: "760px",
-    mx: "auto",
-  },
+  base: { textStyle: "body.sm", color: "text.secondary", margin: 0, maxWidth: "3xl" },
 });

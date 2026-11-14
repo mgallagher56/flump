@@ -217,7 +217,7 @@ export const dark: NativeTheme = {
     "surface.scrim": "rgba(8, 6, 4, 0.6)",
     "surface.subtle": "#2e2a26",
     "surface.sunken": "#171412",
-    "surface.tint.apricot": "#36291b",
+    "surface.tint.apricot": "#2e261c",
     "surface.tint.sage": "#272f22",
     "surface.tint.teal": "#1f322d",
     "text.muted": "#a59d90",
@@ -454,6 +454,7 @@ export const durations = {
   base: 200,
   fast: 120,
   instant: 0,
+  loop: 800,
   slow: 320,
 } as const;
 

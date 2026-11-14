@@ -19,6 +19,18 @@ describe("Tabs Primitive", () => {
     expect(handleSelect).toHaveBeenCalledWith("snowball");
   });
 
+  it("marks a tab focused by a pointer so no keyboard ring shows, and clears it on a key or blur", () => {
+    render(<Tabs items={items} value="avalanche" onValueChange={() => {}} />);
+    const tab = screen.getByRole("tab", { name: "Snowball" });
+    fireEvent.pointerDown(tab);
+    expect(tab.hasAttribute("data-pointer-focus")).toBe(true);
+    fireEvent.keyDown(tab, { key: "ArrowRight" });
+    expect(tab.hasAttribute("data-pointer-focus")).toBe(false);
+    fireEvent.pointerDown(tab);
+    fireEvent.blur(tab);
+    expect(tab.hasAttribute("data-pointer-focus")).toBe(false);
+  });
+
   it("wraps the list in a scroller that cannot widen its parent", () => {
     render(<Tabs items={items} value="avalanche" onValueChange={() => {}} />);
     const scroller = screen.getByRole("tablist").parentElement as HTMLElement;

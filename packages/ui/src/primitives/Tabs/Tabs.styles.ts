@@ -111,6 +111,8 @@ export const tabTrigger = cva({
       outlineColor: "border.focusRing",
       outlineOffset: "-2px",
     },
+    // A tab focused by a mouse or touch shows no ring (see POINTER_FOCUS in Tabs.tsx).
+    "&[data-pointer-focus]:focus-visible": { outline: "none" },
   },
   variants: {
     size: {

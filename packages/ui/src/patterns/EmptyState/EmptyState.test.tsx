@@ -110,3 +110,12 @@ describe("EmptyState Pattern", () => {
     expect(screen.getByRole("heading", { name: "No data" })).toBeDefined();
   });
 });
+
+describe("EmptyState title spacing (R2-2)", () => {
+  it.each(["md", "sm"] as const)("resets letter-spacing to normal at size %s", (size) => {
+    render(<EmptyState size={size} title="Add your first account" />);
+    const title = screen.getByRole("heading", { name: "Add your first account" });
+    expect(title.className).toContain("ls_normal");
+    expect(title.className).toContain(`textStyle_heading.${size}`);
+  });
+});

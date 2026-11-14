@@ -12,7 +12,6 @@ describe("UI package exports", () => {
     expect(UI.ZeroPercentCliffCalculator).toBeDefined();
     expect(UI.Button).toBeDefined();
     expect(UI.SectionBand).toBeDefined();
-    expect(UI.AppSectionDivider).toBeDefined();
     expect(UI.EmptyState).toBeDefined();
     expect(UI.Money).toBeDefined();
     expect(UI.CoachCard).toBeDefined();

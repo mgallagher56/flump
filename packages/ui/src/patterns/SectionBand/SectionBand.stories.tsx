@@ -9,56 +9,45 @@ const placeholder = css({
   borderWidth: "1px",
   borderStyle: "dashed",
   borderColor: "border",
-  borderRadius: "xl",
+  borderRadius: "card",
   color: "text.secondary",
 });
 
 const meta: Meta<typeof SectionBand> = {
   title: "3. Patterns/SectionBand",
   component: SectionBand,
-  parameters: {
-    layout: "fullscreen",
-  },
+  parameters: { layout: "fullscreen" },
   args: {
-    indexBadge: "PILLAR 01",
-    title: "Master Your Financial Timeline",
-    subtitle:
-      "Automated cash-flow modeling, tax trap defusal, and multi-pot retirement projections.",
-    children: <div className={placeholder}>Inner section content</div>,
+    id: "story-band",
+    title: "See your money in one place",
+    subtitle: "A short line under the section title.",
+    children: <div className={placeholder}>Section content</div>,
   },
+  argTypes: { tone: { control: "select", options: ["canvas", "subtle", "sage", "apricot"] } },
 };
 
 export default meta;
 type Story = StoryObj<typeof SectionBand>;
 
-export const CanvasTone: Story = {
-  args: {
-    tone: "canvas",
-  },
-  play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement);
-    await expect(canvas.getByText("Master Your Financial Timeline")).toBeInTheDocument();
-  },
+const assertBand: Story["play"] = async ({ canvasElement }) => {
+  const canvas = within(canvasElement);
+  await expect(
+    canvas.getByRole("region", { name: "See your money in one place" }),
+  ).toBeInTheDocument();
 };
 
-export const SubtleTone: Story = {
-  args: {
-    tone: "subtle",
-  },
-};
+const dark = { globals: { theme: "dark" }, parameters: { backgrounds: { default: "dark" } } };
 
-export const TintedTone: Story = {
-  args: {
-    tone: "tinted",
-  },
-};
+export const Canvas: Story = { args: { tone: "canvas" }, play: assertBand };
+export const Subtle: Story = { args: { tone: "subtle" }, play: assertBand };
+export const Sage: Story = { args: { tone: "sage" }, play: assertBand };
+export const Apricot: Story = { args: { tone: "apricot" }, play: assertBand };
+export const SageDark: Story = { ...dark, args: { tone: "sage" }, play: assertBand };
+export const ApricotDark: Story = { ...dark, args: { tone: "apricot" }, play: assertBand };
 
-export const ContrastTone: Story = {
-  // E8 waiver: color-contrast
-  parameters: { a11y: { config: { rules: [{ id: "color-contrast", enabled: false }] } } },
-  args: {
-    tone: "contrast",
-  },
+export const CentredNarrow: Story = {
+  args: { tone: "subtle", align: "center", width: "narrow", size: "compact" },
+  play: assertBand,
 };
 
 export const AppVariant: Story = {
@@ -66,7 +55,6 @@ export const AppVariant: Story = {
   args: {
     variant: "app",
     id: "where-you-stand",
-    indexBadge: undefined,
     title: "Where you stand",
     subtitle: "Your main figures this month. Sample data.",
   },
@@ -79,12 +67,8 @@ export const AppVariant: Story = {
   },
 };
 
-export const AppVariantTitleOnly: Story = {
-  parameters: { layout: "padded" },
-  args: {
-    variant: "app",
-    indexBadge: undefined,
-    title: "Over time and by account",
-    subtitle: undefined,
-  },
+export const AppVariantDark: Story = {
+  ...AppVariant,
+  globals: { theme: "dark" },
+  parameters: { layout: "padded", backgrounds: { default: "dark" } },
 };

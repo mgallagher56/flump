@@ -10,11 +10,15 @@ export const chartFigureRoot = cva({
   },
 });
 
+/**
+ * `heading.sm` carries the heading face with the wider word spacing that keeps "Your pension pot"
+ * from reading as one word at semibold weight. Tracking is reset to the `normal` token so no
+ * negative letter-spacing narrows the gaps again (R2-2).
+ */
 export const chartFigureTitle = cva({
   base: {
-    fontFamily: "display",
-    fontSize: "md",
-    fontWeight: "semibold",
+    textStyle: "heading.sm",
+    letterSpacing: "normal",
     color: "text.primary",
     margin: "0",
   },

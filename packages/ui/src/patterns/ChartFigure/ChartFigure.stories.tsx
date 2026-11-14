@@ -1,9 +1,11 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import { expect, userEvent, within } from "@storybook/test";
 import { css } from "../../../styled-system/css";
+import { formatMonthTick, niceYDomain, xTickAnchor } from "../../charts/axisDefaults";
+import { formatAxisCurrency } from "../../charts/formatAxisCurrency";
 import { ChartLegend } from "../ChartLegend/ChartLegend";
 import { ProjectionNotice } from "../ProjectionNotice/ProjectionNotice";
-import { ChartFigure } from "./ChartFigure";
+import { ChartFigure, pickTicks, useChartFigure } from "./ChartFigure";
 
 const grid = css({ stroke: "chart.grid", strokeWidth: "1" });
 const axisText = css({ fill: "text.muted", fontSize: "12px", fontVariantNumeric: "tabular-nums" });
@@ -51,6 +53,117 @@ const StaticChart = () => (
     ))}
   </svg>
 );
+
+const tickText = css({ fill: "text.muted", fontSize: "xs", fontVariantNumeric: "tabular-nums" });
+const labelText = css({
+  fill: "text.primary",
+  fontSize: "xs",
+  fontWeight: "semibold",
+  fontVariantNumeric: "tabular-nums",
+});
+const second = css({ ...lineBase, stroke: "chart.series2" });
+const marker = css({ fill: "chart.primary", stroke: "surface.card", strokeWidth: "2" });
+const baseline = css({ stroke: "chart.baseline", strokeWidth: "1", strokeDasharray: "4 4" });
+
+/** 37 months of a pension pot well away from zero, from Sep 2026 to Sep 2029. */
+const MONTHS = Array.from({ length: 37 }, (_, i) => {
+  const date = new Date(Date.UTC(2026, 8 + i, 1));
+  return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}`;
+});
+const POT = MONTHS.map((_, i) => 182_000 + i * 1_500 + Math.round(Math.sin(i / 3) * 2_000));
+const CONTRIBUTIONS = MONTHS.map((_, i) => 176_000 + i * 1_100);
+
+const W = 600;
+const H = 200;
+const LEFT = 56;
+const TOP = 16;
+const BOTTOM = 32;
+
+/**
+ * Static stand-in for an app chart (ui stories never import recharts) that reads the figure's
+ * conventions the way a real chart does: at most `maxTicks` x ticks with the last one anchored to
+ * the plot edge, "Sep" month ticks, a y domain near the data, direct labels offset from the line
+ * end, and the one annotation.
+ */
+const ConventionChart = () => {
+  const { directLabels, annotation, maxTicks, labelOffset, plotPaddingRight } = useChartFigure();
+  const right = W - plotPaddingRight - (directLabels ? 72 : 0);
+  const [lo, hi] = niceYDomain([...POT, ...CONTRIBUTIONS]);
+  const x = (i: number) => LEFT + (i / (MONTHS.length - 1)) * (right - LEFT);
+  const y = (v: number) => TOP + (1 - (v - lo) / (hi - lo)) * (H - TOP - BOTTOM);
+  const path = (values: readonly number[]) => values.map((v, i) => `${x(i)},${y(v)}`).join(" ");
+  const ticks = pickTicks(
+    MONTHS.map((_, i) => i),
+    maxTicks,
+  );
+  const yTicks = [lo, (lo + hi) / 2, hi];
+  const annotated = annotation ? MONTHS.indexOf(String(annotation.x)) : -1;
+  const ends = [
+    { name: "Pot", values: POT },
+    { name: "Paid in", values: CONTRIBUTIONS },
+  ];
+  return (
+    <svg
+      aria-hidden="true"
+      className={svgClass}
+      focusable="false"
+      role="presentation"
+      viewBox={`0 0 ${W} ${H}`}
+    >
+      {yTicks.map((t) => (
+        <g key={t}>
+          <line className={grid} x1={LEFT} x2={right} y1={y(t)} y2={y(t)} />
+          <text className={tickText} textAnchor="end" x={LEFT - 8} y={y(t) + 4}>
+            {formatAxisCurrency(t)}
+          </text>
+        </g>
+      ))}
+      <polyline className={actual} points={path(POT)} />
+      <polyline className={second} points={path(CONTRIBUTIONS)} />
+      {ticks.map((i, n) => (
+        <text
+          className={tickText}
+          key={MONTHS[i]}
+          textAnchor={xTickAnchor(n, ticks.length)}
+          x={x(i)}
+          y={H - 10}
+        >
+          {formatMonthTick(MONTHS[i] as string, "2-digit")}
+        </text>
+      ))}
+      {directLabels
+        ? ends.map((s) => (
+            <text
+              className={labelText}
+              dx={labelOffset.dx}
+              dy={labelOffset.dy}
+              key={s.name}
+              x={x(s.values.length - 1)}
+              y={y(s.values.at(-1) as number)}
+            >
+              {s.name}
+            </text>
+          ))
+        : null}
+      {annotation && annotated >= 0 ? (
+        <g>
+          <line className={baseline} x1={x(annotated)} x2={x(annotated)} y1={TOP} y2={H - BOTTOM} />
+          <circle className={marker} cx={x(annotated)} cy={y(POT[annotated] as number)} r="4" />
+          <text
+            className={labelText}
+            dx={-labelOffset.dx}
+            dy={labelOffset.dy}
+            textAnchor="end"
+            x={x(annotated)}
+            y={y(POT[annotated] as number)}
+          >
+            {annotation.label}
+          </text>
+        </g>
+      ) : null}
+    </svg>
+  );
+};
 
 const legendItems = [
   { id: "networth", label: "Net worth", color: "primary", swatch: "line" },
@@ -167,3 +280,71 @@ export const TooFewPoints: Story = {
 export const TooFewPointsDark: Story = { ...TooFewPoints, globals: { theme: "dark" } };
 
 export const Dark: Story = { ...Default, globals: { theme: "dark" } };
+
+/**
+ * R2-2 defaults: two series named by direct labels (no legend), one annotation, at most 6 month
+ * ticks with "Sep" and the last tick inside the plot, and a y axis near the data instead of £0.
+ */
+const conventionArgs = {
+  title: "Your pension pot",
+  summary: "Your pot grows from £182,000 in Sep 2026 to about £236,000 in Sep 2029.",
+  legend: undefined,
+  dataTable: undefined,
+  annotation: { x: "2028-09", label: "About £220,000, Sep 2028" },
+  children: <ConventionChart />,
+};
+
+const conventionPlay: Story["play"] = async ({ canvasElement }) => {
+  const canvas = within(canvasElement);
+  await expect(canvas.queryByRole("list", { name: "Chart key" })).toBeNull();
+  const svgText = [...canvasElement.querySelectorAll("svg text")].map((t) => t.textContent);
+  await expect(svgText).toContain("Pot");
+  await expect(svgText).toContain("Paid in");
+  await expect(svgText).toContain("About £220,000, Sep 2028");
+  await expect(svgText.some((t) => t?.includes("Sept"))).toBe(false);
+  await expect(svgText).not.toContain("£0");
+};
+
+export const DirectLabelsAndAnnotation: Story = {
+  args: conventionArgs,
+  globals: { theme: "light" },
+  play: conventionPlay,
+};
+
+export const DirectLabelsAndAnnotationDark: Story = {
+  args: conventionArgs,
+  globals: { theme: "dark" },
+  play: conventionPlay,
+};
+
+/** The y axis sits near the data (£160k to £260k here) rather than starting at £0. */
+export const AwayFromZero: Story = {
+  args: { ...conventionArgs, annotation: undefined },
+  globals: { theme: "light" },
+  play: async ({ canvasElement }) => {
+    const svgText = [...canvasElement.querySelectorAll("svg text")].map((t) => t.textContent);
+    await expect(svgText).not.toContain("£0");
+  },
+};
+
+export const AwayFromZeroDark: Story = { ...AwayFromZero, globals: { theme: "dark" } };
+
+/** Asked-for legend: passing `legend` turns direct labels off unless `directLabels` is set. */
+export const WithLegendInstead: Story = {
+  args: {
+    ...conventionArgs,
+    annotation: undefined,
+    legend: (
+      <ChartLegend
+        items={[
+          { id: "pot", label: "Pot", color: "primary", swatch: "line" },
+          { id: "paid", label: "Paid in", color: "series2", swatch: "line" },
+        ]}
+      />
+    ),
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(canvas.getByRole("list", { name: "Chart key" })).toBeInTheDocument();
+  },
+};

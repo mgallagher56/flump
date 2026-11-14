@@ -179,6 +179,8 @@
      SliderField use the identical 2px solid focusRing, so they are unchanged.
    - Opt-out: [data-focus-managed] (and its descendants) for widgets whose container draws the
      ring via :focus-within (e.g. the SliderField pill input), avoiding a double ring.
+   - [data-pointer-focus]: a Tabs trigger focused by a mouse or touch (Radix focuses it by
+     script, which matches :focus-visible); the attribute goes on the first key press.
    - Dialog containers (tabindex="-1") are excluded. */
 :where(
   a,
@@ -192,7 +194,7 @@
   [role="switch"],
   [role="tab"],
   [tabindex]:not([tabindex="-1"])
-):not(:where([data-focus-managed], [data-focus-managed] *)):focus-visible {
+):not(:where([data-focus-managed], [data-focus-managed] *, [data-pointer-focus])):focus-visible {
   outline-style: solid;
   outline-width: 2px;
   outline-color: var(--colors-border-focus-ring);

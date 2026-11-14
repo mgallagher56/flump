@@ -1,3 +1,4 @@
+export * from "./axisDefaults";
 export * from "./capSeriesWithOther";
 export * from "./chartColor";
 export * from "./chartInk";

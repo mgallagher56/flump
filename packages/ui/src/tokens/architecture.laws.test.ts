@@ -151,7 +151,6 @@ describe("Architecture & Design System Laws", () => {
         "Text",
         "Sheet",
         "Skeleton",
-        "Spinner",
         "Stepper",
         "Text",
         "TextInput",
