@@ -51,8 +51,8 @@ export const FourColumnsDark: Story = {
 };
 
 /**
- * Round 3: two figures keep a 3-card width from `lg` and leave the last third empty, so a
- * two-up strip never stretches across a wide page. View at 1280 to see the cap.
+ * Round 4: two cards split the full width into equal halves, so the strip lines up with the hero,
+ * and each carries a one-line caption so neither reads as empty. View at 1280 and on a phone.
  */
 const TwoUp = () => (
   <KpiStrip
@@ -60,12 +60,14 @@ const TwoUp = () => (
       <KpiCard
         key="in"
         label="Money in each month"
+        subtext="After tax"
         value={2085}
         valueFormat={{ fractionDigits: 0 }}
       />,
       <KpiCard
         key="out"
         label="Going out each month"
+        subtext="Bills, spending and savings"
         value={1960}
         valueFormat={{ fractionDigits: 0 }}
       />,
@@ -79,14 +81,14 @@ const twoPlay: Story["play"] = async ({ canvasElement }) => {
   await expect(canvas.getAllByText("Going out each month")[0]).toBeInTheDocument();
 };
 
-export const TwoUpCapped: Story = {
+export const TwoUpHalves: Story = {
   render: () => <TwoUp />,
   globals: { theme: "light" },
   parameters: { viewport: { defaultViewport: "desktop" } },
   play: twoPlay,
 };
 
-export const TwoUpCappedDark: Story = {
+export const TwoUpHalvesDark: Story = {
   render: () => <TwoUp />,
   globals: { theme: "dark" },
   play: twoPlay,

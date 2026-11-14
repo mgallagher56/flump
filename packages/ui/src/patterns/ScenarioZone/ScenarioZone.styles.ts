@@ -78,6 +78,9 @@ export const scenarioZone = sva({
       gap: "3",
       textStyle: "body.sm",
       color: "text.secondary",
+      // A ghost button that leads the footer (Reset hidden) keeps its text at the zone's leading
+      // edge: its own side padding (Button sm, px 4) would otherwise indent it.
+      "& > [data-variant='ghost']:first-child": { marginInlineStart: "-4" },
     },
     reset: {
       flexShrink: "0",

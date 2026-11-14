@@ -58,8 +58,9 @@ export const categoryList = sva({
       flexShrink: 0,
     },
     text: { display: "flex", alignItems: "center", gap: "3", minWidth: 0, flex: 1 },
-    name: { display: "flex", flexDirection: "column", minWidth: 0 },
-    meta: { textStyle: "body.sm", color: "text.secondary" },
+    // The group name carries more weight than the entries opened under it.
+    name: { display: "flex", flexDirection: "column", minWidth: 0, fontWeight: "semibold" },
+    meta: { textStyle: "body.sm", color: "text.secondary", fontWeight: "normal" },
   },
 });
 
@@ -81,7 +82,9 @@ export const chevron = cva({
 
 /** The opened entries, indented under their category so they read as its parts. */
 export const entriesPanel = cva({
-  base: { pt: "1", pb: "4", pl: { base: "4", md: "9" } },
+  // Indented under the group; the right inset matches the chevron, so entry amounts line up with
+  // the group amounts above them.
+  base: { pt: "1", pb: "4", pl: { base: "4", md: "9" }, pr: "6" },
 });
 
 export const listFoot = cva({

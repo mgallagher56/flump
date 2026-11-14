@@ -93,12 +93,14 @@ export const BudgetOverview: FC<BudgetOverviewProps> = ({ entries, picture: pict
           <KpiCard
             key="income"
             label="Money in each month"
+            subtext="After tax"
             value={hasIncome ? (budget?.income ?? 0) : null}
             valueFormat={{ fractionDigits: 0 }}
           />,
           <KpiCard
             key="out"
             label="Going out each month"
+            subtext="Bills, spending and savings"
             value={goingOut}
             valueFormat={{ fractionDigits: 0 }}
           />,

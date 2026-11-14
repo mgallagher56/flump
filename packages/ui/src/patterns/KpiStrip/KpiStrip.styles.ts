@@ -19,13 +19,10 @@ export const kpiStripGrid = cva({
       1: { gridTemplateColumns: "minmax(0, 1fr)" },
       // Two-up: from `lg` the cards keep the width of a 3-card strip and leave the last third
       // empty, so 2 figures never stretch across a wide page (E16 round 3).
-      // Two cards sit side by side from the phone up, so they do not push the next section
-      // below the fold (round 4); KPI values step down in narrow cards (R2-2).
+      // Two cards: equal halves of the full content width at every size, so the strip's edges
+      // line up with the hero (STYLE-GUIDE, KPI strip; round 4). Never capped to a narrower grid.
       2: {
-        gridTemplateColumns: {
-          base: "repeat(2, minmax(0, 1fr))",
-          lg: "repeat(3, minmax(0, 1fr))",
-        },
+        gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
       },
       3: {
         gridTemplateColumns: { base: "minmax(0, 1fr)", sm: "repeat(3, minmax(0, 1fr))" },

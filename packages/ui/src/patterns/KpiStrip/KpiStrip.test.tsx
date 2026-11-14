@@ -193,7 +193,7 @@ describe("KpiStrip Pattern", () => {
     expect(cls).not.toContain("grid-tc_repeat(2");
   });
 
-  it("keeps two cards at a 3-card width from lg, so 2 figures never stretch across the page", () => {
+  it("splits two cards into equal halves of the full width, so the strip lines up with the hero", () => {
     const { container } = render(
       <KpiStrip columns={2}>
         <div>A</div>
@@ -201,10 +201,10 @@ describe("KpiStrip Pattern", () => {
       </KpiStrip>,
     );
     const cls = container.firstElementChild?.className ?? "";
-    // Side by side from the phone up, then capped at a 3-card width from lg.
     expect(cls).toContain("grid-tc_repeat(2,_minmax(0,_1fr))");
+    // Never capped to a narrower grid at any width.
+    expect(cls).not.toContain("lg:grid-tc");
     expect(cls).not.toContain("sm:grid-tc");
-    expect(cls).toContain("lg:grid-tc_repeat(3,_minmax(0,_1fr))");
   });
 
   it("rejects a fifth item at compile time", () => {
