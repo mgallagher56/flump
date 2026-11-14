@@ -81,7 +81,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   return {
     tool: getToolEntry(canonical),
     // The invite request lives on the marketing contact page; figures are not handed over.
-    inviteHref: `${getMarketingUrl(request.url)}/contact#beta`,
+    inviteHref: `${getMarketingUrl(request.url).replace(/\/+$/, "")}/contact#beta`,
   };
 };
 

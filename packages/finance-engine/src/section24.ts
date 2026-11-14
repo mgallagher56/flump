@@ -98,8 +98,9 @@ export function calculateSection24Tax(input: Section24Input): Section24Result {
     Math.round((netRentalTaxLiability - oldRulesTax) * 100) / 100,
   );
   // Can be negative: a cash loss after tax (see `actualCashProfit`).
+  // `+ 0` turns a rounded -0 into 0, so a break-even never shows as "-£0".
   const netRentalIncomeAfterTax =
-    Math.round((actualCashProfit - netRentalTaxLiability) * 100) / 100;
+    Math.round((actualCashProfit - netRentalTaxLiability) * 100) / 100 + 0;
 
   return {
     ownershipSharePct: Math.round(share * 100),

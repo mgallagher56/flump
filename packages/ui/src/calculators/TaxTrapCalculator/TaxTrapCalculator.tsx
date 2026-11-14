@@ -265,7 +265,8 @@ export const TaxTrapCalculator: FC<TaxTrapCalculatorProps> = ({
         />
       ) : null}
       {/* Illustration outcomes, not saved figures, so plain outcome cards rather than a KpiStrip.
-          One outcome, then two supporting figures; the before and after table is in the details. */}
+          One outcome and one supporting figure (P1, first view at most 3 figures); the Personal
+          Allowance and the before and after table are in the details. */}
       <div className={taxTrapOutcomes()} data-density="compact" data-testid="tax-trap-outcomes">
         <KpiCard
           label={TAX_TRAP_COPY.kpiOutcome}
@@ -276,10 +277,6 @@ export const TaxTrapCalculator: FC<TaxTrapCalculatorProps> = ({
           }
         />
         <KpiCard label={TAX_TRAP_COPY.kpiTaxAndNi} value={<Money size="lg" value={taxAndNi} />} />
-        <KpiCard
-          label={TAX_TRAP_COPY.kpiPersonalAllowance}
-          value={<Money size="lg" value={after.personalAllowance} />}
-        />
       </div>
 
       <Button className={taxTrapCta()} size="md" variant="primary" onClick={handleSave}>
