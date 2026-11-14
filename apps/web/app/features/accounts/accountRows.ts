@@ -21,43 +21,109 @@ export interface AccountRow {
   favourable: boolean;
 }
 
+const isBeforeMonth = (month: number, year: number, currentM: number, currentY: number) =>
+  year < currentY || (year === currentY && month < currentM);
+
 type DetailWithAccount = AccountDetail & { accountId?: string };
 
+/** The balance figures for one account, read from its saved balance and its recorded months. */
+export interface AccountBalanceSummary {
+  /** Amount held, or amount owed for a liability. Undefined when no balance is known. */
+  balance: number | undefined;
+  /** Whole-number change against `againstLabel`, or null when there is no earlier month. */
+  changePercent: number | null;
+  /** True when the change is good news (assets up, liabilities down). */
+  favourable: boolean;
+  /** "October 2026": the latest recorded month before the current one, or null. */
+  againstLabel: string | null;
+  /** "November 2026": the current calendar month. */
+  currentLabel: string;
+  /** True when the current month has a recorded balance. */
+  currentRecorded: boolean;
+}
+
+const monthLabel = (month: number, year: number): string =>
+  new Intl.DateTimeFormat("en-GB", { month: "long", year: "numeric" }).format(
+    new Date(year, month - 1, 1),
+  );
+
 /**
- * One display row per account: the latest recorded balance (falling back to the stored balance)
- * and the change against the month before it.
+ * The saved balance is the current balance (D22). Recorded months are history: they never replace
+ * the saved balance, and the latest one is used only when no balance is saved. The change is
+ * against the latest recorded month before the current one.
  */
+export const summariseAccountBalance = (
+  account: AccountRowSource,
+  accountDetails: DetailWithAccount[],
+  now: Date = new Date(),
+): AccountBalanceSummary => {
+  const id = account.id ?? "";
+  const type = account.type ?? "";
+  const currentM = now.getMonth() + 1;
+  const currentY = now.getFullYear();
+  const history = accountDetails
+    .filter((detail) => !id || (detail.account_id || detail.accountId || id) === id)
+    .filter(
+      (detail) => !isFutureMonth(detail.month as number, detail.year as number, currentM, currentY),
+    )
+    .sort(monthYearSort);
+
+  const latest = history[history.length - 1];
+  const previous = history
+    .filter((detail) =>
+      isBeforeMonth(detail.month as number, detail.year as number, currentM, currentY),
+    )
+    .pop();
+  const currentRecorded = history.some(
+    (detail) => detail.month === currentM && detail.year === currentY,
+  );
+
+  const stored =
+    account.balance !== undefined && account.balance !== null && account.balance !== ""
+      ? Number(account.balance)
+      : undefined;
+  const raw = stored ?? (latest?.value !== undefined ? Number(latest.value) : undefined);
+  const balance = toDisplayBalance(type, raw);
+  const previousBalance =
+    previous?.value !== undefined ? toDisplayBalance(type, Number(previous.value)) : undefined;
+
+  const changePercent =
+    balance !== undefined && previousBalance
+      ? Math.round(((balance - previousBalance) / previousBalance) * 100)
+      : null;
+  const isUp = balance !== undefined && previousBalance !== undefined && balance >= previousBalance;
+  const favourable =
+    changePercent === null || changePercent === 0 ? true : isLiabilityType(type) ? !isUp : isUp;
+
+  return {
+    balance,
+    changePercent,
+    favourable,
+    againstLabel:
+      previous?.month && previous.year ? monthLabel(previous.month, previous.year) : null,
+    currentLabel: monthLabel(currentM, currentY),
+    currentRecorded,
+  };
+};
+
+/** One display row per account, from `summariseAccountBalance`. */
 export const buildAccountRows = (
   accounts: AccountRowSource[],
   accountDetails: DetailWithAccount[],
+  now: Date = new Date(),
 ): AccountRow[] =>
   accounts.map((account) => {
     const id = account.id ?? "";
-    const type = account.type ?? "";
-    const history = accountDetails
-      .filter((detail) => (detail.account_id || detail.accountId) === id)
-      .filter((detail) => !isFutureMonth(detail.month as number, detail.year as number))
-      .sort(monthYearSort);
-
-    const latest = history[history.length - 1];
-    const previous = history[history.length - 2];
-
-    const stored = account.balance !== undefined ? Number(account.balance) : undefined;
-    const raw = latest?.value !== undefined ? Number(latest.value) : stored;
-    const balance = toDisplayBalance(type, raw);
-    const previousBalance =
-      previous?.value !== undefined ? toDisplayBalance(type, Number(previous.value)) : undefined;
-
-    const changePercent =
-      balance !== undefined && previousBalance
-        ? Math.round(((balance - previousBalance) / previousBalance) * 100)
-        : null;
-    const isUp =
-      balance !== undefined && previousBalance !== undefined && balance >= previousBalance;
-    const favourable =
-      changePercent === null || changePercent === 0 ? true : isLiabilityType(type) ? !isUp : isUp;
-
-    return { id, name: account.name ?? "", type, balance, changePercent, favourable };
+    const own = accountDetails.filter((detail) => (detail.account_id || detail.accountId) === id);
+    const { balance, changePercent, favourable } = summariseAccountBalance(account, own, now);
+    return {
+      id,
+      name: account.name ?? "",
+      type: account.type ?? "",
+      balance,
+      changePercent,
+      favourable,
+    };
   });
 
 /** "March 2026" for the latest recorded month, or null when there is no history yet. */
@@ -67,7 +133,5 @@ export const lastUpdatedLabel = (accountDetails: AccountDetail[]): string | null
     .sort(monthYearSort)
     .pop();
   if (!latest?.month || !latest.year) return null;
-  return new Intl.DateTimeFormat("en-GB", { month: "long", year: "numeric" }).format(
-    new Date(latest.year, latest.month - 1, 1),
-  );
+  return monthLabel(latest.month, latest.year);
 };
