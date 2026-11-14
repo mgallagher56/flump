@@ -99,17 +99,22 @@ export function useFinishOnboarding(values: OnboardingValues, summary: Onboardin
       // Jobs that already succeeded are remembered so a retry never creates duplicates. The
       // backend is also asked what already exists, so a retry after a reload, a crash or a lost
       // response skips records an earlier attempt created. A failed lookup stops here (no guessing).
-      const existingNames = async (endpoint: string) => {
+      const existingRows = async (endpoint: string) => {
         const rows = await apiFetch<Array<Record<string, unknown>>>(endpoint);
         if (!Array.isArray(rows)) throw new BackendError("bad-response", endpoint);
-        return rows.flatMap((row) => (typeof row.name === "string" ? [row.name] : []));
+        return rows;
       };
+      const names = (rows: Array<Record<string, unknown>>) =>
+        rows.flatMap((row) => (typeof row.name === "string" ? [row.name] : []));
       const [existingAccounts, existingEntries] = await Promise.all([
-        existingNames("/accounts"),
-        existingNames("/budget-entries"),
+        existingRows("/accounts"),
+        existingRows("/budget-entries"),
       ]);
-      for (const name of existingAccounts) seededRef.current.add(`account:${name}`);
-      for (const name of existingEntries) seededRef.current.add(`entry:${name}`);
+      for (const name of names(existingAccounts)) seededRef.current.add(`account:${name}`);
+      for (const name of names(existingEntries)) seededRef.current.add(`entry:${name}`);
+      // Any saved Property account already holds the home (whatever it is called), so a re-run
+      // never seeds a second one and counts the home twice.
+      const hasProperty = existingAccounts.some((row) => row.type === "Property");
 
       const seedJobs = buildOnboardingSeedJobs({
         cash,
@@ -127,6 +132,7 @@ export function useFinishOnboarding(values: OnboardingValues, summary: Onboardin
       const seedResults = await Promise.allSettled(
         seedJobs.map(async (job) => {
           if (!job.enabled || seededRef.current.has(job.key)) return;
+          if (hasProperty && job.payload.type === "Property") return;
           await apiFetch<unknown>(job.endpoint, { method: "POST", body: job.payload });
           seededRef.current.add(job.key);
         }),

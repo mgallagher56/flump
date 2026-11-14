@@ -136,4 +136,28 @@ describe("useFinishOnboarding", () => {
       body: { name: "Home (your estimate)", type: "Property", balance: 310000, isCurrent: true },
     });
   });
+
+  it("never seeds a second home when any Property account already exists (re-run)", async () => {
+    updateProfile.mockResolvedValue(undefined);
+    apiFetch.mockImplementation((endpoint: string, init?: { method?: string }) => {
+      if (init?.method === "POST") return Promise.resolve({});
+      return Promise.resolve(
+        endpoint === "/accounts" ? [{ name: "Our house", type: "Property", balance: 400000 }] : [],
+      );
+    });
+    const owner: OnboardingValues = {
+      ...values,
+      housingStatus: "mortgage",
+      propertyValue: 310000,
+      mortgageBalance: 186000,
+    };
+    const { result } = renderHook(() => useFinishOnboarding(owner, deriveOnboardingSummary(owner)));
+    await act(() => result.current.finish());
+    const posted = apiFetch.mock.calls
+      .filter(([, init]) => (init as { method?: string } | undefined)?.method === "POST")
+      .map(([, init]) => (init as { body: { type?: string } }).body);
+    expect(posted.some((body) => body.type === "Property")).toBe(false);
+    // The other baseline rows are still seeded.
+    expect(posted.some((body) => body.type === "Mortgage")).toBe(true);
+  });
 });
