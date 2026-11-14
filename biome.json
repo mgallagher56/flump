@@ -89,7 +89,8 @@
       "preset": "recommended",
       "suspicious": {
         "noExplicitAny": "off",
-        "noArrayIndexKey": "off"
+        "noArrayIndexKey": "off",
+        "noAlert": "error"
       },
       "correctness": {
         "useExhaustiveDependencies": "off",
