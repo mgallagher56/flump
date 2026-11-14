@@ -42,6 +42,14 @@ describe("ToolGuide", () => {
     expect(screen.getByRole("heading", { name: "How the two methods compare" })).toBeTruthy();
   });
 
+  it("titles each panel with an h2 inside its summary", () => {
+    const { container } = render(
+      <ToolGuide faqs={guide.faqs} guideSections={guide.guideSections} />,
+    );
+    const titles = Array.from(container.querySelectorAll("summary h2")).map((h) => h.textContent);
+    expect(titles).toEqual(["Guide", "Frequently asked questions"]);
+  });
+
   it("names the counts in each summary line", () => {
     render(<ToolGuide faqs={guide.faqs} guideSections={guide.guideSections} />);
     expect(screen.getByText(`${guide.guideSections.length} sections`)).toBeTruthy();

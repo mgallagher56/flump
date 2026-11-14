@@ -8,8 +8,6 @@
     "apps/marketing/src/pages/NotFoundPage/NotFoundPage.styles.ts": 2,
     "apps/marketing/src/pages/PricingPage/PricingPage.styles.ts": 10,
     "apps/marketing/src/pages/SecurityPage.tsx": 6,
-    "apps/marketing/src/pages/ToolPage.tsx": 1,
-    "apps/marketing/src/pages/ToolsIndexPage.tsx": 1,
     "apps/web/app/components/charts/AccountDetailChart.tsx": 2,
     "apps/web/app/components/core/buttons/FLPLinkButton.tsx": 1,
     "apps/web/app/components/core/disclosure/CollapsibleSection.tsx": 1,
@@ -41,8 +39,6 @@
     "apps/marketing/src/pages/NotFoundPage/NotFoundPage.styles.ts": 1,
     "apps/marketing/src/pages/PricingPage/PricingPage.styles.ts": 3,
     "apps/marketing/src/pages/SecurityPage.tsx": 1,
-    "apps/marketing/src/pages/ToolPage.tsx": 1,
-    "apps/marketing/src/pages/ToolsIndexPage.tsx": 1,
     "packages/ui/src/patterns/SectionBand/SectionBand.styles.ts": 1
   },
   "duration": {

@@ -1,9 +1,16 @@
 import { PageHeader } from "@repo/ui";
 import { MarginalRateExplorerStandalone } from "@repo/ui/calculators";
 import { getToolEntry, getToolGuide, resolveToolSlug, type ToolSlug } from "@repo/ui/tools";
+import { ToolBreadcrumbs, type ToolBreadcrumbsRenderLink } from "@repo/ui/tools/breadcrumbs";
 import { ToolGuide } from "@repo/ui/tools/guide";
 import type { FC } from "react";
-import { type LoaderFunctionArgs, type MetaFunction, redirect, useLoaderData } from "react-router";
+import {
+  type LoaderFunctionArgs,
+  type MetaFunction,
+  Link as RouterLink,
+  redirect,
+  useLoaderData,
+} from "react-router";
 import DebtSnowballVsAvalancheTool from "~/components/tools/DebtSnowballVsAvalancheTool";
 import MortgageVsIsaTool from "~/components/tools/MortgageVsIsaTool";
 import OverdraftCostTool from "~/components/tools/OverdraftCostTool";
@@ -12,7 +19,12 @@ import StudentLoanOverpayTool from "~/components/tools/StudentLoanOverpayTool";
 import TaxTrapCalculatorTool from "~/components/tools/TaxTrapCalculatorTool";
 import ZeroPercentCliffTool from "~/components/tools/ZeroPercentCliffTool";
 import { SignedOutPage } from "~/features/signed-out/components/SignedOutPage";
-import { ToolBreadcrumbs } from "~/features/signed-out/components/ToolBreadcrumbs";
+
+const renderCrumbLink: ToolBreadcrumbsRenderLink = (href, className, children) => (
+  <RouterLink className={className} to={href}>
+    {children}
+  </RouterLink>
+);
 
 type ToolComponent =
   | "tax-trap"
@@ -76,7 +88,7 @@ export const ToolDetailPage: FC = () => {
 
   return (
     <SignedOutPage>
-      <ToolBreadcrumbs title={tool.title} />
+      <ToolBreadcrumbs renderLink={renderCrumbLink} title={tool.title} />
       <PageHeader description={tool.description} title={tool.title} />
 
       <section aria-label="Calculator" data-tool-calculator="">

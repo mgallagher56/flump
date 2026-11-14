@@ -4,7 +4,7 @@ import { render, screen, within } from "@testing-library/react";
 import { HelmetProvider } from "react-helmet-async";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it } from "vitest";
-import { CANONICAL_TOOL_SLUGS } from "../utils/toolSlugs";
+import { CANONICAL_TOOL_SLUGS } from "../../utils/toolSlugs";
 import { ToolsIndexPage } from "./ToolsIndexPage";
 
 const renderIndex = () =>

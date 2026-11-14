@@ -33,14 +33,15 @@ interface PanelProps {
 }
 
 /**
- * One closed native `<details>` panel. The text is in the server-rendered HTML (crawlers
+ * One closed native `<details>` panel whose title is a real h2 (page h1 > calculator h2s > Guide h2
+ * > section h3s). The text is in the server-rendered HTML (crawlers
  * read it) and opens without JavaScript; the look matches the `CollapsibleDrawer` card.
  */
 const GuidePanel: FC<PanelProps> = ({ title, count, noun, children }) => (
   <details className={guideDetails()}>
     <summary className={guideSummary()}>
       <span className={guideTitleRow()}>
-        <span className={guideTitle()}>{title}</span>
+        <h2 className={guideTitle()}>{title}</h2>
         <span className={guideCount()}>
           {countFormat.format(count)} {count === 1 ? noun.one : noun.other}
         </span>
@@ -74,8 +75,10 @@ export const ToolGuide: FC<ToolGuideProps> = ({ guideSections, faqs }) => (
             <Heading as="h3" size="md">
               {section.heading}
             </Heading>
-            {section.body.map((paragraph) => (
-              <Text color="secondary" key={paragraph} textStyle="body.md">
+            {section.body.map((paragraph, index) => (
+              // Static copy that never reorders, so the position is a stable key.
+              // biome-ignore lint/suspicious/noArrayIndexKey: fixed list from TOOL_GUIDES
+              <Text color="secondary" key={`${section.heading}-${index}`} textStyle="body.md">
                 {paragraph}
               </Text>
             ))}

@@ -60,6 +60,17 @@ describe("ToolPage", () => {
     expect(localStorage.getItem(ONBOARDING_SEED_STORAGE_KEY)).toBeNull();
   });
 
+  it("renders the overdraft page for a mixed-case alias, not the not-found page", () => {
+    renderAt("/tools/Overdraft-Interest-Calculator");
+    expect(
+      screen.getByRole("heading", {
+        level: 1,
+        name: getToolEntry("overdraft-cost-and-payoff-calculator").title,
+      }),
+    ).toBeTruthy();
+    expect(screen.queryByText("Page not found")).toBeNull();
+  });
+
   it("renders the not-found page for an unknown slug", () => {
     renderAt("/tools/not-a-real-tool");
     expect(screen.getByRole("heading", { level: 1, name: "Page not found" })).toBeTruthy();
@@ -96,7 +107,7 @@ describe("ToolPage", () => {
       const crumbs = within(screen.getByRole("navigation", { name: "Breadcrumb" })).getAllByRole(
         "listitem",
       );
-      expect(crumbs.map((c) => c.textContent)).toEqual(["All calculators", tool.title]);
+      expect(crumbs.map((c) => c.textContent?.trim())).toEqual(["All calculators", tool.title]);
       const before = Array.from(main.querySelectorAll("nav, h1, h2, p, span, [role='note']"))
         .filter((el) => el.compareDocumentPosition(calculator) & Node.DOCUMENT_POSITION_FOLLOWING)
         .filter((el) => !calculator.contains(el));

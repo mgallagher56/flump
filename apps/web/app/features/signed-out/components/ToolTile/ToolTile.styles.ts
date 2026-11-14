@@ -25,3 +25,6 @@ export const tileCta = cva({
     textStyle: "label.md",
   },
 });
+
+/** One wrap rule for card titles in both apps: balanced lines. */
+export const tileTitle = cva({ base: { textWrap: "balance" } });
