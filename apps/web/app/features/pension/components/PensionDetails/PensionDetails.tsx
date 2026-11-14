@@ -269,7 +269,7 @@ export const PensionDetails: FC<PensionDetailsProps> = ({
       {/* The saved facts sit behind a quiet drawer, closed by default, so the first view keeps
           to the headline and the strip (E16 P1.1). "Edit details" stays visible above. */}
       {!isEditing && (
-        <CollapsibleDrawer title="Show your details" variant="quiet">
+        <CollapsibleDrawer title="Salary and contributions" variant="quiet">
           <dl className={factList()}>
             <div className={factRow()}>
               <dt>Salary</dt>

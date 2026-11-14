@@ -58,7 +58,7 @@ describe("<SavingsAccountsList />", () => {
     const bar = screen.getByRole("progressbar", { name: "ISA allowance used this tax year" });
     expect(bar.getAttribute("aria-valuetext")).toBe("Estimate: £1,600 of £20,000 used");
     expect(screen.getByTestId("isa-allowance").textContent).toContain(
-      "The allowance is £20,000 a tax year and resets on 6 April.",
+      "The allowance resets each tax year on 6 April.",
     );
     expect(container.textContent).not.toContain("£1,600");
     expect(container.textContent).not.toContain("unused");

@@ -22,7 +22,7 @@ export const rowList = cva({
   base: { listStyle: "none", margin: 0, padding: 0 },
 });
 
-/** Name and type on the left; balance and actions on the right, wrapping below at 320. */
+/** Name and type on the left; balance and actions on the right, on one line from 375. */
 export const row = cva({
   base: {
     display: "flex",
@@ -72,7 +72,7 @@ export const isaNote = cva({
 });
 
 export const accountMeta = cva({
-  base: { display: "flex", flexDirection: "column", gap: "2px", minWidth: 0, flex: "1 1 160px" },
+  base: { display: "flex", flexDirection: "column", gap: "2px", minWidth: 0, flex: "1 1 7rem" },
 });
 
 export const accountLink = cva({

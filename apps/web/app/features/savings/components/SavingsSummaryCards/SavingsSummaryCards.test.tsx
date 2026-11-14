@@ -18,7 +18,7 @@ describe("SavingsSummaryCards", () => {
     expect(screen.getByText("£21,000")).toBeDefined();
     expect(screen.getByText("Saved each month")).toBeDefined();
     expect(screen.getByText("Average rate")).toBeDefined();
-    expect(screen.getByText("4%")).toBeDefined();
+    expect(screen.getByText("4.0%")).toBeDefined();
     expect(screen.getByText("ISA allowance used")).toBeDefined();
     expect(screen.getByText("Estimate")).toBeDefined();
     expect(screen.queryByText("Weighted by balance (AER)")).toBeNull();

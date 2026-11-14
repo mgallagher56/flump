@@ -67,9 +67,12 @@ export const PensionAccountsList: FC<PensionAccountsListProps> = ({ accounts }) 
               {acc.isCurrent === false ? "Past pot" : "Current pot"}
             </span>
           </span>
-          <span className={potBalance()}>
-            <Money fractionDigits={0} size="sm" value={Number(acc.balance) || 0} />
-          </span>
+          {/* With one pot the hero already shows its balance, so the row does not repeat it. */}
+          {accounts.length > 1 ? (
+            <span className={potBalance()}>
+              <Money fractionDigits={0} size="sm" value={Number(acc.balance) || 0} />
+            </span>
+          ) : null}
           <span className={potActions()}>
             <Button
               aria-label={`Edit ${acc.name}`}

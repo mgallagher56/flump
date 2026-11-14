@@ -78,8 +78,8 @@ describe("formatting", () => {
     expect(formatDuration(30)).toBe("2 years 6 months");
     expect(formatDuration(36)).toBe("3 years");
   });
-  it("shows a computed rate to at most 1 decimal place", () => {
-    expect(formatRate(4)).toBe("4%");
+  it("shows a computed rate to 1 decimal place", () => {
+    expect(formatRate(4)).toBe("4.0%");
     expect(formatRate(6.375)).toBe("6.4%");
   });
 });
