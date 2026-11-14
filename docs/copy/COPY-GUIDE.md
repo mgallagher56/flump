@@ -5,6 +5,7 @@ Version 1.0, 2026-11-14. This is the one guide for every word a person reads or 
 It replaces `docs/copy-style-guide.md` and section P7 of `docs/design/e16-polish/PLAN.md` as the place to look. It restates, and never loosens, the advice boundary policy (`docs/compliance/advice-boundary-policy.md`, rules R1 to R8) and the claims rule (E7). Where this guide and the policy seem to differ, the policy wins and this guide has a bug.
 
 - Evidence: [COPY-RESEARCH.md](./COPY-RESEARCH.md) (sources, with what could and could not be verified).
+- How a screen behaves (hierarchy, states, forms, destructive actions) is set by [`docs/ux/UX-GUIDELINES.md`](../ux/UX-GUIDELINES.md). That document decides the behaviour; this one decides the words.
 - Current state of the product against this guide: [COPY-AUDIT.md](./COPY-AUDIT.md).
 - Mechanical rules are enforced by `bun scripts/check-copy.ts` (section 8).
 
@@ -168,8 +169,8 @@ This is where finance copy most often misleads. Rules:
 5. **Prefer a range to a hedge word.** "Between £180,000 and £260,000" tells the reader more than "could be around £220,000", and research finds a numeric range costs little trust while vague hedges are read inconsistently. Do not stack hedges ("may potentially").
 6. **No false precision.** A 30-year estimate is rounded: to the nearest £1,000 above £100,000, the nearest £100 above £10,000. A date decades away is a year, not a day.
 7. **"Can", not "will".** "Estimate", not "will be". Never "guaranteed", "certain", "risk-free", "safe" about an outcome (existing guard).
-8. **Tax outputs say "Unverified estimate"** until the tax vectors are signed off (R6), once per surface.
-9. **Never put a what-if result in the hero style** (AGENTS.md section 3: `surface.hero` never goes on a scenario outcome). Whether an estimate computed only from saved figures may be a page's hero is plan decision D2, which waits for the owner. Until then the hero is a saved fact, and where a page already shows an estimate there it is labelled "Estimate".
+8. **Every tax figure carries the one standard "Unverified estimate" notice** until the tax vectors are signed off (R6): the same wording, in sentence case, from its component or constant, once per surface. Never write it by hand inside a badge, heading or description.
+9. **The hero holds a saved fact, never an estimate and never a what-if result** (AGENTS.md section 3; plan decision D2, ruled "no" on 2026-11-14). An estimate computed from saved figures is the first KPI, labelled "Estimate".
 10. **Anchors.** A default or example value steers people. Defaults are neutral (the person's own saved figure, or empty), examples are labelled "Example", and a minimum payment is never shown as the suggested amount.
 
 ### 4.5 Comparisons
@@ -405,7 +406,7 @@ Flump shows people their own figures and lets them model changes. It does not gi
 | "Next step: pay off your credit card first"  | "£3,200 of your debt is at 24.9% APR."                                                                     | R4   |
 | "Save £1,200 in tax"                         | "Estimate: £1,200 less Income Tax in this illustration."                                                   | R8   |
 
-The £100,000 threshold is never a banner or a headline. It is one factual line inside the "next £1,000" tool, shown only when income is in the band (P7.5).
+The £100,000 threshold never leads a page: no banner, no headline, no heading of its own. It is one factual line, shown only when adjusted net income is between £90,000 and £125,140, and any button beside it says "Model this contribution" (R5, the E31 ruling, P7.5).
 
 ### 7.3 Wording nobody rewrites
 
@@ -425,7 +426,7 @@ These strings are fixed. A copy change to any of them needs the owner, and for t
 - No claim of a feature, a certification or a regulatory status the product does not have. If a feature is behind an allowlist or not built, the copy does not describe it in the present tense.
 - Every regulatory, security, pricing or feature claim needs evidence (a file and line, or a host) and an approver in the E7 claim register (`docs/audit/plans/E7-claims-design.md`).
 - No "bank-level", "military-grade", "secure" as a bare adjective, "trusted by", "award-winning", user counts or testimonials without evidence.
-- "Free" means free with no condition, or the condition is in the same sentence.
+- "Free" is written as "free during the beta", and only while the code has no payment path. Never a bare "free" in a heading or button.
 - Signed-out pages never show sample figures as if they were the visitor's.
 - **A page may only describe what the tool on that page does today.** A title, description, meta description, catalogue entry or callout names the inputs the tool has and the outputs it shows, nothing more. If the calculator has no pension input, the description does not mention pensions. Check the tool before writing about it.
 - No verb that claims a connection or automation the visitor's session does not have: "syncs", "automatically monitors", "tracks live", "files your return".
