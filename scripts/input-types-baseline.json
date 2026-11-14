@@ -1,0 +1,15 @@
+{
+  "apps/web/app/features/mortgage/components/MortgageSummary/MortgageSummary.tsx": 2,
+  "apps/web/app/features/onboarding/components/IncomeStep/IncomeStep.tsx": 1,
+  "apps/web/app/features/savings/components/AddSavingsAccountDialog/AddSavingsAccountDialog.tsx": 1,
+  "apps/web/app/features/savings/components/SavingsAccountsList/SavingsAccountsList.tsx": 1,
+  "apps/web/app/features/tax/components/TaxIncomeSectionCard/TaxIncomeSectionCard.tsx": 1,
+  "apps/web/app/features/tax/components/TaxReservePanel/TaxReservePanel.tsx": 1,
+  "packages/ui/src/calculators/DebtSnowballCalculator/DebtSnowballCalculator.tsx": 7,
+  "packages/ui/src/calculators/MortgageVsIsaCalculator/MortgageVsIsaCalculator.tsx": 4,
+  "packages/ui/src/calculators/OverdraftCostCalculator/OverdraftCostCalculator.tsx": 2,
+  "packages/ui/src/calculators/Section24Calculator/Section24Calculator.tsx": 4,
+  "packages/ui/src/calculators/StudentLoanCalculator/StudentLoanCalculator.tsx": 2,
+  "packages/ui/src/calculators/ZeroPercentCliffCalculator/ZeroPercentCliffCalculator.tsx": 3,
+  "packages/ui/src/patterns/GlobalBaselineBar/GlobalBaselineBar.tsx": 2
+}
