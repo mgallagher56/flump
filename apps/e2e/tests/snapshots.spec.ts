@@ -20,7 +20,7 @@ test("monthly check-in saves this month's balances and the history page shows th
   await page.goto("/");
   const card = page.locator("#monthly-check-in-card");
   await expect(card.getByRole("heading", { name: "Monthly check-in" })).toBeVisible();
-  await card.getByRole("link", { name: "Update balances" }).click();
+  await card.getByRole("link", { name: /^(Record|Update) balances$/ }).click();
   await expect(page).toHaveURL(/\/app\/accounts\/history\?checkIn=1$/);
 
   const sheet = page.getByRole("dialog", { name: `Monthly check-in: ${month}` });

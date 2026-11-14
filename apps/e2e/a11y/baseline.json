@@ -63,17 +63,12 @@
     "web-dashboard": {
       "1280-forced-colours": {
         "axe": {
-          "color-contrast": 6
+          "color-contrast": 2
         }
       },
       "1280-light": {
         "lang": {
           "html-lang-not-en-GB": 1
-        }
-      },
-      "320-reflow": {
-        "reflow": {
-          "horizontal-overflow": 1
         }
       }
     },
@@ -130,7 +125,7 @@
     "web-sandbox": {
       "1280-forced-colours": {
         "axe": {
-          "color-contrast": 6
+          "color-contrast": 2
         }
       },
       "1280-light": {

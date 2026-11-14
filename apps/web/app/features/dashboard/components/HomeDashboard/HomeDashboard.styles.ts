@@ -21,3 +21,14 @@ export const widgetGrid = cva({
 export const showHideButton = cva({
   base: { gap: "8px" },
 });
+
+/** Setup and check-in rows sit close together so they read as one group (law of proximity). */
+export const housekeepingGroup = cva({
+  base: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "8px",
+    minWidth: 0,
+    _empty: { display: "none" },
+  },
+});
