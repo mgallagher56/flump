@@ -21,8 +21,10 @@ import {
   budgetEditor,
   editorSection,
   entryRow,
+  essentialField,
   figure,
   frequencyField,
+  removeCell,
   rowControls,
 } from "./BudgetEditor.styles";
 
@@ -161,21 +163,22 @@ const EntryRow: FC<EntryRowProps> = ({ entry, onSave, onRemove }) => {
           />
         </div>
         {/* Savings count as savings whatever the flag, so only spending rows offer it. */}
-        {isIncomeEntry(entry) || entry.category === "savings" ? (
-          <span />
-        ) : (
-          <Switch
-            aria-label={`Essential: ${entry.name}`}
-            checked={entry.isEssential}
-            data-testid={`budget-editor-essential-${entry.id}`}
-            id={`budget-editor-essential-${entry.id}`}
-            label="Essential"
-            onChange={(event) => void onSave(entry.id, { isEssential: event.target.checked })}
-          />
-        )}
+        <div className={essentialField()}>
+          {isIncomeEntry(entry) || entry.category === "savings" ? null : (
+            <Switch
+              aria-label={`Essential: ${entry.name}`}
+              checked={entry.isEssential}
+              data-testid={`budget-editor-essential-${entry.id}`}
+              id={`budget-editor-essential-${entry.id}`}
+              label="Essential"
+              onChange={(event) => void onSave(entry.id, { isEssential: event.target.checked })}
+            />
+          )}
+        </div>
       </div>
       <Button
         aria-label={`Delete ${entry.name}`}
+        className={removeCell()}
         data-testid={`budget-editor-remove-${entry.id}`}
         id={`budget-editor-remove-${entry.id}`}
         size="sm"

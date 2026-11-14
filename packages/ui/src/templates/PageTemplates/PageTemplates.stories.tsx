@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import { expect, userEvent, waitFor, within } from "@storybook/test";
+import { PageHeader } from "../../patterns/PageHeader";
 import { expectPageRules } from "../../testing";
 import {
   DashboardTemplate,
@@ -153,6 +154,33 @@ const PageBodySample = () => (
     <p>Each child of the page body is one section.</p>
   </PageBody>
 );
+
+/** P13: a header then the hero, exactly one 32px section gap apart (no stacked header margin). */
+const HeaderGapSample = () => (
+  <PageBody data-testid="page-body-gap">
+    <PageHeader
+      title="Your budget"
+      subtitle="Your income, spending and how long your money lasts."
+    />
+    <div data-testid="page-body-gap-hero">Hero</div>
+  </PageBody>
+);
+
+const headerGapPlay: Story["play"] = async ({ canvasElement }) => {
+  const canvas = within(canvasElement);
+  const header = canvasElement.querySelector('[data-testid="page-body-gap"] > header');
+  const hero = canvas.getByTestId("page-body-gap-hero");
+  if (!header) throw new Error("header missing");
+  const gap = hero.getBoundingClientRect().top - header.getBoundingClientRect().bottom;
+  await expect(Math.round(gap)).toBe(32);
+};
+
+export const PageBodyHeaderGap: Story = { render: () => <HeaderGapSample />, play: headerGapPlay };
+export const PageBodyHeaderGapDark: Story = {
+  render: () => <HeaderGapSample />,
+  globals: { theme: "dark" },
+  play: headerGapPlay,
+};
 
 /** P13: the one page wrapper. Resize to 375, md and lg to see the gutters change. */
 export const PageBodyLayout: Story = { render: () => <PageBodySample />, play: pageBodyPlay };

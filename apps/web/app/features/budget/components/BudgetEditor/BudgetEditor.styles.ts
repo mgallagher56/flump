@@ -47,18 +47,28 @@ export const editorSection = sva({
   },
 });
 
-/** An entry row: name, amount, frequency, essential switch and remove. Wraps on narrow screens. */
+/**
+ * An entry row in two lines on a phone: name and amount, then how often, the essential switch and
+ * delete. One line from md: name, amount, how often, essential, delete.
+ */
 export const entryRow = cva({
   base: {
     display: "grid",
     gridTemplateColumns: {
-      base: "minmax(0, 1fr) auto",
+      base: "auto auto minmax(0, 1fr) auto",
       md: "minmax(0, 1fr) 140px 120px auto auto",
     },
-    gap: "3",
+    columnGap: { base: "2", md: "3" },
+    rowGap: "2",
     alignItems: "center",
     py: "3",
     fontVariantNumeric: "tabular-nums",
+    // The name: across the first line on a phone, beside the amount.
+    "& > :first-child": {
+      gridColumn: { base: "1 / 4", md: "auto" },
+      gridRow: { base: "1", md: "auto" },
+      minWidth: 0,
+    },
     "&:not(:last-child)": {
       borderBottomWidth: "1px",
       borderBottomStyle: "solid",
@@ -67,24 +77,34 @@ export const entryRow = cva({
   },
 });
 
-/** The amount, frequency and essential controls; their own line on narrow screens. */
+/** The amount, frequency and essential controls take their own grid cells. */
 export const rowControls = cva({
-  base: {
-    display: { base: "flex", md: "contents" },
-    flexWrap: "wrap",
-    alignItems: "center",
-    gap: "3",
-    gridColumn: { base: "1 / -1", md: "auto" },
-    gridRow: { base: 2, md: "auto" },
-  },
+  base: { display: "contents" },
 });
 
 export const amountField = cva({
-  base: { width: { base: "140px", md: "100%" }, fontVariantNumeric: "tabular-nums" },
+  base: {
+    gridColumn: { base: "4", md: "auto" },
+    gridRow: { base: "1", md: "auto" },
+    width: { base: "104px", md: "100%" },
+    fontVariantNumeric: "tabular-nums",
+  },
 });
 
 export const frequencyField = cva({
-  base: { width: { base: "120px", md: "100%" } },
+  base: { gridColumn: { base: "1", md: "auto" }, gridRow: { base: "2", md: "auto" } },
+});
+
+export const essentialField = cva({
+  base: { gridColumn: { base: "2", md: "auto" }, gridRow: { base: "2", md: "auto" } },
+});
+
+export const removeCell = cva({
+  base: {
+    gridColumn: { base: "4", md: "auto" },
+    gridRow: { base: "2", md: "auto" },
+    justifySelf: "end",
+  },
 });
 
 /** The add row closing each section: name, amount and the Add button. */
