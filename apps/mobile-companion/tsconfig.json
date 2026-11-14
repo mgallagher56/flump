@@ -3,7 +3,8 @@
   "compilerOptions": {
     "strict": true,
     "paths": {
-      "@flump/finance-engine": ["../../packages/finance-engine/src/index.ts"]
+      "@flump/finance-engine": ["../../packages/finance-engine/src/index.ts"],
+      "@flump/tokens": ["../../packages/tokens/src/index.ts"]
     }
   }
 }
