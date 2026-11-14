@@ -133,7 +133,7 @@ export const TaxRecordDialog: FC<TaxRecordDialogProps> = ({
       onOpenChange={onOpenChange}
       size="md"
       title={mode === "edit" ? "Edit record" : "Add a record"}
-      description="Income or a cost for one of your income sources. Regular items repeat until their end date."
+      description="Income or a cost for one of your income sources. Regular records repeat until their end date."
       id="tax-record-dialog"
     >
       <form className={form()} noValidate onSubmit={submit}>
@@ -253,7 +253,7 @@ export const TaxRecordDialog: FC<TaxRecordDialogProps> = ({
             )}
           </FormField>
           {draft.frequency !== "one-off" ? (
-            <FormField label="End date" hint="Optional. Leave empty if it carries on.">
+            <FormField label="End date (optional)" hint="Leave empty if it carries on.">
               {(field) => (
                 <TextInput
                   {...controlProps(field)}
@@ -266,7 +266,7 @@ export const TaxRecordDialog: FC<TaxRecordDialogProps> = ({
           ) : null}
         </div>
 
-        <FormField label="Notes">
+        <FormField label="Notes (optional)">
           {(field) => (
             <TextInput
               {...controlProps(field)}
@@ -279,9 +279,9 @@ export const TaxRecordDialog: FC<TaxRecordDialogProps> = ({
 
         <div className={receiptBox()}>
           <span className={receiptLabel()} id="tax-receipt-label">
-            Receipt
+            Receipt (optional)
           </span>
-          <p className={receiptHint()}>Optional. An image or PDF up to 5 MB.</p>
+          <p className={receiptHint()}>An image or PDF up to 5 MB.</p>
           {draft.receiptFilename ? (
             <div className={receiptChosen()}>
               <span className={receiptName()}>
@@ -289,7 +289,7 @@ export const TaxRecordDialog: FC<TaxRecordDialogProps> = ({
                 <span>{draft.receiptFilename}</span>
               </span>
               <Button size="sm" type="button" variant="ghost" onClick={clearReceipt}>
-                Remove
+                Remove receipt
               </Button>
             </div>
           ) : (

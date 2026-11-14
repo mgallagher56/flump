@@ -11,7 +11,6 @@ import {
   Icon,
   Illustration,
   Money,
-  StatusBadge,
   Table,
   TBody,
   Td,
@@ -36,13 +35,6 @@ import {
 } from "./TaxRecordsTable.styles";
 
 export const TAX_RECORDS_PAGE_SIZE = 10;
-
-const SOURCE_BADGE: Record<TaxSource, "info" | "warning" | "positive" | "neutral"> = {
-  paye: "info",
-  rental: "warning",
-  "self-employed": "positive",
-  savings: "neutral",
-};
 
 const dateFormat = new Intl.DateTimeFormat("en-GB", {
   day: "numeric",
@@ -111,11 +103,11 @@ export const TaxRecordsTable: FC<TaxRecordsTableProps> = ({
       <EmptyState
         headingLevel="h3"
         illustration={<Illustration scene="empty-accounts" size="sm" />}
-        title="No records yet"
+        title="No records added"
         description="Add income or a cost and it will appear here, with every tax year it counts towards."
         action={
           <Button type="button" onClick={onAdd}>
-            Add a record
+            Add record
           </Button>
         }
       />
@@ -212,11 +204,7 @@ export const TaxRecordsTable: FC<TaxRecordsTableProps> = ({
                       {record.endDate ? `, until ${formatDate(record.endDate)}` : ""}
                     </span>
                   </Td>
-                  <Td>
-                    <StatusBadge size="sm" variant={SOURCE_BADGE[record.source]}>
-                      {SOURCE_LABEL[record.source]}
-                    </StatusBadge>
-                  </Td>
+                  <Td className={cellMuted()}>{SOURCE_LABEL[record.source]}</Td>
                   <Td className={cellMuted()}>{formatDate(record.date)}</Td>
                   <Td className={cellMuted()}>{FREQUENCY_LABEL[record.frequency]}</Td>
                   <Td numeric>
@@ -224,7 +212,6 @@ export const TaxRecordsTable: FC<TaxRecordsTableProps> = ({
                       fractionDigits={2}
                       size="sm"
                       signDisplay="always"
-                      tone={isIncome ? "positive" : "default"}
                       value={isIncome ? amount : -amount}
                     />
                   </Td>
@@ -243,8 +230,8 @@ export const TaxRecordsTable: FC<TaxRecordsTableProps> = ({
                       ) : null}
                       <button
                         aria-label={`Delete ${record.name}`}
-                        className={iconButton({ tone: "danger" })}
-                        title="Delete"
+                        className={iconButton()}
+                        title={`Delete ${record.name}`}
                         type="button"
                         onClick={() => onDelete(record.id)}
                       >
@@ -272,7 +259,7 @@ export const TaxRecordsTable: FC<TaxRecordsTableProps> = ({
               variant="outline"
               onClick={() => setPage(current - 1)}
             >
-              Previous
+              Previous page
             </Button>
             <Button
               disabled={current >= pageCount - 1}
@@ -281,7 +268,7 @@ export const TaxRecordsTable: FC<TaxRecordsTableProps> = ({
               variant="outline"
               onClick={() => setPage(current + 1)}
             >
-              Next
+              Next page
             </Button>
           </span>
         </nav>

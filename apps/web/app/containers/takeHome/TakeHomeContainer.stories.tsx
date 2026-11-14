@@ -3,7 +3,15 @@ import { expect, within } from "storybook/test";
 import TakeHomeContainer from "./TakeHomeContainer";
 
 const loaderData = {
-  userProfile: { annualSalary: 62000, hasResetFinancialData: true },
+  userProfile: {
+    annualSalary: 62000,
+    employmentType: "employed",
+    taxRegion: "ENGLAND",
+    pensionPercent: 5,
+    isSalarySacrifice: false,
+    studentLoanPlans: [],
+    hasResetFinancialData: true,
+  },
 };
 
 const meta: Meta<typeof TakeHomeContainer> = {
@@ -19,8 +27,14 @@ type Story = StoryObj<typeof TakeHomeContainer>;
 export const Overview: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    await expect(canvas.getAllByRole("heading", { name: "Your take-home pay" })[0]).toBeDefined();
-    await expect(canvas.getAllByText("Where you stand")[0]).toBeDefined();
-    await expect(canvas.getAllByText("Where your salary goes")[0]).toBeDefined();
+    await expect(canvas.getAllByRole("heading", { name: "Take-home pay" })[0]).toBeDefined();
+    await expect(canvas.getAllByText("Where your pay goes")[0]).toBeDefined();
+    await expect(canvas.getAllByRole("tab", { name: "A pay rise" })[0]).toBeDefined();
+  },
+};
+
+export const NoSalary: Story = {
+  parameters: {
+    router: { loaderData: { userProfile: { ...loaderData.userProfile, annualSalary: null } } },
   },
 };

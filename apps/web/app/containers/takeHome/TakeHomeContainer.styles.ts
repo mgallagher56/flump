@@ -1,11 +1,6 @@
 import { cva } from "@repo/ui/styled-system/css";
 
+/** PageBody supplies width, gutters and the section gap; this only keeps space under the zone. */
 export const pageRoot = cva({
-  base: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "24px",
-    paddingBottom: "48px",
-    minWidth: 0,
-  },
+  base: { paddingBottom: "48px", minWidth: 0 },
 });

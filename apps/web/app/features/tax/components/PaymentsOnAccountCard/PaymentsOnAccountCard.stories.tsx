@@ -7,7 +7,7 @@ const meta: Meta<typeof PaymentsOnAccountCard> = {
   title: "Tax/PaymentsOnAccountCard",
   component: PaymentsOnAccountCard,
   tags: ["autodocs"],
-  args: { annualSelfAssessmentTax: 4800 },
+  args: { annualSelfAssessmentTax: 4800, taxYear: "2026/27" },
 };
 
 export default meta;
@@ -16,8 +16,8 @@ type Story = StoryObj<typeof PaymentsOnAccountCard>;
 export const WithPaymentsOnAccount: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    await expect(canvas.getByText("31 January deadline")).toBeTruthy();
-    await expect(canvas.getByText("31 July deadline")).toBeTruthy();
+    await expect(canvas.getByText("Due 31 January 2028")).toBeTruthy();
+    await expect(canvas.getByText("Due 31 July 2028")).toBeTruthy();
   },
 };
 
@@ -25,6 +25,6 @@ export const UnderThreshold: Story = {
   args: { annualSelfAssessmentTax: 800 },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    await expect(canvas.getByText("Single annual balancing payment")).toBeTruthy();
+    await expect(canvas.getByText("One payment for this year's bill")).toBeTruthy();
   },
 };

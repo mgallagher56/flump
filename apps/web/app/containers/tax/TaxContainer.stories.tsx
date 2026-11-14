@@ -151,10 +151,32 @@ const records: TaxRecord[] = [
 
 const loaderData = {
   records,
-  userProfile: { annualSalary: 52000, propertyOwnershipShare: 50, country: "GB" },
+  userProfile: {
+    annualSalary: 52000,
+    propertyOwnershipShare: 50,
+    country: "GB",
+    enabledPages: ["accounts", "budget", "tax"],
+    dashboardWidgets: ["accounts", "budget", "tax"],
+    dashboardWidgetOrder: ["accounts", "budget", "tax"],
+  },
   accounts: [],
 };
 
+/** A PAYE-only person who has not turned the section on. */
+const optedOutLoaderData = {
+  records: [],
+  userProfile: {
+    annualSalary: 52000,
+    propertyOwnershipShare: 100,
+    country: "GB",
+    enabledPages: ["accounts", "budget", "savings", "pension"],
+    dashboardWidgets: ["accounts", "budget"],
+    dashboardWidgetOrder: ["accounts", "budget"],
+  },
+  accounts: [],
+};
+
+/** The Storybook preview renders every story side by side in light and dark. */
 const meta = {
   title: "Screens/Tax",
   component: TaxContainer,
@@ -164,24 +186,40 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const Populated: Story = {
+/** Opted in with records: hero, two KPIs, the one notice and the sources list. */
+export const OptedInWithData: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    await expect((await canvas.findAllByText(/Estimated Self Assessment/i)).length).toBeGreaterThan(
-      0,
-    );
+    await expect((await canvas.findAllByText(/^Income for /)).length).toBeGreaterThan(0);
+    await expect((await canvas.findAllByText("Estimated bill")).length).toBeGreaterThan(0);
+    await expect(
+      (await canvas.findAllByRole("button", { name: "Add income" })).length,
+    ).toBeGreaterThan(0);
   },
 };
 
-export const RecordsTab: Story = {
+export const RecordsDrawer: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    const [tab] = await canvas.findAllByRole("tab", { name: /All records/i });
-    await userEvent.click(tab);
+    const [drawer] = await canvas.findAllByRole("button", { name: /^All records/ });
+    await userEvent.click(drawer);
     await expect((await canvas.findAllByRole("table")).length).toBeGreaterThan(0);
   },
 };
 
-export const Empty: Story = {
-  parameters: { router: { loaderData: { records: [], userProfile: null, accounts: [] } } },
+/** Opted in, nothing added yet: one prompt to add income, no figures. */
+export const OptedInEmpty: Story = {
+  parameters: { router: { loaderData: { ...loaderData, records: [] } } },
+};
+
+/** Not opted in: one empty state with one button. */
+export const OptedOut: Story = {
+  parameters: { router: { loaderData: optedOutLoaderData } },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(
+      (await canvas.findAllByRole("button", { name: "Turn on Self Assessment" })).length,
+    ).toBeGreaterThan(0);
+    await expect(canvasElement.textContent).not.toContain("£");
+  },
 };

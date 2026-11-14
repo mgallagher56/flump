@@ -1,222 +1,164 @@
+import { Card, Money, Table, TBody, Td, THead, Th, Tr } from "@repo/ui";
+import type { FC, ReactNode } from "react";
 import {
-  Card,
-  ChartFigure,
-  chartColor,
-  DONUT_GEOMETRY,
-  Money,
-  Num,
-  Table,
-  TBody,
-  Td,
-  THead,
-  Th,
-} from "@repo/ui";
-import { type FC, useMemo } from "react";
-import { Cell, Pie, PieChart, ResponsiveContainer } from "recharts";
-import { useFormatCurrency } from "~/hooks/useFormatCurrency";
-import type { TakeHomeResult } from "../../calculateUKTax";
-import {
+  bar,
+  barKey,
   cardBody,
+  cardHeader,
   cardSubtitle,
   cardTitle,
-  chartRow,
-  compactTable,
-  donutCentre,
-  donutCentreLabel,
-  donutFrame,
-  legend,
-  legendRow,
-  legendShare,
-  totalCell,
+  partCell,
+  segment,
+  swatch,
 } from "./TakeHomeBreakdown.styles";
 
+export type PayPartKey = "incomeTax" | "nationalInsurance" | "pension" | "studentLoan" | "takeHome";
+
+/** Row names. Each pay part is named once on the page, here. */
+export const PAY_PART_LABELS: Record<PayPartKey, string> = {
+  incomeTax: "Income tax",
+  nationalInsurance: "National Insurance",
+  pension: "Pension",
+  studentLoan: "Student loan",
+  takeHome: "Your take-home",
+};
+
 export interface TakeHomeBreakdownProps {
-  grossSalary: number;
-  results: TakeHomeResult;
-  isSalarySacrifice: boolean;
+  /** Saved salary before tax, a year. Sets the bar's proportions only; it is not printed. */
+  salary: number;
+  /** Yearly deductions from the saved figures. */
+  incomeTax: number;
+  nationalInsurance: number;
+  pension: number;
+  studentLoan: number;
+  /** Optional quiet disclosure under the table ("Show details"). */
+  details?: ReactNode;
 }
 
-const Swatch: FC<{ fill: string }> = ({ fill }) => (
-  <svg aria-hidden="true" focusable="false" height="10" viewBox="0 0 10 10" width="10">
-    <circle cx="5" cy="5" fill={fill} r="5" />
-  </svg>
-);
+interface Part {
+  key: PayPartKey;
+  annual: number;
+  monthly: number;
+}
 
-/** Donut, legend and the annual and monthly deductions table for one salary. */
+/**
+ * "Where your pay goes": a thin stacked bar over one table of what comes off the saved pay, a
+ * month, in whole pounds. The swatches key the bar; the take-home segment is keyed by name only,
+ * because its figure is the page's estimate card (each pay part appears once).
+ */
 export const TakeHomeBreakdown: FC<TakeHomeBreakdownProps> = ({
-  grossSalary,
-  results,
-  isSalarySacrifice,
+  salary,
+  incomeTax,
+  nationalInsurance,
+  pension,
+  studentLoan,
+  details,
 }) => {
-  const { formatCurrency } = useFormatCurrency();
-
-  const slices = useMemo(() => {
-    const data = [
-      { name: "Take-home pay", value: Math.round(results.netPay), fill: chartColor("wealth") },
-      { name: "Income tax", value: Math.round(results.incomeTax), fill: chartColor("warning") },
-      { name: "National Insurance", value: Math.round(results.ni), fill: chartColor("debt") },
-    ];
-    if (results.pension > 0) {
-      data.push({
-        name: "Pension contribution",
-        value: Math.round(results.pension),
-        fill: chartColor("accentPurple"),
-      });
-    }
-    if (results.studentLoan > 0) {
-      data.push({
-        name: "Student loan repayment",
-        value: Math.round(results.studentLoan),
-        fill: chartColor("primary"),
-      });
-    }
-    return data.filter((d) => d.value > 0);
-  }, [results]);
-
-  const total = slices.reduce((sum, d) => sum + d.value, 0);
-  const summary = `Where your ${formatCurrency(grossSalary)} gross salary goes: ${slices
-    .map((d) => `${d.name} ${formatCurrency(d.value)}`)
-    .join(", ")}.`;
+  const deductions: Part[] = [
+    { key: "incomeTax", annual: incomeTax, monthly: Math.round(incomeTax / 12) },
+    {
+      key: "nationalInsurance",
+      annual: nationalInsurance,
+      monthly: Math.round(nationalInsurance / 12),
+    },
+    { key: "pension", annual: pension, monthly: Math.round(pension / 12) },
+    { key: "studentLoan", annual: studentLoan, monthly: Math.round(studentLoan / 12) },
+  ];
+  // A part that rounds to nothing a month is left out rather than shown as £0.
+  const shown = deductions.filter((p) => p.monthly > 0);
+  const takeHomeAnnual = Math.max(
+    0,
+    salary - incomeTax - nationalInsurance - pension - studentLoan,
+  );
+  const parts: Part[] = [...shown, { key: "takeHome", annual: takeHomeAnnual, monthly: 0 }];
+  const total = parts.reduce((sum, p) => sum + p.annual, 0);
+  // Segment x and width in a 0..100 box, with a hairline gap between neighbours.
+  const GAP = 0.4;
+  let cursor = 0;
+  const segments = parts.map((p, i) => {
+    const share = total > 0 ? (p.annual / total) * 100 : 0;
+    const x = cursor;
+    cursor += share;
+    const width = Math.max(0, share - (i < parts.length - 1 ? GAP : 0));
+    return { key: p.key, x, width };
+  });
 
   return (
-    <Card padding="lg">
+    <Card
+      aria-labelledby="where-your-pay-goes"
+      as="section"
+      data-testid="take-home-breakdown"
+      id="take-home-breakdown"
+      padding="lg"
+    >
       <div className={cardBody()}>
-        <div>
-          <h2 className={cardTitle()}>Where your salary goes</h2>
-          <p className={cardSubtitle()}>Your gross pay, split by what it is spent on</p>
+        <div className={cardHeader()}>
+          <h2 className={cardTitle()} id="where-your-pay-goes">
+            Where your pay goes
+          </h2>
+          <p className={cardSubtitle()}>
+            Your pay before tax, split into tax, National Insurance, pension and take-home pay
+          </p>
         </div>
 
-        <div className={chartRow()}>
-          <ChartFigure hideTitle summary={summary} title="Salary allocation">
-            <div className={donutFrame()}>
-              <ResponsiveContainer height="100%" width="100%">
-                <PieChart>
-                  <Pie
-                    {...DONUT_GEOMETRY}
-                    cx="50%"
-                    cy="50%"
-                    data={slices}
-                    dataKey="value"
-                    nameKey="name"
-                    stroke="none"
-                  >
-                    {slices.map((s) => (
-                      <Cell key={s.name} fill={s.fill} />
-                    ))}
-                  </Pie>
-                </PieChart>
-              </ResponsiveContainer>
-              <div className={donutCentre()}>
-                <span className={donutCentreLabel()}>Gross pay</span>
-                <Money size="lg" value={grossSalary} />
-              </div>
-            </div>
-          </ChartFigure>
-
-          <ul className={legend()}>
-            {slices.map((s) => (
-              <li key={s.name} className={legendRow()}>
-                <Swatch fill={s.fill} />
-                <span>{s.name}</span>
-                <Money size="sm" value={s.value} />
-                <span className={legendShare()}>
-                  <Num
-                    fractionDigits={0}
-                    kind="percent"
-                    size="sm"
-                    tone="muted"
-                    value={total > 0 ? (s.value / total) * 100 : 0}
+        {/* Decorative: the table below carries every value. */}
+        <div aria-hidden="true" className={bar()} data-testid="pay-bar" id="pay-bar">
+          {/* A 100-unit-wide SVG stretched to the card: each segment's width is its share. */}
+          <svg
+            aria-hidden="true"
+            focusable="false"
+            height="100%"
+            preserveAspectRatio="none"
+            viewBox="0 0 100 1"
+            width="100%"
+          >
+            {total > 0
+              ? segments.map((s) => (
+                  <rect
+                    key={s.key}
+                    className={segment({ part: s.key })}
+                    height="1"
+                    width={s.width}
+                    x={s.x}
+                    y="0"
                   />
-                </span>
-              </li>
-            ))}
-          </ul>
+                ))
+              : null}
+          </svg>
         </div>
+        {/* The take-home share is keyed here, not printed again: its figure is the estimate card. */}
+        <p className={barKey()}>
+          <span aria-hidden="true" className={swatch({ part: "takeHome" })} />
+          {PAY_PART_LABELS.takeHome} (the estimate above)
+        </p>
 
-        <Table caption="Salary deductions breakdown" className={compactTable()}>
+        <Table caption="What comes off your pay each month">
           <THead>
-            <tr>
-              <Th>Item</Th>
-              <Th numeric>A year</Th>
-              <Th numeric>A month</Th>
-            </tr>
+            <Tr>
+              <Th scope="col">Part</Th>
+              <Th numeric scope="col">
+                A month
+              </Th>
+            </Tr>
           </THead>
           <TBody>
-            <tr>
-              <Td>Gross income</Td>
-              <Td numeric>
-                <Money size="sm" value={grossSalary} />
-              </Td>
-              <Td numeric>
-                <Money size="sm" value={grossSalary / 12} />
-              </Td>
-            </tr>
-            {results.pension > 0 && (
-              <tr>
-                <Td>Pension {isSalarySacrifice ? "(salary sacrifice)" : "(relief at source)"}</Td>
-                <Td numeric>
-                  <Money size="sm" value={-results.pension} />
+            {shown.map((p) => (
+              <Tr key={p.key}>
+                <Th scope="row">
+                  <span className={partCell()}>
+                    <span aria-hidden="true" className={swatch({ part: p.key })} />
+                    {PAY_PART_LABELS[p.key]}
+                  </span>
+                </Th>
+                <Td label="A month" numeric>
+                  <Money size="sm" value={p.monthly} />
                 </Td>
-                <Td numeric>
-                  <Money size="sm" value={-results.pension / 12} />
-                </Td>
-              </tr>
-            )}
-            {results.employerNiSaving > 0 && (
-              <tr>
-                <Td>Employer NI paid into your pension</Td>
-                <Td numeric>
-                  <Money signDisplay="always" size="sm" value={results.employerNiSaving} />
-                </Td>
-                <Td numeric>
-                  <Money signDisplay="always" size="sm" value={results.employerNiSaving / 12} />
-                </Td>
-              </tr>
-            )}
-            {results.incomeTax > 0 && (
-              <tr>
-                <Td>Income tax</Td>
-                <Td numeric>
-                  <Money size="sm" value={-results.incomeTax} />
-                </Td>
-                <Td numeric>
-                  <Money size="sm" value={-results.incomeTax / 12} />
-                </Td>
-              </tr>
-            )}
-            {results.ni > 0 && (
-              <tr>
-                <Td>National Insurance</Td>
-                <Td numeric>
-                  <Money size="sm" value={-results.ni} />
-                </Td>
-                <Td numeric>
-                  <Money size="sm" value={-results.ni / 12} />
-                </Td>
-              </tr>
-            )}
-            {results.studentLoan > 0 && (
-              <tr>
-                <Td>Student loan</Td>
-                <Td numeric>
-                  <Money size="sm" value={-results.studentLoan} />
-                </Td>
-                <Td numeric>
-                  <Money size="sm" value={-results.studentLoan / 12} />
-                </Td>
-              </tr>
-            )}
-            <tr>
-              <Td className={totalCell()}>Estimated take-home</Td>
-              <Td className={totalCell()} numeric>
-                <Money size="sm" value={results.netPay} />
-              </Td>
-              <Td className={totalCell()} numeric>
-                <Money size="sm" value={results.netPay / 12} />
-              </Td>
-            </tr>
+              </Tr>
+            ))}
           </TBody>
         </Table>
+
+        {details}
       </div>
     </Card>
   );

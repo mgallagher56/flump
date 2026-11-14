@@ -1,4 +1,4 @@
-import { PageHeader } from "@repo/ui";
+import { PageBody, PageHeader } from "@repo/ui";
 import { type FC, useEffect } from "react";
 import { useLoaderData, useNavigate } from "react-router";
 import { TakeHomeCalculator } from "~/features/take-home/components/TakeHomeCalculator";
@@ -6,7 +6,7 @@ import { useUserProfile } from "~/hooks/useUserProfile";
 import { useFinancialBaseline } from "~/state/baseline.store";
 import { pageRoot } from "./TakeHomeContainer.styles";
 
-/** Take-home pay, marginal rates and thresholds, and pay-rise effect. Moved out of Savings (IA review T-IA-3). */
+/** Take-home pay from saved figures, and what a pay rise would change. */
 export const TakeHomeContainer: FC = () => {
   const loaderData = useLoaderData<any>();
   const navigate = useNavigate();
@@ -22,10 +22,10 @@ export const TakeHomeContainer: FC = () => {
     baseline.annualGrossSalary > 0 ? baseline.annualGrossSalary : Number(profile.annualSalary || 0);
 
   return (
-    <div className={pageRoot()}>
+    <PageBody className={pageRoot()} data-testid="take-home-page" id="take-home-page">
       <PageHeader
-        subtitle="What you keep from your pay, the tax rates and thresholds that apply, and what a pay rise or salary sacrifice would change."
-        title="Your take-home pay"
+        description="What you take home each month, and what a pay rise would change."
+        title="Take-home pay"
       />
       <TakeHomeCalculator
         initialSalary={effectiveSalary}
@@ -34,7 +34,7 @@ export const TakeHomeContainer: FC = () => {
           navigate("/app/savings#forecast", { state: { payRise: Math.round(monthlyIncrease) } })
         }
       />
-    </div>
+    </PageBody>
   );
 };
 

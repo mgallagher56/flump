@@ -1,66 +1,36 @@
-import { Button, Icon } from "@repo/ui";
-import { Copy, Trash2 } from "lucide-react";
-import type { FC } from "react";
-import { actions, bar, chip, iconButton, label, yearGroup } from "./TaxYearBar.styles";
+import { Select } from "@repo/ui";
+import { type FC, useId } from "react";
+import { bar, label, select } from "./TaxYearBar.styles";
 
 export interface TaxYearBarProps {
   years: string[];
   selectedYear: string;
   onSelectYear: (year: string) => void;
-  previousYear: string;
-  onCopy: () => void;
-  /** Shown only when the selected year has records. */
-  onDeleteYear?: () => void;
 }
 
-/** Tax year picker with the year-level actions (copy last year in, delete this year). */
-export const TaxYearBar: FC<TaxYearBarProps> = ({
-  years,
-  selectedYear,
-  onSelectYear,
-  previousYear,
-  onCopy,
-  onDeleteYear,
-}) => (
-  <div className={bar()}>
-    <fieldset className={yearGroup()} aria-label="Tax year">
-      <span aria-hidden="true" className={label()}>
+/** The page's tax year control: one labelled select beside the h1. */
+export const TaxYearBar: FC<TaxYearBarProps> = ({ years, selectedYear, onSelectYear }) => {
+  const id = useId();
+  return (
+    <div className={bar()}>
+      <label className={label()} htmlFor={id}>
         Tax year
-      </span>
-      {years.map((year) => {
-        const selected = year === selectedYear;
-        return (
-          <button
-            key={year}
-            aria-pressed={selected}
-            className={chip({ selected })}
-            type="button"
-            onClick={() => onSelectYear(year)}
-          >
+      </label>
+      <Select
+        className={select()}
+        id={id}
+        size="sm"
+        value={selectedYear}
+        onChange={(e) => onSelectYear(e.target.value)}
+      >
+        {years.map((year) => (
+          <option key={year} value={year}>
             {year}
-          </button>
-        );
-      })}
-    </fieldset>
-    <div className={actions()}>
-      <Button className={iconButton()} size="sm" type="button" variant="outline" onClick={onCopy}>
-        <Icon icon={Copy} size="sm" />
-        Copy from {previousYear}
-      </Button>
-      {onDeleteYear ? (
-        <Button
-          className={iconButton()}
-          size="sm"
-          type="button"
-          variant="ghost"
-          onClick={onDeleteYear}
-        >
-          <Icon icon={Trash2} size="sm" />
-          Delete {selectedYear}
-        </Button>
-      ) : null}
+          </option>
+        ))}
+      </Select>
     </div>
-  </div>
-);
+  );
+};
 
 export default TaxYearBar;

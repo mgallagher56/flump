@@ -12,27 +12,34 @@ export const pageRoot = cva({
   },
 });
 
-export const headerActions = cva({
-  base: { display: "flex", alignItems: "center", flexWrap: "wrap", gap: "3" },
-});
-
 export const numeric = cva({
   base: { fontVariantNumeric: "tabular-nums" },
 });
 
-export const iconButton = cva({
-  base: { gap: "2" },
+export const drawers = cva({
+  base: { display: "flex", flexDirection: "column", gap: "2", minWidth: 0 },
 });
 
-export const zoneLink = cva({
+export const quietAction = cva({
+  base: { marginTop: "3", fontVariantNumeric: "tabular-nums" },
+});
+
+export const errorText = cva({
+  base: { textStyle: "body.sm", color: "text.primary", margin: 0 },
+});
+
+export const textLink = cva({
   base: {
-    textStyle: "label.md",
-    color: "primary",
-    textDecoration: "underline",
-    _focusVisible: {
-      outline: "2px solid",
-      outlineColor: "border.focusRing",
-      outlineOffset: "2px",
+    margin: 0,
+    textStyle: "body.sm",
+    "& a": {
+      color: "primary",
+      textDecoration: "underline",
+      _focusVisible: {
+        outline: "2px solid",
+        outlineColor: "border.focusRing",
+        outlineOffset: "2px",
+      },
     },
   },
 });

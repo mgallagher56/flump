@@ -1,79 +1,76 @@
-import type { TaxCalculationResult } from "@flump/finance-engine";
-import { KpiCard, KpiStrip, Money } from "@repo/ui";
-import type { FC } from "react";
-import TaxEstimateNote from "~/components/tax/TaxEstimateNote";
-import { NotSet } from "~/features/feedback/components/NotSet";
-import { useFormatCurrency } from "~/hooks/useFormatCurrency";
-import { heroSubtext, kpiSubtext, root, sectionHeading } from "./TaxHeadline.styles";
+import {
+  getRecordAnnualTotalForTaxYear,
+  isRecordActiveInTaxYear,
+  type TaxCalculationResult,
+  type TaxRecord,
+} from "@flump/finance-engine";
+import { HeroFigure, KpiCard, KpiStrip } from "@repo/ui";
+import type { FC, ReactNode } from "react";
+import { date, root } from "./TaxHeadline.styles";
 
 export interface TaxHeadlineProps {
   taxYear: string;
-  result: TaxCalculationResult;
-  /** Property ownership share, 0 to 100. */
-  ownershipSharePct: number;
+  records: TaxRecord[];
+  result: TaxCalculationResult | undefined;
+  /** The page's "Add income" control, offered when the year has no income outside PAYE. */
+  emptyAction?: ReactNode;
 }
 
-const percent = new Intl.NumberFormat("en-GB", { maximumFractionDigits: 2 });
+const dateFormat = new Intl.DateTimeFormat("en-GB", {
+  day: "numeric",
+  month: "long",
+  year: "numeric",
+});
 
+/** The bill for tax year "2026/27" is due on 31 January after it ends: 31 January 2028. */
+export const billDueDate = (taxYear: string): Date => {
+  const start = Number.parseInt(taxYear.split("/")[0] ?? "", 10);
+  return new Date(Date.UTC(start + 2, 0, 31));
+};
+
+/** Income outside PAYE that the user added for the year, before costs. */
+export const nonPayeIncome = (records: TaxRecord[], taxYear: string): number =>
+  records
+    .filter(
+      (r) => r.source !== "paye" && r.type === "income" && isRecordActiveInTaxYear(r, taxYear),
+    )
+    .reduce((sum, r) => sum + getRecordAnnualTotalForTaxYear(r, taxYear), 0);
 /**
- * The page's one hero (estimated Self Assessment bill) and the "Where you stand" strip.
- * Figures come straight from `calculateUKTax`; nothing is recomputed here.
+ * The first view of the page. The hero holds a saved fact (the income recorded for the year),
+ * never an estimate (copy audit ruling 7, coordinator D2). The estimated bill is the first KPI,
+ * marked "Estimate", then the next payment date. With nothing added the
+ * hero asks for income and no strip is drawn, so no £0 appears.
  */
-export const TaxHeadline: FC<TaxHeadlineProps> = ({ taxYear, result, ownershipSharePct }) => {
-  const { formatCurrency } = useFormatCurrency();
-  const salary = result.effectivePayeSalary;
+export const TaxHeadline: FC<TaxHeadlineProps> = ({ taxYear, records, result, emptyAction }) => {
+  const income = nonPayeIncome(records, taxYear);
+  const hasIncome = income > 0 && result !== undefined;
+  const bill = Math.max(0, Math.round(result?.netAdditionalTaxToPay ?? 0));
 
   return (
-    <section aria-label={`Tax summary for ${taxYear}`} className={root()}>
-      <KpiCard
-        label={`Estimated Self Assessment due for ${taxYear}`}
-        tone="hero"
-        value={<Money size="kpi" tone="onContrast" value={result.netAdditionalTaxToPay} />}
-        subtext={
-          <span className={heroSubtext()}>
-            <span>Tax and Class 4 National Insurance on top of what PAYE already takes.</span>
-            <TaxEstimateNote taxYear={taxYear} tone="onContrast" />
-          </span>
-        }
+    <section aria-label="Summary" className={root()}>
+      <HeroFigure
+        emptyAction={emptyAction}
+        emptyPrompt="Add income outside PAYE, such as self-employment or rent, to see an estimated tax bill."
+        label={`Income for ${taxYear}`}
+        subline={hasIncome ? "Income outside PAYE that you recorded, before costs" : undefined}
+        value={hasIncome ? income : undefined}
+        valueFormat={{ fractionDigits: 0 }}
       />
-
-      <h2 className={sectionHeading()}>Where you stand</h2>
-      <KpiStrip columns={3}>
-        <KpiCard
-          label="Total income"
-          value={<Money size="lg" value={result.totalGrossIncome} />}
-          subtext={
-            <span className={kpiSubtext()}>
-              Salary{" "}
-              {salary && salary > 0 ? (
-                formatCurrency(salary)
-              ) : (
-                <NotSet href="/app/profile" subject="salary" />
-              )}{" "}
-              plus business, rental and savings income
-            </span>
-          }
-        />
-        <KpiCard
-          label="Your share of rental profit"
-          value={<Money size="lg" value={result.rentalProfitPostInterestShare} />}
-          subtext={
-            <span className={kpiSubtext()}>
-              {percent.format(ownershipSharePct)}% of{" "}
-              {formatCurrency(result.rentalProfitPostInterest)} after mortgage interest
-            </span>
-          }
-        />
-        <KpiCard
-          label="Self-employed profit"
-          value={<Money size="lg" value={result.seProfit} />}
-          subtext={
-            <span className={kpiSubtext()}>
-              Turnover {formatCurrency(result.seIncomeGross)} less allowable costs
-            </span>
-          }
-        />
-      </KpiStrip>
+      {hasIncome ? (
+        <KpiStrip columns={2}>
+          <KpiCard
+            label="Estimated bill"
+            subtext="Estimate"
+            value={bill}
+            valueFormat={{ fractionDigits: 0 }}
+          />
+          <KpiCard
+            label="Next payment date"
+            subtext="Deadline for this tax year's bill"
+            value={<span className={date()}>{dateFormat.format(billDueDate(taxYear))}</span>}
+          />
+        </KpiStrip>
+      ) : null}
     </section>
   );
 };

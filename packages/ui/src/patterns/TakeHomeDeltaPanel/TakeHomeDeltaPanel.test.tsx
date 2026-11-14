@@ -109,6 +109,13 @@ describe("TakeHomeDeltaPanel", () => {
     expect(screen.getByText(/These tax figures have not yet been checked/)).toBeDefined();
   });
 
+  it("drops the unverified sentence when the page's one notice already leads with it", () => {
+    renderPanel({ showNotice: false, isUnverifiedEstimate: true, unverifiedInPageNotice: true });
+    expect(screen.queryByText(/These tax figures have not yet been checked/)).toBeNull();
+    // The header badge still marks the figures as an unverified estimate.
+    expect(screen.getByText("Unverified estimate")).toBeDefined();
+  });
+
   it("renders the guidance notice by default and the fallback banner when rates are older", () => {
     renderPanel({ isFallback: true, calendarYear: "2027/28" });
     expect(screen.getByTestId("projection-notice")).toBeDefined();

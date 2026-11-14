@@ -22,7 +22,7 @@ interface Line {
 }
 
 const gbp = (value: number | undefined, negate = false) => (
-  <Money fractionDigits={2} size="sm" value={negate ? -(value ?? 0) : (value ?? 0)} />
+  <Money fractionDigits={0} size="sm" value={negate ? -(value ?? 0) : (value ?? 0)} />
 );
 const field =
   (key: Key, negate = false) =>
@@ -58,7 +58,7 @@ const GROUPS: Array<{ heading: string; lines: Line[] }> = [
     heading: "Tax",
     lines: [
       {
-        label: "PAYE salary",
+        label: "Salary through PAYE",
         value: (r) =>
           r?.effectivePayeSalary && r.effectivePayeSalary > 0 ? (
             gbp(r.effectivePayeSalary)
@@ -68,9 +68,12 @@ const GROUPS: Array<{ heading: string; lines: Line[] }> = [
       },
       { label: "Total income", value: field("totalGrossIncome") },
       { label: "Personal Allowance", value: field("personalAllowance") },
-      { label: "Section 24 finance cost credit", value: field("rentalPropertyTaxCredit", true) },
       {
-        label: "Self Assessment tax and NI due",
+        label: "Tax credit for mortgage interest (Section 24)",
+        value: field("rentalPropertyTaxCredit", true),
+      },
+      {
+        label: "Estimated tax bill",
         value: field("netAdditionalTaxToPay"),
         total: true,
       },

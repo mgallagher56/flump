@@ -418,7 +418,7 @@ describe("tax action, bulk-create-transactions chunking", () => {
     const res: any = await taxAction(bulkArgs(records, cap));
     expect(res.init.status).toBe(503);
     expect(res.data.success).toBe(false);
-    expect(res.data.error).toMatch(/partly completed: 500 of 600/);
+    expect(res.data.error).toMatch(/We copied 500 of 600 records/);
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 

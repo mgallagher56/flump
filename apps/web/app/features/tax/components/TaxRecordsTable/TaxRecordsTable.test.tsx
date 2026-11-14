@@ -42,18 +42,20 @@ describe("TaxRecordsTable", () => {
       TAX_RECORDS_PAGE_SIZE + 1,
     );
     expect(screen.getByText("Page 1 of 3")).toBeDefined();
-    expect((screen.getByRole("button", { name: "Previous" }) as HTMLButtonElement).disabled).toBe(
+    expect(
+      (screen.getByRole("button", { name: "Previous page" }) as HTMLButtonElement).disabled,
+    ).toBe(true);
+    fireEvent.click(screen.getByRole("button", { name: "Next page" }));
+    fireEvent.click(screen.getByRole("button", { name: "Next page" }));
+    expect(screen.getByText("Showing 21 to 23 of 23 records")).toBeDefined();
+    expect((screen.getByRole("button", { name: "Next page" }) as HTMLButtonElement).disabled).toBe(
       true,
     );
-    fireEvent.click(screen.getByRole("button", { name: "Next" }));
-    fireEvent.click(screen.getByRole("button", { name: "Next" }));
-    expect(screen.getByText("Showing 21 to 23 of 23 records")).toBeDefined();
-    expect((screen.getByRole("button", { name: "Next" }) as HTMLButtonElement).disabled).toBe(true);
   });
 
   it("goes back to page 1 when a filter changes", () => {
     setup(manyRecords(23));
-    fireEvent.click(screen.getByRole("button", { name: "Next" }));
+    fireEvent.click(screen.getByRole("button", { name: "Next page" }));
     fireEvent.change(screen.getByLabelText("Type"), { target: { value: "expense" } });
     expect(screen.getByText("Page 1 of 3")).toBeDefined();
   });
@@ -77,7 +79,7 @@ describe("TaxRecordsTable", () => {
 
   it("shows an empty state with an add action when there are no records", () => {
     const { onAdd } = setup([]);
-    fireEvent.click(screen.getByRole("button", { name: "Add a record" }));
+    fireEvent.click(screen.getByRole("button", { name: "Add record" }));
     expect(onAdd).toHaveBeenCalled();
   });
 });

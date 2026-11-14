@@ -170,7 +170,7 @@ export const action = async (args: ActionFunctionArgs) => {
           return data(
             {
               success: false as const,
-              error: `The copy was only partly completed: ${created} of ${records.length} records were created. Check your tax records before trying again.`,
+              error: `We copied ${created} of ${records.length} records. Check your records before you try again, so none are added twice.`,
             },
             { status: error.status ?? 502 },
           );
@@ -181,7 +181,13 @@ export const action = async (args: ActionFunctionArgs) => {
     return data({ success: true });
   } catch (error) {
     if (error instanceof SyntaxError) {
-      return data({ success: false, error: "We couldn't read those records." }, { status: 400 });
+      return data(
+        {
+          success: false,
+          error: "We could not read those records. Nothing was copied. Try again.",
+        },
+        { status: 400 },
+      );
     }
     return actionErrorResponse(error);
   }

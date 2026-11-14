@@ -64,11 +64,11 @@ describe("<CopyTaxYearModal />", () => {
   test("renders modal and candidate records", () => {
     const { getByText, getByDisplayValue } = customRender(<CopyTaxYearModal {...defaultProps} />);
 
-    expect(getByText("Copy figures and populate tax year")).toBeDefined();
-    expect(getByText("Source year")).toBeDefined();
-    expect(getByText("Target year")).toBeDefined();
+    expect(getByText("Copy records from another tax year")).toBeDefined();
+    expect(getByText("Copy from")).toBeDefined();
+    expect(getByText("Copy to")).toBeDefined();
     expect(getByDisplayValue("Property Flat A Rent")).toBeDefined();
-    expect(getByText(/Copy.*records/i)).toBeDefined();
+    expect(getByText("Copy records")).toBeDefined();
   });
 
   test("allows applying percentage adjustment and submitting copy", () => {
@@ -79,7 +79,7 @@ describe("<CopyTaxYearModal />", () => {
     fireEvent.click(plus5Btn);
 
     // Click Copy Records
-    const copyBtn = getByText(/Copy.*records/i);
+    const copyBtn = getByText("Copy records");
     fireEvent.click(copyBtn);
 
     expect(mockSubmit).toHaveBeenCalledWith(
@@ -102,7 +102,7 @@ describe("<CopyTaxYearModal />", () => {
 
   test("is a modal dialog with an accessible name and description", () => {
     customRender(<CopyTaxYearModal {...defaultProps} />);
-    const dialog = screen.getByRole("dialog", { name: "Copy figures and populate tax year" });
+    const dialog = screen.getByRole("dialog", { name: "Copy records from another tax year" });
     expect(dialog.getAttribute("aria-modal")).toBe("true");
     expect(dialog.getAttribute("aria-describedby")).toBeTruthy();
   });
