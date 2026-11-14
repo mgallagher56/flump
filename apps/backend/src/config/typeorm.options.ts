@@ -71,5 +71,24 @@ export function typeOrmOptionsFromEnv(env: Env): TypeOrmModuleOptions {
     migrations: [MIGRATIONS_GLOB],
     synchronize: db.synchronize,
     migrationsRun: db.migrationsRun,
+    // Each migration runs in its own transaction, so one that must not (an index built
+    // CONCURRENTLY) can opt out with `transaction = false`. Every migration takes the shared
+    // advisory lock itself (config/migration-lock.ts), so instances still serialise.
+    migrationsTransactionMode: "each",
+    // Handed to the pg Pool. Fail fast instead of queueing forever: a request waits at most
+    // connectionTimeoutMillis for a connection, and Postgres cancels a statement, a lock wait
+    // or an idle open transaction past its limit. These apply to migrations at boot too; a
+    // migration that needs longer must lift them for its own session (see AddUserIdIndexes).
+    extra: {
+      max: db.pool.max,
+      connectionTimeoutMillis: db.pool.connectionTimeoutMillis,
+      idleTimeoutMillis: db.pool.idleTimeoutMillis,
+      statement_timeout: db.pool.statementTimeoutMillis,
+      lock_timeout: db.pool.lockTimeoutMillis,
+      idle_in_transaction_session_timeout: db.pool.idleInTransactionTimeoutMillis,
+      // Timestamp columns have no time zone (audit M5), so the session is pinned to UTC
+      // to match the UTC Node process (main.ts).
+      options: "-c TimeZone=UTC",
+    },
   };
 }

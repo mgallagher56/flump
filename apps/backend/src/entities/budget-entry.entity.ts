@@ -2,10 +2,13 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  Index,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from "typeorm";
 
+// A user's budget entries in creation order. (AddUserIdIndexes1794357420000)
+@Index("IDX_budget_entries_user_created", ["userId", "createdAt"])
 @Entity("budget_entries")
 export class BudgetEntry {
   @PrimaryGeneratedColumn("uuid")

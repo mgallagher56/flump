@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isStrictEnv, resolveDbConfig } from "./db.config";
+import { isStrictEnv, resolveDbConfig, resolvePoolConfig } from "./db.config";
 
 const remoteUrl = "postgres://u:p@db.example.com/x";
 
@@ -89,6 +89,14 @@ describe("resolveDbConfig", () => {
         ssl: false,
         synchronize: false,
         migrationsRun: false,
+        pool: {
+          max: 10,
+          connectionTimeoutMillis: 5_000,
+          idleTimeoutMillis: 30_000,
+          statementTimeoutMillis: 10_000,
+          lockTimeoutMillis: 5_000,
+          idleInTransactionTimeoutMillis: 30_000,
+        },
         warnings: [],
       });
     });
@@ -216,5 +224,71 @@ describe("resolveDbConfig", () => {
         expect(message, `case ${index}`).not.toContain(secret);
       }
     }
+  });
+});
+
+describe("resolvePoolConfig", () => {
+  const poolError = (env: Record<string, string>): string => {
+    try {
+      resolvePoolConfig(env);
+    } catch (error) {
+      return (error as Error).message;
+    }
+    throw new Error("expected resolvePoolConfig to throw");
+  };
+
+  it("uses the conservative defaults when unset or empty", () => {
+    expect(resolvePoolConfig({})).toEqual(
+      resolvePoolConfig({ DB_POOL_MAX: "", DB_LOCK_TIMEOUT_MS: " " }),
+    );
+    expect(resolvePoolConfig({}).max).toBe(10);
+  });
+
+  it("reads every setting from its variable", () => {
+    expect(
+      resolvePoolConfig({
+        DB_POOL_MAX: "20",
+        DB_POOL_CONNECTION_TIMEOUT_MS: "2000",
+        DB_POOL_IDLE_TIMEOUT_MS: "60000",
+        DB_STATEMENT_TIMEOUT_MS: "15000",
+        DB_LOCK_TIMEOUT_MS: "3000",
+        DB_IDLE_IN_TRANSACTION_TIMEOUT_MS: "45000",
+      }),
+    ).toEqual({
+      max: 20,
+      connectionTimeoutMillis: 2_000,
+      idleTimeoutMillis: 60_000,
+      statementTimeoutMillis: 15_000,
+      lockTimeoutMillis: 3_000,
+      idleInTransactionTimeoutMillis: 45_000,
+    });
+  });
+
+  it.each([
+    ["DB_POOL_MAX", "0"],
+    ["DB_POOL_MAX", "101"],
+    ["DB_POOL_MAX", "ten"],
+    ["DB_POOL_MAX", "2.5"],
+    ["DB_POOL_MAX", "-1"],
+    ["DB_STATEMENT_TIMEOUT_MS", "0"],
+    ["DB_LOCK_TIMEOUT_MS", "1e3"],
+    ["DB_POOL_CONNECTION_TIMEOUT_MS", "99"],
+    ["DB_IDLE_IN_TRANSACTION_TIMEOUT_MS", "600001"],
+  ])("rejects %s=%s, naming the variable but not the value", (name, value) => {
+    const message = poolError({ [name]: value });
+    expect(message).toContain(name);
+    expect(message).not.toContain(`=${value}`);
+  });
+
+  it("requires the lock timeout to be below the statement timeout", () => {
+    expect(poolError({ DB_LOCK_TIMEOUT_MS: "10000" })).toContain("DB_LOCK_TIMEOUT_MS");
+    expect(resolvePoolConfig({ DB_LOCK_TIMEOUT_MS: "9999" }).lockTimeoutMillis).toBe(9_999);
+  });
+
+  it("is part of resolveDbConfig", () => {
+    expect(resolveDbConfig({ NODE_ENV: "development", DB_POOL_MAX: "4" }).pool.max).toBe(4);
+    expect(() => resolveDbConfig({ NODE_ENV: "development", DB_POOL_MAX: "x" })).toThrow(
+      /DB_POOL_MAX/,
+    );
   });
 });
