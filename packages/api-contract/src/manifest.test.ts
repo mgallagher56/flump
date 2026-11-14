@@ -66,9 +66,9 @@ describe("request schemas", () => {
     expect(result).toEqual({
       ok: false,
       issues: expect.arrayContaining([
-        { path: "name", code: "invalid_type" },
-        { path: "balance", code: "invalid_type" },
-        { path: "userId", code: "unrecognized_keys" },
+        expect.objectContaining({ path: "name", code: "invalid_type" }),
+        expect.objectContaining({ path: "balance", code: "invalid_type" }),
+        { path: "userId", code: "unrecognized_keys", message: "Unknown field" },
       ]),
     });
   });

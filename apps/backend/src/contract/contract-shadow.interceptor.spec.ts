@@ -239,7 +239,10 @@ describe("log volume limits", () => {
         error = e;
       }
       expect(error?.getStatus()).toBe(400);
-      expect(error.getResponse().issues).toEqual([{ path: "body.balance", code: "invalid_type" }]);
+      expect(error.getResponse().code).toBe("validation_failed");
+      expect(error.getResponse().issues).toEqual([
+        { path: "body.balance", code: "invalid_type", message: expect.any(String) },
+      ]);
       expect(JSON.stringify(error.getResponse())).not.toContain("secret-name");
       const rejected = warn.mock.calls
         .map(([m]) => JSON.parse(String(m)))
@@ -249,14 +252,87 @@ describe("log volume limits", () => {
       expect(next.handle).not.toHaveBeenCalled();
     });
 
-    it("lets unknown keys through (the web sends fields the backend drops)", () => {
+    const rejectionOf = (req: Record<string, unknown>) => {
+      const next = { handle: vi.fn(() => of("handled")) };
+      const context = { getType: () => "http", switchToHttp: () => ({ getRequest: () => req }) };
+      try {
+        new ContractShadowInterceptor().intercept(context as never, next);
+      } catch (e) {
+        return { error: e as { getStatus(): number; getResponse(): any }, next };
+      }
+      return { error: undefined, next };
+    };
+
+    it("rejects unknown keys in the body, params and query (BE-09: strict schemas)", () => {
       process.env.CONTRACT_MODE = "enforce";
       vi.spyOn(Logger.prototype, "warn").mockImplementation(() => undefined);
-      const next = run(new ContractShadowInterceptor(), {
+      const body = rejectionOf({
         ...badAccount,
-        body: { name: "x", type: "Current", balance: 1, isDefault: true },
+        body: { name: "x", type: "Current", balance: 1, userId: "victim" },
       });
+      expect(body.error?.getStatus()).toBe(400);
+      expect(body.error?.getResponse().issues).toEqual([
+        { path: "body.userId", code: "unrecognized_keys", message: "Unknown field" },
+      ]);
+      expect(body.next.handle).not.toHaveBeenCalled();
+
+      const nested = rejectionOf({
+        method: "PATCH",
+        route: { path: "/accounts/balances" },
+        params: {},
+        query: {},
+        body: { balances: [{ id: "6f1c1f3e-9d6e-4c0e-9f43-0a1b2c3d4e5f", balance: 1, x: 1 }] },
+      });
+      expect(nested.error?.getResponse().issues).toEqual([
+        expect.objectContaining({ path: "body.balances.0.x", code: "unrecognized_keys" }),
+      ]);
+
+      const query = rejectionOf({
+        method: "GET",
+        route: { path: "/transactions" },
+        params: {},
+        query: { accountId: "6f1c1f3e-9d6e-4c0e-9f43-0a1b2c3d4e5f", cacheBust: "1" },
+      });
+      expect(query.error?.getResponse().issues).toEqual([
+        expect.objectContaining({ path: "query.cacheBust", code: "unrecognized_keys" }),
+      ]);
+    });
+
+    it("replaces body, query and params with the parsed contract output", () => {
+      process.env.CONTRACT_MODE = "enforce";
+      vi.spyOn(Logger.prototype, "warn").mockImplementation(() => undefined);
+      const id = "6f1c1f3e-9d6e-4c0e-9f43-0a1b2c3d4e5f";
+      const create: Record<string, unknown> = {
+        ...badAccount,
+        body: { name: "  Everyday  ", type: "Current", balance: 12.5 },
+      };
+      const created = rejectionOf(create);
+      expect(created.error).toBeUndefined();
+      expect(created.next.handle).toHaveBeenCalledOnce();
+      // Name is trimmed by the contract; the handler sees the parsed value, not the raw one.
+      expect(create.body).toEqual({ name: "Everyday", type: "Current", balance: 12.5 });
+
+      // Express 5 makes req.query a getter: the interceptor must still replace it.
+      const raw = { limit: "25" };
+      const activity = Object.defineProperty(
+        { method: "GET", route: { path: "/mcp-tokens/:id/activity" }, params: { id } },
+        "query",
+        { get: () => raw, configurable: true, enumerable: true },
+      ) as Record<string, unknown>;
+      expect(rejectionOf(activity).error).toBeUndefined();
+      expect(activity.query).toEqual({ limit: 25 });
+      expect(activity.params).toEqual({ id });
+    });
+
+    it("leaves the request untouched in shadow mode", () => {
+      process.env.CONTRACT_MODE = "shadow";
+      vi.spyOn(Logger.prototype, "warn").mockImplementation(() => undefined);
+      const body = { name: "  Everyday  ", type: "Current", balance: 1, extra: true };
+      const req = { ...badAccount, body };
+      const { error, next } = rejectionOf(req);
+      expect(error).toBeUndefined();
       expect(next.handle).toHaveBeenCalledOnce();
+      expect(req.body).toBe(body);
     });
 
     it("only enforces the groups listed in CONTRACT_ENFORCE_GROUPS", () => {

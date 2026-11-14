@@ -8,6 +8,7 @@ import {
 import { BadRequestException, Injectable, Logger, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
+import { type KeysetOrder, keysetPage, type PageRequest } from "../contract/pagination";
 import { McpToken } from "../entities/mcp-token.entity";
 import { isMcpUserAllowed, readMcpAccessConfig } from "../mcp-access";
 
@@ -153,22 +154,16 @@ export class McpTokenService implements McpTokenStoreAdapter {
       where: { userId },
       order: { createdAt: "DESC" },
     });
+    return tokens.map((tok) => toTokenListItem(tok));
+  }
 
-    const now = Date.now();
-
-    return tokens.map((tok) => ({
-      id: tok.id,
-      name: tok.name,
-      tokenPrefix: tok.tokenPrefix,
-      scopes: tok.scopes,
-      anonymizeInstitutions: tok.anonymizeInstitutions,
-      expiresAt: tok.expiresAt,
-      lastUsedAt: tok.lastUsedAt,
-      totalToolCalls: tok.totalToolCalls,
-      createdAt: tok.createdAt,
-      isRevoked: !!tok.revokedAt,
-      isExpired: !!(tok.expiresAt && new Date(tok.expiresAt).getTime() < now),
-    }));
+  /** One page of the user's tokens, newest first (GET /mcp-tokens, BE-09 keyset pagination). */
+  async listTokensPage(userId: string, page: PageRequest) {
+    const qb = this.mcpTokenRepository
+      .createQueryBuilder("t")
+      .where("t.userId = :userId", { userId });
+    const { items, nextCursor } = await keysetPage(qb, TOKEN_ORDER, page);
+    return { items: items.map((tok) => toTokenListItem(tok)), nextCursor };
   }
 
   /** True when `tokenId` is one of the user's tokens (revoked and expired ones included). */
@@ -188,4 +183,31 @@ export class McpTokenService implements McpTokenStoreAdapter {
     await this.mcpTokenRepository.save(token);
     return { success: true };
   }
+}
+
+/** GET /mcp-tokens order: newest first, id as tiebreak. */
+const TOKEN_ORDER: KeysetOrder = {
+  keys: [
+    { column: '"t"."created_at"', kind: "timestamp" },
+    { column: '"t"."id"', kind: "uuid" },
+  ],
+  direction: "DESC",
+};
+
+/** One row of GET /mcp-tokens: never the hash or the revocation time. */
+function toTokenListItem(tok: McpToken) {
+  const now = Date.now();
+  return {
+    id: tok.id,
+    name: tok.name,
+    tokenPrefix: tok.tokenPrefix,
+    scopes: tok.scopes,
+    anonymizeInstitutions: tok.anonymizeInstitutions,
+    expiresAt: tok.expiresAt,
+    lastUsedAt: tok.lastUsedAt,
+    totalToolCalls: tok.totalToolCalls,
+    createdAt: tok.createdAt,
+    isRevoked: !!tok.revokedAt,
+    isExpired: !!(tok.expiresAt && new Date(tok.expiresAt).getTime() < now),
+  };
 }

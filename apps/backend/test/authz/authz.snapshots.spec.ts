@@ -10,8 +10,10 @@ import { ROUTE_MATRIX } from "./matrix";
 import {
   type AuthzHarness,
   bootAuthzHarness,
+  expectProbeRejected,
   MISSING_ID,
   probeBody,
+  sansRequestId,
   truncateAll,
   USER_A,
   USER_B,
@@ -99,7 +101,7 @@ describe.skipIf(dbMode === "skip")("authz: snapshots controller (real Postgres)"
     const missing = await put(PAST, h.tokens.b, { values: [{ accountId: MISSING_ID, value: 1 }] });
     expect(asB.status).toBe(404);
     expect(missing.status).toBe(404);
-    expect(asB.body).toEqual(missing.body);
+    expect(sansRequestId(asB.body)).toEqual(sansRequestId(missing.body));
     expect(await details().count()).toBe(0);
   });
 
@@ -114,14 +116,19 @@ describe.skipIf(dbMode === "skip")("authz: snapshots controller (real Postgres)"
     expect(await details().count()).toBe(0);
   });
 
-  it("ignores userId and id smuggled into the body", async () => {
+  it("rejects userId and id smuggled into the body (strict, BE-09) and writes nothing", async () => {
     const res = await put(PAST, h.tokens.b, {
       ...probeBody(String(accountA)),
       values: [{ accountId: accountB, value: 7, userId: USER_A, id: 1, source: "connected" }],
     });
-    expect(res.status).toBe(200);
-    const [row] = await rowsFor(accountB);
-    expect(row).toMatchObject({ userId: USER_B, source: "manual" });
+    expectProbeRejected(res);
+    expect(res.body.issues).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ path: "body.values.0.userId", code: "unrecognized_keys" }),
+        expect.objectContaining({ path: "body.values.0.source", code: "unrecognized_keys" }),
+      ]),
+    );
+    expect(await rowsFor(accountB)).toHaveLength(0);
     expect(await rowsFor(accountA)).toHaveLength(0);
   });
 

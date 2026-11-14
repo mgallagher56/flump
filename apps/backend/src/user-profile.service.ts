@@ -1,4 +1,8 @@
-import { MAX_BUDGET_CATEGORY_NAME_LENGTH, MAX_CUSTOM_BUDGET_CATEGORIES } from "@flump/api-contract";
+import {
+  MAX_BUDGET_CATEGORY_NAME_LENGTH,
+  MAX_CUSTOM_BUDGET_CATEGORIES,
+  type UpdateProfileRequest,
+} from "@flump/api-contract";
 import {
   BadRequestException,
   Inject,
@@ -9,6 +13,7 @@ import {
 } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { DataSource, type EntityTarget, In, type ObjectLiteral, Repository } from "typeorm";
+import { preconditionFailed, withVersionClaim } from "./contract/etag";
 import { Account } from "./entities/account.entity";
 import { AccountDetail } from "./entities/account-detail.entity";
 import { BankConnection } from "./entities/bank-connection.entity";
@@ -101,12 +106,143 @@ function moneyOrNull(value: unknown, field: string): number | null {
   throw new BadRequestException(`${field} must be a non-negative amount or null`);
 }
 
+/** The profile row as it goes on the wire (E21 contract): every key present, decimals as numbers. */
+function formatProfileRow(profile: UserProfile) {
+  return {
+    ...profile,
+    // Nullable columns with no DB default are absent from a just-inserted entity; pin them to
+    // null so every response has the same keys (E21 contract).
+    displayName: profile.displayName ?? null,
+    avatarUrl: profile.avatarUrl ?? null,
+    employmentType: profile.employmentType ?? null,
+    firstName: profile.firstName ?? null,
+    lastName: profile.lastName ?? null,
+    taxRegion: profile.taxRegion ?? null,
+    birthYear: profile.birthYear ?? null,
+    studentLoanPlans: profile.studentLoanPlans ?? null,
+    housingStatus: profile.housingStatus ?? null,
+    monthlyHousingCost: profile.monthlyHousingCost ?? null,
+    monthlyOtherOutgoings: profile.monthlyOtherOutgoings ?? null,
+    annualSalary:
+      profile.annualSalary !== null && profile.annualSalary !== undefined
+        ? Number(profile.annualSalary)
+        : null,
+    monthlyTakeHome:
+      profile.monthlyTakeHome !== null && profile.monthlyTakeHome !== undefined
+        ? Number(profile.monthlyTakeHome)
+        : null,
+    hasResetFinancialData: Boolean(profile.hasResetFinancialData),
+    onboardingCompleted: Boolean(profile.onboardingCompleted),
+    propertyOwnershipShare:
+      profile.propertyOwnershipShare !== null && profile.propertyOwnershipShare !== undefined
+        ? Number(profile.propertyOwnershipShare)
+        : 100.0,
+    secondIncomeMonthly:
+      profile.secondIncomeMonthly !== null && profile.secondIncomeMonthly !== undefined
+        ? Number(profile.secondIncomeMonthly)
+        : null,
+    rentalIncomeMonthly:
+      profile.rentalIncomeMonthly !== null && profile.rentalIncomeMonthly !== undefined
+        ? Number(profile.rentalIncomeMonthly)
+        : null,
+    buyToLetPropertyValue:
+      profile.buyToLetPropertyValue !== null && profile.buyToLetPropertyValue !== undefined
+        ? Number(profile.buyToLetPropertyValue)
+        : null,
+    buyToLetMonthlyRental:
+      profile.buyToLetMonthlyRental !== null && profile.buyToLetMonthlyRental !== undefined
+        ? Number(profile.buyToLetMonthlyRental)
+        : null,
+    buyToLetMortgageBalance:
+      profile.buyToLetMortgageBalance !== null && profile.buyToLetMortgageBalance !== undefined
+        ? Number(profile.buyToLetMortgageBalance)
+        : null,
+    buyToLetMortgageRate:
+      profile.buyToLetMortgageRate !== null && profile.buyToLetMortgageRate !== undefined
+        ? Number(profile.buyToLetMortgageRate)
+        : null,
+    buyToLetMortgageType: profile.buyToLetMortgageType || "interest-only",
+    pensionPercent:
+      profile.pensionPercent !== null && profile.pensionPercent !== undefined
+        ? Number(profile.pensionPercent)
+        : profile.hasResetFinancialData
+          ? 0
+          : 5.0,
+    pensionEmployerPercent:
+      profile.pensionEmployerPercent !== null && profile.pensionEmployerPercent !== undefined
+        ? Number(profile.pensionEmployerPercent)
+        : profile.hasResetFinancialData
+          ? 0
+          : 3.0,
+    isSalarySacrifice:
+      profile.isSalarySacrifice !== null && profile.isSalarySacrifice !== undefined
+        ? profile.hasResetFinancialData && Number(profile.pensionPercent) === 0
+          ? false
+          : Boolean(profile.isSalarySacrifice)
+        : false,
+    isSalarySacrificeEmployerNi:
+      profile.isSalarySacrificeEmployerNi !== null &&
+      profile.isSalarySacrificeEmployerNi !== undefined
+        ? profile.hasResetFinancialData && Number(profile.pensionPercent) === 0
+          ? false
+          : Boolean(profile.isSalarySacrificeEmployerNi)
+        : false,
+    monthlySavingsTarget:
+      profile.monthlySavingsTarget !== null && profile.monthlySavingsTarget !== undefined
+        ? Number(profile.monthlySavingsTarget)
+        : null,
+    savingsDefaultInterestRate:
+      profile.savingsDefaultInterestRate !== null &&
+      profile.savingsDefaultInterestRate !== undefined
+        ? Number(profile.savingsDefaultInterestRate)
+        : 5.0,
+    savingsAllocationMode: profile.savingsAllocationMode || "per_account",
+    setupChecklistCompletedSteps: Array.isArray(profile.setupChecklistCompletedSteps)
+      ? profile.setupChecklistCompletedSteps
+      : [],
+    enabledPages: Array.isArray(profile.enabledPages)
+      ? withoutRetiredModules(profile.enabledPages)
+      : ["accounts", "budget", "savings", "pension", "mortgage"],
+    dashboardWidgets: Array.isArray(profile.dashboardWidgets)
+      ? withoutRetiredModules(profile.dashboardWidgets)
+      : ["accounts", "budget", "savings", "pension", "mortgage"],
+    dashboardWidgetOrder: Array.isArray(profile.dashboardWidgetOrder)
+      ? withoutRetiredModules(profile.dashboardWidgetOrder)
+      : ["accounts", "budget", "savings", "pension", "mortgage"],
+    dashboardWidgetSizes: nonEmptyRecord(
+      withoutRetiredModuleKeys(profile.dashboardWidgetSizes),
+    ) || {
+      accounts: "wide",
+    },
+    dashboardWidgetConfig: withoutRetiredModuleKeys(profile.dashboardWidgetConfig) || {},
+    customBudgetCategories: Array.isArray(profile.customBudgetCategories)
+      ? profile.customBudgetCategories
+      : [],
+  };
+}
+
+export type FormattedProfile = ReturnType<typeof formatProfileRow>;
+
+/** GET /user-profile and every write that returns the profile: the row plus the caller's email. */
+export type ProfileView = FormattedProfile & { email: string | null };
+
+export interface ResetFinancialDataResult {
+  success: true;
+  message: string;
+  profile: ProfileView;
+}
+
 export interface ProfileLifecycle {
-  getProfile(userId: string, email?: string): Promise<any>;
-  updateProfile(userId: string, body: any, email?: string): Promise<any>;
-  resetFinancialData(userId: string, email?: string): Promise<any>;
-  sendPasswordReset(userId: string): Promise<any>;
-  updateChecklist(userId: string, step: string, completed: boolean, email?: string): Promise<any>;
+  getProfile(userId: string, email?: string): Promise<ProfileView>;
+  updateProfile(userId: string, body: UpdateProfileRequest, email?: string): Promise<ProfileView>;
+  resetFinancialData(userId: string, email?: string): Promise<ResetFinancialDataResult>;
+  sendPasswordReset(userId: string): Promise<{ success: true }>;
+  updateChecklist(
+    userId: string,
+    step: string,
+    completed: boolean,
+    email?: string,
+  ): Promise<ProfileView>;
 }
 
 /** Rows removed by a financial data reset, per registry table (counts only, for the audit event). */
@@ -152,6 +288,35 @@ export function clearFinancialProfileFields(profile: UserProfile): void {
   profile.hasResetFinancialData = true;
   profile.onboardingCompleted = false;
 }
+
+/** The empty defaults a profile row is created with when an update arrives before any read. */
+const PROFILE_UPDATE_DEFAULTS = (userId: string): Partial<UserProfile> => ({
+  userId,
+  displayName: null,
+  firstName: null,
+  lastName: null,
+  avatarUrl: null,
+  currency: "GBP",
+  country: "GB",
+  employmentType: null,
+  annualSalary: null,
+  monthlyTakeHome: null,
+  hasSecondIncome: false,
+  secondIncomeMonthly: null,
+  hasRentalIncome: false,
+  rentalIncomeMonthly: null,
+  hasMortgage: false,
+  propertyOwnershipShare: 100.0,
+  pensionPercent: 5.0,
+  pensionEmployerPercent: 3.0,
+  isSalarySacrifice: false,
+  isSalarySacrificeEmployerNi: false,
+  monthlySavingsTarget: null,
+  savingsAllocationMode: "per_account",
+  savingsDefaultInterestRate: 5.0,
+  setupChecklistCompletedSteps: [],
+  onboardingCompleted: false,
+});
 
 @Injectable()
 export class UserProfileService implements ProfileLifecycle {
@@ -207,118 +372,8 @@ export class UserProfileService implements ProfileLifecycle {
     }
   }
 
-  formatProfile(profile: UserProfile): any {
-    return {
-      ...profile,
-      // Nullable columns with no DB default are absent from a just-inserted entity; pin them to
-      // null so every response has the same keys (E21 contract).
-      displayName: profile.displayName ?? null,
-      avatarUrl: profile.avatarUrl ?? null,
-      employmentType: profile.employmentType ?? null,
-      firstName: profile.firstName ?? null,
-      lastName: profile.lastName ?? null,
-      taxRegion: profile.taxRegion ?? null,
-      birthYear: profile.birthYear ?? null,
-      studentLoanPlans: profile.studentLoanPlans ?? null,
-      housingStatus: profile.housingStatus ?? null,
-      monthlyHousingCost: profile.monthlyHousingCost ?? null,
-      monthlyOtherOutgoings: profile.monthlyOtherOutgoings ?? null,
-      annualSalary:
-        profile.annualSalary !== null && profile.annualSalary !== undefined
-          ? Number(profile.annualSalary)
-          : null,
-      monthlyTakeHome:
-        profile.monthlyTakeHome !== null && profile.monthlyTakeHome !== undefined
-          ? Number(profile.monthlyTakeHome)
-          : null,
-      hasResetFinancialData: Boolean(profile.hasResetFinancialData),
-      onboardingCompleted: Boolean(profile.onboardingCompleted),
-      propertyOwnershipShare:
-        profile.propertyOwnershipShare !== null && profile.propertyOwnershipShare !== undefined
-          ? Number(profile.propertyOwnershipShare)
-          : 100.0,
-      secondIncomeMonthly:
-        profile.secondIncomeMonthly !== null && profile.secondIncomeMonthly !== undefined
-          ? Number(profile.secondIncomeMonthly)
-          : null,
-      rentalIncomeMonthly:
-        profile.rentalIncomeMonthly !== null && profile.rentalIncomeMonthly !== undefined
-          ? Number(profile.rentalIncomeMonthly)
-          : null,
-      buyToLetPropertyValue:
-        profile.buyToLetPropertyValue !== null && profile.buyToLetPropertyValue !== undefined
-          ? Number(profile.buyToLetPropertyValue)
-          : null,
-      buyToLetMonthlyRental:
-        profile.buyToLetMonthlyRental !== null && profile.buyToLetMonthlyRental !== undefined
-          ? Number(profile.buyToLetMonthlyRental)
-          : null,
-      buyToLetMortgageBalance:
-        profile.buyToLetMortgageBalance !== null && profile.buyToLetMortgageBalance !== undefined
-          ? Number(profile.buyToLetMortgageBalance)
-          : null,
-      buyToLetMortgageRate:
-        profile.buyToLetMortgageRate !== null && profile.buyToLetMortgageRate !== undefined
-          ? Number(profile.buyToLetMortgageRate)
-          : null,
-      buyToLetMortgageType: profile.buyToLetMortgageType || "interest-only",
-      pensionPercent:
-        profile.pensionPercent !== null && profile.pensionPercent !== undefined
-          ? Number(profile.pensionPercent)
-          : profile.hasResetFinancialData
-            ? 0
-            : 5.0,
-      pensionEmployerPercent:
-        profile.pensionEmployerPercent !== null && profile.pensionEmployerPercent !== undefined
-          ? Number(profile.pensionEmployerPercent)
-          : profile.hasResetFinancialData
-            ? 0
-            : 3.0,
-      isSalarySacrifice:
-        profile.isSalarySacrifice !== null && profile.isSalarySacrifice !== undefined
-          ? profile.hasResetFinancialData && Number(profile.pensionPercent) === 0
-            ? false
-            : Boolean(profile.isSalarySacrifice)
-          : false,
-      isSalarySacrificeEmployerNi:
-        profile.isSalarySacrificeEmployerNi !== null &&
-        profile.isSalarySacrificeEmployerNi !== undefined
-          ? profile.hasResetFinancialData && Number(profile.pensionPercent) === 0
-            ? false
-            : Boolean(profile.isSalarySacrificeEmployerNi)
-          : false,
-      monthlySavingsTarget:
-        profile.monthlySavingsTarget !== null && profile.monthlySavingsTarget !== undefined
-          ? Number(profile.monthlySavingsTarget)
-          : null,
-      savingsDefaultInterestRate:
-        profile.savingsDefaultInterestRate !== null &&
-        profile.savingsDefaultInterestRate !== undefined
-          ? Number(profile.savingsDefaultInterestRate)
-          : 5.0,
-      savingsAllocationMode: profile.savingsAllocationMode || "per_account",
-      setupChecklistCompletedSteps: Array.isArray(profile.setupChecklistCompletedSteps)
-        ? profile.setupChecklistCompletedSteps
-        : [],
-      enabledPages: Array.isArray(profile.enabledPages)
-        ? withoutRetiredModules(profile.enabledPages)
-        : ["accounts", "budget", "savings", "pension", "mortgage"],
-      dashboardWidgets: Array.isArray(profile.dashboardWidgets)
-        ? withoutRetiredModules(profile.dashboardWidgets)
-        : ["accounts", "budget", "savings", "pension", "mortgage"],
-      dashboardWidgetOrder: Array.isArray(profile.dashboardWidgetOrder)
-        ? withoutRetiredModules(profile.dashboardWidgetOrder)
-        : ["accounts", "budget", "savings", "pension", "mortgage"],
-      dashboardWidgetSizes: nonEmptyRecord(
-        withoutRetiredModuleKeys(profile.dashboardWidgetSizes),
-      ) || {
-        accounts: "wide",
-      },
-      dashboardWidgetConfig: withoutRetiredModuleKeys(profile.dashboardWidgetConfig) || {},
-      customBudgetCategories: Array.isArray(profile.customBudgetCategories)
-        ? profile.customBudgetCategories
-        : [],
-    };
+  formatProfile(profile: UserProfile): FormattedProfile {
+    return formatProfileRow(profile);
   }
 
   /**
@@ -351,7 +406,7 @@ export class UserProfileService implements ProfileLifecycle {
     }
   }
 
-  async getProfile(userId: string, email?: string): Promise<any> {
+  async getProfile(userId: string, email?: string): Promise<ProfileView> {
     const profile = await this.findOrCreateProfile(userId, {
       userId,
       displayName: null,
@@ -399,35 +454,80 @@ export class UserProfileService implements ProfileLifecycle {
     };
   }
 
-  async updateProfile(userId: string, body: any, email?: string): Promise<any> {
-    const profile = await this.findOrCreateProfile(userId, {
-      userId,
-      displayName: null,
-      firstName: null,
-      lastName: null,
-      avatarUrl: null,
-      currency: "GBP",
-      country: "GB",
-      employmentType: null,
-      annualSalary: null,
-      monthlyTakeHome: null,
-      hasSecondIncome: false,
-      secondIncomeMonthly: null,
-      hasRentalIncome: false,
-      rentalIncomeMonthly: null,
-      hasMortgage: false,
-      propertyOwnershipShare: 100.0,
-      pensionPercent: 5.0,
-      pensionEmployerPercent: 3.0,
-      isSalarySacrifice: false,
-      isSalarySacrificeEmployerNi: false,
-      monthlySavingsTarget: null,
-      savingsAllocationMode: "per_account",
-      savingsDefaultInterestRate: 5.0,
-      setupChecklistCompletedSteps: [],
-      onboardingCompleted: false,
-    });
+  /**
+   * `expectedVersion` (from If-Match, BE-09) makes the update conditional: the version claim, the
+   * read and the write run in one transaction (withVersionClaim), so a stale ETag (or a profile
+   * that does not exist yet) is a 412 and writes nothing, and a validation error after the claim
+   * rolls the claim back.
+   */
+  async updateProfile(
+    userId: string,
+    body: UpdateProfileRequest,
+    email?: string,
+    expectedVersion?: Date,
+  ): Promise<ProfileView> {
+    let wasOnboarded = false;
+    let profile: UserProfile;
+    let saved: UserProfile;
+    if (expectedVersion) {
+      ({ profile, saved, wasOnboarded } = await withVersionClaim(
+        this.userProfileRepository,
+        { user_id: userId },
+        expectedVersion,
+        preconditionFailed,
+        async (repository) => {
+          const row = await repository.findOne({ where: { userId } });
+          if (!row) throw preconditionFailed();
+          const onboarded = this.applyProfileUpdate(row, body);
+          return { profile: row, saved: await repository.save(row), wasOnboarded: onboarded };
+        },
+      ));
+    } else {
+      profile = await this.findOrCreateProfile(userId, PROFILE_UPDATE_DEFAULTS(userId));
+      wasOnboarded = this.applyProfileUpdate(profile, body);
+      saved = await this.userProfileRepository.save(profile);
+    }
 
+    // E30 D8: finishing onboarding records the first monthly snapshot of the user's accounts.
+    if (!wasOnboarded && saved.onboardingCompleted) {
+      try {
+        await writeOnboardingSnapshot(this.accountRepository, this.accountDetailRepository, userId);
+      } catch (err: unknown) {
+        // The profile is already saved; a missed first snapshot is recoverable in the check-in.
+        this.logger.warn(`First snapshot warning: ${safeErrorSummary(err)}`);
+      }
+    }
+
+    // Synchronize first/last name with identity provider
+    if (this.identityAdapter && (body.firstName !== undefined || body.lastName !== undefined)) {
+      try {
+        await this.identityAdapter.updateName(
+          userId,
+          // null clears the name here; the adapter treats a missing name as "leave alone".
+          body.firstName !== undefined
+            ? (body.firstName ?? undefined)
+            : profile.firstName || undefined,
+          body.lastName !== undefined
+            ? (body.lastName ?? undefined)
+            : profile.lastName || undefined,
+        );
+      } catch (err: unknown) {
+        this.logger.warn(`Identity name sync warning: ${safeErrorSummary(err)}`);
+      }
+    }
+
+    return {
+      ...this.formatProfile(saved),
+      email: email || null,
+    };
+  }
+
+  /**
+   * Applies an update body to a loaded profile row in place. Throws a 400 for an invalid E23 value;
+   * returns whether the profile was onboarded before this update.
+   */
+  private applyProfileUpdate(profile: UserProfile, body: UpdateProfileRequest): boolean {
+    const wasOnboarded = Boolean(profile.onboardingCompleted);
     if (body.displayName !== undefined) profile.displayName = body.displayName ?? null;
     if (body.firstName !== undefined) profile.firstName = body.firstName ?? null;
     if (body.lastName !== undefined) profile.lastName = body.lastName ?? null;
@@ -497,7 +597,6 @@ export class UserProfileService implements ProfileLifecycle {
       }
       profile.customBudgetCategories = categories;
     }
-    const wasOnboarded = Boolean(profile.onboardingCompleted);
     if (body.onboardingCompleted !== undefined)
       profile.onboardingCompleted = Boolean(body.onboardingCompleted);
     if (body.taxRegion !== undefined) {
@@ -519,39 +618,10 @@ export class UserProfileService implements ProfileLifecycle {
         "monthlyOtherOutgoings",
       );
     }
-
-    const saved = await this.userProfileRepository.save(profile);
-
-    // E30 D8: finishing onboarding records the first monthly snapshot of the user's accounts.
-    if (!wasOnboarded && saved.onboardingCompleted) {
-      try {
-        await writeOnboardingSnapshot(this.accountRepository, this.accountDetailRepository, userId);
-      } catch (err: any) {
-        // The profile is already saved; a missed first snapshot is recoverable in the check-in.
-        this.logger.warn(`First snapshot warning: ${safeErrorSummary(err)}`);
-      }
-    }
-
-    // Synchronize first/last name with identity provider
-    if (this.identityAdapter && (body.firstName !== undefined || body.lastName !== undefined)) {
-      try {
-        await this.identityAdapter.updateName(
-          userId,
-          body.firstName !== undefined ? body.firstName : profile.firstName || undefined,
-          body.lastName !== undefined ? body.lastName : profile.lastName || undefined,
-        );
-      } catch (err: any) {
-        this.logger.warn(`Identity name sync warning: ${safeErrorSummary(err)}`);
-      }
-    }
-
-    return {
-      ...this.formatProfile(saved),
-      email: email || null,
-    };
+    return wasOnboarded;
   }
 
-  async resetFinancialData(userId: string, email?: string): Promise<any> {
+  async resetFinancialData(userId: string, email?: string): Promise<ResetFinancialDataResult> {
     // The reset writes a profile row; never for an erased account (see findOrCreateProfile).
     if (await this.accountDeletion?.isErased(userId)) {
       throw accountDeletedException();
@@ -646,7 +716,7 @@ export class UserProfileService implements ProfileLifecycle {
     step: string,
     completed: boolean,
     email?: string,
-  ): Promise<any> {
+  ): Promise<ProfileView> {
     const profile = await this.findOrCreateProfile(userId, {
       userId,
       displayName: null,

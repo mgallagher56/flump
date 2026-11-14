@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { IsoDateTime, Money, Percent, Uuid } from "../primitives.js";
+import { IsoDateTime, Money, Percent, ResponseMoney, Uuid } from "../primitives.js";
 import { MAX_BUDGET_CATEGORY_NAME_LENGTH, MAX_CUSTOM_BUDGET_CATEGORIES } from "./budget.js";
 
 const AvatarUrl = z
@@ -15,11 +15,11 @@ const ShortText = z.string().trim().max(120);
 const PageKeyList = z.array(z.string().min(1).max(64)).max(20);
 
 /**
- * PATCH /user-profile: every field `UserProfileService.updateProfile` reads. Fields the web sends
- * that the backend ignores (homeValue, ...) are deliberately absent: shadow mode reports
- * them as unknown keys. Both `null` and absent are accepted on nullable columns.
+ * PATCH /user-profile: every field `UserProfileService.updateProfile` reads, plus `homeValue`,
+ * which the web sends and the backend ignores. Unknown keys are rejected (BE-09). Both `null` and
+ * absent are accepted on nullable columns.
  */
-export const UpdateProfileRequest = z.object({
+export const UpdateProfileRequest = z.strictObject({
   displayName: ShortText.nullish(),
   firstName: ShortText.nullish(),
   lastName: ShortText.nullish(),
@@ -70,17 +70,24 @@ export const UpdateProfileRequest = z.object({
   housingStatus: z.enum(["renting", "mortgage", "own_outright"]).nullish(),
   monthlyHousingCost: Money.nullish(),
   monthlyOtherOutgoings: Money.nullish(),
+  /**
+   * Accepted and ignored (BE-09): onboarding still sends it and request bodies are strict. The
+   * home value becomes a Property account row (E23 section 3.1). Remove once the web stops (BE-10).
+   */
+  homeValue: Money.nullish().meta({ description: "Ignored. Not stored on the profile." }),
 });
+export type UpdateProfileRequest = z.infer<typeof UpdateProfileRequest>;
 
-export const UpdateChecklistRequest = z.object({
+export const UpdateChecklistRequest = z.strictObject({
   step: z.string().min(1).max(64),
   completed: z.boolean(),
 });
+export type UpdateChecklistRequest = z.infer<typeof UpdateChecklistRequest>;
 
 // --- Responses (E21) ---
 
 const RepaymentType = z.enum(["repayment", "interest-only"]);
-const NullableAmount = z.number().finite().nullable();
+const NullableAmount = ResponseMoney.nullable();
 
 /**
  * The profile as `UserProfileService.formatProfile` puts it on the wire, plus `email` (the
@@ -113,7 +120,7 @@ export const UserProfileDto = z.strictObject({
   buyToLetPropertyValue: NullableAmount,
   buyToLetMonthlyRental: NullableAmount,
   buyToLetMortgageBalance: NullableAmount,
-  buyToLetMortgageRate: NullableAmount,
+  buyToLetMortgageRate: z.number().finite().nullable(),
   buyToLetMortgageType: RepaymentType,
   pensionPercent: z.number().finite(),
   pensionEmployerPercent: z.number().finite(),
@@ -289,6 +296,8 @@ export const AccountExportAccount = z.strictObject({
   connectionId: Uuid.nullable(),
   externalAccountId: NullableText,
   createdAt: ExportTimestamp,
+  /** When the account last changed; the version behind its ETag (BE-09). */
+  updatedAt: ExportTimestamp,
 });
 
 /** `accountDetails`: the month-end balance history of each account. */
@@ -422,6 +431,18 @@ export const AccountExportAgentAuditEvent = z.strictObject({
   createdAt: ExportTimestamp,
 });
 
+/**
+ * `idempotencyKeys`: which recent create requests were sent with an `Idempotency-Key` header,
+ * and the status each got (BE-09). Never the key, the request hash or the stored response,
+ * which repeats rows already in the sections above.
+ */
+export const AccountExportIdempotencyKey = z.strictObject({
+  id: Uuid,
+  routeId: z.string(),
+  statusCode: z.number().int().nullable(),
+  createdAt: ExportTimestamp,
+});
+
 /** GET /user-profile/export: the whole document (`schemaVersion` first). */
 export const AccountExportDocument = z.strictObject({
   schemaVersion: z.literal(ACCOUNT_EXPORT_SCHEMA_VERSION),
@@ -442,6 +463,7 @@ export const AccountExportDocument = z.strictObject({
   importBatches: z.array(AccountExportImportBatch),
   mcpTokens: z.array(AccountExportMcpToken),
   agentAuditEvents: z.array(AccountExportAgentAuditEvent),
+  idempotencyKeys: z.array(AccountExportIdempotencyKey),
 });
 export type AccountExportDocument = z.infer<typeof AccountExportDocument>;
 
@@ -468,4 +490,5 @@ export const ACCOUNT_EXPORT_SECTIONS = {
   importBatches: AccountExportImportBatch,
   mcpTokens: AccountExportMcpToken,
   agentAuditEvents: AccountExportAgentAuditEvent,
+  idempotencyKeys: AccountExportIdempotencyKey,
 } as const satisfies Record<AccountExportKey, z.ZodType>;

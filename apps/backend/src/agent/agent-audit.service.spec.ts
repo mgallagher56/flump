@@ -114,10 +114,11 @@ describe("AgentAuditService.listForToken (E17 re-plan PR D)", () => {
     const { repo, calls } = builder([row(0)]);
     const service = new AgentAuditService(repo as never);
     const page = await service.listForToken("u1", "t1", {
-      limit: 500,
+      limit: 5000,
       before: encodeActivityCursor(row(5).id),
     });
-    expect(calls).toContainEqual(["limit", [101]]);
+    // Capped at PAGE_LIMITS.activity.max (500), plus the one look-ahead row.
+    expect(calls).toContainEqual(["limit", [501]]);
     const compound = calls.find(
       ([m, a]) => m === "andWhere" && String(a[0]).includes("created_at"),
     );

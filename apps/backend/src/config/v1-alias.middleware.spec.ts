@@ -1,7 +1,7 @@
 import express from "express";
 import request from "supertest";
 import { describe, expect, it } from "vitest";
-import { v1AliasMiddleware } from "./v1-alias.middleware";
+import { UNVERSIONED_SUNSET, v1AliasMiddleware } from "./v1-alias.middleware";
 
 const makeApp = () => {
   const app = express();
@@ -43,6 +43,30 @@ describe("v1AliasMiddleware", () => {
   it("does not touch look-alike prefixes", async () => {
     expect((await request(makeApp()).get("/v10/accounts")).body.url).toBe("/v10/accounts");
     expect((await request(makeApp()).get("/v1x")).body.url).toBe("/v1x");
+  });
+
+  describe("deprecation headers (docs/api/versioning.md)", () => {
+    it("marks an unversioned request deprecated and links its /v1 successor, path only", async () => {
+      const res = await request(makeApp()).get("/accounts/abc?secret=1");
+      expect(res.headers.deprecation).toBe("true");
+      expect(res.headers.link).toBe('</v1/accounts/abc>; rel="successor-version"');
+      // No sunset date has been announced yet.
+      expect(UNVERSIONED_SUNSET).toBeNull();
+      expect(res.headers.sunset).toBeUndefined();
+    });
+
+    it("sends no deprecation headers on /v1", async () => {
+      const res = await request(makeApp()).get("/v1/accounts/abc");
+      expect(res.headers.deprecation).toBeUndefined();
+      expect(res.headers.link).toBeUndefined();
+    });
+
+    it("does not deprecate the health probes, the MCP endpoint or the root", async () => {
+      for (const path of ["/health", "/health/ready", "/mcp", "/"]) {
+        const res = await request(makeApp()).get(path);
+        expect(res.headers.deprecation, path).toBeUndefined();
+      }
+    });
   });
 
   it("applies the tax-records body limit to /v1/tax-records", async () => {

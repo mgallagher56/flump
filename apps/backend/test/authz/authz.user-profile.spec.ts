@@ -15,6 +15,7 @@ import { ROUTE_MATRIX } from "./matrix";
 import {
   type AuthzHarness,
   bootAuthzHarness,
+  expectProbeRejected,
   probeBody,
   truncateAll,
   USER_A,
@@ -217,9 +218,15 @@ describe.skipIf(dbMode === "skip")("authz: user-profile controller (real Postgre
     ran("GET /user-profile");
   });
 
-  it("PATCH /user-profile: B's probe body (A's id and userId) only ever edits B's own row", async () => {
+  it("PATCH /user-profile: B's probe body (A's id and userId) is rejected; B edits only B's row", async () => {
+    expectProbeRejected(
+      await h.call("patch", "/user-profile", h.tokens.b, {
+        ...probeBody(profileAId),
+        displayName: "B Name",
+      }),
+    );
+    await expectProfileAUntouched();
     const res = await h.call("patch", "/user-profile", h.tokens.b, {
-      ...probeBody(profileAId),
       displayName: "B Name",
       annualSalary: 1,
     });
@@ -233,15 +240,21 @@ describe.skipIf(dbMode === "skip")("authz: user-profile controller (real Postgre
     ran("PATCH /user-profile");
   });
 
-  it("PATCH /user-profile/checklist: steps are per user, probe body ignored", async () => {
+  it("PATCH /user-profile/checklist: steps are per user, probe body rejected", async () => {
     const a = await h.call("patch", "/user-profile/checklist", h.tokens.a, {
       step: "connect-bank",
       completed: true,
     });
     expect(a.status).toBe(200);
 
+    expectProbeRejected(
+      await h.call("patch", "/user-profile/checklist", h.tokens.b, {
+        ...probeBody(profileAId),
+        step: "add-budget",
+        completed: true,
+      }),
+    );
     const b = await h.call("patch", "/user-profile/checklist", h.tokens.b, {
-      ...probeBody(profileAId),
       step: "add-budget",
       completed: true,
     });
@@ -259,11 +272,17 @@ describe.skipIf(dbMode === "skip")("authz: user-profile controller (real Postgre
     await seedFinancialData(h.tokens.a, "A");
     await seedFinancialData(h.tokens.b, "B");
 
+    expectProbeRejected(
+      await h.call("post", "/user-profile/reset-financial-data", h.tokens.b, {
+        ...probeBody(profileAId),
+        confirmation: "RESET",
+      }),
+    );
+    expect(await accounts().countBy({ userId: USER_B })).toBe(1);
     const res = await h.call("post", "/user-profile/reset-financial-data", h.tokens.b, {
-      ...probeBody(profileAId),
       confirmation: "RESET",
     });
-    expect(res.status).toBeLessThan(300);
+    expect(res.status).toBe(200);
     expect(res.body.profile.userId).toBe(USER_B);
 
     expect(await accounts().countBy({ userId: USER_B })).toBe(0);
@@ -301,15 +320,22 @@ describe.skipIf(dbMode === "skip")("authz: user-profile controller (real Postgre
     return total;
   };
 
-  it("DELETE /user-profile: B's deletion (probe body) erases only B, and B gets no new profile after", async () => {
+  it("DELETE /user-profile: B's probe body is rejected; B's deletion erases only B, and B gets no new profile after", async () => {
     await seedFinancialData(h.tokens.a, "A");
     await seedFinancialData(h.tokens.b, "B");
     const aRows = await userIdRows(USER_A);
 
-    const res = await h.call("delete", "/user-profile", h.tokens.b, {
-      ...probeBody(profileAId),
-      confirmation: "DELETE",
-    });
+    // The strict contract (BE-09) rejects the probe body before anything is deleted.
+    expectProbeRejected(
+      await h.call("delete", "/user-profile", h.tokens.b, {
+        ...probeBody(profileAId),
+        confirmation: "DELETE",
+      }),
+    );
+    expect(await userIdRows(USER_A)).toBe(aRows);
+    expect(deletedLogins).toEqual([]);
+
+    const res = await h.call("delete", "/user-profile", h.tokens.b, { confirmation: "DELETE" });
     expect(res.status).toBe(200);
     expect(res.body).toEqual({ status: "deleted" });
     expect(deletedLogins).toEqual([USER_B]);
@@ -322,7 +348,7 @@ describe.skipIf(dbMode === "skip")("authz: user-profile controller (real Postgre
     const after = await h.call("get", "/user-profile", h.tokens.b);
     expect(after.status).toBe(410);
     expect(after.body).toMatchObject({
-      error: "account_deleted",
+      code: "account_deleted",
       message: "This account has been deleted.",
     });
     expect(await profiles().countBy({ userId: USER_B })).toBe(0);
@@ -357,7 +383,7 @@ describe.skipIf(dbMode === "skip")("authz: user-profile controller (real Postgre
       confirmation: "DELETE",
     });
     expect(stale.status).toBe(403);
-    expect(stale.body.error).toBe("recent_login_required");
+    expect(stale.body.code).toBe("recent_login_required");
     expect(await userIdRows(USER_B)).toBe(before);
     expect(deletedLogins).toEqual([]);
   });
@@ -368,7 +394,7 @@ describe.skipIf(dbMode === "skip")("authz: user-profile controller (real Postgre
       confirmation: "RESET",
     });
     expect(res.status).toBe(403);
-    expect(res.body.error).toBe("recent_login_required");
+    expect(res.body.code).toBe("recent_login_required");
     expect(await budget().countBy({ userId: USER_B })).toBeGreaterThan(0);
   });
 

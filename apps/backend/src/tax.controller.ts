@@ -1,23 +1,36 @@
-import type { TaxRecordCap } from "@flump/api-contract";
+import type {
+  BulkCreateTaxRecordsRequest,
+  CreateTaxRecordRequest,
+  TaxRecordCap,
+  UpdateTaxRecordRequest,
+} from "@flump/api-contract";
 import {
   Body,
   Controller,
   Delete,
   Get,
   Header,
+  Headers,
+  HttpCode,
   NotFoundException,
   Optional,
   Param,
   ParseUUIDPipe,
   Patch,
   Post,
+  Query,
   Req,
+  Res,
   StreamableFile,
   UseGuards,
 } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
+import type { Response } from "express";
 import { Repository } from "typeorm";
 import { AuthGuard } from "./auth/auth.guard";
+import type { AuthenticatedRequest } from "./auth/authenticated-request";
+import { expectedVersion, setEtag, withVersionClaim } from "./contract/etag";
+import { type KeysetOrder, keysetPage, resolvePage, sendPage } from "./contract/pagination";
 import { TaxRecord } from "./entities/tax-record.entity";
 import { UserProfile } from "./entities/user-profile.entity";
 import { RateLimit } from "./security/rate-limit.decorator";
@@ -31,6 +44,15 @@ import {
 } from "./tax.service";
 
 export { MAX_BULK_TAX_RECORDS, type TaxRecordResponse } from "./tax.service";
+
+/** GET /tax-records order: newest date first, id as tiebreak (keyset pagination, BE-09). */
+const TAX_ORDER: KeysetOrder = {
+  keys: [
+    { column: '"t"."date"', kind: "date" },
+    { column: '"t"."id"', kind: "uuid" },
+  ],
+  direction: "DESC",
+};
 
 @Controller("tax-records")
 @UseGuards(AuthGuard)
@@ -49,25 +71,32 @@ export class TaxController {
   }
 
   @Get()
-  async getTaxRecords(@Req() req: any): Promise<TaxRecordResponse[]> {
-    const userId = req.user.id;
-    const records = await this.taxRecordRepository.find({
-      where: { userId },
-      order: { date: "DESC" },
-    });
-    return records.map(toResponse);
+  @HttpCode(200)
+  async getTaxRecords(
+    @Req() req: AuthenticatedRequest,
+    @Query() query?: unknown,
+    @Res({ passthrough: true }) res?: Response,
+  ): Promise<TaxRecordResponse[]> {
+    // Keyset-paginated (BE-09): `?limit=&cursor=`, next cursor in X-Next-Cursor.
+    const qb = this.taxRecordRepository
+      .createQueryBuilder("t")
+      .where("t.userId = :userId", { userId: req.user.id });
+    return sendPage(res, await keysetPage(qb, TAX_ORDER, resolvePage(query, "tax")), toResponse);
   }
 
   @Get(":id")
+  @HttpCode(200)
   async getTaxRecord(
-    @Req() req: any,
+    @Req() req: AuthenticatedRequest,
     @Param("id", new ParseUUIDPipe()) id: string,
+    @Res({ passthrough: true }) res?: Response,
   ): Promise<TaxRecordResponse> {
     const userId = req.user.id;
     const record = await this.taxRecordRepository.findOne({ where: { id, userId } });
     if (!record) {
       throw new NotFoundException("Tax record not found");
     }
+    setEtag(res, record.updatedAt);
     return toResponse(record);
   }
 
@@ -76,12 +105,13 @@ export class TaxController {
    * legacy row that fails the N14 rules is a 404 rather than served content.
    */
   @Get(":id/receipt")
+  @HttpCode(200)
   @Header("Cache-Control", "private, no-store")
   @Header("X-Content-Type-Options", "nosniff")
   @Header("Content-Security-Policy", "sandbox; default-src 'none'")
   @RateLimit("receiptRead")
   async getReceipt(
-    @Req() req: any,
+    @Req() req: AuthenticatedRequest,
     @Param("id", new ParseUUIDPipe()) id: string,
   ): Promise<StreamableFile> {
     const userId = req.user.id;
@@ -119,21 +149,22 @@ export class TaxController {
   }
 
   @Post("bulk")
+  @HttpCode(201)
   @RateLimit("bulkWrite")
   async createBulkTaxRecords(
-    @Req() req: any,
-    @Body()
-    body: {
-      records: Partial<TaxRecord>[];
-      capPreviousRecordIds?: TaxRecordCap[];
-    },
+    @Req() req: AuthenticatedRequest,
+    @Body() body: BulkCreateTaxRecordsRequest,
   ): Promise<TaxRecordResponse[]> {
     // Validation and the one-transaction write live in TaxService (audit M3).
     return this.taxService.createBulk(req.user.id, body);
   }
 
   @Post()
-  async createTaxRecord(@Req() req: any, @Body() body: any): Promise<TaxRecordResponse> {
+  @HttpCode(201)
+  async createTaxRecord(
+    @Req() req: AuthenticatedRequest,
+    @Body() body: CreateTaxRecordRequest,
+  ): Promise<TaxRecordResponse> {
     const userId = req.user.id;
     const record = this.taxRecordRepository.create(
       withAnnualEndDate({
@@ -145,26 +176,40 @@ export class TaxController {
   }
 
   @Patch(":id")
+  @HttpCode(200)
   async updateTaxRecord(
-    @Req() req: any,
+    @Req() req: AuthenticatedRequest,
     @Param("id", new ParseUUIDPipe()) id: string,
-    @Body() body: any,
+    @Body() body: UpdateTaxRecordRequest,
+    @Headers("if-match") ifMatch?: string,
+    @Res({ passthrough: true }) res?: Response,
   ): Promise<TaxRecordResponse> {
     const userId = req.user.id;
-    const record = await this.taxRecordRepository.findOne({ where: { id, userId } });
-    if (!record) {
-      throw new NotFoundException("Tax record not found");
-    }
-    // receiptData is not loaded (select: false), so an omitted field keeps the stored bytes.
-    Object.assign(record, pickTaxRecordFields(body));
-    withAnnualEndDate(record);
-    return toResponse(await this.taxRecordRepository.save(record));
+    const notFound = () => new NotFoundException("Tax record not found");
+    // `If-Match` makes the update conditional (412 when stale, BE-09); the answer carries the ETag.
+    const saved = await withVersionClaim(
+      this.taxRecordRepository,
+      { id, user_id: userId },
+      expectedVersion(ifMatch),
+      notFound,
+      async (repository) => {
+        const record = await repository.findOne({ where: { id, userId } });
+        if (!record) throw notFound();
+        // receiptData is not loaded (select: false), so an omitted field keeps the stored bytes.
+        Object.assign(record, pickTaxRecordFields(body));
+        withAnnualEndDate(record);
+        return repository.save(record);
+      },
+    );
+    setEtag(res, saved.updatedAt);
+    return toResponse(saved);
   }
 
   @Delete(":id")
+  @HttpCode(200)
   @RateLimit("destructive")
   async deleteTaxRecord(
-    @Req() req: any,
+    @Req() req: AuthenticatedRequest,
     @Param("id", new ParseUUIDPipe()) id: string,
   ): Promise<{ success: boolean }> {
     const userId = req.user.id;

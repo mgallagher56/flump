@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { IsoDateTime, Money, Notes, Uuid } from "../primitives.js";
+import { IsoDate, IsoDateTime, Money, Notes, ResponseMoney, Uuid } from "../primitives.js";
 
 export const BUDGET_FREQUENCIES = ["monthly", "annual", "weekly"] as const;
 export const BudgetFrequency = z.enum(BUDGET_FREQUENCIES);
@@ -7,7 +7,18 @@ export const BudgetFrequency = z.enum(BUDGET_FREQUENCIES);
 /** Budget categories stay open: web sends "living" and custom categories. */
 export const BudgetCategory = z.string().trim().min(1).max(64);
 
-export const CreateBudgetEntryRequest = z.object({
+/**
+ * Accepted and ignored (BE-09): the web budget table and wizard still send these with every new
+ * entry, and request bodies are strict. `isPrimaryIncome` and `isDefault` are server-owned and
+ * `contractEndDate` has no column. Remove them once the web stops sending them (BE-10).
+ */
+const IgnoredBudgetFields = {
+  isPrimaryIncome: z.boolean().optional().meta({ description: "Ignored. Server-owned." }),
+  isDefault: z.boolean().optional().meta({ description: "Ignored. Server-owned." }),
+  contractEndDate: IsoDate.nullish().meta({ description: "Ignored. Not stored." }),
+};
+
+export const CreateBudgetEntryRequest = z.strictObject({
   category: BudgetCategory,
   name: z.string().trim().min(1).max(120).optional(),
   /** Deprecated alias for `name`, accepted for older clients. */
@@ -17,9 +28,11 @@ export const CreateBudgetEntryRequest = z.object({
   isIncome: z.boolean().optional(),
   isEssential: z.boolean().optional(),
   notes: Notes.nullish(),
+  ...IgnoredBudgetFields,
 });
+export type CreateBudgetEntryRequest = z.infer<typeof CreateBudgetEntryRequest>;
 
-export const UpdateBudgetEntryRequest = z.object({
+export const UpdateBudgetEntryRequest = z.strictObject({
   category: BudgetCategory.optional(),
   name: z.string().trim().min(1).max(120).optional(),
   title: z.string().trim().min(1).max(120).optional(),
@@ -28,7 +41,9 @@ export const UpdateBudgetEntryRequest = z.object({
   isIncome: z.boolean().optional(),
   isEssential: z.boolean().optional(),
   notes: Notes.nullish(),
+  contractEndDate: IgnoredBudgetFields.contractEndDate,
 });
+export type UpdateBudgetEntryRequest = z.infer<typeof UpdateBudgetEntryRequest>;
 
 /** Most custom budget categories one user may keep (audit L2), and the longest name. */
 export const MAX_CUSTOM_BUDGET_CATEGORIES = 50;
@@ -38,9 +53,10 @@ export const MAX_BUDGET_CATEGORY_NAME_LENGTH = 64;
  * `POST budget-entries/categories`. The handler also refuses a new category once the user has
  * MAX_CUSTOM_BUDGET_CATEGORIES (400), since the count depends on stored data.
  */
-export const AddBudgetCategoryRequest = z.object({
+export const AddBudgetCategoryRequest = z.strictObject({
   category: z.string().trim().min(1).max(MAX_BUDGET_CATEGORY_NAME_LENGTH),
 });
+export type AddBudgetCategoryRequest = z.infer<typeof AddBudgetCategoryRequest>;
 
 /**
  * A budget entry as the client receives it: every `budget_entries` column, dates as ISO strings.
@@ -51,7 +67,7 @@ export const BudgetEntryDto = z.strictObject({
   userId: z.string(),
   category: z.string(),
   name: z.string(),
-  amount: z.number().finite(),
+  amount: ResponseMoney,
   frequency: BudgetFrequency,
   isIncome: z.boolean(),
   isPrimaryIncome: z.boolean(),

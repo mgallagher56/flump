@@ -44,6 +44,8 @@ export const USER_DATA_TABLES = [
   "budget_entries",
   "agent_audit_events",
   "mcp_tokens",
+  // BE-09 stored create responses for Idempotency-Key retries (they echo the rows they created).
+  "idempotency_keys",
   "tax_records",
   "user_profiles",
   // BE-04 deletion proofs: cleared too, so a persona id erased during staging testing can be seeded

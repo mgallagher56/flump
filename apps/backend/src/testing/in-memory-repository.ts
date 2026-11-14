@@ -12,6 +12,48 @@ const matches = (row: Row, where: Row | undefined) =>
   !where || Object.entries(where).every(([key, value]) => matchesValue(row[key], value));
 
 /**
+ * A list query builder for keyset pages (contract/pagination.ts) over `source()`. Conditions of
+ * the form `alias.prop = :param` really filter, so an unscoped list still leaks and fails a test;
+ * the order, the cursor predicate and the key selects are ignored (the real-Postgres suites cover
+ * those).
+ */
+export const fakeListQueryBuilder = (source: () => Row[]) => {
+  const filters: [string, string][] = [];
+  let params: Row = {};
+  let take = Number.POSITIVE_INFINITY;
+  let skip = 0;
+  const qb = {
+    where: (condition: string, p?: Row) => qb.andWhere(condition, p),
+    andWhere: (condition: string, p?: Row) => {
+      params = { ...params, ...p };
+      const m = /^\s*"?\w+"?\."?(\w+)"?\s*=\s*:(\w+)\s*$/.exec(condition);
+      if (m) filters.push([m[1] as string, m[2] as string]);
+      return qb;
+    },
+    innerJoin: () => qb,
+    addSelect: () => qb,
+    orderBy: () => qb,
+    addOrderBy: () => qb,
+    limit: (n: number) => {
+      take = n;
+      return qb;
+    },
+    offset: (n: number) => {
+      skip = n;
+      return qb;
+    },
+    getRawAndEntities: async () => {
+      const entities = source()
+        .filter((row) => filters.every(([prop, name]) => row[prop] === params[name]))
+        .slice(skip, skip + take)
+        .map((row) => ({ ...row }));
+      return { entities, raw: entities.map(() => ({})) };
+    },
+  };
+  return qb;
+};
+
+/**
  * Minimal in-memory stand-in for a TypeORM repository, used by cross-user
  * tests. Unlike a canned mock it really evaluates `where` clauses, so a
  * handler that forgets to scope by `userId` will leak rows and fail the test.
@@ -63,6 +105,7 @@ export const createInMemoryRepository = (seed: Row[] = []) => {
       if (index >= 0) rows.splice(index, 1);
       return data;
     }),
+    createQueryBuilder: vi.fn(() => fakeListQueryBuilder(() => rows)),
     delete: vi.fn(async (where: Row) => {
       for (let i = rows.length - 1; i >= 0; i--) {
         if (matches(rows[i], where)) rows.splice(i, 1);

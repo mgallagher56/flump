@@ -4,7 +4,7 @@ import { IsoDateTime, Uuid } from "../primitives.js";
 /** Providers wired into the backend registry today (apps/backend/src/providers). */
 export const INSTITUTION_IDS = ["monzo", "starling", "trading212"] as const;
 
-export const ConnectBankRequest = z.object({
+export const ConnectBankRequest = z.strictObject({
   institutionId: z.string().trim().min(1).max(64),
   token: z.string().min(1).max(512).optional(),
   code: z.string().min(1).max(2048).optional(),
@@ -82,3 +82,6 @@ export const DeleteBankConnectionResponse = z.strictObject({
   consentRevoked: z.boolean(),
 });
 export type DeleteBankConnectionResponse = z.infer<typeof DeleteBankConnectionResponse>;
+
+// Parsed request types (z.output: what a handler receives in enforce mode).
+export type ConnectBankRequest = z.infer<typeof ConnectBankRequest>;

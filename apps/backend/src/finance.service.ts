@@ -1,9 +1,5 @@
 import { randomUUID } from "node:crypto";
-import {
-  DEFAULT_TRANSACTION_PAGE,
-  MAX_TRANSACTION_OFFSET,
-  MAX_TRANSACTION_PAGE,
-} from "@flump/api-contract";
+import type { CreateTransactionRequest as CreateTransactionDto } from "@flump/api-contract";
 import { BankSyncOrchestrator, isBankProviderError } from "@flump/banking/server";
 import {
   BadRequestException,
@@ -33,32 +29,35 @@ import {
   SYNC_DEADLINE_MS,
   type SyncOutcome,
 } from "./bank-connection-sync";
+import { type KeysetOrder, keysetPage, type Page, type PageRequest } from "./contract/pagination";
 import { Account } from "./entities/account.entity";
 import { AccountDetail } from "./entities/account-detail.entity";
 import { BankConnection } from "./entities/bank-connection.entity";
 import { Transaction } from "./entities/transaction.entity";
 import { UserProfile } from "./entities/user-profile.entity";
-import type { CreateTransactionDto } from "./finance.controller";
 import { safeErrorSummary } from "./log-safe";
 import type { BankProvider } from "./providers/provider.interface";
 import { BankProviderRegistry } from "./providers/provider.registry";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-/** An optional integer query value within [min, max]; anything else is a 400. */
-function pageNumber(
-  value: string | number | undefined,
-  name: string,
-  min: number,
-  max: number,
-): number | undefined {
-  if (value === undefined || value === "") return undefined;
-  const n = typeof value === "number" ? value : Number(value);
-  if (!Number.isInteger(n) || n < min || n > max) {
-    throw new BadRequestException(`${name} must be a whole number from ${min} to ${max}`);
-  }
-  return n;
-}
+/** GET /transactions order: newest first, id as tiebreak (keyset pagination). */
+const TRANSACTION_ORDER: KeysetOrder = {
+  keys: [
+    { column: '"t"."timestamp"', kind: "timestamp" },
+    { column: '"t"."id"', kind: "uuid" },
+  ],
+  direction: "DESC",
+};
+
+/** GET /bank-connections order: newest first, id as tiebreak (keyset pagination). */
+const CONNECTION_ORDER: KeysetOrder = {
+  keys: [
+    { column: '"c"."created_at"', kind: "timestamp" },
+    { column: '"c"."id"', kind: "uuid" },
+  ],
+  direction: "DESC",
+};
 
 @Injectable()
 export class FinanceService {
@@ -95,6 +94,14 @@ export class FinanceService {
     return this.accountIntakeService.getAccounts(userId);
   }
 
+  listAccounts(userId: string, page: PageRequest) {
+    return this.accountIntakeService.listAccounts(userId, page);
+  }
+
+  listAccountDetails(userId: string, page: PageRequest, accountId?: string) {
+    return this.accountIntakeService.listAccountDetails(userId, page, accountId);
+  }
+
   async getAccount(userId: string, id: string) {
     return this.accountIntakeService.getAccount(userId, id);
   }
@@ -111,8 +118,8 @@ export class FinanceService {
     return this.accountIntakeService.createAccount(userId, body);
   }
 
-  async updateAccount(userId: string, id: string, body: UpdateAccountDto) {
-    return this.accountIntakeService.updateAccount(userId, id, body);
+  async updateAccount(userId: string, id: string, body: UpdateAccountDto, expectedVersion?: Date) {
+    return this.accountIntakeService.updateAccount(userId, id, body, expectedVersion);
   }
 
   async updateBalances(userId: string, body: UpdateBalancesDto) {
@@ -128,31 +135,25 @@ export class FinanceService {
   }
 
   /**
-   * The caller's transactions, newest first, one bounded page at a time: `limit` defaults to
-   * DEFAULT_TRANSACTION_PAGE and never exceeds MAX_TRANSACTION_PAGE. The id breaks timestamp ties
-   * so offset pages never overlap. Re-checked here so the bounds hold with CONTRACT_MODE=off.
+   * One page of the user's transactions, newest first (BE-09 keyset paging, M-API1). The page size
+   * comes from PAGE_LIMITS.transactions, which carries BE-08's DEFAULT_TRANSACTION_PAGE and
+   * MAX_TRANSACTION_PAGE; `offset` (BE-08) skips rows when no cursor is sent. The id breaks
+   * timestamp ties so pages never overlap.
    */
-  async getTransactions(
+  async listTransactions(
     userId: string,
+    page: PageRequest & { offset?: number },
     accountId?: string,
-    page: { limit?: string | number; offset?: string | number } = {},
-  ) {
-    const where: { userId: string; accountId?: string } = { userId };
-    if (accountId) {
-      // account_id is a uuid column: no account has a malformed id, so there is nothing to list
-      // (and casting it would be a database error).
-      if (!UUID.test(accountId)) return [];
-      where.accountId = accountId;
-    }
-    const take =
-      pageNumber(page.limit, "limit", 1, MAX_TRANSACTION_PAGE) ?? DEFAULT_TRANSACTION_PAGE;
-    const skip = pageNumber(page.offset, "offset", 0, MAX_TRANSACTION_OFFSET) ?? 0;
-    return this.transactionRepository.find({
-      where,
-      order: { timestamp: "DESC", id: "DESC" },
-      take,
-      skip,
-    });
+  ): Promise<Page<Transaction>> {
+    // account_id is a uuid column: no account has a malformed id, so there is nothing to list
+    // (and casting it would be a database error). Re-checked so it holds with CONTRACT_MODE=off.
+    if (accountId !== undefined && !UUID.test(accountId)) return { items: [], nextCursor: null };
+    const qb = this.transactionRepository
+      .createQueryBuilder("t")
+      .where("t.userId = :userId", { userId });
+    if (accountId) qb.andWhere("t.accountId = :accountId", { accountId });
+    if (page.offset) qb.offset(page.offset);
+    return keysetPage(qb, TRANSACTION_ORDER, page);
   }
 
   /**
@@ -210,6 +211,15 @@ export class FinanceService {
       order: { createdAt: "DESC" },
     });
     return connections.map(toPublicConnection);
+  }
+
+  /** One page of the user's connections, newest first, without tokens (BE-09, M-API1). */
+  async listBankConnections(userId: string, page: PageRequest) {
+    const qb = this.bankConnectionRepository
+      .createQueryBuilder("c")
+      .where("c.userId = :userId", { userId });
+    const { items, nextCursor } = await keysetPage(qb, CONNECTION_ORDER, page);
+    return { items: items.map(toPublicConnection), nextCursor };
   }
 
   async connectBank(userId: string, body: { institutionId: string; token?: string }) {

@@ -218,7 +218,7 @@ describe("instrument", () => {
       loads += 1;
       return {};
     });
-    await import("./sentry-exception.filter.js");
+    await import("../contract/api-exception.filter.js");
     await import("./observability.module.js");
     await import("./report.js");
     expect(loads).toBe(0);

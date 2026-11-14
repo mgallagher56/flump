@@ -6,6 +6,7 @@ import {
 } from "@nestjs/common";
 import { InjectDataSource } from "@nestjs/typeorm";
 import { DataSource, type EntityManager, In } from "typeorm";
+import { type KeysetOrder, keysetPage, type Page, type PageRequest } from "../contract/pagination";
 import { Account } from "../entities/account.entity";
 import {
   type ImportBatch,
@@ -121,6 +122,14 @@ export interface ImportPreviewView {
 }
 
 const MAX_LISTED_BATCHES = 50;
+/** GET /imports order: newest first, id as tiebreak (keyset pagination, BE-09). */
+const BATCH_ORDER: KeysetOrder = {
+  keys: [
+    { column: '"b"."created_at"', kind: "timestamp" },
+    { column: '"b"."id"', kind: "uuid" },
+  ],
+  direction: "DESC",
+};
 const rowKey = (ref: string, month: string) => `${ref}:${month}`;
 const cellKey = (accountId: string, year: number, month: number) => `${accountId}|${year}|${month}`;
 const NOT_FOUND = "Import not found";
@@ -292,6 +301,20 @@ export class ImportsService {
       take: MAX_LISTED_BATCHES,
     });
     return batches.map((b) => toView(b));
+  }
+
+  /** One page of the caller's batches, newest first (GET /imports, BE-09 keyset pagination). */
+  async listPage(
+    userId: string,
+    page: PageRequest,
+    now: Date = new Date(),
+  ): Promise<Page<ImportBatchView>> {
+    await expireStale(this.dataSource.manager, userId, now);
+    const qb = this.dataSource.manager
+      .createQueryBuilder(ImportBatchEntity, "b")
+      .where("b.userId = :userId", { userId });
+    const { items, nextCursor } = await keysetPage(qb, BATCH_ORDER, page);
+    return { items: items.map((b) => toView(b)), nextCursor };
   }
 
   /**
@@ -601,7 +624,7 @@ export class ImportsService {
       for (const b of data.balances) {
         if (!undone.has(cellKey(b.accountId, b.year, b.month))) continue;
         await m.query(
-          `UPDATE "accounts" SET "balance" = $3 WHERE "id" = $1 AND "user_id" = $2 AND "balance" = $4`,
+          `UPDATE "accounts" SET "balance" = $3, "updated_at" = now() WHERE "id" = $1 AND "user_id" = $2 AND "balance" = $4`,
           [b.accountId, userId, storedBalance(typeById.get(b.accountId), b.prior), b.written],
         );
       }

@@ -8,6 +8,8 @@ import {
 import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { In, Repository } from "typeorm";
+import { claimVersion, preconditionFailed } from "./contract/etag";
+import { type KeysetOrder, keysetPage, type Page, type PageRequest } from "./contract/pagination";
 import { Account } from "./entities/account.entity";
 import { AccountDetail } from "./entities/account-detail.entity";
 import { BankConnection } from "./entities/bank-connection.entity";
@@ -28,7 +30,8 @@ export interface CreateAccountDto {
   name: string;
   type: AccountType | string;
   balance: number;
-  currency?: string;
+  /** null or "" means "not provided" (create defaults it, update keeps it). */
+  currency?: string | null;
   interestRate?: number | null;
   monthlyContribution?: number | null;
   /** Mortgage term in months (1..600). Meaningful for Mortgage accounts; null otherwise. */
@@ -129,8 +132,36 @@ export function toAccountResponse(account: Account): Account {
     connectionId: account.connectionId ?? null,
     externalAccountId: account.externalAccountId ?? null,
     createdAt: account.createdAt,
+    updatedAt: account.updatedAt,
   };
 }
+
+/** An account as the API returns it (BE-09, audit L3): without the owner or provider ids. */
+export type PublicAccount<T extends Account = Account> = Omit<T, "userId" | "externalAccountId">;
+
+export function toPublicAccount<T extends Account>(account: T): PublicAccount<T> {
+  const { userId: _userId, externalAccountId: _externalAccountId, ...rest } = account;
+  return rest;
+}
+
+/** GET /accounts order: oldest first, id as tiebreak (keyset pagination). */
+const ACCOUNT_ORDER: KeysetOrder = {
+  keys: [
+    { column: '"a"."created_at"', kind: "timestamp" },
+    { column: '"a"."id"', kind: "uuid" },
+  ],
+  direction: "ASC",
+};
+
+/** GET /account-details order: by month, id as tiebreak (keyset pagination). */
+const DETAIL_ORDER: KeysetOrder = {
+  keys: [
+    { column: '"d"."year"', kind: "int" },
+    { column: '"d"."month"', kind: "int" },
+    { column: '"d"."id"', kind: "int" },
+  ],
+  direction: "ASC",
+};
 
 function validateStudentLoanPlan(value: unknown): string | null | undefined {
   if (value === undefined || value === null) return value;
@@ -228,7 +259,12 @@ export interface IAccountIntake {
   getAccount(userId: string, id: string): Promise<AccountWithDetails>;
   getAccountDetails(userId: string, accountId?: string): Promise<AccountDetail[]>;
   createAccount(userId: string, body: CreateAccountDto): Promise<Account>;
-  updateAccount(userId: string, id: string, body: UpdateAccountDto): Promise<Account>;
+  updateAccount(
+    userId: string,
+    id: string,
+    body: UpdateAccountDto,
+    expectedVersion?: Date,
+  ): Promise<Account>;
   updateBalances(userId: string, body: UpdateBalancesDto): Promise<Account[]>;
   deleteAccount(userId: string, id: string): Promise<DeleteAccountResponse>;
   getPortfolioSnapshot(userId: string): Promise<PortfolioSnapshotResponse>;
@@ -312,6 +348,49 @@ export class AccountIntakeService implements IAccountIntake {
       ...toAccountResponse(acc),
       details: detailsByAccount[acc.id] || [],
     }));
+  }
+
+  /** One page of the user's accounts, each with its monthly history (BE-09, M-API1). */
+  async listAccounts(userId: string, page: PageRequest): Promise<Page<AccountWithDetails>> {
+    const qb = this.accountRepository
+      .createQueryBuilder("a")
+      .where("a.userId = :userId", { userId });
+    const { items, nextCursor } = await keysetPage(qb, ACCOUNT_ORDER, page);
+    const details =
+      items.length > 0
+        ? await this.accountDetailRepository.find({
+            where: { accountId: In(items.map((a) => a.id)) },
+            order: { year: "ASC", month: "ASC" },
+          })
+        : [];
+    const byAccount = new Map<string, AccountDetail[]>();
+    for (const d of details) byAccount.set(d.accountId, [...(byAccount.get(d.accountId) ?? []), d]);
+    return {
+      items: items.map((a) => ({ ...toAccountResponse(a), details: byAccount.get(a.id) ?? [] })),
+      nextCursor,
+    };
+  }
+
+  /**
+   * One page of monthly values: every account of the user's, or one account's (404 when it is
+   * not theirs). The user filter is on the detail row's own user id and, for one account, on the
+   * account's owner as well.
+   */
+  async listAccountDetails(
+    userId: string,
+    page: PageRequest,
+    accountId?: string,
+  ): Promise<Page<AccountDetail>> {
+    if (accountId) {
+      const account = await this.accountRepository.findOne({ where: { id: accountId, userId } });
+      if (!account) throw new NotFoundException("Account not found");
+    }
+    const qb = this.accountDetailRepository
+      .createQueryBuilder("d")
+      .innerJoin(Account, "owner", '"owner"."id" = "d"."account_id"')
+      .where('"owner"."user_id" = :userId', { userId });
+    if (accountId) qb.andWhere('"d"."account_id" = :accountId', { accountId });
+    return keysetPage(qb, DETAIL_ORDER, page);
   }
 
   async getAccount(userId: string, id: string): Promise<AccountWithDetails> {
@@ -421,8 +500,22 @@ export class AccountIntakeService implements IAccountIntake {
     );
   }
 
-  async updateAccount(userId: string, id: string, body: UpdateAccountDto): Promise<Account> {
+  /**
+   * `expectedVersion` (from If-Match) makes the update conditional: it is claimed atomically
+   * first (claimVersion), so a stale version writes nothing and is a 412 (BE-09, M7).
+   */
+  async updateAccount(
+    userId: string,
+    id: string,
+    body: UpdateAccountDto,
+    expectedVersion?: Date,
+  ): Promise<Account> {
     return this.runInTransaction(async (accounts, details) => {
+      if (expectedVersion) {
+        const claim = await claimVersion(accounts, { id, user_id: userId }, expectedVersion);
+        if (claim === "missing") throw new NotFoundException("Account not found");
+        if (claim === "stale") throw preconditionFailed();
+      }
       const account = await accounts.findOne({ where: { id, userId } });
       if (!account) {
         throw new NotFoundException("Account not found");
@@ -446,7 +539,9 @@ export class AccountIntakeService implements IAccountIntake {
       if (body.balance !== undefined && body.balance !== null) {
         await this.upsertCurrentMonthHistory(details, userId, account.id, Number(saved.balance));
       }
-      return toAccountResponse(saved);
+      // Re-read so the response carries the version the database now holds (the ETag).
+      const fresh = await accounts.findOne({ where: { id, userId } });
+      return toAccountResponse(fresh ?? saved);
     });
   }
 

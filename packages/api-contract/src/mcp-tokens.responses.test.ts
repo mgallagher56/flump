@@ -222,8 +222,8 @@ describe("mcp-tokens response schemas", () => {
   });
 
   it("McpTokenActivityQuery caps the page and checks the cursor", () => {
-    expect(McpTokenActivityQuery.safeParse({ limit: "100" }).success).toBe(true);
-    expect(McpTokenActivityQuery.safeParse({ limit: "101" }).success).toBe(false);
+    expect(McpTokenActivityQuery.safeParse({ limit: "500" }).success).toBe(true);
+    expect(McpTokenActivityQuery.safeParse({ limit: "501" }).success).toBe(false);
     expect(McpTokenActivityQuery.safeParse({ before: "not a cursor!" }).success).toBe(false);
     expect(McpTokenActivityQuery.safeParse({ before: "MGI2ZjRlMWEtOWMy" }).success).toBe(true);
     expect(McpTokenActivityQuery.safeParse({}).success).toBe(true);

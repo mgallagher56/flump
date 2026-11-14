@@ -51,6 +51,7 @@ const ENTITY_TABLES = [
   "bank_connections",
   "bank_oauth_states",
   "budget_entries",
+  "idempotency_keys",
   "import_batches",
   "mcp_tokens",
   "snapshot_checkins",
@@ -1423,6 +1424,46 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
       await ds.query("DELETE FROM migrations WHERE name = 'AddRateLimitBuckets1794632012000'");
       await ds.runMigrations();
       expect(await bucketTable()).toEqual(["rate_limit_buckets"]);
+    });
+  });
+
+  describe("AddIdempotencyKeysAndAccountVersion1794632100000", () => {
+    const MIGRATION = "AddIdempotencyKeysAndAccountVersion1794632100000";
+    const accountColumns = async (): Promise<string[]> =>
+      (
+        await ds.query(
+          "SELECT column_name FROM information_schema.columns WHERE table_name = 'accounts' ORDER BY column_name",
+        )
+      ).map((r: { column_name: string }) => r.column_name);
+
+    it("gives existing accounts a version, enforces one key per user and route; down() drops both", async () => {
+      await ds.runMigrations();
+      await undoThrough(MIGRATION);
+      expect(await tables()).not.toContain("idempotency_keys");
+      expect(await accountColumns()).not.toContain("updated_at");
+      await ds.query(
+        "INSERT INTO accounts (user_id, name, type, balance) VALUES ('u1', 'Before', 'Current', 10)",
+      );
+
+      await ds.runMigrations();
+      const [row] = await ds.query("SELECT updated_at FROM accounts WHERE name = 'Before'");
+      expect(row.updated_at).toBeInstanceOf(Date);
+      const insertKey = (userId: string, routeId: string) =>
+        ds.query(
+          `INSERT INTO idempotency_keys (user_id, route_id, key, request_hash) VALUES ($1, $2, 'k1', $3)`,
+          [userId, routeId, "a".repeat(64)],
+        );
+      await insertKey("u1", "accounts.create");
+      await insertKey("u2", "accounts.create");
+      await insertKey("u1", "budget.create");
+      await expect(insertKey("u1", "accounts.create")).rejects.toThrow(
+        /UQ_idempotency_keys_user_route_key/,
+      );
+
+      await undoThrough(MIGRATION);
+      expect(await tables()).not.toContain("idempotency_keys");
+      expect(await accountColumns()).not.toContain("updated_at");
+      expect(await ds.query("SELECT name FROM accounts")).toEqual([{ name: "Before" }]);
     });
   });
 });

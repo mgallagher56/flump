@@ -17,7 +17,8 @@ import {
 
 /**
  * E21 phase 2: with CONTRACT_MODE=enforce and the default groups, every payload apps/web sends
- * must still reach the handler (unknown keys are stripped, not rejected). Complements the real
+ * must still reach the handler (schemas are strict since BE-09, so each payload must be exactly
+ * what the contract lists, including the fields it accepts and ignores). Complements the real
  * Postgres replay in web-mutations.contract.spec.ts, which needs TEST_DATABASE_URL.
  */
 const ID = "6f1c1f3e-9d6e-4c0e-9f43-0a1b2c3d4e5f";

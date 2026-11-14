@@ -65,11 +65,9 @@ describe("TaxController", () => {
   });
 
   it("returns [] for a new user and never calls create or save", async () => {
-    const mockRepo = {
-      find: vi.fn().mockResolvedValue([]),
-      create: vi.fn((r) => r),
-      save: vi.fn().mockResolvedValue([]),
-    };
+    const mockRepo = createInMemoryRepository([
+      { id: "other", userId: "user-999", date: "2026-01-01" },
+    ]);
     const mockProfileRepo = {
       findOne: vi.fn().mockResolvedValue(null),
     };
@@ -78,10 +76,6 @@ describe("TaxController", () => {
     const result = await controller.getTaxRecords({ user: { id: "user-123" } });
 
     expect(result).toEqual([]);
-    expect(mockRepo.find).toHaveBeenCalledWith({
-      where: { userId: "user-123" },
-      order: { date: "DESC" },
-    });
     expect(mockRepo.create).not.toHaveBeenCalled();
     expect(mockRepo.save).not.toHaveBeenCalled();
   });
@@ -110,7 +104,7 @@ describe("TaxController", () => {
     });
 
     // Create
-    const created = await controller.createTaxRecord(req, { name: "Div", amount: 100 });
+    const created = await controller.createTaxRecord(req, { name: "Div", amount: 100 } as never);
     expect(created.name).toBe("Div");
 
     // Update
@@ -172,7 +166,7 @@ describe("TaxController", () => {
         userId: "userA",
         name: "Takeover",
         amount: 1,
-      });
+      } as never);
 
       expect(taxRepo.rows.find((r) => r.id === "r-A")).toEqual(victim);
       expect(created.id).not.toBe("r-A");
@@ -199,7 +193,7 @@ describe("TaxController", () => {
       const updated = await controller.updateTaxRecord(userB, "r-B", {
         id: "r-A",
         amount: 99,
-      });
+      } as never);
 
       expect(updated.id).toBe("r-B");
       expect(taxRepo.rows.find((r) => r.id === "r-A")).toEqual(victim);
@@ -213,7 +207,7 @@ describe("TaxController", () => {
     it("updateTaxRecord: PATCH with another userId does not change userId", async () => {
       const { taxRepo, controller, userB } = setup();
 
-      await controller.updateTaxRecord(userB, "r-B", { userId: "other", name: "Renamed" });
+      await controller.updateTaxRecord(userB, "r-B", { userId: "other", name: "Renamed" } as never);
 
       expect(taxRepo.rows.find((r) => r.id === "r-B")).toMatchObject({
         userId: "userB",
@@ -229,7 +223,13 @@ describe("TaxController annual record end date (E23 D16)", () => {
     const repo = createInMemoryRepository();
     return new TaxController(withManager(repo) as any, { findOne: vi.fn() } as any);
   };
-  const base = { type: "income", source: "paye", category: "salary", name: "Pay", amount: 1000 };
+  const base = {
+    type: "income",
+    source: "paye",
+    category: "salary",
+    name: "Pay",
+    amount: 1000,
+  } as const;
 
   it("fills end_date with 5 April closing the tax year containing the date", async () => {
     const controller = setup();
@@ -522,7 +522,7 @@ describe("TaxController receipt validation (E20-N14)", () => {
         name: "x",
         receiptFilename: "a.png",
         receiptData: PNG_URL,
-      });
+      } as never);
       expect(created.hasReceipt).toBe(true);
       expect(created).not.toHaveProperty("receiptData");
 

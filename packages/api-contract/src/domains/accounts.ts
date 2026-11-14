@@ -7,6 +7,7 @@ import {
   MoneyNonNegative,
   Name,
   Percent,
+  ResponseMoney,
   Uuid,
 } from "../primitives.js";
 
@@ -34,7 +35,7 @@ export const StudentLoanPlan = z.enum(STUDENT_LOAN_PLANS);
  * POST /accounts. Today's backend accepts any string for `type` and any JSON for `balance`;
  * the contract is the stricter shape the web actually sends.
  */
-export const CreateAccountRequest = z.object({
+export const CreateAccountRequest = z.strictObject({
   name: Name,
   type: AccountType,
   /**
@@ -61,7 +62,7 @@ export const CreateAccountRequest = z.object({
  * columns; `null` on name, type or balance is a contract violation (it hits a NOT NULL column).
  * `currency: null` is tolerated because the service treats it as "not provided".
  */
-export const UpdateAccountRequest = z.object({
+export const UpdateAccountRequest = z.strictObject({
   name: Name.optional(),
   type: AccountType.optional(),
   /** Either sign is accepted; stored by the same rule as on create (a type change re-signs it). */
@@ -81,9 +82,9 @@ export const UpdateAccountRequest = z.object({
  * PATCH /accounts/balances (monthly check-in). One transaction sets every balance and upserts the
  * current UK month's history row for each. An unknown or foreign id fails the whole batch (404).
  */
-export const UpdateBalancesRequest = z.object({
+export const UpdateBalancesRequest = z.strictObject({
   balances: z
-    .array(z.object({ id: Uuid, balance: Money }))
+    .array(z.strictObject({ id: Uuid, balance: Money }))
     .min(1)
     .max(100),
 });
@@ -92,8 +93,10 @@ export const UpdateBalancesRequest = z.object({
 // Responses (the 2xx JSON body after JSON.stringify: Date -> ISO string, decimals as numbers).
 // ---------------------------------------------------------------------------------------------
 
-/** A computed or stored amount in a response: finite, not held to the 2-dp request rule. */
-const Amount = z.number().finite();
+/** A computed or stored amount in a response: finite, not held to the 2-dp request rule (D9). */
+const Amount = ResponseMoney;
+/** A rate in a response (4.5 means 4.5%), not money. */
+const Rate = z.number().finite();
 const Int = z.number().int();
 
 /** The caller's own user id (an identity-provider id, not always a UUID). */
@@ -125,9 +128,10 @@ export const AccountDetailDto = z.strictObject({
 });
 export type AccountDetailDto = z.infer<typeof AccountDetailDto>;
 
+// No `userId` or `externalAccountId` (BE-09, audit L3): the caller knows who they are, and the
+// provider's account id is an internal sync key.
 const accountShape = {
   id: Uuid,
-  userId: OwnerId,
   name: z.string(),
   type: AccountType,
   /**
@@ -135,7 +139,7 @@ const accountShape = {
    * (BE-05 stored-balance rule, enforced by a database check); other types keep their sign.
    */
   balance: Amount,
-  interestRate: Amount.nullable(),
+  interestRate: Rate.nullable(),
   monthlyContribution: Amount.nullable(),
   termMonths: Int.nullable(),
   fixedRateEndDate: IsoDate.nullable(),
@@ -143,8 +147,9 @@ const accountShape = {
   currency: Currency,
   studentLoanPlan: StudentLoanPlan.nullable(),
   connectionId: Uuid.nullable(),
-  externalAccountId: z.string().nullable(),
   createdAt: IsoDateTime,
+  /** The resource version: `If-Match: "<updatedAt>"` makes an update conditional (BE-09). */
+  updatedAt: IsoDateTime,
 };
 
 /** An account as create, update and the balance check-in return it. */
@@ -211,7 +216,7 @@ export const ResolvedAccountDto = z.strictObject({
   netWorthBalance: Amount,
   latestBalance: Amount,
   overdrawnAmount: Amount,
-  interestRate: Amount,
+  interestRate: Rate,
   interestRateKnown: z.boolean(),
   monthlyContribution: Amount,
   monthlyContributionKnown: z.boolean(),
@@ -253,3 +258,8 @@ export const PortfolioSnapshotResponse = z.strictObject({
   currency: Currency,
 });
 export type PortfolioSnapshotResponse = z.infer<typeof PortfolioSnapshotResponse>;
+
+// Parsed request types (z.output: what a handler receives in enforce mode).
+export type CreateAccountRequest = z.infer<typeof CreateAccountRequest>;
+export type UpdateAccountRequest = z.infer<typeof UpdateAccountRequest>;
+export type UpdateBalancesRequest = z.infer<typeof UpdateBalancesRequest>;

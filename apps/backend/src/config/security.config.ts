@@ -1,3 +1,4 @@
+import { ETAG_HEADER, IDEMPOTENT_REPLAYED_HEADER, NEXT_CURSOR_HEADER } from "@flump/api-contract";
 import type { INestApplication } from "@nestjs/common";
 import { json } from "express";
 import helmet from "helmet";
@@ -31,6 +32,17 @@ export function resolveTrustProxyHops(env: Record<string, string | undefined>): 
   return env.RAILWAY_ENVIRONMENT || env.NODE_ENV === "production" ? 1 : undefined;
 }
 
+export const CORS_EXPOSED_HEADERS: readonly string[] = [
+  NEXT_CURSOR_HEADER,
+  ETAG_HEADER,
+  IDEMPOTENT_REPLAYED_HEADER,
+  "Deprecation",
+  "Sunset",
+  "Link",
+  "Retry-After",
+  "x-request-id",
+];
+
 /**
  * CORS, security headers, body limits and proxy trust for the JSON API.
  * The Nest app must be created with `bodyParser: false`: the parsers below
@@ -49,7 +61,9 @@ export function applySecurity(
 
   // First, so every later middleware and route sees the canonical (unversioned) path.
   app.use(v1AliasMiddleware);
-  app.enableCors({ origin: origins, credentials: false });
+  // Browsers hide response headers from scripts unless listed: the paging cursor, the resource
+  // version and the idempotent-replay flag are part of the API (BE-09, docs/api/versioning.md).
+  app.enableCors({ origin: origins, credentials: false, exposedHeaders: CORS_EXPOSED_HEADERS });
   app.use(
     helmet({
       contentSecurityPolicy: {

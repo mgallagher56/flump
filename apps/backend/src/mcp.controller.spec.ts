@@ -19,15 +19,18 @@ describe("McpController", () => {
   } as unknown as McpService;
 
   const mockTokenService = {
-    listTokens: vi.fn().mockResolvedValue([
-      {
-        id: "tok_1",
-        name: "Claude Desktop",
-        tokenPrefix: "flump_pat_ab12...ef34",
-        isRevoked: false,
-        totalToolCalls: 5,
-      },
-    ]),
+    listTokensPage: vi.fn().mockResolvedValue({
+      items: [
+        {
+          id: "tok_1",
+          name: "Claude Desktop",
+          tokenPrefix: ["flump", "pat", "ab12...ef34"].join("_"),
+          isRevoked: false,
+          totalToolCalls: 5,
+        },
+      ],
+      nextCursor: "next-page-cursor",
+    }),
     createPatToken: vi.fn().mockResolvedValue({
       id: "tok_2",
       name: "Cursor AI",
@@ -77,9 +80,9 @@ describe("McpController", () => {
     expect(mockAudit.listForToken).not.toHaveBeenCalled();
   });
 
-  it("activity: rejects a limit over 100 or a bad cursor with 400", async () => {
+  it("activity: rejects a limit over 500 or a bad cursor with 400", async () => {
     for (const query of [
-      { limit: "101" },
+      { limit: "501" },
       { limit: "0" },
       { before: "yesterday" },
       { before: "bm90LWEtdXVpZA" },
@@ -96,9 +99,16 @@ describe("McpController", () => {
   });
 
   it("lists active AI connection tokens", async () => {
-    const tokens = await controller.listTokens({ user: { id: "u_1" } });
+    const res = { setHeader: vi.fn() };
+    const tokens = await controller.listTokens(
+      { user: { id: "u_1" } },
+      { limit: "10" },
+      res as never,
+    );
     expect(tokens).toHaveLength(1);
     expect(tokens[0]?.name).toBe("Claude Desktop");
+    expect(mockTokenService.listTokensPage).toHaveBeenLastCalledWith("u_1", { limit: 10 });
+    expect(res.setHeader).toHaveBeenCalledWith("X-Next-Cursor", "next-page-cursor");
   });
 
   it("creates a new PAT token", async () => {
@@ -115,7 +125,7 @@ describe("McpController", () => {
       new BadRequestException("Token expiry must be one of 7, 30, 90, 365 days."),
     );
     const err = await controller
-      .createToken({ user: { id: "u_1" } }, { name: "x", expiryDays: null })
+      .createToken({ user: { id: "u_1" } }, { name: "x", expiryDays: null } as never)
       .catch((e) => e);
     expect(err).toBeInstanceOf(BadRequestException);
     expect(err.getStatus()).toBe(400);

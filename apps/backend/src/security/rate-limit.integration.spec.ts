@@ -111,7 +111,7 @@ describe("rate limiting (E20-N13)", () => {
     const blocked = await call("POST", "/reset", "alice");
     expect(blocked.status).toBe(429);
     expect(Number(blocked.headers.get("retry-after"))).toBeGreaterThan(0);
-    expect((await blocked.json()).error).toBe("rate_limited");
+    expect((await blocked.json()).code).toBe("rate_limited");
     // A different user is unaffected.
     expect((await call("POST", "/reset", "bob")).status).toBe(201);
   });

@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { Controller, Get, HttpStatus, Res } from "@nestjs/common";
+import { Controller, Get, HttpCode, HttpStatus, Res } from "@nestjs/common";
 import type { Response } from "express";
 import { DataSource } from "typeorm";
 import { SkipRateLimit } from "../security/rate-limit.decorator";
@@ -33,12 +33,14 @@ export class HealthController {
   constructor(private readonly dataSource: DataSource) {}
 
   @Get()
+  @HttpCode(200)
   live(@Res({ passthrough: true }) res: Response) {
     res.setHeader("Cache-Control", "no-store");
     return { status: "ok" };
   }
 
   @Get("ready")
+  @HttpCode(200)
   async ready(@Res({ passthrough: true }) res: Response) {
     res.setHeader("Cache-Control", "no-store");
     let timer: ReturnType<typeof setTimeout> | undefined;

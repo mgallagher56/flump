@@ -6,18 +6,34 @@ export const hasAtMostTwoDecimals = (v: number): boolean => {
   return Math.abs(scaled - Math.round(scaled)) <= Math.max(1e-6, Math.abs(scaled) * 1e-12);
 };
 
-/** Money: a finite JSON number in pounds with at most 2 decimal places (E21 decision D3-A). */
+/**
+ * How money travels on the wire (owner ruling D9, BE-09): a JSON number in pounds, never a string
+ * and never pence. Published as the description of every money field in the OpenAPI document.
+ */
+export const MONEY_WIRE_DESCRIPTION =
+  "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.";
+
+/** Money: a finite JSON number in pounds with at most 2 decimal places (E21 decision D3-A, D9). */
 export const Money = z
   .number()
   .finite()
   .refine((v) => Math.abs(v) < 1e10, "must be below 10 billion")
-  .refine(hasAtMostTwoDecimals, "at most 2 decimal places");
+  .refine(hasAtMostTwoDecimals, "at most 2 decimal places")
+  .meta({ description: MONEY_WIRE_DESCRIPTION });
 
 /**
  * Non-negative money (contributions and other amounts that are never negative). Balances are
  * signed `Money`: a liability is stored negative (BE-05 stored-balance rule).
  */
-export const MoneyNonNegative = Money.refine((v) => v >= 0, "must not be negative");
+export const MoneyNonNegative = Money.refine((v) => v >= 0, "must not be negative").meta({
+  description: MONEY_WIRE_DESCRIPTION,
+});
+
+/**
+ * A money amount in a response (D9): a finite JSON number in pounds. Computed figures are not held
+ * to the 2-decimal request rule.
+ */
+export const ResponseMoney = z.number().finite().meta({ description: MONEY_WIRE_DESCRIPTION });
 
 /** A percentage where 4.5 means 4.5% (never a fraction). Columns are numeric(5,2). */
 export const Percent = z

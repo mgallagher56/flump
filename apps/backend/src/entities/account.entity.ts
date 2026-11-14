@@ -1,4 +1,12 @@
-import { Check, Column, CreateDateColumn, Entity, Index, PrimaryGeneratedColumn } from "typeorm";
+import {
+  Check,
+  Column,
+  CreateDateColumn,
+  Entity,
+  Index,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
+} from "typeorm";
 import { numericTransformer } from "./numeric.transformer";
 
 // Every page loads a user's accounts in creation order. (AddUserIdIndexes1794358100000)
@@ -86,4 +94,8 @@ export class Account {
 
   @CreateDateColumn({ name: "created_at", type: "timestamptz" })
   createdAt: Date;
+
+  /** The resource version behind the ETag (BE-09, audit L15). AddIdempotencyKeysAndAccountVersion1794632100000. */
+  @UpdateDateColumn({ name: "updated_at", type: "timestamptz" })
+  updatedAt: Date;
 }
