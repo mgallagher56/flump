@@ -10,7 +10,20 @@ const summaryFor = (patch: Partial<OnboardingValues>) =>
 describe("<LiveSummaryBar />", () => {
   it("shows Not set, never £0, while nothing is known", () => {
     render(<LiveSummaryBar assumingRegion={false} summary={summaryFor({})} />);
-    expect(screen.getAllByText("Not set")).toHaveLength(3);
+    expect(screen.getAllByText("Not set")).toHaveLength(1);
+  });
+
+  it("shows one figure only: the monthly take-home", () => {
+    render(
+      <LiveSummaryBar
+        assumingRegion={false}
+        summary={summaryFor({ incomeMode: "net", monthlyTakeHome: 3000, cashSavings: 12000 })}
+      />,
+    );
+    expect(screen.getByText("Monthly take-home pay (estimate)")).toBeDefined();
+    expect(screen.queryByTestId("onboarding-surplus")).toBeNull();
+    expect(screen.queryByTestId("onboarding-net-worth")).toBeNull();
+    expect(screen.getByTestId("onboarding-live-summary").textContent?.match(/£/g)).toHaveLength(1);
   });
 
   it("formats en-GB figures and keeps the take-home hooks", () => {
@@ -26,10 +39,8 @@ describe("<LiveSummaryBar />", () => {
       />,
     );
     const takeHome = screen.getByTestId("onboarding-take-home");
-    expect(takeHome.textContent).toBe("£3,000/mo");
+    expect(takeHome.textContent).toBe("£3,000");
     expect(takeHome.getAttribute("data-figure")).toBe("takeHome.monthly");
-    expect(screen.getByTestId("onboarding-surplus").textContent).toBe("+£2,000/mo");
-    expect(screen.getByTestId("onboarding-net-worth").textContent).toBe("£12,000");
     expect(screen.getByTestId("onboarding-take-home-assumption")).toBeDefined();
   });
 
@@ -58,34 +69,5 @@ describe("<LiveSummaryBar />", () => {
       />,
     );
     expect(screen.queryByTestId("onboarding-take-home-note")).toBeNull();
-  });
-
-  it("states a negative surplus with a minus sign", () => {
-    render(
-      <LiveSummaryBar
-        assumingRegion={false}
-        summary={summaryFor({
-          incomeMode: "net",
-          monthlyTakeHome: 1000,
-          monthlyOtherOutgoings: 1500,
-        })}
-      />,
-    );
-    const surplus = screen.getByTestId("onboarding-surplus");
-    expect(surplus.textContent).toMatch(/^[-−]£500\/mo$/);
-    // Same neutral ink as take-home: the sign, not a colour, carries the direction.
-    expect(surplus.className).toBe(screen.getByTestId("onboarding-take-home").className);
-  });
-
-  it("draws a negative net worth in neutral ink with its sign", () => {
-    render(
-      <LiveSummaryBar
-        assumingRegion={false}
-        summary={summaryFor({ incomeMode: "net", monthlyTakeHome: 1000, unsecuredDebt: 4000 })}
-      />,
-    );
-    const worth = screen.getByTestId("onboarding-net-worth");
-    expect(worth.textContent).toMatch(/^[-−]£4,000$/);
-    expect(worth.className).toBe(screen.getByTestId("onboarding-take-home").className);
   });
 });

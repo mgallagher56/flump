@@ -32,7 +32,7 @@ export interface UserProfile {
   secondIncomeMonthly: number | null;
   hasRentalIncome: boolean;
   rentalIncomeMonthly: number | null;
-  housingStatus?: "renting" | "mortgage" | "own_outright" | null;
+  housingStatus?: "renting" | "mortgage" | "own_outright" | "living_with_family" | null;
   monthlyHousingCost?: number | null;
   monthlyOtherOutgoings?: number | null;
   totalCashSavings?: number | null;

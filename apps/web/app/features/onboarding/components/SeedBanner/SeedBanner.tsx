@@ -28,17 +28,17 @@ export const SeedBanner: FC<SeedBannerProps> = ({
   const classes = seedBannerRecipe();
   const { formatCurrency } = useFormatCurrency();
   const message = !hasNumbers ? (
-    "Your demo choices are remembered. Add your own numbers to continue."
+    "We kept your choices from the sample data. Add your own figures to continue."
   ) : salary ? (
     <>
-      {"We've pre-loaded your "}
+      {"We have filled in your "}
       <span className={classes.figure} data-testid="seed-salary" id="seed-salary">
         {formatCurrency(salary)}
       </span>
-      {" salary and savings from the calculator."}
+      {" salary and your savings from the calculator."}
     </>
   ) : (
-    "We've pre-loaded your savings from the calculator."
+    "We have filled in your savings from the calculator."
   );
   return (
     <div className={classes.root} data-testid="seed-banner" id="seed-banner">
@@ -56,7 +56,7 @@ export const SeedBanner: FC<SeedBannerProps> = ({
           role="status"
           textStyle="body.sm"
         >
-          {missingForFinish} in the first step to finish setup.
+          {missingForFinish} in the first step to finish setting up.
         </Text>
       ) : null}
       <div className={classes.actions}>
@@ -68,10 +68,10 @@ export const SeedBanner: FC<SeedBannerProps> = ({
           size="sm"
           type="button"
         >
-          {isSubmitting ? "Saving..." : "Finish with these numbers"}
+          {isSubmitting ? "Saving…" : "Finish with these figures"}
         </Button>
         <Button onClick={onReview} size="sm" type="button" variant="outline">
-          Review and edit numbers
+          Review figures
         </Button>
       </div>
     </div>

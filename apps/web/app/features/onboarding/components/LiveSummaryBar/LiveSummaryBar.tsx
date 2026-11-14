@@ -1,4 +1,3 @@
-import { KpiStrip } from "@repo/ui";
 import type { FC } from "react";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import { REGION_ASSUMPTION_LABEL } from "~/utils/taxTrapCopy";
@@ -11,76 +10,52 @@ export interface LiveSummaryBarProps {
   assumingRegion: boolean;
 }
 
+export const TAKE_HOME_LABEL = "Monthly take-home pay (estimate)";
 const NOT_SET = "Not set";
 
-/** Live figures from what has been entered so far. Unknown inputs read "Not set", never £0. */
+/**
+ * One live figure, the monthly take-home, from what has been entered so far (P1: one figure per
+ * step). A note says why it moved (a pension or student loan answered on a later step) and when
+ * a tax region is assumed. Unknown reads "Not set", never £0.
+ */
 export const LiveSummaryBar: FC<LiveSummaryBarProps> = ({ summary, assumingRegion }) => {
   const { formatCurrency } = useFormatCurrency();
-  const signed = (value: number) => `${value >= 0 ? "+" : ""}${formatCurrency(value)}`;
-
-  const takeHome = summary.hasIncome ? `${formatCurrency(summary.monthlyTakeHome)}/mo` : NOT_SET;
-  const surplus = summary.hasIncome ? `${signed(summary.monthlySurplus)}/mo` : NOT_SET;
-  const netWorth = summary.hasNetWorthInputs ? formatCurrency(summary.startingNetWorth) : NOT_SET;
-
-  // Neutral ink for every known figure: the sign in the text carries the direction, so these
-  // early, partial estimates are not painted as good or bad news.
-  const takeHomeClasses = liveSummaryRecipe({ tone: summary.hasIncome ? "neutral" : "unset" });
-  const surplusClasses = liveSummaryRecipe({ tone: summary.hasIncome ? "neutral" : "unset" });
-  const worthClasses = liveSummaryRecipe({
-    tone: summary.hasNetWorthInputs ? "neutral" : "unset",
-  });
-
+  const classes = liveSummaryRecipe({ tone: summary.hasIncome ? "neutral" : "unset" });
   return (
-    <KpiStrip columns={3}>
-      <div className={takeHomeClasses.cell}>
-        <span className={takeHomeClasses.label}>Net take-home</span>
+    <div
+      className={classes.cell}
+      data-testid="onboarding-live-summary"
+      id="onboarding-live-summary"
+    >
+      <span className={classes.label} id="onboarding-take-home-label">
+        {TAKE_HOME_LABEL}
+      </span>
+      <span
+        className={classes.figure}
+        data-figure="takeHome.monthly"
+        data-testid="onboarding-take-home"
+        id="onboarding-take-home"
+      >
+        {summary.hasIncome ? formatCurrency(summary.monthlyTakeHome) : NOT_SET}
+      </span>
+      {assumingRegion ? (
         <span
-          className={takeHomeClasses.figure}
-          data-figure="takeHome.monthly"
-          data-testid="onboarding-take-home"
-          id="onboarding-take-home"
+          className={classes.note}
+          data-testid="onboarding-take-home-assumption"
+          id="onboarding-take-home-assumption"
         >
-          {takeHome}
+          {REGION_ASSUMPTION_LABEL}
         </span>
-        {assumingRegion ? (
-          <span
-            className={takeHomeClasses.note}
-            data-testid="onboarding-take-home-assumption"
-            id="onboarding-take-home-assumption"
-          >
-            {REGION_ASSUMPTION_LABEL}
-          </span>
-        ) : null}
-        {summary.hasIncome && summary.takeHomeNote ? (
-          <span
-            className={takeHomeClasses.note}
-            data-testid="onboarding-take-home-note"
-            id="onboarding-take-home-note"
-          >
-            {summary.takeHomeNote}
-          </span>
-        ) : null}
-      </div>
-      <div className={surplusClasses.cell}>
-        <span className={surplusClasses.label}>Monthly surplus</span>
+      ) : null}
+      {summary.hasIncome && summary.takeHomeNote ? (
         <span
-          className={surplusClasses.figure}
-          data-testid="onboarding-surplus"
-          id="onboarding-surplus"
+          className={classes.note}
+          data-testid="onboarding-take-home-note"
+          id="onboarding-take-home-note"
         >
-          {surplus}
+          {summary.takeHomeNote}
         </span>
-      </div>
-      <div className={worthClasses.cell}>
-        <span className={worthClasses.label}>Starting net worth</span>
-        <span
-          className={worthClasses.figure}
-          data-testid="onboarding-net-worth"
-          id="onboarding-net-worth"
-        >
-          {netWorth}
-        </span>
-      </div>
-    </KpiStrip>
+      ) : null}
+    </div>
   );
 };

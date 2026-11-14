@@ -25,6 +25,7 @@ describe("deriveOnboardingSummary", () => {
       v({
         incomeMode: "net",
         monthlyTakeHome: 3000,
+        housingStatus: "renting",
         monthlyHousingCost: 1000,
         monthlyOtherOutgoings: 500,
       }),
@@ -32,6 +33,21 @@ describe("deriveOnboardingSummary", () => {
     expect(s.monthlyTakeHome).toBe(3000);
     expect(s.annualTakeHome).toBe(36000);
     expect(s.monthlySurplus).toBe(1500);
+  });
+
+  it("counts no housing cost while housing is not answered, never presuming rent", () => {
+    const s = deriveOnboardingSummary(v({ monthlyHousingCost: 1000 }));
+    expect(s.monthlyHousing).toBe(0);
+  });
+
+  it("counts what someone living with family pays, and £0 when they leave it empty", () => {
+    expect(
+      deriveOnboardingSummary(v({ housingStatus: "living_with_family", monthlyHousingCost: 250 }))
+        .monthlyHousing,
+    ).toBe(250);
+    const none = deriveOnboardingSummary(v({ housingStatus: "living_with_family" }));
+    expect(none.monthlyHousing).toBe(0);
+    expect(none.homeEquity).toBe(0);
   });
 
   it("matches the known £45,000 England take-home and differs for Scotland", () => {

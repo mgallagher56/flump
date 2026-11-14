@@ -25,7 +25,7 @@ describe("<SavingsDebtStep />", () => {
       /cash and isa savings/i,
       /pension pot/i,
       /pension contribution/i,
-      /unsecured debt/i,
+      /owed on credit cards and loans/i,
     ]) {
       expect((screen.getByLabelText(label) as HTMLInputElement).value).toBe("");
     }
@@ -33,7 +33,7 @@ describe("<SavingsDebtStep />", () => {
 
   it("keeps a typed 0 debt as 0, distinct from empty", () => {
     setup();
-    const debt = screen.getByLabelText(/unsecured debt/i) as HTMLInputElement;
+    const debt = screen.getByLabelText(/owed on credit cards and loans/i) as HTMLInputElement;
     fireEvent.change(debt, { target: { value: "0" } });
     expect(debt.value).toBe("0");
   });
@@ -41,7 +41,7 @@ describe("<SavingsDebtStep />", () => {
   it("calls onSkip", () => {
     const onSkip = vi.fn();
     setup(onSkip);
-    fireEvent.click(screen.getByRole("button", { name: "Skip for now" }));
+    fireEvent.click(screen.getByRole("button", { name: "Skip this step" }));
     expect(onSkip).toHaveBeenCalled();
   });
 });

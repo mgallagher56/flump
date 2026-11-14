@@ -150,6 +150,40 @@ describe("selectHousingCost: mortgage", () => {
   });
 });
 
+describe("selectHousingCost: living with family or friends", () => {
+  it("uses the optional amount, and £0 when none is given", () => {
+    const paying = run(
+      facts({ housingStatus: "living_with_family", monthlyHousingCost: 300 }),
+      takeHome(3000),
+    );
+    expect(isFigureKnown(paying) && paying.value).toMatchObject({
+      kind: "household",
+      monthly: 300,
+      sharePct: 10,
+      paymentEstimated: false,
+    });
+    for (const monthlyHousingCost of [null, 0]) {
+      const fig = run(
+        facts({ housingStatus: "living_with_family", monthlyHousingCost }),
+        takeHome(3000),
+      );
+      expect(isFigureKnown(fig) && fig.value).toMatchObject({
+        kind: "household",
+        monthly: 0,
+        sharePct: 0,
+      });
+    }
+  });
+
+  it("never reads as rent", () => {
+    const fig = run(
+      facts({ housingStatus: "living_with_family", monthlyHousingCost: 300 }),
+      takeHome(3000),
+    );
+    expect(isFigureKnown(fig) && fig.value.kind).not.toBe("rent");
+  });
+});
+
 describe("selectHousingCost: unknowns", () => {
   it("is unknown when housing status is not answered or the home is owned outright", () => {
     for (const housingStatus of [null, "own_outright"] as const) {

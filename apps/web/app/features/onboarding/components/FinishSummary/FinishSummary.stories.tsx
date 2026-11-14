@@ -42,7 +42,7 @@ export const MissingIncome: Story = {
   play: async ({ canvasElement, args }) => {
     const canvas = within(canvasElement);
     await expect(canvas.getByRole("button", { name: /finish and open dashboard/i })).toBeDisabled();
-    await userEvent.click(canvas.getByRole("button", { name: /go to you and income/i }));
+    await userEvent.click(canvas.getByRole("button", { name: /^Edit you and income$/ }));
     await expect(args.onEdit).toHaveBeenCalledWith(1);
   },
 };
@@ -54,14 +54,14 @@ export const PartialSave: Story = {
   args: {
     ...COMPLETE,
     error:
-      "We saved some of your details but not all. Check your connection and finish again to add the rest.",
+      "We saved some of your details, but not all. Check your connection, then finish again to save the rest.",
     saveState: "partial",
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     await expect(canvas.getByRole("alert")).toHaveTextContent(/saved some of your details/i);
     await expect(canvas.getByTestId("onboarding-saved-note")).toHaveTextContent(
-      "Some details are saved. Finish again to add the rest.",
+      'Some of your details are saved. Select "Finish and open dashboard" again to save the rest.',
     );
   },
 };

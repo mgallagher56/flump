@@ -21,7 +21,7 @@ type Story = StoryObj<typeof StepFrame>;
 
 export const Default: Story = {
   play: async ({ canvasElement, args }) => {
-    await userEvent.click(within(canvasElement).getByRole("button", { name: "Skip for now" }));
+    await userEvent.click(within(canvasElement).getByRole("button", { name: "Skip this step" }));
     await expect(args.onSkip).toHaveBeenCalledTimes(1);
   },
 };

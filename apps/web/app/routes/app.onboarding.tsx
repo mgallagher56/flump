@@ -4,8 +4,10 @@ import {
   type LoaderFunctionArgs,
   redirect,
   useActionData,
+  useLoaderData,
 } from "react-router";
 import { OnboardingFlow } from "~/features/onboarding/components/OnboardingFlow";
+import { FOCUSED_SHELL_HANDLE } from "~/features/onboarding/focusedShell";
 import type { UserProfile } from "~/hooks/useUserProfile";
 import { backendFetch } from "~/services/backend-client.server";
 import { BackendError } from "~/services/backend-error";
@@ -17,6 +19,9 @@ import {
   DEFAULT_ENABLED_PAGES,
   stripRetiredKeys,
 } from "~/utils/pageConfig";
+
+/** Setup is a focused flow: no app navigation (UX N9). The app shell reads this. */
+export const handle = FOCUSED_SHELL_HANDLE;
 
 export const loader = async (args: LoaderFunctionArgs) => {
   const { user, accessToken } = await getAuthSession(args, { ensureSignedIn: true });
@@ -66,9 +71,12 @@ export const action = async (args: ActionFunctionArgs) => {
 
 export default function OnboardingRoute() {
   const actionData = useActionData<typeof action>();
+  const loaderData = useLoaderData<typeof loader>();
   const actionError =
     actionData && "success" in actionData && actionData.success === false ? actionData.error : null;
-  return <OnboardingFlow actionError={actionError} />;
+  return (
+    <OnboardingFlow actionError={actionError} savedProfile={loaderData?.userProfile ?? null} />
+  );
 }
 
 export { RouteErrorBoundary as ErrorBoundary } from "~/features/feedback/components/RouteErrorBoundary";

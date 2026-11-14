@@ -11,7 +11,12 @@ export const TAX_REGIONS = ["ENGLAND", "WALES", "SCOTLAND", "NORTHERN_IRELAND"] 
 export type TaxRegion = (typeof TAX_REGIONS)[number];
 export const STUDENT_LOAN_PLANS = ["PLAN_1", "PLAN_2", "PLAN_4", "PLAN_5", "POSTGRAD"] as const;
 export type StudentLoanPlan = (typeof STUDENT_LOAN_PLANS)[number];
-export const HOUSING_STATUSES = ["renting", "mortgage", "own_outright"] as const;
+export const HOUSING_STATUSES = [
+  "renting",
+  "mortgage",
+  "own_outright",
+  "living_with_family",
+] as const;
 export type HousingStatus = (typeof HOUSING_STATUSES)[number];
 
 @Entity("user_profiles")

@@ -14,6 +14,9 @@ const AvatarUrl = z
 const ShortText = z.string().trim().max(120);
 const PageKeyList = z.array(z.string().min(1).max(64)).max(20);
 
+/** Where the person lives. Null (not answered) is never read as renting. */
+export const HousingStatus = z.enum(["renting", "mortgage", "own_outright", "living_with_family"]);
+
 /**
  * PATCH /user-profile: every field `UserProfileService.updateProfile` reads, plus `homeValue`,
  * which the web sends and the backend ignores. Unknown keys are rejected (BE-09). Both `null` and
@@ -67,7 +70,7 @@ export const UpdateProfileRequest = z.strictObject({
     .array(z.enum(["PLAN_1", "PLAN_2", "PLAN_4", "PLAN_5", "POSTGRAD"]))
     .max(5)
     .nullish(),
-  housingStatus: z.enum(["renting", "mortgage", "own_outright"]).nullish(),
+  housingStatus: HousingStatus.nullish(),
   monthlyHousingCost: Money.nullish(),
   monthlyOtherOutgoings: Money.nullish(),
   /**
@@ -143,7 +146,7 @@ export const UserProfileDto = z.strictObject({
   studentLoanPlans: z
     .array(z.enum(["PLAN_1", "PLAN_2", "PLAN_4", "PLAN_5", "POSTGRAD"]))
     .nullable(),
-  housingStatus: z.enum(["renting", "mortgage", "own_outright"]).nullable(),
+  housingStatus: HousingStatus.nullable(),
   monthlyHousingCost: NullableAmount,
   monthlyOtherOutgoings: NullableAmount,
   createdAt: IsoDateTime,

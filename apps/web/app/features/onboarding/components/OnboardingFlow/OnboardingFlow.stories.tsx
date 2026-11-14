@@ -23,19 +23,22 @@ export const Start: Story = {
 export const SkipEverything: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    for (let i = 0; i < 4; i++) {
-      await userEvent.click(canvas.getByRole("button", { name: "Skip for now" }));
-    }
+    await userEvent.click(canvas.getByRole("button", { name: /^next/i }));
+    await userEvent.click(canvas.getByRole("button", { name: "Skip this step" }));
+    await userEvent.click(canvas.getByRole("button", { name: "Skip this step" }));
+    // From the bank step, jump to the review from the stepper.
+    const steps = canvas.getByRole("list", { name: "Setup progress" });
+    await userEvent.click(within(steps).getByRole("button", { name: /Step 5 of 5: Review/ }));
     await expect(canvas.getByRole("button", { name: /finish and open dashboard/i })).toBeDisabled();
-    // Skipped steps are never shown as complete.
+    // Skipped steps are never shown as complete; only income was left with Next.
     const progress = canvas.getByRole("list", { name: "Setup progress" });
-    await expect(within(progress).queryByText("Complete")).toBeNull();
-    await expect(within(progress).getAllByText("Skipped")).toHaveLength(4);
+    await expect(within(progress).getAllByText("Complete")).toHaveLength(1);
+    await expect(within(progress).getAllByText("Skipped")).toHaveLength(3);
   },
 };
 
 export const ActionError: Story = {
-  args: { actionError: "We couldn't reach the server. Please try again." },
+  args: { actionError: "We could not reach the server. Try again." },
   play: async ({ canvasElement }) => {
     await expect(within(canvasElement).getByRole("alert")).toBeVisible();
   },

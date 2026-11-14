@@ -1,7 +1,7 @@
 import { sva } from "@repo/ui/styled-system/css";
 
 export const onboardingFlowRecipe = sva({
-  slots: ["page", "inner", "stepNav", "alert", "card"],
+  slots: ["page", "inner", "alert", "card"],
   base: {
     page: {
       // Fill the space below the app header from md up; on phones let the content set the height.
@@ -22,13 +22,6 @@ export const onboardingFlowRecipe = sva({
       pb: { base: "4", md: "10" },
     },
     inner: { width: "100%", maxWidth: "720px", display: "flex", flexDirection: "column", gap: "5" },
-    // From md up the stepper's own steps are the buttons, so this row would only repeat them.
-    stepNav: {
-      display: { base: "flex", md: "none" },
-      flexWrap: "wrap",
-      gap: "1",
-      alignItems: "center",
-    },
     alert: {
       display: "flex",
       alignItems: "flex-start",

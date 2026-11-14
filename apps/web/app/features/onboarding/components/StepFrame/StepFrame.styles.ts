@@ -1,7 +1,7 @@
 import { sva } from "@repo/ui/styled-system/css";
 
 export const stepFrameRecipe = sva({
-  slots: ["root", "heading", "fields", "actions", "actionsEnd"],
+  slots: ["root", "heading", "fields", "actions", "skip"],
   base: {
     root: { display: "flex", flexDirection: "column", gap: "5" },
     heading: {
@@ -26,6 +26,7 @@ export const stepFrameRecipe = sva({
       gap: "3",
       mt: "2",
     },
-    actionsEnd: { display: "flex", flexWrap: "wrap", alignItems: "center", gap: "2", ml: "auto" },
+    // A quiet text link on its own row, away from Next, so skipping never competes with it.
+    skip: { display: "flex", justifyContent: "flex-end", mt: "-2" },
   },
 });

@@ -1,11 +1,19 @@
 import { useCallback, useState } from "react";
-import { INITIAL_VALUES, type OnboardingValues, REVIEW_STEP, STEP_IDS, type StepId } from "./types";
+import {
+  type HousingStatus,
+  INITIAL_VALUES,
+  type OnboardingValues,
+  ownsHome,
+  REVIEW_STEP,
+  STEP_IDS,
+  type StepId,
+} from "./types";
 
-/** How the user last left a step: with Next ("complete") or with "Skip for now" ("skipped"). */
+/** How the user last left a step: with Next ("complete") or with "Skip this step" ("skipped"). */
 export type StepOutcome = "complete" | "skipped";
 
-export function useOnboardingForm() {
-  const [values, setValues] = useState<OnboardingValues>(INITIAL_VALUES);
+export function useOnboardingForm(initial: OnboardingValues = INITIAL_VALUES) {
+  const [values, setValues] = useState<OnboardingValues>(initial);
   const [step, setStep] = useState<number>(1);
   const [outcomes, setOutcomes] = useState<Partial<Record<StepId, StepOutcome>>>({});
   /**
@@ -18,13 +26,13 @@ export function useOnboardingForm() {
     setValues((current) => ({ ...current, ...patch }));
   }, []);
 
-  const setHousingStatus = useCallback((housingStatus: OnboardingValues["housingStatus"]) => {
+  const setHousingStatus = useCallback((housingStatus: HousingStatus) => {
     setValues((current) => ({
       ...current,
       housingStatus,
-      // Only a mortgage has a balance; renting has no property to value.
+      // Only a mortgage has a balance; only a home the person owns has a value to give.
       mortgageBalance: housingStatus === "mortgage" ? current.mortgageBalance : null,
-      propertyValue: housingStatus === "renting" ? null : current.propertyValue,
+      propertyValue: ownsHome(housingStatus) ? current.propertyValue : null,
     }));
   }, []);
 
@@ -52,7 +60,7 @@ export function useOnboardingForm() {
     setStep((s) => Math.max(s - 1, 1));
   }, []);
 
-  /** "Skip for now": moves on and keeps whatever was entered; nothing is cleared. */
+  /** "Skip this step": moves on and keeps whatever was entered; nothing is cleared. */
   const skip = useCallback(
     (stepNumber: number) => markAndAdvance(stepNumber, "skipped"),
     [markAndAdvance],

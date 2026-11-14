@@ -7,8 +7,9 @@ import { REGION_ASSUMPTION_LABEL } from "~/utils/taxTrapCopy";
 import { birthYearFromAge } from "../../age";
 import type { OnboardingSummary } from "../../deriveOnboardingSummary";
 import { MODULE_LABELS } from "../../inferModules";
-import { type OnboardingValues, STEP_LABELS } from "../../types";
+import { type HousingStatus, type OnboardingValues, ownsHome, STEP_LABELS } from "../../types";
 import type { FinishSaveState } from "../../useFinishOnboarding";
+import { TAKE_HOME_LABEL } from "../LiveSummaryBar";
 import { finishSummaryRecipe } from "./FinishSummary.styles";
 
 export interface FinishSummaryProps {
@@ -21,7 +22,7 @@ export interface FinishSummaryProps {
   /** Jump to a step (counting from 1) to add or change something. */
   onEdit: (step: number) => void;
   /**
-   * "Go to You and income" when something Finish needs is missing. Defaults to `onEdit(1)`; the
+   * "Edit you and income" when something Finish needs is missing. Defaults to `onEdit(1)`; the
    * flow passes a handler that also marks the missing fields.
    */
   onFixMissing?: () => void;
@@ -31,17 +32,23 @@ export interface FinishSummaryProps {
   saveState?: FinishSaveState;
 }
 
-const NOT_SET = "Not set";
 const REGIONS: Record<string, string> = {
   ENGLAND: "England",
   WALES: "Wales",
   SCOTLAND: "Scotland",
   NORTHERN_IRELAND: "Northern Ireland",
 };
-const HOUSING: Record<OnboardingValues["housingStatus"], string> = {
+const HOUSING: Record<HousingStatus, string> = {
   renting: "Renting",
-  mortgage: "Mortgage",
-  own_outright: "Own outright",
+  mortgage: "Paying a mortgage",
+  own_outright: "Own with no mortgage",
+  living_with_family: "Living with family or friends",
+};
+/** The monthly housing amount's label per answer. Own with no mortgage has no such row. */
+const HOUSING_COST_LABEL: Partial<Record<HousingStatus, string>> = {
+  renting: "Monthly rent",
+  mortgage: "Monthly mortgage payment",
+  living_with_family: "What you pay each month",
 };
 const EMPLOYMENT: Record<OnboardingValues["employmentType"], string> = {
   employed: "Employed",
@@ -53,17 +60,25 @@ const STUDENT_LOANS: Record<string, string> = {
   PLAN_2: "Plan 2",
   PLAN_4: "Plan 4 (Scotland)",
   PLAN_5: "Plan 5",
-  POSTGRAD: "Postgraduate Loan",
+  POSTGRAD: "Postgraduate loan",
 };
-const NOT_APPLICABLE = "Not applicable";
 const percent = new Intl.NumberFormat("en-GB", { style: "percent", maximumFractionDigits: 1 });
+
+export const SECTIONS_TITLE = "Sections we have set up for you";
+export const NOTHING_ADDED = "Nothing added yet.";
 
 export const SAVED_NOTES: Record<FinishSaveState, string> = {
   idle: "Held in this browser tab until you finish. Nothing is saved to your account yet.",
-  partial: "Some details are saved. Finish again to add the rest.",
+  partial:
+    'Some of your details are saved. Select "Finish and open dashboard" again to save the rest.',
   unconfirmed:
-    "Held in this browser tab. We could not confirm anything was saved, so finish again to save your details.",
+    'We could not confirm your details were saved. They are still in this browser tab. Select "Finish and open dashboard" again.',
 };
+
+type Row = [label: string, value: string];
+
+/** Only the rows the person actually entered: no "Not set" or "Not applicable" rows. */
+const entered = (rows: Array<Row | null>): Row[] => rows.filter((row): row is Row => row !== null);
 
 export const FinishSummary: FC<FinishSummaryProps> = ({
   values,
@@ -81,67 +96,52 @@ export const FinishSummary: FC<FinishSummaryProps> = ({
   const { formatCurrency } = useFormatCurrency();
   // Only a gross salary is taxed by region; a typed take-home needs no assumption.
   const assumingRegion = values.taxRegion === null && values.incomeMode === "gross";
-  const money = (v: number | null, suffix = "") =>
-    v === null ? NOT_SET : `${formatCurrency(v)}${suffix}`;
+  const money = (label: string, v: number | null): Row | null =>
+    v === null ? null : [label, formatCurrency(v)];
+  const monthly = (label: string, v: number | null): Row | null =>
+    v === null ? null : [label, `${formatCurrency(v)} a month`];
+  const status = values.housingStatus;
+  const housingCostLabel = status ? HOUSING_COST_LABEL[status] : undefined;
 
-  const groups: { step: number; title: string; rows: [string, string][] }[] = [
+  const groups: { step: number; title: string; rows: Row[] }[] = [
     {
       step: 1,
       title: STEP_LABELS.income,
-      rows: [
-        [
-          values.incomeMode === "gross" ? "Annual gross salary" : "Monthly take-home pay",
-          money(values.incomeMode === "gross" ? values.grossSalary : values.monthlyTakeHome),
-        ],
-        ["How you earn", EMPLOYMENT[values.employmentType] ?? NOT_SET],
-        [
-          "Where you pay tax",
-          values.taxRegion ? (REGIONS[values.taxRegion] ?? values.taxRegion) : NOT_SET,
-        ],
-        // An age that cannot be saved is shown as Not set, matching what Finish stores.
-        ["Age", birthYearFromAge(values.age) === undefined ? NOT_SET : String(values.age)],
-        [
-          "Student loan plan",
-          values.studentLoanPlan
-            ? (STUDENT_LOANS[values.studentLoanPlan] ?? values.studentLoanPlan)
-            : NOT_SET,
-        ],
-      ],
+      rows: entered([
+        values.incomeMode === "gross"
+          ? money("Yearly salary before tax", values.grossSalary)
+          : monthly("Monthly take-home pay", values.monthlyTakeHome),
+        ["How you earn", EMPLOYMENT[values.employmentType]],
+        values.taxRegion
+          ? ["Where you pay tax", REGIONS[values.taxRegion] ?? values.taxRegion]
+          : null,
+        // An age that cannot be saved is left out, matching what Finish stores.
+        birthYearFromAge(values.age) === undefined ? null : ["Age", String(values.age)],
+        ["Student loan plan", STUDENT_LOANS[values.studentLoanPlan] ?? values.studentLoanPlan],
+      ]),
     },
     {
       step: 2,
       title: STEP_LABELS.housing,
-      rows: [
-        ["Housing", HOUSING[values.housingStatus]],
-        [
-          values.housingStatus === "mortgage" ? "Monthly mortgage payment" : "Monthly rent",
-          values.housingStatus === "own_outright"
-            ? NOT_APPLICABLE
-            : money(values.monthlyHousingCost, "/mo"),
-        ],
-        [
-          "Property value",
-          values.housingStatus === "renting" ? NOT_APPLICABLE : money(values.propertyValue),
-        ],
-        [
-          "Mortgage balance",
-          values.housingStatus === "mortgage" ? money(values.mortgageBalance) : NOT_APPLICABLE,
-        ],
-        ["Other monthly outgoings", money(values.monthlyOtherOutgoings, "/mo")],
-      ],
+      rows: entered([
+        status ? ["Housing", HOUSING[status]] : null,
+        housingCostLabel ? monthly(housingCostLabel, values.monthlyHousingCost) : null,
+        ownsHome(status) ? money("What your home is worth", values.propertyValue) : null,
+        status === "mortgage" ? money("Mortgage left to pay", values.mortgageBalance) : null,
+        monthly("Other monthly spending", values.monthlyOtherOutgoings),
+      ]),
     },
     {
       step: 3,
       title: STEP_LABELS.savings,
-      rows: [
-        ["Cash and ISA savings", money(values.cashSavings)],
-        ["Pension pot", money(values.pensionPot)],
-        [
-          "Pension contribution",
-          values.pensionPercent === null ? NOT_SET : percent.format(values.pensionPercent / 100),
-        ],
-        ["Unsecured debt", money(values.unsecuredDebt)],
-      ],
+      rows: entered([
+        money("Cash and ISA savings", values.cashSavings),
+        money("Pension pot", values.pensionPot),
+        values.pensionPercent === null
+          ? null
+          : ["Pension contribution", percent.format(values.pensionPercent / 100)],
+        money("Owed on credit cards and loans", values.unsecuredDebt),
+      ]),
     },
   ];
 
@@ -155,36 +155,16 @@ export const FinishSummary: FC<FinishSummaryProps> = ({
         Review what will be saved
       </Heading>
 
+      {/* An estimate, so never in the hero style (D2): the default card, labelled as an estimate. */}
       <KpiCard
-        label="Net take-home"
+        label={TAKE_HOME_LABEL}
         subtext={
           assumingRegion
-            ? `per month, estimated from what you entered. ${REGION_ASSUMPTION_LABEL}`
-            : "per month, estimated from what you entered"
+            ? `Worked out from what you entered. ${REGION_ASSUMPTION_LABEL}`
+            : "Worked out from what you entered"
         }
-        tone="hero"
         value={summary.hasIncome ? summary.monthlyTakeHome : null}
       />
-
-      <div className={classes.group}>
-        <h3 className={classes.groupTitle}>Your starting picture</h3>
-        <dl className={classes.rows}>
-          <div className={classes.row}>
-            <dt className={classes.rowLabel}>Monthly surplus</dt>
-            <dd className={classes.rowValue}>
-              {summary.hasIncome
-                ? `${summary.monthlySurplus >= 0 ? "+" : ""}${formatCurrency(summary.monthlySurplus)}/mo`
-                : NOT_SET}
-            </dd>
-          </div>
-          <div className={classes.row}>
-            <dt className={classes.rowLabel}>Starting net worth</dt>
-            <dd className={classes.rowValue}>
-              {summary.hasNetWorthInputs ? formatCurrency(summary.startingNetWorth) : NOT_SET}
-            </dd>
-          </div>
-        </dl>
-      </div>
 
       {groups.map((group) => (
         <div className={classes.group} key={group.step}>
@@ -200,20 +180,24 @@ export const FinishSummary: FC<FinishSummaryProps> = ({
               Edit
             </Button>
           </div>
-          <dl className={classes.rows}>
-            {group.rows.map(([label, value]) => (
-              <div className={classes.row} key={label}>
-                <dt className={classes.rowLabel}>{label}</dt>
-                <dd className={classes.rowValue}>{value}</dd>
-              </div>
-            ))}
-          </dl>
+          {group.rows.length > 0 ? (
+            <dl className={classes.rows}>
+              {group.rows.map(([label, value]) => (
+                <div className={classes.row} key={label}>
+                  <dt className={classes.rowLabel}>{label}</dt>
+                  <dd className={classes.rowValue}>{value}</dd>
+                </div>
+              ))}
+            </dl>
+          ) : (
+            <p className={classes.empty}>{NOTHING_ADDED}</p>
+          )}
         </div>
       ))}
 
       <div className={classes.group}>
-        <h3 className={classes.groupTitle}>Modules switched on</h3>
-        <ul aria-label="Modules switched on" className={classes.modules}>
+        <h3 className={classes.groupTitle}>{SECTIONS_TITLE}</h3>
+        <ul aria-label={SECTIONS_TITLE} className={classes.modules}>
           {modules.map((key) => (
             <li key={key}>
               <StatusBadge variant="neutral">{MODULE_LABELS[key] ?? key}</StatusBadge>
@@ -230,7 +214,7 @@ export const FinishSummary: FC<FinishSummaryProps> = ({
           role="status"
         >
           <span>
-            <Icon icon={TriangleAlert} size="sm" /> {summary.missingForFinish} to finish setup.
+            <Icon icon={TriangleAlert} size="sm" /> {summary.missingForFinish} to finish setting up.
           </span>
           <Button
             onClick={onFixMissing ?? (() => onEdit(1))}
@@ -238,7 +222,7 @@ export const FinishSummary: FC<FinishSummaryProps> = ({
             type="button"
             variant="outline"
           >
-            Go to You and income
+            Edit you and income
           </Button>
         </div>
       ) : null}
@@ -282,7 +266,7 @@ export const FinishSummary: FC<FinishSummaryProps> = ({
           pending={isSubmitting}
           type="button"
         >
-          {isSubmitting ? "Saving..." : "Finish and open dashboard"}
+          {isSubmitting ? "Saving…" : "Finish and open dashboard"}
         </Button>
       </div>
     </div>

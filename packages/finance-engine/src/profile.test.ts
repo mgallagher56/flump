@@ -40,7 +40,29 @@ describe("profile domain module", () => {
       expect(normalizeHousingStatus("own_outright")).toBe("OWN_OUTRIGHT");
       expect(normalizeHousingStatus("renting")).toBe("RENTING");
       expect(normalizeHousingStatus(undefined, 200000)).toBe("MORTGAGE");
-      expect(normalizeHousingStatus(undefined, 0)).toBe("RENTING");
+      expect(normalizeHousingStatus("living_with_family")).toBe("LIVING_WITH_FAMILY");
+      // Not answered stays not answered: never presumed to be renting.
+      expect(normalizeHousingStatus(undefined, 0)).toBeUndefined();
+      expect(normalizeHousingStatus(null, 0)).toBeUndefined();
+    });
+
+    it("never presumes renting or a rent figure when housing status is not answered", () => {
+      const baseline = userProfileToFinancialBaseline({ housingStatus: null });
+      expect(baseline.housingStatus).toBeUndefined();
+      expect(baseline.monthlyHousingCost).toBe(0);
+      expect(financialBaselineToUserProfileUpdate(baseline).housingStatus).toBeNull();
+    });
+
+    it("round-trips living with family or friends with an optional amount", () => {
+      const none = userProfileToFinancialBaseline({ housingStatus: "living_with_family" });
+      expect(none.housingStatus).toBe("LIVING_WITH_FAMILY");
+      expect(none.monthlyHousingCost).toBe(0);
+      const paying = userProfileToFinancialBaseline({
+        housingStatus: "living_with_family",
+        monthlyHousingCost: 250,
+      });
+      expect(paying.monthlyHousingCost).toBe(250);
+      expect(financialBaselineToUserProfileUpdate(paying).housingStatus).toBe("living_with_family");
     });
   });
 

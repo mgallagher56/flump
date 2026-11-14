@@ -12,7 +12,8 @@ export interface OnboardingSeedInput {
   propertyValue?: number;
   unsecuredDebt: number;
   monthlyTakeHome: number;
-  housingStatus: "renting" | "mortgage" | "own_outright";
+  /** Null when not answered: no housing entry is named as rent then. */
+  housingStatus: "renting" | "mortgage" | "own_outright" | "living_with_family" | null;
   monthlyHousing: number;
   otherOutgoings: number;
 }
@@ -44,16 +45,25 @@ const budgetEntry = (
   enabled: amount > 0,
 });
 
+/** The budget entry name for each answer that has a monthly housing payment. */
+const HOUSING_ENTRY: Partial<Record<NonNullable<OnboardingSeedInput["housingStatus"]>, string>> = {
+  renting: "Rent Payment",
+  mortgage: "Mortgage Payment",
+  living_with_family: "Household contribution",
+};
+
 /**
  * The baseline accounts and budget entries onboarding creates. Payloads match the backend's
  * Account and BudgetEntry fields exactly (budget entries use `name`, like BudgetContainer).
  */
 export function buildOnboardingSeedJobs(input: OnboardingSeedInput): OnboardingSeedJob[] {
+  const housingEntry = input.housingStatus ? HOUSING_ENTRY[input.housingStatus] : undefined;
   return [
     account("Cash and emergency savings", "Saving", input.cash),
     account("Workplace and personal pension", "Pension", input.pensionPot),
-    // A renter's leftover answer is not a home they own.
-    ...((input.propertyValue ?? 0) > 0 && input.housingStatus !== "renting"
+    // Only a home the person owns is saved; any other answer's leftover value is not.
+    ...((input.propertyValue ?? 0) > 0 &&
+    (input.housingStatus === "mortgage" || input.housingStatus === "own_outright")
       ? [account(HOME_ESTIMATE_LABEL, "Property", input.propertyValue ?? 0)]
       : []),
     ...(input.mortgageBalance > 0
@@ -63,15 +73,8 @@ export function buildOnboardingSeedJobs(input: OnboardingSeedInput): OnboardingS
       ? [account("Cards and loans baseline", "Credit Card", input.unsecuredDebt)]
       : []),
     budgetEntry("Monthly Take-Home Income", "income", input.monthlyTakeHome, true),
-    ...(input.monthlyHousing > 0
-      ? [
-          budgetEntry(
-            input.housingStatus === "mortgage" ? "Mortgage Payment" : "Rent Payment",
-            "housing",
-            input.monthlyHousing,
-            false,
-          ),
-        ]
+    ...(input.monthlyHousing > 0 && housingEntry
+      ? [budgetEntry(housingEntry, "housing", input.monthlyHousing, false)]
       : []),
     ...(input.otherOutgoings > 0
       ? [budgetEntry("General living and outgoings", "living", input.otherOutgoings, false)]

@@ -2,7 +2,17 @@ import type { TaxRegion } from "~/hooks/useUserProfile";
 
 export type EmploymentType = "employed" | "self-employed";
 export type IncomeMode = "gross" | "net";
-export type HousingStatus = "renting" | "mortgage" | "own_outright";
+export const HOUSING_STATUSES = [
+  "renting",
+  "mortgage",
+  "own_outright",
+  "living_with_family",
+] as const;
+export type HousingStatus = (typeof HOUSING_STATUSES)[number];
+
+/** True for the answers where the person owns the home they live in. */
+export const ownsHome = (status: HousingStatus | null): boolean =>
+  status === "mortgage" || status === "own_outright";
 
 /**
  * Everything the flow collects. `null` means "not given" (unknown), never zero: a typed 0 is a real
@@ -16,7 +26,8 @@ export interface OnboardingValues {
   monthlyTakeHome: number | null;
   studentLoanPlan: string;
   taxRegion: TaxRegion | null;
-  housingStatus: HousingStatus;
+  /** Null until the person picks an answer: never presumed to be renting. */
+  housingStatus: HousingStatus | null;
   monthlyHousingCost: number | null;
   propertyValue: number | null;
   mortgageBalance: number | null;
@@ -36,7 +47,7 @@ export const INITIAL_VALUES: OnboardingValues = {
   monthlyTakeHome: null,
   studentLoanPlan: "NONE",
   taxRegion: null,
-  housingStatus: "renting",
+  housingStatus: null,
   monthlyHousingCost: null,
   propertyValue: null,
   mortgageBalance: null,
@@ -51,13 +62,26 @@ export const INITIAL_VALUES: OnboardingValues = {
 export const STEP_IDS = ["income", "housing", "savings", "bank", "review"] as const;
 export type StepId = (typeof STEP_IDS)[number];
 
+/** Step titles, as headed on each step and on the review. */
 export const STEP_LABELS: Record<StepId, string> = {
   income: "You and income",
-  housing: "Housing and outgoings",
+  housing: "Housing and spending",
   savings: "Savings and debt",
   bank: "Bank (optional)",
   review: "Review",
 };
+
+/** One-word names for the stepper, so no step name wraps at tablet widths. */
+export const STEPPER_LABELS: Record<StepId, string> = {
+  income: "Income",
+  housing: "Housing",
+  savings: "Savings",
+  bank: "Bank",
+  review: "Review",
+};
+
+/** Steps that can be skipped. "You and income" holds what Finish needs, so it has no skip. */
+export const OPTIONAL_STEPS: ReadonlySet<StepId> = new Set(["housing", "savings", "bank"]);
 
 /** Step numbers count from 1, matching the Stepper. */
 export const REVIEW_STEP = STEP_IDS.length;

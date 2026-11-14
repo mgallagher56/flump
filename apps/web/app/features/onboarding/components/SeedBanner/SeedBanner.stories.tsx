@@ -22,7 +22,7 @@ type Story = StoryObj<typeof SeedBanner>;
 export const Ready: Story = {
   play: async ({ canvasElement, args }) => {
     await userEvent.click(
-      within(canvasElement).getByRole("button", { name: /finish with these numbers/i }),
+      within(canvasElement).getByRole("button", { name: /finish with these figures/i }),
     );
     await expect(args.onLaunch).toHaveBeenCalled();
   },
@@ -32,7 +32,7 @@ export const MissingIncome: Story = {
   args: { canFinish: false, missingForFinish: "Enter your income and choose where you pay tax" },
   play: async ({ canvasElement }) => {
     await expect(
-      within(canvasElement).getByRole("button", { name: /finish with these numbers/i }),
+      within(canvasElement).getByRole("button", { name: /finish with these figures/i }),
     ).toBeDisabled();
   },
 };

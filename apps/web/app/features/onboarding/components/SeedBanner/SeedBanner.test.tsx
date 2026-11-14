@@ -17,16 +17,16 @@ describe("<SeedBanner />", () => {
     render(<SeedBanner {...base} onLaunch={onLaunch} salary={75000} />);
     expect(screen.getByTestId("seed-salary").textContent).toBe("£75,000");
     expect(screen.getByTestId("seed-banner").textContent).toContain(
-      "We've pre-loaded your £75,000 salary and savings from the calculator.",
+      "We have filled in your £75,000 salary and your savings from the calculator.",
     );
-    fireEvent.click(screen.getByRole("button", { name: /finish with these numbers/i }));
+    fireEvent.click(screen.getByRole("button", { name: /finish with these figures/i }));
     expect(onLaunch).toHaveBeenCalled();
   });
 
   it("explains why launch is disabled", () => {
     render(<SeedBanner {...base} canFinish={false} missingForFinish="Enter your income" />);
     const btn = screen.getByRole("button", {
-      name: /finish with these numbers/i,
+      name: /finish with these figures/i,
     }) as HTMLButtonElement;
     const hint = screen.getByTestId("seed-income-hint");
     expect(btn.disabled).toBe(true);
@@ -44,7 +44,7 @@ describe("<SeedBanner />", () => {
     expect(onLaunch).not.toHaveBeenCalled();
   });
 
-  it("says demo choices are remembered when there are no numbers", () => {
+  it("says kept your choices from the sample data when there are no numbers", () => {
     render(
       <SeedBanner
         {...base}
@@ -53,6 +53,6 @@ describe("<SeedBanner />", () => {
         missingForFinish="Enter your income"
       />,
     );
-    expect(screen.getByText(/demo choices are remembered/i)).toBeDefined();
+    expect(screen.getByText(/kept your choices from the sample data/i)).toBeDefined();
   });
 });

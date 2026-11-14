@@ -31,7 +31,7 @@ export const WithFigures: Story = {
     }),
   },
   play: async ({ canvasElement }) => {
-    await expect(canvasElement.textContent).toContain("/mo");
+    await expect(canvasElement.textContent).toContain("Monthly take-home pay (estimate)");
   },
 };
 
