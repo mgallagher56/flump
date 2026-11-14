@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.33.0](https://github.com/mgallagher56/flump/compare/flump/marketing-v1.32.0...flump/marketing-v1.33.0) (2026-11-14)
+
+
+### Features ✨
+
+* **tools:** R2-3 calculator bodies and tool pages ([63070e7](https://github.com/mgallagher56/flump/commit/63070e7374f894843c094607115aec482840f301))
+
+
+### Bug Fixes 🪲
+
+* **tools:** R2-3 copy check and re-score fixes ([9b15252](https://github.com/mgallagher56/flump/commit/9b15252549a2fa8f8ee0b1ef61092f065723c42d))
+* **tools:** R2-3 final polish ([0fd4de9](https://github.com/mgallagher56/flump/commit/0fd4de945f772d3e0bed04332547d33a17c2faa0))
+
 ## [1.32.0](https://github.com/mgallagher56/flump/compare/flump/marketing-v1.31.0...flump/marketing-v1.32.0) (2026-11-14)
 
 
