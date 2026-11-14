@@ -94,7 +94,7 @@ export interface UKEWNIIncomeTaxYear {
 
 export const UK_EWNI_INCOME_TAX: Record<string, UKEWNIIncomeTaxYear> = {
   "2020/21": {
-    description: "England, Wales & Northern Ireland — 2020/21",
+    description: "England, Wales and Northern Ireland, 2020/21",
     personalAllowance: 12500,
     basicRateBandWidth: 37500,
     basicRate: 0.2,
@@ -105,7 +105,7 @@ export const UK_EWNI_INCOME_TAX: Record<string, UKEWNIIncomeTaxYear> = {
     personalAllowanceTaperStart: 100000,
   },
   "2021/22": {
-    description: "England, Wales & Northern Ireland — 2021/22",
+    description: "England, Wales and Northern Ireland, 2021/22",
     personalAllowance: 12570,
     basicRateBandWidth: 37700,
     basicRate: 0.2,
@@ -116,7 +116,7 @@ export const UK_EWNI_INCOME_TAX: Record<string, UKEWNIIncomeTaxYear> = {
     personalAllowanceTaperStart: 100000,
   },
   "2022/23": {
-    description: "England, Wales & Northern Ireland — 2022/23",
+    description: "England, Wales and Northern Ireland, 2022/23",
     personalAllowance: 12570,
     basicRateBandWidth: 37700,
     basicRate: 0.2,
@@ -127,7 +127,7 @@ export const UK_EWNI_INCOME_TAX: Record<string, UKEWNIIncomeTaxYear> = {
     personalAllowanceTaperStart: 100000,
   },
   "2023/24": {
-    description: "England, Wales & Northern Ireland — 2023/24",
+    description: "England, Wales and Northern Ireland, 2023/24",
     personalAllowance: 12570,
     basicRateBandWidth: 37700,
     basicRate: 0.2,
@@ -138,7 +138,7 @@ export const UK_EWNI_INCOME_TAX: Record<string, UKEWNIIncomeTaxYear> = {
     personalAllowanceTaperStart: 100000,
   },
   "2024/25": {
-    description: "England, Wales & Northern Ireland — 2024/25",
+    description: "England, Wales and Northern Ireland, 2024/25",
     personalAllowance: 12570,
     basicRateBandWidth: 37700,
     basicRate: 0.2,
@@ -149,7 +149,7 @@ export const UK_EWNI_INCOME_TAX: Record<string, UKEWNIIncomeTaxYear> = {
     personalAllowanceTaperStart: 100000,
   },
   "2025/26": {
-    description: "England, Wales & Northern Ireland — 2025/26",
+    description: "England, Wales and Northern Ireland, 2025/26",
     personalAllowance: 12570,
     basicRateBandWidth: 37700,
     basicRate: 0.2,
@@ -160,7 +160,7 @@ export const UK_EWNI_INCOME_TAX: Record<string, UKEWNIIncomeTaxYear> = {
     personalAllowanceTaperStart: 100000,
   },
   "2026/27": {
-    description: "England, Wales & Northern Ireland — 2026/27",
+    description: "England, Wales and Northern Ireland, 2026/27",
     personalAllowance: 12570,
     basicRateBandWidth: 37700,
     basicRate: 0.2,
@@ -204,7 +204,7 @@ export interface UKScotlandIncomeTaxYear {
 
 export const UK_SCOTLAND_INCOME_TAX: Record<string, UKScotlandIncomeTaxYear> = {
   "2020/21": {
-    description: "Scotland — 2020/21",
+    description: "Scotland, 2020/21",
     personalAllowance: 12500,
     personalAllowanceTaperStart: 100000,
     bands: [
@@ -216,7 +216,7 @@ export const UK_SCOTLAND_INCOME_TAX: Record<string, UKScotlandIncomeTaxYear> = {
     ],
   },
   "2021/22": {
-    description: "Scotland — 2021/22",
+    description: "Scotland, 2021/22",
     personalAllowance: 12570,
     personalAllowanceTaperStart: 100000,
     bands: [
@@ -228,7 +228,7 @@ export const UK_SCOTLAND_INCOME_TAX: Record<string, UKScotlandIncomeTaxYear> = {
     ],
   },
   "2022/23": {
-    description: "Scotland — 2022/23",
+    description: "Scotland, 2022/23",
     personalAllowance: 12570,
     personalAllowanceTaperStart: 100000,
     bands: [
@@ -240,7 +240,7 @@ export const UK_SCOTLAND_INCOME_TAX: Record<string, UKScotlandIncomeTaxYear> = {
     ],
   },
   "2023/24": {
-    description: "Scotland — 2023/24",
+    description: "Scotland, 2023/24",
     personalAllowance: 12570,
     personalAllowanceTaperStart: 100000,
     bands: [
@@ -252,7 +252,7 @@ export const UK_SCOTLAND_INCOME_TAX: Record<string, UKScotlandIncomeTaxYear> = {
     ],
   },
   "2024/25": {
-    description: "Scotland — 2024/25",
+    description: "Scotland, 2024/25",
     personalAllowance: 12570,
     personalAllowanceTaperStart: 100000,
     bands: [
@@ -265,7 +265,7 @@ export const UK_SCOTLAND_INCOME_TAX: Record<string, UKScotlandIncomeTaxYear> = {
     ],
   },
   "2025/26": {
-    description: "Scotland — 2025/26",
+    description: "Scotland, 2025/26",
     personalAllowance: 12570,
     personalAllowanceTaperStart: 100000,
     bands: [
@@ -278,7 +278,7 @@ export const UK_SCOTLAND_INCOME_TAX: Record<string, UKScotlandIncomeTaxYear> = {
     ],
   },
   "2026/27": {
-    description: "Scotland — 2026/27",
+    description: "Scotland, 2026/27",
     personalAllowance: 12570,
     personalAllowanceTaperStart: 100000,
     bands: [
@@ -355,7 +355,7 @@ export interface UKNationalInsuranceYear {
 
 export const UK_NATIONAL_INSURANCE: Record<string, UKNationalInsuranceYear> = {
   "2020/21": {
-    description: "UK National Insurance — 2020/21",
+    description: "UK National Insurance, 2020/21",
     class1: {
       lowerEarningsLimit: 6240,
       primaryThreshold: 9500,
@@ -372,7 +372,7 @@ export const UK_NATIONAL_INSURANCE: Record<string, UKNationalInsuranceYear> = {
     class2: { abolished: false, weeklyRate: 3.05, smallProfitsThreshold: 6475 },
   },
   "2021/22": {
-    description: "UK National Insurance — 2021/22",
+    description: "UK National Insurance, 2021/22",
     class1: {
       lowerEarningsLimit: 6240,
       primaryThreshold: 9568,
@@ -389,7 +389,7 @@ export const UK_NATIONAL_INSURANCE: Record<string, UKNationalInsuranceYear> = {
     class2: { abolished: false, weeklyRate: 3.05, smallProfitsThreshold: 6515 },
   },
   "2022/23": {
-    description: "UK National Insurance — 2022/23 (rates changed mid-year)",
+    description: "UK National Insurance, 2022/23 (rates changed mid-year)",
     class1: {
       lowerEarningsLimit: 6396,
       // APPROXIMATION of mid-year changes (annual method). Per-period figures: PT 9,880 to 5 Jul 2022 then
@@ -411,7 +411,7 @@ export const UK_NATIONAL_INSURANCE: Record<string, UKNationalInsuranceYear> = {
     class2: { abolished: false, weeklyRate: 3.15, smallProfitsThreshold: 6725 },
   },
   "2023/24": {
-    description: "UK National Insurance — 2023/24",
+    description: "UK National Insurance, 2023/24",
     class1: {
       lowerEarningsLimit: 6396,
       primaryThreshold: 12570,
@@ -434,7 +434,7 @@ export const UK_NATIONAL_INSURANCE: Record<string, UKNationalInsuranceYear> = {
     class2: { abolished: false, weeklyRate: 3.45, smallProfitsThreshold: 6725 },
   },
   "2024/25": {
-    description: "UK National Insurance — 2024/25",
+    description: "UK National Insurance, 2024/25",
     class1: {
       lowerEarningsLimit: 6396,
       primaryThreshold: 12570,
@@ -451,7 +451,7 @@ export const UK_NATIONAL_INSURANCE: Record<string, UKNationalInsuranceYear> = {
     class2: { abolished: true, weeklyRate: 0, smallProfitsThreshold: 0 },
   },
   "2025/26": {
-    description: "UK National Insurance — 2025/26",
+    description: "UK National Insurance, 2025/26",
     class1: {
       // 6,500 (125 a week): https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2025-to-2026
       lowerEarningsLimit: 6500,
@@ -469,7 +469,7 @@ export const UK_NATIONAL_INSURANCE: Record<string, UKNationalInsuranceYear> = {
     class2: { abolished: true, weeklyRate: 0, smallProfitsThreshold: 0 },
   },
   "2026/27": {
-    description: "UK National Insurance — 2026/27",
+    description: "UK National Insurance, 2026/27",
     class1: {
       lowerEarningsLimit: 6708,
       primaryThreshold: 12570,
@@ -534,7 +534,7 @@ export const UK_STUDENT_LOANS: Record<string, UKStudentLoanYear> = {
   // (2020 to 2021, 2021 to 2022, 2022 to 2023). Plan 5 did not exist yet.
   // UNVERIFIED: 2020/21 Plan 4 is not listed on the 2020 to 2021 page, so it is omitted, not guessed.
   "2020/21": {
-    description: "Student Loans — 2020/21",
+    description: "Student loans, 2020/21",
     plans: {
       plan1: { name: "Plan 1", threshold: 19390, rate: 0.09 },
       plan2: { name: "Plan 2", threshold: 26575, rate: 0.09 },
@@ -542,7 +542,7 @@ export const UK_STUDENT_LOANS: Record<string, UKStudentLoanYear> = {
     },
   },
   "2021/22": {
-    description: "Student Loans — 2021/22",
+    description: "Student loans, 2021/22",
     plans: {
       plan1: { name: "Plan 1", threshold: 19895, rate: 0.09 },
       plan2: { name: "Plan 2", threshold: 27295, rate: 0.09 },
@@ -551,7 +551,7 @@ export const UK_STUDENT_LOANS: Record<string, UKStudentLoanYear> = {
     },
   },
   "2022/23": {
-    description: "Student Loans — 2022/23",
+    description: "Student loans, 2022/23",
     plans: {
       plan1: { name: "Plan 1", threshold: 20195, rate: 0.09 },
       plan2: { name: "Plan 2", threshold: 27295, rate: 0.09 },
@@ -560,7 +560,7 @@ export const UK_STUDENT_LOANS: Record<string, UKStudentLoanYear> = {
     },
   },
   "2023/24": {
-    description: "Student Loans — 2023/24",
+    description: "Student loans, 2023/24",
     plans: {
       plan1: { name: "Plan 1", threshold: 22015, rate: 0.09 },
       plan2: { name: "Plan 2", threshold: 27295, rate: 0.09 },
@@ -570,7 +570,7 @@ export const UK_STUDENT_LOANS: Record<string, UKStudentLoanYear> = {
     },
   },
   "2024/25": {
-    description: "Student Loans — 2024/25",
+    description: "Student loans, 2024/25",
     plans: {
       plan1: { name: "Plan 1", threshold: 24990, rate: 0.09 },
       plan2: { name: "Plan 2", threshold: 27295, rate: 0.09 },
@@ -583,7 +583,7 @@ export const UK_STUDENT_LOANS: Record<string, UKStudentLoanYear> = {
   // Source: https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2025-to-2026
   // UNVERIFIED: Plan 5 25,000 is not listed on the 2025 to 2026 page (kept from the previous code).
   "2025/26": {
-    description: "Student Loans — 2025/26",
+    description: "Student loans, 2025/26",
     plans: {
       plan1: { name: "Plan 1", threshold: 26065, rate: 0.09 },
       plan2: { name: "Plan 2", threshold: 28470, rate: 0.09 },
@@ -593,7 +593,7 @@ export const UK_STUDENT_LOANS: Record<string, UKStudentLoanYear> = {
     },
   },
   "2026/27": {
-    description: "Student Loans — 2026/27",
+    description: "Student loans, 2026/27",
     plans: {
       plan1: { name: "Plan 1", threshold: 26900, rate: 0.09 },
       plan2: { name: "Plan 2", threshold: 29385, rate: 0.09 },

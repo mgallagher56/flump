@@ -347,7 +347,7 @@ export const ProfileTab: FC<ProfileTabProps> = ({ profile, user, onDirtyChange }
         {/* E23 D06/D-4-C: region and student loan for users who onboarded before they were asked */}
         <div className={fieldGrid()}>
           <FormField
-            hint="Scotland has its own income tax rates, so this changes your take-home pay."
+            hint="Scotland has its own Income Tax rates, so this changes your take-home pay."
             id="tax-region-select"
             label="Where do you pay tax?"
           >
@@ -471,7 +471,7 @@ export const ProfileTab: FC<ProfileTabProps> = ({ profile, user, onDirtyChange }
           checked={selfAssessmentOn}
           data-testid="self-assessment-module-toggle"
           disabled={moduleSaving}
-          hint="Income and expense records by tax year, for self-employed or rental income. Adds a tax page to your menu and dashboard. This is saved straight away."
+          hint="Income and cost records by tax year, for self-employed or rental income. Adds a tax page to your menu and dashboard. This is saved straight away."
           id="self-assessment-module-toggle"
           label="Self Assessment"
           onChange={(e) => handleToggleSelfAssessment(e.target.checked)}

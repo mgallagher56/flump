@@ -14,7 +14,7 @@ const titleOf = (meta: MetaFunction) =>
 // Signed-in pages each name themselves in the browser tab (pre-release defect 11).
 describe("signed-in page titles", () => {
   it.each([
-    ["/", dashboardMeta, "Dashboard | Flump"],
+    ["/", dashboardMeta, "Your money | Flump"],
     ["/app/accounts", accountsMeta, "Accounts | Flump"],
     ["/app/budget", budgetMeta, "Budget | Flump"],
     ["/app/debt", debtMeta, "Debt | Flump"],

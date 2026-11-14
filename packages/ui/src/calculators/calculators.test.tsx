@@ -21,7 +21,7 @@ describe("UI Calculators", () => {
       expect(screen.getByText(/Total interest, highest rate first/)).toBeDefined();
       expect(screen.getByText(/Total interest, smallest balance first/)).toBeDefined();
 
-      const slider = screen.getByRole("slider", { name: /Extra payment a month range slider/i });
+      const slider = screen.getByRole("slider", { name: /Extra payment a month/i });
       fireEvent.change(slider, { target: { value: "150" } });
       expect(screen.getByDisplayValue("£150")).toBeDefined();
 
@@ -46,7 +46,7 @@ describe("UI Calculators", () => {
       expect(screen.getByRole("heading", { name: /Mortgage overpayment or ISA/i })).toBeDefined();
       expect(screen.getByText(/ISA growth is not fixed and can be negative/i)).toBeDefined();
 
-      const slider = screen.getByLabelText("Mortgage balance range slider");
+      const slider = screen.getByLabelText("Mortgage balance");
       fireEvent.change(slider, { target: { value: "300000" } });
       expect((slider as HTMLInputElement).value).toBe("300000");
 
@@ -66,7 +66,7 @@ describe("UI Calculators", () => {
       ).toBeDefined();
       expect(screen.getByText(/Estimated interest a year/i)).toBeDefined();
 
-      const slider = screen.getByLabelText("Average amount overdrawn range slider");
+      const slider = screen.getByLabelText("Average amount overdrawn");
       fireEvent.change(slider, { target: { value: "1500" } });
       expect(screen.getByDisplayValue("£1,500")).toBeDefined();
 
@@ -84,7 +84,7 @@ describe("UI Calculators", () => {
       expect(screen.getByText(/Tax on rental income under Section 24/i)).toBeDefined();
       expect(screen.getAllByText(/Estimated tax on rental income/i).length).toBeGreaterThan(0);
 
-      const slider = screen.getByLabelText("Rental income a year, before costs range slider");
+      const slider = screen.getByLabelText("Rental income a year, before costs");
       fireEvent.change(slider, { target: { value: "25000" } });
       expect(screen.getAllByDisplayValue("25000").length).toBeGreaterThan(0);
 
@@ -101,7 +101,7 @@ describe("UI Calculators", () => {
 
       expect(screen.getByText(/UK student loan repayment calculator/i)).toBeDefined();
 
-      const input = screen.getByLabelText("Yearly salary before tax range slider");
+      const input = screen.getByLabelText("Yearly salary before tax");
       fireEvent.change(input, { target: { value: "52000" } });
       expect((input as HTMLInputElement).value).toBe("52000");
 
@@ -143,7 +143,7 @@ describe("UI Calculators", () => {
       expect(screen.getByText(/Estimated monthly payment/i)).toBeDefined();
       expect(screen.getByText(/with minimum payments only/i)).toBeDefined();
 
-      const slider = screen.getByLabelText("Balance on the 0% card range slider");
+      const slider = screen.getByLabelText("Balance on the 0% card");
       fireEvent.change(slider, { target: { value: "3500" } });
       expect(screen.getByDisplayValue("£3,500")).toBeDefined();
 

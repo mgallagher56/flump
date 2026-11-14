@@ -60,7 +60,10 @@ export const action = async (args: ActionFunctionArgs) => {
       await backendFetch(`/accounts/${accountId}`, { accessToken: token, method: "DELETE" });
     } else {
       return data(
-        { success: false as const, error: "We could not do that. Nothing has changed. Try again." },
+        {
+          success: false as const,
+          error: "We could not save that change. Your debts are unchanged. Try again.",
+        },
         { status: 400 },
       );
     }

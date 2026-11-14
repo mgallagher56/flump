@@ -25,9 +25,7 @@ export const Populated: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     await expect(canvas.getAllByText("Paid off sooner by").length).toBeGreaterThan(0);
-    await expect(canvas.getAllByLabelText("Extra each month range slider").length).toBeGreaterThan(
-      0,
-    );
+    await expect(canvas.getAllByLabelText("Extra each month").length).toBeGreaterThan(0);
     // A scenario outcome is never the hero surface.
     await expect(canvasElement.querySelectorAll("[data-tone='hero']")).toHaveLength(0);
   },

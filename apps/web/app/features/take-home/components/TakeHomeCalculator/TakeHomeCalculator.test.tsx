@@ -187,7 +187,7 @@ describe("<TakeHomeCalculator /> the scenario zone", () => {
     expect(container.querySelector('[data-testid="marginal-rate-explorer"]')).not.toBeNull();
     const pay = () => getByLabelText("Pay before tax a year input") as HTMLInputElement;
     expect(pay().value).toBe("£45,000");
-    fireEvent.change(getByLabelText("Pay before tax a year range slider"), {
+    fireEvent.change(getByLabelText("Pay before tax a year"), {
       target: { value: "80000" },
     });
     expect(pay().value).toBe("£80,000");

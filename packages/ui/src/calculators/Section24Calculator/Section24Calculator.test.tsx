@@ -4,7 +4,7 @@ import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { SECTION24_COPY, Section24Calculator } from "./Section24Calculator";
 
-const slider = (label: string) => screen.getByLabelText(`${label} range slider`);
+const slider = (label: string) => screen.getByLabelText(label);
 const pill = (label: string) => screen.getByLabelText(`${label} input`);
 const outcomes = () => within(screen.getByTestId("section-24-outcomes"));
 const toolText = () => screen.getByTestId("section-24-tool").textContent ?? "";

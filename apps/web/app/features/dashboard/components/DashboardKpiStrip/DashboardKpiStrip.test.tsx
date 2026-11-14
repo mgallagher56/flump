@@ -46,7 +46,7 @@ describe("DashboardKpiStrip", () => {
 
   it("calls a negative figure a shortfall in the usual colour, with a minus sign", () => {
     const { container } = renderStrip({ monthlySurplus: -250 });
-    expect(screen.getByText("Monthly shortfall")).toBeTruthy();
+    expect(screen.getByText("Short each month")).toBeTruthy();
     const figure = container.querySelector('[data-figure="budget.surplus"]');
     expect(figure?.textContent).toMatch(/−£250|-£250/);
     expect(figure?.innerHTML).not.toMatch(/danger|positive/);

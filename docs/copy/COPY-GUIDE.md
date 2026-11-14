@@ -153,6 +153,7 @@ Every number on a screen uses tabular numerals and UK formatting (`Intl.NumberFo
 
 - Full date: "5 April 2027". No ordinal ("5th"), no numeric form ("05/04/27").
 - Compact: "Apr 2027" for months, "2030" on chart axes (never "Year 5").
+- Short months are always three letters: Jan, Feb, Mar, Apr, May, Jun, Jul, Aug, Sep, Oct, Nov, Dec. September is "Sep", never "Sept" (decided 2026-11-14). Three letters keep every month the same width in tables and on chart axes, and the browser's own en-GB short form changes between engines ("Sep" on some, "Sept" on others). So short dates come from `formatDate` and `formatMonthYear` in `@repo/format`, which build the month name by hand, and never from `Intl.DateTimeFormat` or `toLocaleDateString` with `month: "short"`.
 - Tax year: "2026 to 2027 tax year" in a sentence; "2026/27" in a table, label or chart.
 - Durations over 24 months read as years and months: "3 years 4 months". Under that: "18 months".
 - Relative time only for recent events: "Updated 2 hours ago", then the date.

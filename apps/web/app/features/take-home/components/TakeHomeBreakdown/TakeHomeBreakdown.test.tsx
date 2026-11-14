@@ -16,7 +16,7 @@ describe("<TakeHomeBreakdown />", () => {
     const table = screen.getByRole("table", { name: "What comes off your pay each month" });
     const rows = within(table).getAllByRole("row").slice(1);
     expect(rows.map((r) => within(r).getByRole("rowheader").textContent)).toEqual([
-      "Income tax",
+      "Income Tax",
       "National Insurance",
       "Pension",
     ]);

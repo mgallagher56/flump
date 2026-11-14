@@ -99,12 +99,9 @@ export const ScenarioZone: Story = {
     )[0] as HTMLElement;
     await expect(within(zone).getByText("Illustration, not saved")).toBeDefined();
     const heroBefore = canvasElement.querySelector("[data-tone='hero']")?.textContent;
-    fireEvent.change(
-      within(zone).getAllByLabelText("Your contribution range slider")[0] as HTMLElement,
-      {
-        target: { value: "12" },
-      },
-    );
+    fireEvent.change(within(zone).getAllByLabelText("Your contribution")[0] as HTMLElement, {
+      target: { value: "12" },
+    });
     await userEvent.click(within(zone).getByRole("button", { name: "Reset to saved figures" }));
     await expect(canvasElement.querySelector("[data-tone='hero']")?.textContent).toBe(heroBefore);
   },

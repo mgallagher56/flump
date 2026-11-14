@@ -45,7 +45,7 @@ type Story = StoryObj<typeof DebtContainer>;
 export const Populated: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    await expect((await canvas.findAllByText("Debt-free by")).length).toBeGreaterThan(0);
+    await expect((await canvas.findAllByText("Debt-free date")).length).toBeGreaterThan(0);
     await expect(canvas.getAllByText("Total you owe").length).toBeGreaterThan(0);
     await expect(canvas.queryAllByText("Not set").length).toBe(0);
     await expect(

@@ -159,7 +159,7 @@ export const ASK_NO_ACCOUNTS: Missing = {
   field: "accounts",
   why: "No accounts are recorded, so balances, net worth and debts are empty rather than zero.",
   askUser:
-    "Which accounts and balances should I add? Start with current accounts, savings and any debts.",
+    "Which accounts do you have, such as current accounts, savings and debts? They can be added in Flump.",
 };
 
 export interface MonthlyBudget {

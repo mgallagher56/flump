@@ -24,7 +24,7 @@ export function loader() {
 }
 export function action() {
   return {
-    title: "Ping Test",
+    title: "Ping test",
     component: <Index />,
   };
 }
@@ -33,7 +33,7 @@ export default function Index() {
   const [message, setMessage] = useState("");
   return (
     <div>
-      <h1>Ping Test</h1>
+      <h1>Ping test</h1>
       <button
         type="button"
         disabled={message !== ""}
@@ -43,7 +43,7 @@ export default function Index() {
           }, 1000);
         }}
       >
-        Click to start ping
+        Start ping
       </button>
       <p>{message}</p>
     </div>

@@ -14,8 +14,7 @@ const Harness: FC<{ age: number | null }> = ({ age }) => {
   return <ForecasterControls currentAge={age} scenario={current} statePensionMonthly={1000} />;
 };
 
-const slider = (label: string) =>
-  screen.getByLabelText(`${label} range slider`) as HTMLInputElement;
+const slider = (label: string) => screen.getByLabelText(label) as HTMLInputElement;
 
 describe("<ForecasterControls />", () => {
   it("shows three inputs, with the UK rule options behind More options", () => {
@@ -43,6 +42,6 @@ describe("<ForecasterControls />", () => {
   it("without a saved age, the time input is years until you retire", () => {
     render(<Harness age={null} />);
     expect(slider("Years until you retire").value).toBe("32");
-    expect(screen.queryByLabelText("Retirement age range slider")).toBeNull();
+    expect(screen.queryByLabelText("Retirement age")).toBeNull();
   });
 });

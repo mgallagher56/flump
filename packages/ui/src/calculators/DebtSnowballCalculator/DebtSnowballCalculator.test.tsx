@@ -13,7 +13,7 @@ import { debtRowFields } from "./DebtSnowballCalculator.styles";
 const outcomes = () => within(screen.getByTestId("debt-snowball-outcomes"));
 const toolText = () => screen.getByTestId("debt-snowball-tool").textContent ?? "";
 const debtGroup = (name: RegExp) => within(screen.getByRole("group", { name }));
-const extraSlider = () => screen.getByLabelText(`${DEBT_SNOWBALL_COPY.extra} range slider`);
+const extraSlider = () => screen.getByLabelText(DEBT_SNOWBALL_COPY.extra);
 
 /** Types into a CurrencyInput or PercentInput and commits it, as a visitor would. */
 const enter = (input: HTMLElement, value: string) => {

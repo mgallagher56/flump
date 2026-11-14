@@ -7,7 +7,7 @@ const meta: Meta<typeof SiteFooter> = {
   component: SiteFooter,
   parameters: { layout: "fullscreen" },
   args: {
-    blurb: "UK budget, debt and tax calculators. Estimates for guidance, not advice.",
+    blurb: "UK budget, debt and tax calculators.",
     columns: [
       {
         heading: "Free calculators",

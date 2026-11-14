@@ -22,7 +22,7 @@ type Story = StoryObj<typeof PayRiseTeaser>;
 const assertTeaser: Story["play"] = async ({ canvasElement }) => {
   const canvas = within(canvasElement);
   await expect(canvas.getByText("£1,440 a year")).toBeInTheDocument();
-  fireEvent.change(canvas.getByLabelText("Pay rise (a year) range slider"), {
+  fireEvent.change(canvas.getByLabelText("Pay rise (a year)"), {
     target: { value: "1000" },
   });
   await expect(canvas.getByText("£720 a year")).toBeInTheDocument();
@@ -38,7 +38,7 @@ export const Dark: Story = {
 
 const assertTaper: Story["play"] = async ({ canvasElement }) => {
   const canvas = within(canvasElement);
-  fireEvent.change(canvas.getByLabelText("Current salary (before tax) range slider"), {
+  fireEvent.change(canvas.getByLabelText("Current salary (before tax)"), {
     target: { value: "99500" },
   });
   await expect(canvas.getByTestId("pay-rise-taper-note")).toBeInTheDocument();

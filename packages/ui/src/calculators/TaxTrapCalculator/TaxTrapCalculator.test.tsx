@@ -91,12 +91,9 @@ describe("TaxTrapCalculator", () => {
   it("states the childcare limit as a fact, from adjusted net income after the contribution", () => {
     render(<TaxTrapCalculator initialContribution={0} taxYear="2026/27" />);
     expect(screen.getByTestId("tax-trap-childcare-status").textContent).toContain("over £100,000");
-    fireEvent.change(
-      screen.getByRole("slider", { name: `${TAX_TRAP_COPY.contribution} range slider` }),
-      {
-        target: { value: "20000" },
-      },
-    );
+    fireEvent.change(screen.getByRole("slider", { name: TAX_TRAP_COPY.contribution }), {
+      target: { value: "20000" },
+    });
     expect(screen.getByTestId("tax-trap-childcare-status").textContent).toContain(
       "£100,000 or less",
     );

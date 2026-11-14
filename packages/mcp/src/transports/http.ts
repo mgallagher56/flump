@@ -66,7 +66,10 @@ const DISABLED_BODY = {
 const FORBIDDEN_ORIGIN_BODY = { error: "origin_not_allowed", message: "Origin not allowed." };
 
 const WWW_AUTHENTICATE = 'Bearer realm="flump-mcp"';
-const GENERIC_BAD_REQUEST = { error: "bad_request", message: "Bad request" };
+const GENERIC_BAD_REQUEST = {
+  error: "bad_request",
+  message: "Flump could not handle this request. Try again.",
+};
 
 /**
  * SECURITY: takes the RIGHTMOST x-forwarded-for entry, which is the one appended by the

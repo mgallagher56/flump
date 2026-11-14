@@ -4,9 +4,9 @@ import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { ZERO_PERCENT_COPY, ZeroPercentCliffCalculator } from "./ZeroPercentCliffCalculator";
 
-const balanceSlider = () => screen.getByLabelText(`${ZERO_PERCENT_COPY.balance} range slider`);
+const balanceSlider = () => screen.getByLabelText(ZERO_PERCENT_COPY.balance);
 const balancePill = () => screen.getByLabelText(`${ZERO_PERCENT_COPY.balance} input`);
-const monthsSlider = () => screen.getByLabelText(`${ZERO_PERCENT_COPY.months} range slider`);
+const monthsSlider = () => screen.getByLabelText(ZERO_PERCENT_COPY.months);
 const monthsPill = () => screen.getByLabelText(`${ZERO_PERCENT_COPY.months} input`);
 const ratePill = () => screen.getByLabelText(`${ZERO_PERCENT_COPY.rate} input`);
 const outcomes = () => within(screen.getByTestId("zero-percent-outcomes"));
@@ -63,7 +63,7 @@ describe("ZeroPercentCliffCalculator", () => {
     expect(outcomes().getByText(ZERO_PERCENT_COPY.nothingOwed)).toBeDefined();
     expect(outcomes().getByText(ZERO_PERCENT_COPY.nothingOwedSubtext)).toBeDefined();
     expect(outcomes().getByText(ZERO_PERCENT_COPY.kpiLeftNothingOwedSubtext)).toBeDefined();
-    expect(toolText()).not.toMatch(/Pays off the £0|would clear it/);
+    expect(toolText()).not.toMatch(/Pays off the £0|would pay it off/);
   });
 
   it("drops the interest card when the minimum alone would clear the balance", () => {

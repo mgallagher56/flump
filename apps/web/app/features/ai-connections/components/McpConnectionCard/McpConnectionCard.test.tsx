@@ -256,7 +256,7 @@ describe("McpConnectionCard Feature Component", () => {
     fireEvent.keyDown(screen.getByRole("tab", { name: /Active tokens/i }), { key: "Enter" });
     fireEvent.click(screen.getByTestId("revoke-token-tok_rev_1"));
     expect((await screen.findByRole("alert")).textContent).toBe(
-      "The token could not be revoked. Try again in a moment.",
+      "The token could not be disconnected. Try again in a moment.",
     );
     expect(screen.queryByText("Revoked")).toBeNull();
   });

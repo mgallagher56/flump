@@ -426,7 +426,7 @@ export const DashboardTemplate: FC = () => {
 
 const STRATEGIES = [
   { value: "avalanche", label: "Highest rate first", description: "Saves the most interest" },
-  { value: "snowball", label: "Smallest balance first", description: "Clears a debt sooner" },
+  { value: "snowball", label: "Smallest balance first", description: "Pays off a debt sooner" },
 ] as const;
 
 const STRATEGY_LABEL: Record<string, string> = {

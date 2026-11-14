@@ -42,7 +42,7 @@ export const ASSUMPTION_COPY = {
   pensionCappedAtEarnings: "The pension contribution is limited to your pay.",
   pensionMethodAssumed: "The pension contribution is modelled as salary sacrifice.",
   reliefAtSourceBandExtension:
-    "Relief at source widens the basic rate band by the grossed-up contribution.",
+    "Relief at source widens the basic rate band by the contribution plus its tax relief.",
   reliefAtSourceScotland: "Relief at source for Scottish rates is not yet confirmed.",
   multipleUndergraduatePlans:
     "With more than one undergraduate plan, repayments are worked out once, on the lowest threshold.",
@@ -161,7 +161,7 @@ export const EXPLORER_COPY = {
   pensionMethodOptions: {
     none: "None",
     "salary-sacrifice": "Salary sacrifice",
-    "net-pay": "Net pay",
+    "net-pay": "Net pay arrangement",
     "relief-at-source": "Relief at source",
   },
   pensionAmount: "Pension contribution a year",

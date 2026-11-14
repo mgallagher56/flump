@@ -113,7 +113,9 @@ export class TokenVerifier {
 
     // 3. OAuth JWTs are not verified (no signature check), so they are rejected until
     // the OAuth ticket adds real verification.
-    throw new AuthenticationError("OAuth tokens are not enabled");
+    throw new AuthenticationError(
+      "OAuth tokens are not accepted. Use a token created in Flump under AI connections.",
+    );
   }
 
   private async verifyPat(token: string): Promise<VerifiedToken> {

@@ -67,7 +67,7 @@ export const DebtSummary: FC<DebtSummaryProps> = ({
         items={[
           <KpiCard
             key="date"
-            label="Debt-free by"
+            label="Debt-free date"
             subtext="Estimate"
             unset={aprUnknown}
             value={

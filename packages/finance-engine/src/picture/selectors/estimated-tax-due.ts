@@ -20,7 +20,7 @@ export interface SelectEstimatedTaxDueOptions {
 }
 
 export const ESTIMATED_TAX_EWNI_BANDS_NOTE =
-  "Uses England, Wales and Northern Ireland income tax bands.";
+  "Uses England, Wales and Northern Ireland Income Tax bands.";
 
 /** Records that carry income no employer has already taxed. ISA interest is tax-free. */
 function isUntaxedIncome(record: TaxRecord): boolean {

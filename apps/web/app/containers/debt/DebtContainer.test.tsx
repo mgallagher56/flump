@@ -156,7 +156,7 @@ describe("DebtContainer", () => {
     const hero = document.querySelector("[data-tone='hero']");
     expect(hero?.textContent).toContain("Total you owe");
     expect(hero?.textContent).toContain("£7,500");
-    expect(screen.getByText("Debt-free by")).toBeDefined();
+    expect(screen.getAllByText("Debt-free date").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Estimate").length).toBe(2);
     expect(screen.getByText("Interest this year")).toBeDefined();
   });
@@ -453,7 +453,7 @@ describe("DebtContainer scenario zone", () => {
     const { container } = render(<DebtContainer />);
     const before = savedText(container);
     expect(before).toContain("Total you owe");
-    expect(before).toContain("Debt-free by");
+    expect(before).toContain("Debt-free date");
 
     fireEvent.change(screen.getByRole("slider", { name: /Extra payment each month/i }), {
       target: { value: "300" },

@@ -125,7 +125,7 @@ describe("_index route", () => {
     expect(data.taxData.estimatedTaxDue).toBe(2000);
     // The engine's bands note travels with the figure, so the tax widget can show it.
     expect(data.taxData.estimatedTaxDueNotes).toEqual([
-      "Uses England, Wales and Northern Ireland income tax bands.",
+      "Uses England, Wales and Northern Ireland Income Tax bands.",
     ]);
   });
 

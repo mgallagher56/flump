@@ -128,7 +128,7 @@ export const SecurityTab: FC<SecurityTabProps> = ({ email }) => {
             Imports
           </h2>
           <p className={sectionLead()}>
-            Balances a connection stages wait in Imports until you review and confirm them.
+            Balances added through a connection wait in Imports until you review and confirm them.
           </p>
           <div>
             <Button asChild size="sm" variant="outline">

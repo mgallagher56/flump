@@ -52,7 +52,7 @@ export const DashboardKpiStrip: FC<DashboardKpiStripProps> = ({
         <KpiCard
           emptyAction={monthlySurplus === null ? addLink("/app/budget", "Add your budget") : null}
           key="left-over"
-          label={short ? "Monthly shortfall" : "Left over each month"}
+          label={short ? "Short each month" : "Left over each month"}
           unset={monthlySurplus === null}
           value={
             monthlySurplus === null ? null : (

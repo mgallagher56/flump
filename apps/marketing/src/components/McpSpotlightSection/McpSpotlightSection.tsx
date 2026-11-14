@@ -66,17 +66,18 @@ export const McpSpotlightSection: FC = () => {
             <p className={spotlightLead()}>
               Flump's MCP server lets MCP clients such as Claude Desktop and Cursor answer questions
               from the accounts, budget, debts and tax records you have saved in Flump. The tools
-              read your saved data, and UK tax figures come from a deterministic engine. Staging an
-              import for you to review is being rolled out and is not on every account yet. Where it
-              is available it is off by default, and nothing is saved until you confirm it in Flump.
+              read your saved data, and tax figures are calculated by Flump, not by the AI model.
+              Staging an import for you to review is being rolled out and is not on every account
+              yet. Where it is available it is off by default, and nothing is saved until you
+              confirm it in Flump.
             </p>
 
             <div className={stack({ gap: "3" })}>
               <div className={bulletRow()}>
                 <FiCheckCircle className={bulletIcon({ tone: "positive" })} size={18} />
                 <span>
-                  <strong>Deterministic engine:</strong> UK tax bands, debt payoff and net worth
-                  projections.
+                  <strong>Calculated by Flump:</strong> UK tax bands, debt payoff and net worth
+                  estimates.
                 </span>
               </div>
               <div className={bulletRow()}>
@@ -89,8 +90,8 @@ export const McpSpotlightSection: FC = () => {
               <div className={bulletRow()}>
                 <FiTerminal className={bulletIcon({ tone: "info" })} size={18} />
                 <span>
-                  <strong>Local CLI (preview):</strong> Run Flump MCP from source. Setup guide
-                  coming soon.
+                  <strong>Run it yourself (preview):</strong> Run Flump MCP from the source code.
+                  There is no setup guide yet.
                 </span>
               </div>
             </div>
@@ -98,7 +99,7 @@ export const McpSpotlightSection: FC = () => {
             <div className={flex({ gap: "4", flexWrap: "wrap", pt: "2" })}>
               <Link to="/mcp" className={linkReset()}>
                 <Button size="md" variant="primary">
-                  Explore MCP &amp; setup guides →
+                  About the AI connection →
                 </Button>
               </Link>
               <a href={`${appUrl}/app/profile`} className={linkReset()}>
@@ -120,12 +121,12 @@ export const McpSpotlightSection: FC = () => {
               </div>
 
               <div className={terminalPromptLine()}>
-                &gt; "Which income tax band does my salary reach this tax year, and how much income
-                tax is that?"
+                &gt; "Which Income Tax band does my salary reach this tax year, and how much Income
+                Tax is that?"
               </div>
 
               <div className={terminalToolLine()}>
-                ⚡ Calling tool: <code>get_tax_year_position</code>
+                Calling tool: <code>get_tax_year_position</code>
               </div>
 
               <section
@@ -182,7 +183,7 @@ export const McpSpotlightSection: FC = () => {
                 <strong className={terminalSummaryStrong()}>Example output:</strong> for an
                 illustrative £39,000 salary recorded for 2026/27 in England, Wales or Northern
                 Ireland, income sits below the Personal Allowance taper and its top slice is in the
-                basic rate band. Estimated income tax is £5,286. These figures are an unverified
+                basic rate band. Estimated Income Tax is £5,286. These figures are an unverified
                 example, not advice.
               </div>
             </div>

@@ -24,7 +24,7 @@ export interface PensionSummaryProps {
 }
 
 const PROFILE_PATH = "/app/profile";
-const ASSUMED_RATES_CAPTION = "Assumed rates. Edit to match your payslip";
+const ASSUMED_RATES_CAPTION = "Assumed rates. Edit to match your payslip.";
 
 const promptTo = (label: string, to: string): ReactNode => (
   <Link className={promptLink} to={to}>

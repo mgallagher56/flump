@@ -151,7 +151,7 @@ export const PersonalAllowanceTaperBanner: FC<PersonalAllowanceTaperBannerProps>
           <div className={cx(figureStyle, css({ color: "primary" }))}>
             {formatGBP(sacrifice)}{" "}
             <span className={css({ fontSize: "xs", color: "text.muted" })}>
-              ({formatGBP(sacrifice / 12)}/mo)
+              ({formatGBP(sacrifice / 12)} a month)
             </span>
           </div>
         </div>
@@ -175,21 +175,21 @@ export const PersonalAllowanceTaperBanner: FC<PersonalAllowanceTaperBannerProps>
           <div>
             <span className={metricLabelStyle}>Tax and NI difference a year</span>
             <div className={cx(figureStyle, css({ color: "text.primary" }))}>
-              {formatGBP(taxAndNiDifference)} / yr
+              {formatGBP(taxAndNiDifference)} a year
             </div>
           </div>
 
           <div>
             <span className={metricLabelStyle}>Pension contribution</span>
             <div className={cx(figureStyle, css({ color: "primary" }))}>
-              +{formatGBP(sacrifice / 12)} / mo
+              +{formatGBP(sacrifice / 12)} a month
             </div>
           </div>
 
           <div>
             <span className={metricLabelStyle}>Change in take-home pay</span>
             <div className={cx(figureStyle, css({ color: "text.primary" }))}>
-              -{formatGBP(takeHomeChange / 12)} / mo
+              −{formatGBP(takeHomeChange / 12)} a month
             </div>
           </div>
         </div>

@@ -28,9 +28,7 @@ const play: Story["play"] = async ({ canvasElement, args }) => {
   await userEvent.click(
     canvas.getByRole("button", { name: new RegExp(SECTION24_COPY.moreOptions) }),
   );
-  await expect(
-    canvas.getByLabelText(`${SECTION24_COPY.allowableExpenses} range slider`),
-  ).toBeInTheDocument();
+  await expect(canvas.getByLabelText(SECTION24_COPY.allowableExpenses)).toBeInTheDocument();
 
   await userEvent.click(canvas.getByRole("button", { name: /Continue to sign up/ }));
   await expect(args.onSaveAndContinue).toHaveBeenCalledWith(

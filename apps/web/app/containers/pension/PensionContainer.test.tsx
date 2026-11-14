@@ -131,7 +131,7 @@ const openDetails = () =>
   fireEvent.click(screen.getByRole("button", { name: "Salary and contributions" }));
 const zone = () => screen.getByRole("region", { name: "Model a change to your pension" });
 const slider = (label: string) =>
-  within(screen.getByRole("tabpanel")).getByLabelText(`${label} range slider`) as HTMLInputElement;
+  within(screen.getByRole("tabpanel")).getByLabelText(label) as HTMLInputElement;
 const savedText = () =>
   [
     document.querySelector("[data-tone='hero']")?.textContent,

@@ -28,7 +28,7 @@ describe("<DeleteAccountSection />", () => {
     const dialog = screen.getByRole("alertdialog");
     expect(dialog.textContent).toContain("This deletes the following for good:");
     expect(dialog.textContent).toContain("Your login");
-    expect(dialog.textContent).toContain("AI assistant access and its activity log");
+    expect(dialog.textContent).toContain("Your AI connections and their activity log");
     expect(dialog.textContent).toContain("with no personal details, for 24 months");
 
     const confirm = screen.getByRole("button", { name: "Delete my account" }) as HTMLButtonElement;

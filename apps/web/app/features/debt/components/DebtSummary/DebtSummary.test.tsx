@@ -20,7 +20,7 @@ describe("<DebtSummary />", () => {
     expect(heroes[0]?.textContent).toContain("£8,400");
     expect(heroes[0]?.textContent).not.toMatch(/estimate/i);
     expect(heroes[0]?.textContent).not.toContain("August 2028");
-    expect(getByText("Debt-free by")).toBeDefined();
+    expect(getByText("Debt-free date")).toBeDefined();
     expect(container.textContent).toContain("August 2028");
     expect(container.textContent).toContain("Estimate");
     expect(getByText("Interest this year")).toBeDefined();

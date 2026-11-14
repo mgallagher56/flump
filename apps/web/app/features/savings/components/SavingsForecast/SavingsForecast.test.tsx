@@ -58,7 +58,7 @@ describe("SavingsForecast", () => {
 
   it("updates the outcome when the years change", () => {
     render(<Harness initial={filled} />);
-    fireEvent.change(screen.getByLabelText("Years ahead range slider"), {
+    fireEvent.change(screen.getByLabelText("Years ahead"), {
       target: { value: "10" },
     });
     expect(screen.getByTestId("savings-forecast-outcome").textContent).toContain(

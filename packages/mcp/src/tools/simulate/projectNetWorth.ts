@@ -176,7 +176,7 @@ export const projectNetWorth = defineFlumpTool({
         fromProfile(
           "monthlyPensionContributionGbp",
           round2(monthlyPension),
-          "Profile salary times pension contribution percentage, divided by 12.",
+          "Saved salary times pension contribution percentage, divided by 12.",
         ),
       );
     }

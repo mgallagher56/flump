@@ -16,7 +16,7 @@ describe("McpSpotlightSection", () => {
     expect(screen.getByText(/Institution names are replaced with generic labels/i)).toBeDefined();
     expect(screen.getByTestId("mcp-spotlight-preview-badge").textContent).toMatch(/preview/i);
     expect(screen.queryByText(/npx/)).toBeNull();
-    expect(screen.getByText(/Setup guide coming soon/i)).toBeDefined();
+    expect(screen.getByText(/There is no setup guide yet/i)).toBeDefined();
     expect(document.body.textContent).not.toMatch(/PII-scrubbed|Strict PII/i);
     expect(screen.getByText("get_tax_year_position")).toBeDefined();
     expect(screen.getAllByText("5286")).toHaveLength(2);

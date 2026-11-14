@@ -31,7 +31,7 @@ describe("SliderField Primitive", () => {
     );
 
     expect(screen.getByText("Monthly Overpayment")).toBeDefined();
-    const slider = screen.getByLabelText("Monthly Overpayment range slider");
+    const slider = screen.getByLabelText("Monthly Overpayment");
     fireEvent.change(slider, { target: { value: "250" } });
     expect(handleChange).toHaveBeenCalledWith(250);
   });
