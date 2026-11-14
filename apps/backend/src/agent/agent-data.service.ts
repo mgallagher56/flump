@@ -33,6 +33,8 @@ import { Transaction } from "../entities/transaction.entity";
 import { FinanceService } from "../finance.service";
 import { UserProfileService } from "../user-profile.service";
 
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 /**
  * Tax-record columns sent to MCP clients, selected explicitly. No `receipt*` column is ever
  * read, so a receipt blob or filename cannot reach the provider output (E20-N15, E17-N7).
@@ -185,8 +187,12 @@ export class AgentDataService implements McpUserDataProvider {
     const params: unknown[] = [userId, from, to];
     let accounts = "";
     if (range.accountIds) {
-      params.push([...range.accountIds]);
-      accounts = ' AND d."account_id"::text = ANY($4::text[])';
+      const ids = [...new Set(range.accountIds.filter((id) => UUID_PATTERN.test(id)))].map((id) =>
+        id.toLowerCase(),
+      );
+      if (ids.length === 0) return [];
+      params.push(ids);
+      accounts = ' AND d."account_id" = ANY($4::uuid[])';
     }
     const columns = `d."account_id" AS "accountId", d."year", d."month", d."value", d."source"`;
     // In-range rows, plus each account's latest row before the range (the carry-forward seed).

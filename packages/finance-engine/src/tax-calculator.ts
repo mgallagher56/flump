@@ -193,9 +193,9 @@ export function getRecordBucketMonth(dateStr: string): string {
 
 /**
  * End date (YYYY-MM-DD) stored for an annual record: 5 April closing the tax year that
- * getTaxYearForRecordDate files `dateStr` under (month April or later ends 5 April of the
- * following year, January to March ends 5 April of the same year). The backend sets this on
- * create and the BackfillAnnualTaxRecordEndDate migration mirrors it in SQL.
+ * getTaxYearForRecordDate files `dateStr` under. The tax year starts on 6 April, so 6 April or
+ * later ends 5 April of the following year, and 1 January to 5 April ends 5 April of the same
+ * year (2024-04-01 ends 2024-04-05). The backend sets this on create and the BackfillAnnualTaxRecordEndDate migration mirrors it in SQL.
  */
 export function getAnnualRecordEndDate(dateStr: string): string {
   const startYear = Number.parseInt(getTaxYearForRecordDate(dateStr).split("/")[0] || "0", 10);

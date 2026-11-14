@@ -43,6 +43,18 @@ describe("TaxService.createBulk (audit M3)", () => {
     expect(outside.rows).toHaveLength(0);
   });
 
+  it("rejects a cap id that is not a uuid with a 400 before opening a transaction", async () => {
+    const { outside, transaction } = withManager();
+    const service = new TaxService(outside as never);
+    await expect(
+      service.createBulk("u1", {
+        records: [{ ...base, date: "2026-05-01" }],
+        capPreviousRecordIds: [{ id: "not-a-uuid", endDate: "2026-04-05" }],
+      } as never),
+    ).rejects.toBeInstanceOf(BadRequestException);
+    expect(transaction).not.toHaveBeenCalled();
+  });
+
   it("validates everything before opening the transaction", async () => {
     const { outside, transaction } = withManager();
     const service = new TaxService(outside as any);

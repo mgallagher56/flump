@@ -2,7 +2,7 @@ import {
   MAX_BULK_TAX_RECORDS as CONTRACT_MAX_BULK_TAX_RECORDS,
   type TaxRecordCap,
 } from "@flump/api-contract";
-import { getUkTaxYearForDate } from "@flump/finance-engine";
+import { getAnnualRecordEndDate } from "@flump/finance-engine";
 import { BadRequestException, Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
@@ -67,15 +67,10 @@ export const isIsoCalendarDate = (value: string): boolean => {
   return dt.getUTCFullYear() === y && dt.getUTCMonth() === mo - 1 && dt.getUTCDate() === d;
 };
 
-/**
- * 5 April closing the UK tax year that contains `date` (BE-08, audit M1). Built on
- * getUkTaxYearForDate: the tax year starts on 6 April, so 1 to 5 April belong to the year that
- * ends that 5 April (2026-04-03 is in 2025/26 and ends 2026-04-05).
- */
-export const annualRecordEndDate = (date: string): string => {
-  const startYear = Number(getUkTaxYearForDate(date).slice(0, 4));
-  return `${startYear + 1}-04-05`;
-};
+/** 5 April closing the UK tax year that contains `date` (BE-08, audit M1). */
+export const annualRecordEndDate = getAnnualRecordEndDate;
+
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /**
  * E23 D16 / D-7-A: an annual record belongs to the tax year containing its `date`, and its stored
@@ -161,6 +156,9 @@ export class TaxService {
       if (typeof item.id !== "string" || !item.id || typeof item.endDate !== "string") {
         throw new BadRequestException("Each capPreviousRecordIds item needs an id and an endDate");
       }
+      if (!UUID_PATTERN.test(item.id)) {
+        throw new BadRequestException("Each capPreviousRecordIds id must be a uuid");
+      }
       if (!isIsoCalendarDate(item.endDate)) {
         throw new BadRequestException(
           "capPreviousRecordIds endDate must be a date in YYYY-MM-DD form",
@@ -185,10 +183,7 @@ export class TaxService {
   private inTransaction<T>(work: (records: Repository<TaxRecord>) => Promise<T>): Promise<T> {
     const manager = this.taxRecordRepository.manager;
     if (!manager?.transaction) {
-      if (process.env.NODE_ENV === "production") {
-        throw new Error("Tax bulk writes need a TypeORM manager to run transactionally");
-      }
-      return work(this.taxRecordRepository);
+      throw new Error("Tax bulk writes need a TypeORM manager to run transactionally");
     }
     return manager.transaction((em) => work(em.getRepository(TaxRecord)));
   }
