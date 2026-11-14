@@ -79,13 +79,30 @@ describe("requestContextMiddleware", () => {
     expect(JSON.stringify(lines[0])).not.toContain(SENTINEL);
   });
 
-  it("replaces a non-UUID x-request-id", async () => {
+  it("replaces an x-request-id outside the safe pattern", async () => {
     const res = await request(app.getHttpServer())
       .get("/accounts/1")
       .set("x-request-id", "evil\tid with spaces");
     const id = res.headers["x-request-id"] as string;
     expect(id).toMatch(UUID_RE);
     expect(lines[0]?.requestId).toBe(id);
+  });
+
+  it.each(["short", "x".repeat(129), "has/slash-00", 'quote"d-0000'])(
+    "replaces the unsafe x-request-id %s",
+    async (supplied) => {
+      const res = await request(app.getHttpServer())
+        .get("/accounts/1")
+        .set("x-request-id", supplied);
+      expect(res.headers["x-request-id"]).toMatch(UUID_RE);
+    },
+  );
+
+  it("echoes a safe non-UUID x-request-id (the web server's id format may differ)", async () => {
+    const supplied = "web.req_01-ABCdef";
+    const res = await request(app.getHttpServer()).get("/accounts/1").set("x-request-id", supplied);
+    expect(res.headers["x-request-id"]).toBe(supplied);
+    expect(lines[0]?.requestId).toBe(supplied);
   });
 
   it("echoes a valid UUID x-request-id", async () => {

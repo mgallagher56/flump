@@ -130,7 +130,29 @@ describe("assertSafeOptions", () => {
     );
   });
 
+  it.each([0.02, 0.05])(
+    "accepts tracesSampleRate %s with a beforeSendTransaction scrubber",
+    (rate) => {
+      expect(() =>
+        assertSafeOptions({ ...safe, tracesSampleRate: rate, beforeSendTransaction: () => null }),
+      ).not.toThrow();
+    },
+  );
+
+  it("rejects a low tracesSampleRate without a beforeSendTransaction function", () => {
+    expect(() => assertSafeOptions({ ...safe, tracesSampleRate: 0.02 })).toThrow(
+      /beforeSendTransaction/,
+    );
+    expect(() =>
+      assertSafeOptions({ ...safe, tracesSampleRate: 0.02, beforeSendTransaction: "yes" }),
+    ).toThrow(/beforeSendTransaction/);
+  });
+
   it.each([
+    { tracesSampleRate: 0.1, beforeSendTransaction: () => null },
+    { tracesSampleRate: 0.051, beforeSendTransaction: () => null },
+    { tracesSampleRate: -0.01, beforeSendTransaction: () => null },
+    { tracesSampleRate: "0.02", beforeSendTransaction: () => null },
     { tracesSampleRate: 0.1 },
     { tracesSampleRate: 1 },
     { tracesSampleRate: "0.5" },

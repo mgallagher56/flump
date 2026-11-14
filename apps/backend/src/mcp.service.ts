@@ -1,6 +1,6 @@
 import { buildFlumpAiContextPack, formatAiContextPackMarkdown } from "@flump/finance-engine";
 import { HttpMcpHandler, type McpAuditCaller, type McpAuditEvent } from "@flump/mcp";
-import { Inject, Injectable, Logger } from "@nestjs/common";
+import { Inject, Injectable, Logger, Optional } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { AgentAuditService } from "./agent/agent-audit.service";
 import { AgentDataService } from "./agent/agent-data.service";
@@ -15,6 +15,8 @@ import {
   mcpOpenAccessBootWarning,
   readMcpAccessConfig,
 } from "./mcp-access";
+import type { SharedRateLimitStore } from "./security/rate-limit.store";
+import { SHARED_RATE_LIMIT_STORE } from "./security/shared-rate-limit";
 
 /** Handler wiring and the offline context pack. Tokens and data live in their own services. */
 @Injectable()
@@ -29,6 +31,11 @@ export class McpService {
     @Inject(AUTH_MODE) authMode: "workos" | "dev",
     private readonly audit: AgentAuditService,
     private readonly importsAdapter: McpImportsAdapter,
+    // BE-07 (M10): the shared Postgres counters, so the MCP limits hold across replicas and
+    // restarts. Optional only for unit tests that build the service by hand (in-memory default).
+    @Optional()
+    @Inject(SHARED_RATE_LIMIT_STORE)
+    private readonly limitStore?: SharedRateLimitStore,
   ) {
     const warning = mcpOpenAccessBootWarning(process.env);
     if (warning) this.logger.warn(warning);
@@ -51,6 +58,7 @@ export class McpService {
       // E20-N18: the kill switch is read per request; origins are read once at boot.
       isEnabled: () => readMcpAccessConfig(process.env).enabled,
       allowedOrigins: readMcpAccessConfig(process.env).allowedOrigins,
+      ...(this.limitStore ? { limitStore: this.limitStore } : {}),
       tokenStore: this.tokenService,
       // Defence in depth: the dev bypass token is never emitted in a production-like process,
       // even if authMode were somehow "dev" (resolveAuthMode already refuses that at boot).

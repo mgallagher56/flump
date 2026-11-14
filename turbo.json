@@ -13,6 +13,13 @@
     "build": {
       "dependsOn": ["^build", "^generate"],
       "env": ["FLUMP_LAUNCH", "ALLOW_INDEXING"],
+      "passThroughEnv": [
+        "SENTRY_AUTH_TOKEN",
+        "SENTRY_ORG",
+        "SENTRY_PROJECT",
+        "SENTRY_URL",
+        "SENTRY_RELEASE"
+      ],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
       "outputs": ["dist/**", "build/**", "!.next/cache/**"]
     },

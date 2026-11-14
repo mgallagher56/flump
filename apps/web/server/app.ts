@@ -4,6 +4,7 @@ import compression from "compression";
 import express, { type Express } from "express";
 import { RouterContextProvider, type ServerBuild } from "react-router";
 import { accessLog } from "./accessLog";
+import { noSourceMaps } from "./noSourceMaps";
 import { securityHeaders } from "./securityHeaders";
 import { connectionCloseWhenDraining } from "./shutdown";
 
@@ -19,9 +20,10 @@ export interface CreateAppOptions {
 }
 
 /**
- * A near-verbatim port of `react-router-serve` (7.18.5) with three additions: the security headers
+ * A near-verbatim port of `react-router-serve` (7.18.5) with four additions: the security headers
  * on every response (including static files and responses React Router builds outside any hook),
- * a query-free access log in place of morgan("tiny"), and `trust proxy` for the Railway hop.
+ * a query-free access log (with the request id context) in place of morgan("tiny"), a 404 for
+ * every `*.map` path, and `trust proxy` for the Railway hop.
  */
 export function createApp({
   build,
@@ -40,6 +42,7 @@ export function createApp({
   app.use(accessLog({ json, write: logWrite }));
   app.use(connectionCloseWhenDraining());
   app.use(compression());
+  app.use(noSourceMaps());
 
   const publicPath = build.publicPath ?? "/";
   // Same caching as react-router-serve: hashed assets immutable for a year, everything else 1h.

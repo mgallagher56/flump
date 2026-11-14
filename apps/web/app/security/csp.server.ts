@@ -1,19 +1,34 @@
 import { randomBytes } from "node:crypto";
 import { createContext } from "react-router";
 
+type Env = Record<string, string | undefined>;
+
 /**
- * Content-Security-Policy-Report-Only (E20-N11). The enforced `Content-Security-Policy:
- * frame-ancestors 'none'` stays in `SECURITY_HEADERS`; this is a SEPARATE, nonce-bearing policy
- * that only reports until E20-N12 enforces it.
+ * The full, nonce-bearing Content Security Policy (E20-N11 report-only soak, enforced by BE-07 for
+ * audit M8). It replaces the `frame-ancestors 'none'`-only default from `SECURITY_HEADERS` on HTML
+ * documents (the policy carries `frame-ancestors 'none'` itself), so a document has exactly one
+ * `Content-Security-Policy` header. Violations still report: `report-uri` (every browser) and
+ * `report-to` with a `Reporting-Endpoints` header (Reporting API browsers) both point at
+ * `/csp-report`.
  *
- * E20-N12 switch point: `FULL_CSP_HEADER_NAME` is the only place the header name lives. N12 turns
- * it into `CSP_ENFORCE === "true" ? "Content-Security-Policy" : "Content-Security-Policy-Report-Only"`
- * (and then drops the report-only copy of the frame-ancestors directive from the enforced header).
+ * Rollback: `CSP_REPORT_ONLY=true` (exactly) sends the same policy as
+ * `Content-Security-Policy-Report-Only` again, and the enforced `frame-ancestors 'none'` default
+ * comes back on its own. Any other value, or unset, enforces.
  */
-export const FULL_CSP_HEADER_NAME = "Content-Security-Policy-Report-Only";
+export const ENFORCED_CSP_HEADER = "Content-Security-Policy";
+export const REPORT_ONLY_CSP_HEADER = "Content-Security-Policy-Report-Only";
+
+/** The header the full policy goes out under (see the rollback note above). */
+export function fullCspHeaderName(env: Env = process.env): string {
+  return env.CSP_REPORT_ONLY === "true" ? REPORT_ONLY_CSP_HEADER : ENFORCED_CSP_HEADER;
+}
 
 /** Same-origin endpoint that receives violation reports (`routes/csp-report.ts`). */
 export const CSP_REPORT_PATH = "/csp-report";
+
+/** The `report-to` group name, declared by `Reporting-Endpoints` on the same response. */
+export const CSP_REPORT_GROUP = "csp-endpoint";
+export const REPORTING_ENDPOINTS = `${CSP_REPORT_GROUP}="${CSP_REPORT_PATH}"`;
 
 /** Per-request nonce, written by the root middleware and read by `entry.server.tsx`. */
 export const nonceContext = createContext<string>("");
@@ -22,8 +37,6 @@ export const nonceContext = createContext<string>("");
 export function generateNonce(): string {
   return randomBytes(16).toString("base64url");
 }
-
-type Env = Record<string, string | undefined>;
 
 /**
  * Only plain `scheme://host[:port]` origins may enter a policy. The URL parser accepts characters
@@ -77,6 +90,8 @@ export interface CspOptions {
   formActionOrigins: readonly string[];
   /** Extra exact origins for `connect-src` (the Sentry ingest origin, when configured). */
   connectOrigins?: readonly string[];
+  /** Adds `upgrade-insecure-requests` (production only: local http would be upgraded too). */
+  upgradeInsecureRequests?: boolean;
 }
 
 /** The full policy. `script-src` carries the nonce and never `'unsafe-inline'`. */
@@ -84,8 +99,9 @@ export function buildCsp({
   nonce,
   formActionOrigins: formOrigins,
   connectOrigins = [],
+  upgradeInsecureRequests = false,
 }: CspOptions): string {
-  return [
+  const directives = [
     "default-src 'self'",
     `script-src 'self' 'nonce-${nonce}'`,
     "style-src 'self' 'unsafe-inline'",
@@ -96,13 +112,26 @@ export function buildCsp({
     "frame-ancestors 'none'",
     "object-src 'none'",
     "base-uri 'none'",
+    ...(upgradeInsecureRequests ? ["upgrade-insecure-requests"] : []),
     `report-uri ${CSP_REPORT_PATH}`,
-  ].join("; ");
+    `report-to ${CSP_REPORT_GROUP}`,
+  ];
+  return directives.join("; ");
 }
 
-/** Sets the full CSP on a response (set, never append: one header, one nonce). */
-export function applyFullCsp(response: Response, options: CspOptions): Response {
-  const set = (headers: Headers) => headers.set(FULL_CSP_HEADER_NAME, buildCsp(options));
+/**
+ * Sets the full CSP and its `Reporting-Endpoints` on a response (set, never append: one header,
+ * one nonce). Enforced, it overwrites the `frame-ancestors`-only default of the same name.
+ */
+export function applyFullCsp(
+  response: Response,
+  options: CspOptions,
+  env: Env = process.env,
+): Response {
+  const set = (headers: Headers) => {
+    headers.set(fullCspHeaderName(env), buildCsp(options));
+    headers.set("Reporting-Endpoints", REPORTING_ENDPOINTS);
+  };
   try {
     set(response.headers);
     return response;

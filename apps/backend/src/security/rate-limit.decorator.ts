@@ -26,10 +26,41 @@ export const RATE_LIMIT_POLICIES = {
   receiptRead: [{ limit: 30, windowMs: MINUTE }],
 } as const satisfies Record<string, readonly RateLimitWindow[]>;
 
-/** Per-IP ceiling for every non-exempt request. Generous: the web server is one IP after Phase 1. */
+/**
+ * Per-IP ceiling for every non-exempt request. Requests from the web server are keyed by the
+ * browser's address when they carry a valid signed client-IP header (signed-client-ip.ts, M9);
+ * otherwise by the socket address, which for the web server is one IP shared by every user.
+ */
 export const IP_RATE_LIMIT: readonly RateLimitWindow[] = [{ limit: 300, windowMs: MINUTE }];
 
 export type RateLimitClass = keyof typeof RATE_LIMIT_POLICIES;
+
+/**
+ * Classes counted in the shared Postgres store (BE-07, M10): low-volume buckets whose limit must
+ * hold across replicas and restarts. The rest (reads, writes, receipt reads and the per-IP
+ * ceiling) are cheap high-volume buckets that stay in process memory, where a deploy resetting
+ * them or a replica multiplying them costs little. `importStage` stays in memory too because the
+ * MCP import adapter shares that budget through the in-memory RateLimitStore.
+ */
+export const SHARED_RATE_LIMIT_CLASSES: ReadonlySet<RateLimitClass> = new Set<RateLimitClass>([
+  "credential",
+  "tokenMint",
+  "destructive",
+  "bank",
+  "bulkWrite",
+  "dataExport",
+]);
+
+/**
+ * Shared classes that fail closed: when Postgres errors, the request is refused with 503 rather
+ * than let through, because these guard credentials, token minting and irreversible actions.
+ * Every other shared class fails open to the in-memory store.
+ */
+export const FAIL_CLOSED_RATE_LIMIT_CLASSES: ReadonlySet<RateLimitClass> = new Set<RateLimitClass>([
+  "credential",
+  "tokenMint",
+  "destructive",
+]);
 
 export const RATE_LIMIT_CLASS = "flump:rate-limit-class";
 export const RATE_LIMIT_SKIP = "flump:rate-limit-skip";

@@ -48,21 +48,24 @@ test("healthz keeps its own no-store", async ({ request }) => {
   expect(response.headers()["cache-control"]).toBe("no-store");
 });
 
-test("documents carry a nonce report-only CSP next to the unchanged enforced frame-ancestors CSP (E20-N11)", async ({
+test("documents carry one enforced nonce CSP that includes frame-ancestors (E20-N11, BE-07 M8)", async ({
   request,
 }) => {
   const response = await request.get("/sandbox");
   expect(response.status()).toBe(200);
   const headers = response.headers();
 
-  expect(headers["content-security-policy"]).toBe("frame-ancestors 'none'");
-  const policy = headers["content-security-policy-report-only"];
-  expect(policy).toBeDefined();
+  expect(headers["content-security-policy-report-only"]).toBeUndefined();
+  const policy = headers["content-security-policy"];
+  expect(policy).toMatch(/^default-src 'self'; /);
+  expect(policy).toContain("frame-ancestors 'none'");
   const nonce = /'nonce-([A-Za-z0-9_-]{22})'/.exec(policy ?? "")?.[1];
   expect(nonce).toBeDefined();
   expect(policy).toMatch(/script-src 'self' 'nonce-[A-Za-z0-9_-]{22}'(;|$)/);
   expect(policy).not.toMatch(/script-src[^;]*'unsafe-inline'/);
   expect(policy).toContain("report-uri /csp-report");
+  expect(policy).toContain("report-to csp-endpoint");
+  expect(headers["reporting-endpoints"]).toBe('csp-endpoint="/csp-report"');
 
   // Every script element in the document carries the same nonce (inline ones need it to run).
   const html = await response.text();
@@ -72,7 +75,7 @@ test("documents carry a nonce report-only CSP next to the unchanged enforced fra
 
   // A fresh nonce per request.
   const again = await request.get("/sandbox");
-  expect(again.headers()["content-security-policy-report-only"]).not.toBe(policy);
+  expect(again.headers()["content-security-policy"]).not.toBe(policy);
 });
 
 test("/csp-report takes a same-origin report with 204", async ({ request, baseURL }) => {

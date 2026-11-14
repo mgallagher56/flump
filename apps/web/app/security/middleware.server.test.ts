@@ -25,7 +25,8 @@ describe("securityMiddleware", () => {
   it("sets the headers on a document response", async () => {
     const res = await run(new Request(`${APP}/app`), ok);
     expect(res.headers.get("x-frame-options")).toBe("DENY");
-    expect(res.headers.get("content-security-policy")).toBe("frame-ancestors 'none'");
+    // A document's CSP is the full enforced policy, which carries frame-ancestors itself.
+    expect(res.headers.get("content-security-policy")).toContain("frame-ancestors 'none'");
     expect(res.headers.get("strict-transport-security")).toBe(
       "max-age=31536000; includeSubDomains",
     );
@@ -210,19 +211,22 @@ describe("securityMiddleware session refresh cookies (E20-N2)", () => {
     expect(res.headers.getSetCookie()).toEqual([]);
   });
 
-  describe("report-only CSP (E20-N11)", () => {
+  describe("full CSP, enforced (E20-N11, BE-07 M8)", () => {
     const html = () =>
       Promise.resolve(new Response("<html></html>", { headers: { "Content-Type": "text/html" } }));
 
-    it("sets one report-only CSP with the request nonce and keeps the enforced header", async () => {
+    it("enforces one full CSP with the request nonce in place of the frame-ancestors default", async () => {
       const context = new RouterContextProvider();
       const res = await run(new Request(`${APP}/app`), html, context);
       const nonce = context.get(nonceContext);
       expect(nonce).toMatch(/^[A-Za-z0-9_-]{22}$/);
-      const policy = res.headers.get("content-security-policy-report-only") ?? "";
+      const policy = res.headers.get("content-security-policy") ?? "";
       expect(policy).toContain(`script-src 'self' 'nonce-${nonce}'`);
       expect(policy).toContain("report-uri /csp-report");
-      expect(res.headers.get("content-security-policy")).toBe("frame-ancestors 'none'");
+      expect(policy).toContain("report-to csp-endpoint");
+      expect(policy).toContain("frame-ancestors 'none'");
+      expect(res.headers.has("content-security-policy-report-only")).toBe(false);
+      expect(res.headers.get("reporting-endpoints")).toBe('csp-endpoint="/csp-report"');
     });
 
     it("uses a different nonce on every request", async () => {
@@ -235,7 +239,7 @@ describe("securityMiddleware session refresh cookies (E20-N2)", () => {
 
     it("allows the WorkOS and marketing origins in form-action", async () => {
       const res = await run(new Request(`${APP}/app`), html);
-      const policy = res.headers.get("content-security-policy-report-only") ?? "";
+      const policy = res.headers.get("content-security-policy") ?? "";
       expect(policy).toMatch(/form-action 'self' https:\/\/api\.workos\.com https?:\/\/[^;*]+;/);
     });
 
@@ -243,7 +247,7 @@ describe("securityMiddleware session refresh cookies (E20-N2)", () => {
       vi.stubEnv("SENTRY_DSN", "https://pubkey@o123.ingest.de.sentry.io/456");
       try {
         const res = await run(new Request(`${APP}/app`), html);
-        const policy = res.headers.get("content-security-policy-report-only") ?? "";
+        const policy = res.headers.get("content-security-policy") ?? "";
         expect(policy).toContain("connect-src 'self' https://o123.ingest.de.sentry.io;");
         expect(policy).not.toContain("*");
         expect(policy).not.toContain("pubkey");
@@ -256,9 +260,7 @@ describe("securityMiddleware session refresh cookies (E20-N2)", () => {
       vi.stubEnv("SENTRY_DSN", "");
       try {
         const res = await run(new Request(`${APP}/app`), html);
-        expect(res.headers.get("content-security-policy-report-only")).toContain(
-          "connect-src 'self';",
-        );
+        expect(res.headers.get("content-security-policy")).toContain("connect-src 'self';");
       } finally {
         vi.unstubAllEnvs();
       }
@@ -268,13 +270,37 @@ describe("securityMiddleware session refresh cookies (E20-N2)", () => {
       const data = () =>
         Promise.resolve(new Response("[]", { headers: { "Content-Type": "text/x-script" } }));
       const res = await run(new Request(`${APP}/app.data`), data);
-      expect(res.headers.has("content-security-policy-report-only")).toBe(false);
+      expect(res.headers.get("content-security-policy")).toBe("frame-ancestors 'none'");
+      expect(res.headers.has("reporting-endpoints")).toBe(false);
+    });
+
+    it("adds upgrade-insecure-requests in production only", async () => {
+      vi.stubEnv("NODE_ENV", "production");
+      try {
+        const res = await run(new Request(`${APP}/app`), html);
+        expect(res.headers.get("content-security-policy")).toContain("upgrade-insecure-requests");
+      } finally {
+        vi.unstubAllEnvs();
+      }
+      const dev = await run(new Request(`${APP}/app`), html);
+      expect(dev.headers.get("content-security-policy")).not.toContain("upgrade-insecure-requests");
+    });
+
+    it("reports only (enforced default kept) with CSP_REPORT_ONLY=true", async () => {
+      vi.stubEnv("CSP_REPORT_ONLY", "true");
+      try {
+        const res = await run(new Request(`${APP}/app`), html);
+        expect(res.headers.get("content-security-policy")).toBe("frame-ancestors 'none'");
+        expect(res.headers.get("content-security-policy-report-only")).toContain("'nonce-");
+      } finally {
+        vi.unstubAllEnvs();
+      }
     });
 
     it("does not add it to the CSRF rejection", async () => {
       const res = await run(new Request(`${APP}/logout`, { method: "POST" }), html);
       expect(res.status).toBe(403);
-      expect(res.headers.has("content-security-policy-report-only")).toBe(false);
+      expect(res.headers.get("content-security-policy")).toBe("frame-ancestors 'none'");
     });
   });
 

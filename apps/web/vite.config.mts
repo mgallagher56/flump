@@ -16,6 +16,7 @@ import { defineConfig, loadEnv } from "vite";
 import checker from "vite-plugin-checker";
 import tsconfigPaths from "vite-tsconfig-paths";
 import { resolveAppVersion } from "../../scripts/lib/app-version";
+import { sentrySourceMaps } from "./server/sentrySourceMaps";
 
 const marketingRequire = createRequire(
   `${dirname(fileURLToPath(import.meta.url))}/../marketing/package.json`,
@@ -30,168 +31,181 @@ const appVersion = resolveAppVersion({
   env: process.env,
 });
 
-export default defineConfig(({ mode }) => ({
-  server: {
-    port: 5173,
-    watch: {
-      ignored: [
-        "**/coverage/**",
-        "**/.turbo/**",
-        "**/build/**",
-        "**/storybook-static/**",
-        "**/.react-router/**",
-      ],
+export default defineConfig(({ mode, isSsrBuild }) => {
+  // Hidden browser source maps uploaded to Sentry and then deleted (BE-07, L14). Without
+  // SENTRY_AUTH_TOKEN, SENTRY_ORG and SENTRY_PROJECT (local, CI) this is a silent no-op.
+  const sentry =
+    process.env.VITEST || process.env.STORYBOOK
+      ? { sourcemap: false as const, plugins: [] }
+      : sentrySourceMaps(
+          { ...loadEnv(mode, configDir, "SENTRY_"), ...process.env },
+          Boolean(isSsrBuild),
+        );
+  return {
+    server: {
+      port: 5173,
+      watch: {
+        ignored: [
+          "**/coverage/**",
+          "**/.turbo/**",
+          "**/build/**",
+          "**/storybook-static/**",
+          "**/.react-router/**",
+        ],
+      },
     },
-  },
-  define: process.env.VITEST
-    ? {}
-    : { "import.meta.env.VITE_APP_VERSION": JSON.stringify(appVersion) },
-  css: {
-    postcss: {
-      plugins: [pandacss, autoprefixer],
+    define: process.env.VITEST
+      ? {}
+      : { "import.meta.env.VITE_APP_VERSION": JSON.stringify(appVersion) },
+    css: {
+      postcss: {
+        plugins: [pandacss, autoprefixer],
+      },
     },
-  },
-  plugins: [
-    !process.env.VITEST && !process.env.STORYBOOK ? reactRouter() : react(),
-    visualizer({ emitFile: true }),
-    ...(mode === "development"
-      ? [
-          checker({
-            biome: {
-              command: "check",
-              watchPath: "./app",
-              dev: {
-                logLevel: ["error"],
-                debounceMs: 500,
+    plugins: [
+      !process.env.VITEST && !process.env.STORYBOOK ? reactRouter() : react(),
+      visualizer({ emitFile: true }),
+      ...(mode === "development"
+        ? [
+            checker({
+              biome: {
+                command: "check",
+                watchPath: "./app",
+                dev: {
+                  logLevel: ["error"],
+                  debounceMs: 500,
+                },
               },
-            },
-            enableBuild: false,
-          }),
-        ]
-      : []),
-    tsconfigPaths(),
-  ],
-  build: {
-    target: "esnext",
-    // Fonts are always emitted as hashed files under /assets (immutable for a year), never inlined
-    // as `data:` URIs: the CSP is `font-src 'self'` and must not need `data:` (E20-N11 follow-up).
-    // Returning undefined keeps Vite's default 4 kB inline limit for everything else.
-    assetsInlineLimit: (filePath: string) =>
-      /\.(woff2?|ttf|otf|eot)$/i.test(filePath) ? false : undefined,
-  },
-  optimizeDeps: {
-    esbuildOptions: {
+              enableBuild: false,
+            }),
+          ]
+        : []),
+      tsconfigPaths(),
+      ...sentry.plugins,
+    ],
+    build: {
       target: "esnext",
+      sourcemap: sentry.sourcemap,
+      // Fonts are always emitted as hashed files under /assets (immutable for a year), never inlined
+      // as `data:` URIs: the CSP is `font-src 'self'` and must not need `data:` (E20-N11 follow-up).
+      // Returning undefined keeps Vite's default 4 kB inline limit for everything else.
+      assetsInlineLimit: (filePath: string) =>
+        /\.(woff2?|ttf|otf|eot)$/i.test(filePath) ? false : undefined,
     },
-  },
-  ssr: {
-    external: ["path-browserify"],
-  },
-  test: {
-    coverage: {
-      exclude: [
-        "app/**/*.test.{js,ts,jsx,tsx}",
-        "app/**/*.stories.{js,ts,jsx,tsx}",
-        "app/*.*",
-        "app/**/*.config.{js,ts,jsx,tsx}",
-        "app/**/types.ts",
-        "app/**/*.d.ts",
-        "app/components/ui/**/*.{js,mjs,cjs,ts,mts,cts,jsx,tsx}",
+    optimizeDeps: {
+      esbuildOptions: {
+        target: "esnext",
+      },
+    },
+    ssr: {
+      external: ["path-browserify"],
+    },
+    test: {
+      coverage: {
+        exclude: [
+          "app/**/*.test.{js,ts,jsx,tsx}",
+          "app/**/*.stories.{js,ts,jsx,tsx}",
+          "app/*.*",
+          "app/**/*.config.{js,ts,jsx,tsx}",
+          "app/**/types.ts",
+          "app/**/*.d.ts",
+          "app/components/ui/**/*.{js,mjs,cjs,ts,mts,cts,jsx,tsx}",
+        ],
+        include: ["app/**/*.{js,mjs,cjs,ts,mts,cts,jsx,tsx}"],
+        provider: "v8",
+        reporter: ["text", "html", "lcov", "clover", "json", "json-summary"],
+        reportOnFailure: true,
+        // Floors = floor(measured) - 1 (owner decision D6-a), measured after E5 with routes included.
+        thresholds: { statements: 82, branches: 69, functions: 70, lines: 84 },
+      },
+      outputFile: "sonar-report.xml",
+      reporters: [
+        "vitest-sonar-reporter",
+        ...(process.env.GITHUB_ACTIONS ? ["default", "github-actions"] : ["default"]),
       ],
-      include: ["app/**/*.{js,mjs,cjs,ts,mts,cts,jsx,tsx}"],
-      provider: "v8",
-      reporter: ["text", "html", "lcov", "clover", "json", "json-summary"],
-      reportOnFailure: true,
-      // Floors = floor(measured) - 1 (owner decision D6-a), measured after E5 with routes included.
-      thresholds: { statements: 82, branches: 69, functions: 70, lines: 84 },
-    },
-    outputFile: "sonar-report.xml",
-    reporters: [
-      "vitest-sonar-reporter",
-      ...(process.env.GITHUB_ACTIONS ? ["default", "github-actions"] : ["default"]),
-    ],
-    watchExclude: [".*\\/node_modules\\/.*", ".*\\/build\\/.*", ".*\\/postgres-data\\/.*"],
-    // Two projects. `unit` is the mandatory gate (no browser). `storybook` runs every story in
-    // headless chromium with the a11y addon (E8 gate); it is opt-in via `--project storybook`.
-    projects: [
-      {
-        extends: true,
-        test: {
-          name: "unit",
-          onConsoleLog: (message: string): false | undefined => {
-            if (
-              message.includes(
-                "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?",
-              )
-            ) {
-              return false;
-            }
-          },
-          env: loadEnv("test", process.cwd(), ""),
-          environment: "happy-dom",
-          globals: true,
-          include: [
-            "./app/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}",
-            "./server/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}",
-          ],
-          logHeapUsage: true,
-          setupFiles: ["./test/setup-test-env.ts", "./test/vitest.setup.ts"],
-          useAtomics: true,
-        },
-      },
-      {
-        extends: true,
-        resolve: {
-          alias: [
-            // Only a dependency of apps/marketing, so it cannot be resolved by bare name from here.
-            {
-              find: "react-helmet-async",
-              replacement: marketingRequire.resolve("react-helmet-async"),
+      watchExclude: [".*\\/node_modules\\/.*", ".*\\/build\\/.*", ".*\\/postgres-data\\/.*"],
+      // Two projects. `unit` is the mandatory gate (no browser). `storybook` runs every story in
+      // headless chromium with the a11y addon (E8 gate); it is opt-in via `--project storybook`.
+      projects: [
+        {
+          extends: true,
+          test: {
+            name: "unit",
+            onConsoleLog: (message: string): false | undefined => {
+              if (
+                message.includes(
+                  "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?",
+                )
+              ) {
+                return false;
+              }
             },
-          ],
-        },
-        plugins: [storybookTest({ configDir: `${configDir}/.storybook` })],
-        // Axe must see one theme tree. With VITE_SB_THEME unset (a bare `bunx vitest run
-        // --project storybook <path>`) the preview fell back to side-by-side, which renders every
-        // story twice and fails landmark-unique and scrollable-region-focusable locally while
-        // CI (test:storybook, VITE_SB_THEME=light|dark) passed. Default to light here.
-        define: {
-          "import.meta.env.VITE_SB_THEME": JSON.stringify(process.env.VITE_SB_THEME || "light"),
-        },
-        // Pre-bundle deps up front; otherwise Vite re-optimises mid-run and reloads the page,
-        // failing suites on a cold cache. Add to this list if the "optimized dependencies
-        // changed. reloading" warning reappears.
-        optimizeDeps: {
-          entries: [
-            `${configDir}/app/**/*.stories.tsx`,
-            `${configDir}/../../packages/ui/src/**/*.stories.tsx`,
-            `${configDir}/../marketing/src/**/*.stories.tsx`,
-          ],
-          include: [
-            "@storybook/test",
-            "@repo/ui > @radix-ui/react-slot",
-            "@radix-ui/react-dialog",
-            "@radix-ui/react-tabs",
-            "d3-shape",
-            "i18next",
-            "jotai",
-            "react-i18next",
-            "react-icons/fa",
-            "react-icons/fi",
-            "recharts",
-            "react-helmet-async",
-          ],
-        },
-        test: {
-          name: "storybook",
-          browser: {
-            enabled: true,
-            headless: true,
-            provider: playwright(),
-            instances: [{ browser: "chromium" }],
+            env: loadEnv("test", process.cwd(), ""),
+            environment: "happy-dom",
+            globals: true,
+            include: [
+              "./app/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}",
+              "./server/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}",
+            ],
+            logHeapUsage: true,
+            setupFiles: ["./test/setup-test-env.ts", "./test/vitest.setup.ts"],
+            useAtomics: true,
           },
         },
-      },
-    ],
-  },
-}));
+        {
+          extends: true,
+          resolve: {
+            alias: [
+              // Only a dependency of apps/marketing, so it cannot be resolved by bare name from here.
+              {
+                find: "react-helmet-async",
+                replacement: marketingRequire.resolve("react-helmet-async"),
+              },
+            ],
+          },
+          plugins: [storybookTest({ configDir: `${configDir}/.storybook` })],
+          // Axe must see one theme tree. With VITE_SB_THEME unset (a bare `bunx vitest run
+          // --project storybook <path>`) the preview fell back to side-by-side, which renders every
+          // story twice and fails landmark-unique and scrollable-region-focusable locally while
+          // CI (test:storybook, VITE_SB_THEME=light|dark) passed. Default to light here.
+          define: {
+            "import.meta.env.VITE_SB_THEME": JSON.stringify(process.env.VITE_SB_THEME || "light"),
+          },
+          // Pre-bundle deps up front; otherwise Vite re-optimises mid-run and reloads the page,
+          // failing suites on a cold cache. Add to this list if the "optimized dependencies
+          // changed. reloading" warning reappears.
+          optimizeDeps: {
+            entries: [
+              `${configDir}/app/**/*.stories.tsx`,
+              `${configDir}/../../packages/ui/src/**/*.stories.tsx`,
+              `${configDir}/../marketing/src/**/*.stories.tsx`,
+            ],
+            include: [
+              "@storybook/test",
+              "@repo/ui > @radix-ui/react-slot",
+              "@radix-ui/react-dialog",
+              "@radix-ui/react-tabs",
+              "d3-shape",
+              "i18next",
+              "jotai",
+              "react-i18next",
+              "react-icons/fa",
+              "react-icons/fi",
+              "recharts",
+              "react-helmet-async",
+            ],
+          },
+          test: {
+            name: "storybook",
+            browser: {
+              enabled: true,
+              headless: true,
+              provider: playwright(),
+              instances: [{ browser: "chromium" }],
+            },
+          },
+        },
+      ],
+    },
+  };
+});

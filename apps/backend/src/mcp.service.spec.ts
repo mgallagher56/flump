@@ -47,6 +47,23 @@ describe("McpService audit and staging wiring (E17 re-plan PR D)", () => {
     return { service, audit, adapter, options: handlerOptions[0] };
   };
 
+  it("hands the handler the shared rate-limit store for both MCP limiters (BE-07, M10)", () => {
+    const store = { hit: vi.fn(), peek: vi.fn(), reset: vi.fn() };
+    new McpService(
+      {} as never,
+      {} as never,
+      { get: vi.fn().mockReturnValue(undefined) } as never,
+      "workos",
+      {} as never,
+      {} as never,
+      store as never,
+    );
+    expect(handlerOptions[0].limitStore).toBe(store);
+    handlerOptions.length = 0;
+    make();
+    expect(handlerOptions[0].limitStore).toBeUndefined();
+  });
+
   it("hands the handler the import adapter, the audit sink and the fingerprint hook", () => {
     const { options, adapter, audit } = make();
     expect(options.imports).toBe(adapter);

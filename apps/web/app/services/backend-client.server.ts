@@ -1,7 +1,9 @@
 import type { LoaderFunctionArgs } from "react-router";
 import { apiConfig } from "~/config.server";
+import { withRequestIdHeader } from "~/security/request-id.server";
 import { getAuthSession } from "~/utils/auth.server";
 import { BackendError, kindFromStatus } from "./backend-error";
+import { withClientIpHeaders } from "./client-ip.server";
 import { throwRouteError } from "./route-error.server";
 
 export type HttpMethod = "GET" | "POST" | "PATCH" | "PUT" | "DELETE";
@@ -37,7 +39,8 @@ const sleep = (ms: number, signal?: AbortSignal) =>
 /**
  * The single server-side client for the Flump backend. Adds the bearer token, bounds each attempt
  * with a timeout, retries GETs once on transient failures, and reports every failure as a
- * BackendError whose message never contains the token, base URL or response body.
+ * BackendError whose message never contains the token, base URL or response body. The current
+ * request's id (`getRequestId()`) goes out as `x-request-id` on every attempt (BE-07, M14).
  *
  * The timeout and caller signal are combined with a manual AbortController rather than
  * AbortSignal.any/timeout, so it behaves the same under fake timers and on older runtimes.
@@ -62,7 +65,7 @@ export async function backendFetch<T>(endpoint: string, opts: BackendFetchOption
     try {
       const res = await fetch(`${apiConfig.apiBaseUrl}${endpoint}`, {
         method,
-        headers,
+        headers: withClientIpHeaders(withRequestIdHeader(headers)),
         body,
         signal: controller.signal,
       });
@@ -162,7 +165,9 @@ export async function backendFetchBytes(
   try {
     const res = await fetch(`${apiConfig.apiBaseUrl}${endpoint}`, {
       method: "GET",
-      headers: { Authorization: `Bearer ${opts.accessToken}` },
+      headers: withClientIpHeaders(
+        withRequestIdHeader({ Authorization: `Bearer ${opts.accessToken}` }),
+      ),
       signal: controller.signal,
     });
     if (!res.ok) throw new BackendError(kindFromStatus(res.status), endpoint, res.status);

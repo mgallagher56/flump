@@ -1,11 +1,11 @@
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { data, redirectDocument } from "react-router";
 import { apiConfig } from "~/config.server";
+import { withRequestIdHeader } from "~/security/request-id.server";
+import { appendSessionClearCookies } from "~/security/session-cookies.server";
 import { backendFetch } from "~/services/backend-client.server";
 import { BackendError } from "~/services/backend-error";
 import { getAuthSession, requireAccessToken } from "~/utils/auth.server";
-import { devSessionClearCookie, isDevSessionEnabled } from "~/utils/devSession.server";
-import { legacySessionCookieClear, sessionCookieClear } from "~/utils/sessionPolicy.server";
 import {
   ACCOUNT_DELETED_PATH,
   DELETE_ACCOUNT_CONFIRMATION,
@@ -19,29 +19,6 @@ export const DELETE_TIMEOUT_MS = 30_000;
 export const EXPORT_HEADERS_TIMEOUT_MS = 15_000;
 
 const EXPORT_FILENAME = /^flump-export-\d{4}-\d{2}-\d{2}\.json$/;
-
-/**
- * Set-Cookie values that end the web session, the same set `/logout` clears when it has no
- * session to hand to authkit: the session cookie, the presence cookie and (in production) the
- * legacy cookie, or the dev session cookie in the e2e dev-session mode. The WorkOS session is
- * not ended separately: the backend has removed the login it belongs to.
- */
-export function endSessionCookies(request: Request): string[] {
-  if (isDevSessionEnabled(process.env)) {
-    return [devSessionClearCookie, "flump_has_session=; Path=/; SameSite=Lax; Max-Age=0"];
-  }
-  const url = new URL(request.url);
-  const behindHttpsProxy =
-    request.headers.get("x-forwarded-proto")?.split(",")[0]?.trim().toLowerCase() === "https";
-  const secure = url.protocol === "https:" || behindHttpsProxy ? "; Secure" : "";
-  const cookies = [
-    sessionCookieClear(process.env),
-    `flump_has_session=; Path=/; SameSite=Lax; Max-Age=0${secure}`,
-  ];
-  const legacy = legacySessionCookieClear(process.env);
-  if (legacy) cookies.push(legacy);
-  return cookies;
-}
 
 const outcome = (value: DeleteAccountActionData["outcome"], status: number) =>
   data<DeleteAccountActionData>(
@@ -85,8 +62,12 @@ export async function deleteAccountAction(args: ActionFunctionArgs, formData: Fo
   if (result?.status === "identity_pending") return outcome("identity_pending", 200);
   if (result?.status !== "deleted") return outcome("failed", 502);
 
-  const headers = new Headers({ "Cache-Control": "no-store" });
-  for (const cookie of endSessionCookies(args.request)) headers.append("Set-Cookie", cookie);
+  // The same cookie set `/logout` clears (`sessionClearCookies`). The WorkOS session is not ended
+  // separately: the backend has removed the login it belongs to.
+  const headers = appendSessionClearCookies(
+    new Headers({ "Cache-Control": "no-store" }),
+    args.request,
+  );
   return redirectDocument(ACCOUNT_DELETED_PATH, { headers });
 }
 
@@ -142,7 +123,7 @@ export async function exportAccountData(
   try {
     res = await (deps.fetchImpl ?? fetch)(`${apiConfig.apiBaseUrl}/user-profile/export`, {
       method: "GET",
-      headers: { Authorization: `Bearer ${accessToken}` },
+      headers: withRequestIdHeader({ Authorization: `Bearer ${accessToken}` }),
       signal: controller.signal,
       redirect: "manual",
     });

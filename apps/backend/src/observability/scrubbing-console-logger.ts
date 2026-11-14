@@ -1,7 +1,7 @@
 import { redactDeep, redactString } from "@flump/observability";
 import { ConsoleLogger, type LogLevel } from "@nestjs/common";
+import { currentRequestId, isSafeRequestId } from "./request-context";
 
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const METHOD = /^[A-Z]{3,10}$/;
 /** A route template: `/`-prefixed, up to 20 segments of at most 31 characters (no token-length runs). */
 const ROUTE = /^(?:\/[\w:.*{}-]{0,31}){1,20}$/;
@@ -38,7 +38,7 @@ const MAX_ERROR_DEPTH = 5;
 function isAccessLogField(key: string, value: unknown): boolean {
   switch (key) {
     case "requestId":
-      return typeof value === "string" && UUID.test(value);
+      return isSafeRequestId(value);
     case "method":
       return typeof value === "string" && METHOD.test(value);
     case "route":
@@ -280,11 +280,39 @@ function safeContext(context: unknown): string {
 }
 
 /**
+ * The current request id when it is printable verbatim. The middleware only ever stores ids that
+ * pass this check; it is re-checked here so a logger can never print an unchecked value.
+ */
+interface JsonLogOptions {
+  context: string;
+  logLevel: LogLevel;
+  writeStreamType?: "stdout" | "stderr";
+  errorStack?: unknown;
+  params?: Record<string, unknown>;
+  error?: Error;
+}
+type JsonLogObject = {
+  [key: string]: unknown;
+  level: LogLevel;
+  pid: number;
+  timestamp: number;
+  message: unknown;
+};
+
+function printableRequestId(): string | undefined {
+  const id = currentRequestId();
+  return isSafeRequestId(id) ? id : undefined;
+}
+
+/**
  * Nest's ConsoleLogger with every printed value scrubbed. All paths (log, error with a stack param,
  * error with an Error object, ExceptionsHandler, Logger.* from providers) end in `printMessages`,
  * which receives the message list, context, stack and structured params; the separate text-mode
  * stack line goes through `printStackTrace`. Both are overridden, so nothing reaches stdout/stderr
  * unscrubbed. Level, context (class name), timestamp and pid are not user data and pass through.
+ *
+ * Every line written while a request is being served carries its request id (M14): a top-level
+ * `requestId` field in JSON mode, `[rid:<id>]` after the context in text mode.
  */
 export class ScrubbingConsoleLogger extends ConsoleLogger {
   // Nest parses the arguments (merging plain-object params, which runs getters) before it reaches
@@ -375,6 +403,18 @@ export class ScrubbingConsoleLogger extends ConsoleLogger {
     } catch {
       this.printFailure(logLevel, context, writeStreamType);
     }
+  }
+
+  protected override getJsonLogObject(message: unknown, options: JsonLogOptions): JsonLogObject {
+    const logObject = super.getJsonLogObject(message, options);
+    const requestId = printableRequestId();
+    return requestId === undefined ? logObject : { ...logObject, requestId };
+  }
+
+  protected override formatContext(context: string): string {
+    const formatted = super.formatContext(context);
+    const requestId = printableRequestId();
+    return requestId === undefined ? formatted : `${formatted}[rid:${requestId}] `;
   }
 
   protected override printStackTrace(stack: string): void {

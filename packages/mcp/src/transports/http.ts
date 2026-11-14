@@ -1,6 +1,7 @@
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
 import { FailedAuthLimiter } from "../auth/failed-auth-limiter.js";
+import type { LimitStore } from "../auth/limit-store.js";
 import { McpRateLimiter } from "../auth/rate-limiter.js";
 import {
   AuthenticationError,
@@ -32,6 +33,12 @@ export interface HttpTransportOptions extends TokenVerifierOptions {
   rateLimiter?: McpRateLimiter;
   /** Pre-auth limiter for failed attempts per client IP (default 10 per minute). */
   failedAuthLimiter?: FailedAuthLimiter;
+  /**
+   * Where the default limiters keep their counters (BE-07, M10). The backend passes its shared
+   * Postgres store so limits hold across replicas and restarts. Default: in memory, per process.
+   * Ignored for a limiter passed in explicitly.
+   */
+  limitStore?: LimitStore;
   /**
    * Global kill switch (E20-N18). When it returns false every request is answered 503 before
    * Origin checks, rate limiting or auth. A function so the owner can flip it without a restart.
@@ -130,8 +137,9 @@ export class HttpMcpHandler {
     this.isEnabled = options.isEnabled ?? (() => true);
     this.allowedOrigins = new Set((options.allowedOrigins ?? []).map(normalizeOrigin));
     this.verifier = new TokenVerifier(options);
-    this.rateLimiter = options.rateLimiter ?? new McpRateLimiter(60, 300);
-    this.failedAuthLimiter = options.failedAuthLimiter ?? new FailedAuthLimiter(10, 60_000);
+    this.rateLimiter = options.rateLimiter ?? new McpRateLimiter(60, 300, options.limitStore);
+    this.failedAuthLimiter =
+      options.failedAuthLimiter ?? new FailedAuthLimiter(10, 60_000, options.limitStore);
     this.dataProvider = options.dataProvider;
     this.options = options;
   }
@@ -187,7 +195,7 @@ export class HttpMcpHandler {
       return;
     }
     const ip: string = req.ip ?? req.socket?.remoteAddress ?? "unknown";
-    const blocked = this.failedAuthLimiter.check(ip);
+    const blocked = await this.failedAuthLimiter.check(ip);
     if (blocked.blocked) {
       res.setHeader("Retry-After", String(blocked.retryAfterSeconds));
       res.status(429).json({
@@ -202,10 +210,10 @@ export class HttpMcpHandler {
       // 1. Verify Authentication (flump_pat_... personal access token)
       const authHeader = req.headers?.authorization;
       const verified = await this.verifier.verifyAuthorizationHeader(authHeader);
-      this.failedAuthLimiter.recordSuccess(ip);
+      await this.failedAuthLimiter.recordSuccess(ip);
 
       // 2. Check rate limits, then record usage for allowed requests only
-      const limitResult = this.rateLimiter.checkLimit(limiterKey(verified));
+      const limitResult = await this.rateLimiter.checkLimit(limiterKey(verified));
       if (!limitResult.allowed) {
         res.setHeader("Retry-After", String(limitResult.resetSeconds));
         res.status(429).json({
@@ -227,7 +235,7 @@ export class HttpMcpHandler {
       await transport.handleRequest(req, res, parsedBody ?? req.body);
     } catch (err: any) {
       if (err instanceof AuthenticationError) {
-        this.failedAuthLimiter.recordFailure(ip);
+        await this.failedAuthLimiter.recordFailure(ip);
         res.setHeader("WWW-Authenticate", WWW_AUTHENTICATE);
         res.status(401).json({ error: "mcp_auth_error", message: err.message });
         return;
@@ -249,7 +257,7 @@ export class HttpMcpHandler {
       });
     }
     const ip = clientIpFromHeaders(request.headers);
-    const blocked = this.failedAuthLimiter.check(ip);
+    const blocked = await this.failedAuthLimiter.check(ip);
     if (blocked.blocked) {
       return new Response(
         JSON.stringify({
@@ -270,9 +278,9 @@ export class HttpMcpHandler {
     try {
       const authHeader = request.headers.get("authorization") || undefined;
       const verified = await this.verifier.verifyAuthorizationHeader(authHeader);
-      this.failedAuthLimiter.recordSuccess(ip);
+      await this.failedAuthLimiter.recordSuccess(ip);
 
-      const limitResult = this.rateLimiter.checkLimit(limiterKey(verified));
+      const limitResult = await this.rateLimiter.checkLimit(limiterKey(verified));
       if (!limitResult.allowed) {
         return new Response(
           JSON.stringify({
@@ -312,7 +320,7 @@ export class HttpMcpHandler {
       return await transport.handleRequest(request);
     } catch (err: any) {
       if (err instanceof AuthenticationError) {
-        this.failedAuthLimiter.recordFailure(ip);
+        await this.failedAuthLimiter.recordFailure(ip);
         return new Response(JSON.stringify({ error: "mcp_auth_error", message: err.message }), {
           status: 401,
           headers: { "Content-Type": "application/json", "WWW-Authenticate": WWW_AUTHENTICATE },

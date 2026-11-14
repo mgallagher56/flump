@@ -1,9 +1,10 @@
 // @vitest-environment node
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 vi.mock("~/config.server", () => ({ apiConfig: { apiBaseUrl: "https://backend.test" } }));
 vi.mock("~/utils/auth.server", () => ({ getAuthSession: vi.fn() }));
 
+import { runWithRequestId } from "~/security/request-id.server";
 import {
   API_ALLOW_LIST,
   handleApiProxy,
@@ -12,8 +13,8 @@ import {
   normaliseApiPath,
   type ProxyDeps,
   type ProxySession,
-  resetWriteLimiter,
 } from "./api-proxy.server";
+import { CLIENT_IP_HEADER, CLIENT_IP_KEY_ENV, CLIENT_IP_SIG_HEADER } from "./client-ip.server";
 
 const UUID = "123e4567-e89b-42d3-a456-426614174000";
 const ORIGIN = "https://app.flump.test";
@@ -43,8 +44,6 @@ const run = (request: Request, deps: ProxyDeps = {}) =>
     fetchImpl: vi.fn(async () => new Response("{}", { status: 200 })) as never,
     ...deps,
   });
-
-beforeEach(() => resetWriteLimiter());
 
 describe("allow-list", () => {
   it("is exactly the E20 inventory (snapshot: fails if it grows)", () => {
@@ -352,26 +351,80 @@ describe("body handling", () => {
   });
 });
 
-describe("rate limit", () => {
-  it("429s the 121st write per user in a minute, not reads, and resets after the window", async () => {
-    let t = 1_000_000;
-    const deps = { now: () => t };
-    for (let i = 0; i < 120; i++) {
-      expect((await run(req("POST", "/api/accounts", { body: "{}" }), deps)).status).toBe(200);
+describe("rate limit (BE-07: the backend is authoritative)", () => {
+  // A made-up test key, not a real secret.
+  const env = { [CLIENT_IP_KEY_ENV]: "k".repeat(40) };
+
+  it("keeps no limiter of its own: the 121st write in a minute still reaches the backend", async () => {
+    const fetchImpl = vi.fn(async () => new Response("{}", { status: 200 }));
+    for (let i = 0; i < 121; i++) {
+      const res = await run(req("POST", "/api/accounts", { body: "{}" }), {
+        fetchImpl: fetchImpl as never,
+      });
+      expect(res.status).toBe(200);
     }
-    const limited = await run(req("POST", "/api/accounts", { body: "{}" }), deps);
-    expect(limited.status).toBe(429);
-    expect(limited.headers.get("Retry-After")).toBe("60");
-    expect((await run(req("GET", "/api/accounts"), deps)).status).toBe(200);
+    expect(fetchImpl).toHaveBeenCalledTimes(121);
+  });
 
-    const other = await run(req("POST", "/api/accounts", { body: "{}" }), {
-      ...deps,
-      resolveSession: async () => ({ ...session, userId: "user_2" }),
+  it("passes a backend 429 through with its Retry-After", async () => {
+    const res = await run(req("POST", "/api/accounts", { body: "{}" }), {
+      fetchImpl: vi.fn(
+        async () =>
+          new Response(JSON.stringify({ message: "Too many requests. Try again later." }), {
+            status: 429,
+            headers: { "Retry-After": "42" },
+          }),
+      ) as never,
     });
-    expect(other.status).toBe(200);
+    expect(res.status).toBe(429);
+    expect(res.headers.get("Retry-After")).toBe("42");
+    expect(await res.json()).toMatchObject({ message: "Too many requests. Try again later." });
+  });
 
-    t += 60_001;
-    expect((await run(req("POST", "/api/accounts", { body: "{}" }), deps)).status).toBe(200);
+  it("forwards the signed browser address when the key is set", async () => {
+    const fetchImpl = vi.fn(async () => new Response("{}", { status: 200 }));
+    await run(
+      req("GET", "/api/accounts", { headers: { "X-Forwarded-For": "6.6.6.6, 203.0.113.7" } }),
+      {
+        fetchImpl: fetchImpl as never,
+        env,
+        now: () => 1_794_632_012_000,
+      },
+    );
+    const [, init] = fetchImpl.mock.calls[0] as unknown as [string, RequestInit];
+    const headers = init.headers as Record<string, string>;
+    expect(headers[CLIENT_IP_HEADER]).toBe("203.0.113.7");
+    expect(headers[CLIENT_IP_SIG_HEADER]).toMatch(/^v1=1794632012\.[0-9a-f]{64}$/);
+  });
+
+  it("forwards the current request id alongside the signed address", async () => {
+    const fetchImpl = vi.fn(async () => new Response("{}", { status: 200 }));
+    await runWithRequestId("req-123", () =>
+      run(req("GET", "/api/accounts", { headers: { "X-Forwarded-For": "203.0.113.7" } }), {
+        fetchImpl: fetchImpl as never,
+        env,
+      }),
+    );
+    const [, init] = fetchImpl.mock.calls[0] as unknown as [string, RequestInit];
+    expect(Object.keys(init.headers as object).sort()).toEqual([
+      "Authorization",
+      CLIENT_IP_HEADER,
+      CLIENT_IP_SIG_HEADER,
+      "x-request-id",
+    ]);
+    expect((init.headers as Record<string, string>)["x-request-id"]).toBe("req-123");
+  });
+
+  it("sends no client-IP headers without the key or without a forwarded address", async () => {
+    const fetchImpl = vi.fn(async () => new Response("{}", { status: 200 }));
+    await run(req("GET", "/api/accounts", { headers: { "X-Forwarded-For": "203.0.113.7" } }), {
+      fetchImpl: fetchImpl as never,
+      env: {},
+    });
+    await run(req("GET", "/api/accounts"), { fetchImpl: fetchImpl as never, env });
+    for (const call of fetchImpl.mock.calls as unknown as [string, RequestInit][]) {
+      expect(Object.keys(call[1].headers as object)).toEqual(["Authorization"]);
+    }
   });
 });
 

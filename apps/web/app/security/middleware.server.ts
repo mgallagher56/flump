@@ -19,8 +19,9 @@ import { applyRefreshedCookies } from "./session-cookies.server";
  * or action has its `Set-Cookie` appended here once (E20-N2).
  *
  * Every request gets a fresh nonce in the router context (read by `entry.server.tsx`). HTML
- * responses also get the nonce-bearing `Content-Security-Policy-Report-Only` (E20-N11), a separate
- * header from the enforced `frame-ancestors` one; `.data` and resource responses have no scripts.
+ * responses get the full nonce-bearing `Content-Security-Policy` (enforced since BE-07; it replaces
+ * the `frame-ancestors`-only default). `.data` and resource responses have no scripts and keep the
+ * default (upgraded to `NON_DOCUMENT_CSP` by `server/securityHeaders.ts` where eligible).
  */
 export const securityMiddleware: MiddlewareFunction<Response> = async (
   { request, context },
@@ -37,5 +38,6 @@ export const securityMiddleware: MiddlewareFunction<Response> = async (
     nonce,
     formActionOrigins: formActionOrigins(process.env, getMarketingUrl(request.url)),
     connectOrigins: [sentryConnectOrigin(process.env)].filter((o): o is string => o !== null),
+    upgradeInsecureRequests: process.env.NODE_ENV === "production",
   });
 };

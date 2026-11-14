@@ -1,3 +1,5 @@
+export * from "./auth/failed-auth-limiter.js";
+export * from "./auth/limit-store.js";
 export * from "./auth/rate-limiter.js";
 export * from "./auth/scopes.js";
 export * from "./auth/token-verifier.js";

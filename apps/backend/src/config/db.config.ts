@@ -201,3 +201,20 @@ export function resolveDbConfig(env: Env): DbConfig {
     warnings,
   };
 }
+
+/** Default slow-query threshold (M15): a query running longer than this is logged. */
+export const DEFAULT_SLOW_QUERY_MS = 500;
+
+/**
+ * `DB_SLOW_QUERY_MS`: TypeORM `maxQueryExecutionTime`. Unset or empty uses 500 ms; otherwise a
+ * whole number from 1 to 600000.
+ */
+export function resolveSlowQueryMs(env: Env): number {
+  const raw = env.DB_SLOW_QUERY_MS?.trim();
+  if (!raw) return DEFAULT_SLOW_QUERY_MS;
+  const value = Number(raw);
+  if (!/^\d+$/.test(raw) || value < 1 || value > 600_000) {
+    throw new Error("DB_SLOW_QUERY_MS must be a whole number from 1 to 600000");
+  }
+  return value;
+}

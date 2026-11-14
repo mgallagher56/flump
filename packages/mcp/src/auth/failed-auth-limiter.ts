@@ -1,17 +1,18 @@
+import { type LimitStore, type LimitWindow, MemoryLimitStore } from "./limit-store.js";
+
 /**
  * Pre-auth limiter: counts failed authentication attempts per client IP so PAT guessing
  * is throttled before the per-user limiter (which only applies after auth succeeds).
- * In-memory and per-process; the map is bounded so a spray of IPs cannot exhaust memory.
+ * The counters live in the injected store (the backend passes its shared Postgres store, so the
+ * limit holds across replicas and restarts); the default store is in memory and bounded.
+ *
+ * Fails closed: when the store cannot be read, `check` reports the caller blocked for a short
+ * while. This is the credential-guessing guard, so an outage must not switch it off. Writes that
+ * fail (recording a failure or a success) are logged and skipped.
  */
 export interface FailedAuthCheck {
   blocked: boolean;
   retryAfterSeconds: number;
-}
-
-interface Entry {
-  count: number;
-  resetAt: number;
-  cleared?: boolean;
 }
 
 /**
@@ -41,17 +42,26 @@ export function normalizeIpKey(ip: string): string {
   return `${prefix.join(":")}::/64`;
 }
 
+/** Seconds a caller is held off when the store fails during `check`. */
+export const FAIL_CLOSED_RETRY_SECONDS = 30;
+
+const errName = (err: unknown) => (err instanceof Error ? err.name : "error");
+
 export class FailedAuthLimiter {
-  private readonly entries = new Map<string, Entry>();
+  private readonly window: LimitWindow;
+  /** Same bucket as `window`, read with a limit of 1: "has this IP failed at all?". */
+  private readonly anyFailure: LimitWindow;
+  /** The once-per-window marker for `recordSuccess`. */
+  private readonly clearMarker: LimitWindow;
 
   constructor(
-    private readonly maxFailures = 10,
-    private readonly windowMs = 60_000,
-    private readonly maxEntries = 10_000,
-  ) {}
-
-  get size(): number {
-    return this.entries.size;
+    maxFailures = 10,
+    windowMs = 60_000,
+    private readonly store: LimitStore = new MemoryLimitStore(),
+  ) {
+    this.window = { limit: maxFailures, windowMs };
+    this.anyFailure = { limit: 1, windowMs };
+    this.clearMarker = { limit: 1, windowMs };
   }
 
   /**
@@ -59,49 +69,39 @@ export class FailedAuthLimiter {
    * Clears the failure count at most once per window: otherwise an attacker holding any valid
    * token could interleave one valid request between guesses and never reach the limit.
    */
-  recordSuccess(ip: string, now = Date.now()): void {
-    const entry = this.entries.get(normalizeIpKey(ip));
-    if (!entry || now >= entry.resetAt || entry.cleared) return;
-    entry.count = 0;
-    entry.cleared = true;
+  async recordSuccess(ip: string, now = Date.now()): Promise<void> {
+    const key = normalizeIpKey(ip);
+    try {
+      const failures = await this.store.peek(failKey(key), this.anyFailure, now);
+      if (failures.allowed) return; // no failures in this window: nothing to clear
+      const marker = await this.store.hit(clearKey(key), [this.clearMarker], now);
+      if (marker.allowed) await this.store.reset(failKey(key), this.window);
+    } catch (err) {
+      console.error(`MCP failed-auth store failed on success: ${errName(err)}`);
+    }
   }
 
-  check(rawIp: string, now = Date.now()): FailedAuthCheck {
-    const ip = normalizeIpKey(rawIp);
-    const entry = this.entries.get(ip);
-    if (!entry || now >= entry.resetAt) {
-      return { blocked: false, retryAfterSeconds: 0 };
+  async check(rawIp: string, now = Date.now()): Promise<FailedAuthCheck> {
+    try {
+      const d = await this.store.peek(failKey(normalizeIpKey(rawIp)), this.window, now);
+      return d.allowed
+        ? { blocked: false, retryAfterSeconds: 0 }
+        : { blocked: true, retryAfterSeconds: d.retryAfterSeconds };
+    } catch (err) {
+      console.error(`MCP failed-auth store failed, refusing: ${errName(err)}`);
+      return { blocked: true, retryAfterSeconds: FAIL_CLOSED_RETRY_SECONDS };
     }
-    if (entry.count >= this.maxFailures) {
-      return {
-        blocked: true,
-        retryAfterSeconds: Math.max(1, Math.ceil((entry.resetAt - now) / 1000)),
-      };
-    }
-    return { blocked: false, retryAfterSeconds: 0 };
   }
 
-  recordFailure(rawIp: string, now = Date.now()): void {
-    const ip = normalizeIpKey(rawIp);
-    const entry = this.entries.get(ip);
-    if (entry && now < entry.resetAt) {
-      entry.count++;
-      return;
-    }
-    this.entries.delete(ip);
-    if (this.entries.size >= this.maxEntries) this.evict(now);
-    this.entries.set(ip, { count: 1, resetAt: now + this.windowMs });
-  }
-
-  private evict(now: number): void {
-    for (const [key, e] of this.entries) {
-      if (now >= e.resetAt) this.entries.delete(key);
-    }
-    // Still full: drop oldest insertions (Map preserves insertion order).
-    while (this.entries.size >= this.maxEntries) {
-      const oldest = this.entries.keys().next().value;
-      if (oldest === undefined) break;
-      this.entries.delete(oldest);
+  async recordFailure(rawIp: string, now = Date.now()): Promise<void> {
+    try {
+      // Refused once the window is full, which is fine: `check` already blocks at that point.
+      await this.store.hit(failKey(normalizeIpKey(rawIp)), [this.window], now);
+    } catch (err) {
+      console.error(`MCP failed-auth store failed on failure: ${errName(err)}`);
     }
   }
 }
+
+const failKey = (ipKey: string) => `mcpauth:fail:${ipKey}`;
+const clearKey = (ipKey: string) => `mcpauth:cleared:${ipKey}`;
