@@ -27,7 +27,8 @@ const money = (n: number) => formatMoney(n, { fractionDigits: 0 }).text;
 /**
  * The retirement tool's outcome (E16 P1.7): one figure (the estimated pot at retirement, rounded
  * to three significant figures) and up to two supporting figures (the tax-free lump sum, and,
- * once an input moves, the change in monthly income against the saved figures). The saved monthly income is the page's first KPI, so it is never repeated here.
+ * once an input moves, the change in monthly income against the saved figures). The saved
+ * monthly income is the page's first KPI, so it is never repeated here.
  * Never the hero tone.
  */
 export const ForecasterResults: FC<ForecasterResultsProps> = ({

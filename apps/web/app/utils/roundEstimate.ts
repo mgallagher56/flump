@@ -8,7 +8,7 @@ import { formatMoney } from "@repo/ui";
 export const roundEstimate = (value: number): number => {
   if (!Number.isFinite(value)) return 0;
   const magnitude = Math.abs(value);
-  if (magnitude < 1000) return Math.round(value);
+  if (magnitude < 1000) return Math.round(value) || 0;
   const step = 10 ** (Math.floor(Math.log10(magnitude)) - 2);
   const rounded = Math.round(value / step) * step;
   return rounded === 0 ? 0 : rounded;

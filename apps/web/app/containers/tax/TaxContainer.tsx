@@ -239,7 +239,10 @@ const SelfAssessmentPage: FC<{
     onSuccess: () => setTransactionToDelete(null),
   });
   // A failed add or edit is said on the page, never dropped silently.
-  const saveOutcome = useFetcherOutcome(fetcher);
+  // The dialog closes only once the save lands, so a failed save keeps what the user entered.
+  const saveOutcome = useFetcherOutcome(fetcher, {
+    onSuccess: () => setIsRecordDialogOpen(false),
+  });
   const deleteTaxYearOutcome = useFetcherOutcome(fetcher, {
     onSuccess: () => setTaxYearToDelete(null),
   });
@@ -312,7 +315,6 @@ const SelfAssessmentPage: FC<{
     );
     saveOutcome.begin();
     fetcher.submit(formData, { method: "POST" });
-    setIsRecordDialogOpen(false);
   };
 
   const confirmDeleteTransaction = () => {
