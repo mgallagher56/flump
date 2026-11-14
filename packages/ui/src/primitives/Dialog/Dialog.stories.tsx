@@ -62,7 +62,8 @@ export const Phone: Story = {
   play: async ({ canvasElement }) => {
     const body = within(canvasElement.ownerDocument.body);
     const dialog = await body.findByRole("dialog", { name: "Add liability account" });
-    await expect(dialog).toBeVisible();
+    // The slide-up starts off-screen; wait for it to finish.
+    await waitFor(() => expect(dialog).toBeVisible(), { timeout: 3000 });
     // Under md (768px) the dialog is presented like Sheet: full width, resting on the bottom edge.
     // waitFor lets the slide-up finish before measuring.
     if (window.innerWidth < 768) {
