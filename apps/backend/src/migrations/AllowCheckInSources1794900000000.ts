@@ -1,5 +1,5 @@
 import type { MigrationInterface, QueryRunner } from "typeorm";
-import { MIGRATION_LOCK_KEY } from "../config/migration-lock";
+import { takeMigrationLock } from "../config/migration-lock";
 
 // R2-5 (account-by-account check-in). Additive only: allow two more `account_details.source`
 // values, so history can tell a confirmed month ("No change", `confirmed`) and a calculated loan
@@ -14,7 +14,7 @@ export class AllowCheckInSources1794900000000 implements MigrationInterface {
   name = "AllowCheckInSources1794900000000";
 
   public async up(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query("SELECT pg_advisory_xact_lock($1)", [MIGRATION_LOCK_KEY]);
+    await takeMigrationLock(queryRunner);
     await queryRunner.query(
       `ALTER TABLE "account_details" DROP CONSTRAINT IF EXISTS "${SOURCE_CHECK}"`,
     );
@@ -24,7 +24,7 @@ export class AllowCheckInSources1794900000000 implements MigrationInterface {
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query("SELECT pg_advisory_xact_lock($1)", [MIGRATION_LOCK_KEY]);
+    await takeMigrationLock(queryRunner);
     await queryRunner.query(
       `UPDATE "account_details" SET "source" = 'manual' WHERE "source" IN ('confirmed', 'calculated')`,
     );
