@@ -15,5 +15,17 @@ export const homeLogoLink = cva({
       outlineColor: "border.focusRing",
       outlineOffset: "2px",
     },
+    // Current page mark (a short bar under the logo), only where no inline "Home" link shows it.
+    position: "relative",
+    '&[aria-current="page"]::after': {
+      content: '""',
+      position: "absolute",
+      insetInline: "25%",
+      bottom: "-6px",
+      height: "3px",
+      borderRadius: "full",
+      backgroundColor: "primary",
+    },
+    _navWide: { '&[aria-current="page"]::after': { display: "none" } },
   },
 });

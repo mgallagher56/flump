@@ -66,6 +66,14 @@ describe("<MobileNavDrawer /> keyboard", () => {
     expect(hrefs).toContain("/tools");
   });
 
+  test("signed in, leaves out the bottom bar's pages (owner ruling: no second list)", () => {
+    customRender(<MobileNavDrawer isOpen={true} user={{ id: "1" }} onClose={vi.fn()} />);
+    const hrefs = screen.getAllByRole("link").map((l) => l.getAttribute("href"));
+    for (const href of ["/", "/app/accounts", "/app/budget", "/app/take-home"]) {
+      expect(hrefs).not.toContain(href);
+    }
+  });
+
   test("lists Debt for signed-in users", () => {
     customRender(<MobileNavDrawer isOpen={true} user={{ id: "1" }} onClose={vi.fn()} />);
     expect(screen.getAllByText("debt").length).toBeGreaterThan(0);
@@ -109,20 +117,14 @@ describe("<MobileNavDrawer /> modal behaviour", () => {
 });
 
 describe("<MobileNavDrawer /> sandbox", () => {
-  test("lists the same tabs for a signed-out visitor, all disabled except Home", () => {
+  test("lists only what the bottom bar does not, all disabled for a signed-out visitor", () => {
     customRender(<MobileNavDrawer sandbox isOpen={true} user={null} onClose={vi.fn()} />);
-    const home = screen.getByRole("link", { name: /home/i });
-    expect(home.getAttribute("href")).toBe("/sandbox");
-    for (const key of [
-      "debt",
-      "budget",
-      "accounts",
-      "savings",
-      "pension",
-      "mortgage",
-      "takeHome",
-      "tax",
-    ]) {
+    // Home, Accounts, Budget and Pay are in the bottom bar, so not repeated here.
+    for (const key of ["budget", "accounts", "takeHome"]) {
+      expect(screen.queryByTestId(`nav-disabled-${key}`)).toBeNull();
+    }
+    expect(screen.queryByRole("link", { name: /home/i })).toBeNull();
+    for (const key of ["debt", "savings", "pension", "mortgage", "tax"]) {
       const item = screen.getByTestId(`nav-disabled-${key}`) as HTMLButtonElement;
       expect(item.getAttribute("aria-disabled")).toBe("true");
       expect(item.disabled).toBe(false);

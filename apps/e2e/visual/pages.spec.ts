@@ -117,3 +117,37 @@ for (const header of HEADER_CASES) {
     }
   });
 }
+
+/**
+ * Every nav form marks the current page, visibly and with `aria-current="page"` (owner ruling): on
+ * the home page that is the logo from 768 to 1023 (its mark) and the inline "Home" link from 1024
+ * in the web app; the logo on the marketing home page. Checked at 768, 900 and 1024.
+ */
+for (const header of HEADER_CASES) {
+  test.describe(`${header.name} current page`, () => {
+    if (header.signedIn) test.use({ storageState: AUTH_STATE });
+
+    for (const width of [768, 900, 1024]) {
+      test(`${header.name} marks the current page at ${width}px`, async ({ page }, testInfo) => {
+        test.skip(testInfo.project.name !== "1280-light", "layout check, once");
+        await page.setViewportSize({ width, height: 800 });
+        await page.goto(header.url);
+        await settle(page);
+        const current = page.locator('header [aria-current="page"]').filter({ visible: true });
+        await expect(current.first()).toBeVisible();
+        // Visible as well as announced: at least one current item draws its mark or fill.
+        const marked = await current.evaluateAll((els) =>
+          els.some((el) => {
+            const after = getComputedStyle(el, "::after");
+            const own = getComputedStyle(el);
+            const hasMark = after.content !== "none" && after.display !== "none";
+            const hasFill =
+              own.backgroundColor !== "rgba(0, 0, 0, 0)" && own.backgroundColor !== "transparent";
+            return hasMark || hasFill;
+          }),
+        );
+        expect(marked, `current page marked at ${width}px`).toBe(true);
+      });
+    }
+  });
+}

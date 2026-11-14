@@ -30,4 +30,15 @@ describe("HomeLogo", () => {
     render(<HomeLogo />);
     expect(screen.getByTestId("home-logo").innerHTML).not.toMatch(/#[0-9a-f]{3,8}\b|rgb\(/i);
   });
+
+  it("marks the home page as current with aria-current and the mark style", () => {
+    const { rerender } = render(<HomeLogo />);
+    expect(
+      screen.getByRole("link", { name: "Flump home" }).getAttribute("aria-current"),
+    ).toBeNull();
+    rerender(<HomeLogo current />);
+    const link = screen.getByRole("link", { name: "Flump home" });
+    expect(link.getAttribute("aria-current")).toBe("page");
+    expect(link.className).toContain("navWide:");
+  });
 });
