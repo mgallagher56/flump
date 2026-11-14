@@ -125,6 +125,12 @@ interface AppShellProps {
  */
 function AppShell({ user, focused = false, children }: AppShellProps) {
   const hasBottomBarOffset = Boolean(user) && !focused;
+  // The hydration signal, set here so pages and the error boundary both raise it: chrome controls
+  // read it to stop looking pressable before script runs, and end-to-end tests wait on
+  // `html[data-hydrated]` instead of a timeout.
+  useEffect(() => {
+    document.documentElement.dataset.hydrated = "true";
+  }, []);
   return (
     <>
       <VisuallyHidden as="a" focusable href="#main-content">
@@ -190,12 +196,6 @@ export default function App() {
 
   // Sign-out wipes this browser's per-user storage (E19 A6); covers every form posting to /logout.
   useEffect(() => watchLogoutForms(), []);
-
-  // The hydration signal: chrome controls read it to stop looking pressable before script runs,
-  // and end-to-end tests wait on `html[data-hydrated]` instead of a timeout.
-  useEffect(() => {
-    document.documentElement.dataset.hydrated = "true";
-  }, []);
 
   useEffect(() => {
     if (userProfile) {

@@ -72,7 +72,12 @@ export function buildNavManifest({
   isPageEnabled,
   t,
 }: NavManifestOptions): AppNavItem[] {
-  const home = toItem(t, sandbox ? SANDBOX_HOME_NAV_ROUTE : HOME_NAV_ROUTE);
+  // Signed in, "Home" is inline from navWide only: on tablets the logo is the way home, so the
+  // compact bar fits at 768px. Signed out it is the only item, so it always shows.
+  const home = {
+    ...toItem(t, sandbox ? SANDBOX_HOME_NAV_ROUTE : HOME_NAV_ROUTE),
+    wideOnly: signedIn,
+  };
   if (!signedIn) return [home];
   const routes = filterNavRoutes(
     AUTH_NAV_ROUTES,

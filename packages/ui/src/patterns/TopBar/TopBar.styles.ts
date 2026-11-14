@@ -178,3 +178,19 @@ export const topBarActions = cva({
 export const topBarInlineActions = cva({
   base: { display: { base: "none", _navInline: "flex" }, alignItems: "center", gap: "3" },
 });
+
+/** The group button's chevron: says "opens a menu" at every width; turns when open. */
+export const topBarChevron = cva({
+  base: {
+    display: "inline-flex",
+    marginLeft: "-1",
+    opacity: 0.75,
+    _motionSafe: {
+      transitionProperty: "transform",
+      transitionDuration: "fast",
+      transitionTimingFunction: "standard",
+    },
+  },
+  variants: { open: { true: { transform: "rotate(180deg)" }, false: {} } },
+  defaultVariants: { open: false },
+});

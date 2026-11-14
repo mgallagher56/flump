@@ -153,18 +153,16 @@ export const Header: FC = () => {
                 </Button>
               ) : (
                 <>
-                  {/* From 1024px only; on tablets and phones "Sign in" is in the menu. */}
-                  <Button
-                    asChild
-                    className={cx(headerButton(), wideOnly())}
-                    size="sm"
-                    variant="ghost"
-                  >
-                    <a href={`${appUrl}/login`}>
-                      <span className={fullLabel()}>Sign in</span>
-                      <span className={shortLabel()}>Sign in</span>
-                    </a>
-                  </Button>
+                  {/* From 1024px only; on tablets and phones "Sign in" is in the menu. The wrapper
+                      owns the display swap, so it never competes with the button's own display. */}
+                  <span className={wideOnly()}>
+                    <Button asChild className={headerButton()} size="sm" variant="ghost">
+                      <a href={`${appUrl}/login`}>
+                        <span className={fullLabel()}>Sign in</span>
+                        <span className={shortLabel()}>Sign in</span>
+                      </a>
+                    </Button>
+                  </span>
                   <Button asChild className={headerButton()} size="sm" variant="primary">
                     <a href={cta.href}>
                       <span className={fullLabel()}>{cta.label}</span>

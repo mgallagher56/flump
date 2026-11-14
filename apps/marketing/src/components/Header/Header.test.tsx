@@ -216,7 +216,7 @@ describe("Header", () => {
         "navWide:d_list-item",
       );
     }
-    expect(screen.getAllByRole("link", { name: /Sign in/ })[0]?.className).toContain(
+    expect(screen.getAllByRole("link", { name: /Sign in/ })[0]?.parentElement?.className).toContain(
       "navWide:d_inline-flex",
     );
     // The menu button stays up to navWide; the one-button theme switch shows below it.

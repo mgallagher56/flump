@@ -34,11 +34,14 @@ export const Dark: Story = {
   play,
 };
 
-/** 768 to 1023px: no inline top bar items, so the bottom bar must still be present. */
+/** Tablets (768px and up) use the desktop top bar: the bottom bar is phones only (owner ruling). */
 export const Tablet: Story = {
   globals: { theme: "light" },
   parameters: { viewport: { defaultViewport: "tablet" } },
-  play,
+  play: async ({ canvasElement }) => {
+    const bar = canvasElement.querySelector("nav");
+    await expect(bar ? getComputedStyle(bar).display : "none").toBe("none");
+  },
 };
 
 /**

@@ -40,11 +40,23 @@ export const Default: Story = {
     if (!bar) throw new Error("Bar missing");
     const tabs = within(bar).getAllByRole("tab");
     await expect(tabs).toHaveLength(3);
+    // Nothing is clipped: every tab sits wholly inside the bar (no scrolling, no truncation).
+    const barBox = bar.getBoundingClientRect();
     for (const each of tabs) {
-      await expect(each.getBoundingClientRect().width).toBeGreaterThan(0);
+      const box = each.getBoundingClientRect();
+      await expect(box.width).toBeGreaterThan(0);
+      await expect(box.left).toBeGreaterThanOrEqual(barBox.left);
+      await expect(box.right).toBeLessThanOrEqual(barBox.right);
+      await expect(each.scrollWidth).toBeLessThanOrEqual(each.clientWidth + 1);
       await expect(each).toBeVisible();
     }
     await userEvent.click(tab);
     await expect(tab).toHaveAttribute("aria-selected", "true");
   },
+};
+
+/** At phone width the three tabs wrap and every label stays whole. */
+export const Phone320: Story = {
+  ...Default,
+  parameters: { viewport: { defaultViewport: "mobile1" } },
 };

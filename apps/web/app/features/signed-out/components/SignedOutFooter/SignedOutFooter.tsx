@@ -1,6 +1,5 @@
 import { companyLine } from "@flump/business-details";
 import { SiteFooter, type SiteFooterRenderLink } from "@repo/ui";
-import { TOOL_CATALOGUE } from "@repo/ui/tools";
 import type { FC } from "react";
 import { Link as RouterLink } from "react-router";
 import { APP_VERSION, feedbackMailto } from "~/utils/support";
@@ -12,8 +11,8 @@ const renderLink: SiteFooterRenderLink = (link, className, children) => (
 );
 
 /**
- * Footer for the public calculator pages: the shared `SiteFooter` with the app's links. Calculator
- * links follow the catalogue order.
+ * Footer for the public calculator pages: the shared `SiteFooter` with the app's links. One "All
+ * calculators" link and no per-tool links, the same rule as the marketing footer.
  */
 export const SignedOutFooter: FC = () => (
   <SiteFooter
@@ -22,14 +21,7 @@ export const SignedOutFooter: FC = () => (
     columns={[
       {
         heading: "Calculators",
-        links: [
-          ...TOOL_CATALOGUE.slice(0, 4).map((tool) => ({
-            key: tool.slug,
-            label: tool.shortTitle,
-            href: `/tools/${tool.slug}`,
-          })),
-          { key: "all", label: "All calculators", href: "/tools" },
-        ],
+        links: [{ key: "all", label: "All calculators", href: "/tools" }],
       },
       {
         heading: "Account and support",

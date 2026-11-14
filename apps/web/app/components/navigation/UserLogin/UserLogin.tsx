@@ -34,14 +34,12 @@ const UserLogin: FC<UserLoginProps> = ({ className, size = "sm", signUp = "alway
       ) : (
         <>
           {signUp !== "never" && (
-            <ButtonLink
-              asChild
-              className={signUp === "fromSm" ? userLoginSignUp() : userLoginButton()}
-              size={size}
-              variant="ghost"
-            >
-              <Link to="/signup">{t("signUp", "Sign up")}</Link>
-            </ButtonLink>
+            // The wrapper owns the display swap, so it never competes with the button's display.
+            <span className={signUp === "fromSm" ? userLoginSignUp() : undefined}>
+              <ButtonLink asChild className={userLoginButton()} size={size} variant="ghost">
+                <Link to="/signup">{t("signUp", "Sign up")}</Link>
+              </ButtonLink>
+            </span>
           )}
           <ButtonLink asChild className={userLoginButton()} size={size} variant="ghost">
             <Link to="/login">{t("logIn", "Sign in")}</Link>

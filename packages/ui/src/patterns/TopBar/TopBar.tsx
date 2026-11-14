@@ -1,4 +1,4 @@
-import { Menu } from "lucide-react";
+import { ChevronDown, Menu } from "lucide-react";
 import { type FC, type ReactNode, useEffect, useId, useRef, useState } from "react";
 import { cx } from "../../../styled-system/css";
 import { Button } from "../../primitives/Button/Button";
@@ -13,6 +13,7 @@ import {
 import {
   topBarActions,
   topBarBadge,
+  topBarChevron,
   topBarFlyout,
   topBarFlyoutDescription,
   topBarFlyoutLabel,
@@ -110,6 +111,10 @@ const FlyoutGroup: FC<FlyoutGroupProps> = ({ item, active, activeKey, renderLink
       >
         {item.icon}
         <span>{item.label}</span>
+        {/* Wrapped, so the tablet rule that hides link icons (direct svg children) keeps it. */}
+        <span aria-hidden="true" className={topBarChevron({ open })}>
+          <Icon icon={ChevronDown} size="sm" />
+        </span>
       </button>
       {open && (
         <div className={topBarFlyout()} id={panelId}>
