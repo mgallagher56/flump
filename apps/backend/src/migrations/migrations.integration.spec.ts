@@ -15,7 +15,7 @@ import { AddNetWorthChoices1794800000000 } from "./AddNetWorthChoices17948000000
 import { AddProfileFacts1794355723000 } from "./AddProfileFacts1794355723000";
 import { AddRateLimitBuckets1794632012000 } from "./AddRateLimitBuckets1794632012000";
 import { AddUserIdIndexes1794358100000, USER_ID_INDEXES } from "./AddUserIdIndexes1794358100000";
-import { AuditActionUserExported1794900000000 } from "./AuditActionUserExported1794900000000";
+import { AuditActionUserExported1795000000000 } from "./AuditActionUserExported1795000000000";
 import { BackfillAnnualTaxRecordEndDate1794355900000 } from "./BackfillAnnualTaxRecordEndDate1794355900000";
 import { Baseline1794355200000 } from "./Baseline1794355200000";
 import { ClearBankTokens1794355300000 } from "./ClearBankTokens1794355300000";
@@ -1613,8 +1613,8 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
     });
   });
 
-  describe("AuditActionUserExported1794900000000 (BE-15, N3)", () => {
-    const NAME = "AuditActionUserExported1794900000000";
+  describe("AuditActionUserExported1795000000000 (BE-15, N3)", () => {
+    const NAME = "AuditActionUserExported1795000000000";
     const insertAction = (action: string): Promise<unknown> =>
       ds.query("INSERT INTO audit_events (user_id, action) VALUES ('u1', $1)", [action]);
     const actionCheck = async (): Promise<string> => {
@@ -1665,7 +1665,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
       await ds.undoLastMigration();
       await ds.runMigrations();
       expect(await applied()).toContain(NAME);
-      await expect(runUpInTransaction(new AuditActionUserExported1794900000000())).resolves.toBe(
+      await expect(runUpInTransaction(new AuditActionUserExported1795000000000())).resolves.toBe(
         undefined,
       );
       await insertAction("user.exported");
