@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.32.0](https://github.com/mgallagher56/flump/compare/flump/marketing-v1.31.0...flump/marketing-v1.32.0) (2026-11-14)
+
+
+### Features ✨
+
+* **ui,tokens:** E16 R2-2 design-system round 2 ([9ca307f](https://github.com/mgallagher56/flump/commit/9ca307f20de8b28188b14967ee97a696dd6a4802))
+
 ## [1.31.0](https://github.com/mgallagher56/flump/compare/flump/marketing-v1.30.0...flump/marketing-v1.31.0) (2026-11-14)
 
 

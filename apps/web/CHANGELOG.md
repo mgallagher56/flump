@@ -1,5 +1,36 @@
 # Changelog
 
+## [1.34.0](https://github.com/mgallagher56/flump/compare/flump/web-v1.33.0...flump/web-v1.34.0) (2026-11-14)
+
+
+### Features ✨
+
+* **ui,tokens:** E16 R2-2 design-system round 2 ([9ca307f](https://github.com/mgallagher56/flump/commit/9ca307f20de8b28188b14967ee97a696dd6a4802))
+* **web:** net worth follows the user's choices on every surface ([499efbe](https://github.com/mgallagher56/flump/commit/499efbe080c74e482ba1cff3e8749545f7db4bbe))
+* **web:** settings section for what counts in your net worth ([fe013ac](https://github.com/mgallagher56/flump/commit/fe013ac822073b47a21bc6e85adba8de33579f76))
+
+
+### Bug Fixes 🪲
+
+* **ui:** R2-2 review fixes ([80406d6](https://github.com/mgallagher56/flump/commit/80406d6f00f77429283f7f63a9c369f37d6972b4))
+* **web,contract:** proxy allows AI connections and imports; drop ignored request keys ([8d6387a](https://github.com/mgallagher56/flump/commit/8d6387a12ad9487c33e38daa3152c7250b8fa886))
+* **web:** account rows and detail hero show the saved balance ([2e042da](https://github.com/mgallagher56/flump/commit/2e042daa7181bc686f4cad3c94fb62bb9fa16dc3))
+* **web:** dashboard toggle keeps saved sections for switched-off pages ([5738ca3](https://github.com/mgallagher56/flump/commit/5738ca33e0aa72d842628a6dce7d7830c2dab910))
+* **web:** Edit account on the account page opens prefilled ([3611f90](https://github.com/mgallagher56/flump/commit/3611f90be4b35fa36d8057e96d5b1dd5199a0de5))
+* **web:** Edit budget opens the wizard in edit mode ([34a0e84](https://github.com/mgallagher56/flump/commit/34a0e84f8ac3448fae26c8fc2a8e6d6fd0302518))
+* **web:** history ends on the saved balances ([fe5a9ae](https://github.com/mgallagher56/flump/commit/fe5a9ae4a06d0eaacd71be22d4847134d7da7b85))
+* **web:** history hero names the month its change belongs to ([ff285f4](https://github.com/mgallagher56/flump/commit/ff285f43a907a1b712139830c96bbbc4eaf0da45))
+* **web:** net worth choices keep focus while saving; review copy ([c841209](https://github.com/mgallagher56/flump/commit/c84120953bcae9131988cbec4c06b1de1668d275))
+* **web:** rate-change tool payment matches the mortgage figure; pension seeds count once ([50450dd](https://github.com/mgallagher56/flump/commit/50450dd0340eacbf15d8bec136651facdd5a526d))
+
+
+### Tests 🧪
+
+* Tabs snapshot class and visual baselines on 98cee700 (CI run 43600724506) ([ce01292](https://github.com/mgallagher56/flump/commit/ce01292bf82558263877e334a9e32c070760b165))
+* **web:** consistency harness checks one balance per account ([9641a04](https://github.com/mgallagher56/flump/commit/9641a04ffc88e07d6a7f83cc5fcefe1bb3e94918))
+* **web:** consistency harness loops the four net worth choices ([e79db10](https://github.com/mgallagher56/flump/commit/e79db10a706f156e7e5ef0c26199f5c58f741956))
+* **web:** profile and portfolio snapshot fixtures carry the net worth fields ([6025b9d](https://github.com/mgallagher56/flump/commit/6025b9d5bab8a100e258b5e5f44292b5284a1286))
+
 ## [1.33.0](https://github.com/mgallagher56/flump/compare/flump/web-v1.32.0...flump/web-v1.33.0) (2026-11-14)
 
 

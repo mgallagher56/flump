@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.32.0](https://github.com/mgallagher56/flump/compare/flump/backend-v1.31.0...flump/backend-v1.32.0) (2026-11-14)
+
+
+### Features ✨
+
+* **backend:** save the net worth choices and use them in the snapshot ([95f7334](https://github.com/mgallagher56/flump/commit/95f7334263ffc0ca986f017383d3d33553a120be))
+* **engine:** net worth basis for the user's choices ([fce3423](https://github.com/mgallagher56/flump/commit/fce3423690d82b11f8a6c94d06f6ad4450d90289))
+
+
+### Bug Fixes 🪲
+
+* **web,contract:** proxy allows AI connections and imports; drop ignored request keys ([8d6387a](https://github.com/mgallagher56/flump/commit/8d6387a12ad9487c33e38daa3152c7250b8fa886))
+
 ## [1.31.0](https://github.com/mgallagher56/flump/compare/flump/backend-v1.30.0...flump/backend-v1.31.0) (2026-11-14)
 
 
