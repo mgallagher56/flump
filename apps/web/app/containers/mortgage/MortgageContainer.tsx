@@ -1,4 +1,4 @@
-import { calculateLtvMilestones, PortfolioSnapshot } from "@flump/finance-engine";
+import { calculateLtvMilestones, isFigureKnown, PortfolioSnapshot } from "@flump/finance-engine";
 import { Button, EmptyState, Icon, LiveRegion, PageHeader, ScenarioZone } from "@repo/ui";
 import { Building2, Coins, Home, LineChart, Percent } from "lucide-react";
 import { type FC, useEffect, useMemo, useRef, useState } from "react";
@@ -263,18 +263,31 @@ const MortgageContainer: FC = () => {
   ].filter((x): x is string => x !== null);
 
   // Property value is only ever what the user entered; it is never derived from the loan.
-  const propertyValue =
-    (propertyCategory === "btl" ? profile.buyToLetPropertyValue : profile.homeValue) ?? 0;
+  // Residential loan to value comes from the picture (E16 PR 3): the same home value net worth
+  // counts (a Property account, else the profile estimate) over the saved mortgage balance.
+  // It used to read profile.homeValue alone, which the backend never stores, so an onboarded
+  // homeowner saw "not available" with both figures saved.
+  const residentialLtv = isFigureKnown(picture.loanToValue) ? picture.loanToValue.value : null;
+  // Saved balances reach the picture through accountPatches, so it is never stale after a save.
+  const isBtl = propertyCategory === "btl";
+  const propertyValue = isBtl
+    ? (profile.buyToLetPropertyValue ?? 0)
+    : (residentialLtv?.homeValue ?? 0);
+  const ltvLoan = isBtl ? loanAmount : (residentialLtv?.mortgageBalance ?? 0);
 
-  const hasLtvData = loanAmount > 0 && propertyValue > 0;
-  const currentLtv = hasLtvData ? (loanAmount / propertyValue) * 100 : 0;
+  const hasLtvData = ltvLoan > 0 && propertyValue > 0;
+  const currentLtv = !hasLtvData
+    ? 0
+    : !isBtl && residentialLtv
+      ? residentialLtv.percent
+      : (ltvLoan / propertyValue) * 100;
 
   const ltvMilestones = useMemo(() => {
     if (!hasLtvData) return [];
     const fixEnd =
       propertyCategory === "residential" ? (selectedFixEndDate ?? undefined) : undefined;
-    return calculateLtvMilestones(propertyValue, loanAmount, fixEnd);
-  }, [hasLtvData, propertyValue, loanAmount, propertyCategory, selectedFixEndDate]);
+    return calculateLtvMilestones(propertyValue, ltvLoan, fixEnd);
+  }, [hasLtvData, propertyValue, ltvLoan, propertyCategory, selectedFixEndDate]);
 
   // The selected account's stored fix-end date, from the picture. Shown as a fact within six
   // months of the end, and once it has ended.
@@ -546,7 +559,7 @@ const MortgageContainer: FC = () => {
       {hasLtvData ? (
         <LtvMilestones
           currentLtv={currentLtv}
-          loanAmount={loanAmount}
+          loanAmount={ltvLoan}
           milestones={ltvMilestones}
           ownershipSharePct={baseline.propertyOwnershipSharePct ?? 100}
           propertyValue={propertyValue}
