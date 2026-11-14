@@ -154,6 +154,10 @@ export const loader = async (args: LoaderFunctionArgs) => {
   // C-11: the engine's self assessment estimate (tax on income outside PAYE) for the current tax
   // year, from the picture. Unknown (no income outside PAYE) stays null, never £0.
   const estimatedTaxDue: number | null = knownOrNull(picture.estimatedTaxDue)?.amount ?? null;
+  // Its assumption notes (the England, Wales and NI bands for a Scottish taxpayer) go with it.
+  const estimatedTaxDueNotes: string[] = isFigureKnown(picture.estimatedTaxDue)
+    ? [...(picture.estimatedTaxDue.assumptions ?? [])]
+    : [];
 
   // Estimated take-home comes from the engine's one selector; unknown stays unknown.
   const takeHomeFigure = selectTakeHome(profileFactsFromProfile(userProfile));
@@ -202,7 +206,7 @@ export const loader = async (args: LoaderFunctionArgs) => {
       totalAssets,
       totalLiabilities,
       liquidCash,
-      // The profile home estimate inside net worth, labelled "Home (your estimate)" (D3).
+      // The seeded home Property account inside net worth, labelled "Home (your estimate)" (D3).
       homeEstimate,
       accountsCount: Array.isArray(accounts) ? accounts.length : 0,
       typeTotals,
@@ -270,6 +274,7 @@ export const loader = async (args: LoaderFunctionArgs) => {
       totalExpenses: totalTaxExpenses,
       netProfit,
       estimatedTaxDue,
+      estimatedTaxDueNotes,
       recordsCount: currentYearRecords.length,
       marginal,
     },
