@@ -1,13 +1,6 @@
 {
   "generated": true,
   "routes": {
-    "marketing-home": {
-      "1280-forced-colours": {
-        "axe": {
-          "color-contrast": 2
-        }
-      }
-    },
     "web-accounts": {
       "1280-dark": {
         "axe": {
@@ -22,76 +15,6 @@
       "1280-light": {
         "axe": {
           "target-size": 2
-        }
-      }
-    },
-    "web-accounts-history": {
-      "1280-forced-colours": {
-        "axe": {
-          "color-contrast": 3
-        }
-      }
-    },
-    "web-budget": {
-      "1280-forced-colours": {
-        "axe": {
-          "color-contrast": 4
-        }
-      }
-    },
-    "web-dashboard": {
-      "1280-forced-colours": {
-        "axe": {
-          "color-contrast": 3
-        }
-      }
-    },
-    "web-debt": {
-      "1280-forced-colours": {
-        "axe": {
-          "color-contrast": 3
-        }
-      }
-    },
-    "web-forecast": {
-      "1280-forced-colours": {
-        "axe": {
-          "color-contrast": 3
-        }
-      }
-    },
-    "web-mortgage": {
-      "1280-forced-colours": {
-        "axe": {
-          "color-contrast": 3
-        }
-      }
-    },
-    "web-pension": {
-      "1280-forced-colours": {
-        "axe": {
-          "color-contrast": 3
-        }
-      }
-    },
-    "web-sandbox": {
-      "1280-forced-colours": {
-        "axe": {
-          "color-contrast": 2
-        }
-      }
-    },
-    "web-savings": {
-      "1280-forced-colours": {
-        "axe": {
-          "color-contrast": 3
-        }
-      }
-    },
-    "web-take-home": {
-      "1280-forced-colours": {
-        "axe": {
-          "color-contrast": 3
         }
       }
     }
