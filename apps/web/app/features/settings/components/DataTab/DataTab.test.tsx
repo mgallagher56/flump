@@ -112,6 +112,23 @@ describe("<DataTab />", () => {
     expect(screen.getByRole("alertdialog")).toBeDefined();
   });
 
+  it("asks for a fresh sign-in when the reset needs a recent login", async () => {
+    const { RecentLoginRequiredError } = await import("~/hooks/useUserProfile");
+    mockResetFinancialData.mockRejectedValueOnce(new RecentLoginRequiredError());
+    render(<DataTab />);
+    fireEvent.click(screen.getByTestId("reset-financial-data-trigger"));
+    fireEvent.change(screen.getByLabelText(/to confirm/i), { target: { value: "RESET" } });
+    fireEvent.click(screen.getByRole("button", { name: "Reset everything" }));
+    expect((await screen.findByRole("alert")).textContent).toBe(
+      "For your security, sign in again, then try once more.",
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Sign in again" }));
+    expect(fetcher.submit).toHaveBeenCalledWith(
+      { next: "/app/profile?tab=data" },
+      { method: "post", action: "/logout" },
+    );
+  });
+
   it("cancelling does not reset anything", () => {
     render(<DataTab />);
     fireEvent.click(screen.getByTestId("reset-financial-data-trigger"));

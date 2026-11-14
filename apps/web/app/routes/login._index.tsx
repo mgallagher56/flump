@@ -1,14 +1,18 @@
 import { configure, getSignInUrl } from "@workos-inc/authkit-react-router";
 import type { LoaderFunctionArgs } from "react-router";
 import { redirect } from "react-router";
+import { isAllowedReturnPath } from "~/features/settings/account";
 import { devSessionSetCookie, isDevSessionEnabled } from "~/utils/devSession.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
+  const reqUrl = new URL(request.url);
+  // Only the settings "Sign in again" return path is honoured (never an open redirect).
+  const requested = reqUrl.searchParams.get("returnTo");
+  const returnTo = isAllowedReturnPath(requested) ? requested : "/app";
   if (isDevSessionEnabled(process.env)) {
     // Test-only: no WorkOS round trip, just the dev session cookie.
-    return redirect("/app", { headers: { "Set-Cookie": devSessionSetCookie } });
+    return redirect(returnTo, { headers: { "Set-Cookie": devSessionSetCookie } });
   }
-  const reqUrl = new URL(request.url);
   if (
     process.env.NODE_ENV === "development" &&
     (reqUrl.hostname === "localhost" || reqUrl.hostname === "127.0.0.1")
@@ -20,7 +24,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       return process.env[key];
     });
   }
-  const { url, headers } = await getSignInUrl("/app", request);
+  const { url, headers } = await getSignInUrl(returnTo, request);
   return redirect(url, { headers });
 };
 

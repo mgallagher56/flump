@@ -6,9 +6,11 @@ import {
   DELETE_ACCOUNT_INTENT,
   type DeleteAccountStatus,
   isDeleteAccountActionData,
+  RECENT_LOGIN_MESSAGE,
 } from "~/features/settings/account";
 import { DataExportSection } from "~/features/settings/components/DataExportSection";
 import { DeleteAccountSection } from "~/features/settings/components/DeleteAccountSection";
+import { SignInAgainButton } from "~/features/settings/components/SignInAgainButton";
 import {
   sectionCard,
   sectionHeading,
@@ -16,7 +18,11 @@ import {
   statusText,
   tabStack,
 } from "~/features/settings/settings.styles";
-import { RESET_FINANCIAL_DATA_CONFIRMATION, useUserProfile } from "~/hooks/useUserProfile";
+import {
+  RESET_FINANCIAL_DATA_CONFIRMATION,
+  RecentLoginRequiredError,
+  useUserProfile,
+} from "~/hooks/useUserProfile";
 import {
   dangerCopy,
   dangerRow,
@@ -65,6 +71,7 @@ export const DataTab: FC = () => {
   const [resetModalOpen, setResetModalOpen] = useState(false);
   const [resettingData, setResettingData] = useState(false);
   const [resetError, setResetError] = useState<string | null>(null);
+  const [resetNeedsSignIn, setResetNeedsSignIn] = useState(false);
   const [resetSuccess, setResetSuccess] = useState(false);
 
   // Keep the redirect timer so leaving the page cancels it, and block a second submit while the
@@ -83,6 +90,7 @@ export const DataTab: FC = () => {
     resetInFlight.current = true;
     setResettingData(true);
     setResetError(null);
+    setResetNeedsSignIn(false);
     try {
       await resetFinancialData();
       setResetSuccess(true);
@@ -94,6 +102,11 @@ export const DataTab: FC = () => {
       }, SUCCESS_REDIRECT_MS);
     } catch (err) {
       resetInFlight.current = false;
+      if (err instanceof RecentLoginRequiredError) {
+        setResetNeedsSignIn(true);
+        setResetError(RECENT_LOGIN_MESSAGE);
+        return;
+      }
       setResetError(
         err instanceof Error && err.message
           ? err.message
@@ -131,6 +144,7 @@ export const DataTab: FC = () => {
             variant="destructive"
             onClick={() => {
               setResetError(null);
+              setResetNeedsSignIn(false);
               setResetSuccess(false);
               setResetModalOpen(true);
             }}
@@ -145,7 +159,10 @@ export const DataTab: FC = () => {
         open={resetModalOpen}
         onOpenChange={(open) => {
           setResetModalOpen(open);
-          if (!open) setResetError(null);
+          if (!open) {
+            setResetError(null);
+            setResetNeedsSignIn(false);
+          }
         }}
         title="Reset all financial data"
         description={
@@ -161,6 +178,7 @@ export const DataTab: FC = () => {
               <li>All property, salary and savings settings</li>
             </ul>
             <span>You will start again from scratch.</span>
+            {resetNeedsSignIn ? <SignInAgainButton /> : null}
             {resetSuccess ? (
               <p className={statusText({ tone: "positive" })} role="status">
                 All financial data wiped. You have a clean slate.

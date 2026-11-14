@@ -274,6 +274,18 @@ export function profileToBaseline(profile: UserProfile | Partial<UserProfile>): 
  */
 export const RESET_FINANCIAL_DATA_CONFIRMATION = "RESET";
 
+/**
+ * Thrown by resetFinancialData when the backend wants a recent sign-in first (BE-04: 403 with
+ * `error: "recent_login_required"`; the `/api` proxy passes the 403 on without the body, and it
+ * is the only 403 that owner-scoped route sends).
+ */
+export class RecentLoginRequiredError extends Error {
+  constructor() {
+    super("A recent sign-in is required");
+    this.name = "RecentLoginRequiredError";
+  }
+}
+
 export function useUserProfile() {
   const [profile, rawSetProfile] = useAtom(userProfileAtom);
   const [, rawSetBaseline] = useAtom(financialBaselineAtom);
@@ -336,6 +348,7 @@ export function useUserProfile() {
         body: { confirmation: RESET_FINANCIAL_DATA_CONFIRMATION },
       });
     } catch (err) {
+      if (err instanceof BackendError && err.status === 403) throw new RecentLoginRequiredError();
       throw messageFrom(err, "We could not reset your financial data. Try again.");
     }
     if (result?.profile) {

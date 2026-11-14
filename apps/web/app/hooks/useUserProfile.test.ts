@@ -1,6 +1,11 @@
 import { act, renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { DEFAULT_PROFILE, normalizeProfile, useUserProfile } from "./useUserProfile";
+import {
+  DEFAULT_PROFILE,
+  normalizeProfile,
+  RecentLoginRequiredError,
+  useUserProfile,
+} from "./useUserProfile";
 
 const jsonRes = (body: unknown, status = 200) =>
   new Response(body === undefined ? null : JSON.stringify(body), { status });
@@ -170,5 +175,13 @@ describe("useUserProfile", () => {
     );
     const [, init] = (global.fetch as any).mock.calls.at(-1);
     expect(JSON.parse(init.body)).toEqual({ confirmation: "RESET" });
+  });
+
+  test("resetFinancialData reports a recent-login 403 as RecentLoginRequiredError", async () => {
+    (global.fetch as any).mockResolvedValueOnce(jsonRes({ kind: "forbidden" }, 403));
+    const { result } = renderHook(() => useUserProfile());
+    await expect(result.current.resetFinancialData()).rejects.toBeInstanceOf(
+      RecentLoginRequiredError,
+    );
   });
 });

@@ -70,6 +70,11 @@ export async function deleteAccountAction(args: ActionFunctionArgs, formData: Fo
     });
   } catch (error) {
     if (error instanceof BackendError && error.status === 429) return outcome("rate_limited", 429);
+    // The only 403 this owner-scoped route sends is the recent-login check
+    // (`error: "recent_login_required"`); backendFetch does not pass the body on.
+    if (error instanceof BackendError && error.kind === "forbidden") {
+      return outcome("recent_login_required", 403);
+    }
     if (error instanceof BackendError) {
       console.error("Account deletion failed", { kind: error.kind, status: error.status });
       return outcome("failed", 502);

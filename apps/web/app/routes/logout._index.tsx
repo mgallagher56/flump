@@ -1,6 +1,8 @@
 import { signOut } from "@workos-inc/authkit-react-router";
 import type { ActionFunctionArgs } from "react-router";
 import { redirect } from "react-router";
+import { isAllowedReturnPath } from "~/features/settings/account";
+import { expectedOrigin } from "~/security/csrf.server";
 import { ensureSessionStorage } from "~/utils/auth.server";
 import { devSessionClearCookie, isDevSessionEnabled } from "~/utils/devSession.server";
 import { getMarketingUrl } from "~/utils/marketingUrl";
@@ -8,13 +10,31 @@ import { safeErrorSummary } from "~/utils/safeErrorSummary";
 import { hasSealedSession } from "~/utils/sessionCookie.server";
 import { legacySessionCookieClear, sessionCookieClear } from "~/utils/sessionPolicy.server";
 
-const handleSignOut = async (request: Request) => {
+/**
+ * Where the browser ends up. Normally the marketing site; for the settings "Sign in again" flow
+ * (a destructive action needs a recent sign-in) the app's own /login with the one allowed return
+ * path, so the person signs in afresh and lands back on the Data tab.
+ */
+const destination = (request: Request, next: FormDataEntryValue | null): string =>
+  isAllowedReturnPath(next)
+    ? `${expectedOrigin(request)}/login?returnTo=${encodeURIComponent(next)}`
+    : getMarketingUrl(request.url);
+
+const readNext = async (request: Request): Promise<FormDataEntryValue | null> => {
+  try {
+    return (await request.formData()).get("next");
+  } catch {
+    return null;
+  }
+};
+
+const handleSignOut = async (request: Request, next: FormDataEntryValue | null = null) => {
   const url = new URL(request.url);
-  const marketingUrl = getMarketingUrl(request.url);
+  const returnUrl = destination(request, next);
 
   if (isDevSessionEnabled(process.env)) {
     // Test-only: clear the dev session cookie; there is no WorkOS session to end.
-    const headers = new Headers({ Location: marketingUrl });
+    const headers = new Headers({ Location: returnUrl });
     headers.append("Set-Cookie", devSessionClearCookie);
     headers.append("Set-Cookie", "flump_has_session=; Path=/; SameSite=Lax; Max-Age=0");
     return new Response(null, { status: 302, headers });
@@ -29,7 +49,7 @@ const handleSignOut = async (request: Request) => {
   // or if signOut itself fails, still send the browser home with every session cookie cleared.
   // Nothing here reads or refreshes the session, so no refreshed cookie can resurrect it.
   const clearedRedirect = () => {
-    const headers = new Headers({ Location: marketingUrl });
+    const headers = new Headers({ Location: returnUrl });
     headers.append("Set-Cookie", sessionCookieClear(process.env));
     headers.append("Set-Cookie", clearPresenceCookie);
     const legacyClear = legacySessionCookieClear(process.env);
@@ -42,7 +62,7 @@ const handleSignOut = async (request: Request) => {
 
   let response: unknown;
   try {
-    response = await signOut(request, { returnTo: marketingUrl });
+    response = await signOut(request, { returnTo: returnUrl });
   } catch (error) {
     console.warn("logout: signOut failed, clearing cookies locally:", safeErrorSummary(error));
     return clearedRedirect();
@@ -67,7 +87,7 @@ const handleSignOut = async (request: Request) => {
 export const loader = async () => redirect("/");
 
 export const action = async ({ request }: ActionFunctionArgs) => {
-  return handleSignOut(request);
+  return handleSignOut(request, await readNext(request));
 };
 
 export default function LogoutIndex() {
