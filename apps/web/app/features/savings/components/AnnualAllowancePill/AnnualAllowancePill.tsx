@@ -75,7 +75,7 @@ export const AnnualAllowancePill: FC<AnnualAllowancePillProps> = ({
         </div>
         <ProgressBar
           height={10}
-          label={isIsa ? "ISA allowance used" : "Pension allowance used"}
+          label={isIsa ? "ISA allowance used" : "Pension annual allowance used"}
           max={limit}
           value={used}
           valueDisplay={`${formatGBP(used)} / ${formatGBP(limit)}`}
@@ -92,8 +92,8 @@ export const AnnualAllowancePill: FC<AnnualAllowancePillProps> = ({
               ? contributingAccounts
                   .map((acc) => `${acc.name} (${formatGBP(acc.balance)})`)
                   .join(", ")
-              : "cash ISAs, stocks and shares ISAs and Lifetime ISAs."
-            : "workplace pension, SIPP and personal pension contributions."}
+              : "Cash ISAs, Stocks and Shares ISAs and Lifetime ISAs."
+            : "workplace pension, self-invested personal pension (SIPP) and personal pension contributions."}
         </span>
         <span>Resets on 6 April</span>
       </div>
@@ -101,8 +101,8 @@ export const AnnualAllowancePill: FC<AnnualAllowancePillProps> = ({
       {isIsa && psaLimit === null && (
         <div className={psaRow()}>
           <span>
-            <strong>Personal Savings Allowance:</strong> up to £1,000 of interest a year without
-            tax, depending on your income tax band
+            <strong>Personal Savings Allowance:</strong> up to £1,000 of interest a year with no tax
+            to pay, depending on your Income Tax band
           </span>
           <span>Add your income to see your allowance</span>
         </div>

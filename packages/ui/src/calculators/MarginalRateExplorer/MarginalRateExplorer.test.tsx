@@ -59,7 +59,7 @@ describe("MarginalRateExplorer", () => {
   it("is controlled: inputs call onChange and never change values by themselves", () => {
     const onChange = vi.fn();
     render(<MarginalRateExplorer values={DEFAULTS_2026} onChange={onChange} />);
-    fireEvent.change(screen.getByLabelText("Pay before tax a year range slider"), {
+    fireEvent.change(screen.getByLabelText("Pay before tax a year"), {
       target: { value: "60000" },
     });
     expect(onChange).toHaveBeenCalledWith("grossPay", 60000);
@@ -115,10 +115,10 @@ describe("MarginalRateExplorer", () => {
   it("keeps the extra pension slider when dragged to £0", () => {
     render(<MarginalRateExplorerStandalone initialValues={{ taxYear: "2026/27" }} />);
     fireEvent.click(screen.getByRole("button", { name: "Model a pension contribution" }));
-    fireEvent.change(screen.getByLabelText("Extra pension contribution range slider"), {
+    fireEvent.change(screen.getByLabelText("Extra pension contribution"), {
       target: { value: "0" },
     });
-    expect(screen.getByLabelText("Extra pension contribution range slider")).toBeDefined();
+    expect(screen.getByLabelText("Extra pension contribution")).toBeDefined();
     expect(screen.queryByRole("button", { name: "Model a pension contribution" })).toBeNull();
   });
 
@@ -130,7 +130,7 @@ describe("MarginalRateExplorer", () => {
         onChange={onChange}
       />,
     );
-    expect(screen.getByLabelText("Extra pension contribution range slider")).toBeDefined();
+    expect(screen.getByLabelText("Extra pension contribution")).toBeDefined();
     rerender(<MarginalRateExplorer values={DEFAULTS_2026} onChange={onChange} />);
     expect(screen.getByRole("button", { name: "Model a pension contribution" })).toBeDefined();
   });

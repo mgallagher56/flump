@@ -396,7 +396,7 @@ ${
 - **Safe to spend:** ${bg.safeToSpend ? `${formatSignedGbp(bg.safeToSpend.weeklyAllowance)} a week` : "Not set"}
 - **Income minus spending, a month:** ${gbpOrNotSet(bg.monthlySurplus)}
 
-## 5. UK Tax & Fiscal Guardrails (${pack.taxSummary.currentTaxYear})
+## 5. Tax, ${pack.taxSummary.currentTaxYear}
 - **Salary before tax:** £${b.annualGrossSalary.toLocaleString("en-GB")}
 - **Tax region:** ${b.ukRegion}
 - **Adjusted net income:** £${tx.adjustedNetIncomeGbp.toLocaleString("en-GB")}

@@ -19,7 +19,7 @@ describe("MortgageVsIsaTool", () => {
   it("updates simulation when monthly contribution changes", () => {
     render(<MortgageVsIsaTool />);
 
-    const monthlySlider = screen.getByRole("slider", { name: /extra money a month range slider/i });
+    const monthlySlider = screen.getByRole("slider", { name: /extra money a month/i });
     fireEvent.change(monthlySlider, { target: { value: "500" } });
 
     expect((monthlySlider as HTMLInputElement).value).toBe("500");

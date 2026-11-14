@@ -125,7 +125,7 @@ export const Default: Story = {
     await expect(canvas.getByRole("region", { name: "Results" })).toBeInTheDocument();
     await expect(canvasElement.querySelector("main")).toBeNull();
     // Moving a slider updates the outcome in the summary bar.
-    const slider = canvas.getByLabelText("Monthly payment range slider") as HTMLInputElement;
+    const slider = canvas.getByLabelText("Monthly payment") as HTMLInputElement;
     const before = canvas.getByText(/Debt free in/).textContent;
     slider.focus();
     await userEvent.keyboard("{End}");

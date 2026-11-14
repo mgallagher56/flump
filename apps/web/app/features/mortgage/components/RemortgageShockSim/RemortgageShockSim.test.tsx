@@ -66,24 +66,23 @@ describe("RemortgageShockSim", () => {
     );
     // Over 24 months reads as years and months.
     expect(screen.getByText(/\d+ years( \d+ months?)? left on your 2.5% fixed rate/)).toBeDefined();
-    expect((screen.getByLabelText("Years left range slider") as HTMLInputElement).value).toBe("18");
+    expect((screen.getByLabelText("Years left") as HTMLInputElement).value).toBe("18");
   });
 
   it("moving the new rate slider changes the estimated payment", () => {
     render(<RemortgageShockSim currentBalance={280000} currentRate={2.5} propertyValue={350000} />);
     const before = document.body.textContent;
-    fireEvent.change(screen.getByLabelText("Rate after your fixed rate ends range slider"), {
+    fireEvent.change(screen.getByLabelText("Rate after your fixed rate ends"), {
       target: { value: "8" },
     });
     expect(
-      (screen.getByLabelText("Rate after your fixed rate ends range slider") as HTMLInputElement)
-        .value,
+      (screen.getByLabelText("Rate after your fixed rate ends") as HTMLInputElement).value,
     ).toBe("8");
     expect(document.body.textContent).not.toBe(before);
   });
 
   describe("reseeding from props", () => {
-    const term = () => screen.getByLabelText("Years left range slider") as HTMLInputElement;
+    const term = () => screen.getByLabelText("Years left") as HTMLInputElement;
     const year = () => screen.getByLabelText("Fixed rate end year") as HTMLSelectElement;
     const month = () => screen.getByLabelText("Fixed rate end month") as HTMLSelectElement;
     const base = { currentBalance: 280000, currentRate: 2.5 };

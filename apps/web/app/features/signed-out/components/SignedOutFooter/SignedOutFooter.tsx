@@ -17,7 +17,7 @@ const renderLink: SiteFooterRenderLink = (link, className, children) => (
  */
 export const SignedOutFooter: FC = () => (
   <SiteFooter
-    blurb="UK debt, mortgage, student loan and tax calculators. Estimates for guidance, not advice."
+    blurb="UK debt, mortgage, student loan and tax calculators."
     bottom={companyLine(new Date().getFullYear())}
     columns={[
       {

@@ -41,7 +41,7 @@ export const TOOL_GUIDES: Readonly<Record<ToolSlug, ToolGuideContent>> = {
     faqs: [
       {
         q: "Is a mortgage included in the debt snowball?",
-        a: "No. This calculator models one credit card and one personal loan. Mortgage overpayments are modelled separately, in the mortgage overpayment calculator.",
+        a: "No. This calculator models up to 6 debts that you enter, such as cards and loans. Mortgage overpayments are in the mortgage overpayment or ISA calculator.",
       },
       {
         q: "What if I have a 0% balance transfer card?",
@@ -127,7 +127,7 @@ export const TOOL_GUIDES: Readonly<Record<ToolSlug, ToolGuideContent>> = {
         heading: "How student loan repayments work",
         body: [
           "UK student loans work differently from commercial loans. Repayments are 9% of income above a threshold, whatever the balance, and any balance left is written off after 25 to 40 years, depending on the plan.",
-          "For many Plan 2 and Plan 5 borrowers whose balance is projected to be written off, total repayments depend on income over time more than on the interest rate.",
+          "Many Plan 2 and Plan 5 balances are expected to be written off. For those, total repayments depend more on income over time than on the interest rate.",
         ],
       },
     ],
@@ -179,7 +179,7 @@ export const TOOL_GUIDES: Readonly<Record<ToolSlug, ToolGuideContent>> = {
         heading: "Taxable profit and higher-rate taxpayers",
         body: [
           "Because mortgage interest is not deducted as an expense, taxable rental profit is higher than the cash left after interest. That higher figure can take total income into the 40% higher-rate band, or above £100,000 where the Personal Allowance tapers.",
-          "Where interest costs are high relative to rent, the tax due can be more than the cash left after interest, which is an effective rate above 100% of that cash.",
+          "Where interest costs are high compared with rent, the tax due can be more than the cash left after interest. That is a tax rate above 100% of that cash.",
         ],
       },
       {
@@ -200,10 +200,10 @@ export const TOOL_GUIDES: Readonly<Record<ToolSlug, ToolGuideContent>> = {
       },
       {
         q: "What expenses can I still deduct against rental income?",
-        a: "Allowable expenses include letting agent fees, landlord insurance, council tax and utility bills the landlord pays, repairs and maintenance (not improvements), ground rent, cleaning and gardening.",
+        a: "Allowable expenses include letting agent fees, landlord insurance, and repairs and maintenance (not improvements). Council tax and utility bills the landlord pays, ground rent, cleaning and gardening count too.",
       },
       {
-        q: "How does Section 24 interact with Payments on Account?",
+        q: "How does Section 24 interact with payments on account?",
         a: "Section 24 can make a Self Assessment tax bill larger. Above HMRC's limit, HMRC asks for two payments on account, in January and July. Each is half of the previous year's tax bill.",
       },
     ],

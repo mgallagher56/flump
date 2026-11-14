@@ -153,7 +153,7 @@ export const DataTab: FC = () => {
               <li>All accounts, connected and added by hand</li>
               <li>All transaction history and balances</li>
               <li>All budget entries and recurring rules</li>
-              <li>All income and expense tax records</li>
+              <li>All income and cost records by tax year</li>
               <li>Your property, salary and savings details</li>
             </ul>
             <span>This cannot be undone. Your sign-in stays, and you set up Flump again.</span>

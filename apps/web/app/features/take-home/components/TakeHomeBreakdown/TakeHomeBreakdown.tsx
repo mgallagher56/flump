@@ -16,7 +16,7 @@ export type PayPartKey = "incomeTax" | "nationalInsurance" | "pension" | "studen
 
 /** Row names. Each pay part is named once on the page, here. */
 export const PAY_PART_LABELS: Record<PayPartKey, string> = {
-  incomeTax: "Income tax",
+  incomeTax: "Income Tax",
   nationalInsurance: "National Insurance",
   pension: "Pension",
   studentLoan: "Student loan",

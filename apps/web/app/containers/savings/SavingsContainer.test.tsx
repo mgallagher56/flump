@@ -175,10 +175,10 @@ describe("SavingsContainer", () => {
       const before = savedFacts();
       const outcomeBefore = screen.getByTestId("savings-forecast-outcome").textContent;
 
-      fireEvent.change(screen.getByLabelText("Average rate (AER) range slider"), {
+      fireEvent.change(screen.getByLabelText("Average rate (AER)"), {
         target: { value: "6" },
       });
-      fireEvent.change(screen.getByLabelText("Years ahead range slider"), {
+      fireEvent.change(screen.getByLabelText("Years ahead"), {
         target: { value: "12" },
       });
       fireEvent.change(screen.getByLabelText("Monthly amount"), { target: { value: "800" } });

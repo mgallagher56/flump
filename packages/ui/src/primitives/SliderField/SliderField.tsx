@@ -236,7 +236,7 @@ export const SliderField: FC<SliderFieldProps> = ({
 
       <input
         aria-describedby={helperText ? helperId : undefined}
-        aria-label={`${label} range slider`}
+        aria-label={label}
         aria-valuetext={valueText}
         className={sliderInputTrack()}
         disabled={disabled}

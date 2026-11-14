@@ -20,7 +20,7 @@ describe("DebtSnowballVsAvalancheTool", () => {
   it("updates payoff when extra payment slider moves", () => {
     render(<DebtSnowballVsAvalancheTool />);
 
-    const slider = screen.getByLabelText("Extra payment a month range slider") as HTMLInputElement;
+    const slider = screen.getByLabelText("Extra payment a month") as HTMLInputElement;
     fireEvent.change(slider, { target: { value: "150" } });
 
     expect(slider.value).toBe("150");

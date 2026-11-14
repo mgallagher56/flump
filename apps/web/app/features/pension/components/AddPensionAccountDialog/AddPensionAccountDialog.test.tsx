@@ -20,7 +20,7 @@ describe("AddPensionAccountDialog", () => {
     expect(screen.getByRole("dialog", { name: "Add a pension pot" })).toBeDefined();
     expect(screen.getByLabelText(/Pot or provider name/)).toBeDefined();
     expect(screen.getByLabelText("Current value")).toBeDefined();
-    expect(screen.getByLabelText("Expected return a year")).toBeDefined();
+    expect(screen.getByLabelText("Assumed growth a year")).toBeDefined();
     expect(screen.getByLabelText(DIRECT)).toBeDefined();
     expect(screen.queryByRole("button", { name: /^Add pension pot$/i })).toBeNull();
   });

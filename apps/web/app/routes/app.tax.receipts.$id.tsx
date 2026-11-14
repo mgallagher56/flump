@@ -51,7 +51,10 @@ export const loader = async (args: LoaderFunctionArgs) => {
     });
   } catch (error) {
     if (error instanceof BackendError && error.kind === "not-found") {
-      return new Response("Not found", { status: 404, headers: hardeningHeaders });
+      return new Response("We cannot find that receipt.", {
+        status: 404,
+        headers: hardeningHeaders,
+      });
     }
     throw error;
   }

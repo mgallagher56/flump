@@ -64,12 +64,12 @@ describe("PayRiseTeaser", () => {
 
   it("updates the estimate when the rise changes and explains the taper if reached", () => {
     renderTeaser();
-    fireEvent.change(screen.getByLabelText("Pay rise (a year) range slider"), {
+    fireEvent.change(screen.getByLabelText("Pay rise (a year)"), {
       target: { value: "1000" },
     });
     expect(screen.getByText("£720 a year")).toBeDefined();
 
-    fireEvent.change(screen.getByLabelText("Current salary (before tax) range slider"), {
+    fireEvent.change(screen.getByLabelText("Current salary (before tax)"), {
       target: { value: "99500" },
     });
     expect(screen.getByTestId("pay-rise-taper-note").textContent).toMatch(

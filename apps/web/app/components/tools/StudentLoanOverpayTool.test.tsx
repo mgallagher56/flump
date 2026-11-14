@@ -10,7 +10,7 @@ describe("<StudentLoanOverpayTool />", () => {
     );
 
     expect(getByRole("heading", { name: /UK student loan repayment calculator/i })).toBeDefined();
-    expect(getByText(/Projected outcome/i)).toBeDefined();
+    expect(getByText(/Estimated outcome/i)).toBeDefined();
     expect(getAllByText(/Estimated repayment a month/i)).toBeDefined();
 
     // Select different plan
@@ -19,11 +19,11 @@ describe("<StudentLoanOverpayTool />", () => {
     fireEvent.change(select, { target: { value: "plan1" } });
 
     // Change salary and balance
-    const salary = getByLabelText("Yearly salary before tax range slider") as HTMLInputElement;
+    const salary = getByLabelText("Yearly salary before tax") as HTMLInputElement;
     fireEvent.change(salary, { target: { value: "65000" } });
     expect(salary.value).toBe("65000");
 
-    const balance = getByLabelText("Student loan balance range slider") as HTMLInputElement;
+    const balance = getByLabelText("Student loan balance") as HTMLInputElement;
     fireEvent.change(balance, { target: { value: "15000" } });
     expect(balance.value).toBe("15000");
   });

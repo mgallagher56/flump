@@ -4,8 +4,8 @@ import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { OVERDRAFT_COPY, OverdraftCostCalculator } from "./OverdraftCostCalculator";
 
-const balanceSlider = () => screen.getByLabelText(`${OVERDRAFT_COPY.balance} range slider`);
-const rateSlider = () => screen.getByLabelText(`${OVERDRAFT_COPY.rate} range slider`);
+const balanceSlider = () => screen.getByLabelText(OVERDRAFT_COPY.balance);
+const rateSlider = () => screen.getByLabelText(OVERDRAFT_COPY.rate);
 const ratePill = () => screen.getByLabelText(`${OVERDRAFT_COPY.rate} input`);
 const outcomes = () => screen.getByTestId("overdraft-outcomes");
 const toolText = () => screen.getByTestId("overdraft-cost-tool").textContent ?? "";

@@ -738,7 +738,7 @@ const MortgageContainer: FC = () => {
           {showPayoff ? (
             <KpiCard
               label={isInterestOnly ? "Term ends" : "Paid off by"}
-              subtext={isInterestOnly ? "Estimate. The loan is still owed then" : "Estimate"}
+              subtext={isInterestOnly ? "Estimate. The loan is still owed then." : "Estimate"}
               value={<span data-figure="">{payoffMonth(remainingTerm)}</span>}
             />
           ) : null}

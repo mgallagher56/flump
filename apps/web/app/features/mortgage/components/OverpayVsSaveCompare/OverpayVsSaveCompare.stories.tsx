@@ -26,11 +26,9 @@ export const Populated: Story = {
     // The Storybook decorator renders a light and a dark copy, so take the first of each.
     await expect(canvasElement.textContent).toMatch(/overpaying the mortgage gives a total/);
 
-    const [slider] = canvas.getAllByLabelText("Savings interest rate range slider");
+    const [slider] = canvas.getAllByLabelText("Savings interest rate");
     fireEvent.change(slider as HTMLElement, { target: { value: "6" } });
-    await expect(canvas.getAllByLabelText("Savings interest rate range slider")[0]).toHaveValue(
-      "6",
-    );
+    await expect(canvas.getAllByLabelText("Savings interest rate")[0]).toHaveValue("6");
     await expect(canvasElement.textContent).toMatch(/saving the money gives a total/);
   },
 };

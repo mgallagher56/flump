@@ -29,7 +29,7 @@ vi.mock("~/state/baseline.store", () => ({
 import TakeHomeContainer from "./TakeHomeContainer";
 
 const PAY_PARTS = [
-  "Income tax",
+  "Income Tax",
   "National Insurance",
   "Pension",
   "Student loan",

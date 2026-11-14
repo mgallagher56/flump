@@ -4,7 +4,7 @@ import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { STUDENT_LOAN_COPY, StudentLoanCalculator } from "./StudentLoanCalculator";
 
-const slider = (label: string) => screen.getByLabelText(`${label} range slider`);
+const slider = (label: string) => screen.getByLabelText(label);
 const pill = (label: string) => screen.getByLabelText(`${label} input`);
 const planSelect = () => screen.getByLabelText(STUDENT_LOAN_COPY.plan);
 const outcomes = () => within(screen.getByTestId("student-loan-outcomes"));

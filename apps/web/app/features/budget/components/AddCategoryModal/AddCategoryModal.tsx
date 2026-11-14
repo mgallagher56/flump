@@ -85,7 +85,7 @@ export const AddCategoryModal: FC<AddCategoryModalProps> = ({
           {(field) => (
             <TextInput
               {...controlProps(field)}
-              placeholder="For example, Holidays or Pets"
+              placeholder="For example, holidays or pets"
               value={categoryName}
               onChange={(e) => {
                 setCategoryName(e.target.value);

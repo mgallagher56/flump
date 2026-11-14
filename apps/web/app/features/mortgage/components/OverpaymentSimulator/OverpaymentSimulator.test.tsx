@@ -30,7 +30,7 @@ describe("<OverpaymentSimulator />", () => {
     const { getByLabelText } = customRender(
       <OverpaymentSimulator {...props} onOverpaymentChange={onOverpaymentChange} />,
     );
-    fireEvent.change(getByLabelText("Extra each month range slider"), {
+    fireEvent.change(getByLabelText("Extra each month"), {
       target: { value: "500" },
     });
     expect(onOverpaymentChange).toHaveBeenCalledWith(500);

@@ -81,7 +81,7 @@ describe("<PensionSummary />", () => {
 
   test("assumed rates are named in the captions, with no figure", () => {
     const { getByText } = customRender(<PensionSummary {...props} ratesAssumed />);
-    expect(getByText("Assumed rates. Edit to match your payslip")).toBeDefined();
+    expect(getByText("Assumed rates. Edit to match your payslip.")).toBeDefined();
     expect(getByText("A month, in today's money, on assumed rates")).toBeDefined();
   });
 

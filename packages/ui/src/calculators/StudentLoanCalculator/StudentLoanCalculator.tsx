@@ -56,7 +56,7 @@ export const STUDENT_LOAN_COPY = {
   kpiMonthSubtext: (rate: string, threshold: string) =>
     `${rate}% of pay above ${threshold} a year, taken from your salary.`,
   kpiYear: "Estimated repayment a year",
-  kpiOutcome: "Projected outcome",
+  kpiOutcome: "Estimated outcome",
   outcomeRepaid: "Paid off before write-off",
   outcomeWrittenOff: (years: number) => `Written off after ${years} years`,
   outcomeNothingOwed: "No balance to repay",

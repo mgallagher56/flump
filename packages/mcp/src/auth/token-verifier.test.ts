@@ -66,7 +66,9 @@ describe("TokenVerifier (PAT-only)", () => {
       .verifyAuthorizationHeader(`Bearer eyJhbGciOiJub25lIn0.${payload}.sig`)
       .catch((e) => e);
     expect(err).toBeInstanceOf(AuthenticationError);
-    expect(err.message).toBe("OAuth tokens are not enabled");
+    expect(err.message).toBe(
+      "OAuth tokens are not accepted. Use a token created in Flump under AI connections.",
+    );
   });
 
   it("rejects missing, malformed and empty headers", async () => {

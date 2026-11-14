@@ -66,7 +66,7 @@ export const Default: Story = {
     const canvas = within(canvasElement);
     await expect(canvas.getAllByText("Illustration, not saved")[0]).toBeDefined();
     await expect(canvasElement.querySelectorAll("[data-tone='hero']").length).toBe(0);
-    const slider = canvas.getAllByLabelText("Your contribution range slider")[0] as HTMLElement;
+    const slider = canvas.getAllByLabelText("Your contribution")[0] as HTMLElement;
     fireEvent.change(slider, { target: { value: "12" } });
     await userEvent.click(
       canvas.getAllByRole("button", { name: "Reset to saved figures" })[0] as HTMLElement,

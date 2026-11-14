@@ -304,15 +304,11 @@ describe("<MortgageContainer />", () => {
     test("starting figures sit behind More options and start from the saved figures", () => {
       loaderData = loaded();
       const { getByRole, getByLabelText, queryByLabelText } = customRender(<MortgageContainer />);
-      expect(queryByLabelText("Balance to try range slider")).toBeNull();
+      expect(queryByLabelText("Balance to try")).toBeNull();
       fireEvent.click(getByRole("button", { name: "More options" }));
-      expect((getByLabelText("Balance to try range slider") as HTMLInputElement).value).toBe(
-        "135400",
-      );
-      expect((getByLabelText("Rate to try range slider") as HTMLInputElement).value).toBe("4.5");
-      expect((getByLabelText("Years left to try range slider") as HTMLInputElement).value).toBe(
-        "20",
-      );
+      expect((getByLabelText("Balance to try") as HTMLInputElement).value).toBe("135400");
+      expect((getByLabelText("Rate to try") as HTMLInputElement).value).toBe("4.5");
+      expect((getByLabelText("Years left to try") as HTMLInputElement).value).toBe("20");
     });
 
     test("changing any scenario input leaves the hero, strip and details unchanged", () => {

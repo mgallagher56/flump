@@ -15,13 +15,13 @@ export const SOURCE_LABEL: Record<TaxSource, string> = Object.fromEntries(
 export const FREQUENCY_OPTIONS: ReadonlyArray<{ value: TaxRecord["frequency"]; label: string }> = [
   { value: "one-off", label: "One-off" },
   { value: "monthly", label: "Monthly" },
-  { value: "annual", label: "Annual" },
+  { value: "annual", label: "Yearly" },
 ];
 
 export const FREQUENCY_LABEL: Record<TaxRecord["frequency"], string> = {
   "one-off": "One-off",
   monthly: "Monthly",
-  annual: "Annual",
+  annual: "Yearly",
 };
 
 /** Amounts arrive as strings from TypeORM decimals; always hand the UI a number. */

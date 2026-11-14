@@ -39,7 +39,7 @@ describe("<OverpayVsSaveCompare />", () => {
     expect(getByDisplayValue("Higher rate (40% tax)")).toBeDefined();
 
     // Change horizon slider
-    const horizon = getByLabelText("Years to compare range slider") as HTMLInputElement;
+    const horizon = getByLabelText("Years to compare") as HTMLInputElement;
     fireEvent.change(horizon, { target: { value: "15" } });
     expect(horizon.value).toBe("15");
   });
@@ -106,7 +106,7 @@ describe("<OverpayVsSaveCompare /> unknown inputs and caveats", () => {
         remainingTerm={25}
       />,
     );
-    fireEvent.change(getByLabelText("Savings interest rate range slider"), {
+    fireEvent.change(getByLabelText("Savings interest rate"), {
       target: { value: "6" },
     });
     expect(getByTestId("overpay-compare-net-rate").textContent).toContain("6.00%");
@@ -136,7 +136,7 @@ describe("<OverpayVsSaveCompare /> horizon rule", () => {
     const { getByLabelText, container } = customRender(
       <OverpayVsSaveCompare {...props} remainingTerm={0.5} />,
     );
-    const horizon = getByLabelText("Years to compare range slider") as HTMLInputElement;
+    const horizon = getByLabelText("Years to compare") as HTMLInputElement;
     expect(horizon.min).toBe("1");
     expect(horizon.max).toBe("1");
     expect(horizon.value).toBe("1");
@@ -148,7 +148,7 @@ describe("<OverpayVsSaveCompare /> horizon rule", () => {
     const { getByLabelText, container } = customRender(
       <OverpayVsSaveCompare {...props} remainingTerm={7.9} />,
     );
-    const horizon = getByLabelText("Years to compare range slider") as HTMLInputElement;
+    const horizon = getByLabelText("Years to compare") as HTMLInputElement;
     expect(horizon.max).toBe("7");
     fireEvent.change(horizon, { target: { value: "5" } });
     expect(container.textContent ?? "").toContain("Estimate over 5 years,");

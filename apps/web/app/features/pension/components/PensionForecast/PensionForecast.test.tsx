@@ -120,7 +120,7 @@ describe("<PensionForecast />", () => {
     }) as HTMLButtonElement;
     expect(reset.disabled).toBe(true);
     expect(screen.getByText("No change")).toBeDefined();
-    fireEvent.change(within(visiblePanel()).getByLabelText("Your contribution range slider"), {
+    fireEvent.change(within(visiblePanel()).getByLabelText("Your contribution"), {
       target: { value: "12" },
     });
     expect(reset.disabled).toBe(false);
@@ -131,7 +131,7 @@ describe("<PensionForecast />", () => {
 
   it("the take-home tool reads the same contribution and adds the unverified lead to the notice", () => {
     render(<Harness />);
-    fireEvent.change(within(visiblePanel()).getByLabelText("Your contribution range slider"), {
+    fireEvent.change(within(visiblePanel()).getByLabelText("Your contribution"), {
       target: { value: "10" },
     });
     fireEvent.mouseDown(screen.getByRole("tab", { name: "Take-home pay" }), {
@@ -158,7 +158,7 @@ describe("<PensionForecast />", () => {
         vi.advanceTimersByTime(1000);
       });
       expect(region.textContent).toBe("");
-      fireEvent.change(screen.getByLabelText("Retirement age range slider"), {
+      fireEvent.change(screen.getByLabelText("Retirement age"), {
         target: { value: "60" },
       });
       act(() => {

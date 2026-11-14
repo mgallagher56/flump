@@ -96,7 +96,7 @@ const PotForm: FC<PotFormProps> = ({ accountToEdit, onClose }) => {
   return (
     <form className={accountForm()} onSubmit={submit}>
       <FormField
-        hint="Which workplace pension, private pension or SIPP this pot is."
+        hint="The workplace pension, personal pension or self-invested personal pension (SIPP) this pot is in."
         label="Pot or provider name"
         required
       >
@@ -164,7 +164,7 @@ const PotForm: FC<PotFormProps> = ({ accountToEdit, onClose }) => {
             />
           )}
         </FormField>
-        <FormField label="Expected return a year">
+        <FormField label="Assumed growth a year">
           {(field) => (
             <PercentInput
               {...controlProps(field)}
@@ -180,8 +180,8 @@ const PotForm: FC<PotFormProps> = ({ accountToEdit, onClose }) => {
       <FormField
         hint={
           isCurrent
-            ? "A fixed sum you pay into this pot, for example a SIPP direct debit. Leave blank if it comes from your salary."
-            : "Past pots take no regular payments. They keep growing through investment returns."
+            ? "A fixed amount you pay in yourself. Leave blank if payments come from your salary."
+            : "Past pots take no regular payments. Their value can still change with investment returns."
         }
         label="Regular payment each month (optional)"
       >

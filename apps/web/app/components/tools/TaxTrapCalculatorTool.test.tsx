@@ -21,7 +21,7 @@ describe("TaxTrapCalculatorTool", () => {
     render(<TaxTrapCalculatorTool />);
 
     const incomeSlider = screen.getByRole("slider", {
-      name: /pay before tax a year range slider/i,
+      name: /pay before tax a year/i,
     });
     fireEvent.change(incomeSlider, { target: { value: "105000" } });
 

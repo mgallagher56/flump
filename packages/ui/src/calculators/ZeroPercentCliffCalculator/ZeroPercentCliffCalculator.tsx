@@ -53,7 +53,7 @@ export const ZERO_PERCENT_COPY = {
   kpiLeft: "Left when the 0% deal ends, with minimum payments only",
   kpiLeftSubtext: "Assumes a minimum of 2% of today's balance (at least £25) a month.",
   kpiLeftClearedSubtext:
-    "A minimum of 2% of today's balance (at least £25) a month would clear it before the 0% rate ends.",
+    "A minimum of 2% of today's balance (at least £25) a month would pay it off before the 0% rate ends.",
   kpiInterest: (rate: number) => `Interest in the first year after, at ${percent(rate)} APR`,
   kpiInterestSubtext: "On the amount left, if nothing more were paid.",
   explainerTitle: "What happens when the 0% deal ends",

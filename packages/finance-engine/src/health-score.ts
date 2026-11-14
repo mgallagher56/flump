@@ -52,12 +52,12 @@ export function calculateFinancialHealthScore(input: HealthScoreInput): HealthSc
       weight: 0.4,
       comment:
         highInterestDebt > 0
-          ? `£${highInterestDebt.toLocaleString()} in high-APR credit/overdrafts needing immediate Avalanche payoff.`
+          ? `£${Math.round(highInterestDebt).toLocaleString("en-GB")} of card, loan and overdraft debt.`
           : "No card, loan or overdraft debt.",
     });
     if (highInterestDebt > 0) {
       observations.push(
-        `£${Math.round(highInterestDebt).toLocaleString("en-GB")} of high-interest card and overdraft debt is accruing interest.`,
+        `£${Math.round(highInterestDebt).toLocaleString("en-GB")} of card, loan and overdraft debt is recorded.`,
       );
     }
 
@@ -124,10 +124,12 @@ export function calculateFinancialHealthScore(input: HealthScoreInput): HealthSc
       name: "Savings rate",
       score: yieldScore,
       weight: 0.25,
-      comment: `Earning ${yieldApr.toFixed(1)}% AER on liquid savings.`,
+      comment: `Savings rate used: ${yieldApr.toFixed(1)}% AER (3.5% is assumed when no rate is saved).`,
     });
     if (yieldApr < 4.0) {
-      observations.push(`Cash savings are earning ${yieldApr.toFixed(1)}% AER.`);
+      observations.push(
+        `Savings rate used: ${yieldApr.toFixed(1)}% AER (3.5% is assumed when no rate is saved).`,
+      );
     }
 
     // 3. Debt-Free Maintenance (Weight 0.25)
@@ -180,7 +182,7 @@ export function calculateFinancialHealthScore(input: HealthScoreInput): HealthSc
       weight: 0.35,
       comment:
         adjIncome > 100000 && adjIncome <= 125140
-          ? "Caught in the UK 60% tax trap (£100k - £125k band)."
+          ? "Estimate: income is in the £100,000 to £125,140 band."
           : "Estimate: income is outside the £100,000 to £125,140 band.",
     });
 

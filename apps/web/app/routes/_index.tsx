@@ -23,7 +23,7 @@ import { isDemoMode } from "~/utils/demoData";
 import { buildWorkspacePicture, knownOrNull } from "~/utils/financialPicture";
 import { getMarketingUrl } from "~/utils/marketingUrl";
 
-export const meta: MetaFunction = () => [{ title: "Dashboard | Flump" }];
+export const meta: MetaFunction = () => [{ title: "Your money | Flump" }];
 
 type TakeHomeProfile = Parameters<typeof profileFactsFromProfile>[0];
 

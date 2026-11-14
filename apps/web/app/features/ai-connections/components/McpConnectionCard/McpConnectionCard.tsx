@@ -30,9 +30,9 @@ const TOKEN_EXPIRY_DAYS = [7, 30, 90, 365] as const;
 
 export const TOKENS_UNAVAILABLE = "Connection tokens are not available for your account yet.";
 export const CREATE_FAILED = "The token could not be created. Try again in a moment.";
-export const REVOKE_FAILED = "The token could not be revoked. Try again in a moment.";
+export const REVOKE_FAILED = "The token could not be disconnected. Try again in a moment.";
 export const RATE_LIMITED = "Too many tokens created recently. Try again later.";
-export const EXPORT_FAILED = "The context pack could not be loaded. Try again in a moment.";
+export const EXPORT_FAILED = "The summary could not be loaded. Try again in a moment.";
 /** The only messages the card shows; anything else falls back to a fixed line. */
 const SAFE_MESSAGES = new Set([TOKENS_UNAVAILABLE, CREATE_FAILED, REVOKE_FAILED, RATE_LIMITED]);
 
@@ -270,7 +270,7 @@ export const McpConnectionCard: FC<McpConnectionCardProps> = ({
                   margin: "2px 0 0 0",
                 })}
               >
-                Preview: MCP tools currently run against sample/baseline data.
+                Preview: the tools read the figures you have saved in Flump.
               </p>
             </div>
           </div>

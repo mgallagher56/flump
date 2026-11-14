@@ -22,11 +22,9 @@ export const Populated: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     await expect(canvas.getAllByText(/Change in monthly payment/)[0]).toBeInTheDocument();
-    const [slider] = canvas.getAllByLabelText("Rate after your fixed rate ends range slider");
+    const [slider] = canvas.getAllByLabelText("Rate after your fixed rate ends");
     fireEvent.change(slider as HTMLElement, { target: { value: "7" } });
-    await expect(
-      canvas.getAllByLabelText("Rate after your fixed rate ends range slider")[0],
-    ).toHaveValue("7");
+    await expect(canvas.getAllByLabelText("Rate after your fixed rate ends")[0]).toHaveValue("7");
   },
 };
 

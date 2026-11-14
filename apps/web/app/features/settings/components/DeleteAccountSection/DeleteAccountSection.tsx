@@ -108,7 +108,7 @@ export const DeleteAccountSection: FC<DeleteAccountSectionProps> = ({ status, on
               <li>Your bank connections</li>
               <li>Your budget, savings and tax records</li>
               <li>Your check-ins and any imports not yet finished</li>
-              <li>AI assistant access and its activity log</li>
+              <li>Your AI connections and their activity log</li>
               <li>Your login</li>
             </ul>
             <span>

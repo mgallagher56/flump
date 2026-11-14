@@ -23,7 +23,7 @@ const assertSpotlight: Story["play"] = async ({ canvasElement }) => {
   await expect(canvas.getByText("get_tax_year_position")).toBeInTheDocument();
 
   const exploreLink = canvas.getByRole("link", {
-    name: /Explore MCP & setup guides/i,
+    name: /About the AI connection/i,
   });
   await expect(exploreLink).toHaveAttribute("href", "/mcp");
   await expect(canvas.getByText("Example output")).toBeInTheDocument();

@@ -29,7 +29,7 @@ describe("PersonalAllowanceTaperBanner", () => {
       target: { value: "40000" },
     });
     const expected = taxAndNi(140000) - taxAndNi(100000);
-    expect(screen.getByText(`${gbp(expected)} / yr`)).toBeDefined();
+    expect(screen.getByText(`${gbp(expected)} a year`)).toBeDefined();
     expect(Math.round(expected)).not.toBe(Math.round(40000 * 0.62));
   });
 

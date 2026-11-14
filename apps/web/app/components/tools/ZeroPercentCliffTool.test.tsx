@@ -12,11 +12,11 @@ describe("<ZeroPercentCliffTool />", () => {
     expect(getByText(/with minimum payments only/i)).toBeDefined();
 
     // Update inputs
-    const balance = getByLabelText("Balance on the 0% card range slider") as HTMLInputElement;
+    const balance = getByLabelText("Balance on the 0% card") as HTMLInputElement;
     fireEvent.change(balance, { target: { value: "5000" } });
     expect(balance.value).toBe("5000");
 
-    const months = getByLabelText("Months left on the 0% deal range slider") as HTMLInputElement;
+    const months = getByLabelText("Months left on the 0% deal") as HTMLInputElement;
     fireEvent.change(months, { target: { value: "12" } });
     expect(months.value).toBe("12");
 
