@@ -71,12 +71,14 @@ describe("RouteErrorBoundary", () => {
     expect(screen.queryByText(/internal/)).toBeNull();
   });
 
-  it("focuses the heading when the boundary renders", async () => {
+  it("focuses the heading when the boundary renders after an in-app navigation", async () => {
+    window.history.replaceState({ idx: 1 }, "");
     renderWithLoader(() => {
       throw data({ kind: "server" }, { status: 500 });
     });
     const heading = await screen.findByRole("heading", { name: "We could not load this page" });
     await waitFor(() => expect(document.activeElement).toBe(heading));
+    window.history.replaceState(null, "");
   });
 
   it("Try again re-runs the loader and renders the route on success", async () => {
