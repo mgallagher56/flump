@@ -20,7 +20,7 @@ const BEFORE = [
 const AFTER = [...BEFORE, "user.exported"];
 const inList = (actions: string[]) => `"action" IN (${actions.map((a) => `'${a}'`).join(", ")})`;
 
-const USER_EXPORTED_DOWN_REFUSAL =
+const DOWN_REFUSAL =
   "audit_events contains user.exported rows; export or archive them before reverting";
 
 async function replaceCheck(queryRunner: QueryRunner, expr: string): Promise<void> {
@@ -47,7 +47,7 @@ export class AuditActionUserExported1795000000000 implements MigrationInterface 
       `SELECT EXISTS (SELECT 1 FROM "audit_events" WHERE "action" = 'user.exported') AS "found"`,
     );
     if (rows[0]?.found) {
-      throw new Error(USER_EXPORTED_DOWN_REFUSAL);
+      throw new Error(DOWN_REFUSAL);
     }
     await replaceCheck(queryRunner, inList(BEFORE));
   }

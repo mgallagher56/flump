@@ -106,7 +106,7 @@ describe("McpTokenService.findTokenByHash allowlist (E29-T8)", () => {
       process.env = { ...original, ...openMcp, BETA_ALLOWED_EMAILS: "friend@example.com" };
       delete process.env.BETA_ALLOWED_USER_IDS;
       expect(await withRepo().findTokenByHash("h")).not.toBeNull();
-      process.env.BETA_ALLOWED_USER_IDS = "someone-else";
+      process.env = { ...process.env, BETA_ALLOWED_USER_IDS: "someone-else" };
       expect(await withRepo().findTokenByHash("h")).not.toBeNull();
     } finally {
       vi.restoreAllMocks();

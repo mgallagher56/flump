@@ -26,7 +26,7 @@ type Env = Record<string, string | undefined>;
 const DEV_FALLBACK_ROOT = "flump-dev-only-keyed-reference-root-not-secret";
 
 export const RATE_LIMIT_BUCKET_LABEL = "flump:rate-limit-bucket:v1";
-export const LOG_USER_REF_LABEL = "flump:log-user-ref:v1";
+export const LOG_REF_LABEL = "flump:log-user-ref:v1";
 
 /** 128 bits of the HMAC, hex: the stored bucket key. */
 const BUCKET_HEX_CHARS = 32;
@@ -36,10 +36,17 @@ const LOG_REF_HEX_CHARS = 16;
 /** Per label: the derived key and the root it came from (recomputed if the root changes). */
 const derivedCache = new Map<string, { root: string; key: Buffer }>();
 
-/** Production or any Railway deploy: where the public development root must never be used. */
+/**
+ * Production or any Railway deploy: where the public development root must never be used. A
+ * `RAILWAY_*` variable counts only when it has a value: the E2E servers set
+ * `RAILWAY_ENVIRONMENT=""` on purpose to say "not Railway".
+ */
 function isDeployedEnv(env: Env): boolean {
   return (
-    env.NODE_ENV === "production" || Object.keys(env).some((name) => name.startsWith("RAILWAY_"))
+    env.NODE_ENV === "production" ||
+    Object.entries(env).some(
+      ([name, value]) => name.startsWith("RAILWAY_") && (value?.trim() ?? "") !== "",
+    )
   );
 }
 
@@ -86,5 +93,5 @@ export function rateLimitStorageKey(logicalKey: string, env: Env = process.env):
 
 /** A short keyed reference to a user id for log lines: never log the WorkOS id itself. */
 export function logUserRef(userId: string, env: Env = process.env): string {
-  return keyedRef(LOG_USER_REF_LABEL, userId, LOG_REF_HEX_CHARS, env);
+  return keyedRef(LOG_REF_LABEL, userId, LOG_REF_HEX_CHARS, env);
 }
