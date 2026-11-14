@@ -44,9 +44,10 @@ const CASES: {
   {
     name: "Section24Calculator",
     element: <Section24Calculator />,
-    control: () => screen.getByLabelText("Gross annual rental income slider"),
+    control: () => screen.getByLabelText("Rental income a year, before costs range slider"),
     value: "25000",
-    expected: /Estimated tax £[\d,]+ a year, leaving £[\d,]+ cash in pocket/,
+    expected:
+      /^Illustration: estimated tax on rental income £7,600 a year\. Estimated cash left £7,400 a year\.$/,
   },
   {
     name: "StudentLoanCalculator",

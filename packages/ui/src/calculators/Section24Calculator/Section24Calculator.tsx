@@ -1,85 +1,145 @@
-import { calculateSection24LandlordTax, persistOnboardingSeed } from "@flump/finance-engine";
+import {
+  calculateSection24LandlordTax,
+  type OnboardingSeedPayload,
+  persistOnboardingSeed,
+} from "@flump/finance-engine";
+import { ArrowRight } from "lucide-react";
 import type { FC } from "react";
 import { useMemo, useState } from "react";
-import { Button } from "../../primitives/Button";
-import { LiveRegion } from "../../primitives/LiveRegion";
+import { ProjectionNotice } from "../../patterns/ProjectionNotice/ProjectionNotice";
+import { SimulatorSplitLayout } from "../../patterns/SimulatorSplitLayout/SimulatorSplitLayout";
+import { Button } from "../../primitives/Button/Button";
+import { CollapsibleDrawer } from "../../primitives/CollapsibleDrawer/CollapsibleDrawer";
+import { Icon } from "../../primitives/Icon";
+import { KpiCard } from "../../primitives/KpiCard/KpiCard";
+import { LiveRegion } from "../../primitives/LiveRegion/LiveRegion";
+import { formatMoney, Money, Num } from "../../primitives/Money/Money";
+import { SliderField } from "../../primitives/SliderField/SliderField";
+import { StatusBadge } from "../../primitives/StatusBadge/StatusBadge";
+import { ctaLabel } from "../ctaLabel";
 import {
-  adornmentStyle,
-  badgeRowStyle,
-  badgeStyle,
-  cardStyle,
-  ctaCopyStyle,
-  ctaNoteStyle,
-  ctaRowStyle,
-  ctaTitleStyle,
-  headerStyle,
-  inputGridStyle,
-  inputGroupStyle,
-  inputRowStyle,
-  inputWrapStyle,
-  labelStyle,
-  metricCard,
-  metricLabelStyle,
-  metricNoteStyle,
-  metricsGridStyle,
-  metricValueStyle,
-  numberInputStyle,
-  sliderStyle,
-  subtitleStyle,
-  titleStyle,
-} from "./Section24Calculator.styles.js";
+  section24Badges,
+  section24Content,
+  section24Controls,
+  section24Cta,
+  section24DrawerBody,
+  section24Explainer,
+  section24ExplainerTitle,
+  section24Header,
+  section24Intro,
+  section24Outcomes,
+  section24Root,
+  section24Title,
+} from "./Section24Calculator.styles";
 
-const oneDecimalFormatter = new Intl.NumberFormat("en-GB", {
-  minimumFractionDigits: 1,
-  maximumFractionDigits: 1,
-});
+/** Every user-facing string, in one place (COPY-AUDIT, PR 10, Section 24 rows). */
+export const SECTION24_COPY = {
+  title: "Tax on rental income under Section 24",
+  intro:
+    "Estimate the tax on rental income when mortgage interest gets a 20% tax credit and is not deducted from profit.",
+  unverifiedBadge: "Unverified estimate",
+  rentalIncome: "Rental income a year, before costs",
+  mortgageInterest: "Mortgage interest a year",
+  otherIncome: "Other taxable income a year (salary or profits)",
+  moreOptions: "More options",
+  allowableExpenses: "Other allowable costs a year (repairs, agent fees)",
+  kpiTax: "Estimated tax on rental income",
+  kpiCash: "Estimated cash left after costs, mortgage interest and tax",
+  kpiRate: "Tax as a share of taxable profit",
+  explainerTitle: "How Section 24 works",
+  explainer:
+    "Mortgage interest is not deducted from rental profit. Instead, the tax is reduced by 20% of the interest, up to 20% of the taxable rental profit. The estimate uses England, Wales and Northern Ireland rates for a sole owner. Flump does not file your tax return.",
+  controlsLabel: "Rental figures",
+  contentLabel: "Estimated tax on rental income",
+} as const;
+
+export const SECTION24_DEFAULT_CTA = "Continue to sign up";
+
+/** "£6,400 tax before the credit, minus a £1,600 credit for mortgage interest". */
+export const section24TaxBreakdown = (beforeCredit: string, credit: string) =>
+  `${beforeCredit} tax before the credit, minus a ${credit} credit for mortgage interest`;
+
+export const section24CashPerMonth = (monthly: string) => `${monthly} a month`;
+
+export const section24RateOf = (taxableProfit: string) =>
+  `Of ${taxableProfit} taxable rental profit (rent less costs; mortgage interest is not deducted)`;
+
+/** Spoken after inputs settle (COPY-AUDIT row for the live region). */
+export const section24Announcement = (tax: string, cash: string) =>
+  `Illustration: estimated tax on rental income ${tax} a year. Estimated cash left ${cash} a year.`;
+
+const money = (n: number) => formatMoney(n).text;
+
+const RENT_MAX = 100_000;
+const INTEREST_MAX = 50_000;
+const OTHER_INCOME_MAX = 150_000;
+const EXPENSES_MAX = 15_000;
+
+/**
+ * What the button pre-fills for sign-up. The shape is unchanged from before the rebuild, so the
+ * sign-up flow reads it as it always has.
+ */
+export type Section24SeedPayload = OnboardingSeedPayload & {
+  annualIncome: number;
+  initialCashSavings: number;
+  mortgageBalance: number;
+  inferredModules: string[];
+  timestamp: number;
+};
 
 export interface Section24CalculatorProps {
-  onSaveAndContinue?: (payload: any) => void;
+  onSaveAndContinue?: (payload: Section24SeedPayload) => void;
   ctaText?: string;
   /** When false, entered figures are not written to the onboarding seed in local storage. Default true. */
   persistSeed?: boolean;
+  /** Starting values (examples, not anyone's saved figures). */
+  initialRentalIncome?: number;
+  initialMortgageInterest?: number;
+  initialAllowableExpenses?: number;
+  initialOtherIncome?: number;
 }
 
+const clamp = (v: number) => Math.max(0, v);
+
+/**
+ * Signed-out tool: tax on rental income under Section 24. Every figure comes from the engine's
+ * `calculateSection24LandlordTax`; this component only clamps inputs and formats results.
+ */
 export const Section24Calculator: FC<Section24CalculatorProps> = ({
   onSaveAndContinue,
-  ctaText = "Track your properties in Flump free →",
+  ctaText = SECTION24_DEFAULT_CTA,
   persistSeed = true,
+  initialRentalIncome = 18_000,
+  initialMortgageInterest = 8_000,
+  initialAllowableExpenses = 2_000,
+  initialOtherIncome = 60_000,
 }) => {
-  const [rentalIncome, setRentalIncome] = useState<number>(18000);
-  const [mortgageInterest, setMortgageInterest] = useState<number>(8000);
-  const [allowableExpenses, setAllowableExpenses] = useState<number>(2000);
-  const [otherIncome, setOtherIncome] = useState<number>(60000);
+  // Clamped so a negative entry never reaches the engine.
+  const [rentalIncome, setRentalIncome] = useState(clamp(initialRentalIncome));
+  const [mortgageInterest, setMortgageInterest] = useState(clamp(initialMortgageInterest));
+  const [allowableExpenses, setAllowableExpenses] = useState(clamp(initialAllowableExpenses));
+  const [otherIncome, setOtherIncome] = useState(clamp(initialOtherIncome));
 
-  const calc = useMemo(() => {
-    const res = calculateSection24LandlordTax(
-      otherIncome,
-      rentalIncome,
-      mortgageInterest,
-      allowableExpenses,
-      100,
-    );
-    const netCashInPocket =
-      res.netRentalIncomeAfterTax ?? Math.max(0, res.actualCashProfit - res.finalTaxDue);
-    return {
-      ...res,
-      netCashInPocket,
-    };
-  }, [rentalIncome, mortgageInterest, allowableExpenses, otherIncome]);
+  const result = useMemo(
+    () =>
+      calculateSection24LandlordTax(otherIncome, rentalIncome, mortgageInterest, allowableExpenses),
+    [otherIncome, rentalIncome, mortgageInterest, allowableExpenses],
+  );
 
-  const headline = `Estimated tax £${Math.round(calc.finalTaxDue).toLocaleString(
-    "en-GB",
-  )} a year, leaving £${Math.round(calc.netCashInPocket).toLocaleString("en-GB")} cash in pocket`;
+  const tax = result.finalTaxDue;
+  const cashLeft = result.netRentalIncomeAfterTax;
+
+  const announcement = section24Announcement(money(tax), money(cashLeft));
 
   const handleSave = () => {
-    const payload = {
+    const payload: Section24SeedPayload = {
       annualIncome: otherIncome,
       initialCashSavings: 500,
       mortgageBalance: 200000,
       inferredModules: ["tax", "mortgage", "forecast"],
       timestamp: Date.now(),
     };
-    if (persistSeed) persistOnboardingSeed(payload as any);
+    if (persistSeed) persistOnboardingSeed(payload);
     if (onSaveAndContinue) {
       onSaveAndContinue(payload);
     } else if (typeof window !== "undefined") {
@@ -87,198 +147,110 @@ export const Section24Calculator: FC<Section24CalculatorProps> = ({
     }
   };
 
-  return (
-    <div className={cardStyle} data-testid="section-24-tool">
-      <div className={headerStyle}>
-        <div className={badgeRowStyle}>
-          <span className={badgeStyle({ tone: "info" })}>
-            Estimate using England, Wales and Northern Ireland rates
-          </span>
-        </div>
-        <h2 className={titleStyle}>Section 24 buy-to-let mortgage relief calculator</h2>
-        <p className={subtitleStyle}>
-          Estimate taxable rental profit and the 20% basic rate tax credit under the finance cost
-          restriction introduced by Section 24 of the Finance (No. 2) Act 2015.
-        </p>
-      </div>
-
-      <div className={inputGridStyle}>
-        <div className={inputGroupStyle}>
-          <div className={inputRowStyle}>
-            <label className={labelStyle} htmlFor="rental-income">
-              Gross annual rental income
-            </label>
-            <div className={inputWrapStyle}>
-              <span className={adornmentStyle({ side: "start" })}>£</span>
-              <input
-                className={numberInputStyle({ tone: "info", width: "lg", adornment: "start" })}
-                id="rental-income"
-                type="number"
-                min={0}
-                step={1000}
-                value={rentalIncome}
-                onChange={(e) => setRentalIncome(Math.max(0, Number(e.target.value) || 0))}
-              />
-            </div>
-          </div>
-          <input
-            className={sliderStyle}
-            id="rental-income-slider"
-            aria-label="Gross annual rental income slider"
-            max={100000}
-            min={6000}
-            onChange={(e) => setRentalIncome(Number(e.target.value))}
-            step={1000}
-            type="range"
-            value={rentalIncome}
-          />
-        </div>
-
-        <div className={inputGroupStyle}>
-          <div className={inputRowStyle}>
-            <label className={labelStyle} htmlFor="mortgage-interest">
-              Annual mortgage interest paid
-            </label>
-            <div className={inputWrapStyle}>
-              <span className={adornmentStyle({ side: "start" })}>£</span>
-              <input
-                className={numberInputStyle({ tone: "danger", width: "lg", adornment: "start" })}
-                id="mortgage-interest"
-                type="number"
-                min={0}
-                step={500}
-                value={mortgageInterest}
-                onChange={(e) => setMortgageInterest(Math.max(0, Number(e.target.value) || 0))}
-              />
-            </div>
-          </div>
-          <input
-            className={sliderStyle}
-            id="mortgage-interest-slider"
-            aria-label="Annual mortgage interest paid slider"
-            max={50000}
+  const controls = (
+    <div className={section24Controls()}>
+      <SliderField
+        format="currency"
+        label={SECTION24_COPY.rentalIncome}
+        max={RENT_MAX}
+        min={0}
+        step={500}
+        value={rentalIncome}
+        onChange={(v) => setRentalIncome(clamp(v))}
+      />
+      <SliderField
+        format="currency"
+        label={SECTION24_COPY.mortgageInterest}
+        max={INTEREST_MAX}
+        min={0}
+        step={250}
+        value={mortgageInterest}
+        onChange={(v) => setMortgageInterest(clamp(v))}
+      />
+      <SliderField
+        format="currency"
+        label={SECTION24_COPY.otherIncome}
+        max={OTHER_INCOME_MAX}
+        min={0}
+        step={500}
+        value={otherIncome}
+        onChange={(v) => setOtherIncome(clamp(v))}
+      />
+      {/* Named by its title; the visible action text is left out. State lives here, so closing
+          the drawer keeps the figure. */}
+      <CollapsibleDrawer closedLabel="" openLabel="" title={SECTION24_COPY.moreOptions}>
+        <div className={section24DrawerBody()}>
+          <SliderField
+            format="currency"
+            label={SECTION24_COPY.allowableExpenses}
+            max={EXPENSES_MAX}
             min={0}
-            onChange={(e) => setMortgageInterest(Number(e.target.value))}
-            step={500}
-            type="range"
-            value={mortgageInterest}
-          />
-        </div>
-
-        <div className={inputGroupStyle}>
-          <div className={inputRowStyle}>
-            <label className={labelStyle} htmlFor="allowable-expenses">
-              Other allowable expenses (repairs, agent fees)
-            </label>
-            <div className={inputWrapStyle}>
-              <span className={adornmentStyle({ side: "start" })}>£</span>
-              <input
-                className={numberInputStyle({ tone: "neutral", width: "md", adornment: "start" })}
-                id="allowable-expenses"
-                type="number"
-                min={0}
-                step={250}
-                value={allowableExpenses}
-                onChange={(e) => setAllowableExpenses(Math.max(0, Number(e.target.value) || 0))}
-              />
-            </div>
-          </div>
-          <input
-            className={sliderStyle}
-            id="allowable-expenses-slider"
-            aria-label="Other allowable expenses slider"
-            max={15000}
-            min={0}
-            onChange={(e) => setAllowableExpenses(Number(e.target.value))}
             step={250}
-            type="range"
             value={allowableExpenses}
+            onChange={(v) => setAllowableExpenses(clamp(v))}
           />
         </div>
+      </CollapsibleDrawer>
+    </div>
+  );
 
-        <div className={inputGroupStyle}>
-          <div className={inputRowStyle}>
-            <label className={labelStyle} htmlFor="other-income">
-              Other annual taxable income (salary / profits)
-            </label>
-            <div className={inputWrapStyle}>
-              <span className={adornmentStyle({ side: "start" })}>£</span>
-              <input
-                className={numberInputStyle({ tone: "primary", width: "lg", adornment: "start" })}
-                id="other-income"
-                type="number"
-                min={0}
-                step={2500}
-                value={otherIncome}
-                onChange={(e) => setOtherIncome(Math.max(0, Number(e.target.value) || 0))}
-              />
-            </div>
-          </div>
-          <input
-            className={sliderStyle}
-            id="other-income-slider"
-            aria-label="Other annual taxable income slider"
-            max={150000}
-            min={20000}
-            onChange={(e) => setOtherIncome(Number(e.target.value))}
-            step={2500}
-            type="range"
-            value={otherIncome}
-          />
-        </div>
+  const content = (
+    <div className={section24Content()}>
+      {/* Illustration outcomes, not saved figures, so plain outcome cards rather than a KpiStrip.
+          One outcome, then at most two supporting figures. */}
+      <div className={section24Outcomes()} data-density="compact" data-testid="section-24-outcomes">
+        <KpiCard
+          label={SECTION24_COPY.kpiTax}
+          subtext={section24TaxBreakdown(
+            money(result.grossTaxOnProperty),
+            money(result.financeCredit),
+          )}
+          value={tax}
+        />
+        <KpiCard
+          label={SECTION24_COPY.kpiCash}
+          subtext={section24CashPerMonth(money(cashLeft / 12))}
+          value={<Money size="lg" value={cashLeft} />}
+        />
+        <KpiCard
+          label={SECTION24_COPY.kpiRate}
+          subtext={section24RateOf(money(result.section24TaxableProfit))}
+          value={
+            <Num fractionDigits={1} kind="percent" size="lg" value={result.effectiveTaxRate} />
+          }
+        />
       </div>
 
-      {/* Results */}
-      <LiveRegion debounceMs={1000} message={headline} visuallyHidden />
-      <div className={metricsGridStyle}>
-        <div className={metricCard}>
-          <span className={metricLabelStyle}>Estimated Income Tax on rental profit</span>
-          <span className={metricValueStyle({ tone: "danger" })}>
-            £{Math.round(calc.finalTaxDue).toLocaleString("en-GB")}
-          </span>
-          <span className={metricNoteStyle}>
-            (Gross tax £{Math.round(calc.grossTaxOnProperty).toLocaleString("en-GB")} minus £
-            {Math.round(calc.financeCredit).toLocaleString("en-GB")} credit)
-          </span>
-        </div>
-
-        <div className={metricCard}>
-          <span className={metricLabelStyle}>Tax as a share of taxable profit</span>
-          <span className={metricValueStyle({ tone: "warning" })}>
-            {oneDecimalFormatter.format(calc.effectiveTaxRate)}%
-          </span>
-          <span className={metricNoteStyle}>
-            Of £{Math.round(calc.section24TaxableProfit).toLocaleString("en-GB")} taxable rental
-            profit (rent less expenses; mortgage interest is not deducted)
-          </span>
-        </div>
-
-        <div className={metricCard}>
-          <span className={metricLabelStyle}>Rental cash left after tax</span>
-          <span className={metricValueStyle({ tone: "positive" })}>
-            £{Math.round(calc.netCashInPocket).toLocaleString("en-GB")} / yr
-          </span>
-          <span className={metricNoteStyle}>
-            About £{Math.round(calc.netCashInPocket / 12).toLocaleString("en-GB")} a month after
-            expenses, mortgage interest and this tax
-          </span>
-        </div>
+      <div className={section24Explainer()}>
+        <h3 className={section24ExplainerTitle()}>{SECTION24_COPY.explainerTitle}</h3>
+        <p>{SECTION24_COPY.explainer}</p>
       </div>
 
-      {/* CTA */}
-      <div className={ctaRowStyle}>
-        <div className={ctaCopyStyle}>
-          <span className={ctaTitleStyle}>Keep rental income with the rest of your tax year</span>
-          <p className={ctaNoteStyle}>
-            In Flump you record rental income and costs yourself, and see an estimate of Section 24,
-            your ownership share and payments on account. Flump does not file your tax return.
-          </p>
-        </div>
+      <ProjectionNotice />
+      <LiveRegion debounceMs={1000} message={announcement} visuallyHidden />
+    </div>
+  );
 
-        <Button onClick={handleSave} size="lg">
-          {ctaText}
-        </Button>
+  return (
+    <div className={section24Root()} data-testid="section-24-tool">
+      <div className={section24Header()}>
+        <div className={section24Badges()}>
+          <StatusBadge variant="warning">{SECTION24_COPY.unverifiedBadge}</StatusBadge>
+        </div>
+        <h2 className={section24Title()}>{SECTION24_COPY.title}</h2>
+        <p className={section24Intro()}>{SECTION24_COPY.intro}</p>
       </div>
+
+      <SimulatorSplitLayout
+        content={content}
+        contentLabel={SECTION24_COPY.contentLabel}
+        controls={controls}
+        controlsLabel={SECTION24_COPY.controlsLabel}
+      />
+
+      <Button className={section24Cta()} size="md" variant="primary" onClick={handleSave}>
+        {ctaLabel(ctaText)} <Icon icon={ArrowRight} size="sm" />
+      </Button>
     </div>
   );
 };
