@@ -50,7 +50,6 @@ for (const route of VISUAL_ROUTES) {
       );
       for (const line of improvements) {
         testInfo.annotations.push({ type: "a11y-improved", description: line });
-        console.log(`IMPROVED ${line} (lock it in: A11Y_UPDATE_BASELINE=1 bun run test:a11y)`);
       }
       if (recordOnly(baseline)) {
         for (const line of regressions)

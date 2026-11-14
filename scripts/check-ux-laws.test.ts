@@ -19,7 +19,7 @@ describe("countNumberInputs (K1, UX-GUIDELINES F2)", () => {
     const src = `<input type="text" inputMode="decimal" />\n// never use type="number"\n/* type: "number" */\nconst s = "no number inputs";`;
     expect(countNumberInputs(src)).toBe(0);
   });
-  test("ratchets via compareToBaseline: cannot grow, new files fail, drops are stale", () => {
+  test("ratchets via compareToBaseline: cannot grow, new files fail, drops are reported (the scripts pass on a drop)", () => {
     expect(compareToBaseline({ "a.tsx": 2 }, { "a.tsx": 1 }).failures).toHaveLength(1);
     expect(compareToBaseline({ "new.tsx": 1 }, {}).failures).toHaveLength(1);
     expect(compareToBaseline({ "a.tsx": 1 }, { "a.tsx": 2 }).stale).toHaveLength(1);

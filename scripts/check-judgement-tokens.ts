@@ -26,7 +26,10 @@ for (const f of failures)
   console.error(
     `FAIL ${f.replace("violation(s)", "status.danger/status.warning or alarm-icon use(s)")}: red, amber and alarm icons are for errors and destructive actions only, never to judge the user's money (UX-GUIDELINES T2). Use neutral text, or an allow-listed component in scripts/lib/judgement.ts`,
   );
+// A fall is not a failure here: many open PRs remove these at once, and failing each of them as
+// STALE (as check-react-icons does) would only cause baseline merge conflicts. The count still
+// cannot rise. Tighten the baseline with --write-baseline whenever it is convenient.
 for (const s of stale)
-  console.error(`STALE ${s} (run: bun scripts/check-judgement-tokens.ts --write-baseline)`);
-if (failures.length || stale.length) process.exit(1);
+  console.log(`IMPROVED ${s} (lock it in: bun scripts/check-judgement-tokens.ts --write-baseline)`);
+if (failures.length) process.exit(1);
 console.log("check-judgement-tokens: OK");

@@ -25,7 +25,10 @@ for (const f of failures)
   console.error(
     `FAIL ${f.replace("violation(s)", 'type="number" input(s)')}: use CurrencyInput, PercentInput or TextInput with inputMode (UX-GUIDELINES F2)`,
   );
+// A fall is not a failure here: many open PRs remove these at once, and failing each of them as
+// STALE (as check-react-icons does) would only cause baseline merge conflicts. The count still
+// cannot rise. Tighten the baseline with --write-baseline whenever it is convenient.
 for (const s of stale)
-  console.error(`STALE ${s} (run: bun scripts/check-input-types.ts --write-baseline)`);
-if (failures.length || stale.length) process.exit(1);
+  console.log(`IMPROVED ${s} (lock it in: bun scripts/check-input-types.ts --write-baseline)`);
+if (failures.length) process.exit(1);
 console.log("check-input-types: OK");
