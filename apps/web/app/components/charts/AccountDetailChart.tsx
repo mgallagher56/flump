@@ -56,18 +56,18 @@ const AccountDetailChart: FC<AccountDetailChartProps> = ({
   );
 
   // Near the data, not from £0, so a steady balance does not draw as a flat line (R2-2).
-  const yDomain = useMemo(
-    () => niceYDomain(formattedAccountDetails.map((d) => d.Value)),
-    [formattedAccountDetails],
-  );
-  // Evenly spaced round ticks across the domain, so the axis never reads £2k, £2.4k, £2.7k.
-  const yTicks = useMemo(() => {
-    const [lo, hi] = yDomain;
+  // Near the data, not from £0, and on round ticks whose first and last are the axis ends, so
+  // every gridline is the same distance apart (no £2.4k, £2.7k; no short top band).
+  const { yDomain, yTicks } = useMemo(() => {
+    const [lo, hi] = niceYDomain(formattedAccountDetails.map((d) => d.Value));
     const step = niceStep((hi - lo) / CHART_AXIS_DEFAULTS.yTickCount);
+    const start = Math.floor(lo / step) * step;
+    const end = Math.ceil(hi / step) * step;
     const ticks: number[] = [];
-    for (let v = lo; v <= hi + step / 2; v += step) ticks.push(Math.round(v * 100) / 100);
-    return ticks;
-  }, [yDomain]);
+    for (let v = start; v <= end + step / 2; v += step) ticks.push(Math.round(v * 100) / 100);
+    const last = ticks[ticks.length - 1] ?? end;
+    return { yDomain: [ticks[0] ?? start, last] as [number, number], yTicks: ticks };
+  }, [formattedAccountDetails]);
   const xTicks = useMemo(
     () =>
       pickTicks(
