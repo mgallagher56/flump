@@ -1,3 +1,4 @@
+import { expectPageRules } from "@repo/ui/testing";
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { createMemoryRouter, MemoryRouter, RouterProvider, useNavigate } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -67,12 +68,50 @@ describe("<SettingsPage />", () => {
     window.history.pushState({}, "", "/");
   });
 
-  it("has a single page heading and one hero block", () => {
+  it("has one h1 'Settings', no hero and one primary button (page rules)", () => {
+    const { container } = render(
+      <SettingsPage initialProfile={profile} user={{ email: "j@example.com" }} />,
+    );
+    const h1s = screen.getAllByRole("heading", { level: 1 });
+    expect(h1s).toHaveLength(1);
+    expect(h1s[0]?.textContent).toBe("Settings");
+    expect(container.querySelector('[data-tone="hero"]')).toBeNull();
+    expect(screen.queryByTestId("settings-hero")).toBeNull();
+    expectPageRules(container);
+    const primaries = container.querySelectorAll('button[data-variant="primary"]');
+    expect(primaries).toHaveLength(1);
+    expect(primaries[0]?.textContent).toBe("Save changes");
+  });
+
+  it("shows the email once, on the Security tab", () => {
     render(<SettingsPage initialProfile={profile} user={{ email: "j@example.com" }} />);
-    expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
-    expect(screen.getAllByTestId("settings-hero")).toHaveLength(1);
-    expect(screen.getByTestId("settings-hero").textContent).toContain("Jane Doe");
-    expect(screen.getByTestId("settings-hero").textContent).toContain("j@example.com");
+    expect(screen.queryAllByText("j@example.com")).toHaveLength(0);
+    pressTab("Security");
+    expect(screen.getAllByText("j@example.com")).toHaveLength(1);
+  });
+
+  it("renders no bare native <select>: every select is the @repo/ui Select", () => {
+    const { container } = render(<SettingsPage initialProfile={profile} />);
+    for (const tab of ["Profile", "Security", "Data"]) {
+      pressTab(tab);
+      for (const select of Array.from(container.querySelectorAll("select"))) {
+        // The @repo/ui Select wraps its control with a chevron icon; a bare <select> has none.
+        expect(select.parentElement?.querySelector("svg")).not.toBeNull();
+        expect(select.className).not.toBe("");
+      }
+    }
+  });
+
+  it("keeps Save changes disabled until a field changes", () => {
+    render(<SettingsPage initialProfile={profile} />);
+    const save = screen.getByRole("button", { name: "Save changes" }) as HTMLButtonElement;
+    expect(save.disabled).toBe(true);
+    fireEvent.change(screen.getByTestId("tax-region-select"), { target: { value: "SCOTLAND" } });
+    expect(save.disabled).toBe(false);
+    fireEvent.change(screen.getByTestId("tax-region-select"), { target: { value: "" } });
+    expect(save.disabled).toBe(true);
+    edit();
+    expect(save.disabled).toBe(false);
   });
 
   it("offers Profile, Security and Data tabs, starting on Profile", () => {

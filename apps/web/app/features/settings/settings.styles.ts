@@ -1,6 +1,10 @@
 import { cva } from "@repo/ui/styled-system/css";
 
-/** Layout shared by the three settings tabs. */
+/**
+ * Layout shared by the three settings tabs. Every section is a `Card` with a `sectionHeading` h2,
+ * a `sectionLead` line and at most one action row; a destructive action sits in a danger row with
+ * the `danger` button and a type-to-confirm dialog.
+ */
 export const tabStack = cva({
   base: { display: "flex", flexDirection: "column", gap: "6", minWidth: 0 },
 });
@@ -45,34 +49,5 @@ export const saveBar = cva({
     justifyContent: "flex-end",
     flexWrap: "wrap",
     gap: "3",
-  },
-});
-
-/**
- * Native `<select>` styled to match `@repo/ui` TextInput.
- * TODO(E15 T2.2b): swap for the @repo/ui Select primitive when it lands.
- */
-export const nativeSelect = cva({
-  base: {
-    width: "100%",
-    minWidth: 0,
-    minHeight: "density.control.md",
-    px: "density.controlPadX",
-    py: "density.controlPadY",
-    backgroundColor: "surface.card",
-    borderWidth: "1px",
-    borderStyle: "solid",
-    borderColor: "border.input",
-    borderRadius: "md",
-    color: "text.primary",
-    textStyle: "body.md",
-    cursor: "pointer",
-    "@media (pointer: coarse)": { minHeight: "touch" },
-    _focusVisible: {
-      outlineWidth: "2px",
-      outlineStyle: "solid",
-      outlineColor: "border.focusRing",
-      outlineOffset: "1px",
-    },
   },
 });

@@ -1,4 +1,4 @@
-import { Button, Card, Icon, StatusBadge } from "@repo/ui";
+import { Button, Card, Icon } from "@repo/ui";
 import { KeyRound, Mail } from "lucide-react";
 import { type FC, useState } from "react";
 import {
@@ -44,13 +44,10 @@ export const SecurityTab: FC<SecurityTabProps> = ({ email }) => {
     setSendingResetEmail(true);
     try {
       const res = await sendPasswordResetEmail();
-      setPasswordSuccess(res.message || "We will email you a link to reset your password.");
-    } catch (err) {
-      setPasswordError(
-        err instanceof Error && err.message
-          ? err.message
-          : "We could not send the reset email. Try again.",
-      );
+      setPasswordSuccess(res.message || "We have emailed you a link to choose a new password.");
+    } catch {
+      // Never a raw server message (COPY-AUDIT PR 9).
+      setPasswordError("We could not send the email. Your password is unchanged. Try again.");
     } finally {
       setSendingResetEmail(false);
     }
@@ -60,7 +57,7 @@ export const SecurityTab: FC<SecurityTabProps> = ({ email }) => {
     <div className={tabStack()} id="settings-security-tab" data-testid="settings-security-tab">
       <Card as="section" aria-labelledby="sign-in-heading" className={sectionCard()}>
         <h2 className={sectionHeading()} id="sign-in-heading">
-          Sign in
+          How you sign in
         </h2>
         <div className={accountRow()}>
           <div className={accountIdentity()}>
@@ -74,12 +71,8 @@ export const SecurityTab: FC<SecurityTabProps> = ({ email }) => {
                 data-testid="user-email-display"
                 id="user-email-display"
               >
+                {/* No "Verified" badge: nothing here reads the provider's verified flag (ruling 4). */}
                 <span>{email || "Not set"}</span>
-                {email ? (
-                  <StatusBadge showIcon size="sm" variant="positive">
-                    Verified
-                  </StatusBadge>
-                ) : null}
               </div>
             </div>
           </div>
@@ -96,7 +89,7 @@ export const SecurityTab: FC<SecurityTabProps> = ({ email }) => {
             Change password
           </Button>
         </div>
-        <p className={sectionLead()}>We email you a link to choose a new password.</p>
+        <p className={sectionLead()}>We will email you a link to choose a new password.</p>
         {passwordSuccess ? (
           <p
             className={statusText({ tone: "positive" })}

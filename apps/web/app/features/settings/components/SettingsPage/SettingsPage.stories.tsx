@@ -1,3 +1,4 @@
+import { expectPageRules } from "@repo/ui/testing";
 import type { Meta, StoryObj } from "@storybook/react";
 import { expect, userEvent, within } from "storybook/test";
 import { DEFAULT_PROFILE } from "~/hooks/useUserProfile";
@@ -24,7 +25,12 @@ type Story = StoryObj<typeof SettingsPage>;
 export const Default: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    await expect(canvas.getByRole("heading", { level: 1, name: "Your settings" })).toBeDefined();
+    await expect(canvas.getByRole("heading", { level: 1, name: "Settings" })).toBeDefined();
+    await expect(canvasElement.querySelector('[data-tone="hero"]')).toBeNull();
+    // Scope to one page tree: the side-by-side theme view renders the page twice.
+    expectPageRules(canvasElement.querySelector("#settings-page") ?? canvasElement);
+    const save = canvas.getByRole("button", { name: "Save changes" }) as HTMLButtonElement;
+    await expect(save.disabled).toBe(true);
     await userEvent.click(canvas.getByRole("tab", { name: "Data" }));
     await expect(canvas.getByTestId("reset-financial-data-trigger")).toBeDefined();
   },

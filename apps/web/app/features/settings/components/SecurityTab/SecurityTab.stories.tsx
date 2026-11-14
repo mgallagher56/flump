@@ -15,7 +15,7 @@ type Story = StoryObj<typeof SecurityTab>;
 export const Default: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    await expect(canvas.getByTestId("user-email-display").textContent).toContain("Verified");
+    await expect(canvas.getByTestId("user-email-display").textContent).toContain("@");
     await userEvent.click(canvas.getByRole("button", { name: "Change password" }));
     // No backend in Storybook, so the request fails and the fixed error shows.
     await expect(await canvas.findByTestId("password-reset-error")).toBeDefined();

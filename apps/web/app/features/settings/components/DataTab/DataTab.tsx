@@ -30,9 +30,13 @@ import {
 /** How long the success message shows before sending the person back to onboarding. */
 const SUCCESS_REDIRECT_MS = 1500;
 
+export const RESET_FAILED_MESSAGE =
+  "We could not delete your financial data. Nothing has changed. Try again.";
+
 /**
- * Your data: download a copy, reset all financial data, or delete the account. The reset and the
- * deletion each sit behind a type-to-confirm dialog.
+ * Your data: download a copy, delete all financial data, or delete the account. Both deletions are
+ * permanent and each sits behind a type-to-confirm dialog. The typed word for the financial data
+ * stays `RESET` because the API contract checks it.
  */
 export const DataTab: FC = () => {
   const { resetFinancialData } = useUserProfile();
@@ -87,11 +91,8 @@ export const DataTab: FC = () => {
         setResetError(RECENT_LOGIN_MESSAGE);
         return;
       }
-      setResetError(
-        err instanceof Error && err.message
-          ? err.message
-          : "We could not reset your financial data. Try again.",
-      );
+      // Never a raw server message (COPY-AUDIT PR 9): a failed delete leaves everything in place.
+      setResetError(RESET_FAILED_MESSAGE);
     } finally {
       setResettingData(false);
     }
@@ -103,17 +104,17 @@ export const DataTab: FC = () => {
 
       <Card as="section" aria-labelledby="reset-data-heading" className={sectionCard()}>
         <h2 className={sectionHeading()} id="reset-data-heading">
-          Reset your financial data
+          Delete your financial data
         </h2>
         <p className={sectionLead()}>
-          Start again from scratch. This removes everything you have added about your money.
+          This deletes everything you have added about your money. You then set up Flump again.
         </p>
         <div className={dangerRow()}>
           <div className={dangerText()}>
             <p className={dangerTitle()}>This cannot be undone</p>
             <p className={dangerCopy()}>
-              Deletes all your accounts, transactions, bank connections, budget entries and tax
-              records.
+              Your accounts, transactions, connected banks, budget entries and tax records are
+              deleted.
             </p>
           </div>
           <Button
@@ -121,7 +122,7 @@ export const DataTab: FC = () => {
             id="reset-financial-data-trigger"
             size="sm"
             type="button"
-            variant="destructive"
+            variant="danger"
             onClick={() => {
               setResetError(null);
               setResetNeedsSignIn(false);
@@ -129,7 +130,7 @@ export const DataTab: FC = () => {
               setResetModalOpen(true);
             }}
           >
-            Reset all financial data
+            Delete all data
           </Button>
         </div>
       </Card>
@@ -144,29 +145,27 @@ export const DataTab: FC = () => {
             setResetNeedsSignIn(false);
           }
         }}
-        title="Reset all financial data"
+        title="Delete all your financial data?"
         description={
           <div className={dialogBody()}>
-            <span>
-              This is <strong>permanent</strong> and immediately wipes:
-            </span>
+            <span>This deletes the following for good:</span>
             <ul className={wipeList()}>
-              <li>All connected and manual accounts</li>
+              <li>All accounts, connected and added by hand</li>
               <li>All transaction history and balances</li>
               <li>All budget entries and recurring rules</li>
               <li>All income and expense tax records</li>
-              <li>All property, salary and savings settings</li>
+              <li>Your property, salary and savings details</li>
             </ul>
-            <span>You will start again from scratch.</span>
+            <span>This cannot be undone. Your sign-in stays, and you set up Flump again.</span>
             {resetSuccess ? (
               <p className={statusText({ tone: "positive" })} role="status">
-                All financial data wiped. You have a clean slate.
+                All financial data deleted
               </p>
             ) : null}
           </div>
         }
-        confirmLabel="Reset everything"
-        pendingLabel="Resetting"
+        confirmLabel="Delete all data"
+        pendingLabel="Deleting"
         tone="danger"
         requireText={RESET_FINANCIAL_DATA_CONFIRMATION}
         pending={resettingData || resetSuccess}

@@ -1,12 +1,20 @@
-import { Button, Card, controlProps, FormField, Icon, TextInput } from "@repo/ui";
+import {
+  Button,
+  ButtonLink,
+  Card,
+  controlProps,
+  FormField,
+  Icon,
+  Select,
+  TextInput,
+} from "@repo/ui";
 import { cx } from "@repo/ui/styled-system/css";
-import { Briefcase, Camera, Home, PiggyBank, Trash2 } from "lucide-react";
-import { type ChangeEvent, type FC, useEffect, useRef, useState } from "react";
+import { Camera, Trash2 } from "lucide-react";
+import { type ChangeEvent, type FC, type MouseEvent, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import UserAvatar from "~/components/navigation/UserAvatar";
 import {
   fieldGrid,
-  nativeSelect,
   saveBar,
   sectionCard,
   sectionHeading,
@@ -35,6 +43,30 @@ import {
 } from "./ProfileTab.styles";
 
 const MULTIPLE_PLANS = "MULTIPLE";
+
+const TAX_REGION_OPTIONS = [
+  { value: "", label: "Not set (England, Wales and Northern Ireland rates assumed)" },
+  { value: "ENGLAND", label: "England" },
+  { value: "WALES", label: "Wales" },
+  { value: "SCOTLAND", label: "Scotland" },
+  { value: "NORTHERN_IRELAND", label: "Northern Ireland" },
+] as const;
+
+const STUDENT_LOAN_OPTIONS = [
+  { value: "NONE", label: "None" },
+  { value: "PLAN_1", label: "Plan 1" },
+  { value: "PLAN_2", label: "Plan 2" },
+  { value: "PLAN_4", label: "Plan 4 (Scotland)" },
+  { value: "PLAN_5", label: "Plan 5" },
+  { value: "POSTGRAD", label: "Postgraduate loan" },
+] as const;
+
+/** Where the rest of the profile is edited: text links, not buttons (E16 PR 9). */
+const ELSEWHERE_LINKS = [
+  { href: "/app/self-assessment", label: "Tax and take-home pay", id: "settings-link-tax" },
+  { href: "/app/pension", label: "Your pension", id: "settings-link-pension" },
+  { href: "/app/mortgage", label: "Your mortgage", id: "settings-link-mortgage" },
+] as const;
 const formatPlan = (plan: string) =>
   plan === "POSTGRAD" ? "Postgraduate loan" : plan.replace("PLAN_", "Plan ");
 
@@ -111,7 +143,7 @@ export const ProfileTab: FC<ProfileTabProps> = ({ profile, user, onDirtyChange }
       setSavedForm(form);
       setSaved(true);
     } catch {
-      setError("We could not save your profile. Try again.");
+      setError("We could not save your details. Nothing has changed. Try again.");
     } finally {
       setSaving(false);
     }
@@ -133,16 +165,25 @@ export const ProfileTab: FC<ProfileTabProps> = ({ profile, user, onDirtyChange }
     if (!file) return;
     setUploadingImage(true);
     setImageUploadError(null);
+    let dataUrl: string;
     try {
-      const dataUrl = await processImageFile(file, 512);
-      setAvatarUrl(dataUrl);
-      await updateProfile({ avatarUrl: dataUrl });
+      // The file checks run in the browser, so their messages are ours, never a server's.
+      dataUrl = await processImageFile(file, 512);
     } catch (err) {
       setImageUploadError(
         err instanceof Error && err.message
           ? err.message
           : "We could not process that image. Try another one.",
       );
+      setUploadingImage(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
+    try {
+      setAvatarUrl(dataUrl);
+      await updateProfile({ avatarUrl: dataUrl });
+    } catch {
+      setImageUploadError("We could not save your picture. Try again.");
     } finally {
       setUploadingImage(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -156,7 +197,9 @@ export const ProfileTab: FC<ProfileTabProps> = ({ profile, user, onDirtyChange }
       setAvatarUrl(null);
       await updateProfile({ avatarUrl: null });
     } catch {
-      setImageUploadError("We could not remove your profile picture. Try again.");
+      setImageUploadError(
+        "We could not delete your profile picture. It is still in use. Try again.",
+      );
     } finally {
       setUploadingImage(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -182,7 +225,9 @@ export const ProfileTab: FC<ProfileTabProps> = ({ profile, user, onDirtyChange }
         dashboardWidgetOrder: withTax(profile.dashboardWidgetOrder),
       });
     } catch {
-      setModuleError("We could not update the Self Assessment module. Try again.");
+      setModuleError(
+        "We could not change the Self Assessment section. Nothing has changed. Try again.",
+      );
     } finally {
       setModuleSaving(false);
     }
@@ -208,8 +253,8 @@ export const ProfileTab: FC<ProfileTabProps> = ({ profile, user, onDirtyChange }
             <p className={avatarTitle()}>Profile picture</p>
             <p className={avatarHelp()}>
               {avatarUrl
-                ? "Your picture is used across Flump. Changes to it save straight away."
-                : "Your initials are used until you add a picture. It saves straight away."}
+                ? "Your picture is shown across Flump. A new picture is saved straight away."
+                : "Your initials are shown until you add a picture. A new picture is saved straight away."}
             </p>
             <div className={avatarActions()}>
               <input
@@ -245,7 +290,7 @@ export const ProfileTab: FC<ProfileTabProps> = ({ profile, user, onDirtyChange }
                   onClick={handleRemoveImage}
                 >
                   <Icon icon={Trash2} size="sm" />
-                  Remove
+                  Delete picture
                 </Button>
               ) : null}
             </div>
@@ -293,8 +338,9 @@ export const ProfileTab: FC<ProfileTabProps> = ({ profile, user, onDirtyChange }
           How we work out your tax
         </h2>
         <p className={sectionLead()}>
-          Your region and student loan change your take-home pay. Salary and tax code are edited on
-          the tax page, pension rates on the pension page and property on the mortgage page.
+          Where you pay tax and your student loan plan change your take-home pay. Salary and tax
+          code are on the tax page. Pension rates are on the pension page and property is on the
+          mortgage page.
         </p>
         {/* E23 D06/D-4-C: region and student loan for users who onboarded before they were asked */}
         <div className={fieldGrid()}>
@@ -304,11 +350,10 @@ export const ProfileTab: FC<ProfileTabProps> = ({ profile, user, onDirtyChange }
             label="Where do you pay tax?"
           >
             {(field) => (
-              <select
-                aria-describedby={field.describedBy}
-                className={nativeSelect()}
+              <Select
+                {...controlProps(field)}
                 data-testid="tax-region-select"
-                id={field.id}
+                options={TAX_REGION_OPTIONS}
                 value={form.taxRegion ?? ""}
                 onChange={(e) =>
                   setForm((p) => ({
@@ -316,24 +361,14 @@ export const ProfileTab: FC<ProfileTabProps> = ({ profile, user, onDirtyChange }
                     taxRegion: (e.target.value || null) as TaxRegion | null,
                   }))
                 }
-              >
-                <option value="">
-                  Not set (England, Wales and Northern Ireland rates assumed)
-                </option>
-                <option value="ENGLAND">England</option>
-                <option value="WALES">Wales</option>
-                <option value="SCOTLAND">Scotland</option>
-                <option value="NORTHERN_IRELAND">Northern Ireland</option>
-              </select>
+              />
             )}
           </FormField>
           <FormField id="student-loan-select" label="Student loan plan">
             {(field) => (
-              <select
-                aria-describedby={field.describedBy}
-                className={nativeSelect()}
+              <Select
+                {...controlProps(field)}
                 data-testid="student-loan-select"
-                id={field.id}
                 value={
                   form.studentLoanPlans == null
                     ? ""
@@ -357,89 +392,78 @@ export const ProfileTab: FC<ProfileTabProps> = ({ profile, user, onDirtyChange }
                     {form.studentLoanPlans?.map(formatPlan).join(" and ")}
                   </option>
                 )}
-                <option value="NONE">None</option>
-                <option value="PLAN_1">Plan 1</option>
-                <option value="PLAN_2">Plan 2</option>
-                <option value="PLAN_4">Plan 4 (Scotland)</option>
-                <option value="PLAN_5">Plan 5</option>
-                <option value="POSTGRAD">Postgraduate loan</option>
-              </select>
+                {STUDENT_LOAN_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </Select>
             )}
           </FormField>
         </div>
         <div className={linkRow()}>
-          <Button
-            size="sm"
-            type="button"
-            variant="outline"
-            onClick={() => navigate("/app/self-assessment")}
-          >
-            <Icon icon={Briefcase} size="sm" />
-            Go to tax and take-home
-          </Button>
-          <Button
-            size="sm"
-            type="button"
-            variant="outline"
-            onClick={() => navigate("/app/pension")}
-          >
-            <Icon icon={PiggyBank} size="sm" />
-            Go to pension
-          </Button>
-          <Button
-            size="sm"
-            type="button"
-            variant="outline"
-            onClick={() => navigate("/app/mortgage")}
-          >
-            <Icon icon={Home} size="sm" />
-            Go to mortgage
-          </Button>
-        </div>
-
-        <div className={saveBar()}>
-          {error ? (
-            <p
-              className={statusText({ tone: "danger" })}
-              data-testid="profile-save-error"
-              id="profile-save-error"
-              role="alert"
+          {ELSEWHERE_LINKS.map((link) => (
+            <ButtonLink
+              data-testid={link.id}
+              href={link.href}
+              id={link.id}
+              key={link.href}
+              size="sm"
+              variant="link"
+              onClick={(e: MouseEvent<HTMLAnchorElement>) => {
+                if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
+                e.preventDefault();
+                navigate(link.href);
+              }}
             >
-              {error}
-            </p>
-          ) : null}
-          {saved && !dirty ? (
-            <p
-              className={statusText({ tone: "positive" })}
-              data-testid="profile-saved"
-              id="profile-saved"
-              role="status"
-            >
-              Saved
-            </p>
-          ) : null}
-          {dirty ? (
-            <Button size="md" type="button" variant="ghost" onClick={handleDiscard}>
-              Discard changes
-            </Button>
-          ) : null}
-          <Button
-            disabled={!dirty}
-            id="save-profile"
-            data-testid="save-profile"
-            pending={saving}
-            type="button"
-            variant="primary"
-            onClick={handleSave}
-          >
-            Save changes
-          </Button>
+              {link.label}
+            </ButtonLink>
+          ))}
         </div>
       </Card>
 
+      <div className={saveBar()}>
+        {error ? (
+          <p
+            className={statusText({ tone: "danger" })}
+            data-testid="profile-save-error"
+            id="profile-save-error"
+            role="alert"
+          >
+            {error}
+          </p>
+        ) : null}
+        {saved && !dirty ? (
+          <p
+            className={statusText({ tone: "positive" })}
+            data-testid="profile-saved"
+            id="profile-saved"
+            role="status"
+          >
+            Saved
+          </p>
+        ) : null}
+        {dirty ? (
+          <Button size="md" type="button" variant="ghost" onClick={handleDiscard}>
+            Discard changes
+          </Button>
+        ) : null}
+        <Button
+          disabled={!dirty}
+          id="save-profile"
+          data-testid="save-profile"
+          pending={saving}
+          type="button"
+          variant="primary"
+          onClick={handleSave}
+        >
+          Save changes
+        </Button>
+      </div>
+
       <Card as="section" aria-labelledby="modules-heading" className={sectionCard()}>
         <h2 className={sectionHeading()} id="modules-heading">
-          Optional modules
+          Sections you use
         </h2>
         <label className={cx(checkRow())} htmlFor="self-assessment-module-toggle">
           <input
@@ -451,10 +475,10 @@ export const ProfileTab: FC<ProfileTabProps> = ({ profile, user, onDirtyChange }
             onChange={(e) => handleToggleSelfAssessment(e.target.checked)}
           />
           <span className={checkText()}>
-            <span className={checkTitle()}>Self Assessment module</span>
+            <span className={checkTitle()}>Self Assessment</span>
             <span className={checkHelp()}>
-              Income and expense records by tax year, for self-employed or rental income. Adds tax
-              to your menu and dashboard. This saves straight away.
+              Income and expense records by tax year, for self-employed or rental income. Adds a tax
+              page to your menu and dashboard. This is saved straight away.
             </span>
           </span>
         </label>

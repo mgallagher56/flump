@@ -92,7 +92,7 @@ export const FinishDeletionPanel: FC<FinishDeletionPanelProps> = ({ status, onCo
             id="finish-deletion-submit"
             data-testid="finish-deletion-submit"
             type="submit"
-            variant="destructive"
+            variant="danger"
             // While pending the button stays focusable (aria-disabled, clicks ignored) so focus
             // never drops to the page body.
             disabled={!matches && !pending}

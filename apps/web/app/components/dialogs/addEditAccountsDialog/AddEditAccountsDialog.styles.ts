@@ -4,27 +4,6 @@ export const fieldStack = cva({
   base: { display: "flex", flexDirection: "column", gap: "16px", minWidth: 0 },
 });
 
-export const nativeSelect = cva({
-  base: {
-    width: "100%",
-    minHeight: "44px",
-    paddingX: "12px",
-    borderRadius: "md",
-    borderWidth: "1px",
-    borderStyle: "solid",
-    borderColor: "border.input",
-    backgroundColor: "surface.card",
-    color: "text.primary",
-    textStyle: "body.md",
-    cursor: "pointer",
-    _focusVisible: {
-      outline: "2px solid",
-      outlineColor: "border.focusRing",
-      outlineOffset: "2px",
-    },
-  },
-});
-
 export const saveError = cva({
   base: {
     display: "flex",
@@ -164,16 +143,5 @@ export const bankName = cva({
     overflow: "hidden",
     textOverflow: "ellipsis",
     whiteSpace: "nowrap",
-  },
-});
-
-export const liveBadge = cva({
-  base: {
-    textStyle: "label.sm",
-    paddingX: "6px",
-    borderRadius: "full",
-    backgroundColor: "status.positive.bg",
-    color: "status.positive.text",
-    flexShrink: 0,
   },
 });

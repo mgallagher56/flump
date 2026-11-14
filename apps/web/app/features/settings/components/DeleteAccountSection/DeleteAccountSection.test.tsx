@@ -26,7 +26,7 @@ describe("<DeleteAccountSection />", () => {
   it("explains what is removed and keeps the delete button disabled until DELETE is typed", () => {
     const { onConfirm } = setup();
     const dialog = screen.getByRole("alertdialog");
-    expect(dialog.textContent).toContain("This permanently deletes:");
+    expect(dialog.textContent).toContain("This deletes the following for good:");
     expect(dialog.textContent).toContain("Your login");
     expect(dialog.textContent).toContain("AI assistant access and its activity log");
     expect(dialog.textContent).toContain("with no personal details, for 24 months");

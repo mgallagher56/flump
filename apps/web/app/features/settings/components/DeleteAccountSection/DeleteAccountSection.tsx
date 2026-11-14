@@ -73,7 +73,7 @@ export const DeleteAccountSection: FC<DeleteAccountSectionProps> = ({ status, on
       <h2 className={sectionHeading()} id="delete-account-heading">
         Delete your account
       </h2>
-      <p className={sectionLead()}>Permanently remove your Flump account and your data.</p>
+      <p className={sectionLead()}>This deletes your Flump account and all your data.</p>
       <div className={deleteRow()}>
         <div className={deleteText()}>
           <p className={deleteTitle()}>This cannot be undone</p>
@@ -84,7 +84,7 @@ export const DeleteAccountSection: FC<DeleteAccountSectionProps> = ({ status, on
           id="delete-account-trigger"
           size="sm"
           type="button"
-          variant="destructive"
+          variant="danger"
           onClick={() => {
             setAttempted(false);
             setOpen(true);
@@ -98,10 +98,10 @@ export const DeleteAccountSection: FC<DeleteAccountSectionProps> = ({ status, on
         id="delete-account-dialog"
         open={open}
         onOpenChange={setOpen}
-        title="Delete your account"
+        title="Delete your account?"
         description={
           <div className={deleteDialogBody()}>
-            <span>This permanently deletes:</span>
+            <span>This deletes the following for good:</span>
             <ul className={deleteList()}>
               <li>Your profile and settings</li>
               <li>Your financial accounts, balances and transactions</li>
@@ -115,7 +115,7 @@ export const DeleteAccountSection: FC<DeleteAccountSectionProps> = ({ status, on
               We keep a short record that an account was deleted, with no personal details, for 24
               months.
             </span>
-            <span>You will be signed out straight away.</span>
+            <span>This cannot be undone. You are signed out straight away.</span>
           </div>
         }
         confirmLabel={identityPending ? "Try again" : "Delete my account"}

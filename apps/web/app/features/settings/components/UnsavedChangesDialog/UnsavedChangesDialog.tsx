@@ -22,7 +22,7 @@ export const UnsavedChangesDialog: FC<UnsavedChangesDialogProps> = ({
       if (!next) onKeepEditing();
     }}
     title="Discard unsaved changes?"
-    description="You have changes on this tab that are not saved. If you leave now they will be lost."
+    description="Your changes on this tab are not saved. If you leave now, they are lost."
     cancelLabel="Keep editing"
     confirmLabel="Discard changes"
     tone="danger"
