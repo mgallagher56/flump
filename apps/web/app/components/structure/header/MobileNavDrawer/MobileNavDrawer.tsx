@@ -8,10 +8,11 @@ import NavMenu from "~/components/navigation/NavMenu";
 import { mobileLink } from "~/components/navigation/NavMenu/NavMenu.styles";
 import {
   AUTH_NAV_ROUTES,
+  BOTTOM_BAR_TABS,
   CONNECT_AI_ROUTE,
   filterNavRoutes,
   HOME_NAV_ROUTE,
-  SANDBOX_HOME_NAV_ROUTE,
+  type NavRouteItem,
 } from "~/components/navigation/navConfig";
 import { renderHomeLogoLink } from "~/components/navigation/renderHomeLogoLink";
 import UserLogin from "~/components/navigation/UserLogin";
@@ -34,6 +35,23 @@ const SANDBOX_DISABLED_KEYS = new Set(
 
 /** Settings, Connect AI and Calculators use the same row as the pages above them. */
 const footerLinkClass = cx(buttonVariants({ variant: "ghost" }), mobileLink());
+
+// Pages the phone bottom bar already lists (Home, Accounts, Budget, Pay) and the page "Pay" opens.
+const BAR_KEYS = new Set([...BOTTOM_BAR_TABS.map((tab) => tab.key), "takeHome"]);
+
+/**
+ * With the bottom bar on screen the drawer holds only what the bar does not (owner ruling): no
+ * second list of Home, Accounts, Budget and Pay. A group keeps its pages the bar cannot reach (Self
+ * Assessment under Pay).
+ */
+export function withoutBarPages(routes: NavRouteItem[]): NavRouteItem[] {
+  return routes.flatMap((route) => {
+    if (!route.children) return BAR_KEYS.has(route.key) ? [] : [route];
+    const children = route.children.filter((child) => !BAR_KEYS.has(child.key));
+    if (children.length === 0) return [];
+    return [{ ...route, children }];
+  });
+}
 
 /** App content for the shared `NavDrawer` (modal behaviour lives in `@repo/ui`). */
 const MobileNavDrawer: FC<MobileNavDrawerProps> = ({ isOpen, onClose, user, sandbox }) => {
@@ -86,7 +104,10 @@ const MobileNavDrawer: FC<MobileNavDrawerProps> = ({ isOpen, onClose, user, sand
       ) : null}
       <NavMenu
         isMobile
-        routes={[sandbox && !user ? SANDBOX_HOME_NAV_ROUTE : HOME_NAV_ROUTE, ...authRoutes]}
+        routes={
+          // The bottom bar shows signed in and in the sandbox; elsewhere the drawer is the only nav.
+          user || sandbox ? withoutBarPages(authRoutes) : [HOME_NAV_ROUTE, ...authRoutes]
+        }
         isRouteDisabled={
           sandbox && !user ? (item) => SANDBOX_DISABLED_KEYS.has(item.key) : undefined
         }

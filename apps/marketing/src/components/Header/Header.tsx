@@ -176,7 +176,7 @@ export const Header: FC = () => {
         }
         activeKey={activeKey}
         items={items}
-        logo={<HomeLogo renderLink={renderHomeLogoLink} />}
+        logo={<HomeLogo current={location.pathname === "/"} renderLink={renderHomeLogoLink} />}
         menuControls={DRAWER_ID}
         menuExpanded={mobileMenuOpen}
         menuBelow="wide"

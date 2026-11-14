@@ -15,7 +15,9 @@ export const mobileBottomBarRoot = cva({
     borderTopStyle: "solid",
     borderTopColor: "border",
     paddingTop: "1.5",
-    paddingX: "2",
+    // Tight sides and no slot gap so every label fits whole at 320px (about 62px a slot); labels
+    // are never truncated (owner ruling 2026-11-14).
+    paddingX: "1",
     paddingBottom: "calc(6px + env(safe-area-inset-bottom))",
   },
 });
@@ -24,7 +26,7 @@ export const mobileBottomBarList = cva({
   base: {
     display: "grid",
     gridTemplateColumns: "repeat(5, minmax(0, 1fr))",
-    gap: "0.5",
+    gap: "0",
     listStyle: "none",
     padding: "0",
     margin: "0",
@@ -40,8 +42,8 @@ export const mobileBottomBarLink = cva({
     justifyContent: "center",
     gap: "0.5",
     minH: "12",
-    // The whole slot is the label's width: at 375 a slot is about 68px (R2-2, label fit).
-    px: "0.5",
+    // The whole slot is the label's width: about 62px at 320, 73px at 375.
+    px: "0",
     borderRadius: "full",
     color: "text.secondary",
     textStyle: "label.sm",

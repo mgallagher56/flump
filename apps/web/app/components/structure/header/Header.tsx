@@ -18,11 +18,12 @@ import { compactOnly, wideOnly } from "./Header.styles";
 import MobileNavDrawer from "./MobileNavDrawer";
 
 export interface HeaderProps {
+  /** Kept for callers and stories; the header lays itself out with the shared nav conditions. */
   isMobile?: boolean;
   variant?: "desktop" | "mobile";
 }
 
-const Header: FC<HeaderProps> = ({ isMobile: propIsMobile, variant }): ReactElement<FC> => {
+const Header: FC<HeaderProps> = (): ReactElement<FC> => {
   // Read by route id so the header sees the root loader's user from any route, including the root
   // error boundary after a page below it failed. Undefined only when the root loader itself
   // failed, and then the header renders signed out.
@@ -32,10 +33,9 @@ const Header: FC<HeaderProps> = ({ isMobile: propIsMobile, variant }): ReactElem
   const sandbox = !user && isSandboxPath(pathname);
   // Below the nav breakpoint (phones) the top bar always keeps its menu button, beside the bottom
   // bar where that shows (owner ruling 2026-11-14): both open the same drawer.
-  const { isMobile: contextIsMobile, isMobileDrawerOpen, setMobileDrawerOpen } = useResponsive();
+  const { isMobileDrawerOpen, setMobileDrawerOpen } = useResponsive();
   const [localDrawerOpen, setLocalDrawerOpen] = useState(false);
 
-  const isMobileVariant = propIsMobile ?? (variant === "mobile" ? true : contextIsMobile);
   const drawerOpen = isMobileDrawerOpen || localDrawerOpen;
 
   const { t } = useTranslation();
@@ -52,6 +52,7 @@ const Header: FC<HeaderProps> = ({ isMobile: propIsMobile, variant }): ReactElem
     [user, sandbox, profile.enabledPages, t],
   );
   const renderLink = useMemo(() => createRenderNavLink(), []);
+  const activeKey = findActiveNavKey(items, pathname);
 
   // One open state for both openers (this menu button and the bottom bar's More).
   const handleToggleDrawer = () => {
@@ -85,9 +86,11 @@ const Header: FC<HeaderProps> = ({ isMobile: propIsMobile, variant }): ReactElem
             {!user && <UserLogin signUp={sandbox ? "never" : "fromSm"} />}
           </>
         }
-        activeKey={findActiveNavKey(items, pathname)}
+        activeKey={activeKey}
         items={items}
-        logo={<HomeLogo decorative={!isMobileVariant} renderLink={renderHomeLogoLink} />}
+        // Never decorative: from 768 to 1023 the logo is the only way home (the inline "Home" link
+        // shows from 1024), so it stays a real link and marks the home page as current.
+        logo={<HomeLogo current={activeKey === "home"} renderLink={renderHomeLogoLink} />}
         menuControls="mobile-nav-drawer"
         menuExpanded={drawerOpen}
         menuLabel="Open navigation menu"
