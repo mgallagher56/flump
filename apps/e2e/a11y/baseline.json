@@ -39,43 +39,12 @@
         "axe": {
           "color-contrast": 3
         }
-      },
-      "1280-light": {
-        "lang": {
-          "html-lang-not-en-GB": 1
-        }
-      }
-    },
-    "web-accounts-history": {
-      "1280-light": {
-        "lang": {
-          "html-lang-not-en-GB": 1
-        }
-      }
-    },
-    "web-budget": {
-      "1280-light": {
-        "lang": {
-          "html-lang-not-en-GB": 1
-        }
       }
     },
     "web-dashboard": {
       "1280-forced-colours": {
         "axe": {
           "color-contrast": 2
-        }
-      },
-      "1280-light": {
-        "lang": {
-          "html-lang-not-en-GB": 1
-        }
-      }
-    },
-    "web-debt": {
-      "1280-light": {
-        "lang": {
-          "html-lang-not-en-GB": 1
         }
       }
     },
@@ -84,29 +53,12 @@
         "axe": {
           "color-contrast": 3
         }
-      },
-      "1280-light": {
-        "lang": {
-          "html-lang-not-en-GB": 1
-        }
       }
     },
     "web-mortgage": {
       "1280-forced-colours": {
         "axe": {
           "color-contrast": 2
-        }
-      },
-      "1280-light": {
-        "lang": {
-          "html-lang-not-en-GB": 1
-        }
-      }
-    },
-    "web-pension": {
-      "1280-light": {
-        "lang": {
-          "html-lang-not-en-GB": 1
         }
       }
     },
@@ -115,22 +67,12 @@
         "axe": {
           "color-contrast": 3
         }
-      },
-      "1280-light": {
-        "lang": {
-          "html-lang-not-en-GB": 1
-        }
       }
     },
     "web-sandbox": {
       "1280-forced-colours": {
         "axe": {
           "color-contrast": 2
-        }
-      },
-      "1280-light": {
-        "lang": {
-          "html-lang-not-en-GB": 1
         }
       }
     },
@@ -139,43 +81,12 @@
         "axe": {
           "color-contrast": 3
         }
-      },
-      "1280-light": {
-        "lang": {
-          "html-lang-not-en-GB": 1
-        }
       }
     },
     "web-self-assessment": {
       "1280-forced-colours": {
         "axe": {
           "color-contrast": 4
-        }
-      },
-      "1280-light": {
-        "lang": {
-          "html-lang-not-en-GB": 1
-        }
-      }
-    },
-    "web-take-home": {
-      "1280-light": {
-        "lang": {
-          "html-lang-not-en-GB": 1
-        }
-      }
-    },
-    "web-tools": {
-      "1280-light": {
-        "lang": {
-          "html-lang-not-en-GB": 1
-        }
-      }
-    },
-    "web-tools-100k-trap": {
-      "1280-light": {
-        "lang": {
-          "html-lang-not-en-GB": 1
         }
       }
     }
