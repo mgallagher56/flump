@@ -120,7 +120,7 @@ describe("<DataTab />", () => {
     fireEvent.change(screen.getByLabelText(/to confirm/i), { target: { value: "RESET" } });
     fireEvent.click(screen.getByRole("button", { name: "Reset everything" }));
     expect((await screen.findByRole("alert")).textContent).toBe(
-      "For your security, sign in again, then try once more.",
+      "For your security, sign in again, then try again.",
     );
     fireEvent.click(screen.getByRole("button", { name: "Sign in again" }));
     expect(fetcher.submit).toHaveBeenCalledWith(

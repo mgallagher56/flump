@@ -7,18 +7,20 @@ import {
   RECENT_LOGIN_MESSAGE,
 } from "~/features/settings/account";
 import { SignInAgainButton } from "~/features/settings/components/SignInAgainButton";
+import { statusText } from "~/features/settings/settings.styles";
 import {
   finishActions,
   finishCard,
   finishCopy,
   finishForm,
   finishHeading,
+  finishOutcome,
 } from "./FinishDeletionPanel.styles";
 
 const OUTCOME_MESSAGES: Partial<Record<DeleteAccountStatus, string>> = {
   identity_pending: "We still could not remove your login. Try again.",
   recent_login_required: RECENT_LOGIN_MESSAGE,
-  rate_limited: "There have been several attempts in a short while. Wait a little, then try again.",
+  rate_limited: "You have tried this a few times in a short while. Wait a little, then try again.",
   failed: "We could not remove your login. Try again.",
 };
 
@@ -73,14 +75,13 @@ export const FinishDeletionPanel: FC<FinishDeletionPanelProps> = ({ status, onCo
         <FormField
           id="finish-deletion-confirmation"
           label={`Type ${DELETE_ACCOUNT_CONFIRMATION} to confirm`}
-          error={message}
         >
           {(field) => (
             <TextInput
               id={field.id}
               aria-describedby={field.describedBy}
               autoComplete="off"
-              disabled={pending}
+              readOnly={pending}
               value={typed}
               onChange={(event) => setTyped(event.target.value)}
             />
@@ -92,8 +93,10 @@ export const FinishDeletionPanel: FC<FinishDeletionPanelProps> = ({ status, onCo
             data-testid="finish-deletion-submit"
             type="submit"
             variant="destructive"
-            disabled={!matches || pending}
-            aria-busy={pending || undefined}
+            // While pending the button stays focusable (aria-disabled, clicks ignored) so focus
+            // never drops to the page body.
+            disabled={!matches && !pending}
+            pending={pending}
           >
             {pending
               ? "Removing"
@@ -101,11 +104,19 @@ export const FinishDeletionPanel: FC<FinishDeletionPanelProps> = ({ status, onCo
                 ? "Try again"
                 : "Remove my login"}
           </Button>
-          {attempted && status === "recent_login_required" ? (
+        </div>
+      </form>
+      {/* Server outcomes are announced on their own, not as a problem with the typed text. */}
+      {message ? (
+        <div className={finishOutcome()}>
+          <p className={statusText({ tone: "danger" })} role="alert">
+            {message}
+          </p>
+          {status === "recent_login_required" ? (
             <SignInAgainButton returnPath={ACCOUNT_DELETION_PENDING_PATH} />
           ) : null}
         </div>
-      </form>
+      ) : null}
     </Card>
   );
 };

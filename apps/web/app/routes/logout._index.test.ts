@@ -56,6 +56,7 @@ describe("logout action", () => {
   });
 
   it("sends a 'Sign in again' sign-out to /login with the settings Data tab return path", async () => {
+    vi.stubEnv("WORKOS_REDIRECT_URI", "https://web.example.test/callback");
     const body = new URLSearchParams({ next: "/app/profile?tab=data" });
     await action({
       request: new Request("https://web.example.test/logout", { method: "POST", body }),
@@ -68,6 +69,7 @@ describe("logout action", () => {
   });
 
   it("also accepts the account deletion page as the return path", async () => {
+    vi.stubEnv("WORKOS_REDIRECT_URI", "https://web.example.test/callback");
     const body = new URLSearchParams({ next: "/account-deleted?state=pending" });
     await action({
       request: new Request("https://web.example.test/logout", { method: "POST", body }),
@@ -77,6 +79,35 @@ describe("logout action", () => {
     expect(mocks.signOut.mock.calls[0][1]).toEqual({
       returnTo: "https://web.example.test/login?returnTo=%2Faccount-deleted%3Fstate%3Dpending",
     });
+  });
+
+  it("builds the return URL from configuration, never from forwarded host headers", async () => {
+    vi.stubEnv("WORKOS_REDIRECT_URI", "https://web.example.test/callback");
+    const body = new URLSearchParams({ next: "/app/profile?tab=data" });
+    await action({
+      request: new Request("https://web.example.test/logout", {
+        method: "POST",
+        body,
+        headers: { "X-Forwarded-Host": "evil.example", "X-Forwarded-Proto": "https" },
+      }),
+      params: {},
+      context: {},
+    } as any);
+    expect(mocks.signOut.mock.calls[0][1].returnTo).toBe(
+      "https://web.example.test/login?returnTo=%2Fapp%2Fprofile%3Ftab%3Ddata",
+    );
+  });
+
+  it("falls back to a relative return path when no app origin is configured", async () => {
+    vi.stubEnv("WORKOS_REDIRECT_URI", "");
+    mocks.hasSealedSession.mockResolvedValue(false);
+    const body = new URLSearchParams({ next: "/app/profile?tab=data" });
+    const res = (await action({
+      request: new Request("https://web.example.test/logout", { method: "POST", body }),
+      params: {},
+      context: {},
+    } as any)) as Response;
+    expect(res.headers.get("Location")).toBe("/login?returnTo=%2Fapp%2Fprofile%3Ftab%3Ddata");
   });
 
   it("ignores any other return path (no open redirect)", async () => {

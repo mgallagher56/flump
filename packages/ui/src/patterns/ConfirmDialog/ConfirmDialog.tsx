@@ -29,6 +29,13 @@ export interface ConfirmDialogProps {
   pendingLabel?: string;
   /** Failure copy from the last confirm attempt. Shown inline (role="alert"); the dialog stays open. */
   error?: string | null;
+  /** Optional control shown with the error, for example a "Sign in again" button. */
+  errorAction?: ReactNode;
+  /**
+   * While pending, keep the confirm button focusable (`aria-disabled`, clicks ignored) instead
+   * of disabled, so focus does not drop to the page when it was on that button.
+   */
+  keepFocusWhilePending?: boolean;
   /** When set, the confirm button stays disabled until the input matches (case-insensitive). */
   requireText?: string;
   /** Stable id for the dialog (also data-testid). Buttons get `${id}-cancel` and `${id}-confirm`. */
@@ -52,6 +59,8 @@ export const ConfirmDialog: FC<ConfirmDialogProps> = ({
   pending = false,
   pendingLabel,
   error,
+  errorAction,
+  keepFocusWhilePending = false,
   requireText,
   id = "confirm-dialog",
 }) => {
@@ -100,6 +109,7 @@ export const ConfirmDialog: FC<ConfirmDialogProps> = ({
               {error}
             </p>
           ) : null}
+          {error && errorAction ? errorAction : null}
           {requireText !== undefined ? (
             <label className={confirmField()} htmlFor={inputId}>
               <span>
@@ -131,8 +141,9 @@ export const ConfirmDialog: FC<ConfirmDialogProps> = ({
               type="button"
               id={`${id}-confirm`}
               variant={tone === "danger" ? "destructive" : "primary"}
-              disabled={pending || !textMatches}
-              aria-busy={pending || undefined}
+              {...(keepFocusWhilePending
+                ? { disabled: !pending && !textMatches, pending }
+                : { disabled: pending || !textMatches, "aria-busy": pending || undefined })}
               onClick={() => {
                 void onConfirm();
               }}

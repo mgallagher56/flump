@@ -16,8 +16,7 @@ type ExportState = "idle" | "pending" | "done" | "rate_limited" | "failed";
 
 const MESSAGES: Partial<Record<ExportState, string>> = {
   done: "Your download has started.",
-  rate_limited:
-    "You have asked for your data a few times in a short while. Wait a little, then try again.",
+  rate_limited: "You have tried this a few times in a short while. Wait a little, then try again.",
   failed: "We could not prepare your download. Try again.",
 };
 
@@ -63,9 +62,7 @@ export const DataExportSection: FC<DataExportSectionProps> = ({ download = defau
       <h2 className={sectionHeading()} id="export-data-heading">
         Download your data
       </h2>
-      <p className={sectionLead()}>
-        Get a copy of everything Flump stores about you, as a JSON file.
-      </p>
+      <p className={sectionLead()}>Get a copy of your Flump data as one JSON file.</p>
       <div className={exportRow()}>
         <Button
           id="export-data-button"

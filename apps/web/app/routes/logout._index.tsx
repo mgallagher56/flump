@@ -2,7 +2,6 @@ import { signOut } from "@workos-inc/authkit-react-router";
 import type { ActionFunctionArgs } from "react-router";
 import { redirect } from "react-router";
 import { isAllowedReturnPath } from "~/features/settings/account";
-import { expectedOrigin } from "~/security/csrf.server";
 import { ensureSessionStorage } from "~/utils/auth.server";
 import { devSessionClearCookie, isDevSessionEnabled } from "~/utils/devSession.server";
 import { getMarketingUrl } from "~/utils/marketingUrl";
@@ -11,13 +10,26 @@ import { hasSealedSession } from "~/utils/sessionCookie.server";
 import { legacySessionCookieClear, sessionCookieClear } from "~/utils/sessionPolicy.server";
 
 /**
- * Where the browser ends up. Normally the marketing site; for the settings "Sign in again" flow
- * (a destructive action needs a recent sign-in) the app's own /login with the one allowed return
- * path, so the person signs in afresh and lands back on the Data tab.
+ * The app's own origin, from configuration (WORKOS_REDIRECT_URI is required, https, in
+ * production), never from request headers such as X-Forwarded-Host. Null when unset.
+ */
+const configuredAppOrigin = (): string | null => {
+  try {
+    return new URL(process.env.WORKOS_REDIRECT_URI ?? "").origin;
+  } catch {
+    return null;
+  }
+};
+
+/**
+ * Where the browser ends up. Normally the marketing site; for the "Sign in again" flow (a
+ * destructive action needs a recent sign-in) the app's own /login with one of the allowed return
+ * paths, so the person signs in afresh and lands back where they were. Without a configured
+ * origin the path stays relative (fine for a Location header).
  */
 const destination = (request: Request, next: FormDataEntryValue | null): string =>
   isAllowedReturnPath(next)
-    ? `${expectedOrigin(request)}/login?returnTo=${encodeURIComponent(next)}`
+    ? `${configuredAppOrigin() ?? ""}/login?returnTo=${encodeURIComponent(next)}`
     : getMarketingUrl(request.url);
 
 const readNext = async (request: Request): Promise<FormDataEntryValue | null> => {

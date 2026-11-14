@@ -20,7 +20,7 @@ export const IDENTITY_PENDING_MESSAGE =
   "Your data has been deleted, but we could not finish removing your login. Try again.";
 
 const FAILURE_MESSAGES: Partial<Record<DeleteAccountStatus, string>> = {
-  rate_limited: "There have been several attempts in a short while. Wait a little, then try again.",
+  rate_limited: "You have tried this a few times in a short while. Wait a little, then try again.",
   recent_login_required: RECENT_LOGIN_MESSAGE,
   failed: "We could not delete your account. Try again.",
 };
@@ -73,9 +73,7 @@ export const DeleteAccountSection: FC<DeleteAccountSectionProps> = ({ status, on
       <h2 className={sectionHeading()} id="delete-account-heading">
         Delete your account
       </h2>
-      <p className={sectionLead()}>
-        Permanently remove your Flump account and everything stored with it.
-      </p>
+      <p className={sectionLead()}>Permanently remove your Flump account and your data.</p>
       <div className={deleteRow()}>
         <div className={deleteText()}>
           <p className={deleteTitle()}>This cannot be undone</p>
@@ -106,13 +104,18 @@ export const DeleteAccountSection: FC<DeleteAccountSectionProps> = ({ status, on
             <span>This permanently deletes:</span>
             <ul className={deleteList()}>
               <li>Your profile and settings</li>
-              <li>All accounts, balances and transaction history</li>
-              <li>All bank connections</li>
-              <li>All budget, savings and tax records</li>
+              <li>Your financial accounts, balances and transactions</li>
+              <li>Your bank connections</li>
+              <li>Your budget, savings and tax records</li>
+              <li>Your check-ins and any imports not yet finished</li>
+              <li>AI assistant access and its activity log</li>
               <li>Your login</li>
             </ul>
+            <span>
+              We keep a short record that an account was deleted, with no personal details, for 24
+              months.
+            </span>
             <span>You will be signed out straight away.</span>
-            {needsSignIn ? <SignInAgainButton /> : null}
           </div>
         }
         confirmLabel={identityPending ? "Try again" : "Delete my account"}
@@ -120,7 +123,9 @@ export const DeleteAccountSection: FC<DeleteAccountSectionProps> = ({ status, on
         tone="danger"
         requireText={DELETE_ACCOUNT_CONFIRMATION}
         pending={status === "submitting"}
+        keepFocusWhilePending
         error={error}
+        errorAction={needsSignIn ? <SignInAgainButton /> : undefined}
         onConfirm={handleConfirm}
       />
     </Card>

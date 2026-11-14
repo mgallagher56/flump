@@ -40,7 +40,9 @@ describe("<FinishDeletionPanel />", () => {
     expect(onConfirm).toHaveBeenCalledTimes(1);
     rerender("submitting");
     const pending = screen.getByRole("button", { name: "Removing" }) as HTMLButtonElement;
-    expect(pending.disabled).toBe(true);
+    // Stays focusable while pending so focus does not drop to the page.
+    expect(pending.disabled).toBe(false);
+    expect(pending.getAttribute("aria-disabled")).toBe("true");
   });
 
   it("offers another try when the login still could not be removed", () => {
@@ -61,7 +63,7 @@ describe("<FinishDeletionPanel />", () => {
     rerender("submitting");
     rerender("recent_login_required");
     expect(screen.getByRole("alert").textContent).toContain(
-      "For your security, sign in again, then try once more.",
+      "For your security, sign in again, then try again.",
     );
     expect(screen.getByRole("button", { name: "Sign in again" })).toBeDefined();
   });
