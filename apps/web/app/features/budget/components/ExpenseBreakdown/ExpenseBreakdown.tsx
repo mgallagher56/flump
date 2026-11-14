@@ -4,6 +4,7 @@ import {
   CollapsibleDrawer,
   capSeriesWithOther,
   chartColor,
+  DONUT_GEOMETRY,
   Icon,
   Money,
   Num,
@@ -13,7 +14,6 @@ import { ChevronRight } from "lucide-react";
 import { type FC, useMemo } from "react";
 import { Cell, Pie, PieChart, ResponsiveContainer } from "recharts";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
-import { usePrefersReducedMotion } from "~/hooks/usePrefersReducedMotion";
 import { categoryIcon } from "../../categoryIcons";
 import {
   breakdownGrid,
@@ -70,7 +70,6 @@ export const ExpenseBreakdown: FC<ExpenseBreakdownProps> = ({
   onNavigateToCategory,
 }) => {
   const { formatCurrency } = useFormatCurrency();
-  const reducedMotion = usePrefersReducedMotion();
 
   const sorted = useMemo(() => [...categories].sort((a, b) => b.total - a.total), [categories]);
 
@@ -159,15 +158,12 @@ export const ExpenseBreakdown: FC<ExpenseBreakdownProps> = ({
                   <ResponsiveContainer height="100%" width="100%">
                     <PieChart>
                       <Pie
+                        {...DONUT_GEOMETRY}
                         cx="50%"
                         cy="50%"
                         data={slices}
                         dataKey="value"
-                        innerRadius="62%"
-                        isAnimationActive={!reducedMotion}
                         nameKey="label"
-                        outerRadius="90%"
-                        paddingAngle={2}
                         stroke="none"
                       >
                         {slices.map((s) => (

@@ -29,7 +29,8 @@ export const DEFAULT_FINANCIAL_BASELINE: FinancialBaseline = {
   totalUnsecuredDebt: 0,
   pensionContributionPct: 5,
   employerPensionMatchPct: 3,
-  isSalarySacrifice: true,
+  // Net pay unless the user chose salary sacrifice (never assumed).
+  isSalarySacrifice: false,
   studentLoanPlan: "NONE",
   propertyOwnershipSharePct: 100,
   financialStage: "STAGE_2_BUFFER_BUILD",
@@ -313,7 +314,7 @@ export function hydrateBaselineFromSeed(seed: AnySeedPayload, userId = ""): Fina
     seedAny.annualIncome ??
     (seedAny.mode === "WEALTH" ? 65000 : 38000);
   const pensionContributionPct = seedAny.pensionContributionPct ?? 5;
-  const isSalarySacrifice = seedAny.isSalarySacrifice ?? seedAny.salarySacrifice ?? true;
+  const isSalarySacrifice = seedAny.isSalarySacrifice ?? seedAny.salarySacrifice ?? false;
   const totalUnsecuredDebt =
     seedAny.totalUnsecuredDebt !== undefined ? seedAny.totalUnsecuredDebt : 0;
   const totalCashSavings = seedAny.totalCashSavings ?? seedAny.initialCashSavings ?? 5000;

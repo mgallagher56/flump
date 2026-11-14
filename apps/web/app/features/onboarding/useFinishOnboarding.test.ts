@@ -84,4 +84,14 @@ describe("useFinishOnboarding", () => {
     expect(updateProfile).toHaveBeenLastCalledWith({ onboardingCompleted: true });
     expect(navigate).toHaveBeenCalledWith("/");
   });
+
+  it("saves net pay when salary sacrifice was never asked, the method the summary used", async () => {
+    // Never asked in onboarding: the take-home in the summary (and the budget income row) is
+    // worked out as net pay, so the profile must say so too rather than a salary-sacrifice default.
+    updateProfile.mockResolvedValue(undefined);
+    apiFetch.mockResolvedValue([]);
+    const { result } = setup();
+    await act(() => result.current.finish());
+    expect(updateProfile.mock.calls[0]?.[0]).toMatchObject({ isSalarySacrifice: false });
+  });
 });

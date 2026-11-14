@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { DebtSnowballCalculator } from "./DebtSnowballCalculator";
+import { liabilityFieldsStyle } from "./DebtSnowballCalculator.styles";
 
 describe("DebtSnowballCalculator", () => {
   it("renders without crashing", () => {
@@ -30,5 +31,12 @@ describe("DebtSnowballCalculator", () => {
   it("has no inline styles", () => {
     const { container } = render(<DebtSnowballCalculator />);
     expect(container.querySelector("[style]")).toBeNull();
+  });
+
+  it("stacks the liability fields on a phone and only goes three across from sm up", () => {
+    // Pre-release defect 10: three 1fr columns of default-width inputs were 688px wide at 375.
+    const classes = liabilityFieldsStyle.split(" ");
+    expect(classes.some((c) => /^grid-tc_repeat\(3/.test(c))).toBe(false);
+    expect(classes.some((c) => /^sm:grid-tc_repeat\(3,_minmax\(0,_1fr\)\)$/.test(c))).toBe(true);
   });
 });

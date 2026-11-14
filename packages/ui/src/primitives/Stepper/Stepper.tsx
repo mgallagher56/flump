@@ -15,6 +15,7 @@ import {
   stepperSegment,
   stepperSegments,
   stepperStatus,
+  stepperTarget,
   stepperText,
 } from "./Stepper.styles";
 
@@ -46,6 +47,11 @@ export interface StepperProps {
   states?: Partial<Record<string, StepStateOverride>>;
   /** Accessible name for the step list. Defaults to "Setup progress". */
   label?: string;
+  /**
+   * When given, every step other than the current one is a button that calls this with the
+   * step's number (counting from 1), so the stepper itself is the way to jump between steps.
+   */
+  onStepSelect?: (step: number) => void;
   className?: string;
 }
 
@@ -64,6 +70,7 @@ export const Stepper: FC<StepperProps> = ({
   current,
   states,
   label = "Setup progress",
+  onStepSelect,
   className,
 }) => {
   const total = steps.length;
@@ -94,6 +101,20 @@ export const Stepper: FC<StepperProps> = ({
         {steps.map((step, index) => {
           const state = stateOf(index);
           const visual = visualState(state);
+          const content = (
+            <>
+              <span aria-hidden="true" className={stepperMarker({ state: visual })}>
+                {state === "complete" ? <Icon icon={Check} size="md" /> : index + 1}
+              </span>
+              <span className={stepperText()}>
+                <span className={stepperLabel({ state: visual })} data-step-label="">
+                  <VisuallyHidden>{`Step ${index + 1} of ${total}: `}</VisuallyHidden>
+                  {step.label}
+                </span>
+                <span className={stepperStatus()}>{statusWords[state]}</span>
+              </span>
+            </>
+          );
           return (
             <li
               aria-current={state === "current" ? "step" : undefined}
@@ -101,16 +122,17 @@ export const Stepper: FC<StepperProps> = ({
               data-state={state}
               key={step.id}
             >
-              <span aria-hidden="true" className={stepperMarker({ state: visual })}>
-                {state === "complete" ? <Icon icon={Check} size="md" /> : index + 1}
-              </span>
-              <span className={stepperText()}>
-                <span className={stepperLabel({ state: visual })}>
-                  <VisuallyHidden>{`Step ${index + 1} of ${total}: `}</VisuallyHidden>
-                  {step.label}
-                </span>
-                <span className={stepperStatus()}>{statusWords[state]}</span>
-              </span>
+              {onStepSelect && state !== "current" ? (
+                <button
+                  className={stepperTarget({ interactive: true })}
+                  onClick={() => onStepSelect(index + 1)}
+                  type="button"
+                >
+                  {content}
+                </button>
+              ) : (
+                <span className={stepperTarget()}>{content}</span>
+              )}
             </li>
           );
         })}

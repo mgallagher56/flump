@@ -1,3 +1,4 @@
+import { profileFactsFromProfile, selectPsaBand } from "@flump/finance-engine";
 import type { ReactElement } from "react";
 import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "react-router";
 import { data } from "react-router";
@@ -95,7 +96,7 @@ export const action = async (args: ActionFunctionArgs) => {
 export const meta: MetaFunction = () => [{ title: "Accounts | Flump" }];
 
 export const loader = async (args: LoaderFunctionArgs) => {
-  const { accounts, accountDetails, bankConnections, user, accessToken } =
+  const { accounts, accountDetails, bankConnections, user, accessToken, userProfile } =
     await loadWorkspaceSnapshot(args, {
       includeConnections: true,
     });
@@ -112,7 +113,16 @@ export const loader = async (args: LoaderFunctionArgs) => {
       bankConnectionsEnabled = false;
     }
   }
-  return data({ accounts, accountDetails, bankConnections, bankConnectionsEnabled, user });
+  // The PSA band comes from the saved income and tax region; null (no income saved) claims no band.
+  const psaTaxBand = selectPsaBand(profileFactsFromProfile(userProfile));
+  return data({
+    accounts,
+    accountDetails,
+    bankConnections,
+    bankConnectionsEnabled,
+    psaTaxBand,
+    user,
+  });
 };
 
 const Accounts = (): ReactElement<ReactElement> => {

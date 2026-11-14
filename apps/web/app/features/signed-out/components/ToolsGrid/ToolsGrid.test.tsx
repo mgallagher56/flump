@@ -1,3 +1,4 @@
+import { TOOL_SLUGS } from "@repo/ui/tools";
 import { render, screen, within } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
@@ -21,20 +22,13 @@ describe("ToolsGrid", () => {
 
   it("leads with debt and mortgage and does not lead with the £100k tool", () => {
     expect(TOOL_TILES[0]?.slug).toBe("uk-debt-snowball-vs-avalanche-calculator");
-    expect(TOOL_TILES.findIndex((t) => t.slug === "mortgage-overpay-vs-isa")).toBeLessThan(
-      TOOL_TILES.findIndex((t) => t.slug === "uk-100k-tax-trap-calculator"),
-    );
+    expect(
+      TOOL_TILES.findIndex((t) => t.slug === "mortgage-overpayment-vs-isa-calculator"),
+    ).toBeLessThan(TOOL_TILES.findIndex((t) => t.slug === "uk-100k-tax-trap-calculator"));
   });
 
-  it("follows marketing's CANONICAL_TOOL_SLUGS order (E31; web uses shorter slugs for three)", () => {
-    expect(TOOL_TILES.map((t) => t.slug)).toEqual([
-      "uk-debt-snowball-vs-avalanche-calculator",
-      "0-percent-balance-transfer-payoff-calculator",
-      "overdraft-cost-and-payoff-calculator",
-      "mortgage-overpay-vs-isa",
-      "uk-student-loan-overpay-or-invest-calculator",
-      "uk-100k-tax-trap-calculator",
-      "section-24-landlord-calculator",
-    ]);
+  it("follows the shared catalogue order that marketing also reads (E31)", () => {
+    expect(TOOL_TILES.map((t) => t.slug)).toEqual([...TOOL_SLUGS]);
+    expect(TOOL_TILES.map((t) => t.slug)).toContain("uk-pay-rise-take-home-calculator");
   });
 });

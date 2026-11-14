@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { expect, within } from "@storybook/test";
+import { expect, fn, userEvent, within } from "@storybook/test";
 import { css } from "../../../styled-system/css";
 import { Stepper } from "./Stepper";
 
@@ -97,3 +97,17 @@ export const WithOverrides: Story = {
 };
 
 export const WithOverridesDark: Story = { ...WithOverrides, globals: { theme: "dark" } };
+
+/** With onStepSelect the other steps are buttons, so a flow needs no separate "go to a step" row. */
+export const Navigable: Story = {
+  args: { steps: FIVE, current: 3, onStepSelect: fn() },
+  play: async ({ args, canvasElement }) => {
+    const canvas = within(canvasElement);
+    const list = canvas.getByRole("list", { name: /setup progress/i });
+    await expect(within(list).getAllByRole("button")).toHaveLength(4);
+    await userEvent.click(
+      within(list).getByRole("button", { name: /Step 1 of 5: You and income/ }),
+    );
+    await expect(args.onStepSelect).toHaveBeenCalledWith(1);
+  },
+};

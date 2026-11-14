@@ -22,3 +22,13 @@ export const Default: Story = { play };
 export const Light: Story = { globals: { theme: "light" }, play };
 
 export const Dark: Story = { globals: { theme: "dark" }, play };
+
+/** Phone width: the liability fields stack, so nothing scrolls sideways (pre-release defect 10). */
+export const Mobile: Story = {
+  parameters: { viewport: { defaultViewport: "mobile1" } },
+  play: async (context) => {
+    await play(context);
+    const tool = within(context.canvasElement).getByTestId("debt-snowball-tool");
+    await expect(tool.scrollWidth).toBeLessThanOrEqual(tool.clientWidth);
+  },
+};

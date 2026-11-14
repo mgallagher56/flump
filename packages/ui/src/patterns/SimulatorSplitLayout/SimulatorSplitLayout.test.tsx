@@ -68,6 +68,13 @@ describe("SimulatorSplitLayout Pattern", () => {
     expect(screen.getByRole("region", { name: "Parameters" }).className).toContain("lg:pos_sticky");
   });
 
+  it("never caps the sticky column's height or scrolls it on its own (no clipped cards)", () => {
+    render(<SimulatorSplitLayout content={<div>Chart</div>} controls={<div>Controls</div>} />);
+    const className = screen.getByRole("region", { name: "Parameters" }).className;
+    expect(className).not.toMatch(/max-h_/);
+    expect(className).not.toMatch(/ov(-y)?_(auto|scroll|hidden)/);
+  });
+
   it("shows the summary and an Adjust disclosure wired with aria-expanded and aria-controls", () => {
     render(
       <SimulatorSplitLayout

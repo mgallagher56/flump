@@ -614,6 +614,7 @@ describe("OnboardingRoute (5-step flow)", () => {
       hasMortgage: true,
       homeValue: 300000,
       pensionPercent: 5,
+      isSalarySacrifice: false,
       enabledPages: ["accounts", "budget", "savings", "debt", "pension", "mortgage"],
       dashboardWidgets: ["accounts", "budget", "savings", "debt", "pension", "mortgage"],
       dashboardWidgetOrder: ["accounts", "budget", "savings", "debt", "pension", "mortgage"],

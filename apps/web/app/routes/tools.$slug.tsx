@@ -1,6 +1,8 @@
 import { PageHeader, ProjectionNotice, StatusBadge } from "@repo/ui";
+import { MarginalRateExplorerStandalone } from "@repo/ui/calculators";
+import { resolveToolSlug, type ToolSlug } from "@repo/ui/tools";
 import type { FC } from "react";
-import { type LoaderFunctionArgs, type MetaFunction, useLoaderData } from "react-router";
+import { type LoaderFunctionArgs, type MetaFunction, redirect, useLoaderData } from "react-router";
 import DebtSnowballVsAvalancheTool from "~/components/tools/DebtSnowballVsAvalancheTool";
 import MortgageVsIsaTool from "~/components/tools/MortgageVsIsaTool";
 import OverdraftCostTool from "~/components/tools/OverdraftCostTool";
@@ -14,7 +16,7 @@ import { ToolBreadcrumbs } from "~/features/signed-out/components/ToolBreadcrumb
 import { ToolGuide } from "~/features/signed-out/components/ToolGuide";
 
 interface ToolContent {
-  slug: string;
+  slug: ToolSlug;
   metaTitle: string;
   metaDescription: string;
   title: string;
@@ -27,12 +29,13 @@ interface ToolContent {
     | "debt-snowball"
     | "zero-percent-cliff"
     | "overdraft-cost"
-    | "student-loan";
+    | "student-loan"
+    | "pay-rise";
   guideSections: { heading: string; body: string[] }[];
   faqs: { q: string; a: string }[];
 }
 
-const TOOLS_DATA: Record<string, ToolContent> = {
+const TOOLS_DATA: Record<ToolSlug, ToolContent> = {
   "uk-100k-tax-trap-calculator": {
     slug: "uk-100k-tax-trap-calculator",
     metaTitle: "UK £100k–£125k Tax Trap Calculator (60% Marginal Rate) | Flump",
@@ -81,8 +84,8 @@ const TOOLS_DATA: Record<string, ToolContent> = {
       },
     ],
   },
-  "mortgage-overpay-vs-isa": {
-    slug: "mortgage-overpay-vs-isa",
+  "mortgage-overpayment-vs-isa-calculator": {
+    slug: "mortgage-overpayment-vs-isa-calculator",
     metaTitle: "UK Mortgage Overpayment vs Stocks & Shares ISA Calculator | Flump",
     metaDescription:
       "Compare interest saved by overpaying a UK mortgage with a projected Stocks & Shares ISA balance over 5 to 25 years.",
@@ -128,8 +131,8 @@ const TOOLS_DATA: Record<string, ToolContent> = {
       },
     ],
   },
-  "section-24-landlord-calculator": {
-    slug: "section-24-landlord-calculator",
+  "section-24-landlord-tax-calculator": {
+    slug: "section-24-landlord-tax-calculator",
     metaTitle: "UK Section 24 Landlord Tax Calculator (Mortgage Interest Relief) | Flump",
     metaDescription:
       "Estimate how the Section 24 restriction on mortgage interest relief affects tax on buy-to-let income: taxable profit, the 20% basic rate credit and the tax due.",
@@ -294,6 +297,43 @@ const TOOLS_DATA: Record<string, ToolContent> = {
       },
     ],
   },
+  "uk-pay-rise-take-home-calculator": {
+    slug: "uk-pay-rise-take-home-calculator",
+    metaTitle: "UK Pay Rise Take-Home Calculator (Marginal Rate) | Flump",
+    metaDescription:
+      "Estimate how much of a UK pay rise is take-home after Income Tax, National Insurance, student loan repayments and the High Income Child Benefit Charge.",
+    title: "What you keep from a pay rise",
+    subtitle:
+      "Estimate how much of the next £1,000 of pay is take-home after Income Tax, National Insurance, student loan and the Child Benefit charge, with each threshold from £0 to £150,000 marked. Unverified estimate.",
+    category: "UK income tax",
+    component: "pay-rise",
+    guideSections: [
+      {
+        heading: "What the marginal rate means",
+        body: [
+          "The marginal rate is the share of the next pound of pay that goes in deductions. It can differ a lot from the average rate on the whole salary, because each deduction starts at its own threshold.",
+          "The calculator adds Income Tax, employee National Insurance, student loan repayments and the High Income Child Benefit Charge at each salary, and marks where each one starts, changes or stops.",
+        ],
+      },
+      {
+        heading: "Where the marginal rate changes",
+        body: [
+          "Income Tax starts above the Personal Allowance (£12,570 in 2026/27) and rises at the higher-rate threshold. Between £100,000 and £125,140 the Personal Allowance is withdrawn, which gives an effective 60% Income Tax rate on that band.",
+          "Student loan repayments are 9% of income above the plan threshold (6% for a postgraduate loan). The High Income Child Benefit Charge applies to adjusted net income between £60,000 and £80,000 where someone in the household gets Child Benefit.",
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: "Does a pay rise ever reduce take-home pay?",
+        a: "Income Tax and National Insurance alone take less than the whole of each extra pound, so take-home pay still rises. Other changes, such as losing eligibility for funded childcare or a benefit, are not part of this calculation.",
+      },
+      {
+        q: "Does a pension contribution change the figures?",
+        a: "Pension contributions through salary sacrifice or a personal pension reduce adjusted net income, which can change the Personal Allowance taper and the Child Benefit charge. The calculator includes a pension contribution input.",
+      },
+    ],
+  },
 };
 
 export const meta: MetaFunction<typeof loader> = ({ data }) => {
@@ -308,11 +348,16 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
   const slug = params.slug || "";
-  const tool = TOOLS_DATA[slug] || null;
+  const canonical = resolveToolSlug(slug);
 
-  if (!tool) {
+  if (!canonical) {
     throw new Response("Calculator Not Found", { status: 404 });
   }
+  // Older web and marketing slugs move permanently to the shared canonical slug.
+  if (canonical !== slug) {
+    throw redirect(`/tools/${canonical}`, 301);
+  }
+  const tool = TOOLS_DATA[canonical];
 
   return { tool };
 };
@@ -345,6 +390,7 @@ export const ToolDetailPage: FC = () => {
         {tool.component === "zero-percent-cliff" && <ZeroPercentCliffTool />}
         {tool.component === "overdraft-cost" && <OverdraftCostTool />}
         {tool.component === "student-loan" && <StudentLoanOverpayTool />}
+        {tool.component === "pay-rise" && <MarginalRateExplorerStandalone headingLevel="h2" />}
       </section>
 
       <ToolGuide faqs={tool.faqs} guideSections={tool.guideSections} />

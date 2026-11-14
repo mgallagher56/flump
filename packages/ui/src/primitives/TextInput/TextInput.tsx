@@ -29,6 +29,9 @@ export const TextInput: FC<TextInputProps> = ({
     <div
       className={cx(classes.root, className)}
       data-disabled={disabled ? "true" : undefined}
+      // The wrapper draws the one focus ring (:focus-within). Opting out of the app's global
+      // :focus-visible outline stops a second ring being drawn around the inner input.
+      data-focus-managed=""
       data-invalid={invalid ? "true" : undefined}
     >
       {prefix ? (

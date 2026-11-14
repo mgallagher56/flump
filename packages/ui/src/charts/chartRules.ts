@@ -17,3 +17,22 @@ export const CHART_RULES = {
 } as const;
 
 export type ChartRules = typeof CHART_RULES;
+
+/**
+ * Shared Recharts `<Pie>` geometry for every donut, so they all close into one full ring.
+ *
+ * - The ring starts at 12 o'clock and runs clockwise through a full 360 degrees.
+ * - Every slice, including the last, is followed by the same small gap.
+ * - `minAngle` keeps a tiny slice wide enough to read as part of the ring, not a detached dot.
+ * - The sweep animation is off: a sweep that is cut short (a background tab, a screenshot, a
+ *   re-render mid-sweep) leaves the ring open with a gap where the sweep stopped.
+ */
+export const DONUT_GEOMETRY = {
+  startAngle: 90,
+  endAngle: -270,
+  paddingAngle: 2,
+  minAngle: 4,
+  innerRadius: "62%",
+  outerRadius: "90%",
+  isAnimationActive: false,
+} as const;

@@ -50,6 +50,15 @@ describe("<AccountsGroupList />", () => {
     );
   });
 
+  test("shows balances in whole pounds like the rest of the app", () => {
+    const { getAllByText, queryByText } = customRender(
+      <AccountsGroupList rows={[row({ balance: 4000 })]} />,
+    );
+    // The row balance and the group total.
+    expect(getAllByText("£4,000").length).toBeGreaterThan(0);
+    expect(queryByText("£4,000.00")).toBeNull();
+  });
+
   test("states the change in words, not colour alone", () => {
     const { getByText } = customRender(
       <AccountsGroupList

@@ -99,6 +99,30 @@ describe("<AccountsContainer />", () => {
     expect(text).not.toContain("£-");
   });
 
+  test("shows the savings allowance for the band the loader derived, never a hard-coded one", () => {
+    mocks.mockUseLoaderData.mockReturnValue({
+      accounts: [{ id: "a1", name: "Current", type: "Current", balance: 4000 }],
+      accountDetails: [],
+      psaTaxBand: "basic",
+    });
+    const { container } = customRender(<AccountsContainer />);
+    const text = container.textContent ?? "";
+    expect(text).toContain("Personal Savings Allowance (basic rate):");
+    expect(text).not.toContain("higher rate");
+  });
+
+  test("claims no savings allowance band when income is unknown", () => {
+    mocks.mockUseLoaderData.mockReturnValue({
+      accounts: [{ id: "a1", name: "Current", type: "Current", balance: 4000 }],
+      accountDetails: [],
+      psaTaxBand: null,
+    });
+    const { container } = customRender(<AccountsContainer />);
+    const text = container.textContent ?? "";
+    expect(text).toContain("Add your income to see your allowance");
+    expect(text).not.toMatch(/\((basic|higher|additional) rate\)/);
+  });
+
   const openOverview = () => customRender(<AccountsContainer />);
 
   test("counts Property as an asset, not a liability", () => {

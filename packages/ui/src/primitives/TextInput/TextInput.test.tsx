@@ -28,6 +28,14 @@ describe("TextInput", () => {
     expect(Array.from(adornments).map((a) => a.textContent)).toEqual(["£", "%"]);
   });
 
+  // The app's global :focus-visible outline would otherwise draw a second ring around the inner
+  // input, inside the wrapper's own focus-within ring (a double border with inner vertical rules).
+  it("opts the wrapper out of the global focus outline so focus shows a single ring", () => {
+    render(<TextInput aria-label="Balance" prefix="£" />);
+    const wrapper = screen.getByLabelText("Balance").parentElement;
+    expect(wrapper?.hasAttribute("data-focus-managed")).toBe(true);
+  });
+
   it("supports disabled and keyboard focus", () => {
     render(<TextInput aria-label="Name" />);
     const input = screen.getByLabelText("Name");

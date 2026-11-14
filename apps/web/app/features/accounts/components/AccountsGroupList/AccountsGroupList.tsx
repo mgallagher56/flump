@@ -134,7 +134,7 @@ const renderRows = (rows: AccountRow[], caption: string) => (
           </Td>
           <Td label={isLiabilityType(row.type) ? "Owed" : "Balance"} numeric>
             {row.balance !== undefined ? (
-              <Money fractionDigits={2} size="sm" value={row.balance} />
+              <Money size="sm" value={row.balance} />
             ) : (
               <span className={noChange()}>Not set</span>
             )}

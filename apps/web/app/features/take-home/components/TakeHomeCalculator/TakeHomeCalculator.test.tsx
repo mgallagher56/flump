@@ -1,5 +1,8 @@
 import { fireEvent } from "@testing-library/react";
+import { createStore, Provider } from "jotai";
+import type { ReactNode } from "react";
 import { vi } from "vitest";
+import { DEFAULT_PROFILE, type UserProfile, userProfileAtom } from "~/hooks/useUserProfile";
 import customRender from "~/testUtils/customRender";
 import { TakeHomeCalculator } from "./TakeHomeCalculator";
 
@@ -12,6 +15,41 @@ vi.mock("recharts", async () => {
       <div style={{ width: 400, height: 400 }}>{children}</div>
     ),
   };
+});
+
+const withProfile = (overrides: Partial<UserProfile>) => {
+  const store = createStore();
+  store.set(userProfileAtom, { ...DEFAULT_PROFILE, ...overrides });
+  return {
+    wrapper: ({ children }: { children: ReactNode }) => (
+      <Provider store={store}>{children}</Provider>
+    ),
+  };
+};
+
+describe("<TakeHomeCalculator /> pension method", () => {
+  test("never assumes salary sacrifice: net pay when the user has not chosen it", () => {
+    const { getByRole, container } = customRender(
+      <TakeHomeCalculator initialSalary={32000} onApplyIncrease={vi.fn()} />,
+      withProfile({ isSalarySacrifice: false, pensionPercent: 5 }),
+    );
+    const sacrifice = getByRole("switch", { name: /Salary sacrifice/ }) as HTMLInputElement;
+    expect(sacrifice.checked).toBe(false);
+    // £32,000, 5% net-pay pension, England: the same £2,107 a month as dashboard and budget.
+    expect(container.textContent).toMatch(/£2,10[67]/);
+    expect(container.textContent).not.toContain("£2,117");
+    expect(container.textContent).not.toContain("Pension (salary sacrifice)");
+  });
+
+  test("starts from salary sacrifice when the user saved it", () => {
+    const { getByRole } = customRender(
+      <TakeHomeCalculator initialSalary={32000} onApplyIncrease={vi.fn()} />,
+      withProfile({ isSalarySacrifice: true }),
+    );
+    expect((getByRole("switch", { name: /Salary sacrifice/ }) as HTMLInputElement).checked).toBe(
+      true,
+    );
+  });
 });
 
 describe("<TakeHomeCalculator /> without a salary", () => {
@@ -84,6 +122,7 @@ describe("<TakeHomeCalculator />", () => {
   test("turning salary sacrifice off also switches off passing on employer NI", () => {
     const { getByRole } = customRender(
       <TakeHomeCalculator initialSalary={45000} onApplyIncrease={vi.fn()} />,
+      withProfile({ isSalarySacrifice: true }),
     );
     const sacrifice = getByRole("switch", { name: /Salary sacrifice/ }) as HTMLInputElement;
     const employerNi = getByRole("switch", { name: /Pass on employer NI/ }) as HTMLInputElement;

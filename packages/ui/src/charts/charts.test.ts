@@ -5,6 +5,7 @@ import {
   CHART_RULES,
   capSeriesWithOther,
   chartColor,
+  DONUT_GEOMETRY,
   formatAxisCurrency,
   seriesColor,
 } from "./index";
@@ -120,5 +121,21 @@ describe("CHART_RULES", () => {
     expect(CHART_RULES.donutMaxSlices).toBe(6);
     expect(CHART_RULES.nonColourCueRequired).toBe(true);
     expect(CHART_RULES.colourBy).toBe("entity");
+  });
+});
+
+describe("DONUT_GEOMETRY", () => {
+  it("sweeps a full closed ring from 12 o'clock, clockwise", () => {
+    expect(DONUT_GEOMETRY.startAngle).toBe(90);
+    expect(Math.abs(DONUT_GEOMETRY.endAngle - DONUT_GEOMETRY.startAngle)).toBe(360);
+    expect(DONUT_GEOMETRY.endAngle).toBeLessThan(DONUT_GEOMETRY.startAngle);
+  });
+
+  it("never draws a partial ring from an interrupted sweep", () => {
+    expect(DONUT_GEOMETRY.isAnimationActive).toBe(false);
+  });
+
+  it("keeps small slices wider than the gaps around them", () => {
+    expect(DONUT_GEOMETRY.minAngle).toBeGreaterThan(DONUT_GEOMETRY.paddingAngle);
   });
 });

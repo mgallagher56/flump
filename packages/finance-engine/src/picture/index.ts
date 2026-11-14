@@ -7,5 +7,6 @@ export * from "./selectors/housing-cost.js";
 export * from "./selectors/marginal-rate.js";
 export * from "./selectors/months-of-cover.js";
 export * from "./selectors/portfolio-totals.js";
+export * from "./selectors/psa-band.js";
 export * from "./selectors/safe-to-spend.js";
 export * from "./selectors/take-home.js";

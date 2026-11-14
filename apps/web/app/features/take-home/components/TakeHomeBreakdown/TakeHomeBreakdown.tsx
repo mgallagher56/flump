@@ -1,8 +1,19 @@
-import { Card, ChartFigure, chartColor, Money, Num, Table, TBody, Td, THead, Th } from "@repo/ui";
+import {
+  Card,
+  ChartFigure,
+  chartColor,
+  DONUT_GEOMETRY,
+  Money,
+  Num,
+  Table,
+  TBody,
+  Td,
+  THead,
+  Th,
+} from "@repo/ui";
 import { type FC, useMemo } from "react";
 import { Cell, Pie, PieChart, ResponsiveContainer } from "recharts";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
-import { usePrefersReducedMotion } from "~/hooks/usePrefersReducedMotion";
 import type { TakeHomeResult } from "../../calculateUKTax";
 import {
   cardBody,
@@ -38,7 +49,6 @@ export const TakeHomeBreakdown: FC<TakeHomeBreakdownProps> = ({
   isSalarySacrifice,
 }) => {
   const { formatCurrency } = useFormatCurrency();
-  const reducedMotion = usePrefersReducedMotion();
 
   const slices = useMemo(() => {
     const data = [
@@ -82,15 +92,12 @@ export const TakeHomeBreakdown: FC<TakeHomeBreakdownProps> = ({
               <ResponsiveContainer height="100%" width="100%">
                 <PieChart>
                   <Pie
+                    {...DONUT_GEOMETRY}
                     cx="50%"
                     cy="50%"
                     data={slices}
                     dataKey="value"
-                    innerRadius="62%"
-                    isAnimationActive={!reducedMotion}
                     nameKey="name"
-                    outerRadius="90%"
-                    paddingAngle={2}
                     stroke="none"
                   >
                     {slices.map((s) => (

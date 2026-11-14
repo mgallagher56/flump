@@ -235,7 +235,7 @@ export const SnapshotHistoryPage: FC<SnapshotHistoryPageProps> = ({
                   {coverKnown ? (
                     <span className={factLabel()}>
                       {" "}
-                      (cash accounts ÷ essential spending in Budget)
+                      (current and savings accounts ÷ essential spending and debt minimums)
                     </span>
                   ) : null}
                 </dd>
