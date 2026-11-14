@@ -31,7 +31,7 @@ const props = { totalOwn: 0, totalOwe: 0, netWorth: 0, leftOut: [] };
 
 describe("<AccountsGroupList />", () => {
   test("splits rows into what you own and what you owe, each a list with a total", () => {
-    const { getByRole, getByText, queryByRole } = customRender(
+    const { getByRole, getByText, getByTestId, queryByRole, queryByText } = customRender(
       <AccountsGroupList
         leftOut={[]}
         netWorth={12000}
@@ -51,9 +51,10 @@ describe("<AccountsGroupList />", () => {
     expect(queryByRole("table")).toBeNull();
     expect(queryByRole("columnheader")).toBeNull();
     expect(owe.textContent).toContain("Nationwide");
+    // A total shows only for a group with more than one row.
     expect(getByText("Total you own").nextElementSibling?.textContent).toBe("£252,000");
-    expect(getByText("Total you owe").nextElementSibling?.textContent).toBe("£240,000");
-    expect(getByText("Net worth").nextElementSibling?.textContent).toBe("£12,000");
+    expect(queryByText("Total you owe")).toBeNull();
+    expect(getByTestId("accounts-net-worth").textContent).toContain("£12,000");
   });
 
   test("shows no change column: change on last month lives on the account page", () => {
@@ -118,7 +119,9 @@ describe("<AccountsGroupList />", () => {
     expect(queryByText("What you owe")).toBeNull();
     expect(queryByText("Total you owe")).toBeNull();
     expect(
-      getByText(/Student loans are not in your net worth\. Repayments come out/),
+      getByText(
+        "Repayments come out of your pay as you earn, and any balance left at the end of the repayment term is written off.",
+      ),
     ).toBeDefined();
     expect(getByTestId("accounts-net-worth-basis").textContent).toBe(
       "Not counting your student loan. Change what counts",

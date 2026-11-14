@@ -134,12 +134,6 @@ const AccountDetailChart: FC<AccountDetailChartProps> = ({
               : { top: 0, right: 0, left: 0, bottom: 0 }
           }
         >
-          <defs>
-            <linearGradient id="colorValue" x1="0" x2="0" y1="0" y2="1">
-              <stop offset="5%" stopColor="var(--colors-primary)" stopOpacity={0.2} />
-              <stop offset="95%" stopColor="var(--colors-primary)" stopOpacity={0.0} />
-            </linearGradient>
-          </defs>
           {showAxes && (
             <CartesianGrid strokeDasharray="3 3" stroke="var(--colors-border)" vertical={false} />
           )}
@@ -168,6 +162,8 @@ const AccountDetailChart: FC<AccountDetailChartProps> = ({
               tickFormatter={(value: number) => compact.format(value)}
               tickLine={false}
               tickMargin={8}
+              // Room for "£186,000" so the pound sign is never clipped.
+              width={72}
             />
           ) : (
             <YAxis domain={yDomain} tick={false} width={0} />
@@ -191,7 +187,8 @@ const AccountDetailChart: FC<AccountDetailChartProps> = ({
           <Area
             dataKey="Value"
             dot={false}
-            fill="url(#colorValue)"
+            // A line only, like the net worth history chart.
+            fill="none"
             stroke="var(--colors-primary)"
             strokeWidth={1.5}
             type={curve}

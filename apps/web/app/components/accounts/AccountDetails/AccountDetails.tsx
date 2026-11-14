@@ -17,6 +17,7 @@ import { useMemo, useState } from "react";
 import { useLoaderData } from "react-router";
 import AccountDetailChart from "~/components/charts/AccountDetailChart";
 import { toDisplayBalance } from "~/containers/accounts/utils";
+import { londonMonth } from "~/features/snapshot/snapshotModel";
 import type { loader } from "~/routes/app.accounts.$account";
 import { isFutureMonth } from "~/utils/accounts";
 import {
@@ -97,12 +98,31 @@ const AccountDetails: FC = () => {
       });
     }
 
+    // The chart ends on the figure the hero shows: with this month not recorded yet, the saved
+    // balance (D22) is this month's point, as on the net worth history chart.
+    const past = sorted.filter((d) => !isFutureMonth(d.month, d.year));
+    const [cy, cm] = londonMonth().split("-").map(Number) as [number, number];
+    const saved = account?.balance;
+    const hasCurrent = past.some((d) => d.year === cy && d.month === cm);
+    const chart =
+      !hasCurrent && saved !== undefined && saved !== null && past.length > 0
+        ? [
+            ...past,
+            {
+              month: cm,
+              year: cy,
+              value: toDisplayBalance(account?.type, Number(saved)),
+              source: undefined as unknown,
+            },
+          ]
+        : past;
+
     return {
-      chartDetails: sorted.filter((d) => !isFutureMonth(d.month, d.year)),
+      chartDetails: chart,
       ledgerRows: ledger.reverse(),
       yearRows: years,
     };
-  }, [accountDetails, account?.type]);
+  }, [accountDetails, account?.type, account?.balance]);
 
   if (!accountDetails || accountDetails.length === 0) {
     return (

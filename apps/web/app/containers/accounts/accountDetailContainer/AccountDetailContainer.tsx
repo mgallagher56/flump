@@ -92,7 +92,15 @@ const AccountDetailContainer: FC = () => {
             isEditAccount
           />
         }
-        description={typeLabel}
+        // The type, unless the name already says it ("Student loan").
+        description={
+          typeLabel.toLowerCase() ===
+          String(account.name ?? "")
+            .trim()
+            .toLowerCase()
+            ? undefined
+            : typeLabel
+        }
         title={account.name ?? "Account"}
       />
 
