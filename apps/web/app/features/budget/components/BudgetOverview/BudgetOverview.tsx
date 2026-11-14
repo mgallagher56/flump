@@ -83,9 +83,14 @@ export const BudgetOverview: FC<BudgetOverviewProps> = ({ entries, picture: pict
         }
       />
       <KpiStrip
-        emptyPrompt={{
-          title: "Add your income and essential spending to see money in and months of cover",
-        }}
+        // One prompt only when both figures are unknown; a known figure is never hidden.
+        emptyPrompt={
+          !hasIncome && !cover
+            ? {
+                title: "Add your income and essential spending to see money in and months of cover",
+              }
+            : undefined
+        }
         items={[
           <KpiCard
             key="income"
@@ -94,7 +99,7 @@ export const BudgetOverview: FC<BudgetOverviewProps> = ({ entries, picture: pict
             valueFormat={{ fractionDigits: 0 }}
           />,
           <KpiCard
-            explain="How long your current and savings accounts would last if your income stopped, paying essential spending and minimum debt payments. From your saved budget and balances."
+            explain="An estimate of how long your current and savings accounts would last if your income stopped, covering essential spending and minimum debt payments."
             key="cover"
             label="Months of cover"
             value={

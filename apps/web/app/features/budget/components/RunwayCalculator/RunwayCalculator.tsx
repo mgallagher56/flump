@@ -337,7 +337,7 @@ export const RunwayCalculator: FC<RunwayCalculatorProps> = ({
           />
         )}
       </FormField>
-      <FormField label="Spending you would cut, a month">
+      <FormField label="Spending you would cut each month">
         {(field) => (
           <CurrencyInput
             id={field.id}
@@ -401,8 +401,8 @@ export const RunwayCalculator: FC<RunwayCalculatorProps> = ({
         {coverLabel}
       </p>
       <p className={introText()}>
-        How long the money you can draw on would last if your income stopped, paying essential
-        spending and minimum debt payments.
+        An estimate of how long the money you can draw on would last if your income stopped,
+        covering essential spending and minimum debt payments.
       </p>
       <dl className={breakdownList()}>
         <div className={breakdownRow()}>
@@ -412,7 +412,7 @@ export const RunwayCalculator: FC<RunwayCalculatorProps> = ({
           </dd>
         </div>
         <div className={breakdownRow()}>
-          <dt>Spending each month</dt>
+          <dt>Going out each month</dt>
           <dd>
             <Money size="sm" value={monthlyBurn} />
           </dd>
