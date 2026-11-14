@@ -1329,6 +1329,42 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
     });
   });
 
+  describe("AllowCheckInSources1794900000000 (R2-5 check-in)", () => {
+    const MIGRATION = "AllowCheckInSources1794900000000";
+    const account = async (): Promise<string> => {
+      const rows: { id: string }[] = await ds.query(
+        `INSERT INTO accounts (user_id, name, type, balance, currency)
+         VALUES ('user-a', 'Acc', 'Mortgage', -1000, 'GBP') RETURNING id`,
+      );
+      return rows[0].id;
+    };
+    const insert = (id: string, month: number, source: string) =>
+      ds.query(
+        `INSERT INTO account_details (account_id, user_id, year, month, value, as_of_date, source)
+         VALUES ($1, 'user-a', 2026, $2, -1000, make_date(2026, $2, 1), $3)`,
+        [id, month, source],
+      );
+
+    it("allows confirmed and calculated; down() relabels them manual; up again works", async () => {
+      await ds.runMigrations();
+      const id = await account();
+      await insert(id, 1, "confirmed");
+      await insert(id, 2, "calculated");
+      await expect(insert(id, 3, "guess")).rejects.toThrow(/CHK_account_details_source/);
+
+      await undoThrough(MIGRATION);
+      expect(await ds.query("SELECT month, source FROM account_details ORDER BY month")).toEqual([
+        { month: 1, source: "manual" },
+        { month: 2, source: "manual" },
+      ]);
+      await expect(insert(id, 4, "confirmed")).rejects.toThrow(/CHK_account_details_source/);
+
+      await ds.runMigrations();
+      await insert(id, 5, "calculated");
+      expect(await tables()).toEqual(ENTITY_TABLES);
+    });
+  });
+
   describe("SalarySacrificeDefaultFalse1794357400000", () => {
     const MIGRATION = "SalarySacrificeDefaultFalse1794357400000";
     const flag = async (userId: string): Promise<boolean> =>

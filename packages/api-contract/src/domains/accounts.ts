@@ -108,6 +108,10 @@ export const ACCOUNT_DETAIL_SOURCES = [
   "connected",
   "backfill",
   "agent",
+  /** R2-5 check-in: "No change" recorded last month's figure again. */
+  "confirmed",
+  /** R2-5 check-in: a loan balance worked out from its rate and payment, which the user kept. */
+  "calculated",
 ] as const;
 export const AccountDetailSource = z.enum(ACCOUNT_DETAIL_SOURCES);
 

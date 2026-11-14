@@ -1,6 +1,7 @@
 export * from "./account-category.js";
 export * from "./ai-context-pack.js";
 export * from "./anonymise.js";
+export * from "./check-in.js";
 export * from "./compliance/advice-lexicon.js";
 export * from "./debt-payoff.js";
 export * from "./deposit-timeline.js";

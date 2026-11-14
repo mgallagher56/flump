@@ -10,6 +10,11 @@ export interface SnapshotRowWrite {
   /** Already signed by account type (see storedBalance). */
   value: number;
   asOfDate: string;
+  /**
+   * Check-in rows only (R2-5): `confirmed` ("No change") or `calculated`. Overrides
+   * `opts.source` for this row; leave it out for a typed figure.
+   */
+  source?: "manual" | "confirmed" | "calculated";
 }
 
 export interface SnapshotWriteOptions {
@@ -81,7 +86,7 @@ async function writeAll(
           month: r.month,
           value: r.value,
           asOfDate: r.asOfDate,
-          source: opts.source,
+          source: r.source ?? opts.source,
           importBatchId: opts.importBatchId,
           updatedAt,
         })),

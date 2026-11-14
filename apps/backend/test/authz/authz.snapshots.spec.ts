@@ -1,4 +1,5 @@
 import "reflect-metadata";
+import { calculateCheckInBalance } from "@flump/finance-engine";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { Account } from "../../src/entities/account.entity";
 import { AccountDetail } from "../../src/entities/account-detail.entity";
@@ -125,11 +126,71 @@ describe.skipIf(dbMode === "skip")("authz: snapshots controller (real Postgres)"
     expect(res.body.issues).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ path: "body.values.0.userId", code: "unrecognized_keys" }),
-        expect.objectContaining({ path: "body.values.0.source", code: "unrecognized_keys" }),
+        // `source` is a known key since R2-5, but "connected" is server-set only.
+        expect.objectContaining({ path: "body.values.0.source" }),
       ]),
     );
     expect(await rowsFor(accountB)).toHaveLength(0);
     expect(await rowsFor(accountA)).toHaveLength(0);
+  });
+
+  it("R2-5: a client may send manual, confirmed or calculated; server-set sources are rejected", async () => {
+    const ok = await put(PAST, h.tokens.a, {
+      values: [{ accountId: accountA, value: 100, source: "confirmed" }],
+    });
+    expect(ok.status).toBe(200);
+    expect(ok.body.values[0]).toMatchObject({ source: "confirmed" });
+    expect((await rowsFor(accountA))[0]).toMatchObject({ source: "confirmed" });
+    for (const source of ["onboarding", "connected", "backfill", "agent", "guess"]) {
+      const res = await put(PAST, h.tokens.a, {
+        values: [{ accountId: accountA2, value: 1, source }],
+      });
+      expect(res.status).toBe(400);
+      expect(res.body).toMatchObject({ code: "validation_failed" });
+    }
+    expect(await rowsFor(accountA2)).toHaveLength(0);
+  });
+
+  it("R2-5: a calculated value must match the engine's figure to the penny", async () => {
+    const created = await h.call("post", "/accounts", h.tokens.a, {
+      name: "A Mortgage",
+      type: "Mortgage",
+      balance: 186000,
+      interestRate: 4.5,
+      monthlyContribution: 1250,
+    });
+    expect(created.status).toBe(201);
+    const mortgage = created.body.id as string;
+    expect(
+      (await put("2001-01", h.tokens.a, { values: [{ accountId: mortgage, value: 186000 }] }))
+        .status,
+    ).toBe(200);
+    const expected = calculateCheckInBalance({
+      type: "Mortgage",
+      interestRate: 4.5,
+      monthlyPayment: 1250,
+      base: { value: 186000, month: "2001-01" },
+      month: PAST,
+    });
+    expect(expected?.value).toBe(185447.5);
+
+    const wrong = await put(PAST, h.tokens.a, {
+      values: [{ accountId: mortgage, value: 185000, source: "calculated" }],
+    });
+    expect(wrong.status).toBe(400);
+    const notCalculable = await put(PAST, h.tokens.a, {
+      values: [{ accountId: accountA, value: 100, source: "calculated" }],
+    });
+    expect(notCalculable.status).toBe(400);
+    expect(await rowsFor(mortgage)).toHaveLength(1);
+
+    const right = await put(PAST, h.tokens.a, {
+      values: [{ accountId: mortgage, value: expected?.value, source: "calculated" }],
+    });
+    expect(right.status).toBe(200);
+    const rows = await rowsFor(mortgage);
+    expect(rows[1]).toMatchObject({ source: "calculated" });
+    expect(Number(rows[1]?.value)).toBe(-185447.5);
   });
 
   it("rejects non-UUID account ids without a 500", async () => {

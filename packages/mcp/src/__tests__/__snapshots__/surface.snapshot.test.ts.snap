@@ -935,6 +935,8 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
                         "connected",
                         "backfill",
                         "agent",
+                        "confirmed",
+                        "calculated",
                         "other",
                       ],
                       "type": "string",
