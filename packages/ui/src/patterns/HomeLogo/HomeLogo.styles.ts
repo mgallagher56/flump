@@ -27,6 +27,14 @@ export const homeLogoLink = cva({
       // A graphic-only fill (no text on it).
       backgroundColor: "chart.primary",
     },
-    _navWide: { '&[aria-current="page"]::after': { display: "none" } },
   },
+  variants: {
+    // For a bar whose inline "Home" link marks the page from navWide (the web app): the logo's
+    // mark then steps aside. Marketing has no such link, so its logo keeps the mark at every width.
+    markBelowWideOnly: {
+      true: { _navWide: { '&[aria-current="page"]::after': { display: "none" } } },
+      false: {},
+    },
+  },
+  defaultVariants: { markBelowWideOnly: false },
 });

@@ -96,7 +96,11 @@ export function readMetrics(page: Page): Promise<DomMetrics> {
     };
     // N1: the whole card (or the figure's own box) is inside the viewport.
     const figureInFold = (el: Element): boolean => {
-      const rect = cardOf(el).getBoundingClientRect();
+      let card = cardOf(el);
+      // A card taller than the viewport (or a rounded page wrapper) can never be wholly inside it:
+      // judge the figure by its own box instead.
+      if (card.getBoundingClientRect().height > foldHeight) card = el;
+      const rect = card.getBoundingClientRect();
       return rect.width > 0 && rect.top >= 0 && rect.bottom <= foldHeight;
     };
 
