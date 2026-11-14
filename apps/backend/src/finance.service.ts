@@ -456,7 +456,8 @@ export class FinanceService {
         existingAccount.name = pa.name;
         if (existingAccount.type !== pa.type) {
           // A provider that reclassifies an account: the stored balance and history follow the
-          // new type's sign rule (BE-05, audit H6). History first, while the row is the old type.
+          // new type's sign rule (BE-05, audit H6). History first, while the row is the old type,
+          // so the database check holds after each statement even without a transaction.
           await resignHistoryForType(this.accountDetailRepository, existingAccount.id, pa.type);
           existingAccount.balance = storedBalance(pa.type, Number(existingAccount.balance));
         }

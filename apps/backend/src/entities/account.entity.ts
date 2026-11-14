@@ -1,7 +1,13 @@
-import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn } from "typeorm";
+import { Check, Column, CreateDateColumn, Entity, PrimaryGeneratedColumn } from "typeorm";
 import { numericTransformer } from "./numeric.transformer";
 
 @Entity("accounts")
+// BE-05 stored-balance rule (migration LiabilitySignRule1794358050000). Declared here too so a
+// synchronize-built dev database keeps it instead of dropping it as an unknown check.
+@Check(
+  "CHK_accounts_liability_balance_non_positive",
+  `"type" NOT IN ('Mortgage', 'Credit Card', 'Loan', 'Overdraft', 'Student Loan') OR "balance" <= 0`,
+)
 export class Account {
   @PrimaryGeneratedColumn("uuid")
   id: string;
