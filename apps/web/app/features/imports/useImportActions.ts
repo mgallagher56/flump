@@ -19,16 +19,16 @@ export interface ImportActions {
 export function useImportActions(batchId: string): ImportActions {
   const revalidator = useRevalidator();
   return useMemo<ImportActions>(() => {
-    const base = `/imports/${encodeURIComponent(batchId)}`;
+    const id = encodeURIComponent(batchId);
     return {
       preview: (accountMap, signal) =>
-        apiFetch<ImportPreview>(`${base}/preview`, {
+        apiFetch<ImportPreview>(`/imports/${id}/preview`, {
           method: "POST",
           body: { accountMap },
           signal,
         }),
       commit: async (accountMap, overwriteManual) => {
-        const done = await apiFetch<ImportBatch>(`${base}/commit`, {
+        const done = await apiFetch<ImportBatch>(`/imports/${id}/commit`, {
           method: "POST",
           body: { accountMap, overwriteManual },
           timeoutMs: 60_000,
@@ -37,7 +37,7 @@ export function useImportActions(batchId: string): ImportActions {
         return done;
       },
       revert: async () => {
-        const done = await apiFetch<ImportBatch>(`${base}/revert`, {
+        const done = await apiFetch<ImportBatch>(`/imports/${id}/revert`, {
           method: "POST",
           body: {},
           timeoutMs: 60_000,
