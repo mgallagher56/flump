@@ -7,7 +7,7 @@ export const CHART_RULES = {
   /** Area gradients fade to transparent and never exceed this opacity at their strongest point. */
   gradientMaxOpacity: 0.15,
   /** Donut and pie charts show at most this many slices, with the tail grouped as "Other". */
-  donutMaxSlices: 6,
+  donutMaxSlices: 5,
   /** Colour identifies the entity (account, asset, series), never the outcome (good or bad). */
   colourBy: "entity",
   /** Forecast lines are dashed so they are not told apart by colour alone. */

@@ -9,8 +9,8 @@ describe("formatAxisCurrency non-finite options", () => {
 });
 
 describe("capSeriesWithOther non-finite max", () => {
-  it("falls back to 6 when max is NaN", () => {
+  it("falls back to the donut cap of 5 when max is NaN", () => {
     const items = Array.from({ length: 8 }, (_, i) => ({ label: `s${i}`, value: 8 - i }));
-    expect(capSeriesWithOther(items, Number.NaN)).toHaveLength(6);
+    expect(capSeriesWithOther(items, Number.NaN)).toHaveLength(5);
   });
 });
