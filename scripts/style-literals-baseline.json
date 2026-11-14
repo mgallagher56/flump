@@ -12,8 +12,6 @@
     "packages/ui/src/foundations/ColorPalette/ColorPalette.tsx": 2,
     "packages/ui/src/foundations/DirectionCSignoff/DirectionCSignoff.styles.ts": 1,
     "packages/ui/src/foundations/SpacingAndRadii/SpacingAndRadii.tsx": 2,
-    "packages/ui/src/patterns/DebtToWealthChart/DebtToWealthChart.tsx": 4,
-    "packages/ui/src/patterns/PersonalAllowanceTaperBanner/PersonalAllowanceTaperBanner.tsx": 1,
     "packages/ui/src/patterns/SectionBand/SectionBand.styles.ts": 3,
     "packages/ui/src/primitives/KpiCard/KpiCard.styles.ts": 1
   },
@@ -28,7 +26,6 @@
     "apps/web/app/features/budget/components/RunwayCalculator/RunwayCalculator.styles.ts": 4,
     "apps/web/app/features/debt/components/PayoffStrategyControls/PayoffStrategyControls.styles.ts": 1,
     "apps/web/app/root.tsx": 2,
-    "packages/ui/src/patterns/GlobalBaselineBar/GlobalBaselineBar.styles.ts": 1,
     "packages/ui/src/primitives/Button/Button.styles.ts": 1,
     "packages/ui/src/primitives/Card/Card.styles.ts": 2,
     "packages/ui/src/primitives/ProgressBar/ProgressBar.styles.ts": 1,
