@@ -14,16 +14,18 @@ type Story = StoryObj<typeof TaxTrapCalculator>;
 
 const play: Story["play"] = async ({ canvasElement }) => {
   const canvas = within(canvasElement);
-  const table = canvas.getByRole("table", { name: TAX_TRAP_COPY.factsCaption });
-  const before = table.textContent;
+  const [table] = canvas.getAllByRole("table", { name: TAX_TRAP_COPY.factsCaption });
+  const before = table?.textContent;
   await fireEvent.change(
-    canvas.getByRole("slider", { name: `${TAX_TRAP_COPY.contribution} range slider` }),
+    canvas.getAllByRole("slider", {
+      name: `${TAX_TRAP_COPY.contribution} range slider`,
+    })[0] as HTMLElement,
     {
       target: { value: "20000" },
     },
   );
-  await expect(table.textContent).not.toBe(before);
-  await expect(canvas.getByTestId("tax-trap-childcare-status")).toHaveTextContent(
+  await expect(table?.textContent).not.toBe(before);
+  await expect(canvas.getAllByTestId("tax-trap-childcare-status")[0]).toHaveTextContent(
     "£100,000 or less",
   );
 };

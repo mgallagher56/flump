@@ -44,6 +44,15 @@ describe("incomeScenarioFromFacts", () => {
     expect(scenario.region).toBe("SCOTLAND");
   });
 
+  it("keeps the saved method at 0% so an extra contribution is modelled as it is paid", () => {
+    const { scenario } = incomeScenarioFromFacts({
+      ...FACTS,
+      pensionPercent: 0,
+      isSalarySacrifice: false,
+    });
+    expect(scenario.pension).toEqual({ method: "net-pay", pct: 0 });
+  });
+
   it("leaves an unanswered region out so the engine labels it", () => {
     expect(incomeScenarioFromFacts({ ...FACTS, taxRegion: null }).scenario.region).toBeUndefined();
   });
@@ -106,6 +115,28 @@ describe("selectMarginalRate", () => {
     const after = selectMarginalRate(FACTS, { now: new Date("2026-04-06T12:00:00Z") });
     expect(isFigureKnown(before) && before.value.ratesYear).toBe("2025/26");
     expect(isFigureKnown(after) && after.value.ratesYear).toBe("2026/27");
+  });
+});
+
+describe("taper thresholds (E31)", () => {
+  const next = (salary: number) => {
+    const fig = selectMarginalRate(
+      { ...FACTS, annualSalary: salary, studentLoanPlans: [], pensionPercent: 0 },
+      opts,
+    );
+    if (!isFigureKnown(fig)) throw new Error("expected known");
+    return fig.value.nextThreshold;
+  };
+
+  it("never offers the taper as the next threshold below £90,000 adjusted net income", () => {
+    expect(next(60_000)?.kind).not.toBe("taperStart");
+    expect(next(89_000)?.kind).not.toBe("taperStart");
+  });
+
+  it("offers it from £90,000", () => {
+    expect(next(95_000)?.kind).toBe("taperStart");
+    // £125,140 is both the taper end and the additional rate start.
+    expect(["taperEnd", "additionalRate"]).toContain(next(110_000)?.kind);
   });
 });
 

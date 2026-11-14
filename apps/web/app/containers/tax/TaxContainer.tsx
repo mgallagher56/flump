@@ -123,10 +123,13 @@ const TaxContainer: FC = () => {
           : userProfile.propertyOwnershipShare
         : 100.0;
 
-  // The pay planner (E25-T13) starts from saved details only and never writes back.
+  // The pay planner (E25-T13) starts from saved profile details only (not the local baseline,
+  // which the server cannot see) and never writes back.
+  const savedSalaryRaw = Number(userProfile?.annualSalary ?? 0);
+  const savedSalary = Number.isFinite(savedSalaryRaw) && savedSalaryRaw > 0 ? savedSalaryRaw : 0;
   const savedPensionPercent = Number(userProfile?.pensionPercent ?? 0);
   const payScenario = useNextPoundScenario({
-    salary: profileSalary,
+    salary: savedSalary,
     taxRegion: userProfile?.taxRegion ?? null,
     studentLoanPlans: userProfile?.studentLoanPlans ?? null,
     studentLoanPlan: userProfile?.studentLoanPlan ?? null,
@@ -137,8 +140,8 @@ const TaxContainer: FC = () => {
   const { formatCurrency } = useFormatCurrency();
   const percentFormat = new Intl.NumberFormat("en-GB", { maximumFractionDigits: 2 });
   const plannerBasis =
-    profileSalary > 0
-      ? `Starting from your figures: ${formatCurrency(profileSalary)} gross salary, ${percentFormat.format(Number.isFinite(savedPensionPercent) ? savedPensionPercent : 0)}% pension`
+    savedSalary > 0
+      ? `Starting from your figures: ${formatCurrency(savedSalary)} gross salary, ${percentFormat.format(Number.isFinite(savedPensionPercent) ? savedPensionPercent : 0)}% pension`
       : EXPLORER_COPY.defaultBasis;
 
   const [payeSalary, setPayeSalary] = useState<number>(profileSalary);

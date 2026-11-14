@@ -32,7 +32,7 @@ describe("TaxTrapCalculatorTool", () => {
     const setItemSpy = vi.spyOn(Storage.prototype, "setItem");
     render(<TaxTrapCalculatorTool />);
 
-    const ctaButton = screen.getByRole("button", { name: /continue with these figures/i });
+    const ctaButton = screen.getByRole("button", { name: /continue to sign up/i });
     fireEvent.click(ctaButton);
 
     expect(setItemSpy).toHaveBeenCalledWith("flump_onboarding_seed", expect.any(String));

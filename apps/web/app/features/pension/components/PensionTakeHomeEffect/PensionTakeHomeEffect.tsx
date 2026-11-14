@@ -44,7 +44,7 @@ export const PENSION_TAKE_HOME_COPY = {
   methodSalarySacrifice:
     "Assumes the extra is paid through your employer by salary sacrifice, like your current contribution.",
   methodNetPay:
-    "Assumes the extra is paid through your employer from gross pay (net pay), like your current contribution.",
+    "Assumes the extra is taken from your pay before Income Tax (a net pay arrangement), like your current contribution.",
   methodAssumed: "Assumes the extra is paid through your employer by salary sacrifice.",
 } as const;
 
@@ -77,7 +77,11 @@ export const PensionTakeHomeEffect: FC<PensionTakeHomeEffectProps> = ({ facts, e
 
   if (missing.length > 0) {
     return (
-      <p className={effectNote()} data-testid="pension-take-home-effect">
+      <p
+        className={effectNote()}
+        data-testid="pension-take-home-effect"
+        id="pension-take-home-effect"
+      >
         {PENSION_TAKE_HOME_COPY.missing}{" "}
         <Link className={effectLink()} to="/app/profile">
           {PENSION_TAKE_HOME_COPY.missingLink}
@@ -88,7 +92,11 @@ export const PensionTakeHomeEffect: FC<PensionTakeHomeEffectProps> = ({ facts, e
   }
   if (!result) {
     return (
-      <p className={effectNote()} data-testid="pension-take-home-effect">
+      <p
+        className={effectNote()}
+        data-testid="pension-take-home-effect"
+        id="pension-take-home-effect"
+      >
         {PENSION_TAKE_HOME_COPY.noExtra}
       </p>
     );
@@ -106,7 +114,11 @@ export const PensionTakeHomeEffect: FC<PensionTakeHomeEffectProps> = ({ facts, e
         : PENSION_TAKE_HOME_COPY.methodSalarySacrifice;
 
   return (
-    <div className={effectRoot()} data-testid="pension-take-home-effect">
+    <div
+      className={effectRoot()}
+      data-testid="pension-take-home-effect"
+      id="pension-take-home-effect"
+    >
       <div className={effectHeader()}>
         <h3 className={effectTitle()}>{PENSION_TAKE_HOME_COPY.heading}</h3>
         <div className={effectBadges()}>

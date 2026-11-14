@@ -7,7 +7,7 @@
 export const TAX_TRAP_COPY = {
   title: "Pension contributions and the £100,000 Personal Allowance taper",
   intro:
-    "See how a pension contribution changes adjusted net income, the Personal Allowance and take-home pay. Figures come from the Flump tax engine.",
+    "Estimate how a pension contribution changes adjusted net income, the Personal Allowance and take-home pay. Figures are estimates from the Flump tax engine.",
   controlsLabel: "Your figures",
   contentLabel: "Estimated outcome",
   grossIncome: "Gross pay a year",
@@ -35,13 +35,13 @@ export const TAX_TRAP_COPY = {
     "The Personal Allowance goes down by £1 for every £2 of adjusted net income over the taper start, until it reaches £0.",
   childcareHeading: "Childcare support",
   childcareNote:
-    "Tax-Free Childcare and the extended funded childcare hours for working parents in England are not available to a parent whose adjusted net income is over £100,000. The universal 15 hours for 3 and 4 year olds are not income-tested.",
+    "Tax-Free Childcare and the extended funded childcare hours for working parents in England are not available if either parent's adjusted net income is over £100,000. The universal 15 hours for 3- and 4-year-olds are not income-tested.",
   childcareSource: "Check the rules on GOV.UK",
   assumptionsHeading: "How this is worked out",
   unverifiedBadge: "Unverified estimate",
 } as const;
 
-export const TAX_TRAP_DEFAULT_CTA = "Continue with these figures";
+export const TAX_TRAP_DEFAULT_CTA = "Continue to sign up";
 
 /** The taper start and end, from the engine rules. */
 export const taperRange = (start: string, end: string): string =>
