@@ -28,6 +28,14 @@ import {
 
 const TOKEN_EXPIRY_DAYS = [7, 30, 90, 365] as const;
 
+export const TOKENS_UNAVAILABLE = "Connection tokens are not available for your account yet.";
+export const CREATE_FAILED = "The token could not be created. Try again in a moment.";
+export const REVOKE_FAILED = "The token could not be revoked. Try again in a moment.";
+export const RATE_LIMITED = "Too many tokens created recently. Try again later.";
+export const EXPORT_FAILED = "The context pack could not be loaded. Try again in a moment.";
+/** The only messages the card shows; anything else falls back to a fixed line. */
+const SAFE_MESSAGES = new Set([TOKENS_UNAVAILABLE, CREATE_FAILED, REVOKE_FAILED, RATE_LIMITED]);
+
 /** The opt-in write scope (E17 re-plan section 5): stage only, never commit. */
 export const STAGE_SCOPE = "write:stage";
 export const STAGING_TOGGLE_LABEL = "Let this connection stage imports for you to review";
@@ -101,7 +109,7 @@ export const McpConnectionCard: FC<McpConnectionCardProps> = ({
   /** A safe, user-facing message from the last failed create, revoke or export. */
   const [actionError, setActionError] = useState<string | null>(null);
   const errorText = (e: unknown, fallback: string) =>
-    e instanceof Error && e.message ? e.message : fallback;
+    e instanceof Error && SAFE_MESSAGES.has(e.message) ? e.message : fallback;
 
   const activeTokenPlaceholder =
     newlyCreatedToken ||
@@ -155,7 +163,7 @@ export const McpConnectionCard: FC<McpConnectionCardProps> = ({
       setShowGenerateForm(false);
       setAllowStaging(false);
     } catch (e) {
-      setActionError(errorText(e, "The token could not be created. Try again in a moment."));
+      setActionError(errorText(e, CREATE_FAILED));
     } finally {
       setGenerating(false);
     }
@@ -166,7 +174,7 @@ export const McpConnectionCard: FC<McpConnectionCardProps> = ({
     try {
       if (onRevokeToken) await onRevokeToken(id);
     } catch (e) {
-      setActionError(errorText(e, "The token could not be revoked. Try again in a moment."));
+      setActionError(errorText(e, REVOKE_FAILED));
       return;
     }
     setTokens((prev) => prev.map((t) => (t.id === id ? { ...t, isRevoked: true } : t)));
@@ -217,7 +225,7 @@ export const McpConnectionCard: FC<McpConnectionCardProps> = ({
         URL.revokeObjectURL(url);
       }
     } catch {
-      setActionError("The context pack could not be loaded. Try again in a moment.");
+      setActionError(EXPORT_FAILED);
     } finally {
       setExportingContextPack(false);
     }

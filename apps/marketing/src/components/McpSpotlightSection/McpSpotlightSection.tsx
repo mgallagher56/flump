@@ -66,9 +66,9 @@ export const McpSpotlightSection: FC = () => {
             <p className={spotlightLead()}>
               Flump's MCP server lets MCP clients such as Claude Desktop and Cursor answer questions
               from the accounts, budget, debts and tax records you have saved in Flump. The tools
-              read your saved data, and UK tax figures come from a deterministic engine. If you
-              switch it on, a connection can also stage an import of your figures. Nothing is saved
-              until you review and confirm it in Flump.
+              read your saved data, and UK tax figures come from a deterministic engine. Staging an
+              import for you to review is being rolled out and is not on every account yet. Where it
+              is available it is off by default, and nothing is saved until you confirm it in Flump.
             </p>
 
             <div className={stack({ gap: "3" })}>

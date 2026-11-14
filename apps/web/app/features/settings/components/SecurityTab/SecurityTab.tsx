@@ -129,8 +129,8 @@ export const SecurityTab: FC<SecurityTabProps> = ({ email }) => {
       />
 
       {canStage ? (
-        <Card as="section" aria-labelledby="imports-heading" className={sectionCard()}>
-          <h2 className={sectionHeading()} id="imports-heading">
+        <Card as="section" aria-labelledby="settings-imports-heading" className={sectionCard()}>
+          <h2 className={sectionHeading()} id="settings-imports-heading">
             Imports
           </h2>
           <p className={sectionLead()}>

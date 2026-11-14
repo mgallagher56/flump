@@ -120,3 +120,17 @@ export const StagingOptIn: Story = {
     await expect(toggle.checked).toBe(true);
   },
 };
+
+export const CreateFails: Story = {
+  args: {
+    onGenerateToken: fn(async () => {
+      throw new Error("Connection tokens are not available for your account yet.");
+    }),
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(canvas.getByTestId("generate-token-trigger"));
+    await userEvent.click(canvas.getByTestId("confirm-generate-token"));
+    await expect((await canvas.findByRole("alert")).textContent).toContain("not available");
+  },
+};
