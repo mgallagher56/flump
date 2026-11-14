@@ -22,9 +22,7 @@ export const splitDetail = css({ gridColumn: { lg: "span 8" } });
 
 export const cardTitle = css({
   margin: "0",
-  fontFamily: "display",
-  fontSize: "md",
-  fontWeight: "semibold",
+  textStyle: "heading.sm",
   color: "text.primary",
 });
 
