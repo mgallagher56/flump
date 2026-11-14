@@ -4,6 +4,7 @@
 import fc from "fast-check";
 import { describe, it } from "vitest";
 import type { BudgetEntryItem } from "../../ai-context-pack.js";
+import { DEFAULT_NET_WORTH_BASIS } from "../../net-worth-basis.js";
 import { PortfolioSnapshot, type RawAccount } from "../../portfolio.js";
 import { buildFinancialPicture } from "../build.js";
 import { type Figure, figureKnown, figureUnknown } from "../figure.js";
@@ -105,11 +106,23 @@ describe("selectHousingCost properties", () => {
         const profile = { ...base, housingStatus: s, monthlyHousingCost: c };
         const opts = { taxYear: "2026/27", asOf: new Date("2026-11-14T00:00:00Z") } as const;
         const without = buildFinancialPicture(
-          { profile, accounts: accs, details: [], budget: [] },
+          {
+            profile,
+            netWorthBasis: DEFAULT_NET_WORTH_BASIS,
+            accounts: accs,
+            details: [],
+            budget: [],
+          },
           opts,
         );
         const withRows = buildFinancialPicture(
-          { profile, accounts: accs, details: [], budget: rows },
+          {
+            profile,
+            netWorthBasis: DEFAULT_NET_WORTH_BASIS,
+            accounts: accs,
+            details: [],
+            budget: rows,
+          },
           opts,
         );
         return JSON.stringify(without.housingCost) === JSON.stringify(withRows.housingCost);

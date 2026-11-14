@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { DEFAULT_NET_WORTH_BASIS } from "./net-worth-basis.js";
 import {
   categorizeAccountType,
   PortfolioSnapshot,
@@ -132,8 +133,10 @@ describe("PortfolioSnapshot domain module", () => {
 
     it("calculates total assets and liabilities", () => {
       const snapshot = new PortfolioSnapshot(sampleAccounts, sampleDetails);
-      expect(snapshot.getTotalAssets()).toBe(81500);
-      expect(snapshot.getTotalLiabilities()).toBe(210000 + 2400 + 500 + 8000);
+      expect(snapshot.getTotalAssets(DEFAULT_NET_WORTH_BASIS)).toBe(81500);
+      expect(snapshot.getTotalLiabilities(DEFAULT_NET_WORTH_BASIS)).toBe(
+        210000 + 2400 + 500 + 8000,
+      );
     });
 
     it("calculates weighted savings interest rate", () => {
@@ -211,7 +214,7 @@ describe("PortfolioSnapshot domain module", () => {
   describe("getMonthlyHistory", () => {
     it("generates chronological history points from account details", () => {
       const snapshot = new PortfolioSnapshot(sampleAccounts, sampleDetails);
-      const history = snapshot.getMonthlyHistory(12);
+      const history = snapshot.getMonthlyHistory(DEFAULT_NET_WORTH_BASIS, 12);
 
       expect(history.length).toBe(2);
       expect(history[0]?.month).toBe(1);

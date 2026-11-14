@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { DEFAULT_NET_WORTH_BASIS } from "../../net-worth-basis.js";
 import type { TaxRecord } from "../../tax-calculator.js";
 import { taxRecord } from "../__fixtures__/builders.js";
 import { buildFinancialPicture } from "../build.js";
@@ -146,6 +147,7 @@ describe("selectEstimatedTaxDue (C-11)", () => {
     const picture = buildFinancialPicture(
       {
         profile: employee(30000),
+        netWorthBasis: DEFAULT_NET_WORTH_BASIS,
         accounts: [],
         details: [],
         budget: [],

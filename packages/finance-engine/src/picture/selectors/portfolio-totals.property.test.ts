@@ -3,6 +3,7 @@
  */
 import fc from "fast-check";
 import { describe, it } from "vitest";
+import { DEFAULT_NET_WORTH_BASIS } from "../../net-worth-basis.js";
 import { PortfolioSnapshot, type RawAccount } from "../../portfolio.js";
 import { selectLoanToValue } from "./loan-to-value.js";
 import { HOME_ESTIMATE_LABEL, selectNetWorth } from "./portfolio-totals.js";
@@ -31,10 +32,11 @@ const accounts = fc
   .map((rows): RawAccount[] => rows.map(({ row, name }, i) => ({ id: `a${i}`, name, ...row })));
 
 describe("net worth and loan to value (properties)", () => {
-  it("net worth is always total assets less total liabilities", () => {
+  it("net worth is always total assets less total liabilities, under any basis", () => {
+    const basis = fc.record({ countProperty: fc.boolean(), countStudentLoan: fc.boolean() });
     fc.assert(
-      fc.property(accounts, (rows) => {
-        const nw = selectNetWorth(new PortfolioSnapshot(rows));
+      fc.property(accounts, basis, (rows, b) => {
+        const nw = selectNetWorth(new PortfolioSnapshot(rows), b);
         return nw.totalAssets - nw.totalLiabilities === nw.netWorth;
       }),
       PARAMS,
@@ -45,13 +47,13 @@ describe("net worth and loan to value (properties)", () => {
     fc.assert(
       fc.property(accounts, (rows) => {
         const snap = new PortfolioSnapshot(rows);
-        const nw = selectNetWorth(snap);
+        const nw = selectNetWorth(snap, DEFAULT_NET_WORTH_BASIS);
         const labelled = rows
           .filter((r) => r.type === "Property" && r.name === HOME_ESTIMATE_LABEL)
           .reduce((sum, r) => sum + Number(r.balance), 0);
         return (
-          nw.netWorth === snap.getTotalNetWorth() &&
-          nw.totalAssets === snap.getTotalAssets() &&
+          nw.netWorth === snap.getTotalNetWorth(DEFAULT_NET_WORTH_BASIS) &&
+          nw.totalAssets === snap.getTotalAssets(DEFAULT_NET_WORTH_BASIS) &&
           nw.homeEstimate === labelled
         );
       }),

@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { DEFAULT_NET_WORTH_BASIS } from "./net-worth-basis.js";
 import { PortfolioSnapshot, type RawAccount, type RawAccountDetail } from "./portfolio.js";
 
 const current = (balance: number, id = "cur"): RawAccount => ({
@@ -24,9 +25,11 @@ describe("E23 D22: current figure and history", () => {
       ],
     );
     expect(snapshot.getLatestBalance("sav")).toBe(5000);
-    expect(snapshot.getTotalNetWorth()).toBe(5000);
+    expect(snapshot.getTotalNetWorth(DEFAULT_NET_WORTH_BASIS)).toBe(5000);
     // History keeps the recorded past figures.
-    expect(snapshot.getMonthlyHistory().map((p) => p.netWorth)).toEqual([1000, 2000]);
+    expect(snapshot.getMonthlyHistory(DEFAULT_NET_WORTH_BASIS).map((p) => p.netWorth)).toEqual([
+      1000, 2000,
+    ]);
   });
 
   const table: Array<{
@@ -90,7 +93,7 @@ describe("E23 D22: current figure and history", () => {
 
   it.each(table)("$name", ({ details, expected }) => {
     const snapshot = new PortfolioSnapshot([saving(0), current(0)], details);
-    const history = snapshot.getMonthlyHistory(24);
+    const history = snapshot.getMonthlyHistory(DEFAULT_NET_WORTH_BASIS, 24);
     expect(history.map((p) => ({ month: p.month, netWorth: p.netWorth }))).toEqual(expected);
   });
 
@@ -105,7 +108,7 @@ describe("E23 D22: current figure and history", () => {
       { accountId: "pen", year: 2026, month: 1, value: 30000 },
       { accountId: "sl", year: 2026, month: 1, value: -40000 },
     ]);
-    expect(snapshot.getMonthlyHistory()[0]?.netWorth).toBe(230000);
+    expect(snapshot.getMonthlyHistory(DEFAULT_NET_WORTH_BASIS)[0]?.netWorth).toBe(230000);
   });
 });
 
@@ -114,10 +117,12 @@ describe("E23 D17: asset signs", () => {
     const base = new PortfolioSnapshot([saving(4000)], []);
     const overdrawn = new PortfolioSnapshot([saving(4000), current(-1500)], []);
 
-    expect(overdrawn.getTotalNetWorth()).toBe(base.getTotalNetWorth() - 1500);
+    expect(overdrawn.getTotalNetWorth(DEFAULT_NET_WORTH_BASIS)).toBe(
+      base.getTotalNetWorth(DEFAULT_NET_WORTH_BASIS) - 1500,
+    );
     expect(overdrawn.getTotalConsumerDebt()).toBe(1500);
-    expect(overdrawn.getTotalLiabilities()).toBe(1500);
-    expect(overdrawn.getTotalAssets()).toBe(4000);
+    expect(overdrawn.getTotalLiabilities(DEFAULT_NET_WORTH_BASIS)).toBe(1500);
+    expect(overdrawn.getTotalAssets(DEFAULT_NET_WORTH_BASIS)).toBe(4000);
     expect(overdrawn.getAccount("cur")?.nominalBalance).toBe(-1500);
   });
 
@@ -145,8 +150,8 @@ describe("E23 D17: asset signs", () => {
   it("liabilities are normalised by type whatever the stored sign", () => {
     const pos = new PortfolioSnapshot([{ id: "c", type: "Credit Card", balance: 900 }], []);
     const neg = new PortfolioSnapshot([{ id: "c", type: "Credit Card", balance: -900 }], []);
-    expect(pos.getTotalNetWorth()).toBe(-900);
-    expect(neg.getTotalNetWorth()).toBe(-900);
+    expect(pos.getTotalNetWorth(DEFAULT_NET_WORTH_BASIS)).toBe(-900);
+    expect(neg.getTotalNetWorth(DEFAULT_NET_WORTH_BASIS)).toBe(-900);
   });
 
   it("history keeps the real sign of an overdrawn current account", () => {
@@ -157,7 +162,7 @@ describe("E23 D17: asset signs", () => {
         { accountId: "sav", year: 2026, month: 1, value: 4000 },
       ],
     );
-    expect(snapshot.getMonthlyHistory()[0]).toMatchObject({
+    expect(snapshot.getMonthlyHistory(DEFAULT_NET_WORTH_BASIS)[0]).toMatchObject({
       netWorth: 2500,
       totalAssets: 4000,
       totalLiabilities: 1500,

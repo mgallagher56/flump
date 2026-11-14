@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { DEFAULT_NET_WORTH_BASIS } from "./net-worth-basis.js";
 import { categorizeAccountType, PortfolioSnapshot, type RawAccount } from "./portfolio.js";
 
 const accounts: RawAccount[] = [
@@ -21,14 +22,14 @@ describe("E23 account types", () => {
     const snap = new PortfolioSnapshot(accounts);
     expect(snap.getTotalProperty()).toBe(260000);
     expect(snap.getTotalLiquidCash()).toBe(2000);
-    expect(snap.getTotalAssets()).toBe(262000);
+    expect(snap.getTotalAssets(DEFAULT_NET_WORTH_BASIS)).toBe(262000);
   });
 
   it("excludes student loans from net worth, liabilities and debt items but reports them", () => {
     const snap = new PortfolioSnapshot(accounts);
     expect(snap.getTotalStudentLoans()).toBe(45000);
-    expect(snap.getTotalLiabilities()).toBe(181500);
-    expect(snap.getTotalNetWorth()).toBe(262000 - 181500);
+    expect(snap.getTotalLiabilities(DEFAULT_NET_WORTH_BASIS)).toBe(181500);
+    expect(snap.getTotalNetWorth(DEFAULT_NET_WORTH_BASIS)).toBe(262000 - 181500);
     expect(snap.toDebtItems().map((d) => d.id)).toEqual(["o"]);
   });
 
@@ -45,9 +46,15 @@ describe("E23 account types", () => {
       { id: "w", name: "John Smith", type: "Owed", balance: 500 },
     ]);
     expect(categorizeAccountType("Owed")).toBe("other");
-    expect(withIou.getTotalAssets()).toBe(base.getTotalAssets() + 500);
-    expect(withIou.getTotalNetWorth()).toBe(base.getTotalNetWorth() + 500);
-    expect(withIou.getTotalLiabilities()).toBe(base.getTotalLiabilities());
+    expect(withIou.getTotalAssets(DEFAULT_NET_WORTH_BASIS)).toBe(
+      base.getTotalAssets(DEFAULT_NET_WORTH_BASIS) + 500,
+    );
+    expect(withIou.getTotalNetWorth(DEFAULT_NET_WORTH_BASIS)).toBe(
+      base.getTotalNetWorth(DEFAULT_NET_WORTH_BASIS) + 500,
+    );
+    expect(withIou.getTotalLiabilities(DEFAULT_NET_WORTH_BASIS)).toBe(
+      base.getTotalLiabilities(DEFAULT_NET_WORTH_BASIS),
+    );
     expect(withIou.getTotalConsumerDebt()).toBe(base.getTotalConsumerDebt());
     expect(withIou.getTotalLiquidCash()).toBe(base.getTotalLiquidCash());
     expect(withIou.toDebtItems().map((d) => d.id)).not.toContain("w");

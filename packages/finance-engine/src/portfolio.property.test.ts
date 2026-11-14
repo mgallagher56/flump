@@ -4,6 +4,7 @@
  */
 import fc from "fast-check";
 import { describe, it } from "vitest";
+import { DEFAULT_NET_WORTH_BASIS } from "./net-worth-basis.js";
 import { PortfolioSnapshot, type RawAccount, type RawAccountDetail } from "./portfolio.js";
 
 const PARAMS = { seed: 20260101, numRuns: 200 } as const;
@@ -38,8 +39,10 @@ describe("PortfolioSnapshot properties", () => {
       fc.property(accountList, (accounts) => {
         const snap = new PortfolioSnapshot(accounts, []);
         return (
-          snap.getTotalNetWorth() === expectedNetWorth(accounts) &&
-          snap.getTotalAssets() - snap.getTotalLiabilities() === snap.getTotalNetWorth()
+          snap.getTotalNetWorth(DEFAULT_NET_WORTH_BASIS) === expectedNetWorth(accounts) &&
+          snap.getTotalAssets(DEFAULT_NET_WORTH_BASIS) -
+            snap.getTotalLiabilities(DEFAULT_NET_WORTH_BASIS) ===
+            snap.getTotalNetWorth(DEFAULT_NET_WORTH_BASIS)
         );
       }),
       PARAMS,
@@ -67,8 +70,8 @@ describe("PortfolioSnapshot properties", () => {
             { id: "m2", type: t2, balance: b2 + x },
           ];
           return (
-            new PortfolioSnapshot(before, []).getTotalNetWorth() ===
-            new PortfolioSnapshot(after, []).getTotalNetWorth()
+            new PortfolioSnapshot(before, []).getTotalNetWorth(DEFAULT_NET_WORTH_BASIS) ===
+            new PortfolioSnapshot(after, []).getTotalNetWorth(DEFAULT_NET_WORTH_BASIS)
           );
         },
       ),
@@ -80,11 +83,13 @@ describe("PortfolioSnapshot properties", () => {
     fc.assert(
       fc.property(accountList, liabilityType, pounds, (accounts, type, stored) => {
         const x = Math.abs(stored);
-        const before = new PortfolioSnapshot(accounts, []).getTotalNetWorth();
+        const before = new PortfolioSnapshot(accounts, []).getTotalNetWorth(
+          DEFAULT_NET_WORTH_BASIS,
+        );
         const after = new PortfolioSnapshot(
           [...accounts, { id: "liab", type, balance: stored }],
           [],
-        ).getTotalNetWorth();
+        ).getTotalNetWorth(DEFAULT_NET_WORTH_BASIS);
         return after === before - x;
       }),
       PARAMS,
@@ -100,7 +105,8 @@ describe("PortfolioSnapshot properties", () => {
           [],
         );
         return (
-          after.getTotalNetWorth() === before.getTotalNetWorth() - x &&
+          after.getTotalNetWorth(DEFAULT_NET_WORTH_BASIS) ===
+            before.getTotalNetWorth(DEFAULT_NET_WORTH_BASIS) - x &&
           after.getTotalConsumerDebt() === before.getTotalConsumerDebt() + x
         );
       }),
@@ -127,7 +133,7 @@ describe("PortfolioSnapshot properties", () => {
           balance: 0,
         }));
         const snap = new PortfolioSnapshot(accounts, details as RawAccountDetail[]);
-        const history = snap.getMonthlyHistory(1000);
+        const history = snap.getMonthlyHistory(DEFAULT_NET_WORTH_BASIS, 1000);
 
         // Reference model: last row wins per (account, month), then last known at or before m.
         const byKey = new Map<string, number>();
