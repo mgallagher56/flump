@@ -1,6 +1,6 @@
 import { DEFAULT_NET_WORTH_BASIS } from "@flump/finance-engine";
 import type { Meta, StoryObj } from "@storybook/react";
-import { expect, fn, within } from "storybook/test";
+import { expect, fn, userEvent, within } from "storybook/test";
 import {
   EXAMPLE_ACCOUNTS,
   exampleDetails,
@@ -54,5 +54,12 @@ export const Trend: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     await expect(canvas.getAllByText(/^Net worth each month since/)[0]).toBeDefined();
+    const toggle = canvas.getByRole("button", { name: "Show changes by account and by month" });
+    await userEvent.click(toggle);
+    await userEvent.click(canvas.getByRole("tab", { name: "By month" }));
+    await expect(canvas.getByRole("tab", { name: "By month" })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
   },
 };

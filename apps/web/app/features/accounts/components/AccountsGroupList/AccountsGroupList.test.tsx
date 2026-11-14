@@ -30,8 +30,8 @@ const row = (over: Partial<AccountRow>): AccountRow => ({
 const props = { totalOwn: 0, totalOwe: 0, netWorth: 0, leftOut: [] };
 
 describe("<AccountsGroupList />", () => {
-  test("splits rows into what you own and what you owe, each with a type column and total", () => {
-    const { getByRole, getByText } = customRender(
+  test("splits rows into what you own and what you owe, each a list with a total", () => {
+    const { getByRole, getByText, queryByRole } = customRender(
       <AccountsGroupList
         leftOut={[]}
         netWorth={12000}
@@ -44,12 +44,13 @@ describe("<AccountsGroupList />", () => {
         totalOwn={252000}
       />,
     );
-    const own = getByRole("table", { name: "What you own" });
-    const owe = getByRole("table", { name: "What you owe" });
+    const own = getByRole("list", { name: "What you own" });
+    const owe = getByRole("list", { name: "What you owe" });
     expect(own.textContent).toContain("Home (your estimate)");
     expect(own.textContent).toContain("Property");
+    expect(queryByRole("table")).toBeNull();
+    expect(queryByRole("columnheader")).toBeNull();
     expect(owe.textContent).toContain("Nationwide");
-    expect(getByRole("columnheader", { name: "Amount owed" })).toBeDefined();
     expect(getByText("Total you own").nextElementSibling?.textContent).toBe("£252,000");
     expect(getByText("Total you owe").nextElementSibling?.textContent).toBe("£240,000");
     expect(getByText("Net worth").nextElementSibling?.textContent).toBe("£12,000");
@@ -81,25 +82,83 @@ describe("<AccountsGroupList />", () => {
     );
   });
 
-  test("keeps rows beyond the first eight behind a quiet drawer", () => {
-    const rows = Array.from({ length: 10 }, (_, i) => row({ id: `a${i}`, name: `Account ${i}` }));
-    const { getByRole } = customRender(<AccountsGroupList {...props} rows={rows} />);
-    const trigger = getByRole("button", { name: /Show 2 more accounts/ });
-    expect(trigger.getAttribute("aria-expanded")).toBe("false");
+  test("shows the type under the name only when it differs from the name", () => {
+    const { getByRole } = customRender(
+      <AccountsGroupList
+        {...props}
+        rows={[
+          row({ id: "a1", name: "Monzo current", type: "Current" }),
+          row({ id: "a2", name: "Savings", type: "Savings" }),
+        ]}
+      />,
+    );
+    const own = getByRole("list", { name: "What you own" });
+    const items = own.querySelectorAll("li");
+    expect(items[0]?.textContent).toContain("Current account");
+    expect(items[1]?.textContent).not.toContain("SavingsSavings");
+    expect(items[1]?.textContent?.match(/Savings/g)?.length).toBe(1);
   });
 
-  test("notes that a student loan is not in the total or net worth when it is left out", () => {
-    const { getByText, getByTestId } = customRender(
+  test("keeps rows beyond the first eight behind Show all", () => {
+    const rows = Array.from({ length: 10 }, (_, i) => row({ id: `a${i}`, name: `Account ${i}` }));
+    const { getByRole } = customRender(<AccountsGroupList {...props} rows={rows} />);
+    expect(getByRole("button", { name: /Show all 10 accounts/ })).toBeDefined();
+    expect(getByRole("list", { name: "What you own" }).querySelectorAll("li").length).toBe(8);
+  });
+
+  test("puts a left-out student loan in its own group with a footnote and no total", () => {
+    const { getByText, getByTestId, getByRole, queryByText } = customRender(
       <AccountsGroupList
         {...props}
         leftOut={["studentLoan"]}
         rows={[row({ id: "s1", name: "SLC", type: "Student Loan" })]}
       />,
     );
-    expect(getByText(/Student loans are not in this total or your net worth/)).toBeDefined();
+    expect(getByRole("list", { name: "Not counted in net worth" }).textContent).toContain("SLC");
+    expect(queryByText("What you owe")).toBeNull();
+    expect(queryByText("Total you owe")).toBeNull();
+    expect(
+      getByText(/Student loans are not in your net worth\. Repayments come out/),
+    ).toBeDefined();
     expect(getByTestId("accounts-net-worth-basis").textContent).toBe(
       "Not counting your student loan. Change what counts",
     );
+  });
+
+  test("puts left-out property and mortgage in the not counted group", () => {
+    const { getByRole } = customRender(
+      <AccountsGroupList
+        {...props}
+        leftOut={["property", "mortgage"]}
+        rows={[
+          row({ id: "a1", name: "Monzo current", type: "Current" }),
+          row({ id: "h1", name: "Home", type: "Property", balance: 250000 }),
+          row({ id: "m1", name: "Nationwide", type: "Mortgage", balance: 240000 }),
+        ]}
+      />,
+    );
+    const notCounted = getByRole("list", { name: "Not counted in net worth" });
+    expect(notCounted.textContent).toContain("Home");
+    expect(notCounted.textContent).toContain("Nationwide");
+    expect(getByRole("list", { name: "What you own" }).textContent).not.toContain("Home");
+  });
+
+  test("links to the net worth history and renders the afterNetWorth slot", () => {
+    const { getByRole, getByTestId } = customRender(
+      <AccountsGroupList
+        {...props}
+        afterNetWorth={
+          <button id="slot" type="button">
+            Slot
+          </button>
+        }
+        rows={[row({})]}
+      />,
+    );
+    expect(getByRole("link", { name: "See how it has changed" }).getAttribute("href")).toBe(
+      "/app/accounts/history",
+    );
+    expect(getByTestId("slot")).toBeDefined();
   });
 
   test("the footnote follows the choice when the student loan counts", () => {

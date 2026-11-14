@@ -13,10 +13,6 @@ export const group = cva({
   base: { display: "flex", flexDirection: "column", gap: "12px", minWidth: 0 },
 });
 
-export const groupHeader = cva({
-  base: { display: "flex", alignItems: "center", gap: "8px" },
-});
-
 export const groupTitle = cva({
   base: { textStyle: "heading.md", color: "text.primary", margin: 0 },
 });
@@ -41,20 +37,6 @@ export const accountLink = cva({
       outlineOffset: "2px",
     },
   },
-});
-
-export const typeCell = cva({
-  base: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "2px",
-    textStyle: "body.sm",
-    color: "text.secondary",
-  },
-});
-
-export const mutedText = cva({
-  base: { color: "text.muted", textStyle: "body.sm" },
 });
 
 /** A total line under a table. A real top border, so it survives forced colours. */
@@ -89,22 +71,45 @@ export const note = cva({
   base: { textStyle: "body.sm", color: "text.secondary", margin: 0, maxWidth: "65ch" },
 });
 
-/** Name plus, on a phone, the type underneath (the Type column is hidden while stacked). */
+/** The DataList inside a card: rows padded to the card edge, figures centred on the row. */
+export const listInCard = cva({
+  base: {
+    "& > ul > li": { paddingInline: "16px", alignItems: "center" },
+    "& > div": { paddingInline: "16px", paddingBlockEnd: "12px" },
+  },
+});
+
+/** Name, then the type underneath when the name does not already say it. */
 export const accountName = cva({
   base: { display: "flex", flexDirection: "column", gap: "2px", minWidth: 0 },
 });
 
-export const phoneType = cva({
+export const accountType = cva({
+  base: { textStyle: "body.sm", color: "text.secondary" },
+});
+
+/** "Change what counts" and "See how it has changed", side by side when they fit. */
+export const netWorthLinks = cva({
   base: {
-    display: { base: "block", md: "none" },
-    textStyle: "body.sm",
-    color: "text.secondary",
+    display: "flex",
+    flexWrap: "wrap",
+    alignItems: "baseline",
+    justifyContent: "space-between",
+    columnGap: "16px",
+    rowGap: "8px",
   },
 });
 
-/** Hides the Type cell while the table is stacked; outranks the stacked table's cell rule. */
-export const typeColumn = cva({
-  base: { "table tbody tr &": { display: { base: "none", md: "table-cell" } } },
+export const historyLink = cva({
+  base: {
+    textStyle: "body.sm",
+    color: "primary",
+    textDecoration: "underline",
+    textUnderlineOffset: "3px",
+    borderRadius: "sm",
+    whiteSpace: "nowrap",
+    _focusVisible: { outline: "2px solid", outlineColor: "border.focusRing", outlineOffset: "2px" },
+  },
 });
 
 /** The ISA row's link to its allowance, under the account name at every width. */

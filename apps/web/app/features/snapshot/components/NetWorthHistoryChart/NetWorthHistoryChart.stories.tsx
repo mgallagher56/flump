@@ -31,11 +31,14 @@ export const TrendWithGap: Story = {
   args: {
     points: toChartPoints(trend.series),
     recordedMonths: trend.recordedMonths,
-    summary: "Example net worth each month.",
+    summary: "Net worth each month since July 2026. Months with no check-in show as a dashed line.",
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    await expect(canvas.getAllByText("Carried forward (no check-in)")[0]).toBeDefined();
+    await expect(canvas.queryByTestId("net-worth-history-legend")).toBeNull();
+    await expect(
+      canvas.getAllByText(/Months with no check-in show as a dashed line/)[0],
+    ).toBeDefined();
   },
 };
 

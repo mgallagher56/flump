@@ -1,32 +1,24 @@
 import { PortfolioSnapshot, type RawAccount, type RawAccountDetail } from "@flump/finance-engine";
 import { Button, EmptyState, Illustration, PageBody, PageHeader } from "@repo/ui";
 import { type FC, useMemo, useState } from "react";
-import { Link, useLoaderData } from "react-router";
-import BankConnectionsList from "~/components/accounts/BankConnectionsList";
+import { useLoaderData } from "react-router";
 import AddEditAccountsDialogBtn from "~/components/dialogs/addEditAccountsDialog/AddEditAccountsDialog";
 import { buildAccountRows } from "~/features/accounts/accountRows";
 import { AccountsGroupList } from "~/features/accounts/components/AccountsGroupList";
 import { CheckInSheet } from "~/features/snapshot/components/CheckInSheet";
-import { HISTORY_ROUTE } from "~/features/snapshot/components/MonthlyCheckInCard";
 import { londonMonth } from "~/features/snapshot/snapshotModel";
 import { useSaveSnapshot } from "~/features/snapshot/useSaveSnapshot";
 import type { loader } from "~/routes/app.accounts._index";
 import { isFutureMonth } from "~/utils/accounts";
 import { buildWorkspacePicture } from "~/utils/financialPicture";
-import { emptyWrap, headerActions } from "./AccountsContainer.styles";
+import { emptyWrap, headerActions, phoneOnly, wideOnly } from "./AccountsContainer.styles";
 
 /**
  * The accounts list (E16 PR 5): the h1 with one primary action, then what you own, what you owe
  * and net worth once. No hero (P6) and no summary strip: the list is the summary.
  */
 const AccountsContainer: FC = () => {
-  const {
-    accounts = [],
-    accountDetails = [],
-    bankConnections = [],
-    bankConnectionsEnabled = false,
-    userProfile = null,
-  } = useLoaderData<typeof loader>();
+  const { accounts = [], accountDetails = [], userProfile = null } = useLoaderData<typeof loader>();
   const [checkInOpen, setCheckInOpen] = useState(false);
   const saveSnapshot = useSaveSnapshot();
 
@@ -64,11 +56,9 @@ const AccountsContainer: FC = () => {
         actions={
           hasAccounts ? (
             <div className={headerActions()}>
-              <Button asChild variant="ghost">
-                <Link to={HISTORY_ROUTE}>View history</Link>
-              </Button>
-              {/* E30 monthly check-in. */}
+              {/* E30 monthly check-in. From md only: a phone header holds one action. */}
               <Button
+                className={wideOnly()}
                 data-testid="accounts-open-check-in"
                 id="accounts-open-check-in"
                 onClick={() => setCheckInOpen(true)}
@@ -77,15 +67,6 @@ const AccountsContainer: FC = () => {
               >
                 Update balances
               </Button>
-              <CheckInSheet
-                accountDetails={accountDetails as RawAccountDetail[]}
-                accounts={accounts}
-                basis={netWorth.basis}
-                currentMonth={londonMonth()}
-                onOpenChange={setCheckInOpen}
-                onSave={saveSnapshot}
-                open={checkInOpen}
-              />
               <AddEditAccountsDialogBtn variant="primary" />
             </div>
           ) : undefined
@@ -95,13 +76,37 @@ const AccountsContainer: FC = () => {
       />
 
       {hasAccounts ? (
-        <AccountsGroupList
-          leftOut={netWorth.leftOut}
-          netWorth={netWorth.netWorth}
-          rows={rows}
-          totalOwe={netWorth.totalLiabilities}
-          totalOwn={netWorth.totalAssets}
-        />
+        <>
+          <AccountsGroupList
+            afterNetWorth={
+              <div className={phoneOnly()}>
+                <Button
+                  data-testid="accounts-open-check-in-phone"
+                  id="accounts-open-check-in-phone"
+                  onClick={() => setCheckInOpen(true)}
+                  type="button"
+                  variant="secondary"
+                >
+                  Update balances
+                </Button>
+              </div>
+            }
+            leftOut={netWorth.leftOut}
+            netWorth={netWorth.netWorth}
+            rows={rows}
+            totalOwe={netWorth.totalLiabilities}
+            totalOwn={netWorth.totalAssets}
+          />
+          <CheckInSheet
+            accountDetails={accountDetails as RawAccountDetail[]}
+            accounts={accounts}
+            basis={netWorth.basis}
+            currentMonth={londonMonth()}
+            onOpenChange={setCheckInOpen}
+            onSave={saveSnapshot}
+            open={checkInOpen}
+          />
+        </>
       ) : (
         <div className={emptyWrap()}>
           <EmptyState
@@ -113,11 +118,7 @@ const AccountsContainer: FC = () => {
           />
         </div>
       )}
-
-      {/* D8: bank connections show only for owner-allowlisted accounts (E19 D3-B capability). */}
-      {bankConnectionsEnabled ? (
-        <BankConnectionsList canConnect connections={bankConnections} />
-      ) : null}
+      {/* Bank sync is deferred (owner ruling), so no bank connection surface shows here. */}
     </PageBody>
   );
 };

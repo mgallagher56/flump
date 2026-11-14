@@ -1,17 +1,5 @@
-import type { NetWorthLeftOut } from "@flump/finance-engine";
-import {
-  Card,
-  CollapsibleDrawer,
-  IconTile,
-  type IconTileDomain,
-  Money,
-  Table,
-  TBody,
-  Td,
-  THead,
-  Th,
-  Tr,
-} from "@repo/ui";
+import { categorizeAccountType, type NetWorthLeftOut } from "@flump/finance-engine";
+import { Card, DataList, type DataListItem, IconTile, type IconTileDomain, Money } from "@repo/ui";
 import {
   CreditCard,
   HandCoins,
@@ -24,7 +12,7 @@ import {
   Users,
   Wallet,
 } from "lucide-react";
-import type { FC } from "react";
+import type { FC, ReactNode } from "react";
 import { Link } from "react-router";
 import { AccountTypeEnum, isLiabilityType } from "~/containers/accounts/utils";
 import type { AccountRow } from "../../accountRows";
@@ -33,39 +21,56 @@ import {
   accountCell,
   accountLink,
   accountName,
+  accountType,
   group,
-  groupHeader,
   groupTitle,
+  historyLink,
   isaLink,
+  listInCard,
   listRoot,
-  mutedText,
   netWorthBlock,
+  netWorthLinks,
   note,
-  phoneType,
   totalLabel,
   totalRow,
-  typeCell,
-  typeColumn,
 } from "./AccountsGroupList.styles";
+
+/** The net worth history page, linked from the net worth figure. */
+export const HISTORY_HREF = "/app/accounts/history";
 
 export interface AccountsGroupListProps {
   rows: AccountRow[];
-  /** Everything owned, from the financial picture (the home estimate included). */
+  /** Everything owned that counts in net worth, from the financial picture. */
   totalOwn: number;
   /** Everything owed that counts in net worth under the user's choices. */
   totalOwe: number;
   netWorth: number;
   /** What net worth leaves out under the user's choices (`NetWorthTotals.leftOut`). */
   leftOut: readonly NetWorthLeftOut[];
+  /** Rendered under the net worth figure, for example the phone's check-in button. */
+  afterNetWorth?: ReactNode;
 }
+
+const STUDENT_LOAN_FACTS =
+  "Repayments come out of your pay as you earn, and any balance left at the end of the repayment term is written off.";
 
 /** The student loan footnote follows the user's choice; the facts about repayment stay. */
 export const studentLoanFootnote = (counted: boolean): string =>
-  `${
-    counted
-      ? "Student loans are in this total and your net worth."
-      : "Student loans are not in this total or your net worth."
-  } Repayments come out of your pay as you earn, and any balance left at the end of the repayment term is written off.`;
+  counted
+    ? `Student loans are in this total and your net worth. ${STUDENT_LOAN_FACTS}`
+    : `Student loans are not in your net worth. ${STUDENT_LOAN_FACTS}`;
+
+/**
+ * True when the user's net worth choices leave this row out, so it sits in its own group below
+ * the totals and the rows in each total add up to it.
+ */
+export const isLeftOut = (row: AccountRow, leftOut: readonly NetWorthLeftOut[]): boolean => {
+  const category = categorizeAccountType(row.type);
+  if (category === "property") return leftOut.includes("property");
+  if (category === "mortgages") return leftOut.includes("mortgage");
+  if (category === "studentLoans") return leftOut.includes("studentLoan");
+  return false;
+};
 
 const {
   CURRENT,
@@ -139,7 +144,7 @@ const TYPE_DOMAIN: Record<string, IconTileDomain> = {
   [STUDENT_LOAN]: "debt",
 };
 
-/** Law 3: a table over eight rows keeps the rest behind a drawer. */
+/** Law 3: a list over eight rows keeps the rest behind "Show all". */
 export const VISIBLE_ROWS = 8;
 
 /** An ISA is named as one by the user; its allowance lives on the savings page. */
@@ -153,98 +158,78 @@ const byType = (a: AccountRow, b: AccountRow) => {
   return rank(a) - rank(b);
 };
 
-const renderTable = (rows: AccountRow[], caption: string, amountLabel: string) => (
-  <Table appearance="soft" caption={caption} stacked>
-    <THead>
-      <Tr>
-        <Th>Account</Th>
-        <Th>Type</Th>
-        <Th numeric>{amountLabel}</Th>
-      </Tr>
-    </THead>
-    <TBody>
-      {rows.map((row) => (
-        <Tr data-list-row="" key={row.id}>
-          <Td>
-            <div className={accountCell()}>
-              <IconTile
-                domain={TYPE_DOMAIN[row.type] ?? "net-worth"}
-                icon={TYPE_ICON[row.type] ?? Wallet}
-              />
-              <span className={accountName()}>
-                <Link className={accountLink()} to={`/app/accounts/${row.id}`}>
-                  {row.name}
-                </Link>
-                <span className={phoneType()}>{TYPE_LABEL[row.type] ?? row.type}</span>
-                {isIsa(row) ? (
-                  <Link className={isaLink()} to="/app/savings">
-                    See your ISA allowance
-                  </Link>
-                ) : null}
-              </span>
-            </div>
-          </Td>
-          <Td className={typeColumn()} label="Type">
-            <span className={typeCell()}>{TYPE_LABEL[row.type] ?? row.type}</span>
-          </Td>
-          <Td label={amountLabel} numeric>
-            {row.balance !== undefined ? (
-              <Money size="sm" value={row.balance} />
-            ) : (
-              <span className={mutedText()}>Not set</span>
-            )}
-          </Td>
-        </Tr>
-      ))}
-    </TBody>
-  </Table>
-);
+/** The type under the name, unless the name already says it ("Current account"). */
+const typeLine = (row: AccountRow): string | null => {
+  const label = TYPE_LABEL[row.type] ?? row.type;
+  return label.trim().toLowerCase() === row.name.trim().toLowerCase() ? null : label;
+};
+
+const toItem = (row: AccountRow): DataListItem => {
+  const type = typeLine(row);
+  return {
+    id: row.id,
+    label: (
+      <span className={accountCell()}>
+        <IconTile
+          domain={TYPE_DOMAIN[row.type] ?? "net-worth"}
+          icon={TYPE_ICON[row.type] ?? Wallet}
+        />
+        <span className={accountName()}>
+          <Link className={accountLink()} to={`/app/accounts/${row.id}`}>
+            {row.name}
+          </Link>
+          {type ? <span className={accountType()}>{type}</span> : null}
+          {isIsa(row) ? (
+            <Link className={isaLink()} to="/app/savings">
+              See your ISA allowance
+            </Link>
+          ) : null}
+        </span>
+      </span>
+    ),
+    value: row.balance ?? null,
+    valueProps: { size: "sm" },
+  };
+};
 
 interface GroupProps {
   id: string;
   title: string;
-  amountLabel: string;
-  totalText: string;
-  total: number;
   rows: AccountRow[];
+  total?: { text: string; value: number };
   footnote?: string;
 }
 
-const Group: FC<GroupProps> = ({ id, title, amountLabel, totalText, total, rows, footnote }) => {
-  const visible = rows.slice(0, VISIBLE_ROWS);
-  const rest = rows.slice(VISIBLE_ROWS);
-  return (
-    <section aria-labelledby={id} className={group()}>
-      <div className={groupHeader()}>
-        <h2 className={groupTitle()} id={id}>
-          {title}
-        </h2>
-      </div>
-      <Card padding="none">
-        {renderTable(visible, title, amountLabel)}
-        {rest.length > 0 ? (
-          <CollapsibleDrawer
-            title={`Show ${rest.length} more ${rest.length === 1 ? "account" : "accounts"}`}
-            variant="quiet"
-          >
-            {renderTable(rest, `${title}, more accounts`, amountLabel)}
-          </CollapsibleDrawer>
-        ) : null}
+const Group: FC<GroupProps> = ({ id, title, rows, total, footnote }) => (
+  <section aria-labelledby={id} className={group()}>
+    <h2 className={groupTitle()} id={id}>
+      {title}
+    </h2>
+    <Card padding="none">
+      <DataList
+        className={listInCard()}
+        items={rows.map(toItem)}
+        label={title}
+        limit={VISIBLE_ROWS}
+        noun={{ one: "account", other: "accounts" }}
+      />
+      {total ? (
         <dl className={totalRow()}>
-          <dt className={totalLabel()}>{totalText}</dt>
+          <dt className={totalLabel()}>{total.text}</dt>
           <dd>
-            <Money size="sm" value={total} />
+            <Money size="sm" value={total.value} />
           </dd>
         </dl>
-      </Card>
-      {footnote ? <p className={note()}>{footnote}</p> : null}
-    </section>
-  );
-};
+      ) : null}
+    </Card>
+    {footnote ? <p className={note()}>{footnote}</p> : null}
+  </section>
+);
 
 /**
- * The accounts list (E16 PR 5): what you own, then what you owe, each one table with a type column
- * and its total, then net worth once. Change on last month lives on each account's own page.
+ * The accounts list (E16 PR 5, R2-5): what you own and what you owe, each a list with its total,
+ * then net worth once. Accounts the user's net worth choices leave out sit in their own group
+ * below, so the rows in each total add up to it. Change on last month lives on each account's page.
  */
 export const AccountsGroupList: FC<AccountsGroupListProps> = ({
   rows,
@@ -252,34 +237,32 @@ export const AccountsGroupList: FC<AccountsGroupListProps> = ({
   totalOwe,
   netWorth,
   leftOut,
+  afterNetWorth,
 }) => {
-  const own = rows.filter((row) => !isLiabilityType(row.type)).sort(byType);
-  const owe = rows.filter((row) => isLiabilityType(row.type)).sort(byType);
-  const hasStudentLoan = owe.some((row) => row.type === STUDENT_LOAN);
+  const counted = rows.filter((row) => !isLeftOut(row, leftOut));
+  const own = counted.filter((row) => !isLiabilityType(row.type)).sort(byType);
+  const owe = counted.filter((row) => isLiabilityType(row.type)).sort(byType);
+  const notCounted = rows.filter((row) => isLeftOut(row, leftOut)).sort(byType);
+  const countedStudentLoan = owe.some((row) => row.type === STUDENT_LOAN);
+  const leftOutStudentLoan = notCounted.some((row) => row.type === STUDENT_LOAN);
 
   return (
     <div className={listRoot()}>
       {own.length > 0 ? (
         <Group
-          amountLabel="Balance"
           id="accounts-own-heading"
           rows={own}
           title="What you own"
-          total={totalOwn}
-          totalText="Total you own"
+          total={{ text: "Total you own", value: totalOwn }}
         />
       ) : null}
       {owe.length > 0 ? (
         <Group
-          amountLabel="Amount owed"
-          footnote={
-            hasStudentLoan ? studentLoanFootnote(!leftOut.includes("studentLoan")) : undefined
-          }
+          footnote={countedStudentLoan ? studentLoanFootnote(true) : undefined}
           id="accounts-owe-heading"
           rows={owe}
           title="What you owe"
-          total={totalOwe}
-          totalText="Total you owe"
+          total={{ text: "Total you owe", value: totalOwe }}
         />
       ) : null}
       <div className={netWorthBlock()}>
@@ -295,9 +278,23 @@ export const AccountsGroupList: FC<AccountsGroupListProps> = ({
             </dd>
           </dl>
         </Card>
-        {/* The one place the choice is always reachable from the figure, even with nothing left out. */}
-        <NetWorthBasisLine alwaysShowLink id="accounts-net-worth-basis" leftOut={leftOut} />
+        <div className={netWorthLinks()}>
+          {/* The one place the choice is always reachable from the figure, even with nothing left out. */}
+          <NetWorthBasisLine alwaysShowLink id="accounts-net-worth-basis" leftOut={leftOut} />
+          <Link className={historyLink()} id="accounts-view-history" to={HISTORY_HREF}>
+            See how it has changed
+          </Link>
+        </div>
+        {afterNetWorth}
       </div>
+      {notCounted.length > 0 ? (
+        <Group
+          footnote={leftOutStudentLoan ? studentLoanFootnote(false) : undefined}
+          id="accounts-not-counted-heading"
+          rows={notCounted}
+          title="Not counted in net worth"
+        />
+      ) : null}
     </div>
   );
 };

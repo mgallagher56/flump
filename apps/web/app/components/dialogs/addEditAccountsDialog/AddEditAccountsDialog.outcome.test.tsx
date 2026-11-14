@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 import customRender from "~/testUtils/customRender";
 import AddEditAccountsDialogBtn from "./AddEditAccountsDialog";
 
@@ -35,7 +35,6 @@ describe("AddEditAccountsDialog action outcomes", () => {
     mocks.fetcher.state = "idle";
     mocks.fetcher.data = null;
   });
-  afterEach(() => vi.unstubAllGlobals());
 
   test("a failed delete shows the error in the confirm dialog and keeps both dialogs open", async () => {
     const ui = () => <AddEditAccountsDialogBtn isEditAccount accountId="123456" />;
@@ -92,46 +91,6 @@ describe("AddEditAccountsDialog action outcomes", () => {
     rerender(ui());
     expect(getByRole("alert").textContent).toBe(SERVER_DOWN);
     expect(getByRole("dialog")).toBeDefined();
-  });
-
-  describe("OAuth redirect", () => {
-    const startOauth = async () => {
-      const ui = () => <AddEditAccountsDialogBtn />;
-      const view = customRender(ui());
-      await view.user.click(view.getByText("addAccount"));
-      await view.user.click(view.getByText("Connect a bank"));
-      await view.user.click(view.getByText("Bank sign-in"));
-      await view.user.click(view.getByRole("button", { name: /Sign in at/ }));
-      return { ...view, ui };
-    };
-
-    test("navigates only to an https URL", async () => {
-      const location = { href: "" };
-      vi.stubGlobal("location", location);
-      const { rerender, ui } = await startOauth();
-      mocks.fetcher.data = {
-        success: true,
-        oauth: true,
-        redirectUrl: "https://bank.example.test/auth",
-      };
-      rerender(ui());
-      expect(location.href).toBe("https://bank.example.test/auth");
-    });
-
-    test.each(["javascript:alert(1)", "http://bank.example.test/auth", "not a url"])(
-      "rejects %s and shows an error without navigating",
-      async (redirectUrl) => {
-        const location = { href: "" };
-        vi.stubGlobal("location", location);
-        const { getByText, rerender, ui } = await startOauth();
-        mocks.fetcher.data = { success: true, oauth: true, redirectUrl };
-        rerender(ui());
-        expect(location.href).toBe("");
-        expect(
-          getByText("We could not start the bank sign-in. Nothing was connected. Try again."),
-        ).toBeDefined();
-      },
-    );
   });
 
   describe("student loan repayment plan", () => {

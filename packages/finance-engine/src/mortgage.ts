@@ -26,6 +26,46 @@ export function calculateMonthlyMortgagePayment(
 }
 
 /**
+ * One month of a repayment loan: interest is added at a twelfth of the yearly rate, then the
+ * payment comes off. The balance never goes below zero. Shared by the mortgage amortisation and
+ * the check-in's calculated balance, so there is one calculation.
+ */
+export function amortiseOneMonth(
+  balanceGbp: number,
+  monthlyRate: number,
+  paymentGbp: number,
+): { balanceGbp: number; interestGbp: number } {
+  const interestGbp = balanceGbp * monthlyRate;
+  return { balanceGbp: Math.max(0, balanceGbp + interestGbp - paymentGbp), interestGbp };
+}
+
+export interface AmortisedBalanceInput {
+  /** The balance owed at the start, as a positive amount. */
+  balanceGbp: number;
+  /** Yearly interest rate in percent, for example 4.5. */
+  interestRateApr: number;
+  /** The regular monthly payment. */
+  monthlyPaymentGbp: number;
+  /** Whole months of payments since `balanceGbp` was known. */
+  months: number;
+}
+
+/**
+ * The balance owed after `months` regular payments (check-in calculated balances, R2-5). Returns
+ * the balance rounded to the penny. Months of zero or less return the starting balance.
+ */
+export function projectAmortisedBalance(input: AmortisedBalanceInput): number {
+  const monthlyRate = Math.max(0, input.interestRateApr) / 100 / 12;
+  const payment = Math.max(0, input.monthlyPaymentGbp);
+  let balance = Math.max(0, input.balanceGbp);
+  const months = Math.max(0, Math.trunc(input.months));
+  for (let m = 0; m < months && balance > 0; m++) {
+    balance = amortiseOneMonth(balance, monthlyRate, payment).balanceGbp;
+  }
+  return Math.round(balance * 100) / 100;
+}
+
+/**
  * Calculates Target LTV milestones (85%, 80%, 75%, 60%) and the required overpayment to reach each band.
  */
 export function calculateLtvMilestones(
@@ -90,10 +130,9 @@ export function calculateMortgageAmortization(
   let simBalance = balance;
 
   for (let m = 1; m <= termMonths; m++) {
-    const interest = simBalance * monthlyRate;
-    standardTotalInterest += interest;
-    const principalPaid = standardMonthlyPayment - interest;
-    simBalance = Math.max(0, simBalance - principalPaid);
+    const step = amortiseOneMonth(simBalance, monthlyRate, standardMonthlyPayment);
+    standardTotalInterest += step.interestGbp;
+    simBalance = step.balanceGbp;
     if (simBalance <= 0) break;
   }
 
@@ -105,10 +144,9 @@ export function calculateMortgageAmortization(
 
   while (overpaidBalance > 0.01 && monthsWithOverpayment < termMonths) {
     monthsWithOverpayment++;
-    const interest = overpaidBalance * monthlyRate;
-    overpayTotalInterest += interest;
-    const principalPaid = totalPaymentEachMonth - interest;
-    overpaidBalance = Math.max(0, overpaidBalance - principalPaid);
+    const step = amortiseOneMonth(overpaidBalance, monthlyRate, totalPaymentEachMonth);
+    overpayTotalInterest += step.interestGbp;
+    overpaidBalance = step.balanceGbp;
     if (overpaidBalance <= 0.01) break;
   }
 

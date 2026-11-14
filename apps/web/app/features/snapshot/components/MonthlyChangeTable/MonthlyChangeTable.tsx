@@ -1,5 +1,5 @@
-import { Card, CollapsibleDrawer, Table, TBody, Td, THead, Th, Tr, VisuallyHidden } from "@repo/ui";
-import { type FC, type ReactNode, useId } from "react";
+import { Table, TBody, Td, THead, Th, Tr, VisuallyHidden } from "@repo/ui";
+import type { FC, ReactNode } from "react";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import { formatSignedChange, spokenChange } from "../../snapshotCopy";
 import {
@@ -8,10 +8,7 @@ import {
   type MonthChangeRow,
   type MonthKey,
 } from "../../snapshotModel";
-import { changeCell, tableCard, tableHeading, tableNote } from "./MonthlyChangeTable.styles";
-
-/** Tables longer than this go inside a CollapsibleDrawer (AGENTS.md section 3). */
-export const MAX_OPEN_ROWS = 8;
+import { changeCell, tableBlock, tableNote, wideOnly } from "./MonthlyChangeTable.styles";
 
 export type MonthlyChangeTableProps =
   | {
@@ -32,28 +29,29 @@ const Change: FC<{ value: number }> = ({ value }) => (
 /**
  * Month-on-month change, current minus previous, worded the same either way (advice policy R1).
  * `accounts` lists each account between the last two months; `months` lists the total per month.
- * Debts show the amount owed, so a smaller balance is a negative change.
+ * Debts show the amount owed, so a smaller balance is a negative change. The table has no heading
+ * or drawer of its own: the page shows it inside one quiet drawer, under a tab that names it
+ * (AGENTS.md section 3). Neither table stacks into labelled cards on phones: the month table fits
+ * in three columns, and the account table hides its earlier-month column under `md`.
  */
 export const MonthlyChangeTable: FC<MonthlyChangeTableProps> = (props) => {
   const { formatCurrency } = useFormatCurrency();
-  const headingId = useId();
 
-  let title: string;
   let note: string;
   let table: ReactNode;
   if (props.variant === "accounts") {
-    title = "Change by account";
     // The column headers name both months, so the note does not repeat them.
     note = "Debts show the amount owed.";
     table = (
       <Table
-        stacked
         caption={`Change by account, ${formatMonth(props.previousMonth)} to ${formatMonth(props.month)}`}
       >
         <THead>
           <Tr>
             <Th>Account</Th>
-            <Th numeric>{formatMonth(props.previousMonth)}</Th>
+            <Th className={wideOnly()} numeric>
+              {formatMonth(props.previousMonth)}
+            </Th>
             <Th numeric>{formatMonth(props.month)}</Th>
             <Th numeric>Change</Th>
           </Tr>
@@ -65,17 +63,13 @@ export const MonthlyChangeTable: FC<MonthlyChangeTableProps> = (props) => {
                 {r.name}
                 {r.isLiability ? " (owed)" : ""}
               </Th>
-              <Td label={formatMonth(props.previousMonth)} numeric>
+              <Td className={wideOnly()} numeric>
                 {formatCurrency(r.previous)}
               </Td>
-              <Td
-                label={formatMonth(props.month)}
-                numeric
-                secondary={r.carried ? "Carried forward" : undefined}
-              >
+              <Td numeric secondary={r.carried ? "Carried forward" : undefined}>
                 {formatCurrency(r.current)}
               </Td>
-              <Td label="Change" numeric>
+              <Td numeric>
                 <Change value={r.change} />
               </Td>
             </Tr>
@@ -84,10 +78,9 @@ export const MonthlyChangeTable: FC<MonthlyChangeTableProps> = (props) => {
       </Table>
     );
   } else {
-    title = "Change by month";
     note = "Net worth at each month, and the change from the month before.";
     table = (
-      <Table caption="Net worth change by month" stacked>
+      <Table caption="Net worth change by month">
         <THead>
           <Tr>
             <Th>Month</Th>
@@ -100,7 +93,6 @@ export const MonthlyChangeTable: FC<MonthlyChangeTableProps> = (props) => {
             <Tr data-list-row="" key={r.month}>
               <Th scope="row">{formatMonth(r.month)}</Th>
               <Td
-                label="Net worth"
                 numeric
                 secondary={
                   r.allCarried
@@ -112,7 +104,7 @@ export const MonthlyChangeTable: FC<MonthlyChangeTableProps> = (props) => {
               >
                 {formatCurrency(r.netWorth)}
               </Td>
-              <Td label="Change" numeric>
+              <Td numeric>
                 <Change value={r.change} />
               </Td>
             </Tr>
@@ -122,41 +114,15 @@ export const MonthlyChangeTable: FC<MonthlyChangeTableProps> = (props) => {
     );
   }
 
-  if (props.rows.length > MAX_OPEN_ROWS) {
-    return (
-      <CollapsibleDrawer
-        className={tableCard()}
-        itemCount={props.rows.length}
-        itemNoun={
-          props.variant === "accounts"
-            ? { one: "account", other: "accounts" }
-            : { one: "month", other: "months" }
-        }
-        openLabel={`Hide ${title.toLowerCase()}`}
-        title={title}
-        variant="quiet"
-      >
-        <p className={tableNote()}>{note}</p>
-        {table}
-      </CollapsibleDrawer>
-    );
-  }
-
   return (
-    <Card
-      aria-labelledby={headingId}
-      as="section"
-      className={tableCard()}
+    <div
+      className={tableBlock()}
       data-testid={`snapshot-change-${props.variant}`}
       id={`snapshot-change-${props.variant}`}
-      padding="md"
     >
-      <h3 className={tableHeading()} id={headingId}>
-        {title}
-      </h3>
       <p className={tableNote()}>{note}</p>
       {table}
-    </Card>
+    </div>
   );
 };
 

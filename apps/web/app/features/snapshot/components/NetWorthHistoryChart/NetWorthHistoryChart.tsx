@@ -1,15 +1,16 @@
 import {
   CHART_INK,
   ChartFigure,
-  ChartLegend,
   chartColor,
-  pickTicks,
+  formatMonthTick,
+  niceYDomain,
   Table,
   TBody,
   Td,
   THead,
   Th,
   useChartFigure,
+  xTickAnchor,
 } from "@repo/ui";
 import type { FC } from "react";
 import {
@@ -49,27 +50,61 @@ export interface NetWorthHistoryChartProps {
 
 interface DirectLabelProps {
   text: string;
+  /** The figure's label offset, mirrored to sit above left of the dot (recharts owns `offset`). */
+  shift: { dx: number; dy: number };
   /** Supplied by recharts: the box around the annotated dot. */
   viewBox?: { x?: number; y?: number; width?: number; height?: number };
 }
 
-/** The end-point label: drawn just above and to the left of the dot so it never clips at the edge. */
-const DirectLabel: FC<DirectLabelProps> = ({ text, viewBox }) => {
+/** The end-point label: drawn above and to the left of the dot so it never clips at the edge. */
+const DirectLabel: FC<DirectLabelProps> = ({ text, shift, viewBox }) => {
   const x = (viewBox?.x ?? 0) + (viewBox?.width ?? 0) / 2;
   const y = viewBox?.y ?? 0;
   return (
     <text
       fill={CHART_INK.text}
       className={directLabel()}
+      dx={-shift.dx}
+      dy={shift.dy}
       // tabular-nums is inherited from the chart wrapper.
       textAnchor="end"
       x={x}
-      y={y - 8}
+      y={y}
     >
       {text}
     </text>
   );
 };
+
+/**
+ * Evenly spaced x ticks, counted back from the last month so the latest month always has a tick:
+ * every month up to `maxTicks`, then every second (or third) month, never an uneven gap.
+ */
+export const monthTicks = <T,>(values: readonly T[], maxTicks: number): T[] => {
+  const limit = Math.max(2, Math.trunc(maxTicks));
+  if (values.length <= limit) return [...values];
+  const step = Math.ceil((values.length - 1) / (limit - 1));
+  const picked: T[] = [];
+  for (let i = values.length - 1; i >= 0; i -= step) picked.unshift(values[i] as T);
+  return picked;
+};
+
+interface MonthTickProps {
+  x?: number;
+  y?: number;
+  index?: number;
+  payload?: { value: string };
+  /** Tick text per point label ("Sep", or "Sep 26" when the months span two years). */
+  textFor: (label: string) => string;
+  count: number;
+}
+
+/** An x tick whose last label ends at the plot edge (`xTickAnchor`), so "Nov" is never clipped. */
+const MonthTick: FC<MonthTickProps> = ({ x, y, index = 0, payload, textFor, count }) => (
+  <text {...chartXAxisProps.tick} dy="0.71em" textAnchor={xTickAnchor(index, count)} x={x} y={y}>
+    {payload ? textFor(payload.value) : ""}
+  </text>
+);
 
 interface PlotProps {
   points: readonly HistoryChartPoint[];
@@ -78,19 +113,34 @@ interface PlotProps {
 
 /** The drawing itself. Reads the end-point annotation and tick limit from the enclosing figure. */
 const Plot: FC<PlotProps> = ({ points, hasCarried }) => {
-  const { annotation, maxTicks } = useChartFigure();
-  const ticks = pickTicks(
+  const { annotation, maxTicks, labelOffset, plotPaddingRight } = useChartFigure();
+  const ticks = monthTicks(
     points.map((p) => p.label),
     maxTicks,
   );
+  const monthByLabel = new Map(points.map((p) => [p.label, p.month]));
+  const oneYear = new Set(points.map((p) => p.month.slice(0, 4))).size <= 1;
+  const textFor = (label: string): string =>
+    formatMonthTick(monthByLabel.get(label) ?? label, oneYear ? "none" : "2-digit");
+  // Close to the data, so a change of a few thousand on a large net worth is not a flat line.
+  const yDomain = niceYDomain(points.map((p) => p.netWorth));
   const annotated = annotation ? points.find((p) => p.label === annotation.x) : undefined;
   return (
     <div className={chartWrap()} data-testid="net-worth-history-chart" id="net-worth-history-chart">
       <ResponsiveContainer height="100%" width="100%">
-        <LineChart data={[...points]} margin={{ top: 28, right: 16, left: 0, bottom: 0 }}>
+        <LineChart
+          data={[...points]}
+          margin={{ top: 28, right: plotPaddingRight, left: 0, bottom: 0 }}
+        >
           <CartesianGrid {...chartGridProps} />
-          <XAxis dataKey="label" {...chartXAxisProps} interval={0} ticks={ticks} />
-          <YAxis {...chartYAxisProps} />
+          <XAxis
+            dataKey="label"
+            {...chartXAxisProps}
+            interval={0}
+            tick={<MonthTick count={ticks.length} textFor={textFor} />}
+            ticks={ticks}
+          />
+          <YAxis {...chartYAxisProps} domain={yDomain} />
           <Tooltip
             content={<ChartTooltip hiddenKeys={hasCarried ? [] : ["carried"]} />}
             cursor={chartCursorProps}
@@ -116,7 +166,7 @@ const Plot: FC<PlotProps> = ({ points, hasCarried }) => {
           {annotation && annotated ? (
             <ReferenceDot
               fill={chartColor("primary")}
-              label={<DirectLabel text={annotation.label} />}
+              label={<DirectLabel shift={labelOffset} text={annotation.label} />}
               r={4}
               stroke={CHART_INK.surface}
               strokeWidth={2}
@@ -132,8 +182,8 @@ const Plot: FC<PlotProps> = ({ points, hasCarried }) => {
 
 /**
  * Net worth over time from saved monthly snapshots. Recorded months are a solid line; a month with
- * no check-in shows the carried-forward value as a dashed line (never colour alone). The end point
- * is labelled with net worth (P10.2, P10.3). With fewer than 3 recorded months no line is drawn:
+ * no check-in shows the carried-forward value as a dashed line (never colour alone), and the caller's
+ * summary says so in words. The end point is labelled with net worth (P10.2, P10.3). With fewer than 3 recorded months no line is drawn:
  * the summary and a one-line prompt show instead (P10.6).
  */
 export const NetWorthHistoryChart: FC<NetWorthHistoryChartProps> = ({
@@ -175,23 +225,8 @@ export const NetWorthHistoryChart: FC<NetWorthHistoryChartProps> = ({
       directLabels
       headingLevel="h2"
       hideTitle
-      // One series, named by the title, so no legend; the key only explains the dashed months.
-      legend={
-        hasCarried ? (
-          <ChartLegend
-            id="net-worth-history-legend"
-            items={[
-              { id: "recorded", label: "Recorded", color: "primary", swatch: "line" },
-              {
-                id: "carried",
-                label: "Carried forward (no check-in)",
-                color: "primary",
-                swatch: "dashed",
-              },
-            ]}
-          />
-        ) : undefined
-      }
+      // One series, named by the title, so no legend. The dashed months are named in the summary
+      // and the data table's Source column, so the dash is never the only cue.
       minPoints={MIN_CHART_MONTHS}
       notEnoughDataText={notEnoughDataText}
       pointCount={recordedMonths}
