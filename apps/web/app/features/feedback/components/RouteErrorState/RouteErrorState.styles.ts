@@ -14,7 +14,7 @@ export const errorStateContainer = cva({
     borderRadius: "xl",
     borderWidth: "1px",
     borderStyle: "solid",
-    borderColor: "status.danger.border",
+    borderColor: "border",
     boxShadow: "card",
   },
 });
@@ -28,9 +28,15 @@ export const errorStateBadge = cva({
     borderRadius: "full",
     fontSize: "xs",
     fontWeight: "semibold",
-    backgroundColor: "status.danger.bg",
-    color: "status.danger.text",
   },
+  variants: {
+    tone: {
+      // A missing page is not a failure of the user's or Flump's: a quiet badge, no alarm colour.
+      neutral: { backgroundColor: "status.neutral.bg", color: "status.neutral.text" },
+      danger: { backgroundColor: "status.danger.bg", color: "status.danger.text" },
+    },
+  },
+  defaultVariants: { tone: "danger" },
 });
 
 export const errorStateHeading = cva({
@@ -40,11 +46,9 @@ export const errorStateHeading = cva({
     fontSize: "xl",
     fontWeight: "bold",
     color: "text.primary",
-    _focusVisible: {
-      outline: "2px solid",
-      outlineColor: "border.focusRing",
-      outlineOffset: "2px",
-    },
+    // Focus lands here by script so screen readers announce what happened; the heading is not a
+    // control, so it draws no focus ring.
+    _focus: { outline: "none" },
   },
 });
 
