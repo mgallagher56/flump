@@ -85,6 +85,14 @@ const visiblePanel = () => screen.getByRole("tabpanel");
 describe("<PensionForecast />", () => {
   it("has one footer action, the reset, and no link away from the zone", () => {
     render(<Harness />);
+    const footerButtons = () =>
+      within(zone())
+        .queryAllByRole("button", { name: "Reset to saved figures" })
+        .map((b) => b.textContent);
+    expect(footerButtons()).toEqual([]);
+    fireEvent.change(within(visiblePanel()).getByLabelText("Your contribution"), {
+      target: { value: "12" },
+    });
     const footer = within(zone()).getByTestId("scenario-zone-footer");
     expect(
       within(footer)
@@ -115,17 +123,13 @@ describe("<PensionForecast />", () => {
 
   it("moving an input enables Reset, and Reset restores the saved figures", () => {
     render(<Harness />);
-    const reset = screen.getByRole("button", {
-      name: "Reset to saved figures",
-    }) as HTMLButtonElement;
-    expect(reset.disabled).toBe(true);
+    expect(screen.queryByRole("button", { name: "Reset to saved figures" })).toBeNull();
     expect(screen.getByText("No change")).toBeDefined();
     fireEvent.change(within(visiblePanel()).getByLabelText("Your contribution"), {
       target: { value: "12" },
     });
-    expect(reset.disabled).toBe(false);
     expect(screen.queryByText("No change")).toBeNull();
-    fireEvent.click(reset);
+    fireEvent.click(screen.getByRole("button", { name: "Reset to saved figures" }));
     expect(screen.getByText("No change")).toBeDefined();
   });
 

@@ -193,6 +193,18 @@ describe("KpiStrip Pattern", () => {
     expect(cls).not.toContain("grid-tc_repeat(2");
   });
 
+  it("keeps two cards at a 3-card width from lg, so 2 figures never stretch across the page", () => {
+    const { container } = render(
+      <KpiStrip columns={2}>
+        <div>A</div>
+        <div>B</div>
+      </KpiStrip>,
+    );
+    const cls = container.firstElementChild?.className ?? "";
+    expect(cls).toContain("sm:grid-tc_repeat(2,_minmax(0,_1fr))");
+    expect(cls).toContain("lg:grid-tc_repeat(3,_minmax(0,_1fr))");
+  });
+
   it("rejects a fifth item at compile time", () => {
     render(
       <KpiStrip

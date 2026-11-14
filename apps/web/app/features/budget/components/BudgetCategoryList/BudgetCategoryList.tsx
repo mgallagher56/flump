@@ -32,7 +32,8 @@ export interface BudgetCategoryListProps {
   onToggleCategory: (category: string) => void;
   /** Renders the open category's entries (the entry table) under its row. */
   renderEntries: (category: string) => ReactNode;
-  onAddCategory: () => void;
+  /** Shows an "Add category" button at the foot. Left out while categories are edited elsewhere. */
+  onAddCategory?: () => void;
   /**
    * Replaces a row's "3 entries" line, e.g. the housing row names how you pay for housing. The
    * row's amount is still the one figure (housing cost shows once, here).
@@ -168,18 +169,20 @@ export const BudgetCategoryList: FC<BudgetCategoryListProps> = ({
           );
         })}
       </ul>
-      <div className={listFoot()}>
-        <Button
-          data-testid="add-category-btn"
-          id="add-category-btn"
-          size="sm"
-          variant="outline"
-          onClick={onAddCategory}
-        >
-          <Icon icon={Plus} size="sm" />
-          Add category
-        </Button>
-      </div>
+      {onAddCategory ? (
+        <div className={listFoot()}>
+          <Button
+            data-testid="add-category-btn"
+            id="add-category-btn"
+            size="sm"
+            variant="outline"
+            onClick={onAddCategory}
+          >
+            <Icon icon={Plus} size="sm" />
+            Add category
+          </Button>
+        </div>
+      ) : null}
     </Card>
   );
 };

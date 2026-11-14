@@ -223,9 +223,7 @@ describe("SavingsContainer", () => {
       fireEvent.click(reset);
       expect(screen.queryByText(/Pay rise from the take-home pay tool:/)).toBeNull();
       expect(mockNavigate).toHaveBeenCalledWith("/app/savings", { replace: true, state: null });
-      expect(
-        screen.getByRole("button", { name: "Reset to saved figures" }).hasAttribute("disabled"),
-      ).toBe(true);
+      expect(screen.queryByRole("button", { name: "Reset to saved figures" })).toBeNull();
       expect(mockSubmit).not.toHaveBeenCalled();
     });
 

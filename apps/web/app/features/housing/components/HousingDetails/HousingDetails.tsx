@@ -62,7 +62,7 @@ function copyFor(status: HousingTenure, hasAmount: boolean): Copy | null {
         allowZero: true,
       };
     case "mortgage":
-      return { text: "Your mortgage payment is on the mortgage page." };
+      return { text: "Your balance, rate and term are on the mortgage page." };
     case "own_outright":
       return null;
     default:

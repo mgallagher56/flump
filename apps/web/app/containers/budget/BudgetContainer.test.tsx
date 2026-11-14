@@ -168,7 +168,8 @@ describe("BudgetContainer", () => {
     expect(screen.queryByRole("navigation", { name: "Budget sections" })).toBeNull();
     expect(screen.queryByText("Fixed and flexible")).toBeNull();
     expect(screen.queryByRole("heading", { name: "Your details" })).toBeNull();
-    expect(screen.getAllByRole("button", { name: "Add category" })).toHaveLength(1);
+    // Categories are added in Edit budget, so the read-only list has no Add category.
+    expect(screen.queryByRole("button", { name: "Add category" })).toBeNull();
     const zone = screen.getByRole("region", { name: "Model a change to your budget" });
     // The saved months of cover shows once, as the zone outcome.
     expect(screen.getAllByText("Months of cover")).toHaveLength(1);
@@ -198,7 +199,8 @@ describe("BudgetContainer", () => {
   it("opens Add Category modal and allows adding a new category", async () => {
     mockLoaderData = { ...baseLoaderData, budgetEntries: withBudget };
     render(<BudgetContainer />);
-    fireEvent.click(screen.getByTestId("add-category-btn"));
+    fireEvent.click(screen.getByRole("button", { name: "Edit budget" }));
+    fireEvent.click(screen.getByTestId("budget-editor-add-category-btn"));
 
     expect(screen.getByText("Add budget category")).toBeDefined();
 
@@ -208,29 +210,67 @@ describe("BudgetContainer", () => {
     const saveBtn = screen.getByTestId("save-new-category-btn");
     fireEvent.click(saveBtn);
 
+    // The new category gets its own section in the editor, ready for entries.
     await waitFor(() => {
-      expect(screen.getByTestId("budget-category-holidays").getAttribute("aria-expanded")).toBe(
-        "true",
-      );
+      expect(screen.getByRole("heading", { level: 3, name: "Holidays" })).toBeDefined();
     });
   });
 
-  it("opens a category's entries from its row, and opens the wizard from Edit budget", () => {
+  it("opens a category's entries from its row, read only: editing lives in Edit budget", () => {
     mockLoaderData = { ...baseLoaderData, budgetEntries: withBudget };
     render(<BudgetContainer />);
     expect(screen.getByTestId("budget-category-subscriptions")).toBeDefined();
     fireEvent.click(screen.getByTestId("budget-category-housing"));
-    expect(screen.getByRole("button", { name: "Edit Mortgage" })).toBeDefined();
-    fireEvent.click(screen.getByTestId("budget-category-housing"));
+    const list = screen.getByRole("list", { name: "Housing entries" });
+    expect(within(list).getByText("Mortgage")).toBeDefined();
     expect(screen.queryByRole("button", { name: "Edit Mortgage" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Add category" })).toBeNull();
+    fireEvent.click(screen.getByTestId("budget-category-housing"));
+    expect(screen.queryByRole("list", { name: "Housing entries" })).toBeNull();
+  });
 
-    fireEvent.click(screen.getByTestId("setup-wizard-btn"));
-    expect(screen.queryByTestId("hero-figure")).toBeNull();
+  it("Edit budget edits the page in place, with no wizard, and Finish editing returns", async () => {
+    mockLoaderData = { ...baseLoaderData, budgetEntries: withBudget };
+    render(<BudgetContainer />);
+    fireEvent.click(screen.getByRole("button", { name: "Edit budget" }));
+
+    // No wizard steps: the hero stays, the list and the scenario zone give way to the editor.
+    expect(screen.queryByText(/Step 1 of/)).toBeNull();
+    expect(screen.getByTestId("hero-figure")).toBeDefined();
+    expect(screen.getByTestId("budget-editor")).toBeDefined();
+    expect(screen.queryByTestId("budget-category-housing")).toBeNull();
+    expect(screen.queryByRole("heading", { name: "Where your money goes" })).toBeNull();
+    expect(screen.queryByTestId("runway-outcome")).toBeNull();
+    expect(screen.queryByRole("list", { name: "Budget steps" })).toBeNull();
+    expect(screen.getByRole("heading", { level: 3, name: "Money in" })).toBeDefined();
+    // Custom categories get a section too.
+    expect(screen.getByRole("heading", { level: 3, name: "Subscriptions" })).toBeDefined();
+
+    // A change saves where it sits.
+    vi.mocked(apiFetch).mockResolvedValueOnce(row({ name: "Mortgage", amount: 1300 }) as any);
+    const amount = screen.getByTestId("budget-editor-amount-b-1");
+    fireEvent.focus(amount);
+    fireEvent.change(amount, { target: { value: "1300" } });
+    fireEvent.blur(amount);
+    await waitFor(() =>
+      expect(apiFetch).toHaveBeenCalledWith(
+        "/budget-entries/b-1",
+        expect.objectContaining({ method: "PATCH", body: { amount: 1300 } }),
+      ),
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Finish editing" }));
+    expect(screen.queryByTestId("budget-editor")).toBeNull();
+    expect(screen.getByTestId("budget-category-housing")).toBeDefined();
+    expect(screen.getByRole("button", { name: "Edit budget" })).toBeDefined();
+  });
+
+  it("with no budget, Set up your budget still opens the wizard", () => {
+    render(<BudgetContainer />);
+    fireEvent.click(screen.getByRole("button", { name: "Set up your budget" }));
+    expect(screen.queryByTestId("budget-editor")).toBeNull();
     expect(screen.queryByTestId("setup-wizard-btn")).toBeNull();
-    // Edit budget edits the saved budget: no first-run welcome or example figures.
-    expect(screen.getByText("Edit your budget")).toBeDefined();
-    expect(screen.queryByText("Set up your budget")).toBeNull();
-    expect(screen.getByRole("heading", { name: "Income" })).toBeDefined();
+    expect(screen.getByText(/Step 1 of/)).toBeDefined();
   });
 
   it("keeps months of cover inputs for the visit only: not saved, not requested, not in the hero", async () => {
@@ -265,10 +305,8 @@ describe("BudgetContainer", () => {
     global.fetch = vi.fn().mockResolvedValue(new Response(null, { status: 500 })) as any;
 
     render(<BudgetContainer />);
-    fireEvent.click(screen.getByTestId("budget-category-housing"));
-    const entriesTable = await screen.findByRole("table", { name: "Housing entries" });
-    const entryName = within(entriesTable).getByText("Mortgage");
-    fireEvent.click(screen.getByRole("button", { name: "Delete Mortgage" }));
+    fireEvent.click(screen.getByRole("button", { name: "Edit budget" }));
+    fireEvent.click(screen.getByRole("button", { name: "Remove Mortgage" }));
     fireEvent.click(await screen.findByRole("button", { name: "Delete entry" }));
 
     const alert = await screen.findByRole("alert");
@@ -277,9 +315,7 @@ describe("BudgetContainer", () => {
       "/api/budget-entries/b-1",
       expect.objectContaining({ method: "DELETE" }),
     );
-    expect(
-      within(screen.getByRole("table", { name: "Housing entries" })).getByText("Mortgage"),
-    ).toBe(entryName);
+    expect(screen.getByTestId("budget-editor-amount-b-1")).toBeDefined();
   });
 
   it("updates an entry after a 412 by showing the error and reloading the rows", async () => {
@@ -293,12 +329,12 @@ describe("BudgetContainer", () => {
     vi.mocked(apiFetchAll).mockResolvedValueOnce(serverRows as never);
 
     render(<BudgetContainer />);
-    fireEvent.click(screen.getByTestId("budget-category-housing"));
-    fireEvent.click(screen.getByRole("button", { name: "Edit Mortgage" }));
-    fireEvent.change(await screen.findByLabelText(/^Amount/), { target: { value: "1250" } });
-    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+    fireEvent.click(screen.getByRole("button", { name: "Edit budget" }));
+    const amount = screen.getByTestId("budget-editor-amount-b-1");
+    fireEvent.focus(amount);
+    fireEvent.change(amount, { target: { value: "1250" } });
+    fireEvent.blur(amount);
 
-    // The entry dialog stays open (nothing typed is lost), so the page behind it is inert.
     const alert = await screen.findByText(/could not save your changes\. Nothing has changed/i);
     expect(alert.closest('[role="alert"]')).not.toBeNull();
     expect(apiFetch).toHaveBeenCalledWith(
@@ -306,10 +342,13 @@ describe("BudgetContainer", () => {
       expect.objectContaining({ method: "PATCH" }),
     );
     expect(apiFetchAll).toHaveBeenCalledWith("/budget-entries", expect.anything());
-    // The list now holds the server's rows, so the next try sends the current version.
-    const table = await screen.findByRole("table", { name: "Housing entries", hidden: true });
-    await waitFor(() => expect(within(table).getByText("Joint mortgage")).toBeDefined());
-    expect(within(table).queryByText("Mortgage")).toBeNull();
+    // The editor now holds the server's rows, so the next try sends the current version.
+    await waitFor(() =>
+      expect((screen.getByTestId("budget-editor-name-b-1") as HTMLInputElement).value).toBe(
+        "Joint mortgage",
+      ),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Finish editing" }));
     expect(within(screen.getByTestId("budget-category-housing")).getByText("£1,300")).toBeDefined();
   });
 
