@@ -477,7 +477,7 @@ export const McpConnectionCard: FC<McpConnectionCardProps> = ({
             </ol>
             {guideUrl ? (
               <a className={setupLink()} href={guideUrl} rel="noopener" target="_blank">
-                Read more about AI connections
+                AI connections on the Flump website
                 <VisuallyHidden> (opens in a new tab)</VisuallyHidden>
               </a>
             ) : null}

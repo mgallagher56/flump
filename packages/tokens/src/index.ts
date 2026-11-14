@@ -253,12 +253,13 @@ export const semanticTokens = {
 
     // 5. Unified Financial & System Status. Direction C values; positive is a yellower leaf green
     // (hue ~90) so it never reads as the teal primary (hue ~170); info keeps indigo. Every pair is
-    // covered by the contrast matrix in tokens.a11y.test.ts.
+    // covered by the contrast matrix in tokens.a11y.test.ts. The dark positive bg and border are a
+    // deep forest green (hue ~130), not olive, and stay >= 10 deltaE from the teal primary.subtle.
     status: {
       positive: {
         text: { value: { base: "#3e6b12", _dark: "#a8d86a" } },
-        bg: { value: { base: "#eaf3da", _dark: "#2a3316" } },
-        border: { value: { base: "#bcd68f", _dark: "#4a6428" } },
+        bg: { value: { base: "#eaf3da", _dark: "#1d3a22" } },
+        border: { value: { base: "#bcd68f", _dark: "#34603a" } },
         solid: { value: { base: "#3a5c08", _dark: "#c5de4c" } },
       },
       warning: {

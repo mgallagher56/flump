@@ -234,3 +234,50 @@ export const ManualActivation: Story = {
     await expect(args.onValueChange).not.toHaveBeenCalled();
   },
 };
+
+/**
+ * ARIA APG: a panel full of controls is not itself a tab stop (Tab goes from the tab straight to
+ * the first control); a panel of plain text stays one so keyboard users can reach and read it.
+ */
+const PanelFocusDemo = () => {
+  const [value, setValue] = useState("controls");
+  return (
+    <Tabs
+      aria-label="Panel focus"
+      value={value}
+      onValueChange={setValue}
+      items={[
+        { value: "controls", label: "Controls" },
+        { value: "text", label: "Text" },
+      ]}
+      panels={{
+        controls: (
+          <button type="button" className={css({ textStyle: "label.md" })}>
+            Save changes
+          </button>
+        ),
+        text: <p>Your saved details are shown here.</p>,
+      }}
+    />
+  );
+};
+
+export const PanelFocus: Story = {
+  render: () => <PanelFocusDemo />,
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const controlsPanel = canvas.getByRole("tabpanel", { name: "Controls" });
+    await waitFor(() => expect(controlsPanel).not.toHaveAttribute("tabindex"));
+    canvas.getByRole("tab", { name: "Controls" }).focus();
+    await userEvent.tab();
+    await expect(canvas.getByRole("button", { name: "Save changes" })).toHaveFocus();
+
+    await userEvent.click(canvas.getByRole("tab", { name: "Text" }));
+    const textPanel = canvas.getByRole("tabpanel", { name: "Text" });
+    await expect(textPanel).toHaveAttribute("tabindex", "0");
+    await userEvent.tab();
+    await expect(textPanel).toHaveFocus();
+  },
+};
+
+export const PanelFocusDark: Story = { ...PanelFocus, globals: { theme: "dark" } };

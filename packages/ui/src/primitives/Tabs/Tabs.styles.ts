@@ -116,9 +116,12 @@ export const tabTrigger = cva({
   },
   variants: {
     size: {
-      sm: { minHeight: "28px", paddingBlock: "1", paddingInline: "3", fontSize: "xs" },
-      // The original SegmentedTabs look, so existing screens do not shift.
-      md: { minHeight: "36px", paddingBlock: "2", paddingInline: "4", fontSize: "xs" },
+      // Both sizes use the 14px label step: 12px is below the label floor. `sm` (the ScenarioZone
+      // tools row) has tighter side padding so a three-tool row ("Overpayment", "Rate change",
+      // "Overpay or save") still fits the 343px a 375px screen leaves; a longer row scrolls in
+      // `tabsScroller` with its edge fades. Targets stay touch-friendly: 32px (sm), 36px (md).
+      sm: { minHeight: "32px", paddingBlock: "1", paddingInline: "2", fontSize: "sm" },
+      md: { minHeight: "36px", paddingBlock: "2", paddingInline: "4", fontSize: "sm" },
     },
   },
   defaultVariants: { size: "md" },
