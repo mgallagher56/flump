@@ -73,8 +73,9 @@ export const WidgetVisibilityPanel: FC<WidgetVisibilityPanelProps> = ({
         <Dialog.Overlay className={panelOverlay()} />
         <Dialog.Content className={panelContent()} data-focus-managed id="widget-visibility-panel">
           <Dialog.Title className={panelTitle()}>Choose what shows here</Dialog.Title>
-          <Dialog.Description className={panelDescription()} id="widget-visibility-rule">
-            {SECTION_RULE(maxVisible)}
+          {/* Radix owns the Description id (aria-describedby); ours sits on an inner span. */}
+          <Dialog.Description className={panelDescription()}>
+            <span id="widget-visibility-rule">{SECTION_RULE(maxVisible)}</span>
           </Dialog.Description>
           {error ? <InlineAlert tone="danger">{error}</InlineAlert> : null}
           <ul className={panelList()}>

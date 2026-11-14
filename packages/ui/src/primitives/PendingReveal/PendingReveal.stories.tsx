@@ -50,8 +50,16 @@ const Demo = ({ loadMs }: { loadMs: number }) => {
   );
 };
 
+const fastPlay: Story["play"] = async ({ canvasElement }) => {
+  const canvas = within(canvasElement);
+  await userEvent.click(canvas.getByRole("button", { name: /Load/ }));
+  // A load under the delay never shows the placeholder.
+  await waitFor(() => expect(canvas.getByText("£3,200")).toBeInTheDocument());
+};
+
 export const FastLoad: Story = {
   render: () => <Demo loadMs={100} />,
+  globals: { theme: "light" },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     await userEvent.click(canvas.getByRole("button", { name: /Load/ }));
@@ -70,4 +78,8 @@ export const Placeholders: Story = {
   ),
 };
 
-export const Dark: Story = { ...SlowLoad, globals: { theme: "dark" } };
+export const FastLoadDark: Story = {
+  render: () => <Demo loadMs={100} />,
+  globals: { theme: "dark" },
+  play: fastPlay,
+};

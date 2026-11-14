@@ -74,5 +74,5 @@ export const housekeepingGroup = cva({
 
 /** The "Unverified estimate" sentence on its own line inside the one notice. */
 export const noticeLeadLine = cva({
-  base: { display: "block", marginBottom: "4px" },
+  base: { display: "block", marginBottom: "1" },
 });

@@ -15,6 +15,8 @@ export interface PendingRevealProps {
   /** The loaded content. Rendered only when not pending. */
   children: ReactNode;
   className?: string;
+  /** Element id (and `data-testid`) of the placeholder wrapper. */
+  id?: string;
 }
 
 /**
@@ -30,6 +32,7 @@ export const PendingReveal: FC<PendingRevealProps> = ({
   fallback,
   children,
   className,
+  id = "pending-reveal-fallback",
 }) => {
   const placeholderShown = useDelayedPending(pending);
   const reducedMotion = usePrefersReducedMotion();
@@ -49,7 +52,8 @@ export const PendingReveal: FC<PendingRevealProps> = ({
           className,
         )}
         data-pending-state={placeholderShown ? "shown" : "held"}
-        data-testid="pending-reveal-fallback"
+        data-testid={id}
+        id={id}
       >
         {fallback}
       </div>

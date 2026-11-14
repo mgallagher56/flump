@@ -213,7 +213,9 @@ export const loader = async (args: LoaderFunctionArgs) => {
       // Whether the budget holds income only (set up straight after onboarding): the dashboard then
       // shows the income and asks for spending, never income minus nothing as "left over".
       hasIncome: budget?.hasIncome ?? false,
-      hasSpending: Array.isArray(budgetEntries) && budgetEntries.some((e: any) => !e?.isIncome),
+      hasSpending:
+        Array.isArray(budgetEntries) &&
+        budgetEntries.some((e: { isIncome?: boolean } | null) => !e?.isIncome),
       monthlyIncome,
       // Essentials plus discretionary; planned savings is its own line.
       monthlyExpenses: monthlyOutgoings,
