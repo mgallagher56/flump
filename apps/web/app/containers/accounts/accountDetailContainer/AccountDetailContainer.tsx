@@ -72,7 +72,7 @@ export const ownerPageFor = (type: unknown): { to: string; label: string } | nul
 
 /** Joins two subline sentences with a full stop between them. */
 const withSentence = (first: string, second: string | null): string =>
-  second ? `${/[.?]$/.test(first) ? first : `${first}.`} ${second}` : first;
+  second ? `${first.endsWith(".") || first.endsWith("?") ? first : `${first}.`} ${second}` : first;
 
 const BackLink: FC = () => (
   <Link className={backLink()} to="/app/accounts">

@@ -81,7 +81,8 @@ export const shouldRegroup = (raw: string, previous: string): boolean => {
   if (raw.length !== previous.length + 1) return false;
   let i = 0;
   while (i < previous.length && raw[i] === previous[i]) i += 1;
-  return /\d/.test(raw[i] ?? "");
+  const typed = raw[i] ?? "";
+  return typed >= "0" && typed <= "9";
 };
 
 const clamp = (value: number, min?: number, max?: number): number => {

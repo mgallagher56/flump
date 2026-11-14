@@ -28,7 +28,7 @@ test("monthly check-in saves this month's balances and the history page shows th
   await expect(sheet).toBeVisible();
   await expect(sheet).toContainText(month);
   // The seeded balance again, so the persona still matches and the next run need not re-seed.
-  const current = sheet.getByRole("textbox", { name: /^New balance\s*,\s*Current account$/ });
+  const current = sheet.getByRole("textbox", { name: "New balance in pounds, Current account" });
   await current.fill("3,400");
   // Enter confirms the row and saves it at once (save as you go), then moves to the next row.
   await current.press("Enter");
