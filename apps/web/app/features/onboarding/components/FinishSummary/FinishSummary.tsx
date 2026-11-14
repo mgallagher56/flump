@@ -1,9 +1,8 @@
-import { Button, Heading, Icon, KpiCard, ProjectionNotice, StatusBadge } from "@repo/ui";
+import { Button, Heading, Icon, ProjectionNotice, StatusBadge } from "@repo/ui";
 import { ArrowLeft, TriangleAlert } from "lucide-react";
 import type { FC } from "react";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import type { AppPageKey } from "~/utils/pageConfig";
-import { REGION_ASSUMPTION_LABEL } from "~/utils/taxTrapCopy";
 import { birthYearFromAge } from "../../age";
 import type { OnboardingSummary } from "../../deriveOnboardingSummary";
 import { MODULE_LABELS } from "../../inferModules";
@@ -16,7 +15,7 @@ import {
 } from "../../types";
 import type { FinishSaveState } from "../../useFinishOnboarding";
 import type { StepOutcome } from "../../useOnboardingForm";
-import { TAKE_HOME_LABEL } from "../LiveSummaryBar";
+import { LiveSummaryBar } from "../LiveSummaryBar";
 import { finishSummaryRecipe } from "./FinishSummary.styles";
 
 export interface FinishSummaryProps {
@@ -172,16 +171,9 @@ export const FinishSummary: FC<FinishSummaryProps> = ({
         Review what will be saved
       </Heading>
 
-      {/* An estimate, so never in the hero style (D2): the default card, labelled as an estimate. */}
-      <KpiCard
-        label={TAKE_HOME_LABEL}
-        subtext={
-          assumingRegion
-            ? `Worked out from what you entered. ${REGION_ASSUMPTION_LABEL}`
-            : "Worked out from what you entered"
-        }
-        value={summary.hasIncome ? summary.monthlyTakeHome : null}
-      />
+      {/* The same flat take-home line as every step: an estimate, never a hero (D2), and not a
+          card inside the step card. Its label already says "(estimate)". */}
+      <LiveSummaryBar assumingRegion={assumingRegion} summary={summary} />
 
       {groups.map((group) => (
         <div className={classes.group} key={group.step}>
@@ -244,10 +236,13 @@ export const FinishSummary: FC<FinishSummaryProps> = ({
         </div>
       ) : null}
 
-      {/* Plain body copy, not a notice: the projection notice is this step's one notice (P4). */}
-      <p className={classes.saved} data-testid="onboarding-saved-note" id="onboarding-saved-note">
-        {SAVED_NOTES[saveState]}
-      </p>
+      {/* Only when a save went wrong: "Review what will be saved" already says nothing is saved
+          yet. Plain body copy, not a notice: the projection notice is this step's one notice (P4). */}
+      {saveState !== "idle" ? (
+        <p className={classes.saved} data-testid="onboarding-saved-note" id="onboarding-saved-note">
+          {SAVED_NOTES[saveState]}
+        </p>
+      ) : null}
 
       <ProjectionNotice />
 
@@ -270,12 +265,18 @@ export const FinishSummary: FC<FinishSummaryProps> = ({
           <Icon icon={ArrowLeft} size="sm" /> Back
         </Button>
         <Button
-          aria-describedby={[
-            error ? "onboarding-finish-error" : null,
-            summary.canFinish ? "onboarding-saved-note" : "finish-income-hint",
-          ]
-            .filter(Boolean)
-            .join(" ")}
+          aria-describedby={
+            [
+              error ? "onboarding-finish-error" : null,
+              summary.canFinish
+                ? saveState !== "idle"
+                  ? "onboarding-saved-note"
+                  : null
+                : "finish-income-hint",
+            ]
+              .filter(Boolean)
+              .join(" ") || undefined
+          }
           disabled={!summary.canFinish}
           onClick={onFinish}
           pending={isSubmitting}

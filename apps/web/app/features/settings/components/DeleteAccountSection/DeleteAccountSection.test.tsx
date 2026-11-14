@@ -27,7 +27,7 @@ describe("<DeleteAccountSection />", () => {
     const { onConfirm } = setup();
     const dialog = screen.getByRole("alertdialog");
     expect(dialog.textContent).toContain("This deletes the following for good:");
-    expect(dialog.textContent).toContain("Your login");
+    expect(dialog.textContent).toContain("Your sign-in");
     expect(dialog.textContent).toContain("Your AI connections and their activity log");
     expect(dialog.textContent).toContain("with no personal details, for 24 months");
 

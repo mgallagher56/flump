@@ -56,7 +56,45 @@ export const tokenValue = cva({
 
 /** The single muted line at the foot of the AI connections card. */
 export const setupNote = cva({
-  base: { textStyle: "body.sm", color: "text.muted", margin: 0 },
+  base: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "3",
+    textStyle: "body.sm",
+    color: "text.secondary",
+  },
+});
+
+export const setupSteps = cva({
+  base: {
+    margin: 0,
+    paddingInlineStart: "5",
+    listStyleType: "decimal",
+    display: "flex",
+    flexDirection: "column",
+    gap: "2",
+  },
+});
+
+export const serverRow = cva({
+  base: {
+    display: "flex",
+    alignItems: "center",
+    flexWrap: "wrap",
+    gap: "2",
+    minWidth: 0,
+    "& code": { overflowWrap: "anywhere" },
+  },
+});
+
+export const setupLink = cva({
+  base: {
+    color: "primary",
+    fontWeight: "semibold",
+    textDecoration: "underline",
+    textUnderlineOffset: "2px",
+    alignSelf: "flex-start",
+  },
 });
 
 /** The tokens, one row each. Rows stack on phones and never scroll sideways. */
@@ -106,7 +144,7 @@ export const tokenCell = cva({
 });
 
 export const tokenLabel = cva({
-  base: { textStyle: "label.sm", color: "text.primary", overflowWrap: "anywhere" },
+  base: { textStyle: "label.md", color: "text.primary", overflowWrap: "anywhere" },
 });
 
 export const tokenPrefix = cva({

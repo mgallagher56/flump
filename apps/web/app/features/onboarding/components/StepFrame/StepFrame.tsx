@@ -19,6 +19,8 @@ export interface StepFrameProps {
   nextLabel?: string;
   /** Move focus to the heading when the step appears (not on first load). */
   focusOnMount?: boolean;
+  /** The live take-home figure, shown under the fields and above the actions. */
+  summary?: ReactNode;
 }
 
 export const StepFrame: FC<StepFrameProps> = ({
@@ -31,6 +33,7 @@ export const StepFrame: FC<StepFrameProps> = ({
   onNext,
   nextLabel = "Next",
   focusOnMount = false,
+  summary,
 }) => {
   const classes = stepFrameRecipe();
   useEffect(() => {
@@ -55,6 +58,7 @@ export const StepFrame: FC<StepFrameProps> = ({
         ) : null}
       </div>
       <div className={classes.fields}>{children}</div>
+      {summary}
       <div className={classes.actions}>
         {onBack ? (
           <Button onClick={onBack} size="sm" type="button" variant="ghost">

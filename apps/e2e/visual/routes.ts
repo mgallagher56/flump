@@ -26,16 +26,6 @@ const web = (
   prepare,
 });
 
-/**
- * Setup renders for any signed-in user (the route never redirects someone who has finished), and
- * a finished profile starts the flow empty, so the seeded dev-session user gives a stable shot
- * without a second, un-onboarded user or any bypass. Nothing here saves: no Finish, no Save and exit.
- */
-const toHousingStep = async (page: Page) => {
-  await page.getByRole("button", { name: /^next/i }).click();
-  await page.getByRole("heading", { level: 2, name: "Housing and spending" }).waitFor();
-};
-
 const marketing = (name: string, path: string): VisualRoute => ({
   name: `marketing-${name}`,
   url: `${MARKETING_URL}${path}`,
@@ -56,8 +46,9 @@ export const VISUAL_ROUTES: readonly VisualRoute[] = [
   web("forecast", "/app/forecast"),
   web("mortgage", "/app/mortgage"),
   web("pension", "/app/pension"),
-  web("onboarding", "/app/onboarding"),
-  web("onboarding-housing", "/app/onboarding", true, toHousingStep),
+  // Setup is not here: the seeded user has finished it, so /app/onboarding sends them to the
+  // dashboard (R3). The setup screens are covered by their Storybook stories (light, dark, a11y)
+  // and walked end to end by tests/new-user-journey.spec.ts.
   web("profile", "/app/profile"),
   { ...web("not-found-app", "/app/not-a-page"), expectedStatus: 404 },
   { ...web("not-found", "/not-a-page", false), expectedStatus: 404 },

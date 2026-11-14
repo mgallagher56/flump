@@ -159,7 +159,8 @@ describe("OnboardingRoute (4-step flow)", () => {
     next();
     expect(screen.getByRole("button", { name: "Skip this step" })).toBeDefined();
     next();
-    expect(screen.queryByRole("button", { name: /skip/i })).toBeNull();
+    // Stepper steps can read "Skipped" now; only the step action is checked here.
+    expect(screen.queryByRole("button", { name: "Skip this step" })).toBeNull();
   });
 
   it("does not claim a setup time", () => {
@@ -575,14 +576,13 @@ describe("OnboardingRoute (4-step flow)", () => {
   });
 
   describe("review", () => {
-    it("says what is held and does not claim a server save", () => {
+    it("is titled as a review and claims no server save", () => {
       render(<OnboardingRoute />);
       typeInto(/yearly salary before tax/i, "45000");
       chooseRegion();
       goToReview();
-      const note = screen.getByTestId("onboarding-saved-note").textContent ?? "";
-      expect(note).toMatch(/until you finish/i);
-      expect(note).toMatch(/nothing is saved to your account yet/i);
+      expect(screen.getByRole("heading", { name: "Review what will be saved" })).toBeDefined();
+      expect(screen.queryByTestId("onboarding-saved-note")).toBeNull();
       expect(screen.getByRole("list", { name: /sections we have set up for you/i })).toBeDefined();
     });
 

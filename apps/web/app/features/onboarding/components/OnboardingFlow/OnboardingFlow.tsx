@@ -70,7 +70,16 @@ export const OnboardingFlow: FC<OnboardingFlowProps> = ({
 
   // On the review the finish error sits beside the Finish button instead, so it is announced once.
   const alertText = exit.error ?? (step === REVIEW_STEP ? actionError : (error ?? actionError));
-  const common = { focusOnMount: hasMoved };
+  // The one live figure sits under each step's fields, above its actions.
+  const common = {
+    focusOnMount: hasMoved,
+    summary: (
+      <LiveSummaryBar
+        assumingRegion={values.taxRegion === null && values.incomeMode === "gross"}
+        summary={summary}
+      />
+    ),
+  };
 
   return (
     <div className={classes.page}>
@@ -146,12 +155,6 @@ export const OnboardingFlow: FC<OnboardingFlowProps> = ({
               stepStates={stepperStates(form.outcomes, REVIEW_STEP)}
               summary={summary}
               values={values}
-            />
-          ) : null}
-          {step !== REVIEW_STEP ? (
-            <LiveSummaryBar
-              assumingRegion={values.taxRegion === null && values.incomeMode === "gross"}
-              summary={summary}
             />
           ) : null}
         </Card>

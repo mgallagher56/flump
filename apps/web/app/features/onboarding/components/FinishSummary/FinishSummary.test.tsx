@@ -115,7 +115,7 @@ describe("<FinishSummary />", () => {
     expect(screen.getAllByRole("note")).toHaveLength(1);
     expect(screen.getByRole("note").getAttribute("data-notice")).toBe("projection");
     expect(screen.getByTestId("finish-income-hint").querySelector("svg")).toBeNull();
-    expect(screen.getByTestId("onboarding-saved-note").querySelector("svg")).toBeNull();
+    expect(screen.queryByTestId("onboarding-saved-note")).toBeNull();
   });
 
   it("calls the modules list Sections we have set up for you", () => {
@@ -132,9 +132,10 @@ describe("<FinishSummary />", () => {
     expect(onEdit).toHaveBeenNthCalledWith(2, 3);
   });
 
-  it("describes the current save state without claiming an account save", () => {
+  it("adds no save note before anything has been tried: the heading says it is a review", () => {
     setup({});
-    expect(screen.getByTestId("onboarding-saved-note").textContent).toBe(SAVED_NOTES.idle);
+    expect(screen.queryByTestId("onboarding-saved-note")).toBeNull();
+    expect(screen.queryByText(SAVED_NOTES.idle)).toBeNull();
   });
 
   it("says some details are saved after a partial save", () => {
@@ -154,7 +155,10 @@ describe("<FinishSummary />", () => {
   });
 
   it("repeats the finish error beside the Finish button", () => {
-    setup({ grossSalary: 45000, taxRegion: "ENGLAND" }, { error: "Could not save" });
+    setup(
+      { grossSalary: 45000, taxRegion: "ENGLAND" },
+      { error: "Could not save", saveState: "unconfirmed" },
+    );
     const alert = screen.getByRole("alert");
     expect(alert.textContent).toContain("Could not save");
     const finish = screen.getByRole("button", { name: /finish and open dashboard/i });
