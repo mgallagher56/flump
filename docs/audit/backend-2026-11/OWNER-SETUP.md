@@ -193,3 +193,43 @@ There is nothing to change. The new required checks gate pull requests. On a pus
 
 - Open a test PR from a branch that is behind `main`. GitHub shows "This branch is out-of-date" and blocks the merge until it is updated.
 - A PR whose `🎭 E2E smoke` fails cannot merge, including for an admin.
+
+## BE-07 Security, config and observability (findings M6, M8, M9, M10, M12, M14, M15, M18, L7, L14)
+
+The backend now validates its whole environment at boot and refuses to start with a named error (`EnvValidationError`, `OpenBetaNotConfirmedError`, `ContractModeNotEnforcedError`, `BankLaunchGateError`). Set these **before** deploying, or the new image will not boot.
+
+### 1. Backend service variables (Railway, production)
+
+| Variable | Value |
+|---|---|
+| `DATABASE_URL` (or `DB_HOST` and friends) | Already set; confirm |
+| `CORS_ALLOWED_ORIGINS` | The web origin(s), comma separated |
+| `MCP_AUDIT_HMAC_KEY` | `<random, at least 32 characters>` |
+| `WORKOS_CLIENT_ID` | Already set; confirm |
+| `BANKING_TOKEN_ENCRYPTION_KEY` | Already set; confirm |
+| `BETA_ALLOWED_EMAILS` and/or `BETA_ALLOWED_USER_IDS` | The allow-list (ruling D8). Only set `BETA_OPEN=true` if you mean to open the beta |
+| `CONTRACT_MODE` | Unset or `enforce`. Any other value fails boot in production |
+| `BANK_CONNECTIONS_ENABLED` | Unset or `false`. `true` fails boot until BE-12 flips the launch gate (ruling D11) |
+| `WEB_CLIENT_IP_HMAC_KEY` | `<random, at least 32 characters>`, the **same value** on the web service |
+| `SENTRY_TRACES_SAMPLE_RATE` | Optional. Defaults to `0.02` in production (ruling D7); at most `0.05` is accepted |
+| `DB_SLOW_QUERY_MS` | Optional. Defaults to 500 |
+
+### 2. Web service variables (Railway)
+
+| Variable | Value |
+|---|---|
+| `WEB_CLIENT_IP_HMAC_KEY` | Same value as the backend. Without it, every web user shares the web server's per-IP bucket |
+| `SENTRY_AUTH_TOKEN` | A Sentry token with the `project:releases` scope, as a **build** variable. Absent means source maps are skipped, not a failed build |
+| `SENTRY_ORG`, `SENTRY_PROJECT` | Your Sentry org and web project slugs (build variables) |
+| `CSP_REPORT_ONLY` | Leave unset. Set to `true` only as an emergency rollback if the enforced CSP breaks a page |
+
+### 3. Database
+
+The migration `AddRateLimitBuckets1794632012000` adds one table, `rate_limit_buckets`. It is additive and reversible; run the backup drill before deploy as for every migration.
+
+### How to know it worked
+
+- The backend boots and `/health` is green; removing `MCP_AUDIT_HMAC_KEY` in a preview environment makes boot fail with `EnvValidationError` naming it.
+- A web page's response carries `Content-Security-Policy` (not `-Report-Only`) and an `x-request-id`; the same id appears on the backend log line for that request.
+- A Sentry web error shows a readable stack trace, and `https://<web-origin>/assets/<file>.js.map` returns 404.
+- Repeated failed sign-ins stay limited after a redeploy.
