@@ -59,4 +59,50 @@ describe("CollapsibleDrawer Primitive", () => {
     const body = screen.getByText("Body").parentElement as HTMLElement;
     expect(body.className).toContain("motionSafe:");
   });
+
+  describe("quiet variant", () => {
+    it("is a text button named by the title, without the card trailing text", () => {
+      render(
+        <CollapsibleDrawer
+          closedLabel="View full schedule"
+          subtitle="Not shown"
+          title="Show data"
+          variant="quiet"
+        >
+          <div>Body</div>
+        </CollapsibleDrawer>,
+      );
+      const trigger = screen.getByRole("button", { name: "Show data" });
+      expect(trigger.textContent).toBe("Show data");
+      expect(screen.queryByText("Not shown")).toBeNull();
+      expect(screen.queryByText("View full schedule")).toBeNull();
+    });
+
+    it("toggles the body and keeps its name while open", () => {
+      render(
+        <CollapsibleDrawer title="Show details" variant="quiet">
+          <div>Detail row</div>
+        </CollapsibleDrawer>,
+      );
+      const trigger = screen.getByRole("button", { name: "Show details" });
+      expect(trigger.getAttribute("aria-expanded")).toBe("false");
+      expect(trigger.getAttribute("aria-controls")).toBeNull();
+      fireEvent.click(trigger);
+      expect(trigger.getAttribute("aria-expanded")).toBe("true");
+      const body = screen.getByText("Detail row").parentElement as HTMLElement;
+      expect(trigger.getAttribute("aria-controls")).toBe(body.id);
+      expect(screen.getByRole("button", { name: "Show details" })).toBe(trigger);
+      fireEvent.click(trigger);
+      expect(screen.queryByText("Detail row")).toBeNull();
+    });
+
+    it("shows the item count on the trigger", () => {
+      render(
+        <CollapsibleDrawer itemCount={12} title="Show data" variant="quiet">
+          <div>Body</div>
+        </CollapsibleDrawer>,
+      );
+      expect(screen.getByText("12 rows")).toBeDefined();
+    });
+  });
 });

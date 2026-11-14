@@ -4,7 +4,7 @@ import {
   type DebtItem,
   type PayoffResult,
 } from "@flump/finance-engine";
-import { type FC, useMemo, useState } from "react";
+import { type FC, type HTMLAttributes, useEffect, useMemo, useState } from "react";
 import { cx } from "../../../styled-system/css";
 import { formatAxisCurrency } from "../../charts/formatAxisCurrency";
 import { ChartFigure } from "../../patterns/ChartFigure/ChartFigure";
@@ -27,6 +27,7 @@ import { KpiCard } from "../../primitives/KpiCard/KpiCard";
 import { formatMoney, Money } from "../../primitives/Money/Money";
 import { RadioCardGroup } from "../../primitives/RadioCardGroup/RadioCardGroup";
 import { Select } from "../../primitives/Select/Select";
+import { Skeleton } from "../../primitives/Skeleton/Skeleton";
 import { SliderField } from "../../primitives/SliderField/SliderField";
 import { Switch } from "../../primitives/Switch/Switch";
 import { Table, TBody, Td, THead, Th } from "../../primitives/Table/Table";
@@ -50,6 +51,11 @@ import {
   listReset,
   mutedText,
   page,
+  pageBody,
+  pageSkeletonCard,
+  pageSkeletonHeader,
+  pageSkeletonHero,
+  pageSkeletonKpis,
   split,
   splitDetail,
   splitList,
@@ -645,3 +651,91 @@ export const ErrorTemplate: FC = () => (
     </div>
   </main>
 );
+
+/* -------------------------------------------------------------------------------------------- */
+/* Page building blocks (E16 P12, P13). These are exported for app pages, unlike the templates.  */
+/* -------------------------------------------------------------------------------------------- */
+
+export interface PageBodyProps extends HTMLAttributes<HTMLDivElement> {}
+
+/**
+ * The one page wrapper (plan P13): content at most 1200px wide (`sizes.page.max`), gutters of 16px
+ * at 375, 24px from `md` and 40px from `lg`, 20px (32px from `lg`) above the h1, and 32px between
+ * sections. Children render in the P13 order: `PageHeader`, `HeroFigure`, `KpiStrip`, "Your
+ * details", `ScenarioZone`, drawers. It is a plain `div` because `AppShell` already supplies the
+ * `main` landmark. `AppShell` still pads its main area today; a page adopting `PageBody` inside the
+ * shell takes the shell's padding off in the same change, so the gutters are not applied twice.
+ */
+export const PageBody: FC<PageBodyProps> = ({ className, ...props }) => (
+  <div className={cx(pageBody, className)} {...props} />
+);
+
+export interface PageSkeletonProps {
+  /**
+   * Milliseconds to wait before showing the skeleton, so a fast loader never flashes it (P12.1).
+   * Defaults to 200. Pass 0 to show it at once.
+   */
+  delayMs?: number;
+  /** Visually hidden loading message. Defaults to "Loading page". */
+  label?: string;
+  className?: string;
+}
+
+/**
+ * The loading placeholder every route shows while its loader is pending (plan P12.1): header, hero
+ * block, 3 KPI cards and 2 cards, laid out in `PageBody`. Built from `Skeleton`, so it shimmers
+ * only when motion is allowed. Renders nothing until `delayMs` has passed.
+ */
+export const PageSkeleton: FC<PageSkeletonProps> = ({
+  delayMs = 200,
+  label = "Loading page",
+  className,
+}) => {
+  const [visible, setVisible] = useState(delayMs <= 0);
+
+  useEffect(() => {
+    if (delayMs <= 0) {
+      setVisible(true);
+      return;
+    }
+    setVisible(false);
+    const timer = setTimeout(() => setVisible(true), delayMs);
+    return () => clearTimeout(timer);
+  }, [delayMs]);
+
+  if (!visible) return null;
+
+  return (
+    <PageBody aria-busy="true" className={className} data-testid="page-skeleton" role="status">
+      <div className={pageSkeletonHeader}>
+        <Skeleton label={label} shape="line" />
+        <Skeleton />
+      </div>
+      <Skeleton className={pageSkeletonHero} shape="block" size="md" />
+      <div className={pageSkeletonKpis}>
+        {[0, 1, 2].map((i) => (
+          <div
+            aria-hidden="true"
+            className={pageSkeletonCard}
+            data-testid="page-skeleton-kpi"
+            key={i}
+          >
+            <Skeleton />
+            <Skeleton shape="line" />
+          </div>
+        ))}
+      </div>
+      {[0, 1].map((i) => (
+        <div
+          aria-hidden="true"
+          className={pageSkeletonCard}
+          data-testid="page-skeleton-card"
+          key={i}
+        >
+          <Skeleton shape="line" />
+          <Skeleton lines={3} />
+        </div>
+      ))}
+    </PageBody>
+  );
+};

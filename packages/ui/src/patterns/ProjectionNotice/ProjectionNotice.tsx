@@ -22,17 +22,24 @@ export interface ProjectionNoticeProps {
   className?: string;
 }
 
+/**
+ * The page's one "Guidance, not advice" notice (E16 P4). Quiet `note` style: secondary text on the
+ * surrounding surface with a top hairline. Place it at the foot of the first region that shows a
+ * projection (the `ScenarioZone` footer when the page has one), always visible, once per page.
+ */
 export const ProjectionNotice: FC<ProjectionNoticeProps> = ({ children, className }) => (
-  <aside
+  <div
     aria-label="Guidance, not advice"
     className={cx(projectionNotice(), className)}
+    data-notice="projection"
     data-testid="projection-notice"
+    role="note"
   >
     <span className={projectionNoticeIcon()}>
-      <Icon icon={Info} size="md" />
+      <Icon icon={Info} size="sm" />
     </span>
     <div className={projectionNoticeText()}>{children ?? PROJECTION_NOTICE_TEXT}</div>
-  </aside>
+  </div>
 );
 
 export default ProjectionNotice;

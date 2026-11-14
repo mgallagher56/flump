@@ -6,6 +6,8 @@ import {
   ErrorTemplate,
   FormTemplate,
   ListDetailTemplate,
+  PageBody,
+  PageSkeleton,
   SimulatorTemplate,
 } from "./PageTemplates";
 
@@ -111,4 +113,43 @@ export const ErrorPage: Story = {
       within(canvasElement).getByRole("button", { name: "Back to home" }),
     ).toBeInTheDocument();
   },
+};
+
+const pageBodyPlay: Story["play"] = async ({ canvasElement }) => {
+  const canvas = within(canvasElement);
+  await expect(canvas.getByRole("heading", { level: 1, name: "Your money" })).toBeInTheDocument();
+  await expect(canvas.getByTestId("page-body")).toBeInTheDocument();
+};
+
+const PageBodySample = () => (
+  <PageBody data-testid="page-body">
+    <h1>Your money</h1>
+    <p>Sections sit 32px apart, inside gutters of 16, 24 and 40px, at most 1200px wide.</p>
+    <p>Each child of the page body is one section.</p>
+  </PageBody>
+);
+
+/** P13: the one page wrapper. Resize to 375, md and lg to see the gutters change. */
+export const PageBodyLayout: Story = { render: () => <PageBodySample />, play: pageBodyPlay };
+export const PageBodyLayoutDark: Story = {
+  render: () => <PageBodySample />,
+  globals: { theme: "dark" },
+  play: pageBodyPlay,
+};
+
+const skeletonPlay: Story["play"] = async ({ canvasElement }) => {
+  const canvas = within(canvasElement);
+  // Shown after the 200ms delay.
+  const status = await canvas.findByRole("status");
+  await expect(status).toHaveAttribute("aria-busy", "true");
+  await expect(canvas.getAllByTestId("page-skeleton-kpi")).toHaveLength(3);
+  await expect(canvas.getAllByTestId("page-skeleton-card")).toHaveLength(2);
+};
+
+/** P12.1: what every route shows while its loader is pending beyond 200ms. */
+export const Loading: Story = { render: () => <PageSkeleton />, play: skeletonPlay };
+export const LoadingDark: Story = {
+  render: () => <PageSkeleton />,
+  globals: { theme: "dark" },
+  play: skeletonPlay,
 };

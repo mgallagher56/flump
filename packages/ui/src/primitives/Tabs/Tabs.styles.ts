@@ -1,22 +1,38 @@
 import { cva } from "../../../styled-system/css";
 
-export const segmentedTabsList = cva({
+/** The root never grows past its parent, so a long tab list scrolls instead of widening the page. */
+export const tabsRoot = cva({
+  base: { minWidth: "0", maxWidth: "100%" },
+});
+
+/**
+ * Segmented track. At 375px a list wider than its parent scrolls sideways inside itself
+ * (`overflowX: auto`) rather than overflowing the page.
+ */
+export const tabsList = cva({
   base: {
     display: "inline-flex",
     alignItems: "center",
     backgroundColor: "surface.sunken",
-    padding: "4px",
     borderRadius: "xl",
     borderWidth: "1px",
     borderStyle: "solid",
     borderColor: "border.subtle",
-    gap: "4px",
     maxWidth: "100%",
     overflowX: "auto",
+    overscrollBehaviorX: "contain",
+    scrollbarWidth: "thin",
   },
+  variants: {
+    size: {
+      sm: { padding: "2px", gap: "2px" },
+      md: { padding: "4px", gap: "4px" },
+    },
+  },
+  defaultVariants: { size: "md" },
 });
 
-export const segmentedTabPanel = cva({
+export const tabPanel = cva({
   base: {
     marginTop: "4",
     borderRadius: "lg",
@@ -36,23 +52,25 @@ export const segmentedTabPanel = cva({
   defaultVariants: { keepMounted: false },
 });
 
-export const segmentedTabTrigger = cva({
+export const tabTrigger = cva({
   base: {
-    padding: "8px 16px",
-    minHeight: "36px",
     display: "inline-flex",
+    flexShrink: "0",
     alignItems: "center",
     justifyContent: "center",
     gap: "6px",
     whiteSpace: "nowrap",
-    fontSize: "xs",
     fontWeight: "semibold",
     color: "text.muted",
     backgroundColor: "transparent",
     borderRadius: "lg",
     border: "none",
     cursor: "pointer",
-    transition: "all 0.15s ease",
+    _motionSafe: {
+      transitionProperty: "background-color, color, box-shadow",
+      transitionDuration: "base",
+      transitionTimingFunction: "standard",
+    },
     "&[data-state='active']": {
       backgroundColor: "surface.card",
       color: "text.primary",
@@ -61,10 +79,19 @@ export const segmentedTabTrigger = cva({
     _hover: {
       color: "text.primary",
     },
+    _disabled: { cursor: "not-allowed", opacity: 0.5 },
     _focusVisible: {
       outline: "2px solid",
       outlineColor: "border.focusRing",
-      outlineOffset: "2px",
+      outlineOffset: "-2px",
     },
   },
+  variants: {
+    size: {
+      sm: { minHeight: "28px", paddingBlock: "1", paddingInline: "3", fontSize: "xs" },
+      // The original SegmentedTabs look, so existing screens do not shift.
+      md: { minHeight: "36px", paddingBlock: "2", paddingInline: "4", fontSize: "xs" },
+    },
+  },
+  defaultVariants: { size: "md" },
 });

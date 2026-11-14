@@ -98,3 +98,47 @@ export const drawerBody = cva({
     },
   },
 });
+
+// Quiet variant: a text button with no card chrome (plan P10.5, "Show data", "Show details").
+export const drawerQuietContainer = cva({
+  base: { display: "flex", flexDirection: "column", alignItems: "flex-start", width: "100%" },
+});
+
+export const drawerQuietButton = cva({
+  base: {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: "1.5",
+    minHeight: "touch",
+    px: "1",
+    mx: "-1",
+    backgroundColor: "transparent",
+    border: "none",
+    borderRadius: "md",
+    cursor: "pointer",
+    textStyle: "label.sm",
+    fontWeight: "semibold",
+    color: "primary",
+    textDecoration: "none",
+    _hover: { textDecoration: "underline", textUnderlineOffset: "3px" },
+    _focusVisible: {
+      outline: "2px solid",
+      outlineColor: "border.focusRing",
+      outlineOffset: "2px",
+    },
+  },
+});
+
+export const drawerQuietBody = cva({
+  base: {
+    width: "100%",
+    pt: "2",
+    overflowX: "auto",
+    fontVariantNumeric: "tabular-nums",
+    _motionSafe: {
+      animationName: "fadeIn",
+      animationDuration: "base",
+      animationTimingFunction: "enter",
+    },
+  },
+});

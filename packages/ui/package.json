@@ -19,6 +19,7 @@
     "./preset": "./panda.preset.ts",
     "./calculators": "./src/calculators/index.ts",
     "./tools": "./src/tools/index.ts",
+    "./testing": "./src/testing/index.ts",
     "./*": "./src/*.tsx"
   },
   "scripts": {

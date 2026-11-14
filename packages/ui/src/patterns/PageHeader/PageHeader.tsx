@@ -12,11 +12,14 @@ import {
 export interface PageHeaderProps {
   /** Plain, sentence-case page title. Renders the page `h1`. */
   title: string;
-  /** One-line description under the title. */
+  /** One line under the title, at most one sentence and no figures (E16 P13). */
   description?: string;
   /** @deprecated Use `description`. Kept so existing screens keep working. */
   subtitle?: string;
-  /** Primary and secondary page actions, shown top right. */
+  /**
+   * The one actions slot, shown top right: one primary button (the page's only primary, E16 P7.4)
+   * and at most one secondary. Anything more belongs in the page body or a menu.
+   */
   actions?: ReactNode;
   /**
    * Quiet status pill beside the actions, for example "Sample data". A string renders the
@@ -26,6 +29,11 @@ export interface PageHeaderProps {
   className?: string;
 }
 
+/**
+ * The page's h1, one-line description and one actions slot. It has no notice slot: the page's one
+ * `ProjectionNotice` sits at the foot of the first projection region, never above or beside the h1
+ * (E16 P4.1). Nothing but the app header sits above it.
+ */
 export const PageHeader: FC<PageHeaderProps> = ({
   title,
   description,

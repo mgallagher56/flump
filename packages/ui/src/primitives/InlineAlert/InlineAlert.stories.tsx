@@ -104,3 +104,33 @@ export const BannerVariant: Story = {
 };
 
 export const Dark: Story = { ...Tones, globals: { theme: "dark" } };
+
+const infoArgs = {
+  tone: "info" as const,
+  title: "Your fixed rate ends on 31 March",
+  children: "Choose a new deal before then to avoid moving to your lender's standard rate.",
+  action: (
+    <Button size="sm" variant="secondary">
+      Compare deals
+    </Button>
+  ),
+};
+
+const infoPlay: Story["play"] = async ({ canvasElement }) => {
+  const canvas = within(canvasElement);
+  await expect(canvas.getByRole("status")).toBeInTheDocument();
+  await expect(canvas.getByRole("button", { name: "Compare deals" })).toBeInTheDocument();
+};
+
+/**
+ * `tone="info"` is for actionable information only: something the user should do, with the action
+ * to do it (E16 P4.5). Disclaimers and "guidance, not advice" wording never use it; they use the
+ * quiet `ProjectionNotice` note instead.
+ */
+export const InfoIsForActions: Story = { args: infoArgs, play: infoPlay };
+
+export const InfoIsForActionsDark: Story = {
+  args: infoArgs,
+  globals: { theme: "dark" },
+  play: infoPlay,
+};

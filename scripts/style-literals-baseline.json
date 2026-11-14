@@ -79,7 +79,6 @@
     "packages/ui/src/primitives/Button/Button.styles.ts": 1,
     "packages/ui/src/primitives/Card/Card.styles.ts": 2,
     "packages/ui/src/primitives/ProgressBar/ProgressBar.styles.ts": 1,
-    "packages/ui/src/primitives/SegmentedTabs/SegmentedTabs.styles.ts": 1,
     "packages/ui/src/primitives/Spinner/Spinner.styles.ts": 1
   },
   "inlineStyle": {

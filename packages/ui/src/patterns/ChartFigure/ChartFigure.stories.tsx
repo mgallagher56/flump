@@ -147,4 +147,23 @@ export const NoLegendNoData: Story = {
   args: { legend: undefined, dataTable: undefined },
 };
 
+/** P10.6: with fewer than 3 points no chart is drawn; the summary shows with a one-line prompt. */
+export const TooFewPoints: Story = {
+  args: {
+    title: "Your net worth since you joined",
+    summary: "Net worth is £21,400, from your first check-in in January.",
+    showSummary: false,
+    pointCount: 2,
+    notEnoughDataText: "The chart appears after your third check-in.",
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(canvas.getByText(/appears after your third check-in/)).toBeInTheDocument();
+    await expect(canvas.getByText(/Net worth is £21,400/)).toBeVisible();
+    await expect(canvas.queryByRole("list", { name: "Chart key" })).toBeNull();
+  },
+};
+
+export const TooFewPointsDark: Story = { ...TooFewPoints, globals: { theme: "dark" } };
+
 export const Dark: Story = { ...Default, globals: { theme: "dark" } };
