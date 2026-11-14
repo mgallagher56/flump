@@ -23,7 +23,7 @@ import { getAuthSession } from "~/utils/auth.server";
 import { getSandboxPersonaData } from "~/utils/demoData";
 
 export const meta: MetaFunction = () => [
-  { title: "Sample data | Flump" },
+  { title: "Example figures | Flump" },
   { name: "robots", content: "noindex, nofollow" },
 ];
 
@@ -117,6 +117,9 @@ export default function SandboxRoute() {
       {/* The dashboard itself, with the bar as its one sample-data notice (E16 P4.4). */}
       <SampleModeProvider value>
         <HomeDashboard
+          // The SandboxBar sits above the h1 on purpose: it is the sandbox's page-level bar and
+          // one of its two notices (plan P4.4), not a projection notice, so P4.1's "never above
+          // the h1" does not apply to it.
           banner={
             <SandboxBar
               active={activePersona}

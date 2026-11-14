@@ -59,7 +59,7 @@ describe.each(["medium", "debt", "high"])("sandbox page, %s household", (persona
   it("shows net worth once and at most four locked section cards with no links", () => {
     const { container } = renderSandbox(persona);
     expect(container.querySelectorAll('[data-figure="netWorth"]')).toHaveLength(1);
-    expect(screen.getAllByText(/^Net worth$/)).toHaveLength(1);
+    expect(screen.getAllByText(/^Net worth(, including your home estimate)?$/)).toHaveLength(1);
     const cards = Array.from(container.querySelectorAll("[data-section-card]"));
     expect(cards.length).toBeGreaterThan(0);
     expect(cards.length).toBeLessThanOrEqual(4);
@@ -74,8 +74,17 @@ describe.each(["medium", "debt", "high"])("sandbox page, %s household", (persona
     expect(userFacingText(container)).not.toMatch(FORBIDDEN);
     const h1 = screen.getByRole("heading", { level: 1 });
     expect(h1.textContent).toContain("Example figures");
+    // The one projection notice comes after the h1 (P4.1).
     const notice = document.querySelector('[data-notice="projection"]') as HTMLElement;
     expect(notice.compareDocumentPosition(h1) & Node.DOCUMENT_POSITION_PRECEDING).toBeTruthy();
+  });
+
+  it("keeps the SandboxBar above the h1: the page-level bar, exempt as one of the two notices", () => {
+    renderSandbox(persona);
+    const h1 = screen.getByRole("heading", { level: 1 });
+    const bar = document.querySelector('[data-notice="sample"]') as HTMLElement;
+    // P4.4 names the bar as one of the sandbox's two notices; P4.1 governs projection notices.
+    expect(bar.compareDocumentPosition(h1) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
   it("puts at most four figures in the first view", () => {

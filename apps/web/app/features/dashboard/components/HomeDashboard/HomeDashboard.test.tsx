@@ -160,7 +160,8 @@ const firstViewFigures = (container: HTMLElement): number => {
 /** Net worth as a figure, and as a label beside a figure. */
 const netWorthCount = (container: HTMLElement) =>
   container.querySelectorAll('[data-figure="netWorth"]').length;
-const netWorthLabels = () => screen.queryAllByText(/^Net worth$/).length;
+const netWorthLabels = () =>
+  screen.queryAllByText(/^Net worth(, including your home estimate)?$/).length;
 
 describe.each([
   ["with debt", withDebt],
@@ -220,6 +221,19 @@ describe("HomeDashboard", () => {
     window.localStorage.clear();
     mockUpdateProfile.mockReset();
     mockUpdateProfile.mockResolvedValue(undefined);
+  });
+
+  it("labels the home estimate in the hero, with or without a delta (D3)", () => {
+    const withHome = { ...noDebt, accountsData: { ...noDebt.accountsData, homeEstimate: 310000 } };
+    const { unmount } = renderDashboard(withHome);
+    const hero = screen.getByTestId("hero-figure");
+    expect(hero.textContent).toContain("Net worth, including your home estimate");
+    expect(hero.textContent).toMatch(/since October/);
+    unmount();
+    renderDashboard({ ...withHome, netWorthPrior: null });
+    expect(screen.getByTestId("hero-figure").textContent).toContain(
+      "Net worth, including your home estimate",
+    );
   });
 
   it("shows the debt card instead of a band above the hero, with no judgement", () => {
@@ -318,6 +332,23 @@ describe("HomeDashboard", () => {
     expect(
       (within(dialog).getByRole("checkbox", { name: /^Debt/ }) as HTMLInputElement).checked,
     ).toBe(true);
+  });
+
+  it("is honest about the cap: at four ticked, the rest are disabled with one hint", async () => {
+    renderDashboard(withDebt);
+    fireEvent.click(screen.getByRole("button", { name: /Choose what shows here/ }));
+    const dialog = screen.getByRole("dialog", { name: "Choose what shows here" });
+    // The profile has all seven ticked: untick three to reach the cap.
+    for (const name of [/^Accounts/, /^Budget/, /^Self Assessment/]) {
+      fireEvent.click(within(dialog).getByRole("checkbox", { name }));
+    }
+    await waitFor(() =>
+      expect(within(dialog).getByText("Up to 4 sections show here.")).toBeTruthy(),
+    );
+    const accounts = within(dialog).getByRole("checkbox", {
+      name: /^Accounts/,
+    }) as HTMLInputElement;
+    expect(accounts.disabled).toBe(true);
   });
 
   it("shows the all-hidden empty state that reopens the choices", async () => {

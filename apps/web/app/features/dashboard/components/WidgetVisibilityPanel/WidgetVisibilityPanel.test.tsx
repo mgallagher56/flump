@@ -29,6 +29,33 @@ describe("<WidgetVisibilityPanel />", () => {
     expect(onToggle).toHaveBeenCalledWith("debt");
   });
 
+  it("disables the unticked boxes with one hint once four sections are ticked", () => {
+    render(
+      <WidgetVisibilityPanel
+        {...base({
+          widgetKeys: ["accounts", "budget", "debt", "savings", "pension"],
+          visibleKeys: ["accounts", "budget", "debt", "savings"],
+        })}
+      />,
+    );
+    const pension = screen.getByRole("checkbox", { name: /^Pension/ }) as HTMLInputElement;
+    expect(pension.disabled).toBe(true);
+    expect(pension.getAttribute("aria-describedby")).toBe("widget-visibility-cap");
+    expect(screen.getAllByText("Up to 4 sections show here.")).toHaveLength(1);
+    // Ticked boxes stay usable, so a section can be swapped out.
+    expect((screen.getByRole("checkbox", { name: /^Debt/ }) as HTMLInputElement).disabled).toBe(
+      false,
+    );
+  });
+
+  it("shows no hint and disables nothing below the cap", () => {
+    render(<WidgetVisibilityPanel {...base()} />);
+    expect(screen.queryByText(/Up to 4 sections/)).toBeNull();
+    expect((screen.getByRole("checkbox", { name: /^Debt/ }) as HTMLInputElement).disabled).toBe(
+      false,
+    );
+  });
+
   it("shows a save error inline", () => {
     render(<WidgetVisibilityPanel {...base({ error: "Could not save." })} />);
     expect(screen.getByRole("alert").textContent).toContain("Could not save.");
