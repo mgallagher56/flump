@@ -1,4 +1,5 @@
 import "reflect-metadata";
+import { McpInputResponse } from "@flump/api-contract";
 import { DEFAULT_NET_WORTH_BASIS } from "@flump/finance-engine";
 import { inMemoryQueries } from "@flump/mcp";
 import request from "supertest";
@@ -7,6 +8,7 @@ import { AgentAuditEvent } from "../../src/entities/agent-audit-event.entity";
 import { ImportBatch } from "../../src/entities/import-batch.entity";
 import { McpToken } from "../../src/entities/mcp-token.entity";
 import { AgentDataService } from "../../src/modules/agent/agent-data.service";
+import { McpService } from "../../src/modules/agent/mcp.service";
 import { resolveDbTestMode } from "../../src/testing/dbTestMode";
 import { ROUTE_MATRIX } from "./matrix";
 import { type AuthzHarness, bootAuthzHarness, truncateAll, USER_A, USER_B } from "./support";
@@ -282,6 +284,270 @@ describe.skipIf(dbMode === "skip")("authz: /mcp transport (real Postgres)", () =
       expect(asB.text).toContain("NOT_FOUND");
       expect(asB.text).not.toContain("555.55");
     }
+  });
+
+  /**
+   * GET /mcp/input: the raw engine input for the local (stdio) MCP server. PAT only, so the user
+   * is always the token's owner; these tests prove no credential, parameter or mislabelled row
+   * lets one user's token read another user's data, and that the token's own rules still hold.
+   */
+  describe("GET /mcp/input", () => {
+    const key = "GET /mcp/input";
+    const input = (authorization?: string, query = "") => {
+      const req = request(h.app.getHttpServer()).get(`/mcp/input${query}`);
+      return authorization === undefined ? req : req.set("Authorization", authorization);
+    };
+
+    it("refuses a missing token, malformed credentials and anything that is not a PAT", async () => {
+      expect((await input()).status).toBe(401);
+      for (const header of [
+        "Bearer",
+        "Bearer not-a-pat",
+        "Bearer flump_pat_deadbeef",
+        `Basic ${patA.rawToken}`,
+        patA.rawToken,
+      ]) {
+        const res = await input(header);
+        expect(res.status, header).toBe(401);
+        expect(res.body.input, header).toBeUndefined();
+      }
+      await h.resetRateLimits();
+      // A session JWT (the web app's credential) and the dev-bypass token are not PATs.
+      for (const token of [h.tokens.a, h.tokens.b, h.tokens.dev]) {
+        expect((await input(`Bearer ${token}`)).status).toBe(401);
+      }
+      exercised.add(key);
+    });
+
+    it("refuses an expired PAT and a revoked PAT", async () => {
+      await h.dataSource
+        .getRepository(McpToken)
+        .update({ id: patA.id }, { expiresAt: new Date(Date.now() - 3_600_000) });
+      expect((await input(`Bearer ${patA.rawToken}`)).status).toBe(401);
+      const revoke = await h.call("delete", `/mcp-tokens/${patB.id}`, h.tokens.b);
+      expect(revoke.status).toBe(200);
+      expect((await input(`Bearer ${patB.rawToken}`)).status).toBe(401);
+    });
+
+    it("a PAT is still refused by the session-auth routes (no new way in)", async () => {
+      for (const path of ["/mcp-tokens", "/mcp-tokens/context-pack", "/accounts"]) {
+        expect((await h.call("get", path, patA.rawToken)).status, path).toBe(401);
+      }
+    });
+
+    it("A's PAT reads A's data only; B's PAT never sees any of it", async () => {
+      const saver = await createAccount(h.tokens.a, {
+        name: "A Secret Saver",
+        type: "Saving",
+        balance: 4321.09,
+      });
+      await insertDetails(saver, USER_A, [[2025, 6, 3606.66, "connected"]]);
+      const bAccount = await createAccount(h.tokens.b, {
+        name: "B Secret Current",
+        type: "Current",
+        balance: 55.55,
+      });
+      await insertDetails(bAccount, USER_B, [[2025, 6, 66.66, "manual"]]);
+      // A row mislabelled with B's user id but pointing at A's account must not reach B, and one
+      // mislabelled with A's id but pointing at B's account must not reach A.
+      await insertDetails(saver, USER_B, [[2025, 4, 888.88, "manual"]]);
+      await insertDetails(bAccount, USER_A, [[2025, 4, 777.01, "manual"]]);
+      const budget = await h.call("post", "/budget-entries", h.tokens.a, {
+        category: "housing",
+        name: "A secret rent",
+        amount: 913.37,
+        notes: "A budget note",
+      });
+      expect(budget.status).toBe(201);
+      const receipt = Buffer.from("%PDF-1.4\nsecret receipt").toString("base64");
+      const taxRecord = await h.call("post", "/tax-records", h.tokens.a, {
+        type: "income",
+        source: "rental",
+        category: "rental_income",
+        name: "A secret pay",
+        amount: 7777.77,
+        frequency: "one-off",
+        date: "2025-06-01",
+        notes: "A secret note",
+        receiptFilename: "a.pdf",
+        receiptData: `data:application/pdf;base64,${receipt}`,
+      });
+      expect(taxRecord.status).toBe(201);
+
+      const asA = await input(`Bearer ${patA.rawToken}`);
+      expect(asA.status).toBe(200);
+      expect(asA.headers["cache-control"]).toBe("no-store");
+      const parsedA = McpInputResponse.safeParse(asA.body);
+      expect(parsedA.success, JSON.stringify(parsedA.error?.issues)).toBe(true);
+      // Control: the owner reaches the figures, so their absence for B below is meaningful.
+      expect(asA.body.token).toEqual({
+        id: patA.id,
+        scopes: ["mcp:read:anonymized", "mcp:simulate"],
+        anonymizeInstitutions: true,
+      });
+      expect(asA.body.input.accounts).toEqual([
+        expect.objectContaining({ id: saver, name: "Saving Account #1", balance: 4321.09 }),
+      ]);
+      // History follows the account: every row sent is for an account A owns.
+      expect(asA.body.input.accountDetails).toContainEqual({
+        accountId: saver,
+        year: 2025,
+        month: 6,
+        value: 3606.66,
+        source: "connected",
+      });
+      expect(
+        asA.body.input.accountDetails.every((d: { accountId: string }) => d.accountId === saver),
+      ).toBe(true);
+      expect(asA.body.input.budgetEntries).toEqual([
+        expect.objectContaining({ id: budget.body.id, amount: 913.37, name: "housing #1" }),
+      ]);
+      expect(asA.body.input.taxRecords).toEqual([
+        expect.objectContaining({ id: taxRecord.body.id, amount: 7777.77, name: "", notes: null }),
+      ]);
+      // The token is anonymised, so no name, note, receipt or user id leaves, even for its owner.
+      for (const hidden of ["A Secret", "A secret", "A budget note", receipt, USER_A, "a.pdf"]) {
+        expect(asA.text, `A's own anonymised token got ${hidden}`).not.toContain(hidden);
+      }
+      // Nothing of B's reaches A.
+      for (const secret of ["55.55", "66.66", "777.01", "B Secret", bAccount, USER_B]) {
+        expect(asA.text, `A's token got ${secret}`).not.toContain(secret);
+      }
+
+      // B's token, with every parameter an attacker might add to name A.
+      for (const query of [
+        "",
+        `?userId=${USER_A}`,
+        `?user_id=${USER_A}&tokenId=${patA.id}`,
+        `?accountId=${saver}`,
+      ]) {
+        const asB = await input(`Bearer ${patB.rawToken}`, query).set("X-User-Id", USER_A);
+        if (asB.status !== 200) {
+          // A strict contract may refuse the unknown parameter; it must not answer with data.
+          expect(asB.status, query).toBe(400);
+          expect(asB.body.input, query).toBeUndefined();
+        } else {
+          expect(asB.body.token.id, query).toBe(patB.id);
+          expect(asB.body.input.accounts.map((a: { id: string }) => a.id)).toEqual([bAccount]);
+        }
+        for (const secret of [
+          "4321.09",
+          "3606.66",
+          "888.88",
+          "913.37",
+          "7777.77",
+          "A Secret",
+          "A secret",
+          saver,
+          budget.body.id,
+          taxRecord.body.id,
+          patA.id,
+          USER_A,
+        ]) {
+          expect(asB.text, `B's token got ${secret} (${query})`).not.toContain(secret);
+        }
+      }
+    });
+
+    it("needs a read scope: a token without one gets 403 and no data", async () => {
+      await createAccount(h.tokens.a, { name: "A saver", type: "Saving", balance: 1204.5 });
+      await h.dataSource
+        .getRepository(McpToken)
+        .update({ id: patA.id }, { scopes: ["mcp:simulate", "write:stage"] });
+      const res = await input(`Bearer ${patA.rawToken}`);
+      expect(res.status).toBe(403);
+      expect(res.body.code).toBe("insufficient_scope");
+      expect(res.text).not.toContain("1204.5");
+      const rows = await h.dataSource.getRepository(AgentAuditEvent).find();
+      expect(rows.map((r) => [r.userId, r.tokenId, r.toolName, r.outcome])).toEqual([
+        [USER_A, patA.id, "resource_read_raw_input", "denied"],
+      ]);
+    });
+
+    it("records each read in the token's own activity, never another token's", async () => {
+      expect((await input(`Bearer ${patA.rawToken}`)).status).toBe(200);
+      const rows = await h.dataSource.getRepository(AgentAuditEvent).find();
+      expect(rows.map((r) => [r.userId, r.tokenId, r.toolName, r.outcome])).toEqual([
+        [USER_A, patA.id, "resource_read_raw_input", "ok"],
+      ]);
+      const activity = await h.call("get", `/mcp-tokens/${patA.id}/activity`, h.tokens.a);
+      expect(activity.body.events.map((e: { toolName: string }) => e.toolName)).toEqual([
+        "resource_read_raw_input",
+      ]);
+      // B cannot read A's activity, and B's own token shows nothing.
+      expect((await h.call("get", `/mcp-tokens/${patA.id}/activity`, h.tokens.b)).status).toBe(404);
+      const used = await h.dataSource.getRepository(McpToken).findOneByOrFail({ id: patA.id });
+      expect(used.lastUsedAt).not.toBeNull();
+      const unused = await h.dataSource.getRepository(McpToken).findOneByOrFail({ id: patB.id });
+      expect(unused.lastUsedAt).toBeNull();
+    });
+
+    it("follows the kill switch and the allowlist, like the /mcp transport", async () => {
+      vi.stubEnv("MCP_OPEN_ACCESS", "false");
+      vi.stubEnv("MCP_ALLOWED_USER_IDS", USER_B);
+      try {
+        // A's owner is not allowlisted: the token is unusable, with no hint that it exists.
+        expect((await input(`Bearer ${patA.rawToken}`)).status).toBe(401);
+        expect((await input(`Bearer ${patB.rawToken}`)).status).toBe(200);
+        vi.stubEnv("MCP_ENABLED", "false");
+        const off = await input(`Bearer ${patB.rawToken}`);
+        expect(off.status).toBe(503);
+        expect(off.body.code).toBe("mcp_disabled");
+      } finally {
+        vi.unstubAllEnvs();
+      }
+    });
+
+    it("refuses a browser Origin that is not allowed (no cross-site read)", async () => {
+      const res = await input(`Bearer ${patA.rawToken}`).set("Origin", "https://evil.example");
+      expect(res.status).toBe(403);
+      expect(res.body.input).toBeUndefined();
+    });
+
+    it("shares the failed-attempt limit with /mcp: 10 bad tokens a minute per address", async () => {
+      for (let i = 0; i < 10; i++) {
+        expect((await input("Bearer flump_pat_deadbeef")).status).toBe(401);
+      }
+      const blocked = await input(`Bearer ${patA.rawToken}`);
+      expect(blocked.status).toBe(429);
+      expect(blocked.headers["retry-after"]).toBeDefined();
+      // The same counter guards the transport.
+      expect((await mcp("post", `Bearer ${patA.rawToken}`)).status).toBe(429);
+    });
+
+    it("shares the per-token rate limit with /mcp: one budget per token, for both routes", async () => {
+      // The limiter the /mcp transport uses (60 a minute, 300 an hour per token). Filling a real
+      // budget takes 60 requests, so the limiter is told A's token has spent it.
+      const limiter = (
+        h.app.get(McpService).getHttpHandler() as unknown as {
+          rateLimiter: { checkLimit(key: string): Promise<object> };
+        }
+      ).rateLimiter;
+      const real = limiter.checkLimit.bind(limiter);
+      const keys: string[] = [];
+      const spy = vi.spyOn(limiter, "checkLimit").mockImplementation(async (key: string) => {
+        keys.push(key);
+        return key === `tok:${patA.id}`
+          ? { allowed: false, resetSeconds: 42, message: "Rate limit exceeded." }
+          : real(key);
+      });
+      try {
+        const limited = await input(`Bearer ${patA.rawToken}`);
+        expect(limited.status).toBe(429);
+        expect(limited.body.code).toBe("rate_limited");
+        expect(limited.headers["retry-after"]).toBe("42");
+        expect(limited.body.input).toBeUndefined();
+        // The same budget refuses the transport, and a refused request is not counted as a use.
+        expect((await mcp("post", `Bearer ${patA.rawToken}`)).status).toBe(429);
+        const unused = await h.dataSource.getRepository(McpToken).findOneByOrFail({ id: patA.id });
+        expect(unused.lastUsedAt).toBeNull();
+        // Another user's token has its own budget.
+        expect((await input(`Bearer ${patB.rawToken}`)).status).toBe(200);
+        expect(keys).toEqual([`tok:${patA.id}`, `tok:${patA.id}`, `tok:${patB.id}`]);
+      } finally {
+        spy.mockRestore();
+      }
+    });
   });
 
   describe("ranged provider queries (real Postgres)", () => {

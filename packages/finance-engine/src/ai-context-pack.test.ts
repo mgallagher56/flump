@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { buildFlumpAiContextPack, formatAiContextPackMarkdown } from "./ai-context-pack.js";
+import {
+  ANONYMOUS_USER_ID,
+  anonymiseContextPackInput,
+  buildFlumpAiContextPack,
+  formatAiContextPackMarkdown,
+} from "./ai-context-pack.js";
 import { DEFAULT_NET_WORTH_BASIS } from "./net-worth-basis.js";
 import { DEFAULT_FINANCIAL_BASELINE } from "./profile.js";
 
@@ -395,5 +400,91 @@ describe("net worth choices in the pack", () => {
     expect(formatAiContextPackMarkdown(pack)).toContain(
       "not saved, so the mortgage counts without it",
     );
+  });
+});
+
+describe("anonymiseContextPackInput (the raw input an anonymised token may read)", () => {
+  const input = {
+    baseline: { ...DEFAULT_FINANCIAL_BASELINE, userId: "user_real_id" },
+    netWorthBasis: { ...DEFAULT_NET_WORTH_BASIS },
+    accounts: [
+      { id: "a1", name: "Monzo joint 12-34-56", type: "Current", balance: 1200 },
+      { id: "a2", name: "Barclays ISA", type: "Saving", balance: 5000 },
+      { id: "a3", name: "Second current", type: "Current", balance: 10 },
+    ],
+    accountDetails: [{ accountId: "a1", year: 2026, month: 5, value: 1100 }],
+    budgetEntries: [
+      {
+        id: "b1",
+        category: "Housing",
+        name: "Rent to J Smith",
+        amount: 900,
+        frequency: "monthly",
+        isIncome: false,
+        isEssential: true,
+        notes: "pays into 12345678",
+      },
+      {
+        id: "b2",
+        category: "Salary",
+        name: "Acme Ltd",
+        amount: 3000,
+        frequency: "monthly",
+        isIncome: true,
+        isEssential: false,
+      },
+    ],
+    taxRecords: [
+      {
+        id: "t1",
+        type: "income" as const,
+        source: "rental" as const,
+        category: "rent",
+        name: "Flat 2, Example Road",
+        amount: 800,
+        frequency: "monthly" as const,
+        date: "2026-04-06",
+        endDate: null,
+        notes: "tenant J Smith",
+      },
+    ],
+  };
+
+  it("removes names, notes and the user id, and keeps every figure, id and date", () => {
+    const out = anonymiseContextPackInput(input);
+    expect(out.baseline.userId).toBe(ANONYMOUS_USER_ID);
+    expect(out.accounts?.map((a) => a.name)).toEqual([
+      "Current Account #1",
+      "Saving Account #1",
+      "Current Account #2",
+    ]);
+    expect(out.accounts?.map((a) => [a.id, a.type, a.balance])).toEqual(
+      input.accounts.map((a) => [a.id, a.type, a.balance]),
+    );
+    expect(out.accountDetails).toEqual(input.accountDetails);
+    expect(out.budgetEntries?.map((b) => b.name)).toEqual(["Housing #1", "Income #1"]);
+    expect(out.budgetEntries?.every((b) => !("notes" in b))).toBe(true);
+    expect(out.budgetEntries?.map((b) => b.amount)).toEqual([900, 3000]);
+    expect(out.taxRecords).toEqual([{ ...input.taxRecords[0], name: "", notes: null }]);
+    const text = JSON.stringify(out);
+    for (const secret of ["Monzo", "Barclays", "J Smith", "Acme", "Example Road", "12345678"]) {
+      expect(text, secret).not.toContain(secret);
+    }
+    expect(text).not.toContain("user_real_id");
+  });
+
+  it("changes nothing more when applied twice, and leaves its argument alone", () => {
+    const before = JSON.stringify(input);
+    const once = anonymiseContextPackInput(input);
+    expect(anonymiseContextPackInput(once)).toEqual(once);
+    expect(JSON.stringify(input)).toBe(before);
+  });
+
+  it("gives the same anonymised pack as the raw input does", () => {
+    const fromRaw = buildFlumpAiContextPack(input, { anonymizeInstitutions: true });
+    const fromScrubbed = buildFlumpAiContextPack(anonymiseContextPackInput(input), {
+      anonymizeInstitutions: true,
+    });
+    expect({ ...fromScrubbed, metadata: null }).toEqual({ ...fromRaw, metadata: null });
   });
 });

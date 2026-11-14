@@ -10,6 +10,7 @@ export {
   UpdateBalancesResponse,
 } from "./domains/accounts.js";
 export {
+  ClientPolicyResponse,
   HealthResponse,
   ReadinessResponse,
 } from "./domains/app.js";
@@ -34,6 +35,7 @@ export {
 export {
   ContextPackResponse,
   CreateMcpTokenResponse,
+  McpInputResponse,
   McpTokenActivityResponse,
   McpTokenListResponse,
   RevokeMcpTokenResponse,

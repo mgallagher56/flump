@@ -1,5 +1,12 @@
+import type { McpInputResponse } from "@flump/api-contract";
 import { buildFlumpAiContextPack, formatAiContextPackMarkdown } from "@flump/finance-engine";
-import { HttpMcpHandler, type McpAuditCaller, type McpAuditEvent } from "@flump/mcp";
+import {
+  HttpMcpHandler,
+  type McpAuditCaller,
+  type McpAuditEvent,
+  RAW_INPUT_AUDIT_NAME,
+  RAW_INPUT_SCOPES,
+} from "@flump/mcp";
 import { Inject, Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { AUTH_MODE } from "../../auth/auth.module";
@@ -16,6 +23,7 @@ import { webOriginBootWarning } from "../imports/review-url";
 import { AgentAuditService } from "./agent-audit.service";
 import { AgentDataService } from "./agent-data.service";
 import { McpImportsAdapter } from "./mcp-imports.adapter";
+import { toMcpInputToken, toMcpInputWire } from "./mcp-input";
 import { McpTokenService } from "./mcp-token.service";
 
 /** Handler wiring and the offline context pack. Tokens and data live in their own services. */
@@ -97,6 +105,49 @@ export class McpService {
 
   getHttpHandler(): HttpMcpHandler {
     return this.httpHandler;
+  }
+
+  // --- Raw input for a personal access token (GET /mcp/input) ---
+
+  /** One audit row for a raw-input read, named like a resource read. */
+  async recordInputRead(
+    caller: McpAuditCaller,
+    result: { outcome: "ok" | "denied" | "error"; startedAt: number; responseBytes?: number },
+  ): Promise<void> {
+    const required = [...RAW_INPUT_SCOPES.anyOf, ...RAW_INPUT_SCOPES.allOf];
+    await this.recordAudit(caller, {
+      tool: RAW_INPUT_AUDIT_NAME,
+      outcome: result.outcome,
+      ...(result.outcome === "denied" ? { errorCode: "INSUFFICIENT_SCOPE" } : {}),
+      durationMs: Date.now() - result.startedAt,
+      responseBytes: result.responseBytes ?? 0,
+      scopesUsed: required.filter((s) => caller.token.scopes.includes(s)),
+    });
+  }
+
+  /**
+   * The token owner's engine input, loaded exactly as the remote tools load it, and anonymised
+   * before it leaves when the token is. The user id comes from the verified token only.
+   */
+  async getInput(caller: McpAuditCaller): Promise<McpInputResponse> {
+    const startedAt = Date.now();
+    const { token } = caller;
+    try {
+      const raw = await this.agentData.getUserFinancialData(token.userId);
+      const body = {
+        token: toMcpInputToken(token),
+        input: toMcpInputWire(raw, token.anonymizeInstitutions),
+      };
+      await this.recordInputRead(caller, {
+        outcome: "ok",
+        startedAt,
+        responseBytes: Buffer.byteLength(JSON.stringify(body)),
+      });
+      return body;
+    } catch (err) {
+      await this.recordInputRead(caller, { outcome: "error", startedAt });
+      throw err;
+    }
   }
 
   // --- Context Pack for Offline Exporter ---

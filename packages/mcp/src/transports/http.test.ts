@@ -665,3 +665,96 @@ describe("audit and staging wiring (re-plan PR D)", () => {
     ]);
   });
 });
+
+describe("authenticateExpress (the checks every PAT route shares)", () => {
+  const record = {
+    id: "tok-1",
+    userId: "user-1",
+    tokenHash: hashPatToken(PAT),
+    scopes: ["mcp:read:anonymized"],
+    anonymizeInstitutions: true,
+    expiresAt: null,
+    revokedAt: null,
+  };
+  const handlerWith = (overrides: object = {}) => {
+    const recordRequest = vi.fn().mockResolvedValue(undefined);
+    const handler = new HttpMcpHandler({
+      dataProvider: {} as McpUserDataProvider,
+      tokenStore: {
+        findTokenByHash: async (hash: string) => (hash === record.tokenHash ? record : null),
+        recordRequest,
+      },
+      ...overrides,
+    });
+    return { handler, recordRequest };
+  };
+  const req = (authorization?: string, extra: object = {}) =>
+    ({
+      ip: "5.5.5.5",
+      headers: authorization ? { authorization, ...extra } : { ...extra },
+    }) as never;
+
+  it("returns the verified token and records the use, with no tool call counted", async () => {
+    const { handler, recordRequest } = handlerWith();
+    const outcome = await handler.authenticateExpress(req(`Bearer ${PAT}`));
+    expect(outcome).toEqual({
+      ok: true,
+      token: {
+        userId: "user-1",
+        tokenId: "tok-1",
+        scopes: ["mcp:read:anonymized"],
+        anonymizeInstitutions: true,
+        type: "pat",
+      },
+    });
+    expect(recordRequest).toHaveBeenCalledWith("tok-1", 0);
+  });
+
+  it("refuses an unknown token with 401 and a WWW-Authenticate header, recording nothing", async () => {
+    const { handler, recordRequest } = handlerWith();
+    const outcome = await handler.authenticateExpress(req(`Bearer ${PAT}x`));
+    expect(outcome).toMatchObject({
+      ok: false,
+      status: 401,
+      headers: { "WWW-Authenticate": expect.stringMatching(/^Bearer/) },
+    });
+    expect(recordRequest).not.toHaveBeenCalled();
+  });
+
+  it("answers 503 before auth when the kill switch is on, and 403 for a disallowed Origin", async () => {
+    const off = handlerWith({ isEnabled: () => false });
+    expect(await off.handler.authenticateExpress(req(`Bearer ${PAT}`))).toMatchObject({
+      ok: false,
+      status: 503,
+      body: { error: "mcp_disabled" },
+    });
+    const { handler, recordRequest } = handlerWith();
+    expect(
+      await handler.authenticateExpress(req(`Bearer ${PAT}`, { origin: "https://evil.example" })),
+    ).toMatchObject({ ok: false, status: 403, body: { error: "origin_not_allowed" } });
+    expect(recordRequest).not.toHaveBeenCalled();
+  });
+
+  it("answers 429 with Retry-After over the token's rate limit, recording nothing", async () => {
+    const { handler, recordRequest } = handlerWith({
+      rateLimiter: { checkLimit: () => ({ allowed: false, resetSeconds: 7, message: "x" }) },
+    });
+    expect(await handler.authenticateExpress(req(`Bearer ${PAT}`))).toMatchObject({
+      ok: false,
+      status: 429,
+      headers: { "Retry-After": "7" },
+    });
+    expect(recordRequest).not.toHaveBeenCalled();
+  });
+
+  it("blocks an address after too many failed attempts, even with a good token", async () => {
+    const { handler } = handlerWith({ failedAuthLimiter: new FailedAuthLimiter(2, 60_000) });
+    for (let i = 0; i < 2; i++) {
+      expect(await handler.authenticateExpress(req("Bearer nope"))).toMatchObject({ status: 401 });
+    }
+    expect(await handler.authenticateExpress(req(`Bearer ${PAT}`))).toMatchObject({
+      ok: false,
+      status: 429,
+    });
+  });
+});

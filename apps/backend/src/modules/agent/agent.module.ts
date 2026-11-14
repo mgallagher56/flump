@@ -16,6 +16,7 @@ import { AgentDataService } from "./agent-data.service";
 import { McpController } from "./mcp.controller";
 import { McpService } from "./mcp.service";
 import { McpImportsAdapter } from "./mcp-imports.adapter";
+import { McpPatGuard } from "./mcp-pat.guard";
 import { McpTokenService } from "./mcp-token.service";
 
 /** The MCP server, its tokens and its audit trail. The top of the domain graph. */
@@ -37,6 +38,13 @@ import { McpTokenService } from "./mcp-token.service";
     SecurityModule,
   ],
   controllers: [McpController],
-  providers: [AgentAuditService, AgentDataService, McpImportsAdapter, McpService, McpTokenService],
+  providers: [
+    AgentAuditService,
+    AgentDataService,
+    McpImportsAdapter,
+    McpPatGuard,
+    McpService,
+    McpTokenService,
+  ],
 })
 export class AgentModule {}
