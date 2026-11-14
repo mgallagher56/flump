@@ -34,6 +34,7 @@ describe("coverage configuration", () => {
     "packages/banking",
     "packages/finance-engine",
     "packages/mcp",
+    "packages/tokens",
     "packages/ui",
   ];
 

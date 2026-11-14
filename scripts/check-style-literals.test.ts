@@ -87,7 +87,8 @@ describe("countInlineStyles and file scope", () => {
     ).toEqual({ fontSize: 0, fontWeight: 0, duration: 0, inlineStyle: 0 });
   });
   test("token definition files are exempt", () => {
-    expect(isStyleScanExempt("packages/ui/src/tokens/typography.ts")).toBe(true);
+    expect(isStyleScanExempt("packages/tokens/src/typography.ts")).toBe(true);
+    expect(isStyleScanExempt("packages/ui/src/tokens/index.ts")).toBe(true);
     expect(isStyleScanExempt("packages/ui/src/primitives/Card/Card.styles.ts")).toBe(false);
   });
 });
