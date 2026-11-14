@@ -29,11 +29,12 @@ vi.mock("~/features/ai-connections/useMcpTokens", () => ({ useMcpTokens: () => m
 describe("<SecurityTab />", () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it("shows the account email with verified status", () => {
+  it("shows the account email under How you sign in, with no unbacked Verified badge", () => {
     render(<SecurityTab email="jane.doe@example.com" />);
+    expect(screen.getByRole("heading", { name: "How you sign in" })).toBeDefined();
     const display = screen.getByTestId("user-email-display");
     expect(display.textContent).toContain("jane.doe@example.com");
-    expect(display.textContent).toContain("Verified");
+    expect(screen.queryByText("Verified")).toBeNull();
   });
 
   it("says Not set rather than inventing an email", () => {
@@ -52,12 +53,12 @@ describe("<SecurityTab />", () => {
     );
   });
 
-  it("shows an error when the reset email fails", async () => {
+  it("shows the fixed error, never the server's message, when the email fails", async () => {
     mockSendResetEmail.mockRejectedValueOnce(new Error("Failed to send password reset email"));
     render(<SecurityTab email="user@example.com" />);
     fireEvent.click(screen.getByTestId("change-password-trigger"));
     expect((await screen.findByTestId("password-reset-error")).textContent).toBe(
-      "Failed to send password reset email",
+      "We could not send the email. Your password is unchanged. Try again.",
     );
   });
 

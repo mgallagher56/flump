@@ -58,13 +58,13 @@ describe("<AddAccountDialogBtn", () => {
 
   test("should render popular banks including Trading 212 with live open banking enabled", async () => {
     mocks.mockUseLoaderData.mockReturnValue({ user: mockUser, bankConnectionsEnabled: true });
-    const { getByText, getByPlaceholderText, user } = customRender(
+    const { getByText, getByLabelText, queryByText, user } = customRender(
       <AddEditAccountsDialogBtn accountId="123456" />,
     );
     await user.click(getByText("addAccount"));
 
-    // Switch to Connect to bank
-    await user.click(getByText("Connect to bank"));
+    // Switch to Connect a bank
+    await user.click(getByText("Connect a bank"));
 
     // Verify popular banks and Trading 212 are listed
     expect(getByText("Monzo Bank")).toBeDefined();
@@ -74,14 +74,17 @@ describe("<AddAccountDialogBtn", () => {
     expect(getByText("Barclays")).toBeDefined();
     expect(getByText("Revolut")).toBeDefined();
 
+    // No "Live" badge on any tile: bank connection is a preview (ruling 4)
+    expect(queryByText("Live")).toBeNull();
+
     // Select Trading 212
     await user.click(getByText("Trading 212"));
 
     // Verify Trading 212 API Key prompt
     expect(getByText("Trading 212 API key")).toBeDefined();
 
-    // Enter API key
-    const tokenInput = getByPlaceholderText(/Trading 212 app/i);
+    // Enter API key (no placeholder: the hint says where the key comes from)
+    const tokenInput = getByLabelText("Trading 212 API key");
     await user.type(tokenInput, "t212-api-key-test");
 
     // Click Connect
@@ -100,17 +103,17 @@ describe("<AddAccountDialogBtn", () => {
 
   test("should submit real bank connection credentials for direct sync bank", async () => {
     mocks.mockUseLoaderData.mockReturnValue({ user: mockUser, bankConnectionsEnabled: true });
-    const { getByText, getByPlaceholderText, user } = customRender(
+    const { getByText, getByLabelText, user } = customRender(
       <AddEditAccountsDialogBtn accountId="123456" />,
     );
     await user.click(getByText("addAccount"));
-    await user.click(getByText("Connect to bank"));
+    await user.click(getByText("Connect a bank"));
 
     // Select Monzo
     await user.click(getByText("Monzo Bank"));
 
     // Enter token
-    const tokenInput = getByPlaceholderText("Access token from developers.monzo.com…");
+    const tokenInput = getByLabelText("Monzo access token");
     await user.type(tokenInput, "secret-monzo-token");
 
     // Click Connect Monzo Bank
@@ -131,13 +134,13 @@ describe("<AddAccountDialogBtn", () => {
     mocks.mockUseLoaderData.mockReturnValue({ user: mockUser, bankConnectionsEnabled: true });
     const { getByText, user } = customRender(<AddEditAccountsDialogBtn accountId="123456" />);
     await user.click(getByText("addAccount"));
-    await user.click(getByText("Connect to bank"));
+    await user.click(getByText("Connect a bank"));
 
-    // Select OAuth portal
-    await user.click(getByText("OAuth portal"));
+    // Select Bank sign-in
+    await user.click(getByText("Bank sign-in"));
 
-    // Click Authorise via Monzo Bank
-    await user.click(getByText("Authorise via Monzo Bank"));
+    // Click Sign in at Monzo Bank
+    await user.click(getByText("Sign in at Monzo Bank"));
 
     expect(mocks.mockFetcherSubmit).toHaveBeenCalledWith(
       {
@@ -153,6 +156,6 @@ describe("<AddAccountDialogBtn", () => {
     mocks.mockUseLoaderData.mockReturnValue({ user: mockUser, bankConnectionsEnabled: false });
     const { queryByText, getByText, user } = customRender(<AddEditAccountsDialogBtn />);
     await user.click(getByText("addAccount"));
-    expect(queryByText("Connect to bank")).toBeNull();
+    expect(queryByText("Connect a bank")).toBeNull();
   });
 });

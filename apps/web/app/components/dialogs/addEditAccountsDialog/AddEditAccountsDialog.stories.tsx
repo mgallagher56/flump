@@ -110,7 +110,7 @@ export const ConnectBankTab: Story = {
   parameters: { router: { loaderData: bankLoaderData } },
   play: async () => {
     await openAdd();
-    await userEvent.click(screen.getByRole("tab", { name: /connect to bank/i }));
+    await userEvent.click(screen.getByRole("tab", { name: /connect a bank/i }));
     await expect(screen.getAllByRole("button", { name: /Monzo Bank/ }).length).toBeGreaterThan(0);
   },
 };
@@ -127,7 +127,7 @@ export const OpenAddDialogDark: Story = {
   ],
   play: async () => {
     await openAdd();
-    await userEvent.click(screen.getByRole("tab", { name: /connect to bank/i }));
+    await userEvent.click(screen.getByRole("tab", { name: /connect a bank/i }));
     await expect(screen.getByRole("button", { name: /Starling Bank/ })).toBeInTheDocument();
   },
 };

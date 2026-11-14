@@ -32,6 +32,6 @@ export const NoPicture: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     await expect(canvas.getByRole("button", { name: "Upload picture" })).toBeDefined();
-    await expect(canvas.queryByRole("button", { name: "Remove" })).toBeNull();
+    await expect(canvas.queryByRole("button", { name: "Delete picture" })).toBeNull();
   },
 };

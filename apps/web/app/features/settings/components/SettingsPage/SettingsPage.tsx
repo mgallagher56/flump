@@ -1,7 +1,6 @@
-import { PageHeader, SegmentedTabs } from "@repo/ui";
+import { PageHeader, Tabs } from "@repo/ui";
 import { type FC, useCallback, useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router";
-import UserAvatar from "~/components/navigation/UserAvatar";
 import { DataTab } from "~/features/settings/components/DataTab";
 import { ProfileTab } from "~/features/settings/components/ProfileTab";
 import { SecurityTab } from "~/features/settings/components/SecurityTab";
@@ -13,7 +12,7 @@ import {
   type SettingsTab,
 } from "~/features/settings/settings-tabs";
 import { type UserProfile, useUserProfile } from "~/hooks/useUserProfile";
-import { hero, heroEmail, heroEyebrow, heroName, heroText, root } from "./SettingsPage.styles";
+import { root } from "./SettingsPage.styles";
 
 export interface SettingsPageProps {
   /** The profile from the route loader. */
@@ -27,14 +26,10 @@ export interface SettingsPageProps {
   } | null;
 }
 
-const heroDisplayName = (profile: UserProfile, email: string | null | undefined) => {
-  const full = [profile.firstName, profile.lastName].filter(Boolean).join(" ");
-  return full || email || "Your account";
-};
-
 /**
- * Settings (E15 T3.10): who you are, Profile, Security and Data tabs. Each tab owns its own
- * actions, and the Profile tab has its own save with an unsaved-changes guard.
+ * Settings (E15 T3.10, E16 PR 9): Profile, Security and Data tabs, with no hero. The email shows
+ * once, on the Security tab. Each tab owns its own actions, and the Profile tab has the page's one
+ * primary button ("Save changes") with an unsaved-changes guard.
  */
 export const SettingsPage: FC<SettingsPageProps> = ({ initialProfile, user }) => {
   const { profile } = useUserProfile();
@@ -99,49 +94,30 @@ export const SettingsPage: FC<SettingsPageProps> = ({ initialProfile, user }) =>
 
   return (
     <div className={root()} id="settings-page" data-testid="settings-page">
-      <PageHeader
-        title="Your settings"
-        description="Your details, how you sign in and your data."
-      />
+      <PageHeader title="Settings" description="Your details, how you sign in and your data." />
 
-      <section
-        aria-labelledby="settings-hero-name"
-        className={hero()}
-        data-testid="settings-hero"
-        id="settings-hero"
-      >
-        <UserAvatar bordered profile={effectiveProfile} size={64} user={user} />
-        <div className={heroText()}>
-          <p className={heroEyebrow()}>Signed in as</p>
-          <h2 className={heroName()} id="settings-hero-name">
-            {heroDisplayName(effectiveProfile, email)}
-          </h2>
-          {email ? <p className={heroEmail()}>{email}</p> : null}
-        </div>
-      </section>
-
-      <SegmentedTabs
+      <Tabs
         activationMode="manual"
         aria-label="Settings sections"
         items={[...SETTINGS_TAB_ITEMS]}
         value={activeTab}
         onValueChange={(value) => changeTab(value as SettingsTab)}
       >
-        <SegmentedTabs.Panel value="profile">
+        <Tabs.Panel value="profile">
           <ProfileTab
             key={effectiveProfile.id}
             profile={effectiveProfile}
             user={user}
             onDirtyChange={setProfileDirty}
           />
-        </SegmentedTabs.Panel>
-        <SegmentedTabs.Panel value="security">
+        </Tabs.Panel>
+        <Tabs.Panel value="security">
           <SecurityTab email={email} />
-        </SegmentedTabs.Panel>
-        <SegmentedTabs.Panel value="data">
+        </Tabs.Panel>
+        <Tabs.Panel value="data">
           <DataTab />
-        </SegmentedTabs.Panel>
-      </SegmentedTabs>
+        </Tabs.Panel>
+      </Tabs>
 
       <UnsavedChangesDialog open={blocked} onDiscard={proceed} onKeepEditing={keepEditing} />
     </div>

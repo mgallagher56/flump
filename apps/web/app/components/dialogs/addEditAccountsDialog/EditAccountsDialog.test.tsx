@@ -72,7 +72,9 @@ describe("<EditAccountDialogBtn", () => {
     await user.click(getByText("delete"));
 
     const dialog = getByRole("alertdialog", { name: "Delete Monzo Current?" });
-    expect(dialog.textContent).toContain("This deletes the account and its full balance history.");
+    expect(dialog.textContent).toContain(
+      "Its balance history will be deleted too. This cannot be undone.",
+    );
     expect(mocks.mockFetcherSubmit).not.toHaveBeenCalled();
     expect(confirmSpy).not.toHaveBeenCalled();
 

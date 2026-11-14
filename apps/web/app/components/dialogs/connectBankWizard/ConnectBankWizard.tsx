@@ -7,7 +7,6 @@ import {
   KeyRound,
   Landmark,
   Loader2,
-  Lock,
   ShieldCheck,
   TriangleAlert,
 } from "lucide-react";
@@ -63,21 +62,21 @@ const BANKS: BankItem[] = [
   {
     id: "monzo",
     name: "Monzo Bank",
-    desc: "Preview: connect via Developer Token or OAuth",
+    desc: "Preview: connect with an access token or bank sign-in",
     accounts: ["Monzo Current Account", "Monzo Savings Pots"],
     directSync: true,
   },
   {
     id: "starling",
     name: "Starling Bank",
-    desc: "Preview: connect via Personal Access Token or OAuth",
+    desc: "Preview: connect with an access token or bank sign-in",
     accounts: ["Starling Current Account", "Starling Savings Spaces"],
     directSync: true,
   },
   {
     id: "trading212",
     name: "Trading 212",
-    desc: "Preview: connect via API Key",
+    desc: "Preview: connect with an API key",
     accounts: ["Trading 212 Portfolio"],
     directSync: true,
   },
@@ -152,6 +151,8 @@ const ConnectBankWizard: FC<ConnectBankWizardProps> = ({ onSuccess }) => {
   const [authType, setAuthType] = useState<"pat" | "oauth">("pat");
   const [tokenInput, setTokenInput] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
+  // True when the message came from the bank (through the action), so it gets its own label.
+  const [errorFromBank, setErrorFromBank] = useState(false);
   const [importedCount, setImportedCount] = useState(0);
   const fetcher = useFetcher();
 
@@ -172,7 +173,8 @@ const ConnectBankWizard: FC<ConnectBankWizardProps> = ({ onSuccess }) => {
 
     if (res.oauth && res.redirectUrl) {
       if (!isSafeRedirectUrl(res.redirectUrl)) {
-        setErrorMessage("We couldn't start the bank sign-in. Please try again.");
+        setErrorMessage("We could not start the bank sign-in. Nothing was connected. Try again.");
+        setErrorFromBank(false);
         setStep("error");
         return;
       }
@@ -182,6 +184,7 @@ const ConnectBankWizard: FC<ConnectBankWizardProps> = ({ onSuccess }) => {
 
     if (res.error) {
       setErrorMessage(res.error);
+      setErrorFromBank(true);
       setStep("error");
       return;
     }
@@ -189,8 +192,9 @@ const ConnectBankWizard: FC<ConnectBankWizardProps> = ({ onSuccess }) => {
     if (authType === "oauth" && !res.redirectUrl) {
       setErrorMessage(
         res.message ||
-          "We couldn't start the bank sign-in for this bank. Please use a developer token.",
+          "We could not start the sign-in for this bank. Nothing was connected. Use an access token instead.",
       );
+      setErrorFromBank(Boolean(res.message));
       setStep("error");
       return;
     }
@@ -208,6 +212,7 @@ const ConnectBankWizard: FC<ConnectBankWizardProps> = ({ onSuccess }) => {
     setSearchQuery("");
     setTokenInput("");
     setErrorMessage("");
+    setErrorFromBank(false);
     setOpen(true);
   };
 
@@ -263,29 +268,24 @@ const ConnectBankWizard: FC<ConnectBankWizardProps> = ({ onSuccess }) => {
 
   const close = () => setOpen(false);
 
-  const tokenLabel =
-    selectedBank?.id === "trading212" ? "Trading 212 API key" : "Developer access token";
+  const tokenLabel = selectedBank?.id === "trading212" ? "Trading 212 API key" : "Access token";
+  // Monzo and Starling tokens start with eyJ; the others need no placeholder (the hint says it).
   const tokenPlaceholder =
-    selectedBank?.id === "monzo"
-      ? "Monzo access token (for example eyJ…)"
-      : selectedBank?.id === "starling"
-        ? "Starling bearer token starting with eyJ…"
-        : selectedBank?.id === "trading212"
-          ? "Trading 212 API key…"
-          : "Read-only access token…";
+    selectedBank?.id === "monzo" || selectedBank?.id === "starling"
+      ? "For example, eyJ…"
+      : undefined;
   const tokenHelp =
     selectedBank?.id === "monzo"
-      ? "Sign in with your Monzo email at https://developers.monzo.com and copy your access token from the playground."
+      ? "Sign in at developers.monzo.com and copy your access token from the playground."
       : selectedBank?.id === "starling"
-        ? "Make sure your token has permissions account:read and balance:read configured in the Starling Developer Portal."
+        ? "In the Starling Developer Console, create an access token with the account:read and balance:read permissions."
         : selectedBank?.id === "trading212"
-          ? "In the Trading 212 app, go to Settings, then API, then generate an API key and copy it here."
-          : `Paste a read-only access token from ${selectedBank?.name}, or go back and choose the OAuth flow.`;
+          ? "In the Trading 212 app, go to Settings, then API. Create an API key and paste it here."
+          : `Paste a read-only access token from ${selectedBank?.name}, or go back and choose "Bank sign-in".`;
 
   // One dialog, one title per step: the step decides the title, description, body and footer.
-  let title = "Connect bank account";
-  let description: string | undefined =
-    "Choose your bank or financial institution. Bank connection is a preview.";
+  let title = "Connect a bank";
+  let description: string | undefined = "Choose your bank. Bank connection is a preview.";
   let body: React.ReactNode = null;
   let footer: React.ReactNode = null;
 
@@ -297,7 +297,6 @@ const ConnectBankWizard: FC<ConnectBankWizardProps> = ({ onSuccess }) => {
             <TextInput
               {...controlProps(field)}
               name="search"
-              placeholder="Search your bank…"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
@@ -317,13 +316,10 @@ const ConnectBankWizard: FC<ConnectBankWizardProps> = ({ onSuccess }) => {
               <span className={bankCardBody()}>
                 <span className={bankCardTitleRow()}>
                   <span className={cardTitle()}>{bank.name}</span>
-                  {bank.directSync ? (
-                    <StatusBadge size="sm" variant="positive">
-                      Live
-                    </StatusBadge>
-                  ) : (
+                  {/* No badge on banks that connect: bank connection is a preview (ruling 4). */}
+                  {bank.directSync ? null : (
                     <StatusBadge size="sm" variant="neutral">
-                      Soon
+                      Not yet
                     </StatusBadge>
                   )}
                 </span>
@@ -333,7 +329,9 @@ const ConnectBankWizard: FC<ConnectBankWizardProps> = ({ onSuccess }) => {
             </button>
           ))}
           {filteredBanks.length === 0 && (
-            <p className={helperText()}>No banks match your search.</p>
+            <p className={helperText()}>
+              No bank matches that search. You can add the account by hand.
+            </p>
           )}
         </div>
       </div>
@@ -345,7 +343,7 @@ const ConnectBankWizard: FC<ConnectBankWizardProps> = ({ onSuccess }) => {
     );
   } else if (step === "method" && selectedBank) {
     title = "Choose how to connect";
-    description = `Select how you want to connect to ${selectedBank.name}.`;
+    description = `Choose how to connect to ${selectedBank.name}.`;
     body = (
       <div className={stack()}>
         <button className={methodCard()} type="button" onClick={() => handleSelectMethod("pat")}>
@@ -353,7 +351,7 @@ const ConnectBankWizard: FC<ConnectBankWizardProps> = ({ onSuccess }) => {
             <Icon icon={KeyRound} size="md" />
           </span>
           <span className={methodCardBody()}>
-            <span className={cardTitle()}>Personal access token</span>
+            <span className={cardTitle()}>Access token</span>
             <span className={cardMeta()}>
               Preview: paste your own read-only access token from your provider.
             </span>
@@ -364,11 +362,8 @@ const ConnectBankWizard: FC<ConnectBankWizardProps> = ({ onSuccess }) => {
             <Icon icon={Globe} size="md" />
           </span>
           <span className={methodCardBody()}>
-            <span className={cardTitle()}>OAuth 2.0 sign-in</span>
-            <span className={cardMeta()}>
-              Redirect to {selectedBank.name}&apos;s secure portal to authorise read-only access
-              (requires server OAuth keys).
-            </span>
+            <span className={cardTitle()}>Bank sign-in</span>
+            <span className={cardMeta()}>Sign in at {selectedBank.name} to connect.</span>
           </span>
         </button>
       </div>
@@ -380,7 +375,7 @@ const ConnectBankWizard: FC<ConnectBankWizardProps> = ({ onSuccess }) => {
       </Button>
     );
   } else if (step === "tokenInput" && selectedBank) {
-    title = `${selectedBank.name} developer token`;
+    title = `${selectedBank.name} access token`;
     description = "Preview: paste your own read-only access token from your provider.";
     body = (
       <div className={stack()}>
@@ -403,13 +398,13 @@ const ConnectBankWizard: FC<ConnectBankWizardProps> = ({ onSuccess }) => {
           Back
         </Button>
         <Button disabled={!tokenInput.trim()} onClick={handleConnectWithToken}>
-          Connect & Sync
+          Connect bank
         </Button>
       </>
     );
   } else if (step === "consent" && selectedBank) {
-    title = `Link with ${selectedBank.name}`;
-    description = "Review the secure sync authorisations requested.";
+    title = `Connect to ${selectedBank.name}`;
+    description = "Check what Flump will be able to read.";
     body = (
       <div className={stack()}>
         <div className={consentHeader()}>
@@ -421,33 +416,20 @@ const ConnectBankWizard: FC<ConnectBankWizardProps> = ({ onSuccess }) => {
             <span className={cardMeta()}>Bank connection (preview)</span>
           </span>
         </div>
-        <p className={helperText()}>By continuing, you authorise Flump to retrieve:</p>
+        <p className={helperText()}>If you continue, Flump can read:</p>
         <div className={bulletList()}>
           <div className={bulletItem()}>
             <Icon icon={ShieldCheck} size="sm" />
             <span className={bankCardBody()}>
-              <span className={cardTitle()}>Account overview</span>
-              <span className={cardMeta()}>
-                Retrieve account names, currencies, and sub-spaces.
-              </span>
+              <span className={cardTitle()}>Your accounts</span>
+              <span className={cardMeta()}>Account names, currencies, and pots or spaces.</span>
             </span>
           </div>
           <div className={bulletItem()}>
             <Icon icon={Landmark} size="sm" />
             <span className={bankCardBody()}>
               <span className={cardTitle()}>Balances and transactions</span>
-              <span className={cardMeta()}>
-                Fetch current amounts and your transaction history.
-              </span>
-            </span>
-          </div>
-          <div className={bulletItem()}>
-            <Icon icon={Lock} size="sm" />
-            <span className={bankCardBody()}>
-              <span className={cardTitle()}>Read-only access</span>
-              <span className={cardMeta()}>
-                Flump cannot transfer funds or modify bank settings.
-              </span>
+              <span className={cardMeta()}>Current balances and your past transactions.</span>
             </span>
           </div>
         </div>
@@ -458,12 +440,12 @@ const ConnectBankWizard: FC<ConnectBankWizardProps> = ({ onSuccess }) => {
         <Button variant="outline" onClick={() => setStep("method")}>
           Back
         </Button>
-        <Button onClick={handleAuthorize}>Redirect to authorise</Button>
+        <Button onClick={handleAuthorize}>Go to bank sign-in</Button>
       </>
     );
   } else if (step === "syncing" && selectedBank) {
     title = `Connecting to ${selectedBank.name}`;
-    description = "Establishing secure API link and parsing balances.";
+    description = "Reading your accounts and balances…";
     body = (
       <div className={centred()} role="status">
         <span className={spinner()}>
@@ -473,7 +455,7 @@ const ConnectBankWizard: FC<ConnectBankWizardProps> = ({ onSuccess }) => {
     );
   } else if (step === "success" && selectedBank) {
     title = "Connected";
-    description = `Your accounts from ${selectedBank.name} are now synced.`;
+    description = `Your ${selectedBank.name} accounts are connected.`;
     body = (
       <div className={stack()}>
         <div className={centred()}>
@@ -481,7 +463,7 @@ const ConnectBankWizard: FC<ConnectBankWizardProps> = ({ onSuccess }) => {
             <Icon icon={CheckCircle2} size="lg" />
           </span>
         </div>
-        <p className={stateHeading()}>Imported accounts</p>
+        <p className={stateHeading()}>Accounts added</p>
         <div className={importedList()}>
           {selectedBank.accounts.slice(0, importedCount).map((accName) => (
             <div key={accName} className={importedItem()}>
@@ -496,8 +478,8 @@ const ConnectBankWizard: FC<ConnectBankWizardProps> = ({ onSuccess }) => {
     );
     footer = <Button onClick={close}>Done</Button>;
   } else if (step === "error" && selectedBank) {
-    title = "Connection failed";
-    description = `We couldn't connect to ${selectedBank.name}.`;
+    title = "We could not connect";
+    description = `We could not connect to ${selectedBank.name}. Nothing was added.`;
     body = (
       <div className={stack()}>
         <div className={centred()}>
@@ -506,9 +488,12 @@ const ConnectBankWizard: FC<ConnectBankWizardProps> = ({ onSuccess }) => {
           </span>
         </div>
         <div className={errorBox()} role="alert">
-          <p className={errorLabel()}>Error message</p>
+          {errorMessage && errorFromBank ? (
+            <p className={errorLabel()}>What the bank told us</p>
+          ) : null}
           <p className={errorMessageText()}>
-            {errorMessage || "Check your credentials or server environment configuration (.env)."}
+            {errorMessage ||
+              "Check the access token is correct and has not expired, then try again."}
           </p>
         </div>
       </div>
@@ -520,20 +505,19 @@ const ConnectBankWizard: FC<ConnectBankWizardProps> = ({ onSuccess }) => {
     );
   } else if (step === "unsupported" && selectedBank) {
     title = `${selectedBank.name}: bank connection`;
-    description = "Bank connection coming soon.";
+    description = "This bank cannot be connected yet.";
     body = (
       <div className={noticeBox()}>
         <div className={noticeRow()}>
           <Icon icon={ShieldCheck} size="md" />
           <p className={tokenHint()}>
-            Bank connection is in preview and does not create mock accounts. You can try it with{" "}
-            <strong>Monzo</strong> and <strong>Starling Bank</strong> using your own read-only
-            access token.
+            Bank connection is a preview. You can try it with <strong>Monzo</strong> and{" "}
+            <strong>Starling Bank</strong>, using your own read-only access token.
           </p>
         </div>
         <p className={helperText()}>
-          To track your {selectedBank.name} accounts now, use the <strong>Manual entry</strong>{" "}
-          option in the Add account dialog.
+          To add your {selectedBank.name} accounts now, choose <strong>Add by hand</strong> when you
+          add an account.
         </p>
       </div>
     );
@@ -552,7 +536,7 @@ const ConnectBankWizard: FC<ConnectBankWizardProps> = ({ onSuccess }) => {
     <>
       <Button onClick={handleOpenModal}>
         <Icon icon={Landmark} size="sm" />
-        Connect bank account
+        Connect a bank
       </Button>
       <Dialog
         description={description}

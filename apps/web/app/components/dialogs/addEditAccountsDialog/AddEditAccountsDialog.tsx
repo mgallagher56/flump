@@ -5,7 +5,8 @@ import {
   Dialog,
   FormField,
   Icon,
-  SegmentedTabs,
+  Select,
+  Tabs,
   TextInput,
 } from "@repo/ui";
 import { CheckCircle2, Globe, KeyRound, Pencil, ShieldCheck, TriangleAlert } from "lucide-react";
@@ -32,8 +33,6 @@ import {
   dialogFooterGroup,
   fieldStack,
   helperText,
-  liveBadge,
-  nativeSelect,
   noticeBox,
   noticeRow,
   saveError,
@@ -68,7 +67,7 @@ const accountTypeArray = [
   OWED,
 ];
 const studentLoanPlans = {
-  items: [{ id: "", name: "Select a plan" }, ...STUDENT_LOAN_PLAN_OPTIONS.map((p) => ({ ...p }))],
+  items: [{ id: "", name: "Choose a plan" }, ...STUDENT_LOAN_PLAN_OPTIONS.map((p) => ({ ...p }))],
 };
 const PLAN_REQUIRED_MESSAGE = "Choose a repayment plan";
 
@@ -76,31 +75,31 @@ const POPULAR_BANKS = [
   {
     id: "monzo",
     name: "Monzo Bank",
-    desc: "Current, joint & pots",
+    desc: "Current and joint accounts, and pots",
     directSync: true,
   },
   {
     id: "starling",
     name: "Starling Bank",
-    desc: "Current, joint & spaces",
+    desc: "Current and joint accounts, and spaces",
     directSync: true,
   },
   {
     id: "trading212",
     name: "Trading 212",
-    desc: "Invest, Stocks ISA & CFD sync",
+    desc: "Cash balance of a Trading 212 account",
     directSync: true,
   },
   {
     id: "hsbc",
     name: "HSBC Bank",
-    desc: "Current & savings",
+    desc: "Current and savings accounts",
     directSync: true,
   },
   {
     id: "barclays",
     name: "Barclays",
-    desc: "Everyday & cards",
+    desc: "Current accounts and cards",
     directSync: true,
   },
   {
@@ -112,25 +111,25 @@ const POPULAR_BANKS = [
   {
     id: "santander",
     name: "Santander",
-    desc: "123 Current & ISA",
+    desc: "Current accounts and ISAs",
     directSync: true,
   },
   {
     id: "natwest",
     name: "NatWest",
-    desc: "Select & reward accounts",
+    desc: "Current accounts",
     directSync: true,
   },
   {
     id: "lloyds",
     name: "Lloyds Bank",
-    desc: "Club Lloyds & cards",
+    desc: "Current accounts and cards",
     directSync: true,
   },
   {
     id: "chase",
     name: "Chase",
-    desc: "Current & saver accounts",
+    desc: "Current and savings accounts",
     directSync: true,
   },
 ];
@@ -212,7 +211,7 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
 
     if (res.oauth && res.redirectUrl) {
       if (!isSafeRedirectUrl(res.redirectUrl)) {
-        setBankError("We couldn't start the bank sign-in. Please try again.");
+        setBankError("We could not start the bank sign-in. Nothing was connected. Try again.");
         return;
       }
       window.location.href = res.redirectUrl;
@@ -227,7 +226,7 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
     if (bankAuthType === "oauth" && !res.redirectUrl) {
       setBankError(
         res.message ||
-          "We couldn't start the bank sign-in for this bank. Please use a developer token.",
+          "We could not start the sign-in for this bank. Nothing was connected. Use an access token instead.",
       );
       return;
     }
@@ -322,7 +321,7 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
     bankFlowRef.current = true;
     if (bankAuthType === "token") {
       if (!bankToken.trim()) {
-        setBankError("Enter your developer token.");
+        setBankError("Enter your access token");
         return;
       }
       fetcher.submit(
@@ -415,8 +414,8 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
           ? "Connecting"
           : bankAuthType === "token"
             ? `Connect ${selectedBankObj?.name || "bank"}`
-            : `Authorise via ${selectedBankObj?.name || "bank"}`
-        : `Track ${selectedBankObj?.name} with manual entry`
+            : `Sign in at ${selectedBankObj?.name || "bank"}`
+        : `Add ${selectedBankObj?.name} by hand`
       : t("addAccount");
 
   const isConfirmDisabled = useMemo(() => {
@@ -439,28 +438,22 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
     selectedBank === "monzo"
       ? "Monzo access token"
       : selectedBank === "starling"
-        ? "Starling personal access token"
+        ? "Starling access token"
         : selectedBank === "trading212"
           ? "Trading 212 API key"
           : `${selectedBankObj?.name} access token`;
 
-  const bankTokenPlaceholder =
-    selectedBank === "monzo"
-      ? "Access token from developers.monzo.com…"
-      : selectedBank === "starling"
-        ? "Bearer token starting with eyJ…"
-        : selectedBank === "trading212"
-          ? "API key from Trading 212 app (Settings, then API)…"
-          : "Read-only access token…";
+  // Only Starling gets a placeholder: the hint already says where the other tokens come from.
+  const bankTokenPlaceholder = selectedBank === "starling" ? "For example, eyJ…" : undefined;
 
   const bankTokenHint =
     selectedBank === "monzo"
       ? "Sign in at developers.monzo.com and copy your access token from the playground."
       : selectedBank === "starling"
-        ? "Generate a personal access token in the Starling Developer Console with account:read and balance:read permissions."
+        ? "In the Starling Developer Console, create an access token with the account:read and balance:read permissions."
         : selectedBank === "trading212"
-          ? "In the Trading 212 app, go to Settings, then API, then generate an API key and copy it here."
-          : `Paste a read-only access token from ${selectedBankObj?.name}, or switch to OAuth portal.`;
+          ? "In the Trading 212 app, go to Settings, then API. Create an API key and paste it here."
+          : `Paste a read-only access token from ${selectedBankObj?.name}, or choose "Bank sign-in".`;
 
   return (
     <>
@@ -482,7 +475,7 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
           <>
             {isEditAccount ? (
               <Button
-                variant="destructive"
+                variant="danger"
                 onClick={(e: React.MouseEvent) => {
                   e.stopPropagation();
                   setConfirmDeleteOpen(true);
@@ -518,19 +511,19 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
             pending={deleteOutcome.pending}
             error={deleteOutcome.error}
             title={`Delete ${selectedAccount.name || "this account"}?`}
-            description="This deletes the account and its full balance history."
+            description="Its balance history will be deleted too. This cannot be undone."
             confirmLabel="Delete account"
             tone="danger"
             onConfirm={handleConfirmRemoveAccount}
           />
         )}
         {!isEditAccount && bankConnectionsEnabled && (
-          <SegmentedTabs
+          <Tabs
             aria-label="How to add the account"
             className={tabsWrap()}
             items={[
-              { value: "manual", label: <span className={tabLabel()}>Manual entry</span> },
-              { value: "bank", label: <span className={tabLabel()}>Connect to bank</span> },
+              { value: "manual", label: <span className={tabLabel()}>Add by hand</span> },
+              { value: "bank", label: <span className={tabLabel()}>Connect a bank</span> },
             ]}
             value={entryMethod}
             onValueChange={(value) => setEntryMethod(value as "manual" | "bank")}
@@ -552,41 +545,28 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
             </FormField>
             <FormField label="Account type">
               {(field) => (
-                // TODO(E15 T2.2b): swap for @repo/ui Select
-                <select
-                  className={nativeSelect()}
-                  id={field.id}
+                <Select
+                  {...controlProps(field)}
                   name="type"
+                  options={accountTypeArray.map((type) => ({ value: type, label: type }))}
                   value={formInput.type?.[0] ?? ""}
                   onChange={onChangeTypeInput}
-                >
-                  {accountTypeArray.map((type) => (
-                    <option key={type} value={type}>
-                      {type}
-                    </option>
-                  ))}
-                </select>
+                />
               )}
             </FormField>
             {formInput.type?.[0] === STUDENT_LOAN ? (
               <FormField error={planError ?? undefined} label="Repayment plan">
                 {(field) => (
-                  // TODO(E15 T2.2b): swap for @repo/ui Select
-                  <select
-                    aria-describedby={field.describedBy}
-                    aria-invalid={field.invalid || undefined}
-                    className={nativeSelect()}
-                    id={field.id}
+                  <Select
+                    {...controlProps(field)}
                     name="studentLoanPlan"
+                    options={studentLoanPlans.items.map((plan) => ({
+                      value: plan.id,
+                      label: plan.name,
+                    }))}
                     value={formInput.studentLoanPlan[0] ?? ""}
                     onChange={onChangePlanInput}
-                  >
-                    {studentLoanPlans.items.map((plan) => (
-                      <option key={plan.id} value={plan.id}>
-                        {plan.name}
-                      </option>
-                    ))}
-                  </select>
+                  />
                 )}
               </FormField>
             ) : null}
@@ -612,12 +592,11 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
             <div className={noticeRow()}>
               <Icon icon={ShieldCheck} size="sm" />
               <p className={helperText()}>
-                Preview: paste your own read-only access token from your provider. Flump has no
-                feature to make payments.
+                Preview: paste your own read-only access token from your provider.
               </p>
             </div>
 
-            <p className={helperText()}>Select your UK financial institution:</p>
+            <p className={helperText()}>Choose your bank</p>
 
             <div className={bankGrid()}>
               {POPULAR_BANKS.map((bank) => {
@@ -639,7 +618,6 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
                     <span className={bankText()}>
                       <span className={bankNameRow()}>
                         <span className={bankName()}>{bank.name}</span>
-                        {bank.directSync && <span className={liveBadge()}>Live</span>}
                       </span>
                       <span className={helperText()}>{bank.desc}</span>
                     </span>
@@ -651,7 +629,7 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
 
             {isDirectSync ? (
               <>
-                <SegmentedTabs
+                <Tabs
                   aria-label="Connection method"
                   items={[
                     {
@@ -659,7 +637,7 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
                       label: (
                         <span className={tabLabel()}>
                           <Icon icon={KeyRound} size="sm" />
-                          Developer token
+                          Access token
                         </span>
                       ),
                     },
@@ -668,7 +646,7 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
                       label: (
                         <span className={tabLabel()}>
                           <Icon icon={Globe} size="sm" />
-                          OAuth portal
+                          Bank sign-in
                         </span>
                       ),
                     },
@@ -698,10 +676,8 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
                 ) : (
                   <div className={noticeBox()}>
                     <p className={helperText()}>
-                      Selecting &quot;Authorise via {selectedBankObj?.name}&quot; takes you to{" "}
-                      {selectedBankObj?.name}&apos;s secure login page to grant read-only
-                      permissions (requires server OAuth client keys configured in your
-                      environment).
+                      &quot;Sign in at {selectedBankObj?.name}&quot; takes you to{" "}
+                      {selectedBankObj?.name} to sign in.
                     </p>
                   </div>
                 )}
@@ -711,18 +687,15 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
                 <div className={noticeRow()}>
                   <Icon icon={TriangleAlert} size="sm" />
                   <div>
-                    <p className={bankName()}>
-                      Bank connection for {selectedBankObj?.name} coming soon
-                    </p>
+                    <p className={bankName()}>{selectedBankObj?.name} cannot be connected yet</p>
                     <p className={helperText()}>
-                      Bank connection is a preview for Monzo and Starling only. No dummy data is
-                      created. You can record and track {selectedBankObj?.name} balances with manual
-                      entry right now.
+                      Bank connection is a preview for Monzo and Starling only. You can add your{" "}
+                      {selectedBankObj?.name} balances by hand.
                     </p>
                   </div>
                 </div>
                 <Button size="sm" variant="outline" onClick={onSwitchToManualForBank}>
-                  Track {selectedBankObj?.name} with manual entry
+                  Add {selectedBankObj?.name} by hand
                 </Button>
               </div>
             )}

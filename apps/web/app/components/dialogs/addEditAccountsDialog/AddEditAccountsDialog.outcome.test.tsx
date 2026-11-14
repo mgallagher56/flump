@@ -99,9 +99,9 @@ describe("AddEditAccountsDialog action outcomes", () => {
       const ui = () => <AddEditAccountsDialogBtn />;
       const view = customRender(ui());
       await view.user.click(view.getByText("addAccount"));
-      await view.user.click(view.getByText("Connect to bank"));
-      await view.user.click(view.getByText("OAuth portal"));
-      await view.user.click(view.getByRole("button", { name: /Authorise via/ }));
+      await view.user.click(view.getByText("Connect a bank"));
+      await view.user.click(view.getByText("Bank sign-in"));
+      await view.user.click(view.getByRole("button", { name: /Sign in at/ }));
       return { ...view, ui };
     };
 
@@ -127,7 +127,9 @@ describe("AddEditAccountsDialog action outcomes", () => {
         mocks.fetcher.data = { success: true, oauth: true, redirectUrl };
         rerender(ui());
         expect(location.href).toBe("");
-        expect(getByText("We couldn't start the bank sign-in. Please try again.")).toBeDefined();
+        expect(
+          getByText("We could not start the bank sign-in. Nothing was connected. Try again."),
+        ).toBeDefined();
       },
     );
   });

@@ -34,7 +34,7 @@ describe("<DataTab />", () => {
     fetcher.submit = vi.fn();
   });
 
-  it("offers a data download and account deletion alongside the reset", () => {
+  it("offers a data download and account deletion alongside the data deletion", () => {
     render(<DataTab />);
     expect(screen.getByRole("heading", { name: "Download your data" })).toBeDefined();
     expect(screen.getByRole("heading", { name: "Delete your account" })).toBeDefined();
@@ -58,6 +58,17 @@ describe("<DataTab />", () => {
     expect(screen.getByRole("alert").textContent).toContain("could not finish removing your login");
   });
 
+  it("labels the section with Delete wording and a danger button", () => {
+    render(<DataTab />);
+    expect(screen.getByRole("heading", { name: "Delete your financial data" })).toBeDefined();
+    const trigger = screen.getByTestId("reset-financial-data-trigger");
+    expect(trigger.textContent).toBe("Delete all data");
+    expect(trigger.getAttribute("data-variant")).toBe("danger");
+    expect(screen.getByTestId("delete-account-trigger").getAttribute("data-variant")).toBe(
+      "danger",
+    );
+  });
+
   it("does nothing until the reset is confirmed", () => {
     render(<DataTab />);
     expect(screen.queryByRole("alertdialog")).toBeNull();
@@ -67,10 +78,10 @@ describe("<DataTab />", () => {
   it("requires typing RESET to confirm", async () => {
     render(<DataTab />);
     fireEvent.click(screen.getByTestId("reset-financial-data-trigger"));
-    expect(screen.getByText("Reset all financial data", { selector: "h2" })).toBeDefined();
+    expect(screen.getByText("Delete all your financial data?", { selector: "h2" })).toBeDefined();
 
     const confirmBtn = screen.getByRole("button", {
-      name: "Reset everything",
+      name: "Delete all data",
     }) as HTMLButtonElement;
     expect(confirmBtn.disabled).toBe(true);
 
@@ -93,22 +104,25 @@ describe("<DataTab />", () => {
     render(<DataTab />);
     fireEvent.click(screen.getByTestId("reset-financial-data-trigger"));
     fireEvent.change(screen.getByLabelText(/to confirm/i), { target: { value: "RESET" } });
-    const confirmBtn = screen.getByRole("button", { name: "Reset everything" });
+    const confirmBtn = screen.getByRole("button", { name: "Delete all data" });
     fireEvent.click(confirmBtn);
     fireEvent.click(confirmBtn);
     expect(mockResetFinancialData).toHaveBeenCalledTimes(1);
     release();
-    await waitFor(() => expect(screen.getByText(/clean slate/i)).toBeDefined());
+    await waitFor(() => expect(screen.getByText("All financial data deleted")).toBeDefined());
   });
 
-  it("shows a failure inside the dialog and keeps it open", async () => {
+  it("shows the fixed failure message, never the server's, and keeps the dialog open", async () => {
     mockResetFinancialData.mockRejectedValueOnce(new Error("Reset failed on the server"));
     render(<DataTab />);
     fireEvent.click(screen.getByTestId("reset-financial-data-trigger"));
     fireEvent.change(screen.getByLabelText(/to confirm/i), { target: { value: "RESET" } });
-    fireEvent.click(screen.getByRole("button", { name: "Reset everything" }));
+    fireEvent.click(screen.getByRole("button", { name: "Delete all data" }));
     const alert = await screen.findByRole("alert");
-    expect(alert.textContent).toContain("Reset failed on the server");
+    expect(alert.textContent).toBe(
+      "We could not delete your financial data. Nothing has changed. Try again.",
+    );
+    expect(alert.textContent).not.toContain("Reset failed on the server");
     expect(screen.getByRole("alertdialog")).toBeDefined();
   });
 
@@ -118,7 +132,7 @@ describe("<DataTab />", () => {
     render(<DataTab />);
     fireEvent.click(screen.getByTestId("reset-financial-data-trigger"));
     fireEvent.change(screen.getByLabelText(/to confirm/i), { target: { value: "RESET" } });
-    fireEvent.click(screen.getByRole("button", { name: "Reset everything" }));
+    fireEvent.click(screen.getByRole("button", { name: "Delete all data" }));
     expect((await screen.findByRole("alert")).textContent).toBe(
       "For your security, sign in again, then try again.",
     );

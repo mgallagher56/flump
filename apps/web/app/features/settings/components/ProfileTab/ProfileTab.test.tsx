@@ -63,11 +63,35 @@ describe("<ProfileTab />", () => {
     expect(screen.queryByRole("link", { name: /profile/i })).toBeNull();
   });
 
-  it("points to the tax, pension and mortgage pages for the rest", () => {
+  it("points to the tax, pension and mortgage pages with text links, not buttons", () => {
     render(<ProfileTab profile={DEFAULT_PROFILE} />);
-    expect(screen.getByRole("button", { name: /go to tax and take-home/i })).toBeDefined();
-    expect(screen.getByRole("button", { name: /go to pension/i })).toBeDefined();
-    expect(screen.getByRole("button", { name: /go to mortgage/i })).toBeDefined();
+    const links = [
+      ["Tax and take-home pay", "/app/self-assessment"],
+      ["Your pension", "/app/pension"],
+      ["Your mortgage", "/app/mortgage"],
+    ] as const;
+    for (const [name, href] of links) {
+      const link = screen.getByRole("link", { name });
+      expect(link.getAttribute("href")).toBe(href);
+      expect(link.getAttribute("data-variant")).toBe("link");
+    }
+    expect(screen.queryByRole("button", { name: /go to/i })).toBeNull();
+  });
+
+  it("renders the selects with the @repo/ui Select, never a bare native select", () => {
+    const { container } = render(<ProfileTab profile={DEFAULT_PROFILE} />);
+    const selects = Array.from(container.querySelectorAll("select"));
+    expect(selects).toHaveLength(2);
+    for (const select of selects) {
+      // The @repo/ui Select wraps its <select> with a chevron icon; a bare one has neither.
+      expect(select.parentElement?.querySelector("svg")).not.toBeNull();
+    }
+  });
+
+  it("names the opt-in section Sections you use", () => {
+    render(<ProfileTab profile={DEFAULT_PROFILE} />);
+    expect(screen.getByRole("heading", { name: "Sections you use" })).toBeDefined();
+    expect(screen.queryByText(/module/i)).toBeNull();
   });
 
   it("saves only when something changed, and sends only this tab's fields", async () => {
@@ -195,6 +219,8 @@ describe("<ProfileTab />", () => {
     fireEvent.click(screen.getByTestId("self-assessment-module-toggle"));
     const alert = await screen.findByTestId("module-save-error");
     expect(alert.getAttribute("role")).toBe("alert");
-    expect(alert.textContent).toContain("could not update");
+    expect(alert.textContent).toBe(
+      "We could not change the Self Assessment section. Nothing has changed. Try again.",
+    );
   });
 });
