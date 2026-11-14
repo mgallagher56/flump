@@ -67,7 +67,7 @@ export const answerCard = cva({
       left: 0,
       right: 0,
       height: "4px",
-      backgroundColor: "primary",
+      backgroundColor: "chart.primary",
       pointerEvents: "none",
     },
   },
