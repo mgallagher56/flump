@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import { CollapsibleDrawer } from "./CollapsibleDrawer";
+import { CollapsibleDrawer, quietOpenLabel } from "./CollapsibleDrawer";
 
 describe("CollapsibleDrawer Primitive", () => {
   it("expands and collapses children when trigger button is clicked", () => {
@@ -127,6 +127,24 @@ describe("CollapsibleDrawer Primitive", () => {
         </CollapsibleDrawer>,
       );
       expect(screen.getByText("12 rows")).toBeDefined();
+    });
+  });
+
+  describe("quietOpenLabel", () => {
+    it("swaps a leading Show word for Hide", () => {
+      expect(quietOpenLabel("Show data")).toBe("Hide data");
+      expect(quietOpenLabel("Show")).toBe("Hide");
+      expect(quietOpenLabel("Show: details")).toBe("Hide: details");
+    });
+
+    it("leaves titles that do not start with the word Show", () => {
+      expect(quietOpenLabel("Showcase")).toBe("Showcase");
+      expect(quietOpenLabel("Show_all")).toBe("Show_all");
+      expect(quietOpenLabel("Repayments")).toBe("Repayments");
+    });
+
+    it("prefers openLabel when given", () => {
+      expect(quietOpenLabel("Show data", "Close")).toBe("Close");
     });
   });
 });
