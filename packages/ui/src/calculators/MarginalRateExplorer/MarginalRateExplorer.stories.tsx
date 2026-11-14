@@ -1,6 +1,28 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import { expect, fn, userEvent, waitFor, within } from "@storybook/test";
-import { MarginalRateExplorerStandalone } from "./MarginalRateExplorer";
+import { useState } from "react";
+import {
+  getMarginalRateExplorerDefaults,
+  MarginalRateExplorer,
+  MarginalRateExplorerStandalone,
+  type MarginalRateExplorerValues,
+} from "./MarginalRateExplorer";
+
+/** Controlled explorer as the signed-in take-home ScenarioZone renders it. */
+const InZone = () => {
+  const [values, setValues] = useState<MarginalRateExplorerValues>(() => ({
+    ...getMarginalRateExplorerDefaults(),
+    grossPay: 58_000,
+  }));
+  return (
+    <MarginalRateExplorer
+      inScenarioZone
+      showNotice={false}
+      values={values}
+      onChange={(key, value) => setValues((prev) => ({ ...prev, [key]: value }))}
+    />
+  );
+};
 
 const meta: Meta<typeof MarginalRateExplorerStandalone> = {
   title: "5. Calculators/MarginalRateExplorer",
@@ -91,3 +113,18 @@ export const Dark: Story = { ...Default, globals: { theme: "dark" } };
 export const Mobile: Story = {
   parameters: { viewport: { defaultViewport: "mobile1" } },
 };
+
+/** Inside a ScenarioZone: the outcome on the zone surface and only the nearby thresholds. */
+export const InScenarioZone: Story = {
+  render: () => <InZone />,
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const outcome = canvas.getAllByTestId("explorer-outcomes")[0] as HTMLElement;
+    await expect(outcome.querySelector("[data-kpi-value]")).toBeNull();
+    await expect(
+      canvas.getAllByText("Estimated take-home from the next £1,000")[0],
+    ).toBeInTheDocument();
+  },
+};
+
+export const InScenarioZoneDark: Story = { ...InScenarioZone, globals: { theme: "dark" } };

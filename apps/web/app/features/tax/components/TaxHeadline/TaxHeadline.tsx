@@ -4,7 +4,7 @@ import {
   type TaxCalculationResult,
   type TaxRecord,
 } from "@flump/finance-engine";
-import { HeroFigure, KpiCard, KpiStrip, kpiMoney } from "@repo/ui";
+import { Button, HeroFigure, KpiCard, KpiStrip, kpiMoney, StatusBadge } from "@repo/ui";
 import { cx } from "@repo/ui/styled-system/css";
 import type { FC, ReactNode } from "react";
 import { date, root } from "./TaxHeadline.styles";
@@ -15,6 +15,8 @@ export interface TaxHeadlineProps {
   result: TaxCalculationResult | undefined;
   /** The page's "Add income" control, offered when the year has no income outside PAYE. */
   emptyAction?: ReactNode;
+  /** Opens the add dialog for a cost; offered on the costs card when none are recorded. */
+  onAddCost?: () => void;
 }
 
 const dateFormat = new Intl.DateTimeFormat("en-GB", {
@@ -37,33 +39,65 @@ export const nonPayeIncome = (records: TaxRecord[], taxYear: string): number =>
       (r) => r.source !== "paye" && r.type === "income" && isRecordActiveInTaxYear(r, taxYear),
     )
     .reduce((sum, r) => sum + getRecordAnnualTotalForTaxYear(r, taxYear), 0);
+/** Costs recorded against income outside PAYE for the year. */
+export const nonPayeCosts = (records: TaxRecord[], taxYear: string): number =>
+  records
+    .filter(
+      (r) => r.source !== "paye" && r.type === "expense" && isRecordActiveInTaxYear(r, taxYear),
+    )
+    .reduce((sum, r) => sum + getRecordAnnualTotalForTaxYear(r, taxYear), 0);
+
 /**
  * The first view of the page. The hero holds a saved fact (the income recorded for the year),
  * never an estimate (copy audit ruling 7, coordinator D2). The estimated bill is the first KPI,
- * marked "Estimate", then the date the bill is due. With nothing added the
+ * marked "Estimate", then the costs recorded and the date the bill is due: a strip of three, never
+ * two. The tax year is in the year control beside the heading, so the hero label does not repeat
+ * it and the first view holds four figures. With no costs the costs card offers to add one rather
+ * than showing £0. With nothing added the
  * hero asks for income and no strip is drawn, so no £0 appears.
  */
-export const TaxHeadline: FC<TaxHeadlineProps> = ({ taxYear, records, result, emptyAction }) => {
+export const TaxHeadline: FC<TaxHeadlineProps> = ({
+  taxYear,
+  records,
+  result,
+  emptyAction,
+  onAddCost,
+}) => {
   const income = nonPayeIncome(records, taxYear);
   const hasIncome = income > 0 && result !== undefined;
   const bill = Math.max(0, Math.round(result?.netAdditionalTaxToPay ?? 0));
+  const costs = Math.round(nonPayeCosts(records, taxYear));
 
   return (
     <section aria-label="Summary" className={root()}>
       <HeroFigure
         emptyAction={emptyAction}
         emptyPrompt="Add income outside PAYE, such as self-employment or rent, to see an estimated tax bill."
-        label={`Income for ${taxYear}`}
-        subline={hasIncome ? "Income outside PAYE that you recorded, before costs" : undefined}
+        label="Income outside PAYE"
+        subline={hasIncome ? "What you recorded for this tax year, before costs" : undefined}
         value={hasIncome ? income : undefined}
         valueFormat={{ fractionDigits: 0 }}
       />
       {hasIncome ? (
-        <KpiStrip columns={2}>
+        <KpiStrip columns={3}>
           <KpiCard
+            action={<StatusBadge variant="neutral">Estimate</StatusBadge>}
+            explain={`Income Tax and National Insurance on your income outside PAYE, after costs, on top of your salary, at ${taxYear} rates.`}
             label="Estimated bill"
-            subtext="Estimate"
             value={bill}
+            valueFormat={{ fractionDigits: 0 }}
+          />
+          <KpiCard
+            emptyAction={
+              onAddCost ? (
+                <Button size="sm" type="button" variant="link" onClick={onAddCost}>
+                  Add a cost
+                </Button>
+              ) : undefined
+            }
+            label="Costs"
+            notSetLabel="None recorded"
+            value={costs > 0 ? costs : null}
             valueFormat={{ fractionDigits: 0 }}
           />
           <KpiCard

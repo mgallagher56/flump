@@ -111,6 +111,19 @@ describe("EmptyState Pattern", () => {
   });
 });
 
+describe("EmptyState card tone (R2-8)", () => {
+  it("sits on the card surface with a hairline border, and default stays sunken", () => {
+    const { container, rerender } = render(<EmptyState title="Turn it on" tone="card" />);
+    const root = container.querySelector("section") as HTMLElement;
+    expect(root.className).toContain("bg-c_surface.card");
+    expect(root.className).toContain("bd-c_border.subtle");
+    rerender(<EmptyState title="Turn it on" />);
+    expect((container.querySelector("section") as HTMLElement).className).toContain(
+      "bg-c_surface.sunken",
+    );
+  });
+});
+
 describe("EmptyState title spacing (R2-2)", () => {
   it.each(["md", "sm"] as const)("resets letter-spacing to normal at size %s", (size) => {
     render(<EmptyState size={size} title="Add your first account" />);

@@ -72,6 +72,7 @@ export const NextPoundExplorer: FC<NextPoundExplorerProps> = ({
     {/* Always inside a ScenarioZone or a page that shows the notice, so the panel leaves it out. */}
     <MarginalRateExplorer
       headingLevel="h3"
+      inScenarioZone
       showNotice={false}
       unverifiedInPageNotice={unverifiedInPageNotice}
       values={scenario.values}

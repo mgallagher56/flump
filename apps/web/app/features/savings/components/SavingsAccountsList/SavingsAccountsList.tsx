@@ -7,7 +7,7 @@ import {
   ProgressBar,
   VisuallyHidden,
 } from "@repo/ui";
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil } from "lucide-react";
 import { type FC, useState } from "react";
 import { Link, useFetcher } from "react-router";
 import type { Account } from "~/containers/accounts/types";
@@ -54,8 +54,9 @@ const VISIBLE_ROWS = 8;
 const typeLabel = (acc: Account) => (acc.type === "Investment" ? "Investment" : "Savings");
 
 /**
- * "Your accounts": one figure per row, the balance (plan P1.4). The rate and the amount saved each
- * month live in the account's detail page and its edit form.
+ * "Your accounts": one figure per row, the balance (plan P1.4), and one "Edit" button, the same
+ * as pension pots. The rate, the amount saved each month and "Delete account" live in the edit
+ * dialog; deleting always asks for confirmation.
  */
 export const SavingsAccountsList: FC<SavingsAccountsListProps> = ({ accounts, isaUsed }) => {
   const fetcher = useFetcher();
@@ -92,14 +93,7 @@ export const SavingsAccountsList: FC<SavingsAccountsListProps> = ({ accounts, is
                 onClick={() => setEditingAccount(acc)}
               >
                 <Icon icon={Pencil} size="sm" />
-              </Button>
-              <Button
-                aria-label={`Delete ${acc.name}`}
-                size="sm"
-                variant="ghost"
-                onClick={() => setConfirmDeleteId(acc.id || null)}
-              >
-                <Icon icon={Trash2} size="sm" />
+                Edit
               </Button>
             </span>
           </span>
@@ -182,6 +176,10 @@ export const SavingsAccountsList: FC<SavingsAccountsListProps> = ({ accounts, is
           accountToEdit={editingAccount}
           isOpen={true}
           onClose={() => setEditingAccount(null)}
+          onDeleteRequest={() => {
+            setConfirmDeleteId(editingAccount.id || null);
+            setEditingAccount(null);
+          }}
         />
       )}
     </section>

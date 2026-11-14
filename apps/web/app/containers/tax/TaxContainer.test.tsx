@@ -176,7 +176,7 @@ const openRecords = () => openDrawer(/^All records/);
 const firstViewButtons = () => screen.getAllByRole("button");
 
 describe("TaxContainer, opted in", () => {
-  it("leads with the h1, year control, one hero and two KPIs", () => {
+  it("leads with the h1, year control, one hero and a strip of three KPIs", () => {
     const { container } = render(<TaxContainer />);
     expect(screen.getByRole("heading", { level: 1, name: "Self Assessment" })).toBeDefined();
     expect((screen.getByLabelText("Tax year") as HTMLSelectElement).value).toBe(
@@ -184,11 +184,12 @@ describe("TaxContainer, opted in", () => {
     );
     expect(container.querySelectorAll('[data-tone="hero"]')).toHaveLength(1);
     const hero = container.querySelector('[data-tone="hero"]') as HTMLElement;
-    expect(hero.textContent).toContain(`Income for ${getCurrentUKTaxYear()}`);
+    expect(hero.textContent).toContain("Income outside PAYE");
     expect(hero.textContent).not.toMatch(/estimate/i);
     // The estimate is the first KPI, marked as one.
-    const kpis = screen.getAllByText(/^(Estimated bill|Bill due)$/);
-    expect(kpis.map((k) => k.textContent)).toEqual(["Estimated bill", "Bill due"]);
+    const kpis = screen.getAllByText(/^(Estimated bill|Costs|Bill due)\s*$/);
+    expect(kpis.map((k) => k.textContent?.trim())).toEqual(["Estimated bill", "Costs", "Bill due"]);
+    expect(screen.getByText("Estimate")).toBeDefined();
   });
 
   it("meets the page rules in the first view", () => {

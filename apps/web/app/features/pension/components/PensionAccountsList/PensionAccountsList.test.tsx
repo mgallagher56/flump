@@ -58,6 +58,17 @@ describe("PensionAccountsList", () => {
     expect(container.textContent).not.toMatch(/%/);
   });
 
+  it("shows the balance on a single pot and one edit button per row, with no delete button", () => {
+    const { container } = render(
+      <PensionAccountsList
+        accounts={[{ id: "p1", name: "Workplace pension", type: "Pension", balance: 96000 }] as any}
+      />,
+    );
+    expect(container.querySelector("[data-list-row]")?.textContent).toContain("£96,000");
+    expect(screen.getByRole("button", { name: "Edit Workplace pension" })).toBeDefined();
+    expect(screen.queryByRole("button", { name: /Delete/ })).toBeNull();
+  });
+
   it("keeps pots after the eighth behind a drawer", () => {
     const many = Array.from({ length: 10 }, (_, i) => ({
       id: `p${i}`,
@@ -73,6 +84,12 @@ describe("PensionAccountsList", () => {
   });
 
   describe("delete confirmation", () => {
+    // Delete lives inside the pot's edit dialog: Edit, then "Delete pot", then confirm.
+    const openDelete = () => {
+      fireEvent.click(screen.getByRole("button", { name: "Edit Nest Workplace Pension" }));
+      fireEvent.click(screen.getByRole("button", { name: "Delete pot" }));
+    };
+
     const pots = [
       {
         id: "p1",
@@ -90,7 +107,7 @@ describe("PensionAccountsList", () => {
       const confirmSpy = vi.fn();
       vi.stubGlobal("confirm", confirmSpy);
       render(<PensionAccountsList accounts={pots as any} />);
-      fireEvent.click(screen.getAllByRole("button", { name: "Delete Nest Workplace Pension" })[0]);
+      openDelete();
       expect(
         screen.getByRole("alertdialog", { name: "Delete Nest Workplace Pension?" }),
       ).toBeDefined();
@@ -109,7 +126,7 @@ describe("PensionAccountsList", () => {
       fetcherData.current = null;
       const ui = () => <PensionAccountsList accounts={pots as any} />;
       const { rerender } = render(ui());
-      fireEvent.click(screen.getAllByRole("button", { name: "Delete Nest Workplace Pension" })[0]);
+      openDelete();
       fireEvent.click(screen.getByRole("button", { name: "Delete pot" }));
 
       fetcherData.current = {
@@ -132,7 +149,7 @@ describe("PensionAccountsList", () => {
     it("cancel does nothing", () => {
       mockSubmit.mockClear();
       render(<PensionAccountsList accounts={pots as any} />);
-      fireEvent.click(screen.getAllByRole("button", { name: "Delete Nest Workplace Pension" })[0]);
+      openDelete();
       fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
       expect(mockSubmit).not.toHaveBeenCalled();
     });

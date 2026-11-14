@@ -47,7 +47,7 @@ const openTool = (getByRole: (role: string, opts: { name: string }) => HTMLEleme
 describe("<TakeHomeCalculator /> saved figures", () => {
   afterEach(() => vi.useRealTimers());
 
-  test("the hero is the saved salary; take-home is the first KPI, tagged Estimate, in whole pounds", () => {
+  test("the hero is the saved salary alone; take-home is the first of three KPIs, tagged Estimate", () => {
     const { container, getByText } = customRender(
       <TakeHomeCalculator initialSalary={32000} onApplyIncrease={vi.fn()} />,
       withProfile(),
@@ -55,19 +55,29 @@ describe("<TakeHomeCalculator /> saved figures", () => {
     const heroText = hero(container)?.textContent ?? "";
     expect(heroText).toContain("Salary before tax");
     expect(heroText).toContain("£32,000");
-    expect(heroText).toMatch(/£2,667 a month$/);
+    // No monthly sub-line: the strip splits the monthly pay, and it would be a fifth figure.
+    expect(heroText).not.toMatch(/a month/);
     expect(heroText).not.toMatch(/Estimate/);
     expect(getByText("Estimate")).toBeDefined();
     // £32,000, 5% net-pay pension, England: the same figure dashboard and budget show.
-    expect(container.textContent).toMatch(/Monthly take-home.*£2,10[67]/);
+    expect(container.textContent).toMatch(/Monthly take-home pay.*£2,10[67]/);
+    const labels = [...container.querySelectorAll("[data-kpi-value]")].length;
+    expect(labels).toBe(3);
+    // Take-home, tax and NI, and pension add up to the monthly pay before tax (£2,667).
+    const values = [...container.querySelectorAll("[data-kpi-value]")].map((el) =>
+      Number((el.textContent ?? "").replace(/[£,]/g, "")),
+    );
+    expect(values.reduce((a, b) => a + b, 0)).toBe(2667);
     expect(container.textContent).not.toMatch(/£[\d,]+\.\d{2}/);
   });
 
-  test("includes the saved student loan as its own row", () => {
-    const { getByRole } = customRender(
+  test("includes the saved student loan in the third KPI and as its own row", () => {
+    const { getByRole, getByText } = customRender(
       <TakeHomeCalculator initialSalary={45000} onApplyIncrease={vi.fn()} />,
       withProfile({ studentLoanPlans: ["PLAN_2"] } as Partial<UserProfile>),
     );
+    expect(getByText("Monthly pension and student loan")).toBeDefined();
+    fireEvent.click(getByRole("button", { name: "Show details" }));
     expect(getByRole("rowheader", { name: "Student loan" })).toBeDefined();
   });
 

@@ -77,6 +77,7 @@ export const PensionSummary: FC<PensionSummaryProps> = ({
             emptyAction={
               estimateMissing ? promptTo(estimateMissing.label, estimateMissing.to) : undefined
             }
+            explain="Worked out from your pots, what goes in each month and each pot's growth rate, up to your State Pension age. Shown in today's money, taking 4% of the pot a year, without the State Pension."
             key="estimate"
             label="Estimated income at retirement"
             subtext={
@@ -107,9 +108,10 @@ export const PensionSummary: FC<PensionSummaryProps> = ({
           />,
           <KpiCard
             emptyAction={promptTo("Add your year of birth", PROFILE_PATH)}
+            explain="Flump does not store a retirement age, so estimates assume you retire at your State Pension age. You can try a different age in the model below."
             key="age"
             label="Retirement age"
-            subtext={retirementAge === null ? undefined : "Your State Pension age"}
+            subtext={retirementAge === null ? undefined : "Assumed: your State Pension age"}
             unset={retirementAge === null}
             value={
               retirementAge === null ? null : <span className={figureText}>{retirementAge}</span>

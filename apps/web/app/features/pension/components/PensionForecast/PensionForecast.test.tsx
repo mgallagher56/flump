@@ -124,13 +124,14 @@ describe("<PensionForecast />", () => {
   it("moving an input enables Reset, and Reset restores the saved figures", () => {
     render(<Harness />);
     expect(screen.queryByRole("button", { name: "Reset to saved figures" })).toBeNull();
-    expect(screen.getByText("No change")).toBeDefined();
+    // The change line appears only once an input moves.
+    expect(screen.queryByText("Change in monthly income")).toBeNull();
     fireEvent.change(within(visiblePanel()).getByLabelText("Your contribution"), {
       target: { value: "12" },
     });
-    expect(screen.queryByText("No change")).toBeNull();
+    expect(screen.getByText("Change in monthly income")).toBeDefined();
     fireEvent.click(screen.getByRole("button", { name: "Reset to saved figures" }));
-    expect(screen.getByText("No change")).toBeDefined();
+    expect(screen.queryByText("Change in monthly income")).toBeNull();
   });
 
   it("the take-home tool reads the same contribution and adds the unverified lead to the notice", () => {
@@ -168,7 +169,7 @@ describe("<PensionForecast />", () => {
       act(() => {
         vi.advanceTimersByTime(500);
       });
-      expect(region.textContent).toMatch(/^Illustration: estimated pot £[\d,]+ at 60/);
+      expect(region.textContent).toMatch(/^Illustration: estimated pot about £[\d,]+ at 60/);
     } finally {
       vi.useRealTimers();
     }

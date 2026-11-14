@@ -33,7 +33,7 @@ import { FormField } from "../../primitives/FormField/FormField";
 import { Icon } from "../../primitives/Icon";
 import { KpiCard } from "../../primitives/KpiCard/KpiCard";
 import { LiveRegion } from "../../primitives/LiveRegion/LiveRegion";
-import { formatMoney } from "../../primitives/Money/Money";
+import { formatMoney, Money } from "../../primitives/Money/Money";
 import { Select } from "../../primitives/Select/Select";
 import { SliderField } from "../../primitives/SliderField/SliderField";
 import { StatusBadge } from "../../primitives/StatusBadge/StatusBadge";
@@ -49,6 +49,10 @@ import {
   explorerDetails,
   explorerFieldset,
   explorerLegend,
+  explorerOutcome,
+  explorerOutcomeCaption,
+  explorerOutcomeHead,
+  explorerOutcomeLabel,
   explorerOutcomes,
   explorerRoot,
 } from "./MarginalRateExplorer.styles";
@@ -160,6 +164,12 @@ export interface MarginalRateExplorerProps {
   showNotice?: boolean;
   /** Passed to the delta panel: the page's notice already carries the "Unverified estimate" sentence. */
   unverifiedInPageNotice?: boolean;
+  /**
+   * Inside a ScenarioZone (the signed-in take-home page). The outcome sits on the zone's surface
+   * instead of in a card of its own (no card inside the zone), and the chart marks only the
+   * thresholds either side of your pay. Default false: the tool pages keep their layout.
+   */
+  inScenarioZone?: boolean;
   className?: string;
 }
 
@@ -173,6 +183,7 @@ export const MarginalRateExplorer: FC<MarginalRateExplorerProps> = ({
   now,
   showNotice = true,
   unverifiedInPageNotice = false,
+  inScenarioZone = false,
   className,
 }) => {
   const sectionHeading = headingLevel ?? (embedded ? "h2" : "h3");
@@ -449,20 +460,35 @@ export const MarginalRateExplorer: FC<MarginalRateExplorerProps> = ({
 
   const content = (
     <div className={explorerContent()}>
-      {/* The tax year sits at the top of the results, in the same place as the tax trap tool. */}
-      <div className={explorerBadges()}>
-        <StatusBadge variant="neutral">{asAtTaxYear(delta.before.ratesYear)}</StatusBadge>
-      </div>
+      {/* The tax year sits at the top of the results, in the same place as the tax trap tool. In a
+          ScenarioZone it shares the outcome's label row instead. */}
+      {inScenarioZone ? null : (
+        <div className={explorerBadges()}>
+          <StatusBadge variant="neutral">{asAtTaxYear(delta.before.ratesYear)}</StatusBadge>
+        </div>
+      )}
       {/* Scenario outcome, not a saved figure, so a plain outcome card rather than a KpiStrip. The
-          share deducted is the rest of the £1,000, so it is a caption, not a second card. */}
-      <div className={explorerOutcomes()} data-density="compact" data-testid="explorer-outcomes">
-        <KpiCard
-          label={EXPLORER_COPY.kpiNextThousand}
-          subtext={EXPLORER_COPY.kpiNextThousandSubtext}
-          value={delta.deltaTakeHome}
-          valueFormat={{ fractionDigits: takeHomeDigits }}
-        />
-      </div>
+          share deducted is the rest of the £1,000, so it is a caption, not a second card. Inside a
+          ScenarioZone it sits on the zone's own surface, with no card. */}
+      {inScenarioZone ? (
+        <div className={explorerOutcome()} data-testid="explorer-outcomes">
+          <div className={explorerOutcomeHead()}>
+            <p className={explorerOutcomeLabel()}>{EXPLORER_COPY.kpiNextThousand}</p>
+            <StatusBadge variant="neutral">{asAtTaxYear(delta.before.ratesYear)}</StatusBadge>
+          </div>
+          <Money fractionDigits={takeHomeDigits} size="kpi" value={delta.deltaTakeHome} />
+          <p className={explorerOutcomeCaption()}>{EXPLORER_COPY.kpiNextThousandSubtext}</p>
+        </div>
+      ) : (
+        <div className={explorerOutcomes()} data-density="compact" data-testid="explorer-outcomes">
+          <KpiCard
+            label={EXPLORER_COPY.kpiNextThousand}
+            subtext={EXPLORER_COPY.kpiNextThousandSubtext}
+            value={delta.deltaTakeHome}
+            valueFormat={{ fractionDigits: takeHomeDigits }}
+          />
+        </div>
+      )}
       {cta}
       <MarginalRateChart
         headingLevel={sectionHeading}
@@ -470,6 +496,7 @@ export const MarginalRateExplorer: FC<MarginalRateExplorerProps> = ({
         showSummary={!inRange}
         steppedZones={zones}
         summary={summary}
+        thresholdFocus={inScenarioZone ? "near-pay" : "all"}
         thresholds={thresholds}
         title={EXPLORER_COPY.chartTitle}
         yourPay={inRange ? yourGross : undefined}

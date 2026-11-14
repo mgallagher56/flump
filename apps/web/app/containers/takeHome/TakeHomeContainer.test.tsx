@@ -28,13 +28,7 @@ vi.mock("~/state/baseline.store", () => ({
 
 import TakeHomeContainer from "./TakeHomeContainer";
 
-const PAY_PARTS = [
-  "Income Tax",
-  "National Insurance",
-  "Pension",
-  "Student loan",
-  "What you take home",
-];
+const PAY_PARTS = ["Income Tax", "National Insurance", "Pension", "Student loan"];
 
 describe("<TakeHomeContainer /> with saved figures", () => {
   beforeEach(() => {
@@ -45,6 +39,8 @@ describe("<TakeHomeContainer /> with saved figures", () => {
   it("meets the page rules: figure budget, one hero, one notice, at most one primary button", () => {
     const { container } = render(<TakeHomeContainer />);
     expectPageRules(container, { maxFigures: 9, maxNotSet: 0, projectionNotices: 1 });
+    // A strip of three, never one (RESCORE take-home).
+    expect(container.querySelectorAll("[data-kpi-value]")).toHaveLength(3);
     expect(container.querySelectorAll('[data-tone="hero"]')).toHaveLength(1);
     expect(screen.getByRole("heading", { level: 1, name: "Take-home pay" })).toBeDefined();
   });
@@ -57,21 +53,24 @@ describe("<TakeHomeContainer /> with saved figures", () => {
     expect(container.textContent).not.toMatch(/£[\d,]+\.\d{2}\b/);
   });
 
-  it("names each pay part exactly once, and prints the take-home estimate once", () => {
+  it("names each pay part once, in the table behind Show details, and the estimate once up front", () => {
     const { container } = render(<TakeHomeContainer />);
     const text = container.textContent ?? "";
-    // As a label (its own element), each part appears once.
-    const counts = PAY_PARTS.map((label) => [
-      label,
-      screen.getAllByText(new RegExp(`^${label}`)).length,
-    ]);
-    expect(counts).toEqual(PAY_PARTS.map((label) => [label, 1]));
     expect(text).not.toMatch(/You take home/);
-    let card: HTMLElement | null = screen.getByText("Monthly take-home");
+    // The table repeats the strip, so it waits behind the disclosure.
+    expect(screen.queryByRole("table", { name: "Where your pay goes each month" })).toBeNull();
+    let card: HTMLElement | null = screen.getByText("Monthly take-home pay");
     while (card && !/£/.test(card.textContent ?? "")) card = card.parentElement;
     const amount = /£[\d,]+/.exec(card?.textContent ?? "")?.[0];
     expect(amount).toBeDefined();
     expect(findFigures(container).filter((f) => f.text === amount)).toHaveLength(1);
+    fireEvent.click(screen.getByRole("button", { name: "Show details" }));
+    const table = screen.getByRole("table", { name: "Where your pay goes each month" });
+    const counts = PAY_PARTS.map((label) => [
+      label,
+      within(table).getAllByText(new RegExp(`^${label}$`)).length,
+    ]);
+    expect(counts).toEqual(PAY_PARTS.map((label) => [label, 1]));
   });
 
   it("the hero is the saved salary; the take-home estimate is the first KPI, tagged Estimate", () => {
@@ -81,7 +80,7 @@ describe("<TakeHomeContainer /> with saved figures", () => {
     expect(hero).toContain("£45,000");
     expect(hero).not.toMatch(/Estimate|take-home/i);
     expect(screen.getByText("Estimate")).toBeDefined();
-    expect(screen.getByText("Monthly take-home")).toBeDefined();
+    expect(screen.getByText("Monthly take-home pay")).toBeDefined();
   });
 
   it("keeps the saved breakdown outside the scenario zone, which holds only the two what-ifs", () => {

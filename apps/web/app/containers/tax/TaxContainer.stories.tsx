@@ -190,7 +190,7 @@ type Story = StoryObj<typeof meta>;
 export const OptedInWithData: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    await expect((await canvas.findAllByText(/^Income for /)).length).toBeGreaterThan(0);
+    await expect((await canvas.findAllByText(/^Income outside PAYE$/)).length).toBeGreaterThan(0);
     await expect((await canvas.findAllByText("Estimated bill")).length).toBeGreaterThan(0);
     await expect(
       (await canvas.findAllByRole("button", { name: "Add income" })).length,

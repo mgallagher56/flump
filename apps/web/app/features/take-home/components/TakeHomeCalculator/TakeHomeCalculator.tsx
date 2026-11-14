@@ -7,7 +7,6 @@ import {
 } from "@flump/finance-engine";
 import {
   ButtonLink,
-  CollapsibleDrawer,
   DELTA_PANEL_COPY,
   EXPLORER_COPY,
   HeroFigure,
@@ -27,7 +26,7 @@ import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import { useUserProfile } from "~/hooks/useUserProfile";
 import { NextPoundExplorer, useNextPoundScenario } from "../NextPoundExplorer";
 import { PayRiseTool } from "../PayRiseTool";
-import { TakeHomeBreakdown } from "../TakeHomeBreakdown";
+import { monthlyPayParts, TakeHomeBreakdown } from "../TakeHomeBreakdown";
 import {
   calculatorRoot,
   detailHint,
@@ -150,12 +149,13 @@ export const TakeHomeCalculator: FC<TakeHomeCalculatorProps> = ({
       </a>
     );
 
+  // The hero is the saved fact alone (D2). No monthly sub-line: the strip below splits the monthly
+  // pay, and a fifth figure would push the first view over the number budget (P1).
   const salaryHero = (
     <HeroFigure
       emptyAction={profileLink("Add salary", "primary")}
       emptyPrompt="Add your salary before tax to see an estimate of your take-home pay."
       label="Salary before tax"
-      subline={savedSalary > 0 ? `${formatCurrency(savedSalary / 12)} a month` : undefined}
       value={savedSalary > 0 ? savedSalary : undefined}
       valueFormat={{ fractionDigits: 0 }}
     />
@@ -184,7 +184,7 @@ export const TakeHomeCalculator: FC<TakeHomeCalculatorProps> = ({
             <KpiCard
               key="take-home"
               action={estimateBadge}
-              label="Monthly take-home"
+              label="Monthly take-home pay"
               value={null}
             />,
           ]}
@@ -197,9 +197,80 @@ export const TakeHomeCalculator: FC<TakeHomeCalculatorProps> = ({
   const salary = savedSalary;
   const shareNotTakenHome = salary > 0 ? (salary - v.annual) / salary : 0;
   const payAfterPension = Math.max(0, salary - v.pension);
+  const parts = monthlyPayParts({
+    salary,
+    incomeTax: v.incomeTax,
+    nationalInsurance: v.nationalInsurance,
+    pension: v.pension,
+    studentLoan: v.studentLoan,
+  });
+  const pensionAndLoan = parts.pension + parts.studentLoan;
 
+  // Take-home, then what comes off in two cards, so the three add up to the monthly pay before
+  // tax. With no pension or student loan the second and third are Income Tax and National
+  // Insurance, so the strip stays three cards and never shows £0.
+  const takeHomeCard = (
+    <KpiCard
+      key="take-home"
+      action={estimateBadge}
+      explain={`Your saved salary before tax, less Income Tax, National Insurance, pension and student loan, at ${taxYear} rates.`}
+      label="Monthly take-home pay"
+      value={parts.takeHome}
+      valueFormat={{ fractionDigits: 0 }}
+    />
+  );
+  const secondCard =
+    pensionAndLoan > 0 ? (
+      <KpiCard
+        key="tax"
+        explain={`Income Tax and employee National Insurance on your saved salary, at ${taxYear} rates.`}
+        label="Monthly tax and National Insurance"
+        value={parts.incomeTax + parts.nationalInsurance}
+        valueFormat={{ fractionDigits: 0 }}
+      />
+    ) : (
+      <KpiCard
+        key="income-tax"
+        explain={`Income Tax on your saved salary, at ${taxYear} rates.`}
+        label="Monthly Income Tax"
+        value={parts.incomeTax}
+        valueFormat={{ fractionDigits: 0 }}
+      />
+    );
+  const pensionLabel =
+    parts.pension > 0 && parts.studentLoan > 0
+      ? "Monthly pension and student loan"
+      : parts.pension > 0
+        ? "Monthly pension"
+        : "Monthly student loan";
+  const pensionExplain =
+    parts.pension > 0 && parts.studentLoan > 0
+      ? "Your saved pension contribution, and repayments on your saved student loan plan."
+      : parts.pension > 0
+        ? "Your saved pension contribution, as a share of your salary."
+        : "Repayments on your saved student loan plan.";
+  const thirdCard =
+    pensionAndLoan > 0 ? (
+      <KpiCard
+        key="pension"
+        explain={pensionExplain}
+        label={pensionLabel}
+        value={pensionAndLoan}
+        valueFormat={{ fractionDigits: 0 }}
+      />
+    ) : (
+      <KpiCard
+        key="ni"
+        explain={`Employee National Insurance on your saved salary, at ${taxYear} rates.`}
+        label="Monthly National Insurance"
+        value={parts.nationalInsurance}
+        valueFormat={{ fractionDigits: 0 }}
+      />
+    );
+
+  // Content for the breakdown's one quiet "Show details" disclosure, under its table.
   const details = (
-    <CollapsibleDrawer title="Show details" variant="quiet">
+    <>
       <dl className={detailList()}>
         <div className={detailItem()}>
           <dt className={detailLabel()}>Share of pay not taken home</dt>
@@ -222,7 +293,7 @@ export const TakeHomeCalculator: FC<TakeHomeCalculatorProps> = ({
           {a}
         </p>
       ))}
-    </CollapsibleDrawer>
+    </>
   );
 
   return (
@@ -231,19 +302,9 @@ export const TakeHomeCalculator: FC<TakeHomeCalculatorProps> = ({
 
       {salaryHero}
 
-      {/* The estimate is the first KPI, never the hero (ruling 7). */}
-      <KpiStrip
-        items={[
-          <KpiCard
-            key="take-home"
-            action={estimateBadge}
-            label="Monthly take-home"
-            subtext="After tax, National Insurance, pension and student loan"
-            value={v.monthly}
-            valueFormat={{ fractionDigits: 0 }}
-          />,
-        ]}
-      />
+      {/* The estimate is the first KPI, never the hero (D2). The three cards add up to the monthly
+          pay before tax, so the strip explains itself. */}
+      <KpiStrip items={[takeHomeCard, secondCard, thirdCard]} />
 
       <TakeHomeBreakdown
         details={details}

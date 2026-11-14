@@ -54,7 +54,7 @@ describe("<PensionSummary />", () => {
     for (const caption of [
       "A month, in today's money",
       "You and your employer",
-      "Your State Pension age",
+      "Assumed: your State Pension age",
     ]) {
       expect(getByText(caption).textContent).not.toMatch(/£|%|\d/);
     }

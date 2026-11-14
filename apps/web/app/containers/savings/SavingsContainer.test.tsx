@@ -233,13 +233,16 @@ describe("SavingsContainer", () => {
       fireEvent.pointerDown(tab, { button: 0 });
       fireEvent.keyDown(tab, { key: "Enter", code: "Enter" });
       fireEvent.mouseDown(tab);
+      // The tool opens on a default target (the next round £1,000 above the saved total).
       const target = screen.getByLabelText("Target amount") as HTMLInputElement;
-      expect(target.value).toBe("");
+      expect(target.value).toBe("22000");
+      expect(screen.getByTestId("deposit-timeline-outcome").textContent).not.toBe(
+        "Enter a target amount to see an estimate.",
+      );
       expect((screen.getByLabelText("Monthly saving") as HTMLInputElement).value).toMatch(/300/);
       fireEvent.change(target, { target: { value: "31000" } });
-      expect(screen.getByTestId("deposit-timeline-outcome").textContent).toBe(
-        "Estimated time to reach target: 2 years 10 months",
-      );
+      expect(screen.getByTestId("deposit-timeline-outcome").textContent).toBe("2 years 10 months");
+      expect(screen.getByText("Estimated time to reach £31,000")).toBeDefined();
       expect(mockSubmit).not.toHaveBeenCalled();
     });
   });

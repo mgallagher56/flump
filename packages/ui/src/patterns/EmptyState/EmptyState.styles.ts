@@ -69,6 +69,14 @@ export const emptyStateRecipe = sva({
         icon: { color: "text.muted" },
         illustration: { color: "text.muted" },
       },
+      card: {
+        root: {
+          backgroundColor: "surface.card",
+          borderWidth: "1px",
+          borderStyle: "solid",
+          borderColor: "border.subtle",
+        },
+      },
     },
     size: {
       md: {

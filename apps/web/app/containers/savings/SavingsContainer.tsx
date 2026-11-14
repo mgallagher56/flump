@@ -18,6 +18,7 @@ import { AddSavingsAccountDialog } from "~/features/savings/components/AddSaving
 import {
   DepositTimeline,
   type DepositTimelineValues,
+  defaultDepositTarget,
   depositOutcomeText,
 } from "~/features/savings/components/DepositTimeline";
 import { PayRiseScenario } from "~/features/savings/components/PayRiseScenario";
@@ -148,7 +149,12 @@ export const SavingsContainer: FC = () => {
   const forecast = useScenarioState(savedForecast);
 
   const savedDeposit = useMemo<DepositTimelineValues>(
-    () => ({ targetDeposit: null, monthlySaving: saved.monthly, startingAmount: saved.total }),
+    () => ({
+      // A default target so the tab never opens empty: an illustration, not a suggested goal.
+      targetDeposit: defaultDepositTarget(saved.total),
+      monthlySaving: saved.monthly,
+      startingAmount: saved.total,
+    }),
     [saved.monthly, saved.total],
   );
   const deposit = useScenarioState(savedDeposit);
@@ -232,6 +238,7 @@ export const SavingsContainer: FC = () => {
                   ),
                   deposit: (
                     <DepositTimeline
+                      saved={savedDeposit}
                       values={deposit.values}
                       onChange={(key, value) => deposit.set(key, value)}
                     />

@@ -91,6 +91,22 @@ describe("<SavingsAccountsList />", () => {
   });
 
   describe("delete confirmation", () => {
+    // Delete lives inside the account's edit dialog: Edit, then "Delete account", then confirm.
+    const openDelete = () => {
+      fireEvent.click(screen.getByRole("button", { name: "Edit High Yield Saver" }));
+      fireEvent.click(
+        within(screen.getByRole("dialog", { name: "Edit savings account" })).getByRole("button", {
+          name: "Delete account",
+        }),
+      );
+    };
+
+    test("each row has one Edit button and no delete button", () => {
+      customRender(<SavingsAccountsList accounts={mockAccounts} />);
+      expect(screen.getByRole("button", { name: "Edit High Yield Saver" })).toBeDefined();
+      expect(screen.queryByRole("button", { name: /^Delete / })).toBeNull();
+    });
+
     beforeEach(() => {
       mockSubmit.mockClear();
       fetcherData.current = null;
@@ -99,7 +115,7 @@ describe("<SavingsAccountsList />", () => {
     test("a failed delete shows the error inline and keeps the dialog open; success closes it", () => {
       const ui = () => <SavingsAccountsList accounts={mockAccounts} />;
       const { rerender } = customRender(ui());
-      fireEvent.click(screen.getByRole("button", { name: "Delete High Yield Saver" }));
+      openDelete();
       fireEvent.click(screen.getByRole("button", { name: "Delete account" }));
       expect(screen.getByRole("button", { name: "Delete account" }).hasAttribute("disabled")).toBe(
         true,
@@ -120,11 +136,11 @@ describe("<SavingsAccountsList />", () => {
       expect(screen.queryByRole("alertdialog")).toBeNull();
     });
 
-    test("trash opens the confirm and submits nothing", () => {
+    test("Delete account in the edit dialog opens the confirm and submits nothing", () => {
       const confirmSpy = vi.fn();
       vi.stubGlobal("confirm", confirmSpy);
       customRender(<SavingsAccountsList accounts={mockAccounts} />);
-      fireEvent.click(screen.getByRole("button", { name: "Delete High Yield Saver" }));
+      openDelete();
       const dialog = screen.getByRole("alertdialog", { name: "Delete High Yield Saver?" });
       expect(
         within(dialog).getByText("Its balance history will be deleted too. This cannot be undone."),
@@ -135,7 +151,7 @@ describe("<SavingsAccountsList />", () => {
 
     test("confirm deletes once", () => {
       customRender(<SavingsAccountsList accounts={mockAccounts} />);
-      fireEvent.click(screen.getByRole("button", { name: "Delete High Yield Saver" }));
+      openDelete();
       fireEvent.click(screen.getByRole("button", { name: "Delete account" }));
       expect(mockSubmit).toHaveBeenCalledTimes(1);
       expect(mockSubmit).toHaveBeenCalledWith(
@@ -146,7 +162,7 @@ describe("<SavingsAccountsList />", () => {
 
     test("cancel does nothing", () => {
       customRender(<SavingsAccountsList accounts={mockAccounts} />);
-      fireEvent.click(screen.getByRole("button", { name: "Delete High Yield Saver" }));
+      openDelete();
       fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
       expect(mockSubmit).not.toHaveBeenCalled();
     });

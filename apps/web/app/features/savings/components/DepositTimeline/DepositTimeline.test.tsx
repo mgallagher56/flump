@@ -5,7 +5,10 @@ import {
   DEPOSIT_EMPTY_TEXT,
   DepositTimeline,
   type DepositTimelineValues,
+  defaultDepositTarget,
   depositOutcomeText,
+  depositRanges,
+  reachedByMonth,
 } from "./DepositTimeline";
 
 const values = (over: Partial<DepositTimelineValues> = {}): DepositTimelineValues => ({
@@ -16,7 +19,7 @@ const values = (over: Partial<DepositTimelineValues> = {}): DepositTimelineValue
 });
 
 describe("depositOutcomeText", () => {
-  it("asks for a target first, with no placeholder amount", () => {
+  it("asks for a target when it is cleared", () => {
     expect(depositOutcomeText(values())).toBe(DEPOSIT_EMPTY_TEXT);
   });
 
@@ -47,10 +50,32 @@ describe("depositOutcomeText", () => {
   });
 });
 
+describe("defaults and ranges", () => {
+  it("opens on the next round £1,000 above the starting amount", () => {
+    expect(defaultDepositTarget(3200)).toBe(4000);
+    expect(defaultDepositTarget(4000)).toBe(5000);
+    expect(defaultDepositTarget(null)).toBe(1000);
+  });
+
+  it("sets slider ranges from the saved figures that hold them", () => {
+    const ranges = depositRanges(values({ targetDeposit: 25000, startingAmount: 38000 }));
+    expect(ranges.target.max).toBeGreaterThanOrEqual(76000);
+    expect(ranges.starting.max).toBeGreaterThanOrEqual(76000);
+    expect(ranges.monthly.max).toBe(2000);
+    expect(ranges.monthly.step).toBe(25);
+  });
+
+  it("names the month a target is met in en-GB", () => {
+    expect(reachedByMonth(new Date(2026, 10, 14), 6)).toBe("May 2027");
+  });
+});
+
 function Harness({ initial, onChange }: { initial: DepositTimelineValues; onChange?: () => void }) {
   const [state, setState] = useState(initial);
   return (
     <DepositTimeline
+      saved={initial}
+      today={new Date(2026, 10, 14)}
       values={state}
       onChange={(key, value) => {
         onChange?.();
@@ -61,20 +86,27 @@ function Harness({ initial, onChange }: { initial: DepositTimelineValues; onChan
 }
 
 describe("<DepositTimeline />", () => {
-  it("starts with a blank target and updates the outcome as the user types", () => {
+  it("shows one figure and two supporting figures, and updates as a slider moves", () => {
     const onChange = vi.fn();
-    render(<Harness initial={values()} onChange={onChange} />);
-    const target = screen.getByLabelText("Target amount") as HTMLInputElement;
-    expect(target.value).toBe("");
-    expect(screen.getByTestId("deposit-timeline-outcome").textContent).toBe(DEPOSIT_EMPTY_TEXT);
-    fireEvent.change(target, { target: { value: "20000" } });
+    render(<Harness initial={values({ targetDeposit: 6000 })} onChange={onChange} />);
+    expect(screen.getByTestId("deposit-timeline-outcome").textContent).toBe("3 months");
+    expect(screen.getByText("Estimated time to reach £6,000")).toBeDefined();
+    expect(screen.getByText("Reached by").nextElementSibling?.textContent).toBe("February 2027");
+    expect(screen.getByText("Still to save").nextElementSibling?.textContent).toBe("£1,000");
+    fireEvent.change(screen.getByLabelText("Target amount"), { target: { value: "20000" } });
     expect(onChange).toHaveBeenCalled();
-    expect(screen.getByTestId("deposit-timeline-outcome").textContent).toBe(
-      "Estimated time to reach target: 3 years 2 months",
-    );
-    expect(screen.getByText("The total in your savings and investment accounts")).toBeDefined();
+    expect(screen.getByTestId("deposit-timeline-outcome").textContent).toBe("3 years 2 months");
+    // The zone already says "Starting from your saved accounts.", so the slider has no helper.
+    expect(screen.queryByText("The total in your savings and investment accounts")).toBeNull();
     expect(
       screen.getByText("This estimate does not include interest or changes in investment value."),
     ).toBeDefined();
+  });
+
+  it("states the reached and not-reachable cases in words", () => {
+    render(<Harness initial={values({ targetDeposit: 4000 })} />);
+    expect(screen.getByTestId("deposit-timeline-outcome").textContent).toBe(
+      "Your starting amount already meets this target.",
+    );
   });
 });

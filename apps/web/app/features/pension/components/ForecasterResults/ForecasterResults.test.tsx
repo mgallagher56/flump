@@ -21,7 +21,7 @@ const input: ForecastInput = {
 };
 
 describe("<ForecasterResults />", () => {
-  it("shows one outcome and two supporting figures, with no change at the saved figures", () => {
+  it("shows one rounded outcome and the lump sum, hiding the change line at the saved figures", () => {
     const saved = projectPension(input);
     const { container } = render(
       <ForecasterResults inTodaysMoney result={saved} savedResult={saved} whenLabel="at 67" />,
@@ -30,7 +30,11 @@ describe("<ForecasterResults />", () => {
     expect(screen.getByText("Tax-free lump sum")).toBeDefined();
     // The saved monthly income is the page's KPI: the outcome never repeats it.
     expect(document.body.textContent).not.toContain("a month");
-    expect(screen.getByText("No change")).toBeDefined();
+    expect(screen.queryByText("Change in monthly income")).toBeNull();
+    expect(screen.queryByText("No change")).toBeNull();
+    const value = screen.getByText("Estimated pot at 67").nextElementSibling?.textContent ?? "";
+    expect(value).toMatch(/^About £[\d,]+$/);
+    expect(Number(value.replace(/\D/g, "")) % 100).toBe(0);
     expect(screen.queryByText(/PLSA|standard/i)).toBeNull();
     expectPageRules(container, { maxFigures: 2 });
   });
