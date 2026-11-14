@@ -3,4 +3,5 @@
 // whatever the host or container sets. The database session is pinned too (typeorm.options.ts).
 process.env.TZ = "UTC";
 
+// Imported only for its side effect; the empty export keeps this file a module.
 export {};
