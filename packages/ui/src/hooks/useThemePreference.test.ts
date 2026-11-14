@@ -1,8 +1,8 @@
 import { act, renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { useTheme } from "./useTheme";
+import { useThemePreference as useTheme } from "./useThemePreference";
 
-describe("useTheme", () => {
+describe("useThemePreference", () => {
   beforeEach(() => {
     // Clear localStorage
     localStorage.clear();

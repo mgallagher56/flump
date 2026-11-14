@@ -26,9 +26,10 @@ describe("Footer", () => {
     );
   });
 
-  it("uses h2 section headings with no skipped levels", () => {
+  it("uses the shared footer headings (brand h2, columns h3) with no skipped levels", () => {
     renderFooter();
-    expect(screen.getByRole("heading", { level: 2, name: "Calculators" })).toBeDefined();
+    expect(screen.getByRole("heading", { level: 2, name: "Flump" })).toBeDefined();
+    expect(screen.getByRole("heading", { level: 3, name: "Calculators" })).toBeDefined();
     expect(screen.queryAllByRole("heading", { level: 4 })).toHaveLength(0);
   });
 

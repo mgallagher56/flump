@@ -24,8 +24,8 @@ vi.mock("~/components/navigation/UserLogin", () => ({
   default: () => <div>UserLogin</div>,
 }));
 
-vi.mock("~/components/navigation/HomeLogo", () => ({
-  default: () => <div>HomeLogo</div>,
+vi.mock("~/components/navigation/renderHomeLogoLink", () => ({
+  renderHomeLogoLink: () => <div>HomeLogo</div>,
 }));
 
 describe("<MobileNavDrawer />", () => {

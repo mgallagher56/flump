@@ -1,5 +1,5 @@
+import type { Theme, ThemePreference } from "@repo/ui";
 import { createContext, useContext } from "react";
-import type { Theme, ThemePreference } from "./hooks/useTheme";
 
 interface ThemeContextValue {
   /** The theme in effect (system preference resolved). */

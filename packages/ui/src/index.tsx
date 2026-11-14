@@ -22,19 +22,23 @@ export * from "./patterns/ConfirmDialog";
 export * from "./patterns/DebtToWealthChart";
 export * from "./patterns/EmptyState";
 export * from "./patterns/GlobalBaselineBar";
+export * from "./patterns/HomeLogo";
 // Financial Patterns
 export * from "./patterns/KpiStrip";
 export * from "./patterns/MarginalRateChart";
 export * from "./patterns/MobileBottomBar";
+export * from "./patterns/NavDrawer";
 export * from "./patterns/PageHeader";
 export * from "./patterns/ProjectionNotice";
 export * from "./patterns/ScenarioZone";
 export * from "./patterns/SectionBand";
 export * from "./patterns/SideNav";
 export * from "./patterns/SimulatorSplitLayout";
+export * from "./patterns/SiteFooter";
 export * from "./patterns/TakeHomeDeltaPanel";
 export * from "./patterns/TaxRatesStatusBanner";
 export * from "./patterns/TaxTrapEscapeBanner";
+export * from "./patterns/ThemeToggle";
 export * from "./patterns/TopBar";
 // Primitives
 export * from "./primitives/Button";

@@ -1,6 +1,6 @@
-import { cva } from "@repo/ui/styled-system/css";
+import { cva } from "../../../styled-system/css";
 
-export const footerRoot = cva({
+export const siteFooterRoot = cva({
   base: {
     borderTopWidth: "1px",
     borderTopStyle: "solid",
@@ -11,7 +11,7 @@ export const footerRoot = cva({
   },
 });
 
-export const footerInner = cva({
+export const siteFooterInner = cva({
   base: {
     maxWidth: "5xl",
     margin: "0 auto",
@@ -21,17 +21,20 @@ export const footerInner = cva({
   },
 });
 
-export const footerGrid = cva({
+export const siteFooterGrid = cva({
   base: {
     display: "grid",
-    gridTemplateColumns: { base: "1fr", sm: "repeat(2, 1fr)", md: "2fr 1fr 1fr" },
+    // Brand column twice the width of each link column, however many columns a site passes.
+    gridTemplateColumns: { base: "1fr", sm: "repeat(2, 1fr)", md: "2fr" },
+    gridAutoColumns: { md: "1fr" },
+    gridAutoFlow: { md: "column" },
     gap: "32px",
   },
 });
 
-export const footerBlurb = cva({ base: { maxWidth: "380px" } });
+export const siteFooterBlurb = cva({ base: { maxWidth: "380px" } });
 
-export const footerList = cva({
+export const siteFooterList = cva({
   base: {
     listStyle: "none",
     padding: 0,
@@ -43,7 +46,7 @@ export const footerList = cva({
   },
 });
 
-export const footerLink = cva({
+export const siteFooterLink = cva({
   base: {
     color: "text.secondary",
     textDecoration: "none",
@@ -53,7 +56,7 @@ export const footerLink = cva({
   },
 });
 
-export const footerBottom = cva({
+export const siteFooterBottom = cva({
   base: {
     borderTopWidth: "1px",
     borderTopStyle: "solid",

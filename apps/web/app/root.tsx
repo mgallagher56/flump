@@ -1,4 +1,4 @@
-import { ToastProvider, VisuallyHidden } from "@repo/ui";
+import { THEME_INIT_SCRIPT, ToastProvider, useThemePreference, VisuallyHidden } from "@repo/ui";
 import { css } from "@repo/ui/styled-system/css";
 import { useEffect } from "react";
 import type { LoaderFunctionArgs } from "react-router";
@@ -18,7 +18,6 @@ import Header from "./components/structure/header/Header";
 import { ResponsiveProvider } from "./context/ResponsiveContext";
 import { ErrorShell } from "./features/feedback/components/ErrorShell";
 import { RouteErrorBoundary } from "./features/feedback/components/RouteErrorBoundary";
-import { useTheme } from "./hooks/useTheme";
 import type { UserProfile } from "./hooks/useUserProfile";
 import { useUserProfile } from "./hooks/useUserProfile";
 import i18n from "./i18n";
@@ -30,11 +29,14 @@ import { useNonce } from "./security/nonce";
 import { backendFetch } from "./services/backend-client.server";
 import { BackendError } from "./services/backend-error";
 import { ThemeContext } from "./ThemeContext";
-import { THEME_INIT_SCRIPT } from "./theme-init-script";
 import { getAuthSession } from "./utils/auth.server";
 import { watchLogoutForms } from "./utils/userStorage";
 
-export const links = () => [{ rel: "stylesheet", href: styles }];
+// Same favicon file as the marketing site (guarded by chrome-parity.laws.test.ts).
+export const links = () => [
+  { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
+  { rel: "stylesheet", href: styles },
+];
 
 export const middleware = [securityMiddleware];
 
@@ -84,7 +86,7 @@ export const loader = async (args: LoaderFunctionArgs) => {
 export default function App() {
   const { locale, user, userProfile, ENV, isMobileClient } = useLoaderData<typeof loader>();
   const nonce = useNonce();
-  const { theme, preference, setPreference, toggleTheme } = useTheme();
+  const { theme, preference, setPreference, toggleTheme } = useThemePreference();
   const { setProfile } = useUserProfile();
 
   // Sign-out wipes this browser's per-user storage (E19 A6); covers every form posting to /logout.
@@ -181,7 +183,7 @@ export default function App() {
 
 export function ErrorBoundary() {
   const nonce = useNonce();
-  const { theme } = useTheme();
+  const { theme } = useThemePreference();
   const error = useRouteError();
   const title =
     isRouteErrorResponse(error) && error.status === 404 ? "Page not found" : "Something went wrong";

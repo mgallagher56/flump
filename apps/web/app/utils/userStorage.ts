@@ -5,7 +5,7 @@ import {
 } from "~/state/baseline.store";
 import { RUNWAY_STORAGE_KEY } from "~/utils/runwayStorage";
 
-/** Per-user browser keys. The theme (`flump-theme`) is a device preference and stays. */
+/** Per-user browser keys. The theme (THEME_STORAGE_KEY in @repo/ui) is a device preference and stays. */
 export const USER_STORAGE_KEYS = [
   FINANCIAL_BASELINE_STORAGE_KEY,
   ...LEGACY_BASELINE_STORAGE_KEYS,

@@ -1,6 +1,7 @@
 import { elevationShadows } from "./elevation";
 import { densityRadii, densitySizes, densitySpacing } from "./layout";
 
+export * from "./breakpoints";
 export * from "./elevation";
 export * from "./layout";
 export * from "./motion";

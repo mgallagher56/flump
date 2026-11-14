@@ -9,6 +9,7 @@ import {
   letterSpacings,
   lineHeights,
   motionKeyframes,
+  navConditions,
   radii,
   semanticTokens,
   shadows,
@@ -23,6 +24,8 @@ export const flumpPreset = definePreset({
   conditions: {
     extend: {
       compact: "[data-density=compact] &",
+      // Top nav switch (inline links vs menu button + drawer), shared by web and marketing.
+      ...navConditions,
     },
   },
   theme: {

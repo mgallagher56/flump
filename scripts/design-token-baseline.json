@@ -1,7 +1,5 @@
 {
   "apps/marketing/src/components/BaselineSnapshotPreview.tsx": 1,
-  "apps/marketing/src/components/Header.tsx": 9,
-  "apps/marketing/src/components/ThemeToggle.tsx": 7,
   "apps/marketing/src/pages/HomePage.tsx": 4,
   "apps/marketing/src/pages/ToolPage.tsx": 2,
   "apps/web/app/components/core/dialogs/TaxDisclaimerButton.tsx": 2,
