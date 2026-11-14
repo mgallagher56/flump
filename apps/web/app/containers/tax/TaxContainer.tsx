@@ -146,6 +146,7 @@ const SelfAssessmentOff: FC<{
         }
         id="self-assessment-off"
         illustration={<Illustration scene="empty-accounts" size="sm" />}
+        tone="card"
         title="Self Assessment is for income outside PAYE, such as self-employment or rent"
       />
       {error ? (
@@ -237,6 +238,8 @@ const SelfAssessmentPage: FC<{
   const deleteTransactionOutcome = useFetcherOutcome(fetcher, {
     onSuccess: () => setTransactionToDelete(null),
   });
+  // A failed add or edit is said on the page, never dropped silently.
+  const saveOutcome = useFetcherOutcome(fetcher);
   const deleteTaxYearOutcome = useFetcherOutcome(fetcher, {
     onSuccess: () => setTaxYearToDelete(null),
   });
@@ -302,7 +305,13 @@ const SelfAssessmentPage: FC<{
       // An omitted receipt keeps the stored one; clearing must be said explicitly.
       receiptClear: values.receiptCleared && !values.receiptData ? "1" : undefined,
     };
-    fetcher.submit(payload, { method: "POST" });
+    // fetcher.submit turns an undefined value into the text "undefined", which the backend
+    // rejects (an end date of "undefined"), so absent fields are left out of the form data.
+    const formData = Object.fromEntries(
+      Object.entries(payload).filter((entry): entry is [string, string] => entry[1] !== undefined),
+    );
+    saveOutcome.begin();
+    fetcher.submit(formData, { method: "POST" });
     setIsRecordDialogOpen(false);
   };
 
@@ -338,6 +347,12 @@ const SelfAssessmentPage: FC<{
     );
   };
 
+  // "Add a cost" starts on the source of the year's first income outside PAYE (rent, say).
+  const costSource: TaxSource =
+    initialRecords.find(
+      (r) =>
+        r.source !== "paye" && r.type === "income" && isRecordActiveInTaxYear(r, selectedTaxYear),
+    )?.source ?? "self-employed";
   const previousTaxYear = getPreviousTaxYear(selectedTaxYear);
   const countFormat = new Intl.NumberFormat("en-GB");
 
@@ -365,8 +380,15 @@ const SelfAssessmentPage: FC<{
 
       <TaxRatesStatusBanner {...ratesContext} />
 
+      {saveOutcome.error ? (
+        <p className={errorText()} role="alert">
+          {saveOutcome.error}
+        </p>
+      ) : null}
+
       <TaxHeadline
         emptyAction={hasRecordsInYear ? undefined : addIncome}
+        onAddCost={() => onOpenAddModal(costSource, "expense")}
         records={initialRecords}
         result={activeYearData}
         taxYear={selectedTaxYear}

@@ -178,7 +178,8 @@ const cases: Case[] = [
       name: "Work",
       type: "Pension",
       balance: 10,
-      interestRate: 5,
+      // A blank growth rate stays unset, never an assumed 5%.
+      interestRate: null,
       monthlyContribution: null,
     },
   },

@@ -1,8 +1,19 @@
-import { ChartFigure, chartColor, formatAxisCurrency, Table, TBody, Td, THead, Th } from "@repo/ui";
+import {
+  CHART_AXIS_DEFAULTS,
+  ChartFigure,
+  chartColor,
+  formatAxisCurrency,
+  Table,
+  TBody,
+  Td,
+  THead,
+  Th,
+  xTickAnchor,
+} from "@repo/ui";
 import { type FC, useMemo } from "react";
 import {
-  Area,
-  AreaChart,
+  Line,
+  LineChart,
   ReferenceDot,
   ResponsiveContainer,
   Tooltip,
@@ -10,10 +21,12 @@ import {
   YAxis,
 } from "recharts";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
+import { nearDataAxis } from "~/utils/yAxisTicks";
 import type { ForecastResult } from "../../forecast";
 import { annotationChip, annotationText, chartWrap } from "./ForecastChart.styles";
 
-const MAX_TICKS = 6;
+/** Four at most: an end-anchored last tick beside a centred one crowds at 375 with more. */
+const MAX_TICKS = Math.min(4, CHART_AXIS_DEFAULTS.maxXTicks);
 
 /** Chip geometry for the annotation, in SVG units (one unit per CSS pixel). */
 const CHIP_HEIGHT = 22;
@@ -69,6 +82,7 @@ export const ForecastChart: FC<ForecastChartProps> = ({
     [result.chartData, startYear],
   );
   const ticks = evenYearTicks(points.map((p) => p.calendarYear));
+  const yAxis = useMemo(() => nearDataAxis(points.map((p) => p.totalPot)), [points]);
   const last = points[points.length - 1];
   // "to 67" or "for 25 years": short, so the summary fits one line at 375.
   const span = whenLabel.startsWith("at ")
@@ -114,13 +128,31 @@ export const ForecastChart: FC<ForecastChartProps> = ({
       >
         <div className={chartWrap()}>
           <ResponsiveContainer height="100%" width="100%">
-            <AreaChart data={points} margin={{ top: 36, right: 16, left: -8, bottom: 0 }}>
+            <LineChart
+              data={points}
+              margin={{
+                top: 36,
+                right: CHART_AXIS_DEFAULTS.plotPaddingRight,
+                left: -8,
+                bottom: 0,
+              }}
+            >
               <XAxis
                 axisLine={false}
                 dataKey="calendarYear"
                 fontSize={11}
+                tick={({ x, y, payload, index }) => (
+                  <text
+                    className="recharts-cartesian-axis-tick-value"
+                    dy={16}
+                    textAnchor={xTickAnchor(index, ticks.length)}
+                    x={x}
+                    y={y}
+                  >
+                    {payload.value}
+                  </text>
+                )}
                 tickLine={false}
-                tickMargin={8}
                 ticks={ticks}
                 type={NUMERIC_AXIS}
                 domain={["dataMin", "dataMax"]}
@@ -128,18 +160,22 @@ export const ForecastChart: FC<ForecastChartProps> = ({
               <YAxis
                 axisLine={false}
                 fontSize={11}
+                domain={yAxis.domain}
+                // Every round tick is drawn (the set is already short), so £0 never drops out.
+                interval={0}
                 tickFormatter={(val) => formatAxisCurrency(Number(val))}
                 tickLine={false}
                 tickMargin={8}
+                ticks={yAxis.ticks}
               />
               <Tooltip
                 formatter={(value) => formatCurrency(Number(value) || 0)}
                 labelFormatter={(label) => String(label)}
               />
-              <Area
+              {/* A line, not an area: the axis starts near the data, so a fill would overstate growth. */}
+              <Line
                 dataKey="totalPot"
-                fill={chartColor("band")}
-                fillOpacity={0.4}
+                dot={false}
                 isAnimationActive={false}
                 name="Estimated pot"
                 stroke={chartColor("primary")}
@@ -184,7 +220,7 @@ export const ForecastChart: FC<ForecastChartProps> = ({
                   y={last.totalPot}
                 />
               ) : null}
-            </AreaChart>
+            </LineChart>
           </ResponsiveContainer>
         </div>
       </ChartFigure>

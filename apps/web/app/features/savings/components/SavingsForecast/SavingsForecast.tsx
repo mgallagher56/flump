@@ -1,4 +1,5 @@
 import {
+  CHART_AXIS_DEFAULTS,
   ChartFigure,
   Checkbox,
   CollapsibleDrawer,
@@ -16,10 +17,23 @@ import {
   Td,
   THead,
   Th,
+  xTickAnchor,
 } from "@repo/ui";
 import { type FC, type ReactNode, useMemo } from "react";
-import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import {
+  Line,
+  LineChart,
+  ReferenceDot,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
+import { formatEstimate } from "~/utils/roundEstimate";
+import { nearDataAxis } from "~/utils/yAxisTicks";
+import {
+  annotationChip,
+  annotationText,
   chartWrap,
   forecastContent,
   forecastControls,
@@ -77,6 +91,11 @@ const pounds = new Intl.NumberFormat("en-GB", {
   maximumFractionDigits: 0,
 });
 
+/** Chip geometry for the end label, in SVG units (one unit per CSS pixel). */
+const CHIP_HEIGHT = 22;
+const CHIP_PADDING = 8;
+const CHIP_CHAR_WIDTH = 7;
+
 /** Whole pounds, en-GB (P8). */
 const money = (n: number): string => pounds.format(Math.round(n));
 
@@ -97,7 +116,7 @@ export function forecastOutcomeText(
 ): string {
   const result = runProjection(values, startingBalance, payRiseMonthly);
   if (result.flat) return FORECAST_PROMPT;
-  return `About ${pounds.format(Math.round(result.final))} in ${formatYears(values.years)}`;
+  return `${formatEstimate(result.final)} in ${formatYears(values.years)}`;
 }
 
 /**
@@ -123,7 +142,13 @@ export const SavingsForecast: FC<SavingsForecastProps> = ({
     () => result.points.map((p) => ({ label: String(startYear + p.year), balance: p.balance })),
     [result.points, startYear],
   );
-  const ticks = pickTicks(chartData.map((d) => d.label));
+  const ticks = pickTicks(
+    chartData.map((d) => d.label),
+    CHART_AXIS_DEFAULTS.maxXTicks,
+  );
+  const yAxis = useMemo(() => nearDataAxis(chartData.map((d) => d.balance)), [chartData]);
+  const last = chartData[chartData.length - 1];
+  const endLabel = `In ${formatYears(values.years)}`;
 
   const goal = values.goal !== null && values.goal > 0 ? values.goal : null;
   const goalResult =
@@ -211,7 +236,7 @@ export const SavingsForecast: FC<SavingsForecastProps> = ({
           id="savings-forecast-outcome"
         >
           <p className={outcomeLabel()}>Estimated balance in {formatYears(values.years)}</p>
-          <p className={outcomeValue()}>{money(result.final)}</p>
+          <p className={outcomeValue()}>{formatEstimate(result.final)}</p>
           <dl className={outcomeSupport()}>
             <div className={outcomeSupportItem()}>
               <dt>You pay in</dt>
@@ -265,25 +290,47 @@ export const SavingsForecast: FC<SavingsForecastProps> = ({
       >
         <div className={chartWrap()}>
           <ResponsiveContainer height="100%" width="100%">
-            <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+            <LineChart
+              data={chartData}
+              margin={{
+                top: 36,
+                right: CHART_AXIS_DEFAULTS.plotPaddingRight,
+                left: -10,
+                bottom: 0,
+              }}
+            >
               <XAxis
                 axisLine={false}
                 dataKey="label"
+                tick={({ x, y, payload, index }) => (
+                  <text
+                    className="recharts-cartesian-axis-tick-value"
+                    dy={16}
+                    textAnchor={xTickAnchor(index, ticks.length)}
+                    x={x}
+                    y={y}
+                  >
+                    {payload.value}
+                  </text>
+                )}
                 tickLine={false}
-                tickMargin={8}
                 ticks={ticks}
               />
               <YAxis
                 axisLine={false}
+                domain={yAxis.domain}
+                // Every round tick is drawn (the set is already short), so £0 never drops out.
+                interval={0}
                 tickFormatter={(val) => formatAxisCurrency(Number(val))}
                 tickLine={false}
                 tickMargin={8}
+                ticks={yAxis.ticks}
               />
               <Tooltip formatter={(value) => pounds.format(Number(value) || 0)} />
-              <Area
+              {/* A line, not an area: the axis starts near the data, so a fill would overstate growth. */}
+              <Line
                 dataKey="balance"
-                fill={chartColor("band")}
-                fillOpacity={1}
+                dot={false}
                 isAnimationActive={false}
                 name="Estimated balance"
                 stroke={chartColor("wealth")}
@@ -291,7 +338,43 @@ export const SavingsForecast: FC<SavingsForecastProps> = ({
                 strokeWidth={2}
                 type="monotone"
               />
-            </AreaChart>
+              {last ? (
+                <ReferenceDot
+                  fill={chartColor("wealth")}
+                  // Direct label above and left of the end point, on a chip (P10.3).
+                  label={({ viewBox }: { viewBox?: { x?: number; y?: number } }) => {
+                    const x = (viewBox?.x ?? 0) - 6;
+                    const y = (viewBox?.y ?? 0) - 8;
+                    const width = endLabel.length * CHIP_CHAR_WIDTH + CHIP_PADDING * 2;
+                    return (
+                      <g>
+                        <rect
+                          className={annotationChip()}
+                          height={CHIP_HEIGHT}
+                          rx={CHIP_HEIGHT / 2}
+                          width={width}
+                          x={x - width}
+                          y={y - CHIP_HEIGHT}
+                        />
+                        <text
+                          className={annotationText()}
+                          dominantBaseline="middle"
+                          textAnchor="end"
+                          x={x - CHIP_PADDING}
+                          y={y - CHIP_HEIGHT / 2}
+                        >
+                          {endLabel}
+                        </text>
+                      </g>
+                    );
+                  }}
+                  r={5}
+                  stroke="none"
+                  x={last.label}
+                  y={last.balance}
+                />
+              ) : null}
+            </LineChart>
           </ResponsiveContainer>
         </div>
       </ChartFigure>

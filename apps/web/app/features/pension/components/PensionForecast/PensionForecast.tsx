@@ -1,7 +1,6 @@
 import type { ProfileFacts } from "@flump/finance-engine";
 import {
   DELTA_PANEL_COPY,
-  formatMoney,
   ProjectionNotice,
   ScenarioZone,
   SimulatorSplitLayout,
@@ -9,6 +8,7 @@ import {
 } from "@repo/ui";
 import { type FC, useMemo } from "react";
 import { Link } from "react-router";
+import { formatEstimate } from "~/utils/roundEstimate";
 import { type ForecastInput, type ForecastResult, projectPension } from "../../forecast";
 import type { PensionScenario, PensionScenarioValues } from "../../usePensionScenario";
 import { ForecastChart } from "../ForecastChart";
@@ -83,8 +83,6 @@ export interface PensionForecastProps extends PensionForecastBase {
   /** True when the page shows another tax figure (the £100,000 line), so the notice needs the lead. */
   showsOtherTaxFigure?: boolean;
 }
-
-const money = (n: number) => formatMoney(n, { fractionDigits: 0 }).text;
 
 /**
  * The page's one ScenarioZone (E16 P1.7): up to two tools as `Tabs`, one visible at a time, each a
@@ -211,7 +209,9 @@ export const PensionForecast: FC<PensionForecastProps> = ({
   return (
     <ScenarioZone
       announcement={
-        scenario.isModified ? `estimated pot ${money(result.finalBalance)} ${whenLabel}` : ""
+        scenario.isModified
+          ? `estimated pot ${formatEstimate(result.finalBalance).toLowerCase()} ${whenLabel}`
+          : ""
       }
       id={PENSION_SCENARIO_ZONE_ID}
       isModified={scenario.isModified}

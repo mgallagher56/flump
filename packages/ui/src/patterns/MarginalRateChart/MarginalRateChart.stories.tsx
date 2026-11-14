@@ -59,6 +59,18 @@ export const NoChildBenefit: Story = {
   },
 };
 
+/** As on the signed-in take-home page: only the thresholds either side of your pay. */
+export const NearPay: Story = {
+  args: { thresholdFocus: "near-pay", yourPay: 58_000 },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(canvas.getAllByTestId("marginal-rate-threshold")).toHaveLength(2);
+    await expect(canvas.getByTestId("marginal-rate-your-pay")).toBeInTheDocument();
+  },
+};
+
+export const NearPayDark: Story = { ...NearPay, globals: { theme: "dark" } };
+
 export const Mobile: Story = {
   parameters: { viewport: { defaultViewport: "mobile1" } },
 };

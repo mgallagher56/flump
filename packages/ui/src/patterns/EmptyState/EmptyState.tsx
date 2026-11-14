@@ -11,8 +11,12 @@ export interface EmptyStateProps {
   secondaryAction?: ReactNode;
   /** `h1` only where the empty state replaces the whole page, so it is the page heading. */
   headingLevel?: "h1" | "h2" | "h3";
-  /** `muted` drops the tinted fill for places where the empty state should recede. */
-  tone?: "default" | "muted";
+  /**
+   * `default` is a sunken sand panel. `muted` drops the tinted fill for places where the empty
+   * state should recede. `card` sits on the card surface with a hairline border, for an empty state
+   * that is the whole page (an opt-in screen), so it reads as content rather than a hole.
+   */
+  tone?: "default" | "muted" | "card";
   size?: "md" | "sm";
   id?: string;
 }

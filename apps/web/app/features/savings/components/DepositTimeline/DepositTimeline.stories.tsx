@@ -24,16 +24,18 @@ export default meta;
 type Story = StoryObj<typeof Stateful>;
 
 // The Storybook decorator renders light and dark side by side, so queries use the first match.
-export const Empty: Story = {
+export const Default: Story = {
+  args: { initial: { targetDeposit: 6000, monthlySaving: 400, startingAmount: 5000 } },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    const target = canvas.getAllByLabelText("Target amount")[0];
-    if (!target) throw new Error("Target amount field missing");
-    await expect(target).toHaveValue("");
-    await userEvent.type(target, "20000");
-    await expect(
-      canvas.getAllByText("Estimated time to reach target: 3 years 2 months").length,
-    ).toBeGreaterThan(0);
+    await expect(canvas.getAllByText("Estimated time to reach £6,000").length).toBeGreaterThan(0);
+    const before = canvas.getAllByText("3 months").length;
+    await expect(before).toBeGreaterThan(0);
+    const slider = canvas.getAllByRole("slider", { name: "Target amount" })[0];
+    if (!slider) throw new Error("Target amount slider missing");
+    slider.focus();
+    await userEvent.keyboard("{End}");
+    await expect(canvas.queryAllByText("3 months").length).toBeLessThan(before);
   },
 };
 

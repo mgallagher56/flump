@@ -9,7 +9,7 @@ vi.mock("react-router", () => ({
 
 import { AddPensionAccountDialog } from "./AddPensionAccountDialog";
 
-const DIRECT = "Regular payment each month (optional)";
+const DIRECT = "Extra paid in each month (optional)";
 
 describe("AddPensionAccountDialog", () => {
   beforeEach(() => mockSubmit.mockClear());
@@ -20,7 +20,7 @@ describe("AddPensionAccountDialog", () => {
     expect(screen.getByRole("dialog", { name: "Add a pension pot" })).toBeDefined();
     expect(screen.getByLabelText(/Pot or provider name/)).toBeDefined();
     expect(screen.getByLabelText("Current value")).toBeDefined();
-    expect(screen.getByLabelText("Assumed growth a year")).toBeDefined();
+    expect(screen.getByLabelText("Assumed growth a year (optional)")).toBeDefined();
     expect(screen.getByLabelText(DIRECT)).toBeDefined();
     expect(screen.queryByRole("button", { name: /^Add pension pot$/i })).toBeNull();
   });
@@ -103,7 +103,8 @@ describe("AddPensionAccountDialog", () => {
         intent: "createPensionAccount",
         name: "Nest",
         balance: "0",
-        interestRate: "5",
+        // Blank growth rate: saved as unset, never a pre-filled 5%.
+        interestRate: "",
         isCurrent: "true",
       }),
       { method: "POST", action: "/app/pension" },
@@ -124,5 +125,41 @@ describe("AddPensionAccountDialog", () => {
       expect.objectContaining({ intent: "updatePensionAccount", accountId: "p9", name: "Aviva" }),
       { method: "POST", action: "/app/pension" },
     );
+  });
+
+  it("offers Delete pot only when editing with a delete handler, and never deletes by itself", () => {
+    mockSubmit.mockClear();
+    const onDeleteRequest = vi.fn();
+    const { rerender } = render(
+      <AddPensionAccountDialog isOpen={true} onClose={vi.fn()} onDeleteRequest={onDeleteRequest} />,
+    );
+    expect(screen.queryByRole("button", { name: "Delete pot" })).toBeNull();
+    rerender(
+      <AddPensionAccountDialog
+        accountToEdit={{ id: "p9", name: "Aviva", balance: 100 } as never}
+        isOpen={true}
+        onClose={vi.fn()}
+        onDeleteRequest={onDeleteRequest}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Delete pot" }));
+    expect(onDeleteRequest).toHaveBeenCalledTimes(1);
+    expect(mockSubmit).not.toHaveBeenCalled();
+  });
+
+  it("saves a cleared growth rate as unset, not as an assumed figure", () => {
+    mockSubmit.mockClear();
+    render(
+      <AddPensionAccountDialog
+        accountToEdit={{ id: "p9", name: "Aviva", balance: 100, interestRate: null } as never}
+        isOpen={true}
+        onClose={vi.fn()}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+    expect(mockSubmit).toHaveBeenCalledWith(expect.objectContaining({ interestRate: "" }), {
+      method: "POST",
+      action: "/app/pension",
+    });
   });
 });

@@ -4,14 +4,17 @@ import {
   controlProps,
   Dialog,
   FormField,
+  Icon,
   PercentInput,
   TextInput,
 } from "@repo/ui";
+import { Trash2 } from "lucide-react";
 import { type FC, type FormEvent, type ReactNode, useState } from "react";
 import { useFetcher } from "react-router";
 import type { Account } from "~/containers/accounts/types";
 import {
   accountForm,
+  deleteAction,
   fieldRow,
   formActions,
   statusGroup,
@@ -31,6 +34,11 @@ export interface AddPensionAccountDialogProps {
    * dialog. There is no default trigger: the page header owns "Add pension pot".
    */
   triggerButton?: ReactNode;
+  /**
+   * Editing only: shows "Delete pot" in the dialog. The caller closes the dialog and asks for
+   * confirmation before anything is deleted.
+   */
+  onDeleteRequest?: () => void;
 }
 
 const COMMON_PROVIDERS = [
@@ -46,25 +54,25 @@ const COMMON_PROVIDERS = [
   "Fidelity",
 ];
 
-const DEFAULT_RATE = 5;
-
 const toNumberOrNull = (value: unknown): number | null =>
   value !== undefined && value !== null && Number.isFinite(Number(value)) ? Number(value) : null;
 
 interface PotFormProps {
   accountToEdit?: Account | null;
   onClose: () => void;
+  onDeleteRequest?: () => void;
 }
 
 /** Mounted only while the dialog is open, so the fields restart from the pot being edited. */
-const PotForm: FC<PotFormProps> = ({ accountToEdit, onClose }) => {
+const PotForm: FC<PotFormProps> = ({ accountToEdit, onClose, onDeleteRequest }) => {
   const fetcher = useFetcher();
   const isEditing = !!accountToEdit;
 
   const [name, setName] = useState(accountToEdit?.name || "");
   const [balance, setBalance] = useState<number | null>(toNumberOrNull(accountToEdit?.balance));
   const [interestRate, setInterestRate] = useState<number | null>(
-    accountToEdit ? toNumberOrNull(accountToEdit.interestRate) : DEFAULT_RATE,
+    // Blank by default: no rate means the page asks for one, never an assumed figure.
+    toNumberOrNull(accountToEdit?.interestRate),
   );
   const [isCurrent, setIsCurrent] = useState<boolean>(accountToEdit?.isCurrent !== false);
   const [monthlyContribution, setMonthlyContribution] = useState<number | null>(
@@ -83,7 +91,8 @@ const PotForm: FC<PotFormProps> = ({ accountToEdit, onClose }) => {
         name: name.trim(),
         balance: balance === null ? (isEditing ? "" : "0") : String(balance),
         interestRate:
-          interestRate === null ? (isEditing ? "" : String(DEFAULT_RATE)) : String(interestRate),
+          // A cleared rate is saved as unset, never as an assumed figure.
+          interestRate === null ? "" : String(interestRate),
         isCurrent: String(isCurrent),
         monthlyContribution:
           isCurrent && monthlyContribution !== null ? String(monthlyContribution) : "",
@@ -164,7 +173,7 @@ const PotForm: FC<PotFormProps> = ({ accountToEdit, onClose }) => {
             />
           )}
         </FormField>
-        <FormField label="Assumed growth a year">
+        <FormField label="Assumed growth a year (optional)">
           {(field) => (
             <PercentInput
               {...controlProps(field)}
@@ -180,17 +189,17 @@ const PotForm: FC<PotFormProps> = ({ accountToEdit, onClose }) => {
       <FormField
         hint={
           isCurrent
-            ? "A fixed amount you pay in yourself. Leave blank if payments come from your salary."
+            ? "Paid into this pot on top of your workplace contributions from salary. Leave blank if there is none."
             : "Past pots take no regular payments. Their value can still change with investment returns."
         }
-        label="Regular payment each month (optional)"
+        label="Extra paid in each month (optional)"
       >
         {(field) => (
           <CurrencyInput
             {...controlProps(field)}
             disabled={!isCurrent}
             min={0}
-            placeholder={isCurrent ? "From salary" : "None for past pots"}
+            placeholder={isCurrent ? "None" : "None for past pots"}
             value={isCurrent ? monthlyContribution : null}
             onValueChange={setMonthlyContribution}
           />
@@ -198,6 +207,14 @@ const PotForm: FC<PotFormProps> = ({ accountToEdit, onClose }) => {
       </FormField>
 
       <div className={formActions()}>
+        {isEditing && onDeleteRequest ? (
+          <span className={deleteAction()}>
+            <Button type="button" variant="ghost" onClick={onDeleteRequest}>
+              <Icon icon={Trash2} size="sm" />
+              Delete pot
+            </Button>
+          </span>
+        ) : null}
         <Button type="button" variant="ghost" onClick={onClose}>
           Cancel
         </Button>
@@ -214,6 +231,7 @@ export const AddPensionAccountDialog: FC<AddPensionAccountDialogProps> = ({
   isOpen,
   onClose,
   triggerButton,
+  onDeleteRequest,
 }) => (
   <>
     {triggerButton}
@@ -226,7 +244,12 @@ export const AddPensionAccountDialog: FC<AddPensionAccountDialogProps> = ({
       }}
     >
       {isOpen && (
-        <PotForm key={accountToEdit?.id ?? "new"} accountToEdit={accountToEdit} onClose={onClose} />
+        <PotForm
+          key={accountToEdit?.id ?? "new"}
+          accountToEdit={accountToEdit}
+          onClose={onClose}
+          onDeleteRequest={onDeleteRequest}
+        />
       )}
     </Dialog>
   </>

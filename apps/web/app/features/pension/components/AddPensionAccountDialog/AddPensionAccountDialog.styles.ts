@@ -65,3 +65,8 @@ export const statusHint = cva({
 export const formActions = cva({
   base: { display: "flex", justifyContent: "flex-end", gap: "8px", flexWrap: "wrap" },
 });
+
+/** "Delete pot" sits at the start of the action row, apart from Cancel and Save. */
+export const deleteAction = cva({
+  base: { marginInlineEnd: "auto", display: "flex" },
+});

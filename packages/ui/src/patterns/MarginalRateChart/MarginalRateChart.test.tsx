@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import { lineLabelSpot, MarginalRateChart } from "./MarginalRateChart";
+import { lineLabelSpot, MarginalRateChart, markersNearPay, yTicksFor } from "./MarginalRateChart";
 import {
   SAMPLE_POINTS,
   SAMPLE_SUMMARY,
@@ -165,9 +165,46 @@ describe("MarginalRateChart", () => {
   it("formats axis ticks en-GB", () => {
     renderChart();
     const svgText = Array.from(document.querySelectorAll("svg text")).map((t) => t.textContent);
-    for (const tick of ["£0", "£50k", "£100k", "£150k", "0%", "25%", "50%", "75%", "100%"]) {
+    for (const tick of ["£0", "£50k", "£100k", "£150k", "0%", "25%", "50%", "75%"]) {
       expect(svgText).toContain(tick);
     }
+    // The sample curve tops out at 62%, so the axis stops at 75%, not 100%.
+    expect(svgText).not.toContain("100%");
+  });
+
+  it("ends the y axis at the first 25% step at or above the highest rate", () => {
+    expect(yTicksFor([0, 28, 62])).toEqual([0, 25, 50, 75]);
+    expect(yTicksFor([0, 100, 42])).toEqual([0, 25, 50, 75, 100]);
+    expect(yTicksFor([0, 0])).toEqual([0, 25]);
+    expect(yTicksFor([0, 140])).toEqual([0, 25, 50, 75, 100]);
+  });
+
+  it("draws every threshold by default", () => {
+    renderChart();
+    // Nine thresholds in six groups (shared pay levels share one marker).
+    expect(screen.getAllByTestId("marginal-rate-threshold")).toHaveLength(6);
+  });
+
+  it("with thresholdFocus near-pay, draws only the thresholds either side of your pay", () => {
+    renderChart({ thresholdFocus: "near-pay", yourPay: 58_000 });
+    const names = screen
+      .getAllByTestId("marginal-rate-threshold-hit")
+      .map((b) => b.getAttribute("aria-label") ?? "");
+    expect(names).toHaveLength(2);
+    expect(names[0]).toMatch(/£50,270/);
+    expect(names[1]).toMatch(/£60,000/);
+  });
+
+  it("near-pay falls back to every threshold when your pay is not on the chart", () => {
+    renderChart({ thresholdFocus: "near-pay", yourPay: undefined });
+    expect(screen.getAllByTestId("marginal-rate-threshold")).toHaveLength(6);
+  });
+
+  it("markersNearPay keeps the nearest marker below and above", () => {
+    const m = [10, 20, 30].map((gross) => ({ gross, name: String(gross) }));
+    expect(markersNearPay(m, 25).map((x) => x.gross)).toEqual([20, 30]);
+    expect(markersNearPay(m, 5).map((x) => x.gross)).toEqual([10]);
+    expect(markersNearPay(m, 35).map((x) => x.gross)).toEqual([30]);
   });
 
   it("puts a 31-row table, every £5,000, behind Show data", () => {

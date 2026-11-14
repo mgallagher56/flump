@@ -40,7 +40,13 @@ export const Default: Story = {
     await userEvent.click(
       canvas.getAllByRole("button", { name: "Edit Old employer pot" })[0] as HTMLElement,
     );
-    await expect((await within(document.body).findAllByRole("dialog"))[0]).toBeDefined();
+    const dialog = (await within(document.body).findAllByRole("dialog"))[0] as HTMLElement;
+    await expect(dialog).toBeDefined();
+    // Delete lives inside the edit dialog and always asks first; Cancel keeps the pot.
+    await userEvent.click(within(dialog).getByRole("button", { name: "Delete pot" }));
+    const confirm = await within(document.body).findByRole("alertdialog");
+    await userEvent.click(within(confirm).getByRole("button", { name: "Cancel" }));
+    await expect(within(document.body).queryByRole("alertdialog")).toBeNull();
   },
 };
 

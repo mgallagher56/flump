@@ -12,9 +12,11 @@ import { SWEEP_SETS, type SweepPage, type SweepSet } from "./sets";
 /**
  * Design sweep (E16 PR 13): every page of every set at 375x812 and 1280x800, light and dark, as a
  * full-page and a first-view JPEG, plus DOM metrics comparable with docs/design/e16-polish/before.
- * A local tool, not a CI job: `bun run e2e:sweep` (SWEEP_SETS=renter,dialogs runs a subset).
+ * A local tool, not a CI job: `bun run e2e:sweep` (SWEEP_SETS=renter,dialogs runs a subset; SWEEP_PAGES and SWEEP_OUT narrow it).
  */
-const OUT = path.resolve(import.meta.dirname, "../../../docs/design/e16-polish/after");
+const OUT = process.env.SWEEP_OUT
+  ? path.resolve(process.env.SWEEP_OUT)
+  : path.resolve(import.meta.dirname, "../../../docs/design/e16-polish/after");
 const VARIANTS = [
   { width: 375, height: 812, theme: "light" },
   { width: 375, height: 812, theme: "dark" },
@@ -24,6 +26,8 @@ const VARIANTS = [
 type Variant = (typeof VARIANTS)[number];
 
 const only = process.env.SWEEP_SETS?.split(",").map((s) => s.trim());
+/** SWEEP_PAGES=pension,savings shoots only the pages whose name starts with one of these. */
+const onlyPages = process.env.SWEEP_PAGES?.split(",").map((s) => s.trim());
 const slug = (text: string) =>
   text
     .toLowerCase()
@@ -201,6 +205,7 @@ for (const set of SWEEP_SETS) {
       );
       await syncBrowserClock(page);
       for (const entry of set.pages ?? []) {
+        if (onlyPages && !onlyPages.some((p) => entry.name.startsWith(p))) continue;
         try {
           await sweepPage(shot, entry, unreachable);
         } catch (error) {

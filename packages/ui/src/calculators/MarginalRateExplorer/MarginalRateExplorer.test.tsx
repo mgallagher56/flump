@@ -26,6 +26,32 @@ const modelPension = () => {
   fireEvent.click(screen.getByRole("button", { name: "Model a pension contribution" }));
 };
 
+describe("MarginalRateExplorer inside a ScenarioZone", () => {
+  it("puts the outcome on the zone surface, with no card, and marks only the nearby thresholds", () => {
+    render(
+      <MarginalRateExplorer
+        inScenarioZone
+        showNotice={false}
+        values={{ ...DEFAULTS_2026, grossPay: 58_000 }}
+        onChange={vi.fn()}
+      />,
+    );
+    const outcome = screen.getByTestId("explorer-outcomes");
+    expect(outcome.querySelector("[data-kpi-value]")).toBeNull();
+    expect(within(outcome).getByText("Estimated take-home from the next £1,000")).toBeDefined();
+    expect(within(outcome).getByText(/^As at tax year/)).toBeDefined();
+    expect(screen.getAllByTestId("marginal-rate-threshold")).toHaveLength(2);
+  });
+
+  it("keeps the card and every threshold on the tool pages", () => {
+    render(<MarginalRateExplorerStandalone initialValues={{ taxYear: "2026/27" }} />);
+    expect(
+      screen.getByTestId("explorer-outcomes").querySelector("[data-kpi-value]"),
+    ).not.toBeNull();
+    expect(screen.getAllByTestId("marginal-rate-threshold").length).toBeGreaterThan(2);
+  });
+});
+
 describe("MarginalRateExplorer", () => {
   it("defaults to £39,000, no pension, no student loan and no Child Benefit", () => {
     expect(getMarginalRateExplorerDefaults()).toMatchObject({

@@ -33,7 +33,7 @@ export const EditPastPot: Story = {
   },
   play: async () => {
     const dialog = within(await within(document.body).findByRole("dialog"));
-    await expect(dialog.getByLabelText(/Regular payment each month/)).toHaveProperty(
+    await expect(dialog.getByLabelText(/Extra paid in each month/)).toHaveProperty(
       "disabled",
       true,
     );

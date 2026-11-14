@@ -36,7 +36,7 @@ export const detailHint = cva({
 });
 
 export const detailNote = cva({
-  base: { textStyle: "body.sm", color: "text.muted", margin: 0, marginTop: "12px" },
+  base: { textStyle: "body.sm", color: "text.muted", margin: 0 },
 });
 
 export const zoneLink = cva({

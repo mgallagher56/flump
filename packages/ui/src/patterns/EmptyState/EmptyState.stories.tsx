@@ -108,6 +108,29 @@ export const NoDataDark: Story = {
   globals: { theme: "dark" },
 };
 
+/** A whole-page opt-in screen (Self Assessment): on the card surface, not a sunken slab. */
+export const OnCard: Story = {
+  args: {
+    title: "Self Assessment is for income outside PAYE, such as self-employment or rent",
+    illustration: <SceneIllustration scene="empty-accounts" size="sm" />,
+    tone: "card",
+    action: (
+      <Button type="button" variant="primary" onClick={onAction}>
+        Turn on Self Assessment
+      </Button>
+    ),
+  },
+  globals: { theme: "light" },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(
+      canvas.getAllByRole("button", { name: "Turn on Self Assessment" })[0],
+    ).toBeInTheDocument();
+  },
+};
+
+export const OnCardDark: Story = { ...OnCard, globals: { theme: "dark" } };
+
 export const SomethingWentWrong: Story = {
   args: {
     title: "We could not load your pension",

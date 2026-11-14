@@ -76,3 +76,26 @@ export const explorerOutcomes = cva({
 export const explorerBadges = cva({
   base: { display: "flex", flexWrap: "wrap", gap: "2" },
 });
+
+/** The outcome on a ScenarioZone's surface (`inScenarioZone`): label, figure, caption, no card. */
+export const explorerOutcome = cva({
+  base: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "1",
+    minWidth: "0",
+    fontVariantNumeric: "tabular-nums",
+  },
+});
+
+export const explorerOutcomeLabel = cva({
+  base: { textStyle: "label.md", color: "text.secondary", margin: "0" },
+});
+
+export const explorerOutcomeCaption = cva({
+  base: { textStyle: "body.sm", color: "text.secondary", margin: "0" },
+});
+
+export const explorerOutcomeHead = cva({
+  base: { display: "flex", flexWrap: "wrap", alignItems: "center", gap: "2" },
+});

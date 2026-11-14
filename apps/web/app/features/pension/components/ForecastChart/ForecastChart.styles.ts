@@ -17,6 +17,7 @@ export const chartWrap = cva({
     fontVariantNumeric: "tabular-nums",
     "& .recharts-cartesian-axis-tick-value": {
       fill: "text.muted",
+      fontSize: "xs",
       fontVariantNumeric: "tabular-nums",
     },
     "& .recharts-default-tooltip": {

@@ -70,16 +70,24 @@ export interface MarginalRateChartProps {
   /** Rows for the "Show data" table. Defaults to the points every £5,000. */
   dataTable?: readonly MarginalRatePoint[];
   headingLevel?: "h2" | "h3" | "h4";
+  /**
+   * Which threshold markers to draw. "all" (default) draws every one. "near-pay" draws only the
+   * nearest threshold below and above `yourPay`, so the lines that matter to this pay are not lost
+   * among the others; with no `yourPay` on the chart it draws them all.
+   */
+  thresholdFocus?: "all" | "near-pay";
   className?: string;
 }
 
 /** Drawing width before the container is measured (server render, tests). */
 const DEFAULT_W = 600;
 const MIN_W = 300;
-const H = 280;
+/** Drawing height: shorter on a phone, where the plot is narrow and a tall one only adds scroll. */
+const H_WIDE = 280;
+const H_NARROW = 220;
+const NARROW_W = 480;
 const M = { top: 28, right: 14, bottom: 30, left: 46 };
-const PLOT_H = H - M.top - M.bottom;
-const Y_TICKS = [0, 25, 50, 75, 100];
+const Y_STEP = 25;
 const TABLE_STEP = 5000;
 const HIT_W = 24;
 const TIP_W = 260;
@@ -89,7 +97,7 @@ const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v
 const pctText = (n: number, digits = 0) =>
   formatNumber(n, { kind: "percent", fractionDigits: digits }).text;
 
-interface MarkerGroup {
+export interface MarkerGroup {
   gross: number;
   name: string;
 }
@@ -111,6 +119,25 @@ const groupThresholds = (
       gross,
       name: thresholdTooltip(labels.join("; "), formatMoney(gross).text),
     }));
+};
+
+/** The nearest marker below and the nearest above a pay (either may be missing). */
+export const markersNearPay = (markers: readonly MarkerGroup[], pay: number): MarkerGroup[] => {
+  const below = markers.filter((m) => m.gross <= pay).at(-1);
+  const above = markers.find((m) => m.gross > pay);
+  return [below, above].filter((m): m is MarkerGroup => m !== undefined);
+};
+
+/**
+ * Y axis ticks every 25%, up to the first tick at or above the highest rate on the line (never past
+ * 100%), so a curve that tops out at 62% is not drawn in the bottom half of the plot.
+ */
+export const yTicksFor = (rates: readonly number[]): number[] => {
+  const top = Math.max(0, ...rates.filter(Number.isFinite));
+  const max = Math.min(100, Math.max(Y_STEP, Math.ceil(top / Y_STEP) * Y_STEP));
+  const ticks: number[] = [];
+  for (let t = 0; t <= max; t += Y_STEP) ticks.push(t);
+  return ticks;
 };
 
 /** Rough width of one character of a direct label (xs, semibold), in px. */
@@ -178,48 +205,69 @@ export const MarginalRateChart: FC<MarginalRateChartProps> = ({
   notice,
   dataTable,
   headingLevel,
+  thresholdFocus = "all",
   className,
 }) => {
   // Keyed by gross pay so the open tooltip survives markers being added or removed.
   const [activeGross, setActiveGross] = useState<number | null>(null);
   const { ref, width: W } = useContainerWidth();
   const plotW = W - M.left - M.right;
+  const H = W < NARROW_W ? H_NARROW : H_WIDE;
+  const PLOT_H = H - M.top - M.bottom;
   const maxGross = Math.max(1, ...points.map((p) => p.gross));
+  const yTicks = useMemo(() => yTicksFor(points.map((p) => p.ratePct)), [points]);
+  const yMax = yTicks[yTicks.length - 1] ?? 100;
   const x = (g: number) => M.left + (clamp(g, 0, maxGross) / maxGross) * plotW;
-  const y = (r: number) => M.top + PLOT_H - (clamp(r, 0, 100) / 100) * PLOT_H;
+  const y = (r: number) => M.top + PLOT_H - (clamp(r, 0, yMax) / yMax) * PLOT_H;
 
   const line = points.map((p) => `${x(p.gross).toFixed(1)},${y(p.ratePct).toFixed(1)}`).join(" ");
-  const markers = useMemo(() => groupThresholds(thresholds, maxGross), [thresholds, maxGross]);
+  const showYourPay =
+    yourPay !== undefined && Number.isFinite(yourPay) && yourPay >= 0 && yourPay <= maxGross;
+  const markers = useMemo(() => {
+    const all = groupThresholds(thresholds, maxGross);
+    return thresholdFocus === "near-pay" && showYourPay && yourPay !== undefined
+      ? markersNearPay(all, yourPay)
+      : all;
+  }, [thresholds, maxGross, thresholdFocus, showYourPay, yourPay]);
   const xTicks: number[] = [];
   for (let g = 0; g <= maxGross + 1e-9; g += xTickStep(maxGross)) xTicks.push(g);
 
   const rows = dataTable ?? points.filter((p) => p.gross % TABLE_STEP === 0);
-  const showYourPay =
-    yourPay !== undefined && Number.isFinite(yourPay) && yourPay >= 0 && yourPay <= maxGross;
 
   // Direct labels (P10.2) in place of a legend: the line is named at its end, "Your pay" at its
   // marker and the stepped zone inside its band; the dashed thresholds get one quiet line below.
   const lastPoint = points[points.length - 1];
   const labelW = EXPLORER_COPY.chartLineLabel.length * LABEL_CHAR_W;
-  const labelSpot = lineLabelSpot(
-    [
-      ...markers.map((m) => x(m.gross)),
-      ...(showYourPay && yourPay !== undefined ? [x(yourPay)] : []),
-    ],
-    M.left,
-    W - M.right,
-    labelW,
-  );
-  // Sit above the highest point of the line under the label (and a little past its end, so a step
-  // just after it is cleared too), so the label never covers or touches the line.
-  const rateUnderLabel = Math.max(
-    0,
-    ...points
-      .filter(
-        (p) => x(p.gross) >= labelSpot.x && x(p.gross) <= labelSpot.x + labelW + LABEL_CLEARANCE,
-      )
-      .map((p) => p.ratePct),
-  );
+  const verticals = [
+    ...markers.map((m) => x(m.gross)),
+    ...(showYourPay && yourPay !== undefined ? [x(yourPay)] : []),
+  ];
+  // The highest point of the line under a label starting at `lx` (and a little past its end, so a
+  // step just after it is cleared too): the label sits above it, never covering the line.
+  const rateUnder = (lx: number) =>
+    Math.max(
+      0,
+      ...points
+        .filter((p) => x(p.gross) >= lx && x(p.gross) <= lx + labelW + LABEL_CLEARANCE)
+        .map((p) => p.ratePct),
+    );
+  const widest = lineLabelSpot(verticals, M.left, W - M.right, labelW);
+  // Among the gaps the label fits, the one where the line runs lowest, so the label never rises
+  // into the row above the plot where "Your pay" is written. Falls back to the widest gap.
+  const labelSpot = (() => {
+    const inside = verticals.filter((v) => v > M.left && v < W - M.right).sort((a, b) => a - b);
+    const edges = [M.left, ...inside, W - M.right];
+    let best: { x: number; rate: number } | null = null;
+    for (let i = 1; i < edges.length; i++) {
+      const from = i === 1 ? M.left : (edges[i - 1] ?? M.left) + LABEL_CLEARANCE;
+      const to = i === edges.length - 1 ? W - M.right : (edges[i] ?? W - M.right) - LABEL_CLEARANCE;
+      if (to - from < labelW) continue;
+      const rate = rateUnder(from);
+      if (best === null || rate < best.rate) best = { x: from, rate };
+    }
+    return best ? { x: best.x, clear: true } : widest;
+  })();
+  const rateUnderLabel = rateUnder(labelSpot.x);
   const activeMarker = markers.find((m) => m.gross === activeGross) ?? null;
   const tipW = Math.min(TIP_W, W - 16);
   const activeX = activeMarker ? x(activeMarker.gross) : 0;
@@ -294,7 +342,7 @@ export const MarginalRateChart: FC<MarginalRateChartProps> = ({
               <title>{z.label}</title>
             </rect>
           ))}
-          {Y_TICKS.map((t) => (
+          {yTicks.map((t) => (
             <g key={t}>
               <line
                 className={marginalRateGrid()}

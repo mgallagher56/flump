@@ -55,7 +55,26 @@ export const goalLine = cva({
 });
 
 export const chartWrap = cva({
-  base: { width: "100%", height: "240px", minWidth: 0, fontSize: "xs" },
+  base: {
+    width: "100%",
+    height: "240px",
+    minWidth: 0,
+    fontSize: "xs",
+    fontVariantNumeric: "tabular-nums",
+    "& .recharts-cartesian-axis-tick-value": {
+      fill: "text.muted",
+      fontVariantNumeric: "tabular-nums",
+    },
+  },
+});
+
+export const annotationText = cva({
+  base: { textStyle: "label.md", fill: "text.primary", fontVariantNumeric: "tabular-nums" },
+});
+
+/** The small surface chip behind the end label, so it reads clearly over the area fill. */
+export const annotationChip = cva({
+  base: { fill: "surface.card", stroke: "border.subtle", strokeWidth: "1" },
 });
 
 export const moreOptions = cva({

@@ -43,7 +43,8 @@ export const action = async (args: ActionFunctionArgs) => {
           type: "Pension",
           balance: balance ? roundTo2dp(Number(balance)) : 0,
           interestRate:
-            interestRate !== null && interestRate !== "" ? roundTo2dp(Number(interestRate)) : 5.0,
+            // A blank rate stays unset: the page asks for one instead of saving an assumed figure.
+            interestRate !== null && interestRate !== "" ? roundTo2dp(Number(interestRate)) : null,
           monthlyContribution:
             isCurrentBool && monthlyContribution !== null && monthlyContribution !== ""
               ? roundTo2dp(Number(monthlyContribution))
@@ -135,7 +136,8 @@ export const action = async (args: ActionFunctionArgs) => {
           name: name || "Workplace Pension",
           type: "Pension",
           balance: balance ? roundTo2dp(Number(balance)) : 0,
-          interestRate: interestRate ? roundTo2dp(Number(interestRate)) : 5.0,
+          interestRate:
+            interestRate !== null && interestRate !== "" ? roundTo2dp(Number(interestRate)) : null,
           monthlyContribution: monthlyContribution ? roundTo2dp(Number(monthlyContribution)) : null,
         },
       });
