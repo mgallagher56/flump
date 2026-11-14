@@ -55,6 +55,8 @@ export interface UserDataTable<E extends ObjectLiteral = ObjectLiteral> {
 const table = <E extends ObjectLiteral>(t: UserDataTable<E>): UserDataTable =>
   t as unknown as UserDataTable;
 
+// a description of the userId field, not a credential
+// nosemgrep: ajinabraham.njsscan.generic.hardcoded_secrets.node_username
 const USER_ID_IN_ENVELOPE = "the same for every row; given once as the document's userId";
 
 /**

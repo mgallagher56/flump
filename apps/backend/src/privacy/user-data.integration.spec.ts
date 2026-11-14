@@ -37,9 +37,14 @@ import {
 //     -e POSTGRES_DB=flump_privacy_test -p 55432:5432 postgres:18-alpine
 //   TEST_DATABASE_URL=postgres://postgres:postgres@localhost:55432/flump_privacy_test \
 //     bunx vitest run src/privacy
+// made-up test user ids and fake token strings the export test proves are left out
+// nosemgrep: ajinabraham.njsscan.generic.hardcoded_secrets.node_username
 const USER_A = "user_01HZX3Q9V7C2M8N4P6R0S5T1WA";
+// nosemgrep: ajinabraham.njsscan.generic.hardcoded_secrets.node_username
 const USER_B = "user_01HZX3Q9V7C2M8N4P6R0S5T1WB";
+// nosemgrep: ajinabraham.njsscan.generic.hardcoded_secrets.node_secret
 const SECRET_ACCESS = "bank-access-token-SECRET-value";
+// nosemgrep: ajinabraham.njsscan.generic.hardcoded_secrets.node_secret
 const SECRET_REFRESH = "bank-refresh-token-SECRET-value";
 
 describe.skipIf(resolveDbTestMode(process.env) === "skip")("user data (real Postgres)", () => {
