@@ -246,7 +246,9 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
         // A real link, so a click before hydration still reaches the add flow (#701).
         <Button asChild size={btnSize === "icon" ? "md" : btnSize} variant={variant}>
           <a
+            data-testid="add-account-link"
             href={fallbackHref}
+            id="add-account-link"
             onClick={(e) => {
               e.preventDefault();
               handleOpenModal(e);

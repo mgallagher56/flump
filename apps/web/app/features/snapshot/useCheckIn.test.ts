@@ -78,6 +78,22 @@ describe("useCheckIn", () => {
     expect(result.current.figure(everyday)).toMatchObject({ value: 3360, source: "confirmed" });
   });
 
+  it("No change to the rest never overwrites a step whose save failed, and keeps its retry", async () => {
+    const { result, onSave } = setup({ ok: [false, true] });
+    const step = result.current.steps[0];
+    if (!step) throw new Error("no step");
+    await act(async () => {
+      await result.current.confirm(step, { kind: "update", value: 1234 });
+    });
+    expect(result.current.hasError(everyday)).toBe(true);
+    await act(async () => {
+      await result.current.rest();
+    });
+    const restPayload = onSave.mock.calls[1]?.[0].payload;
+    expect(restPayload?.values.some((v) => v.accountId === everyday)).toBe(false);
+    expect(result.current.hasError(everyday)).toBe(true);
+  });
+
   it("resumes at the first account with nothing recorded this month", () => {
     const { result } = setup({
       details: [

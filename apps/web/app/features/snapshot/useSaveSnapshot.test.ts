@@ -152,5 +152,14 @@ describe("useSaveSnapshot against an older backend", () => {
     });
     expect(ok).toBe(false);
     expect(apiFetch).toHaveBeenCalledTimes(1);
+
+    // A 400 that does not name source is a real error: no retry that would drop the source.
+    apiFetch.mockReset();
+    apiFetch.mockRejectedValue(badRequest());
+    await act(async () => {
+      ok = await result.current(withSource);
+    });
+    expect(ok).toBe(false);
+    expect(apiFetch).toHaveBeenCalledTimes(1);
   });
 });

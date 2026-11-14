@@ -3,7 +3,6 @@ import { type FC, useEffect, useRef, useState } from "react";
 import type { CheckInSummary as CheckInSummaryModel } from "../../checkInModel";
 import {
   CHECK_IN_COPY,
-  checkInMoney,
   checkInNetWorthText,
   checkInSavedText,
   checkInWholePounds,
@@ -69,7 +68,8 @@ export const CheckInSummary: FC<CheckInSummaryProps> = ({
                   {c.calculated ? (
                     <StatusBadge variant="neutral">{CHECK_IN_COPY.calculated}</StatusBadge>
                   ) : null}
-                  {c.calculated ? checkInWholePounds(c.value) : checkInMoney(c.value)}
+                  {/* Read, not reconciled: whole pounds (copy guide). */}
+                  {checkInWholePounds(c.value)}
                 </span>
               </li>
             ))}

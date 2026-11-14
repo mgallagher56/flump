@@ -67,7 +67,7 @@ describe("check-in copy", () => {
   });
 
   it("states net worth against last month the same way in both directions", () => {
-    expect(checkInSavedText("2026-11")).toBe("Check-in saved for November 2026.");
+    expect(checkInSavedText("2026-11")).toBe("Check-in saved for November 2026");
     expect(checkInNetWorthText(231400, 1250, "2026-10")).toBe(
       "Net worth: £231,400, up £1,250 on October 2026.",
     );

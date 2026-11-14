@@ -9,13 +9,9 @@ export const summaryHeading = cva({
     margin: 0,
     // Focus moves here by script for screen readers; a heading is not a control, so no ring.
     _focus: { outline: "none" },
+    _focusVisible: { outline: "none" },
     textStyle: "heading.sm",
     color: "text.primary",
-    _focusVisible: {
-      outline: "2px solid",
-      outlineColor: "border.focusRing",
-      outlineOffset: "2px",
-    },
   },
 });
 

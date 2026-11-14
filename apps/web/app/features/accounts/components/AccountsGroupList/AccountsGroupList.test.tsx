@@ -181,4 +181,22 @@ describe("<AccountsGroupList />", () => {
       "/app/profile?tab=profile#net-worth",
     );
   });
+
+  test("puts an overdrawn current account under what you owe, as the amount owed", () => {
+    const { getByRole } = customRender(
+      <AccountsGroupList
+        {...props}
+        rows={[
+          row({ id: "c1", name: "Everyday", type: "Current", balance: -200 }),
+          row({ id: "v1", name: "Saver", type: "Saving", balance: 500 }),
+        ]}
+      />,
+    );
+    const owe = getByRole("list", { name: "What you owe" });
+    const own = getByRole("list", { name: "What you own" });
+    expect(owe.textContent).toContain("Everyday");
+    expect(owe.textContent).toContain("£200");
+    expect(owe.textContent).not.toContain("-");
+    expect(own.textContent).not.toContain("Everyday");
+  });
 });

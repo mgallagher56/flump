@@ -202,13 +202,16 @@ export function useCheckIn({
   );
 
   const rest = useCallback(async () => {
+    // A step whose save failed keeps its typed answer and its retry: never overwrite it here.
     const values = steps
-      .filter((s) => !hasFigure(s))
+      .filter((s) => !hasFigure(s) && !failed[s.accountId])
       .map((s) => answerValue(s, restAnswer(s)))
       .filter((v): v is CheckInValue => v !== null);
+    // The summary waits until every failed save has been retried.
+    const anyFailed = Object.keys(failed).length > 0;
     setEditing({});
     if (values.length === 0) {
-      setFinished(true);
+      if (!anyFailed) setFinished(true);
       return true;
     }
     setRestSaving(true);
@@ -216,13 +219,12 @@ export function useCheckIn({
     const ok = await save(values);
     setRestSaving(false);
     if (ok) {
-      setFailed({});
-      setFinished(true);
+      if (!anyFailed) setFinished(true);
     } else {
       setRestError(true);
     }
     return ok;
-  }, [steps, hasFigure, save]);
+  }, [steps, hasFigure, failed, save]);
 
   const figure = useCallback(
     (accountId: string) => {
