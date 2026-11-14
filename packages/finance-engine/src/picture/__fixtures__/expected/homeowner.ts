@@ -17,8 +17,8 @@ export const homeownerExpected: PersonaExpected = {
     liquidCash: 21000,
     investments: 0,
     pensions: 96000,
-    property: 0, // no Property account row
-    homeEstimate: 310000, // "Home (your estimate)", the profile homeValue at 100%
+    property: 310000, // the seeded "Home (your estimate)" Property account
+    homeEstimate: 310000, // that same account, labelled; already inside property
     studentLoans: 0,
     mortgageBalance: 186000,
     debtItemIds: [], // a mortgage is not in the payoff set
