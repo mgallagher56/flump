@@ -6,6 +6,7 @@ export const taxTrapRoot = cva({
     flexDirection: "column",
     gap: "5",
     width: "100%",
+    minWidth: "0",
     backgroundColor: "surface.card",
     borderWidth: "1px",
     borderStyle: "solid",
@@ -33,24 +34,26 @@ export const taxTrapIntro = cva({
 });
 
 export const taxTrapControls = cva({
-  base: { display: "flex", flexDirection: "column", gap: "4" },
+  base: { display: "flex", flexDirection: "column", gap: "4", minWidth: "0" },
 });
 
 export const taxTrapContent = cva({
   base: { display: "flex", flexDirection: "column", gap: "5", minWidth: "0" },
 });
 
-/** Outcome cards: one column on a phone, two from sm, four in a row from lg. */
+/**
+ * Outcome cards. The first card (the outcome) spans the full row; the supporting cards (at most
+ * two) share the row below from `sm`, and stack on a phone.
+ */
 export const taxTrapOutcomes = cva({
   base: {
     display: "grid",
-    gridTemplateColumns: {
-      base: "minmax(0, 1fr)",
-      sm: "repeat(2, minmax(0, 1fr))",
-      lg: "repeat(4, minmax(0, 1fr))",
-    },
+    gridTemplateColumns: { base: "minmax(0, 1fr)", sm: "repeat(2, minmax(0, 1fr))" },
     gap: "3",
     fontVariantNumeric: "tabular-nums",
+    "& > :first-child": { gridColumn: "1 / -1" },
+    // A lone supporting figure takes the whole row instead of leaving a half-width gap.
+    "& > :nth-child(2):last-child": { gridColumn: "1 / -1" },
   },
 });
 
@@ -90,21 +93,6 @@ export const taxTrapAssumptions = cva({
   },
 });
 
-export const taxTrapUnverified = cva({
-  base: {
-    margin: "0",
-    paddingBlock: "3",
-    paddingInline: "4",
-    borderRadius: "lg",
-    borderWidth: "1px",
-    borderStyle: "solid",
-    borderColor: "status.warning.border",
-    backgroundColor: "status.warning.bg",
-    color: "status.warning.text",
-    textStyle: "body.sm",
-  },
-});
-
 export const taxTrapCta = cva({
-  base: { alignSelf: "flex-start", gap: "2" },
+  base: { alignSelf: { base: "stretch", sm: "flex-start" }, gap: "2" },
 });

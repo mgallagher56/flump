@@ -24,10 +24,11 @@ describe("TaxTrapCalculator", () => {
     expect(outcome(TAX_TRAP_COPY.kpiReachesPension)).toContain(
       formatMoney(expected.deltaPensionGross).text,
     );
-    expect(outcome(TAX_TRAP_COPY.kpiAllowance)).toContain(
-      formatMoney(expected.after.personalAllowance).text,
+    expect(outcome(TAX_TRAP_COPY.kpiTakeHome)).toContain(
+      formatMoney(Math.abs(expected.deltaTakeHome)).text,
     );
     const table = screen.getByRole("table", { name: TAX_TRAP_COPY.factsCaption });
+    expect(table.textContent).toContain(formatMoney(expected.after.personalAllowance).text);
     expect(table.textContent).toContain(formatMoney(expected.before.adjustedNetIncome).text);
     expect(table.textContent).toContain(formatMoney(expected.after.adjustedNetIncome).text);
   });
@@ -67,10 +68,9 @@ describe("TaxTrapCalculator", () => {
       10_000,
     );
     if (r.after.isUnverifiedEstimate) {
-      expect(screen.getAllByText(TAX_TRAP_COPY.unverifiedBadge).length).toBeGreaterThan(0);
-      expect(screen.getByTestId("tax-trap-unverified")).toBeDefined();
+      expect(screen.getAllByText(TAX_TRAP_COPY.unverifiedBadge)).toHaveLength(1);
     } else {
-      expect(screen.queryByTestId("tax-trap-unverified")).toBeNull();
+      expect(screen.queryByText(TAX_TRAP_COPY.unverifiedBadge)).toBeNull();
     }
     expect(screen.getByText("As at tax year 2026/27")).toBeDefined();
   });
@@ -87,6 +87,47 @@ describe("TaxTrapCalculator", () => {
     expect(screen.getByTestId("tax-trap-childcare-status").textContent).toContain(
       "£100,000 or less",
     );
+  });
+
+  it("has three visible inputs, one outcome with two supporting figures, and exactly one notice", () => {
+    render(<TaxTrapCalculator taxYear="2026/27" />);
+    expect(screen.getAllByRole("slider").length + screen.getAllByRole("combobox").length).toBe(3);
+    expect(screen.getByTestId("tax-trap-outcomes").children).toHaveLength(3);
+    expect(screen.getAllByTestId("projection-notice")).toHaveLength(1);
+    expect(screen.queryByTestId("tax-rates-status-banner")).toBeNull();
+  });
+
+  it("never passes a negative entry to the engine", () => {
+    render(
+      <TaxTrapCalculator initialContribution={-5000} initialGrossIncome={-1} taxYear="2026/27" />,
+    );
+    const text = screen.getByTestId("tax-trap-calculator-tool").textContent ?? "";
+    expect(text).not.toMatch(/£-|-£|−£/);
+  });
+
+  it("makes the facts table a focusable, named region when it scrolls sideways (D16)", () => {
+    const width = vi
+      .spyOn(HTMLElement.prototype, "scrollWidth", "get")
+      .mockImplementation(function (this: HTMLElement) {
+        return this.querySelector("table") ? 900 : 0;
+      });
+    try {
+      render(<TaxTrapCalculator taxYear="2026/27" />);
+      const region = screen.getByRole("region", { name: TAX_TRAP_COPY.factsCaption });
+      expect(region.getAttribute("tabindex")).toBe("0");
+      expect(within(region).getByRole("table")).toBeDefined();
+    } finally {
+      width.mockRestore();
+    }
+  });
+
+  it("shows one arrow on the sign-up button when the caller's label has its own", () => {
+    render(<TaxTrapCalculator ctaText="Request an invite →" />);
+    expect(screen.getByRole("button", { name: "Request an invite" })).toBeDefined();
+  });
+
+  it("never leads with the £100,000 line", () => {
+    expect(TAX_TRAP_COPY.title).not.toMatch(/100/);
   });
 
   it("announces the outcome through a single live region", () => {

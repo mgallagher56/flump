@@ -119,12 +119,10 @@ describe("UI Calculators", () => {
       const onSave = vi.fn();
       render(<TaxTrapCalculator ctaText="Save and continue" onSaveAndContinue={onSave} />);
 
-      expect(
-        screen.getByText(/Pension contributions and the £100,000 Personal Allowance taper/i),
-      ).toBeDefined();
+      expect(screen.getByText(/Pensions and the Personal Allowance/i)).toBeDefined();
       expect(screen.getByText(/Reaches your pension/i)).toBeDefined();
 
-      const slider = screen.getByRole("slider", { name: /Gross pay a year/i });
+      const slider = screen.getByRole("slider", { name: /Pay before tax a year/i });
       fireEvent.change(slider, { target: { value: "110000" } });
       expect(screen.getAllByDisplayValue("110000").length).toBeGreaterThan(0);
 

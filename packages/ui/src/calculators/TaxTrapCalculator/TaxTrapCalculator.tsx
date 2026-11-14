@@ -11,6 +11,7 @@ import {
 import { ArrowRight } from "lucide-react";
 import type { FC } from "react";
 import { useMemo, useState } from "react";
+import { ProjectionNotice } from "../../patterns/ProjectionNotice/ProjectionNotice";
 import { SimulatorSplitLayout } from "../../patterns/SimulatorSplitLayout/SimulatorSplitLayout";
 import {
   ASSUMPTION_COPY,
@@ -19,7 +20,6 @@ import {
   DELTA_PANEL_COPY,
   pensionPreviewSentence,
 } from "../../patterns/TakeHomeDeltaPanel/copy";
-import { TaxRatesStatusBanner } from "../../patterns/TaxRatesStatusBanner/TaxRatesStatusBanner";
 import { Button } from "../../primitives/Button/Button";
 import { FormField } from "../../primitives/FormField/FormField";
 import { Icon } from "../../primitives/Icon";
@@ -30,6 +30,7 @@ import { Select } from "../../primitives/Select/Select";
 import { SliderField } from "../../primitives/SliderField/SliderField";
 import { StatusBadge } from "../../primitives/StatusBadge/StatusBadge";
 import { Table, TBody, Td, THead, Th, Tr } from "../../primitives/Table/Table";
+import { ctaLabel } from "../ctaLabel";
 import { childcareStatus, TAX_TRAP_COPY, TAX_TRAP_DEFAULT_CTA, taperRange } from "./copy";
 import {
   taxTrapAssumptions,
@@ -45,7 +46,6 @@ import {
   taxTrapRoot,
   taxTrapSectionTitle,
   taxTrapTitle,
-  taxTrapUnverified,
 } from "./TaxTrapCalculator.styles";
 
 export type TaxTrapRegion = "ENGLAND_NI_WALES" | "SCOTLAND";
@@ -98,11 +98,11 @@ export const TaxTrapCalculator: FC<TaxTrapCalculatorProps> = ({
   initialContribution = 10_000,
   initialRegion = "ENGLAND_NI_WALES",
 }) => {
-  const [grossIncome, setGrossIncome] = useState(initialGrossIncome);
-  const [contribution, setContribution] = useState(initialContribution);
+  // Clamped so a negative entry never reaches the engine.
+  const [grossIncome, setGrossIncome] = useState(Math.max(0, initialGrossIncome));
+  const [contribution, setContribution] = useState(Math.max(0, initialContribution));
   const [region, setRegion] = useState<TaxTrapRegion>(initialRegion);
 
-  const context = useMemo(() => getUkTaxYearContext(), []);
   const year = resolveYear(taxYear);
   const rules = useMemo(() => getUkTaxYearRules(year), [year]);
 
@@ -165,7 +165,7 @@ export const TaxTrapCalculator: FC<TaxTrapCalculatorProps> = ({
         min={0}
         step={500}
         value={grossIncome}
-        onChange={setGrossIncome}
+        onChange={(v) => setGrossIncome(Math.max(0, v))}
       />
       <SliderField
         format="currency"
@@ -175,7 +175,7 @@ export const TaxTrapCalculator: FC<TaxTrapCalculatorProps> = ({
         min={0}
         step={500}
         value={sacrifice}
-        onChange={setContribution}
+        onChange={(v) => setContribution(Math.max(0, v))}
       />
       <FormField label={TAX_TRAP_COPY.region}>
         {(field) => (
@@ -219,31 +219,15 @@ export const TaxTrapCalculator: FC<TaxTrapCalculatorProps> = ({
 
   const content = (
     <div className={taxTrapContent()}>
-      <TaxRatesStatusBanner
-        calendarYear={context.calendarYear}
-        isFallback={before.isFallback}
-        ratesYear={before.ratesYear}
-      />
-      {unverified ? (
-        <p className={taxTrapUnverified()} data-testid="tax-trap-unverified">
-          {DELTA_PANEL_COPY.unverifiedBanner}
-        </p>
-      ) : null}
-      {/* Illustration outcomes, not saved figures, so plain outcome cards rather than a KpiStrip. */}
+      {/* Illustration outcomes, not saved figures, so plain outcome cards rather than a KpiStrip.
+          One outcome, then two supporting figures; the Personal Allowance is in the table below. */}
       <div className={taxTrapOutcomes()} data-density="compact" data-testid="tax-trap-outcomes">
+        <KpiCard label={TAX_TRAP_COPY.kpiTakeHome} value={change.deltaTakeHome} />
         <KpiCard
           label={TAX_TRAP_COPY.kpiReachesPension}
           value={<Money size="lg" value={change.deltaPensionGross} />}
         />
-        <KpiCard
-          label={TAX_TRAP_COPY.kpiTakeHome}
-          value={<Money size="lg" value={change.deltaTakeHome} />}
-        />
         <KpiCard label={TAX_TRAP_COPY.kpiTaxAndNi} value={<Money size="lg" value={taxAndNi} />} />
-        <KpiCard
-          label={TAX_TRAP_COPY.kpiAllowance}
-          value={<Money size="lg" value={after.personalAllowance} />}
-        />
       </div>
 
       <Table caption={TAX_TRAP_COPY.factsCaption}>
@@ -305,6 +289,8 @@ export const TaxTrapCalculator: FC<TaxTrapCalculatorProps> = ({
         </div>
       ) : null}
 
+      {/* The one notice. "Unverified estimate" is carried by the badge in the header (R6). */}
+      <ProjectionNotice />
       <LiveRegion debounceMs={1000} message={announcement} visuallyHidden />
     </div>
   );
@@ -330,7 +316,7 @@ export const TaxTrapCalculator: FC<TaxTrapCalculatorProps> = ({
       />
 
       <Button className={taxTrapCta()} size="md" variant="primary" onClick={handleSave}>
-        {ctaText} <Icon icon={ArrowRight} size="sm" />
+        {ctaLabel(ctaText)} <Icon icon={ArrowRight} size="sm" />
       </Button>
     </div>
   );

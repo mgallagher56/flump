@@ -5,12 +5,12 @@
  */
 
 export const TAX_TRAP_COPY = {
-  title: "Pension contributions and the £100,000 Personal Allowance taper",
+  title: "Pensions and the Personal Allowance",
   intro:
-    "Estimate how a pension contribution changes adjusted net income, the Personal Allowance and take-home pay. Figures are estimates from the Flump tax engine.",
+    "Estimate how a pension contribution changes adjusted net income, the Personal Allowance and take-home pay. Figures are estimates.",
   controlsLabel: "Your figures",
   contentLabel: "Estimated outcome",
-  grossIncome: "Gross pay a year",
+  grossIncome: "Pay before tax a year",
   contribution: "Pension contribution a year",
   contributionHelp: "Modelled as salary sacrifice.",
   region: "Where you pay tax",
@@ -19,9 +19,8 @@ export const TAX_TRAP_COPY = {
     SCOTLAND: "Scotland",
   },
   kpiReachesPension: "Reaches your pension",
-  kpiTakeHome: "Estimated change in take-home",
+  kpiTakeHome: "Estimated change in take-home pay",
   kpiTaxAndNi: "Estimated change in Income Tax and NI",
-  kpiAllowance: "Estimated Personal Allowance",
   factsHeading: "Before and with this contribution",
   factsCaption: "Estimated figures before and with this contribution",
   factColumn: "Figure",
@@ -29,14 +28,14 @@ export const TAX_TRAP_COPY = {
   afterColumn: "With this contribution",
   factAdjustedNetIncome: "Adjusted net income",
   factPersonalAllowance: "Personal Allowance",
-  factTakeHome: "Take-home a year",
+  factTakeHome: "Take-home pay a year",
   factNextThousand: "Share deducted from the next £1,000",
   taperNote:
     "The Personal Allowance goes down by £1 for every £2 of adjusted net income over the taper start, until it reaches £0.",
   childcareHeading: "Childcare support",
   childcareNote:
     "Tax-Free Childcare and the extended funded childcare hours for working parents in England are not available if either parent's adjusted net income is over £100,000. The universal 15 hours for 3- and 4-year-olds are not income-tested.",
-  childcareSource: "Check the rules on GOV.UK",
+  childcareSource: "Childcare rules on GOV.UK (opens in a new tab)",
   assumptionsHeading: "How this is worked out",
   unverifiedBadge: "Unverified estimate",
 } as const;

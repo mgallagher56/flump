@@ -11,18 +11,18 @@ describe("TaxTrapCalculatorTool", () => {
   it("renders the engine-backed taper calculator with the £115k example", () => {
     render(<TaxTrapCalculatorTool />);
 
-    expect(
-      screen.getByText(/pension contributions and the £100,000 personal allowance taper/i),
-    ).toBeDefined();
+    expect(screen.getByText(/pensions and the personal allowance/i)).toBeDefined();
     expect(screen.getByText(/reaches your pension/i)).toBeDefined();
-    expect(screen.getByText(/estimated personal allowance/i)).toBeDefined();
+    expect(screen.getByText(/estimated change in take-home pay/i)).toBeDefined();
     expect(screen.getAllByDisplayValue("115000").length).toBeGreaterThan(0);
   });
 
-  it("updates when the gross pay slider changes", () => {
+  it("updates when the pay slider changes", () => {
     render(<TaxTrapCalculatorTool />);
 
-    const incomeSlider = screen.getByRole("slider", { name: /gross pay a year range slider/i });
+    const incomeSlider = screen.getByRole("slider", {
+      name: /pay before tax a year range slider/i,
+    });
     fireEvent.change(incomeSlider, { target: { value: "105000" } });
 
     expect(screen.getAllByDisplayValue("105000").length).toBeGreaterThan(0);
