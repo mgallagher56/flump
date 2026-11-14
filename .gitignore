@@ -39,3 +39,7 @@ styled-system/
 drill-before.txt
 drill-after.txt
 *.restore-error.log
+
+# E16 sweep output: shots stay local (see docs/design/e16-polish/RESCORE.md); metrics are committed
+docs/design/e16-polish/after/**/*.jpg
+docs/design/e16-polish/after/.auth/

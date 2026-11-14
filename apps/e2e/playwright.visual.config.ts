@@ -2,6 +2,7 @@ import { defineConfig, devices } from "@playwright/test";
 import { frozenClockEnv } from "./support/clock";
 import { WEB_URL } from "./support/env";
 import { webServers } from "./support/servers";
+import { RENTER_TAG } from "./visual/routes";
 
 const isCI = Boolean(process.env.CI);
 
@@ -16,6 +17,13 @@ const shared = {
   timezoneId: "Europe/London",
   reducedMotion: "reduce" as const,
 };
+
+const VARIANTS = [
+  { name: "375-light", use: { ...shared, viewport: MOBILE, colorScheme: "light" as const } },
+  { name: "375-dark", use: { ...shared, viewport: MOBILE, colorScheme: "dark" as const } },
+  { name: "1280-light", use: { ...shared, viewport: DESKTOP, colorScheme: "light" as const } },
+  { name: "1280-dark", use: { ...shared, viewport: DESKTOP, colorScheme: "dark" as const } },
+];
 
 /**
  * Visual regression guard (E15 Phase 8). Full-page screenshots of every main screen at two
@@ -52,10 +60,22 @@ export default defineConfig({
     trace: "retain-on-failure",
   },
   projects: [
-    { name: "375-light", use: { ...shared, viewport: MOBILE, colorScheme: "light" } },
-    { name: "375-dark", use: { ...shared, viewport: MOBILE, colorScheme: "dark" } },
-    { name: "1280-light", use: { ...shared, viewport: DESKTOP, colorScheme: "light" } },
-    { name: "1280-dark", use: { ...shared, viewport: DESKTOP, colorScheme: "dark" } },
+    ...VARIANTS.map(({ name, use }) => ({ name, use, grepInvert: RENTER_TAG })),
+    // The renter pass: re-seed once every homeowner shot is done, then shoot the persona-sensitive
+    // routes again as `<route>-renter-<variant>.png`.
+    {
+      name: "renter-setup",
+      testMatch: /renter\.setup\.ts/,
+      use: { baseURL: WEB_URL },
+      dependencies: VARIANTS.map(({ name }) => name),
+    },
+    ...VARIANTS.map(({ name, use }) => ({
+      name: `${name}-renter`,
+      use,
+      grep: RENTER_TAG,
+      dependencies: ["renter-setup"],
+      snapshotPathTemplate: `{testDir}/__screenshots__/{arg}-${name}{ext}`,
+    })),
   ],
   webServer: webServers(frozenClockEnv()),
 });

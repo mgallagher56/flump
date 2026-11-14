@@ -72,3 +72,22 @@ export const VISUAL_ROUTES: readonly VisualRoute[] = [
   marketing("tools", "/tools"),
   marketing("mcp", "/mcp"),
 ];
+
+/** Tags the renter-pass tests; the homeowner projects leave them out, the renter projects keep only them. */
+export const RENTER_TAG = /@renter/;
+
+/** Routes whose content depends on the household, shot again after the renter re-seed. */
+const RENTER_ROUTE_NAMES = [
+  "dashboard",
+  "accounts",
+  "budget",
+  "debt",
+  "mortgage",
+  "pension",
+  "savings",
+  "take-home",
+].map((name) => `web-${name}`);
+
+export const RENTER_ROUTES: readonly VisualRoute[] = VISUAL_ROUTES.filter((route) =>
+  RENTER_ROUTE_NAMES.includes(route.name),
+);

@@ -6,3 +6,4 @@ test-results-visual/
 playwright-report-a11y/
 test-results-a11y/
 test-results-a11y-findings/
+test-results-sweep/

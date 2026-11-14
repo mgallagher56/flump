@@ -9,6 +9,7 @@
     "e2e:report": "playwright show-report",
     "e2e:visual": "playwright test -c playwright.visual.config.ts",
     "e2e:a11y": "playwright test -c playwright.a11y.config.ts",
+    "e2e:sweep": "playwright test -c playwright.sweep.config.ts",
     "lint": "biome check .",
     "format": "biome check --write .",
     "check-types": "tsc --noEmit"

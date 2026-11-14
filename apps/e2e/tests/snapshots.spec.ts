@@ -26,9 +26,10 @@ test("monthly check-in saves this month's balances and the history page shows th
   const sheet = page.getByRole("dialog", { name: `Monthly check-in: ${month}` });
   await expect(sheet).toBeVisible();
   // Seeded accounts are prefilled (with last month's value, or today's balance when new).
-  const current = sheet.getByRole("textbox", { name: "E2E Current: balance" });
+  const current = sheet.getByRole("textbox", { name: "Current account: balance" });
   await expect(current).not.toHaveValue("");
-  await current.fill("5,100");
+  // The seeded balance again, so the persona still matches and the next run need not re-seed.
+  await current.fill("3,400");
   await sheet.getByRole("button", { name: "Save balances" }).click();
 
   // Saved through PUT /api/snapshots/:month, confirmed with a toast, then reloaded from the server.

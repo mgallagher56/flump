@@ -11,9 +11,9 @@ test.describe("sign in and out", () => {
 
     const netWorth = page.locator('[data-tone="hero"]').filter({ hasText: "Net worth" });
     await expect(netWorth).toBeVisible();
-    // Seeded: £15,000 of assets against a £200,000 mortgage. The hero shows net worth only, and
+    // Seeded homeowner persona: £427,000 of assets against £195,600 of debts. The hero shows net worth only, and
     // net worth appears once on the page (E16 P6).
-    await expect(netWorth).toContainText("£185,000");
+    await expect(netWorth).toContainText("£231,400");
     await expect(page.locator('[data-figure="netWorth"]')).toHaveCount(1);
   });
 
