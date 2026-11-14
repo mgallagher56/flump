@@ -46,13 +46,26 @@ export const Default: Story = {
   },
 };
 
-/** The housing row names how you pay for housing in place of its entry count. */
+/** The housing row names how you pay for housing under its name. */
 export const WithHousingMeta: Story = {
   args: { metaFor: (cat: string) => (cat === "housing" ? "Renting" : undefined) },
   play: async ({ canvasElement }) => {
     const housing = within(canvasElement).getAllByTestId("budget-category-housing")[0];
     if (!housing) throw new Error("Housing row missing");
     await expect(within(housing).getByText("Renting")).toBeDefined();
+  },
+};
+
+/** A mortgage holder's housing row links to the mortgage page in place of opening. */
+export const WithHousingLink: Story = {
+  args: {
+    metaFor: (cat: string) => (cat === "housing" ? "Mortgage" : undefined),
+    hrefFor: (cat: string) =>
+      cat === "housing" ? { to: "/app/mortgage", page: "mortgage page" } : undefined,
+  },
+  play: async ({ canvasElement }) => {
+    const link = within(canvasElement).getAllByRole("link", { name: /open the mortgage page$/ })[0];
+    await expect(link).toHaveAttribute("href", "/app/mortgage");
   },
 };
 

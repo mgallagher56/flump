@@ -3,15 +3,14 @@ import { describe, expect, it } from "vitest";
 import { HeroFigure } from "./HeroFigure";
 
 describe("HeroFigure", () => {
-  it("draws the one hero block with the label, value and a decorative shape", () => {
+  it("draws the one hero block with the label and value, and no decoration", () => {
     const { container } = render(<HeroFigure label="Net worth" value={241000} />);
     const group = screen.getByRole("group", { name: "Net worth" });
     expect(group.getAttribute("data-tone")).toBe("hero");
     expect(group.className).toContain("surface.hero");
     expect(group.innerHTML).toContain("text.onContrast");
     expect(container.textContent).toContain("£241,000");
-    const shape = container.querySelector('[data-decorative="true"]');
-    expect(shape?.getAttribute("aria-hidden")).toBe("true");
+    expect(container.querySelector('[data-decorative="true"]')).toBeNull();
     expect(container.querySelectorAll('[data-tone="hero"]')).toHaveLength(1);
   });
 
@@ -23,13 +22,6 @@ describe("HeroFigure", () => {
     rerender(<HeroFigure id="debt-hero" label="Debt" value={null} />);
     expect(screen.getByRole("group").id).toBe("debt-hero");
     expect(screen.getByRole("group").dataset.testid).toBe("debt-hero");
-  });
-
-  it("fills the decorative shape with chart.primary, not primary.solid", () => {
-    const { container } = render(<HeroFigure label="Net worth" value={1} />);
-    const shape = container.querySelector('[data-decorative="true"]') as HTMLElement;
-    expect(shape.className).toContain("bg-c_chart.primary");
-    expect(shape.className).not.toContain("primary.solid");
   });
 
   it("sets the value in numeric.hero with tabular numerals", () => {
@@ -122,15 +114,10 @@ describe("HeroFigure", () => {
     expect(screen.queryByRole("button", { name: "About Net worth" })).toBeNull();
   });
 
-  it("uses system colours under forced colours and hides the disc", () => {
-    const { container } = render(<HeroFigure label="Net worth" value={1} />);
+  it("uses system colours under forced colours", () => {
+    render(<HeroFigure label="Net worth" value={1} />);
     const group = screen.getByRole("group", { name: "Net worth" });
     expect(group.className).toContain("highContrast:bg-c_Canvas");
     expect(group.className).toContain("highContrast:c_CanvasText");
-    const shape = container.querySelector('[data-decorative="true"]');
-    expect(shape?.className).toContain("highContrast:d_none");
-    // Quieter disc in dark, also when dark comes from the system with JavaScript off (D30).
-    expect(shape?.className).toContain("dark:op_0.1");
-    expect(shape?.className).toContain("systemDark:op_0.1");
   });
 });

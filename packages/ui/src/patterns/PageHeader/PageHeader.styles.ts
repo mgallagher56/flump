@@ -13,7 +13,9 @@ export const pageHeaderContainer = cva({
 });
 
 export const pageHeaderText = cva({
-  base: { flex: "1 1 280px", minWidth: 0 },
+  // A 192px basis lets one action sit beside the h1 at 375 instead of on a row of its own; more
+  // actions than fit still wrap below (E16 round 4).
+  base: { flex: "1 1 192px", minWidth: 0 },
 });
 
 export const pageHeaderTitle = cva({
