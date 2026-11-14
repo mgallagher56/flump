@@ -20,7 +20,7 @@ description = "Fake flump_pat_ fixtures in tests and stories"
 condition = "AND"
 targetRules = ["generic-api-key"]
 paths = [
-  '''^apps/backend/src/mcp\.controller\.spec\.ts$''',
+  '''^apps/backend/src/modules/agent/mcp\.controller\.spec\.ts$''',
   '''^apps/web/app/features/ai-connections/components/McpConnectionCard/McpConnectionCard\.(stories|test)\.tsx$''',
   '''^packages/mcp/src/mcp\.test\.ts$''',
 ]

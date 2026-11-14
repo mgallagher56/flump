@@ -4,7 +4,7 @@ import { cliDataSourceOptions } from "../data-source.options";
 import {
   describeLiabilitySignPlan,
   planLiabilitySignBackfill,
-} from "../snapshots/liability-sign-backfill";
+} from "../integrity/liability-sign-backfill";
 
 /**
  * BE-05 dry run: prints what migration LiabilitySignRule1794358050000 would re-sign, as counts

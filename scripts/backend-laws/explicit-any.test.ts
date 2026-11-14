@@ -9,8 +9,8 @@ const diag = (path: string, category = "lint/suspicious/noExplicitAny") => ({
 
 describe("explicit any ratchet (BE-01, M21)", () => {
   test("counts only production backend source", () => {
-    expect(isCountedFile("apps/backend/src/finance.service.ts")).toBe(true);
-    expect(isCountedFile("apps/backend/src/finance.service.spec.ts")).toBe(false);
+    expect(isCountedFile("apps/backend/src/modules/finance/finance.service.ts")).toBe(true);
+    expect(isCountedFile("apps/backend/src/modules/finance/finance.service.spec.ts")).toBe(false);
     expect(isCountedFile("apps/backend/src/testing/db.ts")).toBe(false);
     expect(isCountedFile("apps/web/app/root.tsx")).toBe(false);
   });

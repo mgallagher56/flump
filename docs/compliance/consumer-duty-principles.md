@@ -29,15 +29,15 @@ Where a path is cited it was checked on 2026-11-12.
 
 Aim: what Flump offers is designed to meet the needs of people who use it, and does not steer them.
 
-| Practice                                                                                     | Evidence                                                                              | State                                                          |
-| -------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
-| Results are guidance computed from the user's own figures, shown neutrally and side by side  | R1 in [advice-boundary-policy.md](advice-boundary-policy.md)                          | Planned (rules drafted; copy rewrite is E29-T4 and E29-T5)     |
-| No personal recommendations or imperatives about investments, pensions, mortgages or debt    | R2                                                                                    | Planned (guard: E29-T3)                                        |
-| No product judgements and no provider names                                                  | R3                                                                                    | Planned                                                        |
-| A computed segment only chooses default layout, never action text                            | R4                                                                                    | Planned (engine labels: E29-T5; dashboard banner: E15 handoff) |
-| A computed outcome never triggers a one-click save                                           | R5; `PensionContainer.tsx:366-376` is the current exception                           | Planned (E29-T4)                                               |
-| No bank data or MCP access for people outside the owner's allowlist until the DPIA is signed | `apps/backend/src/bank-connections.access.ts` for bank connection; MCP gate is E29-T8 | In place (bank), Planned (MCP)                                 |
-| No advice-style recommendations from a third-party model that uses Flump's calculations      | R7; output policy is E29-T6                                                           | Planned                                                        |
+| Practice                                                                                     | Evidence                                                                                              | State                                                          |
+| -------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
+| Results are guidance computed from the user's own figures, shown neutrally and side by side  | R1 in [advice-boundary-policy.md](advice-boundary-policy.md)                                          | Planned (rules drafted; copy rewrite is E29-T4 and E29-T5)     |
+| No personal recommendations or imperatives about investments, pensions, mortgages or debt    | R2                                                                                                    | Planned (guard: E29-T3)                                        |
+| No product judgements and no provider names                                                  | R3                                                                                                    | Planned                                                        |
+| A computed segment only chooses default layout, never action text                            | R4                                                                                                    | Planned (engine labels: E29-T5; dashboard banner: E15 handoff) |
+| A computed outcome never triggers a one-click save                                           | R5; `PensionContainer.tsx:366-376` is the current exception                                           | Planned (E29-T4)                                               |
+| No bank data or MCP access for people outside the owner's allowlist until the DPIA is signed | `apps/backend/src/modules/banking/bank-connections.access.ts` for bank connection; MCP gate is E29-T8 | In place (bank), Planned (MCP)                                 |
+| No advice-style recommendations from a third-party model that uses Flump's calculations      | R7; output policy is E29-T6                                                                           | Planned                                                        |
 
 ## Outcome 2: Price and value
 

@@ -10,9 +10,7 @@ import {
 } from "@nestjs/common";
 import { Test } from "@nestjs/testing";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { FinanceController } from "../../src/finance.controller";
 import { HealthController } from "../../src/health/health.controller";
-import { McpController } from "../../src/mcp.controller";
 import { RateLimit, SkipRateLimit } from "../../src/security";
 import { RATE_LIMIT_CLASS, RATE_LIMIT_SKIP } from "../../src/security/rate-limit.decorator";
 import { SecurityModule } from "../../src/security/security.module";
@@ -22,7 +20,9 @@ import {
   CLIENT_IP_SIG_HEADER,
   signClientIp,
 } from "../../src/security/signed-client-ip";
-import { UserProfileController } from "../../src/user-profile.controller";
+import { McpController } from "../modules/agent/mcp.controller";
+import { FinanceController } from "../modules/finance/finance.controller";
+import { UserProfileController } from "../modules/profile/user-profile.controller";
 
 @Injectable()
 class FakeAuthGuard implements CanActivate {

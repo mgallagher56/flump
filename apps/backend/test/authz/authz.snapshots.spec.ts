@@ -3,8 +3,8 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vites
 import { Account } from "../../src/entities/account.entity";
 import { AccountDetail } from "../../src/entities/account-detail.entity";
 import { SnapshotCheckin } from "../../src/entities/snapshot-checkin.entity";
-import { writeConnectedSnapshot } from "../../src/snapshots/connected-write";
-import { londonDate, londonYearMonth, monthKey } from "../../src/snapshots/london-date";
+import { writeConnectedSnapshot } from "../../src/modules/snapshots/connected-write";
+import { londonDate, londonYearMonth, monthKey } from "../../src/modules/snapshots/london-date";
 import { resolveDbTestMode } from "../../src/testing/dbTestMode";
 import { ROUTE_MATRIX } from "./matrix";
 import {

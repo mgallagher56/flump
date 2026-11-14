@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { IsoDateTime, Uuid } from "../primitives.js";
 
-/** Providers wired into the backend registry today (apps/backend/src/providers). */
+/** Providers wired into the backend registry today (apps/backend/src/modules/banking/providers). */
 export const INSTITUTION_IDS = ["monzo", "starling", "trading212"] as const;
 
 export const ConnectBankRequest = z.strictObject({

@@ -6,7 +6,7 @@ import { DataSource } from "typeorm";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { AppModule } from "../../src/app.module";
 import { DEV_BYPASS_TOKEN } from "../../src/auth/dev-bypass.verifier";
-import { storedBalance } from "../../src/snapshots/stored-balance";
+import { storedBalance } from "../../src/modules/snapshots/stored-balance";
 import { assertSafeTestDatabase } from "../../src/testing/assertSafeTestDatabase";
 import { resolveDbTestMode } from "../../src/testing/dbTestMode";
 import { parseResponseViolation } from "../authz/support";

@@ -9,7 +9,7 @@ import {
   planLiabilitySignBackfill,
   TYPE_TRIGGER,
   LIABILITY_TYPES_SQL as TYPES_SQL,
-} from "../snapshots/liability-sign-backfill";
+} from "../integrity/liability-sign-backfill";
 
 const DETAIL_FN = "flump_check_liability_detail_sign";
 const TYPE_FN = "flump_check_liability_type_change";

@@ -136,7 +136,7 @@
         {
           "kind": "present",
           "pattern": "throttl|rate-?limit",
-          "paths": ["apps/backend/src/mcp.controller.ts", "apps/backend/src/auth"]
+          "paths": ["apps/backend/src/modules/agent/mcp.controller.ts", "apps/backend/src/auth"]
         }
       ]
     },
