@@ -108,7 +108,9 @@ export const PensionSummary: FC<PensionSummaryProps> = ({
           />,
           <KpiCard
             emptyAction={promptTo("Add your year of birth", PROFILE_PATH)}
-            explain="Flump does not store a retirement age, so estimates assume you retire at your State Pension age. You can try a different age in the model below."
+            explain={
+              "Flump does not store a retirement age, so estimates assume you retire at your State Pension age. You can try a different age in \u201cModel a change to your pension\u201d below."
+            }
             key="age"
             label="Retirement age"
             subtext={retirementAge === null ? undefined : "Assumed: your State Pension age"}

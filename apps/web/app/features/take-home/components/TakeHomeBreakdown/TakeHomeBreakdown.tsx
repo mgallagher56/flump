@@ -31,6 +31,12 @@ export interface PayFigures {
   nationalInsurance: number;
   pension: number;
   studentLoan: number;
+  /**
+   * The engine's yearly take-home. When given, the monthly take-home is this figure divided by 12
+   * (the one every other surface shows), and the rounding difference goes to the largest
+   * deduction so the parts still add up to the monthly pay before tax.
+   */
+  takeHome?: number;
 }
 
 export type MonthlyPayParts = Record<PayPartKey, number>;
@@ -44,11 +50,17 @@ export const monthlyPayParts = (f: PayFigures): MonthlyPayParts => {
   const nationalInsurance = Math.round(f.nationalInsurance / 12);
   const pension = Math.round(f.pension / 12);
   const studentLoan = Math.round(f.studentLoan / 12);
-  const takeHome = Math.max(
-    0,
-    Math.round(f.salary / 12) - incomeTax - nationalInsurance - pension - studentLoan,
-  );
-  return { incomeTax, nationalInsurance, pension, studentLoan, takeHome };
+  const monthlyPay = Math.round(f.salary / 12);
+  const derived = Math.max(0, monthlyPay - incomeTax - nationalInsurance - pension - studentLoan);
+  const parts = { incomeTax, nationalInsurance, pension, studentLoan, takeHome: derived };
+  if (f.takeHome === undefined || !Number.isFinite(f.takeHome)) return parts;
+  const takeHome = Math.max(0, Math.round(f.takeHome / 12));
+  const difference = derived - takeHome;
+  const deductions = ["incomeTax", "nationalInsurance", "pension", "studentLoan"] as const;
+  const largest = deductions.reduce((a, b) => (parts[b] > parts[a] ? b : a));
+  // Only a rounding difference (a pound or two) is moved; anything larger is left as it is.
+  if (Math.abs(difference) > 3 || parts[largest] + difference < 0) return { ...parts, takeHome };
+  return { ...parts, [largest]: parts[largest] + difference, takeHome };
 };
 
 export interface TakeHomeBreakdownProps extends PayFigures {

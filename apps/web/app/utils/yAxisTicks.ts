@@ -18,9 +18,15 @@ export const MAX_Y_TICKS = 5;
 export const nearDataAxis = (values: readonly number[]): NearDataAxis => {
   const finite = values.filter((v) => Number.isFinite(v));
   if (finite.length === 0) return { domain: [0, 1], ticks: [0] };
-  const min = Math.min(...finite);
-  const max = Math.max(...finite);
-  const span = max - min || Math.abs(max) || 1;
+  let min = Math.min(...finite);
+  let max = Math.max(...finite);
+  if (min === max) {
+    // A flat series: widen it by a nice step either side (never below £0 for positive data).
+    const step = niceStep(Math.abs(max) / 4 || 1);
+    min = min >= 0 ? Math.max(0, min - step) : min - step;
+    max += step;
+  }
+  const span = max - min;
   let fallback: NearDataAxis | null = null;
   for (const divisions of [4, 5, 6, 3]) {
     const step = niceStep(span / divisions);
@@ -34,7 +40,9 @@ export const nearDataAxis = (values: readonly number[]): NearDataAxis => {
     }
     const axis: NearDataAxis = { domain: [lo === 0 ? 0 : lo, hi], ticks };
     if (ticks.length >= 3 && ticks.length <= MAX_Y_TICKS) return axis;
-    if (!fallback && ticks.length <= MAX_Y_TICKS) fallback = axis;
+    if (ticks.length >= 2 && ticks.length <= MAX_Y_TICKS) {
+      if (!fallback || ticks.length > fallback.ticks.length) fallback = axis;
+    }
   }
   return fallback ?? { domain: [min, max], ticks: [min, max] };
 };

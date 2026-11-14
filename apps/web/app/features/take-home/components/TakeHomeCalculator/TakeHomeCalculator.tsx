@@ -203,12 +203,13 @@ export const TakeHomeCalculator: FC<TakeHomeCalculatorProps> = ({
     nationalInsurance: v.nationalInsurance,
     pension: v.pension,
     studentLoan: v.studentLoan,
+    takeHome: v.annual,
   });
   const pensionAndLoan = parts.pension + parts.studentLoan;
 
   // Take-home, then what comes off in two cards, so the three add up to the monthly pay before
   // tax. With no pension or student loan the second and third are Income Tax and National
-  // Insurance, so the strip stays three cards and never shows £0.
+  // Insurance, so the strip stays three cards; a part that is nothing reads "None", never £0.
   const takeHomeCard = (
     <KpiCard
       key="take-home"
@@ -233,6 +234,8 @@ export const TakeHomeCalculator: FC<TakeHomeCalculatorProps> = ({
         key="income-tax"
         explain={`Income Tax on your saved salary, at ${taxYear} rates.`}
         label="Monthly Income Tax"
+        notSetLabel="None"
+        unset={parts.incomeTax <= 0}
         value={parts.incomeTax}
         valueFormat={{ fractionDigits: 0 }}
       />
@@ -263,6 +266,8 @@ export const TakeHomeCalculator: FC<TakeHomeCalculatorProps> = ({
         key="ni"
         explain={`Employee National Insurance on your saved salary, at ${taxYear} rates.`}
         label="Monthly National Insurance"
+        notSetLabel="None"
+        unset={parts.nationalInsurance <= 0}
         value={parts.nationalInsurance}
         valueFormat={{ fractionDigits: 0 }}
       />
@@ -313,6 +318,7 @@ export const TakeHomeCalculator: FC<TakeHomeCalculatorProps> = ({
         pension={v.pension}
         salary={salary}
         studentLoan={v.studentLoan}
+        takeHome={v.annual}
       />
 
       <ScenarioZone
