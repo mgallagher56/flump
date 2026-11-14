@@ -18,11 +18,36 @@ function words(text: string): string[] {
   return text.toLowerCase().match(/[\p{L}\p{N}]+/gu) ?? [];
 }
 
-/** True when `needle` appears in `haystack` as a run of whole words. */
-function containsWords(haystack: readonly string[], needle: readonly string[]): boolean {
+/** Words a payment row may carry besides the account's name. Anything else is a different thing. */
+const PAYMENT_WORDS = new Set([
+  "payment",
+  "payments",
+  "repayment",
+  "repayments",
+  "minimum",
+  "min",
+  "monthly",
+  "bill",
+  "direct",
+  "debit",
+  "dd",
+  "my",
+  "the",
+  "for",
+  "to",
+]);
+
+/**
+ * True when `needle` appears in `haystack` as a run of whole words and every other word is a
+ * payment word. So "Car loan payment" names the debt "Car loan", and "Car insurance" does not
+ * name a debt called "Car".
+ */
+function namesDebt(haystack: readonly string[], needle: readonly string[]): boolean {
   if (needle.length === 0 || needle.length > haystack.length) return false;
   for (let start = 0; start + needle.length <= haystack.length; start++) {
-    if (needle.every((word, i) => haystack[start + i] === word)) return true;
+    if (!needle.every((word, i) => haystack[start + i] === word)) continue;
+    const rest = [...haystack.slice(0, start), ...haystack.slice(start + needle.length)];
+    if (rest.every((word) => PAYMENT_WORDS.has(word))) return true;
   }
   return false;
 }
@@ -37,7 +62,8 @@ const pence = (n: number): number => Math.round(n * 100);
  * - it is not income, not a savings row and not already in the "debt" category;
  * - its monthly amount equals the debt's saved minimum payment to the penny (an estimated
  *   minimum never matches, because nobody saved it); and
- * - its name contains the debt account's full name as whole words, ignoring case.
+ * - its name contains the debt account's full name as whole words, ignoring case, and nothing
+ *   else but payment words ("payment", "repayment", "monthly", "direct debit" and the like).
  *
  * A row is paired with one debt at most: the one with the longest matching name, and none at all
  * when two debts tie. The caller asks the person; on a yes it moves the row to the "debt"
@@ -62,7 +88,7 @@ export function findPossibleDuplicateDebtRows(
     if (!(monthly > 0)) continue;
     const rowWords = words(row.name);
     const matches = debts.filter(
-      (d) => pence(d.minimum) === pence(monthly) && containsWords(rowWords, d.words),
+      (d) => pence(d.minimum) === pence(monthly) && namesDebt(rowWords, d.words),
     );
     if (matches.length === 0) continue;
     const longest = Math.max(...matches.map((d) => d.words.length));

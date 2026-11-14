@@ -72,6 +72,18 @@ describe("National Insurance class", () => {
     expect(r.netTakeHomePayAnnualGbp).toBe(46111.4);
   });
 
+  it("self-employed profit is never treated as salary sacrifice: Class 4 is on the full profit", () => {
+    const r = calculateUkTax({
+      grossSalary: 40000,
+      selfEmployed: true,
+      pensionContributionPct: 12.5,
+      pensionMethod: "salary-sacrifice",
+      taxYear: Y,
+    });
+    // Class 4 on 40,000: (40,000 - 12,570) x 6% = 1,645.80, not on 35,000 (1,345.80).
+    expect(r.nationalInsuranceGbp).toBe(1645.8);
+  });
+
   it("the take-home selector gives the same self-employed figure", () => {
     const t = selectTakeHome(
       {

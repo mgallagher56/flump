@@ -25,6 +25,17 @@ describe("one tax engine law (E25 T15)", () => {
     expect(found[0]).toContain("reads 5 tax rate or threshold field(s)");
   });
 
+  test("destructured fields, bracket access, Scottish bands and typed-in thresholds all fail", () => {
+    const file = "apps/web/app/features/take-home/quick.ts";
+    expect(messages(file, "const { mainRate } = rules.ni.class4;")).toHaveLength(1);
+    expect(messages(file, 'const r = rules.ni.class1["upperRate"];')).toHaveLength(1);
+    expect(
+      messages(file, "for (const band of rules.scotland.bands) tax += band.rate;"),
+    ).toHaveLength(1);
+    expect(messages(file, "const taxable = Math.max(0, pay - 12570) * 0.2;")).toHaveLength(1);
+    expect(messages(file, "if (income > 125_140) rate = 0.45;")).toHaveLength(1);
+  });
+
   test("a second band walk in a new engine file fails", () => {
     const source = "const tax = Math.min(taxable, e.basicRateBandWidth) * e.basicRate;";
     expect(messages("packages/finance-engine/src/quick-tax.ts", source)).toHaveLength(1);

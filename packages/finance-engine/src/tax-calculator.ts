@@ -536,6 +536,10 @@ export function calculateUKTax(
   // with a logged payslip uses what was logged, and every other month uses a twelfth of the saved
   // salary, so one payslip never replaces the whole salary. Bonus, commission, overtime and benefit
   // records add to that base (C-10); logged employee pension comes off.
+  //
+  // Months are counted by pay date, not by bucket: someone paid on the 1st has twelve pay dates in
+  // the tax year, 1 May to 1 April, and the 1 April payslip is bucketed into March beside the
+  // 1 March one. Counting buckets would leave April looking unpaid and add a thirteenth month.
   const hasAnnualSalaryRecord = records.some(
     (r) =>
       r.source === "paye" &&
@@ -543,8 +547,16 @@ export function calculateUKTax(
       r.frequency === "annual" &&
       getRecordAnnualTotalForTaxYear(r, taxYear) > 0,
   );
-  const salaryByMonth = payeRecordValues.paye_salary ?? [];
-  const monthsWithoutPayslip = months.filter((_month, i) => !((salaryByMonth[i] ?? 0) > 0)).length;
+  const paidMonths = new Set<string>();
+  for (const r of records) {
+    if (r.source !== "paye" || r.category !== "paye_salary") continue;
+    if (r.frequency === "one-off") {
+      if (getRecordAnnualTotalForTaxYear(r, taxYear) > 0) paidMonths.add(r.date.substring(0, 7));
+    } else if (r.frequency === "monthly") {
+      for (const month of months) if (getRecordValueForMonth(r, month) > 0) paidMonths.add(month);
+    }
+  }
+  const monthsWithoutPayslip = Math.max(0, months.length - paidMonths.size);
   const basePayeSalary = hasAnnualSalaryRecord
     ? payeSalaryRecords
     : payeSalaryRecords + (payeSalary * monthsWithoutPayslip) / months.length;

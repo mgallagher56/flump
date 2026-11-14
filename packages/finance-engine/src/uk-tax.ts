@@ -97,15 +97,12 @@ export function calculatePersonalAllowance(
   adjustedNetIncome: number,
   baseAllowance = UK_TAX_CONSTANTS.PERSONAL_ALLOWANCE_DEFAULT,
 ): { effectiveAllowance: number; taperAmount: number } {
-  if (adjustedNetIncome <= UK_TAX_CONSTANTS.TAX_TRAP_LOWER_THRESHOLD) {
-    return { effectiveAllowance: baseAllowance, taperAmount: 0 };
-  }
-
-  const excess = adjustedNetIncome - UK_TAX_CONSTANTS.TAX_TRAP_LOWER_THRESHOLD;
-  const taper = Math.min(baseAllowance, Math.floor(excess / 2));
-  const effectiveAllowance = Math.max(0, baseAllowance - taper);
-
-  return { effectiveAllowance, taperAmount: taper };
+  // The taper itself is the rule function's; this only swaps in the caller's base allowance.
+  const effectiveAllowance = calculatePersonalAllowanceForYear(adjustedNetIncome, {
+    ...LATEST_RULES,
+    ewni: { ...LATEST_RULES.ewni, personalAllowance: baseAllowance },
+  });
+  return { effectiveAllowance, taperAmount: baseAllowance - effectiveAllowance };
 }
 
 /**
