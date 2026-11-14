@@ -45,9 +45,11 @@ describe("Marketing McpPage (E16 PR 12)", () => {
     expect(invites[0]?.getAttribute("href")).toBe("/contact#beta");
     expect(invites[0]?.getAttribute("data-variant")).toBe("primary");
     expect(invites).toHaveLength(1);
-    expect(
-      screen.getByText(/^Flump MCP \(short for Model Context Protocol\) links an AI assistant/),
-    ).toBeDefined();
+    expect(screen.getByText(/^The AI connection links an AI assistant/)).toBeDefined();
+    // Developer words wait behind "Show technical details" (R2-10).
+    expect(within(main).getByRole("heading", { level: 1 }).parentElement?.textContent).not.toMatch(
+      /Model Context Protocol|Claude Desktop|Cursor/,
+    );
     expect(within(main).queryByText(/Open your profile/)).toBeNull();
     expectPageRules(main, { projectionNotices: 0 });
   });
@@ -61,9 +63,7 @@ describe("Marketing McpPage (E16 PR 12)", () => {
     expect(screen.getByRole("heading", { level: 2, name: "How to turn it on" })).toBeDefined();
     expect(screen.getByText(/you can revoke it any time/)).toBeDefined();
     const main = screen.getByRole("main").textContent ?? "";
-    expect(main).toMatch(
-      /For now it runs from source code, with no installer or setup guide yet\./,
-    );
+    expect(main).not.toMatch(/source code/);
     expect(main).not.toMatch(/coming soon/i);
     expect(main).toMatch(/Request an invite and sign in to Flump\./);
   });
@@ -77,6 +77,8 @@ describe("Marketing McpPage (E16 PR 12)", () => {
     fireEvent.click(toggle);
     expect(screen.getByTestId("mcp-technical-details")).toBeDefined();
     expect(screen.getByText(/Institution names are replaced with generic labels/)).toBeDefined();
+    expect(screen.getByText(/short for Model Context Protocol/)).toBeDefined();
+    expect(screen.getByText(/runs from source code, with no installer/)).toBeDefined();
     expect(document.body.textContent).toContain("Flump MCP tools have no payment feature");
   });
 

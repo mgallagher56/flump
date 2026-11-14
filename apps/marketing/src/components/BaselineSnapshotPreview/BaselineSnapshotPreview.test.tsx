@@ -6,7 +6,7 @@ import { BaselineSnapshotPreview } from "./BaselineSnapshotPreview";
 describe("BaselineSnapshotPreview", () => {
   it("shows three example figures and labels them as an example", () => {
     const { container } = render(<BaselineSnapshotPreview />);
-    expect(screen.getByRole("heading", { name: "Example monthly picture" })).toBeDefined();
+    expect(screen.getByRole("heading", { name: "Monthly picture" })).toBeDefined();
     expect(screen.getByText("Example")).toBeDefined();
     expect(screen.getByText("Net worth")).toBeDefined();
     expect(screen.getByText("Left over each month")).toBeDefined();

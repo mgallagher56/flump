@@ -9,7 +9,7 @@ import { MonthlyPictureSection } from "../../components/MonthlyPictureSection";
 import { PageMeta } from "../../components/PageMeta";
 import { PayRiseTeaser } from "../../components/PayRiseTeaser";
 import { SecurityPrivacySection } from "../../components/SecurityPrivacySection";
-import { signupCta } from "../../utils/site";
+import { SITE_TAGLINE, signupCta } from "../../utils/site";
 import { getAppUrl } from "../../utils/url";
 import {
   ctaRow,
@@ -26,8 +26,9 @@ import {
 } from "./HomePage.styles";
 
 /**
- * Marketing home (E16 PR 12): five sections. Hero with an example preview, "What you can see",
- * the pay-rise teaser, a short security strip, then the FAQ with the final call to action.
+ * Marketing home (E16 PR 12, R2-10): five bands. Hero with an example preview, "What you can see",
+ * the pay-rise teaser, a short security strip, then one band holding the FAQ and the final call to
+ * action.
  * "Request an invite" appears twice in the page body (hero and end). MCP is a footer link and one
  * FAQ answer (D13).
  */
@@ -38,8 +39,8 @@ export const HomePage: FC = () => {
   return (
     <div className={pageShell()}>
       <PageMeta
-        title="Flump | See where you stand each month, under UK rules"
-        description="See where you stand each month, whether you rent or pay a mortgage. See your months of cover, what is left over and what a change would do, under UK rules."
+        title={SITE_TAGLINE}
+        description={`${SITE_TAGLINE}. See where you stand each month, whether you rent or pay a mortgage: your months of cover, what is left over and what a change would do, under UK rules.`}
       />
 
       <Header />
@@ -77,24 +78,19 @@ export const HomePage: FC = () => {
 
         <SecurityPrivacySection />
 
-        <MarketingSection align="center" id="faq" title="Frequently asked questions" width="narrow">
-          <HomeFAQ />
-        </MarketingSection>
-
-        {/* The second band of the plan's fifth step, "FAQ and final call to action". */}
+        {/* The fifth band: FAQ, then the final call to action in the same band (R2-10). */}
         <MarketingSection
           align="center"
-          data-testid="home-final-cta"
-          id="get-started"
-          size="compact"
+          id="faq"
+          title="Frequently asked questions"
           tone="sage"
           width="narrow"
-          labelledBy="home-cta-title"
         >
-          <div className={finalCta()}>
-            <h2 className={finalCtaTitle()} id="home-cta-title">
+          <HomeFAQ />
+          <div className={finalCta()} data-testid="home-final-cta" id="get-started">
+            <h3 className={finalCtaTitle()} id="home-cta-title">
               Ready to see where you stand?
-            </h2>
+            </h3>
             <p className={finalCtaBody()}>Start with a few rough numbers. No bank login needed.</p>
             <Button asChild size="lg" variant="primary">
               <a href={cta.href}>{cta.label}</a>

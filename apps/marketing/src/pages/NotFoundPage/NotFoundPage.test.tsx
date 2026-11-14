@@ -24,20 +24,38 @@ describe("NotFoundPage", () => {
         </MemoryRouter>
       </HelmetProvider>,
     );
-    expect(screen.getByRole("heading", { level: 1, name: "Page not found" })).toBeDefined();
+    expect(
+      screen.getByRole("heading", { level: 1, name: "We cannot find that page" }),
+    ).toBeDefined();
     expect(screen.getByRole("link", { name: "Go to the home page" }).getAttribute("href")).toBe(
       "/",
     );
   });
 
+  it("matches the web not-found card and says 'not found' once, with one way back", () => {
+    const { container } = render(
+      <HelmetProvider>
+        <MemoryRouter>
+          <NotFoundPage />
+        </MemoryRouter>
+      </HelmetProvider>,
+    );
+    const main = screen.getByRole("main");
+    expect(container.querySelector('[data-scene="not-found"]')).not.toBeNull();
+    expect(main.textContent).not.toMatch(/Not found|Error 404/);
+    expect(main.querySelectorAll("a")).toHaveLength(1);
+  });
+
   it.each(["/nope", "/tools/not-a-real-tool"])("App renders it for %s", (path) => {
     renderAt(path);
-    expect(screen.getByRole("heading", { level: 1, name: "Page not found" })).toBeDefined();
+    expect(
+      screen.getByRole("heading", { level: 1, name: "We cannot find that page" }),
+    ).toBeDefined();
   });
 
   it("does not render it for a real page", () => {
     renderAt("/pricing");
-    expect(screen.queryByRole("heading", { name: "Page not found" })).toBeNull();
+    expect(screen.queryByRole("heading", { name: "We cannot find that page" })).toBeNull();
   });
 });
 

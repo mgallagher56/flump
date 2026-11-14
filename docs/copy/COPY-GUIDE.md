@@ -37,6 +37,13 @@ Flump sounds like a calm, numerate friend who shows you the working. Four traits
 
 Write to "you". Call ourselves "Flump" or "we". Use contractions where they sound natural ("you'll", "we'll"), but not negative ones in instructions or errors ("do not", not "don't", when the "not" matters).
 
+**Tagline (owner ruling, 14 November 2026).** The tagline is "Finance without the fog". With the name it is written "Flump: finance without the fog".
+
+- Use the exact wording, in sentence case, with a colon after the name. Never a dash.
+- It goes only where the site states a tagline: the home page title and meta description, the Open Graph and Twitter titles, the footer brand line, the share image and the web manifest description. Marketing reads it from `TAGLINE` and `SITE_TAGLINE` in `apps/marketing/src/utils/site.ts`.
+- It never replaces the home h1. The h1 stays the plain line that says what Flump does.
+- Do not scatter fog metaphors through body copy. The tagline is said where it is listed above and nowhere else.
+
 ### 2.2 No hype
 
 Say what a thing does, with the figure. No superlatives, no pseudo-engineering words, no promises. The guard blocks: supercharge, unlock, crush, effortless, magic, bank-grade, enterprise-grade, engineered for, zero-latency, air-gapped, radar, financial freedom, instant insights.

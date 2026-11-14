@@ -3,7 +3,7 @@ import { SiteFooter, type SiteFooterRenderLink, siteFooterLink } from "@repo/ui"
 import { ExternalLink } from "lucide-react";
 import type { FC } from "react";
 import { Link } from "react-router-dom";
-import { mailto, signupCta } from "../../utils/site";
+import { mailto, signupCta, TAGLINE } from "../../utils/site";
 import { getAppUrl } from "../../utils/url";
 import {
   footerBottomRow,
@@ -26,7 +26,7 @@ export const Footer: FC = () => {
 
   return (
     <SiteFooter
-      blurb="A UK personal finance planner for your monthly picture, housing costs, debts and pension."
+      blurb={`${TAGLINE}. A UK planner for your monthly picture, housing costs, debts and pension.`}
       bottom={
         <div className={footerBottomRow()}>
           <span
@@ -57,7 +57,7 @@ export const Footer: FC = () => {
               href: `${appUrl}/sandbox`,
               newTab: true,
             },
-            { key: "mcp", label: "AI connection (MCP)", href: "/mcp" },
+            { key: "mcp", label: "AI connection", href: "/mcp" },
             { key: "pricing", label: "Pricing", href: "/pricing" },
             {
               key: "signin",

@@ -16,7 +16,7 @@ const renderPage = () =>
   );
 
 describe("ContactPage", () => {
-  it("renders the page heading and two cards: general and security", () => {
+  it("renders the page heading, one email card and the security route as a line", () => {
     renderPage();
     expect(screen.getByRole("heading", { level: 1, name: "Contact Flump" })).toBeDefined();
     const main = screen.getByRole("main");
@@ -24,19 +24,18 @@ describe("ContactPage", () => {
       within(main)
         .getAllByRole("heading", { level: 2 })
         .map((h) => h.textContent),
-    ).toEqual(["General", "Security"]);
-    expect(within(main).getAllByRole("region")).toHaveLength(2);
+    ).toEqual(["Email"]);
+    expect(within(main).getAllByRole("region")).toHaveLength(1);
     expectPageRules(main, { projectionNotices: 0 });
   });
 
-  it("leaves the invite button to the header and says 'free' only with the beta", () => {
+  it("leaves the invite button to the header and keeps pricing off the page", () => {
     renderPage();
     const main = screen.getByRole("main");
     // The header carries the invite button; the page body has none (round 4).
     expect(within(main).queryByRole("link", { name: "Request an invite" })).toBeNull();
     expect(within(main).queryByText(/Email for an invite/)).toBeNull();
-    expect(main.textContent).toMatch(/free during the beta/);
-    expect(main.textContent).not.toMatch(/a free, invite-only beta|Nothing is charged/);
+    expect(main.textContent).not.toMatch(/free|Nothing is charged/i);
   });
 
   it("folds the placeholder notice into the email line and says it once", () => {
@@ -44,7 +43,7 @@ describe("ContactPage", () => {
     const text = screen.getByRole("main").textContent ?? "";
     const count = (text.match(/placeholder/g) ?? []).length;
     expect(count).toBe(BUSINESS_DETAILS.supportEmail.isPlaceholder ? 1 : 0);
-    expect(text).toMatch(/feedback, a\s+privacy request or a complaint/);
+    expect(text).toMatch(/Privacy requests and complaints come here too/);
   });
 
   it("has one mailto link in the general card", () => {

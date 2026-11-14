@@ -81,7 +81,3 @@ export const teaserActions = cva({
 export const taperFigure = cva({
   base: { fontVariantNumeric: "tabular-nums" },
 });
-
-export const assumptionsText = cva({
-  base: { textStyle: "body.sm", color: "text.secondary", margin: 0, mt: "6" },
-});

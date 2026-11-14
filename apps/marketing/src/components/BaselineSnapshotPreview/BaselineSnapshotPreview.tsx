@@ -36,7 +36,7 @@ export const BaselineSnapshotPreview: FC = () => (
   >
     <div className={previewHeader()}>
       <h2 className={previewTitle()} id="preview-title">
-        Example monthly picture
+        Monthly picture
       </h2>
       <StatusBadge size="sm" variant="neutral">
         Example
