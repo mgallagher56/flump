@@ -9,6 +9,7 @@ import { BudgetNav } from "~/features/budget/components/BudgetNav";
 import { BudgetOverview } from "~/features/budget/components/BudgetOverview";
 import { BudgetSetupWizard } from "~/features/budget/components/BudgetSetupWizard";
 import { RunwayCalculator } from "~/features/budget/components/RunwayCalculator";
+import { HousingCostCard } from "~/features/housing/components/HousingCostCard";
 import { useUserProfile } from "~/hooks/useUserProfile";
 import type { loader } from "~/routes/app.budget";
 import { apiFetch } from "~/services/api-client";
@@ -109,12 +110,39 @@ const BudgetContainer: FC = () => {
     });
   }, [accounts, accountDetails]);
 
+  // Rent saved on this page, laid over the loader profile until the next load (E32).
+  const [savedHousing, setSavedHousing] = useState<{
+    housingStatus: "renting";
+    monthlyHousingCost: number;
+  } | null>(null);
+  const pictureProfile = useMemo(
+    () => (savedHousing ? { ...(userProfile ?? {}), ...savedHousing } : userProfile),
+    [userProfile, savedHousing],
+  );
+
   // The same engine builder the loaders use, run on the live entries so an edit updates every
   // figure on this page at once (E23 section 2).
   const picture = useMemo(
-    () => buildWorkspacePicture({ userProfile, accounts, accountDetails, budgetEntries: entries }),
-    [userProfile, accounts, accountDetails, entries],
+    () =>
+      buildWorkspacePicture({
+        userProfile: pictureProfile,
+        accounts,
+        accountDetails,
+        budgetEntries: entries,
+      }),
+    [pictureProfile, accounts, accountDetails, entries],
   );
+
+  // Renters, and anyone who has not said, see their housing cost here; owners with a mortgage see
+  // it on the mortgage page, and owning outright has no housing payment to show.
+  const housingStatus = pictureProfile?.housingStatus ?? null;
+  const showHousingCost = housingStatus === "renting" || housingStatus === null;
+
+  const handleSaveRent = async (monthly: number) => {
+    const update = { housingStatus: "renting" as const, monthlyHousingCost: monthly };
+    await updateProfile(update);
+    setSavedHousing(update);
+  };
 
   const isBudgetEmpty = useMemo(() => {
     if (entries.length === 0) return true;
@@ -275,6 +303,16 @@ const BudgetContainer: FC = () => {
           onCancel={() => setActiveTab("dashboard")}
           onComplete={handleWizardComplete}
           onUpdateEntry={updateEntry}
+        />
+      )}
+
+      {activeTab === "dashboard" && showHousingCost && (
+        <HousingCostCard
+          housingCost={picture.housingCost}
+          savedRent={
+            housingStatus === "renting" ? (pictureProfile?.monthlyHousingCost ?? null) : null
+          }
+          onSaveRent={handleSaveRent}
         />
       )}
 

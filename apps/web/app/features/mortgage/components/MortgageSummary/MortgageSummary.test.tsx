@@ -31,6 +31,31 @@ const base = (over: Partial<MortgageSummaryProps> = {}): MortgageSummaryProps =>
   ...over,
 });
 
+describe("<MortgageSummary /> fixed rate end date (E32)", () => {
+  it("offers an optional date field with the term when it can be stored", () => {
+    const onChange = vi.fn();
+    render(
+      <MortgageSummary
+        {...base({ isEditing: true, editFixEndDate: "", onEditFixEndDateChange: onChange })}
+      />,
+    );
+    const input = screen.getByLabelText(/Fixed rate end date \(optional\)/) as HTMLInputElement;
+    expect(input.type).toBe("date");
+    expect(input.value).toBe("");
+    fireEvent.change(input, { target: { value: "2027-06-30" } });
+    expect(onChange).toHaveBeenCalledWith("2027-06-30");
+  });
+
+  it("hides the date field when the term cannot be stored", () => {
+    render(
+      <MortgageSummary
+        {...base({ isEditing: true, canSaveTerm: false, onEditFixEndDateChange: vi.fn() })}
+      />,
+    );
+    expect(screen.queryByLabelText(/Fixed rate end date/)).toBeNull();
+  });
+});
+
 describe("<MortgageSummary />", () => {
   it("shows four KPIs with known values", () => {
     render(<MortgageSummary {...base()} />);

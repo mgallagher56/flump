@@ -78,6 +78,9 @@ describe("AgentDataService.getUserFinancialData profile facts (E23)", () => {
       studentLoanPlans: null,
       pensionPercent: null,
       isSalarySacrifice: null,
+      housingStatus: null,
+      monthlyHousingCost: null,
+      mortgageType: null,
     });
   });
 

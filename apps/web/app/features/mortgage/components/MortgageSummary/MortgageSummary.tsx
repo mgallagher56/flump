@@ -68,6 +68,9 @@ export interface MortgageSummaryProps {
   onEditInterestRateChange: (value: string) => void;
   onEditRemainingTermChange: (value: string) => void;
   onEditMortgageTypeChange: (value: MortgageKind) => void;
+  /** Fixed-rate end date being edited (YYYY-MM-DD, or "" for none). Shown with the term field. */
+  editFixEndDate?: string;
+  onEditFixEndDateChange?: (value: string) => void;
 }
 
 export const MortgageSummary: FC<MortgageSummaryProps> = ({
@@ -96,6 +99,8 @@ export const MortgageSummary: FC<MortgageSummaryProps> = ({
   onEditInterestRateChange,
   onEditRemainingTermChange,
   onEditMortgageTypeChange,
+  editFixEndDate = "",
+  onEditFixEndDateChange,
 }) => {
   // Figures that cannot be stored here send the user to add an account instead of an edit form
   // that would only hold them in memory.
@@ -221,6 +226,18 @@ export const MortgageSummary: FC<MortgageSummaryProps> = ({
                     type="number"
                     value={editRemainingTerm}
                     onChange={(e) => onEditRemainingTermChange(e.target.value)}
+                  />
+                )}
+              </FormField>
+            ) : null}
+            {canSaveTerm && onEditFixEndDateChange ? (
+              <FormField label="Fixed rate end date (optional)">
+                {(field) => (
+                  <TextInput
+                    {...controlProps(field)}
+                    type="date"
+                    value={editFixEndDate}
+                    onChange={(e) => onEditFixEndDateChange(e.target.value)}
                   />
                 )}
               </FormField>

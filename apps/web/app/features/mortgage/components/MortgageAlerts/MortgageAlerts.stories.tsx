@@ -26,4 +26,16 @@ export const Both: Story = {
   },
 };
 
-export const RefinanceOnly: Story = { args: { showMissingAccount: false } };
+export const RefinanceOnly: Story = {
+  args: { showMissingAccount: false },
+  play: async ({ canvasElement }) => {
+    const text = canvasElement.textContent ?? "";
+    await expect(text).not.toMatch(/worth comparing|usually raises/i);
+  },
+};
+
+export const FixedRateEnded: Story = {
+  args: { showMissingAccount: false, refinanceWarning: { diffMonths: 0, date: "2026-10-01" } },
+};
+
+export const Dark: Story = { args: { showMissingAccount: false }, globals: { theme: "dark" } };

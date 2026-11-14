@@ -65,6 +65,14 @@ export const Editing: Story = {
   },
 };
 
+export const EditingWithFixEndDate: Story = {
+  args: { isEditing: true, editFixEndDate: "2027-06-30", onEditFixEndDateChange: fn() },
+  play: async ({ canvasElement }) => {
+    const input = within(canvasElement).getAllByLabelText(/Fixed rate end date/)[0];
+    await expect(input).toHaveValue("2027-06-30");
+  },
+};
+
 export const EditingWithoutAccount: Story = {
   args: { isEditing: true, canSaveFigures: false, canSaveTerm: false },
   play: async ({ canvasElement, args }) => {

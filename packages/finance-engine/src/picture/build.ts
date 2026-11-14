@@ -5,6 +5,12 @@ import type { UkTaxYear } from "../types.js";
 import type { Figure } from "./figure.js";
 import { type FinancialPictureInput, profileFactsFromProfile } from "./input.js";
 import { type BudgetTotals, selectBudgetTotals } from "./selectors/budget-totals.js";
+import {
+  type AccountFixedRateEnd,
+  type HousingCost,
+  selectFixedRateEnds,
+  selectHousingCost,
+} from "./selectors/housing-cost.js";
 import { type MonthsOfCover, selectMonthsOfCover } from "./selectors/months-of-cover.js";
 import {
   type DebtTotals,
@@ -26,12 +32,18 @@ export interface FinancialPicture {
   monthsOfCover: Figure<MonthsOfCover>;
   netWorth: NetWorthTotals;
   debt: DebtTotals;
+  /** Monthly rent or mortgage payment and its share of take-home pay (E32). */
+  housingCost: Figure<HousingCost>;
+  /** Mortgage accounts with a stored fix-end date, as of the build date (E32). */
+  fixedRateEnds: AccountFixedRateEnd[];
 }
 
 export interface BuildFinancialPictureOptions {
   taxYear?: UkTaxYear;
   /** Reuse a snapshot the caller already built from the same rows. */
   snapshot?: PortfolioSnapshot;
+  /** The date date-based facts are measured from. Defaults to now; pass a fixed date in tests. */
+  asOf?: Date;
 }
 
 export function buildFinancialPicture(
@@ -47,6 +59,8 @@ export function buildFinancialPicture(
     monthsOfCover: selectMonthsOfCover(input.budget, snapshot),
     netWorth: selectNetWorth(snapshot),
     debt: selectDebtTotals(snapshot),
+    housingCost: selectHousingCost(input.profile, takeHome, snapshot, input.accounts),
+    fixedRateEnds: selectFixedRateEnds(input.accounts, opts.asOf ?? new Date()),
   };
 }
 
