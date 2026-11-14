@@ -508,6 +508,7 @@ Every ticket also requires: a test that fails before the change and passes after
 - **Blocked by:** the E8 web sweeps merge (for any task editing apps/web/app), the E9 adopt-or-relax decision, and the owner's visual direction decision (D1). Phases 0 to 2 (discovery, tokens, ui components) can start now.
 - **Done when:** one chosen visual direction expressed only through `packages/ui` tokens and components; every key screen rebuilt on them and owner-approved in light and dark at 375 and 1280 px; zero axe violations in gated stories; measured improvement against the Phase 0 baseline; visual regression guard and ratchets in CI.
 - **Notes:** Full plan in `plans/E15-plan-draft.md` (written by an Opus planner; about 115 to 145 agent-days, 3.5 to 5 months elapsed with 2 or 3 worktrees, 15 to 20 hours of owner time). Recommends E15 absorbs E9's remaining scope for each screen it touches. Run its discovery together with E16 discovery. E15 Phase 1 token names must be stable before E12 builds screens.
+- **Status (2026-11-14, checked against `origin/main`):** Direction C is chosen and phase 2 components have merged (#605, #610, #612, #630). Phase 3 screens merged: app shell and dashboard (#609), onboarding (#625), debt (#617, #623), pension (#620), mortgage (#621), take-home and tax leftovers (#616), accounts (#628), settings (#627), and error, empty and signed-out surfaces (#636). Still open: marketing and app chrome parity, and the pre-release visual pass.
 - **Labels:** needs-triage until owner decisions D1 to D4; Phase 0 ready-for-agent
 
 ## E16. Product and functionality review: value, journeys, bloat
@@ -524,6 +525,7 @@ Every ticket also requires: a test that fails before the change and passes after
 - **Blocked by:** E1 (done: PAT-only auth, OAuth disabled). Design phases can start now. Tool scope depends on E16's verdict on whether MCP is a headline feature, and tax tools depend on the owner's E4 vector sign-off.
 - **Done when:** a reviewed target design for MCP tools, resources and prompts and for the REST API contract (versioning, OpenAPI, error and pagination conventions, typed client shared with web and E12 mobile); tools work on the user's real data with scopes, consent and audit; write actions (if approved) behind explicit scopes and confirmation; an eval harness proves models select and call tools correctly; the package or remote endpoint is distributed and every marketing claim about it is true.
 - **Notes:** Full plan in `plans/E17-plan-draft.md` (Opus planner). Absorbs the MCP findings of E1 D-03, E6 G-06, E7 M-10 and E11 F-03 where they concern product shape. The REST contract work overlaps E12 (API versioning, typed client, error contract): do it once.
+- **Status (2026-11-14):** re-planned on 2026-11-13 ([E17-mcp-replan-2026-11.md](plans/E17-mcp-replan-2026-11.md), DECISIONS round 9) around two pillars: queryable reads and staged data entry that only the user commits. Re-plan PRs A (prune) and B (query reads) merged together as #637. PR F (compliance docs: DPIA writes addendum, Hub and perimeter corrections, terms line) is open for review and then needs the owner's signature. PR C (import backend) is being built and has not merged; PRs D (MCP write tools) and E (web review) follow it. E26 is folded in.
 - **Labels:** needs-triage; design phase ready-for-agent
 
 # Added 2026-11-11 from the Fable portfolio review (E18 to E24)
@@ -560,7 +562,7 @@ Source: independent Fable review of the epic portfolio against `main` at e4ff6c3
 - **Blocked by:** none.
 - **Done when:** zod schemas (or equivalent) for every mutating endpoint with global request validation, closing D-08 and B-02 (the endpoints that still take `body: any`); an OpenAPI spec generated from the code; API versioning and an error and pagination convention; a typed client shared by web, the E12 mobile app and E17 agents; contract tests that run web payloads against real controllers on real Postgres (the in-memory repository hides bugs like the onboarding 500s); decimal columns returned as numbers with a policy (B-05).
 - **Notes:** this is one piece of work needed by three epics (E12, E17, validation). Do it once, here.
-- **Status (2026-11-13):** done for the backend. Every route in `packages/api-contract/src/manifest.ts` has request schemas, and every JSON route has a strict response schema (`NON_JSON_RESPONSE_ROUTES` lists the four that are not JSON). `HELD_BACK_GROUPS` is empty and `CONTRACT_MODE` defaults to `enforce` (`shadow` and `off` are incident escape hatches). Responses are checked in every mode and logged as `contract_response_violation`, never rejected; the real-Postgres contract and authz suites fail on any such line. The OpenAPI document carries the response schemas. Follow-ups: the typed client still takes ad hoc response parsers rather than the contract schemas (E12 M1 should adopt them); `createAccount` skips the stored-balance sign rule that update applies (E23 C-15).
+- **Status (2026-11-13; merged as #634 on 2026-11-14):** done for the backend. Every route in `packages/api-contract/src/manifest.ts` has request schemas, and every JSON route has a strict response schema (`NON_JSON_RESPONSE_ROUTES` lists the four that are not JSON). `HELD_BACK_GROUPS` is empty and `CONTRACT_MODE` defaults to `enforce` (`shadow` and `off` are incident escape hatches). Responses are checked in every mode and logged as `contract_response_violation`, never rejected; the real-Postgres contract and authz suites fail on any such line. The OpenAPI document carries the response schemas. Follow-ups: the typed client still takes ad hoc response parsers rather than the contract schemas (E12 M1 should adopt them); `createAccount` skips the stored-balance sign rule that update applies (E23 C-15).
 - **Labels:** needs-triage
 
 ## E22. Tax-year and rates maintenance
@@ -576,6 +578,7 @@ Source: independent Fable review of the epic portfolio against `main` at e4ff6c3
 - **Blocked by:** E4.
 - **Done when:** E16 T-FIX-1 to T-FIX-7 done (onboarding Finish 500s, `PATCH /accounts/:id` 404, region, age and student-loan plan stored and used); C-11 fixed (`_index.tsx:152` estimates tax due as `netProfit * 0.29`); C-15 fixed (`portfolio.ts:167` uses `Math.abs` so overdrawn assets count positive); C-16, C-17 (a failed balance call writes 0); one take-home source of truth across pages; a Playwright smoke test for sign-in, onboarding, add account, budget entry and dashboard totals (E11 F-11).
 - **Notes:** the onboarding and PATCH fixes are in flight as a separate session; E16 holds these bug fixes inside a review epic and they should be tracked here so "not started" does not hide them.
+- **Status (2026-11-14):** the one-request balance check-in with a unique month key (#608) and one financial picture for safe to spend, months of cover and budget totals, with a cross-page consistency harness (#638), have merged.
 - **Labels:** ready-for-agent for T-FIX items
 
 ## E24. Launch readiness and business model
@@ -625,6 +628,7 @@ Source: [docs/research/market-research-2026-11.md](../research/market-research-2
 - **Blocked by:** E4 (owner sign-off of tax vectors) and E22 (tax-year maintenance) for any shipped figure; design can start now.
 - **Done when:** every tax rule is versioned by tax year with a source URL and test vector; one engine answers "what happens to my take-home if my gross changes by X" across the £100k taper, High Income Child Benefit Charge, salary sacrifice (including the April 2029 £2,000 cap), Plan 2 and Plan 5 student loans, and Scottish bands; marginal-rate and cliff views shown on the home and calculator pages with an "as at tax year" label; marketing calculators and the app share one engine; all copy is guidance, not advice.
 - **Notes:** the lead opportunity (backlog #1). Evidence: HMRC-derived counts of 698,000 in the 60% band and 2.29m by 2028-29. Do not model a household-basis child benefit charge or any Budget 2026 change until confirmed on gov.uk. Scotland is a correctness requirement, not a demand-led feature.
+- **Status (2026-11-14):** plan in [E25-plan.md](plans/E25-plan.md). The engine (take-home core, thresholds, what-if, marginal-rate curve; T4 to T8, #631) and the marginal-rate explorer with the public pay-rise tool (T9, T10, T12, #639) have merged. T11, T13 and T14 (calculator rebuild, planner, tax widget) are in progress. Figures stay "unverified" until the owner signs the tax vectors (E4).
 - **Labels:** needs-triage
 
 ## E26. Tax-aware agent tools (extension of E17)
@@ -663,6 +667,7 @@ Source: [docs/research/market-research-2026-11.md](../research/market-research-2
   - **E29a** is free: copy rules, the advice-language guard, disclaimers, the MCP DPIA draft and a widened Innovation Hub enquiry. It gates the friends beta, the E25 copy and E26.
   - **E29b** is the lawyer's perimeter view, inside the launch fixed-fee engagement. It gates public launch and opening E26 to non-friends.
   - E26 and E27 are blocked by E29a, and by E29b before non-friends.
+- **Status (2026-11-14):** E29a built pieces have merged: the MCP allowlist (`apps/backend/src/mcp-access.ts`), the MCP output policy, the advice-boundary copy sweep with the allow-list shrink and rulings log (#633), and the MCP DPIA draft (now v0.2, with a staged-import addendum in E17 re-plan PR F). Owner actions still open: sign the advice-boundary policy and the DPIA, send the Innovation Hub enquiry. E29b (the solicitor) is at launch.
 - **Labels:** needs-triage
 
 ## E30. Monthly snapshots and the check-in habit
@@ -671,6 +676,23 @@ Source: [docs/research/market-research-2026-11.md](../research/market-research-2
 - **Blocked by:** PR1 none (owner runs the E18 backup drill before staging); PR3 needs the owner's email provider choice and a PECR opinion.
 - **Done when:** the first onboarding data is the first monthly snapshot; the user can check in each month from a prefilled form (connected accounts auto-fill, manual edits stick); net worth over time shows month-on-month deltas with carry-forward marked; a user-chosen reminder day sends a figure-free, consent-gated email with one-click unsubscribe; v2 adds actual vs forecast, mortgage reconciliation, crossover, allocation, debt paydown, an MCP history tool and CSV export.
 - **Notes:** evolves `account_details` rather than adding a history table. No streaks or badges, deltas worded the same up or down, assumptions never auto-recalibrated, Europe/London only. Plan: [E30-monthly-snapshots-plan.md](plans/E30-monthly-snapshots-plan.md). PR1 (backend and engine) overlaps E23 section 6.
+- **Status (2026-11-14):** PR1, backend and engine (#614), and PR2, the web check-in, history page and back-fill (#640), have merged. The MCP history tool from v2 shipped early as `get_balance_history` (#637). PR3 (reminder email) waits on the owner's email provider choice and a PECR opinion.
+- **Labels:** needs-triage
+
+## E31. Majority positioning
+
+- **Severity:** P1 for direction (owner requirement, 2026-11-13).
+- **Blocked by:** none.
+- **Done when:** the marketing site and the app lead with the monthly picture and the everyday decisions most people make (renting or a mortgage, debts, pension, a pay rise), not the £100k tax trap, which stays as one tool among many; copy never judges someone's situation or ranks one above another ([copy-style-guide.md](../copy-style-guide.md)); the debt page carries one neutral MoneyHelper line and benefits are signposted only ([advice-boundary-policy.md](../compliance/advice-boundary-policy.md)).
+- **Status (2026-11-14):** done. PR-A, the marketing site (#624), and PR-B, the app and MCP (#632), have merged. The MCP prompt PR-B renamed was then deleted by the E17 re-plan (#637).
+- **Labels:** done
+
+## E32. Housing costs: saved details and deposit timeline
+
+- **Severity:** P2.
+- **Blocked by:** none.
+- **Done when (provisional, written from the working title; the E32 PR replaces it):** housing costs (rent or mortgage) are saved details read by the headline figures, with any what-if kept in a scenario zone that never writes to saved data; a deposit timeline shows when a saved deposit target is reached from recorded figures, with neutral wording that does not rank renting below owning.
+- **Status (2026-11-14):** in progress; nothing merged yet. This entry records the epic; the session working on it holds the detailed scope.
 - **Labels:** needs-triage
 
 ### Addendum to E19: portability
