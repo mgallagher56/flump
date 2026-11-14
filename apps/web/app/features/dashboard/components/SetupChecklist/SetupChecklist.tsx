@@ -1,62 +1,32 @@
-import { Icon, ProgressBar, VisuallyHidden } from "@repo/ui";
-import {
-  Check,
-  ChevronDown,
-  ChevronUp,
-  Circle,
-  CircleCheck,
-  House,
-  Landmark,
-  type LucideIcon,
-  PiggyBank,
-  ReceiptText,
-  ShieldCheck,
-  TrendingUp,
-  Wallet,
-  X,
-} from "lucide-react";
+import { Button, Icon } from "@repo/ui";
+import { ChevronDown, ChevronUp, Circle, CircleCheck, X } from "lucide-react";
 import { type FC, useId, useState } from "react";
-import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router";
-import { useResponsive } from "~/context/ResponsiveContext";
-import { useSampleMode } from "~/context/SampleModeContext";
+import { Link } from "react-router";
 import {
-  actionButton,
-  chevron,
-  countBadge,
   dismissButton,
   header,
   headingWrap,
   panel,
-  progressWrap,
   statusIcon,
   stepBody,
   stepDescription,
-  stepIcon,
   stepItem,
   stepLabel,
   stepList,
-  stepTitleRow,
-  title,
-  titleRow,
   toggle,
-  unlockedNote,
+  toggleText,
 } from "./SetupChecklist.styles";
 
 /** Dismissal is remembered per browser, not per account. */
 export const SETUP_CHECKLIST_DISMISSED_KEY = "flump_setup_checklist_dismissed";
 
-type StepTone = "warning" | "primary" | "positive" | "purple" | "series";
-
 export interface ChecklistStep {
   key: string;
   label: string;
   description: string;
-  icon: LucideIcon;
-  tone: StepTone;
   isComplete: boolean;
   actionLabel: string;
-  onAction: () => void;
+  href: string;
 }
 
 export interface SetupChecklistProps {
@@ -70,10 +40,6 @@ export interface SetupChecklistProps {
   hasTax?: boolean;
   completedSteps: string[];
   enabledPages?: string[];
-  onOpenConnectBank?: () => void;
-  onOpenBudgetWizard?: () => void;
-  isMobile?: boolean;
-  variant?: "desktop" | "mobile";
 }
 
 const readDismissed = (): boolean => {
@@ -92,114 +58,75 @@ const writeDismissed = () => {
   }
 };
 
-const buildSteps = (
-  props: SetupChecklistProps,
-  navigate: ReturnType<typeof useNavigate>,
-): ChecklistStep[] => [
+/** App housekeeping only: each step adds figures to Flump, never a money task (R4). */
+export const buildSteps = (props: SetupChecklistProps): ChecklistStep[] => [
   {
     key: "budget",
-    label: "Break down monthly outgoings",
+    label: "Add your monthly spending",
     description:
-      "Split your monthly outgoings into housing, bills, living and wants to see your months of cover.",
-    icon: Wallet,
-    tone: "warning",
+      "Split your spending into housing, bills, living costs and extras to see your months of cover.",
     isComplete: props.hasBudget || props.completedSteps.includes("budget"),
-    actionLabel: "Drill down budget",
-    onAction: props.onOpenBudgetWizard || (() => navigate("/app/budget")),
+    actionLabel: "Add spending",
+    href: "/app/budget",
   },
   {
     key: "accounts",
     label: "Add your accounts",
-    description: "Add your current accounts and savings pots.",
-    icon: Landmark,
-    tone: "primary",
+    description: "Add your current and savings accounts.",
     isComplete: props.hasAccounts || props.completedSteps.includes("accounts"),
-    actionLabel: "Add account detail",
-    onAction: props.onOpenConnectBank || (() => navigate("/app/accounts")),
+    actionLabel: "Add account",
+    href: "/app/accounts",
   },
   {
     key: "savings",
-    label: "Track savings and interest rates",
-    description: "Record interest rates (AER) and monthly savings targets.",
-    icon: PiggyBank,
-    tone: "positive",
+    label: "Add your savings rates",
+    description: "Add the interest rate (AER) on each account and what you pay in each month.",
     isComplete: !!props.hasSavings || props.completedSteps.includes("savings"),
-    actionLabel: "Track savings",
-    onAction: () => navigate("/app/savings"),
+    actionLabel: "Add savings rates",
+    href: "/app/savings",
   },
   {
     key: "pension",
-    label: "Refine pension schemes and employer match",
-    description: "Add your employer match and track more than one pension pot.",
-    icon: ShieldCheck,
-    tone: "purple",
+    label: "Add your pension details",
+    description: "Add what your employer pays in, and any other pension pots.",
     isComplete: !!props.hasPension || props.completedSteps.includes("pension"),
-    actionLabel: "Refine pension",
-    onAction: () => navigate("/app/pension"),
+    actionLabel: "Add pension details",
+    href: "/app/pension",
   },
   {
     key: "mortgage",
-    label: "Refine mortgage term and overpayment",
-    description:
-      "Model monthly overpayments, view your amortisation schedule and compare an ISA with paying down the mortgage.",
-    icon: House,
-    tone: "positive",
+    label: "Add your mortgage details",
+    description: "Add your balance, rate and term to see your repayment schedule.",
     isComplete: props.hasMortgageAccount || props.completedSteps.includes("mortgage"),
-    actionLabel: "Drill down mortgage",
-    onAction: () => navigate("/app/mortgage"),
-  },
-  {
-    key: "forecast",
-    label: "Explore 10–30 year scenarios",
-    description: "Project your net worth over 10–30 years with the growth forecaster in Savings.",
-    icon: TrendingUp,
-    tone: "series",
-    isComplete: props.hasRunForecast || props.completedSteps.includes("forecast"),
-    actionLabel: "Model scenarios",
-    onAction: () => navigate("/app/savings#forecast"),
+    actionLabel: "Add mortgage details",
+    href: "/app/mortgage",
   },
   {
     key: "tax",
-    label: "Record self-employed or rental tax",
+    label: "Add self-employed or rental income",
     description:
-      "Log income and allowable expenses to see an estimate of your Self Assessment liability.",
-    icon: ReceiptText,
-    tone: "series",
+      "Add income and allowable expenses to see an estimate of your Self Assessment tax bill.",
     isComplete: Boolean(props.hasTax || props.completedSteps.includes("tax")),
-    actionLabel: "Open tax tracker",
-    onAction: () => navigate("/app/self-assessment"),
+    actionLabel: "Open Self Assessment",
+    href: "/app/self-assessment",
   },
 ];
 
+/**
+ * One row under the KPI strip: "Finish setting up: 2 of 5 done". It expands on click to list the
+ * steps and disappears once every step is done (or the user hides it).
+ */
 export const SetupChecklist: FC<SetupChecklistProps> = (props) => {
-  const routerNavigate = useNavigate();
-  const sample = useSampleMode();
-  const { t } = useTranslation();
-  // In the signed-out sandbox these pages need an account, so the actions do nothing.
-  const navigate = (sample ? () => {} : routerNavigate) as typeof routerNavigate;
-  const { isMobile: contextIsMobile } = useResponsive();
-  const isMobileVariant = props.isMobile ?? (props.variant === "mobile" ? true : contextIsMobile);
   const panelId = useId();
   const [expanded, setExpanded] = useState(false);
   const [dismissed, setDismissed] = useState(readDismissed);
 
-  const allSteps = buildSteps(props, navigate);
   const steps = props.enabledPages
-    ? allSteps.filter((s) => {
-        if (s.key === "profile") return true;
-        if (s.key === "runway") return props.enabledPages?.includes("budget");
-        // The growth forecaster is a tab in Savings, so its step follows the Savings module.
-        if (s.key === "forecast") return props.enabledPages?.includes("savings");
-        return props.enabledPages?.includes(s.key);
-      })
-    : allSteps;
-
+    ? buildSteps(props).filter((s) => props.enabledPages?.includes(s.key))
+    : buildSteps(props);
   const completedCount = steps.filter((s) => s.isComplete).length;
-  const allComplete = completedCount === steps.length;
 
-  if (dismissed || allComplete) return null;
-
-  const progressText = `${completedCount} of ${steps.length} steps complete`;
+  if (dismissed || steps.length === 0 || completedCount === steps.length) return null;
 
   return (
     <section
@@ -208,33 +135,26 @@ export const SetupChecklist: FC<SetupChecklistProps> = (props) => {
       data-testid="setup-checklist"
       id="setup-checklist"
     >
-      {/* The heading wraps the toggle so the landmark survives and the whole padded header is the
-          click target; the dismiss button sits beside it, not inside it. The dashboard page
-          heading is h1 and widgets use h2, so the checklist is a sibling h2. */}
       <div className={header()}>
         <h2 className={headingWrap()} id={`${panelId}-title`}>
           <button
             aria-controls={panelId}
             aria-expanded={expanded}
             className={toggle()}
+            data-testid="setup-checklist-toggle"
             type="button"
             onClick={() => setExpanded(!expanded)}
           >
-            <span className={titleRow()}>
-              <span className={title()}>Refine and drill down your baseline</span>
-              <span aria-hidden="true" className={countBadge()}>
-                {completedCount} of {steps.length}
-              </span>
+            <span className={toggleText()}>
+              Finish setting up: {completedCount} of {steps.length} done
             </span>
-            <span className={chevron()}>
-              <Icon icon={expanded ? ChevronUp : ChevronDown} size="sm" />
-            </span>
+            <Icon icon={expanded ? ChevronUp : ChevronDown} size="sm" />
           </button>
         </h2>
         <button
-          aria-label="Dismiss setup checklist"
+          aria-label="Hide setup checklist"
           className={dismissButton()}
-          title="Dismiss"
+          title="Hide setup checklist"
           type="button"
           onClick={() => {
             setDismissed(true);
@@ -245,46 +165,23 @@ export const SetupChecklist: FC<SetupChecklistProps> = (props) => {
         </button>
       </div>
 
-      <div className={progressWrap()}>
-        <ProgressBar height={4} max={steps.length} value={completedCount} />
-      </div>
-      <VisuallyHidden aria-atomic="true" role="status">
-        {progressText}
-      </VisuallyHidden>
-
       <div hidden={!expanded} id={panelId}>
-        <ul className={stepList({ columns: isMobileVariant ? "one" : "responsive" })}>
+        <ul className={stepList()}>
           {steps.map((step) => (
-            <li key={step.key} className={stepItem({ complete: step.isComplete })}>
-              <span className={statusIcon({ complete: step.isComplete })}>
+            <li className={stepItem()} key={step.key}>
+              <span className={statusIcon()}>
                 <Icon
                   icon={step.isComplete ? CircleCheck : Circle}
-                  label={step.isComplete ? "Complete" : "Not started"}
+                  label={step.isComplete ? "Done" : "Not done"}
                 />
               </span>
-
               <div className={stepBody()}>
-                <div className={stepTitleRow()}>
-                  <span className={stepIcon({ tone: step.tone })}>
-                    <Icon icon={step.icon} size="sm" />
-                  </span>
-                  <span className={stepLabel({ complete: step.isComplete })}>{step.label}</span>
-                </div>
+                <span className={stepLabel()}>{step.label}</span>
                 <p className={stepDescription()}>{step.description}</p>
-                {step.isComplete ? (
-                  <span className={unlockedNote()}>
-                    <Icon icon={Check} size="sm" />
-                    Widget unlocked on the dashboard
-                  </span>
-                ) : (
-                  <button
-                    className={actionButton()}
-                    type="button"
-                    aria-disabled={sample ? "true" : undefined}
-                    onClick={sample ? (event) => event.preventDefault() : step.onAction}
-                  >
-                    {sample ? t("signUpToOpen", "Sign up to open") : step.actionLabel}
-                  </button>
+                {step.isComplete ? null : (
+                  <Button asChild size="sm" variant="ghost">
+                    <Link to={step.href}>{step.actionLabel}</Link>
+                  </Button>
                 )}
               </div>
             </li>

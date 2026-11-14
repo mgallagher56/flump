@@ -1,65 +1,54 @@
-import { fireEvent, render, screen } from "@testing-library/react";
-import { Landmark } from "lucide-react";
+import { render, screen } from "@testing-library/react";
+import { PiggyBank } from "lucide-react";
 import { MemoryRouter } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 import { SampleModeProvider } from "~/context/SampleModeContext";
-import { WidgetCard } from "./WidgetCard";
+import { WidgetCard, type WidgetCardProps } from "./WidgetCard";
 
 // The global test setup stubs Link to its children; these tests need real anchors.
 vi.mock("react-router", async () => await vi.importActual("react-router"));
 
-const renderCard = (onHide?: () => void) =>
+const props: WidgetCardProps = {
+  id: "savings",
+  title: "Savings",
+  icon: PiggyBank,
+  domain: "savings",
+  label: "Savings and investments",
+  figure: "£12,000",
+  line: "Across your savings and investment accounts.",
+  link: { to: "/app/savings", label: "Open savings" },
+};
+
+const renderCard = (overrides: Partial<WidgetCardProps> = {}, sample = false) =>
   render(
     <MemoryRouter>
-      <WidgetCard
-        href="/app/accounts"
-        icon={Landmark}
-        id="accounts"
-        title="Accounts"
-        onHide={onHide}
-      >
-        <p>Slot content</p>
-      </WidgetCard>
+      <SampleModeProvider value={sample}>
+        <WidgetCard {...props} {...overrides} />
+      </SampleModeProvider>
     </MemoryRouter>,
   );
 
-describe("<WidgetCard />", () => {
-  it("renders the title, slot content and an Open link", () => {
+describe("WidgetCard", () => {
+  it("shows one figure, one line and one link under the section heading", () => {
     renderCard();
-    expect(screen.getByRole("heading", { name: "Accounts" })).toBeDefined();
-    expect(screen.getByText("Slot content")).toBeDefined();
-    expect(screen.getByRole("link", { name: "Open Accounts" }).getAttribute("href")).toBe(
-      "/app/accounts",
-    );
+    expect(screen.getByRole("heading", { level: 3, name: "Savings" })).toBeTruthy();
+    expect(screen.getByText("£12,000")).toBeTruthy();
+    expect(screen.getByText(props.line)).toBeTruthy();
+    const links = screen.getAllByRole("link");
+    expect(links).toHaveLength(1);
+    expect(links[0].getAttribute("href")).toBe("/app/savings");
+    expect(links[0].textContent).toContain("Open savings");
   });
 
-  it("omits the hide button unless onHide is given", () => {
-    renderCard();
-    expect(screen.queryByRole("button", { name: "Hide Accounts" })).toBeNull();
+  it('shows "Not set" when the figure is unknown', () => {
+    renderCard({ figure: null });
+    expect(screen.getByText("Not set").getAttribute("data-unknown")).toBe("true");
   });
 
-  it("calls onHide when the hide button is pressed", () => {
-    const onHide = vi.fn();
-    renderCard(onHide);
-    fireEvent.click(screen.getByRole("button", { name: "Hide Accounts" }));
-    expect(onHide).toHaveBeenCalledOnce();
-  });
-});
-
-describe("<WidgetCard /> in the sandbox", () => {
-  it("relabels Open to Sign up to open and does not navigate", () => {
-    render(
-      <MemoryRouter>
-        <SampleModeProvider value>
-          <WidgetCard href="/app/accounts" icon={Landmark} id="accounts" title="Accounts">
-            <p>Slot content</p>
-          </WidgetCard>
-        </SampleModeProvider>
-      </MemoryRouter>,
-    );
-    const item = screen.getByRole("button", { name: "signUpToOpen Accounts" });
-    expect(item.getAttribute("aria-disabled")).toBe("true");
-    expect(item.textContent).toBe("signUpToOpen");
-    expect(screen.queryByRole("link", { name: "Open Accounts" })).toBeNull();
+  it("shows a lock and no link in the sandbox", () => {
+    renderCard({}, true);
+    expect(screen.queryByRole("link")).toBeNull();
+    expect(screen.queryByRole("button")).toBeNull();
+    expect(screen.getByRole("img", { name: "Locked in this example" })).toBeTruthy();
   });
 });

@@ -1,17 +1,11 @@
 import { cva } from "@repo/ui/styled-system/css";
 
-export const dashboardPage = cva({
-  base: {
-    maxWidth: "100%",
-    margin: "0 auto",
-    paddingTop: { base: "12px", md: "20px" },
-    paddingBottom: { base: "24px", md: "40px" },
-    paddingX: { base: "16px", md: "24px" },
-    display: "flex",
-    flexDirection: "column",
-    gap: { base: "16px", md: "24px" },
-    minWidth: 0,
-  },
+export const sectionsRegion = cva({
+  base: { display: "flex", flexDirection: "column", gap: "16px", minWidth: 0 },
+});
+
+export const sectionHeading = cva({
+  base: { textStyle: "heading.md", color: "text.primary", margin: 0 },
 });
 
 export const widgetGrid = cva({
@@ -20,6 +14,7 @@ export const widgetGrid = cva({
     gridTemplateColumns: { base: "minmax(0, 1fr)", md: "repeat(2, minmax(0, 1fr))" },
     alignItems: "stretch",
     gap: { base: "12px", md: "20px" },
+    minWidth: 0,
   },
 });
 

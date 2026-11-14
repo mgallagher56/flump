@@ -24,9 +24,9 @@ export const AllHidden: Story = {
   args: { reason: "hidden" },
   play: async ({ canvasElement, args }) => {
     const button = within(canvasElement).getAllByRole("button", {
-      name: "Show or hide widgets",
+      name: "Choose what shows here",
     })[0];
-    if (!button) throw new Error("Choose widgets button missing");
+    if (!button) throw new Error("Choose button missing");
     await userEvent.click(button);
     await expect(args.onChooseWidgets).toHaveBeenCalled();
   },

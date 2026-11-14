@@ -1,9 +1,9 @@
-import { Button, Card, Icon } from "@repo/ui";
+import { Button, Icon } from "@repo/ui";
 import { CalendarCheck } from "lucide-react";
 import { type FC, useId } from "react";
 import { Link } from "react-router";
 import { formatMonth, type MonthKey } from "../../snapshotModel";
-import { cardBody, cardHeader, cardLinks, cardText, cardTitle } from "./MonthlyCheckInCard.styles";
+import { row, rowIcon, rowText, rowTitle } from "./MonthlyCheckInCard.styles";
 
 export const HISTORY_ROUTE = "/app/accounts/history";
 /** Opens the check-in sheet on arrival. Carries no figures (no money in URLs). */
@@ -16,49 +16,43 @@ export interface MonthlyCheckInCardProps {
   lastRecordedMonth: MonthKey | null;
 }
 
+/** A check-in is due when this month has no recorded balances yet. */
+export const isCheckInDue = ({ currentMonth, lastRecordedMonth }: MonthlyCheckInCardProps) =>
+  lastRecordedMonth !== currentMonth;
+
 /**
- * The dashboard's way into the monthly check-in (E30). Matter-of-fact: it says what is recorded
- * and offers the check-in. No streaks, no "overdue", nothing that counts missed months.
+ * The dashboard's way into the monthly check-in (E30), as one row shown only when a check-in is
+ * due. Matter-of-fact: it says what is recorded and offers the check-in. No streaks, no "overdue",
+ * nothing that counts missed months.
  */
-export const MonthlyCheckInCard: FC<MonthlyCheckInCardProps> = ({
-  currentMonth,
-  lastRecordedMonth,
-}) => {
+export const MonthlyCheckInCard: FC<MonthlyCheckInCardProps> = (props) => {
   const headingId = useId();
-  const recordedThisMonth = lastRecordedMonth === currentMonth;
-  const text = recordedThisMonth
-    ? `Balances recorded for ${formatMonth(currentMonth)}. You can update them any time this month.`
-    : lastRecordedMonth
-      ? `Last recorded month: ${formatMonth(lastRecordedMonth)}. Update your balances for ${formatMonth(currentMonth)} whenever suits you.`
-      : "Record your balances once a month to see your net worth over time.";
+  if (!isCheckInDue(props)) return null;
+  const { lastRecordedMonth } = props;
+  const text = lastRecordedMonth
+    ? `Last recorded month: ${formatMonth(lastRecordedMonth)}. Balances for this month are not recorded yet.`
+    : "Record your balances once a month to see your net worth over time.";
 
   return (
-    <Card
+    <section
       aria-labelledby={headingId}
-      as="section"
-      className={cardBody()}
+      className={row()}
       data-testid="monthly-check-in-card"
       id="monthly-check-in-card"
-      padding="md"
     >
-      <div className={cardHeader()}>
+      <span className={rowIcon()}>
         <Icon icon={CalendarCheck} size="md" />
-        <h3 className={cardTitle()} id={headingId}>
+      </span>
+      <div className={rowText()}>
+        <h2 className={rowTitle()} id={headingId}>
           Monthly check-in
-        </h3>
+        </h2>
+        <p>{text}</p>
       </div>
-      <p className={cardText()}>{text}</p>
-      <div className={cardLinks()}>
-        <Button asChild size="sm" variant={recordedThisMonth ? "secondary" : "primary"}>
-          <Link to={CHECK_IN_ROUTE}>Update balances</Link>
-        </Button>
-        {lastRecordedMonth ? (
-          <Button asChild size="sm" variant="ghost">
-            <Link to={HISTORY_ROUTE}>View history</Link>
-          </Button>
-        ) : null}
-      </div>
-    </Card>
+      <Button asChild size="sm" variant="secondary">
+        <Link to={CHECK_IN_ROUTE}>{lastRecordedMonth ? "Update balances" : "Record balances"}</Link>
+      </Button>
+    </section>
   );
 };
 

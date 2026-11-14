@@ -6,12 +6,12 @@ export const widgetCard = cva({
     borderRadius: "card",
     borderWidth: "1px",
     borderStyle: "solid",
-    borderColor: "border.subtle",
+    borderColor: "border",
     boxShadow: "card",
     p: { base: "16px", md: "20px" },
     display: "flex",
     flexDirection: "column",
-    gap: "12px",
+    gap: "8px",
     minWidth: 0,
     height: "100%",
   },
@@ -21,22 +21,9 @@ export const widgetHeader = cva({
   base: {
     display: "flex",
     alignItems: "center",
-    justifyContent: "space-between",
-    gap: "8px",
-    paddingBottom: "12px",
-    borderBottomWidth: "1px",
-    borderBottomStyle: "solid",
-    borderBottomColor: "border.subtle",
-  },
-});
-
-export const widgetTitleRow = cva({
-  base: {
-    display: "flex",
-    alignItems: "center",
-    gap: "10px",
+    gap: "12px",
     minWidth: 0,
-    color: "primary",
+    marginBottom: "4px",
   },
 });
 
@@ -45,16 +32,44 @@ export const widgetTitle = cva({
     textStyle: "heading.sm",
     color: "text.primary",
     margin: 0,
-    overflow: "hidden",
-    textOverflow: "ellipsis",
-    whiteSpace: "nowrap",
+    minWidth: 0,
+    overflowWrap: "anywhere",
   },
 });
 
-export const widgetActions = cva({
-  base: { display: "flex", alignItems: "center", gap: "4px", flexShrink: 0 },
+export const widgetLabel = cva({
+  base: { textStyle: "label.sm", color: "text.secondary", margin: 0 },
 });
 
-export const widgetBody = cva({
-  base: { flex: 1, minWidth: 0 },
+export const widgetFigure = cva({
+  base: {
+    textStyle: "numeric.lg",
+    color: "text.primary",
+    fontVariantNumeric: "tabular-nums",
+    margin: 0,
+    overflowWrap: "anywhere",
+  },
+});
+
+/** "Not set": body size, muted, never larger or heavier than a real value (E16 P3.1). */
+export const widgetUnset = cva({
+  base: { textStyle: "body.md", color: "text.secondary", margin: 0 },
+});
+
+export const widgetLine = cva({
+  base: { textStyle: "body.sm", color: "text.secondary", margin: 0, flex: 1 },
+});
+
+export const widgetFooter = cva({
+  base: { display: "flex", alignItems: "center", marginTop: "4px", marginLeft: "-8px" },
+});
+
+export const widgetLock = cva({
+  base: {
+    display: "inline-flex",
+    alignItems: "center",
+    paddingX: "8px",
+    minHeight: "32px",
+    color: "text.secondary",
+  },
 });

@@ -1,15 +1,15 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import { expect, userEvent, waitFor, within } from "storybook/test";
-import { HomeDashboard } from "./HomeDashboard";
+import { SampleModeProvider } from "~/context/SampleModeContext";
+import { HomeDashboard, type HomeDashboardProps } from "./HomeDashboard";
 
 const userProfile = {
   firstName: "Alex",
   enabledPages: ["accounts", "budget", "debt", "savings", "pension", "mortgage"],
-  dashboardWidgets: ["accounts", "budget", "savings", "pension", "mortgage"],
+  dashboardWidgets: ["accounts", "budget", "debt", "savings", "pension", "mortgage"],
 };
 
-const populated = {
-  user: { id: "u1" },
+const populated: HomeDashboardProps = {
   userProfile,
   persistVisibility: false,
   checklistProps: {
@@ -19,50 +19,23 @@ const populated = {
     hasSavings: true,
     hasPension: true,
     hasMortgageAccount: true,
-    hasRunForecast: true,
-    completedSteps: ["accounts", "budget", "profile", "savings", "pension", "mortgage"],
+    hasRunForecast: false,
+    completedSteps: ["accounts", "budget", "savings", "pension", "mortgage"],
   },
-  accountsData: {
-    netWorth: 50000,
-    totalAssets: 60000,
-    totalLiabilities: 10000,
-    accountsCount: 3,
-    typeTotals: { Current: 10000, Saving: 50000 },
-  },
+  checkIn: { currentMonth: "2026-11", lastRecordedMonth: "2026-10" },
+  netWorthPrior: { month: "2026-10", netWorth: 49680 },
+  accountsData: { netWorth: 50000, homeEstimate: 0, accountsCount: 4 },
   budgetData: {
+    budgetKnown: true,
     monthlyIncome: 4000,
     monthlyExpenses: 2500,
     monthlySurplus: 1500,
-    savingsRatePct: 38,
-    runwayMonths: 12,
+    monthsOfCover: 6.2,
   },
-  savingsData: {
-    totalSavingsBalance: 50000,
-    totalMonthlyContributions: 500,
-    weightedInterestRate: 4.5,
-    accountsCount: 2,
-  },
-  pensionData: {
-    totalPensionBalance: 30000,
-    potsCount: 1,
-    employeePercent: 5,
-    employerPercent: 3,
-    isSalarySacrifice: true,
-    monthlyContributionEst: 400,
-  },
-  mortgageData: {
-    mortgageBalance: 150000,
-    interestRate: 4.2,
-    remainingTermYears: 22,
-    hasMortgageAccount: true,
-  },
-  forecastData: {
-    totalAssets: 60000,
-    monthlySavingRate: 1500,
-    annualSalary: 55000,
-    estimatedTakeHome: 3200,
-  },
-  taxData: { recordsCount: 0 },
+  savingsData: { totalSavingsBalance: 20000, accountsCount: 2 },
+  pensionData: { totalPensionBalance: 30000, potsCount: 1, employeePercent: 5, employerPercent: 3 },
+  mortgageData: { mortgageBalance: 150000, hasMortgageAccount: true },
+  taxData: { estimatedTaxDue: null, recordsCount: 0 },
   debtData: null,
 };
 
@@ -70,7 +43,7 @@ const meta: Meta<typeof HomeDashboard> = {
   title: "3. Financial Patterns & Sections/HomeDashboard",
   component: HomeDashboard,
   parameters: { layout: "fullscreen" },
-  args: populated as any,
+  args: populated,
 };
 
 export default meta;
@@ -80,53 +53,91 @@ type Story = StoryObj<typeof HomeDashboard>;
 export const Populated: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    await expect(canvas.getAllByText("Budget")[0]).toBeDefined();
-
-    const open = canvas.getAllByRole("button", { name: /Show or hide widgets/ })[0];
-    if (!open) throw new Error("Show or hide button missing");
-    await userEvent.click(open);
-
-    const dialog = await within(document.body).findByRole("dialog", {
-      name: "Show or hide widgets",
-    });
-    // The legacy widgets still carry their own dark-mode contrast debt (cleared in PR2 to PR4), so
-    // the story ends with every widget hidden: the checklist and empty state are what axe checks.
-    for (const box of within(dialog).getAllByRole("checkbox")) {
-      if ((box as HTMLInputElement).checked) await userEvent.click(box);
-    }
-    await userEvent.click(within(dialog).getByRole("button", { name: "Done" }));
-
-    await waitFor(() => expect(canvas.queryAllByText("Budget")).toHaveLength(0));
-    await expect(canvas.getAllByRole("heading", { name: "No widgets showing" })[0]).toBeDefined();
+    await expect(canvas.getAllByRole("heading", { level: 1, name: "Your money" })[0]).toBeDefined();
+    await expect(canvas.getAllByText("£320 since October")[0]).toBeDefined();
   },
 };
 
-export const NotSetKpis: Story = {
+export const WithDebt: Story = {
   args: {
-    userProfile: { ...userProfile, dashboardWidgets: [] },
-    checklistProps: { ...populated.checklistProps, hasAccounts: false, hasBudget: false },
-    accountsData: {
-      netWorth: 0,
-      totalAssets: 0,
-      totalLiabilities: 0,
-      accountsCount: 0,
-      typeTotals: {},
+    accountsData: { netWorth: -2000, homeEstimate: 0, accountsCount: 4 },
+    netWorthPrior: null,
+    debtData: {
+      totalDebt: 8000,
+      debtCount: 2,
+      highInterestCount: 1,
+      monthlyMinimumTotal: 250,
+      monthlyMinimumEstimated: false,
+      debtFreeDate: "March 2029",
+      debts: [],
     },
-    budgetData: { monthlyIncome: 0, monthlyExpenses: 0, monthlySurplus: 0 },
-    savingsData: { accountsCount: 0, totalSavingsBalance: 0 },
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    await expect(canvas.getAllByText("Not set").length).toBeGreaterThanOrEqual(4);
-    await expect(canvas.getAllByRole("link", { name: "Add an account" })[0]).toBeDefined();
+    await expect(canvas.getAllByText("What you owe")[0]).toBeDefined();
+    await expect(canvasElement.querySelector('[data-notice="projection"]')).not.toBeNull();
   },
 };
 
-export const EmptyState: Story = {
-  args: { userProfile: { ...userProfile, dashboardWidgets: [] } },
+export const SetupRowExpands: Story = {
+  args: {
+    checklistProps: { ...populated.checklistProps, completedSteps: [], hasSavings: false },
+  },
+  beforeEach: () => {
+    try {
+      window.localStorage.removeItem("flump_setup_checklist_dismissed");
+    } catch {
+      // Storage may be unavailable in the story runner.
+    }
+  },
   play: async ({ canvasElement }) => {
-    await expect(
-      within(canvasElement).getAllByRole("heading", { name: "No widgets showing" })[0],
-    ).toBeDefined();
+    const toggle = within(canvasElement).getAllByRole("button", { name: /Finish setting up/ })[0];
+    if (!toggle) throw new Error("Setup row missing");
+    await userEvent.click(toggle);
+    await waitFor(() => expect(toggle).toHaveAttribute("aria-expanded", "true"));
+  },
+};
+
+export const NearlyEmpty: Story = {
+  args: {
+    checklistProps: {
+      hasAccounts: false,
+      hasProfile: true,
+      hasBudget: false,
+      hasMortgageAccount: false,
+      hasRunForecast: false,
+      completedSteps: [],
+    },
+    checkIn: null,
+    netWorthPrior: null,
+    accountsData: { netWorth: 0, accountsCount: 0 },
+    budgetData: { budgetKnown: false, monthlyIncome: 0, monthlyExpenses: 0, monthlySurplus: null },
+    savingsData: { totalSavingsBalance: 0, accountsCount: 0 },
+    pensionData: {
+      totalPensionBalance: 0,
+      potsCount: 0,
+      employeePercent: null,
+      employerPercent: null,
+    },
+    mortgageData: { mortgageBalance: 0, hasMortgageAccount: false },
+  },
+  play: async ({ canvasElement }) => {
+    await expect(within(canvasElement).getAllByText("Nothing to show yet")[0]).toBeDefined();
+  },
+};
+
+export const Sample: Story = {
+  args: { isSample: true },
+  decorators: [
+    (Story) => (
+      <SampleModeProvider value>
+        <Story />
+      </SampleModeProvider>
+    ),
+  ],
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(canvas.queryAllByRole("link", { name: /Open/ })).toHaveLength(0);
+    await expect(canvas.getAllByRole("img", { name: "Locked in this example" })[0]).toBeDefined();
   },
 };

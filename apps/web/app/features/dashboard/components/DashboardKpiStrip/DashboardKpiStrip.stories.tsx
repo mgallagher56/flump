@@ -7,12 +7,11 @@ const meta: Meta<typeof DashboardKpiStrip> = {
   component: DashboardKpiStrip,
   parameters: { layout: "padded" },
   args: {
-    netWorth: 50000,
-    totalAssets: 60000,
-    totalLiabilities: 10000,
+    budgetKnown: true,
     monthlySurplus: 1500,
-    weeklySafeToSpend: 320,
-    liquidCash: 12500,
+    monthsOfCover: 4.7,
+    totalOwed: null,
+    pensionPot: 30000,
   },
 };
 
@@ -20,44 +19,30 @@ export default meta;
 type Story = StoryObj<typeof DashboardKpiStrip>;
 
 // The Storybook decorator renders light and dark side by side, so queries use the first match.
-export const Populated: Story = {
-  play: async ({ canvasElement }) => {
-    await expect(within(canvasElement).getAllByText("£50,000")[0]).toBeDefined();
-  },
-};
-
-export const NotSet: Story = {
-  args: {
-    netWorth: null,
-    totalAssets: null,
-    totalLiabilities: null,
-    monthlySurplus: null,
-    weeklySafeToSpend: null,
-    liquidCash: null,
-  },
+export const WithPension: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    await expect(canvas.getAllByText("Not set").length).toBeGreaterThan(0);
-    await expect(canvas.getAllByRole("link", { name: "Add an account" })[0]).toBeDefined();
+    await expect(canvas.getAllByText("Left over each month")[0]).toBeDefined();
+    await expect(canvas.getAllByText("Pension pots")[0]).toBeDefined();
   },
 };
 
-/** Commitments go past take-home: the shortfall is named, not shown as a bare £0. */
-export const Shortfall: Story = {
-  args: { weeklySafeToSpend: 0, safeToSpendShortfall: 120, monthlySurplus: -120 },
+export const WithDebt: Story = {
+  args: { totalOwed: 8000 },
   play: async ({ canvasElement }) => {
-    await expect(
-      within(canvasElement).getAllByText(/a month more than take-home/)[0],
-    ).toBeDefined();
+    await expect(within(canvasElement).getAllByText("What you owe")[0]).toBeDefined();
   },
 };
 
-/** A homeowner whose home is their own estimate: it is named inside assets (E16 D3). */
-export const WithHomeEstimate: Story = {
-  args: { netWorth: 241000, totalAssets: 427000, totalLiabilities: 186000, homeEstimate: 310000 },
+export const Shortfall: Story = { args: { monthlySurplus: -250 } };
+
+export const NoBudget: Story = {
+  args: { budgetKnown: false, monthlySurplus: null, monthsOfCover: null },
   play: async ({ canvasElement }) => {
     await expect(
-      within(canvasElement).getAllByText(/including Home \(your estimate\)/)[0],
+      within(canvasElement).getAllByText(
+        "Add your budget to see what is left over each month and your months of cover",
+      )[0],
     ).toBeDefined();
   },
 };

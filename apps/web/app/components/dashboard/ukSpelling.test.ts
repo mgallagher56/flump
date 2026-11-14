@@ -60,7 +60,7 @@ describe("UK spelling in widget, sandbox and debt dialog copy", () => {
       path.join(APP_DIR, "features/dashboard/components/PensionWidget/PensionWidget.tsx"),
       "utf8",
     );
+    // The pension card no longer shows the pay method (E16 PR 4); the abbreviation must not return.
     expect(pension).not.toContain("Sal Sacrifice");
-    expect(pension).toContain("Salary sacrifice");
   });
 });

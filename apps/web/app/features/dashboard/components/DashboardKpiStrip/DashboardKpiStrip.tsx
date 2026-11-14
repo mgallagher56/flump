@@ -1,140 +1,114 @@
-import { HOME_ESTIMATE_LABEL } from "@flump/finance-engine";
 import { Button, KpiCard, KpiStrip, Money } from "@repo/ui";
 import type { FC } from "react";
 import { SampleAwareLink } from "~/components/navigation/SampleAwareLink";
-import { kpiSeparator, kpiStack, kpiSubtext } from "./DashboardKpiStrip.styles";
+import { formatMonthsOfCover } from "../BudgetWidget";
+import { kpiFigure } from "./DashboardKpiStrip.styles";
 
 export interface DashboardKpiStripProps {
   /** `null` for any figure that is unknown. Only a real zero is shown as £0. */
-  netWorth: number | null;
-  totalAssets: number | null;
-  totalLiabilities: number | null;
   monthlySurplus: number | null;
-  weeklySafeToSpend: number | null;
-  /** How far commitments and planned savings go past take-home each month; 0 or null if none. */
-  safeToSpendShortfall?: number | null;
-  liquidCash: number | null;
-  /** The user's own home estimate inside net worth and assets (D3); 0 or absent when none. */
-  homeEstimate?: number | null;
+  monthsOfCover: number | null;
+  /** Total owed on cards, loans and overdrafts; `null` or 0 when there is none. */
+  totalOwed: number | null;
+  /** Pension pots total, shown in the third card when there is no debt. */
+  pensionPot: number | null;
+  /** Whether a budget exists (months of cover then only needs accounts). */
+  budgetKnown: boolean;
 }
 
-const surplusTone = (value: number | null) => {
-  if (value === null || value === 0) return "default" as const;
-  return value > 0 ? ("positive" as const) : ("danger" as const);
-};
+/** True when the third card shows the debt total, so the pension card keeps the pot. */
+export const stripShowsDebt = (totalOwed: number | null): boolean =>
+  totalOwed !== null && totalOwed > 0;
 
-/** The four top-level dashboard figures in one row. */
+const addLink = (to: string, text: string) => (
+  <Button asChild size="sm" variant="ghost">
+    <SampleAwareLink to={to}>{text}</SampleAwareLink>
+  </Button>
+);
+
+/**
+ * The dashboard's three supporting figures (E16 P1.5): what is left over each month, months of
+ * cover, and the total owed if there is any debt, otherwise the pension pots. Net worth is the hero
+ * and never repeats here. Captions carry no figures. Negative amounts keep the usual colour.
+ */
 export const DashboardKpiStrip: FC<DashboardKpiStripProps> = ({
-  netWorth,
-  totalAssets,
-  totalLiabilities,
   monthlySurplus,
-  weeklySafeToSpend,
-  safeToSpendShortfall = null,
-  liquidCash,
-  homeEstimate = null,
+  monthsOfCover,
+  totalOwed,
+  pensionPot,
+  budgetKnown,
 }) => {
-  const shortfall = safeToSpendShortfall !== null && safeToSpendShortfall > 0;
-  const notSet = (href: string, subject: string) => (
-    <Money
-      notSetAction={
-        <Button asChild size="sm" variant="ghost">
-          <SampleAwareLink to={href}>{subject}</SampleAwareLink>
-        </Button>
-      }
-      size="sm"
-      value={null}
-    />
-  );
+  const short = monthlySurplus !== null && monthlySurplus < 0;
+  const showDebt = stripShowsDebt(totalOwed);
 
   return (
-    <div className={kpiStack()}>
-      {netWorth === null ? null : (
+    <KpiStrip
+      emptyPrompt={{
+        title: "Add your budget to see what is left over each month and your months of cover",
+        action: addLink("/app/budget", "Add your budget"),
+        id: "dashboard-kpi-prompt",
+      }}
+      items={[
         <KpiCard
-          label="Net worth"
-          tone="hero"
-          subtext={
-            <span className={kpiSubtext()}>
-              <span>Assets</span>
-              <Money size="sm" tone="onContrast" value={totalAssets} />
-              {homeEstimate !== null && homeEstimate > 0 ? (
-                <span data-testid="kpi-home-estimate" id="kpi-home-estimate">
-                  <span>including {HOME_ESTIMATE_LABEL} </span>
-                  <Money size="sm" tone="onContrast" value={homeEstimate} />
+          emptyAction={monthlySurplus === null ? addLink("/app/budget", "Add your budget") : null}
+          key="left-over"
+          label={short ? "Monthly shortfall" : "Left over each month"}
+          unset={monthlySurplus === null}
+          value={
+            monthlySurplus === null ? null : (
+              <span className={kpiFigure()} data-figure="budget.surplus">
+                <Money fractionDigits={0} size="kpi" value={monthlySurplus} />
+              </span>
+            )
+          }
+        />,
+        <KpiCard
+          emptyAction={
+            monthsOfCover === null
+              ? budgetKnown
+                ? addLink("/app/accounts", "Add your accounts")
+                : addLink("/app/budget", "Add your budget")
+              : null
+          }
+          key="cover"
+          label="Months of cover"
+          unset={monthsOfCover === null}
+          value={
+            monthsOfCover === null ? null : (
+              <span className={kpiFigure()} data-figure="monthsOfCover">
+                {formatMonthsOfCover(monthsOfCover)}
+              </span>
+            )
+          }
+        />,
+        showDebt ? (
+          <KpiCard
+            key="owed"
+            label="What you owe"
+            subtext="Cards, loans and overdrafts"
+            unset={false}
+            value={
+              <span className={kpiFigure()} data-figure="debt.total">
+                <Money fractionDigits={0} size="kpi" value={totalOwed} />
+              </span>
+            }
+          />
+        ) : (
+          <KpiCard
+            emptyAction={pensionPot === null ? addLink("/app/accounts", "Add a pension") : null}
+            key="pension"
+            label="Pension pots"
+            unset={pensionPot === null}
+            value={
+              pensionPot === null ? null : (
+                <span className={kpiFigure()}>
+                  <Money fractionDigits={0} size="kpi" value={pensionPot} />
                 </span>
-              ) : null}
-              <span aria-hidden="true" className={kpiSeparator()}>
-                •
-              </span>
-              <span>Liabilities</span>
-              <Money size="sm" tone="onContrast" value={totalLiabilities} />
-            </span>
-          }
-          value={netWorth}
-        />
-      )}
-      <KpiStrip columns={4}>
-        <KpiCard
-          label="Net worth"
-          value={
-            netWorth === null ? (
-              notSet("/app/accounts", "Add an account")
-            ) : (
-              <span data-figure="netWorth">
-                <Money size="lg" value={netWorth} />
-              </span>
-            )
-          }
-        />
-        <KpiCard
-          label="Monthly surplus"
-          subtext={monthlySurplus === null ? undefined : "Available to save, invest or overpay"}
-          value={
-            monthlySurplus === null ? (
-              notSet("/app/budget", "Add your budget")
-            ) : (
-              <span data-figure="budget.surplus">
-                <Money size="lg" tone={surplusTone(monthlySurplus)} value={monthlySurplus} />
-              </span>
-            )
-          }
-        />
-        <KpiCard
-          label="Weekly safe to spend"
-          subtext={
-            weeklySafeToSpend === null ? undefined : shortfall ? (
-              <span>
-                Commitments and planned savings are <Money size="sm" value={safeToSpendShortfall} />{" "}
-                a month more than take-home
-              </span>
-            ) : (
-              "Discretionary allowance"
-            )
-          }
-          value={
-            weeklySafeToSpend === null ? (
-              notSet("/app/budget", "Add your budget")
-            ) : (
-              <span data-figure="safeToSpend.weekly">
-                <Money size="lg" value={weeklySafeToSpend} />
-              </span>
-            )
-          }
-        />
-        <KpiCard
-          label="Liquid cash"
-          subtext={liquidCash === null ? undefined : "Current and savings accounts"}
-          value={
-            liquidCash === null ? (
-              notSet("/app/savings", "Add a savings account")
-            ) : (
-              <span data-figure="liquidCash">
-                <Money size="lg" value={liquidCash} />
-              </span>
-            )
-          }
-        />
-      </KpiStrip>
-    </div>
+              )
+            }
+          />
+        ),
+      ]}
+    />
   );
 };

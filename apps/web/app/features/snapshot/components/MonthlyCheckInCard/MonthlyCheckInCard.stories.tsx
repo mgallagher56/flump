@@ -19,8 +19,6 @@ export const LastMonthRecorded: Story = {
   },
 };
 
-export const ThisMonthRecorded: Story = { args: { lastRecordedMonth: "2026-11" } };
-
 export const NothingRecorded: Story = {
   args: { lastRecordedMonth: null },
   play: async ({ canvasElement }) => {

@@ -7,14 +7,16 @@ import {
   type MissingKey,
   PortfolioSnapshot,
   profileFactsFromProfile,
-  selectMarginalRate,
   selectTakeHome,
 } from "@flump/finance-engine";
 import type { ReactElement } from "react";
 import { type LoaderFunctionArgs, type MetaFunction, redirect, useLoaderData } from "react-router";
-import { isLiabilityType } from "~/containers/accounts/utils";
 import { HomeDashboard } from "~/features/dashboard/components/HomeDashboard";
-import { latestRecordedMonth, londonMonth } from "~/features/snapshot/snapshotModel";
+import {
+  buildSnapshotHistory,
+  latestRecordedMonth,
+  londonMonth,
+} from "~/features/snapshot/snapshotModel";
 import { loadWorkspaceSnapshot } from "~/services/backend-client.server";
 import { buildDebtSummary } from "~/utils/debtSummary";
 import { isDemoMode } from "~/utils/demoData";
@@ -85,17 +87,6 @@ export const loader = async (args: LoaderFunctionArgs) => {
   const safeToSpend = knownOrNull(picture.safeToSpend);
   const monthsOfCover = knownOrNull(picture.monthsOfCover);
 
-  // Accounts Breakdown
-  const typeTotals: Record<string, number> = {};
-  if (Array.isArray(accounts)) {
-    accounts.forEach((a: any) => {
-      const t = a.type || "Other";
-      const balance = Number(a.balance) || 0;
-      // Liabilities show the amount owed; assets keep their real sign (overdrawn is negative).
-      typeTotals[t] = (typeTotals[t] || 0) + (isLiabilityType(t) ? Math.abs(balance) : balance);
-    });
-  }
-
   // Savings accounts data
   const savingsAccounts = Array.isArray(accounts)
     ? accounts.filter((a: any) => a.type === "Saving" || a.type === "Investment")
@@ -162,17 +153,6 @@ export const loader = async (args: LoaderFunctionArgs) => {
   // Estimated take-home comes from the engine's one selector; unknown stays unknown.
   const takeHomeFigure = selectTakeHome(profileFactsFromProfile(userProfile));
   const takeHome = isFigureKnown(takeHomeFigure) ? takeHomeFigure.value : null;
-  // The dashboard tax card's "next £1,000" facts, from the E25 engine (E25-T14). Unknown stays unknown.
-  const marginalFigure = selectMarginalRate(profileFactsFromProfile(userProfile));
-  const marginal = isFigureKnown(marginalFigure)
-    ? {
-        nextThousandDeductedPct: marginalFigure.value.nextThousandDeductedPct,
-        takeHomeFromNextThousand: marginalFigure.value.takeHomeFromNextThousand,
-        ratesYear: marginalFigure.value.ratesYear,
-        isUnverifiedEstimate: marginalFigure.value.isUnverifiedEstimate,
-        nextThreshold: marginalFigure.value.nextThreshold,
-      }
-    : null;
   const pensionPercentKnown =
     userProfile?.pensionPercent !== null &&
     userProfile?.pensionPercent !== undefined &&
@@ -184,12 +164,25 @@ export const loader = async (args: LoaderFunctionArgs) => {
         )
       : null;
 
+  // The hero's one delta compares today's net worth with the latest recorded month before this
+  // one (E16 P6). Only that month and its total leave the loader.
+  const currentMonth = londonMonth();
+  const details = Array.isArray(accountDetails) ? accountDetails : [];
+  const history = buildSnapshotHistory(
+    Array.isArray(accounts) ? accounts : [],
+    details,
+    currentMonth,
+  );
+  const prior = history.series.filter((p) => !p.allCarried && p.month < currentMonth).at(-1);
+  const netWorthPrior = prior ? { month: prior.month, netWorth: prior.netWorth } : null;
+
   return {
     user,
+    netWorthPrior,
     // E30: the dashboard's monthly check-in card. Month keys only, no figures.
     checkIn: {
-      currentMonth: londonMonth(),
-      lastRecordedMonth: latestRecordedMonth(Array.isArray(accountDetails) ? accountDetails : []),
+      currentMonth,
+      lastRecordedMonth: latestRecordedMonth(details),
     },
     hasAccounts: Array.isArray(accounts) && accounts.length > 0,
     hasBudget:
@@ -209,7 +202,6 @@ export const loader = async (args: LoaderFunctionArgs) => {
       // The seeded home Property account inside net worth, labelled "Home (your estimate)" (D3).
       homeEstimate,
       accountsCount: Array.isArray(accounts) ? accounts.length : 0,
-      typeTotals,
     },
     budgetData: {
       budgetKnown: budget !== null,
@@ -276,7 +268,6 @@ export const loader = async (args: LoaderFunctionArgs) => {
       estimatedTaxDue,
       estimatedTaxDueNotes,
       recordsCount: currentYearRecords.length,
-      marginal,
     },
     debtData: buildDebtSummary(portfolioSnapshot),
   };
@@ -303,6 +294,7 @@ const Index = (): ReactElement => {
     taxData,
     debtData,
     checkIn,
+    netWorthPrior,
   } = data as any;
 
   if (user) {
@@ -312,7 +304,6 @@ const Index = (): ReactElement => {
       totalLiabilities: 0,
       liquidCash: 0,
       accountsCount: 0,
-      typeTotals: {},
     };
 
     const safeBudgetData = budgetData || {
@@ -334,6 +325,7 @@ const Index = (): ReactElement => {
         accountsData={safeAccountsData}
         budgetData={safeBudgetData}
         checkIn={checkIn}
+        netWorthPrior={netWorthPrior ?? null}
         checklistProps={{
           hasAccounts,
           hasBudget,
