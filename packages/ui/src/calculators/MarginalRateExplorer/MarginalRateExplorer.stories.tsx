@@ -16,7 +16,8 @@ type Story = StoryObj<typeof MarginalRateExplorerStandalone>;
 export const Default: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    // Take-home shows in the headline card only; the table lists the deductions.
+    // Take-home shows in the headline card only; the table, in a closed drawer, lists the deductions.
+    await userEvent.click(canvas.getByRole("button", { name: "Where the next £1,000 goes" }));
     await expect(
       within(canvas.getByRole("table", { name: "Where the next £1,000 goes" })).queryByText("£720"),
     ).not.toBeInTheDocument();
