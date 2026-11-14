@@ -69,6 +69,41 @@ describe("BudgetSetupWizard", () => {
     expect(screen.getByText("Add income entry")).toBeDefined();
   });
 
+  it("edit mode starts at Income with the saved entries, with no welcome or example figures", async () => {
+    const onCancel = vi.fn();
+    const onComplete = vi.fn();
+    render(
+      <BudgetSetupWizard
+        entries={mockEntries}
+        mode="edit"
+        monthlyTakeHome={3000}
+        onAddEntry={vi.fn().mockResolvedValue(undefined)}
+        onCancel={onCancel}
+        onComplete={onComplete}
+        onDeleteEntry={vi.fn().mockResolvedValue(undefined)}
+        onUpdateEntry={vi.fn().mockResolvedValue(undefined)}
+      />,
+    );
+
+    expect(screen.getByText("Edit your budget")).toBeDefined();
+    expect(screen.getByText("Step 1 of 6")).toBeDefined();
+    expect(screen.queryByText("Set up your budget")).toBeNull();
+    expect(screen.queryByText("Defaults")).toBeNull();
+    expect(screen.getByRole("heading", { name: "Income" })).toBeDefined();
+    expect(screen.getByText("Salary")).toBeDefined();
+
+    // Back from the first step cancels, it never reaches the welcome or example figures.
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    expect(onCancel).toHaveBeenCalledTimes(1);
+
+    for (let i = 0; i < 5; i++) {
+      fireEvent.click(screen.getByRole("button", { name: /next/i }));
+      await screen.findByText(`Step ${i + 2} of 6`);
+    }
+    fireEvent.click(screen.getByRole("button", { name: "Done" }));
+    expect(onComplete).toHaveBeenCalledTimes(1);
+  });
+
   it("allows removing an item", async () => {
     const onUpdateEntry = vi.fn().mockResolvedValue(undefined);
     const onAddEntry = vi.fn().mockResolvedValue(undefined);

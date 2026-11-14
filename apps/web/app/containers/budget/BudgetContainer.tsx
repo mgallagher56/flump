@@ -70,6 +70,8 @@ const BudgetContainer: FC = () => {
   }, [userProfile, setProfile]);
 
   const [view, setView] = useState<BudgetView>("budget");
+  // Fixed when the wizard opens, so adding the first entries never switches it to edit mid-way.
+  const [wizardMode, setWizardMode] = useState<"setup" | "edit">("setup");
   // The one category whose entries are open in the list (E16 PR 5: rows open their entries).
   const [openCategory, setOpenCategory] = useState<string | null>(null);
   const [entries, setEntries] = useState<BudgetEntry[]>(budgetEntries);
@@ -316,7 +318,10 @@ const BudgetContainer: FC = () => {
             <Button
               data-testid="setup-wizard-btn"
               id="setup-wizard-btn"
-              onClick={() => setView("wizard")}
+              onClick={() => {
+                setWizardMode(isBudgetEmpty ? "setup" : "edit");
+                setView("wizard");
+              }}
             >
               <Icon icon={ListChecks} size="sm" />
               {isBudgetEmpty ? "Set up your budget" : "Edit budget"}
@@ -332,6 +337,7 @@ const BudgetContainer: FC = () => {
       {view === "wizard" ? (
         <BudgetSetupWizard
           entries={entries}
+          mode={wizardMode}
           monthlyTakeHome={
             picture.takeHome.status === "known" ? picture.takeHome.value.monthly : null
           }

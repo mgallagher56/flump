@@ -68,6 +68,11 @@ export interface BudgetSetupWizardProps {
   onCancel: () => void;
   /** Pre-filled monthly take-home from user profile */
   monthlyTakeHome: number | null;
+  /**
+   * "setup" (the default) is the first run: welcome, example figures, then each section. "edit"
+   * changes a saved budget: it starts at Income with the saved entries and skips the first two.
+   */
+  mode?: "setup" | "edit";
 }
 
 type WizardStep =
@@ -89,6 +94,9 @@ const STEPS: WizardStep[] = [
   "savings",
   "summary",
 ];
+
+/** Editing a saved budget skips the welcome and the example figures. */
+const EDIT_STEPS: WizardStep[] = STEPS.filter((step) => step !== "welcome" && step !== "defaults");
 
 const STEP_LABELS: Record<WizardStep, string> = {
   welcome: "Welcome",
@@ -176,9 +184,12 @@ export const BudgetSetupWizard: FC<BudgetSetupWizardProps> = ({
   onComplete,
   onCancel,
   monthlyTakeHome,
+  mode = "setup",
 }) => {
   const { formatCurrency } = useFormatCurrency();
-  const [currentStep, setCurrentStep] = useState<WizardStep>("welcome");
+  const isEdit = mode === "edit";
+  const steps = isEdit ? EDIT_STEPS : STEPS;
+  const [currentStep, setCurrentStep] = useState<WizardStep>(steps[0] ?? "welcome");
   const [localUpdates, setLocalUpdates] = useState<Record<string, Partial<BudgetEntry>>>({});
   const [saving, setSaving] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -241,7 +252,7 @@ export const BudgetSetupWizard: FC<BudgetSetupWizardProps> = ({
     ? entries.find((entry) => entry.id === pendingDeleteId)
     : undefined;
 
-  const stepIndex = STEPS.indexOf(currentStep);
+  const stepIndex = steps.indexOf(currentStep);
   const isFirst = stepIndex === 0;
   const isLast = currentStep === "summary";
 
@@ -266,12 +277,12 @@ export const BudgetSetupWizard: FC<BudgetSetupWizardProps> = ({
         await Promise.all(updateEntries.map(([id, update]) => onUpdateEntry(id, update)));
         setLocalUpdates({});
       }
-      const next = STEPS[stepIndex + 1];
+      const next = steps[stepIndex + 1];
       if (next) setCurrentStep(next);
     } catch (err) {
       console.error("Failed to save budget entries during wizard step:", err);
       // Advance even if saving failed so the wizard is not stuck.
-      const next = STEPS[stepIndex + 1];
+      const next = steps[stepIndex + 1];
       if (next) setCurrentStep(next);
     } finally {
       setSaving(false);
@@ -280,7 +291,7 @@ export const BudgetSetupWizard: FC<BudgetSetupWizardProps> = ({
 
   const goBack = () => {
     resetAddForm();
-    const prev = STEPS[stepIndex - 1];
+    const prev = steps[stepIndex - 1];
     if (prev) setCurrentStep(prev);
   };
 
@@ -403,28 +414,30 @@ export const BudgetSetupWizard: FC<BudgetSetupWizardProps> = ({
   return (
     <div className={wizardRoot()}>
       <ProgressBar
-        label="Budget setup"
-        valueDisplay={`Step ${stepIndex + 1} of ${STEPS.length}`}
+        label={isEdit ? "Edit your budget" : "Budget setup"}
+        valueDisplay={`Step ${stepIndex + 1} of ${steps.length}`}
         value={stepIndex}
-        max={STEPS.length - 1}
+        max={steps.length - 1}
         height={6}
       />
       <ol aria-label="Setup steps" className={stepList()}>
-        {STEPS.filter((s) => s !== "welcome").map((step, i) => {
-          const actualIndex = i + 1;
-          const state =
-            currentStep === step ? "current" : stepIndex > actualIndex ? "done" : "todo";
-          return (
-            <li
-              key={step}
-              aria-current={state === "current" ? "step" : undefined}
-              className={stepItem({ state })}
-            >
-              <Icon icon={state === "done" ? CheckCircle2 : Circle} size="sm" />
-              {STEP_LABELS[step]}
-            </li>
-          );
-        })}
+        {steps
+          .filter((s) => s !== "welcome")
+          .map((step) => {
+            const actualIndex = steps.indexOf(step);
+            const state =
+              currentStep === step ? "current" : stepIndex > actualIndex ? "done" : "todo";
+            return (
+              <li
+                key={step}
+                aria-current={state === "current" ? "step" : undefined}
+                className={stepItem({ state })}
+              >
+                <Icon icon={state === "done" ? CheckCircle2 : Circle} size="sm" />
+                {STEP_LABELS[step]}
+              </li>
+            );
+          })}
       </ol>
 
       <Card padding="lg">
@@ -582,7 +595,7 @@ export const BudgetSetupWizard: FC<BudgetSetupWizardProps> = ({
             ) : isLast ? (
               <>
                 <Icon icon={CheckCircle2} size="sm" />
-                Finish setup
+                {isEdit ? "Done" : "Finish setup"}
               </>
             ) : (
               <>
