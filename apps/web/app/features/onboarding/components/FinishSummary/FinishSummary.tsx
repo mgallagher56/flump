@@ -244,10 +244,13 @@ export const FinishSummary: FC<FinishSummaryProps> = ({
         </div>
       ) : null}
 
-      {/* Plain body copy, not a notice: the projection notice is this step's one notice (P4). */}
-      <p className={classes.saved} data-testid="onboarding-saved-note" id="onboarding-saved-note">
-        {SAVED_NOTES[saveState]}
-      </p>
+      {/* Only when a save went wrong: "Review what will be saved" already says nothing is saved
+          yet. Plain body copy, not a notice: the projection notice is this step's one notice (P4). */}
+      {saveState !== "idle" ? (
+        <p className={classes.saved} data-testid="onboarding-saved-note" id="onboarding-saved-note">
+          {SAVED_NOTES[saveState]}
+        </p>
+      ) : null}
 
       <ProjectionNotice />
 
@@ -272,7 +275,11 @@ export const FinishSummary: FC<FinishSummaryProps> = ({
         <Button
           aria-describedby={[
             error ? "onboarding-finish-error" : null,
-            summary.canFinish ? "onboarding-saved-note" : "finish-income-hint",
+            summary.canFinish
+              ? saveState !== "idle"
+                ? "onboarding-saved-note"
+                : null
+              : "finish-income-hint",
           ]
             .filter(Boolean)
             .join(" ")}

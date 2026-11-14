@@ -7,7 +7,7 @@ import {
   Select,
   TextInput,
 } from "@repo/ui";
-import type { FC } from "react";
+import type { FC, ReactNode } from "react";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import type { TaxRegion } from "~/hooks/useUserProfile";
 import { AGE_ERROR, AGE_MAX, AGE_MIN, isInvalidAge } from "../../age";
@@ -62,6 +62,8 @@ export interface IncomeStepProps {
   update: (patch: Partial<OnboardingValues>) => void;
   onNext: () => void;
   focusOnMount?: boolean;
+  /** The live take-home figure, passed through to the step frame. */
+  summary?: ReactNode;
   /** Mark the empty fields Finish needs (set when the review sends the user here). */
   showMissing?: boolean;
 }
@@ -71,6 +73,7 @@ export const IncomeStep: FC<IncomeStepProps> = ({
   update,
   onNext,
   focusOnMount,
+  summary,
   showMissing = false,
 }) => {
   const classes = incomeStepRecipe();
@@ -88,6 +91,7 @@ export const IncomeStep: FC<IncomeStepProps> = ({
     <StepFrame
       description="We work out your take-home pay from your income. Leave out anything you would rather add later."
       focusOnMount={focusOnMount}
+      summary={summary}
       id="income"
       nextLabel="Next"
       onNext={onNext}

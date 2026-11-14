@@ -1,5 +1,5 @@
 import { CurrencyInput, controlProps, FormField, RadioCardGroup } from "@repo/ui";
-import type { FC } from "react";
+import type { FC, ReactNode } from "react";
 import { type HousingStatus, type OnboardingValues, ownsHome, STEP_LABELS } from "../../types";
 import { StepFrame } from "../StepFrame";
 import { housingStepRecipe } from "./HousingStep.styles";
@@ -30,6 +30,8 @@ export interface HousingStepProps {
   onNext: () => void;
   onSkip: () => void;
   focusOnMount?: boolean;
+  /** The live take-home figure, passed through to the step frame. */
+  summary?: ReactNode;
 }
 
 export const HousingStep: FC<HousingStepProps> = ({
@@ -40,6 +42,7 @@ export const HousingStep: FC<HousingStepProps> = ({
   onNext,
   onSkip,
   focusOnMount,
+  summary,
 }) => {
   const classes = housingStepRecipe();
   const status = values.housingStatus;
@@ -48,6 +51,7 @@ export const HousingStep: FC<HousingStepProps> = ({
     <StepFrame
       description="Your regular costs show what is left over each month and your months of cover."
       focusOnMount={focusOnMount}
+      summary={summary}
       id="housing"
       onBack={onBack}
       onNext={onNext}

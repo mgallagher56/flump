@@ -38,7 +38,7 @@ export const LiveSummaryBar: FC<LiveSummaryBarProps> = ({ summary, assumingRegio
       >
         {summary.hasIncome ? formatCurrency(summary.monthlyTakeHome) : NOT_SET}
       </span>
-      {assumingRegion ? (
+      {assumingRegion && summary.hasIncome ? (
         <span
           className={classes.note}
           data-testid="onboarding-take-home-assumption"
