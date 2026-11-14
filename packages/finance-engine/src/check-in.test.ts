@@ -327,7 +327,7 @@ describe("summary", () => {
     source,
   });
 
-  it("lists what changed and net worth against last month under the basis", () => {
+  it("lists what the user changed and net worth against last month under the basis", () => {
     const answers = {
       c: answer("c", 3500, "manual"),
       v: answer("v", 7600, "confirmed"),
@@ -341,11 +341,10 @@ describe("summary", () => {
       MONTH,
       DEFAULT_NET_WORTH_BASIS,
     );
+    // Savings is a confirmed No change, and the kept calculated mortgage is within £1 of its
+    // saved balance (£186,000), so only the typed current account is listed.
     expect(summary.changed.map((c) => [c.name, c.value, c.calculated])).toEqual([
       ["Current account", 3500, false],
-      // Confirmed at the saved balance, which differs from October's record.
-      ["Easy access savings", 7600, false],
-      ["Residential mortgage", 185999.56, true],
     ]);
     expect(summary.previousMonth).toBe("2026-10");
     // Against October: current +140, savings +220, mortgage 550.44 less owed; accounts not yet
@@ -355,7 +354,7 @@ describe("summary", () => {
     expect(summary.netWorth).toBeCloseTo(3500 + 7600 + 96000 - 185999.56 - 8400, 2);
   });
 
-  it("compares the list and net worth with the same figures: last month's record", () => {
+  it("never lists a confirmed No change, though net worth still moves against last month", () => {
     // Every answer No change repeats the saved balance, which differs from October's records.
     const answers = Object.fromEntries(
       steps.map((s) => [s.accountId, answerValue(s, { kind: "noChange" })!]),
@@ -368,14 +367,15 @@ describe("summary", () => {
       MONTH,
       DEFAULT_NET_WORTH_BASIS,
     );
-    // So each is listed as changed against October, and the net worth line agrees.
-    expect(summary.changed.map((c) => c.accountId)).toEqual(["c", "v", "l", "p", "m", "s"]);
+    // Nothing the user changed, so nothing is listed; the net worth line still compares with
+    // October's records.
+    expect(summary.changed).toEqual([]);
     expect(summary.netWorth).toBe(3400 + 7600 + 96000 - 186000 - 8400);
     // The saved balances against October: +40, +220, +550, +900, +210.
     expect(summary.change).toBe(1920);
   });
 
-  it("lists nothing and shows no change when every figure repeats last month's record", () => {
+  it("compares a typed figure with the saved balance, not last month's record", () => {
     const renter: CheckInAccountInput[] = [
       { id: "C", name: "Current account", type: "Current", balance: 1465 },
       { id: "K", name: "Credit card", type: "Credit Card", balance: -320 },
@@ -394,8 +394,57 @@ describe("summary", () => {
       MONTH,
       DEFAULT_NET_WORTH_BASIS,
     );
-    expect(summary.changed).toEqual([]);
+    // Both typed figures repeat October but differ from the saved balances (£1,465 and £320).
+    expect(summary.changed.map((c) => [c.accountId, c.value])).toEqual([
+      ["c", 1000],
+      ["k", 300],
+    ]);
     expect(summary.change).toBe(0);
+    // Typed at the saved balances instead: nothing changed.
+    const same = buildCheckInSummary(
+      s,
+      { c: answer("c", 1465, "manual"), k: answer("k", 320, "manual") },
+      renter,
+      history,
+      MONTH,
+      DEFAULT_NET_WORTH_BASIS,
+    );
+    expect(same.changed).toEqual([]);
+  });
+
+  it("lists a kept calculated figure that moves £1 or more, and a typed figure with no saved balance", () => {
+    const history = [row("M", 10, -186550)];
+    const loose: CheckInAccountInput[] = [
+      { ...accounts[0]!, balance: -186550 },
+      { id: "N", name: "New savings", type: "Saving" },
+    ];
+    const s = buildCheckInSteps(loose, history, MONTH);
+    const summary = buildCheckInSummary(
+      s,
+      { m: answer("m", 185999.56, "calculated"), n: answer("n", 250, "manual") },
+      loose,
+      history,
+      MONTH,
+      DEFAULT_NET_WORTH_BASIS,
+    );
+    expect(summary.changed.map((c) => [c.accountId, c.calculated])).toEqual([
+      ["n", false],
+      ["m", true],
+    ]);
+  });
+
+  it("does not list a figure recorded before the check-in opened", () => {
+    const history = [row("C", 10, 3360), row("C", 11, 5000)];
+    const s = buildCheckInSteps([accounts[2]!], history, MONTH);
+    const summary = buildCheckInSummary(
+      s,
+      {},
+      [accounts[2]!],
+      history,
+      MONTH,
+      DEFAULT_NET_WORTH_BASIS,
+    );
+    expect(summary.changed).toEqual([]);
   });
 
   it("treats a difference under £1 as unchanged", () => {
@@ -436,9 +485,10 @@ describe("summary", () => {
       MONTH,
       DEFAULT_NET_WORTH_BASIS,
     );
-    // Savings has no October figure: it compares with its saved balance, so it is unchanged and
-    // does not add its whole balance to the change.
-    expect(summary.changed).toEqual([]);
+    // Savings has no October figure: the net worth line compares it with its saved balance, so it
+    // does not add its whole balance to the change. The typed current account differs from its
+    // saved balance (£3,400), so it is listed.
+    expect(summary.changed.map((c) => c.accountId)).toEqual(["c"]);
     expect(summary.netWorth).toBe(8360);
     expect(summary.change).toBe(0);
   });

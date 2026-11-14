@@ -93,6 +93,8 @@ export const CHECK_IN_COPY = {
   stepError: "We could not save this balance. Nothing has changed. Try again.",
   restError: "We could not save these balances. Nothing has changed. Try again.",
   tryAgain: "Try again",
+  /** The summary heading; the month is already in the sheet subtitle. */
+  saved: "Check-in saved",
   whatChanged: "What changed",
   showAll: "Show all",
   done: "Done",
@@ -133,16 +135,6 @@ export function doneText(kind: "updated" | "noChange" | "calculated", value: num
   if (kind === "noChange") return CHECK_IN_COPY.noChange;
   if (kind === "calculated") return `${CHECK_IN_COPY.calculated} ${checkInWholePounds(value)}`;
   return `Updated ${checkInMoney(value)}`;
-}
-
-/** "Check-in saved for November 2026" (a heading: no full stop). */
-export function checkInSavedText(month: MonthKey): string {
-  return `Check-in saved for ${formatMonth(month)}`;
-}
-
-/** "No balances changed since October 2026." */
-export function noBalancesChangedText(since: MonthKey): string {
-  return `No balances changed since ${formatMonth(since)}.`;
 }
 
 /**

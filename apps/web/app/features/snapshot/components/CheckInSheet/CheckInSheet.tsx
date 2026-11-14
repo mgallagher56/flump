@@ -122,7 +122,6 @@ const MonthlyCheckInSheet: FC<CheckInSheetProps> = ({
         <p className={checkInIntro()}>{CHECK_IN_COPY.empty}</p>
       ) : summary ? (
         <CheckInSummary
-          month={currentMonth}
           onChangeBalance={checkIn.reopen}
           onDone={() => handleOpenChange(false)}
           summary={summary}

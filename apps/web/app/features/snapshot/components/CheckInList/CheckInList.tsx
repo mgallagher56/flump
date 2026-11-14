@@ -79,7 +79,8 @@ export const CheckInList: FC<CheckInListProps> = ({ checkIn }) => {
             pending={checkIn.restSaving}
             size="sm"
             type="button"
-            variant="secondary"
+            // The same quiet ghost button as on the phone card.
+            variant="ghost"
           >
             {CHECK_IN_COPY.rest}
           </Button>

@@ -112,8 +112,9 @@ export const CheckInCard: FC<CheckInCardProps> = ({ checkIn }) => {
           id="checkin-rest"
           onClick={() => void checkIn.rest()}
           pending={checkIn.restSaving}
+          size="sm"
           type="button"
-          variant="link"
+          variant="ghost"
         >
           {CHECK_IN_COPY.rest}
         </Button>

@@ -616,8 +616,10 @@ export interface CheckInChange {
 
 export interface CheckInSummary {
   /**
-   * Accounts whose figure differs from last month's by £1 or more, in check-in order. Last
-   * month's figure is the latest recorded before the check-in month, else the saved balance.
+   * Accounts whose figure the user changed in this check-in, in check-in order: a typed figure
+   * (`manual`) or a kept calculated figure that differs by £1 or more from the account's saved
+   * balance before the check-in (`step.lastValue`). A confirmed "No change" is never listed, nor is
+   * a figure recorded before the check-in opened.
    */
   changed: CheckInChange[];
   /** Net worth for the check-in month under the user's basis, from the saved values. */
@@ -634,9 +636,10 @@ export interface CheckInSummary {
 const SUMMARY_TOLERANCE = 1;
 
 /**
- * The end-of-check-in summary: what changed, and net worth against last month under the user's
- * basis. Both compare with one baseline per account (the latest figure recorded before the month,
- * else the saved balance), so the list and the net worth line always agree. The answers are merged
+ * The end-of-check-in summary: what the user changed, and net worth against last month under the
+ * user's basis. The list compares each answer from this check-in with the saved balance it
+ * replaces (what the user saw as "Current balance"); the net worth line compares with one baseline
+ * per account (the latest figure recorded before the month, else the saved balance). The answers are merged
  * into the saved history the way the backend stores them (debts negative), so the figure matches
  * the history page once it reloads.
  */
@@ -668,16 +671,17 @@ export function buildCheckInSummary(
 
   const changed: CheckInChange[] = [];
   for (const step of steps) {
-    const figure = stepFigure(step, answers[step.accountId]);
-    if (!figure) continue;
-    const base = baseline.get(step.accountId);
-    const shownBase = base === undefined ? null : step.isLiability ? Math.abs(base) : base;
-    if (shownBase !== null && Math.abs(figure.value - shownBase) < SUMMARY_TOLERANCE) continue;
+    const answer = answers[step.accountId];
+    // Only a figure the user gave in this check-in: a confirmed No change is never a change.
+    if (!answer || answer.source === "confirmed") continue;
+    if (step.lastValue !== null && Math.abs(answer.value - step.lastValue) < SUMMARY_TOLERANCE) {
+      continue;
+    }
     changed.push({
       accountId: step.accountId,
       name: step.name,
-      value: figure.value,
-      calculated: figure.source === "calculated",
+      value: answer.value,
+      calculated: answer.source === "calculated",
     });
   }
 

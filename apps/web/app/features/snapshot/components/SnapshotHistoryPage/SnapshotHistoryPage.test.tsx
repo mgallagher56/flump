@@ -137,7 +137,8 @@ describe("SnapshotHistoryPage", () => {
     expect(screen.getByText("Net worth recorded for October 2026: -£148,000.")).toBeDefined();
     expect(screen.getByText(fewMonthsPrompt(1))).toBeDefined();
     expect(screen.queryByTestId("net-worth-history-chart")).toBeNull();
-    expect(screen.getByText("Next check-in: 1 December 2026")).toBeDefined();
+    // November is not recorded yet, so no next check-in date beside "not recorded yet".
+    expect(screen.queryByText(/Next check-in/)).toBeNull();
     // Months of cover moved to Budget; no projection, so no notice.
     expect(screen.queryByText(/Months of cover/)).toBeNull();
     expect(screen.queryByText(/Projection|Estimate/)).toBeNull();
@@ -145,6 +146,14 @@ describe("SnapshotHistoryPage", () => {
     expectPageRules(firstView(), { maxFigures: 4 });
     await userEvent.click(screen.getByRole("button", { name: "Update balances" }));
     expect(screen.getByRole("dialog", { name: "Monthly check-in" })).toBeDefined();
+  });
+
+  it("shows the next check-in date once this month is recorded", () => {
+    renderPage({
+      accountDetails: [row(CURRENT, 2026, 10, 2000), row(CURRENT, 2026, 11, 2100)],
+    });
+    expect(screen.getByText("Next check-in: 1 December 2026")).toBeDefined();
+    expect(screen.queryByText(/not recorded yet/)).toBeNull();
   });
 
   it("with two months, shows the change as the hero and the account table, still no chart", async () => {
@@ -165,6 +174,7 @@ describe("SnapshotHistoryPage", () => {
     expect(hero.textContent).toContain("Against September 2026. This month is not recorded yet.");
     expect(screen.getByText(fewMonthsPrompt(2))).toBeDefined();
     expect(screen.queryByTestId("net-worth-history-chart")).toBeNull();
+    expect(screen.queryByText(/Next check-in/)).toBeNull();
     expectPageRules(container, { maxFigures: 6, projectionNotices: 0 });
     // Only the account table exists, so the drawer holds it without tabs.
     await userEvent.click(screen.getByRole("button", { name: "Show changes by account" }));

@@ -47,9 +47,7 @@ export const NoChangeToTheRest: Story = {
   play: async ({ args }) => {
     const body = within(document.body);
     await userEvent.click(await body.findByRole("button", { name: "No change to the rest" }));
-    await expect(
-      await body.findByRole("heading", { name: "Check-in saved for November 2026" }),
-    ).toBeDefined();
+    await expect(await body.findByRole("heading", { name: "Check-in saved" })).toBeDefined();
     await expect(args.onSave).toHaveBeenCalledTimes(1);
   },
 };

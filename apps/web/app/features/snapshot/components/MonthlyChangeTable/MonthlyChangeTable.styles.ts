@@ -14,6 +14,19 @@ export const tableNote = cva({
 });
 
 /**
+ * On the table element. Headers (account names and months) wrap, so the three columns fit at 375
+ * and the change column stays in view; figures keep `nowrap` from `Td numeric`. The table is a
+ * positioned box, so the visually hidden caption and spoken changes (absolutely positioned) stay
+ * inside its scroll box and never widen the page.
+ */
+export const changeTable = cva({
+  base: {
+    position: "relative",
+    "& th": { whiteSpace: "normal", overflowWrap: "break-word" },
+  },
+});
+
+/**
  * The earlier month's column: hidden on phones so the account table keeps three columns and never
  * stacks into labelled cards. The change column still says how far each account moved.
  */

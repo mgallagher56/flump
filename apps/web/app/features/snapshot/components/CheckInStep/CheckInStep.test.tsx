@@ -71,9 +71,12 @@ describe("CheckInStep", () => {
       ),
     ).toBeDefined();
     expect(screen.queryByRole("textbox")).toBeNull();
+    // The calculated figure stands alone: no saved balance beside it, open or done.
+    expect(screen.queryByText(/Current balance/)).toBeNull();
     await userEvent.click(screen.getByRole("button", { name: "Keep this figure" }));
     expect(onAnswer.mock.calls[0]?.[1]).toEqual({ kind: "keepCalculated" });
     await waitFor(() => expect(screen.getByText("Calculated £186,000")).toBeDefined());
+    expect(screen.queryByText(/Current balance/)).toBeNull();
   });
 
   it("reveals the balance field to enter a different figure", async () => {
