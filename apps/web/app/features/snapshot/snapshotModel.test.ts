@@ -25,6 +25,9 @@ const accounts = [
   { id: BANK, name: "Joint account", type: "Current", balance: 900, connectionId: "c1" },
 ];
 
+/** The same accounts with no saved balance, for tests about recorded months only. */
+const historyOnly = accounts.map(({ balance: _balance, ...account }) => account);
+
 const row = (accountId: string, year: number, month: number, value: number) => ({
   accountId,
   year,
@@ -193,7 +196,7 @@ describe("buildSnapshotHistory", () => {
 
   it("a falling mortgage balance is a negative change, and net worth rises by the same amount", () => {
     const h = buildSnapshotHistory(
-      accounts,
+      historyOnly,
       [
         row(CURRENT, 2026, 8, 1000),
         row(MORTGAGE, 2026, 8, -181000),
@@ -214,7 +217,10 @@ describe("buildSnapshotHistory", () => {
 
   it("a growing card balance is a positive change for the account and lowers net worth", () => {
     const CARD = "a0000000-0000-4000-8000-000000000005";
-    const withCard = [...accounts, { id: CARD, name: "Card", type: "Credit Card", balance: -300 }];
+    const withCard = [
+      ...historyOnly,
+      { id: CARD, name: "Card", type: "Credit Card", balance: -450 },
+    ];
     const h = buildSnapshotHistory(
       withCard,
       [row(CARD, 2026, 9, -300), row(CARD, 2026, 10, -450)],
@@ -226,7 +232,7 @@ describe("buildSnapshotHistory", () => {
 
   it("lists month changes newest first and flags carried and new-account months", () => {
     const h = buildSnapshotHistory(
-      accounts,
+      historyOnly,
       [row(CURRENT, 2026, 6, 1000), row(CURRENT, 2026, 8, 1200), row(ISA, 2026, 8, 5000)],
       "2026-09",
     );
@@ -237,10 +243,36 @@ describe("buildSnapshotHistory", () => {
   });
 });
 
+describe("buildSnapshotHistory with saved balances", () => {
+  it("ends the current month on the saved balances, so it matches net worth, and keeps it not recorded", () => {
+    // Recorded October values differ from today's saved balances; ISA and the joint account
+    // have no history at all.
+    const h = buildSnapshotHistory(
+      accounts,
+      [row(CURRENT, 2026, 10, 1000), row(MORTGAGE, 2026, 10, -181000)],
+      "2026-11",
+    );
+    expect(h.latest?.month).toBe("2026-11");
+    expect(h.latest?.allCarried).toBe(true);
+    expect(h.latest?.netWorth).toBe(1500 + 20000 - 180000 + 900);
+    expect(h.latestRecorded?.month).toBe("2026-10");
+    expect(h.latestRecorded?.netWorth).toBe(1000 - 181000);
+  });
+
+  it("a recorded current month keeps its recorded value", () => {
+    const h = buildSnapshotHistory(
+      [{ id: CURRENT, name: "Current account", type: "Current", balance: 1500 }],
+      [row(CURRENT, 2026, 10, 1000), row(CURRENT, 2026, 11, 1500)],
+      "2026-11",
+    );
+    expect(h.latest).toMatchObject({ month: "2026-11", netWorth: 1500, allCarried: false });
+  });
+});
+
 describe("toChartPoints", () => {
   it("draws recorded months solid and bridges carried months with a dashed series", () => {
     const h = buildSnapshotHistory(
-      accounts,
+      historyOnly,
       [row(CURRENT, 2026, 6, 1000), row(CURRENT, 2026, 7, 1100), row(CURRENT, 2026, 9, 1300)],
       "2026-09",
     );

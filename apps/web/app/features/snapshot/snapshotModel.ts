@@ -1,6 +1,8 @@
 import {
   categorizeAccountType,
+  DEFAULT_NET_WORTH_BASIS,
   isLiabilityCategory,
+  type NetWorthBasis,
   type NetWorthPoint,
   type SnapshotRow,
   selectAccountDeltas,
@@ -298,12 +300,15 @@ export interface SnapshotHistory {
 
 /**
  * Builds the whole history view from saved data. The series runs to the current month, so a month
- * with no check-in yet shows as carried forward.
+ * with no check-in yet shows as carried forward. In the current month every account without a
+ * recorded row shows its saved balance (`account.balance`, D22), so the last point equals the net
+ * worth on every other page; the month still counts as not recorded.
  */
 export function buildSnapshotHistory(
   accounts: readonly SnapshotAccountInput[],
   details: readonly AccountDetailInput[],
   current: MonthKey,
+  basis: NetWorthBasis = DEFAULT_NET_WORTH_BASIS,
 ): SnapshotHistory {
   const engineAccounts = (accounts ?? [])
     .filter((a) => a.id)
@@ -311,8 +316,15 @@ export function buildSnapshotHistory(
   const names = new Map(
     (accounts ?? []).filter((a) => a.id).map((a) => [String(a.id).toLowerCase(), a.name ?? ""]),
   );
-  const series = selectNetWorthSeries(engineAccounts, toSnapshotRows(details), {
+  const currentBalances = new Map<string, number>();
+  for (const a of accounts ?? []) {
+    if (!a.id || a.balance === null || a.balance === undefined || a.balance === "") continue;
+    const balance = Number(a.balance);
+    if (Number.isFinite(balance)) currentBalances.set(String(a.id).toLowerCase(), balance);
+  }
+  const series = selectNetWorthSeries(engineAccounts, toSnapshotRows(details), basis, {
     through: current,
+    currentBalances,
   });
   const recordedMonths = series.filter((p) => !p.allCarried).length;
   const stage: HistoryStage =
