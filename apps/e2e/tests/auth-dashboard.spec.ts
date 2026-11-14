@@ -22,9 +22,9 @@ test.describe("sign in and out", () => {
 
     test("logging out returns to the public marketing page", async ({ page }) => {
       await page.goto("/");
-      // Log out lives in the account menu (T-IA-6): open it, then pick the menu item.
+      // Sign out lives in the account menu (T-IA-6): open it, then pick the menu item.
       await page.getByRole("button", { name: "Account menu" }).first().click();
-      await page.getByRole("menuitem", { name: "Log out" }).click();
+      await page.getByRole("menuitem", { name: "Sign out" }).click();
       await expect(page).toHaveURL(new RegExp(`^${MARKETING_URL}/?$`));
       await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
 

@@ -40,7 +40,7 @@ export const Default: Story = {
     await userEvent.hover(hit);
     await waitFor(() =>
       expect(canvas.getByTestId("marginal-rate-tooltip")).toHaveTextContent(
-        "Higher rate (40%); National Insurance upper limit: £50,270 gross pay",
+        "Higher rate (40%); National Insurance upper limit: £50,270 pay before tax",
       ),
     );
     await userEvent.unhover(hit);
