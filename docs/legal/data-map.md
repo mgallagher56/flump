@@ -55,6 +55,9 @@ test checks the catalogue's `user_id` tables against the registry.
 - One database transaction deletes every row with the user's id from every registry table (children
   first, profile last; history and transactions keyed to the user's account ids go too, whatever
   their `user_id`) and writes the tombstone. A failure rolls all of it back.
+- `liability_sign_backfill` (the BE-05 migration's before-image of old and new balance signs) has no
+  user id; its rows go with the account by `ON DELETE CASCADE`. It is not in the export, because the
+  current balances are.
 - From the moment the tombstone commits, every authenticated route refuses the user's tokens with
   410 `{ error: "account_deleted" }` (not 401, so the web app does not loop through sign-in while the
   WorkOS login still exists). Only `DELETE /user-profile` stays open, for retries. `/mcp` is not
