@@ -220,7 +220,7 @@ Flump is a monorepo managed with Turborepo (`turbo`) and Bun.
 - **Sentence Case**: Use sentence case for all headings, subheadings, buttons, tabs, badges, table headers, and form labels, except for proper nouns and recognised UK acronyms (`HMRC`, `FCA`, `PAYE`, `NI`, `ISA`, `SIPP`, `Section 24`).
 - **UK Financial Terminology**: Use `AER` for savings accounts and cash ISAs, `APR`/`EAR` for borrowing and overdrafts, and official UK statutory tax definitions. Never use Americanisms such as `APY`.
 - **No AI Slop or Pseudo-Engineering Jargon**: Avoid melodramatic or speculative buzzwords (`engineered for`, `zero-latency`, `air-gapped`, `cryptographic vault`, `crush your debt`, `defuse promotional cliffs`). Use grounded, pragmatic, and direct language.
-- **Consult & Maintain `docs/copy-style-guide.md`**: Whenever copy, routes, or features are introduced or modified, the agent **MUST** consult `docs/copy-style-guide.md` and ensure full consistency. If new terms or domain concepts are introduced, update `docs/copy-style-guide.md` in the same commit.
+- **Consult & Maintain `docs/copy/COPY-GUIDE.md`**: Whenever copy, routes, or features are introduced or modified, the agent **MUST** consult `docs/copy/COPY-GUIDE.md` and ensure full consistency. If new terms or domain concepts are introduced, update `docs/copy/COPY-GUIDE.md` in the same commit.
 
 ### 23. Institutional-Grade Frontend Architecture & Design System Laws
 

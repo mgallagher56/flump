@@ -5,6 +5,7 @@
     "": {
       "name": "flump",
       "devDependencies": {
+        "@babel/parser": "7.29.13",
         "@biomejs/biome": "2.6.6",
         "@types/node": "26.6.6",
         "@typescript/typescript6": "6.0.2",

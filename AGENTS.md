@@ -55,10 +55,10 @@ CI runs the full suite on every PR in a few minutes, and nothing merges unless i
 
 1. `bun run lint` (zero Biome lint/format errors)
 2. `bun run check-types` (zero TypeScript errors across all monorepo packages)
-3. `bun run check:laws` (design tokens, tabular numbers, react icons and dependency versions)
+3. `bun run check:laws` (design tokens, tabular numbers, react icons, dependency versions and copy)
 4. The tests for what you changed only: `bunx vitest run <paths>` or `bun run test --filter=<package>` for each package the change touches. Do not run the whole monorepo suite locally.
 
-When a change removes violations, the baselines go stale and CI fails. Regenerate them with `bun scripts/check-design-tokens.ts --write-baseline`, `bun scripts/check-tabular-nums.ts --write-baseline` and `bun scripts/check-react-icons.ts --write-baseline`, then commit the updated baseline files.
+When a change removes violations, the baselines go stale and CI fails. Regenerate them with `bun scripts/check-design-tokens.ts --write-baseline`, `bun scripts/check-tabular-nums.ts --write-baseline`, `bun scripts/check-react-icons.ts --write-baseline` and `bun scripts/check-copy.ts --write-baseline`, then commit the updated baseline files.
 
 **Leave to CI:** the full `bun run test`, `bun run build`, Storybook a11y (light and dark), the E2E smoke test and the Docker images. Run one of these locally only to reproduce or debug a CI failure.
 
@@ -137,10 +137,20 @@ Three documents in `docs/ux/` are the standing rules for how Flump behaves and l
 | A new or changed page, flow, form, chart or state in `apps/web` or `apps/marketing`        | UX-GUIDELINES (the sections for what you touch), then `docs/agents/component-guidelines.md`                                                                                 |
 | A new or changed component, token or recipe in `packages/ui`                               | STYLE-GUIDE, then `docs/agents/component-guidelines.md`                                                                                                                     |
 | Any screen in the mobile app, or any change to tokens, formatting or shared specifications | CROSS-PLATFORM, and run its parity checklist                                                                                                                                |
-| User-facing words                                                                          | The copy guide (`docs/copy/COPY-GUIDE.md`; until it lands, `docs/copy-style-guide.md`) and `docs/compliance/advice-boundary-policy.md`. The UX documents do not set wording |
+| User-facing words                                                                          | The copy guide (`docs/copy/COPY-GUIDE.md`, section 11 below) and `docs/compliance/advice-boundary-policy.md`. The UX documents do not set wording |
 
 **How the rules rank.** Each rule in those documents is marked "Enforced by" a law or test, "Proposed check", or "Review only". If a document and a law or test disagree, the law or test wins: follow it, and correct the document in the same PR. If a document and an older design note under `docs/design/` disagree, the `docs/ux/` document wins. Owner decisions in `docs/audit/plans/DECISIONS.md` outrank all of them.
 
 **Review-only rules still apply.** A PR that touches UI states in its description which review-only rules it checked. The `ui-compliance-reviewer` agent reviews against the laws above and the `docs/ux/` documents.
 
 `docs/ux/UX-ASSESSMENT-2026-11.md` is a dated assessment, not a rule set. Do not treat its findings as instructions; the changes it calls for become rules only when they enter the documents above.
+
+## 11. COPY LAW
+
+> **Detailed Reference**: Before writing or changing any string a user or a model reads (web, marketing, `packages/ui`, finance-engine text, MCP descriptions, prompts and results), read [`docs/copy/COPY-GUIDE.md`](./docs/copy/COPY-GUIDE.md).
+
+- **How it fits with the UX guidelines.** [`docs/ux/UX-GUIDELINES.md`](./docs/ux/UX-GUIDELINES.md) says how a screen behaves; the copy guide says what its words are. Where both cover a pattern (empty states, errors, destructive actions), the UX guidelines decide the behaviour and the copy guide decides the wording.
+- **Plain, factual, even-handed.** Everyday words, sentences of 25 words at most, sentence case, en-GB, no exclamation marks, em dashes or ampersands. One approved word per concept (guide section 6): "debts" not "liabilities", "what you own" not "assets", "left over each month" not "surplus", "estimate" for anything computed about the future or tax.
+- **Never judge anyone's finances** (owner rule, guide 2.3): no "only" or "just" about money, no ranking renting below owning, no deprivation statistics at the reader, no red or warnings for ordinary situations.
+- **Facts, not recommendations.** The advice boundary policy (`docs/compliance/advice-boundary-policy.md`, R1 to R8) and the claims rule (E7) outrank everything; the guide restates them in section 7. Fixed wording (notices, the MoneyHelper line, regulatory statements; guide 7.3) is never reworded without the owner.
+- **Guard.** `bun scripts/check-copy.ts` (part of `check:laws`) is a ratchet over `scripts/copy-baseline.json`. `--list <path>` prints the hits under a path. After fixing copy, run `--write-baseline` and commit it. A false positive goes in `ALLOWED_PHRASES` with a reason.
