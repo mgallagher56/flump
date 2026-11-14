@@ -1,4 +1,4 @@
-import { PageHeader, ProjectionNotice, StatusBadge } from "@repo/ui";
+import { PageHeader, StatusBadge } from "@repo/ui";
 import { MarginalRateExplorerStandalone } from "@repo/ui/calculators";
 import { resolveToolSlug, type ToolSlug } from "@repo/ui/tools";
 import type { FC } from "react";
@@ -372,7 +372,6 @@ export const ToolDetailPage: FC = () => {
   return (
     <SignedOutPage>
       <ToolBreadcrumbs category={tool.category} title={tool.title} />
-      <ProjectionNotice />
       <PageHeader
         badge={<StatusBadge variant="neutral">{tool.category}</StatusBadge>}
         description={tool.subtitle}
