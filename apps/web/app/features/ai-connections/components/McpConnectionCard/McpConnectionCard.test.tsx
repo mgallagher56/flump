@@ -71,7 +71,7 @@ describe("McpConnectionCard", () => {
     fireEvent.click(toggle);
     const panel = screen.getByTestId("set-up-panel");
     expect(within(panel).getAllByRole("listitem")).toHaveLength(HOW_TO_CONNECT_STEPS.length);
-    const link = within(panel).getByRole("link", { name: /Read more about AI connections/ });
+    const link = within(panel).getByRole("link", { name: /AI connections on the Flump website/ });
     expect(link.getAttribute("href")).toBe("https://example.test/mcp#setup");
     expect(screen.queryByText(/no setup guide/)).toBeNull();
     expect(screen.queryByText(/npx/)).toBeNull();

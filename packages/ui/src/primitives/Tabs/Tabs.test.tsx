@@ -1,6 +1,12 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { SegmentedTabs, scrollSelectedTabIntoView, Tabs, updateOverflowCue } from "./Tabs";
+import {
+  hasFocusableContent,
+  SegmentedTabs,
+  scrollSelectedTabIntoView,
+  Tabs,
+  updateOverflowCue,
+} from "./Tabs";
 
 describe("Tabs Primitive", () => {
   const items = [
@@ -215,5 +221,66 @@ describe("Tabs Primitive", () => {
     render(<Tabs items={five.slice(0, 4)} value="a" onValueChange={vi.fn()} />);
     expect(warn).not.toHaveBeenCalled();
     warn.mockRestore();
+  });
+  describe("panel tab stop (ARIA APG)", () => {
+    const two = [
+      { value: "a", label: "Controls" },
+      { value: "b", label: "Text" },
+    ];
+
+    it("takes a panel with a button out of the tab order", async () => {
+      render(
+        <Tabs items={two} value="a" onValueChange={vi.fn()}>
+          <Tabs.Panel value="a">
+            <button type="button">Save</button>
+          </Tabs.Panel>
+        </Tabs>,
+      );
+      const panel = screen.getByRole("tabpanel", { name: "Controls" });
+      await waitFor(() => expect(panel.hasAttribute("tabindex")).toBe(false));
+      expect(panel.tabIndex).toBe(-1);
+    });
+
+    it("keeps a panel of plain text as a tab stop (tabIndex 0)", async () => {
+      render(
+        <Tabs items={two} value="b" onValueChange={vi.fn()}>
+          <Tabs.Panel value="b">
+            <p>Nothing to press here.</p>
+          </Tabs.Panel>
+        </Tabs>,
+      );
+      const panel = screen.getByRole("tabpanel", { name: "Text" });
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      expect(panel.getAttribute("tabindex")).toBe("0");
+    });
+
+    it("re-checks when the panel content changes", async () => {
+      const { rerender } = render(
+        <Tabs items={two} value="a" onValueChange={vi.fn()} panels={{ a: <p>Loading</p> }} />,
+      );
+      const panel = screen.getByRole("tabpanel", { name: "Controls" });
+      expect(panel.getAttribute("tabindex")).toBe("0");
+      rerender(
+        <Tabs
+          items={two}
+          value="a"
+          onValueChange={vi.fn()}
+          panels={{ a: <a href="#next">Next step</a> }}
+        />,
+      );
+      await waitFor(() => expect(panel.hasAttribute("tabindex")).toBe(false));
+      rerender(<Tabs items={two} value="a" onValueChange={vi.fn()} panels={{ a: <p>Done</p> }} />);
+      await waitFor(() => expect(panel.getAttribute("tabindex")).toBe("0"));
+    });
+
+    it("hasFocusableContent ignores disabled, hidden-input and negative-tabindex elements", () => {
+      const host = document.createElement("div");
+      host.innerHTML =
+        '<button disabled>x</button><input type="hidden"><span tabindex="-1">y</span><a>no href</a>';
+      expect(hasFocusableContent(host)).toBe(false);
+      host.innerHTML += '<span tabindex="0">z</span>';
+      expect(hasFocusableContent(host)).toBe(true);
+      expect(hasFocusableContent(null)).toBe(false);
+    });
   });
 });

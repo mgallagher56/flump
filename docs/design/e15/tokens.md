@@ -170,7 +170,7 @@ Source: the `--*` variables of `docs/design/e15/directions/c/index.html` (light 
 | `primary.hover`                              | `#0a564b`                                     | `#0a564b`                                     |
 | `primary.subtle` / `border`                  | `#e1f0eb` / `#9ccfc2`                         | `#1e3b35` / `#2e6055`                         |
 | `primary.foreground`                         | `#ffffff`                                     | `#ffffff`                                     |
-| `status.positive` text / bg / border / solid | `#3e6b12` / `#eaf3da` / `#bcd68f` / `#3a5c08` | `#a8d86a` / `#2a3316` / `#4a6428` / `#c5de4c` |
+| `status.positive` text / bg / border / solid | `#3e6b12` / `#eaf3da` / `#bcd68f` / `#3a5c08` | `#a8d86a` / `#1d3a22` / `#34603a` / `#c5de4c` |
 | `status.warning`                             | `#8a4a08` / `#fcebd2` / `#ebc38a` / `#b06a10` | `#f2b873` / `#3b2c16` / `#6b4b1e` / `#e0a04a` |
 | `status.danger`                              | `#a13a2b` / `#fbe5e0` / `#e8b0a4` / `#b64030` | `#f4a593` / `#3d221d` / `#74403a` / `#be5337` |
 | `status.info` (indigo, unchanged)            | `#3730a3` / `#eef0ff` / `#c7c9f7` / `#4f46e5` | `#a5a8ff` / `#1b1e4a` / `#3b3f8f` / `#8f92ff` |

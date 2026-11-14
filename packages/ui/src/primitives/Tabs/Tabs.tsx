@@ -38,6 +38,26 @@ export const updateOverflowCue = (scroller: HTMLElement | null): void => {
   scroller.toggleAttribute("data-overflow-end", max > 1 && scroller.scrollLeft < max - 1);
 };
 
+/** Elements that take keyboard focus by default (or by an explicit non-negative tabindex). */
+const FOCUSABLE_SELECTOR = [
+  "a[href]",
+  "area[href]",
+  "button:not([disabled])",
+  'input:not([disabled]):not([type="hidden"])',
+  "select:not([disabled])",
+  "textarea:not([disabled])",
+  "iframe",
+  "audio[controls]",
+  "video[controls]",
+  "summary",
+  '[contenteditable]:not([contenteditable="false"])',
+  '[tabindex]:not([tabindex^="-"])',
+].join(",");
+
+/** True when `node` contains anything a keyboard user can tab to. */
+export const hasFocusableContent = (node: HTMLElement | null): boolean =>
+  Boolean(node?.querySelector(FOCUSABLE_SELECTOR));
+
 // Replaced statically by the bundler (Vite, Storybook); declared here to avoid a node types dependency.
 declare const process: { env: { NODE_ENV?: string } };
 
@@ -138,15 +158,41 @@ const TabPanel: FC<InternalPanelProps> = ({
 }) => {
   const registry = useContext(PanelRegistryContext);
   const setMounted = registry?.setMounted;
+  const [node, setNode] = useState<HTMLDivElement | null>(null);
   // The ref callback fires on mount and unmount of the Radix panel element, so the registry only
   // lists panels that are actually in the DOM.
   const ref = useCallback(
-    (node: HTMLDivElement | null) => setMounted?.(value, node !== null),
+    (el: HTMLDivElement | null) => {
+      setNode(el);
+      setMounted?.(value, el !== null);
+    },
     [setMounted, value],
   );
+  // ARIA APG: a tab panel is a tab stop only when it holds nothing focusable. Radix always sets
+  // tabIndex=0, so a tall panel full of controls became an extra stop (and the a11y gate found its
+  // centre under the fixed mobile bar). The server and first client render keep tabIndex=0, so
+  // hydration matches; after mount the panel drops out of the tab order while it has focusable
+  // content, re-checked whenever its content changes.
+  const [inTabOrder, setInTabOrder] = useState(true);
+  useEffect(() => {
+    if (!node) return;
+    const update = () => setInTabOrder(!hasFocusableContent(node));
+    update();
+    if (typeof MutationObserver !== "function") return;
+    const observer = new MutationObserver(update);
+    observer.observe(node, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ["disabled", "href", "tabindex", "contenteditable", "type", "controls"],
+    });
+    return () => observer.disconnect();
+  }, [node]);
   return (
     <RadixTabs.Content
       ref={ref}
+      // `undefined` overrides Radix's tabIndex=0 and leaves no tabindex attribute.
+      tabIndex={inTabOrder ? 0 : undefined}
       {...(id ? { id } : {})}
       {...(hidden === undefined ? {} : { hidden })}
       value={value}
