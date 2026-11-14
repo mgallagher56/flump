@@ -203,6 +203,10 @@ describe("BudgetContainer", () => {
     fireEvent.click(screen.getByTestId("setup-wizard-btn"));
     expect(screen.queryByTestId("hero-figure")).toBeNull();
     expect(screen.queryByTestId("setup-wizard-btn")).toBeNull();
+    // Edit budget edits the saved budget: no first-run welcome or example figures.
+    expect(screen.getByText("Edit your budget")).toBeDefined();
+    expect(screen.queryByText("Set up your budget")).toBeNull();
+    expect(screen.getByRole("heading", { name: "Income" })).toBeDefined();
   });
 
   it("keeps months of cover inputs for the visit only: not saved, not requested, not in the hero", async () => {

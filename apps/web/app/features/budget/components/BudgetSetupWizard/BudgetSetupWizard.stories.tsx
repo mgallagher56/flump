@@ -36,3 +36,14 @@ export const IncomeStep: Story = {
     await expect((await canvas.findAllByText("Salary"))[0]).toBeDefined();
   },
 };
+
+/** "Edit budget" on a saved budget: starts at Income, no welcome or example figures. */
+export const EditMode: Story = {
+  args: { mode: "edit" },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(canvas.getAllByText("Edit your budget")[0]).toBeDefined();
+    await expect(canvas.getAllByText("Step 1 of 6")[0]).toBeDefined();
+    await expect(canvas.queryByText("Set up your budget")).toBeNull();
+  },
+};
