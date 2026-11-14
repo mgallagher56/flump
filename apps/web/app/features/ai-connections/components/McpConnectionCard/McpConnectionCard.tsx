@@ -1,18 +1,18 @@
-import { Button, SegmentedTabs, StatusBadge } from "@repo/ui";
+import { Button, Icon, SegmentedTabs, StatusBadge } from "@repo/ui";
 import { css, cx } from "@repo/ui/styled-system/css";
 import { flex, stack } from "@repo/ui/styled-system/patterns";
-import { type FC, useState } from "react";
 import {
-  FaCheck,
-  FaCheckCircle,
-  FaCopy,
-  FaDownload,
-  FaKey,
-  FaLock,
-  FaRobot,
-  FaShieldAlt,
-  FaTrash,
-} from "react-icons/fa";
+  Bot,
+  Check,
+  CircleCheck,
+  Copy,
+  Download,
+  KeyRound,
+  Lock,
+  ShieldCheck,
+  Trash2,
+} from "lucide-react";
+import { type FC, useState } from "react";
 import {
   codeSnippetBox,
   connectionCard,
@@ -216,7 +216,7 @@ export const McpConnectionCard: FC<McpConnectionCardProps> = ({
                 color: "primary",
               })}
             >
-              <FaRobot size={18} />
+              <Icon icon={Bot} size="md" />
             </div>
             <div>
               <h3
@@ -363,7 +363,7 @@ export const McpConnectionCard: FC<McpConnectionCardProps> = ({
           })}
         >
           <div className={flex({ align: "center", gap: "2.5" })}>
-            <FaShieldAlt className={css({ color: "primary" })} size={16} />
+            <Icon icon={ShieldCheck} size="sm" className={css({ color: "primary" })} />
             <div>
               <span
                 className={css({
@@ -424,7 +424,11 @@ export const McpConnectionCard: FC<McpConnectionCardProps> = ({
             data-testid="new-token-banner"
           >
             <div className={flex({ align: "center", gap: "1.5" })}>
-              <FaCheckCircle className={css({ color: "status.positive.text" })} />
+              <Icon
+                icon={CircleCheck}
+                size="sm"
+                className={css({ color: "status.positive.text" })}
+              />
               <span
                 className={css({
                   fontSize: "xs",
@@ -467,7 +471,7 @@ export const McpConnectionCard: FC<McpConnectionCardProps> = ({
                 type="button"
                 onClick={() => handleCopy(newlyCreatedToken, setCopiedToken)}
               >
-                {copiedToken ? <FaCheck /> : <FaCopy />}
+                {copiedToken ? <Icon icon={Check} size="sm" /> : <Icon icon={Copy} size="sm" />}
               </button>
             </div>
           </div>
@@ -491,7 +495,8 @@ export const McpConnectionCard: FC<McpConnectionCardProps> = ({
               variant="outline"
               onClick={() => setShowGenerateForm(true)}
             >
-              <FaKey className={css({ mr: "1.5" })} />+ Generate New AI Connection Token
+              <Icon icon={KeyRound} size="sm" className={css({ mr: "1.5" })} />+ Generate New AI
+              Connection Token
             </Button>
           </div>
         ) : (
@@ -753,7 +758,7 @@ export const McpConnectionCard: FC<McpConnectionCardProps> = ({
                               type="button"
                               onClick={() => handleRevoke(tok.id)}
                             >
-                              <FaTrash className={css({ mr: "1" })} />
+                              <Icon icon={Trash2} size="sm" className={css({ mr: "1" })} />
                               Revoke
                             </button>
                           )}
@@ -788,7 +793,7 @@ export const McpConnectionCard: FC<McpConnectionCardProps> = ({
                 color: "status.info.text",
               })}
             >
-              <FaLock size={18} />
+              <Icon icon={Lock} size="md" />
             </div>
             <div>
               <h3
@@ -826,9 +831,9 @@ export const McpConnectionCard: FC<McpConnectionCardProps> = ({
             onClick={() => handleExportContextPack("clipboard")}
           >
             {exportedSuccess ? (
-              <FaCheck className={css({ mr: "1.5" })} />
+              <Icon icon={Check} size="sm" className={css({ mr: "1.5" })} />
             ) : (
-              <FaCopy className={css({ mr: "1.5" })} />
+              <Icon icon={Copy} size="sm" className={css({ mr: "1.5" })} />
             )}
             {exportedSuccess ? "Copied to Clipboard!" : "Copy Context Pack to Clipboard"}
           </Button>
@@ -841,7 +846,7 @@ export const McpConnectionCard: FC<McpConnectionCardProps> = ({
             variant="outline"
             onClick={() => handleExportContextPack("markdown")}
           >
-            <FaDownload className={css({ mr: "1.5" })} />
+            <Icon icon={Download} size="sm" className={css({ mr: "1.5" })} />
             Download .md
           </Button>
 
@@ -853,7 +858,7 @@ export const McpConnectionCard: FC<McpConnectionCardProps> = ({
             variant="outline"
             onClick={() => handleExportContextPack("json")}
           >
-            <FaDownload className={css({ mr: "1.5" })} />
+            <Icon icon={Download} size="sm" className={css({ mr: "1.5" })} />
             Download .json
           </Button>
         </div>

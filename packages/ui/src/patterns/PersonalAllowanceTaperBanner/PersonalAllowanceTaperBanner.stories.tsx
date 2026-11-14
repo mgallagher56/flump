@@ -1,10 +1,10 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import { expect, within } from "@storybook/test";
-import { TaxTrapEscapeBanner } from "./TaxTrapEscapeBanner";
+import { PersonalAllowanceTaperBanner } from "./PersonalAllowanceTaperBanner";
 
-const meta: Meta<typeof TaxTrapEscapeBanner> = {
-  title: "3. Financial Patterns & Sections/TaxTrapEscapeBanner",
-  component: TaxTrapEscapeBanner,
+const meta: Meta<typeof PersonalAllowanceTaperBanner> = {
+  title: "3. Financial Patterns & Sections/PersonalAllowanceTaperBanner",
+  component: PersonalAllowanceTaperBanner,
   parameters: {
     layout: "padded",
   },
@@ -14,9 +14,9 @@ const meta: Meta<typeof TaxTrapEscapeBanner> = {
 };
 
 export default meta;
-type Story = StoryObj<typeof TaxTrapEscapeBanner>;
+type Story = StoryObj<typeof PersonalAllowanceTaperBanner>;
 
-export const InTrap: Story = {
+export const InTaperBand: Story = {
   args: {
     grossIncome: 115000,
   },
@@ -26,8 +26,14 @@ export const InTrap: Story = {
   },
 };
 
-export const Approaching: Story = {
+export const BelowTaperBand: Story = {
   args: {
     grossIncome: 98000,
+  },
+};
+
+export const AboveTaperBand: Story = {
+  args: {
+    grossIncome: 140000,
   },
 };

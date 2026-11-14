@@ -118,7 +118,10 @@ function parsePgArray(value: string[] | string | null | undefined): string[] {
 /**
  * Rows of the caller's own accounts only: filtered on `account_details.user_id` and joined to
  * `accounts` on (id, user_id), so a row of a deleted or foreign account never comes back.
- * `$1` is the user id; `extra` is appended to the WHERE clause.
+ * `$1` is the user id; `extra` is appended to the WHERE clause. The planner drives from
+ * `account_details` through IDX_account_details_user_account_year_month (user_id first, then each
+ * account's months in order) and hash-joins the user's accounts, so the uuid-to-text cast on
+ * `a."id"` never needs an index of its own.
  */
 const ownedDetails = (extra = "") => `FROM "account_details" d
   JOIN "accounts" a ON a."id"::text = d."account_id" AND a."user_id" = $1

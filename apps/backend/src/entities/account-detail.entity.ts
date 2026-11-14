@@ -21,6 +21,9 @@ export type AccountDetailSource = (typeof ACCOUNT_DETAIL_SOURCES)[number];
 // One row per account per month (E23 D22, UniqueAccountDetailMonth1794356000000); E30 reuses this
 // index as its unique key rather than adding a second one.
 @Index("UQ_account_details_account_year_month", ["accountId", "year", "month"], { unique: true })
+// The agent's per-user reads filter on user_id and walk each account in month order
+// (AccountDetailsUserMonthIndex1794357300000).
+@Index("IDX_account_details_user_account_year_month", ["userId", "accountId", "year", "month"])
 @Check("CHK_account_details_month", `"month" BETWEEN 1 AND 12`)
 @Check(
   "CHK_account_details_source",
@@ -37,7 +40,6 @@ export class AccountDetail {
   @Column({ name: "account_id" })
   accountId: string;
 
-  @Index("IDX_account_details_user")
   @Column({ name: "user_id" })
   userId: string;
 

@@ -433,8 +433,10 @@ describe("ScrubbingConsoleLogger through a Nest app", () => {
       const out = capture();
       const err = new Error(`bad\n    at x (a.js:1:1) ${EMAIL} 4111 1111 1111 1111`);
       createAppLogger({ LOG_FORMAT: "text" }).error(err);
-      expect(out()).not.toContain(EMAIL);
-      expect(out()).not.toContain("4111");
+      // Drop Nest's "[Nest] <pid>" prefix first: a process ID of 4111 is not a leaked card number.
+      const text = out().replace(/\[Nest\] \d+/g, "[Nest]");
+      expect(text).not.toContain(EMAIL);
+      expect(text).not.toContain("4111");
     });
 
     it("strips query and hash from frame paths and handles home dirs in any case", () => {

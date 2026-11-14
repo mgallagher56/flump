@@ -19,6 +19,12 @@ const ID_ROUTES: readonly RegExp[] = [
 ];
 
 /**
+ * Dynamic routes whose segment is a public slug, never a record id: kept as is even when it mixes
+ * letters and digits (`uk-100k-tax-trap-calculator`).
+ */
+const PUBLIC_SLUG_ROUTES: readonly RegExp[] = [/^\/tools\/[a-z0-9-]+$/];
+
+/**
  * A segment that looks like a record id or token: all digits, a UUID, or 8+ characters mixing
  * letters and digits. Plain words (`debt`, `take-home`, a tool slug) are kept.
  */
@@ -33,7 +39,8 @@ function looksLikeId(segment: string): boolean {
  * by `:id` whatever the segment looks like; any other id-like segment is replaced too, so a new
  * dynamic route cannot leak its id into the mailto subject.
  */
-function routeKeyFor(pathname: string): string {
+export function routeKeyFor(pathname: string): string {
+  if (PUBLIC_SLUG_ROUTES.some((route) => route.test(pathname))) return pathname;
   const known = ID_ROUTES.reduce((path, route) => path.replace(route, "$1:id"), pathname);
   return known
     .split("/")

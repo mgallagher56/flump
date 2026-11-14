@@ -1,9 +1,9 @@
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { render, screen, waitFor } from "@testing-library/react";
 import { createRoutesStub, data } from "react-router";
 import { describe, expect, it, vi } from "vitest";
-import { RouteErrorBoundary } from "./RouteErrorBoundary";
+import { RouteErrorBoundary, routeKeyFor } from "./RouteErrorBoundary";
 
 // The global test setup stubs useRevalidator and Form; this suite needs the real router behaviour.
 vi.mock("react-router", async () => await vi.importActual("react-router"));
@@ -224,5 +224,53 @@ describe("route modules", () => {
     expect(src).toContain(
       'export { RouteErrorBoundary as ErrorBoundary } from "~/features/feedback/components/RouteErrorBoundary";',
     );
+  });
+});
+
+describe("routeKeyFor covers every dynamic route", () => {
+  // One example path per dynamic route file in app/routes, with the subject key it must produce.
+  // Adding a `$` route without a row here fails the coverage test below.
+  const DYNAMIC_ROUTES: Record<string, readonly (readonly [string, string])[]> = {
+    $: [
+      ["/no/such/page", "/no/such/page"],
+      ["/old/links/abc12345def", "/old/links/:id"],
+    ],
+    "$feature._index": [
+      ["/debt", "/debt"],
+      ["/take-home", "/take-home"],
+    ],
+    "api.$": [["/api/accounts/550e8400-e29b-41d4-a716-446655440000", "/api/accounts/:id"]],
+    "app.accounts.$account": [
+      ["/app/accounts/acc_123", "/app/accounts/:id"],
+      ["/app/accounts/savings", "/app/accounts/:id"],
+    ],
+    "app.tax.receipts.$id": [
+      ["/app/tax/receipts/rcpt-42", "/app/tax/receipts/:id"],
+      ["/app/tax/receipts/plain", "/app/tax/receipts/:id"],
+    ],
+    "tools.$slug": [
+      ["/tools/uk-100k-tax-trap-calculator", "/tools/uk-100k-tax-trap-calculator"],
+      [
+        "/tools/0-percent-balance-transfer-payoff-calculator",
+        "/tools/0-percent-balance-transfer-payoff-calculator",
+      ],
+      ["/tools/mortgage-overpay-vs-isa", "/tools/mortgage-overpay-vs-isa"],
+    ],
+  };
+
+  it("has a row for every dynamic route file", () => {
+    const dynamic = readdirSync(resolve(__dirname, "../../../../routes"))
+      .filter((f) => f.includes("$") && /\.tsx?$/.test(f) && !/\.(test|spec)\./.test(f))
+      .map((f) => f.replace(/\.tsx?$/, ""))
+      .sort();
+    expect(Object.keys(DYNAMIC_ROUTES).sort()).toEqual(dynamic);
+  });
+
+  it.each(
+    Object.entries(DYNAMIC_ROUTES).flatMap(([route, rows]) =>
+      rows.map(([path, key]) => [route, path, key] as const),
+    ),
+  )("%s: %s becomes %s", (_route, path, key) => {
+    expect(routeKeyFor(path)).toBe(key);
   });
 });

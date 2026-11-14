@@ -151,6 +151,13 @@ export default defineConfig(({ mode }) => ({
           ],
         },
         plugins: [storybookTest({ configDir: `${configDir}/.storybook` })],
+        // Axe must see one theme tree. With VITE_SB_THEME unset (a bare `bunx vitest run
+        // --project storybook <path>`) the preview fell back to side-by-side, which renders every
+        // story twice and fails landmark-unique and scrollable-region-focusable locally while
+        // CI (test:storybook, VITE_SB_THEME=light|dark) passed. Default to light here.
+        define: {
+          "import.meta.env.VITE_SB_THEME": JSON.stringify(process.env.VITE_SB_THEME || "light"),
+        },
         // Pre-bundle deps up front; otherwise Vite re-optimises mid-run and reloads the page,
         // failing suites on a cold cache. Add to this list if the "optimized dependencies
         // changed. reloading" warning reappears.

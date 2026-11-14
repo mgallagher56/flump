@@ -214,29 +214,21 @@ export class BudgetController {
   @Get("budget-entries")
   async getBudgetEntries(@Req() req: any): Promise<BudgetEntry[]> {
     const userId = req.user.id;
-    const entries = await this.budgetEntryRepository.find({
+    // The entity's numeric transformer already returns `amount` as a number.
+    return this.budgetEntryRepository.find({
       where: { userId },
       order: { createdAt: "ASC" },
     });
-
-    return entries.map((entry) => ({
-      ...entry,
-      amount: Number(entry.amount) || 0,
-    })) as BudgetEntry[];
   }
 
   @Post("budget-entries/seed-defaults")
   async seedDefaultBudgetEntries(@Req() req: any): Promise<BudgetEntry[]> {
     const userId = req.user.id;
     await this.seedDefaults(userId);
-    const entries = await this.budgetEntryRepository.find({
+    return this.budgetEntryRepository.find({
       where: { userId },
       order: { createdAt: "ASC" },
     });
-    return entries.map((entry) => ({
-      ...entry,
-      amount: Number(entry.amount) || 0,
-    })) as BudgetEntry[];
   }
 
   @Post("budget-entries/categories")
@@ -302,11 +294,7 @@ export class BudgetController {
       notes: body.notes ?? null,
       isDefault: false,
     });
-    const saved = await this.budgetEntryRepository.save(entry);
-    return {
-      ...saved,
-      amount: Number(saved.amount) || 0,
-    } as BudgetEntry;
+    return this.budgetEntryRepository.save(entry);
   }
 
   @Patch("budget-entries/:id")
@@ -344,11 +332,7 @@ export class BudgetController {
     if (body.isEssential !== undefined) entry.isEssential = body.isEssential;
     if (body.notes !== undefined) entry.notes = body.notes ?? null;
 
-    const saved = await this.budgetEntryRepository.save(entry);
-    return {
-      ...saved,
-      amount: Number(saved.amount) || 0,
-    } as BudgetEntry;
+    return this.budgetEntryRepository.save(entry);
   }
 
   @Delete("budget-entries/:id")
