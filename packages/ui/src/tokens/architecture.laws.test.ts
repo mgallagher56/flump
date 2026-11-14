@@ -335,10 +335,7 @@ describe("Architecture & Design System Laws", () => {
     it("E16: files outside components/core importing a legacy FLP* component may only shrink", () => {
       // Shrinking baseline (plan 4.7). Remove a path when its FLP import goes; never add one.
       // A zero-tolerance rule for FLPTabs lands with PR 9.
-      const LEGACY_FLP_IMPORTERS = [
-        "apps/web/app/components/navigation/NavMenu/NavMenu.tsx",
-        "apps/web/app/components/navigation/UserLogin.tsx",
-      ];
+      const LEGACY_FLP_IMPORTERS = [];
       const repoRoot = path.resolve(__dirname, "../../../..");
       const FLP_IMPORT = /from\s*["'][^"']*components\/core\/[^"']*\/FLP\w*["']/;
       const importers: string[] = [];
