@@ -17,17 +17,28 @@ export interface ThemeToggleProps {
   preference: ThemePreference;
   onChange: (preference: ThemePreference) => void;
   className?: string;
+  /**
+   * Element id (and `data-testid`). Pass a different one for a second toggle on the same page,
+   * such as the copy in the mobile drawer.
+   */
+  id?: string;
 }
 
 /**
  * System / Light / Dark switch, shared by the web app and the marketing site. "System" follows the
  * operating system and is the default.
  */
-export const ThemeToggle: FC<ThemeToggleProps> = ({ preference, onChange, className }) => (
+export const ThemeToggle: FC<ThemeToggleProps> = ({
+  preference,
+  onChange,
+  className,
+  id = "theme-toggle",
+}) => (
   <fieldset
     aria-label="Colour theme"
     className={cx(themeToggleGroup(), className)}
-    id="theme-toggle"
+    data-testid={id}
+    id={id}
   >
     {OPTIONS.map(({ value, label, icon }) => {
       const checked = preference === value;
@@ -37,6 +48,7 @@ export const ThemeToggle: FC<ThemeToggleProps> = ({ preference, onChange, classN
           aria-pressed={checked}
           aria-label={label}
           className={themeToggleOption()}
+          data-testid={`${id}-${value}`}
           type="button"
           onClick={() => onChange(value)}
         >

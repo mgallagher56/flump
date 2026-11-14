@@ -2,6 +2,7 @@ import type { FC, ReactNode } from "react";
 import { cx } from "../../../styled-system/css";
 import { Heading } from "../../primitives/Heading/Heading";
 import { Text } from "../../primitives/Text/Text";
+import { VisuallyHidden } from "../../primitives/VisuallyHidden/VisuallyHidden";
 import {
   siteFooterBlurb,
   siteFooterBottom,
@@ -91,6 +92,7 @@ export const SiteFooter: FC<SiteFooterProps> = ({
                       target={link.newTab ? "_blank" : undefined}
                     >
                       {link.label}
+                      {link.newTab && <VisuallyHidden> (opens in a new tab)</VisuallyHidden>}
                     </a>
                   ) : (
                     renderLink(link, siteFooterLink(), link.label)

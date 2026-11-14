@@ -86,4 +86,19 @@ describe("NavDrawer", () => {
     );
     expect(document.activeElement).toBe(opener);
   });
+  it("keeps focus where it is when the parent re-renders with a new onClose", () => {
+    const { rerender } = render(
+      <NavDrawer footer={<button type="button">Footer action</button>} isOpen onClose={() => {}}>
+        <span />
+      </NavDrawer>,
+    );
+    const action = screen.getByRole("button", { name: "Footer action" });
+    action.focus();
+    rerender(
+      <NavDrawer footer={<button type="button">Footer action</button>} isOpen onClose={() => {}}>
+        <span />
+      </NavDrawer>,
+    );
+    expect(document.activeElement).toBe(action);
+  });
 });

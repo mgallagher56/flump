@@ -66,7 +66,11 @@ const MobileNavDrawer: FC<MobileNavDrawerProps> = ({ isOpen, onClose, user, sand
             </>
           )}
           <div className={footerRow()}>
-            <ThemeToggle onChange={setPreference} preference={preference} />
+            <ThemeToggle
+              id="theme-toggle-drawer"
+              onChange={setPreference}
+              preference={preference}
+            />
             <UserLogin />
           </div>
         </>
