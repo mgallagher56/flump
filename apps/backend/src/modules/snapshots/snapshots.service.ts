@@ -190,7 +190,23 @@ export class SnapshotsService {
           ORDER BY "account_id", "year" DESC, "month" DESC`,
         [userId, calculated.map((r) => r.accountId), year, monthNumber],
       );
+    // A retried save of the same calculated figure for this month (its first response lost) is
+    // accepted as it is: the row already holds it, and the saved balance moved to it.
+    const existing: Array<{ account_id: string; value: string; source: string }> =
+      await manager.query(
+        `SELECT "account_id", "value", "source" FROM "account_details"
+          WHERE "user_id" = $1 AND "account_id" = ANY($2::uuid[]) AND "year" = $3 AND "month" = $4`,
+        [userId, calculated.map((r) => r.accountId), year, monthNumber],
+      );
+    const pence = (v: number) => Math.round(Math.abs(v) * 100);
     for (const r of calculated) {
+      const same = existing.find(
+        (e) =>
+          e.account_id === r.accountId &&
+          e.source === "calculated" &&
+          pence(Number(e.value)) === pence(r.value),
+      );
+      if (same) continue;
       const account = accounts.find((a) => a.id === r.accountId);
       const base = bases.find((b) => b.account_id === r.accountId);
       const expected = calculateCheckInBalance({

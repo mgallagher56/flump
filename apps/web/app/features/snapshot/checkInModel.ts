@@ -1,10 +1,5 @@
-import {
-  type CalculatedFigure,
-  type CheckInAccountInput,
-  calculateCheckInBalance,
-  type StatementPrompt,
-} from "@flump/finance-engine";
-import { formatMonth, type MonthKey } from "./snapshotModel";
+import type { CalculatedFigure, StatementPrompt } from "@flump/finance-engine";
+import { formatMonth } from "./snapshotModel";
 
 /**
  * The account-by-account monthly check-in (R2-5, owner-approved design). The pure rules (the
@@ -46,25 +41,6 @@ export {
  * gets the same save again without it (see `withoutSource`).
  */
 export const CHECK_IN_SENDS_SOURCE = true;
-
-/**
- * The calculated balance for a loan or mortgage: the latest recorded figure before `month`, with
- * one month of interest and one regular payment for each month since (the engine's amortisation).
- * Null when the rate, the payment or a base figure is missing: the check-in never guesses.
- */
-export function calculateBalance(
-  account: CheckInAccountInput,
-  base: { value: number; month: MonthKey } | null,
-  month: MonthKey,
-): CalculatedFigure | null {
-  return calculateCheckInBalance({
-    type: account.type,
-    interestRate: account.interestRate,
-    monthlyPayment: account.monthlyContribution,
-    base,
-    month,
-  });
-}
 
 /** "From your interest rate of 4.5% and monthly payment of £1,250 since October 2026." */
 export function calculatedExplain(c: CalculatedFigure): string {
