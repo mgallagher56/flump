@@ -22,6 +22,7 @@ export * from "./types.js";
 export * from "./uk-hicbc.js";
 export * from "./uk-rule-sources.js";
 export * from "./uk-scheduled-rules.js";
+export * from "./uk-self-assessment.js";
 export * from "./uk-take-home.js";
 export * from "./uk-tax.js";
 export * from "./uk-tax-thresholds.js";

@@ -82,8 +82,8 @@ describe("selectEstimatedTaxDue (C-11)", () => {
 
   it("a self-employed user with a saved income of 0 and only rent is estimated on the rent", () => {
     const none = { ...selfEmployed, annualSalary: 0 };
-    // 20,000 rent: 7,430 above the allowance at 20% = 1,486.
-    expect(amount(none, [rent(20000)])).toBe(1486);
+    // 20,000 rent less the 1,000 property allowance: 6,430 above the personal allowance at 20% = 1,286.
+    expect(amount(none, [rent(20000)])).toBe(1286);
   });
 
   it("is a known 0 below the allowance: 10,000 self-employed profit", () => {

@@ -117,7 +117,9 @@ describe("computeUkTakeHome: E25-T2 vectors", () => {
   );
 });
 
-describe("computeUkTakeHome: differential against calculateUkTax", () => {
+// calculateUkTax is an adapter over computeUkTakeHome; this sparse grid checks the adapter maps
+// every input and output field, not that two engines agree.
+describe("computeUkTakeHome: calculateUkTax adapter mapping", () => {
   const regions: UkTaxRegion[] = ["ENGLAND_NI_WALES", "SCOTLAND"];
   const loanPlans: UkStudentLoanPlan[] = [
     "NONE",
@@ -128,9 +130,7 @@ describe("computeUkTakeHome: differential against calculateUkTax", () => {
     "POSTGRAD",
   ];
 
-  it("agrees on every shared input, every year, region, plan and pension method (GBP0 to GBP200k)", {
-    timeout: 60_000,
-  }, () => {
+  it("maps every shared input, every year, region, plan and pension method (GBP0 to GBP200k)", () => {
     let compared = 0;
     for (const taxYear of SUPPORTED_UK_TAX_YEARS) {
       const rules = getUkTaxYearRules(taxYear);
@@ -139,9 +139,9 @@ describe("computeUkTakeHome: differential against calculateUkTax", () => {
           const key = toStudentLoanPlanKey(plan);
           if (key && !rules.studentLoans.plans[key]) continue;
           for (const isSalarySacrifice of [false, true]) {
-            for (let gross = 0; gross <= 200_000; gross += 2_500) {
-              const pct = (gross / 2_500) % 3 === 0 ? 0 : 5;
-              const bonus = (gross / 2_500) % 4 === 0 ? 3_000 : 0;
+            for (let gross = 0; gross <= 200_000; gross += 12_500) {
+              const pct = (gross / 12_500) % 3 === 0 ? 0 : 5;
+              const bonus = (gross / 12_500) % 4 === 0 ? 3_000 : 0;
               const old = calculateUkTax({
                 grossSalary: gross,
                 bonusOrSideIncome: bonus,
@@ -171,7 +171,7 @@ describe("computeUkTakeHome: differential against calculateUkTax", () => {
         }
       }
     }
-    expect(compared).toBeGreaterThan(10_000);
+    expect(compared).toBeGreaterThan(1_000);
   });
 });
 

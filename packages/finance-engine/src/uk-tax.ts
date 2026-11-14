@@ -1,6 +1,4 @@
 import {
-  calculateScottishIncomeTaxOnTaxable,
-  calculateUKEWNITakeHome,
   getCurrentUKTaxYear,
   STUDENT_LOAN_WRITE_OFF_YEARS,
   UK_STUDENT_LOANS,
@@ -14,6 +12,7 @@ import type {
   UkTaxRegion,
   UkTaxYear,
 } from "./types.js";
+import { computeUkTakeHome, type UkPensionMethod } from "./uk-take-home.js";
 import {
   calculateEmployeeNi,
   calculateEmployerNiSaving,
@@ -50,6 +49,9 @@ export const UK_TAX_CONSTANTS = {
   NI_MAIN_RATE: LATEST_RULES.ni.class1.mainRate,
   NI_HIGHER_RATE: LATEST_RULES.ni.class1.upperRate,
 };
+
+const SCOTTISH_PSA_HIGHER_EDGE =
+  LATEST_RULES.ewni.personalAllowance + LATEST_RULES.ewni.basicRateBandWidth;
 
 export { getCurrentUKTaxYear };
 
@@ -160,7 +162,7 @@ function incomeTaxOnAdjustedNetIncome(
  * Default year for the UI-facing trap entry points (no year passed): the current UK tax
  * year if supported, otherwise the latest supported year, so the banner, hero widget,
  * pension container and calculator do not crash once the clock passes the last supported
- * year (same degradation as calculateUKEWNITakeHome). An explicitly passed unsupported
+ * year. An explicitly passed unsupported
  * year still throws UnsupportedUkTaxYearError. Recorded as known issue (c).
  */
 function defaultTrapTaxYear(): string {
@@ -350,34 +352,11 @@ export function calculateScottishIncomeTax(
   taxYear: string = resolveUkTaxYear(),
 ): number {
   const rules = getUkTaxYearRules(resolveUkTaxYear(taxYear));
-  return roundPence(
-    calculateScottishIncomeTaxOnTaxable(
-      Math.max(0, taxableIncome - personalAllowance),
-      rules.scotland,
-    ),
-  );
-}
-
-/**
- * Calculates UK Class 1 Employee National Insurance.
- */
-export function calculateNationalInsurance(grossPay: number): number {
-  if (grossPay <= UK_TAX_CONSTANTS.NI_PRIMARY_THRESHOLD) {
-    return 0;
-  }
-
-  let ni = 0;
-  const earningsInMainBand =
-    Math.min(grossPay, UK_TAX_CONSTANTS.NI_UPPER_EARNINGS_LIMIT) -
-    UK_TAX_CONSTANTS.NI_PRIMARY_THRESHOLD;
-  ni += earningsInMainBand * UK_TAX_CONSTANTS.NI_MAIN_RATE;
-
-  if (grossPay > UK_TAX_CONSTANTS.NI_UPPER_EARNINGS_LIMIT) {
-    const excess = grossPay - UK_TAX_CONSTANTS.NI_UPPER_EARNINGS_LIMIT;
-    ni += excess * UK_TAX_CONSTANTS.NI_HIGHER_RATE;
-  }
-
-  return Math.round(ni * 100) / 100;
+  return calculateIncomeTaxOnTaxable(
+    Math.max(0, taxableIncome - personalAllowance),
+    rules,
+    "SCOTLAND",
+  ).total;
 }
 
 /**
@@ -413,116 +392,84 @@ export function getTaxYearRemainingDays(
 }
 
 /**
- * Primary UK Tax & Allowance Calculator.
+ * The take-home calculator with the allowances summary (E25-T5). An adapter: it maps its inputs onto
+ * one `computeUkTakeHome` scenario and reshapes the result. It holds no tax arithmetic of its own.
+ *
+ * Savings interest and rental profit are passed as other income, taxed with the pay as non-savings
+ * income (the savings and dividend bands are worked out by the Self Assessment ledger, not here).
  */
 export function calculateUkTax(input: UkTaxCalculationInput): UkTaxCalculationResult {
   const taxYear = resolveUkTaxYear(input.taxYear);
   const rules = getUkTaxYearRules(taxYear);
   const region = input.region ?? "ENGLAND_NI_WALES";
   const grossSalary = Math.max(0, input.grossSalary);
-  const bonusOrSideIncome = Math.max(0, input.bonusOrSideIncome ?? 0);
-  const taxableSavingsInterest = Math.max(0, input.taxableSavingsInterestGbp ?? 0);
-  const netBtlProfit = Math.max(0, input.netBtlProfitGbp ?? 0);
   const pensionPct = Math.max(0, input.pensionContributionPct ?? 0);
   const employerMatchPct = Math.max(0, input.employerPensionMatchPct ?? 0);
-  const isSalarySacrifice = input.isSalarySacrifice ?? false;
-  const studentLoanPlan = input.studentLoanPlan ?? "NONE";
+  const method: UkPensionMethod =
+    input.pensionMethod ?? (input.isSalarySacrifice ? "salary-sacrifice" : "net-pay");
+  const planKey = toStudentLoanPlanKey(input.studentLoanPlan ?? "NONE");
   const netGiftAid = Math.max(0, input.giftAidContributionsGbp ?? 0);
-  const grossGiftAid = netGiftAid * 1.25;
 
-  const totalGrossIncome = grossSalary + bonusOrSideIncome + taxableSavingsInterest + netBtlProfit;
-
-  // Pension calculations
-  const employeePensionContribution = (grossSalary * pensionPct) / 100;
-  const employerPensionContribution = (grossSalary * employerMatchPct) / 100;
-
-  // Employer NI savings if salary sacrifice
-  const employerNiSavings =
-    isSalarySacrifice && input.includeEmployerNiRebate
-      ? calculateEmployerNISavings(grossSalary, employeePensionContribution, taxYear)
-      : 0;
-
-  // Under salary sacrifice, gross pay subject to NI and Tax is reduced
-  const grossPayForNi = isSalarySacrifice
-    ? Math.max(0, grossSalary - employeePensionContribution) + bonusOrSideIncome
-    : grossSalary + bonusOrSideIncome;
-
-  // Adjusted Net Income (used ONLY for the personal allowance taper) = total gross income
-  // minus gross pension contributions minus gross Gift Aid.
-  // Pension is pinned as net-pay (deducted from taxable income too): UNVERIFIED, owner ruling pending.
-  const adjustedNetIncome = Math.max(
-    0,
-    totalGrossIncome - employeePensionContribution - grossGiftAid,
-  );
-
-  // Personal Allowance after taper (year-specific)
-  const effectiveAllowance = calculatePersonalAllowanceForYear(adjustedNetIncome, rules);
-
-  // Income before allowance: Gift Aid does NOT reduce it (it extends the bands instead; for Scotland
-  // the Basic upper limit and the bands above it, ITA 2007 s.414(2)(b)).
-  const incomeBeforeAllowance = Math.max(0, totalGrossIncome - employeePensionContribution);
-  const taxableIncome = Math.max(0, incomeBeforeAllowance - effectiveAllowance);
-
-  // Income Tax
-  const incomeTax = calculateIncomeTaxOnTaxable(taxableIncome, rules, region, {
-    bandExtension: grossGiftAid,
-  }).total;
-
-  // National Insurance (calculated on payroll gross pay)
-  const nationalInsurance = calculateEmployeeNi(grossPayForNi, rules);
-
-  // Student Loan deduction (calculated on payroll gross pay)
-  const studentLoanDeduction = calculateStudentLoanDeduction(
-    grossPayForNi,
-    studentLoanPlan,
+  const core = computeUkTakeHome({
     taxYear,
-  );
+    region,
+    salary: grossSalary,
+    bonus: Math.max(0, input.bonusOrSideIncome ?? 0),
+    otherIncome:
+      Math.max(0, input.taxableSavingsInterestGbp ?? 0) + Math.max(0, input.netBtlProfitGbp ?? 0),
+    selfEmployed: input.selfEmployed === true,
+    pension: pensionPct > 0 ? { method, pct: pensionPct } : undefined,
+    studentLoans: planKey ? [planKey] : [],
+    giftAidNet: netGiftAid,
+  });
 
-  // Total deductions from salary. The pension leaves pay either way: under salary sacrifice the
-  // employee gives up that much salary, otherwise it is deducted from net pay (E23 D10).
+  const totalGrossIncome = core.grossPay + core.otherIncome;
+  const employerPensionContribution = (grossSalary * employerMatchPct) / 100;
+  const employerNiSavings =
+    method === "salary-sacrifice" && input.includeEmployerNiRebate
+      ? calculateEmployerNiSaving(grossSalary, core.pensionEmployee, rules)
+      : 0;
   const totalDeductions =
-    incomeTax + nationalInsurance + studentLoanDeduction + employeePensionContribution;
-
-  const netTakeHomeAnnual = Math.round((totalGrossIncome - totalDeductions) * 100) / 100;
-  const netTakeHomeMonthly = Math.round((netTakeHomeAnnual / 12) * 100) / 100;
+    core.incomeTax + core.nationalInsurance + core.studentLoan + core.pensionEmployee;
   const effectiveTaxRatePct =
     totalGrossIncome > 0
-      ? Math.round(((incomeTax + nationalInsurance) / totalGrossIncome) * 1000) / 10
+      ? Math.round(((core.incomeTax + core.nationalInsurance) / totalGrossIncome) * 1000) / 10
       : 0;
 
-  // Marginal band determination for Personal Savings Allowance (PSA)
+  // Which band the top of the income sits in, for the Personal Savings Allowance.
   let marginalBand: UkAllowancesStatus["marginalIncomeTaxBand"] = "PERSONAL_ALLOWANCE";
-  let personalSavingsAllowance: number = UK_TAX_CONSTANTS.PSA_BASIC_RATE;
-
-  const basicTop = rules.ewni.basicRateBandWidth + grossGiftAid;
-  const additionalFrom = rules.ewni.additionalRateThreshold + grossGiftAid;
+  let personalSavingsAllowance: number = rules.savings.psaBasic;
+  const basicTop = rules.ewni.basicRateBandWidth + core.bandExtension;
+  const additionalFrom = rules.ewni.additionalRateThreshold + core.bandExtension;
   const isAdditional =
     region === "SCOTLAND"
-      ? incomeBeforeAllowance > UK_TAX_CONSTANTS.TAX_TRAP_UPPER_THRESHOLD
-      : taxableIncome > additionalFrom;
-  // UNVERIFIED (E25-T4): the Scottish personal savings allowance band edge is pinned at 50,270 of income
-  // before the allowance, as before. Which band edge applies to Scottish taxpayers is an accountant ruling
-  // (E25 plan, OWNER STEPS 2); the value is kept, not guessed.
-  const isHigher = region === "SCOTLAND" ? incomeBeforeAllowance > 50270 : taxableIncome > basicTop;
+      ? core.incomeBeforeAllowance > UK_TAX_CONSTANTS.TAX_TRAP_UPPER_THRESHOLD
+      : core.taxableIncome > additionalFrom;
+  // UNVERIFIED (E25-T4): the Scottish personal savings allowance band edge is pinned at the latest
+  // year's allowance plus basic rate band (50,270) of income before the allowance, as before. Which
+  // band edge applies to Scottish taxpayers is an accountant ruling (E25 plan, OWNER STEPS 2); the
+  // value is kept, not guessed.
+  const isHigher =
+    region === "SCOTLAND"
+      ? core.incomeBeforeAllowance > SCOTTISH_PSA_HIGHER_EDGE
+      : core.taxableIncome > basicTop;
   if (isAdditional) {
     marginalBand = "ADDITIONAL";
-    personalSavingsAllowance = UK_TAX_CONSTANTS.PSA_ADDITIONAL_RATE;
+    personalSavingsAllowance = rules.savings.psaAdditional;
   } else if (isHigher) {
     marginalBand = "HIGHER";
-    personalSavingsAllowance = UK_TAX_CONSTANTS.PSA_HIGHER_RATE;
-  } else if (taxableIncome > 0) {
+    personalSavingsAllowance = rules.savings.psaHigher;
+  } else if (core.taxableIncome > 0) {
     marginalBand = "BASIC";
-    personalSavingsAllowance = UK_TAX_CONSTANTS.PSA_BASIC_RATE;
   }
 
   const { daysRemaining, endDateFormatted } = getTaxYearRemainingDays(new Date(), taxYear);
-
-  const totalPensionUsed = employeePensionContribution + employerPensionContribution;
+  const totalPensionUsed = core.pensionGross + employerPensionContribution;
 
   const allowances: UkAllowancesStatus = {
-    isaAllowanceGbp: UK_TAX_CONSTANTS.ISA_ANNUAL_ALLOWANCE,
+    isaAllowanceGbp: rules.isaAllowance,
     isaAllowanceUsedGbp: 0,
-    isaAllowanceRemainingGbp: UK_TAX_CONSTANTS.ISA_ANNUAL_ALLOWANCE,
+    isaAllowanceRemainingGbp: rules.isaAllowance,
     pensionAnnualAllowanceGbp: rules.pensionAnnualAllowance,
     pensionAllowanceUsedGbp: Math.round(totalPensionUsed),
     pensionAllowanceRemainingGbp: roundPence(
@@ -534,48 +481,26 @@ export function calculateUkTax(input: UkTaxCalculationInput): UkTaxCalculationRe
     daysRemainingInTaxYear: daysRemaining,
   };
 
-  const taxTrap = analyzeTaxTrap(adjustedNetIncome, region, taxYear, { niPay: grossPayForNi });
+  const taxTrap = analyzeTaxTrap(core.adjustedNetIncome, region, taxYear, { niPay: core.niPay });
 
   return {
     taxYear,
     grossIncomeGbp: roundPence(totalGrossIncome),
-    adjustedNetIncomeGbp: roundPence(adjustedNetIncome),
-    taxableIncomeGbp: roundPence(taxableIncome),
-    incomeTaxGbp: incomeTax,
-    nationalInsuranceGbp: nationalInsurance,
-    studentLoanDeductionGbp: studentLoanDeduction,
-    employeePensionDeductionGbp: roundPence(employeePensionContribution),
+    adjustedNetIncomeGbp: core.adjustedNetIncome,
+    taxableIncomeGbp: core.taxableIncome,
+    incomeTaxGbp: core.incomeTax,
+    nationalInsuranceGbp: core.nationalInsurance,
+    studentLoanDeductionGbp: core.studentLoan,
+    employeePensionDeductionGbp: core.pensionEmployee,
     employerPensionContributionGbp: roundPence(employerPensionContribution),
     employerNiSavingsGbp: roundPence(employerNiSavings),
     giftAidContributionsGbp: roundPence(netGiftAid),
     totalDeductionsGbp: roundPence(totalDeductions),
-    netTakeHomePayAnnualGbp: netTakeHomeAnnual,
-    netTakeHomePayMonthlyGbp: netTakeHomeMonthly,
+    netTakeHomePayAnnualGbp: core.takeHome,
+    netTakeHomePayMonthlyGbp: roundPence(core.takeHome / 12),
     effectiveTaxRatePct,
     taxTrap,
     allowances,
-  };
-}
-
-export function calculateUKTakeHome(
-  grossSalary: number,
-  pensionContributionPct = 5,
-  salarySacrifice = true,
-  taxYear: string = getCurrentUKTaxYear(),
-) {
-  const result = calculateUKEWNITakeHome(
-    grossSalary,
-    "employed",
-    pensionContributionPct,
-    salarySacrifice,
-    taxYear,
-  );
-
-  const trapAnalysis = calculateTaxTrapRelief(grossSalary, taxYear);
-
-  return {
-    ...result,
-    trapAnalysis,
   };
 }
 

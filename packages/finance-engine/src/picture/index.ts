@@ -3,6 +3,7 @@ export * from "./figure.js";
 export * from "./input.js";
 export * from "./selectors/budget-totals.js";
 export * from "./selectors/commitments.js";
+export * from "./selectors/duplicate-debt-rows.js";
 export * from "./selectors/estimated-tax-due.js";
 export * from "./selectors/housing-cost.js";
 export * from "./selectors/loan-to-value.js";

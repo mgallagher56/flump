@@ -9,9 +9,9 @@
  */
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { calculateMonthlyMortgagePayment } from "./mortgage.js";
-import { buildLegacyUKConfig, getCurrentUKTaxYear } from "./tax-rules.js";
+import { getCurrentUKTaxYear } from "./tax-rules.js";
 import { SUPPORTED_UK_TAX_YEARS, type UkTaxRegion, type UkTaxYear } from "./types.js";
-import { calculateNationalInsurance, calculateTaxTrapRelief, calculateUkTax } from "./uk-tax.js";
+import { calculateTaxTrapRelief, calculateUkTax } from "./uk-tax.js";
 import {
   calculateEmployeeNi,
   getCurrentUkTaxYear,
@@ -270,15 +270,6 @@ describe("sweep 0..300000 step 250 per year, region and variant", () => {
       }
     }
   });
-
-  it("the year-less NI helper still matches the per-year table for 2024/25 to 2026/27", () => {
-    for (const year of ["2024/25", "2025/26", "2026/27"] as const) {
-      const rules = getUkTaxYearRules(year);
-      for (const gross of [0, 12570, 30000, 50270, 80000]) {
-        expect(calculateNationalInsurance(gross)).toBeCloseTo(calculateEmployeeNi(gross, rules), 2);
-      }
-    }
-  });
 });
 
 // ---------------------------------------------------------------------------
@@ -323,11 +314,11 @@ describe("tax year rollover at 5/6 April with fake timers", () => {
 // ---------------------------------------------------------------------------
 
 describe("unknown tax years", () => {
-  it("buildLegacyUKConfig throws UnsupportedUkTaxYearError instead of falling back", () => {
-    expect(() => buildLegacyUKConfig("1999/00")).toThrow(UnsupportedUkTaxYearError);
-    expect(() => buildLegacyUKConfig("2027/28")).toThrow(UnsupportedUkTaxYearError);
+  it("getUkTaxYearRules throws UnsupportedUkTaxYearError instead of falling back", () => {
+    expect(() => getUkTaxYearRules("1999/00" as UkTaxYear)).toThrow(UnsupportedUkTaxYearError);
+    expect(() => getUkTaxYearRules("2027/28" as UkTaxYear)).toThrow(UnsupportedUkTaxYearError);
     for (const year of SUPPORTED_UK_TAX_YEARS) {
-      expect(buildLegacyUKConfig(year).personalAllowance).toBe(YEAR_VECTORS[year].pa);
+      expect(getUkTaxYearRules(year).ewni.personalAllowance).toBe(YEAR_VECTORS[year].pa);
     }
   });
 });

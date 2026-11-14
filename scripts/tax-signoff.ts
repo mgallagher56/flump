@@ -9,18 +9,23 @@
  */
 import { readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { UK_SELF_ASSESSMENT_VECTORS } from "../packages/finance-engine/src/test-vectors/uk-self-assessment.vectors";
 import { UK_TAX_VECTORS } from "../packages/finance-engine/src/test-vectors/uk-tax.vectors";
 import { UK_WHATIF_VECTORS } from "../packages/finance-engine/src/test-vectors/uk-whatif.vectors";
 import { applySignoff, generateSheet, parseTicked } from "./lib/tax-signoff";
 
 const repoRoot = resolve(import.meta.dir, "..");
 const vectorsDir = resolve(repoRoot, "packages/finance-engine/src/test-vectors");
-// The core catalogue and the E25-T2 what-if catalogue are separate files; sign-off covers both.
+// The core, what-if and Self Assessment catalogues are separate files; sign-off covers all three.
 const catalogues = [
   { file: resolve(vectorsDir, "uk-tax.vectors.ts"), vectors: UK_TAX_VECTORS },
   { file: resolve(vectorsDir, "uk-whatif.vectors.ts"), vectors: UK_WHATIF_VECTORS },
+  {
+    file: resolve(vectorsDir, "uk-self-assessment.vectors.ts"),
+    vectors: UK_SELF_ASSESSMENT_VECTORS,
+  },
 ] as const;
-const allVectors = [...UK_TAX_VECTORS, ...UK_WHATIF_VECTORS];
+const allVectors = [...UK_TAX_VECTORS, ...UK_WHATIF_VECTORS, ...UK_SELF_ASSESSMENT_VECTORS];
 
 const [cmd, ...rest] = process.argv.slice(2);
 const flag = (name: string) => {

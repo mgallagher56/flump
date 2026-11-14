@@ -1,3 +1,4 @@
+import { calculateSelfAssessmentPayments, isSupportedUkTaxYear } from "@flump/finance-engine";
 import { Card, Money } from "@repo/ui";
 import type { FC } from "react";
 import {
@@ -15,6 +16,8 @@ export interface PaymentsOnAccountCardProps {
   annualSelfAssessmentTax: number;
   /** The tax year the bill is for, e.g. "2026/27". */
   taxYear: string;
+  /** Tax for the year already taken at source, such as through PAYE. */
+  taxDeductedAtSource?: number;
 }
 
 const dateFormat = new Intl.DateTimeFormat("en-GB", {
@@ -24,23 +27,26 @@ const dateFormat = new Intl.DateTimeFormat("en-GB", {
   timeZone: "UTC",
 });
 
+const formatDue = (isoDate: string) => dateFormat.format(new Date(`${isoDate}T00:00:00Z`));
+
 /**
- * When the estimated bill is paid. The bill for a tax year is due on 31 January after it ends;
- * over £1,000, HMRC also asks for two payments towards the next year, each half of this bill,
- * on that 31 January and the 31 July after. Neutral styling throughout: a deadline is a fact.
+ * When the estimated bill is paid. The dates, the £1,000 and 80% thresholds and the amounts come
+ * from the engine's payment schedule (`calculateSelfAssessmentPayments`); this card only lays them
+ * out. Neutral styling throughout: a deadline is a fact.
  */
 export const PaymentsOnAccountCard: FC<PaymentsOnAccountCardProps> = ({
   annualSelfAssessmentTax,
   taxYear,
+  taxDeductedAtSource,
 }) => {
   const tax = Math.max(0, Math.round(annualSelfAssessmentTax));
-  if (tax <= 0) return null;
+  if (tax <= 0 || !isSupportedUkTaxYear(taxYear)) return null;
 
-  const start = Number.parseInt(taxYear.split("/")[0] ?? "", 10);
-  const january = dateFormat.format(new Date(Date.UTC(start + 2, 0, 31)));
-  const july = dateFormat.format(new Date(Date.UTC(start + 2, 6, 31)));
-  const withPaymentsOnAccount = tax > 1000;
-  const half = Math.round(tax / 2);
+  const payments = calculateSelfAssessmentPayments({ taxYear, bill: tax, taxDeductedAtSource });
+  const january = formatDue(payments.january.date);
+  // The July date is shown either way, so the card says plainly when nothing is due then.
+  const july = formatDue(payments.january.date.replace("-01-31", "-07-31"));
+  const withPaymentsOnAccount = payments.paymentsOnAccountDue;
 
   return (
     <Card as="section" data-testid="payments-on-account-card" padding="lg">
@@ -49,13 +55,13 @@ export const PaymentsOnAccountCard: FC<PaymentsOnAccountCardProps> = ({
         {withPaymentsOnAccount ? (
           <p className={intro()}>
             This estimate assumes HMRC asks for two payments on account, on 31 January and 31 July,
-            because the estimated bill is over £1,000.
+            because the estimated bill is £1,000 or more.
           </p>
         ) : null}
         <div className={deadlines()}>
           <div className={deadline()}>
             <h4 className={deadlineName()}>Due {january}</h4>
-            <Money fractionDigits={0} size="md" value={withPaymentsOnAccount ? tax + half : tax} />
+            <Money fractionDigits={0} size="md" value={payments.january.amount} />
             <span className={caption()}>
               {withPaymentsOnAccount
                 ? "This year's bill plus the first payment towards next year"
@@ -66,12 +72,14 @@ export const PaymentsOnAccountCard: FC<PaymentsOnAccountCardProps> = ({
             <h4 className={deadlineName()}>Due {july}</h4>
             {withPaymentsOnAccount ? (
               <>
-                <Money fractionDigits={0} size="md" value={half} />
+                <Money fractionDigits={0} size="md" value={payments.paymentOnAccount} />
                 <span className={caption()}>Second payment on account</span>
               </>
             ) : (
               <span className={caption()}>
-                No July payment, because the estimated bill is under £1,000
+                {payments.reason === "mostly-taken-at-source"
+                  ? "No July payment, because more than 80% of your tax for the year is taken at source"
+                  : "No July payment, because the estimated bill is under £1,000"}
               </span>
             )}
           </div>

@@ -65,6 +65,23 @@ describe("TaxHeadline", () => {
     expect(onAddCost).toHaveBeenCalledTimes(1);
   });
 
+  it("says when the January payment includes a first payment on account", () => {
+    const withPayments = {
+      ...taxResultFixture,
+      payments: { ...taxResultFixture.payments, paymentsOnAccountDue: true },
+    };
+    const { rerender } = render(
+      <TaxHeadline records={taxRecordsFixture} result={withPayments} taxYear="2026/27" />,
+    );
+    expect(screen.getByText("This year's bill and a first payment on account")).toBeDefined();
+    const without = {
+      ...taxResultFixture,
+      payments: { ...taxResultFixture.payments, paymentsOnAccountDue: false },
+    };
+    rerender(<TaxHeadline records={taxRecordsFixture} result={without} taxYear="2026/27" />);
+    expect(screen.getByText("Balancing payment")).toBeDefined();
+  });
+
   it("dates the bill to 31 January after the tax year ends", () => {
     expect(billDueDate("2025/26").toISOString().slice(0, 10)).toBe("2027-01-31");
   });

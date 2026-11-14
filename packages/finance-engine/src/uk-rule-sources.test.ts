@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
+  selectUkSelfAssessmentVectors,
+  type UkSelfAssessmentVectorKind,
+} from "./test-vectors/uk-self-assessment.vectors.js";
+import {
   selectUkTaxVectors,
   UK_TAX_VECTOR_YEARS,
   type UkTaxVectorKind,
@@ -57,6 +61,13 @@ const WHATIF_VECTOR_FOR_KEY: Partial<Record<UkRuleKey, UkWhatIfVectorKind>> = {
   childBenefit: "hicbc",
 };
 
+/** Keys exercised by the Self Assessment catalogue (`uk-self-assessment.vectors.ts`). */
+const SELF_ASSESSMENT_VECTOR_FOR_KEY: Partial<Record<UkRuleKey, UkSelfAssessmentVectorKind>> = {
+  tradingAllowance: "tradingAllowance",
+  propertyAllowance: "propertyAllowance",
+  paymentsOnAccount: "paymentsOnAccount",
+};
+
 const NO_VECTOR_YET: readonly UkRuleKey[] = [
   "savingsAllowance",
   "pensionAnnualAllowance",
@@ -89,6 +100,17 @@ describe("UK rule sources registry (E25-T1)", () => {
 
   it("every key maps to a vector kind that has vectors for every year, or is listed as pending", () => {
     for (const key of UK_RULE_KEYS) {
+      const selfAssessmentKind = SELF_ASSESSMENT_VECTOR_FOR_KEY[key];
+      if (selfAssessmentKind) {
+        expect(NO_VECTOR_YET, key).not.toContain(key);
+        for (const taxYear of UK_TAX_VECTOR_YEARS) {
+          expect(
+            selectUkSelfAssessmentVectors({ taxYear, kind: selfAssessmentKind }).length,
+            `${taxYear} ${key}`,
+          ).toBeGreaterThan(0);
+        }
+        continue;
+      }
       const whatIfKind = WHATIF_VECTOR_FOR_KEY[key];
       if (whatIfKind) {
         expect(NO_VECTOR_YET, key).not.toContain(key);

@@ -13,6 +13,12 @@ export interface ProfileFacts {
   pensionPercent: number | null;
   isSalarySacrifice: boolean | null;
   /**
+   * How the pension is paid, when known. Optional: no saved profile field holds it yet, so it is
+   * set only by callers that ask the person. When absent, `isSalarySacrifice` decides between
+   * salary sacrifice and a net pay arrangement.
+   */
+  pensionMethod?: "salary-sacrifice" | "net-pay" | "relief-at-source" | null;
+  /**
    * E32 housing facts. Optional so callers that only build take-home facts need not list them;
    * profileFactsFromProfile always sets them, null when unanswered.
    */

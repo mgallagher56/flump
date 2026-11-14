@@ -310,6 +310,30 @@ const PENSION_ANNUAL_ALLOWANCE: Record<UkTaxYear, number> = {
   "2026/27": 60000,
 };
 
+/**
+ * Self Assessment figures that are the same in every supported year.
+ * - Trading and property allowances, 1,000 each, from 2017 to 2018:
+ *   https://www.gov.uk/guidance/tax-free-allowances-on-property-and-trading-income (read 2026-11-14).
+ * - Payments on account: none when the last bill was less than 1,000, or when more than 80% of the
+ *   tax owed was already taken at source:
+ *   https://www.gov.uk/understand-self-assessment-bill/payments-on-account (read 2026-11-14).
+ */
+export interface UkSelfAssessmentRules {
+  tradingAllowance: number;
+  propertyAllowance: number;
+  /** Payments on account are due when the bill is this much or more. */
+  paymentsOnAccountThreshold: number;
+  /** No payments on account when more than this share of the tax owed was taken at source. */
+  paymentsOnAccountSourceShare: number;
+}
+
+const SELF_ASSESSMENT: UkSelfAssessmentRules = {
+  tradingAllowance: 1000,
+  propertyAllowance: 1000,
+  paymentsOnAccountThreshold: 1000,
+  paymentsOnAccountSourceShare: 0.8,
+};
+
 // ISA allowance 20,000: https://www.gov.uk/individual-savings-accounts ("In the 2026 to 2027 tax
 // year, the maximum you can save in ISAs is 20,000"). Other years UNVERIFIED in the registry.
 const ISA_ALLOWANCE = 20000;
@@ -388,6 +412,8 @@ export interface UkTaxYearRules {
   studentLoans: UKStudentLoanYear;
   savings: UkSavingsRules;
   dividends: UkDividendRules;
+  /** Trading and property allowances and the payments on account thresholds. */
+  selfAssessment: UkSelfAssessmentRules;
   /** Child Benefit weekly rates and High Income Child Benefit Charge thresholds (E25-T3). */
   hicbc: UKChildBenefitYear;
   giftAidGrossUp: 1.25;
@@ -437,6 +463,7 @@ export function getUkTaxYearRules(year: UkTaxYear): UkTaxYearRules {
     studentLoans,
     savings: SAVINGS,
     dividends: DIVIDENDS[year],
+    selfAssessment: SELF_ASSESSMENT,
     hicbc,
     giftAidGrossUp: 1.25,
     sources: ruleSourceUrls(year),

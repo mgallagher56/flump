@@ -59,7 +59,7 @@ CI runs the full suite on every PR in a few minutes, and nothing merges unless i
 
 1. `bun run lint` (zero Biome lint/format errors)
 2. `bun run check-types` (zero TypeScript errors across all monorepo packages)
-3. `bun run check:laws` (design tokens, tabular numbers, react icons, style literals, number inputs, judgement colours, dependency versions and copy)
+3. `bun run check:laws` (design tokens, tabular numbers, react icons, style literals, number inputs, judgement colours, dependency versions, copy, the unsigned tax vector ratchet and the one tax engine guard)
 4. The tests for what you changed only: `bunx vitest run <paths>` or `bun run test --filter=<package>` for each package the change touches. Do not run the whole monorepo suite locally.
 
 When a change removes violations, the baselines go stale and CI fails. Regenerate them with `bun scripts/check-design-tokens.ts --write-baseline`, `bun scripts/check-tabular-nums.ts --write-baseline`, `bun scripts/check-react-icons.ts --write-baseline`, `bun scripts/check-style-literals.ts --write-baseline` and `bun scripts/check-copy.ts --write-baseline`, then commit the updated baseline files. The number-input and judgement checks (`scripts/check-input-types.ts`, `scripts/check-judgement-tokens.ts`) fail only when a count rises; a fall prints `IMPROVED` and passes, so regenerating their baselines is optional.
