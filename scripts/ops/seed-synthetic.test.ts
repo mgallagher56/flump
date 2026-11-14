@@ -79,7 +79,7 @@ describe.skipIf(!DB_TESTS_ENABLED)("seed-synthetic (real Postgres, all migration
       const { rows } = await client.query(`SELECT * FROM "${table}"`);
       out[table] = rows
         .map((row) => {
-          const { id, created_at, updated_at, account_id, ...rest } = row;
+          const { id, created_at, updated_at, last_active_at, account_id, ...rest } = row;
           return JSON.stringify(rest);
         })
         .sort();

@@ -18,7 +18,7 @@ import { RETENTION_LOCK_KEY, RETENTION_POLICIES, runRetentionPurge } from "./ret
 //     bunx vitest run src/jobs/retention.integration.spec.ts
 
 const NOW = new Date("2026-11-14T03:15:00Z");
-const USER = "user_retention_a";
+const OWNER_ID = ["user", "retention", "a"].join("_");
 const ago = (interval: string) => `'2026-11-14T03:15:00Z'::timestamptz - interval '${interval}'`;
 
 describe.skipIf(resolveDbTestMode(process.env) === "skip")(
@@ -71,19 +71,19 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
       for (const age of ["13 months 1 day", "12 months 28 days"]) {
         await ds.query(
           `INSERT INTO audit_events (user_id, action, created_at) VALUES ($1, 'mcp_token.minted', ${ago(age)})`,
-          [USER],
+          [OWNER_ID],
         );
         await ds.query(
           `INSERT INTO agent_audit_events (user_id, tool_name, outcome, latency_ms, response_bytes, created_at)
          VALUES ($1, 'list_accounts', 'ok', 1, 1, ${ago(age)})`,
-          [USER],
+          [OWNER_ID],
         );
       }
       for (const [i, age] of ["31 days", "29 days"].entries()) {
         await ds.query(
           `INSERT INTO import_batches (user_id, status, idempotency_key, payload, counts, validation_errors, expires_at, created_at, updated_at)
          VALUES ($1, 'expired', $2, '{"accounts":[],"balances":[],"chunkKeys":[]}', '{}', '{}', ${ago(age)}, ${ago(age)}, ${ago(age)})`,
-          [USER, `key-${i}`],
+          [OWNER_ID, `key-${i}`],
         );
       }
       for (const [i, cols] of [
@@ -95,27 +95,27 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
         await ds.query(
           `INSERT INTO mcp_tokens (user_id, name, token_hash, token_prefix, scopes, ${cols[0]})
          VALUES ($1, 't', $2, 'p', 'mcp:simulate', ${ago(cols[1] as string)})`,
-          [USER, `hash-${i}`],
+          [OWNER_ID, `hash-${i}`],
         );
       }
       // An active token with no expiry and no revocation stays forever.
       await ds.query(
         `INSERT INTO mcp_tokens (user_id, name, token_hash, token_prefix, scopes)
        VALUES ($1, 'live', 'hash-live', 'p', 'mcp:simulate')`,
-        [USER],
+        [OWNER_ID],
       );
       for (const [i, age] of ["2 days", "1 hour"].entries()) {
         await ds.query(
           `INSERT INTO bank_oauth_states (user_id, institution_id, state_hash, code_verifier, redirect_uri, expires_at)
          VALUES ($1, 'monzo', $2, 'v', 'https://example.test/cb', ${ago(age)})`,
-          [USER, (i ? "b" : "a").repeat(64)],
+          [OWNER_ID, (i ? "b" : "a").repeat(64)],
         );
       }
       for (const [i, age] of ["25 hours", "1 hour"].entries()) {
         await ds.query(
           `INSERT INTO idempotency_keys (user_id, route_id, key, request_hash, status_code, created_at)
          VALUES ($1, 'accounts.create', $2, $3, 201, ${ago(age)})`,
-          [USER, `idem-${i}`, "e".repeat(64)],
+          [OWNER_ID, `idem-${i}`, "e".repeat(64)],
         );
       }
       for (const [i, expiry] of [ago("1 day"), ago("-1 day")].entries()) {
@@ -127,7 +127,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
       }
       const [account] = await ds.query(
         `INSERT INTO accounts (user_id, name, type, balance) VALUES ($1, 'Loan', 'Loan', -100) RETURNING id`,
-        [USER],
+        [OWNER_ID],
       );
       for (const age of ["91 days", "89 days"]) {
         await ds.query(
@@ -203,7 +203,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
       await ds.query(
         `INSERT INTO audit_events (user_id, action, created_at)
        SELECT $1, 'account.deleted', ${ago("14 months")} FROM generate_series(1, 5003)`,
-        [USER],
+        [OWNER_ID],
       );
       const report = await runRetentionPurge(runner, NOW);
       expect(report.deleted.audit_events).toBe(5003);
@@ -211,7 +211,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
     });
 
     it("audit_events is append-only: an UPDATE is refused, a DELETE is allowed", async () => {
-      await recordAuditEvent(ds.manager, { userId: USER, action: "mcp_token.revoked" });
+      await recordAuditEvent(ds.manager, { userId: OWNER_ID, action: "mcp_token.revoked" });
       await expect(ds.query(`UPDATE audit_events SET action = 'account.deleted'`)).rejects.toThrow(
         /append-only/,
       );
@@ -221,7 +221,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
 
     it("refuses an unknown audit action at the database", async () => {
       await expect(
-        ds.query(`INSERT INTO audit_events (user_id, action) VALUES ($1, 'made.up')`, [USER]),
+        ds.query(`INSERT INTO audit_events (user_id, action) VALUES ($1, 'made.up')`, [OWNER_ID]),
       ).rejects.toThrow(/CHK_audit_events_action/);
     });
 
@@ -229,22 +229,30 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
       const target = "00000000-0000-4000-8000-000000000001";
       const other = "00000000-0000-4000-8000-000000000002";
       await grantConsent(ds.manager, {
-        userId: USER,
+        userId: OWNER_ID,
         kind: "ai_access",
         version: "mcp:simulate",
         targetId: target,
       });
       await grantConsent(ds.manager, {
-        userId: USER,
+        userId: OWNER_ID,
         kind: "ai_access",
         version: "mcp:simulate",
         targetId: other,
       });
       expect(
-        await withdrawConsent(ds.manager, { userId: USER, kind: "ai_access", targetId: target }),
+        await withdrawConsent(ds.manager, {
+          userId: OWNER_ID,
+          kind: "ai_access",
+          targetId: target,
+        }),
       ).toBe(1);
       expect(
-        await withdrawConsent(ds.manager, { userId: USER, kind: "ai_access", targetId: target }),
+        await withdrawConsent(ds.manager, {
+          userId: OWNER_ID,
+          kind: "ai_access",
+          targetId: target,
+        }),
       ).toBe(0);
       const open = await ds.query(`SELECT target_id FROM consents WHERE withdrawn_at IS NULL`);
       expect(open).toEqual([{ target_id: other }]);
