@@ -50,12 +50,18 @@ export const mobileBottomBarLink = cva({
     fontWeight: "semibold",
     textDecoration: "none",
     textAlign: "center",
-    _motionSafe: {
-      transitionProperty: "background-color, color",
-      transitionDuration: "fast",
-      transitionTimingFunction: "standard",
+    // Hover, and its fade, only where a pointer can really hover. The current fill changes at once:
+    // it used to fade out over `fast`, so a frame taken just after leaving Budget for Mortgage still
+    // showed Budget filled although it was no longer current; and a touch browser keeps `:hover` on
+    // the last tab tapped, so that tab looked darker on the next page.
+    "@media (hover: hover)": {
+      _motionSafe: {
+        transitionProperty: "color",
+        transitionDuration: "fast",
+        transitionTimingFunction: "standard",
+      },
+      _hover: { color: "text.primary" },
     },
-    _hover: { color: "text.primary" },
     _focusVisible: {
       outline: "2px solid",
       outlineColor: "border.focusRing",
