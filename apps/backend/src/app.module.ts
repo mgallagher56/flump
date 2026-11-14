@@ -11,6 +11,7 @@ import { McpTokenService } from "./agent/mcp-token.service";
 import { AppController } from "./app.controller";
 import { AppService } from "./app.service";
 import { AuthModule } from "./auth/auth.module";
+import { ERASED_ACCOUNT_CHECK } from "./auth/erased-account";
 import { BudgetController } from "./budget.controller";
 import { AppConfigModule, BOOT_CONFIG } from "./config/config.module";
 import { ENTITIES, typeOrmOptionsFromEnv } from "./config/typeorm.options";
@@ -74,6 +75,8 @@ import { UserProfileService } from "./user-profile.service";
     McpImportsAdapter,
     UserProfileService,
     AccountDeletionService,
+    // The AuthGuard refuses tokens of erased accounts through this port (BE-04).
+    { provide: ERASED_ACCOUNT_CHECK, useExisting: AccountDeletionService },
     AccountExportService,
     // BE-12 replaces this with real provider revocation.
     { provide: BANK_CONSENT_REVOKER, useClass: LoggingBankConsentRevoker },

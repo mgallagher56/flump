@@ -5,7 +5,6 @@ import {
   Logger,
   Optional,
   ServiceUnavailableException,
-  UnauthorizedException,
 } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { DataSource, type EntityTarget, In, type ObjectLiteral, Repository } from "typeorm";
@@ -29,6 +28,7 @@ import { USER_IDENTITY_ADAPTER, type UserIdentityAdapter } from "./identity/iden
 import { safeErrorSummary } from "./log-safe";
 import { AccountDeletionService } from "./privacy/account-deletion.service";
 import { BANK_CONSENT_REVOKER, type BankConsentRevoker } from "./privacy/bank-consent-revoker";
+import { accountDeletedException } from "./privacy/recent-login";
 import { type RemovedCounts, USER_DATA_REGISTRY } from "./privacy/user-data-registry";
 import { writeOnboardingSnapshot } from "./snapshots/first-snapshot";
 
@@ -335,7 +335,7 @@ export class UserProfileService implements ProfileLifecycle {
     // An erased account must not get a fresh profile row from a request made with a token issued
     // before the deletion (WorkOS access tokens stay valid until they expire).
     if (await this.accountDeletion?.isErased(userId)) {
-      throw new UnauthorizedException("This account has been deleted.");
+      throw accountDeletedException();
     }
 
     try {
@@ -539,7 +539,7 @@ export class UserProfileService implements ProfileLifecycle {
   async resetFinancialData(userId: string, email?: string): Promise<any> {
     // The reset writes a profile row; never for an erased account (see findOrCreateProfile).
     if (await this.accountDeletion?.isErased(userId)) {
-      throw new UnauthorizedException("This account has been deleted.");
+      throw accountDeletedException();
     }
     // Repositories by entity: the transaction's when there is a DataSource, else the injected ones.
     const injected = new Map<EntityTarget<ObjectLiteral>, Repository<any> | undefined>([

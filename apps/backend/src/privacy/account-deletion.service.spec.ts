@@ -37,7 +37,10 @@ function fakeDataSource() {
             deletes.push(entity.name);
             return { affected: 1 };
           },
-          find: async () => [{ id: "c1", institutionId: "monzo", authType: "oauth" }],
+          find: async () =>
+            entity.name === "BankConnection"
+              ? [{ id: "c1", institutionId: "monzo", authType: "oauth" }]
+              : [],
         };
   const ds = {
     transaction: vi.fn(async (cb: (m: unknown) => unknown) => cb({ getRepository: repoFor })),
@@ -74,7 +77,10 @@ describe("AccountDeletionService", () => {
 
     await expect(service.deleteAccount("user_A")).resolves.toEqual({ status: "deleted" });
 
-    expect(f.deletes).toEqual(USER_DATA_REGISTRY.map((t) => t.entity.name));
+    // The sweep runs in the deletion transaction and once more after it commits.
+    const order = USER_DATA_REGISTRY.map((t) => t.entity.name);
+    expect(f.deletes).toEqual([...order, ...order]);
+    expect(f.ds.transaction).toHaveBeenCalledTimes(2);
     expect(identity.deletedUsers).toEqual(["user_A"]);
     expect(revoke).toHaveBeenCalledWith("user_A", [
       { id: "c1", institutionId: "monzo", authType: "oauth" },

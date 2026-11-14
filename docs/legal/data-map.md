@@ -53,17 +53,26 @@ test checks the catalogue's `user_id` tables against the registry.
   logs `bank_consent_revoke_pending` (counts and institution ids, no user id or tokens); no bank is
   contacted yet.
 - One database transaction deletes every row with the user's id from every registry table (children
-  first, profile last) and writes the tombstone. A failure rolls all of it back.
+  first, profile last; history and transactions keyed to the user's account ids go too, whatever
+  their `user_id`) and writes the tombstone. A failure rolls all of it back.
+- From the moment the tombstone commits, every authenticated route refuses the user's tokens with
+  410 `{ error: "account_deleted" }` (not 401, so the web app does not loop through sign-in while the
+  WorkOS login still exists). Only `DELETE /user-profile` stays open, for retries. `/mcp` is not
+  behind that guard, but its tokens are deleted with the account.
+- The delete sweep then runs once more (and again on every retry), removing rows that a request
+  already in flight during the transaction wrote.
 - Then the WorkOS user is deleted, which removes the login and ends its WorkOS sessions. If WorkOS
   fails, the answer is still 200 with `status: "identity_pending"`: the data is already gone, and the
   same request repeated later finishes the job (nothing left to delete, the tombstone is found by its
   hash, WorkOS is retried). A WorkOS 404 counts as already deleted.
 - Audit: one `account_deleted` log line after commit with the tombstone id and per-table row
   counts. No user id, names or amounts.
-- A profile row is never recreated for an erased user (requests with a still-valid access token get
-  401). Other write routes do not check the tombstone yet (follow-up).
-- Without `DELETION_TOMBSTONE_KEY` (32+ characters) outside development and test, deletion answers
-  503 and changes nothing; every other route keeps working.
+- `DELETION_TOMBSTONE_KEY` must be at least 32 characters. Without a usable key outside local
+  development and test (or anywhere on Railway), deletion answers 503 and changes nothing; every
+  other route keeps working.
+- **Never rotate `DELETION_TOMBSTONE_KEY`.** Tombstones are found by recomputing the HMAC under the
+  same key; after a rotation every existing tombstone is unfindable, so pending deletions cannot be
+  retried cleanly and erased accounts' tokens are no longer refused.
 
 ### Export document (`GET /user-profile/export`)
 
@@ -83,7 +92,7 @@ shape is `AccountExportDocument` in `packages/api-contract/src/domains/profile.t
 
 Left out on purpose: bank access and refresh tokens, MCP token hashes, the import retry key and the
 keyed hash of agent arguments. The login (email, password) lives in WorkOS and is not in the file.
-Rows are read in one read-only snapshot transaction, a page at a time. Limited to 10 exports an hour
+Rows are read in one read-only snapshot transaction, a page at a time, with a 30 s statement timeout, a 60 s idle-in-transaction timeout and a 2-minute overall deadline, so a slow client cannot hold a database connection. Limited to 10 exports an hour
 per user.
 
 ### Financial reset (`POST /user-profile/reset-financial-data`)

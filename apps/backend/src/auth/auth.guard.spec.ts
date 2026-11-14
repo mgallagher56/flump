@@ -1,12 +1,14 @@
 import {
   type ExecutionContext,
   ForbiddenException,
+  GoneException,
   Logger,
   UnauthorizedException,
 } from "@nestjs/common";
 import { afterEach, beforeAll, describe, expect, it } from "vitest";
 import { AuthGuard } from "./auth.guard";
 import { DEV_BYPASS_TOKEN, DevBypassVerifier } from "./dev-bypass.verifier";
+import { AllowErasedAccount } from "./erased-account";
 import { createTestJwks } from "./testing/test-jwks";
 import type { TokenVerifier } from "./token-verifier";
 import { WorkOsJwtVerifier } from "./workos-jwt.verifier";
@@ -125,5 +127,49 @@ describe("AuthGuard", () => {
       expect(err.getResponse()).toMatchObject({ error: "not_invited" });
       await expect(run({ id: "no-email" })).rejects.toBeInstanceOf(ForbiddenException);
     });
+  });
+});
+
+describe("AuthGuard erased-account check (BE-04)", () => {
+  const erased = new Set(["dev_user_123"]);
+  const check = { isErased: async (id: string) => erased.has(id) };
+  const request = () => ({ headers: { authorization: `Bearer ${DEV_BYPASS_TOKEN}` } }) as Req;
+  const withHandler = (req: Req, handler: () => void): ExecutionContext =>
+    ({
+      switchToHttp: () => ({ getRequest: () => req }),
+      getHandler: () => handler,
+    }) as unknown as ExecutionContext;
+
+  it("refuses an erased account's valid token with 410 account_deleted (not 401)", async () => {
+    const guard = new AuthGuard(new DevBypassVerifier(), undefined, check);
+    const err = await guard.canActivate(withHandler(request(), () => {})).catch((e) => e);
+    expect(err).toBeInstanceOf(GoneException);
+    expect(err.getResponse()).toEqual({
+      statusCode: 410,
+      error: "account_deleted",
+      message: "This account has been deleted.",
+    });
+  });
+
+  it("lets the erased account through only on a handler marked AllowErasedAccount", async () => {
+    const guard = new AuthGuard(new DevBypassVerifier(), undefined, check);
+    class Probe {
+      @AllowErasedAccount()
+      retryDelete() {}
+    }
+    await expect(
+      guard.canActivate(withHandler(request(), Probe.prototype.retryDelete)),
+    ).resolves.toBe(true);
+  });
+
+  it("passes accounts that are not erased, and resolves the check lazily from the app", async () => {
+    erased.clear();
+    const moduleRef = { get: () => check };
+    const guard = new AuthGuard(new DevBypassVerifier(), moduleRef as never);
+    await expect(guard.canActivate(withHandler(request(), () => {}))).resolves.toBe(true);
+    erased.add("dev_user_123");
+    await expect(guard.canActivate(withHandler(request(), () => {}))).rejects.toThrow(
+      GoneException,
+    );
   });
 });

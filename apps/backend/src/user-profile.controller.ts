@@ -25,6 +25,7 @@ import { InjectRepository } from "@nestjs/typeorm";
 import type { Response } from "express";
 import { Repository } from "typeorm";
 import { AuthGuard } from "./auth/auth.guard";
+import { AllowErasedAccount } from "./auth/erased-account";
 import { Account } from "./entities/account.entity";
 import { AccountDetail } from "./entities/account-detail.entity";
 import { BankConnection } from "./entities/bank-connection.entity";
@@ -107,7 +108,7 @@ export class UserProfileController {
     // Only the phrase is checked: unknown keys are stripped, not rejected, as by the interceptor.
     const confirmation = (body as { confirmation?: unknown } | null)?.confirmation;
     if (!ResetFinancialDataRequest.shape.confirmation.safeParse(confirmation).success) {
-      throw new BadRequestException("Type the confirmation phrase to reset your financial data.");
+      throw new BadRequestException("Type RESET to confirm.");
     }
     assertRecentLogin(req.user);
     return this.userProfileService.resetFinancialData(req.user.id, req.user?.email);
@@ -125,12 +126,13 @@ export class UserProfileController {
    * Deleting the WorkOS user ends its WorkOS sessions; the web app clears its own session cookie.
    */
   @Delete("user-profile")
+  @AllowErasedAccount()
   @HttpCode(200)
   @RateLimit("destructive")
   async deleteUser(@Req() req: any, @Body() body: unknown): Promise<DeleteUserResponse> {
     const confirmation = (body as { confirmation?: unknown } | null)?.confirmation;
     if (!DeleteUserRequest.shape.confirmation.safeParse(confirmation).success) {
-      throw new BadRequestException("Type the confirmation phrase to delete your account.");
+      throw new BadRequestException("Type DELETE to confirm.");
     }
     assertRecentLogin(req.user);
     if (!this.accountDeletion) throw new ServiceUnavailableException(ACCOUNT_DELETION_UNAVAILABLE);
@@ -145,7 +147,10 @@ export class UserProfileController {
   @Get("user-profile/export")
   @RateLimit("dataExport")
   async exportData(@Req() req: any, @Res() res: Response): Promise<void> {
-    if (!this.accountExport) throw new ServiceUnavailableException("Export is not available.");
+    if (!this.accountExport)
+      throw new ServiceUnavailableException(
+        "Downloading your data is not available right now. Try again later.",
+      );
     const now = new Date();
     res.status(200);
     res.setHeader("Content-Type", "application/json; charset=utf-8");
@@ -174,7 +179,9 @@ export class UserProfileController {
       this.logger.warn(`Export failed: ${safeErrorSummary(err)}`);
       if (!res.headersSent) {
         res.removeHeader("Content-Disposition");
-        res.status(503).json({ statusCode: 503, message: "Export failed. Please try again." });
+        res
+          .status(503)
+          .json({ statusCode: 503, message: "We could not prepare your download. Try again." });
       } else {
         res.destroy();
       }
