@@ -1,5 +1,5 @@
 import { elevationShadows } from "./elevation";
-import { densityRadii, densitySizes, densitySpacing } from "./layout";
+import { densityRadii, densitySizes, densitySpacing, pageSpacing } from "./layout";
 
 export * from "./breakpoints";
 export * from "./elevation";
@@ -164,6 +164,7 @@ export const spacing = {
   20: { value: "80px" },
   24: { value: "96px" },
   32: { value: "128px" },
+  ...pageSpacing,
 } as const;
 
 export const radii = {
@@ -178,8 +179,10 @@ export const radii = {
 } as const;
 
 export const shadows = {
+  // E16 PR 1: strengthened so a light card lifts off the sand canvas (paired with a 1px
+  // border.DEFAULT edge on Card, KpiCard, Table and CollapsibleDrawer).
   cardLight: {
-    value: "0 1px 2px rgba(43, 38, 32, 0.06)",
+    value: "0 1px 2px rgba(43, 38, 32, 0.08), 0 4px 14px rgba(43, 38, 32, 0.07)",
   },
   cardHoverLight: {
     value: "0 2px 8px -2px rgba(43, 38, 32, 0.1)",
@@ -219,6 +222,15 @@ export const semanticTokens = {
       // Modal/drawer backdrop. A translucent backdrop, never a text surface: contrast is not
       // asserted, only that it visibly dims the page (see tokens.a11y.test.ts).
       scrim: { value: { base: "rgba(43, 38, 32, 0.4)", _dark: "rgba(8, 6, 4, 0.6)" } },
+      // E16 PR 1 (P9, D16 option a): domain tints for icon tiles and at most ONE tinted section per
+      // page. Never around a KpiStrip, a ScenarioZone or a chart, and KPI cards are never tinted.
+      // Teal: net worth, mortgage, pension. Apricot: debt. Sage: savings. text.primary, secondary
+      // and muted clear 4.5:1 on each, and each is >= 2 deltaE76 from every other surface (tests).
+      tint: {
+        teal: { value: { base: "#dcede6", _dark: "#1f322d" } },
+        apricot: { value: { base: "#fae5cc", _dark: "#36291b" } },
+        sage: { value: { base: "#e5edda", _dark: "#272f22" } },
+      },
     },
 
     // 3. Typography Hierarchy

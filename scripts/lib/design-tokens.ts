@@ -125,6 +125,10 @@ export function extractStringLiterals(source: string): Literal[] {
   return out;
 }
 
+// E16: Panda exposes a DEFAULT key under the group name only ("border", "primary"); a literal
+// "border.DEFAULT" resolves to an undefined CSS variable, so the colour falls back to currentColor.
+const DEFAULT_PATH = /(?<![\w-])[a-z]\w*(?:\.\w+)*\.DEFAULT(?![\w-])/g;
+
 export function countTokenViolations(source: string): number {
   // Only string literal contents are inspected, so comments and code never count.
   let total = 0;
@@ -136,8 +140,23 @@ export function countTokenViolations(source: string): number {
     }
     total += text.match(COLOUR_FN)?.length ?? 0;
     total += text.match(PRIMITIVE)?.length ?? 0;
+    total += text.match(DEFAULT_PATH)?.length ?? 0;
   }
   return total;
+}
+
+// E16 plan 4.4/4.7: disclaimers and scenario notes use the quiet note style (text.secondary,
+// border.subtle, parent surface), never the indigo status.info alert. Counted only inside the
+// ProjectionNotice and ScenarioZone recipes; status.info stays legal elsewhere.
+const NOTICE_RECIPE = /(?:^|\/)(?:ProjectionNotice|ScenarioZone)\/[^/]+\.styles\.ts$/;
+const STATUS_INFO = /(?<![\w-])status\.info(?:\.(?:text|bg|border|solid))?(?![\w-])/g;
+
+export function countNoticeInfoUses(relPath: string, source: string): number {
+  if (!NOTICE_RECIPE.test(relPath)) return 0;
+  return extractStringLiterals(source).reduce(
+    (n, { text }) => n + (text.match(STATUS_INFO)?.length ?? 0),
+    0,
+  );
 }
 
 export type BaselineComparison = { failures: string[]; stale: string[] };

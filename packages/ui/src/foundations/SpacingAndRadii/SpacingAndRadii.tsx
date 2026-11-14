@@ -1,7 +1,20 @@
 import type { FC } from "react";
 import { css } from "../../../styled-system/css";
-import { densityRadii, radii, spacing } from "../../tokens";
+import { densityRadii, radii, sizes, spacing } from "../../tokens";
 import { gridBox, scaleItem } from "./SpacingAndRadii.styles";
+
+// `spacing.page.*` is the E16 page template group, shown in its own list below the 4px scale.
+const { page: pageSpacing, ...spacingScale } = spacing;
+
+const PAGE_TEMPLATE_ROWS = [
+  { token: "sizes.page.max", value: sizes.page.max.value, use: "Content width" },
+  { token: "spacing.page.gutter.sm", value: pageSpacing.gutter.sm.value, use: "Gutter at 375" },
+  { token: "spacing.page.gutter.md", value: pageSpacing.gutter.md.value, use: "Gutter from md" },
+  { token: "spacing.page.gutter.lg", value: pageSpacing.gutter.lg.value, use: "Gutter from lg" },
+  { token: "spacing.page.top.sm", value: pageSpacing.top.sm.value, use: "Header to h1 at 375" },
+  { token: "spacing.page.top.lg", value: pageSpacing.top.lg.value, use: "Header to h1 from lg" },
+  { token: "spacing.page.section", value: pageSpacing.section.value, use: "Section gap" },
+] as const;
 
 /** Static literals so Panda can extract each alias (it cannot see a dynamic `borderRadius: alias`). */
 const ALIAS_RADIUS = {
@@ -45,7 +58,7 @@ const DensityPanel: FC<{ density: (typeof DENSITIES)[number] }> = ({ density }) 
               backgroundColor: "surface.subtle",
               borderWidth: "1px",
               borderStyle: "solid",
-              borderColor: "border.DEFAULT",
+              borderColor: "border",
               textStyle: "label.sm",
               fontVariantNumeric: "tabular-nums",
               color: "text.secondary",
@@ -131,7 +144,7 @@ export const SpacingAndRadii: FC = () => {
           4px Geometric Spacing Scale
         </h2>
         <div className={gridBox()}>
-          {Object.entries(spacing).map(([step, val]) => (
+          {Object.entries(spacingScale).map(([step, val]) => (
             <div key={step} className={scaleItem()}>
               <div
                 className={css({
@@ -150,6 +163,47 @@ export const SpacingAndRadii: FC = () => {
             </div>
           ))}
         </div>
+      </section>
+
+      {/* E16 page template (P13) */}
+      <section className={css({ mb: "36px" })}>
+        <h2
+          className={css({
+            fontFamily: "display",
+            fontSize: "lg",
+            fontWeight: "semibold",
+            mb: "8px",
+          })}
+        >
+          Page template
+        </h2>
+        <p className={css({ fontSize: "xs", color: "text.muted", mb: "12px" })}>
+          Every app page renders through <code>PageBody</code>, which is the only consumer of these
+          tokens.
+        </p>
+        <dl
+          className={css({
+            display: "grid",
+            gridTemplateColumns: "auto auto 1fr",
+            columnGap: "16px",
+            rowGap: "4px",
+            fontSize: "xs",
+          })}
+        >
+          {PAGE_TEMPLATE_ROWS.map((row) => (
+            <div
+              key={row.token}
+              data-testid={`page-row-${row.token}`}
+              className={css({ display: "contents" })}
+            >
+              <dt className={css({ fontFamily: "mono" })}>{row.token}</dt>
+              <dd className={css({ fontFamily: "mono", fontVariantNumeric: "tabular-nums" })}>
+                {row.value}
+              </dd>
+              <dd className={css({ color: "text.muted" })}>{row.use}</dd>
+            </div>
+          ))}
+        </dl>
       </section>
 
       {/* Density */}

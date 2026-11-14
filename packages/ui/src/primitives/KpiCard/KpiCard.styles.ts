@@ -6,7 +6,7 @@ export const kpiCardContainer = cva({
     borderRadius: "card",
     borderWidth: "1px",
     borderStyle: "solid",
-    borderColor: "border.subtle",
+    borderColor: "border",
     p: "density.cardPad",
     containerType: "inline-size",
     display: "flex",

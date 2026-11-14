@@ -317,6 +317,44 @@ describe("Architecture & Design System Laws", () => {
       verifyColocatedStructure(MARKETING_COMPONENTS_DIR, "McpSpotlightSection");
       verifyColocatedStructure(MARKETING_PAGES_DIR, "McpPage");
     });
+
+    it("E16: HeroFigure, IconTile and PageRules take all five files wherever they land", () => {
+      // PR 2 of docs/design/e16-polish/PLAN.md adds these. Until then the check passes vacuously;
+      // PR 2 moves them into the deliberately registered lists above once they exist.
+      for (const name of ["HeroFigure", "IconTile", "PageRules"]) {
+        for (const dir of [PRIMITIVES_DIR, PATTERNS_DIR]) {
+          if (getSubdirectories(dir).includes(name)) verifyColocatedStructure(dir, name);
+        }
+      }
+    });
+
+    it("E16: files outside components/core importing a legacy FLP* component may only shrink", () => {
+      // Shrinking baseline (plan 4.7). Remove a path when its FLP import goes; never add one.
+      // A zero-tolerance rule for FLPTabs lands with PR 9.
+      const LEGACY_FLP_IMPORTERS = [
+        "apps/web/app/components/navigation/NavMenu/NavMenu.tsx",
+        "apps/web/app/components/navigation/UserLogin.tsx",
+      ];
+      const repoRoot = path.resolve(__dirname, "../../../..");
+      const FLP_IMPORT = /from\s*["'][^"']*components\/core\/[^"']*\/FLP\w*["']/;
+      const importers: string[] = [];
+      const walk = (dir: string) => {
+        for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+          const full = path.join(dir, entry.name);
+          if (entry.isDirectory()) {
+            const isLegacyCore = full.endsWith(path.join("components", "core"));
+            if (!["node_modules", "build"].includes(entry.name) && !isLegacyCore) walk(full);
+          } else if (/\.tsx?$/.test(entry.name) && FLP_IMPORT.test(fs.readFileSync(full, "utf8"))) {
+            importers.push(path.relative(repoRoot, full).split(path.sep).join("/"));
+          }
+        }
+      };
+      walk(path.join(repoRoot, "apps/web/app"));
+      walk(path.join(repoRoot, "apps/marketing/src"));
+      expect(importers.sort(), "new FLP* importer (use @repo/ui) or stale baseline entry").toEqual(
+        LEGACY_FLP_IMPORTERS,
+      );
+    });
   });
 
   describe("2. Design Token Boundaries Law", () => {

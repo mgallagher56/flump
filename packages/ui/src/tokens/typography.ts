@@ -53,7 +53,10 @@ const TABULAR = "tabular-nums";
 
 /**
  * Panda `textStyles`, usable as `textStyle: "heading.lg"`. Rules: 12px minimum, line heights
- * 1.2 to 1.6, fluid `clamp()` only on display and heading.xl, numeric styles always tabular-nums.
+ * 1.2 to 1.6, fluid `clamp()` only on display, heading.xl and numeric.hero, numeric styles always
+ * tabular-nums, weights at most 700 (E16). Font sizes in components come from these styles or the
+ * `fontSizes` scale; `scripts/check-style-literals.ts` ratchets raw sizes out. Sentence case
+ * everywhere: no style sets uppercase or caps tracking (E16 P7.3).
  */
 export const textStyles = {
   display: {
@@ -144,11 +147,33 @@ export const textStyles = {
         fontSize: "0.75rem",
         fontWeight: "500",
         lineHeight: "1.4",
-        letterSpacing: "0.02em",
       },
     },
   },
   numeric: {
+    // E16: the one headline figure per page (HeroFigure). Fluid like display.
+    hero: {
+      value: {
+        fontFamily: fontFamilies.body,
+        fontSize: "clamp(2.25rem, 1.75rem + 2vw, 3rem)",
+        fontWeight: "700",
+        lineHeight: "1.2",
+        letterSpacing: "-0.02em",
+        fontVariantNumeric: TABULAR,
+      },
+    },
+    // E16 P3: "Not set" in a figure slot. Body size and regular weight so it never outranks a real
+    // value; pair with `color: "text.muted"`.
+    unset: {
+      value: {
+        fontFamily: fontFamilies.body,
+        fontSize: "1rem",
+        fontWeight: "400",
+        lineHeight: "1.5",
+        fontVariantNumeric: TABULAR,
+      },
+    },
+    // The only KPI value style (KpiCard).
     kpi: {
       value: {
         fontFamily: fontFamilies.body,

@@ -16,5 +16,8 @@ describe("ColorPalette Foundation", () => {
     expect(screen.getByText("New in E15 (Light & Dark)")).toBeDefined();
     expect(screen.getAllByText("chart.series6")).toHaveLength(2);
     expect(screen.getAllByText("surface.scrim")).toHaveLength(2);
+    for (const tint of ["teal", "apricot", "sage"]) {
+      expect(screen.getAllByText(`surface.tint.${tint}`)).toHaveLength(2);
+    }
   });
 });

@@ -10,6 +10,13 @@ describe("SpacingAndRadii Foundation", () => {
     expect(screen.getByText("Border Radii Scale")).toBeDefined();
   });
 
+  it("lists the E16 page template tokens", () => {
+    render(<SpacingAndRadii />);
+    expect(screen.getByText("Page template")).toBeDefined();
+    expect(screen.getByTestId("page-row-sizes.page.max").textContent).toContain("1200px");
+    expect(screen.getByTestId("page-row-spacing.page.gutter.lg").textContent).toContain("40px");
+  });
+
   it("renders both density panels", () => {
     render(<SpacingAndRadii />);
     expect(screen.getByTestId("density-comfortable").getAttribute("data-density")).toBe(

@@ -42,6 +42,21 @@ const E15_KEYS = [
     note: "Headline block, text.onContrast",
     fill: css({ backgroundColor: "surface.hero" }),
   },
+  {
+    token: "surface.tint.teal",
+    note: "E16: net worth, mortgage, pension tiles",
+    fill: css({ backgroundColor: "surface.tint.teal" }),
+  },
+  {
+    token: "surface.tint.apricot",
+    note: "E16: debt tiles",
+    fill: css({ backgroundColor: "surface.tint.apricot" }),
+  },
+  {
+    token: "surface.tint.sage",
+    note: "E16: savings tiles",
+    fill: css({ backgroundColor: "surface.tint.sage" }),
+  },
   { token: "chart.series6", fill: css({ backgroundColor: "chart.series6" }) },
   { token: "chart.series7", fill: css({ backgroundColor: "chart.series7" }) },
   { token: "chart.series8", fill: css({ backgroundColor: "chart.series8" }) },

@@ -6,7 +6,7 @@ export const cardRecipe = cva({
     borderRadius: "card",
     borderWidth: "1px",
     borderStyle: "solid",
-    borderColor: "border.subtle",
+    borderColor: "border",
     color: "text.primary",
     transition: "border-color 0.2s ease, box-shadow 0.2s ease",
   },

@@ -22,9 +22,9 @@ Direction of travel (E15 phase 3 target, not yet enforced): web pages move from 
 ## 2. DESIGN TOKEN & STYLING LAWS
 
 - **Zero Raw Hex/RGB or Primitive Token Leaks:** Components may NEVER use hardcoded hex values (`#141A26`) or raw primitive scale tokens (`indigo.600`, `slate.800`, `success.500`, `purple.500`, `cyan.400`). Always use the 6 canonical semantic namespaces:
-  - `surface.*` (`canvas`, `card`, `sunken`, `subtle`, `overlay`, `contrast`, `scrim`, `hero`; `scrim` is a modal backdrop, never a text surface; `hero` is the single deep-teal headline block per page, added by DECISIONS round 5, text on it uses `text.onContrast`)
+  - `surface.*` (`canvas`, `card`, `sunken`, `subtle`, `overlay`, `contrast`, `scrim`, `hero`; `scrim` is a modal backdrop, never a text surface; `hero` is the single deep-teal headline block per page, added by DECISIONS round 5, text on it uses `text.onContrast`; `tint.{teal|apricot|sage}` are E16 domain tints for icon tiles and at most one tinted section per page, never around a `KpiStrip`, a `ScenarioZone` or a chart, and never on a KPI card)
   - `text.*` (`primary`, `secondary`, `muted`, `onContrast`)
-  - `border.*` (`DEFAULT`, `subtle`, `strong`, `input`, `focusRing`)
+  - `border.*` (`DEFAULT`, `subtle`, `strong`, `input`, `focusRing`; reference a `DEFAULT` by its group name, `"border"` or `"primary"`: a literal `"border.DEFAULT"` resolves to no CSS variable and renders `currentColor`, and `check-design-tokens` counts it)
   - `primary.*` (`DEFAULT`, `solid`, `hover`, `subtle`, `border`, `foreground`; `solid`/`hover` are fills behind `primary.foreground` only, graphic-only fills use `primary` or `chart.primary`)
   - `status.{positive|warning|danger|info|neutral}.{text|bg|border|solid}`
   - `chart.*` (`primary`, `wealth`, `debt`, `warning`, `accentPurple`, `accentCyan`, `grid`, `series1`..`series8`, `projection`, `band`, `baseline`)
@@ -37,6 +37,10 @@ Direction of travel (E15 phase 3 target, not yet enforced): web pages move from 
 - **Compact Slider Inputs:** Always use `<SliderField>` (Label top-left, compact editable value pill top-right, slider below). Never render a full-width text input box below a slider.
 - **Saved vs Scenario:** Headline figures and `<KpiStrip>`s read saved loader data only; what-if inputs live in a `<ScenarioZone>` driven by `useScenarioState`, and scenario inputs never write to saved data (no "apply", no localStorage, no money in URLs) and `surface.hero` never goes on a scenario outcome.
 - **No Uncollapsed Raw Schedules:** Any table exceeding 8 rows (Amortisation schedules, 12-month ledgers, multi-year tax tables) must live inside a `<CollapsibleDrawer>` or secondary tab.
+- **Number Budget and One Notice:** Each view keeps to the number budget and shows one headline figure, and each surface carries at most one quiet notice, as set out in principles P1, P2 and P4 of [`docs/design/e16-polish/PLAN.md`](./docs/design/e16-polish/PLAN.md).
+- **One Tabs Component:** Tabbed views use the single tabs component from `@repo/ui` (today `SegmentedTabs`; E16 PR 2 consolidates it as `Tabs`); no new `FLPTabs` or hand-built tab rows.
+- **Page Template:** Every app page renders through `<PageBody>` (content width `sizes.page.max`, `spacing.page.*` gutters and gaps) and shows its headline figure in `<HeroFigure>`, the only place `surface.hero` and `numeric.hero` appear (E16 P2 and P13). Direction of travel: `PageBody` and `HeroFigure` land with E16 PR 2 and pages adopt them in the page PRs; until then this is not enforced and existing `surface.hero` uses (KpiCard `tone="hero"` and others) stay.
+- **Type and Motion Come From Tokens:** Font sizes come from textStyles or the `fontSizes` scale, weights stop at 700, and transitions use the `durations` and `easings` tokens; `bun scripts/check-style-literals.ts` ratchets raw values (and inline `style=` in the apps) down.
 
 ## 4. DEFINITION OF DONE FOR ANY UI CHANGE
 
@@ -55,10 +59,10 @@ CI runs the full suite on every PR in a few minutes, and nothing merges unless i
 
 1. `bun run lint` (zero Biome lint/format errors)
 2. `bun run check-types` (zero TypeScript errors across all monorepo packages)
-3. `bun run check:laws` (design tokens, tabular numbers, react icons, dependency versions and copy)
+3. `bun run check:laws` (design tokens, tabular numbers, react icons, style literals, dependency versions and copy)
 4. The tests for what you changed only: `bunx vitest run <paths>` or `bun run test --filter=<package>` for each package the change touches. Do not run the whole monorepo suite locally.
 
-When a change removes violations, the baselines go stale and CI fails. Regenerate them with `bun scripts/check-design-tokens.ts --write-baseline`, `bun scripts/check-tabular-nums.ts --write-baseline`, `bun scripts/check-react-icons.ts --write-baseline` and `bun scripts/check-copy.ts --write-baseline`, then commit the updated baseline files.
+When a change removes violations, the baselines go stale and CI fails. Regenerate them with `bun scripts/check-design-tokens.ts --write-baseline`, `bun scripts/check-tabular-nums.ts --write-baseline`, `bun scripts/check-react-icons.ts --write-baseline`, `bun scripts/check-style-literals.ts --write-baseline` and `bun scripts/check-copy.ts --write-baseline`, then commit the updated baseline files.
 
 **Leave to CI:** the full `bun run test`, `bun run build`, Storybook a11y (light and dark), the E2E smoke test and the Docker images. Run one of these locally only to reproduce or debug a CI failure.
 
