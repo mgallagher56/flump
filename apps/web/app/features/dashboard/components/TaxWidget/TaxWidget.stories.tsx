@@ -48,3 +48,31 @@ export const NotSet: Story = {
     ).toBeDefined();
   },
 };
+
+export const WithNextThousand: Story = {
+  args: {
+    data: {
+      taxYear: "2026/27",
+      totalIncome: 0,
+      totalExpenses: 0,
+      netProfit: 0,
+      estimatedTaxDue: null,
+      recordsCount: 0,
+      marginal: {
+        nextThousandDeductedPct: 42,
+        takeHomeFromNextThousand: 580,
+        ratesYear: "2026/27",
+        isUnverifiedEstimate: true,
+        nextThreshold: {
+          kind: "higherRate",
+          band: { name: "Higher", rate: 0.4 },
+          grossAt: 50270,
+          distance: 2270,
+        },
+      },
+    },
+  },
+  play: async ({ canvasElement }) => {
+    await expect(within(canvasElement).getAllByText("Your next £1,000 of pay")[0]).toBeDefined();
+  },
+};

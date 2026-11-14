@@ -135,6 +135,8 @@ export interface MarginalRateExplorerProps {
   ) => void;
   /** Heading level for the chart and the panel titles. Defaults to h3. */
   headingLevel?: "h2" | "h3" | "h4";
+  /** Shows the panel's "Guidance, not advice" notice. Pass false inside a ScenarioZone, which has its own. */
+  showNotice?: boolean;
   className?: string;
 }
 
@@ -145,6 +147,7 @@ export const MarginalRateExplorer: FC<MarginalRateExplorerProps> = ({
   values,
   onChange,
   headingLevel = "h3",
+  showNotice = true,
   className,
 }) => {
   const {
@@ -465,6 +468,7 @@ export const MarginalRateExplorer: FC<MarginalRateExplorerProps> = ({
             : undefined
         }
         ratesYear={delta.before.ratesYear}
+        showNotice={showNotice}
         takeHome={delta.deltaTakeHome}
       />
       <LiveRegion debounceMs={800} message={announcement} visuallyHidden />

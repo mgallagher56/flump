@@ -180,40 +180,39 @@ export const PensionContainer: FC = () => {
   const monthlyEmployerNiContrib = annualEmployerNiSavings / 12;
   const monthlyEmployerContrib = standardMonthlyEmployerContrib + monthlyEmployerNiContrib;
 
-  // UK Tax & NI relief calculation for employee pension contribution
-  const { netMonthlyCost, taxReliefMonthly } = useMemo(() => {
-    if (annualSalary <= 0 || employeePercent <= 0) {
-      return { netMonthlyCost: 0, taxReliefMonthly: 0 };
-    }
-    // Region and student-loan plans come from the profile, so a Scottish or Plan 2 user gets
-    // the right relief. An unknown employment type or setting gives no relief figure.
+  // Saved profile facts for the take-home engine. Region and student-loan plans come from the
+  // profile, so a Scottish or Plan 2 user gets the right figures. Read only.
+  const savedFacts = useMemo(() => {
     const stored: Record<string, unknown> = { ...userProfile };
     for (const [key, value] of Object.entries(profile)) {
       if (value !== null && value !== undefined) stored[key] = value;
     }
-    const facts = {
+    return {
       ...profileFactsFromProfile(stored),
       annualSalary,
       employmentType: employmentType ?? null,
       isSalarySacrifice,
+      pensionPercent: employeePercent,
     };
-    const withoutPension = selectTakeHome(facts, { overrides: { pensionPercent: 0 } });
-    const withPension = selectTakeHome(facts, { overrides: { pensionPercent: employeePercent } });
+  }, [annualSalary, employeePercent, employmentType, isSalarySacrifice, profile, userProfile]);
+
+  // UK Tax & NI relief calculation for employee pension contribution. An unknown employment type
+  // or setting gives no relief figure.
+  const { netMonthlyCost, taxReliefMonthly } = useMemo(() => {
+    if (annualSalary <= 0 || employeePercent <= 0) {
+      return { netMonthlyCost: 0, taxReliefMonthly: 0 };
+    }
+    const withoutPension = selectTakeHome(savedFacts, { overrides: { pensionPercent: 0 } });
+    const withPension = selectTakeHome(savedFacts, {
+      overrides: { pensionPercent: employeePercent },
+    });
     if (!isFigureKnown(withoutPension) || !isFigureKnown(withPension)) {
       return { netMonthlyCost: 0, taxReliefMonthly: 0 };
     }
     const netCost = Math.max(0, (withoutPension.value.annual - withPension.value.annual) / 12);
     const relief = Math.max(0, Math.round(monthlyEmployeeContrib - netCost));
     return { netMonthlyCost: netCost, taxReliefMonthly: relief };
-  }, [
-    annualSalary,
-    employeePercent,
-    employmentType,
-    isSalarySacrifice,
-    monthlyEmployeeContrib,
-    profile,
-    userProfile,
-  ]);
+  }, [annualSalary, employeePercent, monthlyEmployeeContrib, savedFacts]);
 
   // Scenario inputs live in memory only: no storage, no URL, no network. Seeded from saved data.
   const savedGrowthRate = weightedReturnRate > 0 ? Number(weightedReturnRate.toFixed(1)) : 5;
@@ -457,6 +456,7 @@ export const PensionContainer: FC = () => {
           portfolioReturnRate={weightedReturnRate}
           salary={annualSalary}
           scenario={scenario}
+          takeHomeFacts={savedFacts}
           onEditDetails={handleEditDetails}
         />
       </div>

@@ -7,6 +7,7 @@ import {
   type MissingKey,
   PortfolioSnapshot,
   profileFactsFromProfile,
+  selectMarginalRate,
   selectTakeHome,
 } from "@flump/finance-engine";
 import type { ReactElement } from "react";
@@ -158,6 +159,17 @@ export const loader = async (args: LoaderFunctionArgs) => {
   // Estimated take-home comes from the engine's one selector; unknown stays unknown.
   const takeHomeFigure = selectTakeHome(profileFactsFromProfile(userProfile));
   const takeHome = isFigureKnown(takeHomeFigure) ? takeHomeFigure.value : null;
+  // The dashboard tax card's "next £1,000" facts, from the E25 engine (E25-T14). Unknown stays unknown.
+  const marginalFigure = selectMarginalRate(profileFactsFromProfile(userProfile));
+  const marginal = isFigureKnown(marginalFigure)
+    ? {
+        nextThousandDeductedPct: marginalFigure.value.nextThousandDeductedPct,
+        takeHomeFromNextThousand: marginalFigure.value.takeHomeFromNextThousand,
+        ratesYear: marginalFigure.value.ratesYear,
+        isUnverifiedEstimate: marginalFigure.value.isUnverifiedEstimate,
+        nextThreshold: marginalFigure.value.nextThreshold,
+      }
+    : null;
   const pensionPercentKnown =
     userProfile?.pensionPercent !== null &&
     userProfile?.pensionPercent !== undefined &&
@@ -258,6 +270,7 @@ export const loader = async (args: LoaderFunctionArgs) => {
       netProfit,
       estimatedTaxDue,
       recordsCount: currentYearRecords.length,
+      marginal,
     },
     debtData: buildDebtSummary(portfolioSnapshot),
   };

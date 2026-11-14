@@ -10,13 +10,25 @@ import {
   type TaxRecord,
   type TaxSource,
 } from "@flump/finance-engine";
-import { Button, Icon, PageHeader, ProjectionNotice, TaxRatesStatusBanner } from "@repo/ui";
+import {
+  Button,
+  EXPLORER_COPY,
+  Icon,
+  PageHeader,
+  ProjectionNotice,
+  ScenarioZone,
+  TaxRatesStatusBanner,
+} from "@repo/ui";
 import { Plus } from "lucide-react";
 import { type FC, useCallback, useEffect, useMemo, useState } from "react";
-import { useFetcher, useLoaderData } from "react-router";
+import { Link, useFetcher, useLoaderData } from "react-router";
 import TaxDisclaimerButton from "~/components/core/dialogs/TaxDisclaimerButton";
 import { ConfirmDialog } from "~/features/feedback/components/ConfirmDialog";
 import { useFetcherOutcome } from "~/features/feedback/hooks/useFetcherOutcome";
+import {
+  NextPoundExplorer,
+  useNextPoundScenario,
+} from "~/features/take-home/components/NextPoundExplorer";
 import { CopyTaxYearModal } from "~/features/tax/components/CopyTaxYearModal";
 import { TaxHeadline } from "~/features/tax/components/TaxHeadline";
 import { TaxReceiptDialog } from "~/features/tax/components/TaxReceiptDialog";
@@ -28,10 +40,14 @@ import { TaxTabs } from "~/features/tax/components/TaxTabs";
 import { TaxYearBar } from "~/features/tax/components/TaxYearBar";
 import { TaxYearComparison } from "~/features/tax/components/TaxYearComparison";
 import { recordAmount } from "~/features/tax/tax-labels";
+import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import type { loader } from "~/routes/app.self-assessment";
 import { useFinancialBaseline } from "~/state/baseline.store";
 import { getKnownTrapRegion } from "~/utils/taxTrapCopy";
-import { headerActions, iconButton, numeric, pageRoot } from "./TaxContainer.styles";
+import { headerActions, iconButton, numeric, pageRoot, zoneLink } from "./TaxContainer.styles";
+
+/** Id of the pay planner zone, linked from the dashboard tax widget. */
+export const TAX_PAY_PLANNER_ID = "tax-pay-planner";
 
 type TaxTab = "streams" | "trap-reserve" | "multi-year" | "detailed";
 
@@ -106,6 +122,24 @@ const TaxContainer: FC = () => {
           ? Number.parseFloat(userProfile.propertyOwnershipShare)
           : userProfile.propertyOwnershipShare
         : 100.0;
+
+  // The pay planner (E25-T13) starts from saved details only and never writes back.
+  const savedPensionPercent = Number(userProfile?.pensionPercent ?? 0);
+  const payScenario = useNextPoundScenario({
+    salary: profileSalary,
+    taxRegion: userProfile?.taxRegion ?? null,
+    studentLoanPlans: userProfile?.studentLoanPlans ?? null,
+    studentLoanPlan: userProfile?.studentLoanPlan ?? null,
+    isSalarySacrifice: userProfile?.isSalarySacrifice === true,
+    pensionPercent: Number.isFinite(savedPensionPercent) ? savedPensionPercent : 0,
+    taxYear: ratesContext.ratesYear,
+  });
+  const { formatCurrency } = useFormatCurrency();
+  const percentFormat = new Intl.NumberFormat("en-GB", { maximumFractionDigits: 2 });
+  const plannerBasis =
+    profileSalary > 0
+      ? `Starting from your figures: ${formatCurrency(profileSalary)} gross salary, ${percentFormat.format(Number.isFinite(savedPensionPercent) ? savedPensionPercent : 0)}% pension`
+      : EXPLORER_COPY.defaultBasis;
 
   const [payeSalary, setPayeSalary] = useState<number>(profileSalary);
   const [propertyOwnershipShare, setPropertyOwnershipShare] = useState<number>(profileShare);
@@ -384,6 +418,23 @@ const TaxContainer: FC = () => {
           />
         ) : null}
       </TaxTabs>
+
+      <ScenarioZone
+        basis={plannerBasis}
+        footer={
+          <Link className={zoneLink()} to="/app/profile">
+            Update your details
+          </Link>
+        }
+        id={TAX_PAY_PLANNER_ID}
+        isModified={payScenario.isModified}
+        // The page's own notice above already covers this zone.
+        showNotice={false}
+        title="Model a change to your pay"
+        onReset={payScenario.reset}
+      >
+        <NextPoundExplorer scenario={payScenario} />
+      </ScenarioZone>
 
       <TaxRecordDialog
         open={isRecordDialogOpen}

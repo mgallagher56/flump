@@ -38,3 +38,25 @@ export const detailValue = cva({
     gap: "4px",
   },
 });
+
+export const marginalBlock = cva({
+  base: { display: "flex", flexDirection: "column", gap: "8px", minWidth: 0 },
+});
+
+export const marginalTitle = cva({
+  base: { textStyle: "label.md", color: "text.primary", margin: 0 },
+});
+
+export const marginalBadges = cva({
+  base: { display: "flex", flexWrap: "wrap", gap: "6px" },
+});
+
+export const marginalLink = cva({
+  base: {
+    alignSelf: "flex-start",
+    textStyle: "label.md",
+    color: "primary",
+    textDecoration: "underline",
+    _focusVisible: { outline: "2px solid", outlineColor: "border.focusRing", outlineOffset: "2px" },
+  },
+});

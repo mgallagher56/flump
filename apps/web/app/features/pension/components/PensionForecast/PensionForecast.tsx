@@ -1,3 +1,4 @@
+import type { ProfileFacts } from "@flump/finance-engine";
 import { Button, ScenarioZone, SimulatorSplitLayout } from "@repo/ui";
 import { type FC, useMemo } from "react";
 import { Link } from "react-router";
@@ -8,6 +9,7 @@ import { ForecastAssumptions } from "../ForecastAssumptions";
 import { ForecastChart } from "../ForecastChart";
 import { ForecasterControls } from "../ForecasterControls";
 import { ForecasterResults } from "../ForecasterResults";
+import { PensionTakeHomeEffect } from "../PensionTakeHomeEffect";
 import {
   forecastStack,
   growthNote,
@@ -34,6 +36,8 @@ export interface PensionForecastProps {
   /** True when no pot has a growth rate, so the starting rate is a placeholder. */
   growthRateIsPlaceholder: boolean;
   hasPots: boolean;
+  /** Saved profile facts for the take-home effect of the extra monthly lever. Read only. */
+  takeHomeFacts?: ProfileFacts;
   onEditDetails?: () => void;
 }
 
@@ -56,6 +60,7 @@ export const PensionForecast: FC<PensionForecastProps> = ({
   portfolioReturnRate,
   growthRateIsPlaceholder,
   hasPots,
+  takeHomeFacts,
   onEditDetails,
 }) => {
   const { formatCurrency } = useFormatCurrency();
@@ -141,6 +146,9 @@ export const PensionForecast: FC<PensionForecastProps> = ({
               horizonYears={values.horizonYears}
               result={result}
             />
+            {takeHomeFacts ? (
+              <PensionTakeHomeEffect extraMonthly={values.extraMonthly} facts={takeHomeFacts} />
+            ) : null}
             <ForecastChart
               adjustForInflation={values.adjustForInflation}
               growthRate={values.growthRate}

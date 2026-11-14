@@ -23,3 +23,16 @@ export const numeric = cva({
 export const iconButton = cva({
   base: { gap: "2" },
 });
+
+export const zoneLink = cva({
+  base: {
+    textStyle: "label.md",
+    color: "primary",
+    textDecoration: "underline",
+    _focusVisible: {
+      outline: "2px solid",
+      outlineColor: "border.focusRing",
+      outlineOffset: "2px",
+    },
+  },
+});

@@ -25,6 +25,11 @@ describe("ScenarioZone", () => {
     expect(screen.getByTestId("projection-notice")).toBeTruthy();
   });
 
+  it("leaves the notice out when the page already shows it", () => {
+    render(<ScenarioZone showNotice={false}>content</ScenarioZone>);
+    expect(screen.queryByTestId("projection-notice")).toBeNull();
+  });
+
   it("hides Reset until modified", () => {
     const { rerender } = render(<ScenarioZone onReset={() => {}}>x</ScenarioZone>);
     expect(screen.queryByRole("button", { name: SCENARIO_RESET_LABEL })).toBeNull();

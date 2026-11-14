@@ -281,10 +281,8 @@ export const TaxTrapCalculator: FC<TaxTrapCalculatorProps> = ({
         {taperRange(money(rules.ewni.personalAllowanceTaperStart), money(rules.taperEnd))}
       </p>
 
-      <section aria-labelledby="tax-trap-childcare" className={taxTrapNote()}>
-        <h3 className={taxTrapSectionTitle()} id="tax-trap-childcare">
-          {TAX_TRAP_COPY.childcareHeading}
-        </h3>
+      <div className={taxTrapNote()}>
+        <h3 className={taxTrapSectionTitle()}>{TAX_TRAP_COPY.childcareHeading}</h3>
         <p data-testid="tax-trap-childcare-status">
           {childcareStatus(money(after.adjustedNetIncome), childcareOver)}
         </p>
@@ -294,13 +292,11 @@ export const TaxTrapCalculator: FC<TaxTrapCalculatorProps> = ({
             {TAX_TRAP_COPY.childcareSource}
           </a>
         </p>
-      </section>
+      </div>
 
       {assumptions.length > 0 ? (
-        <section aria-labelledby="tax-trap-assumptions" className={taxTrapAssumptions()}>
-          <h3 className={taxTrapSectionTitle()} id="tax-trap-assumptions">
-            {TAX_TRAP_COPY.assumptionsHeading}
-          </h3>
+        <div className={taxTrapAssumptions()}>
+          <h3 className={taxTrapSectionTitle()}>{TAX_TRAP_COPY.assumptionsHeading}</h3>
           <ul>
             {assumptions.map((a) => (
               <li key={a.code}>
@@ -309,7 +305,7 @@ export const TaxTrapCalculator: FC<TaxTrapCalculatorProps> = ({
               </li>
             ))}
           </ul>
-        </section>
+        </div>
       ) : null}
 
       <LiveRegion debounceMs={1000} message={announcement} visuallyHidden />

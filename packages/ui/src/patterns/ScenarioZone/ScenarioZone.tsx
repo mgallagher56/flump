@@ -36,6 +36,11 @@ export interface ScenarioZoneProps {
   announcement?: string;
   /** Id for the section element. */
   id?: string;
+  /**
+   * Shows the "Guidance, not advice" notice inside the zone. Default true. Pass false only when the
+   * page already shows that notice above the zone, so it appears once (one landmark per label).
+   */
+  showNotice?: boolean;
   className?: string;
 }
 
@@ -53,6 +58,7 @@ export const ScenarioZone: FC<ScenarioZoneProps> = ({
   footer,
   announcement,
   id,
+  showNotice = true,
   className,
 }) => {
   const headingId = useId();
@@ -75,7 +81,7 @@ export const ScenarioZone: FC<ScenarioZoneProps> = ({
         </div>
         {basis ? <p className={slots.basis}>{basis}</p> : null}
       </div>
-      <ProjectionNotice />
+      {showNotice ? <ProjectionNotice /> : null}
       {tools}
       <div className={slots.body}>{children}</div>
       {isModified ? (

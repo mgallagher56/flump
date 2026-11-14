@@ -47,6 +47,11 @@ export interface TakeHomeDeltaPanelProps {
   /** "An extra £X a year into your pension…" line. */
   pensionPreview?: { contribution: number; takeHomeChange: number; reachesPension: number };
   headingLevel?: "h2" | "h3" | "h4";
+  /**
+   * Shows the "Guidance, not advice" notice. Default true. Pass false inside a ScenarioZone or a page
+   * that already shows it, so the notice (a labelled landmark) appears once.
+   */
+  showNotice?: boolean;
   className?: string;
 }
 
@@ -64,6 +69,7 @@ export const TakeHomeDeltaPanel: FC<TakeHomeDeltaPanelProps> = ({
   assumptions,
   pensionPreview,
   headingLevel = "h3",
+  showNotice = true,
   className,
 }) => {
   const Heading = headingLevel;
@@ -156,7 +162,7 @@ export const TakeHomeDeltaPanel: FC<TakeHomeDeltaPanelProps> = ({
         <p className={deltaPanelBanner()}>{DELTA_PANEL_COPY.unverifiedBanner}</p>
       ) : null}
 
-      <ProjectionNotice />
+      {showNotice ? <ProjectionNotice /> : null}
 
       {known.length > 0 ? (
         <div className={deltaPanelAssumptions()}>
