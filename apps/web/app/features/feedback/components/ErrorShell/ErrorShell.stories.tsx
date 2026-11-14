@@ -41,11 +41,11 @@ export const NotFoundDocument: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     // The side-by-side theme decorator renders the story in each pane, so check the first one.
-    const [skip] = await canvas.findAllByRole("link", { name: "Skip to content" });
+    const [skip] = await canvas.findAllByRole("link", { name: "Skip to main content" });
     await expect(skip.getAttribute("href")).toBe("#main-content");
     const [heading] = await canvas.findAllByRole("heading", {
       level: 1,
-      name: "We couldn't find that",
+      name: "We cannot find that page",
     });
     await expect(heading).toBeVisible();
     const [main] = canvas.getAllByRole("main");

@@ -70,13 +70,13 @@ describe("actionErrorResponse", () => {
     );
     expect(res.init.status).toBe(503);
     expect(res.data.success).toBe(false);
-    expect(res.data.error).toMatch(/try again/);
+    expect(res.data.error).toMatch(/try again/i);
     expect(JSON.stringify(res.data)).not.toMatch(/secret|accounts/);
   });
 
   it("uses the exact 401 copy", () => {
     const res: any = actionErrorResponse(new BackendError("unauthorised", "/x", 401));
-    expect(res.data.error).toBe("Your session has ended. Please sign in again.");
+    expect(res.data.error).toBe("Your session has ended. Sign in again.");
   });
 
   it("falls back to the kind's status when the backend never answered", () => {

@@ -45,15 +45,17 @@ const result = z.object({
 
 export const getFinancialSnapshot = defineFlumpTool({
   name: "get_financial_snapshot",
-  title: "Financial snapshot",
+  title: "Summary of your figures",
   description:
-    "One-call summary of the user's finances: net worth, assets, liabilities, cash, investments, pensions, debts and (when a budget exists) monthly surplus and emergency runway. Built only from recorded accounts and budget entries; anything not recorded is null and listed in missing[] with a question to ask the user. Pass asOfMonth (YYYY-MM) for balances as at the end of a past month, from recorded monthly history (budget figures are then null, as the budget is not kept by month). Start here before drilling into other tools.",
+    "Summary of the user's figures in one call: net worth, what they own (assetsGbp), what they owe (liabilitiesGbp), cash, investments, pensions, debts and, when a budget exists, the amount left over each month (monthlySurplusAfterStoredMinimumsGbp) and months of cover (emergencyRunwayMonths). Built only from recorded accounts and budget entries; anything not recorded is null and listed in missing[] with a question to ask the user. Pass asOfMonth (in the form 2025-04) for balances as at the end of a past month, from recorded monthly history (budget figures are then null, as the budget is not kept by month). Call this first for a summary.",
   input: {
     asOfMonth: z
       .string()
       .regex(/^\d{4}-(0[1-9]|1[0-2])$/, "Use YYYY-MM, such as 2025-04")
       .optional()
-      .describe("Balances as at the end of this past month (YYYY-MM); omit for current balances"),
+      .describe(
+        "Month in the form 2025-04. Gives balances as at the end of that past month. Leave out for current balances.",
+      ),
   },
   result,
   maxTokens: 1500,
@@ -95,11 +97,11 @@ export const getFinancialSnapshot = defineFlumpTool({
         assumptions.push({
           field: "monthlySurplusAfterStoredMinimumsGbp",
           source: "default",
-          reason: `${estimatedCount} debt(s) have no stored minimum payment, so no minimum is subtracted for them; the surplus is overstated by their minimums.`,
+          reason: `No minimum payment is saved for ${estimatedCount} of the debts, so none is subtracted for them. The left-over figure is higher by their minimums.`,
         });
         missing.push({
           field: "debts.minimumPayment",
-          why: `${estimatedCount} debt(s) have no recorded minimum payment, so the surplus excludes them.`,
+          why: `No minimum payment is saved for ${estimatedCount} of the debts, so the left-over figure does not subtract them.`,
           askUser: "What is the minimum monthly payment on each of your debts?",
         });
       }
@@ -110,7 +112,7 @@ export const getFinancialSnapshot = defineFlumpTool({
     } else {
       missing.push({
         field: "monthlyEssentialSpendGbp",
-        why: "No essential spending entries in the budget, so emergency runway cannot be worked out.",
+        why: "No essential spending entries in the budget, so months of cover cannot be worked out.",
         askUser:
           "Roughly how much do you spend each month on essentials (rent or mortgage, bills, food)?",
       });
@@ -137,7 +139,7 @@ export const getFinancialSnapshot = defineFlumpTool({
         asOfMonth: null,
         notes: [
           "Student loans are income-contingent and excluded from net worth and debt totals.",
-          "Monthly surplus is after stored (not estimated) minimum debt payments.",
+          "The left-over figure is income minus spending and saved minimum debt payments. Estimated minimums are not subtracted.",
         ],
       },
       provenance,
@@ -192,7 +194,7 @@ async function historicalSnapshot(ctx: McpServerContext, asOfMonth: string) {
   } else if (values.size < tracked.length) {
     missing.push({
       field: "accountHistory.accounts",
-      why: `${tracked.length - values.size} of ${tracked.length} account(s) have no month-end balance on or before ${asOfMonth}, so they are left out.`,
+      why: `Accounts with no month-end balance on or before ${asOfMonth} are left out: ${tracked.length - values.size} of ${tracked.length}.`,
       askUser: "Would you like to record month-end balances for the accounts with no history?",
     });
   }
@@ -217,7 +219,7 @@ async function historicalSnapshot(ctx: McpServerContext, asOfMonth: string) {
       emergencyRunwayMonths: null,
       asOfMonth,
       notes: [
-        `Balances are month-end values recorded for ${asOfMonth}; ${carried} of ${values.size} account(s) repeat their last earlier value because nothing was recorded that month.`,
+        `Balances are month-end values recorded for ${asOfMonth}. Accounts repeating their last earlier value because nothing was recorded that month: ${carried} of ${values.size}.`,
         "Student loans and budget figures are not kept by month, so they are null here.",
       ],
     },

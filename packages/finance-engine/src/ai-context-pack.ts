@@ -4,9 +4,7 @@ import {
   compareAvalancheAndSnowball,
   evaluateUkStudentLoan,
   filterConsumerDebts,
-  normalizeDebtItem,
 } from "./debt-payoff.js";
-import { calculateFinancialHealthScore, evaluateFinancialStage } from "./health-score.js";
 import { buildFinancialPicture } from "./picture/build.js";
 import { isFigureKnown } from "./picture/figure.js";
 import { type ProfileFacts, profileFactsFromProfile } from "./picture/input.js";
@@ -21,8 +19,6 @@ import { calculateUKTax, type TaxCalculationResult, type TaxRecord } from "./tax
 import type {
   AvalancheVsSnowballComparison,
   FinancialBaseline,
-  FinancialStageEvaluation,
-  HealthScoreResult,
   NormalizedDebtItem,
   PromoCliffAlert,
   SafeToSpendResult,
@@ -60,6 +56,9 @@ export interface BuildContextPackInput {
   profileFacts?: ProfileFacts;
 }
 
+/** The saved baseline as the pack carries it: figures only, so no computed stage. */
+export type ContextPackBaseline = Omit<FinancialBaseline, "financialStage">;
+
 export interface FlumpAiContextPack {
   metadata: {
     generatedAt: string;
@@ -67,9 +66,12 @@ export interface FlumpAiContextPack {
     isAnonymized: boolean;
     currency: string;
   };
-  baseline: FinancialBaseline;
-  stageEvaluation: FinancialStageEvaluation;
-  healthScore: HealthScoreResult;
+  baseline: ContextPackBaseline;
+  /**
+   * Neutral sentences that each state one of the person's figures, in a fixed order. The pack
+   * carries figures only: no score, grade, stage or priority (copy audit ruling 2, 2026-11-14).
+   */
+  observations: string[];
   portfolio: {
     netWorth: number;
     totalAssets: number;
@@ -123,9 +125,10 @@ export function buildFlumpAiContextPack(
   const isAnonymized = options.anonymizeInstitutions ?? true;
   const currency = "GBP";
 
-  // 1. Scrub baseline of any direct PII identifier
-  const safeBaseline: FinancialBaseline = {
-    ...input.baseline,
+  // 1. Scrub baseline of any direct PII identifier. The stage is dropped: figures only.
+  const { financialStage: _stage, ...baselineFigures } = input.baseline;
+  const safeBaseline: ContextPackBaseline = {
+    ...baselineFigures,
     userId: isAnonymized ? "anonymous-user" : input.baseline.userId,
   };
 
@@ -207,42 +210,10 @@ export function buildFlumpAiContextPack(
   const pictureSafeToSpend = isFigureKnown(picture.safeToSpend) ? picture.safeToSpend.value : null;
   const pictureCover = isFigureKnown(picture.monthsOfCover) ? picture.monthsOfCover.value : null;
 
-  // Stage and health score only (E17 owns them): they still fall back to the baseline when the
-  // budget is empty. Every budget figure the pack reports comes from the picture above.
-  const effectiveMonthlyIncome =
-    pictureBudget && pictureBudget.income > 0
-      ? pictureBudget.income
-      : (safeBaseline.monthlyTakeHomeOverride ?? (safeBaseline.annualGrossSalary / 12) * 0.72);
-  const effectiveEssentialBills =
-    pictureBudget && pictureBudget.essentials > 0
-      ? pictureBudget.essentials
-      : (safeBaseline.monthlyHousingCost ?? 900) + (safeBaseline.monthlyOtherOutgoings ?? 1100);
-  const minDebtMonthly = consumerDebts.reduce((sum, d) => sum + d.minimumPaymentGbp, 0);
-  const totalLiquid = snapshot.getTotalLiquidCash();
-  // Budget essentials already include "debt" rows; only minimums beyond them come off again.
-  const debtBeyondBudget = Math.max(0, minDebtMonthly - (pictureBudget?.debtPayments ?? 0));
-  const monthlySurplus = Math.round(
-    effectiveMonthlyIncome -
-      effectiveEssentialBills -
-      (pictureBudget?.discretionary ?? 0) -
-      debtBeyondBudget,
-  );
-
-  // 6. Stage Evaluation & Health Score
-  const stageEvaluation = evaluateFinancialStage({
-    debts: consumerDebts,
-    monthlySurplus,
-    liquidSavings: totalLiquid,
-    monthlyEssentialExpenses: effectiveEssentialBills,
-  });
-
-  const healthScore = calculateFinancialHealthScore({
-    stage: stageEvaluation.canonicalStage,
-    totalUnsecuredDebtGbp: totalDebtBalance,
-    monthlyNetIncomeGbp: effectiveMonthlyIncome,
-    monthlyEssentialBillsGbp: effectiveEssentialBills,
-    emergencyFundGbp: totalLiquid,
-    adjustedNetIncomeGbp: safeBaseline.annualGrossSalary,
+  const observations = buildObservations({
+    consumerDebtGbp: totalDebtBalance,
+    monthsOfCover: pictureCover?.months ?? null,
+    leftOverMonthly: pictureBudget?.hasIncome ? pictureBudget.surplus : null,
   });
 
   // 7. UK Tax Calculation & Self-Assessment Ledger
@@ -273,8 +244,7 @@ export function buildFlumpAiContextPack(
       currency,
     },
     baseline: safeBaseline,
-    stageEvaluation,
-    healthScore,
+    observations,
     portfolio: {
       netWorth: snapshot.getTotalNetWorth(),
       totalAssets: snapshot.getTotalAssets(),
@@ -320,9 +290,37 @@ export function buildFlumpAiContextPack(
   };
 }
 
+/** Whole pounds, en-GB. */
+function gbp(value: number): string {
+  return `£${Math.round(value).toLocaleString("en-GB")}`;
+}
+
 /**
- * Formats a FlumpAiContextPack into human-readable Markdown suitable for clipboard export.
+ * One neutral sentence per known figure, always in this order. Unknown figures are left out
+ * rather than guessed; nothing here ranks, grades or suggests.
  */
+function buildObservations(args: {
+  consumerDebtGbp: number;
+  monthsOfCover: number | null;
+  leftOverMonthly: number | null;
+}): string[] {
+  const out: string[] = [];
+  if (args.consumerDebtGbp > 0) {
+    out.push(`Debts total ${gbp(args.consumerDebtGbp)}, not counting mortgages and student loans.`);
+  }
+  if (args.monthsOfCover !== null) {
+    out.push(`Cash covers ${args.monthsOfCover.toFixed(1)} months of essential spending.`);
+  }
+  if (args.leftOverMonthly !== null) {
+    out.push(
+      args.leftOverMonthly >= 0
+        ? `${gbp(args.leftOverMonthly)} a month is left over after the spending and saving in the budget.`
+        : `Spending and saving in the budget are ${gbp(Math.abs(args.leftOverMonthly))} a month more than income.`,
+    );
+  }
+  return out;
+}
+
 function gbpOrNotSet(value: number | null): string {
   return value === null ? "Not set" : formatSignedGbp(value);
 }
@@ -333,6 +331,9 @@ function formatSignedGbp(value: number): string {
   return value < 0 ? `-£${abs}` : `£${abs}`;
 }
 
+/**
+ * Formats a FlumpAiContextPack into human-readable Markdown suitable for clipboard export.
+ */
 export function formatAiContextPackMarkdown(pack: FlumpAiContextPack): string {
   const p = pack.portfolio;
   const b = pack.baseline;
@@ -340,21 +341,18 @@ export function formatAiContextPackMarkdown(pack: FlumpAiContextPack): string {
   const bg = pack.budgetSummary;
   const tx = pack.taxSummary.ukTaxCalculation;
 
-  return `# FLUMP UK FINANCIAL CONTEXT PACK
-Generated: ${pack.metadata.generatedAt} | Anonymized: ${pack.metadata.isAnonymized ? "YES" : "NO"} | Currency: ${pack.metadata.currency}
+  return `# Flump context pack
+Generated: ${pack.metadata.generatedAt} | Anonymised: ${pack.metadata.isAnonymized ? "yes" : "no"} | Currency: ${pack.metadata.currency}
 
-## 1. Executive Summary & Health Grade
-- **Current Financial Stage:** ${pack.stageEvaluation.headline} (${pack.stageEvaluation.canonicalStage})
-- **Overall Health Score:** ${pack.healthScore.overallScore}/100 [Grade: ${pack.healthScore.grade}]
-- **Primary Hero Focus:** ${pack.stageEvaluation.primaryHeroMetric}
+## 1. Summary
 - **Observations:**
-${pack.healthScore.observations.map((o) => `  * ${o}`).join("\n") || "  * None."}
+${pack.observations.map((o) => `  * ${o}`).join("\n") || "  * None."}
 
-## 2. Net Worth & Assets
-- **Total Net Worth:** ${formatSignedGbp(p.netWorth)}
-- **Total Assets:** £${p.totalAssets.toLocaleString("en-GB")} (Liquid: £${p.totalLiquidCash.toLocaleString("en-GB")}, Investments: £${p.totalInvestments.toLocaleString("en-GB")}, Pensions: £${p.totalPensions.toLocaleString("en-GB")})
-- **Total Liabilities:** £${p.totalLiabilities.toLocaleString("en-GB")} (Consumer Debt: £${p.totalConsumerDebt.toLocaleString("en-GB")}, Mortgages: £${p.totalMortgageBalance.toLocaleString("en-GB")})
-- **Weighted Cash Yield:** ${p.weightedSavingsRate}% AER
+## 2. Net worth
+- **Net worth:** ${formatSignedGbp(p.netWorth)}
+- **What you own:** £${p.totalAssets.toLocaleString("en-GB")} (cash you can get at quickly: £${p.totalLiquidCash.toLocaleString("en-GB")}, investments: £${p.totalInvestments.toLocaleString("en-GB")}, pensions: £${p.totalPensions.toLocaleString("en-GB")})
+- **What you owe:** £${p.totalLiabilities.toLocaleString("en-GB")} (debts: £${p.totalConsumerDebt.toLocaleString("en-GB")}, mortgages: £${p.totalMortgageBalance.toLocaleString("en-GB")})
+- **Average savings rate:** ${p.weightedSavingsRate}% AER
 
 ### Accounts:
 ${p.accounts
@@ -366,46 +364,46 @@ ${p.accounts
   )
   .join("\n")}
 
-## 3. Debt Architecture & Payoff
-- **Consumer Debt Balance:** £${d.totalStartingDebtGbp.toLocaleString("en-GB")}
-- **Avalanche debt-free date:** ${d.avalancheVsSnowballComparison.avalanche.debtFreeDate} (Interest: £${d.avalancheVsSnowballComparison.avalanche.totalInterest.toLocaleString("en-GB")})
-- **Snowball first debt cleared:** ${d.avalancheVsSnowballComparison.snowballFirstWinDescription}
-- **Interest difference (avalanche vs minimum payments only):** £${d.avalancheVsSnowballComparison.interestSavedAvalancheVsMin.toLocaleString("en-GB")}
+## 3. Debts
+- **Debt balance:** £${d.totalStartingDebtGbp.toLocaleString("en-GB")}
+- **Highest rate first (avalanche):** debt-free date ${d.avalancheVsSnowballComparison.avalanche.debtFreeDate}, total interest £${d.avalancheVsSnowballComparison.avalanche.totalInterest.toLocaleString("en-GB")}
+- **Smallest balance first (snowball):** debt-free date ${d.avalancheVsSnowballComparison.snowball.debtFreeDate}, total interest £${d.avalancheVsSnowballComparison.snowball.totalInterest.toLocaleString("en-GB")}
+- **Interest difference (highest rate first compared with minimum payments only):** £${d.avalancheVsSnowballComparison.interestSavedAvalancheVsMin.toLocaleString("en-GB")}
 ${
   d.promoCliffAlerts.length > 0
-    ? `\n### 0% promotional periods ending:\n${d.promoCliffAlerts
+    ? `\n### When the 0% deal ends:\n${d.promoCliffAlerts
         .map(
           (c) =>
-            `- ${c.debtName}: Expires ${c.promoExpiryDate}, Revert APR ${c.revertApr}%. Monthly amount that clears it before expiry: £${c.requiredMonthlyToClearBeforeCliff}`,
+            `- ${c.debtName}: the 0% deal ends ${c.promoExpiryDate}, then ${c.revertApr}% APR. Monthly payment that pays it off before then: £${c.requiredMonthlyToClearBeforeCliff}`,
         )
         .join("\n")}`
     : ""
 }
 ${
   d.studentLoanEvaluation
-    ? `\n### UK Student Loan Status:\n- Plan: ${d.studentLoanEvaluation.plan.toUpperCase()} | Projected outcome: ${d.studentLoanEvaluation.projectedOutcome}\n- Detail: ${d.studentLoanEvaluation.reasoning}`
+    ? `\n### Student loan:\n- Plan: ${d.studentLoanEvaluation.plan.toUpperCase()} | Projected outcome: ${d.studentLoanEvaluation.projectedOutcome}\n- Detail: ${d.studentLoanEvaluation.reasoning}`
     : ""
 }
 
-## 4. Cash Flow & Budget Runway
-- **Budgeted Income:** ${gbpOrNotSet(bg.monthlyIncome)}/mo
-- **Priority Essential Bills:** ${gbpOrNotSet(bg.essentialBillsMonthly)}/mo
-- **Months of Cover:** ${bg.emergencyRunwayMonths === null ? "Not set" : `${bg.emergencyRunwayMonths.toFixed(1)} Months`}
-- **Weekly Safe-to-Spend:** ${bg.safeToSpend ? `${formatSignedGbp(bg.safeToSpend.weeklyAllowance)}/wk (${formatSignedGbp(bg.safeToSpend.dailyAllowance)}/day)` : "Not set"}
-- **Monthly Net Surplus:** ${gbpOrNotSet(bg.monthlySurplus)}/mo
+## 4. Budget
+- **Income in your budget, a month:** ${gbpOrNotSet(bg.monthlyIncome)}
+- **Essential spending, a month:** ${gbpOrNotSet(bg.essentialBillsMonthly)}
+- **Months of cover:** ${bg.emergencyRunwayMonths === null ? "Not set" : `${bg.emergencyRunwayMonths.toFixed(1)} months`}
+- **Safe to spend:** ${bg.safeToSpend ? `${formatSignedGbp(bg.safeToSpend.weeklyAllowance)} a week` : "Not set"}
+- **Income minus spending, a month:** ${gbpOrNotSet(bg.monthlySurplus)}
 
 ## 5. UK Tax & Fiscal Guardrails (${pack.taxSummary.currentTaxYear})
-- **Gross Salary:** £${b.annualGrossSalary.toLocaleString("en-GB")}
-- **Tax Region:** ${b.ukRegion}
-- **Adjusted Net Income:** £${tx.adjustedNetIncomeGbp.toLocaleString("en-GB")}
-- **Adjusted net income in the £100,000 to £125,140 band:** ${tx.taxTrap.isInTaxTrap ? "YES (60%+ marginal rate)" : "NO"}
+- **Salary before tax:** £${b.annualGrossSalary.toLocaleString("en-GB")}
+- **Tax region:** ${b.ukRegion}
+- **Adjusted net income:** £${tx.adjustedNetIncomeGbp.toLocaleString("en-GB")}
+- **Adjusted net income in the £100,000 to £125,140 band:** ${tx.taxTrap.isInTaxTrap ? "Yes (the Personal Allowance reduces in this band)" : "No"}
 ${
   tx.taxTrap.isInTaxTrap
     ? `- **Contribution that brings adjusted net income to £100,000:** £${tx.taxTrap.contributionRequiredToEscapeGbp.toLocaleString("en-GB")}\n- **Estimated tax difference at that contribution:** £${tx.taxTrap.estimatedTaxSavedByEscapingGbp.toLocaleString("en-GB")}`
     : ""
 }
-- **Remaining ISA Allowance:** £${tx.allowances.isaAllowanceRemainingGbp.toLocaleString("en-GB")} / £20,000
-- **Remaining Pension Allowance:** £${tx.allowances.pensionAllowanceRemainingGbp.toLocaleString("en-GB")} / £${tx.allowances.pensionAnnualAllowanceGbp.toLocaleString("en-GB")}
+- **ISA allowance unused this tax year:** £${tx.allowances.isaAllowanceRemainingGbp.toLocaleString("en-GB")} of £20,000
+- **Pension annual allowance unused this tax year:** £${tx.allowances.pensionAllowanceRemainingGbp.toLocaleString("en-GB")} of £${tx.allowances.pensionAnnualAllowanceGbp.toLocaleString("en-GB")}
 - **Personal Savings Allowance:** £${tx.allowances.personalSavingsAllowanceGbp.toLocaleString("en-GB")} (${tx.allowances.marginalIncomeTaxBand} band)
 `;
 }

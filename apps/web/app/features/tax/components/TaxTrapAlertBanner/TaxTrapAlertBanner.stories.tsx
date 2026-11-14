@@ -19,7 +19,9 @@ type Story = StoryObj<typeof TaxTrapAlertBanner>;
 export const InTaper: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    await expect(canvas.getAllByText(/60% income tax, 62% including NI/).length).toBeGreaterThan(0);
+    await expect(
+      canvas.getAllByText(/60% Income Tax, 62% including National Insurance/).length,
+    ).toBeGreaterThan(0);
     await expect(canvas.queryByRole("button")).toBeNull();
   },
 };

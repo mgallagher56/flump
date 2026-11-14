@@ -7,15 +7,15 @@ describe("RouteErrorState", () => {
     const onRetry = vi.fn();
     render(<RouteErrorState kind="server" onRetry={onRetry} />);
 
-    expect(screen.getByRole("heading", { name: "We couldn't load your data" })).toBeDefined();
+    expect(screen.getByRole("heading", { name: "We could not load this page" })).toBeDefined();
     fireEvent.click(screen.getByRole("button", { name: "Try again" }));
     expect(onRetry).toHaveBeenCalledTimes(1);
   });
 
-  it("shows 'Trying again...' and disables the button while retrying", () => {
+  it("shows 'Trying again…' and disables the button while retrying", () => {
     render(<RouteErrorState kind="unavailable" onRetry={() => {}} retrying />);
 
-    const button = screen.getByRole("button", { name: "Trying again..." }) as HTMLButtonElement;
+    const button = screen.getByRole("button", { name: "Trying again…" }) as HTMLButtonElement;
     expect(button.disabled).toBe(true);
   });
 
@@ -28,7 +28,7 @@ describe("RouteErrorState", () => {
       />,
     );
 
-    expect(screen.getByRole("heading", { name: "We couldn't find that" })).toBeDefined();
+    expect(screen.getByRole("heading", { name: "We cannot find that page" })).toBeDefined();
     const link = screen.getByRole("link", { name: "Back to accounts" });
     expect(link.getAttribute("href")).toBe("/app/accounts");
   });
@@ -51,12 +51,14 @@ describe("RouteErrorState", () => {
 
   it("falls back to the generic state for unknown kinds", () => {
     render(<RouteErrorState kind="unknown" onRetry={() => {}} />);
-    expect(screen.getByRole("heading", { name: "We couldn't load your data" })).toBeDefined();
+    expect(screen.getByRole("heading", { name: "We could not load this page" })).toBeDefined();
   });
 
   it("renders a forbidden state", () => {
     render(<RouteErrorState kind="forbidden" />);
-    expect(screen.getByRole("heading", { name: "You don't have access to this" })).toBeDefined();
+    expect(
+      screen.getByRole("heading", { name: "You do not have access to this page" }),
+    ).toBeDefined();
   });
 
   it("renders an invite-only state with a sign out action", () => {
@@ -117,7 +119,7 @@ describe("RouteErrorState", () => {
 
   it("gives a connection failure its own copy and a retry", () => {
     render(<RouteErrorState kind="unavailable" onRetry={() => {}} />);
-    expect(screen.getByRole("heading", { name: "We couldn't reach Flump" })).toBeDefined();
+    expect(screen.getByRole("heading", { name: "We could not reach Flump" })).toBeDefined();
     expect(screen.getByRole("button", { name: "Try again" })).toBeDefined();
   });
 
@@ -151,7 +153,7 @@ describe("RouteErrorState", () => {
   it("moves focus to the heading on mount", () => {
     render(<RouteErrorState kind="server" />);
     expect(document.activeElement).toBe(
-      screen.getByRole("heading", { name: "We couldn't load your data" }),
+      screen.getByRole("heading", { name: "We could not load this page" }),
     );
   });
 

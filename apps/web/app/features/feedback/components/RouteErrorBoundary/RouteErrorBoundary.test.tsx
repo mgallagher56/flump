@@ -47,7 +47,7 @@ describe("RouteErrorBoundary", () => {
     renderWithLoader(() => {
       throw data({ kind: "unavailable" }, { status: 503 });
     });
-    expect(await screen.findByRole("heading", { name: "We couldn't reach Flump" })).toBeDefined();
+    expect(await screen.findByRole("heading", { name: "We could not reach Flump" })).toBeDefined();
     expect(screen.getByText("Error 503")).toBeDefined();
   });
 
@@ -56,7 +56,7 @@ describe("RouteErrorBoundary", () => {
       throw data({ kind: "server" }, { status: 500 });
     });
     expect(
-      await screen.findByRole("heading", { name: "We couldn't load your data" }),
+      await screen.findByRole("heading", { name: "We could not load this page" }),
     ).toBeDefined();
     expect(screen.getByRole("button", { name: "Try again" })).toBeDefined();
     expect(screen.getByRole("link", { name: "Report this problem by email" })).toBeDefined();
@@ -67,7 +67,7 @@ describe("RouteErrorBoundary", () => {
     renderWithLoader(() => {
       throw new TypeError("Failed to fetch https://api.internal/secret");
     });
-    expect(await screen.findByRole("heading", { name: "We couldn't reach Flump" })).toBeDefined();
+    expect(await screen.findByRole("heading", { name: "We could not reach Flump" })).toBeDefined();
     expect(screen.queryByText(/internal/)).toBeNull();
   });
 
@@ -75,7 +75,7 @@ describe("RouteErrorBoundary", () => {
     renderWithLoader(() => {
       throw data({ kind: "server" }, { status: 500 });
     });
-    const heading = await screen.findByRole("heading", { name: "We couldn't load your data" });
+    const heading = await screen.findByRole("heading", { name: "We could not load this page" });
     await waitFor(() => expect(document.activeElement).toBe(heading));
   });
 
@@ -100,7 +100,7 @@ describe("RouteErrorBoundary", () => {
       throw new Error("secret token abc123");
     });
     expect(
-      await screen.findByRole("heading", { name: "We couldn't load your data" }),
+      await screen.findByRole("heading", { name: "We could not load this page" }),
     ).toBeDefined();
     expect(screen.queryByText(/secret token/)).toBeNull();
   });
@@ -109,10 +109,10 @@ describe("RouteErrorBoundary", () => {
     renderWithLoader(() => {
       throw data({ kind: "not-found" }, { status: 404 });
     });
-    expect(await screen.findByRole("heading", { name: "We couldn't find that" })).toBeDefined();
+    expect(await screen.findByRole("heading", { name: "We cannot find that page" })).toBeDefined();
     expect(screen.getByRole("link", { name: "Go to Flump" }).getAttribute("href")).toBe("/");
     expect(screen.getByText("Error 404")).toBeDefined();
-    expect(screen.queryByRole("link", { name: "Go to dashboard" })).toBeNull();
+    expect(screen.queryByRole("link", { name: "Back to home" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Try again" })).toBeNull();
   });
 
@@ -120,7 +120,7 @@ describe("RouteErrorBoundary", () => {
     renderWithLoader(() => {
       throw new Response("Not Found", { status: 404, statusText: "Not Found" });
     });
-    expect(await screen.findByRole("heading", { name: "We couldn't find that" })).toBeDefined();
+    expect(await screen.findByRole("heading", { name: "We cannot find that page" })).toBeDefined();
     expect(screen.queryByRole("button", { name: "Try again" })).toBeNull();
     expect(screen.getByRole("link", { name: "Go to Flump" }).getAttribute("href")).toBe("/");
   });
@@ -137,8 +137,8 @@ describe("RouteErrorBoundary", () => {
     renderWithLoader(() => {
       throw data({ kind: "forbidden" }, { status: 403 });
     });
-    expect(await screen.findByRole("heading", { name: "We couldn't find that" })).toBeDefined();
-    expect(screen.queryByText("You don't have access to this")).toBeNull();
+    expect(await screen.findByRole("heading", { name: "We cannot find that page" })).toBeDefined();
+    expect(screen.queryByText("You do not have access to this page")).toBeNull();
     expect(screen.queryByText("Error 403")).toBeNull();
     expect(screen.getByText("Error 404")).toBeDefined();
   });
@@ -147,7 +147,7 @@ describe("RouteErrorBoundary", () => {
     renderWithLoader(() => {
       throw new TypeError("Load failed");
     });
-    expect(await screen.findByRole("heading", { name: "We couldn't reach Flump" })).toBeDefined();
+    expect(await screen.findByRole("heading", { name: "We could not reach Flump" })).toBeDefined();
   });
 
   it("renders the heading as the page h1, since it replaces the route's PageHeader", async () => {
@@ -155,7 +155,7 @@ describe("RouteErrorBoundary", () => {
       throw data({ kind: "server" }, { status: 500 });
     });
     expect(
-      await screen.findByRole("heading", { level: 1, name: "We couldn't load your data" }),
+      await screen.findByRole("heading", { level: 1, name: "We could not load this page" }),
     ).toBeDefined();
   });
 
@@ -163,7 +163,7 @@ describe("RouteErrorBoundary", () => {
     renderWithLoader(() => {
       throw data({ kind: "server" }, { status: 500 });
     });
-    await screen.findByRole("heading", { name: "We couldn't load your data" });
+    await screen.findByRole("heading", { name: "We could not load this page" });
     expect(screen.queryByRole("alert")).toBeNull();
   });
 
@@ -199,7 +199,7 @@ describe("RouteErrorBoundary", () => {
       throw data({ kind: "bogus" }, { status: 500 });
     });
     expect(
-      await screen.findByRole("heading", { name: "We couldn't load your data" }),
+      await screen.findByRole("heading", { name: "We could not load this page" }),
     ).toBeDefined();
   });
 });

@@ -51,10 +51,10 @@ export const AllowanceProgressPill: FC<AllowanceProgressPillProps> = ({
             <span
               className={css({ fontSize: "sm", fontWeight: "semibold", color: "text.primary" })}
             >
-              {isIsa ? "UK ISA Annual Allowance" : "UK Pension Annual Allowance"}
+              {isIsa ? "ISA allowance" : "Pension annual allowance"}
             </span>
             <StatusBadge size="sm" variant="brand">
-              {formatGBP(limit)} / Tax Year
+              {formatGBP(limit)} a tax year
             </StatusBadge>
           </div>
           <div
@@ -65,7 +65,7 @@ export const AllowanceProgressPill: FC<AllowanceProgressPillProps> = ({
               fontVariantNumeric: "tabular-nums",
             })}
           >
-            {formatGBP(remaining)} remaining tax-free capacity
+            {formatGBP(remaining)} of this tax year's allowance is unused
           </div>
         </div>
 
@@ -89,10 +89,10 @@ export const AllowanceProgressPill: FC<AllowanceProgressPillProps> = ({
           <span className={css({ fontWeight: "semibold", color: "text.primary" })}>
             {formatGBP(used)}{" "}
             <span className={css({ color: "text.muted", fontWeight: "normal" })}>
-              contributed ({percentage.toFixed(0)}%)
+              paid in ({percentage.toFixed(0)}% of the allowance)
             </span>
           </span>
-          <span className={css({ color: "text.muted" })}>Max {formatGBP(limit)}</span>
+          <span className={css({ color: "text.muted" })}>Allowance {formatGBP(limit)}</span>
         </div>
         <ProgressBar height={8} max={limit} value={used} variant={progressVariant} />
       </div>
@@ -115,10 +115,10 @@ export const AllowanceProgressPill: FC<AllowanceProgressPillProps> = ({
         })}
       >
         <span>
-          <strong>Scope:</strong>{" "}
+          <strong>Counts:</strong>{" "}
           {isIsa
-            ? "Cash ISAs, Stocks & Shares ISAs, and Lifetime ISAs."
-            : "Workplace pension, SIPP, and personal pension contributions."}
+            ? "Cash ISAs, Stocks and Shares ISAs and Lifetime ISAs."
+            : "Workplace pension, self-invested personal pension (SIPP) and personal pension contributions."}
         </span>
         <span className={css({ color: "primary", fontWeight: "semibold" })}>Resets 6 April</span>
       </div>

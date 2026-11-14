@@ -102,7 +102,7 @@ export const PersonalAllowanceTaperBanner: FC<PersonalAllowanceTaperBannerProps>
             </h3>
             <StatusBadge size="sm" variant="neutral">
               <span className={css({ fontVariantNumeric: "tabular-nums" })}>
-                {bandRatePct}% marginal rate in the band
+                {bandRatePct}% of extra pay deducted in the band
               </span>
             </StatusBadge>
           </div>
@@ -117,7 +117,7 @@ export const PersonalAllowanceTaperBanner: FC<PersonalAllowanceTaperBannerProps>
           >
             Between {formatGBP(taperStart)} and {formatGBP(taperEnd)} of adjusted net income, the
             Personal Allowance reduces by £1 for every £2 of income. With higher rate tax and
-            National Insurance, the effective marginal rate in this band is{" "}
+            National Insurance, the estimated share of extra pay deducted in this band is{" "}
             <strong className={css({ fontVariantNumeric: "tabular-nums" })}>{bandRatePct}%</strong>.
             In England, funded childcare hours for working parents, and Tax-Free Childcare across
             the UK, are not available if either parent's adjusted net income is over{" "}
@@ -144,7 +144,7 @@ export const PersonalAllowanceTaperBanner: FC<PersonalAllowanceTaperBannerProps>
               Pension salary sacrifice
             </label>
             <div className={metricLabelStyle}>
-              A sacrifice equal to the income above {formatGBP(taperStart)} brings adjusted net
+              Salary sacrifice equal to the income above {formatGBP(taperStart)} brings adjusted net
               income to {formatGBP(taperStart)} in this estimate. Unverified estimate.
             </div>
           </div>
@@ -180,7 +180,7 @@ export const PersonalAllowanceTaperBanner: FC<PersonalAllowanceTaperBannerProps>
           </div>
 
           <div>
-            <span className={metricLabelStyle}>Gross pension contribution</span>
+            <span className={metricLabelStyle}>Pension contribution</span>
             <div className={cx(figureStyle, css({ color: "primary" }))}>
               +{formatGBP(sacrifice / 12)} / mo
             </div>

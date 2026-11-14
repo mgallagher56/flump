@@ -70,7 +70,7 @@ export const TAX_YEARS: Record<string, TaxYearConfig> = Object.fromEntries(
 );
 
 export const RENTAL_CATEGORIES = [
-  { id: "rental_income", name: "Rental Income", type: "income" as const },
+  { id: "rental_income", name: "Rental income", type: "income" as const },
   {
     id: "rent_rates_insurance",
     name: "Rent, rates, insurance, ground rents",
@@ -86,13 +86,13 @@ export const RENTAL_CATEGORIES = [
   { id: "services_costs", name: "Costs of services provided", type: "expense" as const },
   {
     id: "mortgage_interest",
-    name: "Mortgage Interest / Residential property finance",
+    name: "Mortgage interest and other residential finance costs",
     type: "expense" as const,
   },
 ];
 
 export const SELF_EMPLOYED_CATEGORIES = [
-  { id: "self_employed_income", name: "Self-Employed Turnover/Income", type: "income" as const },
+  { id: "self_employed_income", name: "Self-employed turnover or income", type: "income" as const },
   {
     id: "office_costs",
     name: "Office, stationery, phone, internet, postage",
@@ -121,19 +121,19 @@ export const SELF_EMPLOYED_CATEGORIES = [
 ];
 
 export const PAYE_CATEGORIES = [
-  { id: "paye_salary", name: "Base PAYE Salary", type: "income" as const },
-  { id: "paye_bonus", name: "Bonus, Commission & Overtime", type: "income" as const },
-  { id: "paye_benefit", name: "Taxable Benefits in Kind (P11D)", type: "income" as const },
-  { id: "paye_pension", name: "Employee Pension Contributions", type: "expense" as const },
+  { id: "paye_salary", name: "Base PAYE salary", type: "income" as const },
+  { id: "paye_bonus", name: "Bonus, commission and overtime", type: "income" as const },
+  { id: "paye_benefit", name: "Taxable benefits in kind (P11D)", type: "income" as const },
+  { id: "paye_pension", name: "Employee pension contributions", type: "expense" as const },
 ];
 
 export const SAVINGS_CATEGORIES = [
-  { id: "savings_interest", name: "Taxable Bank & Savings Interest", type: "income" as const },
-  { id: "dividend_income", name: "Dividends (Shares / Equity)", type: "income" as const },
-  { id: "isa_interest", name: "Tax-Free ISA Interest / Returns", type: "income" as const },
+  { id: "savings_interest", name: "Taxable bank and savings interest", type: "income" as const },
+  { id: "dividend_income", name: "Dividends from shares", type: "income" as const },
+  { id: "isa_interest", name: "ISA interest and returns (tax-free)", type: "income" as const },
   {
     id: "investment_fees",
-    name: "Deductible Investment Management Fees",
+    name: "Deductible investment management fees",
     type: "expense" as const,
   },
 ];

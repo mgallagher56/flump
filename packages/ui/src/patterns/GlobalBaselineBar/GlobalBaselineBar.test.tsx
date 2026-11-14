@@ -7,13 +7,13 @@ describe("GlobalBaselineBar Pattern", () => {
     render(<GlobalBaselineBar pensionPct={8} salary={55000} />);
     expect(screen.getByText("£55,000")).toBeDefined();
     expect(screen.getByText("8%")).toBeDefined();
-    expect(screen.getByText("Your baseline")).toBeDefined();
+    expect(screen.getByText("Your figures")).toBeDefined();
   });
 
   it("toggles inline parameter adjustment drawer", () => {
     render(<GlobalBaselineBar pensionPct={8} salary={55000} />);
-    const toggleBtn = screen.getByRole("button", { name: "Adjust Baseline" });
+    const toggleBtn = screen.getByRole("button", { name: "Model a change" });
     fireEvent.click(toggleBtn);
-    expect(screen.getByLabelText("Gross Annual Salary (£)")).toBeDefined();
+    expect(screen.getByLabelText("Yearly salary before tax")).toBeDefined();
   });
 });

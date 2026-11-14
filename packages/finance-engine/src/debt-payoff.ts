@@ -395,7 +395,7 @@ function simulateSchedule(
 }
 
 /** PayoffResult.debtFreeDate is a string; this label stands in when payoff is not achievable. */
-const NOT_ACHIEVABLE_LABEL = "Not payable at current payments";
+const NOT_ACHIEVABLE_LABEL = "Not paid off at these payments";
 
 /**
  * Core Debt Payoff Schedule Generator (Snowball & Avalanche).
@@ -619,8 +619,8 @@ export function compareAvalancheAndSnowball(
   );
 
   const quickWinText = snowball.quickWinDebtName
-    ? `Snowball pays off ${snowball.quickWinDebtName} first`
-    : "Snowball pays off the smallest balance first";
+    ? `Smallest balance first (snowball): ${snowball.quickWinDebtName} is paid off first`
+    : "Smallest balance first (snowball): the smallest balance is paid off first";
 
   return {
     avalanche,
@@ -745,8 +745,8 @@ export function evaluateUkStudentLoan(
   const reasoning = nothingOwed
     ? "There is no balance left to repay."
     : willLikelyRepayBeforeWriteOff
-      ? `Your annual repayment of £${Math.round(annualRepayment).toLocaleString("en-GB")} is projected to clear the £${Math.round(currentBalance).toLocaleString("en-GB")} balance before the ${cfg.writeOffYears}-year statutory write-off.`
-      : `Your annual repayment of £${Math.round(annualRepayment).toLocaleString("en-GB")} is not projected to clear the £${Math.round(currentBalance).toLocaleString("en-GB")} balance before the ${cfg.writeOffYears}-year statutory write-off, so in this projection the balance is written off before it is repaid.`;
+      ? `Estimate: repayments of £${Math.round(annualRepayment).toLocaleString("en-GB")} a year pay off the £${Math.round(currentBalance).toLocaleString("en-GB")} balance. That is before it would be written off after ${cfg.writeOffYears} years.`
+      : `Estimate: repayments of £${Math.round(annualRepayment).toLocaleString("en-GB")} a year do not pay off the £${Math.round(currentBalance).toLocaleString("en-GB")} balance. What is left is written off after ${cfg.writeOffYears} years.`;
 
   return {
     plan: key,

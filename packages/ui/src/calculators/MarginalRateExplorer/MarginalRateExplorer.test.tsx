@@ -39,7 +39,7 @@ describe("MarginalRateExplorer", () => {
     expect(screen.getByText("28%")).toBeDefined();
     // The 2026/27 rules are not yet signed off: the chart carries the notice, and so does the panel.
     const figure = screen.getByRole("figure", {
-      name: "Estimated share deducted from the next £1,000, by gross pay",
+      name: "Estimated share deducted from the next £1,000, by pay before tax",
     });
     expect(within(figure).getByText(/^Unverified estimate\. These tax figures/)).toBeDefined();
     expect(screen.getAllByText(/^Unverified estimate\. These tax figures/)).toHaveLength(2);
@@ -49,7 +49,7 @@ describe("MarginalRateExplorer", () => {
     render(<MarginalRateExplorerStandalone initialValues={{ taxYear: "2026/27" }} />);
     expect(
       screen.getByRole("figure", {
-        name: "Estimated share deducted from the next £1,000, by gross pay",
+        name: "Estimated share deducted from the next £1,000, by pay before tax",
       }),
     ).toBeDefined();
     expect(screen.getAllByTestId("marginal-rate-threshold").length).toBeGreaterThan(3);
@@ -59,7 +59,7 @@ describe("MarginalRateExplorer", () => {
   it("is controlled: inputs call onChange and never change values by themselves", () => {
     const onChange = vi.fn();
     render(<MarginalRateExplorer values={DEFAULTS_2026} onChange={onChange} />);
-    fireEvent.change(screen.getByLabelText("Gross pay a year range slider"), {
+    fireEvent.change(screen.getByLabelText("Pay before tax a year range slider"), {
       target: { value: "60000" },
     });
     expect(onChange).toHaveBeenCalledWith("grossPay", 60000);

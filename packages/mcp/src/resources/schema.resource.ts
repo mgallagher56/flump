@@ -29,7 +29,7 @@ export const SCHEMA_DOCUMENT = {
   currency: "GBP. Every money figure is in pounds sterling, rounded to the penny.",
   ids: "Accounts and tax records are named by short opaque ids (acc_..., tax_...) that are stable for one access token. Labels such as 'Saving #2' are generic unless the token has full read access.",
   signConvention:
-    "Assets keep their real sign (an overdrawn current account is negative). Liabilities (debts, mortgages, student loans) are always the amount owed as a positive number, so a falling liability is a smaller debt. Net worth is assets minus liabilities, excluding student loans.",
+    "What is owned keeps its real sign (an overdrawn current account is negative). What is owed (debts, mortgages, student loans) is always the amount owed as a positive number, so a falling figure is a smaller debt. Net worth is what is owned minus what is owed, excluding student loans.",
   accountCategories: ACCOUNT_CATEGORIES.map((id) => ({
     id,
     isLiability: LIABILITY_CATEGORIES.has(id),
@@ -50,7 +50,7 @@ export const SCHEMA_DOCUMENT = {
   },
   taxRecords: {
     taxYear:
-      "UK tax years run 6 April to 5 April and are written 2025/26. Records are bucketed by calendar month, so April belongs wholly to the year that starts in it.",
+      "UK tax years run 6 April to 5 April and are written 2025/26. Records are grouped by calendar month, so April belongs wholly to the year that starts in it.",
     frequencies: {
       "one-off": "Counts once, in the month of its date.",
       monthly: "Counts every month from its date to its end date (or indefinitely).",
@@ -69,7 +69,7 @@ export const SCHEMA_DOCUMENT = {
     list_tax_records: "Tax records and totals for a tax year.",
     get_tax_year_position: "Income, allowances and tax estimates for a tax year.",
     simulate_debt_payoff: "Debt payoff timeline under a given strategy and extra payment.",
-    project_net_worth: "Net worth projection at a given return, with optional events.",
+    project_net_worth: "Net worth estimate at a given return, with optional events.",
     compare_mortgage_overpay_vs_invest:
       "Deprecated: overpaying a mortgage beside investing the same amount.",
     stage_import:
@@ -85,7 +85,7 @@ export function registerSchemaResource(server: McpServer) {
     {
       title: "Flump data dictionary",
       description:
-        "What Flump's data means: account categories, the sign convention for liabilities, monthly history and carry-forward, and tax-record categories. Contains no user data.",
+        "What Flump's data means: account categories, the sign convention for what is owed, monthly history and carry-forward, and tax-record categories. Contains no user data.",
       mimeType: "application/json",
     },
     async (uri) => ({

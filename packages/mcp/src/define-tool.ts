@@ -134,7 +134,7 @@ export function defineFlumpTool<I extends z.ZodRawShape, R extends z.ZodType>(
           const issue = parsed.error.issues[0];
           return fail({
             code: "INVALID_ARGUMENT",
-            message: issue?.message ?? "Invalid arguments.",
+            message: issue?.message ?? "The arguments do not match the input schema.",
             hint: "Check the input schema and try again.",
             retryable: false,
             ...(issue?.path.length ? { field: issue.path.join(".") } : {}),

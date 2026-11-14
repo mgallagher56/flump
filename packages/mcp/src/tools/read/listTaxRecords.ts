@@ -183,10 +183,10 @@ export const listTaxRecords = defineFlumpTool({
         notes: [
           ...(unrecognised > 0
             ? [
-                `${unrecognised} record(s) use a category the tax calculation does not recognise (shown as "other"), so get_tax_year_position leaves them out.`,
+                `Records using a category the tax calculation does not recognise (shown as "other"): ${unrecognised}. get_tax_year_position leaves them out.`,
               ]
             : []),
-          "Records are bucketed by calendar month: April belongs wholly to the tax year that starts in it.",
+          "Records are grouped by calendar month: April belongs wholly to the tax year that starts in it.",
           "A monthly record counts in every month from its date to its end date; one-off and annual records count once, in the month of their date.",
         ],
       },

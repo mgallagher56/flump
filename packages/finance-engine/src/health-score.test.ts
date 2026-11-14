@@ -33,7 +33,7 @@ describe("health-score module", () => {
       annualIsaContributionGbp: 5000,
     });
     expect(res.observations).toContain(
-      "Adjusted net income is £108,000, in the £100,000 to £125,140 band where the personal allowance tapers.",
+      "Adjusted net income is £108,000, in the £100,000 to £125,140 band where the Personal Allowance reduces.",
     );
     expect(res.observations.join(" ")).toContain(
       "£15,000 of this tax year's ISA allowance is unused",
@@ -136,7 +136,7 @@ describe("health-score module", () => {
     });
 
     expect(res.stage).toBe("STAGE_3_WEALTH_OPTIMIZE");
-    const trapComponent = res.components.find((c) => c.name.includes("Tax Trap"));
+    const trapComponent = res.components.find((c) => c.name.includes("£100,000 to £125,140 band"));
     expect(trapComponent).toBeDefined();
     expect(trapComponent?.score).toBe(40);
   });

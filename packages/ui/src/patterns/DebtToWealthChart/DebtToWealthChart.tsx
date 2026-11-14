@@ -47,17 +47,17 @@ export const DebtToWealthChart: FC<DebtToWealthChartProps> = ({
             margin: "0",
           })}
         >
-          The Debt-to-Wealth Crossover Bridge
+          Example: after the debts are paid off
         </h3>
         <p className={css({ fontSize: "xs", color: "text.muted", mt: "2px", mb: "0" })}>
-          The real breakthrough happens when liabilities reach £0 and that exact monthly repayment
-          is redirected into a compound ISA.
+          In this example, the monthly payment that went to debts goes into savings once the debts
+          reach £0.
         </p>
       </div>
 
       <div className={crossoverStatsRow()}>
         <div>
-          <span className={css({ fontSize: "xs", color: "text.muted" })}>Current Debt Outflow</span>
+          <span className={css({ fontSize: "xs", color: "text.muted" })}>Debt payments now</span>
           <div
             className={css({
               fontFamily: "display",
@@ -66,15 +66,15 @@ export const DebtToWealthChart: FC<DebtToWealthChartProps> = ({
               fontVariantNumeric: "tabular-nums",
             })}
           >
-            £{monthlyOutflow}/mo
+            £{monthlyOutflow} a month
           </div>
           <span className={css({ fontSize: "11px", color: "text.muted" })}>
-            Freed up post-payoff
+            Available once the debts are paid off
           </span>
         </div>
 
         <div>
-          <span className={css({ fontSize: "xs", color: "text.muted" })}>Debt-Free Milestone</span>
+          <span className={css({ fontSize: "xs", color: "text.muted" })}>Debt-free date</span>
           <div
             className={css({
               fontFamily: "display",
@@ -86,15 +86,11 @@ export const DebtToWealthChart: FC<DebtToWealthChartProps> = ({
           >
             Year {debtFreeYear}
           </div>
-          <span className={css({ fontSize: "11px", color: "text.muted" })}>
-            Liabilities reach £0
-          </span>
+          <span className={css({ fontSize: "11px", color: "text.muted" })}>Debts reach £0</span>
         </div>
 
         <div>
-          <span className={css({ fontSize: "xs", color: "text.muted" })}>
-            Accumulated ISA Wealth
-          </span>
+          <span className={css({ fontSize: "xs", color: "text.muted" })}>Estimated savings</span>
           <div
             className={css({
               fontFamily: "display",
@@ -107,7 +103,7 @@ export const DebtToWealthChart: FC<DebtToWealthChartProps> = ({
             +£{wealthAccumulatedFiveYrs.toLocaleString("en-GB")}
           </div>
           <span className={css({ fontSize: "11px", color: "status.positive.text" })}>
-            5 yrs post debt-free
+            5 years after the debt-free date
           </span>
         </div>
       </div>
@@ -127,7 +123,7 @@ export const DebtToWealthChart: FC<DebtToWealthChartProps> = ({
         })}
       >
         <svg height="100%" style={{ overflow: "visible" }} viewBox="0 0 500 150" width="100%">
-          <title>Debt-to-wealth crossover chart</title>
+          <title>Example chart: debts falling to £0, then savings growing</title>
           {/* Zone 1: Debt Area (Decreasing to 0) */}
           <path
             d="M 10 20 L 120 60 L 220 130 L 250 140 L 10 140 Z"
@@ -164,7 +160,7 @@ export const DebtToWealthChart: FC<DebtToWealthChartProps> = ({
             x="250"
             y="125"
           >
-            £0 Crossover Point
+            Debts paid off
           </text>
         </svg>
       </div>

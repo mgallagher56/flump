@@ -261,7 +261,7 @@ describe("OnboardingRoute (5-step flow)", () => {
     render(<OnboardingRoute />);
     typeInto(/annual gross salary/i, "50000");
     expect(screen.getByTestId("onboarding-take-home-assumption").textContent).toMatch(
-      /assuming england, wales and northern ireland/i,
+      /uses england, wales and northern ireland/i,
     );
     chooseRegion("ENGLAND");
     expect(screen.queryByTestId("onboarding-take-home-assumption")).toBeNull();

@@ -190,10 +190,10 @@ export const getBalanceHistory = defineFlumpTool({
   name: "get_balance_history",
   title: "Balance history",
   description:
-    "Month-end balances recorded in Flump between two months, per account, per category or as a net-worth total, at monthly, calendar-quarter or calendar-year intervals (a period cut short by the range is flagged partial). metric balance gives the value at the end of each period; delta gives the change from the end of the previous period (current minus previous, up or down); pctDelta gives that change as a percentage. Liabilities are the amount owed as a positive number. A month with no recorded value carries the last known value forward and is flagged carriedForward; source says how each value was recorded. Student loans are excluded. Results are paged: ask for the next page while page is below totalPages.",
+    "Month-end balances recorded in Flump between two months, per account, per category or as a net-worth total, at monthly, calendar-quarter or calendar-year intervals (a period cut short by the range is flagged partial). metric balance gives the value at the end of each period; delta gives the change from the end of the previous period (current minus previous, up or down); pctDelta gives that change as a percentage. Debts and mortgages are the amount owed as a positive number. A month with no recorded value carries the last known value forward and is flagged carriedForward; source says how each value was recorded. Student loans are excluded. Results are paged: ask for the next page while page is below totalPages.",
   input: {
-    from: MONTH.describe("First month, YYYY-MM"),
-    to: MONTH.describe("Last month, YYYY-MM"),
+    from: MONTH.describe("First month, in the form 2025-04"),
+    to: MONTH.describe("Last month, in the form 2025-04"),
     accountIds: z
       .array(z.string().max(40))
       .max(50)
@@ -305,10 +305,14 @@ export const getBalanceHistory = defineFlumpTool({
     const perPage = Math.max(1, Math.floor(budget / grid.length));
     const totalPages = Math.ceil(groups.length / perPage);
     if (input.page > Math.max(1, totalPages)) {
-      throw new FlumpToolError("INVALID_ARGUMENT", `There are only ${totalPages} page(s).`, {
-        field: "page",
-        hint: "Ask for page 1.",
-      });
+      throw new FlumpToolError(
+        "INVALID_ARGUMENT",
+        `Page ${input.page} does not exist. Pages available: ${totalPages}.`,
+        {
+          field: "page",
+          hint: "Ask for page 1.",
+        },
+      );
     }
     const pageGroups = groups.slice((input.page - 1) * perPage, input.page * perPage);
 
@@ -366,7 +370,7 @@ export const getBalanceHistory = defineFlumpTool({
     } else if (withData.length < selected.length) {
       missing.push({
         field: "accountHistory.accounts",
-        why: `${selected.length - withData.length} of ${selected.length} selected account(s) have no month-end balance on or before ${input.to}, so they are left out.`,
+        why: `Selected accounts with no month-end balance on or before ${input.to} are left out: ${selected.length - withData.length} of ${selected.length}.`,
         askUser: "Would you like to record month-end balances for the accounts with no history?",
       });
     }
@@ -377,7 +381,7 @@ export const getBalanceHistory = defineFlumpTool({
       "An account's first recorded month adds its whole balance, so a delta there is partly a new account rather than a change; accountsAdded counts such accounts.",
       "Quarters and years are calendar periods, not UK tax years.",
       ...(input.groupBy === "total"
-        ? ["The total is assets minus liabilities for the selected accounts."]
+        ? ["The total is what is owned minus what is owed, for the selected accounts."]
         : []),
       ...(index.accounts.some((a) => a.category === "studentLoans")
         ? [

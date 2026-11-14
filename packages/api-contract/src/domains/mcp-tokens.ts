@@ -143,8 +143,8 @@ export const AiContextPackDto = z.strictObject({
     currency: z.string(),
   }),
   baseline: EngineResult,
-  stageEvaluation: EngineResult,
-  healthScore: EngineResult,
+  /** Neutral sentences that each state a figure. The pack carries no score, grade or stage. */
+  observations: z.array(z.string()),
   portfolio: z.strictObject({
     netWorth: z.number(),
     totalAssets: z.number(),

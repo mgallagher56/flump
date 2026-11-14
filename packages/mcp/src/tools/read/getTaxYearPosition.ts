@@ -76,7 +76,7 @@ export const getTaxYearPosition = defineFlumpTool({
   name: "get_tax_year_position",
   title: "Tax year position",
   description:
-    "The user's UK tax position for a tax year, from their stored salary and tax records: income by source, where total income sits against the Personal Allowance taper (100,000 to 125,140 in recent years), the income tax bands for their region (including Scottish bands), the High Income Child Benefit Charge thresholds, the Section 24 finance-cost credit on rental income, and the estimated tax and Self Assessment figures shown on the Flump Tax page. Facts and estimates only.",
+    "The user's UK tax position for a tax year, from their stored salary and tax records: income by source, where total income sits against the Personal Allowance taper (£100,000 to £125,140 in recent years), the income tax bands for their region (including Scottish bands), the High Income Child Benefit Charge thresholds, the Section 24 finance-cost credit on rental income, and the tax and Self Assessment estimates shown on the Flump tax page. Facts and estimates only.",
   input: { taxYear: taxYearInput },
   result,
   maxTokens: 3000,
@@ -120,9 +120,9 @@ export const getTaxYearPosition = defineFlumpTool({
     if (salary === 0 && records.length === 0) {
       missing.push({
         field: "annualSalary",
-        why: "No salary is saved in the profile and no tax records fall in this tax year, so every figure is zero.",
+        why: "No salary is saved and no tax records fall in this tax year, so every figure is zero.",
         askUser:
-          "What is your gross annual salary, and do you have other income such as rent or self-employment?",
+          "What is your yearly salary before tax, and do you have other income such as rent or self-employment?",
       });
     }
     missing.push({
@@ -138,7 +138,7 @@ export const getTaxYearPosition = defineFlumpTool({
             value: region,
             source: "default" as const,
             reason:
-              "No tax region is saved in the profile, so England, Wales and Northern Ireland rates are used.",
+              "No tax region is saved, so England, Wales and Northern Ireland rates are used.",
           },
         ]
       : [];
@@ -187,12 +187,11 @@ export const getTaxYearPosition = defineFlumpTool({
           selfAssessmentGbp: round2(ledger.netAdditionalTaxToPay),
         },
         notes: [
-          "Estimate from published UK tax rules and the figures saved in Flump. A calculation, not tax advice.",
-          "Total income here is salary plus self-employed profit, rental profit share before finance costs, taxable savings interest and dividends; pension contributions and Gift Aid that would lower adjusted net income are not deducted unless recorded.",
+          "Total income here is salary plus self-employed profit, rental profit share before finance costs, taxable savings interest and dividends. Pension contributions and Gift Aid, which lower adjusted net income, are deducted only if recorded.",
           "The Child Benefit charge is worked out on the individual's own income only.",
           ...(region === "SCOTLAND"
             ? [
-                "The bands use Scottish rates; the tax and Self Assessment estimate use the Tax page calculation, which applies England, Wales and Northern Ireland rates.",
+                "The bands use Scottish rates. The tax and Self Assessment estimates use the tax page calculation, which applies England, Wales and Northern Ireland rates.",
               ]
             : []),
         ],

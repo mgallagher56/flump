@@ -57,7 +57,7 @@ export class McpRateLimiter {
         remaining: 0,
         resetSeconds,
         statusCode: 429,
-        message: `Too Many Requests: Rate limit of ${this.maxPerMinute} requests per minute exceeded. Retry in ${resetSeconds}s.`,
+        message: `Too many requests. The limit is ${this.maxPerMinute} a minute. Try again in ${resetSeconds} seconds.`,
       };
     }
 
@@ -70,7 +70,7 @@ export class McpRateLimiter {
         remaining: 0,
         resetSeconds,
         statusCode: 429,
-        message: `Too Many Requests: Hourly quota of ${this.maxPerHour} requests exceeded. Retry in ${resetSeconds}s.`,
+        message: `Too many requests. The limit is ${this.maxPerHour} an hour. Try again in ${resetSeconds} seconds.`,
       };
     }
 

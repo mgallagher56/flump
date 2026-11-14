@@ -77,16 +77,16 @@ const result = z.object({
 
 export const projectNetWorth = defineFlumpTool({
   name: "project_net_worth",
-  title: "Project net worth",
+  title: "Estimate future net worth",
   description:
-    "Projects net worth year by year from the recorded account balances, with and without up to 10 events that each carry an explicit one-off and/or monthly cost. The expected investment return is required. Monthly saving defaults to the budget surplus when a budget exists and is otherwise reported in missing[] and set to zero. Cash (4%), pension (6.5%) and property (2.5%) growth use those rates unless supplied; each is listed in assumptions. Mortgage repayments are not modelled, so equity grows only with property growth. Concise format returns every fifth year; detailed adds the balance breakdown.",
+    "Estimates net worth year by year from the recorded account balances, with and without up to 10 events that each carry a one-off cost, a monthly cost or both. The expected investment return is required. Monthly saving defaults to the amount left over in the budget when a budget exists and is otherwise reported in missing[] and set to zero. Cash (4%), pension (6.5%) and property (2.5%) growth use those rates unless supplied; each is listed in assumptions. Mortgage repayments are not modelled, so equity grows only with property growth. Concise format returns every fifth year; detailed adds the balance breakdown.",
   input: {
     horizonYears: z.number().int().min(1).max(MAX_HORIZON_YEARS).default(10),
     expectedReturnPct: pctInput(
       "Assumed constant annual return on investments, as a percentage (5 means 5%). No default.",
     ),
     monthlySavingGbp: gbpInput(
-      "Amount saved each month, in GBP. Defaults to the budget surplus.",
+      "Amount saved each month, in GBP. Defaults to the amount left over in the budget.",
       100_000,
     ).optional(),
     cashInterestPct: pctInput(
@@ -134,19 +134,19 @@ export const projectNetWorth = defineFlumpTool({
         assumptions.push(
           derived(
             "monthlySavingGbp",
-            "Budget income minus essential and discretionary spending. Debt minimums and pension contributions are not deducted or added; check the budget already includes them.",
+            "Budget income minus essential and flexible spending. Minimum debt payments and pension contributions are not deducted or added, so the figure assumes the budget already includes them.",
             surplus,
           ),
         );
         if (surplus < 0) {
-          earlyNotes.push("The budget shows a monthly deficit, so zero saving was used.");
+          earlyNotes.push("The budget is short each month, so zero saving was used.");
         }
       } else {
         saving = 0;
         missing.push({
           field: "monthlySavingGbp",
           why: "No income entry in the budget and no monthly saving supplied, so zero saving was used.",
-          askUser: "How much can you save each month?",
+          askUser: "What monthly saving would you like the estimate to use?",
         });
       }
     }
@@ -219,7 +219,7 @@ export const projectNetWorth = defineFlumpTool({
       ...(s.getTotalProperty() < s.getTotalMortgageBalance()
         ? ["Property is worth less than the mortgage; negative equity is counted as zero."]
         : []),
-      "Saving goes to debt first, then to investments (up to 20,000 pounds a year) and cash.",
+      "The estimate assumes saving pays down debt first, then goes to investments (up to £20,000 a year) and cash.",
       "Student loans are excluded. Mortgage repayments and inflation are not modelled.",
     ];
 

@@ -264,7 +264,7 @@ describe("PensionContainer", () => {
       const { container } = render(<PensionContainer />);
 
       expect(container.textContent).toContain("60% marginal rate (unverified estimate)");
-      expect(container.textContent).toContain("60% income tax, 62% including NI");
+      expect(container.textContent).toContain("60% Income Tax, 62% including National Insurance");
       expect(container.textContent).not.toContain("effective 60% marginal tax rate");
     });
 
@@ -412,14 +412,16 @@ describe("PensionContainer", () => {
       store.set(financialBaselineAtom, { ...NO_SALARY_BASELINE, ukRegion: "SCOTLAND" });
       setProfile(profile);
       const scottish = render(<PensionContainer />);
-      expect(scottish.container.textContent).toContain("67.5% income tax, 69.5% including NI");
-      expect(screen.queryByText(/assuming England, Wales and Northern Ireland/i)).toBeNull();
+      expect(scottish.container.textContent).toContain(
+        "67.5% Income Tax, 69.5% including National Insurance",
+      );
+      expect(screen.queryByText(/uses England, Wales and Northern Ireland/i)).toBeNull();
       scottish.unmount();
 
       store.set(financialBaselineAtom, NO_SALARY_BASELINE);
       setProfile(profile);
       render(<PensionContainer />);
-      expect(screen.getByText(/assuming England, Wales and Northern Ireland/i)).toBeDefined();
+      expect(screen.getByText(/uses England, Wales and Northern Ireland/i)).toBeDefined();
       // Region can now be set in profile settings (E23 D-4-C), so the label links there.
       expect(screen.getByRole("link", { name: /set your region/i }).getAttribute("href")).toBe(
         "/app/profile",

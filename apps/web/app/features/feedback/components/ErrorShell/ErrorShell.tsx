@@ -14,7 +14,7 @@ export interface ErrorShellProps {
 export const ErrorShell: FC<ErrorShellProps> = ({ children }) => (
   <div className={shellRoot()}>
     <VisuallyHidden as="a" focusable href="#main-content">
-      Skip to content
+      Skip to main content
     </VisuallyHidden>
     <header className={shellHeader()}>
       <HomeLogo renderLink={renderHomeLogoLink} />

@@ -105,7 +105,7 @@ export function RouteErrorBoundary({
         routeKey={routeKeyFor(pathname)}
         primaryHref={onAccountDetail ? "/app/accounts" : "/"}
         primaryLabel={
-          onAccountDetail ? "Back to accounts" : signedIn ? "Go to dashboard" : "Go to Flump"
+          onAccountDetail ? "Back to accounts" : signedIn ? "Back to home" : "Go to Flump"
         }
       />
     </div>

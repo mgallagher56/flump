@@ -19,7 +19,7 @@ describe("PersonalAllowanceTaperBanner", () => {
   it("describes the taper band for a £115k income", () => {
     render(<PersonalAllowanceTaperBanner grossIncome={115000} />);
     expect(screen.getByText("Income in the £100,000 to £125,140 band")).toBeDefined();
-    expect(screen.getByText("62% marginal rate in the band")).toBeDefined();
+    expect(screen.getByText("62% of extra pay deducted in the band")).toBeDefined();
     expect(screen.getByText("Tax and NI difference a year")).toBeDefined();
   });
 

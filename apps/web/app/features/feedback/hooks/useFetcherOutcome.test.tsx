@@ -42,7 +42,7 @@ describe("useFetcherOutcome", () => {
     const { hook, update } = setup();
     act(() => hook.result.current.begin());
     update({ state: "idle", data: { success: false } });
-    expect(hook.result.current.error).toBe("Something went wrong. Please try again.");
+    expect(hook.result.current.error).toBe("We could not complete that. Try again.");
   });
 
   it("reports success and calls onSuccess once", () => {

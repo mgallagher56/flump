@@ -497,7 +497,7 @@ describe("simulate tools v2: review edge cases", () => {
       ],
     });
     const e = await call("project_net_worth", { expectedReturnPct: 5 });
-    expect(e.result.notes.join(" ")).toContain("deficit");
+    expect(e.result.notes.join(" ")).toContain("short each month");
     expect(e.assumptions.find((a) => a.field === "monthlySavingGbp")?.value).toBe(-500);
   });
 });

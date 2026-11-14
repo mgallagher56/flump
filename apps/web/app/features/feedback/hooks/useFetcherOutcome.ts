@@ -7,7 +7,7 @@ interface FetcherLike {
 
 export type FetcherOutcomeStatus = "idle" | "pending" | "failed" | "succeeded";
 
-const GENERIC_ERROR = "Something went wrong. Please try again.";
+const GENERIC_ERROR = "We could not complete that. Try again.";
 
 /**
  * Tracks the result of one fetcher submission so confirmed destructive actions can stay open

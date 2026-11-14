@@ -14,7 +14,7 @@ const meta: Meta<typeof MarginalRateChart> = {
   component: MarginalRateChart,
   parameters: { layout: "padded" },
   args: {
-    title: "Estimated share deducted from the next £1,000, by gross pay",
+    title: "Estimated share deducted from the next £1,000, by pay before tax",
     summary: SAMPLE_SUMMARY,
     points: SAMPLE_POINTS,
     thresholds: SAMPLE_THRESHOLDS,
@@ -32,7 +32,7 @@ export const Default: Story = {
     const canvas = within(canvasElement);
     await expect(
       canvas.getByRole("figure", {
-        name: "Estimated share deducted from the next £1,000, by gross pay",
+        name: "Estimated share deducted from the next £1,000, by pay before tax",
       }),
     ).toBeInTheDocument();
     // The threshold tooltip appears on hover and goes on leave.

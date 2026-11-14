@@ -303,7 +303,7 @@ export function getSandboxPersonaData(persona: "debt" | "medium" | "high" | "wea
       {
         id: "mb1",
         category: "Income",
-        name: "Take-home pay (£39k salary)",
+        name: "Take-home pay (£39,000 salary)",
         amount: 2503,
         frequency: "monthly",
         isIncome: true,

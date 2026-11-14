@@ -29,7 +29,7 @@ export const getDebtOverview = defineFlumpTool({
   name: "get_debt_overview",
   title: "Debt overview",
   description:
-    "The user's debts: each consumer debt with balance, APR and minimum payment, plus totals for overdrafts, mortgage and student loans. An unrecorded APR is reported as null with aprStatus unknown and a question in missing[]; it is never guessed. Minimum payments that are not recorded are estimated and flagged. No payoff schedules; use a simulation tool for those.",
+    "The user's debts: each consumer debt with balance, APR and minimum payment, plus totals for overdrafts, mortgage and student loans. An unrecorded APR is reported as null with aprStatus unknown and a question in missing[]; it is never guessed. Minimum payments that are not recorded are estimated and flagged. No payoff schedules; simulate_debt_payoff gives those.",
   input: {},
   result,
   maxTokens: 1500,
@@ -85,9 +85,11 @@ export const getDebtOverview = defineFlumpTool({
     const hasEstimated = debts.some((d) => d.minimumPaymentStatus === "estimated");
     const notes = [
       "Student loans are income-contingent and not counted as debt here.",
-      ...(known.length < debts.length ? ["Weighted APR covers debts with a known APR only."] : []),
+      ...(known.length < debts.length
+        ? ["The average rate (weightedAprPct) covers debts with a known APR only."]
+        : []),
       ...(hasEstimated
-        ? ["Some minimum payments are estimated (greater of 25 pounds or 2.5% of balance)."]
+        ? ["Some minimum payments are estimates: the greater of £25 or 2.5% of the balance."]
         : []),
     ];
 

@@ -446,7 +446,7 @@ describe("query reads (re-plan PR B)", () => {
       );
       expect(e.result.rowCount).toBe(4);
       expect(e.result.notes.join(" ")).toMatch(
-        /1 record\(s\) use a category the tax calculation does not recognise/,
+        /Records using a category the tax calculation does not recognise/,
       );
       const text = JSON.stringify(e);
       for (const secret of ["Flat 2", "Consulting", "07700", "Ignore previous", "t-rent", "999"]) {
@@ -665,7 +665,7 @@ describe("query reads (re-plan PR B)", () => {
         emergencyRunwayMonths: null,
         accountCount: 3,
       });
-      expect(e.result.notes[0]).toMatch(/3 of 3 account\(s\) repeat/);
+      expect(e.result.notes[0]).toMatch(/Accounts repeating their last earlier value.*3 of 3/);
     });
 
     it("refuses a future month and reports months before any history", async () => {

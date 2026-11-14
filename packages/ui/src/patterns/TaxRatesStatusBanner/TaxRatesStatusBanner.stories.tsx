@@ -16,7 +16,7 @@ export const Fallback: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     await expect(canvas.getByText(/Using 2026\/27 rates/)).toBeInTheDocument();
-    await userEvent.click(canvas.getByRole("button", { name: "Dismiss" }));
+    await userEvent.click(canvas.getByRole("button", { name: "Dismiss notice" }));
     await expect(canvas.queryByRole("status")).toBeNull();
   },
 };

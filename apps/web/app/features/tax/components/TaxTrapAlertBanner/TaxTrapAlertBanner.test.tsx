@@ -38,7 +38,7 @@ describe("TaxTrapAlertBanner", () => {
       "Personal Allowance taper, £100,000–£125,140",
     );
     expect(screen.getByText("62% marginal rate including NI (unverified estimate)")).toBeDefined();
-    expect(container.textContent).toContain("60% income tax, 62% including NI");
+    expect(container.textContent).toContain("60% Income Tax, 62% including National Insurance");
     expect(container.textContent).toContain("£115,000");
     expect(screen.getByText("£7,500")).toBeDefined(); // Personal Allowance reduced by
   });
@@ -62,15 +62,15 @@ describe("TaxTrapAlertBanner", () => {
   it("uses Scottish rates when the region is Scotland, with no assumption label", () => {
     const { container } = renderBanner({ adjustedNetIncome: 110_000, region: "SCOTLAND" });
 
-    expect(container.textContent).toContain("67.5% income tax, 69.5% including NI");
-    expect(screen.queryByText(/assuming England, Wales and Northern Ireland/i)).toBeNull();
+    expect(container.textContent).toContain("67.5% Income Tax, 69.5% including National Insurance");
+    expect(screen.queryByText(/uses England, Wales and Northern Ireland/i)).toBeNull();
   });
 
   it("labels the England, Wales and NI assumption and links to set the region when unknown", () => {
     renderBanner({ adjustedNetIncome: 110_000 });
 
     // react-router's Link is mocked to its children in test/vitest.setup.ts.
-    expect(screen.getByText(/assuming England, Wales and Northern Ireland/i).textContent).toContain(
+    expect(screen.getByText(/uses England, Wales and Northern Ireland/i).textContent).toContain(
       "Set your region",
     );
   });
@@ -84,6 +84,6 @@ describe("TaxTrapAlertBanner", () => {
 
   it("shows no assumption label when England, Wales and NI is the known region", () => {
     renderBanner({ adjustedNetIncome: 110_000, region: "ENGLAND_NI_WALES" });
-    expect(screen.queryByText(/assuming England, Wales and Northern Ireland/i)).toBeNull();
+    expect(screen.queryByText(/uses England, Wales and Northern Ireland/i)).toBeNull();
   });
 });

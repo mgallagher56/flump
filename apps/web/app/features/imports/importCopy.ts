@@ -104,7 +104,7 @@ export const UNDO_CONFIRM =
   "Balances this import replaced go back to what they were before, and balances it added are removed. Any that have changed since stay as they are, and new accounts it created are removed if nothing else uses them.";
 
 export const invalidRowsLine = (n: number) =>
-  `${formatCount(n)} staged ${n === 1 ? "row was" : "rows were"} not valid (for example a future month) and will not be saved.`;
+  `${formatCount(n)} ${n === 1 ? "row in the import was" : "rows in the import were"} not valid (for example a future month) and will not be saved.`;
 
 export function savedSentence(counts: {
   new: number | null;
@@ -130,13 +130,13 @@ export function undoneSentence(r: { restored: number; removed: number; kept: num
 
 export const EXPIRED_TITLE = "This import has expired";
 export const EXPIRED_BODY =
-  "Staged imports are kept for 7 days and then cleared. Nothing from it was saved. Ask your assistant to stage it again if you still want it.";
+  "Imports wait 7 days for review and are then cleared. Nothing from this one was saved. Ask your assistant to prepare it again if you still want it.";
 
 export const LIST_DESCRIPTION =
-  "Balances staged for you to review, for example by an AI assistant. Nothing is saved until you confirm, and staged imports are cleared after 7 days.";
+  "Balances prepared for you to review, for example by an AI assistant. Nothing is saved until you confirm. Imports not confirmed within 7 days are cleared.";
 export const LIST_EMPTY_TITLE = "No imports yet";
 export const LIST_EMPTY_BODY =
-  "When an AI assistant you have connected stages your balances, they appear here for you to review.";
+  "When an AI assistant you have connected prepares an import, it appears here for you to review.";
 
 export function formatDate(iso: string): string {
   return new Intl.DateTimeFormat("en-GB", {

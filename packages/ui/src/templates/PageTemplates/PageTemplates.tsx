@@ -405,7 +405,7 @@ export const SimulatorTemplate: FC = () => {
   return (
     <main className={page}>
       <PageHeader
-        description="Sample debts, calculated with the Flump payoff engine."
+        description="Sample debts. Figures are calculated by Flump."
         title="Debt payoff"
       />
       <SimulatorSplitLayout
@@ -621,7 +621,7 @@ export const EmptyTemplate: FC = () => (
     <div className={centred}>
       <EmptyState
         action={<Button>Add an account</Button>}
-        description="Add a current account, savings or pension and your totals will appear here. It only takes a minute."
+        description="Add a current account, savings or pension and your totals will appear here."
         headingLevel="h2"
         illustration={<Illustration scene="empty-accounts" />}
         secondaryAction={<Button variant="secondary">Connect a bank</Button>}
