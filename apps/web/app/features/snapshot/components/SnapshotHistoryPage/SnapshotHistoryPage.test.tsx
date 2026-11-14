@@ -5,6 +5,7 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 import {
+  chartSummary,
   fewMonthsPrompt,
   heroSubline,
   SnapshotHistoryPage,
@@ -73,6 +74,26 @@ describe("heroSubline", () => {
   });
 });
 
+describe("chartSummary", () => {
+  const point = (month: string, allCarried = false) => ({ month, allCarried });
+
+  it("names the first month, and the dashed months only when one has no check-in", () => {
+    expect(chartSummary([point("2026-09"), point("2026-10")], "2026-11")).toBe(
+      "Net worth each month since September 2026.",
+    );
+    expect(
+      chartSummary([point("2026-09"), point("2026-10"), point("2026-11", true)], "2026-11"),
+    ).toBe(
+      "Net worth each month since September 2026. November is not recorded yet, so it shows your saved balances.",
+    );
+    expect(
+      chartSummary([point("2026-08"), point("2026-09", true), point("2026-10")], "2026-11"),
+    ).toBe(
+      "Net worth each month since August 2026. Months with no check-in show as a dashed line.",
+    );
+  });
+});
+
 describe("SnapshotHistoryPage", () => {
   it("with no history, prompts for the first check-in", async () => {
     const { container } = renderPage();
@@ -125,7 +146,7 @@ describe("SnapshotHistoryPage", () => {
     expect(screen.getByRole("dialog", { name: "Monthly check-in: November 2026" })).toBeDefined();
   });
 
-  it("with two months, shows the change as the hero and the account table, still no chart", () => {
+  it("with two months, shows the change as the hero and the account table, still no chart", async () => {
     const { container } = renderPage({
       accountDetails: [
         row(CURRENT, 2026, 9, 2000),
@@ -143,37 +164,53 @@ describe("SnapshotHistoryPage", () => {
     expect(hero.textContent).toContain("Against September 2026. This month is not recorded yet.");
     expect(screen.getByText(fewMonthsPrompt(2))).toBeDefined();
     expect(screen.queryByTestId("net-worth-history-chart")).toBeNull();
-    expect(screen.getByRole("heading", { name: "Change by account" })).toBeDefined();
-    expect(screen.queryByRole("heading", { name: "Change by month" })).toBeNull();
+    expectPageRules(container, { maxFigures: 6, projectionNotices: 0 });
+    // Only the account table exists, so the drawer holds it without tabs.
+    await userEvent.click(screen.getByRole("button", { name: "Show changes by account" }));
+    expect(screen.queryByRole("tab")).toBeNull();
     const mortgage = screen.getByRole("rowheader", { name: "Mortgage (owed)" }).closest("tr");
     expect(mortgage?.textContent).toContain("−£500");
-    expectPageRules(container, { maxFigures: 10, projectionNotices: 0 });
     expectPageRules(firstView(), { maxFigures: 4 });
   });
 
-  it("with three or more months, shows the hero change, the chart with its summary and the tables", () => {
+  it("with three or more months, shows the hero change, the chart with its summary and the tables", async () => {
     const { container } = renderPage({ accountDetails: TREND });
     expect(screen.getByTestId("hero-figure").textContent).toContain("-£200");
     expect(screen.getByTestId("hero-figure").textContent).toContain("Against August 2026");
     expect(screen.getByTestId("net-worth-history-chart")).toBeDefined();
+    // September and November have no check-in, so the summary names the dashed line (no legend).
     expect(
-      screen.getByText("Net worth each month since July 2026, ending at £1,900."),
+      screen.getByText(
+        "Net worth each month since July 2026. Months with no check-in show as a dashed line.",
+      ),
     ).toBeDefined();
     expect(screen.queryByText(/The chart appears after/)).toBeNull();
-    expect(screen.getByTestId("net-worth-history-legend").textContent).toContain("Carried forward");
-    expect(screen.getByRole("heading", { name: "Change by month" })).toBeDefined();
-    // The check-in button moves to the header once the chart shows: one primary button.
+    expect(screen.queryByTestId("net-worth-history-legend")).toBeNull();
+    // The header holds the one primary button; back-fill is a quiet link by the check-in line.
+    const header = screen.getByRole("heading", { level: 1 }).closest("header") as HTMLElement;
+    expect(within(header).getAllByRole("button")).toHaveLength(1);
+    expect(within(header).getByRole("button", { name: "Update balances" })).toBeDefined();
     expect(screen.getAllByRole("button", { name: "Update balances" })).toHaveLength(1);
-    expectPageRules(container, { maxFigures: 10, projectionNotices: 0 });
+    expect(screen.getByTestId("snapshot-open-backfill").getAttribute("data-variant")).toBe("link");
+    // The whole page view, drawer closed (P1.3 target for history: 6).
+    expectPageRules(container, { maxFigures: 6, projectionNotices: 0 });
     expectPageRules(firstView(), { maxFigures: 4 });
-  });
 
-  it("collapses the month table into a quiet drawer once over 8 rows", () => {
-    renderPage({
-      accountDetails: Array.from({ length: 10 }, (_, i) => row(CURRENT, 2026, i + 1, 1000 + i)),
-    });
-    const toggle = screen.getByRole("button", { name: /Change by month/ });
+    // Both tables sit behind one quiet drawer, as two tabs.
+    const toggle = screen.getByRole("button", { name: "Show changes by account and by month" });
     expect(toggle.getAttribute("aria-expanded")).toBe("false");
+    expect(screen.queryByRole("tab")).toBeNull();
+    await userEvent.click(toggle);
+    expect(toggle.getAttribute("aria-expanded")).toBe("true");
+    expect(screen.getByRole("tab", { name: "By account" }).getAttribute("aria-selected")).toBe(
+      "true",
+    );
+    expect(screen.getByTestId("snapshot-change-accounts")).toBeDefined();
+    await userEvent.click(screen.getByRole("tab", { name: "By month" }));
+    expect(screen.getByRole("tab", { name: "By month" }).getAttribute("aria-selected")).toBe(
+      "true",
+    );
+    expect(screen.getByRole("table", { name: "Net worth change by month" })).toBeDefined();
   });
 
   it("opens the check-in on arrival from the dashboard link", () => {

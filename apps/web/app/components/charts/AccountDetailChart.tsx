@@ -1,4 +1,11 @@
-import { ChartFigure } from "@repo/ui";
+import {
+  CHART_AXIS_DEFAULTS,
+  ChartFigure,
+  formatMonthTick,
+  niceStep,
+  niceYDomain,
+  pickTicks,
+} from "@repo/ui";
 import { css } from "@repo/ui/styled-system/css";
 import { curveCardinal } from "d3-shape";
 import { type FC, useMemo } from "react";
@@ -41,16 +48,49 @@ const AccountDetailChart: FC<AccountDetailChartProps> = ({
   const formattedAccountDetails = useMemo(
     () =>
       accountDetails.map((accountDetail) => ({
-        Name: `${accountDetail.month}/${accountDetail.year.toString().slice(-2)}`,
+        // "2026-05": read by formatMonthTick, so the axis says "May" and the table "May 2026".
+        Name: `${accountDetail.year}-${String(accountDetail.month).padStart(2, "0")}`,
         Value: accountDetail.value,
       })),
     [accountDetails],
   );
 
+  // Near the data, not from £0, so a steady balance does not draw as a flat line (R2-2).
+  const yDomain = useMemo(
+    () => niceYDomain(formattedAccountDetails.map((d) => d.Value)),
+    [formattedAccountDetails],
+  );
+  // Evenly spaced round ticks across the domain, so the axis never reads £2k, £2.4k, £2.7k.
+  const yTicks = useMemo(() => {
+    const [lo, hi] = yDomain;
+    const step = niceStep((hi - lo) / CHART_AXIS_DEFAULTS.yTickCount);
+    const ticks: number[] = [];
+    for (let v = lo; v <= hi + step / 2; v += step) ticks.push(Math.round(v * 100) / 100);
+    return ticks;
+  }, [yDomain]);
+  const xTicks = useMemo(
+    () =>
+      pickTicks(
+        formattedAccountDetails.map((d) => d.Name),
+        CHART_AXIS_DEFAULTS.maxXTicks,
+      ),
+    [formattedAccountDetails],
+  );
+  const compact = useMemo(
+    () =>
+      new Intl.NumberFormat("en-GB", {
+        style: "currency",
+        currency: "GBP",
+        notation: "compact",
+        maximumSignificantDigits: 3,
+      }),
+    [],
+  );
+  const monthLabel = (key: string) => formatMonthTick(key, "numeric");
   const first = formattedAccountDetails[0];
   const last = formattedAccountDetails[formattedAccountDetails.length - 1];
   const summary = last
-    ? `Balance history from ${first.Name} to ${last.Name}: ${formatCurrency(first.Value)} at the start and ${formatCurrency(last.Value)} at the end, across ${formattedAccountDetails.length} monthly balances.`
+    ? `Balance history from ${monthLabel(first.Name)} to ${monthLabel(last.Name)}: ${formatCurrency(first.Value)} at the start and ${formatCurrency(last.Value)} at the end, across ${formattedAccountDetails.length} monthly balances.`
     : "No balance history recorded yet.";
 
   return (
@@ -69,7 +109,7 @@ const AccountDetailChart: FC<AccountDetailChartProps> = ({
             <tbody>
               {formattedAccountDetails.map((row) => (
                 <tr key={row.Name}>
-                  <th scope="row">{row.Name}</th>
+                  <th scope="row">{monthLabel(row.Name)}</th>
                   <td style={{ fontVariantNumeric: "tabular-nums" }}>
                     {formatCurrency(row.Value)}
                   </td>
@@ -90,7 +130,7 @@ const AccountDetailChart: FC<AccountDetailChartProps> = ({
           data={formattedAccountDetails}
           margin={
             showAxes
-              ? { top: 10, right: 10, left: -10, bottom: 5 }
+              ? { top: 10, right: CHART_AXIS_DEFAULTS.plotPaddingRight, left: 0, bottom: 5 }
               : { top: 0, right: 0, left: 0, bottom: 0 }
           }
         >
@@ -108,7 +148,10 @@ const AccountDetailChart: FC<AccountDetailChartProps> = ({
               axisLine={false}
               dataKey="Name"
               fontSize={11}
+              interval={0}
+              ticks={xTicks}
               stroke="var(--colors-text-muted)"
+              tickFormatter={(value: string) => formatMonthTick(value, "none")}
               tickLine={false}
               tickMargin={8}
             />
@@ -120,12 +163,14 @@ const AccountDetailChart: FC<AccountDetailChartProps> = ({
               axisLine={false}
               fontSize={11}
               stroke="var(--colors-text-muted)"
-              tickFormatter={(value: any) => formatCurrency(value)}
+              domain={yDomain}
+              ticks={yTicks}
+              tickFormatter={(value: number) => compact.format(value)}
               tickLine={false}
               tickMargin={8}
             />
           ) : (
-            <YAxis tick={false} width={0} />
+            <YAxis domain={yDomain} tick={false} width={0} />
           )}
           <Tooltip
             contentStyle={{
@@ -134,6 +179,7 @@ const AccountDetailChart: FC<AccountDetailChartProps> = ({
               borderRadius: "8px",
             }}
             formatter={(value: any) => [formatCurrency(value), "Balance"]}
+            labelFormatter={(label) => monthLabel(String(label))}
             itemStyle={{
               color: "var(--colors-text-primary)",
             }}

@@ -1,7 +1,7 @@
 import { cleanup, waitFor } from "@testing-library/react";
 import mockUser from "__mocks__/user";
 import type { ReactNode } from "react";
-import { vi } from "vitest";
+import { beforeEach, vi } from "vitest";
 import customRender from "~/testUtils/customRender";
 import AddEditAccountsDialogBtn from "./AddEditAccountsDialog";
 
@@ -160,5 +160,87 @@ describe("<EditAccountDialogBtn", () => {
       }),
       expect.anything(),
     );
+  });
+
+  describe("a liability shows the amount owed and saves the stored figure unchanged", () => {
+    const studentLoan = {
+      id: "sl1",
+      name: "Student loan",
+      type: "Student Loan",
+      balance: -38500,
+      studentLoanPlan: "PLAN_2",
+    };
+    const lastSubmit = () =>
+      mocks.mockFetcherSubmit.mock.calls.at(-1)?.[0] as Record<string, string>;
+
+    beforeEach(() => {
+      mocks.mockUseLoaderData.mockReturnValue({ accounts: [studentLoan] });
+      mocks.mockFetcherSubmit.mockClear();
+    });
+
+    test("open edit and save without changes sends the same stored balance", async () => {
+      const { getByText, getByLabelText, queryByLabelText, user } = customRender(
+        <AddEditAccountsDialogBtn isEditAccount accountId="sl1" />,
+      );
+      await user.click(getByText("edit"));
+
+      const owed = getByLabelText("Amount owed") as HTMLInputElement;
+      expect(owed.value).toBe("38,500");
+      expect(owed.value).not.toContain("-");
+      expect(queryByLabelText("Balance")).toBeNull();
+
+      await user.click(getByText("save"));
+      expect(lastSubmit()).toMatchObject({
+        intent: "update",
+        accountId: "sl1",
+        type: "Student Loan",
+        balance: "-38500",
+      });
+    });
+
+    test("a new amount owed is sent as minus that amount", async () => {
+      const { getByText, getByLabelText, user } = customRender(
+        <AddEditAccountsDialogBtn isEditAccount accountId="sl1" />,
+      );
+      await user.click(getByText("edit"));
+      const owed = getByLabelText("Amount owed");
+      await user.clear(owed);
+      await user.type(owed, "37000");
+      await user.tab();
+      await user.click(getByText("save"));
+      expect(lastSubmit()).toMatchObject({ balance: "-37000" });
+    });
+
+    test("an asset keeps its sign and its Balance label", async () => {
+      mocks.mockUseLoaderData.mockReturnValue({
+        accounts: [{ id: "c1", name: "Current", type: "Current", balance: -120 }],
+      });
+      const { getByText, getByLabelText, user } = customRender(
+        <AddEditAccountsDialogBtn isEditAccount accountId="c1" />,
+      );
+      await user.click(getByText("edit"));
+      expect((getByLabelText("Balance") as HTMLInputElement).value).toContain("120");
+      await user.click(getByText("save"));
+      expect(lastSubmit()).toMatchObject({ balance: "-120" });
+    });
+  });
+
+  test("delete is a quiet ghost action and the confirmation names only what exists", async () => {
+    mocks.mockUseLoaderData.mockReturnValue({
+      accounts: [{ id: "123456", name: "Monzo Current", type: "Current", balance: 10 }],
+    });
+    const { getByText, getByRole, user } = customRender(
+      <AddEditAccountsDialogBtn isEditAccount accountId="123456" />,
+    );
+    await user.click(getByText("edit"));
+    const deleteBtn = getByText("delete").closest("button") as HTMLButtonElement;
+    expect(deleteBtn.dataset.variant).toBe("ghost");
+    expect(getByText("save").closest("button")?.dataset.variant).toBe("primary");
+    expect(getByRole("button", { name: "Cancel" }).dataset.variant).toBe("ghost");
+
+    await user.click(deleteBtn);
+    const text = getByRole("alertdialog").textContent ?? "";
+    expect(text).not.toMatch(/transactions/i);
+    expect(text).not.toMatch(/bank connections/i);
   });
 });

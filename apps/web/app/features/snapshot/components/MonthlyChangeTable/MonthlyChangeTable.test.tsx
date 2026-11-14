@@ -1,8 +1,7 @@
 import { render, screen } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 import type { MonthChangeRow } from "../../snapshotModel";
-import { MAX_OPEN_ROWS, MonthlyChangeTable } from "./MonthlyChangeTable";
+import { MonthlyChangeTable } from "./MonthlyChangeTable";
 
 const monthRows = (n: number): MonthChangeRow[] =>
   Array.from({ length: n }, (_, i) => ({
@@ -53,19 +52,13 @@ describe("MonthlyChangeTable", () => {
     expect(current?.textContent).toContain("Carried forward");
   });
 
-  it(`stays open up to ${MAX_OPEN_ROWS} rows`, () => {
-    render(<MonthlyChangeTable rows={monthRows(MAX_OPEN_ROWS)} variant="months" />);
-    expect(screen.getByRole("heading", { name: "Change by month" })).toBeDefined();
-    expect(screen.getAllByRole("row")).toHaveLength(MAX_OPEN_ROWS + 1);
+  it("lists every month with its net worth and change, as a plain table with no heading", () => {
+    render(<MonthlyChangeTable rows={monthRows(10)} variant="months" />);
+    expect(screen.queryByRole("heading")).toBeNull();
+    expect(screen.queryByRole("button")).toBeNull();
+    expect(screen.getByRole("table", { name: "Net worth change by month" })).toBeDefined();
+    expect(screen.getAllByRole("row")).toHaveLength(11);
     expect(screen.getByText("Includes 1 new account")).toBeDefined();
-  });
-
-  it(`collapses beyond ${MAX_OPEN_ROWS} rows into a drawer`, async () => {
-    render(<MonthlyChangeTable rows={monthRows(MAX_OPEN_ROWS + 1)} variant="months" />);
-    const toggle = screen.getByRole("button", { name: /Change by month/ });
-    expect(toggle.getAttribute("aria-expanded")).toBe("false");
-    await userEvent.click(toggle);
-    expect(toggle.getAttribute("aria-expanded")).toBe("true");
-    expect(screen.getAllByRole("row")).toHaveLength(MAX_OPEN_ROWS + 2);
+    expect(screen.getByText("Carried forward")).toBeDefined();
   });
 });

@@ -78,20 +78,32 @@ export const StudentLoanAccount: Story = {
   },
 };
 
-const bankLoaderData = { ...mockLoaderData, bankConnectionsEnabled: true };
+const liabilityLoaderData = {
+  accounts: [
+    {
+      id: "sl-1",
+      name: "Student loan",
+      type: AccountTypeEnum.STUDENT_LOAN,
+      balance: -38500,
+      studentLoanPlan: "PLAN_2",
+    },
+  ],
+};
 
 const openAdd = async () => {
   await userEvent.click(await screen.findByRole("button", { name: /addAccount|add account/i }));
   await screen.findByRole("dialog");
 };
 
+/** Bank connection is deferred: Add account is one manual form with no tab row, flag or not. */
 export const OpenAddDialog: Story = {
   args: { isEditAccount: false },
-  parameters: { router: { loaderData: mockLoaderData } },
+  parameters: { router: { loaderData: { ...mockLoaderData, bankConnectionsEnabled: true } } },
   play: async () => {
     await openAdd();
     await expect(screen.getByLabelText("Name")).toBeInTheDocument();
     await expect(screen.getByLabelText("Account type")).toBeInTheDocument();
+    await expect(screen.queryByRole("tablist")).toBeNull();
   },
 };
 
@@ -101,23 +113,26 @@ export const OpenEditDialog: Story = {
   play: async () => {
     await userEvent.click(await screen.findByRole("button", { name: /edit/i }));
     await screen.findByRole("dialog");
-    await expect(screen.getByRole("button", { name: /delete/i })).toBeInTheDocument();
+    await expect(screen.getByRole("button", { name: /delete/i })).toHaveAttribute(
+      "data-variant",
+      "ghost",
+    );
   },
 };
 
-export const ConnectBankTab: Story = {
-  args: { isEditAccount: false },
-  parameters: { router: { loaderData: bankLoaderData } },
+/** A liability shows the positive amount owed, labelled "Amount owed". */
+export const EditLiability: Story = {
+  args: { accountId: "sl-1", isEditAccount: true },
+  parameters: { router: { loaderData: liabilityLoaderData } },
   play: async () => {
-    await openAdd();
-    await userEvent.click(screen.getByRole("tab", { name: /connect a bank/i }));
-    await expect(screen.getAllByRole("button", { name: /Monzo Bank/ }).length).toBeGreaterThan(0);
+    await userEvent.click(await screen.findByRole("button", { name: /edit/i }));
+    await screen.findByRole("dialog");
+    await expect(screen.getByLabelText("Amount owed")).toHaveValue("38,500");
   },
 };
 
-export const OpenAddDialogDark: Story = {
-  args: { isEditAccount: false },
-  parameters: { router: { loaderData: bankLoaderData } },
+export const EditLiabilityDark: Story = {
+  ...EditLiability,
   decorators: [
     (Story) => (
       <DarkRoot>
@@ -125,9 +140,4 @@ export const OpenAddDialogDark: Story = {
       </DarkRoot>
     ),
   ],
-  play: async () => {
-    await openAdd();
-    await userEvent.click(screen.getByRole("tab", { name: /connect a bank/i }));
-    await expect(screen.getByRole("button", { name: /Starling Bank/ })).toBeInTheDocument();
-  },
 };

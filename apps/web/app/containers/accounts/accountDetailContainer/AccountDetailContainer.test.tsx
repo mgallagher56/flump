@@ -164,12 +164,12 @@ vi.mock("~/hooks/useFormatCurrency", () => ({
 }));
 
 describe("<AccountDetailContainer />", () => {
-  test("shows the account name, one hero balance and the Your account zone", () => {
-    const { getByRole, getByText } = customRender(<AccountDetailContainer />);
+  test("shows the account name, one hero balance and the type label, with Edit in the header", () => {
+    const { getByRole, getByText, queryByRole } = customRender(<AccountDetailContainer />);
     expect(getByRole("heading", { level: 1, name: "My current account" })).toBeDefined();
     expect(getByText("Current balance")).toBeDefined();
-    expect(getByRole("heading", { name: "Your account" })).toBeDefined();
-    expect(getByText("Saved")).toBeDefined();
+    expect(queryByRole("heading", { name: "Your account" })).toBeNull();
+    expect(getByRole("button", { name: /edit/i })).toBeDefined();
   });
 
   test("keeps the ledger on its own tab, with the chart first", () => {
@@ -210,7 +210,7 @@ describe("<AccountDetailContainer />", () => {
       vi.useRealTimers();
     });
 
-    test("shows the saved balance, not the latest recorded month, and says the month is not recorded", () => {
+    test("shows the saved balance, not the latest recorded month, and says when it was last updated", () => {
       mocks.mockUseLoaderData.mockReturnValueOnce({
         account: { id: "a1", name: "Easy saver", type: "Savings", balance: 1500 },
         accountDetails: [{ month: 10, year: 2026, value: 1000 }],
@@ -218,7 +218,7 @@ describe("<AccountDetailContainer />", () => {
       const { getByTestId, getByText } = customRender(<AccountDetailContainer />);
       expect(getByTestId("hero-figure").textContent).toContain("£1,500");
       expect(getByTestId("hero-figure").textContent).not.toContain("£1,000");
-      expect(getByText("November 2026 not recorded yet")).toBeDefined();
+      expect(getByText("Last updated October 2026")).toBeDefined();
     });
 
     test("names the month it compares with when the current month is recorded", () => {
@@ -231,6 +231,15 @@ describe("<AccountDetailContainer />", () => {
       } as never);
       const { getByText } = customRender(<AccountDetailContainer />);
       expect(getByText("Up 10% on September 2026")).toBeDefined();
+    });
+
+    test("says no balances are recorded when there are none", () => {
+      mocks.mockUseLoaderData.mockReturnValueOnce({
+        account: { id: "a1", name: "Easy saver", type: "Savings", balance: 1500 },
+        accountDetails: [],
+      } as never);
+      const { getByText } = customRender(<AccountDetailContainer />);
+      expect(getByText("No monthly balances recorded yet")).toBeDefined();
     });
 
     test("says there is no earlier month when only the current month is recorded", () => {

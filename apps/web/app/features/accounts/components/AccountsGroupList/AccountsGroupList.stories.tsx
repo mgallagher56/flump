@@ -60,3 +60,46 @@ export const Default: Story = {
     await expect(canvas.getByText("Net worth")).toBeDefined();
   },
 };
+
+export const NotCountedInNetWorth: Story = {
+  args: {
+    leftOut: ["property", "mortgage"],
+    totalOwn: 14850,
+    totalOwe: 640,
+    netWorth: 14210,
+    rows: [
+      {
+        id: "a1",
+        name: "Monzo current",
+        type: "Current",
+        balance: 2450,
+        changePercent: 4,
+        favourable: true,
+      },
+      {
+        id: "a3",
+        name: "Barclaycard",
+        type: "Credit Card",
+        balance: 640,
+        changePercent: -12,
+        favourable: true,
+      },
+      {
+        id: "a4",
+        name: "Nationwide mortgage",
+        type: "Mortgage",
+        balance: 182000,
+        changePercent: 0,
+        favourable: true,
+      },
+    ],
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const notCounted = canvas.getByRole("list", { name: "Not counted in net worth" });
+    await expect(
+      within(notCounted).getByRole("link", { name: "Nationwide mortgage" }),
+    ).toBeDefined();
+    await expect(canvas.getByRole("link", { name: "See how it has changed" })).toBeDefined();
+  },
+};

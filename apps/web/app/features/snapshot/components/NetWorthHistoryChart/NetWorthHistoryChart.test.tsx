@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import { NetWorthHistoryChart } from "./NetWorthHistoryChart";
+import { monthTicks, NetWorthHistoryChart } from "./NetWorthHistoryChart";
 
 const points = [
   { month: "2026-07", label: "Jul 26", netWorth: 1000, recorded: 1000, carried: null },
@@ -10,12 +10,10 @@ const points = [
 ];
 
 describe("NetWorthHistoryChart", () => {
-  it("labels recorded and carried-forward months in the key and the data table", () => {
+  it("has no legend and labels carried-forward months in the data table", () => {
     render(<NetWorthHistoryChart points={points} recordedMonths={3} summary="Net worth." />);
     expect(screen.getByTestId("net-worth-history-chart")).toBeDefined();
-    const legend = screen.getByTestId("net-worth-history-legend");
-    expect(legend.textContent).toContain("Recorded");
-    expect(legend.textContent).toContain("Carried forward (no check-in)");
+    expect(screen.queryByTestId("net-worth-history-legend")).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: /Show data/ }));
     expect(screen.getByRole("columnheader", { name: "Source" })).toBeDefined();
     const sep = screen.getByRole("rowheader", { name: "September 2026" }).closest("tr");
@@ -23,15 +21,16 @@ describe("NetWorthHistoryChart", () => {
     expect(sep?.textContent).toContain("£1,100");
   });
 
-  it("has no key when every month is recorded", () => {
-    render(
-      <NetWorthHistoryChart
-        points={points.map((p) => ({ ...p, recorded: p.netWorth, carried: null }))}
-        recordedMonths={4}
-        summary="Net worth."
-      />,
-    );
-    expect(screen.queryByTestId("net-worth-history-legend")).toBeNull();
+  it("spaces x ticks evenly from the last month, at most the tick limit", () => {
+    const seven = ["May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov"];
+    expect(monthTicks(seven, 6)).toEqual(["May", "Jul", "Sep", "Nov"]);
+    expect(monthTicks(seven.slice(1), 6)).toEqual(seven.slice(1));
+    expect(
+      monthTicks(
+        Array.from({ length: 13 }, (_, i) => i),
+        6,
+      ),
+    ).toEqual([0, 3, 6, 9, 12]);
   });
 
   it("draws no chart with fewer than 3 recorded months, only the summary and the prompt", () => {

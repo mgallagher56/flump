@@ -1,5 +1,13 @@
 import { type NetWorthBasis, resolveNetWorthScope } from "@flump/finance-engine";
-import { Button, EmptyState, HeroFigure, PageBody, PageHeader } from "@repo/ui";
+import {
+  Button,
+  CollapsibleDrawer,
+  EmptyState,
+  HeroFigure,
+  PageBody,
+  PageHeader,
+  Tabs,
+} from "@repo/ui";
 import { type FC, useMemo, useState } from "react";
 import { Link } from "react-router";
 import { NetWorthBasisLine } from "~/features/accounts/components/NetWorthBasisLine";
@@ -17,7 +25,13 @@ import type { SaveSnapshot } from "../../useSaveSnapshot";
 import { type CheckInMode, CheckInSheet } from "../CheckInSheet";
 import { MonthlyChangeTable } from "../MonthlyChangeTable";
 import { MIN_CHART_MONTHS, NetWorthHistoryChart } from "../NetWorthHistoryChart";
-import { actionsRow, checkInLine, promptActions, sectionStack } from "./SnapshotHistoryPage.styles";
+import {
+  changesBody,
+  checkInLine,
+  checkInRow,
+  promptActions,
+  sectionStack,
+} from "./SnapshotHistoryPage.styles";
 
 export interface SnapshotHistoryPageProps {
   accounts: readonly SnapshotAccountInput[];
@@ -53,6 +67,28 @@ export const heroSubline = (
     : against;
 };
 
+const monthName = (month: MonthKey): string => formatMonth(month).split(" ")[0] ?? month;
+
+/**
+ * The chart summary (P10.1, at most 2 figures). The end figure is the chart's direct label, so the
+ * summary names the first month and, only when a month has no check-in, says which line is dashed
+ * instead of a legend.
+ */
+export const chartSummary = (
+  series: readonly { month: MonthKey; allCarried: boolean }[],
+  currentMonth: MonthKey,
+): string => {
+  const first = series[0];
+  if (!first) return "";
+  const opening = `Net worth each month since ${formatMonth(first.month)}.`;
+  const carried = series.filter((p) => p.allCarried);
+  const onlyCurrent = carried.length === 1 && carried[0]?.month === currentMonth;
+  if (carried.length === 0) return opening;
+  return onlyCurrent
+    ? `${opening} ${monthName(currentMonth)} is not recorded yet, so it shows your saved balances.`
+    : `${opening} Months with no check-in show as a dashed line.`;
+};
+
 /**
  * Net worth history (E30, E16 PR 5). Saved data only: every figure comes from recorded monthly
  * balances, and the only writes are the check-in and back-fill saves. First view (P13): the h1, the
@@ -83,8 +119,8 @@ export const SnapshotHistoryPage: FC<SnapshotHistoryPageProps> = ({
   const previous = history.previousRecorded;
   const latestChange = latest && previous ? latest.netWorth - previous.netWorth : null;
   const enoughForChart = recordedMonths >= MIN_CHART_MONTHS;
-  const first = series[0];
   const end = series.at(-1);
+  const [changesTab, setChangesTab] = useState<"accounts" | "months">("accounts");
 
   const checkInButton = (
     <Button
@@ -99,31 +135,52 @@ export const SnapshotHistoryPage: FC<SnapshotHistoryPageProps> = ({
   );
 
   // One primary button on the page (P7.4): in the header once the chart shows, otherwise beside the
-  // "chart appears after your third check-in" prompt.
-  const headerActions =
-    stage === "none" ? undefined : (
-      <div className={actionsRow()}>
-        <Button
-          disabled={!hasAccounts}
-          id="snapshot-open-backfill"
-          data-testid="snapshot-open-backfill"
-          onClick={() => setSheet("backfill")}
-          type="button"
-          variant="secondary"
-        >
-          Add earlier months
-        </Button>
-        {enoughForChart ? checkInButton : null}
-      </div>
-    );
+  // "chart appears after your third check-in" prompt. At 375 the header holds this one action only.
+  const headerActions = stage !== "none" && enoughForChart ? checkInButton : undefined;
 
-  // At most 2 figures (P10.1). The end point's net worth is also the chart's direct label.
-  const summary =
-    enoughForChart && first && end
-      ? `Net worth each month since ${formatMonth(first.month)}, ending at ${formatCurrency(end.netWorth)}.`
-      : latest
-        ? `Net worth recorded for ${formatMonth(latest.month)}: ${formatCurrency(latest.netWorth)}.`
-        : "";
+  // At most 2 figures (P10.1). The end point's net worth is the chart's direct label.
+  const summary = enoughForChart
+    ? chartSummary(series, currentMonth)
+    : latest
+      ? `Net worth recorded for ${formatMonth(latest.month)}: ${formatCurrency(latest.netWorth)}.`
+      : "";
+
+  // Both change tables sit behind one quiet drawer, as two tabs when both exist.
+  const accountsTable =
+    latest && previous && history.accountChanges.length > 0 ? (
+      <MonthlyChangeTable
+        month={latest.month}
+        previousMonth={previous.month}
+        rows={history.accountChanges}
+        variant="accounts"
+      />
+    ) : null;
+  const monthsTable =
+    latest && previous && enoughForChart ? (
+      <MonthlyChangeTable rows={history.monthChanges} variant="months" />
+    ) : null;
+  const changes =
+    accountsTable && monthsTable ? (
+      <Tabs
+        aria-label="Changes"
+        items={[
+          { value: "accounts", label: "By account" },
+          { value: "months", label: "By month" },
+        ]}
+        onValueChange={(value) => setChangesTab(value === "months" ? "months" : "accounts")}
+        panels={{ accounts: accountsTable, months: monthsTable }}
+        size="sm"
+        value={changesTab}
+      />
+    ) : (
+      (accountsTable ?? monthsTable)
+    );
+  const changesTitle =
+    accountsTable && monthsTable
+      ? "Show changes by account and by month"
+      : accountsTable
+        ? "Show changes by account"
+        : "Show changes by month";
 
   return (
     <PageBody data-testid="snapshot-history" id="snapshot-history">
@@ -187,24 +244,26 @@ export const SnapshotHistoryPage: FC<SnapshotHistoryPageProps> = ({
               summary={summary}
             />
             {enoughForChart ? null : <div className={promptActions()}>{checkInButton}</div>}
-            <p className={checkInLine()}>Next check-in: {nextCheckInDate(currentMonth)}</p>
+            <div className={checkInRow()}>
+              <p className={checkInLine()}>Next check-in: {nextCheckInDate(currentMonth)}</p>
+              <Button
+                disabled={!hasAccounts}
+                id="snapshot-open-backfill"
+                data-testid="snapshot-open-backfill"
+                onClick={() => setSheet("backfill")}
+                size="sm"
+                type="button"
+                variant="link"
+              >
+                Add earlier months
+              </Button>
+            </div>
           </section>
 
-          {latest && previous && (history.accountChanges.length > 0 || enoughForChart) ? (
-            // Each table carries its own heading ("Change by account", "Change by month").
-            <div className={sectionStack()}>
-              {history.accountChanges.length > 0 ? (
-                <MonthlyChangeTable
-                  month={latest.month}
-                  previousMonth={previous.month}
-                  rows={history.accountChanges}
-                  variant="accounts"
-                />
-              ) : null}
-              {enoughForChart ? (
-                <MonthlyChangeTable rows={history.monthChanges} variant="months" />
-              ) : null}
-            </div>
+          {changes ? (
+            <CollapsibleDrawer className={changesBody()} title={changesTitle} variant="quiet">
+              {changes}
+            </CollapsibleDrawer>
           ) : null}
         </>
       )}

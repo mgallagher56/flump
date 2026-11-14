@@ -1,6 +1,6 @@
 import { DEFAULT_NET_WORTH_BASIS } from "@flump/finance-engine";
 import type { Meta, StoryObj } from "@storybook/react";
-import { expect, userEvent, within } from "storybook/test";
+import { expect, within } from "storybook/test";
 import { EXAMPLE_ACCOUNTS, exampleDetails, TREND_MONTHS, TWO_MONTHS } from "../../fixtures";
 import { buildSnapshotHistory } from "../../snapshotModel";
 import { MonthlyChangeTable } from "./MonthlyChangeTable";
@@ -40,12 +40,10 @@ export const ByAccount: Story = {
   },
 };
 
-export const ByMonthCollapsed: Story = {
+export const ByMonth: Story = {
   args: { variant: "months", rows: trend.monthChanges },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    const toggle = canvas.getAllByRole("button", { name: /Change by month/ })[0] as HTMLElement;
-    await userEvent.click(toggle);
-    await expect(toggle.getAttribute("aria-expanded")).toBe("true");
+    await expect(canvas.getByRole("table", { name: "Net worth change by month" })).toBeDefined();
   },
 };

@@ -9,6 +9,7 @@ import {
   selectMonthDeltas,
   selectNetWorthSeries,
 } from "@flump/finance-engine";
+import { formatMonthTick } from "@repo/ui";
 
 /**
  * Monthly snapshots (E30 PR2): the pure model behind the check-in sheet and the history page.
@@ -66,15 +67,10 @@ export function formatMonth(month: MonthKey): string {
   }).format(new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, 1)));
 }
 
-/** "Nov 26", for chart axes. */
+/** "Nov 26" and "Sep 26" (never "Sept"), for chart axes (copy audit 4.3). */
 export function formatMonthShort(month: MonthKey): string {
-  const m = MONTH_RE.exec(month);
-  if (!m) return month;
-  return new Intl.DateTimeFormat("en-GB", {
-    month: "short",
-    year: "2-digit",
-    timeZone: "UTC",
-  }).format(new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, 1)));
+  if (!MONTH_RE.test(month)) return month;
+  return formatMonthTick(month, "2-digit");
 }
 
 /**
@@ -227,7 +223,12 @@ export function buildCheckInRows(
 }
 
 export interface SnapshotPayload {
-  values: Array<{ accountId: string; value: number }>;
+  /** `source` (check-in only): a typed figure, a confirmed "No change" or a kept calculated one. */
+  values: Array<{
+    accountId: string;
+    value: number;
+    source?: "manual" | "confirmed" | "calculated";
+  }>;
   complete?: boolean;
 }
 

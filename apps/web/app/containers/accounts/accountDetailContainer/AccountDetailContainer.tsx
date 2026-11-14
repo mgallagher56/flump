@@ -3,9 +3,10 @@ import { ArrowLeft } from "lucide-react";
 import { type FC, useMemo } from "react";
 import { Link, useLoaderData } from "react-router";
 import AccountDetails from "~/components/accounts/AccountDetails";
+import AddEditAccountsDialogBtn from "~/components/dialogs/addEditAccountsDialog/AddEditAccountsDialog";
 import { type AccountType, isLiabilityType } from "~/containers/accounts/utils";
 import { lastUpdatedLabel, summariseAccountBalance } from "~/features/accounts/accountRows";
-import { AccountYourDetails } from "~/features/accounts/components/AccountYourDetails";
+import { TYPE_LABEL } from "~/features/accounts/components/AccountsGroupList";
 import type { loader } from "~/routes/app.accounts.$account";
 import { backLink, notFound } from "./AccountDetailContainer.styles";
 
@@ -40,9 +41,13 @@ const AccountDetailContainer: FC = () => {
     [account, accountDetails],
   );
   const current = summary.balance ?? 0;
+  const lastUpdated = lastUpdatedLabel(accountDetails as never[]);
+  // When this month is not recorded, say which month the history last has (R2-5), not a change.
   const subline = summary.currentRecorded
     ? changeLine(summary.changePercent, summary.againstLabel)
-    : `${summary.currentLabel} not recorded yet`;
+    : lastUpdated
+      ? `Last updated ${lastUpdated}`
+      : "No monthly balances recorded yet";
 
   if (!account) {
     return (
@@ -54,13 +59,31 @@ const AccountDetailContainer: FC = () => {
   }
 
   const isLiability = isLiabilityType(account.type);
+  const typeLabel = TYPE_LABEL[String(account.type ?? "")] ?? account.type ?? "Account";
 
   return (
     <PageBody>
       <BackLink />
 
+      {/* One action, Edit, which holds the account's saved name, type and balance (R2-5). */}
       <PageHeader
-        description={`${account.type ?? "Account"} account. Your balance history, month by month.`}
+        actions={
+          <AddEditAccountsDialogBtn
+            account={{
+              id: String(account.id ?? ""),
+              name: account.name ?? "",
+              type: account.type as AccountType | undefined,
+              balance:
+                account.balance === undefined || account.balance === null
+                  ? undefined
+                  : Number(account.balance),
+              studentLoanPlan: account.studentLoanPlan ?? null,
+            }}
+            accountId={String(account.id ?? "")}
+            isEditAccount
+          />
+        }
+        description={typeLabel}
         title={account.name ?? "Account"}
       />
 
@@ -68,24 +91,6 @@ const AccountDetailContainer: FC = () => {
         label={isLiability ? "Amount owed" : "Current balance"}
         subline={subline}
         value={current}
-      />
-
-      <AccountYourDetails
-        accountId={String(account.id ?? "")}
-        balance={current}
-        lastUpdated={lastUpdatedLabel(accountDetails as never[])}
-        name={account.name ?? ""}
-        savedAccount={{
-          id: String(account.id ?? ""),
-          name: account.name ?? "",
-          type: account.type as AccountType | undefined,
-          balance:
-            account.balance === undefined || account.balance === null
-              ? undefined
-              : Number(account.balance),
-          studentLoanPlan: account.studentLoanPlan ?? null,
-        }}
-        type={String(account.type ?? "")}
       />
 
       <AccountDetails />
