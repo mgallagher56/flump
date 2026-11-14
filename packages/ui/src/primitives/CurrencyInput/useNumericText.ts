@@ -15,7 +15,37 @@ export interface NumericTextOptions {
   allowed: RegExp;
   /** The one symbol this field accepts and strips when parsing ("£" or "%"). */
   symbol: string;
+  /** Regroup thousands while typing ("1234" shows "1,234"), keeping the caret in place. */
+  groupWhileTyping?: boolean;
 }
+
+const TYPED_NUMBER = /^(\s*[£]?\s*-?)([\d,]*)(\.\d*)?(\s*)$/;
+
+/**
+ * "12345.6" to "12,345.6": regroups the whole-number part of what was typed and leaves the rest
+ * (a trailing ".", the pence typed so far) exactly as it is. Text that is not a plain number is
+ * returned unchanged.
+ */
+export const groupTypedNumber = (raw: string): string => {
+  const match = TYPED_NUMBER.exec(raw);
+  if (!match) return raw;
+  const [, lead = "", whole = "", decimals = "", trail = ""] = match;
+  const digits = whole.replace(/,/g, "");
+  if (digits === "") return raw;
+  const grouped = digits.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  return `${lead}${grouped}${decimals}${trail}`;
+};
+
+/** Where the caret goes after regrouping: after the same number of digits as before. */
+export const caretAfterGrouping = (grouped: string, digitsBefore: number): number => {
+  if (digitsBefore <= 0) return Math.max(0, grouped.search(/\d/));
+  let seen = 0;
+  for (let i = 0; i < grouped.length; i += 1) {
+    if (/\d/.test(grouped[i] ?? "")) seen += 1;
+    if (seen === digitsBefore) return i + 1;
+  }
+  return grouped.length;
+};
 
 const clamp = (value: number, min?: number, max?: number): number => {
   let result = value;
@@ -38,6 +68,7 @@ export const useNumericText = ({
   max,
   allowed,
   symbol,
+  groupWhileTyping = false,
 }: NumericTextOptions) => {
   const toText = (v: number | null | undefined): string =>
     v === null || v === undefined ? "" : format(v);
@@ -60,8 +91,22 @@ export const useNumericText = ({
       onInvalid?.(raw);
       return;
     }
-    setText(raw);
-    const parsed = parseEnGbNumber(raw, symbol);
+    let next = raw;
+    if (groupWhileTyping) {
+      const input = event.target;
+      const caret = input.selectionStart ?? raw.length;
+      const digitsBefore = (raw.slice(0, caret).match(/\d/g) ?? []).length;
+      next = groupTypedNumber(raw);
+      if (next !== raw) {
+        const position = caretAfterGrouping(next, digitsBefore);
+        // After React writes the new value, put the caret back after the same digit.
+        requestAnimationFrame(() => {
+          if (document.activeElement === input) input.setSelectionRange(position, position);
+        });
+      }
+    }
+    setText(next);
+    const parsed = parseEnGbNumber(next, symbol);
     if (parsed === null && raw.trim() !== "") onInvalid?.(raw);
     onValueChange?.(parsed);
   };

@@ -28,6 +28,11 @@ export const heroFigure = sva({
       borderStyle: "solid",
       p: { base: "5", md: "6" },
       minWidth: "0",
+      // From md the block fits its figure instead of a full-width band that is mostly empty
+      // (R2-5 re-score); the end padding leaves the decorative disc room beside the figure.
+      width: { base: "100%", md: "fit-content" },
+      maxWidth: "100%",
+      paddingInlineEnd: { md: "24" },
     },
     content: {
       display: "flex",

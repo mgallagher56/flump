@@ -323,6 +323,15 @@ Storybook is the living specification: every component has stories in light and 
 
 **CA1.** Components live in their own directory with styles, stories and tests. **Enforced by** `architecture.laws.test.ts`. **CA2.** No second implementation of a listed component (no legacy `FLP*`, no local tabs). **Enforced by** `architecture.laws.test.ts` baseline **[PR 1]**.
 
+### 12.3 Dialog or sheet
+
+One rule for every modal surface. Enforced by: `Dialog.styles.ts` and `Sheet.styles.ts` (the phone presentation); which one a feature uses is review only.
+
+- **On a phone (under md), every modal rises from the bottom of the screen**, full width, rounded at the top, clear of the home indicator. A `Dialog` and a `Sheet` look the same there, so a person never meets two kinds of modal on one device.
+- **From md, use a `Dialog`** (centred) for a short form or a confirmation: one task, a few fields, done in one go. Add account, Edit account and every `ConfirmDialog` are dialogs.
+- **From md, use a `Sheet`** (a panel at the side) for a long list or a task done step by step that keeps the page visible behind it. The monthly check-in and adding earlier months are sheets.
+- A confirmation opened from inside a dialog replaces the dialog's actions with the question, or closes the dialog first; never stack a second modal on top of the first.
+
 ## 13. What this guide replaces
 
 | Older document                        | Status                                                                                                                             |

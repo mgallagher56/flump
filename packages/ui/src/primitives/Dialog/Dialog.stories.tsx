@@ -56,6 +56,16 @@ export const Default: Story = {
   },
 };
 
+/** Under md every modal rises from the bottom (STYLE-GUIDE 12.3): full width, rounded at the top. */
+export const Phone: Story = {
+  parameters: { viewport: { defaultViewport: "mobile1" } },
+  play: async ({ canvasElement }) => {
+    const body = within(canvasElement.ownerDocument.body);
+    const dialog = await body.findByRole("dialog", { name: "Add liability account" });
+    await expect(dialog).toBeVisible();
+  },
+};
+
 /** Separate from Default so the a11y check still runs against an open dialog. */
 export const EscapeCloses: Story = {
   play: async ({ canvasElement }) => {
