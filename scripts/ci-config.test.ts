@@ -222,6 +222,8 @@ describe("supply chain (BE-01 L8, M17)", () => {
   test("CI and every image install with lifecycle scripts off", () => {
     const action = readFileSync(resolve(repoRoot, ".github/actions/bun-setup/action.yml"), "utf8");
     expect(action).toContain("bun install --frozen-lockfile --ignore-scripts");
+    // First-party workspace codegen still runs, explicitly, after the scriptless install.
+    expect(action).toContain("bun run --filter './apps/*' --filter './packages/*' prepare");
     for (const app of ["backend", "web", "marketing"]) {
       const dockerfile = readFileSync(resolve(repoRoot, `apps/${app}/Dockerfile`), "utf8");
       for (const line of dockerfile.split("\n").filter((l) => l.includes("bun install")))
