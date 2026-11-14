@@ -11,9 +11,12 @@
  */
 import {
   buildFinancialPicture,
+  categorizeAccountType,
+  countsTowardNetWorth,
   type FinancialPicture,
   financialPictureInputFromRows,
   isFigureKnown,
+  type NetWorthBasis,
 } from "@flump/finance-engine";
 import { PERSONAS, type PersonaFixture, type PersonaName } from "@flump/finance-engine/testing";
 import { cleanup, render } from "@testing-library/react";
@@ -63,10 +66,14 @@ vi.mock("recharts", async () => {
   };
 });
 
+import AccountDetailContainer from "~/containers/accounts/accountDetailContainer/AccountDetailContainer";
+import { isLiabilityType } from "~/containers/accounts/utils";
 import BudgetContainer from "~/containers/budget/BudgetContainer";
 import { DebtContainer } from "~/containers/debt/DebtContainer";
 import MortgageContainer from "~/containers/mortgage/MortgageContainer";
+import { buildAccountRows } from "~/features/accounts/accountRows";
 import { HomeDashboard } from "~/features/dashboard/components/HomeDashboard";
+import { buildSnapshotHistory } from "~/features/snapshot/snapshotModel";
 import { loader as dashboardLoader } from "~/routes/_index";
 import { loader as debtLoader } from "~/routes/app.debt";
 import { loadWorkspaceSnapshot } from "~/services/backend-client.server";
@@ -356,3 +363,136 @@ describe("renter and homeowner: the figures E16 PR 3 fixed", () => {
     expect(pictureOf("homeowner").estimatedTaxDue.status).toBe("unknown");
   });
 });
+
+/**
+ * One balance source (R2-1, D22): the saved account balance is the current balance on every
+ * surface. Recorded months are history, and their values differ from today's balances here, so a
+ * surface that reads the latest recorded month instead of the saved balance fails.
+ *
+ * Each case is a persona, whether the current month is recorded, and a net worth basis, so the
+ * net worth choices can loop the same checks over every basis by adding cases.
+ */
+const TODAY = new Date(2026, 10, 14); // 14 November 2026
+const CURRENT_MONTH = "2026-11";
+
+type MonthState = "current month not recorded" | "current month recorded";
+
+interface BalanceCase {
+  name: PersonaName;
+  month: MonthState;
+  basis: NetWorthBasis;
+}
+
+const BALANCE_CASES: BalanceCase[] = (["homeowner", "sam"] as const).flatMap((name) =>
+  (["current month not recorded", "current month recorded"] as const).map((month) => ({
+    name,
+    month,
+    basis: PERSONAS[name].fixture.netWorthBasis,
+  })),
+);
+
+/**
+ * September and October rows whose values differ from the saved balance, plus a November row
+ * equal to it when the current month is recorded (a check-in writes both, snapshot-write.ts).
+ */
+function historyFor(fixture: PersonaFixture, month: MonthState) {
+  return fixture.accounts.flatMap((a) => {
+    const balance = Number(a.balance);
+    const rows = [
+      { accountId: a.id, year: 2026, month: 9, value: Math.round(balance * 0.9) },
+      { accountId: a.id, year: 2026, month: 10, value: Math.round(balance * 0.95) },
+    ];
+    if (month === "current month recorded") {
+      rows.push({ accountId: a.id, year: 2026, month: 11, value: balance });
+    }
+    return rows;
+  });
+}
+
+/** Signed sum of the accounts the basis counts: assets add, amounts owed subtract. */
+function countedSum(
+  accounts: readonly { type?: string | null }[],
+  amount: (index: number) => number,
+  basis: NetWorthBasis,
+): number {
+  return accounts.reduce((sum, a, i) => {
+    const type = String(a.type ?? "");
+    if (!countsTowardNetWorth(categorizeAccountType(type), basis)) return sum;
+    const value = amount(i);
+    return sum + (isLiabilityType(type) ? -Math.abs(value) : value);
+  }, 0);
+}
+
+/** The hero figure in whole pounds: "£21,000", "minus £186,000". */
+const heroPounds = (container: HTMLElement): number => {
+  const text = container.querySelector('[data-testid="hero-figure"]')?.textContent ?? "";
+  const match = text.replace(/,/g, "").match(/£(\d+)/);
+  if (!match) throw new Error(`no pounds in hero "${text}"`);
+  return Number(match[1]);
+};
+
+describe.each(BALANCE_CASES)(
+  "$name, $month: one balance per account, one net worth",
+  ({ name, month, basis }) => {
+    const fixture = PERSONAS[name].fixture;
+    const details = historyFor(fixture, month);
+    const picture = buildFinancialPicture({ ...fixture, details, netWorthBasis: basis });
+    const netWorth = picture.netWorth.netWorth;
+
+    beforeEach(() => {
+      vi.useFakeTimers({ toFake: ["Date"] });
+      vi.setSystemTime(TODAY);
+    });
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it("the recorded history differs from the saved balances, so the checks below can fail", () => {
+      const latestRecorded = countedSum(
+        fixture.accounts,
+        (i) => Math.round(Number(fixture.accounts[i]?.balance) * 0.95),
+        basis,
+      );
+      expect(latestRecorded).not.toBe(netWorth);
+    });
+
+    it("the account rows show the saved balances and sum to the picture's net worth", () => {
+      const rows = buildAccountRows(fixture.accounts, details, TODAY);
+      rows.forEach((row, i) => {
+        const saved = Number(fixture.accounts[i]?.balance);
+        expect(row.balance).toBe(isLiabilityType(row.type) ? Math.abs(saved) : saved);
+      });
+      expect(countedSum(rows, (i) => rows[i]?.balance ?? 0, basis)).toBe(netWorth);
+    });
+
+    it("the history chart ends on the picture's net worth", () => {
+      const history = buildSnapshotHistory(fixture.accounts, details, CURRENT_MONTH, basis);
+      expect(history.latest?.month).toBe(CURRENT_MONTH);
+      expect(history.latest?.netWorth).toBe(netWorth);
+      expect(history.latest?.allCarried).toBe(month === "current month not recorded");
+    });
+
+    it("each account page hero shows the saved balance, and they sum to the picture's net worth", () => {
+      const heroes = fixture.accounts.map((account) => {
+        loaderState.data = {
+          account,
+          accountDetails: details.filter((d) => d.accountId === account.id),
+        };
+        const page = render(<AccountDetailContainer />);
+        const value = heroPounds(page.container);
+        const text = page.container.textContent ?? "";
+        if (month === "current month not recorded") {
+          expect(text).toContain("November 2026 not recorded yet");
+        } else {
+          expect(text).not.toContain("not recorded yet");
+        }
+        page.unmount();
+        return value;
+      });
+      fixture.accounts.forEach((account, i) => {
+        expect(heroes[i]).toBe(Math.abs(Number(account.balance)));
+      });
+      expect(countedSum(fixture.accounts, (i) => heroes[i] ?? 0, basis)).toBe(netWorth);
+    });
+  },
+);
