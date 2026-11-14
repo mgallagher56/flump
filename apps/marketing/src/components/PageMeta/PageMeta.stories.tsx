@@ -4,7 +4,7 @@ import { expect } from "storybook/test";
 import { PageMeta } from "./PageMeta";
 
 const meta: Meta<typeof PageMeta> = {
-  title: "Marketing/PageMeta",
+  title: "3. Patterns/Marketing/PageMeta",
   component: PageMeta,
   args: { title: "Pricing and plans | Flump", description: "Indicative pricing." },
   decorators: [

@@ -5,7 +5,7 @@ import { expect, userEvent, waitFor, within } from "storybook/test";
 import { McpPage } from "./McpPage";
 
 const meta: Meta<typeof McpPage> = {
-  title: "Marketing/McpPage",
+  title: "6. Pages/Marketing/McpPage",
   component: McpPage,
   decorators: [
     (Story) => (

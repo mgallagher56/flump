@@ -5,7 +5,7 @@ import { expect, within } from "storybook/test";
 import { HomePage } from "./HomePage";
 
 const meta: Meta<typeof HomePage> = {
-  title: "Marketing/HomePage",
+  title: "6. Pages/Marketing/HomePage",
   component: HomePage,
   parameters: { layout: "fullscreen" },
   decorators: [

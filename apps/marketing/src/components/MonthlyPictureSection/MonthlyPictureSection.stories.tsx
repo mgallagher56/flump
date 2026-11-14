@@ -4,7 +4,7 @@ import { expect, within } from "storybook/test";
 import { MonthlyPictureSection } from "./MonthlyPictureSection";
 
 const meta: Meta<typeof MonthlyPictureSection> = {
-  title: "Marketing/MonthlyPictureSection",
+  title: "3. Patterns/Marketing/MonthlyPictureSection",
   component: MonthlyPictureSection,
   parameters: { layout: "fullscreen" },
   decorators: [

@@ -5,7 +5,7 @@ import { expect, within } from "storybook/test";
 import { ContactPage } from "./ContactPage";
 
 const meta: Meta<typeof ContactPage> = {
-  title: "Marketing/ContactPage",
+  title: "6. Pages/Marketing/ContactPage",
   component: ContactPage,
   decorators: [
     (Story) => (

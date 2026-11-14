@@ -3,7 +3,7 @@ import { expect, within } from "@storybook/test";
 import { Footer } from "./Footer";
 
 const meta: Meta<typeof Footer> = {
-  title: "Marketing/Footer",
+  title: "3. Patterns/Marketing/Footer",
   component: Footer,
   parameters: { layout: "fullscreen" },
 };
