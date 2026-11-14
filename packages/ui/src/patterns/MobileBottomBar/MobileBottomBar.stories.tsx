@@ -73,5 +73,12 @@ export const LockedAt375: Story = {
     await expect(
       canvas.getByRole("button", { name: "Borrowing: Sign up to open" }),
     ).toBeInTheDocument();
+    // Every label sits on one baseline, locked or not.
+    const bottoms = Array.from(canvasElement.querySelectorAll("[data-nav-label]")).map((el) =>
+      Math.round(el.getBoundingClientRect().bottom),
+    );
+    await expect(new Set(bottoms).size).toBe(1);
   },
 };
+
+export const LockedAt375Dark: Story = { ...LockedAt375, globals: { theme: "dark" } };

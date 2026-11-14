@@ -56,7 +56,12 @@ export const kpiLabel = cva({
   variants: {
     tone: {
       default: {},
-      hero: { color: "text.onContrast" },
+      hero: {
+        color: "text.onContrast",
+        // The explain InfoTip trigger defaults to text.muted, which fails on surface.hero. The
+        // type and attribute outrank the trigger's doubled class; the open state keeps its own.
+        "& button[aria-haspopup]:not([data-state='open'])": { color: "text.onContrast" },
+      },
     },
   },
   defaultVariants: { tone: "default" },
@@ -83,10 +88,9 @@ export const kpiHeroValue = cva({
     margin: "0",
     minWidth: 0,
     maxWidth: "100%",
-    overflowWrap: "anywhere",
-    // `Money` keeps its digits on one line elsewhere; in a KPI a long figure wraps instead of
-    // overflowing the card. The child selector outranks Money's own `nowrap`.
-    "& > span": { whiteSpace: "normal", maxWidth: "100%" },
+    // Words ("December 2029") wrap at spaces; a word longer than the card breaks only as a last
+    // resort. A money figure never splits: "£1,234,5" over "67" would read as two figures.
+    overflowWrap: "break-word",
   },
   variants: {
     tone: {
@@ -172,7 +176,7 @@ export const kpiMoney = cva({
     minWidth: 0,
     maxWidth: "100%",
     textStyle: "numeric.kpi",
-    whiteSpace: "normal",
-    overflowWrap: "anywhere",
+    // One figure, one line (see kpiHeroValue).
+    whiteSpace: "nowrap",
   },
 });

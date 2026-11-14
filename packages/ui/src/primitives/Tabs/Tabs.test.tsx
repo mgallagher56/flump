@@ -19,15 +19,29 @@ describe("Tabs Primitive", () => {
     expect(handleSelect).toHaveBeenCalledWith("snowball");
   });
 
-  it("marks a tab focused by a pointer so no keyboard ring shows, and clears it on a key or blur", () => {
+  it("marks a tab only when a press focuses it, and clears the mark on a key or blur", () => {
     render(<Tabs items={items} value="avalanche" onValueChange={() => {}} />);
     const tab = screen.getByRole("tab", { name: "Snowball" });
     fireEvent.pointerDown(tab);
+    fireEvent.focus(tab);
     expect(tab.hasAttribute("data-pointer-focus")).toBe(true);
     fireEvent.keyDown(tab, { key: "ArrowRight" });
     expect(tab.hasAttribute("data-pointer-focus")).toBe(false);
     fireEvent.pointerDown(tab);
+    fireEvent.focus(tab);
     fireEvent.blur(tab);
+    expect(tab.hasAttribute("data-pointer-focus")).toBe(false);
+  });
+
+  it("keeps the keyboard ring when a press did not focus the tab (Safari, ctrl-click)", async () => {
+    render(<Tabs items={items} value="avalanche" onValueChange={() => {}} />);
+    const tab = screen.getByRole("tab", { name: "Snowball" });
+    fireEvent.pointerDown(tab);
+    expect(tab.hasAttribute("data-pointer-focus")).toBe(false);
+    fireEvent.pointerUp(tab);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    // Later keyboard focus lands on the tab: no mark, so the ring shows.
+    fireEvent.focus(tab);
     expect(tab.hasAttribute("data-pointer-focus")).toBe(false);
   });
 

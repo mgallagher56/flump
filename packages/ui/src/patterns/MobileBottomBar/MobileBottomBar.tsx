@@ -41,7 +41,9 @@ export const MobileBottomBar: FC<MobileBottomBarProps> = ({
             mobileBottomBarLink(),
             <>
               {item.icon}
-              <span className={mobileBottomBarLabel()}>{item.label}</span>
+              <span className={mobileBottomBarLabel()} data-nav-label="">
+                {item.label}
+              </span>
             </>,
             isActiveItem(item, activeKey) ? "page" : undefined,
           )}

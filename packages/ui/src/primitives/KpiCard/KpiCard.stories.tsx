@@ -320,3 +320,10 @@ export const WithExplain: Story = {
   },
 };
 export const WithExplainDark: Story = { ...WithExplain, globals: { theme: "dark" } };
+
+/** The explain trigger on the hero tone keeps the hero ink (text.onContrast), not text.muted. */
+export const WithExplainHero: Story = {
+  ...WithExplain,
+  args: { ...WithExplain.args, tone: "hero" },
+};
+export const WithExplainHeroDark: Story = { ...WithExplainHero, globals: { theme: "dark" } };

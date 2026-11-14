@@ -81,6 +81,15 @@ const preview: Preview = {
   decorators: [
     (Story, context) => {
       const selectedTheme = context.globals.theme || "side-by-side";
+      // The theme belongs on <html>, as the app's theme script puts it: with no data-theme on the
+      // root, the JS-off dark condition (D30, `prefers-color-scheme: dark`) would turn the light
+      // pane dark on a dark OS. Side by side, the root is light and the dark pane's `.dark`
+      // wrapper re-declares the dark tokens for its own subtree.
+      if (typeof document !== "undefined") {
+        const rootDark = selectedTheme === "dark";
+        document.documentElement.setAttribute("data-theme", rootDark ? "dark" : "light");
+        document.documentElement.classList.toggle("dark", rootDark);
+      }
       const routerParams = context.parameters.router || {};
       const routerValue = {
         loaderData: routerParams.loaderData || {},
