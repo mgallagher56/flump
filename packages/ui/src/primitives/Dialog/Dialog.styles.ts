@@ -29,9 +29,8 @@ export const dialogContentRecipe = cva({
     boxShadow: "overlay",
     width: "100%",
     // Dynamic viewport units: on a phone `vh` counts the area under the browser's toolbars, so a
-    // tall dialog's last field and actions sat behind the toolbar and the bottom bar (R2-8). 90 on
-    // a phone, the same as Sheet (STYLE-GUIDE 12.3).
-    maxHeight: { base: "90dvh", md: "85dvh" },
+    // tall dialog's last field and actions sat behind the toolbar and the bottom bar (R2-8).
+    maxHeight: { base: "94dvh", md: "85dvh" },
     overflowY: "auto",
     padding: { base: "5", md: "7" },
     // Phone: clear of the home indicator, like a bottom sheet.
