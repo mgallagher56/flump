@@ -254,8 +254,15 @@ export const PensionContainer: FC = () => {
       ...(salaryValue > 0 ? { annualSalary: salaryValue } : {}),
       pensionPercent: roundTo2dp(Math.max(0, values.employeePercent ?? 0)),
       pensionEmployerPercent: roundTo2dp(Math.max(0, values.employerPercent ?? 0)),
-      isSalarySacrifice: values.isSalarySacrifice,
-      isSalarySacrificeEmployerNi: values.isSalarySacrifice && values.isSalarySacrificeEmployerNi,
+      // The method is written only when the user changed it: the form starts from a guess when
+      // no method is stored, and saving that guess would turn it into a choice.
+      ...(values.methodChanged
+        ? {
+            isSalarySacrifice: values.isSalarySacrifice,
+            isSalarySacrificeEmployerNi:
+              values.isSalarySacrifice && values.isSalarySacrificeEmployerNi,
+          }
+        : {}),
     });
   };
 

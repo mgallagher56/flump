@@ -39,6 +39,11 @@ export interface PensionDetailsSaveValues {
   employerPercent: number | null;
   isSalarySacrifice: boolean;
   isSalarySacrificeEmployerNi: boolean;
+  /**
+   * True only when the user changed a contribution-method box in this edit. The boxes start from
+   * the saved method or a guess, so an untouched method must not be saved as a choice.
+   */
+  methodChanged: boolean;
 }
 
 export interface PensionDetailsProps {
@@ -100,6 +105,7 @@ const DetailsForm: FC<FormProps> = ({
   const [employer, setEmployer] = useState<number | null>(employerPercent);
   const [sacrifice, setSacrifice] = useState(isSalarySacrifice);
   const [employerNi, setEmployerNi] = useState(isSalarySacrificeEmployerNi);
+  const [methodChanged, setMethodChanged] = useState(false);
   const [saving, setSaving] = useState(false);
 
   const submit = async (event: FormEvent) => {
@@ -112,6 +118,7 @@ const DetailsForm: FC<FormProps> = ({
         employerPercent: employer,
         isSalarySacrifice: sacrifice,
         isSalarySacrificeEmployerNi: sacrifice && employerNi,
+        methodChanged,
       });
       onEditingChange(false);
     } catch (err) {
@@ -163,6 +170,7 @@ const DetailsForm: FC<FormProps> = ({
               id="pension-salary-sacrifice-checkbox"
               type="checkbox"
               onChange={(e) => {
+                setMethodChanged(true);
                 setSacrifice(e.target.checked);
                 if (!e.target.checked) setEmployerNi(false);
               }}
@@ -179,7 +187,10 @@ const DetailsForm: FC<FormProps> = ({
               disabled={!sacrifice}
               id="pension-employer-ni-checkbox"
               type="checkbox"
-              onChange={(e) => setEmployerNi(e.target.checked)}
+              onChange={(e) => {
+                setMethodChanged(true);
+                setEmployerNi(e.target.checked);
+              }}
             />
             <span>
               Pass on employer NI
