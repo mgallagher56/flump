@@ -33,6 +33,6 @@ const play: Story["play"] = async ({ canvasElement }) => {
 };
 
 /** Guide and FAQ under a calculator: native details panels, closed until opened. */
-export const Default: Story = { play };
+export const Light: Story = { globals: { theme: "light" }, play };
 
 export const Dark: Story = { globals: { theme: "dark" }, play };

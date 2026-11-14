@@ -1,4 +1,4 @@
-import { Icon } from "@repo/ui";
+import { PageHeader } from "@repo/ui";
 import {
   DebtSnowballCalculator,
   MarginalRateExplorerStandalone,
@@ -9,67 +9,24 @@ import {
   TaxTrapCalculator,
   ZeroPercentCliffCalculator,
 } from "@repo/ui/calculators";
-import { css } from "@repo/ui/styled-system/css";
 import { getToolEntry, getToolGuide, resolveToolSlug } from "@repo/ui/tools";
+import { ToolBreadcrumbs, type ToolBreadcrumbsRenderLink } from "@repo/ui/tools/breadcrumbs";
 import { ToolGuide } from "@repo/ui/tools/guide";
-import { ChevronRight } from "lucide-react";
 import type { FC } from "react";
 import { Link, useParams } from "react-router-dom";
-import { Footer } from "../components/Footer";
-import { Header } from "../components/Header";
-import { PageMeta } from "../components/PageMeta";
-import { signupCta } from "../utils/site";
-import { isKnownToolSlug } from "../utils/toolSlugs";
-import { NotFoundPage } from "./NotFoundPage";
+import { Footer } from "../../components/Footer";
+import { Header } from "../../components/Header";
+import { PageMeta } from "../../components/PageMeta";
+import { signupCta } from "../../utils/site";
+import { isKnownToolSlug } from "../../utils/toolSlugs";
+import { NotFoundPage } from "../NotFoundPage";
+import { containerStyle, guideStyle, mainStyle, pageStyle } from "./ToolPage.styles";
 
-const pageStyle = css({ minHeight: "100vh", display: "flex", flexDirection: "column" });
-
-const mainStyle = css({ flex: "1" });
-
-const containerStyle = css({ maxWidth: "5xl", mx: "auto", py: "8", px: "4" });
-
-const crumbListStyle = css({
-  listStyle: "none",
-  padding: "0",
-  margin: "0",
-  marginBottom: "4",
-  display: "flex",
-  flexWrap: "wrap",
-  alignItems: "center",
-  gap: "1.5",
-  fontSize: "sm",
-  color: "text.secondary",
-});
-
-const crumbItemStyle = css({ display: "inline-flex", alignItems: "center", gap: "1.5" });
-
-const crumbLinkStyle = css({
-  color: "primary",
-  fontWeight: "600",
-  textDecoration: "none",
-  _hover: { textDecoration: "underline" },
-  _focusVisible: { outline: "2px solid", outlineColor: "border.focusRing", outlineOffset: "2px" },
-});
-
-const headerBlockStyle = css({ marginBottom: "6" });
-
-const titleStyle = css({
-  fontFamily: "display",
-  fontSize: "clamp(2rem, 3.5vw, 2.75rem)",
-  fontWeight: "800",
-  lineHeight: "1.15",
-  color: "text.primary",
-  marginBottom: "2",
-});
-
-const descriptionStyle = css({
-  fontSize: "lg",
-  color: "text.secondary",
-  maxWidth: "3xl",
-  lineHeight: "1.6",
-});
-
-const guideStyle = css({ marginTop: "10" });
+const renderCrumbLink: ToolBreadcrumbsRenderLink = (href, className, children) => (
+  <Link className={className} to={href}>
+    {children}
+  </Link>
+);
 
 /**
  * One public calculator: breadcrumb, h1, one line, the calculator (which carries the page's one
@@ -90,7 +47,7 @@ export const ToolPage: FC = () => {
   const guide = getToolGuide(normalizedSlug);
 
   // Invite-only: the button asks for an invite. Open: it hands the calculation to the web app.
-  const ctaText = cta.external ? "Continue in Flump" : `${cta.label} →`;
+  const ctaText = cta.external ? "Continue in Flump" : cta.label;
   // Only hand figures to the web app when sign-up is open; an invite request has nowhere to restore them.
   const persistSeed = cta.external;
 
@@ -108,24 +65,8 @@ export const ToolPage: FC = () => {
 
       <main className={mainStyle} id="main" tabIndex={-1}>
         <section className={containerStyle}>
-          <nav aria-label="Breadcrumb">
-            <ol className={crumbListStyle}>
-              <li className={crumbItemStyle}>
-                <Link className={crumbLinkStyle} to="/tools">
-                  All calculators
-                </Link>
-                <Icon icon={ChevronRight} size="sm" />
-              </li>
-              <li aria-current="page" className={crumbItemStyle}>
-                {tool.title}
-              </li>
-            </ol>
-          </nav>
-
-          <div className={headerBlockStyle}>
-            <h1 className={titleStyle}>{tool.title}</h1>
-            <p className={descriptionStyle}>{tool.description}</p>
-          </div>
+          <ToolBreadcrumbs renderLink={renderCrumbLink} title={tool.title} />
+          <PageHeader description={tool.description} title={tool.title} />
 
           <section aria-label="Calculator" data-tool-calculator="">
             {normalizedSlug === "uk-100k-tax-trap-calculator" && (

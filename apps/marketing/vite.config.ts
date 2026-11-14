@@ -33,6 +33,10 @@ export default defineConfig({
         __dirname,
         "../../packages/ui/src/tools/ToolGuide/index.ts",
       ),
+      "@repo/ui/tools/breadcrumbs": path.resolve(
+        __dirname,
+        "../../packages/ui/src/tools/ToolBreadcrumbs/index.ts",
+      ),
       "@repo/ui/tools": path.resolve(__dirname, "../../packages/ui/src/tools/index.ts"),
       "@repo/ui/fonts.css": path.resolve(__dirname, "../../packages/ui/src/fonts/fonts.css"),
       "@repo/ui": path.resolve(__dirname, "../../packages/ui/src/index.tsx"),

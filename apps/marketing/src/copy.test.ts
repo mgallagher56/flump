@@ -8,7 +8,7 @@ const read = (rel: string) => fs.readFileSync(path.resolve(__dirname, rel), "utf
 
 describe("marketing copy (R-10)", () => {
   it.each([
-    "pages/ToolsIndexPage.tsx",
+    "pages/ToolsIndexPage/ToolsIndexPage.tsx",
     "components/BaselineSnapshotPreview.tsx",
     "components/MonthlyPictureSection/MonthlyPictureSection.tsx",
     "components/BigMovesSection/BigMovesSection.tsx",

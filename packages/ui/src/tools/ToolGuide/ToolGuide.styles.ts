@@ -2,7 +2,7 @@ import { cva } from "../../../styled-system/css";
 
 /** The guide and FAQ panels, stacked under the calculator. */
 export const guideRoot = cva({
-  base: { display: "flex", flexDirection: "column", gap: "4", maxWidth: "3xl" },
+  base: { display: "flex", flexDirection: "column", gap: "4", width: "100%" },
 });
 
 /** A native `<details>` card, styled to match the `CollapsibleDrawer` card variant. */
@@ -45,7 +45,7 @@ export const guideTitleRow = cva({
 });
 
 export const guideTitle = cva({
-  base: { textStyle: "label.md", fontWeight: "semibold", color: "text.primary" },
+  base: { textStyle: "label.md", fontWeight: "semibold", color: "text.primary", margin: "0" },
 });
 
 export const guideCount = cva({

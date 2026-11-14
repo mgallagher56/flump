@@ -65,8 +65,8 @@ describe("claims guard", () => {
 describe("public calculator copy guard (E16 PR 11)", () => {
   const banned = /ENGINE|Mathematically|guaranteed|\bsyncs\b|\bmonitors\b|tax trap/i;
   const toolSources = [
-    join(__dirname, "pages", "ToolPage.tsx"),
-    join(__dirname, "pages", "ToolsIndexPage.tsx"),
+    join(__dirname, "pages", "ToolPage", "ToolPage.tsx"),
+    join(__dirname, "pages", "ToolsIndexPage", "ToolsIndexPage.tsx"),
     ...files(join(__dirname, "..", "..", "..", "packages", "ui", "src", "tools")),
   ].map((f) => [f, readFileSync(f, "utf8")] as const);
 
