@@ -35,17 +35,19 @@ ARG RAILWAY_GIT_COMMIT_SHA
 # Browser source maps (BE-07, L14): with the token, org and project all set, the client build
 # emits hidden maps, uploads them to Sentry and deletes them, so none reach the runner stage.
 # Unset: no maps, no upload. The org, project and URL are public slugs, so plain build ARGs.
-# The token is a BuildKit secret (Railway exposes each service variable as a build secret with its
-# own name as the id): mounted at /run/secrets/SENTRY_AUTH_TOKEN for the build command only, so
-# it never lands in a layer, the image history or the build cache. Absent, the build skips upload.
+# The token is a build ARG too: Railway's builder rejects `RUN --mount=type=secret` (it accepts
+# cache mounts only), so a BuildKit secret cannot be used here. The ARG is declared in this build
+# stage only; the runner stage below starts from `base` and copies files out, so the token is not
+# in the final image or its history. It can remain in the builder's cache for this stage: use a
+# Sentry organisation token limited to source map upload. Absent, the build skips upload.
+ARG SENTRY_AUTH_TOKEN
 ARG SENTRY_ORG
 ARG SENTRY_PROJECT
 ARG SENTRY_URL
 # Build, then swap node_modules for a production-only install (M17): the runtime image carries
 # no devDependencies. The reinstall reuses the bun cache from the deps stage.
-RUN --mount=type=secret,id=SENTRY_AUTH_TOKEN \
-    bun run --cwd apps/web prepare \
- && SENTRY_AUTH_TOKEN="$(cat /run/secrets/SENTRY_AUTH_TOKEN 2>/dev/null || true)" \
+RUN bun run --cwd apps/web prepare \
+ && SENTRY_AUTH_TOKEN="${SENTRY_AUTH_TOKEN:-}" \
     bun turbo run build --filter=@flump/web... \
  && find . -name node_modules -type d -prune -exec rm -rf {} + \
  && bun install --frozen-lockfile --ignore-scripts --production --filter './' --filter '@flump/web' --filter 'marketing' --filter './packages/*'
