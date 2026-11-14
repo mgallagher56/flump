@@ -73,12 +73,11 @@ describe("<HousingDetails />", () => {
     await waitFor(() => expect(onSave).toHaveBeenCalledWith(0));
   });
 
-  it("mortgage: points to the mortgage page and offers no form", () => {
-    render(<HousingDetails housingStatus="mortgage" savedAmount={1100} onSave={vi.fn()} />);
-    expect(screen.getByText("Your balance, rate and term are on the mortgage page.")).toBeDefined();
-    // The global test setup renders links as their children.
-    expect(screen.getByText("Open the mortgage page")).toBeDefined();
-    expect(screen.queryByRole("button")).toBeNull();
+  it("mortgage: renders nothing (the housing row links to the mortgage page)", () => {
+    const { container } = render(
+      <HousingDetails housingStatus="mortgage" savedAmount={1100} onSave={vi.fn()} />,
+    );
+    expect(container.innerHTML).toBe("");
   });
 
   it("own outright: renders nothing", () => {

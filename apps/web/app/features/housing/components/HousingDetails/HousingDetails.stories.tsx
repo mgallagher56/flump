@@ -42,13 +42,6 @@ export const LivingWithFamily: Story = {
   },
 };
 
-export const Mortgage: Story = {
-  args: { housingStatus: "mortgage", savedAmount: 1100 },
-  play: async ({ canvasElement }) => {
-    await expect(within(canvasElement).getAllByText("Open the mortgage page")[0]).toBeDefined();
-  },
-};
-
 export const NotSet: Story = {
   args: { housingStatus: null, savedAmount: null },
   play: async ({ canvasElement }) => {

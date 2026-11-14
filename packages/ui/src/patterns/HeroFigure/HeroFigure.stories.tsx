@@ -30,10 +30,8 @@ const heroPlay: Story["play"] = async ({ canvasElement }) => {
   await expect(group).toHaveAttribute("data-tone", "hero");
   await expect(canvas.getByText("£241,000")).toBeInTheDocument();
   await expect(canvasElement.querySelectorAll('[data-tone="hero"]')).toHaveLength(1);
-  await expect(canvasElement.querySelector('[data-decorative="true"]')).toHaveAttribute(
-    "aria-hidden",
-    "true",
-  );
+  // No decoration: the disc crossed the sub-line on a phone (round 4).
+  await expect(canvasElement.querySelector('[data-decorative="true"]')).toBeNull();
 };
 
 export const Default: Story = { globals: { theme: "light" }, play: heroPlay };

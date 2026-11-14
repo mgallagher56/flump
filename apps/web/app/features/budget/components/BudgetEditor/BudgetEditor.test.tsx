@@ -46,10 +46,11 @@ const setup = (props: Partial<BudgetEditorProps> = {}, withToast = false) => {
 };
 
 describe("BudgetEditor", () => {
-  it("shows Money in first, then the page's categories in order", () => {
+  it("shows Money in first, then categories in the read view's order", () => {
     setup();
     const headings = screen.getAllByRole("heading", { level: 3 }).map((h) => h.textContent);
-    expect(headings).toEqual(["Money in", "Housing", "Bills", "Expenses", "Savings", "Pets"]);
+    // Spending ranked by amount (housing £1,200, expenses £40), empty ones at the foot in order.
+    expect(headings).toEqual(["Money in", "Housing", "Expenses", "Bills", "Savings", "Pets"]);
     expect(screen.getByTestId("budget-editor-name-b-2")).toBeDefined();
     // Income rows have no essential switch.
     expect(screen.queryByTestId("budget-editor-essential-b-2")).toBeNull();
@@ -204,7 +205,7 @@ describe("BudgetEditor", () => {
     expect(onDelete).not.toHaveBeenCalled();
   });
 
-  it("shows one quiet toast per save, add and remove when a ToastProvider is present", async () => {
+  it("shows one quiet toast per save and remove, none for an add", async () => {
     setup({}, true);
     fireEvent.change(screen.getByTestId("budget-editor-frequency-b-1"), {
       target: { value: "weekly" },
@@ -216,7 +217,9 @@ describe("BudgetEditor", () => {
       target: { value: "Water" },
     });
     fireEvent.click(screen.getByTestId("budget-editor-add-bills"));
-    expect(await screen.findByText("Entry added")).toBeDefined();
+    // The new row is the confirmation: no "Entry added" message.
+    await waitFor(() => expect(screen.getByTestId("budget-editor-open-add-bills")).toBeDefined());
+    expect(screen.queryByText("Entry added")).toBeNull();
 
     fireEvent.click(screen.getByRole("button", { name: "Delete Rent" }));
     const dialog = await screen.findByRole("alertdialog");

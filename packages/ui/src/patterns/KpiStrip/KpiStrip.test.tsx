@@ -201,7 +201,9 @@ describe("KpiStrip Pattern", () => {
       </KpiStrip>,
     );
     const cls = container.firstElementChild?.className ?? "";
-    expect(cls).toContain("sm:grid-tc_repeat(2,_minmax(0,_1fr))");
+    // Side by side from the phone up, then capped at a 3-card width from lg.
+    expect(cls).toContain("grid-tc_repeat(2,_minmax(0,_1fr))");
+    expect(cls).not.toContain("sm:grid-tc");
     expect(cls).toContain("lg:grid-tc_repeat(3,_minmax(0,_1fr))");
   });
 

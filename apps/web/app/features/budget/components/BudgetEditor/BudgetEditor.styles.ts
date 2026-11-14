@@ -95,8 +95,13 @@ export const frequencyField = cva({
   base: { gridColumn: { base: "1", md: "auto" }, gridRow: { base: "2", md: "auto" } },
 });
 
+/** Kept at its width on income and savings rows too, so amounts line up across sections. */
 export const essentialField = cva({
-  base: { gridColumn: { base: "2", md: "auto" }, gridRow: { base: "2", md: "auto" } },
+  base: {
+    gridColumn: { base: "2", md: "auto" },
+    gridRow: { base: "2", md: "auto" },
+    minWidth: { md: "120px" },
+  },
 });
 
 export const removeCell = cva({

@@ -1,8 +1,19 @@
 import { fireEvent, screen, within } from "@testing-library/react";
+import type { ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 import customRender from "~/testUtils/customRender";
 import type { BudgetEntry } from "~/types/budget";
 import { BudgetCategoryList, INCOME_CATEGORY, rankCategories } from "./BudgetCategoryList";
+
+// The global setup renders links as their children; render a real anchor so link rows are found.
+vi.mock("react-router", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("react-router")>()),
+  Link: ({ children, to, ...rest }: { children: ReactNode; to: string }) => (
+    <a href={to} {...rest}>
+      {children}
+    </a>
+  ),
+}));
 
 const entry = (overrides: Partial<BudgetEntry>): BudgetEntry => ({
   id: "e1",
@@ -29,10 +40,6 @@ const entries = [
 ];
 
 const categories = ["housing", "bills", "expenses", "savings", "income", "pets"];
-
-/** The share a row's bar shows (aria-valuenow on its decorative progress bar). */
-const shareOf = (row: Element | undefined) =>
-  Number(row?.querySelector('[role="progressbar"]')?.getAttribute("aria-valuenow"));
 
 describe("rankCategories", () => {
   it("ranks by monthly amount, largest first, empty categories at the foot, income left out", () => {
@@ -102,33 +109,13 @@ describe("<BudgetCategoryList />", () => {
     expect(screen.queryByTestId("budget-category-income")).toBeNull();
     expect(screen.queryByText("£3,000")).toBeNull();
     expect(within(rows[0] as HTMLElement).getByText("£1,000")).toBeDefined();
-    expect(within(rows[0] as HTMLElement).getByText("1 entry")).toBeDefined();
     expect(within(rows[2] as HTMLElement).getByText("£40")).toBeDefined();
-    expect(within(rows[4] as HTMLElement).getByText("No entries yet")).toBeDefined();
+    // No entry-count line and no share bars: the amount is the row's one figure.
+    expect(screen.queryByText(/\d+ entr(y|ies)|No entries yet/)).toBeNull();
+    expect(container.querySelector('[role="progressbar"]')).toBeNull();
   });
 
-  it("draws each bar as a share of money in", () => {
-    const { container } = customRender(<BudgetCategoryList {...props} />);
-    const rows = Array.from(container.querySelectorAll("[data-list-row]"));
-    // Of £3,000 in: housing £1,000, groceries £400, water £40 a month.
-    expect(shareOf(rows[0])).toBeCloseTo((1000 / 3000) * 100, 1);
-    expect(shareOf(rows[1])).toBeCloseTo((400 / 3000) * 100, 1);
-    expect(shareOf(rows[2])).toBeCloseTo((40 / 3000) * 100, 1);
-    // Empty categories draw no bar.
-    expect(rows[4]?.querySelector('[role="progressbar"]')).toBeNull();
-  });
-
-  it("draws bars as a share of everything going out when there is no income", () => {
-    const { container } = customRender(
-      <BudgetCategoryList {...props} entries={entries.filter((e) => !e.isIncome)} />,
-    );
-    const rows = Array.from(container.querySelectorAll("[data-list-row]"));
-    // £1,000 + £400 + £40 = £1,440 going out.
-    expect(shareOf(rows[0])).toBeCloseTo((1000 / 1440) * 100, 1);
-    expect(shareOf(rows[2])).toBeCloseTo((40 / 1440) * 100, 1);
-  });
-
-  it("replaces a row's entry count with metaFor when it returns text", () => {
+  it("shows metaFor's line under a row's name when it returns text", () => {
     customRender(
       <BudgetCategoryList
         {...props}
@@ -137,11 +124,31 @@ describe("<BudgetCategoryList />", () => {
     );
     const housing = screen.getByTestId("budget-category-housing");
     expect(within(housing).getByText("Renting")).toBeDefined();
-    expect(within(housing).queryByText("1 entry")).toBeNull();
-    // Rows metaFor leaves alone keep their entry count.
-    expect(
-      within(screen.getByTestId("budget-category-expenses")).getByText("1 entry"),
-    ).toBeDefined();
+    // Rows metaFor leaves alone show their name only.
+    expect(screen.getByTestId("budget-category-expenses").textContent).toBe("Expenses£400");
+  });
+
+  it("makes a row a link with hrefFor, named in full, with no entries panel", () => {
+    customRender(
+      <BudgetCategoryList
+        {...props}
+        hrefFor={(cat) =>
+          cat === "housing" ? { to: "/app/mortgage", page: "mortgage page" } : undefined
+        }
+        metaFor={(cat) => (cat === "housing" ? "Mortgage" : undefined)}
+        openCategory="housing"
+      />,
+    );
+    const housing = screen.getByRole("link", {
+      name: /^Housing\s*Mortgage\s*£1,000 a month, open the mortgage page$/,
+    });
+    expect(housing.getAttribute("href")).toBe("/app/mortgage");
+    expect(housing.getAttribute("aria-expanded")).toBeNull();
+    expect(screen.queryByText("Entries for housing")).toBeNull();
+    // Other rows still open their entries.
+    expect(screen.getByTestId("budget-category-expenses").getAttribute("aria-expanded")).toBe(
+      "false",
+    );
   });
 
   it("opens a row's entries and reports the toggle", () => {

@@ -61,15 +61,6 @@ function writableEntryFields<T extends Partial<BudgetEntry>>(entry: T) {
   return fields;
 }
 
-const FREQUENCY_NOTE: Record<string, string> = { annual: "Paid yearly", weekly: "Paid weekly" };
-
-/** "Essential", or "Flexible, paid yearly": the quiet second line of a read-only entry. */
-function entrySecondary(entry: BudgetEntry): string {
-  const kind = entry.isEssential ? "Essential" : "Flexible";
-  const note = FREQUENCY_NOTE[entry.frequency];
-  return note ? `${kind}, ${note.toLowerCase()}` : kind;
-}
-
 const BudgetContainer: FC = () => {
   const {
     accounts = [],
@@ -181,7 +172,8 @@ const BudgetContainer: FC = () => {
   );
 
   // Housing cost shows once: as the housing row in "Where your money goes". The row names the
-  // tenure, and opening it says where the saved figure lives (E16 R2-6).
+  // tenure, and opening it says where the saved figure lives, or links to the mortgage page
+  // (E16 R2-6).
   const housingStatus = (pictureProfile?.housingStatus ?? null) as HousingTenure;
 
   const handleSaveHousing = async (monthly: number) => {
@@ -334,17 +326,16 @@ const BudgetContainer: FC = () => {
         items={entries
           .filter((e) => e.category === category && !e.isIncome)
           .map((e, _i, rows) =>
-            // A single entry is the row's own total, so its figure would only repeat it (P6):
-            // its kind takes the figure's place instead of leaving a gap.
+            // One line per entry. A single entry is the row's own total, so it shows its name
+            // only: its figure would repeat the row's (P6).
             rows.length > 1
               ? {
                   id: e.id,
                   label: e.name,
-                  secondary: entrySecondary(e),
                   value: Math.abs(toMonthly(e)),
                   valueProps: { fractionDigits: 0, size: "sm" as const },
                 }
-              : { id: e.id, label: e.name, valueDisplay: entrySecondary(e) },
+              : { id: e.id, label: e.name },
           )}
         label={`${getCategoryLabel(category)} entries`}
         noun={{ one: "entry", other: "entries" }}
@@ -440,6 +431,12 @@ const BudgetContainer: FC = () => {
             <BudgetCategoryList
               categories={allCategories}
               entries={entries}
+              hrefFor={(cat) =>
+                // A mortgage holder's housing row opens the mortgage page, where its details live.
+                cat === "housing" && housingStatus === "mortgage"
+                  ? { to: "/app/mortgage", page: "mortgage page" }
+                  : undefined
+              }
               metaFor={(cat) => (cat === "housing" ? housingTenureLabel(housingStatus) : undefined)}
               openCategory={openCategory}
               renderEntries={renderEntries}
