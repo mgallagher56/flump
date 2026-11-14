@@ -38,21 +38,27 @@ export const debtList = cva({
   base: { display: "flex", flexDirection: "column", gap: "3", minWidth: "0" },
 });
 
-/** One debt: legend and remove button on a row, the three fields below. */
+/**
+ * One debt, with no border of its own (no card in a card): rows are split by a quiet rule.
+ * At every width the name and the actions share the top line and the fields sit below at full
+ * width, so the name never wraps beside the balance.
+ */
 export const debtRow = cva({
   base: {
     display: "grid",
     gridTemplateColumns: "minmax(0, 1fr) auto",
     alignItems: "center",
-    columnGap: "2",
+    columnGap: "3",
     rowGap: "2",
     minWidth: "0",
     margin: "0",
-    padding: "3",
-    borderWidth: "1px",
-    borderStyle: "solid",
-    borderColor: "border.subtle",
-    borderRadius: "xl",
+    padding: "0",
+    paddingBlock: "3",
+    border: "none",
+    borderTopWidth: "1px",
+    borderTopStyle: "solid",
+    borderTopColor: "border.subtle",
+    "&:first-of-type": { borderTopWidth: "0", paddingTop: "0" },
   },
 });
 
@@ -61,28 +67,31 @@ export const debtRowLegend = cva({
   base: {
     float: "left",
     gridColumn: "1",
+    gridRow: "1",
+    alignSelf: "center",
     padding: "0",
     textStyle: "label.md",
     color: "text.primary",
   },
 });
 
-export const debtRowRemove = cva({
-  base: { gridColumn: "2", justifySelf: "end" },
+export const debtRowActions = cva({
+  base: { display: "flex", gap: "1", justifySelf: "end", gridColumn: "2", gridRow: "1" },
 });
 
 /**
- * The three fields wrap to as many columns as fit (one on a phone, three in a wide column), so a
- * row never forces sideways scrolling at 375px (known #10).
+ * The fields wrap to as many columns as fit, so a row never forces sideways scrolling at 375px
+ * (known #10). Open, the minimum sits beside the balance and the rate goes below.
  */
 export const debtRowFields = cva({
   base: {
-    gridColumn: "1 / -1",
     display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 8.5rem), 1fr))",
+    gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 10rem), 1fr))",
     gap: "3",
     minWidth: "0",
     alignItems: "end",
+    gridColumn: "1 / -1",
+    gridRow: "2",
   },
 });
 
@@ -90,7 +99,12 @@ export const debtAddButton = cva({
   base: { alignSelf: "flex-start", gap: "2" },
 });
 
-/** Right column: outcome, the two methods, the explainer, then the one notice. */
+/** Under lg the results column comes before the debts, so the answer shows first on a phone. */
+export const debtSplit = cva({
+  base: { "& > section:last-of-type": { order: { base: "-1", lg: "0" } } },
+});
+
+/** Right column: the outcome, the two methods, the sign-up button and the details. */
 export const debtContent = cva({
   base: { display: "flex", flexDirection: "column", gap: "5", minWidth: "0" },
 });
@@ -130,6 +144,10 @@ export const debtExplainer = cva({
 
 export const debtExplainerTitle = cva({
   base: { textStyle: "label.md", color: "text.primary", margin: "0" },
+});
+
+export const debtDetails = cva({
+  base: { fontVariantNumeric: "tabular-nums", overflowX: "auto" },
 });
 
 export const debtCta = cva({

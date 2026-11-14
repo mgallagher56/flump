@@ -38,6 +38,21 @@ export const Light: Story = { ...Default, globals: { theme: "light" } };
 
 export const Dark: Story = { ...Default, globals: { theme: "dark" } };
 
+/** As on a tool page: the page shows the title and description, so the calculator does not. */
+export const Embedded: Story = {
+  args: { embedded: true },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(canvas.queryByText(STUDENT_LOAN_COPY.title)).not.toBeInTheDocument();
+    // No heading is left to skip a level: the explainer is a quiet drawer, closed by default.
+    await expect(canvas.queryByRole("heading", { level: 3 })).not.toBeInTheDocument();
+    const explainer = canvas.getByRole("button", { name: STUDENT_LOAN_COPY.explainerTitle });
+    await expect(explainer).toHaveAttribute("aria-expanded", "false");
+    await userEvent.click(explainer);
+    await expect(explainer).toHaveAttribute("aria-expanded", "true");
+  },
+};
+
 export const Mobile: Story = {
   parameters: { viewport: { defaultViewport: "mobile1" } },
 };

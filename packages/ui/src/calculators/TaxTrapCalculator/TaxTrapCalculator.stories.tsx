@@ -15,6 +15,11 @@ type Story = StoryObj<typeof TaxTrapCalculator>;
 
 const play: Story["play"] = async ({ canvasElement, args }) => {
   const canvas = within(canvasElement);
+  const headline = canvas.getByTestId("tax-trap-headline");
+  const headlineBefore = headline.textContent;
+
+  // The table, taper and childcare text sit behind "Show details".
+  await userEvent.click(canvas.getByRole("button", { name: TAX_TRAP_COPY.details }));
   const table = canvas.getByRole("table", { name: TAX_TRAP_COPY.factsCaption });
   const before = table.textContent;
 
@@ -24,6 +29,7 @@ const play: Story["play"] = async ({ canvasElement, args }) => {
   await userEvent.type(contribution, "20000");
   await userEvent.tab();
   await expect(table.textContent).not.toBe(before);
+  await expect(headline.textContent).not.toBe(headlineBefore);
   await expect(canvas.getByTestId("tax-trap-childcare-status")).toHaveTextContent(
     "£100,000 or less",
   );
@@ -42,6 +48,24 @@ export const Dark: Story = { ...Default, globals: { theme: "dark" } };
 
 export const Mobile: Story = {
   parameters: { viewport: { defaultViewport: "mobile1" } },
+};
+
+/** On a tool page: the page shows the title, so the calculator leaves out its own. */
+export const Embedded: Story = {
+  args: { embedded: true },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(canvas.queryByText(TAX_TRAP_COPY.title)).not.toBeInTheDocument();
+  },
+};
+
+/** A date in a tax year with no rates yet: the banner says which year's rates are used. */
+export const FallbackRates: Story = {
+  args: { taxYear: undefined, now: new Date(Date.UTC(2040, 5, 1)) },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(canvas.getByTestId("tax-rates-status-banner")).toBeInTheDocument();
+  },
 };
 
 export const Scotland: Story = { args: { initialRegion: "SCOTLAND" } };

@@ -11,14 +11,51 @@ const outcomes = () => screen.getByTestId("overdraft-outcomes");
 const toolText = () => screen.getByTestId("overdraft-cost-tool").textContent ?? "";
 
 describe("OverdraftCostCalculator", () => {
-  it("shows one outcome and one supporting figure from the default example", () => {
+  it("shows one outcome card and the monthly figure as a line under it", () => {
     render(<OverdraftCostCalculator />);
     const cards = within(outcomes());
     // £1,200 at 39.9% EAR: £478.80 a year, £39.90 a month, read in whole pounds.
     expect(cards.getByText(OVERDRAFT_COPY.kpiYear)).toBeDefined();
     expect(cards.getByText("£479")).toBeDefined();
-    expect(cards.getByText(OVERDRAFT_COPY.kpiMonth)).toBeDefined();
     expect(cards.getByText("£40")).toBeDefined();
+    expect(outcomes().textContent).toContain(`£40 ${OVERDRAFT_COPY.monthLine}`);
+    // One card only: the monthly figure is not a second card.
+    expect(outcomes().querySelectorAll("p").length).toBe(1);
+  });
+
+  it("puts the sign-up button under the result, before the explainer and notice", () => {
+    render(<OverdraftCostCalculator />);
+    const button = screen.getByRole("button", { name: "Continue to sign up" });
+    const notice = screen.getByTestId("projection-notice");
+    const explainer = screen.getByText(OVERDRAFT_COPY.explainerTitle);
+    expect(
+      outcomes().compareDocumentPosition(button) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(
+      button.compareDocumentPosition(explainer) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(button.compareDocumentPosition(notice) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it("hides its own title and intro when embedded, with no skipped heading level", () => {
+    render(<OverdraftCostCalculator embedded />);
+    expect(screen.queryByText(OVERDRAFT_COPY.title)).toBeNull();
+    expect(screen.queryByText(OVERDRAFT_COPY.intro)).toBeNull();
+    const levels = Array.from(
+      screen.getByTestId("overdraft-cost-tool").querySelectorAll("h1, h2, h3, h4, h5, h6"),
+    ).map((h) => Number(h.tagName.slice(1)));
+    expect(levels[0]).toBe(2);
+    for (let i = 1; i < levels.length; i++) {
+      expect((levels[i] ?? 0) - (levels[i - 1] ?? 0)).toBeLessThanOrEqual(1);
+    }
+  });
+
+  it("shows its title as h2 and section headings as h3 when not embedded", () => {
+    render(<OverdraftCostCalculator />);
+    expect(screen.getByRole("heading", { level: 2, name: OVERDRAFT_COPY.title })).toBeDefined();
+    expect(
+      screen.getByRole("heading", { level: 3, name: OVERDRAFT_COPY.explainerTitle }),
+    ).toBeDefined();
   });
 
   it("recalculates when the balance changes", () => {

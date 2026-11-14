@@ -27,9 +27,9 @@ type Story = StoryObj<typeof TakeHomeDeltaPanel>;
 export const Default: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    await expect(canvas.getByTestId("take-home-delta-sentence")).toHaveTextContent(
-      "Of the next £1,000 of pay, an estimated £720 is take-home: £200 Income Tax and £80 National Insurance.",
-    );
+    const table = within(canvas.getByRole("table"));
+    await expect(table.getByText("£720")).toBeInTheDocument();
+    await expect(table.getByText("£200")).toBeInTheDocument();
     await expect(canvas.getByText("As at tax year 2026/27")).toBeInTheDocument();
   },
 };

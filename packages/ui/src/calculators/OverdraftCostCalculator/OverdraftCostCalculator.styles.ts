@@ -1,6 +1,6 @@
 import { cva } from "../../../styled-system/css";
 
-/** The tool's card: one bordered surface holding the header, the split and the sign-up button. */
+/** The tool's card: one bordered surface holding the header (unless embedded) and the split. */
 export const overdraftRoot = cva({
   base: {
     display: "flex",
@@ -34,24 +34,27 @@ export const overdraftControls = cva({
   base: { display: "flex", flexDirection: "column", gap: "4" },
 });
 
-/** Right column: outcome, supporting figures, the explainer, then the one notice. */
+/** Right column: outcome, the sign-up button, the explainer, then the one notice. */
 export const overdraftContent = cva({
   base: { display: "flex", flexDirection: "column", gap: "5", minWidth: "0" },
 });
 
-/**
- * Outcome cards. The first card (the outcome) spans the full row; the supporting cards (at most
- * two) share the row below from `sm`, and stack on a phone.
- */
+/** The outcome card, then the one supporting figure as a quiet line under it. */
 export const overdraftOutcomes = cva({
   base: {
-    display: "grid",
-    gridTemplateColumns: { base: "minmax(0, 1fr)", sm: "repeat(2, minmax(0, 1fr))" },
-    gap: "3",
+    display: "flex",
+    flexDirection: "column",
+    gap: "2",
     fontVariantNumeric: "tabular-nums",
-    "& > :first-child": { gridColumn: "1 / -1" },
-    // A lone supporting figure takes the whole row instead of leaving a half-width gap.
-    "& > :nth-child(2):last-child": { gridColumn: "1 / -1" },
+  },
+});
+
+export const overdraftMonthLine = cva({
+  base: {
+    textStyle: "body.sm",
+    color: "text.secondary",
+    fontVariantNumeric: "tabular-nums",
+    margin: "0",
   },
 });
 

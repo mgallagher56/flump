@@ -10,10 +10,8 @@ import {
   type AssumptionCode,
   asAtTaxYear,
   DELTA_PANEL_COPY,
-  DELTA_SENTENCE_PARTS,
   DELTA_TABLE_ROWS,
   type DeltaComponentKey,
-  deltaSentence,
   pensionPreviewSentence,
 } from "./copy";
 import {
@@ -32,7 +30,7 @@ import {
 export type TakeHomeDeltaComponents = Record<DeltaComponentKey, number>;
 
 export interface TakeHomeDeltaPanelProps {
-  /** The pay rise being explained, usually 1,000. */
+  /** The pay rise being explained, usually 1,000. Sets the pence shown, with the other figures. */
   deltaGross: number;
   /** Change in take-home from that rise. */
   takeHome: number;
@@ -83,9 +81,6 @@ export const TakeHomeDeltaPanel: FC<TakeHomeDeltaPanelProps> = ({
   const fractionDigits = figures.some(hasPence) ? 2 : 0;
   const money = (n: number) => formatMoney(n, { fractionDigits }).text;
 
-  const parts = DELTA_SENTENCE_PARTS.filter(({ key }) => components[key] > 0).map(
-    ({ key, label }) => `${money(components[key])} ${label}`,
-  );
   const rows = DELTA_TABLE_ROWS.filter(({ key }) => components[key] > 0);
   const known = assumptions.filter((a): a is { code: AssumptionCode; unverified: boolean } =>
     Object.hasOwn(ASSUMPTION_COPY, a.code),
@@ -127,10 +122,8 @@ export const TakeHomeDeltaPanel: FC<TakeHomeDeltaPanelProps> = ({
         ratesYear={ratesYear}
       />
 
-      <p className={deltaPanelSentence()} data-testid="take-home-delta-sentence">
-        {deltaSentence(money(deltaGross), money(takeHome), parts)}
-      </p>
-
+      {/* No sentence restating the table: the take-home figure is already the headline card and
+          the first row below (RESCORE Appendix B, pay rise item 1). */}
       <Table caption={DELTA_PANEL_COPY.tableCaption}>
         <THead>
           <Tr>

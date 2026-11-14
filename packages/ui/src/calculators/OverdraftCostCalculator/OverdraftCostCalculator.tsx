@@ -23,6 +23,7 @@ import {
   overdraftExplainerTitle,
   overdraftHeader,
   overdraftIntro,
+  overdraftMonthLine,
   overdraftOutcomes,
   overdraftRoot,
   overdraftTitle,
@@ -36,8 +37,8 @@ export const OVERDRAFT_COPY = {
   rate: "Overdraft interest rate (EAR)",
   rateHelp: "The equivalent annual rate (EAR) shown in your banking app or on your statement.",
   kpiYear: "Estimated interest a year",
-  kpiMonth: "Estimated interest a month",
-  kpiMonthSubtext: "Charged to your current account.",
+  /** Follows the monthly figure in the line under the headline: "£40 a month, charged to ...". */
+  monthLine: "a month, charged to your current account.",
   explainerTitle: "How overdraft interest works",
   explainer:
     "An arranged overdraft has no fixed end date. Interest is charged for as long as the account is overdrawn, and stops on any amount that is paid off.",
@@ -70,6 +71,8 @@ export interface OverdraftCostCalculatorProps {
   /** Starting values (examples, not anyone's saved figures). */
   initialBalance?: number;
   initialRate?: number;
+  /** Inside a tool page that already shows the title and description: hide this calculator's own title and intro. */
+  embedded?: boolean;
 }
 
 /**
@@ -82,10 +85,14 @@ export const OverdraftCostCalculator: FC<OverdraftCostCalculatorProps> = ({
   persistSeed = true,
   initialBalance = 1200,
   initialRate = 39.9,
+  embedded = false,
 }) => {
   // Clamped so a negative entry never reaches the engine (a negative rate would give a negative cost).
   const [balance, setBalance] = useState(Math.max(0, initialBalance));
   const [rate, setRate] = useState(Math.max(0, initialRate));
+
+  // Embedded, the page's h1 sits directly above, so section headings step down to h2.
+  const SectionHeading = embedded ? "h2" : "h3";
 
   const cost = useMemo(() => calculateOverdraftCost(balance, rate), [balance, rate]);
 
@@ -133,19 +140,23 @@ export const OverdraftCostCalculator: FC<OverdraftCostCalculatorProps> = ({
 
   const content = (
     <div className={overdraftContent()}>
-      {/* Illustration outcomes, not saved figures, so plain outcome cards rather than a KpiStrip.
-          One outcome, then at most two supporting figures. */}
+      {/* Illustration outcome, not a saved figure, so a plain outcome card rather than a KpiStrip.
+          The monthly figure is the one supporting figure, as a line under the card. */}
       <div className={overdraftOutcomes()} data-density="compact" data-testid="overdraft-outcomes">
         <KpiCard label={OVERDRAFT_COPY.kpiYear} value={cost.annualPoundCost} />
-        <KpiCard
-          label={OVERDRAFT_COPY.kpiMonth}
-          subtext={OVERDRAFT_COPY.kpiMonthSubtext}
-          value={<Money size="lg" value={cost.monthlyPoundCost} />}
-        />
+        <p className={overdraftMonthLine()}>
+          <Money value={cost.monthlyPoundCost} /> {OVERDRAFT_COPY.monthLine}
+        </p>
       </div>
 
+      <Button className={overdraftCta()} size="md" variant="primary" onClick={handleSave}>
+        {ctaLabel(ctaText)} <Icon icon={ArrowRight} size="sm" />
+      </Button>
+
       <div className={overdraftExplainer()}>
-        <h3 className={overdraftExplainerTitle()}>{OVERDRAFT_COPY.explainerTitle}</h3>
+        <SectionHeading className={overdraftExplainerTitle()}>
+          {OVERDRAFT_COPY.explainerTitle}
+        </SectionHeading>
         <p>{OVERDRAFT_COPY.explainer}</p>
       </div>
 
@@ -156,10 +167,12 @@ export const OverdraftCostCalculator: FC<OverdraftCostCalculatorProps> = ({
 
   return (
     <div className={overdraftRoot()} data-testid="overdraft-cost-tool">
-      <div className={overdraftHeader()}>
-        <h2 className={overdraftTitle()}>{OVERDRAFT_COPY.title}</h2>
-        <p className={overdraftIntro()}>{OVERDRAFT_COPY.intro}</p>
-      </div>
+      {embedded ? null : (
+        <div className={overdraftHeader()}>
+          <h2 className={overdraftTitle()}>{OVERDRAFT_COPY.title}</h2>
+          <p className={overdraftIntro()}>{OVERDRAFT_COPY.intro}</p>
+        </div>
+      )}
 
       <SimulatorSplitLayout
         content={content}
@@ -167,10 +180,6 @@ export const OverdraftCostCalculator: FC<OverdraftCostCalculatorProps> = ({
         controls={controls}
         controlsLabel={OVERDRAFT_COPY.controlsLabel}
       />
-
-      <Button className={overdraftCta()} size="md" variant="primary" onClick={handleSave}>
-        {ctaLabel(ctaText)} <Icon icon={ArrowRight} size="sm" />
-      </Button>
     </div>
   );
 };

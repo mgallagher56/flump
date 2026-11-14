@@ -9,6 +9,7 @@ import { useMemo, useState } from "react";
 import { ProjectionNotice } from "../../patterns/ProjectionNotice/ProjectionNotice";
 import { SimulatorSplitLayout } from "../../patterns/SimulatorSplitLayout/SimulatorSplitLayout";
 import { Button } from "../../primitives/Button/Button";
+import { CollapsibleDrawer } from "../../primitives/CollapsibleDrawer/CollapsibleDrawer";
 import { FormField } from "../../primitives/FormField/FormField";
 import { Icon } from "../../primitives/Icon";
 import { KpiCard } from "../../primitives/KpiCard/KpiCard";
@@ -22,7 +23,6 @@ import {
   studentLoanControls,
   studentLoanCta,
   studentLoanExplainer,
-  studentLoanExplainerTitle,
   studentLoanHeader,
   studentLoanIntro,
   studentLoanOutcomes,
@@ -53,19 +53,19 @@ export const STUDENT_LOAN_COPY = {
   salary: "Yearly salary before tax",
   balance: "Student loan balance",
   kpiMonth: "Estimated repayment a month",
-  kpiMonthSubtext: (rate: string, threshold: string) =>
-    `${rate}% of pay above ${threshold} a year, taken from your salary.`,
-  kpiYear: "Estimated repayment a year",
+  kpiMonthSubtext: "A share of pay above the plan's threshold, taken from your salary.",
   kpiOutcome: "Estimated outcome",
   outcomeRepaid: "Paid off before write-off",
   outcomeWrittenOff: (years: number) => `Written off after ${years} years`,
   outcomeNothingOwed: "No balance to repay",
-  reasonRepaid: (annual: string, balance: string, years: number) =>
-    `Estimate: repayments of ${annual} a year pay off the ${balance} balance before it is written off after ${years} years.`,
-  reasonWrittenOff: (annual: string, balance: string, years: number) =>
-    `Estimate: repayments of ${annual} a year do not pay off the ${balance} balance in ${years} years. The rest is written off then.`,
+  reasonRepaid: "Estimate: repayments at this salary pay off the balance before it is written off.",
+  reasonWrittenOff:
+    "Estimate: repayments at this salary do not pay off the balance, so the rest is written off then.",
   reasonNothingOwed: "There is no balance left to repay.",
   explainerTitle: "How this is worked out",
+  /** "Repayments on this plan are 9% of pay above £29,385 a year." */
+  explainerRate: (rate: string, threshold: string) =>
+    `Repayments on this plan are ${rate}% of pay above ${threshold} a year.`,
   explainer:
     "This is a rough check, not a year-by-year projection. It assumes interest of 6.5% a year and that your salary stays the same.",
   controlsLabel: "Student loan details",
@@ -96,6 +96,8 @@ export interface StudentLoanCalculatorProps {
   initialPlan?: StudentLoanPlanOption;
   initialSalary?: number;
   initialBalance?: number;
+  /** Inside a tool page that already shows the title and description: hide this calculator's own title and intro. */
+  embedded?: boolean;
 }
 
 /**
@@ -111,6 +113,7 @@ export const StudentLoanCalculator: FC<StudentLoanCalculatorProps> = ({
   initialPlan = "plan2",
   initialSalary = 38_000,
   initialBalance = 45_000,
+  embedded = false,
 }) => {
   const [plan, setPlan] = useState<StudentLoanPlanOption>(initialPlan);
   // Clamped so a negative entry never reaches the engine.
@@ -123,7 +126,6 @@ export const StudentLoanCalculator: FC<StudentLoanCalculatorProps> = ({
   );
 
   const annualText = money(evaluation.annualRepayment);
-  const balanceText = money(balance);
   const nothingOwed = balance <= 0;
   const repaid = evaluation.projectedOutcome === "repaid_before_write_off";
   const outcomeValue = nothingOwed
@@ -134,8 +136,8 @@ export const StudentLoanCalculator: FC<StudentLoanCalculatorProps> = ({
   const outcomeReason = nothingOwed
     ? STUDENT_LOAN_COPY.reasonNothingOwed
     : repaid
-      ? STUDENT_LOAN_COPY.reasonRepaid(annualText, balanceText, evaluation.writeOffYears)
-      : STUDENT_LOAN_COPY.reasonWrittenOff(annualText, balanceText, evaluation.writeOffYears);
+      ? STUDENT_LOAN_COPY.reasonRepaid
+      : STUDENT_LOAN_COPY.reasonWrittenOff;
 
   const announcement = studentLoanAnnouncement(money(evaluation.monthlyRepayment), annualText);
 
@@ -191,34 +193,41 @@ export const StudentLoanCalculator: FC<StudentLoanCalculatorProps> = ({
 
   const content = (
     <div className={studentLoanContent()}>
+      {/* The question is "paid off or written off first", so the worded answer leads, set in a
+          text style (KpiCard's value style is for figures). The monthly repayment supports it. */}
       <div
         className={studentLoanOutcomes()}
         data-density="compact"
         data-testid="student-loan-outcomes"
       >
         <KpiCard
-          label={STUDENT_LOAN_COPY.kpiMonth}
-          subtext={STUDENT_LOAN_COPY.kpiMonthSubtext(
-            whole.format(evaluation.rate),
-            money(evaluation.threshold),
-          )}
-          value={evaluation.monthlyRepayment}
-        />
-        <KpiCard
-          label={STUDENT_LOAN_COPY.kpiYear}
-          value={<Money size="lg" value={evaluation.annualRepayment} />}
-        />
-        <KpiCard
           label={STUDENT_LOAN_COPY.kpiOutcome}
           subtext={outcomeReason}
           value={<span className={studentLoanOutcomeText()}>{outcomeValue}</span>}
         />
+        <KpiCard
+          label={STUDENT_LOAN_COPY.kpiMonth}
+          subtext={STUDENT_LOAN_COPY.kpiMonthSubtext}
+          value={<Money size="lg" value={evaluation.monthlyRepayment} />}
+        />
       </div>
 
-      <div className={studentLoanExplainer()}>
-        <h3 className={studentLoanExplainerTitle()}>{STUDENT_LOAN_COPY.explainerTitle}</h3>
-        <p>{STUDENT_LOAN_COPY.explainer}</p>
-      </div>
+      <Button className={studentLoanCta()} size="md" variant="primary" onClick={handleSave}>
+        {ctaLabel(ctaText)} <Icon icon={ArrowRight} size="sm" />
+      </Button>
+
+      {/* Closed by default: the working adds figures, so it stays out of the first view. */}
+      <CollapsibleDrawer title={STUDENT_LOAN_COPY.explainerTitle} variant="quiet">
+        <div className={studentLoanExplainer()}>
+          <p>
+            {STUDENT_LOAN_COPY.explainerRate(
+              whole.format(evaluation.rate),
+              money(evaluation.threshold),
+            )}{" "}
+            {STUDENT_LOAN_COPY.explainer}
+          </p>
+        </div>
+      </CollapsibleDrawer>
 
       <ProjectionNotice />
       <LiveRegion debounceMs={1000} message={announcement} visuallyHidden />
@@ -227,10 +236,12 @@ export const StudentLoanCalculator: FC<StudentLoanCalculatorProps> = ({
 
   return (
     <div className={studentLoanRoot()} data-testid="student-loan-tool">
-      <div className={studentLoanHeader()}>
-        <h2 className={studentLoanTitle()}>{STUDENT_LOAN_COPY.title}</h2>
-        <p className={studentLoanIntro()}>{STUDENT_LOAN_COPY.intro}</p>
-      </div>
+      {embedded ? null : (
+        <div className={studentLoanHeader()}>
+          <h2 className={studentLoanTitle()}>{STUDENT_LOAN_COPY.title}</h2>
+          <p className={studentLoanIntro()}>{STUDENT_LOAN_COPY.intro}</p>
+        </div>
+      )}
 
       <SimulatorSplitLayout
         content={content}
@@ -238,10 +249,6 @@ export const StudentLoanCalculator: FC<StudentLoanCalculatorProps> = ({
         controls={controls}
         controlsLabel={STUDENT_LOAN_COPY.controlsLabel}
       />
-
-      <Button className={studentLoanCta()} size="md" variant="primary" onClick={handleSave}>
-        {ctaLabel(ctaText)} <Icon icon={ArrowRight} size="sm" />
-      </Button>
     </div>
   );
 };

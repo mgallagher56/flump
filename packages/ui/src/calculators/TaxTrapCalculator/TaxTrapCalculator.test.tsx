@@ -1,24 +1,21 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { ADVICE_PATTERNS, whatIfGrossChange, whatIfSacrificeChange } from "@flump/finance-engine";
+import {
+  ADVICE_PATTERNS,
+  getLatestSupportedUkTaxYear,
+  whatIfGrossChange,
+  whatIfSacrificeChange,
+} from "@flump/finance-engine";
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
+import { DELTA_PANEL_COPY } from "../../patterns/TakeHomeDeltaPanel/copy";
 import { formatMoney } from "../../primitives/Money/Money";
-import { allTaxTrapCopyStrings, TAX_TRAP_COPY } from "./copy";
+import { allTaxTrapCopyStrings, outcomeHeadline, TAX_TRAP_COPY } from "./copy";
 import { TaxTrapCalculator } from "./TaxTrapCalculator";
 
-// Lets one test see the engine report a fallback rates year; every other test gets the real result.
-const fallback = vi.hoisted(() => ({ on: false }));
-vi.mock("@flump/finance-engine", async (importOriginal) => {
-  const engine = await importOriginal<typeof import("@flump/finance-engine")>();
-  return {
-    ...engine,
-    whatIfSacrificeChange: (...args: Parameters<typeof engine.whatIfSacrificeChange>) => {
-      const change = engine.whatIfSacrificeChange(...args);
-      return fallback.on ? { ...change, before: { ...change.before, isFallback: true } } : change;
-    },
-  };
-});
+/** Opens "Show details", where the table, taper, childcare and working now live. */
+const openDetails = () =>
+  fireEvent.click(screen.getByRole("button", { name: TAX_TRAP_COPY.details }));
 
 const outcome = (label: string) => {
   const cards = within(screen.getByTestId("tax-trap-outcomes"));
@@ -34,12 +31,18 @@ describe("TaxTrapCalculator", () => {
       { taxYear: "2026/27", region: "ENGLAND_NI_WALES", salary: 115_000 },
       10_000,
     );
-    expect(outcome(TAX_TRAP_COPY.kpiReachesPension)).toContain(
-      formatMoney(expected.deltaPensionGross).text,
+    // A contribution is framed as what reaches the pension and what it costs, not as a loss.
+    expect(screen.getByTestId("tax-trap-headline").textContent).toBe(
+      outcomeHeadline(
+        formatMoney(expected.deltaPensionGross).text,
+        formatMoney(-expected.deltaTakeHome).text,
+      ),
     );
-    expect(outcome(TAX_TRAP_COPY.kpiTakeHome)).toContain(
-      formatMoney(Math.abs(expected.deltaTakeHome)).text,
+    expect(outcome(TAX_TRAP_COPY.kpiPersonalAllowance)).toContain(
+      formatMoney(expected.after.personalAllowance).text,
     );
+    expect(screen.queryByRole("table")).toBeNull();
+    openDetails();
     const table = screen.getByRole("table", { name: TAX_TRAP_COPY.factsCaption });
     expect(table.textContent).toContain(formatMoney(expected.after.personalAllowance).text);
     expect(table.textContent).toContain(formatMoney(expected.before.adjustedNetIncome).text);
@@ -54,6 +57,7 @@ describe("TaxTrapCalculator", () => {
       { ...s, pension: { method: "salary-sacrifice", amount: 10_000 } },
       1000,
     ).effectiveMarginalRatePct;
+    openDetails();
     const row = screen.getByRole("row", { name: new RegExp(TAX_TRAP_COPY.factNextThousand) });
     expect(row.textContent).toContain(`${Math.round(before)}%`);
     expect(row.textContent).toContain(`${Math.round(after)}%`);
@@ -61,6 +65,7 @@ describe("TaxTrapCalculator", () => {
 
   it("recomputes when the region changes", () => {
     render(<TaxTrapCalculator taxYear="2026/27" />);
+    openDetails();
     const table = screen.getByRole("table", { name: TAX_TRAP_COPY.factsCaption });
     const englandText = table.textContent;
     fireEvent.change(screen.getByLabelText(TAX_TRAP_COPY.region), {
@@ -80,16 +85,21 @@ describe("TaxTrapCalculator", () => {
       { taxYear: "2026/27", region: "ENGLAND_NI_WALES", salary: 115_000 },
       10_000,
     );
+    const notice = screen.getByTestId("projection-notice").textContent ?? "";
     if (r.after.isUnverifiedEstimate) {
       expect(screen.getAllByText(TAX_TRAP_COPY.unverifiedBadge)).toHaveLength(1);
+      // The one notice leads with the full unverified estimate sentence, matching the badge.
+      expect(notice.startsWith(DELTA_PANEL_COPY.unverifiedBanner)).toBe(true);
     } else {
       expect(screen.queryByText(TAX_TRAP_COPY.unverifiedBadge)).toBeNull();
+      expect(notice).not.toContain(DELTA_PANEL_COPY.unverifiedBanner);
     }
     expect(screen.getByText("As at tax year 2026/27")).toBeDefined();
   });
 
   it("states the childcare limit as a fact, from adjusted net income after the contribution", () => {
     render(<TaxTrapCalculator initialContribution={0} taxYear="2026/27" />);
+    openDetails();
     expect(screen.getByTestId("tax-trap-childcare-status").textContent).toContain("over £100,000");
     fireEvent.change(screen.getByRole("slider", { name: TAX_TRAP_COPY.contribution }), {
       target: { value: "20000" },
@@ -108,13 +118,41 @@ describe("TaxTrapCalculator", () => {
   });
 
   it("explains the rates year, beside the one notice, only when the rates are a fallback year", () => {
-    fallback.on = true;
-    try {
-      render(<TaxTrapCalculator taxYear="2026/27" />);
-      expect(screen.getAllByTestId("tax-rates-status-banner")).toHaveLength(1);
-      expect(screen.getAllByTestId("projection-notice")).toHaveLength(1);
-    } finally {
-      fallback.on = false;
+    // A date in the tax year after the latest one the engine has rates for.
+    const latest = getLatestSupportedUkTaxYear();
+    const now = new Date(Date.UTC(Number(latest.slice(0, 4)) + 1, 5, 1));
+    render(<TaxTrapCalculator now={now} />);
+    const banner = screen.getByTestId("tax-rates-status-banner");
+    expect(banner.textContent).toContain(`Using ${latest} rates`);
+    expect(screen.getAllByTestId("projection-notice")).toHaveLength(1);
+  });
+
+  it("shows no fallback banner when today's tax year has its own rates", () => {
+    render(<TaxTrapCalculator now={new Date(Date.UTC(2026, 5, 1))} />);
+    expect(screen.queryByTestId("tax-rates-status-banner")).toBeNull();
+  });
+
+  it("puts the sign-up button under the results and keeps one factual line outside the details", () => {
+    render(<TaxTrapCalculator />);
+    const cta = screen.getByRole("button", { name: "Continue to sign up" });
+    const outcomes = screen.getByTestId("tax-trap-outcomes");
+    expect(outcomes.compareDocumentPosition(cta) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(screen.getByTestId("tax-trap-fact-line").textContent).toBe(TAX_TRAP_COPY.factLine);
+    expect(screen.getByTestId("tax-trap-fact-line").textContent).not.toMatch(/\d/);
+    expect(screen.queryByTestId("tax-trap-taper-note")).toBeNull();
+    expect(screen.queryByTestId("tax-trap-childcare-status")).toBeNull();
+  });
+
+  it("hides its own title when embedded, with no skipped heading level", () => {
+    const { container } = render(<TaxTrapCalculator embedded taxYear="2026/27" />);
+    expect(screen.queryByText(TAX_TRAP_COPY.title)).toBeNull();
+    openDetails();
+    const levels = [...container.querySelectorAll("h1, h2, h3, h4, h5, h6")].map((h) =>
+      Number(h.tagName[1]),
+    );
+    expect(levels[0]).toBe(2);
+    for (let i = 1; i < levels.length; i++) {
+      expect((levels[i] ?? 0) - (levels[i - 1] ?? 0)).toBeLessThanOrEqual(1);
     }
   });
 
@@ -134,6 +172,7 @@ describe("TaxTrapCalculator", () => {
       });
     try {
       render(<TaxTrapCalculator taxYear="2026/27" />);
+      openDetails();
       const region = screen.getByRole("region", { name: TAX_TRAP_COPY.factsCaption });
       expect(region.getAttribute("tabindex")).toBe("0");
       expect(within(region).getByRole("table")).toBeDefined();

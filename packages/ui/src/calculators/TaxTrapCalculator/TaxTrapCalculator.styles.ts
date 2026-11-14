@@ -57,6 +57,32 @@ export const taxTrapOutcomes = cva({
   },
 });
 
+/**
+ * The worded headline at a heading size, so a sentence never takes the large figure style. A
+ * block with its own line height, so it does not inherit the KPI value's tall line box.
+ */
+export const taxTrapHeadline = cva({
+  base: {
+    display: "block",
+    textStyle: "heading.md",
+    lineHeight: "normal",
+    color: "text.primary",
+    margin: "0",
+    fontVariantNumeric: "tabular-nums",
+  },
+});
+
+/** "Show details": the before and after table, the taper and childcare text and the working. */
+export const taxTrapDetails = cva({
+  base: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "4",
+    minWidth: "0",
+    fontVariantNumeric: "tabular-nums",
+  },
+});
+
 export const taxTrapNote = cva({
   base: {
     display: "flex",

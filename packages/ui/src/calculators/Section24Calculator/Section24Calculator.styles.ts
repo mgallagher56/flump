@@ -76,10 +76,6 @@ export const section24Explainer = cva({
   },
 });
 
-export const section24ExplainerTitle = cva({
-  base: { textStyle: "label.md", color: "text.primary", margin: "0" },
-});
-
 export const section24Cta = cva({
   base: { alignSelf: { base: "stretch", sm: "flex-start" }, gap: "2" },
 });

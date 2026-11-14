@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
+import { DELTA_PANEL_COPY } from "../../patterns/TakeHomeDeltaPanel/copy";
 import { SECTION24_COPY, Section24Calculator } from "./Section24Calculator";
 
 const slider = (label: string) => screen.getByLabelText(label);
@@ -19,19 +20,40 @@ describe("Section24Calculator", () => {
     const cards = outcomes();
     expect(cards.getByText(SECTION24_COPY.kpiTax)).toBeDefined();
     expect(cards.getByText("£4,800")).toBeDefined();
-    expect(
-      cards.getByText("£6,400 tax before the credit, minus a £1,600 credit for mortgage interest"),
-    ).toBeDefined();
+    expect(cards.getByText(SECTION24_COPY.kpiTaxSubtext)).toBeDefined();
     expect(cards.getByText("£3,200")).toBeDefined();
-    expect(cards.getByText("£267 a month")).toBeDefined();
+  });
+
+  it("keeps figures out of the captions (no £6,400, £1,600, £267 or £16,000)", () => {
+    render(<Section24Calculator />);
+    const text = toolText();
+    expect(text).not.toMatch(/£6,400|£1,600|£267|£16,000/);
+    for (const w of [
+      SECTION24_COPY.kpiTaxSubtext,
+      SECTION24_COPY.kpiCashSubtext,
+      SECTION24_COPY.kpiRateSubtext,
+    ]) {
+      expect(w).not.toMatch(/[0-9£%]/);
+    }
+  });
+
+  it("shows a cash loss after tax with a minus sign and no alarm colour", () => {
+    // £18,000 rent, £2,000 costs, £13,000 interest: £3,800 tax, so £3,000 cash before tax
+    // becomes a £800 loss after it.
+    render(<Section24Calculator initialMortgageInterest={13_000} />);
+    const cash = outcomes().getByText("-£800");
+    expect(cash).toBeDefined();
+    expect(screen.getByText("minus £800")).toBeDefined();
+    expect(cash.closest("[class]")?.className ?? "").not.toMatch(/danger|negative|red/);
   });
 
   it("labels the rate against taxable profit, matching the engine (£4,800 of £16,000 = 30%)", () => {
     render(<Section24Calculator />);
     const text = toolText();
     expect(text).toContain(SECTION24_COPY.kpiRate);
-    expect(text).toContain("30.0%");
-    expect(text).toContain("Of £16,000 taxable rental profit");
+    expect(text).toContain("30%");
+    expect(text).not.toContain("30.0%");
+    expect(text).toContain(SECTION24_COPY.kpiRateSubtext);
     expect(text).not.toMatch(/real cash profit/);
   });
 
@@ -53,12 +75,16 @@ describe("Section24Calculator", () => {
 
   it("never passes a negative entry to the engine", () => {
     render(<Section24Calculator initialMortgageInterest={-5000} />);
+    // Interest clamped to £0: £16,000 taxable at 40% is £6,400 tax, no credit.
+    expect(outcomes().getByText("£6,400")).toBeDefined();
     expect(toolText()).not.toMatch(/£-|-£|−£/);
     fireEvent.focus(pill(SECTION24_COPY.rentalIncome));
     fireEvent.change(pill(SECTION24_COPY.rentalIncome), { target: { value: "-100" } });
     fireEvent.blur(pill(SECTION24_COPY.rentalIncome));
-    expect(toolText()).not.toMatch(/£-|-£|−£/);
+    // Rent clamped to £0: no tax, and the £2,000 of costs is a cash loss (not -£100 of rent).
+    expect((pill(SECTION24_COPY.rentalIncome) as HTMLInputElement).value).not.toContain("-");
     expect(outcomes().getAllByText("£0").length).toBeGreaterThan(0);
+    expect(outcomes().getByText("-£2,000")).toBeDefined();
   });
 
   it("has three visible inputs and exactly one notice, and says the tax is unverified", () => {
@@ -69,8 +95,50 @@ describe("Section24Calculator", () => {
     expect(screen.getAllByText(SECTION24_COPY.unverifiedBadge)).toHaveLength(1);
   });
 
+  it("leads the one notice with the full unverified estimate sentence", () => {
+    render(<Section24Calculator />);
+    const notice = screen.getByTestId("projection-notice");
+    expect(notice.textContent?.startsWith(DELTA_PANEL_COPY.unverifiedBanner)).toBe(true);
+  });
+
+  it("puts the sign-up button under the result, before the explainer and notice", () => {
+    render(<Section24Calculator />);
+    const button = screen.getByRole("button", { name: "Continue to sign up" });
+    const cards = screen.getByTestId("section-24-outcomes");
+    const notice = screen.getByTestId("projection-notice");
+    expect(cards.compareDocumentPosition(button) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(button.compareDocumentPosition(notice) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it("hides its own title and intro when embedded, keeps the badge, and skips no heading level", () => {
+    render(<Section24Calculator embedded />);
+    expect(screen.queryByText(SECTION24_COPY.title)).toBeNull();
+    expect(screen.queryByText(SECTION24_COPY.intro)).toBeNull();
+    expect(screen.getByText(SECTION24_COPY.unverifiedBadge)).toBeDefined();
+    const levels = Array.from(
+      screen.getByTestId("section-24-tool").querySelectorAll("h1, h2, h3, h4, h5, h6"),
+    ).map((h) => Number(h.tagName.slice(1)));
+    // The explainer is a drawer, not a heading; any heading left must start at h2.
+    expect(levels.length === 0 || levels[0] === 2).toBe(true);
+    for (let i = 1; i < levels.length; i++) {
+      expect((levels[i] ?? 0) - (levels[i - 1] ?? 0)).toBeLessThanOrEqual(1);
+    }
+  });
+
+  it("shows its title as h2 and section headings as h3 when not embedded", () => {
+    render(<Section24Calculator />);
+    expect(screen.getByRole("heading", { level: 2, name: SECTION24_COPY.title })).toBeDefined();
+    // The explainer sits in a quiet drawer, closed by default, so its figures stay out of view.
+    const explainer = screen.getByRole("button", { name: SECTION24_COPY.explainerTitle });
+    expect(explainer.getAttribute("aria-expanded")).toBe("false");
+    expect(screen.queryByText(SECTION24_COPY.explainer)).toBeNull();
+    fireEvent.click(explainer);
+    expect(screen.getByText(SECTION24_COPY.explainer)).toBeDefined();
+  });
+
   it("claims no automation or HMRC filing", () => {
     render(<Section24Calculator />);
+    fireEvent.click(screen.getByRole("button", { name: SECTION24_COPY.explainerTitle }));
     const text = toolText();
     expect(text).not.toMatch(/automat|HMRC tax due|HMRC landlord|free|\/ yr|\/mo|&/i);
     expect(text).toContain("Flump does not file your tax return.");

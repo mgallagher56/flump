@@ -12,7 +12,7 @@ export const meta: MetaFunction = () => [
 
 /** The calculator index: h1, one line and the tiles, with no notice (E16 PR 11, D11). */
 export const ToolsIndex: FC = () => (
-  <SignedOutPage>
+  <SignedOutPage width="wide">
     <PageHeader description={TOOLS_INDEX_DESCRIPTION} title={TOOLS_INDEX_TITLE} />
     <ToolsGrid />
   </SignedOutPage>

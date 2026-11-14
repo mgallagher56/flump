@@ -28,9 +28,61 @@ describe("ZeroPercentCliffCalculator", () => {
     expect(cards.getByText("£200")).toBeDefined();
     expect(cards.getByText("£2,304")).toBeDefined();
     expect(cards.getByText("£574")).toBeDefined();
-    expect(cards.getByText("Interest in the first year after, at 24.9% APR")).toBeDefined();
-    expect(toolText()).toContain("2% of today's balance (at least £25)");
-    expect(toolText()).toContain("Pays off the £3,600 balance in 18 months");
+    expect(cards.getByText(ZERO_PERCENT_COPY.kpiInterest)).toBeDefined();
+    // The minimum-payment working is in the explainer, not a caption, closed by default.
+    expect(toolText()).not.toContain(ZERO_PERCENT_COPY.minimumExplainer);
+    fireEvent.click(screen.getByRole("button", { name: ZERO_PERCENT_COPY.explainerTitle }));
+    expect(toolText()).toContain(ZERO_PERCENT_COPY.minimumExplainer);
+  });
+
+  it("keeps figures out of the card labels and captions", () => {
+    render(<ZeroPercentCliffCalculator />);
+    const cards = screen.getByTestId("zero-percent-outcomes");
+    const words = [
+      ZERO_PERCENT_COPY.kpiPayment,
+      ZERO_PERCENT_COPY.kpiPaymentSubtext,
+      ZERO_PERCENT_COPY.kpiLeft,
+      ZERO_PERCENT_COPY.kpiLeftSubtext,
+      ZERO_PERCENT_COPY.kpiLeftClearedSubtext,
+      ZERO_PERCENT_COPY.kpiInterest,
+      ZERO_PERCENT_COPY.kpiInterestSubtext,
+    ];
+    for (const w of words) expect(w.replace("0%", "")).not.toMatch(/[0-9£]/);
+    // Three figures in the cards: payment, amount left and interest.
+    expect(cards.textContent?.match(/£[0-9,]+/g)).toHaveLength(3);
+  });
+
+  it("puts the sign-up button under the result, before the explainer and notice", () => {
+    render(<ZeroPercentCliffCalculator />);
+    const button = screen.getByRole("button", { name: "Continue to sign up" });
+    const cards = screen.getByTestId("zero-percent-outcomes");
+    const notice = screen.getByTestId("projection-notice");
+    expect(cards.compareDocumentPosition(button) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(button.compareDocumentPosition(notice) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it("hides its own title and intro when embedded, with no skipped heading level", () => {
+    render(<ZeroPercentCliffCalculator embedded />);
+    expect(screen.queryByText(ZERO_PERCENT_COPY.title)).toBeNull();
+    expect(screen.queryByText(ZERO_PERCENT_COPY.intro)).toBeNull();
+    const levels = Array.from(
+      screen.getByTestId("zero-percent-cliff-tool").querySelectorAll("h1, h2, h3, h4, h5, h6"),
+    ).map((h) => Number(h.tagName.slice(1)));
+    // The explainer is a drawer, not a heading; any heading left must start at h2.
+    expect(levels.length === 0 || levels[0] === 2).toBe(true);
+    for (let i = 1; i < levels.length; i++) {
+      expect((levels[i] ?? 0) - (levels[i - 1] ?? 0)).toBeLessThanOrEqual(1);
+    }
+  });
+
+  it("shows its title as h2 and section headings as h3 when not embedded", () => {
+    render(<ZeroPercentCliffCalculator />);
+    expect(screen.getByRole("heading", { level: 2, name: ZERO_PERCENT_COPY.title })).toBeDefined();
+    expect(
+      screen
+        .getByRole("button", { name: ZERO_PERCENT_COPY.explainerTitle })
+        .getAttribute("aria-expanded"),
+    ).toBe("false");
   });
 
   it("recalculates when the balance and months change", () => {
@@ -42,13 +94,13 @@ describe("ZeroPercentCliffCalculator", () => {
     expect(outcomes().getByText("£400")).toBeDefined();
   });
 
-  it("formats a pence balance as currency and keeps months whole and positive", () => {
+  it("keeps months whole and positive", () => {
     render(<ZeroPercentCliffCalculator />);
-    enter(balancePill(), "3600.50");
+    enter(balancePill(), "3600");
     enter(monthsPill(), "-3");
-    const text = toolText();
-    expect(text).toContain("£3,600.50 balance in 1 month,");
-    expect(text).not.toMatch(/-3 months|0 months/);
+    // Clamped to one month: the whole balance in a single payment.
+    expect((monthsPill() as HTMLInputElement).value).toBe("1");
+    expect(outcomes().getByText("£3,600")).toBeDefined();
   });
 
   it("never shows a negative figure for negative entries", () => {

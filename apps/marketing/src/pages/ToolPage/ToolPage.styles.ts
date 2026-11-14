@@ -4,6 +4,16 @@ export const pageStyle = css({ minHeight: "100vh", display: "flex", flexDirectio
 
 export const mainStyle = css({ flex: "1" });
 
-export const containerStyle = css({ maxWidth: "5xl", mx: "auto", py: "8", px: "4" });
+/** Same width and top spacing as the web tool page (`SignedOutPage`), so h1s line up. */
+export const containerStyle = css({
+  maxWidth: "5xl",
+  mx: "auto",
+  display: "flex",
+  flexDirection: "column",
+  gap: { base: "6", md: "8" },
+  pt: { base: "page.top.sm", lg: "page.top.lg" },
+  pb: "12",
+  px: { base: "page.gutter.sm", md: "page.gutter.md" },
+});
 
-export const guideStyle = css({ marginTop: "10" });
+export const guideStyle = css({ marginTop: "2" });

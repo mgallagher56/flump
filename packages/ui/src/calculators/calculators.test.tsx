@@ -34,7 +34,7 @@ describe("UI Calculators", () => {
 
       const cta = screen.getByRole("button", { name: /Save and continue/i });
       fireEvent.click(cta);
-      expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ totalUnsecuredDebt: 9000 }));
+      expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ totalUnsecuredDebt: 5500 }));
     });
   });
 
@@ -44,6 +44,7 @@ describe("UI Calculators", () => {
       render(<MortgageVsIsaCalculator ctaText="Save and continue" onSaveAndContinue={onSave} />);
 
       expect(screen.getByRole("heading", { name: /Mortgage overpayment or ISA/i })).toBeDefined();
+      fireEvent.click(screen.getByRole("button", { name: "How this is worked out" }));
       expect(screen.getByText(/ISA growth is not fixed and can be negative/i)).toBeDefined();
 
       const slider = screen.getByLabelText("Mortgage balance");

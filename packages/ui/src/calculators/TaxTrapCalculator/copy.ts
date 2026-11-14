@@ -18,9 +18,13 @@ export const TAX_TRAP_COPY = {
     ENGLAND_NI_WALES: "England, Wales or Northern Ireland",
     SCOTLAND: "Scotland",
   },
-  kpiReachesPension: "Reaches your pension",
-  kpiTakeHome: "Estimated change in take-home pay",
-  kpiTaxAndNi: "Estimated change in Income Tax and NI",
+  kpiOutcome: "With this pension contribution",
+  noContribution: "With no pension contribution, take-home pay stays the same",
+  kpiTaxAndNi: "Estimated change in Income Tax and National Insurance",
+  kpiPersonalAllowance: "Estimated Personal Allowance with this contribution",
+  factLine:
+    "Above the taper start, the Personal Allowance goes down as adjusted net income rises. A pension contribution lowers adjusted net income.",
+  details: "Show details",
   factsHeading: "Before and with this contribution",
   factsCaption: "Estimated figures before and with this contribution",
   factColumn: "Figure",
@@ -42,6 +46,15 @@ export const TAX_TRAP_COPY = {
 
 export const TAX_TRAP_DEFAULT_CTA = "Continue to sign up";
 
+/**
+ * The headline: what reaches the pension and what it costs in take-home, so a contribution is not
+ * shown as a loss (RESCORE Appendix B, income above £100,000, item 2). Figures come from the engine.
+ */
+export const outcomeHeadline = (pension: string, cost: string | null): string =>
+  cost === null
+    ? `${pension} reaches your pension with no change in take-home pay`
+    : `${pension} reaches your pension for an estimated ${cost} less take-home pay`;
+
 /** The taper start and end, from the engine rules. */
 export const taperRange = (start: string, end: string): string =>
   `Taper: adjusted net income from ${start} to ${end}.`;
@@ -62,6 +75,8 @@ export function allTaxTrapCopyStrings(): string[] {
   out.push(
     TAX_TRAP_DEFAULT_CTA,
     taperRange("£100,000", "£125,140"),
+    outcomeHeadline("£10,000", "£3,800"),
+    outcomeHeadline("£10,000", null),
     childcareStatus("£105,000", true),
     childcareStatus("£95,000", false),
   );

@@ -49,6 +49,11 @@ export function readMetrics(page: Page): Promise<DomMetrics> {
       if (SKIP_TAGS.has(el.tagName.toUpperCase())) return true;
       if (el.getAttribute("aria-hidden") === "true" || el.hasAttribute("hidden")) return true;
       if (el.hasAttribute("data-figure-ignore") || el.hasAttribute("data-list-row")) return true;
+      // N is "before any disclosure is opened": the body of a closed <details> is not on screen,
+      // although its computed style still says it is (only its summary shows).
+      const disclosure = el.closest("details");
+      if (disclosure && !disclosure.open && el !== disclosure && !el.closest("summary"))
+        return true;
       const style = getComputedStyle(el);
       // Not checkVisibility(): it is false for `display: contents` wrappers, whose children show.
       if (style.display === "none" || style.visibility === "hidden") return true;

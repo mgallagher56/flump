@@ -80,22 +80,26 @@ export function calculateSection24Tax(input: Section24Input): Section24Result {
   const recommendedMonthlyTaxSetAside = Math.round((netRentalTaxLiability / 12) * 100) / 100;
 
   // Old rules (pre-Section 24) comparison
-  const actualCashProfit = Math.max(0, netRentalProfitBeforeFinance - shareMortgageInterest);
+  // Not floored: under Section 24 the tax is worked out before mortgage interest, so a landlord
+  // can owe tax and still make a cash loss. The result shows that loss rather than £0.
+  const actualCashProfit = netRentalProfitBeforeFinance - shareMortgageInterest;
   const isHigherRate = otherIncome >= 50270;
   // Pre-Section 24: interest was deducted, so the cash profit is the taxable slice. Same slice
-  // method and allowance taper as above, so the "penalty" is only the effect of Section 24.
+  // method and allowance taper as above, so the "penalty" is only the effect of Section 24. A
+  // property loss was carried forward against later property profit, not set against other
+  // income, so a loss adds no tax and takes none away.
+  const oldRulesTaxableProfit = Math.max(0, actualCashProfit);
   const oldRulesTax =
     Math.round(
-      (computeIncomeTax(otherIncome + actualCashProfit) - computeIncomeTax(otherIncome)) * 100,
+      (computeIncomeTax(otherIncome + oldRulesTaxableProfit) - computeIncomeTax(otherIncome)) * 100,
     ) / 100;
   const section24Penalty = Math.max(
     0,
     Math.round((netRentalTaxLiability - oldRulesTax) * 100) / 100,
   );
-  const netRentalIncomeAfterTax = Math.max(
-    0,
-    Math.round((actualCashProfit - netRentalTaxLiability) * 100) / 100,
-  );
+  // Can be negative: a cash loss after tax (see `actualCashProfit`).
+  const netRentalIncomeAfterTax =
+    Math.round((actualCashProfit - netRentalTaxLiability) * 100) / 100;
 
   return {
     ownershipSharePct: Math.round(share * 100),

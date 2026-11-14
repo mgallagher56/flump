@@ -71,10 +71,6 @@ export const mortgageIsaExplainer = cva({
   },
 });
 
-export const mortgageIsaExplainerTitle = cva({
-  base: { textStyle: "label.md", color: "text.primary", margin: "0" },
-});
-
 export const mortgageIsaCta = cva({
   base: { alignSelf: { base: "stretch", sm: "flex-start" }, gap: "2" },
 });

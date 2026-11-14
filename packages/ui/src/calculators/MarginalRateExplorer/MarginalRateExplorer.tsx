@@ -3,6 +3,7 @@ import {
   getUkTaxYearContext,
   getUkTaxYearRules,
   marginalRateCurve,
+  persistOnboardingSeed,
   SUPPORTED_UK_TAX_YEARS,
   type UkIncomeScenario,
   type UkStudentLoanPlanKey,
@@ -10,7 +11,8 @@ import {
   whatIfGrossChange,
   whatIfSacrificeChange,
 } from "@flump/finance-engine";
-import { type FC, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ArrowRight } from "lucide-react";
+import { type FC, type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { cx } from "../../../styled-system/css";
 import { MarginalRateChart } from "../../patterns/MarginalRateChart/MarginalRateChart";
 import { SimulatorSplitLayout } from "../../patterns/SimulatorSplitLayout/SimulatorSplitLayout";
@@ -27,16 +29,19 @@ import { Button } from "../../primitives/Button/Button";
 import { Checkbox } from "../../primitives/Checkbox/Checkbox";
 import { CollapsibleDrawer } from "../../primitives/CollapsibleDrawer/CollapsibleDrawer";
 import { FormField } from "../../primitives/FormField/FormField";
+import { Icon } from "../../primitives/Icon";
 import { KpiCard } from "../../primitives/KpiCard/KpiCard";
 import { LiveRegion } from "../../primitives/LiveRegion/LiveRegion";
-import { formatMoney, formatNumber, Money, Num } from "../../primitives/Money/Money";
+import { formatMoney, formatNumber, Num } from "../../primitives/Money/Money";
 import { Select } from "../../primitives/Select/Select";
 import { SliderField } from "../../primitives/SliderField/SliderField";
 import { Switch } from "../../primitives/Switch/Switch";
+import { ctaLabel } from "../ctaLabel";
 import {
   explorerAction,
   explorerContent,
   explorerControls,
+  explorerCta,
   explorerDetails,
   explorerFieldset,
   explorerLegend,
@@ -130,8 +135,23 @@ export interface MarginalRateExplorerProps {
     key: K,
     value: MarginalRateExplorerValues[K],
   ) => void;
-  /** Heading level for the chart and the panel titles. Defaults to h3. */
+  /**
+   * Heading level for the chart and the panel titles. Defaults to h2 when `embedded` and h3
+   * otherwise; pass it to override.
+   */
   headingLevel?: "h2" | "h3" | "h4";
+  /**
+   * Inside a tool page that already shows the title and description. The explorer has no title
+   * or intro of its own, so this only sets the section headings to h2 (page outline h1 > h2).
+   */
+  embedded?: boolean;
+  /** Rendered directly under the headline result (the standalone tool's sign-up button). */
+  cta?: ReactNode;
+  /**
+   * The date the current tax year is worked out from. Defaults to today; tests and stories pass a
+   * date to show the fallback-rates banner.
+   */
+  now?: Date;
   /** Shows the panel's "Guidance, not advice" notice. Pass false inside a ScenarioZone, which has its own. */
   showNotice?: boolean;
   /** Passed to the delta panel: the page's notice already carries the "Unverified estimate" sentence. */
@@ -145,11 +165,15 @@ const pctDigits = (n: number) => (Number.isInteger(n) ? 0 : 1);
 export const MarginalRateExplorer: FC<MarginalRateExplorerProps> = ({
   values,
   onChange,
-  headingLevel = "h3",
+  headingLevel,
+  embedded = false,
+  cta,
+  now,
   showNotice = true,
   unverifiedInPageNotice = false,
   className,
 }) => {
+  const sectionHeading = headingLevel ?? (embedded ? "h2" : "h3");
   const {
     grossPay,
     bonus,
@@ -163,7 +187,15 @@ export const MarginalRateExplorer: FC<MarginalRateExplorerProps> = ({
     extraPension,
   } = values;
 
-  const context = useMemo(() => getUkTaxYearContext(), []);
+  const nowTime = now?.getTime();
+  const context = useMemo(
+    () => getUkTaxYearContext(nowTime === undefined ? undefined : new Date(nowTime)),
+    [nowTime],
+  );
+  // The engine is always given an explicit year, so its own `isFallback` is always false. The
+  // banner follows the calendar instead: today's tax year has no rates yet and the year in use is
+  // the one standing in for it.
+  const isFallback = context.isFallback && resolveYear(taxYear) === context.ratesYear;
   const scenario = useMemo(
     () =>
       explorerScenario({
@@ -260,11 +292,10 @@ export const MarginalRateExplorer: FC<MarginalRateExplorerProps> = ({
   const yourRate = delta.effectiveMarginalRatePct;
   const inRange = yourGross <= CURVE_MAX;
   const summary = chartSummary(
-    formatMoney(CURVE_MAX).text,
-    inRange ? formatMoney(yourGross).text : null,
     inRange
       ? formatNumber(yourRate, { kind: "percent", fractionDigits: pctDigits(yourRate) }).text
       : null,
+    formatMoney(CURVE_MAX).text,
   );
   const takeHomeDigits = Number.isInteger(delta.deltaTakeHome) ? 0 : 2;
   const announcement = liveTakeHomeMessage(
@@ -295,8 +326,14 @@ export const MarginalRateExplorer: FC<MarginalRateExplorerProps> = ({
         onChange={(v) => set("bonus", v)}
       />
       {/* Named by its title, "More options"; the visible action text is left out. Holds every
-          input past the first three (gross pay, bonus and the extra pension), state in the parent. */}
-      <CollapsibleDrawer closedLabel="" openLabel="" title={EXPLORER_COPY.moreDetails}>
+          input past the first two (gross pay and bonus), including the extra pension, with the
+          state in the parent. */}
+      <CollapsibleDrawer
+        closedLabel=""
+        defaultOpen={extraPension > 0}
+        openLabel=""
+        title={EXPLORER_COPY.moreDetails}
+      >
         <div className={explorerDetails()}>
           <FormField label={EXPLORER_COPY.region}>
             {(field) => (
@@ -381,36 +418,35 @@ export const MarginalRateExplorer: FC<MarginalRateExplorerProps> = ({
               />
             )}
           </FormField>
+          {pensionOpen || extraPension > 0 ? (
+            <SliderField
+              format="currency"
+              label={EXPLORER_COPY.extraPension}
+              max={20_000}
+              min={0}
+              step={100}
+              value={extraPension}
+              onChange={(v) => {
+                zeroFromSlider.current = v === 0;
+                set("extraPension", v);
+              }}
+            />
+          ) : (
+            <Button
+              className={explorerAction()}
+              type="button"
+              variant="secondary"
+              onClick={() => {
+                zeroFromSlider.current = false;
+                setPensionOpen(true);
+                if (extraPension === 0) set("extraPension", EXTRA_PENSION_START);
+              }}
+            >
+              {EXPLORER_COPY.modelPension}
+            </Button>
+          )}
         </div>
       </CollapsibleDrawer>
-
-      {pensionOpen || extraPension > 0 ? (
-        <SliderField
-          format="currency"
-          label={EXPLORER_COPY.extraPension}
-          max={20_000}
-          min={0}
-          step={100}
-          value={extraPension}
-          onChange={(v) => {
-            zeroFromSlider.current = v === 0;
-            set("extraPension", v);
-          }}
-        />
-      ) : (
-        <Button
-          className={explorerAction()}
-          type="button"
-          variant="secondary"
-          onClick={() => {
-            zeroFromSlider.current = false;
-            setPensionOpen(true);
-            if (extraPension === 0) set("extraPension", EXTRA_PENSION_START);
-          }}
-        >
-          {EXPLORER_COPY.modelPension}
-        </Button>
-      )}
     </div>
   );
 
@@ -434,13 +470,10 @@ export const MarginalRateExplorer: FC<MarginalRateExplorerProps> = ({
             />
           }
         />
-        <KpiCard
-          label={EXPLORER_COPY.kpiTakeHome}
-          value={<Money size="lg" value={delta.before.takeHome} />}
-        />
       </div>
+      {cta}
       <MarginalRateChart
-        headingLevel={headingLevel}
+        headingLevel={sectionHeading}
         points={points}
         steppedZones={zones}
         summary={summary}
@@ -453,8 +486,8 @@ export const MarginalRateExplorer: FC<MarginalRateExplorerProps> = ({
         calendarYear={context.calendarYear}
         components={delta.components}
         deltaGross={delta.deltaGross}
-        headingLevel={headingLevel}
-        isFallback={delta.before.isFallback}
+        headingLevel={sectionHeading}
+        isFallback={isFallback}
         isUnverifiedEstimate={unverified}
         pensionPreview={
           pension
@@ -490,29 +523,80 @@ export const MarginalRateExplorer: FC<MarginalRateExplorerProps> = ({
   );
 };
 
+/** What the sign-up button pre-fills: only the pay the visitor entered; nothing invented. */
+export interface PayRiseSeedPayload {
+  annualIncome: number;
+  inferredModules: string[];
+  timestamp: number;
+}
+
+export const PAY_RISE_DEFAULT_CTA = "Continue to sign up";
+
 export interface MarginalRateExplorerStandaloneProps {
   initialValues?: Partial<MarginalRateExplorerValues>;
   headingLevel?: "h2" | "h3" | "h4";
+  /** Inside a tool page that already shows the title and description: section headings are h2. */
+  embedded?: boolean;
+  /**
+   * Label of the sign-up button under the headline result. The button shows only when this or
+   * `onSaveAndContinue` is passed, so a use without either (a dashboard) shows none.
+   */
+  ctaText?: string;
+  onSaveAndContinue?: (payload: PayRiseSeedPayload) => void;
+  /** When false, entered figures are not written to the onboarding seed in local storage. Default true. */
+  persistSeed?: boolean;
+  /** The date the current tax year is worked out from. Defaults to today. */
+  now?: Date;
   className?: string;
 }
 
-/** Holds its own state, for signed-out pages. Nothing is saved anywhere. */
+/** Holds its own state, for signed-out pages. Nothing is saved anywhere unless the visitor signs up. */
 export const MarginalRateExplorerStandalone: FC<MarginalRateExplorerStandaloneProps> = ({
   initialValues,
   headingLevel,
+  embedded = false,
+  ctaText,
+  onSaveAndContinue,
+  persistSeed = true,
+  now,
   className,
 }) => {
   const [values, setValues] = useState<MarginalRateExplorerValues>(() => ({
-    ...getMarginalRateExplorerDefaults(),
+    ...getMarginalRateExplorerDefaults(now),
     ...initialValues,
   }));
   const onChange = useCallback<MarginalRateExplorerProps["onChange"]>((key, value) => {
     setValues((prev) => ({ ...prev, [key]: value }));
   }, []);
+
+  const showCta = onSaveAndContinue !== undefined || ctaText !== undefined;
+  const handleSave = () => {
+    const payload: PayRiseSeedPayload = {
+      annualIncome: Math.max(0, values.grossPay),
+      inferredModules: ["tax", "pension"],
+      timestamp: Date.now(),
+    };
+    if (persistSeed) persistOnboardingSeed(payload);
+    if (onSaveAndContinue) {
+      onSaveAndContinue(payload);
+    } else if (typeof window !== "undefined") {
+      window.location.href = "/signup";
+    }
+  };
+
   return (
     <MarginalRateExplorer
       className={className}
+      cta={
+        showCta ? (
+          <Button className={explorerCta()} size="md" variant="primary" onClick={handleSave}>
+            {ctaLabel(ctaText ?? PAY_RISE_DEFAULT_CTA)} <Icon icon={ArrowRight} size="sm" />
+          </Button>
+        ) : undefined
+      }
+      embedded={embedded}
       headingLevel={headingLevel}
+      now={now}
       values={values}
       onChange={onChange}
     />

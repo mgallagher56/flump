@@ -9,6 +9,7 @@ import { useMemo, useState } from "react";
 import { ProjectionNotice } from "../../patterns/ProjectionNotice/ProjectionNotice";
 import { SimulatorSplitLayout } from "../../patterns/SimulatorSplitLayout/SimulatorSplitLayout";
 import { Button } from "../../primitives/Button/Button";
+import { CollapsibleDrawer } from "../../primitives/CollapsibleDrawer/CollapsibleDrawer";
 import { Icon } from "../../primitives/Icon";
 import { KpiCard } from "../../primitives/KpiCard/KpiCard";
 import { LiveRegion } from "../../primitives/LiveRegion/LiveRegion";
@@ -20,7 +21,6 @@ import {
   zeroControls,
   zeroCta,
   zeroExplainer,
-  zeroExplainerTitle,
   zeroHeader,
   zeroIntro,
   zeroOutcomes,
@@ -28,14 +28,6 @@ import {
   zeroRoot,
   zeroTitle,
 } from "./ZeroPercentCliffCalculator.styles";
-
-const percent = (n: number) => `${n.toLocaleString("en-GB", { maximumFractionDigits: 2 })}%`;
-
-const months = (n: number) => `${n} ${n === 1 ? "month" : "months"}`;
-
-/** £3,600 for whole pounds, £3,600.50 when there are pence. */
-const formatBalance = (n: number) =>
-  formatMoney(n, { fractionDigits: Number.isInteger(n) ? 0 : 2 }).text;
 
 /** Every user-facing string, in one place (COPY-AUDIT, PR 10, 0% deal end rows). */
 export const ZERO_PERCENT_COPY = {
@@ -45,20 +37,21 @@ export const ZERO_PERCENT_COPY = {
   months: "Months left on the 0% deal",
   rate: "Interest rate after the 0% deal ends (APR)",
   kpiPayment: "Estimated monthly payment",
-  kpiPaymentSubtext: (balance: number, n: number) =>
-    `Pays off the ${formatBalance(balance)} balance in ${months(n)}, before any interest is charged, as long as the 0% rate applies and no fees are added.`,
+  kpiPaymentSubtext:
+    "Pays off the balance before the deal ends and interest starts, as long as no fees are added.",
   nothingOwed: "No balance to repay",
   nothingOwedSubtext: "There is no balance on the 0% card to pay off.",
   kpiLeftNothingOwedSubtext: "Nothing is left when the 0% deal ends.",
   kpiLeft: "Left when the 0% deal ends, with minimum payments only",
-  kpiLeftSubtext: "Assumes a minimum of 2% of today's balance (at least £25) a month.",
-  kpiLeftClearedSubtext:
-    "A minimum of 2% of today's balance (at least £25) a month would pay it off before the 0% rate ends.",
-  kpiInterest: (rate: number) => `Interest in the first year after, at ${percent(rate)} APR`,
-  kpiInterestSubtext: "On the amount left, if nothing more were paid.",
+  kpiLeftSubtext: "Assumes the minimum payment stays at the amount set by today's balance.",
+  kpiLeftClearedSubtext: "Minimum payments alone would pay it off before the deal ends.",
+  kpiInterest: "Interest in the first year after the deal ends",
+  kpiInterestSubtext: "On the amount left, at the rate you entered, if nothing more were paid.",
   explainerTitle: "What happens when the 0% deal ends",
   explainer:
     "Any balance left when the 0% deal ends is charged interest at the card's standard rate. Fees, such as a balance transfer fee, are not included here.",
+  minimumExplainer:
+    "The minimum payment is taken as 2% of today's balance, or £25 if that is more, each month.",
   controlsLabel: "0% deal details",
   contentLabel: "Estimated payment",
 } as const;
@@ -96,6 +89,8 @@ export interface ZeroPercentCliffCalculatorProps {
   initialBalance?: number;
   initialMonths?: number;
   initialRate?: number;
+  /** Inside a tool page that already shows the title and description: hide this calculator's own title and intro. */
+  embedded?: boolean;
 }
 
 /**
@@ -111,6 +106,7 @@ export const ZeroPercentCliffCalculator: FC<ZeroPercentCliffCalculatorProps> = (
   initialBalance = 3600,
   initialMonths = 18,
   initialRate = 24.9,
+  embedded = false,
 }) => {
   const [balance, setBalance] = useState(Math.max(0, initialBalance));
   const [monthsLeft, setMonthsLeft] = useState(clampMonths(initialMonths));
@@ -183,9 +179,7 @@ export const ZeroPercentCliffCalculator: FC<ZeroPercentCliffCalculatorProps> = (
         <KpiCard
           label={ZERO_PERCENT_COPY.kpiPayment}
           subtext={
-            nothingOwed
-              ? ZERO_PERCENT_COPY.nothingOwedSubtext
-              : ZERO_PERCENT_COPY.kpiPaymentSubtext(balance, monthsLeft)
+            nothingOwed ? ZERO_PERCENT_COPY.nothingOwedSubtext : ZERO_PERCENT_COPY.kpiPaymentSubtext
           }
           value={
             nothingOwed ? (
@@ -208,17 +202,25 @@ export const ZeroPercentCliffCalculator: FC<ZeroPercentCliffCalculatorProps> = (
         />
         {minimumClears ? null : (
           <KpiCard
-            label={ZERO_PERCENT_COPY.kpiInterest(rate)}
+            label={ZERO_PERCENT_COPY.kpiInterest}
             subtext={ZERO_PERCENT_COPY.kpiInterestSubtext}
             value={<Money size="lg" value={cliff.penaltyInterestFirstYearIfUnpaid} />}
           />
         )}
       </div>
 
-      <div className={zeroExplainer()}>
-        <h3 className={zeroExplainerTitle()}>{ZERO_PERCENT_COPY.explainerTitle}</h3>
-        <p>{ZERO_PERCENT_COPY.explainer}</p>
-      </div>
+      <Button className={zeroCta()} size="md" variant="primary" onClick={handleSave}>
+        {ctaLabel(ctaText)} <Icon icon={ArrowRight} size="sm" />
+      </Button>
+
+      {/* Closed by default: the minimum-payment working adds figures, so it stays out of the
+          first view, which keeps to the outcome and two supporting figures. */}
+      <CollapsibleDrawer title={ZERO_PERCENT_COPY.explainerTitle} variant="quiet">
+        <div className={zeroExplainer()}>
+          <p>{ZERO_PERCENT_COPY.explainer}</p>
+          <p>{ZERO_PERCENT_COPY.minimumExplainer}</p>
+        </div>
+      </CollapsibleDrawer>
 
       <ProjectionNotice />
       <LiveRegion debounceMs={1000} message={announcement} visuallyHidden />
@@ -227,10 +229,12 @@ export const ZeroPercentCliffCalculator: FC<ZeroPercentCliffCalculatorProps> = (
 
   return (
     <div className={zeroRoot()} data-testid="zero-percent-cliff-tool">
-      <div className={zeroHeader()}>
-        <h2 className={zeroTitle()}>{ZERO_PERCENT_COPY.title}</h2>
-        <p className={zeroIntro()}>{ZERO_PERCENT_COPY.intro}</p>
-      </div>
+      {embedded ? null : (
+        <div className={zeroHeader()}>
+          <h2 className={zeroTitle()}>{ZERO_PERCENT_COPY.title}</h2>
+          <p className={zeroIntro()}>{ZERO_PERCENT_COPY.intro}</p>
+        </div>
+      )}
 
       <SimulatorSplitLayout
         content={content}
@@ -238,10 +242,6 @@ export const ZeroPercentCliffCalculator: FC<ZeroPercentCliffCalculatorProps> = (
         controls={controls}
         controlsLabel={ZERO_PERCENT_COPY.controlsLabel}
       />
-
-      <Button className={zeroCta()} size="md" variant="primary" onClick={handleSave}>
-        {ctaLabel(ctaText)} <Icon icon={ArrowRight} size="sm" />
-      </Button>
     </div>
   );
 };

@@ -36,6 +36,18 @@ export const Light: Story = { ...Default, globals: { theme: "light" } };
 
 export const Dark: Story = { ...Default, globals: { theme: "dark" } };
 
+/** As on a tool page: the page shows the title and description, so the calculator does not. */
+export const Embedded: Story = {
+  args: { embedded: true },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(canvas.queryByText(OVERDRAFT_COPY.title)).not.toBeInTheDocument();
+    await expect(
+      canvas.getByRole("heading", { level: 2, name: OVERDRAFT_COPY.explainerTitle }),
+    ).toBeInTheDocument();
+  },
+};
+
 export const Mobile: Story = {
   parameters: { viewport: { defaultViewport: "mobile1" } },
 };

@@ -11,15 +11,6 @@ export type DeltaComponentKey =
   | "hicbc"
   | "pension";
 
-/** Order and wording of the parts in the "next £1,000" sentence. */
-export const DELTA_SENTENCE_PARTS: readonly { key: DeltaComponentKey; label: string }[] = [
-  { key: "incomeTax", label: "Income Tax" },
-  { key: "nationalInsurance", label: "National Insurance" },
-  { key: "studentLoan", label: "student loan" },
-  { key: "hicbc", label: "Child Benefit charge" },
-  { key: "pension", label: "pension" },
-];
-
 /** Breakdown table row labels, in order. */
 export const DELTA_TABLE_ROWS: readonly { key: DeltaComponentKey; label: string }[] = [
   { key: "incomeTax", label: "Income Tax" },
@@ -124,21 +115,6 @@ export const DELTA_PANEL_COPY = {
 
 export const asAtTaxYear = (year: string): string => `As at tax year ${year}`;
 
-/** "£200 Income Tax, £80 National Insurance and £45 student loan" (callers add the full stop). */
-export function joinParts(parts: readonly string[]): string {
-  if (parts.length <= 1) return parts[0] ?? "";
-  return `${parts.slice(0, -1).join(", ")} and ${parts[parts.length - 1]}`;
-}
-
-export function deltaSentence(
-  deltaGross: string,
-  takeHome: string,
-  parts: readonly string[],
-): string {
-  const lead = `Of the next ${deltaGross} of pay, an estimated ${takeHome} is take-home`;
-  return parts.length > 0 ? `${lead}: ${joinParts(parts)}.` : `${lead}.`;
-}
-
 export function pensionPreviewSentence(
   contribution: string,
   takeHomeChange: string,
@@ -172,13 +148,13 @@ export const EXPLORER_COPY = {
   taxYear: "Tax year",
   kpiNextThousand: "Estimated take-home from the next £1,000",
   kpiNextPound: "Estimated share deducted from the next £1,000",
-  kpiTakeHome: "Estimated take-home a year",
   kpiTaxYear: "Tax year",
   chartTitle: "Estimated share deducted from the next £1,000, by pay before tax",
   chartXAxis: "Pay before tax",
-  chartYAxis: "Estimated share deducted from the next £1,000",
-  chartLine: "Estimated share deducted from the next £1,000",
-  chartThresholds: "Thresholds",
+  /** Drawn at the end of the line (direct label, P10.2), so the title is not repeated. */
+  chartLineLabel: "Share deducted",
+  chartThresholdsNote:
+    "Each dashed line marks a threshold, such as where higher rate Income Tax starts.",
   yourPay: "Your pay",
   tableGross: "Pay before tax",
   tableRate: "Estimated share deducted from the next £1,000",
@@ -190,16 +166,14 @@ export const EXPLORER_COPY = {
   defaultBasis: "No salary saved, so this uses an example: £39,000 a year before tax",
 } as const;
 
-/** Chart text alternative. */
-export function chartSummary(
-  maxGross: string,
-  yourPay: string | null,
-  yourRate: string | null,
-): string {
-  const range = `The estimated share of the next £1,000 of pay that is deducted, at each level of pay before tax from £0 to ${maxGross}.`;
-  return yourPay && yourRate
-    ? `${range} At your pay of ${yourPay}, it is an estimated ${yourRate}.`
-    : range;
+/**
+ * Chart text alternative and visible summary: at most two figures (P10.1). The range of the axis
+ * is left to the chart itself.
+ */
+export function chartSummary(yourRate: string | null, maxGross: string): string {
+  return yourRate
+    ? `At your pay, an estimated ${yourRate} of the next £1,000 is deducted.`
+    : `Your pay is above the ${maxGross} the chart goes up to.`;
 }
 
 export const thresholdTooltip = (label: string, gross: string): string =>
@@ -217,7 +191,6 @@ export function allCopyStrings(): string[] {
     else if (v && typeof v === "object") Object.values(v).forEach(walk);
   };
   walk([
-    DELTA_SENTENCE_PARTS,
     DELTA_TABLE_ROWS,
     ASSUMPTION_COPY,
     STUDENT_LOAN_PLAN_LABELS,
@@ -244,9 +217,9 @@ export function allCopyStrings(): string[] {
   }
   out.push(
     asAtTaxYear("2026/27"),
-    deltaSentence("£1,000", "£720", ["£200 Income Tax", "£80 National Insurance"]),
     pensionPreviewSentence("£1,000", "£550", "£1,000"),
-    chartSummary("£150,000", "£39,000", "28%"),
+    chartSummary("28%", "£150,000"),
+    chartSummary(null, "£150,000"),
     thresholdTooltip("Higher rate (40%)", "£50,270"),
     liveTakeHomeMessage("£720"),
   );

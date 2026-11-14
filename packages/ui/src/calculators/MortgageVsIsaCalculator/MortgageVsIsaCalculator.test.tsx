@@ -14,26 +14,93 @@ const openMoreOptions = () =>
   fireEvent.click(screen.getByRole("button", { name: MORTGAGE_ISA_COPY.moreOptions }));
 
 describe("MortgageVsIsaCalculator", () => {
-  it("shows the amount set aside and both options from the engine for the defaults", () => {
+  it("leads with the difference between the two options, then each option, for the defaults", () => {
     render(<MortgageVsIsaCalculator />);
-    // £240,000 at 4.5% over 20 years, £350 a month, 7% assumed ISA growth.
+    // £240,000 at 4.5% over 20 years, £350 a month, 7% assumed ISA growth: interest saved
+    // £36,349, ISA growth £99,388, so the ISA growth is £63,039 more.
     const res = calculateMortgageVsIsa(240000, 4.5, 20, 350, 7);
     const cards = outcomes();
-    expect(cards.getByText(MORTGAGE_ISA_COPY.kpiSetAside(20))).toBeDefined();
-    expect(cards.getByText("£84,000")).toBeDefined();
+    expect(cards.getByText(MORTGAGE_ISA_COPY.kpiDifferenceIsa)).toBeDefined();
+    expect(cards.getByText("£63,039")).toBeDefined();
     expect(cards.getByText(MORTGAGE_ISA_COPY.kpiInterestSaved)).toBeDefined();
     expect(cards.getByText(pounds(res.interestSaved))).toBeDefined();
-    expect(cards.getByText(MORTGAGE_ISA_COPY.kpiIsaBalance)).toBeDefined();
-    expect(cards.getByText(pounds(res.isaAccumulatedValue))).toBeDefined();
-    expect(toolText()).toContain("about 5.3 years sooner");
+    expect(cards.getByText(MORTGAGE_ISA_COPY.kpiIsaGrowth)).toBeDefined();
+    expect(cards.getByText(pounds(res.isaGrowth))).toBeDefined();
+    // The amount set aside (input times term) is no longer shown.
+    expect(toolText()).not.toContain("£84,000");
+  });
+
+  it("writes the time saved in years and months, not a decimal", () => {
+    render(<MortgageVsIsaCalculator />);
+    fireEvent.click(screen.getByRole("button", { name: MORTGAGE_ISA_COPY.explainerTitle }));
+    // 64 months sooner.
+    expect(toolText()).toContain("Overpaying pays the mortgage off 5 years 4 months sooner");
+    expect(toolText()).not.toMatch(/\d\.\d years/);
+  });
+
+  it("names overpaying as the larger when the interest saved is more than ISA growth", () => {
+    render(<MortgageVsIsaCalculator initialIsaGrowth={0} />);
+    // No growth: interest saved £36,349 is the larger, by all of it.
+    expect(outcomes().getByText(MORTGAGE_ISA_COPY.kpiDifferenceOverpay)).toBeDefined();
+    expect(outcomes().getAllByText("£36,349")).toHaveLength(2);
+  });
+
+  it("reads as no difference when nothing is overpaid", () => {
+    render(<MortgageVsIsaCalculator initialExtra={0} />);
+    expect(outcomes().getByText(MORTGAGE_ISA_COPY.kpiDifferenceEven)).toBeDefined();
   });
 
   it("recalculates when the extra money a month changes", () => {
     render(<MortgageVsIsaCalculator />);
     fireEvent.change(slider(MORTGAGE_ISA_COPY.extra), { target: { value: "500" } });
     const res = calculateMortgageVsIsa(240000, 4.5, 20, 500, 7);
-    expect(outcomes().getByText("£120,000")).toBeDefined();
+    expect(outcomes().getByText(pounds(res.netWealthDelta))).toBeDefined();
     expect(outcomes().getByText(pounds(res.interestSaved))).toBeDefined();
+  });
+
+  it("keeps figures out of the card labels and captions", () => {
+    for (const w of [
+      MORTGAGE_ISA_COPY.kpiDifferenceIsa,
+      MORTGAGE_ISA_COPY.kpiDifferenceOverpay,
+      MORTGAGE_ISA_COPY.kpiDifferenceEven,
+      MORTGAGE_ISA_COPY.kpiDifferenceSubtext,
+      MORTGAGE_ISA_COPY.kpiInterestSaved,
+      MORTGAGE_ISA_COPY.kpiInterestSavedSubtext,
+      MORTGAGE_ISA_COPY.kpiIsaGrowth,
+      MORTGAGE_ISA_COPY.kpiIsaGrowthSubtext,
+    ]) {
+      expect(w).not.toMatch(/[0-9£%]/);
+    }
+  });
+
+  it("puts the sign-up button under the result, before the explainer and notice", () => {
+    render(<MortgageVsIsaCalculator />);
+    const button = screen.getByRole("button", { name: "Continue to sign up" });
+    const cards = screen.getByTestId("mortgage-isa-outcomes");
+    const notice = screen.getByTestId("projection-notice");
+    expect(cards.compareDocumentPosition(button) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(button.compareDocumentPosition(notice) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it("hides its own title and intro when embedded, with no skipped heading level", () => {
+    render(<MortgageVsIsaCalculator embedded />);
+    expect(screen.queryByText(MORTGAGE_ISA_COPY.title)).toBeNull();
+    expect(screen.queryByText(MORTGAGE_ISA_COPY.intro)).toBeNull();
+    const levels = Array.from(
+      screen.getByTestId("mortgage-vs-isa-tool").querySelectorAll("h1, h2, h3, h4, h5, h6"),
+    ).map((h) => Number(h.tagName.slice(1)));
+    // The explainer is a closed drawer now, so the embedded body may hold no heading at all.
+    if (levels.length > 0) expect(levels[0]).toBe(2);
+    for (let i = 1; i < levels.length; i++) {
+      expect((levels[i] ?? 0) - (levels[i - 1] ?? 0)).toBeLessThanOrEqual(1);
+    }
+  });
+
+  it("shows its title as h2 when not embedded, and the working in a closed drawer", () => {
+    render(<MortgageVsIsaCalculator />);
+    expect(screen.getByRole("heading", { level: 2, name: MORTGAGE_ISA_COPY.title })).toBeDefined();
+    const drawer = screen.getByRole("button", { name: MORTGAGE_ISA_COPY.explainerTitle });
+    expect(drawer.getAttribute("aria-expanded")).toBe("false");
   });
 
   it("uses the years left the user sets under More options (default 20)", () => {
@@ -42,16 +109,16 @@ describe("MortgageVsIsaCalculator", () => {
     expect((slider(MORTGAGE_ISA_COPY.term) as HTMLInputElement).value).toBe("20");
     fireEvent.change(slider(MORTGAGE_ISA_COPY.term), { target: { value: "10" } });
     const res = calculateMortgageVsIsa(240000, 4.5, 10, 350, 7);
-    expect(outcomes().getByText(MORTGAGE_ISA_COPY.kpiSetAside(10))).toBeDefined();
-    expect(outcomes().getByText(pounds(res.isaAccumulatedValue))).toBeDefined();
+    expect(outcomes().getByText(pounds(res.isaGrowth))).toBeDefined();
   });
 
   it("uses the assumed ISA growth set under More options", () => {
     render(<MortgageVsIsaCalculator />);
     openMoreOptions();
     fireEvent.change(slider(MORTGAGE_ISA_COPY.isaGrowth), { target: { value: "0" } });
-    // No growth: the ISA balance equals the money paid in.
-    expect(outcomes().getAllByText("£84,000")).toHaveLength(2);
+    // No growth: the ISA adds nothing to the money paid in.
+    expect(outcomes().getByText("£0")).toBeDefined();
+    expect(outcomes().getByText(MORTGAGE_ISA_COPY.kpiDifferenceOverpay)).toBeDefined();
   });
 
   it("never passes a negative entry to the engine", () => {
@@ -74,7 +141,10 @@ describe("MortgageVsIsaCalculator", () => {
 
   it("keeps the years left between 1 and 40", () => {
     render(<MortgageVsIsaCalculator initialTermYears={0} />);
-    expect(outcomes().getByText(MORTGAGE_ISA_COPY.kpiSetAside(1))).toBeDefined();
+    const res = calculateMortgageVsIsa(240000, 4.5, 1, 350, 7);
+    expect(outcomes().getByText(pounds(res.isaGrowth))).toBeDefined();
+    openMoreOptions();
+    expect((slider(MORTGAGE_ISA_COPY.term) as HTMLInputElement).value).toBe("1");
   });
 
   it("has three visible inputs at most, the rest under More options, and exactly one notice", () => {

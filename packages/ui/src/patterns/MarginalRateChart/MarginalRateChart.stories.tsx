@@ -35,6 +35,10 @@ export const Default: Story = {
         name: "Estimated share deducted from the next £1,000, by pay before tax",
       }),
     ).toBeInTheDocument();
+    // Direct labels in place of a legend (P10.2).
+    await expect(canvas.getByTestId("marginal-rate-line-label")).toHaveTextContent(
+      "Share deducted",
+    );
     // The threshold tooltip appears on hover and goes on leave.
     const hit = canvas.getAllByTestId("marginal-rate-threshold-hit")[1] as Element;
     await userEvent.hover(hit);
