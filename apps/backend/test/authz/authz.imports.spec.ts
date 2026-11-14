@@ -441,7 +441,9 @@ describe.skipIf(dbMode === "skip")("authz: imports controller (real Postgres)", 
   it("reset financial data removes the user's import batches", async () => {
     await stage(h.tokens.a, simple());
     await stage(h.tokens.b, simple());
-    const res = await h.call("post", "/user-profile/reset-financial-data", h.tokens.a);
+    const res = await h.call("post", "/user-profile/reset-financial-data", h.tokens.a, {
+      confirmation: "RESET",
+    });
     expect(res.status).toBe(201);
     expect(await batches().countBy({ userId: USER_A })).toBe(0);
     expect(await batches().count()).toBe(1);
