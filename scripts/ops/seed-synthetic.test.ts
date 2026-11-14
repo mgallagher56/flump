@@ -108,9 +108,9 @@ describe.skipIf(!DB_TESTS_ENABLED)("seed-synthetic (real Postgres, all migration
       );
       await client.query("INSERT INTO migrations (timestamp, name) VALUES (1, 'Synthetic')");
       // Stale user data from "restored production" and a non-persona user.
-      await client.query(
+      const oldAccount = await client.query(
         `INSERT INTO accounts (user_id, name, type, balance, currency)
-         VALUES ('${REAL_LOOKING}', 'old account', 'Saving', 1, 'GBP')`,
+         VALUES ('${REAL_LOOKING}', 'old account', 'Saving', 1, 'GBP') RETURNING id`,
       );
       await client.query(
         `INSERT INTO budget_entries (user_id, category, name, amount)
@@ -119,9 +119,11 @@ describe.skipIf(!DB_TESTS_ENABLED)("seed-synthetic (real Postgres, all migration
       await client.query(
         `INSERT INTO user_profiles (user_id, display_name) VALUES ('${REAL_LOOKING}', 'old')`,
       );
+      // account_id is a uuid foreign key to accounts (BE-08), so it names the stale account.
       await client.query(
         `INSERT INTO transactions (account_id, user_id, amount, description, category)
-         VALUES ('x', '${REAL_LOOKING}', 1, 'old', 'old')`,
+         VALUES ($1, '${REAL_LOOKING}', 1, 'old', 'old')`,
+        [oldAccount.rows[0].id],
       );
     });
   });
@@ -181,7 +183,7 @@ describe.skipIf(!DB_TESTS_ENABLED)("seed-synthetic (real Postgres, all migration
       }
       const orphans = await client.query(
         `SELECT count(*)::int AS n FROM account_details d
-         WHERE NOT EXISTS (SELECT 1 FROM accounts a WHERE a.id::text = d.account_id)`,
+         WHERE NOT EXISTS (SELECT 1 FROM accounts a WHERE a.id = d.account_id)`,
       );
       expect(Number(orphans.rows[0].n)).toBe(0);
 

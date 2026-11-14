@@ -28,8 +28,8 @@ import {
   type SyntheticPersona,
 } from "./synthetic-personas";
 
-// Children first. There are no FOREIGN KEY constraints today (account_details.account_id and
-// transactions.account_id are plain varchars), but the order stays child-before-parent.
+// Children first: account_details.account_id and transactions.account_id are uuid foreign keys
+// to accounts with ON DELETE CASCADE (BE-08), and the order stays child-before-parent.
 export const USER_DATA_TABLES = [
   "transactions",
   "snapshot_checkins",

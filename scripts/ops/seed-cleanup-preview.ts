@@ -36,8 +36,8 @@ export const ACCOUNT_MATCH_FROM = `"accounts" a, jsonb_to_recordset(${jsonLitera
            AND a."is_current" IS NOT DISTINCT FROM s."isCurrent"
            AND a."currency" = 'GBP'
            AND a."connection_id" IS NULL AND a."external_account_id" IS NULL
-           AND NOT EXISTS (SELECT 1 FROM "account_details" d WHERE d."account_id" = a."id"::text)
-           AND NOT EXISTS (SELECT 1 FROM "transactions" t WHERE t."account_id" = a."id"::text)`;
+           AND NOT EXISTS (SELECT 1 FROM "account_details" d WHERE d."account_id"::text = a."id"::text)
+           AND NOT EXISTS (SELECT 1 FROM "transactions" t WHERE t."account_id"::text = a."id"::text)`;
 
 export const BUDGET_MATCH_FROM = `"budget_entries" b, jsonb_to_recordset(${jsonLiteral(SEEDED_BUDGET_ENTRIES)}) AS s(
            "category" text, "name" text, "amount" numeric, "isIncome" boolean,
@@ -68,7 +68,7 @@ export function buildPreviewSql(options: PreviewOptions = {}): string {
   // The migration deletes in order and counts mock rows AFTER the seed deletes, so a mock-owned
   // row that also matches a seed fingerprint is counted once, under its seed label.
   const mockCount = {
-    account_details: `(SELECT count(*) FROM "account_details" WHERE "account_id" IN
+    account_details: `(SELECT count(*) FROM "account_details" WHERE "account_id"::text IN
       (SELECT "id"::text FROM "accounts" WHERE "user_id" = ANY(${MOCK})))`,
     transactions: `(SELECT count(*) FROM "transactions" WHERE "user_id" = ANY(${MOCK}))`,
     accounts: `(SELECT count(*) FROM "accounts" WHERE "user_id" = ANY(${MOCK}) AND "id" NOT IN (${accountIds}))`,
