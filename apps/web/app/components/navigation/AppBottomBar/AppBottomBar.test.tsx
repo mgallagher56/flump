@@ -16,7 +16,7 @@ const renderBar = (user: unknown, path: string, onMoreClick?: () => void) =>
     </MemoryRouter>,
   );
 
-const BAR = { name: "Mobile Bottom Navigation" };
+const BAR = { name: "Main navigation" };
 
 describe("<AppBottomBar />", () => {
   it("shows the bar to a signed-in user", () => {

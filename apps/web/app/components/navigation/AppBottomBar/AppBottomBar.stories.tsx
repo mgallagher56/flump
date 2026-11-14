@@ -19,7 +19,7 @@ export const SignedIn: Story = {
   parameters: at("/app/budget"),
   play: async ({ canvasElement }) => {
     await expect(
-      within(canvasElement).getByRole("navigation", { name: "Mobile Bottom Navigation" }),
+      within(canvasElement).getByRole("navigation", { name: "Main navigation" }),
     ).toBeInTheDocument();
   },
 };
@@ -29,7 +29,7 @@ export const SandboxSignedOut: Story = {
   parameters: at("/sandbox"),
   play: async ({ canvasElement }) => {
     await expect(
-      within(canvasElement).getByRole("navigation", { name: "Mobile Bottom Navigation" }),
+      within(canvasElement).getByRole("navigation", { name: "Main navigation" }),
     ).toBeInTheDocument();
   },
 };

@@ -1,6 +1,7 @@
 import { type AppNavChild, type AppNavItem, Icon } from "@repo/ui";
 import type { TFunction } from "i18next";
 import { Ellipsis } from "lucide-react";
+import enCommon from "../../../public/locales/en/common.json";
 import {
   AUTH_NAV_ROUTES,
   BOTTOM_BAR_TABS,
@@ -18,8 +19,18 @@ export const MORE_NAV_KEY = "more";
 
 type Translate = TFunction | ((key: string, fallback?: string) => string);
 
+/**
+ * English labels from the same locale file the app loads, so every surface that draws the nav
+ * (header, drawer, bottom bar, and the header on error and 404 pages) shows the same words even
+ * when the translations have not loaded, never a raw key such as "borrowing".
+ */
+const EN_LABELS: Readonly<Record<string, string>> = enCommon;
+
 const label = (t: Translate, key: string, fallback?: string): string =>
-  (t as (k: string, f?: string) => string)(key, fallback ?? key);
+  (t as (k: string, f?: string) => string)(key, fallback ?? EN_LABELS[key] ?? key);
+
+/** A nav label or description key, translated, with the English locale string as the fallback. */
+export const navLabel = (t: Translate, key: string): string => label(t, key);
 
 const toIcon = (route: NavRouteItem) =>
   route.icon ? <Icon icon={route.icon} size="sm" /> : undefined;
@@ -28,7 +39,7 @@ const toChild = (t: Translate, route: NavRouteItem): AppNavChild => ({
   key: route.key,
   label: label(t, route.label ?? route.key),
   href: route.route ?? "/",
-  description: route.description ? label(t, route.description, route.description) : undefined,
+  description: route.description ? label(t, route.description) : undefined,
   icon: toIcon(route),
 });
 

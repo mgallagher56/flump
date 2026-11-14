@@ -22,10 +22,15 @@ export interface HeaderProps {
 }
 
 const Header: FC<HeaderProps> = ({ isMobile: propIsMobile, variant }): ReactElement<FC> => {
-  const { user } = useLoaderData<typeof loader>();
+  // Undefined in the root error boundary when the root loader itself failed: render signed out.
+  const user = useLoaderData<typeof loader>()?.user ?? null;
   const { profile } = useUserProfile();
   const { pathname } = useLocation();
   const sandbox = !user && isSandboxPath(pathname);
+  // Below the nav breakpoint the bottom bar is the navigation whenever it shows (signed in, or the
+  // signed-out sandbox) and its "More" opens the drawer, so the header drops its menu button: one
+  // navigation control at 375. Elsewhere signed out there is no bottom bar, so the button stays.
+  const hasBottomBar = !!user || sandbox;
   const {
     isMobile: contextIsMobile,
     isMobileDrawerOpen,
@@ -80,7 +85,7 @@ const Header: FC<HeaderProps> = ({ isMobile: propIsMobile, variant }): ReactElem
         menuLabel="Open navigation menu"
         navLabel="Primary"
         renderLink={renderLink}
-        onMenuClick={handleToggleDrawer}
+        onMenuClick={hasBottomBar ? undefined : handleToggleDrawer}
       />
       <MobileNavDrawer
         isOpen={drawerOpen}

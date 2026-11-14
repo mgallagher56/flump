@@ -247,38 +247,6 @@ exports[`<Header /> > renders correctly when user logged in 1`] = `
       <div
         class="d_flex ai_center gap_3 navInline:gap_5 min-h_14 navInline:min-h_18 px_4 navInline:px_10 py_2 max-w_1536px mx_auto"
       >
-        <button
-          aria-expanded="false"
-          aria-label="Open navigation menu"
-          class="pos_relative d_inline-flex ai_center jc_center gap_2 bdr_xl bd-w_1.5px border-style_solid bd-c_transparent fw_bold cursor_pointer lh_1.25 ta_center td_none py_2 [@media_(pointer:_coarse)]:min-h_touch [@media_(pointer:_coarse)]:min-w_touch motionSafe:trs-prop_background-color,_border-color,_box-shadow,_transform,_opacity motionSafe:trs-dur_fast motionSafe:trs-tmf_standard motionSafe:hover:trf_translateY(-2px) motionSafe:active:trf_scale(0.97) [&:is(:disabled,_[disabled])]:bg_transparent [&:is(:disabled,_[disabled])]:c_text.muted [&:is(:disabled,_[disabled])]:bd-c_transparent [&:is(:disabled,_[disabled])]:cursor_not-allowed [&:is(:disabled,_[disabled])]:bx-sh_none [&[aria-busy=true]]:cursor_progress focusVisible:ring_2px_solid focusVisible:ring-c_border.focusRing focusVisible:ring-o_2px bg_transparent c_text.primary hover:bg_surface.subtle h_10 w_10 px_0 d_inline-flex navInline:d_none"
-          data-variant="ghost"
-          type="button"
-        >
-          <svg
-            aria-hidden="true"
-            class="lucide lucide-menu d_inline-block flex-sh_0 c_currentColor va_middle w_20px h_20px"
-            fill="none"
-            focusable="false"
-            height="20"
-            stroke="currentColor"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="1.75"
-            viewBox="0 0 24 24"
-            width="20"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              d="M4 5h16"
-            />
-            <path
-              d="M4 12h16"
-            />
-            <path
-              d="M4 19h16"
-            />
-          </svg>
-        </button>
         <div
           class="d_inline-flex ai_center flex-sh_0"
         >

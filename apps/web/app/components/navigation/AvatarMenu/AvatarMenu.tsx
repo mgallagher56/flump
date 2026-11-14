@@ -12,7 +12,7 @@ export interface AvatarMenuProps {
 }
 
 /**
- * Account menu (IA review T-IA-6): Settings, Connect AI, Free calculators, Log out. It replaces the
+ * Account menu (IA review T-IA-6): Settings, Connect AI, Free calculators, Sign out. It replaces the
  * bare avatar link so these destinations share one home.
  */
 const AvatarMenu: FC<AvatarMenuProps> = ({ user }) => {
@@ -73,7 +73,7 @@ const AvatarMenu: FC<AvatarMenuProps> = ({ user }) => {
         <span aria-hidden="true">
           <UserAvatar bordered size={26} user={user} />
         </span>
-        <span className={srOnly()}>{t("accountMenu", "Account menu")}</span>
+        <span className={srOnly()}>{t("accountMenu", "Your account menu")}</span>
         <Icon icon={ChevronDown} size="sm" />
       </button>
       {open && (
@@ -100,7 +100,7 @@ const AvatarMenu: FC<AvatarMenuProps> = ({ user }) => {
           <Form action="/logout" method="post">
             <button className={item()} role="menuitem" type="submit">
               <Icon icon={LogOut} size="sm" />
-              {t("logOut", "Log out")}
+              {t("logOut", "Sign out")}
             </button>
           </Form>
         </div>

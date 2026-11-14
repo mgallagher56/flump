@@ -1,15 +1,15 @@
 import { buttonVariants, Icon } from "@repo/ui";
+import { cx } from "@repo/ui/styled-system/css";
 import { ChevronDown } from "lucide-react";
-import { type FC, useEffect, useRef, useState } from "react";
+import { type FC, type ReactNode, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { NavLink as RouterNavLink, useLocation } from "react-router";
-import FLPButtonGroup from "~/components/core/buttons/FLPButtonGroup";
-import FLPLinkButton from "~/components/core/buttons/FLPLinkButton";
-import FLPBox from "~/components/core/structure/FLPBox";
+import { navLabel } from "../buildNavManifest";
 import { DisabledNavItem } from "../DisabledNavItem";
 import type { NavRouteItem } from "../navConfig";
 import {
   activeChildDot,
+  desktopGroup,
   dropdownContainer,
   flyoutDescription,
   flyoutIconBox,
@@ -17,6 +17,8 @@ import {
   flyoutLabel,
   flyoutPanel,
   flyoutText,
+  linkIcon,
+  mobileLink,
   mobileMenuContainer,
   mobileSection,
   mobileSectionHeading,
@@ -122,7 +124,7 @@ const DesktopDropdownGroup: FC<{
             <Icon icon={item.icon} size="sm" />
           </span>
         )}
-        <span>{t(item.label ?? item.key)}</span>
+        <span>{navLabel(t, item.label ?? item.key)}</span>
         {hasActiveChild && <span aria-hidden="true" className={activeChildDot()} />}
         <Icon className={triggerChevron({ open: isOpen })} icon={ChevronDown} size="sm" />
       </button>
@@ -146,11 +148,9 @@ const DesktopDropdownGroup: FC<{
                   </div>
                 )}
                 <div className={flyoutText()}>
-                  <span className={flyoutLabel()}>{t(child.label ?? child.key)}</span>
+                  <span className={flyoutLabel()}>{navLabel(t, child.label ?? child.key)}</span>
                   {child.description && (
-                    <span className={flyoutDescription()}>
-                      {t(child.description, child.description)}
-                    </span>
+                    <span className={flyoutDescription()}>{navLabel(t, child.description)}</span>
                   )}
                 </div>
               </RouterNavLink>
@@ -162,13 +162,34 @@ const DesktopDropdownGroup: FC<{
   );
 };
 
+/** A nav destination styled as a button; the current page gets the secondary fill. */
+const NavMenuLink: FC<{
+  to: string;
+  text: string;
+  icon?: ReactNode;
+  mobile?: boolean;
+  onClick?: () => void;
+}> = ({ to, text, icon, mobile = false, onClick }) => (
+  <RouterNavLink
+    className={({ isActive }) =>
+      cx(buttonVariants({ variant: isActive ? "secondary" : "ghost" }), mobile && mobileLink())
+    }
+    end={to === "/app/accounts" || to === "/"}
+    to={to}
+    onClick={onClick}
+  >
+    {icon && <span className={linkIcon()}>{icon}</span>}
+    {text}
+  </RouterNavLink>
+);
+
 const DisabledMobileItem: FC<{ item: NavRouteItem }> = ({ item }) => {
   const { t } = useTranslation();
   return (
     <DisabledNavItem
       icon={item.icon && <Icon icon={item.icon} size="sm" />}
       id={`nav-disabled-${item.key}`}
-      label={t(item.label ?? item.key)}
+      label={navLabel(t, item.label ?? item.key)}
     />
   );
 };
@@ -191,18 +212,19 @@ const NavMenu: FC<NavMenuProps> = ({
           if (route.children && route.children.length > 0) {
             return (
               <div key={route.key} className={mobileSection()}>
-                <div className={mobileSectionHeading()}>{t(route.label ?? route.key)}</div>
+                <div className={mobileSectionHeading()}>
+                  {navLabel(t, route.label ?? route.key)}
+                </div>
                 {route.children.map((child) =>
                   child.route && isRouteDisabled?.(child) ? (
                     <DisabledMobileItem key={child.key} item={child} />
                   ) : child.route ? (
-                    <FLPLinkButton
-                      key={child.key}
+                    <NavMenuLink
                       icon={child.icon && <Icon icon={child.icon} size="sm" />}
-                      isMobile
-                      text={t(child.label ?? child.key)}
+                      key={child.key}
+                      mobile
+                      text={navLabel(t, child.label ?? child.key)}
                       to={child.route}
-                      variant="mobile"
                       onClick={onNavigate}
                     />
                   ) : null,
@@ -216,13 +238,12 @@ const NavMenu: FC<NavMenuProps> = ({
           if (isRouteDisabled?.(route)) return <DisabledMobileItem key={route.key} item={route} />;
 
           return (
-            <FLPLinkButton
-              key={route.key}
+            <NavMenuLink
               icon={route.icon && <Icon icon={route.icon} size="sm" />}
-              isMobile
-              text={t(route.label ?? route.key)}
+              key={route.key}
+              mobile
+              text={navLabel(t, route.label ?? route.key)}
               to={route.route}
-              variant="mobile"
               onClick={onNavigate}
             />
           );
@@ -232,30 +253,32 @@ const NavMenu: FC<NavMenuProps> = ({
   }
 
   return (
-    <FLPBox>
-      <FLPButtonGroup gap={2}>
-        {routes?.map((route) => {
-          if (route.children && route.children.length > 0) {
-            return (
-              <DesktopDropdownGroup
-                key={route.key}
-                isOpen={openGroupKey === route.key}
-                item={route}
-                onClose={() => setOpenGroupKey((prev) => (prev === route.key ? null : prev))}
-                onOpen={() => setOpenGroupKey(route.key)}
-                onToggle={() => setOpenGroupKey((prev) => (prev === route.key ? null : route.key))}
-              />
-            );
-          }
-
-          if (!route.route) return null;
-
+    <div className={desktopGroup()}>
+      {routes?.map((route) => {
+        if (route.children && route.children.length > 0) {
           return (
-            <FLPLinkButton key={route.key} text={t(route.label ?? route.key)} to={route.route} />
+            <DesktopDropdownGroup
+              key={route.key}
+              isOpen={openGroupKey === route.key}
+              item={route}
+              onClose={() => setOpenGroupKey((prev) => (prev === route.key ? null : prev))}
+              onOpen={() => setOpenGroupKey(route.key)}
+              onToggle={() => setOpenGroupKey((prev) => (prev === route.key ? null : route.key))}
+            />
           );
-        })}
-      </FLPButtonGroup>
-    </FLPBox>
+        }
+
+        if (!route.route) return null;
+
+        return (
+          <NavMenuLink
+            key={route.key}
+            text={navLabel(t, route.label ?? route.key)}
+            to={route.route}
+          />
+        );
+      })}
+    </div>
   );
 };
 

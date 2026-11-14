@@ -17,7 +17,7 @@ export const action = () => {
   throw new Response("Not Found", { status: 404, statusText: "Not Found" });
 };
 
-export const meta: MetaFunction = () => [{ title: "Page not found | Flump" }];
+export const meta: MetaFunction = () => [{ title: "We cannot find that page | Flump" }];
 
 export { RouteErrorBoundary as ErrorBoundary } from "~/features/feedback/components/RouteErrorBoundary";
 

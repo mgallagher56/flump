@@ -11,6 +11,8 @@ export interface RenderNavLinkOptions {
   onButtonClick?: () => void;
   buttonLabel?: string;
   buttonExpanded?: boolean;
+  /** Element id of what the button opens, set as `aria-controls` while it is open. */
+  buttonControls?: string;
   /** Called after a link is followed (closes a flyout/drawer). */
   onNavigate?: () => void;
 }
@@ -24,12 +26,14 @@ export const createRenderNavLink =
     onButtonClick,
     buttonLabel,
     buttonExpanded,
+    buttonControls,
     onNavigate,
   }: RenderNavLinkOptions = {}): AppNavRenderLink =>
   (item, className, children, ariaCurrent) => {
     if (buttonKey && item.key === buttonKey) {
       return (
         <button
+          aria-controls={buttonExpanded ? buttonControls : undefined}
           aria-expanded={buttonExpanded}
           aria-label={buttonLabel}
           className={className}

@@ -80,12 +80,12 @@ export default function CallbackRoute() {
       <EmptyState
         action={
           <Button asChild variant="primary">
-            <a href="/login">Try signing in again</a>
+            <a href="/login">Sign in again</a>
           </Button>
         }
         // The error replaces the whole page, so its heading is the page's h1.
         headingLevel="h1"
-        description="Something went wrong while signing you in, so we haven't started a session. Try signing in again. If it keeps happening, report it and we'll look into it."
+        description="You are not signed in. Try again, and tell us if it keeps happening."
         id="callback-error"
         illustration={<Illustration scene="empty-accounts" size="sm" />}
         secondaryAction={
@@ -93,7 +93,7 @@ export default function CallbackRoute() {
             Report this problem
           </a>
         }
-        title="We couldn't sign you in"
+        title="We could not sign you in"
       />
     </div>
   );
