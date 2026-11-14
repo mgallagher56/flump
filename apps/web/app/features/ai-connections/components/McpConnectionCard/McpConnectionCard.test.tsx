@@ -76,7 +76,7 @@ describe("McpConnectionCard Feature Component", () => {
     fireEvent.click(submitBtn);
 
     await waitFor(() => {
-      expect(mockGenerate).toHaveBeenCalledWith("ChatGPT Action", true, 90);
+      expect(mockGenerate).toHaveBeenCalledWith("ChatGPT Action", true, 90, false);
     });
 
     expect(screen.getByTestId("new-token-banner")).toBeDefined();
@@ -105,7 +105,7 @@ describe("McpConnectionCard Feature Component", () => {
 
     fireEvent.change(select, { target: { value: "365" } });
     fireEvent.click(screen.getByTestId("confirm-generate-token"));
-    await waitFor(() => expect(mockGenerate).toHaveBeenCalledWith("Client", true, 365));
+    await waitFor(() => expect(mockGenerate).toHaveBeenCalledWith("Client", true, 365, false));
   });
 
   it("always requests an anonymised token, even if the context-pack toggle is off", async () => {
@@ -125,7 +125,33 @@ describe("McpConnectionCard Feature Component", () => {
       target: { value: "Client" },
     });
     fireEvent.click(screen.getByTestId("confirm-generate-token"));
-    await waitFor(() => expect(mockGenerate).toHaveBeenCalledWith("Client", true, 90));
+    await waitFor(() => expect(mockGenerate).toHaveBeenCalledWith("Client", true, 90, false));
+  });
+
+  it("asks for the staging scope only when the user turns it on, and labels such tokens", async () => {
+    const mockGenerate = vi.fn().mockResolvedValue({
+      id: "tok_s",
+      name: "Client",
+      rawToken: "flump_pat_secret_sss",
+      tokenPrefix: "flump_pat_ss...sss",
+      scopes: ["mcp:read:anonymized", "write:stage"],
+      anonymizeInstitutions: true,
+      expiresAt: "2027-11-12T00:00:00.000Z",
+    });
+    render(<McpConnectionCard onGenerateToken={mockGenerate} />);
+    fireEvent.click(screen.getByTestId("generate-token-trigger"));
+    const toggle = screen.getByRole("switch", {
+      name: "Let this connection stage imports for you to review",
+    }) as HTMLInputElement;
+    expect(toggle.checked).toBe(false);
+    fireEvent.change(screen.getByLabelText("Connection / Client Name"), {
+      target: { value: "Client" },
+    });
+    fireEvent.click(toggle);
+    fireEvent.click(screen.getByTestId("confirm-generate-token"));
+    await waitFor(() => expect(mockGenerate).toHaveBeenCalledWith("Client", true, 90, true));
+    fireEvent.keyDown(screen.getByRole("tab", { name: /Active Tokens/ }), { key: "Enter" });
+    expect(screen.getByText("Can stage imports")).toBeDefined();
   });
 
   it("revokes an active token on user click", async () => {

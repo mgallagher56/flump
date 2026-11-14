@@ -1,4 +1,4 @@
-import { Button, Icon, SegmentedTabs, StatusBadge } from "@repo/ui";
+import { Button, Icon, SegmentedTabs, StatusBadge, Switch } from "@repo/ui";
 import { css, cx } from "@repo/ui/styled-system/css";
 import { flex, stack } from "@repo/ui/styled-system/patterns";
 import {
@@ -27,6 +27,12 @@ import {
 } from "./McpConnectionCard.styles";
 
 const TOKEN_EXPIRY_DAYS = [7, 30, 90, 365] as const;
+
+/** The opt-in write scope (E17 re-plan section 5): stage only, never commit. */
+export const STAGE_SCOPE = "write:stage";
+export const STAGING_TOGGLE_LABEL = "Let this connection stage imports for you to review";
+export const STAGING_TOGGLE_HINT =
+  "The assistant can prepare balances, such as from a spreadsheet, as an import. Nothing is saved until you review it and confirm in Flump. It cannot confirm imports or delete anything. Off by default.";
 const EXPIRY_LABELS: Record<(typeof TOKEN_EXPIRY_DAYS)[number], string> = {
   7: "7 days",
   30: "30 days",
@@ -60,10 +66,12 @@ export interface CreatedTokenResult {
 
 export interface McpConnectionCardProps {
   initialTokens?: McpTokenItem[];
+  /** `allowStaging` asks for the opt-in `write:stage` scope (off unless the user turns it on). */
   onGenerateToken?: (
     name: string,
     anonymize: boolean,
     expiryDays: number,
+    allowStaging: boolean,
   ) => Promise<CreatedTokenResult>;
   onRevokeToken?: (tokenId: string) => Promise<void>;
   onFetchContextPack?: (anonymize: boolean) => Promise<{ pack: any; markdown: string }>;
@@ -83,6 +91,7 @@ export const McpConnectionCard: FC<McpConnectionCardProps> = ({
   const [showGenerateForm, setShowGenerateForm] = useState<boolean>(false);
   const [tokenName, setTokenName] = useState<string>("Claude Desktop");
   const [expirySelection, setExpirySelection] = useState<string>("90");
+  const [allowStaging, setAllowStaging] = useState<boolean>(false);
   const [generating, setGenerating] = useState<boolean>(false);
   const [newlyCreatedToken, setNewlyCreatedToken] = useState<string | null>(null);
 
@@ -118,6 +127,7 @@ export const McpConnectionCard: FC<McpConnectionCardProps> = ({
         // The API rejects un-anonymised tokens until step-up exists (E20-N16).
         true,
         expiryDays,
+        allowStaging,
       );
 
       setNewlyCreatedToken(result.rawToken);
@@ -138,6 +148,7 @@ export const McpConnectionCard: FC<McpConnectionCardProps> = ({
         ...prev,
       ]);
       setShowGenerateForm(false);
+      setAllowStaging(false);
     } finally {
       setGenerating(false);
     }
@@ -606,6 +617,15 @@ export const McpConnectionCard: FC<McpConnectionCardProps> = ({
               </div>
             </div>
 
+            <Switch
+              checked={allowStaging}
+              data-testid="mcp-token-allow-staging"
+              hint={STAGING_TOGGLE_HINT}
+              id="mcp-token-allow-staging"
+              label={STAGING_TOGGLE_LABEL}
+              onChange={(e) => setAllowStaging(e.target.checked)}
+            />
+
             <div className={flex({ justify: "flex-end", gap: "2" })}>
               <Button size="sm" variant="ghost" onClick={() => setShowGenerateForm(false)}>
                 Cancel
@@ -711,12 +731,19 @@ export const McpConnectionCard: FC<McpConnectionCardProps> = ({
                           <code className={css({ fontSize: "11px" })}>{tok.tokenPrefix}</code>
                         </td>
                         <td className={tokenTableCell()}>
-                          <StatusBadge
-                            size="sm"
-                            variant={tok.anonymizeInstitutions ? "info" : "warning"}
-                          >
-                            {tok.anonymizeInstitutions ? "Anonymized" : "Full Names"}
-                          </StatusBadge>
+                          <div className={flex({ gap: "1", flexWrap: "wrap" })}>
+                            <StatusBadge
+                              size="sm"
+                              variant={tok.anonymizeInstitutions ? "info" : "warning"}
+                            >
+                              {tok.anonymizeInstitutions ? "Anonymized" : "Full Names"}
+                            </StatusBadge>
+                            {tok.scopes.includes(STAGE_SCOPE) ? (
+                              <StatusBadge size="sm" variant="neutral">
+                                Can stage imports
+                              </StatusBadge>
+                            ) : null}
+                          </div>
                         </td>
                         <td className={tokenTableCell()}>
                           {tok.lastUsedAt
