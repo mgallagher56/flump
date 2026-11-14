@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.30.0](https://github.com/mgallagher56/flump/compare/flump/marketing-v1.29.0...flump/marketing-v1.30.0) (2026-11-14)
+
+
+### Features ✨
+
+* **marketing:** public tool page for the pay rise take-home explorer (E25-T12) ([7d410ba](https://github.com/mgallagher56/flump/commit/7d410ba63931091f151e0df673115375df5533ae))
+
+
+### Bug Fixes 🪲
+
+* **marketing:** MCP example shows only figures the tax tool returns; preview limits stated ([3c96ea5](https://github.com/mgallagher56/flump/commit/3c96ea50b3361841174eadfc420eb5c555c8bbe4))
+* **marketing:** MCP page and spotlight name only the tools that exist after [#637](https://github.com/mgallagher56/flump/issues/637) ([4c1bf47](https://github.com/mgallagher56/flump/commit/4c1bf47610fd0e0794a76e47fc819c53faa3168e))
+* **ui,web,marketing:** explorer review fixes (E25 T9, T10) ([5d0164d](https://github.com/mgallagher56/flump/commit/5d0164dcfbd6c31ed48e7b17e3019750d73b6b5b))
+
 ## [1.29.0](https://github.com/mgallagher56/flump/compare/flump/marketing-v1.28.0...flump/marketing-v1.29.0) (2026-11-13)
 
 

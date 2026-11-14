@@ -1,5 +1,32 @@
 # Changelog
 
+## [1.32.0](https://github.com/mgallagher56/flump/compare/flump/web-v1.31.0...flump/web-v1.32.0) (2026-11-14)
+
+
+### Features ✨
+
+* **e23:** one financial picture for safe to spend, months of cover and budget totals, plus cross-page consistency harness ([8b61263](https://github.com/mgallagher56/flump/commit/8b6126394fe4962ec61fc9f72640d2a8600049ef))
+* **mcp:** prune the MCP surface and add query reads (E17 re-plan PRs A and B) ([13a5910](https://github.com/mgallagher56/flump/commit/13a5910cdb8b762fa7b85ba917d82a64b1b0f2e7))
+* **ui,web:** marginal-rate explorer, chart and next £1,000 panel (E25 T9, T10) ([2385743](https://github.com/mgallagher56/flump/commit/2385743b962e2f9c6247945176fdade848ea9c72))
+* **web,mcp:** majority positioning for the app and MCP (E31 PR-B) ([f991eb0](https://github.com/mgallagher56/flump/commit/f991eb02516413322b629e4d5db5aa221a82bbf8))
+* **web:** error, empty and signed-out surfaces restyle (T3.11, T3.12) ([ab0f144](https://github.com/mgallagher56/flump/commit/ab0f1441ed39963f30cd0074f1936ab7d3806c21))
+* **web:** monthly snapshots check-in, history page and back-fill (E30 PR2) ([959209a](https://github.com/mgallagher56/flump/commit/959209a8417a0e3fca39e19555805ba54694eb3a))
+
+
+### Bug Fixes 🪲
+
+* **compliance:** apply fable and opus review findings to the E29 sweep ([4a8288f](https://github.com/mgallagher56/flump/commit/4a8288fd1c83b1607dbde8768adf9aa3b213a9bb))
+* **compliance:** calculators and mortgage comparison without verdicts (E29) ([ae415f9](https://github.com/mgallagher56/flump/commit/ae415f956bf39ecace59ab0cb4c4d634c2f8f460))
+* **compliance:** E29 advice-boundary copy sweep and allow-list shrink ([a2fcc24](https://github.com/mgallagher56/flump/commit/a2fcc245be2df94c85153cf8ad65e3b300210e41))
+* **e23:** review fixes for the financial picture ([f5bcddb](https://github.com/mgallagher56/flump/commit/f5bcddbb0197b9b066bbf3e97e26da134129dcde))
+* **ui,web,marketing:** explorer review fixes (E25 T9, T10) ([5d0164d](https://github.com/mgallagher56/flump/commit/5d0164dcfbd6c31ed48e7b17e3019750d73b6b5b))
+* **web,mcp:** review fixes for E31 PR-B ([032ffaf](https://github.com/mgallagher56/flump/commit/032ffaff84fd2889f813634f7e65a4c02e215d04))
+* **web:** address review of error and signed-out surfaces ([8f9559b](https://github.com/mgallagher56/flump/commit/8f9559b16be919b7e7cbd59bcbfcb8199681e76f))
+* **web:** carry E31 order and persona names into the signed-out components ([50ec6b5](https://github.com/mgallagher56/flump/commit/50ec6b5fec317b4b4a0db47ab16a888a6cc4c755))
+* **web:** E30 PR2 review fixes and before/after frames ([46c9941](https://github.com/mgallagher56/flump/commit/46c9941820021994e4f84ee5f99d876e134a3c4f))
+* **web:** fix claims guard path, root error heading and focus ratchet for the error shell ([b5e0734](https://github.com/mgallagher56/flump/commit/b5e0734868cb34200d1448f3c8bb244c3f1a347f))
+* **web:** history loader reads surplus and months of cover from the financial picture ([670c511](https://github.com/mgallagher56/flump/commit/670c511737741aa1477d940b82446ddb5af4851e))
+
 ## [1.31.0](https://github.com/mgallagher56/flump/compare/flump/web-v1.30.0...flump/web-v1.31.0) (2026-11-13)
 
 

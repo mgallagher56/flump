@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.30.0](https://github.com/mgallagher56/flump/compare/flump/backend-v1.29.0...flump/backend-v1.30.0) (2026-11-14)
+
+
+### Features ✨
+
+* **api-contract,backend:** finish E21 with response schemas and enforce by default ([8ee17a5](https://github.com/mgallagher56/flump/commit/8ee17a5934cac09851cccf8c53838cf3c743c213))
+* **e23:** one financial picture for safe to spend, months of cover and budget totals, plus cross-page consistency harness ([8b61263](https://github.com/mgallagher56/flump/commit/8b6126394fe4962ec61fc9f72640d2a8600049ef))
+* **mcp:** prune the MCP surface and add query reads (E17 re-plan PRs A and B) ([13a5910](https://github.com/mgallagher56/flump/commit/13a5910cdb8b762fa7b85ba917d82a64b1b0f2e7))
+
+
+### Bug Fixes 🪲
+
+* **e23:** review fixes for the financial picture ([f5bcddb](https://github.com/mgallagher56/flump/commit/f5bcddbb0197b9b066bbf3e97e26da134129dcde))
+* **mcp:** review fixes for the query reads ([c7a9aef](https://github.com/mgallagher56/flump/commit/c7a9aef574dee87869148173792aa366f5f06173))
+
 ## [1.29.0](https://github.com/mgallagher56/flump/compare/flump/backend-v1.28.0...flump/backend-v1.29.0) (2026-11-13)
 
 
