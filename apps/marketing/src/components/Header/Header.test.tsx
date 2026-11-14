@@ -2,7 +2,7 @@ import { fireEvent, render, screen, within } from "@testing-library/react";
 import { HelmetProvider } from "react-helmet-async";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it } from "vitest";
-import { ThemeProvider } from "../context/ThemeContext";
+import { ThemeProvider } from "../../context/ThemeContext";
 import { Header } from "./Header";
 
 describe("Header", () => {
@@ -31,8 +31,36 @@ describe("Header", () => {
     expect(screen.getByText("Request an invite").closest("a")?.getAttribute("href")).toBe(
       "/contact#beta",
     );
-    expect(screen.getByRole("button", { name: /switch to dark mode/i })).toBeDefined();
+    expect(screen.getAllByRole("group", { name: "Colour theme" })).toHaveLength(1);
     expect(screen.queryByText("Go to dashboard →")).toBeNull();
+  });
+
+  it("uses the shared logo linked home, with no text wordmark", () => {
+    render(
+      <HelmetProvider>
+        <ThemeProvider>
+          <MemoryRouter>
+            <Header />
+          </MemoryRouter>
+        </ThemeProvider>
+      </HelmetProvider>,
+    );
+    const home = screen.getByRole("link", { name: "Flump home" });
+    expect(home.getAttribute("href")).toBe("/");
+    expect(home.querySelector("svg")).not.toBeNull();
+  });
+
+  it("marks the current section with aria-current", () => {
+    render(
+      <HelmetProvider>
+        <ThemeProvider>
+          <MemoryRouter initialEntries={["/pricing"]}>
+            <Header />
+          </MemoryRouter>
+        </ThemeProvider>
+      </HelmetProvider>,
+    );
+    expect(screen.getByRole("link", { name: "Pricing" }).getAttribute("aria-current")).toBe("page");
   });
 
   it("renders 'Go to dashboard →' when flump_has_session=1 cookie is present", () => {
@@ -52,7 +80,7 @@ describe("Header", () => {
     expect(screen.getByText("Go to dashboard →")).toBeDefined();
     expect(screen.queryByText("Sign in")).toBeNull();
     expect(screen.queryByText("Request an invite")).toBeNull();
-    expect(screen.getByRole("button", { name: /switch to dark mode/i })).toBeDefined();
+    expect(screen.getAllByRole("group", { name: "Colour theme" })).toHaveLength(1);
   });
 
   it("toggles the mobile navigation drawer when clicking the mobile menu button", () => {
@@ -77,10 +105,11 @@ describe("Header", () => {
     expect(toggleButton.getAttribute("aria-expanded")).toBe("true");
     const mobileNav = screen.getByRole("navigation", { name: /mobile navigation/i });
     expect(mobileNav).toBeDefined();
-    expect(within(mobileNav).getByText("Request an invite")).toBeDefined();
+    expect(within(mobileNav).getByRole("link", { name: /pricing/i })).toBeDefined();
+    expect(within(screen.getByRole("dialog")).getByText("Request an invite")).toBeDefined();
 
-    // Close mobile menu by clicking toggle again
-    fireEvent.click(toggleButton);
+    // Close mobile menu from the drawer's close button
+    fireEvent.click(screen.getByRole("button", { name: /close navigation menu/i }));
     expect(toggleButton.getAttribute("aria-expanded")).toBe("false");
     expect(screen.queryByRole("navigation", { name: /mobile navigation/i })).toBeNull();
   });

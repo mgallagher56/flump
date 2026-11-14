@@ -36,8 +36,8 @@ vi.mock("app/components/navigation/NavMenu", () => ({
   default: ({ routes }) => routes.map(({ key }) => <div key={key}>{key}</div>),
 }));
 
-vi.mock("app/components/navigation/HomeLogo", () => ({
-  default: () => <div>HomeLogo</div>,
+vi.mock("app/components/navigation/renderHomeLogoLink", () => ({
+  renderHomeLogoLink: () => <div>HomeLogo</div>,
 }));
 
 describe("<Header />", () => {

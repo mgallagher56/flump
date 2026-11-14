@@ -268,10 +268,10 @@ describe.skipIf(!buildReady)("web express server (built)", () => {
   });
 
   it("stamps files from public/", async () => {
-    const res = await send(`${base}/favicon.ico`);
+    const res = await send(`${base}/favicon.svg`);
     expect(res.status).toBe(200);
     expect(res.headers.get("content-type") ?? "").toMatch(/^image\//);
-    // Images keep the frame-ancestors-only default (the image viewer needs inline styles).
+    // Images (SVG included) keep the frame-ancestors-only default.
     assertSecurityHeaders(res);
     expect(res.headers.get("cache-control")).toMatch(/^public, max-age=\d+/);
   });

@@ -1,6 +1,6 @@
-import { VisuallyHidden } from "@repo/ui";
+import { HomeLogo, VisuallyHidden } from "@repo/ui";
 import type { FC, ReactNode } from "react";
-import HomeLogo from "~/components/navigation/HomeLogo";
+import { renderHomeLogoLink } from "~/components/navigation/renderHomeLogoLink";
 import { shellHeader, shellMain, shellRoot } from "./ErrorShell.styles";
 
 export interface ErrorShellProps {
@@ -17,7 +17,7 @@ export const ErrorShell: FC<ErrorShellProps> = ({ children }) => (
       Skip to content
     </VisuallyHidden>
     <header className={shellHeader()}>
-      <HomeLogo />
+      <HomeLogo renderLink={renderHomeLogoLink} />
     </header>
     <main id="main-content" tabIndex={-1} className={shellMain()}>
       {children}

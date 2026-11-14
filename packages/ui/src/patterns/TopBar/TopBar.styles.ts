@@ -18,9 +18,9 @@ export const topBarInner = cva({
   base: {
     display: "flex",
     alignItems: "center",
-    gap: { base: "3", lg: "5" },
-    minHeight: { base: "14", lg: "18" },
-    px: { base: "4", lg: "10" },
+    gap: { base: "3", _navInline: "5" },
+    minHeight: { base: "14", _navInline: "18" },
+    px: { base: "4", _navInline: "10" },
     py: "2",
     maxWidth: "1536px",
     marginX: "auto",
@@ -32,12 +32,12 @@ export const topBarLogo = cva({
 });
 
 export const topBarMenuButton = cva({
-  base: { display: { base: "inline-flex", lg: "none" } },
+  base: { display: { base: "inline-flex", _navInline: "none" } },
 });
 
 export const topBarNav = cva({
   base: {
-    display: { base: "none", lg: "block" },
+    display: { base: "none", _navInline: "block" },
     flex: "1",
     minWidth: 0,
     marginLeft: "3",

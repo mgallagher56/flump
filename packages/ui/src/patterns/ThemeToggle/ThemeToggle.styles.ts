@@ -1,4 +1,4 @@
-import { cva } from "@repo/ui/styled-system/css";
+import { cva } from "../../../styled-system/css";
 
 export const themeToggleGroup = cva({
   base: {

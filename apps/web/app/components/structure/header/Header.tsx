@@ -1,17 +1,17 @@
-import { TopBar } from "@repo/ui";
+import { HomeLogo, ThemeToggle, TopBar } from "@repo/ui";
 import { type FC, type ReactElement, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useLoaderData, useLocation } from "react-router";
 import AvatarMenu from "~/components/navigation/AvatarMenu";
 import { buildNavManifest, findActiveNavKey } from "~/components/navigation/buildNavManifest";
-import HomeLogo from "~/components/navigation/HomeLogo";
 import { isSandboxPath } from "~/components/navigation/navConfig";
+import { renderHomeLogoLink } from "~/components/navigation/renderHomeLogoLink";
 import { createRenderNavLink } from "~/components/navigation/renderNavLink";
-import ThemeToggle from "~/components/navigation/ThemeToggle";
 import UserLogin from "~/components/navigation/UserLogin";
 import { useResponsive } from "~/context/ResponsiveContext";
 import { useUserProfile } from "~/hooks/useUserProfile";
 import type { loader } from "~/root";
+import { useThemeContext } from "~/ThemeContext";
 import { isPageEnabled } from "~/utils/pageConfig";
 
 import MobileNavDrawer from "./MobileNavDrawer";
@@ -38,6 +38,7 @@ const Header: FC<HeaderProps> = ({ isMobile: propIsMobile, variant }): ReactElem
   const drawerOpen = isMobileDrawerOpen || localDrawerOpen;
 
   const { t } = useTranslation();
+  const { preference, setPreference } = useThemeContext();
   const items = useMemo(
     () =>
       buildNavManifest({
@@ -66,14 +67,16 @@ const Header: FC<HeaderProps> = ({ isMobile: propIsMobile, variant }): ReactElem
       <TopBar
         actions={
           <>
-            <ThemeToggle />
+            <ThemeToggle onChange={setPreference} preference={preference} />
             {!!user && <AvatarMenu user={user} />}
             {!user && <UserLogin />}
           </>
         }
         activeKey={findActiveNavKey(items, pathname)}
         items={items}
-        logo={<HomeLogo decorative={!isMobileVariant} />}
+        logo={<HomeLogo decorative={!isMobileVariant} renderLink={renderHomeLogoLink} />}
+        menuControls="mobile-nav-drawer"
+        menuExpanded={drawerOpen}
         menuLabel="Open navigation menu"
         navLabel="Primary"
         renderLink={renderLink}

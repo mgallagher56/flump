@@ -2,7 +2,9 @@ import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { OnboardingHeader } from "./OnboardingHeader";
 
-vi.mock("~/components/navigation/HomeLogo", () => ({ default: () => <a href="/">Flump home</a> }));
+vi.mock("~/components/navigation/renderHomeLogoLink", () => ({
+  renderHomeLogoLink: () => <a href="/">Flump home</a>,
+}));
 
 describe("<OnboardingHeader />", () => {
   it("has one level-1 heading and makes no time claim", () => {

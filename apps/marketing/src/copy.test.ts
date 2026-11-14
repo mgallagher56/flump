@@ -35,13 +35,3 @@ describe("index.html (R-13)", () => {
     expect(fs.existsSync(path.resolve(__dirname, "../public/favicon.svg"))).toBe(true);
   });
 });
-
-describe("UK badge contrast (R-12)", () => {
-  it("uses a solid fill with its foreground token", () => {
-    const header = read("components/Header.tsx");
-    const block = header.slice(header.indexOf("const ukBadgeStyle"));
-    const body = block.slice(0, block.indexOf("});"));
-    expect(body).toContain('backgroundColor: "primary.solid"');
-    expect(body).toContain('color: "primary.foreground"');
-  });
-});

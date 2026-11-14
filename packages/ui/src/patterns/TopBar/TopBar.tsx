@@ -38,9 +38,13 @@ export interface TopBarProps {
   actions?: ReactNode;
   /** Link slot, so the ui package needs no router. Defaults to a plain anchor. */
   renderLink?: AppNavRenderLink;
-  /** Shows the menu button below `lg` and calls this when pressed. */
+  /** Shows the menu button below the shared nav breakpoint (`NAV_BREAKPOINT`) and calls this when pressed. */
   onMenuClick?: () => void;
   menuLabel?: string;
+  /** Whether the menu the button opens is showing; sets `aria-expanded` on the menu button. */
+  menuExpanded?: boolean;
+  /** Element id of the menu the button opens (for `aria-controls`). */
+  menuControls?: string;
   /** Accessible name of the inline navigation landmark. */
   navLabel?: string;
   className?: string;
@@ -128,6 +132,8 @@ export const TopBar: FC<TopBarProps> = ({
   renderLink = defaultRenderLink,
   onMenuClick,
   menuLabel = "Open menu",
+  menuExpanded,
+  menuControls,
   navLabel = "Primary",
   className,
 }) => (
@@ -135,6 +141,8 @@ export const TopBar: FC<TopBarProps> = ({
     <div className={topBarInner()}>
       {onMenuClick && (
         <Button
+          aria-controls={menuExpanded ? menuControls : undefined}
+          aria-expanded={menuExpanded}
           aria-label={menuLabel}
           className={topBarMenuButton()}
           onClick={onMenuClick}
