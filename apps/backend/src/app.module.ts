@@ -27,7 +27,7 @@ import { McpService } from "./mcp.service";
 import { ObservabilityModule } from "./observability/observability.module";
 import { AccountDeletionService } from "./privacy/account-deletion.service";
 import { AccountExportService } from "./privacy/account-export.service";
-import { BANK_CONSENT_REVOKER, LoggingBankConsentRevoker } from "./privacy/bank-consent-revoker";
+import { BANK_CONSENT_REVOKER, ProviderBankConsentRevoker } from "./privacy/bank-consent-revoker";
 import { MonzoProvider } from "./providers/monzo.provider";
 import { BankProviderRegistry } from "./providers/provider.registry";
 import { StarlingProvider } from "./providers/starling.provider";
@@ -78,8 +78,8 @@ import { UserProfileService } from "./user-profile.service";
     // The AuthGuard refuses tokens of erased accounts through this port (BE-04).
     { provide: ERASED_ACCOUNT_CHECK, useExisting: AccountDeletionService },
     AccountExportService,
-    // BE-12 replaces this with real provider revocation.
-    { provide: BANK_CONSENT_REVOKER, useClass: LoggingBankConsentRevoker },
+    // Revokes consent at each bank before deletion or reset (BE-12, audit H10).
+    { provide: BANK_CONSENT_REVOKER, useClass: ProviderBankConsentRevoker },
     McpTokenService,
     AgentDataService,
     McpService,

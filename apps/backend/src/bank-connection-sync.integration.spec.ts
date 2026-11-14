@@ -20,6 +20,7 @@ import { BankConnection } from "./entities/bank-connection.entity";
 import { Transaction } from "./entities/transaction.entity";
 import { UserProfile } from "./entities/user-profile.entity";
 import { FinanceService } from "./finance.service";
+import { ProviderBankConsentRevoker } from "./privacy/bank-consent-revoker";
 import { createFakeBank } from "./providers/__fixtures__/fake-bank";
 import { monzoCase } from "./providers/__fixtures__/provider-cases";
 import type { BankProvider, ProviderAccount } from "./providers/provider.interface";
@@ -527,6 +528,28 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("bank sync (real Post
         PERSON,
       );
       expect(summary).toEqual({ attempted: 3, revoked: 1, unsupported: 1, failed: 1 });
+    });
+  });
+
+  describe("account deletion and reset seam (BE-04)", () => {
+    it("ProviderBankConsentRevoker revokes each listed connection of that user only, and never throws", async () => {
+      const mine = await insertConnection();
+      const theirs = await insertConnection({}, OTHER_PERSON);
+      const provider = scriptedProvider(() => []);
+      const revoker = new ProviderBankConsentRevoker(ds.getRepository(BankConnection), {
+        getProvider: () => provider,
+      } as unknown as BankProviderRegistry);
+      await revoker.revokeAll(PERSON, [
+        { id: mine, institutionId: "monzo", authType: "oauth" },
+        { id: theirs, institutionId: "monzo", authType: "oauth" },
+      ]);
+      expect(provider.revokeConnection).toHaveBeenCalledTimes(1);
+      expect(provider.revokeConnection).toHaveBeenCalledWith("access-1");
+
+      provider.revokeConnection.mockRejectedValue(new Error("down"));
+      await expect(
+        revoker.revokeAll(PERSON, [{ id: mine, institutionId: "monzo", authType: "oauth" }]),
+      ).resolves.toBeUndefined();
     });
   });
 
