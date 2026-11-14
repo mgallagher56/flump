@@ -1,6 +1,14 @@
 import { Button, Card, ConfirmDialog } from "@repo/ui";
 import { type FC, useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router";
+import { useFetcher, useNavigate } from "react-router";
+import {
+  DELETE_ACCOUNT_CONFIRMATION,
+  DELETE_ACCOUNT_INTENT,
+  type DeleteAccountStatus,
+  isDeleteAccountActionData,
+} from "~/features/settings/account";
+import { DataExportSection } from "~/features/settings/components/DataExportSection";
+import { DeleteAccountSection } from "~/features/settings/components/DeleteAccountSection";
 import {
   sectionCard,
   sectionHeading,
@@ -21,9 +29,28 @@ import {
 /** How long the success message shows before sending the person back to onboarding. */
 const SUCCESS_REDIRECT_MS = 1500;
 
-/** Your data: reset all financial data, behind a type-to-confirm dialog. */
+/** The settings route that handles the delete-account action. */
+const SETTINGS_ROUTE = "/app/profile";
+
+/**
+ * Your data: download a copy, reset all financial data, or delete the account. The reset and the
+ * deletion each sit behind a type-to-confirm dialog.
+ */
 export const DataTab: FC = () => {
   const { resetFinancialData } = useUserProfile();
+  const deleteFetcher = useFetcher();
+  const deleteStatus: DeleteAccountStatus =
+    deleteFetcher.state !== "idle"
+      ? "submitting"
+      : isDeleteAccountActionData(deleteFetcher.data)
+        ? deleteFetcher.data.outcome
+        : "idle";
+  const handleDeleteAccount = () => {
+    void deleteFetcher.submit(
+      { intent: DELETE_ACCOUNT_INTENT, confirmation: DELETE_ACCOUNT_CONFIRMATION },
+      { method: "post", action: SETTINGS_ROUTE },
+    );
+  };
 
   let navigate: (to: string) => void;
   try {
@@ -79,6 +106,8 @@ export const DataTab: FC = () => {
 
   return (
     <div className={tabStack()} id="settings-data-tab" data-testid="settings-data-tab">
+      <DataExportSection />
+
       <Card as="section" aria-labelledby="reset-data-heading" className={sectionCard()}>
         <h2 className={sectionHeading()} id="reset-data-heading">
           Reset your financial data
@@ -147,6 +176,8 @@ export const DataTab: FC = () => {
         error={resetError}
         onConfirm={handleResetFinancialData}
       />
+
+      <DeleteAccountSection status={deleteStatus} onConfirm={handleDeleteAccount} />
     </div>
   );
 };

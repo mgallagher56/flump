@@ -4,6 +4,16 @@ import { DataTab } from "./DataTab";
 
 const mockResetFinancialData = vi.fn().mockResolvedValue(undefined);
 
+const fetcher = vi.hoisted(() => ({
+  state: "idle" as "idle" | "submitting" | "loading",
+  data: undefined as unknown,
+  submit: (() => undefined) as (...args: unknown[]) => unknown,
+}));
+vi.mock("react-router", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("react-router")>()),
+  useFetcher: () => fetcher,
+}));
+
 vi.mock("~/hooks/useUserProfile", async () => {
   const actual: typeof import("~/hooks/useUserProfile") =
     await vi.importActual("~/hooks/useUserProfile");
@@ -17,7 +27,36 @@ vi.mock("~/hooks/useUserProfile", async () => {
 });
 
 describe("<DataTab />", () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    fetcher.state = "idle";
+    fetcher.data = undefined;
+    fetcher.submit = vi.fn();
+  });
+
+  it("offers a data download and account deletion alongside the reset", () => {
+    render(<DataTab />);
+    expect(screen.getByRole("heading", { name: "Download your data" })).toBeDefined();
+    expect(screen.getByRole("heading", { name: "Delete your account" })).toBeDefined();
+  });
+
+  it("posts the delete intent and the DELETE phrase to the settings route", () => {
+    render(<DataTab />);
+    fireEvent.click(screen.getByTestId("delete-account-trigger"));
+    fireEvent.change(screen.getByLabelText(/to confirm/i), { target: { value: "DELETE" } });
+    fireEvent.click(screen.getByRole("button", { name: "Delete my account" }));
+    expect(fetcher.submit).toHaveBeenCalledWith(
+      { intent: "delete-account", confirmation: "DELETE" },
+      { method: "post", action: "/app/profile" },
+    );
+  });
+
+  it("shows the identity_pending outcome from the action", () => {
+    fetcher.data = { outcome: "identity_pending" };
+    render(<DataTab />);
+    fireEvent.click(screen.getByTestId("delete-account-trigger"));
+    expect(screen.getByRole("alert").textContent).toContain("could not finish removing your login");
+  });
 
   it("does nothing until the reset is confirmed", () => {
     render(<DataTab />);
