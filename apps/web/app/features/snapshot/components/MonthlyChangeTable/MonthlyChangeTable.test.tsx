@@ -15,6 +15,40 @@ const monthRows = (n: number): MonthChangeRow[] =>
   }));
 
 describe("MonthlyChangeTable", () => {
+  it("labels a calculated or confirmed figure wherever it appears (R2-5)", () => {
+    render(
+      <MonthlyChangeTable
+        month="2026-11"
+        previousMonth="2026-10"
+        rows={[
+          {
+            accountId: "m",
+            name: "Mortgage",
+            isLiability: true,
+            previous: 186550,
+            current: 185999.56,
+            change: -550.44,
+            carried: false,
+            currentSource: "calculated",
+          },
+          {
+            accountId: "p",
+            name: "Pension",
+            isLiability: false,
+            previous: 9000,
+            current: 9000,
+            change: 0,
+            carried: false,
+            currentSource: "confirmed",
+          },
+        ]}
+        variant="accounts"
+      />,
+    );
+    expect(screen.getByText("Calculated")).toBeDefined();
+    expect(screen.getByText("No change")).toBeDefined();
+  });
+
   it("shows per-account changes with debts as the amount owed", () => {
     render(
       <MonthlyChangeTable
