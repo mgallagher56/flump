@@ -23,6 +23,11 @@ export const stripShowsDebt = (totalOwed: number | null): boolean =>
   totalOwed !== null && totalOwed > 0;
 
 /** How "left over each month" is worked out, for the card's explain tip (copy guide: plain, no judgement). */
+/** One plain caption on every card, so the cards read evenly (R2-4). */
+export const LEFT_OVER_CAPTION = "From your budget";
+export const OWED_CAPTION = "Cards, loans and overdrafts";
+export const PENSION_CAPTION = "From your accounts";
+
 export const INCOME_ONLY_LABEL = "Income in your budget";
 export const ADD_SPENDING_PROMPT = "Add your spending to see what is left over each month";
 
@@ -76,6 +81,7 @@ export const DashboardKpiStrip: FC<DashboardKpiStripProps> = ({
         explain={monthlySurplus === null ? undefined : LEFT_OVER_EXPLAIN}
         key="left-over"
         label={short ? "Short each month" : "Left over each month"}
+        subtext={monthlySurplus === null ? undefined : LEFT_OVER_CAPTION}
         unset={monthlySurplus === null}
         value={
           monthlySurplus === null ? null : (
@@ -91,7 +97,7 @@ export const DashboardKpiStrip: FC<DashboardKpiStripProps> = ({
     <KpiCard
       key="owed"
       label="What you owe"
-      subtext="Cards, loans and overdrafts"
+      subtext={OWED_CAPTION}
       unset={false}
       value={
         <span className={kpiFigure()} data-figure="debt.total">
@@ -103,6 +109,7 @@ export const DashboardKpiStrip: FC<DashboardKpiStripProps> = ({
     <KpiCard
       key="pension"
       label="Pension pots"
+      subtext={PENSION_CAPTION}
       unset={false}
       value={
         <span className={kpiFigure()}>

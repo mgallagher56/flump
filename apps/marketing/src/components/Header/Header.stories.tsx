@@ -14,7 +14,10 @@ type Story = StoryObj<typeof Header>;
 const play: Story["play"] = async ({ canvasElement }) => {
   const canvas = within(canvasElement);
   await expect(canvas.getByRole("link", { name: "Flump home" })).toBeInTheDocument();
-  await expect(canvas.getByRole("group", { name: "Colour theme" })).toBeInTheDocument();
+  // One theme control shows at any width: the three-way switch from 1024px, one button below.
+  await expect(
+    canvasElement.querySelector("#theme-toggle, #theme-toggle-compact"),
+  ).toBeInTheDocument();
 };
 
 export const Light: Story = { globals: { theme: "light" }, play };

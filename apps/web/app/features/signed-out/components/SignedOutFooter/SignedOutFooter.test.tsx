@@ -23,13 +23,11 @@ describe("SignedOutFooter", () => {
     );
   });
 
-  it("links the first four catalogue tools by their short titles", async () => {
+  it("lists no per-tool links, only All calculators (same rule as marketing)", async () => {
     const { TOOL_CATALOGUE } = await import("@repo/ui/tools");
     render(<SignedOutFooter />);
-    for (const tool of TOOL_CATALOGUE.slice(0, 4)) {
-      expect(screen.getByRole("link", { name: tool.shortTitle }).getAttribute("href")).toBe(
-        `/tools/${tool.slug}`,
-      );
+    for (const tool of TOOL_CATALOGUE) {
+      expect(screen.queryByRole("link", { name: tool.shortTitle })).toBeNull();
     }
   });
 

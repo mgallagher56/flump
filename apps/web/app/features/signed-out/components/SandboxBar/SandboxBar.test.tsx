@@ -50,6 +50,10 @@ describe("SandboxBar", () => {
     expect(container.parentElement).toBe(screen.getByTestId("sandbox-bar"));
     expect(container.className).toBe(personaTabs());
     expect(personaTabs()).toMatch(/flex_1_1_20rem/);
+    // The tabs wrap rather than scroll, so no tab is clipped at 375 or 320.
+    expect(personaTabs()).toMatch(/flex-wrap_wrap/);
+    expect(personaTabs()).toMatch(/ov-x_visible/);
+    expect(personaTabs()).toMatch(/white-space_normal/);
     for (const tab of tabs) expect(container.contains(tab)).toBe(true);
   });
 });

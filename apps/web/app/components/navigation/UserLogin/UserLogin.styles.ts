@@ -19,7 +19,5 @@ export const userLoginButton = cva({
 export const userLoginSignUp = cva({
   base: {
     display: { base: "none", _navInline: "inline-flex" },
-    px: { base: "2.5", _navInline: "4" },
-    whiteSpace: "nowrap",
   },
 });

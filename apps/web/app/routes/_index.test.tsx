@@ -89,6 +89,33 @@ describe("_index route", () => {
     expect(data.budgetData.monthlyIncome).toBe(2085);
   });
 
+  it("does not count the zero-amount seeded default rows as spending", async () => {
+    vi.mocked(loadWorkspaceSnapshot).mockResolvedValueOnce({
+      user: { id: "u1", email: "real@example.com" },
+      accounts: [],
+      accountDetails: [],
+      budgetEntries: [
+        { id: "b1", name: "Take-home pay", category: "income", amount: 2085, isIncome: true },
+        {
+          id: "b2",
+          name: "Rent",
+          category: "housing",
+          amount: 0,
+          isEssential: true,
+          isDefault: true,
+        },
+        { id: "b3", name: "Groceries", category: "food", amount: 0, isDefault: true },
+      ],
+      taxRecords: [],
+      userProfile: { onboardingCompleted: true },
+      portfolioSnapshot: undefined,
+    } as any);
+    const request = new Request("http://localhost/");
+    const data = (await loader({ request, params: {}, context: {} } as any)) as any;
+    expect(data.budgetData.hasIncome).toBe(true);
+    expect(data.budgetData.hasSpending).toBe(false);
+  });
+
   it("never invents an estimated tax due figure from tax records", async () => {
     vi.mocked(loadWorkspaceSnapshot).mockResolvedValueOnce({
       user: { id: "u1", email: "real@example.com" },

@@ -85,4 +85,12 @@ describe("DashboardKpiStrip", () => {
     expect(screen.queryByText("Add your budget to see what is left over each month")).toBeNull();
     expect(screen.getByText("Pension pots")).toBeTruthy();
   });
+
+  it("gives every card one plain caption", () => {
+    renderStrip();
+    expect(screen.getByText("From your budget")).toBeTruthy();
+    expect(screen.getByText("From your accounts")).toBeTruthy();
+    renderStrip({ totalOwed: 8000 });
+    expect(screen.getByText("Cards, loans and overdrafts")).toBeTruthy();
+  });
 });

@@ -26,6 +26,12 @@ import {
   DEFAULT_ENABLED_PAGES,
 } from "~/utils/pageConfig";
 import { netWorthDelta, type PriorNetWorth } from "../../netWorthDelta";
+import {
+  MAX_SECTION_CARDS,
+  orderSections,
+  SECTION_PRIORITY,
+  selectSectionCards,
+} from "../../sectionOrder";
 import { AccountsWidget } from "../AccountsWidget";
 import { BudgetWidget } from "../BudgetWidget";
 import { CheckInRow } from "../CheckInRow";
@@ -85,32 +91,7 @@ export const HERO_LABEL_WITH_HOME = "Net worth, including your home estimate";
 /** The dashboard's one control for which sections show. */
 export const SHOW_HIDE_LABEL = "Choose what shows here";
 
-/** At most four section cards render (plan D1, E16 P1.8). */
-export const MAX_SECTION_CARDS = 4;
-
-/**
- * Which sections are most useful on the dashboard, first to last. Debt, mortgage, savings and
- * pension show figures found nowhere else on the page; budget and accounts mostly repeat the hero
- * and the KPI strip, so they come last.
- */
-export const SECTION_PRIORITY: readonly DashboardWidgetKey[] = [
-  "debt",
-  "mortgage",
-  "savings",
-  "pension",
-  "tax",
-  "budget",
-  "accounts",
-];
-
-/** The cards to draw: the most relevant `max` of `available`, in the fixed dashboard order. */
-export const selectSectionCards = (
-  available: readonly DashboardWidgetKey[],
-  max = MAX_SECTION_CARDS,
-): DashboardWidgetKey[] => {
-  const chosen = new Set(SECTION_PRIORITY.filter((k) => available.includes(k)).slice(0, max));
-  return ALL_PAGE_KEYS.filter((k) => chosen.has(k));
-};
+export { MAX_SECTION_CARDS, SECTION_PRIORITY, selectSectionCards };
 
 const finiteOrNull = (value: unknown): number | null =>
   typeof value === "number" && Number.isFinite(value) ? value : null;
@@ -193,8 +174,9 @@ export const HomeDashboard: FC<HomeDashboardProps> = ({
     () => (profile.enabledPages as AppPageKey[]) || DEFAULT_ENABLED_PAGES,
     [profile.enabledPages],
   );
+  // The panel lists sections in the same order the cards are drawn (one shared order).
   const applicableKeys = useMemo<DashboardWidgetKey[]>(
-    () => ALL_PAGE_KEYS.filter((k) => enabledPages.includes(k)),
+    () => orderSections(ALL_PAGE_KEYS.filter((k) => enabledPages.includes(k))),
     [enabledPages],
   );
 

@@ -277,9 +277,9 @@ describe("HomeDashboard", () => {
     expect(screen.getByTestId("widget-card-pension")).toBeTruthy();
     expect(screen.queryByTestId("widget-card-accounts")).toBeNull();
     expect(selectSectionCards(["accounts", "budget", "tax"])).toEqual([
-      "accounts",
-      "budget",
       "tax",
+      "budget",
+      "accounts",
     ]);
   });
 
@@ -416,6 +416,24 @@ describe("HomeDashboard", () => {
     expect(
       (within(dialog).getByRole("checkbox", { name: /^Debt/ }) as HTMLInputElement).checked,
     ).toBe(true);
+  });
+
+  it("marks as showing exactly the sections the dashboard draws, first rows first", () => {
+    renderDashboard(withDebt);
+    fireEvent.click(screen.getByRole("button", { name: /Choose what shows here/ }));
+    const dialog = screen.getByRole("dialog", { name: "Choose what shows here" });
+    const drawn = Array.from(document.querySelectorAll("[data-section-card]")).map((card) =>
+      card.getAttribute("data-section-card"),
+    );
+    const showing = within(dialog)
+      .getAllByText("Showing")
+      .map((el) => (el as HTMLElement).id.replace(/^widget-visibility-|-status$/g, ""));
+    expect(showing).toEqual(drawn);
+    // Rows follow the card order, so the shown sections are the first ticked rows.
+    const rows = within(dialog)
+      .getAllByRole("checkbox")
+      .map((box) => (box as HTMLElement).id.replace(/^widget-visibility-/, ""));
+    expect(rows.slice(0, drawn.length)).toEqual(drawn);
   });
 
   it("is honest about the cap: at four ticked, the rest are disabled and point to the rule", async () => {

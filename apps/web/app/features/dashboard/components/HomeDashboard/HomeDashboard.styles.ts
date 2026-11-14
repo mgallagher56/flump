@@ -48,6 +48,9 @@ export const showHideButton = cva({
  */
 export const dashboardHeader = cva({
   base: {
+    // The page's section gap (spacing.page.section) is the only space before the hero; PageHeader's
+    // own bottom margin doubled it to about 56px at 1280. `:is(header)` outranks that margin.
+    "&:is(header)": { marginBottom: "0" },
     mdDown: {
       flexWrap: "nowrap",
       alignItems: "center",

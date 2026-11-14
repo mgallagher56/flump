@@ -342,7 +342,7 @@ exports[`<Header /> > renders correctly when user logged in 1`] = `
             class="d_flex ai_center gap_1 flex-wrap_nowrap li-s_none p_0 m_0"
           >
             <li
-              class="pos_relative flex-sh_0"
+              class="pos_relative flex-sh_0 d_none navWide:d_list-item"
             >
               <a
                 href="/"
@@ -547,6 +547,29 @@ exports[`<Header /> > renders correctly when user logged in 1`] = `
                 <span>
                   savingsAndPension
                 </span>
+                <span
+                  aria-hidden="true"
+                  class="d_inline-flex ml_-1 op_0.75 motionSafe:trs-prop_transform motionSafe:trs-dur_fast motionSafe:trs-tmf_standard"
+                >
+                  <svg
+                    aria-hidden="true"
+                    class="lucide lucide-chevron-down d_inline-block flex-sh_0 c_currentColor va_middle w_16px h_16px"
+                    fill="none"
+                    focusable="false"
+                    height="16"
+                    stroke="currentColor"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="1.75"
+                    viewBox="0 0 24 24"
+                    width="16"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="m6 9 6 6 6-6"
+                    />
+                  </svg>
+                </span>
               </button>
             </li>
             <li
@@ -580,6 +603,29 @@ exports[`<Header /> > renders correctly when user logged in 1`] = `
                 </svg>
                 <span>
                   borrowing
+                </span>
+                <span
+                  aria-hidden="true"
+                  class="d_inline-flex ml_-1 op_0.75 motionSafe:trs-prop_transform motionSafe:trs-dur_fast motionSafe:trs-tmf_standard"
+                >
+                  <svg
+                    aria-hidden="true"
+                    class="lucide lucide-chevron-down d_inline-block flex-sh_0 c_currentColor va_middle w_16px h_16px"
+                    fill="none"
+                    focusable="false"
+                    height="16"
+                    stroke="currentColor"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="1.75"
+                    viewBox="0 0 24 24"
+                    width="16"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="m6 9 6 6 6-6"
+                    />
+                  </svg>
                 </span>
               </button>
             </li>
