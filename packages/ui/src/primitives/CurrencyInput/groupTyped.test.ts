@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { caretAfterGrouping, groupTypedNumber } from "./useNumericText";
+import { caretAfterGrouping, groupTypedNumber, shouldRegroup } from "./useNumericText";
 
 describe("groupTypedNumber", () => {
   it("regroups the whole-number part only", () => {
@@ -29,5 +29,19 @@ describe("caretAfterGrouping", () => {
     // Caret after the first two digits of "12345" stays after them: "12|,345".
     expect(caretAfterGrouping("12,345", 2)).toBe(2);
     expect(caretAfterGrouping("1,234", 0)).toBe(0);
+  });
+});
+
+describe("shouldRegroup", () => {
+  it("regroups a valid number, or one digit typed into or one character deleted from one", () => {
+    expect(shouldRegroup("1234", "123")).toBe(true);
+    expect(shouldRegroup("1,2345", "1,234")).toBe(true);
+    expect(shouldRegroup("12,34", "12,345")).toBe(true);
+  });
+
+  it("leaves a comma typed as a decimal point, and pasted stray commas, as typed", () => {
+    expect(shouldRegroup("1,", "1")).toBe(false);
+    expect(shouldRegroup("1,5", "1,")).toBe(false);
+    expect(shouldRegroup("1,23", "")).toBe(false);
   });
 });

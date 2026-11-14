@@ -221,3 +221,44 @@ describe("typing a decimal figure key by key (R2-5)", () => {
     expect(onValueChange).toHaveBeenLastCalledWith(3412.5);
   });
 });
+
+describe("deleting beside a thousands comma (R2-5)", () => {
+  const setup = () => {
+    const onValueChange = vi.fn();
+    render(<CurrencyInput aria-label="Balance" onValueChange={onValueChange} value={1234} />);
+    const input = screen.getByRole("textbox", { name: "Balance" }) as HTMLInputElement;
+    input.focus();
+    return { input, onValueChange };
+  };
+
+  it("Backspace just after the comma deletes the digit before it", () => {
+    const { input, onValueChange } = setup();
+    expect(input.value).toBe("1,234");
+    // "1,|234" + Backspace removes the comma in the raw value; the caret sits where it was.
+    input.setSelectionRange(1, 1);
+    fireEvent.change(input, { target: { value: "1234", selectionStart: 1 } });
+    expect(input.value).toBe("234");
+    expect(onValueChange).toHaveBeenLastCalledWith(234);
+  });
+});
+
+describe("a comma used as a decimal point (R2-5)", () => {
+  it("is not read as a different number", () => {
+    const onValueChange = vi.fn();
+    const onInvalid = vi.fn();
+    render(
+      <CurrencyInput
+        aria-label="Balance"
+        onInvalid={onInvalid}
+        onValueChange={onValueChange}
+        value={null}
+      />,
+    );
+    const input = screen.getByRole("textbox", { name: "Balance" }) as HTMLInputElement;
+    fireEvent.change(input, { target: { value: "1" } });
+    fireEvent.change(input, { target: { value: "1," } });
+    fireEvent.change(input, { target: { value: "1,5" } });
+    expect(input.value).toBe("1,5");
+    expect(onValueChange).not.toHaveBeenLastCalledWith(15);
+  });
+});
