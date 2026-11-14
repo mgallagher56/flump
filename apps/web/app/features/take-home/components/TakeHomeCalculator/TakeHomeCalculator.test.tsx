@@ -76,9 +76,10 @@ describe("<TakeHomeCalculator /> saved figures", () => {
       <TakeHomeCalculator initialSalary={45000} onApplyIncrease={vi.fn()} />,
       withProfile({ studentLoanPlans: ["PLAN_2"] } as Partial<UserProfile>),
     );
-    // Once as the third KPI, once under its bar segment.
-    expect(getAllByText("Pension and student loan")).toHaveLength(2);
-    expect(getByText("After tax, National Insurance, pension and student loan")).toBeDefined();
+    // Once, as the third KPI: no bar repeats it, and no caption repeats the label.
+    expect(getAllByText("Pension and student loan")).toHaveLength(1);
+    expect(getByText("After tax and deductions")).toBeDefined();
+    expect(container.textContent).not.toContain("Comes off your pay each month");
     expect(container.querySelectorAll("[data-kpi-value]").length).toBe(3);
     fireEvent.click(getByRole("button", { name: "Show details" }));
     expect(getByRole("rowheader", { name: "Student loan" })).toBeDefined();
@@ -197,6 +198,8 @@ describe("<TakeHomeCalculator /> the scenario zone", () => {
     expect(container.querySelector('[data-testid="marginal-rate-explorer"]')).toBeNull();
     openTool(getByRole);
     expect(container.querySelector('[data-testid="marginal-rate-explorer"]')).not.toBeNull();
+    // The pay starts at the saved salary, so it waits under "More options".
+    fireEvent.click(getByRole("button", { name: "More options" }));
     const pay = () => getByLabelText("Pay before tax a year input") as HTMLInputElement;
     expect(pay().value).toBe("£45,000");
     fireEvent.change(getByLabelText("Pay before tax a year"), {

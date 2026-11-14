@@ -21,12 +21,12 @@ export interface TaxHeadlineProps {
 
 const dateFormat = new Intl.DateTimeFormat("en-GB", {
   day: "numeric",
-  month: "long",
+  month: "short",
   year: "numeric",
   timeZone: "UTC",
 });
 
-/** The bill for tax year "2026/27" is due on 31 January after it ends: 31 January 2028. */
+/** The bill for tax year "2026/27" is due on 31 January after it ends: 31 Jan 2028. */
 export const billDueDate = (taxYear: string): Date => {
   const start = Number.parseInt(taxYear.split("/")[0] ?? "", 10);
   return new Date(Date.UTC(start + 2, 0, 31));
@@ -74,7 +74,7 @@ export const TaxHeadline: FC<TaxHeadlineProps> = ({
         emptyAction={emptyAction}
         emptyPrompt="Add income outside PAYE, such as self-employment or rent, to see an estimated tax bill."
         label="Income outside PAYE"
-        subline={hasIncome ? "What you recorded for this tax year, before costs" : undefined}
+        subline={hasIncome ? "Before costs, this tax year" : undefined}
         value={hasIncome ? income : undefined}
         valueFormat={{ fractionDigits: 0 }}
       />
@@ -106,7 +106,7 @@ export const TaxHeadline: FC<TaxHeadlineProps> = ({
             subtext={
               result?.payments.paymentsOnAccountDue
                 ? "This year's bill and a first payment on account"
-                : "Balancing payment"
+                : undefined
             }
             value={
               <span className={cx(kpiMoney(), date())}>

@@ -28,7 +28,7 @@ export const Overview: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     await expect(canvas.getAllByRole("heading", { name: "Take-home pay" })[0]).toBeDefined();
-    await expect(canvas.getAllByText("Where your pay goes")[0]).toBeDefined();
+    await expect(canvas.getAllByRole("button", { name: "Show details" })[0]).toBeDefined();
     await expect(canvas.getAllByRole("tab", { name: "A pay rise" })[0]).toBeDefined();
   },
 };

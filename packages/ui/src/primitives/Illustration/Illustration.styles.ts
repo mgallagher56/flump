@@ -19,11 +19,12 @@ export const sceneClasses = {
   sand: css({
     fill: { base: "surface.sunken", _dark: "surface.subtle", _systemDark: "surface.subtle" },
   }),
-  // The apricot sun is the brightest shape on a dark canvas, so in dark it is a quarter strength
-  // (R2-8). fill-opacity, not opacity, so the halo's own opacity attribute still applies on top.
+  // The apricot sun is the brightest shape in a scene, so it is muted to a tint: about half
+  // strength in light and a quarter in dark, where it would glare on the canvas (R2-8).
+  // fill-opacity, not opacity, so the halo's own opacity attribute still applies on top.
   apricot: css({
     fill: "chart.debt",
-    fillOpacity: { base: "1", _dark: "0.25", _systemDark: "0.25" },
+    fillOpacity: { base: "0.5", _dark: "0.25", _systemDark: "0.25" },
   }),
   sage: css({ fill: "chart.wealth" }),
   tealSoft: css({ fill: "primary.border" }),

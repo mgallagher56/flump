@@ -39,6 +39,19 @@ const ReturnHarness = ({ removable = false }: { removable?: boolean }) => {
 };
 
 describe("Dialog primitive ARIA and footer", () => {
+  it("caps its height in dynamic viewport units and sits above the bottom bar (R2-8)", () => {
+    render(
+      <Dialog open onOpenChange={() => {}} title="Add a record">
+        x
+      </Dialog>,
+    );
+    const dialog = screen.getByRole("dialog");
+    expect(dialog.className).toContain("max-h_94dvh");
+    expect(dialog.className).not.toMatch(/max-h_\d+vh/);
+    // MobileBottomBar uses zIndex "header" (20); the overlay sits far above it.
+    expect(dialog.parentElement?.className).toContain("z_200");
+  });
+
   it("is labelled by its title and described by its description", () => {
     render(
       <Dialog open onOpenChange={() => {}} title="Add liability" description="Log a debt">

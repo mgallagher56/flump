@@ -23,7 +23,9 @@ export const dialogContentRecipe = cva({
     borderColor: "border.subtle",
     boxShadow: "overlay",
     width: "100%",
-    maxHeight: { base: "94vh", md: "85vh" },
+    // Dynamic viewport units: on a phone `vh` counts the area under the browser's toolbars, so a
+    // tall dialog's last field and actions sat behind the toolbar and the bottom bar (R2-8).
+    maxHeight: { base: "94dvh", md: "85dvh" },
     overflowY: "auto",
     padding: { base: "5", sm: "7" },
     display: "flex",

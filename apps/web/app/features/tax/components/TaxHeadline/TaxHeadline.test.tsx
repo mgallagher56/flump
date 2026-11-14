@@ -18,7 +18,7 @@ describe("TaxHeadline", () => {
     expect(screen.getByText("Bill due")).toBeDefined();
     expect(screen.getByText("Income after costs")).toBeDefined();
     expect(container.querySelectorAll("[data-kpi-value]").length).toBe(3);
-    expect(screen.getByText("31 January 2028")).toBeDefined();
+    expect(screen.getByText("31 Jan 2028")).toBeDefined();
     expect(container.textContent).not.toMatch(/£[\d,]+\.\d{2}/);
   });
 

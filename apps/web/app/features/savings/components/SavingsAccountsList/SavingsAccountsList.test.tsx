@@ -43,7 +43,8 @@ describe("<SavingsAccountsList />", () => {
     expect(screen.getByText("Your accounts")).toBeDefined();
     const row = container.querySelector("[data-list-row]") as HTMLElement;
     expect(row.textContent).toContain("High Yield Saver");
-    expect(row.textContent).toContain("£10,000");
+    // With one account the hero carries the balance, so the row leaves it out.
+    expect(row.textContent).not.toContain("£10,000");
     expect(row.textContent).not.toContain("4.75%");
     expect(row.textContent).not.toContain("£250");
     expect(screen.getByRole("link", { name: "High Yield Saver" }).getAttribute("href")).toBe(

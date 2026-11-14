@@ -1,11 +1,16 @@
 import { monthsToTarget } from "@flump/finance-engine";
-import { formatMoney, niceStep, SimulatorSplitLayout, SliderField } from "@repo/ui";
+import {
+  formatMoney,
+  formatMonthTick,
+  niceStep,
+  SimulatorSplitLayout,
+  SliderField,
+} from "@repo/ui";
 import type { FC } from "react";
 import { formatDuration } from "../SavingsForecast/savingsForecast.utils";
 import {
   timelineControls,
   timelineLabel,
-  timelineNote,
   timelineOutcome,
   timelineSupport,
   timelineSupportItem,
@@ -37,12 +42,15 @@ export interface DepositTimelineProps {
 
 export const DEPOSIT_EMPTY_TEXT = "Enter a target amount to see an estimate.";
 
+/** The outcome label: it carries the one assumption, so no separate note is needed. */
+export const DEPOSIT_OUTCOME_LABEL = "Time to your target, not counting interest";
+
 /**
- * The target the tool opens with: the next round £1,000 above the starting amount. An
+ * The target the tool opens with: the next round £5,000 above the starting amount. An
  * illustration so the tab never opens empty, never a suggested goal.
  */
 export const defaultDepositTarget = (startingAmount: number | null): number =>
-  (Math.floor(Math.max(0, startingAmount ?? 0) / 1000) + 1) * 1000;
+  (Math.floor(Math.max(0, startingAmount ?? 0) / 5000) + 1) * 5000;
 
 /** A round slider top at least `value`, never below `floor`. */
 const roundUp = (value: number, floor: number): number => {
@@ -99,11 +107,12 @@ export function depositOutcomeText(values: DepositTimelineValues): string {
   return `Estimated time to reach target: ${formatDuration(outcome.months)}`;
 }
 
-const monthYear = new Intl.DateTimeFormat("en-GB", { month: "long", year: "numeric" });
-
-/** The month a target is met, `months` whole months after `today`: "May 2027". */
+/**
+ * The month a target is met, `months` whole months after `today`, as a short date: "Sep 2027"
+ * (three-letter months, copy guide 4.3). Built in UTC so the month never shifts.
+ */
 export const reachedByMonth = (today: Date, months: number): string =>
-  monthYear.format(new Date(today.getFullYear(), today.getMonth() + months, 1));
+  formatMonthTick(new Date(Date.UTC(today.getFullYear(), today.getMonth() + months, 1)));
 
 const money = (n: number) => formatMoney(n, { fractionDigits: 0 }).text;
 
@@ -153,7 +162,8 @@ export const DepositTimeline: FC<DepositTimelineProps> = ({
         <div className={timelineOutcome()}>
           {outcome.kind === "months" ? (
             <>
-              <p className={timelineLabel()}>Estimated time to reach {money(outcome.target)}</p>
+              {/* The target is the input beside it, so the label does not repeat it. */}
+              <p className={timelineLabel()}>{DEPOSIT_OUTCOME_LABEL}</p>
               <p
                 className={timelineValue()}
                 data-testid="deposit-timeline-outcome"
@@ -181,9 +191,6 @@ export const DepositTimeline: FC<DepositTimelineProps> = ({
               {depositOutcomeText(values)}
             </p>
           )}
-          <p className={timelineNote()}>
-            This estimate does not include interest or changes in investment value.
-          </p>
         </div>
       }
     />

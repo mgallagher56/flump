@@ -74,20 +74,16 @@ describe("<TakeHomeBreakdown />", () => {
 
   it("adds a student loan row only when there is a repayment", () => {
     render(<TakeHomeBreakdown {...base} studentLoan={1400} />);
-    expect(screen.getByText("Pension and student loan")).toBeDefined();
     openDetails();
     expect(screen.getByRole("rowheader", { name: "Student loan" })).toBeDefined();
   });
 
-  it("draws a decorative bar of three parts, each labelled under the bar, with no figure", () => {
+  it("shows no bar, heading or figure until the details are opened", () => {
     const { container } = render(<TakeHomeBreakdown {...base} />);
-    const bar = screen.getByTestId("pay-bar");
-    expect(bar.closest('[aria-hidden="true"]')).not.toBeNull();
-    expect(bar.querySelectorAll("rect")).toHaveLength(3);
-    const labels = [...container.querySelectorAll("li")].map((li) => li.textContent);
-    expect(labels).toEqual(["Take-home pay", "Tax and National Insurance", "Pension"]);
+    expect(screen.queryByTestId("pay-bar")).toBeNull();
+    expect(screen.queryByRole("heading")).toBeNull();
     expect(container.textContent).not.toMatch(/£/);
-    expect(screen.getByRole("heading", { level: 2, name: "Where your pay goes" })).toBeDefined();
+    expect(screen.getByRole("region", { name: "Where your pay goes" })).toBeDefined();
   });
 
   it("puts the details slot inside the disclosure, under the table", () => {

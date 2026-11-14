@@ -80,11 +80,11 @@ describe("<NextPoundExplorer />", () => {
     const fetchSpy = vi.spyOn(globalThis, "fetch");
     render(<Harness seed={saved} />);
     expect(screen.getByTestId("modified").textContent).toBe("false");
+    // The saved pay and the pension action sit inside "More options".
+    fireEvent.click(screen.getByRole("button", { name: "More options" }));
     expect((screen.getByLabelText("Pay before tax a year input") as HTMLInputElement).value).toBe(
       "£45,000",
     );
-    // The pension action sits inside "More options".
-    fireEvent.click(screen.getByRole("button", { name: "More options" }));
     fireEvent.click(screen.getByRole("button", { name: "Model a pension contribution" }));
     expect(
       (screen.getByLabelText("Extra pension contribution input") as HTMLInputElement).value,

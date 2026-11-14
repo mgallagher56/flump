@@ -8,6 +8,7 @@ import { useFetcherOutcome } from "~/features/feedback/hooks/useFetcherOutcome";
 import { AddPensionAccountDialog } from "../AddPensionAccountDialog";
 import {
   drawerWrap,
+  editLabel,
   listRoot,
   potActions,
   potBalance,
@@ -26,7 +27,8 @@ export interface PensionAccountsListProps {
 const VISIBLE_ROWS = 8;
 
 /**
- * "Your pots": one figure per row (the balance, E16 P1.4) and one "Edit" button. The growth rate,
+ * "Your pots": one figure per row (the balance, E16 P1.4; left out with a single pot, whose balance
+ * is the hero) and one "Edit" button. The growth rate,
  * extra monthly payment and "Delete pot" live in each pot's edit dialog, and its history on the
  * account page. Renders nothing when there
  * are no pots: the page's hero carries the one "Add pension pot" prompt.
@@ -39,6 +41,7 @@ export const PensionAccountsList: FC<PensionAccountsListProps> = ({ accounts }) 
   const deleteOutcome = useFetcherOutcome(fetcher, { onSuccess: () => setAccountToDelete(null) });
 
   if (accounts.length === 0) return null;
+  const showBalances = accounts.length > 1;
 
   const confirmDelete = () => {
     if (!accountToDelete?.id) return;
@@ -69,9 +72,12 @@ export const PensionAccountsList: FC<PensionAccountsListProps> = ({ accounts }) 
               {acc.isCurrent === false ? "Past pot" : "Current pot"}
             </span>
           </span>
-          <span className={potBalance()}>
-            <Money fractionDigits={0} size="sm" value={Number(acc.balance) || 0} />
-          </span>
+          {/* With one pot the hero already shows its balance, so the row does not repeat it. */}
+          {showBalances && (
+            <span className={potBalance()}>
+              <Money fractionDigits={0} size="sm" value={Number(acc.balance) || 0} />
+            </span>
+          )}
           {/* One edit affordance per row: delete lives inside the pot's edit dialog. */}
           <span className={potActions()}>
             <Button
@@ -82,7 +88,8 @@ export const PensionAccountsList: FC<PensionAccountsListProps> = ({ accounts }) 
               onClick={() => setEditingAccount(acc)}
             >
               <Icon icon={Pencil} size="sm" />
-              Edit
+              {/* Icon only below sm, so long names keep one line; the aria-label names it. */}
+              <span className={editLabel()}>Edit</span>
             </Button>
           </span>
         </li>

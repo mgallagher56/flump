@@ -111,9 +111,9 @@ export function formatDuration(totalMonths: number): string {
 export const formatYears = (years: number): string => plural(years, "year", "years");
 
 const rateFormat = new Intl.NumberFormat("en-GB", {
-  minimumFractionDigits: 1,
+  minimumFractionDigits: 0,
   maximumFractionDigits: 1,
 });
 
-/** A computed rate, to 1 decimal place like the rate slider (plan P8): "4.0%", "6.4%". */
+/** A computed rate, to at most 1 decimal place like the rate slider (plan P8): "4%", "6.4%". */
 export const formatRate = (rate: number): string => `${rateFormat.format(rate)}%`;

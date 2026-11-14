@@ -46,7 +46,3 @@ export const timelineSupportItem = cva({
     },
   },
 });
-
-export const timelineNote = cva({
-  base: { textStyle: "body.sm", color: "text.muted", margin: "0", mt: "4" },
-});

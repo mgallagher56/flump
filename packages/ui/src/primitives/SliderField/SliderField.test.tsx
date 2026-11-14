@@ -264,4 +264,21 @@ describe("SliderField Primitive", () => {
     expect(cancel).toHaveBeenCalled();
     cancel.mockRestore();
   });
+
+  it("keeps a suffix's leading space in the pill (R2-8)", () => {
+    render(
+      <SliderField
+        label="Years"
+        max={40}
+        min={1}
+        unitSuffix=" years"
+        value={5}
+        onChange={vi.fn()}
+      />,
+    );
+    const suffix = screen.getByText(" years", { normalizer: (s) => s });
+    expect(suffix.textContent).toBe(" years");
+    // The pill is a flex row, which drops a flex item's leading space unless it is preserved.
+    expect(suffix.className).toContain("white-space_pre");
+  });
 });

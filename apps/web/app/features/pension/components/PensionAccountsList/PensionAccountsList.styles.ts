@@ -83,3 +83,8 @@ export const potActions = cva({
 export const drawerWrap = cva({
   base: { px: "4", pb: "2" },
 });
+
+/** The "Edit" word shows from sm up; below it the button is the pencil alone. */
+export const editLabel = cva({
+  base: { display: { base: "none", sm: "inline" } },
+});

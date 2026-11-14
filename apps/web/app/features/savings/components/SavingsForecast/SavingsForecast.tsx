@@ -95,6 +95,9 @@ const pounds = new Intl.NumberFormat("en-GB", {
 const CHIP_HEIGHT = 22;
 const CHIP_PADDING = 8;
 const CHIP_CHAR_WIDTH = 7;
+/** The chip's right edge sits on the end dot's right edge (its radius), just above the dot. */
+const CHIP_ANCHOR_X = 5;
+const CHIP_ANCHOR_GAP = 9;
 
 /** Whole pounds, en-GB (P8). */
 const money = (n: number): string => pounds.format(Math.round(n));
@@ -185,8 +188,9 @@ export const SavingsForecast: FC<SavingsForecastProps> = ({
       />
       <SliderField
         format="percent"
-        fractionDigits={1}
-        label="Average rate (AER)"
+        // Whole rates read "4%", others keep one decimal place: "4.5%".
+        fractionDigits={values.rate !== null && Number.isInteger(values.rate) ? 0 : 1}
+        label="Rate (AER)"
         max={10}
         min={0}
         step={0.1}
@@ -292,8 +296,10 @@ export const SavingsForecast: FC<SavingsForecastProps> = ({
         summary={
           result.flat
             ? "In this estimate your balance stays the same."
-            : `Estimated balance each year${values.todaysMoney ? " in today's money" : ""}, with interest added monthly. Real returns can differ.`
+            : `Estimated balance each year${values.todaysMoney ? " in today's money" : ""}, with interest added monthly.`
         }
+        // The outcome above names what the chart shows, so the title is for screen readers.
+        hideTitle
         title="Estimated savings balance"
       >
         <div className={chartWrap()}>
@@ -349,10 +355,11 @@ export const SavingsForecast: FC<SavingsForecastProps> = ({
               {last ? (
                 <ReferenceDot
                   fill={chartColor("wealth")}
-                  // Direct label above and left of the end point, on a chip (P10.3).
+                  // Direct label on a chip whose right edge lines up with the end dot, just above
+                  // it, so it reads as the dot's label (P10.3).
                   label={({ viewBox }: { viewBox?: { x?: number; y?: number } }) => {
-                    const x = (viewBox?.x ?? 0) - 6;
-                    const y = (viewBox?.y ?? 0) - 8;
+                    const x = (viewBox?.x ?? 0) + CHIP_ANCHOR_X;
+                    const y = (viewBox?.y ?? 0) - CHIP_ANCHOR_GAP;
                     const width = endLabel.length * CHIP_CHAR_WIDTH + CHIP_PADDING * 2;
                     return (
                       <g>

@@ -84,7 +84,8 @@ export const tableElement = cva({
     width: "100%",
     textAlign: "start",
     color: "text.primary",
-    fontVariantNumeric: "tabular-nums",
+    // Tabular figures live on `numeric` cells only: Inter's tnum also widens the hyphen, so a
+    // word cell such as "Self-employed" read as "Self - employed" (R2-8).
   },
   variants: {
     appearance: {
@@ -176,8 +177,12 @@ export const thRecipe = cva({
       classic: { paddingBlock: "10px" },
       soft: { paddingBlock: "12px" },
     },
+    numeric: {
+      true: { fontVariantNumeric: "tabular-nums" },
+      false: { fontVariantNumeric: "normal" },
+    },
   },
-  defaultVariants: { align: "start", appearance: "classic" },
+  defaultVariants: { align: "start", appearance: "classic", numeric: false },
 });
 
 export const tdRecipe = cva({
@@ -195,7 +200,10 @@ export const tdRecipe = cva({
       classic: { whiteSpace: "nowrap" },
       soft: {},
     },
-    numeric: { true: { whiteSpace: "nowrap", fontVariantNumeric: "tabular-nums" }, false: {} },
+    numeric: {
+      true: { whiteSpace: "nowrap", fontVariantNumeric: "tabular-nums" },
+      false: { fontVariantNumeric: "normal" },
+    },
   },
   defaultVariants: { align: "start", appearance: "classic", numeric: false },
 });

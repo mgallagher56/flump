@@ -38,7 +38,7 @@ export const Default: Story = {
   play: async ({ canvasElement, args }) => {
     const canvas = within(canvasElement);
     await expect(canvas.getAllByText("Monthly take-home pay")[0]).toBeDefined();
-    await expect(canvas.getAllByText("Where your pay goes")[0]).toBeDefined();
+    await expect(canvas.getAllByRole("button", { name: "Show details" })[0]).toBeDefined();
     const button = canvas.getAllByRole("button", { name: "Model this in savings" })[0];
     if (!button) throw new Error("Button missing");
     await userEvent.click(button);

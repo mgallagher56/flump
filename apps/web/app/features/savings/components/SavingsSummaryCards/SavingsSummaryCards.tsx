@@ -12,6 +12,8 @@ export interface SavingsSummaryCardsProps {
   averageRate: number | null;
   /** ISA allowance used this tax year. Null or 0 reads "None this tax year". */
   isaUsed: number | null;
+  /** True when an account has ISA in its name. False hides the ISA card. */
+  hasIsaAccount: boolean;
 }
 
 const isReal = (value: number | null): value is number =>
@@ -35,14 +37,16 @@ export const SavingsSummaryCards: FC<SavingsSummaryCardsProps> = ({
   monthlySaving,
   averageRate,
   isaUsed,
+  hasIsaAccount,
 }) => {
   const cards: ReactElement[] = [];
+  const single = accountCount === 1;
   if (isReal(monthlySaving)) {
     cards.push(
       <KpiCard
         key="monthly"
         label="Saved each month"
-        subtext="Across your accounts"
+        subtext={single ? "Into your account" : "Across your accounts"}
         value={Math.round(monthlySaving)}
         valueFormat={{ fractionDigits: 0 }}
       />,
@@ -52,15 +56,15 @@ export const SavingsSummaryCards: FC<SavingsSummaryCardsProps> = ({
     cards.push(
       <KpiCard
         key="rate"
-        label="Average rate"
-        subtext="AER across your accounts"
+        label={single ? "Rate" : "Average rate"}
+        subtext={single ? "AER on your account" : "AER across your accounts"}
         value={<span className={kpiFigure()}>{formatRate(averageRate)}</span>}
       />,
     );
   }
-  // Shown whenever another fact is, so every strip holds three (R2-8). With no ISA saving it
-  // reads "None" (this tax year): a fact about the saved accounts, never a judgement.
-  if (cards.length > 0) {
+  // Shown only when an account has ISA in its name (round 3): with no ISA a "None" card says
+  // nothing new, so the strip holds two. With an ISA and no monthly saving it reads "None".
+  if (cards.length > 0 && hasIsaAccount) {
     cards.push(
       <KpiCard
         explain={ISA_EXPLAIN}

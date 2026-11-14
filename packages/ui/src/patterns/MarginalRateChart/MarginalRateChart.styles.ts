@@ -11,6 +11,16 @@ export const marginalRateFigure = cva({
     // nearly fits into two half lines; wrap normally so it keeps one line when it fits.
     "& > figcaption > :is(h2, h3, h4)": { textStyle: "heading.sm", textWrap: "wrap" },
   },
+  variants: {
+    // In a ScenarioZone the chart sits under the outcome, so its title is a strong body line.
+    variant: {
+      full: {},
+      zone: {
+        "& > figcaption > :is(h2, h3, h4)": { textStyle: "body.md", fontWeight: "semibold" },
+      },
+    },
+  },
+  defaultVariants: { variant: "full" },
 });
 
 /** Labels drawn on the chart itself, in place of a legend (P10.2). */

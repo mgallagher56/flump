@@ -71,6 +71,18 @@ export const NearPay: Story = {
 
 export const NearPayDark: Story = { ...NearPay, globals: { theme: "dark" } };
 
+/** As on the signed-in take-home page: one marker, the line named at its end, no axis title. */
+export const Zone: Story = {
+  args: { variant: "zone", steppedZones: [], title: "Share deducted, by pay", yourPay: 32_000 },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(canvas.queryAllByTestId("marginal-rate-threshold")).toHaveLength(0);
+    await expect(canvas.getByTestId("marginal-rate-line-label")).toBeInTheDocument();
+  },
+};
+
+export const ZoneDark: Story = { ...Zone, globals: { theme: "dark" } };
+
 export const Mobile: Story = {
   parameters: { viewport: { defaultViewport: "mobile1" } },
 };

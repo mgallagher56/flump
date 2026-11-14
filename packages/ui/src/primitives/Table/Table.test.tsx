@@ -288,4 +288,29 @@ describe("Table Primitive", () => {
     widths.mockRestore();
     client.mockRestore();
   });
+
+  it("keeps tabular figures on numeric cells only, so word cells keep a normal hyphen (R2-8)", () => {
+    // Inter's tnum widens "-" (7.4px to 10.4px at 16px), so "Self-employed" read "Self - employed".
+    const { container } = render(
+      <Table>
+        <THead>
+          <tr>
+            <Th>Employment</Th>
+            <Th numeric>Income</Th>
+          </tr>
+        </THead>
+        <TBody>
+          <tr>
+            <Td>Self-employed</Td>
+            <Td numeric>£1,234</Td>
+          </tr>
+        </TBody>
+      </Table>,
+    );
+    expect(container.querySelector("table")?.className).not.toContain("tabular-nums");
+    expect(screen.getByText("Self-employed").className).not.toContain("tabular-nums");
+    expect(screen.getByText("Employment").className).not.toContain("tabular-nums");
+    expect(screen.getByText("£1,234").className).toContain("tabular-nums");
+    expect(screen.getByText("Income").className).toContain("tabular-nums");
+  });
 });

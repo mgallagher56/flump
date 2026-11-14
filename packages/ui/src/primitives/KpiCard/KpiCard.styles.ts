@@ -37,17 +37,26 @@ export const kpiCardContainer = cva({
   defaultVariants: { tone: "default" },
 });
 
+/**
+ * The label row is one fixed line height (the 24px InfoTip trigger), so a card with an explain
+ * tip or an action badge has its value on the same line as a card with neither (R2-8).
+ */
 export const kpiEyebrow = cva({
   base: {
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
     gap: "2",
+    minHeight: "6",
   },
 });
 
 export const kpiLabel = cva({
   base: {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: "1",
+    minHeight: "6",
     textStyle: "label.sm",
     color: "text.muted",
     minWidth: 0,
@@ -73,6 +82,16 @@ export const kpiValueRow = cva({
     alignItems: "baseline",
     flexWrap: "wrap",
     gap: "2",
+  },
+});
+
+/** Holds the `action` badge at the label row's height, so a badge never makes the row taller. */
+export const kpiAction = cva({
+  base: {
+    display: "flex",
+    alignItems: "center",
+    flex: "none",
+    height: "6",
   },
 });
 

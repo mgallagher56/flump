@@ -190,7 +190,7 @@ export const Th: FC<ThProps> = ({
   return (
     <th
       className={cx(
-        thRecipe({ align: align ?? (numeric ? "end" : "start"), appearance }),
+        thRecipe({ align: align ?? (numeric ? "end" : "start"), appearance, numeric }),
         className,
       )}
       role={stacked ? (resolvedScope === "row" ? "rowheader" : "columnheader") : undefined}

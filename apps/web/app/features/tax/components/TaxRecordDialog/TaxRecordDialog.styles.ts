@@ -6,7 +6,22 @@ export const form = cva({
     flexDirection: "column",
     gap: "4",
     marginTop: "4",
-    fontVariantNumeric: "tabular-nums",
+    // No form-wide tabular-nums: Inter's tnum widens the hyphen ("Self - employed"). The amount
+    // and date inputs carry their own tabular figures (R2-8).
+  },
+});
+
+/**
+ * Category and notes, under the quiet "More details" toggle. The drawer body sets tabular-nums
+ * for schedules; these are words, so reset it and keep hyphens narrow (R2-8).
+ */
+export const moreDetails = cva({
+  base: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "4",
+    paddingTop: "3",
+    fontVariantNumeric: "normal",
   },
 });
 
@@ -32,6 +47,11 @@ export const receiptLabel = cva({
 
 export const receiptHint = cva({
   base: { textStyle: "body.sm", color: "text.muted", margin: 0 },
+});
+
+/** A failed save, inside the dialog. */
+export const saveErrorText = cva({
+  base: { textStyle: "body.sm", color: "text.primary", margin: 0 },
 });
 
 export const receiptChosen = cva({
@@ -102,12 +122,26 @@ export const uploadLabel = cva({
   },
 });
 
+/**
+ * Sticky to the bottom of the scrolling dialog, so Cancel and Save are always in view at 375px
+ * (R2-8). The negative inset and matching padding cover the dialog's own bottom padding, so
+ * fields scroll under the bar rather than showing through the gap.
+ */
 export const footer = cva({
   base: {
+    position: "sticky",
+    bottom: { base: "-5", sm: "-7" },
     display: "flex",
     justifyContent: "flex-end",
     flexWrap: "wrap",
     gap: "2",
     marginTop: "2",
+    marginBottom: { base: "-5", sm: "-7" },
+    paddingTop: "3",
+    paddingBottom: { base: "5", sm: "7" },
+    backgroundColor: "surface.overlay",
+    borderTopWidth: "1px",
+    borderTopStyle: "solid",
+    borderTopColor: "border.subtle",
   },
 });

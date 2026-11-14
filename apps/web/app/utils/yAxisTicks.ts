@@ -34,6 +34,12 @@ export const nearDataAxis = (values: readonly number[]): NearDataAxis => {
     let lo = Math.floor(min / pad) * pad;
     const hi = Math.ceil(max / pad) * pad;
     if (min >= 0 && lo < 0) lo = 0;
+    // Small positive data (a £9,000 pot rising to £206,000) would floor to £0: start a little
+    // below the lowest value instead, on a fifth of the padding, so the axis stays near the data.
+    if (lo === 0 && min > 0) {
+      const grid = pad / 5;
+      lo = Math.max(0, Math.floor((min - pad / 4) / grid) * grid);
+    }
     const ticks: number[] = [];
     for (let v = Math.ceil(lo / step) * step; v <= hi + step / 1e6; v += step) {
       ticks.push(Math.round(v));

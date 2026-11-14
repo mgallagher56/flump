@@ -32,7 +32,8 @@ describe("<ForecasterResults />", () => {
       />,
     );
     expect(screen.getByText("Estimated pot at retirement")).toBeDefined();
-    expect(screen.getByText("Tax-free lump sum")).toBeDefined();
+    // The tax-free lump sum sits behind the chart's "Show data": one outcome figure here.
+    expect(screen.queryByText("Tax-free lump sum")).toBeNull();
     // The saved monthly income is the page's KPI: the outcome never repeats it.
     expect(document.body.textContent).not.toContain("a month");
     expect(screen.queryByText("Change in monthly income")).toBeNull();

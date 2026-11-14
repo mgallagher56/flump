@@ -104,6 +104,8 @@ export function getMarginalRateExplorerDefaults(now?: Date): MarginalRateExplore
 const DELTA_GROSS = 1000;
 const CURVE_MAX = 150_000;
 const EXTRA_PENSION_START = 1000;
+/** The chart's shorter title in a ScenarioZone, where the outcome above already names the £1,000. */
+const ZONE_CHART_TITLE = "Share deducted, by pay";
 const PLAN_ORDER: readonly UkStudentLoanPlanKey[] = [
   "plan1",
   "plan2",
@@ -316,17 +318,23 @@ export const MarginalRateExplorer: FC<MarginalRateExplorerProps> = ({
 
   const set = onChange;
 
+  const grossPaySlider = (
+    <SliderField
+      format="currency"
+      label={EXPLORER_COPY.grossPay}
+      max={150_000}
+      min={0}
+      step={500}
+      value={grossPay}
+      onChange={(v) => set("grossPay", v)}
+    />
+  );
+
+  // In a ScenarioZone the pay starts at the saved salary, which the page's hero already shows, so
+  // its slider waits under "More options" and the bonus is the one input in view.
   const controls = (
     <div className={explorerControls()}>
-      <SliderField
-        format="currency"
-        label={EXPLORER_COPY.grossPay}
-        max={150_000}
-        min={0}
-        step={500}
-        value={grossPay}
-        onChange={(v) => set("grossPay", v)}
-      />
+      {inScenarioZone ? null : grossPaySlider}
       <SliderField
         format="currency"
         label={EXPLORER_COPY.bonus}
@@ -347,6 +355,7 @@ export const MarginalRateExplorer: FC<MarginalRateExplorerProps> = ({
         variant={inScenarioZone ? "quiet" : undefined}
       >
         <div className={explorerDetails()}>
+          {inScenarioZone ? grossPaySlider : null}
           <FormField label={EXPLORER_COPY.region}>
             {(field) => (
               <Select
@@ -498,9 +507,9 @@ export const MarginalRateExplorer: FC<MarginalRateExplorerProps> = ({
         summary={summary}
         showDataTable={!inScenarioZone}
         showThresholdNote={!inScenarioZone}
-        thresholdFocus={inScenarioZone ? "near-pay" : "all"}
         thresholds={thresholds}
-        title={EXPLORER_COPY.chartTitle}
+        title={inScenarioZone ? ZONE_CHART_TITLE : EXPLORER_COPY.chartTitle}
+        variant={inScenarioZone ? "zone" : "full"}
         yourPay={inRange ? yourGross : undefined}
       />
       <TakeHomeDeltaPanel
@@ -511,13 +520,12 @@ export const MarginalRateExplorer: FC<MarginalRateExplorerProps> = ({
         disclosureExtra={
           inScenarioZone ? (
             <>
-              {/* In the zone the tax year, the rest of the £1,000 and the dashed lines are
-                  explained here, so the first view keeps to the outcome and the chart. */}
+              {/* In the zone the tax year and the rest of the £1,000 are explained here, so the
+                  first view keeps to the outcome and the chart (which draws no threshold lines). */}
               <div className={explorerBadges()}>
                 <StatusBadge variant="neutral">{asAtTaxYear(delta.before.ratesYear)}</StatusBadge>
               </div>
               <p className={explorerOutcomeCaption()}>{EXPLORER_COPY.kpiNextThousandSubtext}</p>
-              <p className={explorerOutcomeCaption()}>{EXPLORER_COPY.chartThresholdsNote}</p>
               <MarginalRateDataTable
                 caption={EXPLORER_COPY.chartTitle}
                 rows={marginalRateTableRows(points)}

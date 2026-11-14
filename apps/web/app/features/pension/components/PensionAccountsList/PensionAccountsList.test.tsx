@@ -58,13 +58,13 @@ describe("PensionAccountsList", () => {
     expect(container.textContent).not.toMatch(/%/);
   });
 
-  it("shows the balance on a single pot and one edit button per row, with no delete button", () => {
+  it("leaves the balance off a single pot (the hero shows it), with one edit button and no delete", () => {
     const { container } = render(
       <PensionAccountsList
         accounts={[{ id: "p1", name: "Workplace pension", type: "Pension", balance: 96000 }] as any}
       />,
     );
-    expect(container.querySelector("[data-list-row]")?.textContent).toContain("£96,000");
+    expect(container.querySelector("[data-list-row]")?.textContent).not.toContain("£96,000");
     expect(screen.getByRole("button", { name: "Edit Workplace pension" })).toBeDefined();
     expect(screen.queryByRole("button", { name: /Delete/ })).toBeNull();
   });

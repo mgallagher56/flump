@@ -214,3 +214,46 @@ export const Classic: Story = {
     </Table>
   ),
 };
+
+/**
+ * R2-8: a word with a hyphen beside a money figure. Only the `numeric` cell has tabular figures,
+ * because Inter's tnum also widens the hyphen ("Self - employed").
+ */
+const WordsAndFigures = () => (
+  <Table caption="Income by employment">
+    <THead>
+      <tr>
+        <Th>Employment</Th>
+        <Th numeric>Income</Th>
+      </tr>
+    </THead>
+    <TBody>
+      <tr>
+        <Td>Self-employed</Td>
+        <Td numeric>£1,234</Td>
+      </tr>
+    </TBody>
+  </Table>
+);
+
+const wordsAndFiguresPlay: Story["play"] = async ({ canvasElement }) => {
+  const canvas = within(canvasElement);
+  await expect(getComputedStyle(canvas.getByText("Self-employed")).fontVariantNumeric).toBe(
+    "normal",
+  );
+  await expect(getComputedStyle(canvas.getByText("£1,234")).fontVariantNumeric).toBe(
+    "tabular-nums",
+  );
+};
+
+export const HyphenInWordCell: Story = {
+  render: () => <WordsAndFigures />,
+  globals: { theme: "light" },
+  play: wordsAndFiguresPlay,
+};
+
+export const HyphenInWordCellDark: Story = {
+  render: () => <WordsAndFigures />,
+  globals: { theme: "dark" },
+  play: wordsAndFiguresPlay,
+};

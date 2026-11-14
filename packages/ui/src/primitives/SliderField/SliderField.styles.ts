@@ -77,8 +77,12 @@ export const sliderPillInput = cva({
   },
 });
 
+/**
+ * `pre` keeps an affix's own spaces: the pill is a flex row, and a flex item's leading space is
+ * otherwise dropped, so `unitSuffix=" years"` read "5years" (R2-8).
+ */
 export const sliderPillAffix = cva({
-  base: { color: "text.secondary", fontVariantNumeric: "tabular-nums" },
+  base: { color: "text.secondary", fontVariantNumeric: "tabular-nums", whiteSpace: "pre" },
 });
 
 export const sliderHelperText = cva({

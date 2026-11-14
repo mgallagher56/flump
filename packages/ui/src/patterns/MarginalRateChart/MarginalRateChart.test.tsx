@@ -22,6 +22,25 @@ const renderChart = (props: Partial<React.ComponentProps<typeof MarginalRateChar
   );
 
 describe("MarginalRateChart", () => {
+  it("in the zone draws one marker, no thresholds or axis title, and names the line at its end", () => {
+    renderChart({ variant: "zone", steppedZones: [], yourPay: 32_000 });
+    expect(screen.queryAllByTestId("marginal-rate-threshold")).toHaveLength(0);
+    expect(screen.getByTestId("marginal-rate-your-pay")).toBeDefined();
+    expect(screen.queryByText("Pay before tax")).toBeNull();
+    const label = screen.getByTestId("marginal-rate-line-label");
+    expect(label.getAttribute("text-anchor")).toBe("end");
+  });
+
+  it("starts the line where a fall at the very start ends", () => {
+    renderChart({
+      points: [{ gross: 0, ratePct: 100 }, { gross: 250, ratePct: 100 }, ...SAMPLE_POINTS.slice(2)],
+    });
+    const line = screen.getByTestId("marginal-rate-line").getAttribute("points") ?? "";
+    expect(line.split(" ")).toHaveLength(SAMPLE_POINTS.length - 2);
+    // The 100% edge value at £0 no longer sets the top of the axis.
+    expect(screen.queryByText("100%")).toBeNull();
+  });
+
   it("is a named figure with the caller's summary", () => {
     renderChart();
     expect(

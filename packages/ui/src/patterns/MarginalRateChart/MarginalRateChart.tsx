@@ -87,6 +87,12 @@ export interface MarginalRateChartProps {
    * false only when the caller shows `EXPLORER_COPY.chartThresholdsNote` elsewhere on the view.
    */
   showThresholdNote?: boolean;
+  /**
+   * "full" (default) is the tool pages' chart. "zone" is the quieter chart inside a ScenarioZone:
+   * one marker ("Your pay") and no threshold lines, no axis title, the line named at its end and
+   * a strong body-size title.
+   */
+  variant?: "full" | "zone";
   className?: string;
 }
 
@@ -226,6 +232,27 @@ export const lineLabelSpot = (
   return { x: Math.max(left, Math.min(best.from, right - labelW)), clear: best.width >= labelW };
 };
 
+/**
+ * The points the line is drawn through: from the end of any fall at the very start. At the lowest
+ * pay a fixed pension contribution can take all of the next £1,000, so the curve opens with a
+ * spike from 100% down to the first band; it says nothing about any real pay and pushes the axis
+ * to 100%. The maths and the data table keep every point.
+ */
+export const clipLeadingDrop = (
+  points: readonly MarginalRatePoint[],
+): readonly MarginalRatePoint[] => {
+  // Walk the opening stretch while the line does not rise; start after its last fall. A line that
+  // opens flat (no pension: 0% up to the Personal Allowance) has no fall, so nothing is clipped.
+  let start = 0;
+  for (let i = 0; i < points.length - 1; i++) {
+    const here = points[i]?.ratePct ?? 0;
+    const next = points[i + 1]?.ratePct ?? 0;
+    if (next > here) break;
+    if (next < here) start = i + 1;
+  }
+  return start === 0 ? points : points.slice(start);
+};
+
 const xTickStep = (max: number) => Math.max(10_000, Math.ceil(max / 3 / 10_000) * 10_000);
 
 /**
@@ -265,8 +292,10 @@ export const MarginalRateChart: FC<MarginalRateChartProps> = ({
   thresholdFocus = "all",
   showDataTable = true,
   showThresholdNote = true,
+  variant = "full",
   className,
 }) => {
+  const zone = variant === "zone";
   // Keyed by gross pay so the open tooltip survives markers being added or removed.
   const [activeGross, setActiveGross] = useState<number | null>(null);
   const { ref, width: W } = useContainerWidth();
@@ -274,20 +303,22 @@ export const MarginalRateChart: FC<MarginalRateChartProps> = ({
   const H = W < NARROW_W ? H_NARROW : H_WIDE;
   const PLOT_H = H - M.top - M.bottom;
   const maxGross = Math.max(1, ...points.map((p) => p.gross));
-  const yTicks = useMemo(() => yTicksFor(points.map((p) => p.ratePct)), [points]);
+  const drawn = useMemo(() => clipLeadingDrop(points), [points]);
+  const yTicks = useMemo(() => yTicksFor(drawn.map((p) => p.ratePct)), [drawn]);
   const yMax = yTicks[yTicks.length - 1] ?? 100;
   const x = (g: number) => M.left + (clamp(g, 0, maxGross) / maxGross) * plotW;
   const y = (r: number) => M.top + PLOT_H - (clamp(r, 0, yMax) / yMax) * PLOT_H;
 
-  const line = points.map((p) => `${x(p.gross).toFixed(1)},${y(p.ratePct).toFixed(1)}`).join(" ");
+  const line = drawn.map((p) => `${x(p.gross).toFixed(1)},${y(p.ratePct).toFixed(1)}`).join(" ");
   const showYourPay =
     yourPay !== undefined && Number.isFinite(yourPay) && yourPay >= 0 && yourPay <= maxGross;
   const markers = useMemo(() => {
+    if (zone) return [];
     const all = groupThresholds(thresholds, maxGross);
     return thresholdFocus === "near-pay" && showYourPay && yourPay !== undefined
       ? markersNearPay(all, yourPay, maxGross * NEAR_SHARE)
       : all;
-  }, [thresholds, maxGross, thresholdFocus, showYourPay, yourPay]);
+  }, [zone, thresholds, maxGross, thresholdFocus, showYourPay, yourPay]);
   const xTicks: number[] = [];
   for (let g = 0; g <= maxGross + 1e-9; g += xTickStep(maxGross)) xTicks.push(g);
 
@@ -295,7 +326,7 @@ export const MarginalRateChart: FC<MarginalRateChartProps> = ({
 
   // Direct labels (P10.2) in place of a legend: the line is named at its end, "Your pay" at its
   // marker and the stepped zone inside its band; the dashed thresholds get one quiet line below.
-  const lastPoint = points[points.length - 1];
+  const lastPoint = drawn[drawn.length - 1];
   const labelW = EXPLORER_COPY.chartLineLabel.length * LABEL_CHAR_W;
   const verticals = [
     ...markers.map((m) => x(m.gross)),
@@ -306,7 +337,7 @@ export const MarginalRateChart: FC<MarginalRateChartProps> = ({
   const rateUnder = (lx: number) =>
     Math.max(
       0,
-      ...points
+      ...drawn
         .filter((p) => x(p.gross) >= lx && x(p.gross) <= lx + labelW + LABEL_CLEARANCE)
         .map((p) => p.ratePct),
     );
@@ -370,6 +401,19 @@ export const MarginalRateChart: FC<MarginalRateChartProps> = ({
     return best ? { x: best.x, clear: !best.crosses, hidden: false } : { ...widest, hidden: true };
   })();
   const rateUnderLabel = rateUnder(labelSpot.x);
+  // In the zone the line is named at its end, right-aligned above its last point (below it when
+  // that would touch the "Your pay" text above the plot).
+  const endLabel = (() => {
+    if (!zone || !lastPoint) return null;
+    const ex = x(lastPoint.gross);
+    // Above the line everywhere under the label (a step just before the end included), so it
+    // never crosses the line; just below the last point if that would touch "Your pay" or the top.
+    const above = y(rateUnder(ex - labelW - LABEL_CLEARANCE)) - 8;
+    const touchesYourPay =
+      yourPayBox !== null && ex - labelW < yourPayBox.x2 && above - 11 < yourPayBox.y2;
+    const below = touchesYourPay || above - 11 < 0;
+    return { x: ex, y: below ? y(lastPoint.ratePct) + 16 : above };
+  })();
   const activeMarker = markers.find((m) => m.gross === activeGross) ?? null;
   const tipW = Math.min(TIP_W, W - 16);
   const activeX = activeMarker ? x(activeMarker.gross) : 0;
@@ -390,7 +434,7 @@ export const MarginalRateChart: FC<MarginalRateChartProps> = ({
 
   return (
     <ChartFigure
-      className={cx(marginalRateFigure(), className)}
+      className={cx(marginalRateFigure({ variant }), className)}
       dataTable={
         showDataTable && rows.length > 0 ? (
           <MarginalRateDataTable caption={title} rows={rows} />
@@ -478,7 +522,17 @@ export const MarginalRateChart: FC<MarginalRateChartProps> = ({
           <polyline className={marginalRateLine()} data-testid="marginal-rate-line" points={line} />
           {/* Left out only when no spot keeps it off "Your pay" (a narrow phone): the title
               already names the line, so no label is better than one written over that line. */}
-          {lastPoint && !labelSpot.hidden ? (
+          {endLabel ? (
+            <text
+              className={marginalRateDirectLabel({ tone: "line" })}
+              data-testid="marginal-rate-line-label"
+              textAnchor="end"
+              x={endLabel.x}
+              y={endLabel.y}
+            >
+              {EXPLORER_COPY.chartLineLabel}
+            </text>
+          ) : lastPoint && !labelSpot.hidden ? (
             <text
               className={marginalRateDirectLabel({ tone: "line" })}
               data-testid="marginal-rate-line-label"
@@ -544,7 +598,9 @@ export const MarginalRateChart: FC<MarginalRateChartProps> = ({
             </foreignObject>
           ) : null}
         </svg>
-        <p className={marginalRateAxisTitle({ position: "end" })}>{EXPLORER_COPY.chartXAxis}</p>
+        {zone ? null : (
+          <p className={marginalRateAxisTitle({ position: "end" })}>{EXPLORER_COPY.chartXAxis}</p>
+        )}
         {showThresholdNote && markers.length > 0 ? (
           <p className={marginalRateNote()}>{EXPLORER_COPY.chartThresholdsNote}</p>
         ) : null}

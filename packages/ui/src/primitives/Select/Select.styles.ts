@@ -23,7 +23,8 @@ export const selectRecipe = sva({
       borderRadius: "lg",
       color: "text.primary",
       textStyle: "body.md",
-      fontVariantNumeric: "tabular-nums",
+      // No tabular-nums: Inter's tnum also widens the hyphen, so "Self-employed" read as
+      // "Self - employed" (R2-8). Options are words; numbers are not compared down a column here.
       cursor: "pointer",
       textOverflow: "ellipsis",
       _motionSafe: {

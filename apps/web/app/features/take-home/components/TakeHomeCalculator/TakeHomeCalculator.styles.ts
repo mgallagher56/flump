@@ -53,22 +53,18 @@ export const zoneLink = cva({
 });
 
 /**
- * The take-home card, the page's answer: a teal rule along its top edge, drawn as an overlay so
- * the card's content sits at the same height as its neighbours.
+ * At phone width the take-home card takes the full row and the two cards that come off the pay
+ * sit side by side under it, so the strip is not three tall stacked cards. From `sm` it is the
+ * strip's own single row. The attribute selector outranks the strip's own column rule.
  */
-export const answerCard = cva({
+export const payStrip = cva({
   base: {
-    position: "relative",
-    overflow: "hidden",
-    _before: {
-      content: '""',
-      position: "absolute",
-      top: 0,
-      left: 0,
-      right: 0,
-      height: "4px",
-      backgroundColor: "chart.primary",
-      pointerEvents: "none",
+    "&[data-density]": {
+      gridTemplateColumns: {
+        base: "repeat(2, minmax(0, 1fr))",
+        sm: "repeat(3, minmax(0, 1fr))",
+      },
     },
+    "&[data-density] > :first-child": { gridColumn: { base: "1 / -1", sm: "auto" } },
   },
 });

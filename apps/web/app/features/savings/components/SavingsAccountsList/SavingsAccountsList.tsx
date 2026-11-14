@@ -14,6 +14,7 @@ import {
   actionsCell,
   balance,
   drawerWrap,
+  editLabel,
   listHeader,
   listRoot,
   listTitle,
@@ -32,8 +33,9 @@ const VISIBLE_ROWS = 8;
 const typeLabel = (acc: Account) => (acc.type === "Investment" ? "Investment" : "Savings");
 
 /**
- * "Your accounts": one figure per row, the balance (plan P1.4), and one "Edit" button, the same
- * as pension pots. The rate, the amount saved each month and "Delete account" live in the edit
+ * "Your accounts": one figure per row, the balance (plan P1.4; left out with a single account,
+ * whose balance is the hero), and one "Edit" button, the same as pension pots. The type line
+ * shows only when the list mixes savings and investments. The rate, the amount saved each month and "Delete account" live in the edit
  * dialog; deleting always asks for confirmation.
  */
 export const SavingsAccountsList: FC<SavingsAccountsListProps> = ({ accounts }) => {
@@ -46,6 +48,10 @@ export const SavingsAccountsList: FC<SavingsAccountsListProps> = ({ accounts }) 
     ? accounts.find((acc) => acc.id === confirmDeleteId)
     : undefined;
 
+  const showBalances = accounts.length > 1;
+  // The type line only tells rows apart when the list mixes savings and investments.
+  const showTypes = new Set(accounts.map(typeLabel)).size > 1;
+
   // A list, not a table: at 320 to 375 the name wraps onto more lines while the balance and Edit
   // stay right-aligned on the row, so nothing clips or scrolls sideways.
   const renderRows = (rows: Account[]) => (
@@ -56,13 +62,16 @@ export const SavingsAccountsList: FC<SavingsAccountsListProps> = ({ accounts }) 
             <Link className={accountLink()} to={`/app/accounts/${acc.id}`}>
               <span className={accountName()}>{acc.name}</span>
             </Link>
-            <span className={accountType()}>{typeLabel(acc)}</span>
+            {showTypes && <span className={accountType()}>{typeLabel(acc)}</span>}
           </span>
           <span className={rowEnd()}>
-            <span className={balance()}>
-              <VisuallyHidden>Balance </VisuallyHidden>
-              <Money size="sm" value={Math.round(Number(acc.balance) || 0)} />
-            </span>
+            {/* With one account the hero already shows its balance, so the row does not repeat it. */}
+            {showBalances && (
+              <span className={balance()}>
+                <VisuallyHidden>Balance </VisuallyHidden>
+                <Money size="sm" value={Math.round(Number(acc.balance) || 0)} />
+              </span>
+            )}
             <span className={actionsCell()}>
               <Button
                 aria-label={`Edit ${acc.name}`}
@@ -71,7 +80,8 @@ export const SavingsAccountsList: FC<SavingsAccountsListProps> = ({ accounts }) 
                 onClick={() => setEditingAccount(acc)}
               >
                 <Icon icon={Pencil} size="sm" />
-                Edit
+                {/* Icon only below sm, so names keep one line; the aria-label names it. */}
+                <span className={editLabel()}>Edit</span>
               </Button>
             </span>
           </span>

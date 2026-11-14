@@ -1,6 +1,7 @@
 import { getCategoriesForSource, type TaxRecord, type TaxSource } from "@flump/finance-engine";
 import {
   Button,
+  CollapsibleDrawer,
   CurrencyInput,
   controlProps,
   Dialog,
@@ -12,16 +13,18 @@ import {
 import { Camera, FileText, Image as ImageIcon, Upload } from "lucide-react";
 import { type ChangeEvent, type FC, type FormEvent, useState } from "react";
 import { isAcceptableReceiptFile, RECEIPT_ACCEPT } from "~/containers/tax/receipt-file";
-import { FREQUENCY_OPTIONS, SOURCE_OPTIONS } from "../../tax-labels";
+import { categoryShortLabel, FREQUENCY_OPTIONS, SOURCE_OPTIONS } from "../../tax-labels";
 import {
   fieldRow,
   footer,
   form,
+  moreDetails,
   receiptBox,
   receiptChosen,
   receiptHint,
   receiptLabel,
   receiptName,
+  saveErrorText,
   uploadLabel,
   uploadRow,
 } from "./TaxRecordDialog.styles";
@@ -51,6 +54,8 @@ export interface TaxRecordDialogProps {
   mode: "add" | "edit";
   initial: TaxRecordDraft;
   onSave: (draft: TaxRecordDraft) => void;
+  /** Why the last save failed, shown inside the dialog (the page behind a modal is hidden). */
+  saveError?: string | null;
 }
 
 type Errors = Partial<Record<"name" | "amount" | "date" | "receipt", string>>;
@@ -70,6 +75,7 @@ export const TaxRecordDialog: FC<TaxRecordDialogProps> = ({
   mode,
   initial,
   onSave,
+  saveError,
 }) => {
   const [draft, setDraft] = useState<TaxRecordDraft>(initial);
   const [errors, setErrors] = useState<Errors>({});
@@ -134,6 +140,8 @@ export const TaxRecordDialog: FC<TaxRecordDialogProps> = ({
   };
 
   const isPdf = draft.receiptMimeType?.includes("pdf");
+  // Open "More details" when editing a record that already has notes, so they are never hidden.
+  const hasDetails = initial.notes.trim() !== "";
 
   return (
     <Dialog
@@ -145,6 +153,7 @@ export const TaxRecordDialog: FC<TaxRecordDialogProps> = ({
       id="tax-record-dialog"
     >
       <form className={form()} noValidate onSubmit={submit}>
+        {/* Amount comes straight after the name; category and notes wait under "More details". */}
         <FormField label="Name" required error={errors.name}>
           {(field) => (
             <TextInput
@@ -156,7 +165,66 @@ export const TaxRecordDialog: FC<TaxRecordDialogProps> = ({
             />
           )}
         </FormField>
-
+        <div className={fieldRow()}>
+          <FormField
+            label="Amount"
+            required
+            error={errors.amount}
+            hint={draft.frequency === "one-off" ? undefined : "Per payment"}
+          >
+            {(field) => (
+              <CurrencyInput
+                {...controlProps(field)}
+                value={draft.amount}
+                onValueChange={(v) => set("amount", v)}
+              />
+            )}
+          </FormField>
+          <FormField label="How often">
+            {(field) => (
+              <Select
+                id={field.id}
+                aria-describedby={field.describedBy}
+                value={draft.frequency}
+                onChange={(e) => set("frequency", e.target.value as TaxRecord["frequency"])}
+              >
+                {FREQUENCY_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
+              </Select>
+            )}
+          </FormField>
+        </div>
+        <div className={fieldRow()}>
+          <FormField
+            label={draft.frequency === "one-off" ? "Date" : "First payment"}
+            required
+            error={errors.date}
+          >
+            {(field) => (
+              <TextInput
+                {...controlProps(field)}
+                type="date"
+                value={draft.date}
+                onChange={(e) => set("date", e.target.value)}
+              />
+            )}
+          </FormField>
+          {draft.frequency !== "one-off" ? (
+            <FormField label="End date (optional)" hint="Leave empty if it carries on.">
+              {(field) => (
+                <TextInput
+                  {...controlProps(field)}
+                  type="date"
+                  value={draft.endDate}
+                  onChange={(e) => set("endDate", e.target.value)}
+                />
+              )}
+            </FormField>
+          ) : null}
+        </div>
         <div className={fieldRow()}>
           <FormField label="Income source">
             {(field) => (
@@ -190,97 +258,6 @@ export const TaxRecordDialog: FC<TaxRecordDialogProps> = ({
             )}
           </FormField>
         </div>
-
-        <FormField label="Category">
-          {(field) => (
-            <Select
-              id={field.id}
-              aria-describedby={field.describedBy}
-              value={draft.category}
-              onChange={(e) => set("category", e.target.value)}
-            >
-              {categories.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </Select>
-          )}
-        </FormField>
-
-        <div className={fieldRow()}>
-          <FormField
-            label="Amount"
-            required
-            error={errors.amount}
-            hint={draft.frequency === "one-off" ? undefined : "Per payment"}
-          >
-            {(field) => (
-              <CurrencyInput
-                {...controlProps(field)}
-                value={draft.amount}
-                onValueChange={(v) => set("amount", v)}
-              />
-            )}
-          </FormField>
-          <FormField label="How often">
-            {(field) => (
-              <Select
-                id={field.id}
-                aria-describedby={field.describedBy}
-                value={draft.frequency}
-                onChange={(e) => set("frequency", e.target.value as TaxRecord["frequency"])}
-              >
-                {FREQUENCY_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>
-                    {o.label}
-                  </option>
-                ))}
-              </Select>
-            )}
-          </FormField>
-        </div>
-
-        <div className={fieldRow()}>
-          <FormField
-            label={draft.frequency === "one-off" ? "Date" : "First payment"}
-            required
-            error={errors.date}
-          >
-            {(field) => (
-              <TextInput
-                {...controlProps(field)}
-                type="date"
-                value={draft.date}
-                onChange={(e) => set("date", e.target.value)}
-              />
-            )}
-          </FormField>
-          {draft.frequency !== "one-off" ? (
-            <FormField label="End date (optional)" hint="Leave empty if it carries on.">
-              {(field) => (
-                <TextInput
-                  {...controlProps(field)}
-                  type="date"
-                  value={draft.endDate}
-                  onChange={(e) => set("endDate", e.target.value)}
-                />
-              )}
-            </FormField>
-          ) : null}
-        </div>
-
-        <FormField label="Notes (optional)">
-          {(field) => (
-            <TextInput
-              {...controlProps(field)}
-              autoComplete="off"
-              value={draft.notes}
-              onChange={(e) => set("notes", e.target.value)}
-            />
-          )}
-        </FormField>
-
         <div className={receiptBox()}>
           <span className={receiptLabel()} id="tax-receipt-label">
             Receipt (optional)
@@ -327,7 +304,41 @@ export const TaxRecordDialog: FC<TaxRecordDialogProps> = ({
             </p>
           ) : null}
         </div>
-
+        {saveError ? (
+          <p className={saveErrorText()} role="alert">
+            {saveError}
+          </p>
+        ) : null}
+        <CollapsibleDrawer title="More details" variant="quiet" defaultOpen={hasDetails}>
+          <div className={moreDetails()}>
+            <FormField label="Category">
+              {(field) => (
+                <Select
+                  id={field.id}
+                  aria-describedby={field.describedBy}
+                  value={draft.category}
+                  onChange={(e) => set("category", e.target.value)}
+                >
+                  {categories.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {categoryShortLabel(c)}
+                    </option>
+                  ))}
+                </Select>
+              )}
+            </FormField>
+            <FormField label="Notes (optional)">
+              {(field) => (
+                <TextInput
+                  {...controlProps(field)}
+                  autoComplete="off"
+                  value={draft.notes}
+                  onChange={(e) => set("notes", e.target.value)}
+                />
+              )}
+            </FormField>
+          </div>
+        </CollapsibleDrawer>
         <div className={footer()}>
           <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
             Cancel

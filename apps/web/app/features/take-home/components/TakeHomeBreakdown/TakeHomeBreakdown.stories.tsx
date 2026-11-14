@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { expect, within } from "storybook/test";
+import { expect, userEvent, within } from "storybook/test";
 import { TakeHomeBreakdown } from "./TakeHomeBreakdown";
 
 const meta: Meta<typeof TakeHomeBreakdown> = {
@@ -22,9 +22,9 @@ type Story = StoryObj<typeof TakeHomeBreakdown>;
 export const Default: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    await expect(canvas.getAllByText("Where your pay goes")[0]).toBeDefined();
-    await expect(canvas.getAllByText("Take-home pay")[0]).toBeDefined();
-    await expect(canvas.getAllByText("Tax and National Insurance")[0]).toBeDefined();
+    const [toggle] = canvas.getAllByRole("button", { name: "Show details" });
+    if (toggle) await userEvent.click(toggle);
+    await expect(canvas.getAllByRole("rowheader", { name: "Take-home pay" })[0]).toBeDefined();
   },
 };
 

@@ -48,8 +48,8 @@ const ASSUMED_GROWTH_RATE = 5;
 
 /**
  * The pension page (E16 PR 7): saved facts first (hero "Total in your pots", a strip of three,
- * "Your details" with the pots), then one ScenarioZone, then one quiet "Assumptions and UK rules"
- * drawer. Headline figures read saved loader data only (ruling D2: no hero holds an estimate).
+ * "Your details" with the pots), then one ScenarioZone that ends the page, with the quiet
+ * "Assumptions and UK rules" drawer in its footer. Headline figures read saved loader data only (ruling D2: no hero holds an estimate).
  */
 export const PensionContainer: FC = () => {
   const loaderData = useLoaderData<typeof loader>();
@@ -335,8 +335,9 @@ export const PensionContainer: FC = () => {
   };
 
   const openAddPot = () => setIsAddModalOpen(true);
-  const addPotButton = (
-    <Button type="button" onClick={openAddPot}>
+  // Compact in the header, so at 375 it does not push the hero down as a full primary button.
+  const addPotButton = (size: "sm" | "md") => (
+    <Button size={size} type="button" onClick={openAddPot}>
       <Icon icon={Plus} size="sm" />
       Add pension pot
     </Button>
@@ -351,7 +352,7 @@ export const PensionContainer: FC = () => {
       <PageBody>
         <PageHeader title="Your pension" />
         <EmptyState
-          action={addPotButton}
+          action={addPotButton("md")}
           description="Add a pension pot to see its value and an estimate of your income at retirement."
           headingLevel="h2"
           illustration={<Illustration scene="onboarding" />}
@@ -365,7 +366,7 @@ export const PensionContainer: FC = () => {
   return (
     <PageBody>
       <PageHeader
-        actions={addPotButton}
+        actions={addPotButton("sm")}
         subtitle="Your pots, what goes in each month and what it could pay at retirement."
         title="Your pension"
       />
@@ -410,6 +411,21 @@ export const PensionContainer: FC = () => {
         takeHomeFacts={takeHomeFacts}
         tool={tool}
         onToolChange={setTool}
+        assumptions={
+          <ForecastAssumptions
+            annualPaidIn={savedResult.totalAnnualInflow}
+            employerAndGrowth={
+              estimateKnown ? savedResult.totalEmployerContribs + savedResult.totalGrowth : null
+            }
+            growthRateIsPlaceholder={growthRateIsPlaceholder}
+            isSalarySacrifice={isSalarySacrifice}
+            methodSet={methodSet}
+            passEmployerNi={isSalarySacrificeEmployerNi}
+            placeholderGrowthRate={ASSUMED_GROWTH_RATE}
+            statePensionAnnual={savedResult.statePensionAnnual}
+            totalGrowth={estimateKnown ? savedResult.totalGrowth : null}
+          />
+        }
       />
 
       {/* Personal Allowance taper (E31, ruling 6): one factual line after the main content, and
@@ -449,20 +465,6 @@ export const PensionContainer: FC = () => {
           )}
         </div>
       )}
-
-      <ForecastAssumptions
-        annualPaidIn={savedResult.totalAnnualInflow}
-        employerAndGrowth={
-          estimateKnown ? savedResult.totalEmployerContribs + savedResult.totalGrowth : null
-        }
-        growthRateIsPlaceholder={growthRateIsPlaceholder}
-        isSalarySacrifice={isSalarySacrifice}
-        methodSet={methodSet}
-        passEmployerNi={isSalarySacrificeEmployerNi}
-        placeholderGrowthRate={ASSUMED_GROWTH_RATE}
-        statePensionAnnual={savedResult.statePensionAnnual}
-        totalGrowth={estimateKnown ? savedResult.totalGrowth : null}
-      />
 
       {dialog}
     </PageBody>

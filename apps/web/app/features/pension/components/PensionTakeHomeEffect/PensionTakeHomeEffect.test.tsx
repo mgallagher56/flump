@@ -51,10 +51,11 @@ describe("<PensionTakeHomeEffect />", () => {
     expect(screen.getByText(PENSION_TAKE_HOME_COPY.methodNetPay)).toBeDefined();
   });
 
-  it("asks for a change when the contribution matches the saved figure", () => {
+  it("reads No change in the outcome slot when the contribution matches the saved figure", () => {
     renderEffect(FACTS, 0);
+    expect(screen.getByText(PENSION_TAKE_HOME_COPY.outcomeLabel)).toBeDefined();
+    expect(document.querySelector('[data-figure="takeHome.delta"]')?.textContent).toBe("No change");
     expect(screen.getByText(PENSION_TAKE_HOME_COPY.noChange)).toBeDefined();
-    expect(document.querySelector('[data-figure="takeHome.delta"]')).toBeNull();
   });
 
   it("points to Profile when a needed fact is missing, with no figure", () => {
