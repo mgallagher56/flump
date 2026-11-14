@@ -120,7 +120,13 @@ export class SnapshotsService {
         const owned = ids.every((id) => UUID.test(id))
           ? await manager.find(Account, {
               where: { id: In(ids), userId },
-              select: { id: true, type: true, interestRate: true, monthlyContribution: true },
+              select: {
+                id: true,
+                type: true,
+                balance: true,
+                interestRate: true,
+                monthlyContribution: true,
+              },
             })
           : [];
         if (owned.length !== ids.length) throw new NotFoundException("Account not found");
@@ -167,7 +173,9 @@ export class SnapshotsService {
     manager: EntityManager,
     userId: string,
     rows: ReadonlyArray<{ accountId: string; value: number; source: SnapshotWriteSource }>,
-    accounts: ReadonlyArray<Pick<Account, "id" | "type" | "interestRate" | "monthlyContribution">>,
+    accounts: ReadonlyArray<
+      Pick<Account, "id" | "type" | "balance" | "interestRate" | "monthlyContribution">
+    >,
     month: string,
   ): Promise<void> {
     const calculated = rows.filter((r) => r.source === "calculated");
@@ -189,6 +197,8 @@ export class SnapshotsService {
         type: account?.type,
         interestRate: account?.interestRate,
         monthlyPayment: account?.monthlyContribution,
+        // Ruling (b): a saved balance edited since the latest record means no calculated figure.
+        savedBalance: account?.balance,
         base: base
           ? {
               value: Number(base.value),

@@ -9,6 +9,7 @@ import {
   buildSnapshotPayload,
   CHECK_IN_TYPE_ORDER,
   type CheckInAccountInput,
+  calculateCheckInBalance,
   checkInHistoryFor,
   checkInPayload,
   compareCheckInMonths,
@@ -41,6 +42,12 @@ const accounts: CheckInAccountInput[] = [
   { id: "L", name: "Car loan", type: "Loan", balance: -8400, interestRate: 7.9 },
   { id: "V", name: "Easy access savings", type: "Saving", balance: 7600 },
 ];
+
+/** The mortgage with its saved balance equal to October's record, so a figure is calculated. */
+const synced: CheckInAccountInput[] = accounts.map((a) =>
+  a.id === "M" ? { ...a, balance: -186550 } : a,
+);
+const syncedMortgage = synced[0]!;
 
 const row = (
   accountId: string,
@@ -133,9 +140,10 @@ describe("buildCheckInSteps", () => {
     expect(byId("m")).toMatchObject({ lastValue: 186000, lastMonth: "2026-10", isLiability: true });
   });
 
-  it("calculates a mortgage from the latest recorded figure, not the saved balance", () => {
+  it("calculates a mortgage from the latest recorded figure when the saved balance matches it", () => {
     // 186,550 + 4.5%/12 interest (699.56) - 1,250 = 185,999.56.
-    expect(byId("m")?.calculated).toEqual({
+    const m = buildCheckInSteps(synced, details, MONTH).find((x) => x.accountId === "m");
+    expect(m?.calculated).toEqual({
       value: 185999.56,
       baseValue: 186550,
       baseMonth: "2026-10",
@@ -151,9 +159,74 @@ describe("buildCheckInSteps", () => {
   });
 
   it("calculates across a missed month from the latest recorded figure", () => {
-    const [m] = buildCheckInSteps([accounts[0]!], [row("M", 9, -187100)], MONTH);
+    const [m] = buildCheckInSteps(
+      [{ ...accounts[0]!, balance: -187100 }],
+      [row("M", 9, -187100)],
+      MONTH,
+    );
     expect(m?.calculated?.baseMonth).toBe("2026-09");
     expect(m?.calculated?.value).toBe(186001.19);
+  });
+});
+
+describe("ruling (b): no calculated figure once the saved balance has moved on", () => {
+  const loan: CheckInAccountInput = {
+    id: "L",
+    name: "Car loan",
+    type: "Loan",
+    balance: -8610,
+    interestRate: 7.9,
+    monthlyContribution: 265,
+  };
+
+  it("offers a calculated figure when the saved balance equals the latest record", () => {
+    const [step] = buildCheckInSteps([loan], [row("L", 10, -8610)], MONTH);
+    expect(step?.calculated?.baseValue).toBe(8610);
+    expect(
+      calculateCheckInBalance({
+        type: "Loan",
+        interestRate: 7.9,
+        monthlyPayment: 265,
+        base: { value: -8610, month: "2026-10" },
+        month: MONTH,
+        savedBalance: "-8610.00",
+      }),
+    ).not.toBeNull();
+  });
+
+  it("offers none when the saved balance differs, and No change keeps the saved balance", () => {
+    const edited = { ...loan, balance: -8400 };
+    const [step] = buildCheckInSteps([edited], [row("L", 10, -8610)], MONTH);
+    expect(step?.calculated).toBeNull();
+    expect(step?.lastValue).toBe(8400);
+    expect(
+      calculateCheckInBalance({
+        type: "Loan",
+        interestRate: 7.9,
+        monthlyPayment: 265,
+        base: { value: -8610, month: "2026-10" },
+        month: MONTH,
+        savedBalance: -8400,
+      }),
+    ).toBeNull();
+  });
+
+  it("No change to the rest saves the saved balance as confirmed, never an older calculated figure", () => {
+    const edited = { ...loan, balance: -8400 };
+    const [step] = buildCheckInSteps([edited], [row("L", 10, -8610)], MONTH);
+    expect(restAnswer(step!)).toEqual({ kind: "noChange" });
+    expect(answerValue(step!, restAnswer(step!))).toEqual({
+      accountId: "l",
+      value: 8400,
+      source: "confirmed",
+    });
+  });
+
+  it("offers none with no recorded month yet: the saved balance is what No change confirms", () => {
+    const [step] = buildCheckInSteps([loan], [], MONTH);
+    expect(step?.calculated).toBeNull();
+    expect(step?.lastValue).toBe(8610);
+    expect(restAnswer(step!)).toEqual({ kind: "noChange" });
   });
 });
 
@@ -206,7 +279,7 @@ describe("resume", () => {
 describe("answers and payloads", () => {
   const steps = buildCheckInSteps(accounts, details, MONTH);
   const current = steps[0]!;
-  const mortgage = steps.find((s) => s.accountId === "m")!;
+  const mortgage = buildCheckInSteps(synced, details, MONTH).find((s) => s.accountId === "m")!;
 
   it("a typed figure is manual, rounded to pence; No change repeats the saved balance", () => {
     expect(answerValue(current, { kind: "update", value: 3412.505 })).toEqual({
@@ -267,7 +340,7 @@ describe("answers and payloads", () => {
 describe("statement prompt", () => {
   it("asks once a fixed rate has ended since the last typed figure", () => {
     const [m] = buildCheckInSteps(
-      [{ ...accounts[0]!, fixedRateEndDate: "2026-06-30" }],
+      [{ ...syncedMortgage, fixedRateEndDate: "2026-06-30" }],
       [row("M", 5, -188000), row("M", 10, -186550, "calculated")],
       MONTH,
     );
@@ -275,9 +348,9 @@ describe("statement prompt", () => {
   });
 
   it("asks once a year with no typed figure, and not before", () => {
-    expect(buildCheckInSteps([accounts[0]!], details, MONTH)[0]?.statementPrompt).toBeNull();
+    expect(buildCheckInSteps([syncedMortgage], details, MONTH)[0]?.statementPrompt).toBeNull();
     const old = buildCheckInSteps(
-      [accounts[0]!],
+      [syncedMortgage],
       [{ ...row("M", 10, -190000), year: 2025 }, row("M", 10, -186550, "calculated")],
       MONTH,
     )[0];

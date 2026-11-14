@@ -37,6 +37,12 @@ export interface CalculatedBalanceInput {
   base: { value: number; month: CheckInMonth } | null;
   /** The month being checked in. */
   month: CheckInMonth;
+  /**
+   * The account's saved (current) balance, signed or not. When given and it differs from `base`
+   * (the user edited the balance after the latest record), no figure is calculated: the check-in
+   * never proposes a figure older than the one the user last gave (coordinator ruling (b)).
+   */
+  savedBalance?: number | string | null;
 }
 
 export interface CalculatedBalance {
@@ -67,6 +73,10 @@ export function calculateCheckInBalance(input: CalculatedBalanceInput): Calculat
   const months = monthsBetween(input.base.month, input.month);
   if (!Number.isFinite(months) || months < 1) return null;
   const baseValue = Math.abs(input.base.value);
+  const saved = toNumber(input.savedBalance);
+  if (saved !== null && Math.round(Math.abs(saved) * 100) !== Math.round(baseValue * 100)) {
+    return null;
+  }
   return {
     value: projectAmortisedBalance({
       balanceGbp: baseValue,
@@ -468,6 +478,7 @@ export function buildCheckInSteps(
         monthlyPayment: account.monthlyContribution,
         base: before ? { value: before.value, month: before.month } : null,
         month,
+        savedBalance: account.balance,
       });
       return {
         accountId,
