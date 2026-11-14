@@ -10844,7 +10844,7 @@
                     "housingStatus": {
                       "anyOf": [
                         {
-                          "enum": ["renting", "mortgage", "own_outright"],
+                          "enum": ["renting", "mortgage", "own_outright", "living_with_family"],
                           "type": "string"
                         },
                         {
@@ -11348,7 +11348,7 @@
                   "housingStatus": {
                     "anyOf": [
                       {
-                        "enum": ["renting", "mortgage", "own_outright"],
+                        "enum": ["renting", "mortgage", "own_outright", "living_with_family"],
                         "type": "string"
                       },
                       {
@@ -11669,7 +11669,7 @@
                     "housingStatus": {
                       "anyOf": [
                         {
-                          "enum": ["renting", "mortgage", "own_outright"],
+                          "enum": ["renting", "mortgage", "own_outright", "living_with_family"],
                           "type": "string"
                         },
                         {
@@ -12175,7 +12175,7 @@
                     "housingStatus": {
                       "anyOf": [
                         {
-                          "enum": ["renting", "mortgage", "own_outright"],
+                          "enum": ["renting", "mortgage", "own_outright", "living_with_family"],
                           "type": "string"
                         },
                         {
@@ -12731,7 +12731,7 @@
                         "housingStatus": {
                           "anyOf": [
                             {
-                              "enum": ["renting", "mortgage", "own_outright"],
+                              "enum": ["renting", "mortgage", "own_outright", "living_with_family"],
                               "type": "string"
                             },
                             {
