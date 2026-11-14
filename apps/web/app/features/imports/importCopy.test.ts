@@ -36,7 +36,7 @@ describe("importCopy", () => {
 
   it("summarises the plan and the outcome", () => {
     expect(planSentence({ new: 3, overwrite: 1, unchanged: 1, kept: 1 })).toBe(
-      "3 new balances, 1 replaced, 1 unchanged, 1 kept as they are.",
+      "3 new balances, 1 replaced, 1 unchanged, 1 skipped.",
     );
     expect(commitButtonLabel(0)).toBe("Nothing to save");
     expect(commitButtonLabel(4)).toBe("Save 4 monthly balances");
@@ -44,7 +44,7 @@ describe("importCopy", () => {
       "1 new balance saved, 0 replaced, 0 unchanged.",
     );
     expect(undoneSentence({ restored: 1, removed: 2, kept: 1 })).toBe(
-      "Import undone: 1 restored, 2 removed, 1 left as you changed them.",
+      "Import undone: 1 restored, 2 removed, 1 left as they are now.",
     );
   });
 });

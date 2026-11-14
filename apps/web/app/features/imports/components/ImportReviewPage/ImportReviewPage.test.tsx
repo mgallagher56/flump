@@ -50,7 +50,7 @@ describe("ImportReviewPage", () => {
     const tick = screen.getByTestId("import-tick-saver:2026-09") as HTMLInputElement;
     expect(tick.checked).toBe(false);
     expect(screen.getByTestId("import-plan").textContent).toBe(
-      "3 new balances, 1 replaced, 1 unchanged, 1 kept as they are.",
+      "3 new balances, 1 replaced, 1 unchanged, 1 skipped.",
     );
     expect(actions.preview).not.toHaveBeenCalled();
     expect(actions.commit).not.toHaveBeenCalled();
@@ -68,6 +68,7 @@ describe("ImportReviewPage", () => {
       "saver:2026-09",
     ]);
     expect(await screen.findByRole("heading", { name: "Import saved" })).toBeDefined();
+    expect(document.activeElement?.id).toBe("import-result");
   });
 
   it("re-runs the dry run when an account is re-matched", async () => {
@@ -110,12 +111,15 @@ describe("ImportReviewPage", () => {
   it("undoes a saved import after confirmation", async () => {
     const user = userEvent.setup();
     const actions = renderPage({ batch: COMMITTED_BATCH, initialPreview: null });
-    expect(screen.getByText(/3 new balances saved, 1 replaced, 1 unchanged, 1 kept/)).toBeDefined();
+    expect(
+      screen.getByText(/3 new balances saved, 1 replaced, 1 unchanged, 1 skipped/),
+    ).toBeDefined();
     await user.click(screen.getByTestId("import-undo"));
     await user.click(await screen.findByRole("button", { name: "Undo import" }));
     expect(actions.revert).toHaveBeenCalledTimes(1);
     expect(await screen.findByRole("heading", { name: "Import undone" })).toBeDefined();
     expect(screen.getByText("Import undone: 1 restored, 3 removed.")).toBeDefined();
+    await waitFor(() => expect(document.activeElement?.id).toBe("import-result"));
     expect(screen.queryByTestId("import-undo")).toBeNull();
   });
 

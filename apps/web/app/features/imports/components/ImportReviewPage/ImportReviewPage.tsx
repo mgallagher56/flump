@@ -16,7 +16,9 @@ import {
   EXPIRED_BODY,
   EXPIRED_TITLE,
   expiryLine,
+  formatCount,
   formatDate,
+  invalidRowsLine,
   PREVIEW_ERROR,
   planSentence,
   REVERT_ERROR,
@@ -83,10 +85,20 @@ export const ImportReviewPage: FC<ImportReviewPageProps> = ({
   const [undoing, setUndoing] = useState(false);
   const [undoError, setUndoError] = useState<string | null>(null);
   const firstMap = useRef(true);
+  const resultRef = useRef<HTMLParagraphElement>(null);
+  const movedByAction = useRef(false);
   const actionsRef = useRef(actions);
   actionsRef.current = actions;
 
   useEffect(() => setBatch(loadedBatch), [loadedBatch]);
+
+  // After commit or undo the triggering button is gone: move focus to the outcome line.
+  useEffect(() => {
+    if (movedByAction.current && (batch.status === "committed" || batch.status === "reverted")) {
+      movedByAction.current = false;
+      resultRef.current?.focus();
+    }
+  }, [batch.status]);
 
   // Re-run the dry run whenever the account map changes (not on first render: the loader ran it).
   useEffect(() => {
@@ -123,7 +135,9 @@ export const ImportReviewPage: FC<ImportReviewPageProps> = ({
     setCommitting(true);
     setError(null);
     try {
-      setBatch(await actions.commit(map, overwriteKeys(preview.rows, ticked)));
+      const done = await actions.commit(map, overwriteKeys(preview.rows, ticked));
+      movedByAction.current = true;
+      setBatch(done);
     } catch {
       setError(COMMIT_ERROR);
     } finally {
@@ -135,8 +149,10 @@ export const ImportReviewPage: FC<ImportReviewPageProps> = ({
     setUndoing(true);
     setUndoError(null);
     try {
-      setBatch(await actions.revert());
+      const done = await actions.revert();
+      movedByAction.current = true;
       setUndoOpen(false);
+      setBatch(done);
     } catch {
       setUndoError(REVERT_ERROR);
     } finally {
@@ -169,28 +185,22 @@ export const ImportReviewPage: FC<ImportReviewPageProps> = ({
         <PageHeader
           actions={BACK_LINK}
           badge={badge}
-          description={
-            reverted && batch.revertedAt
-              ? `Undone on ${formatDate(batch.revertedAt)}.`
-              : batch.committedAt
-                ? `Saved on ${formatDate(batch.committedAt)}.`
-                : undefined
-          }
           title={reverted ? "Import undone" : "Import saved"}
         />
+        {reverted && batch.revertedAt ? (
+          <p className={statusLine()}>Undone on {formatDate(batch.revertedAt)}.</p>
+        ) : batch.committedAt ? (
+          <p className={statusLine()}>Saved on {formatDate(batch.committedAt)}.</p>
+        ) : null}
         <KpiStrip
           items={[
-            <KpiCard key="new" label="New balances" value={String(batch.counts.new ?? 0)} />,
-            <KpiCard key="ow" label="Replaced" value={String(batch.counts.overwrite ?? 0)} />,
-            <KpiCard key="un" label="Unchanged" value={String(batch.counts.unchanged ?? 0)} />,
-            <KpiCard
-              key="sk"
-              label="Kept as they were"
-              value={String(batch.counts.skipped ?? 0)}
-            />,
+            <KpiCard key="new" label="New balances" value={formatCount(batch.counts.new ?? 0)} />,
+            <KpiCard key="ow" label="Replaced" value={formatCount(batch.counts.overwrite ?? 0)} />,
+            <KpiCard key="un" label="Unchanged" value={formatCount(batch.counts.unchanged ?? 0)} />,
+            <KpiCard key="sk" label="Skipped" value={formatCount(batch.counts.skipped ?? 0)} />,
           ]}
         />
-        <p className={statusLine()} id="import-result">
+        <p className={statusLine()} id="import-result" ref={resultRef} role="status" tabIndex={-1}>
           {reverted && batch.revert ? undoneSentence(batch.revert) : savedSentence(batch.counts)}
         </p>
         {reverted ? null : (
@@ -242,18 +252,16 @@ export const ImportReviewPage: FC<ImportReviewPageProps> = ({
       {plan ? (
         <KpiStrip
           items={[
-            <KpiCard key="new" label="New balances" value={String(plan.new)} />,
-            <KpiCard key="ow" label="Replaced" value={String(plan.overwrite)} />,
-            <KpiCard key="un" label="Unchanged" value={String(plan.unchanged)} />,
-            <KpiCard key="kept" label="Kept as they are" value={String(plan.kept)} />,
+            <KpiCard key="new" label="New balances" value={formatCount(plan.new)} />,
+            <KpiCard key="ow" label="Replaced" value={formatCount(plan.overwrite)} />,
+            <KpiCard key="un" label="Unchanged" value={formatCount(plan.unchanged)} />,
+            <KpiCard key="kept" label="Skipped" value={formatCount(plan.kept)} />,
           ]}
         />
       ) : null}
 
       {p.totals.errors > 0 ? (
-        <InlineAlert tone="info">
-          {`${p.totals.errors} staged ${p.totals.errors === 1 ? "row was" : "rows were"} not valid (for example a future month) and will not be saved.`}
-        </InlineAlert>
+        <InlineAlert tone="info">{invalidRowsLine(p.totals.errors)}</InlineAlert>
       ) : null}
 
       <AccountMappingPanel

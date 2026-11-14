@@ -15,7 +15,7 @@ import { formatMonth } from "~/features/snapshot/snapshotModel";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import { FLAGGED_HELP, replaceLabel, rowStatusLabel } from "../../importCopy";
 import { groupByMonth, type PreviewAccount, type PreviewRow } from "../../importModel";
-import { flaggedList, heading, note, tableCard } from "./ImportDiffTable.styles";
+import { flaggedList, heading, note, section, tableCard } from "./ImportDiffTable.styles";
 
 /** Tables longer than this go inside a CollapsibleDrawer (AGENTS.md section 3). */
 export const MAX_OPEN_ROWS = 8;
@@ -51,7 +51,7 @@ export const ImportDiffTable: FC<ImportDiffTableProps> = ({
     if (r.needsTick) {
       return (
         <StatusBadge size="sm" variant={ticked.has(r.key) ? "warning" : "neutral"}>
-          {ticked.has(r.key) ? "Will replace" : "Kept unless ticked"}
+          {ticked.has(r.key) ? "Will be saved" : "Skipped unless ticked"}
         </StatusBadge>
       );
     }
@@ -94,7 +94,7 @@ export const ImportDiffTable: FC<ImportDiffTableProps> = ({
   );
 
   return (
-    <section aria-labelledby={headingId} className={flaggedList()}>
+    <section aria-labelledby={headingId} className={section()}>
       <h2 className={heading()} id={headingId}>
         Review changes
       </h2>
