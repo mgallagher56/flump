@@ -222,12 +222,16 @@ describe("accounts responses", () => {
           totalLiabilities: 0,
         },
       ],
+      netWorthLeavesOut: ["studentLoan"],
       currency: "GBP",
     };
     // JSON.stringify drops undefined keys, as the wire does.
     ok(PortfolioSnapshotResponse, JSON.parse(JSON.stringify(snapshot)));
     bad(PortfolioSnapshotResponse, { ...snapshot, netWorth: "-181266.19" });
     bad(PortfolioSnapshotResponse, { ...snapshot, resolvedAccounts: [{ ...resolved, extra: 1 }] });
+    bad(PortfolioSnapshotResponse, { ...snapshot, netWorthLeavesOut: ["pension"] });
+    const { netWorthLeavesOut: _omitted, ...withoutLeavesOut } = snapshot;
+    bad(PortfolioSnapshotResponse, withoutLeavesOut);
   });
 });
 

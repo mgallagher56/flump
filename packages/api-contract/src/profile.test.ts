@@ -30,6 +30,14 @@ describe("UpdateProfileRequest", () => {
     expect(UpdateProfileRequest.safeParse({ pensionPercent: 101 }).success).toBe(false);
   });
 
+  it("accepts the net worth choices as booleans only, never null", () => {
+    const parse = (body: Record<string, unknown>) => UpdateProfileRequest.safeParse(body).success;
+    expect(parse({ netWorthCountsProperty: false, netWorthCountsStudentLoan: true })).toBe(true);
+    expect(parse({ netWorthCountsStudentLoan: false })).toBe(true);
+    expect(parse({ netWorthCountsProperty: null })).toBe(false);
+    expect(parse({ netWorthCountsStudentLoan: "yes" })).toBe(false);
+  });
+
   it("accepts living with family or friends, with £0 or no amount, and rejects unknown statuses", () => {
     const parse = (body: Record<string, unknown>) => UpdateProfileRequest.safeParse(body).success;
     expect(parse({ housingStatus: "living_with_family" })).toBe(true);

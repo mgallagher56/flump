@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { PAGE_LIMITS } from "../pagination.js";
 import { IsoDateTime, ResponseMoney, Uuid } from "../primitives.js";
-import { ResolvedAccountDto } from "./accounts.js";
+import { NetWorthLeftOut, ResolvedAccountDto } from "./accounts.js";
 
 /** Expiry choices (E17 D5-A). `null` ("never expires") is rejected. */
 export const PAT_EXPIRY_DAYS = [7, 30, 90, 365] as const;
@@ -163,6 +163,10 @@ export const AiContextPackDto = z.strictObject({
     monthlyHistory: z.array(EngineResult),
     /** Strict: this is the account data AI clients receive, so a leaked field must be flagged. */
     accounts: z.array(ResolvedAccountDto),
+    /** The user's net worth choices the figures above were computed under. */
+    netWorthBasis: z.strictObject({ countProperty: z.boolean(), countStudentLoan: z.boolean() }),
+    /** What net worth leaves out under those choices, in display order. */
+    netWorthLeavesOut: z.array(NetWorthLeftOut),
   }),
   debtSummary: z.strictObject({
     consumerDebts: z.array(EngineResult),

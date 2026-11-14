@@ -85,6 +85,22 @@ describe("AgentDataService.getUserFinancialData profile facts (E23)", () => {
     });
   });
 
+  it("carries the saved net worth choices, and the defaults when none are saved", async () => {
+    expect((await serviceWith({}).getUserFinancialData("u1")).netWorthBasis).toEqual({
+      countProperty: true,
+      countStudentLoan: false,
+    });
+    const saved = { netWorthCountsProperty: false, netWorthCountsStudentLoan: true };
+    expect((await serviceWith(saved).getUserFinancialData("u1")).netWorthBasis).toEqual({
+      countProperty: false,
+      countStudentLoan: true,
+    });
+    expect(await serviceWith(saved).getNetWorthBasis("u1")).toEqual({
+      countProperty: false,
+      countStudentLoan: true,
+    });
+  });
+
   it("maps a saved salary, region and pension", async () => {
     const data = await serviceWith({
       annualSalary: "38000",

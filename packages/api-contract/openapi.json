@@ -7624,6 +7624,26 @@
                             "netWorth": {
                               "type": "number"
                             },
+                            "netWorthBasis": {
+                              "additionalProperties": false,
+                              "properties": {
+                                "countProperty": {
+                                  "type": "boolean"
+                                },
+                                "countStudentLoan": {
+                                  "type": "boolean"
+                                }
+                              },
+                              "required": ["countProperty", "countStudentLoan"],
+                              "type": "object"
+                            },
+                            "netWorthLeavesOut": {
+                              "items": {
+                                "enum": ["property", "mortgage", "studentLoan", "homeValueMissing"],
+                                "type": "string"
+                              },
+                              "type": "array"
+                            },
                             "totalAssets": {
                               "type": "number"
                             },
@@ -7661,7 +7681,9 @@
                             "totalMortgageBalance",
                             "weightedSavingsRate",
                             "monthlyHistory",
-                            "accounts"
+                            "accounts",
+                            "netWorthBasis",
+                            "netWorthLeavesOut"
                           ],
                           "type": "object"
                         },
@@ -8147,6 +8169,13 @@
                       "description": "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.",
                       "type": "number"
                     },
+                    "netWorthLeavesOut": {
+                      "items": {
+                        "enum": ["property", "mortgage", "studentLoan", "homeValueMissing"],
+                        "type": "string"
+                      },
+                      "type": "array"
+                    },
                     "resolvedAccounts": {
                       "items": {
                         "additionalProperties": false,
@@ -8334,6 +8363,7 @@
                     "totalStudentLoans",
                     "resolvedAccounts",
                     "monthlyHistory",
+                    "netWorthLeavesOut",
                     "currency"
                   ],
                   "type": "object"
@@ -10898,6 +10928,12 @@
                       "enum": ["repayment", "interest-only"],
                       "type": "string"
                     },
+                    "netWorthCountsProperty": {
+                      "type": "boolean"
+                    },
+                    "netWorthCountsStudentLoan": {
+                      "type": "boolean"
+                    },
                     "onboardingCompleted": {
                       "type": "boolean"
                     },
@@ -11027,6 +11063,8 @@
                     "housingStatus",
                     "monthlyHousingCost",
                     "monthlyOtherOutgoings",
+                    "netWorthCountsProperty",
+                    "netWorthCountsStudentLoan",
                     "createdAt",
                     "updatedAt"
                   ],
@@ -11393,6 +11431,12 @@
                     "enum": ["repayment", "interest-only"],
                     "type": "string"
                   },
+                  "netWorthCountsProperty": {
+                    "type": "boolean"
+                  },
+                  "netWorthCountsStudentLoan": {
+                    "type": "boolean"
+                  },
                   "onboardingCompleted": {
                     "type": "boolean"
                   },
@@ -11711,6 +11755,12 @@
                       "enum": ["repayment", "interest-only"],
                       "type": "string"
                     },
+                    "netWorthCountsProperty": {
+                      "type": "boolean"
+                    },
+                    "netWorthCountsStudentLoan": {
+                      "type": "boolean"
+                    },
                     "onboardingCompleted": {
                       "type": "boolean"
                     },
@@ -11840,6 +11890,8 @@
                     "housingStatus",
                     "monthlyHousingCost",
                     "monthlyOtherOutgoings",
+                    "netWorthCountsProperty",
+                    "netWorthCountsStudentLoan",
                     "createdAt",
                     "updatedAt"
                   ],
@@ -12217,6 +12269,12 @@
                       "enum": ["repayment", "interest-only"],
                       "type": "string"
                     },
+                    "netWorthCountsProperty": {
+                      "type": "boolean"
+                    },
+                    "netWorthCountsStudentLoan": {
+                      "type": "boolean"
+                    },
                     "onboardingCompleted": {
                       "type": "boolean"
                     },
@@ -12346,6 +12404,8 @@
                     "housingStatus",
                     "monthlyHousingCost",
                     "monthlyOtherOutgoings",
+                    "netWorthCountsProperty",
+                    "netWorthCountsStudentLoan",
                     "createdAt",
                     "updatedAt"
                   ],
@@ -12773,6 +12833,12 @@
                           "enum": ["repayment", "interest-only"],
                           "type": "string"
                         },
+                        "netWorthCountsProperty": {
+                          "type": "boolean"
+                        },
+                        "netWorthCountsStudentLoan": {
+                          "type": "boolean"
+                        },
                         "onboardingCompleted": {
                           "type": "boolean"
                         },
@@ -12902,6 +12968,8 @@
                         "housingStatus",
                         "monthlyHousingCost",
                         "monthlyOtherOutgoings",
+                        "netWorthCountsProperty",
+                        "netWorthCountsStudentLoan",
                         "createdAt",
                         "updatedAt"
                       ],

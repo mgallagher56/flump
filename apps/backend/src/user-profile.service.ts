@@ -127,6 +127,9 @@ function formatProfileRow(profile: UserProfile) {
     housingStatus: profile.housingStatus ?? null,
     monthlyHousingCost: profile.monthlyHousingCost ?? null,
     monthlyOtherOutgoings: profile.monthlyOtherOutgoings ?? null,
+    // Net worth choices: the column defaults, so a just-inserted entity shows the same values.
+    netWorthCountsProperty: profile.netWorthCountsProperty ?? true,
+    netWorthCountsStudentLoan: profile.netWorthCountsStudentLoan ?? false,
     annualSalary:
       profile.annualSalary !== null && profile.annualSalary !== undefined
         ? Number(profile.annualSalary)
@@ -254,7 +257,8 @@ export type FinancialDataResetCounts = RemovedCounts;
 
 /**
  * Sets every financial field of the profile back to its default (M-PRIV1). Kept: identity (names,
- * avatar), locale (currency, country) and layout preferences (pages, widgets).
+ * avatar), locale (currency, country), layout preferences (pages, widgets) and the net worth
+ * choices (what net worth counts is a preference, not financial data).
  */
 export function clearFinancialProfileFields(profile: UserProfile): void {
   profile.employmentType = null;
@@ -320,6 +324,8 @@ const PROFILE_UPDATE_DEFAULTS = (userId: string): Partial<UserProfile> => ({
   savingsDefaultInterestRate: 5.0,
   setupChecklistCompletedSteps: [],
   onboardingCompleted: false,
+  netWorthCountsProperty: true,
+  netWorthCountsStudentLoan: false,
 });
 
 @Injectable()
@@ -450,6 +456,8 @@ export class UserProfileService implements ProfileLifecycle {
       dashboardWidgetSizes: { accounts: "wide" },
       dashboardWidgetConfig: {},
       onboardingCompleted: false,
+      netWorthCountsProperty: true,
+      netWorthCountsStudentLoan: false,
     });
 
     return {
@@ -603,6 +611,10 @@ export class UserProfileService implements ProfileLifecycle {
     }
     if (body.onboardingCompleted !== undefined)
       profile.onboardingCompleted = Boolean(body.onboardingCompleted);
+    if (body.netWorthCountsProperty !== undefined)
+      profile.netWorthCountsProperty = body.netWorthCountsProperty;
+    if (body.netWorthCountsStudentLoan !== undefined)
+      profile.netWorthCountsStudentLoan = body.netWorthCountsStudentLoan;
     if (body.taxRegion !== undefined) {
       profile.taxRegion = oneOfOrNull(body.taxRegion, TAX_REGIONS, "taxRegion");
     }
