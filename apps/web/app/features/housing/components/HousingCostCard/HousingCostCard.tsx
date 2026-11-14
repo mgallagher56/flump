@@ -1,5 +1,5 @@
 import type { Figure, FixedRateEndFact, HousingCost, MissingKey } from "@flump/finance-engine";
-import { Button, CurrencyInput, controlProps, FormField, Heading } from "@repo/ui";
+import { Button, CurrencyInput, controlProps, FormField, Heading, LiveRegion } from "@repo/ui";
 import { type FC, type FormEvent, useEffect, useId, useState } from "react";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import {
@@ -77,6 +77,14 @@ export const HousingCostCard: FC<HousingCostCardProps> = ({
   const [rent, setRent] = useState<number | null>(savedRent);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [savedNotice, setSavedNotice] = useState("");
+  // Inner ids derive from the card id, so two cards on one page never share an id.
+  const ids = {
+    monthly: `${id}-monthly`,
+    share: `${id}-share`,
+    fixEnd: `${id}-fix-end`,
+    unknown: `${id}-unknown`,
+  };
 
   useEffect(() => {
     setRent(savedRent);
@@ -95,8 +103,10 @@ export const HousingCostCard: FC<HousingCostCardProps> = ({
     if (!onSaveRent || rent === null || !(rent > 0)) return;
     setSaving(true);
     setError(null);
+    setSavedNotice("");
     try {
       await onSaveRent(rent);
+      setSavedNotice("Rent saved.");
     } catch {
       setError("Could not save your rent. Please try again.");
     } finally {
@@ -121,44 +131,27 @@ export const HousingCostCard: FC<HousingCostCardProps> = ({
         <dl className={housingFigures()}>
           <div className={housingFigure()}>
             <dt className={housingLabel()}>{label}</dt>
-            <dd
-              className={housingValue()}
-              data-testid="housing-cost-monthly"
-              id="housing-cost-monthly"
-            >
+            <dd className={housingValue()} data-testid={ids.monthly} id={ids.monthly}>
               {formatCurrency(known.monthly, {
                 maximumFractionDigits: known.paymentEstimated ? 2 : 0,
               })}
             </dd>
-            <dd className={housingShare()} data-testid="housing-cost-share" id="housing-cost-share">
+            <dd className={housingShare()} data-testid={ids.share} id={ids.share}>
               {`${shareFormat.format(known.sharePct)}% of your estimated take-home pay`}
             </dd>
           </div>
-          {fixedRateEnd ? (
-            <div className={housingFigure()}>
-              <dt className={housingLabel()}>Fixed rate ends</dt>
-              <dd className={housingFixEnd()} data-testid="housing-fix-end" id="housing-fix-end">
-                {fixedRateEndText(fixedRateEnd)}
-              </dd>
-            </div>
-          ) : null}
         </dl>
       ) : (
-        <>
-          <p
-            className={housingUnknown()}
-            data-testid="housing-cost-unknown"
-            id="housing-cost-unknown"
-          >
-            {unknownText(missing)}
-          </p>
-          {fixedRateEnd ? (
-            <p className={housingFixEnd()} data-testid="housing-fix-end" id="housing-fix-end">
-              {fixedRateEndText(fixedRateEnd)}
-            </p>
-          ) : null}
-        </>
+        <p className={housingUnknown()} data-testid={ids.unknown} id={ids.unknown}>
+          {unknownText(missing)}
+        </p>
       )}
+
+      {fixedRateEnd ? (
+        <p className={housingFixEnd()} data-testid={ids.fixEnd} id={ids.fixEnd}>
+          {fixedRateEndText(fixedRateEnd)}
+        </p>
+      ) : null}
 
       {known?.paymentEstimated ? (
         <p className={housingNote()}>Estimate based on a repayment mortgage at your saved rate.</p>
@@ -189,6 +182,8 @@ export const HousingCostCard: FC<HousingCostCardProps> = ({
           {error}
         </p>
       ) : null}
+      <LiveRegion announceInitial message={savedNotice} visuallyHidden />
+      {savedNotice ? <p className={housingNote()}>{savedNotice}</p> : null}
     </section>
   );
 };

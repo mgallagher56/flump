@@ -52,7 +52,7 @@ export const MortgageAlerts: FC<MortgageAlertsProps> = ({
             <div>
               <h3 className={alertTitle()}>{refinanceTitle(refinanceWarning)}</h3>
               <p className={alertText()}>
-                Renewal date{" "}
+                Fixed rate end date{" "}
                 <span className={alertDate()}>{formatRenewalDate(refinanceWarning.date)}</span>.
                 After a fixed rate ends, the rate your lender charges can change. Your lender's
                 terms set out any early repayment charge (ERC).

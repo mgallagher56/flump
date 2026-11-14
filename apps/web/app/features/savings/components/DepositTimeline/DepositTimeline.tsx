@@ -29,7 +29,7 @@ const countFormat = new Intl.NumberFormat("en-GB", { maximumFractionDigits: 0 })
 const plural = (n: number, one: string, many: string) =>
   `${countFormat.format(n)} ${n === 1 ? one : many}`;
 
-export const DEPOSIT_EMPTY_TEXT = "Enter a target deposit to see an estimate.";
+export const DEPOSIT_EMPTY_TEXT = "Enter a target amount to see an estimate.";
 
 /** The one outcome line for the current inputs. */
 export function depositOutcomeText(values: DepositTimelineValues): string {
@@ -59,7 +59,7 @@ export const DepositTimeline: FC<DepositTimelineProps> = ({ values, onChange }) 
   <SimulatorSplitLayout
     controls={
       <div className={timelineControls()}>
-        <FormField label="Target deposit">
+        <FormField label="Target amount">
           {(field) => (
             <CurrencyInput
               {...controlProps(field)}
@@ -79,7 +79,7 @@ export const DepositTimeline: FC<DepositTimelineProps> = ({ values, onChange }) 
             />
           )}
         </FormField>
-        <FormField hint="From your saved savings accounts" label="Starting amount">
+        <FormField hint="From your saved savings and investment accounts" label="Starting amount">
           {(field) => (
             <CurrencyInput
               {...controlProps(field)}
@@ -100,7 +100,9 @@ export const DepositTimeline: FC<DepositTimelineProps> = ({ values, onChange }) 
         >
           {depositOutcomeText(values)}
         </p>
-        <p className={timelineNote()}>Estimate only. Does not include interest.</p>
+        <p className={timelineNote()}>
+          Estimate only. Does not include interest or changes in investment value.
+        </p>
       </div>
     }
   />

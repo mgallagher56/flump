@@ -165,17 +165,24 @@ describe("SavingsContainer", () => {
     });
   });
   describe("deposit timeline (E32)", () => {
+    it("lives in the forecaster panel only, not under every tab", () => {
+      render(<SavingsContainer />);
+      expect(screen.getByRole("region", { name: "Model a change to your savings" })).toBeDefined();
+      fireEvent.mouseDown(screen.getByRole("tab", { name: /Accounts/ }));
+      expect(screen.queryByRole("region", { name: "Model a change to your savings" })).toBeNull();
+    });
+
     it("models a target in a scenario zone, seeded from saved figures, and never saves it", () => {
       const setItem = vi.spyOn(Storage.prototype, "setItem");
       render(<SavingsContainer />);
       const zone = screen.getByRole("region", { name: "Model a change to your savings" });
       expect(zone.textContent).toContain("Illustration, not saved");
-      const target = screen.getByLabelText("Target deposit") as HTMLInputElement;
+      const target = screen.getByLabelText("Target amount") as HTMLInputElement;
       expect(target.value).toBe("");
       // Saved figures: £20,000 across both accounts, £550 a month of stored contributions.
       expect((screen.getByLabelText("Monthly saving") as HTMLInputElement).value).toMatch(/550/);
       expect(screen.getByTestId("deposit-timeline-outcome").textContent).toBe(
-        "Enter a target deposit to see an estimate.",
+        "Enter a target amount to see an estimate.",
       );
 
       fireEvent.change(target, { target: { value: "31000" } });
@@ -186,7 +193,7 @@ describe("SavingsContainer", () => {
       expect(mockSubmit).not.toHaveBeenCalled();
 
       fireEvent.click(screen.getByRole("button", { name: "Reset to saved figures" }));
-      expect((screen.getByLabelText("Target deposit") as HTMLInputElement).value).toBe("");
+      expect((screen.getByLabelText("Target amount") as HTMLInputElement).value).toBe("");
       setItem.mockRestore();
     });
   });
