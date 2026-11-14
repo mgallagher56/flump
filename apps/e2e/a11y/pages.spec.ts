@@ -27,7 +27,11 @@ for (const route of VISUAL_ROUTES) {
 
       await syncBrowserClock(page);
       const response = await page.goto(route.url);
-      expect(response?.status(), `${route.url} status`).toBeLessThan(400);
+      if (route.expectedStatus) {
+        expect(response?.status(), `${route.url} status`).toBe(route.expectedStatus);
+      } else {
+        expect(response?.status(), `${route.url} status`).toBeLessThan(400);
+      }
       if (route.signedIn) await expect(page).not.toHaveURL(/\/login|\/sandbox/);
       await settle(page);
 
