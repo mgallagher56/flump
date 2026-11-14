@@ -122,6 +122,7 @@ export const loader = async (args: LoaderFunctionArgs) => {
   const psaTaxBand = selectPsaBand(profileFactsFromProfile(userProfile), {
     otherAnnualIncome: otherAnnualIncomeFromProfile(userProfile),
   });
+  // The profile carries the user's own home estimate, which net worth counts (E16 D3).
   return data({
     accounts,
     accountDetails,
@@ -129,6 +130,7 @@ export const loader = async (args: LoaderFunctionArgs) => {
     bankConnectionsEnabled,
     psaTaxBand,
     user,
+    userProfile,
   });
 };
 

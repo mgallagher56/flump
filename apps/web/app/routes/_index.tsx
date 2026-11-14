@@ -74,10 +74,10 @@ export const loader = async (args: LoaderFunctionArgs) => {
   // from the one financial picture, built once from saved rows (E23 section 2).
   const portfolioSnapshot = new PortfolioSnapshot(accounts, accountDetails);
   const picture = buildWorkspacePicture(
-    { userProfile, accounts, accountDetails, budgetEntries },
+    { userProfile, accounts, accountDetails, budgetEntries, taxRecords },
     { snapshot: portfolioSnapshot },
   );
-  const { totalAssets, totalLiabilities, netWorth, liquidCash } = picture.netWorth;
+  const { totalAssets, totalLiabilities, netWorth, liquidCash, homeEstimate } = picture.netWorth;
   const budget = knownOrNull(picture.budget);
   const monthlyIncome = budget?.income ?? 0;
   const monthlyOutgoings = budget?.outgoings ?? 0;
@@ -151,8 +151,9 @@ export const loader = async (args: LoaderFunctionArgs) => {
   const totalTaxIncome = taxRecordTotal("income");
   const totalTaxExpenses = taxRecordTotal("expense");
   const netProfit = Math.max(0, totalTaxIncome - totalTaxExpenses);
-  // Not calculated yet: the old flat 29% across every year's records was an invented figure.
-  const estimatedTaxDue: number | null = null;
+  // C-11: the engine's self assessment estimate (tax on income outside PAYE) for the current tax
+  // year, from the picture. Unknown (no income outside PAYE) stays null, never £0.
+  const estimatedTaxDue: number | null = knownOrNull(picture.estimatedTaxDue)?.amount ?? null;
 
   // Estimated take-home comes from the engine's one selector; unknown stays unknown.
   const takeHomeFigure = selectTakeHome(profileFactsFromProfile(userProfile));
@@ -201,6 +202,8 @@ export const loader = async (args: LoaderFunctionArgs) => {
       totalAssets,
       totalLiabilities,
       liquidCash,
+      // The profile home estimate inside net worth, labelled "Home (your estimate)" (D3).
+      homeEstimate,
       accountsCount: Array.isArray(accounts) ? accounts.length : 0,
       typeTotals,
     },

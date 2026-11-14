@@ -46,3 +46,21 @@ export const WithStudentLoan: Story = {
     },
   },
 };
+
+/** A homeowner whose home is their own estimate (E16 D3): named, and counted in net worth. */
+export const WithHomeEstimate: Story = {
+  args: {
+    stats: {
+      assets: 427000,
+      liabilities: 186000,
+      netWorth: 241000,
+      homeEstimate: 310000,
+      studentLoans: 0,
+      liquidCash: 21000,
+      weightedAvgApy: 0,
+    },
+  },
+  play: async ({ canvasElement }) => {
+    await expect(within(canvasElement).getAllByText(/Home \(your estimate\)/)[0]).toBeDefined();
+  },
+};

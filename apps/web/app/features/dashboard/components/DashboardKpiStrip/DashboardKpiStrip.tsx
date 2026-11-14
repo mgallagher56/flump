@@ -1,3 +1,4 @@
+import { HOME_ESTIMATE_LABEL } from "@flump/finance-engine";
 import { Button, KpiCard, KpiStrip, Money } from "@repo/ui";
 import type { FC } from "react";
 import { SampleAwareLink } from "~/components/navigation/SampleAwareLink";
@@ -13,6 +14,8 @@ export interface DashboardKpiStripProps {
   /** How far commitments and planned savings go past take-home each month; 0 or null if none. */
   safeToSpendShortfall?: number | null;
   liquidCash: number | null;
+  /** The user's own home estimate inside net worth and assets (D3); 0 or absent when none. */
+  homeEstimate?: number | null;
 }
 
 const surplusTone = (value: number | null) => {
@@ -29,6 +32,7 @@ export const DashboardKpiStrip: FC<DashboardKpiStripProps> = ({
   weeklySafeToSpend,
   safeToSpendShortfall = null,
   liquidCash,
+  homeEstimate = null,
 }) => {
   const shortfall = safeToSpendShortfall !== null && safeToSpendShortfall > 0;
   const notSet = (href: string, subject: string) => (
@@ -53,6 +57,12 @@ export const DashboardKpiStrip: FC<DashboardKpiStripProps> = ({
             <span className={kpiSubtext()}>
               <span>Assets</span>
               <Money size="sm" tone="onContrast" value={totalAssets} />
+              {homeEstimate !== null && homeEstimate > 0 ? (
+                <span data-testid="kpi-home-estimate" id="kpi-home-estimate">
+                  <span>including {HOME_ESTIMATE_LABEL} </span>
+                  <Money size="sm" tone="onContrast" value={homeEstimate} />
+                </span>
+              ) : null}
               <span aria-hidden="true" className={kpiSeparator()}>
                 •
               </span>

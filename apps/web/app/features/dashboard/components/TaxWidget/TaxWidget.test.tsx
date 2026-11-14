@@ -26,7 +26,7 @@ describe("<TaxWidget />", () => {
   it("shows Not set with the verification note when tax due is unknown", () => {
     renderWidget();
     expect(screen.getByText("Not set")).toBeDefined();
-    expect(screen.getByText("Calculated once tax estimates are verified")).toBeDefined();
+    expect(screen.getByText("Shown once you add income not taxed through PAYE")).toBeDefined();
     expect(screen.getByRole("link", { name: "Review tax records" }).getAttribute("href")).toBe(
       "/app/self-assessment",
     );
@@ -52,7 +52,9 @@ describe("<TaxWidget />", () => {
     renderWidget({ ...data, estimatedTaxDue: 2900 });
     expect(screen.getByText("£2,900")).toBeDefined();
     expect(screen.queryByText("Not set")).toBeNull();
-    expect(screen.queryByText("Calculated once tax estimates are verified")).toBeNull();
+    expect(screen.queryByText("Shown once you add income not taxed through PAYE")).toBeNull();
+    expect(screen.getByText("Estimate of tax on income not taxed through PAYE")).toBeDefined();
+    expect(screen.getByText(/Estimated tax due/)).toBeDefined();
   });
 
   it("keeps the title as the only heading", () => {

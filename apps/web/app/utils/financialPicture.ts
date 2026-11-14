@@ -13,6 +13,7 @@ export interface WorkspaceRows {
   accounts?: unknown;
   accountDetails?: unknown;
   budgetEntries?: unknown;
+  taxRecords?: unknown;
 }
 
 const asArray = <T>(value: unknown): T[] => (Array.isArray(value) ? (value as T[]) : []);
@@ -34,6 +35,7 @@ export function buildWorkspacePicture(
       accounts: asArray(rows.accounts),
       accountDetails: asArray(rows.accountDetails),
       budgetEntries: asArray(rows.budgetEntries),
+      taxRecords: asArray(rows.taxRecords),
     }),
     opts,
   );

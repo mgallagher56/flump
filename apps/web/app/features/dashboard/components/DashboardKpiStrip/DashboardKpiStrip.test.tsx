@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 import { DashboardKpiStrip, type DashboardKpiStripProps } from "./DashboardKpiStrip";
@@ -78,5 +78,15 @@ describe("<DashboardKpiStrip />", () => {
     renderStrip({ ...known, weeklySafeToSpend: 0, safeToSpendShortfall: 120 });
     expect(screen.getByText(/a month more than take-home/)).toBeDefined();
     expect(screen.queryByText("Discretionary allowance")).toBeNull();
+  });
+
+  it("labels the home estimate inside net worth, and shows nothing without one", () => {
+    renderStrip({ ...known, netWorth: 241000, totalAssets: 427000, homeEstimate: 310000 });
+    const line = screen.getByTestId("kpi-home-estimate");
+    expect(line.textContent).toContain("including Home (your estimate)");
+    expect(line.textContent).toContain("£310,000");
+    cleanup();
+    renderStrip({ ...known, homeEstimate: 0 });
+    expect(screen.queryByTestId("kpi-home-estimate")).toBeNull();
   });
 });

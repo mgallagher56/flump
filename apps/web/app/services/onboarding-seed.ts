@@ -1,7 +1,15 @@
+import { HOME_ESTIMATE_LABEL } from "@flump/finance-engine";
+
 export interface OnboardingSeedInput {
   cash: number;
   pensionPot: number;
   mortgageBalance: number;
+  /**
+   * The user's own estimate of their home's value. Saved as a Property account named
+   * "Home (your estimate)" so net worth and loan to value count it (E16 D3); the backend does
+   * not store the profile `homeValue`. Optional: absent or 0 seeds nothing.
+   */
+  propertyValue?: number;
   unsecuredDebt: number;
   monthlyTakeHome: number;
   housingStatus: "renting" | "mortgage" | "own_outright";
@@ -44,6 +52,10 @@ export function buildOnboardingSeedJobs(input: OnboardingSeedInput): OnboardingS
   return [
     account("Cash and emergency savings", "Saving", input.cash),
     account("Workplace and personal pension", "Pension", input.pensionPot),
+    // A renter's leftover answer is not a home they own.
+    ...((input.propertyValue ?? 0) > 0 && input.housingStatus !== "renting"
+      ? [account(HOME_ESTIMATE_LABEL, "Property", input.propertyValue ?? 0)]
+      : []),
     ...(input.mortgageBalance > 0
       ? [account("Residential Mortgage", "Mortgage", input.mortgageBalance)]
       : []),

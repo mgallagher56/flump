@@ -1,4 +1,9 @@
-import { PortfolioSnapshot, type RawAccount, type RawAccountDetail } from "@flump/finance-engine";
+import {
+  HOME_ESTIMATE_LABEL,
+  PortfolioSnapshot,
+  type RawAccount,
+  type RawAccountDetail,
+} from "@flump/finance-engine";
 import { Button, Card, EmptyState, Illustration, PageHeader } from "@repo/ui";
 import { type FC, useMemo, useState } from "react";
 import { Link, useLoaderData } from "react-router";
@@ -15,6 +20,7 @@ import { londonMonth } from "~/features/snapshot/snapshotModel";
 import { useSaveSnapshot } from "~/features/snapshot/useSaveSnapshot";
 import type { loader } from "~/routes/app.accounts._index";
 import { isFutureMonth } from "~/utils/accounts";
+import { buildWorkspacePicture } from "~/utils/financialPicture";
 import { headerActions, pageRoot, section, sectionTitle } from "./AccountsContainer.styles";
 
 const { INVESTMENT } = AccountTypeEnum;
@@ -26,6 +32,7 @@ const AccountsContainer: FC = () => {
     bankConnections = [],
     bankConnectionsEnabled = false,
     psaTaxBand = null,
+    userProfile = null,
   } = useLoaderData<typeof loader>();
   const [checkInOpen, setCheckInOpen] = useState(false);
   const saveSnapshot = useSaveSnapshot();
@@ -41,6 +48,13 @@ const AccountsContainer: FC = () => {
         ),
       ),
     [accounts, accountDetails],
+  );
+
+  // Net worth and its parts come from the one financial picture (E23), built on the same
+  // snapshot, so the profile home estimate (D3) counts here exactly as on the dashboard.
+  const netWorth = useMemo(
+    () => buildWorkspacePicture({ userProfile, accounts }, { snapshot }).netWorth,
+    [userProfile, accounts, snapshot],
   );
 
   const stats = useMemo(() => {
@@ -62,16 +76,17 @@ const AccountsContainer: FC = () => {
     }
 
     return {
-      assets: snapshot.getTotalAssets(),
-      liabilities: snapshot.getTotalLiabilities(),
-      netWorth: snapshot.getTotalNetWorth(),
-      studentLoans: snapshot.getTotalStudentLoans(),
-      liquidCash: snapshot.getTotalLiquidCash(),
+      assets: netWorth.totalAssets,
+      liabilities: netWorth.totalLiabilities,
+      netWorth: netWorth.netWorth,
+      homeEstimate: netWorth.homeEstimate,
+      studentLoans: netWorth.studentLoans,
+      liquidCash: netWorth.liquidCash,
       weightedAvgApy:
         yieldingCashSum > 0 ? Math.round((weightedYieldSum / yieldingCashSum) * 100) / 100 : 0,
       isaUsed: Math.min(20000, isaUsed),
     };
-  }, [snapshot]);
+  }, [snapshot, netWorth]);
 
   // Asset allocation: assets only (Property included, Student Loan excluded).
   const allocation = useMemo(() => {
@@ -82,12 +97,16 @@ const AccountsContainer: FC = () => {
       totalAssets += acc.nominalBalance;
       typeTotals[acc.rawType] = (typeTotals[acc.rawType] || 0) + acc.nominalBalance;
     }
+    if (netWorth.homeEstimate > 0) {
+      totalAssets += netWorth.homeEstimate;
+      typeTotals[HOME_ESTIMATE_LABEL] = netWorth.homeEstimate;
+    }
     return Object.entries(typeTotals).map(([type, value]) => ({
       type,
       value,
       percentage: totalAssets > 0 ? (value / totalAssets) * 100 : 0,
     }));
-  }, [snapshot]);
+  }, [snapshot, netWorth]);
 
   const rows = useMemo(
     () => buildAccountRows(accounts as never[], accountDetails as never[]),

@@ -264,6 +264,7 @@ export const HomeDashboard: FC<HomeDashboardProps> = ({
 
       <SectionBand id="dashboard-stand" title="Where you stand" variant="app">
         <DashboardKpiStrip
+          homeEstimate={hasAccounts ? finiteOrNull(accountsData?.homeEstimate) : null}
           liquidCash={liquidCash}
           monthlySurplus={budgetKnown ? finiteOrNull(budgetData?.monthlySurplus) : null}
           netWorth={hasAccounts ? finiteOrNull(accountsData?.netWorth) : null}

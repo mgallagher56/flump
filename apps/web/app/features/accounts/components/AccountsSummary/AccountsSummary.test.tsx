@@ -38,6 +38,22 @@ describe("<AccountsSummary />", () => {
     expect(line.textContent).toContain("written off");
   });
 
+  test("labels the home estimate inside net worth, and hides it when there is none", () => {
+    const { getByTestId, queryByTestId, unmount } = customRender(
+      <AccountsSummary
+        accountCount={3}
+        allocation={[]}
+        stats={{ ...stats, homeEstimate: 310000 }}
+      />,
+    );
+    expect(getByTestId("home-estimate-line").textContent).toContain(
+      "Home (your estimate): £310,000",
+    );
+    unmount();
+    customRender(<AccountsSummary accountCount={3} allocation={[]} stats={stats} />);
+    expect(queryByTestId("home-estimate-line")).toBeNull();
+  });
+
   test("hides the student loan line when there is none", () => {
     const { queryByTestId } = customRender(
       <AccountsSummary accountCount={1} allocation={[]} stats={stats} />,
