@@ -136,10 +136,7 @@ export const PensionForecast: FC<PensionForecastProps> = ({
       onReset={scenario.reset}
     >
       {hasPots && growthRateIsPlaceholder && (
-        <p className={growthNote()}>
-          No growth rate is set on your pots, so the forecast starts from a 5% placeholder. Edit a
-          pot to set its rate.
-        </p>
+        <p className={growthNote()}>Assumes 5% growth a year. Edit a pot to set its own rate.</p>
       )}
       <SimulatorSplitLayout
         content={

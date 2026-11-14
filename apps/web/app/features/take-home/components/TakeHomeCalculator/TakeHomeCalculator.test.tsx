@@ -44,7 +44,8 @@ describe("<TakeHomeCalculator /> pension method", () => {
   test("starts from salary sacrifice when the user saved it", () => {
     const { getByRole } = customRender(
       <TakeHomeCalculator initialSalary={32000} onApplyIncrease={vi.fn()} />,
-      withProfile({ isSalarySacrifice: true }),
+      // A changed employer rate marks the method as the user's own choice (not the legacy default).
+      withProfile({ isSalarySacrifice: true, pensionEmployerPercent: 4 }),
     );
     expect((getByRole("switch", { name: /Salary sacrifice/ }) as HTMLInputElement).checked).toBe(
       true,
@@ -122,7 +123,8 @@ describe("<TakeHomeCalculator />", () => {
   test("turning salary sacrifice off also switches off passing on employer NI", () => {
     const { getByRole } = customRender(
       <TakeHomeCalculator initialSalary={45000} onApplyIncrease={vi.fn()} />,
-      withProfile({ isSalarySacrifice: true }),
+      // A changed employer rate marks the method as the user's own choice (not the legacy default).
+      withProfile({ isSalarySacrifice: true, pensionEmployerPercent: 4 }),
     );
     const sacrifice = getByRole("switch", { name: /Salary sacrifice/ }) as HTMLInputElement;
     const employerNi = getByRole("switch", { name: /Pass on employer NI/ }) as HTMLInputElement;

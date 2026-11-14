@@ -53,6 +53,8 @@ export interface PensionDetailsProps {
   monthlyEmployerNiContrib: number;
   /** True for the backend default 5% and 3%, which the user may never have chosen. */
   ratesAssumed: boolean;
+  /** False until the user saves a contribution method: it then reads "Not set". */
+  methodSet?: boolean;
   /** ISO timestamp of the last profile save, when known. */
   updatedAt?: string | null;
   isEditing: boolean;
@@ -219,6 +221,7 @@ export const PensionDetails: FC<PensionDetailsProps> = ({
   standardMonthlyEmployerContrib,
   monthlyEmployerNiContrib,
   ratesAssumed,
+  methodSet = true,
   updatedAt,
   isEditing,
   onEditingChange,
@@ -310,11 +313,13 @@ export const PensionDetails: FC<PensionDetailsProps> = ({
         <p className={mutedNote()}>
           Salary:{" "}
           <strong>{hasSalary ? `${formatCurrency(annualSalary)} a year` : "not set"}</strong> ·{" "}
-          {isSalarySacrifice
-            ? isSalarySacrificeEmployerNi
-              ? "Salary sacrifice and employer NI"
-              : "Salary sacrifice"
-            : "Net pay"}
+          {!methodSet
+            ? "Contribution method: Not set"
+            : isSalarySacrifice
+              ? isSalarySacrificeEmployerNi
+                ? "Salary sacrifice and employer NI"
+                : "Salary sacrifice"
+              : "Net pay"}
         </p>
       </div>
     </section>

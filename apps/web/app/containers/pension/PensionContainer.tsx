@@ -6,6 +6,7 @@ import {
   isInTaxTrapAlertBand,
   PortfolioSnapshot,
   profileFactsFromProfile,
+  salarySacrificeFromProfile,
   selectTakeHome,
 } from "@flump/finance-engine";
 import { Button, Icon, LiveRegion, PageHeader, StatusBadge } from "@repo/ui";
@@ -160,9 +161,17 @@ export const PensionContainer: FC = () => {
   const employerPercent = isReset
     ? (profile.pensionEmployerPercent ?? userProfile?.pensionEmployerPercent ?? 0)
     : (profile.pensionEmployerPercent ?? userProfile?.pensionEmployerPercent ?? 3.0);
-  const isSalarySacrifice = isReset
-    ? (profile.isSalarySacrifice ?? userProfile?.isSalarySacrifice ?? false)
-    : (profile.isSalarySacrifice ?? userProfile?.isSalarySacrifice ?? false);
+  // The contribution method counts only when the user chose it. The column is NOT NULL and
+  // used to default to salary sacrifice, so the method reads "Not set" while the pension facts
+  // are still the creation defaults, and a legacy stored true is never used as a choice
+  // (salarySacrificeFromProfile, shared with the engine's take-home).
+  const methodSet = !ratesAssumed;
+  const storedSalarySacrifice = salarySacrificeFromProfile({
+    isSalarySacrifice: profile.isSalarySacrifice ?? userProfile?.isSalarySacrifice,
+    pensionPercent: profile.pensionPercent ?? userProfile?.pensionPercent,
+    pensionEmployerPercent: profile.pensionEmployerPercent ?? userProfile?.pensionEmployerPercent,
+  });
+  const isSalarySacrifice = storedSalarySacrifice ?? false;
   const isSalarySacrificeEmployerNi = isReset
     ? (profile.isSalarySacrificeEmployerNi ?? userProfile?.isSalarySacrificeEmployerNi ?? false)
     : (profile.isSalarySacrificeEmployerNi ?? userProfile?.isSalarySacrificeEmployerNi ?? false);
@@ -205,9 +214,9 @@ export const PensionContainer: FC = () => {
       pensionPercent: ratesAssumed
         ? null
         : (profile.pensionPercent ?? userProfile?.pensionPercent ?? null),
-      isSalarySacrifice: profile.isSalarySacrifice ?? userProfile?.isSalarySacrifice ?? null,
+      isSalarySacrifice: methodSet ? storedSalarySacrifice : null,
     }),
-    [savedFacts, ratesAssumed, profile, userProfile],
+    [savedFacts, ratesAssumed, methodSet, storedSalarySacrifice, profile, userProfile],
   );
 
   // UK Tax & NI relief calculation for employee pension contribution. An unknown employment type
@@ -359,6 +368,7 @@ export const PensionContainer: FC = () => {
         isEditing={isEditingDetails}
         isSalarySacrifice={isSalarySacrifice}
         isSalarySacrificeEmployerNi={isSalarySacrificeEmployerNi}
+        methodSet={methodSet}
         monthlyEmployeeContrib={monthlyEmployeeContrib}
         monthlyEmployerNiContrib={monthlyEmployerNiContrib}
         ratesAssumed={ratesAssumed}

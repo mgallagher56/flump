@@ -117,11 +117,12 @@ export const PensionSummary: FC<PensionSummaryProps> = ({
           !hasPots
             ? "Set when you add a pot"
             : growthRateIsPlaceholder
-              ? "A 5% placeholder: no growth rate is set on your pots"
+              ? "No growth rate is set on your pots"
               : "Average across your pots, weighted by value"
         }
         value={
-          hasPots ? (
+          // A placeholder rate is an assumption, so it only appears in the scenario zone.
+          hasPots && !growthRateIsPlaceholder ? (
             <span className={figure}>
               <span className={rateValue}>{pct(weightedReturnRate)}</span>{" "}
               <span className={perMonth}>a year</span>
