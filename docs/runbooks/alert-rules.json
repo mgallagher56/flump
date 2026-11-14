@@ -1,0 +1,98 @@
+{
+  "$comment": "Alerting as config (BE-03, finding M16). The owner applies each entry in the named tool's UI; no agent calls these APIs. Field names follow each tool's own form or API so they can be copied across. scripts/ops/alert-rules.test.ts keeps the paths and the backup schedule in step with the code. Runbook: docs/runbooks/uptime-and-alerts.md.",
+  "uptimeMonitors": [
+    {
+      "name": "flump-backend-ready",
+      "service": "backend",
+      "path": "/health/ready",
+      "method": "GET",
+      "expectStatus": 200,
+      "keyword": "\"status\":\"ok\"",
+      "intervalSeconds": 180,
+      "timeoutSeconds": 10,
+      "alertAfterConsecutiveFailures": 2,
+      "notify": ["email", "push"]
+    },
+    {
+      "name": "flump-web",
+      "service": "web",
+      "path": "/healthz",
+      "method": "GET",
+      "expectStatus": 200,
+      "keyword": "\"status\":\"ok\"",
+      "intervalSeconds": 180,
+      "timeoutSeconds": 10,
+      "alertAfterConsecutiveFailures": 2,
+      "notify": ["email", "push"]
+    },
+    {
+      "name": "flump-marketing",
+      "service": "marketing",
+      "path": "/healthz",
+      "method": "GET",
+      "expectStatus": 200,
+      "keyword": "\"status\":\"ok\"",
+      "intervalSeconds": 180,
+      "timeoutSeconds": 10,
+      "alertAfterConsecutiveFailures": 2,
+      "notify": ["email", "push"]
+    }
+  ],
+  "backupHeartbeat": {
+    "$comment": "Dead-man switch for scripts/ops/backup-run.ts. Either a Sentry Cron Monitor (BACKUP_HEARTBEAT_URL = its check-in URL with ?status=ok, BACKUP_HEARTBEAT_FAIL_URL = the same with ?status=error) or a healthchecks.io check (URL and URL/fail). schedule must equal deploy.cronSchedule in scripts/ops/backup.railway.json.",
+    "name": "flump-backup",
+    "schedule": "30 2 * * *",
+    "timezone": "UTC",
+    "checkinMarginMinutes": 60,
+    "maxRuntimeMinutes": 60,
+    "failureIssueThreshold": 1,
+    "recoveryThreshold": 1,
+    "notify": ["email", "push"]
+  },
+  "sentry": {
+    "issueAlerts": [
+      {
+        "name": "New issue in production",
+        "environment": "production",
+        "actionMatch": "all",
+        "conditions": [
+          { "id": "sentry.rules.conditions.first_seen_event.FirstSeenEventCondition" }
+        ],
+        "filters": [],
+        "actions": ["email:owner", "channel:alerts"],
+        "frequencyMinutes": 30
+      },
+      {
+        "name": "Regression in production",
+        "environment": "production",
+        "actionMatch": "all",
+        "conditions": [
+          { "id": "sentry.rules.conditions.regression_event.RegressionEventCondition" }
+        ],
+        "filters": [],
+        "actions": ["email:owner", "channel:alerts"],
+        "frequencyMinutes": 30
+      },
+      {
+        "name": "Error spike (more than 10 events in 1 hour)",
+        "environment": "production",
+        "actionMatch": "all",
+        "conditions": [
+          {
+            "id": "sentry.rules.conditions.event_frequency.EventFrequencyCondition",
+            "value": 10,
+            "interval": "1h"
+          }
+        ],
+        "filters": [],
+        "actions": ["email:owner", "channel:alerts"],
+        "frequencyMinutes": 60
+      }
+    ]
+  },
+  "railwayWebhook": {
+    "$comment": "Project Settings, Webhooks. Confirm the crash event string with Test Webhook before filtering (uptime-and-alerts.md section 2).",
+    "events": ["Deployment.failed", "Deployment.crashed"],
+    "target": "channel:alerts"
+  }
+}

@@ -18,9 +18,16 @@ Create one monitor per service in an uptime tool (Better Stack Uptime or UptimeR
 - Staging monitors are optional. Staging has no URL defaults by design (`scripts/ops/smoke.sh staging` needs `BACKEND_URL`, `WEB_URL` and `MARKETING_URL`).
 - Run `MARKETING_URL=https://<marketing-domain> bash scripts/ops/smoke.sh production` after setup to confirm the same URLs answer before pointing a monitor at them.
 
-### Backup heartbeat (future, A-16)
+### Backup heartbeat (dead-man switch)
 
-When the backup cron exists, create a healthchecks.io check with a period matching the schedule plus a grace period, and have the cron `curl` the ping URL only on success. A missed ping alerts. Until A-16 lands there is nothing to ping: do not create the check early, it would alert immediately.
+The nightly backup (`scripts/ops/backup-run.ts`, `backup-restore.md` section 1) pings `BACKUP_HEARTBEAT_URL` only after both encrypted objects are uploaded, and `BACKUP_HEARTBEAT_FAIL_URL` with a one-line reason when it fails. Use either:
+
+- **Sentry Cron Monitor** (no new vendor): Crons, Add Monitor, slug `flump-backup`, crontab `30 2 * * *` UTC, check-in margin 60 min, max runtime 60 min, failure tolerance 1. Set `BACKUP_HEARTBEAT_URL` to its HTTP check-in URL with `?status=ok` and `BACKUP_HEARTBEAT_FAIL_URL` to the same URL with `?status=error`.
+- **healthchecks.io**: period 1 day, grace 1 hour; `BACKUP_HEARTBEAT_URL` is the ping URL, `BACKUP_HEARTBEAT_FAIL_URL` the ping URL plus `/fail`.
+
+Create the monitor in the same sitting as the cron service, after the first manual run succeeds, or it alerts at once.
+
+All monitors, the heartbeat and the Sentry rules are written down as config in [`alert-rules.json`](./alert-rules.json) (kept in step with the code by `scripts/ops/alert-rules.test.ts`): copy the values from there.
 
 ## 2. Alert routing
 
@@ -29,6 +36,7 @@ When the backup cron exists, create a healthchecks.io check with a period matchi
 | Railway project webhook | `Deployment.failed` (V), and the crashed state | Discord or Slack channel on your phone | Owner            |
 | Sentry alert rule       | New issue, or more than 10 events in 1 hour    | Email plus the same channel            | Owner            |
 | Uptime tool             | Down for 2 consecutive checks                  | Email plus phone push                  | Owner            |
+| Backup heartbeat        | Missed or failed nightly backup                | Email plus phone push                  | Owner            |
 | Railway                 | Crash email                                    | Project members                        | none (automatic) |
 
 Railway facts (V, docs.railway.com/observability/webhooks and /deployments/deployment-actions):
@@ -43,7 +51,8 @@ Railway facts (V, docs.railway.com/observability/webhooks and /deployments/deplo
 
 1. Railway: project Settings, Webhooks, add the Discord or Slack URL, choose the deployment events, Save.
 2. Uptime tool: add the three monitors above, set the alert policy to email plus push, and install the tool's mobile app.
-3. Sentry (after E18-N1 to N3 land): alert rule, "new issue" and "more than 10 events in 1 hour", actions email plus the channel integration.
+3. Sentry: the three issue alerts in `alert-rules.json` (`sentry.issueAlerts`: new issue, regression, more than 10 events in 1 hour, all filtered to `production`), actions email plus the channel integration.
+4. Backup heartbeat: as above.
 
 ## 3. Test each alert
 
@@ -54,7 +63,7 @@ Do these once after setup, and again after changing a route.
 | Railway webhook | Webhook form, Test Webhook (10 s timeout; or the Railway MCP `test-webhook` tool)                                                                                                                                                                                                                               | The sample payload appears in the channel and the form shows a 2xx status. |
 | Uptime          | Use the tool's "send test notification". For a real check, add a temporary monitor on a backend or web URL that returns 404 (for example `<backend-url>/health/nope`). Do not use marketing: its SPA catch-all returns 200 for unknown paths and delete it afterwards. Do not stop production services to test. | Email and push both arrive within 10 minutes.                              |
 | Sentry          | Use the alert rule's "Send test notification", or send a test event from staging only.                                                                                                                                                                                                                          | Email and channel message arrive.                                          |
-| Heartbeat       | Skip a ping once the backup cron exists.                                                                                                                                                                                                                                                                        | Alert arrives after the grace period.                                      |
+| Heartbeat       | Set the cron service's `BACKUP_AGE_RECIPIENTS` to an invalid value for one manual run (it exits 2 and pings the fail URL), then restore it. Or skip one run.                                                                                                                                                    | Alert arrives after the grace period.                                      |
 
 ## 4. Noise budget
 
@@ -62,15 +71,16 @@ Target: fewer than 2 alerts a week that needed no action (E18 draft, section 19)
 
 ## 5. Triage
 
-| Alert                          | Check first                                                                                                                                                                                     | Then                                                             |
-| ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
-| Backend monitor down, web fine | `railway logs -s backend -n 200`; open `/health` (liveness). If `/health` is 200 and `/health/ready` is 503, the database is the problem: check the Postgres service status and recent deploys. | Fix forward, or roll back (below).                               |
-| Web or marketing down          | Latest deployment status and logs for that service.                                                                                                                                             | Roll back that service.                                          |
-| All three down                 | Railway status page, then project status in the dashboard.                                                                                                                                      | Usually platform-side: wait, do not redeploy blindly.            |
-| `Deployment.failed`            | Build or start logs of the failed deployment. The previous deployment keeps serving if a healthcheck is set.                                                                                    | Fix forward with a new commit.                                   |
-| Crashed (10 restarts)          | Boot logs: migration error or missing env var are the usual causes.                                                                                                                             | Roll back immediately without a healthcheck (crash-loop outage). |
-| Sentry new issue               | Release (commit) of the event, and whether it started with the last deploy.                                                                                                                     | Fix forward, or roll back if user-facing and recent.             |
+| Alert                          | Check first                                                                                                                                                                                             | Then                                                                                                                |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| Backend monitor down, web fine | `railway logs -s backend -n 200`; open `/health` (liveness). If `/health` is 200 and `/health/ready` is 503, the database is the problem: check the Postgres service status and recent deploys.         | Fix forward, or roll back (below).                                                                                  |
+| Web or marketing down          | Latest deployment status and logs for that service.                                                                                                                                                     | Roll back that service.                                                                                             |
+| All three down                 | Railway status page, then project status in the dashboard.                                                                                                                                              | Usually platform-side: wait, do not redeploy blindly.                                                               |
+| `Deployment.failed`            | Build or start logs of the failed deployment. The previous deployment keeps serving if a healthcheck is set.                                                                                            | Fix forward with a new commit.                                                                                      |
+| Crashed (10 restarts)          | Boot logs: migration error or missing env var are the usual causes.                                                                                                                                     | Roll back immediately without a healthcheck (crash-loop outage).                                                    |
+| Backup heartbeat missed/failed | The cron service's last run logs in Railway (they hold counts and the error line only). Common causes: storage key expired, pg_dump older than the server after a Postgres upgrade (rebuild the image). | Fix, then trigger a manual run; the next ping clears the alert. Two missed nights in a row is a P2 (`incident.md`). |
+| Sentry new issue               | Release (commit) of the event, and whether it started with the last deploy.                                                                                                                             | Fix forward, or roll back if user-facing and recent.                                                                |
 
 Rollback: follow [`first-deploy-pr368.md#rollback`](./first-deploy-pr368.md#rollback) (the heading `## Rollback` exists, V). Two points from it: set healthcheck paths to be compatible with the build you roll back to, and Hobby keeps images for 72 hours, after which Redeploy rebuilds from source. Never delete rows from the `migrations` table to undo a migration.
 
-Log each incident and time to resolution (target: under 1 hour during the private beta).
+Log each incident and time to resolution (target: under 1 hour during the private beta) as [`incident.md`](./incident.md) describes.
