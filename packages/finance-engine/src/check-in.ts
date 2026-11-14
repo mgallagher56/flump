@@ -615,19 +615,30 @@ export interface CheckInChange {
 }
 
 export interface CheckInSummary {
-  /** Accounts whose figure differs from `lastValue`, in check-in order. */
+  /**
+   * Accounts whose figure differs from last month's by £1 or more, in check-in order. Last
+   * month's figure is the latest recorded before the check-in month, else the saved balance.
+   */
   changed: CheckInChange[];
   /** Net worth for the check-in month under the user's basis, from the saved values. */
   netWorth: number | null;
-  /** Change on the month before, or null with nothing to compare. */
+  /**
+   * Change on the month before, against the same figures `changed` compares with, or null when
+   * no account has a figure recorded before the check-in month.
+   */
   change: number | null;
   previousMonth: CheckInMonth;
 }
 
+/** Figures read in whole pounds: a difference under £1 is no change in the summary. */
+const SUMMARY_TOLERANCE = 1;
+
 /**
  * The end-of-check-in summary: what changed, and net worth against last month under the user's
- * basis. The answers are merged into the saved history the way the backend stores them (debts
- * negative), so the figure matches the history page once it reloads.
+ * basis. Both compare with one baseline per account (the latest figure recorded before the month,
+ * else the saved balance), so the list and the net worth line always agree. The answers are merged
+ * into the saved history the way the backend stores them (debts negative), so the figure matches
+ * the history page once it reloads.
  */
 export function buildCheckInSummary(
   steps: readonly CheckInStep[],
@@ -637,11 +648,31 @@ export function buildCheckInSummary(
   month: CheckInMonth,
   basis: NetWorthBasis,
 ): CheckInSummary {
+  const previousMonth = addCheckInMonths(month, -1);
+  const [year, monthNum] = month.split("-").map(Number) as [number, number];
+  const [prevYear, prevMonthNum] = previousMonth.split("-").map(Number) as [number, number];
+
+  // One baseline per account, as stored (debts may be negative).
+  const baseline = new Map<string, number>();
+  let anyEarlier = false;
+  for (const a of accounts ?? []) {
+    if (!a.id) continue;
+    const id = String(a.id).toLowerCase();
+    const before = checkInHistoryFor(id, details)
+      .filter((r) => compareCheckInMonths(r.month, month) < 0)
+      .at(-1);
+    if (before) anyEarlier = true;
+    const value = before ? before.value : toNumber(a.balance);
+    if (value !== null) baseline.set(id, value);
+  }
+
   const changed: CheckInChange[] = [];
   for (const step of steps) {
     const figure = stepFigure(step, answers[step.accountId]);
     if (!figure) continue;
-    if (step.lastValue !== null && samePence(figure.value, step.lastValue)) continue;
+    const base = baseline.get(step.accountId);
+    const shownBase = base === undefined ? null : step.isLiability ? Math.abs(base) : base;
+    if (shownBase !== null && Math.abs(figure.value - shownBase) < SUMMARY_TOLERANCE) continue;
     changed.push({
       accountId: step.accountId,
       name: step.name,
@@ -649,14 +680,22 @@ export function buildCheckInSummary(
       calculated: figure.source === "calculated",
     });
   }
-  const [year, monthNum] = month.split("-").map(Number) as [number, number];
+
   const answered = new Set(Object.keys(answers));
   const owed = new Map(steps.map((s) => [s.accountId, s.isLiability]));
+  const idOf = (d: AccountDetailInput) => String(d.accountId ?? d.account_id ?? "").toLowerCase();
+  // The month as saved (recorded rows not replaced by an answer, then the answers), after one
+  // baseline row per account in the month before.
   const merged: AccountDetailInput[] = [
-    ...(details ?? []).filter((d) => {
-      const id = String(d.accountId ?? d.account_id ?? "").toLowerCase();
-      return !(answered.has(id) && Number(d.year) === year && Number(d.month) === monthNum);
-    }),
+    ...[...baseline].map(([accountId, value]) => ({
+      accountId,
+      year: prevYear,
+      month: prevMonthNum,
+      value,
+    })),
+    ...(details ?? []).filter(
+      (d) => !answered.has(idOf(d)) && Number(d.year) === year && Number(d.month) === monthNum,
+    ),
     ...Object.values(answers).map((a) => ({
       accountId: a.accountId,
       year,
@@ -665,9 +704,8 @@ export function buildCheckInSummary(
     })),
   ];
   const series = selectSavedNetWorthSeries(accounts, merged, month, basis);
-  const previousMonth = addCheckInMonths(month, -1);
   const now = series.find((p) => p.month === month) ?? null;
-  const before = series.find((p) => p.month === previousMonth) ?? null;
+  const before = anyEarlier ? (series.find((p) => p.month === previousMonth) ?? null) : null;
   return {
     changed,
     netWorth: now ? now.netWorth : null,

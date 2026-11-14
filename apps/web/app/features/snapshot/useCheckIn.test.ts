@@ -131,6 +131,29 @@ describe("useCheckIn", () => {
     expect(result.current.finished).toBe(true);
   });
 
+  it("No change to the rest saves a typed but unsaved figure as Update in the same PUT", async () => {
+    const { result, onSave } = setup();
+    act(() => {
+      result.current.setDraft(card, 712.4);
+      result.current.setDraft(mortgage, 185900);
+    });
+    await act(async () => {
+      await result.current.rest();
+    });
+    expect(onSave).toHaveBeenCalledTimes(1);
+    expect(onSave.mock.calls[0]?.[0].payload).toEqual({
+      values: [
+        { accountId: everyday, value: 3360, source: "confirmed" },
+        { accountId: card, value: 712.4, source: "manual" },
+        { accountId: isa, value: 14200, source: "confirmed" },
+        { accountId: mortgage, value: 185900, source: "manual" },
+      ],
+      complete: true,
+    });
+    expect(result.current.draft(card)).toBeNull();
+    expect(result.current.finished).toBe(true);
+  });
+
   it("shows the summary once the last open step is saved", async () => {
     const { result } = setup({
       details: [

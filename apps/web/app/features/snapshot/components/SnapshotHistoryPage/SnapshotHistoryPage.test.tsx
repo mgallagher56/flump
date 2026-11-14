@@ -84,7 +84,8 @@ describe("chartSummary", () => {
     expect(
       chartSummary([point("2026-09"), point("2026-10"), point("2026-11", true)], "2026-11"),
     ).toBe(
-      "Net worth each month since September 2026. November is not recorded yet, so it shows your saved balances.",
+      // The hero subline already says this month is not recorded: no second notice (P4).
+      "Net worth each month since September 2026.",
     );
     expect(
       chartSummary([point("2026-08"), point("2026-09", true), point("2026-10")], "2026-11"),

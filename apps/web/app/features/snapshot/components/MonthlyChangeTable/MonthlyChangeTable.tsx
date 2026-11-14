@@ -5,6 +5,7 @@ import { formatSignedChange, spokenChange } from "../../snapshotCopy";
 import {
   type AccountChange,
   formatMonth,
+  historySourceLabel,
   type MonthChangeRow,
   type MonthKey,
 } from "../../snapshotModel";
@@ -68,15 +69,7 @@ export const MonthlyChangeTable: FC<MonthlyChangeTableProps> = (props) => {
               </Td>
               <Td
                 numeric
-                secondary={
-                  r.carried
-                    ? "Carried forward"
-                    : r.currentSource === "calculated"
-                      ? "Calculated"
-                      : r.currentSource === "confirmed"
-                        ? "No change"
-                        : undefined
-                }
+                secondary={r.carried ? "Carried forward" : historySourceLabel(r.currentSource)}
               >
                 {formatCurrency(r.current)}
               </Td>

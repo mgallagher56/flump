@@ -58,6 +58,16 @@ describe("CheckInCard", () => {
     expect(screen.getByText("2 of 4")).toBeDefined();
   });
 
+  it("saves a typed figure as Update when Enter is pressed in the balance field", async () => {
+    const { onSave } = setup();
+    await userEvent.type(screen.getByRole("textbox", { name: /New balance/ }), "3412{Enter}");
+    await waitFor(() => expect(screen.getByText("2 of 4")).toBeDefined());
+    expect(onSave).toHaveBeenCalledTimes(1);
+    expect((onSave.mock.calls[0] as unknown[] | undefined)?.[0]).toMatchObject({
+      payload: { values: [{ accountId: everyday, value: 3412, source: "manual" }] },
+    });
+  });
+
   it("stays on the card with an error when the save fails", async () => {
     setup(undefined, async () => false);
     await userEvent.click(screen.getByRole("button", { name: "No change" }));

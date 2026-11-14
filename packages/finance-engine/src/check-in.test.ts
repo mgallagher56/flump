@@ -343,6 +343,8 @@ describe("summary", () => {
     );
     expect(summary.changed.map((c) => [c.name, c.value, c.calculated])).toEqual([
       ["Current account", 3500, false],
+      // Confirmed at the saved balance, which differs from October's record.
+      ["Easy access savings", 7600, false],
       ["Residential mortgage", 185999.56, true],
     ]);
     expect(summary.previousMonth).toBe("2026-10");
@@ -353,7 +355,8 @@ describe("summary", () => {
     expect(summary.netWorth).toBeCloseTo(3500 + 7600 + 96000 - 185999.56 - 8400, 2);
   });
 
-  it("with every answer No change nothing is listed, and net worth is the saved balances", () => {
+  it("compares the list and net worth with the same figures: last month's record", () => {
+    // Every answer No change repeats the saved balance, which differs from October's records.
     const answers = Object.fromEntries(
       steps.map((s) => [s.accountId, answerValue(s, { kind: "noChange" })!]),
     );
@@ -365,10 +368,79 @@ describe("summary", () => {
       MONTH,
       DEFAULT_NET_WORTH_BASIS,
     );
-    expect(summary.changed).toEqual([]);
+    // So each is listed as changed against October, and the net worth line agrees.
+    expect(summary.changed.map((c) => c.accountId)).toEqual(["c", "v", "l", "p", "m", "s"]);
     expect(summary.netWorth).toBe(3400 + 7600 + 96000 - 186000 - 8400);
     // The saved balances against October: +40, +220, +550, +900, +210.
     expect(summary.change).toBe(1920);
+  });
+
+  it("lists nothing and shows no change when every figure repeats last month's record", () => {
+    const renter: CheckInAccountInput[] = [
+      { id: "C", name: "Current account", type: "Current", balance: 1465 },
+      { id: "K", name: "Credit card", type: "Credit Card", balance: -320 },
+    ];
+    const history = [row("C", 10, 1000), row("K", 10, -300)];
+    const s = buildCheckInSteps(renter, history, MONTH);
+    const answers = {
+      c: answer("c", 1000, "manual"),
+      k: answer("k", 300, "manual"),
+    };
+    const summary = buildCheckInSummary(
+      s,
+      answers,
+      renter,
+      history,
+      MONTH,
+      DEFAULT_NET_WORTH_BASIS,
+    );
+    expect(summary.changed).toEqual([]);
+    expect(summary.change).toBe(0);
+  });
+
+  it("treats a difference under £1 as unchanged", () => {
+    const history = [row("M", 10, -186000)];
+    const [m] = buildCheckInSteps([accounts[0]!], history, MONTH);
+    const summary = buildCheckInSummary(
+      [m!],
+      { m: answer("m", 185999.56, "calculated") },
+      [accounts[0]!],
+      history,
+      MONTH,
+      DEFAULT_NET_WORTH_BASIS,
+    );
+    expect(summary.changed).toEqual([]);
+    const moved = buildCheckInSummary(
+      [m!],
+      { m: answer("m", 185998.9, "calculated") },
+      [accounts[0]!],
+      history,
+      MONTH,
+      DEFAULT_NET_WORTH_BASIS,
+    );
+    expect(moved.changed.map((c) => c.accountId)).toEqual(["m"]);
+  });
+
+  it("falls back to the saved balance for an account with no earlier month, in both", () => {
+    const pair: CheckInAccountInput[] = [
+      { id: "C", name: "Current account", type: "Current", balance: 3400 },
+      { id: "V", name: "Savings", type: "Saving", balance: 5000 },
+    ];
+    const history = [row("C", 10, 3360)];
+    const s = buildCheckInSteps(pair, history, MONTH);
+    const summary = buildCheckInSummary(
+      s,
+      { c: answer("c", 3360, "manual"), v: answer("v", 5000, "confirmed") },
+      pair,
+      history,
+      MONTH,
+      DEFAULT_NET_WORTH_BASIS,
+    );
+    // Savings has no October figure: it compares with its saved balance, so it is unchanged and
+    // does not add its whole balance to the change.
+    expect(summary.changed).toEqual([]);
+    expect(summary.netWorth).toBe(8360);
+    expect(summary.change).toBe(0);
   });
 
   it("has no change to show without a month before", () => {

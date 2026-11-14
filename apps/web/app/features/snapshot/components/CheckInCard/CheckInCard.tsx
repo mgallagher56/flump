@@ -1,5 +1,5 @@
 import { Button, InlineAlert, ProgressBar } from "@repo/ui";
-import { type FC, useEffect, useRef } from "react";
+import { type FC, type KeyboardEvent, useEffect, useRef } from "react";
 import type { CheckInAnswer, CheckInStep as CheckInStepModel } from "../../checkInModel";
 import { CHECK_IN_COPY, checkInProgress } from "../../snapshotCopy";
 import type { CheckInController } from "../../useCheckIn";
@@ -43,6 +43,14 @@ export const CheckInCard: FC<CheckInCardProps> = ({ checkIn }) => {
       if (n !== -1) setIndex(n);
     }
   };
+  // Enter in the balance field saves the typed figure as Update, as in the desktop list.
+  const onFieldKeyDown = (event: KeyboardEvent<HTMLInputElement>, s: CheckInStepModel) => {
+    if (event.key !== "Enter") return;
+    event.preventDefault();
+    const draft = checkIn.draft(s.accountId);
+    if (draft === null || checkIn.isSaving(s.accountId)) return;
+    void answer(s, { kind: "update", value: draft });
+  };
   const retry = async (s: CheckInStepModel) => {
     if (await checkIn.retry(s)) {
       const n = checkIn.nextOpen(steps.indexOf(s), s.accountId);
@@ -64,6 +72,7 @@ export const CheckInCard: FC<CheckInCardProps> = ({ checkIn }) => {
           key={step.accountId}
           layout="card"
           onAnswer={answer}
+          onFieldKeyDown={onFieldKeyDown}
           onRetry={retry}
           step={step}
         />

@@ -3,6 +3,7 @@ import {
   ChartFigure,
   chartColor,
   formatMonthTick,
+  niceStep,
   niceYDomain,
   Table,
   TBody,
@@ -89,6 +90,22 @@ export const monthTicks = <T,>(values: readonly T[], maxTicks: number): T[] => {
   return picked;
 };
 
+/**
+ * Y ticks on round steps inside the domain (for example £210k, £220k, £230k), so the axis never
+ * reads £216.5k, £223k, £229.5k. The step is a round one for about four intervals.
+ */
+export const yTicks = ([lo, hi]: readonly [number, number], intervals = 4): number[] => {
+  if (!Number.isFinite(lo) || !Number.isFinite(hi) || hi <= lo) return [lo];
+  const step = niceStep((hi - lo) / intervals);
+  const ticks: number[] = [];
+  for (let k = Math.ceil(lo / step); k * step <= hi + step * 1e-9; k++) {
+    const v = k * step;
+    // Normalise -0 so the axis never reads "-£0".
+    ticks.push(v === 0 ? 0 : v);
+  }
+  return ticks;
+};
+
 interface MonthTickProps {
   x?: number;
   y?: number;
@@ -124,6 +141,7 @@ const Plot: FC<PlotProps> = ({ points, hasCarried }) => {
     formatMonthTick(monthByLabel.get(label) ?? label, oneYear ? "none" : "2-digit");
   // Close to the data, so a change of a few thousand on a large net worth is not a flat line.
   const yDomain = niceYDomain(points.map((p) => p.netWorth));
+  const yAxisTicks = yTicks(yDomain);
   const annotated = annotation ? points.find((p) => p.label === annotation.x) : undefined;
   return (
     <div className={chartWrap()} data-testid="net-worth-history-chart" id="net-worth-history-chart">
@@ -140,7 +158,7 @@ const Plot: FC<PlotProps> = ({ points, hasCarried }) => {
             tick={<MonthTick count={ticks.length} textFor={textFor} />}
             ticks={ticks}
           />
-          <YAxis {...chartYAxisProps} domain={yDomain} />
+          <YAxis {...chartYAxisProps} domain={yDomain} interval={0} ticks={yAxisTicks} />
           <Tooltip
             content={<ChartTooltip hiddenKeys={hasCarried ? [] : ["carried"]} />}
             cursor={chartCursorProps}

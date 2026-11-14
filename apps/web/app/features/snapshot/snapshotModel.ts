@@ -102,6 +102,19 @@ export interface AccountChange {
   currentSource?: "calculated" | "confirmed" | null;
 }
 
+/**
+ * The history label for how a figure was given: "Calculated", or "Confirmed" for a figure kept with
+ * the check-in's No change. Not "No change": a confirmed figure repeats the saved balance, which can
+ * differ from last month's record, so it can sit beside a non-zero change.
+ */
+export function historySourceLabel(
+  source: AccountChange["currentSource"],
+): "Calculated" | "Confirmed" | undefined {
+  if (source === "calculated") return "Calculated";
+  if (source === "confirmed") return "Confirmed";
+  return undefined;
+}
+
 export interface MonthChangeRow {
   month: MonthKey;
   previousMonth: MonthKey;
@@ -177,8 +190,8 @@ export function buildSnapshotHistory(
   const recorded = series.filter((p) => !p.allCarried);
   const latestRecorded = recorded.at(-1) ?? null;
   const previousRecorded = recorded.at(-2) ?? null;
-  // Sorted by name, then id: the engine returns rows in account-id order, and ids are random, so
-  // without this the table order changed from one user (and one test run) to the next.
+  // Sorted by group, name, then id: the engine returns rows in account-id order, and ids are random,
+  // so without this the table order changed from one user (and one test run) to the next.
   const sourceAt = (accountId: string, month: MonthKey): AccountChange["currentSource"] => {
     const [y, m] = month.split("-").map(Number);
     const row = (details ?? []).find(
@@ -205,9 +218,12 @@ export function buildSnapshotHistory(
               currentSource: a?.carried ? null : sourceAt(d.accountId, latestRecorded.month),
             };
           })
+          // What you own first, then what you owe, each by name: the Accounts page grouping.
           .sort(
             (x, y) =>
-              x.name.localeCompare(y.name, "en-GB") || x.accountId.localeCompare(y.accountId),
+              Number(x.isLiability) - Number(y.isLiability) ||
+              x.name.localeCompare(y.name, "en-GB") ||
+              x.accountId.localeCompare(y.accountId),
           )
       : [];
   return {

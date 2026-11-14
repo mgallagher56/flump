@@ -67,8 +67,6 @@ export const heroSubline = (
     : against;
 };
 
-const monthName = (month: MonthKey): string => formatMonth(month).split(" ")[0] ?? month;
-
 /**
  * The chart summary (P10.1, at most 2 figures). The end figure is the chart's direct label, so the
  * summary names the first month and, only when a month has no check-in, says which line is dashed
@@ -82,11 +80,11 @@ export const chartSummary = (
   if (!first) return "";
   const opening = `Net worth each month since ${formatMonth(first.month)}.`;
   const carried = series.filter((p) => p.allCarried);
+  // Only the current month carried: the hero subline already says it is not recorded, so the
+  // summary adds no second notice (P4).
   const onlyCurrent = carried.length === 1 && carried[0]?.month === currentMonth;
-  if (carried.length === 0) return opening;
-  return onlyCurrent
-    ? `${opening} ${monthName(currentMonth)} is not recorded yet, so it shows your saved balances.`
-    : `${opening} Months with no check-in show as a dashed line.`;
+  if (carried.length === 0 || onlyCurrent) return opening;
+  return `${opening} Months with no check-in show as a dashed line.`;
 };
 
 /**

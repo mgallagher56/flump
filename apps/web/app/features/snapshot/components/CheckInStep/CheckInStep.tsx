@@ -228,7 +228,8 @@ export const CheckInStep: FC<CheckInStepProps> = ({
               onClick={() => onAnswer(step, { kind: "noChange" })}
               size="sm"
               type="button"
-              variant="secondary"
+              // In the list, Update is each row's primary; No change is the quieter choice.
+              variant={layout === "row" ? "ghost" : "secondary"}
             >
               {CHECK_IN_COPY.noChange}
             </Button>

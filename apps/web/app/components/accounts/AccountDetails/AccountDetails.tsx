@@ -54,7 +54,7 @@ interface LedgerRow {
 
 /** How a month's figure was given, when it was not typed: shown wherever the figure appears. */
 export const sourceLabel = (source: unknown): string | null =>
-  source === "calculated" ? "Calculated" : source === "confirmed" ? "No change" : null;
+  source === "calculated" ? "Calculated" : source === "confirmed" ? "Confirmed" : null;
 
 interface YearRow {
   year: number;
