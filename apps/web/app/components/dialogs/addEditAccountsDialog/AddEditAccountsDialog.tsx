@@ -96,6 +96,14 @@ interface AddEditAccountsDialogBtnProp {
   isIconButton?: boolean;
   /** Style of the text button. The page's one primary action passes "primary" (E16 P7.4). */
   variant?: "primary" | "outline";
+  /**
+   * A link the text button follows before the page has hydrated (#701), for example
+   * "/app/accounts?add=1"; the page then opens the dialog with `defaultOpen`. Once hydrated the
+   * click opens the dialog in place.
+   */
+  fallbackHref?: string;
+  /** Open on first render (the page was reached through `fallbackHref`). */
+  defaultOpen?: boolean;
 }
 
 /**
@@ -109,11 +117,13 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
   isEditAccount,
   isIconButton = false,
   variant = "outline",
+  fallbackHref,
+  defaultOpen = false,
 }) => {
   const { accounts = [] }: { accounts?: AccountOption[] } = useLoaderData<typeof loader>();
   const { t } = useTranslation();
   const fetcher = useFetcher();
-  const [modalOpen, setModalOpen] = useState(false);
+  const [modalOpen, setModalOpen] = useState(defaultOpen);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const [planError, setPlanError] = useState<string | null>(null);
   const accountName = (account ?? accounts.find((option) => option.id === accountId))?.name;
@@ -231,6 +241,19 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
       {isIconButton ? (
         <Button aria-label={editLabel} size="icon" variant="ghost" onClick={handleOpenModal}>
           <Icon icon={Pencil} size="sm" />
+        </Button>
+      ) : fallbackHref ? (
+        // A real link, so a click before hydration still reaches the add flow (#701).
+        <Button asChild size={btnSize === "icon" ? "md" : btnSize} variant={variant}>
+          <a
+            href={fallbackHref}
+            onClick={(e) => {
+              e.preventDefault();
+              handleOpenModal(e);
+            }}
+          >
+            {t(isEditAccount ? "edit" : "addAccount")}
+          </a>
         </Button>
       ) : (
         <Button
