@@ -1,5 +1,6 @@
-# Use official Bun image as base
-FROM oven/bun:1.4.4-slim AS base
+# Official Bun image, pinned by digest (M17) so a re-pushed tag cannot change the build.
+# To bump: docker buildx imagetools inspect oven/bun:<version>-slim and copy the index digest.
+FROM oven/bun:1.4.4-slim@sha256:1846adf22496bd711036aae8be147e57bdebbaea2e5264e3e0b5af1db187d9a4 AS base
 WORKDIR /app
 
 # Stage 1a: workspace manifests only. Every workspace's package.json is needed so
@@ -24,7 +25,11 @@ RUN bun install --frozen-lockfile --ignore-scripts --filter './' --filter 'backe
 FROM deps AS build
 COPY . .
 ENV NODE_ENV=production
-RUN bun turbo run build --filter=backend...
+# Build, then swap node_modules for a production-only install (M17): the runtime image carries
+# no devDependencies. The reinstall reuses the bun cache from the deps stage.
+RUN bun turbo run build --filter=backend... \
+ && find . -name node_modules -type d -prune -exec rm -rf {} + \
+ && bun install --frozen-lockfile --ignore-scripts --production --filter './' --filter 'backend' --filter './packages/*'
 
 # Stage 3: Create final production image
 FROM base AS runner
@@ -33,7 +38,10 @@ WORKDIR /app
 
 COPY --from=build --chown=bun:bun /app/node_modules ./node_modules
 COPY --from=build --chown=bun:bun /app/packages ./packages
-COPY --from=build --chown=bun:bun /app/apps/backend ./apps/backend
+# Only the compiled server and its manifest (health reads the version from package.json); no src.
+COPY --from=build --chown=bun:bun /app/apps/backend/dist ./apps/backend/dist
+COPY --from=build --chown=bun:bun /app/apps/backend/package.json ./apps/backend/package.json
+COPY --from=build --chown=bun:bun /app/apps/backend/node_modules ./apps/backend/node_modules
 COPY --from=build --chown=bun:bun /app/package.json ./package.json
 
 WORKDIR /app/apps/backend

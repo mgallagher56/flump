@@ -1,10 +1,10 @@
 name: 🔐 Security Scan
 
-# Advisory scanners, one job per tool. None of these are required checks; a red
-# run is a prompt to triage. The weekly schedule and workflow_dispatch run only
-# the ZAP job; gitleaks and Semgrep run on push and pull_request. gitleaks scans
-# a commit range, and the full-history scan is a manual local command
-# (docs/runbooks/secret-scan.md).
+# Security scanners, one job per tool. gitleaks and Semgrep are required checks on
+# pull requests (BE-01, .github/required-checks.json); ZAP stays advisory. The
+# weekly schedule and workflow_dispatch run only the ZAP job; gitleaks and Semgrep
+# run on push and pull_request. gitleaks scans a commit range, and the
+# full-history scan is a manual local command (docs/runbooks/secret-scan.md).
 
 on:
   push:
@@ -65,8 +65,12 @@ jobs:
             ${RANGE:+--log-opts="$RANGE"} \
             --redact --exit-code 1
 
+  # Blocking with a baseline (BE-01, H11): on a pull request Semgrep runs diff-aware against the
+  # merge base with main and fails only on findings the PR introduces, so existing findings are the
+  # baseline and never block. A false positive is silenced in code with `// nosemgrep: <rule-id>`
+  # plus a reason. On push to main it runs a full report-only scan for the SARIF artifact.
   semgrep:
-    name: 🔎 SAST (Semgrep CE, report-only)
+    name: 🔎 SAST (Semgrep CE)
     if: github.event_name == 'push' || github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -78,24 +82,38 @@ jobs:
         # actions/checkout v7.0.1
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
+          fetch-depth: 0
           persist-credentials: false
 
       - name: 🔎 Run Semgrep CE
         env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_REF: ${{ github.base_ref }}
           # Semgrep CE 1.185.0 (multi-arch index digest).
           SEMGREP_IMAGE: semgrep/semgrep:1.185.0@sha256:67518c174185a2043fdbed16c70631b79209499b3671178e7194379b48295a0d
         run: |
           set -u
-          # Report-only: findings are printed and written to semgrep.sarif but
-          # never fail the job (no --error flag). Metrics are off.
+          if [ "$EVENT_NAME" = "pull_request" ]; then
+            BASELINE=$(git merge-base "origin/$BASE_REF" HEAD)
+            echo "Semgrep baseline commit: $BASELINE (only new findings fail the job)"
+            MODE="--baseline-commit=$BASELINE --error"
+          else
+            MODE=""
+          fi
           status=0
-          docker run --rm -v "$PWD:/src" -w /src "$SEMGREP_IMAGE" \
-            semgrep scan --metrics=off --sarif --output=/src/semgrep.sarif \
-            --config p/owasp-top-ten --config p/typescript \
-            --config p/react --config p/nodejsscan \
-            --exclude node_modules --exclude dist --exclude build \
-            --exclude .turbo --exclude coverage || status=$?
-          echo "semgrep exit code: $status (advisory, not failing the job)"
+          # safe.directory: the checkout is owned by the runner user, not the container's.
+          docker run --rm -v "$PWD:/src" -w /src "$SEMGREP_IMAGE" sh -c "
+            git config --global --add safe.directory /src &&
+            semgrep scan --metrics=off --sarif --output=/src/semgrep.sarif $MODE \
+              --config p/owasp-top-ten --config p/typescript \
+              --config p/react --config p/nodejsscan \
+              --exclude node_modules --exclude dist --exclude build \
+              --exclude .turbo --exclude coverage" || status=$?
+          echo "semgrep exit code: $status"
+          if [ "$EVENT_NAME" = "pull_request" ]; then
+            [ "$status" = "0" ] || echo "::error title=Semgrep::This PR adds Semgrep findings (see the log above and the SARIF artifact). Fix them, or add // nosemgrep: <rule-id> with a reason."
+            exit "$status"
+          fi
           exit 0
 
       - name: 📦 Upload Semgrep report

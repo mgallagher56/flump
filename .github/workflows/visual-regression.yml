@@ -68,7 +68,7 @@ jobs:
 
     steps:
       - name: ⬇️ Checkout repo
-        uses: actions/checkout@v7.0.1
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       # setup-bun extracts a zip and the Playwright image ships without unzip. faketime freezes
       # the servers' clock (apps/e2e/support/clock.ts) so dates in the shots never move.

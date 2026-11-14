@@ -86,10 +86,110 @@ Values for every monitor and rule are in `alert-rules.json`; the steps are in `u
 | Sentry: more than 10 events in 1 hour (production)     |               |               |            |
 | Railway webhook: `Deployment.failed`, crashed          |               |               |            |
 
-### 9. Branch protection (ruling D13, optional)
+### 9. Branch protection (ruling D13)
 
-- [ ] GitHub, Settings, Branches, the `main` rule, "Require status checks to pass": add `💾 Backup and restore roundtrip` (workflow `.github/workflows/backup.yml`). It runs on every pull request, so it is safe to require.
+- [ ] `💾 Backup and restore roundtrip` (workflow `.github/workflows/backup.yml`) is one of the required checks listed under BE-01 below. Apply it together with the rest of that list.
 
 ### Before deploying any PR with an irreversible migration (BE-05 first)
 
 - [ ] Trigger a manual backup run with `BACKUP_LABEL=pre-<pr>` (or wait for the night's run), then run the section 3 drill on it and log it. Only then deploy.
+
+## BE-01 Merge gate and secret scanning (finding H11)
+
+BE-01 changed the workflows in the repository. The GitHub settings below are the owner's to apply (decision D13). Nothing in the repository can apply them, and no agent calls the settings API. Until they are applied, finding H11 stays open: a PR behind `main`, or one with a failing E2E, Docker, audit or gitleaks job, can still merge.
+
+Apply them after the BE-01 PR has merged and its checks have run at least once on a pull request. GitHub only offers a check name in the picker after it has reported in the last 7 days. The Semgrep check is renamed in BE-01, so its new name appears after the first run.
+
+### 1. Branch protection on `main`
+
+Settings → Branches → the rule for `main` (or Settings → Rules → Rulesets, if you use rulesets).
+
+| Setting | Value | Why |
+|---|---|---|
+| Require a pull request before merging | On | All changes go through CI |
+| Required approving reviews | 0 | A solo owner cannot review their own PR. CI is the gate (D13) |
+| Require status checks to pass before merging | On | |
+| Require branches to be up to date before merging (`strict`) | **On** | A PR behind `main` must re-run CI on the merged result. AGENTS.md section 5 assumes this |
+| Required status checks | The 12 names below, exactly | |
+| Do not allow bypassing the above settings (`enforce_admins`) | **On** | Admins are exempt today, so the gate can be skipped by accident |
+| Allow force pushes | Off | |
+| Allow deletions | Off | |
+
+Required status checks. These names are copied from `.github/required-checks.json`, and `scripts/ci-config.test.ts` fails if that file and the workflows drift apart. The emoji are part of each name.
+
+| Check name | Workflow | Time on a PR (approx.) |
+|---|---|---|
+| `⬣ Lint & Type Check` | CI Pipeline | 30 s |
+| `⚡ Vitest Tests` | CI Pipeline | 3 min (aggregates the two shards) |
+| `🏗️ Build` | CI Pipeline | 30 s |
+| `🧰 Ops script tests` | CI Pipeline | 40 s |
+| `♿ Storybook a11y (light)` | CI Pipeline | 2.5 min |
+| `♿ Storybook a11y (dark)` | CI Pipeline | 2 min |
+| `🎭 E2E smoke` | CI Pipeline | 1 to 1.5 min |
+| `🐳 Docker images` | CI Pipeline | 2 to 3 min when an image input changed; 20 s otherwise |
+| `🛡️ Dependency audit` | CI Pipeline | 20 s |
+| `🔑 Secret scan (gitleaks)` | Security Scan | 10 s |
+| `🔎 SAST (Semgrep CE)` | Security Scan | 1.5 to 2 min |
+| `💾 Backup and restore roundtrip` | Backup restore test (BE-03) | about 1.5 min |
+
+The jobs run in parallel, so a PR still finishes in about 3 minutes. Remove the old `♿ Storybook a11y` entries or the old Semgrep name if the picker still lists them under their previous names.
+
+Not required, on purpose:
+
+- `⚡ Vitest web` and `⚡ Vitest backend and packages`: covered by `⚡ Vitest Tests`. Requiring the aggregate keeps the gate stable if the shards change.
+- `🖼️ Visual regression`: still bedding in (`continue-on-error`; see `apps/e2e/README.md`, "Making it required").
+- `🕷️ DAST (ZAP baseline, passive)`: scheduled only.
+
+The same settings with the GitHub CLI, if you prefer it to the web page (run it yourself). It replaces the whole protection rule for `main`:
+
+```bash
+gh api -X PUT repos/mgallagher56/flump/branches/main/protection --input - <<'JSON'
+{
+  "required_status_checks": {
+    "strict": true,
+    "checks": [
+      { "context": "⬣ Lint & Type Check" },
+      { "context": "⚡ Vitest Tests" },
+      { "context": "🏗️ Build" },
+      { "context": "🧰 Ops script tests" },
+      { "context": "♿ Storybook a11y (light)" },
+      { "context": "♿ Storybook a11y (dark)" },
+      { "context": "🎭 E2E smoke" },
+      { "context": "🐳 Docker images" },
+      { "context": "🛡️ Dependency audit" },
+      { "context": "🔑 Secret scan (gitleaks)" },
+      { "context": "🔎 SAST (Semgrep CE)" },
+      { "context": "💾 Backup and restore roundtrip" }
+    ]
+  },
+  "enforce_admins": true,
+  "required_pull_request_reviews": { "required_approving_review_count": 0 },
+  "restrictions": null,
+  "allow_force_pushes": false,
+  "allow_deletions": false
+}
+JSON
+```
+
+To check it afterwards: `gh api repos/mgallagher56/flump/branches/main/protection -q '{strict: .required_status_checks.strict, admins: .enforce_admins.enabled, checks: [.required_status_checks.checks[].context]}'`.
+
+### 2. Secret scanning and push protection
+
+Settings → Code security (the repository is public, so both are free):
+
+| Setting | Value |
+|---|---|
+| Secret Protection (secret scanning) | Enable |
+| Push protection | Enable |
+| Dependabot alerts | Leave as they are. Renovate handles updates, and `🛡️ Dependency audit` blocks PRs |
+
+Push protection stops a push that contains a known token format before it reaches GitHub. The gitleaks job is the second line of defence, and it runs on the PR after the push.
+
+### 3. Railway "Wait for CI"
+
+There is nothing to change. The new required checks gate pull requests. On a push to `main`, the audit and tax-calendar steps only warn, the Docker job does not run, and visual regression never runs. So a new upstream advisory or a flaky screenshot cannot block a deploy. One change: the Storybook a11y jobs are now blocking on `main` as well, as E8 planned. They have been green on `main` throughout the bedding-in period.
+
+### How to know it worked
+
+- Open a test PR from a branch that is behind `main`. GitHub shows "This branch is out-of-date" and blocks the merge until it is updated.
+- A PR whose `🎭 E2E smoke` fails cannot merge, including for an admin.

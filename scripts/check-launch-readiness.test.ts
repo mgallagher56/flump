@@ -197,6 +197,32 @@ describe("docs/launch/readiness.json", () => {
         }
   });
 
+  // E24: stale paths made the report show false failures. A pattern scan over a path that does
+  // not exist can never pass (or, for absent, can never fail), so every scanned path must exist.
+  test("every present and absent evidence path exists", () => {
+    const missing = readiness.items.flatMap((item) =>
+      item.evidence.flatMap((e) =>
+        e.kind === "present" || e.kind === "absent"
+          ? e.paths.filter((p) => !existsSync(resolve(repoRoot, p))).map((p) => `${item.id}: ${p}`)
+          : [],
+      ),
+    );
+    expect(missing).toEqual([]);
+  });
+
+  // A file that is still to be written is a real gap, but its folder must exist: a missing
+  // folder means the evidence points at a layout that has moved (apps/web/e2e was apps/e2e/tests).
+  test("file evidence points into a folder that exists", () => {
+    const stale = readiness.items.flatMap((item) =>
+      item.evidence.flatMap((e) =>
+        e.kind === "file" && !existsSync(resolve(repoRoot, e.path, ".."))
+          ? [`${item.id}: ${e.path}`]
+          : [],
+      ),
+    );
+    expect(stale).toEqual([]);
+  });
+
   test("owner attestations are never pre-filled", () => {
     for (const item of readiness.items)
       for (const e of item.evidence) if (e.kind === "owner") expect(e.attestation).toEqual({});
