@@ -38,7 +38,7 @@ export const fewMonthsPrompt = (recordedMonths: number): string =>
   `You have ${MONTH_WORDS[recordedMonths] ?? `${recordedMonths} months`} of history. The chart appears after your third check-in.`;
 
 /**
- * "Against September 2026", plus "This month is not recorded yet" when the current month has no
+ * "Against September 2026", plus "This month is not recorded yet." when the current month has no
  * check-in, so the hero never reads as this month's change. One line with one date, so the first
  * view stays inside the number budget (P1).
  */
@@ -49,7 +49,7 @@ export const heroSubline = (
 ): string => {
   const against = `Against ${formatMonth(previous.month)}`;
   return end?.month === currentMonth && end.allCarried
-    ? `${against}. This month is not recorded yet`
+    ? `${against}. This month is not recorded yet.`
     : against;
 };
 
@@ -173,7 +173,7 @@ export const SnapshotHistoryPage: FC<SnapshotHistoryPageProps> = ({
           ) : (
             <HeroFigure
               emptyPrompt="The change shows once you have two months recorded."
-              label="Change since last month"
+              label="Monthly change"
               notSetLabel="No earlier month"
             />
           )}

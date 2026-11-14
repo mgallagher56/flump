@@ -100,7 +100,7 @@ describe("BudgetSetupWizard", () => {
       fireEvent.click(screen.getByRole("button", { name: /next/i }));
       await screen.findByText(`Step ${i + 2} of 6`);
     }
-    fireEvent.click(screen.getByRole("button", { name: "Done" }));
+    fireEvent.click(screen.getByRole("button", { name: "Finish editing" }));
     expect(onComplete).toHaveBeenCalledTimes(1);
   });
 

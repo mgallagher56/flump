@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test, vi } from "vitest";
-import { buildAccountRows, lastUpdatedLabel } from "./accountRows";
+import { buildAccountRows, lastUpdatedLabel, summariseAccountBalance } from "./accountRows";
 
 describe("buildAccountRows", () => {
   afterEach(() => {
@@ -59,6 +59,29 @@ describe("buildAccountRows", () => {
     );
     expect(row.balance).toBe(1200);
     expect(row.changePercent).toBeNull();
+  });
+});
+
+describe("summariseAccountBalance", () => {
+  const now = new Date(2026, 10, 14);
+  const noId = { month: 10, year: 2026, value: 900 };
+
+  test("a recorded month with no account id matches no account in a mixed list", () => {
+    const summary = summariseAccountBalance({ id: "a1", type: "Current" }, [noId], now);
+    expect(summary.balance).toBeUndefined();
+    expect(summary.againstLabel).toBeNull();
+  });
+
+  test("a recorded month with no account id belongs to the account when the caller says so", () => {
+    const summary = summariseAccountBalance({ id: "a1", type: "Current" }, [noId], now, true);
+    expect(summary.balance).toBe(900);
+    expect(summary.againstLabel).toBe("October 2026");
+  });
+
+  test("a recorded month for another account never matches", () => {
+    const other = { account_id: "a2", month: 10, year: 2026, value: 500 };
+    const summary = summariseAccountBalance({ id: "a1", type: "Current" }, [other], now, true);
+    expect(summary.balance).toBeUndefined();
   });
 });
 

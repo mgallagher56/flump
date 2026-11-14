@@ -69,7 +69,7 @@ describe("heroSubline", () => {
     ).toBe("Against October 2026");
     expect(
       heroSubline({ month: "2026-10" }, { month: "2026-11", allCarried: true }, "2026-11"),
-    ).toBe("Against October 2026. This month is not recorded yet");
+    ).toBe("Against October 2026. This month is not recorded yet.");
   });
 });
 
@@ -109,7 +109,7 @@ describe("SnapshotHistoryPage", () => {
     });
     const hero = screen.getByTestId("hero-figure");
     expect(hero.getAttribute("data-tone")).toBeNull();
-    expect(hero.textContent).toContain("Change since last month");
+    expect(hero.textContent).toContain("Monthly change");
     expect(hero.textContent).toContain("No earlier month");
     expect(hero.textContent).not.toMatch(/£/);
     expect(screen.getByText("Net worth recorded for October 2026: -£148,000.")).toBeDefined();
@@ -140,7 +140,7 @@ describe("SnapshotHistoryPage", () => {
     // The change is October against September; November has no check-in yet.
     expect(hero.textContent).toContain("Change in October 2026");
     expect(hero.textContent).not.toContain("since last month");
-    expect(hero.textContent).toContain("Against September 2026. This month is not recorded yet");
+    expect(hero.textContent).toContain("Against September 2026. This month is not recorded yet.");
     expect(screen.getByText(fewMonthsPrompt(2))).toBeDefined();
     expect(screen.queryByTestId("net-worth-history-chart")).toBeNull();
     expect(screen.getByRole("heading", { name: "Change by account" })).toBeDefined();
