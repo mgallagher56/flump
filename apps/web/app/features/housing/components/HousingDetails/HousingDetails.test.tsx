@@ -75,7 +75,7 @@ describe("<HousingDetails />", () => {
 
   it("mortgage: points to the mortgage page and offers no form", () => {
     render(<HousingDetails housingStatus="mortgage" savedAmount={1100} onSave={vi.fn()} />);
-    expect(screen.getByText("Your mortgage payment is on the mortgage page.")).toBeDefined();
+    expect(screen.getByText("Your balance, rate and term are on the mortgage page.")).toBeDefined();
     // The global test setup renders links as their children.
     expect(screen.getByText("Open the mortgage page")).toBeDefined();
     expect(screen.queryByRole("button")).toBeNull();

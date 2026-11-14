@@ -340,16 +340,13 @@ describe("<MortgageContainer />", () => {
       expect(window.location.search).toBe("");
     });
 
-    test("the zone states its starting point and reset stays disabled until a change", () => {
+    test("the zone states its starting point and reset is absent until a change", () => {
       loaderData = loaded();
-      const { getByText, getByRole } = customRender(<MortgageContainer />);
+      const { getByText, queryByRole } = customRender(<MortgageContainer />);
       expect(
         getByText(/Starting from your figures: £135,400 at 4.5%, 20 years left/),
       ).toBeDefined();
-      expect(getByRole("button", { name: "Reset to saved figures" })).toHaveProperty(
-        "disabled",
-        true,
-      );
+      expect(queryByRole("button", { name: "Reset to saved figures" })).toBeNull();
     });
 
     test("the rate change tool uses the user's real property value and fix date", () => {

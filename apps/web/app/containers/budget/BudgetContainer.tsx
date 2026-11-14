@@ -8,6 +8,7 @@ import {
 import { PortfolioSnapshot } from "@flump/finance-engine";
 import {
   Button,
+  DataList,
   EmptyState,
   Icon,
   Illustration,
@@ -15,12 +16,12 @@ import {
   PageBody,
   PageHeader,
 } from "@repo/ui";
-import { ListChecks } from "lucide-react";
+import { ListChecks, Pencil } from "lucide-react";
 import { type FC, useEffect, useMemo, useRef, useState } from "react";
 import { useLoaderData } from "react-router";
 import { AddCategoryModal } from "~/features/budget/components/AddCategoryModal";
 import { BudgetCategoryList } from "~/features/budget/components/BudgetCategoryList";
-import { BudgetCategoryTable } from "~/features/budget/components/BudgetCategoryTable";
+import { BudgetEditor } from "~/features/budget/components/BudgetEditor";
 import { BudgetOverview } from "~/features/budget/components/BudgetOverview";
 import { BudgetSetupWizard } from "~/features/budget/components/BudgetSetupWizard";
 import { RunwayCalculator } from "~/features/budget/components/RunwayCalculator";
@@ -34,12 +35,15 @@ import { useUserProfile } from "~/hooks/useUserProfile";
 import type { loader } from "~/routes/app.budget";
 import { apiFetch, apiFetchAll } from "~/services/api-client";
 import { BackendError } from "~/services/backend-error";
-import { type BudgetEntry, toMonthly } from "~/types/budget";
+import { type BudgetEntry, getCategoryLabel, toMonthly } from "~/types/budget";
 import { buildWorkspacePicture } from "~/utils/financialPicture";
 import { clearRunwaySettings, type RunwayScenario } from "~/utils/runwayStorage";
 
-/** The page shows the budget, or the setup wizard in its place. */
-type BudgetView = "budget" | "wizard";
+/**
+ * The page shows the budget, the budget with its entries editable in place (E16 round 3), or the
+ * first-time setup wizard in its place.
+ */
+type BudgetView = "budget" | "editing" | "wizard";
 
 const STANDARD_CATEGORIES: string[] = ["housing", "bills", "expenses", "savings", "income"];
 
@@ -55,6 +59,15 @@ function writableEntryFields<T extends Partial<BudgetEntry>>(entry: T) {
     ...fields
   } = entry;
   return fields;
+}
+
+const FREQUENCY_NOTE: Record<string, string> = { annual: "Paid yearly", weekly: "Paid weekly" };
+
+/** "Essential", or "Flexible, paid yearly": the quiet second line of a read-only entry. */
+function entrySecondary(entry: BudgetEntry): string {
+  const kind = entry.isEssential ? "Essential" : "Flexible";
+  const note = FREQUENCY_NOTE[entry.frequency];
+  return note ? `${kind}, ${note.toLowerCase()}` : kind;
 }
 
 const BudgetContainer: FC = () => {
@@ -73,8 +86,6 @@ const BudgetContainer: FC = () => {
   }, [userProfile, setProfile]);
 
   const [view, setView] = useState<BudgetView>("budget");
-  // Fixed when the wizard opens, so adding the first entries never switches it to edit mid-way.
-  const [wizardMode, setWizardMode] = useState<"setup" | "edit">("setup");
   // The one category whose entries are open in the list (E16 PR 5: rows open their entries).
   const [openCategory, setOpenCategory] = useState<string | null>(null);
   const [entries, setEntries] = useState<BudgetEntry[]>(budgetEntries);
@@ -232,7 +243,8 @@ const BudgetContainer: FC = () => {
     }
   };
 
-  const deleteEntry = async (id: string) => {
+  /** Resolves `false` when the delete failed and the row was kept. */
+  const deleteEntry = async (id: string): Promise<boolean> => {
     try {
       await apiFetch(`/budget-entries/${id}`, {
         method: "DELETE",
@@ -242,10 +254,11 @@ const BudgetContainer: FC = () => {
     } catch {
       // Keep the row: the server still has it.
       setActionError("We could not delete that entry. Nothing has changed. Try again.");
-      return;
+      return false;
     }
     setActionError(null);
     setEntries((prev) => prev.filter((e) => e.id !== id));
+    return true;
   };
 
   const handleWizardComplete = async () => {
@@ -316,16 +329,19 @@ const BudgetContainer: FC = () => {
           onSave={handleSaveHousing}
         />
       )}
-      <BudgetCategoryTable
-        category={category}
-        embedded
-        entries={entries.filter((e) => e.category === category)}
-        onAdd={addEntry}
-        onDelete={deleteEntry}
-        onUpdate={updateEntry}
-        onDeleteCategory={
-          !STANDARD_CATEGORIES.includes(category) ? handleDeleteCategory : undefined
-        }
+      {/* Read only: entries are edited in place with "Edit budget" (E16 round 3). */}
+      <DataList
+        items={entries
+          .filter((e) => e.category === category && !e.isIncome)
+          .map((e) => ({
+            id: e.id,
+            label: e.name,
+            secondary: entrySecondary(e),
+            value: Math.abs(toMonthly(e)),
+            valueProps: { fractionDigits: 0 },
+          }))}
+        label={`${getCategoryLabel(category)} entries`}
+        noun={{ one: "entry", other: "entries" }}
       />
     </>
   );
@@ -334,16 +350,23 @@ const BudgetContainer: FC = () => {
     <PageBody>
       <PageHeader
         actions={
-          view === "budget" ? (
+          view === "editing" ? (
             <Button
               data-testid="setup-wizard-btn"
               id="setup-wizard-btn"
-              onClick={() => {
-                setWizardMode(isBudgetEmpty ? "setup" : "edit");
-                setView("wizard");
-              }}
+              onClick={() => setView("budget")}
             >
-              <Icon icon={ListChecks} size="sm" />
+              Finish editing
+            </Button>
+          ) : view === "budget" ? (
+            // The wizard is for first-time setup only; a saved budget is edited in place.
+            <Button
+              data-testid="setup-wizard-btn"
+              id="setup-wizard-btn"
+              variant={isBudgetEmpty ? "primary" : "outline"}
+              onClick={() => setView(isBudgetEmpty ? "wizard" : "editing")}
+            >
+              <Icon icon={isBudgetEmpty ? ListChecks : Pencil} size="sm" />
               {isBudgetEmpty ? "Set up your budget" : "Edit budget"}
             </Button>
           ) : undefined
@@ -357,19 +380,36 @@ const BudgetContainer: FC = () => {
       {view === "wizard" ? (
         <BudgetSetupWizard
           entries={entries}
-          mode={wizardMode}
+          mode="setup"
           monthlyTakeHome={
             picture.takeHome.status === "known" ? picture.takeHome.value.monthly : null
           }
           onAddEntry={addEntry}
-          onDeleteEntry={deleteEntry}
+          onDeleteEntry={async (id) => {
+            await deleteEntry(id);
+          }}
           onCancel={() => setView("budget")}
           onComplete={handleWizardComplete}
           onUpdateEntry={updateEntry}
         />
       ) : (
         <>
-          {isBudgetEmpty ? (
+          {view === "editing" ? (
+            <>
+              {/* Removing or zeroing every entry keeps the editor open until Finish editing. */}
+              {!isBudgetEmpty && <BudgetOverview entries={entries} picture={picture} />}
+              <BudgetEditor
+                categories={allCategories}
+                entries={entries}
+                onAdd={addEntry}
+                onAddCategory={() => setIsAddCategoryOpen(true)}
+                onDelete={deleteEntry}
+                onDeleteCategory={handleDeleteCategory}
+                onUpdate={updateEntry}
+                removableCategories={customCategories}
+              />
+            </>
+          ) : isBudgetEmpty ? (
             <EmptyState
               action={
                 <Button
@@ -390,19 +430,18 @@ const BudgetContainer: FC = () => {
             <BudgetOverview entries={entries} picture={picture} />
           )}
 
-          {!isBudgetEmpty && (
+          {view === "budget" && !isBudgetEmpty && (
             <BudgetCategoryList
               categories={allCategories}
               entries={entries}
               metaFor={(cat) => (cat === "housing" ? housingTenureLabel(housingStatus) : undefined)}
               openCategory={openCategory}
               renderEntries={renderEntries}
-              onAddCategory={() => setIsAddCategoryOpen(true)}
               onToggleCategory={(cat) => setOpenCategory((prev) => (prev === cat ? null : cat))}
             />
           )}
 
-          {!isBudgetEmpty && (
+          {view === "budget" && !isBudgetEmpty && (
             <RunwayCalculator
               accountDetails={normalizedAccountDetails}
               accounts={accountsWithBalances}

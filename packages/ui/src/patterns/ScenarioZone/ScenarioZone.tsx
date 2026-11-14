@@ -18,11 +18,12 @@ export interface ScenarioZoneProps {
   title?: string;
   /** "Starting from your figures: £X at Y%, Z years left". Built from SAVED values only. */
   basis?: ReactNode;
-  /** True once any scenario input differs from the saved figures. Enables the reset button. */
+  /** True once any scenario input differs from the saved figures. Shows the reset button. */
   isModified?: boolean;
   /**
-   * Called by "Reset to saved figures". Restores scenario inputs to the saved values. When set, the
-   * button always shows in the footer, disabled until `isModified`.
+   * Called by "Reset to saved figures". Restores scenario inputs to the saved values. The button
+   * shows in the footer only while `isModified` (E16 round 3): nothing to reset, nothing shown.
+   * After a reset, focus moves to the zone heading, since the button it was on goes away.
    */
   onReset?: () => void;
   /**
@@ -77,7 +78,12 @@ export const ScenarioZone: FC<ScenarioZoneProps> = ({
   const headingId = useId();
   const slots = scenarioZone();
   const resolvedNotice = showNotice ? (notice ?? <ProjectionNotice />) : null;
-  const hasActions = Boolean(onReset || footer);
+  const showReset = Boolean(onReset) && isModified;
+  const hasActions = showReset || Boolean(footer);
+  const handleReset = () => {
+    onReset?.();
+    document.getElementById(headingId)?.focus();
+  };
   return (
     <section
       aria-labelledby={headingId}
@@ -87,7 +93,7 @@ export const ScenarioZone: FC<ScenarioZoneProps> = ({
     >
       <div className={slots.header}>
         <div className={slots.titleRow}>
-          <Heading as="h2" data-testid="scenario-zone-title" id={headingId} size="md">
+          <Heading as="h2" data-testid="scenario-zone-title" id={headingId} size="md" tabIndex={-1}>
             {title}
           </Heading>
           <StatusBadge variant="neutral" icon={<Icon icon={CircleDashed} size="sm" />}>
@@ -103,14 +109,13 @@ export const ScenarioZone: FC<ScenarioZoneProps> = ({
         <div className={slots.footer} data-testid="scenario-zone-footer" id="scenario-zone-footer">
           {hasActions ? (
             <div className={slots.footerActions}>
-              {onReset ? (
+              {showReset ? (
                 <Button
                   className={slots.reset}
-                  disabled={!isModified}
                   size="sm"
                   type="button"
                   variant="secondary"
-                  onClick={onReset}
+                  onClick={handleReset}
                 >
                   <Icon icon={RotateCcw} size="sm" />
                   {SCENARIO_RESET_LABEL}

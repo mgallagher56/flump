@@ -433,10 +433,7 @@ describe("DebtContainer scenario zone", () => {
     expect(within(zone).getAllByRole("tablist")).toHaveLength(1);
     const slider = within(zone).getByRole("slider", { name: /Extra payment each month/i });
     expect((slider as HTMLInputElement).value).toBe("0");
-    expect(
-      (within(zone).getByRole("button", { name: "Reset to saved figures" }) as HTMLButtonElement)
-        .disabled,
-    ).toBe(true);
+    expect(within(zone).queryByRole("button", { name: "Reset to saved figures" })).toBeNull();
   });
 
   it("'Update your details' moves focus to the saved debts list", () => {
@@ -475,10 +472,7 @@ describe("DebtContainer scenario zone", () => {
     fireEvent.change(slider(), { target: { value: "300" } });
     fireEvent.click(screen.getByRole("button", { name: "Reset to saved figures" }));
     expect(slider().value).toBe("0");
-    expect(
-      (screen.getByRole("button", { name: "Reset to saved figures" }) as HTMLButtonElement)
-        .disabled,
-    ).toBe(true);
+    expect(screen.queryByRole("button", { name: "Reset to saved figures" })).toBeNull();
   });
 
   it("keeps fact inputs out of the zone: balances and APRs are edited in Your debts only", () => {

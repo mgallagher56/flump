@@ -63,11 +63,10 @@ export const Default: Story = {
     const canvas = within(canvasElement);
     await expect(canvas.getByRole("region", { name: "Model a change" })).toBeInTheDocument();
     await expect(canvas.getByText("Illustration, not saved")).toBeInTheDocument();
-    const reset = canvas.getByRole("button", { name: SCENARIO_RESET_LABEL });
-    await expect(reset).toBeDisabled();
-    // The footer holds Reset, "Update your details" and the page's single notice.
+    // Nothing differs from the saved figures yet, so there is no Reset (E16 round 3).
+    await expect(canvas.queryByRole("button", { name: SCENARIO_RESET_LABEL })).toBeNull();
+    // The footer holds "Update your details" and the page's single notice.
     const footer = canvas.getByTestId("scenario-zone-footer");
-    await expect(footer).toContainElement(reset);
     await expect(footer).toContainElement(
       canvas.getByRole("link", { name: "Update your details" }),
     );
@@ -109,18 +108,21 @@ export const Modified: Story = {
   render: () => <Interactive />,
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    const reset = canvas.getByRole("button", { name: SCENARIO_RESET_LABEL });
-    await expect(reset).toBeDisabled();
+    await expect(canvas.queryByRole("button", { name: SCENARIO_RESET_LABEL })).toBeNull();
     const slider = canvas.getByRole("slider");
     slider.focus();
     await userEvent.keyboard("{ArrowRight}");
-    await waitFor(() => expect(reset).toBeEnabled());
+    const reset = await canvas.findByRole("button", { name: SCENARIO_RESET_LABEL });
     await waitFor(
       () => expect(canvas.getByRole("status")).toHaveTextContent(/^Illustration: Interest saved/),
       { timeout: 3000 },
     );
     await userEvent.click(reset);
-    await waitFor(() => expect(reset).toBeDisabled());
+    await waitFor(() =>
+      expect(canvas.queryByRole("button", { name: SCENARIO_RESET_LABEL })).toBeNull(),
+    );
+    // Focus lands on the zone heading, not on the body, once the button goes.
+    await expect(canvas.getByTestId("scenario-zone-title")).toHaveFocus();
     await waitFor(
       () =>
         expect(canvas.getByRole("status")).toHaveTextContent(

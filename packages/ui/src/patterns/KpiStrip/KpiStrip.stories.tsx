@@ -51,6 +51,48 @@ export const FourColumnsDark: Story = {
 };
 
 /**
+ * Round 3: two figures keep a 3-card width from `lg` and leave the last third empty, so a
+ * two-up strip never stretches across a wide page. View at 1280 to see the cap.
+ */
+const TwoUp = () => (
+  <KpiStrip
+    items={[
+      <KpiCard
+        key="in"
+        label="Money in each month"
+        value={2085}
+        valueFormat={{ fractionDigits: 0 }}
+      />,
+      <KpiCard
+        key="out"
+        label="Going out each month"
+        value={1960}
+        valueFormat={{ fractionDigits: 0 }}
+      />,
+    ]}
+  />
+);
+
+const twoPlay: Story["play"] = async ({ canvasElement }) => {
+  const canvas = within(canvasElement);
+  await expect(canvas.getAllByText("Money in each month")[0]).toBeInTheDocument();
+  await expect(canvas.getAllByText("Going out each month")[0]).toBeInTheDocument();
+};
+
+export const TwoUpCapped: Story = {
+  render: () => <TwoUp />,
+  globals: { theme: "light" },
+  parameters: { viewport: { defaultViewport: "desktop" } },
+  play: twoPlay,
+};
+
+export const TwoUpCappedDark: Story = {
+  render: () => <TwoUp />,
+  globals: { theme: "dark" },
+  play: twoPlay,
+};
+
+/**
  * R2-2: a money value with a unit, a date, a plain number and a percentage share one value size,
  * and the cards stay level although only one has a caption.
  */

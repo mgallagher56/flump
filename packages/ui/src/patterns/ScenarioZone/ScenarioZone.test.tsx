@@ -30,27 +30,29 @@ describe("ScenarioZone", () => {
     expect(screen.queryByTestId("projection-notice")).toBeNull();
   });
 
-  it("always shows Reset in the footer, disabled until modified", () => {
+  it("shows Reset in the footer only while something differs from the saved figures", () => {
     const { rerender } = render(<ScenarioZone onReset={() => {}}>x</ScenarioZone>);
-    const reset = screen.getByRole("button", { name: SCENARIO_RESET_LABEL }) as HTMLButtonElement;
-    expect(reset.disabled).toBe(true);
-    // E16 4.4: the footer holds Reset, "Update your details" and the notice.
-    expect(screen.getByTestId("scenario-zone-footer").contains(reset)).toBe(true);
+    expect(screen.queryByRole("button", { name: SCENARIO_RESET_LABEL })).toBeNull();
     rerender(
       <ScenarioZone isModified onReset={() => {}}>
         x
       </ScenarioZone>,
     );
-    expect(
-      (screen.getByRole("button", { name: SCENARIO_RESET_LABEL }) as HTMLButtonElement).disabled,
-    ).toBe(false);
+    const reset = screen.getByRole("button", { name: SCENARIO_RESET_LABEL });
+    // E16 4.4: the footer holds Reset, "Update your details" and the notice.
+    expect(screen.getByTestId("scenario-zone-footer").contains(reset)).toBe(true);
   });
 
-  it("does not call onReset while nothing has changed", () => {
+  it("resets, then moves focus to the zone heading as the button goes away", () => {
     const onReset = vi.fn();
-    render(<ScenarioZone onReset={onReset}>x</ScenarioZone>);
+    render(
+      <ScenarioZone isModified onReset={onReset} title="Model a change">
+        x
+      </ScenarioZone>,
+    );
     fireEvent.click(screen.getByRole("button", { name: SCENARIO_RESET_LABEL }));
-    expect(onReset).not.toHaveBeenCalled();
+    expect(onReset).toHaveBeenCalledTimes(1);
+    expect(document.activeElement).toBe(screen.getByTestId("scenario-zone-title"));
   });
 
   it("leaves Reset out when there is nothing to reset", () => {

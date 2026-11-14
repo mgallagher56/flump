@@ -17,8 +17,14 @@ export const kpiStripGrid = cva({
   variants: {
     columns: {
       1: { gridTemplateColumns: "minmax(0, 1fr)" },
+      // Two-up: from `lg` the cards keep the width of a 3-card strip and leave the last third
+      // empty, so 2 figures never stretch across a wide page (E16 round 3).
       2: {
-        gridTemplateColumns: { base: "minmax(0, 1fr)", sm: "repeat(2, minmax(0, 1fr))" },
+        gridTemplateColumns: {
+          base: "minmax(0, 1fr)",
+          sm: "repeat(2, minmax(0, 1fr))",
+          lg: "repeat(3, minmax(0, 1fr))",
+        },
       },
       3: {
         gridTemplateColumns: { base: "minmax(0, 1fr)", sm: "repeat(3, minmax(0, 1fr))" },

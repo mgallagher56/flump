@@ -145,25 +145,24 @@ describe("<TakeHomeCalculator /> empty states", () => {
 describe("<TakeHomeCalculator /> the scenario zone", () => {
   test("a pay rise changes the outcome, never the headline, sends no request, and resets", () => {
     const fetchSpy = vi.spyOn(globalThis, "fetch");
-    const { container, getByLabelText, getByRole, getByText } = customRender(
+    const { container, getByLabelText, getByRole, getByText, queryByRole } = customRender(
       <TakeHomeCalculator initialSalary={45000} onApplyIncrease={vi.fn()} />,
       withProfile(),
     );
     const saved = hero(container)?.textContent;
-    const reset = () =>
-      getByRole("button", { name: "Reset to saved figures" }) as HTMLButtonElement;
+    const reset = () => getByRole("button", { name: "Reset to saved figures" });
     expect(getByText("Illustration, not saved")).toBeDefined();
-    expect(reset().disabled).toBe(true);
+    expect(queryByRole("button", { name: "Reset to saved figures" })).toBeNull();
 
     const input = getByLabelText("Pay rise a year, before tax") as HTMLInputElement;
     expect(input.type).not.toBe("number");
     fireEvent.change(input, { target: { value: "10000" } });
     expect(hero(container)?.textContent).toBe(saved);
-    expect(reset().disabled).toBe(false);
+    expect(reset()).toBeDefined();
     expect(fetchSpy).not.toHaveBeenCalled();
 
     fireEvent.click(reset());
-    expect(reset().disabled).toBe(true);
+    expect(queryByRole("button", { name: "Reset to saved figures" })).toBeNull();
     fetchSpy.mockRestore();
   });
 
