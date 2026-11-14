@@ -14,6 +14,7 @@ import { KpiStrip } from "../../patterns/KpiStrip/KpiStrip";
 import { PageHeader } from "../../patterns/PageHeader/PageHeader";
 import { ProjectionNotice } from "../../patterns/ProjectionNotice/ProjectionNotice";
 import { ScenarioZone } from "../../patterns/ScenarioZone/ScenarioZone";
+import { SimulatorSplitLayout } from "../../patterns/SimulatorSplitLayout/SimulatorSplitLayout";
 import { Button } from "../../primitives/Button/Button";
 import { Card } from "../../primitives/Card/Card";
 import { Checkbox } from "../../primitives/Checkbox/Checkbox";
@@ -31,6 +32,7 @@ import { Switch } from "../../primitives/Switch/Switch";
 import { Table, TBody, Td, THead, Th } from "../../primitives/Table/Table";
 import { Tabs } from "../../primitives/Tabs/Tabs";
 import { TextInput } from "../../primitives/TextInput/TextInput";
+import { VisuallyHidden } from "../../primitives/VisuallyHidden/VisuallyHidden";
 import {
   buttonRow,
   cardHeader,
@@ -162,7 +164,8 @@ const sampleHistory = (current: number): ChartPoint[] =>
     projected: false,
   }));
 
-const W = 900;
+/** Drawing width before the chart is measured (server render, tests). */
+const DEFAULT_W = 900;
 const H = 240;
 const PAD = { l: 64, r: 8, t: 12, b: 36 };
 const MAX_TICKS = 6;
@@ -173,8 +176,30 @@ const niceCeil = (max: number): number => {
   return Math.ceil(max / step) * step;
 };
 
+/**
+ * The SVG's own width in CSS pixels, so one drawing unit is one pixel and the axis text stays at
+ * its text-style size at every width (a fixed 900-unit viewBox shrank it to about 6px at 375).
+ */
+const useMeasuredWidth = (): [(el: SVGSVGElement | null) => void, number] => {
+  const [el, setEl] = useState<SVGSVGElement | null>(null);
+  const [width, setWidth] = useState(DEFAULT_W);
+  useEffect(() => {
+    if (!el || typeof ResizeObserver !== "function") return;
+    const measure = () => {
+      const next = Math.round(el.getBoundingClientRect().width);
+      if (next > 0) setWidth(next);
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [el]);
+  return [setEl, width];
+};
+
 /** Static stand-in for a real chart (templates never import recharts). */
 const TemplateChart: FC<{ points: readonly ChartPoint[] }> = ({ points }) => {
+  const [svgRef, W] = useMeasuredWidth();
   const yMax = niceCeil(Math.max(...points.map((p) => p.value)));
   const x = (i: number) => PAD.l + (i * (W - PAD.l - PAD.r)) / Math.max(points.length - 1, 1);
   const y = (v: number) => PAD.t + (1 - v / yMax) * (H - PAD.t - PAD.b);
@@ -192,6 +217,7 @@ const TemplateChart: FC<{ points: readonly ChartPoint[] }> = ({ points }) => {
       aria-hidden="true"
       className={chartSvg}
       focusable="false"
+      ref={svgRef}
       role="presentation"
       viewBox={`0 0 ${W} ${H}`}
     >
@@ -218,7 +244,14 @@ const TemplateChart: FC<{ points: readonly ChartPoint[] }> = ({ points }) => {
       ) : null}
       {ticked.map(({ p, i }, n) =>
         n % tickEvery === 0 ? (
-          <text className={chartAxisText} key={p.label} textAnchor="middle" x={x(i)} y={H - 10}>
+          <text
+            className={chartAxisText}
+            key={p.label}
+            // The last point sits at the plot's right edge: end-anchor it so it is never clipped.
+            textAnchor={i === points.length - 1 ? "end" : "middle"}
+            x={x(i)}
+            y={H - 10}
+          >
             {p.short}
           </text>
         ) : null,
@@ -353,15 +386,20 @@ export const DashboardTemplate: FC = () => {
           <THead>
             <tr>
               <Th>Account</Th>
-              <Th>Type</Th>
               <Th numeric>Balance</Th>
             </tr>
           </THead>
           <TBody>
+            {/* Two columns so nothing scrolls at 375 (P1.4: one figure per row); the account
+                type is secondary text under the name. */}
             {ACCOUNTS.map((a) => (
               <tr data-list-row="" key={a.id}>
-                <Td>{a.name}</Td>
-                <Td>{a.kind}</Td>
+                <Td>
+                  <span className={listItemMeta}>
+                    <span>{a.name}</span>
+                    <span className={mutedText}>{a.kind}</span>
+                  </span>
+                </Td>
                 <Td numeric>
                   <Money size="sm" value={a.balance} />
                 </Td>
@@ -450,9 +488,10 @@ const runPlan = (debts: DebtItem[], extra: number, strategy: string): PayoffResu
 
 /**
  * Simulator (P13, P1.7): saved facts first (hero, KPIs, "Your details"), then a visibly lighter
- * `ScenarioZone` with two tools (one visible, at most 3 inputs), one outcome figure plus 2
- * supporting, one chart, and the page's single projection notice in the zone footer. At most 12
- * figures.
+ * `ScenarioZone` holding a `SimulatorSplitLayout` (AGENTS.md section 3): the tool switcher (two
+ * tools, one visible, at most 3 inputs) in the sticky left column, and one outcome figure plus 2
+ * supporting and one chart on the right. The page's single projection notice sits in the zone
+ * footer. At most 12 figures.
  */
 export const SimulatorTemplate: FC = () => {
   const [tool, setTool] = useState("extra");
@@ -552,87 +591,95 @@ export const SimulatorTemplate: FC = () => {
         isModified={isModified}
         notice={<ProjectionNotice />}
         onReset={reset}
-        tools={
-          <Tabs
-            aria-label="Ways to change your plan"
-            items={[
-              { value: "extra", label: "Pay extra" },
-              { value: "rate", label: "Change a rate" },
-            ]}
-            onValueChange={setTool}
-            panelClassName={toolStack}
-            panels={{
-              extra: (
-                <>
-                  <SliderField
-                    format="currency"
-                    helperText="On top of your minimum payments."
-                    label="Extra each month"
-                    max={500}
-                    min={0}
-                    onChange={setExtra}
-                    step={10}
-                    value={extra}
-                  />
-                  <RadioCardGroup
-                    legend="Which debt to pay first"
-                    onValueChange={setStrategy}
-                    options={STRATEGIES}
-                    value={strategy}
-                  />
-                </>
-              ),
-              rate: (
-                <SliderField
-                  format="percent"
-                  fractionDigits={1}
-                  label="Credit card interest rate (APR)"
-                  max={40}
-                  min={0}
-                  onChange={setCardApr}
-                  step={0.1}
-                  value={cardApr}
-                />
-              ),
-            }}
-            size="sm"
-            value={tool}
-          />
-        }
       >
-        <div className={outcome} data-testid="scenario-outcome">
-          <p className={outcomeLabel}>Debt-free in</p>
-          <p className={outcomeValue}>
-            {achievable ? formatDuration(plan.months) : "Not paid off at these payments"}
-          </p>
-          {achievable ? (
-            <dl className={outcomeSupport}>
-              <div className={outcomeSupportItem}>
-                <dt>Last payment</dt>
-                <dd className={figureText}>{paidOff}</dd>
+        <SimulatorSplitLayout
+          content={
+            <>
+              <div className={outcome} data-testid="scenario-outcome" id="scenario-outcome">
+                <p className={outcomeLabel}>Debt-free in</p>
+                <p className={outcomeValue}>
+                  {achievable ? formatDuration(plan.months) : "Not paid off at these payments"}
+                </p>
+                {achievable ? (
+                  <dl className={outcomeSupport}>
+                    <div className={outcomeSupportItem}>
+                      <dt>Last payment</dt>
+                      <dd className={figureText}>{paidOff}</dd>
+                    </div>
+                    <div className={outcomeSupportItem}>
+                      <dt>
+                        {interestSaved >= 0
+                          ? "Less interest than your plan"
+                          : "More interest than your plan"}
+                      </dt>
+                      <dd className={figureText}>{pounds(Math.abs(interestSaved))}</dd>
+                    </div>
+                  </dl>
+                ) : null}
               </div>
-              <div className={outcomeSupportItem}>
-                <dt>
-                  {interestSaved >= 0
-                    ? "Less interest than your plan"
-                    : "More interest than your plan"}
-                </dt>
-                <dd className={figureText}>{pounds(Math.abs(interestSaved))}</dd>
-              </div>
-            </dl>
-          ) : null}
-        </div>
-        <SeriesFigure
-          headingLevel="h3"
-          hideTitle
-          measure="Debt remaining"
-          points={points}
-          summary={
-            achievable
-              ? `Your total debt comes down every month to zero, paying ${STRATEGY_LABEL[strategy] ?? strategy}.`
-              : "At these payments your debts are not paid off."
+              <SeriesFigure
+                headingLevel="h3"
+                hideTitle
+                measure="Debt remaining"
+                points={points}
+                summary={
+                  achievable
+                    ? `Your total debt comes down every month to zero, paying ${STRATEGY_LABEL[strategy] ?? strategy}.`
+                    : "At these payments your debts are not paid off."
+                }
+                title="How your debt comes down"
+              />
+            </>
           }
-          title="How your debt comes down"
+          contentLabel="Your result"
+          controls={
+            <Tabs
+              aria-label="Ways to change your plan"
+              items={[
+                { value: "extra", label: "Pay extra" },
+                { value: "rate", label: "Change a rate" },
+              ]}
+              onValueChange={setTool}
+              panelClassName={toolStack}
+              panels={{
+                extra: (
+                  <>
+                    <SliderField
+                      format="currency"
+                      helperText="On top of your minimum payments."
+                      label="Extra each month"
+                      max={500}
+                      min={0}
+                      onChange={setExtra}
+                      step={10}
+                      value={extra}
+                    />
+                    <RadioCardGroup
+                      legend="Which debt to pay first"
+                      onValueChange={setStrategy}
+                      options={STRATEGIES}
+                      value={strategy}
+                    />
+                  </>
+                ),
+                rate: (
+                  <SliderField
+                    format="percent"
+                    fractionDigits={1}
+                    label="Credit card interest rate (APR)"
+                    max={40}
+                    min={0}
+                    onChange={setCardApr}
+                    step={0.1}
+                    value={cardApr}
+                  />
+                ),
+              }}
+              size="sm"
+              value={tool}
+            />
+          }
+          controlsLabel="Your what-if inputs"
         />
       </ScenarioZone>
       <CollapsibleDrawer title="How this is worked out" variant="quiet">
@@ -811,13 +858,18 @@ export interface PageBodyProps extends HTMLAttributes<HTMLDivElement> {}
  * details", `ScenarioZone`, drawers. It is a plain `div` because `AppShell` already supplies the
  * `main` landmark.
  *
- * Gutters are applied once. Inside an element marked `data-page-shell` (AppShell's `main` sets it,
- * because it already pads its content with the same 16/24/40px gutters and 20/32px top space),
- * `PageBody` drops its own horizontal gutters and top space and keeps only the width cap and the
- * section gap, so a page looks the same before and after it adopts `PageBody`. Outside a shell (a
- * signed-out page, a story) `PageBody` supplies the gutters itself. A shell that pads its content
- * must set `data-page-shell` on that element; when the shell padding is later removed, drop the
- * attribute too and `PageBody` becomes the only source of gutters.
+ * Gutters and top space are applied exactly once. A shell that already pads its content marks
+ * that element with `data-page-shell`, and `PageBody` adds only what the shell leaves short of
+ * the P13 values:
+ * - `data-page-shell=""` (AppShell's `main`): the shell pads with the same 16/24/40px gutters and
+ *   20/32px top space, so `PageBody` adds none and keeps only the width cap and section gap.
+ * - `data-page-shell="web"` (the apps/web root `main`, whose wrapper pads 12/24px at the sides and
+ *   which pads 16/24px on top): `PageBody` adds 4px at 375 and 16px from `lg` at the sides, and
+ *   4px at 375 and 8px from `lg` on top; from `md` to `lg` a -4px top margin takes the shell's
+ *   24px down to P13's 20px. Pages that do not use `PageBody` are unaffected by the attribute.
+ * Outside a shell (a signed-out page, a story) `PageBody` supplies everything itself. If a shell's
+ * padding changes, update the matching rule in `pageBody`; when it is removed, drop the attribute
+ * and `PageBody` becomes the only source of gutters.
  */
 export const PageBody: FC<PageBodyProps> = ({ className, ...props }) => (
   <div className={cx(pageBody, className)} {...props} />
@@ -837,7 +889,10 @@ export interface PageSkeletonProps {
 /**
  * The loading placeholder every route shows while its loader is pending (plan P12.1): header, hero
  * block, 3 KPI cards and 2 cards, laid out in `PageBody`. Built from `Skeleton`, so it shimmers
- * only when motion is allowed. Renders nothing until `delayMs` has passed.
+ * only when motion is allowed. Draws nothing until `delayMs` has passed. A visually hidden
+ * `role="status"` region is mounted from the start and gets `label` when the skeleton appears, so
+ * screen readers announce it; `aria-busy` sits on the skeleton container only, never on the live
+ * region (a busy live region is not announced).
  */
 export const PageSkeleton: FC<PageSkeletonProps> = ({
   delayMs = 200,
@@ -856,39 +911,53 @@ export const PageSkeleton: FC<PageSkeletonProps> = ({
     return () => clearTimeout(timer);
   }, [delayMs]);
 
-  if (!visible) return null;
-
   return (
-    <PageBody aria-busy="true" className={className} data-testid="page-skeleton" role="status">
-      <div className={pageSkeletonHeader}>
-        <Skeleton label={label} shape="line" />
-        <Skeleton />
-      </div>
-      <Skeleton className={pageSkeletonHero} shape="block" size="md" />
-      <div className={pageSkeletonKpis}>
-        {[0, 1, 2].map((i) => (
-          <div
-            aria-hidden="true"
-            className={pageSkeletonCard}
-            data-testid="page-skeleton-kpi"
-            key={i}
-          >
-            <Skeleton />
-            <Skeleton shape="line" />
-          </div>
-        ))}
-      </div>
-      {[0, 1].map((i) => (
-        <div
-          aria-hidden="true"
-          className={pageSkeletonCard}
-          data-testid="page-skeleton-card"
-          key={i}
+    <>
+      {/* A persistent live region: mounted empty, so the label is announced when it appears. */}
+      <VisuallyHidden data-testid="page-skeleton-status" id="page-skeleton-status" role="status">
+        {visible ? label : ""}
+      </VisuallyHidden>
+      {visible ? (
+        <PageBody
+          aria-busy="true"
+          className={className}
+          data-testid="page-skeleton"
+          id="page-skeleton"
         >
-          <Skeleton shape="line" />
-          <Skeleton lines={3} />
-        </div>
-      ))}
-    </PageBody>
+          <div className={pageSkeletonHeader}>
+            <Skeleton shape="line" />
+            <Skeleton />
+          </div>
+          <Skeleton className={pageSkeletonHero} shape="block" size="md" />
+          <div className={pageSkeletonKpis}>
+            {[1, 2, 3].map((n) => (
+              <div
+                aria-hidden="true"
+                className={pageSkeletonCard}
+                data-testid="page-skeleton-kpi"
+                // Numbered, because an id must be unique on the page.
+                id={`page-skeleton-kpi-${n}`}
+                key={n}
+              >
+                <Skeleton />
+                <Skeleton shape="line" />
+              </div>
+            ))}
+          </div>
+          {[1, 2].map((n) => (
+            <div
+              aria-hidden="true"
+              className={pageSkeletonCard}
+              data-testid="page-skeleton-card"
+              id={`page-skeleton-card-${n}`}
+              key={n}
+            >
+              <Skeleton shape="line" />
+              <Skeleton lines={3} />
+            </div>
+          ))}
+        </PageBody>
+      ) : null}
+    </>
   );
 };

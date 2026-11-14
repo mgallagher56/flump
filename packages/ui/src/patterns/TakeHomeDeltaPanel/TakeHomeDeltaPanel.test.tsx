@@ -75,7 +75,16 @@ describe("TakeHomeDeltaPanel", () => {
       assumptions: [{ code: "childBenefitWeeks", unverified: true }],
     });
     expect(screen.getByText("Unverified estimate")).toBeDefined();
-    expect(screen.getByText(/These tax figures have not yet been checked/)).toBeDefined();
+    // One notice: the unverified sentence leads the guidance note, with no amber block.
+    const notices = document.querySelectorAll("[data-notice]");
+    expect(notices).toHaveLength(1);
+    expect(notices[0]?.textContent).toMatch(
+      /^Unverified estimate\. These tax figures have not yet been checked.*Guidance, not advice\./,
+    );
+    // No amber paragraph: the only warning colour left is the header badge.
+    for (const p of Array.from(document.querySelectorAll("p"))) {
+      expect(p.className).not.toContain("status.warning");
+    }
     expect(screen.getByText("(not yet confirmed)")).toBeDefined();
     expect(screen.getByText(/Child Benefit is counted for 52 weeks a year/)).toBeDefined();
   });
@@ -92,6 +101,12 @@ describe("TakeHomeDeltaPanel", () => {
   it("leaves the guidance notice to the surrounding zone when asked", () => {
     renderPanel({ showNotice: false });
     expect(screen.queryByTestId("projection-notice")).toBeNull();
+  });
+
+  it("keeps the unverified sentence as quiet text, not a notice, when the zone owns the notice", () => {
+    renderPanel({ showNotice: false, isUnverifiedEstimate: true });
+    expect(document.querySelectorAll("[data-notice]")).toHaveLength(0);
+    expect(screen.getByText(/These tax figures have not yet been checked/)).toBeDefined();
   });
 
   it("renders the guidance notice by default and the fallback banner when rates are older", () => {

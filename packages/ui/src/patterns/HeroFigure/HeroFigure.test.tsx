@@ -15,6 +15,23 @@ describe("HeroFigure", () => {
     expect(container.querySelectorAll('[data-tone="hero"]')).toHaveLength(1);
   });
 
+  it("pairs id and data-testid, hero-figure by default, and takes an id prop", () => {
+    const { rerender } = render(<HeroFigure label="Net worth" value={1} />);
+    const group = screen.getByRole("group");
+    expect(group.id).toBe("hero-figure");
+    expect(group.dataset.testid).toBe("hero-figure");
+    rerender(<HeroFigure id="debt-hero" label="Debt" value={null} />);
+    expect(screen.getByRole("group").id).toBe("debt-hero");
+    expect(screen.getByRole("group").dataset.testid).toBe("debt-hero");
+  });
+
+  it("fills the decorative shape with chart.primary, not primary.solid", () => {
+    const { container } = render(<HeroFigure label="Net worth" value={1} />);
+    const shape = container.querySelector('[data-decorative="true"]') as HTMLElement;
+    expect(shape.className).toContain("bg-c_chart.primary");
+    expect(shape.className).not.toContain("primary.solid");
+  });
+
   it("sets the value in numeric.hero with tabular numerals", () => {
     const { container } = render(<HeroFigure label="Net worth" value={1234} />);
     expect(container.innerHTML).toContain("textStyle_numeric.hero");

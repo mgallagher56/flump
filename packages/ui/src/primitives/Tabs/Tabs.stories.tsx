@@ -124,6 +124,14 @@ const itemCountsPlay: Story["play"] = async ({ canvasElement }) => {
     await expect(list.getBoundingClientRect().right).toBeLessThanOrEqual(window.innerWidth);
   }
   await expect(document.documentElement.scrollWidth).toBeLessThanOrEqual(window.innerWidth);
+  // Each Tabs root stays within its parent's width, however long its list.
+  for (const list of canvas.getAllByRole("tablist")) {
+    const root = list.parentElement?.parentElement as HTMLElement;
+    const parent = root.parentElement as HTMLElement;
+    await expect(root.getBoundingClientRect().width).toBeLessThanOrEqual(
+      parent.getBoundingClientRect().width + 0.5,
+    );
+  }
 };
 
 /** Two, three and four items at 375px (the maximum is four), plus the small size. */

@@ -78,7 +78,7 @@ describe("CollapsibleDrawer Primitive", () => {
       expect(screen.queryByText("View full schedule")).toBeNull();
     });
 
-    it("toggles the body and keeps its name while open", () => {
+    it("toggles the body and reads Hide while open", () => {
       render(
         <CollapsibleDrawer title="Show details" variant="quiet">
           <div>Detail row</div>
@@ -91,9 +91,33 @@ describe("CollapsibleDrawer Primitive", () => {
       expect(trigger.getAttribute("aria-expanded")).toBe("true");
       const body = screen.getByText("Detail row").parentElement as HTMLElement;
       expect(trigger.getAttribute("aria-controls")).toBe(body.id);
-      expect(screen.getByRole("button", { name: "Show details" })).toBe(trigger);
+      // The visible label (and so the name) switches; aria-expanded still carries the state.
+      expect(trigger.textContent).toBe("Hide details");
+      expect(screen.getByRole("button", { name: "Hide details" })).toBe(trigger);
       fireEvent.click(trigger);
       expect(screen.queryByText("Detail row")).toBeNull();
+      expect(trigger.textContent).toBe("Show details");
+      expect(trigger.getAttribute("aria-expanded")).toBe("false");
+    });
+
+    it("uses openLabel while open, and keeps a title that does not start with Show", () => {
+      const { unmount } = render(
+        <CollapsibleDrawer openLabel="Close the table" title="Show data" variant="quiet">
+          <div>Body</div>
+        </CollapsibleDrawer>,
+      );
+      fireEvent.click(screen.getByRole("button", { name: "Show data" }));
+      expect(screen.getByRole("button", { name: "Close the table" })).toBeDefined();
+      unmount();
+      render(
+        <CollapsibleDrawer title="How this is worked out" variant="quiet">
+          <div>Body</div>
+        </CollapsibleDrawer>,
+      );
+      const trigger = screen.getByRole("button", { name: "How this is worked out" });
+      fireEvent.click(trigger);
+      expect(trigger.textContent).toBe("How this is worked out");
+      expect(trigger.getAttribute("aria-expanded")).toBe("true");
     });
 
     it("shows the item count on the trigger", () => {

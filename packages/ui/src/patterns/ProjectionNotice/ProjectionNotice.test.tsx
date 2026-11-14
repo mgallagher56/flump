@@ -24,6 +24,13 @@ describe("ProjectionNotice", () => {
     expect(html).toContain("border.subtle");
   });
 
+  it("shows a lead sentence before the unchanged wording, in the same one note", () => {
+    const { container } = render(<ProjectionNotice lead="Unverified estimate." />);
+    const notes = container.querySelectorAll("[data-notice]");
+    expect(notes).toHaveLength(1);
+    expect(notes[0]?.textContent).toBe(`Unverified estimate. ${PROJECTION_NOTICE_TEXT}`);
+  });
+
   it("lets a page supply its own sentence", () => {
     render(<ProjectionNotice>Custom wording</ProjectionNotice>);
     expect(screen.getByTestId("projection-notice").textContent).toBe("Custom wording");

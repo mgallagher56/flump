@@ -118,7 +118,10 @@ export interface ChartFigureProps {
   summary: string;
   /** Heading element for the title, so it follows the page outline. Defaults to h3. */
   headingLevel?: "h2" | "h3" | "h4";
-  /** Show the summary visually, directly under the title. Defaults to screen-reader only. */
+  /**
+   * Show the summary visually, directly under the title (P10.1). Defaults to true; pass false only
+   * when a nearby visible sentence already says the same, and the summary stays screen-reader only.
+   */
   showSummary?: boolean;
   /**
    * Opt-in notice slot, shown above the chart. Not drawn unless passed. Under E16 P4 the page owns
@@ -155,7 +158,7 @@ export const ChartFigure: FC<ChartFigureProps> = ({
   title,
   hideTitle = false,
   summary,
-  showSummary = false,
+  showSummary = true,
   headingLevel = "h3",
   notice,
   legend,

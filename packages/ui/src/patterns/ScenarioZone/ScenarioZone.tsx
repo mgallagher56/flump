@@ -35,8 +35,9 @@ export interface ScenarioZoneProps {
   /** The "Update your details" link. It opens the normal edit form with the SAVED values. */
   footer?: ReactNode;
   /**
-   * The page's single notice, shown at the foot of the zone (E16 P4.1). Defaults to the standard
-   * `ProjectionNotice`; pass a `ProjectionNotice` with page-specific wording to replace it.
+   * Holds the page's single `ProjectionNotice` (E16 P4.1), shown at the foot of the zone. Its
+   * wording never changes (D14): pass the notice element here to place it, not to reword it.
+   * Defaults to the standard `ProjectionNotice`.
    */
   notice?: ReactNode;
   /**
@@ -98,7 +99,8 @@ export const ScenarioZone: FC<ScenarioZoneProps> = ({
       {tools}
       <div className={slots.body}>{children}</div>
       {hasActions || resolvedNotice ? (
-        <div className={slots.footer} data-testid="scenario-zone-footer">
+        // id and data-testid pair (component guidelines); a page has one scenario zone.
+        <div className={slots.footer} data-testid="scenario-zone-footer" id="scenario-zone-footer">
           {hasActions ? (
             <div className={slots.footerActions}>
               {onReset ? (

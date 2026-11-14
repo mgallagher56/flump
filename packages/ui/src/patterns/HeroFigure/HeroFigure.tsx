@@ -36,6 +36,11 @@ interface HeroFigureBaseProps {
   emptyPrompt?: ReactNode;
   /** One action (a link or button) shown when the value is unknown. */
   emptyAction?: ReactNode;
+  /**
+   * Element id, also used as `data-testid` (component guidelines: tested elements pair the two).
+   * Defaults to "hero-figure"; a page has one hero figure (P2.2), so the default is unique.
+   */
+  id?: string;
   className?: string;
 }
 
@@ -91,6 +96,7 @@ export const HeroFigure: FC<HeroFigureProps> = ({
   notSetLabel = "Not set",
   emptyPrompt,
   emptyAction,
+  id = "hero-figure",
   className,
 }) => {
   const labelId = useId();
@@ -103,7 +109,8 @@ export const HeroFigure: FC<HeroFigureProps> = ({
       <div
         aria-labelledby={labelId}
         className={cx(slots.root, className)}
-        data-testid="hero-figure"
+        data-testid={id}
+        id={id}
         role="group"
       >
         <div className={slots.content}>
@@ -125,8 +132,9 @@ export const HeroFigure: FC<HeroFigureProps> = ({
     <div
       aria-labelledby={labelId}
       className={cx(slots.root, className)}
-      data-testid="hero-figure"
+      data-testid={id}
       data-tone="hero"
+      id={id}
       role="group"
     >
       <span aria-hidden="true" className={slots.shape} data-decorative="true" />

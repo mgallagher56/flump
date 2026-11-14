@@ -34,8 +34,8 @@ describe("ChartFigure Pattern", () => {
     expect(screen.getByText(SUMMARY)).toBeDefined();
   });
 
-  it("summary sits in the figcaption, the figure's first child, visually hidden by default", () => {
-    renderFigure();
+  it("summary sits in the figcaption, the figure's first child, hidden with showSummary false", () => {
+    renderFigure({ showSummary: false });
     const summary = screen.getByText(SUMMARY);
     const caption = summary.parentElement as HTMLElement;
     expect(caption.tagName).toBe("FIGCAPTION");
@@ -44,8 +44,8 @@ describe("ChartFigure Pattern", () => {
     expect(screen.getByRole("figure").getAttribute("aria-describedby")).toBe(summary.id);
   });
 
-  it("showSummary renders the summary visibly, directly under the title", () => {
-    renderFigure({ showSummary: true });
+  it("shows the summary visibly by default, directly under the title (P10.1)", () => {
+    renderFigure();
     const summary = screen.getByText(SUMMARY);
     expect(summary.className).not.toBe(visuallyHiddenRecipe({ focusable: false }));
     expect(summary.previousElementSibling).toBe(screen.getByRole("heading"));
@@ -104,6 +104,7 @@ describe("ChartFigure Pattern", () => {
     fireEvent.click(toggle);
     expect(screen.getByRole("table")).toBeDefined();
     expect(toggle.getAttribute("aria-expanded")).toBe("true");
+    expect(toggle.textContent).toBe("Hide data");
     fireEvent.click(toggle);
     expect(screen.queryByRole("table")).toBeNull();
   });

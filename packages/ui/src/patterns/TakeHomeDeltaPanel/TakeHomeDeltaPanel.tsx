@@ -20,13 +20,13 @@ import {
   deltaPanelAssumptions,
   deltaPanelAssumptionsList,
   deltaPanelAssumptionsTitle,
-  deltaPanelBanner,
   deltaPanelHeader,
   deltaPanelNumeric,
   deltaPanelRoot,
   deltaPanelSentence,
   deltaPanelTitle,
   deltaPanelUnverified,
+  deltaPanelUnverifiedNote,
 } from "./TakeHomeDeltaPanel.styles";
 
 export type TakeHomeDeltaComponents = Record<DeltaComponentKey, number>;
@@ -158,11 +158,16 @@ export const TakeHomeDeltaPanel: FC<TakeHomeDeltaPanelProps> = ({
         </p>
       ) : null}
 
-      {isUnverifiedEstimate ? (
-        <p className={deltaPanelBanner()}>{DELTA_PANEL_COPY.unverifiedBanner}</p>
+      {/* One notice (E16 P4.1, P4.3): the unverified sentence leads the guidance note rather than
+          sitting in a second, amber block; the header badge already flags the estimate. */}
+      {showNotice ? (
+        <ProjectionNotice
+          lead={isUnverifiedEstimate ? DELTA_PANEL_COPY.unverifiedBanner : undefined}
+        />
+      ) : isUnverifiedEstimate ? (
+        // The page shows its one notice elsewhere, so the sentence stays as quiet text here.
+        <p className={deltaPanelUnverifiedNote()}>{DELTA_PANEL_COPY.unverifiedBanner}</p>
       ) : null}
-
-      {showNotice ? <ProjectionNotice /> : null}
 
       {known.length > 0 ? (
         <div className={deltaPanelAssumptions()}>

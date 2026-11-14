@@ -37,7 +37,10 @@ export const heroFigure = sva({
       insetInlineEnd: "-5rem",
       insetBlockStart: "-6rem",
       borderRadius: "full",
-      backgroundColor: "primary.solid",
+      // A graphic-only fill, so `chart.primary`, not `primary.solid` (a fill behind primary.foreground
+      // only). Light: the same teal as before. Dark: the lighter chart teal at 18% over the hero keeps
+      // text.onContrast at about 6.4:1 where they overlap (8.6:1 on the bare hero), above 4.5:1.
+      backgroundColor: "chart.primary",
       opacity: 0.18,
       pointerEvents: "none",
     },

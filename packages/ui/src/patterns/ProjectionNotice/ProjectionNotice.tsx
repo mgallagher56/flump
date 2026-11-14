@@ -19,6 +19,12 @@ export const PROJECTION_NOTICE_TEXT =
 export interface ProjectionNoticeProps {
   /** Replaces the default wording where a page needs a more specific sentence. */
   children?: ReactNode;
+  /**
+   * A sentence shown first, inside the same note, before the fixed wording (which stays
+   * unchanged). Use it to fold a page's own caveat (for example "Unverified estimate. ...") into
+   * the one notice instead of adding a second one (E16 P4.1, P4.3).
+   */
+  lead?: ReactNode;
   className?: string;
 }
 
@@ -27,7 +33,7 @@ export interface ProjectionNoticeProps {
  * surrounding surface with a top hairline. Place it at the foot of the first region that shows a
  * projection (the `ScenarioZone` footer when the page has one), always visible, once per page.
  */
-export const ProjectionNotice: FC<ProjectionNoticeProps> = ({ children, className }) => (
+export const ProjectionNotice: FC<ProjectionNoticeProps> = ({ children, lead, className }) => (
   <div
     aria-label="Guidance, not advice"
     className={cx(projectionNotice(), className)}
@@ -38,7 +44,14 @@ export const ProjectionNotice: FC<ProjectionNoticeProps> = ({ children, classNam
     <span className={projectionNoticeIcon()}>
       <Icon icon={Info} size="sm" />
     </span>
-    <div className={projectionNoticeText()}>{children ?? PROJECTION_NOTICE_TEXT}</div>
+    <div className={projectionNoticeText()}>
+      {lead ? (
+        <>
+          <span data-notice-lead="">{lead}</span>{" "}
+        </>
+      ) : null}
+      {children ?? PROJECTION_NOTICE_TEXT}
+    </div>
   </div>
 );
 

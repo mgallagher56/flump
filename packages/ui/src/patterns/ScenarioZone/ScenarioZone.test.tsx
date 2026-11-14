@@ -65,6 +65,7 @@ describe("ScenarioZone", () => {
       </ScenarioZone>,
     );
     const footer = screen.getByTestId("scenario-zone-footer");
+    expect(footer.id).toBe("scenario-zone-footer");
     expect(footer.contains(screen.getByRole("link", { name: "Update your details" }))).toBe(true);
     const notices = document.querySelectorAll('[data-notice="projection"]');
     expect(notices).toHaveLength(1);

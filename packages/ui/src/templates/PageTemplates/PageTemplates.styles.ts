@@ -152,9 +152,10 @@ export const figureText = css({ fontVariantNumeric: "tabular-nums", fontWeight: 
 
 export const chartSvg = css({ width: "100%", height: "auto", display: "block" });
 export const chartGrid = css({ stroke: "chart.grid", strokeWidth: "1" });
+/** Axis ticks at the label size; the chart draws one SVG unit per CSS pixel, so it holds. */
 export const chartAxisText = css({
   fill: "text.muted",
-  fontSize: "16px",
+  textStyle: "label.md",
   fontVariantNumeric: "tabular-nums",
 });
 export const chartBand = css({ fill: "chart.band" });
@@ -184,9 +185,19 @@ export const pageBody = css({
   px: { base: "page.gutter.sm", md: "page.gutter.md", lg: "page.gutter.lg" },
   pt: { base: "page.top.sm", lg: "page.top.lg" },
   color: "text.primary",
-  // Inside a shell that already pads its content (AppShell's main today), the shell's padding is
-  // the gutter, so it is not applied twice. The shell padding matches these tokens.
-  "[data-page-shell] &": { px: "0", pt: "0" },
+  // Inside a shell that already pads its content, only the difference to the P13 tokens is added,
+  // so gutters and top space apply exactly once (see the PageBody JSDoc). The two values never
+  // match the same element, so neither rule depends on CSS order.
+  // AppShell's main (`data-page-shell=""`) pads with exactly the P13 values: add nothing.
+  '[data-page-shell=""] &': { px: "0", pt: "0" },
+  // apps/web root main (`data-page-shell="web"`): its wrapper pads 12px (24px from md) at the
+  // sides and the main pads 16px (24px from md) on top. Add the rest: 16/24/40 sides and 20/32
+  // top. From md to lg the shell's 24px top is 4px more than P13's 20px, taken back by margin.
+  '[data-page-shell="web"] &': {
+    px: { base: "1", md: "0", lg: "4" },
+    pt: { base: "1", md: "0", lg: "2" },
+    mt: { base: "0", md: "-1", lg: "0" },
+  },
 });
 
 // PageSkeleton (plan P12.1): header, hero block, 3 KPI cards, 2 cards.

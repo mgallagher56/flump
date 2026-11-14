@@ -165,8 +165,10 @@ export const PageBodyLayoutDark: Story = {
 const skeletonPlay: Story["play"] = async ({ canvasElement }) => {
   const canvas = within(canvasElement);
   // Shown after the 200ms delay.
-  const status = await canvas.findByRole("status");
-  await expect(status).toHaveAttribute("aria-busy", "true");
+  const status = canvas.getByRole("status");
+  await expect(await canvas.findByText("Loading page")).toBe(status);
+  await expect(status).not.toHaveAttribute("aria-busy");
+  await expect(canvas.getByTestId("page-skeleton")).toHaveAttribute("aria-busy", "true");
   await expect(canvas.getAllByTestId("page-skeleton-kpi")).toHaveLength(3);
   await expect(canvas.getAllByTestId("page-skeleton-card")).toHaveLength(2);
 };

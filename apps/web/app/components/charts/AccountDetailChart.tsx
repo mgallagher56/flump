@@ -80,6 +80,8 @@ const AccountDetailChart: FC<AccountDetailChartProps> = ({
         ) : undefined
       }
       summary={summary}
+      // A compact tile chart: the summary stays screen-reader only (ChartFigure now shows it by default).
+      showSummary={false}
       hideTitle
       title={title}
     >

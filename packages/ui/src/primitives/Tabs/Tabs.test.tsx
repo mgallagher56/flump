@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { SegmentedTabs, Tabs } from "./Tabs";
+import { SegmentedTabs, scrollSelectedTabIntoView, Tabs } from "./Tabs";
 
 describe("Tabs Primitive", () => {
   const items = [
@@ -17,6 +17,36 @@ describe("Tabs Primitive", () => {
     expect(snowballBtn).toBeDefined();
     fireEvent.keyDown(snowballBtn, { key: "Enter", code: "Enter" });
     expect(handleSelect).toHaveBeenCalledWith("snowball");
+  });
+
+  it("wraps the list in a scroller that cannot widen its parent", () => {
+    render(<Tabs items={items} value="avalanche" onValueChange={() => {}} />);
+    const scroller = screen.getByRole("tablist").parentElement as HTMLElement;
+    expect(scroller.hasAttribute("data-tabs-scroller")).toBe(true);
+    expect(scroller.className).toContain("ov-x_auto");
+    expect(scroller.className).toContain("contain_inline-size");
+    expect(scroller.className).toContain("max-w_100%");
+  });
+
+  it("scrolls the selected tab into view sideways only", () => {
+    const scroller = document.createElement("div");
+    scroller.innerHTML =
+      '<button role="tab" data-state="inactive"></button><button role="tab" data-state="active"></button>';
+    const active = scroller.lastElementChild as HTMLElement;
+    const rect = (left: number, right: number) => ({ left, right }) as DOMRect;
+    scroller.getBoundingClientRect = () => rect(0, 300);
+    active.getBoundingClientRect = () => rect(280, 400);
+    scrollSelectedTabIntoView(scroller);
+    expect(scroller.scrollLeft).toBe(100);
+    scroller.scrollLeft = 200;
+    active.getBoundingClientRect = () => rect(-50, 70);
+    scrollSelectedTabIntoView(scroller);
+    expect(scroller.scrollLeft).toBe(150);
+    // Already visible: no change.
+    active.getBoundingClientRect = () => rect(10, 120);
+    scrollSelectedTabIntoView(scroller);
+    expect(scroller.scrollLeft).toBe(150);
+    expect(() => scrollSelectedTabIntoView(null)).not.toThrow();
   });
 
   it("keeps every panel mounted and hides the inactive ones", () => {
