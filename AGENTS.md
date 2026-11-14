@@ -132,11 +132,11 @@ Three documents in `docs/ux/` are the standing rules for how Flump behaves and l
 
 **What to read before UI work:**
 
-| Task                                                                                       | Read first                                                                                                                                                                  |
-| ------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| A new or changed page, flow, form, chart or state in `apps/web` or `apps/marketing`        | UX-GUIDELINES (the sections for what you touch), then `docs/agents/component-guidelines.md`                                                                                 |
-| A new or changed component, token or recipe in `packages/ui`                               | STYLE-GUIDE, then `docs/agents/component-guidelines.md`                                                                                                                     |
-| Any screen in the mobile app, or any change to tokens, formatting or shared specifications | CROSS-PLATFORM, and run its parity checklist                                                                                                                                |
+| Task                                                                                       | Read first                                                                                                                                        |
+| ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| A new or changed page, flow, form, chart or state in `apps/web` or `apps/marketing`        | UX-GUIDELINES (the sections for what you touch), then `docs/agents/component-guidelines.md`                                                       |
+| A new or changed component, token or recipe in `packages/ui`                               | STYLE-GUIDE, then `docs/agents/component-guidelines.md`                                                                                           |
+| Any screen in the mobile app, or any change to tokens, formatting or shared specifications | CROSS-PLATFORM, and run its parity checklist                                                                                                      |
 | User-facing words                                                                          | The copy guide (`docs/copy/COPY-GUIDE.md`, section 11 below) and `docs/compliance/advice-boundary-policy.md`. The UX documents do not set wording |
 
 **How the rules rank.** Each rule in those documents is marked "Enforced by" a law or test, "Proposed check", or "Review only". If a document and a law or test disagree, the law or test wins: follow it, and correct the document in the same PR. If a document and an older design note under `docs/design/` disagree, the `docs/ux/` document wins. Owner decisions in `docs/audit/plans/DECISIONS.md` outrank all of them.
