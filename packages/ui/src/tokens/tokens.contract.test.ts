@@ -69,6 +69,8 @@ function flumpKeys(category: string): string[] {
 
 /** Light (unconditioned) and dark values of a token. Dark falls back to light when not themed. */
 function specValues(token: string): { light: string[]; dark: string } {
+  // Token names are public design data in a test, not a secret: a timing-safe compare is not needed.
+  // nosemgrep: ajinabraham.njsscan.crypto.timing_attack_node.node_timing_attack
   const rows = spec.values.filter((v) => v.token === token);
   const light = rows.filter((v) => !v.condition).map((v) => v.value);
   const dark = rows.find((v) => v.condition === "_dark")?.value ?? light.at(-1) ?? "";
