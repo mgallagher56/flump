@@ -79,7 +79,8 @@ export const loader = async (args: LoaderFunctionArgs) => {
     { userProfile, accounts, accountDetails, budgetEntries, taxRecords },
     { snapshot: portfolioSnapshot },
   );
-  const { totalAssets, totalLiabilities, netWorth, liquidCash, homeEstimate } = picture.netWorth;
+  const { totalAssets, totalLiabilities, netWorth, liquidCash, homeEstimate, basis, leftOut } =
+    picture.netWorth;
   const budget = knownOrNull(picture.budget);
   const monthlyIncome = budget?.income ?? 0;
   const monthlyOutgoings = budget?.outgoings ?? 0;
@@ -165,13 +166,15 @@ export const loader = async (args: LoaderFunctionArgs) => {
       : null;
 
   // The hero's one delta compares today's net worth with the latest recorded month before this
-  // one (E16 P6). Only that month and its total leave the loader.
+  // one (E16 P6). Only that month and its total leave the loader. The series is computed under the
+  // same net worth choices as today's figure, so the delta never mixes two bases.
   const currentMonth = londonMonth();
   const details = Array.isArray(accountDetails) ? accountDetails : [];
   const history = buildSnapshotHistory(
     Array.isArray(accounts) ? accounts : [],
     details,
     currentMonth,
+    basis,
   );
   const prior = history.series.filter((p) => !p.allCarried && p.month < currentMonth).at(-1);
   const netWorthPrior = prior ? { month: prior.month, netWorth: prior.netWorth } : null;
@@ -201,6 +204,8 @@ export const loader = async (args: LoaderFunctionArgs) => {
       liquidCash,
       // The seeded home Property account inside net worth, labelled "Home (your estimate)" (D3).
       homeEstimate,
+      // What net worth leaves out under the user's choices, for the line under the hero.
+      leftOut,
       accountsCount: Array.isArray(accounts) ? accounts.length : 0,
     },
     budgetData: {

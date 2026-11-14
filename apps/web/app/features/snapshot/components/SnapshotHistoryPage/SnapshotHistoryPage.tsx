@@ -1,6 +1,8 @@
+import { type NetWorthBasis, resolveNetWorthScope } from "@flump/finance-engine";
 import { Button, EmptyState, HeroFigure, PageBody, PageHeader } from "@repo/ui";
 import { type FC, useMemo, useState } from "react";
 import { Link } from "react-router";
+import { NetWorthBasisLine } from "~/features/accounts/components/NetWorthBasisLine";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import {
   type AccountDetailInput,
@@ -23,6 +25,8 @@ export interface SnapshotHistoryPageProps {
   /** The current Europe/London month. */
   currentMonth: MonthKey;
   onSave: SaveSnapshot;
+  /** The user's net worth choices (saved on their profile): every month is computed under them. */
+  basis: NetWorthBasis;
   /** Opens the check-in on arrival (the dashboard's "Monthly check-in" link). */
   initialSheet?: CheckInMode | null;
 }
@@ -61,14 +65,17 @@ export const SnapshotHistoryPage: FC<SnapshotHistoryPageProps> = ({
   accountDetails,
   currentMonth,
   onSave,
+  basis,
   initialSheet = null,
 }) => {
   const { formatCurrency } = useFormatCurrency();
   const [sheet, setSheet] = useState<CheckInMode | null>(initialSheet);
   const history = useMemo(
-    () => buildSnapshotHistory(accounts, accountDetails, currentMonth),
-    [accounts, accountDetails, currentMonth],
+    () => buildSnapshotHistory(accounts, accountDetails, currentMonth, basis),
+    [accounts, accountDetails, currentMonth, basis],
   );
+  // History is recomputed under today's choices, scoped by today's accounts (net worth choices).
+  const leftOut = useMemo(() => resolveNetWorthScope(accounts, basis).leftOut, [accounts, basis]);
   const hasAccounts = accounts.length > 0;
   const { stage, series, recordedMonths } = history;
   // Compare recorded months only: a current month with no check-in yet is carried, not a change.
@@ -170,6 +177,7 @@ export const SnapshotHistoryPage: FC<SnapshotHistoryPageProps> = ({
               notSetLabel="No earlier month"
             />
           )}
+          <NetWorthBasisLine id="snapshot-net-worth-basis" leftOut={leftOut} />
 
           <section className={sectionStack()}>
             <NetWorthHistoryChart
@@ -205,6 +213,7 @@ export const SnapshotHistoryPage: FC<SnapshotHistoryPageProps> = ({
         <CheckInSheet
           accountDetails={accountDetails}
           accounts={accounts}
+          basis={basis}
           currentMonth={currentMonth}
           key={sheet}
           mode={sheet}

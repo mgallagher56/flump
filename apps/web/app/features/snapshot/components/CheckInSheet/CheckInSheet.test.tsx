@@ -1,3 +1,4 @@
+import { DEFAULT_NET_WORTH_BASIS } from "@flump/finance-engine";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
@@ -26,6 +27,7 @@ const setup = (props: Partial<CheckInSheetProps> = {}) => {
     <CheckInSheet
       accountDetails={details}
       accounts={accounts}
+      basis={DEFAULT_NET_WORTH_BASIS}
       currentMonth="2026-11"
       onOpenChange={onOpenChange}
       onSave={onSave}
@@ -147,6 +149,21 @@ describe("CheckInSheet", () => {
       const month = screen.getByRole("combobox", { name: "Month" }) as HTMLSelectElement;
       fireEvent.change(month, { target: { value: "12" } });
       await waitFor(() => expect(month.value).toBe("10"));
+    });
+  });
+
+  describe("net worth choices", () => {
+    it("says a row is not counted only when the choices leave its kind out", () => {
+      setup({ basis: { countProperty: false, countStudentLoan: false } });
+      const mortgage = screen.getByText("Mortgage", { selector: "p" }).parentElement;
+      expect(mortgage?.textContent).toContain("Not counted in net worth");
+      const current = screen.getByText("Current account", { selector: "p" }).parentElement;
+      expect(current?.textContent).not.toContain("Not counted in net worth");
+    });
+
+    it("counts the mortgage under the default choices", () => {
+      setup();
+      expect(screen.queryByText(/Not counted in net worth/)).toBeNull();
     });
   });
 });

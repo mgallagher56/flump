@@ -238,6 +238,28 @@ describe("HomeDashboard", () => {
     );
   });
 
+  it("net worth choices: one quiet line under the hero, and no home label once property is left out", () => {
+    renderDashboard({
+      ...noDebt,
+      accountsData: {
+        ...noDebt.accountsData,
+        homeEstimate: 310000,
+        leftOut: ["property", "mortgage"],
+      },
+    });
+    const hero = screen.getByTestId("hero-figure");
+    expect(hero.textContent).toContain("Net worth");
+    expect(hero.textContent).not.toContain("including your home estimate");
+    expect(screen.getByTestId("dashboard-net-worth-basis").textContent).toBe(
+      "Not counting your property or mortgage. Change what counts",
+    );
+  });
+
+  it("net worth choices: no line when nothing is left out", () => {
+    renderDashboard(noDebt);
+    expect(screen.queryByTestId("dashboard-net-worth-basis")).toBeNull();
+  });
+
   it("shows the debt card instead of a band above the hero, with no judgement", () => {
     const { container } = renderDashboard(withDebt);
     expect(screen.getByTestId("widget-card-debt")).toBeTruthy();

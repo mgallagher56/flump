@@ -1,17 +1,32 @@
+import { DEFAULT_NET_WORTH_BASIS } from "@flump/finance-engine";
 import { describe, expect, it } from "vitest";
 import {
   addMonths,
-  buildCheckInRows,
-  buildSnapshotHistory,
   buildSnapshotPayload,
+  buildCheckInRows as checkInRowsFor,
   formatMonth,
   historyCountLabel,
+  buildSnapshotHistory as historyFor,
   latestRecordedMonth,
   londonMonth,
   nextCheckInDate,
   projectFromSnapshot,
   toChartPoints,
 } from "./snapshotModel";
+
+// These tests cover the default net worth choices; the choices themselves are tested below.
+type Args<F extends (...a: never[]) => unknown> = Parameters<F>;
+const buildCheckInRows = (
+  accounts: Args<typeof checkInRowsFor>[0],
+  details: Args<typeof checkInRowsFor>[1],
+  month: string,
+  current: string,
+) => checkInRowsFor(accounts, details, month, current, DEFAULT_NET_WORTH_BASIS);
+const buildSnapshotHistory = (
+  accounts: Args<typeof historyFor>[0],
+  details: Args<typeof historyFor>[1],
+  current: string,
+) => historyFor(accounts, details, current, DEFAULT_NET_WORTH_BASIS);
 
 const CURRENT = "a0000000-0000-4000-8000-000000000001";
 const ISA = "a0000000-0000-4000-8000-000000000002";
@@ -291,5 +306,34 @@ describe("projectFromSnapshot", () => {
       ["2027-01", 1500],
     ]);
     expect(projectFromSnapshot({ month: "2026-11", netWorth: 1000 }, null)).toEqual([]);
+  });
+});
+
+describe("net worth choices", () => {
+  const LOAN = "a0000000-0000-4000-8000-000000000005";
+  const withLoan = [
+    ...accounts,
+    { id: LOAN, name: "Student loan", type: "Student Loan", balance: -25000 },
+  ];
+  const BOTH_ON = { countProperty: true, countStudentLoan: true };
+  const BOTH_OFF = { countProperty: false, countStudentLoan: false };
+
+  it("check-in rows are outside net worth exactly when the choices leave their kind out", () => {
+    const outside = (basis: typeof BOTH_ON) =>
+      checkInRowsFor(withLoan, [], "2026-11", "2026-11", basis)
+        .filter((r) => r.outsideNetWorth)
+        .map((r) => r.accountId);
+    expect(outside(DEFAULT_NET_WORTH_BASIS)).toEqual([LOAN]);
+    expect(outside(BOTH_ON)).toEqual([]);
+    expect(outside(BOTH_OFF)).toEqual([MORTGAGE, LOAN]);
+  });
+
+  it("the history's current month follows the choices", () => {
+    const latest = (basis: typeof BOTH_ON) =>
+      historyFor(withLoan, [row(CURRENT, 2026, 10, 1000)], "2026-11", basis).latest?.netWorth;
+    // 1,500 + 20,000 + 900, less the mortgage and the loan as each choice says.
+    expect(latest(DEFAULT_NET_WORTH_BASIS)).toBe(22400 - 180000);
+    expect(latest(BOTH_ON)).toBe(22400 - 180000 - 25000);
+    expect(latest(BOTH_OFF)).toBe(22400);
   });
 });

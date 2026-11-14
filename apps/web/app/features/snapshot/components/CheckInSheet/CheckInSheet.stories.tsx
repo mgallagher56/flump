@@ -1,3 +1,4 @@
+import { DEFAULT_NET_WORTH_BASIS } from "@flump/finance-engine";
 import type { Meta, StoryObj } from "@storybook/react";
 import { expect, fn, userEvent, within } from "storybook/test";
 import { EXAMPLE_ACCOUNTS, exampleDetails, TWO_MONTHS } from "../../fixtures";
@@ -15,6 +16,7 @@ const meta: Meta<typeof CheckInSheet> = {
     accountDetails: exampleDetails(TWO_MONTHS),
     currentMonth: "2026-11",
     mode: "checkIn",
+    basis: DEFAULT_NET_WORTH_BASIS,
   },
 };
 

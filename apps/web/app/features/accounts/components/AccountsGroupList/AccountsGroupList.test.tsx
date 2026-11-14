@@ -27,12 +27,13 @@ const row = (over: Partial<AccountRow>): AccountRow => ({
   ...over,
 });
 
-const props = { totalOwn: 0, totalOwe: 0, netWorth: 0 };
+const props = { totalOwn: 0, totalOwe: 0, netWorth: 0, leftOut: [] };
 
 describe("<AccountsGroupList />", () => {
   test("splits rows into what you own and what you owe, each with a type column and total", () => {
     const { getByRole, getByText } = customRender(
       <AccountsGroupList
+        leftOut={[]}
         netWorth={12000}
         rows={[
           row({ id: "a1", name: "Monzo current", type: "Current", balance: 2000 }),
@@ -87,13 +88,38 @@ describe("<AccountsGroupList />", () => {
     expect(trigger.getAttribute("aria-expanded")).toBe("false");
   });
 
-  test("notes that a student loan is not in the total or net worth", () => {
-    const { getByText } = customRender(
+  test("notes that a student loan is not in the total or net worth when it is left out", () => {
+    const { getByText, getByTestId } = customRender(
+      <AccountsGroupList
+        {...props}
+        leftOut={["studentLoan"]}
+        rows={[row({ id: "s1", name: "SLC", type: "Student Loan" })]}
+      />,
+    );
+    expect(getByText(/Student loans are not in this total or your net worth/)).toBeDefined();
+    expect(getByTestId("accounts-net-worth-basis").textContent).toBe(
+      "Not counting your student loan. Change what counts",
+    );
+  });
+
+  test("the footnote follows the choice when the student loan counts", () => {
+    const { getByText, getByRole } = customRender(
       <AccountsGroupList
         {...props}
         rows={[row({ id: "s1", name: "SLC", type: "Student Loan" })]}
       />,
     );
-    expect(getByText(/Student loans are not in this total or your net worth/)).toBeDefined();
+    expect(getByText(/Student loans are in this total and your net worth/)).toBeDefined();
+    // The student loan row stays in the list with its balance.
+    expect(getByRole("link", { name: "SLC" })).toBeDefined();
+  });
+
+  test("with nothing left out, net worth still links to what counts", () => {
+    const { getByTestId } = customRender(<AccountsGroupList {...props} rows={[row({})]} />);
+    const line = getByTestId("accounts-net-worth-basis");
+    expect(line.textContent).toBe("Change what counts");
+    expect(line.querySelector("a")?.getAttribute("href")).toBe(
+      "/app/profile?tab=profile#net-worth",
+    );
   });
 });

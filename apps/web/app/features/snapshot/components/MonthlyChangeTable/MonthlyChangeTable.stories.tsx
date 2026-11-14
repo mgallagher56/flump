@@ -1,11 +1,22 @@
+import { DEFAULT_NET_WORTH_BASIS } from "@flump/finance-engine";
 import type { Meta, StoryObj } from "@storybook/react";
 import { expect, userEvent, within } from "storybook/test";
 import { EXAMPLE_ACCOUNTS, exampleDetails, TREND_MONTHS, TWO_MONTHS } from "../../fixtures";
 import { buildSnapshotHistory } from "../../snapshotModel";
 import { MonthlyChangeTable } from "./MonthlyChangeTable";
 
-const pair = buildSnapshotHistory(EXAMPLE_ACCOUNTS, exampleDetails(TWO_MONTHS), "2026-10");
-const trend = buildSnapshotHistory(EXAMPLE_ACCOUNTS, exampleDetails(TREND_MONTHS), "2026-11");
+const pair = buildSnapshotHistory(
+  EXAMPLE_ACCOUNTS,
+  exampleDetails(TWO_MONTHS),
+  "2026-10",
+  DEFAULT_NET_WORTH_BASIS,
+);
+const trend = buildSnapshotHistory(
+  EXAMPLE_ACCOUNTS,
+  exampleDetails(TREND_MONTHS),
+  "2026-11",
+  DEFAULT_NET_WORTH_BASIS,
+);
 
 const meta: Meta<typeof MonthlyChangeTable> = {
   title: "3. Patterns/Snapshot/MonthlyChangeTable",

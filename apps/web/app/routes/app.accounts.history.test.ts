@@ -33,4 +33,16 @@ describe("app.accounts.history loader", () => {
     expect(data).not.toHaveProperty("monthsOfCover");
     expect(data).not.toHaveProperty("monthlySurplus");
   });
+
+  it("passes the user's net worth choices, and the defaults when the profile has none", async () => {
+    loadWorkspaceSnapshot.mockResolvedValue({
+      accounts,
+      accountDetails: [],
+      userProfile: { netWorthCountsProperty: false, netWorthCountsStudentLoan: true },
+    });
+    expect((await run()).basis).toEqual({ countProperty: false, countStudentLoan: true });
+
+    loadWorkspaceSnapshot.mockResolvedValue({ accounts, accountDetails: [], userProfile: null });
+    expect((await run()).basis).toEqual({ countProperty: true, countStudentLoan: false });
+  });
 });
