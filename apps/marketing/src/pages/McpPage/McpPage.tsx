@@ -117,7 +117,7 @@ export const McpPage: FC = () => {
     <div className={pageShell()} id="mcp-marketing-page" data-testid="mcp-marketing-page">
       <PageMeta
         title="Flump for AI | Model Context Protocol (MCP) Server (Preview)"
-        description="Preview: connect an MCP client such as Claude Desktop to Flump and ask questions about your own saved finances. Read-only tools, with UK tax figures from a deterministic engine."
+        description="Preview: connect an MCP client such as Claude Desktop to Flump and ask questions about your own saved finances. The tools read your saved data, with UK tax figures from a deterministic engine. Staging an import is opt-in, and nothing is saved until you confirm it in Flump."
       />
 
       <Header />
@@ -136,10 +136,11 @@ export const McpPage: FC = () => {
             <h1 className={heroHeading()}>Ask your AI assistant about your own saved finances</h1>
 
             <p className={heroLead()}>
-              Flump MCP is a preview for MCP clients such as Claude Desktop and Cursor. Its
-              read-only tools answer questions from the accounts, budget, debts and tax records you
-              have saved in Flump, and UK tax and debt figures come from a deterministic calculation
-              engine.
+              Flump MCP is a preview for MCP clients such as Claude Desktop and Cursor. Its tools
+              answer questions from the accounts, budget, debts and tax records you have saved in
+              Flump, and UK tax and debt figures come from a deterministic calculation engine. If
+              you switch it on, a connection can also stage an import for you to review. Nothing is
+              saved until you confirm it in Flump.
             </p>
 
             <div className={flex({ gap: "4", flexWrap: "wrap", justify: "center", pt: "2" })}>
@@ -161,7 +162,9 @@ export const McpPage: FC = () => {
         <section className={sectionContainer()}>
           <div className={sectionHeader()}>
             <span className={sectionKicker()}>Why connect via Flump MCP?</span>
-            <h2 className={sectionHeading()}>Deterministic UK calculations and read-only tools</h2>
+            <h2 className={sectionHeading()}>
+              Deterministic UK calculations and tools that read your saved data
+            </h2>
             <p className={sectionSubheading()}>
               General-purpose language models can get UK tax bands, NI tapering and amortisation
               maths wrong. Flump MCP tools calculate these with a deterministic engine instead.
@@ -197,11 +200,12 @@ export const McpPage: FC = () => {
               <div className={iconBadge({ tone: "warning" })}>
                 <FiLock />
               </div>
-              <h3 className={cardTitle()}>Read-only guardrails</h3>
+              <h3 className={cardTitle()}>You confirm every change</h3>
               <p className={cardBody()}>
-                All Flump MCP tools carry <code>readOnlyHint: true</code> and{" "}
-                <code>destructiveHint: false</code> metadata. Flump MCP tools have no payment
-                feature.
+                The tools that read your data carry <code>readOnlyHint: true</code>. A connection
+                can stage an import only if you switch that on, and staging saves nothing: you
+                review and confirm the import in Flump. No Flump MCP tool deletes data. Flump MCP
+                tools have no payment feature.
               </p>
             </div>
 
@@ -271,9 +275,7 @@ export const McpPage: FC = () => {
         <section className={sectionContainer()}>
           <div className={sectionHeader()}>
             <span className={sectionKicker()}>Tool catalogue</span>
-            <h2 className={sectionHeading()}>
-              {MCP_TOOLS.length} read-only tools for your saved data
-            </h2>
+            <h2 className={sectionHeading()}>{MCP_TOOLS.length} tools that read your saved data</h2>
             <p className={sectionSubheading()}>
               Your connected AI assistant can call any of these tools. None of them can change your
               data.
@@ -305,8 +307,9 @@ export const McpPage: FC = () => {
           <div className={ctaInner()}>
             <h2 className={sectionHeading()}>Try the MCP preview</h2>
             <p className={sectionSubheading()}>
-              Generate a read-only MCP token in your Flump profile. The tools read your saved data
-              and cannot change it.
+              Generate an MCP token in your Flump settings. Its tools read your saved data. You can
+              also let it stage imports, and nothing is saved until you review and confirm them in
+              Flump.
             </p>
             <div className={flex({ gap: "4", justify: "center", flexWrap: "wrap", pt: "2" })}>
               <a href={`${appUrl}/app/profile`} className={linkReset()}>

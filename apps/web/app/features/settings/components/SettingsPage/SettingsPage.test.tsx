@@ -7,6 +7,10 @@ import { SettingsPage } from "./SettingsPage";
 
 const mockUpdateProfile = vi.fn().mockResolvedValue(undefined);
 
+vi.mock("~/features/ai-connections/useMcpTokens", () => ({
+  useMcpTokens: () => ({ tokens: [], create: vi.fn(), revoke: vi.fn(), contextPack: vi.fn() }),
+}));
+
 vi.mock("~/hooks/useUserProfile", async () => {
   const actual: typeof import("~/hooks/useUserProfile") =
     await vi.importActual("~/hooks/useUserProfile");

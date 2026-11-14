@@ -1,7 +1,11 @@
 import { Button, Card, Icon, StatusBadge } from "@repo/ui";
 import { KeyRound, Mail } from "lucide-react";
 import { type FC, useState } from "react";
-import { McpConnectionCard } from "~/features/ai-connections/components/McpConnectionCard";
+import {
+  McpConnectionCard,
+  STAGE_SCOPE,
+} from "~/features/ai-connections/components/McpConnectionCard";
+import { useMcpTokens } from "~/features/ai-connections/useMcpTokens";
 import {
   sectionCard,
   sectionHeading,
@@ -26,6 +30,10 @@ export interface SecurityTabProps {
 /** Sign-in security and AI access: password reset by email and the MCP connection card. */
 export const SecurityTab: FC<SecurityTabProps> = ({ email }) => {
   const { sendPasswordResetEmail } = useUserProfile();
+  const mcp = useMcpTokens();
+  // Imports are reached from here once a connection may stage them (owner-only rollout: a user who
+  // cannot mint such a token never sees the link).
+  const canStage = (mcp.tokens ?? []).some((t) => t.scopes.includes(STAGE_SCOPE));
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [passwordSuccess, setPasswordSuccess] = useState<string | null>(null);
   const [sendingResetEmail, setSendingResetEmail] = useState(false);
@@ -111,7 +119,32 @@ export const SecurityTab: FC<SecurityTabProps> = ({ email }) => {
         ) : null}
       </Card>
 
-      <McpConnectionCard />
+      <McpConnectionCard
+        initialTokens={mcp.tokens ?? []}
+        // Remount once the saved tokens arrive, so the card starts from them.
+        key={mcp.tokens ? "loaded" : "loading"}
+        onFetchContextPack={mcp.contextPack}
+        onGenerateToken={mcp.create}
+        onRevokeToken={mcp.revoke}
+      />
+
+      {canStage ? (
+        <Card as="section" aria-labelledby="imports-heading" className={sectionCard()}>
+          <h2 className={sectionHeading()} id="imports-heading">
+            Imports
+          </h2>
+          <p className={sectionLead()}>
+            Balances a connection stages wait in Imports until you review and confirm them.
+          </p>
+          <div>
+            <Button asChild size="sm" variant="outline">
+              <a data-testid="settings-imports-link" href="/app/imports" id="settings-imports-link">
+                Review imports
+              </a>
+            </Button>
+          </div>
+        </Card>
+      ) : null}
     </div>
   );
 };
