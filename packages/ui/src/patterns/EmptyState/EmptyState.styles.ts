@@ -59,7 +59,7 @@ export const emptyStateRecipe = sva({
           backgroundColor: "transparent",
           borderWidth: "1px",
           borderStyle: "dashed",
-          borderColor: "border.DEFAULT",
+          borderColor: "border",
         },
         title: { color: "text.secondary" },
         description: { color: "text.muted" },

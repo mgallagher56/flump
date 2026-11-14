@@ -8,7 +8,7 @@ const placeholder = css({
   textAlign: "center",
   borderWidth: "1px",
   borderStyle: "dashed",
-  borderColor: "border.DEFAULT",
+  borderColor: "border",
   borderRadius: "xl",
   color: "text.secondary",
 });

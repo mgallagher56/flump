@@ -37,9 +37,35 @@ const DURATION = /(?<![\w.-])\d*\.?\d+m?s(?![\w-])/g;
 
 const INLINE_STYLE_DIRS = ["apps/web/", "apps/marketing/"];
 
-/** Strip // and /* *\/ comments so prose never counts (keeps "://" in URLs). */
-function stripComments(source: string): string {
-  return source.replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:\\])\/\/.*$/gm, "$1");
+/**
+ * Strip // and /* *\/ comments so prose never counts. Quote-aware: "//" or "/*" inside a string
+ * or template literal (URLs, `${scheme}//${host}`) is kept. Regex literals are not parsed, which
+ * is fine for style files.
+ */
+export function stripComments(source: string): string {
+  let out = "";
+  let quote: string | null = null;
+  for (let i = 0; i < source.length; i++) {
+    const c = source[i] as string;
+    const next = source[i + 1];
+    if (quote) {
+      out += c;
+      if (c === "\\") {
+        out += next ?? "";
+        i++;
+      } else if (c === quote || (quote !== "`" && c === "\n")) quote = null;
+    } else if (c === "/" && next === "/") {
+      while (i < source.length && source[i] !== "\n") i++;
+      out += "\n";
+    } else if (c === "/" && next === "*") {
+      const end = source.indexOf("*/", i + 2);
+      i = end === -1 ? source.length : end + 1;
+    } else {
+      if (c === '"' || c === "'" || c === "`") quote = c;
+      out += c;
+    }
+  }
+  return out;
 }
 
 /**
@@ -116,8 +142,11 @@ export function countDurationLiterals(code: string): number {
   let n = 0;
   for (const span of spansFor(code, MOTION_PROPS)) {
     for (const s of stringsIn(span)) n += s.match(DURATION)?.length ?? 0;
-    // `transitionDuration: 200` (a bare number of ms in a style object)
-    n += bareNumbersIn(span).length;
+    // A bare number is a duration only as the whole value (`transitionDuration: 200`) or under a
+    // duration/delay key (`transition={{ duration: 0.3 }}`); spring stiffness/damping do not count.
+    const noStrings = span.replace(/"[^"\n]*"|'[^'\n]*'|`[^`]*`/g, '""');
+    if (/^\s*\d*\.?\d+\s*$/.test(noStrings)) n++;
+    n += noStrings.match(/\b(?:duration|delay)\s*:\s*\d*\.?\d+/g)?.length ?? 0;
   }
   return n;
 }

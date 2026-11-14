@@ -54,7 +54,7 @@ export const pageHeaderBadge = cva({
     backgroundColor: "surface.sunken",
     borderWidth: "1px",
     borderStyle: "solid",
-    borderColor: "border.DEFAULT",
+    borderColor: "border",
     borderRadius: "full",
     px: "3",
     py: "0.5",

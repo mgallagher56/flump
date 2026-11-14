@@ -12,7 +12,7 @@ export const mobileBottomBarRoot = cva({
     backdropFilter: "blur(14px)",
     borderTopWidth: "1px",
     borderTopStyle: "solid",
-    borderTopColor: "border.DEFAULT",
+    borderTopColor: "border",
     paddingTop: "1.5",
     paddingX: "2",
     paddingBottom: "calc(6px + env(safe-area-inset-bottom))",
