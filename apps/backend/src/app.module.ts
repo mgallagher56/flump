@@ -4,7 +4,9 @@ import { APP_INTERCEPTOR } from "@nestjs/core";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { AccountIntakeService } from "./account-intake.service";
 import { AgentAuditService } from "./agent/agent-audit.service";
+import { AgentAuditPurgeScheduler } from "./agent/agent-audit-purge.scheduler";
 import { AgentDataService } from "./agent/agent-data.service";
+import { McpImportsAdapter } from "./agent/mcp-imports.adapter";
 import { McpTokenService } from "./agent/mcp-token.service";
 import { AppController } from "./app.controller";
 import { AppService } from "./app.service";
@@ -65,6 +67,8 @@ import { UserProfileService } from "./user-profile.service";
     SnapshotsService,
     ImportsService,
     AgentAuditService,
+    AgentAuditPurgeScheduler,
+    McpImportsAdapter,
     UserProfileService,
     McpTokenService,
     AgentDataService,

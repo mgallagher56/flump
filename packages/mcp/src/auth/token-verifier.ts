@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 
-import { effectiveAnonymize, filterKnownScopes, type McpScope } from "./scopes.js";
+import { effectiveAnonymize, filterKnownScopes, MCP_SCOPES, type McpScope } from "./scopes.js";
 
 export type { McpScope };
 
@@ -75,7 +75,7 @@ export class TokenVerifier {
     return {
       resource: this.expectedAudience,
       authorization_servers: [this.authServerUrl],
-      scopes_supported: ["mcp:read:anonymized", "mcp:read:full", "mcp:simulate"],
+      scopes_supported: [...MCP_SCOPES],
       bearer_methods_supported: ["header"],
     };
   }

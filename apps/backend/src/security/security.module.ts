@@ -10,6 +10,8 @@ import { UserRateLimitInterceptor } from "./user-rate-limit.interceptor";
     { provide: APP_GUARD, useClass: IpRateLimitGuard },
     { provide: APP_INTERCEPTOR, useClass: UserRateLimitInterceptor },
   ],
+  // Exported so the MCP import adapter shares the per-user importStage budget (E17 PR D).
+  exports: [RateLimitStore],
 })
 export class SecurityModule implements OnApplicationBootstrap {
   constructor(@Inject(HttpAdapterHost) private readonly adapterHost: HttpAdapterHost) {}

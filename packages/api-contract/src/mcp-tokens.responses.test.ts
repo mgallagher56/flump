@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
   ContextPackResponse,
+  CreateMcpTokenRequest,
   CreateMcpTokenResponse,
+  McpTokenActivityQuery,
+  McpTokenActivityResponse,
   McpTokenListResponse,
   RevokeMcpTokenResponse,
 } from "./domains/mcp-tokens.js";
@@ -168,5 +171,50 @@ describe("mcp-tokens response schemas", () => {
         markdown: "",
       }).ok,
     ).toBe(false);
+  });
+
+  it("CreateMcpTokenRequest accepts an optional boolean allowStaging", () => {
+    expect(CreateMcpTokenRequest.safeParse({ name: "x", allowStaging: true }).success).toBe(true);
+    expect(CreateMcpTokenRequest.safeParse({ name: "x" }).success).toBe(true);
+    expect(CreateMcpTokenRequest.safeParse({ name: "x", allowStaging: "yes" }).success).toBe(false);
+  });
+
+  const event = {
+    id: listed.id,
+    toolName: "stage_import",
+    outcome: "ok",
+    errorCode: null,
+    scopesUsed: ["mcp:read:anonymized", "write:stage"],
+    clientName: "claude-ai/1.0",
+    latencyMs: 12,
+    responseBytes: 900,
+    createdAt: listed.createdAt,
+  };
+
+  it("McpTokenActivityResponse accepts identifiers and timings only", () => {
+    expect(checkAgainst(McpTokenActivityResponse, { events: [event], nextBefore: null })).toEqual({
+      ok: true,
+    });
+    // The argument fingerprint and any argument field are leaks.
+    expect(
+      checkAgainst(McpTokenActivityResponse, {
+        events: [{ ...event, argsFingerprint: "f".repeat(64) }],
+        nextBefore: null,
+      }).ok,
+    ).toBe(false);
+    expect(
+      checkAgainst(McpTokenActivityResponse, {
+        events: [{ ...event, outcome: "maybe" }],
+        nextBefore: null,
+      }).ok,
+    ).toBe(false);
+  });
+
+  it("McpTokenActivityQuery caps the page and checks the cursor", () => {
+    expect(McpTokenActivityQuery.safeParse({ limit: "100" }).success).toBe(true);
+    expect(McpTokenActivityQuery.safeParse({ limit: "101" }).success).toBe(false);
+    expect(McpTokenActivityQuery.safeParse({ before: "not a cursor!" }).success).toBe(false);
+    expect(McpTokenActivityQuery.safeParse({ before: "MGI2ZjRlMWEtOWMy" }).success).toBe(true);
+    expect(McpTokenActivityQuery.safeParse({}).success).toBe(true);
   });
 });

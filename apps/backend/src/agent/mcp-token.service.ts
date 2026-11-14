@@ -1,5 +1,10 @@
 import { randomBytes } from "node:crypto";
-import { hashPatToken, type McpTokenRecord, type McpTokenStoreAdapter } from "@flump/mcp";
+import {
+  hashPatToken,
+  type McpTokenRecord,
+  type McpTokenStoreAdapter,
+  WRITE_STAGE_SCOPE,
+} from "@flump/mcp";
 import { BadRequestException, Injectable, Logger, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
@@ -65,6 +70,8 @@ export class McpTokenService implements McpTokenStoreAdapter {
     options: {
       expiryDays?: number | null;
       anonymizeInstitutions?: boolean;
+      /** Opt in to `write:stage` (E17 re-plan PR D). Default off. */
+      allowStaging?: boolean;
     } = {},
   ) {
     if (typeof name !== "string") {
@@ -102,13 +109,19 @@ export class McpTokenService implements McpTokenStoreAdapter {
     }
     const anonymizeInstitutions = true;
 
+    if (options.allowStaging !== undefined && typeof options.allowStaging !== "boolean") {
+      throw new BadRequestException("allowStaging must be a boolean.");
+    }
+
     // Generate 32-hex cryptographically secure PAT
     const randomSecret = randomBytes(16).toString("hex");
     const rawToken = `flump_pat_${randomSecret}`;
     const tokenHash = hashPatToken(rawToken);
     const tokenPrefix = `flump_pat_${randomSecret.slice(0, 4)}...${randomSecret.slice(-4)}`;
 
+    // Read and simulate always; staging only when the user opted in at mint (default off).
     const scopes = ["mcp:read:anonymized", "mcp:simulate"];
+    if (options.allowStaging === true) scopes.push(WRITE_STAGE_SCOPE);
     const expiresAt = new Date(Date.now() + expiryDays * 86400 * 1000);
 
     const token = this.mcpTokenRepository.create({
@@ -156,6 +169,11 @@ export class McpTokenService implements McpTokenStoreAdapter {
       isRevoked: !!tok.revokedAt,
       isExpired: !!(tok.expiresAt && new Date(tok.expiresAt).getTime() < now),
     }));
+  }
+
+  /** True when `tokenId` is one of the user's tokens (revoked and expired ones included). */
+  async ownsToken(userId: string, tokenId: string): Promise<boolean> {
+    return (await this.mcpTokenRepository.count({ where: { id: tokenId, userId } })) > 0;
   }
 
   async revokeToken(userId: string, tokenId: string) {

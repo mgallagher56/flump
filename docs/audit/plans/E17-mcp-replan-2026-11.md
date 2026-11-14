@@ -57,7 +57,7 @@ Other findings:
 
 ### Writes (PR D; one opt-in scope, `write:stage`; a token can stage but never commit)
 
-- `stage_import`. Inputs `batchId?`, `idempotencyKey`, `accounts[{ref, name, type, details}]`, `balances[{accountRef, month, value}]`; later `budgetEntries` and `taxRecords`. Returns `batchId`, `reviewUrl`, counts of new, overwrite and unchanged rows, and validation errors.
+- `stage_import`. Inputs `batchId?`, `idempotencyKey`, `accounts[{ref, name, type, details}]`, `balances[{accountRef, month, value}]`; later `budgetEntries` and `taxRecords`. Returns `batchId`, `reviewUrl`, counts of new, overwrite and unchanged rows, and validation errors. (As built in PR D, new, overwrite and unchanged are null at stage time and known only at review or commit; see [E17-PR-D-notes.md](E17-PR-D-notes.md), pending owner sign-off.)
 - `get_import_status`. Input `batchId`.
 
 ## 6. Import flow

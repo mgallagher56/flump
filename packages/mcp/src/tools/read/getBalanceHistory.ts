@@ -96,8 +96,8 @@ function periods(from: number, to: number, interval: Interval): Period[] {
   return out;
 }
 
-/** Sources the E30 CHECK allows; anything else is reported as "other", never echoed. */
-export const SNAPSHOT_SOURCES = ["onboarding", "manual", "connected", "backfill"] as const;
+/** Sources the E30 CHECK allows (plus `agent`, a committed import, E17 PR C); anything else is "other", never echoed. */
+export const SNAPSHOT_SOURCES = ["onboarding", "manual", "connected", "backfill", "agent"] as const;
 
 export function safeSnapshotSource(source: string): string {
   return (SNAPSHOT_SOURCES as readonly string[]).includes(source) ? source : "other";

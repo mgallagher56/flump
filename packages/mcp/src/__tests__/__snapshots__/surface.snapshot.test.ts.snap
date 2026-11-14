@@ -1,5 +1,28 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
+exports[`MCP surface snapshot (E17-N1) > pins prompts/list (re-plan PR D adds two) 1`] = `
+[
+  {
+    "arguments": undefined,
+    "description": "Steps for copying month-end balances from the user's spreadsheet into an import batch the user reviews and commits in Flump. Needs a token that allows staging.",
+    "name": "import-spreadsheet",
+    "title": "Import a spreadsheet",
+  },
+  {
+    "arguments": [
+      {
+        "description": "YYYY-MM, not after the current month; defaults to last month",
+        "name": "month",
+        "required": false,
+      },
+    ],
+    "description": "Steps for recording the user's month-end balances for one month as an import batch the user reviews and commits in Flump. Needs a token that allows staging.",
+    "name": "monthly-check-in",
+    "title": "Monthly check-in",
+  },
+]
+`;
+
 exports[`MCP surface snapshot (E17-N1) > pins resources/list 1`] = `
 [
   {
@@ -20,11 +43,13 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tool names 1`] = `
   "get_data_coverage",
   "get_debt_overview",
   "get_financial_snapshot",
+  "get_import_status",
   "get_tax_year_position",
   "list_accounts",
   "list_tax_records",
   "project_net_worth",
   "simulate_debt_payoff",
+  "stage_import",
 ]
 `;
 
@@ -682,7 +707,7 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
       "openWorldHint": false,
       "readOnlyHint": true,
     },
-    "description": "For each account, which months have a recorded month-end balance: the first and last recorded month, how many months are recorded, the gaps in between, and how the values were recorded (onboarding, manual, connected or backfill). Use it to see which months are missing before reading or adding history. Paged at 25 accounts; ask for the next page while page is below totalPages.",
+    "description": "For each account, which months have a recorded month-end balance: the first and last recorded month, how many months are recorded, the gaps in between, and how the values were recorded (onboarding, manual, connected, backfill, or agent for an import the user reviewed and committed in Flump). Use it to see which months are missing before reading or adding history. Paged at 25 accounts; ask for the next page while page is below totalPages.",
     "execution": {
       "taskSupport": "forbidden",
     },
@@ -886,6 +911,7 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
                         "manual",
                         "connected",
                         "backfill",
+                        "agent",
                         "other",
                       ],
                       "type": "string",
@@ -3530,6 +3556,721 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
     },
     "title": "Project net worth",
   },
+  {
+    "_meta": undefined,
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": false,
+    },
+    "description": "Stages the user's own account list and month-end balances (for example mapped from a spreadsheet) as an import batch for the user to review in Flump. Nothing is saved to their Flump data: the user opens reviewUrl, matches each ref to a new or existing account and commits there. Send large sheets in chunks: the first call returns batchId, pass it on later calls; give each call its own idempotencyKey (resending the same key returns the same batch without adding rows). Leave out months after the current month. Rows the server refuses come back in validationErrors as ref, month and code. Up to 5,000 rows and 200 accounts per batch, 3 open batches and 30 calls an hour.",
+    "execution": {
+      "taskSupport": "forbidden",
+    },
+    "inputSchema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "properties": {
+        "accounts": {
+          "description": "Accounts in this chunk; a balance must name an account staged in this or an earlier chunk",
+          "items": {
+            "properties": {
+              "details": {
+                "properties": {
+                  "fixedRateEndDate": {
+                    "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                    "type": "string",
+                  },
+                  "interestRate": {
+                    "description": "4.5 means 4.5%",
+                    "maximum": 100,
+                    "minimum": 0,
+                    "type": "number",
+                  },
+                  "monthlyContribution": {
+                    "type": "number",
+                  },
+                  "termMonths": {
+                    "maximum": 600,
+                    "minimum": 1,
+                    "type": "integer",
+                  },
+                },
+                "type": "object",
+              },
+              "name": {
+                "description": "The account's name as in the sheet",
+                "maxLength": 120,
+                "minLength": 1,
+                "type": "string",
+              },
+              "ref": {
+                "description": "Your own short id for this account, such as acc1",
+                "pattern": "^[A-Za-z0-9_.-]{1,64}$",
+                "type": "string",
+              },
+              "type": {
+                "enum": [
+                  "Current",
+                  "Saving",
+                  "Mortgage",
+                  "Loan",
+                  "Credit Card",
+                  "Owed",
+                  "Investment",
+                  "Pension",
+                  "Property",
+                  "Student Loan",
+                  "Overdraft",
+                ],
+                "type": "string",
+              },
+            },
+            "required": [
+              "ref",
+              "name",
+              "type",
+            ],
+            "type": "object",
+          },
+          "maxItems": 200,
+          "type": "array",
+        },
+        "balances": {
+          "items": {
+            "properties": {
+              "accountRef": {
+                "pattern": "^[A-Za-z0-9_.-]{1,64}$",
+                "type": "string",
+              },
+              "month": {
+                "description": "YYYY-MM, not after the current month",
+                "pattern": "^\\d{4}-(0[1-9]|1[0-2])$",
+                "type": "string",
+              },
+              "value": {
+                "description": "The month-end balance as in the sheet, in pounds",
+                "type": "number",
+              },
+            },
+            "required": [
+              "accountRef",
+              "month",
+              "value",
+            ],
+            "type": "object",
+          },
+          "maxItems": 5000,
+          "type": "array",
+        },
+        "batchId": {
+          "description": "Append to this open batch (from an earlier call); omit to start a new batch",
+          "format": "uuid",
+          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+          "type": "string",
+        },
+        "idempotencyKey": {
+          "description": "A new random key per chunk; resend the same key only to retry that chunk",
+          "pattern": "^[A-Za-z0-9_.:-]{8,128}$",
+          "type": "string",
+        },
+        "responseFormat": {
+          "default": "concise",
+          "description": "concise (default) keeps the answer short; detailed returns the full breakdown",
+          "enum": [
+            "concise",
+            "detailed",
+          ],
+          "type": "string",
+        },
+      },
+      "required": [
+        "idempotencyKey",
+        "accounts",
+        "balances",
+      ],
+      "type": "object",
+    },
+    "name": "stage_import",
+    "outputSchema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "additionalProperties": false,
+      "properties": {
+        "asOf": {
+          "format": "date-time",
+          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$",
+          "type": "string",
+        },
+        "assumptions": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "field": {
+                "type": "string",
+              },
+              "reason": {
+                "type": "string",
+              },
+              "source": {
+                "enum": [
+                  "agent_supplied",
+                  "default",
+                  "user_profile",
+                  "derived",
+                ],
+                "type": "string",
+              },
+              "value": {
+                "type": [
+                  "number",
+                  "string",
+                ],
+              },
+            },
+            "required": [
+              "field",
+              "source",
+            ],
+            "type": "object",
+          },
+          "type": "array",
+        },
+        "currency": {
+          "const": "GBP",
+          "type": "string",
+        },
+        "missing": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "askUser": {
+                "type": "string",
+              },
+              "field": {
+                "type": "string",
+              },
+              "why": {
+                "type": "string",
+              },
+            },
+            "required": [
+              "field",
+              "why",
+              "askUser",
+            ],
+            "type": "object",
+          },
+          "type": "array",
+        },
+        "nextCursor": {
+          "type": [
+            "string",
+            "null",
+          ],
+        },
+        "notice": {
+          "type": "string",
+        },
+        "provenance": {
+          "additionalProperties": {
+            "type": "string",
+          },
+          "propertyNames": {
+            "type": "string",
+          },
+          "type": "object",
+        },
+        "result": {
+          "additionalProperties": false,
+          "properties": {
+            "batchId": {
+              "type": "string",
+            },
+            "committed": {
+              "type": "boolean",
+            },
+            "committedAt": {
+              "type": [
+                "string",
+                "null",
+              ],
+            },
+            "counts": {
+              "additionalProperties": false,
+              "properties": {
+                "errors": {
+                  "type": "number",
+                },
+                "new": {
+                  "type": [
+                    "number",
+                    "null",
+                  ],
+                },
+                "overwrite": {
+                  "type": [
+                    "number",
+                    "null",
+                  ],
+                },
+                "skipped": {
+                  "type": [
+                    "number",
+                    "null",
+                  ],
+                },
+                "staged": {
+                  "type": "number",
+                },
+                "unchanged": {
+                  "type": [
+                    "number",
+                    "null",
+                  ],
+                },
+              },
+              "required": [
+                "staged",
+                "new",
+                "overwrite",
+                "unchanged",
+                "skipped",
+                "errors",
+              ],
+              "type": "object",
+            },
+            "expiresAt": {
+              "type": "string",
+            },
+            "nextStep": {
+              "type": "string",
+            },
+            "note": {
+              "type": "string",
+            },
+            "revertedAt": {
+              "type": [
+                "string",
+                "null",
+              ],
+            },
+            "reviewUrl": {
+              "type": "string",
+            },
+            "rows": {
+              "type": "number",
+            },
+            "status": {
+              "enum": [
+                "staged",
+                "committed",
+                "reverted",
+                "expired",
+              ],
+              "type": "string",
+            },
+            "validationErrors": {
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "code": {
+                    "enum": [
+                      "future_month",
+                      "too_early",
+                      "bad_month",
+                      "bad_value",
+                      "unknown_account_ref",
+                    ],
+                    "type": "string",
+                  },
+                  "month": {
+                    "pattern": "^\\d{4}-(0[1-9]|1[0-2])$",
+                    "type": "string",
+                  },
+                  "ref": {
+                    "pattern": "^[A-Za-z0-9_.-]{1,64}$",
+                    "type": "string",
+                  },
+                },
+                "required": [
+                  "ref",
+                  "code",
+                ],
+                "type": "object",
+              },
+              "type": "array",
+            },
+          },
+          "required": [
+            "batchId",
+            "status",
+            "committed",
+            "reviewUrl",
+            "rows",
+            "counts",
+            "validationErrors",
+            "expiresAt",
+            "committedAt",
+            "revertedAt",
+            "nextStep",
+            "note",
+          ],
+          "type": "object",
+        },
+        "schemaVersion": {
+          "const": "2.0",
+          "type": "string",
+        },
+        "taxYear": {
+          "type": "string",
+        },
+        "truncated": {
+          "type": "boolean",
+        },
+        "verification": {
+          "additionalProperties": false,
+          "properties": {
+            "detail": {
+              "type": "string",
+            },
+            "status": {
+              "enum": [
+                "verified",
+                "unverified",
+              ],
+              "type": "string",
+            },
+          },
+          "required": [
+            "status",
+            "detail",
+          ],
+          "type": "object",
+        },
+      },
+      "required": [
+        "schemaVersion",
+        "asOf",
+        "currency",
+        "result",
+        "provenance",
+        "assumptions",
+        "missing",
+        "truncated",
+        "nextCursor",
+      ],
+      "type": "object",
+    },
+    "title": "Stage an import for review",
+  },
+  {
+    "_meta": undefined,
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+    },
+    "description": "The status of an import batch staged with stage_import: staged (waiting for the user to review and commit it in Flump), committed (the user committed it, with counts of rows written, unchanged and skipped), reverted (the user undid it) or expired (never committed; nothing was saved). Use it after sending the user to reviewUrl. It cannot commit anything.",
+    "execution": {
+      "taskSupport": "forbidden",
+    },
+    "inputSchema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "properties": {
+        "batchId": {
+          "description": "The batchId returned by stage_import",
+          "format": "uuid",
+          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+          "type": "string",
+        },
+        "responseFormat": {
+          "default": "concise",
+          "description": "concise (default) keeps the answer short; detailed returns the full breakdown",
+          "enum": [
+            "concise",
+            "detailed",
+          ],
+          "type": "string",
+        },
+      },
+      "required": [
+        "batchId",
+      ],
+      "type": "object",
+    },
+    "name": "get_import_status",
+    "outputSchema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "additionalProperties": false,
+      "properties": {
+        "asOf": {
+          "format": "date-time",
+          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$",
+          "type": "string",
+        },
+        "assumptions": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "field": {
+                "type": "string",
+              },
+              "reason": {
+                "type": "string",
+              },
+              "source": {
+                "enum": [
+                  "agent_supplied",
+                  "default",
+                  "user_profile",
+                  "derived",
+                ],
+                "type": "string",
+              },
+              "value": {
+                "type": [
+                  "number",
+                  "string",
+                ],
+              },
+            },
+            "required": [
+              "field",
+              "source",
+            ],
+            "type": "object",
+          },
+          "type": "array",
+        },
+        "currency": {
+          "const": "GBP",
+          "type": "string",
+        },
+        "missing": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "askUser": {
+                "type": "string",
+              },
+              "field": {
+                "type": "string",
+              },
+              "why": {
+                "type": "string",
+              },
+            },
+            "required": [
+              "field",
+              "why",
+              "askUser",
+            ],
+            "type": "object",
+          },
+          "type": "array",
+        },
+        "nextCursor": {
+          "type": [
+            "string",
+            "null",
+          ],
+        },
+        "notice": {
+          "type": "string",
+        },
+        "provenance": {
+          "additionalProperties": {
+            "type": "string",
+          },
+          "propertyNames": {
+            "type": "string",
+          },
+          "type": "object",
+        },
+        "result": {
+          "additionalProperties": false,
+          "properties": {
+            "batchId": {
+              "type": "string",
+            },
+            "committed": {
+              "type": "boolean",
+            },
+            "committedAt": {
+              "type": [
+                "string",
+                "null",
+              ],
+            },
+            "counts": {
+              "additionalProperties": false,
+              "properties": {
+                "errors": {
+                  "type": "number",
+                },
+                "new": {
+                  "type": [
+                    "number",
+                    "null",
+                  ],
+                },
+                "overwrite": {
+                  "type": [
+                    "number",
+                    "null",
+                  ],
+                },
+                "skipped": {
+                  "type": [
+                    "number",
+                    "null",
+                  ],
+                },
+                "staged": {
+                  "type": "number",
+                },
+                "unchanged": {
+                  "type": [
+                    "number",
+                    "null",
+                  ],
+                },
+              },
+              "required": [
+                "staged",
+                "new",
+                "overwrite",
+                "unchanged",
+                "skipped",
+                "errors",
+              ],
+              "type": "object",
+            },
+            "expiresAt": {
+              "type": "string",
+            },
+            "nextStep": {
+              "type": "string",
+            },
+            "note": {
+              "type": "string",
+            },
+            "revertedAt": {
+              "type": [
+                "string",
+                "null",
+              ],
+            },
+            "reviewUrl": {
+              "type": "string",
+            },
+            "rows": {
+              "type": "number",
+            },
+            "status": {
+              "enum": [
+                "staged",
+                "committed",
+                "reverted",
+                "expired",
+              ],
+              "type": "string",
+            },
+            "validationErrors": {
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "code": {
+                    "enum": [
+                      "future_month",
+                      "too_early",
+                      "bad_month",
+                      "bad_value",
+                      "unknown_account_ref",
+                    ],
+                    "type": "string",
+                  },
+                  "month": {
+                    "pattern": "^\\d{4}-(0[1-9]|1[0-2])$",
+                    "type": "string",
+                  },
+                  "ref": {
+                    "pattern": "^[A-Za-z0-9_.-]{1,64}$",
+                    "type": "string",
+                  },
+                },
+                "required": [
+                  "ref",
+                  "code",
+                ],
+                "type": "object",
+              },
+              "type": "array",
+            },
+          },
+          "required": [
+            "batchId",
+            "status",
+            "committed",
+            "reviewUrl",
+            "rows",
+            "counts",
+            "validationErrors",
+            "expiresAt",
+            "committedAt",
+            "revertedAt",
+            "nextStep",
+            "note",
+          ],
+          "type": "object",
+        },
+        "schemaVersion": {
+          "const": "2.0",
+          "type": "string",
+        },
+        "taxYear": {
+          "type": "string",
+        },
+        "truncated": {
+          "type": "boolean",
+        },
+        "verification": {
+          "additionalProperties": false,
+          "properties": {
+            "detail": {
+              "type": "string",
+            },
+            "status": {
+              "enum": [
+                "verified",
+                "unverified",
+              ],
+              "type": "string",
+            },
+          },
+          "required": [
+            "status",
+            "detail",
+          ],
+          "type": "object",
+        },
+      },
+      "required": [
+        "schemaVersion",
+        "asOf",
+        "currency",
+        "result",
+        "provenance",
+        "assumptions",
+        "missing",
+        "truncated",
+        "nextCursor",
+      ],
+      "type": "object",
+    },
+    "title": "Import status",
+  },
 ]
 `;
 
@@ -3541,10 +4282,12 @@ exports[`per-tool output size (E17-N1) > calls every registered tool and pins th
   "get_data_coverage": 1500,
   "get_debt_overview": 1500,
   "get_financial_snapshot": 1500,
+  "get_import_status": 1000,
   "get_tax_year_position": 2500,
   "list_accounts": 1000,
   "list_tax_records": 1000,
   "project_net_worth": 2000,
   "simulate_debt_payoff": 1000,
+  "stage_import": 1000,
 }
 `;

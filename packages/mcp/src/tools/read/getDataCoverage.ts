@@ -41,7 +41,7 @@ export const getDataCoverage = defineFlumpTool({
   name: "get_data_coverage",
   title: "Data coverage",
   description:
-    "For each account, which months have a recorded month-end balance: the first and last recorded month, how many months are recorded, the gaps in between, and how the values were recorded (onboarding, manual, connected or backfill). Use it to see which months are missing before reading or adding history. Paged at 25 accounts; ask for the next page while page is below totalPages.",
+    "For each account, which months have a recorded month-end balance: the first and last recorded month, how many months are recorded, the gaps in between, and how the values were recorded (onboarding, manual, connected, backfill, or agent for an import the user reviewed and committed in Flump). Use it to see which months are missing before reading or adding history. Paged at 25 accounts; ask for the next page while page is below totalPages.",
   input: {
     category: z.enum(ACCOUNT_CATEGORIES).optional().describe("Only accounts in this category"),
     page: z.number().int().min(1).max(1000).default(1).describe("Result page, from 1"),

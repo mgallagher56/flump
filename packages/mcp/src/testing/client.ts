@@ -3,6 +3,8 @@ import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import type { VerifiedToken } from "../auth/token-verifier.js";
 import { createFlumpMcpServer } from "../server.js";
+import type { McpAuditEvent } from "../types.js";
+import { createFakeImports, type FakeImports } from "./fake-imports.js";
 import {
   createFakeProvider,
   type FakeProvider,
@@ -11,7 +13,7 @@ import {
 
 export const TEST_TOKEN: VerifiedToken = {
   userId: "user_test",
-  scopes: ["mcp:read:anonymized", "mcp:simulate"],
+  scopes: ["mcp:read:anonymized", "mcp:simulate", "write:stage"],
   anonymizeInstitutions: true,
   type: "pat",
 };
@@ -19,6 +21,10 @@ export const TEST_TOKEN: VerifiedToken = {
 export interface TestHarness {
   client: Client;
   provider: FakeProvider;
+  /** The staging double the write tools call. */
+  imports: FakeImports;
+  /** Every audit event the server emitted. */
+  auditEvents: McpAuditEvent[];
   /** Calls a tool and returns the parsed JSON of its first text block. */
   callJson(name: string, args?: Record<string, unknown>): Promise<unknown>;
   /** Calls a tool and returns the raw text of its first text block. */
@@ -29,12 +35,21 @@ export interface TestHarness {
 /** Connects a real SDK `Client` to `createFlumpMcpServer` over an in-memory transport. */
 export async function connectTestClient(
   data: BuildContextPackInput,
-  options: FakeProviderOptions & { token?: VerifiedToken } = {},
+  options: FakeProviderOptions & {
+    token?: VerifiedToken;
+    imports?: FakeImports;
+    /** Leave the server without a staging provider (as on stdio). */
+    noImports?: boolean;
+  } = {},
 ): Promise<TestHarness> {
   const provider = createFakeProvider(data, options);
+  const imports = options.imports ?? createFakeImports();
+  const auditEvents: McpAuditEvent[] = [];
   const server = createFlumpMcpServer({
     token: options.token ?? TEST_TOKEN,
     dataProvider: provider,
+    ...(options.noImports ? {} : { imports }),
+    audit: (e) => void auditEvents.push(e),
   });
   const client = new Client({ name: "flump-test-client", version: "0.0.0" });
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
@@ -49,6 +64,8 @@ export async function connectTestClient(
   return {
     client,
     provider,
+    imports,
+    auditEvents,
     callText,
     async callJson(name, args) {
       return JSON.parse(await callText(name, args));

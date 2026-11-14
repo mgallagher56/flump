@@ -1,7 +1,11 @@
 import type { Repository } from "typeorm";
 import { describe, expect, it, vi } from "vitest";
 import type { AgentAuditEvent } from "../entities/agent-audit-event.entity";
-import { AgentAuditService } from "./agent-audit.service";
+import {
+  AgentAuditService,
+  decodeActivityCursor,
+  encodeActivityCursor,
+} from "./agent-audit.service";
 
 const make = () => {
   const insert = vi.fn().mockResolvedValue(undefined);
@@ -59,5 +63,100 @@ describe("AgentAuditService (E17-N17)", () => {
     const cutoff = where.createdAt.value;
     expect(cutoff.getFullYear()).toBe(2025);
     expect(cutoff.getMonth()).toBe(9);
+  });
+});
+
+describe("AgentAuditService.listForToken (E17 re-plan PR D)", () => {
+  const row = (i: number) => ({
+    id: `0b6f4e1a-9c2d-4e3f-a1b2-c3d4e5f6071${i}`,
+    userId: "u1",
+    tokenId: "t1",
+    clientName: null,
+    toolName: "list_accounts",
+    scopesUsed: ["mcp:read:anonymized"],
+    outcome: "ok",
+    errorCode: null,
+    latencyMs: 5,
+    responseBytes: 100,
+    argsFingerprint: "f".repeat(64),
+    createdAt: new Date(Date.UTC(2026, 10, 14, 10, 0, 10 - i)),
+  });
+
+  /** A chainable stand-in for TypeORM's query builder that records each call. */
+  const builder = (rows: unknown[]) => {
+    const calls: Array<[string, unknown[]]> = [];
+    const qb: Record<string, unknown> = {};
+    for (const m of ["where", "andWhere", "orderBy", "addOrderBy", "limit"]) {
+      qb[m] = (...args: unknown[]) => {
+        calls.push([m, args]);
+        return qb;
+      };
+    }
+    qb.getMany = async () => rows;
+    return { repo: { createQueryBuilder: () => qb }, calls };
+  };
+
+  it("filters by user and token, caps the page and returns an opaque cursor, never the fingerprint", async () => {
+    const { repo, calls } = builder([row(0), row(1), row(2)]);
+    const service = new AgentAuditService(repo as never);
+    const page = await service.listForToken("u1", "t1", { limit: 2 });
+    expect(calls).toContainEqual(["where", ["e.userId = :userId", { userId: "u1" }]]);
+    expect(calls).toContainEqual(["andWhere", ["e.tokenId = :tokenId", { tokenId: "t1" }]]);
+    expect(calls).toContainEqual(["addOrderBy", ["e.id", "DESC"]]);
+    expect(calls).toContainEqual(["limit", [3]]);
+    expect(page.events).toHaveLength(2);
+    expect(page.nextBefore).toBe(encodeActivityCursor(row(1).id));
+    expect(decodeActivityCursor(page.nextBefore as string)).toBe(row(1).id);
+    expect(JSON.stringify(page)).not.toContain("f".repeat(64));
+  });
+
+  it("pages with a compound (created_at, id) comparison and ends with a null cursor", async () => {
+    const { repo, calls } = builder([row(0)]);
+    const service = new AgentAuditService(repo as never);
+    const page = await service.listForToken("u1", "t1", {
+      limit: 500,
+      before: encodeActivityCursor(row(5).id),
+    });
+    expect(calls).toContainEqual(["limit", [101]]);
+    const compound = calls.find(
+      ([m, a]) => m === "andWhere" && String(a[0]).includes("created_at"),
+    );
+    expect(String(compound?.[1][0])).toMatch(/\("e"\."created_at", "e"\."id"\) </);
+    expect(compound?.[1][1]).toEqual({ cursorId: row(5).id });
+    expect(page.nextBefore).toBeNull();
+  });
+
+  it("a cursor that is not ours returns an empty page without querying", async () => {
+    const { repo, calls } = builder([row(0)]);
+    const service = new AgentAuditService(repo as never);
+    for (const bad of ["!!", encodeActivityCursor("not-a-uuid")]) {
+      expect(await service.listForToken("u1", "t1", { before: bad })).toEqual({
+        events: [],
+        nextBefore: null,
+      });
+    }
+    expect(calls.some(([m]) => m === "limit")).toBe(false);
+  });
+
+  it("keeps a precomputed fingerprint only when it is 64 hex characters", async () => {
+    const { service, insert } = make();
+    await service.record({
+      userId: "u",
+      toolName: "x",
+      outcome: "ok",
+      latencyMs: 1,
+      responseBytes: 1,
+      argsFingerprint: "a".repeat(64),
+    });
+    await service.record({
+      userId: "u",
+      toolName: "x",
+      outcome: "ok",
+      latencyMs: 1,
+      responseBytes: 1,
+      argsFingerprint: "nope",
+    });
+    expect(insert.mock.calls[0]?.[0].argsFingerprint).toBe("a".repeat(64));
+    expect(insert.mock.calls[1]?.[0].argsFingerprint).toBeNull();
   });
 });

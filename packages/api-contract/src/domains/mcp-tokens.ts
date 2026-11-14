@@ -12,7 +12,40 @@ export const CreateMcpTokenRequest = z.object({
     .refine((v) => (PAT_EXPIRY_DAYS as readonly number[]).includes(v), "must be 7, 30, 90 or 365")
     .optional(),
   anonymizeInstitutions: z.boolean().optional(),
+  /**
+   * Opt in to the `write:stage` scope (E17 re-plan PR D): the token may stage an import batch for
+   * the user to review, never commit, revert or delete. Default false.
+   */
+  allowStaging: z.boolean().optional(),
 });
+
+/**
+ * The opt-in staging scope a token gets when minted with `allowStaging: true`. The source of
+ * truth is `WRITE_STAGE_SCOPE` in `@flump/mcp` (packages/mcp does not depend on this package);
+ * this copy is for web clients, and a backend test asserts the two are equal.
+ */
+export const WRITE_STAGE_SCOPE = "write:stage";
+
+/** Most activity rows one page returns. */
+export const MAX_ACTIVITY_PAGE = 100;
+
+/**
+ * Opaque paging cursor for the activity route (a compound created_at plus id position, encoded by
+ * the server). Clients pass back `nextBefore` unchanged and never build one.
+ */
+export const ActivityCursor = z
+  .string()
+  .regex(/^[A-Za-z0-9_-]{1,128}$/, "must be a cursor from nextBefore");
+
+/**
+ * GET /mcp-tokens/:id/activity query. `limit` defaults to 50; `before` (the previous page's
+ * `nextBefore`) pages back in time.
+ */
+export const McpTokenActivityQuery = z.object({
+  limit: z.coerce.number().int().min(1).max(MAX_ACTIVITY_PAGE).optional(),
+  before: ActivityCursor.optional(),
+});
+export type McpTokenActivityQuery = z.infer<typeof McpTokenActivityQuery>;
 
 // --- Responses (E21) ---
 // No response ever carries `tokenHash` or `revokedAt`; strict objects flag either if it leaks.
@@ -53,6 +86,30 @@ export const CreateMcpTokenResponse = z.strictObject({
   createdAt: IsoDateTime,
 });
 export type CreateMcpTokenResponse = z.infer<typeof CreateMcpTokenResponse>;
+
+/**
+ * One audited MCP tool call (E17-N17). Identifiers, codes and timings only: never arguments,
+ * results, amounts or the argument fingerprint.
+ */
+export const McpTokenActivityEvent = z.strictObject({
+  id: Uuid,
+  toolName: z.string(),
+  outcome: z.enum(["ok", "error", "denied"]),
+  errorCode: z.string().nullable(),
+  scopesUsed: z.array(z.string()),
+  clientName: z.string().nullable(),
+  latencyMs: z.number().int().min(0),
+  responseBytes: z.number().int().min(0),
+  createdAt: IsoDateTime,
+});
+export type McpTokenActivityEvent = z.infer<typeof McpTokenActivityEvent>;
+
+/** GET /mcp-tokens/:id/activity: newest first; `nextBefore` is null on the last page. */
+export const McpTokenActivityResponse = z.strictObject({
+  events: z.array(McpTokenActivityEvent),
+  nextBefore: ActivityCursor.nullable(),
+});
+export type McpTokenActivityResponse = z.infer<typeof McpTokenActivityResponse>;
 
 /** DELETE /mcp-tokens/:id */
 export const RevokeMcpTokenResponse = z.strictObject({ success: z.literal(true) });

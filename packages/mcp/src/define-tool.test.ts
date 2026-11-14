@@ -254,6 +254,9 @@ describe("defineFlumpTool error contract", () => {
     ["CALCULATION_UNVERIFIED_BLOCKED", {}],
     ["CONFIRMATION_EXPIRED", {}],
     ["CONFIRMATION_MISMATCH", {}],
+    ["CONFLICT", {}],
+    ["LIMIT_EXCEEDED", {}],
+    ["UNAVAILABLE", {}],
   ] as const)("returns %s", async (code, init) => {
     const { call } = await connect(
       def({
@@ -383,7 +386,14 @@ describe("defineFlumpTool scopes and hooks", () => {
     expect(events).toHaveLength(2);
     expect(events[0]).toMatchObject({ tool: NAME, outcome: "ok" });
     expect(events[1]).toMatchObject({ tool: NAME, outcome: "error", errorCode: "NOT_FOUND" });
-    expect(Object.keys(events[0] ?? {}).sort()).toEqual(["durationMs", "outcome", "tool"]);
+    expect(Object.keys(events[0] ?? {}).sort()).toEqual([
+      "durationMs",
+      "outcome",
+      "responseBytes",
+      "scopesUsed",
+      "tool",
+    ]);
+    expect(events[0]?.responseBytes).toBeGreaterThan(0);
     expect(JSON.stringify(events)).not.toContain("secret-detail");
   });
 

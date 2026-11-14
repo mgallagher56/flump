@@ -27,6 +27,13 @@ describe("scope helpers", () => {
     ]);
   });
 
+  it("knows write:stage", () => {
+    expect(filterKnownScopes(["write:stage", "write:commit"])).toEqual(["write:stage"]);
+    expect(requirementFor("tool", "stage_import")?.allOf).toEqual(["write:stage"]);
+    // No tool name suggests a commit, revert or delete path.
+    expect(Object.keys(TOOL_SCOPES).filter((n) => /commit|revert|delete|undo/.test(n))).toEqual([]);
+  });
+
   it("requires a read scope for everything, plus simulate for simulators", () => {
     const sim = requirementFor("tool", "simulate_debt_payoff");
     expect(hasScopes(["mcp:simulate"], sim)).toBe(false);
@@ -114,7 +121,12 @@ describe("TokenVerifier scope handling", () => {
 const RESOURCE_URIS: Record<string, string> = {
   schema: "flump://schema",
 };
-const ALL: VerifiedToken["scopes"] = ["mcp:read:anonymized", "mcp:read:full", "mcp:simulate"];
+const ALL: VerifiedToken["scopes"] = [
+  "mcp:read:anonymized",
+  "mcp:read:full",
+  "mcp:simulate",
+  "write:stage",
+];
 
 describe("scope enforcement through the MCP server", () => {
   async function withToken<T>(
@@ -135,9 +147,8 @@ describe("scope enforcement through the MCP server", () => {
       const resources = (await h.client.listResources()).resources.map((r) => r.name).sort();
       expect(tools).toEqual(Object.keys(TOOL_SCOPES).sort());
       expect(resources).toEqual(Object.keys(RESOURCE_SCOPES).sort());
-      // No prompts are registered, so the server does not advertise the capability at all.
-      expect(Object.keys(PROMPT_SCOPES)).toEqual([]);
-      expect(h.client.getServerCapabilities()?.prompts).toBeUndefined();
+      const prompts = (await h.client.listPrompts()).prompts.map((p) => p.name).sort();
+      expect(prompts).toEqual(Object.keys(PROMPT_SCOPES).sort());
       expect(Object.keys(RESOURCE_URIS).sort()).toEqual(resources);
     });
   });
@@ -147,22 +158,35 @@ describe("scope enforcement through the MCP server", () => {
   });
 
   for (const [name, req] of Object.entries(TOOL_SCOPES)) {
-    const needsSimulate = req.allOf.includes("mcp:simulate");
-    it(`${name}: enforces ${needsSimulate ? "read plus mcp:simulate" : "read only"}`, async () => {
+    const extra = req.allOf[0];
+    it(`${name}: enforces ${extra ? `read plus ${extra}` : "read only"}`, async () => {
       const args = CALL_ARGS[name] ?? {};
-      await withToken(["mcp:simulate"], async (h) => {
+      await withToken(["mcp:simulate", "write:stage"], async (h) => {
         expect(await h.callText(name, args)).toContain("INSUFFICIENT_SCOPE");
       });
       await withToken(["mcp:read:anonymized"], async (h) => {
         const text = await h.callText(name, args);
-        if (needsSimulate) expect(text).toContain("INSUFFICIENT_SCOPE");
+        if (extra) expect(text).toContain("INSUFFICIENT_SCOPE");
         else expect(text).not.toContain("INSUFFICIENT_SCOPE");
       });
-      await withToken(["mcp:read:anonymized", "mcp:simulate"], async (h) => {
+      await withToken(["mcp:read:anonymized", ...req.allOf], async (h) => {
         expect(await h.callText(name, args)).not.toContain("INSUFFICIENT_SCOPE");
       });
     });
   }
+
+  it("write:stage alone does not unlock simulators, and simulate does not unlock staging", async () => {
+    await withToken(["mcp:read:anonymized", "write:stage"], async (h) => {
+      expect(await h.callText("simulate_debt_payoff", {})).toContain("INSUFFICIENT_SCOPE");
+    });
+    await withToken(["mcp:read:anonymized", "mcp:simulate"], async (h) => {
+      const text = await h.callText("stage_import", CALL_ARGS.stage_import ?? {});
+      expect(text).toContain("INSUFFICIENT_SCOPE");
+      expect(text).toContain("write:stage");
+      // The refusal happens before the provider: nothing was staged.
+      expect(h.imports.staged).toEqual([]);
+    });
+  });
 
   it("flags the call as an error and leaves tools/list unfiltered", async () => {
     await withToken(["mcp:simulate"], async (h) => {
@@ -188,13 +212,15 @@ describe("scope enforcement through the MCP server", () => {
   }
 
   for (const name of Object.keys(PROMPT_SCOPES)) {
-    it(`prompt ${name}: denied without read, allowed with read`, async () => {
-      await withToken(["mcp:simulate"], async (h) => {
-        await expect(h.client.getPrompt({ name, arguments: {} })).rejects.toThrow(
-          "INSUFFICIENT_SCOPE",
-        );
-      });
-      await withToken(["mcp:read:anonymized"], async (h) => {
+    it(`prompt ${name}: denied without read plus write:stage, allowed with both`, async () => {
+      for (const scopes of [["write:stage"], ["mcp:read:anonymized", "mcp:simulate"]] as const) {
+        await withToken([...scopes], async (h) => {
+          await expect(h.client.getPrompt({ name, arguments: {} })).rejects.toThrow(
+            "INSUFFICIENT_SCOPE",
+          );
+        });
+      }
+      await withToken(["mcp:read:anonymized", "write:stage"], async (h) => {
         expect((await h.client.getPrompt({ name, arguments: {} })).messages.length).toBeGreaterThan(
           0,
         );

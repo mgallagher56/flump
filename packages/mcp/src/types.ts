@@ -15,7 +15,7 @@ export interface AccountSnapshotRow {
   /** 1 to 12. */
   month: number;
   value: number;
-  /** How the row got there: `onboarding`, `manual`, `connected` or `backfill` (E30). */
+  /** How the row got there: `onboarding`, `manual`, `connected`, `backfill` (E30) or `agent` (a committed import). */
   source: string;
 }
 
@@ -80,20 +80,111 @@ export interface McpUserDataProvider {
   ): Promise<McpTaxRecord[]>;
 }
 
-/** One tool call, for audit. Never carries arguments or results (E17-N8). */
+/** One account row of a staged import. `ref` is the caller's own id; `name` is never echoed back. */
+export interface McpImportAccount {
+  ref: string;
+  name: string;
+  type: string;
+  details?: {
+    interestRate?: number;
+    monthlyContribution?: number;
+    termMonths?: number;
+    fixedRateEndDate?: string;
+  };
+}
+
+/** One month-end value of a staged import. */
+export interface McpImportBalance {
+  accountRef: string;
+  /** "YYYY-MM". */
+  month: string;
+  value: number;
+}
+
+export interface McpStageImportInput {
+  batchId?: string;
+  idempotencyKey: string;
+  accounts: McpImportAccount[];
+  balances: McpImportBalance[];
+}
+
+export const MCP_IMPORT_STATUSES = ["staged", "committed", "reverted", "expired"] as const;
+export const MCP_IMPORT_VALIDATION_CODES = [
+  "future_month",
+  "too_early",
+  "bad_month",
+  "bad_value",
+  "unknown_account_ref",
+] as const;
+
+/** An import batch as the staging tools see it: refs, row keys and counts, never names or values. */
+export interface McpImportBatch {
+  batchId: string;
+  status: (typeof MCP_IMPORT_STATUSES)[number];
+  /** Where the user reviews and commits the batch in Flump. */
+  reviewUrl: string;
+  /** Rows in the batch (accounts plus balances, across chunks). */
+  rows: number;
+  counts: {
+    staged: number;
+    new: number | null;
+    overwrite: number | null;
+    unchanged: number | null;
+    skipped: number | null;
+    errors: number;
+  };
+  validationErrors: Array<{
+    ref: string;
+    month?: string;
+    code: (typeof MCP_IMPORT_VALIDATION_CODES)[number];
+  }>;
+  createdAt: string;
+  expiresAt: string;
+  committedAt: string | null;
+  revertedAt: string | null;
+}
+
+/**
+ * Staging access for ONE user (E17 re-plan PR D). Deliberately has no commit, revert or delete:
+ * committing needs a web session. Implementations take the verified token so they can enforce
+ * `write:stage` themselves (server-side), not only trust the tool's own check. Throw
+ * `FlumpToolError` for an expected refusal (cap, conflict, rate limit, not found).
+ */
+export interface McpImportProvider {
+  stageImport(token: VerifiedToken, input: McpStageImportInput): Promise<McpImportBatch>;
+  getImportStatus(token: VerifiedToken, batchId: string): Promise<McpImportBatch>;
+}
+
+/**
+ * One tool call, for audit (E17-N17). Never carries arguments or results (E17-N8): only an
+ * optional keyed fingerprint of the arguments, made by the context's `fingerprintArgs`.
+ */
 export interface McpAuditEvent {
   tool: string;
-  outcome: "ok" | "error";
+  outcome: "ok" | "error" | "denied";
   errorCode?: string;
   durationMs: number;
+  /** UTF-8 bytes of the text sent back to the client. */
+  responseBytes: number;
+  /** The scopes the call needed that the token held. */
+  scopesUsed: string[];
+  /** HMAC of the validated arguments, or absent when no fingerprint function or key is set. */
+  argsFingerprint?: string;
 }
 
 export interface McpServerContext {
   token: VerifiedToken;
   dataProvider: McpUserDataProvider;
+  /** Staging access (PR D). Absent on transports that cannot stage, such as stdio. */
+  imports?: McpImportProvider;
   contextPack?: FlumpAiContextPack;
   /** Scope hook used by `defineFlumpTool`. Falls back to the token's scopes when absent. */
   authorize?: (requirement: ScopeRequirement) => boolean;
+  /**
+   * Keyed fingerprint of a call's validated arguments for the audit row (the key stays in the
+   * host). Return null when no key is configured. Failures are swallowed.
+   */
+  fingerprintArgs?: (args: unknown) => string | null;
   /** Optional audit sink; failures are swallowed. */
   audit?: (event: McpAuditEvent) => void | Promise<void>;
 }

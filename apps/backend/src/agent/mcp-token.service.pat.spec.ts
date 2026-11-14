@@ -1,3 +1,5 @@
+import { WRITE_STAGE_SCOPE as ContractWriteStageScope } from "@flump/api-contract";
+import { WRITE_STAGE_SCOPE } from "@flump/mcp";
 import { BadRequestException } from "@nestjs/common";
 import { describe, expect, it, vi } from "vitest";
 import { McpTokenService } from "./mcp-token.service";
@@ -100,4 +102,39 @@ describe("McpTokenService.createPatToken type guards (E20-N16)", () => {
       ).rejects.toBeInstanceOf(BadRequestException);
     },
   );
+});
+
+describe("McpTokenService write:stage opt-in (E17 re-plan PR D)", () => {
+  it("the contract's scope string matches the MCP package's (one value, two exports)", () => {
+    expect(ContractWriteStageScope).toBe(WRITE_STAGE_SCOPE);
+    expect(WRITE_STAGE_SCOPE).toBe("write:stage");
+  });
+
+  it("is off by default: read and simulate only", async () => {
+    const { service } = buildTokenService();
+    expect((await service.createPatToken("u1", "Reader")).scopes).toEqual([
+      "mcp:read:anonymized",
+      "mcp:simulate",
+    ]);
+    expect(
+      (await service.createPatToken("u1", "Reader", { allowStaging: false })).scopes,
+    ).not.toContain("write:stage");
+  });
+
+  it("adds write:stage, and nothing else, when allowStaging is true", async () => {
+    const { service, repo } = buildTokenService();
+    const res = await service.createPatToken("u1", "Stager", { allowStaging: true });
+    expect(res.scopes).toEqual(["mcp:read:anonymized", "mcp:simulate", "write:stage"]);
+    expect(repo.save).toHaveBeenCalledWith(
+      expect.objectContaining({ scopes: ["mcp:read:anonymized", "mcp:simulate", "write:stage"] }),
+    );
+  });
+
+  it.each(["true", 1, null])("rejects a non-boolean allowStaging (%s) with 400", async (v) => {
+    const { service, repo } = buildTokenService();
+    await expect(
+      service.createPatToken("u1", "Stager", { allowStaging: v as never }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+    expect(repo.save).not.toHaveBeenCalled();
+  });
 });

@@ -24,8 +24,84 @@ import { UserProfileService } from "./user-profile.service";
 function build(mode: "workos" | "dev") {
   const config = { get: vi.fn().mockReturnValue(undefined) };
   const nothing = {} as never;
-  return new McpService(nothing, nothing, config as never, mode);
+  return new McpService(nothing, nothing, config as never, mode, nothing, nothing);
 }
+
+describe("McpService audit and staging wiring (E17 re-plan PR D)", () => {
+  beforeEach(() => {
+    handlerOptions.length = 0;
+  });
+
+  const make = (record = vi.fn().mockResolvedValue(undefined)) => {
+    const audit = { record, fingerprint: vi.fn().mockReturnValue("a".repeat(64)) };
+    const adapter = { stageImport: vi.fn(), getImportStatus: vi.fn() };
+    const config = { get: vi.fn().mockReturnValue(undefined) };
+    const service = new McpService(
+      {} as never,
+      {} as never,
+      config as never,
+      "workos",
+      audit as never,
+      adapter as never,
+    );
+    return { service, audit, adapter, options: handlerOptions[0] };
+  };
+
+  it("hands the handler the import adapter, the audit sink and the fingerprint hook", () => {
+    const { options, adapter, audit } = make();
+    expect(options.imports).toBe(adapter);
+    expect(options.fingerprintArgs({ x: 1 })).toBe("a".repeat(64));
+    expect(audit.fingerprint).toHaveBeenCalledWith({ x: 1 });
+    expect(typeof options.audit).toBe("function");
+  });
+
+  it("records one audit row per tool call with the caller's identifiers", async () => {
+    const { options, audit } = make();
+    await options.audit(
+      {
+        token: {
+          userId: "u1",
+          tokenId: "00000000-0000-4000-8000-000000000001",
+          scopes: [],
+          anonymizeInstitutions: true,
+          type: "pat",
+        },
+        clientName: "claude-ai/1.0",
+      },
+      {
+        tool: "stage_import",
+        outcome: "denied",
+        errorCode: "INSUFFICIENT_SCOPE",
+        durationMs: 3,
+        responseBytes: 120,
+        scopesUsed: ["mcp:read:anonymized"],
+        argsFingerprint: "b".repeat(64),
+      },
+    );
+    expect(audit.record).toHaveBeenCalledWith({
+      userId: "u1",
+      tokenId: "00000000-0000-4000-8000-000000000001",
+      clientName: "claude-ai/1.0",
+      toolName: "stage_import",
+      scopesUsed: ["mcp:read:anonymized"],
+      outcome: "denied",
+      errorCode: "INSUFFICIENT_SCOPE",
+      latencyMs: 3,
+      responseBytes: 120,
+      argsFingerprint: "b".repeat(64),
+    });
+  });
+
+  it("never fails a call when the audit write fails", async () => {
+    const { options } = make(vi.fn().mockRejectedValue(new Error("db down")));
+    await expect(
+      options.audit(
+        { token: { userId: "u1", scopes: [], anonymizeInstitutions: true, type: "pat" } },
+        { tool: "list_accounts", outcome: "ok", durationMs: 1, responseBytes: 1, scopesUsed: [] },
+      ),
+    ).resolves.toBeUndefined();
+  });
+});
 
 describe("McpService dev token wiring", () => {
   beforeEach(() => {
@@ -181,6 +257,8 @@ describe("McpService.getContextPack for a brand-new user", () => {
       agentData,
       config as never,
       "workos",
+      {} as never,
+      {} as never,
     );
 
     const { pack, markdown } = await service.getContextPack(userId);
