@@ -20,6 +20,7 @@
     "format": "biome check --write .",
     "test": "turbo run test && bun test ./scripts",
     "test:e2e": "bun run --cwd apps/e2e e2e",
+    "test:visual": "bun run --cwd apps/e2e e2e:visual",
     "test:scripts": "bun test ./scripts",
     "test:coverage": "turbo run test:coverage",
     "test:storybook": "bun run --cwd apps/web test:storybook",

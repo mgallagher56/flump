@@ -1,0 +1,120 @@
+name: 🖼️ Visual regression
+
+# E15 Phase 8. Full-page screenshots of the main screens (375 and 1280, light and dark) compared
+# with the baselines in apps/e2e/visual/__screenshots__, plus layout checks (overflow at phone
+# width, black SVG gradient stops, empty <title>). See apps/e2e/README.md "Visual regression".
+#
+# Its own workflow, so it runs alongside the required CI Pipeline jobs and never adds to their
+# time. Pull requests and manual runs only: it never runs on push to main, so a flaky shot can
+# never hold up Railway's "Wait for CI" deploys.
+on:
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      update:
+        description: "Regenerate baselines that differ or are missing, and upload them as an artifact"
+        type: boolean
+        default: true
+
+env:
+  TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+  TURBO_TEAM: ${{ vars.TURBO_TEAM }}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  visual:
+    name: 🖼️ Visual regression
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    # Not yet a required check: see apps/e2e/README.md "Making it required".
+    continue-on-error: true
+    permissions:
+      actions: write
+      contents: read
+
+    # Baselines are only valid from this exact image: font rendering differs between OSes and
+    # Chromium builds. Keep the tag equal to @playwright/test in apps/e2e/package.json
+    # (Renovate bumps them together); a bump means regenerating every baseline.
+    container:
+      image: mcr.microsoft.com/playwright:v1.65.0-noble
+
+    # Throwaway Postgres; the password is a literal for this disposable container, not a secret.
+    # In a container job the service is reached by its name, not localhost.
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: flump_e2e
+        options: >-
+          --health-cmd "pg_isready -U postgres -d flump_e2e"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+
+    env:
+      CI: "true"
+      E2E_DATABASE_URL: postgres://postgres:postgres@postgres:5432/flump_e2e
+      E2E_FREEZE_CLOCK: "1"
+
+    steps:
+      - name: ⬇️ Checkout repo
+        uses: actions/checkout@v7.0.1
+
+      # setup-bun extracts a zip and the Playwright image ships without unzip. faketime freezes
+      # the servers' clock (apps/e2e/support/clock.ts) so dates in the shots never move.
+      - name: 📦 Install unzip and faketime
+        env:
+          DEBIAN_FRONTEND: noninteractive
+        run: apt-get update -qq && apt-get install -y -qq unzip faketime > /dev/null
+
+      - name: ⚙️ Setup Bun and install dependencies
+        uses: ./.github/actions/bun-setup
+        with:
+          turbo: true
+          ghToken: ${{ secrets.GITHUB_TOKEN }}
+          turboToken: ${{ env.TURBO_TOKEN }}
+
+      - name: 🏗️ Build all packages
+        run: bun run build
+
+      - name: 🖼️ Compare screenshots
+        if: github.event_name != 'workflow_dispatch' || !inputs.update
+        run: bun run test:visual
+
+      - name: 🔄 Regenerate baselines
+        if: github.event_name == 'workflow_dispatch' && inputs.update
+        run: bun run test:visual --update-snapshots=changed
+
+      # On a pull request, missing baselines are written here too, so the first run of a new
+      # route produces its baseline in this artifact.
+      - name: 📎 Upload baselines
+        if: always()
+        # actions/upload-artifact v7.0.2
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: visual-baselines
+          path: apps/e2e/visual/__screenshots__
+          retention-days: 7
+          if-no-files-found: ignore
+
+      - name: 📎 Upload diffs and report
+        if: failure()
+        # actions/upload-artifact v7.0.2
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: visual-report
+          path: |
+            apps/e2e/playwright-report-visual
+            apps/e2e/test-results-visual
+          retention-days: 7
+          if-no-files-found: ignore
