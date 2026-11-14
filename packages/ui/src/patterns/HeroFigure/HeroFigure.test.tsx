@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { HeroFigure } from "./HeroFigure";
 
@@ -99,5 +99,38 @@ describe("HeroFigure", () => {
   it("uses no inline styles", () => {
     const { container } = render(<HeroFigure label="Net worth" value={1} />);
     expect(container.querySelector("[style]")).toBeNull();
+  });
+
+  it("explains the figure in an InfoTip beside the label, named by the label", () => {
+    render(
+      <HeroFigure
+        explain="What you own minus your debts, from your saved balances."
+        label="Net worth"
+        value={241000}
+      />,
+    );
+    // The group keeps its plain label; the tip is a separate button.
+    expect(screen.getByRole("group", { name: "Net worth" })).toBeDefined();
+    fireEvent.click(screen.getByRole("button", { name: "About Net worth" }));
+    expect(
+      screen.getByText("What you own minus your debts, from your saved balances."),
+    ).toBeDefined();
+  });
+
+  it("shows no InfoTip without explain", () => {
+    render(<HeroFigure label="Net worth" value={1} />);
+    expect(screen.queryByRole("button", { name: "About Net worth" })).toBeNull();
+  });
+
+  it("uses system colours under forced colours and hides the disc", () => {
+    const { container } = render(<HeroFigure label="Net worth" value={1} />);
+    const group = screen.getByRole("group", { name: "Net worth" });
+    expect(group.className).toContain("highContrast:bg-c_Canvas");
+    expect(group.className).toContain("highContrast:c_CanvasText");
+    const shape = container.querySelector('[data-decorative="true"]');
+    expect(shape?.className).toContain("highContrast:d_none");
+    // Quieter disc in dark, also when dark comes from the system with JavaScript off (D30).
+    expect(shape?.className).toContain("dark:op_0.1");
+    expect(shape?.className).toContain("systemDark:op_0.1");
   });
 });

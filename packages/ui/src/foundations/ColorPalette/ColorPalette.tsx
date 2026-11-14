@@ -292,7 +292,7 @@ export const ColorPalette: FC = () => {
                 <div className={swatchTile()} style={{ backgroundColor: colorObj.value }}>
                   <span
                     className={css({
-                      fontSize: "10px",
+                      fontSize: "xs",
                       px: "4px",
                       py: "1px",
                       borderRadius: "xs",
@@ -307,7 +307,7 @@ export const ColorPalette: FC = () => {
                 <div className={swatchMeta()}>
                   <span className={css({ fontWeight: "semibold", fontSize: "xs" })}>{step}</span>
                   <span
-                    className={css({ fontFamily: "mono", fontSize: "11px", color: "text.muted" })}
+                    className={css({ fontFamily: "mono", fontSize: "xs", color: "text.muted" })}
                   >
                     {colorObj.value}
                   </span>

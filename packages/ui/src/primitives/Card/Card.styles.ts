@@ -8,7 +8,9 @@ export const cardRecipe = cva({
     borderStyle: "solid",
     borderColor: "border",
     color: "text.primary",
-    transition: "border-color 0.2s ease, box-shadow 0.2s ease",
+    transitionProperty: "border-color, box-shadow",
+    transitionDuration: "base",
+    transitionTimingFunction: "standard",
   },
   variants: {
     /** `default` is the warm `surface.card`; `subtle` and `sunken` sit back for quiet blocks. */

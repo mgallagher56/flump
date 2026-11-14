@@ -30,6 +30,9 @@ export const emptyStateRecipe = sva({
     title: {
       margin: 0,
       color: "text.primary",
+      // The heading styles track tighter (-0.01em at md), which closes the narrow word gaps of
+      // the heading face. Reset to the `normal` token so the title keeps its spaces (R2-2).
+      letterSpacing: "normal",
     },
     description: {
       margin: 0,

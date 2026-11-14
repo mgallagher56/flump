@@ -23,7 +23,7 @@ export const mobileBottomBarList = cva({
   base: {
     display: "grid",
     gridTemplateColumns: "repeat(5, minmax(0, 1fr))",
-    gap: "1",
+    gap: "0.5",
     listStyle: "none",
     padding: "0",
     margin: "0",
@@ -32,13 +32,15 @@ export const mobileBottomBarList = cva({
 
 export const mobileBottomBarLink = cva({
   base: {
+    position: "relative",
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
     justifyContent: "center",
     gap: "0.5",
     minH: "12",
-    px: "1",
+    // The whole slot is the label's width: at 375 a slot is about 68px (R2-2, label fit).
+    px: "0.5",
     borderRadius: "full",
     color: "text.secondary",
     textStyle: "label.sm",
@@ -57,6 +59,14 @@ export const mobileBottomBarLink = cva({
       outlineOffset: "-2px",
     },
     '&[aria-current="page"]': { backgroundColor: "primary.subtle", color: "primary" },
+    // A third child (the sandbox's lock icon after the label) sits beside the item icon as a
+    // badge, not in a row under the label, so every label shares one baseline (RESCORE B7).
+    "& > :nth-child(3)": {
+      position: "absolute",
+      insetBlockStart: "1",
+      insetInlineStart: "calc(50% + 0.5rem)",
+      color: "text.muted",
+    },
   },
 });
 

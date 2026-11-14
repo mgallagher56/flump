@@ -103,3 +103,17 @@ export const Phone: Story = {
     await expect(document.documentElement.scrollWidth).toBeLessThanOrEqual(window.innerWidth);
   },
 };
+
+/** UX extra C: the hero explains how it is worked out in an InfoTip beside the label. */
+export const WithExplain: Story = {
+  args: { explain: "What you own minus your debts, from your saved balances." },
+  globals: { theme: "light" },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(canvas.getByRole("button", { name: /^About / }));
+    await expect(
+      within(document.body).getByText("What you own minus your debts, from your saved balances."),
+    ).toBeVisible();
+  },
+};
+export const WithExplainDark: Story = { ...WithExplain, globals: { theme: "dark" } };

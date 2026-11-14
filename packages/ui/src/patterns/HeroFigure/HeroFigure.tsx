@@ -2,6 +2,7 @@ import { ArrowDown, ArrowUp, type LucideIcon, Minus } from "lucide-react";
 import { type FC, isValidElement, type ReactNode, useId } from "react";
 import { cx } from "../../../styled-system/css";
 import { Icon } from "../../primitives/Icon/Icon";
+import { InfoTip } from "../../primitives/InfoTip/InfoTip";
 import type { KpiDelta, KpiDeltaDirection } from "../../primitives/KpiCard/KpiCard";
 import { formatMoney, type MoneyProps } from "../../primitives/Money/Money";
 import { VisuallyHidden } from "../../primitives/VisuallyHidden/VisuallyHidden";
@@ -28,6 +29,11 @@ interface HeroFigureBaseProps {
    * drawn and a plain block with "Not set" and the prompt shows instead (E16 P2.3, P3).
    */
   value?: number | ReactNode;
+  /**
+   * How this figure is worked out (UX extra C): one or two plain sentences naming its inputs,
+   * source and assumptions. Shown as an `InfoTip` beside the label, titled with the label.
+   */
+  explain?: ReactNode;
   /** Formatting for a numeric `value`. */
   valueFormat?: Pick<MoneyProps, "compact" | "currency" | "fractionDigits" | "signDisplay">;
   /** Replaces "Not set" when the value is unknown. */
@@ -91,6 +97,7 @@ export const HeroFigure: FC<HeroFigureProps> = ({
   label,
   value,
   valueFormat,
+  explain,
   delta,
   subline,
   notSetLabel = "Not set",
@@ -139,9 +146,12 @@ export const HeroFigure: FC<HeroFigureProps> = ({
     >
       <span aria-hidden="true" className={slots.shape} data-decorative="true" />
       <div className={slots.content}>
-        <p className={slots.label} id={labelId}>
-          {label}
-        </p>
+        <div className={slots.labelRow}>
+          <p className={slots.label} id={labelId}>
+            {label}
+          </p>
+          {explain ? <InfoTip term={label}>{explain}</InfoTip> : null}
+        </div>
         {isValidElement(value) ? (
           <div className={slots.value}>{value}</div>
         ) : (

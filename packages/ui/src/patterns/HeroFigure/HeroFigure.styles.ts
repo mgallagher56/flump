@@ -10,6 +10,7 @@ export const heroFigure = sva({
     "root",
     "shape",
     "content",
+    "labelRow",
     "label",
     "value",
     "delta",
@@ -38,11 +39,14 @@ export const heroFigure = sva({
       insetBlockStart: "-6rem",
       borderRadius: "full",
       // A graphic-only fill, so `chart.primary`, not `primary.solid` (a fill behind primary.foreground
-      // only). Light: the same teal as before. Dark: the lighter chart teal at 18% over the hero keeps
-      // text.onContrast at about 6.4:1 where they overlap (8.6:1 on the bare hero), above 4.5:1.
+      // only). Light: the same teal at 18%. Dark: the lighter chart teal is louder on the dark hero,
+      // so it drops to 10% (R2-2), which keeps text.onContrast above 7:1 where they overlap. Both
+      // dark conditions: component styles do not inherit the JS-off dark mode from tokens (D30).
       backgroundColor: "chart.primary",
-      opacity: 0.18,
+      opacity: { base: "0.18", _dark: "0.1", _systemDark: "0.1" },
       pointerEvents: "none",
+      // Forced colours strip fills, so the disc would show as a solid system-colour block.
+      _highContrast: { display: "none" },
     },
     content: {
       display: "flex",
@@ -50,6 +54,7 @@ export const heroFigure = sva({
       gap: "1",
       minWidth: "0",
     },
+    labelRow: { display: "flex", alignItems: "center", gap: "1", minWidth: "0" },
     label: {
       textStyle: "label.md",
       margin: "0",
@@ -101,8 +106,23 @@ export const heroFigure = sva({
           color: "text.onContrast",
           // border.focusRing is under 3:1 on the light hero, so descendants use the text colour.
           "& :focus-visible": { outlineColor: "text.onContrast" },
+          // Forced colours (Windows contrast themes) replace the hero fill with the system canvas,
+          // and cream text on it was the gate's contrast finding. Use the system pair and keep a
+          // real border so the block still reads as one block (UX A12).
+          _highContrast: {
+            backgroundColor: "Canvas",
+            borderColor: "CanvasText",
+            color: "CanvasText",
+            "& *": { color: "CanvasText" },
+            "& :focus-visible": { outlineColor: "Highlight" },
+          },
         },
         label: { color: "text.onContrast" },
+        // The InfoTip trigger defaults to text.muted, which fails on surface.hero. The extra type
+        // and attribute outrank the trigger's doubled class (open state keeps its own colours).
+        labelRow: {
+          "& button[aria-haspopup]:not([data-state='open'])": { color: "text.onContrast" },
+        },
         value: { color: "text.onContrast" },
         delta: { color: "text.onContrast" },
         subline: { color: "text.onContrast" },

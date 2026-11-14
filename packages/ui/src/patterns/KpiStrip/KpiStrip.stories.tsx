@@ -50,6 +50,53 @@ export const FourColumnsDark: Story = {
   play: fourPlay,
 };
 
+/**
+ * R2-2: a money value with a unit, a date, a plain number and a percentage share one value size,
+ * and the cards stay level although only one has a caption.
+ */
+const MixedUnits = () => (
+  <KpiStrip columns={4}>
+    <KpiCard label="Monthly payment" value={305} valueFormat={{ fractionDigits: 0 }} />
+    <KpiCard label="Debt-free date" value="December 2029" />
+    <KpiCard label="Debts" value="3" />
+    <KpiCard label="Interest rate" subtext="Average across your debts" value="19.9%" />
+  </KpiStrip>
+);
+
+const mixedPlay: Story["play"] = async ({ canvasElement }) => {
+  const values = [...canvasElement.querySelectorAll("[data-kpi-value]")];
+  await expect(values).toHaveLength(4);
+  const sizes = new Set(values.map((v) => getComputedStyle(v).fontSize));
+  await expect(sizes.size).toBe(1);
+  const heights = new Set(
+    [...canvasElement.querySelectorAll("[data-kpi-value]")].map(
+      (v) => (v.closest("[data-density] > *") as HTMLElement | null)?.offsetHeight,
+    ),
+  );
+  await expect(heights.size).toBe(1);
+};
+
+export const MixedUnitStrip: Story = {
+  render: () => <MixedUnits />,
+  globals: { theme: "light" },
+  play: mixedPlay,
+};
+
+export const MixedUnitStripDark: Story = {
+  render: () => <MixedUnits />,
+  globals: { theme: "dark" },
+  play: mixedPlay,
+};
+
+export const MixedUnitStripPhone: Story = {
+  render: () => (
+    <div className={phoneWidth}>
+      <MixedUnits />
+    </div>
+  ),
+  globals: { theme: "light" },
+};
+
 /** Three cards is the default (E16 P1.5): no `columns` prop needed. */
 export const ThreeColumns: Story = {
   render: () => (

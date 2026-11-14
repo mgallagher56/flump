@@ -2,6 +2,7 @@ import { elevationShadows } from "./elevation.js";
 import { densityRadii, densitySizes, densitySpacing, pageSpacing } from "./layout.js";
 
 export * from "./breakpoints.js";
+export * from "./colorScheme.js";
 export * from "./elevation.js";
 export * from "./layout.js";
 export * from "./motion.js";
@@ -228,7 +229,7 @@ export const semanticTokens = {
       // and muted clear 4.5:1 on each, and each is >= 2 deltaE76 from every other surface (tests).
       tint: {
         teal: { value: { base: "#dcede6", _dark: "#1f322d" } },
-        apricot: { value: { base: "#fae5cc", _dark: "#36291b" } },
+        apricot: { value: { base: "#fae5cc", _dark: "#2e261c" } },
         sage: { value: { base: "#e5edda", _dark: "#272f22" } },
       },
     },

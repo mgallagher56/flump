@@ -52,7 +52,9 @@ export const progressFillRecipe = cva({
     height: "100%",
     width: "var(--progress-value, 0%)",
     borderRadius: "full",
-    transition: "width 0.3s ease-out",
+    transitionProperty: "width",
+    transitionDuration: "slow",
+    transitionTimingFunction: "enter",
     _motionReduce: { transition: "none" },
   },
   variants: {

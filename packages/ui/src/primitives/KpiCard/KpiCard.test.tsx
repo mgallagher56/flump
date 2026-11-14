@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { deltaTone, KpiCard } from "./KpiCard";
 
@@ -161,5 +161,38 @@ describe("KpiCard Primitive", () => {
       <KpiCard label="Pot" value={97800} valueFormat={{ compact: true }} />,
     );
     expect(container.textContent).toContain("£97.8k");
+  });
+});
+
+describe("KpiCard value size (R2-2)", () => {
+  it("uses one value class for a number, a date string and a node", () => {
+    const { container } = render(
+      <>
+        <KpiCard label="Payment" value={305} />
+        <KpiCard label="Date" value="December 2029" />
+        <KpiCard label="Count" value={<span>3</span>} />
+      </>,
+    );
+    const values = [...container.querySelectorAll("[data-kpi-value]")];
+    expect(values).toHaveLength(3);
+    expect(new Set(values.map((v) => v.className)).size).toBe(1);
+    expect(values[0]?.className).toContain("textStyle_numeric.kpi");
+  });
+
+  it("lets a long value wrap rather than overflow", () => {
+    const { container } = render(<KpiCard label="Date" value="December 2029" />);
+    expect(container.querySelector("[data-kpi-value]")?.className).toContain("ov-wrap_anywhere");
+  });
+
+  it("explains a computed figure in an InfoTip named by the label", () => {
+    render(
+      <KpiCard
+        explain="Your saved cash divided by what you spend each month."
+        label="Months of cover"
+        value="7 months"
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "About Months of cover" }));
+    expect(screen.getByText("Your saved cash divided by what you spend each month.")).toBeDefined();
   });
 });

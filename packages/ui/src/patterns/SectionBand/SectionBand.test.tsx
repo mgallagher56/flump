@@ -1,22 +1,43 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import { SectionBand } from "./SectionBand";
+import { SectionBand, type SectionBandTone } from "./SectionBand";
 
-describe("SectionBand Pattern", () => {
-  it("renders title, subtitle, and children", () => {
+describe("SectionBand", () => {
+  it("labels a marketing band with its h2 and marks its tone", () => {
     render(
-      <SectionBand
-        indexBadge="01"
-        subtitle="Designed for British personal finance"
-        title="Institutional Financial Planning"
-      >
-        <div>Band content body</div>
+      <SectionBand id="example" subtitle="One line." title="A section" tone="sage">
+        <p>Body</p>
       </SectionBand>,
     );
+    const section = screen.getByRole("region", { name: "A section" });
+    expect(section.getAttribute("id")).toBe("example");
+    expect(section.getAttribute("data-tone-band")).toBe("sage");
+    expect(screen.getByRole("heading", { level: 2, name: "A section" })).toBeDefined();
+    expect(screen.getByText("One line.")).toBeDefined();
+    expect(screen.getByText("Body")).toBeDefined();
+  });
 
-    expect(screen.getByText("Institutional Financial Planning")).toBeDefined();
-    expect(screen.getByText("01")).toBeDefined();
-    expect(screen.getByText("Band content body")).toBeDefined();
+  it.each<SectionBandTone>(["canvas", "subtle", "sage", "apricot"])(
+    "renders the %s tone",
+    (tone) => {
+      render(
+        <SectionBand id={`band-${tone}`} title={`Band ${tone}`} tone={tone}>
+          <p>Body</p>
+        </SectionBand>,
+      );
+      expect(
+        screen.getByRole("region", { name: `Band ${tone}` }).getAttribute("data-tone-band"),
+      ).toBe(tone);
+    },
+  );
+
+  it("uses a heading inside the children as the label when there is no title", () => {
+    render(
+      <SectionBand id="plain" labelledBy="inner">
+        <h2 id="inner">Inner heading</h2>
+      </SectionBand>,
+    );
+    expect(screen.getByRole("region", { name: "Inner heading" })).toBeDefined();
   });
 
   it("app variant renders a left-aligned labelled section with a muted description", () => {
@@ -30,24 +51,9 @@ describe("SectionBand Pattern", () => {
         <div>Body</div>
       </SectionBand>,
     );
-    expect(screen.getByRole("region", { name: "Where you stand" })).toBeDefined();
+    const section = screen.getByRole("region", { name: "Where you stand" });
+    expect(section.hasAttribute("data-tone-band")).toBe(false);
     expect(screen.getByRole("heading", { level: 2, name: "Where you stand" })).toBeDefined();
     expect(screen.getByText("Your figures this month.")).toBeDefined();
-    expect(screen.getByText("Body")).toBeDefined();
-  });
-
-  it("defaults to the marketing variant and ignores index badge in the app variant", () => {
-    const { rerender } = render(
-      <SectionBand indexBadge="01" title="Plan">
-        <div>Body</div>
-      </SectionBand>,
-    );
-    expect(screen.getByText("01")).toBeDefined();
-    rerender(
-      <SectionBand indexBadge="01" title="Plan" variant="app">
-        <div>Body</div>
-      </SectionBand>,
-    );
-    expect(screen.queryByText("01")).toBeNull();
   });
 });

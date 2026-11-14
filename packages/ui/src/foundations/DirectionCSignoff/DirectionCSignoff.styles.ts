@@ -146,7 +146,7 @@ export const chartBand = css({ fill: "chart.band" });
 
 export const chartAxisText = css({
   fill: "text.muted",
-  fontSize: "12px",
+  fontSize: "xs",
   fontVariantNumeric: "tabular-nums",
 });
 

@@ -44,6 +44,18 @@ declare const process: { env: { NODE_ENV?: string } };
 /** E16 P5: in-page view switching shows at most this many tabs. */
 export const TABS_MAX_ITEMS = 4;
 
+/**
+ * Radix moves focus to a tab by script when it is clicked, and browsers then match
+ * `:focus-visible`, so a mouse click drew the keyboard ring (RESCORE 3.8). A tab focused by a
+ * pointer carries `data-pointer-focus` until a key is pressed on it or it loses focus; the trigger
+ * style and the apps' global ring skip it. Keyboard focus still shows the ring.
+ */
+const POINTER_FOCUS = "data-pointer-focus";
+const markPointerFocus = (event: { currentTarget: HTMLElement }) =>
+  event.currentTarget.setAttribute(POINTER_FOCUS, "");
+const clearPointerFocus = (event: { currentTarget: HTMLElement }) =>
+  event.currentTarget.removeAttribute(POINTER_FOCUS);
+
 export type TabsSize = "sm" | "md";
 
 export interface TabItem {
@@ -215,6 +227,9 @@ const TabsRoot: FC<TabsProps> = ({
                 className={cx(tabTrigger({ size }))}
                 disabled={item.disabled}
                 value={item.value}
+                onBlur={clearPointerFocus}
+                onKeyDown={clearPointerFocus}
+                onPointerDown={markPointerFocus}
                 // Radix always sets aria-controls; strip it when no panel is mounted for this tab.
                 {...(mounted.has(item.value) ? {} : { "aria-controls": undefined })}
               >

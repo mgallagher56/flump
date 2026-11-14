@@ -2,6 +2,7 @@ import { ArrowDown, ArrowUp, type LucideIcon, Minus } from "lucide-react";
 import type { FC, ReactNode } from "react";
 import { cx } from "../../../styled-system/css";
 import { Icon } from "../Icon/Icon";
+import { InfoTip } from "../InfoTip/InfoTip";
 import { Money, type MoneyProps } from "../Money/Money";
 import { Skeleton } from "../Skeleton/Skeleton";
 import { StatusBadge, type StatusBadgeVariants } from "../StatusBadge/StatusBadge";
@@ -65,6 +66,12 @@ export interface KpiCardProps {
   subtext?: ReactNode;
   /** A small control beside the label (for example a menu). Not the "Not set" action. */
   action?: ReactNode;
+  /**
+   * How this figure is worked out (UX extra C): one or two plain sentences naming its inputs,
+   * source and assumptions. Shown as an `InfoTip` beside the label, titled with the label. Use it
+   * on computed figures only; a balance the user typed in needs none.
+   */
+  explain?: ReactNode;
   /** Shows a skeleton in place of the value and marks the card busy. */
   loading?: boolean;
   /** Label used when `value` is null or undefined. */
@@ -119,18 +126,22 @@ const renderValue = (
   value: ReactNode,
   valueFormat: KpiCardProps["valueFormat"],
   cardTone: KpiCardTone,
-) =>
-  typeof value === "number" ? (
-    <Money
-      {...valueFormat}
-      className={kpiMoney()}
-      size="kpi"
-      tone={cardTone === "hero" ? "onContrast" : "default"}
-      value={value}
-    />
-  ) : (
-    <div className={kpiHeroValue({ tone: cardTone })}>{value}</div>
-  );
+) => (
+  // One wrapper and one text style for every kind of value, so a strip never mixes sizes (R2-2).
+  <div className={kpiHeroValue({ tone: cardTone })} data-kpi-value="">
+    {typeof value === "number" ? (
+      <Money
+        {...valueFormat}
+        className={kpiMoney()}
+        size="kpi"
+        tone={cardTone === "hero" ? "onContrast" : "default"}
+        value={value}
+      />
+    ) : (
+      value
+    )}
+  </div>
+);
 
 export const KpiCard: FC<KpiCardProps> = ({
   label,
@@ -141,6 +152,7 @@ export const KpiCard: FC<KpiCardProps> = ({
   delta,
   subtext,
   action,
+  explain,
   loading = false,
   notSetLabel = "Not set",
   emptyAction,
@@ -160,7 +172,15 @@ export const KpiCard: FC<KpiCardProps> = ({
       data-unset={isKpiCardUnset({ value, loading, unset }) || undefined}
     >
       <div className={kpiEyebrow()}>
-        <span className={kpiLabel({ tone: cardTone })}>{label}</span>
+        <span className={kpiLabel({ tone: cardTone })}>
+          {label}
+          {explain ? (
+            <>
+              {" "}
+              <InfoTip term={label}>{explain}</InfoTip>
+            </>
+          ) : null}
+        </span>
         {action && <div>{action}</div>}
       </div>
 

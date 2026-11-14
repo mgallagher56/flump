@@ -8,6 +8,9 @@ export const durations = {
   fast: { value: "120ms" },
   base: { value: "200ms" },
   slow: { value: "320ms" },
+  // One turn of a continuous loop (the pending spinner in Button). Under reduced motion it slows
+  // further rather than stopping, because it says "loading".
+  loop: { value: "800ms" },
 } as const;
 
 export const easings = {

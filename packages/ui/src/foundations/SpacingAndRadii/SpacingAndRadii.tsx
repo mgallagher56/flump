@@ -157,7 +157,7 @@ export const SpacingAndRadii: FC = () => {
                 style={{ width: val.value, height: "32px", minWidth: "4px" }}
               />
               <span className={css({ fontWeight: "bold", fontSize: "xs" })}>space.{step}</span>
-              <span className={css({ fontFamily: "mono", fontSize: "11px", color: "text.muted" })}>
+              <span className={css({ fontFamily: "mono", fontSize: "xs", color: "text.muted" })}>
                 {val.value}
               </span>
             </div>
@@ -257,7 +257,7 @@ export const SpacingAndRadii: FC = () => {
                 style={{ borderRadius: val.value }}
               />
               <span className={css({ fontWeight: "bold", fontSize: "xs" })}>radii.{step}</span>
-              <span className={css({ fontFamily: "mono", fontSize: "11px", color: "text.muted" })}>
+              <span className={css({ fontFamily: "mono", fontSize: "xs", color: "text.muted" })}>
                 {val.value}
               </span>
             </div>

@@ -146,7 +146,7 @@ export const buttonSpinnerRecipe = cva({
     pointerEvents: "none",
     _motionSafe: {
       animationName: "spin",
-      animationDuration: "0.8s",
+      animationDuration: "loop",
       animationTimingFunction: "linear",
       animationIterationCount: "infinite",
     },

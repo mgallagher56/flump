@@ -5,9 +5,11 @@ import {
   useContext,
   useEffect,
   useId,
+  useMemo,
   useRef,
 } from "react";
 import { cx } from "../../../styled-system/css";
+import { CHART_AXIS_DEFAULTS } from "../../charts/axisDefaults";
 import { CHART_RULES } from "../../charts/chartRules";
 import { CollapsibleDrawer } from "../../primitives/CollapsibleDrawer/CollapsibleDrawer";
 import { visuallyHiddenRecipe } from "../../primitives/VisuallyHidden/VisuallyHidden.styles";
@@ -61,23 +63,37 @@ export interface ChartAnnotation {
 
 /** Chart conventions a `ChartFigure` hands to the chart drawn inside it (read with `useChartFigure`). */
 export interface ChartFigureConfig {
-  /** Label each series at its line end instead of relying on a legend (up to 3 series). */
+  /**
+   * Label each series at its line end instead of relying on a legend (up to 3 series). On by
+   * default; off when a `legend` is passed or `seriesCount` is above 3, unless set explicitly.
+   */
   directLabels: boolean;
   /** The single annotation to draw, if any. */
   annotation?: ChartAnnotation;
   /** Most x-axis ticks to draw. Pass to `pickTicks` or the chart library's tick count. */
   maxTicks: number;
+  /**
+   * Offset in px from a line end (or the annotated point) to its label, so the label never sits
+   * on top of the line. Use as the label's `dx` / `dy`.
+   */
+  labelOffset: { dx: number; dy: number };
+  /** Space in px to keep right of the plot, so the last tick and end labels are not clipped. */
+  plotPaddingRight: number;
 }
 
 export const CHART_FIGURE_DEFAULTS = {
   maxTicks: CHART_RULES.maxXTicks,
   minPoints: CHART_RULES.minPoints,
   directLabelMaxSeries: CHART_RULES.directLabelMaxSeries,
+  labelOffset: CHART_AXIS_DEFAULTS.directLabelOffset,
+  plotPaddingRight: CHART_AXIS_DEFAULTS.plotPaddingRight,
 } as const;
 
 const ChartFigureContext = createContext<ChartFigureConfig>({
   directLabels: false,
   maxTicks: CHART_FIGURE_DEFAULTS.maxTicks,
+  labelOffset: CHART_FIGURE_DEFAULTS.labelOffset,
+  plotPaddingRight: CHART_FIGURE_DEFAULTS.plotPaddingRight,
 });
 
 /**
@@ -85,6 +101,24 @@ const ChartFigureContext = createContext<ChartFigureConfig>({
  * `ChartFigure` it returns the defaults (no direct labels, no annotation, 6 ticks).
  */
 export const useChartFigure = (): ChartFigureConfig => useContext(ChartFigureContext);
+
+/**
+ * Whether series are named by direct labels (R2-2): an explicit `directLabels` wins; otherwise on,
+ * unless a legend was asked for or there are more series than direct labels can fit.
+ */
+export const resolveDirectLabels = ({
+  directLabels,
+  hasLegend,
+  seriesCount,
+}: {
+  directLabels?: boolean;
+  hasLegend: boolean;
+  seriesCount?: number;
+}): boolean => {
+  if (directLabels !== undefined) return directLabels;
+  if (hasLegend) return false;
+  return seriesCount === undefined || seriesCount <= CHART_FIGURE_DEFAULTS.directLabelMaxSeries;
+};
 
 /**
  * Pick at most `maxTicks` evenly spaced values, always keeping the first and last. Returns a copy
@@ -133,8 +167,13 @@ export interface ChartFigureProps {
   legend?: ReactNode;
   /** Optional accessible data table, revealed by a quiet "Show data" text button under the chart. */
   dataTable?: ReactNode;
-  /** Label up to 3 series at their line ends (P10.2). Read by the chart through `useChartFigure`. */
+  /**
+   * Label up to 3 series at their line ends (P10.2). Read by the chart through `useChartFigure`.
+   * Defaults to on, unless `legend` is passed or `seriesCount` is above 3 (R2-2).
+   */
   directLabels?: boolean;
+  /** Number of series drawn. Above 3, direct labels default to off and a `legend` names them. */
+  seriesCount?: number;
   /** At most one annotation (P10.3). Read by the chart through `useChartFigure`. */
   annotation?: ChartAnnotation;
   /** Most x-axis ticks (P10.4). Defaults to 6. Read by the chart through `useChartFigure`. */
@@ -163,7 +202,8 @@ export const ChartFigure: FC<ChartFigureProps> = ({
   notice,
   legend,
   dataTable,
-  directLabels = false,
+  directLabels,
+  seriesCount,
   annotation,
   maxTicks = CHART_FIGURE_DEFAULTS.maxTicks,
   pointCount,
@@ -181,6 +221,17 @@ export const ChartFigure: FC<ChartFigureProps> = ({
   // With too few points the summary is the content, so it is always shown.
   const summaryVisible = showSummary || tooFewPoints;
   const hidden = visuallyHiddenRecipe({ focusable: false });
+  const labelled = resolveDirectLabels({ directLabels, hasLegend: Boolean(legend), seriesCount });
+  const config = useMemo<ChartFigureConfig>(
+    () => ({
+      directLabels: labelled,
+      annotation,
+      maxTicks,
+      labelOffset: CHART_FIGURE_DEFAULTS.labelOffset,
+      plotPaddingRight: CHART_FIGURE_DEFAULTS.plotPaddingRight,
+    }),
+    [labelled, annotation, maxTicks],
+  );
 
   return (
     <figure
@@ -203,7 +254,7 @@ export const ChartFigure: FC<ChartFigureProps> = ({
         <p className={chartFigurePrompt()}>{notEnoughDataText}</p>
       ) : (
         <>
-          <ChartFigureContext.Provider value={{ directLabels, annotation, maxTicks }}>
+          <ChartFigureContext.Provider value={config}>
             <div aria-hidden="true" ref={chartRef}>
               {children}
             </div>

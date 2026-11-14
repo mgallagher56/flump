@@ -2,10 +2,12 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { visuallyHiddenRecipe } from "../../primitives/VisuallyHidden/VisuallyHidden.styles";
 import {
+  CHART_FIGURE_DEFAULTS,
   ChartFigure,
   type ChartFigureConfig,
   NOT_ENOUGH_DATA_TEXT,
   pickTicks,
+  resolveDirectLabels,
   useChartFigure,
 } from "./ChartFigure";
 
@@ -145,13 +147,77 @@ describe("ChartFigure Pattern", () => {
       directLabels: true,
       annotation: { x: 2030, label: "Paid off, Mar 2030" },
       maxTicks: 4,
+      labelOffset: CHART_FIGURE_DEFAULTS.labelOffset,
+      plotPaddingRight: CHART_FIGURE_DEFAULTS.plotPaddingRight,
     });
   });
 
   it("useChartFigure outside a figure returns the defaults", () => {
     seenConfig = undefined;
     render(<Probe />);
-    expect(seenConfig).toEqual({ directLabels: false, maxTicks: 6 });
+    expect(seenConfig).toEqual({
+      directLabels: false,
+      maxTicks: 6,
+      labelOffset: CHART_FIGURE_DEFAULTS.labelOffset,
+      plotPaddingRight: CHART_FIGURE_DEFAULTS.plotPaddingRight,
+    });
+  });
+
+  it("names series with direct labels by default, offset off the line end (R2-2)", () => {
+    seenConfig = undefined;
+    render(
+      <ChartFigure summary={SUMMARY} title="Debt">
+        <Probe />
+      </ChartFigure>,
+    );
+    expect(seenConfig?.directLabels).toBe(true);
+    expect(seenConfig?.maxTicks).toBe(6);
+    expect(seenConfig?.labelOffset.dx).toBeGreaterThan(0);
+    expect(seenConfig?.labelOffset.dy).not.toBe(0);
+    expect(seenConfig?.plotPaddingRight).toBeGreaterThan(0);
+  });
+
+  it("uses a legend instead of direct labels only when asked or when series do not fit", () => {
+    expect(resolveDirectLabels({ hasLegend: false })).toBe(true);
+    expect(resolveDirectLabels({ hasLegend: true })).toBe(false);
+    expect(resolveDirectLabels({ hasLegend: false, seriesCount: 3 })).toBe(true);
+    expect(resolveDirectLabels({ hasLegend: false, seriesCount: 4 })).toBe(false);
+    expect(resolveDirectLabels({ directLabels: true, hasLegend: true })).toBe(true);
+    expect(resolveDirectLabels({ directLabels: false, hasLegend: false })).toBe(false);
+  });
+
+  it("hands the annotation to the chart", () => {
+    seenConfig = undefined;
+    render(
+      <ChartFigure
+        annotation={{ x: "2029-12", label: "Paid off, Dec 2029" }}
+        summary={SUMMARY}
+        title="Debt"
+      >
+        <Probe />
+      </ChartFigure>,
+    );
+    expect(seenConfig?.annotation).toEqual({ x: "2029-12", label: "Paid off, Dec 2029" });
+  });
+
+  it("keeps at most 6 x ticks by default, whatever the data length", () => {
+    for (const length of [2, 6, 7, 12, 48, 361]) {
+      const months = Array.from({ length }, (_, i) => i);
+      const ticks = pickTicks(months);
+      expect(ticks.length).toBeLessThanOrEqual(6);
+      expect(ticks.at(-1)).toBe(length - 1);
+    }
+  });
+
+  it("titles use heading.sm with normal letter-spacing so words keep their gaps", () => {
+    render(
+      <ChartFigure summary={SUMMARY} title="Your pension pot">
+        <svg />
+      </ChartFigure>,
+    );
+    const title = screen.getByRole("heading", { name: "Your pension pot" });
+    expect(title.className).toContain("textStyle_heading.sm");
+    expect(title.className).toContain("ls_normal");
   });
 
   it("pickTicks keeps the ends and at most maxTicks values", () => {

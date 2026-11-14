@@ -246,6 +246,7 @@ describe("E15 motion", () => {
       fast: "120ms",
       base: "200ms",
       slow: "320ms",
+      loop: "800ms",
     });
     for (const e of Object.values(easings)) expect(e.value).toMatch(/^cubic-bezier\(/);
     expect(Object.keys(easings).sort()).toEqual(["enter", "exit", "standard"]);

@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { expect, within } from "@storybook/test";
+import { expect, userEvent, within } from "@storybook/test";
 import { css } from "../../../styled-system/css";
 import { Money } from "../Money/Money";
 import { KpiCard } from "./KpiCard";
@@ -274,3 +274,49 @@ export const BadgeKeepsBaseline: Story = {
     await expect(Math.abs(a.bottom - b.bottom)).toBeLessThanOrEqual(1);
   },
 };
+
+const sideBySide = css({
+  display: "grid",
+  gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+  gap: "4",
+});
+
+/** R2-2: a money value, a date and a plain number render at the one KPI value size. */
+const MixedValues = () => (
+  <div className={sideBySide}>
+    <KpiCard label="Monthly payment" value={305} valueFormat={{ fractionDigits: 0 }} />
+    <KpiCard label="Debt-free date" value="December 2029" />
+    <KpiCard label="Debts" subtext="Cards and loans" value="3" />
+  </div>
+);
+
+const mixedValuesPlay: Story["play"] = async ({ canvasElement }) => {
+  const values = [...canvasElement.querySelectorAll("[data-kpi-value]")];
+  await expect(new Set(values.map((v) => getComputedStyle(v).fontSize)).size).toBe(1);
+};
+
+export const MixedValueKinds: Story = {
+  render: () => <MixedValues />,
+  globals: { theme: "light" },
+  play: mixedValuesPlay,
+};
+
+export const MixedValueKindsDark: Story = {
+  render: () => <MixedValues />,
+  globals: { theme: "dark" },
+  play: mixedValuesPlay,
+};
+
+/** UX extra C: a computed figure explains itself in an InfoTip beside the label. */
+export const WithExplain: Story = {
+  args: { explain: "Your saved cash divided by what you spend each month." },
+  globals: { theme: "light" },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(canvas.getByRole("button", { name: /^About / }));
+    await expect(
+      within(document.body).getByText("Your saved cash divided by what you spend each month."),
+    ).toBeVisible();
+  },
+};
+export const WithExplainDark: Story = { ...WithExplain, globals: { theme: "dark" } };

@@ -14,7 +14,10 @@ export const kpiCardContainer = cva({
     // Top-aligned so the value sits at the same height in every card of a strip (known #15).
     justifyContent: "flex-start",
     gap: "density.gap",
+    // Fills the strip row (the grid stretches its items), so every card in a strip is as tall as
+    // the tallest one and the caption is pinned to the bottom (R2-2).
     height: "100%",
+    alignSelf: "stretch",
     minWidth: 0,
     boxShadow: "card",
   },
@@ -68,6 +71,10 @@ export const kpiValueRow = cva({
   },
 });
 
+/**
+ * The one value style for every KPI, whatever the value is (a number through `Money`, a date, a
+ * string or any node), so a strip never mixes sizes (R2-2). Long values wrap; they never grow.
+ */
 export const kpiHeroValue = cva({
   base: {
     textStyle: "numeric.kpi",
@@ -75,7 +82,11 @@ export const kpiHeroValue = cva({
     color: "text.primary",
     margin: "0",
     minWidth: 0,
+    maxWidth: "100%",
     overflowWrap: "anywhere",
+    // `Money` keeps its digits on one line elsewhere; in a KPI a long figure wraps instead of
+    // overflowing the card. The child selector outranks Money's own `nowrap`.
+    "& > span": { whiteSpace: "normal", maxWidth: "100%" },
   },
   variants: {
     tone: {
@@ -92,6 +103,8 @@ export const kpiSubtext = cva({
     color: "text.muted",
     margin: "0",
     pt: "1",
+    // Pinned to the bottom of the card, so captions line up across a strip of uneven content.
+    mt: "auto",
   },
   variants: {
     tone: {
@@ -149,11 +162,17 @@ export const kpiDeltaContent = cva({
   },
 });
 
-/** The figure scales with the card so a long value stays on one line, even at 375px in a 2x2 strip. */
+/**
+ * A numeric value inside the KPI value slot. It takes its size from the slot (`numeric.kpi`), so
+ * a money value is the same size as a date or a word beside it (R2-2). It no longer scales with
+ * the card: a value too long for a narrow card wraps instead.
+ */
 export const kpiMoney = cva({
   base: {
     minWidth: 0,
-    // Digits never wrap: the size follows the card width (container query units), 16px to 32px.
-    fontSize: "clamp(1rem, 12cqi, 2rem)",
+    maxWidth: "100%",
+    textStyle: "numeric.kpi",
+    whiteSpace: "normal",
+    overflowWrap: "anywhere",
   },
 });
