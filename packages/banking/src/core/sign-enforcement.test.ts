@@ -3,6 +3,9 @@ import {
   enforceSignConvention,
   isAssetCategory,
   isLiabilityCategory,
+  isStoredNegativeAccountType,
+  normalizeStoredBalance,
+  STORED_NEGATIVE_ACCOUNT_TYPES,
   validateSignConvention,
 } from "./sign-enforcement.js";
 import type { NormalizedAccount } from "./types.js";
@@ -59,5 +62,46 @@ describe("banking core: sign-enforcement", () => {
     expect(enforced.netWorthImpactGbp).toBe(-3200);
     expect(enforced.principalOwedGbp).toBe(3200);
     expect(validateSignConvention(enforced)).toBe(true);
+  });
+});
+
+describe("normalizeStoredBalance (BE-05 stored-balance rule)", () => {
+  it("lists every stored-negative type, Student Loan included", () => {
+    expect([...STORED_NEGATIVE_ACCOUNT_TYPES]).toEqual([
+      "Mortgage",
+      "Credit Card",
+      "Loan",
+      "Overdraft",
+      "Student Loan",
+    ]);
+  });
+
+  it("stores a liability as minus its absolute value, whatever sign it arrives with", () => {
+    for (const type of STORED_NEGATIVE_ACCOUNT_TYPES) {
+      expect(normalizeStoredBalance(type, 500)).toBe(-500);
+      expect(normalizeStoredBalance(type, -500)).toBe(-500);
+      expect(normalizeStoredBalance(type, 0.01)).toBe(-0.01);
+      expect(isStoredNegativeAccountType(type)).toBe(true);
+    }
+  });
+
+  it("keeps any other type's sign, and never returns -0", () => {
+    for (const type of [
+      "Current",
+      "Saving",
+      "Investment",
+      "Pension",
+      "Property",
+      "Owed",
+      "",
+      "credit card",
+    ]) {
+      expect(normalizeStoredBalance(type, 250)).toBe(250);
+      expect(normalizeStoredBalance(type, -250)).toBe(-250);
+      expect(isStoredNegativeAccountType(type)).toBe(false);
+    }
+    expect(Object.is(normalizeStoredBalance("Credit Card", 0), 0)).toBe(true);
+    expect(Object.is(normalizeStoredBalance("Credit Card", -0), 0)).toBe(true);
+    expect(normalizeStoredBalance(null, 5)).toBe(5);
   });
 });

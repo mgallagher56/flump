@@ -13,7 +13,10 @@ export const Money = z
   .refine((v) => Math.abs(v) < 1e10, "must be below 10 billion")
   .refine(hasAtMostTwoDecimals, "at most 2 decimal places");
 
-/** Non-negative money (balances: liabilities are stored positive, sign comes from the type). */
+/**
+ * Non-negative money (contributions and other amounts that are never negative). Balances are
+ * signed `Money`: a liability is stored negative (BE-05 stored-balance rule).
+ */
 export const MoneyNonNegative = Money.refine((v) => v >= 0, "must not be negative");
 
 /** A percentage where 4.5 means 4.5% (never a fraction). Columns are numeric(5,2). */

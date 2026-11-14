@@ -1,4 +1,4 @@
-import { enforceSignConvention } from "../core/sign-enforcement.js";
+import { enforceSignConvention, normalizeStoredBalance } from "../core/sign-enforcement.js";
 import type { FlumpAccountCategory, NormalizedAccount } from "../core/types.js";
 import { encryptBankingToken, safeDecryptBankingToken } from "./crypto.js";
 import type { BankingProviderAdapter } from "./interface.js";
@@ -180,25 +180,14 @@ export class BankSyncOrchestrator {
   }
 
   /**
-   * Normalizes account balances to comply with the Flump Sign Convention Law:
-   * - Assets (Current, Saving, Investment) keep their real sign: an overdrawn current account
-   *   is negative and lowers net worth (E23 C-15).
-   * - Liabilities (Mortgage, Credit Card, Loan, Overdraft) have negative balance.
+   * Normalizes account balances to comply with the Flump Sign Convention Law (see
+   * `normalizeStoredBalance`, the one rule every write path uses).
    */
   static normalizeAccountBalance(
     accountType: "Current" | "Saving" | "Mortgage" | "Credit Card" | "Investment" | string,
     rawBalance: number,
   ): number {
-    const isLiability =
-      accountType === "Mortgage" ||
-      accountType === "Credit Card" ||
-      accountType === "Loan" ||
-      accountType === "Overdraft";
-
-    if (isLiability) {
-      return -Math.abs(rawBalance);
-    }
-    return rawBalance;
+    return normalizeStoredBalance(accountType, rawBalance);
   }
 
   /**

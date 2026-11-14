@@ -132,6 +132,25 @@ describe("accounts responses", () => {
     bad(AccountResponse, { ...account, details: [detail], accessToken: "x" });
   });
 
+  it("carries a liability's balance and history negative, a Student Loan included (BE-05)", () => {
+    const studentLoan = {
+      ...account,
+      id: "c3d4e5f6-a7b8-4c9d-8e0f-2a3b4c5d6e7f",
+      name: "Student loan",
+      type: "Student Loan",
+      balance: -42000,
+      studentLoanPlan: "PLAN_2",
+    };
+    ok(AccountResponse, {
+      ...studentLoan,
+      details: [{ ...detail, accountId: studentLoan.id, value: -41500 }],
+    });
+    ok(AccountListResponse, [
+      { ...mortgage, details: [] },
+      { ...studentLoan, details: [] },
+    ]);
+  });
+
   it("rejects a decimal column that arrives as a string (B-05)", () => {
     ok(AccountDto, mortgage);
     bad(AccountDto, { ...mortgage, balance: "-182500.75" });

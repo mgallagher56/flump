@@ -39,6 +39,50 @@ describe("AccountIntakeService (Deep Module)", () => {
     );
   });
 
+  describe("stored-balance sign rule (BE-05, audit H6)", () => {
+    it("creates a liability negative whatever sign it is sent with, and keeps an asset's sign", async () => {
+      const cases: Array<[string, number, number]> = [
+        ["Credit Card", 500, -500],
+        ["Credit Card", -500, -500],
+        ["Mortgage", 200000, -200000],
+        ["Loan", 1200, -1200],
+        ["Overdraft", 300, -300],
+        ["Student Loan", 42000, -42000],
+        ["Current", -150, -150],
+        ["Saving", 3000, 3000],
+      ];
+      for (const [type, sent, stored] of cases) {
+        mockAccountRepo.create.mockClear();
+        await service.createAccount("userA", { name: "A", type, balance: sent } as never);
+        expect(mockAccountRepo.create.mock.calls[0][0].balance, type).toBe(stored);
+      }
+    });
+
+    it("re-signs the balance and positive history when an update makes the account a liability", async () => {
+      mockAccountRepo.findOne.mockResolvedValueOnce({
+        id: "a1",
+        userId: "userA",
+        type: "Saving",
+        balance: 800,
+      });
+      const history = [
+        { id: 1, accountId: "a1", value: 700 },
+        { id: 2, accountId: "a1", value: -5 },
+      ];
+      mockAccountDetailRepo.find.mockResolvedValueOnce(history);
+      await service.updateAccount("userA", "a1", { type: "Credit Card" });
+      expect(mockAccountRepo.save.mock.calls[0][0]).toMatchObject({
+        type: "Credit Card",
+        balance: -800,
+      });
+      expect(mockAccountDetailRepo.save).toHaveBeenCalledWith([
+        { id: 1, accountId: "a1", value: -700 },
+      ]);
+      // A history re-sign is not a balance edit: no current-month row is written.
+      expect(mockAccountDetailRepo.upsert).not.toHaveBeenCalled();
+    });
+  });
+
   it("returns [] and never saves for a user with no accounts", async () => {
     mockAccountRepo.find.mockResolvedValueOnce([]);
 

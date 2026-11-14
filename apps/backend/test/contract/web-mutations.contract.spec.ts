@@ -6,6 +6,7 @@ import { DataSource } from "typeorm";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { AppModule } from "../../src/app.module";
 import { DEV_BYPASS_TOKEN } from "../../src/auth/dev-bypass.verifier";
+import { storedBalance } from "../../src/snapshots/stored-balance";
 import { assertSafeTestDatabase } from "../../src/testing/assertSafeTestDatabase";
 import { resolveDbTestMode } from "../../src/testing/dbTestMode";
 import { parseResponseViolation } from "../authz/support";
@@ -62,6 +63,12 @@ const AUTH = { Authorization: `Bearer ${DEV_BYPASS_TOKEN}` };
 
 const omit = <T extends object>(source: T, keys: readonly string[]) =>
   Object.fromEntries(Object.entries(source).filter(([k]) => !keys.includes(k)));
+
+/** A sent account body as the API stores it: liabilities negative (BE-05 sign rule). */
+const asStored = <T extends Record<string, unknown>>(body: T, type?: unknown): T =>
+  typeof body.balance === "number"
+    ? { ...body, balance: storedBalance(String(body.type ?? type), body.balance) }
+    : body;
 
 describe.skipIf(resolveDbTestMode(process.env) === "skip")(
   "web mutations contract (real Postgres)",
@@ -243,7 +250,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
         expect(accounts).toHaveLength(ONBOARDING_ACCOUNTS.length);
         for (const sent of ONBOARDING_ACCOUNTS) {
           const stored = accounts.find((a) => a.name === sent.name);
-          expect(stored, `account ${sent.name} stored`).toMatchObject(sent);
+          expect(stored, `account ${sent.name} stored`).toMatchObject(asStored(sent));
           expect(typeof stored?.balance).toBe("number");
         }
 
@@ -318,14 +325,14 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
 
           const stored = await get(`/accounts/${id}`);
           expect2xx(stored, `GET /accounts/${id}`);
-          expect(stored.body).toMatchObject(createBody);
+          expect(stored.body).toMatchObject(asStored(createBody));
           expect(typeof stored.body.balance).toBe("number");
           if ("interestRate" in createBody) expect(typeof stored.body.interestRate).toBe("number");
 
           const updateBody = ACCOUNT_UPDATE_PAYLOADS[page as keyof typeof ACCOUNT_UPDATE_PAYLOADS];
           expect2xx(await send("patch", `/accounts/${id}`, updateBody), `PATCH /accounts/${id}`);
           const updated = (await get(`/accounts/${id}`)).body;
-          expect(updated).toMatchObject(updateBody);
+          expect(updated).toMatchObject(asStored(updateBody, createBody.type));
           expect(typeof updated.balance).toBe("number");
 
           expect2xx(await send("delete", `/accounts/${id}`), `DELETE /accounts/${id}`);
@@ -341,7 +348,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
           "PATCH /accounts/:id (mortgage)",
         );
         const stored = (await get(`/accounts/${id}`)).body;
-        expect(stored).toMatchObject({ ...ONBOARDING_ACCOUNTS[2], interestRate: 3.99 });
+        expect(stored).toMatchObject({ ...asStored(ONBOARDING_ACCOUNTS[2]), interestRate: 3.99 });
       });
     });
 

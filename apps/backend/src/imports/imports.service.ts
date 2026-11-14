@@ -552,6 +552,21 @@ export class ImportsService {
         [batch.id, userId],
       );
       const stampedByKey = new Map(stamped.map((r) => [cellKey(r.account_id, r.year, r.month), r]));
+      // A prior value recorded before the BE-05 backfill can carry a liability's old positive
+      // sign: restore it through the same sign rule as every other write (audit H6).
+      const typeIds = [
+        ...new Set([
+          ...data.rows.map((r) => r.accountId),
+          ...data.balances.map((b) => b.accountId),
+        ]),
+      ];
+      const typeRows: Array<{ id: string; type: string }> = typeIds.length
+        ? await m.query(
+            `SELECT "id"::text AS "id", "type" FROM "accounts" WHERE "id" = ANY($1::uuid[]) AND "user_id" = $2`,
+            [typeIds, userId],
+          )
+        : [];
+      const typeById = new Map(typeRows.map((t) => [t.id, t.type]));
 
       let restored = 0;
       const removeIds: number[] = [];
@@ -570,7 +585,13 @@ export class ImportsService {
            SET "value" = $2, "as_of_date" = $3, "source" = $4, "import_batch_id" = $5,
                "updated_at" = now()
            WHERE "id" = $1`,
-          [cur.id, r.prior.value, r.prior.asOfDate, r.prior.source, r.prior.importBatchId],
+          [
+            cur.id,
+            storedBalance(typeById.get(r.accountId), Number(r.prior.value)),
+            r.prior.asOfDate,
+            r.prior.source,
+            r.prior.importBatchId,
+          ],
         );
         restored++;
       }
@@ -581,7 +602,7 @@ export class ImportsService {
         if (!undone.has(cellKey(b.accountId, b.year, b.month))) continue;
         await m.query(
           `UPDATE "accounts" SET "balance" = $3 WHERE "id" = $1 AND "user_id" = $2 AND "balance" = $4`,
-          [b.accountId, userId, b.prior, b.written],
+          [b.accountId, userId, storedBalance(typeById.get(b.accountId), b.prior), b.written],
         );
       }
       if (data.createdAccountIds.length > 0) {

@@ -2,6 +2,7 @@ import { In, type Repository } from "typeorm";
 import type { Account } from "../entities/account.entity";
 import type { AccountDetail } from "../entities/account-detail.entity";
 import { londonDate, londonYearMonth } from "./london-date";
+import { storedBalance } from "./stored-balance";
 
 /**
  * E30 D8: the first onboarding data is the first snapshot. Writes one `source=onboarding` row per
@@ -30,7 +31,8 @@ export async function writeOnboardingSnapshot(
         userId,
         year,
         month,
-        value: Number(a.balance),
+        // Already signed on write; the rule again keeps this path safe on its own (BE-05).
+        value: storedBalance(a.type, Number(a.balance)),
         asOfDate,
         source: "onboarding",
       }),
