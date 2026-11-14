@@ -40,7 +40,7 @@ Write to "you". Call ourselves "Flump" or "we". Use contractions where they soun
 **Tagline (owner ruling, 14 November 2026).** The tagline is "Finance without the fog". With the name it is written "Flump: finance without the fog".
 
 - Use the exact wording, in sentence case, with a colon after the name. Never a dash.
-- It goes only where the site states a tagline: the home page title and meta description, the Open Graph and Twitter titles, the footer brand line, the share image and the web manifest description. Marketing reads it from `TAGLINE` and `SITE_TAGLINE` in `apps/marketing/src/utils/site.ts`.
+- It goes only where the site states a tagline: the home page title and meta description, the Open Graph and Twitter titles, the footer brand line, and, once they exist, the share image and the web manifest description. Marketing reads it from `TAGLINE` and `SITE_TAGLINE` in `apps/marketing/src/utils/site.ts`.
 - It never replaces the home h1. The h1 stays the plain line that says what Flump does.
 - Do not scatter fog metaphors through body copy. The tagline is said where it is listed above and nowhere else.
 

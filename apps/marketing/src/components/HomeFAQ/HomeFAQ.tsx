@@ -24,11 +24,6 @@ export interface HomeFaqEntry {
  */
 export const HOME_FAQS: HomeFaqEntry[] = [
   {
-    id: "payments",
-    q: "Can Flump move my money or make payments?",
-    a: "No. Flump has no feature to make payments or move money.",
-  },
-  {
     id: "bank",
     q: "Do I have to connect my bank accounts?",
     a: "No. You type in your own figures. Rough totals for income, spending and savings are enough to use the tax, debt, mortgage and forecast tools.",

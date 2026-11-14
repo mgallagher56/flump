@@ -30,7 +30,7 @@ const months = new Intl.NumberFormat("en-GB", { maximumFractionDigits: 1 });
  */
 export const BaselineSnapshotPreview: FC = () => (
   <figure
-    aria-labelledby="preview-title"
+    aria-labelledby="preview-title preview-badge"
     className={previewFrame()}
     data-testid="baseline-snapshot-preview"
   >
@@ -38,7 +38,7 @@ export const BaselineSnapshotPreview: FC = () => (
       <h2 className={previewTitle()} id="preview-title">
         Monthly picture
       </h2>
-      <StatusBadge size="sm" variant="neutral">
+      <StatusBadge id="preview-badge" size="sm" variant="neutral">
         Example
       </StatusBadge>
     </div>

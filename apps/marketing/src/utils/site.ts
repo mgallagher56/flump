@@ -10,7 +10,7 @@ export type SignupMode = "invite-only" | "open";
 
 /**
  * The brand tagline (owner ruling, 14 Nov 2026). Exact wording, sentence case, a colon after the
- * name and no dash. It never replaces the home h1. Copy guide section 1.1 holds the rules.
+ * name and no dash. It never replaces the home h1. Copy guide section 2.1 holds the rules.
  */
 export const TAGLINE = "Finance without the fog";
 

@@ -38,7 +38,7 @@ export const Dark: Story = {
 
 const assertTaper: Story["play"] = async ({ canvasElement }) => {
   const canvas = within(canvasElement);
-  fireEvent.change(canvas.getByLabelText("Current salary (before tax)"), {
+  fireEvent.change(canvas.getByLabelText("Salary before tax"), {
     target: { value: "99500" },
   });
   await expect(canvas.getByTestId("pay-rise-taper-note")).toBeInTheDocument();
