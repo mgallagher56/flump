@@ -200,3 +200,253 @@ export type DeleteUserResponse = z.infer<typeof DeleteUserResponse>;
 
 /** Version of the export document below. Bump on any breaking change to its shape. */
 export const ACCOUNT_EXPORT_SCHEMA_VERSION = 1;
+
+// --- Account export document (BE-04, GET /user-profile/export) ---
+//
+// One JSON document holding every row Flump stores for the caller, table by table, so a person can
+// take a copy of their data (UK GDPR right of access and portability). Field names match the API
+// (camelCase); values are as stored: money and percentages are numbers, `date` columns are
+// YYYY-MM-DD, timestamps are ISO date-times. Secrets are never included: no MCP token hash and no
+// bank access or refresh token. Documented in docs/legal/data-map.md ("Export document").
+
+const ExportTimestamp = IsoDateTime;
+const NullableExportTimestamp = IsoDateTime.nullable();
+const NullableNumber = z.number().finite().nullable();
+const NullableText = z.string().nullable();
+const TextList = z.array(z.string()).nullable();
+
+/** `profile`: the settings and facts the person entered (one row, or null if never created). */
+export const AccountExportProfile = z.strictObject({
+  id: Uuid,
+  displayName: NullableText,
+  firstName: NullableText,
+  lastName: NullableText,
+  avatarUrl: NullableText,
+  currency: z.string(),
+  country: z.string(),
+  employmentType: NullableText,
+  annualSalary: NullableNumber,
+  monthlyTakeHome: NullableNumber,
+  hasSecondIncome: z.boolean(),
+  secondIncomeMonthly: NullableNumber,
+  hasRentalIncome: z.boolean(),
+  rentalIncomeMonthly: NullableNumber,
+  hasMortgage: z.boolean(),
+  mortgageType: z.string(),
+  propertyOwnershipShare: NullableNumber,
+  hasBuyToLet: z.boolean(),
+  buyToLetCount: z.number().int(),
+  buyToLetPropertyValue: NullableNumber,
+  buyToLetMonthlyRental: NullableNumber,
+  buyToLetMortgageBalance: NullableNumber,
+  buyToLetMortgageRate: NullableNumber,
+  buyToLetMortgageType: z.string(),
+  pensionPercent: NullableNumber,
+  pensionEmployerPercent: NullableNumber,
+  isSalarySacrifice: z.boolean(),
+  isSalarySacrificeEmployerNi: z.boolean(),
+  monthlySavingsTarget: NullableNumber,
+  savingsAllocationMode: z.string(),
+  savingsDefaultInterestRate: NullableNumber,
+  setupChecklistCompletedSteps: TextList,
+  customBudgetCategories: TextList,
+  enabledPages: TextList,
+  dashboardWidgets: TextList,
+  dashboardWidgetOrder: TextList,
+  dashboardWidgetSizes: z.record(z.string(), z.string()).nullable(),
+  dashboardWidgetConfig: z.record(z.string(), z.unknown()).nullable(),
+  hasResetFinancialData: z.boolean(),
+  onboardingCompleted: z.boolean(),
+  taxRegion: NullableText,
+  birthYear: z.number().int().nullable(),
+  studentLoanPlans: TextList,
+  housingStatus: NullableText,
+  monthlyHousingCost: NullableNumber,
+  monthlyOtherOutgoings: NullableNumber,
+  createdAt: ExportTimestamp,
+  updatedAt: ExportTimestamp,
+});
+
+/** `accounts`: each account and its current balance. */
+export const AccountExportAccount = z.strictObject({
+  id: Uuid,
+  name: z.string(),
+  type: z.string(),
+  balance: z.number().finite(),
+  interestRate: NullableNumber,
+  monthlyContribution: NullableNumber,
+  termMonths: z.number().int().nullable(),
+  fixedRateEndDate: NullableText,
+  isCurrent: z.boolean(),
+  currency: z.string(),
+  studentLoanPlan: NullableText,
+  connectionId: Uuid.nullable(),
+  externalAccountId: NullableText,
+  createdAt: ExportTimestamp,
+});
+
+/** `accountDetails`: the month-end balance history of each account. */
+export const AccountExportAccountDetail = z.strictObject({
+  id: z.number().int(),
+  accountId: z.string(),
+  year: z.number().int(),
+  month: z.number().int(),
+  value: z.number().finite(),
+  asOfDate: z.string(),
+  source: z.string(),
+  importBatchId: Uuid.nullable(),
+  updatedAt: ExportTimestamp,
+});
+
+/** `transactions`: account movements. */
+export const AccountExportTransaction = z.strictObject({
+  id: Uuid,
+  accountId: z.string(),
+  amount: z.number().finite(),
+  description: z.string(),
+  category: z.string(),
+  timestamp: ExportTimestamp,
+});
+
+/** `bankConnections`: linked banks. Never the access or refresh token. */
+export const AccountExportBankConnection = z.strictObject({
+  id: Uuid,
+  institutionId: z.string(),
+  institutionName: z.string(),
+  status: z.string(),
+  authType: z.string(),
+  expiresAt: NullableExportTimestamp,
+  lastSyncedAt: ExportTimestamp,
+  createdAt: ExportTimestamp,
+  updatedAt: ExportTimestamp,
+});
+
+/** `budgetEntries`: income and outgoings. */
+export const AccountExportBudgetEntry = z.strictObject({
+  id: Uuid,
+  category: z.string(),
+  name: z.string(),
+  amount: z.number().finite(),
+  frequency: z.string(),
+  isIncome: z.boolean(),
+  isPrimaryIncome: z.boolean(),
+  isEssential: z.boolean(),
+  notes: NullableText,
+  isDefault: z.boolean(),
+  createdAt: ExportTimestamp,
+  updatedAt: ExportTimestamp,
+});
+
+/** `taxRecords`: income and expense records, with any receipt as a base64 data URL. */
+export const AccountExportTaxRecord = z.strictObject({
+  id: Uuid,
+  type: z.string(),
+  source: z.string(),
+  category: z.string(),
+  name: z.string(),
+  amount: z.number().finite(),
+  frequency: z.string(),
+  date: z.string(),
+  endDate: NullableText,
+  notes: NullableText,
+  receiptFilename: NullableText,
+  receiptMimeType: NullableText,
+  receiptData: NullableText,
+  createdAt: ExportTimestamp,
+  updatedAt: ExportTimestamp,
+});
+
+/** `snapshotCheckins`: months whose balances the person confirmed. */
+export const AccountExportSnapshotCheckin = z.strictObject({
+  month: z.string(),
+  completedAt: ExportTimestamp,
+});
+
+/** `importBatches`: spreadsheet imports, staged or committed, with what each changed. */
+export const AccountExportImportBatch = z.strictObject({
+  id: Uuid,
+  status: z.string(),
+  payload: z.unknown(),
+  counts: z.unknown(),
+  validationErrors: z.unknown(),
+  revertData: z.unknown().nullable(),
+  createdAt: ExportTimestamp,
+  updatedAt: ExportTimestamp,
+  committedAt: NullableExportTimestamp,
+  revertedAt: NullableExportTimestamp,
+  expiresAt: ExportTimestamp,
+});
+
+/** `mcpTokens`: AI connection tokens, metadata only. Never the token or its hash. */
+export const AccountExportMcpToken = z.strictObject({
+  id: Uuid,
+  name: z.string(),
+  tokenPrefix: z.string(),
+  scopes: TextList,
+  anonymizeInstitutions: z.boolean(),
+  expiresAt: NullableExportTimestamp,
+  lastUsedAt: NullableExportTimestamp,
+  totalToolCalls: z.number().int(),
+  revokedAt: NullableExportTimestamp,
+  createdAt: ExportTimestamp,
+});
+
+/** `agentAuditEvents`: what each AI connection did (tool names and timings, no amounts). */
+export const AccountExportAgentAuditEvent = z.strictObject({
+  id: Uuid,
+  tokenId: Uuid.nullable(),
+  clientName: NullableText,
+  toolName: z.string(),
+  scopesUsed: TextList,
+  outcome: z.string(),
+  errorCode: NullableText,
+  latencyMs: z.number().int(),
+  responseBytes: z.number().int(),
+  createdAt: ExportTimestamp,
+});
+
+/** GET /user-profile/export: the whole document (`schemaVersion` first). */
+export const AccountExportDocument = z.strictObject({
+  schemaVersion: z.literal(ACCOUNT_EXPORT_SCHEMA_VERSION),
+  exportedAt: IsoDateTime,
+  /** The caller's own user id; left out of every row below because it is the same everywhere. */
+  userId: z.string().min(1),
+  /** Plain-English notes on what is and is not included. */
+  notes: z.array(z.string()).optional(),
+  profile: AccountExportProfile.nullable(),
+  accounts: z.array(AccountExportAccount),
+  accountDetails: z.array(AccountExportAccountDetail),
+  transactions: z.array(AccountExportTransaction),
+  bankConnections: z.array(AccountExportBankConnection),
+  budgetEntries: z.array(AccountExportBudgetEntry),
+  taxRecords: z.array(AccountExportTaxRecord),
+  snapshotCheckins: z.array(AccountExportSnapshotCheckin),
+  importBatches: z.array(AccountExportImportBatch),
+  mcpTokens: z.array(AccountExportMcpToken),
+  agentAuditEvents: z.array(AccountExportAgentAuditEvent),
+});
+export type AccountExportDocument = z.infer<typeof AccountExportDocument>;
+
+/** Keys of the export document that hold stored data (one per table). */
+export type AccountExportKey = Exclude<
+  keyof AccountExportDocument,
+  "schemaVersion" | "exportedAt" | "userId" | "notes"
+>;
+
+/**
+ * The row schema for each data key, in document order. The backend writes the sections in this
+ * order and checks each table's projection against its schema.
+ */
+export const ACCOUNT_EXPORT_SECTIONS = {
+  profile: AccountExportProfile,
+  accounts: AccountExportAccount,
+  accountDetails: AccountExportAccountDetail,
+  transactions: AccountExportTransaction,
+  bankConnections: AccountExportBankConnection,
+  budgetEntries: AccountExportBudgetEntry,
+  taxRecords: AccountExportTaxRecord,
+  snapshotCheckins: AccountExportSnapshotCheckin,
+  importBatches: AccountExportImportBatch,
+  mcpTokens: AccountExportMcpToken,
+  agentAuditEvents: AccountExportAgentAuditEvent,
+} as const satisfies Record<AccountExportKey, z.ZodType>;
