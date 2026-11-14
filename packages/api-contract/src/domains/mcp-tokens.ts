@@ -210,3 +210,116 @@ export type ContextPackResponse = z.infer<typeof ContextPackResponse>;
 
 // Parsed request types (z.output: what a handler receives in enforce mode).
 export type CreateMcpTokenRequest = z.infer<typeof CreateMcpTokenRequest>;
+
+// --- GET /mcp/input: the raw finance-engine input, for a personal access token ----------------
+
+/** finance-engine `FinancialBaseline`. Strict: a field the engine gains must be listed here. */
+const McpInputBaseline = z.strictObject({
+  /** `anonymous-user` for an anonymised token, never the real id. */
+  userId: z.string(),
+  age: z.number().optional(),
+  taxYear: z.enum(["2020/21", "2021/22", "2022/23", "2023/24", "2024/25", "2025/26", "2026/27"]),
+  ukRegion: z.enum(["ENGLAND_NI_WALES", "SCOTLAND"]),
+  ukRegionAssumed: z.boolean().optional(),
+  employmentStatus: z.enum(["PAYE", "SELF_EMPLOYED", "MIXED", "OTHER"]),
+  annualGrossSalary: ResponseMoney,
+  monthlyTakeHomeOverride: ResponseMoney.optional(),
+  annualBonusOrSideIncome: ResponseMoney,
+  housingStatus: z.enum(["RENTING", "MORTGAGE", "OWN_OUTRIGHT", "LIVING_WITH_FAMILY"]).optional(),
+  monthlyHousingCost: ResponseMoney.optional(),
+  propertyValue: ResponseMoney.optional(),
+  mortgageBalance: ResponseMoney.optional(),
+  monthlyOtherOutgoings: ResponseMoney.optional(),
+  totalCashSavings: ResponseMoney.optional(),
+  totalPensionPot: ResponseMoney.optional(),
+  totalUnsecuredDebt: ResponseMoney.optional(),
+  pensionContributionPct: z.number(),
+  employerPensionMatchPct: z.number(),
+  isSalarySacrifice: z.boolean(),
+  studentLoanPlan: z.enum(["NONE", "PLAN_1", "PLAN_2", "PLAN_4", "PLAN_5", "POSTGRAD"]),
+  propertyOwnershipSharePct: z.number(),
+  financialStage: z.enum([
+    "STAGE_1_DEBT_RECOVERY",
+    "STAGE_2_BUFFER_BUILD",
+    "STAGE_3_WEALTH_OPTIMIZE",
+  ]),
+  enabledModules: z.array(
+    z.enum(["accounts", "debt", "budget", "pension", "mortgage", "forecast", "tax"]),
+  ),
+});
+
+/** finance-engine `ProfileFacts`: the saved answers, null where not answered. */
+const McpInputProfileFacts = z.strictObject({
+  annualSalary: ResponseMoney.nullable(),
+  employmentType: z.enum(["employed", "self-employed", "other"]).nullable(),
+  taxRegion: z.enum(["ENGLAND", "WALES", "SCOTLAND", "NORTHERN_IRELAND"]).nullable(),
+  studentLoanPlans: z.array(z.string()).nullable(),
+  pensionPercent: z.number().nullable(),
+  isSalarySacrifice: z.boolean().nullable(),
+  housingStatus: z.enum(["renting", "mortgage", "own_outright", "living_with_family"]).nullable(),
+  monthlyHousingCost: ResponseMoney.nullable(),
+  mortgageType: z.enum(["repayment", "interest-only"]).nullable(),
+  propertyOwnershipShare: z.number().nullable(),
+});
+
+/** One account as the engine reads it. No connection, provider or external id. */
+const McpInputAccount = z.strictObject({
+  id: z.string().min(1),
+  /** A generic label ("Current Account #1") for an anonymised token. */
+  name: z.string(),
+  type: z.string(),
+  balance: ResponseMoney,
+  interestRate: z.number().nullable(),
+  monthlyContribution: ResponseMoney.nullable(),
+  termMonths: z.number().int().nullable(),
+  fixedRateEndDate: z.string().nullable(),
+  currency: z.string(),
+  isCurrent: z.boolean(),
+});
+
+/** One stored month-end value. */
+const McpInputAccountDetail = z.strictObject({
+  accountId: z.string().min(1),
+  year: z.number().int(),
+  month: z.number().int().min(1).max(12),
+  value: ResponseMoney,
+  source: z.string(),
+});
+
+/** One tax record. Never a receipt field; `name` is empty and `notes` null when anonymised. */
+const McpInputTaxRecord = z.strictObject({
+  id: z.string().min(1),
+  type: z.enum(["income", "expense"]),
+  source: z.enum(["paye", "self-employed", "rental", "savings"]),
+  category: z.string(),
+  name: z.string(),
+  amount: ResponseMoney,
+  frequency: z.enum(["one-off", "monthly", "annual"]),
+  date: z.string(),
+  endDate: z.string().nullable(),
+  notes: z.string().nullable(),
+});
+
+/**
+ * GET /mcp/input: what the MCP tools compute from (finance-engine `BuildContextPackInput`), for
+ * the owner of the personal access token in the Authorization header. `token` says what that
+ * token may do, so a local MCP server applies the same scopes and anonymisation as the remote one.
+ */
+export const McpInputResponse = z.strictObject({
+  token: z.strictObject({
+    /** The token's own id: the key its short ids are derived from. Null for a dev token. */
+    id: Uuid.nullable(),
+    scopes: z.array(z.string()),
+    anonymizeInstitutions: z.boolean(),
+  }),
+  input: z.strictObject({
+    baseline: McpInputBaseline,
+    profileFacts: McpInputProfileFacts,
+    netWorthBasis: z.strictObject({ countProperty: z.boolean(), countStudentLoan: z.boolean() }),
+    accounts: z.array(McpInputAccount),
+    accountDetails: z.array(McpInputAccountDetail),
+    budgetEntries: z.array(ContextPackBudgetEntry),
+    taxRecords: z.array(McpInputTaxRecord),
+  }),
+});
+export type McpInputResponse = z.infer<typeof McpInputResponse>;

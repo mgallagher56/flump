@@ -115,6 +115,12 @@ const backendEnvSchema = z.looseObject({
   BACKEND_URL: url(HTTP),
   WEB_ORIGIN: url(HTTP),
 
+  // Mobile client policy (GET /app/client-policy). A malformed value means no minimum.
+  CLIENT_POLICY_IOS_MIN_VERSION: text(),
+  CLIENT_POLICY_IOS_RECOMMENDED_VERSION: text(),
+  CLIENT_POLICY_ANDROID_MIN_VERSION: text(),
+  CLIENT_POLICY_ANDROID_RECOMMENDED_VERSION: text(),
+
   // Auth
   AUTH_DEV_BYPASS: bool(),
   WORKOS_CLIENT_ID: text(),

@@ -1,10 +1,11 @@
-import { BadRequestException, ParseUUIDPipe } from "@nestjs/common";
+import { BadRequestException, ForbiddenException, ParseUUIDPipe } from "@nestjs/common";
 import { describe, expect, it, vi } from "vitest";
 import { AuthGuard } from "../../auth/auth.guard";
 import { McpAllowlistGuard, McpKillSwitchGuard } from "../../auth/mcp-access";
 import { encodeActivityCursor } from "./agent-audit.service";
 import { McpController } from "./mcp.controller";
 import type { McpService } from "./mcp.service";
+import { McpPatGuard } from "./mcp-pat.guard";
 import type { McpTokenService } from "./mcp-token.service";
 
 describe("McpController", () => {
@@ -176,4 +177,55 @@ describe("McpController", () => {
     const idArg = Object.values(params).find((a) => a.data === "id");
     expect(idArg?.pipes.some((p) => p instanceof ParseUUIDPipe)).toBe(true);
   });
+});
+
+describe("McpController GET /mcp/input", () => {
+  const token = (scopes: string[]) => ({
+    userId: "u_owner",
+    tokenId: "00000000-0000-4000-8000-000000000001",
+    scopes,
+    anonymizeInstitutions: true,
+    type: "pat" as const,
+  });
+  const build = () => {
+    const service = {
+      getInput: vi.fn().mockResolvedValue({ token: {}, input: {} }),
+      recordInputRead: vi.fn().mockResolvedValue(undefined),
+    };
+    const controller = new McpController(service as never, {} as never, {} as never);
+    return { controller, service, res: { setHeader: vi.fn() } };
+  };
+  const request = (scopes: string[]) =>
+    ({ mcpToken: token(scopes), headers: { "user-agent": "flump-mcp-stdio" } }) as never;
+
+  it("is guarded by the PAT guard only: a session token cannot reach it", () => {
+    const guards = Reflect.getMetadata("__guards__", McpController.prototype.getInput);
+    expect(guards).toEqual([McpPatGuard]);
+    expect(guards).not.toContain(AuthGuard);
+  });
+
+  it("reads for the token's owner, taken from the verified token and nowhere else", async () => {
+    const { controller, service, res } = build();
+    await controller.getInput(request(["mcp:read:anonymized"]), res as never);
+    expect(service.getInput).toHaveBeenCalledWith({
+      token: token(["mcp:read:anonymized"]),
+      clientName: "flump-mcp-stdio",
+    });
+    expect(res.setHeader).toHaveBeenCalledWith("Cache-Control", "no-store");
+  });
+
+  it.each([[[]], [["mcp:simulate"]], [["write:stage", "mcp:simulate"]]])(
+    "refuses scopes %j with 403, records the denial and reads nothing",
+    async (scopes) => {
+      const { controller, service, res } = build();
+      await expect(controller.getInput(request(scopes), res as never)).rejects.toBeInstanceOf(
+        ForbiddenException,
+      );
+      expect(service.getInput).not.toHaveBeenCalled();
+      expect(service.recordInputRead).toHaveBeenCalledWith(
+        expect.objectContaining({ token: token(scopes) }),
+        expect.objectContaining({ outcome: "denied" }),
+      );
+    },
+  );
 });

@@ -53,6 +53,15 @@ const STAGE: ScopeRequirement = {
   allOf: ["write:stage"],
 };
 
+/**
+ * The raw engine input (the backend's `GET /mcp/input`, read by the local stdio server): the same
+ * requirement as every read tool, since it is the data they read.
+ */
+export const RAW_INPUT_SCOPES: ScopeRequirement = READ;
+
+/** The audit name of a raw-input read, in the `resource_read_*` family. */
+export const RAW_INPUT_AUDIT_NAME = "resource_read_raw_input";
+
 export const TOOL_SCOPES: Readonly<Record<string, ScopeRequirement>> = {
   // Read tools (E17-N9, plus the 2026-11 re-plan PR B query reads and the one tax tool).
   get_financial_snapshot: READ,

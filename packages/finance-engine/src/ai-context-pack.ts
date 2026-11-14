@@ -71,6 +71,49 @@ export interface BuildContextPackInput {
   netWorthBasis: NetWorthBasis;
 }
 
+/** The user id an anonymised pack or input carries in place of the real one. */
+// A fixed label, not a credential.
+// nosemgrep: ajinabraham.njsscan.generic.hardcoded_secrets.node_username
+export const ANONYMOUS_USER_ID = "anonymous-user";
+
+/**
+ * The raw input with every free-text or identifying field replaced, by the same rules the
+ * anonymised context pack uses: accounts get generic per-type labels, budget entries their
+ * generic labels and a scrubbed category with no notes, tax records no name or notes, and the
+ * baseline no user id. Figures, ids, dates and types are unchanged, so every calculation on the
+ * result matches the same calculation on the input. Applying it twice changes nothing more.
+ */
+export function anonymiseContextPackInput(input: BuildContextPackInput): BuildContextPackInput {
+  const counters: Record<string, number> = {};
+  const accounts = input.accounts?.map((acc) => {
+    const typeKey = genericAccountLabel(acc.type, 0).replace(/ Account #0$/, "");
+    counters[typeKey] = (counters[typeKey] ?? 0) + 1;
+    return { ...acc, name: genericAccountLabel(acc.type, counters[typeKey]) };
+  });
+  const labels = anonymousBudgetEntryLabels(input.budgetEntries ?? []);
+  const budgetEntries = input.budgetEntries?.map((entry, idx) => {
+    const { notes: _notes, ...rest } = entry;
+    return {
+      ...rest,
+      name: labels[idx] ?? "Budget entry",
+      category: anonymiseDescription(entry.category ?? ""),
+    };
+  });
+  const taxRecords = input.taxRecords?.map((record) => ({
+    ...record,
+    category: anonymiseDescription(record.category ?? ""),
+    name: "",
+    notes: null,
+  }));
+  return {
+    ...input,
+    baseline: { ...input.baseline, userId: ANONYMOUS_USER_ID },
+    ...(accounts ? { accounts } : {}),
+    ...(budgetEntries ? { budgetEntries } : {}),
+    ...(taxRecords ? { taxRecords } : {}),
+  };
+}
+
 /** The saved baseline as the pack carries it: figures only, so no computed stage. */
 export type ContextPackBaseline = Omit<FinancialBaseline, "financialStage">;
 
@@ -150,7 +193,7 @@ export function buildFlumpAiContextPack(
   const { financialStage: _stage, ...baselineFigures } = input.baseline;
   const safeBaseline: ContextPackBaseline = {
     ...baselineFigures,
-    userId: isAnonymized ? "anonymous-user" : input.baseline.userId,
+    userId: isAnonymized ? ANONYMOUS_USER_ID : input.baseline.userId,
   };
 
   // 2. Anonymize Institution / Account names if requested

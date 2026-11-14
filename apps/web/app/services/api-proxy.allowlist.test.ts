@@ -197,4 +197,29 @@ describe("/api proxy allow-list covers every browser call", () => {
       }
     }
   });
+
+  /**
+   * The other direction, walking the whole manifest: a route that does not take the session
+   * token is never forwarded. The proxy attaches the signed-in user's Bearer token, which a
+   * public route (`app.clientPolicy`, read by the mobile app straight from the backend before
+   * sign-in) does not need and a personal-access-token route (`mcp.input`, `/mcp`) must never
+   * receive in place of a PAT.
+   */
+  const notForwarded = allRoutes.filter((route) => route.auth !== "user");
+
+  it("finds the public and PAT routes in the manifest", () => {
+    const ids = notForwarded.map((route) => route.id);
+    expect(ids).toEqual(expect.arrayContaining(["app.clientPolicy", "mcp.input", "mcp.post"]));
+  });
+
+  it.each(notForwarded.map((route) => [`${route.method} /${route.path} (${route.auth})`, route]))(
+    "%s is not forwarded by the proxy",
+    (_label, route) => {
+      const sample = `/${route.path
+        .split("/")
+        .map((part) => (part.startsWith(":") ? (SAMPLE_PARAM[part.slice(1)] ?? part) : part))
+        .join("/")}`;
+      expect(matchAllowList(route.method, sample)).toBe(false);
+    },
+  );
 });

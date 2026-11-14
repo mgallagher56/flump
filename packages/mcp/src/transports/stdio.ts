@@ -2,9 +2,10 @@
 import { realpathSync } from "node:fs";
 import { pathToFileURL } from "node:url";
 import { BackendError, callBackend } from "@flump/api-client";
-import { ContextPackResponse } from "@flump/api-contract";
-import type { BuildContextPackInput, FinancialBaseline } from "@flump/finance-engine";
+import { McpInputResponse } from "@flump/api-contract";
+import type { BuildContextPackInput } from "@flump/finance-engine";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { filterKnownScopes, type McpScope, WRITE_STAGE_SCOPE } from "../auth/scopes.js";
 import { type McpLogger, stderrLogger } from "../logger.js";
 import { inMemoryQueries } from "../provider/in-memory.js";
 import { createFlumpMcpServer } from "../server.js";
@@ -23,28 +24,32 @@ export class PatRejectedError extends Error {
 const REQUEST_TIMEOUT_MS = 10_000;
 
 /**
- * Feeds the in-memory provider from a parsed context pack. The pack is the engine's output, not
- * its raw input: its baseline is an open record with the stage removed, and it carries no tax
- * records. The baseline conversion below is a domain mapping of an already-validated body, not a
- * response cast; a raw-input endpoint for PAT holders is a follow-up (see BE-10 PR).
+ * How long one fetched input is reused. A tool call makes several provider reads, and each
+ * uncached read would be a request against the token's rate limit and a row in its activity.
  */
-export function packToInput(pack: ContextPackResponse["pack"]): BuildContextPackInput {
-  return {
-    baseline: pack.baseline as unknown as FinancialBaseline,
-    accounts: pack.portfolio.accounts.map((a) => ({
-      id: a.id,
-      name: a.name,
-      type: a.rawType,
-      balance: a.nominalBalance,
-      interestRate: a.interestRateKnown ? a.interestRate : null,
-      monthlyContribution: a.monthlyContributionKnown ? a.monthlyContribution : null,
-      currency: a.currency,
-    })),
-    budgetEntries: pack.budgetSummary.entries,
-    taxRecords: [],
-    // The figures in the pack were computed under these choices.
-    netWorthBasis: { ...pack.portfolio.netWorthBasis },
-  };
+export const INPUT_REUSE_MS = 5_000;
+
+/** The user id the local server runs under: the API never sends the real one to a token. */
+// A fixed label, not a credential.
+// nosemgrep: ajinabraham.njsscan.generic.hardcoded_secrets.node_username
+const LOCAL_USER_ID = "local-user";
+
+/**
+ * The parsed `GET /v1/mcp/input` body as the engine's input. The contract schema is strict and
+ * mirrors `BuildContextPackInput`, so this is an assignment, with no cast: if the two drift,
+ * this function stops compiling.
+ */
+export function toEngineInput(input: McpInputResponse["input"]): BuildContextPackInput {
+  return input;
+}
+
+/**
+ * The scopes the local server runs with: the token's own, minus staging. Staging writes go
+ * through the remote server only (the local one has no import access), so `write:stage` is
+ * never honoured here.
+ */
+export function localScopes(scopes: readonly string[]): McpScope[] {
+  return filterKnownScopes(scopes).filter((scope) => scope !== WRITE_STAGE_SCOPE);
 }
 
 type Connect = (server: ReturnType<typeof createFlumpMcpServer>) => Promise<void>;
@@ -63,25 +68,26 @@ export async function runStdio(
   connect: Connect = connectStdio,
   // stdout carries the protocol here, so logs go to stderr only.
   logger: McpLogger = stderrLogger,
+  now: () => number = Date.now,
 ): Promise<void> {
   const pat = env.FLUMP_PAT;
   if (!pat) throw new PatRejectedError();
   const apiUrl = env.FLUMP_API_URL || "http://localhost:4000";
 
-  const fetchPack = async (): Promise<ContextPackResponse["pack"]> => {
+  const fetchInput = async (): Promise<McpInputResponse> => {
     try {
-      // Contract-typed (BE-10): `/v1`, and a body that does not match ContextPackResponse is a
-      // typed bad-response rather than undefined fields deep in a tool.
+      // Contract-typed: `/v1/mcp/input` accepts a personal access token, and a body that does
+      // not match McpInputResponse is a typed bad-response rather than undefined fields in a tool.
       const { data } = await callBackend(
         {
           baseUrl: apiUrl,
           fetch: fetchImpl,
           headers: () => ({ Authorization: `Bearer ${pat}` }),
         },
-        "/mcp-tokens/context-pack",
-        { schema: ContextPackResponse, timeoutMs: REQUEST_TIMEOUT_MS },
+        "/mcp/input",
+        { schema: McpInputResponse, timeoutMs: REQUEST_TIMEOUT_MS },
       );
-      return data.pack;
+      return data;
     } catch (err) {
       if (!(err instanceof BackendError)) throw err;
       if (err.kind === "unavailable") {
@@ -98,15 +104,25 @@ export async function runStdio(
     }
   };
 
-  // Fail fast, before the transport opens, if the PAT does not work.
-  const initial = await fetchPack();
-  const userId = initial.baseline.userId;
-  if (typeof userId !== "string" || userId === "") throw new PatRejectedError();
-
-  const getUserFinancialData = async () => {
-    return packToInput(await fetchPack());
+  // One request serves every read made within INPUT_REUSE_MS (concurrent ones share it); a
+  // failed request is not kept, so the next read tries again.
+  let latest: { at: number; request: Promise<McpInputResponse> } | undefined;
+  const readInput = (): Promise<McpInputResponse> => {
+    if (latest && now() - latest.at < INPUT_REUSE_MS) return latest.request;
+    const entry = { at: now(), request: fetchInput() };
+    latest = entry;
+    entry.request.catch(() => {
+      if (latest === entry) latest = undefined;
+    });
+    return entry.request;
   };
-  // The context pack has no monthly rows, so history reads return empty with missing[] here.
+
+  // Fail fast, before the transport opens, if the PAT does not work.
+  const initial = await readInput();
+
+  // Tool calls read data at most INPUT_REUSE_MS old. The token's rules are fixed at start: a
+  // token whose scopes change (or that is revoked) fails its next read and the tool call with it.
+  const getUserFinancialData = async () => toEngineInput((await readInput()).input);
   const dataProvider: McpUserDataProvider = {
     getUserFinancialData,
     ...inMemoryQueries(getUserFinancialData),
@@ -114,9 +130,11 @@ export async function runStdio(
 
   const server = createFlumpMcpServer({
     token: {
-      userId,
-      scopes: ["mcp:read:anonymized", "mcp:simulate"],
-      anonymizeInstitutions: true,
+      userId: LOCAL_USER_ID,
+      // The same key as the remote server, so a short id means the same account in both.
+      ...(initial.token.id ? { tokenId: initial.token.id } : {}),
+      scopes: localScopes(initial.token.scopes),
+      anonymizeInstitutions: initial.token.anonymizeInstitutions,
       type: "pat",
     },
     dataProvider,

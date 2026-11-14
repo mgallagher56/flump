@@ -28,6 +28,11 @@ export interface McpAuditCaller {
   clientName?: string;
 }
 
+/** The result of the shared PAT checks: the verified token, or the refusal to send as it is. */
+export type McpAuthOutcome =
+  | { ok: true; token: VerifiedToken }
+  | { ok: false; status: number; body: object; headers?: Record<string, string> };
+
 export interface HttpTransportOptions extends TokenVerifierOptions {
   dataProvider: McpUserDataProvider;
   /** Staging access for the write tools (re-plan PR D). Without it they refuse. */
@@ -208,6 +213,73 @@ export class HttpMcpHandler {
   }
 
   /**
+   * The checks every PAT-authenticated Express route shares, in order: the kill switch and the
+   * Origin rule, the failed-attempt limiter per client IP, the token itself, the per-token rate
+   * limit, then the usage write. `/mcp` and the backend's `GET /mcp/input` both go through here,
+   * so a token is limited and counted the same way whichever route it calls.
+   */
+  async authenticateExpress(req: ExpressLikeRequest, usageBody?: unknown): Promise<McpAuthOutcome> {
+    const rejected = this.gate(req.headers?.origin);
+    if (rejected) return { ok: false, ...rejected };
+    const ip: string = req.ip ?? req.socket?.remoteAddress ?? "unknown";
+    // Counted up front, atomically, so concurrent guesses cannot overshoot; a verified request
+    // gives its attempt back below.
+    const blocked = await this.failedAuthLimiter.attempt(ip);
+    if (blocked.blocked) {
+      return {
+        ok: false,
+        status: 429,
+        headers: { "Retry-After": String(blocked.retryAfterSeconds) },
+        body: {
+          error: "rate_limit_exceeded",
+          message: "Too many failed attempts.",
+          retryAfter: blocked.retryAfterSeconds,
+        },
+      };
+    }
+
+    let verifiedOk = false;
+    try {
+      // 1. Verify Authentication (flump_pat_... personal access token)
+      const verified = await this.verifier.verifyAuthorizationHeader(req.headers?.authorization);
+      verifiedOk = true;
+      await this.failedAuthLimiter.recordSuccess(ip);
+
+      // 2. Check rate limits, then record usage for allowed requests only
+      const limitResult = await this.rateLimiter.checkLimit(limiterKey(verified));
+      if (!limitResult.allowed) {
+        return {
+          ok: false,
+          status: 429,
+          headers: { "Retry-After": String(limitResult.resetSeconds) },
+          body: {
+            error: "rate_limit_exceeded",
+            message: limitResult.message,
+            retryAfter: limitResult.resetSeconds,
+          },
+        };
+      }
+
+      await this.recordUsage(verified, usageBody);
+      return { ok: true, token: verified };
+    } catch (err) {
+      if (err instanceof AuthenticationError) {
+        // Already counted by attempt(): a failed guess keeps its count.
+        return {
+          ok: false,
+          status: 401,
+          headers: { "WWW-Authenticate": WWW_AUTHENTICATE },
+          body: { error: "mcp_auth_error", message: err.message },
+        };
+      }
+      // Not a guess: the verifier or a later step failed for another reason.
+      if (!verifiedOk) await this.failedAuthLimiter.forgive(ip);
+      this.logger.error(`MCP request failed: ${errorName(err)}`);
+      return { ok: false, status: 400, body: GENERIC_BAD_REQUEST };
+    }
+  }
+
+  /**
    * Express / NestJS request handler
    */
   async handleExpressRequest(
@@ -215,63 +287,22 @@ export class HttpMcpHandler {
     res: ExpressLikeResponse,
     parsedBody?: unknown,
   ): Promise<void> {
-    const rejected = this.gate(req.headers?.origin);
-    if (rejected) {
-      res.status(rejected.status).json(rejected.body);
-      return;
-    }
-    const ip: string = req.ip ?? req.socket?.remoteAddress ?? "unknown";
-    // Counted up front, atomically, so concurrent guesses cannot overshoot; a verified request
-    // gives its attempt back below.
-    const blocked = await this.failedAuthLimiter.attempt(ip);
-    let verifiedOk = false;
-    if (blocked.blocked) {
-      res.setHeader("Retry-After", String(blocked.retryAfterSeconds));
-      res.status(429).json({
-        error: "rate_limit_exceeded",
-        message: "Too many failed attempts.",
-        retryAfter: blocked.retryAfterSeconds,
-      });
+    const auth = await this.authenticateExpress(req, parsedBody ?? req.body);
+    if (!auth.ok) {
+      for (const [name, value] of Object.entries(auth.headers ?? {})) res.setHeader(name, value);
+      res.status(auth.status).json(auth.body);
       return;
     }
 
     try {
-      // 1. Verify Authentication (flump_pat_... personal access token)
-      const authHeader = req.headers?.authorization;
-      const verified = await this.verifier.verifyAuthorizationHeader(authHeader);
-      verifiedOk = true;
-      await this.failedAuthLimiter.recordSuccess(ip);
-
-      // 2. Check rate limits, then record usage for allowed requests only
-      const limitResult = await this.rateLimiter.checkLimit(limiterKey(verified));
-      if (!limitResult.allowed) {
-        res.setHeader("Retry-After", String(limitResult.resetSeconds));
-        res.status(429).json({
-          error: "rate_limit_exceeded",
-          message: limitResult.message,
-          retryAfter: limitResult.resetSeconds,
-        });
-        return;
-      }
-
-      await this.recordUsage(verified, parsedBody ?? req.body);
-
       // 3. Create server and transport instance for this request
-      const mcpServer = this.serverFor(verified, req.headers?.["user-agent"]);
+      const mcpServer = this.serverFor(auth.token, req.headers?.["user-agent"]);
 
       const transport = new StreamableHTTPServerTransport();
       await mcpServer.connect(transport);
 
       await transport.handleRequest(req, res, parsedBody ?? req.body);
     } catch (err) {
-      if (err instanceof AuthenticationError) {
-        // Already counted by attempt(): a failed guess keeps its count.
-        res.setHeader("WWW-Authenticate", WWW_AUTHENTICATE);
-        res.status(401).json({ error: "mcp_auth_error", message: err.message });
-        return;
-      }
-      // Not a guess: the verifier or a later step failed for another reason.
-      if (!verifiedOk) await this.failedAuthLimiter.forgive(ip);
       this.logger.error(`MCP request failed: ${errorName(err)}`);
       res.status(400).json(GENERIC_BAD_REQUEST);
     }

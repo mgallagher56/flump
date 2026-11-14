@@ -2550,6 +2550,79 @@
         "tags": ["accounts"]
       }
     },
+    "/v1/app/client-policy": {
+      "get": {
+        "operationId": "app.clientPolicy",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "android": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "minVersion": {
+                          "pattern": "^\\d{1,5}(\\.\\d{1,5}){0,2}$",
+                          "type": "string"
+                        },
+                        "recommendedVersion": {
+                          "pattern": "^\\d{1,5}(\\.\\d{1,5}){0,2}$",
+                          "type": "string"
+                        }
+                      },
+                      "required": ["minVersion", "recommendedVersion"],
+                      "type": "object"
+                    },
+                    "ios": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "minVersion": {
+                          "pattern": "^\\d{1,5}(\\.\\d{1,5}){0,2}$",
+                          "type": "string"
+                        },
+                        "recommendedVersion": {
+                          "pattern": "^\\d{1,5}(\\.\\d{1,5}){0,2}$",
+                          "type": "string"
+                        }
+                      },
+                      "required": ["minVersion", "recommendedVersion"],
+                      "type": "object"
+                    }
+                  },
+                  "required": ["ios", "android"],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Success."
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`rate_limited`: too many requests. See the Retry-After header."
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`internal_error`: an unexpected failure. Quote the requestId."
+          }
+        },
+        "security": [],
+        "tags": ["app"]
+      }
+    },
     "/v1/bank-connections": {
       "get": {
         "operationId": "bankConnections.list",
@@ -8104,6 +8177,573 @@
         "security": [
           {
             "bearerAuth": []
+          }
+        ],
+        "tags": ["mcp-tokens"]
+      }
+    },
+    "/v1/mcp/input": {
+      "get": {
+        "operationId": "mcp.input",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "input": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "accountDetails": {
+                          "items": {
+                            "additionalProperties": false,
+                            "properties": {
+                              "accountId": {
+                                "minLength": 1,
+                                "type": "string"
+                              },
+                              "month": {
+                                "maximum": 12,
+                                "minimum": 1,
+                                "type": "integer"
+                              },
+                              "source": {
+                                "type": "string"
+                              },
+                              "value": {
+                                "description": "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.",
+                                "type": "number"
+                              },
+                              "year": {
+                                "maximum": 9007199254740991,
+                                "minimum": -9007199254740991,
+                                "type": "integer"
+                              }
+                            },
+                            "required": ["accountId", "year", "month", "value", "source"],
+                            "type": "object"
+                          },
+                          "type": "array"
+                        },
+                        "accounts": {
+                          "items": {
+                            "additionalProperties": false,
+                            "properties": {
+                              "balance": {
+                                "description": "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.",
+                                "type": "number"
+                              },
+                              "currency": {
+                                "type": "string"
+                              },
+                              "fixedRateEndDate": {
+                                "type": ["string", "null"]
+                              },
+                              "id": {
+                                "minLength": 1,
+                                "type": "string"
+                              },
+                              "interestRate": {
+                                "type": ["number", "null"]
+                              },
+                              "isCurrent": {
+                                "type": "boolean"
+                              },
+                              "monthlyContribution": {
+                                "anyOf": [
+                                  {
+                                    "description": "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.",
+                                    "type": "number"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "name": {
+                                "type": "string"
+                              },
+                              "termMonths": {
+                                "anyOf": [
+                                  {
+                                    "maximum": 9007199254740991,
+                                    "minimum": -9007199254740991,
+                                    "type": "integer"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "type": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "name",
+                              "type",
+                              "balance",
+                              "interestRate",
+                              "monthlyContribution",
+                              "termMonths",
+                              "fixedRateEndDate",
+                              "currency",
+                              "isCurrent"
+                            ],
+                            "type": "object"
+                          },
+                          "type": "array"
+                        },
+                        "baseline": {
+                          "additionalProperties": false,
+                          "properties": {
+                            "age": {
+                              "type": "number"
+                            },
+                            "annualBonusOrSideIncome": {
+                              "description": "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.",
+                              "type": "number"
+                            },
+                            "annualGrossSalary": {
+                              "description": "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.",
+                              "type": "number"
+                            },
+                            "employerPensionMatchPct": {
+                              "type": "number"
+                            },
+                            "employmentStatus": {
+                              "enum": ["PAYE", "SELF_EMPLOYED", "MIXED", "OTHER"],
+                              "type": "string"
+                            },
+                            "enabledModules": {
+                              "items": {
+                                "enum": [
+                                  "accounts",
+                                  "debt",
+                                  "budget",
+                                  "pension",
+                                  "mortgage",
+                                  "forecast",
+                                  "tax"
+                                ],
+                                "type": "string"
+                              },
+                              "type": "array"
+                            },
+                            "financialStage": {
+                              "enum": [
+                                "STAGE_1_DEBT_RECOVERY",
+                                "STAGE_2_BUFFER_BUILD",
+                                "STAGE_3_WEALTH_OPTIMIZE"
+                              ],
+                              "type": "string"
+                            },
+                            "housingStatus": {
+                              "enum": ["RENTING", "MORTGAGE", "OWN_OUTRIGHT", "LIVING_WITH_FAMILY"],
+                              "type": "string"
+                            },
+                            "isSalarySacrifice": {
+                              "type": "boolean"
+                            },
+                            "monthlyHousingCost": {
+                              "description": "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.",
+                              "type": "number"
+                            },
+                            "monthlyOtherOutgoings": {
+                              "description": "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.",
+                              "type": "number"
+                            },
+                            "monthlyTakeHomeOverride": {
+                              "description": "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.",
+                              "type": "number"
+                            },
+                            "mortgageBalance": {
+                              "description": "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.",
+                              "type": "number"
+                            },
+                            "pensionContributionPct": {
+                              "type": "number"
+                            },
+                            "propertyOwnershipSharePct": {
+                              "type": "number"
+                            },
+                            "propertyValue": {
+                              "description": "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.",
+                              "type": "number"
+                            },
+                            "studentLoanPlan": {
+                              "enum": ["NONE", "PLAN_1", "PLAN_2", "PLAN_4", "PLAN_5", "POSTGRAD"],
+                              "type": "string"
+                            },
+                            "taxYear": {
+                              "enum": [
+                                "2020/21",
+                                "2021/22",
+                                "2022/23",
+                                "2023/24",
+                                "2024/25",
+                                "2025/26",
+                                "2026/27"
+                              ],
+                              "type": "string"
+                            },
+                            "totalCashSavings": {
+                              "description": "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.",
+                              "type": "number"
+                            },
+                            "totalPensionPot": {
+                              "description": "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.",
+                              "type": "number"
+                            },
+                            "totalUnsecuredDebt": {
+                              "description": "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.",
+                              "type": "number"
+                            },
+                            "ukRegion": {
+                              "enum": ["ENGLAND_NI_WALES", "SCOTLAND"],
+                              "type": "string"
+                            },
+                            "ukRegionAssumed": {
+                              "type": "boolean"
+                            },
+                            "userId": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "userId",
+                            "taxYear",
+                            "ukRegion",
+                            "employmentStatus",
+                            "annualGrossSalary",
+                            "annualBonusOrSideIncome",
+                            "pensionContributionPct",
+                            "employerPensionMatchPct",
+                            "isSalarySacrifice",
+                            "studentLoanPlan",
+                            "propertyOwnershipSharePct",
+                            "financialStage",
+                            "enabledModules"
+                          ],
+                          "type": "object"
+                        },
+                        "budgetEntries": {
+                          "items": {
+                            "additionalProperties": false,
+                            "properties": {
+                              "amount": {
+                                "description": "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.",
+                                "type": "number"
+                              },
+                              "category": {
+                                "type": "string"
+                              },
+                              "frequency": {
+                                "type": "string"
+                              },
+                              "id": {
+                                "type": "string"
+                              },
+                              "isEssential": {
+                                "type": "boolean"
+                              },
+                              "isIncome": {
+                                "type": "boolean"
+                              },
+                              "name": {
+                                "type": "string"
+                              },
+                              "notes": {
+                                "type": ["string", "null"]
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "category",
+                              "name",
+                              "amount",
+                              "frequency",
+                              "isIncome",
+                              "isEssential"
+                            ],
+                            "type": "object"
+                          },
+                          "type": "array"
+                        },
+                        "netWorthBasis": {
+                          "additionalProperties": false,
+                          "properties": {
+                            "countProperty": {
+                              "type": "boolean"
+                            },
+                            "countStudentLoan": {
+                              "type": "boolean"
+                            }
+                          },
+                          "required": ["countProperty", "countStudentLoan"],
+                          "type": "object"
+                        },
+                        "profileFacts": {
+                          "additionalProperties": false,
+                          "properties": {
+                            "annualSalary": {
+                              "anyOf": [
+                                {
+                                  "description": "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.",
+                                  "type": "number"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "employmentType": {
+                              "anyOf": [
+                                {
+                                  "enum": ["employed", "self-employed", "other"],
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "housingStatus": {
+                              "anyOf": [
+                                {
+                                  "enum": [
+                                    "renting",
+                                    "mortgage",
+                                    "own_outright",
+                                    "living_with_family"
+                                  ],
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "isSalarySacrifice": {
+                              "type": ["boolean", "null"]
+                            },
+                            "monthlyHousingCost": {
+                              "anyOf": [
+                                {
+                                  "description": "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.",
+                                  "type": "number"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "mortgageType": {
+                              "anyOf": [
+                                {
+                                  "enum": ["repayment", "interest-only"],
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "pensionPercent": {
+                              "type": ["number", "null"]
+                            },
+                            "propertyOwnershipShare": {
+                              "type": ["number", "null"]
+                            },
+                            "studentLoanPlans": {
+                              "anyOf": [
+                                {
+                                  "items": {
+                                    "type": "string"
+                                  },
+                                  "type": "array"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "taxRegion": {
+                              "anyOf": [
+                                {
+                                  "enum": ["ENGLAND", "WALES", "SCOTLAND", "NORTHERN_IRELAND"],
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            }
+                          },
+                          "required": [
+                            "annualSalary",
+                            "employmentType",
+                            "taxRegion",
+                            "studentLoanPlans",
+                            "pensionPercent",
+                            "isSalarySacrifice",
+                            "housingStatus",
+                            "monthlyHousingCost",
+                            "mortgageType",
+                            "propertyOwnershipShare"
+                          ],
+                          "type": "object"
+                        },
+                        "taxRecords": {
+                          "items": {
+                            "additionalProperties": false,
+                            "properties": {
+                              "amount": {
+                                "description": "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.",
+                                "type": "number"
+                              },
+                              "category": {
+                                "type": "string"
+                              },
+                              "date": {
+                                "type": "string"
+                              },
+                              "endDate": {
+                                "type": ["string", "null"]
+                              },
+                              "frequency": {
+                                "enum": ["one-off", "monthly", "annual"],
+                                "type": "string"
+                              },
+                              "id": {
+                                "minLength": 1,
+                                "type": "string"
+                              },
+                              "name": {
+                                "type": "string"
+                              },
+                              "notes": {
+                                "type": ["string", "null"]
+                              },
+                              "source": {
+                                "enum": ["paye", "self-employed", "rental", "savings"],
+                                "type": "string"
+                              },
+                              "type": {
+                                "enum": ["income", "expense"],
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "type",
+                              "source",
+                              "category",
+                              "name",
+                              "amount",
+                              "frequency",
+                              "date",
+                              "endDate",
+                              "notes"
+                            ],
+                            "type": "object"
+                          },
+                          "type": "array"
+                        }
+                      },
+                      "required": [
+                        "baseline",
+                        "profileFacts",
+                        "netWorthBasis",
+                        "accounts",
+                        "accountDetails",
+                        "budgetEntries",
+                        "taxRecords"
+                      ],
+                      "type": "object"
+                    },
+                    "token": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "anonymizeInstitutions": {
+                          "type": "boolean"
+                        },
+                        "id": {
+                          "anyOf": [
+                            {
+                              "format": "uuid",
+                              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "scopes": {
+                          "items": {
+                            "type": "string"
+                          },
+                          "type": "array"
+                        }
+                      },
+                      "required": ["id", "scopes", "anonymizeInstitutions"],
+                      "type": "object"
+                    }
+                  },
+                  "required": ["token", "input"],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Success."
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`unauthorized`: missing or invalid credentials."
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`rate_limited`: too many requests. See the Retry-After header."
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`internal_error`: an unexpected failure. Quote the requestId."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`service_unavailable`: busy or temporarily unavailable. See the Retry-After header."
+          }
+        },
+        "security": [
+          {
+            "patAuth": []
           }
         ],
         "tags": ["mcp-tokens"]

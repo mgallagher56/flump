@@ -42,6 +42,7 @@ import {
   BankConnectionListResponse,
   BudgetEntryListResponse,
   BudgetEntryResponse,
+  ClientPolicyResponse,
   ConnectBankResponse,
   ContextPackResponse,
   CreateAccountResponse,
@@ -56,6 +57,7 @@ import {
   ImportBatchListResponse,
   ImportBatchResponse,
   ImportPreviewResponse,
+  McpInputResponse,
   McpTokenActivityResponse,
   McpTokenListResponse,
   PortfolioSnapshotResponse,
@@ -728,6 +730,19 @@ export const routes = {
       ownership: "none",
       group: "app",
     }),
+    /**
+     * The raw engine input for the token's owner, for the local (stdio) MCP server. Scope: a read
+     * scope. Limited by the MCP limiters, like `mcp.post`, not by the user rate-limit classes.
+     */
+    input: defineRoute({
+      id: "mcp.input",
+      method: "GET",
+      path: "mcp/input",
+      auth: "pat",
+      ownership: "user",
+      group: "mcp-tokens",
+      response: McpInputResponse,
+    }),
   },
   app: {
     hello: defineRoute({
@@ -755,6 +770,16 @@ export const routes = {
       ownership: "none",
       group: "app",
       response: ReadinessResponse,
+    }),
+    /** Minimum and recommended mobile client versions, read before sign-in (E12 B-A). */
+    clientPolicy: defineRoute({
+      id: "app.clientPolicy",
+      method: "GET",
+      path: "app/client-policy",
+      auth: "public",
+      ownership: "none",
+      group: "app",
+      response: ClientPolicyResponse,
     }),
   },
 } as const;

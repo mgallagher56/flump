@@ -22,3 +22,20 @@ export const ReadinessResponse = z.discriminatedUnion("status", [
   z.strictObject({ status: z.literal("unavailable") }),
 ]);
 export type ReadinessResponse = z.infer<typeof ReadinessResponse>;
+
+/** A dotted numeric version, for example `1.4.0`. `0.0.0` means no minimum. */
+export const ClientVersion = z.string().regex(/^\d{1,5}(\.\d{1,5}){0,2}$/);
+
+const PlatformClientPolicy = z.strictObject({
+  /** Clients below this must update before they can be used. */
+  minVersion: ClientVersion,
+  /** Clients below this are offered an update and keep working. */
+  recommendedVersion: ClientVersion,
+});
+
+/** GET /app/client-policy: the supported client versions per mobile platform. No auth. */
+export const ClientPolicyResponse = z.strictObject({
+  ios: PlatformClientPolicy,
+  android: PlatformClientPolicy,
+});
+export type ClientPolicyResponse = z.infer<typeof ClientPolicyResponse>;

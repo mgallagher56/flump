@@ -3,11 +3,13 @@ import {
   MAX_ACTIVITY_PAGE,
   McpTokenActivityQuery,
 } from "@flump/api-contract";
+import { hasScopes, RAW_INPUT_SCOPES } from "@flump/mcp";
 import {
   BadRequestException,
   Body,
   Controller,
   Delete,
+  ForbiddenException,
   Get,
   HttpCode,
   NotFoundException,
@@ -27,6 +29,7 @@ import { resolvePage, sendPage } from "../../contract/pagination";
 import { RateLimit } from "../../security/rate-limit.decorator";
 import { AgentAuditService, decodeActivityCursor } from "./agent-audit.service";
 import { McpService } from "./mcp.service";
+import { McpPatGuard, type PatAuthenticatedRequest } from "./mcp-pat.guard";
 import { McpTokenService } from "./mcp-token.service";
 
 @Controller()
@@ -56,6 +59,31 @@ export class McpController {
   @UseGuards(McpKillSwitchGuard)
   async handleMcpGet(@Req() req: Request, @Res() res: Response) {
     return this.mcpService.getHttpHandler().handleExpressRequest(req, res);
+  }
+
+  /**
+   * The raw engine input for the owner of the personal access token, for the local (stdio) MCP
+   * server. PAT only (McpPatGuard): the user is the token's owner and nothing in the request can
+   * name another one. Needs a read scope. An anonymised token gets the anonymised input. Every
+   * read, and every refusal for a missing scope, is one row in the token's activity.
+   */
+  @Get("mcp/input")
+  @HttpCode(200)
+  @UseGuards(McpPatGuard)
+  async getInput(@Req() req: PatAuthenticatedRequest, @Res({ passthrough: true }) res: Response) {
+    const token = req.mcpToken;
+    const userAgent = req.headers["user-agent"];
+    const caller = { token, ...(typeof userAgent === "string" ? { clientName: userAgent } : {}) };
+    res.setHeader("Cache-Control", "no-store");
+    if (!hasScopes(token.scopes, RAW_INPUT_SCOPES)) {
+      await this.mcpService.recordInputRead(caller, { outcome: "denied", startedAt: Date.now() });
+      throw new ForbiddenException({
+        statusCode: 403,
+        error: "insufficient_scope",
+        message: "This token cannot read data.",
+      });
+    }
+    return this.mcpService.getInput(caller);
   }
 
   /**

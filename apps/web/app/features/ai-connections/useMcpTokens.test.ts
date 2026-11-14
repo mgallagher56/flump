@@ -58,10 +58,116 @@ describe("useMcpTokens", () => {
     await expect(result.current.create("a", true, 90, false)).rejects.toThrow(TOKENS_UNAVAILABLE);
     apiFetch.mockRejectedValueOnce(new BackendError("client", "/mcp-tokens", 429));
     await expect(result.current.create("a", true, 90, false)).rejects.toThrow(RATE_LIMITED);
-    apiFetch.mockRejectedValueOnce(new BackendError("server", "/mcp-tokens", 500));
+    // A 5xx leaves the outcome unknown, so the list is read again (covered below).
+    apiFetch
+      .mockRejectedValueOnce(new BackendError("server", "/mcp-tokens", 500))
+      .mockResolvedValueOnce([]);
     await expect(result.current.create("a", true, 90, false)).rejects.toThrow(CREATE_FAILED);
     apiFetch.mockRejectedValueOnce(new BackendError("server", "/mcp-tokens/x", 500));
     await expect(result.current.revoke("x")).rejects.toThrow(REVOKE_FAILED);
+  });
+
+  describe("a create whose outcome is unknown", () => {
+    const listCalls = () => apiFetch.mock.calls.filter(([, o]) => o?.method === undefined).length;
+    const minted = { id: "t-unseen", name: "Claude", expiresAt: "2027-01-01T00:00:00.000Z" };
+
+    it.each([
+      ["a timeout or dropped connection", new BackendError("unavailable", "/mcp-tokens")],
+      ["a gateway 5xx", new BackendError("server", "/mcp-tokens", 504)],
+      ["a 2xx the client could not read", new BackendError("bad-response", "/mcp-tokens", 201)],
+      ["an error that is not from the backend", new TypeError("Failed to fetch")],
+    ])("reads the list again after %s, so a token made anyway is shown", async (_label, error) => {
+      apiFetch.mockResolvedValueOnce([]);
+      const { result } = renderHook(() => useMcpTokens());
+      await waitFor(() => expect(result.current.tokens).toEqual([]));
+
+      // The create fails for the browser, but the backend did mint the token.
+      apiFetch.mockRejectedValueOnce(error).mockResolvedValueOnce([minted]);
+      await act(async () => {
+        await expect(result.current.create("Claude", true, 90, false)).rejects.toThrow(
+          CREATE_FAILED,
+        );
+      });
+      await waitFor(() => expect(result.current.tokens).toEqual([{ ...minted, lastUsedAt: null }]));
+      expect(apiFetch).toHaveBeenLastCalledWith("/mcp-tokens", {
+        signal: expect.any(AbortSignal),
+        schema: McpTokenListResponse,
+      });
+      expect(listCalls()).toBe(2);
+    });
+
+    it.each([
+      ["401", new BackendError("unauthorised", "/mcp-tokens", 401)],
+      ["403", new BackendError("forbidden", "/mcp-tokens", 403)],
+      ["404", new BackendError("not-found", "/mcp-tokens", 404)],
+      ["422", new BackendError("client", "/mcp-tokens", 422)],
+      ["429", new BackendError("client", "/mcp-tokens", 429)],
+    ])("does not read the list again after a %s: nothing was made", async (_status, error) => {
+      apiFetch.mockResolvedValueOnce([]);
+      const { result } = renderHook(() => useMcpTokens());
+      await waitFor(() => expect(result.current.tokens).toEqual([]));
+      apiFetch.mockRejectedValueOnce(error);
+      await act(async () => {
+        await expect(result.current.create("Claude", true, 90, false)).rejects.toThrow();
+      });
+      expect(listCalls()).toBe(1);
+    });
+
+    it("keeps the list it had when the refresh fails too", async () => {
+      apiFetch.mockResolvedValueOnce([{ id: "t1" }]);
+      const { result } = renderHook(() => useMcpTokens());
+      await waitFor(() => expect(result.current.tokens).toHaveLength(1));
+      apiFetch
+        .mockRejectedValueOnce(new BackendError("unavailable", "/mcp-tokens"))
+        .mockRejectedValueOnce(new BackendError("unavailable", "/mcp-tokens"));
+      await act(async () => {
+        await expect(result.current.create("Claude", true, 90, false)).rejects.toThrow(
+          CREATE_FAILED,
+        );
+      });
+      await waitFor(() => expect(listCalls()).toBe(2));
+      expect(result.current.tokens).toEqual([{ id: "t1", expiresAt: null, lastUsedAt: null }]);
+    });
+
+    it("does not let a slow refresh hide a token created while it was in flight", async () => {
+      apiFetch.mockResolvedValueOnce([]);
+      const { result } = renderHook(() => useMcpTokens());
+      await waitFor(() => expect(result.current.tokens).toEqual([]));
+
+      // The first create fails with a 504; its refresh is slow and reads the list before the
+      // retry below, so its answer does not hold the retried token.
+      let finishStaleRead: (list: unknown[]) => void = () => undefined;
+      apiFetch
+        .mockRejectedValueOnce(new BackendError("server", "/mcp-tokens", 504))
+        .mockReturnValueOnce(new Promise((resolve) => (finishStaleRead = resolve)))
+        .mockResolvedValueOnce({ id: "t-retry", name: "Claude" })
+        .mockResolvedValueOnce([{ id: "t-retry" }, { id: "t-unseen" }]);
+      await act(async () => {
+        await expect(result.current.create("Claude", true, 90, false)).rejects.toThrow();
+      });
+      await act(async () => {
+        await result.current.create("Claude", true, 90, false);
+      });
+      expect(result.current.tokens?.map((t) => t.id)).toEqual(["t-retry"]);
+
+      await act(async () => finishStaleRead([]));
+      // The out-of-date answer is not shown; the list is read once more instead.
+      await waitFor(() =>
+        expect(result.current.tokens?.map((t) => t.id)).toEqual(["t-retry", "t-unseen"]),
+      );
+      expect(listCalls()).toBe(3);
+    });
+
+    it("does not refresh or set state after the card has gone", async () => {
+      apiFetch.mockResolvedValueOnce([]);
+      const { result, unmount } = renderHook(() => useMcpTokens());
+      await waitFor(() => expect(result.current.tokens).toEqual([]));
+      const { create } = result.current;
+      unmount();
+      apiFetch.mockRejectedValueOnce(new BackendError("unavailable", "/mcp-tokens"));
+      await expect(create("Claude", true, 90, false)).rejects.toThrow(CREATE_FAILED);
+      expect(listCalls()).toBe(1);
+    });
   });
 
   it("revokes and fetches the context pack", async () => {

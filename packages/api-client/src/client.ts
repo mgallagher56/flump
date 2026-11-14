@@ -66,8 +66,9 @@ export interface ApiClient {
 }
 
 /**
- * Not in the contract manifest yet (the mobile plan, E12), so it has no contract schema: the
- * body is checked by `policyFrom` field by field.
+ * `app.clientPolicy` in the contract manifest (`ClientPolicyResponse`, one policy per platform).
+ * This package does not depend on the contract, and the version gate must fail open, so the body
+ * is read by `policyFrom` field by field: the platform's entry, or a flat policy.
  */
 const POLICY_PATH = "/app/client-policy";
 

@@ -33,8 +33,13 @@ export const ROUTE_MATRIX: Readonly<Record<string, MatrixRow>> = {
   "GET /": { status: "public", reason: "app hello route" },
   "GET /health": { status: "public", reason: "liveness probe" },
   "GET /health/ready": { status: "public", reason: "readiness probe" },
+  "GET /app/client-policy": {
+    status: "public",
+    reason: "mobile client version policy (no user data)",
+  },
   "GET /mcp": mcpTransport,
   "POST /mcp": mcpTransport,
+  "GET /mcp/input": mcpTransport,
 
   // Finance controller.
   "GET /accounts": finance,
@@ -108,4 +113,7 @@ export const UNGUARDED_ALLOWLIST: readonly string[] = [
   "GET /health/ready",
   "GET /mcp",
   "POST /mcp",
+  // PAT only, through McpPatGuard (the /mcp transport's own authentication).
+  "GET /mcp/input",
+  "GET /app/client-policy",
 ];
