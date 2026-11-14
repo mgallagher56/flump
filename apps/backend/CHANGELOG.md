@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.34.0](https://github.com/mgallagher56/flump/compare/flump/backend-v1.33.0...flump/backend-v1.34.0) (2026-11-14)
+
+
+### Features ✨
+
+* **backend,mcp:** BE-15 privacy and config completeness, MCP token tightening ([216ae69](https://github.com/mgallagher56/flump/commit/216ae695c1680b9d1b913750cec0b6257677a3cf))
+
+
+### Bug Fixes 🪲
+
+* **backend:** BE-15 CI fixes: empty RAILWAY variable is not Railway, staging runbook row, no literals Semgrep reads as usernames ([1faa71e](https://github.com/mgallagher56/flump/commit/1faa71edf78c0025eeca91050bcab62490118114))
+* **backend:** BE-15 migration takes the next free timestamp after the rebase ([54a9e26](https://github.com/mgallagher56/flump/commit/54a9e26faf3b27c33ead015b1a3022e53207d2da))
+* **backend:** rate-limit key derivation never refuses; production-configuration integration test ([92c6f15](https://github.com/mgallagher56/flump/commit/92c6f15480e5d46ecc1ea5b887ffc971a67bb317))
+
 ## [1.33.0](https://github.com/mgallagher56/flump/compare/flump/backend-v1.32.2...flump/backend-v1.33.0) (2026-11-14)
 
 

@@ -1,5 +1,27 @@
 # Changelog
 
+## [1.40.0](https://github.com/mgallagher56/flump/compare/flump/web-v1.39.0...flump/web-v1.40.0) (2026-11-14)
+
+
+### Features ✨
+
+* **ui:** compact hero, one rule for dialogs and sheets, money grouped while typing ([812384f](https://github.com/mgallagher56/flump/commit/812384f91c164809f544c8712218f40df40e337d))
+
+
+### Bug Fixes 🪲
+
+* **chrome:** R3 phone nav: no stale current tab after leaving Budget; drawer footer rows marked current ([521842d](https://github.com/mgallagher56/flump/commit/521842d9d26b382b8800a1f14e0d4ee995eabe9b))
+* round 3 final re-score fixes ([21cfe45](https://github.com/mgallagher56/flump/commit/21cfe458e623989f0659a74627b77dbb18ab4f20))
+* round 3 review findings ([997f33e](https://github.com/mgallagher56/flump/commit/997f33ecaa86f5e8c832c71b9c40999a56c526c3))
+* Semgrep regex findings use string checks; E2E reads the named check-in field ([7512081](https://github.com/mgallagher56/flump/commit/7512081ad56aae41a9f7a9ff2e083e170fcb55fa))
+* **web:** round 3 re-score fixes for the check-in, dialogs, history and account detail ([bea1fea](https://github.com/mgallagher56/flump/commit/bea1fea193a93bb23fa28bb6a21f2f7f8158e857))
+
+
+### Tests 🧪
+
+* **web:** dialog snapshots after rebase ([768a82a](https://github.com/mgallagher56/flump/commit/768a82ae2014592119ea3d566bd5c1cedffb8a35))
+* **web:** dialog snapshots for the 94dvh phone height ([c2da65b](https://github.com/mgallagher56/flump/commit/c2da65b596704cd2a4d7e4a1d4b726bc2643fe6d))
+
 ## [1.39.0](https://github.com/mgallagher56/flump/compare/flump/web-v1.38.0...flump/web-v1.39.0) (2026-11-14)
 
 
