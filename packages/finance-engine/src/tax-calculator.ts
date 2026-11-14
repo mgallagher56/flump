@@ -553,15 +553,30 @@ export function calculateUKTax(
   const totalGrossIncome = nonSavingsGross + netTaxableSavingsInterest + dividendIncomeGross;
 
   // Personal Allowance with Tapering above £100,000
-  let personalAllowance = config.personalAllowance;
-  if (totalGrossIncome > 100000) {
-    const taper = Math.floor((totalGrossIncome - 100000) / 2);
-    personalAllowance = Math.max(0, config.personalAllowance - taper);
-  }
+  const taperedAllowance = (income: number): number =>
+    income > 100000
+      ? Math.max(0, config.personalAllowance - Math.floor((income - 100000) / 2))
+      : config.personalAllowance;
+  const personalAllowance = taperedAllowance(totalGrossIncome);
 
-  // Baseline PAYE tax (assumed deducted under PAYE)
-  const payeTaxable = Math.max(0, effectivePayeSalary - personalAllowance);
+  // Tax the employer deducts under PAYE: the employer only sees the salary, so it is taxed with
+  // the allowance tapered by the salary alone. Any further taper from other income is part of the
+  // tax still to pay, not of the PAYE already paid.
+  const payeTaxable = Math.max(0, effectivePayeSalary - taperedAllowance(effectivePayeSalary));
   const payeTaxDue = calculateIncomeTaxForTaxable(payeTaxable, ewni);
+
+  // The allowance is set against non-savings income first, then savings, then dividends.
+  const allowanceOnNonSavings = Math.min(personalAllowance, nonSavingsGross);
+  const allowanceOnSavings = Math.min(
+    personalAllowance - allowanceOnNonSavings,
+    netTaxableSavingsInterest,
+  );
+  const allowanceOnDividends = Math.min(
+    personalAllowance - allowanceOnNonSavings - allowanceOnSavings,
+    dividendIncomeGross,
+  );
+  const savingsAfterAllowance = netTaxableSavingsInterest - allowanceOnSavings;
+  const dividendsAfterAllowance = dividendIncomeGross - allowanceOnDividends;
 
   // Personal Savings Allowance (PSA)
   // Basic rate taxpayers: £1,000; Higher rate: £500; Additional rate: £0
@@ -578,11 +593,19 @@ export function calculateUKTax(
   // Dividend Allowance (per-year table)
   const dividendAllowance = yearRules.dividends.allowance;
 
-  const taxableSavingsInterest = Math.max(0, netTaxableSavingsInterest - personalSavingsAllowance);
-  const taxableDividends = Math.max(0, dividendIncomeGross - dividendAllowance);
-
   // Tax on non-savings + non-dividends
   const nonSavingsTaxable = Math.max(0, nonSavingsGross - personalAllowance);
+
+  // Starting rate for savings (0%): 5,000 less non-savings income above the allowance. It and the
+  // PSA are 0% bands that still occupy band space, so the savings left over stack above them.
+  const startingRateUsed = Math.min(
+    Math.max(0, yearRules.savings.startingRateBand - nonSavingsTaxable),
+    savingsAfterAllowance,
+  );
+  const psaUsed = Math.min(personalSavingsAllowance, savingsAfterAllowance - startingRateUsed);
+  const taxableSavingsInterest = savingsAfterAllowance - startingRateUsed - psaUsed;
+  const dividendAllowanceUsed = Math.min(dividendsAfterAllowance, dividendAllowance);
+  const taxableDividends = dividendsAfterAllowance - dividendAllowanceUsed;
   const nonSavingsIncomeTaxBeforeCredit = calculateIncomeTaxForTaxable(nonSavingsTaxable, ewni);
 
   // Section 24 Rental Property Finance Tax Credit
@@ -622,19 +645,22 @@ export function calculateUKTax(
   // Savings tax (stacked above non-savings income)
   let savingsTaxDue = 0;
   if (taxableSavingsInterest > 0) {
-    const totalWithSavings = nonSavingsTaxable + taxableSavingsInterest;
-    const taxWithSavings = calculateIncomeTaxForTaxable(totalWithSavings, ewni);
-    savingsTaxDue = Math.max(0, taxWithSavings - nonSavingsIncomeTaxBeforeCredit);
+    const zeroRatedTop = nonSavingsTaxable + startingRateUsed + psaUsed;
+    savingsTaxDue = Math.max(
+      0,
+      calculateIncomeTaxForTaxable(zeroRatedTop + taxableSavingsInterest, ewni) -
+        calculateIncomeTaxForTaxable(zeroRatedTop, ewni),
+    );
   }
 
   // Dividend tax (stacked at top of all income, taxed at the year's dividend rates)
   let dividendTaxDue = 0;
   if (taxableDividends > 0) {
-    const priorTaxable = nonSavingsTaxable + taxableSavingsInterest;
+    const priorTaxable = nonSavingsTaxable + savingsAfterAllowance;
     dividendTaxDue = calculateDividendTaxForStack(
       priorTaxable,
       taxableDividends,
-      Math.min(dividendIncomeGross, dividendAllowance),
+      dividendAllowanceUsed,
       ewni,
       yearRules.dividends,
     );
