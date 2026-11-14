@@ -28,9 +28,10 @@ const CASES: {
   {
     name: "MortgageVsIsaCalculator",
     element: <MortgageVsIsaCalculator />,
-    control: () => screen.getByLabelText("Mortgage balance slider"),
+    control: () => screen.getByLabelText("Mortgage balance range slider"),
     value: "300000",
-    expected: /Overpaying would save an estimated £[\d,]+ interest; the ISA would grow to £[\d,]+/,
+    expected:
+      /^Illustration: overpaying, estimated interest saved £38,670\. ISA, estimated balance £183,388\.$/,
   },
   {
     name: "OverdraftCostCalculator",
@@ -49,9 +50,9 @@ const CASES: {
   {
     name: "StudentLoanCalculator",
     element: <StudentLoanCalculator />,
-    control: () => screen.getByLabelText("Gross annual salary (£)"),
+    control: () => screen.getByLabelText("Yearly salary before tax range slider"),
     value: "50000",
-    expected: /Repayment £[\d,]+ a month, £[\d,]+ a year/,
+    expected: /^Illustration: estimated repayment £155 a month, £1,855 a year$/,
   },
   {
     name: "TaxTrapCalculator",
