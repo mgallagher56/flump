@@ -104,8 +104,10 @@ describe("BudgetEditor", () => {
     expect(onUpdate).toHaveBeenCalledWith("b-3", { isEssential: true });
   });
 
-  it("adds a row with the wizard's defaults and clears the add row", async () => {
+  it("opens the add row from its quiet button, adds with the wizard's defaults, then closes it", async () => {
     const { onAdd } = setup();
+    expect(screen.queryByTestId("budget-editor-new-name-expenses")).toBeNull();
+    fireEvent.click(screen.getByTestId("budget-editor-open-add-expenses"));
     const add = screen.getByTestId("budget-editor-add-expenses") as HTMLButtonElement;
     expect(add.disabled).toBe(true);
     fireEvent.change(screen.getByTestId("budget-editor-new-name-expenses"), {
@@ -127,15 +129,13 @@ describe("BudgetEditor", () => {
         }),
       ),
     );
-    await waitFor(() =>
-      expect(
-        (screen.getByTestId("budget-editor-new-name-expenses") as HTMLInputElement).value,
-      ).toBe(""),
-    );
+    await waitFor(() => expect(screen.queryByTestId("budget-editor-new-name-expenses")).toBeNull());
+    expect(screen.getByTestId("budget-editor-open-add-expenses")).toBeDefined();
   });
 
   it("adds income as income, and other spending as essential", async () => {
     const { onAdd } = setup();
+    fireEvent.click(screen.getByTestId("budget-editor-open-add-income"));
     fireEvent.change(screen.getByTestId("budget-editor-new-name-income"), {
       target: { value: "Child Benefit" },
     });
@@ -145,6 +145,7 @@ describe("BudgetEditor", () => {
         expect.objectContaining({ category: "income", isIncome: true, amount: 0 }),
       ),
     );
+    fireEvent.click(screen.getByTestId("budget-editor-open-add-bills"));
     fireEvent.change(screen.getByTestId("budget-editor-new-name-bills"), {
       target: { value: "Water" },
     });
@@ -159,6 +160,7 @@ describe("BudgetEditor", () => {
   it("keeps the typed add row when adding fails", async () => {
     const onAdd = vi.fn().mockRejectedValue(new Error("no"));
     setup({ onAdd });
+    fireEvent.click(screen.getByTestId("budget-editor-open-add-bills"));
     fireEvent.change(screen.getByTestId("budget-editor-new-name-bills"), {
       target: { value: "Water" },
     });
@@ -199,6 +201,7 @@ describe("BudgetEditor", () => {
     });
     expect(await screen.findByText("Saved")).toBeDefined();
 
+    fireEvent.click(screen.getByTestId("budget-editor-open-add-bills"));
     fireEvent.change(screen.getByTestId("budget-editor-new-name-bills"), {
       target: { value: "Water" },
     });

@@ -141,7 +141,8 @@ const EntryRow: FC<EntryRowProps> = ({ entry, onSave, onRemove }) => {
             }
           />
         </div>
-        {isIncomeEntry(entry) ? (
+        {/* Savings count as savings whatever the flag, so only spending rows offer it. */}
+        {isIncomeEntry(entry) || entry.category === "savings" ? (
           <span />
         ) : (
           <Switch
@@ -175,8 +176,13 @@ interface AddEntryRowProps {
   onAdd: (name: string, amount: number) => Promise<boolean>;
 }
 
-/** The inline add row that closes each section. */
+/**
+ * The add row that closes each section: a quiet "Add to …" button that opens a name and amount
+ * row in place, so the editor does not show an empty form under every section.
+ */
 const AddEntryRow: FC<AddEntryRowProps> = ({ category, label, onAdd }) => {
+  const [open, setOpen] = useState(false);
+  const nameRef = useRef<HTMLInputElement>(null);
   const [name, setName] = useState("");
   const [amount, setAmount] = useState<number | null>(null);
   const [adding, setAdding] = useState(false);
@@ -192,12 +198,35 @@ const AddEntryRow: FC<AddEntryRowProps> = ({ category, label, onAdd }) => {
     if (added) {
       setName("");
       setAmount(null);
+      setOpen(false);
     }
   };
+
+  useEffect(() => {
+    if (open) nameRef.current?.focus();
+  }, [open]);
+
+  if (!open) {
+    return (
+      <div>
+        <Button
+          data-testid={`budget-editor-open-add-${category}`}
+          id={`budget-editor-open-add-${category}`}
+          size="sm"
+          variant="ghost"
+          onClick={() => setOpen(true)}
+        >
+          <Icon icon={Plus} size="sm" />
+          Add to {label.toLowerCase()}
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <form className={addRow()} onSubmit={submit}>
       <TextInput
+        ref={nameRef}
         aria-label={`New entry name in ${label}`}
         data-testid={`budget-editor-new-name-${category}`}
         id={`budget-editor-new-name-${category}`}
@@ -227,6 +256,17 @@ const AddEntryRow: FC<AddEntryRowProps> = ({ category, label, onAdd }) => {
       >
         <Icon icon={Plus} size="sm" />
         {adding ? "Adding…" : "Add"}
+      </Button>
+      <Button
+        size="sm"
+        variant="ghost"
+        onClick={() => {
+          setOpen(false);
+          setName("");
+          setAmount(null);
+        }}
+      >
+        Cancel
       </Button>
     </form>
   );

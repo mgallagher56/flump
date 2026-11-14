@@ -59,12 +59,13 @@ export const Default: Story = {
     const headings = scoped.getAllByRole("heading", { level: 3 });
     await expect(headings[0]).toHaveTextContent("Money in");
 
-    // Adding a bill saves it and clears the add row.
+    // Adding a bill opens the add row, saves it and closes the row again.
+    await userEvent.click(scoped.getByRole("button", { name: "Add to bills" }));
     const name = scoped.getByLabelText("New entry name in Bills");
     await userEvent.type(name, "Water");
     await userEvent.click(scoped.getByRole("button", { name: "Add to Bills" }));
     await waitFor(() => expect(args.onAdd).toHaveBeenCalled());
-    await waitFor(() => expect(name).toHaveValue(""));
+    await waitFor(() => expect(scoped.queryByLabelText("New entry name in Bills")).toBeNull());
   },
 };
 
