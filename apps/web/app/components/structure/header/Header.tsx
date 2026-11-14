@@ -90,7 +90,13 @@ const Header: FC<HeaderProps> = (): ReactElement<FC> => {
         items={items}
         // Never decorative: from 768 to 1023 the logo is the only way home (the inline "Home" link
         // shows from 1024), so it stays a real link and marks the home page as current.
-        logo={<HomeLogo current={activeKey === "home"} renderLink={renderHomeLogoLink} />}
+        logo={
+          <HomeLogo
+            current={activeKey === "home" && !!user}
+            markBelowWideOnly
+            renderLink={renderHomeLogoLink}
+          />
+        }
         menuControls="mobile-nav-drawer"
         menuExpanded={drawerOpen}
         menuLabel="Open navigation menu"
