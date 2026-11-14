@@ -43,8 +43,17 @@ const AccountDetailContainer: FC = () => {
   const current = summary.balance ?? 0;
   const lastUpdated = lastUpdatedLabel(accountDetails as never[]);
   // When this month is not recorded, say which month the history last has (R2-5), not a change.
+  const now = new Date();
+  const currentSource = (
+    accountDetails as { month?: number; year?: number; source?: string }[]
+  ).find(
+    (d) => Number(d.month) === now.getMonth() + 1 && Number(d.year) === now.getFullYear(),
+  )?.source;
+  // A calculated figure says so wherever it appears (R2-5 check-in).
   const subline = summary.currentRecorded
-    ? changeLine(summary.changePercent, summary.againstLabel)
+    ? currentSource === "calculated"
+      ? `Calculated for ${summary.currentLabel}`
+      : changeLine(summary.changePercent, summary.againstLabel)
     : lastUpdated
       ? `Last updated ${lastUpdated}`
       : "No monthly balances recorded yet";

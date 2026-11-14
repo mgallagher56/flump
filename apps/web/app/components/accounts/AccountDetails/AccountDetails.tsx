@@ -29,6 +29,7 @@ import {
   panel,
   section,
   sectionTitle,
+  sourceTag,
 } from "./AccountDetails.styles";
 
 type DetailsTab = "chart" | "ledger";
@@ -46,7 +47,13 @@ interface LedgerRow {
   label: string;
   balance: number;
   change: number | null;
+  /** "Calculated" or "No change" from the check-in (R2-5); null for a typed figure. */
+  sourceLabel: string | null;
 }
+
+/** How a month's figure was given, when it was not typed: shown wherever the figure appears. */
+export const sourceLabel = (source: unknown): string | null =>
+  source === "calculated" ? "Calculated" : source === "confirmed" ? "No change" : null;
 
 interface YearRow {
   year: number;
@@ -66,6 +73,7 @@ const AccountDetails: FC = () => {
         month: Number(d.month),
         year: Number(d.year),
         value: toDisplayBalance(account?.type, Number(d.value)),
+        source: d.source as unknown,
       }))
       .sort((a, b) => (a.year !== b.year ? a.year - b.year : a.month - b.month));
 
@@ -74,6 +82,7 @@ const AccountDetails: FC = () => {
       label: monthName(detail.month, detail.year),
       balance: detail.value,
       change: index > 0 ? detail.value - sorted[index - 1].value : null,
+      sourceLabel: sourceLabel(detail.source),
     }));
 
     const years: YearRow[] = [];
@@ -125,6 +134,7 @@ const AccountDetails: FC = () => {
             </Td>
             <Td label="Balance" numeric>
               <Money size="sm" value={row.balance} />
+              {row.sourceLabel ? <span className={sourceTag()}>{row.sourceLabel}</span> : null}
             </Td>
             <Td label="Change on last month" numeric>
               {row.change === null ? (
