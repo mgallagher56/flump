@@ -6,6 +6,7 @@ import { assertSafeTestDatabase } from "../testing/assertSafeTestDatabase";
 import { resolveDbTestMode } from "../testing/dbTestMode";
 import { discoverMigrations, type MigrationClass } from "../testing/discoverMigrations";
 import { AccountDetailsUserMonthIndex1794357300000 } from "./AccountDetailsUserMonthIndex1794357300000";
+import { AddAccountDeletionTombstones1794622492000 } from "./AddAccountDeletionTombstones1794622492000";
 import { AddAccountStudentLoanPlanAndCurrencyDefault1794355800000 } from "./AddAccountStudentLoanPlanAndCurrencyDefault1794355800000";
 import { AddMortgageTermColumns1794355600000 } from "./AddMortgageTermColumns1794355600000";
 import { AddProfileFacts1794355723000 } from "./AddProfileFacts1794355723000";
@@ -41,6 +42,7 @@ let MIGRATIONS: MigrationClass[] = [];
 const MIGRATION_ONLY_TABLES = "'migrations', 'liability_sign_backfill'";
 
 const ENTITY_TABLES = [
+  "account_deletion_tombstones",
   "account_details",
   "accounts",
   "agent_audit_events",
@@ -165,7 +167,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
     }
   };
 
-  it("creates all eleven tables on an empty database", async () => {
+  it("creates all twelve tables on an empty database", async () => {
     await ds.runMigrations();
     expect(await tables()).toEqual(ENTITY_TABLES);
   });
@@ -1324,6 +1326,41 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
       await undoThrough(MIGRATION);
       await ds.query("INSERT INTO user_profiles (user_id) VALUES ('reverted')");
       expect(await flag("reverted")).toBe(true);
+    });
+  });
+
+  describe("AddAccountDeletionTombstones1794622492000 (BE-04)", () => {
+    it("creates the tombstone table with a unique subject hash; down() drops it and up() runs again", async () => {
+      await ds.runMigrations();
+      await ds.query(
+        `INSERT INTO account_deletion_tombstones (subject_hash, deleted_at, expires_at)
+         VALUES ('abc', now(), now() + interval '24 months')`,
+      );
+      await expect(
+        ds.query(
+          `INSERT INTO account_deletion_tombstones (subject_hash, deleted_at, expires_at)
+           VALUES ('abc', now(), now())`,
+        ),
+      ).rejects.toThrow(/UQ_account_deletion_tombstones_subject_hash/);
+      const cols: { column_name: string }[] = await ds.query(
+        "SELECT column_name FROM information_schema.columns WHERE table_name = 'account_deletion_tombstones' ORDER BY column_name",
+      );
+      // No user id column: the table holds a keyed hash only.
+      expect(cols.map((c) => c.column_name)).toEqual([
+        "deleted_at",
+        "expires_at",
+        "id",
+        "identity_deleted_at",
+        "subject_hash",
+      ]);
+
+      await runMigrationDown(new AddAccountDeletionTombstones1794622492000());
+      expect(await tables()).not.toContain("account_deletion_tombstones");
+      await ds.query(
+        `DELETE FROM migrations WHERE name = 'AddAccountDeletionTombstones1794622492000'`,
+      );
+      await ds.runMigrations();
+      expect(await tables()).toEqual(ENTITY_TABLES);
     });
   });
 });
