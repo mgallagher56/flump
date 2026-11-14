@@ -155,6 +155,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
           import_batches: 1,
           mcp_tokens_closed: 2,
           bank_oauth_states: 1,
+          idempotency_keys: 1,
           account_deletion_tombstones: 1,
           liability_sign_backfill: 1,
         },
