@@ -456,6 +456,8 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("user data (real Post
 
   it("sets the statement and idle-in-transaction timeouts inside the export transaction only", async () => {
     let seen: { statement_timeout: string; idle: string } | undefined;
+    // The session default comes from the pool config (BE-02), so compare with it, not with "0".
+    const [before] = await ds.query("SELECT current_setting('statement_timeout') AS t");
     const original = ds.transaction.bind(ds);
     const spy = vi.spyOn(ds, "transaction").mockImplementation(((
       level: never,
@@ -473,7 +475,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("user data (real Post
     spy.mockRestore();
     expect(seen).toEqual({ statement_timeout: "30s", idle: "1min" });
     const [after] = await ds.query("SELECT current_setting('statement_timeout') AS t");
-    expect(after.t).toBe("0");
+    expect(after.t).toBe(before.t);
   });
 
   it("exports an empty document (profile null) for a user with no data", async () => {

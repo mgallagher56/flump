@@ -38,6 +38,11 @@ export const JUDGEMENT_ALLOW_LIST: ReadonlyArray<{ path: string; reason: string 
     reason: "the danger item variant marks a destructive menu action",
   },
   {
+    path: "apps/web/app/features/settings/components/DeleteAccountSection/",
+    reason:
+      "the account deletion section marks a permanent delete and its errors (UX-GUIDELINES D1)",
+  },
+  {
     path: "packages/ui/src/patterns/ConfirmDialog/",
     reason: "confirms a permanent delete (UX-GUIDELINES D1)",
   },

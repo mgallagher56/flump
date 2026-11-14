@@ -542,7 +542,7 @@ export class UserProfileService implements ProfileLifecycle {
       throw accountDeletedException();
     }
     // Repositories by entity: the transaction's when there is a DataSource, else the injected ones.
-    const injected = new Map<EntityTarget<ObjectLiteral>, Repository<any> | undefined>([
+    const injected = new Map<EntityTarget<ObjectLiteral>, Repository<ObjectLiteral> | undefined>([
       [Account, this.accountRepository],
       [AccountDetail, this.accountDetailRepository],
       [Transaction, this.transactionRepository],
@@ -559,7 +559,7 @@ export class UserProfileService implements ProfileLifecycle {
     await this.revokeBankConsent(userId, this.bankConnectionRepository);
 
     const performReset = async (
-      repoFor: (entity: EntityTarget<ObjectLiteral>) => Repository<any> | undefined,
+      repoFor: (entity: EntityTarget<ObjectLiteral>) => Repository<ObjectLiteral> | undefined,
     ) => {
       // Rows removed per table, for the audit event. `affected` is a count, never a value.
       const removed = (result: { affected?: number | null } | undefined): number =>
@@ -573,7 +573,9 @@ export class UserProfileService implements ProfileLifecycle {
         if (t.entity === AccountDetail && repo) {
           // Belt and braces: history rows keyed to the user's accounts, whatever their user_id.
           const accounts: Array<{ id: string }> =
-            (await repoFor(Account)?.find({ where: { userId }, select: { id: true } })) ?? [];
+            ((await repoFor(Account)?.find({ where: { userId }, select: { id: true } })) as
+              | Array<{ id: string }>
+              | undefined) ?? [];
           let n = removed(await repo.delete({ userId }));
           if (accounts.length > 0) {
             n += removed(await repo.delete({ accountId: In(accounts.map((a) => a.id)) }));
