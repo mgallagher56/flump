@@ -4,6 +4,7 @@ import { Account } from "../entities/account.entity";
 import { AccountDetail } from "../entities/account-detail.entity";
 import { AgentAuditEvent } from "../entities/agent-audit-event.entity";
 import { BankConnection } from "../entities/bank-connection.entity";
+import { BankOAuthState } from "../entities/bank-oauth-state.entity";
 import { BudgetEntry } from "../entities/budget-entry.entity";
 import { ImportBatch } from "../entities/import-batch.entity";
 import { McpToken } from "../entities/mcp-token.entity";
@@ -194,6 +195,7 @@ export const USER_DATA_REGISTRY: readonly UserDataTable[] = [
         userId: USER_ID_IN_ENVELOPE,
         accessToken: "secret: a bank credential, never exported",
         refreshToken: "secret: a bank credential, never exported",
+        syncStartedAt: "operational: the sync lease, cleared when each sync ends",
       },
       orderBy: ["id"],
       batchSize: 500,
@@ -201,6 +203,27 @@ export const USER_DATA_REGISTRY: readonly UserDataTable[] = [
     reset: {
       kind: "financial-clear",
       reason: "bank links carry credentials to financial data; consent is revoked first",
+    },
+  }),
+  table({
+    entity: BankOAuthState,
+    key: "bankOAuthStates",
+    deleteOnErasure: true,
+    export: {
+      shape: "rows",
+      columns: ["id", "institutionId", "expiresAt", "createdAt"],
+      excluded: {
+        userId: USER_ID_IN_ENVELOPE,
+        stateHash: "secret: identifies a pending bank consent, never exported",
+        codeVerifier: "secret: the PKCE verifier for a pending bank consent, never exported",
+        redirectUri: "server configuration, not the user's data",
+      },
+      orderBy: ["id"],
+      batchSize: 500,
+    },
+    reset: {
+      kind: "revoke",
+      reason: "a pending bank consent could link a bank after the reset; it is cancelled",
     },
   }),
   table({

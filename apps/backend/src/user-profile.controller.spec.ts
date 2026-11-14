@@ -207,6 +207,7 @@ describe("UserProfileController", () => {
         transactions: 5,
         accounts: 1,
         bankConnections: 1,
+        bankOAuthStates: 0,
         budgetEntries: 3,
         taxRecords: 4,
         mcpTokens: 0,

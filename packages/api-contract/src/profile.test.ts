@@ -72,6 +72,7 @@ describe("AccountExportDocument (BE-04)", () => {
     accountDetails: [],
     transactions: [],
     bankConnections: [],
+    bankOAuthStates: [],
     budgetEntries: [],
     taxRecords: [],
     snapshotCheckins: [],

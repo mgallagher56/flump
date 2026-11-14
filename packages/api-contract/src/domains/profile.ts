@@ -323,6 +323,17 @@ export const AccountExportBankConnection = z.strictObject({
   updatedAt: ExportTimestamp,
 });
 
+/**
+ * `bankOAuthStates`: bank consent redirects started in the last ten minutes. Never the state, its
+ * hash or the PKCE verifier.
+ */
+export const AccountExportBankOAuthState = z.strictObject({
+  id: Uuid,
+  institutionId: z.string(),
+  expiresAt: ExportTimestamp,
+  createdAt: ExportTimestamp,
+});
+
 /** `budgetEntries`: income and outgoings. */
 export const AccountExportBudgetEntry = z.strictObject({
   id: Uuid,
@@ -420,6 +431,7 @@ export const AccountExportDocument = z.strictObject({
   accountDetails: z.array(AccountExportAccountDetail),
   transactions: z.array(AccountExportTransaction),
   bankConnections: z.array(AccountExportBankConnection),
+  bankOAuthStates: z.array(AccountExportBankOAuthState),
   budgetEntries: z.array(AccountExportBudgetEntry),
   taxRecords: z.array(AccountExportTaxRecord),
   snapshotCheckins: z.array(AccountExportSnapshotCheckin),
@@ -445,6 +457,7 @@ export const ACCOUNT_EXPORT_SECTIONS = {
   accountDetails: AccountExportAccountDetail,
   transactions: AccountExportTransaction,
   bankConnections: AccountExportBankConnection,
+  bankOAuthStates: AccountExportBankOAuthState,
   budgetEntries: AccountExportBudgetEntry,
   taxRecords: AccountExportTaxRecord,
   snapshotCheckins: AccountExportSnapshotCheckin,

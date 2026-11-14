@@ -15,6 +15,7 @@ describe("UserProfileService (Deep Module)", () => {
   let mockCheckinRepo: any;
   let mockImportRepo: any;
   let mockMcpTokenRepo: any;
+  let mockBankOAuthStateRepo: any;
   let identityAdapter: InMemoryIdentityAdapter;
   let mockDataSource: any;
 
@@ -52,6 +53,9 @@ describe("UserProfileService (Deep Module)", () => {
     mockMcpTokenRepo = {
       delete: vi.fn().mockResolvedValue({ affected: 2 }),
     };
+    mockBankOAuthStateRepo = {
+      delete: vi.fn().mockResolvedValue({ affected: 0 }),
+    };
     identityAdapter = new InMemoryIdentityAdapter();
     mockDataSource = {
       transaction: vi.fn(async (cb) => {
@@ -67,6 +71,7 @@ describe("UserProfileService (Deep Module)", () => {
             if (entityClass.name === "SnapshotCheckin") return mockCheckinRepo;
             if (entityClass.name === "ImportBatch") return mockImportRepo;
             if (entityClass.name === "McpToken") return mockMcpTokenRepo;
+            if (entityClass.name === "BankOAuthState") return mockBankOAuthStateRepo;
             return {};
           },
         };
