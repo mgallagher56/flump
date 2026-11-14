@@ -49,7 +49,7 @@ export const BudgetWidget: FC<BudgetWidgetProps> = ({ data }) => {
       }
       icon={WIDGET_ICONS.budget}
       id="budget"
-      label="Going out each month"
+      label="Spending each month"
       line={
         budgetKnown
           ? "Bills and living costs in your budget."

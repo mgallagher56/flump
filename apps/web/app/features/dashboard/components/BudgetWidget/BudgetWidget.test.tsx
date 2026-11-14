@@ -15,7 +15,7 @@ const renderWidget = (data: Parameters<typeof BudgetWidget>[0]["data"]) =>
 describe("BudgetWidget", () => {
   it("shows spending each month as its one figure", () => {
     renderWidget({ budgetKnown: true, monthlyIncome: 3000, monthlyExpenses: 2150 });
-    expect(screen.getByText("Going out each month")).toBeTruthy();
+    expect(screen.getByText("Spending each month")).toBeTruthy();
     expect(screen.getByText("£2,150")).toBeTruthy();
     expect(screen.getAllByRole("link")).toHaveLength(1);
   });
