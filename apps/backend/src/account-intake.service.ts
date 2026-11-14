@@ -481,19 +481,12 @@ export class AccountIntakeService implements IAccountIntake {
    * Deletes one of the caller's accounts with its history and transactions, in one transaction
    * (E1 D-06, audit M2). The ownership check runs first, so another user's id deletes nothing and
    * is a 404. The foreign keys cascade (AccountIdForeignKeys1794358200000); the explicit child
-   * deletes keep the order plain and hold for test doubles without a database.
+   * deletes keep the order plain.
    */
   async deleteAccount(userId: string, id: string): Promise<DeleteAccountResponse> {
     const manager = this.accountRepository.manager;
     if (!manager?.transaction) {
-      if (process.env.NODE_ENV === "production") {
-        throw new Error("Account deletes need a TypeORM manager to run transactionally");
-      }
-      return deleteOwnedAccount(
-        { accounts: this.accountRepository, details: this.accountDetailRepository },
-        userId,
-        id,
-      );
+      throw new Error("Account deletes need a TypeORM manager to run transactionally");
     }
     return manager.transaction((em) =>
       deleteOwnedAccount(

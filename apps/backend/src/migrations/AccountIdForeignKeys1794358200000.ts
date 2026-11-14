@@ -53,6 +53,12 @@ export class AccountIdForeignKeys1794358200000 implements MigrationInterface {
     await takeMigrationLock(queryRunner);
     await queryRunner.query("SET LOCAL lock_timeout = '10s'");
 
+    // Take every lock up front, in one order, so the later DELETEs and ALTERs never upgrade a
+    // weaker lock (which could deadlock against a concurrent writer). ADD FOREIGN KEY takes
+    // SHARE ROW EXCLUSIVE on the referenced table.
+    await queryRunner.query("LOCK TABLE accounts IN SHARE ROW EXCLUSIVE MODE");
+    await queryRunner.query("LOCK TABLE account_details, transactions IN ACCESS EXCLUSIVE MODE");
+
     const counts = await countAccountOrphans(queryRunner);
     // Counts only: never ids, names or amounts.
     this.logger.log(

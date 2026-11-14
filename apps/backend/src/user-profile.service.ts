@@ -1,3 +1,4 @@
+import { MAX_BUDGET_CATEGORY_NAME_LENGTH, MAX_CUSTOM_BUDGET_CATEGORIES } from "@flump/api-contract";
 import {
   BadRequestException,
   Inject,
@@ -478,10 +479,24 @@ export class UserProfileService implements ProfileLifecycle {
       profile.dashboardWidgetSizes = body.dashboardWidgetSizes;
     if (body.dashboardWidgetConfig !== undefined)
       profile.dashboardWidgetConfig = body.dashboardWidgetConfig;
-    if (body.customBudgetCategories !== undefined)
-      profile.customBudgetCategories = Array.isArray(body.customBudgetCategories)
+    if (body.customBudgetCategories !== undefined) {
+      const categories = Array.isArray(body.customBudgetCategories)
         ? body.customBudgetCategories
         : [];
+      if (categories.length > MAX_CUSTOM_BUDGET_CATEGORIES) {
+        throw new BadRequestException(
+          `At most ${MAX_CUSTOM_BUDGET_CATEGORIES} custom budget categories are allowed`,
+        );
+      }
+      for (const name of categories) {
+        if (typeof name !== "string" || name.length > MAX_BUDGET_CATEGORY_NAME_LENGTH) {
+          throw new BadRequestException(
+            `Category names must be strings of at most ${MAX_BUDGET_CATEGORY_NAME_LENGTH} characters`,
+          );
+        }
+      }
+      profile.customBudgetCategories = categories;
+    }
     const wasOnboarded = Boolean(profile.onboardingCompleted);
     if (body.onboardingCompleted !== undefined)
       profile.onboardingCompleted = Boolean(body.onboardingCompleted);

@@ -147,8 +147,16 @@ describe("AgentDataService ranged MCP reads (E17 re-plan PR B, unit)", () => {
     ).toEqual([]);
     expect(query).not.toHaveBeenCalled();
     await service.getAccountSnapshots("u1", { from: "2025-01", to: "2025-02", accountIds: ["x"] });
+    expect(query).not.toHaveBeenCalled(); // no valid uuid left, so no query
+    const id = "0A1B2C3D-0000-4000-8000-000000000001";
+    await service.getAccountSnapshots("u1", {
+      from: "2025-01",
+      to: "2025-02",
+      accountIds: ["x", id],
+    });
     const [sql, params] = query.mock.calls[0] as unknown as [string, unknown[]];
-    expect(params).toEqual(["u1", 2025 * 12, 2025 * 12 + 1, ["x"]]);
+    expect(params).toEqual(["u1", 2025 * 12, 2025 * 12 + 1, [id.toLowerCase()]]);
+    expect(sql).toContain("= ANY($4::uuid[])");
     expect(sql).toContain('a."user_id" = $1');
     expect(sql).toContain('d."user_id" = $1');
   });

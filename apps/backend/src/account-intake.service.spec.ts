@@ -25,6 +25,17 @@ describe("AccountIntakeService (Deep Module)", () => {
       upsert: vi.fn().mockResolvedValue(undefined),
       save: vi.fn((data) => Promise.resolve(data)),
     };
+    // A manager stub: the transaction hands back the same doubles, keyed by entity name.
+    mockAccountRepo.manager = {
+      transaction: (work: (em: unknown) => Promise<unknown>) =>
+        work({
+          getRepository: (entity: { name: string }) => {
+            if (entity.name === "AccountDetail") return mockAccountDetailRepo;
+            if (entity.name === "Transaction") return { delete: vi.fn() };
+            return mockAccountRepo;
+          },
+        }),
+    };
     mockUserProfileRepo = {
       findOne: vi.fn().mockResolvedValue({ userId: "user-123", hasResetFinancialData: false }),
     };

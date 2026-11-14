@@ -8,8 +8,9 @@ import { takeMigrationLock } from "../config/migration-lock";
 // `USING col AT TIME ZONE 'UTC'`.
 //
 // With the session time zone set to UTC (SET LOCAL below), Postgres 12+ treats
-// timestamp -> timestamptz as binary-coercible: no table rewrite and no index rebuild, only a
-// brief ACCESS EXCLUSIVE lock per table to change the catalogue. lock_timeout makes the migration
+// timestamp -> timestamptz as binary-coercible: no table rewrite, only a brief ACCESS
+// EXCLUSIVE lock per table to change the catalogue. Indexes on a converted column may still be
+// rebuilt (the operator class differs); the tables are small, so that is quick. lock_timeout makes the migration
 // fail fast rather than queue behind a long transaction (and stall readers behind it). A column
 // that is already timestamptz (a synchronize-built database) is skipped. down() converts back
 // the same way, reading each instant as UTC wall-clock time.
