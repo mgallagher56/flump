@@ -87,6 +87,12 @@ function copyFor(kind: RouteErrorStateProps["kind"]): Copy {
   }
 }
 
+/** React Router numbers history entries from 0; a later entry means the app navigated here. */
+const cameFromInAppNavigation = (): boolean => {
+  const idx = (window.history.state as { idx?: unknown } | null)?.idx;
+  return typeof idx === "number" && idx > 0;
+};
+
 export const RouteErrorState: FC<RouteErrorStateProps> = ({
   kind,
   onRetry,
@@ -102,10 +108,12 @@ export const RouteErrorState: FC<RouteErrorStateProps> = ({
   const copy = copyFor(kind);
   const Heading = headingLevel;
   const headingRef = useRef<HTMLHeadingElement>(null);
-  // Move focus to the heading so keyboard and screen reader users land on what happened. Focus is
-  // the one announcement: the section is not also a live region, or the error would be read twice.
+  // After an in-app navigation, move focus to the heading so keyboard and screen reader users land
+  // on what happened. Focus is the one announcement: the section is not also a live region, or the
+  // error would be read twice. On a fresh page load the browser starts at the top, so focus stays
+  // there and the first Tab still reaches the skip link.
   useEffect(() => {
-    headingRef.current?.focus({ preventScroll: true });
+    if (cameFromInAppNavigation()) headingRef.current?.focus({ preventScroll: true });
   }, []);
   const showRetry =
     kind !== "unauthorised" &&

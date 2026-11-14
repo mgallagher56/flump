@@ -150,11 +150,20 @@ describe("RouteErrorState", () => {
     expect(screen.queryByText(/^Error \d+/)).toBeNull();
   });
 
-  it("moves focus to the heading on mount", () => {
+  it("moves focus to the heading after an in-app navigation", () => {
+    window.history.replaceState({ idx: 1 }, "");
     render(<RouteErrorState kind="server" />);
     expect(document.activeElement).toBe(
       screen.getByRole("heading", { name: "We could not load this page" }),
     );
+    window.history.replaceState(null, "");
+  });
+
+  it("leaves focus alone on a fresh page load so the skip link stays the first Tab stop", () => {
+    window.history.replaceState({ idx: 0 }, "");
+    render(<RouteErrorState kind="server" />);
+    expect(document.activeElement).toBe(document.body);
+    window.history.replaceState(null, "");
   });
 
   it("renders an h1 when asked and an h2 by default", () => {
