@@ -1,16 +1,11 @@
 import { Button, Card, ConfirmDialog } from "@repo/ui";
 import { type FC, useEffect, useRef, useState } from "react";
-import { useFetcher, useNavigate } from "react-router";
-import {
-  DELETE_ACCOUNT_CONFIRMATION,
-  DELETE_ACCOUNT_INTENT,
-  type DeleteAccountStatus,
-  isDeleteAccountActionData,
-  RECENT_LOGIN_MESSAGE,
-} from "~/features/settings/account";
+import { useNavigate } from "react-router";
+import { RECENT_LOGIN_MESSAGE } from "~/features/settings/account";
 import { DataExportSection } from "~/features/settings/components/DataExportSection";
 import { DeleteAccountSection } from "~/features/settings/components/DeleteAccountSection";
 import { SignInAgainButton } from "~/features/settings/components/SignInAgainButton";
+import { useDeleteAccount } from "~/features/settings/hooks/useDeleteAccount";
 import {
   sectionCard,
   sectionHeading,
@@ -35,28 +30,13 @@ import {
 /** How long the success message shows before sending the person back to onboarding. */
 const SUCCESS_REDIRECT_MS = 1500;
 
-/** The settings route that handles the delete-account action. */
-const SETTINGS_ROUTE = "/app/profile";
-
 /**
  * Your data: download a copy, reset all financial data, or delete the account. The reset and the
  * deletion each sit behind a type-to-confirm dialog.
  */
 export const DataTab: FC = () => {
   const { resetFinancialData } = useUserProfile();
-  const deleteFetcher = useFetcher();
-  const deleteStatus: DeleteAccountStatus =
-    deleteFetcher.state !== "idle"
-      ? "submitting"
-      : isDeleteAccountActionData(deleteFetcher.data)
-        ? deleteFetcher.data.outcome
-        : "idle";
-  const handleDeleteAccount = () => {
-    void deleteFetcher.submit(
-      { intent: DELETE_ACCOUNT_INTENT, confirmation: DELETE_ACCOUNT_CONFIRMATION },
-      { method: "post", action: SETTINGS_ROUTE },
-    );
-  };
+  const { status: deleteStatus, submit: handleDeleteAccount } = useDeleteAccount();
 
   let navigate: (to: string) => void;
   try {

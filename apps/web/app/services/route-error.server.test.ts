@@ -29,6 +29,18 @@ describe("throwRouteError", () => {
     expect(result.data).toEqual({ kind, endpoint: "/accounts" });
   });
 
+  it("redirects an erased account (410) to the page that finishes the deletion", () => {
+    let thrown: unknown;
+    try {
+      throwRouteError(new BackendError("client", "/accounts", 410));
+    } catch (e) {
+      thrown = e;
+    }
+    expect(thrown).toBeInstanceOf(Response);
+    expect((thrown as Response).status).toBe(302);
+    expect((thrown as Response).headers.get("Location")).toBe("/account-deleted?state=pending");
+  });
+
   it("never redirects on unauthorised", () => {
     const result = caught(new BackendError("unauthorised", "/accounts", 401));
     expect(result).not.toBeInstanceOf(Response);
