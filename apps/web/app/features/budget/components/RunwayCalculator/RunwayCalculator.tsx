@@ -326,10 +326,7 @@ export const RunwayCalculator: FC<RunwayCalculatorProps> = ({
 
   const controls = (
     <div className={controlsStack()}>
-      <FormField
-        hint="A one-off payment added to what you can draw on"
-        label="Redundancy pay or lump sum"
-      >
+      <FormField hint="Added to what you can draw on" label="Redundancy pay or lump sum">
         {(field) => (
           <CurrencyInput
             id={field.id}

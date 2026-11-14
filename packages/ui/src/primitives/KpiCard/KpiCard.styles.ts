@@ -85,9 +85,11 @@ export const kpiHeroValue = cva({
     textStyle: "numeric.kpi",
     // A money figure never wraps, so a narrow card (a 2-up strip on a phone) steps the whole
     // value down instead. The card is the container and every card in a strip has the same
-    // width, so the strip still shows one size. Scale tokens only.
-    "@container (min-width: 10.01rem) and (max-width: 14rem)": { fontSize: "2xl" },
-    "@container (max-width: 10rem)": { fontSize: "md" },
+    // width, so the strip still shows one size. Scale tokens only. Round 4: a 2-up card on a
+    // phone (about 8rem inside its padding) keeps "£186,550" readable at 2xl rather than md;
+    // only a card under 7rem steps further down.
+    "@container (min-width: 7.01rem) and (max-width: 14rem)": { fontSize: "2xl" },
+    "@container (max-width: 7rem)": { fontSize: "lg" },
     fontVariantNumeric: "tabular-nums",
     color: "text.primary",
     margin: "0",
