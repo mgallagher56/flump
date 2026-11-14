@@ -43,4 +43,17 @@ describe("app.onboarding loader", () => {
     expect(result.data).not.toHaveProperty("accessToken");
     expect(JSON.stringify(result.data)).not.toContain(SESSION_TOKEN);
   });
+
+  it("sends someone who has finished setup to the dashboard", async () => {
+    backendFetch.mockResolvedValueOnce({ id: "p1", onboardingCompleted: true });
+    const args = {
+      request: new Request("http://localhost/app/onboarding"),
+      params: {},
+      context: {},
+    };
+    const result = (await loader(args as never)) as unknown as Response;
+    expect(result).toBeInstanceOf(Response);
+    expect(result.status).toBe(302);
+    expect(result.headers.get("Location")).toBe("/");
+  });
 });

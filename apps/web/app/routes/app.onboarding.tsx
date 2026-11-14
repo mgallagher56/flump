@@ -30,17 +30,21 @@ export const meta: MetaFunction = () => [{ title: "Set up | Flump" }];
 export const loader = async (args: LoaderFunctionArgs) => {
   const { user, accessToken } = await getAuthSession(args, { ensureSignedIn: true });
   if (!accessToken) throwRouteError(new BackendError("unauthorised", "/user-profile"));
+  let userProfile: UserProfile;
   try {
-    const userProfile: UserProfile = await backendFetch("/user-profile", {
+    userProfile = await backendFetch("/user-profile", {
       schema: UserProfileResponse,
       accessToken,
       signal: args.request.signal,
     });
-    // The access token stays on the server: browser calls go through the same-origin /api proxy.
-    return data({ userProfile, user });
   } catch (error) {
     throwRouteError(error);
   }
+  // Setup is done once. Someone who has finished it (an old tab, a bookmark, the back button)
+  // goes to their dashboard rather than a blank setup that would save over their details.
+  if (userProfile.onboardingCompleted) return redirect("/");
+  // The access token stays on the server: browser calls go through the same-origin /api proxy.
+  return data({ userProfile, user });
 };
 
 export const action = async (args: ActionFunctionArgs) => {
