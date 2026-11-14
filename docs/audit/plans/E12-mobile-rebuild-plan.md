@@ -904,3 +904,66 @@ Revision 2 folds in a stronger-model review from the parent session. Each point 
 - **Minors:** `check:auth` exemption wording fixed; bank brand constants allow-listed; `dist` builds stated; dev routes excluded from production; cleartext profile reconciled with the https rule; crash-only reporting recommended (D7); real reviewer test account (T9.6); trust proxy for the throttle (T3.18).
 
 A second Sonnet reviewer spot-checked revision 2 (arithmetic, dependency closure, contradictions, code claims, tagging). Verified: 192 tasks, 155 raw days and 94 P0 tasks with 77.5 days matched the tables; no L or XL tasks; all code claims (a to l) true; Bun filter flag exists locally (1.3.5), pinned 1.4.4 UNCONFIRMED so T0.8 proves it. Fixed after the spot-check: P0 tasks that depended on whole milestones now name P0 tasks; backend tickets became sized tasks (T4.13, T7.26 to T7.31) and the totals include them; Dockerfiles fixed first (T0.8) because the first new workspace would break all three builds; T3.17 split so API-reading flows run after Home exists (T4.14); T2.22 no longer depends on the token store; stale T1.22/T1.23 references; inventory rows using the legacy tax-year function; store-compliance, GDPR and disclaimer decisions added (D25 to D27); untagged external claims tagged; the inventory gained mobile-only rows and a row-to-task map.
+
+## 12. UX and design parity requirements (added 2026-11-14 from `docs/ux`)
+
+> **Added section, not a revision of sections 1 to 11.** Source: [`docs/ux/CROSS-PLATFORM.md`](../../ux/CROSS-PLATFORM.md), [`docs/ux/UX-GUIDELINES.md`](../../ux/UX-GUIDELINES.md), [`docs/ux/STYLE-GUIDE.md`](../../ux/STYLE-GUIDE.md) and the research in [`docs/ux/RESEARCH-2026-11.md`](../../ux/RESEARCH-2026-11.md). The plan is still a draft for owner review; these requirements are folded into the tasks when it is next revised. Where this section and an earlier one disagree, this section says so.
+
+**Goal of this section:** a person who uses the marketing site, the web app and the mobile app feels they are in one product. Tokens, figures, names, states and specifications are shared; chrome follows each platform.
+
+### 12.1 Requirements that every mobile task inherits
+
+Add to Global Constraints when the plan is revised.
+
+- **Read first.** Before any screen or component task: `docs/ux/CROSS-PLATFORM.md` (all), the `docs/ux/UX-GUIDELINES.md` sections for what the screen does, and `docs/ux/STYLE-GUIDE.md` section 12 for each component used. Run the parity checklist (CROSS-PLATFORM section 7) and state the result in the PR.
+- **One headline per screen, same as web.** Each screen answers the same question with the same headline figure as its web page (the table in `docs/design/e16-polish/PLAN.md` section 2), in a `HeroFigure`, one per screen. A phone screen shows no more figures than the web page shows at 375: at most 4 in the first view, 12 before any disclosure.
+- **Saved versus scenario.** Headline figures and KPI strips read saved data only. What-ifs live in a `ScenarioZone` labelled "Illustration, not saved", may open as their own pushed screen, never write to saved data and never put money in a deep link. Each simulator screen has the same test as web: changing a scenario input changes no saved figure and sends no request.
+- **No judgement.** `status.danger` only for errors and destructive actions; debt is apricot; no flame, warning or alarm icon on an ordinary balance; no streaks, points, confetti or badges; no comparison with other people.
+- **Same names and order.** The tab bar and the "More" list read the same navigation data as web (Home, Accounts, Budget, Tax and pay, More). "More" is an ordinary fifth tab opening our own list screen, not the iOS system overflow tab. A test asserts the mobile entries equal the web source.
+- **Platform chrome on purpose.** Native stack headers, back gesture and predictive back never blocked; native sheets with detents; platform alerts or action sheets for destructive confirmation; native pickers; edge to edge on Android with insets handled on every screen; system materials only on bars and sheets, never behind figures. The full table is CROSS-PLATFORM section 5. A difference not in that table is added to it or removed.
+- **No Material dynamic colour.** Wallpaper colour never drives brand, status or chart colours.
+- **Text scales.** Never set `allowFontScaling={false}` on text or figures. The bundled brand fonts must scale with Dynamic Type and the Android font scale like system fonts. Layouts hold at the largest iOS accessibility size and Android 200% (already an exit check in 5.1).
+- **Targets.** 48 by 48 on both platforms as the working minimum (meets Apple's 44pt and Android's 48dp).
+- **Money entry.** One `CurrencyInput` and one `PercentInput` with the decimal pad, tolerant parsing (a typed £, commas, spaces) and formatting on blur from `@flump/format`; blank is "not given", never 0. Every slider is a `SliderField` with an editable value, `adjustable` role and increment and decrement actions.
+- **Charts.** `ChartFigure` with a visible one-sentence summary, a "Show data" list, direct labels, dashed forecasts, at most 3 series on a phone, tap to select with a fixed readout (no hover, no long-press-only detail). If owner decision U1 (`docs/ux/UX-ASSESSMENT-2026-11.md` section 5) is taken, forecasts beyond a year show the same range band as web.
+- **States.** Every screen ships its empty, loading (skeleton in the shape of the screen), error, "Not set" and offline states, with the same meaning and wording as web. Empty is one illustration, one sentence, one button.
+- **Explanations.** Every computed figure can show what went into it, as on web once that pattern lands (assessment Extra C).
+- **Store requirements that are design requirements.** In-app account deletion (already T7.23); value beyond a web wrapper (native navigation, offline reading, device lock).
+
+### 12.2 Token pipeline: confirms 2.11 option (d), with additions
+
+Section 2.11's recommendation stands. The research checked the alternatives (Style Dictionary 5, the W3C Design Tokens format with its Resolver module, Terrazzo, NativeWind, Tamagui, react-native-web) and found none better for a code-first team with one authored source. Additions to T1.15 to T1.17 and T2.3:
+
+- **T1.16 scope grows beyond colours and sizes.** The generator also emits: every text style as a complete native object (family, size, weight, absolute line height, letter spacing in points, `fontVariant: ['tabular-nums']` on numeric styles); the two ends of each fluid size (phone uses the minimum, tablet the maximum); elevation as four levels with the dark hairline as a border; motion durations as milliseconds and easings as four bezier numbers for Reanimated; breakpoints as numbers. Density (`_compact`) is not generated: mobile is comfortable density only. The translation table is CROSS-PLATFORM section 2.
+- **New task T1.16b, contract test against Panda's own export (S) [P0].** `panda codegen --spec` (available in the pinned Panda 2.5.0; verified with `panda codegen --help`) writes the resolved design system as JSON. A Vitest test asserts that every semantic path exists in both that file and `native.generated.ts` with the same resolved value in both themes. This is stronger than T1.16's "regeneration is byte-identical" because it compares against what the web actually ships. Deps: T1.16.
+- **Polish PR 1 first.** T1.15 moves the token files, and polish PR 1 edits them (`surface.tint.*`, `numeric.hero`, `numeric.unset`, page spacing). Do T1.15 after PR 1 merges, and generate the new keys.
+- **Styling library.** `StyleSheet` with `useTheme()` as in T2.3 remains the default. If the M2 spike wants adaptive themes without a provider re-render, Unistyles 3 accepts the same generated object; that is the only alternative to consider. Do not add NativeWind, Tamagui or react-native-web.
+- **DTCG later, not now.** If a design tool joins the workflow, emit W3C Design Tokens JSON with a resolver file as a further output of the same TypeScript source. It never becomes the authored source.
+- **T1.15 to T1.16b can land ahead of the mobile app** (assessment Extra F), since they touch no app code and the web output is byte-identical.
+
+### 12.3 Component catalogue: names and parity
+
+Section 5.4's catalogue adopts the names and specifications in CROSS-PLATFORM section 3 (the parity matrix) and STYLE-GUIDE section 12. Same component name, same `variant`, `tone` and `size` values, same states as `@repo/ui`. Additions to the M2 catalogue if not already listed: `HeroFigure`, `IconTile`, `ProjectionNotice` (text from the shared constant), `ScenarioZone`, `Skeleton` and a screen skeleton, `EmptyState` using the shared SVG scenes, `Money` with the same spoken form ("minus £1,234"), `Illustration` and `FlumpLogo` drawn from the web artwork through `react-native-svg`. Icons are `lucide-react-native` at the version pinned for `lucide-react` (dependency law, AGENTS.md section 9).
+
+New task **T2.x, parity matrix as data (S) [P1]:** keep the matrix as a typed table and test that each component it lists for mobile exists under that name. Deps: the M2 catalogue.
+
+### 12.4 Formatting
+
+`@flump/format` (2.12) is the one formatter for web, marketing and mobile. Addition: Hermes uses each platform's own number and date formatting, so en-GB output can differ between iOS and Android. **T0.4 must capture output on both platforms**, and the package's snapshot tests run on V8, Hermes iOS and Hermes Android with the same expected strings (`£1,234`, `-£1,234`, `12.5%`, `Mar 2030`). Whole pounds where a figure is read; pence only where the user types or reconciles.
+
+### 12.5 Accessibility additions to 5.1
+
+Target is WCAG 2.2 AA read for apps as in WCAG2ICT. Add to the checklist: no interaction needs dragging (sliders, reordering and dismissing have a tap alternative); focus order and visibility with a hardware keyboard and Switch Control; recalculated results announced without moving focus (`AccessibilityInfo.announceForAccessibility` or a live region), with the "Illustration:" prefix in a scenario; Reduce Motion honoured through `AccessibilityInfo.isReduceMotionEnabled`; nothing asks for the same information twice in a flow; help in the same place on every screen ("More").
+
+### 12.6 Visual checks
+
+Add to 6: Maestro captures the same personas and screens as the web visual sweep (`apps/e2e/visual/routes.ts`), in light and dark, for side-by-side review against the web frames at 375. Advisory, like the web visual regression.
+
+### 12.7 Rules in this plan that AGENTS.md has since changed
+
+Not design matters, but they would mislead an agent executing the plan as written:
+
+- The header line "Subagent model law: `sonnet` or `haiku` only" is superseded by AGENTS.md section 6 (writing code is `opus`).
+- Global Constraints says the four commands `lint`, `check-types`, `test`, `build` pass before any PR. AGENTS.md section 5 now runs `lint`, `check-types`, `check:laws` and the changed packages' tests locally and leaves the full suite to CI.
+- Section 2.11 and 5.2 describe the indigo and slate palette. The tokens are now Direction C (teal, sand, warm charcoal); values are in `docs/design/e15/tokens.md` and STYLE-GUIDE section 2. The pipeline design is unaffected.
+- Section 2.12 mentions Spanish (`supportedLngs: ["en", "es"]`); web is now en-GB only.

@@ -121,3 +121,26 @@ Every token an agent reads is paid for again on each later turn of that session,
 - A dependency declared in two or more workspace `package.json` files (root, `apps/*`, `packages/*`) must use the same version string everywhere. `bun scripts/check-dependency-versions.ts` enforces this in `check:laws` (and so in CI); peerDependencies ranges are not compared. Deliberate exceptions go in `ALLOWED_MISMATCHES` in `scripts/lib/dependency-versions.ts`, each with a reason.
 - Renovate groups non-major updates into one PR and raises major updates one PR per package; each covers every workspace that declares the package. When bumping by hand, bump every workspace together.
 - Bun catalogs (`workspaces.catalog` and `"catalog:"` references) are deferred: Renovate's bun manager does not extract catalog entries ([`lib/modules/manager/bun/extract.ts`](https://github.com/renovatebot/renovate/blob/main/lib/modules/manager/bun/extract.ts) only reads `workspaces.packages`), so catalog versions would never get upgrade PRs. Revisit when Renovate adds support.
+
+## 10. UX GUIDELINES AND STYLE GUIDE
+
+Three documents in `docs/ux/` are the standing rules for how Flump behaves and looks on every platform (marketing site, web app, future mobile app). Sections 1 to 4 above are the enforced subset of them.
+
+- [`docs/ux/UX-GUIDELINES.md`](./docs/ux/UX-GUIDELINES.md): behaviour. Hierarchy and the number budget, navigation, saved details versus scenarios, forms and money input, states, destructive actions, charts, onboarding, accessibility, trust, motion, responsive and touch.
+- [`docs/ux/STYLE-GUIDE.md`](./docs/ux/STYLE-GUIDE.md): the visual language. Colour, type, spacing, radius, elevation, icons, illustration, logo, chart palette, component anatomy and states.
+- [`docs/ux/CROSS-PLATFORM.md`](./docs/ux/CROSS-PLATFORM.md): what is shared between marketing, web and mobile, the component parity matrix, and the parity checklist.
+
+**What to read before UI work:**
+
+| Task                                                                                       | Read first                                                                                                                                                                  |
+| ------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| A new or changed page, flow, form, chart or state in `apps/web` or `apps/marketing`        | UX-GUIDELINES (the sections for what you touch), then `docs/agents/component-guidelines.md`                                                                                 |
+| A new or changed component, token or recipe in `packages/ui`                               | STYLE-GUIDE, then `docs/agents/component-guidelines.md`                                                                                                                     |
+| Any screen in the mobile app, or any change to tokens, formatting or shared specifications | CROSS-PLATFORM, and run its parity checklist                                                                                                                                |
+| User-facing words                                                                          | The copy guide (`docs/copy/COPY-GUIDE.md`; until it lands, `docs/copy-style-guide.md`) and `docs/compliance/advice-boundary-policy.md`. The UX documents do not set wording |
+
+**How the rules rank.** Each rule in those documents is marked "Enforced by" a law or test, "Proposed check", or "Review only". If a document and a law or test disagree, the law or test wins: follow it, and correct the document in the same PR. If a document and an older design note under `docs/design/` disagree, the `docs/ux/` document wins. Owner decisions in `docs/audit/plans/DECISIONS.md` outrank all of them.
+
+**Review-only rules still apply.** A PR that touches UI states in its description which review-only rules it checked. The `ui-compliance-reviewer` agent reviews against the laws above and the `docs/ux/` documents.
+
+`docs/ux/UX-ASSESSMENT-2026-11.md` is a dated assessment, not a rule set. Do not treat its findings as instructions; the changes it calls for become rules only when they enter the documents above.
