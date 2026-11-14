@@ -168,12 +168,18 @@ export function nativeTextStyle(style: TextStyleValue) {
   const role = FAMILY_ROLES.find(([, stack]) => stack === style.fontFamily)?.[0];
   if (!role) throw new Error(`Unknown font family: ${style.fontFamily}`);
   const fontSize = toSize(style.fontSize);
-  const em = style.letterSpacing ? Number.parseFloat(style.letterSpacing) : 0;
+  const spacing = style.letterSpacing ?? "0em";
+  if (!/^-?\d*\.?\d+em$/.test(spacing))
+    throw new Error(`letterSpacing must be in em, got "${spacing}"`);
+  const em = Number.parseFloat(spacing);
+  const ratio = Number(style.lineHeight);
+  if (!Number.isFinite(ratio))
+    throw new Error(`lineHeight must be a unitless ratio, got "${style.lineHeight}"`);
   return {
     fontFamily: role,
     fontSize,
     fontWeight: style.fontWeight,
-    lineHeight: scale(fontSize, Number(style.lineHeight)),
+    lineHeight: scale(fontSize, ratio),
     letterSpacing: scale(fontSize, em),
     ...(style.fontVariantNumeric === "tabular-nums" ? { fontVariant: ["tabular-nums"] } : {}),
   };
