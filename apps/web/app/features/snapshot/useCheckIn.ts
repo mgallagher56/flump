@@ -54,6 +54,11 @@ export interface CheckInController {
   restError: boolean;
   /** Every step is saved and the summary shows. */
   finished: boolean;
+  /**
+   * The check-in opened with every account already recorded this month, so only the summary
+   * shows; false again once the user goes back to the steps.
+   */
+  openedFinished: boolean;
   /** From the summary back to the steps. */
   reopen: () => void;
   /** True once, after anything was saved since the last call: the caller refreshes saved data. */
@@ -91,6 +96,7 @@ export function useCheckIn({
   const [drafts, setDrafts] = useState<Record<string, number | null>>({});
   const [index, setIndex] = useState(0);
   const [finished, setFinished] = useState(false);
+  const [openedFinished, setOpenedFinished] = useState(false);
   const [restSaving, setRestSaving] = useState(false);
   const [restError, setRestError] = useState(false);
 
@@ -124,6 +130,7 @@ export function useCheckIn({
     setRestError(false);
     setIndex(firstOpen === -1 ? 0 : firstOpen);
     setFinished(steps.length > 0 && firstOpen === -1);
+    setOpenedFinished(steps.length > 0 && firstOpen === -1);
   }, [open]);
 
   // Once the last open step is saved, the summary shows.
@@ -295,8 +302,10 @@ export function useCheckIn({
     restSaving,
     restError,
     finished,
+    openedFinished,
     reopen: () => {
       setFinished(false);
+      setOpenedFinished(false);
       setIndex(0);
     },
     takeDirty: () => {

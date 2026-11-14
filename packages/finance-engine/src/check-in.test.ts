@@ -468,9 +468,10 @@ describe("summary", () => {
       DEFAULT_NET_WORTH_BASIS,
     );
     // Both typed figures repeat October but differ from the saved balances (£1,465 and £320).
-    expect(summary.changed.map((c) => [c.accountId, c.value])).toEqual([
-      ["c", 1000],
-      ["k", 300],
+    // Each change carries the saved balance it replaced, debts positive.
+    expect(summary.changed.map((c) => [c.accountId, c.previous, c.value])).toEqual([
+      ["c", 1465, 1000],
+      ["k", 320, 300],
     ]);
     expect(summary.change).toBe(0);
     // Typed at the saved balances instead: nothing changed.

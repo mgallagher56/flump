@@ -31,16 +31,17 @@ const twelveMonths = {
   })),
 };
 
-export const LedgerWithDrawer: Story = {
+export const ChartWithData: Story = {
   parameters: {
     router: { loaderData: twelveMonths },
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    await userEvent.click(canvas.getByRole("tab", { name: "Month by month" }));
-    const drawer = await canvas.findByRole("button", { name: /Show earlier months/ });
-    await userEvent.click(drawer);
-    await expect(canvas.getByRole("table", { name: "Earlier monthly balances" })).toBeDefined();
+    await expect(canvas.queryByRole("tab")).toBeNull();
+    await userEvent.click(canvas.getByRole("button", { name: "Show data" }));
+    await expect(
+      canvas.getByRole("table", { name: "Main Savings balance history by month" }),
+    ).toBeDefined();
   },
 };
 

@@ -120,6 +120,33 @@ export const OpenEditDialog: Story = {
   },
 };
 
+/** Delete asks in place of the form: one modal, Cancel first, then "Delete {name}". */
+export const DeleteConfirm: Story = {
+  args: { accountId: "acc-2", isEditAccount: true },
+  parameters: { router: { loaderData: mockLoaderData } },
+  play: async () => {
+    await userEvent.click(await screen.findByRole("button", { name: /edit/i }));
+    await screen.findByRole("dialog");
+    await userEvent.click(screen.getByRole("button", { name: /delete/i }));
+    await expect(screen.getAllByRole("dialog")).toHaveLength(1);
+    await expect(screen.queryByRole("alertdialog")).toBeNull();
+    await expect(screen.getByText(/This cannot be undone/)).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    await expect(await screen.findByLabelText("Name")).toBeInTheDocument();
+  },
+};
+
+export const DeleteConfirmDark: Story = {
+  ...DeleteConfirm,
+  decorators: [
+    (Story) => (
+      <DarkRoot>
+        <Story />
+      </DarkRoot>
+    ),
+  ],
+};
+
 /** A liability shows the positive amount owed, labelled "Amount owed". */
 export const EditLiability: Story = {
   args: { accountId: "sl-1", isEditAccount: true },

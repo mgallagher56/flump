@@ -54,6 +54,27 @@ export const NoChangeToTheRest: Story = {
 
 export const NoChangeToTheRestDark: Story = { ...NoChangeToTheRest, globals: { theme: "dark" } };
 
+/** Every account already recorded this month: the short summary in a dialog from md. */
+export const AlreadyRecorded: Story = {
+  args: {
+    accountDetails: [
+      ...CHECK_IN_DETAILS,
+      ...CHECK_IN_ACCOUNTS.map((a) => ({
+        accountId: a.id,
+        year: 2026,
+        month: 11,
+        value: a.balance,
+      })),
+    ],
+  },
+  play: async () => {
+    const body = within(document.body);
+    await expect(await body.findByRole("heading", { name: "Check-in saved" })).toBeDefined();
+  },
+};
+
+export const AlreadyRecordedDark: Story = { ...AlreadyRecorded, globals: { theme: "dark" } };
+
 export const AddEarlierMonth: Story = {
   args: {
     mode: "backfill",

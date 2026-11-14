@@ -11,8 +11,20 @@ const meta: Meta<typeof CheckInSummary> = {
     onChangeBalance: fn(),
     summary: {
       changed: [
-        { accountId: "a", name: "Everyday account", value: 3412.5, calculated: false },
-        { accountId: "b", name: "Residential mortgage", value: 185999.56, calculated: true },
+        {
+          accountId: "a",
+          name: "Everyday account",
+          value: 3412.5,
+          previous: 3360,
+          calculated: false,
+        },
+        {
+          accountId: "b",
+          name: "Residential mortgage",
+          value: 185999.56,
+          previous: 186550,
+          calculated: true,
+        },
       ],
       netWorth: 231400,
       change: 1250,
@@ -27,7 +39,9 @@ type Story = StoryObj<typeof CheckInSummary>;
 export const Saved: Story = {
   play: async ({ canvasElement, args }) => {
     const canvas = within(canvasElement);
-    await expect(canvas.getByText("Net worth: £231,400, up £1,250 on October 2026.")).toBeDefined();
+    await expect(canvas.getByText("£3,360 to £3,413")).toBeDefined();
+    await expect(canvas.getByText("£231,400")).toBeDefined();
+    await expect(canvas.getByText("Up £1,250 on October 2026.")).toBeDefined();
     await userEvent.click(canvas.getByRole("button", { name: "Done" }));
     await expect(args.onDone).toHaveBeenCalled();
   },
@@ -42,7 +56,7 @@ export const NothingChanged: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     await expect(canvas.queryByRole("heading", { name: "What changed" })).toBeNull();
-    await expect(canvas.getByText("Net worth: £231,400, the same as October 2026.")).toBeDefined();
+    await expect(canvas.getByText("The same as October 2026.")).toBeDefined();
   },
 };
 

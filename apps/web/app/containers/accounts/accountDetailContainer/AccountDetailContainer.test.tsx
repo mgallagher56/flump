@@ -1,6 +1,11 @@
 import { vi } from "vitest";
 import customRender from "~/testUtils/customRender";
-import AccountDetailContainer, { changeLine } from "./AccountDetailContainer";
+import AccountDetailContainer, {
+  accountCounts,
+  changeLine,
+  ownerPageFor,
+  typeSubtitle,
+} from "./AccountDetailContainer";
 
 const mocks = vi.hoisted(() => ({
   mockFetcherSubmit: vi.fn(),
@@ -172,10 +177,45 @@ describe("<AccountDetailContainer />", () => {
     expect(getByRole("button", { name: /edit/i })).toBeDefined();
   });
 
-  test("keeps the ledger on its own tab, with the chart first", () => {
-    const { getByRole } = customRender(<AccountDetailContainer />);
-    expect(getByRole("tab", { name: "Balance over time" })).toBeDefined();
-    expect(getByRole("tab", { name: "Month by month" })).toBeDefined();
+  test("shows the chart with no tabs, and no owner link for a current account", () => {
+    const { getByRole, queryByRole, queryByTestId } = customRender(<AccountDetailContainer />);
+    expect(queryByRole("tab")).toBeNull();
+    expect(getByRole("figure", { name: "My current account balance history" })).toBeDefined();
+    expect(queryByTestId("account-owner-link")).toBeNull();
+  });
+
+  test("hides the type line when the name already says it", () => {
+    mocks.mockUseLoaderData.mockReturnValueOnce({
+      account: { id: "m1", name: "Residential mortgage", type: "Mortgage", balance: -180000 },
+      accountDetails: [],
+    } as never);
+    const { queryByText, getByRole } = customRender(<AccountDetailContainer />);
+    expect(queryByText("Mortgage", { exact: true })).toBeNull();
+    expect(getByRole("link", { name: "See your mortgage" }).getAttribute("href")).toBe(
+      "/app/mortgage",
+    );
+  });
+
+  test("says a student loan is not counted under the default choices, and links to debts", () => {
+    mocks.mockUseLoaderData.mockReturnValueOnce({
+      account: { id: "s1", name: "Plan 2", type: "Student Loan", balance: -25000 },
+      accountDetails: [],
+    } as never);
+    const { getByTestId, getByRole } = customRender(<AccountDetailContainer />);
+    expect(getByTestId("hero-figure").textContent).toContain(
+      "No monthly balances recorded yet. Not counted in your net worth.",
+    );
+    expect(getByRole("link", { name: "See your debts" }).getAttribute("href")).toBe("/app/debt");
+  });
+
+  test("says nothing about net worth when the account counts", () => {
+    mocks.mockUseLoaderData.mockReturnValueOnce({
+      account: { id: "s1", name: "Plan 2", type: "Student Loan", balance: -25000 },
+      accountDetails: [],
+      basis: { countProperty: true, countStudentLoan: true },
+    } as never);
+    const { queryByText } = customRender(<AccountDetailContainer />);
+    expect(queryByText(/Not counted/)).toBeNull();
   });
   test("back to accounts is a real link", () => {
     const { getByRole } = customRender(<AccountDetailContainer />);
@@ -267,5 +307,39 @@ describe("changeLine", () => {
     expect(changeLine(0)).toBe("No change on last month");
     expect(changeLine(null)).toBe("No earlier month");
     expect(changeLine(4, "October 2026")).toBe("Up 4% on October 2026");
+  });
+});
+
+describe("typeSubtitle", () => {
+  test("hides the type when the name contains it", () => {
+    expect(typeSubtitle("Residential mortgage", "Mortgage")).toBeUndefined();
+    expect(typeSubtitle("Student loan", "Student loan")).toBeUndefined();
+    expect(typeSubtitle("Halifax", "Mortgage")).toBe("Mortgage");
+  });
+});
+
+describe("accountCounts", () => {
+  test("follows the net worth choices", () => {
+    expect(accountCounts("Student Loan", undefined)).toBe(false);
+    expect(accountCounts("Student Loan", { countProperty: true, countStudentLoan: true })).toBe(
+      true,
+    );
+    expect(accountCounts("Mortgage", { countProperty: false, countStudentLoan: false })).toBe(
+      false,
+    );
+    expect(accountCounts("Property", { countProperty: false, countStudentLoan: false })).toBe(
+      false,
+    );
+    expect(accountCounts("Current", undefined)).toBe(true);
+  });
+});
+
+describe("ownerPageFor", () => {
+  test("links mortgages to the mortgage page and debts to the debts page", () => {
+    expect(ownerPageFor("Mortgage")).toEqual({ to: "/app/mortgage", label: "See your mortgage" });
+    for (const type of ["Loan", "Credit Card", "Overdraft", "Student Loan"]) {
+      expect(ownerPageFor(type)).toEqual({ to: "/app/debt", label: "See your debts" });
+    }
+    expect(ownerPageFor("Saving")).toBeNull();
   });
 });

@@ -53,13 +53,10 @@ export const Trend: Story = {
   args: { accountDetails: exampleDetails(TREND_MONTHS) },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    await expect(canvas.getAllByText(/^Net worth each month since/)[0]).toBeDefined();
-    const toggle = canvas.getByRole("button", { name: "Show changes by account and by month" });
+    await expect(canvas.getAllByText(/^Up £[\d,]+ since November 2025\./)[0]).toBeDefined();
+    const toggle = canvas.getByRole("button", { name: "Show changes by account" });
     await userEvent.click(toggle);
-    await userEvent.click(canvas.getByRole("tab", { name: "By month" }));
-    await expect(canvas.getByRole("tab", { name: "By month" })).toHaveAttribute(
-      "aria-selected",
-      "true",
-    );
+    await expect(toggle).toHaveAttribute("aria-expanded", "true");
+    await expect(canvas.getByRole("columnheader", { name: "Effect on net worth" })).toBeDefined();
   },
 };

@@ -1,4 +1,11 @@
-import { type ChangeEvent, type FocusEvent, useEffect, useState } from "react";
+import {
+  type ChangeEvent,
+  type FocusEvent,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 import { parseEnGbNumber } from "./parseCurrency";
 
 export interface NumericTextOptions {
@@ -36,13 +43,16 @@ export const groupTypedNumber = (raw: string): string => {
   return `${lead}${grouped}${decimals}${trail}`;
 };
 
-/** Where the caret goes after regrouping: after the same number of digits as before. */
-export const caretAfterGrouping = (grouped: string, digitsBefore: number): number => {
-  if (digitsBefore <= 0) return Math.max(0, grouped.search(/\d/));
+/**
+ * Where the caret goes after regrouping: after the same number of characters other than the
+ * thousands commas as before, so a caret after a typed "." stays after it ("1234.|" -> "1,234.|").
+ */
+export const caretAfterGrouping = (grouped: string, charsBefore: number): number => {
+  if (charsBefore <= 0) return 0;
   let seen = 0;
   for (let i = 0; i < grouped.length; i += 1) {
-    if (/\d/.test(grouped[i] ?? "")) seen += 1;
-    if (seen === digitsBefore) return i + 1;
+    if (grouped[i] !== ",") seen += 1;
+    if (seen === charsBefore) return i + 1;
   }
   return grouped.length;
 };
@@ -73,6 +83,17 @@ export const useNumericText = ({
   const toText = (v: number | null | undefined): string =>
     v === null || v === undefined ? "" : format(v);
   const [text, setText] = useState(() => toText(value));
+  // The caret to restore after a regrouped value is written, set before the next keystroke can
+  // land (a layout effect runs straight after React commits; a frame later is too late).
+  const pendingCaret = useRef<{ input: HTMLInputElement; position: number } | null>(null);
+  useLayoutEffect(() => {
+    const pending = pendingCaret.current;
+    if (!pending) return;
+    pendingCaret.current = null;
+    if (document.activeElement === pending.input) {
+      pending.input.setSelectionRange(pending.position, pending.position);
+    }
+  }, [text]);
 
   // Follow external changes, but never clobber text that already parses to the same number
   // (so "12." or "1,234.50" survive while typing).
@@ -95,14 +116,10 @@ export const useNumericText = ({
     if (groupWhileTyping) {
       const input = event.target;
       const caret = input.selectionStart ?? raw.length;
-      const digitsBefore = (raw.slice(0, caret).match(/\d/g) ?? []).length;
+      const charsBefore = raw.slice(0, caret).replace(/,/g, "").length;
       next = groupTypedNumber(raw);
       if (next !== raw) {
-        const position = caretAfterGrouping(next, digitsBefore);
-        // After React writes the new value, put the caret back after the same digit.
-        requestAnimationFrame(() => {
-          if (document.activeElement === input) input.setSelectionRange(position, position);
-        });
+        pendingCaret.current = { input, position: caretAfterGrouping(next, charsBefore) };
       }
     }
     setText(next);

@@ -1,6 +1,7 @@
 import {
   CHART_INK,
   ChartFigure,
+  CollapsibleDrawer,
   chartColor,
   formatMonthTick,
   niceStep,
@@ -13,7 +14,7 @@ import {
   useChartFigure,
   xTickAnchor,
 } from "@repo/ui";
-import type { FC } from "react";
+import type { FC, ReactNode } from "react";
 import {
   CartesianGrid,
   Line,
@@ -34,7 +35,13 @@ import {
 } from "~/features/charts";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import { formatMonth, type HistoryChartPoint } from "../../snapshotModel";
-import { chartWrap, directLabel } from "./NetWorthHistoryChart.styles";
+import {
+  chartStack,
+  chartWrap,
+  dataRow,
+  dataRowEnd,
+  directLabel,
+} from "./NetWorthHistoryChart.styles";
 
 /** Fewest recorded months worth drawing as a line (plan P10.6). */
 export const MIN_CHART_MONTHS = 3;
@@ -47,6 +54,11 @@ export interface NetWorthHistoryChartProps {
   recordedMonths: number;
   /** The one-line prompt shown instead of the chart when there are too few recorded months. */
   notEnoughDataText?: string;
+  /**
+   * Quiet links and text in one row with "Show data" (for example "Add earlier months"), styled
+   * with `quietLink`, so every link under the chart lines up and looks the same.
+   */
+  dataActions?: ReactNode;
 }
 
 interface DirectLabelProps {
@@ -123,13 +135,26 @@ const MonthTick: FC<MonthTickProps> = ({ x, y, index = 0, payload, textFor, coun
   </text>
 );
 
-interface PlotProps {
+export interface MonthLinePlotProps {
   points: readonly HistoryChartPoint[];
-  hasCarried: boolean;
+  /** The line's name in the tooltip ("Net worth", "Balance"). */
+  valueName?: string;
+  /** Id and test id of the drawing. */
+  id?: string;
 }
 
-/** The drawing itself. Reads the end-point annotation and tick limit from the enclosing figure. */
-const Plot: FC<PlotProps> = ({ points, hasCarried }) => {
+/**
+ * The drawing itself, shared by net worth history and the account page so both read the same:
+ * evenly spaced month ticks, round £k y ticks, the same gridlines, a solid recorded line, a dashed
+ * line through carried months, and the end point labelled. Reads the end-point annotation and
+ * tick limit from the enclosing `ChartFigure`.
+ */
+export const MonthLinePlot: FC<MonthLinePlotProps> = ({
+  points,
+  valueName = "Net worth",
+  id = "net-worth-history-chart",
+}) => {
+  const hasCarried = points.some((p) => p.recorded === null && p.carried !== null);
   const { annotation, maxTicks, labelOffset, plotPaddingRight } = useChartFigure();
   const ticks = monthTicks(
     points.map((p) => p.label),
@@ -144,7 +169,7 @@ const Plot: FC<PlotProps> = ({ points, hasCarried }) => {
   const yAxisTicks = yTicks(yDomain);
   const annotated = annotation ? points.find((p) => p.label === annotation.x) : undefined;
   return (
-    <div className={chartWrap()} data-testid="net-worth-history-chart" id="net-worth-history-chart">
+    <div className={chartWrap()} data-testid={id} id={id}>
       <ResponsiveContainer height="100%" width="100%">
         <LineChart
           data={[...points]}
@@ -179,7 +204,7 @@ const Plot: FC<PlotProps> = ({ points, hasCarried }) => {
             type="linear"
             dataKey="recorded"
             dot={false}
-            name="Net worth"
+            name={valueName}
           />
           {annotation && annotated ? (
             <ReferenceDot
@@ -199,6 +224,27 @@ const Plot: FC<PlotProps> = ({ points, hasCarried }) => {
 };
 
 /**
+ * "Show data" and the caller's quiet links in one aligned row. The drawer's trigger and its table
+ * become items of the row (`display: contents`), so the table opens full width under the row.
+ */
+export const ChartDataRow: FC<{ table?: ReactNode; actions?: ReactNode }> = ({
+  table,
+  actions,
+}) => {
+  if (!table && !actions) return null;
+  return (
+    <div className={dataRow()}>
+      {table ? (
+        <CollapsibleDrawer title="Show data" variant="quiet">
+          {table}
+        </CollapsibleDrawer>
+      ) : null}
+      {actions ? <div className={dataRowEnd()}>{actions}</div> : null}
+    </div>
+  );
+};
+
+/**
  * Net worth over time from saved monthly snapshots. Recorded months are a solid line; a month with
  * no check-in shows the carried-forward value as a dashed line (never colour alone), and the caller's
  * summary says so in words. The end point is labelled with net worth (P10.2, P10.3). With fewer than 3 recorded months no line is drawn:
@@ -209,50 +255,55 @@ export const NetWorthHistoryChart: FC<NetWorthHistoryChartProps> = ({
   summary,
   recordedMonths,
   notEnoughDataText,
+  dataActions,
 }) => {
   const { formatCurrency } = useFormatCurrency();
-  const hasCarried = points.some((p) => p.recorded === null && p.carried !== null);
   const drawn = recordedMonths >= MIN_CHART_MONTHS;
   const last = points.at(-1);
 
   return (
-    <ChartFigure
-      annotation={last ? { x: last.label, label: formatCurrency(last.netWorth) } : undefined}
-      dataTable={
-        drawn ? (
-          <Table caption="Net worth by month">
-            <THead>
-              <tr>
-                <Th>Month</Th>
-                <Th numeric>Net worth</Th>
-                <Th>Source</Th>
-              </tr>
-            </THead>
-            <TBody>
-              {points.map((p) => (
-                <tr key={p.month}>
-                  <Th scope="row">{formatMonth(p.month)}</Th>
-                  <Td numeric>{formatCurrency(p.netWorth)}</Td>
-                  <Td>{p.recorded !== null ? "Recorded" : "Carried forward"}</Td>
+    <div className={chartStack()}>
+      <ChartFigure
+        annotation={last ? { x: last.label, label: formatCurrency(last.netWorth) } : undefined}
+        directLabels
+        headingLevel="h2"
+        hideTitle
+        // One series, named by the title, so no legend. The dashed months are named in the summary
+        // and the data table's Source column, so the dash is never the only cue.
+        minPoints={MIN_CHART_MONTHS}
+        notEnoughDataText={notEnoughDataText}
+        pointCount={recordedMonths}
+        summary={summary}
+        title="Net worth over time"
+      >
+        <MonthLinePlot points={points} />
+      </ChartFigure>
+      <ChartDataRow
+        actions={dataActions}
+        table={
+          drawn ? (
+            <Table caption="Net worth by month">
+              <THead>
+                <tr>
+                  <Th>Month</Th>
+                  <Th numeric>Net worth</Th>
+                  <Th>Source</Th>
                 </tr>
-              ))}
-            </TBody>
-          </Table>
-        ) : undefined
-      }
-      directLabels
-      headingLevel="h2"
-      hideTitle
-      // One series, named by the title, so no legend. The dashed months are named in the summary
-      // and the data table's Source column, so the dash is never the only cue.
-      minPoints={MIN_CHART_MONTHS}
-      notEnoughDataText={notEnoughDataText}
-      pointCount={recordedMonths}
-      summary={summary}
-      title="Net worth over time"
-    >
-      <Plot hasCarried={hasCarried} points={points} />
-    </ChartFigure>
+              </THead>
+              <TBody>
+                {points.map((p) => (
+                  <tr key={p.month}>
+                    <Th scope="row">{formatMonth(p.month)}</Th>
+                    <Td numeric>{formatCurrency(p.netWorth)}</Td>
+                    <Td>{p.recorded !== null ? "Recorded" : "Carried forward"}</Td>
+                  </tr>
+                ))}
+              </TBody>
+            </Table>
+          ) : undefined
+        }
+      />
+    </div>
   );
 };
 

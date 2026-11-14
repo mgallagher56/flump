@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react";
+import { expect, within } from "storybook/test";
 import AccountDetailChart from "./AccountDetailChart";
 
 const meta: Meta<typeof AccountDetailChart> = {
@@ -7,15 +8,7 @@ const meta: Meta<typeof AccountDetailChart> = {
   tags: ["autodocs"],
   decorators: [
     (Story) => (
-      <div
-        style={{
-          width: "350px",
-          height: "150px",
-          background: "#20222D",
-          padding: "10px",
-          borderRadius: "8px",
-        }}
-      >
+      <div style={{ maxWidth: "720px" }}>
         <Story />
       </div>
     ),
@@ -37,5 +30,25 @@ const mockDetails = [
 export const Default: Story = {
   args: {
     accountDetails: mockDetails,
+  },
+};
+
+/** Seven months ending on this month's saved balance: ticks May, Jul, Sep, Nov; dashed end. */
+export const SavedEnd: Story = {
+  args: {
+    title: "Mortgage balance history",
+    accountDetails: [
+      { month: 5, year: 2026, value: 183000 },
+      { month: 6, year: 2026, value: 182500 },
+      { month: 7, year: 2026, value: 182000 },
+      { month: 8, year: 2026, value: 181500 },
+      { month: 9, year: 2026, value: 181000 },
+      { month: 10, year: 2026, value: 180500, source: "calculated" },
+      { month: 11, year: 2026, value: 180000, carried: true },
+    ],
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(canvas.getByText(/^Down £3,000 since May 2026\./)).toBeDefined();
   },
 };

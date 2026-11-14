@@ -1,202 +1,134 @@
-import {
-  CHART_AXIS_DEFAULTS,
-  ChartFigure,
-  formatMonthTick,
-  niceStep,
-  niceYDomain,
-  pickTicks,
-} from "@repo/ui";
-import { css } from "@repo/ui/styled-system/css";
-import { curveCardinal } from "d3-shape";
+import { ChartFigure, Table, TBody, Td, THead, Th } from "@repo/ui";
+import { css, cx } from "@repo/ui/styled-system/css";
 import { type FC, useMemo } from "react";
 import {
-  Area,
-  AreaChart,
-  CartesianGrid,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
-import type { AccountDetail } from "~/containers/accounts/types";
+  ChartDataRow,
+  chartStack,
+  MonthLinePlot,
+} from "~/features/snapshot/components/NetWorthHistoryChart";
+import { changeSinceSentence, formatMonth, toLinePoints } from "~/features/snapshot/snapshotModel";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
-import { usePrefersReducedMotion } from "~/hooks/usePrefersReducedMotion";
+
+/** One month of an account's balance, oldest first. */
+export interface AccountChartRow {
+  month: number;
+  year: number;
+  /** The balance as shown (a debt is the amount owed). */
+  value: number;
+  /** How a recorded figure was given: "calculated", "confirmed", or typed (anything else). */
+  source?: unknown;
+  /** This month's saved balance, not recorded yet: the dashed end of the line. */
+  carried?: boolean;
+}
 
 interface AccountDetailChartProps {
-  accountDetails: AccountDetail[];
-  showAxes?: boolean;
-  /** Accessible name for the chart (for example the account name). */
+  accountDetails: readonly AccountChartRow[];
+  /** Accessible name for the chart (for example "Mortgage balance history"). */
   title?: string;
 }
 
-// Keep the figure filling its parent like the bare chart did.
-const figureFill = css({
-  height: "100%",
-  gap: "0",
-  "& > div[aria-hidden]": { flex: "1", minHeight: "0" },
-});
+/** Every figure and month in the summary, label and table lines up (tabular-nums). */
+const figureNumbers = css({ fontVariantNumeric: "tabular-nums" });
 
-const curve = curveCardinal.tension(0.1);
+/** Fewest months worth a line on the account page. */
+const MIN_ACCOUNT_POINTS = 2;
 
+const monthKey = (r: AccountChartRow): string => `${r.year}-${String(r.month).padStart(2, "0")}`;
+
+/** How the figure was given, for the "Show data" table's Source column. */
+export const accountSourceLabel = (row: AccountChartRow): string => {
+  if (row.carried) return "Saved balance";
+  if (row.source === "calculated") return "Calculated";
+  if (row.source === "confirmed") return "Confirmed";
+  return "Recorded";
+};
+
+/**
+ * The summary under the account chart: the change since the first month and, when this month is
+ * not recorded, one clause for the dashed end. Matches the net worth history summary.
+ */
+export const accountChartSummary = (
+  rows: readonly AccountChartRow[],
+  format: (value: number) => string,
+): string => {
+  const takeaway = changeSinceSentence(
+    rows.map((r) => ({ month: monthKey(r), value: r.value })),
+    format,
+  );
+  const endCarried = rows.at(-1)?.carried === true;
+  return [
+    takeaway,
+    endCarried ? "The dashed end is this month's saved balance, not yet recorded." : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+};
+
+/**
+ * One account's balance over time, drawn exactly like net worth history (the shared
+ * `MonthLinePlot`): evenly spaced month ticks, round £k ticks, the end point labelled with the
+ * current figure, and a dashed last segment when this month is not recorded. The visible summary
+ * carries the takeaway; "Show data" lists every month with how it was given.
+ */
 const AccountDetailChart: FC<AccountDetailChartProps> = ({
   accountDetails,
-  showAxes = false,
   title = "Account balance history",
 }) => {
   const { formatCurrency } = useFormatCurrency();
-  const reducedMotion = usePrefersReducedMotion();
-  const formattedAccountDetails = useMemo(
+  const points = useMemo(
     () =>
-      accountDetails.map((accountDetail) => ({
-        // "2026-05": read by formatMonthTick, so the axis says "May" and the table "May 2026".
-        Name: `${accountDetail.year}-${String(accountDetail.month).padStart(2, "0")}`,
-        Value: accountDetail.value,
-      })),
+      toLinePoints(
+        accountDetails.map((r) => ({
+          month: monthKey(r),
+          value: r.value,
+          carried: r.carried === true,
+        })),
+      ),
     [accountDetails],
   );
-
-  // Near the data, not from £0, so a steady balance does not draw as a flat line (R2-2).
-  // Near the data, not from £0, and on round ticks whose first and last are the axis ends, so
-  // every gridline is the same distance apart (no £2.4k, £2.7k; no short top band).
-  const { yDomain, yTicks } = useMemo(() => {
-    const [lo, hi] = niceYDomain(formattedAccountDetails.map((d) => d.Value));
-    const step = niceStep((hi - lo) / CHART_AXIS_DEFAULTS.yTickCount);
-    const start = Math.floor(lo / step) * step;
-    const end = Math.ceil(hi / step) * step;
-    const ticks: number[] = [];
-    for (let v = start; v <= end + step / 2; v += step) ticks.push(Math.round(v * 100) / 100);
-    const last = ticks[ticks.length - 1] ?? end;
-    return { yDomain: [ticks[0] ?? start, last] as [number, number], yTicks: ticks };
-  }, [formattedAccountDetails]);
-  const xTicks = useMemo(
-    () =>
-      pickTicks(
-        formattedAccountDetails.map((d) => d.Name),
-        CHART_AXIS_DEFAULTS.maxXTicks,
-      ),
-    [formattedAccountDetails],
-  );
-  const compact = useMemo(
-    () =>
-      new Intl.NumberFormat("en-GB", {
-        style: "currency",
-        currency: "GBP",
-        // Whole pounds: a compact "£38.1k" hides the round step the ticks are on.
-        maximumFractionDigits: 0,
-      }),
-    [],
-  );
-  const monthLabel = (key: string) => formatMonthTick(key, "numeric");
-  const first = formattedAccountDetails[0];
-  const last = formattedAccountDetails[formattedAccountDetails.length - 1];
-  const summary = last
-    ? `Balance history from ${monthLabel(first.Name)} to ${monthLabel(last.Name)}: ${formatCurrency(first.Value)} at the start and ${formatCurrency(last.Value)} at the end, across ${formattedAccountDetails.length} monthly balances.`
-    : "No balance history recorded yet.";
+  const last = points.at(-1);
+  const whole = (v: number) => formatCurrency(v, { maximumFractionDigits: 0 });
 
   return (
-    <ChartFigure
-      className={figureFill}
-      dataTable={
-        showAxes && last ? (
-          <table>
-            <caption>{title} by month</caption>
-            <thead>
-              <tr>
-                <th scope="col">Month</th>
-                <th scope="col">Balance</th>
-              </tr>
-            </thead>
-            <tbody>
-              {formattedAccountDetails.map((row) => (
-                <tr key={row.Name}>
-                  <th scope="row">{monthLabel(row.Name)}</th>
-                  <td style={{ fontVariantNumeric: "tabular-nums" }}>
-                    {formatCurrency(row.Value)}
-                  </td>
+    <div className={cx(chartStack(), figureNumbers)}>
+      <ChartFigure
+        annotation={last ? { x: last.label, label: formatCurrency(last.netWorth) } : undefined}
+        directLabels
+        headingLevel="h2"
+        hideTitle
+        minPoints={MIN_ACCOUNT_POINTS}
+        notEnoughDataText="The chart appears once this account has more monthly balances."
+        pointCount={points.length}
+        summary={accountChartSummary(accountDetails, whole)}
+        title={title}
+      >
+        <MonthLinePlot id="account-detail-chart" points={points} valueName="Balance" />
+      </ChartFigure>
+      <ChartDataRow
+        table={
+          accountDetails.length > 0 ? (
+            <Table caption={`${title} by month`}>
+              <THead>
+                <tr>
+                  <Th>Month</Th>
+                  <Th numeric>Balance</Th>
+                  <Th>Source</Th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        ) : undefined
-      }
-      summary={summary}
-      // A compact tile chart: the summary stays screen-reader only (ChartFigure now shows it by default).
-      showSummary={false}
-      hideTitle
-      title={title}
-    >
-      <ResponsiveContainer height="100%" width="100%">
-        <AreaChart
-          data={formattedAccountDetails}
-          margin={
-            showAxes
-              ? { top: 10, right: CHART_AXIS_DEFAULTS.plotPaddingRight, left: 0, bottom: 5 }
-              : { top: 0, right: 0, left: 0, bottom: 0 }
-          }
-        >
-          {showAxes && (
-            <CartesianGrid strokeDasharray="3 3" stroke="var(--colors-border)" vertical={false} />
-          )}
-          {showAxes ? (
-            <XAxis
-              axisLine={false}
-              dataKey="Name"
-              fontSize={11}
-              interval={0}
-              ticks={xTicks}
-              stroke="var(--colors-text-muted)"
-              tickFormatter={(value: string) => formatMonthTick(value, "none")}
-              tickLine={false}
-              tickMargin={8}
-            />
-          ) : (
-            <XAxis dataKey="Name" height={0} tick={false} />
-          )}
-          {showAxes ? (
-            <YAxis
-              axisLine={false}
-              fontSize={11}
-              stroke="var(--colors-text-muted)"
-              domain={yDomain}
-              ticks={yTicks}
-              tickFormatter={(value: number) => compact.format(value)}
-              tickLine={false}
-              tickMargin={8}
-              // Room for "£186,000" so the pound sign is never clipped.
-              width={72}
-            />
-          ) : (
-            <YAxis domain={yDomain} tick={false} width={0} />
-          )}
-          <Tooltip
-            contentStyle={{
-              backgroundColor: "var(--colors-card)",
-              borderColor: "var(--colors-border)",
-              borderRadius: "8px",
-            }}
-            formatter={(value: any) => [formatCurrency(value), "Balance"]}
-            labelFormatter={(label) => monthLabel(String(label))}
-            itemStyle={{
-              color: "var(--colors-text-primary)",
-            }}
-            labelStyle={{
-              color: "var(--colors-text-muted)",
-              fontWeight: "bold",
-            }}
-          />
-          <Area
-            dataKey="Value"
-            dot={false}
-            // A line only, like the net worth history chart.
-            fill="none"
-            stroke="var(--colors-primary)"
-            strokeWidth={1.5}
-            type={curve}
-            isAnimationActive={!reducedMotion}
-          />
-        </AreaChart>
-      </ResponsiveContainer>
-    </ChartFigure>
+              </THead>
+              <TBody>
+                {accountDetails.map((r) => (
+                  <tr key={monthKey(r)}>
+                    <Th scope="row">{formatMonth(monthKey(r))}</Th>
+                    <Td numeric>{formatCurrency(r.value)}</Td>
+                    <Td>{accountSourceLabel(r)}</Td>
+                  </tr>
+                ))}
+              </TBody>
+            </Table>
+          ) : undefined
+        }
+      />
+    </div>
   );
 };
 

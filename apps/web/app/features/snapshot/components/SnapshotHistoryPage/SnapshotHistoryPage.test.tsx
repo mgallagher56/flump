@@ -10,6 +10,7 @@ import {
   heroSubline,
   SnapshotHistoryPage,
   type SnapshotHistoryPageProps,
+  sentences,
 } from "./SnapshotHistoryPage";
 
 vi.mock("react-router", async () => await vi.importActual("react-router"));
@@ -75,23 +76,48 @@ describe("heroSubline", () => {
 });
 
 describe("chartSummary", () => {
-  const point = (month: string, allCarried = false) => ({ month, allCarried });
+  const gbp = (v: number) => `£${v.toLocaleString("en-GB")}`;
+  const point = (month: string, netWorth: number, allCarried = false) => ({
+    month,
+    netWorth,
+    allCarried,
+  });
 
-  it("names the first month, and the dashed months only when one has no check-in", () => {
-    expect(chartSummary([point("2026-09"), point("2026-10")], "2026-11")).toBe(
-      "Net worth each month since September 2026.",
+  it("leads with the change since the first month, worded the same up or down", () => {
+    expect(chartSummary([point("2026-05", 200000), point("2026-10", 215000)], "2026-11", gbp)).toBe(
+      "Up £15,000 since May 2026.",
+    );
+    expect(chartSummary([point("2026-05", 215000), point("2026-10", 200000)], "2026-11", gbp)).toBe(
+      "Down £15,000 since May 2026.",
+    );
+  });
+
+  it("says the dashed end is this month's saved balances only when this month is not recorded", () => {
+    expect(
+      chartSummary(
+        [point("2026-09", 1000), point("2026-10", 1000), point("2026-11", 1500, true)],
+        "2026-11",
+        gbp,
+      ),
+    ).toBe(
+      "Up £500 since September 2026. The dashed end is this month's saved balances, not yet recorded.",
     );
     expect(
-      chartSummary([point("2026-09"), point("2026-10"), point("2026-11", true)], "2026-11"),
-    ).toBe(
-      // The hero subline already says this month is not recorded: no second notice (P4).
-      "Net worth each month since September 2026.",
+      chartSummary(
+        [point("2026-08", 1000), point("2026-09", 1000, true), point("2026-10", 1000)],
+        "2026-11",
+        gbp,
+      ),
+    ).toBe("No change since August 2026. Months with no check-in show as a dashed line.");
+  });
+});
+
+describe("sentences", () => {
+  it("adds a full stop between sentences and skips empty ones", () => {
+    expect(sentences("Against October 2026", "Not counting your student loan.")).toBe(
+      "Against October 2026. Not counting your student loan.",
     );
-    expect(
-      chartSummary([point("2026-08"), point("2026-09", true), point("2026-10")], "2026-11"),
-    ).toBe(
-      "Net worth each month since August 2026. Months with no check-in show as a dashed line.",
-    );
+    expect(sentences("Against October 2026", "")).toBe("Against October 2026");
   });
 });
 
@@ -176,11 +202,12 @@ describe("SnapshotHistoryPage", () => {
     expect(screen.queryByTestId("net-worth-history-chart")).toBeNull();
     expect(screen.queryByText(/Next check-in/)).toBeNull();
     expectPageRules(container, { maxFigures: 6, projectionNotices: 0 });
-    // Only the account table exists, so the drawer holds it without tabs.
+    // One quiet drawer, no tabs, holding each account's effect on net worth.
     await userEvent.click(screen.getByRole("button", { name: "Show changes by account" }));
     expect(screen.queryByRole("tab")).toBeNull();
     const mortgage = screen.getByRole("rowheader", { name: "Mortgage (owed)" }).closest("tr");
-    expect(mortgage?.textContent).toContain("−£500");
+    // The mortgage fell by £500, which raised net worth by £500.
+    expect(mortgage?.textContent).toContain("+£500");
     expectPageRules(firstView(), { maxFigures: 4 });
   });
 
@@ -189,39 +216,37 @@ describe("SnapshotHistoryPage", () => {
     expect(screen.getByTestId("hero-figure").textContent).toContain("-£200");
     expect(screen.getByTestId("hero-figure").textContent).toContain("Against August 2026");
     expect(screen.getByTestId("net-worth-history-chart")).toBeDefined();
-    // September and November have no check-in, so the summary names the dashed line (no legend).
+    // The takeaway, then the dashed months in words (no legend): September has no check-in, and
+    // November is this month's saved balances.
     expect(
       screen.getByText(
-        "Net worth each month since July 2026. Months with no check-in show as a dashed line.",
+        "Down £100 since July 2026. Months with no check-in show as a dashed line. The dashed end is this month's saved balances, not yet recorded.",
       ),
     ).toBeDefined();
     expect(screen.queryByText(/The chart appears after/)).toBeNull();
     expect(screen.queryByTestId("net-worth-history-legend")).toBeNull();
-    // The header holds the one primary button; back-fill is a quiet link by the check-in line.
+    // The header holds the one primary button; back-fill is a quiet link beside "Show data".
     const header = screen.getByRole("heading", { level: 1 }).closest("header") as HTMLElement;
     expect(within(header).getAllByRole("button")).toHaveLength(1);
     expect(within(header).getByRole("button", { name: "Update balances" })).toBeDefined();
     expect(screen.getAllByRole("button", { name: "Update balances" })).toHaveLength(1);
-    expect(screen.getByTestId("snapshot-open-backfill").getAttribute("data-variant")).toBe("link");
+    const backfill = screen.getByTestId("snapshot-open-backfill");
+    const showData = screen.getByRole("button", { name: "Show data" });
+    // One row, one style: the link and "Show data" share a parent row.
+    expect(backfill.parentElement?.parentElement).toBe(showData.parentElement?.parentElement);
     // The whole page view, drawer closed (P1.3 target for history: 6).
     expectPageRules(container, { maxFigures: 6, projectionNotices: 0 });
     expectPageRules(firstView(), { maxFigures: 4 });
 
-    // Both tables sit behind one quiet drawer, as two tabs.
-    const toggle = screen.getByRole("button", { name: "Show changes by account and by month" });
+    // The change by account sits behind one quiet drawer; no "By month" tab (the chart's "Show
+    // data" table already lists every month).
+    const toggle = screen.getByRole("button", { name: "Show changes by account" });
     expect(toggle.getAttribute("aria-expanded")).toBe("false");
-    expect(screen.queryByRole("tab")).toBeNull();
     await userEvent.click(toggle);
     expect(toggle.getAttribute("aria-expanded")).toBe("true");
-    expect(screen.getByRole("tab", { name: "By account" }).getAttribute("aria-selected")).toBe(
-      "true",
-    );
+    expect(screen.queryByRole("tab")).toBeNull();
     expect(screen.getByTestId("snapshot-change-accounts")).toBeDefined();
-    await userEvent.click(screen.getByRole("tab", { name: "By month" }));
-    expect(screen.getByRole("tab", { name: "By month" }).getAttribute("aria-selected")).toBe(
-      "true",
-    );
-    expect(screen.getByRole("table", { name: "Net worth change by month" })).toBeDefined();
+    expect(screen.queryByRole("table", { name: "Net worth change by month" })).toBeNull();
   });
 
   it("opens the check-in on arrival from the dashboard link", () => {
@@ -238,21 +263,34 @@ describe("SnapshotHistoryPage", () => {
   describe("net worth choices", () => {
     const twoMonths = [row(CURRENT, 2026, 9, 2000), row(CURRENT, 2026, 10, 2100)];
 
-    it("under the default choices with no student loan, no line shows", () => {
+    it("under the default choices with no student loan, the hero subline adds nothing", () => {
       renderPage({ accountDetails: twoMonths });
-      expect(screen.queryByTestId("snapshot-net-worth-basis")).toBeNull();
+      expect(screen.queryByText(/Not counting/)).toBeNull();
     });
 
-    it("with property switched off, the hero says what it leaves out and links to the choice", () => {
+    it("with property switched off, the hero subline says what it leaves out, with no line below", () => {
       renderPage({
         accountDetails: twoMonths,
         basis: { countProperty: false, countStudentLoan: false },
       });
-      const line = screen.getByTestId("snapshot-net-worth-basis");
-      expect(line.textContent).toContain("Not counting your mortgage.");
-      expect(
-        within(line).getByRole("link", { name: "Change what counts" }).getAttribute("href"),
-      ).toBe("/app/profile?tab=profile#net-worth");
+      expect(screen.getByTestId("hero-figure").textContent).toContain(
+        "Against September 2026. This month is not recorded yet. Not counting your mortgage.",
+      );
+      expect(screen.queryByTestId("snapshot-net-worth-basis")).toBeNull();
+      expect(screen.queryByRole("link", { name: "Change what counts" })).toBeNull();
+    });
+
+    it("a renter's student loan folds into the subline with one month recorded too", () => {
+      renderPage({
+        accounts: [
+          ...accounts.slice(0, 1),
+          { id: MORTGAGE, name: "Student loan", type: "Student Loan" },
+        ],
+        accountDetails: [row(CURRENT, 2026, 10, 2000)],
+      });
+      expect(screen.getByTestId("hero-figure").textContent).toContain(
+        "Not counting your student loan.",
+      );
     });
   });
 });

@@ -1,12 +1,20 @@
 import { Button, StatusBadge } from "@repo/ui";
 import { type FC, useEffect, useRef, useState } from "react";
 import type { CheckInSummary as CheckInSummaryModel } from "../../checkInModel";
-import { CHECK_IN_COPY, checkInNetWorthText, checkInWholePounds } from "../../snapshotCopy";
+import {
+  CHECK_IN_COPY,
+  checkInChangeText,
+  checkInNetWorthChange,
+  checkInWholeTotal,
+} from "../../snapshotCopy";
 import {
   changeFigure,
   changeName,
   changeRow,
   changesList,
+  netWorthBlock,
+  netWorthFigure,
+  netWorthLabel,
   summaryActions,
   summaryHeading,
   summaryLine,
@@ -25,10 +33,11 @@ export interface CheckInSummaryProps {
 }
 
 /**
- * The end of the check-in: saved, what the user changed, and net worth against last month. The
- * month is in the sheet subtitle, so the heading does not repeat it. With nothing changed the list
- * and its heading are left out, and the net worth line stands alone. Facts only: no verdict, no
- * praise, and the same sentence whichever way net worth moved.
+ * The end of the check-in: saved, what the user changed (each from its old figure to the new one),
+ * and net worth, the summary's largest figure, against last month. The month is in the sheet
+ * subtitle, so the heading does not repeat it. With nothing changed the list and its heading are
+ * left out, and net worth stands alone. Facts only: no verdict, no praise, and the same sentence
+ * whichever way net worth moved. Whole pounds throughout: read, not reconciled (copy guide).
  */
 export const CheckInSummary: FC<CheckInSummaryProps> = ({ summary, onDone, onChangeBalance }) => {
   const [showAll, setShowAll] = useState(false);
@@ -57,8 +66,7 @@ export const CheckInSummary: FC<CheckInSummaryProps> = ({ summary, onDone, onCha
                   {c.calculated ? (
                     <StatusBadge variant="neutral">{CHECK_IN_COPY.calculated}</StatusBadge>
                   ) : null}
-                  {/* Read, not reconciled: whole pounds (copy guide). */}
-                  {checkInWholePounds(c.value)}
+                  {checkInChangeText(c.previous, c.value)}
                 </span>
               </li>
             ))}
@@ -79,9 +87,15 @@ export const CheckInSummary: FC<CheckInSummaryProps> = ({ summary, onDone, onCha
       ) : null}
 
       {summary.netWorth !== null ? (
-        <p className={summaryLine()} data-testid="checkin-net-worth" id="checkin-net-worth">
-          {checkInNetWorthText(summary.netWorth, summary.change, summary.previousMonth)}
-        </p>
+        <div className={netWorthBlock()} data-testid="checkin-net-worth" id="checkin-net-worth">
+          <p className={netWorthLabel()}>{CHECK_IN_COPY.netWorth}</p>
+          <p className={netWorthFigure()}>{checkInWholeTotal(summary.netWorth)}</p>
+          {summary.change !== null ? (
+            <p className={summaryLine()}>
+              {checkInNetWorthChange(summary.change, summary.previousMonth)}
+            </p>
+          ) : null}
+        </div>
       ) : null}
 
       <div className={summaryActions()}>

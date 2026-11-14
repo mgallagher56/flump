@@ -18,6 +18,11 @@ describe("groupTypedNumber", () => {
 });
 
 describe("caretAfterGrouping", () => {
+  it("keeps a caret after a typed point after it", () => {
+    // Typed "1234.|" (5 characters before the caret) -> "1,234.|"
+    expect(caretAfterGrouping("1,234.", 5)).toBe(6);
+  });
+
   it("puts the caret after the same digit", () => {
     // Typed "1234|" -> "1,234|"
     expect(caretAfterGrouping("1,234", 4)).toBe(5);
