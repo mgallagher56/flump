@@ -3,7 +3,7 @@ import { expect, fn, userEvent, within } from "@storybook/test";
 import { MORTGAGE_ISA_COPY, MortgageVsIsaCalculator } from "./MortgageVsIsaCalculator";
 
 const meta: Meta<typeof MortgageVsIsaCalculator> = {
-  title: "3. Calculators/MortgageVsIsaCalculator",
+  title: "5. Calculators/MortgageVsIsaCalculator",
   component: MortgageVsIsaCalculator,
   parameters: { layout: "padded" },
   args: { onSaveAndContinue: fn(), persistSeed: false },

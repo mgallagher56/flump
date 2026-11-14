@@ -75,6 +75,7 @@ describe("ToolPage", () => {
     "student-loan-plan-2-calculator",
   ])("renders a calculator for %s", (slug) => {
     renderAt(`/tools/${slug}`);
-    expect(screen.getAllByText(/Request an invite →/).length).toBeGreaterThan(0);
+    // The calculator draws the arrow as an icon, so the label itself has none.
+    expect(screen.getByRole("button", { name: "Request an invite" })).toBeDefined();
   });
 });

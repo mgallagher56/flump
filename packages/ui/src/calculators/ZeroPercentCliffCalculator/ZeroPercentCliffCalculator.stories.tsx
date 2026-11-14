@@ -3,7 +3,7 @@ import { expect, fn, userEvent, within } from "@storybook/test";
 import { ZERO_PERCENT_COPY, ZeroPercentCliffCalculator } from "./ZeroPercentCliffCalculator";
 
 const meta: Meta<typeof ZeroPercentCliffCalculator> = {
-  title: "3. Calculators/ZeroPercentCliffCalculator",
+  title: "5. Calculators/ZeroPercentCliffCalculator",
   component: ZeroPercentCliffCalculator,
   parameters: { layout: "padded" },
   args: { onSaveAndContinue: fn(), persistSeed: false },

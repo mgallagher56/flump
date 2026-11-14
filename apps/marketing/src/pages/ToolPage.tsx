@@ -1,4 +1,3 @@
-import { ProjectionNotice } from "@repo/ui";
 import {
   DebtSnowballCalculator,
   MarginalRateExplorerStandalone,
@@ -47,7 +46,6 @@ export const ToolPage: FC = () => {
     : `${cta.label} →`;
   // Only hand figures to the web app when sign-up is open; an invite request has nowhere to restore them.
   const persistSeed = cta.external;
-  const hasOwnNotice = normalizedSlug === "uk-pay-rise-take-home-calculator";
 
   const handleContinue = () => {
     if (typeof window !== "undefined") {
@@ -84,13 +82,7 @@ export const ToolPage: FC = () => {
             </Link>
           </div>
 
-          {/* The pay-rise explorer carries its own "Guidance, not advice" notice. */}
-          {!hasOwnNotice && (
-            <div style={{ marginBottom: "24px" }}>
-              <ProjectionNotice />
-            </div>
-          )}
-
+          {/* Every calculator carries its own single "Guidance, not advice" notice (E16 PR 10). */}
           <div style={{ marginBottom: "32px" }}>
             <span
               style={{

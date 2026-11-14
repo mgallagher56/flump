@@ -5,23 +5,27 @@ import { ZeroPercentCliffTool } from "./ZeroPercentCliffTool";
 
 describe("<ZeroPercentCliffTool />", () => {
   test("renders 0% cliff calculator and updates fields", () => {
-    const { getByText, getByDisplayValue } = customRender(<ZeroPercentCliffTool />);
+    const { getByText, getByLabelText } = customRender(<ZeroPercentCliffTool />);
 
-    expect(getByText(/0% balance transfer promotional expiry calculator/i)).toBeDefined();
-    expect(getByText(/Target monthly payment/i)).toBeDefined();
-    expect(getByText(/If you pay only the minimum/i)).toBeDefined();
+    expect(getByText(/When a 0% balance transfer ends/i)).toBeDefined();
+    expect(getByText(/Estimated monthly payment/i)).toBeDefined();
+    expect(getByText(/with minimum payments only/i)).toBeDefined();
 
     // Update inputs
-    const balanceInput = getByDisplayValue("3600");
-    fireEvent.change(balanceInput, { target: { value: "5000" } });
-    expect(getByDisplayValue("5000")).toBeDefined();
+    const balance = getByLabelText("Balance on the 0% card range slider") as HTMLInputElement;
+    fireEvent.change(balance, { target: { value: "5000" } });
+    expect(balance.value).toBe("5000");
 
-    const monthsInput = getByDisplayValue("18");
-    fireEvent.change(monthsInput, { target: { value: "12" } });
-    expect(getByDisplayValue("12")).toBeDefined();
+    const months = getByLabelText("Months left on the 0% deal range slider") as HTMLInputElement;
+    fireEvent.change(months, { target: { value: "12" } });
+    expect(months.value).toBe("12");
 
-    const aprInput = getByDisplayValue("24.9");
-    fireEvent.change(aprInput, { target: { value: "29.9" } });
-    expect(getByDisplayValue("29.9")).toBeDefined();
+    const apr = getByLabelText(
+      "Interest rate after the 0% deal ends (APR) input",
+    ) as HTMLInputElement;
+    fireEvent.focus(apr);
+    fireEvent.change(apr, { target: { value: "29.9" } });
+    fireEvent.blur(apr);
+    expect(apr.value).toContain("29.9");
   });
 });

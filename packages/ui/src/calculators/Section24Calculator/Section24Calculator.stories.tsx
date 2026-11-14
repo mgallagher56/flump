@@ -3,7 +3,7 @@ import { expect, fn, userEvent, within } from "@storybook/test";
 import { SECTION24_COPY, Section24Calculator } from "./Section24Calculator";
 
 const meta: Meta<typeof Section24Calculator> = {
-  title: "3. Calculators/Section24Calculator",
+  title: "5. Calculators/Section24Calculator",
   component: Section24Calculator,
   parameters: { layout: "padded" },
   args: { onSaveAndContinue: fn(), persistSeed: false },
