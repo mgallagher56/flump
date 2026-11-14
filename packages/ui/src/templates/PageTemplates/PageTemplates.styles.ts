@@ -145,6 +145,8 @@ export const proseText = css({
 });
 
 export const listItemMeta = css({ display: "flex", flexDirection: "column", gap: "1" });
+/** A name cell that wraps, so the balance column always stays on screen at 375. */
+export const wrapCell = css({ whiteSpace: "normal", width: "100%" });
 /** The account name leads the row: body size in primary text, above the smaller secondary type. */
 export const listItemName = css({ textStyle: "body.md", color: "text.primary" });
 
