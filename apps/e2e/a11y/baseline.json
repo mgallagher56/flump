@@ -1,0 +1,295 @@
+{
+  "generated": true,
+  "routes": {
+    "marketing-home": {
+      "1280-dark": {
+        "axe": {
+          "color-contrast": 11
+        },
+        "focus": {
+          "no-skip-link": 1
+        }
+      },
+      "1280-forced-colours": {
+        "axe": {
+          "color-contrast": 26
+        },
+        "focus": {
+          "no-skip-link": 1
+        }
+      },
+      "1280-light": {
+        "axe": {
+          "color-contrast": 14
+        },
+        "focus": {
+          "no-skip-link": 1
+        },
+        "lang": {
+          "html-lang-not-en-GB": 1
+        }
+      },
+      "375-dark": {
+        "axe": {
+          "color-contrast": 11
+        },
+        "focus": {
+          "no-skip-link": 1
+        }
+      },
+      "375-light": {
+        "axe": {
+          "color-contrast": 14
+        },
+        "focus": {
+          "no-skip-link": 1
+        }
+      }
+    },
+    "marketing-mcp": {
+      "1280-dark": {
+        "focus": {
+          "no-skip-link": 1
+        }
+      },
+      "1280-forced-colours": {
+        "focus": {
+          "no-skip-link": 1
+        }
+      },
+      "1280-light": {
+        "focus": {
+          "no-skip-link": 1
+        },
+        "lang": {
+          "html-lang-not-en-GB": 1
+        }
+      },
+      "375-dark": {
+        "focus": {
+          "no-skip-link": 1
+        }
+      },
+      "375-light": {
+        "focus": {
+          "no-skip-link": 1
+        }
+      }
+    },
+    "marketing-pricing": {
+      "1280-dark": {
+        "focus": {
+          "no-skip-link": 1
+        }
+      },
+      "1280-forced-colours": {
+        "focus": {
+          "no-skip-link": 1
+        }
+      },
+      "1280-light": {
+        "focus": {
+          "no-skip-link": 1
+        },
+        "lang": {
+          "html-lang-not-en-GB": 1
+        }
+      },
+      "375-dark": {
+        "focus": {
+          "no-skip-link": 1
+        }
+      },
+      "375-light": {
+        "focus": {
+          "no-skip-link": 1
+        }
+      }
+    },
+    "marketing-tools": {
+      "1280-dark": {
+        "focus": {
+          "no-skip-link": 1
+        }
+      },
+      "1280-forced-colours": {
+        "focus": {
+          "no-skip-link": 1
+        }
+      },
+      "1280-light": {
+        "focus": {
+          "no-skip-link": 1
+        },
+        "lang": {
+          "html-lang-not-en-GB": 1
+        }
+      },
+      "375-dark": {
+        "focus": {
+          "no-skip-link": 1
+        }
+      },
+      "375-light": {
+        "focus": {
+          "no-skip-link": 1
+        }
+      }
+    },
+    "web-accounts": {
+      "1280-forced-colours": {
+        "axe": {
+          "color-contrast": 3
+        }
+      },
+      "1280-light": {
+        "lang": {
+          "html-lang-not-en-GB": 1
+        }
+      }
+    },
+    "web-accounts-history": {
+      "1280-light": {
+        "lang": {
+          "html-lang-not-en-GB": 1
+        }
+      }
+    },
+    "web-budget": {
+      "1280-light": {
+        "lang": {
+          "html-lang-not-en-GB": 1
+        }
+      }
+    },
+    "web-dashboard": {
+      "1280-forced-colours": {
+        "axe": {
+          "color-contrast": 6
+        }
+      },
+      "1280-light": {
+        "lang": {
+          "html-lang-not-en-GB": 1
+        }
+      }
+    },
+    "web-debt": {
+      "1280-light": {
+        "lang": {
+          "html-lang-not-en-GB": 1
+        }
+      }
+    },
+    "web-forecast": {
+      "1280-forced-colours": {
+        "axe": {
+          "color-contrast": 3
+        }
+      },
+      "1280-light": {
+        "lang": {
+          "html-lang-not-en-GB": 1
+        }
+      }
+    },
+    "web-mortgage": {
+      "1280-forced-colours": {
+        "axe": {
+          "color-contrast": 2
+        }
+      },
+      "1280-light": {
+        "lang": {
+          "html-lang-not-en-GB": 1
+        }
+      }
+    },
+    "web-pension": {
+      "1280-light": {
+        "lang": {
+          "html-lang-not-en-GB": 1
+        }
+      }
+    },
+    "web-profile": {
+      "1280-forced-colours": {
+        "axe": {
+          "color-contrast": 3
+        }
+      },
+      "1280-light": {
+        "lang": {
+          "html-lang-not-en-GB": 1
+        }
+      }
+    },
+    "web-sandbox": {
+      "1280-forced-colours": {
+        "axe": {
+          "color-contrast": 6
+        }
+      },
+      "1280-light": {
+        "lang": {
+          "html-lang-not-en-GB": 1
+        }
+      }
+    },
+    "web-savings": {
+      "1280-forced-colours": {
+        "axe": {
+          "color-contrast": 3
+        }
+      },
+      "1280-light": {
+        "lang": {
+          "html-lang-not-en-GB": 1
+        }
+      }
+    },
+    "web-self-assessment": {
+      "1280-forced-colours": {
+        "axe": {
+          "color-contrast": 4
+        }
+      },
+      "1280-light": {
+        "lang": {
+          "html-lang-not-en-GB": 1
+        }
+      }
+    },
+    "web-take-home": {
+      "1280-light": {
+        "lang": {
+          "html-lang-not-en-GB": 1
+        }
+      }
+    },
+    "web-tools": {
+      "1280-light": {
+        "lang": {
+          "html-lang-not-en-GB": 1
+        }
+      }
+    },
+    "web-tools-100k-trap": {
+      "1280-light": {
+        "lang": {
+          "html-lang-not-en-GB": 1
+        }
+      },
+      "375-dark": {
+        "axe": {
+          "scrollable-region-focusable": 1
+        }
+      },
+      "375-light": {
+        "axe": {
+          "scrollable-region-focusable": 1
+        }
+      }
+    }
+  }
+}

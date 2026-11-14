@@ -3,3 +3,6 @@ playwright-report/
 playwright-report-visual/
 test-results/
 test-results-visual/
+playwright-report-a11y/
+test-results-a11y/
+test-results-a11y-findings/
