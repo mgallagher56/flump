@@ -10,6 +10,7 @@ import {
   navDrawerLink,
   ThemeToggle,
   TopBar,
+  VisuallyHidden,
 } from "@repo/ui";
 import { cx } from "@repo/ui/styled-system/css";
 import { ExternalLink } from "lucide-react";
@@ -94,6 +95,7 @@ export const Header: FC = () => {
     (item as MarketingNavItem).external ? (
       <a className={className} href={item.href} rel="noreferrer" target="_blank">
         {children}
+        <VisuallyHidden> (opens in a new tab)</VisuallyHidden>
       </a>
     ) : (
       <Link aria-current={ariaCurrent} className={className} to={item.href}>
@@ -169,12 +171,16 @@ export const Header: FC = () => {
                 </Button>
               </>
             )}
-            <ThemeToggle onChange={setPreference} preference={preference} />
+            <ThemeToggle
+              id="theme-toggle-drawer"
+              onChange={setPreference}
+              preference={preference}
+            />
           </div>
         }
         id={DRAWER_ID}
         isOpen={mobileMenuOpen}
-        logo={<HomeLogo decorative renderLink={renderHomeLogoLink} />}
+        logo={<HomeLogo renderLink={renderHomeLogoLink} />}
         onClose={closeMenu}
       >
         <nav aria-label="Mobile navigation" className={navDrawerBody()}>
@@ -184,7 +190,12 @@ export const Header: FC = () => {
               <>
                 <span className={drawerLinkLabel()}>
                   {item.label}
-                  {item.external && <ExternalLink aria-hidden="true" size={14} />}
+                  {item.external && (
+                    <>
+                      <ExternalLink aria-hidden="true" size={14} />
+                      <VisuallyHidden>(opens in a new tab)</VisuallyHidden>
+                    </>
+                  )}
                 </span>
                 <span className={drawerLinkHint()}>{item.hint}</span>
               </>

@@ -32,7 +32,8 @@ function applyTheme(theme: Theme) {
 export interface UseThemePreferenceOptions {
   /**
    * Theme assumed for "system" on the server and on the hydration render, before the real
-   * operating-system theme is read. It must match what the server renders.
+   * operating-system theme is read. It must match what the server renders: the web app renders
+   * dark (the default here), the marketing site passes "light".
    */
   serverTheme?: Theme;
 }

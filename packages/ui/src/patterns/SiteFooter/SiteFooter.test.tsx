@@ -45,7 +45,7 @@ describe("SiteFooter", () => {
     );
     const signup = within(nav).getByRole("link", { name: "Sign up" });
     expect(signup.getAttribute("data-router")).toBeNull();
-    const demo = within(nav).getByRole("link", { name: "Live demo" });
+    const demo = within(nav).getByRole("link", { name: /Live demo/ });
     expect(demo.getAttribute("target")).toBe("_blank");
     expect(demo.getAttribute("rel")).toBe("noreferrer");
   });

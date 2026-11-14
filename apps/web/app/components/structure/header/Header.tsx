@@ -1,5 +1,5 @@
 import { HomeLogo, ThemeToggle, TopBar } from "@repo/ui";
-import { type FC, type ReactElement, useMemo, useState } from "react";
+import { type FC, type ReactElement, useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useLoaderData, useLocation } from "react-router";
 import AvatarMenu from "~/components/navigation/AvatarMenu";
@@ -57,10 +57,10 @@ const Header: FC<HeaderProps> = ({ isMobile: propIsMobile, variant }): ReactElem
     setLocalDrawerOpen((prev) => !prev);
   };
 
-  const handleCloseDrawer = () => {
+  const handleCloseDrawer = useCallback(() => {
     setMobileDrawerOpen(false);
     setLocalDrawerOpen(false);
-  };
+  }, [setMobileDrawerOpen]);
 
   return (
     <>

@@ -48,6 +48,10 @@ export const NavDrawer: FC<NavDrawerProps> = ({
   const closeRef = useRef<HTMLButtonElement>(null);
   const drawerRef = useRef<HTMLDivElement>(null);
   const openerRef = useRef<HTMLElement | null>(null);
+  // Read through a ref so a new onClose on each parent render does not re-run the effects below
+  // (which would pull focus back to the close button).
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
 
   useEffect(() => {
     setMounted(true);
@@ -63,12 +67,16 @@ export const NavDrawer: FC<NavDrawerProps> = ({
     };
   }, [isOpen]);
 
+  // Focus moves in on open, and again after the portal remount on the first open.
+  useEffect(() => {
+    if (isOpen) closeRef.current?.focus();
+  }, [isOpen, mounted]);
+
   useEffect(() => {
     if (!isOpen) return;
-    closeRef.current?.focus();
     const onKey = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
-        onClose();
+        onCloseRef.current();
         return;
       }
       if (event.key !== "Tab" || !drawerRef.current) return;
@@ -89,7 +97,7 @@ export const NavDrawer: FC<NavDrawerProps> = ({
     return () => {
       document.removeEventListener("keydown", onKey);
     };
-  }, [isOpen, mounted, onClose]);
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
