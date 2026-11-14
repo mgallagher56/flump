@@ -1,14 +1,6 @@
-import { Button, Icon } from "@repo/ui";
-import { ArrowRight, Lock } from "lucide-react";
-import {
-  barButton,
-  barGroup,
-  barHint,
-  barRoot,
-  barTitle,
-  legendHidden,
-  personaSet,
-} from "./SandboxBar.styles";
+import { Button, Icon, Tabs } from "@repo/ui";
+import { Info } from "lucide-react";
+import { barButton, barGroup, barHint, barRoot, barTitle, personaTabs } from "./SandboxBar.styles";
 
 export interface SandboxPersona<Key extends string = string> {
   key: Key;
@@ -22,48 +14,49 @@ export interface SandboxBarProps<Key extends string = string> {
   onSave: () => void;
 }
 
-/** Sandbox header: read-only cue, sample persona switcher and the save-and-sign-up action. */
+/** The sandbox's one sample-data notice (E16 P4.4): what this is, which household, and sign up. */
 export const SandboxBar = <Key extends string>({
   personas,
   active,
   onSelect,
   onSave,
 }: SandboxBarProps<Key>) => (
-  <div className={barRoot()}>
+  // biome-ignore lint/a11y/useSemanticElements: a labelled note region, not an aside landmark.
+  <div
+    aria-label="Sample data"
+    className={barRoot()}
+    data-notice="sample"
+    data-testid="sandbox-bar"
+    id="sandbox-bar"
+    role="note"
+  >
     <div className={barGroup()}>
       <span className={barTitle()}>
-        <Icon icon={Lock} size="sm" />
-        Demo sandbox (read-only)
+        <Icon icon={Info} size="sm" />
+        Sample data: illustrative figures, not yours.
       </span>
-      <fieldset className={personaSet()}>
-        <legend className={legendHidden()}>Sample persona</legend>
-        {personas.map((persona) => (
-          <Button
-            aria-pressed={active === persona.key}
-            className={barButton()}
-            key={persona.key}
-            onClick={() => onSelect(persona.key)}
-            size="sm"
-            type="button"
-            variant={active === persona.key ? "primary" : "outline"}
-          >
-            {persona.label}
-          </Button>
-        ))}
-      </fieldset>
+      <Tabs
+        aria-label="Sample household"
+        className={personaTabs()}
+        items={personas.map((p) => ({ value: p.key, label: p.label }))}
+        size="sm"
+        value={active}
+        onValueChange={(value) => onSelect(value as Key)}
+      />
     </div>
 
     <div className={barGroup()}>
-      <span className={barHint()}>Ready to use your own bank feeds and HMRC data?</span>
+      <span className={barHint()}>Ready to use your own figures?</span>
       <Button
-        aria-label="Save my numbers and create account"
         className={barButton()}
+        data-testid="sandbox-bar-sign-up"
+        id="sandbox-bar-sign-up"
         onClick={onSave}
         size="sm"
         type="button"
-        variant="primary"
+        variant="outline"
       >
-        Save my numbers <Icon icon={ArrowRight} size="sm" />
+        Sign up
       </Button>
     </div>
   </div>

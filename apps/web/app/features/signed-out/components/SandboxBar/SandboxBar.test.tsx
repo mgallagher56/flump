@@ -1,7 +1,7 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { SandboxBar } from "./SandboxBar";
-import { barButton } from "./SandboxBar.styles";
 
 const personas = [
   { key: "debt", label: "Paying off debts" },
@@ -9,29 +9,28 @@ const personas = [
 ] as const;
 
 describe("SandboxBar", () => {
-  it("says the sandbox is read-only and marks the active persona", () => {
+  it("is the one sample-data notice and marks the chosen household", () => {
     render(<SandboxBar active="debt" onSave={vi.fn()} onSelect={vi.fn()} personas={personas} />);
-    expect(screen.getByText(/Demo sandbox \(read-only\)/)).toBeDefined();
-    expect(screen.getByText("Paying off debts").getAttribute("aria-pressed")).toBe("true");
+    expect(screen.getByRole("note", { name: "Sample data" }).getAttribute("data-notice")).toBe(
+      "sample",
+    );
+    expect(screen.getByText("Sample data: illustrative figures, not yours.")).toBeDefined();
+    expect(screen.getByRole("tablist", { name: "Sample household" })).toBeDefined();
     expect(
-      screen.getByText("Paying a mortgage and letting a property").getAttribute("aria-pressed"),
-    ).toBe("false");
+      screen.getByRole("tab", { name: "Paying off debts" }).getAttribute("aria-selected"),
+    ).toBe("true");
+    expect(screen.getByText("Ready to use your own figures?")).toBeDefined();
+    expect(document.body.textContent).not.toMatch(/bank feeds|HMRC|demo|live/i);
   });
 
-  it("reports persona selection and the save action", () => {
+  it("reports household selection and sign up", async () => {
+    const user = userEvent.setup();
     const onSelect = vi.fn();
     const onSave = vi.fn();
     render(<SandboxBar active="debt" onSave={onSave} onSelect={onSelect} personas={personas} />);
-    fireEvent.click(screen.getByText("Paying a mortgage and letting a property"));
+    await user.click(screen.getByRole("tab", { name: "Paying a mortgage and letting a property" }));
     expect(onSelect).toHaveBeenCalledWith("high");
-    fireEvent.click(screen.getByRole("button", { name: /Save my numbers and create account/ }));
+    await user.click(screen.getByRole("button", { name: "Sign up" }));
     expect(onSave).toHaveBeenCalledTimes(1);
-  });
-
-  it("keeps a 44px hit area on the persona and save buttons", () => {
-    render(<SandboxBar active="debt" onSave={vi.fn()} onSelect={vi.fn()} personas={personas} />);
-    for (const button of screen.getAllByRole("button")) {
-      expect(button.className).toContain(barButton());
-    }
   });
 });

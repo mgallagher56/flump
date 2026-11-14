@@ -23,7 +23,7 @@ export const barRoot = cva({
 });
 
 export const barGroup = cva({
-  base: { display: "flex", alignItems: "center", flexWrap: "wrap", gap: "12px" },
+  base: { display: "flex", alignItems: "center", flexWrap: "wrap", gap: "12px", minWidth: 0 },
 });
 
 export const barTitle = cva({
@@ -36,27 +36,17 @@ export const barTitle = cva({
   },
 });
 
-export const personaSet = cva({
-  base: {
-    display: "flex",
-    flexWrap: "wrap",
-    gap: "8px",
-    border: "none",
-    padding: 0,
-    margin: 0,
-  },
-});
-
 /** The small button size keeps the chip compact; the 44px minimum keeps the hit area (WCAG 2.5.8). */
 export const barButton = cva({ base: { minHeight: "44px" } });
 
 export const barHint = cva({
-  base: { textStyle: "body.sm", color: "text.muted", display: { base: "none", md: "inline" } },
+  base: { textStyle: "body.sm", color: "text.secondary", display: { base: "none", md: "inline" } },
 });
 
-export const legendHidden = cva({ base: { srOnly: true } });
+/** The household tabs scroll inside the bar rather than widening the page at 320px. */
+export const personaTabs = cva({ base: { minWidth: 0, maxWidth: "100%" } });
 
-/** Page column for the sandbox route: bar, sample-data note, then the dashboard. */
+/** Page column for the sandbox route: the bar, the dashboard, then the closing sign-up. */
 export const sandboxPage = cva({
   base: {
     display: "flex",
@@ -68,4 +58,26 @@ export const sandboxPage = cva({
     maxWidth: "1536px",
     margin: "0 auto",
   },
+});
+
+/** The closing sign-up at the foot of the sandbox page. */
+export const sandboxEnd = cva({
+  base: {
+    display: "flex",
+    flexWrap: "wrap",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: "12px",
+    paddingX: { base: "16px", md: "24px" },
+    paddingY: "20px",
+    backgroundColor: "surface.card",
+    borderRadius: "card",
+    borderWidth: "1px",
+    borderStyle: "solid",
+    borderColor: "border",
+  },
+});
+
+export const sandboxEndText = cva({
+  base: { margin: 0, textStyle: "body.md", color: "text.primary" },
 });

@@ -18,6 +18,7 @@ const meta: Meta<typeof SandboxBar> = {
 export default meta;
 type Story = StoryObj<typeof SandboxBar>;
 
+// The Storybook decorator renders light and dark side by side, so queries use the first match.
 export const Default: Story = {
   render: () => {
     const [active, setActive] = useState<string>("medium");
@@ -32,10 +33,9 @@ export const Default: Story = {
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    await userEvent.click(canvas.getByRole("button", { name: "Paying off debts" }));
-    await expect(canvas.getByRole("button", { name: "Paying off debts" })).toHaveAttribute(
-      "aria-pressed",
-      "true",
-    );
+    const tab = canvas.getAllByRole("tab", { name: "Paying off debts" })[0];
+    if (!tab) throw new Error("Tab missing");
+    await userEvent.click(tab);
+    await expect(tab).toHaveAttribute("aria-selected", "true");
   },
 };
