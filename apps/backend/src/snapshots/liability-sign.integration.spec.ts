@@ -1,8 +1,10 @@
 import "reflect-metadata";
+import { BankSyncOrchestrator } from "@flump/banking/server";
 import type { ConfigService } from "@nestjs/config";
 import { DataSource, type DataSourceOptions, type QueryRunner } from "typeorm";
 import { afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { AccountIntakeService } from "../account-intake.service";
+import { accessTokenAad } from "../bank-connection-sync";
 import { typeOrmOptionsFromEnv } from "../config/typeorm.options";
 import { Account } from "../entities/account.entity";
 import { AccountDetail } from "../entities/account-detail.entity";
@@ -12,6 +14,7 @@ import { UserProfile } from "../entities/user-profile.entity";
 import { FinanceService } from "../finance.service";
 import { ImportsService } from "../imports/imports.service";
 import { LiabilitySignRule1794358050000 } from "../migrations/LiabilitySignRule1794358050000";
+import type { BankProvider } from "../providers/provider.interface";
 import type { BankProviderRegistry } from "../providers/provider.registry";
 import { assertSafeTestDatabase } from "../testing/assertSafeTestDatabase";
 import { resolveDbTestMode } from "../testing/dbTestMode";
@@ -480,6 +483,9 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
             status: "connected",
           } as Partial<BankConnection>),
         );
+        await ds.getRepository(BankConnection).update(connection.id, {
+          accessToken: BankSyncOrchestrator.encryptToken("token", accessTokenAad(connection.id)),
+        });
         let provided = [
           {
             externalAccountId: "ext-1",
@@ -497,7 +503,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
           },
         ];
         const registry = {
-          getProvider: () => ({ fetchAccounts: async () => provided }),
+          getProvider: () => ({ fetchAccounts: async () => provided }) as unknown as BankProvider,
         } as unknown as BankProviderRegistry;
         const finance = new FinanceService(
           ds.getRepository(Account),
@@ -508,7 +514,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
           registry,
           { get: () => undefined } as unknown as ConfigService,
         );
-        await finance.syncProviderAccounts(connection, USER, "token");
+        await finance.syncBankConnection(USER, connection.id);
         const byExt = async (ext: string) =>
           (await ds.query("SELECT id FROM accounts WHERE external_account_id = $1", [ext]))[0].id;
         const card = await byExt("ext-1");
@@ -522,7 +528,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
           flex,
         ]);
         provided = [{ ...provided[1], type: "Overdraft", balance: 130 }];
-        await finance.syncProviderAccounts(connection, USER, "token");
+        await finance.syncBankConnection(USER, connection.id);
         expect(await balanceOf(flex)).toBe(-120);
         expect(await historyOf(flex)).toEqual([-120]);
         expect(await wrongSignRows()).toBe(0);

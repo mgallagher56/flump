@@ -5,7 +5,7 @@ export interface PublicBankConnection {
   id: string;
   institutionId: string;
   institutionName: string;
-  status: "connected" | "disconnected" | "error";
+  status: "connected" | "disconnected" | "error" | "needs_reconnect";
   authType: "oauth" | "token";
   expiresAt: Date | null;
   lastSyncedAt: Date;

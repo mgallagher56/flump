@@ -47,6 +47,7 @@ const ENTITY_TABLES = [
   "accounts",
   "agent_audit_events",
   "bank_connections",
+  "bank_oauth_states",
   "budget_entries",
   "import_batches",
   "mcp_tokens",

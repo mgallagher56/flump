@@ -1,11 +1,13 @@
 import { randomUUID } from "node:crypto";
-import { BankSyncOrchestrator } from "@flump/banking/server";
+import { BankSyncOrchestrator, isBankProviderError } from "@flump/banking/server";
 import {
   BadRequestException,
+  ConflictException,
   Injectable,
   Logger,
   NotFoundException,
   Optional,
+  ServiceUnavailableException,
 } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { InjectRepository } from "@nestjs/typeorm";
@@ -13,11 +15,19 @@ import { Repository } from "typeorm";
 import {
   AccountIntakeService,
   type CreateAccountDto,
-  currentUkYearMonth,
   type UpdateAccountDto,
   type UpdateBalancesDto,
 } from "./account-intake.service";
 import { toPublicConnection } from "./bank-connection.public";
+import { revokeConnectionConsent } from "./bank-connection-consent";
+import { issueOAuthState, withPkceChallenge } from "./bank-connection-oauth";
+import {
+  accessTokenAad,
+  BankConnectionSync,
+  ConnectionNeedsReconnectError,
+  SYNC_DEADLINE_MS,
+  type SyncOutcome,
+} from "./bank-connection-sync";
 import { Account } from "./entities/account.entity";
 import { AccountDetail } from "./entities/account-detail.entity";
 import { BankConnection } from "./entities/bank-connection.entity";
@@ -25,10 +35,8 @@ import { Transaction } from "./entities/transaction.entity";
 import { UserProfile } from "./entities/user-profile.entity";
 import type { CreateTransactionDto } from "./finance.controller";
 import { safeErrorSummary } from "./log-safe";
+import type { BankProvider } from "./providers/provider.interface";
 import { BankProviderRegistry } from "./providers/provider.registry";
-import { writeConnectedSnapshot } from "./snapshots/connected-write";
-import { londonDate } from "./snapshots/london-date";
-import { resignHistoryForType, storedBalance } from "./snapshots/stored-balance";
 
 @Injectable()
 export class FinanceService {
@@ -166,322 +174,238 @@ export class FinanceService {
 
   async connectBank(userId: string, body: { institutionId: string; token?: string }) {
     const { institutionId, token } = body;
-    const provider = this.providerRegistry?.getProvider
-      ? this.providerRegistry.getProvider(institutionId)
-      : null;
-
-    // 1. Token-based auth
-    if (token && provider) {
-      const names: { [key: string]: string } = {
-        starling: "Starling Bank",
-        monzo: "Monzo Bank",
-        trading212: "Trading 212",
-        hsbc: "HSBC Bank",
-        barclays: "Barclays",
-        revolut: "Revolut",
-        santander: "Santander",
-        natwest: "NatWest",
-        lloyds: "Lloyds Bank",
-        chase: "Chase",
-      };
-      const name = names[institutionId.toLowerCase()] || "External Bank";
-
-      let conn: BankConnection;
-      const found = await this.bankConnectionRepository.findOne({
-        where: { userId, institutionId },
-      });
-
-      if (found) {
-        conn = found;
-      } else {
-        conn = this.bankConnectionRepository.create
-          ? this.bankConnectionRepository.create({
-              userId,
-              institutionId,
-              institutionName: name,
-            })
-          : ({ userId, institutionId, institutionName: name } as any);
-      }
-
-      conn.status = "connected";
-      conn.authType = "token";
-      conn.accessToken = BankSyncOrchestrator.encryptToken(token);
-      conn.lastSyncedAt = new Date();
-      const savedConn: BankConnection = (await this.bankConnectionRepository.save(conn)) as any;
-
-      try {
-        const accountsCount = await this.syncProviderAccounts(savedConn, userId, token);
-        return {
-          success: true,
-          connection: toPublicConnection(savedConn),
-          message: `Connected successfully! Sync'd ${accountsCount} accounts.`,
-        };
-      } catch (err) {
-        savedConn.status = "error";
-        await this.bankConnectionRepository.save(savedConn);
-        this.logger.error(`Token sync verification failed: ${safeErrorSummary(err)}`);
-        throw new BadRequestException(
-          "Token sync verification failed. Check the token and try again.",
-        );
-      }
-    }
-
-    // 2. OAuth check
-    const clientId = this.configService?.get
-      ? this.configService.get<string>(`${institutionId.toUpperCase()}_CLIENT_ID`)
-      : null;
-    const clientSecret = this.configService?.get
-      ? this.configService.get<string>(`${institutionId.toUpperCase()}_CLIENT_SECRET`)
-      : null;
-
-    if (clientId && clientSecret && provider) {
-      const backendUrl = this.configService.get<string>("BACKEND_URL", "http://localhost:4000");
-      const redirectUri = `${backendUrl}/bank-connections/callback`;
-      const state = `${institutionId}:${userId}`;
-      const redirectUrl = provider.getAuthUrl(clientId, redirectUri, state);
-
-      return {
-        success: true,
-        oauth: true,
-        redirectUrl,
-      };
-    }
-
-    // 3. Unsupported or unconfigured
+    const provider = this.providerRegistry?.getProvider(institutionId) ?? null;
     if (!provider) {
       throw new BadRequestException(
         `Financial institution "${institutionId}" is not currently supported for direct bank connections. Supported providers: Monzo Bank and Starling Bank.`,
       );
     }
+    const institutionName =
+      INSTITUTION_NAMES[institutionId.toLowerCase()] ?? (token ? "External Bank" : institutionId);
 
-    const providerNames: { [key: string]: string } = {
-      starling: "Starling Bank",
-      monzo: "Monzo Bank",
-      trading212: "Trading 212",
-      hsbc: "HSBC Bank",
-      barclays: "Barclays",
-      revolut: "Revolut",
-      santander: "Santander",
-      natwest: "NatWest",
-      lloyds: "Lloyds Bank",
-      chase: "Chase",
-    };
-    const institutionName = providerNames[institutionId.toLowerCase()] || institutionId;
+    // 1. Token-based auth: store the token (encrypted, bound to the connection id), then sync.
+    if (token) {
+      // One connection per user and bank (unique index): a double-clicked connect reuses it.
+      const [row] = (await this.bankConnectionRepository.query(
+        `INSERT INTO "bank_connections" ("user_id", "institution_id", "institution_name", "status", "auth_type")
+         VALUES ($1, $2, $3, 'connected', 'token')
+         ON CONFLICT ("user_id", "institution_id") DO UPDATE SET "updated_at" = now()
+         RETURNING "id"`,
+        [userId, institutionId, institutionName],
+      )) as Array<{ id: string }>;
+      const id = (row as { id: string }).id;
+      // The token is bound to the row id (AAD), so it is written once the id is known.
+      await this.bankConnectionRepository.update(
+        { id, userId },
+        {
+          status: "connected",
+          authType: "token",
+          accessToken: BankSyncOrchestrator.encryptToken(token, accessTokenAad(id)),
+          refreshToken: null,
+          expiresAt: null,
+        },
+      );
 
+      const result = await this.runSync(userId, id, provider);
+      if (result.kind === "busy") throw new ConflictException(SYNC_BUSY_MESSAGE);
+      if (result.kind !== "ok") {
+        throw new BadRequestException(
+          "Token sync verification failed. Check the token and try again.",
+        );
+      }
+      return {
+        success: true,
+        connection: toPublicConnection(result.connection),
+        message: syncMessage(result.outcome),
+      };
+    }
+
+    // 2. OAuth: a random single-use state and a PKCE challenge (audit M4).
+    const clientId = this.oauthConfig(institutionId, "CLIENT_ID");
+    const clientSecret = this.oauthConfig(institutionId, "CLIENT_SECRET");
+    if (clientId && clientSecret) {
+      const redirectUri = this.redirectUri(institutionId);
+      const { state, codeChallenge } = await issueOAuthState(
+        this.bankConnectionRepository.manager,
+        {
+          userId,
+          institutionId,
+          redirectUri,
+        },
+      );
+      const redirectUrl = withPkceChallenge(
+        provider.getAuthUrl(clientId, redirectUri, state),
+        codeChallenge,
+      );
+      return { success: true, oauth: true, redirectUrl };
+    }
+
+    // 3. Unconfigured.
     throw new BadRequestException(
       `OAuth credentials are not configured on the server for ${institutionName}. Please connect using a Personal Access Token or configure ${institutionId.toUpperCase()}_CLIENT_ID and ${institutionId.toUpperCase()}_CLIENT_SECRET.`,
     );
   }
 
   async syncBankConnection(userId: string, id: string) {
-    const connection = await this.bankConnectionRepository.findOne({
-      where: { id, userId },
-    });
-
+    const connection = await this.bankConnectionRepository.findOne({ where: { id, userId } });
     if (!connection) {
       throw new NotFoundException("Bank connection not found");
     }
-
-    const provider = this.providerRegistry?.getProvider
-      ? this.providerRegistry.getProvider(connection.institutionId)
-      : null;
-
-    if (!connection.accessToken) {
-      await this.failNeedingReconnect(connection);
+    const provider = this.providerRegistry?.getProvider(connection.institutionId);
+    if (!provider) {
+      throw new BadRequestException(
+        "Bank connection has no active token or credentials to refresh.",
+      );
     }
 
-    if (provider) {
-      // Stored ciphertext that cannot be decrypted (wrong key, corruption) must not surface
-      // decrypt or key details; the user has to reconnect.
-      try {
-        BankSyncOrchestrator.decryptToken(connection.accessToken as string);
-        if (connection.refreshToken) BankSyncOrchestrator.decryptToken(connection.refreshToken);
-      } catch (err) {
-        this.logger.error(
-          `Stored tokens unusable for ${connection.institutionName}: ${safeErrorSummary(err)}`,
-        );
-        await this.failNeedingReconnect(connection);
-      }
-
-      try {
-        const refreshed = await BankSyncOrchestrator.refreshConnectionTokensIfNeeded({
-          connection,
-          exchangeRefreshToken: async (plainRefreshToken) => {
-            const clientId = this.configService.get<string>(
-              `${connection.institutionId.toUpperCase()}_CLIENT_ID`,
-            );
-            const clientSecret = this.configService.get<string>(
-              `${connection.institutionId.toUpperCase()}_CLIENT_SECRET`,
-            );
-            const redirectUri =
-              this.configService.get<string>(
-                `${connection.institutionId.toUpperCase()}_REDIRECT_URI`,
-              ) || "http://localhost:5173/auth/callback";
-
-            if (!clientId || !clientSecret) {
-              throw new Error(`Missing OAuth credentials for ${connection.institutionId}`);
-            }
-
-            return provider.exchangeCode(clientId, clientSecret, redirectUri, plainRefreshToken);
-          },
-        });
-
-        if (refreshed.wasRefreshed) {
-          if (refreshed.updatedEncryptedAccessToken) {
-            connection.accessToken = refreshed.updatedEncryptedAccessToken;
-          }
-          if (refreshed.updatedEncryptedRefreshToken) {
-            connection.refreshToken = refreshed.updatedEncryptedRefreshToken;
-          }
-          if (refreshed.newExpiresAt) {
-            connection.expiresAt = refreshed.newExpiresAt;
-          }
-          await this.bankConnectionRepository.save(connection);
-        }
-
-        const accountsCount = await this.syncProviderAccounts(
-          connection,
-          userId,
-          refreshed.activeAccessToken,
-        );
-        connection.lastSyncedAt = new Date();
-        connection.status = "connected";
-        await this.bankConnectionRepository.save(connection);
-
+    const result = await this.runSync(userId, id, provider);
+    switch (result.kind) {
+      case "busy":
+        throw new ConflictException(SYNC_BUSY_MESSAGE);
+      case "ok":
         return {
           success: true,
-          connection: toPublicConnection(connection),
-          message: `Sync'd ${accountsCount} accounts.`,
+          connection: toPublicConnection(result.connection),
+          message: syncMessage(result.outcome),
+          accounts: { updated: result.outcome.updated, skipped: result.outcome.skipped },
         };
-      } catch (err) {
-        this.logger.error(
-          `API Sync failed for ${connection.institutionName}: ${safeErrorSummary(err)}`,
-        );
-        connection.status = "error";
-        await this.bankConnectionRepository.save(connection);
+      case "needs_reconnect":
+        return {
+          success: false,
+          connection: toPublicConnection(result.connection),
+          error:
+            "This bank connection needs to be reconnected. Please reconnect it to resume syncing.",
+        };
+      default:
         // Provider error text is logged, not returned: it can echo credentials or internals.
         return {
           success: false,
-          connection: toPublicConnection(connection),
+          connection: toPublicConnection(result.connection),
           error: "Sync failed. Please try again, or reconnect the bank if it keeps failing.",
         };
+    }
+  }
+
+  /**
+   * One sync of one connection (BE-12): the lease, the token (refreshed under a row lock), the
+   * provider read under one deadline, and the account writes in one transaction. Records the
+   * connection's resulting status; never throws for a provider failure.
+   */
+  private async runSync(userId: string, id: string, provider: BankProvider): Promise<SyncResult> {
+    const sync = this.bankSync();
+    const lease = await sync.claim(id, userId);
+    if (!lease) return { kind: "busy" };
+
+    let status: BankConnection["status"] = "error";
+    let outcome: SyncOutcome | undefined;
+    try {
+      const institutionId = (await this.bankConnectionRepository.findOneOrFail({ where: { id } }))
+        .institutionId;
+      const accessToken = await sync.activeAccessToken(id, provider, {
+        clientId: this.oauthConfig(institutionId, "CLIENT_ID"),
+        clientSecret: this.oauthConfig(institutionId, "CLIENT_SECRET"),
+      });
+      const providerAccounts = await provider.fetchAccounts(accessToken, {
+        signal: AbortSignal.timeout(SYNC_DEADLINE_MS),
+      });
+      outcome = await sync.writeAccounts(id, userId, providerAccounts);
+      status = outcome.total > 0 && outcome.updated === 0 ? "error" : "connected";
+    } catch (err) {
+      this.logger.error(`Bank sync failed: ${safeErrorSummary(err)}`);
+      status = needsReconnect(err) ? "needs_reconnect" : "error";
+    } finally {
+      try {
+        // Only the status columns are written: the token columns may have just been refreshed.
+        await this.bankConnectionRepository.update(
+          { id, userId },
+          status === "connected" ? { status, lastSyncedAt: new Date() } : { status },
+        );
+      } catch (err) {
+        this.logger.error(`Bank sync status not saved: ${safeErrorSummary(err)}`);
+      } finally {
+        await sync.release(id, lease);
       }
     }
 
-    throw new BadRequestException("Bank connection has no active token or credentials to refresh.");
+    // Disconnected while the sync ran: nothing was written, and there is nothing to return.
+    const connection = await this.bankConnectionRepository.findOne({ where: { id, userId } });
+    if (!connection) throw new NotFoundException("Bank connection not found");
+    if (status === "connected" && outcome) return { kind: "ok", connection, outcome };
+    return { kind: status === "needs_reconnect" ? "needs_reconnect" : "failed", connection };
   }
 
-  private async failNeedingReconnect(connection: BankConnection): Promise<never> {
-    connection.status = "error";
-    await this.bankConnectionRepository.save(connection);
-    throw new BadRequestException(
-      "This bank connection needs to be reconnected. Please reconnect it to resume syncing.",
-    );
-  }
-
+  /**
+   * Disconnects a bank (audit H10): consent is revoked at the provider first (best effort,
+   * outside the transaction), then the connection and everything synced from it are deleted in
+   * one transaction. `consentRevoked: false` means the user must remove access in their bank's
+   * app.
+   */
   async deleteBankConnection(userId: string, id: string) {
-    const connection = await this.bankConnectionRepository.findOne({
-      where: { id, userId },
-    });
-
+    const connection = await this.bankConnectionRepository.findOne({ where: { id, userId } });
     if (!connection) {
       throw new NotFoundException("Bank connection not found");
     }
-
-    const accounts = await this.accountRepository.find({
-      where: { connectionId: connection.id, userId },
-    });
-
-    for (const acc of accounts) {
-      await this.accountDetailRepository.delete({ accountId: acc.id });
-      await this.transactionRepository.delete({ accountId: acc.id });
-      await this.accountRepository.remove(acc);
-    }
-
-    await this.bankConnectionRepository.remove(connection);
-
-    return { success: true };
+    const outcome = this.providerRegistry
+      ? await revokeConnectionConsent(this.providerRegistry, connection)
+      : "no_token";
+    await this.bankSync().deleteConnectionData(connection.id, userId);
+    return { success: true, consentRevoked: outcome === "revoked" };
   }
 
-  async syncProviderAccounts(
-    connection: BankConnection,
-    userId: string,
-    accessToken: string,
-  ): Promise<number> {
-    const provider = this.providerRegistry?.getProvider
-      ? this.providerRegistry.getProvider(connection.institutionId)
-      : null;
-    if (!provider) return 0;
-
-    const providerAccounts = await provider.fetchAccounts(accessToken);
-    // One clock reading for year, month and date (E30 D3): a sync at month-end midnight can never
-    // pair next month's date with this month's key (the table CHECK would reject it).
-    const today = londonDate();
-    const [currentYear, currentMonth] = today.split("-").map(Number) as [number, number];
-
-    for (const pa of providerAccounts) {
-      const normalizedBalance = storedBalance(pa.type, pa.balance);
-
-      const existingAccount = await this.accountRepository.findOne({
-        where: {
-          connectionId: connection.id,
-          externalAccountId: pa.externalAccountId,
-          userId,
-        },
-      });
-
-      let targetAccount: Account;
-      if (!existingAccount) {
-        targetAccount = this.accountRepository.create
-          ? this.accountRepository.create({
-              userId,
-              name: pa.name,
-              type: pa.type,
-              balance: normalizedBalance,
-              currency: pa.currency,
-              connectionId: connection.id,
-              externalAccountId: pa.externalAccountId,
-            })
-          : ({
-              id: `acc-${randomUUID()}`,
-              userId,
-              name: pa.name,
-              type: pa.type,
-              balance: normalizedBalance,
-              currency: pa.currency,
-              connectionId: connection.id,
-              externalAccountId: pa.externalAccountId,
-            } as any);
-      } else {
-        existingAccount.name = pa.name;
-        if (existingAccount.type !== pa.type) {
-          // A provider that reclassifies an account: the stored balance and history follow the
-          // new type's sign rule (BE-05, audit H6). History first, while the row is the old type,
-          // so the database check holds after each statement even without a transaction.
-          await resignHistoryForType(this.accountDetailRepository, existingAccount.id, pa.type);
-          existingAccount.balance = storedBalance(pa.type, Number(existingAccount.balance));
-        }
-        existingAccount.type = pa.type;
-        // The balance is not touched here: writeConnectedSnapshot moves it atomically, and not at
-        // all when this month's value was entered by hand (E30 D7).
-        targetAccount = existingAccount;
-      }
-      const savedAcc = (await this.accountRepository.save(targetAccount)) || targetAccount;
-
-      // One row per account per London month, shared with the check-in (unique index, E23 D22).
-      await writeConnectedSnapshot(this.accountDetailRepository, this.accountRepository, {
-        accountId: savedAcc.id,
-        userId,
-        year: currentYear,
-        month: currentMonth,
-        value: normalizedBalance,
-        asOfDate: today,
-      });
-
-      // E19 D8-A: synced transactions are deliberately not stored. Balances are enough for
-      // net worth and debt, and merchant descriptions are high-risk personal data.
-    }
-
-    return providerAccounts.length;
+  private bankSync(): BankConnectionSync {
+    return new BankConnectionSync(this.bankConnectionRepository.manager.connection);
   }
+
+  private oauthConfig(
+    institutionId: string,
+    key: "CLIENT_ID" | "CLIENT_SECRET",
+  ): string | undefined {
+    return this.configService?.get<string>(`${institutionId.toUpperCase()}_${key}`) || undefined;
+  }
+
+  /** The OAuth redirect URI is required config (audit H3): never a localhost fallback. */
+  private redirectUri(institutionId: string): string {
+    const specific = this.configService?.get<string>(`${institutionId.toUpperCase()}_REDIRECT_URI`);
+    if (specific) return specific;
+    const backendUrl = this.configService?.get<string>("BACKEND_URL");
+    if (!backendUrl) {
+      this.logger.error(`No OAuth redirect URI configured for ${institutionId}`);
+      throw new ServiceUnavailableException("Bank connections are not configured on this server.");
+    }
+    return `${backendUrl.replace(/\/+$/, "")}/bank-connections/callback`;
+  }
+}
+
+const SYNC_BUSY_MESSAGE = "A sync for this bank connection is already running. Try again shortly.";
+
+const INSTITUTION_NAMES: Record<string, string> = {
+  starling: "Starling Bank",
+  monzo: "Monzo Bank",
+  trading212: "Trading 212",
+  hsbc: "HSBC Bank",
+  barclays: "Barclays",
+  revolut: "Revolut",
+  santander: "Santander",
+  natwest: "NatWest",
+  lloyds: "Lloyds Bank",
+  chase: "Chase",
+};
+
+type SyncResult =
+  | { kind: "busy" }
+  | { kind: "ok"; connection: BankConnection; outcome: SyncOutcome }
+  | { kind: "needs_reconnect" | "failed"; connection: BankConnection };
+
+/** Expired or revoked consent (M13): the user has to reconnect; retrying will not help. */
+function needsReconnect(err: unknown): boolean {
+  return (
+    err instanceof ConnectionNeedsReconnectError ||
+    (isBankProviderError(err) && err.code === "AUTH_EXPIRED")
+  );
+}
+
+function syncMessage(outcome: SyncOutcome): string {
+  const noun = outcome.total === 1 ? "account" : "accounts";
+  if (outcome.skipped === 0) return `Synced ${outcome.updated} ${noun}.`;
+  return `Updated ${outcome.updated} of ${outcome.total} ${noun}. The rest could not be read from the bank this time.`;
 }

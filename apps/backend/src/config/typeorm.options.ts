@@ -5,6 +5,7 @@ import { AccountDeletionTombstone } from "../entities/account-deletion-tombstone
 import { AccountDetail } from "../entities/account-detail.entity";
 import { AgentAuditEvent } from "../entities/agent-audit-event.entity";
 import { BankConnection } from "../entities/bank-connection.entity";
+import { BankOAuthState } from "../entities/bank-oauth-state.entity";
 import { BudgetEntry } from "../entities/budget-entry.entity";
 import { ImportBatch } from "../entities/import-batch.entity";
 import { McpToken } from "../entities/mcp-token.entity";
@@ -20,6 +21,7 @@ export const ENTITIES: Function[] = [
   Transaction,
   AccountDetail,
   BankConnection,
+  BankOAuthState,
   UserProfile,
   BudgetEntry,
   TaxRecord,

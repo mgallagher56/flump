@@ -5,8 +5,6 @@ import type {
   NormalizedAccount,
   NormalizedTransaction,
 } from "../../core/types.js";
-import { decryptBankingToken, encryptBankingToken } from "../crypto.js";
-import type { BankingProviderAdapter } from "../interface.js";
 
 export type SupportedBankCsvFormat = "monzo" | "starling" | "amex" | "hsbc" | "generic";
 
@@ -146,7 +144,34 @@ function parseCsvLine(line: string): string[] {
 }
 
 /**
- * Standardizes UK CSV Statements from Monzo, Starling, Amex, and HSBC.
+ * Thrown when a CSV row has no readable amount. `row` is the 1-based data row (the header is not
+ * counted). The message names the row but never includes the cell content.
+ */
+export class CsvAmountError extends Error {
+  readonly row: number;
+
+  constructor(row: number) {
+    super(`CSV row ${row} has no readable amount.`);
+    this.name = "CsvAmountError";
+    this.row = row;
+  }
+}
+
+/**
+ * Parses an amount cell, tolerating currency symbols, thousands separators and spaces. An empty
+ * or unreadable cell throws `CsvAmountError` rather than being stored as 0.
+ */
+function parseCsvAmount(cell: string | undefined, row: number): number {
+  const cleaned = (cell ?? "").replace(/[^0-9.-]/g, "");
+  if (!/[0-9]/.test(cleaned)) throw new CsvAmountError(row);
+  const value = Number(cleaned);
+  if (!Number.isFinite(value)) throw new CsvAmountError(row);
+  return value;
+}
+
+/**
+ * Standardizes UK CSV Statements from Monzo, Starling, Amex, and HSBC. Throws `CsvAmountError`
+ * for a row with no readable amount.
  */
 export function parseBankCsvContent(
   csvContent: string,
@@ -173,6 +198,7 @@ export function parseBankCsvContent(
     const row = rows[idx]!;
     const cols = parseCsvLine(row);
     if (cols.length < 3) continue;
+    const dataRow = idx + 1;
 
     let date = "";
     let merchant = "";
@@ -184,18 +210,18 @@ export function parseBankCsvContent(
       date = cols[1] ?? "";
       merchant = cols[4] || cols[13] || "Monzo Transaction";
       rawCategory = cols[6];
-      amount = Number.parseFloat((cols[7] ?? "0").replace(/[^0-9.-]/g, "")) || 0;
+      amount = parseCsvAmount(cols[7], dataRow);
     } else if (format === "starling") {
       // Starling: Date (0), Counter Party (1), Reference (2), Type (3), Amount (GBP) (4), Balance (GBP) (5), Spending Category (6)
       date = cols[0] ?? "";
       merchant = cols[1] || cols[2] || "Starling Transaction";
-      amount = Number.parseFloat((cols[4] ?? "0").replace(/[^0-9.-]/g, "")) || 0;
+      amount = parseCsvAmount(cols[4], dataRow);
       rawCategory = cols[6];
     } else if (format === "amex") {
       // Amex: Date (0), Description (1), Card Member (2), Account # (3), Amount (4)
       date = cols[0] ?? "";
       merchant = cols[1] || "American Express Transaction";
-      const rawAmexAmount = Number.parseFloat((cols[4] ?? "0").replace(/[^0-9.-]/g, "")) || 0;
+      const rawAmexAmount = parseCsvAmount(cols[4], dataRow);
       // In Amex statements: charges are positive, repayments are negative.
       // We flip to Flump Standard: Outflows negative, Inflows positive.
       amount = -rawAmexAmount;
@@ -204,10 +230,8 @@ export function parseBankCsvContent(
       // HSBC / Generic: Date (0), Description (1), Amount (2), Balance (3)
       date = cols[0] ?? "";
       merchant = cols[1] || "Bank Transaction";
-      amount = Number.parseFloat((cols[2] ?? "0").replace(/[^0-9.-]/g, "")) || 0;
+      amount = parseCsvAmount(cols[2], dataRow);
     }
-
-    if (Number.isNaN(amount)) continue;
 
     computedBalance += amount;
 
@@ -257,58 +281,4 @@ export function parseBankCsvContent(
   });
 
   return { account, transactions };
-}
-
-export class CsvStatementParser implements BankingProviderAdapter {
-  readonly providerName = "csv" as const;
-
-  async createLinkSession(userId: string): Promise<{ linkTokenOrUrl: string; expiresAt: string }> {
-    return {
-      linkTokenOrUrl: `csv://upload?userId=${encodeURIComponent(userId)}`,
-      expiresAt: new Date(Date.now() + 86400 * 1000).toISOString(),
-    };
-  }
-
-  async exchangePublicToken(csvStringContent: string): Promise<{
-    accessTokenEncrypted: string;
-    providerItemId: string;
-    consentExpiresAt: string;
-  }> {
-    // Encrypt the uploaded CSV statement using AES-256-GCM
-    const encryptedCsv = encryptBankingToken(csvStringContent);
-    return {
-      accessTokenEncrypted: encryptedCsv,
-      providerItemId: `csv_statement_${Date.now()}`,
-      consentExpiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(), // Manual CSV has 1-year lifespan
-    };
-  }
-
-  async getAccounts(accessTokenEncrypted: string): Promise<NormalizedAccount[]> {
-    const csvContent = decryptBankingToken(accessTokenEncrypted);
-    const { account } = parseBankCsvContent(csvContent);
-    return [account];
-  }
-
-  async syncTransactions(
-    accessTokenEncrypted: string,
-    _cursor?: string,
-  ): Promise<{
-    added: NormalizedTransaction[];
-    modified: NormalizedTransaction[];
-    removedIds: string[];
-    nextCursor: string;
-  }> {
-    const csvContent = decryptBankingToken(accessTokenEncrypted);
-    const { transactions } = parseBankCsvContent(csvContent);
-    return {
-      added: transactions,
-      modified: [],
-      removedIds: [],
-      nextCursor: `cursor_csv_${Date.now()}`,
-    };
-  }
-
-  async revokeConnection(_accessTokenEncrypted: string): Promise<void> {
-    return Promise.resolve();
-  }
 }

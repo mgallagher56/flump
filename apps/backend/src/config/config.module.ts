@@ -1,4 +1,4 @@
-import { resolveBankingKey } from "@flump/banking/server";
+import { resolveBankingKey, resolveBankingKeyring } from "@flump/banking/server";
 import { Global, Logger, Module } from "@nestjs/common";
 import { type DbConfig, resolveDbConfig } from "./db.config";
 
@@ -17,6 +17,7 @@ export interface BootConfig {
       useFactory: (): BootConfig => {
         const db = resolveDbConfig(process.env);
         resolveBankingKey(process.env);
+        resolveBankingKeyring(process.env);
         const logger = new Logger("AppConfigModule");
         for (const warning of db.warnings) {
           logger.warn(warning);

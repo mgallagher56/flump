@@ -68,7 +68,7 @@ export async function seedHotQueryData(ds: DataSource, scale: SeedScale): Promis
   );
   await ds.query(
     `INSERT INTO bank_connections (user_id, institution_id, institution_name)
-     SELECT us.user_id, 'inst', 'Bank'
+     SELECT us.user_id, 'inst-' || c, 'Bank'
      FROM (${users}) us, generate_series(1, ${scale.connectionsPerUser}) c`,
   );
   await ds.query(
@@ -85,6 +85,8 @@ export interface HotQuery {
   table: string;
   /** The index the plan is expected to use on that table. */
   index: string;
+  /** Other indexes that serve the query as well (the planner may pick either). */
+  alsoAccepted?: string[];
   build: (ds: DataSource, userId: string, accountId: string) => [string, unknown[]];
 }
 
@@ -158,6 +160,8 @@ export const HOT_QUERIES: HotQuery[] = [
     name: "Bank connections by user, newest first",
     table: "bank_connections",
     index: "IDX_bank_connections_user_created",
+    // BE-12: the unique (user_id, institution_id) key also leads with user_id.
+    alsoAccepted: ["UQ_bank_connections_user_institution"],
     build: (ds, userId) =>
       fromFind(ds, BankConnection, { where: { userId }, order: { createdAt: "DESC" } }),
   },

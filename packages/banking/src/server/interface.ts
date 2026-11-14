@@ -1,9 +1,3 @@
-import type {
-  BankingProviderName,
-  NormalizedAccount,
-  NormalizedTransaction,
-} from "../core/types.js";
-
 // ---------------------------------------------------------------------------------------------
 // The bank-provider interface (audit M20). Every live bank or broker integration (Monzo,
 // Starling, Trading 212, the Open Banking standard banks) implements `BankProvider`.
@@ -78,33 +72,4 @@ export interface BankProvider {
     externalAccountId: string,
     options?: FetchTransactionsOptions,
   ): Promise<ProviderTransaction[]>;
-}
-
-/**
- * @deprecated Not a bank-provider interface: only the CSV statement parser and the unused
- * adapter registry in `orchestrator.ts` use it. Live bank integrations implement `BankProvider`.
- * Remove it together with that registry.
- */
-export interface BankingProviderAdapter {
-  readonly providerName: BankingProviderName;
-  createLinkSession(
-    userId: string,
-    reauthConnectionId?: string,
-  ): Promise<{ linkTokenOrUrl: string; expiresAt: string }>;
-  exchangePublicToken(publicTokenOrCode: string): Promise<{
-    accessTokenEncrypted: string;
-    providerItemId: string;
-    consentExpiresAt: string; // Default +90 days for UK Open Banking
-  }>;
-  getAccounts(accessTokenEncrypted: string): Promise<NormalizedAccount[]>;
-  syncTransactions(
-    accessTokenEncrypted: string,
-    cursor?: string,
-  ): Promise<{
-    added: NormalizedTransaction[];
-    modified: NormalizedTransaction[];
-    removedIds: string[];
-    nextCursor: string;
-  }>;
-  revokeConnection(accessTokenEncrypted: string): Promise<void>;
 }
