@@ -65,6 +65,19 @@ with 429: recreate the database. And the smoke suite's check-in test records the
 which the seed does not undo, so a visual run after it shows no check-in prompt: recreate the
 database before comparing shots. CI always starts from an empty database.
 
+### The new-user journey
+
+`tests/new-user-journey.spec.ts` walks a brand-new user through setup, a first account, a first
+budget entry and the dashboard. The suite has one user, so the spec clears it with
+`clearToNewUser` (the same reset endpoint) and runs in its own Playwright project, `new-user`,
+after every spec in `chromium` has finished. If a `chromium` spec fails, the journey does not run.
+It leaves the journey's data behind; global setup seeds the homeowner again on the next run.
+
+Against a database you keep, a full smoke run therefore spends two resets (the journey, then the
+next seed), so about five runs an hour reach the limit. To skip the journey while working on
+another spec, run `bunx playwright test --project=chromium`. To run only the journey, run
+`bunx playwright test --project=new-user --no-deps`.
+
 ## Known gaps
 
 - `api-proxy.spec.ts` carries a `test.fail` for E20-N8: the root loader still serialises the

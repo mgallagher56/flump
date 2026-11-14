@@ -3,6 +3,7 @@ import { WEB_URL } from "./support/env";
 import { webServers } from "./support/servers";
 
 const isCI = Boolean(process.env.CI);
+const NEW_USER_SPEC = /new-user-journey\.spec\.ts$/;
 
 export default defineConfig({
   testDir: process.env.E2E_DIR ?? "./tests",
@@ -22,6 +23,15 @@ export default defineConfig({
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
   },
-  projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
+  projects: [
+    { name: "chromium", use: { ...devices["Desktop Chrome"] }, testIgnore: NEW_USER_SPEC },
+    // The suite has one user. This spec clears it, so it runs alone, after the persona specs.
+    {
+      name: "new-user",
+      use: { ...devices["Desktop Chrome"] },
+      testMatch: NEW_USER_SPEC,
+      dependencies: ["chromium"],
+    },
+  ],
   webServer: webServers(),
 });

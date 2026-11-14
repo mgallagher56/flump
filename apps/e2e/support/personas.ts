@@ -382,3 +382,23 @@ export async function applyPersona(page: Page, name: PersonaName): Promise<Perso
   }
   return { persona: name, unchanged: outcome.unchanged, reset: outcome.reset };
 }
+
+/**
+ * Makes the signed-in dev user a brand-new one: no accounts, no budget, no profile facts, and
+ * setup not finished. The page must be on the web app's origin with a session. The suite has one
+ * user, so only a spec that runs after the persona specs may call this (see the `new-user`
+ * project in playwright.config.ts). Spends one of the ten resets an hour.
+ */
+export async function clearToNewUser(page: Page): Promise<void> {
+  const status = await page.evaluate(async () => {
+    const response = await fetch("/api/user-profile/reset-financial-data", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-flump-request": "1" },
+      body: JSON.stringify({ confirmation: "RESET" }),
+    });
+    return response.status;
+  });
+  if (status !== 200) {
+    throw new Error(`Clearing the dev user through /api failed: POST reset ${status}`);
+  }
+}
