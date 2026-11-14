@@ -3,13 +3,12 @@ import {
   MAX_TRANSACTION_OFFSET,
   MAX_TRANSACTION_PAGE,
 } from "@flump/api-contract";
-import { BankSyncOrchestrator } from "@flump/banking/server";
-import { BadRequestException, Logger, NotFoundException } from "@nestjs/common";
+import { BadRequestException, NotFoundException } from "@nestjs/common";
 import { describe, expect, it, vi } from "vitest";
+import { financeServiceWithIntake } from "../../testing/finance-service";
 import { createInMemoryRepository, fakeListQueryBuilder } from "../../testing/in-memory-repository";
 import { withManager } from "../../testing/with-manager";
 import { FinanceController } from "./finance.controller";
-import { FinanceService } from "./finance.service";
 
 const ACC_1 = "00000000-0000-4000-8000-000000000001";
 
@@ -97,7 +96,7 @@ describe("FinanceController & FinanceService", () => {
       AccountDetail: mockAccountDetailRepo,
       Transaction: mockTransactionRepo,
     });
-    const service = new FinanceService(
+    const service = financeServiceWithIntake(
       mockAccountRepo as any,
       mockTransactionRepo as any,
       mockAccountDetailRepo as any,
@@ -386,7 +385,7 @@ describe("FinanceController & FinanceService", () => {
         AccountDetail: accountDetailRepo,
         Transaction: transactionRepo,
       });
-      const service = new FinanceService(
+      const service = financeServiceWithIntake(
         accountRepo as any,
         transactionRepo as any,
         accountDetailRepo as any,

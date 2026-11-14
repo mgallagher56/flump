@@ -67,8 +67,6 @@ const CONNECTION_ORDER: KeysetOrder = {
 @Injectable()
 export class FinanceService {
   private readonly logger = new Logger(FinanceService.name);
-  private readonly accountIntakeService: AccountIntakeService;
-
   constructor(
     @InjectRepository(Account)
     private readonly accountRepository: Repository<Account>,
@@ -82,17 +80,8 @@ export class FinanceService {
     private readonly userProfileRepository: Repository<UserProfile>,
     private readonly providerRegistry: BankProviderRegistry,
     private readonly configService: ConfigService,
-    accountIntakeService?: AccountIntakeService,
-  ) {
-    this.accountIntakeService =
-      accountIntakeService ??
-      new AccountIntakeService(
-        accountRepository,
-        accountDetailRepository,
-        userProfileRepository,
-        bankConnectionRepository,
-      );
-  }
+    private readonly accountIntakeService: AccountIntakeService,
+  ) {}
 
   async getAccounts(userId: string) {
     return this.accountIntakeService.getAccounts(userId);

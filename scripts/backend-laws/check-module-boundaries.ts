@@ -64,8 +64,19 @@ export function isCoveredFile(srcRelative: string): boolean {
   return true;
 }
 
-const IMPORT_SPEC =
-  /(?:^|\n)\s*(?:import|export)\b[^"'`;]*?\bfrom\s*["']([^"']+)["']|\bimport\s*\(\s*["']([^"']+)["']\s*\)|(?:^|\n)\s*import\s*["']([^"']+)["']/g;
+const Q = "[\"'`]";
+/**
+ * Specifiers of `import ... from`, `export ... from`, side-effect `import "x"`, dynamic
+ * `import("x")`, `require("x")` and `import x = require("x")`, quoted with ', " or a backtick.
+ */
+const IMPORT_SPEC = new RegExp(
+  [
+    `\\b(?:import|export)\\b[^"'\`;]*?\\bfrom\\s*${Q}([^"'\`]+)${Q}`,
+    `\\b(?:import|require)\\s*\\(\\s*${Q}([^"'\`]+)${Q}\\s*\\)`,
+    `\\bimport\\s*${Q}([^"'\`]+)${Q}`,
+  ].join("|"),
+  "g",
+);
 
 /** Relative import specifiers in `source`, with their line numbers. */
 export function relativeImports(source: string): { spec: string; line: number }[] {

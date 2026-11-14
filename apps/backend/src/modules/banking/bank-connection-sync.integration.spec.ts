@@ -19,7 +19,7 @@ import { UserProfile } from "../../entities/user-profile.entity";
 import { assertSafeTestDatabase } from "../../testing/assertSafeTestDatabase";
 import { resolveDbTestMode } from "../../testing/dbTestMode";
 import { discoverMigrations, type MigrationClass } from "../../testing/discoverMigrations";
-import { FinanceService } from "../finance/finance.service";
+import { financeServiceWithIntake } from "../../testing/finance-service";
 import { revokeAllBankConsentsForUser } from "./bank-connection-consent";
 import { consumeOAuthState, issueOAuthState } from "./bank-connection-oauth";
 import { accessTokenAad, BankConnectionSync, refreshTokenAad } from "./bank-connection-sync";
@@ -121,7 +121,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("bank sync (real Post
   });
 
   const financeWith = (provider: BankProvider | undefined) =>
-    new FinanceService(
+    financeServiceWithIntake(
       ds.getRepository(Account),
       ds.getRepository(Transaction),
       ds.getRepository(AccountDetail),

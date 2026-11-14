@@ -66,7 +66,7 @@ describe("module-boundaries law", () => {
     ]);
   });
 
-  it("finds static, re-export, side-effect and dynamic relative imports", () => {
+  it("finds every relative import form, several to a line", () => {
     const source = [
       'import { a } from "./a";',
       'import type { B } from "../b";',
@@ -74,13 +74,26 @@ describe("module-boundaries law", () => {
       'import "./side-effect";',
       'const d = await import("./d");',
       'import { e } from "@flump/api-contract";',
+      'import f = require("./f");',
+      'const g = require("./g");',
+      "const h = await import(`./h`);",
+      'import { i } from "./i"; import { j } from "./j";',
+      "import {\n  k,\n} from './k';",
     ].join("\n");
-    expect(relativeImports(source)).toEqual([
-      { spec: "./a", line: 1 },
-      { spec: "../b", line: 2 },
-      { spec: "./c", line: 3 },
-      { spec: "./side-effect", line: 4 },
-      { spec: "./d", line: 5 },
+    expect(relativeImports(source).map((i) => i.spec)).toEqual([
+      "./a",
+      "../b",
+      "./c",
+      "./side-effect",
+      "./d",
+      "./f",
+      "./g",
+      "./h",
+      "./i",
+      "./j",
+      "./k",
     ]);
+    expect(relativeImports(source).find((i) => i.spec === "./j")?.line).toBe(10);
+    expect(relativeImports(source).find((i) => i.spec === "./k")?.line).toBe(13);
   });
 });
