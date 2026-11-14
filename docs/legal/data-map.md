@@ -23,6 +23,7 @@ in PR 421. BE-04 added account deletion, the data export and a fuller financial 
 | Budget entries incl. free-text notes                                                                                                                                                                       | `budget_entries`                | User                             | Free text may contain anything                                                                                                                                                     |
 | Tax records incl. notes and receipt file as base64                                                                                                                                                         | `tax_records`                   | User                             | Receipts are large blobs, read only by the receipt route; included in the data export                                                                                              |
 | Bank connections: institution, status, **encrypted** access and refresh tokens, expiry, last sync                                                                                                          | `bank_connections`              | Bank connect                     | AES-256-GCM; public responses strip tokens. Connect is owner-allowlisted only. Never exported                                                                                      |
+| Pending bank consents: institution, a hash of the random OAuth state, the PKCE verifier (encrypted), redirect URI, expiry (ten minutes)                                                                    | `bank_oauth_states`             | Bank connect (OAuth)             | Single use, deleted when used or on the next connect after expiry. Deleted on erasure and reset. Exported without the hash, verifier or redirect URI                               |
 | MCP tokens: name, hash, prefix, scopes, anonymise flag, expiry, usage                                                                                                                                      | `mcp_tokens`                    | User                             | Hash only, never the token. Revoked (deleted) by a financial reset; exported as metadata only                                                                                      |
 | Spreadsheet imports: staged rows (account names and values), counts, validation errors, the prior values kept for undo                                                                                     | `import_batches`                | User (import)                    | Deleted by a financial reset and by account deletion; exported except the browser retry key                                                                                        |
 | AI connection audit log: tool name, scopes, outcome, timings, response size, token id, keyed hash of the arguments (no amounts, no free text)                                                              | `agent_audit_events`            | `/mcp` tool calls                | 13-month retention. **Kept** by a financial reset (security log); deleted with the account; exported except the keyed hash                                                         |
@@ -49,9 +50,12 @@ test checks the catalogue's `user_id` tables against the registry.
 
 - The person types `DELETE` and must have signed in within the last 15 minutes (WorkOS `auth_time`
   claim); otherwise 400 or 403 `recent_login_required`.
-- Bank consent: a seam is called first with the connection ids and institutions. Until BE-12 it only
-  logs `bank_consent_revoke_pending` (counts and institution ids, no user id or tokens); no bank is
-  contacted yet.
+- Bank consent: before the transaction, Flump asks each bank to revoke its access (BE-12). This is
+  best effort: a 10-second limit and one retry when the bank says "try later". The deletion goes
+  ahead whatever the bank answers. The audit event `bank_consent_revoke` has counts, typed failure
+  codes and institution ids only, with no user id, tokens or bank text. Banks with no revoke
+  endpoint (all except Monzo today) count as `unsupported`; the person removes access in their
+  bank's app. Disconnecting one bank does the same, and the response says whether it worked.
 - One database transaction deletes every row with the user's id from every registry table (children
   first, profile last; history and transactions keyed to the user's account ids go too, whatever
   their `user_id`) and writes the tombstone. A failure rolls all of it back.
@@ -89,11 +93,12 @@ shape is `AccountExportDocument` in `packages/api-contract/src/domains/profile.t
 | `profile`                                        | `user_profiles` row (object, or null if never created)                         |
 | `accounts`, `accountDetails`, `transactions`     | Accounts, monthly balance history, transactions                                |
 | `bankConnections`                                | Linked banks: institution, status, expiry, last sync. Never the tokens         |
+| `bankOAuthStates`                                | Bank consents started in the last ten minutes: institution and expiry only     |
 | `budgetEntries`, `taxRecords`                    | Budget and tax records, receipts as base64 data URLs                           |
 | `snapshotCheckins`, `importBatches`              | Confirmed months; spreadsheet imports and their undo data                      |
 | `mcpTokens`, `agentAuditEvents`                  | AI connection token metadata (name, prefix, scopes, usage) and its audit log   |
 
-Left out on purpose: bank access and refresh tokens, MCP token hashes, the import retry key and the
+Left out on purpose: bank access and refresh tokens, the bank OAuth state hash and PKCE verifier, MCP token hashes, the import retry key and the
 keyed hash of agent arguments. The login (email, password) lives in WorkOS and is not in the file.
 Rows are read in one read-only snapshot transaction, a page at a time, with a 30 s statement timeout, a 60 s idle-in-transaction timeout and a 2-minute overall deadline, so a slow client cannot hold a database connection. Limited to 10 exports an hour
 per user.
@@ -101,8 +106,8 @@ per user.
 ### Financial reset (`POST /user-profile/reset-financial-data`)
 
 Also needs a recent sign-in. Deletes every registry table marked `financial-clear` (accounts,
-history, transactions, check-ins, imports, bank connections, budget, tax), revokes (deletes) MCP
-tokens, keeps the agent audit log, and sets every financial profile field back to its default,
+history, transactions, check-ins, imports, bank connections, budget, tax), revokes consent at each
+bank first (as for deletion), revokes (deletes) MCP tokens and pending bank consents, keeps the agent audit log, and sets every financial profile field back to its default,
 including employment type, tax region, birth year, student loan plans, housing status and costs
 (M-PRIV1). Names, avatar, currency, country and layout preferences stay.
 

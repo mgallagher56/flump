@@ -21,7 +21,7 @@ import { Transaction } from "./entities/transaction.entity";
 import { UserProfile } from "./entities/user-profile.entity";
 import { FinanceService } from "./finance.service";
 import { ProviderBankConsentRevoker } from "./privacy/bank-consent-revoker";
-import { createFakeBank } from "./providers/__fixtures__/fake-bank";
+import { createFakeBank, PROVIDER_ECHO_MARKER } from "./providers/__fixtures__/fake-bank";
 import { monzoCase } from "./providers/__fixtures__/provider-cases";
 import type { BankProvider, ProviderAccount } from "./providers/provider.interface";
 import type { BankProviderRegistry } from "./providers/provider.registry";
@@ -550,6 +550,80 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("bank sync (real Post
       await expect(
         revoker.revokeAll(PERSON, [{ id: mine, institutionId: "monzo", authType: "oauth" }]),
       ).resolves.toBeUndefined();
+    });
+  });
+
+  describe("account deletion and reset seam against the fake Monzo API", () => {
+    const monzoRevoker = () =>
+      new ProviderBankConsentRevoker(ds.getRepository(BankConnection), {
+        getProvider: () => monzoCase.make(),
+      } as unknown as BankProviderRegistry);
+    const auditEvents = (spy: { mock: { calls: unknown[][] } }) =>
+      spy.mock.calls
+        .map((args: unknown[]) => String(args[0]))
+        .filter((m: string) => m.includes('"bank_consent_revoke"'))
+        .map((m: string) => JSON.parse(m));
+
+    it("revokes through the logout endpoint and audits counts only", async () => {
+      const bank = createFakeBank(monzoCase.routes);
+      vi.stubGlobal("fetch", bank.fetch);
+      const log = vi.spyOn(Logger.prototype, "log").mockImplementation(() => {});
+      try {
+        const id = await insertConnection();
+        await monzoRevoker().revokeAll(PERSON, [{ id, institutionId: "monzo", authType: "oauth" }]);
+        expect(bank.callsTo("revoke")).toHaveLength(1);
+        const [event] = auditEvents(log);
+        expect(event).toEqual({
+          event: "bank_consent_revoke",
+          connections: 1,
+          revoked: 1,
+          unsupported: 0,
+          failed: 0,
+          no_token: 0,
+          failures: {},
+          institutions: ["monzo"],
+        });
+        expect(JSON.stringify(log.mock.calls)).not.toContain(PERSON);
+        expect(JSON.stringify(log.mock.calls)).not.toContain("access-1");
+      } finally {
+        log.mockRestore();
+      }
+    });
+
+    it("an outage is retried once, audited with its typed code, and never throws", async () => {
+      const bank = createFakeBank(monzoCase.routes);
+      bank.failAlways("revoke", { kind: "status", status: 503 });
+      vi.stubGlobal("fetch", bank.fetch);
+      const log = vi.spyOn(Logger.prototype, "log").mockImplementation(() => {});
+      const warn = vi.spyOn(Logger.prototype, "warn").mockImplementation(() => {});
+      try {
+        const id = await insertConnection();
+        await expect(
+          monzoRevoker().revokeAll(PERSON, [{ id, institutionId: "monzo", authType: "oauth" }]),
+        ).resolves.toBeUndefined();
+        expect(bank.callsTo("revoke").length).toBeGreaterThanOrEqual(2);
+        const [event] = auditEvents(log);
+        expect(event).toMatchObject({ failed: 1, revoked: 0, failures: { UNAVAILABLE: 1 } });
+        expect(JSON.stringify(warn.mock.calls)).not.toContain(PROVIDER_ECHO_MARKER);
+      } finally {
+        log.mockRestore();
+        warn.mockRestore();
+      }
+    });
+
+    it("a revoked consent (401) is audited as AUTH_EXPIRED without a retry", async () => {
+      const bank = createFakeBank(monzoCase.routes);
+      bank.failAlways("revoke", { kind: "status", status: 401 });
+      vi.stubGlobal("fetch", bank.fetch);
+      const log = vi.spyOn(Logger.prototype, "log").mockImplementation(() => {});
+      try {
+        const id = await insertConnection();
+        await monzoRevoker().revokeAll(PERSON, [{ id, institutionId: "monzo", authType: "oauth" }]);
+        expect(bank.callsTo("revoke")).toHaveLength(1);
+        expect(auditEvents(log)[0]).toMatchObject({ failed: 1, failures: { AUTH_EXPIRED: 1 } });
+      } finally {
+        log.mockRestore();
+      }
     });
   });
 
