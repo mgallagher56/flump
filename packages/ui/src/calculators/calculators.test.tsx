@@ -13,44 +13,28 @@ import {
 
 describe("UI Calculators", () => {
   describe("DebtSnowballCalculator", () => {
-    it("renders and handles slider adjustments and CTA", () => {
+    it("renders and handles the extra payment, a debt field and the CTA", () => {
       const onSave = vi.fn();
       render(<DebtSnowballCalculator ctaText="Save and continue" onSaveAndContinue={onSave} />);
 
-      expect(screen.getByText(/Debt payoff: snowball vs avalanche calculator/i)).toBeDefined();
-      expect(screen.getByText(/Avalanche strategy/i)).toBeDefined();
-      expect(screen.getByText(/Snowball strategy/i)).toBeDefined();
+      expect(screen.getByRole("heading", { name: "Debt payoff methods compared" })).toBeDefined();
+      expect(screen.getByText(/Total interest, highest rate first/)).toBeDefined();
+      expect(screen.getByText(/Total interest, smallest balance first/)).toBeDefined();
 
-      const slider = screen.getByRole("slider", { name: /Extra each month slider/i });
+      const slider = screen.getByRole("slider", { name: /Extra payment a month range slider/i });
       fireEvent.change(slider, { target: { value: "150" } });
-      expect(screen.getAllByDisplayValue("150").length).toBeGreaterThan(0);
+      expect(screen.getByDisplayValue("£150")).toBeDefined();
 
-      // Adjust card and loan balance
-      const card = within(screen.getByRole("group", { name: /Credit card/ }));
-      const loan = within(screen.getByRole("group", { name: /Personal loan/ }));
-      const cardBalance = card.getByLabelText("Balance (£)");
+      const card = within(screen.getByRole("group", { name: "Debt 1: credit card" }));
+      const cardBalance = card.getByLabelText("Balance");
+      fireEvent.focus(cardBalance);
       fireEvent.change(cardBalance, { target: { value: "4000" } });
-      expect(screen.getByDisplayValue("4000")).toBeDefined();
-
-      const cardApr = card.getByLabelText("APR (%)");
-      fireEvent.change(cardApr, { target: { value: "29.9" } });
-
-      const cardMin = card.getByLabelText("Min / mo (£)");
-      fireEvent.change(cardMin, { target: { value: "120" } });
-
-      const loanBalance = loan.getByLabelText("Balance (£)");
-      fireEvent.change(loanBalance, { target: { value: "6000" } });
-      expect(screen.getByDisplayValue("6000")).toBeDefined();
-
-      const loanApr = loan.getByLabelText("APR (%)");
-      fireEvent.change(loanApr, { target: { value: "7.5" } });
-
-      const loanMin = loan.getByLabelText("Min / mo (£)");
-      fireEvent.change(loanMin, { target: { value: "180" } });
+      fireEvent.blur(cardBalance);
+      expect(screen.getByDisplayValue("4,000")).toBeDefined();
 
       const cta = screen.getByRole("button", { name: /Save and continue/i });
       fireEvent.click(cta);
-      expect(onSave).toHaveBeenCalled();
+      expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ totalUnsecuredDebt: 9000 }));
     });
   });
 
@@ -167,21 +151,23 @@ describe("UI Calculators", () => {
   });
 
   describe("ZeroPercentCliffCalculator", () => {
-    it("renders and computes 0% purchase card expiration cliff", () => {
+    it("renders and computes the payment before a 0% deal ends", () => {
       const onSave = vi.fn();
       render(<ZeroPercentCliffCalculator ctaText="Save and continue" onSaveAndContinue={onSave} />);
 
-      expect(screen.getByText(/0% balance transfer promotional expiry calculator/i)).toBeDefined();
-      expect(screen.getByText(/Target monthly payment/i)).toBeDefined();
-      expect(screen.getByText(/If you pay only the minimum/i)).toBeDefined();
+      expect(
+        screen.getByRole("heading", { name: "When a 0% balance transfer ends" }),
+      ).toBeDefined();
+      expect(screen.getByText(/Estimated monthly payment/i)).toBeDefined();
+      expect(screen.getByText(/with minimum payments only/i)).toBeDefined();
 
-      const input = screen.getByLabelText("Current 0% card balance (£)");
-      fireEvent.change(input, { target: { value: "3500" } });
-      expect(screen.getByDisplayValue("3500")).toBeDefined();
+      const slider = screen.getByLabelText("Balance on the 0% card range slider");
+      fireEvent.change(slider, { target: { value: "3500" } });
+      expect(screen.getByDisplayValue("£3,500")).toBeDefined();
 
       const cta = screen.getByRole("button", { name: /Save and continue/i });
       fireEvent.click(cta);
-      expect(onSave).toHaveBeenCalled();
+      expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ totalUnsecuredDebt: 3500 }));
     });
   });
 

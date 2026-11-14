@@ -1,165 +1,76 @@
-import { css, cva } from "../../../styled-system/css/index.js";
+import { cva } from "../../../styled-system/css";
 
-export const cardStyle = css({
-  backgroundColor: "surface.card",
-  border: "1px solid",
-  borderColor: "border",
-  borderRadius: "2xl",
-  padding: { base: "20px", md: "32px" },
-  display: "flex",
-  flexDirection: "column",
-  gap: "24px",
-  boxShadow: "sm",
-});
-
-export const headerStyle = css({
-  display: "flex",
-  justifyContent: "space-between",
-  alignItems: "flex-start",
-  flexWrap: "wrap",
-  gap: "12px",
-});
-
-export const titleStyle = css({
-  textStyle: "heading.md",
-  color: "text.primary",
-  margin: "0 0 4px 0",
-});
-
-export const introStyle = css({
-  textStyle: "body.sm",
-  color: "text.muted",
-  margin: 0,
-});
-
-export const gridStyle = css({
-  display: "grid",
-  gridTemplateColumns: { base: "1fr", lg: "1.1fr 0.9fr" },
-  gap: "32px",
-});
-
-export const inputGroupStyle = css({
-  display: "flex",
-  flexDirection: "column",
-  gap: "8px",
-  marginBottom: "16px",
-});
-
-export const fieldLabelStyle = css({
-  textStyle: "label.md",
-  color: "text.primary",
-});
-
-export const textInputStyle = css({
-  padding: "10px 14px",
-  borderRadius: "lg",
-  border: "1px solid",
-  borderColor: "border.input",
-  backgroundColor: "surface.canvas",
-  color: "text.primary",
-  textStyle: "body.md",
-  fontVariantNumeric: "tabular-nums",
-});
-
-export const resultsBoxStyle = css({
-  backgroundColor: "surface.canvas",
-  border: "1px solid",
-  borderColor: "border",
-  borderRadius: "xl",
-  padding: "24px",
-  display: "flex",
-  flexDirection: "column",
-  gap: "18px",
-});
-
-export const badgeRecipe = cva({
+/** The tool's card: one bordered surface holding the header, the split and the sign-up button. */
+export const zeroRoot = cva({
   base: {
-    display: "inline-block",
-    textStyle: "label.sm",
-    padding: "2px 8px",
-    borderRadius: "md",
+    display: "flex",
+    flexDirection: "column",
+    gap: "5",
+    width: "100%",
+    minWidth: "0",
+    backgroundColor: "surface.card",
+    borderWidth: "1px",
+    borderStyle: "solid",
+    borderColor: "border",
+    borderRadius: "2xl",
+    padding: { base: "4", sm: "8" },
   },
-  variants: {
-    tone: {
-      danger: { backgroundColor: "status.danger.bg", color: "status.danger.text" },
-      positive: { backgroundColor: "status.positive.bg", color: "status.positive.text" },
-    },
-  },
-  defaultVariants: { tone: "danger" },
 });
 
-export const figureRecipe = cva({
+export const zeroHeader = cva({
+  base: { display: "flex", flexDirection: "column", gap: "2" },
+});
+
+export const zeroTitle = cva({
+  base: { textStyle: "heading.md", color: "text.primary", margin: "0" },
+});
+
+export const zeroIntro = cva({
+  base: { textStyle: "body.md", color: "text.secondary", margin: "0", maxWidth: "70ch" },
+});
+
+/** Left column: at most three visible inputs (a calculator with more adds a "More options" drawer). */
+export const zeroControls = cva({
+  base: { display: "flex", flexDirection: "column", gap: "4" },
+});
+
+/** Right column: outcome, supporting figures, the explainer, then the one notice. */
+export const zeroContent = cva({
+  base: { display: "flex", flexDirection: "column", gap: "5", minWidth: "0" },
+});
+
+/**
+ * Outcome cards. The first card (the outcome) spans the full row; the supporting cards (at most
+ * two) share the row below from `sm`, and stack on a phone.
+ */
+export const zeroOutcomes = cva({
   base: {
-    textStyle: "numeric.lg",
+    display: "grid",
+    gridTemplateColumns: { base: "minmax(0, 1fr)", sm: "repeat(2, minmax(0, 1fr))" },
+    gap: "3",
     fontVariantNumeric: "tabular-nums",
-    marginTop: "4px",
+    "& > :first-child": { gridColumn: "1 / -1" },
+    // A lone supporting figure takes the whole row instead of leaving a half-width gap.
+    "& > :nth-child(2):last-child": { gridColumn: "1 / -1" },
   },
-  variants: {
-    tone: {
-      danger: { color: "status.danger.text" },
-      positive: { color: "status.positive.text" },
-      neutral: { color: "text.primary" },
-    },
-  },
-  defaultVariants: { tone: "neutral" },
 });
 
-export const noteStyle = css({
-  textStyle: "body.sm",
-  color: "text.muted",
-  fontVariantNumeric: "tabular-nums",
-  margin: "4px 0 0 0",
-});
-
-export const calloutRecipe = cva({
+export const zeroExplainer = cva({
   base: {
-    padding: "14px",
-    borderRadius: "lg",
-    border: "1px solid",
-  },
-  variants: {
-    tone: {
-      neutral: { backgroundColor: "surface.card", borderColor: "border" },
-      danger: { backgroundColor: "status.danger.bg", borderColor: "status.danger.border" },
-      positive: { backgroundColor: "status.positive.bg", borderColor: "status.positive.border" },
-    },
-  },
-  defaultVariants: { tone: "neutral" },
-});
-
-export const calloutTitleRecipe = cva({
-  base: { textStyle: "label.md" },
-  variants: {
-    tone: {
-      neutral: { color: "text.primary" },
-      danger: { color: "status.danger.text" },
-      positive: { color: "status.positive.text" },
-    },
-  },
-  defaultVariants: { tone: "neutral" },
-});
-
-export const calloutBodyRecipe = cva({
-  base: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "1",
+    margin: "0",
     textStyle: "body.sm",
-    fontVariantNumeric: "tabular-nums",
-    margin: "4px 0 0 0",
+    color: "text.secondary",
+    "& p": { margin: "0" },
   },
-  variants: {
-    tone: {
-      neutral: { color: "text.muted" },
-      danger: { color: "status.danger.text" },
-      positive: { color: "text.primary" },
-    },
-  },
-  defaultVariants: { tone: "neutral" },
 });
 
-export const alertHeadingStyle = css({
-  display: "flex",
-  alignItems: "center",
-  gap: "8px",
-  color: "status.danger.text",
+export const zeroExplainerTitle = cva({
+  base: { textStyle: "label.md", color: "text.primary", margin: "0" },
 });
 
-export const ctaStyle = css({ width: "100%" });
+export const zeroCta = cva({
+  base: { alignSelf: { base: "stretch", sm: "flex-start" }, gap: "2" },
+});
