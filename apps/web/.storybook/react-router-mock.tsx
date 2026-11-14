@@ -7,6 +7,10 @@ export {
   data,
   isRouteErrorResponse,
   MemoryRouter,
+  // Marketing page stories render inside a real MemoryRouter with real routes and params.
+  Route,
+  Routes,
+  useParams,
   useRouteError,
 } from "react-router-real";
 
