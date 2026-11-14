@@ -8,6 +8,7 @@ import type { FC } from "react";
 import { useMemo, useState } from "react";
 import { ProjectionNotice } from "../../patterns/ProjectionNotice/ProjectionNotice";
 import { SimulatorSplitLayout } from "../../patterns/SimulatorSplitLayout/SimulatorSplitLayout";
+import { DELTA_PANEL_COPY } from "../../patterns/TakeHomeDeltaPanel/copy";
 import { Button } from "../../primitives/Button/Button";
 import { CollapsibleDrawer } from "../../primitives/CollapsibleDrawer/CollapsibleDrawer";
 import { Icon } from "../../primitives/Icon";
@@ -24,7 +25,6 @@ import {
   section24Cta,
   section24DrawerBody,
   section24Explainer,
-  section24ExplainerTitle,
   section24Header,
   section24Intro,
   section24Outcomes,
@@ -44,25 +44,21 @@ export const SECTION24_COPY = {
   moreOptions: "More options",
   allowableExpenses: "Other allowable costs a year (repairs, agent fees)",
   kpiTax: "Estimated tax on rental income",
+  kpiTaxSubtext: "After the tax credit for mortgage interest.",
   kpiCash: "Estimated cash left after costs, mortgage interest and tax",
+  kpiCashSubtext: "For the year. It can be below zero.",
   kpiRate: "Tax as a share of taxable profit",
+  kpiRateSubtext: "Taxable profit is rent less costs. Mortgage interest is not deducted.",
   explainerTitle: "How Section 24 works",
   explainer:
     "Mortgage interest is not deducted from rental profit. Instead, the tax is reduced by 20% of the interest, up to 20% of the taxable rental profit. The estimate uses England, Wales and Northern Ireland rates for a sole owner. Flump does not file your tax return.",
+  explainerLoss:
+    "Because tax is worked out before mortgage interest, the tax can be more than the cash the property makes, so the cash left can be below zero.",
   controlsLabel: "Rental figures",
   contentLabel: "Estimated tax on rental income",
 } as const;
 
 export const SECTION24_DEFAULT_CTA = "Continue to sign up";
-
-/** "£6,400 tax before the credit, minus a £1,600 credit for mortgage interest". */
-export const section24TaxBreakdown = (beforeCredit: string, credit: string) =>
-  `${beforeCredit} tax before the credit, minus a ${credit} credit for mortgage interest`;
-
-export const section24CashPerMonth = (monthly: string) => `${monthly} a month`;
-
-export const section24RateOf = (taxableProfit: string) =>
-  `Of ${taxableProfit} taxable rental profit (rent less costs; mortgage interest is not deducted)`;
 
 /** Spoken after inputs settle (COPY-AUDIT row for the live region). */
 export const section24Announcement = (tax: string, cash: string) =>
@@ -97,6 +93,8 @@ export interface Section24CalculatorProps {
   initialMortgageInterest?: number;
   initialAllowableExpenses?: number;
   initialOtherIncome?: number;
+  /** Inside a tool page that already shows the title and description: hide this calculator's own title and intro. */
+  embedded?: boolean;
 }
 
 const clamp = (v: number) => Math.max(0, v);
@@ -113,6 +111,7 @@ export const Section24Calculator: FC<Section24CalculatorProps> = ({
   initialMortgageInterest = 8_000,
   initialAllowableExpenses = 2_000,
   initialOtherIncome = 60_000,
+  embedded = false,
 }) => {
   // Clamped so a negative entry never reaches the engine.
   const [rentalIncome, setRentalIncome] = useState(clamp(initialRentalIncome));
@@ -127,6 +126,8 @@ export const Section24Calculator: FC<Section24CalculatorProps> = ({
   );
 
   const tax = result.finalTaxDue;
+  // Can be below zero: under Section 24 a landlord can owe tax and still make a cash loss. Shown
+  // with a minus sign in the default tone, never red.
   const cashLeft = result.netRentalIncomeAfterTax;
 
   const announcement = section24Announcement(money(tax), money(cashLeft));
@@ -199,34 +200,35 @@ export const Section24Calculator: FC<Section24CalculatorProps> = ({
       {/* Illustration outcomes, not saved figures, so plain outcome cards rather than a KpiStrip.
           One outcome, then at most two supporting figures. */}
       <div className={section24Outcomes()} data-density="compact" data-testid="section-24-outcomes">
-        <KpiCard
-          label={SECTION24_COPY.kpiTax}
-          subtext={section24TaxBreakdown(
-            money(result.grossTaxOnProperty),
-            money(result.financeCredit),
-          )}
-          value={tax}
-        />
+        <KpiCard label={SECTION24_COPY.kpiTax} subtext={SECTION24_COPY.kpiTaxSubtext} value={tax} />
         <KpiCard
           label={SECTION24_COPY.kpiCash}
-          subtext={section24CashPerMonth(money(cashLeft / 12))}
-          value={<Money size="lg" value={cashLeft} />}
+          subtext={SECTION24_COPY.kpiCashSubtext}
+          value={<Money size="lg" tone="default" value={cashLeft} />}
         />
         <KpiCard
           label={SECTION24_COPY.kpiRate}
-          subtext={section24RateOf(money(result.section24TaxableProfit))}
+          subtext={SECTION24_COPY.kpiRateSubtext}
           value={
-            <Num fractionDigits={1} kind="percent" size="lg" value={result.effectiveTaxRate} />
+            <Num fractionDigits={0} kind="percent" size="lg" value={result.effectiveTaxRate} />
           }
         />
       </div>
 
-      <div className={section24Explainer()}>
-        <h3 className={section24ExplainerTitle()}>{SECTION24_COPY.explainerTitle}</h3>
-        <p>{SECTION24_COPY.explainer}</p>
-      </div>
+      <Button className={section24Cta()} size="md" variant="primary" onClick={handleSave}>
+        {ctaLabel(ctaText)} <Icon icon={ArrowRight} size="sm" />
+      </Button>
 
-      <ProjectionNotice />
+      {/* Closed by default: the working adds figures, so it stays out of the first view. */}
+      <CollapsibleDrawer title={SECTION24_COPY.explainerTitle} variant="quiet">
+        <div className={section24Explainer()}>
+          <p>{SECTION24_COPY.explainer}</p>
+          <p>{SECTION24_COPY.explainerLoss}</p>
+        </div>
+      </CollapsibleDrawer>
+
+      {/* The one notice, carrying the full "Unverified estimate" sentence (P4.3). */}
+      <ProjectionNotice lead={DELTA_PANEL_COPY.unverifiedBanner} />
       <LiveRegion debounceMs={1000} message={announcement} visuallyHidden />
     </div>
   );
@@ -234,11 +236,16 @@ export const Section24Calculator: FC<Section24CalculatorProps> = ({
   return (
     <div className={section24Root()} data-testid="section-24-tool">
       <div className={section24Header()}>
+        {/* The badge stays when embedded: every tax figure carries it (R6). */}
         <div className={section24Badges()}>
           <StatusBadge variant="warning">{SECTION24_COPY.unverifiedBadge}</StatusBadge>
         </div>
-        <h2 className={section24Title()}>{SECTION24_COPY.title}</h2>
-        <p className={section24Intro()}>{SECTION24_COPY.intro}</p>
+        {embedded ? null : (
+          <>
+            <h2 className={section24Title()}>{SECTION24_COPY.title}</h2>
+            <p className={section24Intro()}>{SECTION24_COPY.intro}</p>
+          </>
+        )}
       </div>
 
       <SimulatorSplitLayout
@@ -247,10 +254,6 @@ export const Section24Calculator: FC<Section24CalculatorProps> = ({
         controls={controls}
         controlsLabel={SECTION24_COPY.controlsLabel}
       />
-
-      <Button className={section24Cta()} size="md" variant="primary" onClick={handleSave}>
-        {ctaLabel(ctaText)} <Icon icon={ArrowRight} size="sm" />
-      </Button>
     </div>
   );
 };

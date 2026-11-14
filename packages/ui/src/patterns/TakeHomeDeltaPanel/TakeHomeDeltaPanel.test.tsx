@@ -1,7 +1,7 @@
 import { ADVICE_PATTERNS } from "@flump/finance-engine";
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import { allCopyStrings, deltaSentence, joinParts, thresholdLabel } from "./copy";
+import { allCopyStrings, chartSummary, thresholdLabel } from "./copy";
 import { TakeHomeDeltaPanel, type TakeHomeDeltaPanelProps } from "./TakeHomeDeltaPanel";
 
 const base: TakeHomeDeltaPanelProps = {
@@ -19,16 +19,16 @@ const renderPanel = (props: Partial<TakeHomeDeltaPanelProps> = {}) =>
   render(<TakeHomeDeltaPanel {...base} {...props} />);
 
 describe("TakeHomeDeltaPanel", () => {
-  it("states the next £1,000 and leaves out zero parts", () => {
+  it("lists the next £1,000 in the table only, leaving out zero parts", () => {
     renderPanel();
-    expect(screen.getByTestId("take-home-delta-sentence").textContent).toBe(
-      "Of the next £1,000 of pay, an estimated £720 is take-home: £200 Income Tax and £80 National Insurance.",
-    );
+    // No sentence repeating the table and the headline card (RESCORE pay rise item 1).
+    expect(screen.queryByTestId("take-home-delta-sentence")).toBeNull();
+    expect(screen.queryByText(/Of the next £1,000 of pay/)).toBeNull();
     const rows = screen.getAllByRole("rowheader").map((r) => r.textContent);
     expect(rows).toEqual(["Take-home", "Income Tax", "National Insurance"]);
   });
 
-  it("lists every part in order with commas and a final and", () => {
+  it("lists every non-zero part in order", () => {
     renderPanel({
       takeHome: 225,
       components: {
@@ -39,9 +39,14 @@ describe("TakeHomeDeltaPanel", () => {
         pension: 0,
       },
     });
-    expect(screen.getByTestId("take-home-delta-sentence").textContent).toBe(
-      "Of the next £1,000 of pay, an estimated £225 is take-home: £400 Income Tax, £20 National Insurance, £90 student loan and £265 Child Benefit charge.",
-    );
+    const rows = screen.getAllByRole("rowheader").map((r) => r.textContent);
+    expect(rows).toEqual([
+      "Take-home",
+      "Income Tax",
+      "National Insurance",
+      "Student loan",
+      "Child Benefit charge",
+    ]);
   });
 
   it("leaves out negative parts as well as zero ones", () => {
@@ -49,9 +54,8 @@ describe("TakeHomeDeltaPanel", () => {
       takeHome: 805,
       components: { incomeTax: -5, nationalInsurance: 80, studentLoan: 0, hicbc: 0, pension: 120 },
     });
-    const sentence = screen.getByTestId("take-home-delta-sentence").textContent ?? "";
-    expect(sentence).not.toContain("Income Tax");
-    expect(sentence).toContain("£80 National Insurance and £120 pension");
+    const rows = screen.getAllByRole("rowheader").map((r) => r.textContent);
+    expect(rows).toEqual(["Take-home", "National Insurance", "Pension"]);
   });
 
   it("shows pence only when they matter", () => {
@@ -59,7 +63,7 @@ describe("TakeHomeDeltaPanel", () => {
       takeHome: 719.5,
       components: { incomeTax: 200.5, nationalInsurance: 80, studentLoan: 0, hicbc: 0, pension: 0 },
     });
-    expect(screen.getByTestId("take-home-delta-sentence").textContent).toContain("£719.50");
+    expect(screen.getByText("£719.50")).toBeDefined();
   });
 
   it("badges the tax year and an estimate", () => {
@@ -89,11 +93,8 @@ describe("TakeHomeDeltaPanel", () => {
     expect(screen.getByText(/Child Benefit is counted for 52 weeks a year/)).toBeDefined();
   });
 
-  it("uses tabular figures in the sentence and the table", () => {
+  it("uses tabular figures in the table", () => {
     renderPanel();
-    expect(screen.getByTestId("take-home-delta-sentence").className).toMatch(
-      /tabular-nums|fv-num_tabular/,
-    );
     const cells = screen.getAllByRole("cell");
     for (const cell of cells) expect(cell.className).toMatch(/tabular-nums|fv-num_tabular/);
   });
@@ -133,13 +134,16 @@ describe("TakeHomeDeltaPanel", () => {
 });
 
 describe("copy", () => {
-  it("joins parts with commas and a final and", () => {
-    expect(joinParts(["a"])).toBe("a");
-    expect(joinParts(["a", "b"])).toBe("a and b");
-    expect(joinParts(["a", "b", "c"])).toBe("a, b and c");
-    expect(deltaSentence("£1,000", "£1,000", [])).toBe(
-      "Of the next £1,000 of pay, an estimated £1,000 is take-home.",
+  it("keeps the chart summary to at most two figures", () => {
+    expect(chartSummary("28%", "£150,000")).toBe(
+      "At your pay, an estimated 28% of the next £1,000 is deducted.",
     );
+    expect(chartSummary(null, "£150,000")).toBe(
+      "Your pay is above the £150,000 the chart goes up to.",
+    );
+    for (const s of [chartSummary("28%", "£150,000"), chartSummary(null, "£150,000")]) {
+      expect((s.match(/£[\d,]+|\d+%/g) ?? []).length).toBeLessThanOrEqual(2);
+    }
   });
 
   it("labels thresholds from the data", () => {

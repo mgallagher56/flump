@@ -7,20 +7,23 @@ import {
   useRef,
   useState,
 } from "react";
+import { cx } from "../../../styled-system/css";
 import { formatAxisCurrency } from "../../charts/formatAxisCurrency";
 import { formatMoney, formatNumber } from "../../primitives/Money/Money";
 import { Table, TBody, Td, THead, Th, Tr } from "../../primitives/Table/Table";
 import { ChartFigure } from "../ChartFigure/ChartFigure";
-import { ChartLegend, type ChartLegendItem } from "../ChartLegend/ChartLegend";
 import { EXPLORER_COPY, thresholdTooltip } from "../TakeHomeDeltaPanel/copy";
 import {
   marginalRateAxisText,
   marginalRateAxisTitle,
   marginalRateBand,
   marginalRateChartArea,
+  marginalRateDirectLabel,
+  marginalRateFigure,
   marginalRateGrid,
   marginalRateHitArea,
   marginalRateLine,
+  marginalRateNote,
   marginalRateSvg,
   marginalRateTable,
   marginalRateThreshold,
@@ -159,29 +162,9 @@ export const MarginalRateChart: FC<MarginalRateChartProps> = ({
   const showYourPay =
     yourPay !== undefined && Number.isFinite(yourPay) && yourPay >= 0 && yourPay <= maxGross;
 
-  const legendItems: ChartLegendItem[] = [
-    { id: "rate", label: EXPLORER_COPY.chartLine, color: "primary", swatch: "line" },
-    ...(markers.length > 0
-      ? [
-          {
-            id: "thresholds",
-            label: EXPLORER_COPY.chartThresholds,
-            color: "baseline",
-            swatch: "dashed",
-          } as const,
-        ]
-      : []),
-    ...(showYourPay
-      ? [{ id: "you", label: EXPLORER_COPY.yourPay, color: "warning", swatch: "line" } as const]
-      : []),
-    ...steppedZones.map((z, i) => ({
-      id: `zone-${i}`,
-      label: z.label,
-      color: "band",
-      swatch: "area" as const,
-    })),
-  ];
-
+  // Direct labels (P10.2) in place of a legend: the line is named at its end, "Your pay" at its
+  // marker and the stepped zone inside its band; the dashed thresholds get one quiet line below.
+  const lastPoint = points[points.length - 1];
   const activeMarker = markers.find((m) => m.gross === activeGross) ?? null;
   const tipW = Math.min(TIP_W, W - 16);
   const activeX = activeMarker ? x(activeMarker.gross) : 0;
@@ -202,7 +185,7 @@ export const MarginalRateChart: FC<MarginalRateChartProps> = ({
 
   return (
     <ChartFigure
-      className={className}
+      className={cx(marginalRateFigure(), className)}
       dataTable={
         rows.length > 0 ? (
           <Table caption={title} className={marginalRateTable()}>
@@ -227,14 +210,13 @@ export const MarginalRateChart: FC<MarginalRateChartProps> = ({
           </Table>
         ) : undefined
       }
+      directLabels
       headingLevel={headingLevel}
-      legend={<ChartLegend items={legendItems} />}
       notice={notice}
       summary={summary}
       title={title}
     >
       <div className={marginalRateChartArea()} data-testid="marginal-rate-chart" ref={ref}>
-        <p className={marginalRateAxisTitle()}>{EXPLORER_COPY.chartYAxis}</p>
         <svg
           className={marginalRateSvg()}
           focusable="false"
@@ -294,7 +276,30 @@ export const MarginalRateChart: FC<MarginalRateChartProps> = ({
               <circle className={marginalRateThresholdHandle()} cx={x(m.gross)} cy={M.top} r="4" />
             </g>
           ))}
+          {steppedZones.map((z) => (
+            <text
+              className={marginalRateDirectLabel()}
+              data-testid="marginal-rate-zone-label"
+              key={`label-${z.from}-${z.to}`}
+              textAnchor="middle"
+              x={(x(z.from) + x(z.to)) / 2}
+              y={M.top + PLOT_H - 8}
+            >
+              {z.label}
+            </text>
+          ))}
           <polyline className={marginalRateLine()} data-testid="marginal-rate-line" points={line} />
+          {lastPoint ? (
+            <text
+              className={marginalRateDirectLabel({ tone: "line" })}
+              data-testid="marginal-rate-line-label"
+              textAnchor="end"
+              x={W - M.right}
+              y={y(lastPoint.ratePct) - 8}
+            >
+              {EXPLORER_COPY.chartLineLabel}
+            </text>
+          ) : null}
           {showYourPay ? (
             <g data-testid="marginal-rate-your-pay">
               <title>{`${EXPLORER_COPY.yourPay}: ${formatMoney(yourPay).text}`}</title>
@@ -351,6 +356,9 @@ export const MarginalRateChart: FC<MarginalRateChartProps> = ({
           ) : null}
         </svg>
         <p className={marginalRateAxisTitle({ position: "end" })}>{EXPLORER_COPY.chartXAxis}</p>
+        {markers.length > 0 ? (
+          <p className={marginalRateNote()}>{EXPLORER_COPY.chartThresholdsNote}</p>
+        ) : null}
       </div>
     </ChartFigure>
   );

@@ -71,9 +71,9 @@ describe("nextPoundSavedValues", () => {
 describe("<NextPoundExplorer />", () => {
   test("with no saved salary it works from the £39,000 example", () => {
     render(<Harness seed={{ ...saved, salary: 0, taxRegion: null, studentLoanPlans: [] }} />);
-    expect(document.querySelector('[data-testid="take-home-delta-sentence"]')?.textContent).toBe(
-      "Of the next £1,000 of pay, an estimated £720 is take-home: £200 Income Tax and £80 National Insurance.",
-    );
+    // The KPI cards carry the split; no sentence repeats it (E16 RESCORE B, pay rise item 1).
+    expect(document.querySelector('[data-testid="take-home-delta-sentence"]')).toBeNull();
+    expect(document.body.textContent).toContain("£720");
   });
 
   test("edits stay in memory, send no request and reset to the saved figures", () => {
@@ -83,6 +83,8 @@ describe("<NextPoundExplorer />", () => {
     expect((screen.getByLabelText("Pay before tax a year input") as HTMLInputElement).value).toBe(
       "£45,000",
     );
+    // The pension action sits inside "More options".
+    fireEvent.click(screen.getByRole("button", { name: "More options" }));
     fireEvent.click(screen.getByRole("button", { name: "Model a pension contribution" }));
     expect(
       (screen.getByLabelText("Extra pension contribution input") as HTMLInputElement).value,

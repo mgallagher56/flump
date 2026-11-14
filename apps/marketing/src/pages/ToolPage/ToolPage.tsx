@@ -9,10 +9,10 @@ import {
   TaxTrapCalculator,
   ZeroPercentCliffCalculator,
 } from "@repo/ui/calculators";
-import { getToolEntry, getToolGuide, resolveToolSlug } from "@repo/ui/tools";
+import { getToolEntry, getToolGuide, resolveToolSlug, type ToolSlug } from "@repo/ui/tools";
 import { ToolBreadcrumbs, type ToolBreadcrumbsRenderLink } from "@repo/ui/tools/breadcrumbs";
 import { ToolGuide } from "@repo/ui/tools/guide";
-import type { FC } from "react";
+import type { ComponentType, FC } from "react";
 import { Link, useParams } from "react-router-dom";
 import { Footer } from "../../components/Footer";
 import { Header } from "../../components/Header";
@@ -27,6 +27,28 @@ const renderCrumbLink: ToolBreadcrumbsRenderLink = (href, className, children) =
     {children}
   </Link>
 );
+
+/** What every calculator takes on a tool page: no own title, and the site's one sign-up button. */
+interface ToolCalculatorProps {
+  embedded: boolean;
+  ctaText: string;
+  onSaveAndContinue: () => void;
+  persistSeed: boolean;
+}
+
+/** Which calculator each slug renders, the same map as the web tool route. */
+const TOOL_COMPONENTS: Record<ToolSlug, ComponentType<ToolCalculatorProps>> = {
+  "uk-debt-snowball-vs-avalanche-calculator": DebtSnowballCalculator,
+  "0-percent-balance-transfer-payoff-calculator": ZeroPercentCliffCalculator,
+  "overdraft-cost-and-payoff-calculator": OverdraftCostCalculator,
+  "mortgage-overpayment-vs-isa-calculator": MortgageVsIsaCalculator,
+  "uk-student-loan-overpay-or-invest-calculator": StudentLoanCalculator,
+  "uk-pay-rise-take-home-calculator": (props) => (
+    <MarginalRateExplorerStandalone headingLevel="h2" {...props} />
+  ),
+  "section-24-landlord-tax-calculator": Section24Calculator,
+  "uk-100k-tax-trap-calculator": TaxTrapCalculator,
+};
 
 /**
  * One public calculator: breadcrumb, h1, one line, the calculator (which carries the page's one
@@ -44,6 +66,7 @@ export const ToolPage: FC = () => {
     return <NotFoundPage />;
   }
   const tool = getToolEntry(normalizedSlug);
+  const Calculator = TOOL_COMPONENTS[normalizedSlug];
   const guide = getToolGuide(normalizedSlug);
 
   // Invite-only: the button asks for an invite. Open: it hands the calculation to the web app.
@@ -69,65 +92,12 @@ export const ToolPage: FC = () => {
           <PageHeader description={tool.description} title={tool.title} />
 
           <section aria-label="Calculator" data-tool-calculator="">
-            {normalizedSlug === "uk-100k-tax-trap-calculator" && (
-              <TaxTrapCalculator
-                ctaText={ctaText}
-                onSaveAndContinue={handleContinue}
-                persistSeed={persistSeed}
-              />
-            )}
-
-            {normalizedSlug === "uk-debt-snowball-vs-avalanche-calculator" && (
-              <DebtSnowballCalculator
-                ctaText={ctaText}
-                onSaveAndContinue={handleContinue}
-                persistSeed={persistSeed}
-              />
-            )}
-
-            {normalizedSlug === "0-percent-balance-transfer-payoff-calculator" && (
-              <ZeroPercentCliffCalculator
-                ctaText={ctaText}
-                onSaveAndContinue={handleContinue}
-                persistSeed={persistSeed}
-              />
-            )}
-
-            {normalizedSlug === "section-24-landlord-tax-calculator" && (
-              <Section24Calculator
-                ctaText={ctaText}
-                onSaveAndContinue={handleContinue}
-                persistSeed={persistSeed}
-              />
-            )}
-
-            {normalizedSlug === "mortgage-overpayment-vs-isa-calculator" && (
-              <MortgageVsIsaCalculator
-                ctaText={ctaText}
-                onSaveAndContinue={handleContinue}
-                persistSeed={persistSeed}
-              />
-            )}
-
-            {normalizedSlug === "overdraft-cost-and-payoff-calculator" && (
-              <OverdraftCostCalculator
-                ctaText={ctaText}
-                onSaveAndContinue={handleContinue}
-                persistSeed={persistSeed}
-              />
-            )}
-
-            {normalizedSlug === "uk-pay-rise-take-home-calculator" && (
-              <MarginalRateExplorerStandalone headingLevel="h2" />
-            )}
-
-            {normalizedSlug === "uk-student-loan-overpay-or-invest-calculator" && (
-              <StudentLoanCalculator
-                ctaText={ctaText}
-                onSaveAndContinue={handleContinue}
-                persistSeed={persistSeed}
-              />
-            )}
+            <Calculator
+              ctaText={ctaText}
+              embedded
+              persistSeed={persistSeed}
+              onSaveAndContinue={handleContinue}
+            />
           </section>
 
           <div className={guideStyle}>

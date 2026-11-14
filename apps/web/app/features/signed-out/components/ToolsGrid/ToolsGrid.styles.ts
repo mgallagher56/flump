@@ -8,6 +8,6 @@ export const toolsGrid = cva({
     display: "grid",
     // Eight tools: 1 column, then 2 from md (four full rows), so no tile is orphaned.
     gridTemplateColumns: { base: "1fr", md: "repeat(2, 1fr)" },
-    gap: "20px",
+    gap: "6",
   },
 });

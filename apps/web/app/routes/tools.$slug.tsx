@@ -1,9 +1,18 @@
 import { PageHeader } from "@repo/ui";
-import { MarginalRateExplorerStandalone } from "@repo/ui/calculators";
+import {
+  DebtSnowballCalculator,
+  MarginalRateExplorerStandalone,
+  MortgageVsIsaCalculator,
+  OverdraftCostCalculator,
+  Section24Calculator,
+  StudentLoanCalculator,
+  TaxTrapCalculator,
+  ZeroPercentCliffCalculator,
+} from "@repo/ui/calculators";
 import { getToolEntry, getToolGuide, resolveToolSlug, type ToolSlug } from "@repo/ui/tools";
 import { ToolBreadcrumbs, type ToolBreadcrumbsRenderLink } from "@repo/ui/tools/breadcrumbs";
 import { ToolGuide } from "@repo/ui/tools/guide";
-import type { FC } from "react";
+import type { ComponentType, FC } from "react";
 import {
   type LoaderFunctionArgs,
   type MetaFunction,
@@ -11,14 +20,8 @@ import {
   redirect,
   useLoaderData,
 } from "react-router";
-import DebtSnowballVsAvalancheTool from "~/components/tools/DebtSnowballVsAvalancheTool";
-import MortgageVsIsaTool from "~/components/tools/MortgageVsIsaTool";
-import OverdraftCostTool from "~/components/tools/OverdraftCostTool";
-import Section24Tool from "~/components/tools/Section24Tool";
-import StudentLoanOverpayTool from "~/components/tools/StudentLoanOverpayTool";
-import TaxTrapCalculatorTool from "~/components/tools/TaxTrapCalculatorTool";
-import ZeroPercentCliffTool from "~/components/tools/ZeroPercentCliffTool";
 import { SignedOutPage } from "~/features/signed-out/components/SignedOutPage";
+import { getMarketingUrl } from "~/utils/marketingUrl";
 
 const renderCrumbLink: ToolBreadcrumbsRenderLink = (href, className, children) => (
   <RouterLink className={className} to={href}>
@@ -26,27 +29,30 @@ const renderCrumbLink: ToolBreadcrumbsRenderLink = (href, className, children) =
   </RouterLink>
 );
 
-type ToolComponent =
-  | "tax-trap"
-  | "mortgage-isa"
-  | "section-24"
-  | "debt-snowball"
-  | "zero-percent-cliff"
-  | "overdraft-cost"
-  | "student-loan"
-  | "pay-rise";
+/** What every calculator takes on a tool page: no own title, and the invite request as its button. */
+interface ToolCalculatorProps {
+  embedded: boolean;
+  ctaText: string;
+  onSaveAndContinue: () => void;
+  persistSeed: boolean;
+}
 
 /** Which calculator each slug renders. Titles, descriptions and guides come from `@repo/ui/tools`. */
-const TOOL_COMPONENTS: Record<ToolSlug, ToolComponent> = {
-  "uk-debt-snowball-vs-avalanche-calculator": "debt-snowball",
-  "0-percent-balance-transfer-payoff-calculator": "zero-percent-cliff",
-  "overdraft-cost-and-payoff-calculator": "overdraft-cost",
-  "mortgage-overpayment-vs-isa-calculator": "mortgage-isa",
-  "uk-student-loan-overpay-or-invest-calculator": "student-loan",
-  "uk-pay-rise-take-home-calculator": "pay-rise",
-  "section-24-landlord-tax-calculator": "section-24",
-  "uk-100k-tax-trap-calculator": "tax-trap",
+const TOOL_COMPONENTS: Record<ToolSlug, ComponentType<ToolCalculatorProps>> = {
+  "uk-debt-snowball-vs-avalanche-calculator": DebtSnowballCalculator,
+  "0-percent-balance-transfer-payoff-calculator": ZeroPercentCliffCalculator,
+  "overdraft-cost-and-payoff-calculator": OverdraftCostCalculator,
+  "mortgage-overpayment-vs-isa-calculator": MortgageVsIsaCalculator,
+  "uk-student-loan-overpay-or-invest-calculator": StudentLoanCalculator,
+  "uk-pay-rise-take-home-calculator": (props) => (
+    <MarginalRateExplorerStandalone headingLevel="h2" {...props} />
+  ),
+  "section-24-landlord-tax-calculator": Section24Calculator,
+  "uk-100k-tax-trap-calculator": TaxTrapCalculator,
 };
+
+/** Sign-up is invite-only, so the button asks for an invite, as on the marketing tool pages. */
+const TOOL_CTA_TEXT = "Request an invite";
 
 export const meta: MetaFunction<typeof loader> = ({ data }) => {
   if (!data?.tool) {
@@ -72,18 +78,22 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
     throw redirect(`/tools/${canonical}${new URL(request.url).search}`, 301);
   }
 
-  return { tool: getToolEntry(canonical) };
+  return {
+    tool: getToolEntry(canonical),
+    // The invite request lives on the marketing contact page; figures are not handed over.
+    inviteHref: `${getMarketingUrl(request.url)}/contact#beta`,
+  };
 };
 
 /**
- * One public calculator: breadcrumb, h1, one line, then the tool (which carries the page's one
- * notice), then the collapsed guide and FAQ (E16 PR 11). Nothing else sits above the tool.
+ * One public calculator: breadcrumb, h1, one line, then the tool (embedded, so it does not repeat the
+ * title; it carries the page's one notice), then the collapsed guide and FAQ (E16 PR 11). Nothing else sits above the tool.
  */
 export const ToolDetailPage: FC = () => {
-  const { tool } = useLoaderData<typeof loader>();
+  const { tool, inviteHref } = useLoaderData<typeof loader>();
 
   if (!tool) return null;
-  const component = TOOL_COMPONENTS[tool.slug];
+  const Calculator = TOOL_COMPONENTS[tool.slug];
   const guide = getToolGuide(tool.slug);
 
   return (
@@ -92,14 +102,14 @@ export const ToolDetailPage: FC = () => {
       <PageHeader description={tool.description} title={tool.title} />
 
       <section aria-label="Calculator" data-tool-calculator="">
-        {component === "tax-trap" && <TaxTrapCalculatorTool />}
-        {component === "mortgage-isa" && <MortgageVsIsaTool />}
-        {component === "section-24" && <Section24Tool />}
-        {component === "debt-snowball" && <DebtSnowballVsAvalancheTool />}
-        {component === "zero-percent-cliff" && <ZeroPercentCliffTool />}
-        {component === "overdraft-cost" && <OverdraftCostTool />}
-        {component === "student-loan" && <StudentLoanOverpayTool />}
-        {component === "pay-rise" && <MarginalRateExplorerStandalone headingLevel="h2" />}
+        <Calculator
+          ctaText={TOOL_CTA_TEXT}
+          embedded
+          persistSeed={false}
+          onSaveAndContinue={() => {
+            window.location.href = inviteHref;
+          }}
+        />
       </section>
 
       <ToolGuide faqs={guide.faqs} guideSections={guide.guideSections} />

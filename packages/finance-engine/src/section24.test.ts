@@ -104,4 +104,59 @@ describe("section24 module", () => {
     expect(res.oldRulesTax).toBe(res.netRentalTaxLiabilityGbp);
     expect(res.section24Penalty).toBe(0);
   });
+
+  it("shows a cash loss after tax instead of flooring it at zero", () => {
+    // Higher-rate landlord: £12,000 rent, £1,000 costs, £11,500 mortgage interest.
+    // Taxable profit £11,000 (interest not deducted), taxed at 40% = £4,400.
+    // Credit 20% of min(£11,500, £11,000) = £2,200, so tax due £2,200.
+    // Cash before tax 12,000 - 1,000 - 11,500 = -£500; after tax -£2,700.
+    const res = calculateSection24Tax({
+      grossRentalIncomeGbp: 12000,
+      allowableExpensesGbp: 1000,
+      mortgageInterestGbp: 11500,
+      otherTaxableIncomeGbp: 60000,
+    });
+    expect(res.taxableRentalProfitGbp).toBe(11000);
+    expect(res.netRentalTaxLiabilityGbp).toBe(2200);
+    expect(res.actualCashProfit).toBe(-500);
+    expect(res.netRentalIncomeAfterTax).toBe(-2700);
+  });
+
+  it("can owe tax with a cash profit before tax but a loss after it", () => {
+    // £16,000 taxable profit at 40% = £6,400; credit 20% of £13,000 interest = £2,600; tax £3,800.
+    // Cash before tax 18,000 - 2,000 - 13,000 = £3,000; after tax -£800.
+    const res = calculateSection24LandlordTax(60000, 18000, 13000, 2000);
+    expect(res.actualCashProfit).toBe(3000);
+    expect(res.financeCredit).toBe(2600);
+    expect(res.finalTaxDue).toBe(3800);
+    expect(res.netRentalIncomeAfterTax).toBe(-800);
+  });
+
+  it("keeps tax and the old-rules comparison at zero or above when there is a loss", () => {
+    const res = calculateSection24Tax({
+      grossRentalIncomeGbp: 6000,
+      allowableExpensesGbp: 1000,
+      mortgageInterestGbp: 9000,
+      otherTaxableIncomeGbp: 30000,
+    });
+    // Taxable profit £5,000 at 20% = £1,000; credit 20% of £5,000 = £1,000: no tax.
+    expect(res.netRentalTaxLiabilityGbp).toBe(0);
+    expect(res.actualCashProfit).toBe(-4000);
+    expect(res.netRentalIncomeAfterTax).toBe(-4000);
+    // Under the old rules a property loss was carried forward, not set against other income.
+    expect(res.oldRulesTax).toBe(0);
+    expect(res.section24Penalty).toBe(0);
+  });
+
+  it("floors negative inputs before working out the result", () => {
+    const res = calculateSection24Tax({
+      grossRentalIncomeGbp: -5000,
+      allowableExpensesGbp: -100,
+      mortgageInterestGbp: -200,
+      otherTaxableIncomeGbp: -1000,
+    });
+    expect(res.netRentalTaxLiabilityGbp).toBe(0);
+    expect(res.actualCashProfit).toBe(0);
+    expect(res.netRentalIncomeAfterTax).toBe(0);
+  });
 });

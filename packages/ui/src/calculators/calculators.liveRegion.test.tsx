@@ -24,7 +24,7 @@ const CASES: {
     control: () => screen.getByRole("slider", { name: /Extra payment a month/i }),
     value: "150",
     expected:
-      /^Illustration: highest rate first, estimated debt-free date \w+ \d{4}, total interest £1,324\. Smallest balance first, estimated debt-free date \w+ \d{4}, total interest £1,324$/,
+      /^Illustration: highest rate first, estimated debt-free date \w+ \d{4}, total interest £1,225\. Smallest balance first, estimated debt-free date \w+ \d{4}, total interest £1,499$/,
   },
   {
     name: "MortgageVsIsaCalculator",
@@ -32,7 +32,7 @@ const CASES: {
     control: () => screen.getByLabelText("Mortgage balance"),
     value: "300000",
     expected:
-      /^Illustration: overpaying, estimated interest saved £38,670\. ISA, estimated balance £183,388\.$/,
+      /^Illustration: overpaying, estimated interest saved £38,670\. ISA, estimated growth £99,388\.$/,
   },
   {
     name: "OverdraftCostCalculator",

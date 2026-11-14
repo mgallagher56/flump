@@ -40,24 +40,24 @@ export const studentLoanContent = cva({
 });
 
 /**
- * Outcome cards. The first card (the outcome) spans the full row; the supporting cards (at most
- * two) share the row below from `sm`, and stack on a phone.
+ * Outcome cards: the worded answer, then the one supporting figure, each a full row so neither
+ * card is left part-empty beside the other.
  */
 export const studentLoanOutcomes = cva({
   base: {
     display: "grid",
-    gridTemplateColumns: { base: "minmax(0, 1fr)", sm: "repeat(2, minmax(0, 1fr))" },
+    gridTemplateColumns: "minmax(0, 1fr)",
     gap: "3",
     fontVariantNumeric: "tabular-nums",
-    "& > :first-child": { gridColumn: "1 / -1" },
-    // A lone supporting figure takes the whole row instead of leaving a half-width gap.
-    "& > :nth-child(2):last-child": { gridColumn: "1 / -1" },
   },
 });
 
-/** The projected outcome is words, not a figure: the supporting size, so the row keeps one height. */
+/**
+ * The headline answer is words, not a figure, so it takes a heading text style rather than the
+ * KPI number style: normal word spacing and line height when it wraps.
+ */
 export const studentLoanOutcomeText = cva({
-  base: { textStyle: "numeric.lg", color: "text.primary" },
+  base: { display: "block", textStyle: "heading.lg", color: "text.primary", margin: "0" },
 });
 
 export const studentLoanExplainer = cva({
@@ -70,10 +70,6 @@ export const studentLoanExplainer = cva({
     color: "text.secondary",
     "& p": { margin: "0" },
   },
-});
-
-export const studentLoanExplainerTitle = cva({
-  base: { textStyle: "label.md", color: "text.primary", margin: "0" },
 });
 
 export const studentLoanCta = cva({

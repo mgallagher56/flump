@@ -4,7 +4,14 @@ export const pageStyle = css({ minHeight: "100vh", display: "flex", flexDirectio
 
 export const mainStyle = css({ flex: "1" });
 
-export const containerStyle = css({ maxWidth: "6xl", mx: "auto", py: "12", px: "4" });
+/** Same width and top spacing as the web `/tools` index (`SignedOutPage width="wide"`). */
+export const containerStyle = css({
+  maxWidth: "6xl",
+  mx: "auto",
+  pt: { base: "page.top.sm", lg: "page.top.lg" },
+  pb: "12",
+  px: { base: "page.gutter.sm", md: "page.gutter.md" },
+});
 
 export const toolListStyle = css({ listStyle: "none", padding: "0", margin: "0" });
 
@@ -29,8 +36,8 @@ export const toolCardStyle = css({
   _focusVisible: { outline: "2px solid", outlineColor: "border.focusRing", outlineOffset: "2px" },
 });
 
-/** One wrap rule for card titles in both apps: balanced lines. */
-export const toolTitleStyle = css({ textWrap: "balance" });
+/** One wrap rule for card titles in both apps: natural breaks, no orphaned last word. */
+export const toolTitleStyle = css({ textWrap: "pretty" });
 
 export const ctaLinkStyle = css({
   display: "flex",

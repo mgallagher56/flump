@@ -50,6 +50,27 @@ describe("MarginalRateChart", () => {
     expect(screen.getAllByTestId("marginal-rate-stepped-zone")).toHaveLength(1);
   });
 
+  it("labels the line, your pay and the stepped zone directly, with no legend", () => {
+    const { container } = renderChart();
+    expect(screen.getByTestId("marginal-rate-line-label").textContent).toBe("Share deducted");
+    expect(screen.getByTestId("marginal-rate-zone-label").textContent).toBe(SAMPLE_ZONES[0]?.label);
+    expect(container.querySelector('[data-testid="chart-legend"], ul[aria-label]')).toBeNull();
+    expect(screen.getByText(/Each dashed line marks a threshold/)).toBeDefined();
+  });
+
+  it("does not repeat the title as an axis label", () => {
+    renderChart();
+    const title = "Estimated share deducted from the next £1,000, by pay before tax";
+    expect(screen.getAllByText(/Estimated share deducted from the next £1,000/)).toHaveLength(1);
+    expect(screen.getByRole("heading", { name: title })).toBeDefined();
+  });
+
+  it("gives the title the heading text style, which carries word spacing", () => {
+    renderChart();
+    const figure = screen.getByRole("figure");
+    expect(figure.className).toMatch(/textStyle_heading\.sm/);
+  });
+
   it("leaves out the your-pay marker beyond the chart range", () => {
     renderChart({ yourPay: 200_000 });
     expect(screen.queryByTestId("marginal-rate-your-pay")).toBeNull();

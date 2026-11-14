@@ -93,9 +93,12 @@ describe("Tools Routes", () => {
 
     expect(screen.getByRole("heading", { level: 1, name: entry.title })).toBeDefined();
     const calculator = screen.getByRole("region", { name: "Calculator" });
-    // The one line sits above the tool (a calculator may repeat it inside its own card).
-    const lines = screen.getAllByText(entry.description).filter((el) => !calculator.contains(el));
-    expect(lines).toHaveLength(1);
+    // The one line sits above the tool, and the embedded calculator repeats neither it nor a title.
+    expect(screen.getAllByText(entry.description)).toHaveLength(1);
+    expect(calculator.contains(screen.getByText(entry.description))).toBe(false);
+    expect(within(calculator).queryAllByRole("heading", { level: 1 })).toHaveLength(0);
+    // Sign-up is invite-only, so the tool's one button asks for an invite.
+    expect(within(calculator).getByRole("button", { name: /Request an invite/ })).toBeDefined();
     expect(calculator.hasAttribute("aria-describedby")).toBe(false);
 
     // Exactly one notice, and it is the calculator's own.

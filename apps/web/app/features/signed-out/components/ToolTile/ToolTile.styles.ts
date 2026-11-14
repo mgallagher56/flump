@@ -26,5 +26,5 @@ export const tileCta = cva({
   },
 });
 
-/** One wrap rule for card titles in both apps: balanced lines. */
-export const tileTitle = cva({ base: { textWrap: "balance" } });
+/** One wrap rule for card titles in both apps: natural breaks, no orphaned last word. */
+export const tileTitle = cva({ base: { textWrap: "pretty" } });

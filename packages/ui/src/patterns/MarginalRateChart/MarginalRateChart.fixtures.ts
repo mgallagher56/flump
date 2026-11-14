@@ -36,5 +36,4 @@ export const SAMPLE_ZONES: MarginalRateSteppedZone[] = [
   { from: 60_000, to: 80_000, label: "Child Benefit charge, in steps" },
 ];
 
-export const SAMPLE_SUMMARY =
-  "The estimated share of the next £1,000 of pay that is deducted, at each gross pay from £0 to £150,000. At your pay of £39,000, it is an estimated 28%.";
+export const SAMPLE_SUMMARY = "At your pay, an estimated 28% of the next £1,000 is deducted.";

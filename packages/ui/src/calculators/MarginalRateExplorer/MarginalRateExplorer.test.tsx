@@ -1,4 +1,4 @@
-import { whatIfGrossChange } from "@flump/finance-engine";
+import { getLatestSupportedUkTaxYear, whatIfGrossChange } from "@flump/finance-engine";
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import {
@@ -10,6 +10,16 @@ import {
 } from "./MarginalRateExplorer";
 
 const DEFAULTS_2026 = { ...getMarginalRateExplorerDefaults(), taxYear: "2026/27" };
+const CHART_TITLE = "Estimated share deducted from the next £1,000, by pay before tax";
+
+/** The "Where the next £1,000 goes" breakdown table's text. */
+const breakdown = () =>
+  screen.getByRole("table", { name: "Where the next £1,000 goes" }).textContent ?? "";
+const openMoreOptions = () => fireEvent.click(screen.getByRole("button", { name: "More options" }));
+const modelPension = () => {
+  openMoreOptions();
+  fireEvent.click(screen.getByRole("button", { name: "Model a pension contribution" }));
+};
 
 describe("MarginalRateExplorer", () => {
   it("defaults to £39,000, no pension, no student loan and no Child Benefit", () => {
@@ -29,31 +39,84 @@ describe("MarginalRateExplorer", () => {
     render(<MarginalRateExplorerStandalone initialValues={{ taxYear: "2026/27" }} />);
     const expected = whatIfGrossChange(explorerScenario(DEFAULTS_2026), 1000);
     expect(expected.deltaTakeHome).toBe(720);
-    expect(screen.getByTestId("take-home-delta-sentence").textContent).toBe(
-      "Of the next £1,000 of pay, an estimated £720 is take-home: £200 Income Tax and £80 National Insurance.",
-    );
+    // The figures show once in the card and once in the table, with no sentence repeating them.
+    expect(screen.queryByText(/Of the next £1,000 of pay/)).toBeNull();
+    expect(breakdown()).toContain("£720");
+    expect(breakdown()).toContain("£200");
+    expect(breakdown()).toContain("£80");
     const outcomes = screen.getByTestId("explorer-outcomes");
     expect(outcomes.textContent).toContain("Estimated take-home from the next £1,000");
     expect(outcomes.textContent).toContain("£720");
     expect(outcomes.textContent).toContain("Estimated share deducted from the next £1,000");
-    expect(screen.getByText("28%")).toBeDefined();
+    expect(outcomes.textContent).not.toContain("Estimated take-home a year");
+    expect(within(outcomes).getByText("28%")).toBeDefined();
     // The 2026/27 rules are not yet signed off: the panel says so once, and the chart does not repeat it.
-    const figure = screen.getByRole("figure", {
-      name: "Estimated share deducted from the next £1,000, by pay before tax",
-    });
+    const figure = screen.getByRole("figure", { name: CHART_TITLE });
     expect(within(figure).queryByText(/^Unverified estimate\. These tax figures/)).toBeNull();
     expect(screen.getAllByText(/^Unverified estimate\. These tax figures/)).toHaveLength(1);
   });
 
-  it("draws the chart with thresholds and your pay", () => {
+  it("draws the chart with thresholds and your pay, summarised in at most two figures", () => {
     render(<MarginalRateExplorerStandalone initialValues={{ taxYear: "2026/27" }} />);
-    expect(
-      screen.getByRole("figure", {
-        name: "Estimated share deducted from the next £1,000, by pay before tax",
-      }),
-    ).toBeDefined();
+    const figure = screen.getByRole("figure", { name: CHART_TITLE });
+    expect(figure.getAttribute("aria-describedby")).toBeTruthy();
+    const summaryId = figure.getAttribute("aria-describedby") ?? "";
+    expect(document.getElementById(summaryId)?.textContent).toBe(
+      "At your pay, an estimated 28% of the next £1,000 is deducted.",
+    );
     expect(screen.getAllByTestId("marginal-rate-threshold").length).toBeGreaterThan(3);
     expect(screen.getByTestId("marginal-rate-your-pay")).toBeDefined();
+  });
+
+  it("hides no sign-up button unless a caller asks for one", () => {
+    render(<MarginalRateExplorerStandalone initialValues={{ taxYear: "2026/27" }} />);
+    expect(screen.queryByRole("button", { name: /sign up|invite/i })).toBeNull();
+  });
+
+  it("shows the sign-up button under the headline result and pre-fills the pay entered", () => {
+    const onSave = vi.fn();
+    render(
+      <MarginalRateExplorerStandalone
+        ctaText="Request an invite →"
+        initialValues={{ taxYear: "2026/27" }}
+        persistSeed={false}
+        onSaveAndContinue={onSave}
+      />,
+    );
+    const cta = screen.getByRole("button", { name: "Request an invite" });
+    const outcomes = screen.getByTestId("explorer-outcomes");
+    const figure = screen.getByRole("figure", { name: CHART_TITLE });
+    expect(outcomes.compareDocumentPosition(cta) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(cta.compareDocumentPosition(figure) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    fireEvent.click(cta);
+    expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ annualIncome: 39_000 }));
+  });
+
+  it("uses h2 section headings when embedded, h3 otherwise, and headingLevel overrides", () => {
+    const { container, unmount } = render(
+      <MarginalRateExplorerStandalone embedded initialValues={{ taxYear: "2026/27" }} />,
+    );
+    const levels = () =>
+      [...container.querySelectorAll("h1, h2, h3, h4, h5, h6")].map((h) => h.tagName);
+    expect(new Set(levels())).toEqual(new Set(["H2"]));
+    expect(screen.getByRole("heading", { level: 2, name: CHART_TITLE })).toBeDefined();
+    unmount();
+    render(<MarginalRateExplorerStandalone initialValues={{ taxYear: "2026/27" }} />);
+    expect(screen.getByRole("heading", { level: 3, name: CHART_TITLE })).toBeDefined();
+  });
+
+  it("shows the fallback-rates banner when today's tax year has no rates yet", () => {
+    const latest = getLatestSupportedUkTaxYear();
+    const now = new Date(Date.UTC(Number(latest.slice(0, 4)) + 1, 5, 1));
+    render(<MarginalRateExplorerStandalone now={now} />);
+    expect(screen.getByTestId("tax-rates-status-banner").textContent).toContain(
+      `Using ${latest} rates`,
+    );
+  });
+
+  it("shows no fallback banner when today's tax year has its own rates", () => {
+    render(<MarginalRateExplorerStandalone now={new Date(Date.UTC(2026, 5, 1))} />);
+    expect(screen.queryByTestId("tax-rates-status-banner")).toBeNull();
   });
 
   it("is controlled: inputs call onChange and never change values by themselves", () => {
@@ -67,7 +130,9 @@ describe("MarginalRateExplorer", () => {
 
   it("pre-fills the extra pension at £1,000 and previews it", () => {
     render(<MarginalRateExplorerStandalone initialValues={{ taxYear: "2026/27" }} />);
-    fireEvent.click(screen.getByRole("button", { name: "Model a pension contribution" }));
+    // Inside More options, not a second full button beside it.
+    expect(screen.queryByRole("button", { name: "Model a pension contribution" })).toBeNull();
+    modelPension();
     const pill = screen.getByLabelText("Extra pension contribution input") as HTMLInputElement;
     expect(pill.value).toBe("£1,000");
     expect(screen.getByTestId("take-home-delta-pension").textContent).toBe(
@@ -86,7 +151,7 @@ describe("MarginalRateExplorer", () => {
     expect(within(group).getByLabelText("Plan 2")).toBeDefined();
     expect(within(group).getByLabelText("Postgraduate loan")).toBeDefined();
     fireEvent.click(within(group).getByLabelText("Plan 2"));
-    expect(screen.getByTestId("take-home-delta-sentence").textContent).toContain("student loan");
+    expect(breakdown()).toContain("Student loan");
   });
 
   it("adds the Child Benefit charge zone when Child Benefit is on", () => {
@@ -104,17 +169,16 @@ describe("MarginalRateExplorer", () => {
         initialValues={{ taxYear: "2026/27", studentLoans: "plan5" }}
       />,
     );
-    const sentence = () => screen.getByTestId("take-home-delta-sentence").textContent;
-    expect(sentence()).toContain("student loan");
-    fireEvent.click(screen.getByRole("button", { name: "More options" }));
+    expect(breakdown()).toContain("Student loan");
+    openMoreOptions();
     fireEvent.change(screen.getByLabelText("Tax year"), { target: { value: "2022/23" } });
-    expect(sentence()).not.toContain("student loan");
+    expect(breakdown()).not.toContain("Student loan");
     expect(screen.queryByLabelText("Plan 5")).toBeNull();
   });
 
   it("keeps the extra pension slider when dragged to £0", () => {
     render(<MarginalRateExplorerStandalone initialValues={{ taxYear: "2026/27" }} />);
-    fireEvent.click(screen.getByRole("button", { name: "Model a pension contribution" }));
+    modelPension();
     fireEvent.change(screen.getByLabelText("Extra pension contribution"), {
       target: { value: "0" },
     });
@@ -130,6 +194,7 @@ describe("MarginalRateExplorer", () => {
         onChange={onChange}
       />,
     );
+    // More options opens itself when an extra pension is already set.
     expect(screen.getByLabelText("Extra pension contribution")).toBeDefined();
     rerender(<MarginalRateExplorer values={DEFAULTS_2026} onChange={onChange} />);
     expect(screen.getByRole("button", { name: "Model a pension contribution" })).toBeDefined();
@@ -137,24 +202,24 @@ describe("MarginalRateExplorer", () => {
 
   it("does not use a KpiStrip for scenario outcomes", () => {
     render(<MarginalRateExplorerStandalone initialValues={{ taxYear: "2026/27" }} />);
-    expect(screen.getByTestId("explorer-outcomes").children).toHaveLength(3);
+    // One outcome and one supporting figure; take-home a year answers a different question.
+    expect(screen.getByTestId("explorer-outcomes").children).toHaveLength(2);
     expect(document.getElementById("marginal-rate-explorer")).not.toBeNull();
   });
 
-  it("shows three inputs at most, with region and pension type under More options", () => {
+  it("shows two inputs, with region, pension type and the extra pension under More options", () => {
     render(<MarginalRateExplorerStandalone initialValues={{ taxYear: "2026/27" }} />);
-    // Gross pay, bonus and the "Model a pension contribution" button.
+    // Gross pay and bonus.
     expect(screen.getAllByRole("slider")).toHaveLength(2);
     expect(screen.queryByRole("combobox")).toBeNull();
     expect(screen.queryByLabelText("Where you pay tax")).toBeNull();
-    fireEvent.click(screen.getByRole("button", { name: "More options" }));
+    openMoreOptions();
+    const before = breakdown();
     fireEvent.change(screen.getByLabelText("Where you pay tax"), {
       target: { value: "SCOTLAND" },
     });
     expect(screen.getByLabelText("Pension contribution type")).toBeDefined();
-    expect(screen.getByTestId("take-home-delta-sentence").textContent).not.toContain(
-      "£200 Income Tax",
-    );
+    expect(breakdown()).not.toBe(before);
   });
 
   it("parses plan strings in a fixed order", () => {

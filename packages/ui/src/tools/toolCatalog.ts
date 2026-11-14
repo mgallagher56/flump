@@ -63,7 +63,7 @@ const ENTRIES: Record<ToolSlug, Omit<ToolCatalogueEntry, "slug">> = {
     title: "When a 0% balance transfer ends",
     shortTitle: "0% balance transfer",
     description:
-      "Estimate the monthly payment that pays off a transferred balance before the 0% deal ends.",
+      "Estimate the monthly payment that pays off a transferred balance before the interest-free deal ends.",
     metaTitle: "0% balance transfer payoff calculator",
     domain: "debt",
     icon: "credit-card",
@@ -99,7 +99,7 @@ const ENTRIES: Record<ToolSlug, Omit<ToolCatalogueEntry, "slug">> = {
     title: "What you keep from a pay rise",
     shortTitle: "Pay rise take-home",
     description:
-      "Estimate how much of the next £1,000 of pay is take-home pay after Income Tax, National Insurance, student loan and the Child Benefit charge.",
+      "Estimate how much of a pay rise you keep after Income Tax, National Insurance, student loan and the Child Benefit charge.",
     metaTitle: "What you keep from a pay rise: take-home calculator",
     domain: "pay",
     icon: "pound-sterling",
@@ -108,7 +108,7 @@ const ENTRIES: Record<ToolSlug, Omit<ToolCatalogueEntry, "slug">> = {
     title: "Section 24 landlord tax calculator",
     shortTitle: "Landlord tax",
     description:
-      "Estimate buy-to-let tax under Section 24, including the 20% tax credit for mortgage interest.",
+      "Estimate buy-to-let tax under Section 24, including the tax credit for mortgage interest.",
     metaTitle: "Section 24 landlord tax calculator",
     domain: "tax",
     icon: "building",
@@ -117,7 +117,7 @@ const ENTRIES: Record<ToolSlug, Omit<ToolCatalogueEntry, "slug">> = {
     title: "Pension contributions and income above £100,000",
     shortTitle: "Income above £100,000",
     description:
-      "Estimate how a pension contribution changes adjusted net income, the Personal Allowance and take-home pay between £100,000 and £125,140.",
+      "Estimate how a pension contribution changes adjusted net income, the Personal Allowance and take-home pay above £100,000.",
     metaTitle: "Pension contributions and income above £100,000: calculator",
     domain: "tax",
     icon: "percent",

@@ -35,6 +35,10 @@ export const explorerAction = cva({
   base: { alignSelf: "flex-start" },
 });
 
+export const explorerCta = cva({
+  base: { alignSelf: { base: "stretch", sm: "flex-start" }, gap: "2" },
+});
+
 /**
  * Scenario outcome cards. The first card (the outcome) spans the full row; the supporting cards
  * (at most two) share the row below from `sm`, and stack on a phone.

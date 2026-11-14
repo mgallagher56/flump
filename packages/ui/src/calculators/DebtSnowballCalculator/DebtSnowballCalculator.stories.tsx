@@ -15,18 +15,25 @@ type Story = StoryObj<typeof DebtSnowballCalculator>;
 const play: Story["play"] = async ({ canvasElement, args }) => {
   const canvas = within(canvasElement);
   const outcomes = within(canvas.getByTestId("debt-snowball-outcomes"));
-  await expect(outcomes.getAllByText("£1,900")).toHaveLength(2);
+  // The examples are ordered differently by the two methods, so they give different answers.
+  await expect(outcomes.getByText("£1,864")).toBeInTheDocument();
+  await expect(outcomes.getByText("£2,131")).toBeInTheDocument();
+
+  // Rate and minimum sit behind Edit.
+  const edit = canvas.getByRole("button", { name: DEBT_SNOWBALL_COPY.editLabel(1) });
+  await userEvent.click(edit);
+  await expect(edit).toHaveAttribute("aria-expanded", "true");
 
   // Typing in the extra payment pill recalculates both methods.
   const extra = canvas.getByLabelText(`${DEBT_SNOWBALL_COPY.extra} input`);
   await userEvent.clear(extra);
-  await userEvent.type(extra, "500");
+  await userEvent.type(extra, "0");
   await userEvent.tab();
-  await expect(await outcomes.findAllByText("£597")).toHaveLength(2);
+  await expect(outcomes.queryByText("£1,864")).not.toBeInTheDocument();
 
   await userEvent.click(canvas.getByRole("button", { name: /Continue to sign up/ }));
   await expect(args.onSaveAndContinue).toHaveBeenCalledWith(
-    expect.objectContaining({ totalUnsecuredDebt: 8500 }),
+    expect.objectContaining({ totalUnsecuredDebt: 6000 }),
   );
 };
 
@@ -35,6 +42,18 @@ export const Default: Story = { play };
 export const Light: Story = { ...Default, globals: { theme: "light" } };
 
 export const Dark: Story = { ...Default, globals: { theme: "dark" } };
+
+/** On a tool page: the page shows the title, so the calculator leaves out its own. */
+export const Embedded: Story = {
+  args: { embedded: true },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(canvas.queryByText(DEBT_SNOWBALL_COPY.title)).not.toBeInTheDocument();
+    await expect(
+      canvas.getByRole("heading", { level: 2, name: DEBT_SNOWBALL_COPY.explainerTitle }),
+    ).toBeInTheDocument();
+  },
+};
 
 /** Phone width: each debt's fields wrap, so nothing scrolls sideways (known #10). */
 export const Mobile: Story = {

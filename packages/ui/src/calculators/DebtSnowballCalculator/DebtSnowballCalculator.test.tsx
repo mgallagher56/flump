@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { compareAvalancheAndSnowball } from "@flump/finance-engine";
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import {
@@ -7,13 +8,17 @@ import {
   DebtSnowballCalculator,
   debtSnowballAnnouncement,
   formatPayoffDuration,
+  STARTING_DEBTS,
 } from "./DebtSnowballCalculator";
-import { debtRowFields } from "./DebtSnowballCalculator.styles";
+import { debtRow, debtRowActions, debtRowFields } from "./DebtSnowballCalculator.styles";
 
 const outcomes = () => within(screen.getByTestId("debt-snowball-outcomes"));
 const toolText = () => screen.getByTestId("debt-snowball-tool").textContent ?? "";
 const debtGroup = (name: RegExp) => within(screen.getByRole("group", { name }));
 const extraSlider = () => screen.getByLabelText(DEBT_SNOWBALL_COPY.extra);
+/** Opens a debt's rate and minimum behind its Edit button. */
+const openDebt = (n: number) =>
+  fireEvent.click(screen.getByRole("button", { name: DEBT_SNOWBALL_COPY.editLabel(n) }));
 
 /** Types into a CurrencyInput or PercentInput and commits it, as a visitor would. */
 const enter = (input: HTMLElement, value: string) => {
@@ -23,17 +28,91 @@ const enter = (input: HTMLElement, value: string) => {
 };
 
 describe("DebtSnowballCalculator", () => {
+  it("starts from examples where the two methods give different answers (engine check)", () => {
+    const engine = compareAvalancheAndSnowball(
+      STARTING_DEBTS.map((d) => ({
+        id: d.id,
+        name: d.kind ?? d.id,
+        type: d.type,
+        balance: d.balance ?? 0,
+        apr: d.apr ?? 0,
+        minimumPayment: d.minimum ?? 0,
+      })),
+      75,
+    );
+    // The smaller debt has the lower rate, so the two orders differ.
+    expect(engine.avalanche.totalInterest).toBeLessThan(engine.snowball.totalInterest);
+    expect(engine.avalanche.months).toBeLessThan(engine.snowball.months);
+  });
+
   it("shows the debt-free date and both methods' totals from the default example", () => {
     render(<DebtSnowballCalculator />);
     const cards = outcomes();
     expect(cards.getByText(DEBT_SNOWBALL_COPY.kpiDate)).toBeDefined();
-    // The smallest debt also has the highest rate, so both methods give the same result:
-    // 35 months and £1,900.14 of interest from the engine, read in whole pounds.
-    expect(cards.getByText(DEBT_SNOWBALL_COPY.dateSame)).toBeDefined();
+    // Engine: £1,863.89 over 32 months highest rate first, £2,130.69 over 33 months smallest
+    // balance first, read in whole pounds.
+    expect(cards.getByText(DEBT_SNOWBALL_COPY.dateAvalancheSooner)).toBeDefined();
     expect(cards.getByText(DEBT_SNOWBALL_COPY.kpiAvalanche)).toBeDefined();
     expect(cards.getByText(DEBT_SNOWBALL_COPY.kpiSnowball)).toBeDefined();
-    expect(cards.getAllByText("£1,900")).toHaveLength(2);
-    expect(cards.getAllByText("Paid off in 2 years 11 months.")).toHaveLength(2);
+    expect(cards.getByText("£1,864")).toBeDefined();
+    expect(cards.getByText("£2,131")).toBeDefined();
+  });
+
+  it("keeps figures out of the captions and puts each method's time in Show details", () => {
+    render(<DebtSnowballCalculator />);
+    expect(outcomes().queryByText(/Paid off in/)).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: DEBT_SNOWBALL_COPY.details }));
+    const table = within(screen.getByRole("table", { name: DEBT_SNOWBALL_COPY.detailsCaption }));
+    expect(table.getByText("2 years 8 months")).toBeDefined();
+    expect(table.getByText("2 years 9 months")).toBeDefined();
+  });
+
+  it("shows each debt as one line until Edit opens its rate and minimum", () => {
+    render(<DebtSnowballCalculator />);
+    const card = debtGroup(/Debt 1/);
+    expect(card.getByLabelText(DEBT_SNOWBALL_COPY.balance)).toBeDefined();
+    expect(card.queryByLabelText(DEBT_SNOWBALL_COPY.rate)).toBeNull();
+    expect(card.queryByLabelText(DEBT_SNOWBALL_COPY.minimum)).toBeNull();
+    const edit = screen.getByRole("button", { name: DEBT_SNOWBALL_COPY.editLabel(1) });
+    expect(edit.getAttribute("aria-expanded")).toBe("false");
+    fireEvent.click(edit);
+    expect(edit.getAttribute("aria-expanded")).toBe("true");
+    expect(card.getByLabelText(DEBT_SNOWBALL_COPY.rate)).toBeDefined();
+    expect(card.getByLabelText(DEBT_SNOWBALL_COPY.minimum)).toBeDefined();
+    // Two balances and the extra payment: about three inputs on arrival (P1.7).
+    fireEvent.click(edit);
+    expect(screen.getAllByRole("textbox").length + screen.getAllByRole("slider").length).toBe(4);
+  });
+
+  it("puts the sign-up button under the results, before the explainer and notice", () => {
+    render(<DebtSnowballCalculator />);
+    const cta = screen.getByRole("button", { name: "Continue to sign up" });
+    const outcomesEl = screen.getByTestId("debt-snowball-outcomes");
+    const notice = screen.getByTestId("projection-notice");
+    expect(outcomesEl.compareDocumentPosition(cta) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(cta.compareDocumentPosition(notice) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it("hides its own title when embedded, with no skipped heading level", () => {
+    const { container } = render(<DebtSnowballCalculator embedded />);
+    expect(screen.queryByText(DEBT_SNOWBALL_COPY.title)).toBeNull();
+    expect(screen.queryByText(DEBT_SNOWBALL_COPY.intro)).toBeNull();
+    const levels = [...container.querySelectorAll("h1, h2, h3, h4, h5, h6")].map((h) =>
+      Number(h.tagName[1]),
+    );
+    expect(levels.length).toBeGreaterThan(0);
+    expect(levels[0]).toBe(2);
+    for (let i = 1; i < levels.length; i++) {
+      expect((levels[i] ?? 0) - (levels[i - 1] ?? 0)).toBeLessThanOrEqual(1);
+    }
+  });
+
+  it("keeps its title and an h3 explainer outside a tool page", () => {
+    render(<DebtSnowballCalculator />);
+    expect(screen.getByRole("heading", { level: 2, name: DEBT_SNOWBALL_COPY.title })).toBeDefined();
+    expect(
+      screen.getByRole("heading", { level: 3, name: DEBT_SNOWBALL_COPY.explainerTitle }),
+    ).toBeDefined();
   });
 
   it("labels the debts Debt 1 and Debt 2, in sentence case", () => {
@@ -45,28 +124,18 @@ describe("DebtSnowballCalculator", () => {
 
   it("recalculates when the extra payment changes", () => {
     render(<DebtSnowballCalculator />);
-    fireEvent.change(extraSlider(), { target: { value: "500" } });
-    // 13 months and £597.44 from the engine.
-    expect(outcomes().getAllByText("£597")).toHaveLength(2);
-    expect(outcomes().getAllByText("Paid off in 13 months.")).toHaveLength(2);
+    fireEvent.change(extraSlider(), { target: { value: "0" } });
+    expect(outcomes().queryByText("£1,864")).toBeNull();
+    fireEvent.change(extraSlider(), { target: { value: "75" } });
+    expect(outcomes().getByText("£1,864")).toBeDefined();
   });
 
-  it("shows each method's own figures with the same fields when they differ", () => {
+  it("says when both methods finish in the same month", () => {
     render(<DebtSnowballCalculator />);
-    // A small, low-rate loan: snowball clears it first, avalanche goes to the card first.
-    const loan = debtGroup(/Debt 2/);
-    enter(loan.getByLabelText(DEBT_SNOWBALL_COPY.balance), "600");
-    enter(loan.getByLabelText(DEBT_SNOWBALL_COPY.rate), "3");
-    // Engine: £717.99 highest rate first, £727.88 smallest balance first, both 16 months.
-    expect(outcomes().getByText("£718")).toBeDefined();
-    expect(outcomes().getByText("£728")).toBeDefined();
-    expect(outcomes().getAllByText("Paid off in 16 months.")).toHaveLength(2);
-  });
-
-  it("names both dates when the methods finish in different months", () => {
-    expect(DEBT_SNOWBALL_COPY.dateBoth("May 2028", "June 2028")).toBe(
-      "Highest rate first: May 2028. Smallest balance first: June 2028.",
-    );
+    // With the smaller loan at the higher rate, both orders start with the loan.
+    openDebt(2);
+    enter(debtGroup(/Debt 2/).getByLabelText(DEBT_SNOWBALL_COPY.rate), "29.9");
+    expect(outcomes().getByText(DEBT_SNOWBALL_COPY.dateSame)).toBeDefined();
   });
 
   it("recalculates when a debt's balance changes and sends the new total", () => {
@@ -75,23 +144,25 @@ describe("DebtSnowballCalculator", () => {
     enter(debtGroup(/Debt 1/).getByLabelText(DEBT_SNOWBALL_COPY.balance), "4000");
     fireEvent.click(screen.getByRole("button", { name: "Continue to sign up" }));
     expect(onSave).toHaveBeenCalledWith(
-      expect.objectContaining({ mode: "DEBT", totalUnsecuredDebt: 9000 }),
+      expect.objectContaining({ mode: "DEBT", totalUnsecuredDebt: 5500 }),
     );
   });
 
   it("clamps negative entries to zero before they reach the engine", () => {
     const onSave = vi.fn();
     render(<DebtSnowballCalculator onSaveAndContinue={onSave} persistSeed={false} />);
+    openDebt(1);
     const card = debtGroup(/Debt 1/);
     enter(card.getByLabelText(DEBT_SNOWBALL_COPY.balance), "-3500");
     enter(card.getByLabelText(DEBT_SNOWBALL_COPY.rate), "-5");
     expect(toolText()).not.toMatch(/£-|-£|−£/);
     fireEvent.click(screen.getByRole("button", { name: "Continue to sign up" }));
-    expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ totalUnsecuredDebt: 5000 }));
+    expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ totalUnsecuredDebt: 1500 }));
   });
 
   it("says plainly when the payments would not pay off the debts", () => {
     render(<DebtSnowballCalculator />);
+    openDebt(1);
     const card = debtGroup(/Debt 1/);
     enter(card.getByLabelText(DEBT_SNOWBALL_COPY.minimum), "1");
     enter(card.getByLabelText(DEBT_SNOWBALL_COPY.balance), "900000");
@@ -110,7 +181,7 @@ describe("DebtSnowballCalculator", () => {
     fireEvent.click(screen.getByRole("button", { name: DEBT_SNOWBALL_COPY.removeLabel(1) }));
     expect(screen.queryByRole("group", { name: /credit card/ })).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Continue to sign up" }));
-    expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ totalUnsecuredDebt: 6000 }));
+    expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ totalUnsecuredDebt: 2500 }));
   });
 
   it("moves focus to the new row's balance when a debt is added", () => {
@@ -179,6 +250,14 @@ describe("DebtSnowballCalculator", () => {
     const classes = debtRowFields().split(" ");
     expect(classes.some((c) => c.includes("auto-fit"))).toBe(true);
     expect(classes.some((c) => /^grid-tc_repeat\(3/.test(c))).toBe(false);
+  });
+
+  it("keeps the name and actions on one line with the balance below at every width", () => {
+    // No breakpoint moves the balance beside the name, where the name would wrap.
+    for (const classes of [debtRow(), debtRowFields(), debtRowActions()]) {
+      expect(classes.split(" ").some((c) => /^(sm|md|lg):/.test(c))).toBe(false);
+    }
+    expect(debtRowFields()).toContain("grid-c_1_/_-1");
   });
 
   it("formats payoff durations over 24 months as years and months", () => {

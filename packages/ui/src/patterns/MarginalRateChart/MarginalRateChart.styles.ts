@@ -1,5 +1,29 @@
 import { cva } from "../../../styled-system/css";
 
+/**
+ * The figure. ChartFigure's own title style sets no word spacing, so at 600 weight the title's
+ * words ran together ("deductedfromthe"). The heading textStyle carries the heading word spacing
+ * from the tokens. (The lasting fix belongs in ChartFigure's title style.)
+ */
+export const marginalRateFigure = cva({
+  base: {
+    "& > figcaption > :is(h2, h3, h4)": { textStyle: "heading.sm" },
+  },
+});
+
+/** Labels drawn on the chart itself, in place of a legend (P10.2). */
+export const marginalRateDirectLabel = cva({
+  base: { fill: "text.secondary", fontSize: "xs", fontWeight: "semibold" },
+  variants: {
+    tone: { line: { fill: "text.primary" }, muted: {} },
+  },
+  defaultVariants: { tone: "muted" },
+});
+
+export const marginalRateNote = cva({
+  base: { textStyle: "body.sm", color: "text.secondary", margin: "0" },
+});
+
 export const marginalRateSvg = cva({
   base: { width: "100%", height: "auto", display: "block", overflow: "visible" },
 });

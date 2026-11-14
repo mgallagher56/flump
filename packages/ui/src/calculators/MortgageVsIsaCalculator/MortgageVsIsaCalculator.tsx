@@ -3,6 +3,7 @@ import {
   type OnboardingSeedPayload,
   persistOnboardingSeed,
 } from "@flump/finance-engine";
+import { formatDuration } from "@flump/format";
 import { ArrowRight } from "lucide-react";
 import type { FC } from "react";
 import { useMemo, useState } from "react";
@@ -22,19 +23,12 @@ import {
   mortgageIsaCta,
   mortgageIsaDrawerBody,
   mortgageIsaExplainer,
-  mortgageIsaExplainerTitle,
   mortgageIsaHeader,
   mortgageIsaIntro,
   mortgageIsaOutcomes,
   mortgageIsaRoot,
   mortgageIsaTitle,
 } from "./MortgageVsIsaCalculator.styles";
-
-const percentText = new Intl.NumberFormat("en-GB", { maximumFractionDigits: 2 });
-const oneDecimal = new Intl.NumberFormat("en-GB", {
-  minimumFractionDigits: 1,
-  maximumFractionDigits: 1,
-});
 
 /** Every user-facing string, in one place (COPY-AUDIT, PR 10, mortgage vs ISA rows). */
 export const MORTGAGE_ISA_COPY = {
@@ -46,21 +40,26 @@ export const MORTGAGE_ISA_COPY = {
   moreOptions: "More options",
   isaGrowth: "Assumed ISA growth a year",
   term: "Years left on the mortgage",
-  kpiSetAside: (years: number) => `Extra money set aside over ${years} years`,
-  kpiSetAsideSubtext: "The same amount each month, either overpaid or paid into an ISA.",
+  /** Headline labels: the larger of the two outcomes, by how much. */
+  kpiDifferenceIsa: "Estimated ISA growth above the interest saved by overpaying",
+  kpiDifferenceOverpay: "Estimated interest saved by overpaying above ISA growth",
+  kpiDifferenceEven: "Estimated difference between overpaying and the ISA",
+  kpiDifferenceSubtext:
+    "The same amount each month, either overpaid or paid into an ISA, over the years left.",
   kpiInterestSaved: "Overpaying: estimated interest saved",
-  kpiInterestSavedSubtext: (years: string) =>
-    `Paid off about ${years} years sooner, if the rate stays the same.`,
+  kpiInterestSavedSubtext: "Paid off sooner, if the rate stays the same.",
   kpiInterestSavedNoBalance: "No mortgage balance entered.",
   kpiInterestSavedNoExtra: "No overpayment entered.",
-  kpiIsaBalance: "ISA: estimated balance",
-  kpiIsaBalanceSubtext: (growth: string, rate: string) =>
-    `Includes ${growth} of growth at the ${rate}% a year you entered.`,
-  explainerTitle: "What this leaves out",
+  kpiIsaGrowth: "ISA: estimated growth",
+  kpiIsaGrowthSubtext: "On top of the money paid in, at the growth rate you entered.",
+  explainerTitle: "How this is worked out",
+  /** "Overpaying pays the mortgage off 5 years 4 months sooner, if the rate stays the same." */
+  explainerSooner: (sooner: string) =>
+    `Overpaying pays the mortgage off ${sooner} sooner, if the rate stays the same.`,
   explainer:
     "Both are compared over the years left that you set. This does not count investing the mortgage payment once the mortgage is paid off early, charges, or early repayment limits on your mortgage. ISA growth is not fixed and can be negative.",
   controlsLabel: "Mortgage and ISA details",
-  contentLabel: "Estimated interest saved and ISA balance",
+  contentLabel: "Estimated interest saved and ISA growth",
 } as const;
 
 export const MORTGAGE_ISA_DEFAULT_CTA = "Continue to sign up";
@@ -68,8 +67,8 @@ export const MORTGAGE_ISA_DEFAULT_CTA = "Continue to sign up";
 const money = (n: number) => formatMoney(n).text;
 
 /** Spoken after inputs settle (COPY-AUDIT row for the live region). */
-export const mortgageIsaAnnouncement = (interestSaved: string, isaBalance: string) =>
-  `Illustration: overpaying, estimated interest saved ${interestSaved}. ISA, estimated balance ${isaBalance}.`;
+export const mortgageIsaAnnouncement = (interestSaved: string, isaGrowth: string) =>
+  `Illustration: overpaying, estimated interest saved ${interestSaved}. ISA, estimated growth ${isaGrowth}.`;
 
 const BALANCE_MAX = 1_000_000;
 const RATE_MAX = 15;
@@ -98,6 +97,8 @@ export interface MortgageVsIsaCalculatorProps {
   initialExtra?: number;
   initialIsaGrowth?: number;
   initialTermYears?: number;
+  /** Inside a tool page that already shows the title and description: hide this calculator's own title and intro. */
+  embedded?: boolean;
 }
 
 /**
@@ -114,7 +115,9 @@ export const MortgageVsIsaCalculator: FC<MortgageVsIsaCalculatorProps> = ({
   initialExtra = 350,
   initialIsaGrowth = 7,
   initialTermYears = 20,
+  embedded = false,
 }) => {
+  // Embedded, the page's h1 sits directly above, so section headings step down to h2.
   // Clamped so a negative entry never reaches the engine.
   const [balance, setBalance] = useState(Math.max(0, initialBalance));
   const [rate, setRate] = useState(Math.max(0, initialRate));
@@ -129,8 +132,18 @@ export const MortgageVsIsaCalculator: FC<MortgageVsIsaCalculatorProps> = ({
 
   const announcement = mortgageIsaAnnouncement(
     money(result.interestSaved),
-    money(result.isaAccumulatedValue),
+    money(result.isaGrowth),
   );
+
+  // The engine's netWealthDelta is ISA growth less interest saved: its sign says which is larger.
+  // Under 50p either way reads as no difference.
+  const delta = result.netWealthDelta;
+  const differenceLabel =
+    delta >= 0.5
+      ? MORTGAGE_ISA_COPY.kpiDifferenceIsa
+      : delta <= -0.5
+        ? MORTGAGE_ISA_COPY.kpiDifferenceOverpay
+        : MORTGAGE_ISA_COPY.kpiDifferenceEven;
 
   const handleSave = () => {
     const payload: MortgageVsIsaSeedPayload = {
@@ -203,19 +216,20 @@ export const MortgageVsIsaCalculator: FC<MortgageVsIsaCalculatorProps> = ({
     </div>
   );
 
+  const showSooner = balance > 0 && extra > 0 && result.monthsShaved > 0;
   const content = (
     <div className={mortgageIsaContent()}>
-      {/* Illustration outcomes, not saved figures. The two options sit side by side in the same
-          neutral style: neither is marked as better. */}
+      {/* Illustration outcomes, not saved figures. The headline is the difference between the
+          two; the two options then sit side by side in the same neutral style. */}
       <div
         className={mortgageIsaOutcomes()}
         data-density="compact"
         data-testid="mortgage-isa-outcomes"
       >
         <KpiCard
-          label={MORTGAGE_ISA_COPY.kpiSetAside(termYears)}
-          subtext={MORTGAGE_ISA_COPY.kpiSetAsideSubtext}
-          value={result.totalIsaContributed}
+          label={differenceLabel}
+          subtext={MORTGAGE_ISA_COPY.kpiDifferenceSubtext}
+          value={Math.abs(delta)}
         />
         <KpiCard
           label={MORTGAGE_ISA_COPY.kpiInterestSaved}
@@ -224,26 +238,32 @@ export const MortgageVsIsaCalculator: FC<MortgageVsIsaCalculatorProps> = ({
               ? MORTGAGE_ISA_COPY.kpiInterestSavedNoBalance
               : extra <= 0
                 ? MORTGAGE_ISA_COPY.kpiInterestSavedNoExtra
-                : MORTGAGE_ISA_COPY.kpiInterestSavedSubtext(
-                    oneDecimal.format(Number(result.yearsShaved)),
-                  )
+                : MORTGAGE_ISA_COPY.kpiInterestSavedSubtext
           }
           value={<Money size="lg" value={result.interestSaved} />}
         />
         <KpiCard
-          label={MORTGAGE_ISA_COPY.kpiIsaBalance}
-          subtext={MORTGAGE_ISA_COPY.kpiIsaBalanceSubtext(
-            money(result.isaGrowth),
-            percentText.format(isaGrowth),
-          )}
-          value={<Money size="lg" value={result.isaAccumulatedValue} />}
+          label={MORTGAGE_ISA_COPY.kpiIsaGrowth}
+          subtext={MORTGAGE_ISA_COPY.kpiIsaGrowthSubtext}
+          value={<Money size="lg" value={result.isaGrowth} />}
         />
       </div>
 
-      <div className={mortgageIsaExplainer()}>
-        <h3 className={mortgageIsaExplainerTitle()}>{MORTGAGE_ISA_COPY.explainerTitle}</h3>
-        <p>{MORTGAGE_ISA_COPY.explainer}</p>
-      </div>
+      <Button className={mortgageIsaCta()} size="md" variant="primary" onClick={handleSave}>
+        {ctaLabel(ctaText)} <Icon icon={ArrowRight} size="sm" />
+      </Button>
+
+      {/* Closed by default so the first view keeps to the headline and two figures (P1). */}
+      <CollapsibleDrawer title={MORTGAGE_ISA_COPY.explainerTitle} variant="quiet">
+        <div className={mortgageIsaExplainer()}>
+          <p>
+            {showSooner
+              ? `${MORTGAGE_ISA_COPY.explainerSooner(formatDuration(result.monthsShaved))} `
+              : null}
+            {MORTGAGE_ISA_COPY.explainer}
+          </p>
+        </div>
+      </CollapsibleDrawer>
 
       <ProjectionNotice />
       <LiveRegion debounceMs={1000} message={announcement} visuallyHidden />
@@ -252,10 +272,12 @@ export const MortgageVsIsaCalculator: FC<MortgageVsIsaCalculatorProps> = ({
 
   return (
     <div className={mortgageIsaRoot()} data-testid="mortgage-vs-isa-tool">
-      <div className={mortgageIsaHeader()}>
-        <h2 className={mortgageIsaTitle()}>{MORTGAGE_ISA_COPY.title}</h2>
-        <p className={mortgageIsaIntro()}>{MORTGAGE_ISA_COPY.intro}</p>
-      </div>
+      {embedded ? null : (
+        <div className={mortgageIsaHeader()}>
+          <h2 className={mortgageIsaTitle()}>{MORTGAGE_ISA_COPY.title}</h2>
+          <p className={mortgageIsaIntro()}>{MORTGAGE_ISA_COPY.intro}</p>
+        </div>
+      )}
 
       <SimulatorSplitLayout
         content={content}
@@ -263,10 +285,6 @@ export const MortgageVsIsaCalculator: FC<MortgageVsIsaCalculatorProps> = ({
         controls={controls}
         controlsLabel={MORTGAGE_ISA_COPY.controlsLabel}
       />
-
-      <Button className={mortgageIsaCta()} size="md" variant="primary" onClick={handleSave}>
-        {ctaLabel(ctaText)} <Icon icon={ArrowRight} size="sm" />
-      </Button>
     </div>
   );
 };
