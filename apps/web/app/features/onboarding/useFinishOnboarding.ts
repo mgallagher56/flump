@@ -115,6 +115,7 @@ export function useFinishOnboarding(values: OnboardingValues, summary: Onboardin
         cash,
         pensionPot: pot,
         mortgageBalance,
+        propertyValue,
         unsecuredDebt,
         monthlyTakeHome: summary.monthlyTakeHome,
         housingStatus: values.housingStatus,
