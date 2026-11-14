@@ -67,6 +67,24 @@ describe("selectEstimatedTaxDue (C-11)", () => {
     expect(amount(selfEmployed, records)).toBe(3232);
   });
 
+  it("is unknown for a self-employed user whose trading income is not logged (never a known 0)", () => {
+    // A 40,000 profile figure with only a 10,000 rental record: the trading income decides the
+    // band the rent falls in, and the profile figure may be turnover, not profit.
+    expect(selectEstimatedTaxDue(selfEmployed, [rent(10000)], { taxYear: Y })).toEqual({
+      status: "unknown",
+      missing: ["selfEmploymentRecords"],
+      reason: "not-set",
+    });
+    const noSaved = { ...selfEmployed, annualSalary: null };
+    expect(selectEstimatedTaxDue(noSaved, [rent(10000)], { taxYear: Y }).status).toBe("unknown");
+  });
+
+  it("a self-employed user with a saved income of 0 and only rent is estimated on the rent", () => {
+    const none = { ...selfEmployed, annualSalary: 0 };
+    // 20,000 rent: 7,430 above the allowance at 20% = 1,486.
+    expect(amount(none, [rent(20000)])).toBe(1486);
+  });
+
   it("is a known 0 below the allowance: 10,000 self-employed profit", () => {
     expect(
       amount(selfEmployed, [annual("self-employed", "income", "self_employed_income", 10000)]),

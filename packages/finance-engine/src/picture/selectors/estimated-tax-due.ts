@@ -43,6 +43,9 @@ function isUntaxedIncome(record: TaxRecord): boolean {
  * - Known £0 when there is such income but no tax on it (below the allowance, or a loss).
  * - A self-employed user's profile salary is their trading income, not PAYE pay, so it is not
  *   passed as a salary; their self-employed records carry that income.
+ * - Unknown (`selfEmploymentRecords`) for a self-employed user with no self-employed income
+ *   record in the year, unless their saved income is 0: the profile figure may be turnover
+ *   rather than profit, and the trading income decides the band the other income falls in.
  */
 export function selectEstimatedTaxDue(
   facts: ProfileFacts,
@@ -65,6 +68,10 @@ export function selectEstimatedTaxDue(
   const loggedSalary = inYear.some((r) => r.source === "paye" && r.category === "paye_salary");
   if (facts.employmentType === "employed" && salary === null && !loggedSalary) {
     return figureUnknown(["annualSalary"], "not-set");
+  }
+  const loggedTrading = inYear.some((r) => r.source === "self-employed" && r.type === "income");
+  if (selfEmployed && !loggedTrading && facts.annualSalary !== 0) {
+    return figureUnknown(["selfEmploymentRecords"], "not-set");
   }
 
   const share =

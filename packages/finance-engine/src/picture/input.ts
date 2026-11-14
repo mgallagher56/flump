@@ -44,7 +44,9 @@ export type MissingKey =
   /** A mortgage account with a balance (loan to value). */
   | "mortgageBalance"
   /** Income records not taxed through PAYE (rental, self-employed, savings, dividends). */
-  | "untaxedIncomeRecords";
+  | "untaxedIncomeRecords"
+  /** Self-employed income records (a self-employed user's trading income, estimated tax due). */
+  | "selfEmploymentRecords";
 
 /**
  * The saved rows one user's financial picture is built from (E23 section 2.1). Saved data only:
