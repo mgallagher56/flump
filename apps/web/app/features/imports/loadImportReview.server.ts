@@ -28,11 +28,11 @@ export async function loadImportReview(args: LoaderFunctionArgs): Promise<Import
   if (!UUID.test(id)) throwRouteError(new BackendError("not-found", "/imports/:id"));
   if (!accessToken) throwRouteError(new BackendError("unauthorised", "/imports/:id"));
   const signal = args.request.signal;
-  const base = `/imports/${encodeURIComponent(id)}`;
+  const safeId = encodeURIComponent(id);
 
   try {
     const [batch, accounts] = await Promise.all([
-      backendFetch<ImportBatch>(base, { accessToken, signal }),
+      backendFetch<ImportBatch>(`/imports/${safeId}`, { accessToken, signal }),
       backendFetch<Array<{ id: string; name: string; type: string }>>("/accounts", {
         accessToken,
         signal,
@@ -42,7 +42,7 @@ export async function loadImportReview(args: LoaderFunctionArgs): Promise<Import
     if (batch.status !== "staged") return { batch, initialPreview: null, existingAccounts };
 
     const preview = (accountMap: Record<string, string | null>) =>
-      backendFetch<ImportPreview>(`${base}/preview`, {
+      backendFetch<ImportPreview>(`/imports/${safeId}/preview`, {
         accessToken,
         signal,
         method: "POST",
@@ -56,7 +56,10 @@ export async function loadImportReview(args: LoaderFunctionArgs): Promise<Import
     } catch (error) {
       // 409: the batch expired or was committed since it was read. Show its current state.
       if (error instanceof BackendError && error.status === 409) {
-        const fresh = await backendFetch<ImportBatch>(base, { accessToken, signal });
+        const fresh = await backendFetch<ImportBatch>(`/imports/${safeId}`, {
+          accessToken,
+          signal,
+        });
         return { batch: fresh, initialPreview: null, existingAccounts };
       }
       throw error;
