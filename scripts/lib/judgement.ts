@@ -67,10 +67,6 @@ export const JUDGEMENT_ALLOW_LIST: ReadonlyArray<{ path: string; reason: string 
     reason: "invalid-state border and its error text",
   },
   {
-    path: "apps/web/app/components/core/inputs/",
-    reason: "legacy FLP input, select and checkbox invalid states (same role as FormField)",
-  },
-  {
     path: "packages/ui/src/patterns/TaxRatesStatusBanner/",
     reason: "warns that Flump's own tax rates are provisional or a fallback, not the user's money",
   },

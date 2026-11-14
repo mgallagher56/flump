@@ -317,8 +317,7 @@ describe("Architecture & Design System Laws", () => {
       }
     });
 
-    it("enforces colocated structure for new marketing MCP components and pages", () => {
-      verifyColocatedStructure(MARKETING_COMPONENTS_DIR, "McpSpotlightSection");
+    it("enforces colocated structure for new marketing MCP pages", () => {
       verifyColocatedStructure(MARKETING_PAGES_DIR, "McpPage");
     });
 
@@ -332,28 +331,31 @@ describe("Architecture & Design System Laws", () => {
       }
     });
 
-    it("E16: files outside components/core importing a legacy FLP* component may only shrink", () => {
-      // Shrinking baseline (plan 4.7). Remove a path when its FLP import goes; never add one.
-      // A zero-tolerance rule for FLPTabs lands with PR 9.
-      const LEGACY_FLP_IMPORTERS = [];
+    it("E16: the legacy FLP* layer is gone and may not return", () => {
       const repoRoot = path.resolve(__dirname, "../../../..");
-      const FLP_IMPORT = /from\s*["'][^"']*components\/core\/[^"']*\/FLP\w*["']/;
-      const importers: string[] = [];
+      expect(
+        fs.existsSync(path.join(repoRoot, "apps/web/app/components/core")),
+        "apps/web/app/components/core must not exist",
+      ).toBe(false);
+      const LEGACY_IMPORT = /["'][^"']*components\/core(\/|["'])/;
+      const FLP_IDENTIFIER = /\bFLP[A-Z]\w+/;
+      const offenders: string[] = [];
       const walk = (dir: string) => {
         for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
           const full = path.join(dir, entry.name);
           if (entry.isDirectory()) {
-            const isLegacyCore = full.endsWith(path.join("components", "core"));
-            if (!["node_modules", "build"].includes(entry.name) && !isLegacyCore) walk(full);
-          } else if (/\.tsx?$/.test(entry.name) && FLP_IMPORT.test(fs.readFileSync(full, "utf8"))) {
-            importers.push(path.relative(repoRoot, full).split(path.sep).join("/"));
+            if (!["node_modules", "build"].includes(entry.name)) walk(full);
+          } else if (/\.tsx?$/.test(entry.name) && !full.endsWith("architecture.laws.test.ts")) {
+            const text = fs.readFileSync(full, "utf8");
+            if (LEGACY_IMPORT.test(text) || FLP_IDENTIFIER.test(text)) {
+              offenders.push(path.relative(repoRoot, full).split(path.sep).join("/"));
+            }
           }
         }
       };
       walk(path.join(repoRoot, "apps/web/app"));
-      walk(path.join(repoRoot, "apps/marketing/src"));
-      expect(importers.sort(), "new FLP* importer (use @repo/ui) or stale baseline entry").toEqual(
-        LEGACY_FLP_IMPORTERS,
+      expect(offenders.sort(), "no file under apps/web/app may use the legacy FLP* layer").toEqual(
+        [],
       );
     });
   });
@@ -403,7 +405,6 @@ describe("Architecture & Design System Laws", () => {
     it("ensures colocated MCP components in web and marketing contain zero inline style props, raw hex colours, or primitive token scales", () => {
       const strictDirs = [
         path.join(AI_CONNECTIONS_FEATURES_DIR, "McpConnectionCard"),
-        path.join(MARKETING_COMPONENTS_DIR, "McpSpotlightSection"),
         path.join(MARKETING_PAGES_DIR, "McpPage"),
       ];
       const forbiddenTokens = ["var(--colors-", "style={{"];
@@ -442,10 +443,7 @@ describe("Architecture & Design System Laws", () => {
       // status.*.solid is a fill/graphic colour (3:1, SC 1.4.11). As text it is only guaranteed
       // when paired with text.onContrast. Use status.*.text for text. Icons are graphics, so
       // they may use solid. Paths are relative to the repo root.
-      const ALLOWED: Record<string, string> = {
-        "apps/marketing/src/components/McpSpotlightSection/McpSpotlightSection.styles.ts":
-          "bulletIcon recipe, applied to icon components only (graphic)",
-      };
+      const ALLOWED: Record<string, string> = {};
       const repoRoot = path.resolve(__dirname, "../../../..");
       const roots = [path.join(repoRoot, "packages/ui/src")];
       for (const app of ["web", "marketing", "mobile-companion"]) {

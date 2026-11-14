@@ -1,11 +1,6 @@
 {
   "fontSize": {
     "apps/web/app/components/charts/AccountDetailChart.tsx": 2,
-    "apps/web/app/components/core/buttons/FLPLinkButton.tsx": 1,
-    "apps/web/app/components/core/disclosure/CollapsibleSection.tsx": 1,
-    "apps/web/app/components/core/inputs/input/FLPInput.tsx": 1,
-    "apps/web/app/components/core/inputs/select/FLPSelect.tsx": 1,
-    "apps/web/app/components/core/metrics/StatMetric.tsx": 6,
     "apps/web/app/components/navigation/UserAvatar.tsx": 3,
     "apps/web/app/features/ai-connections/components/McpConnectionCard/McpConnectionCard.tsx": 7,
     "apps/web/app/features/charts/utils/chartProps.ts": 1,
@@ -23,19 +18,10 @@
     "packages/ui/src/primitives/KpiCard/KpiCard.styles.ts": 1
   },
   "fontWeight": {
-    "apps/marketing/src/components/McpSpotlightSection/McpSpotlightSection.styles.ts": 1,
     "packages/ui/src/patterns/SectionBand/SectionBand.styles.ts": 1
   },
   "duration": {
     "apps/web/app/components/accounts/BankConnectionsList/BankConnectionsList.styles.ts": 1,
-    "apps/web/app/components/core/cards/FLPCardStyles.ts": 2,
-    "apps/web/app/components/core/dialogs/TaxDisclaimerButton.tsx": 1,
-    "apps/web/app/components/core/disclosure/CollapsibleSection.tsx": 3,
-    "apps/web/app/components/core/inputs/checkbox/FLPCheckbox.tsx": 1,
-    "apps/web/app/components/core/inputs/input/FLPInput.tsx": 2,
-    "apps/web/app/components/core/inputs/select/FLPSelect.tsx": 1,
-    "apps/web/app/components/core/progress/FLPProgressBar.tsx": 1,
-    "apps/web/app/components/core/tabs/FLPTabs.tsx": 3,
     "apps/web/app/components/dialogs/connectBankWizard/ConnectBankWizard.styles.ts": 1,
     "apps/web/app/features/ai-connections/components/McpConnectionCard/McpConnectionCard.styles.ts": 3,
     "apps/web/app/features/budget/components/AddCategoryModal/AddCategoryModal.styles.ts": 2,
@@ -50,17 +36,6 @@
   },
   "inlineStyle": {
     "apps/web/app/components/charts/AccountDetailChart.tsx": 1,
-    "apps/web/app/components/core/buttons/FLPButton.tsx": 1,
-    "apps/web/app/components/core/buttons/FLPButtonGroup.tsx": 1,
-    "apps/web/app/components/core/buttons/FLPLinkButton.tsx": 1,
-    "apps/web/app/components/core/dialogs/TaxDisclaimerButton.tsx": 1,
-    "apps/web/app/components/core/inputs/checkbox/FLPCheckbox.tsx": 4,
-    "apps/web/app/components/core/inputs/input/FLPInput.tsx": 2,
-    "apps/web/app/components/core/inputs/select/FLPSelect.tsx": 3,
-    "apps/web/app/components/core/progress/FLPProgressBar.tsx": 2,
-    "apps/web/app/components/core/structure/FLPBox.tsx": 1,
-    "apps/web/app/components/core/typography/FLPHeading.tsx": 1,
-    "apps/web/app/components/core/typography/FLPText.tsx": 1,
     "apps/web/app/components/navigation/UserAvatar.tsx": 2,
     "apps/web/app/root.tsx": 1
   }
