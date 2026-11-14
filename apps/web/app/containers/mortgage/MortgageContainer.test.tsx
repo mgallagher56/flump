@@ -523,13 +523,16 @@ describe("<MortgageContainer />", () => {
       expect(window.location.search).toBe("");
     });
 
-    test("the zone starts from the saved figures and offers reset only after a change", () => {
+    test("the zone starts from the saved figures and reset stays disabled until a change", () => {
       loaderData = loaded();
-      const { getByText, queryByRole } = customRender(<MortgageContainer />);
+      const { getByText, getByRole } = customRender(<MortgageContainer />);
       expect(
         getByText(/Starting from your figures: £135,400 at 4.5%, 20 years left/),
       ).toBeDefined();
-      expect(queryByRole("button", { name: "Reset to saved figures" })).toBeNull();
+      expect(getByRole("button", { name: "Reset to saved figures" })).toHaveProperty(
+        "disabled",
+        true,
+      );
     });
 
     test("a balance typed in Edit is stored on the mortgage account as a liability", async () => {

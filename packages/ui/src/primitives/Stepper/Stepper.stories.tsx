@@ -111,3 +111,5 @@ export const Navigable: Story = {
     await expect(args.onStepSelect).toHaveBeenCalledWith(1);
   },
 };
+
+export const NavigableDark: Story = { ...Navigable, globals: { theme: "dark" } };

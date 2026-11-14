@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { expect, userEvent, within } from "@storybook/test";
+import { expect, userEvent, waitFor, within } from "@storybook/test";
 import { useState } from "react";
 import { css } from "../../../styled-system/css";
 import { Card } from "../../primitives/Card/Card";
@@ -148,5 +148,51 @@ export const ControlsOpenUnderLg: Story = {
     await userEvent.click(adjust);
     await expect(adjust).toHaveAttribute("aria-expanded", "true");
     await expect(canvas.getByText(/Debt free in/)).toBeInTheDocument();
+  },
+};
+
+const tallBlock = css({
+  height: "400px",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  backgroundColor: "surface.sunken",
+  borderRadius: "xl",
+  color: "text.secondary",
+  textStyle: "body.sm",
+});
+
+/**
+ * A column taller than the viewport is not sticky: it scrolls with the page, so the last control
+ * can be reached without scrolling to the end of the results first.
+ */
+export const TallControls: Story = {
+  render: () => (
+    <SimulatorSplitLayout
+      content={
+        <Card>
+          <div className={tallBlock}>Results</div>
+        </Card>
+      }
+      controls={
+        <Card>
+          <div className={cardStack}>
+            <h2 className={heading}>Many settings</h2>
+            {[1, 2, 3, 4, 5, 6].map((n) => (
+              <div className={tallBlock} key={n}>
+                Setting group {n}
+              </div>
+            ))}
+            <button type="button">Last control</button>
+          </div>
+        </Card>
+      }
+    />
+  ),
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const region = canvas.getByRole("region", { name: "Parameters" });
+    await waitFor(() => expect(region).toHaveAttribute("data-sticky", "false"));
+    await expect(canvas.getByRole("button", { name: "Last control" })).toBeInTheDocument();
   },
 };

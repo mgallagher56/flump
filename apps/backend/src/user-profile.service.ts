@@ -219,7 +219,7 @@ export class UserProfileService implements ProfileLifecycle {
           ? profile.hasResetFinancialData && Number(profile.pensionPercent) === 0
             ? false
             : Boolean(profile.isSalarySacrifice)
-          : !profile.hasResetFinancialData,
+          : false,
       isSalarySacrificeEmployerNi:
         profile.isSalarySacrificeEmployerNi !== null &&
         profile.isSalarySacrificeEmployerNi !== undefined
@@ -314,7 +314,7 @@ export class UserProfileService implements ProfileLifecycle {
       buyToLetMortgageType: "interest-only",
       pensionPercent: 5.0,
       pensionEmployerPercent: 3.0,
-      isSalarySacrifice: true,
+      isSalarySacrifice: false,
       isSalarySacrificeEmployerNi: false,
       monthlySavingsTarget: null,
       savingsAllocationMode: "per_account",
@@ -354,7 +354,7 @@ export class UserProfileService implements ProfileLifecycle {
       propertyOwnershipShare: 100.0,
       pensionPercent: 5.0,
       pensionEmployerPercent: 3.0,
-      isSalarySacrifice: true,
+      isSalarySacrifice: false,
       isSalarySacrificeEmployerNi: false,
       monthlySavingsTarget: null,
       savingsAllocationMode: "per_account",
@@ -617,7 +617,7 @@ export class UserProfileService implements ProfileLifecycle {
       propertyOwnershipShare: 100.0,
       pensionPercent: 5.0,
       pensionEmployerPercent: 3.0,
-      isSalarySacrifice: true,
+      isSalarySacrifice: false,
       monthlySavingsTarget: null,
       savingsAllocationMode: "per_account",
       savingsDefaultInterestRate: 5.0,

@@ -53,7 +53,7 @@ const OverpaymentTool = ({
 );
 
 export const Default: Story = {
-  args: { footer: <UpdateLink /> },
+  args: { footer: <UpdateLink />, onReset: () => {} },
   render: (args) => (
     <ScenarioZone {...args}>
       <OverpaymentTool onChange={() => {}} value={null} />
@@ -63,9 +63,11 @@ export const Default: Story = {
     const canvas = within(canvasElement);
     await expect(canvas.getByRole("region", { name: "Model a change" })).toBeInTheDocument();
     await expect(canvas.getByText("Illustration, not saved")).toBeInTheDocument();
-    await expect(canvas.queryByRole("button", { name: SCENARIO_RESET_LABEL })).toBeNull();
+    await expect(canvas.getByRole("button", { name: SCENARIO_RESET_LABEL })).toBeDisabled();
   },
 };
+
+export const DefaultDark: Story = { ...Default, globals: { theme: "dark" } };
 
 const Interactive = () => {
   const [extra, setExtra] = useState<number | null>(null);
@@ -97,20 +99,18 @@ export const Modified: Story = {
   render: () => <Interactive />,
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    await expect(canvas.queryByRole("button", { name: SCENARIO_RESET_LABEL })).toBeNull();
+    const reset = canvas.getByRole("button", { name: SCENARIO_RESET_LABEL });
+    await expect(reset).toBeDisabled();
     const slider = canvas.getByRole("slider");
     slider.focus();
     await userEvent.keyboard("{ArrowRight}");
-    const reset = await canvas.findByRole("button", { name: SCENARIO_RESET_LABEL });
-    await expect(reset).toBeInTheDocument();
+    await waitFor(() => expect(reset).toBeEnabled());
     await waitFor(
       () => expect(canvas.getByRole("status")).toHaveTextContent(/^Illustration: Interest saved/),
       { timeout: 3000 },
     );
     await userEvent.click(reset);
-    await waitFor(() =>
-      expect(canvas.queryByRole("button", { name: SCENARIO_RESET_LABEL })).toBeNull(),
-    );
+    await waitFor(() => expect(reset).toBeDisabled());
     await waitFor(
       () =>
         expect(canvas.getByRole("status")).toHaveTextContent(
@@ -121,8 +121,15 @@ export const Modified: Story = {
   },
 };
 
+export const ModifiedDark: Story = { ...Modified, globals: { theme: "dark" } };
+
 export const ResetVisible: Story = {
-  args: { isModified: true, footer: <UpdateLink />, announcement: "Interest saved £3,800" },
+  args: {
+    isModified: true,
+    onReset: () => {},
+    footer: <UpdateLink />,
+    announcement: "Interest saved £3,800",
+  },
   render: (args) => (
     <ScenarioZone {...args}>
       <OverpaymentTool onChange={() => {}} value={100} />
@@ -130,9 +137,11 @@ export const ResetVisible: Story = {
   ),
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    await expect(canvas.getByRole("button", { name: SCENARIO_RESET_LABEL })).toBeInTheDocument();
+    await expect(canvas.getByRole("button", { name: SCENARIO_RESET_LABEL })).toBeEnabled();
   },
 };
+
+export const ResetVisibleDark: Story = { ...ResetVisible, globals: { theme: "dark" } };
 
 const WithTabs = () => {
   const [tool, setTool] = useState("overpayment");
@@ -195,7 +204,7 @@ export const LongContent: Story = {
 };
 
 export const Narrow: Story = {
-  args: { isModified: true, footer: <UpdateLink /> },
+  args: { isModified: true, onReset: () => {}, footer: <UpdateLink /> },
   parameters: { viewport: { defaultViewport: "mobile1" } },
   render: (args) => (
     <div className={css({ maxWidth: "343px" })}>

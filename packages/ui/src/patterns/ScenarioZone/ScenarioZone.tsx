@@ -1,4 +1,4 @@
-import { CircleDashed } from "lucide-react";
+import { CircleDashed, RotateCcw } from "lucide-react";
 import { type FC, type ReactNode, useId } from "react";
 import { cx } from "../../../styled-system/css";
 import { Button } from "../../primitives/Button/Button";
@@ -18,9 +18,12 @@ export interface ScenarioZoneProps {
   title?: string;
   /** "Starting from your figures: £X at Y%, Z years left". Built from SAVED values only. */
   basis?: ReactNode;
-  /** True once any scenario input differs from the saved figures. Shows the reset button. */
+  /** True once any scenario input differs from the saved figures. Enables the reset button. */
   isModified?: boolean;
-  /** Called by "Reset to saved figures". Restores scenario inputs to the saved values. */
+  /**
+   * Called by "Reset to saved figures". Restores scenario inputs to the saved values. When set, the
+   * button always shows in the header, disabled until `isModified`.
+   */
   onReset?: () => void;
   /** Optional tool switcher (for example SegmentedTabs) rendered above the content. */
   tools?: ReactNode;
@@ -72,23 +75,33 @@ export const ScenarioZone: FC<ScenarioZoneProps> = ({
     >
       <div className={slots.header}>
         <div className={slots.titleRow}>
-          <Heading as="h2" data-testid="scenario-zone-title" id={headingId} size="md">
-            {title}
-          </Heading>
-          <StatusBadge variant="neutral" icon={<Icon icon={CircleDashed} size="sm" />}>
-            {SCENARIO_BADGE_TEXT}
-          </StatusBadge>
+          <div className={slots.titleGroup}>
+            <Heading as="h2" data-testid="scenario-zone-title" id={headingId} size="md">
+              {title}
+            </Heading>
+            <StatusBadge variant="neutral" icon={<Icon icon={CircleDashed} size="sm" />}>
+              {SCENARIO_BADGE_TEXT}
+            </StatusBadge>
+          </div>
+          {onReset ? (
+            <Button
+              className={slots.reset}
+              disabled={!isModified}
+              size="sm"
+              type="button"
+              variant="secondary"
+              onClick={onReset}
+            >
+              <Icon icon={RotateCcw} size="sm" />
+              {SCENARIO_RESET_LABEL}
+            </Button>
+          ) : null}
         </div>
         {basis ? <p className={slots.basis}>{basis}</p> : null}
       </div>
       {showNotice ? <ProjectionNotice /> : null}
       {tools}
       <div className={slots.body}>{children}</div>
-      {isModified ? (
-        <Button className={slots.reset} variant="secondary" size="sm" onClick={onReset}>
-          {SCENARIO_RESET_LABEL}
-        </Button>
-      ) : null}
       {footer ? <div className={slots.footer}>{footer}</div> : null}
       <LiveRegion
         message={announcement ? `${SCENARIO_ANNOUNCEMENT_PREFIX} ${announcement}` : ""}

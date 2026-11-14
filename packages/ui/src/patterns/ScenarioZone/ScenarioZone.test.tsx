@@ -30,15 +30,38 @@ describe("ScenarioZone", () => {
     expect(screen.queryByTestId("projection-notice")).toBeNull();
   });
 
-  it("hides Reset until modified", () => {
+  it("always shows Reset in the header, disabled until modified", () => {
     const { rerender } = render(<ScenarioZone onReset={() => {}}>x</ScenarioZone>);
-    expect(screen.queryByRole("button", { name: SCENARIO_RESET_LABEL })).toBeNull();
+    const reset = screen.getByRole("button", { name: SCENARIO_RESET_LABEL }) as HTMLButtonElement;
+    expect(reset.disabled).toBe(true);
+    // It lives in the header row beside the title, not under the body.
+    expect(reset.parentElement?.contains(screen.getByTestId("scenario-zone-title"))).toBe(true);
     rerender(
       <ScenarioZone isModified onReset={() => {}}>
         x
       </ScenarioZone>,
     );
-    expect(screen.getByRole("button", { name: SCENARIO_RESET_LABEL })).toBeTruthy();
+    expect(
+      (screen.getByRole("button", { name: SCENARIO_RESET_LABEL }) as HTMLButtonElement).disabled,
+    ).toBe(false);
+  });
+
+  it("does not call onReset while nothing has changed", () => {
+    const onReset = vi.fn();
+    render(<ScenarioZone onReset={onReset}>x</ScenarioZone>);
+    fireEvent.click(screen.getByRole("button", { name: SCENARIO_RESET_LABEL }));
+    expect(onReset).not.toHaveBeenCalled();
+  });
+
+  it("leaves Reset out when there is nothing to reset", () => {
+    render(<ScenarioZone isModified>x</ScenarioZone>);
+    expect(screen.queryByRole("button", { name: SCENARIO_RESET_LABEL })).toBeNull();
+  });
+
+  it("keeps the badge inline with the title", () => {
+    render(<ScenarioZone>x</ScenarioZone>);
+    const title = screen.getByTestId("scenario-zone-title");
+    expect(title.parentElement?.textContent).toContain(SCENARIO_BADGE_TEXT);
   });
 
   it("calls onReset when Reset is pressed", () => {

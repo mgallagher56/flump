@@ -1,4 +1,8 @@
-import { profileFactsFromProfile, selectPsaBand } from "@flump/finance-engine";
+import {
+  otherAnnualIncomeFromProfile,
+  profileFactsFromProfile,
+  selectPsaBand,
+} from "@flump/finance-engine";
 import type { ReactElement } from "react";
 import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "react-router";
 import { data } from "react-router";
@@ -113,8 +117,11 @@ export const loader = async (args: LoaderFunctionArgs) => {
       bankConnectionsEnabled = false;
     }
   }
-  // The PSA band comes from the saved income and tax region; null (no income saved) claims no band.
-  const psaTaxBand = selectPsaBand(profileFactsFromProfile(userProfile));
+  // The PSA band comes from the saved income (salary plus second and rental income) and tax
+  // region; null (no salary saved) claims no band.
+  const psaTaxBand = selectPsaBand(profileFactsFromProfile(userProfile), {
+    otherAnnualIncome: otherAnnualIncomeFromProfile(userProfile),
+  });
   return data({
     accounts,
     accountDetails,

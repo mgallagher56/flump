@@ -43,6 +43,9 @@ export const ForecasterControls: FC<ForecasterControlsProps> = ({
     portfolioReturnRate !== undefined && portfolioReturnRate > 0
       ? Number(portfolioReturnRate.toFixed(1))
       : null;
+  // Exactly one chip is pressed: when "Your pots" matches a preset rate, the pots chip wins.
+  const portfolioPressed = portfolioRate !== null && values.growthRate === portfolioRate;
+  const isPresetPressed = (rate: number) => !portfolioPressed && values.growthRate === rate;
 
   return (
     <div className={controlsPanel()}>
@@ -103,10 +106,10 @@ export const ForecasterControls: FC<ForecasterControlsProps> = ({
         <div className={presetRow()}>
           {portfolioRate !== null && (
             <Button
-              aria-pressed={values.growthRate === portfolioRate}
+              aria-pressed={portfolioPressed}
               size="sm"
               type="button"
-              variant={values.growthRate === portfolioRate ? "primary" : "outline"}
+              variant={portfolioPressed ? "primary" : "outline"}
               onClick={() => set("growthRate", portfolioRate)}
             >
               Your pots ({portfolioRate}%)
@@ -115,10 +118,10 @@ export const ForecasterControls: FC<ForecasterControlsProps> = ({
           {PRESETS.map((preset) => (
             <Button
               key={preset.rate}
-              aria-pressed={values.growthRate === preset.rate}
+              aria-pressed={isPresetPressed(preset.rate)}
               size="sm"
               type="button"
-              variant={values.growthRate === preset.rate ? "primary" : "outline"}
+              variant={isPresetPressed(preset.rate) ? "primary" : "outline"}
               onClick={() => set("growthRate", preset.rate)}
             >
               {preset.label}

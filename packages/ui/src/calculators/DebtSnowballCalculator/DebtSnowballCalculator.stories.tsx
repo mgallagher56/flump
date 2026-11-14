@@ -32,3 +32,5 @@ export const Mobile: Story = {
     await expect(tool.scrollWidth).toBeLessThanOrEqual(tool.clientWidth);
   },
 };
+
+export const MobileDark: Story = { ...Mobile, globals: { theme: "dark" } };

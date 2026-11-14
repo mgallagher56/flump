@@ -1,5 +1,5 @@
 import { SlidersHorizontal } from "lucide-react";
-import { type FC, type ReactNode, useId, useState, useSyncExternalStore } from "react";
+import { type FC, type ReactNode, useEffect, useId, useState, useSyncExternalStore } from "react";
 import { cx } from "../../../styled-system/css";
 import { Icon } from "../../primitives/Icon";
 import {
@@ -25,6 +25,42 @@ const getDesktop = () =>
     ? true
     : window.matchMedia(DESKTOP_QUERY).matches;
 
+/** Gap kept above the sticky column, matching `token(spacing.4)` in the styles. */
+const STICKY_GAP_PX = 16;
+
+const readHeaderOffset = (el: HTMLElement): number => {
+  const fromEl = getComputedStyle(el).getPropertyValue("--app-header-offset");
+  const raw = fromEl.trim()
+    ? fromEl
+    : getComputedStyle(document.documentElement).getPropertyValue("--app-header-offset");
+  const px = Number.parseFloat(raw);
+  return Number.isFinite(px) ? px : 0;
+};
+
+/**
+ * Whether the element fits in the viewport below the header offset. Re-measured when the element
+ * or the window resizes. Starts `true` (sticky, as rendered on the server) until measured.
+ */
+const useFitsViewport = (el: HTMLElement | null): boolean => {
+  const [fits, setFits] = useState(true);
+  useEffect(() => {
+    if (!el || typeof window === "undefined") return;
+    const measure = () => {
+      const available = window.innerHeight - readHeaderOffset(el) - STICKY_GAP_PX;
+      setFits(el.getBoundingClientRect().height <= available);
+    };
+    measure();
+    window.addEventListener("resize", measure);
+    const observer = typeof ResizeObserver === "function" ? new ResizeObserver(measure) : null;
+    observer?.observe(el);
+    return () => {
+      window.removeEventListener("resize", measure);
+      observer?.disconnect();
+    };
+  }, [el]);
+  return fits;
+};
+
 /** Props handed to `renderControlsContainer` when the controls leave the sticky column (under `lg`). */
 export interface ControlsContainerRenderProps {
   open: boolean;
@@ -38,7 +74,10 @@ export interface ControlsContainerRenderProps {
 }
 
 export interface SimulatorSplitLayoutProps {
-  /** Parameter controls (sliders and inputs). Sticky left column from `lg`. */
+  /**
+   * Parameter controls (sliders and inputs). Left column from `lg`, sticky while it fits in the
+   * viewport below `--app-header-offset`; a taller column scrolls with the page instead.
+   */
   controls: ReactNode;
   /** Chart and outcome cards. Right column from `lg`. */
   content: ReactNode;
@@ -91,6 +130,9 @@ export const SimulatorSplitLayout: FC<SimulatorSplitLayoutProps> = ({
   const isDesktop = useSyncExternalStore(subscribeDesktop, getDesktop, () => true);
   const hasSummary = summary !== undefined && summary !== null && summary !== false;
   const custom = hasSummary && !isDesktop && renderControlsContainer !== undefined;
+  // State, not a ref: the section remounts when the controls move into a custom container and back.
+  const [controlsEl, setControlsEl] = useState<HTMLElement | null>(null);
+  const sticky = useFitsViewport(controlsEl);
 
   return (
     <div className={cx(splitGrid(), className)}>
@@ -122,8 +164,12 @@ export const SimulatorSplitLayout: FC<SimulatorSplitLayoutProps> = ({
       ) : (
         <section
           aria-label={controlsLabel}
-          className={cx(splitLeftControls({ span: controlsSpan, collapsed: hasSummary && !open }))}
+          className={cx(
+            splitLeftControls({ span: controlsSpan, sticky, collapsed: hasSummary && !open }),
+          )}
+          data-sticky={sticky}
           id={controlsId}
+          ref={setControlsEl}
         >
           {controls}
         </section>

@@ -73,17 +73,23 @@ export const splitLeftControls = cva({
     flexDirection: "column",
     gap: "4",
     display: "flex",
-    position: { lg: "sticky" },
-    top: { lg: `calc(${headerOffset} + token(spacing.4))` },
     // No max height or inner scroll: a capped column clipped its last cards behind a scrollbar
-    // most people never noticed. A column taller than the viewport scrolls with the page instead,
-    // and every card stays in normal flow at its full height.
+    // most people never noticed. Every card stays in normal flow at its full height.
     alignSelf: "start",
   },
   variants: {
     span: {
       4: { gridColumn: { base: "span 1", lg: "span 4" } },
       5: { gridColumn: { base: "span 1", lg: "span 5" } },
+    },
+    // Sticky from lg only while the column fits below the header (measured in the component).
+    // A taller column scrolls with the page, so its bottom controls are always reachable.
+    sticky: {
+      true: {
+        position: { lg: "sticky" },
+        top: { lg: `calc(${headerOffset} + token(spacing.4))` },
+      },
+      false: {},
     },
     // Under lg, with a summary bar, the controls stay hidden until Adjust is pressed.
     collapsed: {
@@ -93,6 +99,7 @@ export const splitLeftControls = cva({
   },
   defaultVariants: {
     span: 5,
+    sticky: true,
     collapsed: false,
   },
 });

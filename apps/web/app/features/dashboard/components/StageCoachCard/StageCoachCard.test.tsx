@@ -25,6 +25,15 @@ describe("<StageCoachCard />", () => {
     );
   });
 
+  it("keeps the teal next-step treatment with a solid payoff link", () => {
+    renderCard({ unsecuredDebt: 3000, debtFreeDate: "March 2029", weeklyAllowance: 120 });
+    const card = screen.getByTestId("stage-coach-card");
+    expect(card.className).toContain("bg-c_primary.subtle");
+    expect(card.className).toContain("bd-c_primary.border");
+    const link = screen.getByRole("link", { name: "Open debt payoff" });
+    expect(link.className).toContain("bg_primary.solid");
+  });
+
   it("is a labelled summary with links only: no action button and no stage wording (R4)", () => {
     renderCard({ unsecuredDebt: 3000, debtFreeDate: "March 2029", weeklyAllowance: 120 });
     expect(

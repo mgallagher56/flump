@@ -1209,4 +1209,28 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
       expect(await tables()).toEqual(ENTITY_TABLES);
     });
   });
+
+  describe("SalarySacrificeDefaultFalse1794357400000", () => {
+    const MIGRATION = "SalarySacrificeDefaultFalse1794357400000";
+    const flag = async (userId: string): Promise<boolean> =>
+      (
+        await ds.query("SELECT is_salary_sacrifice FROM user_profiles WHERE user_id = $1", [userId])
+      )[0].is_salary_sacrifice;
+
+    it("defaults new profiles to false and leaves existing rows untouched; down() restores true", async () => {
+      await ds.runMigrations();
+      await undoThrough(MIGRATION);
+      await ds.query("INSERT INTO user_profiles (user_id) VALUES ('before')");
+      expect(await flag("before")).toBe(true);
+
+      await ds.runMigrations();
+      await ds.query("INSERT INTO user_profiles (user_id) VALUES ('after')");
+      expect(await flag("before")).toBe(true);
+      expect(await flag("after")).toBe(false);
+
+      await undoThrough(MIGRATION);
+      await ds.query("INSERT INTO user_profiles (user_id) VALUES ('reverted')");
+      expect(await flag("reverted")).toBe(true);
+    });
+  });
 });

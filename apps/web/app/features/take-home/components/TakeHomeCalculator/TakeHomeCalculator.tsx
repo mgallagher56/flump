@@ -36,6 +36,10 @@ import {
 } from "./TakeHomeCalculator.styles";
 
 const DEFAULT_PENSION_PERCENT = 5;
+const PERCENT_FORMAT = new Intl.NumberFormat("en-GB", {
+  style: "percent",
+  maximumFractionDigits: 1,
+});
 const DEFAULT_RAISE = 5000;
 const TOOLS = [
   { value: "take-home", label: EXPLORER_COPY.tabYourTakeHome },
@@ -290,7 +294,7 @@ export const TakeHomeCalculator: FC<TakeHomeCalculatorProps> = ({
           tool === "next-pound" && !savedKnown
             ? EXPLORER_COPY.defaultBasis
             : savedKnown
-              ? `Starting from your figures: ${formatCurrency(savedSalary)} gross salary, ${savedPension}% pension`
+              ? `Starting from your figures: ${formatCurrency(savedSalary)} gross salary, ${PERCENT_FORMAT.format(savedPension / 100)} pension`
               : "Starting from your figures: no saved salary yet"
         }
         footer={

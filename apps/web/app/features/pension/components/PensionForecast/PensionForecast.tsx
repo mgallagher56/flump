@@ -16,10 +16,12 @@ import {
   noSalaryLink,
   noSalaryNote,
   zoneFooter,
+  zoneFooterNote,
 } from "./PensionForecast.styles";
 
 export const PENSION_SCENARIO_ZONE_ID = "pension-scenario-zone";
 const ZONE_TITLE = "Model a change to your pension";
+const ZONE_FOOTER_NOTE = "Changes here are not saved.";
 
 export interface PensionForecastProps {
   scenario: PensionScenario;
@@ -121,6 +123,7 @@ export const PensionForecast: FC<PensionForecastProps> = ({
       footer={
         onEditDetails ? (
           <div className={zoneFooter()}>
+            <p className={zoneFooterNote()}>{ZONE_FOOTER_NOTE}</p>
             <Button size="sm" type="button" variant="link" onClick={onEditDetails}>
               Update your details
             </Button>

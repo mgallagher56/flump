@@ -38,7 +38,7 @@ const profile = {
   buyToLetMortgageType: "interest-only",
   pensionPercent: 5,
   pensionEmployerPercent: 3,
-  isSalarySacrifice: true,
+  isSalarySacrifice: false,
   isSalarySacrificeEmployerNi: false,
   monthlySavingsTarget: 300,
   savingsAllocationMode: "per_account",
