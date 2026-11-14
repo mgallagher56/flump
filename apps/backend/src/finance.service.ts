@@ -28,6 +28,7 @@ import { safeErrorSummary } from "./log-safe";
 import { BankProviderRegistry } from "./providers/provider.registry";
 import { writeConnectedSnapshot } from "./snapshots/connected-write";
 import { londonDate } from "./snapshots/london-date";
+import { resignHistoryForType, storedBalance } from "./snapshots/stored-balance";
 
 @Injectable()
 export class FinanceService {
@@ -419,7 +420,7 @@ export class FinanceService {
     const [currentYear, currentMonth] = today.split("-").map(Number) as [number, number];
 
     for (const pa of providerAccounts) {
-      const normalizedBalance = BankSyncOrchestrator.normalizeAccountBalance(pa.type, pa.balance);
+      const normalizedBalance = storedBalance(pa.type, pa.balance);
 
       const existingAccount = await this.accountRepository.findOne({
         where: {
@@ -453,6 +454,12 @@ export class FinanceService {
             } as any);
       } else {
         existingAccount.name = pa.name;
+        if (existingAccount.type !== pa.type) {
+          // A provider that reclassifies an account: the stored balance and history follow the
+          // new type's sign rule (BE-05, audit H6). History first, while the row is the old type.
+          await resignHistoryForType(this.accountDetailRepository, existingAccount.id, pa.type);
+          existingAccount.balance = storedBalance(pa.type, Number(existingAccount.balance));
+        }
         existingAccount.type = pa.type;
         // The balance is not touched here: writeConnectedSnapshot moves it atomically, and not at
         // all when this month's value was entered by hand (E30 D7).

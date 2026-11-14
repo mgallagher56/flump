@@ -13,7 +13,7 @@ import { AccountDetail } from "./entities/account-detail.entity";
 import { BankConnection } from "./entities/bank-connection.entity";
 import { UserProfile } from "./entities/user-profile.entity";
 import { londonDate } from "./snapshots/london-date";
-import { storedBalance } from "./snapshots/stored-balance";
+import { resignHistoryForType, storedBalance } from "./snapshots/stored-balance";
 
 export type AccountType = (typeof ACCOUNT_TYPES)[number];
 
@@ -348,6 +348,10 @@ export class AccountIntakeService implements IAccountIntake {
       }
       fields.connectionId = connection.id;
     }
+    if (fields.balance !== undefined) {
+      // BE-05 (audit H6): creation follows the same sign rule as every other write path.
+      fields.balance = storedBalance(fields.type, Number(fields.balance));
+    }
     const account: Account = this.accountRepository.create({
       ...fields,
       // accounts.currency is NOT NULL and the DTO leaves it optional, so default it here.
@@ -401,10 +405,19 @@ export class AccountIntakeService implements IAccountIntake {
         throw new NotFoundException("Account not found");
       }
 
+      const previousType = account.type;
       Object.assign(account, this.pickAccountFields(body));
+      const typeChanged = account.type !== previousType;
       if (body.balance !== undefined && body.balance !== null) {
         // Same sign rule as every other write path (liabilities negative).
         account.balance = storedBalance(account.type, Number(body.balance));
+      } else if (typeChanged && Number.isFinite(Number(account.balance))) {
+        // A type change alone re-signs the stored balance too (BE-05, audit H6).
+        account.balance = storedBalance(account.type, Number(account.balance));
+      }
+      if (typeChanged) {
+        // History first, while the row is still the old type (see resignHistoryForType).
+        await resignHistoryForType(details, account.id, account.type);
       }
       const saved = await accounts.save(account);
       if (body.balance !== undefined && body.balance !== null) {

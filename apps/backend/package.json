@@ -15,7 +15,8 @@
     "check-types": "tsc --noEmit && tsc --noEmit -p tsconfig.test.json",
     "migration:run": "bun ./node_modules/typeorm/cli.js -d src/data-source.ts migration:run",
     "migration:revert": "bun ./node_modules/typeorm/cli.js -d src/data-source.ts migration:revert",
-    "migration:generate": "bun ./node_modules/typeorm/cli.js -d src/data-source.ts migration:generate"
+    "migration:generate": "bun ./node_modules/typeorm/cli.js -d src/data-source.ts migration:generate",
+    "liability-signs:dry-run": "bun src/scripts/liability-signs-dry-run.ts"
   },
   "dependencies": {
     "@flump/api-contract": "workspace:*",

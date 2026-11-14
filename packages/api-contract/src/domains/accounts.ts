@@ -37,7 +37,11 @@ export const StudentLoanPlan = z.enum(STUDENT_LOAN_PLANS);
 export const CreateAccountRequest = z.object({
   name: Name,
   type: AccountType,
-  /** Signed: the web debt page sends negative balances for cards and loans (E23 C-15 owns the policy). */
+  /**
+   * Either sign is accepted. The backend stores a liability (Mortgage, Credit Card, Loan,
+   * Overdraft, Student Loan) as minus its absolute value and keeps any other type's sign (BE-05
+   * stored-balance rule, E23 C-15).
+   */
   balance: Money,
   currency: Currency.nullish(),
   interestRate: Percent.nullish(),
@@ -60,6 +64,7 @@ export const CreateAccountRequest = z.object({
 export const UpdateAccountRequest = z.object({
   name: Name.optional(),
   type: AccountType.optional(),
+  /** Either sign is accepted; stored by the same rule as on create (a type change re-signs it). */
   balance: Money.optional(),
   currency: Currency.nullish(),
   interestRate: Percent.nullish(),
@@ -110,7 +115,7 @@ export const AccountDetailDto = z.strictObject({
   userId: OwnerId,
   year: Int,
   month: Int.min(1).max(12),
-  /** Signed: liabilities are stored negative. */
+  /** Signed: a liability's history is stored negative (BE-05 stored-balance rule). */
   value: Amount,
   asOfDate: IsoDate,
   source: AccountDetailSource,
@@ -125,7 +130,10 @@ const accountShape = {
   userId: OwnerId,
   name: z.string(),
   type: AccountType,
-  /** Signed: liabilities are stored negative (E30 stored-balance rule). */
+  /**
+   * Signed: a liability (Mortgage, Credit Card, Loan, Overdraft, Student Loan) is always negative
+   * (BE-05 stored-balance rule, enforced by a database check); other types keep their sign.
+   */
   balance: Amount,
   interestRate: Amount.nullable(),
   monthlyContribution: Amount.nullable(),

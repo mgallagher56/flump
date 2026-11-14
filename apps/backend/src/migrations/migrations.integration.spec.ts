@@ -35,6 +35,10 @@ const TEST_DATABASE_URL = process.env.TEST_DATABASE_URL;
 // Discovered from src/migrations (shared with the contract test) so a new migration is never skipped.
 let MIGRATIONS: MigrationClass[] = [];
 
+// Operational tables a migration creates that no entity maps (left out of the entity
+// comparisons): the BE-05 liability sign before-image (LiabilitySignRule1794358050000).
+const MIGRATION_ONLY_TABLES = "'migrations', 'liability_sign_backfill'";
+
 const ENTITY_TABLES = [
   "account_details",
   "accounts",
@@ -89,27 +93,27 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
 
   const tables = async (): Promise<string[]> => {
     const rows: { table_name: string }[] = await ds.query(
-      "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' AND table_name <> 'migrations' ORDER BY table_name",
+      `SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' AND table_name NOT IN (${MIGRATION_ONLY_TABLES}) ORDER BY table_name`,
     );
     return rows.map((r) => r.table_name);
   };
 
   const columns = (): Promise<unknown[]> =>
     ds.query(
-      "SELECT table_name, column_name, data_type, is_nullable, column_default FROM information_schema.columns WHERE table_schema = 'public' AND table_name <> 'migrations' ORDER BY table_name, column_name",
+      `SELECT table_name, column_name, data_type, is_nullable, column_default FROM information_schema.columns WHERE table_schema = 'public' AND table_name NOT IN (${MIGRATION_ONLY_TABLES}) ORDER BY table_name, column_name`,
     );
 
   // Names, types and nullability per column, plus PRIMARY KEY / UNIQUE column sets.
   const shape = async (): Promise<unknown> => ({
     columns: await ds.query(
-      "SELECT table_name, column_name, data_type, character_maximum_length, numeric_precision, numeric_scale, is_nullable FROM information_schema.columns WHERE table_schema = 'public' AND table_name <> 'migrations' ORDER BY table_name, column_name",
+      `SELECT table_name, column_name, data_type, character_maximum_length, numeric_precision, numeric_scale, is_nullable FROM information_schema.columns WHERE table_schema = 'public' AND table_name NOT IN (${MIGRATION_ONLY_TABLES}) ORDER BY table_name, column_name`,
     ),
     constraints: await ds.query(
       `SELECT tc.table_name, tc.constraint_type, array_agg(kcu.column_name::text ORDER BY kcu.column_name) AS cols
        FROM information_schema.table_constraints tc
        JOIN information_schema.key_column_usage kcu
          ON kcu.constraint_name = tc.constraint_name AND kcu.table_schema = tc.table_schema
-       WHERE tc.table_schema = 'public' AND tc.table_name <> 'migrations'
+       WHERE tc.table_schema = 'public' AND tc.table_name NOT IN (${MIGRATION_ONLY_TABLES})
          AND tc.constraint_type IN ('PRIMARY KEY', 'UNIQUE')
        GROUP BY tc.table_name, tc.constraint_name, tc.constraint_type
        ORDER BY tc.table_name, tc.constraint_type, cols`,
@@ -718,7 +722,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
       await ds.query('ALTER TABLE "accounts" DROP COLUMN "fixed_rate_end_date"');
       await ds.query(
         `INSERT INTO accounts (user_id, name, type, balance, currency)
-         VALUES ('u1', 'Home', 'Mortgage', 200000, 'GBP')`,
+         VALUES ('u1', 'Home', 'Mortgage', -200000, 'GBP')`,
       );
 
       await ds.runMigrations();
@@ -912,11 +916,11 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
       await ds.runMigrations();
       await expect(
         ds.query(
-          `INSERT INTO accounts (user_id, name, type, balance, student_loan_plan) VALUES ('u1', 'SL', 'Student Loan', 1, 'PLAN_9')`,
+          `INSERT INTO accounts (user_id, name, type, balance, student_loan_plan) VALUES ('u1', 'SL', 'Student Loan', -1, 'PLAN_9')`,
         ),
       ).rejects.toThrow(/CHK_accounts_student_loan_plan/);
       await ds.query(
-        `INSERT INTO accounts (user_id, name, type, balance, student_loan_plan) VALUES ('u2', 'SL', 'Student Loan', 1, 'PLAN_2')`,
+        `INSERT INTO accounts (user_id, name, type, balance, student_loan_plan) VALUES ('u2', 'SL', 'Student Loan', -1, 'PLAN_2')`,
       );
     });
 
