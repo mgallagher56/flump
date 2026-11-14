@@ -4,6 +4,7 @@ import { type FC, type ReactNode, useMemo } from "react";
 import type { BudgetEntry } from "~/types/budget";
 import { CATEGORY_LABELS, toMonthly } from "~/types/budget";
 import { categoryIcon } from "../../categoryIcons";
+import { INCOME_CATEGORY, isIncomeEntry } from "../../income";
 import {
   categoryList,
   chevron,
@@ -48,13 +49,12 @@ export interface CategoryRow {
   count: number;
 }
 
-/** Income is money in, not somewhere money goes: it shows once, as "Money in each month". */
-export const INCOME_CATEGORY = "income";
+export { INCOME_CATEGORY };
 
 /** True when a category holds nothing but income, so a stray spending row never hides. */
 const isIncomeCategory = (category: string, entries: BudgetEntry[]): boolean => {
   const inCategory = entries.filter((e) => e.category === category);
-  if (inCategory.some((e) => !e.isIncome)) return false;
+  if (inCategory.some((e) => !isIncomeEntry(e))) return false;
   return category === INCOME_CATEGORY || inCategory.length > 0;
 };
 
@@ -68,7 +68,7 @@ export function rankCategories(categories: string[], entries: BudgetEntry[]): Ca
   );
   return all
     .map((category, index) => {
-      const inCategory = entries.filter((e) => e.category === category && !e.isIncome);
+      const inCategory = entries.filter((e) => e.category === category && !isIncomeEntry(e));
       const total = inCategory.reduce((s, e) => s + Math.abs(toMonthly(e)), 0);
       return {
         index,
@@ -105,9 +105,7 @@ export const BudgetCategoryList: FC<BudgetCategoryListProps> = ({
   const rows = useMemo(() => rankCategories(categories, entries), [categories, entries]);
   // Bars show each category's share of money in; without income, of everything going out.
   const scale = useMemo(() => {
-    const incoming = entries
-      .filter((e) => e.isIncome)
-      .reduce((s, e) => s + Math.abs(toMonthly(e)), 0);
+    const incoming = entries.filter(isIncomeEntry).reduce((s, e) => s + Math.abs(toMonthly(e)), 0);
     const outgoing = rows.reduce((s, r) => s + r.total, 0);
     return incoming > 0 ? incoming : outgoing;
   }, [rows, entries]);

@@ -72,3 +72,24 @@ export const Default: Story = {
 export const Empty: Story = {
   args: { entries: [] },
 };
+
+/** The housing add row open, with its example name; Cancel closes it and focus returns. */
+export const AddRowOpen: Story = {
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const editor = canvas.getAllByTestId("budget-editor")[0];
+    if (!editor) throw new Error("Editor missing");
+    const scoped = within(editor);
+    const opener = scoped.getByRole("button", { name: "Add to housing" });
+    await userEvent.click(opener);
+    const name = scoped.getByLabelText("New entry name in Housing");
+    await expect(name).toHaveFocus();
+    await expect(name).toHaveAttribute("placeholder", "For example, Rent");
+    await userEvent.click(scoped.getByTestId("budget-editor-cancel-add-housing"));
+    await waitFor(() => expect(scoped.queryByLabelText("New entry name in Housing")).toBeNull());
+    await expect(scoped.getByRole("button", { name: "Add to housing" })).toHaveFocus();
+    // Leave the row open for the visual snapshot.
+    await userEvent.click(scoped.getByRole("button", { name: "Add to housing" }));
+    await expect(scoped.getByLabelText("New entry name in Housing")).toBeVisible();
+  },
+};

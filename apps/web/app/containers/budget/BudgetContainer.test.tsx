@@ -259,7 +259,11 @@ describe("BudgetContainer", () => {
       ),
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Finish editing" }));
+    const finish = screen.getByTestId("finish-editing-btn");
+    expect(finish.id).toBe("finish-editing-btn");
+    expect(finish.textContent).toBe("Finish editing");
+    expect(screen.queryByTestId("setup-wizard-btn")).toBeNull();
+    fireEvent.click(finish);
     expect(screen.queryByTestId("budget-editor")).toBeNull();
     expect(screen.getByTestId("budget-category-housing")).toBeDefined();
     expect(screen.getByRole("button", { name: "Edit budget" })).toBeDefined();
@@ -306,7 +310,7 @@ describe("BudgetContainer", () => {
 
     render(<BudgetContainer />);
     fireEvent.click(screen.getByRole("button", { name: "Edit budget" }));
-    fireEvent.click(screen.getByRole("button", { name: "Remove Mortgage" }));
+    fireEvent.click(screen.getByRole("button", { name: "Delete Mortgage" }));
     fireEvent.click(await screen.findByRole("button", { name: "Delete entry" }));
 
     const alert = await screen.findByRole("alert");
