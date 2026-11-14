@@ -12,7 +12,7 @@ const withManager = () => {
   const transaction = vi.fn(async (work: (em: unknown) => Promise<unknown>) =>
     work({ getRepository: () => inside }),
   );
-  (outside as any).manager = { transaction };
+  Object.assign(outside, { manager: { transaction } });
   return { outside, inside, transaction };
 };
 
@@ -29,7 +29,7 @@ describe("annualRecordEndDate (audit M1)", () => {
 describe("TaxService.createBulk (audit M3)", () => {
   it("writes caps and records through one transaction's repository", async () => {
     const { outside, inside, transaction } = withManager();
-    const service = new TaxService(outside as any);
+    const service = new TaxService(outside as never);
 
     const created = await service.createBulk("u1", {
       records: [{ ...base, frequency: "annual", date: "2026-04-03" } as never],
@@ -57,7 +57,7 @@ describe("TaxService.createBulk (audit M3)", () => {
 
   it("validates everything before opening the transaction", async () => {
     const { outside, transaction } = withManager();
-    const service = new TaxService(outside as any);
+    const service = new TaxService(outside as never);
 
     await expect(
       service.createBulk("u1", {
@@ -75,7 +75,7 @@ describe("TaxService.createBulk (audit M3)", () => {
 
   it("opens no transaction for an empty request", async () => {
     const { outside, transaction } = withManager();
-    expect(await new TaxService(outside as any).createBulk("u1", { records: [] })).toEqual([]);
+    expect(await new TaxService(outside as never).createBulk("u1", { records: [] })).toEqual([]);
     expect(transaction).not.toHaveBeenCalled();
   });
 
@@ -86,13 +86,15 @@ describe("TaxService.createBulk (audit M3)", () => {
       create: (rows: unknown) => rows,
       save: vi.fn().mockRejectedValue(new Error("insert failed")),
     };
-    (outside as any).manager = {
-      transaction: (work: (em: unknown) => Promise<unknown>) =>
-        work({ getRepository: () => failing }),
-    };
+    Object.assign(outside, {
+      manager: {
+        transaction: (work: (em: unknown) => Promise<unknown>) =>
+          work({ getRepository: () => failing }),
+      },
+    });
 
     await expect(
-      new TaxService(outside as any).createBulk("u1", {
+      new TaxService(outside as never).createBulk("u1", {
         records: [{ ...base, frequency: "monthly", date: "2026-05-01" } as never],
         capPreviousRecordIds: [
           { id: "00000000-0000-4000-8000-000000000001", endDate: "2026-04-05" },

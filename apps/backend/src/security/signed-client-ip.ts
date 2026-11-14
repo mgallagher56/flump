@@ -19,8 +19,8 @@ export const CLIENT_IP_HEADER = "x-flump-client-ip";
 export const CLIENT_IP_SIG_HEADER = "x-flump-client-ip-sig";
 export const CLIENT_IP_KEY_ENV = "WEB_CLIENT_IP_HMAC_KEY";
 /** How far a signature's timestamp may be from now, either way, in seconds. */
-export const CLIENT_IP_MAX_SKEW_SECONDS = 60;
-export const CLIENT_IP_MIN_KEY_LENGTH = 32;
+const CLIENT_IP_MAX_SKEW_SECONDS = 60;
+const CLIENT_IP_MIN_KEY_LENGTH = 32;
 
 const SIG_FORMAT = /^v1=(\d{1,12})\.([0-9a-f]{64})$/;
 

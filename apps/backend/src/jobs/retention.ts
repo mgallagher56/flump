@@ -84,9 +84,9 @@ export const RETENTION_POLICIES: readonly RetentionPolicy[] = [
 ];
 
 /** Profiles with no authenticated request for this long are due for erasure (D4). */
-export const INACTIVE_ACCOUNT_WHERE = `"last_active_at" < $1::timestamptz - interval '24 months'`;
+const INACTIVE_ACCOUNT_WHERE = `"last_active_at" < $1::timestamptz - interval '24 months'`;
 
-export const RETENTION_BATCH_SIZE = 5000;
+const RETENTION_BATCH_SIZE = 5000;
 /** pg advisory lock key for the purge ("BE06" in ASCII), so overlapping runs skip. */
 export const RETENTION_LOCK_KEY = 0x42453036;
 

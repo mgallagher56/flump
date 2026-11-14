@@ -22,7 +22,7 @@ export interface Page<T> {
 }
 
 /** How a key column is compared, cast and written into the cursor. */
-export type KeyKind = "timestamp" | "date" | "int" | "uuid";
+type KeyKind = "timestamp" | "date" | "int" | "uuid";
 
 export interface KeyColumn {
   /** The quoted SQL column, for example `"a"."created_at"`. Never user input. */
@@ -205,11 +205,17 @@ interface HeaderSink {
  * Sets X-Next-Cursor (when another page follows) and returns the page's rows, mapped. `res` is
  * absent when a unit test calls the handler directly.
  */
-export function sendPage<T, R = T>(
+export function sendPage<T>(res: HeaderSink | undefined, page: Page<T>): T[];
+export function sendPage<T, R>(
   res: HeaderSink | undefined,
   page: Page<T>,
-  map: (item: T) => R = (item) => item as unknown as R,
-): R[] {
+  map: (item: T) => R,
+): R[];
+export function sendPage<T, R>(
+  res: HeaderSink | undefined,
+  page: Page<T>,
+  map?: (item: T) => R,
+): Array<T | R> {
   if (page.nextCursor) res?.setHeader(NEXT_CURSOR_HEADER, page.nextCursor);
-  return page.items.map(map);
+  return map ? page.items.map(map) : [...page.items];
 }

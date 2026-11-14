@@ -18,6 +18,13 @@ import {
   sanitizeStack,
 } from "./scrubbing-console-logger";
 
+/** The logger's protected print seams, reached directly by the tests below. */
+type ProtectedSeams = {
+  printFailure(...args: unknown[]): void;
+  printStackTrace(stack: string): void;
+  printMessages(...args: unknown[]): void;
+};
+
 const EMAIL = "sentinel.person@pii-example.com";
 const TOKEN = "SENTINELTOKENVALUE99";
 const BALANCE = "987654";
@@ -374,8 +381,7 @@ describe("ScrubbingConsoleLogger through a Nest app", () => {
             throw new Error("pipe closed");
           });
         }
-        // biome-ignore lint/suspicious/noExplicitAny: reach the protected seam
-        (this as any).printFailure(level, ctx);
+        (this as unknown as ProtectedSeams).printFailure(level, ctx);
       }
     }
 
@@ -394,20 +400,22 @@ describe("ScrubbingConsoleLogger through a Nest app", () => {
     it("printStackTrace falls back to the placeholder when printing throws", () => {
       const out = capture();
       const logger = new ScrubbingConsoleLogger();
-      // biome-ignore lint/suspicious/noExplicitAny: spy on the protected seam
-      vi.spyOn(ConsoleLogger.prototype as any, "printStackTrace").mockImplementation(() => {
+      vi.spyOn(
+        ConsoleLogger.prototype as unknown as ProtectedSeams,
+        "printStackTrace",
+      ).mockImplementation(() => {
         throw new Error(EMAIL);
       });
-      // biome-ignore lint/suspicious/noExplicitAny: reach the protected seam
-      expect(() => (logger as any).printStackTrace("Error: x\n    at f (/a.js:1:1)")).not.toThrow();
+      expect(() =>
+        (logger as unknown as ProtectedSeams).printStackTrace("Error: x\n    at f (/a.js:1:1)"),
+      ).not.toThrow();
       expect(out()).toContain("[log scrubbing failed]");
       expect(out()).not.toContain(EMAIL);
     });
 
     it("drops a non-string error stack and non-object params result", () => {
       const out = capture();
-      // biome-ignore lint/suspicious/noExplicitAny: reach the protected seam
-      (new ScrubbingConsoleLogger({ json: true }) as any).printMessages(
+      (new ScrubbingConsoleLogger({ json: true }) as unknown as ProtectedSeams).printMessages(
         ["m"],
         "Ctx",
         "error",

@@ -13,10 +13,10 @@ export const ACCOUNT_CHILD_TABLES = [
   { table: "transactions", foreignKey: "FK_transactions_account" },
 ] as const;
 
-export type AccountChildTable = (typeof ACCOUNT_CHILD_TABLES)[number]["table"];
+type AccountChildTable = (typeof ACCOUNT_CHILD_TABLES)[number]["table"];
 
 /** Matches a uuid in any case; only such a value can name an account. */
-export const UUID_PATTERN_SQL = "'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'";
+const UUID_PATTERN_SQL = "'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'";
 
 /**
  * `account_id` as a uuid, or NULL when it is not one. Works whether the column is still `varchar`

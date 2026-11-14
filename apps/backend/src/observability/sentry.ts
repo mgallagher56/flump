@@ -3,8 +3,6 @@ import * as Sentry from "@sentry/node";
 import { registerReporter } from "./report";
 import { isSafeRequestId } from "./request-context";
 
-export { reportException } from "./report";
-
 type Env = Record<string, string | undefined>;
 
 /**
@@ -20,7 +18,7 @@ const ALLOWED_INTEGRATIONS = new Set([
   "Dedupe",
 ]);
 
-export const SELFTEST_MESSAGE = "sentry self-test";
+const SELFTEST_MESSAGE = "sentry self-test";
 export const WITHHELD = "[message withheld]";
 
 type Json = Record<string, unknown>;

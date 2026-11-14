@@ -87,7 +87,7 @@ function bandExtensionOf(b: UkTakeHomeBreakdown): number {
  */
 function solveGross(
   s: UkIncomeScenario,
-  rules: UkTaxYearRules,
+  _rules: UkTaxYearRules,
   measure: UkThresholdMeasure,
   at: number,
   extended: boolean,

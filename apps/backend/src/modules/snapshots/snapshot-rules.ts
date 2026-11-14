@@ -13,7 +13,7 @@ import {
  */
 
 /** Earliest month a snapshot may be written for (back-filling a spreadsheet history). */
-export const EARLIEST_SNAPSHOT: YearMonth = { year: 2000, month: 1 };
+const EARLIEST_SNAPSHOT: YearMonth = { year: 2000, month: 1 };
 const MAX_ABS_VALUE = 1e10;
 
 /** Only UUID-shaped ids can match an account; anything else is treated as unknown. */

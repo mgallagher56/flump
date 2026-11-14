@@ -5,7 +5,7 @@ export type ReceiptMimeType = (typeof RECEIPT_MIME_TYPES)[number];
 
 /** Decoded receipt size cap (5 MB). */
 export const RECEIPT_MAX_BYTES = 5 * 1024 * 1024;
-export const RECEIPT_FILENAME_MAX = 255;
+const RECEIPT_FILENAME_MAX = 255;
 
 const DATA_URL = /^data:([^;,]+);base64,([A-Za-z0-9+/]*={0,2})$/;
 

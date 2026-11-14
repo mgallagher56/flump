@@ -29,10 +29,7 @@ import { assertRecentLogin } from "../../auth/recent-login";
 import { safeErrorSummary } from "../../common/log-safe";
 import { expectedVersion, setEtag } from "../../contract/etag";
 import { RateLimit } from "../../security/rate-limit.decorator";
-import {
-  ACCOUNT_DELETION_UNAVAILABLE,
-  AccountDeletionService,
-} from "../privacy/account-deletion.service";
+import { AccountDeletionService } from "../privacy/account-deletion.service";
 import { AccountExportService, exportFileName } from "../privacy/account-export.service";
 import {
   type ProfileView,
@@ -44,14 +41,11 @@ import {
 @UseGuards(AuthGuard)
 export class UserProfileController {
   private readonly logger = new Logger(UserProfileController.name);
-  /**
-   * Plain injection (BE-13, audit M19). Deletion and export stay typed optional only so a unit
-   * test can reach the 503 branches; Nest still fails at boot when either provider is missing.
-   */
+  /** Plain, required injection (BE-13, audit M19): Nest fails at boot when a provider is missing. */
   constructor(
     private readonly userProfileService: UserProfileService,
-    private readonly accountDeletion?: AccountDeletionService,
-    private readonly accountExport?: AccountExportService,
+    private readonly accountDeletion: AccountDeletionService,
+    private readonly accountExport: AccountExportService,
   ) {}
 
   @Get("user-profile")
@@ -136,7 +130,6 @@ export class UserProfileController {
       throw new BadRequestException("Type DELETE to confirm.");
     }
     assertRecentLogin(req.user);
-    if (!this.accountDeletion) throw new ServiceUnavailableException(ACCOUNT_DELETION_UNAVAILABLE);
     return this.accountDeletion.deleteAccount(req.user.id);
   }
 
@@ -149,10 +142,6 @@ export class UserProfileController {
   @RateLimit("dataExport")
   @HttpCode(200)
   async exportData(@Req() req: AuthenticatedRequest, @Res() res: Response): Promise<void> {
-    if (!this.accountExport)
-      throw new ServiceUnavailableException(
-        "Downloading your data is not available right now. Try again later.",
-      );
     const now = new Date();
     res.status(200);
     res.setHeader("Content-Type", "application/json; charset=utf-8");

@@ -3,20 +3,13 @@ import { InjectDataSource } from "@nestjs/typeorm";
 import { DataSource, In } from "typeorm";
 import { Account } from "../../entities/account.entity";
 import { isRealDate, londonDate, londonYearMonth, monthKey } from "./london-date";
-import {
-  checkSnapshotMonth,
-  defaultAsOfDate,
-  EARLIEST_SNAPSHOT,
-  isValidSnapshotValue,
-  UUID,
-} from "./snapshot-rules";
+import { checkSnapshotMonth, defaultAsOfDate, isValidSnapshotValue, UUID } from "./snapshot-rules";
 import { writeSnapshotRows } from "./snapshot-write";
 import { storedBalance } from "./stored-balance";
 
-export { EARLIEST_SNAPSHOT };
-export const MAX_SNAPSHOT_VALUES = 200;
+const MAX_SNAPSHOT_VALUES = 200;
 
-export interface SnapshotValueInput {
+interface SnapshotValueInput {
   accountId: string;
   value: number;
   asOfDate?: string;

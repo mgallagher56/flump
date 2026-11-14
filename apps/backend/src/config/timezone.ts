@@ -3,4 +3,4 @@
 // whatever the host or container sets. The database session is pinned too (typeorm.options.ts).
 process.env.TZ = "UTC";
 
-export const PINNED_TIME_ZONE = "UTC";
+export {};

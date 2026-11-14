@@ -5,7 +5,7 @@ import type { RateLimitDecision, RateLimitWindow, SharedRateLimitStore } from ".
 /** Every this many hits (per process), expired rows are swept in the background. */
 export const SWEEP_EVERY = 200;
 /** Rows deleted per sweep, so one sweep never holds locks for long. */
-export const SWEEP_BATCH = 1000;
+const SWEEP_BATCH = 1000;
 
 type Queryable = Pick<DataSource, "query"> | Pick<QueryRunner, "query">;
 

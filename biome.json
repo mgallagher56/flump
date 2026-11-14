@@ -42,6 +42,28 @@
         "rules": {
           "style": {
             "useImportType": "off"
+          },
+          "suspicious": {
+            "noExplicitAny": "error"
+          }
+        }
+      }
+    },
+    {
+      "includes": [
+        "apps/backend/**",
+        "packages/api-contract/**",
+        "packages/banking/**",
+        "packages/finance-engine/**",
+        "packages/mcp/**",
+        "packages/observability/**"
+      ],
+      "linter": {
+        "rules": {
+          "correctness": {
+            "noUnusedVariables": "error",
+            "noUnusedImports": "error",
+            "noUnusedFunctionParameters": "error"
           }
         }
       }

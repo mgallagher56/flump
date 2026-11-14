@@ -15,7 +15,7 @@ import type { BankProvider } from "./providers/provider.interface";
 // provider says "try later", and every outcome is logged without tokens or provider text.
 
 /** Overall time allowed for one provider revoke call, including the one retry. */
-export const REVOKE_TIMEOUT_MS = 10_000;
+const REVOKE_TIMEOUT_MS = 10_000;
 
 /**
  * - `revoked`: the provider confirmed access is withdrawn.
@@ -57,7 +57,7 @@ export async function revokeConnectionConsent(
  * Why a revoke failed, for audit events: a typed provider error code, an unusable stored token,
  * the overall time limit, or anything else. Never provider text.
  */
-export type ConsentRevokeFailure =
+type ConsentRevokeFailure =
   | BankProviderErrorCode
   | "TOKEN_UNUSABLE"
   | "REVOKE_TIMEOUT"

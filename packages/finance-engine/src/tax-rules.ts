@@ -19,13 +19,7 @@
  *   - Scotland: Revenue Scotland / Scottish Government budget documents
  */
 
-import {
-  getUkCalendarDate,
-  getUkTaxYearContext,
-  getUkTaxYearForDate,
-  resolveUkTaxYear,
-  UnsupportedUkTaxYearError,
-} from "./uk-tax-year.js";
+import { getUkTaxYearContext, resolveUkTaxYear, UnsupportedUkTaxYearError } from "./uk-tax-year.js";
 
 // ---------------------------------------------------------------------------
 // Legal Disclaimer

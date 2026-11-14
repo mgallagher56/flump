@@ -8,7 +8,7 @@ import {
 import { type RemovedCounts } from "../privacy/user-data-registry";
 
 /** Profile formatting, field validation and update defaults behind UserProfileService. */
-export const PG_UNIQUE_VIOLATION = "23505";
+const PG_UNIQUE_VIOLATION = "23505";
 
 /** TypeORM wraps the pg error: QueryFailedError.driverError.code. Also accept a bare err.code. */
 export function isUniqueViolation(err: unknown): boolean {
@@ -21,20 +21,20 @@ export function isUniqueViolation(err: unknown): boolean {
  * forecaster became a tab in Savings. Stored rows may still carry it; it is filtered out on read
  * (non-destructive: the row is rewritten the next time the user saves).
  */
-export const RETIRED_MODULE_KEYS: readonly string[] = ["forecast"];
+const RETIRED_MODULE_KEYS: readonly string[] = ["forecast"];
 
-export function withoutRetiredModules(keys: string[]): string[] {
+function withoutRetiredModules(keys: string[]): string[] {
   return keys.filter((k) => !RETIRED_MODULE_KEYS.includes(k));
 }
 
-export function withoutRetiredModuleKeys<V>(record: Record<string, V> | null | undefined) {
+function withoutRetiredModuleKeys<V>(record: Record<string, V> | null | undefined) {
   if (!record) return record;
   return Object.fromEntries(
     Object.entries(record).filter(([k]) => !RETIRED_MODULE_KEYS.includes(k)),
   ) as Record<string, V>;
 }
 
-export function nonEmptyRecord<V>(record: Record<string, V> | null | undefined) {
+function nonEmptyRecord<V>(record: Record<string, V> | null | undefined) {
   return record && Object.keys(record).length > 0 ? record : undefined;
 }
 

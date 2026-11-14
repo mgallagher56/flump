@@ -2,12 +2,12 @@ import { createHmac } from "node:crypto";
 import { isStrictEnv } from "../../config/db.config";
 
 export const TOMBSTONE_KEY_ENV_VAR = "DELETION_TOMBSTONE_KEY";
-export const MIN_TOMBSTONE_KEY_LENGTH = 32;
+const MIN_TOMBSTONE_KEY_LENGTH = 32;
 /** Public on purpose: used only in development and test, where no real user is ever erased. */
 const DEV_TOMBSTONE_KEY = "flump-dev-only-deletion-tombstone-key-not-secret";
 
 /** How long a tombstone is kept (owner decision D1, recommended option). */
-export const TOMBSTONE_RETENTION_MONTHS = 24;
+const TOMBSTONE_RETENTION_MONTHS = 24;
 
 /**
  * Strict unless NODE_ENV is explicitly development or test AND not on Railway: the same rule the

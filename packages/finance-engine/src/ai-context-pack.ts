@@ -24,7 +24,11 @@ import {
   type RawAccountDetail,
   type ResolvedAccount,
 } from "./portfolio.js";
-import { calculateUKTax, type TaxCalculationResult, type TaxRecord } from "./tax-calculator.js";
+import {
+  calculateUKTax,
+  type TaxCalculationResult,
+  type TaxRecordFields,
+} from "./tax-calculator.js";
 import type {
   AvalancheVsSnowballComparison,
   FinancialBaseline,
@@ -57,7 +61,7 @@ export interface BuildContextPackInput {
   accounts?: RawAccount[];
   accountDetails?: RawAccountDetail[];
   budgetEntries?: BudgetEntryItem[];
-  taxRecords?: TaxRecord[];
+  taxRecords?: TaxRecordFields[];
   /**
    * The saved profile facts (no defaults). The budget summary's safe to spend needs them for
    * take-home; without them it is null rather than a guess from the defaulted baseline.

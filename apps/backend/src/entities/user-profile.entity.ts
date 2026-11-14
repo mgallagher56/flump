@@ -260,7 +260,7 @@ export class UserProfile {
   dashboardWidgetSizes: Record<string, "normal" | "wide"> | null;
 
   @Column({ name: "dashboard_widget_config", type: "simple-json", nullable: true })
-  dashboardWidgetConfig: Record<string, any> | null;
+  dashboardWidgetConfig: Record<string, unknown> | null;
 
   @Column({ name: "has_reset_financial_data", default: false })
   hasResetFinancialData: boolean;

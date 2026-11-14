@@ -1,8 +1,10 @@
+import type { CreateTransactionRequest } from "@flump/api-contract";
 import { BankSyncOrchestrator } from "@flump/banking/server";
 import { BadRequestException, NotFoundException } from "@nestjs/common";
 import { describe, expect, it, vi } from "vitest";
 import { financeServiceWithIntake } from "../../testing/finance-service";
 import { createInMemoryRepository } from "../../testing/in-memory-repository";
+import { at } from "../../testing/must";
 import { withManager } from "../../testing/with-manager";
 
 const createService = () => {
@@ -26,13 +28,13 @@ const createService = () => {
     Transaction: transactionRepo,
   });
   const service = financeServiceWithIntake(
-    accountRepo as any,
-    transactionRepo as any,
-    accountDetailRepo as any,
-    {} as any,
-    {} as any,
-    {} as any,
-    {} as any,
+    accountRepo,
+    transactionRepo,
+    accountDetailRepo,
+    {},
+    {},
+    {},
+    {},
   );
   return { service, accountRepo, transactionRepo, accountDetailRepo };
 };
@@ -67,12 +69,14 @@ describe("FinanceService", () => {
             AuditEvent: { insert: auditInsert },
           })[entity.name],
       };
-      (accountRepo as any).manager = {
-        transaction: async (work: (m: typeof em) => Promise<unknown>) => {
-          inTransaction(true);
-          return work(em);
+      Object.assign(accountRepo, {
+        manager: {
+          transaction: async (work: (m: typeof em) => Promise<unknown>) => {
+            inTransaction(true);
+            return work(em);
+          },
         },
-      };
+      });
 
       const result = await service.deleteAccount("userA", "acc-1");
 
@@ -104,9 +108,9 @@ describe("FinanceService", () => {
         description: "Coffee",
         category: "Food",
         timestamp: "2026-01-01T10:00:00Z",
-      } as any);
+      } as unknown as CreateTransactionRequest);
 
-      const created = transactionRepo.create.mock.calls[0][0];
+      const created = at(transactionRepo.create.mock.calls, 0)[0];
       expect(created.userId).toBe("userA");
       expect(created).not.toHaveProperty("id");
       expect(created).toMatchObject({
@@ -115,7 +119,7 @@ describe("FinanceService", () => {
         description: "Coffee",
         category: "Food",
       });
-      expect(transactionRepo.save.mock.calls[0][0].userId).toBe("userA");
+      expect(transactionRepo.save.mock.calls[0]?.[0].userId).toBe("userA");
       expect(accountRepo.findOne).toHaveBeenCalledWith({
         where: { id: "acc-1", userId: "userA" },
       });
@@ -127,7 +131,7 @@ describe("FinanceService", () => {
       const body = { accountId: "acc-1", amount: 1, description: "x", category: "y" };
 
       await service.createTransaction("userA", { ...body, timestamp: "2026-01-01T10:00:00Z" });
-      expect(transactionRepo.create.mock.calls[0][0].timestamp).toEqual(
+      expect(transactionRepo.create.mock.calls[0]?.[0].timestamp).toEqual(
         new Date("2026-01-01T10:00:00Z"),
       );
 
@@ -159,7 +163,11 @@ describe("FinanceService", () => {
       const { service, transactionRepo, accountRepo } = createService();
 
       await expect(
-        service.createTransaction("userA", { amount: 1, description: "x", category: "y" } as any),
+        service.createTransaction("userA", {
+          amount: 1,
+          description: "x",
+          category: "y",
+        } as CreateTransactionRequest),
       ).rejects.toBeInstanceOf(BadRequestException);
 
       expect(accountRepo.findOne).not.toHaveBeenCalled();
@@ -188,13 +196,13 @@ describe("FinanceService", () => {
       const bankRepo = createInMemoryRepository(seed);
       const provider = { fetchAccounts: vi.fn().mockResolvedValue([]) };
       const service = financeServiceWithIntake(
-        {} as any,
-        {} as any,
-        {} as any,
-        bankRepo as any,
-        {} as any,
-        { getProvider: vi.fn().mockReturnValue(provider) } as any,
-        { get: vi.fn() } as any,
+        {},
+        {},
+        {},
+        bankRepo,
+        {},
+        { getProvider: vi.fn().mockReturnValue(provider) },
+        { get: vi.fn() },
       );
       return { service, bankRepo, provider };
     };
@@ -208,7 +216,7 @@ describe("FinanceService", () => {
       const result = await service.getBankConnections("userA");
 
       expect(result.map((c) => c.id)).toEqual(["a1"]);
-      for (const field of TOKEN_FIELDS) expect(Object.keys(result[0])).not.toContain(field);
+      for (const field of TOKEN_FIELDS) expect(Object.keys(at(result, 0))).not.toContain(field);
     });
   });
 });

@@ -1,3 +1,4 @@
+import type { IncomingMessage, ServerResponse } from "node:http";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
 import { FailedAuthLimiter } from "../auth/failed-auth-limiter.js";
@@ -12,6 +13,13 @@ import {
 import { errorName, type McpLogger, stderrLogger } from "../logger.js";
 import { createFlumpMcpServer } from "../server.js";
 import type { McpAuditEvent, McpImportProvider, McpUserDataProvider } from "../types.js";
+
+/** The parts of an Express request the handler reads; the SDK transport takes the rest. */
+type ExpressLikeRequest = IncomingMessage & { ip?: string; body?: unknown };
+/** The parts of an Express response the handler writes; the SDK transport takes the rest. */
+type ExpressLikeResponse = ServerResponse & {
+  status(code: number): { json(body: unknown): unknown };
+};
 
 /** Who made an audited call: the verified token plus the self-reported client, if any. */
 export interface McpAuditCaller {
@@ -202,7 +210,11 @@ export class HttpMcpHandler {
   /**
    * Express / NestJS request handler
    */
-  async handleExpressRequest(req: any, res: any, parsedBody?: any): Promise<void> {
+  async handleExpressRequest(
+    req: ExpressLikeRequest,
+    res: ExpressLikeResponse,
+    parsedBody?: unknown,
+  ): Promise<void> {
     const rejected = this.gate(req.headers?.origin);
     if (rejected) {
       res.status(rejected.status).json(rejected.body);
@@ -251,7 +263,7 @@ export class HttpMcpHandler {
       await mcpServer.connect(transport);
 
       await transport.handleRequest(req, res, parsedBody ?? req.body);
-    } catch (err: any) {
+    } catch (err) {
       if (err instanceof AuthenticationError) {
         // Already counted by attempt(): a failed guess keeps its count.
         res.setHeader("WWW-Authenticate", WWW_AUTHENTICATE);
@@ -342,7 +354,7 @@ export class HttpMcpHandler {
       await mcpServer.connect(transport);
 
       return await transport.handleRequest(request);
-    } catch (err: any) {
+    } catch (err) {
       if (err instanceof AuthenticationError) {
         // Already counted by attempt(): a failed guess keeps its count.
         return new Response(JSON.stringify({ error: "mcp_auth_error", message: err.message }), {

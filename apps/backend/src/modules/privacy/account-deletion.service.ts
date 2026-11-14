@@ -17,7 +17,7 @@ import { type RemovedCounts, USER_DATA_REGISTRY } from "./user-data-registry";
 /** Bound on the in-process cache of erased user ids (cleared whole when full). */
 const ERASED_CACHE_MAX = 10_000;
 
-export const ACCOUNT_DELETION_UNAVAILABLE =
+const ACCOUNT_DELETION_UNAVAILABLE =
   "Account deletion is not available right now. Try again later.";
 
 /**

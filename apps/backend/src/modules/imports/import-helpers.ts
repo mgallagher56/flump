@@ -159,7 +159,7 @@ export function classifyRows(
   });
 }
 
-export const normaliseName = (s: string) => s.trim().toLowerCase().replace(/\s+/g, " ");
+const normaliseName = (s: string) => s.trim().toLowerCase().replace(/\s+/g, " ");
 
 /** An existing account with the same name and type, when exactly one matches. */
 export function suggestAccount(
@@ -170,7 +170,8 @@ export function suggestAccount(
   const matches = accounts.filter(
     (a) => a.type === staged.type && normaliseName(a.name ?? "") === name,
   );
-  return matches.length === 1 ? matches[0].id : null;
+  const [only] = matches;
+  return matches.length === 1 && only ? only.id : null;
 }
 
 /** Serialises every mutating import call of one user (stage, commit, revert). */
@@ -236,10 +237,10 @@ export function toView(
   };
 }
 
-export const twoDecimals = (v: number) => Math.abs(v * 100 - Math.round(v * 100)) < 1e-6;
+const twoDecimals = (v: number) => Math.abs(v * 100 - Math.round(v * 100)) < 1e-6;
 
 /** Account details, checked against the column ranges so a commit can never fail on them. */
-export function parseDetails(d: unknown): StagedAccount["details"] | undefined {
+function parseDetails(d: unknown): StagedAccount["details"] | undefined {
   if (d === undefined || d === null) return undefined;
   if (typeof d !== "object" || Array.isArray(d)) {
     throw new BadRequestException("account details must be an object");

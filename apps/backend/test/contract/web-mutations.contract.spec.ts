@@ -9,6 +9,7 @@ import { DEV_BYPASS_TOKEN } from "../../src/auth/dev-bypass.verifier";
 import { storedBalance } from "../../src/modules/snapshots/stored-balance";
 import { assertSafeTestDatabase } from "../../src/testing/assertSafeTestDatabase";
 import { resolveDbTestMode } from "../../src/testing/dbTestMode";
+import { at } from "../../src/testing/must";
 import { parseResponseViolation } from "../authz/support";
 import {
   ACCOUNT_CREATE_PAYLOADS,
@@ -317,14 +318,17 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
       }
 
       it("accepts the mortgage page's interest-rate-only PATCH", async () => {
-        const created = await send("post", "/accounts", ONBOARDING_ACCOUNTS[2]);
+        const created = await send("post", "/accounts", at(ONBOARDING_ACCOUNTS, 2));
         const id = created.body.id as string;
         expect2xx(
           await send("patch", `/accounts/${id}`, ACCOUNT_UPDATE_PAYLOADS.mortgagePage),
           "PATCH /accounts/:id (mortgage)",
         );
         const stored = (await get(`/accounts/${id}`)).body;
-        expect(stored).toMatchObject({ ...asStored(ONBOARDING_ACCOUNTS[2]), interestRate: 3.99 });
+        expect(stored).toMatchObject({
+          ...asStored(at(ONBOARDING_ACCOUNTS, 2)),
+          interestRate: 3.99,
+        });
       });
     });
 
@@ -440,11 +444,11 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
         const listed = (await get("/budget-entries")).body as Array<Record<string, unknown>>;
         expect(listed).toHaveLength(1);
         expect(listed[0]).toMatchObject(BUDGET_CREATE_PAYLOAD);
-        expect(typeof listed[0].amount).toBe("number");
+        expect(typeof at(listed, 0).amount).toBe("number");
 
         const updated = await send("patch", `/budget-entries/${id}`, BUDGET_UPDATE_PAYLOAD);
         expect2xx(updated, `PATCH /budget-entries/${id}`);
-        const after = ((await get("/budget-entries")).body as Array<Record<string, unknown>>)[0];
+        const after = at((await get("/budget-entries")).body as Array<Record<string, unknown>>, 0);
         expect(after).toMatchObject(BUDGET_UPDATE_PAYLOAD);
         expect(typeof after.amount).toBe("number");
 

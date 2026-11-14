@@ -61,7 +61,7 @@ const TAX_RECORD_FIELDS = [
   "receiptData",
 ] as const;
 
-export const pickTaxRecordFields = (body: Partial<TaxRecord> | undefined): Partial<TaxRecord> => {
+const pickTaxRecordFields = (body: Partial<TaxRecord> | undefined): Partial<TaxRecord> => {
   const picked: Record<string, unknown> = {};
   for (const key of TAX_RECORD_FIELDS) {
     if (body?.[key] !== undefined) picked[key] = body[key];
@@ -84,7 +84,7 @@ export const pickTaxRecordFields = (body: Partial<TaxRecord> | undefined): Parti
 const ISO_DATE = /^(\d{4})-(\d{2})-(\d{2})$/;
 
 /** A real calendar date in YYYY-MM-DD form (rejects 2024-13-45 before Postgres 500s on it). */
-export const isIsoCalendarDate = (value: string): boolean => {
+const isIsoCalendarDate = (value: string): boolean => {
   const m = ISO_DATE.exec(value);
   if (!m) return false;
   const [y, mo, d] = [Number(m[1]), Number(m[2]), Number(m[3])];
@@ -102,7 +102,7 @@ const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{
  * `end_date` says so (5 April closing that year). The end date of an annual record is always
  * derived from its date; a client value is replaced, so editing the date never leaves a stale one.
  */
-export const withAnnualEndDate = <T extends Partial<TaxRecord>>(record: T): T => {
+const withAnnualEndDate = <T extends Partial<TaxRecord>>(record: T): T => {
   for (const field of ["date", "endDate"] as const) {
     const value = record[field];
     if (

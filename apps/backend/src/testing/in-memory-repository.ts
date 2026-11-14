@@ -1,7 +1,7 @@
 import { FindOperator } from "typeorm";
 import { vi } from "vitest";
 
-type Row = Record<string, any>;
+type Row = Record<string, unknown>;
 
 const matchesValue = (actual: unknown, expected: unknown): boolean =>
   expected instanceof FindOperator && expected.type === "in"
@@ -108,7 +108,8 @@ export const createInMemoryRepository = (seed: Row[] = []) => {
     createQueryBuilder: vi.fn(() => fakeListQueryBuilder(() => rows)),
     delete: vi.fn(async (where: Row) => {
       for (let i = rows.length - 1; i >= 0; i--) {
-        if (matches(rows[i], where)) rows.splice(i, 1);
+        const row = rows[i];
+        if (row && matches(row, where)) rows.splice(i, 1);
       }
     }),
   };

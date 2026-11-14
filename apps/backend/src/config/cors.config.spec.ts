@@ -14,7 +14,7 @@ describe("resolveCorsOrigins", () => {
       [],
     );
     expect(err).toHaveBeenCalledTimes(2);
-    expect(String(err.mock.calls[0][0])).toContain("CORS_ALLOWED_ORIGINS");
+    expect(String(err.mock.calls[0]?.[0])).toContain("CORS_ALLOWED_ORIGINS");
     err.mockRestore();
   });
 

@@ -6,8 +6,6 @@ import type {
   OnboardingSeedPayload,
   UkEmploymentStatus,
   UkStudentLoanPlan,
-  UkTaxRegion,
-  UkTaxYear,
 } from "./types.js";
 
 export const DEFAULT_FINANCIAL_BASELINE: FinancialBaseline = {

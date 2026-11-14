@@ -25,7 +25,7 @@ import type { BankProvider, ProviderAccount } from "./providers/provider.interfa
 /** Overall deadline for the provider calls of one sync. */
 export const SYNC_DEADLINE_MS = 25_000;
 /** How long a sync lease is honoured; longer than any sync can run. */
-export const SYNC_LEASE_MS = 120_000;
+const SYNC_LEASE_MS = 120_000;
 const TOKEN_REFRESH_MARGIN_MS = 300_000;
 
 /** The stored tokens cannot be used (missing, undecryptable, or no way to refresh them). */
@@ -72,7 +72,7 @@ export const accessTokenAad = (connectionId: string): string => `${connectionId}
 export const refreshTokenAad = (connectionId: string): string => `${connectionId}:refresh`;
 
 /** The connection was deleted while the sync ran; nothing is written. */
-export class ConnectionGoneError extends Error {
+class ConnectionGoneError extends Error {
   constructor() {
     super("bank connection was removed during the sync");
     this.name = "ConnectionGoneError";

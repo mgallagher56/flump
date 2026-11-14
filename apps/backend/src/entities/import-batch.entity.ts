@@ -9,7 +9,7 @@ import {
 } from "typeorm";
 
 /** Lifecycle of a staged import (E17 re-plan PR C). Only `staged` batches are open. */
-export const IMPORT_BATCH_STATUSES = ["staged", "committed", "reverted", "expired"] as const;
+const IMPORT_BATCH_STATUSES = ["staged", "committed", "reverted", "expired"] as const;
 export type ImportBatchStatus = (typeof IMPORT_BATCH_STATUSES)[number];
 
 /** One staged account. `ref` is the caller's own id for it, never a Flump id. */

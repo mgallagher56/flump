@@ -73,6 +73,6 @@ export const SkipRateLimit = () => SetMetadata(RATE_LIMIT_SKIP, true);
 
 /** `/mcp` keeps its own limiter, so it is exempt by path rather than by decorator. */
 export function isExemptPath(path: string | undefined): boolean {
-  const p = (path ?? "").split("?")[0];
+  const p = (path ?? "").split("?")[0] ?? "";
   return p === "/mcp" || p.startsWith("/mcp/");
 }

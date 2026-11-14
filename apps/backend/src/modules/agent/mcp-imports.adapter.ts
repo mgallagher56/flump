@@ -131,7 +131,7 @@ const notFound = () =>
   });
 
 /** Copies listed fields only: the view never holds names or values, and neither does this. */
-export function toMcpBatch(view: ImportBatchView): McpImportBatch {
+function toMcpBatch(view: ImportBatchView): McpImportBatch {
   return {
     batchId: view.batchId,
     status: view.status,

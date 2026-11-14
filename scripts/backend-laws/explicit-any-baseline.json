@@ -1,6 +1,12 @@
 {
-  "apps/backend/src/modules/agent/agent-data.service.ts": 2,
-  "apps/backend/src/entities/user-profile.entity.ts": 1,
-  "apps/backend/src/identity/identity.adapter.ts": 1,
-  "apps/backend/src/integrity/liability-sign-backfill.ts": 1
+  "packages/api-contract/src/openapi.test.ts": 3,
+  "packages/finance-engine/src/persistence.test.ts": 6,
+  "packages/finance-engine/src/persistence.ts": 4,
+  "packages/finance-engine/src/portfolio.ts": 2,
+  "packages/finance-engine/src/profile.test.ts": 1,
+  "packages/finance-engine/src/profile.ts": 8,
+  "packages/mcp/src/tools/read/query-tools.test.ts": 14,
+  "packages/mcp/src/tools/read/read-tools.test.ts": 1,
+  "packages/mcp/src/tools/simulate/simulate.test.ts": 1,
+  "packages/mcp/src/transports/http.test.ts": 12
 }

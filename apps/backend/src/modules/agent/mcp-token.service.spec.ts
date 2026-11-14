@@ -1,5 +1,6 @@
 import { Logger } from "@nestjs/common";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it, type Mock, vi } from "vitest";
+import { at } from "../../testing/must";
 import { McpTokenService } from "./mcp-token.service";
 
 describe("McpTokenService.findTokenByHash allowlist (E29-T8)", () => {
@@ -82,11 +83,19 @@ describe("McpTokenService.findTokenByHash allowlist (E29-T8)", () => {
   });
 });
 
+type UpdateBuilder = { update: Mock; set: Mock; where: Mock; setParameter: Mock; execute: Mock };
+
+/** A chainable update query builder whose `execute` resolves. */
+const fakeUpdateBuilder = (): UpdateBuilder => {
+  const qb = {} as UpdateBuilder;
+  for (const m of ["update", "set", "where", "setParameter"] as const) qb[m] = vi.fn(() => qb);
+  qb.execute = vi.fn().mockResolvedValue(undefined);
+  return qb;
+};
+
 describe("McpTokenService.recordRequest (E17-N6)", () => {
   it("issues one atomic UPDATE adding the count and setting lastUsedAt", async () => {
-    const qb: any = {};
-    for (const m of ["update", "set", "where", "setParameter"]) qb[m] = vi.fn(() => qb);
-    qb.execute = vi.fn().mockResolvedValue(undefined);
+    const qb = fakeUpdateBuilder();
     const query = vi.fn().mockResolvedValue([]);
     const repo = { createQueryBuilder: vi.fn(() => qb), query };
     const service = new McpTokenService(repo as never);
@@ -95,7 +104,7 @@ describe("McpTokenService.recordRequest (E17-N6)", () => {
     expect(query).toHaveBeenCalledWith(expect.stringContaining('"last_active_at" = now()'), [
       "tok_1",
     ]);
-    const set = qb.set.mock.calls[0][0];
+    const set = at(qb.set.mock.calls, 0)[0];
     expect(set.totalToolCalls()).toBe("total_tool_calls + :n");
     expect(set.lastUsedAt()).toBe("now()");
     expect(qb.setParameter).toHaveBeenCalledWith("n", 3);
@@ -104,9 +113,7 @@ describe("McpTokenService.recordRequest (E17-N6)", () => {
   });
 
   it("never fails the MCP request when the activity write fails", async () => {
-    const qb: any = {};
-    for (const m of ["update", "set", "where", "setParameter"]) qb[m] = vi.fn(() => qb);
-    qb.execute = vi.fn().mockResolvedValue(undefined);
+    const qb = fakeUpdateBuilder();
     const repo = {
       createQueryBuilder: vi.fn(() => qb),
       query: vi.fn().mockRejectedValue(new Error("x")),

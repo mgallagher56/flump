@@ -6,7 +6,7 @@ import type { AuthenticatedUser, TokenVerifier } from "./token-verifier";
  * AuthKit access token issuer (user_management form). Source: @workos-inc/node
  * README ("Access token issuer validation").
  */
-export function workosIssuer(clientId: string): string {
+function workosIssuer(clientId: string): string {
   return `https://api.workos.com/user_management/${clientId}`;
 }
 

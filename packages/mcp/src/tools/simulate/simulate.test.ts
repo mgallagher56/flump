@@ -18,7 +18,6 @@ type Env = {
 
 const FULL = { ...TEST_TOKEN, scopes: ["mcp:read:full", "mcp:simulate"] as never };
 const MORTGAGE_ID = "11111111-aaaa-4aaa-8aaa-0000000000a1";
-const CARD_ID = "11111111-aaaa-4aaa-8aaa-0000000000b1";
 
 const homeowner = {
   ...mixedAccountsWithHistory,

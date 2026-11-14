@@ -77,7 +77,7 @@ const lowerEnum = <const T extends readonly [string, ...string[]]>(values: T) =>
 
 const HTTP = ["http:", "https:"] as const;
 
-export const backendEnvSchema = z.looseObject({
+const backendEnvSchema = z.looseObject({
   // Runtime
   NODE_ENV: text(),
   PORT: int(1, 65_535),
