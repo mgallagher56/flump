@@ -138,7 +138,7 @@ describe("table laws: indexed id columns", () => {
 
 // Time zone law (backend audit M5, plan BE-08): every timestamp column is `timestamptz`, so an
 // instant means the same thing whatever time zone Node or Postgres runs in.
-// TimestampsWithTimeZone1794358400000 converted the existing columns; this keeps new ones right.
+// TimestampsWithTimeZone1794358500000 converted the existing columns; this keeps new ones right.
 const TIMESTAMP_TYPES = new Set(["timestamp", "timestamp without time zone", "datetime"]);
 
 /** `table.column` for every column stored as a timestamp without a time zone. */

@@ -20,13 +20,13 @@ export class AccountDeletionTombstone {
   @Column({ name: "subject_hash", type: "varchar", length: 64 })
   subjectHash: string;
 
-  @Column({ name: "deleted_at", type: "timestamp" })
+  @Column({ name: "deleted_at", type: "timestamptz" })
   deletedAt: Date;
 
-  @Column({ name: "identity_deleted_at", type: "timestamp", nullable: true })
+  @Column({ name: "identity_deleted_at", type: "timestamptz", nullable: true })
   identityDeletedAt: Date | null;
 
   /** `deleted_at` plus 24 months. */
-  @Column({ name: "expires_at", type: "timestamp" })
+  @Column({ name: "expires_at", type: "timestamptz" })
   expiresAt: Date;
 }
