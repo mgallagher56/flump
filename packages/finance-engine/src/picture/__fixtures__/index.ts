@@ -7,6 +7,7 @@ import { danExpected, danTaxYearsExpected } from "./expected/dan.js";
 import { debtStressedExpected, debtStressedItemsExpected } from "./expected/debt-stressed.js";
 import { garethContributionsExpected, garethExpected } from "./expected/gareth.js";
 import { heavyExpected, heavyHistoryExpected, heavyTaxYearsExpected } from "./expected/heavy.js";
+import { homeownerExpected } from "./expected/homeowner.js";
 import { newUserExpected } from "./expected/new-user.js";
 import { priyaExpected, priyaTrapExpected } from "./expected/priya.js";
 import { samExpected } from "./expected/sam.js";
@@ -16,6 +17,7 @@ import { dan } from "./personas/dan.js";
 import { debtStressed } from "./personas/debt-stressed.js";
 import { gareth } from "./personas/gareth.js";
 import { heavy } from "./personas/heavy.js";
+import { homeowner } from "./personas/homeowner.js";
 import { newUser } from "./personas/new-user.js";
 import { priya } from "./personas/priya.js";
 import { sam } from "./personas/sam.js";
@@ -39,6 +41,8 @@ export {
   heavyExpected,
   heavyHistoryExpected,
   heavyTaxYearsExpected,
+  homeowner,
+  homeownerExpected,
   newUser,
   newUserExpected,
   priya,
@@ -63,7 +67,8 @@ export type PersonaName =
   | "dan"
   | "debtStressed"
   | "newUser"
-  | "heavy";
+  | "heavy"
+  | "homeowner";
 
 export const PERSONAS: Record<PersonaName, { fixture: PersonaFixture; expected: PersonaExpected }> =
   {
@@ -76,4 +81,5 @@ export const PERSONAS: Record<PersonaName, { fixture: PersonaFixture; expected: 
     debtStressed: { fixture: debtStressed, expected: debtStressedExpected },
     newUser: { fixture: newUser, expected: newUserExpected },
     heavy: { fixture: heavy, expected: heavyExpected },
+    homeowner: { fixture: homeowner, expected: homeownerExpected },
   };

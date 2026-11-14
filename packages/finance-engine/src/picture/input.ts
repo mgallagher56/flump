@@ -1,6 +1,7 @@
 import type { BudgetEntryItem } from "../ai-context-pack.js";
 import type { RawAccount, RawAccountDetail } from "../portfolio.js";
 import type { UserProfileData } from "../profile.js";
+import type { TaxRecord } from "../tax-calculator.js";
 
 export interface ProfileFacts {
   annualSalary: number | null;
@@ -18,6 +19,13 @@ export interface ProfileFacts {
   /** Saved monthly rent (renters) or mortgage payment (owners), as the user entered it. */
   monthlyHousingCost?: number | null;
   mortgageType?: "repayment" | "interest-only" | null;
+  /**
+   * D3 (E16): the user's own estimate of their home's value, counted at 100% in net worth as
+   * "Home (your estimate)" when no Property account holds the home. null when not given.
+   */
+  homeValue?: number | null;
+  /** Share of rental property the user owns, in percent (self assessment). null means 100%. */
+  propertyOwnershipShare?: number | null;
 }
 
 export type FactKey = keyof ProfileFacts;
@@ -32,7 +40,11 @@ export type MissingKey =
   | "budgetIncome"
   | "budgetEssentials"
   /** A stored mortgage balance, rate and term (E32 housing cost). */
-  | "mortgageDetails";
+  | "mortgageDetails"
+  /** A mortgage account with a balance (loan to value). */
+  | "mortgageBalance"
+  /** Income records not taxed through PAYE (rental, self-employed, savings, dividends). */
+  | "untaxedIncomeRecords";
 
 /**
  * The saved rows one user's financial picture is built from (E23 section 2.1). Saved data only:
@@ -43,6 +55,8 @@ export interface FinancialPictureInput {
   accounts: RawAccount[];
   details: RawAccountDetail[];
   budget: BudgetEntryItem[];
+  /** Self-assessment records (estimated tax due). Optional: absent means none saved. */
+  taxRecords?: TaxRecord[];
 }
 
 function toNumber(value: unknown): number | null {
@@ -86,5 +100,7 @@ export function profileFactsFromProfile(
     housingStatus: HOUSING.find((h) => h === p.housingStatus) ?? null,
     monthlyHousingCost: toNumber(p.monthlyHousingCost),
     mortgageType: MORTGAGE_TYPES.find((t) => t === p.mortgageType) ?? null,
+    homeValue: toNumber(p.homeValue),
+    propertyOwnershipShare: toNumber(p.propertyOwnershipShare),
   };
 }
