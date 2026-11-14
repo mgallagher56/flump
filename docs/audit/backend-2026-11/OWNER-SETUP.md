@@ -219,7 +219,7 @@ The backend now validates its whole environment at boot and refuses to start wit
 | Variable | Value |
 |---|---|
 | `WEB_CLIENT_IP_HMAC_KEY` | Same value as the backend. Without it, every web user shares the web server's per-IP bucket |
-| `SENTRY_AUTH_TOKEN` | A Sentry token with the `project:releases` scope. Set it as an ordinary service variable: Railway hands it to the Docker build as a BuildKit secret (id `SENTRY_AUTH_TOKEN`), read only by the build step and never baked into an image layer. Absent means source maps are skipped, not a failed build |
+| `SENTRY_AUTH_TOKEN` | A Sentry organisation token (or a personal token with the `project:releases` scope). Set it as an ordinary service variable: Railway passes it to the Docker build as a build argument, used in the build stage only, so it is not in the final image. Railway's builder does not support BuildKit secret mounts. Optional: without it the build skips source map upload |
 | `SENTRY_ORG`, `SENTRY_PROJECT` | Your Sentry org and web project slugs (build variables) |
 | `CSP_REPORT_ONLY` | Leave unset. Set to `true` only as an emergency rollback if the enforced CSP breaks a page |
 
