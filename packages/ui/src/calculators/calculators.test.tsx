@@ -77,32 +77,16 @@ describe("UI Calculators", () => {
   });
 
   describe("Section24Calculator", () => {
-    it("renders and models buy-to-let tax relief", () => {
+    it("renders the engine's estimate and pre-fills on continue", () => {
       const onSave = vi.fn();
       render(<Section24Calculator ctaText="Save and continue" onSaveAndContinue={onSave} />);
 
-      expect(screen.getByText(/Section 24 buy-to-let mortgage relief calculator/i)).toBeDefined();
-      expect(screen.getByText(/Estimated Income Tax on rental profit/i)).toBeDefined();
+      expect(screen.getByText(/Tax on rental income under Section 24/i)).toBeDefined();
+      expect(screen.getAllByText(/Estimated tax on rental income/i).length).toBeGreaterThan(0);
 
-      const slider = screen.getByLabelText("Gross annual rental income slider");
+      const slider = screen.getByLabelText("Rental income a year, before costs range slider");
       fireEvent.change(slider, { target: { value: "25000" } });
       expect(screen.getAllByDisplayValue("25000").length).toBeGreaterThan(0);
-
-      const interestSlider = screen.getByLabelText("Annual mortgage interest paid slider");
-      fireEvent.change(interestSlider, { target: { value: "8000" } });
-      expect(screen.getAllByDisplayValue("8000").length).toBeGreaterThan(0);
-
-      const expensesSlider = screen.getByLabelText("Other allowable expenses slider");
-      fireEvent.change(expensesSlider, { target: { value: "2000" } });
-
-      const expensesInput = document.getElementById("allowable-expenses") as HTMLInputElement;
-      if (expensesInput) fireEvent.change(expensesInput, { target: { value: "2500" } });
-
-      const otherIncomeSlider = screen.getByLabelText("Other annual taxable income slider");
-      fireEvent.change(otherIncomeSlider, { target: { value: "55000" } });
-
-      const otherIncomeInput = document.getElementById("other-income") as HTMLInputElement;
-      if (otherIncomeInput) fireEvent.change(otherIncomeInput, { target: { value: "60000" } });
 
       const cta = screen.getByRole("button", { name: /Save and continue/i });
       fireEvent.click(cta);

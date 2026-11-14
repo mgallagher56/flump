@@ -1,182 +1,85 @@
-import { css, cva } from "../../../styled-system/css/index.js";
+import { cva } from "../../../styled-system/css";
 
-export const cardStyle = css({
-  backgroundColor: "surface.card",
-  border: "1px solid",
-  borderColor: "border",
-  borderRadius: "2xl",
-  padding: { base: "20px", sm: "32px" },
-  boxShadow: "card",
-  marginBottom: "40px",
-});
-
-export const headerStyle = css({ marginBottom: "24px" });
-
-export const badgeRowStyle = css({
-  display: "flex",
-  alignItems: "center",
-  gap: "2",
-  marginBottom: "2",
-});
-
-export const badgeStyle = cva({
+/** The tool's card: one bordered surface holding the header, the split and the sign-up button. */
+export const section24Root = cva({
   base: {
-    paddingBlock: "1",
-    paddingInline: "2.5",
-    borderRadius: "full",
-    textStyle: "label.sm",
-    textTransform: "uppercase",
-    letterSpacing: "0.05em",
-  },
-  variants: {
-    tone: {
-      warning: { backgroundColor: "status.warning.bg", color: "status.warning.text" },
-      info: { backgroundColor: "status.info.bg", color: "status.info.text" },
-    },
-  },
-  defaultVariants: { tone: "warning" },
-});
-
-export const titleStyle = css({
-  textStyle: "heading.md",
-  color: "text.primary",
-  margin: "0 0 4px 0",
-});
-
-export const subtitleStyle = css({
-  textStyle: "body.sm",
-  color: "text.muted",
-  margin: 0,
-});
-
-export const inputGridStyle = css({
-  display: "grid",
-  gridTemplateColumns: { base: "1fr", sm: "repeat(2, 1fr)" },
-  gap: "20px",
-  marginBottom: "24px",
-});
-
-export const inputGroupStyle = css({
-  display: "flex",
-  flexDirection: "column",
-  gap: "6px",
-});
-
-export const inputRowStyle = css({
-  display: "flex",
-  justifyContent: "space-between",
-  alignItems: "center",
-});
-
-export const labelStyle = css({ textStyle: "label.md", color: "text.primary" });
-
-export const inputWrapStyle = css({
-  position: "relative",
-  display: "inline-flex",
-  alignItems: "center",
-});
-
-export const adornmentStyle = cva({
-  base: { position: "absolute", textStyle: "label.sm", color: "text.muted" },
-  variants: {
-    side: { start: { left: "2" }, end: { right: "1.5" } },
-  },
-  defaultVariants: { side: "start" },
-});
-
-export const numberInputStyle = cva({
-  base: {
-    textStyle: "label.md",
-    fontWeight: "bold",
-    fontVariantNumeric: "tabular-nums",
-    textAlign: "right",
-    paddingBlock: "0.5",
-    borderRadius: "md",
-    border: "1px solid",
-    borderColor: "border.input",
+    display: "flex",
+    flexDirection: "column",
+    gap: "5",
+    width: "100%",
+    minWidth: "0",
     backgroundColor: "surface.card",
+    borderWidth: "1px",
+    borderStyle: "solid",
+    borderColor: "border",
+    borderRadius: "2xl",
+    padding: { base: "4", sm: "8" },
   },
-  variants: {
-    tone: {
-      warning: { color: "status.warning.text" },
-      positive: { color: "status.positive.text" },
-      danger: { color: "status.danger.text" },
-      info: { color: "status.info.text" },
-      primary: { color: "primary" },
-      neutral: { color: "text.secondary" },
-    },
-    width: {
-      sm: { width: "70px" },
-      md: { width: "90px" },
-      lg: { width: "100px" },
-    },
-    adornment: {
-      start: { paddingLeft: "5", paddingRight: "1.5" },
-      end: { paddingLeft: "1.5", paddingRight: "4.5" },
-    },
+});
+
+export const section24Header = cva({
+  base: { display: "flex", flexDirection: "column", gap: "2" },
+});
+
+/** The one "Unverified estimate" label every tax figure carries (R6). */
+export const section24Badges = cva({
+  base: { display: "flex", flexWrap: "wrap", gap: "2" },
+});
+
+export const section24Title = cva({
+  base: { textStyle: "heading.md", color: "text.primary", margin: "0" },
+});
+
+export const section24Intro = cva({
+  base: { textStyle: "body.md", color: "text.secondary", margin: "0", maxWidth: "70ch" },
+});
+
+/** Left column: three visible inputs, then the "More options" drawer. */
+export const section24Controls = cva({
+  base: { display: "flex", flexDirection: "column", gap: "4", minWidth: "0" },
+});
+
+export const section24DrawerBody = cva({
+  base: { display: "flex", flexDirection: "column", gap: "4", paddingTop: "2" },
+});
+
+/** Right column: outcome, supporting figures, the explainer, then the one notice. */
+export const section24Content = cva({
+  base: { display: "flex", flexDirection: "column", gap: "5", minWidth: "0" },
+});
+
+/**
+ * Outcome cards. The first card (the outcome) spans the full row; the supporting cards (at most
+ * two) share the row below from `sm`, and stack on a phone.
+ */
+export const section24Outcomes = cva({
+  base: {
+    display: "grid",
+    gridTemplateColumns: { base: "minmax(0, 1fr)", sm: "repeat(2, minmax(0, 1fr))" },
+    gap: "3",
+    fontVariantNumeric: "tabular-nums",
+    "& > :first-child": { gridColumn: "1 / -1" },
+    // A lone supporting figure takes the whole row instead of leaving a half-width gap.
+    "& > :nth-child(2):last-child": { gridColumn: "1 / -1" },
   },
-  defaultVariants: { tone: "primary", width: "lg", adornment: "start" },
 });
 
-export const sliderStyle = css({
-  width: "100%",
-  accentColor: "primary",
-  cursor: "pointer",
-  height: "6px",
-});
-
-export const metricsGridStyle = css({
-  display: "grid",
-  gridTemplateColumns: { base: "1fr", sm: "repeat(3, 1fr)" },
-  gap: "16px",
-  marginTop: "24px",
-  marginBottom: "24px",
-});
-
-export const metricCard = css({
-  backgroundColor: "surface.canvas",
-  border: "1px solid",
-  borderColor: "border",
-  borderRadius: "xl",
-  padding: "16px",
-  display: "flex",
-  flexDirection: "column",
-  gap: "4px",
-});
-
-export const metricLabelStyle = css({ textStyle: "label.sm", color: "text.muted" });
-
-export const metricValueStyle = cva({
-  base: { textStyle: "numeric.lg", fontWeight: "bold", fontVariantNumeric: "tabular-nums" },
-  variants: {
-    tone: {
-      warning: { color: "status.warning.text" },
-      positive: { color: "status.positive.text" },
-      danger: { color: "status.danger.text" },
-    },
+export const section24Explainer = cva({
+  base: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "1",
+    margin: "0",
+    textStyle: "body.sm",
+    color: "text.secondary",
+    "& p": { margin: "0" },
   },
-  defaultVariants: { tone: "positive" },
 });
 
-export const metricNoteStyle = css({
-  textStyle: "body.sm",
-  color: "text.muted",
-  fontVariantNumeric: "tabular-nums",
+export const section24ExplainerTitle = cva({
+  base: { textStyle: "label.md", color: "text.primary", margin: "0" },
 });
 
-export const ctaRowStyle = css({
-  display: "flex",
-  justifyContent: "space-between",
-  alignItems: "center",
-  flexWrap: "wrap",
-  gap: "16px",
-  paddingTop: "20px",
-  borderTop: "1px solid",
-  borderColor: "border",
+export const section24Cta = cva({
+  base: { alignSelf: { base: "stretch", sm: "flex-start" }, gap: "2" },
 });
-
-export const ctaCopyStyle = css({ maxWidth: "440px" });
-
-export const ctaTitleStyle = css({ textStyle: "label.md", color: "text.primary" });
-
-export const ctaNoteStyle = css({ textStyle: "body.sm", color: "text.muted", margin: 0 });
