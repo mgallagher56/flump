@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { formatDate, formatRelativeTime, formatTaxYear } from "./date.js";
+import {
+  formatDate,
+  formatDuration,
+  formatMonthYear,
+  formatRelativeTime,
+  formatTaxYear,
+} from "./date.js";
 
 describe("formatDate", () => {
   it("formats as D Mon YYYY", () => {
@@ -62,5 +68,32 @@ describe("formatTaxYear", () => {
     expect(formatTaxYear(2025)).toBe("2025/26");
     expect(formatTaxYear(1999)).toBe("1999/00");
     expect(formatTaxYear(2009)).toBe("2009/10");
+  });
+});
+
+describe("formatMonthYear", () => {
+  it("formats short and long month names", () => {
+    expect(formatMonthYear("2030-03-01")).toBe("Mar 2030");
+    expect(formatMonthYear("2030-03-01", { month: "long" })).toBe("March 2030");
+    expect(formatMonthYear(new Date(2026, 8, 30))).toBe("Sep 2026");
+  });
+  it("returns the placeholder for missing or invalid input", () => {
+    expect(formatMonthYear(undefined)).toBe("Not set");
+    expect(formatMonthYear("nope", { placeholder: "-" })).toBe("-");
+  });
+});
+
+describe("formatDuration", () => {
+  it("reads months as years and months, dropping a zero part", () => {
+    expect(formatDuration(40)).toBe("3 years 4 months");
+    expect(formatDuration(24)).toBe("2 years");
+    expect(formatDuration(13)).toBe("1 year 1 month");
+    expect(formatDuration(0)).toBe("0 months");
+    expect(formatDuration(11.6)).toBe("1 year");
+  });
+  it("returns the placeholder for negative, missing or non-finite input", () => {
+    expect(formatDuration(-3)).toBe("Not set");
+    expect(formatDuration(undefined)).toBe("Not set");
+    expect(formatDuration(Number.POSITIVE_INFINITY, { placeholder: "-" })).toBe("-");
   });
 });

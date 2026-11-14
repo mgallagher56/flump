@@ -1,7 +1,15 @@
-/** Currency, percent and speech formatting. en-GB only; Hermes-safe Intl. */
+/**
+ * Currency, percent and speech formatting. en-GB only; Hermes-safe Intl (no compact notation).
+ *
+ * Output matches what the web shows today through `Money` / `Num` in `@repo/ui` (pinned by
+ * packages/ui/src/format.parity.test.ts): whole pounds by default, the ASCII hyphen-minus as the
+ * visible sign (screen readers get "minus" from the spoken form), compact k / m / bn / tn, and an
+ * invalid currency code falls back to GBP. E12 section 12.4 supersedes T1.13's true minus and
+ * two-decimal default, which would have differed from the web.
+ */
 
 const LOCALE = "en-GB";
-const MINUS = "−";
+const MINUS = "-";
 
 export const DEFAULT_PLACEHOLDER = "Not set";
 
@@ -11,12 +19,14 @@ export interface FormatOptions {
 }
 
 export interface FormatCurrencyOptions extends FormatOptions {
-  /** Abbreviate large values (1.5k, 2.3m, 1.1bn) with no decimals below 1,000. */
+  /** Abbreviate large values (£1.5k, £2.3m, £1.1bn) with at most one decimal. */
   compact?: boolean;
+  /** 0 (whole pounds, the default: a figure that is read) or 2 (pence, where it is typed or reconciled). */
+  fractionDigits?: 0 | 2;
 }
 
 export interface FormatPercentOptions extends FormatOptions {
-  /** Max fraction digits. Default 1. */
+  /** Fixed fraction digits, as `Num kind="percent"`. Default 0. */
   fractionDigits?: number;
   /** Treat the input as a fraction (0.045 -> 4.5%). Default false. */
   fraction?: boolean;
@@ -51,114 +61,108 @@ function plainNumber(abs: number, minFraction: number, maxFraction: number): str
   ).format(abs);
 }
 
-function currencySymbolPrefix(abs: number, currency: string): string | null {
+function currencyFormat(currency: string, digits: number): Intl.NumberFormat {
+  return cached(
+    `c:${currency}:${digits}`,
+    () =>
+      new Intl.NumberFormat(LOCALE, {
+        style: "currency",
+        currency,
+        minimumFractionDigits: digits,
+        maximumFractionDigits: digits,
+      }),
+  );
+}
+
+/** An invalid ISO 4217 code makes Intl throw; fall back to GBP, as `Money` does. */
+function safeCurrency(code: string): string {
   try {
-    return cached(
-      `cs:${currency}`,
-      () =>
-        new Intl.NumberFormat(LOCALE, {
-          style: "currency",
-          currency,
-          currencyDisplay: "narrowSymbol",
-        }),
-    ).format(abs);
+    currencyFormat(code, 0);
+    return code;
   } catch {
-    return null;
+    return "GBP";
   }
 }
 
-function currencyDigits(currency: string): number {
-  try {
-    return (
-      cached(
-        `cd:${currency}`,
-        () => new Intl.NumberFormat(LOCALE, { style: "currency", currency }),
-      ).resolvedOptions().maximumFractionDigits ?? 2
-    );
-  } catch {
-    return 2;
-  }
+/** Round to the display precision; anything that rounds to zero is unsigned ("-£0" never shows). */
+function normalise(value: number, digits: number): { abs: number; sign: string } {
+  const factor = 10 ** digits;
+  const abs = Math.round(Math.abs(value) * factor) / factor;
+  return { abs, sign: value < 0 && abs !== 0 ? MINUS : "" };
 }
 
-/** Symbol (or code) for a currency, derived from Intl with a code fallback. */
-function currencyPrefix(currency: string): string {
-  const sample = currencySymbolPrefix(0, currency);
-  if (sample === null) return `${currency.toUpperCase()} `;
-  return sample.replace(/[\d.,\s ]/g, "") === ""
-    ? `${currency.toUpperCase()} `
-    : sample.replace(/[\d.,]/g, "");
-}
+const COMPACT_UNITS: Array<[number, string]> = [
+  [1e12, "tn"],
+  [1e9, "bn"],
+  [1e6, "m"],
+  [1e3, "k"],
+];
 
+/** Scale to the largest unit, one decimal at most; rounding can tip into the next unit. */
 function compactParts(abs: number): { scaled: number; suffix: string } {
-  const units: Array<[number, string]> = [
-    [1e9, "bn"],
-    [1e6, "m"],
-    [1e3, "k"],
-  ];
-  for (let i = 0; i < units.length; i++) {
-    const [size, suffix] = units[i] as [number, string];
-    if (abs >= size) {
-      const scaled = Math.round((abs / size) * 10) / 10;
-      // Rounding can tip into the next unit (999,999 -> 1,000k -> 1m).
-      const next = units[i - 1];
-      if (next && scaled * size >= next[0])
-        return { scaled: (scaled * size) / next[0], suffix: next[1] };
-      return { scaled, suffix };
-    }
+  const rounded = Math.round(abs * 10) / 10;
+  for (let i = 0; i < COMPACT_UNITS.length; i++) {
+    const [size, suffix] = COMPACT_UNITS[i] as [number, string];
+    if (rounded < size) continue;
+    const scaled = Math.round((abs / size) * 10) / 10;
+    const next = COMPACT_UNITS[i - 1];
+    // 999,950 -> 1,000k -> 1m.
+    if (next && scaled * size >= next[0])
+      return { scaled: (scaled * size) / next[0], suffix: next[1] };
+    return { scaled, suffix };
   }
-  const rounded = Math.round(abs);
-  // 999.5 rounds to 1,000: promote to the next unit rather than showing "£1000".
-  if (rounded >= 1e3) return { scaled: rounded / 1e3, suffix: "k" };
   return { scaled: rounded, suffix: "" };
 }
 
 /**
- * Format a monetary value. 0 renders as £0.00; null/undefined/NaN/Infinity
- * render as the placeholder (never £0.00). Negatives use a true minus (U+2212).
+ * Format a monetary value: £1,234 by default, £1,234.50 with `fractionDigits: 2`. 0 renders as £0;
+ * null, undefined, NaN and Infinity render as the placeholder (never £0).
  */
 export function formatCurrency(
   value: number | null | undefined,
   currencyCode = "GBP",
   options: FormatCurrencyOptions = {},
 ): string {
-  const currency = currencyCode || "GBP";
-  const { placeholder = DEFAULT_PLACEHOLDER, compact = false } = options;
+  const { placeholder = DEFAULT_PLACEHOLDER, compact = false, fractionDigits = 0 } = options;
   if (!isFiniteNumber(value)) return placeholder;
-
-  const digits = compact ? 0 : currencyDigits(currency);
-  const abs = Math.abs(value);
-  const isZero = Math.round(abs * 10 ** digits) === 0;
-  const sign = value < 0 && !isZero ? MINUS : "";
+  const currency = safeCurrency(currencyCode || "GBP");
 
   if (compact) {
-    const { scaled, suffix } = compactParts(abs);
-    return `${sign}${currencyPrefix(currency)}${plainNumber(scaled, 0, 1)}${suffix}`;
+    const { scaled, suffix } = compactParts(Math.abs(value));
+    const sign = value < 0 && scaled !== 0 ? MINUS : "";
+    // The symbol (and any spacing) is whatever Intl prints before the digits.
+    const prefix = currencyFormat(currency, 0)
+      .format(0)
+      .replace(/[\d.,]/g, "");
+    return `${sign}${prefix}${plainNumber(scaled, 0, 1)}${suffix}`;
   }
 
-  const symbolic = currencySymbolPrefix(abs, currency);
-  if (symbolic !== null) {
-    // Code-style output ("ZZZ 5.00") keeps its own spacing; symbols hug the number.
-    return `${sign}${symbolic.replace(/ /g, " ")}`;
-  }
-  return `${sign}${currency.toUpperCase()} ${plainNumber(abs, 2, 2)}`;
+  const { abs, sign } = normalise(value, fractionDigits);
+  return `${sign}${currencyFormat(currency, fractionDigits).format(abs)}`;
 }
 
-/** Format a percentage. Input is percentage points unless `fraction` is set. */
+/** Short form for tight spaces such as chart labels: £97.8k, £1.2m. */
+export function formatCompactCurrency(
+  value: number | null | undefined,
+  currencyCode = "GBP",
+  options: FormatOptions = {},
+): string {
+  return formatCurrency(value, currencyCode, { ...options, compact: true });
+}
+
+/** Format a percentage: 12.5 -> "13%", or "12.5%" with `fractionDigits: 1`. Input is percentage points unless `fraction` is set. */
 export function formatPercent(
   value: number | null | undefined,
   options: FormatPercentOptions = {},
 ): string {
-  const { placeholder = DEFAULT_PLACEHOLDER, fractionDigits = 1, fraction = false } = options;
+  const { placeholder = DEFAULT_PLACEHOLDER, fractionDigits = 0, fraction = false } = options;
   if (!isFiniteNumber(value)) return placeholder;
   // Intl throws outside 0..20 (and on NaN): clamp so formatting never throws.
   const digits = Number.isFinite(fractionDigits)
     ? Math.min(20, Math.max(0, Math.trunc(fractionDigits)))
-    : 1;
-  const points = fraction ? value * 100 : value;
-  const abs = Math.abs(points);
-  const isZero = Math.round(abs * 10 ** digits) === 0;
-  const sign = points < 0 && !isZero ? MINUS : "";
-  return `${sign}${plainNumber(abs, 0, digits)}%`;
+    : 0;
+  const { abs, sign } = normalise(fraction ? value * 100 : value, digits);
+  return `${sign}${plainNumber(abs, digits, digits)}%`;
 }
 
 const SPOKEN: Record<string, { major: [string, string]; minor: [string, string] }> = {
