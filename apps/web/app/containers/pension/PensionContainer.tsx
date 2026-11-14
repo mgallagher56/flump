@@ -196,6 +196,19 @@ export const PensionContainer: FC = () => {
     };
   }, [annualSalary, employeePercent, employmentType, isSalarySacrifice, profile, userProfile]);
 
+  // The take-home effect reads only answered pension facts: an unanswered percentage or method
+  // stays null so the panel asks for it instead of using the 5% / salary sacrifice defaults.
+  const takeHomeFacts = useMemo(
+    () => ({
+      ...savedFacts,
+      pensionPercent: ratesAssumed
+        ? null
+        : (profile.pensionPercent ?? userProfile?.pensionPercent ?? null),
+      isSalarySacrifice: profile.isSalarySacrifice ?? userProfile?.isSalarySacrifice ?? null,
+    }),
+    [savedFacts, ratesAssumed, profile, userProfile],
+  );
+
   // UK Tax & NI relief calculation for employee pension contribution. An unknown employment type
   // or setting gives no relief figure.
   const { netMonthlyCost, taxReliefMonthly } = useMemo(() => {
@@ -456,7 +469,7 @@ export const PensionContainer: FC = () => {
           portfolioReturnRate={weightedReturnRate}
           salary={annualSalary}
           scenario={scenario}
-          takeHomeFacts={savedFacts}
+          takeHomeFacts={takeHomeFacts}
           onEditDetails={handleEditDetails}
         />
       </div>

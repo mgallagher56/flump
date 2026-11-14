@@ -116,7 +116,11 @@ export const TaxWidget: FC<TaxWidgetProps> = ({ data, onHide }) => {
           </div>
         </dl>
         {marginal ? (
-          <div className={marginalBlock()} data-testid="tax-widget-marginal">
+          <div
+            className={marginalBlock()}
+            data-testid="tax-widget-marginal"
+            id="tax-widget-marginal"
+          >
             <p className={marginalTitle()}>{TAX_WIDGET_COPY.marginalTitle}</p>
             <div className={marginalBadges()}>
               <StatusBadge size="sm" variant="neutral">

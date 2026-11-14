@@ -46,6 +46,12 @@ export interface SelectMarginalRateOptions {
 }
 
 const NEXT = 1000;
+/**
+ * E31: the Personal Allowance taper is only surfaced when adjusted net income is within this much
+ * below the taper start, up to the taper end (£90,000 to £125,140 in 2026/27).
+ */
+export const TAPER_SURFACE_WINDOW = 10_000;
+const TAPER_KINDS: readonly UkThresholdKind[] = ["taperStart", "taperEnd"];
 const UNDERGRADUATE_ORDER: readonly UkStudentLoanPlanKey[] = [
   "plan1",
   "plan2",
@@ -83,7 +89,8 @@ export function incomeScenarioFromFacts(
       ? {}
       : { region: facts.taxRegion === "SCOTLAND" ? "SCOTLAND" : "ENGLAND_NI_WALES" }),
     salary: Math.max(0, facts.annualSalary ?? 0),
-    ...(pct > 0
+    // The saved method is kept even at 0%, so an extra contribution is modelled the way it is paid.
+    ...(facts.isSalarySacrifice !== null
       ? {
           pension: {
             method: facts.isSalarySacrifice ? "salary-sacrifice" : "net-pay",
@@ -103,7 +110,8 @@ export function nextThresholdAbove(
 ): NextIncomeThreshold | null {
   let best: UkIncomeThreshold | null = null;
   for (const t of thresholds) {
-    if (t.grossAt === null || t.grossAt <= grossPay) continue;
+    // Under 50p away rounds to "£0 above your pay", so the next one is shown instead.
+    if (t.grossAt === null || t.grossAt < grossPay + 0.5) continue;
     if (!best || (best.grossAt as number) > t.grossAt) best = t;
   }
   if (!best || best.grossAt === null) return null;
@@ -132,6 +140,9 @@ export function selectMarginalRate(
   const { before } = next;
   const rules = getUkTaxYearRules(before.ratesYear);
   const thresholds = getUkIncomeThresholds(rules, { ...scenario, taxYear: before.ratesYear });
+  const ani = before.adjustedNetIncome;
+  const taperInView =
+    ani >= rules.ewni.personalAllowanceTaperStart - TAPER_SURFACE_WINDOW && ani <= rules.taperEnd;
   const assumptions = before.assumptions.some((a) => a.code === "regionAssumed")
     ? [ASSUMED_REGION_NOTE]
     : undefined;
@@ -144,7 +155,10 @@ export function selectMarginalRate(
       ratesYear: before.ratesYear,
       isFallback: before.isFallback,
       isUnverifiedEstimate: before.isUnverifiedEstimate || next.after.isUnverifiedEstimate,
-      nextThreshold: nextThresholdAbove(thresholds, before.grossPay),
+      nextThreshold: nextThresholdAbove(
+        taperInView ? thresholds : thresholds.filter((t) => !TAPER_KINDS.includes(t.kind)),
+        before.grossPay,
+      ),
     },
     assumptions ? "assumption" : "derived",
     assumptions,
