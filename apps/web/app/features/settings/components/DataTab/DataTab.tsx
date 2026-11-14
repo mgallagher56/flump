@@ -158,7 +158,6 @@ export const DataTab: FC = () => {
               <li>All property, salary and savings settings</li>
             </ul>
             <span>You will start again from scratch.</span>
-            {resetNeedsSignIn ? <SignInAgainButton /> : null}
             {resetSuccess ? (
               <p className={statusText({ tone: "positive" })} role="status">
                 All financial data wiped. You have a clean slate.
@@ -172,6 +171,7 @@ export const DataTab: FC = () => {
         requireText={RESET_FINANCIAL_DATA_CONFIRMATION}
         pending={resettingData || resetSuccess}
         error={resetError}
+        errorAction={resetNeedsSignIn ? <SignInAgainButton /> : undefined}
         onConfirm={handleResetFinancialData}
       />
 

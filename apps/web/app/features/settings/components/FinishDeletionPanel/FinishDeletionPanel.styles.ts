@@ -19,3 +19,7 @@ export const finishForm = cva({
 export const finishActions = cva({
   base: { display: "flex", flexWrap: "wrap", alignItems: "center", gap: "3" },
 });
+
+export const finishOutcome = cva({
+  base: { display: "flex", flexDirection: "column", alignItems: "flex-start", gap: "3" },
+});

@@ -40,9 +40,9 @@ export function isAllowedReturnPath(value: unknown): value is AllowedReturnPath 
 
 /**
  * The backend refuses delete and reset unless the person signed in within the last 15 minutes
- * (403, `error: "recent_login_required"`). Same words as the backend's message.
+ * (403, `error: "recent_login_required"`). Same words as the backend's message (keep the two in step).
  */
-export const RECENT_LOGIN_MESSAGE = "For your security, sign in again, then try once more.";
+export const RECENT_LOGIN_MESSAGE = "For your security, sign in again, then try again.";
 
 /** What the delete action returns when it does not redirect. */
 export interface DeleteAccountActionData {

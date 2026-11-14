@@ -28,6 +28,8 @@ describe("<DeleteAccountSection />", () => {
     const dialog = screen.getByRole("alertdialog");
     expect(dialog.textContent).toContain("This permanently deletes:");
     expect(dialog.textContent).toContain("Your login");
+    expect(dialog.textContent).toContain("AI assistant access and its activity log");
+    expect(dialog.textContent).toContain("with no personal details, for 24 months");
 
     const confirm = screen.getByRole("button", { name: "Delete my account" }) as HTMLButtonElement;
     expect(confirm.disabled).toBe(true);
@@ -57,7 +59,9 @@ describe("<DeleteAccountSection />", () => {
     fireEvent.click(screen.getByRole("button", { name: "Delete my account" }));
     rerender("submitting");
     const pending = screen.getByRole("button", { name: "Deleting" }) as HTMLButtonElement;
-    expect(pending.disabled).toBe(true);
+    // Stays focusable while pending so focus does not drop to the page.
+    expect(pending.disabled).toBe(false);
+    expect(pending.getAttribute("aria-disabled")).toBe("true");
     expect(pending.getAttribute("aria-busy")).toBe("true");
   });
 
@@ -89,7 +93,7 @@ describe("<DeleteAccountSection />", () => {
     rerender("submitting");
     rerender("recent_login_required");
     expect(screen.getByRole("alert").textContent).toBe(
-      "For your security, sign in again, then try once more.",
+      "For your security, sign in again, then try again.",
     );
     expect(screen.getByRole("button", { name: "Sign in again" })).toBeDefined();
   });

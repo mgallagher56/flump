@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { css } from "../../../styled-system/css";
 import { ConfirmDialog, type ConfirmDialogProps } from "./ConfirmDialog";
@@ -109,6 +109,28 @@ describe("ConfirmDialog", () => {
     expect(
       (screen.getByRole("button", { name: "Delete year" }) as HTMLButtonElement).disabled,
     ).toBe(true);
+  });
+
+  it("can keep the confirm button focusable while pending", () => {
+    const { onConfirm } = setup({ pending: true, keepFocusWhilePending: true });
+    expect((screen.getByRole("button", { name: "Cancel" }) as HTMLButtonElement).disabled).toBe(
+      true,
+    );
+    const confirm = screen.getByRole("button", { name: "Delete year" }) as HTMLButtonElement;
+    expect(confirm.disabled).toBe(false);
+    expect(confirm.getAttribute("aria-disabled")).toBe("true");
+    fireEvent.click(confirm);
+    expect(onConfirm).not.toHaveBeenCalled();
+  });
+
+  it("shows an error action next to the error only", () => {
+    const action = <button type="button">Sign in again</button>;
+    setup({ errorAction: action });
+    expect(screen.queryByRole("button", { name: "Sign in again" })).toBeNull();
+    cleanup();
+    setup({ error: "Sign in first", errorAction: action });
+    expect(screen.getByRole("alert").textContent).toBe("Sign in first");
+    expect(screen.getByRole("button", { name: "Sign in again" })).toBeDefined();
   });
 
   it("requires matching text (case-insensitive) before confirming", () => {
