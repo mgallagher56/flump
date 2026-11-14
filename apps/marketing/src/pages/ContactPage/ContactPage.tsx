@@ -60,7 +60,7 @@ export const ContactPage: FC = () => (
               {SUPPORT_EMAIL}
             </a>
             {BUSINESS_DETAILS.supportEmail.isPlaceholder && (
-              <span className={placeholderNote()}> A placeholder, not monitored yet.</span>
+              <span className={placeholderNote()}>A placeholder, not monitored yet.</span>
             )}
           </p>
           <p className={body()}>
