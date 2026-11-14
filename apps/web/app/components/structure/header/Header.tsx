@@ -67,12 +67,12 @@ const Header: FC<HeaderProps> = ({ isMobile: propIsMobile, variant }): ReactElem
       <TopBar
         actions={
           <>
-            <ThemeToggle onChange={setPreference} preference={preference} />
             {!!user && <AvatarMenu user={user} />}
             {!user && <UserLogin />}
           </>
         }
         activeKey={findActiveNavKey(items, pathname)}
+        inlineActions={<ThemeToggle onChange={setPreference} preference={preference} />}
         items={items}
         logo={<HomeLogo decorative={!isMobileVariant} renderLink={renderHomeLogoLink} />}
         menuControls="mobile-nav-drawer"

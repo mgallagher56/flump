@@ -18,6 +18,7 @@ import {
   topBarFlyoutLabel,
   topBarFlyoutLink,
   topBarFlyoutText,
+  topBarInlineActions,
   topBarInner,
   topBarLink,
   topBarList,
@@ -34,8 +35,13 @@ export interface TopBarProps {
   activeKey?: string;
   /** Logo element, usually wrapped in a link home. */
   logo?: ReactNode;
-  /** Right-hand slot: theme toggle, account menu. */
+  /** Right-hand slot: account menu, sign-in buttons. */
   actions?: ReactNode;
+  /**
+   * Right-hand slot shown only from the shared nav breakpoint up, for controls that the mobile
+   * drawer already offers (the theme toggle), so the bar fits on small screens.
+   */
+  inlineActions?: ReactNode;
   /** Link slot, so the ui package needs no router. Defaults to a plain anchor. */
   renderLink?: AppNavRenderLink;
   /** Shows the menu button below the shared nav breakpoint (`NAV_BREAKPOINT`) and calls this when pressed. */
@@ -129,6 +135,7 @@ export const TopBar: FC<TopBarProps> = ({
   activeKey,
   logo,
   actions,
+  inlineActions,
   renderLink = defaultRenderLink,
   onMenuClick,
   menuLabel = "Open menu",
@@ -188,7 +195,12 @@ export const TopBar: FC<TopBarProps> = ({
           })}
         </ul>
       </nav>
-      {actions && <div className={topBarActions()}>{actions}</div>}
+      {(actions || inlineActions) && (
+        <div className={topBarActions()}>
+          {inlineActions && <div className={topBarInlineActions()}>{inlineActions}</div>}
+          {actions}
+        </div>
+      )}
     </div>
   </header>
 );

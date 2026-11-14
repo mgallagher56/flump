@@ -158,3 +158,7 @@ export const topBarFlyoutDescription = cva({
 export const topBarActions = cva({
   base: { display: "flex", alignItems: "center", gap: "3", marginLeft: "auto", flexShrink: 0 },
 });
+
+export const topBarInlineActions = cva({
+  base: { display: { base: "none", _navInline: "flex" }, alignItems: "center", gap: "3" },
+});
