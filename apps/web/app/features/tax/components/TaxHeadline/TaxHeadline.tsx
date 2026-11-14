@@ -20,6 +20,7 @@ const dateFormat = new Intl.DateTimeFormat("en-GB", {
   day: "numeric",
   month: "long",
   year: "numeric",
+  timeZone: "UTC",
 });
 
 /** The bill for tax year "2026/27" is due on 31 January after it ends: 31 January 2028. */
@@ -38,7 +39,7 @@ export const nonPayeIncome = (records: TaxRecord[], taxYear: string): number =>
 /**
  * The first view of the page. The hero holds a saved fact (the income recorded for the year),
  * never an estimate (copy audit ruling 7, coordinator D2). The estimated bill is the first KPI,
- * marked "Estimate", then the next payment date. With nothing added the
+ * marked "Estimate", then the date the bill is due. With nothing added the
  * hero asks for income and no strip is drawn, so no £0 appears.
  */
 export const TaxHeadline: FC<TaxHeadlineProps> = ({ taxYear, records, result, emptyAction }) => {
@@ -65,8 +66,8 @@ export const TaxHeadline: FC<TaxHeadlineProps> = ({ taxYear, records, result, em
             valueFormat={{ fractionDigits: 0 }}
           />
           <KpiCard
-            label="Next payment date"
-            subtext="Deadline for this tax year's bill"
+            label="Bill due"
+            subtext="Balancing payment date, 31 January after the tax year ends"
             value={<span className={date()}>{dateFormat.format(billDueDate(taxYear))}</span>}
           />
         </KpiStrip>

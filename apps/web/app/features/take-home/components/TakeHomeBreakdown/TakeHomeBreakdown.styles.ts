@@ -56,6 +56,8 @@ export const swatch = cva({
     height: "10px",
     borderRadius: "full",
     flexShrink: 0,
+    // Forced colours drop background fills, so outline each swatch to keep it visible.
+    "@media (forced-colors: active)": { border: "1px solid CanvasText" },
   },
   variants: { part: partColour },
 });
