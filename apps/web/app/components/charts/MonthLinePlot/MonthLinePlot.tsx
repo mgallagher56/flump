@@ -15,6 +15,8 @@ import {
   ReferenceDot,
   ResponsiveContainer,
   Tooltip,
+  useXAxisScale,
+  useYAxisScale,
   XAxis,
   YAxis,
 } from "recharts";
@@ -33,20 +35,75 @@ interface DirectLabelProps {
   text: string;
   /** The figure's label offset, mirrored to sit above left of the dot (recharts owns `offset`). */
   shift: { dx: number; dy: number };
+  /** The drawn line's points (x label and value), oldest first, ending at the labelled dot. */
+  line?: readonly { x: string; y: number }[];
   /** Supplied by recharts: the box around the annotated dot. */
   viewBox?: { x?: number; y?: number; width?: number; height?: number };
 }
 
-/** The end-point label: drawn above and to the left of the dot so it never clips at the edge. */
-const DirectLabel: FC<DirectLabelProps> = ({ text, shift, viewBox }) => {
+/** Rough width of the label text in pixels (semibold `sm` figures): enough to clear the line. */
+const labelWidth = (text: string) => text.length * 8.5;
+
+/** Space kept between the label's baseline and the line beneath it (clears the text box too). */
+const LABEL_LINE_GAP = 8;
+
+/**
+ * The label's vertical offset from the dot (`dy`, negative is up), so the whole label sits above
+ * the line end: at least `minDy` above the dot, and higher where the line rises within the label's
+ * span to the left of the dot (a falling line runs into the label otherwise). Pixel points, oldest
+ * first, ending at the dot.
+ */
+export const endLabelDy = (
+  dot: { x: number; y: number },
+  linePoints: readonly { x: number; y: number }[],
+  span: number,
+  minDy: number,
+): number => {
+  const left = dot.x - span;
+  let top = dot.y;
+  for (let i = linePoints.length - 1; i > 0; i--) {
+    const b = linePoints[i] as { x: number; y: number };
+    const a = linePoints[i - 1] as { x: number; y: number };
+    if (b.x <= left) break;
+    top = Math.min(top, b.y);
+    if (a.x >= left) top = Math.min(top, a.y);
+    else if (b.x > a.x) top = Math.min(top, a.y + ((b.y - a.y) * (left - a.x)) / (b.x - a.x));
+  }
+  return Math.min(minDy, top - dot.y - LABEL_LINE_GAP);
+};
+
+/**
+ * The end-point label: drawn above and to the left of the dot so it never clips at the edge, and
+ * lifted clear of the line where the line comes down into the end point.
+ */
+const DirectLabel: FC<DirectLabelProps> = ({ text, shift, line = [], viewBox }) => {
+  const xScale = useXAxisScale();
+  const yScale = useYAxisScale();
+  const half = (viewBox?.height ?? 0) / 2;
   const x = (viewBox?.x ?? 0) + (viewBox?.width ?? 0) / 2;
-  const y = viewBox?.y ?? 0;
+  const y = (viewBox?.y ?? 0) + half;
+  // By default the baseline sits `shift.dy` above the top of the dot.
+  let dy = shift.dy - half;
+  const end = line.at(-1);
+  const endX = end && xScale ? xScale(end.x) : undefined;
+  const endY = end && yScale ? yScale(end.y) : undefined;
+  if (xScale && yScale && typeof endX === "number" && typeof endY === "number") {
+    // Line the scaled points up with the dot itself (a category scale may give the band start).
+    const pixels = line.flatMap((p) => {
+      const px = xScale(p.x);
+      const py = yScale(p.y);
+      return typeof px === "number" && typeof py === "number"
+        ? [{ x: px + x - endX, y: py + y - endY }]
+        : [];
+    });
+    dy = endLabelDy({ x, y }, pixels, shift.dx + labelWidth(text), dy);
+  }
   return (
     <text
       fill={CHART_INK.text}
       className={directLabel()}
       dx={-shift.dx}
-      dy={shift.dy}
+      dy={dy}
       // tabular-nums is inherited from the chart wrapper.
       textAnchor="end"
       x={x}
@@ -102,6 +159,15 @@ const MonthTick: FC<MonthTickProps> = ({ x, y, index = 0, payload, textFor, coun
     {payload ? textFor(payload.value) : ""}
   </text>
 );
+
+/** The drawn line's points (recorded or carried), oldest first, up to the labelled month. */
+const linePoints = (points: readonly HistoryChartPoint[], endLabel: string | number) => {
+  const end = points.findIndex((p) => p.label === String(endLabel));
+  return points.slice(0, end === -1 ? points.length : end + 1).flatMap((p) => {
+    const v = p.recorded ?? p.carried;
+    return v === null || v === undefined ? [] : [{ x: p.label, y: v }];
+  });
+};
 
 export interface MonthLinePlotProps {
   points: readonly HistoryChartPoint[];
@@ -177,7 +243,13 @@ export const MonthLinePlot: FC<MonthLinePlotProps> = ({
           {annotation && annotated ? (
             <ReferenceDot
               fill={chartColor("primary")}
-              label={<DirectLabel shift={labelOffset} text={annotation.label} />}
+              label={
+                <DirectLabel
+                  line={linePoints(points, annotation.x)}
+                  shift={labelOffset}
+                  text={annotation.label}
+                />
+              }
               r={4}
               stroke={CHART_INK.surface}
               strokeWidth={2}

@@ -56,11 +56,19 @@ describe("CheckInList", () => {
     await waitFor(() => expect(screen.getByText("Updated £3,412.50")).toBeDefined());
   });
 
-  it("Enter on an empty field records No change", async () => {
+  it("Enter on an empty field only moves to the next row and saves nothing", async () => {
     const { onSave } = setup();
     await userEvent.click(field(everyday));
     await userEvent.keyboard("{Enter}");
     await waitFor(() => expect(document.activeElement).toBe(field(card)));
+    expect(onSave).not.toHaveBeenCalled();
+    expect(screen.queryByTestId(`checkin-status-${everyday}`)).toBeNull();
+  });
+
+  it("records No change only with the No change button", async () => {
+    const { onSave } = setup();
+    await userEvent.click(screen.getByTestId(`checkin-same-${everyday}`));
+    await waitFor(() => expect(onSave).toHaveBeenCalledTimes(1));
     expect(values(onSave, 0)).toEqual([{ accountId: everyday, value: 3360, source: "confirmed" }]);
   });
 
@@ -89,20 +97,20 @@ describe("CheckInList", () => {
     expect(values(onSave, 0)).toEqual([{ accountId: everyday, value: 3400, source: "manual" }]);
   });
 
-  it("moves to the balance field on a calculated row too; an empty Enter keeps the figure", async () => {
+  it("moves to the balance field on a calculated row too; an empty Enter saves nothing", async () => {
     const { onSave } = setup();
     await userEvent.click(field(isa));
     await userEvent.keyboard("{Enter}");
     await waitFor(() => expect(document.activeElement).toBe(field(mortgage)));
     await userEvent.keyboard("{Enter}");
-    await waitFor(() => expect(onSave).toHaveBeenCalledTimes(2));
-    expect(values(onSave, 1)?.[0]).toMatchObject({ accountId: mortgage, source: "calculated" });
+    await waitFor(() => expect(document.activeElement).toBe(field(everyday)));
+    expect(onSave).not.toHaveBeenCalled();
   });
 
   it("reopens a saved row with Change", async () => {
     setup();
     await userEvent.click(field(everyday));
-    await userEvent.keyboard("{Enter}");
+    await userEvent.keyboard("3400{Enter}");
     const change = await screen.findByRole("button", { name: "Change Everyday account" });
     await userEvent.click(change);
     await waitFor(() => expect(document.activeElement).toBe(field(everyday)));

@@ -1,11 +1,6 @@
 import { Button, InlineAlert } from "@repo/ui";
 import { type FC, type KeyboardEvent, useEffect } from "react";
-import {
-  answerValue,
-  type CheckInAnswer,
-  type CheckInStep as CheckInStepModel,
-  restAnswer,
-} from "../../checkInModel";
+import type { CheckInAnswer, CheckInStep as CheckInStepModel } from "../../checkInModel";
 import { CHECK_IN_COPY } from "../../snapshotCopy";
 import { formatMonth } from "../../snapshotModel";
 import type { CheckInController } from "../../useCheckIn";
@@ -20,8 +15,8 @@ export interface CheckInListProps {
  * The desktop check-in (md and up): every account in one list. The first open row's balance field
  * has the focus when the list opens, and each next open row's field as it becomes current, so
  * typing starts at once. Keyboard: the focused row's field
- * takes a figure; Enter saves it (or, on an empty field, records No change) and moves to the next
- * open row; Tab saves a typed figure and moves on, and on an empty field just moves. Saved rows
+ * takes a figure; Enter saves it as Update and moves to the next open row (on an empty field it
+ * only moves, saving nothing); Tab saves a typed figure and moves on, and on an empty field just moves. Saved rows
  * collapse to a status with a Change button. Each answer is saved straight away; a failed save
  * reopens its row with the error.
  */
@@ -52,9 +47,10 @@ export const CheckInList: FC<CheckInListProps> = ({ checkIn }) => {
     const draft = checkIn.draft(step.accountId);
     if (event.key === "Enter") {
       event.preventDefault();
-      const a: CheckInAnswer = draft !== null ? { kind: "update", value: draft } : restAnswer(step);
-      if (answerValue(step, a) === null) return;
-      answer(step, a);
+      // An empty field saves nothing: Enter only moves to the next open row. No change is
+      // recorded by its own button (or "No change to the rest"), never by an empty Enter.
+      if (draft === null) moveOn(step);
+      else answer(step, { kind: "update", value: draft });
       return;
     }
     if (event.key === "Tab" && !event.shiftKey && draft !== null) {

@@ -113,18 +113,6 @@ export const netWorthLinks = cva({
   },
 });
 
-export const historyLink = cva({
-  base: {
-    textStyle: "body.sm",
-    color: "primary",
-    textDecoration: "underline",
-    textUnderlineOffset: "3px",
-    borderRadius: "sm",
-    whiteSpace: "nowrap",
-    _focusVisible: { outline: "2px solid", outlineColor: "border.focusRing", outlineOffset: "2px" },
-  },
-});
-
 /** The ISA row's link to its allowance, under the account name at every width. */
 export const isaLink = cva({
   base: {

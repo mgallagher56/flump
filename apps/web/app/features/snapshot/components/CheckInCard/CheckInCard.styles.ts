@@ -15,12 +15,18 @@ export const progress = cva({
 });
 
 /**
- * The account on the sheet's own surface: no bordered card nested inside the sheet. One height for
- * every account, open or done, so the sheet does not jump between steps at 375. Taller steps (a
- * calculated figure with a statement prompt) still grow.
+ * The whole step body: the account and its row of Back / "No change to the rest" buttons. One
+ * height for every account, open or done, so the sheet does not jump between steps at 375. The
+ * buttons sit straight under the account, so any spare height falls below them, never between the
+ * account and its buttons. Taller steps (a calculated figure with a statement prompt) still grow.
  */
+export const cardBody = cva({
+  base: { display: "flex", flexDirection: "column", gap: "4", minHeight: "19rem", minWidth: 0 },
+});
+
+/** The account on the sheet's own surface: no bordered card nested inside the sheet. */
 export const cardSurface = cva({
-  base: { minHeight: "15rem" },
+  base: { minWidth: 0 },
 });
 
 /**

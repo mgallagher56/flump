@@ -35,6 +35,11 @@ export interface SheetProps {
   side?: "bottom" | "right";
   /** Accessible name for the close button. */
   closeLabel?: string;
+  /**
+   * The control focus returns to on close when the dialog opened with nothing focused (for
+   * example from a URL). Without it focus would fall to the page body.
+   */
+  returnFocusTo?: () => HTMLElement | null;
   /** Stable id for the sheet content (also set as data-testid). */
   id?: string;
   className?: string;
@@ -59,8 +64,9 @@ export const Sheet: FC<SheetProps> = ({
   closeLabel = "Close",
   id,
   className,
+  returnFocusTo,
 }) => {
-  const focusReturn = useDialogFocusReturn();
+  const focusReturn = useDialogFocusReturn(returnFocusTo);
   return (
     <RadixDialog.Root open={open} onOpenChange={onOpenChange}>
       <RadixDialog.Portal>

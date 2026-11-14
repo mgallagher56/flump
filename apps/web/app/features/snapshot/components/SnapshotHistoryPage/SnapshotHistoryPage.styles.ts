@@ -17,3 +17,8 @@ export const sectionStack = cva({
 export const changesBody = cva({
   base: { minWidth: 0 },
 });
+
+/** The link button's own inline padding, taken back so it lines up with "Show data". */
+export const flushLink = cva({
+  base: { marginInline: "-1" },
+});

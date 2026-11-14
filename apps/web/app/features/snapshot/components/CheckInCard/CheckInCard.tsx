@@ -4,7 +4,14 @@ import type { CheckInAnswer, CheckInStep as CheckInStepModel } from "../../check
 import { CHECK_IN_COPY, checkInProgress } from "../../snapshotCopy";
 import type { CheckInController } from "../../useCheckIn";
 import { CheckInStep, checkInHeadingId, focusCheckInStep } from "../CheckInStep";
-import { cardNav, cardNavGroup, cardRoot, cardSurface, progress } from "./CheckInCard.styles";
+import {
+  cardBody,
+  cardNav,
+  cardNavGroup,
+  cardRoot,
+  cardSurface,
+  progress,
+} from "./CheckInCard.styles";
 
 export interface CheckInCardProps {
   checkIn: CheckInController;
@@ -63,61 +70,63 @@ export const CheckInCard: FC<CheckInCardProps> = ({ checkIn }) => {
       <p className={progress()} data-testid="checkin-progress" id="checkin-progress">
         {checkInProgress(position, steps.length)}
       </p>
-      <section aria-labelledby={checkInHeadingId(step.accountId)} className={cardSurface()}>
-        <CheckInStep
-          checkIn={checkIn}
-          key={step.accountId}
-          layout="card"
-          onAnswer={answer}
-          onFieldKeyDown={onFieldKeyDown}
-          onRetry={retry}
-          step={step}
-        />
-      </section>
-      <div className={cardNav()}>
-        <div className={cardNavGroup()}>
-          {position > 1 ? (
+      <div className={cardBody()}>
+        <section aria-labelledby={checkInHeadingId(step.accountId)} className={cardSurface()}>
+          <CheckInStep
+            checkIn={checkIn}
+            key={step.accountId}
+            layout="card"
+            onAnswer={answer}
+            onFieldKeyDown={onFieldKeyDown}
+            onRetry={retry}
+            step={step}
+          />
+        </section>
+        <div className={cardNav()}>
+          <div className={cardNavGroup()}>
+            {position > 1 ? (
+              <Button
+                data-testid="checkin-back"
+                id="checkin-back"
+                onClick={() => setIndex(position - 2)}
+                size="sm"
+                type="button"
+                variant="ghost"
+              >
+                {CHECK_IN_COPY.back}
+              </Button>
+            ) : null}
+            {done && next !== -1 ? (
+              <Button
+                data-testid="checkin-next"
+                id="checkin-next"
+                onClick={() => setIndex(next)}
+                size="sm"
+                type="button"
+                variant="ghost"
+              >
+                {CHECK_IN_COPY.next}
+              </Button>
+            ) : null}
+          </div>
+          {anyOpen ? (
             <Button
-              data-testid="checkin-back"
-              id="checkin-back"
-              onClick={() => setIndex(position - 2)}
+              data-testid="checkin-rest"
+              id="checkin-rest"
+              onClick={() => void checkIn.rest()}
+              pending={checkIn.restSaving}
               size="sm"
               type="button"
               variant="ghost"
             >
-              {CHECK_IN_COPY.back}
-            </Button>
-          ) : null}
-          {done && next !== -1 ? (
-            <Button
-              data-testid="checkin-next"
-              id="checkin-next"
-              onClick={() => setIndex(next)}
-              size="sm"
-              type="button"
-              variant="ghost"
-            >
-              {CHECK_IN_COPY.next}
+              {CHECK_IN_COPY.rest}
             </Button>
           ) : null}
         </div>
-        {anyOpen ? (
-          <Button
-            data-testid="checkin-rest"
-            id="checkin-rest"
-            onClick={() => void checkIn.rest()}
-            pending={checkIn.restSaving}
-            size="sm"
-            type="button"
-            variant="ghost"
-          >
-            {CHECK_IN_COPY.rest}
-          </Button>
+        {checkIn.restError ? (
+          <InlineAlert tone="danger">{CHECK_IN_COPY.restError}</InlineAlert>
         ) : null}
       </div>
-      {checkIn.restError ? (
-        <InlineAlert tone="danger">{CHECK_IN_COPY.restError}</InlineAlert>
-      ) : null}
     </div>
   );
 };

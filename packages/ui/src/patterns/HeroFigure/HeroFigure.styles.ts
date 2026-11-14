@@ -28,10 +28,11 @@ export const heroFigure = sva({
       borderStyle: "solid",
       p: { base: "5", md: "6" },
       minWidth: "0",
-      // From md the block fits its figure instead of a full-width band that is mostly empty
-      // (R2-5 re-score); the end padding leaves the decorative disc room beside the figure.
-      width: { base: "100%", md: "fit-content" },
-      maxWidth: "100%",
+      // From md one steady width instead of a full-width band that is mostly empty (R2-5
+      // re-score), the same on every page and breakpoint whatever the figure; the end padding
+      // leaves the decorative disc room beside the figure.
+      width: "100%",
+      maxWidth: { base: "100%", md: "30rem" },
       paddingInlineEnd: { md: "24" },
     },
     content: {

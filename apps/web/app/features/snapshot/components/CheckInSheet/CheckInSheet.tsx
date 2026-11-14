@@ -55,9 +55,26 @@ export interface CheckInSheetProps {
   onSave: SaveSnapshot;
   /** The user's net worth choices: rows they leave out say "Not counted in net worth". */
   basis: NetWorthBasis;
+  /**
+   * The page's "Update balances" control, where focus returns on close when the check-in opened
+   * with nothing focused (from `?checkIn=1`).
+   */
+  returnFocusTo?: () => HTMLElement | null;
 }
 
 const CHECK_IN_TITLE = "Monthly check-in";
+
+/**
+ * The first of these elements that is shown (a page can hold one "Update balances" for phones and
+ * one from md, with CSS hiding the other), for `returnFocusTo`.
+ */
+export const firstShownElement = (ids: readonly string[]) => (): HTMLElement | null => {
+  for (const id of ids) {
+    const el = document.getElementById(id);
+    if (el && el.getClientRects().length > 0) return el;
+  }
+  return ids.map((id) => document.getElementById(id)).find((el) => el !== null) ?? null;
+};
 
 /** Earliest month the backend accepts (E30 PR1 `EARLIEST_SNAPSHOT`). */
 const EARLIEST_YEAR = 2000;
@@ -89,6 +106,7 @@ const MonthlyCheckInSheet: FC<CheckInSheetProps> = ({
   currentMonth,
   onSave,
   basis,
+  returnFocusTo,
 }) => {
   const checkIn = useCheckIn({ accounts, accountDetails, month: currentMonth, open, onSave });
   const phone = useBelowMd();
@@ -136,6 +154,7 @@ const MonthlyCheckInSheet: FC<CheckInSheetProps> = ({
         id="snapshot-check-in"
         onOpenChange={handleOpenChange}
         open={open}
+        returnFocusTo={returnFocusTo}
         size="sm"
         title={CHECK_IN_TITLE}
       >
@@ -150,6 +169,7 @@ const MonthlyCheckInSheet: FC<CheckInSheetProps> = ({
       id="snapshot-check-in"
       onOpenChange={handleOpenChange}
       open={open}
+      returnFocusTo={returnFocusTo}
       side="right"
       title={CHECK_IN_TITLE}
     >
@@ -173,6 +193,7 @@ const ListFormSheet: FC<CheckInSheetProps> = ({
   mode = "checkIn",
   onSave,
   basis,
+  returnFocusTo,
 }) => {
   const { formatCurrencyDecimal } = useFormatCurrency();
   const isBackfill = mode === "backfill";
@@ -248,6 +269,7 @@ const ListFormSheet: FC<CheckInSheetProps> = ({
       id="snapshot-check-in"
       onOpenChange={onOpenChange}
       open={open}
+      returnFocusTo={returnFocusTo}
       side="right"
       title={title}
     >

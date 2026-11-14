@@ -131,6 +131,11 @@ export const DeleteConfirm: Story = {
     await expect(screen.getAllByRole("dialog")).toHaveLength(1);
     await expect(screen.queryByRole("alertdialog")).toBeNull();
     await expect(screen.getByText(/This cannot be undone/)).toBeInTheDocument();
+    // The same quiet Cancel as the Add and Edit forms.
+    await expect(screen.getByRole("button", { name: "Cancel" })).toHaveAttribute(
+      "data-variant",
+      "ghost",
+    );
     await userEvent.click(screen.getByRole("button", { name: "Cancel" }));
     await expect(await screen.findByLabelText("Name")).toBeInTheDocument();
   },

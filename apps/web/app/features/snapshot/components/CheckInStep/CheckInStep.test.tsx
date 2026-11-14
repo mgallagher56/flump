@@ -20,10 +20,19 @@ const Harness: FC<{
   layout?: CheckInStepLayout;
   onAnswer: (step: Step, answer: CheckInAnswer) => void;
   onSave?: SaveSnapshot;
-}> = ({ accountId, layout = "card", onAnswer, onSave }) => {
+  accounts?: typeof CHECK_IN_ACCOUNTS;
+  details?: typeof CHECK_IN_DETAILS;
+}> = ({
+  accountId,
+  layout = "card",
+  onAnswer,
+  onSave,
+  accounts = CHECK_IN_ACCOUNTS,
+  details = CHECK_IN_DETAILS,
+}) => {
   const checkIn = useCheckIn({
-    accounts: CHECK_IN_ACCOUNTS,
-    accountDetails: CHECK_IN_DETAILS,
+    accounts,
+    accountDetails: details,
     month: "2026-11",
     open: true,
     onSave: onSave ?? (async () => true),
@@ -45,6 +54,39 @@ const Harness: FC<{
 };
 
 describe("CheckInStep", () => {
+  it("on reopening, a figure typed this month reads Updated, though the saved balance now matches", () => {
+    // Saving the month moved the saved balance to the typed figure (£2,345).
+    const accounts = CHECK_IN_ACCOUNTS.map((a) =>
+      a.id === everyday ? { ...a, balance: 2345 } : a,
+    );
+    const details = [
+      ...CHECK_IN_DETAILS,
+      { accountId: everyday, year: 2026, month: 11, value: 2345, source: "manual" },
+      { accountId: card, year: 2026, month: 11, value: -640, source: "confirmed" },
+    ];
+    const { unmount } = render(
+      <Harness
+        accountId={everyday}
+        accounts={accounts}
+        details={details}
+        layout="row"
+        onAnswer={vi.fn()}
+      />,
+    );
+    expect(screen.getByTestId(`checkin-status-${everyday}`).textContent).toBe("Updated £2,345");
+    unmount();
+    render(
+      <Harness
+        accountId={card}
+        accounts={accounts}
+        details={details}
+        layout="row"
+        onAnswer={vi.fn()}
+      />,
+    );
+    expect(screen.getByTestId(`checkin-status-${card}`).textContent).toBe("No change");
+  });
+
   it("shows the account, last month's figure and the two choices", () => {
     render(<Harness accountId={everyday} onAnswer={vi.fn()} />);
     expect(screen.getByRole("heading", { name: "Everyday account" })).toBeDefined();
