@@ -6,7 +6,8 @@ export const runwayRoot = cva({
 
 /** The controls column: two inputs, then "More options". Sits on the zone surface (no card). */
 export const controlsStack = cva({
-  base: { display: "flex", flexDirection: "column", gap: "4" },
+  // Amounts are short, so the inputs stop at 320px instead of filling the column (round 4).
+  base: { display: "flex", flexDirection: "column", gap: "4", "& > *": { maxWidth: "320px" } },
 });
 
 export const optionsStack = cva({

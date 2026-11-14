@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from "@storybook/react";
 import { expect, userEvent, waitFor, within } from "@storybook/test";
 import { useState } from "react";
 import { css } from "../../../styled-system/css";
+import { Button } from "../../primitives/Button/Button";
 import { SliderField } from "../../primitives/SliderField";
 import { Tabs } from "../../primitives/Tabs";
 import { SCENARIO_RESET_LABEL, ScenarioZone } from "./ScenarioZone";
@@ -229,3 +230,52 @@ export const Narrow: Story = {
     </div>
   ),
 };
+
+/**
+ * Round 4: the footer's "Update your details" as a ghost button. Without Reset (nothing changed)
+ * its text sits at the zone's leading edge, as with Reset in front of it.
+ */
+const GhostUpdate = () => (
+  <Button size="sm" variant="ghost">
+    Update your details
+  </Button>
+);
+
+const leadingEdgePlay: Story["play"] = async ({ canvasElement }) => {
+  const canvas = within(canvasElement);
+  const zone = canvas.getByTestId("scenario-zone");
+  const button = canvas.getByRole("button", { name: "Update your details" });
+  const label = button.firstChild as Node;
+  const range = document.createRange();
+  range.selectNodeContents(label);
+  const textLeft = range.getBoundingClientRect().left;
+  const footer = canvas.getByTestId("scenario-zone-footer");
+  // The text starts where the footer's content box starts, give or take a pixel.
+  const footerLeft = footer.getBoundingClientRect().left;
+  await expect(Math.abs(textLeft - footerLeft)).toBeLessThan(2);
+  await expect(zone).toBeInTheDocument();
+};
+
+export const FooterWithoutReset: Story = {
+  render: () => (
+    <ScenarioZone footer={<GhostUpdate />} onReset={() => {}}>
+      <OverpaymentTool onChange={() => {}} value={null} />
+    </ScenarioZone>
+  ),
+  play: leadingEdgePlay,
+};
+
+export const FooterWithReset: Story = {
+  render: () => (
+    <ScenarioZone footer={<GhostUpdate />} isModified onReset={() => {}}>
+      <OverpaymentTool onChange={() => {}} value={100} />
+    </ScenarioZone>
+  ),
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(canvas.getByRole("button", { name: SCENARIO_RESET_LABEL })).toBeInTheDocument();
+    await expect(canvas.getByRole("button", { name: "Update your details" })).toBeInTheDocument();
+  },
+};
+
+export const FooterWithoutResetDark: Story = { ...FooterWithoutReset, globals: { theme: "dark" } };

@@ -55,6 +55,23 @@ describe("ScenarioZone", () => {
     expect(document.activeElement).toBe(screen.getByTestId("scenario-zone-title"));
   });
 
+  it("pulls a leading ghost footer action back to the zone's edge, so it is not indented", () => {
+    render(
+      <ScenarioZone
+        footer={
+          <button data-variant="ghost" type="button">
+            Update
+          </button>
+        }
+        onReset={() => {}}
+      >
+        x
+      </ScenarioZone>,
+    );
+    const actions = screen.getByRole("button", { name: "Update" }).parentElement as HTMLElement;
+    expect(actions.className).toContain("[&_>_[data-variant='ghost']:first-child]:ms_-4");
+  });
+
   it("leaves Reset out when there is nothing to reset", () => {
     render(<ScenarioZone isModified>x</ScenarioZone>);
     expect(screen.queryByRole("button", { name: SCENARIO_RESET_LABEL })).toBeNull();
