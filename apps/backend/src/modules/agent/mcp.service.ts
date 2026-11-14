@@ -1,6 +1,6 @@
 import { buildFlumpAiContextPack, formatAiContextPackMarkdown } from "@flump/finance-engine";
 import { HttpMcpHandler, type McpAuditCaller, type McpAuditEvent } from "@flump/mcp";
-import { Inject, Injectable, Logger, Optional } from "@nestjs/common";
+import { Inject, Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { AUTH_MODE } from "../../auth/auth.module";
 import { DEV_BYPASS_TOKEN, DEV_USER } from "../../auth/dev-bypass.verifier";
@@ -35,7 +35,6 @@ export class McpService {
     private readonly importsAdapter: McpImportsAdapter,
     // BE-07 (M10): the shared Postgres counters, so the MCP limits hold across replicas and
     // restarts. Optional only for unit tests that build the service by hand (in-memory default).
-    @Optional()
     @Inject(SHARED_RATE_LIMIT_STORE)
     private readonly limitStore?: SharedRateLimitStore,
   ) {

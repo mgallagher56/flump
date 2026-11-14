@@ -1,4 +1,3 @@
-import { randomUUID } from "node:crypto";
 import type { CreateTransactionRequest as CreateTransactionDto } from "@flump/api-contract";
 import { BankSyncOrchestrator, isBankProviderError } from "@flump/banking/server";
 import {
@@ -7,7 +6,6 @@ import {
   Injectable,
   Logger,
   NotFoundException,
-  Optional,
   ServiceUnavailableException,
 } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
@@ -84,7 +82,6 @@ export class FinanceService {
     private readonly userProfileRepository: Repository<UserProfile>,
     private readonly providerRegistry: BankProviderRegistry,
     private readonly configService: ConfigService,
-    @Optional()
     accountIntakeService?: AccountIntakeService,
   ) {
     this.accountIntakeService =

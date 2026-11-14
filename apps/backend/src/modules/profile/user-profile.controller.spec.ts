@@ -6,6 +6,7 @@ import {
 } from "@nestjs/common";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { UserProfileController } from "./user-profile.controller";
+import { UserProfileService } from "./user-profile.service";
 
 /** A WorkOS auth_time from a moment ago: the recent-login check passes. */
 const freshAuthTime = () => Math.floor(Date.now() / 1000) - 30;
@@ -50,15 +51,17 @@ describe("UserProfileController", () => {
       get: vi.fn().mockReturnValue(null), // no workos api key in test mock
     };
 
+    // Test wiring (BE-13): the controller takes the service; the service takes the repositories.
     controller = new UserProfileController(
-      mockUserProfileRepo,
-      mockAccountRepo,
-      mockTransactionRepo,
-      mockAccountDetailRepo,
-      mockBankConnectionRepo,
-      mockBudgetEntryRepo,
-      mockTaxRecordRepo,
-      mockConfigService,
+      new UserProfileService(
+        mockUserProfileRepo,
+        mockAccountRepo,
+        mockTransactionRepo,
+        mockAccountDetailRepo,
+        mockBankConnectionRepo,
+        mockBudgetEntryRepo,
+        mockTaxRecordRepo,
+      ),
     );
   });
 
@@ -309,18 +312,7 @@ describe("UserProfileController account deletion and export (BE-04)", () => {
   const fresh = { id: "user-123", authTime: Math.floor(Date.now() / 1000) - 30 };
   const stale = { id: "user-123", authTime: Math.floor(Date.now() / 1000) - 3600 };
   const make = (deletion?: object, exporter?: object) =>
-    new UserProfileController(
-      {} as never,
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-      deletion as never,
-      exporter as never,
-    );
+    new UserProfileController({} as never, deletion as never, exporter as never);
 
   it.each([
     ["no body", undefined],

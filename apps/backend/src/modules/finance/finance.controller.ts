@@ -14,8 +14,6 @@ import {
   Get,
   Headers,
   HttpCode,
-  Inject,
-  Optional,
   Param,
   Patch,
   Post,
@@ -25,25 +23,16 @@ import {
   Res,
   UseGuards,
 } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
-import { InjectRepository } from "@nestjs/typeorm";
 import type { Response } from "express";
-import { Repository } from "typeorm";
 import { AuthGuard } from "../../auth/auth.guard";
 import type { AuthenticatedRequest } from "../../auth/authenticated-request";
 import { expectedVersion, setEtag } from "../../contract/etag";
 import { resolveOffset, resolvePage, sendPage } from "../../contract/pagination";
-import { Account } from "../../entities/account.entity";
-import { AccountDetail } from "../../entities/account-detail.entity";
-import { BankConnection } from "../../entities/bank-connection.entity";
-import { Transaction } from "../../entities/transaction.entity";
-import { UserProfile } from "../../entities/user-profile.entity";
 import { RateLimit } from "../../security/rate-limit.decorator";
 import {
   BankConnectionsEnabledGuard,
   isBankConnectionAllowed,
 } from "../banking/bank-connections.access";
-import { BankProviderRegistry } from "../banking/providers/provider.registry";
 import { toPublicAccount } from "./account-intake.service";
 import { FinanceService } from "./finance.service";
 
@@ -55,47 +44,7 @@ import { FinanceService } from "./finance.service";
 @Controller()
 @UseGuards(AuthGuard)
 export class FinanceController {
-  private readonly financeService: FinanceService;
-
-  constructor(
-    @Optional()
-    @Inject(FinanceService)
-    financeServiceOrAccountRepo?: FinanceService | Repository<Account>,
-    @Optional()
-    @InjectRepository(Transaction)
-    transactionRepository?: Repository<Transaction>,
-    @Optional()
-    @InjectRepository(AccountDetail)
-    accountDetailRepository?: Repository<AccountDetail>,
-    @Optional()
-    @InjectRepository(BankConnection)
-    bankConnectionRepository?: Repository<BankConnection>,
-    @Optional()
-    @InjectRepository(UserProfile)
-    userProfileRepository?: Repository<UserProfile>,
-    @Optional() providerRegistry?: BankProviderRegistry,
-    @Optional() configService?: ConfigService,
-  ) {
-    const candidate = financeServiceOrAccountRepo as
-      | { getAccounts?: unknown; manager?: unknown }
-      | undefined;
-    if (
-      financeServiceOrAccountRepo instanceof FinanceService ||
-      (candidate && typeof candidate.getAccounts === "function" && !candidate.manager)
-    ) {
-      this.financeService = financeServiceOrAccountRepo as FinanceService;
-    } else {
-      this.financeService = new FinanceService(
-        financeServiceOrAccountRepo as Repository<Account>,
-        transactionRepository as Repository<Transaction>,
-        accountDetailRepository as Repository<AccountDetail>,
-        bankConnectionRepository as Repository<BankConnection>,
-        userProfileRepository as Repository<UserProfile>,
-        providerRegistry as BankProviderRegistry,
-        configService as ConfigService,
-      );
-    }
-  }
+  constructor(private readonly financeService: FinanceService) {}
 
   // Lists are keyset-paginated (BE-09, M-API1): `?limit=&cursor=`, the next cursor in the
   // X-Next-Cursor header. `res` is absent when a unit test calls a handler directly.

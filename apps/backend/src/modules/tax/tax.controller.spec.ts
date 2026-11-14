@@ -14,6 +14,11 @@ import { describe, expect, expectTypeOf, it, vi } from "vitest";
 import { createInMemoryRepository } from "../../testing/in-memory-repository";
 import { withManager } from "../../testing/with-manager";
 import { MAX_BULK_TAX_RECORDS, TaxController } from "./tax.controller";
+import { TaxService } from "./tax.service";
+
+/** Test wiring (BE-13): the controller takes TaxService; the profile repository is no longer used. */
+const taxController = (taxRepo: unknown, _profileRepo?: unknown) =>
+  new TaxController(new TaxService(taxRepo as never));
 
 describe("TaxController", () => {
   it("should be defined", () => {
@@ -34,7 +39,7 @@ describe("TaxController", () => {
       findOne: vi.fn().mockResolvedValue(null),
     };
 
-    const controller = new TaxController(withManager(mockRepo) as any, mockProfileRepo as any);
+    const controller = taxController(withManager(mockRepo) as any, mockProfileRepo as any);
     const mockReq = { user: { id: "user-123" } };
 
     const bulkPayload = {
@@ -72,7 +77,7 @@ describe("TaxController", () => {
       findOne: vi.fn().mockResolvedValue(null),
     };
 
-    const controller = new TaxController(withManager(mockRepo) as any, mockProfileRepo as any);
+    const controller = taxController(withManager(mockRepo) as any, mockProfileRepo as any);
     const result = await controller.getTaxRecords({ user: { id: "user-123" } });
 
     expect(result).toEqual([]);
@@ -87,7 +92,7 @@ describe("TaxController", () => {
       save: vi.fn((r) => Promise.resolve(r)),
       remove: vi.fn().mockResolvedValue(undefined),
     };
-    const controller = new TaxController(withManager(mockRepo) as any, {} as any);
+    const controller = taxController(withManager(mockRepo) as any, {} as any);
     const req = { user: { id: "u1" } };
 
     // Get single
@@ -130,7 +135,7 @@ describe("TaxController", () => {
     const profileRepo = createInMemoryRepository([
       { userId: "userB", hasResetFinancialData: true },
     ]);
-    const controller = new TaxController(withManager(taxRepo) as any, profileRepo as any);
+    const controller = taxController(withManager(taxRepo) as any, profileRepo as any);
     const userA = { user: { id: "userA" } };
     const userB = { user: { id: "userB" } };
 
@@ -154,7 +159,7 @@ describe("TaxController", () => {
       const victim = { id: "r-A", userId: "userA", name: "Rent", amount: 100, endDate: null };
       const own = { id: "r-B", userId: "userB", name: "Mine", amount: 5, endDate: null };
       const taxRepo = createInMemoryRepository([victim, own]);
-      const controller = new TaxController(withManager(taxRepo) as any, {} as any);
+      const controller = taxController(withManager(taxRepo) as any, {} as any);
       return { victim, own, taxRepo, controller, userB: { user: { id: "userB" } } };
     };
 
@@ -221,7 +226,7 @@ describe("TaxController annual record end date (E23 D16)", () => {
   const req = { user: { id: "u1" } };
   const setup = () => {
     const repo = createInMemoryRepository();
-    return new TaxController(withManager(repo) as any, { findOne: vi.fn() } as any);
+    return taxController(withManager(repo) as any, { findOne: vi.fn() } as any);
   };
   const base = {
     type: "income",
@@ -336,7 +341,7 @@ describe("TaxController receipt validation (E20-N14)", () => {
       findOne: vi.fn().mockResolvedValue({ id: "r1", userId: "u1" }),
       update: vi.fn(),
     };
-    return { repo, controller: new TaxController(withManager(repo) as any, {} as any) };
+    return { repo, controller: taxController(withManager(repo) as any, {} as any) };
   };
   const req = { user: { id: "u1" } };
   const base = {
@@ -504,7 +509,7 @@ describe("TaxController receipt validation (E20-N14)", () => {
         withReceipt,
         { id: "r-N", userId: "userA", name: "None", receiptFilename: null, receiptData: null },
       ]);
-      const controller = new TaxController(withManager(repo) as any, {} as any);
+      const controller = taxController(withManager(repo) as any, {} as any);
 
       const list = await controller.getTaxRecords(userA);
       expect(list.map((r) => r.hasReceipt).sort()).toEqual([false, true]);
@@ -517,7 +522,7 @@ describe("TaxController receipt validation (E20-N14)", () => {
 
     it("create and patch responses omit receiptData and report hasReceipt", async () => {
       const repo = createInMemoryRepository([]);
-      const controller = new TaxController(withManager(repo) as any, {} as any);
+      const controller = taxController(withManager(repo) as any, {} as any);
       const created = await controller.createTaxRecord(userA, {
         name: "x",
         receiptFilename: "a.png",
@@ -538,7 +543,7 @@ describe("TaxController receipt validation (E20-N14)", () => {
 
     it("PATCH ignores a client-sent filename or MIME type without receiptData", async () => {
       const repo = createInMemoryRepository([withReceipt]);
-      const controller = new TaxController(withManager(repo) as any, {} as any);
+      const controller = taxController(withManager(repo) as any, {} as any);
       await controller.updateTaxRecord(userA, "r-A", {
         receiptFilename: "evil.pdf",
         receiptMimeType: "application/pdf",
@@ -569,16 +574,13 @@ describe("TaxController receipt validation (E20-N14)", () => {
 
     it("PATCH keeps the stored receipt when the body omits it", async () => {
       const repo = createInMemoryRepository([withReceipt]);
-      const controller = new TaxController(withManager(repo) as any, {} as any);
+      const controller = taxController(withManager(repo) as any, {} as any);
       await controller.updateTaxRecord(userA, "r-A", { name: "Renamed" });
       expect(repo.rows[0]).toMatchObject({ name: "Renamed", receiptData: PNG_URL });
     });
 
     it("GET receipt returns the bytes with the sniffed type to the owner", async () => {
-      const controller = new TaxController(
-        createInMemoryRepository([withReceipt]) as any,
-        {} as any,
-      );
+      const controller = taxController(createInMemoryRepository([withReceipt]) as any, {} as any);
       const file = await controller.getReceipt(userA, "r-A");
       expect(file.getHeaders().type).toBe("image/png");
       expect(await read(file)).toEqual(PNG_BYTES);
@@ -587,7 +589,7 @@ describe("TaxController receipt validation (E20-N14)", () => {
 
     it("GET receipt asks the repository explicitly for the select:false column", async () => {
       const repo = createInMemoryRepository([withReceipt]);
-      const controller = new TaxController(withManager(repo) as any, {} as any);
+      const controller = taxController(withManager(repo) as any, {} as any);
       await controller.getReceipt(userA, "r-A");
       const options = repo.findOne.mock.calls[0]?.[0] as any;
       expect(options.where).toEqual({ id: "r-A", userId: "userA" });
@@ -606,7 +608,7 @@ describe("TaxController receipt validation (E20-N14)", () => {
           receiptData: "data:text/html;base64,PGI+aGk8L2I+",
         },
       ]);
-      const controller = new TaxController(withManager(repo) as any, {} as any);
+      const controller = taxController(withManager(repo) as any, {} as any);
       await expect(controller.getReceipt(userB, "r-A")).rejects.toThrow(NotFoundException);
       await expect(controller.getReceipt(userA, "nope")).rejects.toThrow(NotFoundException);
       await expect(controller.getReceipt(userA, "r-N")).rejects.toThrow(NotFoundException);
@@ -642,7 +644,7 @@ describe("TaxController response shape (E21)", () => {
       ),
       update: vi.fn(),
     };
-    const controller = new TaxController(withManager(repo) as any, {} as any);
+    const controller = taxController(withManager(repo) as any, {} as any);
     const created = await controller.createTaxRecord(req, { ...base });
     const [bulk] = await controller.createBulkTaxRecords(req, { records: [{ ...base }] });
     for (const record of [created, bulk]) {
