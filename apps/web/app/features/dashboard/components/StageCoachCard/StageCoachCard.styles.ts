@@ -23,8 +23,24 @@ export const allowanceLink = cva({
   },
 });
 
+/** Teal-tinted next-step surface from the approved E15 dashboard design. */
 export const summaryRoot = cva({
-  base: { display: "flex", alignItems: "flex-start", gap: "4" },
+  base: {
+    display: "flex",
+    alignItems: "flex-start",
+    gap: "4",
+    backgroundColor: "primary.subtle",
+    borderWidth: "1px",
+    borderStyle: "solid",
+    borderColor: "primary.border",
+    borderRadius: "card",
+    color: "text.primary",
+    p: "density.cardPad",
+  },
+});
+
+export const payoffLink = cva({
+  base: { textDecoration: "none" },
 });
 
 export const summaryIcon = cva({

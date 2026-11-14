@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { SimulatorSplitLayout } from "./SimulatorSplitLayout";
 
@@ -121,6 +121,60 @@ describe("SimulatorSplitLayout Pattern", () => {
       />,
     );
     expect(screen.getByRole("region", { name: "Parameters" }).className).toContain("d_none");
+  });
+
+  describe("sticky only when the column fits the viewport", () => {
+    const renderWithHeight = (height: number) => {
+      vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(
+        () => ({ height }) as DOMRect,
+      );
+      return render(
+        <SimulatorSplitLayout content={<div>Chart</div>} controls={<div>Controls</div>} />,
+      );
+    };
+
+    afterEach(() => {
+      vi.restoreAllMocks();
+    });
+
+    it("stays sticky when the column fits below the header", () => {
+      vi.stubGlobal("innerHeight", 900);
+      renderWithHeight(600);
+      const region = screen.getByRole("region", { name: "Parameters" });
+      expect(region.dataset.sticky).toBe("true");
+      expect(region.className).toContain("lg:pos_sticky");
+    });
+
+    it("scrolls with the page when the column is taller than the viewport", () => {
+      vi.stubGlobal("innerHeight", 700);
+      renderWithHeight(1200);
+      const region = screen.getByRole("region", { name: "Parameters" });
+      expect(region.dataset.sticky).toBe("false");
+      expect(region.className).not.toContain("lg:pos_sticky");
+    });
+
+    it("subtracts --app-header-offset from the space available", () => {
+      vi.stubGlobal("innerHeight", 700);
+      document.documentElement.style.setProperty("--app-header-offset", "120px");
+      try {
+        renderWithHeight(600);
+        expect(screen.getByRole("region", { name: "Parameters" }).dataset.sticky).toBe("false");
+      } finally {
+        document.documentElement.style.removeProperty("--app-header-offset");
+      }
+    });
+
+    it("re-measures when the window is resized", () => {
+      vi.stubGlobal("innerHeight", 700);
+      renderWithHeight(800);
+      const region = screen.getByRole("region", { name: "Parameters" });
+      expect(region.dataset.sticky).toBe("false");
+      vi.stubGlobal("innerHeight", 1000);
+      act(() => {
+        window.dispatchEvent(new Event("resize"));
+      });
+      expect(region.dataset.sticky).toBe("true");
+    });
   });
 
   it("offsets both sticky elements by --app-header-offset", () => {

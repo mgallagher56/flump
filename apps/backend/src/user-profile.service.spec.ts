@@ -156,6 +156,52 @@ describe("UserProfileService (Deep Module)", () => {
     expect(result.dashboardWidgetSizes).toEqual({ accounts: "wide" });
   });
 
+  describe("salary sacrifice is never assumed", () => {
+    it("getProfile creates a new profile with salary sacrifice off", async () => {
+      mockUserProfileRepo.findOne.mockResolvedValue(null);
+
+      const result = await service.getProfile("user-123");
+
+      expect(mockUserProfileRepo.create).toHaveBeenCalledWith(
+        expect.objectContaining({ isSalarySacrifice: false }),
+      );
+      expect(result.isSalarySacrifice).toBe(false);
+    });
+
+    it("updateProfile creates a new profile with salary sacrifice off", async () => {
+      mockUserProfileRepo.findOne.mockResolvedValue(null);
+
+      const result = await service.updateProfile("user-123", { currency: "EUR" });
+
+      expect(mockUserProfileRepo.create).toHaveBeenCalledWith(
+        expect.objectContaining({ isSalarySacrifice: false }),
+      );
+      expect(result.isSalarySacrifice).toBe(false);
+    });
+
+    it("updateChecklist creates a new profile with salary sacrifice off", async () => {
+      mockUserProfileRepo.findOne.mockResolvedValue(null);
+
+      await service.updateChecklist("user-123", "profile", true);
+
+      expect(mockUserProfileRepo.create).toHaveBeenCalledWith(
+        expect.objectContaining({ isSalarySacrifice: false }),
+      );
+    });
+
+    it("reads a stored null as off", async () => {
+      mockUserProfileRepo.findOne.mockResolvedValue({
+        id: "profile-1",
+        userId: "user-123",
+        isSalarySacrifice: null,
+      });
+
+      const result = await service.getProfile("user-123");
+
+      expect(result.isSalarySacrifice).toBe(false);
+    });
+  });
+
   describe("lazy profile creation", () => {
     const uniqueViolation = () => Object.assign(new Error("duplicate key"), { code: "23505" });
     const wrappedViolation = () => {

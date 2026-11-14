@@ -22,13 +22,23 @@ export const growthNote = cva({
   base: { margin: 0, textStyle: "body.sm", color: "text.muted" },
 });
 
+/** "Changes here are not saved." on the left, "Update your details" on the right. */
 export const zoneFooter = cva({
   base: {
     display: "flex",
     flexWrap: "wrap",
     alignItems: "center",
+    justifyContent: "space-between",
+    flex: "1",
     gap: "8px",
     textStyle: "body.sm",
     minHeight: "touch",
+  },
+});
+
+export const zoneFooterNote = cva({
+  base: {
+    margin: "0",
+    color: "text.secondary",
   },
 });

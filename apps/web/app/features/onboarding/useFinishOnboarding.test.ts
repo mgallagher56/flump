@@ -4,14 +4,17 @@ import { deriveOnboardingSummary } from "./deriveOnboardingSummary";
 import { INITIAL_VALUES, type OnboardingValues } from "./types";
 import { FINISH_ERROR, PARTIAL_FINISH_ERROR, useFinishOnboarding } from "./useFinishOnboarding";
 
-const { navigate, updateProfile, apiFetch } = vi.hoisted(() => ({
+const { navigate, updateProfile, apiFetch, profileState } = vi.hoisted(() => ({
   navigate: vi.fn(),
   updateProfile: vi.fn(),
   apiFetch: vi.fn(),
+  profileState: { current: { onboardingCompleted: false } as { onboardingCompleted: boolean } },
 }));
 
 vi.mock("react-router", () => ({ useNavigate: () => navigate }));
-vi.mock("~/hooks/useUserProfile", () => ({ useUserProfile: () => ({ updateProfile }) }));
+vi.mock("~/hooks/useUserProfile", () => ({
+  useUserProfile: () => ({ updateProfile, profile: profileState.current }),
+}));
 vi.mock("~/services/api-client", () => ({
   apiFetch: (...args: unknown[]) => apiFetch(...args),
 }));
@@ -42,6 +45,7 @@ describe("useFinishOnboarding", () => {
     navigate.mockReset();
     updateProfile.mockReset();
     apiFetch.mockReset();
+    profileState.current = { onboardingCompleted: false };
     vi.spyOn(console, "error").mockImplementation(() => {});
   });
 
@@ -93,5 +97,26 @@ describe("useFinishOnboarding", () => {
     const { result } = setup();
     await act(() => result.current.finish());
     expect(updateProfile.mock.calls[0]?.[0]).toMatchObject({ isSalarySacrifice: false });
+  });
+
+  it("leaves a saved salary-sacrifice choice alone when onboarding is run again", async () => {
+    profileState.current = { onboardingCompleted: true };
+    updateProfile.mockResolvedValue(undefined);
+    apiFetch.mockResolvedValue([]);
+    const { result } = setup();
+    await act(() => result.current.finish());
+    expect(updateProfile.mock.calls[0]?.[0]).not.toHaveProperty("isSalarySacrifice");
+  });
+
+  it("saves an answer given in onboarding even when run again", async () => {
+    profileState.current = { onboardingCompleted: true };
+    updateProfile.mockResolvedValue(undefined);
+    apiFetch.mockResolvedValue([]);
+    const answered: OnboardingValues = { ...values, isSalarySacrifice: true };
+    const { result } = renderHook(() =>
+      useFinishOnboarding(answered, deriveOnboardingSummary(answered)),
+    );
+    await act(() => result.current.finish());
+    expect(updateProfile.mock.calls[0]?.[0]).toMatchObject({ isSalarySacrifice: true });
   });
 });

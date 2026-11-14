@@ -5,7 +5,7 @@ import { sva } from "../../../styled-system/css";
  * "not saved" through shape and words, never colour alone. Never `surface.hero`.
  */
 export const scenarioZone = sva({
-  slots: ["root", "header", "titleRow", "basis", "body", "footer", "reset"],
+  slots: ["root", "header", "titleRow", "titleGroup", "basis", "body", "footer", "reset"],
   base: {
     root: {
       display: "flex",
@@ -29,7 +29,15 @@ export const scenarioZone = sva({
       flexWrap: "wrap",
       alignItems: "center",
       justifyContent: "space-between",
+      gap: "3",
+    },
+    /** Title and badge sit together on the left; the badge follows the title inline. */
+    titleGroup: {
+      display: "flex",
+      flexWrap: "wrap",
+      alignItems: "center",
       gap: "2",
+      minWidth: "0",
     },
     basis: {
       margin: "0",
@@ -48,12 +56,16 @@ export const scenarioZone = sva({
       display: "flex",
       flexWrap: "wrap",
       alignItems: "center",
+      justifyContent: "space-between",
       gap: "3",
       fontSize: "sm",
       color: "text.secondary",
     },
+    /** Always in the header's top right; wraps under the title on narrow screens. */
     reset: {
-      alignSelf: "flex-start",
+      flexShrink: "0",
+      gap: "1.5",
+      _disabled: { cursor: "not-allowed" },
     },
   },
 });

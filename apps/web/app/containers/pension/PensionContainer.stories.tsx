@@ -78,6 +78,26 @@ export const TaxTrap: Story = {
     await expect(
       (await canvas.findAllByRole("button", { name: "Model this contribution" })).length,
     ).toBeGreaterThan(0);
+    // E31: the taper note follows the main content rather than leading the page.
+    const note = canvasElement.querySelector('[aria-labelledby="pension-trap-title"]');
+    const tabs = canvas.getByRole("tablist", { name: "Pension tools" });
+    await expect(
+      Boolean(note && tabs.compareDocumentPosition(note) & Node.DOCUMENT_POSITION_FOLLOWING),
+    ).toBe(true);
+  },
+};
+
+// E31: adjusted net income outside £90,000 to £125,140 shows no taper note.
+export const TaxTrapAboveBand: Story = {
+  parameters: {
+    router: {
+      loaderData: loaderData(accounts, { ...salaried, annualSalary: 140000, pensionPercent: 0 }),
+    },
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect((await canvas.findAllByText("Total in your pots")).length).toBeGreaterThan(0);
+    await expect(canvasElement.querySelector('[aria-labelledby="pension-trap-title"]')).toBeNull();
   },
 };
 

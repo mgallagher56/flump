@@ -144,6 +144,30 @@ describe("Tools Routes", () => {
     expect((thrown as Response).headers.get("Location")).toBe(`/tools/${to}`);
   });
 
+  it("keeps the query string when redirecting an alias", async () => {
+    const thrown = await slugLoader({
+      params: { slug: "mortgage-overpay-vs-isa" },
+      request: new Request("http://localhost/tools/mortgage-overpay-vs-isa?utm_source=x&a=1"),
+    } as any).catch((e: unknown) => e);
+    expect((thrown as Response).status).toBe(301);
+    expect((thrown as Response).headers.get("Location")).toBe(
+      "/tools/mortgage-overpayment-vs-isa-calculator?utm_source=x&a=1",
+    );
+  });
+
+  it.each([
+    ["UK-100k-Tax-Trap-Calculator", "uk-100k-tax-trap-calculator"],
+    ["Mortgage-Overpay-VS-ISA", "mortgage-overpayment-vs-isa-calculator"],
+  ])("matches %s case-insensitively and redirects to /tools/%s", async (from, to) => {
+    const thrown = await slugLoader({
+      params: { slug: from },
+      request: new Request(`http://localhost/tools/${from}?ref=1`),
+    } as any).catch((e: unknown) => e);
+    expect(thrown).toBeInstanceOf(Response);
+    expect((thrown as Response).status).toBe(301);
+    expect((thrown as Response).headers.get("Location")).toBe(`/tools/${to}?ref=1`);
+  });
+
   it("renders ToolDetailPage for the pay rise take-home calculator", async () => {
     const res = await slugLoader({
       params: { slug: "uk-pay-rise-take-home-calculator" },

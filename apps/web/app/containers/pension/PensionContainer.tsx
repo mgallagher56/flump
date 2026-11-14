@@ -3,6 +3,7 @@ import {
   calculateEmployerNISavings,
   getCurrentUKTaxYear,
   isFigureKnown,
+  isInTaxTrapAlertBand,
   PortfolioSnapshot,
   profileFactsFromProfile,
   selectTakeHome,
@@ -161,7 +162,7 @@ export const PensionContainer: FC = () => {
     : (profile.pensionEmployerPercent ?? userProfile?.pensionEmployerPercent ?? 3.0);
   const isSalarySacrifice = isReset
     ? (profile.isSalarySacrifice ?? userProfile?.isSalarySacrifice ?? false)
-    : (profile.isSalarySacrifice ?? userProfile?.isSalarySacrifice ?? true);
+    : (profile.isSalarySacrifice ?? userProfile?.isSalarySacrifice ?? false);
   const isSalarySacrificeEmployerNi = isReset
     ? (profile.isSalarySacrificeEmployerNi ?? userProfile?.isSalarySacrificeEmployerNi ?? false)
     : (profile.isSalarySacrificeEmployerNi ?? userProfile?.isSalarySacrificeEmployerNi ?? false);
@@ -288,6 +289,8 @@ export const PensionContainer: FC = () => {
     );
   }, [effectiveSalary, effectiveEmployeePct, effectiveIsSalarySacrifice, knownRegion]);
   const trapCopy = getTaxTrapCopy(taxTrap);
+  // Saved baseline and profile figures only (adjusted net income after the saved contribution).
+  const showTrapNote = isInTaxTrapAlertBand(taxTrap.adjustedNetIncome);
 
   // Seeds the zone's extra-monthly lever only. Nothing is saved (advice boundary R5).
   const handleModelTaxTrapContribution = (contributionReq: number) => {
@@ -332,56 +335,6 @@ export const PensionContainer: FC = () => {
         title="Your pension"
       />
       <LiveRegion debounceMs={1000} message={pensionHeadline} visuallyHidden />
-
-      {/* £100k-£125k Personal Allowance taper: stated as fact, with a button to model it. */}
-      {taxTrap.isInTaxTrap && (
-        <section aria-labelledby="pension-trap-title" className={trapAlert}>
-          <div className={trapHeadingRow}>
-            <h2 className={trapHeading} id="pension-trap-title">
-              <Icon icon={TriangleAlert} size="sm" />
-              Personal Allowance taper, £100,000–£125,140: {trapCopy.incomeTaxRate} marginal rate
-              (unverified estimate)
-            </h2>
-            <StatusBadge size="sm" variant="warning">
-              {trapCopy.breakdown}
-            </StatusBadge>
-          </div>
-          <p>
-            Your adjusted net income is{" "}
-            <strong className={strong}>{formatCurrency(taxTrap.adjustedNetIncome)}</strong>. Every
-            £2 earned above £100k reduces your Personal Allowance by £1, resulting in a marginal
-            rate of {trapCopy.breakdown} and{" "}
-            {formatCurrency(taxTrap.estimatedTaxSavedByEscapingGbp)} in additional tax.
-          </p>
-          {!knownRegion && (
-            <p className={mutedNote}>
-              {REGION_ASSUMPTION_LABEL}{" "}
-              <Link to={REGION_SETTINGS_PATH} className={regionLinkStyle}>
-                Set your region
-              </Link>
-            </p>
-          )}
-          <div className={trapAction}>
-            <p>
-              Adjusted net income above £100,000 reduces the personal allowance. A contribution of{" "}
-              <strong className={strong}>
-                {formatCurrency(taxTrap.contributionRequiredToEscapeGbp)}
-              </strong>{" "}
-              would bring adjusted net income to £100,000 in this estimate.
-            </p>
-            <Button
-              size="sm"
-              type="button"
-              variant="outline"
-              onClick={() =>
-                handleModelTaxTrapContribution(taxTrap.contributionRequiredToEscapeGbp)
-              }
-            >
-              Model this contribution
-            </Button>
-          </div>
-        </section>
-      )}
 
       <PensionSummary
         directMonthlyContrib={directMonthlyContrib}
@@ -496,6 +449,76 @@ export const PensionContainer: FC = () => {
           Auto-enrolment minimum: 5% from you and 3% from your employer, 8% in total.
         </p>
       </div>
+
+      {/* Personal Allowance taper (E31): after the main content, and only when saved adjusted net
+          income is in the engine's alert band. Never gated on scenario inputs. */}
+      {showTrapNote && (
+        <section aria-labelledby="pension-trap-title" className={trapAlert}>
+          {taxTrap.isInTaxTrap ? (
+            <>
+              <div className={trapHeadingRow}>
+                <h2 className={trapHeading} id="pension-trap-title">
+                  <Icon icon={TriangleAlert} size="sm" />
+                  Personal Allowance taper, £100,000–£125,140: {trapCopy.incomeTaxRate} marginal
+                  rate (unverified estimate)
+                </h2>
+                <StatusBadge size="sm" variant="warning">
+                  {trapCopy.breakdown}
+                </StatusBadge>
+              </div>
+              <p>
+                Your adjusted net income is{" "}
+                <strong className={strong}>{formatCurrency(taxTrap.adjustedNetIncome)}</strong>.
+                Every £2 earned above £100k reduces your Personal Allowance by £1, resulting in a
+                marginal rate of {trapCopy.breakdown} and{" "}
+                {formatCurrency(taxTrap.estimatedTaxSavedByEscapingGbp)} in additional tax.
+              </p>
+            </>
+          ) : (
+            <>
+              <h2 className={trapHeading} id="pension-trap-title">
+                <Icon icon={TriangleAlert} size="sm" />
+                Personal Allowance taper starts at £100,000
+              </h2>
+              <p>
+                Your adjusted net income is{" "}
+                <strong className={strong}>{formatCurrency(taxTrap.adjustedNetIncome)}</strong>.
+                Above £100,000, every £2 of adjusted net income reduces your Personal Allowance by
+                £1, until it reaches zero at £125,140.
+              </p>
+            </>
+          )}
+          {!knownRegion && (
+            <p className={mutedNote}>
+              {REGION_ASSUMPTION_LABEL}{" "}
+              <Link to={REGION_SETTINGS_PATH} className={regionLinkStyle}>
+                Set your region
+              </Link>
+            </p>
+          )}
+          {taxTrap.isInTaxTrap && (
+            <div className={trapAction}>
+              <p>
+                Adjusted net income above £100,000 reduces the personal allowance. A contribution of{" "}
+                <strong className={strong}>
+                  {formatCurrency(taxTrap.contributionRequiredToEscapeGbp)}
+                </strong>{" "}
+                would bring adjusted net income to £100,000 in this estimate.
+              </p>
+              <Button
+                size="sm"
+                type="button"
+                variant="outline"
+                onClick={() =>
+                  handleModelTaxTrapContribution(taxTrap.contributionRequiredToEscapeGbp)
+                }
+              >
+                Model this contribution
+              </Button>
+            </div>
+          )}
+        </section>
+      )}
 
       <AddPensionAccountDialog isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} />
     </div>

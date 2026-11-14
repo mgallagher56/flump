@@ -159,7 +159,9 @@ describe("<TakeHomeCalculator /> saved figures and the illustration", () => {
     expect(getByText("Illustration, not saved")).toBeDefined();
     expect(getByText(/Starting from your figures: £45,000 gross salary/)).toBeDefined();
     // Nothing to reset until an input differs from the saved figures.
-    expect(queryByRole("button", { name: "Reset to saved figures" })).toBeNull();
+    expect(
+      (getByRole("button", { name: "Reset to saved figures" }) as HTMLButtonElement).disabled,
+    ).toBe(true);
 
     fireEvent.change(getByLabelText("Gross salary range slider"), { target: { value: "90000" } });
     fireEvent.change(getByLabelText("Pension contribution range slider"), {
@@ -169,7 +171,9 @@ describe("<TakeHomeCalculator /> saved figures and the illustration", () => {
     expect(fetchSpy).not.toHaveBeenCalled();
 
     fireEvent.click(getByRole("button", { name: "Reset to saved figures" }));
-    expect(queryByRole("button", { name: "Reset to saved figures" })).toBeNull();
+    expect(
+      (getByRole("button", { name: "Reset to saved figures" }) as HTMLButtonElement).disabled,
+    ).toBe(true);
     expect((getByLabelText("Gross salary input") as HTMLInputElement).value).toBe("£45,000");
     fetchSpy.mockRestore();
   });
@@ -248,7 +252,9 @@ describe("<TakeHomeCalculator /> the next £1,000", () => {
     fireEvent.click(getByRole("button", { name: "Model a pension contribution" }));
     expect((getByLabelText("Gross pay a year input") as HTMLInputElement).value).toBe("£80,000");
     fireEvent.click(getByRole("button", { name: "Reset to saved figures" }));
-    expect(queryByRole("button", { name: "Reset to saved figures" })).toBeNull();
+    expect(
+      (getByRole("button", { name: "Reset to saved figures" }) as HTMLButtonElement).disabled,
+    ).toBe(true);
     expect((getByLabelText("Gross pay a year input") as HTMLInputElement).value).toBe("£45,000");
     expect(getByRole("button", { name: "Model a pension contribution" })).toBeDefined();
   });

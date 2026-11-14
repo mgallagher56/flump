@@ -44,6 +44,17 @@ describe("<ForecasterControls />", () => {
     ).toBe("false");
   });
 
+  it("presses only one chip when your pots' rate matches a preset", () => {
+    render(<Harness portfolioReturnRate={5} />);
+    fireEvent.click(screen.getByRole("button", { name: "Your pots (5%)" }));
+    expect(current.values.growthRate).toBe(5);
+    const pressed = screen
+      .getAllByRole("button")
+      .filter((b) => b.getAttribute("aria-pressed") === "true");
+    expect(pressed.map((b) => b.textContent)).toEqual(["Your pots (5%)"]);
+    expect(screen.getByRole("button", { name: "5%" }).getAttribute("aria-pressed")).toBe("false");
+  });
+
   it("a cleared pill does not snap the value to 0", () => {
     render(<Harness />);
     const pill = screen.getByLabelText("Years to retirement input") as HTMLInputElement;

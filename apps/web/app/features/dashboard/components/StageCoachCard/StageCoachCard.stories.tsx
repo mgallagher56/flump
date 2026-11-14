@@ -17,6 +17,10 @@ export const WithAllowance: Story = {
   play: async ({ canvasElement }) => {
     const link = within(canvasElement).getAllByRole("link", { name: "Open debt payoff" })[0];
     await expect(link?.getAttribute("href")).toBe("/app/debt");
+    // The approved next-step treatment: teal-tinted card, solid primary link button.
+    await expect(link?.className).toContain("bg_primary.solid");
+    const card = within(canvasElement).getAllByTestId("stage-coach-card")[0];
+    await expect(card?.className).toContain("bg-c_primary.subtle");
   },
 };
 

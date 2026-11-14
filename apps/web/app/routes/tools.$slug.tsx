@@ -346,16 +346,18 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
   ];
 };
 
-export const loader = async ({ params }: LoaderFunctionArgs) => {
+export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   const slug = params.slug || "";
-  const canonical = resolveToolSlug(slug);
+  // Slugs match case-insensitively; a mixed-case link redirects to the lowercase canonical one.
+  const canonical = resolveToolSlug(slug.toLowerCase());
 
   if (!canonical) {
     throw new Response("Calculator Not Found", { status: 404 });
   }
-  // Older web and marketing slugs move permanently to the shared canonical slug.
+  // Older web and marketing slugs move permanently to the shared canonical slug, keeping the
+  // query string (campaign and referral parameters).
   if (canonical !== slug) {
-    throw redirect(`/tools/${canonical}`, 301);
+    throw redirect(`/tools/${canonical}${new URL(request.url).search}`, 301);
   }
   const tool = TOOLS_DATA[canonical];
 

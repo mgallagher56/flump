@@ -282,6 +282,77 @@ describe("PensionContainer", () => {
       expect(screen.queryByRole("button", { name: /^apply/i })).toBeNull();
     });
 
+    describe("taper note gating on saved adjusted net income (E31)", () => {
+      const trapNote = (container: HTMLElement) =>
+        container.querySelector('[aria-labelledby="pension-trap-title"]');
+      const saved = (annualSalary: number) =>
+        setProfile({
+          annualSalary,
+          pensionPercent: 0,
+          pensionEmployerPercent: 0,
+          setupChecklistCompletedSteps: ["pension"],
+        });
+
+      // A saved baseline with no salary or contribution, so the profile figures drive the income.
+      beforeEach(async () => {
+        const { getDefaultStore } = await import("jotai");
+        const { financialBaselineAtom, NO_SALARY_BASELINE } = await import(
+          "~/state/baseline.store"
+        );
+        getDefaultStore().set(financialBaselineAtom, {
+          ...NO_SALARY_BASELINE,
+          pensionContributionPct: 0,
+        });
+      });
+
+      it("is hidden below £90,000", () => {
+        saved(89_999);
+        const { container } = render(<PensionContainer />);
+        expect(trapNote(container)).toBeNull();
+      });
+
+      it("is hidden above £125,140", () => {
+        saved(125_141);
+        const { container } = render(<PensionContainer />);
+        expect(trapNote(container)).toBeNull();
+      });
+
+      it("is shown at £100,000, stating facts with no action", () => {
+        saved(100_000);
+        const { container } = render(<PensionContainer />);
+        expect(trapNote(container)).not.toBeNull();
+        expect(trapNote(container)?.textContent).toContain("£100,000");
+        expect(screen.queryByRole("button", { name: "Model this contribution" })).toBeNull();
+      });
+
+      it("uses saved adjusted net income, net of a salary sacrifice contribution", () => {
+        setProfile({
+          annualSalary: 130_000,
+          pensionPercent: 10,
+          pensionEmployerPercent: 0,
+          isSalarySacrifice: true,
+          setupChecklistCompletedSteps: ["pension"],
+        });
+        const { container } = render(<PensionContainer />);
+        // £130,000 less 10% sacrifice is £117,000: inside the band.
+        expect(trapNote(container)).not.toBeNull();
+      });
+
+      it("renders after the KPI strip, the tabs and the scenario zone", () => {
+        saved(110_000);
+        // Pots give the KPI strip its hero block.
+        testLoaderData = { ...testLoaderData, accounts: defaultLoaderData.accounts };
+        const { container } = render(<PensionContainer />);
+        const note = trapNote(container) as Element;
+        const precedesNote = (el: Element | null) =>
+          Boolean(el && el.compareDocumentPosition(note) & Node.DOCUMENT_POSITION_FOLLOWING);
+        expect(precedesNote(container.querySelector("[data-tone='hero']"))).toBe(true);
+        expect(precedesNote(screen.getByRole("tablist", { name: "Pension tools" }))).toBe(true);
+        expect(precedesNote(container.querySelector("#pension-panel-forecaster"))).toBe(true);
+        expect(precedesNote(container.querySelector("#pension-panel-rules"))).toBe(true);
+      });
+    });
+
     it("shows no taper note below the band", () => {
       setProfile({
         annualSalary: 39000,
@@ -468,7 +539,10 @@ describe("PensionContainer", () => {
         ["Extra each month", "Years to retirement", "Growth a year"].map((l) => slider(l).value),
       ).toEqual(before);
       expect((screen.getByLabelText(/today's money/) as HTMLInputElement).checked).toBe(false);
-      expect(screen.queryByRole("button", { name: "Reset to saved figures" })).toBeNull();
+      expect(
+        (screen.getByRole("button", { name: "Reset to saved figures" }) as HTMLButtonElement)
+          .disabled,
+      ).toBe(true);
     });
 
     it("keeps the scenario when switching tabs and back", () => {

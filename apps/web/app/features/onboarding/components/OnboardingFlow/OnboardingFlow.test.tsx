@@ -2,6 +2,7 @@ import { fireEvent, render, screen, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { MISSING_GROSS_ERROR, MISSING_REGION_ERROR } from "../IncomeStep";
 import { OnboardingFlow } from "./OnboardingFlow";
+import { onboardingFlowRecipe } from "./OnboardingFlow.styles";
 
 const seedState = vi.hoisted(() => ({ showBanner: false, dismissBanner: vi.fn() }));
 
@@ -28,6 +29,14 @@ describe("<OnboardingFlow />", () => {
   beforeEach(() => {
     seedState.showBanner = false;
     seedState.dismissBanner.mockReset();
+  });
+
+  it("subtracts the app shell's top padding and bottom-bar offset from its md min height, so it never scrolls", () => {
+    const page = onboardingFlowRecipe().page;
+    const mdMinHeight = page.split(" ").find((c) => c.startsWith("md:min-h_")) ?? "";
+    expect(mdMinHeight).toContain("app-header-offset");
+    expect(mdMinHeight).toContain("spacing.6");
+    expect(mdMinHeight).toContain("app-bottom-bar-offset");
   });
 
   it("shows the action error in one alert", () => {

@@ -1,10 +1,11 @@
-import { Card, formatMoney, Icon } from "@repo/ui";
+import { ButtonLink, formatMoney, Icon } from "@repo/ui";
 import { CreditCard } from "lucide-react";
 import type { FC } from "react";
 import { SampleAwareLink } from "~/components/navigation/SampleAwareLink";
 import {
   allowanceLink,
   allowanceNote,
+  payoffLink,
   summaryBody,
   summaryDescription,
   summaryIcon,
@@ -25,7 +26,8 @@ export interface StageCoachCardProps {
 /**
  * Unsecured debt summary card. The lifecycle stage only decides whether the card shows (R4);
  * its wording is the same factual summary for everyone and names no action to take. It is a
- * plain summary card, not a CoachCard, because R4 keeps CoachCard to app housekeeping.
+ * plain summary card, not a CoachCard, because R4 keeps CoachCard to app housekeeping. It keeps the
+ * approved E15 treatment: a teal-tinted surface and a solid "Open debt payoff" link button.
  */
 export const StageCoachCard: FC<StageCoachCardProps> = ({
   unsecuredDebt,
@@ -38,14 +40,11 @@ export const StageCoachCard: FC<StageCoachCardProps> = ({
     : "Debt-free date not calculated yet.";
 
   return (
-    <Card
+    <section
       aria-labelledby="stage-coach-card-title"
-      as="section"
       className={summaryRoot()}
       data-testid="stage-coach-card"
-      elevation="resting"
       id="stage-coach-card"
-      padding="md"
     >
       <div aria-hidden="true" className={summaryIcon()}>
         <Icon icon={CreditCard} size="lg" />
@@ -58,9 +57,9 @@ export const StageCoachCard: FC<StageCoachCardProps> = ({
           {debt} of unsecured debt remaining. {target}
         </p>
         <div className={summaryLinks()}>
-          <SampleAwareLink className={allowanceLink()} to="/app/debt">
-            Open debt payoff
-          </SampleAwareLink>
+          <ButtonLink asChild className={payoffLink()} size="sm" variant="primary">
+            <SampleAwareLink to="/app/debt">Open debt payoff</SampleAwareLink>
+          </ButtonLink>
           {weeklyAllowance === null ? (
             <SampleAwareLink className={allowanceLink()} to="/app/budget">
               Add your budget to see your safe to spend allowance
@@ -72,6 +71,6 @@ export const StageCoachCard: FC<StageCoachCardProps> = ({
           )}
         </div>
       </div>
-    </Card>
+    </section>
   );
 };

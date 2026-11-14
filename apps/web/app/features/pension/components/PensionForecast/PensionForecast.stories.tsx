@@ -47,7 +47,7 @@ export const ModifiedThenReset: Story = {
       target: { value: "300" },
     });
     await userEvent.click(await canvas.findByRole("button", { name: "Reset to saved figures" }));
-    await expect(canvas.queryByRole("button", { name: "Reset to saved figures" })).toBeNull();
+    await expect(canvas.getByRole("button", { name: "Reset to saved figures" })).toBeDisabled();
   },
 };
 

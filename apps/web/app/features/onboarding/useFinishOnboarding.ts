@@ -34,7 +34,7 @@ export type FinishSaveState = "idle" | "partial" | "unconfirmed";
 export function useFinishOnboarding(values: OnboardingValues, summary: OnboardingSummary) {
   const navigate = useNavigate();
   const notify = useOnboardingNotify();
-  const { updateProfile } = useUserProfile();
+  const { updateProfile, profile } = useUserProfile();
   const seededRef = useRef<Set<string>>(new Set());
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -81,9 +81,14 @@ export function useFinishOnboarding(values: OnboardingValues, summary: Onboardin
         hasMortgage: values.housingStatus === "mortgage" || mortgageBalance > 0,
         homeValue: propertyValue > 0 ? propertyValue : null,
         pensionPercent: values.pensionPercent ?? undefined,
-        // Not asked in onboarding: save net pay, the method the summary's take-home (and the
-        // budget income row) used, so the database's salary-sacrifice default never applies.
-        isSalarySacrifice: values.isSalarySacrifice ?? false,
+        // Not asked in onboarding: on the first run save net pay, the method the summary's
+        // take-home (and the budget income row) used. On a later run leave the field out, so a
+        // choice saved since (in settings or on the pension page) is never overwritten.
+        ...(values.isSalarySacrifice !== null
+          ? { isSalarySacrifice: values.isSalarySacrifice }
+          : profile?.onboardingCompleted
+            ? {}
+            : { isSalarySacrifice: false }),
         enabledPages: pagesToSave,
         dashboardWidgets,
         dashboardWidgetOrder,

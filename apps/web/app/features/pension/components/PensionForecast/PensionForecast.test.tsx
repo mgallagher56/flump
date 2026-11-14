@@ -53,12 +53,15 @@ describe("<PensionForecast />", () => {
     expect(
       screen.getByText("Starting from your figures: £50,000 salary, 6% you and 4% your employer"),
     ).toBeDefined();
-    expect(screen.queryByRole("button", { name: /Reset to saved figures/ })).toBeNull();
+    expect(
+      (screen.getByRole("button", { name: /Reset to saved figures/ }) as HTMLButtonElement)
+        .disabled,
+    ).toBe(true);
     expect(screen.queryByRole("button", { name: /Sync/i })).toBeNull();
     expect(screen.queryByRole("button", { name: /Apply/i })).toBeNull();
   });
 
-  it("moving a lever shows Reset, and Reset restores the saved figures", () => {
+  it("moving a lever enables Reset, and Reset restores the saved figures", () => {
     render(<Harness />);
     const extra = screen.getByLabelText("Extra each month range slider") as HTMLInputElement;
     fireEvent.change(extra, { target: { value: "200" } });
@@ -67,7 +70,10 @@ describe("<PensionForecast />", () => {
     expect((screen.getByLabelText("Extra each month range slider") as HTMLInputElement).value).toBe(
       "0",
     );
-    expect(screen.queryByRole("button", { name: "Reset to saved figures" })).toBeNull();
+    expect(
+      (screen.getByRole("button", { name: "Reset to saved figures" }) as HTMLButtonElement)
+        .disabled,
+    ).toBe(true);
   });
 
   it("no salary shows the prompt and no projection", () => {
@@ -76,6 +82,15 @@ describe("<PensionForecast />", () => {
       "to project your pension.",
     );
     expect(screen.queryByLabelText("Extra each month range slider")).toBeNull();
+  });
+
+  it("the footer notes that changes are not saved beside 'Update your details'", () => {
+    render(<Harness />);
+    const note = screen.getByText("Changes here are not saved.");
+    const link = screen.getByRole("button", { name: "Update your details" });
+    // Same footer row, note first so it sits on the left and the link on the right.
+    expect(note.parentElement).toBe(link.parentElement);
+    expect(note.compareDocumentPosition(link) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
   it("'Update your details' opens the saved details and carries no scenario values", () => {

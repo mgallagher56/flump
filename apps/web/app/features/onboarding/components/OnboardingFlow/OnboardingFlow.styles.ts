@@ -5,7 +5,13 @@ export const onboardingFlowRecipe = sva({
   base: {
     page: {
       // Fill the space below the app header from md up; on phones let the content set the height.
-      minHeight: { base: "auto", md: "calc(100dvh - var(--app-header-offset, 0px))" },
+      // The app shell's <main> (root.tsx) adds paddingTop token 6 from md and, under lg, a bottom
+      // padding of the bottom-bar offset plus the safe area; subtract both so the page never
+      // scrolls by that padding. Keep these in step with root.tsx.
+      minHeight: {
+        base: "auto",
+        md: "calc(100dvh - var(--app-header-offset, 0px) - token(spacing.6) - var(--app-bottom-bar-offset, 0px) - env(safe-area-inset-bottom, 0px))",
+      },
       backgroundColor: "surface.canvas",
       color: "text.primary",
       display: "flex",

@@ -184,7 +184,7 @@ export class UserProfile {
 
   @Column({
     name: "is_salary_sacrifice",
-    default: true,
+    default: false,
   })
   isSalarySacrifice: boolean;
 
