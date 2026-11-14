@@ -13,7 +13,7 @@ export const optionsStack = cva({
   base: { display: "flex", flexDirection: "column", gap: "6", paddingTop: "2" },
 });
 
-/** Switches fill the zone's width: 1 column on a phone, up to 3 on a wide screen. */
+/** Switches fill the zone width: 1 column on a phone, 4 on a wide screen, so each switch sits near its label. */
 export const optionItems = cva({
   base: {
     display: "grid",
