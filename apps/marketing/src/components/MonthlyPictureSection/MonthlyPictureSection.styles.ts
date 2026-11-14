@@ -2,71 +2,37 @@ import { cva } from "@repo/ui/styled-system/css";
 
 export const pictureGrid = cva({
   base: {
+    listStyle: "none",
+    margin: 0,
+    padding: 0,
     display: "grid",
-    gridTemplateColumns: { base: "1fr", md: "repeat(3, minmax(0, 1fr))" },
-    gap: "6",
+    gridTemplateColumns: { base: "1fr", md: "repeat(3, 1fr)" },
+    gap: { base: "4", md: "6" },
   },
 });
 
 export const pictureCard = cva({
-  base: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "3",
-    height: "100%",
-  },
-});
-
-export const pictureEyebrow = cva({
-  base: {
-    fontSize: "xs",
-    fontWeight: "semibold",
-    letterSpacing: "0.01em",
-    color: "primary",
-  },
+  base: { display: "flex", flexDirection: "column", gap: "3" },
 });
 
 export const pictureTitle = cva({
-  base: {
-    fontFamily: "display",
-    fontSize: "xl",
-    fontWeight: "bold",
-    color: "text.primary",
-    margin: "0",
-  },
+  base: { textStyle: "heading.md", color: "text.primary", margin: 0 },
 });
 
 export const pictureBody = cva({
-  base: {
-    fontSize: "sm",
-    lineHeight: "1.6",
-    color: "text.secondary",
-    margin: "0",
-  },
+  base: { textStyle: "body.md", color: "text.secondary", margin: 0 },
 });
 
-export const pictureExample = cva({
-  base: {
-    marginTop: "auto",
-    paddingTop: "3",
-    borderTopWidth: "1px",
-    borderTopStyle: "dashed",
-    borderTopColor: "border.subtle",
-    display: "flex",
-    alignItems: "baseline",
-    justifyContent: "space-between",
-    gap: "3",
-    fontSize: "sm",
-    color: "text.muted",
-  },
+export const pictureFooter = cva({
+  base: { textStyle: "body.md", color: "text.secondary", margin: 0 },
 });
 
-export const pictureFigure = cva({
+export const pictureLink = cva({
   base: {
-    fontFamily: "display",
-    fontSize: "lg",
-    fontWeight: "bold",
-    color: "text.primary",
-    fontVariantNumeric: "tabular-nums",
+    color: "primary",
+    fontWeight: "semibold",
+    textDecoration: "underline",
+    textUnderlineOffset: "3px",
+    _hover: { color: "primary.hover" },
   },
 });

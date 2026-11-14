@@ -1,12 +1,13 @@
 import { BUSINESS_DETAILS, formatPrice } from "@flump/business-details";
+import { expectPageRules } from "@repo/ui/testing";
 import { TOOL_CATALOGUE } from "@repo/ui/tools";
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import { HelmetProvider } from "react-helmet-async";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { PRICE_NOT_SET } from "../../utils/pricing";
 import { signupCta } from "../../utils/site";
-import { CANONICAL_TOOL_SLUGS } from "../../utils/toolSlugs";
-import { PricingPage } from "./PricingPage";
+import { BETA_FEATURES, BETA_STATEMENT, PricingPage } from "./PricingPage";
 
 const renderPage = () =>
   render(
@@ -21,59 +22,66 @@ afterEach(() => {
   vi.unstubAllEnvs();
 });
 
-describe("PricingPage", () => {
-  it("states the free, invite-only beta and that nothing is charged", () => {
+const placeholderFigures = [
+  formatPrice(BUSINESS_DETAILS.price.value.monthly),
+  formatPrice(BUSINESS_DETAILS.price.value.annual),
+  "£4.99",
+];
+
+describe("PricingPage (D10 b)", () => {
+  it("states one pricing position: free during the beta, nothing charged, price not set", () => {
     const { container } = renderPage();
-    expect(container.textContent).toMatch(/free, invite-only beta/i);
-    expect(container.textContent).toMatch(/Nothing is charged/);
-    expect(container.textContent).toMatch(/price is not set/);
     expect(screen.getByRole("heading", { level: 1, name: "Pricing" })).toBeDefined();
-    expect(screen.getByText("Free today")).toBeDefined();
+    expect(screen.getByText(BETA_STATEMENT)).toBeDefined();
+    const text = container.textContent ?? "";
+    expect(text).not.toMatch(/not been announced|Free today|free, invite-only/i);
+    // "Free" only ever appears as "free during the beta" (ruling 4).
+    for (const match of text.matchAll(/free[^.]*/gi))
+      expect(match[0]).toMatch(/free during the beta/i);
   });
 
-  it("does not claim a trial, Pro tier or no-card promise", () => {
+  it("puts the beta plan first and the paid plan as one quiet card", () => {
     const { container } = renderPage();
-    expect(container.textContent).not.toMatch(/trial|Pro\b|No credit card/i);
-    expect(container.textContent).not.toMatch(/coming soon|Introductory/i);
+    const plans = Array.from(container.querySelectorAll("[data-plan]"));
+    expect(plans.map((p) => p.getAttribute("data-plan"))).toEqual(["beta", "paid"]);
+    expect(
+      within(plans[0] as HTMLElement).getByRole("heading", { name: "Free during the beta" }),
+    ).toBeDefined();
+    expect(within(plans[0] as HTMLElement).queryByText("Beta")).toBeNull();
+    expect(within(plans[1] as HTMLElement).getByText(PRICE_NOT_SET)).toBeDefined();
+    expect(within(plans[1] as HTMLElement).queryByRole("button")).toBeNull();
+    expect(within(plans[1] as HTMLElement).queryByRole("link")).toBeNull();
   });
 
-  it("asks for an invite through the shared sign-up CTA, not a closed sign-up link", () => {
+  it("has no billing toggle and no example price anywhere", () => {
+    const { container } = renderPage();
+    expect(screen.queryByRole("switch")).toBeNull();
+    const text = container.textContent ?? "";
+    for (const figure of placeholderFigures) expect(text).not.toContain(figure);
+    expect(text).not.toMatch(/per month|per year|billed annually|Example figure only/i);
+  });
+
+  it("asks for an invite through the shared sign-up CTA, the page's one primary button", () => {
     renderPage();
-    const link = within(screen.getByRole("main")).getByText("Request an invite").closest("a");
-    expect(link?.getAttribute("href")).toBe(signupCta().href);
     const main = screen.getByRole("main");
+    const link = within(main).getByRole("link", { name: "Request an invite" });
+    expect(link.getAttribute("href")).toBe(signupCta().href);
     expect(within(main).queryByText("Get started")).toBeNull();
     expect(main.querySelector('a[href$="/signUp"], a[href$="/signup"]')).toBeNull();
+    expectPageRules(main, { projectionNotices: 0 });
   });
 
-  it("keeps the paid CTA disabled and not a link", () => {
-    renderPage();
-    const cta = screen.getByText("Not available") as HTMLButtonElement;
-    expect(cta.closest("a")).toBeNull();
-    expect(cta.disabled).toBe(true);
-  });
-
-  it("switches the placeholder price with the billing toggle", () => {
-    renderPage();
-    const toggle = screen.getByRole("switch", { name: "Annual billing" });
-    expect(toggle.getAttribute("aria-checked")).toBe("false");
-    expect(screen.getByText("£4.99")).toBeDefined();
-    expect(screen.getByText("per month")).toBeDefined();
-    expect(screen.getByText("Example figure only. No price is set.")).toBeDefined();
-    fireEvent.click(toggle);
-    expect(toggle.getAttribute("aria-checked")).toBe("true");
-    expect(screen.getByText("£49")).toBeDefined();
-    expect(screen.getByText("per year, billed annually")).toBeDefined();
-  });
-
-  it("claims only shipped features", () => {
+  it("lists three short benefits, claims only shipped features and promises no bank feed", () => {
     const { container } = renderPage();
-    expect(container.textContent).not.toMatch(/CSV|auto-categorisation|FCA|real-time/i);
-    // The free list is the tools catalogue: every calculator, none missing or renamed.
-    for (const tool of TOOL_CATALOGUE)
-      expect(screen.getAllByText(tool.title).length).toBeGreaterThan(0);
-    expect(TOOL_CATALOGUE).toHaveLength(CANONICAL_TOOL_SLUGS.length);
-    expect(container.textContent).not.toMatch(/30-year|£0|per month, free/i);
+    const items = within(container.querySelector('[data-plan="beta"]') as HTMLElement).getAllByRole(
+      "listitem",
+    );
+    expect(items.map((li) => li.textContent)).toEqual([...BETA_FEATURES]);
+    const text = container.textContent ?? "";
+    expect(text).not.toMatch(/CSV|auto-categorisation|FCA|real-time|trial|Pro\b|No credit card/i);
+    expect(text).not.toMatch(/bank connection|bank feed|coming soon|planned/i);
+    // The calculator list lives on /tools, not here.
+    for (const tool of TOOL_CATALOGUE) expect(screen.queryByText(tool.title)).toBeNull();
   });
 
   it("has no FCA or Open Banking claim in title or meta", async () => {
@@ -82,21 +90,16 @@ describe("PricingPage", () => {
     const description = document.querySelector('meta[name="description"]')?.getAttribute("content");
     expect(document.title).not.toMatch(/FCA|Open Banking|Pro/);
     expect(description).not.toMatch(/FCA|Open Banking|trial/i);
-    expect(description).toMatch(/free, invite-only beta/);
+    expect(description).toMatch(/free during the beta/);
   });
 
   describe("launch state with the price not set", () => {
-    it("renders no paid card, no toggle and no price", () => {
+    it("renders the beta plan only", () => {
       vi.stubEnv("VITE_SHOW_PAID_PLAN", "false");
       const { container } = renderPage();
-      expect(screen.queryByRole("switch")).toBeNull();
       expect(screen.queryByText("Paid plan")).toBeNull();
-      expect(screen.queryByText("Not available")).toBeNull();
-      const text = container.textContent ?? "";
-      expect(text).not.toContain(formatPrice(BUSINESS_DETAILS.price.value.monthly));
-      expect(text).not.toContain(formatPrice(BUSINESS_DETAILS.price.value.annual));
-      expect(text).not.toMatch(/£X|£Y|Example figure only/);
-      expect(screen.getByText("Free today")).toBeDefined();
+      expect(container.querySelectorAll("[data-plan]")).toHaveLength(1);
+      expect(screen.getByRole("heading", { name: "Free during the beta" })).toBeDefined();
       expect(within(screen.getByRole("main")).getByText("Request an invite")).toBeDefined();
     });
   });

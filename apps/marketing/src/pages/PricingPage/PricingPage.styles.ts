@@ -1,143 +1,111 @@
-import { css, cva } from "@repo/ui/styled-system/css";
+import { cva } from "@repo/ui/styled-system/css";
 
-export const pageStyle = css({ minHeight: "100vh", display: "flex", flexDirection: "column" });
-export const mainStyle = css({ flex: "1" });
-export const headerBlockStyle = css({ textAlign: "center", marginBottom: "10" });
-
-export const containerStyle = css({ maxWidth: "6xl", mx: "auto", py: "16", px: "4" });
-
-export const eyebrowStyle = css({ fontSize: "12px", fontWeight: "600", color: "primary" });
-
-export const headingStyle = css({
-  fontSize: "clamp(2rem, 4vw, 3rem)",
-  fontWeight: "800",
-  color: "text.primary",
-  marginTop: "2",
-});
-
-export const introStyle = css({
-  fontSize: "1.1rem",
-  color: "text.secondary",
-  maxWidth: "600px",
-  margin: "3 auto 0",
-});
-
-export const toggleRowStyle = css({
-  display: "flex",
-  justifyContent: "center",
-  alignItems: "center",
-  gap: "3",
-  marginTop: "8",
-});
-
-export const toggleLabelStyle = cva({
-  base: { fontSize: "14px", color: "text.primary" },
-  variants: { active: { true: { fontWeight: "700" }, false: { fontWeight: "500" } } },
-  defaultVariants: { active: false },
-});
-
-export const toggleTrackStyle = css({
-  width: "56px",
-  height: "30px",
-  borderRadius: "full",
-  border: "1px solid",
-  borderColor: "border.input",
-  backgroundColor: "surface.subtle",
-  cursor: "pointer",
-  position: "relative",
-  padding: "3px",
-  '&[aria-checked="true"]': { backgroundColor: "primary.solid", borderColor: "primary.border" },
-  _focusVisible: { outline: "2px solid", outlineColor: "border.focusRing", outlineOffset: "2px" },
-});
-
-export const toggleThumbStyle = cva({
+export const pageShell = cva({
   base: {
-    display: "block",
-    width: "22px",
-    height: "22px",
-    borderRadius: "full",
+    minHeight: "100vh",
+    display: "flex",
+    flexDirection: "column",
+    backgroundColor: "surface.canvas",
+  },
+});
+
+export const mainContent = cva({
+  base: { flex: "1", px: "4", py: { base: "12", md: "16" }, _focus: { outline: "none" } },
+});
+
+/** The reading width shared by pricing, security, MCP and contact (E16 PR 12 round 2). */
+export const container = cva({
+  base: { maxWidth: "3xl", mx: "auto", display: "flex", flexDirection: "column", gap: "8" },
+});
+
+export const headerBlock = cva({
+  base: { display: "flex", flexDirection: "column", gap: "3" },
+});
+
+export const heading = cva({
+  base: { textStyle: "heading.xl", color: "text.primary", margin: 0 },
+});
+
+export const intro = cva({
+  base: { textStyle: "body.lg", color: "text.secondary", margin: 0 },
+});
+
+export const planCard = cva({
+  base: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "5",
+    borderRadius: "xl",
+    borderWidth: "1px",
+    borderStyle: "solid",
+    borderColor: "primary.border",
     backgroundColor: "surface.card",
-    boxShadow: "sm",
-    transition: "transform 0.2s ease",
+    boxShadow: "card",
+    p: { base: "6", md: "8" },
   },
-  variants: {
-    checked: { true: { transform: "translateX(26px)" }, false: { transform: "translateX(0)" } },
+});
+
+export const planName = cva({
+  base: { textStyle: "heading.lg", color: "text.primary", margin: 0 },
+});
+
+export const featureList = cva({
+  base: {
+    listStyle: "none",
+    margin: 0,
+    padding: 0,
+    display: "flex",
+    flexDirection: "column",
+    gap: "3",
   },
-  defaultVariants: { checked: false },
 });
 
-export const cardGridStyle = cva({
-  base: { display: "grid", gap: "8", maxWidth: "4xl", mx: "auto", mb: "16" },
-  variants: {
-    paid: {
-      true: { gridTemplateColumns: { base: "1fr", md: "repeat(2, 1fr)" } },
-      false: { gridTemplateColumns: "1fr", maxWidth: "md" },
-    },
+export const featureItem = cva({
+  base: {
+    display: "flex",
+    alignItems: "flex-start",
+    gap: "3",
+    textStyle: "body.md",
+    color: "text.primary",
   },
-  defaultVariants: { paid: true },
 });
 
-export const cardStyle = css({
-  backgroundColor: "surface.card",
-  border: "2px solid",
-  borderColor: "border",
-  borderRadius: "2xl",
-  padding: "8",
-  display: "flex",
-  flexDirection: "column",
-  justifyContent: "space-between",
-  '&[data-featured="true"]': { borderColor: "primary.border" },
+export const featureIcon = cva({
+  base: { color: "primary", flexShrink: 0, mt: "0.5", display: "inline-flex" },
 });
 
-export const planNameStyle = css({ fontSize: "1.5rem", fontWeight: "800", color: "text.primary" });
-export const planDescStyle = css({ fontSize: "14px", color: "text.secondary", minHeight: "42px" });
-
-export const priceRowStyle = css({
-  margin: "6 0 2",
-  display: "flex",
-  alignItems: "baseline",
-  gap: "1",
-  flexWrap: "wrap",
+/** The possible paid plan: one quiet line, no card chrome to fill (D10 b). */
+export const paidLine = cva({
+  base: {
+    display: "flex",
+    flexWrap: "wrap",
+    alignItems: "baseline",
+    columnGap: "3",
+    rowGap: "1",
+    px: { base: "4", md: "5" },
+    py: "4",
+    borderRadius: "lg",
+    backgroundColor: "surface.subtle",
+    textStyle: "body.md",
+    color: "text.secondary",
+  },
 });
 
-export const priceStyle = css({
-  fontSize: "2.75rem",
-  fontWeight: "900",
-  color: "text.primary",
-  fontVariantNumeric: "tabular-nums",
+export const paidName = cva({
+  base: { textStyle: "heading.sm", color: "text.primary", margin: 0 },
 });
 
-export const priceUnitStyle = css({
-  fontSize: "1rem",
-  color: "text.secondary",
-  fontVariantNumeric: "tabular-nums",
+export const paidPrice = cva({
+  base: {
+    color: "text.muted",
+    fontVariantNumeric: "tabular-nums",
+    pl: "3",
+    borderLeftWidth: "1px",
+    borderLeftStyle: "solid",
+    borderLeftColor: "border",
+  },
 });
 
-export const placeholderNoteStyle = css({
-  fontSize: "12px",
-  fontWeight: "600",
-  color: "status.warning.text",
-  backgroundColor: "status.warning.bg",
-  border: "1px solid",
-  borderColor: "status.warning.border",
-  borderRadius: "md",
-  padding: "1 2",
-  display: "inline-block",
-  marginBottom: "6",
+export const paidNote = cva({
+  base: { margin: 0, flexBasis: { base: "100%", md: "auto" } },
 });
-
-export const priceSpacerStyle = css({ height: "36px" });
-export const featureListStyle = css({
-  display: "flex",
-  flexDirection: "column",
-  gap: "3",
-  marginBottom: "8",
-  listStyle: "none",
-  padding: "0",
-});
-export const featureItemStyle = css({ display: "flex", alignItems: "center", gap: "2" });
-export const featureStyle = css({ fontSize: "14px", color: "text.primary" });
-export const checkStyle = css({ color: "status.positive.text", flexShrink: 0 });
-export const pendingStyle = css({ color: "text.muted", flexShrink: 0 });
-export const linkResetStyle = css({ textDecoration: "none" });
-export const fullWidthButtonStyle = css({ width: "100%", justifyContent: "center" });

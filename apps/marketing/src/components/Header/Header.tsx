@@ -73,16 +73,16 @@ export const Header: FC = () => {
         key: "tools",
         label: "Calculators",
         href: "/tools",
-        hint: `${CANONICAL_TOOL_SLUGS.length} tools`,
+        hint: `${CANONICAL_TOOL_SLUGS.length} calculators`,
       },
       { key: "pricing", label: "Pricing", href: "/pricing", hint: "Free during the beta" },
       { key: "security", label: "Security", href: "/security", hint: "Security and privacy" },
-      { key: "mcp", label: "AI & MCP", href: "/mcp", hint: "Claude & Cursor" },
+      { key: "mcp", label: "AI connection", href: "/mcp", hint: "Claude and Cursor" },
       {
         key: "demo",
-        label: "Live demo",
+        label: "Sample data",
         href: `${appUrl}/sandbox`,
-        hint: "Sandbox",
+        hint: "Try it without signing in",
         external: true,
       },
     ],
@@ -126,7 +126,7 @@ export const Header: FC = () => {
               {hasSession ? (
                 <Button asChild className={headerButton()} size="sm" variant="primary">
                   <a href={`${appUrl}/`}>
-                    <span className={fullLabel()}>Go to dashboard →</span>
+                    <span className={fullLabel()}>Go to dashboard</span>
                     <span className={shortLabel()}>Dashboard</span>
                   </a>
                 </Button>
@@ -141,7 +141,7 @@ export const Header: FC = () => {
                   <Button asChild className={headerButton()} size="sm" variant="primary">
                     <a href={cta.href}>
                       <span className={fullLabel()}>{cta.label}</span>
-                      <span className={shortLabel()}>{cta.shortLabel}</span>
+                      <span className={shortLabel()}>{cta.label}</span>
                     </a>
                   </Button>
                 </>
@@ -166,7 +166,7 @@ export const Header: FC = () => {
             {hasSession ? (
               <Button asChild className={drawerCta()} size="md" variant="primary">
                 <a href={`${appUrl}/`} onClick={closeMenu}>
-                  Go to dashboard →
+                  Go to dashboard
                 </a>
               </Button>
             ) : (

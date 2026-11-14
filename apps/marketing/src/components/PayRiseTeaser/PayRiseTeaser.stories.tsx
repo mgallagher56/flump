@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react";
+import { MemoryRouter } from "react-router-dom";
 import { expect, fireEvent, within } from "storybook/test";
 import { PayRiseTeaser } from "./PayRiseTeaser";
 
@@ -6,6 +7,13 @@ const meta: Meta<typeof PayRiseTeaser> = {
   title: "Marketing/PayRiseTeaser",
   component: PayRiseTeaser,
   parameters: { layout: "fullscreen" },
+  decorators: [
+    (Story) => (
+      <MemoryRouter>
+        <Story />
+      </MemoryRouter>
+    ),
+  ],
 };
 
 export default meta;
@@ -13,11 +21,11 @@ type Story = StoryObj<typeof PayRiseTeaser>;
 
 const assertTeaser: Story["play"] = async ({ canvasElement }) => {
   const canvas = within(canvasElement);
-  await expect(canvas.getByText("£1,440 a year of £2,000")).toBeInTheDocument();
+  await expect(canvas.getByText("£1,440 a year")).toBeInTheDocument();
   fireEvent.change(canvas.getByLabelText("Pay rise (a year) range slider"), {
     target: { value: "1000" },
   });
-  await expect(canvas.getByText("£720 a year of £1,000")).toBeInTheDocument();
+  await expect(canvas.getByText("£720 a year")).toBeInTheDocument();
 };
 
 export const Light: Story = { globals: { theme: "light" }, play: assertTeaser };
@@ -33,7 +41,7 @@ const assertTaper: Story["play"] = async ({ canvasElement }) => {
   fireEvent.change(canvas.getByLabelText("Current salary (before tax) range slider"), {
     target: { value: "99500" },
   });
-  await expect(canvas.getByText("Personal Allowance taper")).toBeInTheDocument();
+  await expect(canvas.getByTestId("pay-rise-taper-note")).toBeInTheDocument();
 };
 
 /** A visitor's own salary inside the taper band shows the factual note. */

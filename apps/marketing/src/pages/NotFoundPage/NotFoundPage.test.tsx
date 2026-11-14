@@ -25,9 +25,9 @@ describe("NotFoundPage", () => {
       </HelmetProvider>,
     );
     expect(screen.getByRole("heading", { level: 1, name: "Page not found" })).toBeDefined();
-    expect(
-      screen.getByRole("link", { name: "Back to the Flump home page" }).getAttribute("href"),
-    ).toBe("/");
+    expect(screen.getByRole("link", { name: "Go to the home page" }).getAttribute("href")).toBe(
+      "/",
+    );
   });
 
   it.each(["/nope", "/tools/not-a-real-tool"])("App renders it for %s", (path) => {

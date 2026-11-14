@@ -1,0 +1,146 @@
+{
+  "404-375-light": {
+    "height": 1438,
+    "inviteButtonsTotal": 2,
+    "inviteButtonsInMain": 0,
+    "horizontalScroll": false
+  },
+  "home-375-light": {
+    "height": 10634,
+    "inviteButtonsTotal": 5,
+    "inviteButtonsInMain": 3,
+    "horizontalScroll": false
+  },
+  "pricing-375-light": {
+    "height": 2764,
+    "inviteButtonsTotal": 3,
+    "inviteButtonsInMain": 1,
+    "horizontalScroll": false
+  },
+  "security-375-light": {
+    "height": 2452,
+    "inviteButtonsTotal": 2,
+    "inviteButtonsInMain": 0,
+    "horizontalScroll": false
+  },
+  "mcp-375-light": {
+    "height": 8321,
+    "inviteButtonsTotal": 3,
+    "inviteButtonsInMain": 1,
+    "horizontalScroll": false
+  },
+  "contact-375-light": {
+    "height": 2562,
+    "inviteButtonsTotal": 2,
+    "inviteButtonsInMain": 0,
+    "horizontalScroll": false
+  },
+  "404-1280-light": {
+    "height": 1065,
+    "inviteButtonsTotal": 2,
+    "inviteButtonsInMain": 0,
+    "horizontalScroll": false
+  },
+  "home-1280-light": {
+    "height": 6725,
+    "inviteButtonsTotal": 5,
+    "inviteButtonsInMain": 3,
+    "horizontalScroll": false
+  },
+  "pricing-1280-light": {
+    "height": 1748,
+    "inviteButtonsTotal": 3,
+    "inviteButtonsInMain": 1,
+    "horizontalScroll": false
+  },
+  "security-1280-light": {
+    "height": 1615,
+    "inviteButtonsTotal": 2,
+    "inviteButtonsInMain": 0,
+    "horizontalScroll": false
+  },
+  "mcp-1280-light": {
+    "height": 4762,
+    "inviteButtonsTotal": 3,
+    "inviteButtonsInMain": 1,
+    "horizontalScroll": false
+  },
+  "contact-1280-light": {
+    "height": 2058,
+    "inviteButtonsTotal": 2,
+    "inviteButtonsInMain": 0,
+    "horizontalScroll": false
+  },
+  "404-375-dark": {
+    "height": 1438,
+    "inviteButtonsTotal": 2,
+    "inviteButtonsInMain": 0,
+    "horizontalScroll": false
+  },
+  "home-375-dark": {
+    "height": 10634,
+    "inviteButtonsTotal": 5,
+    "inviteButtonsInMain": 3,
+    "horizontalScroll": false
+  },
+  "pricing-375-dark": {
+    "height": 2764,
+    "inviteButtonsTotal": 3,
+    "inviteButtonsInMain": 1,
+    "horizontalScroll": false
+  },
+  "security-375-dark": {
+    "height": 2452,
+    "inviteButtonsTotal": 2,
+    "inviteButtonsInMain": 0,
+    "horizontalScroll": false
+  },
+  "mcp-375-dark": {
+    "height": 8321,
+    "inviteButtonsTotal": 3,
+    "inviteButtonsInMain": 1,
+    "horizontalScroll": false
+  },
+  "contact-375-dark": {
+    "height": 2562,
+    "inviteButtonsTotal": 2,
+    "inviteButtonsInMain": 0,
+    "horizontalScroll": false
+  },
+  "404-1280-dark": {
+    "height": 1065,
+    "inviteButtonsTotal": 2,
+    "inviteButtonsInMain": 0,
+    "horizontalScroll": false
+  },
+  "home-1280-dark": {
+    "height": 6725,
+    "inviteButtonsTotal": 5,
+    "inviteButtonsInMain": 3,
+    "horizontalScroll": false
+  },
+  "pricing-1280-dark": {
+    "height": 1748,
+    "inviteButtonsTotal": 3,
+    "inviteButtonsInMain": 1,
+    "horizontalScroll": false
+  },
+  "security-1280-dark": {
+    "height": 1615,
+    "inviteButtonsTotal": 2,
+    "inviteButtonsInMain": 0,
+    "horizontalScroll": false
+  },
+  "mcp-1280-dark": {
+    "height": 4762,
+    "inviteButtonsTotal": 3,
+    "inviteButtonsInMain": 1,
+    "horizontalScroll": false
+  },
+  "contact-1280-dark": {
+    "height": 2058,
+    "inviteButtonsTotal": 2,
+    "inviteButtonsInMain": 0,
+    "horizontalScroll": false
+  }
+}

@@ -1,4 +1,5 @@
 import { BUSINESS_DETAILS } from "@flump/business-details";
+import { expectPageRules } from "@repo/ui/testing";
 import { render, screen, within } from "@testing-library/react";
 import { HelmetProvider } from "react-helmet-async";
 import { MemoryRouter } from "react-router-dom";
@@ -15,22 +16,38 @@ const renderPage = () =>
   );
 
 describe("ContactPage", () => {
-  it("renders the page heading and every section", () => {
+  it("renders the page heading and two cards: general and security", () => {
     renderPage();
     expect(screen.getByRole("heading", { level: 1, name: "Contact Flump" })).toBeDefined();
-    for (const name of [
-      "Support",
-      "Feedback",
-      "Request a beta invite",
-      "Security",
-      "Privacy and your data",
-      "Complaints",
-    ]) {
-      expect(screen.getByRole("heading", { level: 2, name })).toBeDefined();
-    }
+    const main = screen.getByRole("main");
+    expect(
+      within(main)
+        .getAllByRole("heading", { level: 2 })
+        .map((h) => h.textContent),
+    ).toEqual(["General", "Security"]);
+    expect(within(main).getAllByRole("region")).toHaveLength(2);
+    expectPageRules(main, { projectionNotices: 0 });
   });
 
-  it("links the support mailbox, feedback, invite request and complaints by mailto", () => {
+  it("leaves the invite button to the header and says 'free' only with the beta", () => {
+    renderPage();
+    const main = screen.getByRole("main");
+    // The header carries the invite button; the page body has none (round 4).
+    expect(within(main).queryByRole("link", { name: "Request an invite" })).toBeNull();
+    expect(within(main).queryByText(/Email for an invite/)).toBeNull();
+    expect(main.textContent).toMatch(/free during the beta/);
+    expect(main.textContent).not.toMatch(/a free, invite-only beta|Nothing is charged/);
+  });
+
+  it("folds the placeholder notice into the email line and says it once", () => {
+    renderPage();
+    const text = screen.getByRole("main").textContent ?? "";
+    const count = (text.match(/placeholder/g) ?? []).length;
+    expect(count).toBe(BUSINESS_DETAILS.supportEmail.isPlaceholder ? 1 : 0);
+    expect(text).toMatch(/feedback, a\s+privacy request or a complaint/);
+  });
+
+  it("has one mailto link in the general card", () => {
     renderPage();
     const main = screen.getByRole("main");
     const hrefs = within(main)
@@ -38,9 +55,8 @@ describe("ContactPage", () => {
       .map((a) => a.getAttribute("href") ?? "")
       .filter((h) => h.startsWith("mailto:"));
     const address = BUSINESS_DETAILS.supportEmail.value;
-    expect(hrefs.length).toBeGreaterThanOrEqual(4);
+    expect(hrefs).toHaveLength(1);
     for (const href of hrefs) expect(href.startsWith(`mailto:${address}`)).toBe(true);
-    expect(hrefs.some((h) => h.includes("subject=Flump%20beta%20invite%20request"))).toBe(true);
   });
 
   it("has the #beta anchor that the sign-up CTAs point at", () => {

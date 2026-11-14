@@ -1,31 +1,48 @@
 import { cva } from "@repo/ui/styled-system/css";
 
-export const disclosureCard = cva({
+export const disclosureSection = cva({
   base: {
-    backgroundColor: "surface.card",
-    border: "1px solid",
-    borderColor: "border",
-    borderRadius: "2xl",
-    p: { base: "6", md: "8" },
-    mb: "8",
+    display: "flex",
+    flexDirection: "column",
+    gap: "3",
+    pt: "8",
+    borderTopWidth: "1px",
+    borderTopStyle: "solid",
+    borderTopColor: "border.subtle",
   },
 });
 
 export const disclosureTitle = cva({
-  base: { fontSize: "1.25rem", fontWeight: "700", color: "text.primary", marginBottom: "8px" },
+  base: { textStyle: "heading.lg", color: "text.primary", margin: 0 },
 });
 
 export const disclosureBody = cva({
-  base: { fontSize: "14px", color: "text.secondary", lineHeight: "1.7", marginBottom: "12px" },
+  base: { textStyle: "body.md", color: "text.secondary", margin: 0 },
+});
+
+export const disclosureLink = cva({
+  base: {
+    color: "text.primary",
+    textDecoration: "underline",
+    textUnderlineOffset: "3px",
+    overflowWrap: "anywhere",
+    _hover: { color: "primary.hover" },
+  },
+});
+
+export const disclosurePlaceholder = cva({
+  base: { color: "text.muted" },
 });
 
 export const disclosureList = cva({
   base: {
-    fontSize: "14px",
+    textStyle: "body.md",
     color: "text.secondary",
-    lineHeight: "1.7",
+    margin: 0,
     paddingLeft: "5",
     listStyleType: "disc",
-    marginBottom: "12px",
+    display: "flex",
+    flexDirection: "column",
+    gap: "1",
   },
 });

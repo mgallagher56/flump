@@ -25,7 +25,7 @@ describe("Header", () => {
     const skip = screen.getByRole("link", { name: "Skip to main content" });
     expect(skip.getAttribute("href")).toBe(`#${MAIN_ID}`);
     fireEvent.click(screen.getByRole("button", { name: /open navigation menu/i }));
-    expect(screen.getByText(`${CANONICAL_TOOL_SLUGS.length} tools`)).toBeDefined();
+    expect(screen.getByText(`${CANONICAL_TOOL_SLUGS.length} calculators`)).toBeDefined();
   });
 
   it("renders desktop navigation links, 'Sign in', the invite CTA, and theme toggle when no session", () => {
@@ -42,14 +42,16 @@ describe("Header", () => {
     expect(screen.getByRole("link", { name: /calculators/i })).toBeDefined();
     expect(screen.getByRole("link", { name: /pricing/i })).toBeDefined();
     expect(screen.getByRole("link", { name: /security/i })).toBeDefined();
-    expect(screen.getByRole("link", { name: /live demo/i })).toBeDefined();
+    expect(screen.getByRole("link", { name: /^Sample data/ })).toBeDefined();
+    expect(screen.getByRole("link", { name: "AI connection" })).toBeDefined();
 
     expect(screen.getAllByText("Sign in").length).toBeGreaterThan(0);
-    expect(screen.getByText("Request an invite").closest("a")?.getAttribute("href")).toBe(
-      "/contact#beta",
-    );
+    // Full and compact labels now read the same ("Request an invite"), one link.
+    const invites = screen.getAllByText("Request an invite").map((el) => el.closest("a"));
+    expect(new Set(invites).size).toBe(1);
+    expect(invites[0]?.getAttribute("href")).toBe("/contact#beta");
     expect(screen.getAllByRole("group", { name: "Colour theme" })).toHaveLength(1);
-    expect(screen.queryByText("Go to dashboard →")).toBeNull();
+    expect(screen.queryByText("Go to dashboard")).toBeNull();
   });
 
   it("uses the shared logo linked home, with no text wordmark", () => {
@@ -80,7 +82,7 @@ describe("Header", () => {
     expect(screen.getByRole("link", { name: "Pricing" }).getAttribute("aria-current")).toBe("page");
   });
 
-  it("renders 'Go to dashboard →' when flump_has_session=1 cookie is present", () => {
+  it("renders 'Go to dashboard' when flump_has_session=1 cookie is present", () => {
     // biome-ignore lint/suspicious/noDocumentCookie: Cookie testing helper
     document.cookie = "flump_has_session=1; path=/";
 
@@ -94,7 +96,7 @@ describe("Header", () => {
       </HelmetProvider>,
     );
 
-    expect(screen.getByText("Go to dashboard →")).toBeDefined();
+    expect(screen.getByText("Go to dashboard")).toBeDefined();
     expect(screen.queryByText("Sign in")).toBeNull();
     expect(screen.queryByText("Request an invite")).toBeNull();
     expect(screen.getAllByRole("group", { name: "Colour theme" })).toHaveLength(1);
@@ -176,7 +178,7 @@ describe("Header", () => {
 
     const mobileNav = screen.getByRole("navigation", { name: /mobile navigation/i });
     expect(mobileNav).toBeDefined();
-    expect(screen.getAllByText("Go to dashboard →").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Go to dashboard").length).toBeGreaterThan(0);
   });
 
   it("shows the Security sub-label in the mobile drawer without FCA wording", () => {

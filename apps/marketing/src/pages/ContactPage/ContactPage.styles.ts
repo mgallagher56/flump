@@ -1,72 +1,61 @@
 import { cva } from "@repo/ui/styled-system/css";
 
-export const pageStyle = cva({
+export const pageShell = cva({
   base: {
     minHeight: "100vh",
     display: "flex",
     flexDirection: "column",
     backgroundColor: "surface.canvas",
+  },
+});
+
+export const mainContent = cva({
+  base: { flex: "1", px: "4", py: { base: "12", md: "16" }, _focus: { outline: "none" } },
+});
+
+export const container = cva({
+  base: { maxWidth: "3xl", mx: "auto", display: "flex", flexDirection: "column", gap: "8" },
+});
+
+export const headerBlock = cva({
+  base: { display: "flex", flexDirection: "column", gap: "3" },
+});
+
+export const heading = cva({
+  base: { textStyle: "heading.xl", color: "text.primary", margin: 0 },
+});
+
+export const intro = cva({
+  base: { textStyle: "body.lg", color: "text.secondary", margin: 0 },
+});
+
+export const placeholderNote = cva({
+  base: { color: "text.muted" },
+});
+
+export const cardGrid = cva({
+  base: { display: "flex", flexDirection: "column", gap: "6" },
+});
+
+export const card = cva({
+  base: { display: "flex", flexDirection: "column", gap: "4" },
+});
+
+export const cardHeading = cva({
+  base: { textStyle: "heading.md", color: "text.primary", margin: 0 },
+});
+
+export const body = cva({
+  base: { textStyle: "body.md", color: "text.secondary", margin: 0 },
+});
+
+export const link = cva({
+  base: {
     color: "text.primary",
-  },
-});
-
-export const mainStyle = cva({ base: { flex: 1 } });
-
-export const containerStyle = cva({
-  base: { maxWidth: "3xl", mx: "auto", py: "16", px: "4" },
-});
-
-export const eyebrowStyle = cva({
-  base: { fontSize: "12px", fontWeight: "600", color: "status.positive.text" },
-});
-
-export const headingStyle = cva({
-  base: {
-    fontSize: "clamp(2rem, 4vw, 3rem)",
-    fontWeight: "800",
-    color: "text.primary",
-    mt: "2",
-  },
-});
-
-export const introStyle = cva({
-  base: { fontSize: "1.1rem", color: "text.secondary", mt: "3", mb: "10", lineHeight: "1.6" },
-});
-
-export const sectionStyle = cva({
-  base: {
-    backgroundColor: "surface.card",
-    border: "1px solid",
-    borderColor: "border",
-    borderRadius: "2xl",
-    p: { base: "6", md: "8" },
-    mb: "6",
-    scrollMarginTop: "24",
-  },
-});
-
-export const sectionHeadingStyle = cva({
-  base: { fontSize: "1.25rem", fontWeight: "700", color: "text.primary", mb: "2" },
-});
-
-export const bodyStyle = cva({
-  base: { fontSize: "15px", color: "text.secondary", lineHeight: "1.7" },
-});
-
-export const linkStyle = cva({
-  base: {
-    color: "primary",
-    fontWeight: "600",
+    fontWeight: "semibold",
     textDecoration: "underline",
-    textUnderlineOffset: "2px",
-    _focusVisible: { outline: "2px solid", outlineColor: "border.focusRing", outlineOffset: "2px" },
+    textUnderlineOffset: "3px",
+    overflowWrap: "anywhere",
+    _hover: { color: "primary.hover" },
   },
-});
-
-export const buttonLinkStyle = cva({
-  base: { display: "inline-block", textDecoration: "none", mt: "4" },
-});
-
-export const noteStyle = cva({
-  base: { fontSize: "13px", color: "text.muted", mt: "3", lineHeight: "1.6" },
 });
