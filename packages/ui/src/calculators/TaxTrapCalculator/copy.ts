@@ -27,6 +27,8 @@ export const TAX_TRAP_COPY = {
   /** Supporting card, shown as a positive amount so no minus sign appears. */
   kpiTaxAndNiReduction: "Estimated reduction in Income Tax and National Insurance",
   kpiTaxAndNiChange: "Estimated change in Income Tax and National Insurance",
+  kpiTaxAndNiSubtext: "Because the contribution lowers adjusted net income.",
+  noContributionTaxAndNi: "With no pension contribution, these stay the same.",
   kpiPersonalAllowance: "Estimated Personal Allowance with this contribution",
   details: "Show details",
   factsHeading: "Before and with this contribution",

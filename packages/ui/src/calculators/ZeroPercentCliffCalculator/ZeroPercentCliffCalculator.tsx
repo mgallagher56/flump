@@ -35,7 +35,8 @@ export const ZERO_PERCENT_COPY = {
   intro: "Estimate the monthly payment that pays off a balance before the 0% deal ends.",
   balance: "Balance on the 0% card",
   months: "Months left on the 0% deal",
-  rate: "Interest rate after the 0% deal ends (APR)",
+  rate: "Rate after the deal (APR)",
+  rateHelper: "The card's standard rate once the 0% deal ends.",
   kpiPayment: "Estimated monthly payment",
   kpiPaymentSubtext:
     "Pays off the balance before the deal ends and interest starts, as long as no fees are added.",
@@ -162,6 +163,7 @@ export const ZeroPercentCliffCalculator: FC<ZeroPercentCliffCalculatorProps> = (
       <SliderField
         format="percent"
         fractionDigits={1}
+        helperText={ZERO_PERCENT_COPY.rateHelper}
         label={ZERO_PERCENT_COPY.rate}
         max={RATE_MAX}
         min={0}

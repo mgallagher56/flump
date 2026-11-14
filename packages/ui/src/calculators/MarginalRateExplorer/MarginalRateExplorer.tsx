@@ -477,6 +477,7 @@ export const MarginalRateExplorer: FC<MarginalRateExplorerProps> = ({
       <TakeHomeDeltaPanel
         assumptions={pension ? pension.after.assumptions : delta.before.assumptions}
         calendarYear={context.calendarYear}
+        collapseTable
         components={delta.components}
         deltaGross={delta.deltaGross}
         headingLevel={sectionHeading}

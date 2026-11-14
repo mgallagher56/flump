@@ -49,15 +49,6 @@ export const overdraftOutcomes = cva({
   },
 });
 
-export const overdraftMonthLine = cva({
-  base: {
-    textStyle: "body.sm",
-    color: "text.secondary",
-    fontVariantNumeric: "tabular-nums",
-    margin: "0",
-  },
-});
-
 export const overdraftExplainer = cva({
   base: {
     display: "flex",

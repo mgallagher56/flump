@@ -23,7 +23,6 @@ import {
   overdraftExplainer,
   overdraftHeader,
   overdraftIntro,
-  overdraftMonthLine,
   overdraftOutcomes,
   overdraftRoot,
   overdraftTitle,
@@ -138,12 +137,18 @@ export const OverdraftCostCalculator: FC<OverdraftCostCalculatorProps> = ({
   const content = (
     <div className={overdraftContent()}>
       {/* Illustration outcome, not a saved figure, so a plain outcome card rather than a KpiStrip.
-          The monthly figure is the one supporting figure, as a line under the card. */}
+          The monthly figure is the one supporting figure, in the card's own caption (it replaced a
+          second card, so this caption may carry one figure). */}
       <div className={overdraftOutcomes()} data-density="compact" data-testid="overdraft-outcomes">
-        <KpiCard label={OVERDRAFT_COPY.kpiYear} value={cost.annualPoundCost} />
-        <p className={overdraftMonthLine()}>
-          <Money value={cost.monthlyPoundCost} /> {OVERDRAFT_COPY.monthLine}
-        </p>
+        <KpiCard
+          label={OVERDRAFT_COPY.kpiYear}
+          subtext={
+            <>
+              <Money value={cost.monthlyPoundCost} /> {OVERDRAFT_COPY.monthLine}
+            </>
+          }
+          value={cost.annualPoundCost}
+        />
       </div>
 
       <Button className={overdraftCta()} size="md" variant="primary" onClick={handleSave}>

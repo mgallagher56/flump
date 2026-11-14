@@ -106,6 +106,28 @@ describe("TakeHomeDeltaPanel", () => {
     expect(screen.getByText(/Child Benefit is counted for 52 weeks a year/)).toBeDefined();
   });
 
+  it("puts the explainer drawer above the notice", () => {
+    renderPanel();
+    const drawer = screen.getByRole("button", { name: "How this is worked out" });
+    const notice = screen.getByTestId("projection-notice");
+    expect(drawer.compareDocumentPosition(notice) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it("can put the table in a closed quiet drawer with no heading or badges", () => {
+    renderPanel({ collapseTable: true });
+    const name = "Where the next £1,000 goes";
+    expect(screen.queryByRole("table", { name })).toBeNull();
+    expect(screen.queryByRole("heading")).toBeNull();
+    expect(screen.queryByText("Estimate")).toBeNull();
+    const toggle = screen.getByRole("button", { name });
+    expect(toggle.getAttribute("aria-expanded")).toBe("false");
+    fireEvent.click(toggle);
+    expect(screen.getAllByRole("rowheader").map((r) => r.textContent)).toEqual([
+      "Income Tax",
+      "National Insurance",
+    ]);
+  });
+
   it("uses tabular figures in the table", () => {
     renderPanel();
     const cells = screen.getAllByRole("cell");

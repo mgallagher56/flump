@@ -269,3 +269,14 @@ describe("TaxTrapCalculator", () => {
     }
   });
 });
+
+describe("TaxTrapCalculator outcome captions", () => {
+  it("gives both outcome cards a caption with no figure", () => {
+    render(<TaxTrapCalculator />);
+    const outcomes = screen.getByTestId("tax-trap-outcomes");
+    expect(outcomes.textContent).toContain(TAX_TRAP_COPY.kpiTakeHomeSubtext);
+    expect(outcomes.textContent).toContain(TAX_TRAP_COPY.kpiTaxAndNiSubtext);
+    expect(TAX_TRAP_COPY.kpiTaxAndNiSubtext).not.toMatch(/\d|£|%/);
+    expect(TAX_TRAP_COPY.noContributionTaxAndNi).not.toMatch(/\d|£|%/);
+  });
+});

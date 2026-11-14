@@ -66,6 +66,20 @@ export const WithPensionPreview: Story = {
   args: { pensionPreview: { contribution: 1000, takeHomeChange: 720, reachesPension: 1000 } },
 };
 
+/** The pay rise tool: no heading or badges, and the table in a closed quiet drawer. */
+export const CollapsedTable: Story = {
+  args: { collapseTable: true },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const name = "Where the next £1,000 goes";
+    await expect(canvas.queryByRole("table", { name })).not.toBeInTheDocument();
+    await userEvent.click(canvas.getByRole("button", { name }));
+    await expect(canvas.getByRole("table", { name })).toBeInTheDocument();
+  },
+};
+
+export const DarkCollapsedTable: Story = { ...CollapsedTable, globals: { theme: "dark" } };
+
 export const OlderRates: Story = {
   args: { isFallback: true, calendarYear: "2027/28" },
 };

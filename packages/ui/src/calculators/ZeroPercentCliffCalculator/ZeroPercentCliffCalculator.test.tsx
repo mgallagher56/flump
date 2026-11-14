@@ -159,3 +159,13 @@ describe("ZeroPercentCliffCalculator", () => {
     expect(`${tsx}${styles}`).not.toMatch(/status\.(danger|warning)|#[0-9a-f]{3,6}\b/i);
   });
 });
+
+describe("ZeroPercentCliffCalculator rate label", () => {
+  it("keeps the rate label short, with the rest in its helper text", () => {
+    render(<ZeroPercentCliffCalculator />);
+    const slider = screen.getByLabelText(ZERO_PERCENT_COPY.rate);
+    expect(ZERO_PERCENT_COPY.rate).toBe("Rate after the deal (APR)");
+    const helper = document.getElementById(slider.getAttribute("aria-describedby") ?? "");
+    expect(helper?.textContent).toBe(ZERO_PERCENT_COPY.rateHelper);
+  });
+});

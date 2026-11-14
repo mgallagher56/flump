@@ -281,6 +281,9 @@ export const TaxTrapCalculator: FC<TaxTrapCalculatorProps> = ({
           label={
             taxAndNiDown ? TAX_TRAP_COPY.kpiTaxAndNiReduction : TAX_TRAP_COPY.kpiTaxAndNiChange
           }
+          subtext={
+            sacrifice > 0 ? TAX_TRAP_COPY.kpiTaxAndNiSubtext : TAX_TRAP_COPY.noContributionTaxAndNi
+          }
           value={<Money size="lg" value={Math.abs(taxAndNi)} />}
         />
       </div>
