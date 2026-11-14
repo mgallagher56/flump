@@ -101,8 +101,9 @@ test("a new user sets up, adds an account and a budget entry, and the dashboard 
 
   await test.step("add a first budget entry", async () => {
     await open(page, "/app/budget");
-    // Setup saved the take-home estimate as the budget's income.
-    await expect(page.getByRole("button", { name: /^Income 1 entry/ })).toBeVisible();
+    // Setup saved the take-home estimate as the budget's income, shown once as money in (R2-6).
+    await expect(page.getByText("Money in each month", { exact: true })).toBeVisible();
+    await expect(page.getByRole("button", { name: /^Income/ })).toHaveCount(0);
     await page.getByRole("button", { name: /^Expenses No entries yet/ }).click();
     await page.getByRole("button", { name: "Add entry", exact: true }).first().click();
 
