@@ -106,7 +106,9 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
       expect(committed.counts.new).toBe(4);
 
       const accounts: Array<{ id: string; name: string; type: string; balance: string }> =
-        await ds.query(`SELECT id, name, type, balance FROM accounts WHERE user_id = $1`, [OWNER_ID]);
+        await ds.query(`SELECT id, name, type, balance FROM accounts WHERE user_id = $1`, [
+          OWNER_ID,
+        ]);
       const byName = new Map(accounts.map((a) => [a.name, a]));
       expect(accounts).toHaveLength(3);
       expect(byName.get("Stocks ISA")?.type).toBe("Investment");
