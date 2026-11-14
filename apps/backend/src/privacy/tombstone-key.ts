@@ -10,19 +10,59 @@ const DEV_TOMBSTONE_KEY = "flump-dev-only-deletion-tombstone-key-not-secret";
 export const TOMBSTONE_RETENTION_MONTHS = 24;
 
 /**
- * The HMAC key for deletion tombstones, or null when it is not usable.
- *
- * Development and test fall back to a fixed public key, as the banking key does. Anywhere else
- * (production, staging, NODE_ENV unset) the key must be set to at least 32 characters; when it is
- * not, this returns null and account deletion fails closed with a 503 rather than writing a
- * tombstone that a known key could reverse. Boot is not blocked, so a deploy before the owner sets
- * the key keeps every other route working. The value is never logged.
+ * Strict unless NODE_ENV is explicitly development or test AND not on Railway: the same rule the
+ * auth config applies to the dev bypass (auth/auth.config.ts).
  */
-export function resolveTombstoneKey(env: Record<string, string | undefined>): string | null {
+function isStrictTombstoneEnv(env: Record<string, string | undefined>): boolean {
+  return isStrictEnv(env) || Boolean(env.RAILWAY_ENVIRONMENT);
+}
+
+export interface TombstoneKeyResolution {
+  /** The HMAC key, or null when account deletion must fail closed (503). */
+  key: string | null;
+  /** A warning naming the variable only (never a value), when there is something to say. */
+  warning?: string;
+}
+
+/**
+ * The HMAC key for deletion tombstones.
+ *
+ * NEVER ROTATE DELETION_TOMBSTONE_KEY. A tombstone is found only by recomputing the HMAC of the
+ * user id under the same key: after a rotation every existing tombstone becomes unfindable, so a
+ * pending deletion can no longer be retried idempotently and erased accounts' tokens pass the
+ * AuthGuard's erased check until they expire.
+ *
+ * - A configured key must be at least 32 characters in every environment; a shorter one is
+ *   refused (null).
+ * - Development and test (and not on Railway) with no key fall back to a fixed public key, with a
+ *   warning.
+ * - Anywhere else with no key: null, so account deletion fails closed with a 503 rather than writing
+ *   tombstones a known key could reverse. Boot is not blocked, so a deploy before the owner sets
+ *   the key keeps every other route working.
+ */
+export function resolveTombstoneKey(
+  env: Record<string, string | undefined>,
+): TombstoneKeyResolution {
   const configured = env[TOMBSTONE_KEY_ENV_VAR];
-  if (!isStrictEnv(env)) return configured || DEV_TOMBSTONE_KEY;
-  if (!configured || configured.length < MIN_TOMBSTONE_KEY_LENGTH) return null;
-  return configured;
+  if (configured) {
+    if (configured.length < MIN_TOMBSTONE_KEY_LENGTH) {
+      return {
+        key: null,
+        warning: `${TOMBSTONE_KEY_ENV_VAR} is shorter than ${MIN_TOMBSTONE_KEY_LENGTH} characters: account deletion returns 503 until it is fixed.`,
+      };
+    }
+    return { key: configured };
+  }
+  if (!isStrictTombstoneEnv(env)) {
+    return {
+      key: DEV_TOMBSTONE_KEY,
+      warning: `${TOMBSTONE_KEY_ENV_VAR} is not set: using the public development key (development and test only).`,
+    };
+  }
+  return {
+    key: null,
+    warning: `${TOMBSTONE_KEY_ENV_VAR} is not set: account deletion returns 503 until it is.`,
+  };
 }
 
 /** Hex HMAC-SHA256 of the user id: the only trace of the user a tombstone keeps. */

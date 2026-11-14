@@ -388,3 +388,24 @@ export const USER_DATA_REGISTRY: readonly UserDataTable[] = [
 
 /** Row counts per registry table, for audit events. Counts only, never values. */
 export type RemovedCounts = Partial<Record<AccountExportKey, number>>;
+
+/**
+ * Entities in ENTITIES that are deliberately not user data, each with the reason. The coverage
+ * tests fail on any other entity that has a user-like column (/user|owner/i) or a relation and is
+ * not in the registry.
+ */
+export const NON_USER_ENTITIES: Readonly<Record<string, string>> = {
+  AccountDeletionTombstone:
+    "proof of erasure: a keyed hash of the user id and timestamps, no user id and no personal data",
+};
+
+/**
+ * Columns whose names match /user|owner/i but are not links to a user, each with the reason.
+ * Keys are `Entity.property` for the unit test; the integration test uses the column names.
+ */
+export const NOT_USER_LINK_COLUMNS: Readonly<Record<string, { column: string; reason: string }>> = {
+  "UserProfile.propertyOwnershipShare": {
+    column: "property_ownership_share",
+    reason: "the share of a property the person owns, a percentage, not a link to a user",
+  },
+};

@@ -22,10 +22,10 @@ import { resolveDbTestMode } from "../testing/dbTestMode";
 import { discoverMigrations } from "../testing/discoverMigrations";
 import { UserProfileService } from "../user-profile.service";
 import { AccountDeletionService } from "./account-deletion.service";
-import { AccountExportService } from "./account-export.service";
+import { AccountExportService, ExportDeadlineError } from "./account-export.service";
 import { LoggingBankConsentRevoker } from "./bank-consent-revoker";
 import { tombstoneSubjectHash } from "./tombstone-key";
-import { USER_DATA_REGISTRY } from "./user-data-registry";
+import { NOT_USER_LINK_COLUMNS, USER_DATA_REGISTRY } from "./user-data-registry";
 
 // BE-04 on real Postgres: erasure completeness, two-user isolation, rollback, retry after a WorkOS
 // failure, export contents and the reset. Drops the public schema, so a throwaway database only:
@@ -208,6 +208,34 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("user data (real Post
     expect(await userIdTables()).toEqual(registryTables);
   });
 
+  it("no table outside the registry has a user- or owner-like column or a foreign key into it", async () => {
+    const registryTables = USER_DATA_REGISTRY.map((t) => ds.getMetadata(t.entity).tableName);
+    const userLike: { table_name: string; column_name: string }[] = await ds.query(
+      `SELECT table_name, column_name FROM information_schema.columns
+       WHERE table_schema = 'public' AND table_name <> 'migrations'
+         AND column_name ~* '(user|owner)' ORDER BY table_name, column_name`,
+    );
+    // Inside the registry, user_id is the only user link.
+    const notLinks = Object.values(NOT_USER_LINK_COLUMNS).map((c) => c.column);
+    expect(
+      userLike.filter((c) => c.column_name !== "user_id" && !notLinks.includes(c.column_name)),
+    ).toEqual([]);
+    expect([...new Set(userLike.map((c) => c.table_name))].sort()).toEqual(
+      [...registryTables].sort(),
+    );
+    // A foreign key into a registry table from outside it would make that table user data too.
+    const fks: { child: string; parent: string }[] = await ds.query(
+      `SELECT tc.table_name AS child, ccu.table_name AS parent
+       FROM information_schema.table_constraints tc
+       JOIN information_schema.constraint_column_usage ccu
+         ON ccu.constraint_name = tc.constraint_name AND ccu.table_schema = tc.table_schema
+       WHERE tc.table_schema = 'public' AND tc.constraint_type = 'FOREIGN KEY'`,
+    );
+    for (const fk of fks.filter((f) => registryTables.includes(f.parent))) {
+      expect(registryTables, `${fk.child} references ${fk.parent}`).toContain(fk.child);
+    }
+  });
+
   it("deletion leaves no row with the user's id in any table, and the other user's untouched", async () => {
     await seed(USER_A, "A");
     await seed(USER_B, "B");
@@ -239,6 +267,49 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("user data (real Post
     expect(months).toBe(24);
     await expect(deletion.isErased(USER_A)).resolves.toBe(true);
     await expect(deletion.isErased(USER_B)).resolves.toBe(false);
+  });
+
+  it("also removes history and transactions keyed to the user's accounts under another user_id", async () => {
+    await seed(USER_A, "A");
+    const [account] = await ds.getRepository(Account).findBy({ userId: USER_A });
+    await ds.getRepository(Transaction).insert({
+      accountId: account.id,
+      userId: "user_stray",
+      amount: 1,
+      description: "stray",
+      category: "x",
+    });
+    await deletion.deleteAccount(USER_A);
+    expect(await ds.getRepository(Transaction).countBy({ accountId: account.id })).toBe(0);
+  });
+
+  it("sweeps again after the commit, removing rows an in-flight request wrote meanwhile", async () => {
+    await seed(USER_A, "A");
+    const original = ds.transaction.bind(ds);
+    let calls = 0;
+    const spy = vi.spyOn(ds, "transaction").mockImplementation((async (...args: never[]) => {
+      const result = await (original as (...a: never[]) => Promise<unknown>)(...args);
+      calls += 1;
+      // A request that passed the guard before the tombstone committed lands its write now.
+      if (calls === 1) {
+        await ds.getRepository(BudgetEntry).insert({
+          userId: USER_A,
+          category: "food",
+          name: "late write",
+          amount: 1,
+        });
+      }
+      return result;
+    }) as never);
+    try {
+      await expect(deletion.deleteAccount(USER_A)).resolves.toEqual({ status: "deleted" });
+    } finally {
+      spy.mockRestore();
+    }
+    expect(calls).toBe(2);
+    for (const [table, n] of Object.entries(await countsFor(USER_A))) {
+      expect(n, table).toBe(0);
+    }
   });
 
   it("rolls everything back when a delete fails mid-transaction", async () => {
@@ -332,6 +403,52 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("user data (real Post
     expect(text).not.toContain("SECRET");
     expect(text).not.toContain("idem-A");
     expect(text).not.toContain("f".repeat(64));
+  });
+
+  it("aborts a stalled export at the deadline, rolls back and frees the pooled connection", async () => {
+    await seed(USER_A, "A");
+    let calls = 0;
+    const stalled = exporter.writeExport(
+      USER_A,
+      () => {
+        calls += 1;
+        // The client stops reading after the first chunk.
+        return calls === 1 ? Promise.resolve() : new Promise<void>(() => {});
+      },
+      new Date(),
+      300,
+    );
+    await expect(stalled).rejects.toBeInstanceOf(ExportDeadlineError);
+    const [{ open }] = await ds.query(
+      `SELECT count(*)::int AS open FROM pg_stat_activity
+       WHERE datname = current_database() AND state LIKE 'idle in transaction%'`,
+    );
+    expect(open).toBe(0);
+    // The pool still serves a full export afterwards.
+    const doc = AccountExportDocument.parse(JSON.parse(await exportFor(USER_A)));
+    expect(doc.accounts).toHaveLength(1);
+  });
+
+  it("sets the statement and idle-in-transaction timeouts inside the export transaction only", async () => {
+    let seen: { statement_timeout: string; idle: string } | undefined;
+    const original = ds.transaction.bind(ds);
+    const spy = vi.spyOn(ds, "transaction").mockImplementation(((
+      level: never,
+      run: (m: import("typeorm").EntityManager) => Promise<unknown>,
+    ) =>
+      original(level, async (m) => {
+        const result = await run(m);
+        const [row] = await m.query(
+          "SELECT current_setting('statement_timeout') AS statement_timeout, current_setting('idle_in_transaction_session_timeout') AS idle",
+        );
+        seen = row;
+        return result;
+      })) as never);
+    await exportFor(USER_A);
+    spy.mockRestore();
+    expect(seen).toEqual({ statement_timeout: "30s", idle: "1min" });
+    const [after] = await ds.query("SELECT current_setting('statement_timeout') AS t");
+    expect(after.t).toBe("0");
   });
 
   it("exports an empty document (profile null) for a user with no data", async () => {

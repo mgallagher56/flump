@@ -9,23 +9,33 @@ import {
 const KEY = "k".repeat(32);
 
 describe("resolveTombstoneKey", () => {
-  it("falls back to a fixed key in development and test only", () => {
+  it("falls back to a fixed key in development and test only, with a warning naming the variable", () => {
     const dev = resolveTombstoneKey({ NODE_ENV: "development" });
-    expect(dev).toBeTruthy();
-    expect(resolveTombstoneKey({ NODE_ENV: "test" })).toBe(dev);
-    expect(resolveTombstoneKey({ NODE_ENV: "test", [TOMBSTONE_KEY_ENV_VAR]: KEY })).toBe(KEY);
+    expect(dev.key).toBeTruthy();
+    expect(dev.warning).toContain(TOMBSTONE_KEY_ENV_VAR);
+    expect(resolveTombstoneKey({ NODE_ENV: "test" }).key).toBe(dev.key);
+    expect(resolveTombstoneKey({ NODE_ENV: "test", [TOMBSTONE_KEY_ENV_VAR]: KEY })).toEqual({
+      key: KEY,
+    });
   });
 
   it.each([
     ["production", { NODE_ENV: "production" }],
     ["NODE_ENV unset", {}],
-    ["a short key", { NODE_ENV: "production", [TOMBSTONE_KEY_ENV_VAR]: "short" }],
-  ])("returns null (deletion fails closed) for %s", (_label, env) => {
-    expect(resolveTombstoneKey(env)).toBeNull();
+    ["development on Railway", { NODE_ENV: "development", RAILWAY_ENVIRONMENT: "staging" }],
+    ["a short key in production", { NODE_ENV: "production", [TOMBSTONE_KEY_ENV_VAR]: "short" }],
+    ["a short key in development", { NODE_ENV: "development", [TOMBSTONE_KEY_ENV_VAR]: "short" }],
+  ])("returns no key (deletion fails closed) for %s, warning without the value", (_label, env) => {
+    const resolved = resolveTombstoneKey(env);
+    expect(resolved.key).toBeNull();
+    expect(resolved.warning).toContain(TOMBSTONE_KEY_ENV_VAR);
+    expect(resolved.warning).not.toContain("short ");
   });
 
-  it("uses a configured key of 32 or more characters in production", () => {
-    expect(resolveTombstoneKey({ NODE_ENV: "production", [TOMBSTONE_KEY_ENV_VAR]: KEY })).toBe(KEY);
+  it("uses a configured key of 32 or more characters anywhere, silently", () => {
+    expect(resolveTombstoneKey({ NODE_ENV: "production", [TOMBSTONE_KEY_ENV_VAR]: KEY })).toEqual({
+      key: KEY,
+    });
   });
 });
 

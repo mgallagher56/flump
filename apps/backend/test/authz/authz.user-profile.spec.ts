@@ -9,6 +9,7 @@ import {
   USER_IDENTITY_ADAPTER,
   type WorkOSIdentityAdapter,
 } from "../../src/identity/identity.adapter";
+import { AccountDeletionService } from "../../src/privacy/account-deletion.service";
 import { resolveDbTestMode } from "../../src/testing/dbTestMode";
 import { ROUTE_MATRIX } from "./matrix";
 import {
@@ -80,6 +81,8 @@ describe.skipIf(dbMode === "skip")("authz: user-profile controller (real Postgre
 
   beforeEach(async () => {
     await truncateAll(h.dataSource);
+    // Tombstones were truncated: drop the guard's cached "erased" answers with them.
+    h.app.get(AccountDeletionService).clearErasedCache();
     h.resetRateLimits();
     lookedUp.length = 0;
     resetSentTo.length = 0;
@@ -315,9 +318,31 @@ describe.skipIf(dbMode === "skip")("authz: user-profile controller (real Postgre
     await expectProfileAUntouched();
 
     // B's access token is still valid until it expires: no profile row may be recreated from it.
+    // 410 account_deleted (not 401, which would loop the web app through sign-in).
     const after = await h.call("get", "/user-profile", h.tokens.b);
-    expect(after.status).toBe(401);
+    expect(after.status).toBe(410);
+    expect(after.body).toMatchObject({
+      error: "account_deleted",
+      message: "This account has been deleted.",
+    });
     expect(await profiles().countBy({ userId: USER_B })).toBe(0);
+    // Every other route refuses the erased account too: no write can recreate its data.
+    const writes = [
+      await h.call("post", "/accounts", h.tokens.b, { name: "x", type: "Saving", balance: 1 }),
+      await h.call("post", "/budget-entries", h.tokens.b, {
+        category: "housing",
+        name: "x",
+        amount: 1,
+      }),
+      await h.call("post", "/mcp-tokens", h.tokens.b, { name: "x" }),
+      await h.call("patch", "/user-profile/checklist", h.tokens.b, { step: "x", completed: true }),
+    ];
+    expect(writes.map((r) => r.status)).toEqual([410, 410, 410, 410]);
+    expect(await userIdRows(USER_B)).toBe(0);
+    // The deletion route stays open, so a retry still works (idempotent).
+    const retry = await h.call("delete", "/user-profile", h.tokens.b, { confirmation: "DELETE" });
+    expect(retry.status).toBe(200);
+    expect(retry.body).toEqual({ status: "deleted" });
     ran("DELETE /user-profile");
   });
 

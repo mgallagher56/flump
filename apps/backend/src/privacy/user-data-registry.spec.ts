@@ -6,7 +6,7 @@ import { ENTITIES } from "../config/typeorm.options";
 import { AccountDetail } from "../entities/account-detail.entity";
 import { ImportBatch } from "../entities/import-batch.entity";
 import { UserProfile } from "../entities/user-profile.entity";
-import { USER_DATA_REGISTRY } from "./user-data-registry";
+import { NON_USER_ENTITIES, NOT_USER_LINK_COLUMNS, USER_DATA_REGISTRY } from "./user-data-registry";
 
 /**
  * The user-data coverage test (BE-04 acceptance): shared by account deletion, the data export and
@@ -15,26 +15,66 @@ import { USER_DATA_REGISTRY } from "./user-data-registry";
  */
 const storage = getMetadataArgsStorage();
 const columnsOf = (entity: unknown) => storage.columns.filter((c) => c.target === entity);
+const USER_LIKE = /user|owner/i;
 const isUserIdColumn = (c: { propertyName: string; options: { name?: string } }) =>
   c.propertyName === "userId" || c.options.name === "user_id";
 
 describe("user-data registry coverage", () => {
+  /** A column whose property or database name mentions a user or owner (owner_id, created_by_user). */
+  const isUserLikeColumn = (c: { propertyName: string; options: { name?: string } }) =>
+    USER_LIKE.test(c.propertyName) || USER_LIKE.test(c.options.name ?? "");
+  const relationsOf = (entity: unknown) => storage.relations.filter((r) => r.target === entity);
+  const joinColumnsOf = (entity: unknown) => storage.joinColumns.filter((j) => j.target === entity);
+  const notALink = (entity: { name: string }, property: string) =>
+    Object.hasOwn(NOT_USER_LINK_COLUMNS, `${entity.name}.${property}`);
+  const looksUserLinked = (entity: { name: string }) =>
+    columnsOf(entity).some((c) => isUserLikeColumn(c) && !notALink(entity, c.propertyName)) ||
+    relationsOf(entity).length > 0 ||
+    joinColumnsOf(entity).length > 0;
+
   it("lists every entity in ENTITIES that has a user id column, exactly once", () => {
     const withUserId = ENTITIES.filter((e) => columnsOf(e).some(isUserIdColumn));
     const registered = USER_DATA_REGISTRY.map((t) => t.entity);
     expect(new Set(registered).size).toBe(registered.length);
     const missing = withUserId.filter((e) => !registered.includes(e as never)).map((e) => e.name);
     expect(missing, "entities with a user id and no delete/export/reset handling").toEqual([]);
-    // Nothing registered that is not a real entity with a user id.
     for (const t of USER_DATA_REGISTRY) {
       expect(ENTITIES).toContain(t.entity);
       expect(columnsOf(t.entity).some(isUserIdColumn), t.entity.name).toBe(true);
     }
   });
 
-  it("only the tombstone table, which holds no user id, is outside the registry", () => {
+  it("an entity with any user-like column or relation is in the registry or the explicit allow-list", () => {
+    const unhandled = ENTITIES.filter(
+      (e) =>
+        looksUserLinked(e) &&
+        !USER_DATA_REGISTRY.some((t) => t.entity === e) &&
+        !Object.hasOwn(NON_USER_ENTITIES, e.name),
+    ).map((e) => e.name);
+    expect(unhandled, "user-linked entities with no delete/export/reset handling").toEqual([]);
+  });
+
+  it("registered entities link to the user through user_id only (no second user-like column)", () => {
+    for (const t of USER_DATA_REGISTRY) {
+      const extra = columnsOf(t.entity)
+        .filter(
+          (c) =>
+            isUserLikeColumn(c) &&
+            !isUserIdColumn(c) &&
+            !Object.hasOwn(NOT_USER_LINK_COLUMNS, `${t.entity.name}.${c.propertyName}`),
+        )
+        .map((c) => c.propertyName);
+      expect(extra, `${t.entity.name}: handle the extra user link explicitly`).toEqual([]);
+      expect(relationsOf(t.entity), t.entity.name).toEqual([]);
+    }
+  });
+
+  it("everything outside the registry is in the allow-list, with a reason", () => {
     const outside = ENTITIES.filter((e) => !USER_DATA_REGISTRY.some((t) => t.entity === e));
-    expect(outside.map((e) => e.name)).toEqual(["AccountDeletionTombstone"]);
+    expect(outside.map((e) => e.name).sort()).toEqual(Object.keys(NON_USER_ENTITIES).sort());
+    for (const reason of Object.values(NON_USER_ENTITIES)) {
+      expect(reason.length).toBeGreaterThan(20);
+    }
   });
 
   it.each(USER_DATA_REGISTRY.map((t) => [t.entity.name, t] as const))(

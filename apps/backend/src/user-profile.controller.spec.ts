@@ -347,7 +347,7 @@ describe("UserProfileController account deletion and export (BE-04)", () => {
 
   it("deleteUser is a 503 when the deletion service is not wired", async () => {
     await expect(make().deleteUser({ user: fresh }, { confirmation: "DELETE" })).rejects.toThrow(
-      "Account deletion is not available right now. Please try again later.",
+      "Account deletion is not available right now. Try again later.",
     );
   });
 
