@@ -56,8 +56,15 @@ for (const route of VISUAL_ROUTES) {
     if (route.signedIn) test.use({ storageState: AUTH_STATE });
 
     test(`${route.name} renders as the baseline`, async ({ page }, testInfo) => {
-      // Same instant as the servers, so hydration agrees with the server-rendered dates.
-      if (SERVER_CLOCK_FROZEN) await page.clock.install({ time: FROZEN_NOW });
+      // The servers started at FROZEN_NOW and have ticked since: take their current time from
+      // the Date header so the browser agrees with the server-rendered dates when it hydrates.
+      if (SERVER_CLOCK_FROZEN) {
+        const ping = await page.request.get("/healthz");
+        const serverDate = ping.headers().date;
+        await page.clock.install({
+          time: serverDate ? new Date(serverDate) : new Date(FROZEN_NOW),
+        });
+      }
       const response = await page.goto(route.url);
       expect(response?.status(), `${route.url} status`).toBeLessThan(400);
       if (route.signedIn) await expect(page).not.toHaveURL(/\/login|\/sandbox/);

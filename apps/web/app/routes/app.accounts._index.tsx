@@ -1,5 +1,5 @@
 import type { ReactElement } from "react";
-import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
+import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "react-router";
 import { data } from "react-router";
 import AccountsContainer from "~/containers/accounts/accountsContainer/AccountsContainer";
 import {
@@ -91,6 +91,8 @@ export const action = async (args: ActionFunctionArgs) => {
     return actionErrorResponse(error);
   }
 };
+
+export const meta: MetaFunction = () => [{ title: "Accounts | Flump" }];
 
 export const loader = async (args: LoaderFunctionArgs) => {
   const { accounts, accountDetails, bankConnections, user, accessToken } =

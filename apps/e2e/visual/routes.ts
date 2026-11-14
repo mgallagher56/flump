@@ -39,7 +39,6 @@ export const VISUAL_ROUTES: readonly VisualRoute[] = [
   web("savings", "/app/savings"),
   web("self-assessment", "/app/self-assessment"),
   web("take-home", "/app/take-home"),
-  web("tax", "/app/tax"),
   web("tools", "/tools", false),
   web("tools-100k-trap", "/tools/uk-100k-tax-trap-calculator", false),
   web("sandbox", "/sandbox", false),

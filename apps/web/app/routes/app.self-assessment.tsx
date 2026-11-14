@@ -1,5 +1,5 @@
 import type { ReactElement } from "react";
-import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
+import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "react-router";
 import { data } from "react-router";
 import TaxContainer from "~/containers/tax/TaxContainer";
 import { backendFetch, loadWorkspaceSnapshot } from "~/services/backend-client.server";
@@ -186,6 +186,8 @@ export const action = async (args: ActionFunctionArgs) => {
     return actionErrorResponse(error);
   }
 };
+
+export const meta: MetaFunction = () => [{ title: "Self Assessment | Flump" }];
 
 export const loader = async (args: LoaderFunctionArgs) => {
   const { taxRecords, userProfile, accounts, user } = await loadWorkspaceSnapshot(args, {

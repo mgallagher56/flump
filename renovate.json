@@ -27,7 +27,14 @@
       "description": "The visual regression job's container image must match @playwright/test, and a bump means regenerating its baselines (apps/e2e/README.md)",
       "matchPackageNames": ["@playwright/test", "mcr.microsoft.com/playwright"],
       "groupName": "playwright",
+      "minimumReleaseAge": "3 days",
       "automerge": false
+    },
+    {
+      "description": "The Playwright image tag is v<semver>-<ubuntu codename>",
+      "matchDatasources": ["docker"],
+      "matchPackageNames": ["mcr.microsoft.com/playwright"],
+      "versioning": "regex:^v(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)-(?<compatibility>.+)$"
     }
   ]
 }
