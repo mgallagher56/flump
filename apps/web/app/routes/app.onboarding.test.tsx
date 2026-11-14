@@ -574,6 +574,7 @@ describe("OnboardingRoute (5-step flow)", () => {
     expect(body("/accounts")).toEqual([
       { name: "Cash and emergency savings", type: "Saving", balance: 5000, isCurrent: true },
       { name: "Workplace and personal pension", type: "Pension", balance: 15000, isCurrent: true },
+      { name: "Home (your estimate)", type: "Property", balance: 300000, isCurrent: true },
       { name: "Residential Mortgage", type: "Mortgage", balance: 200000, isCurrent: true },
       { name: "Cards and loans baseline", type: "Credit Card", balance: 2000, isCurrent: true },
     ]);
