@@ -1,0 +1,124 @@
+name: ♿ Accessibility gate
+
+# UX assessment extra PR D (checks K2 to K5, K19). Every route in apps/e2e/visual/routes.ts runs
+# axe (WCAG 2.2 A and AA) at 375 and 1280 in light and dark and in forced colours, a keyboard
+# focus walk (visible and not obscured, skip link first), 320 px reflow and the html lang tag.
+# Known failures live in apps/e2e/a11y/baseline.json: the job fails only on a new or worse
+# failure. See apps/e2e/README.md "Accessibility gate".
+#
+# Advisory: continue-on-error and not a required check. Its own workflow, so it never adds to the
+# required CI Pipeline jobs, and pull requests and manual runs only, so it cannot hold up deploys.
+on:
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      update:
+        description: "Regenerate apps/e2e/a11y/baseline.json from this run and upload it as an artifact"
+        type: boolean
+        default: true
+
+env:
+  TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+  TURBO_TEAM: ${{ vars.TURBO_TEAM }}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  a11y:
+    name: ♿ Accessibility gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    # Advisory until the baseline is empty for a while: see apps/e2e/README.md.
+    continue-on-error: true
+    permissions:
+      actions: write
+      contents: read
+
+    # Same image as the visual suite, so Chromium and its forced-colours and font behaviour match.
+    # Keep the tag equal to @playwright/test in apps/e2e/package.json.
+    container:
+      image: mcr.microsoft.com/playwright:v1.65.0-noble
+
+    # Throwaway Postgres; the password is a literal for this disposable container, not a secret.
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: flump_e2e
+        options: >-
+          --health-cmd "pg_isready -U postgres -d flump_e2e"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+
+    env:
+      CI: "true"
+      E2E_DATABASE_URL: postgres://postgres:postgres@postgres:5432/flump_e2e
+      E2E_FREEZE_CLOCK: "1"
+
+    steps:
+      - name: ⬇️ Checkout repo
+        # actions/checkout v7.0.1
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
+      # setup-bun extracts a zip and the Playwright image ships without unzip. faketime freezes
+      # the servers' clock (apps/e2e/support/clock.ts) so dated content is the same every run.
+      - name: 📦 Install unzip and faketime
+        env:
+          DEBIAN_FRONTEND: noninteractive
+        run: apt-get update -qq && apt-get install -y -qq unzip faketime > /dev/null
+
+      - name: ⚙️ Setup Bun and install dependencies
+        uses: ./.github/actions/bun-setup
+        with:
+          turbo: true
+          ghToken: ${{ secrets.GITHUB_TOKEN }}
+          turboToken: ${{ env.TURBO_TOKEN }}
+
+      - name: 🏗️ Build all packages
+        run: bun run build
+
+      # While the committed baseline says "generated": false this records instead of failing,
+      # so the first run produces the baseline in the artifact below.
+      - name: ♿ Check against the baseline
+        if: github.event_name != 'workflow_dispatch' || !inputs.update
+        run: bun run test:a11y
+
+      - name: 🔄 Regenerate the baseline
+        if: github.event_name == 'workflow_dispatch' && inputs.update
+        env:
+          A11Y_UPDATE_BASELINE: "1"
+        run: bun run test:a11y
+
+      # Always written by the run, whatever the mode: download it over
+      # apps/e2e/a11y/baseline.json to accept this run's findings.
+      - name: 📎 Upload generated baseline
+        if: always()
+        # actions/upload-artifact v7.0.2
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: a11y-baseline
+          path: apps/e2e/test-results-a11y-findings/baseline.json
+          retention-days: 7
+          if-no-files-found: ignore
+
+      - name: 📎 Upload report
+        if: always()
+        # actions/upload-artifact v7.0.2
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: a11y-report
+          path: |
+            apps/e2e/playwright-report-a11y
+            apps/e2e/test-results-a11y
+          retention-days: 7
+          if-no-files-found: ignore

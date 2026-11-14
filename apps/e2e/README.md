@@ -104,3 +104,44 @@ It starts as a non-required check with `continue-on-error: true`. Once it has pa
 1. Remove `continue-on-error: true` from the `visual` job.
 2. In GitHub, Settings → Rules (or Branches → branch protection for `main`), add the status check
    "🖼️ Visual regression" to the required checks.
+
+## Accessibility gate
+
+`a11y/pages.spec.ts` (config `playwright.a11y.config.ts`, root script `bun run test:a11y`) runs
+page-level accessibility checks on every row of `visual/routes.ts`, reusing the visual suite's
+servers, global setup, sign-in state, frozen clock and `settle`. One test per route per project
+(`a11y/projects.ts`):
+
+| Check    | Projects                                                                  | What fails                                                                                                                                                                                                                                                   |
+| -------- | ------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `axe`    | `375-light`, `375-dark`, `1280-light`, `1280-dark`, `1280-forced-colours` | `@axe-core/playwright` with the tags `wcag2a`, `wcag2aa`, `wcag21a`, `wcag21aa`, `wcag22aa`; counted per rule id as failing nodes                                                                                                                            |
+| `focus`  | the same five                                                             | Tabs through the first `MAX_TAB_STOPS` (25) elements: `no-visible-indicator` (focus changes no outline, box-shadow or border and there is no visible outline), `obscured` (the centre is under a fixed or sticky bar), `skip-link-not-first`, `no-skip-link` |
+| `reflow` | `320-reflow`                                                              | `horizontal-overflow` at 320 px wide (WCAG 1.4.10), with the same overflow helper as the visual suite                                                                                                                                                        |
+| `lang`   | `1280-light`                                                              | `html-lang-not-en-GB`                                                                                                                                                                                                                                        |
+| `render` | `1280-forced-colours`                                                     | `empty-title`. Every project also asserts the route answers below 400 and, when signed in, does not bounce to `/login`                                                                                                                                       |
+
+**Known-failures baseline.** `a11y/baseline.json` holds, per route, project and check, each rule
+with its count. It stores no selectors or text, so it is stable from run to run. A run **fails**
+when a rule appears that is not in the baseline or a count rises; the message names the route,
+project, check and rule, lists example elements, and says how to update the baseline. A run
+**passes** when counts fall or rules disappear, and prints an `IMPROVED` line for each, so a PR
+that fixes something is never failed by a stale baseline. Lock improvements in by regenerating.
+
+**Updating the baseline.** Locally, `A11Y_UPDATE_BASELINE=1 bun run test:a11y` rewrites
+`a11y/baseline.json` (sorted keys, no timestamps; entries for routes and projects that did not
+run are kept, routes no longer in `visual/routes.ts` are dropped). Or run the workflow with
+`gh workflow run a11y-gate.yml --ref <branch> -f update=true` and download the result:
+
+```sh
+gh run download <run-id> -n a11y-baseline -D apps/e2e/a11y
+```
+
+Every run also writes its merged baseline to `test-results-a11y-findings/baseline.json` (the
+`a11y-baseline` artifact in CI). While the committed file says `"generated": false` the suite
+records and writes the baseline instead of failing, so the first run produces it.
+
+It runs in its own workflow, `.github/workflows/a11y-gate.yml` ("Accessibility gate"), on pull
+requests and by hand. It is **advisory**: `continue-on-error: true` and not a required check.
+Make it required the same way as the visual suite once the baseline has stayed stable for about
+20 pull requests. Unlike screenshots the findings do not depend on the OS, so a local run is a
+fair preview of CI; pick free `E2E_*_PORT` values and a database whose name contains `e2e`.
