@@ -66,7 +66,7 @@ describe("<BankConnectionsList />", () => {
 
   test("shows one connect entry point when the list is empty", () => {
     const { getAllByText } = customRender(<BankConnectionsList canConnect connections={[]} />);
-    expect(getAllByText("Connect bank account")).toHaveLength(1);
+    expect(getAllByText("Connect a bank")).toHaveLength(1);
   });
 
   test("allows syncing a connection", () => {
