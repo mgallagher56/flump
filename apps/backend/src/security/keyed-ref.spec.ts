@@ -1,7 +1,7 @@
 import { createHmac } from "node:crypto";
 import { describe, expect, it } from "vitest";
 import {
-  LOG_USER_REF_LABEL,
+  LOG_REF_LABEL,
   logUserRef,
   RATE_LIMIT_BUCKET_LABEL,
   rateLimitStorageKey,
@@ -79,6 +79,12 @@ describe("root secret handling", () => {
     ).toThrow(unsetMessage);
   });
 
+  it("does not treat an empty RAILWAY variable as Railway (the E2E servers set one)", () => {
+    expect(
+      rateLimitStorageKey("x|1", { NODE_ENV: "development", RAILWAY_ENVIRONMENT: "" }),
+    ).toMatch(/^rl1:[0-9a-f]{32}$/);
+  });
+
   it("still uses a configured key in production and on Railway", () => {
     expect(() =>
       rateLimitStorageKey("x|1", { ...ENV, NODE_ENV: "production", RAILWAY_ENVIRONMENT: "p" }),
@@ -102,7 +108,7 @@ describe("logUserRef (BE-15, S6)", () => {
   });
 
   it("is domain-separated from the bucket keys", () => {
-    const derived = createHmac("sha256", ROOT).update(LOG_USER_REF_LABEL).digest();
+    const derived = createHmac("sha256", ROOT).update(LOG_REF_LABEL).digest();
     expect(logUserRef(USER, ENV)).toBe(
       createHmac("sha256", derived).update(USER).digest("hex").slice(0, 16),
     );

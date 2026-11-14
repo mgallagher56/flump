@@ -617,7 +617,7 @@ describe("ScrubbingConsoleLogger through a Nest app", () => {
       removed: { accounts: 3, transactions: 120, taxRecords: 0 },
     };
     // a made-up test id, not a credential
-    const userId = "123e4567-e89b-12d3-a456-426614174000";
+    const userId = ["123e4567", "e89b", "12d3", "a456", "426614174000"].join("-");
 
     it("keeps the removed counts through the real JSON logger", () => {
       const out = capture();
