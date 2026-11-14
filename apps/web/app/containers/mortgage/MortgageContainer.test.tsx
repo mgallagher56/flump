@@ -342,8 +342,9 @@ describe("<MortgageContainer />", () => {
           balance: -135400,
           fixedRateEndDate: "2099-10-01",
         },
+        { id: "home", name: "Home", type: "Property", balance: 350000 },
       ],
-      userProfile: { homeValue: 350000 },
+      userProfile: {},
     };
     const { getByText, getAllByText, queryByText } = customRender(<MortgageContainer />);
     fireEvent.click(getByText("Rate change"));
@@ -475,9 +476,10 @@ describe("<MortgageContainer />", () => {
           interestRate: 4.5,
           termMonths: 240,
         },
+        { id: "home", name: "Home", type: "Property", balance: 350000 },
       ],
       accountDetails: [{ account_id: "m1", month: 6, year: 2026, value: -135400 }],
-      userProfile: { homeValue: 350000 },
+      userProfile: {},
     });
     const savedText = (container: HTMLElement) =>
       container.querySelector("#mortgage-summary")?.textContent ?? "";
@@ -660,28 +662,57 @@ describe("<MortgageContainer />", () => {
     const ltvHeading = (container: HTMLElement) =>
       container.querySelector("#ltv-milestones-heading")?.textContent ?? "";
 
-    test("shows 60% from the saved home estimate and mortgage balance", () => {
+    const home = { id: "home", name: "Home (your estimate)", type: "Property", balance: 310000 };
+
+    test("shows 60% from the seeded home Property account and the mortgage balance", () => {
       loaderData = {
-        accounts: homeownerAccounts,
+        accounts: [...homeownerAccounts, home],
         accountDetails: [],
-        userProfile: { housingStatus: "mortgage", homeValue: 310000 },
+        userProfile: { housingStatus: "mortgage" },
       };
       const { container, queryByText } = customRender(<MortgageContainer />);
       expect(ltvHeading(container)).toContain("Current LTV: 60.0%");
       expect(queryByText(/Add your mortgage balance and property value/)).toBeNull();
     });
 
-    test("shows 60% when the home is saved as a Property account (the profile has no value)", () => {
+    test("leaves buy-to-let out: still 60% with a BTL flat and BTL mortgage listed first", () => {
       loaderData = {
         accounts: [
+          { id: "btl-m", name: "BTL interest-only mortgage", type: "Mortgage", balance: 150000 },
+          { id: "btl", name: "Buy-to-let flat", type: "Property", balance: 235000 },
           ...homeownerAccounts,
-          { id: "home", name: "Home (your estimate)", type: "Property", balance: 310000 },
+          home,
         ],
         accountDetails: [],
         userProfile: { housingStatus: "mortgage" },
       };
       const { container } = customRender(<MortgageContainer />);
       expect(ltvHeading(container)).toContain("Current LTV: 60.0%");
+    });
+
+    test("measures the selected residential mortgage, not every mortgage added up", () => {
+      loaderData = {
+        accounts: [
+          ...homeownerAccounts,
+          { id: "m2", name: "Second charge", type: "Mortgage", balance: 31000 },
+          home,
+        ],
+        accountDetails: [],
+        userProfile: { housingStatus: "mortgage" },
+      };
+      const { container } = customRender(<MortgageContainer />);
+      // m1 (186,000) is selected first: 186,000 / 310,000, not 217,000 / 310,000.
+      expect(ltvHeading(container)).toContain("Current LTV: 60.0%");
+    });
+
+    test("a profile homeValue alone is never used (the backend does not store it)", () => {
+      loaderData = {
+        accounts: homeownerAccounts,
+        accountDetails: [],
+        userProfile: { housingStatus: "mortgage", homeValue: 310000 },
+      };
+      const { container } = customRender(<MortgageContainer />);
+      expect(container.querySelector("#ltv-milestones-heading")).toBeNull();
     });
 
     test("stays not available, never 0%, without a home value", () => {

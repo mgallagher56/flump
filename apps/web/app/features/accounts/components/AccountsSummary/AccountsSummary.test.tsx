@@ -49,6 +49,7 @@ describe("<AccountsSummary />", () => {
     expect(getByTestId("home-estimate-line").textContent).toContain(
       "Home (your estimate): £310,000",
     );
+    expect(getByTestId("home-estimate-line").textContent).toContain("counted once");
     unmount();
     customRender(<AccountsSummary accountCount={3} allocation={[]} stats={stats} />);
     expect(queryByTestId("home-estimate-line")).toBeNull();

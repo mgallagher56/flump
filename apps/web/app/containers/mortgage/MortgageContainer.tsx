@@ -1,4 +1,10 @@
-import { calculateLtvMilestones, isFigureKnown, PortfolioSnapshot } from "@flump/finance-engine";
+import {
+  calculateLtvMilestones,
+  isBuyToLetAccountName,
+  isFigureKnown,
+  PortfolioSnapshot,
+  selectLoanToValue,
+} from "@flump/finance-engine";
 import { Button, EmptyState, Icon, LiveRegion, PageHeader, ScenarioZone } from "@repo/ui";
 import { Building2, Coins, Home, LineChart, Percent } from "lucide-react";
 import { type FC, useEffect, useMemo, useRef, useState } from "react";
@@ -263,12 +269,17 @@ const MortgageContainer: FC = () => {
   ].filter((x): x is string => x !== null);
 
   // Property value is only ever what the user entered; it is never derived from the loan.
-  // Residential loan to value comes from the picture (E16 PR 3): the same home value net worth
-  // counts (a Property account, else the profile estimate) over the saved mortgage balance.
-  // It used to read profile.homeValue alone, which the backend never stores, so an onboarded
-  // homeowner saw "not available" with both figures saved.
-  const residentialLtv = isFigureKnown(picture.loanToValue) ? picture.loanToValue.value : null;
-  // Saved balances reach the picture through accountPatches, so it is never stale after a save.
+  // Residential loan to value (E16 PR 3): the selected residential mortgage over residential
+  // Property accounts (the seeded home estimate is one), buy to let left out. Built from the
+  // same rows as the picture, so a saved balance (accountPatches) is never stale.
+  const residentialLtvFigure = useMemo(
+    () =>
+      selectLoanToValue(new PortfolioSnapshot(pictureAccounts, accountDetails), {
+        mortgageAccountId: selectedAccountId,
+      }),
+    [pictureAccounts, accountDetails, selectedAccountId],
+  );
+  const residentialLtv = isFigureKnown(residentialLtvFigure) ? residentialLtvFigure.value : null;
   const isBtl = propertyCategory === "btl";
   const propertyValue = isBtl
     ? (profile.buyToLetPropertyValue ?? 0)
@@ -302,9 +313,11 @@ const MortgageContainer: FC = () => {
         }
       : null;
 
-  // Filter for mortgage accounts
+  // Residential mortgage accounts: buy-to-let mortgages are left out of the residential view.
   const mortgageAccounts = useMemo(() => {
-    return accounts.filter((acc: any) => acc.type === "Mortgage");
+    return accounts.filter(
+      (acc: any) => acc.type === "Mortgage" && !isBuyToLetAccountName(String(acc.name ?? "")),
+    );
   }, [accounts]);
 
   // Pre-populate with first linked mortgage account if found

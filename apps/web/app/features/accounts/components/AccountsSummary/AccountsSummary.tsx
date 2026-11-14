@@ -4,6 +4,8 @@ import type { FC } from "react";
 import {
   allocationItem,
   allocationList,
+  homeEstimateLine,
+  homeEstimateNote,
   section,
   sectionTitle,
   studentLoanLine,
@@ -21,7 +23,10 @@ export interface AccountsSummaryStats {
   assets: number;
   liabilities: number;
   netWorth: number;
-  /** The user's own home estimate counted in net worth and assets (E16 D3); 0 when none. */
+  /**
+   * The seeded "Home (your estimate)" Property account (E16 D3), already inside assets and net
+   * worth; 0 when none.
+   */
   homeEstimate?: number;
   studentLoans: number;
   liquidCash: number;
@@ -75,13 +80,17 @@ export const AccountsSummary: FC<AccountsSummaryProps> = ({ stats, allocation, a
         />
       </KpiStrip>
       {(stats.homeEstimate ?? 0) > 0 && (
-        <div className={studentLoanLine()} data-testid="home-estimate-line" id="home-estimate-line">
-          <p className={studentLoanNote()}>
+        <div
+          className={homeEstimateLine()}
+          data-testid="home-estimate-line"
+          id="home-estimate-line"
+        >
+          <p className={homeEstimateNote()}>
             {HOME_ESTIMATE_LABEL}: <Money size="sm" value={stats.homeEstimate ?? 0} />
           </p>
-          <p className={studentLoanNote()}>
-            The value you gave for your home, counted in total assets and net worth. Add it as a
-            property account to keep it up to date.
+          <p className={homeEstimateNote()}>
+            The value you gave for your home, counted once in your net worth. Edit the account to
+            keep it up to date.
           </p>
         </div>
       )}

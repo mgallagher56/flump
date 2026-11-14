@@ -81,7 +81,6 @@ describe("AgentDataService.getUserFinancialData profile facts (E23)", () => {
       housingStatus: null,
       monthlyHousingCost: null,
       mortgageType: null,
-      homeValue: null,
       propertyOwnershipShare: null,
     });
   });
