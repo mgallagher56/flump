@@ -14,7 +14,7 @@ import { TaxService } from "../tax.service";
 import { assertSafeTestDatabase } from "../testing/assertSafeTestDatabase";
 import { resolveDbTestMode } from "../testing/dbTestMode";
 import { discoverMigrations, type MigrationClass } from "../testing/discoverMigrations";
-import { TIMESTAMP_COLUMNS } from "./TimestampsWithTimeZone1794358400000";
+import { TIMESTAMP_COLUMNS } from "./TimestampsWithTimeZone1794358500000";
 
 // BE-08 (backend audit M1, M2, M3, M5): the three BE-08 migrations and the two writes that now run
 // in one transaction, on real Postgres. Same throwaway-database rules as
@@ -25,7 +25,7 @@ const TEST_DATABASE_URL = process.env.TEST_DATABASE_URL;
 
 const FK_MIGRATION = "AccountIdForeignKeys1794358200000";
 const TAX_MIGRATION = "TaxRecordAprilEndDate1794358300000";
-const TZ_MIGRATION = "TimestampsWithTimeZone1794358400000";
+const TZ_MIGRATION = "TimestampsWithTimeZone1794358500000";
 const USER_A = "user-a";
 const USER_B = "user-b";
 const MISSING = "00000000-0000-4000-8000-00000000dead";

@@ -1,5 +1,5 @@
 import type { MigrationInterface, QueryRunner } from "typeorm";
-import { takeMigrationLock } from "../config/migration-lock";
+import { convertTimestampColumns } from "../integrity/timestamp-columns";
 
 // BE-08 (backend audit 2026-11, finding M5): every timestamp column was `timestamp` (without time
 // zone), so its meaning depended on Node and Postgres both running in UTC. BE-02 pinned TZ=UTC
@@ -44,38 +44,24 @@ export const TIMESTAMP_COLUMNS = [
   ["user_profiles", "updated_at"],
 ] as const;
 
-export class TimestampsWithTimeZone1794358400000 implements MigrationInterface {
-  name = "TimestampsWithTimeZone1794358400000";
+export class TimestampsWithTimeZone1794358500000 implements MigrationInterface {
+  name = "TimestampsWithTimeZone1794358500000";
 
   public async up(queryRunner: QueryRunner): Promise<void> {
-    await convert(queryRunner, "timestamp without time zone", "timestamptz");
+    await convertTimestampColumns(
+      queryRunner,
+      TIMESTAMP_COLUMNS,
+      "timestamp without time zone",
+      "timestamptz",
+    );
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await convert(queryRunner, "timestamp with time zone", "timestamp");
-  }
-}
-
-async function convert(queryRunner: QueryRunner, from: string, to: string): Promise<void> {
-  await takeMigrationLock(queryRunner);
-  await queryRunner.query("SET LOCAL lock_timeout = '10s'");
-  await queryRunner.query("SET LOCAL timezone = 'UTC'");
-  const rows: Array<{ table_name: string; column_name: string }> = await queryRunner.query(
-    `SELECT table_name, column_name FROM information_schema.columns
-     WHERE table_schema = current_schema() AND data_type = $1`,
-    [from],
-  );
-  const present = new Set(rows.map((r) => `${r.table_name}.${r.column_name}`));
-  const byTable = new Map<string, string[]>();
-  for (const [table, column] of TIMESTAMP_COLUMNS) {
-    if (!present.has(`${table}.${column}`)) continue;
-    byTable.set(table, [...(byTable.get(table) ?? []), column]);
-  }
-  for (const [table, columns] of byTable) {
-    // One ALTER per table, so each table is locked once. No USING clause on purpose: the
-    // implicit cast reads the values in the session time zone (UTC, set above), which equals
-    // `USING col AT TIME ZONE 'UTC'`, and only the plain cast lets Postgres skip the rewrite.
-    const clauses = columns.map((c) => `ALTER COLUMN "${c}" TYPE ${to}`);
-    await queryRunner.query(`ALTER TABLE "${table}" ${clauses.join(", ")}`);
+    await convertTimestampColumns(
+      queryRunner,
+      TIMESTAMP_COLUMNS,
+      "timestamp with time zone",
+      "timestamp",
+    );
   }
 }
