@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { DEFAULT_NET_WORTH_BASIS } from "../net-worth-basis.js";
 import { PortfolioSnapshot } from "../portfolio.js";
 import {
   calculateUKTax,
@@ -114,9 +115,9 @@ describe.each(NAMES)("persona %s: portfolio totals", (name) => {
   it("matches the hand-derived totals", () => {
     const snap = snapshot(fixture);
     // Net worth is account rows only: the home estimate is a Property account row (D3).
-    expect(snap.getTotalNetWorth()).toBe(p.netWorth);
-    expect(snap.getTotalAssets()).toBe(p.totalAssets);
-    expect(snap.getTotalLiabilities()).toBe(p.totalLiabilities);
+    expect(snap.getTotalNetWorth(DEFAULT_NET_WORTH_BASIS)).toBe(p.netWorth);
+    expect(snap.getTotalAssets(DEFAULT_NET_WORTH_BASIS)).toBe(p.totalAssets);
+    expect(snap.getTotalLiabilities(DEFAULT_NET_WORTH_BASIS)).toBe(p.totalLiabilities);
     expect(snap.getTotalConsumerDebt()).toBe(p.consumerDebt);
     expect(snap.getTotalLiquidCash()).toBe(p.liquidCash);
     expect(snap.getTotalInvestments()).toBe(p.investments);
@@ -126,7 +127,10 @@ describe.each(NAMES)("persona %s: portfolio totals", (name) => {
     expect(snap.getTotalMortgageBalance()).toBe(p.mortgageBalance);
     expect(snap.toDebtItems().map((d) => d.id)).toEqual(p.debtItemIds);
     // Net worth is always assets minus liabilities; a student loan is in neither.
-    expect(snap.getTotalAssets() - snap.getTotalLiabilities()).toBe(snap.getTotalNetWorth());
+    expect(
+      snap.getTotalAssets(DEFAULT_NET_WORTH_BASIS) -
+        snap.getTotalLiabilities(DEFAULT_NET_WORTH_BASIS),
+    ).toBe(snap.getTotalNetWorth(DEFAULT_NET_WORTH_BASIS));
   });
 
   it("has fixture budget rows that sum to the expected totals", () => {
@@ -431,7 +435,7 @@ describe("new user", () => {
   it("has no portfolio, history, budget or tax rows", () => {
     const snap = snapshot(newUser);
     expect(snap.getResolvedAccounts()).toEqual([]);
-    expect(snap.getMonthlyHistory()).toEqual([]);
+    expect(snap.getMonthlyHistory(DEFAULT_NET_WORTH_BASIS)).toEqual([]);
     expect(snap.toDebtItems()).toEqual([]);
     expect(newUser.budget).toEqual([]);
     expect(newUser.taxRecords).toEqual([]);
@@ -461,7 +465,7 @@ describe("heavy persona", () => {
   // History only includes accounts that have detail rows (portfolio.ts filters on
   // history.length > 0), so its end-state net worth differs from getTotalNetWorth() by design today.
   it("carries values forward month by month, with the later duplicate row winning", () => {
-    const history = snap.getMonthlyHistory(12);
+    const history = snap.getMonthlyHistory(DEFAULT_NET_WORTH_BASIS, 12);
     expect(history).toHaveLength(heavyHistoryExpected.length);
     history.forEach((point, i) => {
       const e = heavyHistoryExpected[i];
@@ -473,7 +477,7 @@ describe("heavy persona", () => {
   });
 
   it("limits history to the most recent months asked for", () => {
-    const last3 = snap.getMonthlyHistory(3);
+    const last3 = snap.getMonthlyHistory(DEFAULT_NET_WORTH_BASIS, 3);
     expect(last3.map((p) => p.month)).toEqual([9, 10, 11]);
     expect(last3.at(-1)?.netWorth).toBe(heavyHistoryExpected.at(-1)?.netWorth);
   });
@@ -483,7 +487,9 @@ describe("heavy persona", () => {
       heavy.accounts,
       heavy.details.filter((d) => d.accountId !== "heavy-student-loan"),
     );
-    expect(withoutLoanRow.getMonthlyHistory(12)).toEqual(snap.getMonthlyHistory(12));
+    expect(withoutLoanRow.getMonthlyHistory(DEFAULT_NET_WORTH_BASIS, 12)).toEqual(
+      snap.getMonthlyHistory(DEFAULT_NET_WORTH_BASIS, 12),
+    );
   });
 
   it.each(Object.keys(heavyTaxYearsExpected))("sums the records for %s on its own", (year) => {

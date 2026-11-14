@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { DEFAULT_NET_WORTH_BASIS } from "../../net-worth-basis.js";
 import { PortfolioSnapshot } from "../../portfolio.js";
 import {
   HOME_ESTIMATE_LABEL,
@@ -24,7 +25,7 @@ const snapshot = new PortfolioSnapshot([
 
 describe("selectNetWorth", () => {
   it("is assets less liabilities, with an overdraft as a liability, not netted cash", () => {
-    const nw = selectNetWorth(snapshot);
+    const nw = selectNetWorth(snapshot, DEFAULT_NET_WORTH_BASIS);
     expect(nw.totalAssets).toBe(13000);
     expect(nw.totalLiabilities).toBe(5500);
     expect(nw.netWorth).toBe(7500);
@@ -33,7 +34,7 @@ describe("selectNetWorth", () => {
   });
 
   it("is a real £0 with no accounts", () => {
-    expect(selectNetWorth(new PortfolioSnapshot([])).netWorth).toBe(0);
+    expect(selectNetWorth(new PortfolioSnapshot([]), DEFAULT_NET_WORTH_BASIS).netWorth).toBe(0);
   });
 });
 
@@ -44,7 +45,7 @@ describe("home estimate in net worth (E16 D3, option a)", () => {
   ]);
 
   it("is the seeded Property account, counted once inside property, assets and net worth", () => {
-    const nw = selectNetWorth(seeded);
+    const nw = selectNetWorth(seeded, DEFAULT_NET_WORTH_BASIS);
     expect(nw.homeEstimate).toBe(310000);
     expect(nw.property).toBe(310000);
     expect(nw.totalAssets).toBe(315000);
@@ -57,12 +58,12 @@ describe("home estimate in net worth (E16 D3, option a)", () => {
       { id: "flat", name: "Buy-to-let flat", type: "Property", balance: 200000 },
     ]);
     expect(selectHomeEstimate(other)).toBe(0);
-    expect(selectNetWorth(other).property).toBe(200000);
+    expect(selectNetWorth(other, DEFAULT_NET_WORTH_BASIS).property).toBe(200000);
   });
 
   it("is 0 with no home account", () => {
     expect(selectHomeEstimate(snapshot)).toBe(0);
-    expect(selectNetWorth(snapshot).homeEstimate).toBe(0);
+    expect(selectNetWorth(snapshot, DEFAULT_NET_WORTH_BASIS).homeEstimate).toBe(0);
   });
 });
 
