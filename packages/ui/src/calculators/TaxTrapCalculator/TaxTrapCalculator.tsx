@@ -1,89 +1,154 @@
-import { calculateTaxTrapRelief, persistOnboardingSeed } from "@flump/finance-engine";
-import { ArrowRight, CircleCheck, TriangleAlert } from "lucide-react";
+import {
+  getUkTaxYearContext,
+  getUkTaxYearRules,
+  persistOnboardingSeed,
+  SUPPORTED_UK_TAX_YEARS,
+  type UkIncomeScenario,
+  type UkTaxYear,
+  whatIfGrossChange,
+  whatIfSacrificeChange,
+} from "@flump/finance-engine";
+import { ArrowRight } from "lucide-react";
 import type { FC } from "react";
 import { useMemo, useState } from "react";
-import { Button } from "../../primitives/Button";
-import { Icon } from "../../primitives/Icon";
-import { LiveRegion } from "../../primitives/LiveRegion";
+import { SimulatorSplitLayout } from "../../patterns/SimulatorSplitLayout/SimulatorSplitLayout";
 import {
-  badgeRowStyle,
-  badgeStyle,
-  cardStyle,
-  childcareIconStyle,
-  childcareStyle,
-  ctaIconStyle,
-  ctaStyle,
-  estimateNoteStyle,
-  fieldLabelStyle,
-  fieldRowStyle,
-  headerStyle,
-  inputGroupStyle,
-  introStyle,
-  metricCard,
-  metricLabelStyle,
-  metricNoteStyle,
-  metricsGridStyle,
-  metricValueStyle,
-  pillInputStyle,
-  pillPrefixStyle,
-  pillWrapStyle,
-  scaleLabelsStyle,
-  sliderStyle,
-  titleStyle,
-} from "./TaxTrapCalculator.styles.js";
+  ASSUMPTION_COPY,
+  type AssumptionCode,
+  asAtTaxYear,
+  DELTA_PANEL_COPY,
+  pensionPreviewSentence,
+} from "../../patterns/TakeHomeDeltaPanel/copy";
+import { TaxRatesStatusBanner } from "../../patterns/TaxRatesStatusBanner/TaxRatesStatusBanner";
+import { Button } from "../../primitives/Button/Button";
+import { FormField } from "../../primitives/FormField/FormField";
+import { Icon } from "../../primitives/Icon";
+import { KpiCard } from "../../primitives/KpiCard/KpiCard";
+import { LiveRegion } from "../../primitives/LiveRegion/LiveRegion";
+import { formatMoney, formatNumber, Money } from "../../primitives/Money/Money";
+import { Select } from "../../primitives/Select/Select";
+import { SliderField } from "../../primitives/SliderField/SliderField";
+import { StatusBadge } from "../../primitives/StatusBadge/StatusBadge";
+import { Table, TBody, Td, THead, Th, Tr } from "../../primitives/Table/Table";
+import { childcareStatus, TAX_TRAP_COPY, TAX_TRAP_DEFAULT_CTA, taperRange } from "./copy";
+import {
+  taxTrapAssumptions,
+  taxTrapBadges,
+  taxTrapContent,
+  taxTrapControls,
+  taxTrapCta,
+  taxTrapHeader,
+  taxTrapIntro,
+  taxTrapLink,
+  taxTrapNote,
+  taxTrapOutcomes,
+  taxTrapRoot,
+  taxTrapSectionTitle,
+  taxTrapTitle,
+  taxTrapUnverified,
+} from "./TaxTrapCalculator.styles";
+
+export type TaxTrapRegion = "ENGLAND_NI_WALES" | "SCOTLAND";
 
 export interface TaxTrapCalculatorProps {
-  onSaveAndContinue?: (payload: any) => void;
+  onSaveAndContinue?: (payload: TaxTrapSeedPayload) => void;
   ctaText?: string;
   /** When false, entered figures are not written to the onboarding seed in local storage. Default true. */
   persistSeed?: boolean;
-  /** Tax year the figures are for. Defaults to the year the trap maths is written for. */
+  /** Tax year whose rates are used. Defaults to the year the engine says applies today. */
   taxYear?: string;
+  /** Starting values (examples, not anyone's saved figures). */
+  initialGrossIncome?: number;
+  initialContribution?: number;
+  initialRegion?: TaxTrapRegion;
 }
 
-const gbp = (value: number) => `£${value.toLocaleString("en-GB")}`;
-// TODO: derive from the engine (getUkTaxYearContext) once calculateTaxTrapRelief takes a year.
-const DEFAULT_TAX_YEAR = "2026/27";
+/** What the CTA pre-fills for sign-up. Only the figure the visitor entered; nothing invented. */
+export interface TaxTrapSeedPayload {
+  annualIncome: number;
+  inferredModules: string[];
+  timestamp: number;
+}
 
+const GROSS_MAX = 200_000;
+const CONTRIBUTION_MAX = 60_000;
+const CHILDCARE_LIMIT = 100_000;
+const NEXT = 1000;
+const CHILDCARE_URL = "https://www.gov.uk/tax-free-childcare";
+
+const resolveYear = (year: string | undefined): UkTaxYear =>
+  year && (SUPPORTED_UK_TAX_YEARS as readonly string[]).includes(year)
+    ? (year as UkTaxYear)
+    : getUkTaxYearContext().ratesYear;
+
+const pctDigits = (n: number) => (Number.isInteger(n) ? 0 : 1);
+const money = (n: number) => formatMoney(n).text;
+const pct = (n: number) => formatNumber(n, { kind: "percent", fractionDigits: pctDigits(n) }).text;
+
+/**
+ * Signed-out tool for the Personal Allowance taper. Every figure comes from the engine's
+ * `whatIfSacrificeChange` and `whatIfGrossChange`; this component holds no tax rates of its own.
+ */
 export const TaxTrapCalculator: FC<TaxTrapCalculatorProps> = ({
   onSaveAndContinue,
-  ctaText = "Save scenario and continue free →",
+  ctaText = TAX_TRAP_DEFAULT_CTA,
   persistSeed = true,
-  taxYear: TAX_YEAR = DEFAULT_TAX_YEAR,
+  taxYear,
+  initialGrossIncome = 115_000,
+  initialContribution = 10_000,
+  initialRegion = "ENGLAND_NI_WALES",
 }) => {
-  const [grossIncome, setGrossIncome] = useState<number>(115000);
-  const [salarySacrifice, setSalarySacrifice] = useState<number>(10000);
+  const [grossIncome, setGrossIncome] = useState(initialGrossIncome);
+  const [contribution, setContribution] = useState(initialContribution);
+  const [region, setRegion] = useState<TaxTrapRegion>(initialRegion);
 
-  const analysis = useMemo(() => {
-    return calculateTaxTrapRelief(grossIncome);
-  }, [grossIncome]);
+  const context = useMemo(() => getUkTaxYearContext(), []);
+  const year = resolveYear(taxYear);
+  const rules = useMemo(() => getUkTaxYearRules(year), [year]);
 
-  const allowanceReclaimed = Math.min(
-    analysis.lostPersonalAllowance,
-    Math.round(salarySacrifice / 2),
+  const maxContribution = Math.min(CONTRIBUTION_MAX, Math.max(0, grossIncome));
+  const sacrifice = Math.min(contribution, maxContribution);
+
+  const scenario = useMemo<UkIncomeScenario>(
+    () => ({ taxYear: year, region, salary: Math.max(0, grossIncome) }),
+    [year, region, grossIncome],
+  );
+  const change = useMemo(() => whatIfSacrificeChange(scenario, sacrifice), [scenario, sacrifice]);
+  const nextBefore = useMemo(() => whatIfGrossChange(scenario, NEXT), [scenario]);
+  const nextAfter = useMemo(
+    () =>
+      whatIfGrossChange(
+        { ...scenario, pension: { method: "salary-sacrifice", amount: sacrifice } },
+        NEXT,
+      ),
+    [scenario, sacrifice],
   );
 
-  const inTrapSacrifice = Math.min(analysis.excessAbove100k, salarySacrifice);
-  const aboveTrapSacrifice = Math.max(0, salarySacrifice - analysis.excessAbove100k);
-  const totalTaxSaved = Math.round(inTrapSacrifice * 0.62 + aboveTrapSacrifice * 0.42);
+  const { before, after } = change;
+  const taxAndNi = change.components.incomeTax + change.components.nationalInsurance;
+  const unverified = before.isUnverifiedEstimate || after.isUnverifiedEstimate;
+  const childcareOver = after.adjustedNetIncome > CHILDCARE_LIMIT;
+  const assumptions = after.assumptions.filter(
+    (a): a is { code: AssumptionCode; unverified: boolean } =>
+      Object.hasOwn(ASSUMPTION_COPY, a.code),
+  );
 
-  const maxSacrifice = Math.min(60000, Math.max(0, grossIncome - 20000));
-  const isTrapZone = grossIncome > 100000;
-  const netIncomeAfterSacrifice = Math.max(0, grossIncome - salarySacrifice);
-  const stillInTrap = isTrapZone && salarySacrifice < analysis.excessAbove100k;
-  const childcareEligible = netIncomeAfterSacrifice <= 100000;
-
-  const headline = `Estimated tax and NI saved £${totalTaxSaved.toLocaleString("en-GB")}`;
+  const announcement =
+    sacrifice > 0
+      ? pensionPreviewSentence(
+          money(sacrifice),
+          money(-change.deltaTakeHome),
+          money(change.deltaPensionGross),
+        )
+      : "";
 
   const handleSave = () => {
-    const payload = {
+    const payload: TaxTrapSeedPayload = {
       annualIncome: grossIncome,
-      initialCashSavings: 1000,
-      mortgageBalance: 250000,
-      inferredModules: ["tax", "pension", "forecast"],
+      inferredModules: ["tax", "pension"],
       timestamp: Date.now(),
     };
-    if (persistSeed) persistOnboardingSeed(payload as any);
+    if (persistSeed) persistOnboardingSeed(payload);
     if (onSaveAndContinue) {
       onSaveAndContinue(payload);
     } else if (typeof window !== "undefined") {
@@ -91,137 +156,188 @@ export const TaxTrapCalculator: FC<TaxTrapCalculatorProps> = ({
     }
   };
 
-  return (
-    <div className={cardStyle} data-testid="tax-trap-calculator-tool">
-      <div className={headerStyle}>
-        <div className={badgeRowStyle}>
-          <span className={badgeStyle({ tone: "brand" })}>UK {TAX_YEAR} tax engine</span>
-          {isTrapZone && (
-            <span className={badgeStyle({ tone: "danger" })}>
-              <Icon icon={TriangleAlert} size="sm" /> 60% trap active
-            </span>
-          )}
-        </div>
-        <h2 className={titleStyle}>Interactive £100k–£125k tax trap modeller</h2>
-        <p className={introStyle}>
-          Slide your income and test how salary sacrifice or SIPP contributions reclaim your
-          personal allowance and unlock tax-free childcare.
+  const controls = (
+    <div className={taxTrapControls()}>
+      <SliderField
+        format="currency"
+        label={TAX_TRAP_COPY.grossIncome}
+        max={GROSS_MAX}
+        min={0}
+        step={500}
+        value={grossIncome}
+        onChange={setGrossIncome}
+      />
+      <SliderField
+        format="currency"
+        helperText={TAX_TRAP_COPY.contributionHelp}
+        label={TAX_TRAP_COPY.contribution}
+        max={maxContribution}
+        min={0}
+        step={500}
+        value={sacrifice}
+        onChange={setContribution}
+      />
+      <FormField label={TAX_TRAP_COPY.region}>
+        {(field) => (
+          <Select
+            aria-describedby={field.describedBy}
+            id={field.id}
+            options={[
+              { value: "ENGLAND_NI_WALES", label: TAX_TRAP_COPY.regionOptions.ENGLAND_NI_WALES },
+              { value: "SCOTLAND", label: TAX_TRAP_COPY.regionOptions.SCOTLAND },
+            ]}
+            value={region}
+            onChange={(e) => setRegion(e.target.value as TaxTrapRegion)}
+          />
+        )}
+      </FormField>
+    </div>
+  );
+
+  const factRows: { label: string; before: string; after: string }[] = [
+    {
+      label: TAX_TRAP_COPY.factAdjustedNetIncome,
+      before: money(before.adjustedNetIncome),
+      after: money(after.adjustedNetIncome),
+    },
+    {
+      label: TAX_TRAP_COPY.factPersonalAllowance,
+      before: money(before.personalAllowance),
+      after: money(after.personalAllowance),
+    },
+    {
+      label: TAX_TRAP_COPY.factTakeHome,
+      before: money(before.takeHome),
+      after: money(after.takeHome),
+    },
+    {
+      label: TAX_TRAP_COPY.factNextThousand,
+      before: pct(nextBefore.effectiveMarginalRatePct),
+      after: pct(nextAfter.effectiveMarginalRatePct),
+    },
+  ];
+
+  const content = (
+    <div className={taxTrapContent()}>
+      <TaxRatesStatusBanner
+        calendarYear={context.calendarYear}
+        isFallback={before.isFallback}
+        ratesYear={before.ratesYear}
+      />
+      {unverified ? (
+        <p className={taxTrapUnverified()} data-testid="tax-trap-unverified">
+          {DELTA_PANEL_COPY.unverifiedBanner}
         </p>
-      </div>
-
-      <div className={inputGroupStyle}>
-        <div className={fieldRowStyle}>
-          <label htmlFor="gross-income-input" className={fieldLabelStyle}>
-            Total gross UK income
-          </label>
-          <div className={pillWrapStyle}>
-            <span className={pillPrefixStyle}>£</span>
-            <input
-              id="gross-income-input"
-              className={pillInputStyle({ tone: "primary" })}
-              type="number"
-              min={0}
-              step={500}
-              value={grossIncome}
-              onChange={(e) => setGrossIncome(Number(e.target.value) || 0)}
-            />
-          </div>
-        </div>
-        <input
-          id="gross-income-slider"
-          aria-label="Total gross UK income slider"
-          className={sliderStyle}
-          max={150000}
-          min={90000}
-          step={500}
-          type="range"
-          value={grossIncome}
-          onChange={(e) => setGrossIncome(Number(e.target.value))}
+      ) : null}
+      {/* Illustration outcomes, not saved figures, so plain outcome cards rather than a KpiStrip. */}
+      <div className={taxTrapOutcomes()} data-density="compact" data-testid="tax-trap-outcomes">
+        <KpiCard
+          label={TAX_TRAP_COPY.kpiReachesPension}
+          value={<Money size="lg" value={change.deltaPensionGross} />}
         />
-        <div className={scaleLabelsStyle}>
-          <span>£90k (40% higher rate)</span>
-          <span>£100k (trap starts)</span>
-          <span>£125,140 (zero allowance)</span>
-          <span>£150k</span>
-        </div>
-      </div>
-
-      <div className={inputGroupStyle}>
-        <div className={fieldRowStyle}>
-          <label htmlFor="sacrifice-input" className={fieldLabelStyle}>
-            Annual pension salary sacrifice / SIPP contribution
-          </label>
-          <div className={pillWrapStyle}>
-            <span className={pillPrefixStyle}>£</span>
-            <input
-              id="sacrifice-input"
-              className={pillInputStyle({ tone: "positive" })}
-              type="number"
-              min={0}
-              max={maxSacrifice}
-              step={500}
-              value={salarySacrifice}
-              onChange={(e) => setSalarySacrifice(Number(e.target.value) || 0)}
-            />
-          </div>
-        </div>
-        <input
-          id="sacrifice-slider"
-          aria-label="Annual pension salary sacrifice slider"
-          className={sliderStyle}
-          max={maxSacrifice}
-          min={0}
-          step={500}
-          type="range"
-          value={salarySacrifice}
-          onChange={(e) => setSalarySacrifice(Number(e.target.value))}
+        <KpiCard
+          label={TAX_TRAP_COPY.kpiTakeHome}
+          value={<Money signDisplay="exceptZero" size="lg" value={change.deltaTakeHome} />}
+        />
+        <KpiCard
+          label={TAX_TRAP_COPY.kpiTaxAndNi}
+          value={<Money signDisplay="exceptZero" size="lg" value={taxAndNi} />}
+        />
+        <KpiCard
+          label={TAX_TRAP_COPY.kpiAllowance}
+          value={<Money size="lg" value={after.personalAllowance} />}
         />
       </div>
 
-      <LiveRegion debounceMs={1000} message={headline} visuallyHidden />
-      <div className={metricsGridStyle}>
-        <div className={metricCard}>
-          <span className={metricLabelStyle}>Effective marginal rate</span>
-          <span className={metricValueStyle({ tone: stillInTrap ? "danger" : "positive" })}>
-            {stillInTrap ? "62.0%" : "42.0%"}
-          </span>
-          <span className={metricNoteStyle}>40% income tax + 20% taper + 2% NI</span>
-        </div>
+      <Table caption={TAX_TRAP_COPY.factsCaption}>
+        <THead>
+          <Tr>
+            <Th scope="col">{TAX_TRAP_COPY.factColumn}</Th>
+            <Th numeric scope="col">
+              {TAX_TRAP_COPY.beforeColumn}
+            </Th>
+            <Th numeric scope="col">
+              {TAX_TRAP_COPY.afterColumn}
+            </Th>
+          </Tr>
+        </THead>
+        <TBody>
+          {factRows.map((row) => (
+            <Tr key={row.label}>
+              <Th scope="row">{row.label}</Th>
+              <Td label={TAX_TRAP_COPY.beforeColumn} numeric>
+                {row.before}
+              </Td>
+              <Td label={TAX_TRAP_COPY.afterColumn} numeric>
+                {row.after}
+              </Td>
+            </Tr>
+          ))}
+        </TBody>
+      </Table>
 
-        <div className={metricCard}>
-          <span className={metricLabelStyle}>Estimated tax and NI saved</span>
-          <span className={metricValueStyle({ tone: "positive" })}>{gbp(totalTaxSaved)}</span>
-          <span className={metricNoteStyle}>Estimate, not a guarantee</span>
-        </div>
-
-        <div className={metricCard}>
-          <span className={metricLabelStyle}>Personal allowance reclaimed</span>
-          <span className={metricValueStyle({ tone: "primary" })}>{gbp(allowanceReclaimed)}</span>
-          <span className={metricNoteStyle}>
-            of {gbp(analysis.lostPersonalAllowance)} lost allowance
-          </span>
-        </div>
-      </div>
-
-      <p data-testid="tax-trap-estimate-note" className={estimateNoteStyle}>
-        Estimate for {TAX_YEAR}, based on the figures you entered. Assumes {TAX_YEAR} England, Wales
-        and Northern Ireland rates; Scotland differs.
+      <p className={taxTrapNote()} data-testid="tax-trap-taper-note">
+        {TAX_TRAP_COPY.taperNote}{" "}
+        {taperRange(money(rules.ewni.personalAllowanceTaperStart), money(rules.taperEnd))}
       </p>
 
-      <div className={childcareStyle({ eligible: childcareEligible })}>
-        <Icon
-          icon={childcareEligible ? CircleCheck : TriangleAlert}
-          className={childcareIconStyle({ eligible: childcareEligible })}
-        />
-        <span>
-          {childcareEligible
-            ? "Adjusted net income is within the £100,000 limit for funded childcare for working parents (England) and Tax-Free Childcare"
-            : "Adjusted net income is over £100,000, the limit for funded childcare for working parents (England) and Tax-Free Childcare."}
-        </span>
+      <section aria-labelledby="tax-trap-childcare" className={taxTrapNote()}>
+        <h3 className={taxTrapSectionTitle()} id="tax-trap-childcare">
+          {TAX_TRAP_COPY.childcareHeading}
+        </h3>
+        <p data-testid="tax-trap-childcare-status">
+          {childcareStatus(money(after.adjustedNetIncome), childcareOver)}
+        </p>
+        <p>
+          {TAX_TRAP_COPY.childcareNote}{" "}
+          <a className={taxTrapLink()} href={CHILDCARE_URL} rel="noreferrer" target="_blank">
+            {TAX_TRAP_COPY.childcareSource}
+          </a>
+        </p>
+      </section>
+
+      {assumptions.length > 0 ? (
+        <section aria-labelledby="tax-trap-assumptions" className={taxTrapAssumptions()}>
+          <h3 className={taxTrapSectionTitle()} id="tax-trap-assumptions">
+            {TAX_TRAP_COPY.assumptionsHeading}
+          </h3>
+          <ul>
+            {assumptions.map((a) => (
+              <li key={a.code}>
+                {ASSUMPTION_COPY[a.code]}
+                {a.unverified ? ` ${DELTA_PANEL_COPY.notConfirmed}` : ""}
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
+
+      <LiveRegion debounceMs={1000} message={announcement} visuallyHidden />
+    </div>
+  );
+
+  return (
+    <div className={taxTrapRoot()} data-testid="tax-trap-calculator-tool">
+      <div className={taxTrapHeader()}>
+        <div className={taxTrapBadges()}>
+          <StatusBadge variant="neutral">{asAtTaxYear(before.ratesYear)}</StatusBadge>
+          <StatusBadge variant={unverified ? "warning" : "info"}>
+            {unverified ? TAX_TRAP_COPY.unverifiedBadge : DELTA_PANEL_COPY.estimateBadge}
+          </StatusBadge>
+        </div>
+        <h2 className={taxTrapTitle()}>{TAX_TRAP_COPY.title}</h2>
+        <p className={taxTrapIntro()}>{TAX_TRAP_COPY.intro}</p>
       </div>
 
-      <Button className={ctaStyle} variant="primary" size="md" onClick={handleSave}>
-        {ctaText} <Icon icon={ArrowRight} size="sm" className={ctaIconStyle} />
+      <SimulatorSplitLayout
+        content={content}
+        contentLabel={TAX_TRAP_COPY.contentLabel}
+        controls={controls}
+        controlsLabel={TAX_TRAP_COPY.controlsLabel}
+      />
+
+      <Button className={taxTrapCta()} size="md" variant="primary" onClick={handleSave}>
+        {ctaText} <Icon icon={ArrowRight} size="sm" />
       </Button>
     </div>
   );
