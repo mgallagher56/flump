@@ -75,7 +75,9 @@ export const basisSentence = (leftOut: readonly NetWorthLeftOut[]): string =>
  */
 export const sentences = (...parts: readonly string[]): string => {
   const kept = parts.filter(Boolean);
-  return kept.map((p, i) => (i < kept.length - 1 && !/[.?]$/.test(p) ? `${p}.` : p)).join(" ");
+  return kept
+    .map((p, i) => (i < kept.length - 1 && !(p.endsWith(".") || p.endsWith("?")) ? `${p}.` : p))
+    .join(" ");
 };
 
 /**
