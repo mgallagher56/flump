@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
+  bridgePayoffMonth,
   calculateAvalanche,
   calculateDebtSchedule,
   calculateDebtToWealthBridge,
@@ -379,6 +380,37 @@ describe("debt-payoff module", () => {
       const last = bridge[bridge.length - 1]!;
       expect(last.isPostDebtFree).toBe(true);
       expect(last.wealthAccumulated).toBeGreaterThan(0);
+    });
+
+    it("clears the debt in the same month the payoff-order comparison says", () => {
+      // £1,500 card, no APR, £38 estimated minimum: 40 months, which is not a multiple of 3, so a
+      // sampled point after the payoff month would read 42.
+      const card: DebtItem = {
+        id: "card",
+        name: "Card",
+        balanceGbp: 1500,
+        interestRateApr: 0,
+        minimumPaymentGbp: 38,
+        debtType: "credit_card",
+      };
+      for (const extra of [0, 25]) {
+        const comparison = compareAvalancheAndSnowball([card, ...sampleDebts.slice(0, 2)], extra);
+        for (const strategy of ["AVALANCHE", "SNOWBALL"] as const) {
+          const bridge = calculateDebtToWealthBridge(
+            [card, ...sampleDebts.slice(0, 2)],
+            extra,
+            6,
+            5,
+            strategy,
+          );
+          const months =
+            strategy === "AVALANCHE" ? comparison.avalanche.months : comparison.snowball.months;
+          expect(bridgePayoffMonth(bridge), `${strategy} +${extra}`).toBe(months);
+        }
+      }
+      const single = calculateDebtToWealthBridge([card], 0, 6, 5);
+      expect(bridgePayoffMonth(single)).toBe(40);
+      expect(compareAvalancheAndSnowball([card], 0).avalanche.months).toBe(40);
     });
   });
 });

@@ -25,6 +25,7 @@ const AccountsContainer: FC = () => {
     accountDetails = [],
     bankConnections = [],
     bankConnectionsEnabled = false,
+    psaTaxBand = null,
   } = useLoaderData<typeof loader>();
   const [checkInOpen, setCheckInOpen] = useState(false);
   const saveSnapshot = useSaveSnapshot();
@@ -147,7 +148,7 @@ const AccountsContainer: FC = () => {
                 .filter((acc) => acc.name?.toLowerCase().includes("isa") || acc.type === INVESTMENT)
                 .map((acc) => ({ name: acc.name, balance: Number(acc.balance) || 0 }))}
               currentAmount={stats.isaUsed}
-              taxBand="higher"
+              taxBand={psaTaxBand ?? undefined}
               totalLimit={20000}
               type="isa"
             />

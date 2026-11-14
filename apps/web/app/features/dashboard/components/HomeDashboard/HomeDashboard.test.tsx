@@ -160,7 +160,9 @@ describe("HomeDashboard", () => {
 
   it("renders welcome header and widgets for all enabled pages", () => {
     renderDashboard();
-    expect(screen.getByRole("heading", { level: 1, name: /Welcome back, Alex/i })).toBeDefined();
+    expect(screen.getByRole("heading", { level: 1, name: "Hi, Alex" })).toBeDefined();
+    // Straight after a first onboarding there is no "back" to welcome the user to.
+    expect(screen.queryByText(/Welcome back/)).toBeNull();
     expect(screen.getByText("Accounts")).toBeDefined();
     expect(screen.getByText("Budget")).toBeDefined();
     expect(screen.getByText("Savings")).toBeDefined();
@@ -180,7 +182,7 @@ describe("HomeDashboard", () => {
   it("labels sandbox data as an example instead of welcoming the user back", () => {
     renderDashboard({ isSample: true });
     expect(screen.getByRole("heading", { level: 1, name: "Example snapshot" })).toBeDefined();
-    expect(screen.queryByText(/Welcome back/)).toBeNull();
+    expect(screen.queryByText(/Hi, Alex/)).toBeNull();
     expect(screen.getByText(/Sample data: illustrative figures/)).toBeDefined();
     expect(document.querySelectorAll('[data-testid="projection-notice"]')).toHaveLength(1);
   });

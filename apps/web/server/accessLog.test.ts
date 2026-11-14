@@ -26,7 +26,7 @@ describe("normalisePath", () => {
   });
 
   it("collapses long slugs by design and keeps short static routes", () => {
-    expect(normalisePath("/tools/mortgage-overpay-vs-isa")).toBe("/tools/:id");
+    expect(normalisePath("/tools/mortgage-overpayment-vs-isa-calculator")).toBe("/tools/:id");
     expect(normalisePath("/r/correct-horse-battery-staple")).toBe("/r/:id");
     for (const route of ["/app/budget", "/tools/mortgage", "/login", "/callback"]) {
       expect(normalisePath(route)).toBe(route);

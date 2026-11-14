@@ -19,6 +19,7 @@ export interface AnnualAllowancePillProps {
   currentAmount: number;
   /** £20,000 for an ISA, £60,000 for a pension when omitted. */
   totalLimit?: number;
+  /** From the saved income and tax region. Omitted when income is unknown: no band is claimed. */
   taxBand?: "basic" | "higher" | "additional";
   savingsInterest?: number;
   contributingAccounts?: Array<{ name: string; balance: number }>;
@@ -30,7 +31,7 @@ export const AnnualAllowancePill: FC<AnnualAllowancePillProps> = ({
   type,
   currentAmount,
   totalLimit: customLimit,
-  taxBand = "higher",
+  taxBand,
   savingsInterest = 0,
   contributingAccounts,
 }) => {
@@ -53,8 +54,9 @@ export const AnnualAllowancePill: FC<AnnualAllowancePillProps> = ({
   }, []);
 
   // Personal Savings Allowance (PSA)
-  const psaLimit = taxBand === "basic" ? 1000 : taxBand === "higher" ? 500 : 0;
-  const psaRemaining = Math.max(0, psaLimit - savingsInterest);
+  const psaLimit =
+    taxBand === undefined ? null : taxBand === "basic" ? 1000 : taxBand === "higher" ? 500 : 0;
+  const psaRemaining = Math.max(0, (psaLimit ?? 0) - savingsInterest);
 
   return (
     <div
@@ -90,6 +92,8 @@ export const AnnualAllowancePill: FC<AnnualAllowancePillProps> = ({
           label={isIsa ? "ISA allowance used" : "Pension allowance used"}
           max={limit}
           value={used}
+          valueDisplay={`${formatGBP(used)} / ${formatGBP(limit)}`}
+          valueText={`${formatGBP(used)} of ${formatGBP(limit)} used`}
           variant={progressVariant}
         />
       </div>
@@ -108,7 +112,17 @@ export const AnnualAllowancePill: FC<AnnualAllowancePillProps> = ({
         {isIsa && <span>Resets 6 April</span>}
       </div>
 
-      {isIsa && psaLimit > 0 && (
+      {isIsa && psaLimit === null && (
+        <div className={psaRow()}>
+          <span>
+            <strong>Personal Savings Allowance:</strong> up to £1,000 of interest a year without
+            tax, depending on your income tax band
+          </span>
+          <span>Add your income to see your allowance</span>
+        </div>
+      )}
+
+      {isIsa && psaLimit !== null && psaLimit > 0 && (
         <div className={psaRow()}>
           <span>
             <strong>Personal Savings Allowance ({taxBand} rate):</strong> {formatGBP(psaLimit)} of

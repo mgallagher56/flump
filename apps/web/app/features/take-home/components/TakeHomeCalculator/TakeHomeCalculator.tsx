@@ -57,8 +57,13 @@ export const TakeHomeCalculator: FC<TakeHomeCalculatorProps> = ({
   const inRouter = useInRouterContext();
   // Saved figures: the headline reads these only. The scenario below starts from them.
   const savedSalary = initialSalary && initialSalary > 0 ? initialSalary : 0;
-  const savedSacrifice = profile?.isSalarySacrifice ?? true;
+  // The method the user saved; when never chosen, net pay, as the dashboard and budget use.
+  const savedSacrifice = profile?.isSalarySacrifice ?? false;
   const savedEmployerNi = profile?.isSalarySacrificeEmployerNi ?? false;
+  const savedPension =
+    typeof profile?.pensionPercent === "number" && Number.isFinite(profile.pensionPercent)
+      ? profile.pensionPercent
+      : DEFAULT_PENSION_PERCENT;
   // No invented salary: until one is known (or typed in) the results render "Not set".
   const [grossSalary, setGrossSalary] = useState<number>(
     initialSalary && initialSalary > 0 ? initialSalary : 0,
@@ -68,7 +73,7 @@ export const TakeHomeCalculator: FC<TakeHomeCalculatorProps> = ({
   const updateSalary = (value: number) => {
     if (Number.isFinite(value) && value > 0) setGrossSalary(value);
   };
-  const [pensionPercent, setPensionPercent] = useState<number>(DEFAULT_PENSION_PERCENT);
+  const [pensionPercent, setPensionPercent] = useState<number>(savedPension);
   const [isSalarySacrifice, setIsSalarySacrifice] = useState<boolean>(savedSacrifice);
   const [isSalarySacrificeEmployerNi, setIsSalarySacrificeEmployerNi] =
     useState<boolean>(savedEmployerNi);
@@ -145,15 +150,8 @@ export const TakeHomeCalculator: FC<TakeHomeCalculatorProps> = ({
   // The headline reads saved figures only, never the scenario inputs.
   const savedResults = useMemo(
     () =>
-      calculateUKTax(
-        savedSalary,
-        DEFAULT_PENSION_PERCENT,
-        "none",
-        taxYear,
-        savedSacrifice,
-        savedEmployerNi,
-      ),
-    [savedSalary, taxYear, savedSacrifice, savedEmployerNi],
+      calculateUKTax(savedSalary, savedPension, "none", taxYear, savedSacrifice, savedEmployerNi),
+    [savedSalary, savedPension, taxYear, savedSacrifice, savedEmployerNi],
   );
   const savedKnown = savedSalary > 0;
   const effectiveRate = savedKnown
@@ -162,7 +160,7 @@ export const TakeHomeCalculator: FC<TakeHomeCalculatorProps> = ({
 
   const isModified =
     grossSalary !== savedSalary ||
-    pensionPercent !== DEFAULT_PENSION_PERCENT ||
+    pensionPercent !== savedPension ||
     isSalarySacrifice !== savedSacrifice ||
     isSalarySacrificeEmployerNi !== savedEmployerNi ||
     studentLoanPlan !== "none" ||
@@ -175,13 +173,13 @@ export const TakeHomeCalculator: FC<TakeHomeCalculatorProps> = ({
     studentLoanPlans: profile?.studentLoanPlans,
     studentLoanPlan: profile?.studentLoanPlan,
     isSalarySacrifice: savedSacrifice,
-    pensionPercent: DEFAULT_PENSION_PERCENT,
+    pensionPercent: savedPension,
     taxYear,
   });
   const resetScenario = () => {
     nextPound.reset();
     setGrossSalary(savedSalary);
-    setPensionPercent(DEFAULT_PENSION_PERCENT);
+    setPensionPercent(savedPension);
     setIsSalarySacrifice(savedSacrifice);
     setIsSalarySacrificeEmployerNi(savedEmployerNi);
     setStudentLoanPlan("none");
@@ -292,7 +290,7 @@ export const TakeHomeCalculator: FC<TakeHomeCalculatorProps> = ({
           tool === "next-pound" && !savedKnown
             ? EXPLORER_COPY.defaultBasis
             : savedKnown
-              ? `Starting from your figures: ${formatCurrency(savedSalary)} gross salary, ${DEFAULT_PENSION_PERCENT}% pension`
+              ? `Starting from your figures: ${formatCurrency(savedSalary)} gross salary, ${savedPension}% pension`
               : "Starting from your figures: no saved salary yet"
         }
         footer={

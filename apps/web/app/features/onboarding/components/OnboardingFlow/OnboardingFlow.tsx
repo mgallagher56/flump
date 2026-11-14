@@ -70,9 +70,11 @@ export const OnboardingFlow: FC<OnboardingFlowProps> = ({ actionError = null }) 
         <Stepper
           current={step}
           label="Setup progress"
+          onStepSelect={goTo}
           states={stepperStates(form.outcomes, step)}
           steps={STEPPER_STEPS}
         />
+        {/* Phones only: the full stepper row (whose steps are the buttons) is hidden there. */}
         <nav aria-label="Go to a step" className={classes.stepNav}>
           {STEPPER_STEPS.map((s, index) =>
             index + 1 === step ? null : (

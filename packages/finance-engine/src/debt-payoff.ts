@@ -766,9 +766,11 @@ export function calculateDebtToWealthBridge(
   extraMonthlyPayment = 50,
   investmentAnnualReturnPct = 6.0,
   postDebtYears = 5,
+  strategy: DebtPayoffStrategy = "AVALANCHE",
 ): DebtToWealthBridgePoint[] {
   const normalized = debts.map((d) => normalizeDebtItem(d));
-  const payoff = calculateDebtSchedule(normalized, extraMonthlyPayment, "AVALANCHE");
+  // The same schedule as the payoff-order comparison, so "debts cleared after" always agrees.
+  const payoff = calculateDebtSchedule(normalized, extraMonthlyPayment, strategy);
   const payoffMonths = payoff.monthsToPayoff;
   const commercialDebts = filterConsumerDebts(normalized).consumerDebts;
   const totalMin = commercialDebts.reduce((sum, d) => sum + d.minimumPaymentGbp, 0);
@@ -807,4 +809,17 @@ export function calculateDebtToWealthBridge(
   }
 
   return points;
+}
+
+/**
+ * The month the bridge's debts are cleared, or null when they are not cleared within the schedule.
+ * Points after the payoff month are sampled every 3 months, so the first post-debt-free point is
+ * not the payoff month: the payoff month is the last point still counted as paying off debt.
+ */
+export function bridgePayoffMonth(points: readonly DebtToWealthBridgePoint[]): number | null {
+  const hasPostDebtFree = points.some((p) => p.isPostDebtFree);
+  const lastPaying = [...points].reverse().find((p) => !p.isPostDebtFree);
+  // The engine caps the schedule, so a post-debt-free point alone does not prove the debt cleared.
+  if (!hasPostDebtFree || !lastPaying || lastPaying.debtRemaining !== 0) return null;
+  return lastPaying.month;
 }

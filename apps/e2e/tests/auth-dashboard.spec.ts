@@ -7,7 +7,7 @@ test.describe("sign in and out", () => {
     // Signed out with no stored session: the real /login route starts the (test-only) session.
     await page.goto("/login");
     await expect(page).toHaveURL(/\/$/);
-    await expect(page.getByRole("heading", { name: /^Welcome back/ })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /^(Hi, |Your dashboard)/ })).toBeVisible();
 
     const netWorth = page.locator('[data-tone="hero"]').filter({ hasText: "Net worth" });
     await expect(netWorth).toBeVisible();

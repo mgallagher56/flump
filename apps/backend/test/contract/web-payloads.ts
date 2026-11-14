@@ -30,6 +30,7 @@ export const ONBOARDING_PROFILE = {
   hasMortgage: true,
   homeValue: 300000,
   pensionPercent: 5,
+  isSalarySacrifice: false,
   enabledPages: ONBOARDING_PAGES,
   dashboardWidgets: ONBOARDING_PAGES,
   dashboardWidgetOrder: ONBOARDING_PAGES,

@@ -157,6 +157,9 @@ export default function App() {
                     id="main-content"
                     tabIndex={-1}
                     className={css({
+                      // One gap between the sticky header and every page's first block, so no
+                      // page title or banner sits flush against the header.
+                      paddingTop: { base: "4", md: "6" },
                       paddingBottom: {
                         // Reads the wrapper's bottom-bar offset so the two never drift apart.
                         base: user

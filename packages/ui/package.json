@@ -18,6 +18,7 @@
     "./styled-system/*": "./styled-system/*",
     "./preset": "./panda.preset.ts",
     "./calculators": "./src/calculators/index.ts",
+    "./tools": "./src/tools/index.ts",
     "./*": "./src/*.tsx"
   },
   "scripts": {

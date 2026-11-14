@@ -21,9 +21,7 @@ import { isDemoMode } from "~/utils/demoData";
 import { buildWorkspacePicture, knownOrNull } from "~/utils/financialPicture";
 import { getMarketingUrl } from "~/utils/marketingUrl";
 
-export const meta: MetaFunction = (): { title: string }[] => [
-  { title: "Flump | UK Net Worth, Tax and Debt Calculators" },
-];
+export const meta: MetaFunction = () => [{ title: "Dashboard | Flump" }];
 
 type TakeHomeProfile = Parameters<typeof profileFactsFromProfile>[0];
 

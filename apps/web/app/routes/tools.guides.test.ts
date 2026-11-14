@@ -1,4 +1,5 @@
 import { ADVICE_PATTERNS } from "@flump/finance-engine";
+import { TOOL_SLUGS } from "@repo/ui/tools";
 import { describe, expect, it } from "vitest";
 import { loader } from "./tools.$slug";
 
@@ -7,15 +8,7 @@ import { loader } from "./tools.$slug";
  * style guide's no-shaming rules). The advice-language guard covers the lexicon; this test adds
  * the hype, loss-framed and directive wording that earlier reviews found in these guides.
  */
-const SLUGS = [
-  "uk-100k-tax-trap-calculator",
-  "mortgage-overpay-vs-isa",
-  "section-24-landlord-calculator",
-  "uk-debt-snowball-vs-avalanche-calculator",
-  "0-percent-balance-transfer-payoff-calculator",
-  "overdraft-cost-and-payoff-calculator",
-  "uk-student-loan-overpay-or-invest-calculator",
-];
+const SLUGS = TOOL_SLUGS;
 
 const HYPE_OR_DIRECTIVE = [
   /\bshould\b/i,

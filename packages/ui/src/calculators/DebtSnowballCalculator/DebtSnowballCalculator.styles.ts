@@ -14,7 +14,8 @@ export const cardStyle = css({
 
 export const gridStyle = css({
   display: "grid",
-  gridTemplateColumns: { base: "1fr", lg: "1.1fr 0.9fr" },
+  // minmax(0, …) lets the columns shrink below their inputs' intrinsic width on a phone.
+  gridTemplateColumns: { base: "minmax(0, 1fr)", lg: "minmax(0, 1.1fr) minmax(0, 0.9fr)" },
   gap: "32px",
 });
 
@@ -23,6 +24,7 @@ export const inputGroupStyle = css({
   flexDirection: "column",
   gap: "8px",
   marginBottom: "16px",
+  minWidth: "0",
 });
 
 export const textInputStyle = css({
@@ -33,6 +35,9 @@ export const textInputStyle = css({
   backgroundColor: "surface.canvas",
   color: "text.primary",
   fontSize: "15px",
+  width: "100%",
+  minWidth: "0",
+  fontVariantNumeric: "tabular-nums",
 });
 
 export const resultsBoxStyle = css({
@@ -89,8 +94,9 @@ export const liabilityTitleStyle = css({
 export const liabilityFieldsStyle = css({
   clear: "both",
   display: "grid",
-  gridTemplateColumns: "repeat(3, 1fr)",
-  gap: "3",
+  // Stacked on a phone (E-prerelease defect 10: 688px wide at 375); three across from sm up.
+  gridTemplateColumns: { base: "minmax(0, 1fr)", sm: "repeat(3, minmax(0, 1fr))" },
+  columnGap: "3",
 });
 
 export const fieldLabelStyle = css({

@@ -4,7 +4,8 @@ import { describe, expect, it, vi } from "vitest";
 import ToolsIndex from "./tools._index";
 import { loader as slugLoader, meta as slugMeta, ToolDetailPage } from "./tools.$slug";
 
-vi.mock("react-router", () => ({
+vi.mock("react-router", async (importOriginal) => ({
+  redirect: (await importOriginal<typeof import("react-router")>()).redirect,
   useNavigate: () => vi.fn(),
   useLoaderData: vi.fn(),
   Link: ({
@@ -37,11 +38,12 @@ describe("Tools Routes", () => {
       within(screen.getByRole("list", { name: "Calculators" })).getAllByRole("heading", {
         level: 2,
       }),
-    ).toHaveLength(7);
+    ).toHaveLength(8);
     expect(screen.getByText(/£100k–£125k tax trap calculator/i)).toBeDefined();
     expect(screen.getByText(/mortgage overpay vs isa calculator/i)).toBeDefined();
     expect(screen.getByText(/section 24 landlord tax calculator/i)).toBeDefined();
     expect(screen.getByText(/debt payoff: snowball vs avalanche calculator/i)).toBeDefined();
+    expect(screen.getByText(/what you keep from a pay rise/i)).toBeDefined();
   });
 
   it("leads the index with debt and does not feature the £100k tool first", () => {
@@ -96,8 +98,8 @@ describe("Tools Routes", () => {
 
   it("renders ToolDetailPage for mortgage vs isa comparator", async () => {
     const res = await slugLoader({
-      params: { slug: "mortgage-overpay-vs-isa" },
-      request: new Request("http://localhost/tools/mortgage-overpay-vs-isa"),
+      params: { slug: "mortgage-overpayment-vs-isa-calculator" },
+      request: new Request("http://localhost/tools/mortgage-overpayment-vs-isa-calculator"),
     } as any);
     vi.mocked(useLoaderData).mockReturnValue(res);
 
@@ -113,8 +115,8 @@ describe("Tools Routes", () => {
 
   it("renders ToolDetailPage for section 24 landlord calculator", async () => {
     const res = await slugLoader({
-      params: { slug: "section-24-landlord-calculator" },
-      request: new Request("http://localhost/tools/section-24-landlord-calculator"),
+      params: { slug: "section-24-landlord-tax-calculator" },
+      request: new Request("http://localhost/tools/section-24-landlord-tax-calculator"),
     } as any);
     vi.mocked(useLoaderData).mockReturnValue(res);
 
@@ -126,6 +128,35 @@ describe("Tools Routes", () => {
         name: /section 24 landlord mortgage relief and tax calculator/i,
       }),
     ).toBeDefined();
+  });
+
+  it.each([
+    ["mortgage-overpay-vs-isa", "mortgage-overpayment-vs-isa-calculator"],
+    ["section-24-landlord-calculator", "section-24-landlord-tax-calculator"],
+    ["overdraft-interest-calculator", "overdraft-cost-and-payoff-calculator"],
+  ])("slug loader redirects %s to /tools/%s with a 301", async (from, to) => {
+    const thrown = await slugLoader({
+      params: { slug: from },
+      request: new Request(`http://localhost/tools/${from}`),
+    } as any).catch((e: unknown) => e);
+    expect(thrown).toBeInstanceOf(Response);
+    expect((thrown as Response).status).toBe(301);
+    expect((thrown as Response).headers.get("Location")).toBe(`/tools/${to}`);
+  });
+
+  it("renders ToolDetailPage for the pay rise take-home calculator", async () => {
+    const res = await slugLoader({
+      params: { slug: "uk-pay-rise-take-home-calculator" },
+      request: new Request("http://localhost/tools/uk-pay-rise-take-home-calculator"),
+    } as any);
+    vi.mocked(useLoaderData).mockReturnValue(res);
+
+    render(<ToolDetailPage />);
+
+    expect(
+      screen.getByRole("heading", { level: 1, name: /what you keep from a pay rise/i }),
+    ).toBeDefined();
+    expect(screen.getByRole("region", { name: "Calculator, illustration" })).toBeDefined();
   });
 
   it("slugMeta returns correct tags", () => {

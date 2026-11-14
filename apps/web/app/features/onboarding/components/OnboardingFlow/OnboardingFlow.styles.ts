@@ -11,10 +11,18 @@ export const onboardingFlowRecipe = sva({
       display: "flex",
       justifyContent: "center",
       px: { base: "4", md: "8" },
-      py: { base: "4", md: "10" },
+      // The app shell already adds the gap below the header.
+      pt: { base: "0", md: "4" },
+      pb: { base: "4", md: "10" },
     },
     inner: { width: "100%", maxWidth: "720px", display: "flex", flexDirection: "column", gap: "5" },
-    stepNav: { display: "flex", flexWrap: "wrap", gap: "1", alignItems: "center" },
+    // From md up the stepper's own steps are the buttons, so this row would only repeat them.
+    stepNav: {
+      display: { base: "flex", md: "none" },
+      flexWrap: "wrap",
+      gap: "1",
+      alignItems: "center",
+    },
     alert: {
       display: "flex",
       alignItems: "flex-start",

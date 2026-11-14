@@ -1,5 +1,5 @@
-import { render, screen, within } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { fireEvent, render, screen, within } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
 import { Stepper } from "./Stepper";
 
 const steps = [
@@ -72,5 +72,21 @@ describe("Stepper", () => {
     render(<Stepper current={3} states={{ home: "upcoming" }} steps={steps} />);
     expect(screen.getAllByText("Complete")).toHaveLength(1);
     expect(screen.getByText("Up next")).toBeDefined();
+  });
+
+  it("makes the other steps buttons when onStepSelect is given, so it needs no separate link row", () => {
+    const onStepSelect = vi.fn();
+    render(<Stepper current={2} onStepSelect={onStepSelect} steps={steps} />);
+    const list = screen.getByRole("list", { name: /setup progress/i });
+    const buttons = within(list).getAllByRole("button");
+    // The current step is not a button: there is nowhere to go.
+    expect(buttons).toHaveLength(2);
+    fireEvent.click(within(list).getByRole("button", { name: /Step 3 of 3: Savings and debt/ }));
+    expect(onStepSelect).toHaveBeenCalledWith(3);
+  });
+
+  it("renders no step buttons without onStepSelect", () => {
+    render(<Stepper current={2} steps={steps} />);
+    expect(screen.queryAllByRole("button")).toHaveLength(0);
   });
 });

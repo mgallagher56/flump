@@ -19,8 +19,10 @@ export const Default: Story = {
     await expect(canvas.getAllByText("Where you stand")[0]).toBeDefined();
     const sacrifice = canvas.getAllByRole("switch", { name: /Salary sacrifice/ })[0];
     if (!sacrifice) throw new Error("Switch missing");
-    await userEvent.click(sacrifice);
+    // Net pay unless the user saved salary sacrifice: the switch starts off and turns on.
     await expect((sacrifice as HTMLInputElement).checked).toBe(false);
+    await userEvent.click(sacrifice);
+    await expect((sacrifice as HTMLInputElement).checked).toBe(true);
   },
 };
 

@@ -371,7 +371,13 @@ export const DebtContainer: FC = () => {
           onReset={scenario.reset}
         >
           <SimulatorSplitLayout
-            content={<DebtToWealthBridgeCard debts={debts} extraPayment={extraPayment} />}
+            content={
+              <DebtToWealthBridgeCard
+                debts={debts}
+                extraPayment={extraPayment}
+                strategy={selectedStrategy}
+              />
+            }
             contentLabel="Debt payoff results"
             controls={controls}
             controlsLabel="Payoff settings"

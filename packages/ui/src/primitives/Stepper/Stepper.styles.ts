@@ -53,26 +53,64 @@ export const stepperList = cva({
   },
 });
 
+/**
+ * Each step is an equal column: marker on top, name centred underneath. Columns give the names
+ * room to sit on one or two lines at desktop widths instead of being squeezed beside the marker.
+ */
 export const stepperItem = cva({
   base: {
+    position: "relative",
     display: "flex",
-    alignItems: "flex-start",
-    gap: "10px",
-    flex: "0 1 auto",
+    justifyContent: "center",
+    flex: "1 1 0",
     minWidth: 0,
-    "&:not(:last-child)": { flex: "1 1 auto" },
-    // The connector after a step fills once that step is complete.
+    // The connector runs from this step's marker to the next one's (marker 36px, 8px clear).
     "&:not(:last-child)::after": {
       content: '""',
-      flex: "1 1 24px",
-      minWidth: "24px",
-      marginBlockStart: "17px",
-      marginInlineEnd: "10px",
+      position: "absolute",
+      top: "17px",
+      left: "calc(50% + 26px)",
+      width: "calc(100% - 52px)",
       height: "3px",
       borderRadius: "full",
       backgroundColor: "border",
     },
     "&[data-state=complete]:not(:last-child)::after": { backgroundColor: "primary" },
+  },
+});
+
+/** Marker and text together; a button when the step can be jumped to. */
+export const stepperTarget = cva({
+  base: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    gap: "8px",
+    maxWidth: "100%",
+    paddingInline: "4px",
+    paddingBlockEnd: "4px",
+    borderRadius: "md",
+    textAlign: "center",
+  },
+  variants: {
+    interactive: {
+      true: {
+        appearance: "none",
+        backgroundColor: "transparent",
+        borderWidth: "0",
+        color: "inherit",
+        font: "inherit",
+        cursor: "pointer",
+        paddingBlockStart: "0",
+        "&:hover [data-step-label]": { textDecoration: "underline" },
+        _focusVisible: {
+          outlineWidth: "2px",
+          outlineStyle: "solid",
+          outlineColor: "border.focusRing",
+          outlineOffset: "2px",
+        },
+      },
+    },
   },
 });
 
@@ -115,11 +153,12 @@ export const stepperMarker = cva({
 });
 
 export const stepperText = cva({
-  base: { display: "flex", flexDirection: "column", gap: "2px", minWidth: 0 },
+  base: { display: "flex", flexDirection: "column", alignItems: "center", gap: "2px", minWidth: 0 },
 });
 
 export const stepperLabel = cva({
-  base: { fontSize: "md", fontWeight: "semibold", lineHeight: "1.3" },
+  // Balanced wrapping: a long name splits into two even lines, never one word left on its own.
+  base: { fontSize: "sm", fontWeight: "semibold", lineHeight: "1.3", textWrap: "balance" },
   variants: {
     state: {
       complete: { color: "text.primary" },
@@ -130,5 +169,5 @@ export const stepperLabel = cva({
 });
 
 export const stepperStatus = cva({
-  base: { color: "text.muted", fontSize: "xs", fontWeight: "medium" },
+  base: { color: "text.muted", fontSize: "xs", fontWeight: "medium", whiteSpace: "nowrap" },
 });

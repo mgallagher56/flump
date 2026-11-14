@@ -46,6 +46,13 @@ describe("<OnboardingFlow />", () => {
     expect(progressItems()[0]?.getAttribute("data-state")).toBe("complete");
   });
 
+  it("jumps to a step from the stepper itself", () => {
+    render(<OnboardingFlow />);
+    const list = screen.getByRole("list", { name: /setup progress/i });
+    fireEvent.click(within(list).getByRole("button", { name: /Step 3 of 5: Savings and debt/ }));
+    expect(list.querySelector("[aria-current='step']")?.textContent).toContain("Savings and debt");
+  });
+
   it("never labels a skipped or unvisited step complete", () => {
     render(<OnboardingFlow />);
     fireEvent.click(screen.getByRole("button", { name: "Skip for now" }));

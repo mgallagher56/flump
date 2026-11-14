@@ -10,7 +10,7 @@ import { BackendError } from "~/services/backend-error";
 import { throwRouteError } from "~/services/route-error.server";
 import { getAuthSession } from "~/utils/auth.server";
 
-export const meta: MetaFunction = () => [{ title: "Profile | Flump" }];
+export const meta: MetaFunction = () => [{ title: "Settings | Flump" }];
 
 export const loader = async (args: LoaderFunctionArgs) => {
   const { user, accessToken } = await getAuthSession(args, { ensureSignedIn: true });

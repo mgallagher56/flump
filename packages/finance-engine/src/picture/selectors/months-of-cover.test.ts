@@ -30,6 +30,36 @@ describe("selectMonthsOfCover", () => {
     expect(fig.value).toMatchObject({ months: 3.7, liquidCash: 3700, monthlyEssentials: 1000 });
   });
 
+  it("rounds to one decimal (never truncates) and leaves non-essential rows out", () => {
+    // £4,000 cash over £950 essential rent; the £800 non-essential row is not divided by.
+    const fig = selectMonthsOfCover(
+      [row({ amount: 950 }), row({ amount: 800, isEssential: false })],
+      new PortfolioSnapshot([{ id: "sav", name: "Saver", type: "Saving", balance: 4000 }]),
+    );
+    if (!isFigureKnown(fig)) throw new Error("expected known");
+    expect(fig.value).toMatchObject({ months: 4.2, monthlyEssentials: 950 });
+    // 4,000 / 1,750 = 2.286: rounds up to 2.3, where truncation would show 2.2.
+    const both = selectMonthsOfCover(
+      [row({ amount: 950 }), row({ amount: 800 })],
+      new PortfolioSnapshot([{ id: "sav", name: "Saver", type: "Saving", balance: 4000 }]),
+    );
+    if (!isFigureKnown(both)) throw new Error("expected known");
+    expect(both.value.months).toBe(2.3);
+  });
+
+  it("counts debt minimums in the essential commitments", () => {
+    // £1,500 card with no stored payment: estimated minimum max(£25, 2.5%) = £38.
+    const fig = selectMonthsOfCover(
+      [row({ amount: 950 })],
+      new PortfolioSnapshot([
+        { id: "sav", name: "Saver", type: "Saving", balance: 4000 },
+        { id: "cc", name: "Card", type: "Credit Card", balance: -1500 },
+      ]),
+    );
+    if (!isFigureKnown(fig)) throw new Error("expected known");
+    expect(fig.value).toMatchObject({ monthlyEssentials: 988, months: 4 });
+  });
+
   it("does not net an overdraft against savings", () => {
     const fig = selectMonthsOfCover(
       [row({ amount: 1000 })],

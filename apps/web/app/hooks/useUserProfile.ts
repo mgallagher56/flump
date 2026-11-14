@@ -104,7 +104,7 @@ export const DEFAULT_PROFILE: UserProfile = {
   buyToLetMortgageType: "interest-only",
   pensionPercent: 5.0,
   pensionEmployerPercent: 3.0,
-  isSalarySacrifice: true,
+  isSalarySacrifice: false,
   isSalarySacrificeEmployerNi: false,
   monthlySavingsTarget: null,
   savingsAllocationMode: "per_account",
@@ -212,7 +212,8 @@ export const normalizeProfile = (p: Partial<UserProfile>): UserProfile => ({
     p.pensionEmployerPercent !== null && p.pensionEmployerPercent !== undefined
       ? Number(p.pensionEmployerPercent)
       : 3.0,
-  isSalarySacrifice: p.isSalarySacrifice !== undefined ? Boolean(p.isSalarySacrifice) : true,
+  // Never assume salary sacrifice the user did not choose: net pay, as the dashboard and budget use.
+  isSalarySacrifice: p.isSalarySacrifice !== undefined ? Boolean(p.isSalarySacrifice) : false,
   isSalarySacrificeEmployerNi:
     p.isSalarySacrificeEmployerNi !== undefined ? Boolean(p.isSalarySacrificeEmployerNi) : false,
   monthlySavingsTarget:

@@ -96,6 +96,13 @@ describe("canonicalLinkTag", () => {
     expect(tag("/tools/uk-100k-tax-trap-calculator")).toBe(
       link("/tools/uk-100k-tax-trap-calculator"),
     );
+    // Former web app slugs, from the shared catalogue in @repo/ui/tools.
+    expect(tag("/tools/mortgage-overpay-vs-isa")).toBe(
+      link("/tools/mortgage-overpayment-vs-isa-calculator"),
+    );
+    expect(tag("/tools/section-24-landlord-calculator")).toBe(
+      link("/tools/section-24-landlord-tax-calculator"),
+    );
   });
 
   it("emits nothing for unknown pages and cannot be broken out of the attribute", () => {

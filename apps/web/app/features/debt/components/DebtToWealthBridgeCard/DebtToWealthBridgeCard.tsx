@@ -1,4 +1,8 @@
-import { calculateDebtToWealthBridge, type DebtItem } from "@flump/finance-engine";
+import {
+  bridgePayoffMonth,
+  calculateDebtToWealthBridge,
+  type DebtItem,
+} from "@flump/finance-engine";
 import {
   ChartFigure,
   chartColor,
@@ -34,6 +38,8 @@ import {
 export interface DebtToWealthBridgeCardProps {
   debts: DebtItem[];
   extraPayment: number;
+  /** The payoff order picked on the left, so the cleared month matches its card. */
+  strategy?: "avalanche" | "snowball";
   className?: string;
 }
 
@@ -52,6 +58,7 @@ const rateFormat = new Intl.NumberFormat("en-GB", {
 export const DebtToWealthBridgeCard: FC<DebtToWealthBridgeCardProps> = ({
   debts,
   extraPayment,
+  strategy = "avalanche",
   className,
 }) => {
   const { formatCurrency } = useFormatCurrency();
@@ -60,17 +67,20 @@ export const DebtToWealthBridgeCard: FC<DebtToWealthBridgeCardProps> = ({
   const rateOption = GROWTH_RATE_OPTIONS.find((o) => o.rate === returnRate);
 
   const bridgePoints = useMemo(
-    () => calculateDebtToWealthBridge(debts, extraPayment, returnRate, 5),
-    [debts, extraPayment, returnRate],
+    () =>
+      calculateDebtToWealthBridge(
+        debts,
+        extraPayment,
+        returnRate,
+        5,
+        strategy === "snowball" ? "SNOWBALL" : "AVALANCHE",
+      ),
+    [debts, extraPayment, returnRate, strategy],
   );
 
-  const firstPostDebtFree = bridgePoints.find((p) => p.isPostDebtFree);
-  const lastPreDebtFree = [...bridgePoints].reverse().find((p) => !p.isPostDebtFree);
-  // The engine caps the schedule, so a post-debt-free point alone does not prove the debt cleared.
-  const clearedPoint =
-    firstPostDebtFree && (lastPreDebtFree?.debtRemaining ?? 0) === 0
-      ? firstPostDebtFree
-      : undefined;
+  // The engine's payoff month: the same schedule as the payoff-order cards, never a sampled point.
+  const clearedMonth = bridgePayoffMonth(bridgePoints);
+  const clearedPoint = clearedMonth === null ? undefined : { month: clearedMonth };
   const finalPoint = bridgePoints[bridgePoints.length - 1];
   const totalMonthlyCommitment = debts.reduce((sum, d) => sum + d.minimumPayment, 0) + extraPayment;
 

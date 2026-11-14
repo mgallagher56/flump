@@ -81,7 +81,9 @@ export function useFinishOnboarding(values: OnboardingValues, summary: Onboardin
         hasMortgage: values.housingStatus === "mortgage" || mortgageBalance > 0,
         homeValue: propertyValue > 0 ? propertyValue : null,
         pensionPercent: values.pensionPercent ?? undefined,
-        isSalarySacrifice: values.isSalarySacrifice ?? undefined,
+        // Not asked in onboarding: save net pay, the method the summary's take-home (and the
+        // budget income row) used, so the database's salary-sacrifice default never applies.
+        isSalarySacrifice: values.isSalarySacrifice ?? false,
         enabledPages: pagesToSave,
         dashboardWidgets,
         dashboardWidgetOrder,

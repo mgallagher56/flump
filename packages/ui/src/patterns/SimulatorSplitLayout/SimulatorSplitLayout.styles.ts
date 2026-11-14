@@ -75,9 +75,10 @@ export const splitLeftControls = cva({
     display: "flex",
     position: { lg: "sticky" },
     top: { lg: `calc(${headerOffset} + token(spacing.4))` },
-    // The page may be taller than the viewport: let the sticky column scroll on its own.
-    maxHeight: { lg: `calc(100vh - ${headerOffset} - 32px)` },
-    overflowY: { lg: "auto" },
+    // No max height or inner scroll: a capped column clipped its last cards behind a scrollbar
+    // most people never noticed. A column taller than the viewport scrolls with the page instead,
+    // and every card stays in normal flow at its full height.
+    alignSelf: "start",
   },
   variants: {
     span: {

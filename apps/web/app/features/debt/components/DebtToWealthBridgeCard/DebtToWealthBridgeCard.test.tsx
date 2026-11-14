@@ -1,3 +1,4 @@
+import { compareAvalancheAndSnowball } from "@flump/finance-engine";
 import { fireEvent, screen } from "@testing-library/react";
 import { describe, expect, test, vi } from "vitest";
 import customRender from "~/testUtils/customRender";
@@ -14,6 +15,17 @@ vi.mock("recharts", async () => {
 const card = { id: "d1", name: "Card", balance: 3000, apr: 19.9, minimumPayment: 100 };
 
 describe("<DebtToWealthBridgeCard />", () => {
+  test("states the same debt-free month as the payoff-order cards", () => {
+    // £1,500 at no APR with a £38 minimum clears in 40 months: not a multiple of 3, so a sampled
+    // chart point would have said 42.
+    const noApr = { id: "d2", name: "Card", balance: 1500, apr: 0, minimumPayment: 38 };
+    const months = compareAvalancheAndSnowball([noApr], 0).avalanche.months;
+    expect(months).toBe(40);
+    const { container } = customRender(<DebtToWealthBridgeCard debts={[noApr]} extraPayment={0} />);
+    expect(container.textContent).toContain(`${months} months`);
+    expect(container.textContent).not.toContain("42 months");
+  });
+
   test("frames the projection as a neutral what-if with the rate as an assumption", () => {
     const { container } = customRender(
       <DebtToWealthBridgeCard debts={[card]} extraPayment={100} />,

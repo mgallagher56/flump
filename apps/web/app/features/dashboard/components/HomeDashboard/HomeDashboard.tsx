@@ -48,7 +48,7 @@ export interface HomeDashboardProps {
    * session only and never calls the backend (the signed-out sandbox).
    */
   persistVisibility?: boolean;
-  /** Illustrative persona data (the sandbox): swaps "Welcome back" for an "Example snapshot" heading. */
+  /** Illustrative persona data (the sandbox): swaps the greeting for an "Example snapshot" heading. */
   isSample?: boolean;
 }
 
@@ -247,7 +247,8 @@ export const HomeDashboard: FC<HomeDashboardProps> = ({
             : "Your live financial snapshot across your active modules."
         }
         title={
-          isSample ? "Example snapshot" : `Welcome back${greetingName ? `, ${greetingName}` : ""}`
+          // Neutral on a first visit straight after onboarding as much as on a later one.
+          isSample ? "Example snapshot" : greetingName ? `Hi, ${greetingName}` : "Your dashboard"
         }
       />
 
