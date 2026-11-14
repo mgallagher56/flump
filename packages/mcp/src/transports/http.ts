@@ -195,7 +195,10 @@ export class HttpMcpHandler {
       return;
     }
     const ip: string = req.ip ?? req.socket?.remoteAddress ?? "unknown";
-    const blocked = await this.failedAuthLimiter.check(ip);
+    // Counted up front, atomically, so concurrent guesses cannot overshoot; a verified request
+    // gives its attempt back below.
+    const blocked = await this.failedAuthLimiter.attempt(ip);
+    let verifiedOk = false;
     if (blocked.blocked) {
       res.setHeader("Retry-After", String(blocked.retryAfterSeconds));
       res.status(429).json({
@@ -210,6 +213,7 @@ export class HttpMcpHandler {
       // 1. Verify Authentication (flump_pat_... personal access token)
       const authHeader = req.headers?.authorization;
       const verified = await this.verifier.verifyAuthorizationHeader(authHeader);
+      verifiedOk = true;
       await this.failedAuthLimiter.recordSuccess(ip);
 
       // 2. Check rate limits, then record usage for allowed requests only
@@ -235,11 +239,13 @@ export class HttpMcpHandler {
       await transport.handleRequest(req, res, parsedBody ?? req.body);
     } catch (err: any) {
       if (err instanceof AuthenticationError) {
-        await this.failedAuthLimiter.recordFailure(ip);
+        // Already counted by attempt(): a failed guess keeps its count.
         res.setHeader("WWW-Authenticate", WWW_AUTHENTICATE);
         res.status(401).json({ error: "mcp_auth_error", message: err.message });
         return;
       }
+      // Not a guess: the verifier or a later step failed for another reason.
+      if (!verifiedOk) await this.failedAuthLimiter.forgive(ip);
       console.error("MCP request failed:", err);
       res.status(400).json(GENERIC_BAD_REQUEST);
     }
@@ -257,7 +263,10 @@ export class HttpMcpHandler {
       });
     }
     const ip = clientIpFromHeaders(request.headers);
-    const blocked = await this.failedAuthLimiter.check(ip);
+    // Counted up front, atomically, so concurrent guesses cannot overshoot; a verified request
+    // gives its attempt back below.
+    const blocked = await this.failedAuthLimiter.attempt(ip);
+    let verifiedOk = false;
     if (blocked.blocked) {
       return new Response(
         JSON.stringify({
@@ -278,6 +287,7 @@ export class HttpMcpHandler {
     try {
       const authHeader = request.headers.get("authorization") || undefined;
       const verified = await this.verifier.verifyAuthorizationHeader(authHeader);
+      verifiedOk = true;
       await this.failedAuthLimiter.recordSuccess(ip);
 
       const limitResult = await this.rateLimiter.checkLimit(limiterKey(verified));
@@ -320,12 +330,14 @@ export class HttpMcpHandler {
       return await transport.handleRequest(request);
     } catch (err: any) {
       if (err instanceof AuthenticationError) {
-        await this.failedAuthLimiter.recordFailure(ip);
+        // Already counted by attempt(): a failed guess keeps its count.
         return new Response(JSON.stringify({ error: "mcp_auth_error", message: err.message }), {
           status: 401,
           headers: { "Content-Type": "application/json", "WWW-Authenticate": WWW_AUTHENTICATE },
         });
       }
+      // Not a guess: the verifier or a later step failed for another reason.
+      if (!verifiedOk) await this.failedAuthLimiter.forgive(ip);
       console.error("MCP request failed:", err);
       return new Response(JSON.stringify(GENERIC_BAD_REQUEST), {
         status: 400,

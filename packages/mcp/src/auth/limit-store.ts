@@ -29,6 +29,18 @@ export interface LimitStore {
   peek(key: string, window: LimitWindow, now?: number): Promise<LimitDecision>;
   /** Drops one window's counter for `key`. */
   reset(key: string, window: LimitWindow): Promise<void>;
+  /** Gives back one hit in the current window (never below zero); a no-op when there is none. */
+  refund(key: string, window: LimitWindow, now?: number): Promise<void>;
+}
+
+/**
+ * True for Postgres "undefined_table" (42P01): the shared store's table is not there (an
+ * unmigrated dev database). The limiters then fall back to memory rather than refuse or allow all.
+ */
+export function isMissingTableError(err: unknown): boolean {
+  if (typeof err !== "object" || err === null) return false;
+  const e = err as { code?: unknown; driverError?: { code?: unknown } };
+  return e.code === "42P01" || e.driverError?.code === "42P01";
 }
 
 interface Bucket {
@@ -102,6 +114,11 @@ export class MemoryLimitStore implements LimitStore {
 
   async reset(key: string, window: LimitWindow): Promise<void> {
     this.buckets.delete(bucketId(key, window));
+  }
+
+  async refund(key: string, window: LimitWindow, now = Date.now()): Promise<void> {
+    const bucket = this.buckets.get(bucketId(key, window));
+    if (bucket && now < bucket.resetAt && bucket.count > 0) bucket.count--;
   }
 
   /** Drops expired buckets, then the oldest insertions, once at the cap. */

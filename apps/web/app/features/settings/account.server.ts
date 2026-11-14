@@ -5,6 +5,7 @@ import { withRequestIdHeader } from "~/security/request-id.server";
 import { appendSessionClearCookies } from "~/security/session-cookies.server";
 import { backendFetch } from "~/services/backend-client.server";
 import { BackendError } from "~/services/backend-error";
+import { withClientIpHeaders } from "~/services/client-ip.server";
 import { getAuthSession, requireAccessToken } from "~/utils/auth.server";
 import {
   ACCOUNT_DELETED_PATH,
@@ -123,7 +124,7 @@ export async function exportAccountData(
   try {
     res = await (deps.fetchImpl ?? fetch)(`${apiConfig.apiBaseUrl}/user-profile/export`, {
       method: "GET",
-      headers: withRequestIdHeader({ Authorization: `Bearer ${accessToken}` }),
+      headers: withClientIpHeaders(withRequestIdHeader({ Authorization: `Bearer ${accessToken}` })),
       signal: controller.signal,
       redirect: "manual",
     });

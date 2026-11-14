@@ -1,10 +1,12 @@
 import {
+  Body,
   Controller,
   Get,
   type INestApplication,
   Injectable,
   Logger,
   type LoggerService,
+  Post,
 } from "@nestjs/common";
 import { Test } from "@nestjs/testing";
 import request from "supertest";
@@ -37,6 +39,13 @@ class LedgerController {
   @Get()
   get() {
     return this.ledger.load();
+  }
+
+  /** A JSON body goes through the body parser (applySecurity) after the context middleware. */
+  @Post()
+  async post(@Body() body: { entries?: unknown[] }) {
+    await this.ledger.load();
+    return { received: Array.isArray(body?.entries) ? body.entries.length : -1 };
   }
 }
 
@@ -88,6 +97,20 @@ describe("request id over HTTP (M14)", () => {
     const access = lines.find((l) => l.context === "HttpAccess");
     expect(access?.requestId).toBe(INBOUND);
     expect(access?.message).toMatchObject({ requestId: INBOUND, route: "/ledger", status: 200 });
+  });
+
+  it("keeps the id through the JSON body parser on a POST", async () => {
+    const res = await request(app.getHttpServer())
+      .post("/ledger")
+      .set("x-request-id", INBOUND)
+      .set("Content-Type", "application/json")
+      .send(JSON.stringify({ entries: [1, 2, 3] }));
+    expect(res.status).toBe(201);
+    expect(res.body).toEqual({ received: 3 });
+    expect(res.headers["x-request-id"]).toBe(INBOUND);
+    expect(lines.find((l) => l.context === "LedgerService")?.requestId).toBe(INBOUND);
+    const access = lines.find((l) => l.context === "HttpAccess");
+    expect(access?.message).toMatchObject({ requestId: INBOUND, status: 201 });
   });
 
   it("replaces an unsafe inbound id and still ties the lines together", async () => {

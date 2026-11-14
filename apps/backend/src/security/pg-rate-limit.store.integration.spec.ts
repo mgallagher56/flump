@@ -136,6 +136,19 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
       expect((await store.peek("p", window, T0)).allowed).toBe(true);
     });
 
+    it("refund gives back one hit atomically and never goes below zero", async () => {
+      const store = new PgRateLimitStore(ds);
+      const window = { limit: 2, windowMs: MINUTE };
+      await store.refund("r", window, T0); // no row: a no-op
+      await store.hit("r", [window], T0);
+      await store.hit("r", [window], T0);
+      expect((await store.hit("r", [window], T0)).allowed).toBe(false);
+      await Promise.all([1, 2, 3].map(() => store.refund("r", window, T0)));
+      const [row] = await ds.query("SELECT count FROM rate_limit_buckets WHERE key = 'r|60000'");
+      expect(row.count).toBe(0);
+      expect((await store.hit("r", [window], T0)).allowed).toBe(true);
+    });
+
     it("sweeps expired rows in the background every SWEEP_EVERY hits", async () => {
       vi.spyOn(Logger.prototype, "warn").mockImplementation(() => undefined);
       await ds.query(

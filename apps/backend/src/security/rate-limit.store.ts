@@ -25,6 +25,8 @@ export interface SharedRateLimitStore {
   peek(key: string, window: RateLimitWindow, now?: number): Promise<RateLimitDecision>;
   /** Drops one window's counter. */
   reset(key: string, window: RateLimitWindow): Promise<void>;
+  /** Gives back one hit in the current window (never below zero). */
+  refund(key: string, window: RateLimitWindow, now?: number): Promise<void>;
 }
 
 interface Bucket {
@@ -102,6 +104,11 @@ export class RateLimitStore {
     this.buckets.delete(`${key}|${window.windowMs}`);
   }
 
+  refund(key: string, window: RateLimitWindow, now = Date.now()): void {
+    const bucket = this.buckets.get(`${key}|${window.windowMs}`);
+    if (bucket && now < bucket.resetAt && bucket.count > 0) bucket.count--;
+  }
+
   /** Bounds memory: drop expired buckets, then the oldest-inserted ones, once at the cap. */
   private makeRoom(now: number): void {
     if (this.buckets.size < this.maxEntries) return;
@@ -140,5 +147,9 @@ export class MemorySharedRateLimitStore implements SharedRateLimitStore {
 
   async reset(key: string, window: RateLimitWindow): Promise<void> {
     this.memory.reset(key, window);
+  }
+
+  async refund(key: string, window: RateLimitWindow, now?: number): Promise<void> {
+    this.memory.refund(key, window, now);
   }
 }

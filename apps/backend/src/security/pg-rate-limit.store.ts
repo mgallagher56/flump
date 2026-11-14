@@ -41,6 +41,11 @@ WITH t AS (SELECT COALESCE($2::timestamptz, now()) AS now)
 SELECT b.count, GREATEST(1, CEIL(EXTRACT(EPOCH FROM (b.expires_at - t.now))))::int AS retry
 FROM t JOIN rate_limit_buckets b ON b.key = $1 AND b.expires_at > t.now`;
 
+/** $1 bucket id, $2 now (null for the database clock). Never below zero, never an expired row. */
+const REFUND_SQL = `
+UPDATE rate_limit_buckets SET count = count - 1
+WHERE key = $1 AND count > 0 AND expires_at > COALESCE($2::timestamptz, now())`;
+
 const SWEEP_SQL = `
 DELETE FROM rate_limit_buckets WHERE key IN (
   SELECT key FROM rate_limit_buckets WHERE expires_at < now() LIMIT ${SWEEP_BATCH}
@@ -116,6 +121,10 @@ export class PgRateLimitStore implements SharedRateLimitStore {
     await this.dataSource.query("DELETE FROM rate_limit_buckets WHERE key = $1", [
       bucketId(key, window),
     ]);
+  }
+
+  async refund(key: string, window: RateLimitWindow, now?: number): Promise<void> {
+    await this.dataSource.query(REFUND_SQL, [bucketId(key, window), at(now)]);
   }
 
   /** Deletes up to SWEEP_BATCH expired rows. Never throws: a failed sweep waits for the next. */
