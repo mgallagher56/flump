@@ -1,5 +1,16 @@
+import AxeBuilder from "@axe-core/playwright";
 import { expect, type Page, test } from "@playwright/test";
+import { AXE_TAGS } from "../a11y/checks";
 import { clearToNewUser } from "../support/personas";
+
+/**
+ * Setup is not in the visual and accessibility suites (the seeded user has finished it and is sent
+ * to the dashboard), so its first two steps get an axe check here, inside the real app shell.
+ */
+async function expectNoAxeViolations(page: Page, where: string): Promise<void> {
+  const { violations } = await new AxeBuilder({ page }).withTags(AXE_TAGS).analyze();
+  expect(violations.map((v) => `${where}: ${v.id} (${v.nodes.length})`)).toEqual([]);
+}
 
 /**
  * The new-user journey (E11 F-11, E23): sign in with nothing saved, finish setup, add a first
@@ -46,10 +57,13 @@ test("a new user sets up, adds an account and a budget entry, and the dashboard 
     await income.getByRole("radio", { name: /^Employed/ }).check();
     await income.getByRole("textbox", { name: /^Yearly salary before tax/ }).fill("36,000");
     await income.getByRole("combobox", { name: /^Where do you pay tax/ }).selectOption("England");
+    await expectNoAxeViolations(page, "setup step 1");
     await income.getByRole("button", { name: "Next", exact: true }).click();
 
     // No housing costs, balances or debts here, so setup creates no account and no spending.
     const housing = page.getByRole("region", { name: "Housing and spending" });
+    await expect(housing).toBeVisible();
+    await expectNoAxeViolations(page, "setup step 2");
     await housing.getByRole("button", { name: "Skip this step" }).click();
     const savings = page.getByRole("region", { name: "Savings and debt" });
     await savings.getByRole("button", { name: "Skip this step" }).click();

@@ -108,11 +108,12 @@ describe("<OnboardingFlow />", () => {
     expect((screen.getByLabelText(/monthly rent/i) as HTMLInputElement).value).toBe("900");
   });
 
-  it("hides the live summary on the review step so figures appear once", () => {
+  it("shows the take-home figure once on every step, the review included", () => {
     render(<OnboardingFlow />);
-    expect(screen.getByTestId("onboarding-take-home")).toBeDefined();
+    expect(screen.getAllByTestId("onboarding-take-home")).toHaveLength(1);
     for (let i = 0; i < 3; i++) fireEvent.click(screen.getByRole("button", { name: /^next/i }));
-    expect(screen.queryByTestId("onboarding-take-home")).toBeNull();
+    expect(screen.getByRole("heading", { name: "Review what will be saved" })).toBeDefined();
+    expect(screen.getAllByTestId("onboarding-take-home")).toHaveLength(1);
   });
 
   it("marks the missing fields when the review sends the user back", () => {

@@ -127,7 +127,12 @@ describe("app.onboarding loader", () => {
   });
 
   it("returns the profile and never the access token on success (E20-N7)", async () => {
-    globalThis.fetch = respond(200, { ...profileFixture, enabledPages: [] });
+    // Someone still in setup: a finished profile is sent to the dashboard instead.
+    globalThis.fetch = respond(200, {
+      ...profileFixture,
+      enabledPages: [],
+      onboardingCompleted: false,
+    });
     const res: any = await onboardingLoader(args());
     expect(res.data.userProfile).toBeDefined();
     expect(res.data).not.toHaveProperty("accessToken");

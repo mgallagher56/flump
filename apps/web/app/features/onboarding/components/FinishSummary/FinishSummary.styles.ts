@@ -49,6 +49,8 @@ export const finishSummaryRecipe = sva({
       textStyle: "body.sm",
       color: "text.primary",
       fontVariantNumeric: "tabular-nums",
+      // "£1,100 a month" and term labels stay on one line at 375.
+      whiteSpace: "nowrap",
       textAlign: "right",
       margin: 0,
     },
