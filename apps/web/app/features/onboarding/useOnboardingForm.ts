@@ -3,6 +3,7 @@ import {
   type HousingStatus,
   INITIAL_VALUES,
   type OnboardingValues,
+  OPTIONAL_STEPS,
   ownsHome,
   REVIEW_STEP,
   STEP_IDS,
@@ -63,7 +64,12 @@ export function useOnboardingForm(initial: OnboardingValues = INITIAL_VALUES) {
     setStep(1);
   }, []);
 
-  const next = useCallback(() => markAndAdvance(step, "complete"), [markAndAdvance, step]);
+  /** Next on an optional step with nothing entered counts as skipped, as the review then says. */
+  const next = useCallback(() => {
+    const id = STEP_IDS[step - 1];
+    const empty = id !== undefined && OPTIONAL_STEPS.has(id) && !stepHasEntries(id, values);
+    markAndAdvance(step, empty ? "skipped" : "complete");
+  }, [markAndAdvance, step, values]);
   const back = useCallback(() => {
     setShowMissing(false);
     setStep((s) => Math.max(s - 1, 1));

@@ -58,14 +58,14 @@ describe("<DataTab />", () => {
     expect(screen.getByRole("alert").textContent).toContain("could not finish removing your login");
   });
 
-  it("labels the section with Delete wording and a danger button", () => {
+  it("labels the section with Delete wording; danger styling waits for the confirmation (D3)", () => {
     render(<DataTab />);
     expect(screen.getByRole("heading", { name: "Delete your financial data" })).toBeDefined();
     const trigger = screen.getByTestId("reset-financial-data-trigger");
     expect(trigger.textContent).toBe("Delete all data");
-    expect(trigger.getAttribute("data-variant")).toBe("danger");
+    expect(trigger.getAttribute("data-variant")).toBe("outline");
     expect(screen.getByTestId("delete-account-trigger").getAttribute("data-variant")).toBe(
-      "danger",
+      "outline",
     );
   });
 

@@ -18,14 +18,7 @@ import {
   RecentLoginRequiredError,
   useUserProfile,
 } from "~/hooks/useUserProfile";
-import {
-  dangerCopy,
-  dangerRow,
-  dangerText,
-  dangerTitle,
-  dialogBody,
-  wipeList,
-} from "./DataTab.styles";
+import { dialogBody, wipeList } from "./DataTab.styles";
 
 /** How long the success message shows before sending the person back to onboarding. */
 const SUCCESS_REDIRECT_MS = 1500;
@@ -107,21 +100,17 @@ export const DataTab: FC = () => {
           Delete your financial data
         </h2>
         <p className={sectionLead()}>
-          This deletes everything you have added about your money. You then set up Flump again.
+          This deletes your accounts and balances, budget entries and tax records. You then set up
+          Flump again.
         </p>
-        <div className={dangerRow()}>
-          <div className={dangerText()}>
-            <p className={dangerTitle()}>This cannot be undone</p>
-            <p className={dangerCopy()}>
-              Your accounts and balances, budget entries and tax records are deleted.
-            </p>
-          </div>
+        {/* Danger styling only inside the confirmation (UX D3): at rest this is a plain button. */}
+        <div>
           <Button
             data-testid="reset-financial-data-trigger"
             id="reset-financial-data-trigger"
             size="sm"
             type="button"
-            variant="danger"
+            variant="outline"
             onClick={() => {
               setResetError(null);
               setResetNeedsSignIn(false);
