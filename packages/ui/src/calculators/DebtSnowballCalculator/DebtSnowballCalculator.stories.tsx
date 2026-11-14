@@ -3,7 +3,7 @@ import { expect, fn, userEvent, within } from "@storybook/test";
 import { DEBT_SNOWBALL_COPY, DebtSnowballCalculator } from "./DebtSnowballCalculator";
 
 const meta: Meta<typeof DebtSnowballCalculator> = {
-  title: "3. Calculators/DebtSnowballCalculator",
+  title: "5. Calculators/DebtSnowballCalculator",
   component: DebtSnowballCalculator,
   parameters: { layout: "padded" },
   args: { onSaveAndContinue: fn(), persistSeed: false },

@@ -5,11 +5,13 @@ import { StudentLoanOverpayTool } from "./StudentLoanOverpayTool";
 
 describe("<StudentLoanOverpayTool />", () => {
   test("renders student loan evaluator and allows switching plans", () => {
-    const { getByText, getByRole, getByDisplayValue } = customRender(<StudentLoanOverpayTool />);
+    const { getByText, getAllByText, getByRole, getByLabelText } = customRender(
+      <StudentLoanOverpayTool />,
+    );
 
-    expect(getByRole("heading", { name: /UK Student Loan/i })).toBeDefined();
-    expect(getByText(/Projected outcome:/i)).toBeDefined();
-    expect(getByText(/How the projection works out/i)).toBeDefined();
+    expect(getByRole("heading", { name: /UK student loan repayment calculator/i })).toBeDefined();
+    expect(getByText(/Projected outcome/i)).toBeDefined();
+    expect(getAllByText(/Estimated repayment a month/i)).toBeDefined();
 
     // Select different plan
     const select = document.querySelector("select") as HTMLSelectElement;
@@ -17,12 +19,12 @@ describe("<StudentLoanOverpayTool />", () => {
     fireEvent.change(select, { target: { value: "plan1" } });
 
     // Change salary and balance
-    const salaryInput = getByDisplayValue("38000");
-    fireEvent.change(salaryInput, { target: { value: "65000" } });
-    expect(getByDisplayValue("65000")).toBeDefined();
+    const salary = getByLabelText("Yearly salary before tax range slider") as HTMLInputElement;
+    fireEvent.change(salary, { target: { value: "65000" } });
+    expect(salary.value).toBe("65000");
 
-    const balanceInput = getByDisplayValue("45000");
-    fireEvent.change(balanceInput, { target: { value: "15000" } });
-    expect(getByDisplayValue("15000")).toBeDefined();
+    const balance = getByLabelText("Student loan balance range slider") as HTMLInputElement;
+    fireEvent.change(balance, { target: { value: "15000" } });
+    expect(balance.value).toBe("15000");
   });
 });

@@ -4,7 +4,7 @@ import { TAX_TRAP_COPY } from "./copy";
 import { TaxTrapCalculator } from "./TaxTrapCalculator";
 
 const meta: Meta<typeof TaxTrapCalculator> = {
-  title: "3. Calculators/TaxTrapCalculator",
+  title: "5. Calculators/TaxTrapCalculator",
   component: TaxTrapCalculator,
   parameters: { layout: "padded" },
   args: { taxYear: "2026/27", persistSeed: false, onSaveAndContinue: fn() },

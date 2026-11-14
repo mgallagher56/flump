@@ -3,7 +3,7 @@ import { expect, userEvent, waitFor, within } from "@storybook/test";
 import { MarginalRateExplorerStandalone } from "./MarginalRateExplorer";
 
 const meta: Meta<typeof MarginalRateExplorerStandalone> = {
-  title: "3. Calculators/MarginalRateExplorer",
+  title: "5. Calculators/MarginalRateExplorer",
   component: MarginalRateExplorerStandalone,
   parameters: { layout: "padded" },
   // Pinned so the £720 check does not move with the calendar.

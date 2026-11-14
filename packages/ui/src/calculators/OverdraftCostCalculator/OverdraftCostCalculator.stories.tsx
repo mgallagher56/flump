@@ -3,7 +3,7 @@ import { expect, fn, userEvent, within } from "@storybook/test";
 import { OVERDRAFT_COPY, OverdraftCostCalculator } from "./OverdraftCostCalculator";
 
 const meta: Meta<typeof OverdraftCostCalculator> = {
-  title: "3. Calculators/OverdraftCostCalculator",
+  title: "5. Calculators/OverdraftCostCalculator",
   component: OverdraftCostCalculator,
   parameters: { layout: "padded" },
   args: { onSaveAndContinue: fn(), persistSeed: false },
