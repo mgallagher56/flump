@@ -1,5 +1,6 @@
 import { createHmac } from "node:crypto";
-import { describe, expect, it } from "vitest";
+import { Logger } from "@nestjs/common";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   LOG_REF_LABEL,
   logUserRef,
@@ -48,15 +49,14 @@ describe("rateLimitStorageKey (BE-15, N4)", () => {
 });
 
 describe("root secret handling", () => {
-  const unsetMessage = /MCP_AUDIT_HMAC_KEY/;
-
   it("treats a whitespace-only key as unset", () => {
+    vi.spyOn(Logger.prototype, "error").mockImplementation(() => undefined);
     expect(rateLimitStorageKey("x|1", { MCP_AUDIT_HMAC_KEY: "   " })).toBe(
       rateLimitStorageKey("x|1", {}),
     );
-    expect(() =>
-      rateLimitStorageKey("x|1", { MCP_AUDIT_HMAC_KEY: "  \t", NODE_ENV: "production" }),
-    ).toThrow(unsetMessage);
+    expect(rateLimitStorageKey("x|1", { MCP_AUDIT_HMAC_KEY: "  \t", NODE_ENV: "production" })).toBe(
+      rateLimitStorageKey("x|1", { NODE_ENV: "production" }),
+    );
   });
 
   it("trims a configured key", () => {
@@ -65,36 +65,87 @@ describe("root secret handling", () => {
     );
   });
 
-  it("throws, naming the variable but no value, in production with no key", () => {
-    expect(() => rateLimitStorageKey("x|1", { NODE_ENV: "production" })).toThrow(unsetMessage);
-    expect(() => logUserRef(USER, { NODE_ENV: "production" })).toThrow(unsetMessage);
-  });
-
-  it("throws on Railway with no key, whatever NODE_ENV says", () => {
-    expect(() => rateLimitStorageKey("x|1", { RAILWAY_ENVIRONMENT: "production" })).toThrow(
-      unsetMessage,
-    );
-    expect(() =>
-      rateLimitStorageKey("x|1", { NODE_ENV: "development", RAILWAY_SERVICE_ID: "svc" }),
-    ).toThrow(unsetMessage);
-  });
-
   it("does not treat an empty RAILWAY variable as Railway (the E2E servers set one)", () => {
-    expect(
-      rateLimitStorageKey("x|1", { NODE_ENV: "development", RAILWAY_ENVIRONMENT: "" }),
-    ).toMatch(/^rl1:[0-9a-f]{32}$/);
+    expect(rateLimitStorageKey("x|1", { NODE_ENV: "development", RAILWAY_ENVIRONMENT: "" })).toBe(
+      rateLimitStorageKey("x|1", {}),
+    );
   });
 
-  it("still uses a configured key in production and on Railway", () => {
-    expect(() =>
-      rateLimitStorageKey("x|1", { ...ENV, NODE_ENV: "production", RAILWAY_ENVIRONMENT: "p" }),
-    ).not.toThrow();
+  it("uses a configured key in production and on Railway", () => {
+    const env = { ...ENV, NODE_ENV: "production", RAILWAY_ENVIRONMENT: "p" };
+    expect(rateLimitStorageKey("x|1", env)).toBe(rateLimitStorageKey("x|1", ENV));
   });
 
   it("falls back to the public dev root for local development and test", () => {
+    const devRoot = rateLimitStorageKey("x|1", {});
     for (const NODE_ENV of ["development", "test", undefined]) {
-      expect(rateLimitStorageKey("x|1", { NODE_ENV })).toMatch(/^rl1:[0-9a-f]{32}$/);
+      expect(rateLimitStorageKey("x|1", { NODE_ENV })).toBe(devRoot);
     }
+  });
+});
+
+describe("deployed environment with no key (process-local root)", () => {
+  // A fresh module per test: the per-process root and its one log line are module state.
+  async function freshModule() {
+    vi.resetModules();
+    const errors = vi.spyOn(Logger.prototype, "error").mockImplementation(() => undefined);
+    const mod = await import("./keyed-ref.js");
+    return { mod, errors };
+  }
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  const deployedEnvs: Record<string, string | undefined>[] = [
+    { NODE_ENV: "production" },
+    { RAILWAY_ENVIRONMENT: "production" },
+    { NODE_ENV: "development", RAILWAY_SERVICE_ID: "svc" },
+  ];
+
+  it("never throws, yields rl1 plus 32 hex, and is stable within the process", async () => {
+    const { mod } = await freshModule();
+    for (const env of deployedEnvs) {
+      const key = mod.rateLimitStorageKey("x|1", env);
+      expect(key).toMatch(/^rl1:[0-9a-f]{32}$/);
+      expect(mod.rateLimitStorageKey("x|1", env)).toBe(key);
+      expect(mod.logUserRef(USER, env)).toMatch(/^[0-9a-f]{16}$/);
+    }
+    const [first, ...rest] = deployedEnvs.map((env) => mod.rateLimitStorageKey("x|1", env));
+    for (const key of rest) expect(key).toBe(first);
+  });
+
+  it("differs from the public dev root and from a configured key", async () => {
+    const { mod } = await freshModule();
+    const deployed = mod.rateLimitStorageKey("x|1", { NODE_ENV: "production" });
+    expect(deployed).not.toBe(mod.rateLimitStorageKey("x|1", {}));
+    expect(deployed).not.toBe(mod.rateLimitStorageKey("x|1", ENV));
+  });
+
+  it("uses a new random root in a new process", async () => {
+    const first = (await freshModule()).mod.rateLimitStorageKey("x|1", { NODE_ENV: "production" });
+    const second = (await freshModule()).mod.rateLimitStorageKey("x|1", { NODE_ENV: "production" });
+    expect(second).not.toBe(first);
+  });
+
+  it("logs one error line naming the variable, with no values, the first time only", async () => {
+    const { mod, errors } = await freshModule();
+    for (const env of deployedEnvs) {
+      mod.rateLimitStorageKey(`user:${USER}:credential|60000`, env);
+      mod.logUserRef(USER, env);
+    }
+    expect(errors).toHaveBeenCalledTimes(1);
+    const message = String(errors.mock.calls[0]?.[0]);
+    expect(message).toContain("MCP_AUDIT_HMAC_KEY");
+    expect(message).not.toContain(USER);
+    expect(message).not.toMatch(/[0-9a-f]{32}/);
+  });
+
+  it("logs nothing when the key is set or outside a deployed environment", async () => {
+    const { mod, errors } = await freshModule();
+    mod.rateLimitStorageKey("x|1", { ...ENV, NODE_ENV: "production" });
+    mod.rateLimitStorageKey("x|1", { NODE_ENV: "development", RAILWAY_ENVIRONMENT: "" });
+    expect(errors).not.toHaveBeenCalled();
   });
 });
 

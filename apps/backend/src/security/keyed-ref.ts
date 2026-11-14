@@ -1,4 +1,5 @@
-import { createHmac } from "node:crypto";
+import { createHmac, randomBytes } from "node:crypto";
+import { Logger } from "@nestjs/common";
 
 type Env = Record<string, string | undefined>;
 
@@ -6,11 +7,17 @@ type Env = Record<string, string | undefined>;
  * Keyed, one-way references to identifiers we must not store or log in the clear (BE-15: N4, S6):
  * client addresses and user ids in `rate_limit_buckets` keys, and WorkOS user ids in log lines.
  *
- * Root secret: `MCP_AUDIT_HMAC_KEY`, required in production by the boot guard
- * (`config/env.schema.ts`). Outside production, when it is unset, a fixed public development
- * secret is used instead, so keys keep one format everywhere. Those references are only
- * pseudonymous (anyone can recompute them), which is acceptable because no real user data lives
- * in a development or test database.
+ * Root secret: `MCP_AUDIT_HMAC_KEY`. With NODE_ENV=production the boot guard requires it
+ * (`PRODUCTION_REQUIRED`, `config/env.schema.ts`). When it is unset (or blank):
+ * - in a deployed environment (NODE_ENV=production or a non-empty `RAILWAY_*` variable, for
+ *   example a Railway service running with another NODE_ENV), a random per-process root is used,
+ *   created once at first use and kept for the process lifetime, and one error line is logged.
+ *   Nothing throws, so rate limiting (including the fail-closed classes) keeps working, but bucket
+ *   keys are process-local: limits do not hold across replicas or restarts, and log references do
+ *   not correlate across restarts. Nobody outside the process can recompute them.
+ * - in local development and tests, a fixed public development root is used, so keys keep one
+ *   format everywhere. Those references are only pseudonymous (anyone can recompute them), which
+ *   is acceptable because no real user data lives in a development or test database.
  *
  * The root secret is never used directly. Each use derives its own key first:
  * `derived = HMAC-SHA256(root, label)` with a fixed, versioned label per use, then
@@ -50,20 +57,30 @@ function isDeployedEnv(env: Env): boolean {
   );
 }
 
+/** Random root for a deployed process with no configured key: created once, kept for its life. */
+let processRoot: string | undefined;
+
+function processLocalRoot(): string {
+  if (processRoot === undefined) {
+    processRoot = randomBytes(32).toString("hex");
+    new Logger("KeyedRef").error(
+      "MCP_AUDIT_HMAC_KEY is not set in a deployed environment: using a random per-process root, " +
+        "so rate-limit bucket keys are process-local (limits do not hold across replicas or " +
+        "restarts) and log references do not correlate across restarts until it is set",
+    );
+  }
+  return processRoot;
+}
+
 /**
- * Blank (after trimming) counts as unset. Unset falls back to the public development root only
- * for local development and tests; in production or on Railway it throws, naming the variable.
- * This cannot throw per request in production: `MCP_AUDIT_HMAC_KEY` is in `PRODUCTION_REQUIRED`
- * (`config/env.schema.ts`), so boot has already failed without it and the first request never
- * reaches this branch.
+ * Blank (after trimming) counts as unset. Unset uses the per-process random root in a deployed
+ * environment and the public development root for local development and tests. Never throws, so
+ * it never turns a request into a refusal.
  */
 function rootSecret(env: Env): string {
   const configured = env.MCP_AUDIT_HMAC_KEY?.trim() ?? "";
   if (configured !== "") return configured;
-  if (isDeployedEnv(env)) {
-    throw new Error("MCP_AUDIT_HMAC_KEY is required in production and on Railway but is not set");
-  }
-  return DEV_FALLBACK_ROOT;
+  return isDeployedEnv(env) ? processLocalRoot() : DEV_FALLBACK_ROOT;
 }
 
 /** HMAC-SHA256(root, label). */
