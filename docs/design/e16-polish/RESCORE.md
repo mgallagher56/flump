@@ -71,6 +71,7 @@ Per-tool scores (the same body serves web and marketing): overdraft 8.5 / 8.5; 0
 8. **Selected tab shows a focus ring after a mouse click** (settings, savings, mortgage, take-home).
 9. **Precision drift:** "18.2 years", "4.50%", "2.7 months" beside "7 months", a projection of £388,007.
 10. **Indigo avatar** on every signed-in page.
+11. **Accessibility findings that only show with data.** With the seeded household the accessibility gate records new contrast findings (2 to 4 a page on accounts, history, budget, debt, pension and take-home) and touch targets under 24px (2 a page on three pages). They are in `apps/e2e/a11y/baseline.json`; each wave-2 PR clears its own.
 
 ## 4. Round 2: PRs to reach 10
 

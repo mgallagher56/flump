@@ -4,47 +4,52 @@
     "marketing-home": {
       "1280-forced-colours": {
         "axe": {
-          "color-contrast": 24
-        }
-      },
-      "1280-light": {
-        "lang": {
-          "html-lang-not-en-GB": 1
-        }
-      }
-    },
-    "marketing-mcp": {
-      "1280-light": {
-        "lang": {
-          "html-lang-not-en-GB": 1
-        }
-      }
-    },
-    "marketing-pricing": {
-      "1280-light": {
-        "lang": {
-          "html-lang-not-en-GB": 1
-        }
-      }
-    },
-    "marketing-tools": {
-      "1280-light": {
-        "lang": {
-          "html-lang-not-en-GB": 1
+          "color-contrast": 2
         }
       }
     },
     "web-accounts": {
+      "1280-dark": {
+        "axe": {
+          "target-size": 2
+        }
+      },
+      "1280-forced-colours": {
+        "axe": {
+          "target-size": 2
+        }
+      },
+      "1280-light": {
+        "axe": {
+          "target-size": 2
+        }
+      }
+    },
+    "web-accounts-history": {
       "1280-forced-colours": {
         "axe": {
           "color-contrast": 3
         }
       }
     },
+    "web-budget": {
+      "1280-forced-colours": {
+        "axe": {
+          "color-contrast": 4
+        }
+      }
+    },
     "web-dashboard": {
       "1280-forced-colours": {
         "axe": {
-          "color-contrast": 2
+          "color-contrast": 3
+        }
+      }
+    },
+    "web-debt": {
+      "1280-forced-colours": {
+        "axe": {
+          "color-contrast": 3
         }
       }
     },
@@ -58,11 +63,11 @@
     "web-mortgage": {
       "1280-forced-colours": {
         "axe": {
-          "color-contrast": 2
+          "color-contrast": 3
         }
       }
     },
-    "web-profile": {
+    "web-pension": {
       "1280-forced-colours": {
         "axe": {
           "color-contrast": 3
@@ -83,10 +88,10 @@
         }
       }
     },
-    "web-self-assessment": {
+    "web-take-home": {
       "1280-forced-colours": {
         "axe": {
-          "color-contrast": 4
+          "color-contrast": 3
         }
       }
     }
