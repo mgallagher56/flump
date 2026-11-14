@@ -35,22 +35,22 @@ export class BankConnection {
   @Column({ name: "refresh_token", type: "text", nullable: true })
   refreshToken: string | null;
 
-  @Column({ name: "expires_at", type: "timestamp", nullable: true })
+  @Column({ name: "expires_at", type: "timestamptz", nullable: true })
   expiresAt: Date | null;
 
   @Column({ name: "auth_type", type: "varchar", default: "oauth" })
   authType: "oauth" | "token";
 
-  @Column("timestamp", { name: "last_synced_at", default: () => "CURRENT_TIMESTAMP" })
+  @Column("timestamptz", { name: "last_synced_at", default: () => "CURRENT_TIMESTAMP" })
   lastSyncedAt: Date;
 
   /** Sync lease (BE-12, audit H4): set while a sync runs, so a second one gets 409. */
   @Column({ name: "sync_started_at", type: "timestamptz", nullable: true })
   syncStartedAt: Date | null;
 
-  @CreateDateColumn({ name: "created_at" })
+  @CreateDateColumn({ name: "created_at", type: "timestamptz" })
   createdAt: Date;
 
-  @UpdateDateColumn({ name: "updated_at" })
+  @UpdateDateColumn({ name: "updated_at", type: "timestamptz" })
   updatedAt: Date;
 }

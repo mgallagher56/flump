@@ -208,7 +208,7 @@ export const heavy: PersonaFixture = {
     budgetEntry("heavy-b22", "leisure", "Clothing", 80),
   ],
   taxRecords: [
-    // Monthly rent and side income run from April 2023 with no end date: every month of all four years.
+    // Monthly rent and side income run from 6 April 2023 with no end date: every month of all four years.
     taxRecord({
       id: "heavy-rent",
       type: "income",
@@ -216,7 +216,7 @@ export const heavy: PersonaFixture = {
       category: "rental_income",
       name: "Rent",
       amount: 1200,
-      date: "2023-04-01",
+      date: "2023-04-06",
     }),
     taxRecord({
       id: "heavy-side",
@@ -225,7 +225,7 @@ export const heavy: PersonaFixture = {
       category: "self_employed_income",
       name: "Side income",
       amount: 400,
-      date: "2023-04-01",
+      date: "2023-04-06",
     }),
     ...annualRecords,
     taxRecord({

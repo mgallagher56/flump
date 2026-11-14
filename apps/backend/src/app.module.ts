@@ -36,6 +36,7 @@ import { SecurityModule } from "./security/security.module";
 import { SnapshotsController } from "./snapshots/snapshots.controller";
 import { SnapshotsService } from "./snapshots/snapshots.service";
 import { TaxController } from "./tax.controller";
+import { TaxService } from "./tax.service";
 import { UserProfileController } from "./user-profile.controller";
 import { UserProfileService } from "./user-profile.service";
 
@@ -80,6 +81,7 @@ import { UserProfileService } from "./user-profile.service";
     AccountExportService,
     // Revokes consent at each bank before deletion or reset (BE-12, audit H10).
     { provide: BANK_CONSENT_REVOKER, useClass: ProviderBankConsentRevoker },
+    TaxService,
     McpTokenService,
     AgentDataService,
     McpService,

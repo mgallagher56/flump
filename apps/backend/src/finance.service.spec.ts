@@ -48,18 +48,37 @@ describe("FinanceService", () => {
       expect(transactionRepo.delete).not.toHaveBeenCalled();
     });
 
-    it("deletes transactions after confirming the caller owns the account", async () => {
-      const { service, accountRepo, transactionRepo } = createService();
+    it("checks ownership, then deletes transactions, history and the account in one transaction", async () => {
+      const { service, accountRepo, transactionRepo, accountDetailRepo } = createService();
       accountRepo.findOne.mockResolvedValue({ id: "acc-1", userId: "userA", balance: "0" });
+      const inTransaction = vi.fn();
+      const em = {
+        getRepository: (entity: { name: string }) =>
+          ({
+            Account: accountRepo,
+            Transaction: transactionRepo,
+            AccountDetail: accountDetailRepo,
+          })[entity.name],
+      };
+      (accountRepo as any).manager = {
+        transaction: async (work: (m: typeof em) => Promise<unknown>) => {
+          inTransaction(true);
+          return work(em);
+        },
+      };
 
       const result = await service.deleteAccount("userA", "acc-1");
 
       expect(result).toEqual({ success: true });
-      expect(transactionRepo.delete).toHaveBeenCalledTimes(1);
+      expect(inTransaction).toHaveBeenCalledTimes(1);
+      expect(accountRepo.findOne).toHaveBeenCalledTimes(1);
       expect(transactionRepo.delete).toHaveBeenCalledWith({ accountId: "acc-1" });
-      expect(accountRepo.findOne.mock.invocationCallOrder[0]).toBeLessThan(
-        transactionRepo.delete.mock.invocationCallOrder[0],
-      );
+      expect(accountDetailRepo.delete).toHaveBeenCalledWith({ accountId: "acc-1" });
+      expect(accountRepo.remove).toHaveBeenCalledWith(expect.objectContaining({ id: "acc-1" }));
+      const order = (fn: { mock: { invocationCallOrder: number[] } }) =>
+        fn.mock.invocationCallOrder[0] ?? 0;
+      expect(order(accountRepo.findOne)).toBeLessThan(order(transactionRepo.delete));
+      expect(order(transactionRepo.delete)).toBeLessThan(order(accountRepo.remove));
     });
   });
   describe("createTransaction", () => {

@@ -1,9 +1,16 @@
+import {
+  DEFAULT_TRANSACTION_PAGE,
+  MAX_TRANSACTION_OFFSET,
+  MAX_TRANSACTION_PAGE,
+} from "@flump/api-contract";
 import { BankSyncOrchestrator } from "@flump/banking/server";
 import { BadRequestException, Logger, NotFoundException } from "@nestjs/common";
 import { describe, expect, it, vi } from "vitest";
 import { FinanceController } from "./finance.controller";
 import { FinanceService } from "./finance.service";
 import { createInMemoryRepository } from "./testing/in-memory-repository";
+
+const ACC_1 = "00000000-0000-4000-8000-000000000001";
 
 describe("FinanceController & FinanceService", () => {
   const createMocks = () => {
@@ -188,6 +195,39 @@ describe("FinanceController & FinanceService", () => {
     ).rejects.toThrow(BadRequestException);
   });
 
+  it("bounds GET /transactions: limit and offset page it, and anything out of range is a 400", async () => {
+    const { controller, mockTransactionRepo } = createMocks();
+    const req = { user: { id: "u1" } };
+
+    await controller.getTransactions(req, undefined, "25", "50");
+    expect(mockTransactionRepo.find).toHaveBeenLastCalledWith(
+      expect.objectContaining({ take: 25, skip: 50 }),
+    );
+    await controller.getTransactions(req, undefined, String(MAX_TRANSACTION_PAGE));
+    expect(mockTransactionRepo.find).toHaveBeenLastCalledWith(
+      expect.objectContaining({ take: MAX_TRANSACTION_PAGE, skip: 0 }),
+    );
+    for (const [limit, offset] of [
+      ["0", undefined],
+      [String(MAX_TRANSACTION_PAGE + 1), undefined],
+      ["2.5", undefined],
+      ["abc", undefined],
+      [undefined, "-1"],
+      [undefined, String(MAX_TRANSACTION_OFFSET + 1)],
+    ]) {
+      await expect(controller.getTransactions(req, undefined, limit, offset)).rejects.toThrow(
+        BadRequestException,
+      );
+    }
+  });
+
+  it("lists no transactions for an accountId that is not a uuid, without querying", async () => {
+    const { controller, mockTransactionRepo } = createMocks();
+    mockTransactionRepo.find.mockClear();
+    expect(await controller.getTransactions({ user: { id: "u1" } }, "acc-1")).toEqual([]);
+    expect(mockTransactionRepo.find).not.toHaveBeenCalled();
+  });
+
   it("handles transactions and bank connections listing", async () => {
     const { controller, mockTransactionRepo, mockBankConnRepo } = createMocks();
     const req = { user: { id: "u1" } };
@@ -195,13 +235,17 @@ describe("FinanceController & FinanceService", () => {
     await controller.getTransactions(req);
     expect(mockTransactionRepo.find).toHaveBeenCalledWith({
       where: { userId: "u1" },
-      order: { timestamp: "DESC" },
+      order: { timestamp: "DESC", id: "DESC" },
+      take: DEFAULT_TRANSACTION_PAGE,
+      skip: 0,
     });
 
-    await controller.getTransactions(req, "acc-1");
+    await controller.getTransactions(req, ACC_1);
     expect(mockTransactionRepo.find).toHaveBeenCalledWith({
-      where: { userId: "u1", accountId: "acc-1" },
-      order: { timestamp: "DESC" },
+      where: { userId: "u1", accountId: ACC_1 },
+      order: { timestamp: "DESC", id: "DESC" },
+      take: DEFAULT_TRANSACTION_PAGE,
+      skip: 0,
     });
 
     await controller.getBankConnections(req);

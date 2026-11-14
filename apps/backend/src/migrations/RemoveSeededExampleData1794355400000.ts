@@ -325,8 +325,8 @@ export class RemoveSeededExampleData1794355400000 implements MigrationInterface 
            AND a."is_current" IS NOT DISTINCT FROM s."isCurrent"
            AND a."currency" = 'GBP'
            AND a."connection_id" IS NULL AND a."external_account_id" IS NULL
-           AND NOT EXISTS (SELECT 1 FROM "account_details" d WHERE d."account_id" = a."id"::text)
-           AND NOT EXISTS (SELECT 1 FROM "transactions" t WHERE t."account_id" = a."id"::text)`,
+           AND NOT EXISTS (SELECT 1 FROM "account_details" d WHERE d."account_id"::text = a."id"::text)
+           AND NOT EXISTS (SELECT 1 FROM "transactions" t WHERE t."account_id"::text = a."id"::text)`,
       [JSON.stringify(SEEDED_ACCOUNTS)],
     );
 
@@ -349,7 +349,7 @@ export class RemoveSeededExampleData1794355400000 implements MigrationInterface 
     const mock = [...MOCK_USER_IDS];
     const mockDetails = await deleteCount(
       queryRunner,
-      `DELETE FROM "account_details" WHERE "account_id" IN
+      `DELETE FROM "account_details" WHERE "account_id"::text IN
          (SELECT "id"::text FROM "accounts" WHERE "user_id" = ANY($1::text[]))`,
       [mock],
     );

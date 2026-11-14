@@ -47,12 +47,12 @@ export async function seedHotQueryData(ds: DataSource, scale: SeedScale): Promis
   );
   await ds.query(
     `INSERT INTO transactions (account_id, user_id, amount, description, category, "timestamp")
-     SELECT acc.id::text, acc.user_id, 12.34, 'Shop', 'Groceries', now() - (t || ' hours')::interval
+     SELECT acc.id, acc.user_id, 12.34, 'Shop', 'Groceries', now() - (t || ' hours')::interval
      FROM accounts acc, generate_series(1, ${scale.transactionsPerAccount}) t`,
   );
   await ds.query(
     `INSERT INTO account_details (account_id, user_id, year, month, value, as_of_date)
-     SELECT acc.id::text, acc.user_id, extract(year FROM d)::int, extract(month FROM d)::int, 100, d::date
+     SELECT acc.id, acc.user_id, extract(year FROM d)::int, extract(month FROM d)::int, 100, d::date
      FROM accounts acc,
           generate_series(date '2024-01-01', date '2024-01-01' + ((${scale.monthsPerAccount} - 1) || ' months')::interval, interval '1 month') d`,
   );
@@ -135,10 +135,7 @@ export const HOT_QUERIES: HotQuery[] = [
         order: { year: "ASC", month: "ASC" },
       });
       return [
-        sql.replace(
-          /IN \(\$1\)/,
-          `IN (SELECT a."id"::text FROM "accounts" a WHERE a."user_id" = $1)`,
-        ),
+        sql.replace(/IN \(\$1\)/, `IN (SELECT a."id" FROM "accounts" a WHERE a."user_id" = $1)`),
         [userId, ...params.slice(1)],
       ];
     },
@@ -179,8 +176,8 @@ export const HOT_QUERIES: HotQuery[] = [
     build: (_ds, userId, accountId) => [
       `SELECT a."id" FROM "accounts" a
        WHERE a."id" = ANY($1::uuid[]) AND a."user_id" = $2 AND a."connection_id" IS NULL
-         AND NOT EXISTS (SELECT 1 FROM "account_details" d WHERE d."account_id" = a."id"::text)
-         AND NOT EXISTS (SELECT 1 FROM "transactions" t WHERE t."account_id" = a."id"::text)`,
+         AND NOT EXISTS (SELECT 1 FROM "account_details" d WHERE d."account_id" = a."id")
+         AND NOT EXISTS (SELECT 1 FROM "transactions" t WHERE t."account_id" = a."id")`,
       [[accountId], userId],
     ],
   },

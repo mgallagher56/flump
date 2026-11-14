@@ -84,6 +84,6 @@ export class Account {
   @Column({ name: "external_account_id", type: "varchar", nullable: true })
   externalAccountId: string | null;
 
-  @CreateDateColumn({ name: "created_at" })
+  @CreateDateColumn({ name: "created_at", type: "timestamptz" })
   createdAt: Date;
 }

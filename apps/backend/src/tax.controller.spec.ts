@@ -248,7 +248,27 @@ describe("TaxController annual record end date (E23 D16)", () => {
       frequency: "annual",
       date: "2025-04-05",
     });
-    expect(c.endDate).toBe("2026-04-05");
+    // 5 April is the last day of the tax year (audit M1: it used to file under the next year).
+    expect(c.endDate).toBe("2025-04-05");
+  });
+
+  it("files a record dated 1-5 April under the tax year ending that 5 April (audit M1)", async () => {
+    const controller = setup();
+    const cases: Array<[string, string]> = [
+      ["2026-04-01", "2026-04-05"],
+      ["2026-04-03", "2026-04-05"], // in 2025/26
+      ["2026-04-05", "2026-04-05"],
+      ["2026-04-06", "2027-04-05"], // first day of 2026/27
+      ["2026-03-31", "2026-04-05"],
+    ];
+    for (const [date, endDate] of cases) {
+      const r = await controller.createTaxRecord(req, { ...base, frequency: "annual", date });
+      expect(r.endDate, date).toBe(endDate);
+    }
+    const [bulk] = await controller.createBulkTaxRecords(req, {
+      records: [{ ...base, frequency: "annual", date: "2026-04-03" } as never],
+    });
+    expect(bulk?.endDate).toBe("2026-04-05");
   });
 
   it("derives an annual end date even when the client sends one, and leaves other frequencies alone", async () => {

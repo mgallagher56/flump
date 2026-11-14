@@ -27,7 +27,7 @@ export class DeleteSyncedTransactions1794355500000 implements MigrationInterface
     await queryRunner.query(
       `DELETE FROM "transactions" t
        USING "accounts" a
-       WHERE t."account_id" = a."id"::text
+       WHERE t."account_id"::text = a."id"::text
          AND a."connection_id" IS NOT NULL`,
     );
   }

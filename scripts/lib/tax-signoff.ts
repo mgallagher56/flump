@@ -118,3 +118,31 @@ export function applySignoff(
   }
   return { text, signed, skipped };
 }
+
+/** IDs of vectors with no owner sign-off (`signedOffBy: null`), sorted and de-duplicated. */
+export function unsignedVectorIds(vectors: readonly Pick<UkTaxVector, "id" | "signedOffBy">[]) {
+  return [...new Set(vectors.filter((v) => v.signedOffBy === null).map((v) => v.id))].sort();
+}
+
+export interface UnsignedRatchetResult {
+  /** Unsigned now but not in the baseline: a vector was added (or edited) without sign-off. */
+  added: string[];
+  /** In the baseline but no longer unsigned (signed off or removed): regenerate the baseline. */
+  stale: string[];
+}
+
+/**
+ * BE-08 ratchet: the set of unsigned vectors may shrink (owner signs off) but never grow. New
+ * vectors must be signed off by the owner before merge, or the baseline consciously regenerated.
+ */
+export function compareUnsignedToBaseline(
+  unsigned: readonly string[],
+  baseline: readonly string[],
+): UnsignedRatchetResult {
+  const base = new Set(baseline);
+  const now = new Set(unsigned);
+  return {
+    added: [...now].filter((id) => !base.has(id)).sort(),
+    stale: [...base].filter((id) => !now.has(id)).sort(),
+  };
+}

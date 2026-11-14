@@ -1,4 +1,9 @@
 import { randomUUID } from "node:crypto";
+import {
+  DEFAULT_TRANSACTION_PAGE,
+  MAX_TRANSACTION_OFFSET,
+  MAX_TRANSACTION_PAGE,
+} from "@flump/api-contract";
 import { BankSyncOrchestrator, isBankProviderError } from "@flump/banking/server";
 import {
   BadRequestException,
@@ -37,6 +42,23 @@ import type { CreateTransactionDto } from "./finance.controller";
 import { safeErrorSummary } from "./log-safe";
 import type { BankProvider } from "./providers/provider.interface";
 import { BankProviderRegistry } from "./providers/provider.registry";
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** An optional integer query value within [min, max]; anything else is a 400. */
+function pageNumber(
+  value: string | number | undefined,
+  name: string,
+  min: number,
+  max: number,
+): number | undefined {
+  if (value === undefined || value === "") return undefined;
+  const n = typeof value === "number" ? value : Number(value);
+  if (!Number.isInteger(n) || n < min || n > max) {
+    throw new BadRequestException(`${name} must be a whole number from ${min} to ${max}`);
+  }
+  return n;
+}
 
 @Injectable()
 export class FinanceService {
@@ -97,21 +119,39 @@ export class FinanceService {
     return this.accountIntakeService.updateBalances(userId, body);
   }
 
+  /**
+   * One transaction: ownership check, then transactions, history and the account
+   * (AccountIntakeService.deleteAccount). Another user's id is a 404 and deletes nothing.
+   */
   async deleteAccount(userId: string, id: string) {
-    // Throws NotFoundException unless the account belongs to the caller.
-    await this.accountIntakeService.getAccount(userId, id);
-    await this.transactionRepository.delete({ accountId: id });
     return this.accountIntakeService.deleteAccount(userId, id);
   }
 
-  async getTransactions(userId: string, accountId?: string) {
-    const where: any = { userId };
+  /**
+   * The caller's transactions, newest first, one bounded page at a time: `limit` defaults to
+   * DEFAULT_TRANSACTION_PAGE and never exceeds MAX_TRANSACTION_PAGE. The id breaks timestamp ties
+   * so offset pages never overlap. Re-checked here so the bounds hold with CONTRACT_MODE=off.
+   */
+  async getTransactions(
+    userId: string,
+    accountId?: string,
+    page: { limit?: string | number; offset?: string | number } = {},
+  ) {
+    const where: { userId: string; accountId?: string } = { userId };
     if (accountId) {
+      // account_id is a uuid column: no account has a malformed id, so there is nothing to list
+      // (and casting it would be a database error).
+      if (!UUID.test(accountId)) return [];
       where.accountId = accountId;
     }
+    const take =
+      pageNumber(page.limit, "limit", 1, MAX_TRANSACTION_PAGE) ?? DEFAULT_TRANSACTION_PAGE;
+    const skip = pageNumber(page.offset, "offset", 0, MAX_TRANSACTION_OFFSET) ?? 0;
     return this.transactionRepository.find({
       where,
-      order: { timestamp: "DESC" },
+      order: { timestamp: "DESC", id: "DESC" },
+      take,
+      skip,
     });
   }
 

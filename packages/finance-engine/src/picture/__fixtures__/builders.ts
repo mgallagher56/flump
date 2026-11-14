@@ -1,5 +1,5 @@
 import type { BudgetEntryItem } from "../../ai-context-pack.js";
-import type { TaxRecord } from "../../tax-calculator.js";
+import { getAnnualRecordEndDate, type TaxRecord } from "../../tax-calculator.js";
 
 const USER_ID = "persona-user";
 
@@ -13,11 +13,7 @@ type TaxRecordSeed = Pick<
 export function taxRecord(seed: TaxRecordSeed): TaxRecord {
   const frequency = seed.frequency ?? "monthly";
   let endDate = seed.endDate ?? null;
-  if (frequency === "annual" && endDate === null) {
-    const year = Number(seed.date.slice(0, 4));
-    const month = Number(seed.date.slice(5, 7));
-    endDate = `${month >= 4 ? year + 1 : year}-04-05`;
-  }
+  if (frequency === "annual" && endDate === null) endDate = getAnnualRecordEndDate(seed.date);
   return {
     ...seed,
     userId: USER_ID,

@@ -545,16 +545,15 @@ describe("TaxContainer & Calculation Tools", () => {
     }
   });
 
-  it("files a record dated 1 April (old web default) under the year starting that April", () => {
-    // Month bucketing: 2024-04 is a 2024/25 month, so the record is listed in 2024/25
-    // (not 2023/24, which the 6 April date boundary would give), matching the totals.
+  it("files a record dated 1 April under the tax year ending that 5 April", () => {
+    // The UK tax year starts on 6 April, so a record dated 1 April 2024 belongs to 2023/24.
     mockLoaderRecords = [{ ...mockRecords[0], id: "rec-apr1", date: "2024-04-01" }];
     const { unmount } = render(<TaxContainer />);
 
-    expect(screen.getByRole("button", { name: "2024/25" })).toBeDefined();
-    expect(screen.queryByRole("button", { name: "2023/24" })).toBeNull();
+    expect(screen.getByRole("button", { name: "2023/24" })).toBeDefined();
+    expect(screen.queryByRole("button", { name: "2024/25" })).toBeNull();
 
-    fireEvent.click(screen.getByRole("button", { name: "2024/25" }));
+    fireEvent.click(screen.getByRole("button", { name: "2023/24" }));
     openTab("All records");
     expect(screen.getByText("Flat rent (2024/25)")).toBeDefined();
 

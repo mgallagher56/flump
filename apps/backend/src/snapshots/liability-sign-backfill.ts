@@ -33,6 +33,8 @@ interface SqlRunner {
 }
 
 /** Read-only: what the backfill would change. Shared by the migration log and the dry run. */
+// Both sides compare as text so the plan reads the same before and after
+// AccountIdForeignKeys1794358200000 turns account_details.account_id into a uuid.
 export async function planLiabilitySignBackfill(runner: SqlRunner): Promise<LiabilitySignPlan> {
   const accounts: Array<{ type: string; rows: number }> = await runner.query(
     `SELECT "type", count(*)::int AS "rows" FROM "accounts"
@@ -41,7 +43,7 @@ export async function planLiabilitySignBackfill(runner: SqlRunner): Promise<Liab
   );
   const accountDetails: Array<{ type: string; rows: number }> = await runner.query(
     `SELECT a."type", count(*)::int AS "rows"
-     FROM "account_details" d JOIN "accounts" a ON a."id"::text = d."account_id"
+     FROM "account_details" d JOIN "accounts" a ON a."id"::text = d."account_id"::text
      WHERE a."type" IN (${TYPES_SQL}) AND d."value" > 0
      GROUP BY a."type" ORDER BY a."type"`,
   );
@@ -50,7 +52,7 @@ export async function planLiabilitySignBackfill(runner: SqlRunner): Promise<Liab
      FROM "accounts" a
      WHERE a."type" IN (${TYPES_SQL})
        AND (a."balance" > 0 OR EXISTS (
-         SELECT 1 FROM "account_details" d WHERE d."account_id" = a."id"::text AND d."value" > 0))`,
+         SELECT 1 FROM "account_details" d WHERE d."account_id"::text = a."id"::text AND d."value" > 0))`,
   );
   return { accounts, accountDetails, users: owners?.users ?? 0 };
 }

@@ -73,7 +73,7 @@ export class LiabilitySignRule1794358050000 implements MigrationInterface {
       `WITH changed AS (
          UPDATE "account_details" d SET "value" = -d."value"
          FROM "accounts" a
-         WHERE a."id"::text = d."account_id" AND a."type" IN (${TYPES_SQL}) AND d."value" > 0
+         WHERE a."id"::text = d."account_id"::text AND a."type" IN (${TYPES_SQL}) AND d."value" > 0
          RETURNING d."id", a."id" AS "account_id", d."value"
        )
        INSERT INTO "${BEFORE_IMAGE_TABLE}" ("account_id", "table_name", "row_id", "old_value", "new_value")

@@ -58,6 +58,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
   "liability sign rule (real Postgres)",
   () => {
     let ds: DataSource;
+    let options: DataSourceOptions;
     let migrations: MigrationClass[] = [];
 
     beforeAll(async () => {
@@ -66,7 +67,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
 
     beforeEach(async () => {
       assertSafeTestDatabase(TEST_DATABASE_URL as string, process.env);
-      const options = typeOrmOptionsFromEnv({
+      options = typeOrmOptionsFromEnv({
         NODE_ENV: "test",
         DATABASE_URL: TEST_DATABASE_URL,
       }) as DataSourceOptions;
@@ -90,6 +91,26 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
     const migrateToBeforeRule = async (): Promise<void> => {
       await ds.runMigrations();
       while ((await applied()).includes(MIGRATION_NAME)) await ds.undoLastMigration();
+    };
+
+    /**
+     * Pending migrations up to and including BE-05 only, so a test can look at what the backfill
+     * left before AccountIdForeignKeys1794358200000 deletes orphan history (such as "legacy-1").
+     */
+    const runMigrationsThroughRule = async (): Promise<void> => {
+      const stamp = (m: MigrationClass) => Number(m.name.match(/(\d{13})$/)?.[1] ?? 0);
+      const upTo = new DataSource({
+        ...options,
+        migrations: migrations.filter((m) => stamp(m) <= 1794358050000),
+        synchronize: false,
+        migrationsRun: false,
+      });
+      await upTo.initialize();
+      try {
+        await upTo.runMigrations();
+      } finally {
+        await upTo.destroy();
+      }
     };
 
     const inTransaction = async (work: (qr: QueryRunner) => Promise<void>): Promise<void> => {
@@ -146,7 +167,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
       const [{ n }] = await ds.query(
         `SELECT (
          (SELECT count(*) FROM accounts WHERE type = ANY($1) AND balance > 0) +
-         (SELECT count(*) FROM account_details d JOIN accounts a ON a.id::text = d.account_id
+         (SELECT count(*) FROM account_details d JOIN accounts a ON a.id::text = d.account_id::text
           WHERE a.type = ANY($1) AND d.value > 0)
        )::int AS n`,
         [[...STORED_NEGATIVE_ACCOUNT_TYPES]],
@@ -205,7 +226,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
           users: 2,
         });
 
-        await ds.runMigrations();
+        await runMigrationsThroughRule();
 
         expect(await balanceOf(ids.card)).toBe(-500);
         expect(await balanceOf(ids.mortgage)).toBe(-200000);
@@ -239,7 +260,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
           accountDetails: [],
           users: 0,
         });
-      });
+      }, 30_000);
 
       it("is idempotent: running it again changes nothing and adds no before-image rows", async () => {
         await migrateToBeforeRule();
@@ -456,7 +477,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
 
         const rows: Array<{ type: string; balance: string; values: string[] }> = await ds.query(
           `SELECT a.type, a.balance, array_agg(d.value ORDER BY d.year, d.month) AS values
-         FROM accounts a JOIN account_details d ON d.account_id = a.id::text
+         FROM accounts a JOIN account_details d ON d.account_id::text = a.id::text
          WHERE a.user_id = $1 GROUP BY a.id, a.type, a.balance`,
           [USER],
         );
@@ -536,10 +557,12 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
     });
 
     it("import revert restores a prior value recorded before the backfill with the rule applied", async () => {
-      await migrateToBeforeRule();
-      // Before BE-05: a card created with the old wrong sign, with a manual October value.
-      const card = await insertAccount("Credit Card", 700);
-      await insertDetail(card, 10, 700);
+      // The import service needs the uuid account_id of AccountIdForeignKeys1794358200000, so the
+      // batch is committed on the current schema and its recorded prior is then set to what a
+      // commit before BE-05 recorded: the card's old positive October value.
+      await ds.runMigrations();
+      const card = await insertAccount("Credit Card", -700);
+      await insertDetail(card, 10, -700);
       const svc = new ImportsService(ds);
       const staged = await svc.stage(
         USER,
@@ -557,8 +580,18 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
         NOW,
       );
       expect(await historyOf(card)).toEqual([-720]);
+      await ds.query(
+        `UPDATE import_batches
+         SET revert_data = jsonb_set(revert_data, '{rows,0,prior,value}', '700'::jsonb)
+         WHERE id = $1`,
+        [staged.batchId],
+      );
+      const [{ prior }] = await ds.query(
+        "SELECT (revert_data #>> '{rows,0,prior,value}')::float AS prior FROM import_batches WHERE id = $1",
+        [staged.batchId],
+      );
+      expect(prior).toBe(700);
 
-      await ds.runMigrations();
       await svc.revert(USER, staged.batchId);
 
       expect(await historyOf(card)).toEqual([-700]);

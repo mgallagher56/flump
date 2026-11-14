@@ -1,3 +1,8 @@
+import {
+  AddBudgetCategoryRequest,
+  MAX_BUDGET_CATEGORY_NAME_LENGTH,
+  MAX_CUSTOM_BUDGET_CATEGORIES,
+} from "@flump/api-contract";
 import { BadRequestException, NotFoundException } from "@nestjs/common";
 import { describe, expect, it, vi } from "vitest";
 import { BudgetController } from "./budget.controller";
@@ -91,6 +96,36 @@ describe("BudgetController", () => {
 
     expect(result.success).toBe(true);
     expect(result.categories).toEqual(["holidays"]);
+  });
+
+  it("caps custom categories at the contract's limit (audit L2)", async () => {
+    const full = Array.from({ length: MAX_CUSTOM_BUDGET_CATEGORIES }, (_, i) => `cat ${i}`);
+    const mockProfileRepo = {
+      findOne: vi.fn().mockResolvedValue({ userId: "u1", customBudgetCategories: [...full] }),
+      create: vi.fn((p) => ({ ...p })),
+      save: vi.fn((p) => Promise.resolve(p)),
+    };
+    const controller = new BudgetController({} as any, mockProfileRepo as any);
+    const req = { user: { id: "u1" } };
+
+    await expect(controller.addCustomCategory(req, { category: "One more" })).rejects.toThrow(
+      BadRequestException,
+    );
+    // Re-adding an existing category at the cap is still a no-op success.
+    const again = await controller.addCustomCategory(req, { category: "CAT 0" });
+    expect(again.categories).toHaveLength(MAX_CUSTOM_BUDGET_CATEGORIES);
+    expect(mockProfileRepo.save).not.toHaveBeenCalled();
+    // A name over the length limit is refused even with the contract off.
+    await expect(
+      controller.addCustomCategory(req, {
+        category: "x".repeat(MAX_BUDGET_CATEGORY_NAME_LENGTH + 1),
+      }),
+    ).rejects.toThrow(BadRequestException);
+    expect(
+      AddBudgetCategoryRequest.safeParse({
+        category: "x".repeat(MAX_BUDGET_CATEGORY_NAME_LENGTH + 1),
+      }).success,
+    ).toBe(false);
   });
 
   it("creates, updates and deletes budget entries", async () => {

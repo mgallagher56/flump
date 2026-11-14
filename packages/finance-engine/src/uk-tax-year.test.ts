@@ -90,13 +90,14 @@ describe("month bucketing versus the 6 April date boundary (documented granulari
     expect(months).toHaveLength(12);
   });
 
-  it("a record dated 1-5 April is filed under the previous year by date but lands in April of the new year by month", () => {
+  it("a record dated 1-5 April is bucketed into March, the last month of the year it is filed under", () => {
     expect(getTaxYearForDate("2024-04-05")).toBe("2023/24");
     expect(getTaxYearForDate("2024-04-06")).toBe("2024/25");
-    // Month granularity: both fall in the 2024-04 bucket, which belongs to 2024/25.
-    expect(getRecordValueForMonth(rec("2024-04-05"), "2024-04")).toBe(100);
+    // BE-08 M1: 1-5 April belongs to the earlier year, so it lands in that year's last bucket.
+    expect(getRecordValueForMonth(rec("2024-04-05"), "2024-03")).toBe(100);
+    expect(getRecordValueForMonth(rec("2024-04-05"), "2024-04")).toBe(0);
     expect(getRecordValueForMonth(rec("2024-04-06"), "2024-04")).toBe(100);
-    expect(getMonthsForTaxYear("2023/24")).not.toContain("2024-04");
+    expect(getMonthsForTaxYear("2023/24")).toContain("2024-03");
   });
 });
 

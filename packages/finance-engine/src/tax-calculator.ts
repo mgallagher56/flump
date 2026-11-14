@@ -172,26 +172,23 @@ export function getTaxYearForDate(dateStr: string): string {
 
 /**
  * Tax year ("YYYY/YY") a RECORD filed on `dateStr` belongs to, for listing and copying.
- * Records are bucketed by whole calendar month (getMonthsForTaxYear /
- * getRecordValueForMonth), so the month alone decides: April to December start the tax
- * year of that calendar year, January to March end the one that started the year before.
- * A record dated 1-5 April therefore belongs to the year starting that April, unlike
- * getTaxYearForDate (6 April boundary, for real calendar dates). Use this, not
- * getTaxYearForDate, wherever a record is filed under a year. Existing persisted records
- * dated 1-5 April (the old web default was -04-01) are re-filed by this rule; no data
- * migration is included (sign-off sheet, known issue (f)).
+ * Same 6 April boundary as getTaxYearForDate (built on getUkTaxYearForDate): a record dated
+ * 1-5 April belongs to the year that ends on 5 April (BE-08 M1). getRecordValueForMonth
+ * buckets such a record into March so listing, copying and totals agree.
  */
 export function getTaxYearForRecordDate(dateStr: string): string {
-  const normalised = /^\d{4}-\d{2}/.test(dateStr)
-    ? dateStr
-    : (() => {
-        const d = new Date(dateStr);
-        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-      })();
-  const year = Number.parseInt(normalised.substring(0, 4), 10);
-  const month = Number.parseInt(normalised.substring(5, 7), 10);
-  const startYear = month >= 4 ? year : year - 1;
-  return `${startYear}/${String(startYear + 1).slice(-2)}`;
+  return getTaxYearForDate(dateStr);
+}
+
+/**
+ * Calendar month bucket ("YYYY-MM") for a record date. Records are bucketed by calendar month
+ * (getMonthsForTaxYear), except 1-5 April, which belongs to the tax year ending on 5 April and
+ * so is bucketed into that year's last month, March.
+ */
+export function getRecordBucketMonth(dateStr: string): string {
+  const month = dateStr.substring(0, 7);
+  const match = /^(\d{4})-04-0([1-5])/.exec(dateStr);
+  return match ? `${match[1]}-03` : month;
 }
 
 /**
@@ -221,11 +218,9 @@ export function getNextTaxYear(taxYear: string): string {
   return `${nextStart}/${(nextStart + 1).toString().slice(-2)}`;
 }
 
-// Generate the 12 calendar months YYYY-MM for a tax year YYYY/YY.
-// Known granularity limit: record values are bucketed by WHOLE calendar month,
-// so April belongs entirely to the new tax year. getTaxYearForRecordDate applies the
-// same rule to a record's date (1-5 April belongs to the year starting that April), so
-// listing, copying and totals agree. See sign-off sheet known issue (f).
+// Generate the 12 calendar months YYYY-MM for a tax year YYYY/YY. Record values are bucketed
+// by calendar month; a record dated 1-5 April is bucketed into March (getRecordBucketMonth),
+// so it counts in the year getTaxYearForRecordDate files it under.
 export function getMonthsForTaxYear(taxYear: string): string[] {
   const parts = taxYear.split("/");
   const startYear = Number.parseInt(parts[0] || "0", 10);
@@ -247,7 +242,7 @@ export function getRecordValueForMonth(record: TaxRecord, monthYYYYMM: string): 
   const amount =
     typeof record.amount === "string" ? Number.parseFloat(record.amount) : record.amount;
   if (!amount || Number.isNaN(amount)) return 0;
-  const recordMonth = record.date.substring(0, 7);
+  const recordMonth = getRecordBucketMonth(record.date);
 
   if (record.frequency === "one-off") {
     return recordMonth === monthYYYYMM ? amount : 0;
@@ -255,7 +250,7 @@ export function getRecordValueForMonth(record: TaxRecord, monthYYYYMM: string): 
 
   if (record.frequency === "monthly") {
     if (recordMonth <= monthYYYYMM) {
-      if (!record.endDate || record.endDate.substring(0, 7) >= monthYYYYMM) {
+      if (!record.endDate || getRecordBucketMonth(record.endDate) >= monthYYYYMM) {
         return amount;
       }
     }
