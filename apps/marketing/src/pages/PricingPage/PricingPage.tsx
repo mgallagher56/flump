@@ -28,7 +28,7 @@ import {
  * The intro. "Free during the beta" is said once, in the plan card (R2-10); the home FAQ says the
  * same in its own words.
  */
-export const BETA_STATEMENT = "One plan today.";
+export const BETA_STATEMENT = "One plan you can use today.";
 
 /** What the beta includes: three things that exist today (E7, copy guide 7.4). */
 export const BETA_FEATURES = [

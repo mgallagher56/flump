@@ -27,7 +27,7 @@ export const notFoundCard = cva({
     flexDirection: "column",
     alignItems: "flex-start",
     gap: "3",
-    maxWidth: "560px",
+    maxWidth: "xl",
     width: "100%",
     mx: "auto",
     p: { base: "5", md: "7" },

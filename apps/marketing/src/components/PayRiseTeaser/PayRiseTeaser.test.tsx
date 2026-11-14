@@ -69,7 +69,7 @@ describe("PayRiseTeaser", () => {
     });
     expect(screen.getByText("£720 a year")).toBeDefined();
 
-    fireEvent.change(screen.getByLabelText("Current salary (before tax)"), {
+    fireEvent.change(screen.getByLabelText("Salary before tax"), {
       target: { value: "99500" },
     });
     expect(screen.getByTestId("pay-rise-taper-note").textContent).toMatch(
@@ -83,7 +83,7 @@ describe("PayRiseTeaser", () => {
     expect(notice.textContent?.startsWith(DELTA_PANEL_COPY.unverifiedBanner)).toBe(true);
     // The assumptions are always visible, with the tax year in words.
     expect(screen.getByTestId("pay-rise-assumptions").textContent).toMatch(
-      /^Uses the \d{4} to \d{4} tax year and the bands for England, Wales and Northern Ireland/,
+      /^Uses \d{4} to \d{4} rates outside Scotland, with no pension or student loan\.$/,
     );
     expect(screen.queryByRole("button", { name: "More" })).toBeNull();
     expect(taxYearInWords("2026/27")).toBe("2026 to 2027");

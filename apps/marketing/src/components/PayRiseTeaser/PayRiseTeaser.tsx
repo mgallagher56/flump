@@ -108,7 +108,7 @@ export const PayRiseTeaser: FC = () => {
           <div className={teaserControls()}>
             <SliderField
               format="currency"
-              label="Current salary (before tax)"
+              label="Salary before tax"
               max={150_000}
               min={12_000}
               step={500}
@@ -171,8 +171,8 @@ export const PayRiseTeaser: FC = () => {
             <>
               {DELTA_PANEL_COPY.unverifiedBanner}{" "}
               <span data-testid="pay-rise-assumptions">
-                Uses the {taxYearInWords(result.taxYear)} tax year and the bands for England, Wales
-                and Northern Ireland, with no pension contribution or student loan.
+                Uses {taxYearInWords(result.taxYear)} rates outside Scotland, with no pension or
+                student loan.
               </span>
             </>
           }

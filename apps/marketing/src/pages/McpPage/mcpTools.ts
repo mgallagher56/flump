@@ -64,7 +64,7 @@ export const MCP_TOOLS: readonly McpToolEntry[] = [
     name: "compare_mortgage_overpay_vs_invest",
     kind: "calculate",
     description:
-      "Sets the interest saved by overpaying your recorded mortgage beside the growth on the same amount invested at a rate you choose. It states both and does not choose between them. This tool is due to be removed.",
+      "Sets the interest saved by overpaying your recorded mortgage beside the growth on the same amount invested at a rate you choose. It states both and does not choose between them.",
   },
   {
     name: "simulate_debt_payoff",

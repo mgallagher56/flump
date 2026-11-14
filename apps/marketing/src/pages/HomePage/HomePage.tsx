@@ -91,7 +91,7 @@ export const HomePage: FC = () => {
             <h3 className={finalCtaTitle()} id="home-cta-title">
               Ready to see where you stand?
             </h3>
-            <p className={finalCtaBody()}>Start with a few rough numbers. No bank login needed.</p>
+            <p className={finalCtaBody()}>Start with a few rough numbers.</p>
             <Button asChild size="lg" variant="primary">
               <a href={cta.href}>{cta.label}</a>
             </Button>
