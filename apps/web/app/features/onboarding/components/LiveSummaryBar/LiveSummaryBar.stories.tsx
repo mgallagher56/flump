@@ -34,3 +34,22 @@ export const WithFigures: Story = {
     await expect(canvasElement.textContent).toContain("/mo");
   },
 };
+
+/** Pension and student loan answered: the bar says what the take-home now includes. */
+export const WithDeductionsNote: Story = {
+  args: {
+    assumingRegion: false,
+    summary: deriveOnboardingSummary({
+      ...INITIAL_VALUES,
+      grossSalary: 45000,
+      taxRegion: "ENGLAND",
+      studentLoanPlan: "PLAN_2",
+      pensionPercent: 5,
+    }),
+  },
+  play: async ({ canvasElement }) => {
+    await expect(canvasElement.textContent).toContain(
+      "Now includes your 5% pension and student loan",
+    );
+  },
+};

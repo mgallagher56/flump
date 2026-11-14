@@ -1,5 +1,34 @@
-import { calculateUkTax, type UkStudentLoanPlan } from "@flump/finance-engine";
+import { isFigureKnown, type ProfileFacts, selectTakeHome } from "@flump/finance-engine";
 import type { OnboardingValues } from "./types";
+
+const percentFormat = new Intl.NumberFormat("en-GB", { maximumFractionDigits: 2 });
+
+/**
+ * The facts onboarding has so far, as the engine reads a saved profile. Unanswered pension and
+ * salary sacrifice count as none (0% and net pay) for the live figure only; region stays null so
+ * the engine names its assumption.
+ */
+export function onboardingTakeHomeFacts(values: OnboardingValues): ProfileFacts {
+  const salary = values.grossSalary ?? 0;
+  return {
+    annualSalary: salary > 0 ? salary : null,
+    employmentType: values.employmentType,
+    taxRegion: values.taxRegion,
+    studentLoanPlans: values.studentLoanPlan === "NONE" ? [] : [values.studentLoanPlan],
+    pensionPercent: values.pensionPercent ?? 0,
+    isSalarySacrifice: values.isSalarySacrifice ?? false,
+  };
+}
+
+/** One sentence naming the deductions the take-home includes, or null when there are none. */
+export function takeHomeIncludesNote(values: OnboardingValues): string | null {
+  const pension = (values.pensionPercent ?? 0) > 0;
+  const loan = values.studentLoanPlan !== "NONE";
+  if (!pension && !loan) return null;
+  const pensionPart = `your ${percentFormat.format(values.pensionPercent ?? 0)}% pension`;
+  if (pension && loan) return `Now includes ${pensionPart} and student loan`;
+  return pension ? `Now includes ${pensionPart}` : "Now includes your student loan";
+}
 
 export interface OnboardingSummary {
   hasIncome: boolean;
@@ -10,6 +39,11 @@ export interface OnboardingSummary {
   missingRegion: boolean;
   monthlyTakeHome: number;
   annualTakeHome: number;
+  /**
+   * Why the take-home moved as answers came in ("Now includes your 5% pension and student
+   * loan"), or null when no pension or student loan is in it, or in net mode.
+   */
+  takeHomeNote: string | null;
   monthlyHousing: number;
   otherOutgoings: number;
   monthlySurplus: number;
@@ -34,21 +68,21 @@ export function deriveOnboardingSummary(values: OnboardingValues): OnboardingSum
         : "Enter your income"
       : "Choose where you pay tax";
 
-  let monthlyTakeHome: number;
-  let annualTakeHome: number;
+  // Gross mode uses the engine's one take-home selector, the same one the dashboard, budget and
+  // take-home pages read, so the figure here is the figure the user sees after finishing.
+  let monthlyTakeHome = 0;
+  let annualTakeHome = 0;
+  let takeHomeNote: string | null = null;
   if (values.incomeMode === "net") {
     monthlyTakeHome = takeHomeNet;
     annualTakeHome = takeHomeNet * 12;
   } else {
-    const tax = calculateUkTax({
-      grossSalary: salary,
-      pensionContributionPct: values.pensionPercent ?? 0,
-      isSalarySacrifice: values.isSalarySacrifice ?? false,
-      studentLoanPlan: values.studentLoanPlan as UkStudentLoanPlan,
-      region: values.taxRegion === "SCOTLAND" ? "SCOTLAND" : "ENGLAND_NI_WALES",
-    });
-    monthlyTakeHome = Math.round(tax.netTakeHomePayMonthlyGbp);
-    annualTakeHome = Math.round(tax.netTakeHomePayAnnualGbp);
+    const takeHome = selectTakeHome(onboardingTakeHomeFacts(values));
+    if (isFigureKnown(takeHome)) {
+      monthlyTakeHome = takeHome.value.monthly;
+      annualTakeHome = takeHome.value.annual;
+      takeHomeNote = takeHomeIncludesNote(values);
+    }
   }
 
   const monthlyHousing =
@@ -69,6 +103,7 @@ export function deriveOnboardingSummary(values: OnboardingValues): OnboardingSum
     missingRegion,
     monthlyTakeHome,
     annualTakeHome,
+    takeHomeNote,
     monthlyHousing,
     otherOutgoings,
     monthlySurplus: monthlyTakeHome - monthlyHousing - otherOutgoings,

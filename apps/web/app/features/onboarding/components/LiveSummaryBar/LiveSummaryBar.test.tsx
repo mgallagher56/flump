@@ -33,6 +33,33 @@ describe("<LiveSummaryBar />", () => {
     expect(screen.getByTestId("onboarding-take-home-assumption")).toBeDefined();
   });
 
+  it("says in one sentence why the take-home includes pension and student loan", () => {
+    render(
+      <LiveSummaryBar
+        assumingRegion={false}
+        summary={summaryFor({
+          grossSalary: 45000,
+          taxRegion: "ENGLAND",
+          studentLoanPlan: "PLAN_2",
+          pensionPercent: 5,
+        })}
+      />,
+    );
+    expect(screen.getByTestId("onboarding-take-home-note").textContent).toBe(
+      "Now includes your 5% pension and student loan",
+    );
+  });
+
+  it("shows no note when nothing is deducted beyond tax and NI", () => {
+    render(
+      <LiveSummaryBar
+        assumingRegion={false}
+        summary={summaryFor({ grossSalary: 45000, taxRegion: "ENGLAND" })}
+      />,
+    );
+    expect(screen.queryByTestId("onboarding-take-home-note")).toBeNull();
+  });
+
   it("states a negative surplus with a minus sign", () => {
     render(
       <LiveSummaryBar
