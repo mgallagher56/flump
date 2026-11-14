@@ -16,6 +16,8 @@ vi.mock("react-router", () => ({
   ),
 }));
 vi.mock("../UserAvatar", () => ({ default: () => <span>avatar</span> }));
+const hydration = vi.hoisted(() => ({ hydrated: true }));
+vi.mock("~/hooks/useHydrated", () => ({ useHydrated: () => hydration.hydrated }));
 
 const open = () => fireEvent.click(screen.getByTestId("avatar-menu-trigger"));
 
@@ -81,5 +83,15 @@ describe("<AvatarMenu />", () => {
     fireEvent.keyDown(screen.getByRole("menu"), { key: "Tab" });
     expect(screen.queryByRole("menu")).toBeNull();
     expect(document.activeElement).toBe(screen.getByTestId("avatar-menu-trigger"));
+  });
+
+  it("is visibly inert before hydration, so an early click is not silently lost", () => {
+    hydration.hydrated = false;
+    customRender(<AvatarMenu user={{ id: "1" }} />);
+    const trigger = screen.getByTestId("avatar-menu-trigger");
+    expect(trigger.getAttribute("aria-disabled")).toBe("true");
+    fireEvent.click(trigger);
+    expect(screen.queryByRole("menu")).toBeNull();
+    hydration.hydrated = true;
   });
 });

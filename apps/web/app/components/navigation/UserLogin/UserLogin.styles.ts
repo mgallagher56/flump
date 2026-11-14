@@ -13,13 +13,13 @@ export const userLoginButton = cva({
 });
 
 /**
- * "Sign up" from `sm` up only: on a phone the top bar holds the menu button, logo, theme switch and
- * "Sign in", and the drawer the menu button opens offers "Sign up".
+ * "Sign up" from the shared nav breakpoint only: on a phone the top bar holds the menu button, logo,
+ * theme switch and "Sign in", and the drawer the menu button opens offers "Sign up".
  */
 export const userLoginSignUp = cva({
   base: {
-    display: { base: "none", sm: "inline-flex" },
-    px: { base: "2.5", sm: "4" },
+    display: { base: "none", _navInline: "inline-flex" },
+    px: { base: "2.5", _navInline: "4" },
     whiteSpace: "nowrap",
   },
 });

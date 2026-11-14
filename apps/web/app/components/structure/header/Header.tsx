@@ -1,5 +1,4 @@
 import { HomeLogo, ThemeToggle, TopBar } from "@repo/ui";
-import { css } from "@repo/ui/styled-system/css";
 import { type FC, type ReactElement, useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useLocation, useRouteLoaderData } from "react-router";
@@ -15,11 +14,8 @@ import type { loader } from "~/root";
 import { useThemeContext } from "~/ThemeContext";
 import { isPageEnabled } from "~/utils/pageConfig";
 
+import { compactOnly, wideOnly } from "./Header.styles";
 import MobileNavDrawer from "./MobileNavDrawer";
-
-// The theme switch swaps at the shared navWide condition, never a raw breakpoint.
-const compactOnly = css({ _navWide: { display: "none" } });
-const wideOnly = css({ display: "none", _navWide: { display: "flex" } });
 
 export interface HeaderProps {
   isMobile?: boolean;
@@ -76,13 +72,13 @@ const Header: FC<HeaderProps> = ({ isMobile: propIsMobile, variant }): ReactElem
           <>
             {/* Phones and tablets: one 44px button. From navWide the three-way switch shows. */}
             <ThemeToggle
-              className={compactOnly}
+              className={compactOnly()}
               id="theme-toggle-compact"
               onChange={setPreference}
               preference={preference}
               variant="cycle"
             />
-            <div className={wideOnly}>
+            <div className={wideOnly()}>
               <ThemeToggle onChange={setPreference} preference={preference} />
             </div>
             {!!user && <AvatarMenu user={user} />}
