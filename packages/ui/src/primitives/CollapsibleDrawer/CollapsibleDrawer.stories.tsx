@@ -107,3 +107,24 @@ export const LongSchedule: Story = {
 export const SingleItem: Story = {
   args: { itemCount: 1, itemNoun: { one: "year", other: "years" } },
 };
+
+/** Quiet: a text button for secondary detail under a chart or figure ("Show data"). */
+export const Quiet: Story = {
+  args: { variant: "quiet", title: "Show data", subtitle: undefined, itemCount: undefined },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const trigger = canvas.getByRole("button", { name: "Show data" });
+    await expect(trigger).toHaveAttribute("aria-expanded", "false");
+    await expect(canvas.queryByRole("table")).toBeNull();
+    await userEvent.click(trigger);
+    await expect(trigger).toHaveAttribute("aria-expanded", "true");
+    await expect(canvas.getByRole("table")).toBeInTheDocument();
+    // The name does not change while open; aria-expanded carries the state.
+    await expect(canvas.getByRole("button", { name: "Show data" })).toBe(trigger);
+  },
+};
+
+export const QuietOpenDark: Story = {
+  args: { variant: "quiet", title: "Show details", subtitle: undefined, defaultOpen: true },
+  globals: { theme: "dark" },
+};

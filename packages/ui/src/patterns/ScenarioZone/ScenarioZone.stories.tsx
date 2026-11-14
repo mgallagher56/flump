@@ -2,8 +2,8 @@ import type { Meta, StoryObj } from "@storybook/react";
 import { expect, userEvent, waitFor, within } from "@storybook/test";
 import { useState } from "react";
 import { css } from "../../../styled-system/css";
-import { SegmentedTabs } from "../../primitives/SegmentedTabs";
 import { SliderField } from "../../primitives/SliderField";
+import { Tabs } from "../../primitives/Tabs";
 import { SCENARIO_RESET_LABEL, ScenarioZone } from "./ScenarioZone";
 
 const meta: Meta<typeof ScenarioZone> = {
@@ -63,7 +63,17 @@ export const Default: Story = {
     const canvas = within(canvasElement);
     await expect(canvas.getByRole("region", { name: "Model a change" })).toBeInTheDocument();
     await expect(canvas.getByText("Illustration, not saved")).toBeInTheDocument();
-    await expect(canvas.getByRole("button", { name: SCENARIO_RESET_LABEL })).toBeDisabled();
+    const reset = canvas.getByRole("button", { name: SCENARIO_RESET_LABEL });
+    await expect(reset).toBeDisabled();
+    // The footer holds Reset, "Update your details" and the page's single notice.
+    const footer = canvas.getByTestId("scenario-zone-footer");
+    await expect(footer).toContainElement(reset);
+    await expect(footer).toContainElement(
+      canvas.getByRole("link", { name: "Update your details" }),
+    );
+    await expect(footer).toContainElement(
+      canvas.getByRole("note", { name: "Guidance, not advice" }),
+    );
   },
 };
 
@@ -152,8 +162,9 @@ const WithTabs = () => {
       isModified
       onReset={() => setTool("overpayment")}
       tools={
-        <SegmentedTabs
+        <Tabs
           aria-label="Scenario tools"
+          size="sm"
           items={[
             { value: "overpayment", label: "Overpayment" },
             { value: "rate-change", label: "Rate change" },
@@ -183,6 +194,8 @@ export const WithToolTabs: Story = {
     );
   },
 };
+
+export const WithToolTabsDark: Story = { ...WithToolTabs, globals: { theme: "dark" } };
 
 export const LongContent: Story = {
   args: {

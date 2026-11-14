@@ -93,6 +93,7 @@ describe("Architecture & Design System Laws", () => {
         "DirectionCSignoff",
         "Elevation",
         "Motion",
+        "PageRules", // E16 PR 2
         "SpacingAndRadii",
         "TypographyScale",
       ]) {
@@ -103,11 +104,11 @@ describe("Architecture & Design System Laws", () => {
       }
     });
 
-    it("keeps hooks/ and charts/ as component-free utility directories", () => {
+    it("keeps hooks/, charts/ and testing/ as component-free utility directories", () => {
       // These hold plain TS (hooks, framework-free helpers), so the 5-file component law does not
       // apply. They must not grow components: any non-test .tsx or .styles.ts belongs in a
       // registered component directory instead.
-      for (const dir of ["hooks", "charts"]) {
+      for (const dir of ["hooks", "charts", "testing"]) {
         const files = fs.readdirSync(path.join(UI_SRC, dir));
         expect(files.length).toBeGreaterThan(0);
         const offenders = files.filter(
@@ -135,6 +136,7 @@ describe("Architecture & Design System Laws", () => {
         "FlumpLogo",
         "FormField",
         "Heading",
+        "IconTile",
         "Illustration",
         "InfoTip",
         "InlineAlert",
@@ -145,6 +147,7 @@ describe("Architecture & Design System Laws", () => {
         "RadioCardGroup",
         "Select",
         "Switch",
+        "Tabs",
         "Text",
         "Sheet",
         "Skeleton",
@@ -165,6 +168,7 @@ describe("Architecture & Design System Laws", () => {
         "CoachCard",
         "ConfirmDialog",
         "EmptyState",
+        "HeroFigure",
         "KpiStrip",
         "ScenarioZone",
       ]) {

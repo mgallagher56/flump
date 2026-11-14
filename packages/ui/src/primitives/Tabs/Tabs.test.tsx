@@ -1,19 +1,19 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { SegmentedTabs } from "./SegmentedTabs";
+import { SegmentedTabs, Tabs } from "./Tabs";
 
-describe("SegmentedTabs Primitive", () => {
+describe("Tabs Primitive", () => {
   const items = [
-    { value: "avalanche", label: "Avalanche (Highest APR)" },
-    { value: "snowball", label: "Snowball (Lowest Balance)" },
-    { value: "minimum", label: "Minimum Only" },
+    { value: "avalanche", label: "Avalanche" },
+    { value: "snowball", label: "Snowball" },
+    { value: "minimum", label: "Minimum only" },
   ];
 
   it("renders tab triggers and handles selection", () => {
     const handleSelect = vi.fn();
-    render(<SegmentedTabs items={items} value="avalanche" onValueChange={handleSelect} />);
+    render(<Tabs items={items} value="avalanche" onValueChange={handleSelect} />);
 
-    const snowballBtn = screen.getByRole("tab", { name: "Snowball (Lowest Balance)" });
+    const snowballBtn = screen.getByRole("tab", { name: "Snowball" });
     expect(snowballBtn).toBeDefined();
     fireEvent.keyDown(snowballBtn, { key: "Enter", code: "Enter" });
     expect(handleSelect).toHaveBeenCalledWith("snowball");
@@ -21,7 +21,7 @@ describe("SegmentedTabs Primitive", () => {
 
   it("keeps every panel mounted and hides the inactive ones", () => {
     render(
-      <SegmentedTabs
+      <Tabs
         items={items}
         panels={{ avalanche: <p>First panel</p>, snowball: <p>Second panel</p> }}
         value="snowball"
@@ -31,24 +31,17 @@ describe("SegmentedTabs Primitive", () => {
     expect(screen.getByText("Second panel")).toBeDefined();
     expect(screen.queryByRole("tabpanel", { hidden: false })?.textContent).toBe("Second panel");
     expect(screen.getByText("First panel", { ignore: "" }).closest("[hidden]")).not.toBeNull();
-    const tab = screen.getByRole("tab", { name: "Snowball (Lowest Balance)" });
+    const tab = screen.getByRole("tab", { name: "Snowball" });
     expect(document.getElementById(tab.getAttribute("aria-controls") ?? "")).not.toBeNull();
   });
 
   it("names the tab list with aria-label", () => {
-    render(
-      <SegmentedTabs
-        aria-label="Sections"
-        items={items}
-        value="avalanche"
-        onValueChange={vi.fn()}
-      />,
-    );
+    render(<Tabs aria-label="Sections" items={items} value="avalanche" onValueChange={vi.fn()} />);
     expect(screen.getByRole("tablist", { name: "Sections" })).toBeDefined();
   });
 
   it("does not emit a dangling aria-controls when no panels are given", () => {
-    render(<SegmentedTabs items={items} value="avalanche" onValueChange={vi.fn()} />);
+    render(<Tabs items={items} value="avalanche" onValueChange={vi.fn()} />);
     for (const tab of screen.getAllByRole("tab")) {
       expect(tab.hasAttribute("aria-controls")).toBe(false);
     }
@@ -56,45 +49,45 @@ describe("SegmentedTabs Primitive", () => {
 
   it("links the active tab to a real panel via the panels prop", () => {
     render(
-      <SegmentedTabs
+      <Tabs
         items={items}
         value="snowball"
         onValueChange={vi.fn()}
         panels={{ avalanche: "A", snowball: "S", minimum: "M" }}
       />,
     );
-    const tab = screen.getByRole("tab", { name: "Snowball (Lowest Balance)" });
+    const tab = screen.getByRole("tab", { name: "Snowball" });
     const panel = screen.getByRole("tabpanel");
     expect(tab.getAttribute("aria-controls")).toBe(panel.id);
     expect(panel.getAttribute("aria-labelledby")).toBe(tab.id);
     expect(panel.textContent).toBe("S");
     // Radix keeps inactive panels in the DOM (hidden, empty), so aria-controls still resolves.
-    const inactive = screen.getByRole("tab", { name: "Minimum Only" });
+    const inactive = screen.getByRole("tab", { name: "Minimum only" });
     const target = document.getElementById(inactive.getAttribute("aria-controls") ?? "");
     expect(target?.hasAttribute("hidden")).toBe(true);
   });
 
-  it("supports SegmentedTabs.Panel children and keepMounted", () => {
+  it("supports Tabs.Panel children and keepMounted", () => {
     render(
-      <SegmentedTabs items={items} value="avalanche" onValueChange={vi.fn()}>
-        <SegmentedTabs.Panel value="avalanche">First</SegmentedTabs.Panel>
-        <SegmentedTabs.Panel value="snowball" keepMounted>
+      <Tabs items={items} value="avalanche" onValueChange={vi.fn()}>
+        <Tabs.Panel value="avalanche">First</Tabs.Panel>
+        <Tabs.Panel value="snowball" keepMounted>
           Second
-        </SegmentedTabs.Panel>
-      </SegmentedTabs>,
+        </Tabs.Panel>
+      </Tabs>,
     );
     expect(screen.getByText("First")).toBeDefined();
     const hidden = screen.getByText("Second", { selector: "[role=tabpanel]" });
     expect(hidden.getAttribute("data-state")).toBe("inactive");
-    expect(
-      screen.getByRole("tab", { name: "Snowball (Lowest Balance)" }).getAttribute("aria-controls"),
-    ).toBe(hidden.id);
+    expect(screen.getByRole("tab", { name: "Snowball" }).getAttribute("aria-controls")).toBe(
+      hidden.id,
+    );
   });
 
   it("selects on arrow focus by default (automatic activation)", async () => {
     const onValueChange = vi.fn();
-    render(<SegmentedTabs items={items} value="avalanche" onValueChange={onValueChange} />);
-    const first = screen.getByRole("tab", { name: "Avalanche (Highest APR)" });
+    render(<Tabs items={items} value="avalanche" onValueChange={onValueChange} />);
+    const first = screen.getByRole("tab", { name: "Avalanche" });
     first.focus();
     fireEvent.keyDown(first, { key: "ArrowRight" });
     await waitFor(() => expect(onValueChange).toHaveBeenCalledWith("snowball"));
@@ -103,22 +96,45 @@ describe("SegmentedTabs Primitive", () => {
   it("only moves focus on arrow keys with activationMode manual", async () => {
     const onValueChange = vi.fn();
     render(
-      <SegmentedTabs
+      <Tabs
         activationMode="manual"
         items={items}
         value="avalanche"
         onValueChange={onValueChange}
       />,
     );
-    const first = screen.getByRole("tab", { name: "Avalanche (Highest APR)" });
+    const first = screen.getByRole("tab", { name: "Avalanche" });
     first.focus();
     fireEvent.keyDown(first, { key: "ArrowRight" });
     // Focus moves (Radix does it on a timer), selection does not.
     await waitFor(() =>
-      expect(screen.getByRole("tab", { name: "Snowball (Lowest Balance)" })).toBe(
-        document.activeElement,
-      ),
+      expect(screen.getByRole("tab", { name: "Snowball" })).toBe(document.activeElement),
     );
     expect(onValueChange).not.toHaveBeenCalled();
+  });
+
+  it("keeps SegmentedTabs as a deprecated alias of Tabs", () => {
+    expect(SegmentedTabs).toBe(Tabs);
+    expect(SegmentedTabs.Panel).toBe(Tabs.Panel);
+  });
+
+  it("applies the size variant to the list and triggers", () => {
+    const { rerender } = render(
+      <Tabs items={items} size="sm" value="avalanche" onValueChange={vi.fn()} />,
+    );
+    const smClass = screen.getByRole("tab", { name: "Avalanche" }).className;
+    rerender(<Tabs items={items} value="avalanche" onValueChange={vi.fn()} />);
+    expect(screen.getByRole("tab", { name: "Avalanche" }).className).not.toBe(smClass);
+  });
+
+  it("warns in development when given more than four items", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const five = ["a", "b", "c", "d", "e"].map((v) => ({ value: v, label: v.toUpperCase() }));
+    render(<Tabs items={five} value="a" onValueChange={vi.fn()} />);
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining("at most 4"));
+    warn.mockClear();
+    render(<Tabs items={five.slice(0, 4)} value="a" onValueChange={vi.fn()} />);
+    expect(warn).not.toHaveBeenCalled();
+    warn.mockRestore();
   });
 });

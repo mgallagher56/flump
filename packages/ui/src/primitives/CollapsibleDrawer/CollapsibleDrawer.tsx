@@ -9,6 +9,9 @@ import {
   drawerContainer,
   drawerCount,
   drawerHeaderButton,
+  drawerQuietBody,
+  drawerQuietButton,
+  drawerQuietContainer,
   drawerSubtitle,
   drawerTitle,
   drawerTitleRow,
@@ -34,6 +37,14 @@ export interface CollapsibleDrawerProps {
   openLabel?: string;
   /** Trailing action text while closed. Defaults to "View full schedule". */
   closedLabel?: string;
+  /**
+   * `card` (default): a bordered card with a full-width header row, for schedules and ledgers.
+   * `quiet`: a small text button ("Show details", "Show data") with no card chrome, for secondary
+   * detail under a chart or figure (plan P10.5). Only `title` (and `itemCount`) show on its trigger;
+   * `badge`, `subtitle`, `openLabel` and `closedLabel` are ignored, and `aria-expanded` carries the
+   * open state, so the button's name stays the same while open.
+   */
+  variant?: "card" | "quiet";
   children: ReactNode;
   className?: string;
 }
@@ -49,6 +60,7 @@ export const CollapsibleDrawer: FC<CollapsibleDrawerProps> = ({
   defaultOpen = false,
   openLabel,
   closedLabel,
+  variant = "card",
   children,
   className,
 }) => {
@@ -59,6 +71,31 @@ export const CollapsibleDrawer: FC<CollapsibleDrawerProps> = ({
     itemCount === undefined
       ? undefined
       : `${countFormat.format(itemCount)} ${itemCount === 1 ? itemNoun.one : itemNoun.other}`;
+
+  if (variant === "quiet") {
+    return (
+      <div className={cx(drawerQuietContainer(), className)}>
+        <button
+          aria-controls={isOpen ? bodyId : undefined}
+          aria-expanded={isOpen}
+          className={drawerQuietButton()}
+          type="button"
+          onClick={() => setIsOpen((prev) => !prev)}
+        >
+          {title}
+          {countText && <span className={drawerCount()}>{countText}</span>}
+          <span aria-hidden="true" className={drawerChevron({ open: isOpen })}>
+            <Icon icon={ChevronDown} size="sm" />
+          </span>
+        </button>
+        {isOpen && (
+          <div className={drawerQuietBody()} id={bodyId}>
+            {children}
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className={cx(drawerContainer(), className)}>

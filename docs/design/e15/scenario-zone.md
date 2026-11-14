@@ -34,8 +34,10 @@ Use a hybrid of options A and D, on the same page and the same route.
 
 - "Your details" uses `surface.card` and `border.DEFAULT`.
 - ScenarioZone:
-  - Background and outline: `surface.sunken` with a dashed `border.strong` outline.
-  - Badge and notice: a neutral `StatusBadge` (icon plus text), with `ProjectionNotice` inside the zone.
+  - Background and outline (E16 4.4): `surface.subtle` with a 1px dashed `border` outline, so the zone is visibly lighter than the saved "Your details" card.
+  - Header: one row, the title on the left and the "Illustration, not saved" badge (a neutral `StatusBadge`, icon plus text) on the right. The basis line sits under it in `body.sm`, `text.secondary`.
+  - Tools: `<Tabs size="sm">`, at most 3 tools, one visible at a time. Tool content sits on the zone surface with no nested card chrome or headings.
+  - Footer: "Reset to saved figures", "Update your details" and the page's single `ProjectionNotice` (quiet note style), in that order.
   - Accessibility: it is a `<section aria-labelledby>`. Outcomes are announced through `LiveRegion` with the prefix "Illustration:". Never rely on colour alone.
 - `surface.hero` goes only on a saved figure, never on a scenario outcome. The mortgage "Interest saved" hero from #508 moves to a saved figure, such as the balance.
 

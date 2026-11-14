@@ -68,7 +68,7 @@ describe("SnapshotHistoryPage", () => {
     expect(
       screen.getByText(/current and savings accounts ÷ essential spending and debt minimums/),
     ).toBeDefined();
-    expect(screen.getByRole("complementary", { name: "Guidance, not advice" }).textContent).toMatch(
+    expect(screen.getByRole("note", { name: "Guidance, not advice" }).textContent).toMatch(
       /Projection, not a forecast: it assumes your budget surplus of £400 a month/,
     );
     expect(screen.getByText("Last recorded month: October 2026")).toBeDefined();
@@ -82,7 +82,7 @@ describe("SnapshotHistoryPage", () => {
       monthlySurplus: null,
       monthsOfCover: null,
     });
-    expect(screen.queryByRole("complementary", { name: "Guidance, not advice" })).toBeNull();
+    expect(screen.queryByRole("note", { name: "Guidance, not advice" })).toBeNull();
     expect(screen.getAllByText("Not set").length).toBeGreaterThan(0);
   });
 

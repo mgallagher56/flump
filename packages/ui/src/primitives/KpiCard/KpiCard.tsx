@@ -8,11 +8,14 @@ import { VisuallyHidden } from "../VisuallyHidden/VisuallyHidden";
 import {
   kpiCardContainer,
   kpiDeltaContent,
+  kpiDeltaRow,
   kpiEyebrow,
   kpiHeroValue,
   kpiLabel,
   kpiLoadingBar,
   kpiMoney,
+  kpiNotSet,
+  kpiNotSetAction,
   kpiSubtext,
   kpiValueRow,
 } from "./KpiCard.styles";
@@ -32,6 +35,9 @@ export type KpiCardTone = "default" | "hero";
 export interface KpiCardProps {
   label: string;
   /**
+   * @deprecated Use `HeroFigure` for the page's one headline figure (E16 P2). `KpiStrip` cards are
+   * never the hero. Kept working so existing screens do not break.
+   *
    * `hero` paints the card as the page's one deep-teal headline block (`surface.hero`). Use it at
    * most once per page. Figures inside should use `tone="onContrast"`. Falls back to the default
    * card while loading or when the value is unknown, so "Not set" keeps its muted contrast.
@@ -51,14 +57,27 @@ export interface KpiCardProps {
   deltaText?: string;
   deltaVariant?: StatusBadgeVariants["variant"];
   delta?: KpiDelta;
+  /**
+   * Optional one-line caption under the value. It contains no figure and does not restate the
+   * value (E16 P1.5, P1.6). Leave it out when the label says enough.
+   */
   subtext?: ReactNode;
+  /** A small control beside the label (for example a menu). Not the "Not set" action. */
   action?: ReactNode;
   /** Shows a skeleton in place of the value and marks the card busy. */
   loading?: boolean;
   /** Label used when `value` is null or undefined. */
   notSetLabel?: string;
-  /** Call to action shown beside "Not set", e.g. an "Add" button. */
+  /**
+   * The one action shown under "Not set", normally a single link such as "Add your rate"
+   * (E16 P3.1).
+   */
   emptyAction?: ReactNode;
+  /**
+   * Overrides unknown-value detection for `KpiStrip`'s empty prompt (E16 P3.2). By default a card
+   * is unset when `value` is null, undefined or a non-finite number and it is not loading.
+   */
+  unset?: boolean;
   className?: string;
 }
 
@@ -72,6 +91,18 @@ const DELTA_SPOKEN: Record<KpiDeltaDirection, string> = {
   up: "Up",
   down: "Down",
   flat: "No change",
+};
+
+/** True when a card with these props shows "Not set" (used by `KpiStrip`, E16 P3.2). */
+export const isKpiCardUnset = (
+  props: Pick<KpiCardProps, "value" | "loading" | "unset">,
+): boolean => {
+  if (props.unset !== undefined) return props.unset;
+  if (props.loading) return false;
+  const { value } = props;
+  return (
+    value === null || value === undefined || (typeof value === "number" && !Number.isFinite(value))
+  );
 };
 
 export const deltaTone = (
@@ -113,6 +144,7 @@ export const KpiCard: FC<KpiCardProps> = ({
   notSetLabel = "Not set",
   emptyAction,
   tone = "default",
+  unset,
   className,
 }) => {
   const isEmpty =
@@ -124,6 +156,7 @@ export const KpiCard: FC<KpiCardProps> = ({
       aria-busy={loading || undefined}
       className={cx(kpiCardContainer({ tone: cardTone }), className)}
       data-tone={cardTone === "hero" ? "hero" : undefined}
+      data-unset={isKpiCardUnset({ value, loading, unset }) || undefined}
     >
       <div className={kpiEyebrow()}>
         <span className={kpiLabel({ tone: cardTone })}>{label}</span>
@@ -137,31 +170,37 @@ export const KpiCard: FC<KpiCardProps> = ({
             <VisuallyHidden>Loading</VisuallyHidden>
           </>
         ) : isEmpty ? (
-          <Money
-            className={kpiMoney()}
-            notSetAction={emptyAction}
-            notSetLabel={notSetLabel}
-            size="kpi"
-            value={null}
-          />
+          // E16 P3.1: body size, regular weight, muted, so it never outranks a real value.
+          <span className={kpiNotSet()} data-unknown="true">
+            {notSetLabel}
+          </span>
         ) : (
           renderValue(value, valueFormat, cardTone)
         )}
-        {!loading && delta ? (
-          <StatusBadge size="sm" variant={deltaTone(delta.direction, delta.polarity)}>
-            <span className={kpiDeltaContent()}>
-              <Icon icon={DELTA_ICON[delta.direction]} size="sm" />
-              <VisuallyHidden>{DELTA_SPOKEN[delta.direction]}</VisuallyHidden>
-              <span>{delta.text}</span>
-            </span>
-          </StatusBadge>
-        ) : null}
-        {!loading && !delta && deltaText ? (
-          <StatusBadge size="sm" variant={deltaVariant}>
-            {deltaText}
-          </StatusBadge>
-        ) : null}
       </div>
+
+      {!loading && isEmpty && emptyAction ? (
+        <div className={kpiNotSetAction()}>{emptyAction}</div>
+      ) : null}
+
+      {/* The badge has its own row, so the value sits on the same baseline with or without it. */}
+      {!loading && (delta || deltaText) ? (
+        <div className={kpiDeltaRow()}>
+          {delta ? (
+            <StatusBadge size="sm" variant={deltaTone(delta.direction, delta.polarity)}>
+              <span className={kpiDeltaContent()}>
+                <Icon icon={DELTA_ICON[delta.direction]} size="sm" />
+                <VisuallyHidden>{DELTA_SPOKEN[delta.direction]}</VisuallyHidden>
+                <span>{delta.text}</span>
+              </span>
+            </StatusBadge>
+          ) : (
+            <StatusBadge size="sm" variant={deltaVariant}>
+              {deltaText}
+            </StatusBadge>
+          )}
+        </div>
+      ) : null}
 
       {subtext && <div className={kpiSubtext({ tone: cardTone })}>{subtext}</div>}
     </div>

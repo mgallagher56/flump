@@ -111,7 +111,7 @@ Import and compose shared layout patterns from `@repo/ui`:
 - **Top-level page metrics (`<KpiStrip>`)**: Render up to 4 top-level KPIs in a single horizontal row (`lg:grid-cols-4` or `3`).
 - **Interactive calculators (`<SimulatorSplitLayout>`)**: Place sticky parameter controls in the left column (`lg:col-span-5` or `4`) and live charts/outcomes in the right column (`lg:col-span-7` or `8`).
 - **Numeric slider controls (`<SliderField>`)**: Render label top-left, compact editable value pill top-right, and range track below.
-- **Schedules and ledgers > 8 rows (`<CollapsibleDrawer>` / `<SegmentedTabs>`)**: Place amortisation tables, 12-month ledgers, and multi-year tax schedules inside a `<CollapsibleDrawer>` (collapsed by default) or a secondary `<SegmentedTabs>` panel.
+- **Schedules and ledgers > 8 rows (`<CollapsibleDrawer>` / `<Tabs>`)**: Place amortisation tables, 12-month ledgers, and multi-year tax schedules inside a `<CollapsibleDrawer>` (collapsed by default) or a secondary `<Tabs>` panel.
 - **Portals for overlays**: Mount dialogs, drawers, and bottom sheets via Radix `<Dialog.Portal>` so parent `backdrop-filter` or `transform` styles do not trap `position: fixed` elements.
 
 ---
@@ -138,7 +138,7 @@ Import and compose shared layout patterns from `@repo/ui`:
    ```tsx
    <div id="mcp-connection-card" data-testid="mcp-connection-card">
    ```
-2. **Radix `<SegmentedTabs>` in Vitest JSDOM**: Radix `Tabs.Trigger` activates on pointerdown or keyboard events rather than synthetic `click` in JSDOM. Trigger tab changes in `.test.tsx` with:
+2. **Radix `<Tabs>` (formerly `SegmentedTabs`) in Vitest JSDOM**: Radix `Tabs.Trigger` activates on pointerdown or keyboard events rather than synthetic `click` in JSDOM. Trigger tab changes in `.test.tsx` with:
 
    ```ts
    const tab = screen.getByRole("tab", { name: /Active Tokens/i });

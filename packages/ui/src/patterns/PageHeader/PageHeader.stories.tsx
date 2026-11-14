@@ -29,6 +29,41 @@ export const Default: Story = {
   },
 };
 
+const primaryAndSecondaryArgs = {
+  title: "Your budget",
+  description: "What comes in, what goes out and what is left each month.",
+  actions: (
+    <>
+      <Button size="sm" variant="secondary">
+        Export
+      </Button>
+      <Button size="sm">Edit budget</Button>
+    </>
+  ),
+};
+
+const primaryAndSecondaryPlay: Story["play"] = async ({ canvasElement }) => {
+  const canvas = within(canvasElement);
+  await expect(canvas.getAllByRole("button")).toHaveLength(2);
+  await expect(canvas.getByRole("button", { name: "Edit budget" })).toBeInTheDocument();
+  await expect(canvas.queryByRole("note")).toBeNull();
+};
+
+/**
+ * The one `actions` slot holds one primary and at most one secondary. The description is one
+ * line. There is no notice slot: the page's notice sits at the foot of its first projection.
+ */
+export const PrimaryAndSecondary: Story = {
+  args: primaryAndSecondaryArgs,
+  play: primaryAndSecondaryPlay,
+};
+
+export const PrimaryAndSecondaryDark: Story = {
+  args: primaryAndSecondaryArgs,
+  globals: { theme: "dark" },
+  play: primaryAndSecondaryPlay,
+};
+
 export const SampleDataBadge: Story = {
   args: {
     title: "Home",

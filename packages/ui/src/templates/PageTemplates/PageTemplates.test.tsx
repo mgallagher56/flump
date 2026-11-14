@@ -1,11 +1,13 @@
-import { fireEvent, render, screen, within } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   DashboardTemplate,
   EmptyTemplate,
   ErrorTemplate,
   FormTemplate,
   ListDetailTemplate,
+  PageBody,
+  PageSkeleton,
   SimulatorTemplate,
 } from "./PageTemplates";
 
@@ -69,5 +71,59 @@ describe("PageTemplates", () => {
     expect(screen.getByRole("button", { name: "Add an account" })).toBeDefined();
     render(<ErrorTemplate />);
     expect(screen.getByRole("button", { name: "Back to home" })).toBeDefined();
+  });
+});
+
+describe("PageBody", () => {
+  it("wraps its children in one div and passes attributes through", () => {
+    render(
+      <PageBody aria-label="Page" data-testid="body">
+        <h1>Your money</h1>
+      </PageBody>,
+    );
+    const body = screen.getByTestId("body");
+    expect(body.tagName).toBe("DIV");
+    expect(body.getAttribute("aria-label")).toBe("Page");
+    expect(within(body).getByRole("heading", { level: 1 })).toBeDefined();
+    expect(body.className).toContain("max-w_page.max");
+  });
+});
+
+describe("PageSkeleton", () => {
+  afterEach(() => vi.useRealTimers());
+
+  it("shows nothing for the first 200ms, then the skeleton", () => {
+    vi.useFakeTimers();
+    render(<PageSkeleton />);
+    expect(screen.queryByTestId("page-skeleton")).toBeNull();
+    act(() => vi.advanceTimersByTime(199));
+    expect(screen.queryByTestId("page-skeleton")).toBeNull();
+    act(() => vi.advanceTimersByTime(1));
+    expect(screen.getByTestId("page-skeleton")).toBeDefined();
+  });
+
+  it("has a header, a hero block, 3 KPI cards and 2 cards, announced as loading", () => {
+    render(<PageSkeleton delayMs={0} />);
+    const skeleton = screen.getByRole("status");
+    expect(skeleton.getAttribute("aria-busy")).toBe("true");
+    expect(within(skeleton).getByText("Loading page")).toBeDefined();
+    expect(screen.getAllByTestId("page-skeleton-kpi")).toHaveLength(3);
+    expect(screen.getAllByTestId("page-skeleton-card")).toHaveLength(2);
+  });
+
+  it("takes a custom label and delay", () => {
+    vi.useFakeTimers();
+    render(<PageSkeleton delayMs={500} label="Loading your debts" />);
+    act(() => vi.advanceTimersByTime(300));
+    expect(screen.queryByRole("status")).toBeNull();
+    act(() => vi.advanceTimersByTime(200));
+    expect(screen.getByText("Loading your debts")).toBeDefined();
+  });
+
+  it("cancels the timer when unmounted before the delay", () => {
+    vi.useFakeTimers();
+    const { unmount } = render(<PageSkeleton />);
+    unmount();
+    expect(vi.getTimerCount()).toBe(0);
   });
 });

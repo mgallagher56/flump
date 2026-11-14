@@ -114,3 +114,45 @@ export const chartProjectionLine = css({
   stroke: "chart.projection",
   strokeDasharray: "6 6",
 });
+
+// PageBody (plan P13): the only page wrapper. Values come from the PR 1 page tokens.
+export const pageBody = css({
+  display: "flex",
+  flexDirection: "column",
+  gap: "page.section",
+  width: "100%",
+  maxWidth: "page.max",
+  marginInline: "auto",
+  px: { base: "page.gutter.sm", md: "page.gutter.md", lg: "page.gutter.lg" },
+  pt: { base: "page.top.sm", lg: "page.top.lg" },
+  color: "text.primary",
+});
+
+// PageSkeleton (plan P12.1): header, hero block, 3 KPI cards, 2 cards.
+export const pageSkeletonHeader = css({
+  display: "flex",
+  flexDirection: "column",
+  gap: "3",
+  maxWidth: "480px",
+});
+
+export const pageSkeletonHero = css({ borderRadius: "card" });
+
+export const pageSkeletonKpis = css({
+  display: "grid",
+  gridTemplateColumns: { base: "1fr", md: "repeat(3, minmax(0, 1fr))" },
+  gap: "4",
+});
+
+export const pageSkeletonCard = css({
+  display: "flex",
+  flexDirection: "column",
+  gap: "3",
+  p: "5",
+  borderRadius: "card",
+  borderWidth: "1px",
+  borderStyle: "solid",
+  borderColor: "border",
+  backgroundColor: "surface.card",
+  boxShadow: "card",
+});

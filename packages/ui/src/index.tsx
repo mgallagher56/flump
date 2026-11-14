@@ -22,6 +22,7 @@ export * from "./patterns/ConfirmDialog";
 export * from "./patterns/DebtToWealthChart";
 export * from "./patterns/EmptyState";
 export * from "./patterns/GlobalBaselineBar";
+export * from "./patterns/HeroFigure";
 export * from "./patterns/HomeLogo";
 // Financial Patterns
 export * from "./patterns/KpiStrip";
@@ -52,6 +53,7 @@ export * from "./primitives/FlumpLogo";
 export * from "./primitives/FormField";
 export * from "./primitives/Heading";
 export * from "./primitives/Icon";
+export * from "./primitives/IconTile";
 export * from "./primitives/Illustration";
 export * from "./primitives/InfoTip";
 export * from "./primitives/InlineAlert";
@@ -63,7 +65,6 @@ export * from "./primitives/PercentInput";
 export * from "./primitives/Popover";
 export * from "./primitives/ProgressBar";
 export * from "./primitives/RadioCardGroup";
-export * from "./primitives/SegmentedTabs";
 export * from "./primitives/Select";
 export * from "./primitives/Sheet";
 export * from "./primitives/Skeleton";
@@ -73,12 +74,21 @@ export * from "./primitives/StatusBadge";
 export * from "./primitives/Stepper";
 export * from "./primitives/Switch";
 export * from "./primitives/Table";
+export * from "./primitives/Tabs";
 export * from "./primitives/Text";
 export * from "./primitives/TextInput";
 export * from "./primitives/Toast";
 export * from "./primitives/Tooltip";
 // Explicit names shadow Panda's generated visually-hidden JSX pattern (star-export ambiguity).
 export { VisuallyHidden, type VisuallyHiddenProps } from "./primitives/VisuallyHidden";
+// Page building blocks (E16 P12, P13). The templates themselves stay Storybook-only.
+export {
+  PageBody,
+  type PageBodyProps,
+  PageSkeleton,
+  type PageSkeletonProps,
+} from "./templates/PageTemplates";
+// Page-rules test helpers are not exported here: import them from "@repo/ui/testing".
 
 // Export Tokens
 export * from "./tokens";

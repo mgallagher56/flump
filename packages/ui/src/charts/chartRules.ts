@@ -6,8 +6,19 @@ export const CHART_RULES = {
   nonColourCueRequired: true,
   /** Area gradients fade to transparent and never exceed this opacity at their strongest point. */
   gradientMaxOpacity: 0.15,
-  /** Donut and pie charts show at most this many slices, with the tail grouped as "Other". */
+  /**
+   * Donut and pie charts show at most this many slices, with the tail grouped as "Other"
+   * (E16 ruling U6: 5). Pass it to `capSeriesWithOther(items, CHART_RULES.donutMaxSlices)`.
+   */
   donutMaxSlices: 5,
+  /** Up to this many series are labelled at the line end; a legend only above it (E16 P10.2). */
+  directLabelMaxSeries: 3,
+  /** At most one annotation per chart, on the point that answers the page's question (P10.3). */
+  maxAnnotations: 1,
+  /** At most this many x-axis ticks (P10.4). `ChartFigure`'s `maxTicks` default. */
+  maxXTicks: 6,
+  /** Fewer points than this draw no chart: the summary and a prompt instead (P10.6). */
+  minPoints: 3,
   /** Colour identifies the entity (account, asset, series), never the outcome (good or bad). */
   colourBy: "entity",
   /** Forecast lines are dashed so they are not told apart by colour alone. */

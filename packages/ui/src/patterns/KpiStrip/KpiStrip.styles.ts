@@ -2,7 +2,7 @@ import { cva } from "../../../styled-system/css";
 
 /**
  * Direction A: a single row from `sm` upwards, a 2x2 grid at phone width (375px).
- * `columns` is capped at 4 by type. Passing more children than `columns` wraps onto a second
+ * `columns` defaults to 3 (E16 P1.5) and is capped at 4 by type. Passing more children than `columns` wraps onto a second
  * row rather than throwing, but top-level KPI strips should stay at four or fewer.
  */
 export const kpiStripGrid = cva({
@@ -24,6 +24,6 @@ export const kpiStripGrid = cva({
     },
   },
   defaultVariants: {
-    columns: 4,
+    columns: 3,
   },
 });

@@ -1,7 +1,20 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { visuallyHiddenRecipe } from "../../primitives/VisuallyHidden/VisuallyHidden.styles";
-import { ChartFigure } from "./ChartFigure";
+import {
+  ChartFigure,
+  type ChartFigureConfig,
+  NOT_ENOUGH_DATA_TEXT,
+  pickTicks,
+  useChartFigure,
+} from "./ChartFigure";
+
+let seenConfig: ChartFigureConfig | undefined;
+/** Records what a chart drawn inside a ChartFigure reads from its context. */
+const Probe = () => {
+  seenConfig = useChartFigure();
+  return null;
+};
 
 const SUMMARY = "Balance grows from £1,000 to £12,345 over 10 years.";
 
@@ -21,20 +34,21 @@ describe("ChartFigure Pattern", () => {
     expect(screen.getByText(SUMMARY)).toBeDefined();
   });
 
-  it("summary is a figcaption, visually hidden by default", () => {
+  it("summary sits in the figcaption, the figure's first child, visually hidden by default", () => {
     renderFigure();
-    const caption = screen.getByText(SUMMARY);
+    const summary = screen.getByText(SUMMARY);
+    const caption = summary.parentElement as HTMLElement;
     expect(caption.tagName).toBe("FIGCAPTION");
-    expect(caption.parentElement?.tagName).toBe("FIGURE");
-    expect(caption.className).toBe(visuallyHiddenRecipe({ focusable: false }));
-    expect(screen.getByRole("figure").getAttribute("aria-describedby")).toBe(caption.id);
+    expect(caption.parentElement?.firstElementChild).toBe(caption);
+    expect(summary.className).toBe(visuallyHiddenRecipe({ focusable: false }));
+    expect(screen.getByRole("figure").getAttribute("aria-describedby")).toBe(summary.id);
   });
 
-  it("showSummary renders a visible figcaption", () => {
+  it("showSummary renders the summary visibly, directly under the title", () => {
     renderFigure({ showSummary: true });
-    const caption = screen.getByText(SUMMARY);
-    expect(caption.tagName).toBe("FIGCAPTION");
-    expect(caption.parentElement?.tagName).toBe("FIGURE");
+    const summary = screen.getByText(SUMMARY);
+    expect(summary.className).not.toBe(visuallyHiddenRecipe({ focusable: false }));
+    expect(summary.previousElementSibling).toBe(screen.getByRole("heading"));
   });
 
   it("chart svg is hidden from AT", () => {
@@ -86,12 +100,68 @@ describe("ChartFigure Pattern", () => {
     });
     expect(screen.queryByRole("table")).toBeNull();
     const toggle = screen.getByRole("button", { name: "Show data" });
-    expect(toggle.textContent).not.toMatch(/schedule/i);
+    expect(toggle.textContent).toBe("Show data");
     fireEvent.click(toggle);
     expect(screen.getByRole("table")).toBeDefined();
     expect(toggle.getAttribute("aria-expanded")).toBe("true");
     fireEvent.click(toggle);
     expect(screen.queryByRole("table")).toBeNull();
+  });
+
+  it("draws no chart, and shows the summary with a prompt, below minPoints", () => {
+    renderFigure({ pointCount: 2, legend: <ul aria-label="Chart key" /> });
+    expect(screen.queryByTestId("chart")).toBeNull();
+    expect(screen.queryByRole("list", { name: "Chart key" })).toBeNull();
+    expect(screen.getByText(SUMMARY).className).not.toBe(
+      visuallyHiddenRecipe({ focusable: false }),
+    );
+    expect(screen.getByText(NOT_ENOUGH_DATA_TEXT)).toBeDefined();
+  });
+
+  it("draws the chart at minPoints, or when no pointCount is given", () => {
+    const { unmount } = renderFigure({ pointCount: 3 });
+    expect(screen.getByTestId("chart")).toBeDefined();
+    expect(screen.queryByText(NOT_ENOUGH_DATA_TEXT)).toBeNull();
+    unmount();
+    renderFigure({ pointCount: 4, minPoints: 5, notEnoughDataText: "Add another year." });
+    expect(screen.getByText("Add another year.")).toBeDefined();
+  });
+
+  it("hands directLabels, annotation and maxTicks to the chart through context", () => {
+    seenConfig = undefined;
+    render(
+      <ChartFigure
+        annotation={{ x: 2030, label: "Paid off, Mar 2030" }}
+        directLabels
+        maxTicks={4}
+        summary={SUMMARY}
+        title="Debt"
+      >
+        <Probe />
+      </ChartFigure>,
+    );
+    expect(seenConfig).toEqual({
+      directLabels: true,
+      annotation: { x: 2030, label: "Paid off, Mar 2030" },
+      maxTicks: 4,
+    });
+  });
+
+  it("useChartFigure outside a figure returns the defaults", () => {
+    seenConfig = undefined;
+    render(<Probe />);
+    expect(seenConfig).toEqual({ directLabels: false, maxTicks: 6 });
+  });
+
+  it("pickTicks keeps the ends and at most maxTicks values", () => {
+    const years = Array.from({ length: 26 }, (_, i) => 2025 + i);
+    const ticks = pickTicks(years);
+    expect(ticks).toHaveLength(6);
+    expect(ticks[0]).toBe(2025);
+    expect(ticks.at(-1)).toBe(2050);
+    expect(pickTicks([1, 2, 3], 6)).toEqual([1, 2, 3]);
+    expect(pickTicks(years, 3)).toEqual([2025, 2038, 2050]);
+    expect(pickTicks(years, Number.NaN)).toHaveLength(6);
   });
 
   it("renders a notice slot above the chart and a legend slot below it", () => {
@@ -126,6 +196,12 @@ describe("ChartFigure Pattern", () => {
     unmount();
     renderFigure({ headingLevel: "h2" });
     expect(screen.getByRole("heading", { level: 2, name: "Savings forecast" })).toBeDefined();
+  });
+
+  it("draws no notice unless one is passed", () => {
+    const { container } = renderFigure();
+    expect(container.querySelector("[data-notice]")).toBeNull();
+    expect(screen.queryByRole("note")).toBeNull();
   });
 
   it("omits the drawer without a dataTable", () => {

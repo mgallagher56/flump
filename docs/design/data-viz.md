@@ -9,7 +9,7 @@ The same rules are exported as `CHART_RULES` from `@repo/ui`.
 1. **Legend for two or more series.** Or a direct label on every series.
 2. **Never colour alone.** Each series also gets a dash, a marker or a direct label. Forecast lines (`chart.projection`) are always dashed.
 3. **Gradients stay faint.** Area fills reach at most 0.15 opacity at their strongest point, and fade to transparent. Confidence bands use `chart.band`, a fill behind lines, never a line.
-4. **Donut and pie: at most 5 slices.** Group the tail into "Other" with `capSeriesWithOther(items)`, which defaults to `CHART_RULES.donutMaxSlices` (the result has at most 5 slices including "Other"). The cap was 6 until the owner ruling of 2026-11-14 (UX assessment decision U6), which follows UK Government Analysis Function guidance.
+4. **Donut and pie: at most 5 slices.** Group the tail into "Other" with `capSeriesWithOther(items)`, which defaults to `CHART_RULES.donutMaxSlices` (the result has at most 5 slices including "Other"). The cap was 6 until the owner ruling of 2026-11-14 (UX assessment decision U6), which follows UK Government Analysis Function guidance. No donut where a ranked list already shows the split (P10.8).
 5. **Colour identifies the entity, not the outcome.** An account, asset or scenario keeps its colour wherever it appears. Good or bad is shown by text, icon and the `status.*` tokens, not by switching a bar from one series colour to another. Liabilities use amber (`chart.debt`), never red; red is reserved for errors.
 6. **Unknown is "Not set".** Never plot or print `0`, `NaN` or an empty cell for a missing figure.
 7. **Honour reduced motion.** Use `useChartAnimation({ isDragging })`: it is false under reduced motion and while dragging a slider that redraws the chart.

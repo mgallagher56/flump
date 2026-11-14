@@ -36,9 +36,35 @@ describe("KpiCard Primitive", () => {
     expect(screen.queryByText("Not set")).toBeNull();
   });
 
-  it("sizes the Not set text like a KPI value", () => {
-    const { container } = render(<KpiCard label="Net worth" value={null} />);
-    expect(container.innerHTML).toContain("textStyle_numeric.kpi");
+  it("sets Not set smaller and lighter than a value (numeric.unset, muted)", () => {
+    render(<KpiCard label="Net worth" value={null} />);
+    const notSet = screen.getByText("Not set");
+    expect(notSet.className).toContain("textStyle_numeric.unset");
+    expect(notSet.className).toContain("text.muted");
+    expect(notSet.className).not.toContain("numeric.kpi");
+  });
+
+  it("marks an unset card for KpiStrip, and honours the unset override", () => {
+    const { container, rerender } = render(<KpiCard label="Rate" value={null} />);
+    expect(container.firstElementChild?.getAttribute("data-unset")).toBe("true");
+    rerender(<KpiCard label="Rate" value="4.5%" />);
+    expect(container.firstElementChild?.hasAttribute("data-unset")).toBe(false);
+    rerender(<KpiCard label="Rate" loading value={null} />);
+    expect(container.firstElementChild?.hasAttribute("data-unset")).toBe(false);
+    rerender(<KpiCard label="Rate" unset value="Unknown" />);
+    expect(container.firstElementChild?.getAttribute("data-unset")).toBe("true");
+  });
+
+  it("keeps the value in its own row, with the badge below it", () => {
+    render(<KpiCard deltaText="+2%" label="Savings" value="£4,000" />);
+    const valueRow = screen.getByText("£4,000").parentElement;
+    expect(valueRow?.textContent).toBe("£4,000");
+    expect(valueRow?.nextElementSibling?.textContent).toBe("+2%");
+  });
+
+  it("renders without a caption", () => {
+    const { container } = render(<KpiCard label="Savings" value="£4,000" />);
+    expect(container.innerHTML).not.toContain("textStyle_body.sm");
   });
 
   it("renders a real zero value as given", () => {

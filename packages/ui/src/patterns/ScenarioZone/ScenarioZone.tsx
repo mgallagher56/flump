@@ -22,15 +22,23 @@ export interface ScenarioZoneProps {
   isModified?: boolean;
   /**
    * Called by "Reset to saved figures". Restores scenario inputs to the saved values. When set, the
-   * button always shows in the header, disabled until `isModified`.
+   * button always shows in the footer, disabled until `isModified`.
    */
   onReset?: () => void;
-  /** Optional tool switcher (for example SegmentedTabs) rendered above the content. */
+  /**
+   * Tool switcher rendered above the content: `<Tabs size="sm">`, at most 3 tools, one visible at
+   * a time (E16 P1.7).
+   */
   tools?: ReactNode;
-  /** The what-if tool(s). */
+  /** The what-if tool(s). They sit on the zone surface: no nested cards or headings. */
   children?: ReactNode;
   /** The "Update your details" link. It opens the normal edit form with the SAVED values. */
   footer?: ReactNode;
+  /**
+   * The page's single notice, shown at the foot of the zone (E16 P4.1). Defaults to the standard
+   * `ProjectionNotice`; pass a `ProjectionNotice` with page-specific wording to replace it.
+   */
+  notice?: ReactNode;
   /**
    * Outcome text announced politely, prefixed with "Illustration:". Keep it empty until the user
    * changes an input, and derive it only while `isModified`. A non-empty value present at mount
@@ -40,8 +48,8 @@ export interface ScenarioZoneProps {
   /** Id for the section element. */
   id?: string;
   /**
-   * Shows the "Guidance, not advice" notice inside the zone. Default true. Pass false only when the
-   * page already shows that notice above the zone, so it appears once (one landmark per label).
+   * Shows the notice in the zone footer. Default true. Pass false only when the page already shows
+   * its one notice elsewhere, so it appears once per page.
    */
   showNotice?: boolean;
   className?: string;
@@ -59,6 +67,7 @@ export const ScenarioZone: FC<ScenarioZoneProps> = ({
   tools,
   children,
   footer,
+  notice,
   announcement,
   id,
   showNotice = true,
@@ -66,6 +75,8 @@ export const ScenarioZone: FC<ScenarioZoneProps> = ({
 }) => {
   const headingId = useId();
   const slots = scenarioZone();
+  const resolvedNotice = showNotice ? (notice ?? <ProjectionNotice />) : null;
+  const hasActions = Boolean(onReset || footer);
   return (
     <section
       aria-labelledby={headingId}
@@ -75,34 +86,40 @@ export const ScenarioZone: FC<ScenarioZoneProps> = ({
     >
       <div className={slots.header}>
         <div className={slots.titleRow}>
-          <div className={slots.titleGroup}>
-            <Heading as="h2" data-testid="scenario-zone-title" id={headingId} size="md">
-              {title}
-            </Heading>
-            <StatusBadge variant="neutral" icon={<Icon icon={CircleDashed} size="sm" />}>
-              {SCENARIO_BADGE_TEXT}
-            </StatusBadge>
-          </div>
-          {onReset ? (
-            <Button
-              className={slots.reset}
-              disabled={!isModified}
-              size="sm"
-              type="button"
-              variant="secondary"
-              onClick={onReset}
-            >
-              <Icon icon={RotateCcw} size="sm" />
-              {SCENARIO_RESET_LABEL}
-            </Button>
-          ) : null}
+          <Heading as="h2" data-testid="scenario-zone-title" id={headingId} size="md">
+            {title}
+          </Heading>
+          <StatusBadge variant="neutral" icon={<Icon icon={CircleDashed} size="sm" />}>
+            {SCENARIO_BADGE_TEXT}
+          </StatusBadge>
         </div>
         {basis ? <p className={slots.basis}>{basis}</p> : null}
       </div>
-      {showNotice ? <ProjectionNotice /> : null}
       {tools}
       <div className={slots.body}>{children}</div>
-      {footer ? <div className={slots.footer}>{footer}</div> : null}
+      {hasActions || resolvedNotice ? (
+        <div className={slots.footer} data-testid="scenario-zone-footer">
+          {hasActions ? (
+            <div className={slots.footerActions}>
+              {onReset ? (
+                <Button
+                  className={slots.reset}
+                  disabled={!isModified}
+                  size="sm"
+                  type="button"
+                  variant="secondary"
+                  onClick={onReset}
+                >
+                  <Icon icon={RotateCcw} size="sm" />
+                  {SCENARIO_RESET_LABEL}
+                </Button>
+              ) : null}
+              {footer}
+            </div>
+          ) : null}
+          {resolvedNotice}
+        </div>
+      ) : null}
       <LiveRegion
         message={announcement ? `${SCENARIO_ANNOUNCEMENT_PREFIX} ${announcement}` : ""}
         visuallyHidden

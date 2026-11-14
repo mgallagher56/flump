@@ -30,12 +30,12 @@ describe("ScenarioZone", () => {
     expect(screen.queryByTestId("projection-notice")).toBeNull();
   });
 
-  it("always shows Reset in the header, disabled until modified", () => {
+  it("always shows Reset in the footer, disabled until modified", () => {
     const { rerender } = render(<ScenarioZone onReset={() => {}}>x</ScenarioZone>);
     const reset = screen.getByRole("button", { name: SCENARIO_RESET_LABEL }) as HTMLButtonElement;
     expect(reset.disabled).toBe(true);
-    // It lives in the header row beside the title, not under the body.
-    expect(reset.parentElement?.contains(screen.getByTestId("scenario-zone-title"))).toBe(true);
+    // E16 4.4: the footer holds Reset, "Update your details" and the notice.
+    expect(screen.getByTestId("scenario-zone-footer").contains(reset)).toBe(true);
     rerender(
       <ScenarioZone isModified onReset={() => {}}>
         x
@@ -56,6 +56,34 @@ describe("ScenarioZone", () => {
   it("leaves Reset out when there is nothing to reset", () => {
     render(<ScenarioZone isModified>x</ScenarioZone>);
     expect(screen.queryByRole("button", { name: SCENARIO_RESET_LABEL })).toBeNull();
+  });
+
+  it("puts Reset, the details link and the one notice in the footer, notice last", () => {
+    render(
+      <ScenarioZone footer={<a href="/edit">Update your details</a>} onReset={() => {}}>
+        x
+      </ScenarioZone>,
+    );
+    const footer = screen.getByTestId("scenario-zone-footer");
+    expect(footer.contains(screen.getByRole("link", { name: "Update your details" }))).toBe(true);
+    const notices = document.querySelectorAll('[data-notice="projection"]');
+    expect(notices).toHaveLength(1);
+    expect(footer.lastElementChild).toBe(notices[0]);
+  });
+
+  it("accepts a page-supplied notice in place of the default one", () => {
+    render(<ScenarioZone notice={<p data-notice="projection">Page notice</p>}>x</ScenarioZone>);
+    expect(screen.getByText("Page notice")).toBeTruthy();
+    expect(screen.queryByTestId("projection-notice")).toBeNull();
+  });
+
+  it("uses the lighter E16 surface: subtle fill and a 1px dashed outline", () => {
+    render(<ScenarioZone>x</ScenarioZone>);
+    const cls = screen.getByTestId("scenario-zone").className;
+    expect(cls).toContain("surface.subtle");
+    expect(cls).not.toContain("surface.sunken");
+    expect(cls).toContain("bd-w_1px");
+    expect(cls).toContain("border-style_dashed");
   });
 
   it("keeps the badge inline with the title", () => {

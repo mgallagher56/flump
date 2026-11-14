@@ -11,7 +11,8 @@ export const kpiCardContainer = cva({
     containerType: "inline-size",
     display: "flex",
     flexDirection: "column",
-    justifyContent: "space-between",
+    // Top-aligned so the value sits at the same height in every card of a strip (known #15).
+    justifyContent: "flex-start",
     gap: "density.gap",
     height: "100%",
     minWidth: 0,
@@ -118,6 +119,36 @@ export const kpiLoadingBar = cva({
       animationTimingFunction: "standard",
       animationIterationCount: "infinite",
     },
+  },
+});
+
+/** E16 P3.1: "Not set" in `numeric.unset`, muted, never larger or heavier than a real value. */
+export const kpiNotSet = cva({
+  base: {
+    textStyle: "numeric.unset",
+    color: "text.muted",
+    margin: "0",
+  },
+});
+
+/** The one action under "Not set". */
+export const kpiNotSetAction = cva({
+  base: {
+    display: "flex",
+    flexWrap: "wrap",
+    alignItems: "center",
+    gap: "2",
+    textStyle: "body.sm",
+  },
+});
+
+/** The delta badge row, below the value so the value baseline never moves. */
+export const kpiDeltaRow = cva({
+  base: {
+    display: "flex",
+    flexWrap: "wrap",
+    alignItems: "center",
+    gap: "2",
   },
 });
 

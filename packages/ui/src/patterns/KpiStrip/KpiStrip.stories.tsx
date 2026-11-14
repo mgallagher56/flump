@@ -21,37 +21,21 @@ type Story = StoryObj<typeof KpiStrip>;
 const FourUp = () => (
   <KpiStrip columns={4}>
     <KpiCard
-      delta={{ direction: "down", text: "-£240/mo", polarity: "liability" }}
-      label="Total monthly outflow"
-      subtext="Combined minimum payments"
-      value="£315/mo"
+      delta={{ direction: "down", text: "-£240 a month", polarity: "liability" }}
+      label="Monthly payments"
+      subtext="Minimum payments on all your debts"
+      value="£315"
     />
-    <KpiCard
-      delta={{ direction: "down", text: "14 months saved", polarity: "liability" }}
-      label="Debt-free horizon"
-      subtext="August 2026 via avalanche"
-      value="18 months"
-    />
-    <KpiCard
-      deltaText="Optimal"
-      deltaVariant="brand"
-      label="Lifetime interest saved"
-      subtext="Compared with minimum payments"
-      value="£2,140"
-    />
-    <KpiCard
-      delta={{ direction: "up", text: "+£300", polarity: "liability" }}
-      label="High APR liabilities"
-      subtext="Overdraft and credit card debt"
-      value="£4,200"
-    />
+    <KpiCard label="Debt-free date" subtext="Paying the highest rate first" value="Aug 2026" />
+    <KpiCard label="Interest saved" subtext="Compared with minimum payments" value="£2,140" />
+    <KpiCard label="Credit cards and overdraft" subtext="Your highest-rate debts" value="£4,200" />
   </KpiStrip>
 );
 
 const fourPlay: Story["play"] = async ({ canvasElement }) => {
   const canvas = within(canvasElement);
-  await expect(canvas.getByText("Total monthly outflow")).toBeInTheDocument();
-  await expect(canvas.getByText("Debt-free horizon")).toBeInTheDocument();
+  await expect(canvas.getByText("Monthly payments")).toBeInTheDocument();
+  await expect(canvas.getByText("Debt-free date")).toBeInTheDocument();
 };
 
 export const FourColumns: Story = {
@@ -66,9 +50,10 @@ export const FourColumnsDark: Story = {
   play: fourPlay,
 };
 
+/** Three cards is the default (E16 P1.5): no `columns` prop needed. */
 export const ThreeColumns: Story = {
   render: () => (
-    <KpiStrip columns={3}>
+    <KpiStrip>
       <KpiCard label="Gross annual salary" value="£65,000" />
       <KpiCard
         deltaText="Salary sacrifice"
@@ -123,7 +108,7 @@ export const LongLabels: Story = {
 const ItemsTupleStrip = () => (
   <KpiStrip
     items={[
-      <KpiCard key="nw" label="Net worth" tone="hero" value={184250} />,
+      <KpiCard key="nw" label="Net worth" value={184250} />,
       <KpiCard
         delta={{ direction: "down", text: "-£1,240 this month", polarity: "liability" }}
         key="mortgage"
@@ -201,4 +186,47 @@ export const PhoneLongValues: Story = {
       }
     }
   },
+};
+
+const promptLink = css({ color: "primary", textDecoration: "underline", fontWeight: "medium" });
+
+const MostlyUnsetStrip = () => (
+  <KpiStrip
+    emptyPrompt={{
+      title: "Add your interest rate and term to see your payment breakdown",
+      action: (
+        <a className={promptLink} href="#details">
+          Update your details
+        </a>
+      ),
+    }}
+  >
+    <KpiCard label="Balance" value={182450} />
+    <KpiCard label="Monthly payment" value={null} />
+    <KpiCard label="Interest rate" value={null} />
+  </KpiStrip>
+);
+
+const promptPlay: Story["play"] = async ({ canvasElement }) => {
+  const canvas = within(canvasElement);
+  await expect(
+    canvas.getByRole("heading", {
+      name: "Add your interest rate and term to see your payment breakdown",
+    }),
+  ).toBeInTheDocument();
+  await expect(canvas.getByRole("link", { name: "Update your details" })).toBeInTheDocument();
+  await expect(canvas.queryByText("Not set")).toBeNull();
+};
+
+/** Half or more cards unset: one prompt naming what is missing replaces the strip (E16 P3.2). */
+export const MostlyNotSet: Story = {
+  render: () => <MostlyUnsetStrip />,
+  globals: { theme: "light" },
+  play: promptPlay,
+};
+
+export const MostlyNotSetDark: Story = {
+  render: () => <MostlyUnsetStrip />,
+  globals: { theme: "dark" },
+  play: promptPlay,
 };
