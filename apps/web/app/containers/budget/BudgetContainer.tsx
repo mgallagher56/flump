@@ -333,11 +333,12 @@ const BudgetContainer: FC = () => {
       <DataList
         items={entries
           .filter((e) => e.category === category && !e.isIncome)
-          .map((e) => ({
+          .map((e, _i, rows) => ({
             id: e.id,
             label: e.name,
             secondary: entrySecondary(e),
-            value: Math.abs(toMonthly(e)),
+            // A single entry is the row's own total, so its figure would only repeat it (P6).
+            value: rows.length > 1 ? Math.abs(toMonthly(e)) : undefined,
             valueProps: { fractionDigits: 0 },
           }))}
         label={`${getCategoryLabel(category)} entries`}

@@ -423,7 +423,7 @@ export const RunwayCalculator: FC<RunwayCalculatorProps> = ({
           </dd>
         </div>
         <div className={breakdownRow()}>
-          <dt>Spending to cover each month</dt>
+          <dt>Essential spending to cover each month</dt>
           <dd>
             <Money size="sm" value={monthlyBurn} />
           </dd>

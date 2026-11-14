@@ -318,8 +318,18 @@ export const BudgetEditor: FC<BudgetEditorProps> = ({
   onDeleteCategory,
   removableCategories = [],
 }) => {
-  const toast = useOptionalToast();
-  const { formatCurrencyDecimal } = useFormatCurrency();
+  const toastApi = useOptionalToast();
+  const { formatCurrency } = useFormatCurrency();
+  // One save message at a time: each new one replaces the last, so toasts never pile up.
+  const lastToast = useRef<string | null>(null);
+  const toast = toastApi
+    ? {
+        toast: (options: { title: string }) => {
+          if (lastToast.current) toastApi.dismiss(lastToast.current);
+          lastToast.current = toastApi.toast(options);
+        },
+      }
+    : null;
   const [toRemove, setToRemove] = useState<BudgetEntry | null>(null);
   const [removing, setRemoving] = useState(false);
   // Where focus goes once a deleted row has gone (UX A3): the next row's name, else the heading.
@@ -483,7 +493,9 @@ export const BudgetEditor: FC<BudgetEditorProps> = ({
           toRemove ? (
             <p>
               {toRemove.name},{" "}
-              <span className={figure()}>{formatCurrencyDecimal(toAmount(toRemove.amount))}</span>{" "}
+              <span className={figure()}>
+                {formatCurrency(toAmount(toRemove.amount), { maximumFractionDigits: 0 })}
+              </span>{" "}
               {FREQUENCY_OPTIONS.find((o) => o.value === toRemove.frequency)?.label ?? "a month"},
               will be deleted from your budget. This cannot be undone.
             </p>
