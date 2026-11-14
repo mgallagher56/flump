@@ -1,3 +1,5 @@
 .auth/
 playwright-report/
+playwright-report-visual/
 test-results/
+test-results-visual/

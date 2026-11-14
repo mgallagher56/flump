@@ -22,6 +22,12 @@
     {
       "matchUpdateTypes": ["major"],
       "automerge": false
+    },
+    {
+      "description": "The visual regression job's container image must match @playwright/test, and a bump means regenerating its baselines (apps/e2e/README.md)",
+      "matchPackageNames": ["@playwright/test", "mcr.microsoft.com/playwright"],
+      "groupName": "playwright",
+      "automerge": false
     }
   ]
 }
