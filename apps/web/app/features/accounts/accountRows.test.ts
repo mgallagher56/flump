@@ -1,27 +1,51 @@
-import { describe, expect, test } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 import { buildAccountRows, lastUpdatedLabel } from "./accountRows";
 
 describe("buildAccountRows", () => {
-  test("uses the latest recorded balance and the change on the month before", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  test("shows the saved balance, not the latest recorded month, when they differ", () => {
     const [row] = buildAccountRows(
-      [{ id: "a1", name: "Current", type: "Current", balance: 1 }],
+      [{ id: "a1", name: "Current", type: "Current", balance: 1500 }],
       [
         { account_id: "a1", month: 1, year: 2020, value: 800 },
         { account_id: "a1", month: 2, year: 2020, value: 1000 },
       ],
     );
+    expect(row.balance).toBe(1500);
+    // Compared with February 2020, the latest recorded month before this one.
+    expect(row.changePercent).toBe(50);
+    expect(row.favourable).toBe(true);
+  });
+
+  test("compares a recorded current month with the month before it", () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date(2026, 10, 14));
+    const [row] = buildAccountRows(
+      [{ id: "a1", name: "Current", type: "Current", balance: 1000 }],
+      [
+        { account_id: "a1", month: 10, year: 2026, value: 800 },
+        { account_id: "a1", month: 11, year: 2026, value: 1000 },
+      ],
+    );
     expect(row.balance).toBe(1000);
     expect(row.changePercent).toBe(25);
-    expect(row.favourable).toBe(true);
+  });
+
+  test("falls back to the latest recorded month when no balance is saved", () => {
+    const [row] = buildAccountRows(
+      [{ id: "a1", name: "Current", type: "Current" }],
+      [{ account_id: "a1", month: 2, year: 2020, value: 1000 }],
+    );
+    expect(row.balance).toBe(1000);
   });
 
   test("shows a liability as the amount owed, and a falling debt as good news", () => {
     const [row] = buildAccountRows(
       [{ id: "d1", name: "Card", type: "Credit Card", balance: -1200 }],
-      [
-        { account_id: "d1", month: 1, year: 2020, value: -1500 },
-        { account_id: "d1", month: 2, year: 2020, value: -1200 },
-      ],
+      [{ account_id: "d1", month: 1, year: 2020, value: -1500 }],
     );
     expect(row.balance).toBe(1200);
     expect(row.changePercent).toBe(-20);
