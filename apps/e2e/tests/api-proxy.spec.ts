@@ -39,7 +39,9 @@ test.describe("/api proxy", () => {
       });
 
       expect(result.status).toBe(200);
-      expect(result.accountNames).toEqual(expect.arrayContaining(["E2E Current", "E2E Savings"]));
+      expect(result.accountNames).toEqual(
+        expect.arrayContaining(["Current account", "Easy access savings", "Residential mortgage"]),
+      );
       expect(result.envKeys.some((key) => /token|secret|authorization/i.test(key))).toBe(false);
       expect(result.envHasTokenLike).toBe(false);
       expect(result.domHasTokenLike).toBe(false);

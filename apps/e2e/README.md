@@ -35,8 +35,29 @@ round trips. The flag is refused, and the web server refuses to boot, unless `NO
 `development` and `AUTH_DEV_BYPASS=true`, and when `RAILWAY_ENVIRONMENT` or `WORKOS_API_KEY` is
 set. Never set it in a deployed environment.
 
-Global setup signs in once, completes onboarding and seeds three accounts through the `/api`
-proxy, and saves the cookie as storage state for the authenticated specs.
+Global setup signs in once, seeds the **homeowner** persona through the `/api` proxy and saves the
+cookie as storage state for the authenticated specs.
+
+### Personas
+
+`support/personas.ts` holds two neutral sample households for the single dev-bypass user:
+
+| Persona     | Household                                                                                                                                                                                                                                    |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `renter`    | Age 29, £32,000 salary, Plan 2 student loan, rent £950 and other spending £800 a month, £4,500 cash (current and savings), £9,000 pension at 5% plus 4% employer, a £1,800 credit card                                                       |
+| `homeowner` | Age 44, £58,000 salary, a £310,000 home with a £186,000 repayment mortgage (4.5%, 218 months, £1,250 a month), other spending £1,500, £21,000 cash (current, savings, cash ISA), £96,000 pension at 8% plus 5%, a car loan and a credit card |
+
+Each has profile facts, accounts with rates and payments, a budget across the standard
+categories, and six past months of balances written through `PUT /snapshots/:month` (the
+check-in endpoint, which accepts past months), so history charts and "since last month" figures
+have data. The current month is left unrecorded, so the dashboard's check-in card shows.
+Dates are relative to `FROZEN_NOW` when the servers run under the frozen clock, else to today.
+
+`applyPersona(page, name)` is idempotent: when the stored accounts, budget and salary already
+match it writes nothing. Otherwise it clears the user's financial data with
+`POST /user-profile/reset-financial-data` (only if there is anything to clear: that endpoint is
+rate-limited to 10 calls an hour per user) and writes the persona again. A reset leaves the
+profile's `hasResetFinancialData` flag set; nothing the personas show depends on it.
 
 ## Known gaps
 
@@ -53,6 +74,13 @@ at 375 and 1280 wide, light and dark (four Playwright projects). Before each sho
 - no horizontal overflow at 375 (names the elements that stick out);
 - no SVG gradient `<stop>` computing to black (an unresolved CSS variable falls back to black);
 - a non-empty `<title>`.
+
+**Renter pass.** After the four homeowner projects, the `renter-setup` project
+(`visual/renter.setup.ts`) re-seeds the user as the renter, and four `*-renter` projects shoot the
+household-dependent routes (`RENTER_ROUTES` in `visual/routes.ts`: dashboard, accounts, budget,
+debt, mortgage, pension, savings, take-home) as `<route>-renter-<width>-<theme>.png`. It runs
+through Playwright project `dependencies`, so when any homeowner shot fails the renter pass is
+skipped for that run; a baseline regeneration run (`update=true`) passes and so always reaches it.
 
 It runs in its own workflow, `.github/workflows/visual-regression.yml` ("Visual regression"),
 on pull requests and by hand, alongside the required CI Pipeline jobs. It never runs on push to
@@ -104,6 +132,28 @@ It starts as a non-required check with `continue-on-error: true`. Once it has pa
 1. Remove `continue-on-error: true` from the `visual` job.
 2. In GitHub, Settings → Rules (or Branches → branch protection for `main`), add the status check
    "🖼️ Visual regression" to the required checks.
+
+## Design sweep
+
+`sweep/sweep.spec.ts` (config `playwright.sweep.config.ts`, `bun run e2e:sweep` here or
+`bun run sweep:design` from the root) is a **local tool, not a CI job**. For each set in
+`sweep/sets.ts` it re-seeds the persona, then shoots every page at 375x812 and 1280x800, light and
+dark, as a full-page JPEG and a first-view `-fold` JPEG (quality 60), and records DOM metrics:
+
+- `renter` and `mortgage` (the homeowner): every signed-in page, plus each secondary tab as
+  `<page>--<tab>`;
+- `dialogs` (homeowner, viewport shots): add and edit dialogs, the budget wizard, the check-in
+  sheet, "Choose what shows here", the self assessment record forms, delete account, the mobile
+  nav. Nothing is ever saved, deleted or finished;
+- `onboarding`: each step, moving on with Next only;
+- `out` (signed out web app) and `mkt` (marketing site).
+
+Output goes to `docs/design/e16-polish/after/<set>/<page>-<width>-<theme>[-fold].jpg`, with
+`after/metrics-<set>.json` in the same shape as `before/metrics-*.json` (N1 is `foldDistinct`, N
+is `pageDistinct`, counted with the money, percentage and duration patterns of `countFigures`)
+plus `heroes`, `notices`, `notSet` and `primaryButtons`. Anything that could not be opened is
+listed in `after/unreachable-<set>.json`. `SWEEP_SETS=renter,dialogs` runs a subset. Build first,
+and use free ports and a database whose name contains `e2e`, as for the other suites.
 
 ## Accessibility gate
 
