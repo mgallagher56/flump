@@ -278,7 +278,7 @@ Four backend variables keep account deletion, the client-IP rate limit and terms
 
 ### 2. Database
 
-The migration `AuditActionUserExported1794900000000` lets `audit_events` hold the new action `user.exported`: each completed data export now writes one audit row (N3). It changes only the CHECK constraint. Its `down()` never deletes audit rows: it refuses with an error while any `user.exported` row exists, so export or archive those rows before reverting.
+The migration `AuditActionUserExported1795000000000` lets `audit_events` hold the new action `user.exported`: each data export now writes one audit row (N3). It changes only the CHECK constraint. Its `down()` never deletes audit rows: it refuses with an error while any `user.exported` row exists, so export or archive those rows before reverting.
 
 ### Notes
 

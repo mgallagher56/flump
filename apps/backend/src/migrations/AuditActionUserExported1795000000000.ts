@@ -31,8 +31,8 @@ async function replaceCheck(queryRunner: QueryRunner, expr: string): Promise<voi
   await queryRunner.query(`ALTER TABLE "audit_events" VALIDATE CONSTRAINT "${CONSTRAINT}"`);
 }
 
-export class AuditActionUserExported1794900000000 implements MigrationInterface {
-  name = "AuditActionUserExported1794900000000";
+export class AuditActionUserExported1795000000000 implements MigrationInterface {
+  name = "AuditActionUserExported1795000000000";
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     await takeMigrationLock(queryRunner);
