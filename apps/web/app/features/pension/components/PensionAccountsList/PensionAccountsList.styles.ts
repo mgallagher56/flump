@@ -21,7 +21,9 @@ export const potRow = cva({
   base: {
     display: "flex",
     alignItems: "center",
-    gap: "2",
+    flexWrap: "wrap",
+    columnGap: "2",
+    rowGap: "0",
     py: "1.5",
     "&:not(:last-child)": {
       borderBottomWidth: "1px",
@@ -32,7 +34,13 @@ export const potRow = cva({
 });
 
 export const potIdentity = cva({
-  base: { display: "flex", flexDirection: "column", gap: "0.5", flex: "1", minWidth: 0 },
+  base: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "0.5",
+    flex: "1 1 9rem",
+    minWidth: "9rem",
+  },
 });
 
 export const potLink = cva({
@@ -42,7 +50,7 @@ export const potLink = cva({
     alignSelf: "flex-start",
     textAlign: "left",
     whiteSpace: "normal",
-    overflowWrap: "anywhere",
+    overflowWrap: "break-word",
     p: 0,
     background: "none",
     border: "none",

@@ -2,7 +2,7 @@ import { countFigures } from "@repo/ui/testing";
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { projectPension } from "../../forecast";
-import { ForecastChart } from "./ForecastChart";
+import { evenYearTicks, ForecastChart } from "./ForecastChart";
 
 vi.mock("~/hooks/useFormatCurrency", () => ({
   useFormatCurrency: () => ({
@@ -60,6 +60,12 @@ describe("<ForecastChart />", () => {
     renderChart();
     expect(screen.getByRole("button", { name: /Show data/ })).toBeDefined();
     expect(screen.queryByRole("table")).toBeNull();
+  });
+
+  it("uses even year steps that end on the retirement year, six ticks at most", () => {
+    const years = Array.from({ length: 33 }, (_, i) => 2026 + i);
+    expect(evenYearTicks(years)).toEqual([2028, 2038, 2048, 2058]);
+    expect(evenYearTicks(years.slice(0, 11))).toEqual([2026, 2028, 2030, 2032, 2034, 2036]);
   });
 
   it("draws no chart for fewer than three points", () => {

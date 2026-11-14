@@ -160,7 +160,7 @@ export const SavingsForecast: FC<SavingsForecastProps> = ({
       <SliderField
         format="percent"
         fractionDigits={1}
-        label="Interest rate (AER)"
+        label="Average rate (AER)"
         max={10}
         min={0}
         step={0.1}
@@ -254,7 +254,6 @@ export const SavingsForecast: FC<SavingsForecastProps> = ({
             </TBody>
           </Table>
         }
-        hideTitle
         notEnoughDataText={FORECAST_PROMPT}
         pointCount={result.flat ? 0 : chartData.length}
         summary={
@@ -283,8 +282,8 @@ export const SavingsForecast: FC<SavingsForecastProps> = ({
               <Tooltip formatter={(value) => pounds.format(Number(value) || 0)} />
               <Area
                 dataKey="balance"
-                fill={chartColor("wealth")}
-                fillOpacity={0.12}
+                fill={chartColor("band")}
+                fillOpacity={1}
                 isAnimationActive={false}
                 name="Estimated balance"
                 stroke={chartColor("wealth")}

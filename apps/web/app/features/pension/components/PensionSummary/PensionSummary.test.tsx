@@ -51,7 +51,11 @@ describe("<PensionSummary />", () => {
 
   test("captions carry no figures", () => {
     const { getByText } = customRender(<PensionSummary {...props} />);
-    for (const caption of ["A month, in today's money", "Your State Pension age"]) {
+    for (const caption of [
+      "A month, in today's money",
+      "You and your employer",
+      "Your State Pension age",
+    ]) {
       expect(getByText(caption).textContent).not.toMatch(/£|%|\d/);
     }
   });

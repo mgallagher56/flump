@@ -127,6 +127,8 @@ const restore = () => {
   testProfileData = defaultProfileData;
 };
 
+const openDetails = () =>
+  fireEvent.click(screen.getByRole("button", { name: "Show your details" }));
 const zone = () => screen.getByRole("region", { name: "Model a change to your pension" });
 const slider = (label: string) =>
   within(screen.getByRole("tabpanel")).getByLabelText(`${label} range slider`) as HTMLInputElement;
@@ -164,7 +166,7 @@ describe("PensionContainer", () => {
       expect(cards[0]).toMatch(
         /^Estimated income at retirementEstimate£[\d,]+A month, in today's money$/,
       );
-      expect(cards[1]).toBe("Going in each month£532");
+      expect(cards[1]).toBe("Going in each month£532You and your employer");
       expect(cards[2]).toBe("Retirement age67Your State Pension age");
       const firstView = document.createElement("div");
       firstView.append(
@@ -178,6 +180,9 @@ describe("PensionContainer", () => {
       useFixture(FILLED);
       render(<PensionContainer />);
       const details = screen.getByRole("region", { name: "Your details" });
+      // The saved facts start behind a closed drawer, so they stay out of the first view.
+      expect(details.querySelector("dl")).toBeNull();
+      openDetails();
       const rows = Array.from(details.querySelectorAll("dl > div")).map((r) => r.textContent);
       expect(rows).toEqual([
         "Salary£58,000 a year",
@@ -271,11 +276,16 @@ describe("PensionContainer", () => {
     await waitFor(() => expect(mockUpdateProfile).toHaveBeenCalled());
     const stored = { ...chosen, ...(mockUpdateProfile.mock.calls[0]?.[0] as object) };
     expect(profileFactsFromProfile(stored).isSalarySacrifice).toBe(true);
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "Show your details" })).toBeDefined(),
+    );
+    openDetails();
     expect(screen.getByText("Method").nextElementSibling?.textContent).toBe("Salary sacrifice");
   });
 
   it("reads the contribution method as Not set while the pension facts are the defaults", () => {
     render(<PensionContainer />);
+    openDetails();
     expect(screen.getByText("Method").nextElementSibling?.textContent).toBe("Not set");
     expect(screen.getAllByText(/Assumed: the auto-enrolment minimum/)).toHaveLength(1);
   });
@@ -328,6 +338,7 @@ describe("PensionContainer", () => {
       userProfile: { ...FILLED.userProfile, pensionPercent: 0, pensionEmployerPercent: 0 },
     });
     render(<PensionContainer />);
+    openDetails();
     const details = screen.getByRole("region", { name: "Your details" });
     expect(within(details).getByText("You pay").nextElementSibling?.textContent).toBe(
       "0% of salary",
@@ -434,6 +445,27 @@ describe("PensionContainer", () => {
       expect(Number(slider("Your contribution").value)).toBeGreaterThan(5);
       expect(mockUpdateProfile).not.toHaveBeenCalled();
       expect(mockSubmit).not.toHaveBeenCalled();
+    });
+
+    it("seeds a contribution that lands at £100,000 from the saved profile, whatever the baseline says", async () => {
+      const { calculate100kTaxTrap } = await import("@flump/finance-engine");
+      const { getDefaultStore } = await import("jotai");
+      const { financialBaselineAtom, NO_SALARY_BASELINE } = await import("~/state/baseline.store");
+      // A stale local baseline that disagrees with the saved profile.
+      getDefaultStore().set(financialBaselineAtom, {
+        ...NO_SALARY_BASELINE,
+        annualGrossSalary: 150_000,
+        pensionContributionPct: 20,
+      });
+      saved(110_000, { pensionPercent: 5, pensionEmployerPercent: 4 });
+      render(<PensionContainer />);
+      expect(trapNote()?.textContent).toContain("brings it back to that line.");
+      fireEvent.click(screen.getByRole("button", { name: "Model this contribution" }));
+      const percent = Number(slider("Your contribution").value);
+      const ani = (pct: number) =>
+        calculate100kTaxTrap(110_000, pct, false, "ENGLAND_NI_WALES").adjustedNetIncome;
+      expect(ani(percent)).toBeLessThanOrEqual(100_000);
+      expect(ani(percent - 0.5)).toBeGreaterThan(100_000);
     });
 
     it("labels the region assumption unless the baseline is Scottish", async () => {

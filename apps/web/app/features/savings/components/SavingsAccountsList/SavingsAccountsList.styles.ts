@@ -18,18 +18,61 @@ export const listTitle = cva({
   base: { textStyle: "heading.lg", color: "text.primary", margin: 0 },
 });
 
-/** The name column wraps at 375 so the table never scrolls sideways. */
-export const nameCell = cva({
-  base: { whiteSpace: "normal", minWidth: 0, width: "100%" },
+export const rowList = cva({
+  base: { listStyle: "none", margin: 0, padding: 0 },
 });
 
-/** Balance and actions take only the room they need, so the figure sits beside the icons. */
-export const tightCell = cva({
-  base: { whiteSpace: "nowrap", width: "1%" },
+/** Name and type on the left; balance and actions on the right, wrapping below at 320. */
+export const row = cva({
+  base: {
+    display: "flex",
+    flexWrap: "wrap",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: "2",
+    paddingX: "4",
+    paddingY: "3",
+    minWidth: 0,
+    "&:not(:last-child)": {
+      borderBottomWidth: "1px",
+      borderBottomStyle: "solid",
+      borderColor: "border.subtle",
+    },
+  },
+});
+
+export const rowEnd = cva({
+  base: { display: "flex", alignItems: "center", gap: "2", marginLeft: "auto", flexShrink: 0 },
+});
+
+export const balance = cva({
+  base: { fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap" },
+});
+
+export const isaFooter = cva({
+  base: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "2",
+    paddingX: "4",
+    paddingY: "4",
+    borderTopWidth: "1px",
+    borderTopStyle: "solid",
+    borderColor: "border.subtle",
+  },
+});
+
+export const isaNote = cva({
+  base: {
+    margin: 0,
+    textStyle: "body.sm",
+    color: "text.secondary",
+    fontVariantNumeric: "tabular-nums",
+  },
 });
 
 export const accountMeta = cva({
-  base: { display: "flex", flexDirection: "column", gap: "2px", minWidth: 0 },
+  base: { display: "flex", flexDirection: "column", gap: "2px", minWidth: 0, flex: "1 1 160px" },
 });
 
 export const accountLink = cva({

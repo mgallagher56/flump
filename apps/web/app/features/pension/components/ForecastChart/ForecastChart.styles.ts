@@ -1,12 +1,17 @@
 import { cva } from "@repo/ui/styled-system/css";
 
 export const annotationText = cva({
-  base: { textStyle: "label.md", fontVariantNumeric: "tabular-nums" },
+  base: { textStyle: "label.md", fill: "text.primary", fontVariantNumeric: "tabular-nums" },
+});
+
+/** The small surface chip behind the annotation, so it reads clearly over the area fill. */
+export const annotationChip = cva({
+  base: { fill: "surface.card", stroke: "border.subtle", strokeWidth: "1" },
 });
 
 export const chartWrap = cva({
   base: {
-    height: { base: "130px", md: "240px" },
+    height: { base: "160px", md: "240px" },
     width: "100%",
     minWidth: 0,
     fontVariantNumeric: "tabular-nums",

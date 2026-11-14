@@ -97,6 +97,11 @@ describe("SavingsContainer", () => {
     expect(screen.getByText("Average rate")).toBeDefined();
     expect(screen.getByText("4%")).toBeDefined();
     expect(screen.getByText("ISA allowance used")).toBeDefined();
+    // The ISA bar is a quiet footer of the accounts card, with no second ISA figure.
+    expect(
+      screen.getByTestId("savings-accounts").contains(screen.getByTestId("isa-allowance")),
+    ).toBe(true);
+    expect(container.textContent).not.toContain("unused");
     expect(screen.queryByText("Weighted by balance (AER)")).toBeNull();
     expect(screen.queryByText("Where you stand")).toBeNull();
     expect(screen.queryByText("Milestones")).toBeNull();
@@ -170,7 +175,7 @@ describe("SavingsContainer", () => {
       const before = savedFacts();
       const outcomeBefore = screen.getByTestId("savings-forecast-outcome").textContent;
 
-      fireEvent.change(screen.getByLabelText("Interest rate (AER) range slider"), {
+      fireEvent.change(screen.getByLabelText("Average rate (AER) range slider"), {
         target: { value: "6" },
       });
       fireEvent.change(screen.getByLabelText("Years ahead range slider"), {
@@ -203,9 +208,24 @@ describe("SavingsContainer", () => {
       expect(screen.getAllByText("Illustration, not saved")).toHaveLength(1);
       expect(savedFacts()).toBe(before);
 
+      expect(zone().textContent).toContain("Pay rise from the take-home pay tool:");
       fireEvent.click(screen.getByRole("button", { name: "Remove pay rise" }));
       expect(screen.queryByText(/Pay rise from the take-home pay tool:/)).toBeNull();
       expect(mockNavigate).toHaveBeenCalledWith("/app/savings", { replace: true, state: null });
+      expect(mockSubmit).not.toHaveBeenCalled();
+    });
+
+    it("counts a handed-over pay rise as a change, and Reset clears it", () => {
+      mockLocation.current = { pathname: "/app/savings", hash: "", state: { payRise: 230 } };
+      render(<SavingsContainer />);
+      const reset = screen.getByRole("button", { name: "Reset to saved figures" });
+      expect(reset.hasAttribute("disabled")).toBe(false);
+      fireEvent.click(reset);
+      expect(screen.queryByText(/Pay rise from the take-home pay tool:/)).toBeNull();
+      expect(mockNavigate).toHaveBeenCalledWith("/app/savings", { replace: true, state: null });
+      expect(
+        screen.getByRole("button", { name: "Reset to saved figures" }).hasAttribute("disabled"),
+      ).toBe(true);
       expect(mockSubmit).not.toHaveBeenCalled();
     });
 

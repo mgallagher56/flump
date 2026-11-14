@@ -307,28 +307,26 @@ export const PensionContainer: FC = () => {
     document.getElementById(PENSION_SCENARIO_ZONE_ID)?.scrollIntoView?.({ block: "start" });
   }, [scrollToZone]);
 
-  const effectiveSalary =
-    baseline.annualGrossSalary > 0 ? baseline.annualGrossSalary : annualSalary;
-  const effectiveEmployeePct =
-    baseline.pensionContributionPct > 0 ? baseline.pensionContributionPct : employeePercent;
-  const effectiveIsSalarySacrifice = baseline.isSalarySacrifice ?? isSalarySacrifice;
+  // One source for the £100,000 line and its "Model this contribution" seed: the saved profile,
+  // the same figures the zone projects from, so the seeded contribution lands at £100,000. Only
+  // the region comes from the baseline.
 
   const knownRegion = getKnownTrapRegion(baseline);
   const taxTrap = useMemo(() => {
     return calculate100kTaxTrap(
-      effectiveSalary,
-      effectiveEmployeePct,
-      effectiveIsSalarySacrifice,
+      annualSalary,
+      employeePercent,
+      isSalarySacrifice,
       knownRegion ?? "ENGLAND_NI_WALES",
     );
-  }, [effectiveSalary, effectiveEmployeePct, effectiveIsSalarySacrifice, knownRegion]);
-  // Saved baseline and profile figures only (adjusted net income after the saved contribution).
+  }, [annualSalary, employeePercent, isSalarySacrifice, knownRegion]);
+  // Saved profile figures only (adjusted net income after the saved contribution).
   const showTrapNote = isInTaxTrapAlertBand(taxTrap.adjustedNetIncome);
 
   // Seeds the zone's contribution input only. Nothing is saved (advice boundary R5).
   const handleModelTaxTrapContribution = (contributionReq: number) => {
-    if (!effectiveSalary || effectiveSalary <= 0) return;
-    const needed = employeePercent + (Math.max(0, contributionReq) / effectiveSalary) * 100;
+    if (annualSalary <= 0) return;
+    const needed = employeePercent + (Math.max(0, contributionReq) / annualSalary) * 100;
     // Rounded up to the slider's half-percent step, so the illustration reaches £100,000.
     const percent = Math.min(MAX_CONTRIBUTION_PERCENT, Math.ceil(needed * 2) / 2);
     scenario.set("contributionPercent", percent);
@@ -366,7 +364,11 @@ export const PensionContainer: FC = () => {
 
   return (
     <PageBody>
-      <PageHeader actions={addPotButton} title="Your pension" />
+      <PageHeader
+        actions={addPotButton}
+        subtitle="Your pots, what goes in each month and what it could pay at retirement."
+        title="Your pension"
+      />
 
       <PensionSummary
         estimatedMonthlyIncome={estimateKnown ? savedResult.monthlyRetirementIncome : null}
@@ -422,8 +424,8 @@ export const PensionContainer: FC = () => {
           {taxTrap.isInTaxTrap && (
             <p className={trapText}>
               In this estimate, an extra contribution of{" "}
-              {formatCurrency(taxTrap.contributionRequiredToEscapeGbp)} a year brings it down to the
-              start of the band.{" "}
+              {formatCurrency(taxTrap.contributionRequiredToEscapeGbp)} a year brings it back to
+              that line.{" "}
               <Button
                 size="sm"
                 type="button"

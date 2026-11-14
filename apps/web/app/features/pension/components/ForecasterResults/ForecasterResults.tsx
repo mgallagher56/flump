@@ -5,7 +5,6 @@ import {
   allowanceNote,
   outcome,
   outcomeLabel,
-  outcomeSuffix,
   outcomeSupport,
   outcomeSupportItem,
   outcomeValue,
@@ -25,8 +24,10 @@ export interface ForecasterResultsProps {
 const money = (n: number) => formatMoney(n, { fractionDigits: 0 }).text;
 
 /**
- * The retirement tool's outcome (E16 P1.7): one figure (estimated income a month) and two
- * supporting figures (the pot, and the change against the saved figures). Never the hero tone.
+ * The retirement tool's outcome (E16 P1.7): one figure (the estimated pot at retirement) and two
+ * supporting figures (the tax-free lump sum, and the change in monthly income against the saved
+ * figures). The saved monthly income is the page's first KPI, so it is never repeated here.
+ * Never the hero tone.
  */
 export const ForecasterResults: FC<ForecasterResultsProps> = ({
   result,
@@ -39,19 +40,17 @@ export const ForecasterResults: FC<ForecasterResultsProps> = ({
     <div className={outcome()} data-testid="pension-scenario-outcome" id="pension-scenario-outcome">
       <p className={outcomeLabel()}>
         {inTodaysMoney
-          ? "Estimated income at retirement"
-          : "Estimated income at retirement, before inflation"}
+          ? `Estimated pot ${whenLabel}`
+          : `Estimated pot ${whenLabel}, before inflation`}
       </p>
-      <p className={outcomeValue()}>
-        {money(result.monthlyRetirementIncome)} <span className={outcomeSuffix()}>a month</span>
-      </p>
+      <p className={outcomeValue()}>{money(result.finalBalance)}</p>
       <dl className={outcomeSupport()}>
         <div className={outcomeSupportItem()}>
-          <dt>Pot {whenLabel}</dt>
-          <dd>{money(result.finalBalance)}</dd>
+          <dt>Tax-free lump sum</dt>
+          <dd>{money(result.taxFreeLumpSum)}</dd>
         </div>
         <div className={outcomeSupportItem()}>
-          <dt>Against your saved figures</dt>
+          <dt>Change in monthly income</dt>
           <dd>
             {change === 0
               ? "No change"

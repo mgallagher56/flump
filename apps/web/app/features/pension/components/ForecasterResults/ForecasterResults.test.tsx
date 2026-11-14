@@ -26,8 +26,10 @@ describe("<ForecasterResults />", () => {
     const { container } = render(
       <ForecasterResults inTodaysMoney result={saved} savedResult={saved} whenLabel="at 67" />,
     );
-    expect(screen.getByText("Estimated income at retirement")).toBeDefined();
-    expect(screen.getByText("Pot at 67")).toBeDefined();
+    expect(screen.getByText("Estimated pot at 67")).toBeDefined();
+    expect(screen.getByText("Tax-free lump sum")).toBeDefined();
+    // The saved monthly income is the page's KPI: the outcome never repeats it.
+    expect(document.body.textContent).not.toContain("a month");
     expect(screen.getByText("No change")).toBeDefined();
     expect(screen.queryByText(/PLSA|standard/i)).toBeNull();
     expectPageRules(container, { maxFigures: 2 });
@@ -37,7 +39,7 @@ describe("<ForecasterResults />", () => {
     const saved = projectPension(input);
     const more = projectPension({ ...input, employeePercent: 12 });
     render(<ForecasterResults inTodaysMoney result={more} savedResult={saved} whenLabel="at 67" />);
-    const change = screen.getByText("Against your saved figures").nextElementSibling;
+    const change = screen.getByText("Change in monthly income").nextElementSibling;
     expect(change?.textContent).toMatch(/^\+£[\d,]+ a month$/);
   });
 
