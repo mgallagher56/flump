@@ -1,9 +1,8 @@
 import { expect, test } from "@playwright/test";
 
-test("sandbox navigation marks locked items with 'Sign up to open'", async ({ page }) => {
+test("sandbox section cards are locked with an icon and no inline link", async ({ page }) => {
   await page.goto("/sandbox");
-  const locked = page.getByRole("button", { name: /Sign up to open/ }).first();
-  await expect(locked).toBeVisible();
-  await expect(locked).toHaveAttribute("aria-disabled", "true");
-  await expect(locked.getByText("Sign up to open")).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: "Example figures" })).toBeVisible();
+  await expect(page.getByRole("img", { name: "Locked in this example" }).first()).toBeVisible();
+  await expect(page.getByRole("button", { name: "Sign up", exact: true })).toHaveCount(2);
 });

@@ -38,7 +38,13 @@ import { SavingsWidget } from "../SavingsWidget";
 import { SetupChecklist, type SetupChecklistProps } from "../SetupChecklist";
 import { TaxWidget, taxCardShowsEstimate } from "../TaxWidget";
 import { WidgetVisibilityPanel } from "../WidgetVisibilityPanel";
-import { sectionHeading, sectionsRegion, showHideButton, widgetGrid } from "./HomeDashboard.styles";
+import {
+  housekeepingGroup,
+  sectionHeading,
+  sectionsRegion,
+  showHideButton,
+  widgetGrid,
+} from "./HomeDashboard.styles";
 
 export interface HomeDashboardProps {
   user?: unknown;
@@ -303,8 +309,12 @@ export const HomeDashboard: FC<HomeDashboardProps> = ({
         totalOwed={totalOwed}
       />
 
-      {isSample ? null : <SetupChecklist {...checklistProps} enabledPages={enabledPages} />}
-      {!isSample && checkIn && hasAccounts ? <MonthlyCheckInCard {...checkIn} /> : null}
+      {isSample ? null : (
+        <div className={housekeepingGroup()}>
+          <SetupChecklist {...checklistProps} enabledPages={enabledPages} />
+          {checkIn && hasAccounts ? <MonthlyCheckInCard {...checkIn} /> : null}
+        </div>
+      )}
 
       <section aria-labelledby="dashboard-sections-title" className={sectionsRegion()}>
         <h2 className={sectionHeading()} id="dashboard-sections-title">
