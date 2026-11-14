@@ -43,8 +43,9 @@ export const SecurityTab: FC<SecurityTabProps> = ({ email }) => {
     setPasswordSuccess(null);
     setSendingResetEmail(true);
     try {
-      const res = await sendPasswordResetEmail();
-      setPasswordSuccess(res.message || "We have emailed you a link to choose a new password.");
+      // Fixed copy on success too: the server's message is never shown (COPY-AUDIT PR 9).
+      await sendPasswordResetEmail();
+      setPasswordSuccess("We have emailed you a link to choose a new password.");
     } catch {
       // Never a raw server message (COPY-AUDIT PR 9).
       setPasswordError("We could not send the email. Your password is unchanged. Try again.");

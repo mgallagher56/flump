@@ -413,9 +413,15 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
         ? isConnecting
           ? "Connecting"
           : bankAuthType === "token"
-            ? `Connect ${selectedBankObj?.name || "bank"}`
-            : `Sign in at ${selectedBankObj?.name || "bank"}`
-        : `Add ${selectedBankObj?.name} by hand`
+            ? selectedBankObj?.name
+              ? `Connect ${selectedBankObj.name}`
+              : "Connect a bank"
+            : selectedBankObj?.name
+              ? `Sign in at ${selectedBankObj.name}`
+              : "Sign in at your bank"
+        : selectedBankObj?.name
+          ? `Add ${selectedBankObj.name} by hand`
+          : "Add by hand"
       : t("addAccount");
 
   const isConfirmDisabled = useMemo(() => {

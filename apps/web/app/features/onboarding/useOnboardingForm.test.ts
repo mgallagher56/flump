@@ -1,5 +1,6 @@
 import { act, renderHook } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
+import { INITIAL_VALUES } from "./types";
 import { stepperStates, useOnboardingForm } from "./useOnboardingForm";
 
 describe("useOnboardingForm", () => {
@@ -50,6 +51,26 @@ describe("useOnboardingForm", () => {
     expect(result.current.values.propertyValue).toBe(300000);
     act(() => result.current.setHousingStatus("renting"));
     expect(result.current.values.propertyValue).toBeNull();
+  });
+});
+
+describe("useOnboardingForm answers", () => {
+  it("clears the monthly housing amount when the housing answer changes", () => {
+    const { result } = renderHook(() =>
+      useOnboardingForm({ ...INITIAL_VALUES, housingStatus: "renting", monthlyHousingCost: 950 }),
+    );
+    act(() => result.current.setHousingStatus("renting"));
+    expect(result.current.values.monthlyHousingCost).toBe(950);
+    act(() => result.current.setHousingStatus("mortgage"));
+    expect(result.current.values.monthlyHousingCost).toBeNull();
+  });
+
+  it("marks how the person earns as answered only once it is set", () => {
+    const { result } = renderHook(() => useOnboardingForm());
+    act(() => result.current.update({ grossSalary: 30000 }));
+    expect(result.current.employmentAnswered).toBe(false);
+    act(() => result.current.update({ employmentType: "employed" }));
+    expect(result.current.employmentAnswered).toBe(true);
   });
 });
 

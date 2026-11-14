@@ -6,9 +6,9 @@ import {
   FormField,
   Icon,
   Select,
+  Switch,
   TextInput,
 } from "@repo/ui";
-import { cx } from "@repo/ui/styled-system/css";
 import { Camera, Trash2 } from "lucide-react";
 import { type ChangeEvent, type FC, type MouseEvent, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
@@ -35,10 +35,6 @@ import {
   avatarRow,
   avatarText,
   avatarTitle,
-  checkHelp,
-  checkRow,
-  checkText,
-  checkTitle,
   linkRow,
 } from "./ProfileTab.styles";
 
@@ -179,10 +175,13 @@ export const ProfileTab: FC<ProfileTabProps> = ({ profile, user, onDirtyChange }
       if (fileInputRef.current) fileInputRef.current.value = "";
       return;
     }
+    const previous = avatarUrl;
     try {
       setAvatarUrl(dataUrl);
       await updateProfile({ avatarUrl: dataUrl });
     } catch {
+      // Show the picture that is still saved, not the one that failed.
+      setAvatarUrl(previous);
       setImageUploadError("We could not save your picture. Try again.");
     } finally {
       setUploadingImage(false);
@@ -193,10 +192,13 @@ export const ProfileTab: FC<ProfileTabProps> = ({ profile, user, onDirtyChange }
   const handleRemoveImage = async () => {
     setUploadingImage(true);
     setImageUploadError(null);
+    const previous = avatarUrl;
     try {
       setAvatarUrl(null);
       await updateProfile({ avatarUrl: null });
     } catch {
+      // The picture is still saved, so keep showing it.
+      setAvatarUrl(previous);
       setImageUploadError(
         "We could not delete your profile picture. It is still in use. Try again.",
       );
@@ -465,23 +467,15 @@ export const ProfileTab: FC<ProfileTabProps> = ({ profile, user, onDirtyChange }
         <h2 className={sectionHeading()} id="modules-heading">
           Sections you use
         </h2>
-        <label className={cx(checkRow())} htmlFor="self-assessment-module-toggle">
-          <input
-            checked={selfAssessmentOn}
-            data-testid="self-assessment-module-toggle"
-            disabled={moduleSaving}
-            id="self-assessment-module-toggle"
-            type="checkbox"
-            onChange={(e) => handleToggleSelfAssessment(e.target.checked)}
-          />
-          <span className={checkText()}>
-            <span className={checkTitle()}>Self Assessment</span>
-            <span className={checkHelp()}>
-              Income and expense records by tax year, for self-employed or rental income. Adds a tax
-              page to your menu and dashboard. This is saved straight away.
-            </span>
-          </span>
-        </label>
+        <Switch
+          checked={selfAssessmentOn}
+          data-testid="self-assessment-module-toggle"
+          disabled={moduleSaving}
+          hint="Income and expense records by tax year, for self-employed or rental income. Adds a tax page to your menu and dashboard. This is saved straight away."
+          id="self-assessment-module-toggle"
+          label="Self Assessment"
+          onChange={(e) => handleToggleSelfAssessment(e.target.checked)}
+        />
         {moduleError ? (
           <p
             className={statusText({ tone: "danger" })}

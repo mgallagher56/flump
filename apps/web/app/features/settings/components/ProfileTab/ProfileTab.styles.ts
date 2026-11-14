@@ -31,28 +31,6 @@ export const avatarActions = cva({
   base: { display: "flex", alignItems: "center", flexWrap: "wrap", gap: "2", paddingTop: "2" },
 });
 
-export const checkRow = cva({
-  base: {
-    display: "flex",
-    alignItems: "flex-start",
-    gap: "3",
-    cursor: "pointer",
-    "& input": { marginTop: "1", accentColor: "primary" },
-  },
-});
-
-export const checkText = cva({
-  base: { display: "flex", flexDirection: "column", gap: "1" },
-});
-
-export const checkTitle = cva({
-  base: { textStyle: "label.md", color: "text.primary" },
-});
-
-export const checkHelp = cva({
-  base: { textStyle: "body.sm", color: "text.muted" },
-});
-
 export const linkRow = cva({
   base: { display: "flex", flexWrap: "wrap", gap: "3" },
 });

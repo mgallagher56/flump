@@ -21,8 +21,14 @@ export function useOnboardingForm(initial: OnboardingValues = INITIAL_VALUES) {
    * mark the missing fields. Any other move clears it.
    */
   const [showMissing, setShowMissing] = useState(false);
+  /**
+   * True once the person (or seeded data) set how they earn. The field always holds a value, so
+   * "Save and exit" uses this to avoid overwriting a saved answer with the default.
+   */
+  const [employmentAnswered, setEmploymentAnswered] = useState(false);
 
   const update = useCallback((patch: Partial<OnboardingValues>) => {
+    if ("employmentType" in patch) setEmploymentAnswered(true);
     setValues((current) => ({ ...current, ...patch }));
   }, []);
 
@@ -30,6 +36,9 @@ export function useOnboardingForm(initial: OnboardingValues = INITIAL_VALUES) {
     setValues((current) => ({
       ...current,
       housingStatus,
+      // A new answer starts with no amount, so rent never carries over into a mortgage payment.
+      monthlyHousingCost:
+        current.housingStatus === housingStatus ? current.monthlyHousingCost : null,
       // Only a mortgage has a balance; only a home the person owns has a value to give.
       mortgageBalance: housingStatus === "mortgage" ? current.mortgageBalance : null,
       propertyValue: ownsHome(housingStatus) ? current.propertyValue : null,
@@ -71,6 +80,7 @@ export function useOnboardingForm(initial: OnboardingValues = INITIAL_VALUES) {
     update,
     setValues,
     setHousingStatus,
+    employmentAnswered,
     step,
     outcomes,
     showMissing,

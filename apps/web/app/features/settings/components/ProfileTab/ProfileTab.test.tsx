@@ -55,6 +55,26 @@ describe("<ProfileTab />", () => {
     );
   });
 
+  it("puts the saved picture back when the upload fails to save", async () => {
+    vi.spyOn(avatarUtils, "processImageFile").mockResolvedValueOnce("data:image/jpeg;base64,new");
+    mockUpdateProfile.mockRejectedValueOnce(new Error("boom"));
+    render(<ProfileTab profile={DEFAULT_PROFILE} />);
+    const file = new File(["x"], "avatar.png", { type: "image/png" });
+    fireEvent.change(screen.getByTestId("profile-picture-input"), { target: { files: [file] } });
+    await screen.findByText("We could not save your picture. Try again.");
+    expect(screen.queryByTestId("user-avatar-image")).toBeNull();
+    expect(screen.getByTestId("user-avatar-fallback")).toBeDefined();
+  });
+
+  it("keeps showing the picture when removing it fails to save", async () => {
+    mockUpdateProfile.mockRejectedValueOnce(new Error("boom"));
+    render(<ProfileTab profile={{ ...DEFAULT_PROFILE, avatarUrl: "data:image/jpeg;base64,e" }} />);
+    fireEvent.click(screen.getByTestId("remove-picture-button"));
+    await screen.findByText(/We could not delete your profile picture/);
+    expect(screen.getByTestId("user-avatar-image")).toBeDefined();
+    expect(screen.getByTestId("remove-picture-button")).toBeDefined();
+  });
+
   it("has no display name field, no country or currency, and no link back to profile", () => {
     render(<ProfileTab profile={DEFAULT_PROFILE} />);
     expect(screen.queryByLabelText(/display name/i)).toBeNull();
@@ -198,7 +218,7 @@ describe("<ProfileTab />", () => {
 
   it("opts in to the Self Assessment module straight away, without the form save", async () => {
     render(<ProfileTab profile={DEFAULT_PROFILE} />);
-    const toggle = screen.getByTestId("self-assessment-module-toggle") as HTMLInputElement;
+    const toggle = screen.getByRole("switch", { name: "Self Assessment" }) as HTMLInputElement;
     expect(toggle.checked).toBe(false);
     fireEvent.click(toggle);
     await waitFor(() =>

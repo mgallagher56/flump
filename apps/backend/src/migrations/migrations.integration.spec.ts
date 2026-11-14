@@ -8,6 +8,7 @@ import { discoverMigrations, type MigrationClass } from "../testing/discoverMigr
 import { AccountDetailsUserMonthIndex1794357300000 } from "./AccountDetailsUserMonthIndex1794357300000";
 import { AddAccountDeletionTombstones1794622492000 } from "./AddAccountDeletionTombstones1794622492000";
 import { AddAccountStudentLoanPlanAndCurrencyDefault1794355800000 } from "./AddAccountStudentLoanPlanAndCurrencyDefault1794355800000";
+import { AddLivingWithFamilyHousingStatus1794700000000 } from "./AddLivingWithFamilyHousingStatus1794700000000";
 import { AddMortgageTermColumns1794355600000 } from "./AddMortgageTermColumns1794355600000";
 import { AddProfileFacts1794355723000 } from "./AddProfileFacts1794355723000";
 import { AddRateLimitBuckets1794632012000 } from "./AddRateLimitBuckets1794632012000";
@@ -1464,6 +1465,61 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
       expect(await tables()).not.toContain("idempotency_keys");
       expect(await accountColumns()).not.toContain("updated_at");
       expect(await ds.query("SELECT name FROM accounts")).toEqual([{ name: "Before" }]);
+    });
+  });
+
+  describe("AddLivingWithFamilyHousingStatus1794700000000 (E16 PR 9)", () => {
+    const housing = async (): Promise<unknown[]> =>
+      ds.query(
+        "SELECT user_id, housing_status, monthly_housing_cost::float AS cost FROM user_profiles ORDER BY user_id",
+      );
+
+    it("allows living with family and still rejects values outside the list", async () => {
+      await ds.runMigrations();
+      await ds.query(
+        "INSERT INTO user_profiles (user_id, housing_status) VALUES ('u1', 'living_with_family')",
+      );
+      await expect(
+        ds.query("INSERT INTO user_profiles (user_id, housing_status) VALUES ('u2', 'castle')"),
+      ).rejects.toThrow(/CHK_user_profiles_housing_status/);
+    });
+
+    it("down sets living with family to not answered, keeps the amount and restores the old check", async () => {
+      await ds.runMigrations();
+      await ds.query(
+        `INSERT INTO user_profiles (user_id, housing_status, monthly_housing_cost)
+         VALUES ('a', 'living_with_family', 150), ('b', 'renting', 900), ('c', NULL, NULL)`,
+      );
+
+      await runMigrationDown(new AddLivingWithFamilyHousingStatus1794700000000());
+
+      expect(await housing()).toEqual([
+        { user_id: "a", housing_status: null, cost: 150 },
+        { user_id: "b", housing_status: "renting", cost: 900 },
+        { user_id: "c", housing_status: null, cost: null },
+      ]);
+      await expect(
+        ds.query(
+          "INSERT INTO user_profiles (user_id, housing_status) VALUES ('d', 'living_with_family')",
+        ),
+      ).rejects.toThrow(/CHK_user_profiles_housing_status/);
+      await ds.query(
+        "INSERT INTO user_profiles (user_id, housing_status) VALUES ('e', 'mortgage')",
+      );
+    });
+
+    it("is idempotent: up runs twice, and again after down", async () => {
+      await ds.runMigrations();
+      await expect(
+        runUpInTransaction(new AddLivingWithFamilyHousingStatus1794700000000()),
+      ).resolves.toBe(undefined);
+      await runMigrationDown(new AddLivingWithFamilyHousingStatus1794700000000());
+      await expect(
+        runUpInTransaction(new AddLivingWithFamilyHousingStatus1794700000000()),
+      ).resolves.toBe(undefined);
+      await ds.query(
+        "INSERT INTO user_profiles (user_id, housing_status) VALUES ('u1', 'living_with_family')",
+      );
     });
   });
 });

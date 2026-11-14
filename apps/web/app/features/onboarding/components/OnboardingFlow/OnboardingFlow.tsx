@@ -41,7 +41,7 @@ export const OnboardingFlow: FC<OnboardingFlowProps> = ({
   const modules = inferModules(values);
   const { finish, isSubmitting, error, saveState } = useFinishOnboarding(values, summary);
   const seed = useSeedHydration(form.update);
-  const exit = useSaveAndExit(values);
+  const exit = useSaveAndExit(values, form.employmentAnswered);
   const [hasMoved, setHasMoved] = useState(false);
   const moved =
     <A extends unknown[]>(fn: (...args: A) => void) =>

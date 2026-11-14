@@ -12,9 +12,16 @@ export const SAVE_AND_EXIT_ERROR =
  * The profile facts "Save and exit" keeps: only answers the person gave, and never
  * `onboardingCompleted`, so setup carries on next time. Balances are saved as accounts only by
  * Finish (the profile has no field for them), so they are not part of the draft.
+ *
+ * `employmentType` always has a value in the form (it defaults to employed), so it is sent only
+ * when the person answered it: an untouched step must not overwrite a saved answer such as "other".
  */
-export function draftFromValues(values: OnboardingValues): UserProfileUpdate {
-  const draft: UserProfileUpdate = { employmentType: values.employmentType };
+export function draftFromValues(
+  values: OnboardingValues,
+  { employmentAnswered = false }: { employmentAnswered?: boolean } = {},
+): UserProfileUpdate {
+  const draft: UserProfileUpdate = {};
+  if (employmentAnswered) draft.employmentType = values.employmentType;
   const birthYear = birthYearFromAge(values.age);
   if (birthYear !== undefined) draft.birthYear = birthYear;
   if (values.taxRegion) draft.taxRegion = values.taxRegion;

@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import mockUser from "__mocks__/user";
-import { createRoutesStub, data, Link } from "react-router";
+import { createRoutesStub, data, Link, Outlet } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // The global test setup stubs parts of react-router; the root boundary needs the real router.
@@ -23,6 +23,10 @@ const NullFallback = () => null;
 
 function ThrowingPage(): never {
   throw new Error("render failed");
+}
+
+function RootOutlet() {
+  return <Outlet />;
 }
 
 function GoSlowLink() {
@@ -94,6 +98,26 @@ describe("root ErrorBoundary", () => {
     await screen.findByRole("heading", { name: "We could not load this page" });
     expect(primaryNavHrefs()).toContain("/app/accounts");
     expect(screen.queryByRole("link", { name: "logIn" })).toBeNull();
+  });
+
+  it("keeps the signed-in header when a child route without its own boundary throws", async () => {
+    const Stub = createRoutesStub([
+      {
+        id: "root",
+        path: "/",
+        loader: rootData(mockUser),
+        Component: RootOutlet,
+        ErrorBoundary,
+        HydrateFallback: NullFallback,
+        children: [{ path: "broken", Component: ThrowingPage }],
+      },
+    ]);
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    render(<Stub initialEntries={["/broken"]} />, { container: document });
+    await screen.findByRole("heading", { name: "We could not load this page" });
+    expect(primaryNavHrefs()).toContain("/app/accounts");
+    expect(screen.queryByRole("link", { name: "logIn" })).toBeNull();
+    expect(screen.getByRole("button", { name: "accountMenu" })).toBeDefined();
   });
 
   it("renders the unknown state for a plain Error without leaking its message", async () => {
