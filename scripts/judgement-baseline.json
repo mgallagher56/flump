@@ -1,6 +1,5 @@
 {
-  "apps/web/app/components/dialogs/addEditAccountsDialog/AddEditAccountsDialog.styles.ts": 3,
-  "apps/web/app/components/dialogs/addEditAccountsDialog/AddEditAccountsDialog.tsx": 2,
+  "apps/web/app/components/dialogs/addEditAccountsDialog/AddEditAccountsDialog.styles.ts": 5,
   "apps/web/app/components/dialogs/connectBankWizard/ConnectBankWizard.styles.ts": 4,
   "apps/web/app/components/dialogs/connectBankWizard/ConnectBankWizard.tsx": 1,
   "apps/web/app/containers/debt/DebtContainer.styles.ts": 3,
