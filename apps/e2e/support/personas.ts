@@ -96,7 +96,8 @@ export const RENTER: Persona = {
       type: "Pension",
       balance: 9000,
       interestRate: 5,
-      monthlyContribution: 240,
+      // No monthlyContribution: the salary percentages above already pay into this pot, and the
+      // pension page adds a pot's own contribution on top (it would count twice).
       monthlyChange: 260,
     },
     {
@@ -191,7 +192,8 @@ export const HOMEOWNER: Persona = {
       type: "Pension",
       balance: 96000,
       interestRate: 5,
-      monthlyContribution: 630,
+      // No monthlyContribution: the salary percentages above already pay into this pot, and the
+      // pension page adds a pot's own contribution on top (it would count twice).
       monthlyChange: 900,
     },
     {
