@@ -92,7 +92,8 @@ differ, the `visual-report` artifact holds the expected, actual and diff images 
 report.
 
 Locally, `bun run test:visual` (from the repo root, after `bun run build`) runs the layout checks
-and compares against the committed baselines. Expect pixel differences on macOS; use it for the
+and compares against the committed baselines. Like the smoke suite it reuses any server already listening
+on its ports, which may be another checkout's build: pick free `E2E_*_PORT` values if unsure. Expect pixel differences on macOS; use it for the
 layout checks and to try new routes, and let CI produce the images.
 
 ### Making it required
