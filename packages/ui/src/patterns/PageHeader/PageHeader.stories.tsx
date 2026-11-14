@@ -118,3 +118,18 @@ export const PhoneTitleAndActionDark: Story = {
   ...PhoneTitleAndAction,
   globals: { theme: "dark" },
 };
+
+/** Round 4: a long title on a phone wraps inside the screen, and the action moves below it. */
+export const PhoneLongTitle: Story = {
+  args: {
+    title: "Pension contributions and income above £100,000",
+    description: "How pension contributions change tax on income over £100,000.",
+    actions: <Button variant="outline">Edit details</Button>,
+  },
+  parameters: { viewport: { defaultViewport: "mobile1" } },
+  play: async ({ canvasElement }) => {
+    const header = canvasElement.querySelector("header") as HTMLElement;
+    // Nothing runs off the side: the header is no wider than its container.
+    await expect(header.scrollWidth <= header.clientWidth + 1).toBe(true);
+  },
+};

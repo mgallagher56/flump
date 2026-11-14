@@ -76,9 +76,12 @@ describe("RunwayCalculator", () => {
     // £2,000 + £8,000 cash over £1,500 essentials = 6.7 months. Investments are not cash.
     expect(outcomeFigure()).toBe("6.7 months");
     expect(supporting("Money to draw on")).toBe("£10,000");
-    // One supporting figure: the essential spending line is gone, and the zone has no basis line.
+    // One supporting figure: the essential spending line is gone. The basis line names what the
+    // zone starts from, without repeating a figure (UX-GUIDELINES S5).
     expect(results().queryByText("Essential spending to cover each month")).toBeNull();
-    expect(screen.queryByText(/Starting from your/)).toBeNull();
+    expect(screen.getByTestId("runway-basis").textContent).toBe(
+      "Starting from your saved budget and accounts.",
+    );
     // Pension and mortgage accounts are never offered.
     openMoreOptions();
     expect(screen.getByRole("switch", { name: "Main Current" })).toBeDefined();

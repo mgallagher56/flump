@@ -142,6 +142,7 @@ export const BudgetCategoryList: FC<BudgetCategoryListProps> = ({
                   className={slots.row}
                   data-testid={`budget-category-${row.category}`}
                   id={`budget-category-${slug}`}
+                  sampleAriaLabel={`${row.label}, sign up to open the ${link.page}`}
                   sampleLabel={identity(null)}
                   to={link.to}
                 >

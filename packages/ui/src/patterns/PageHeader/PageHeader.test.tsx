@@ -49,7 +49,11 @@ describe("PageHeader Pattern", () => {
     expect(description.className).toContain("order_3");
     expect(description.className).toContain("flex-b_100%");
     // The h1 grows but never shrinks, so actions that do not fit wrap instead of crushing it.
-    expect(screen.getByRole("heading", { level: 1 }).className).toContain("flex_1_0_auto");
+    const h1 = screen.getByRole("heading", { level: 1 }).className;
+    expect(h1).toContain("flex_1_1_auto");
+    // A long title wraps rather than running off a phone screen.
+    expect(h1).toContain("min-w_0");
+    expect(h1).toContain("ov-wrap_anywhere");
   });
 
   it("omits the aside when there is no badge or action", () => {
