@@ -67,13 +67,13 @@ const MCP_TOOLS: ToolCatalogEntry[] = [
   {
     name: "get_balance_history",
     description:
-      "Month-end balances recorded in Flump between two months, per account, per category or as a net worth total, monthly, quarterly or yearly.",
+      "Month-end balances recorded in Flump between two months, per account, per category or as a net worth total, monthly, quarterly or yearly. Not yet available in the local preview.",
     samplePrompt: "How has my net worth changed over the last 12 months?",
   },
   {
     name: "get_data_coverage",
     description:
-      "Shows which months have a recorded balance for each account, and where the gaps are.",
+      "Shows which months have a recorded balance for each account, and where the gaps are. Not yet available in the local preview.",
     samplePrompt: "Which months are missing from my savings account history?",
   },
   {
@@ -85,7 +85,7 @@ const MCP_TOOLS: ToolCatalogEntry[] = [
   {
     name: "simulate_debt_payoff",
     description:
-      "Sets the avalanche (highest APR first) and snowball (smallest balance first) orders side by side for your recorded debts, with an optional extra monthly amount.",
+      "Simulates paying off your recorded debts under avalanche (highest APR first) and snowball (smallest balance first), with an optional extra monthly amount. Debts with no recorded APR are left out, not guessed.",
     samplePrompt: "What is the total interest under avalanche and under snowball for my debts?",
   },
   {
@@ -97,7 +97,7 @@ const MCP_TOOLS: ToolCatalogEntry[] = [
   {
     name: "get_tax_year_position",
     description:
-      "Your UK tax position for a tax year from your saved salary and tax records: income by source, the income tax bands for your region, National Insurance, and where income sits against the Personal Allowance taper.",
+      "Your UK tax position for a tax year from your saved salary and tax records: income by source, the income tax bands for your region, Class 4 National Insurance on self-employed profit, and where income sits against the Personal Allowance taper.",
     samplePrompt: "Which income tax band does my salary reach this tax year?",
   },
   {

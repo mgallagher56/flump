@@ -73,8 +73,8 @@ export const McpSpotlightSection: FC = () => {
               <div className={bulletRow()}>
                 <FiCheckCircle className={bulletIcon({ tone: "positive" })} size={18} />
                 <span>
-                  <strong>Deterministic engine:</strong> UK tax bands, National Insurance, debt
-                  payoff and net worth projections.
+                  <strong>Deterministic engine:</strong> UK tax bands, debt payoff and net worth
+                  projections.
                 </span>
               </div>
               <div className={bulletRow()}>
@@ -119,7 +119,7 @@ export const McpSpotlightSection: FC = () => {
 
               <div className={terminalPromptLine()}>
                 &gt; "Which income tax band does my salary reach this tax year, and how much income
-                tax and National Insurance is that?"
+                tax is that?"
               </div>
 
               <div className={terminalToolLine()}>
@@ -168,9 +168,8 @@ export const McpSpotlightSection: FC = () => {
                 &nbsp;&nbsp;&nbsp;&nbsp;<span className={payloadKey()}>"incomeTaxGbp":</span>{" "}
                 <span className={payloadNum()}>5286</span>,
                 <br />
-                &nbsp;&nbsp;&nbsp;&nbsp;
-                <span className={payloadKey()}>"nationalInsuranceGbp":</span>{" "}
-                <span className={payloadNum()}>2114.4</span>
+                &nbsp;&nbsp;&nbsp;&nbsp;<span className={payloadKey()}>"payeTaxGbp":</span>{" "}
+                <span className={payloadNum()}>5286</span>
                 <br />
                 &nbsp;&nbsp;<span className={payloadBracket()}>{"}"}</span>
                 <br />
@@ -181,8 +180,8 @@ export const McpSpotlightSection: FC = () => {
                 <strong className={terminalSummaryStrong()}>Example output:</strong> for an
                 illustrative £39,000 salary recorded for 2026/27 in England, Wales or Northern
                 Ireland, income sits below the Personal Allowance taper and its top slice is in the
-                basic rate band. Estimated income tax is £5,286 and National Insurance £2,114. These
-                figures are an unverified example, not advice.
+                basic rate band. Estimated income tax is £5,286. These figures are an unverified
+                example, not advice.
               </div>
             </div>
           </div>

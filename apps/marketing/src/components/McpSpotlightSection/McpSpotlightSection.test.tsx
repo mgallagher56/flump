@@ -19,8 +19,8 @@ describe("McpSpotlightSection", () => {
     expect(screen.getByText(/Setup guide coming soon/i)).toBeDefined();
     expect(document.body.textContent).not.toMatch(/PII-scrubbed|Strict PII/i);
     expect(screen.getByText("get_tax_year_position")).toBeDefined();
-    expect(screen.getByText("5286")).toBeDefined();
-    expect(screen.getByText("2114.4")).toBeDefined();
+    expect(screen.getAllByText("5286")).toHaveLength(2);
+    expect(document.body.textContent).not.toContain("2114");
 
     expect(screen.getByText("Example output")).toBeDefined();
     expect(document.body.textContent).not.toMatch(
