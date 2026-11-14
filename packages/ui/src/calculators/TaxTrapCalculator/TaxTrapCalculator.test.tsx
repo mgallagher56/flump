@@ -20,8 +20,8 @@ const openDetails = () =>
 const outcome = (label: string) => {
   const cards = within(screen.getByTestId("tax-trap-outcomes"));
   const labelEl = cards.getByText(label);
-  return (labelEl.closest("[data-testid='kpi-card']") ?? labelEl.parentElement?.parentElement)
-    ?.textContent;
+  // The card is the parent of the label row (KpiCard marks that row data-kpi-eyebrow).
+  return labelEl.closest("[data-kpi-eyebrow]")?.parentElement?.textContent;
 };
 
 describe("TaxTrapCalculator", () => {
