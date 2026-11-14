@@ -15,7 +15,7 @@
   "apps/web/app/containers/debt/DebtContainer.tsx": 1,
   "apps/web/app/containers/pension/PensionContainer.styles.ts": 4,
   "apps/web/app/containers/pension/PensionContainer.tsx": 2,
-  "apps/web/app/features/ai-connections/components/McpConnectionCard/McpConnectionCard.tsx": 2,
+  "apps/web/app/features/ai-connections/components/McpConnectionCard/McpConnectionCard.tsx": 3,
   "apps/web/app/features/budget/components/BudgetCategoryTable/BudgetCategoryTable.styles.ts": 1,
   "apps/web/app/features/budget/components/BudgetOverview/BudgetOverview.styles.ts": 4,
   "apps/web/app/features/budget/components/BudgetOverview/BudgetOverview.tsx": 1,
