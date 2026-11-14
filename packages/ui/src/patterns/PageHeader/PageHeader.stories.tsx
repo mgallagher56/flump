@@ -88,3 +88,33 @@ export const LongContent: Story = {
     badge: "Sample data",
   },
 };
+
+/**
+ * Round 4: on a phone the h1 and a single action share the first row and the description runs
+ * full width beneath, so the action never takes a row of its own.
+ */
+const phonePlay: Story["play"] = async ({ canvasElement }) => {
+  const canvas = within(canvasElement);
+  const title = canvas.getByRole("heading", { level: 1, name: "Your budget" });
+  const action = canvas.getByRole("button", { name: "Edit budget" });
+  const titleBox = title.getBoundingClientRect();
+  const actionBox = action.getBoundingClientRect();
+  // Same row: the action's vertical centre falls within the h1's line box.
+  const centre = actionBox.top + actionBox.height / 2;
+  await expect(centre > titleBox.top && centre < titleBox.bottom + 8).toBe(true);
+};
+
+export const PhoneTitleAndAction: Story = {
+  args: {
+    title: "Your budget",
+    description: "Your income, spending and how long your money lasts.",
+    actions: <Button variant="outline">Edit budget</Button>,
+  },
+  parameters: { viewport: { defaultViewport: "mobile1" } },
+  play: phonePlay,
+};
+
+export const PhoneTitleAndActionDark: Story = {
+  ...PhoneTitleAndAction,
+  globals: { theme: "dark" },
+};
