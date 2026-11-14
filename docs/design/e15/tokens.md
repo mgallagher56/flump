@@ -37,7 +37,7 @@ Self-hosting: `@fontsource-variable/{inter,plus-jakarta-sans}` (pinned 5.3.0) ar
 
 ## textStyles
 
-`display`, `heading.{xl,lg,md,sm}`, `body.{lg,md,sm}`, `label.{md,sm}`, `numeric.{kpi,lg,md,sm}`. Rules (enforced by tests): 12px minimum, line heights 1.2 to 1.6, fluid `clamp()` only on `display` and `heading.xl`, numeric styles always `tabular-nums`, display/headings use the heading face and the rest use the body face.
+`display`, `heading.{xl,lg,md,sm}`, `body.{lg,md,sm}`, `label.{md,sm}`, `numeric.{hero,kpi,lg,md,sm,unset}`. Rules (enforced by tests): 12px minimum, line heights 1.2 to 1.6, fluid `clamp()` only on `display`, `heading.xl` and `numeric.hero`, numeric styles always `tabular-nums`, weights at most 700, no uppercase or caps tracking, display/headings use the heading face and the rest use the body face. E16 additions are described under "E16 foundations" below.
 
 ## Motion and elevation
 
@@ -215,3 +215,38 @@ One deep-teal headline block per page (the headline figure). Text on it uses `te
 ### Page surface separation
 
 Every pair of canvas, card, sunken, subtle and overlay is at least 2.0 deltaE (about one just-noticeable difference) in both themes; light card and overlay (`#fffdf9` vs `#ffffff`) are the closest pair at 2.2, and rely on elevation for separation. Light surfaces are warm (red channel at least blue), as are dark.
+
+## E16 foundations (PR 1)
+
+From `docs/design/e16-polish/PLAN.md` sections 4.1 to 4.3 and 4.7. The `status.info` retune (owner decision D12) is not part of this change: indigo stays until the owner decides.
+
+### Domain tints (`surface.tint.*`, D16 option a)
+
+| Token                  | Light     | Dark      | Domain                       |
+| ---------------------- | --------- | --------- | ---------------------------- |
+| `surface.tint.teal`    | `#dcede6` | `#1f322d` | net worth, mortgage, pension |
+| `surface.tint.apricot` | `#fae5cc` | `#36291b` | debt                         |
+| `surface.tint.sage`    | `#e5edda` | `#272f22` | savings                      |
+
+For icon tiles and at most one tinted section per page; never around a `KpiStrip`, a `ScenarioZone` or a chart, and never on a KPI card (P9). Measured: `text.primary` 12.2 to 12.5:1, `text.secondary` 6.6 to 8.1:1 and `text.muted` 4.9 to 5.3:1 on every tint in both themes; each tint is at least 6.9 deltaE from every page surface and from the other tints (asserted at 4.5:1 and 2.0). The light values are a step more saturated than the plan's starting points, because the owner asked for more colour in light mode.
+
+### Card separation
+
+`Card`, `KpiCard`, `Table` (classic) and `CollapsibleDrawer` draw their outer edge in `border.DEFAULT` (was `border.subtle`): 1.31:1 against the light canvas, 1.45:1 against the light card (asserted at 1.3:1); `border.subtle` was 1.15:1 and barely visible. The light `cardLight` shadow (behind `shadows.card`) is now `0 1px 2px rgba(43,38,32,.08), 0 4px 14px rgba(43,38,32,.07)`, a contact shadow plus a soft lift, a step stronger than the plan's starting value so cards visibly rise off the sand. Dark is unchanged apart from the slightly stronger hairline edge.
+
+### Type scale
+
+- `fontSizes` `4xl`, `5xl` and `6xl` (36, 48 and 60px) were always generated; the Typography story built its classes with a dynamic `css({ fontSize: key })`, which Panda cannot extract, so those rows fell back to body size. The story now uses one literal class per key, typed against `fontSizes`, and a test checks each key.
+- `numeric.hero`: fluid 2.25rem to 3rem, bold, tabular. The one headline figure (`HeroFigure`, PR 2).
+- `numeric.unset`: body size, regular, tabular, used with `text.muted` for "Not set" so it never outranks a real value (P3).
+- `label.sm` no longer sets letter spacing (sentence case labels, P7.3). `numeric.kpi` remains the only KPI value style.
+
+### Page template (P13)
+
+`sizes.page.max` 1200px. `spacing.page.gutter.{sm,md,lg}` 16, 24 and 40px (base, `md`, `lg`); `spacing.page.top.{sm,lg}` 20 and 32px; `spacing.page.section` 32px. `PageBody` (PR 2) is the only consumer.
+
+### Laws
+
+- `scripts/check-style-literals.ts` (in `check:laws`, baseline `scripts/style-literals-baseline.json`): per file, raw `fontSize` values outside the `fontSizes` keys, `fontWeight` above 700, literal transition or animation durations, and inline `style=` in `apps/web` and `apps/marketing`. Counts may only shrink. At the first baseline: 123 raw font sizes in 35 files, 18 heavy weights in 11, 52 literal durations in 32 and 99 inline styles in 21.
+- `scripts/check-design-tokens.ts` also counts `status.info` inside the `ProjectionNotice` and `ScenarioZone` recipes (3 in `ProjectionNotice` today, in the baseline; PR 2 moves disclaimers to the quiet note style).
+- `architecture.laws.test.ts`: a shrinking list of files outside `components/core` that import a legacy `FLP*` component, and the five-file rule for `HeroFigure`, `IconTile` and `PageRules` wherever they land.

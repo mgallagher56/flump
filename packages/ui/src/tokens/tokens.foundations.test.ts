@@ -10,8 +10,11 @@ import {
   easings,
   elevationShadows,
   fontFamilies,
+  fontSizes,
   fonts,
+  fontWeights,
   motionKeyframes,
+  pageSpacing,
   radii,
   semanticTokens,
   shadows,
@@ -48,6 +51,8 @@ describe("E15 textStyles", () => {
         "body.sm",
         "label.md",
         "label.sm",
+        "numeric.hero",
+        "numeric.unset",
         "numeric.kpi",
         "numeric.lg",
         "numeric.md",
@@ -58,7 +63,7 @@ describe("E15 textStyles", () => {
 
   it("every numeric style carries tabular-nums", () => {
     const numeric = leaves.filter((l) => l.path.startsWith("numeric."));
-    expect(numeric).toHaveLength(4);
+    expect(numeric).toHaveLength(6);
     for (const l of numeric) expect(l.value.fontVariantNumeric, l.path).toBe("tabular-nums");
   });
 
@@ -72,9 +77,9 @@ describe("E15 textStyles", () => {
     }
   });
 
-  it("uses fluid clamp() only on display and heading.xl, and clamp minimums stay >= 12px", () => {
+  it("uses fluid clamp() only on display, heading.xl and numeric.hero, and clamp minimums stay >= 12px", () => {
     const fluid = leaves.filter((l) => l.value.fontSize.startsWith("clamp(")).map((l) => l.path);
-    expect(fluid.sort()).toEqual(["display", "heading.xl"]);
+    expect(fluid.sort()).toEqual(["display", "heading.xl", "numeric.hero"]);
     for (const l of leaves.filter((x) => fluid.includes(x.path))) {
       expect(remOf(l.value.fontSize.replace("clamp(", ""))).toBeGreaterThanOrEqual(0.75);
     }
@@ -88,6 +93,37 @@ describe("E15 textStyles", () => {
           : fontFamilies.body;
       expect(l.value.fontFamily, l.path).toBe(expected);
     }
+  });
+});
+
+describe("E16 type scale (PR 1, plan 4.2)", () => {
+  it("every textStyle and fontWeights token stays at or below 700", () => {
+    for (const l of leaves) expect(Number(l.value.fontWeight), l.path).toBeLessThanOrEqual(700);
+    for (const [key, t] of Object.entries(fontWeights)) {
+      expect(Number(t.value), key).toBeLessThanOrEqual(700);
+    }
+  });
+
+  it("no textStyle sets uppercase or caps tracking (sentence case, P7.3)", () => {
+    for (const l of leaves) {
+      expect(l.value, l.path).not.toHaveProperty("textTransform");
+      if (l.path.startsWith("label.")) expect(l.value, l.path).not.toHaveProperty("letterSpacing");
+    }
+  });
+
+  it("numeric.hero is the bold fluid headline figure; numeric.unset is body size and regular", () => {
+    const style = (p: string) => leaves.find((l) => l.path === p)?.value ?? {};
+    expect(style("numeric.hero").fontWeight).toBe("700");
+    expect(style("numeric.hero").fontSize).toMatch(/^clamp\(2\.25rem, .+, 3rem\)$/);
+    expect(style("numeric.unset").fontSize).toBe(style("body.md").fontSize);
+    expect(style("numeric.unset").fontWeight).toBe("400");
+  });
+
+  it("fontSizes 4xl to 6xl are 36, 48 and 60px", () => {
+    expect(fontSizes["4xl"].value).toBe("2.25rem");
+    expect(fontSizes["5xl"].value).toBe("3rem");
+    expect(fontSizes["6xl"].value).toBe("3.75rem");
+    expect((flumpPreset as any).theme.extend.tokens.fontSizes).toBe(fontSizes);
   });
 });
 
@@ -115,6 +151,15 @@ describe("E15 elevation", () => {
     for (const key of ["xs", "card", "raised", "overlay", "focus"]) {
       expect(elevationShadows).toHaveProperty(key);
     }
+  });
+
+  it("E16: the light card shadow has a contact shadow plus a soft lift layer", () => {
+    expect(shadows.cardLight.value).toBe(
+      "0 1px 2px rgba(43, 38, 32, 0.08), 0 4px 14px rgba(43, 38, 32, 0.07)",
+    );
+    expect((elevationShadows.card.value as Record<string, string>).base).toBe(
+      "{shadows.cardLight}",
+    );
   });
 
   it("keeps the legacy card, cardHover and floating keys", () => {
@@ -245,6 +290,18 @@ describe("E15 layout", () => {
     const values = order.map((k) => Number(zIndex[k].value));
     expect(values).toEqual([-1, 0, 5, 10, 20, 25, 30, 40, 50, 55, 60, 65, 70]);
     for (let i = 1; i < values.length; i++) expect(values[i]).toBeGreaterThan(values[i - 1]);
+  });
+
+  it("E16 P13 page template: 1200px content, 16/24/40 gutters, 20/32 top, 32 section gap", () => {
+    expect(sizes.page.max.value).toBe("1200px");
+    const p = pageSpacing.page;
+    expect([p.gutter.sm, p.gutter.md, p.gutter.lg].map((t) => t.value)).toEqual([
+      "16px",
+      "24px",
+      "40px",
+    ]);
+    expect([p.top.sm.value, p.top.lg.value, p.section.value]).toEqual(["20px", "32px", "32px"]);
+    expect((flumpPreset as any).theme.extend.tokens.spacing.page).toBe(p);
   });
 
   it("sizes provide control heights, compact heights and a 44px touch target", () => {

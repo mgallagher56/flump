@@ -22,7 +22,7 @@ export const tableWrapper = cva({
         borderRadius: "xl",
         borderWidth: "1px",
         borderStyle: "solid",
-        borderColor: "border.subtle",
+        borderColor: "border",
         backgroundColor: "surface.card",
       },
       soft: {},

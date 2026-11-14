@@ -1,12 +1,14 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { compareToBaseline, countTokenViolations } from "./lib/design-tokens";
+import { compareToBaseline, countNoticeInfoUses, countTokenViolations } from "./lib/design-tokens";
 import { collectFiles, readSource, repoRoot } from "./lib/scan";
 
 const baselinePath = resolve(import.meta.dir, "design-token-baseline.json");
 const counts: Record<string, number> = {};
 for (const file of collectFiles()) {
-  const n = countTokenViolations(readSource(repoRoot, file));
+  const source = readSource(repoRoot, file);
+  // Raw colours and primitive scales, plus status.info inside the notice recipes (E16 4.7).
+  const n = countTokenViolations(source) + countNoticeInfoUses(file, source);
   if (n > 0) counts[file] = n;
 }
 

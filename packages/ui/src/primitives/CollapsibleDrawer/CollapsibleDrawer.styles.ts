@@ -5,7 +5,7 @@ export const drawerContainer = cva({
     borderRadius: "2xl",
     borderWidth: "1px",
     borderStyle: "solid",
-    borderColor: "border.subtle",
+    borderColor: "border",
     backgroundColor: "surface.card",
     overflow: "hidden",
   },

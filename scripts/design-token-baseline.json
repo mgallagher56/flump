@@ -1,10 +1,18 @@
 {
   "apps/marketing/src/components/BaselineSnapshotPreview.tsx": 1,
+  "apps/marketing/src/components/McpSpotlightSection/McpSpotlightSection.styles.ts": 1,
   "apps/marketing/src/pages/HomePage.tsx": 4,
+  "apps/marketing/src/pages/McpPage/McpPage.styles.ts": 5,
   "apps/marketing/src/pages/ToolPage.tsx": 2,
   "apps/web/app/components/core/dialogs/TaxDisclaimerButton.tsx": 2,
   "apps/web/app/components/navigation/UserAvatar.tsx": 3,
   "packages/ui/src/foundations/ColorPalette/ColorPalette.tsx": 1,
+  "packages/ui/src/patterns/EmptyState/EmptyState.styles.ts": 1,
   "packages/ui/src/patterns/GlobalBaselineBar/GlobalBaselineBar.styles.ts": 1,
-  "packages/ui/src/patterns/SectionBand/SectionBand.styles.ts": 2
+  "packages/ui/src/patterns/MarginalRateChart/MarginalRateChart.styles.ts": 1,
+  "packages/ui/src/patterns/MobileBottomBar/MobileBottomBar.styles.ts": 1,
+  "packages/ui/src/patterns/PageHeader/PageHeader.styles.ts": 1,
+  "packages/ui/src/patterns/ProjectionNotice/ProjectionNotice.styles.ts": 3,
+  "packages/ui/src/patterns/SectionBand/SectionBand.styles.ts": 2,
+  "packages/ui/src/patterns/TopBar/TopBar.styles.ts": 1
 }

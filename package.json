@@ -31,7 +31,7 @@
     "check:tax-calendar": "bun scripts/check-tax-year-calendar.ts",
     "check:launch": "bun scripts/check-launch-readiness.ts",
     "tax:signoff": "bun scripts/tax-signoff.ts",
-    "check:laws": "bun scripts/check-design-tokens.ts && bun scripts/check-tabular-nums.ts && bun scripts/check-react-icons.ts && bun scripts/check-dependency-versions.ts && bun scripts/check-copy.ts",
+    "check:laws": "bun scripts/check-design-tokens.ts && bun scripts/check-tabular-nums.ts && bun scripts/check-react-icons.ts && bun scripts/check-style-literals.ts && bun scripts/check-dependency-versions.ts && bun scripts/check-copy.ts",
     "verify": "turbo run verify",
     "prepare": "husky"
   },

@@ -40,6 +40,31 @@ export const sizes = {
   },
   // Minimum touch target (WCAG 2.5.5 / platform guidance)
   touch: { value: "44px" },
+  // E16 P13 page template: the content width every app page renders at (via `PageBody`).
+  page: {
+    max: { value: "1200px" },
+  },
+} as const;
+
+/**
+ * E16 P13 page template spacing, merged into the primitive `spacing` scale as `page.*`.
+ * Breakpoint steps are separate keys (Panda tokens cannot vary by breakpoint), used as
+ * `px: { base: "page.gutter.sm", md: "page.gutter.md", lg: "page.gutter.lg" }` and
+ * `pt: { base: "page.top.sm", lg: "page.top.lg" }`. `PageBody` (PR 2) is the only consumer.
+ */
+export const pageSpacing = {
+  page: {
+    gutter: {
+      sm: { value: "16px" }, // 375 and up
+      md: { value: "24px" }, // from md
+      lg: { value: "40px" }, // from lg
+    },
+    top: {
+      sm: { value: "20px" }, // app header to h1 at 375
+      lg: { value: "32px" }, // app header to h1 from lg
+    },
+    section: { value: "32px" }, // gap between page sections
+  },
 } as const;
 
 /** Semantic density tokens: `{ base: comfortable, _compact: compact }`. */

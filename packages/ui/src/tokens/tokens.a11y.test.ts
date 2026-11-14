@@ -1,4 +1,5 @@
 import { existsSync, readFileSync } from "node:fs";
+import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { colors, fontSizes, fonts, semanticTokens } from "./index";
 
@@ -910,5 +911,68 @@ describe("Round 5 hue and series separation", () => {
         "dark",
       ),
     ).toBeGreaterThanOrEqual(4.5);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// E16 PR 1: domain tints (P9, D16 option a) and light card separation (plan 4.1)
+// ---------------------------------------------------------------------------
+
+const TINTS = ["teal", "apricot", "sage"].map((t) => `surface.tint.${t}`);
+
+describe("E16 surface tints", () => {
+  it.each(TINTS)(
+    "%s carries text.primary, text.secondary and text.muted at 4.5:1 in both themes",
+    (tint) => {
+      for (const fg of TEXTS) assertPair({ fg, bg: tint, themes: BOTH, min: 4.5, role: "text" });
+    },
+  );
+
+  it("each tint is at least 2 deltaE76 from every page surface and every other tint", () => {
+    for (const theme of BOTH) {
+      for (const tint of TINTS) {
+        const others = [
+          ...PAGE_SURFACES.map((s) => `surface.${s}`),
+          ...TINTS.filter((t) => t !== tint),
+        ];
+        for (const other of others) {
+          expect(
+            deltaE(tint, other, theme),
+            `${tint} vs ${other} (${theme})`,
+          ).toBeGreaterThanOrEqual(MIN_SURFACE_DELTA_E);
+        }
+      }
+    }
+  });
+
+  it("tints differ between themes", () => {
+    for (const tint of TINTS)
+      expect(resolveColor(tint, "light")).not.toBe(resolveColor(tint, "dark"));
+  });
+});
+
+describe("E16 light card separation", () => {
+  it("the card edge (border.DEFAULT) reads against the canvas and the card at 1.3:1 or more", () => {
+    for (const theme of BOTH) {
+      const edge = resolveColor("border", theme);
+      for (const s of ["surface.canvas", "surface.card"]) {
+        const bg = resolveColor(s, theme);
+        expect(contrast(edge, bg, bg), `${s} (${theme})`).toBeGreaterThanOrEqual(1.3);
+      }
+    }
+  });
+
+  it("Card, KpiCard, Table and CollapsibleDrawer draw their outer edge in border (border.DEFAULT)", () => {
+    const read = (rel: string) => readFileSync(path.resolve(__dirname, "..", rel), "utf8");
+    for (const rel of [
+      "primitives/Card/Card.styles.ts",
+      "primitives/KpiCard/KpiCard.styles.ts",
+      "primitives/Table/Table.styles.ts",
+      "primitives/CollapsibleDrawer/CollapsibleDrawer.styles.ts",
+    ]) {
+      // The first borderColor in each recipe is the outer container edge.
+      const first = /borderColor:\s*"([^"]+)"/.exec(read(rel))?.[1];
+      expect(first, rel).toBe("border");
+    }
   });
 });

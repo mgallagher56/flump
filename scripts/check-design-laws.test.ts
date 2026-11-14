@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { compareToBaseline, countTokenViolations } from "./lib/design-tokens";
+import { compareToBaseline, countNoticeInfoUses, countTokenViolations } from "./lib/design-tokens";
 import { countReactIconsImports } from "./lib/react-icons";
 import { shouldSkip } from "./lib/scan";
 import { needsTabular } from "./lib/tabular-nums";
@@ -21,6 +21,43 @@ describe("countTokenViolations", () => {
   test("ignores semantic tokens and non-colour text", () => {
     const src = `css({ color: "status.danger.text", bg: "surface.card", c: "chart.series1", p: "primary.solid", b: "border.subtle", t: "text.muted" }); // issue #123`;
     expect(countTokenViolations(src)).toBe(0);
+  });
+});
+
+describe("E16 token rules", () => {
+  test("surface.tint.* is a semantic token, not a primitive", () => {
+    expect(
+      countTokenViolations(
+        `css({ bg: "surface.tint.teal", b: "surface.tint.apricot", c: "surface.tint.sage" })`,
+      ),
+    ).toBe(0);
+  });
+  test("a literal .DEFAULT token path counts (Panda resolves it to nothing); the group name does not", () => {
+    expect(
+      countTokenViolations(`css({ borderColor: "border.DEFAULT", bg: "primary.DEFAULT" })`),
+    ).toBe(2);
+    expect(countTokenViolations(`css({ borderColor: "border", color: "primary" })`)).toBe(0);
+  });
+  test("status.info counts inside ProjectionNotice and ScenarioZone recipes only", () => {
+    const src = `cva({ base: { borderColor: "status.info.border", color: "status.info.text" } })`;
+    expect(
+      countNoticeInfoUses(
+        "packages/ui/src/patterns/ProjectionNotice/ProjectionNotice.styles.ts",
+        src,
+      ),
+    ).toBe(2);
+    expect(
+      countNoticeInfoUses("packages/ui/src/patterns/ScenarioZone/ScenarioZone.styles.ts", src),
+    ).toBe(2);
+    expect(
+      countNoticeInfoUses("packages/ui/src/primitives/InlineAlert/InlineAlert.styles.ts", src),
+    ).toBe(0);
+    expect(
+      countNoticeInfoUses(
+        "packages/ui/src/patterns/ProjectionNotice/ProjectionNotice.styles.ts",
+        `// status.info is banned here\ncva({ base: { color: "text.secondary" } })`,
+      ),
+    ).toBe(0);
   });
 });
 

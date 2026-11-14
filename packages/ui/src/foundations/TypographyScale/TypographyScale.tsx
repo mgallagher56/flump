@@ -1,5 +1,5 @@
 import type { FC } from "react";
-import { css } from "../../../styled-system/css";
+import { css, cx } from "../../../styled-system/css";
 import { fontSizes, fonts } from "../../tokens";
 import { specimenRow, specimenSection } from "./TypographyScale.styles";
 
@@ -26,12 +26,36 @@ const TEXT_STYLE_SPECIMENS = [
     cls: css({ textStyle: "body.sm" }),
   },
   { name: "label.md", sample: "Monthly overpayment", cls: css({ textStyle: "label.md" }) },
-  { name: "label.sm", sample: "UPDATED 12 NOV 2026", cls: css({ textStyle: "label.sm" }) },
+  { name: "label.sm", sample: "Updated 12 Nov 2026", cls: css({ textStyle: "label.sm" }) },
+  { name: "numeric.hero", sample: "£48,250", cls: css({ textStyle: "numeric.hero" }) },
   { name: "numeric.kpi", sample: "£1,240,500", cls: css({ textStyle: "numeric.kpi" }) },
   { name: "numeric.lg", sample: "£85,200.00", cls: css({ textStyle: "numeric.lg" }) },
   { name: "numeric.md", sample: "£1,450.50", cls: css({ textStyle: "numeric.md" }) },
   { name: "numeric.sm", sample: "29.90%", cls: css({ textStyle: "numeric.sm" }) },
+  {
+    name: "numeric.unset",
+    sample: "Not set",
+    cls: css({ textStyle: "numeric.unset", color: "text.muted" }),
+  },
 ] as const;
+
+/**
+ * One literal class per `fontSizes` key. A dynamic `css({ fontSize: key })` cannot be extracted by
+ * Panda, so only sizes used elsewhere got CSS and 4xl to 6xl rendered at body size (E16 4.2).
+ * Typed against `fontSizes`, so a new scale key fails type-checking until it is listed here.
+ */
+const FONT_SIZE_CLASSES: Record<keyof typeof fontSizes, string> = {
+  xs: css({ fontSize: "xs" }),
+  sm: css({ fontSize: "sm" }),
+  md: css({ fontSize: "md" }),
+  lg: css({ fontSize: "lg" }),
+  xl: css({ fontSize: "xl" }),
+  "2xl": css({ fontSize: "2xl" }),
+  "3xl": css({ fontSize: "3xl" }),
+  "4xl": css({ fontSize: "4xl" }),
+  "5xl": css({ fontSize: "5xl" }),
+  "6xl": css({ fontSize: "6xl" }),
+};
 
 export const TypographyScale: FC = () => {
   const tabularSpecimens = [
@@ -159,8 +183,8 @@ export const TypographyScale: FC = () => {
         >
           Type Scale (12px minimum floor)
         </h2>
-        {Object.entries(fontSizes).map(([key, val]) => (
-          <div key={key} className={specimenRow()}>
+        {(Object.keys(fontSizes) as (keyof typeof fontSizes)[]).map((key) => (
+          <div key={key} className={specimenRow()} data-testid={`font-size-${key}`}>
             <div className={css({ display: "flex", alignItems: "baseline", gap: "12px" })}>
               <span
                 className={css({
@@ -172,12 +196,12 @@ export const TypographyScale: FC = () => {
               >
                 {key}
               </span>
-              <span className={css({ fontSize: key as any, fontWeight: "medium" })}>
-                Financial Independence & Wealth Optimization
+              <span className={cx(FONT_SIZE_CLASSES[key], css({ fontWeight: "medium" }))}>
+                Money left over this month
               </span>
             </div>
             <span className={css({ fontFamily: "mono", fontSize: "xs", color: "text.muted" })}>
-              {val.value}
+              {fontSizes[key].value}
             </span>
           </div>
         ))}
