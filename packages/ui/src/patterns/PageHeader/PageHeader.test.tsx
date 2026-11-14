@@ -43,17 +43,13 @@ describe("PageHeader Pattern", () => {
       />,
     );
     const header = container.querySelector("header") as HTMLElement;
-    expect(header.className).toContain("flex-wrap_wrap");
-    // The description is ordered after the actions and takes a full line of its own.
-    const description = screen.getByText("About");
-    expect(description.className).toContain("order_3");
-    expect(description.className).toContain("flex-b_100%");
-    // The h1 grows but never shrinks, so actions that do not fit wrap instead of crushing it.
+    expect(header.className).toContain("d_grid");
+    expect(header.className).toContain("md:d_flex");
+    // The description spans the row under the h1 and the actions, so nothing splits them.
+    expect(screen.getByText("About").className).toContain("grid-c_1_/_-1");
     const h1 = screen.getByRole("heading", { level: 1 }).className;
-    expect(h1).toContain("flex_1_1_auto");
-    // A long title wraps rather than running off a phone screen.
-    expect(h1).toContain("min-w_0");
-    expect(h1).toContain("ov-wrap_anywhere");
+    expect(h1).toContain("grid-r_1");
+    expect(h1).toContain("ov-wrap_break-word");
   });
 
   it("omits the aside when there is no badge or action", () => {

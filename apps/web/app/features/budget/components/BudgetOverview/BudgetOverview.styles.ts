@@ -1,8 +1,8 @@
 import { cva } from "@repo/ui/styled-system/css";
 
-/** Hero then strip, at the page's section gap. */
+/** Hero then strip, at the page's 32px section gap, as on every other page (P13). */
 export const overviewRoot = cva({
-  base: { display: "flex", flexDirection: "column", gap: { base: "16px", md: "20px" } },
+  base: { display: "flex", flexDirection: "column", gap: "page.section" },
 });
 
 /** A link inside the hero's sub-line: the surrounding ink, underlined. */
