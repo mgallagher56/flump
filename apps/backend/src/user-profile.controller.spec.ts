@@ -1,6 +1,9 @@
-import { BadRequestException, Logger } from "@nestjs/common";
+import { BadRequestException, ForbiddenException, Logger } from "@nestjs/common";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { UserProfileController } from "./user-profile.controller";
+
+/** A WorkOS auth_time from a moment ago: the recent-login check passes. */
+const freshAuthTime = () => Math.floor(Date.now() / 1000) - 30;
 
 describe("UserProfileController", () => {
   let controller: UserProfileController;
@@ -126,7 +129,7 @@ describe("UserProfileController", () => {
       });
 
       const res = await controller.resetFinancialData(
-        { user: { id: "user-123", email: "jane@example.com" } },
+        { user: { id: "user-123", email: "jane@example.com", authTime: freshAuthTime() } },
         { confirmation: "RESET" },
       );
 
@@ -164,7 +167,7 @@ describe("UserProfileController", () => {
   });
 
   describe("resetFinancialData confirmation and audit (security review)", () => {
-    const req = { user: { id: "user-123", email: "jane@example.com" } };
+    const req = { user: { id: "user-123", email: "jane@example.com", authTime: freshAuthTime() } };
 
     it.each([
       ["no body", undefined],
@@ -206,6 +209,7 @@ describe("UserProfileController", () => {
         bankConnections: 1,
         budgetEntries: 3,
         taxRecords: 4,
+        mcpTokens: 0,
       });
       expect(events[0]).not.toContain("jane@example.com");
       expect(events[0]).not.toContain("80000");
@@ -290,5 +294,135 @@ describe("UserProfileController", () => {
         status: 503,
       });
     });
+  });
+});
+
+describe("UserProfileController account deletion and export (BE-04)", () => {
+  const fresh = { id: "user-123", authTime: Math.floor(Date.now() / 1000) - 30 };
+  const stale = { id: "user-123", authTime: Math.floor(Date.now() / 1000) - 3600 };
+  const make = (deletion?: object, exporter?: object) =>
+    new UserProfileController(
+      {} as never,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      deletion as never,
+      exporter as never,
+    );
+
+  it.each([
+    ["no body", undefined],
+    ["the wrong phrase", { confirmation: "delete" }],
+    ["the reset phrase", { confirmation: "RESET" }],
+  ])("deleteUser rejects %s with a 400 and deletes nothing", async (_label, body) => {
+    const deleteAccount = vi.fn();
+    await expect(make({ deleteAccount }).deleteUser({ user: fresh }, body)).rejects.toBeInstanceOf(
+      BadRequestException,
+    );
+    expect(deleteAccount).not.toHaveBeenCalled();
+  });
+
+  it("deleteUser needs a recent sign-in (403 recent_login_required), checked after the phrase", async () => {
+    const deleteAccount = vi.fn();
+    await expect(
+      make({ deleteAccount }).deleteUser({ user: stale }, { confirmation: "DELETE" }),
+    ).rejects.toBeInstanceOf(ForbiddenException);
+    expect(deleteAccount).not.toHaveBeenCalled();
+  });
+
+  it("deleteUser passes the caller's own id and returns the service outcome", async () => {
+    const deleteAccount = vi.fn().mockResolvedValue({ status: "identity_pending" });
+    await expect(
+      make({ deleteAccount }).deleteUser(
+        { user: fresh },
+        { confirmation: "DELETE", userId: "someone-else" },
+      ),
+    ).resolves.toEqual({ status: "identity_pending" });
+    expect(deleteAccount).toHaveBeenCalledWith("user-123");
+  });
+
+  it("deleteUser is a 503 when the deletion service is not wired", async () => {
+    await expect(make().deleteUser({ user: fresh }, { confirmation: "DELETE" })).rejects.toThrow(
+      "Account deletion is not available right now. Please try again later.",
+    );
+  });
+
+  it("resetFinancialData needs a recent sign-in too (L1)", async () => {
+    await expect(
+      make().resetFinancialData({ user: stale }, { confirmation: "RESET" }),
+    ).rejects.toBeInstanceOf(ForbiddenException);
+  });
+
+  const fakeRes = () => {
+    const chunks: string[] = [];
+    const headers: Record<string, string> = {};
+    const res = {
+      statusCode: 0,
+      headersSent: false,
+      destroyed: false,
+      status(code: number) {
+        res.statusCode = code;
+        return res;
+      },
+      setHeader(k: string, v: string) {
+        headers[k.toLowerCase()] = v;
+      },
+      removeHeader(k: string) {
+        delete headers[k.toLowerCase()];
+      },
+      write(chunk: string) {
+        res.headersSent = true;
+        chunks.push(chunk);
+        return true;
+      },
+      end: vi.fn(),
+      destroy: vi.fn(),
+      json: vi.fn(),
+      once: vi.fn(),
+      off: vi.fn(),
+    };
+    return { res, chunks, headers };
+  };
+
+  it("exportData streams the document as a no-store attachment", async () => {
+    const writeExport = vi.fn(async (_id: string, write: (c: string) => Promise<void>) => {
+      await write('{"schemaVersion":1');
+      await write("}");
+    });
+    const { res, chunks, headers } = fakeRes();
+    await make(undefined, { writeExport }).exportData({ user: fresh }, res as never);
+    expect(writeExport).toHaveBeenCalledWith("user-123", expect.any(Function), expect.any(Date));
+    expect(res.statusCode).toBe(200);
+    expect(headers["content-type"]).toBe("application/json; charset=utf-8");
+    expect(headers["content-disposition"]).toMatch(
+      /^attachment; filename="flump-export-\d{4}-\d{2}-\d{2}\.json"$/,
+    );
+    expect(headers["cache-control"]).toBe("no-store");
+    expect(chunks.join("")).toBe('{"schemaVersion":1}');
+    expect(res.end).toHaveBeenCalled();
+  });
+
+  it("exportData answers 503 if it fails before any byte, and cuts the stream if after", async () => {
+    vi.spyOn(Logger.prototype, "warn").mockImplementation(() => undefined);
+    const early = fakeRes();
+    await make(undefined, {
+      writeExport: vi.fn().mockRejectedValue(new Error("db down")),
+    }).exportData({ user: fresh }, early.res as never);
+    expect(early.res.statusCode).toBe(503);
+    expect(early.headers["content-disposition"]).toBeUndefined();
+
+    const late = fakeRes();
+    await make(undefined, {
+      writeExport: vi.fn(async (_id: string, write: (c: string) => Promise<void>) => {
+        await write("{");
+        throw new Error("db down");
+      }),
+    }).exportData({ user: fresh }, late.res as never);
+    expect(late.res.destroy).toHaveBeenCalled();
+    expect(late.res.end).not.toHaveBeenCalled();
   });
 });

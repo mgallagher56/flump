@@ -11,6 +11,18 @@ export interface UserIdentityAdapter {
   /** Returns the user's own email from the identity provider, or null if unknown. */
   getUserEmail(userId: string): Promise<string | null>;
   sendPasswordReset(email: string): Promise<void>;
+  /**
+   * Permanently deletes the login (BE-04). Resolves when the user is gone, including when the
+   * provider says it was already gone (404), so a retry is safe. Throws on any other failure.
+   * Deleting the WorkOS user also ends its WorkOS sessions.
+   */
+  deleteUser(userId: string): Promise<void>;
+}
+
+/** True for the provider's "no such user" answer, which a retried deletion treats as done. */
+export function isIdentityNotFound(err: unknown): boolean {
+  const e = err as { status?: unknown; name?: unknown } | null;
+  return e?.status === 404 || e?.name === "NotFoundException";
 }
 
 export const USER_IDENTITY_ADAPTER = "USER_IDENTITY_ADAPTER";
@@ -61,6 +73,16 @@ export class WorkOSIdentityAdapter implements UserIdentityAdapter {
     if (!this.client) throw new Error("WorkOS client not configured");
     await this.client.userManagement.createPasswordReset({ email });
   }
+
+  async deleteUser(userId: string): Promise<void> {
+    if (!this.client) throw new Error("WorkOS client not configured");
+    try {
+      await this.client.userManagement.deleteUser(userId);
+    } catch (err: unknown) {
+      if (isIdentityNotFound(err)) return;
+      throw err;
+    }
+  }
 }
 
 /**
@@ -70,6 +92,9 @@ export class InMemoryIdentityAdapter implements UserIdentityAdapter {
   public updatedNames: Array<{ userId: string; firstName?: string; lastName?: string }> = [];
   public emails = new Map<string, string>();
   public resetEmails: string[] = [];
+  public deletedUsers: string[] = [];
+  /** Set to make the next deleteUser calls fail (simulates a WorkOS outage). */
+  public deleteFailure: Error | null = null;
 
   async updateName(userId: string, firstName?: string, lastName?: string): Promise<void> {
     this.updatedNames.push({ userId, firstName, lastName });
@@ -81,5 +106,10 @@ export class InMemoryIdentityAdapter implements UserIdentityAdapter {
 
   async sendPasswordReset(email: string): Promise<void> {
     this.resetEmails.push(email);
+  }
+
+  async deleteUser(userId: string): Promise<void> {
+    if (this.deleteFailure) throw this.deleteFailure;
+    this.deletedUsers.push(userId);
   }
 }

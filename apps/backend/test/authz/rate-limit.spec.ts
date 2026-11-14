@@ -14,6 +14,8 @@ describe("rate limit classes on real controllers", () => {
   it("marks credential, destructive, token mint and bank routes", () => {
     expect(classOf(UserProfileController.prototype, "sendPasswordReset")).toBe("credential");
     expect(classOf(UserProfileController.prototype, "resetFinancialData")).toBe("destructive");
+    expect(classOf(UserProfileController.prototype, "deleteUser")).toBe("destructive");
+    expect(classOf(UserProfileController.prototype, "exportData")).toBe("dataExport");
     expect(classOf(McpController.prototype, "createToken")).toBe("tokenMint");
     expect(classOf(FinanceController.prototype, "deleteAccount")).toBe("destructive");
     expect(classOf(FinanceController.prototype, "connectBank")).toBe("bank");

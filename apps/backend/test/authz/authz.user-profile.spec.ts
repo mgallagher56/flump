@@ -1,4 +1,5 @@
 import "reflect-metadata";
+import { AccountExportDocument } from "@flump/api-contract";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { Account } from "../../src/entities/account.entity";
 import { BudgetEntry } from "../../src/entities/budget-entry.entity";
@@ -50,6 +51,7 @@ describe.skipIf(dbMode === "skip")("authz: user-profile controller (real Postgre
   const emails: Record<string, string> = { [USER_A]: "a@example.test", [USER_B]: "b@example.test" };
   const lookedUp: string[] = [];
   const resetSentTo: string[] = [];
+  const deletedLogins: string[] = [];
 
   beforeAll(async () => {
     h = await bootAuthzHarness();
@@ -62,6 +64,9 @@ describe.skipIf(dbMode === "skip")("authz: user-profile controller (real Postgre
       resetSentTo.push(email);
     });
     vi.spyOn(adapter, "updateName").mockImplementation(async () => undefined);
+    vi.spyOn(adapter, "deleteUser").mockImplementation(async (userId) => {
+      deletedLogins.push(userId);
+    });
   }, 60_000);
 
   afterAll(async () => {
@@ -78,6 +83,7 @@ describe.skipIf(dbMode === "skip")("authz: user-profile controller (real Postgre
     h.resetRateLimits();
     lookedUp.length = 0;
     resetSentTo.length = 0;
+    deletedLogins.length = 0;
     const patched = await h.call("patch", "/user-profile", h.tokens.a, {
       displayName: "A Secret Name",
       annualSalary: 50000,
@@ -131,7 +137,7 @@ describe.skipIf(dbMode === "skip")("authz: user-profile controller (real Postgre
   describe("authentication (every user-profile route)", () => {
     const routes: Array<{
       key: string;
-      method: "get" | "post" | "patch";
+      method: "get" | "post" | "patch" | "delete";
       path: string;
       body?: object;
     }> = [
@@ -158,6 +164,13 @@ describe.skipIf(dbMode === "skip")("authz: user-profile controller (real Postgre
         path: "/user-profile/checklist",
         body: { step: "pwned", completed: true },
       },
+      {
+        key: "DELETE /user-profile",
+        method: "delete",
+        path: "/user-profile",
+        body: { confirmation: "DELETE" },
+      },
+      { key: "GET /user-profile/export", method: "get", path: "/user-profile/export" },
     ];
 
     it.each(routes.map((r) => [r.key, r] as const))(
@@ -178,6 +191,7 @@ describe.skipIf(dbMode === "skip")("authz: user-profile controller (real Postgre
         expect(await tax().countBy({ userId: USER_A })).toBe(1);
         expect(lookedUp).toEqual([]);
         expect(resetSentTo).toEqual([]);
+        expect(deletedLogins).toEqual([]);
         ran(route.key, "authn");
       },
     );
@@ -266,6 +280,94 @@ describe.skipIf(dbMode === "skip")("authz: user-profile controller (real Postgre
     expect(res.status).toBe(400);
     expect(await budget().countBy({ userId: USER_B })).toBeGreaterThan(0);
     expect(await tax().countBy({ userId: USER_B })).toBeGreaterThan(0);
+  });
+
+  const userIdRows = async (userId: string): Promise<number> => {
+    const tables: { table_name: string }[] = await h.dataSource.query(
+      `SELECT table_name FROM information_schema.columns
+       WHERE table_schema = 'public' AND column_name = 'user_id'`,
+    );
+    let total = 0;
+    for (const { table_name } of tables) {
+      const [{ n }] = await h.dataSource.query(
+        `SELECT count(*)::int AS n FROM "${table_name}" WHERE user_id = $1`,
+        [userId],
+      );
+      total += n;
+    }
+    return total;
+  };
+
+  it("DELETE /user-profile: B's deletion (probe body) erases only B, and B gets no new profile after", async () => {
+    await seedFinancialData(h.tokens.a, "A");
+    await seedFinancialData(h.tokens.b, "B");
+    const aRows = await userIdRows(USER_A);
+
+    const res = await h.call("delete", "/user-profile", h.tokens.b, {
+      ...probeBody(profileAId),
+      confirmation: "DELETE",
+    });
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ status: "deleted" });
+    expect(deletedLogins).toEqual([USER_B]);
+    expect(await userIdRows(USER_B)).toBe(0);
+    expect(await userIdRows(USER_A)).toBe(aRows);
+    await expectProfileAUntouched();
+
+    // B's access token is still valid until it expires: no profile row may be recreated from it.
+    const after = await h.call("get", "/user-profile", h.tokens.b);
+    expect(after.status).toBe(401);
+    expect(await profiles().countBy({ userId: USER_B })).toBe(0);
+    ran("DELETE /user-profile");
+  });
+
+  it("DELETE /user-profile: a wrong phrase is a 400 and a stale sign-in a 403; neither deletes anything", async () => {
+    await seedFinancialData(h.tokens.b, "B");
+    const before = await userIdRows(USER_B);
+    for (const body of [{}, { confirmation: "delete" }, { confirmation: "RESET" }]) {
+      const res = await h.call("delete", "/user-profile", h.tokens.b, body);
+      expect(res.status).toBe(400);
+    }
+    const stale = await h.call("delete", "/user-profile", h.tokens.stale, {
+      confirmation: "DELETE",
+    });
+    expect(stale.status).toBe(403);
+    expect(stale.body.error).toBe("recent_login_required");
+    expect(await userIdRows(USER_B)).toBe(before);
+    expect(deletedLogins).toEqual([]);
+  });
+
+  it("POST /user-profile/reset-financial-data: a stale sign-in is a 403 that wipes nothing", async () => {
+    await seedFinancialData(h.tokens.b, "B");
+    const res = await h.call("post", "/user-profile/reset-financial-data", h.tokens.stale, {
+      confirmation: "RESET",
+    });
+    expect(res.status).toBe(403);
+    expect(res.body.error).toBe("recent_login_required");
+    expect(await budget().countBy({ userId: USER_B })).toBeGreaterThan(0);
+  });
+
+  it("GET /user-profile/export: each caller downloads only their own data, as an uncached attachment", async () => {
+    await seedFinancialData(h.tokens.a, "A");
+    await seedFinancialData(h.tokens.b, "B");
+
+    const res = await h.call("get", "/user-profile/export", h.tokens.b).buffer(true);
+    expect(res.status).toBe(200);
+    expect(res.headers["content-type"]).toBe("application/json; charset=utf-8");
+    expect(res.headers["content-disposition"]).toMatch(
+      /^attachment; filename="flump-export-\d{4}-\d{2}-\d{2}\.json"$/,
+    );
+    expect(res.headers["cache-control"]).toBe("no-store");
+    const text = res.text;
+    const doc = AccountExportDocument.parse(JSON.parse(text));
+    expect(doc.userId).toBe(USER_B);
+    expect(doc.accounts.map((a) => a.name)).toEqual(["B saver"]);
+    expect(doc.budgetEntries.map((b) => b.name)).toEqual(["B rent"]);
+    expect(doc.taxRecords.map((t) => t.name)).toEqual(["B pay"]);
+    expect(text).not.toContain(USER_A);
+    expect(text).not.toContain("A Secret Name");
+    expect(text).not.toContain("A saver");
+    ran("GET /user-profile/export");
   });
 
   it("POST /user-profile/send-password-reset: resolves the caller's own address, body ignored", async () => {

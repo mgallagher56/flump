@@ -191,6 +191,17 @@ describe("WorkOsJwtVerifier client_id check", { timeout: 15_000 }, () => {
     };
   }
 
+  it("passes a numeric auth_time through as authTime and ignores any other type", async () => {
+    const { t, verifier } = await make();
+    await expect(
+      verifier.verify(await t.sign({ sub: "u", client_id: "client_x", auth_time: 1700000000 })),
+    ).resolves.toEqual({ id: "u", email: undefined, authTime: 1700000000 });
+    const loose = await verifier.verify(
+      await t.sign({ sub: "u", client_id: "client_x", auth_time: "1700000000" }),
+    );
+    expect(loose.authTime).toBeUndefined();
+  });
+
   it("accepts a matching client_id", async () => {
     const { t, verifier } = await make();
     await expect(

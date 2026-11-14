@@ -79,6 +79,8 @@ export const ROUTE_MATRIX: Readonly<Record<string, MatrixRow>> = {
   "POST /user-profile/send-password-reset": userProfile,
   "POST /user-profile/reset-financial-data": userProfile,
   "PATCH /user-profile/checklist": userProfile,
+  "DELETE /user-profile": userProfile,
+  "GET /user-profile/export": userProfile,
 
   // Monthly snapshots (E30).
   "PUT /snapshots/:month": snapshots,

@@ -24,6 +24,9 @@ import { ImportsService } from "./imports/imports.service";
 import { McpController } from "./mcp.controller";
 import { McpService } from "./mcp.service";
 import { ObservabilityModule } from "./observability/observability.module";
+import { AccountDeletionService } from "./privacy/account-deletion.service";
+import { AccountExportService } from "./privacy/account-export.service";
+import { BANK_CONSENT_REVOKER, LoggingBankConsentRevoker } from "./privacy/bank-consent-revoker";
 import { MonzoProvider } from "./providers/monzo.provider";
 import { BankProviderRegistry } from "./providers/provider.registry";
 import { StarlingProvider } from "./providers/starling.provider";
@@ -70,6 +73,10 @@ import { UserProfileService } from "./user-profile.service";
     AgentAuditPurgeScheduler,
     McpImportsAdapter,
     UserProfileService,
+    AccountDeletionService,
+    AccountExportService,
+    // BE-12 replaces this with real provider revocation.
+    { provide: BANK_CONSENT_REVOKER, useClass: LoggingBankConsentRevoker },
     McpTokenService,
     AgentDataService,
     McpService,

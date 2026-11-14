@@ -5,14 +5,16 @@ import {
   Logger,
   Optional,
   ServiceUnavailableException,
+  UnauthorizedException,
 } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { DataSource, In, Repository } from "typeorm";
+import { DataSource, type EntityTarget, In, type ObjectLiteral, Repository } from "typeorm";
 import { Account } from "./entities/account.entity";
 import { AccountDetail } from "./entities/account-detail.entity";
 import { BankConnection } from "./entities/bank-connection.entity";
 import { BudgetEntry } from "./entities/budget-entry.entity";
 import { ImportBatch } from "./entities/import-batch.entity";
+import { McpToken } from "./entities/mcp-token.entity";
 import { SnapshotCheckin } from "./entities/snapshot-checkin.entity";
 import { TaxRecord } from "./entities/tax-record.entity";
 import { Transaction } from "./entities/transaction.entity";
@@ -25,6 +27,9 @@ import {
 } from "./entities/user-profile.entity";
 import { USER_IDENTITY_ADAPTER, type UserIdentityAdapter } from "./identity/identity.adapter";
 import { safeErrorSummary } from "./log-safe";
+import { AccountDeletionService } from "./privacy/account-deletion.service";
+import { BANK_CONSENT_REVOKER, type BankConsentRevoker } from "./privacy/bank-consent-revoker";
+import { type RemovedCounts, USER_DATA_REGISTRY } from "./privacy/user-data-registry";
 import { writeOnboardingSnapshot } from "./snapshots/first-snapshot";
 
 const PG_UNIQUE_VIOLATION = "23505";
@@ -103,16 +108,48 @@ export interface ProfileLifecycle {
   updateChecklist(userId: string, step: string, completed: boolean, email?: string): Promise<any>;
 }
 
-/** Rows removed by a financial data reset, per table (counts only, for the audit event). */
-export interface FinancialDataResetCounts {
-  accounts: number;
-  accountDetails: number;
-  snapshotCheckins: number;
-  importBatches: number;
-  transactions: number;
-  bankConnections: number;
-  budgetEntries: number;
-  taxRecords: number;
+/** Rows removed by a financial data reset, per registry table (counts only, for the audit event). */
+export type FinancialDataResetCounts = RemovedCounts;
+
+/**
+ * Sets every financial field of the profile back to its default (M-PRIV1). Kept: identity (names,
+ * avatar), locale (currency, country) and layout preferences (pages, widgets).
+ */
+export function clearFinancialProfileFields(profile: UserProfile): void {
+  profile.employmentType = null;
+  profile.annualSalary = null;
+  profile.monthlyTakeHome = null;
+  profile.hasSecondIncome = false;
+  profile.secondIncomeMonthly = null;
+  profile.hasRentalIncome = false;
+  profile.rentalIncomeMonthly = null;
+  profile.hasMortgage = false;
+  profile.mortgageType = "repayment";
+  profile.propertyOwnershipShare = 100.0;
+  profile.hasBuyToLet = false;
+  profile.buyToLetCount = 1;
+  profile.buyToLetPropertyValue = null;
+  profile.buyToLetMonthlyRental = null;
+  profile.buyToLetMortgageBalance = null;
+  profile.buyToLetMortgageRate = null;
+  profile.buyToLetMortgageType = "interest-only";
+  profile.pensionPercent = 0;
+  profile.pensionEmployerPercent = 0;
+  profile.isSalarySacrifice = false;
+  profile.isSalarySacrificeEmployerNi = false;
+  profile.customBudgetCategories = [];
+  profile.monthlySavingsTarget = null;
+  profile.savingsAllocationMode = "per_account";
+  profile.savingsDefaultInterestRate = 5.0;
+  profile.taxRegion = null;
+  profile.birthYear = null;
+  profile.studentLoanPlans = null;
+  profile.housingStatus = null;
+  profile.monthlyHousingCost = null;
+  profile.monthlyOtherOutgoings = null;
+  profile.setupChecklistCompletedSteps = [];
+  profile.hasResetFinancialData = true;
+  profile.onboardingCompleted = false;
 }
 
 @Injectable()
@@ -145,7 +182,29 @@ export class UserProfileService implements ProfileLifecycle {
     @Optional()
     @InjectRepository(ImportBatch)
     private readonly importBatchRepository?: Repository<ImportBatch>,
+    @Optional()
+    @InjectRepository(McpToken)
+    private readonly mcpTokenRepository?: Repository<McpToken>,
+    @Optional()
+    @Inject(BANK_CONSENT_REVOKER)
+    private readonly bankConsentRevoker?: BankConsentRevoker,
+    @Optional()
+    private readonly accountDeletion?: AccountDeletionService,
   ) {}
+
+  /** Bank-revoke seam (BE-04): never blocks the reset; a failure is logged without detail. */
+  private async revokeBankConsent(userId: string, repo: Repository<BankConnection>): Promise<void> {
+    if (!this.bankConsentRevoker) return;
+    try {
+      const connections = await repo.find({
+        where: { userId },
+        select: { id: true, institutionId: true, authType: true },
+      });
+      await this.bankConsentRevoker.revokeAll(userId, connections ?? []);
+    } catch (err) {
+      this.logger.warn(`Bank consent revoke warning: ${safeErrorSummary(err)}`);
+    }
+  }
 
   formatProfile(profile: UserProfile): any {
     return {
@@ -273,6 +332,11 @@ export class UserProfileService implements ProfileLifecycle {
   ): Promise<UserProfile> {
     const existing = await this.userProfileRepository.findOne({ where: { userId } });
     if (existing) return existing;
+    // An erased account must not get a fresh profile row from a request made with a token issued
+    // before the deletion (WorkOS access tokens stay valid until they expire).
+    if (await this.accountDeletion?.isErased(userId)) {
+      throw new UnauthorizedException("This account has been deleted.");
+    }
 
     try {
       return await this.userProfileRepository.save(
@@ -473,104 +537,69 @@ export class UserProfileService implements ProfileLifecycle {
   }
 
   async resetFinancialData(userId: string, email?: string): Promise<any> {
+    // The reset writes a profile row; never for an erased account (see findOrCreateProfile).
+    if (await this.accountDeletion?.isErased(userId)) {
+      throw new UnauthorizedException("This account has been deleted.");
+    }
+    // Repositories by entity: the transaction's when there is a DataSource, else the injected ones.
+    const injected = new Map<EntityTarget<ObjectLiteral>, Repository<any> | undefined>([
+      [Account, this.accountRepository],
+      [AccountDetail, this.accountDetailRepository],
+      [Transaction, this.transactionRepository],
+      [BankConnection, this.bankConnectionRepository],
+      [BudgetEntry, this.budgetEntryRepository],
+      [TaxRecord, this.taxRecordRepository],
+      [UserProfile, this.userProfileRepository],
+      [SnapshotCheckin, this.snapshotCheckinRepository],
+      [ImportBatch, this.importBatchRepository],
+      [McpToken, this.mcpTokenRepository],
+    ]);
+
+    // Bank consent first (BE-04 seam, BE-12 fills it): identifiers only, never the stored tokens.
+    await this.revokeBankConsent(userId, this.bankConnectionRepository);
+
     const performReset = async (
-      accountRepo: Repository<Account>,
-      detailRepo: Repository<AccountDetail>,
-      txRepo: Repository<Transaction>,
-      bankRepo: Repository<BankConnection>,
-      budgetRepo: Repository<BudgetEntry>,
-      taxRepo: Repository<TaxRecord>,
-      profileRepo: Repository<UserProfile>,
-      checkinRepo: Repository<SnapshotCheckin> | undefined,
-      importRepo?: Repository<ImportBatch>,
+      repoFor: (entity: EntityTarget<ObjectLiteral>) => Repository<any> | undefined,
     ) => {
-      const accounts = await accountRepo.find({
-        where: { userId },
-        select: { id: true },
-      });
       // Rows removed per table, for the audit event. `affected` is a count, never a value.
       const removed = (result: { affected?: number | null } | undefined): number =>
         result?.affected ?? 0;
-      // Monthly history carries user_id (E30), so it is erased by owner; the account-id delete
-      // stays as a belt and braces for any row whose user_id somehow differs.
-      let accountDetails = removed(await detailRepo.delete({ userId }));
-      if (accounts.length > 0) {
-        const accountIds = accounts.map((a) => a.id);
-        accountDetails += removed(await detailRepo.delete({ accountId: In(accountIds) }));
+      const counts: FinancialDataResetCounts = {};
+      // Every registry table marked financial-clear or revoke (M-PRIV1), in deletion order. The
+      // profile is the exception: its row stays and its financial fields are cleared below.
+      for (const t of USER_DATA_REGISTRY) {
+        if (t.entity === UserProfile || t.reset.kind === "keep") continue;
+        const repo = repoFor(t.entity);
+        if (t.entity === AccountDetail && repo) {
+          // Belt and braces: history rows keyed to the user's accounts, whatever their user_id.
+          const accounts: Array<{ id: string }> =
+            (await repoFor(Account)?.find({ where: { userId }, select: { id: true } })) ?? [];
+          let n = removed(await repo.delete({ userId }));
+          if (accounts.length > 0) {
+            n += removed(await repo.delete({ accountId: In(accounts.map((a) => a.id)) }));
+          }
+          counts[t.key] = n;
+          continue;
+        }
+        counts[t.key] = removed(await repo?.delete({ userId }));
       }
-      const counts: FinancialDataResetCounts = {
-        accountDetails,
-        snapshotCheckins: removed(await checkinRepo?.delete({ userId })),
-        // Staged imports hold account names and values (E17 PR C), so they go with the rest.
-        importBatches: removed(await importRepo?.delete({ userId })),
-        transactions: removed(await txRepo.delete({ userId })),
-        accounts: removed(await accountRepo.delete({ userId })),
-        bankConnections: removed(await bankRepo.delete({ userId })),
-        budgetEntries: removed(await budgetRepo.delete({ userId })),
-        taxRecords: removed(await taxRepo.delete({ userId })),
-      };
 
+      const profileRepo = repoFor(UserProfile) as Repository<UserProfile>;
       let profile = await profileRepo.findOne({ where: { userId } });
       if (!profile) {
         profile = profileRepo.create({ userId });
       }
-
-      profile.annualSalary = null;
-      profile.monthlyTakeHome = null;
-      profile.hasSecondIncome = false;
-      profile.secondIncomeMonthly = null;
-      profile.hasRentalIncome = false;
-      profile.rentalIncomeMonthly = null;
-      profile.hasMortgage = false;
-      profile.mortgageType = "repayment";
-      profile.propertyOwnershipShare = 100.0;
-      profile.hasBuyToLet = false;
-      profile.buyToLetCount = 1;
-      profile.buyToLetPropertyValue = null;
-      profile.buyToLetMonthlyRental = null;
-      profile.buyToLetMortgageBalance = null;
-      profile.buyToLetMortgageRate = null;
-      profile.buyToLetMortgageType = "interest-only";
-      profile.pensionPercent = 0;
-      profile.pensionEmployerPercent = 0;
-      profile.isSalarySacrifice = false;
-      profile.isSalarySacrificeEmployerNi = false;
-      profile.customBudgetCategories = [];
-      profile.monthlySavingsTarget = null;
-      profile.setupChecklistCompletedSteps = [];
-      profile.hasResetFinancialData = true;
-      profile.onboardingCompleted = false;
-
+      clearFinancialProfileFields(profile);
       return { saved: await profileRepo.save(profile), counts };
     };
 
     let outcome: { saved: UserProfile; counts: FinancialDataResetCounts };
     if (this.dataSource) {
-      outcome = await this.dataSource.transaction(async (manager) => {
-        return performReset(
-          manager.getRepository(Account),
-          manager.getRepository(AccountDetail),
-          manager.getRepository(Transaction),
-          manager.getRepository(BankConnection),
-          manager.getRepository(BudgetEntry),
-          manager.getRepository(TaxRecord),
-          manager.getRepository(UserProfile),
-          manager.getRepository(SnapshotCheckin),
-          manager.getRepository(ImportBatch),
-        );
-      });
-    } else {
-      outcome = await performReset(
-        this.accountRepository,
-        this.accountDetailRepository,
-        this.transactionRepository,
-        this.bankConnectionRepository,
-        this.budgetEntryRepository,
-        this.taxRecordRepository,
-        this.userProfileRepository,
-        this.snapshotCheckinRepository,
-        this.importBatchRepository,
+      outcome = await this.dataSource.transaction(async (manager) =>
+        performReset((entity) => manager.getRepository(entity)),
       );
+    } else {
+      outcome = await performReset((entity) => injected.get(entity));
     }
     const { saved, counts } = outcome;
 

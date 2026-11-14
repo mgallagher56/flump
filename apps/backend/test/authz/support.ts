@@ -61,7 +61,8 @@ export type HttpMethod = "get" | "post" | "put" | "patch" | "delete";
 export interface AuthzHarness {
   app: INestApplication;
   dataSource: DataSource;
-  tokens: { a: string; b: string; expired: string; dev: string };
+  /** `stale`: user B, signed in an hour ago (fails the recent-login check). */
+  tokens: { a: string; b: string; stale: string; expired: string; dev: string };
   call(method: HttpMethod, path: string, token?: string, body?: object): request.Test;
   /** Per-user and per-IP limits (tokenMint 5/h, destructive 10/h) would otherwise 429 the matrix. */
   resetRateLimits(): void;
@@ -134,9 +135,12 @@ export async function bootAuthzHarness(): Promise<AuthzHarness> {
     failedAuthLimiter: { entries: Map<string, unknown> };
   };
 
+  // auth_time = now: a fresh sign-in, so the recent-login check on destructive routes passes.
+  const authTime = Math.floor(Date.now() / 1000);
   const tokens = {
-    a: await jwt.sign({ sub: USER_A }),
-    b: await jwt.sign({ sub: USER_B }),
+    a: await jwt.sign({ sub: USER_A, auth_time: authTime }),
+    b: await jwt.sign({ sub: USER_B, auth_time: authTime }),
+    stale: await jwt.sign({ sub: USER_B, auth_time: authTime - 3600 }),
     expired: await jwt.sign({ sub: USER_A }, { expiresIn: "-1h" }),
     dev: DEV_BYPASS_TOKEN,
   };
