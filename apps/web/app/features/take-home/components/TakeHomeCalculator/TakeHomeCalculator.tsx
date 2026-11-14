@@ -237,8 +237,7 @@ export const TakeHomeCalculator: FC<TakeHomeCalculatorProps> = ({
         key="income-tax"
         label="Income Tax"
         notSetLabel="None"
-        unset={parts.incomeTax <= 0}
-        value={parts.incomeTax}
+        value={parts.incomeTax > 0 ? parts.incomeTax : null}
         valueFormat={{ fractionDigits: 0 }}
       />
     );
@@ -261,8 +260,7 @@ export const TakeHomeCalculator: FC<TakeHomeCalculatorProps> = ({
         key="ni"
         label="National Insurance"
         notSetLabel="None"
-        unset={parts.nationalInsurance <= 0}
-        value={parts.nationalInsurance}
+        value={parts.nationalInsurance > 0 ? parts.nationalInsurance : null}
         valueFormat={{ fractionDigits: 0 }}
       />
     );

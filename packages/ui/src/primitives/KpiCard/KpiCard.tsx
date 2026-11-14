@@ -161,8 +161,12 @@ export const KpiCard: FC<KpiCardProps> = ({
   unset,
   className,
 }) => {
+  // `unset` wins when given (as `isKpiCardUnset` reads it), so a £0 can read "None".
   const isEmpty =
-    value === null || value === undefined || (typeof value === "number" && !Number.isFinite(value));
+    unset ??
+    (value === null ||
+      value === undefined ||
+      (typeof value === "number" && !Number.isFinite(value)));
   const cardTone = tone === "hero" && !isEmpty && !loading ? "hero" : "default";
 
   return (

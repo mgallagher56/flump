@@ -1,7 +1,13 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { taxRecordsFixture, taxResultFixture } from "../../__fixtures__/taxRecords";
-import { billDueDate, nonPayeCosts, nonPayeIncome, TaxHeadline } from "./TaxHeadline";
+import {
+  allowanceLine,
+  billDueDate,
+  nonPayeCosts,
+  nonPayeIncome,
+  TaxHeadline,
+} from "./TaxHeadline";
 
 describe("TaxHeadline", () => {
   it("puts what the user added in the hero and the estimate in the first KPI", () => {
@@ -79,10 +85,32 @@ describe("TaxHeadline", () => {
       payments: { ...taxResultFixture.payments, paymentsOnAccountDue: false },
     };
     rerender(<TaxHeadline records={taxRecordsFixture} result={without} taxYear="2026/27" />);
-    expect(screen.getByText("Balancing payment")).toBeDefined();
+    expect(screen.queryByText("This year's bill and a first payment on account")).toBeNull();
   });
 
   it("dates the bill to 31 January after the tax year ends", () => {
     expect(billDueDate("2025/26").toISOString().slice(0, 10)).toBe("2027-01-31");
+  });
+
+  it("says when the engine used an allowance in place of recorded costs, from its flags only", () => {
+    expect(allowanceLine({ tradingAllowanceUsed: 0, propertyAllowanceUsed: 0 })).toBeNull();
+    expect(allowanceLine(undefined)).toBeNull();
+    expect(allowanceLine({ tradingAllowanceUsed: 1000, propertyAllowanceUsed: 0 })).toBe(
+      "The estimate uses the trading allowance, which is more than the costs you recorded.",
+    );
+    expect(allowanceLine({ tradingAllowanceUsed: 0, propertyAllowanceUsed: 1000 })).toContain(
+      "uses the property allowance",
+    );
+    expect(allowanceLine({ tradingAllowanceUsed: 1000, propertyAllowanceUsed: 600 })).toContain(
+      "uses the trading and property allowances",
+    );
+    render(
+      <TaxHeadline
+        records={taxRecordsFixture}
+        result={{ ...taxResultFixture, tradingAllowanceUsed: 1000 }}
+        taxYear="2026/27"
+      />,
+    );
+    expect(screen.getByText(/uses the trading allowance/)).toBeDefined();
   });
 });
