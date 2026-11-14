@@ -16,10 +16,18 @@
  * Skipped when TEST_DATABASE_URL is unset, unless REQUIRE_DB_TESTS=1 (CI), where it fails
  * instead. It creates and drops its own `<database>_contract` database on that server.
  */
+
 import { type ChildProcess, spawn } from "node:child_process";
 import { createRequire } from "node:module";
 import { createServer } from "node:net";
 import path from "node:path";
+import {
+  AccountListResponse,
+  BudgetEntryListResponse,
+  BudgetEntryResponse,
+  CreateAccountResponse,
+  DeleteBudgetEntryResponse,
+} from "@flump/api-contract";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 
 // Actions need the real `data` and `redirect`; the global setup stubs parts of react-router.
@@ -31,8 +39,9 @@ vi.mock("~/utils/auth.server", () => ({
   requireAccessToken: ({ accessToken }: { accessToken?: string }) => accessToken,
 }));
 
+import type { ContractSchema } from "@flump/api-client";
 import { apiConfig } from "~/config.server";
-import { backendFetch } from "~/services/backend-client.server";
+import { backendFetch, backendFetchAll } from "~/services/backend-client.server";
 import { buildOnboardingSeedJobs } from "~/services/onboarding-seed";
 import { action as accountsAction } from "../routes/app.accounts._index";
 import { action as debtAction } from "../routes/app.debt";
@@ -146,7 +155,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
       const deadline = Date.now() + 60_000;
       while (Date.now() < deadline) {
         try {
-          const res = await fetch(`${baseUrl}/accounts`, {
+          const res = await fetch(`${baseUrl}/v1/accounts`, {
             headers: { Authorization: `Bearer ${DEV_TOKEN}` },
           });
           if (res.ok) break;
@@ -167,7 +176,8 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
       await dropDatabase();
     });
 
-    const get = <T>(endpoint: string) => backendFetch<T>(endpoint, { accessToken: DEV_TOKEN });
+    const get = <T>(endpoint: string, schema: ContractSchema<T[]>) =>
+      backendFetchAll(endpoint, { accessToken: DEV_TOKEN, schema });
     const form = (fields: Record<string, string>) => {
       const body = new FormData();
       for (const [k, v] of Object.entries(fields)) body.set(k, v);
@@ -177,13 +187,12 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
       action({ request: form(fields), params: {}, context: {} });
 
     const createAccount = (name: string) =>
-      backendFetch<Row>("/accounts", {
+      backendFetch("/accounts", {
         accessToken: DEV_TOKEN,
+        schema: CreateAccountResponse,
         method: "POST",
         body: { name, type: "Saving", balance: 100, isCurrent: true },
       });
-
-    type Row = { id: string; name: string; balance?: number; amount?: number; currency?: string };
 
     it("seeds the onboarding baseline accounts and budget entries", async () => {
       const jobs = buildOnboardingSeedJobs({
@@ -197,14 +206,15 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
         otherOutgoings: 900,
       });
       for (const job of jobs.filter((j) => j.enabled)) {
-        await backendFetch(job.endpoint, {
-          accessToken: DEV_TOKEN,
-          method: "POST",
-          body: job.payload,
-        });
+        const post = { accessToken: DEV_TOKEN, method: "POST", body: job.payload } as const;
+        if (job.endpoint === "/accounts") {
+          await backendFetch(job.endpoint, { ...post, schema: CreateAccountResponse });
+        } else {
+          await backendFetch(job.endpoint, { ...post, schema: BudgetEntryResponse });
+        }
       }
 
-      const accounts = await get<Row[]>("/accounts");
+      const accounts = await get("/accounts", AccountListResponse);
       expect(accounts.map((a) => a.name)).toEqual(
         expect.arrayContaining([
           "Cash and emergency savings",
@@ -215,7 +225,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
       );
       expect(accounts.every((a) => a.currency === "GBP")).toBe(true);
 
-      const entries = await get<Row[]>("/budget-entries");
+      const entries = await get("/budget-entries", BudgetEntryListResponse);
       expect(entries.map((e) => e.name)).toEqual(
         expect.arrayContaining([
           "Monthly Take-Home Income",
@@ -234,7 +244,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
         interestRate: "",
         monthlyContribution: "30",
       });
-      const accounts = await get<Row[]>("/accounts");
+      const accounts = await get("/accounts", AccountListResponse);
       expect(accounts.find((a) => a.name === "Contract Barclaycard")?.currency).toBe("GBP");
     });
 
@@ -249,13 +259,13 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
       });
       expect(result).not.toMatchObject({ success: false });
 
-      const after = (await get<Row[]>("/accounts")).find((a) => a.id === target.id);
+      const after = (await get("/accounts", AccountListResponse)).find((a) => a.id === target.id);
       expect(Number(after?.balance)).toBe(4321);
     });
 
     it("also accepts PUT for account updates", async () => {
       const target = await createAccount("Contract PUT target");
-      const res = await fetch(`${baseUrl}/accounts/${target.id}`, {
+      const res = await fetch(`${baseUrl}/v1/accounts/${target.id}`, {
         method: "PUT",
         headers: { Authorization: `Bearer ${DEV_TOKEN}`, "Content-Type": "application/json" },
         body: JSON.stringify({ balance: 77 }),
@@ -265,9 +275,10 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
     });
 
     it("creates, updates and deletes budget entries with the BudgetContainer payloads", async () => {
-      const created = await backendFetch<Row>("/budget-entries", {
+      const created = await backendFetch("/budget-entries", {
         accessToken: DEV_TOKEN,
         method: "POST",
+        schema: BudgetEntryResponse,
         body: {
           name: "Gym",
           category: "living",
@@ -278,31 +289,36 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
       });
       expect(created).toMatchObject({ name: "Gym", amount: 40 });
 
-      const updated = await backendFetch<Row>(`/budget-entries/${created.id}`, {
+      const updated = await backendFetch(`/budget-entries/${created.id}`, {
         accessToken: DEV_TOKEN,
+        schema: BudgetEntryResponse,
         method: "PATCH",
         body: { name: "Gym membership", amount: 45 },
       });
       expect(updated).toMatchObject({ name: "Gym membership", amount: 45 });
 
-      await backendFetch<void>(`/budget-entries/${created.id}`, {
+      await backendFetch(`/budget-entries/${created.id}`, {
         accessToken: DEV_TOKEN,
+        schema: DeleteBudgetEntryResponse,
         method: "DELETE",
       });
-      expect((await get<Row[]>("/budget-entries")).some((e) => e.id === created.id)).toBe(false);
+      expect(
+        (await get("/budget-entries", BudgetEntryListResponse)).some((e) => e.id === created.id),
+      ).toBe(false);
     });
 
     it("accepts `title` as an alias for the budget entry name", async () => {
-      const created = await backendFetch<Row>("/budget-entries", {
+      const created = await backendFetch("/budget-entries", {
         accessToken: DEV_TOKEN,
         method: "POST",
+        schema: BudgetEntryResponse,
         body: { title: "Legacy title", category: "living", amount: 12, isIncome: false },
       });
       expect(created.name).toBe("Legacy title");
     });
 
     it("registers the bank-connection refresh route the accounts route calls", async () => {
-      const res = await fetch(`${baseUrl}/bank-connections/${crypto.randomUUID()}/refresh`, {
+      const res = await fetch(`${baseUrl}/v1/bank-connections/${crypto.randomUUID()}/refresh`, {
         method: "POST",
         headers: { Authorization: `Bearer ${DEV_TOKEN}` },
       });
@@ -312,7 +328,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
     });
 
     it("rejects a budget entry with no name with a 400, not a 500", async () => {
-      const res = await fetch(`${baseUrl}/budget-entries`, {
+      const res = await fetch(`${baseUrl}/v1/budget-entries`, {
         method: "POST",
         headers: { Authorization: `Bearer ${DEV_TOKEN}`, "Content-Type": "application/json" },
         body: JSON.stringify({ category: "living", amount: 12 }),

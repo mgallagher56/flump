@@ -5,12 +5,16 @@ import { RequestMethod } from "@nestjs/common";
 import { METHOD_METADATA, PATH_METADATA } from "@nestjs/common/constants";
 import { describe, expect, it } from "vitest";
 import { AppModule } from "../../src/app.module";
+import { API_VERSION_PREFIX, v1AliasMiddleware } from "../../src/config/v1-alias.middleware";
 
 /**
  * Route inventory guard (E23 section 9.3, B1).
  *
- * Statically extracts every (method, path) the web app sends through backendFetch/apiFetch and
- * checks that the backend registers a matching route. A web call to a route the backend does not
+ * Statically extracts every (method, path) the web app sends through backendFetch/apiFetch (and
+ * their list variants) and checks that the backend registers a matching route. The web clients
+ * send every call under `/v1` (BE-10: `versionedPath` in packages/api-client, and the `/api`
+ * proxy for browser calls), so each call is checked as `/v1<path>` resolved by the backend's own
+ * v1 alias middleware. A web call to a route the backend does not
  * have is a silent 404 in production (this would have caught D03, D04 and D05).
  *
  * Backend routes are read from the controllers registered on AppModule using the same Nest
@@ -53,14 +57,9 @@ const KNOWN_DYNAMIC: ReadonlyArray<{ file: string; token: string; reason: string
     reason: "POST /accounts and /budget-entries, covered by onboarding-seed and the contract test",
   },
   {
-    file: "features/onboarding/useFinishOnboarding.ts",
-    token: "endpoint",
-    reason: "existingNames helper, called with the literals /accounts and /budget-entries (GET)",
-  },
-  {
     file: "services/api-client.ts",
     token: "endpoint",
-    reason: "the apiFetch definition itself",
+    reason: "the apiFetch and apiFetchAll definitions themselves",
   },
   {
     file: "routes/app.accounts._index.tsx",
@@ -70,14 +69,14 @@ const KNOWN_DYNAMIC: ReadonlyArray<{ file: string; token: string; reason: string
   {
     file: "services/backend-client.server.ts",
     token: "endpoint",
-    reason: "generic `get` wrapper in loadWorkspaceSnapshot, extracted separately",
+    reason: "backendFetch/backendFetchAll definitions and the `list` wrapper, extracted separately",
   },
 ];
 
 /** Wrappers whose first argument is the endpoint (and, for send, second the method). */
 const WRAPPERS: ReadonlyArray<{ file: string; name: string; methodArg: boolean }> = [
   { file: "routes/app.accounts._index.tsx", name: "send", methodArg: true },
-  { file: "services/backend-client.server.ts", name: "get", methodArg: false },
+  { file: "services/backend-client.server.ts", name: "list", methodArg: false },
 ];
 
 function walk(dir: string): string[] {
@@ -100,7 +99,7 @@ function normalisePath(raw: string): string {
 }
 
 const CALL_RE =
-  /\b(backendFetch|apiFetch)\s*(?:<[^()]*>)?\s*\(\s*(?:(["'`])((?:\\.|(?!\2)[^\\])*)\2|([A-Za-z_.$]+))/g;
+  /\b(backendFetchAll|backendFetch|apiFetchAll|apiFetch)\s*(?:<[^()]*>)?\s*\(\s*(?:(["'`])((?:\\.|(?!\2)[^\\])*)\2|([A-Za-z_.$]+))/g;
 
 const VERB_LITERAL = /^"(GET|POST|PATCH|PUT|DELETE)"$/;
 
@@ -193,8 +192,20 @@ function backendRoutes(): Array<{ method: Method; path: string }> {
 function matches(route: { method: Method; path: string }, call: Call): boolean {
   if (route.method !== call.method) return false;
   const r = route.path.split("/");
-  const c = call.path.split("/");
+  const c = servedPath(call.path).split("/");
   return r.length === c.length && r.every((seg, i) => seg === c[i] || seg === ":p");
+}
+
+/** The client's prefix: `API_VERSION_PREFIX` in packages/api-client/src/transport.ts. */
+const CLIENT_VERSION_PREFIX = /API_VERSION_PREFIX = "([^"]+)"/.exec(
+  readFileSync(join(REPO_ROOT, "packages", "api-client", "src", "transport.ts"), "utf8"),
+)?.[1];
+
+/** The path a web call is served on: sent as `/v1<path>`, resolved by the v1 alias middleware. */
+function servedPath(path: string): string {
+  const req = { url: `${CLIENT_VERSION_PREFIX}${path}` };
+  v1AliasMiddleware(req as never, { setHeader: () => undefined } as never, () => undefined);
+  return req.url;
 }
 
 const webFiles = walk(WEB_APP_DIR);
@@ -237,6 +248,12 @@ describe("web to backend route inventory", () => {
     }
     expect(routes).toContainEqual({ method: "PATCH", path: "/accounts/:p" });
     expect(routes).toContainEqual({ method: "POST", path: "/bank-connections/:p/refresh" });
+  });
+
+  it("sends web calls under the backend's /v1 prefix", () => {
+    expect(CLIENT_VERSION_PREFIX).toBe(API_VERSION_PREFIX);
+    expect(API_VERSION_PREFIX).toBe("/v1");
+    expect(servedPath("/accounts/:p")).toBe("/accounts/:p");
   });
 
   it("normalises template and query paths", () => {

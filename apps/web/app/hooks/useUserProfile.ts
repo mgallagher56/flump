@@ -1,3 +1,9 @@
+import {
+  ResetFinancialDataResponse,
+  SendPasswordResetResponse,
+  UpdateChecklistResponse,
+  UpdateProfileResponse,
+} from "@flump/api-contract";
 import { type FinancialBaseline, userProfileToFinancialBaseline } from "@flump/finance-engine";
 import { atom, useAtom } from "jotai";
 import { useCallback } from "react";
@@ -9,14 +15,16 @@ import { stripRetiredKeys, stripRetiredRecordKeys } from "~/utils/pageConfig";
 /** E23 D06: the four UK nations as stored on the profile; null means not set. */
 export type TaxRegion = "ENGLAND" | "WALES" | "SCOTLAND" | "NORTHERN_IRELAND";
 
+// Nullable fields are optional (`?:`) so a contract-parsed profile assigns: with this app's
+// `strictNullChecks: false`, zod types a nullable key as optional (BE-10).
 export interface UserProfile {
   id: string;
   userId: string;
-  displayName: string | null;
+  displayName?: string | null;
   firstName?: string | null;
   lastName?: string | null;
   email?: string | null;
-  avatarUrl: string | null;
+  avatarUrl?: string | null;
   currency: string;
   country: string;
   age?: number | null;
@@ -24,14 +32,14 @@ export interface UserProfile {
   taxRegion?: TaxRegion | null;
   /** [] means "no student loan"; null means not answered. */
   studentLoanPlans?: string[] | null;
-  employmentType: "employed" | "self-employed" | "other" | null;
-  annualSalary: number | null;
-  monthlyTakeHome: number | null;
+  employmentType?: "employed" | "self-employed" | "other" | null;
+  annualSalary?: number | null;
+  monthlyTakeHome?: number | null;
   studentLoanPlan?: string | null;
   hasSecondIncome: boolean;
-  secondIncomeMonthly: number | null;
+  secondIncomeMonthly?: number | null;
   hasRentalIncome: boolean;
-  rentalIncomeMonthly: number | null;
+  rentalIncomeMonthly?: number | null;
   housingStatus?: "renting" | "mortgage" | "own_outright" | "living_with_family" | null;
   monthlyHousingCost?: number | null;
   monthlyOtherOutgoings?: number | null;
@@ -46,16 +54,16 @@ export interface UserProfile {
   propertyOwnershipShare: number;
   hasBuyToLet: boolean;
   buyToLetCount: number;
-  buyToLetPropertyValue: number | null;
-  buyToLetMonthlyRental: number | null;
-  buyToLetMortgageBalance: number | null;
-  buyToLetMortgageRate: number | null;
+  buyToLetPropertyValue?: number | null;
+  buyToLetMonthlyRental?: number | null;
+  buyToLetMortgageBalance?: number | null;
+  buyToLetMortgageRate?: number | null;
   buyToLetMortgageType: "repayment" | "interest-only";
   pensionPercent: number;
   pensionEmployerPercent: number;
   isSalarySacrifice: boolean;
   isSalarySacrificeEmployerNi: boolean;
-  monthlySavingsTarget: number | null;
+  monthlySavingsTarget?: number | null;
   savingsAllocationMode: "total" | "per_account";
   savingsDefaultInterestRate: number;
   setupChecklistCompletedSteps: string[];
@@ -304,9 +312,10 @@ export function useUserProfile() {
 
   const updateProfile = useCallback(
     async (updates: UserProfileUpdate): Promise<void> => {
-      const updated = await apiFetch<UserProfile>("/user-profile", {
+      const updated: UserProfile = await apiFetch("/user-profile", {
         method: "PATCH",
         body: updates,
+        schema: UpdateProfileResponse,
       });
       setProfile(updated);
     },
@@ -315,9 +324,10 @@ export function useUserProfile() {
 
   const markChecklistStep = useCallback(
     async (step: string, completed: boolean): Promise<void> => {
-      const updated = await apiFetch<UserProfile>("/user-profile/checklist", {
+      const updated: UserProfile = await apiFetch("/user-profile/checklist", {
         method: "PATCH",
         body: { step, completed },
+        schema: UpdateChecklistResponse,
       });
       setProfile(updated);
     },
@@ -330,10 +340,10 @@ export function useUserProfile() {
   }> => {
     try {
       // The server resolves the caller's own email; no body is sent.
-      return await apiFetch<{ success: boolean; message?: string }>(
-        "/user-profile/send-password-reset",
-        { method: "POST" },
-      );
+      return await apiFetch("/user-profile/send-password-reset", {
+        method: "POST",
+        schema: SendPasswordResetResponse,
+      });
     } catch (err) {
       throw messageFrom(err, "We could not send the password reset email. Try again.");
     }
@@ -343,8 +353,9 @@ export function useUserProfile() {
     let result: { profile?: UserProfile } | undefined;
     try {
       // The backend requires the typed phrase too (security review), not only the dialog.
-      result = await apiFetch<{ profile?: UserProfile }>("/user-profile/reset-financial-data", {
+      result = await apiFetch("/user-profile/reset-financial-data", {
         method: "POST",
+        schema: ResetFinancialDataResponse,
         body: { confirmation: RESET_FINANCIAL_DATA_CONFIRMATION },
       });
     } catch (err) {

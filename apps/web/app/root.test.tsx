@@ -7,6 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 vi.mock("react-router", async () => await vi.importActual("react-router"));
 vi.mock("./utils/auth.server", () => ({ getAuthSession: vi.fn() }));
 
+import { jsonResponse, profileFixture } from "~/test/fixtures/contractResponses";
 import App, { ErrorBoundary, loader } from "./root";
 import * as splatRoute from "./routes/$";
 import { getAuthSession } from "./utils/auth.server";
@@ -283,9 +284,9 @@ describe("root loader", () => {
   it("loads the profile on success", async () => {
     globalThis.fetch = vi
       .fn()
-      .mockResolvedValue(new Response(JSON.stringify({ annualSalary: 5 }), { status: 200 }));
+      .mockResolvedValue(jsonResponse({ ...profileFixture, annualSalary: 5 }));
     const result = await loader(args);
-    expect(result.userProfile).toEqual({ annualSalary: 5 });
+    expect(result.userProfile).toEqual({ ...profileFixture, annualSalary: 5 });
   });
 
   it("lets a redirect Response from the auth session pass through", async () => {

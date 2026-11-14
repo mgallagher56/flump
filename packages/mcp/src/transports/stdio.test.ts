@@ -1,14 +1,81 @@
+import { ContextPackResponse } from "@flump/api-contract";
 import { describe, expect, it, vi } from "vitest";
-import { PAT_REJECTED_MESSAGE, PatRejectedError, runStdio } from "./stdio.js";
+import { PAT_REJECTED_MESSAGE, PatRejectedError, packToInput, runStdio } from "./stdio.js";
 
 const PAT = "flump_pat_0123456789abcdef0123456789abcdef";
 
-const okPack = {
-  baseline: { userId: "user-1" },
-  portfolio: { accounts: [] },
-  budgetSummary: { entries: [] },
-  taxRecords: [],
+// The real GET /v1/mcp-tokens/context-pack shape (ContextPackResponse), not a hand-made one.
+const pack = {
+  metadata: {
+    generatedAt: "2026-11-13T10:00:00.000Z",
+    schemaVersion: "1.0.0",
+    isAnonymized: true,
+    currency: "GBP",
+  },
+  baseline: { userId: "anonymous-user", annualGrossSalary: 42000 },
+  observations: [],
+  portfolio: {
+    netWorth: 4000,
+    totalAssets: 4000,
+    homeEstimate: 0,
+    totalLiabilities: 0,
+    totalLiquidCash: 4000,
+    totalInvestments: 0,
+    totalPensions: 0,
+    totalConsumerDebt: 0,
+    totalMortgageBalance: 0,
+    weightedSavingsRate: 0,
+    monthlyHistory: [],
+    accounts: [
+      {
+        id: "6f1c6a4e-5b0e-4a63-9d0a-3f2f2a9d1c11",
+        name: "Current Account #1",
+        rawType: "Current",
+        category: "cash",
+        isAsset: true,
+        isLiability: false,
+        nominalBalance: 4000,
+        netWorthBalance: 4000,
+        latestBalance: 4000,
+        overdrawnAmount: 0,
+        interestRate: 0,
+        interestRateKnown: false,
+        monthlyContribution: 0,
+        monthlyContributionKnown: false,
+        currency: "GBP",
+        history: [],
+      },
+    ],
+  },
+  debtSummary: {
+    consumerDebts: [],
+    totalStartingDebtGbp: 0,
+    avalancheVsSnowballComparison: {},
+    promoCliffAlerts: [],
+  },
+  budgetSummary: {
+    monthlyIncome: null,
+    essentialBillsMonthly: null,
+    discretionarySpendMonthly: null,
+    plannedSavingsMonthly: null,
+    monthlySurplus: null,
+    safeToSpend: null,
+    emergencyRunwayMonths: null,
+    entries: [
+      {
+        id: "b1",
+        category: "Housing",
+        name: "Rent",
+        amount: 950,
+        frequency: "monthly",
+        isIncome: false,
+        isEssential: true,
+      },
+    ],
+  },
+  taxSummary: { currentTaxYear: "2026/27", ukTaxCalculation: {} },
 };
+const okPack = { pack, markdown: "# FLUMP" };
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } });
@@ -56,7 +123,7 @@ describe("runStdio", () => {
       connect,
     );
     expect(fetchImpl).toHaveBeenCalledWith(
-      "https://api.example.test/mcp-tokens/context-pack",
+      "https://api.example.test/v1/mcp-tokens/context-pack",
       expect.objectContaining({
         headers: expect.objectContaining({ Authorization: `Bearer ${PAT}` }),
       }),
@@ -81,17 +148,46 @@ describe("runStdio", () => {
     const connect = vi.fn();
     await expect(
       runStdio({ FLUMP_PAT: PAT }, fetchImpl as unknown as typeof fetch, connect),
-    ).rejects.toThrow(/not valid JSON/);
+    ).rejects.toThrow(/does not match the contract/);
     expect(connect).not.toHaveBeenCalled();
   });
 
-  it("rejects a response with no baseline.userId", async () => {
-    const fetchImpl = vi.fn(async () => json({ baseline: {} }));
+  it("rejects a 200 whose body is not a ContextPackResponse (the old hand-made shape)", async () => {
+    const fetchImpl = vi.fn(async () =>
+      json({ baseline: { userId: "user-1" }, portfolio: { accounts: [] } }),
+    );
+    const connect = vi.fn();
+    await expect(
+      runStdio({ FLUMP_PAT: PAT }, fetchImpl as unknown as typeof fetch, connect),
+    ).rejects.toThrow(/does not match the contract/);
+    expect(connect).not.toHaveBeenCalled();
+  });
+
+  it("rejects a pack with no baseline.userId", async () => {
+    const fetchImpl = vi.fn(async () => json({ ...okPack, pack: { ...pack, baseline: {} } }));
     const connect = vi.fn();
     await expect(
       runStdio({ FLUMP_PAT: PAT }, fetchImpl as unknown as typeof fetch, connect),
     ).rejects.toThrow(PatRejectedError);
     expect(connect).not.toHaveBeenCalled();
+  });
+
+  it("maps the parsed pack onto the provider input", () => {
+    expect(ContextPackResponse.safeParse(okPack).success).toBe(true);
+    const input = packToInput(ContextPackResponse.parse(okPack).pack);
+    expect(input.baseline.userId).toBe("anonymous-user");
+    expect(input.accounts).toEqual([
+      {
+        id: "6f1c6a4e-5b0e-4a63-9d0a-3f2f2a9d1c11",
+        name: "Current Account #1",
+        type: "Current",
+        balance: 4000,
+        interestRate: null,
+        monthlyContribution: null,
+        currency: "GBP",
+      },
+    ]);
+    expect(input.budgetEntries).toHaveLength(1);
   });
 
   it("never includes the PAT in thrown errors", async () => {

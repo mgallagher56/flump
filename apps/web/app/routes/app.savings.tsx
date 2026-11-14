@@ -1,3 +1,9 @@
+import {
+  CreateAccountResponse,
+  DeleteAccountResponse,
+  UpdateAccountResponse,
+  UpdateProfileResponse,
+} from "@flump/api-contract";
 import type { ReactElement } from "react";
 import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "react-router";
 import { data } from "react-router";
@@ -26,6 +32,7 @@ export const action = async (args: ActionFunctionArgs) => {
       const monthlyContribution = formData.get("monthlyContribution");
 
       await backendFetch(`/accounts`, {
+        schema: CreateAccountResponse,
         accessToken: token,
         method: "POST",
         body: {
@@ -61,12 +68,14 @@ export const action = async (args: ActionFunctionArgs) => {
       }
 
       await backendFetch(`/accounts/${encodeURIComponent(String(accountId ?? ""))}`, {
+        schema: UpdateAccountResponse,
         accessToken: token,
         method: "PATCH",
         body: updatePayload,
       });
     } else if (intent === "deleteAccount") {
       await backendFetch(`/accounts/${encodeURIComponent(String(accountId ?? ""))}`, {
+        schema: DeleteAccountResponse,
         accessToken: token,
         method: "DELETE",
       });
@@ -75,6 +84,7 @@ export const action = async (args: ActionFunctionArgs) => {
       const monthlySavingsTarget = formData.get("monthlySavingsTarget");
 
       await backendFetch(`/user-profile`, {
+        schema: UpdateProfileResponse,
         accessToken: token,
         method: "PATCH",
         body: {

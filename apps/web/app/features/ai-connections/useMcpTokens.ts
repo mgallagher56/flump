@@ -1,5 +1,11 @@
+import {
+  ContextPackResponse,
+  CreateMcpTokenResponse,
+  McpTokenListResponse,
+  RevokeMcpTokenResponse,
+} from "@flump/api-contract";
 import { useCallback, useEffect, useState } from "react";
-import { apiFetch } from "~/services/api-client";
+import { apiFetch, apiFetchAll } from "~/services/api-client";
 import { BackendError } from "~/services/backend-error";
 import type {
   CreatedTokenResult,
@@ -47,8 +53,17 @@ export function useMcpTokens(): McpTokensApi {
 
   useEffect(() => {
     const controller = new AbortController();
-    apiFetch<McpTokenItem[]>("/mcp-tokens", { signal: controller.signal })
-      .then((list) => setTokens(Array.isArray(list) ? list : []))
+    apiFetchAll("/mcp-tokens", { signal: controller.signal, schema: McpTokenListResponse })
+      .then((list) =>
+        setTokens(
+          // The card's type spells "no expiry / never used" as null.
+          list.map((t) => ({
+            ...t,
+            expiresAt: t.expiresAt ?? null,
+            lastUsedAt: t.lastUsedAt ?? null,
+          })),
+        ),
+      )
       .catch(() => {
         if (!controller.signal.aborted) setTokens([]);
       });
@@ -58,10 +73,12 @@ export function useMcpTokens(): McpTokensApi {
   const create = useCallback<McpTokensApi["create"]>(
     async (name, anonymize, expiryDays, allowStaging) => {
       try {
-        return await apiFetch<CreatedTokenResult>("/mcp-tokens", {
+        const created: CreatedTokenResult = await apiFetch("/mcp-tokens", {
           method: "POST",
+          schema: CreateMcpTokenResponse,
           body: { name, expiryDays, anonymizeInstitutions: anonymize, allowStaging },
         });
+        return created;
       } catch (error) {
         throw new Error(messageFor(error, CREATE_FAILED));
       }
@@ -73,6 +90,7 @@ export function useMcpTokens(): McpTokensApi {
     try {
       await apiFetch(`/mcp-tokens/${encodeURIComponent(id)}`, {
         method: "DELETE",
+        schema: RevokeMcpTokenResponse,
         allowEmpty: true,
       });
     } catch (error) {
@@ -82,9 +100,9 @@ export function useMcpTokens(): McpTokensApi {
 
   const contextPack = useCallback<McpTokensApi["contextPack"]>(
     (anonymize) =>
-      apiFetch<{ pack: unknown; markdown: string }>(
-        `/mcp-tokens/context-pack?anonymize=${anonymize ? "true" : "false"}`,
-      ),
+      apiFetch(`/mcp-tokens/context-pack?anonymize=${anonymize ? "true" : "false"}`, {
+        schema: ContextPackResponse,
+      }),
     [],
   );
 

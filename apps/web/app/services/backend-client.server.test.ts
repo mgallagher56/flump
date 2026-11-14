@@ -1,5 +1,16 @@
+import { UserProfileResponse } from "@flump/api-contract";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { runWithRequestId } from "~/security/request-id.server";
+import {
+  accountDetailFixture,
+  accountWithDetailsFixture,
+  bankConnectionFixture,
+  budgetEntryFixture,
+  jsonResponse,
+  portfolioSnapshotFixture,
+  profileFixture,
+  taxRecordFixture,
+} from "~/test/fixtures/contractResponses";
 import { backendFetch, backendFetchBytes, loadWorkspaceSnapshot } from "./backend-client.server";
 import { CLIENT_IP_HEADER, CLIENT_IP_KEY_ENV, CLIENT_IP_SIG_HEADER } from "./client-ip.server";
 
@@ -16,45 +27,19 @@ describe("backend-client.server", () => {
 
   beforeEach(() => {
     globalThis.fetch = vi.fn().mockImplementation((url: string) => {
-      if (url.includes("/accounts")) {
-        return Promise.resolve(
-          new Response(JSON.stringify([{ id: "acc_1", balance: 500 }]), { status: 200 }),
-        );
+      if (url.includes("/v1/accounts")) {
+        return Promise.resolve(jsonResponse([accountWithDetailsFixture]));
       }
-      if (url.includes("/account-details")) {
-        return Promise.resolve(
-          new Response(JSON.stringify([{ month: 11, year: 2026, value: 500 }]), { status: 200 }),
-        );
+      if (url.includes("/v1/user-profile")) return Promise.resolve(jsonResponse(profileFixture));
+      if (url.includes("/v1/budget-entries")) {
+        return Promise.resolve(jsonResponse([budgetEntryFixture]));
       }
-      if (url.includes("/user-profile")) {
-        return Promise.resolve(
-          new Response(JSON.stringify({ annualIncome: 65000 }), { status: 200 }),
-        );
+      if (url.includes("/v1/tax-records")) return Promise.resolve(jsonResponse([taxRecordFixture]));
+      if (url.includes("/v1/bank-connections")) {
+        return Promise.resolve(jsonResponse([bankConnectionFixture]));
       }
-      if (url.includes("/budget")) {
-        return Promise.resolve(
-          new Response(JSON.stringify([{ id: "b_1", amount: 100 }]), { status: 200 }),
-        );
-      }
-      if (url.includes("/tax-records")) {
-        return Promise.resolve(
-          new Response(JSON.stringify([{ year: "2026/27" }]), { status: 200 }),
-        );
-      }
-      if (url.includes("/bank-connections")) {
-        return Promise.resolve(new Response(JSON.stringify([{ id: "conn_1" }]), { status: 200 }));
-      }
-      if (url.includes("/portfolio-snapshot")) {
-        return Promise.resolve(
-          new Response(
-            JSON.stringify({
-              netWorth: 15000,
-              totalAssets: 20000,
-              totalLiabilities: 5000,
-            }),
-            { status: 200 },
-          ),
-        );
+      if (url.includes("/v1/portfolio-snapshot")) {
+        return Promise.resolve(jsonResponse(portfolioSnapshotFixture));
       }
       return Promise.resolve(new Response("Not found", { status: 404 }));
     });
@@ -70,7 +55,7 @@ describe("backend-client.server", () => {
     expect(snapshot.user.id).toBe("user_test");
     expect(snapshot.accounts.length).toBe(1);
     expect(snapshot.accountDetails.length).toBe(1);
-    expect(snapshot.userProfile?.annualIncome).toBe(65000);
+    expect(snapshot.userProfile?.annualSalary).toBe(65000);
     // Optional endpoints default to empty when not requested
     expect(snapshot.budgetEntries).toEqual([]);
     expect(snapshot.taxRecords).toEqual([]);
@@ -109,7 +94,7 @@ describe("backend-client.server", () => {
         Promise.resolve(
           url.includes("/accounts")
             ? new Response("no", { status: 401 })
-            : new Response("[]", { status: 200 }),
+            : jsonResponse(profileFixture),
         ),
       );
     const err = await loadWorkspaceSnapshot({ request: new Request("http://x/") } as any).catch(
@@ -126,7 +111,9 @@ describe("backend-client.server", () => {
         Promise.resolve(
           url.includes("/tax-records")
             ? new Response("boom", { status: 500 })
-            : new Response("[]", { status: 200 }),
+            : url.includes("/user-profile")
+              ? jsonResponse(profileFixture)
+              : jsonResponse([]),
         ),
       );
     const err = await loadWorkspaceSnapshot({ request: new Request("http://x/") } as any, {
@@ -136,34 +123,65 @@ describe("backend-client.server", () => {
     expect(err.data.endpoint).toBe("/tax-records");
   });
 
-  it("treats an empty account-details array as valid and falls back to nested details", async () => {
-    globalThis.fetch = vi.fn().mockImplementation((url: string) =>
-      Promise.resolve(
-        url.includes("/accounts")
-          ? new Response(JSON.stringify([{ id: "a", details: [{ year: 2026 }] }]), {
-              status: 200,
-            })
-          : new Response("[]", { status: 200 }),
-      ),
-    );
+  it("takes account details from the accounts' nested details, with no /account-details call (M24)", async () => {
     const snapshot = await loadWorkspaceSnapshot({ request: new Request("http://x/") } as any);
-    expect(snapshot.accountDetails).toEqual([{ year: 2026 }]);
+    expect(snapshot.accountDetails).toEqual([accountDetailFixture]);
+    const urls = vi.mocked(globalThis.fetch).mock.calls.map(([url]) => String(url));
+    expect(urls.some((u) => u.includes("/account-details"))).toBe(false);
   });
 
-  it("does not fall back to nested details when /account-details fails", async () => {
-    globalThis.fetch = vi.fn().mockImplementation((url: string) =>
-      Promise.resolve(
-        url.includes("/account-details")
-          ? new Response("boom", { status: 500 })
-          : new Response(JSON.stringify([{ id: "a", details: [{ year: 2026 }] }]), {
-              status: 200,
-            }),
-      ),
-    );
+  it("follows X-Next-Cursor on list reads", async () => {
+    const second = { ...accountWithDetailsFixture, id: "a2b3c4d5-e6f7-4a8b-9c0d-1e2f3a4b5c6d" };
+    globalThis.fetch = vi.fn().mockImplementation((url: string) => {
+      if (url.includes("/v1/accounts?cursor=p2")) return Promise.resolve(jsonResponse([second]));
+      if (url.includes("/v1/accounts")) {
+        return Promise.resolve(
+          jsonResponse([accountWithDetailsFixture], 200, { "X-Next-Cursor": "p2" }),
+        );
+      }
+      return Promise.resolve(jsonResponse(profileFixture));
+    });
+    const snapshot = await loadWorkspaceSnapshot({ request: new Request("http://x/") } as any);
+    expect(snapshot.accounts.map((a) => a.id)).toEqual([accountWithDetailsFixture.id, second.id]);
+  });
+
+  it("reports a body that breaks the contract as a 502 bad-response", async () => {
+    globalThis.fetch = vi
+      .fn()
+      .mockImplementation((url: string) =>
+        Promise.resolve(
+          url.includes("/v1/accounts")
+            ? jsonResponse([{ ...accountWithDetailsFixture, balance: "not a number" }])
+            : jsonResponse(profileFixture),
+        ),
+      );
     const err = await loadWorkspaceSnapshot({ request: new Request("http://x/") } as any).catch(
       (e) => e,
     );
     expect(err.init.status).toBe(502);
+    expect(err.data.kind).toBe("bad-response");
+  });
+
+  it("shares one /user-profile call between loaders of the same request", async () => {
+    await runWithRequestId("req-dedupe-1", () =>
+      Promise.all([
+        loadWorkspaceSnapshot({ request: new Request("http://x/") } as any),
+        backendFetch("/user-profile", {
+          accessToken: "test_token_123",
+          schema: UserProfileResponse,
+        }),
+      ]),
+    );
+    const urls = vi.mocked(globalThis.fetch).mock.calls.map(([url]) => String(url));
+    expect(urls.filter((u) => u.endsWith("/v1/user-profile"))).toHaveLength(1);
+
+    // A later request, or none, fetches again.
+    await backendFetch("/user-profile", {
+      accessToken: "test_token_123",
+      schema: UserProfileResponse,
+    });
+    const after = vi.mocked(globalThis.fetch).mock.calls.map(([url]) => String(url));
+    expect(after.filter((u) => u.endsWith("/v1/user-profile"))).toHaveLength(2);
   });
 
   it("returns the empty snapshot without fetching when there is no user", async () => {
@@ -208,7 +226,7 @@ describe("signed client IP on backend calls (BE-07, M9)", () => {
     await runWithRequestId(
       "req-12345678",
       async () => {
-        await backendFetch("/accounts", { accessToken: "t" });
+        await backendFetch("/accounts", { schema: null, allowEmpty: true, accessToken: "t" });
         await backendFetchBytes("/tax-records/x/receipt", { accessToken: "t" });
       },
       { clientIp: "203.0.113.7" },
@@ -221,8 +239,9 @@ describe("signed client IP on backend calls (BE-07, M9)", () => {
   });
 
   it("sends no client-IP headers outside a request or without a known address", async () => {
-    await backendFetch("/accounts", { accessToken: "t" });
-    await runWithRequestId("req-12345678", () => backendFetch("/accounts", { accessToken: "t" }));
+    const opts = { schema: null, allowEmpty: true, accessToken: "t" } as const;
+    await backendFetch("/accounts", opts);
+    await runWithRequestId("req-12345678", () => backendFetch("/accounts", opts));
     for (const i of [0, 1]) expect(sentHeaders(i)[CLIENT_IP_HEADER]).toBeUndefined();
   });
 });

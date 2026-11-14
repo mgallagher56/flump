@@ -1,3 +1,8 @@
+import {
+  CreateAccountResponse,
+  DeleteAccountResponse,
+  UpdateAccountResponse,
+} from "@flump/api-contract";
 import type { ReactElement } from "react";
 import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "react-router";
 import { data } from "react-router";
@@ -29,6 +34,7 @@ export const action = async (args: ActionFunctionArgs) => {
   try {
     if (intent === "createDebt") {
       await backendFetch("/accounts", {
+        schema: CreateAccountResponse,
         accessToken: token,
         method: "POST",
         body: {
@@ -52,12 +58,17 @@ export const action = async (args: ActionFunctionArgs) => {
         body.monthlyContribution = optionalNumber(formData.get("monthlyContribution"));
       }
       await backendFetch(`/accounts/${accountId}`, {
+        schema: UpdateAccountResponse,
         accessToken: token,
         method: "PATCH",
         body,
       });
     } else if (intent === "deleteDebt") {
-      await backendFetch(`/accounts/${accountId}`, { accessToken: token, method: "DELETE" });
+      await backendFetch(`/accounts/${accountId}`, {
+        schema: DeleteAccountResponse,
+        accessToken: token,
+        method: "DELETE",
+      });
     } else {
       return data(
         {

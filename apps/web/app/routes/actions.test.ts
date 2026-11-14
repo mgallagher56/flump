@@ -14,6 +14,7 @@ vi.mock("~/utils/auth.server", () => ({
 
 import { BankSyncOrchestrator } from "@flump/banking/server";
 import { apiConfig } from "~/config.server";
+import { contractFetch, jsonResponse } from "~/test/fixtures/contractResponses";
 import { action as accountsAction } from "./app.accounts._index";
 import { action as debtAction } from "./app.debt";
 import { action as onboardingAction } from "./app.onboarding";
@@ -323,8 +324,13 @@ const makeArgs = (c: Case): any => {
   };
 };
 
-const respond = (status: number, body: unknown = {}) =>
-  vi.fn().mockImplementation(async () => new Response(JSON.stringify(body), { status }));
+/** `body` when given; otherwise a contract-valid body for the route (2xx) or `{}` (errors). */
+const respond = (status: number, body?: unknown) =>
+  vi.fn().mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
+    if (body !== undefined) return jsonResponse(body, status);
+    if (status < 300) return contractFetch(status)(input, init);
+    return new Response("{}", { status });
+  });
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -334,12 +340,12 @@ beforeEach(() => {
 
 describe.each(cases)("$route action, intent $intent", (c) => {
   it("calls the backend with the expected method, URL, auth and body", async () => {
-    const fetchMock = respond(200, { success: true });
+    const fetchMock = respond(200);
     globalThis.fetch = fetchMock;
     const res: any = await c.action(makeArgs(c));
     expect(res.data).toMatchObject({ success: true });
     const [url, init] = fetchMock.mock.calls[0];
-    expect(url).toBe(`${apiConfig.apiBaseUrl}${c.path}`);
+    expect(url).toBe(`${apiConfig.apiBaseUrl}/v1${c.path}`);
     expect(init.method).toBe(c.method);
     expect(init.headers.Authorization).toBe("Bearer tok");
     if (c.body === undefined) expect(init.body).toBeUndefined();
@@ -453,7 +459,11 @@ describe("accounts action, connectBank", () => {
   });
 
   it("returns the backend redirect URL for OAuth", async () => {
-    globalThis.fetch = respond(200, { oauth: true, redirectUrl: "https://bank.example/auth" });
+    globalThis.fetch = respond(200, {
+      success: true,
+      oauth: true,
+      redirectUrl: "https://bank.example/auth",
+    });
     const form = new FormData();
     form.set("intent", "connectBank");
     form.set("institutionId", "inst");
@@ -477,7 +487,7 @@ describe("pension wizard", () => {
   it("runs account, profile then checklist, and stops at the first failure", async () => {
     const fetchMock = vi
       .fn()
-      .mockResolvedValueOnce(new Response("{}", { status: 200 }))
+      .mockImplementationOnce(contractFetch())
       .mockResolvedValueOnce(new Response("{}", { status: 500 }));
     globalThis.fetch = fetchMock;
     const res: any = await pensionAction(makeArgs(wizard));
@@ -490,7 +500,7 @@ describe("pension wizard", () => {
     globalThis.fetch = fetchMock;
     await pensionAction(makeArgs(wizard));
     const [url, init] = fetchMock.mock.calls[2];
-    expect(url).toBe(`${apiConfig.apiBaseUrl}/user-profile/checklist`);
+    expect(url).toBe(`${apiConfig.apiBaseUrl}/v1/user-profile/checklist`);
     expect(init.method).toBe("PATCH");
     expect(JSON.parse(init.body)).toEqual({ step: "pension", completed: true });
   });
@@ -515,7 +525,7 @@ describe("onboarding action", () => {
     expect(res.status).toBe(302);
     expect(res.headers.get("Location")).toBe("/");
     const [url, init] = fetchMock.mock.calls[0];
-    expect(url).toBe(`${apiConfig.apiBaseUrl}/user-profile`);
+    expect(url).toBe(`${apiConfig.apiBaseUrl}/v1/user-profile`);
     expect(init.method).toBe("PATCH");
     expect(JSON.parse(init.body)).toEqual({
       enabledPages: ["accounts", "budget"],
@@ -544,7 +554,7 @@ describe("onboarding action", () => {
 
 describe("tax action, receipts on update (E20-N15)", () => {
   const send = async (fields: Record<string, string>) => {
-    const fetchMock = respond(200, { success: true });
+    const fetchMock = respond(200);
     globalThis.fetch = fetchMock;
     await taxAction(
       makeArgs({
@@ -597,8 +607,8 @@ describe("action edge cases", () => {
     const wizard = cases.find((c) => c.intent === "completePensionWizard") as Case;
     globalThis.fetch = vi
       .fn()
-      .mockResolvedValueOnce(new Response("{}", { status: 200 }))
-      .mockResolvedValueOnce(new Response("{}", { status: 200 }))
+      .mockImplementationOnce(contractFetch())
+      .mockImplementationOnce(contractFetch())
       .mockResolvedValueOnce(new Response("{}", { status: 503 }));
     const res: any = await pensionAction(makeArgs(wizard));
     expect(res.data).toEqual({ success: true });
@@ -636,7 +646,7 @@ describe("path segment encoding", () => {
     });
     return fetchMock.mock.calls.map((c: any[]) => c[0] as string);
   };
-  const base = apiConfig.apiBaseUrl;
+  const base = `${apiConfig.apiBaseUrl}/v1`;
 
   it("encodes accountId and connectionId in the accounts route", async () => {
     expect(await run(accountsAction, { intent: "delete", accountId: "a/../b" })).toEqual([

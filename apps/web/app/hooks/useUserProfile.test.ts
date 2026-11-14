@@ -1,5 +1,6 @@
 import { act, renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { profileFixture } from "~/test/fixtures/contractResponses";
 import {
   DEFAULT_PROFILE,
   normalizeProfile,
@@ -71,7 +72,7 @@ describe("useUserProfile", () => {
   });
 
   test("never sends a browser access token: it calls the same-origin proxy", async () => {
-    (global.fetch as any).mockResolvedValueOnce(jsonRes({}));
+    (global.fetch as any).mockResolvedValueOnce(jsonRes(profileFixture));
     const { result } = renderHook(() => useUserProfile());
 
     await result.current.updateProfile({ displayName: "X" });
@@ -95,7 +96,7 @@ describe("useUserProfile", () => {
 
   test("updateProfile sends PATCH request and updates state", async () => {
     const mockUpdated = {
-      ...DEFAULT_PROFILE,
+      ...profileFixture,
       displayName: "Updated User",
       annualSalary: 80000,
     };
@@ -120,7 +121,7 @@ describe("useUserProfile", () => {
 
   test("markChecklistStep sends checklist update", async () => {
     const mockUpdated = {
-      ...DEFAULT_PROFILE,
+      ...profileFixture,
       setupChecklistCompletedSteps: ["step1"],
     };
 
@@ -142,9 +143,7 @@ describe("useUserProfile", () => {
   });
 
   test("sendPasswordResetEmail sends request", async () => {
-    (global.fetch as any).mockResolvedValueOnce(
-      jsonRes({ success: true, message: "Reset email sent" }),
-    );
+    (global.fetch as any).mockResolvedValueOnce(jsonRes({ success: true }));
 
     const { result } = renderHook(() => useUserProfile());
 
@@ -155,8 +154,9 @@ describe("useUserProfile", () => {
 
   test("resetFinancialData sends reset request", async () => {
     const mockUpdated = {
-      ...DEFAULT_PROFILE,
-      hasResetFinancialData: true,
+      success: true,
+      message: "Financial data reset",
+      profile: { ...profileFixture, hasResetFinancialData: true },
     };
 
     (global.fetch as any).mockResolvedValueOnce(jsonRes(mockUpdated));

@@ -1,3 +1,4 @@
+import { ImportBatchResponse, ImportPreviewResponse } from "@flump/api-contract";
 import { renderHook } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -22,6 +23,7 @@ describe("useImportActions", () => {
     await result.current.preview({ saver: null });
     expect(apiFetch).toHaveBeenCalledWith(`/imports/${ID}/preview`, {
       method: "POST",
+      schema: ImportPreviewResponse,
       body: { accountMap: { saver: null } },
       signal: undefined,
     });
@@ -36,6 +38,7 @@ describe("useImportActions", () => {
     });
     expect(apiFetch).toHaveBeenCalledWith(`/imports/${ID}/commit`, {
       method: "POST",
+      schema: ImportBatchResponse,
       body: { accountMap: { saver: "x" }, overwriteManual: ["saver:2026-09"] },
       timeoutMs: 60_000,
     });
@@ -48,6 +51,7 @@ describe("useImportActions", () => {
     await result.current.revert();
     expect(apiFetch).toHaveBeenLastCalledWith(`/imports/${ID}/revert`, {
       method: "POST",
+      schema: ImportBatchResponse,
       body: {},
       timeoutMs: 60_000,
     });

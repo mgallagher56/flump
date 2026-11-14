@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { BackendError } from "./backend-error.js";
-import { createApiClient, isBelowMin } from "./client.js";
+import { type ApiClient, createApiClient, isBelowMin } from "./client.js";
+import type { ContractSchema } from "./transport.js";
 
 function respond(status: number, body?: string) {
   return new Response(body ?? null, { status });
@@ -17,6 +18,19 @@ function setup(overrides: Partial<Parameters<typeof createApiClient>[0]> = {}) {
   return { fetchMock, client };
 }
 
+/** Accepts any JSON body: these tests are about the transport, not a contract shape. */
+const anyJson: ContractSchema<unknown> = {
+  safeParse: (u: unknown) => ({ success: true, data: u }),
+};
+
+type CallOpts = Omit<Parameters<ApiClient["request"]>[1], "schema" | "allowEmpty"> & {
+  allowEmpty?: boolean;
+};
+const call = (client: ApiClient, path: string, { allowEmpty, ...opts }: CallOpts = {}) =>
+  allowEmpty
+    ? client.request(path, { ...opts, schema: anyJson, allowEmpty: true })
+    : client.request(path, { ...opts, schema: anyJson });
+
 const hang = (_url: string, init: RequestInit) =>
   new Promise((_resolve, reject) => {
     if (init.signal?.aborted) reject(init.signal.reason);
@@ -27,9 +41,9 @@ describe("request core", () => {
   it("joins the base URL, sends the bearer token and parses JSON", async () => {
     const { client, fetchMock } = setup();
     fetchMock.mockResolvedValue(respond(200, JSON.stringify({ ok: 1 })));
-    await expect(client.request("/accounts")).resolves.toEqual({ ok: 1 });
+    await expect(call(client, "/accounts")).resolves.toEqual({ ok: 1 });
     const [url, init] = fetchMock.mock.calls[0];
-    expect(url).toBe("https://api.example.test/accounts");
+    expect(url).toBe("https://api.example.test/v1/accounts");
     expect(init.headers.Authorization).toBe("Bearer tok");
     expect(init.method).toBe("GET");
   });
@@ -37,7 +51,7 @@ describe("request core", () => {
   it("sends a JSON body with the method", async () => {
     const { client, fetchMock } = setup();
     fetchMock.mockResolvedValue(respond(200, "{}"));
-    await client.request("/x", { method: "PATCH", body: { a: 1 } });
+    await call(client, "/x", { method: "PATCH", body: { a: 1 } });
     const [, init] = fetchMock.mock.calls[0];
     expect(init.method).toBe("PATCH");
     expect(init.body).toBe('{"a":1}');
@@ -47,7 +61,7 @@ describe("request core", () => {
   it("throws unauthorised without a request when the token is missing", async () => {
     for (const token of [null, undefined, ""]) {
       const { client, fetchMock } = setup({ getAccessToken: async () => token });
-      await expect(client.request("/x")).rejects.toMatchObject({ kind: "unauthorised" });
+      await expect(call(client, "/x")).rejects.toMatchObject({ kind: "unauthorised" });
       expect(fetchMock).not.toHaveBeenCalled();
     }
   });
@@ -62,7 +76,7 @@ describe("request core", () => {
       [503, "server"],
     ] as const) {
       fetchMock.mockResolvedValueOnce(respond(status));
-      await expect(client.request("/x")).rejects.toMatchObject({ kind, status });
+      await expect(call(client, "/x")).rejects.toMatchObject({ kind, status });
     }
   });
 
@@ -72,7 +86,7 @@ describe("request core", () => {
       fetchMock.mockResolvedValueOnce(
         respond(status, JSON.stringify({ message: "Weak password" })),
       );
-      const err = (await client.request("/x").catch((e) => e)) as BackendError;
+      const err = (await call(client, "/x").catch((e) => e)) as BackendError;
       expect(err.detail).toBe("Weak password");
       expect(err.message).not.toContain("Weak password");
     }
@@ -83,7 +97,7 @@ describe("request core", () => {
     fetchMock.mockResolvedValueOnce(respond(400, "not json"));
     fetchMock.mockResolvedValueOnce(respond(400, JSON.stringify({ message: 5 })));
     for (let i = 0; i < 2; i++) {
-      const err = (await client.request("/x").catch((e) => e)) as BackendError;
+      const err = (await call(client, "/x").catch((e) => e)) as BackendError;
       expect(err.detail).toBeUndefined();
     }
   });
@@ -92,7 +106,7 @@ describe("request core", () => {
     const { client, fetchMock } = setup();
     for (const status of [401, 403, 500, 503]) {
       fetchMock.mockResolvedValueOnce(respond(status, JSON.stringify({ message: "Secret" })));
-      const err = (await client.request("/x").catch((e) => e)) as BackendError;
+      const err = (await call(client, "/x").catch((e) => e)) as BackendError;
       expect(err.detail).toBeUndefined();
     }
   });
@@ -100,29 +114,29 @@ describe("request core", () => {
   it("maps network failure to unavailable", async () => {
     const { client, fetchMock } = setup();
     fetchMock.mockRejectedValue(new TypeError("Failed to fetch"));
-    await expect(client.request("/x")).rejects.toMatchObject({ kind: "unavailable" });
+    await expect(call(client, "/x")).rejects.toMatchObject({ kind: "unavailable" });
   });
 
   it("returns undefined for 204 and empty bodies only when allowEmpty is set", async () => {
     const { client, fetchMock } = setup();
     fetchMock.mockResolvedValueOnce(respond(204));
-    await expect(client.request("/x", { allowEmpty: true })).resolves.toBeUndefined();
+    await expect(call(client, "/x", { allowEmpty: true })).resolves.toBeUndefined();
     fetchMock.mockResolvedValueOnce(respond(200, ""));
-    await expect(client.request("/x", { allowEmpty: true })).resolves.toBeUndefined();
+    await expect(call(client, "/x", { allowEmpty: true })).resolves.toBeUndefined();
   });
 
   it("treats an empty or 204 body as bad-response by default", async () => {
     const { client, fetchMock } = setup();
     fetchMock.mockResolvedValueOnce(respond(204));
-    await expect(client.request("/x")).rejects.toMatchObject({ kind: "bad-response" });
+    await expect(call(client, "/x")).rejects.toMatchObject({ kind: "bad-response" });
     fetchMock.mockResolvedValueOnce(respond(200, "  "));
-    await expect(client.request("/x")).rejects.toMatchObject({ kind: "bad-response" });
+    await expect(call(client, "/x")).rejects.toMatchObject({ kind: "bad-response" });
   });
 
   it("maps malformed JSON to bad-response without carrying the body", async () => {
     const { client, fetchMock } = setup();
     fetchMock.mockResolvedValue(respond(200, "<html>secret</html>"));
-    const err = (await client.request("/x").catch((e) => e)) as BackendError;
+    const err = (await call(client, "/x").catch((e) => e)) as BackendError;
     expect(err.kind).toBe("bad-response");
     expect(err.cause).toBeUndefined();
     expect(JSON.stringify(err)).not.toContain("secret");
@@ -130,19 +144,26 @@ describe("request core", () => {
 
   it("validates with the schema and maps a mismatch to bad-response without the body", async () => {
     const { client, fetchMock } = setup();
-    const schema = {
-      parse(u: unknown): { n: number } {
-        if (typeof (u as { n?: unknown })?.n !== "number") throw new Error("leak: secret");
-        return u as { n: number };
+    const schema: ContractSchema<{ n: number }> = {
+      safeParse: (u: unknown) => {
+        const n: unknown = typeof u === "object" && u !== null ? Reflect.get(u, "n") : undefined;
+        return typeof n === "number"
+          ? { success: true, data: { n } }
+          : { success: false, error: { issues: [{ path: ["n"] }] } };
       },
     };
     fetchMock.mockResolvedValueOnce(respond(200, '{"n":2}'));
     await expect(client.request("/x", { schema })).resolves.toEqual({ n: 2 });
-    fetchMock.mockResolvedValueOnce(respond(200, '{"n":"secret"}'));
+    fetchMock.mockResolvedValueOnce(
+      new Response('{"n":"secret"}', { status: 200, headers: { "x-request-id": "req-9" } }),
+    );
     const err = (await client.request("/x", { schema }).catch((e) => e)) as BackendError;
     expect(err.kind).toBe("bad-response");
+    expect(err.requestId).toBe("req-9");
+    expect(err.issuePaths).toEqual(["n"]);
     expect(err.cause).toBeUndefined();
     expect(err.message).not.toContain("secret");
+    expect(JSON.stringify(err)).not.toContain("secret");
   });
 
   it("maps a body read failure to bad-response, and to unavailable when aborted", async () => {
@@ -153,7 +174,7 @@ describe("request core", () => {
       return res;
     };
     fetchMock.mockResolvedValueOnce(broken());
-    await expect(client.request("/x")).rejects.toMatchObject({ kind: "bad-response" });
+    await expect(call(client, "/x")).rejects.toMatchObject({ kind: "bad-response" });
 
     const controller = new AbortController();
     const reason = new DOMException("Aborted", "AbortError");
@@ -163,7 +184,7 @@ describe("request core", () => {
       throw reason;
     });
     fetchMock.mockResolvedValueOnce(res);
-    await expect(client.request("/x", { signal: controller.signal })).rejects.toBe(reason);
+    await expect(call(client, "/x", { signal: controller.signal })).rejects.toBe(reason);
   });
 
   describe("timeout and abort", () => {
@@ -173,7 +194,7 @@ describe("request core", () => {
       vi.useFakeTimers();
       const { client, fetchMock } = setup();
       fetchMock.mockImplementation(hang);
-      const result = client.request("/x").catch((e) => e);
+      const result = call(client, "/x").catch((e) => e);
       await vi.advanceTimersByTimeAsync(14999);
       expect(fetchMock.mock.calls[0][1].signal.aborted).toBe(false);
       await vi.advanceTimersByTimeAsync(2);
@@ -186,7 +207,7 @@ describe("request core", () => {
       vi.useFakeTimers();
       const { client, fetchMock } = setup({ timeoutMs: 100 });
       fetchMock.mockImplementation(hang);
-      const result = client.request("/x").catch((e) => e);
+      const result = call(client, "/x").catch((e) => e);
       await vi.advanceTimersByTimeAsync(101);
       expect(((await result) as BackendError).kind).toBe("unavailable");
     });
@@ -196,7 +217,7 @@ describe("request core", () => {
       const controller = new AbortController();
       const reason = new DOMException("Aborted", "AbortError");
       fetchMock.mockImplementation(hang);
-      const result = client.request("/x", { signal: controller.signal }).catch((e) => e);
+      const result = call(client, "/x", { signal: controller.signal }).catch((e) => e);
       await Promise.resolve();
       await Promise.resolve();
       controller.abort(reason);
@@ -211,7 +232,7 @@ describe("request core", () => {
       const reason = new DOMException("Aborted", "AbortError");
       controller.abort(reason);
       fetchMock.mockImplementation(hang);
-      await expect(client.request("/x", { signal: controller.signal })).rejects.toBe(reason);
+      await expect(call(client, "/x", { signal: controller.signal })).rejects.toBe(reason);
     });
   });
 });
@@ -248,7 +269,7 @@ describe("401 single-flight refresh", () => {
     const { client, fetchMock } = setup({ getAccessToken: store.get, onUnauthorised });
     bearerAwareFetch(fetchMock);
 
-    const results = Promise.all(Array.from({ length: 10 }, (_, i) => client.request(`/x${i}`)));
+    const results = Promise.all(Array.from({ length: 10 }, (_, i) => call(client, `/x${i}`)));
     await vi.waitFor(() => expect(onUnauthorised).toHaveBeenCalledTimes(1));
     release();
     await expect(results).resolves.toHaveLength(10);
@@ -266,13 +287,13 @@ describe("401 single-flight refresh", () => {
     });
     const { client, fetchMock } = setup({ getAccessToken: store.get, onUnauthorised });
     bearerAwareFetch(fetchMock);
-    await client.request("/a");
+    await call(client, "/a");
     store.set("new");
     fetchMock.mockImplementationOnce(async () => {
       return respond(401);
     });
     // Sends "new" then gets a 401 with an unchanged token: that is a genuine refresh case.
-    await expect(client.request("/b")).resolves.toEqual({ ok: true });
+    await expect(call(client, "/b")).resolves.toEqual({ ok: true });
     expect(onUnauthorised).toHaveBeenCalledTimes(2);
   });
 
@@ -288,7 +309,7 @@ describe("401 single-flight refresh", () => {
       }
       return respond(200, "{}");
     });
-    await expect(client.request("/x")).resolves.toEqual({});
+    await expect(call(client, "/x")).resolves.toEqual({});
     expect(onUnauthorised).not.toHaveBeenCalled();
   });
 
@@ -300,7 +321,7 @@ describe("401 single-flight refresh", () => {
     });
     const { client, fetchMock } = setup({ getAccessToken: store.get, onUnauthorised });
     fetchMock.mockResolvedValue(respond(401));
-    await expect(client.request("/x")).rejects.toMatchObject({ kind: "unauthorised" });
+    await expect(call(client, "/x")).rejects.toMatchObject({ kind: "unauthorised" });
     expect(fetchMock).toHaveBeenCalledTimes(2);
     expect(onUnauthorised).toHaveBeenCalledTimes(1);
   });
@@ -308,7 +329,7 @@ describe("401 single-flight refresh", () => {
   it("throws unauthorised without retrying when the session ended", async () => {
     const { client, fetchMock } = setup({ onUnauthorised: async () => "ended" });
     fetchMock.mockResolvedValue(respond(401));
-    await expect(client.request("/x")).rejects.toMatchObject({ kind: "unauthorised" });
+    await expect(call(client, "/x")).rejects.toMatchObject({ kind: "unauthorised" });
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
@@ -321,7 +342,7 @@ describe("401 single-flight refresh", () => {
     ]) {
       const { client, fetchMock } = setup({ onUnauthorised });
       fetchMock.mockResolvedValue(respond(401));
-      const err = (await client.request("/x").catch((e) => e)) as BackendError;
+      const err = (await call(client, "/x").catch((e) => e)) as BackendError;
       expect(err.kind).toBe("unavailable");
       expect(fetchMock).toHaveBeenCalledTimes(1);
     }
@@ -334,7 +355,7 @@ describe("401 single-flight refresh", () => {
       onUnauthorised: async () => "refreshed",
     });
     fetchMock.mockResolvedValue(respond(401));
-    await expect(client.request("/x")).rejects.toMatchObject({ kind: "unauthorised" });
+    await expect(call(client, "/x")).rejects.toMatchObject({ kind: "unauthorised" });
   });
 
   it("maps a synchronously throwing onUnauthorised to unavailable and clears the refresh", async () => {
@@ -344,7 +365,7 @@ describe("401 single-flight refresh", () => {
     const { client, fetchMock } = setup({ onUnauthorised });
     fetchMock.mockResolvedValue(respond(401));
     for (let i = 0; i < 2; i++) {
-      const err = (await client.request("/x").catch((e) => e)) as BackendError;
+      const err = (await call(client, "/x").catch((e) => e)) as BackendError;
       expect(err.kind).toBe("unavailable");
     }
     expect(onUnauthorised).toHaveBeenCalledTimes(2);
@@ -353,7 +374,7 @@ describe("401 single-flight refresh", () => {
   it("reports unavailable without a 401 status when refresh is retryable", async () => {
     const { client, fetchMock } = setup({ onUnauthorised: async () => "retryable" });
     fetchMock.mockResolvedValue(respond(401));
-    const err = (await client.request("/x").catch((e) => e)) as BackendError;
+    const err = (await call(client, "/x").catch((e) => e)) as BackendError;
     expect(err.kind).toBe("unavailable");
     expect(err.status).toBeUndefined();
   });
@@ -364,7 +385,7 @@ describe("401 single-flight refresh", () => {
         throw new Error("keychain");
       },
     });
-    const err = (await client.request("/x").catch((e) => e)) as BackendError;
+    const err = (await call(client, "/x").catch((e) => e)) as BackendError;
     expect(err).toBeInstanceOf(BackendError);
     expect(err.kind).toBe("unavailable");
     expect(fetchMock).not.toHaveBeenCalled();
@@ -379,7 +400,7 @@ describe("401 single-flight refresh", () => {
       },
     });
     fetchMock.mockResolvedValue(respond(401));
-    const err = (await client.request("/x").catch((e) => e)) as BackendError;
+    const err = (await call(client, "/x").catch((e) => e)) as BackendError;
     expect(err).toBeInstanceOf(BackendError);
     expect(err.kind).toBe("unavailable");
   });
@@ -394,7 +415,7 @@ describe("401 single-flight refresh", () => {
       onUnauthorised: async () => "refreshed",
     });
     fetchMock.mockResolvedValue(respond(401));
-    const err = (await client.request("/x").catch((e) => e)) as BackendError;
+    const err = (await call(client, "/x").catch((e) => e)) as BackendError;
     expect(err.kind).toBe("unavailable");
   });
 
@@ -405,7 +426,7 @@ describe("401 single-flight refresh", () => {
       onUnauthorised: () => new Promise<never>(() => {}),
     });
     fetchMock.mockResolvedValue(respond(401));
-    const pending = client.request("/x").catch((e) => e);
+    const pending = call(client, "/x").catch((e) => e);
     await vi.advanceTimersByTimeAsync(200);
     const err = (await pending) as BackendError;
     vi.useRealTimers();
@@ -419,7 +440,7 @@ describe("401 single-flight refresh", () => {
       onUnauthorised: () => new Promise<never>(() => {}),
     });
     fetchMock.mockResolvedValue(respond(401));
-    const pending = client.request("/x", { signal: controller.signal }).catch((e) => e);
+    const pending = call(client, "/x", { signal: controller.signal }).catch((e) => e);
     await new Promise((r) => setTimeout(r, 10));
     const reason = new Error("caller-abort");
     controller.abort(reason);
@@ -436,13 +457,13 @@ describe("401 single-flight refresh", () => {
       },
     });
     fetchMock.mockResolvedValue(respond(401));
-    expect(await client.request("/x", { signal: controller.signal }).catch((e) => e)).toBe(reason);
+    expect(await call(client, "/x", { signal: controller.signal }).catch((e) => e)).toBe(reason);
   });
 
   it("is unauthorised without an onUnauthorised handler", async () => {
     const { client, fetchMock } = setup();
     fetchMock.mockResolvedValue(respond(401));
-    await expect(client.request("/x")).rejects.toMatchObject({ kind: "unauthorised", status: 401 });
+    await expect(call(client, "/x")).rejects.toMatchObject({ kind: "unauthorised", status: 401 });
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
@@ -458,9 +479,9 @@ describe("401 single-flight refresh", () => {
       const auth = (init.headers as Record<string, string>).Authorization;
       return auth === `Bearer t${n}` && n > 0 ? respond(200, "{}") : respond(401);
     });
-    await client.request("/a");
+    await call(client, "/a");
     store.set("stale");
-    await client.request("/b");
+    await call(client, "/b");
     expect(onUnauthorised).toHaveBeenCalledTimes(2);
   });
 });
@@ -482,8 +503,8 @@ describe("client header and policy", () => {
       .mockResolvedValueOnce(respond(401))
       .mockResolvedValueOnce(respond(200, "{}"))
       .mockResolvedValueOnce(respond(200, "{}"));
-    await client.request("/a");
-    await client.request("/b");
+    await call(client, "/a");
+    await call(client, "/b");
     expect(fetchMock).toHaveBeenCalledTimes(3);
     for (const [, init] of fetchMock.mock.calls) {
       expect(init.headers["X-Flump-Client"]).toBe("mobile/1.2.3 (ios)");
@@ -493,7 +514,7 @@ describe("client header and policy", () => {
   it("omits the header when no client info is configured", async () => {
     const { client, fetchMock } = setup();
     fetchMock.mockResolvedValue(respond(200, "{}"));
-    await client.request("/a");
+    await call(client, "/a");
     expect(fetchMock.mock.calls[0][1].headers["X-Flump-Client"]).toBeUndefined();
   });
 
@@ -507,7 +528,7 @@ describe("client header and policy", () => {
       policy: { minVersion: "1.0.0", recommendedVersion: "1.5.0" },
     });
     const [url, init] = fetchMock.mock.calls[0];
-    expect(url).toBe("https://api.example.test/app/client-policy");
+    expect(url).toBe("https://api.example.test/v1/app/client-policy");
     expect(init.headers.Authorization).toBeUndefined();
     expect(init.headers["X-Flump-Client"]).toBe("mobile/1.2.3 (ios)");
   });

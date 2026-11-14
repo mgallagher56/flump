@@ -1,3 +1,4 @@
+import { UserProfileResponse } from "@flump/api-contract";
 import type { LoaderFunctionArgs } from "react-router";
 import { redirect } from "react-router";
 import { backendFetch } from "~/services/backend-client.server";
@@ -12,9 +13,10 @@ export const loader = async (args: LoaderFunctionArgs) => {
   if (!accessToken) throwRouteError(new BackendError("unauthorised", "/user-profile"));
 
   try {
-    const profile = await backendFetch<{ onboardingCompleted?: boolean } | null>("/user-profile", {
+    const profile = await backendFetch("/user-profile", {
       accessToken,
       signal: args.request.signal,
+      schema: UserProfileResponse,
     });
     if (profile && profile.onboardingCompleted === false) {
       return redirect("/app/onboarding");

@@ -1,3 +1,4 @@
+import { AccountResponse } from "@flump/api-contract";
 import type { ReactElement } from "react";
 import type { LoaderFunctionArgs } from "react-router";
 import { data } from "react-router";
@@ -13,9 +14,10 @@ export const loader = async (args: LoaderFunctionArgs) => {
   if (!accessToken) throwRouteError(new BackendError("unauthorised", `/accounts/${accountId}`));
 
   try {
-    const account = await backendFetch<any>(`/accounts/${accountId}`, {
+    const account = await backendFetch(`/accounts/${accountId}`, {
       accessToken,
       signal: args.request.signal,
+      schema: AccountResponse,
     });
     if (!account) throw new BackendError("not-found", `/accounts/${accountId}`);
     const accountDetails = account.details || [];

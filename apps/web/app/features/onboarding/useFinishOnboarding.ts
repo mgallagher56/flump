@@ -1,9 +1,14 @@
+import {
+  AccountListResponse,
+  BudgetEntryListResponse,
+  BudgetEntryResponse,
+  CreateAccountResponse,
+} from "@flump/api-contract";
 import { clearOnboardingSeed } from "@flump/finance-engine";
 import { useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import { useUserProfile } from "~/hooks/useUserProfile";
-import { apiFetch } from "~/services/api-client";
-import { BackendError } from "~/services/backend-error";
+import { apiFetch, apiFetchAll } from "~/services/api-client";
 import { buildOnboardingSeedJobs } from "~/services/onboarding-seed";
 import type { DashboardWidgetKey } from "~/utils/pageConfig";
 import { birthYearFromAge } from "./age";
@@ -82,7 +87,6 @@ export function useFinishOnboarding(values: OnboardingValues, summary: Onboardin
           : { housingStatus: values.housingStatus, monthlyHousingCost: summary.monthlyHousing }),
         monthlyOtherOutgoings: summary.otherOutgoings,
         hasMortgage: values.housingStatus === "mortgage" || mortgageBalance > 0,
-        homeValue: propertyValue > 0 ? propertyValue : null,
         pensionPercent: values.pensionPercent ?? undefined,
         // Not asked in onboarding: on the first run save net pay, the method the summary's
         // take-home (and the budget income row) used. On a later run leave the field out, so a
@@ -102,16 +106,10 @@ export function useFinishOnboarding(values: OnboardingValues, summary: Onboardin
       // Jobs that already succeeded are remembered so a retry never creates duplicates. The
       // backend is also asked what already exists, so a retry after a reload, a crash or a lost
       // response skips records an earlier attempt created. A failed lookup stops here (no guessing).
-      const existingRows = async (endpoint: string) => {
-        const rows = await apiFetch<Array<Record<string, unknown>>>(endpoint);
-        if (!Array.isArray(rows)) throw new BackendError("bad-response", endpoint);
-        return rows;
-      };
-      const names = (rows: Array<Record<string, unknown>>) =>
-        rows.flatMap((row) => (typeof row.name === "string" ? [row.name] : []));
+      const names = (rows: Array<{ name: string }>) => rows.map((row) => row.name);
       const [existingAccounts, existingEntries] = await Promise.all([
-        existingRows("/accounts"),
-        existingRows("/budget-entries"),
+        apiFetchAll("/accounts", { schema: AccountListResponse }),
+        apiFetchAll("/budget-entries", { schema: BudgetEntryListResponse }),
       ]);
       for (const name of names(existingAccounts)) seededRef.current.add(`account:${name}`);
       for (const name of names(existingEntries)) seededRef.current.add(`entry:${name}`);
@@ -136,7 +134,12 @@ export function useFinishOnboarding(values: OnboardingValues, summary: Onboardin
         seedJobs.map(async (job) => {
           if (!job.enabled || seededRef.current.has(job.key)) return;
           if (hasProperty && job.payload.type === "Property") return;
-          await apiFetch<unknown>(job.endpoint, { method: "POST", body: job.payload });
+          const post = { method: "POST", body: job.payload } as const;
+          if (job.endpoint === "/accounts") {
+            await apiFetch(job.endpoint, { ...post, schema: CreateAccountResponse });
+          } else {
+            await apiFetch(job.endpoint, { ...post, schema: BudgetEntryResponse });
+          }
           seededRef.current.add(job.key);
         }),
       );

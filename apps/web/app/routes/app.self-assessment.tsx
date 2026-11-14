@@ -1,3 +1,9 @@
+import {
+  DeleteTaxRecordResponse,
+  TaxRecordListResponse,
+  TaxRecordResponse,
+  UpdateProfileResponse,
+} from "@flump/api-contract";
 import type { ReactElement } from "react";
 import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "react-router";
 import { data } from "react-router";
@@ -31,6 +37,7 @@ export const action = async (args: ActionFunctionArgs) => {
       const annualSalary = formData.get("annualSalary");
       const propertyOwnershipShare = formData.get("propertyOwnershipShare");
       await backendFetch(`/user-profile`, {
+        schema: UpdateProfileResponse,
         accessToken: token,
         method: "PATCH",
         body: {
@@ -55,6 +62,7 @@ export const action = async (args: ActionFunctionArgs) => {
       const receiptData = formData.get("receiptData") || null;
 
       await backendFetch(`/tax-records`, {
+        schema: TaxRecordResponse,
         accessToken: token,
         method: "POST",
         body: {
@@ -89,6 +97,7 @@ export const action = async (args: ActionFunctionArgs) => {
       const receiptClear = formData.get("receiptClear") === "1";
 
       await backendFetch(`/tax-records/${encodeURIComponent(String(id ?? ""))}`, {
+        schema: TaxRecordResponse,
         accessToken: token,
         method: "PATCH",
         body: {
@@ -110,6 +119,7 @@ export const action = async (args: ActionFunctionArgs) => {
     } else if (intent === "delete-transaction") {
       const id = formData.get("id");
       await backendFetch(`/tax-records/${encodeURIComponent(String(id ?? ""))}`, {
+        schema: DeleteTaxRecordResponse,
         accessToken: token,
         method: "DELETE",
       });
@@ -121,6 +131,7 @@ export const action = async (args: ActionFunctionArgs) => {
         await Promise.all(
           recordIds.map((id) =>
             backendFetch(`/tax-records/${encodeURIComponent(String(id ?? ""))}`, {
+              schema: DeleteTaxRecordResponse,
               accessToken: token,
               method: "DELETE",
             }),
@@ -161,6 +172,7 @@ export const action = async (args: ActionFunctionArgs) => {
       for (const body of bodies) {
         try {
           await backendFetch(`/tax-records/bulk`, {
+            schema: TaxRecordListResponse,
             accessToken: token,
             method: "POST",
             body,

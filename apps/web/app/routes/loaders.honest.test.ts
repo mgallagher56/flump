@@ -13,6 +13,11 @@ vi.mock("~/utils/auth.server", () => ({
 
 import { redirect } from "react-router";
 import { apiConfig } from "~/config.server";
+import {
+  accountDetailFixture,
+  accountWithDetailsFixture,
+  profileFixture,
+} from "~/test/fixtures/contractResponses";
 import { loader as appIndexLoader } from "./app._index";
 import { loader as accountLoader } from "./app.accounts.$account";
 import { loader as onboardingLoader } from "./app.onboarding";
@@ -108,7 +113,7 @@ describe("app.profile loader", () => {
   });
 
   it("returns the profile on success", async () => {
-    globalThis.fetch = respond(200, { annualSalary: 1 });
+    globalThis.fetch = respond(200, { ...profileFixture, annualSalary: 1 });
     const res: any = await profileLoader(args());
     expect(res.data.userProfile.annualSalary).toBe(1);
   });
@@ -122,7 +127,7 @@ describe("app.onboarding loader", () => {
   });
 
   it("returns the profile and never the access token on success (E20-N7)", async () => {
-    globalThis.fetch = respond(200, { enabledPages: [] });
+    globalThis.fetch = respond(200, { ...profileFixture, enabledPages: [] });
     const res: any = await onboardingLoader(args());
     expect(res.data.userProfile).toBeDefined();
     expect(res.data).not.toHaveProperty("accessToken");
@@ -138,13 +143,13 @@ describe("app index loader", () => {
   });
 
   it("redirects to onboarding when not completed", async () => {
-    globalThis.fetch = respond(200, { onboardingCompleted: false });
+    globalThis.fetch = respond(200, { ...profileFixture, onboardingCompleted: false });
     const res: Response = (await appIndexLoader(args())) as any;
     expect(res.headers.get("Location")).toBe("/app/onboarding");
   });
 
   it("redirects home when completed", async () => {
-    globalThis.fetch = respond(200, { onboardingCompleted: true });
+    globalThis.fetch = respond(200, { ...profileFixture, onboardingCompleted: true });
     const res: Response = (await appIndexLoader(args())) as any;
     expect(res.headers.get("Location")).toBe("/");
   });
@@ -179,24 +184,26 @@ describe("account detail loader", () => {
   });
 
   it("encodes the account id in the backend path", async () => {
-    globalThis.fetch = respond(200, { id: "a/b", details: [] });
+    globalThis.fetch = respond(200, accountWithDetailsFixture);
     await accountLoader(args("http://localhost/x", { account: "a/b?c" }));
     expect((globalThis.fetch as any).mock.calls[0][0]).toBe(
-      `${apiConfig.apiBaseUrl}/accounts/a%2Fb%3Fc`,
+      `${apiConfig.apiBaseUrl}/v1/accounts/a%2Fb%3Fc`,
     );
   });
 
-  it("treats an empty body as not-found rather than throwing a TypeError", async () => {
+  it("treats a null body as a bad response (it breaks the contract), never a TypeError", async () => {
     globalThis.fetch = respond(200, null);
     const err = await caught(accountLoader(args("http://localhost/x", { account: "a1" })));
-    expect(err.init.status).toBe(404);
-    expect(err.data.kind).toBe("not-found");
+    expect(err.init.status).toBe(502);
+    expect(err.data.kind).toBe("bad-response");
   });
 
   it("calls the configured base URL and returns nested details", async () => {
-    globalThis.fetch = respond(200, { id: "a1", details: [{ year: 2026 }] });
+    globalThis.fetch = respond(200, accountWithDetailsFixture);
     const res: any = await accountLoader(args("http://localhost/x", { account: "a1" }));
-    expect(res.data.accountDetails).toEqual([{ year: 2026 }]);
-    expect((globalThis.fetch as any).mock.calls[0][0]).toBe(`${apiConfig.apiBaseUrl}/accounts/a1`);
+    expect(res.data.accountDetails).toEqual([accountDetailFixture]);
+    expect((globalThis.fetch as any).mock.calls[0][0]).toBe(
+      `${apiConfig.apiBaseUrl}/v1/accounts/a1`,
+    );
   });
 });

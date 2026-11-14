@@ -1,3 +1,4 @@
+import { CreateAccountResponse } from "@flump/api-contract";
 import { act, renderHook } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { deriveOnboardingSummary } from "./deriveOnboardingSummary";
@@ -15,8 +16,10 @@ vi.mock("react-router", () => ({ useNavigate: () => navigate }));
 vi.mock("~/hooks/useUserProfile", () => ({
   useUserProfile: () => ({ updateProfile, profile: profileState.current }),
 }));
+// One mock for both: the existing-row lookups go through apiFetchAll.
 vi.mock("~/services/api-client", () => ({
   apiFetch: (...args: unknown[]) => apiFetch(...args),
+  apiFetchAll: (...args: unknown[]) => apiFetch(...args),
 }));
 vi.mock("./notify", () => ({ useOnboardingNotify: () => vi.fn() }));
 vi.mock("@flump/finance-engine", async (importOriginal) => ({
@@ -134,6 +137,7 @@ describe("useFinishOnboarding", () => {
     expect(apiFetch).toHaveBeenCalledWith("/accounts", {
       method: "POST",
       body: { name: "Home (your estimate)", type: "Property", balance: 310000, isCurrent: true },
+      schema: CreateAccountResponse,
     });
   });
 

@@ -19,6 +19,8 @@ import { CLIENT_IP_HEADER, CLIENT_IP_KEY_ENV, CLIENT_IP_SIG_HEADER } from "./cli
 const UUID = "123e4567-e89b-42d3-a456-426614174000";
 const ORIGIN = "https://app.flump.test";
 
+const envelope = (code: string, message: string) => ({ code, message, requestId: "req-upstream" });
+
 const session: ProxySession = { userId: "user_1", accessToken: "secret-token", cookies: [] };
 
 function req(
@@ -90,7 +92,7 @@ describe("allow-list", () => {
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({ ok: 1 });
     const [url, init] = fetchImpl.mock.calls[0] as unknown as [string, RequestInit];
-    expect(url).toBe(`https://backend.test${path}`);
+    expect(url).toBe(`https://backend.test/v1${path}`);
     expect(init.headers).toEqual({
       Authorization: "Bearer secret-token",
       ...(body ? { "Content-Type": "application/json" } : {}),
@@ -370,10 +372,13 @@ describe("rate limit (BE-07: the backend is authoritative)", () => {
     const res = await run(req("POST", "/api/accounts", { body: "{}" }), {
       fetchImpl: vi.fn(
         async () =>
-          new Response(JSON.stringify({ message: "Too many requests. Try again later." }), {
-            status: 429,
-            headers: { "Retry-After": "42" },
-          }),
+          new Response(
+            JSON.stringify(envelope("rate_limited", "Too many requests. Try again later.")),
+            {
+              status: 429,
+              headers: { "Retry-After": "42" },
+            },
+          ),
       ) as never,
     });
     expect(res.status).toBe(429);
@@ -435,21 +440,40 @@ describe("error mapping", () => {
 
   it("passes 401 and 403 through without backend text", async () => {
     for (const status of [401, 403]) {
-      const res = await run(req("GET", "/api/accounts"), upstream(status, '{"message":"Secret"}'));
+      const res = await run(
+        req("GET", "/api/accounts"),
+        upstream(status, JSON.stringify(envelope("forbidden", "Secret"))),
+      );
       expect(res.status).toBe(status);
       expect(JSON.stringify(await res.json())).not.toContain("Secret");
     }
   });
 
   it("keeps the validation message for other 4xx", async () => {
-    const res = await run(req("GET", "/api/accounts"), upstream(400, '{"message":"Nope"}'));
+    const res = await run(
+      req("GET", "/api/accounts"),
+      upstream(400, JSON.stringify(envelope("validation_failed", "Nope"))),
+    );
     expect(res.status).toBe(400);
-    expect(await res.json()).toEqual({ kind: "client", message: "Nope" });
+    expect(await res.json()).toEqual({
+      kind: "client",
+      code: "validation_failed",
+      message: "Nope",
+      requestId: "req-upstream",
+    });
+  });
+
+  it("drops a 4xx body that is not the BE-09 error envelope", async () => {
+    const res = await run(req("GET", "/api/accounts"), upstream(400, '{"message":"Nope"}'));
+    expect(await res.json()).toEqual({ kind: "client" });
   });
 
   it("turns 5xx and redirects into a generic 502", async () => {
     for (const status of [500, 503, 302]) {
-      const res = await run(req("GET", "/api/accounts"), upstream(status, '{"message":"Secret"}'));
+      const res = await run(
+        req("GET", "/api/accounts"),
+        upstream(status, JSON.stringify(envelope("forbidden", "Secret"))),
+      );
       expect(res.status).toBe(502);
       expect(JSON.stringify(await res.json())).not.toContain("Secret");
     }
@@ -483,5 +507,83 @@ describe("error mapping", () => {
     expect(res.status).toBe(204);
     expect(res.headers.get("Cache-Control")).toBe("no-store");
     expect(await res.text()).toBe("");
+  });
+});
+
+describe("v1 write conventions and paging (BE-10)", () => {
+  const ok = (headers?: Record<string, string>) =>
+    vi.fn(async () => new Response("[]", { status: 200, headers }));
+  const sent = (fetchImpl: ReturnType<typeof ok>) =>
+    fetchImpl.mock.calls[0] as unknown as [string, RequestInit];
+
+  it("forwards a valid Idempotency-Key on POST", async () => {
+    const fetchImpl = ok();
+    await run(
+      req("POST", "/api/accounts", { body: "{}", headers: { "Idempotency-Key": "key-123" } }),
+      { fetchImpl: fetchImpl as never },
+    );
+    expect((sent(fetchImpl)[1].headers as Record<string, string>)["Idempotency-Key"]).toBe(
+      "key-123",
+    );
+  });
+
+  it("refuses an Idempotency-Key on a non-POST or with bad characters", async () => {
+    for (const request of [
+      req("PATCH", `/api/accounts/${UUID}`, { body: "{}", headers: { "Idempotency-Key": "k" } }),
+      req("POST", "/api/accounts", { body: "{}", headers: { "Idempotency-Key": "badé" } }),
+    ]) {
+      const fetchImpl = ok();
+      const res = await run(request, { fetchImpl: fetchImpl as never });
+      expect(res.status).toBe(400);
+      expect(fetchImpl).not.toHaveBeenCalled();
+    }
+  });
+
+  it("forwards an If-Match ETag on updates and refuses anything else", async () => {
+    const etag = '"2026-11-14T09:30:00.000Z"';
+    const fetchImpl = ok();
+    await run(
+      req("PATCH", `/api/accounts/${UUID}`, { body: "{}", headers: { "If-Match": etag } }),
+      {
+        fetchImpl: fetchImpl as never,
+      },
+    );
+    expect((sent(fetchImpl)[1].headers as Record<string, string>)["If-Match"]).toBe(etag);
+
+    for (const request of [
+      req("PATCH", `/api/accounts/${UUID}`, { body: "{}", headers: { "If-Match": "*" } }),
+      req("GET", "/api/accounts", { headers: { "If-Match": etag } }),
+    ]) {
+      const refused = ok();
+      expect((await run(request, { fetchImpl: refused as never })).status).toBe(400);
+      expect(refused).not.toHaveBeenCalled();
+    }
+  });
+
+  it("forwards only limit and cursor on GET, and passes X-Next-Cursor back", async () => {
+    const fetchImpl = ok({ "X-Next-Cursor": "abc_DEF-1" });
+    const res = await run(req("GET", "/api/budget-entries?limit=50&cursor=abc_DEF-0"), {
+      fetchImpl: fetchImpl as never,
+    });
+    expect(sent(fetchImpl)[0]).toBe(
+      "https://backend.test/v1/budget-entries?limit=50&cursor=abc_DEF-0",
+    );
+    expect(res.headers.get("X-Next-Cursor")).toBe("abc_DEF-1");
+  });
+
+  it("refuses any other query parameter and drops a malformed X-Next-Cursor", async () => {
+    for (const path of [
+      "/api/accounts?userId=x",
+      "/api/accounts?cursor=a/b",
+      "/api/accounts?limit=1&limit=2",
+    ]) {
+      const fetchImpl = ok();
+      expect((await run(req("GET", path), { fetchImpl: fetchImpl as never })).status).toBe(400);
+      expect(fetchImpl).not.toHaveBeenCalled();
+    }
+    const res = await run(req("GET", "/api/accounts"), {
+      fetchImpl: ok({ "X-Next-Cursor": "not a cursor" }) as never,
+    });
+    expect(res.headers.get("X-Next-Cursor")).toBeNull();
   });
 });

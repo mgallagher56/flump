@@ -1,94 +1,83 @@
-import { BackendError, kindFromStatus } from "./backend-error";
+import {
+  type ContractSchema,
+  callBackend,
+  callBackendAll,
+  type HttpMethod,
+  type TransportConfig,
+} from "@flump/api-client";
 
-export type HttpMethod = "GET" | "POST" | "PATCH" | "PUT" | "DELETE";
+export type { HttpMethod } from "@flump/api-client";
 
-export interface ApiFetchOptions {
+interface ApiFetchBase {
   method?: HttpMethod;
   body?: unknown;
   /** Caller cancellation. A caller abort is rethrown as is, never reported as a backend failure. */
   signal?: AbortSignal;
   /** Timeout in milliseconds. Defaults to 15000. A timeout is reported as `unavailable`. */
   timeoutMs?: number;
-  /** Set for endpoints that legitimately return no body (for example DELETE). */
-  allowEmpty?: boolean;
+  /** `Idempotency-Key` on a POST: a fresh UUID by default, `false` for none. */
+  idempotencyKey?: string | false;
+  /** Sent as `If-Match` (the entity's `ETag`, `"<updatedAt>"`) on a conditional update. */
+  ifMatch?: string;
 }
 
-const DEFAULT_TIMEOUT_MS = 15000;
-
-/** Same-origin proxy prefix (E20-N4). The server attaches the credentials. */
-const API_BASE = "/api";
+/** The 2xx body must match `schema`, the route's contract `*Response`. */
+export interface ApiFetchSchemaOptions<T> extends ApiFetchBase {
+  schema: ContractSchema<T>;
+  allowEmpty?: false;
+}
+/** As above, but an empty body resolves `undefined`. */
+export interface ApiFetchMaybeEmptyOptions<T> extends ApiFetchBase {
+  schema: ContractSchema<T>;
+  allowEmpty: true;
+}
+/** An endpoint with no response body. */
+export interface ApiFetchEmptyOptions extends ApiFetchBase {
+  schema: null;
+  allowEmpty: true;
+}
+export type ApiFetchOptions<T> =
+  | ApiFetchSchemaOptions<T>
+  | ApiFetchMaybeEmptyOptions<T>
+  | ApiFetchEmptyOptions;
 
 /**
- * Browser-side API client. Calls the same-origin `/api` proxy with no token and throws
- * `BackendError` for every failure so callers can show honest, generic messages.
+ * Same-origin proxy prefix (E20-N4). The server attaches the credentials and adds `/v1` when it
+ * forwards, so this client sends paths unversioned (`version: false`).
  */
-export async function apiFetch<T>(endpoint: string, opts: ApiFetchOptions = {}): Promise<T> {
-  const { method = "GET", body, signal, timeoutMs = DEFAULT_TIMEOUT_MS } = opts;
+const PROXY: TransportConfig = {
+  baseUrl: "/api",
+  version: false,
+  credentials: "same-origin",
+  // Read through a wrapper so tests that replace globalThis.fetch are honoured.
+  fetch: (input, init) => fetch(input, init),
+  headers: () => ({ "X-Flump-Request": "1" }),
+};
 
-  const headers: Record<string, string> = { "X-Flump-Request": "1" };
-  if (body !== undefined) headers["Content-Type"] = "application/json";
+/**
+ * Browser-side API client on the shared `callBackend` core. Calls the same-origin `/api` proxy
+ * with no token, validates the body with the route's contract schema, and throws `BackendError`
+ * for every failure so callers can show honest, generic messages.
+ */
+export function apiFetch(endpoint: string, opts: ApiFetchEmptyOptions): Promise<undefined>;
+export function apiFetch<T>(
+  endpoint: string,
+  opts: ApiFetchMaybeEmptyOptions<T>,
+): Promise<T | undefined>;
+export function apiFetch<T>(endpoint: string, opts: ApiFetchSchemaOptions<T>): Promise<T>;
+export async function apiFetch<T>(
+  endpoint: string,
+  opts: ApiFetchOptions<T>,
+): Promise<T | undefined> {
+  const { data } = await callBackend<T>(PROXY, endpoint, opts);
+  return data;
+}
 
-  // A manual AbortController combines the timeout and the caller signal (same as backendFetch).
-  const controller = new AbortController();
-  const onCallerAbort = () => controller.abort(signal?.reason);
-  if (signal?.aborted) onCallerAbort();
-  else signal?.addEventListener("abort", onCallerAbort, { once: true });
-  const timer = setTimeout(() => controller.abort(new Error("timeout")), timeoutMs);
-
-  try {
-    let res: Response;
-    try {
-      res = await fetch(`${API_BASE}${endpoint}`, {
-        method,
-        credentials: "same-origin",
-        headers,
-        body: body === undefined ? undefined : JSON.stringify(body),
-        signal: controller.signal,
-      });
-    } catch (cause) {
-      if (signal?.aborted) throw cause;
-      throw new BackendError("unavailable", endpoint, undefined, { cause });
-    }
-
-    if (!res.ok) {
-      const error = new BackendError(kindFromStatus(res.status), endpoint, res.status);
-      // Only 4xx other than 401 and 403 may surface backend text (for example validation messages).
-      if (res.status >= 400 && res.status < 500 && res.status !== 401 && res.status !== 403) {
-        try {
-          const parsed = JSON.parse(await res.text()) as { message?: unknown };
-          if (typeof parsed?.message === "string") error.detail = parsed.message;
-        } catch {
-          // No usable error body
-        }
-      }
-      throw error;
-    }
-
-    let text = "";
-    if (res.status !== 204) {
-      try {
-        text = await res.text();
-      } catch (cause) {
-        if (signal?.aborted) throw cause;
-        throw new BackendError(
-          controller.signal.aborted ? "unavailable" : "bad-response",
-          endpoint,
-          res.status,
-          { cause },
-        );
-      }
-    }
-    if (text.trim() === "") {
-      if (opts.allowEmpty) return undefined as T;
-      throw new BackendError("bad-response", endpoint, res.status);
-    }
-    try {
-      return JSON.parse(text) as T;
-    } catch (cause) {
-      throw new BackendError("bad-response", endpoint, res.status, { cause });
-    }
-  } finally {
-    clearTimeout(timer);
-    signal?.removeEventListener("abort", onCallerAbort);
-  }
+/** GETs every page of a list: follows `X-Next-Cursor` until it is absent. */
+export async function apiFetchAll<T>(
+  endpoint: string,
+  opts: { schema: ContractSchema<T[]>; signal?: AbortSignal; timeoutMs?: number },
+): Promise<T[]> {
+  const { data } = await callBackendAll<T>(PROXY, endpoint, opts);
+  return data;
 }

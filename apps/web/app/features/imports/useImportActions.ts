@@ -1,3 +1,4 @@
+import { ImportBatchResponse, ImportPreviewResponse } from "@flump/api-contract";
 import { useMemo } from "react";
 import { useRevalidator } from "react-router";
 import { apiFetch } from "~/services/api-client";
@@ -22,14 +23,16 @@ export function useImportActions(batchId: string): ImportActions {
     const id = encodeURIComponent(batchId);
     return {
       preview: (accountMap, signal) =>
-        apiFetch<ImportPreview>(`/imports/${id}/preview`, {
+        apiFetch(`/imports/${id}/preview`, {
           method: "POST",
+          schema: ImportPreviewResponse,
           body: { accountMap },
           signal,
         }),
       commit: async (accountMap, overwriteManual) => {
-        const done = await apiFetch<ImportBatch>(`/imports/${id}/commit`, {
+        const done = await apiFetch(`/imports/${id}/commit`, {
           method: "POST",
+          schema: ImportBatchResponse,
           body: { accountMap, overwriteManual },
           timeoutMs: 60_000,
         });
@@ -37,8 +40,9 @@ export function useImportActions(batchId: string): ImportActions {
         return done;
       },
       revert: async () => {
-        const done = await apiFetch<ImportBatch>(`/imports/${id}/revert`, {
+        const done = await apiFetch(`/imports/${id}/revert`, {
           method: "POST",
+          schema: ImportBatchResponse,
           body: {},
           timeoutMs: 60_000,
         });

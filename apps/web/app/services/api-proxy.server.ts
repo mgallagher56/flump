@@ -1,3 +1,13 @@
+import {
+  ErrorResponse,
+  ETAG_HEADER,
+  IDEMPOTENCY_KEY_HEADER,
+  IdempotencyKey,
+  IF_MATCH_HEADER,
+  NEXT_CURSOR_HEADER,
+  PageCursor,
+  parseEtag,
+} from "@flump/api-contract";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { apiConfig } from "~/config.server";
 import { expectedOrigin } from "~/security/csrf.server";
@@ -70,6 +80,23 @@ export function normaliseApiPath(rawPathname: string): string | null {
 
 export function matchAllowList(method: string, path: string): boolean {
   return COMPILED.some((rule) => rule.methods.includes(method) && rule.regex.test(path));
+}
+
+/**
+ * The query string forwarded upstream: only `limit` (digits) and `cursor` (an X-Next-Cursor
+ * value) on GET. Empty string when there is none; null when anything else is present, so the
+ * proxy stays an allow-list for query parameters too.
+ */
+export function forwardedQuery(params: URLSearchParams, method: string): string | null {
+  const out = new URLSearchParams();
+  for (const [key, value] of params) {
+    if (method !== "GET" || out.has(key)) return null;
+    if (key === "limit" && /^\d{1,4}$/.test(value)) out.set(key, value);
+    else if (key === "cursor" && PageCursor.safeParse(value).success) out.set(key, value);
+    else return null;
+  }
+  const text = out.toString();
+  return text === "" ? "" : `?${text}`;
 }
 
 function json(status: number, body: unknown, headers?: Headers): Response {
@@ -195,13 +222,30 @@ export async function handleApiProxy(
     }
   }
 
-  // 5. Forward. Only Content-Type, the Bearer token, the request id and the signed client IP go
-  // upstream.
+  // 5. Forward to the stable `/v1` surface (BE-10, D10). Only Content-Type, the Bearer token, the
+  // request id, the signed client IP and the validated write-convention headers (Idempotency-Key
+  // on POST, If-Match on updates) go upstream; only `limit` and `cursor` survive from the query.
   const headers: Record<string, string> = withRequestIdHeader({
     Authorization: `Bearer ${session.accessToken}`,
     ...signedClientIpHeaders(request, deps.env, now()),
   });
   if (body !== undefined) headers["Content-Type"] = "application/json";
+  const idempotencyKey = request.headers.get(IDEMPOTENCY_KEY_HEADER);
+  if (idempotencyKey !== null) {
+    if (method !== "POST" || !IdempotencyKey.safeParse(idempotencyKey).success) {
+      return json(400, { kind: "client" }, cookieHeaders);
+    }
+    headers[IDEMPOTENCY_KEY_HEADER] = idempotencyKey;
+  }
+  const ifMatch = request.headers.get(IF_MATCH_HEADER);
+  if (ifMatch !== null) {
+    if (method === "GET" || method === "POST" || parseEtag(ifMatch) === null) {
+      return json(400, { kind: "client" }, cookieHeaders);
+    }
+    headers[IF_MATCH_HEADER] = ifMatch;
+  }
+  const query = forwardedQuery(new URL(request.url).searchParams, method);
+  if (query === null) return json(400, { kind: "client" }, cookieHeaders);
   const controller = new AbortController();
   const onAbort = () => controller.abort(request.signal.reason);
   if (request.signal.aborted) onAbort();
@@ -211,7 +255,7 @@ export async function handleApiProxy(
   try {
     let res: Response;
     try {
-      res = await doFetch(`${deps.baseUrl ?? apiConfig.apiBaseUrl}${endpoint}`, {
+      res = await doFetch(`${deps.baseUrl ?? apiConfig.apiBaseUrl}/v1${endpoint}${query}`, {
         method,
         headers,
         body,
@@ -230,20 +274,19 @@ export async function handleApiProxy(
       if (kind === "server" || (res.status >= 300 && res.status < 400)) {
         return json(502, { kind: "server" }, cookieHeaders);
       }
-      let message: string | undefined;
-      if (res.status !== 401 && res.status !== 403) {
-        try {
-          const parsed = JSON.parse(await res.text()) as { message?: unknown };
-          if (typeof parsed?.message === "string") message = parsed.message;
-        } catch {
-          // No usable error body
-        }
+      // From the BE-09 envelope only `code`, `requestId` and (not on 401/403) `message` pass.
+      const out: { kind: string; code?: string; message?: string; requestId?: string } = { kind };
+      const envelope = ErrorResponse.safeParse(await res.json().catch(() => null));
+      if (envelope.success) {
+        out.code = envelope.data.code;
+        out.requestId = envelope.data.requestId;
+        if (res.status !== 401 && res.status !== 403) out.message = envelope.data.message;
       }
       const errorHeaders = new Headers(cookieHeaders);
       // A backend 429 keeps its Retry-After, so the browser knows when to try again.
       const retryAfter = res.status === 429 ? res.headers.get("retry-after") : null;
       if (retryAfter && /^\d{1,6}$/.test(retryAfter)) errorHeaders.set("Retry-After", retryAfter);
-      return json(res.status, message === undefined ? { kind } : { kind, message }, errorHeaders);
+      return json(res.status, out, errorHeaders);
     }
 
     if (res.status === 204) {
@@ -260,6 +303,13 @@ export async function handleApiProxy(
     const out = new Headers(cookieHeaders);
     out.set("Content-Type", "application/json");
     out.set("Cache-Control", "no-store");
+    // Paging and versioning headers the browser client reads; each is validated before it passes.
+    const nextCursor = res.headers.get(NEXT_CURSOR_HEADER);
+    if (nextCursor !== null && PageCursor.safeParse(nextCursor).success) {
+      out.set(NEXT_CURSOR_HEADER, nextCursor);
+    }
+    const etag = res.headers.get(ETAG_HEADER);
+    if (etag !== null && parseEtag(etag) !== null) out.set(ETAG_HEADER, etag);
     return new Response(text, { status: res.status, headers: out });
   } finally {
     clearTimeout(timer);

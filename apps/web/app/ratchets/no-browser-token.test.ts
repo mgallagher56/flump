@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { inspect } from "node:util";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { contractFetch } from "~/test/fixtures/contractResponses";
 
 /**
  * E20-N8: the access token must never reach the browser.
@@ -117,37 +118,6 @@ const ERROR_PATH_ONLY: Record<string, string> = {
   "routes/$.tsx": "catch-all route: its loader always throws a 404 Response",
 };
 
-/** Realistic per-endpoint backend fixtures (shapes the existing loader tests use). */
-const profileFixture = {
-  id: "p1",
-  onboardingCompleted: true,
-  enabledPages: ["accounts", "budget"],
-  taxYear: "2025/26",
-  grossIncome: 45000,
-};
-const accountFixture = {
-  id: "a1",
-  name: "Current",
-  type: "Current",
-  balance: 1000,
-  details: [],
-};
-const backendFixture = (endpoint: string): unknown => {
-  if (endpoint === "/accounts" || endpoint === "/account-details") {
-    return endpoint === "/accounts" ? [accountFixture] : [];
-  }
-  if (/^\/accounts\/[^/]+$/.test(endpoint)) return accountFixture;
-  if (endpoint === "/user-profile") return profileFixture;
-  if (endpoint === "/imports") return [];
-  if (/^\/imports\/[^/]+$/.test(endpoint)) {
-    return { batchId: "b0000000-0000-4000-8000-000000000001", status: "committed", counts: {} };
-  }
-  if (endpoint === "/bank-connections/capability") return { enabled: false };
-  if (endpoint === "/portfolio-snapshot") return null;
-  if (["/budget-entries", "/tax-records", "/bank-connections"].includes(endpoint)) return [];
-  return {};
-};
-
 /** Serialises whatever a loader returned or threw the way a page could expose it. */
 async function serialise(value: unknown): Promise<string> {
   const parts: string[] = [];
@@ -212,13 +182,8 @@ describe("loader data never contains the access token", () => {
     });
     vi.stubGlobal(
       "fetch",
-      vi.fn(async (input: RequestInfo | URL) => {
-        const { pathname } = new URL(input instanceof Request ? input.url : String(input));
-        return new Response(JSON.stringify(backendFixture(pathname)), {
-          status: 200,
-          headers: { "content-type": "application/json" },
-        });
-      }),
+      // Contract-valid bodies: the clients validate every response (BE-10).
+      vi.fn(contractFetch()),
     );
     vi.spyOn(console, "error").mockImplementation(() => {});
   });

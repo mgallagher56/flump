@@ -1,14 +1,30 @@
+import {
+  BackendError,
+  type ContractSchema,
+  callBackend,
+  kindFromStatus,
+  type QueryValue,
+  type TransportConfig,
+  versionedPath,
+} from "@flump/api-client";
+import {
+  AccountListResponse,
+  BankConnectionListResponse,
+  BudgetEntryListResponse,
+  PortfolioSnapshotResponse,
+  TaxRecordListResponse,
+  UserProfileResponse,
+} from "@flump/api-contract";
 import type { LoaderFunctionArgs } from "react-router";
 import { apiConfig } from "~/config.server";
-import { withRequestIdHeader } from "~/security/request-id.server";
+import { getRequestId, withRequestIdHeader } from "~/security/request-id.server";
 import { getAuthSession } from "~/utils/auth.server";
-import { BackendError, kindFromStatus } from "./backend-error";
 import { withClientIpHeaders } from "./client-ip.server";
 import { throwRouteError } from "./route-error.server";
 
 export type HttpMethod = "GET" | "POST" | "PATCH" | "PUT" | "DELETE";
 
-export interface BackendFetchOptions {
+interface BackendFetchBase {
   accessToken: string;
   method?: HttpMethod;
   body?: unknown;
@@ -18,7 +34,33 @@ export interface BackendFetchOptions {
   timeoutMs?: number;
   /** Extra attempts after the first. Defaults to 1 for GET and 0 for everything else. */
   retries?: number;
+  /** Appended to the path; `null` and `undefined` values are left out. */
+  query?: Record<string, QueryValue>;
+  /** `Idempotency-Key` for a POST: generated once per call (and reused by its retries) by default. */
+  idempotencyKey?: string | false;
+  /** Sent as `If-Match` on a conditional update. */
+  ifMatch?: string;
 }
+
+/** The 2xx body must match `schema`, the route's contract `*Response`. */
+export interface BackendFetchSchemaOptions<T> extends BackendFetchBase {
+  schema: ContractSchema<T>;
+  allowEmpty?: false;
+}
+/** As above, but an empty body resolves `undefined`. */
+export interface BackendFetchMaybeEmptyOptions<T> extends BackendFetchBase {
+  schema: ContractSchema<T>;
+  allowEmpty: true;
+}
+/** A route with no response body. */
+export interface BackendFetchEmptyOptions extends BackendFetchBase {
+  schema: null;
+  allowEmpty: true;
+}
+export type BackendFetchOptions<T> =
+  | BackendFetchSchemaOptions<T>
+  | BackendFetchMaybeEmptyOptions<T>
+  | BackendFetchEmptyOptions;
 
 const DEFAULT_TIMEOUT_MS = 8000;
 const RETRY_DELAY_MS = 250;
@@ -36,81 +78,181 @@ const sleep = (ms: number, signal?: AbortSignal) =>
     );
   });
 
+const transport = (accessToken: string): TransportConfig => ({
+  baseUrl: apiConfig.apiBaseUrl,
+  // Read through a wrapper so tests that replace globalThis.fetch are honoured.
+  fetch: (input, init) => fetch(input, init),
+  headers: () =>
+    withClientIpHeaders(withRequestIdHeader({ Authorization: `Bearer ${accessToken}` })),
+});
+
 /**
- * The single server-side client for the Flump backend. Adds the bearer token, bounds each attempt
- * with a timeout, retries GETs once on transient failures, and reports every failure as a
- * BackendError whose message never contains the token, base URL or response body. The current
- * request's id (`getRequestId()`) goes out as `x-request-id` on every attempt (BE-07, M14).
- *
- * The timeout and caller signal are combined with a manual AbortController rather than
- * AbortSignal.any/timeout, so it behaves the same under fake timers and on older runtimes.
+ * GETs answered once per incoming request (root loader and child loaders all read the profile):
+ * concurrent callers in the same request share one call. Keyed on `getRequestId()`, so nothing is
+ * shared outside a request or between requests; an entry is removed when its call settles, and
+ * any write in the same request clears the request's entries first.
  */
-export async function backendFetch<T>(endpoint: string, opts: BackendFetchOptions): Promise<T> {
+const DEDUPED_GETS = new Set(["/user-profile"]);
+interface InFlight {
+  accessToken: string;
+  schema: unknown;
+  promise: Promise<unknown>;
+}
+const inFlight = new Map<string, InFlight>();
+
+function clearRequestMemo(requestId: string | undefined) {
+  if (!requestId) return;
+  for (const key of inFlight.keys()) {
+    if (key.startsWith(`${requestId} `)) inFlight.delete(key);
+  }
+}
+
+/**
+ * The single server-side client for the Flump backend, a thin wrapper on `callBackend` from
+ * `@flump/api-client`: it calls `/v1`, adds the bearer token, the current request's id
+ * (`x-request-id`, BE-07, M14) and the signed client address, bounds each attempt with a timeout,
+ * retries GETs once on transient failures, and validates the body with the route's contract
+ * schema. Every failure is a BackendError whose message never contains the token, base URL or
+ * response body.
+ */
+export function backendFetch(endpoint: string, opts: BackendFetchEmptyOptions): Promise<undefined>;
+export function backendFetch<T>(
+  endpoint: string,
+  opts: BackendFetchMaybeEmptyOptions<T>,
+): Promise<T | undefined>;
+export function backendFetch<T>(endpoint: string, opts: BackendFetchSchemaOptions<T>): Promise<T>;
+export function backendFetch<T>(
+  endpoint: string,
+  opts: BackendFetchOptions<T>,
+): Promise<T | undefined>;
+export async function backendFetch<T>(
+  endpoint: string,
+  opts: BackendFetchOptions<T>,
+): Promise<T | undefined> {
   const method = opts.method ?? "GET";
-  const timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+  const requestId = getRequestId();
+  if (method !== "GET") {
+    clearRequestMemo(requestId);
+    return runWithRetries(endpoint, opts);
+  }
+  if (!requestId || !DEDUPED_GETS.has(endpoint) || opts.query) {
+    return runWithRetries(endpoint, opts);
+  }
+  const key = `${requestId} ${endpoint}`;
+  const existing = inFlight.get(key);
+  if (existing && existing.accessToken === opts.accessToken && existing.schema === opts.schema) {
+    // The shared body was parsed by this same schema; parsing it again types it without a cast
+    // (the deduped schemas have no transforms, so a second parse is a pure check).
+    const shared = await existing.promise;
+    if (shared === undefined || opts.schema === null) return undefined;
+    const parsed = opts.schema.safeParse(shared);
+    if (!parsed.success) {
+      const error = new BackendError("bad-response", endpoint);
+      error.requestId = requestId;
+      throw error;
+    }
+    return parsed.data;
+  }
+  const promise = runWithRetries(endpoint, opts);
+  const entry: InFlight = { accessToken: opts.accessToken, schema: opts.schema, promise };
+  inFlight.set(key, entry);
+  const forget = () => {
+    if (inFlight.get(key) === entry) inFlight.delete(key);
+  };
+  promise.then(forget, forget);
+  return promise;
+}
+
+async function runWithRetries<T>(
+  endpoint: string,
+  opts: BackendFetchOptions<T>,
+): Promise<T | undefined> {
+  const method = opts.method ?? "GET";
   const retries = opts.retries ?? (method === "GET" ? 1 : 0);
-  const headers: Record<string, string> = { Authorization: `Bearer ${opts.accessToken}` };
-  if (opts.body !== undefined) headers["Content-Type"] = "application/json";
-  const body = opts.body !== undefined ? JSON.stringify(opts.body) : undefined;
+  // One key for the call, so a retried POST replays instead of creating twice.
+  const idempotencyKey =
+    method === "POST" && opts.idempotencyKey === undefined
+      ? crypto.randomUUID()
+      : opts.idempotencyKey;
+  const { accessToken, retries: _retries, timeoutMs = DEFAULT_TIMEOUT_MS, ...rest } = opts;
+  const cfg = transport(accessToken);
 
   let attempt = 0;
   while (true) {
-    const controller = new AbortController();
-    const onCallerAbort = () => controller.abort(opts.signal?.reason);
-    if (opts.signal?.aborted) onCallerAbort();
-    else opts.signal?.addEventListener("abort", onCallerAbort, { once: true });
-    const timer = setTimeout(() => controller.abort(new Error("timeout")), timeoutMs);
-
     let failure: BackendError;
     try {
-      const res = await fetch(`${apiConfig.apiBaseUrl}${endpoint}`, {
+      const { data } = await callBackend<T>(cfg, endpoint, {
+        ...rest,
         method,
-        headers: withClientIpHeaders(withRequestIdHeader(headers)),
-        body,
-        signal: controller.signal,
+        timeoutMs,
+        idempotencyKey,
       });
-      if (res.ok) {
-        const text = await res.text();
-        if (res.status === 204 || text === "") return undefined as T;
-        try {
-          return JSON.parse(text) as T;
-        } catch {
-          throw new BackendError("bad-response", endpoint, res.status);
-        }
-      }
-      let kind = kindFromStatus(res.status);
-      if (res.status === 403) {
-        // The backend marks a closed-beta refusal (E19 A7) so the UI can explain it: `code` in
-        // the BE-09 error envelope (`error` was the field before it).
-        const refusal = (await res.json().catch(() => null)) as {
-          code?: unknown;
-          error?: unknown;
-        } | null;
-        if (refusal?.code === "not_invited" || refusal?.error === "not_invited") {
-          kind = "not-invited";
-        }
-      }
-      failure = new BackendError(kind, endpoint, res.status);
+      return data;
     } catch (err) {
-      if (err instanceof BackendError) {
-        failure = err;
-      } else if (opts.signal?.aborted) {
-        // The caller cancelled (for example navigated away): not a backend failure.
-        throw err;
-      } else {
-        failure = new BackendError("unavailable", endpoint, undefined, { cause: err });
-      }
-    } finally {
-      clearTimeout(timer);
-      opts.signal?.removeEventListener("abort", onCallerAbort);
+      if (!(err instanceof BackendError)) throw err;
+      failure = err;
     }
-
     const transient =
       failure.kind === "unavailable" ||
       failure.status === 502 ||
       failure.status === 503 ||
       failure.status === 504;
     if (method !== "GET" || !transient || attempt >= retries) throw failure;
+    attempt += 1;
+    await sleep(RETRY_DELAY_MS, opts.signal);
+    if (opts.signal?.aborted) throw opts.signal.reason;
+  }
+}
+
+export interface BackendFetchAllOptions<T>
+  extends Omit<BackendFetchSchemaOptions<T[]>, "method" | "body" | "idempotencyKey" | "ifMatch"> {}
+
+/** At most this many pages per list; more is a `bad-response` (a cursor that never ends). */
+const MAX_LIST_PAGES = 100;
+
+/**
+ * GETs every page of a list route: follows `X-Next-Cursor` (sent back as `cursor=`) until it is
+ * absent, each page through `backendFetch`'s retry. The rows are joined in order.
+ */
+export async function backendFetchAll<T>(
+  endpoint: string,
+  opts: BackendFetchAllOptions<T>,
+): Promise<T[]> {
+  const rows: T[] = [];
+  let cursor: string | null = null;
+  const cfgFetch = (query: Record<string, QueryValue>) =>
+    pageWithRetries<T>(endpoint, { ...opts, query });
+  for (let page = 0; page < MAX_LIST_PAGES; page++) {
+    const result = await cfgFetch(cursor ? { ...opts.query, cursor } : { ...opts.query });
+    rows.push(...result.data);
+    cursor = result.nextCursor;
+    if (!cursor) return rows;
+  }
+  throw new BackendError("bad-response", endpoint);
+}
+
+/** One page of a list, with the GET retry; returns the next cursor too. */
+async function pageWithRetries<T>(
+  endpoint: string,
+  opts: BackendFetchAllOptions<T>,
+): Promise<{ data: T[]; nextCursor: string | null }> {
+  const { accessToken, retries = 1, timeoutMs = DEFAULT_TIMEOUT_MS, ...rest } = opts;
+  const cfg = transport(accessToken);
+  let attempt = 0;
+  while (true) {
+    let failure: BackendError;
+    try {
+      return await callBackend<T[]>(cfg, endpoint, { ...rest, method: "GET", timeoutMs });
+    } catch (err) {
+      if (!(err instanceof BackendError)) throw err;
+      failure = err;
+    }
+    const transient =
+      failure.kind === "unavailable" ||
+      failure.status === 502 ||
+      failure.status === 503 ||
+      failure.status === 504;
+    if (!transient || attempt >= retries) throw failure;
     attempt += 1;
     await sleep(RETRY_DELAY_MS, opts.signal);
     if (opts.signal?.aborted) throw opts.signal.reason;
@@ -169,7 +311,7 @@ export async function backendFetchBytes(
     opts.timeoutMs ?? DEFAULT_TIMEOUT_MS,
   );
   try {
-    const res = await fetch(`${apiConfig.apiBaseUrl}${endpoint}`, {
+    const res = await fetch(`${apiConfig.apiBaseUrl}${versionedPath(endpoint)}`, {
       method: "GET",
       headers: withClientIpHeaders(
         withRequestIdHeader({ Authorization: `Bearer ${opts.accessToken}` }),
@@ -247,44 +389,39 @@ export async function loadWorkspaceSnapshot(
 
   if (!accessToken) throwRouteError(new BackendError("unauthorised", "/accounts"));
   const signal = args.request.signal;
-  const get = <T>(endpoint: string) => backendFetch<T>(endpoint, { accessToken, signal });
+  const list = <T>(endpoint: string, schema: ContractSchema<T[]>) =>
+    backendFetchAll(endpoint, { accessToken, signal, schema });
 
   let accounts: any[];
-  let rawAccountDetails: any[];
   let userProfile: any | null;
   let budgetEntries: any[];
   let taxRecords: any[];
   let bankConnections: any[];
   let portfolioSnapshot: PortfolioSnapshotData | null;
   try {
-    [
-      accounts,
-      rawAccountDetails,
-      userProfile,
-      budgetEntries,
-      taxRecords,
-      bankConnections,
-      portfolioSnapshot,
-    ] = await Promise.all([
-      get<any[]>("/accounts"),
-      get<any[]>("/account-details"),
-      get<any | null>("/user-profile"),
-      includeBudget ? get<any[]>("/budget-entries") : Promise.resolve([]),
-      includeTax ? get<any[]>("/tax-records") : Promise.resolve([]),
-      includeConnections ? get<any[]>("/bank-connections") : Promise.resolve([]),
-      includePortfolioSnapshot
-        ? get<PortfolioSnapshotData | null>("/portfolio-snapshot")
-        : Promise.resolve(null),
-    ]);
+    [accounts, userProfile, budgetEntries, taxRecords, bankConnections, portfolioSnapshot] =
+      await Promise.all([
+        list("/accounts", AccountListResponse),
+        backendFetch("/user-profile", { accessToken, signal, schema: UserProfileResponse }),
+        includeBudget ? list("/budget-entries", BudgetEntryListResponse) : Promise.resolve([]),
+        includeTax ? list("/tax-records", TaxRecordListResponse) : Promise.resolve([]),
+        includeConnections
+          ? list("/bank-connections", BankConnectionListResponse)
+          : Promise.resolve([]),
+        includePortfolioSnapshot
+          ? backendFetch("/portfolio-snapshot", {
+              accessToken,
+              signal,
+              schema: PortfolioSnapshotResponse,
+            })
+          : Promise.resolve(null),
+      ]);
   } catch (err) {
     throwRouteError(err);
   }
 
-  // An empty /account-details array is a valid answer; only then use the accounts' nested details.
-  const accountDetails =
-    rawAccountDetails && rawAccountDetails.length > 0
-      ? rawAccountDetails
-      : accounts.flatMap((a) => a.details || []);
+  // Every account read carries its monthly history (M24): no separate /account-details call.
+  const accountDetails = accounts.flatMap((a) => a.details || []);
 
   return {
     user,

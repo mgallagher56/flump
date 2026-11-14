@@ -1,3 +1,4 @@
+import { UpdateAccountResponse } from "@flump/api-contract";
 import {
   calculateLtvMilestones,
   isBuyToLetAccountName,
@@ -268,7 +269,11 @@ const MortgageContainer: FC = () => {
             body.fixedRateEndDate = fixEnd;
           }
           if (Object.keys(body).length > 0) {
-            await apiFetch(`/accounts/${selectedAccountId}`, { method: "PATCH", body });
+            await apiFetch(`/accounts/${selectedAccountId}`, {
+              method: "PATCH",
+              body,
+              schema: UpdateAccountResponse,
+            });
             const accountId = selectedAccountId;
             setAccountPatches((prev) => ({
               ...prev,
