@@ -48,7 +48,7 @@ describe("McpService audit and staging wiring (E17 re-plan PR D)", () => {
   };
 
   it("hands the handler the shared rate-limit store for both MCP limiters (BE-07, M10)", () => {
-    const store = { hit: vi.fn(), peek: vi.fn(), reset: vi.fn() };
+    const store = { hit: vi.fn(), peek: vi.fn(), reset: vi.fn(), refund: vi.fn() };
     new McpService(
       {} as never,
       {} as never,

@@ -17,6 +17,12 @@ vi.mock("~/services/backend-client.server", () => ({
 
 import { apiConfig } from "~/config.server";
 import { action, shouldRevalidate } from "~/routes/app.profile";
+import { runWithRequestId } from "~/security/request-id.server";
+import {
+  CLIENT_IP_HEADER,
+  CLIENT_IP_KEY_ENV,
+  CLIENT_IP_SIG_HEADER,
+} from "~/services/client-ip.server";
 import { DELETE_TIMEOUT_MS, exportAccountData } from "./account.server";
 
 type DataResult = { data: unknown; init: { status?: number } | null };
@@ -140,6 +146,29 @@ describe("export route", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     getAuthSession.mockResolvedValue({ accessToken: "tok", user: { id: "u1" } });
+  });
+
+  it("signs the request context's client address on the export fetch (BE-07, M9)", async () => {
+    const saved = process.env[CLIENT_IP_KEY_ENV];
+    // A made-up test key, not a real secret.
+    process.env[CLIENT_IP_KEY_ENV] = "k".repeat(40);
+    try {
+      const fetchImpl = vi.fn().mockResolvedValue(new Response("{}", { status: 200 }));
+      await runWithRequestId(
+        "req-12345678",
+        () => exportAccountData(exportRequest(), { fetchImpl }),
+        {
+          clientIp: "203.0.113.7",
+        },
+      );
+      const headers = fetchImpl.mock.calls[0]?.[1].headers as Record<string, string>;
+      expect(headers[CLIENT_IP_HEADER]).toBe("203.0.113.7");
+      expect(headers[CLIENT_IP_SIG_HEADER]).toMatch(/^v1=\d+\.[0-9a-f]{64}$/);
+      expect(headers["x-request-id"]).toBe("req-12345678");
+    } finally {
+      if (saved === undefined) delete process.env[CLIENT_IP_KEY_ENV];
+      else process.env[CLIENT_IP_KEY_ENV] = saved;
+    }
   });
 
   it("streams the backend body through with download and no-store headers", async () => {

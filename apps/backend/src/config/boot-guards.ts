@@ -1,5 +1,5 @@
 import { isBetaOpen, isBetaRestricted } from "../auth/beta-access";
-import { type BackendEnv, isProduction, parseBackendEnv, setBootEnv } from "./env.schema";
+import { type BackendEnv, isProduction, parseBackendEnv } from "./env.schema";
 import { BANK_LAUNCH_GATE_PASSED } from "./launch-gate";
 
 type Raw = Record<string, string | undefined>;
@@ -51,12 +51,10 @@ export function assertBootGuards(env: Raw, options: BootGuardOptions = {}): void
 
 /**
  * The single boot check, run by main.ts before Nest starts: the schema first (every malformed or
- * missing variable in one EnvValidationError), then the guards. On success the typed snapshot
- * becomes what getBackendEnv() returns.
+ * missing variable in one EnvValidationError), then the guards. Returns the typed environment.
  */
 export function validateBootEnv(env: Raw, options: BootGuardOptions = {}): BackendEnv {
   const parsed = parseBackendEnv(env);
   assertBootGuards(env, options);
-  setBootEnv(parsed);
   return parsed;
 }

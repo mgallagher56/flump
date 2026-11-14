@@ -1,7 +1,7 @@
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { describe, expect, it, vi } from "vitest";
 import { FailedAuthLimiter } from "../auth/failed-auth-limiter.js";
-import { hashPatToken } from "../auth/token-verifier.js";
+import { AuthenticationError, hashPatToken } from "../auth/token-verifier.js";
 import { createFakeImports, SEEDED_BATCH_ID } from "../testing/fake-imports.js";
 import type { McpUserDataProvider } from "../types.js";
 import { countToolCalls, HttpMcpHandler, MAX_BATCH_COUNTED, MAX_BODY_BYTES } from "./http.js";
@@ -138,6 +138,52 @@ describe("HttpMcpHandler hardening", () => {
     expect(JSON.stringify(sent)).not.toContain("hunter2");
   });
 
+  it("counts concurrent attempts atomically: a burst cannot overshoot the limit", async () => {
+    const limiter = new FailedAuthLimiter(3, 60_000);
+    let release!: () => void;
+    const gate = new Promise<void>((r) => {
+      release = r;
+    });
+    const h = new HttpMcpHandler({
+      dataProvider: {} as McpUserDataProvider,
+      failedAuthLimiter: limiter,
+    });
+    // Every verification waits until the whole burst is in flight, the case a check-then-record
+    // limiter got wrong.
+    (h as any).verifier = {
+      verifyAuthorizationHeader: async () => {
+        await gate;
+        throw new AuthenticationError("bad token");
+      },
+    };
+    const burst = Array.from({ length: 20 }, () =>
+      h.handleWebRequest(webReq(`Bearer ${PAT}`, "8.8.8.8")),
+    );
+    await new Promise((r) => setTimeout(r, 10));
+    release();
+    const statuses = (await Promise.all(burst)).map((r) => r.status);
+    expect(statuses.filter((s) => s === 401)).toHaveLength(3);
+    expect(statuses.filter((s) => s === 429)).toHaveLength(17);
+  });
+
+  it("gives back the attempt when verification fails for a non-auth reason", async () => {
+    const limiter = new FailedAuthLimiter(1, 60_000);
+    const h = new HttpMcpHandler({
+      dataProvider: {} as McpUserDataProvider,
+      failedAuthLimiter: limiter,
+    });
+    vi.spyOn(console, "error").mockImplementation(() => undefined);
+    (h as any).verifier = {
+      verifyAuthorizationHeader: async () => {
+        throw new Error("db down");
+      },
+    };
+    for (let i = 0; i < 3; i++) {
+      expect((await h.handleWebRequest(webReq(`Bearer ${PAT}`, "9.9.9.9"))).status).toBe(400);
+    }
+    vi.restoreAllMocks();
+  });
+
   it("clears the IP's failure count after a successful authentication (web)", async () => {
     const limiter = new FailedAuthLimiter(2, 60_000);
     const handler = new HttpMcpHandler({
@@ -148,11 +194,11 @@ describe("HttpMcpHandler hardening", () => {
         checkLimit: () => ({ allowed: false, resetSeconds: 1, message: "x" }),
       } as never,
     });
-    await limiter.recordFailure("7.7.7.7");
+    await limiter.attempt("7.7.7.7"); // a failed guess: counted, never given back
     const res = await handler.handleWebRequest(webReq("Bearer dev-secret", "7.7.7.7"));
     expect(res.status).toBe(429);
-    await limiter.recordFailure("7.7.7.7");
-    expect((await limiter.check("7.7.7.7")).blocked).toBe(false);
+    await limiter.attempt("7.7.7.7");
+    expect((await limiter.attempt("7.7.7.7")).blocked).toBe(false);
   });
 
   it("clears the IP's failure count after a successful authentication (express)", async () => {
@@ -165,14 +211,14 @@ describe("HttpMcpHandler hardening", () => {
         checkLimit: () => ({ allowed: false, resetSeconds: 1, message: "x" }),
       } as never,
     });
-    await limiter.recordFailure("7.7.7.8");
+    await limiter.attempt("7.7.7.8"); // a failed guess: counted, never given back
     const res: any = { status: () => res, setHeader: () => res, json: () => res };
     await handler.handleExpressRequest(
       { ip: "7.7.7.8", headers: { authorization: "Bearer dev-secret" } },
       res,
     );
-    await limiter.recordFailure("7.7.7.8");
-    expect((await limiter.check("7.7.7.8")).blocked).toBe(false);
+    await limiter.attempt("7.7.7.8");
+    expect((await limiter.attempt("7.7.7.8")).blocked).toBe(false);
   });
 });
 

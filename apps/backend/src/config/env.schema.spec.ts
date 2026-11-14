@@ -1,11 +1,5 @@
-import { afterEach, describe, expect, it } from "vitest";
-import {
-  EnvValidationError,
-  getBackendEnv,
-  PRODUCTION_REQUIRED,
-  parseBackendEnv,
-  setBootEnv,
-} from "./env.schema";
+import { describe, expect, it } from "vitest";
+import { EnvValidationError, PRODUCTION_REQUIRED, parseBackendEnv } from "./env.schema";
 
 const PROD = {
   NODE_ENV: "production",
@@ -27,8 +21,6 @@ function issuesOf(env: Record<string, string | undefined>) {
 }
 
 describe("parseBackendEnv", () => {
-  afterEach(() => setBootEnv(undefined));
-
   it("accepts an empty development environment (current defaults keep working)", () => {
     expect(() => parseBackendEnv({ NODE_ENV: "development" })).not.toThrow();
     expect(() => parseBackendEnv({ NODE_ENV: "test" })).not.toThrow();
@@ -122,11 +114,5 @@ describe("parseBackendEnv", () => {
     })();
     expect(error?.name).toBe("EnvValidationError");
     expect(error?.message).not.toContain("hunter2");
-  });
-
-  it("getBackendEnv returns the boot snapshot once set, else parses process.env", () => {
-    expect(getBackendEnv().NODE_ENV).toBe(process.env.NODE_ENV);
-    setBootEnv(parseBackendEnv({ NODE_ENV: "snapshot" }));
-    expect(getBackendEnv().NODE_ENV).toBe("snapshot");
   });
 });

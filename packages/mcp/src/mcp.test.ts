@@ -57,6 +57,7 @@ describe("McpRateLimiter", () => {
       },
       peek: async () => ({ allowed: true, retryAfterSeconds: 0 }),
       reset: async () => undefined,
+      refund: async () => undefined,
     };
     const a = new McpRateLimiter(2, 300, store);
     const b = new McpRateLimiter(2, 300, store);
@@ -73,8 +74,20 @@ describe("McpRateLimiter", () => {
       hit: () => Promise.reject(new Error("db down")),
       peek: () => Promise.reject(new Error("db down")),
       reset: () => Promise.reject(new Error("db down")),
+      refund: () => Promise.reject(new Error("db down")),
     };
     expect((await new McpRateLimiter(1, 1, store).checkLimit("k")).allowed).toBe(true);
+    spy.mockRestore();
+  });
+
+  it("falls back to memory when the store's table is missing (42P01), still limiting", async () => {
+    const spy = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    const missing = () => Promise.reject(Object.assign(new Error("no table"), { code: "42P01" }));
+    const store: LimitStore = { hit: missing, peek: missing, reset: missing, refund: missing };
+    const limiter = new McpRateLimiter(2, 300, store);
+    expect((await limiter.checkLimit("k", 0)).allowed).toBe(true);
+    expect((await limiter.checkLimit("k", 0)).allowed).toBe(true);
+    expect((await limiter.checkLimit("k", 0)).allowed).toBe(false);
     spy.mockRestore();
   });
 });

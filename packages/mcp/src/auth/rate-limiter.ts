@@ -1,4 +1,10 @@
-import { type LimitStore, type LimitWindow, MemoryLimitStore } from "./limit-store.js";
+import {
+  isMissingTableError,
+  type LimitDecision,
+  type LimitStore,
+  type LimitWindow,
+  MemoryLimitStore,
+} from "./limit-store.js";
 
 export interface RateLimitResult {
   allowed: boolean;
@@ -19,11 +25,14 @@ const HOUR_MS = 3_600_000;
  *
  * Fails open: when the store throws, the request is allowed and the error logged. This is a
  * general usage cap, and refusing every agent while the database blips would do more harm than a
- * few uncounted calls. The pre-auth failed-attempt limiter is the one that fails closed.
+ * few uncounted calls. The pre-auth failed-attempt limiter is the one that fails closed. A missing
+ * table (an unmigrated dev database) falls back to memory.
  */
 export class McpRateLimiter {
   private readonly minute: LimitWindow;
   private readonly hour: LimitWindow;
+  private readonly fallback = new MemoryLimitStore();
+  private missingTable = false;
 
   constructor(
     maxPerMinute = 60,
@@ -34,15 +43,29 @@ export class McpRateLimiter {
     this.hour = { limit: maxPerHour, windowMs: HOUR_MS };
   }
 
-  async checkLimit(key: string, now = Date.now()): Promise<RateLimitResult> {
-    let decision: Awaited<ReturnType<LimitStore["hit"]>>;
+  /** `now` is for tests only: without it the store's own clock (the database's) is used. */
+  async checkLimit(key: string, now?: number): Promise<RateLimitResult> {
+    const windows = [this.minute, this.hour];
+    let decision: LimitDecision;
     try {
-      decision = await this.store.hit(`mcp:${key}`, [this.minute, this.hour], now);
-    } catch (err) {
-      console.error(
-        `MCP rate-limit store failed, allowing the request: ${err instanceof Error ? err.name : "error"}`,
+      decision = await (this.missingTable ? this.fallback : this.store).hit(
+        `mcp:${key}`,
+        windows,
+        now,
       );
-      return { allowed: true, limit: this.minute.limit, remaining: 0, resetSeconds: 60 };
+    } catch (err) {
+      if (isMissingTableError(err)) {
+        if (!this.missingTable) {
+          console.error("MCP limit store table is missing (unmigrated schema): limits in memory");
+        }
+        this.missingTable = true;
+        decision = await this.fallback.hit(`mcp:${key}`, windows, now);
+      } else {
+        console.error(
+          `MCP rate-limit store failed, allowing the request: ${err instanceof Error ? err.name : "error"}`,
+        );
+        return { allowed: true, limit: this.minute.limit, remaining: 0, resetSeconds: 60 };
+      }
     }
 
     if (!decision.allowed) {

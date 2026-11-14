@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 import {
   assertBootGuards,
   BankLaunchGateError,
@@ -6,7 +6,7 @@ import {
   OpenBetaNotConfirmedError,
   validateBootEnv,
 } from "./boot-guards";
-import { EnvValidationError, getBackendEnv, setBootEnv } from "./env.schema";
+import { EnvValidationError } from "./env.schema";
 import { BANK_LAUNCH_GATE_PASSED } from "./launch-gate";
 
 const PROD = {
@@ -18,8 +18,6 @@ const PROD = {
   BANKING_TOKEN_ENCRYPTION_KEY: "b".repeat(64),
   BETA_ALLOWED_USER_IDS: "user_01",
 };
-
-afterEach(() => setBootEnv(undefined));
 
 describe("open beta guard (M12, D8)", () => {
   it("refuses production with neither allow-list and no BETA_OPEN", () => {
@@ -101,13 +99,12 @@ describe("bank launch gate guard", () => {
 });
 
 describe("validateBootEnv", () => {
-  it("runs the schema before the guards and stores the snapshot", () => {
+  it("runs the schema before the guards and returns the typed environment", () => {
     expect(() => validateBootEnv({ ...PROD, CORS_ALLOWED_ORIGINS: undefined })).toThrow(
       EnvValidationError,
     );
     const env = validateBootEnv({ ...PROD, PORT: "4001" });
     expect(env.PORT).toBe(4001);
-    expect(getBackendEnv().PORT).toBe(4001);
   });
 
   it("throws the guard error for a valid but unsafe environment", () => {

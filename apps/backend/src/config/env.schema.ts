@@ -223,18 +223,3 @@ export function parseBackendEnv(env: Raw): BackendEnv {
   if (issues.length > 0 || !result.success) throw new EnvValidationError(issues);
   return result.data;
 }
-
-let bootEnv: BackendEnv | undefined;
-
-/** Called once by validateBootEnv after every check passes. */
-export function setBootEnv(env: BackendEnv | undefined): void {
-  bootEnv = env;
-}
-
-/**
- * The typed environment: the snapshot validated at boot, or (outside main.ts, as in unit tests)
- * a fresh parse of `process.env`, so tests that change variables see their change.
- */
-export function getBackendEnv(): BackendEnv {
-  return bootEnv ?? parseBackendEnv(process.env);
-}

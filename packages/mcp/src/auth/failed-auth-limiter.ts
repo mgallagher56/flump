@@ -1,14 +1,21 @@
-import { type LimitStore, type LimitWindow, MemoryLimitStore } from "./limit-store.js";
+import {
+  isMissingTableError,
+  type LimitStore,
+  type LimitWindow,
+  MemoryLimitStore,
+} from "./limit-store.js";
 
 /**
- * Pre-auth limiter: counts failed authentication attempts per client IP so PAT guessing
- * is throttled before the per-user limiter (which only applies after auth succeeds).
+ * Pre-auth limiter: counts authentication attempts per client IP so PAT guessing is throttled
+ * before the per-user limiter (which only applies after auth succeeds). Every attempt is counted
+ * up front with one atomic store hit, before the token is checked, so concurrent guesses cannot
+ * overshoot the limit; a successful verification gives its own attempt back (`recordSuccess`).
  * The counters live in the injected store (the backend passes its shared Postgres store, so the
  * limit holds across replicas and restarts); the default store is in memory and bounded.
  *
- * Fails closed: when the store cannot be read, `check` reports the caller blocked for a short
- * while. This is the credential-guessing guard, so an outage must not switch it off. Writes that
- * fail (recording a failure or a success) are logged and skipped.
+ * Fails closed: when the store errors, `attempt` reports the caller blocked for a short while, as
+ * this is the credential-guessing guard and an outage must not switch it off. A missing table (an
+ * unmigrated dev database) falls back to memory instead. Failed refunds are logged and skipped.
  */
 export interface FailedAuthCheck {
   blocked: boolean;
@@ -42,48 +49,52 @@ export function normalizeIpKey(ip: string): string {
   return `${prefix.join(":")}::/64`;
 }
 
-/** Seconds a caller is held off when the store fails during `check`. */
+/** Seconds a caller is held off when the store fails during `attempt`. */
 export const FAIL_CLOSED_RETRY_SECONDS = 30;
 
 const errName = (err: unknown) => (err instanceof Error ? err.name : "error");
 
 export class FailedAuthLimiter {
   private readonly window: LimitWindow;
-  /** Same bucket as `window`, read with a limit of 1: "has this IP failed at all?". */
-  private readonly anyFailure: LimitWindow;
+  /** Same bucket as `window`, read with a limit of 1: "is anything still counted?". */
+  private readonly anyAttempt: LimitWindow;
   /** The once-per-window marker for `recordSuccess`. */
   private readonly clearMarker: LimitWindow;
+  /** Used instead of the store while its table is missing (unmigrated dev database). */
+  private readonly fallback = new MemoryLimitStore();
+  private missingTable = false;
 
   constructor(
-    maxFailures = 10,
+    maxAttempts = 10,
     windowMs = 60_000,
     private readonly store: LimitStore = new MemoryLimitStore(),
   ) {
-    this.window = { limit: maxFailures, windowMs };
-    this.anyFailure = { limit: 1, windowMs };
+    this.window = { limit: maxAttempts, windowMs };
+    this.anyAttempt = { limit: 1, windowMs };
     this.clearMarker = { limit: 1, windowMs };
   }
 
-  /**
-   * Call after a successful authentication so valid clients behind a shared IP are not blocked.
-   * Clears the failure count at most once per window: otherwise an attacker holding any valid
-   * token could interleave one valid request between guesses and never reach the limit.
-   */
-  async recordSuccess(ip: string, now = Date.now()): Promise<void> {
-    const key = normalizeIpKey(ip);
+  /** The store, or memory once the store reported its table missing. */
+  private async run<T>(op: (store: LimitStore) => Promise<T>): Promise<T> {
+    if (this.missingTable) return op(this.fallback);
     try {
-      const failures = await this.store.peek(failKey(key), this.anyFailure, now);
-      if (failures.allowed) return; // no failures in this window: nothing to clear
-      const marker = await this.store.hit(clearKey(key), [this.clearMarker], now);
-      if (marker.allowed) await this.store.reset(failKey(key), this.window);
+      return await op(this.store);
     } catch (err) {
-      console.error(`MCP failed-auth store failed on success: ${errName(err)}`);
+      if (!isMissingTableError(err)) throw err;
+      this.missingTable = true;
+      console.error("MCP limit store table is missing (unmigrated schema): limits in memory");
+      return op(this.fallback);
     }
   }
 
-  async check(rawIp: string, now = Date.now()): Promise<FailedAuthCheck> {
+  /**
+   * Counts one attempt for `rawIp`, atomically, before the token is checked. Blocked once the
+   * window is full; a refused attempt is not counted. `now` is for tests only: without it the
+   * store's own clock (the database's, for Postgres) is used.
+   */
+  async attempt(rawIp: string, now?: number): Promise<FailedAuthCheck> {
     try {
-      const d = await this.store.peek(failKey(normalizeIpKey(rawIp)), this.window, now);
+      const d = await this.run((s) => s.hit(failKey(normalizeIpKey(rawIp)), [this.window], now));
       return d.allowed
         ? { blocked: false, retryAfterSeconds: 0 }
         : { blocked: true, retryAfterSeconds: d.retryAfterSeconds };
@@ -93,12 +104,36 @@ export class FailedAuthLimiter {
     }
   }
 
-  async recordFailure(rawIp: string, now = Date.now()): Promise<void> {
+  /**
+   * Gives back the attempt counted by `attempt` when it turned out not to be a guess (the
+   * verifier failed for another reason). Never throws.
+   */
+  async forgive(rawIp: string, now?: number): Promise<void> {
     try {
-      // Refused once the window is full, which is fine: `check` already blocks at that point.
-      await this.store.hit(failKey(normalizeIpKey(rawIp)), [this.window], now);
+      await this.run((s) => s.refund(failKey(normalizeIpKey(rawIp)), this.window, now));
     } catch (err) {
-      console.error(`MCP failed-auth store failed on failure: ${errName(err)}`);
+      console.error(`MCP failed-auth store failed on refund: ${errName(err)}`);
+    }
+  }
+
+  /**
+   * Call after a successful authentication: gives this attempt back, and clears earlier failures
+   * so valid clients behind a shared IP are not blocked. The clearing happens at most once per
+   * window: otherwise an attacker holding any valid token could interleave one valid request
+   * between guesses and never reach the limit. Never throws.
+   */
+  async recordSuccess(ip: string, now?: number): Promise<void> {
+    const key = normalizeIpKey(ip);
+    try {
+      await this.run(async (s) => {
+        await s.refund(failKey(key), this.window, now);
+        const left = await s.peek(failKey(key), this.anyAttempt, now);
+        if (left.allowed) return; // nothing else counted in this window
+        const marker = await s.hit(clearKey(key), [this.clearMarker], now);
+        if (marker.allowed) await s.reset(failKey(key), this.window);
+      });
+    } catch (err) {
+      console.error(`MCP failed-auth store failed on success: ${errName(err)}`);
     }
   }
 }

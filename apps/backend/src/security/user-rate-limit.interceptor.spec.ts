@@ -32,6 +32,7 @@ const broken = (code?: string): SharedRateLimitStore => ({
   hit: () => Promise.reject(Object.assign(new Error("db down"), code ? { code } : {})),
   peek: () => Promise.reject(new Error("db down")),
   reset: () => Promise.reject(new Error("db down")),
+  refund: () => Promise.reject(new Error("db down")),
 });
 
 const run = (interceptor: UserRateLimitInterceptor, ctx: never) =>
