@@ -20,7 +20,7 @@ import {
 } from "./src/tokens";
 
 export const flumpPreset = definePreset({
-  // `compact` density: set data-density="compact" on any ancestor (see tokens/layout.ts).
+  // `compact` density: set data-density="compact" on any ancestor (see layout.ts in @flump/tokens).
   conditions: {
     extend: {
       compact: "[data-density=compact] &",

@@ -11,7 +11,7 @@ export const STYLE_RULES = ["fontSize", "fontWeight", "duration", "inlineStyle"]
 export type StyleRule = (typeof STYLE_RULES)[number];
 export type StyleCounts = Record<StyleRule, number>;
 
-/** `fontSizes` keys from packages/ui/src/tokens/index.ts, plus CSS-wide keywords. */
+/** `fontSizes` keys from packages/tokens/src/index.ts, plus CSS-wide keywords. */
 export const FONT_SIZE_KEYS = new Set([
   "xs",
   "sm",
@@ -167,7 +167,7 @@ export function countStyleLiterals(relPath: string, source: string): StyleCounts
 
 /** Token and preset files define the scale itself, so they are not scanned. */
 export function isStyleScanExempt(relPath: string): boolean {
-  return relPath.startsWith("packages/ui/src/tokens/");
+  return relPath.startsWith("packages/tokens/") || relPath.startsWith("packages/ui/src/tokens/");
 }
 
 export type StyleBaseline = Record<StyleRule, Record<string, number>>;

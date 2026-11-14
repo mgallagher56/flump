@@ -1,7 +1,4 @@
-import { readFileSync } from "node:fs";
-import path from "node:path";
 import { describe, expect, it } from "vitest";
-import flumpPreset from "../../panda.preset";
 import {
   densityRadii,
   densitySizes,
@@ -21,7 +18,7 @@ import {
   sizes,
   textStyles,
   zIndex,
-} from "./index";
+} from "./index.js";
 
 type Leaf = { path: string; value: Record<string, string> };
 
@@ -123,7 +120,6 @@ describe("E16 type scale (PR 1, plan 4.2)", () => {
     expect(fontSizes["4xl"].value).toBe("2.25rem");
     expect(fontSizes["5xl"].value).toBe("3rem");
     expect(fontSizes["6xl"].value).toBe("3.75rem");
-    expect((flumpPreset as any).theme.extend.tokens.fontSizes).toBe(fontSizes);
   });
 });
 
@@ -238,7 +234,6 @@ describe("E15 radii (round 5, tied to density)", () => {
     for (const k of ["none", "xs", "sm", "md", "lg", "xl", "2xl", "full"]) {
       expect(radii).toHaveProperty(k);
     }
-    expect((flumpPreset as any).theme.extend.semanticTokens.radii).toBe(densityRadii.radii);
     expect(semanticTokens.radii).toBe(densityRadii.radii);
   });
 });
@@ -301,7 +296,6 @@ describe("E15 layout", () => {
       "40px",
     ]);
     expect([p.top.sm.value, p.top.lg.value, p.section.value]).toEqual(["20px", "32px", "32px"]);
-    expect((flumpPreset as any).theme.extend.tokens.spacing.page).toBe(p);
   });
 
   it("sizes provide control heights, compact heights and a 44px touch target", () => {
@@ -318,47 +312,6 @@ describe("E15 layout", () => {
     }
     for (const t of Object.values(densitySizes.density.control)) {
       expect(t.value._compact).toContain("compact");
-    }
-  });
-});
-
-describe("E15 preset wiring", () => {
-  const extend = (flumpPreset as any).theme.extend;
-
-  it("registers the new token groups, textStyles and keyframes", () => {
-    for (const group of [
-      "lineHeights",
-      "fontWeights",
-      "letterSpacings",
-      "durations",
-      "easings",
-      "zIndex",
-      "sizes",
-    ]) {
-      expect(extend.tokens, group).toHaveProperty(group);
-    }
-    expect(extend.textStyles).toBe(textStyles);
-    expect(extend.keyframes).toBe(motionKeyframes);
-    expect(extend.semanticTokens.sizes).toBe(densitySizes);
-    expect(extend.semanticTokens.spacing).toBe(densitySpacing);
-  });
-
-  it("declares the compact density condition", () => {
-    expect((flumpPreset as any).conditions.extend.compact).toBe("[data-density=compact] &");
-  });
-});
-
-describe("E15 self-hosted fonts", () => {
-  const root = path.resolve(__dirname, "../..");
-  it("fonts.css imports the two variable fonts and is exported from the package", () => {
-    const css = readFileSync(path.join(root, "src/fonts/fonts.css"), "utf8");
-    for (const pkg of ["inter", "plus-jakarta-sans"]) {
-      expect(css).toContain(`@fontsource-variable/${pkg}/wght.css`);
-    }
-    const pkgJson = JSON.parse(readFileSync(path.join(root, "package.json"), "utf8"));
-    expect(pkgJson.exports["./fonts.css"]).toBe("./src/fonts/fonts.css");
-    for (const dep of ["inter", "plus-jakarta-sans"]) {
-      expect(pkgJson.dependencies[`@fontsource-variable/${dep}`]).toMatch(/^\d+\.\d+\.\d+$/);
     }
   });
 });

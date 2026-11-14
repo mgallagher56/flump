@@ -115,7 +115,7 @@ describe("shouldSkip", () => {
       "a/Foo.test.tsx",
       "a/Foo.stories.tsx",
       "a/x.d.ts",
-      "packages/ui/src/tokens/index.ts",
+      "packages/tokens/src/index.ts",
       "a/x.css",
     ])
       expect(shouldSkip(f)).toBe(true);
