@@ -5,6 +5,7 @@ import { typeOrmOptionsFromEnv } from "../config/typeorm.options";
 import { assertSafeTestDatabase } from "../testing/assertSafeTestDatabase";
 import { resolveDbTestMode } from "../testing/dbTestMode";
 import { discoverMigrations, type MigrationClass } from "../testing/discoverMigrations";
+import { at } from "../testing/must";
 import { AccountDetailsUserMonthIndex1794357300000 } from "./AccountDetailsUserMonthIndex1794357300000";
 import { AddAccountDeletionTombstones1794622492000 } from "./AddAccountDeletionTombstones1794622492000";
 import { AddAccountStudentLoanPlanAndCurrencyDefault1794355800000 } from "./AddAccountStudentLoanPlanAndCurrencyDefault1794355800000";
@@ -289,7 +290,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
          RETURNING id`,
         [userId, name, amount, endDate],
       );
-      return rows[0].id;
+      return at(rows, 0).id;
     };
 
     const fingerprintOf = async (id: string): Promise<string> => {
@@ -297,7 +298,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
         `SELECT ${TAX_FINGERPRINT_SQL} AS fp FROM tax_records WHERE id = $1`,
         [id],
       );
-      return rows[0].fp;
+      return at(rows, 0).fp;
     };
 
     const insertAccount = async (
@@ -319,7 +320,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
           overrides.connectionId ?? null,
         ],
       );
-      return rows[0].id;
+      return at(rows, 0).id;
     };
 
     const insertSeedAccounts = (userId: string): Promise<string[]> =>
@@ -344,7 +345,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
           isDefault,
         ],
       );
-      return rows[0].id;
+      return at(rows, 0).id;
     };
 
     // Brings the database to the state just before this migration ran in production.
@@ -379,25 +380,27 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
       const expected: { fp: string }[] = await ds.query(
         `SELECT md5('Generic Fee|46.22|2020-12-01|monthly|rental_income|rental|') AS fp`,
       );
-      expect(await fingerprintOf(id)).toBe(expected[0].fp);
+      expect(await fingerprintOf(id)).toBe(at(expected, 0).fp);
     });
 
     it("deletes untouched seed accounts and keeps edited, connected and populated ones", async () => {
       await prepare();
       const [checking, , , pension] = await insertSeedAccounts("u1");
-      const changedBalance = await insertAccount("u2", SEEDED_ACCOUNTS[0], { balance: 2450.76 });
-      const [connection]: { id: string }[] = await ds.query(
+      const changedBalance = await insertAccount("u2", at(SEEDED_ACCOUNTS, 0), {
+        balance: 2450.76,
+      });
+      const connections: { id: string }[] = await ds.query(
         `INSERT INTO bank_connections (user_id, institution_id, institution_name) VALUES ('u3', 'i', 'Bank') RETURNING id`,
       );
-      const connected = await insertAccount("u3", SEEDED_ACCOUNTS[0], {
-        connectionId: connection.id,
+      const connected = await insertAccount("u3", at(SEEDED_ACCOUNTS, 0), {
+        connectionId: at(connections, 0).id,
       });
-      const withDetails = await insertAccount("u4", SEEDED_ACCOUNTS[1]);
+      const withDetails = await insertAccount("u4", at(SEEDED_ACCOUNTS, 1));
       await ds.query(
         "INSERT INTO account_details (account_id, user_id, month, year, value, as_of_date) VALUES ($1, 'u', 1, 2024, 5, '2024-01-31')",
         [withDetails],
       );
-      const withTransactions = await insertAccount("u5", SEEDED_ACCOUNTS[2]);
+      const withTransactions = await insertAccount("u5", at(SEEDED_ACCOUNTS, 2));
       await ds.query(
         `INSERT INTO transactions (account_id, user_id, amount, description, category) VALUES ($1, 'u5', 1, 'x', 'y')`,
         [withTransactions],
@@ -429,13 +432,13 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
     it("deletes untouched budget template rows and keeps edited or user-created ones", async () => {
       await prepare();
       const [rent, insurance, electricity, gas] = [
-        await insertBudget("u1", SEEDED_BUDGET_ENTRIES[0]),
-        await insertBudget("u1", SEEDED_BUDGET_ENTRIES[1]),
-        await insertBudget("u1", SEEDED_BUDGET_ENTRIES[2]),
-        await insertBudget("u1", SEEDED_BUDGET_ENTRIES[3]),
+        await insertBudget("u1", at(SEEDED_BUDGET_ENTRIES, 0)),
+        await insertBudget("u1", at(SEEDED_BUDGET_ENTRIES, 1)),
+        await insertBudget("u1", at(SEEDED_BUDGET_ENTRIES, 2)),
+        await insertBudget("u1", at(SEEDED_BUDGET_ENTRIES, 3)),
       ];
-      const salary = await insertBudget("u1", SEEDED_BUDGET_ENTRIES[14]);
-      const notDefault = await insertBudget("u1", SEEDED_BUDGET_ENTRIES[4], false);
+      const salary = await insertBudget("u1", at(SEEDED_BUDGET_ENTRIES, 14));
+      const notDefault = await insertBudget("u1", at(SEEDED_BUDGET_ENTRIES, 4), false);
       await ds.query(
         "UPDATE budget_entries SET amount = 1300, updated_at = now() + interval '1 second' WHERE id = $1",
         [rent],
@@ -464,7 +467,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
         );
       for (const user of ["user_mock", "dev_user_123", "real-user"]) {
         const account = await insertAccount(user, {
-          ...SEEDED_ACCOUNTS[0],
+          ...at(SEEDED_ACCOUNTS, 0),
           name: `Custom ${user}`,
         });
         await ds.query(
@@ -476,7 +479,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
           [account, user],
         );
         await insertConnections([[user, "tok", "connected"]]);
-        await insertBudget(user, SEEDED_BUDGET_ENTRIES[0], false);
+        await insertBudget(user, at(SEEDED_BUDGET_ENTRIES, 0), false);
         await insertTax(user, "Custom", "5.00");
         await tokenInsert(user, `hash-${user}`);
         await ds.query("INSERT INTO user_profiles (user_id) VALUES ($1)", [user]);
@@ -509,7 +512,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
       await runUpInTransaction(new RemoveSeededExampleData1794355400000(fingerprints));
       await ds.query("DELETE FROM migrations WHERE name = $1", [MIGRATION]);
       // Rows created after the first run, matching the seed shapes again.
-      const lateAccount = await insertAccount("u2", SEEDED_ACCOUNTS[0]);
+      const lateAccount = await insertAccount("u2", at(SEEDED_ACCOUNTS, 0));
       await ds.query("INSERT INTO migrations (timestamp, name) VALUES (1794355400000, $1)", [
         MIGRATION,
       ]);
@@ -552,7 +555,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
            VALUES ($1, 'Acc', 'Current', 10, 'GBP') RETURNING id`,
           [user],
         );
-        return rows[0].id;
+        return at(rows, 0).id;
       };
       return { a: await acc("user-a"), b: await acc("user-b") };
     };
@@ -632,7 +635,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
         `INSERT INTO accounts (user_id, name, type, balance, currency)
          VALUES ('user-a', 'Acc', 'Current', 10, 'GBP') RETURNING id`,
       );
-      const id = rows[0].id;
+      const id = at(rows, 0).id;
       const insert = (year: number, month: number, date: string, source = "manual") =>
         ds.query(
           `INSERT INTO account_details (account_id, user_id, year, month, value, as_of_date, source)
@@ -670,9 +673,9 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
       await ds.query(
         `INSERT INTO transactions (account_id, user_id, amount, description, category)
          VALUES ($1, 'u1', -5, $2, 'Food')`,
-        [rows[0].id, `tx on ${name}`],
+        [at(rows, 0).id, `tx on ${name}`],
       );
-      return rows[0].id;
+      return at(rows, 0).id;
     };
 
     const prepare = async (): Promise<string> => {
@@ -682,7 +685,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
         `INSERT INTO bank_connections (user_id, institution_id, institution_name, status)
          VALUES ('u1', 'monzo', 'Monzo', 'connected') RETURNING id`,
       );
-      return conn[0].id;
+      return at(conn, 0).id;
     };
 
     it("deletes transactions on bank-synced accounts and keeps manual ones", async () => {
@@ -1259,7 +1262,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
         `INSERT INTO accounts (user_id, name, type, balance, currency)
          VALUES ('user-a', 'Acc', 'Current', 10, 'GBP') RETURNING id`,
       );
-      return rows[0].id;
+      return at(rows, 0).id;
     };
     const batch = async (key = "k-1"): Promise<string> => {
       const rows: { id: string }[] = await ds.query(
@@ -1267,7 +1270,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
          VALUES ('user-a', $1, '{}', '{}', '{}', now() + interval '7 days') RETURNING id`,
         [key],
       );
-      return rows[0].id;
+      return at(rows, 0).id;
     };
 
     it("allows source agent with a batch id, nulls it when the batch goes, and keys are unique per user", async () => {
@@ -1539,7 +1542,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
           WHERE table_name = 'user_profiles'
             AND column_name IN ('net_worth_counts_property', 'net_worth_counts_student_loan')`,
       );
-      return Number(rows[0]?.n);
+      return Number(at(rows, 0)?.n);
     };
 
     it("gives existing and new profiles today's defaults: property counts, student loans do not", async () => {

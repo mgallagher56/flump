@@ -13,7 +13,6 @@ import {
   readAndClearOnboardingSeed,
   readOnboardingSeed,
   readOnboardingSeedFromHeader,
-  SESSION_PRESENCE_COOKIE,
   setSessionPresenceCookie,
   setStorageDriver,
 } from "./persistence.js";

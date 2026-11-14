@@ -2,6 +2,7 @@ import "reflect-metadata";
 import { Logger } from "@nestjs/common";
 import { of } from "rxjs";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { at } from "../testing/must";
 import {
   ContractShadowInterceptor,
   resolveContractMode,
@@ -24,7 +25,17 @@ const run = (
   return next;
 };
 
-const warnings = (spy: { mock: { calls: unknown[][] } }): Array<Record<string, any>> =>
+type ContractIssue = { path: string; code: string; message?: string };
+type ContractLogEntry = { event?: string; count?: number; issues: ContractIssue[] } & Record<
+  string,
+  unknown
+>;
+type ContractRejection = {
+  getStatus(): number;
+  getResponse(): { code?: string; issues?: ContractIssue[] };
+};
+
+const warnings = (spy: { mock: { calls: unknown[][] } }): ContractLogEntry[] =>
   spy.mock.calls.map(([message]) => JSON.parse(message as string));
 
 describe("ContractShadowInterceptor", () => {
@@ -46,7 +57,7 @@ describe("ContractShadowInterceptor", () => {
 
     expect(next.handle).toHaveBeenCalledOnce();
     expect(req.body).toBe(body);
-    const [violation] = warnings(warn);
+    const violation = at(warnings(warn), 0);
     expect(violation).toMatchObject({
       event: "contract_violation",
       routeId: "accounts.create",
@@ -141,7 +152,7 @@ describe("response shape check", () => {
     const warn = vi.spyOn(Logger.prototype, "warn").mockImplementation(() => undefined);
     const body = [{ id: "secret-id", name: "secret-name" }];
     expect(respond(body)).toBe(body);
-    const [violation] = warnings(warn);
+    const violation = at(warnings(warn), 0);
     expect(violation).toMatchObject({
       event: "contract_response_violation",
       routeId: "accounts.list",
@@ -210,7 +221,7 @@ describe("log volume limits", () => {
       route: { path: "/accounts" },
       body: { name: "x", type: "Current", balance: 1, ...body },
     });
-    const [violation] = warnings(warn);
+    const violation = at(warnings(warn), 0);
     expect(violation.issues).toHaveLength(20);
     for (const issue of violation.issues) expect(issue.path.length).toBeLessThanOrEqual(80);
   });
@@ -232,18 +243,18 @@ describe("log volume limits", () => {
         getType: () => "http",
         switchToHttp: () => ({ getRequest: () => badAccount }),
       };
-      let error: any;
+      let error: ContractRejection | undefined;
       try {
         new ContractShadowInterceptor().intercept(context as never, next);
       } catch (e) {
-        error = e;
+        error = e as ContractRejection;
       }
       expect(error?.getStatus()).toBe(400);
-      expect(error.getResponse().code).toBe("validation_failed");
-      expect(error.getResponse().issues).toEqual([
+      expect(error?.getResponse().code).toBe("validation_failed");
+      expect(error?.getResponse().issues).toEqual([
         { path: "body.balance", code: "invalid_type", message: expect.any(String) },
       ]);
-      expect(JSON.stringify(error.getResponse())).not.toContain("secret-name");
+      expect(JSON.stringify(error?.getResponse())).not.toContain("secret-name");
       const rejected = warn.mock.calls
         .map(([m]) => JSON.parse(String(m)))
         .find((entry) => entry.event === "contract_rejected");
@@ -258,7 +269,7 @@ describe("log volume limits", () => {
       try {
         new ContractShadowInterceptor().intercept(context as never, next);
       } catch (e) {
-        return { error: e as { getStatus(): number; getResponse(): any }, next };
+        return { error: e as ContractRejection, next };
       }
       return { error: undefined, next };
     };

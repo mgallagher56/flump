@@ -1,26 +1,44 @@
 import { Logger, ServiceUnavailableException } from "@nestjs/common";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, type Mock, vi } from "vitest";
 import { InMemoryIdentityAdapter } from "../../identity/identity.adapter";
+import { at } from "../../testing/must";
 import { UserProfileService } from "./user-profile.service";
+
+type DeleteRepo = { delete: Mock };
 
 describe("UserProfileService (Deep Module)", () => {
   let service: UserProfileService;
-  let mockUserProfileRepo: any;
-  let mockAccountRepo: any;
-  let mockTransactionRepo: any;
-  let mockAccountDetailRepo: any;
-  let mockBankConnectionRepo: any;
-  let mockBudgetEntryRepo: any;
-  let mockTaxRecordRepo: any;
-  let mockCheckinRepo: any;
-  let mockImportRepo: any;
-  let mockMcpTokenRepo: any;
-  let mockBankOAuthStateRepo: any;
-  let mockIdempotencyRepo: any;
+  let mockUserProfileRepo: { findOne: Mock; save: Mock; create: Mock };
+  let mockAccountRepo: { find: Mock; delete: Mock };
+  let mockTransactionRepo: DeleteRepo;
+  let mockAccountDetailRepo: DeleteRepo;
+  let mockBankConnectionRepo: DeleteRepo & { find?: Mock };
+  let mockBudgetEntryRepo: DeleteRepo;
+  let mockTaxRecordRepo: DeleteRepo;
+  let mockCheckinRepo: DeleteRepo;
+  let mockImportRepo: DeleteRepo;
+  let mockMcpTokenRepo: DeleteRepo;
+  let mockBankOAuthStateRepo: DeleteRepo;
+  let mockIdempotencyRepo: DeleteRepo;
   let identityAdapter: InMemoryIdentityAdapter;
-  let mockDataSource: any;
-  let mockAuditInsert: any;
-  let mockConsentUpdate: any;
+  let mockDataSource: { transaction: Mock };
+  let mockAuditInsert: Mock;
+  let mockConsentUpdate: Mock;
+
+  /** The service over the current doubles; `seams` replaces the default revoker or erased check. */
+  const build = (seams: { bankConsentRevoker?: object; accountDeletion?: object } = {}) =>
+    new UserProfileService(
+      ...([
+        mockUserProfileRepo,
+        mockAccountRepo,
+        mockAccountDetailRepo,
+        mockBankConnectionRepo,
+        identityAdapter,
+        mockDataSource,
+        seams.bankConsentRevoker ?? { revokeAll: vi.fn().mockResolvedValue(undefined) },
+        seams.accountDeletion ?? { isErased: vi.fn().mockResolvedValue(false) },
+      ] as unknown as ConstructorParameters<typeof UserProfileService>),
+    );
 
   beforeEach(() => {
     mockAuditInsert = vi.fn().mockResolvedValue(undefined);
@@ -68,7 +86,7 @@ describe("UserProfileService (Deep Module)", () => {
     mockDataSource = {
       transaction: vi.fn(async (cb) => {
         const fakeManager = {
-          getRepository: (entityClass: any) => {
+          getRepository: (entityClass: { name: string }): unknown => {
             if (entityClass.name === "UserProfile") return mockUserProfileRepo;
             if (entityClass.name === "Account") return mockAccountRepo;
             if (entityClass.name === "Transaction") return mockTransactionRepo;
@@ -90,17 +108,7 @@ describe("UserProfileService (Deep Module)", () => {
       }),
     };
 
-    service = new UserProfileService(
-      mockUserProfileRepo,
-      mockAccountRepo,
-      mockTransactionRepo,
-      mockAccountDetailRepo,
-      mockBankConnectionRepo,
-      mockBudgetEntryRepo,
-      mockTaxRecordRepo,
-      identityAdapter,
-      mockDataSource,
-    );
+    service = build();
   });
 
   it("resets all 6 financial entity tables inside a single atomic transaction", async () => {
@@ -149,7 +157,7 @@ describe("UserProfileService (Deep Module)", () => {
       savingsDefaultInterestRate: 4.2,
     });
     await service.resetFinancialData("user-123");
-    const saved = mockUserProfileRepo.save.mock.calls.at(-1)[0];
+    const saved = at(mockUserProfileRepo.save.mock.calls, -1)[0];
     expect(saved).toMatchObject({
       firstName: "Jane",
       currency: "GBP",
@@ -170,28 +178,14 @@ describe("UserProfileService (Deep Module)", () => {
     mockBankConnectionRepo.find = vi
       .fn()
       .mockResolvedValue([{ id: "c1", institutionId: "monzo", authType: "oauth" }]);
-    const withSeam = new UserProfileService(
-      mockUserProfileRepo,
-      mockAccountRepo,
-      mockTransactionRepo,
-      mockAccountDetailRepo,
-      mockBankConnectionRepo,
-      mockBudgetEntryRepo,
-      mockTaxRecordRepo,
-      identityAdapter,
-      mockDataSource,
-      undefined,
-      undefined,
-      undefined,
-      { revokeAll },
-    );
+    const withSeam = build({ bankConsentRevoker: { revokeAll } });
     mockUserProfileRepo.findOne.mockResolvedValueOnce({ userId: "user-123" });
     await withSeam.resetFinancialData("user-123");
     expect(revokeAll).toHaveBeenCalledWith("user-123", [
       { id: "c1", institutionId: "monzo", authType: "oauth" },
     ]);
     expect(revokeAll.mock.invocationCallOrder[0]).toBeLessThan(
-      mockDataSource.transaction.mock.invocationCallOrder[0],
+      at(mockDataSource.transaction.mock.invocationCallOrder, 0),
     );
     // A failing seam never blocks the reset.
     revokeAll.mockRejectedValueOnce(new Error("bank down"));
@@ -204,22 +198,7 @@ describe("UserProfileService (Deep Module)", () => {
 
   it("refuses to create a fresh profile for an erased account (no row recreated after deletion)", async () => {
     const accountDeletion = { isErased: vi.fn().mockResolvedValue(true) };
-    const guarded = new UserProfileService(
-      mockUserProfileRepo,
-      mockAccountRepo,
-      mockTransactionRepo,
-      mockAccountDetailRepo,
-      mockBankConnectionRepo,
-      mockBudgetEntryRepo,
-      mockTaxRecordRepo,
-      identityAdapter,
-      mockDataSource,
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-      accountDeletion as never,
-    );
+    const guarded = build({ accountDeletion });
     mockUserProfileRepo.findOne.mockResolvedValueOnce(null);
     await expect(guarded.getProfile("user-gone")).rejects.toThrow("This account has been deleted.");
     expect(mockUserProfileRepo.save).not.toHaveBeenCalled();
@@ -237,7 +216,7 @@ describe("UserProfileService (Deep Module)", () => {
     mockUserProfileRepo.findOne.mockResolvedValueOnce({ userId: "user-123" });
     await service.resetFinancialData("user-123");
     expect(resetEvents()).toHaveLength(1);
-    expect((resetEvents()[0][0] as { removed: { snapshotCheckins: number } }).removed).toEqual(
+    expect((at(resetEvents(), 0)[0] as { removed: { snapshotCheckins: number } }).removed).toEqual(
       expect.objectContaining({ snapshotCheckins: 1 }),
     );
     log.mockRestore();
@@ -325,10 +304,10 @@ describe("UserProfileService (Deep Module)", () => {
   describe("lazy profile creation", () => {
     const uniqueViolation = () => Object.assign(new Error("duplicate key"), { code: "23505" });
     const wrappedViolation = () => {
-      const err: any = new Error("duplicate key value violates unique constraint");
-      err.name = "QueryFailedError";
-      err.driverError = { code: "23505" };
-      return err;
+      return Object.assign(new Error("duplicate key value violates unique constraint"), {
+        name: "QueryFailedError",
+        driverError: { code: "23505" },
+      });
     };
 
     it("getProfile recovers when a concurrent request created the profile (err.code)", async () => {
@@ -354,12 +333,12 @@ describe("UserProfileService (Deep Module)", () => {
     });
 
     it("two concurrent getProfile calls resolve to the same profile id", async () => {
-      let stored: any = null;
+      let stored: Record<string, unknown> | null = null;
       mockUserProfileRepo.findOne.mockImplementation(async () => {
         await Promise.resolve();
         return stored;
       });
-      mockUserProfileRepo.save.mockImplementation(async (entity: any) => {
+      mockUserProfileRepo.save.mockImplementation(async (entity: Record<string, unknown>) => {
         await Promise.resolve();
         if (stored) throw wrappedViolation();
         stored = { id: "profile-1", ...entity };
@@ -397,7 +376,7 @@ describe("UserProfileService (Deep Module)", () => {
       mockUserProfileRepo.findOne.mockResolvedValueOnce(null).mockResolvedValueOnce(existing);
       mockUserProfileRepo.save
         .mockRejectedValueOnce(uniqueViolation())
-        .mockImplementationOnce((entity: any) => Promise.resolve(entity));
+        .mockImplementationOnce((entity: Record<string, unknown>) => Promise.resolve(entity));
 
       const result = await service.updateProfile("user-123", { currency: "EUR" });
 
@@ -410,7 +389,7 @@ describe("UserProfileService (Deep Module)", () => {
       mockUserProfileRepo.findOne.mockResolvedValueOnce(null).mockResolvedValueOnce(existing);
       mockUserProfileRepo.save
         .mockRejectedValueOnce(uniqueViolation())
-        .mockImplementationOnce((entity: any) => Promise.resolve(entity));
+        .mockImplementationOnce((entity: Record<string, unknown>) => Promise.resolve(entity));
 
       const result = await service.updateChecklist("user-123", "profile", true);
 
@@ -434,7 +413,7 @@ describe("UserProfileService (Deep Module)", () => {
 
   it("sends the reset to the caller's own email, never a supplied one", async () => {
     identityAdapter.emails.set("user-123", "me@example.com");
-    const res = await (service as any).sendPasswordReset("user-123", "victim@x");
+    const res = await Reflect.apply(service.sendPasswordReset, service, ["user-123", "victim@x"]);
 
     expect(res).toEqual({ success: true });
     expect(identityAdapter.resetEmails).toEqual(["me@example.com"]);
@@ -445,21 +424,6 @@ describe("UserProfileService (Deep Module)", () => {
       ServiceUnavailableException,
     );
     expect(identityAdapter.resetEmails).toEqual([]);
-  });
-
-  it("fails (503) when no identity adapter is configured", async () => {
-    const bare = new UserProfileService(
-      {} as never,
-      {} as never,
-      {} as never,
-      {} as never,
-      {} as never,
-      {} as never,
-      {} as never,
-    );
-    await expect(bare.sendPasswordReset("user-123")).rejects.toBeInstanceOf(
-      ServiceUnavailableException,
-    );
   });
 
   it("fails (503) with a generic message when the identity provider throws, logging only class and code", async () => {

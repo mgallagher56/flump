@@ -1,12 +1,14 @@
 /**
- * Backend `noExplicitAny` ratchet (BE-01, M21). Counts explicit `any` per file in production
- * backend source with Biome and fails when any file has more than the committed baseline.
- * Fewer is fine; lower the baseline with: bun scripts/backend-laws/check-explicit-any.ts --write-baseline
+ * Backend `noExplicitAny` ratchet (BE-01, tightened in BE-14, M21). Counts explicit `any` per file
+ * across the backend and the packages it runs (tests included) with Biome, and fails when any file
+ * differs from the committed baseline: more is a regression, fewer means the baseline is stale.
+ * After removing an `any`, lower the baseline with:
+ *   bun scripts/backend-laws/check-explicit-any.ts --write-baseline
  */
 import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { compareAnyCounts, countExplicitAny } from "../lib/explicit-any";
+import { COUNTED_ROOTS, compareAnyCounts, countExplicitAny } from "../lib/explicit-any";
 
 const repoRoot = resolve(import.meta.dir, "../..");
 const baselinePath = resolve(import.meta.dir, "explicit-any-baseline.json");
@@ -19,7 +21,7 @@ const run = spawnSync(
     "--only=suspicious/noExplicitAny",
     "--reporter=json",
     "--max-diagnostics=none",
-    "apps/backend/src",
+    ...COUNTED_ROOTS,
   ],
   { cwd: repoRoot, encoding: "utf8", maxBuffer: 64 * 1024 * 1024 },
 );
@@ -47,8 +49,8 @@ const { increases, decreases } = compareAnyCounts(counts, baseline);
 for (const line of increases)
   console.error(`FAIL ${line} (use a real type, \`unknown\` or a zod-inferred type)`);
 for (const line of decreases)
-  console.log(
-    `LOWER ${line} (optional: bun scripts/backend-laws/check-explicit-any.ts --write-baseline)`,
+  console.error(
+    `STALE ${line} (lower it: bun scripts/backend-laws/check-explicit-any.ts --write-baseline)`,
   );
-if (increases.length) process.exit(1);
-console.log(`check-explicit-any: OK (${total} explicit any in backend source, never more)`);
+if (increases.length || decreases.length) process.exit(1);
+console.log(`check-explicit-any: OK (${total} explicit any in backend code, never more)`);

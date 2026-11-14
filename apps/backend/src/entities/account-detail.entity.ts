@@ -2,13 +2,7 @@ import { Check, Column, Entity, Index, PrimaryGeneratedColumn, UpdateDateColumn 
 import { numericTransformer } from "./numeric.transformer";
 
 /** How a monthly value got into the table (E30). */
-export const ACCOUNT_DETAIL_SOURCES = [
-  "onboarding",
-  "manual",
-  "connected",
-  "backfill",
-  "agent",
-] as const;
+const ACCOUNT_DETAIL_SOURCES = ["onboarding", "manual", "connected", "backfill", "agent"] as const;
 export type AccountDetailSource = (typeof ACCOUNT_DETAIL_SOURCES)[number];
 
 /**

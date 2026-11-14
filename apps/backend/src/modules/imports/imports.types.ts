@@ -30,7 +30,7 @@ export const ACCOUNT_TYPES = new Set([
 export const REF = /^[A-Za-z0-9_.-]{1,64}$/;
 export const IDEMPOTENCY_KEY = /^[A-Za-z0-9_.:-]{8,128}$/;
 
-export type ImportValidationCode =
+type ImportValidationCode =
   | "future_month"
   | "too_early"
   | "bad_month"

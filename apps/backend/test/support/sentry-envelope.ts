@@ -15,7 +15,7 @@ import { ObservabilityModule } from "../../src/observability/observability.modul
 import { initSentry, WITHHELD } from "../../src/observability/sentry";
 import { assertNoLeakedKeys } from "./envelope-keys";
 
-export { assertNoLeakedKeys, LEAKY_KEYS } from "./envelope-keys";
+export { assertNoLeakedKeys } from "./envelope-keys";
 
 /** Strings that must never appear in an envelope. */
 export const SENTINELS = {
@@ -27,7 +27,7 @@ export const SENTINELS = {
   cookie: "SENTINELCOOKIEVALUE2",
 };
 
-export const PROVIDER_MESSAGE = "balance 12.5 for John Smith at Tesco Express";
+const PROVIDER_MESSAGE = "balance 12.5 for John Smith at Tesco Express";
 
 // Decorators are applied by hand so this helper needs no decorator transform (vitest or bun).
 class BoomController {

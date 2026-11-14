@@ -9,7 +9,6 @@ import {
 import {
   getUkTaxYearForDate,
   getUkTaxYearRules,
-  isSupportedUkTaxYear,
   resolveUkTaxYear,
   type UkDividendRules,
 } from "./uk-tax-year.js";
@@ -36,6 +35,21 @@ export interface TaxRecord {
   createdAt: string;
   updatedAt: string;
 }
+
+/**
+ * The fields the tax maths reads. Callers that never hold receipts or row metadata (the MCP
+ * context pack, E20-N15) pass this rather than inventing values for the rest of `TaxRecord`.
+ */
+export type TaxRecordFields = Omit<
+  TaxRecord,
+  | "userId"
+  | "receiptFilename"
+  | "receiptMimeType"
+  | "receiptData"
+  | "hasReceipt"
+  | "createdAt"
+  | "updatedAt"
+>;
 
 export interface UserProfile {
   id: string;
@@ -238,7 +252,7 @@ export function getMonthsForTaxYear(taxYear: string): string[] {
 }
 
 // Calculate the value of a record in a specific month YYYY-MM
-export function getRecordValueForMonth(record: TaxRecord, monthYYYYMM: string): number {
+export function getRecordValueForMonth(record: TaxRecordFields, monthYYYYMM: string): number {
   const amount =
     typeof record.amount === "string" ? Number.parseFloat(record.amount) : record.amount;
   if (!amount || Number.isNaN(amount)) return 0;
@@ -268,7 +282,7 @@ export function getRecordValueForMonth(record: TaxRecord, monthYYYYMM: string): 
   return 0;
 }
 
-export function getRecordAnnualTotalForTaxYear(record: TaxRecord, taxYear: string): number {
+export function getRecordAnnualTotalForTaxYear(record: TaxRecordFields, taxYear: string): number {
   const months = getMonthsForTaxYear(taxYear);
   let total = 0;
   for (const month of months) {
@@ -277,7 +291,7 @@ export function getRecordAnnualTotalForTaxYear(record: TaxRecord, taxYear: strin
   return total;
 }
 
-export function isRecordActiveInTaxYear(record: TaxRecord, taxYear: string): boolean {
+export function isRecordActiveInTaxYear(record: TaxRecordFields, taxYear: string): boolean {
   return getRecordAnnualTotalForTaxYear(record, taxYear) > 0;
 }
 
@@ -403,7 +417,7 @@ export interface TaxCalculationResult {
 
 export function calculateUKTax(
   taxYear: string,
-  records: TaxRecord[],
+  records: TaxRecordFields[],
   payeSalary: number,
   propertyOwnershipShare: number,
 ): TaxCalculationResult {

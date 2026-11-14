@@ -53,6 +53,6 @@ describe("AppConfigModule", () => {
     process.env.DB_SSL = "no-verify";
     await compile();
     expect(warn).toHaveBeenCalledTimes(1);
-    expect(String(warn.mock.calls[0][0])).toMatch(/DB_SSL=no-verify/);
+    expect(String(warn.mock.calls[0]?.[0])).toMatch(/DB_SSL=no-verify/);
   });
 });

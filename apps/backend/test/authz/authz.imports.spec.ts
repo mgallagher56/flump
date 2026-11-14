@@ -210,7 +210,7 @@ describe.skipIf(dbMode === "skip")("authz: imports controller (real Postgres)", 
         await stage(h.tokens.b, simple({ batchId: id })),
         await stage(h.tokens.b, simple({ batchId: MISSING_ID })),
       ],
-    ];
+    ] as const;
     for (const [foreign, missing] of pairs) {
       expect(foreign.status).toBe(404);
       expect(missing.status).toBe(404);

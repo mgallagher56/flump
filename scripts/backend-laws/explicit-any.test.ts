@@ -8,11 +8,15 @@ const diag = (path: string, category = "lint/suspicious/noExplicitAny") => ({
 });
 
 describe("explicit any ratchet (BE-01, M21)", () => {
-  test("counts only production backend source", () => {
+  test("counts the backend and its packages, tests included (BE-14)", () => {
     expect(isCountedFile("apps/backend/src/modules/finance/finance.service.ts")).toBe(true);
-    expect(isCountedFile("apps/backend/src/modules/finance/finance.service.spec.ts")).toBe(false);
-    expect(isCountedFile("apps/backend/src/testing/db.ts")).toBe(false);
+    expect(isCountedFile("apps/backend/src/modules/finance/finance.service.spec.ts")).toBe(true);
+    expect(isCountedFile("apps/backend/src/testing/db.ts")).toBe(true);
+    expect(isCountedFile("apps/backend/test/authz/rate-limit.spec.ts")).toBe(true);
+    expect(isCountedFile("packages/mcp/src/transports/http.ts")).toBe(true);
+    expect(isCountedFile("packages/finance-engine/src/profile.test.ts")).toBe(true);
     expect(isCountedFile("apps/web/app/root.tsx")).toBe(false);
+    expect(isCountedFile("packages/ui/src/index.ts")).toBe(false);
   });
 
   test("counts noExplicitAny diagnostics per file and ignores other rules", () => {
@@ -23,9 +27,14 @@ describe("explicit any ratchet (BE-01, M21)", () => {
         diag("apps/backend/src/a.ts"),
         diag("apps/backend/src/a.ts", "lint/style/useConst"),
         diag("apps/backend/src/a.spec.ts"),
+        diag("apps/web/app/root.tsx"),
       ],
     });
-    expect(counts).toEqual({ "apps/backend/src/a.ts": 2, "apps/backend/src/b.ts": 1 });
+    expect(counts).toEqual({
+      "apps/backend/src/a.spec.ts": 1,
+      "apps/backend/src/a.ts": 2,
+      "apps/backend/src/b.ts": 1,
+    });
   });
 
   test("a new any fails; a file new to the baseline is allowed zero", () => {
@@ -36,7 +45,7 @@ describe("explicit any ratchet (BE-01, M21)", () => {
     ]);
   });
 
-  test("fewer any never fails, it is reported as a decrease", () => {
+  test("fewer any is a stale baseline, reported as a decrease so the law fails", () => {
     const r = compareAnyCounts({ "a.ts": 1 }, { "a.ts": 2, "gone.ts": 4 });
     expect(r.increases).toEqual([]);
     expect(r.decreases).toEqual(["a.ts: baseline 2, now 1", "gone.ts: baseline 4, now 0"]);

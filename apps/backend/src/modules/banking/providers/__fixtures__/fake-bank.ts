@@ -29,7 +29,7 @@ export interface FakeRoute {
   respond: FakeBehaviour;
 }
 
-export interface FakeCall {
+interface FakeCall {
   key: string;
   method: string;
   url: string;

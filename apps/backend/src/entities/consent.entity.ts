@@ -8,7 +8,7 @@ import { Check, Column, CreateDateColumn, Entity, Index, PrimaryGeneratedColumn 
  * - `terms`: the terms and privacy notice accepted at sign-up, with their version. Reserved: no
  *   acceptance step exists in the web app yet (follow-up), so nothing writes it today.
  */
-export const CONSENT_KINDS = ["terms", "ai_access", "bank_access"] as const;
+const CONSENT_KINDS = ["terms", "ai_access", "bank_access"] as const;
 export type ConsentKind = (typeof CONSENT_KINDS)[number];
 
 @Entity("consents")

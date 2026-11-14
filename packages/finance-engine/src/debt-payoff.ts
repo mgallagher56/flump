@@ -277,7 +277,6 @@ function simulateSchedule(
 
     // Sort remaining debts for this month according to strategy
     const sortedRemaining = sortDebtsByStrategy(remainingDebts, strategy);
-    const targetPriorityDebtId = sortedRemaining[0]?.id;
 
     // First: compute interest and mandatory minimum payments
     let availableBudgetThisMonth = totalMonthlyCommitment;

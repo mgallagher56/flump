@@ -29,25 +29,25 @@ export interface LiabilitySignPlan {
 }
 
 interface SqlRunner {
-  query(sql: string, params?: unknown[]): Promise<any>;
+  query<T>(sql: string, params?: unknown[]): Promise<T>;
 }
 
 /** Read-only: what the backfill would change. Shared by the migration log and the dry run. */
 // Both sides compare as text so the plan reads the same before and after
 // AccountIdForeignKeys1794358200000 turns account_details.account_id into a uuid.
 export async function planLiabilitySignBackfill(runner: SqlRunner): Promise<LiabilitySignPlan> {
-  const accounts: Array<{ type: string; rows: number }> = await runner.query(
+  const accounts = await runner.query<Array<{ type: string; rows: number }>>(
     `SELECT "type", count(*)::int AS "rows" FROM "accounts"
      WHERE "type" IN (${TYPES_SQL}) AND "balance" > 0
      GROUP BY "type" ORDER BY "type"`,
   );
-  const accountDetails: Array<{ type: string; rows: number }> = await runner.query(
+  const accountDetails = await runner.query<Array<{ type: string; rows: number }>>(
     `SELECT a."type", count(*)::int AS "rows"
      FROM "account_details" d JOIN "accounts" a ON a."id"::text = d."account_id"::text
      WHERE a."type" IN (${TYPES_SQL}) AND d."value" > 0
      GROUP BY a."type" ORDER BY a."type"`,
   );
-  const [owners]: Array<{ users: number }> = await runner.query(
+  const [owners] = await runner.query<Array<{ users: number }>>(
     `SELECT count(DISTINCT a."user_id")::int AS "users"
      FROM "accounts" a
      WHERE a."type" IN (${TYPES_SQL})

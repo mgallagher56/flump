@@ -10,7 +10,7 @@ import type { EntityManager } from "typeorm";
 // No callback route exists yet (bank connections are off, D11); `consumeOAuthState` is what it
 // must call before exchanging the code.
 
-export const OAUTH_STATE_TTL_MS = 10 * 60 * 1000;
+const OAUTH_STATE_TTL_MS = 10 * 60 * 1000;
 
 const base64url = (buf: Buffer): string => buf.toString("base64url");
 const sha256Hex = (value: string): string => createHash("sha256").update(value).digest("hex");

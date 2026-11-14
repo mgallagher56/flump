@@ -20,7 +20,7 @@ export interface UserIdentityAdapter {
 }
 
 /** True for the provider's "no such user" answer, which a retried deletion treats as done. */
-export function isIdentityNotFound(err: unknown): boolean {
+function isIdentityNotFound(err: unknown): boolean {
   const e = err as { status?: unknown; name?: unknown } | null;
   return e?.status === 404 || e?.name === "NotFoundException";
 }
@@ -50,7 +50,7 @@ export class WorkOSIdentityAdapter implements UserIdentityAdapter {
         firstName: firstName || undefined,
         lastName: lastName || undefined,
       });
-    } catch (err: any) {
+    } catch (err) {
       this.logger.warn(`WorkOS name sync warning: ${safeErrorSummary(err)}`);
     }
   }

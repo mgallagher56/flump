@@ -23,18 +23,6 @@ export interface SeedScale {
   tokensPerUser: number;
 }
 
-/** The audit's seeded size: 2,000 users, 20k accounts, 200k transactions, 480k snapshot rows. */
-export const AUDIT_SCALE: SeedScale = {
-  users: 2_000,
-  accountsPerUser: 10,
-  transactionsPerAccount: 10,
-  monthsPerAccount: 24,
-  taxRecordsPerUser: 20,
-  budgetEntriesPerUser: 20,
-  connectionsPerUser: 2,
-  tokensPerUser: 2,
-};
-
 export const userIdFor = (n: number): string => `user_${String(n).padStart(5, "0")}`;
 
 /** Fills an empty, migrated schema with synthetic rows for `scale.users` users, then ANALYZEs. */
@@ -217,7 +205,8 @@ export async function explainHotQuery(
   const runner = ds.createQueryRunner();
   try {
     await runner.startTransaction();
-    const rows: { "QUERY PLAN": [{ Plan: PlanNode; "Execution Time"?: number }] }[] =
+    // EXPLAIN (FORMAT JSON) returns exactly one row holding a one-element array.
+    const rows: [{ "QUERY PLAN": [{ Plan: PlanNode; "Execution Time"?: number }] }] =
       await runner.query(
         `EXPLAIN (FORMAT JSON${analyze ? ", ANALYZE, BUFFERS" : ""}) ${sql}`,
         params,

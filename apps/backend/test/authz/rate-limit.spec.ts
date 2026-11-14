@@ -6,10 +6,11 @@ import { FinanceController } from "../../src/modules/finance/finance.controller"
 import { UserProfileController } from "../../src/modules/profile/user-profile.controller";
 import { TaxController } from "../../src/modules/tax/tax.controller";
 import { RATE_LIMIT_CLASS, RATE_LIMIT_SKIP } from "../../src/security/rate-limit.decorator";
+import { must } from "../../src/testing/must";
 
 describe("rate limit classes on real controllers", () => {
   const classOf = (proto: object, method: string) =>
-    Reflect.getMetadata(RATE_LIMIT_CLASS, (proto as Record<string, object>)[method]);
+    Reflect.getMetadata(RATE_LIMIT_CLASS, must((proto as Record<string, object>)[method], method));
 
   it("marks credential, destructive, token mint and bank routes", () => {
     expect(classOf(UserProfileController.prototype, "sendPasswordReset")).toBe("credential");

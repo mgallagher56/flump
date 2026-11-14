@@ -7,7 +7,7 @@ const METHOD = /^[A-Z]{3,10}$/;
 const ROUTE = /^(?:\/[\w:.*{}-]{0,31}){1,20}$/;
 const ACCESS_LOG_REQUIRED = ["requestId", "method", "route", "status", "durationMs"] as const;
 /** Printed instead of anything the scrubber could not process. Raw input is never the fallback. */
-export const SCRUB_FAILED = "[log scrubbing failed]";
+const SCRUB_FAILED = "[log scrubbing failed]";
 /** A Nest context is a class name. Anything else was passed as a trailing string by mistake. */
 const CONTEXT = /^[A-Za-z][\w.$-]{0,63}$/;
 const ERROR_NAME = /^[A-Za-z][\w$.]{0,99}$/;
@@ -97,6 +97,7 @@ const MAX_AUDIT_COUNTS = 16;
 function isAuditEventEntry(value: Record<string, unknown>): boolean {
   if (typeof value.event !== "string" || !Object.hasOwn(AUDIT_EVENTS, value.event)) return false;
   const idKey = AUDIT_EVENTS[value.event];
+  if (idKey === undefined) return false;
   const keys = Object.keys(value).sort();
   if (keys.join(",") !== ["event", "removed", idKey].sort().join(",")) return false;
   const id = value[idKey];

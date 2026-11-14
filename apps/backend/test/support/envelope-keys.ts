@@ -1,7 +1,7 @@
 // Dependency-free so the web Bun test can share it without importing the backend.
 
 /** Keys that must never appear anywhere in an envelope sent by the hardened init. */
-export const LEAKY_KEYS = [
+const LEAKY_KEYS = [
   '"request"',
   '"headers"',
   '"query_string"',

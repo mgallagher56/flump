@@ -44,10 +44,10 @@ import type { DataSource } from "typeorm";
  */
 
 /** A pending row older than this is a request that died before storing its result. */
-export const PENDING_TIMEOUT_SECONDS = 300;
+const PENDING_TIMEOUT_SECONDS = 300;
 
 /** Response headers stored with the result and set again on a replay. Lower case. */
-export const REPLAYED_HEADERS = ["etag", "location"] as const;
+const REPLAYED_HEADERS = ["etag", "location"] as const;
 
 interface RequestLike {
   method?: string;

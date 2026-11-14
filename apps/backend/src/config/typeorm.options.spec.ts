@@ -22,7 +22,7 @@ describe("typeOrmOptionsFromEnv", () => {
   it("points the migrations glob at ../migrations", () => {
     const o = typeOrmOptionsFromEnv({ NODE_ENV: "development" }) as { migrations: string[] };
     expect(o.migrations).toHaveLength(1);
-    expect(o.migrations[0].replaceAll("\\", "/")).toMatch(
+    expect(o.migrations[0]?.replaceAll("\\", "/")).toMatch(
       /\/src\/migrations\/\*\[0-9\]\{\.ts,\.js\}$/,
     );
   });

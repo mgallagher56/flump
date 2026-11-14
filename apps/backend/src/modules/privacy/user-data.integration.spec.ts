@@ -25,6 +25,7 @@ import { InMemoryIdentityAdapter } from "../../identity/identity.adapter";
 import { assertSafeTestDatabase } from "../../testing/assertSafeTestDatabase";
 import { resolveDbTestMode } from "../../testing/dbTestMode";
 import { discoverMigrations } from "../../testing/discoverMigrations";
+import { at } from "../../testing/must";
 import { LoggingBankConsentRevoker } from "../banking/bank-consent-revoker";
 import { AccountIntakeService } from "../finance/account-intake.service";
 import { UserProfileService } from "../profile/user-profile.service";
@@ -300,18 +301,19 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("user data (real Post
 
     const tombstones = await ds.getRepository(AccountDeletionTombstone).find();
     expect(tombstones).toHaveLength(1);
-    expect(tombstones[0].subjectHash).toBe(
+    const tombstone = at(tombstones, 0);
+    expect(tombstone.subjectHash).toBe(
       tombstoneSubjectHash(
         // The dev/test fallback key, as the service resolved it.
         (deletion as unknown as { key: string }).key,
         USER_A,
       ),
     );
-    expect(tombstones[0].identityDeletedAt).toBeInstanceOf(Date);
+    expect(tombstone.identityDeletedAt).toBeInstanceOf(Date);
     expect(JSON.stringify(tombstones)).not.toContain(USER_A);
     const months =
-      (tombstones[0].expiresAt.getUTCFullYear() - tombstones[0].deletedAt.getUTCFullYear()) * 12 +
-      (tombstones[0].expiresAt.getUTCMonth() - tombstones[0].deletedAt.getUTCMonth());
+      (tombstone.expiresAt.getUTCFullYear() - tombstone.deletedAt.getUTCFullYear()) * 12 +
+      (tombstone.expiresAt.getUTCMonth() - tombstone.deletedAt.getUTCMonth());
     expect(months).toBe(24);
     await expect(deletion.isErased(USER_A)).resolves.toBe(true);
     await expect(deletion.isErased(USER_B)).resolves.toBe(false);
@@ -321,7 +323,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("user data (real Post
     await seed(USER_A, "A");
     await seed(USER_B, "B");
     const accountOf = async (userId: string) =>
-      (await ds.getRepository(Account).findBy({ userId }))[0].id;
+      at(await ds.getRepository(Account).findBy({ userId }), 0).id;
     for (const userId of [USER_A, USER_B]) {
       await ds.query(
         `INSERT INTO liability_sign_backfill (account_id, table_name, row_id, old_value, new_value)
@@ -339,7 +341,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("user data (real Post
 
   it("also removes history and transactions keyed to the user's accounts under another user_id", async () => {
     await seed(USER_A, "A");
-    const [account] = await ds.getRepository(Account).findBy({ userId: USER_A });
+    const account = at(await ds.getRepository(Account).findBy({ userId: USER_A }), 0);
     await ds.getRepository(Transaction).insert({
       accountId: account.id,
       userId: "user_stray",
@@ -404,7 +406,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("user data (real Post
     await seed(USER_A, "A");
     identity.deleteFailure = new Error("WorkOS unavailable");
     await expect(deletion.deleteAccount(USER_A)).resolves.toEqual({ status: "identity_pending" });
-    const [pending] = await ds.getRepository(AccountDeletionTombstone).find();
+    const pending = at(await ds.getRepository(AccountDeletionTombstone).find(), 0);
     expect(pending.identityDeletedAt).toBeNull();
     expect(Object.values(await countsFor(USER_A)).every((n) => n === 0)).toBe(true);
 
@@ -412,9 +414,9 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("user data (real Post
     await expect(deletion.deleteAccount(USER_A)).resolves.toEqual({ status: "deleted" });
     const all = await ds.getRepository(AccountDeletionTombstone).find();
     expect(all).toHaveLength(1);
-    expect(all[0].id).toBe(pending.id);
-    expect(all[0].deletedAt.getTime()).toBe(pending.deletedAt.getTime());
-    expect(all[0].identityDeletedAt).toBeInstanceOf(Date);
+    expect(at(all, 0).id).toBe(pending.id);
+    expect(at(all, 0).deletedAt.getTime()).toBe(pending.deletedAt.getTime());
+    expect(at(all, 0).identityDeletedAt).toBeInstanceOf(Date);
     expect(identity.deletedUsers).toEqual([USER_A]);
   });
 
@@ -461,7 +463,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("user data (real Post
       expect((doc[t.key] as unknown[]).length, t.key).toBe(1);
     }
     expect(doc.accounts[0]).toMatchObject({ name: "A saver", balance: 1234.5 });
-    expect(doc.taxRecords[0].receiptData).toBe("data:image/png;base64,AAAA");
+    expect(at(doc.taxRecords, 0).receiptData).toBe("data:image/png;base64,AAAA");
     expect(doc.mcpTokens[0]).toMatchObject({ name: "A Claude", tokenPrefix: "flp_abcd" });
 
     // Nothing of B's, and no secret of anyone's.
@@ -556,17 +558,12 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("user data (real Post
     const service = new UserProfileService(
       repo(UserProfile),
       repo(Account),
-      repo(Transaction),
       repo(AccountDetail),
       repo(BankConnection),
-      repo(BudgetEntry),
-      repo(TaxRecord),
       identity,
       ds,
-      repo(SnapshotCheckin),
-      repo(ImportBatch),
-      repo(McpToken),
       new LoggingBankConsentRevoker(),
+      deletion,
     );
 
     await service.resetFinancialData(USER_A);
@@ -608,17 +605,12 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("user data (real Post
       new UserProfileService(
         repo(UserProfile),
         repo(Account),
-        repo(Transaction),
         repo(AccountDetail),
         repo(BankConnection),
-        repo(BudgetEntry),
-        repo(TaxRecord),
         identity,
         ds,
-        repo(SnapshotCheckin),
-        repo(ImportBatch),
-        repo(McpToken),
         new LoggingBankConsentRevoker(),
+        deletion,
       );
     const intake = () =>
       new AccountIntakeService(

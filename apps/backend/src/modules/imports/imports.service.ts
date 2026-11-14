@@ -100,12 +100,13 @@ export class ImportsService {
          LIMIT 1`,
         [userId, key],
       );
-      if (replayed.length > 0) {
+      const [prior] = replayed;
+      if (prior) {
         // A key names one stage call. Reusing it with a different batchId is a client bug.
-        if (input.batchId !== undefined && input.batchId.toLowerCase() !== replayed[0].id) {
+        if (input.batchId !== undefined && input.batchId.toLowerCase() !== prior.id) {
           throw new ConflictException("idempotencyKey belongs to another import");
         }
-        const batch = await m.findOneByOrFail(ImportBatchEntity, { id: replayed[0].id });
+        const batch = await m.findOneByOrFail(ImportBatchEntity, { id: prior.id });
         return toView(batch, (batch.validationErrors[key] ?? []) as ImportValidationError[]);
       }
 
@@ -396,7 +397,9 @@ export class ImportsService {
         : [];
       const createdAccountIds = createdAccounts.map((a) => a.id);
       createdAccounts.forEach((created, i) => {
-        accountByRef.set(toCreate[i].ref, { id: created.id, type: created.type, connected: false });
+        const entry = toCreate[i];
+        if (!entry) throw new Error("saved accounts out of step with the accounts to create");
+        accountByRef.set(entry.ref, { id: created.id, type: created.type, connected: false });
       });
 
       // Existing values for the mapped accounts, locked for the rest of the transaction. Rows

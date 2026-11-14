@@ -6,16 +6,16 @@ export const RECENT_LOGIN_MAX_AGE_SECONDS = 15 * 60;
 /** Clock skew allowed between WorkOS and this server for an `auth_time` slightly in the future. */
 const CLOCK_SKEW_SECONDS = 60;
 
-export const RECENT_LOGIN_REQUIRED = "recent_login_required";
-export const RECENT_LOGIN_MESSAGE = "For your security, sign in again, then try again.";
+const RECENT_LOGIN_REQUIRED = "recent_login_required";
+const RECENT_LOGIN_MESSAGE = "For your security, sign in again, then try again.";
 
 /**
  * An erased account (BE-04). 410 Gone, not 401: during identity_pending the WorkOS login still
  * exists, so a 401 would send the web app round a sign-in loop. The web app tells the two apart by
  * `error`.
  */
-export const ACCOUNT_DELETED = "account_deleted";
-export const ACCOUNT_DELETED_MESSAGE = "This account has been deleted.";
+const ACCOUNT_DELETED = "account_deleted";
+const ACCOUNT_DELETED_MESSAGE = "This account has been deleted.";
 
 export function accountDeletedException(): GoneException {
   return new GoneException({

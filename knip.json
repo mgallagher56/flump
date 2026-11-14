@@ -1,0 +1,10 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "workspaces": {
+    "apps/backend": {
+      "entry": ["src/data-source.ts", "src/migrations/*.ts", "src/scripts/*.ts"],
+      "project": ["src/**/*.ts", "test/**/*.ts"],
+      "ignoreDependencies": ["@nestjs/schematics", "@typescript/typescript6"]
+    }
+  }
+}

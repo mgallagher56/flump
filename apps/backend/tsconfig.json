@@ -24,7 +24,7 @@
     "noFallthroughCasesInSwitch": true,
     "strict": true,
     "strictPropertyInitialization": false,
-    "noUncheckedIndexedAccess": false
+    "noUncheckedIndexedAccess": true
   },
   "include": ["src"],
   "exclude": ["node_modules", "dist"]

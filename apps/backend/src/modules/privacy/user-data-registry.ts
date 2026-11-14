@@ -23,7 +23,7 @@ import { UserProfile } from "../../entities/user-profile.entity";
  * - `revoke`: the rows are credentials; deleting them revokes them.
  * - `keep`: the rows survive a reset. Account deletion still removes them.
  */
-export type ResetHandling = {
+type ResetHandling = {
   kind: "financial-clear" | "revoke" | "keep";
   reason: string;
 };

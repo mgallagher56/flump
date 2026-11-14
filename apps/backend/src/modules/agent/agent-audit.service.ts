@@ -39,7 +39,7 @@ export interface AgentAuditActivity {
 }
 
 /** Activity page sizes come from the contract (PAGE_LIMITS.activity, BE-09). */
-export const MAX_ACTIVITY_PAGE = PAGE_LIMITS.activity.max;
+const MAX_ACTIVITY_PAGE = PAGE_LIMITS.activity.max;
 const DEFAULT_ACTIVITY_PAGE = PAGE_LIMITS.activity.default;
 const INT_MAX = 2_147_483_647;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -61,7 +61,7 @@ export function decodeActivityCursor(cursor: string): string | null {
 }
 
 /** JSON with object keys sorted at every level, so equal arguments always hash the same. */
-export function canonicalJson(value: unknown): string {
+function canonicalJson(value: unknown): string {
   if (Array.isArray(value)) return `[${value.map((v) => canonicalJson(v ?? null)).join(",")}]`;
   if (value && typeof value === "object") {
     const entries = Object.keys(value as Record<string, unknown>)

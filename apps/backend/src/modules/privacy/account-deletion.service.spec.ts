@@ -1,6 +1,7 @@
 import { Logger, ServiceUnavailableException } from "@nestjs/common";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { InMemoryIdentityAdapter, WorkOSIdentityAdapter } from "../../identity/identity.adapter";
+import { at } from "../../testing/must";
 import { LoggingBankConsentRevoker } from "../banking/bank-consent-revoker";
 import { AccountDeletionService } from "./account-deletion.service";
 import { TOMBSTONE_KEY_ENV_VAR } from "./tombstone-key";
@@ -110,7 +111,7 @@ describe("AccountDeletionService", () => {
     const events = log.mock.calls.map((call: unknown[]) => call[0] as Record<string, unknown>);
     const deleted = events.filter((e: Record<string, unknown>) => e?.event === "account_deleted");
     expect(deleted).toHaveLength(1);
-    expect(Object.keys(deleted[0]).sort()).toEqual(["event", "removed", "tombstoneId"]);
+    expect(Object.keys(at(deleted, 0)).sort()).toEqual(["event", "removed", "tombstoneId"]);
     expect(JSON.stringify(deleted[0])).not.toContain("user_A");
   });
 
@@ -179,7 +180,7 @@ describe("LoggingBankConsentRevoker", () => {
       { id: "c1", institutionId: "monzo", authType: "oauth" },
       { id: "c2", institutionId: "monzo", authType: "oauth" },
     ]);
-    const line = String(warn.mock.calls[0][0]);
+    const line = String(warn.mock.calls[0]?.[0]);
     expect(JSON.parse(line)).toEqual({
       event: "bank_consent_revoke_pending",
       connections: 2,

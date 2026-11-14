@@ -45,12 +45,13 @@ export class AuthGuard implements CanActivate {
       throw new UnauthorizedException("Authentication failed");
     }
     const parts = header.trim().split(/\s+/);
-    if (parts.length !== 2 || parts[0].toLowerCase() !== "bearer" || parts[1].length === 0) {
+    const [scheme, token] = parts;
+    if (parts.length !== 2 || scheme?.toLowerCase() !== "bearer" || !token) {
       throw new UnauthorizedException("Authentication failed");
     }
 
     try {
-      request.user = await this.verifier.verify(parts[1]);
+      request.user = await this.verifier.verify(token);
     } catch {
       throw new UnauthorizedException("Authentication failed");
     }

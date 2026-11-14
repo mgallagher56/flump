@@ -7,6 +7,7 @@ import { describe, expect, it } from "vitest";
 import { AppModule } from "../../src/app.module";
 import { API_VERSION_PREFIX, v1AliasMiddleware } from "../../src/config/v1-alias.middleware";
 import { moduleControllers } from "../../src/testing/module-controllers";
+import { must } from "../../src/testing/must";
 
 /**
  * Route inventory guard (E23 section 9.3, B1).
@@ -148,7 +149,7 @@ function extractWebCalls(
         if (lit) method = lit[1] as Method;
         else problems.push(`${rel}: non-literal method ${m[3]} for "${m[2]}"`);
       }
-      calls.push({ method, path: normalisePath(m[2]), source: rel });
+      calls.push({ method, path: normalisePath(must(m[2], "path")), source: rel });
     }
   }
   return { calls, dynamic, problems };
@@ -318,8 +319,9 @@ describe("web to backend route inventory", () => {
     for (const m of text.matchAll(
       /apiFetch(?:<[^()]*>)?\(\s*(["'`])((?:\\.|(?!\1)[^\\])*)\1([^)]*)\)/g,
     )) {
-      const method = (/method:\s*"(GET|POST|PATCH|PUT|DELETE)"/.exec(m[3])?.[1] ?? "GET") as Method;
-      calls.push({ method, path: normalisePath(m[2]), source: "mobile-companion" });
+      const method = (/method:\s*"(GET|POST|PATCH|PUT|DELETE)"/.exec(m[3] ?? "")?.[1] ??
+        "GET") as Method;
+      calls.push({ method, path: normalisePath(must(m[2], "path")), source: "mobile-companion" });
     }
     const missing = calls.filter((c) => !routes.some((r) => matches(r, c)));
     if (missing.length > 0) {

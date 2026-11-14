@@ -1,6 +1,5 @@
 import { ACCOUNT_TYPES } from "@flump/api-contract";
 import {
-  getUkCalendarDate,
   type MonthlyPortfolioHistoryPoint,
   type NetWorthLeftOut,
   netWorthBasisFromProfile,
@@ -27,9 +26,9 @@ import { UserProfile } from "../../entities/user-profile.entity";
 import { londonDate } from "../snapshots/london-date";
 import { resignHistoryForType, storedBalance } from "../snapshots/stored-balance";
 
-export type AccountType = (typeof ACCOUNT_TYPES)[number];
+type AccountType = (typeof ACCOUNT_TYPES)[number];
 
-export const STUDENT_LOAN_PLANS = ["PLAN_1", "PLAN_2", "PLAN_4", "PLAN_5", "POSTGRAD"] as const;
+const STUDENT_LOAN_PLANS = ["PLAN_1", "PLAN_2", "PLAN_4", "PLAN_5", "POSTGRAD"] as const;
 
 export interface AccountWithDetails extends Account {
   details: AccountDetail[];
@@ -75,10 +74,10 @@ export interface PortfolioSnapshotResponse {
   currency: string;
 }
 
-export const DEFAULT_ACCOUNT_CURRENCY = "GBP";
+const DEFAULT_ACCOUNT_CURRENCY = "GBP";
 
-export const MIN_TERM_MONTHS = 1;
-export const MAX_TERM_MONTHS = 600;
+const MIN_TERM_MONTHS = 1;
+const MAX_TERM_MONTHS = 600;
 
 function validateTermMonths(value: unknown): number | null | undefined {
   if (value === undefined || value === null) return value;
@@ -126,7 +125,7 @@ const nullableNumber = (value: number | string | null | undefined): number | nul
  * `isCurrent` a boolean. Create, update, check-in and the reads all return it, so a client sees
  * the same object whichever route produced it.
  */
-export function toAccountResponse(account: Account): Account {
+function toAccountResponse(account: Account): Account {
   return {
     id: account.id,
     userId: account.userId,
@@ -184,10 +183,10 @@ function validateStudentLoanPlan(value: unknown): string | null | undefined {
   );
 }
 
-export const MAX_BALANCE_BATCH = 100;
+const MAX_BALANCE_BATCH = 100;
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-export interface BalanceUpdateDto {
+interface BalanceUpdateDto {
   id: string;
   balance: number;
 }
@@ -206,7 +205,7 @@ function validateBalance(value: unknown): number | undefined {
 }
 
 /** Validates the PATCH /accounts/balances body; throws 400 on anything malformed. */
-export function validateBalanceUpdates(body: unknown): BalanceUpdateDto[] {
+function validateBalanceUpdates(body: unknown): BalanceUpdateDto[] {
   const balances = (body as { balances?: unknown } | null | undefined)?.balances;
   if (!Array.isArray(balances) || balances.length === 0) {
     throw new BadRequestException("balances must be a non-empty array");
@@ -231,12 +230,6 @@ export function validateBalanceUpdates(body: unknown): BalanceUpdateDto[] {
     seen.add(key);
     return { id: key, balance };
   });
-}
-
-/** Current year and month on the UK calendar (not the server's UTC date). */
-export function currentUkYearMonth(now: Date = new Date()): { year: number; month: number } {
-  const [year, month] = getUkCalendarDate(now).split("-").map(Number);
-  return { year: year as number, month: month as number };
 }
 
 export interface DeleteAccountResponse {
@@ -265,7 +258,7 @@ async function deleteOwnedAccount(
   return { success: true };
 }
 
-export interface IAccountIntake {
+interface IAccountIntake {
   getAccounts(userId: string): Promise<AccountWithDetails[]>;
   getAccount(userId: string, id: string): Promise<AccountWithDetails>;
   getAccountDetails(userId: string, accountId?: string): Promise<AccountDetail[]>;
@@ -348,8 +341,9 @@ export class AccountIntakeService implements IAccountIntake {
 
     const detailsByAccount = details.reduce(
       (acc, d) => {
-        if (!acc[d.accountId]) acc[d.accountId] = [];
-        acc[d.accountId].push(d);
+        const list = acc[d.accountId] ?? [];
+        list.push(d);
+        acc[d.accountId] = list;
         return acc;
       },
       {} as Record<string, AccountDetail[]>,

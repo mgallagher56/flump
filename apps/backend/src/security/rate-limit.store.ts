@@ -35,7 +35,7 @@ interface Bucket {
 }
 
 const SWEEP_EVERY = 500;
-export const DEFAULT_MAX_ENTRIES = 50_000;
+const DEFAULT_MAX_ENTRIES = 50_000;
 
 /**
  * Fixed-window, in-memory counters (E20-N13). One bucket per key and window length. A request is

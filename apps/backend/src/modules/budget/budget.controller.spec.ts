@@ -21,7 +21,7 @@ describe("BudgetController", () => {
   it("getBudgetEntries returns [] for a new user and never saves", async () => {
     const budgetRepo = createInMemoryRepository();
     const profileRepo = createInMemoryRepository();
-    const controller = budgetController(budgetRepo as any, profileRepo as any);
+    const controller = budgetController(budgetRepo, profileRepo);
 
     const result = await controller.getBudgetEntries({ user: { id: "user-123" } });
 
@@ -33,7 +33,7 @@ describe("BudgetController", () => {
 
   it("seedDefaultBudgetEntries twice creates each template row once", async () => {
     const budgetRepo = createInMemoryRepository();
-    const controller = budgetController(budgetRepo as any, createInMemoryRepository() as any);
+    const controller = budgetController(budgetRepo, createInMemoryRepository());
     const req = { user: { id: "user-123" } };
 
     const first = await controller.seedDefaultBudgetEntries(req);
@@ -51,7 +51,7 @@ describe("BudgetController", () => {
       { id: "u1", userId: "user-123", name: "Gym", isDefault: false, amount: 99 },
       { id: "d1", userId: "user-123", name: "Gas", isDefault: true, amount: 61 },
     ]);
-    const controller = budgetController(budgetRepo as any, createInMemoryRepository() as any);
+    const controller = budgetController(budgetRepo, createInMemoryRepository());
 
     await controller.seedDefaultBudgetEntries({ user: { id: "user-123" } });
 
@@ -61,7 +61,7 @@ describe("BudgetController", () => {
 
   it("suggested defaults contain no income entry", async () => {
     const budgetRepo = createInMemoryRepository();
-    const controller = budgetController(budgetRepo as any, createInMemoryRepository() as any);
+    const controller = budgetController(budgetRepo, createInMemoryRepository());
 
     await controller.seedDefaultBudgetEntries({ user: { id: "user-123" } });
 
@@ -72,7 +72,7 @@ describe("BudgetController", () => {
 
   it("suggested defaults carry no invented amounts (E23)", async () => {
     const budgetRepo = createInMemoryRepository();
-    const controller = budgetController(budgetRepo as any, createInMemoryRepository() as any);
+    const controller = budgetController(budgetRepo, createInMemoryRepository());
 
     await controller.seedDefaultBudgetEntries({ user: { id: "user-123" } });
 
@@ -88,7 +88,7 @@ describe("BudgetController", () => {
       save: vi.fn((p) => Promise.resolve(p)),
     };
 
-    const controller = budgetController(mockBudgetRepo as any, mockProfileRepo as any);
+    const controller = budgetController(mockBudgetRepo, mockProfileRepo);
 
     await expect(
       controller.addCustomCategory({ user: { id: "user-123" } }, { category: "  " }),
@@ -110,7 +110,7 @@ describe("BudgetController", () => {
       create: vi.fn((p) => ({ ...p })),
       save: vi.fn((p) => Promise.resolve(p)),
     };
-    const controller = budgetController({} as any, mockProfileRepo as any);
+    const controller = budgetController({}, mockProfileRepo);
     const req = { user: { id: "u1" } };
 
     await expect(controller.addCustomCategory(req, { category: "One more" })).rejects.toThrow(
@@ -141,7 +141,7 @@ describe("BudgetController", () => {
       remove: vi.fn().mockResolvedValue(undefined),
     };
     const mockProfileRepo = {};
-    const controller = budgetController(mockBudgetRepo as any, mockProfileRepo as any);
+    const controller = budgetController(mockBudgetRepo, mockProfileRepo);
     const req = { user: { id: "u1" } };
 
     // Create
@@ -198,7 +198,9 @@ describe("BudgetController", () => {
   });
 
   it("has no reset route that re-seeds", () => {
-    expect((BudgetController.prototype as any).resetBudgetEntries).toBeUndefined();
+    expect(
+      (BudgetController.prototype as unknown as Record<string, unknown>).resetBudgetEntries,
+    ).toBeUndefined();
   });
 
   it("scopes budget entries by owner: user B cannot list, update or delete user A's entry", async () => {
@@ -206,7 +208,7 @@ describe("BudgetController", () => {
       { id: "e-A", userId: "userA", category: "housing", name: "Rent", amount: 1500 },
     ]);
     const profileRepo = createInMemoryRepository();
-    const controller = budgetController(budgetRepo as any, profileRepo as any);
+    const controller = budgetController(budgetRepo, profileRepo);
     const userA = { user: { id: "userA" } };
     const userB = { user: { id: "userB" } };
 

@@ -5,6 +5,7 @@ import { typeOrmOptionsFromEnv } from "../../config/typeorm.options";
 import { assertSafeTestDatabase } from "../../testing/assertSafeTestDatabase";
 import { resolveDbTestMode } from "../../testing/dbTestMode";
 import { discoverMigrations } from "../../testing/discoverMigrations";
+import { must } from "../../testing/must";
 import { ImportsService } from "./imports.service";
 
 // BE-13 (audit L13): import commit creates every new account in one insert, and revert restores
@@ -115,9 +116,15 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
       expect(byName.get("Credit card")?.type).toBe("Credit Card");
       expect(byName.get("Rainy day")?.type).toBe("Saving");
       expect(Number(byName.get("Credit card")?.balance)).toBe(-250);
-      expect((await history(byName.get("Stocks ISA")!.id)).map((r) => r.value)).toEqual([1000]);
-      expect((await history(byName.get("Credit card")!.id)).map((r) => r.value)).toEqual([-250]);
-      expect((await history(byName.get("Rainy day")!.id)).map((r) => r.value)).toEqual([40, 60]);
+      expect(
+        (await history(must(byName.get("Stocks ISA"), "Stocks ISA").id)).map((r) => r.value),
+      ).toEqual([1000]);
+      expect(
+        (await history(must(byName.get("Credit card"), "Credit card").id)).map((r) => r.value),
+      ).toEqual([-250]);
+      expect(
+        (await history(must(byName.get("Rainy day"), "Rainy day").id)).map((r) => r.value),
+      ).toEqual([40, 60]);
 
       const reverted = await svc.revert(OWNER_ID, staged.batchId);
       expect(reverted.revert).toEqual({ restored: 0, removed: 4, kept: 0 });

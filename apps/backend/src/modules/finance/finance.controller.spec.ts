@@ -1,4 +1,6 @@
 import {
+  type CreateAccountRequest,
+  type CreateTransactionRequest,
   DEFAULT_TRANSACTION_PAGE,
   MAX_TRANSACTION_OFFSET,
   MAX_TRANSACTION_PAGE,
@@ -9,6 +11,7 @@ import { financeServiceWithIntake } from "../../testing/finance-service";
 import { createInMemoryRepository, fakeListQueryBuilder } from "../../testing/in-memory-repository";
 import { withManager } from "../../testing/with-manager";
 import { FinanceController } from "./finance.controller";
+import type { FinanceService } from "./finance.service";
 
 const ACC_1 = "00000000-0000-4000-8000-000000000001";
 
@@ -97,13 +100,13 @@ describe("FinanceController & FinanceService", () => {
       Transaction: mockTransactionRepo,
     });
     const service = financeServiceWithIntake(
-      mockAccountRepo as any,
-      mockTransactionRepo as any,
-      mockAccountDetailRepo as any,
-      mockBankConnRepo as any,
-      mockProfileRepo as any,
-      mockRegistry as any,
-      mockConfig as any,
+      mockAccountRepo,
+      mockTransactionRepo,
+      mockAccountDetailRepo,
+      mockBankConnRepo,
+      mockProfileRepo,
+      mockRegistry,
+      mockConfig,
     );
 
     const controller = new FinanceController(service);
@@ -131,7 +134,7 @@ describe("FinanceController & FinanceService", () => {
     await expect(
       controller.updateBalances({ user: { id: "userB" } }, { balances: [{ id, balance: 5 }] }),
     ).rejects.toThrow(NotFoundException);
-    expect(mockAccountRepo.find.mock.calls[0][0].where.userId).toBe("userB");
+    expect(mockAccountRepo.find.mock.calls[0]?.[0].where.userId).toBe("userB");
     expect(mockAccountRepo.save).not.toHaveBeenCalled();
   });
 
@@ -332,7 +335,7 @@ describe("FinanceController & FinanceService", () => {
       deleteAccount: vi.fn().mockResolvedValue({ success: true }),
     };
 
-    const controller = new FinanceController(mockFinanceService as any);
+    const controller = new FinanceController(mockFinanceService as unknown as FinanceService);
 
     const userReq = { user: { id: "user-123" } };
     // Responses never carry the owner id (BE-09, audit L3).
@@ -386,13 +389,13 @@ describe("FinanceController & FinanceService", () => {
         Transaction: transactionRepo,
       });
       const service = financeServiceWithIntake(
-        accountRepo as any,
-        transactionRepo as any,
-        accountDetailRepo as any,
-        bankConnRepo as any,
-        profileRepo as any,
-        { getProvider: vi.fn() } as any,
-        { get: vi.fn() } as any,
+        accountRepo,
+        transactionRepo,
+        accountDetailRepo,
+        bankConnRepo,
+        profileRepo,
+        { getProvider: vi.fn() },
+        { get: vi.fn() },
       );
       return {
         controller: new FinanceController(service),
@@ -432,7 +435,7 @@ describe("FinanceController & FinanceService", () => {
         name: "Mine",
         type: "Current",
         balance: 1,
-      } as any);
+      } as unknown as CreateAccountRequest);
 
       expect(accountRepo.rows.find((r) => r.id === "acc-A")).toMatchObject({
         userId: "userA",
@@ -455,7 +458,7 @@ describe("FinanceController & FinanceService", () => {
           amount: 999,
           description: "Forged",
           category: "Other",
-        } as any),
+        } as unknown as CreateTransactionRequest),
       ).rejects.toThrow(NotFoundException);
 
       expect(transactionRepo.rows).toEqual([
@@ -487,7 +490,9 @@ describe("FinanceController & FinanceService", () => {
     const proto = FinanceController.prototype as unknown as Record<string, object>;
     const paths = Object.getOwnPropertyNames(proto)
       .map((name) => proto[name])
-      .filter((fn) => typeof fn === "function" && Reflect.getMetadata("method", fn) === 1)
+      .filter(
+        (fn): fn is object => typeof fn === "function" && Reflect.getMetadata("method", fn) === 1,
+      )
       .map((fn) => Reflect.getMetadata("path", fn));
     expect(paths).toEqual(
       expect.arrayContaining(["bank-connections/:id/sync", "bank-connections/:id/refresh"]),
@@ -501,7 +506,8 @@ describe("FinanceController & FinanceService", () => {
     const verbs = Object.getOwnPropertyNames(proto)
       .map((name) => proto[name])
       .filter(
-        (fn) => typeof fn === "function" && Reflect.getMetadata("path", fn) === "accounts/:id",
+        (fn): fn is object =>
+          typeof fn === "function" && Reflect.getMetadata("path", fn) === "accounts/:id",
       )
       .map((fn) => Reflect.getMetadata("method", fn));
     expect(verbs).toEqual(expect.arrayContaining([2, 4]));
@@ -509,7 +515,7 @@ describe("FinanceController & FinanceService", () => {
 
   it("returns 404 for another user's account on both PUT and PATCH", async () => {
     const { controller } = createMocks();
-    const userB = { user: { id: "userB" } } as any;
+    const userB = { user: { id: "userB" } };
 
     await expect(controller.replaceAccount(userB, "acc-of-userA", { balance: 1 })).rejects.toThrow(
       NotFoundException,

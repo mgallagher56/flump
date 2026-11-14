@@ -1,51 +1,82 @@
 import { BadRequestException, NotFoundException } from "@nestjs/common";
+import type { Repository } from "typeorm";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { Account } from "../../entities/account.entity";
+import type { AccountDetail } from "../../entities/account-detail.entity";
+import type { BankConnection } from "../../entities/bank-connection.entity";
+import type { UserProfile } from "../../entities/user-profile.entity";
 import { createInMemoryRepository } from "../../testing/in-memory-repository";
+import { at } from "../../testing/must";
 import { AccountIntakeService } from "./account-intake.service";
+
+/** Builds the service over test doubles, which stand in for the TypeORM repositories. */
+const intakeOver = (
+  accounts: unknown,
+  details: unknown,
+  profiles: unknown,
+  connections: unknown,
+): AccountIntakeService =>
+  new AccountIntakeService(
+    accounts as Repository<Account>,
+    details as Repository<AccountDetail>,
+    profiles as Repository<UserProfile>,
+    connections as Repository<BankConnection>,
+  );
+
+const createMocks = () => {
+  const auditInsert = vi.fn().mockResolvedValue(undefined);
+  const accountDetailRepo = {
+    find: vi.fn(),
+    findOne: vi.fn(),
+    delete: vi.fn().mockResolvedValue({ affected: 1 }),
+    upsert: vi.fn().mockResolvedValue(undefined),
+    save: vi.fn((data) => Promise.resolve(data)),
+  };
+  const accountRepo = {
+    find: vi.fn(),
+    findOne: vi.fn(),
+    create: vi.fn((data) => ({ id: "acc-new", ...data })),
+    save: vi.fn((data) => Promise.resolve(data)),
+    remove: vi.fn().mockResolvedValue({ id: "acc-1" }),
+    // A manager stub: the transaction hands back the same doubles, keyed by entity name.
+    manager: {
+      transaction: (work: (em: unknown) => Promise<unknown>) =>
+        work({
+          getRepository: (entity: { name: string }): unknown => {
+            if (entity.name === "AccountDetail") return accountDetailRepo;
+            if (entity.name === "Transaction") return { delete: vi.fn() };
+            if (entity.name === "AuditEvent") return { insert: auditInsert };
+            return accountRepo;
+          },
+        }),
+    },
+  };
+  const userProfileRepo = {
+    findOne: vi.fn().mockResolvedValue({ userId: "user-123", hasResetFinancialData: false }),
+  };
+  const bankConnectionRepo = { findOne: vi.fn().mockResolvedValue(null) };
+  return { auditInsert, accountRepo, accountDetailRepo, userProfileRepo, bankConnectionRepo };
+};
+type Mocks = ReturnType<typeof createMocks>;
 
 describe("AccountIntakeService (Deep Module)", () => {
   let service: AccountIntakeService;
-  let mockAccountRepo: any;
-  let mockAccountDetailRepo: any;
-  let mockUserProfileRepo: any;
-  let mockBankConnectionRepo: any;
-  let mockAuditInsert: any;
+  let mockAccountRepo: Mocks["accountRepo"];
+  let mockAccountDetailRepo: Mocks["accountDetailRepo"];
+  let mockUserProfileRepo: Mocks["userProfileRepo"];
+  let mockBankConnectionRepo: Mocks["bankConnectionRepo"];
+  let mockAuditInsert: Mocks["auditInsert"];
 
   beforeEach(() => {
-    mockAuditInsert = vi.fn().mockResolvedValue(undefined);
-    mockAccountRepo = {
-      find: vi.fn(),
-      findOne: vi.fn(),
-      create: vi.fn((data) => ({ id: "acc-new", ...data })),
-      save: vi.fn((data) => Promise.resolve(data)),
-      remove: vi.fn().mockResolvedValue({ id: "acc-1" }),
-    };
-    mockAccountDetailRepo = {
-      find: vi.fn(),
-      findOne: vi.fn(),
-      delete: vi.fn().mockResolvedValue({ affected: 1 }),
-      upsert: vi.fn().mockResolvedValue(undefined),
-      save: vi.fn((data) => Promise.resolve(data)),
-    };
-    // A manager stub: the transaction hands back the same doubles, keyed by entity name.
-    mockAccountRepo.manager = {
-      transaction: (work: (em: unknown) => Promise<unknown>) =>
-        work({
-          getRepository: (entity: { name: string }) => {
-            if (entity.name === "AccountDetail") return mockAccountDetailRepo;
-            if (entity.name === "Transaction") return { delete: vi.fn() };
-            if (entity.name === "AuditEvent") return { insert: mockAuditInsert };
-            return mockAccountRepo;
-          },
-        }),
-    };
-    mockUserProfileRepo = {
-      findOne: vi.fn().mockResolvedValue({ userId: "user-123", hasResetFinancialData: false }),
-    };
+    ({
+      auditInsert: mockAuditInsert,
+      accountRepo: mockAccountRepo,
+      accountDetailRepo: mockAccountDetailRepo,
+      userProfileRepo: mockUserProfileRepo,
+      bankConnectionRepo: mockBankConnectionRepo,
+    } = createMocks());
 
-    mockBankConnectionRepo = { findOne: vi.fn().mockResolvedValue(null) };
-
-    service = new AccountIntakeService(
+    service = intakeOver(
       mockAccountRepo,
       mockAccountDetailRepo,
       mockUserProfileRepo,
@@ -68,7 +99,7 @@ describe("AccountIntakeService (Deep Module)", () => {
       for (const [type, sent, stored] of cases) {
         mockAccountRepo.create.mockClear();
         await service.createAccount("userA", { name: "A", type, balance: sent } as never);
-        expect(mockAccountRepo.create.mock.calls[0][0].balance, type).toBe(stored);
+        expect(mockAccountRepo.create.mock.calls[0]?.[0].balance, type).toBe(stored);
       }
     });
 
@@ -85,7 +116,7 @@ describe("AccountIntakeService (Deep Module)", () => {
       ];
       mockAccountDetailRepo.find.mockResolvedValueOnce(history);
       await service.updateAccount("userA", "a1", { type: "Credit Card" });
-      expect(mockAccountRepo.save.mock.calls[0][0]).toMatchObject({
+      expect(mockAccountRepo.save.mock.calls[0]?.[0]).toMatchObject({
         type: "Credit Card",
         balance: -800,
       });
@@ -120,12 +151,7 @@ describe("AccountIntakeService (Deep Module)", () => {
     const accountRepo = createInMemoryRepository();
     const detailRepo = createInMemoryRepository();
     const profileRepo = createInMemoryRepository();
-    const concurrent = new AccountIntakeService(
-      accountRepo as any,
-      detailRepo as any,
-      profileRepo as any,
-      mockBankConnectionRepo,
-    );
+    const concurrent = intakeOver(accountRepo, detailRepo, profileRepo, mockBankConnectionRepo);
 
     await Promise.all([
       concurrent.getAccounts("user-123"),
@@ -217,7 +243,9 @@ describe("AccountIntakeService (Deep Module)", () => {
 
     it("persists a valid plan", async () => {
       await service.createAccount("userA", { ...loan, studentLoanPlan: "PLAN_2" });
-      expect(mockAccountRepo.create.mock.calls[0][0]).toMatchObject({ studentLoanPlan: "PLAN_2" });
+      expect(mockAccountRepo.create.mock.calls[0]?.[0]).toMatchObject({
+        studentLoanPlan: "PLAN_2",
+      });
     });
 
     it("rejects an unknown plan with a 400 on create and update", async () => {
@@ -238,7 +266,7 @@ describe("AccountIntakeService (Deep Module)", () => {
         currency: "GBP",
         studentLoanPlan: "PLAN_2",
       });
-      expect(mockAccountRepo.create.mock.calls[0][0]).toMatchObject({ studentLoanPlan: null });
+      expect(mockAccountRepo.create.mock.calls[0]?.[0]).toMatchObject({ studentLoanPlan: null });
     });
 
     it("clears the plan when an update changes the type away from Student Loan", async () => {
@@ -250,7 +278,7 @@ describe("AccountIntakeService (Deep Module)", () => {
       };
       mockAccountRepo.findOne.mockResolvedValueOnce(existing);
       await service.updateAccount("userA", "a1", { type: "Loan" });
-      expect(mockAccountRepo.save.mock.calls[0][0]).toMatchObject({
+      expect(mockAccountRepo.save.mock.calls[0]?.[0]).toMatchObject({
         type: "Loan",
         studentLoanPlan: null,
       });
@@ -265,7 +293,7 @@ describe("AccountIntakeService (Deep Module)", () => {
       };
       mockAccountRepo.findOne.mockResolvedValueOnce(existing);
       await service.updateAccount("userA", "a1", { name: "Renamed" });
-      expect(mockAccountRepo.save.mock.calls[0][0]).toMatchObject({ studentLoanPlan: "PLAN_2" });
+      expect(mockAccountRepo.save.mock.calls[0]?.[0]).toMatchObject({ studentLoanPlan: "PLAN_2" });
     });
   });
 
@@ -279,7 +307,7 @@ describe("AccountIntakeService (Deep Module)", () => {
         fixedRateEndDate: "2028-02-29",
       });
 
-      expect(mockAccountRepo.create.mock.calls[0][0]).toMatchObject({
+      expect(mockAccountRepo.create.mock.calls[0]?.[0]).toMatchObject({
         termMonths: 300,
         fixedRateEndDate: "2028-02-29",
       });
@@ -296,7 +324,7 @@ describe("AccountIntakeService (Deep Module)", () => {
         fixedRateEndDate: null,
       });
 
-      expect(mockAccountRepo.create.mock.calls[2][0]).toMatchObject({
+      expect(mockAccountRepo.create.mock.calls[2]?.[0]).toMatchObject({
         termMonths: null,
         fixedRateEndDate: null,
       });
@@ -305,7 +333,7 @@ describe("AccountIntakeService (Deep Module)", () => {
     it("omits the fields when not supplied so an update leaves them untouched", async () => {
       mockAccountRepo.findOne.mockResolvedValueOnce({ id: "a1", userId: "userA", termMonths: 240 });
       await service.updateAccount("userA", "a1", { balance: 5 });
-      expect(mockAccountRepo.save.mock.calls.at(-1)[0]).toMatchObject({ termMonths: 240 });
+      expect(mockAccountRepo.save.mock.calls.at(-1)?.[0]).toMatchObject({ termMonths: 240 });
     });
 
     it("updateAccount can clear both fields with null", async () => {
@@ -316,7 +344,7 @@ describe("AccountIntakeService (Deep Module)", () => {
         fixedRateEndDate: "2030-01-01",
       });
       await service.updateAccount("userA", "a1", { termMonths: null, fixedRateEndDate: null });
-      expect(mockAccountRepo.save.mock.calls.at(-1)[0]).toMatchObject({
+      expect(mockAccountRepo.save.mock.calls.at(-1)?.[0]).toMatchObject({
         termMonths: null,
         fixedRateEndDate: null,
       });
@@ -324,7 +352,7 @@ describe("AccountIntakeService (Deep Module)", () => {
 
     it.each([0, -1, 601, 12.5, "300", Number.NaN])("rejects termMonths %s", async (termMonths) => {
       await expect(
-        service.createAccount("userA", { ...mortgage, termMonths } as any),
+        service.createAccount("userA", { ...mortgage, termMonths } as never),
       ).rejects.toBeInstanceOf(BadRequestException);
       expect(mockAccountRepo.save).not.toHaveBeenCalled();
     });
@@ -333,11 +361,11 @@ describe("AccountIntakeService (Deep Module)", () => {
       "rejects fixedRateEndDate %s",
       async (fixedRateEndDate) => {
         await expect(
-          service.createAccount("userA", { ...mortgage, fixedRateEndDate } as any),
+          service.createAccount("userA", { ...mortgage, fixedRateEndDate } as never),
         ).rejects.toBeInstanceOf(BadRequestException);
         mockAccountRepo.findOne.mockResolvedValueOnce({ id: "a1", userId: "userA" });
         await expect(
-          service.updateAccount("userA", "a1", { fixedRateEndDate } as any),
+          service.updateAccount("userA", "a1", { fixedRateEndDate } as never),
         ).rejects.toBeInstanceOf(BadRequestException);
         expect(mockAccountRepo.save).not.toHaveBeenCalled();
       },
@@ -348,14 +376,14 @@ describe("AccountIntakeService (Deep Module)", () => {
     const valid = { name: "Savings", type: "Saving", balance: 100, currency: "GBP" };
 
     it("createAccount saves with the caller's userId and no id override", async () => {
-      const body = { ...valid, id: "other-id", userId: "userB" } as any;
+      const body = { ...valid, id: "other-id", userId: "userB" } as never;
 
       await service.createAccount("userA", body);
 
-      const created = mockAccountRepo.create.mock.calls[0][0];
+      const created = at(mockAccountRepo.create.mock.calls, 0)[0];
       expect(created).toEqual({ ...valid, userId: "userA" });
       expect(created).not.toHaveProperty("id");
-      const saved = mockAccountRepo.save.mock.calls[0][0];
+      const saved = at(mockAccountRepo.save.mock.calls, 0)[0];
       expect(saved.userId).toBe("userA");
       expect(saved.id).toBe("acc-new");
     });
@@ -364,22 +392,22 @@ describe("AccountIntakeService (Deep Module)", () => {
       "rejects account type %j on create and update, even without the contract",
       async (type) => {
         await expect(
-          service.createAccount("userA", { ...valid, type } as any),
+          service.createAccount("userA", { ...valid, type } as never),
         ).rejects.toBeInstanceOf(BadRequestException);
         mockAccountRepo.findOne.mockResolvedValueOnce({
           id: "a1",
           userId: "userA",
           type: "Saving",
         });
-        await expect(service.updateAccount("userA", "a1", { type } as any)).rejects.toBeInstanceOf(
-          BadRequestException,
-        );
+        await expect(
+          service.updateAccount("userA", "a1", { type } as never),
+        ).rejects.toBeInstanceOf(BadRequestException);
         expect(mockAccountRepo.save).not.toHaveBeenCalled();
       },
     );
 
     it("createAccount returns every account key, null where unset", async () => {
-      const result = await service.createAccount("userA", valid as any);
+      const result = await service.createAccount("userA", valid as never);
       expect(result).toMatchObject({
         interestRate: null,
         monthlyContribution: null,
@@ -393,9 +421,9 @@ describe("AccountIntakeService (Deep Module)", () => {
     });
 
     it("createAccount defaults the currency to GBP when the body omits it", async () => {
-      await service.createAccount("userA", { name: "Cash", type: "Saving", balance: 5 } as any);
+      await service.createAccount("userA", { name: "Cash", type: "Saving", balance: 5 } as never);
 
-      expect(mockAccountRepo.create.mock.calls[0][0]).toMatchObject({ currency: "GBP" });
+      expect(mockAccountRepo.create.mock.calls[0]?.[0]).toMatchObject({ currency: "GBP" });
     });
 
     it("updateAccount treats null or empty currency as unset and keeps the stored one", async () => {
@@ -405,8 +433,8 @@ describe("AccountIntakeService (Deep Module)", () => {
           userId: "userA",
           currency: "USD",
         });
-        await service.updateAccount("userA", "a1", { balance: 9, currency } as any);
-        const saved = mockAccountRepo.save.mock.calls.at(-1)[0];
+        await service.updateAccount("userA", "a1", { balance: 9, currency } as never);
+        const saved = at(mockAccountRepo.save.mock.calls, -1)[0];
         expect(saved).toMatchObject({ balance: 9, currency: "USD" });
       }
     });
@@ -441,7 +469,7 @@ describe("AccountIntakeService (Deep Module)", () => {
 
       await service.createAccount("userA", { ...valid, connectionId: "conn-1" });
 
-      expect(mockAccountRepo.save.mock.calls[0][0].connectionId).toBe("conn-1");
+      expect(mockAccountRepo.save.mock.calls[0]?.[0].connectionId).toBe("conn-1");
     });
 
     it("updateAccount leaves id, userId and connectionId unchanged but applies balance", async () => {
@@ -459,7 +487,7 @@ describe("AccountIntakeService (Deep Module)", () => {
         id: "x",
         connectionId: "conn-of-userB",
         balance: 5,
-      } as any);
+      } as never);
 
       expect(mockAccountRepo.findOne).toHaveBeenCalledWith({
         where: { id: "own-id", userId: "userA" },
@@ -494,12 +522,7 @@ describe("AccountIntakeService (Deep Module)", () => {
         { id: FOREIGN, userId: "userB", name: "Theirs", balance: 999 },
       ]);
       const details = createInMemoryRepository();
-      const svc = new AccountIntakeService(
-        accounts as any,
-        details as any,
-        mockUserProfileRepo,
-        mockBankConnectionRepo,
-      );
+      const svc = intakeOver(accounts, details, mockUserProfileRepo, mockBankConnectionRepo);
       return { svc, accounts, details };
     };
 
@@ -584,7 +607,7 @@ describe("AccountIntakeService (Deep Module)", () => {
       ],
     ])("updateBalances rejects %s with 400", async (_label, body) => {
       const { svc, accounts } = build();
-      await expect(svc.updateBalances("userA", body as any)).rejects.toBeInstanceOf(
+      await expect(svc.updateBalances("userA", body as never)).rejects.toBeInstanceOf(
         BadRequestException,
       );
       expect(accounts.save).not.toHaveBeenCalled();
@@ -606,7 +629,7 @@ describe("AccountIntakeService (Deep Module)", () => {
       ["huge", 1e10],
     ])("updateAccount rejects a %s balance with 400 and writes nothing", async (_l, balance) => {
       const { svc, accounts, details } = build();
-      await expect(svc.updateAccount("userA", A, { balance } as any)).rejects.toBeInstanceOf(
+      await expect(svc.updateAccount("userA", A, { balance } as never)).rejects.toBeInstanceOf(
         BadRequestException,
       );
       expect(accounts.save).not.toHaveBeenCalled();
@@ -633,12 +656,7 @@ describe("AccountIntakeService (Deep Module)", () => {
         ids.map((id) => ({ id, userId: "userA", balance: 0 })),
       );
       const details = createInMemoryRepository();
-      const svc = new AccountIntakeService(
-        accounts as any,
-        details as any,
-        mockUserProfileRepo,
-        mockBankConnectionRepo,
-      );
+      const svc = intakeOver(accounts, details, mockUserProfileRepo, mockBankConnectionRepo);
       const result = await svc.updateBalances("userA", {
         balances: ids.map((id) => ({ id, balance: 1 })),
       });

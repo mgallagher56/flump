@@ -26,7 +26,7 @@ import {
 } from "./rate-limit.store";
 import { isMissingTableError, SHARED_RATE_LIMIT_STORE } from "./shared-rate-limit";
 
-export const RATE_LIMIT_UNAVAILABLE = "This action is unavailable right now. Try again shortly.";
+const RATE_LIMIT_UNAVAILABLE = "This action is unavailable right now. Try again shortly.";
 
 const READ_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
 

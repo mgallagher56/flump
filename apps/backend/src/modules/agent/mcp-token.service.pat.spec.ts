@@ -9,9 +9,13 @@ import { McpTokenService } from "./mcp-token.service";
 
 function buildTokenService() {
   const repo = {
-    create: (v: any) => ({ ...v }),
-    save: vi.fn(async (v: any) => ({ id: "tok_new", createdAt: new Date(), ...v })),
-    manager: {} as any,
+    create: (v: Record<string, unknown>) => ({ ...v }),
+    save: vi.fn(async (v: Record<string, unknown>) => ({
+      id: "tok_new",
+      createdAt: new Date(),
+      ...v,
+    })),
+    manager: {} as unknown,
   };
   const auditInsert = vi.fn(async () => undefined);
   const consentInsert = vi.fn(async () => undefined);
@@ -44,7 +48,9 @@ describe("McpTokenService audit trail (BE-06)", () => {
 
   it("records mcp_token.revoked and withdraws the consent when a token is revoked", async () => {
     const { service, repo, auditInsert, consentUpdate, tokenUpdate } = buildTokenService();
-    (repo as any).findOne = vi.fn(async () => ({ id: "tok_1", userId: "u1", revokedAt: null }));
+    Object.assign(repo, {
+      findOne: vi.fn(async () => ({ id: "tok_1", userId: "u1", revokedAt: null })),
+    });
     await service.revokeToken("u1", "tok_1");
     expect(tokenUpdate).toHaveBeenCalled();
     expect(auditInsert).toHaveBeenCalledWith(
@@ -55,11 +61,13 @@ describe("McpTokenService audit trail (BE-06)", () => {
 
   it("writes nothing when the token is already revoked", async () => {
     const { service, repo, auditInsert, consentUpdate, tokenUpdate } = buildTokenService();
-    (repo as any).findOne = vi.fn(async () => ({
-      id: "tok_1",
-      userId: "u1",
-      revokedAt: new Date(),
-    }));
+    Object.assign(repo, {
+      findOne: vi.fn(async () => ({
+        id: "tok_1",
+        userId: "u1",
+        revokedAt: new Date(),
+      })),
+    });
     await expect(service.revokeToken("u1", "tok_1")).resolves.toEqual({ success: true });
     expect(tokenUpdate).not.toHaveBeenCalled();
     expect(auditInsert).not.toHaveBeenCalled();

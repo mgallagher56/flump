@@ -22,10 +22,8 @@ import {
   calculateStudentLoanRepayment,
   getLatestSupportedUkTaxYear,
   getUkTaxYearRules,
-  isSupportedUkTaxYear,
   resolveUkTaxYear,
   roundPence,
-  SUPPORTED_UK_TAX_YEARS,
   type UkStudentLoanPlanKey,
   type UkTaxYearRules,
 } from "./uk-tax-year.js";

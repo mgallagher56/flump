@@ -7,9 +7,9 @@ import { isIPv6 } from "node:net";
  */
 export function clientKey(ip: string | undefined): string {
   if (!ip) return "unknown";
-  const mapped = /^::ffff:(\d+\.\d+\.\d+\.\d+)$/i.exec(ip);
-  if (mapped) return mapped[1];
-  const bare = ip.split("%")[0];
+  const mappedV4 = /^::ffff:(\d+\.\d+\.\d+\.\d+)$/i.exec(ip)?.[1];
+  if (mappedV4) return mappedV4;
+  const bare = ip.split("%")[0] ?? ip;
   if (!isIPv6(bare)) return ip;
 
   const compressed = bare.includes("::");

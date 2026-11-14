@@ -20,12 +20,6 @@ import { preconditionFailed, withVersionClaim } from "../../contract/etag";
 import { Account } from "../../entities/account.entity";
 import { AccountDetail } from "../../entities/account-detail.entity";
 import { BankConnection } from "../../entities/bank-connection.entity";
-import { BudgetEntry } from "../../entities/budget-entry.entity";
-import { ImportBatch } from "../../entities/import-batch.entity";
-import { McpToken } from "../../entities/mcp-token.entity";
-import { SnapshotCheckin } from "../../entities/snapshot-checkin.entity";
-import { TaxRecord } from "../../entities/tax-record.entity";
-import { Transaction } from "../../entities/transaction.entity";
 import { HOUSING_STATUSES, TAX_REGIONS, UserProfile } from "../../entities/user-profile.entity";
 import { USER_IDENTITY_ADAPTER, type UserIdentityAdapter } from "../../identity/identity.adapter";
 import { BANK_CONSENT_REVOKER, type BankConsentRevoker } from "../banking/bank-consent-revoker";
@@ -49,15 +43,10 @@ import {
   studentLoanPlansOrNull,
 } from "./profile-view";
 
-export {
-  clearFinancialProfileFields,
-  type FinancialDataResetCounts,
-  type FormattedProfile,
-  type ProfileLifecycle,
-  type ProfileView,
-  type ResetFinancialDataResult,
-  withoutRetiredModuleKeys,
-  withoutRetiredModules,
+export type {
+  FormattedProfile,
+  ProfileView,
+  ResetFinancialDataResult,
 } from "./profile-view";
 
 @Injectable()
@@ -69,33 +58,20 @@ export class UserProfileService implements ProfileLifecycle {
     private readonly userProfileRepository: Repository<UserProfile>,
     @InjectRepository(Account)
     private readonly accountRepository: Repository<Account>,
-    @InjectRepository(Transaction)
-    private readonly transactionRepository: Repository<Transaction>,
     @InjectRepository(AccountDetail)
     private readonly accountDetailRepository: Repository<AccountDetail>,
     @InjectRepository(BankConnection)
     private readonly bankConnectionRepository: Repository<BankConnection>,
-    @InjectRepository(BudgetEntry)
-    private readonly budgetEntryRepository: Repository<BudgetEntry>,
-    @InjectRepository(TaxRecord)
-    private readonly taxRecordRepository: Repository<TaxRecord>,
     @Inject(USER_IDENTITY_ADAPTER)
-    private readonly identityAdapter?: UserIdentityAdapter,
-    private readonly dataSource?: DataSource,
-    @InjectRepository(SnapshotCheckin)
-    private readonly snapshotCheckinRepository?: Repository<SnapshotCheckin>,
-    @InjectRepository(ImportBatch)
-    private readonly importBatchRepository?: Repository<ImportBatch>,
-    @InjectRepository(McpToken)
-    private readonly mcpTokenRepository?: Repository<McpToken>,
+    private readonly identityAdapter: UserIdentityAdapter,
+    private readonly dataSource: DataSource,
     @Inject(BANK_CONSENT_REVOKER)
-    private readonly bankConsentRevoker?: BankConsentRevoker,
-    private readonly accountDeletion?: AccountDeletionService,
+    private readonly bankConsentRevoker: BankConsentRevoker,
+    private readonly accountDeletion: AccountDeletionService,
   ) {}
 
   /** Bank-revoke seam (BE-04): never blocks the reset; a failure is logged without detail. */
   private async revokeBankConsent(userId: string, repo: Repository<BankConnection>): Promise<void> {
-    if (!this.bankConsentRevoker) return;
     try {
       const connections = await repo.find({
         where: { userId },
@@ -125,7 +101,7 @@ export class UserProfileService implements ProfileLifecycle {
     if (existing) return existing;
     // An erased account must not get a fresh profile row from a request made with a token issued
     // before the deletion (WorkOS access tokens stay valid until they expire).
-    if (await this.accountDeletion?.isErased(userId)) {
+    if (await this.accountDeletion.isErased(userId)) {
       throw accountDeletedException();
     }
 
@@ -236,7 +212,7 @@ export class UserProfileService implements ProfileLifecycle {
     }
 
     // Synchronize first/last name with identity provider
-    if (this.identityAdapter && (body.firstName !== undefined || body.lastName !== undefined)) {
+    if (body.firstName !== undefined || body.lastName !== undefined) {
       try {
         await this.identityAdapter.updateName(
           userId,
@@ -364,28 +340,15 @@ export class UserProfileService implements ProfileLifecycle {
 
   async resetFinancialData(userId: string, email?: string): Promise<ResetFinancialDataResult> {
     // The reset writes a profile row; never for an erased account (see findOrCreateProfile).
-    if (await this.accountDeletion?.isErased(userId)) {
+    if (await this.accountDeletion.isErased(userId)) {
       throw accountDeletedException();
     }
-    // Repositories by entity: the transaction's when there is a DataSource, else the injected ones.
-    const injected = new Map<EntityTarget<ObjectLiteral>, Repository<ObjectLiteral> | undefined>([
-      [Account, this.accountRepository],
-      [AccountDetail, this.accountDetailRepository],
-      [Transaction, this.transactionRepository],
-      [BankConnection, this.bankConnectionRepository],
-      [BudgetEntry, this.budgetEntryRepository],
-      [TaxRecord, this.taxRecordRepository],
-      [UserProfile, this.userProfileRepository],
-      [SnapshotCheckin, this.snapshotCheckinRepository],
-      [ImportBatch, this.importBatchRepository],
-      [McpToken, this.mcpTokenRepository],
-    ]);
-
     // Bank consent first (BE-04 seam, BE-12 fills it): identifiers only, never the stored tokens.
     await this.revokeBankConsent(userId, this.bankConnectionRepository);
 
+    // Every repository comes from the transaction's manager, so the reset commits or rolls back whole.
     const performReset = async (
-      repoFor: (entity: EntityTarget<ObjectLiteral>) => Repository<ObjectLiteral> | undefined,
+      repoFor: (entity: EntityTarget<ObjectLiteral>) => Repository<ObjectLiteral>,
     ) => {
       // Rows removed per table, for the audit event. `affected` is a count, never a value.
       const removed = (result: { affected?: number | null } | undefined): number =>
@@ -396,10 +359,10 @@ export class UserProfileService implements ProfileLifecycle {
       for (const t of USER_DATA_REGISTRY) {
         if (t.entity === UserProfile || t.reset.kind === "keep") continue;
         const repo = repoFor(t.entity);
-        if (t.entity === AccountDetail && repo) {
+        if (t.entity === AccountDetail) {
           // Belt and braces: history rows keyed to the user's accounts, whatever their user_id.
           const accounts: Array<{ id: string }> =
-            ((await repoFor(Account)?.find({ where: { userId }, select: { id: true } })) as
+            ((await repoFor(Account).find({ where: { userId }, select: { id: true } })) as
               | Array<{ id: string }>
               | undefined) ?? [];
           let n = removed(await repo.delete({ userId }));
@@ -409,7 +372,7 @@ export class UserProfileService implements ProfileLifecycle {
           counts[t.key] = n;
           continue;
         }
-        counts[t.key] = removed(await repo?.delete({ userId }));
+        counts[t.key] = removed(await repo.delete({ userId }));
       }
 
       const profileRepo = repoFor(UserProfile) as Repository<UserProfile>;
@@ -421,25 +384,19 @@ export class UserProfileService implements ProfileLifecycle {
       return { saved: await profileRepo.save(profile), counts };
     };
 
-    let outcome: { saved: UserProfile; counts: FinancialDataResetCounts };
-    if (this.dataSource) {
-      outcome = await this.dataSource.transaction(async (manager) => {
-        const result = await performReset((entity) => manager.getRepository(entity));
-        // BE-06: the reset revoked every AI token and bank connection, so their consents close,
-        // and the action is recorded in the same transaction.
-        await withdrawAllConsents(manager, { userId, kind: "ai_access" });
-        await withdrawAllConsents(manager, { userId, kind: "bank_access" });
-        await recordAuditEvent(manager, {
-          userId,
-          action: "financial_data.reset",
-          metadata: { removed: result.counts },
-        });
-        return result;
+    const { saved, counts } = await this.dataSource.transaction(async (manager) => {
+      const result = await performReset((entity) => manager.getRepository(entity));
+      // BE-06: the reset revoked every AI token and bank connection, so their consents close,
+      // and the action is recorded in the same transaction.
+      await withdrawAllConsents(manager, { userId, kind: "ai_access" });
+      await withdrawAllConsents(manager, { userId, kind: "bank_access" });
+      await recordAuditEvent(manager, {
+        userId,
+        action: "financial_data.reset",
+        metadata: { removed: result.counts },
       });
-    } else {
-      outcome = await performReset((entity) => injected.get(entity));
-    }
-    const { saved, counts } = outcome;
+      return result;
+    });
 
     // Audit trail (security review): one structured event after the transaction has committed.
     // The user id and row counts only; no amounts, names or email. A logging failure never turns
@@ -523,7 +480,7 @@ export class UserProfileService implements ProfileLifecycle {
     const fail = (): never => {
       throw new ServiceUnavailableException("Password reset is unavailable. Please try again.");
     };
-    if (!this.identityAdapter || !userId) return fail();
+    if (!userId) return fail();
     try {
       const email = await this.identityAdapter.getUserEmail(userId);
       if (!email) {

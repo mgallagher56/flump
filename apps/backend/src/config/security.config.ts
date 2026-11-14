@@ -8,7 +8,7 @@ import { v1AliasMiddleware } from "./v1-alias.middleware";
 export const DEFAULT_JSON_LIMIT = "1mb";
 /** Tax-record routes receive base64 receipts, so they get a larger body limit. */
 export const TAX_JSON_LIMIT = "8mb";
-export const TAX_ROUTE_PREFIX = "/tax-records";
+const TAX_ROUTE_PREFIX = "/tax-records";
 
 export function parseTrustProxyHops(raw: string | undefined): number | undefined {
   const value = raw?.trim();
@@ -32,7 +32,7 @@ export function resolveTrustProxyHops(env: Record<string, string | undefined>): 
   return env.RAILWAY_ENVIRONMENT || env.NODE_ENV === "production" ? 1 : undefined;
 }
 
-export const CORS_EXPOSED_HEADERS: readonly string[] = [
+const CORS_EXPOSED_HEADERS: readonly string[] = [
   NEXT_CURSOR_HEADER,
   ETAG_HEADER,
   IDEMPOTENT_REPLAYED_HEADER,

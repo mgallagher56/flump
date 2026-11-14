@@ -23,6 +23,7 @@ import {
   Between,
   Brackets,
   type FindOptionsSelect,
+  type FindOptionsWhere,
   LessThanOrEqual,
   MoreThanOrEqual,
   Repository,
@@ -310,7 +311,7 @@ export class AgentDataService implements McpUserDataProvider {
 
   async getUserFinancialData(
     userId: string,
-    options: { anonymizeInstitutions?: boolean } = {},
+    _options: { anonymizeInstitutions?: boolean } = {},
   ): Promise<BuildContextPackInput> {
     const profile = wireProfile(await this.userProfileService.getProfile(userId));
     const baseline = userProfileToFinancialBaseline(profile, userId);
@@ -350,7 +351,7 @@ export class AgentDataService implements McpUserDataProvider {
         date: t.date,
         endDate: t.endDate,
         notes: t.notes,
-      })) as any,
+      })),
     };
   }
 
@@ -364,7 +365,7 @@ export class AgentDataService implements McpUserDataProvider {
       limit?: number;
     },
   ) {
-    const where: any = { userId };
+    const where: FindOptionsWhere<Transaction> = { userId };
     if (filters.accountId) where.accountId = filters.accountId;
     if (filters.category) where.category = filters.category;
 

@@ -8,7 +8,7 @@ import { DataSource, type EntityManager, type FindOptionsOrder } from "typeorm";
 import { USER_DATA_REGISTRY, type UserDataTable } from "./user-data-registry";
 
 /** Plain-English notes written into every export. */
-export const EXPORT_NOTES: readonly string[] = [
+const EXPORT_NOTES: readonly string[] = [
   "This file holds every record Flump stores about you, one section per table.",
   "Money is in pounds as a number; dates are YYYY-MM-DD; times are ISO 8601 in UTC.",
   "Left out on purpose: secrets (bank access and refresh tokens, AI connection token hashes), browser retry keys and keyed hashes that mean nothing outside Flump.",
@@ -16,11 +16,11 @@ export const EXPORT_NOTES: readonly string[] = [
 ];
 
 /** Overall time an export may take, client included, before it is aborted. */
-export const EXPORT_DEADLINE_MS = 2 * 60_000;
+const EXPORT_DEADLINE_MS = 2 * 60_000;
 /** One page query may take this long. */
-export const EXPORT_STATEMENT_TIMEOUT_MS = 30_000;
+const EXPORT_STATEMENT_TIMEOUT_MS = 30_000;
 /** The connection may sit idle in the export transaction (waiting on the client) this long. */
-export const EXPORT_IDLE_IN_TRANSACTION_TIMEOUT_MS = 60_000;
+const EXPORT_IDLE_IN_TRANSACTION_TIMEOUT_MS = 60_000;
 
 export class ExportDeadlineError extends Error {
   constructor() {

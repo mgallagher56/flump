@@ -7,7 +7,7 @@
 export function safeErrorSummary(err: unknown): string {
   const name = err instanceof Error ? err.name : typeof err;
   const message = err instanceof Error ? err.message : "";
-  const phrase = message.split(":")[0].trim().slice(0, 80);
+  const phrase = (message.split(":")[0] ?? "").trim().slice(0, 80);
   const status = (err as { status?: unknown; statusCode?: unknown } | null)?.status;
   const statusCode = typeof status === "number" ? ` status=${status}` : "";
   return `${name}${phrase ? ` (${phrase})` : ""}${statusCode}`;

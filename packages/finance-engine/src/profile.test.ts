@@ -10,7 +10,6 @@ import {
   normalizeHousingStatus,
   normalizeStudentLoanPlan,
   scrambleSeedLegacy,
-  unscrambleSeedLegacy,
   userProfileToFinancialBaseline,
 } from "./profile.js";
 import type { FinancialBaseline, OnboardingSeedPayload } from "./types.js";

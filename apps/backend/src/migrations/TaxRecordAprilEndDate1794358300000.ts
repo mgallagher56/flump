@@ -24,7 +24,8 @@ export class TaxRecordAprilEndDate1794358300000 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     await takeMigrationLock(queryRunner);
     await queryRunner.query("SET LOCAL lock_timeout = '10s'");
-    const [{ n }]: Array<{ n: number }> = await queryRunner.query(
+    // `count(*)` with no GROUP BY always returns exactly one row.
+    const [{ n }]: [{ n: number }] = await queryRunner.query(
       `WITH changed AS (
          UPDATE "tax_records"
          SET "end_date" = make_date(EXTRACT(YEAR FROM "date")::int, 4, 5)

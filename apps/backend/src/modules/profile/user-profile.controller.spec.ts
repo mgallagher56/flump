@@ -4,7 +4,9 @@ import {
   Logger,
   ServiceUnavailableException,
 } from "@nestjs/common";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, type Mock, vi } from "vitest";
+import { InMemoryIdentityAdapter } from "../../identity/identity.adapter";
+import { at } from "../../testing/must";
 import { UserProfileController } from "./user-profile.controller";
 import { UserProfileService } from "./user-profile.service";
 
@@ -13,14 +15,13 @@ const freshAuthTime = () => Math.floor(Date.now() / 1000) - 30;
 
 describe("UserProfileController", () => {
   let controller: UserProfileController;
-  let mockUserProfileRepo: any;
-  let mockAccountRepo: any;
-  let mockTransactionRepo: any;
-  let mockAccountDetailRepo: any;
-  let mockBankConnectionRepo: any;
-  let mockBudgetEntryRepo: any;
-  let mockTaxRecordRepo: any;
-  let mockConfigService: any;
+  let mockUserProfileRepo: { findOne: Mock; save: Mock; create: Mock };
+  let mockAccountRepo: { find: Mock; delete: Mock };
+  let mockTransactionRepo: { delete: Mock };
+  let mockAccountDetailRepo: { delete: Mock };
+  let mockBankConnectionRepo: { delete: Mock };
+  let mockBudgetEntryRepo: { delete: Mock };
+  let mockTaxRecordRepo: { delete: Mock };
 
   beforeEach(() => {
     mockUserProfileRepo = {
@@ -47,21 +48,44 @@ describe("UserProfileController", () => {
     mockTaxRecordRepo = {
       delete: vi.fn().mockResolvedValue({ affected: 4 }),
     };
-    mockConfigService = {
-      get: vi.fn().mockReturnValue(null), // no workos api key in test mock
-    };
 
     // Test wiring (BE-13): the controller takes the service; the service takes the repositories.
+    // The reset runs in a transaction whose manager hands out these doubles; any other registry
+    // table removes nothing.
+    const byEntity: Record<string, unknown> = {
+      UserProfile: mockUserProfileRepo,
+      Account: mockAccountRepo,
+      Transaction: mockTransactionRepo,
+      AccountDetail: mockAccountDetailRepo,
+      BankConnection: mockBankConnectionRepo,
+      BudgetEntry: mockBudgetEntryRepo,
+      TaxRecord: mockTaxRecordRepo,
+      AuditEvent: { insert: vi.fn().mockResolvedValue(undefined) },
+      Consent: { update: vi.fn().mockResolvedValue({ affected: 0 }) },
+    };
+    const dataSource = {
+      transaction: vi.fn(async (cb: (manager: unknown) => unknown) =>
+        cb({
+          getRepository: (entity: { name: string }) =>
+            byEntity[entity.name] ?? { delete: vi.fn().mockResolvedValue({ affected: 0 }) },
+        }),
+      ),
+    };
     controller = new UserProfileController(
       new UserProfileService(
-        mockUserProfileRepo,
-        mockAccountRepo,
-        mockTransactionRepo,
-        mockAccountDetailRepo,
-        mockBankConnectionRepo,
-        mockBudgetEntryRepo,
-        mockTaxRecordRepo,
+        ...([
+          mockUserProfileRepo,
+          mockAccountRepo,
+          mockAccountDetailRepo,
+          mockBankConnectionRepo,
+          new InMemoryIdentityAdapter(),
+          dataSource,
+          { revokeAll: vi.fn().mockResolvedValue(undefined) },
+          { isErased: vi.fn().mockResolvedValue(false) },
+        ] as unknown as ConstructorParameters<typeof UserProfileService>),
       ),
+      {} as never,
+      {} as never,
     );
   });
 
@@ -206,7 +230,7 @@ describe("UserProfileController", () => {
         .map(([message]) => JSON.stringify(message))
         .filter((m) => m.includes("financial_data_reset"));
       expect(events).toHaveLength(1);
-      const event = JSON.parse(events[0]);
+      const event = JSON.parse(at(events, 0));
       expect(Object.keys(event).sort()).toEqual(["event", "removed", "userId"]);
       expect(event.userId).toBe("user-123");
       expect(event.removed).toEqual({
@@ -300,7 +324,7 @@ describe("UserProfileController", () => {
       expect(removed.setupChecklistCompletedSteps).toEqual(["set_budget"]);
     });
 
-    it("rejects sendPasswordReset (503) when no identity provider is configured", async () => {
+    it("rejects sendPasswordReset (503) when the identity provider has no email for the user", async () => {
       await expect(controller.sendPasswordReset({ user: { id: "u1" } })).rejects.toMatchObject({
         status: 503,
       });
@@ -343,12 +367,6 @@ describe("UserProfileController account deletion and export (BE-04)", () => {
       } as never),
     ).resolves.toEqual({ status: "identity_pending" });
     expect(deleteAccount).toHaveBeenCalledWith("user-123");
-  });
-
-  it("deleteUser is a 503 when the deletion service is not wired", async () => {
-    await expect(make().deleteUser({ user: fresh }, { confirmation: "DELETE" })).rejects.toThrow(
-      "Account deletion is not available right now. Try again later.",
-    );
   });
 
   it("resetFinancialData needs a recent sign-in too (L1)", async () => {

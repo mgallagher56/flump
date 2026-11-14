@@ -3,13 +3,22 @@ interface BiomeReport {
   diagnostics?: { category?: string; location?: { path?: string } }[];
 }
 
-/** Production backend source only: specs and test helpers may stub with `any` (BE-14 may tighten). */
+/**
+ * What the ratchet lints (BE-14, M21): the backend and the packages it runs, tests included.
+ * `apps/web` and `packages/ui` have their own rules.
+ */
+export const COUNTED_ROOTS = [
+  "apps/backend/",
+  "packages/api-contract/",
+  "packages/banking/",
+  "packages/finance-engine/",
+  "packages/mcp/",
+  "packages/observability/",
+] as const;
+
+/** Backend and backend-package source, specs and test helpers included (BE-14 tightened BE-01). */
 export function isCountedFile(path: string): boolean {
-  return (
-    path.startsWith("apps/backend/src/") &&
-    !/\.(spec|test)\.ts$/.test(path) &&
-    !path.startsWith("apps/backend/src/testing/")
-  );
+  return COUNTED_ROOTS.some((root) => path.startsWith(root)) && /\.tsx?$/.test(path);
 }
 
 /** Per-file count of `lint/suspicious/noExplicitAny` diagnostics in a Biome JSON report. */
@@ -26,7 +35,7 @@ export function countExplicitAny(report: BiomeReport): Record<string, number> {
 export interface RatchetResult {
   /** Files with more `any` than the baseline allows: these fail the law. */
   increases: string[];
-  /** Files with fewer: the baseline can be lowered, but this never fails (plan BE-01). */
+  /** Files with fewer: the baseline is stale and must be lowered, so these fail too (BE-14). */
   decreases: string[];
 }
 

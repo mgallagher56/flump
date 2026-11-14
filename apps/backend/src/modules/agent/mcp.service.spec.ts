@@ -1,14 +1,15 @@
+import type { HttpTransportOptions } from "@flump/mcp";
 import { Logger } from "@nestjs/common";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const handlerOptions: any[] = [];
+const handlerOptions: HttpTransportOptions[] = [];
 
 vi.mock("@flump/mcp", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@flump/mcp")>();
   return {
     ...actual,
     HttpMcpHandler: class {
-      constructor(options: unknown) {
+      constructor(options: HttpTransportOptions) {
         handlerOptions.push(options);
       }
     },
@@ -17,6 +18,7 @@ vi.mock("@flump/mcp", async (importOriginal) => {
 
 import { DEV_BYPASS_TOKEN, DEV_USER } from "../../auth/dev-bypass.verifier";
 import { financeServiceWithIntake } from "../../testing/finance-service";
+import { at, must } from "../../testing/must";
 import { UserProfileService } from "../profile/user-profile.service";
 import { AgentDataService } from "./agent-data.service";
 import { McpService } from "./mcp.service";
@@ -45,7 +47,7 @@ describe("McpService audit and staging wiring (E17 re-plan PR D)", () => {
       audit as never,
       adapter as never,
     );
-    return { service, audit, adapter, options: handlerOptions[0] };
+    return { service, audit, adapter, options: at(handlerOptions, 0) };
   };
 
   it("hands the handler the shared rate-limit store for both MCP limiters (BE-07, M10)", () => {
@@ -59,16 +61,16 @@ describe("McpService audit and staging wiring (E17 re-plan PR D)", () => {
       {} as never,
       store as never,
     );
-    expect(handlerOptions[0].limitStore).toBe(store);
+    expect(at(handlerOptions, 0).limitStore).toBe(store);
     handlerOptions.length = 0;
     make();
-    expect(handlerOptions[0].limitStore).toBeUndefined();
+    expect(at(handlerOptions, 0).limitStore).toBeUndefined();
   });
 
   it("hands the handler the import adapter, the audit sink and the fingerprint hook", () => {
     const { options, adapter, audit } = make();
     expect(options.imports).toBe(adapter);
-    expect(options.fingerprintArgs({ x: 1 })).toBe("a".repeat(64));
+    expect(options.fingerprintArgs?.({ x: 1 })).toBe("a".repeat(64));
     expect(audit.fingerprint).toHaveBeenCalledWith({ x: 1 });
     expect(typeof options.audit).toBe("function");
   });
@@ -76,13 +78,13 @@ describe("McpService audit and staging wiring (E17 re-plan PR D)", () => {
   it("hands the handler a Nest logger so MCP logs never go to console (L6)", () => {
     const { options } = make();
     expect(options.logger).toBeInstanceOf(Logger);
-    expect(typeof options.logger.warn).toBe("function");
-    expect(typeof options.logger.error).toBe("function");
+    expect(typeof options.logger?.warn).toBe("function");
+    expect(typeof options.logger?.error).toBe("function");
   });
 
   it("records a prompt or resource read under its fixed audit name (H12)", async () => {
     const { options, audit } = make();
-    await options.audit(
+    await must(options.audit)(
       {
         token: {
           userId: "u1",
@@ -107,7 +109,7 @@ describe("McpService audit and staging wiring (E17 re-plan PR D)", () => {
 
   it("records one audit row per tool call with the caller's identifiers", async () => {
     const { options, audit } = make();
-    await options.audit(
+    await must(options.audit)(
       {
         token: {
           userId: "u1",
@@ -145,7 +147,7 @@ describe("McpService audit and staging wiring (E17 re-plan PR D)", () => {
   it("never fails a call when the audit write fails", async () => {
     const { options } = make(vi.fn().mockRejectedValue(new Error("db down")));
     await expect(
-      options.audit(
+      must(options.audit)(
         { token: { userId: "u1", scopes: [], anonymizeInstitutions: true, type: "pat" } },
         { tool: "list_accounts", outcome: "ok", durationMs: 1, responseBytes: 1, scopesUsed: [] },
       ),
@@ -160,8 +162,8 @@ describe("McpService dev token wiring", () => {
 
   it("passes the dev token and user only in dev mode", () => {
     build("dev");
-    expect(handlerOptions[0].devToken).toBe(DEV_BYPASS_TOKEN);
-    expect(handlerOptions[0].devUserId).toBe(DEV_USER.id);
+    expect(at(handlerOptions, 0).devToken).toBe(DEV_BYPASS_TOKEN);
+    expect(at(handlerOptions, 0).devUserId).toBe(DEV_USER.id);
   });
 
   it("never passes dev options in a production-like process, even in dev mode", () => {
@@ -174,8 +176,8 @@ describe("McpService dev token wiring", () => {
     } finally {
       process.env = original;
     }
-    expect(handlerOptions[0].devToken).toBeUndefined();
-    expect(handlerOptions[1].devToken).toBeUndefined();
+    expect(at(handlerOptions, 0).devToken).toBeUndefined();
+    expect(at(handlerOptions, 1).devToken).toBeUndefined();
   });
 
   it("wires isEnabled and allowedOrigins from the environment into the handler (E20-N18)", () => {
@@ -187,11 +189,11 @@ describe("McpService dev token wiring", () => {
         MCP_ALLOWED_ORIGINS: "https://a.example/, https://b.example",
       };
       build("workos");
-      const opts = handlerOptions[0];
+      const opts = at(handlerOptions, 0);
       expect(opts.allowedOrigins).toEqual(["https://a.example", "https://b.example"]);
-      expect(opts.isEnabled()).toBe(true);
+      expect(opts.isEnabled?.()).toBe(true);
       process.env = { ...process.env, MCP_ENABLED: "false" };
-      expect(opts.isEnabled()).toBe(false);
+      expect(opts.isEnabled?.()).toBe(false);
     } finally {
       process.env = original;
     }
@@ -205,7 +207,7 @@ describe("McpService dev token wiring", () => {
     } finally {
       process.env = original;
     }
-    expect(handlerOptions[0].allowedOrigins).toEqual([]);
+    expect(at(handlerOptions, 0).allowedOrigins).toEqual([]);
   });
 
   it("passes an empty origin list by default", () => {
@@ -217,19 +219,19 @@ describe("McpService dev token wiring", () => {
     } finally {
       process.env = original;
     }
-    expect(handlerOptions[0].allowedOrigins).toEqual([]);
+    expect(at(handlerOptions, 0).allowedOrigins).toEqual([]);
   });
 
   it("passes no dev options in workos mode", () => {
     build("workos");
-    expect(handlerOptions[0].devToken).toBeUndefined();
-    expect(handlerOptions[0].devUserId).toBeUndefined();
+    expect(at(handlerOptions, 0).devToken).toBeUndefined();
+    expect(at(handlerOptions, 0).devUserId).toBeUndefined();
   });
 });
 
 /** In-memory repository stand-in that records every write attempt. */
 function memoryRepo() {
-  const rows: any[] = [];
+  const rows: Record<string, unknown>[] = [];
   const writes = {
     save: vi.fn(),
     insert: vi.fn(),
@@ -241,13 +243,13 @@ function memoryRepo() {
   const repo = {
     rows,
     writes,
-    create: (v: any) => ({ ...v }),
+    create: (v: Record<string, unknown>) => ({ ...v }),
     find: vi.fn(async () => [...rows]),
-    findOne: vi.fn(async (opts?: any) => {
+    findOne: vi.fn(async (opts?: { where?: Record<string, unknown> }) => {
       const where = opts?.where ?? {};
       return rows.find((r) => Object.entries(where).every(([k, v]) => r[k] === v)) ?? null;
     }),
-    save: vi.fn(async (v: any) => {
+    save: vi.fn(async (v: Record<string, unknown>) => {
       writes.save(v);
       const row = { id: `row-${rows.length + 1}`, ...v };
       rows.push(row);
@@ -287,11 +289,12 @@ describe("McpService.getContextPack for a brand-new user", () => {
     const profileService = new UserProfileService(
       profiles as never,
       accounts as never,
-      transactions as never,
       details as never,
       connections as never,
-      budget as never,
-      tax as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      { isErased: async () => false } as never,
     );
     const agentData = new AgentDataService(
       budget as never,

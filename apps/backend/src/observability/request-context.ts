@@ -16,7 +16,7 @@ const storage = new AsyncLocalStorage<RequestContext>();
  * separators, so it is safe to print verbatim in a log line or response header. The web server
  * forwards its own id (UUID) in the same header.
  */
-export const REQUEST_ID_PATTERN = /^[A-Za-z0-9._-]{8,128}$/;
+const REQUEST_ID_PATTERN = /^[A-Za-z0-9._-]{8,128}$/;
 
 export const isSafeRequestId = (value: unknown): value is string =>
   typeof value === "string" && REQUEST_ID_PATTERN.test(value);

@@ -18,6 +18,7 @@ import { assertSafeTestDatabase } from "../../testing/assertSafeTestDatabase";
 import { resolveDbTestMode } from "../../testing/dbTestMode";
 import { discoverMigrations, type MigrationClass } from "../../testing/discoverMigrations";
 import { financeServiceWithIntake } from "../../testing/finance-service";
+import { at } from "../../testing/must";
 import { accessTokenAad } from "../banking/bank-connection-sync";
 import type { BankProvider } from "../banking/providers/provider.interface";
 import type { BankProviderRegistry } from "../banking/providers/provider.registry";
@@ -551,7 +552,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
         await ds.query("UPDATE account_details SET source = 'manual' WHERE account_id = $1", [
           flex,
         ]);
-        provided = [{ ...provided[1], type: "Overdraft", balance: 130 }];
+        provided = [{ ...at(provided, 1), type: "Overdraft", balance: 130 }];
         await finance.syncBankConnection(USER, connection.id);
         expect(await balanceOf(flex)).toBe(-120);
         expect(await historyOf(flex)).toEqual([-120]);
