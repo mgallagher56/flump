@@ -37,14 +37,9 @@ const APP_DIR = path.resolve(__dirname, "..");
 
 /**
  * Browser-reachable files that may still mention `accessToken`. Every entry is debt with an owner.
- * - AddEditAccountsDialog.tsx and ConnectBankWizard.tsx only contain the placeholder text for the
- *   bank provider token a user pastes in themselves ("Bearer token starting with eyJ...").
- *   It is not the Flump session token and no code reads it from the session.
+ * Empty since E16 PR 9 removed the "Bearer token" placeholders from the bank dialogs.
  */
-const ACCESS_TOKEN_ALLOW_LIST = [
-  "components/dialogs/addEditAccountsDialog/AddEditAccountsDialog.tsx",
-  "components/dialogs/connectBankWizard/ConnectBankWizard.tsx",
-];
+const ACCESS_TOKEN_ALLOW_LIST: string[] = [];
 
 const walk = (dir: string, files: string[] = []): string[] => {
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
