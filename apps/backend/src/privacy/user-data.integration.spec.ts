@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import "reflect-metadata";
 import { AccountExportDocument } from "@flump/api-contract";
 import { Logger } from "@nestjs/common";
@@ -9,6 +10,7 @@ import { AccountDeletionTombstone } from "../entities/account-deletion-tombstone
 import { AccountDetail } from "../entities/account-detail.entity";
 import { AgentAuditEvent } from "../entities/agent-audit-event.entity";
 import { BankConnection } from "../entities/bank-connection.entity";
+import { BankOAuthState } from "../entities/bank-oauth-state.entity";
 import { BudgetEntry } from "../entities/budget-entry.entity";
 import { ImportBatch } from "../entities/import-batch.entity";
 import { McpToken } from "../entities/mcp-token.entity";
@@ -101,6 +103,16 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("user data (real Post
         institutionName: `${label} Bank`,
         accessToken: `${SECRET_ACCESS}-${label}`,
         refreshToken: `${SECRET_REFRESH}-${label}`,
+      }),
+    );
+    await m.save(
+      m.create(BankOAuthState, {
+        userId,
+        institutionId: "monzo",
+        stateHash: createHash("sha256").update(`state-${label}`).digest("hex"),
+        codeVerifier: `verifier-SECRET-${label}`,
+        redirectUri: "https://api.example.test/bank-connections/callback",
+        expiresAt: new Date(Date.now() + 600_000),
       }),
     );
     const account = await m.save(
@@ -539,6 +551,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("user data (real Post
       accounts: 0,
       agent_audit_events: 1,
       bank_connections: 0,
+      bank_oauth_states: 0,
       budget_entries: 0,
       import_batches: 0,
       mcp_tokens: 0,
