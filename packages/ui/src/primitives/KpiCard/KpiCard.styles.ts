@@ -83,6 +83,11 @@ export const kpiValueRow = cva({
 export const kpiHeroValue = cva({
   base: {
     textStyle: "numeric.kpi",
+    // A money figure never wraps, so a narrow card (a 2-up strip on a phone) steps the whole
+    // value down instead. The card is the container and every card in a strip has the same
+    // width, so the strip still shows one size. Scale tokens only.
+    "@container (min-width: 10.01rem) and (max-width: 14rem)": { fontSize: "2xl" },
+    "@container (max-width: 10rem)": { fontSize: "md" },
     fontVariantNumeric: "tabular-nums",
     color: "text.primary",
     margin: "0",

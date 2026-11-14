@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { expect, userEvent, within } from "@storybook/test";
+import { expect, userEvent, waitFor, within } from "@storybook/test";
 import { css } from "../../../styled-system/css";
 import { Money } from "../Money/Money";
 import { KpiCard } from "./KpiCard";
@@ -314,9 +314,12 @@ export const WithExplain: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     await userEvent.click(canvas.getByRole("button", { name: /^About / }));
-    await expect(
-      within(document.body).getByText("Your saved cash divided by what you spend each month."),
-    ).toBeVisible();
+    // The popover fades in, so wait for it rather than checking at once.
+    await waitFor(() =>
+      expect(
+        within(document.body).getByText("Your saved cash divided by what you spend each month."),
+      ).toBeVisible(),
+    );
   },
 };
 export const WithExplainDark: Story = { ...WithExplain, globals: { theme: "dark" } };
