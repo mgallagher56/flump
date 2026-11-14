@@ -119,4 +119,21 @@ describe("useFinishOnboarding", () => {
     await act(() => result.current.finish());
     expect(updateProfile.mock.calls[0]?.[0]).toMatchObject({ isSalarySacrifice: true });
   });
+
+  it("saves an owner's home estimate as a Property account, so net worth and LTV count it", async () => {
+    updateProfile.mockResolvedValue(undefined);
+    apiFetch.mockResolvedValue([]);
+    const owner: OnboardingValues = {
+      ...values,
+      housingStatus: "mortgage",
+      propertyValue: 310000,
+      mortgageBalance: 186000,
+    };
+    const { result } = renderHook(() => useFinishOnboarding(owner, deriveOnboardingSummary(owner)));
+    await act(() => result.current.finish());
+    expect(apiFetch).toHaveBeenCalledWith("/accounts", {
+      method: "POST",
+      body: { name: "Home (your estimate)", type: "Property", balance: 310000, isCurrent: true },
+    });
+  });
 });
