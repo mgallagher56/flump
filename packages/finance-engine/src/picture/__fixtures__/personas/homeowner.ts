@@ -1,3 +1,4 @@
+import { DEFAULT_NET_WORTH_BASIS } from "../../../net-worth-basis.js";
 import { budgetEntry } from "../builders.js";
 import type { PersonaFixture } from "../types.js";
 
@@ -8,6 +9,7 @@ import type { PersonaFixture } from "../types.js";
  * in net worth once, labelled (D3), and loan to value is 186,000 / 310,000 = 60%.
  */
 export const homeowner: PersonaFixture = {
+  netWorthBasis: DEFAULT_NET_WORTH_BASIS,
   profile: {
     annualSalary: 52000,
     employmentType: "employed",

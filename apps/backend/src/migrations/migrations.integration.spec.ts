@@ -10,6 +10,7 @@ import { AddAccountDeletionTombstones1794622492000 } from "./AddAccountDeletionT
 import { AddAccountStudentLoanPlanAndCurrencyDefault1794355800000 } from "./AddAccountStudentLoanPlanAndCurrencyDefault1794355800000";
 import { AddLivingWithFamilyHousingStatus1794700000000 } from "./AddLivingWithFamilyHousingStatus1794700000000";
 import { AddMortgageTermColumns1794355600000 } from "./AddMortgageTermColumns1794355600000";
+import { AddNetWorthChoices1794800000000 } from "./AddNetWorthChoices1794800000000";
 import { AddProfileFacts1794355723000 } from "./AddProfileFacts1794355723000";
 import { AddRateLimitBuckets1794632012000 } from "./AddRateLimitBuckets1794632012000";
 import { AddUserIdIndexes1794358100000, USER_ID_INDEXES } from "./AddUserIdIndexes1794358100000";
@@ -1522,6 +1523,53 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
       await ds.query(
         "INSERT INTO user_profiles (user_id, housing_status) VALUES ('u1', 'living_with_family')",
       );
+    });
+  });
+
+  describe("AddNetWorthChoices1794800000000 (net worth choices)", () => {
+    const choices = async (): Promise<unknown[]> =>
+      ds.query(
+        `SELECT user_id, net_worth_counts_property AS property,
+                net_worth_counts_student_loan AS student_loan
+           FROM user_profiles ORDER BY user_id`,
+      );
+    const hasColumns = async (): Promise<number> => {
+      const rows: Array<{ n: string }> = await ds.query(
+        `SELECT count(*) AS n FROM information_schema.columns
+          WHERE table_name = 'user_profiles'
+            AND column_name IN ('net_worth_counts_property', 'net_worth_counts_student_loan')`,
+      );
+      return Number(rows[0]?.n);
+    };
+
+    it("gives existing and new profiles today's defaults: property counts, student loans do not", async () => {
+      // A profile saved before the columns existed, then the migration adds them.
+      await ds.runMigrations();
+      await runMigrationDown(new AddNetWorthChoices1794800000000());
+      await ds.query("INSERT INTO user_profiles (user_id) VALUES ('existing')");
+      await runUpInTransaction(new AddNetWorthChoices1794800000000());
+      await ds.query("INSERT INTO user_profiles (user_id) VALUES ('new')");
+      expect(await choices()).toEqual([
+        { user_id: "existing", property: true, student_loan: false },
+        { user_id: "new", property: true, student_loan: false },
+      ]);
+      await expect(
+        ds.query(
+          "INSERT INTO user_profiles (user_id, net_worth_counts_property) VALUES ('n', NULL)",
+        ),
+      ).rejects.toThrow(/null value/);
+    });
+
+    it("down drops both columns, and up is idempotent before and after", async () => {
+      await ds.runMigrations();
+      await expect(runUpInTransaction(new AddNetWorthChoices1794800000000())).resolves.toBe(
+        undefined,
+      );
+      expect(await hasColumns()).toBe(2);
+      await runMigrationDown(new AddNetWorthChoices1794800000000());
+      expect(await hasColumns()).toBe(0);
+      await runUpInTransaction(new AddNetWorthChoices1794800000000());
+      expect(await hasColumns()).toBe(2);
     });
   });
 });

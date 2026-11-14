@@ -194,6 +194,20 @@ export class UserProfile {
   })
   isSalarySacrifice: boolean;
 
+  /** Net worth choice: count Property values and Mortgage balances (equity). */
+  @Column({
+    name: "net_worth_counts_property",
+    default: true,
+  })
+  netWorthCountsProperty: boolean;
+
+  /** Net worth choice: count student loans as a debt (default off, owner decision D-5-B). */
+  @Column({
+    name: "net_worth_counts_student_loan",
+    default: false,
+  })
+  netWorthCountsStudentLoan: boolean;
+
   @Column({
     name: "is_salary_sacrifice_employer_ni",
     default: false,

@@ -1,4 +1,5 @@
 import type { BudgetEntryItem } from "../ai-context-pack.js";
+import { netWorthBasisFromProfile } from "../net-worth-basis.js";
 import { PortfolioSnapshot, type RawAccount, type RawAccountDetail } from "../portfolio.js";
 import type { UserProfileData } from "../profile.js";
 import type { TaxRecord } from "../tax-calculator.js";
@@ -64,7 +65,7 @@ export function buildFinancialPicture(
     budget: selectBudgetTotals(input.budget),
     safeToSpend: selectSafeToSpend(takeHome, input.budget, snapshot),
     monthsOfCover: selectMonthsOfCover(input.budget, snapshot),
-    netWorth: selectNetWorth(snapshot),
+    netWorth: selectNetWorth(snapshot, input.netWorthBasis),
     debt: selectDebtTotals(snapshot),
     housingCost: selectHousingCost(input.profile, takeHome, snapshot, input.accounts),
     fixedRateEnds: selectFixedRateEnds(input.accounts, opts.asOf ?? new Date()),
@@ -116,6 +117,7 @@ export function budgetEntryFromRow(row: BudgetRowLike, index = 0): BudgetEntryIt
 export function financialPictureInputFromRows(rows: FinancialPictureRows): FinancialPictureInput {
   return {
     profile: profileFactsFromProfile(rows.profile),
+    netWorthBasis: netWorthBasisFromProfile(rows.profile),
     accounts: Array.isArray(rows.accounts) ? [...rows.accounts] : [],
     details: Array.isArray(rows.accountDetails) ? [...rows.accountDetails] : [],
     budget: Array.isArray(rows.budgetEntries) ? rows.budgetEntries.map(budgetEntryFromRow) : [],

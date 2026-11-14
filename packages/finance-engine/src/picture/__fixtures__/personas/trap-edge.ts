@@ -1,3 +1,4 @@
+import { DEFAULT_NET_WORTH_BASIS } from "../../../net-worth-basis.js";
 import type { ProfileFacts } from "../../input.js";
 import type { PersonaFixture } from "../types.js";
 
@@ -27,6 +28,7 @@ export const trapEdgeVariants = {
 } satisfies Record<string, ProfileFacts>;
 
 export const trapEdge: PersonaFixture = {
+  netWorthBasis: DEFAULT_NET_WORTH_BASIS,
   profile: trapEdgeVariants.at112570,
   accounts: [],
   details: [],

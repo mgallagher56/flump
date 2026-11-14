@@ -2,8 +2,11 @@ import { ACCOUNT_TYPES } from "@flump/api-contract";
 import {
   getUkCalendarDate,
   type MonthlyPortfolioHistoryPoint,
+  type NetWorthLeftOut,
+  netWorthBasisFromProfile,
   PortfolioSnapshot,
   type ResolvedAccount,
+  resolveSnapshotNetWorthScope,
 } from "@flump/finance-engine";
 import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
@@ -58,10 +61,12 @@ export interface PortfolioSnapshotResponse {
   totalConsumerDebt: number;
   totalMortgageBalance: number;
   totalProperty: number;
-  /** Income-contingent: excluded from netWorth, totalLiabilities and debt totals (D-5-B). */
+  /** Income-contingent, so never in debt totals (D-5-B); in net worth only when the user counts it. */
   totalStudentLoans: number;
   resolvedAccounts: ResolvedAccount[];
   monthlyHistory: MonthlyPortfolioHistoryPoint[];
+  /** What net worth leaves out under the user's own choices, in display order. */
+  netWorthLeavesOut: NetWorthLeftOut[];
   currency: string;
 }
 
@@ -608,11 +613,17 @@ export class AccountIntakeService implements IAccountIntake {
     const accounts = await this.getAccounts(userId);
     const details = accounts.flatMap((a) => a.details);
     const snapshot = new PortfolioSnapshot(accounts, details);
+    // Net worth, totals and history follow the user's own choices of what counts.
+    const profile = await this.userProfileRepository.findOne({
+      where: { userId },
+      select: { id: true, netWorthCountsProperty: true, netWorthCountsStudentLoan: true },
+    });
+    const basis = netWorthBasisFromProfile(profile);
 
     return {
-      netWorth: snapshot.getTotalNetWorth(),
-      totalAssets: snapshot.getTotalAssets(),
-      totalLiabilities: snapshot.getTotalLiabilities(),
+      netWorth: snapshot.getTotalNetWorth(basis),
+      totalAssets: snapshot.getTotalAssets(basis),
+      totalLiabilities: snapshot.getTotalLiabilities(basis),
       totalLiquidCash: snapshot.getTotalLiquidCash(),
       totalInvestments: snapshot.getTotalInvestments(),
       totalPensions: snapshot.getTotalPensions(),
@@ -620,8 +631,12 @@ export class AccountIntakeService implements IAccountIntake {
       totalMortgageBalance: snapshot.getTotalMortgageBalance(),
       totalProperty: snapshot.getTotalProperty(),
       totalStudentLoans: snapshot.getTotalStudentLoans(),
-      resolvedAccounts: snapshot.getResolvedAccounts(),
-      monthlyHistory: snapshot.getMonthlyHistory(),
+      // Each account's netWorthBalance is its contribution under the user's basis (0 when left out).
+      resolvedAccounts: snapshot
+        .getResolvedAccounts()
+        .map((a) => ({ ...a, netWorthBalance: snapshot.netWorthBalanceOf(a, basis) })),
+      monthlyHistory: snapshot.getMonthlyHistory(basis),
+      netWorthLeavesOut: resolveSnapshotNetWorthScope(snapshot, basis).leftOut,
       currency: accounts[0]?.currency || "GBP",
     };
   }

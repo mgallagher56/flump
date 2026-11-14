@@ -2,6 +2,7 @@ import type {
   BuildContextPackInput,
   FinancialBaseline,
   FlumpAiContextPack,
+  NetWorthBasis,
   RawAccount,
   TaxRecord,
 } from "@flump/finance-engine";
@@ -59,6 +60,8 @@ export interface McpUserDataProvider {
   getAccounts(userId: string): Promise<RawAccount[]>;
   /** The user's profile baseline (salary, region, ownership share). */
   getBaseline(userId: string): Promise<FinancialBaseline>;
+  /** What the user's net worth counts (their saved choices; the default when none are saved). */
+  getNetWorthBasis(userId: string): Promise<NetWorthBasis>;
   /**
    * Monthly rows in `range` (inclusive), plus, for each account, its latest row before
    * `range.from` so a value can be carried forward into the range. `accountIds` narrows to those

@@ -1,4 +1,16 @@
+import {
+  type AccountCategory,
+  categorizeAccountType,
+  isLiabilityCategory,
+} from "./account-category.js";
+import { countsTowardNetWorth, type NetWorthBasis } from "./net-worth-basis.js";
 import type { DebtItem, DebtType } from "./types.js";
+
+export {
+  type AccountCategory,
+  categorizeAccountType,
+  isLiabilityCategory,
+} from "./account-category.js";
 
 export type RawAccountType =
   | "Current"
@@ -18,17 +30,6 @@ export type RawAccountType =
   | "investment"
   | "other"
   | string;
-
-export type AccountCategory =
-  | "cash"
-  | "savings"
-  | "investments"
-  | "pensions"
-  | "debt"
-  | "mortgages"
-  | "property"
-  | "studentLoans"
-  | "other";
 
 export interface RawAccount {
   id?: string;
@@ -66,7 +67,10 @@ export interface ResolvedAccount {
    * overdrawn current account is negative) and the positive amount owed for liabilities.
    */
   nominalBalance: number;
-  /** Signed contribution to net worth: real sign for assets, -owed for liabilities, 0 for student loans. */
+  /**
+   * Signed contribution to net worth under DEFAULT_NET_WORTH_BASIS: real sign for assets, -owed
+   * for liabilities, 0 for student loans. Totals use the user's basis instead.
+   */
   netWorthBalance: number;
   latestBalance: number; // Same as nominalBalance
   /** Portion of a negative asset balance (overdrawn current account), as a positive amount. */
@@ -118,31 +122,6 @@ function isValidHistoryMonth(month: number): boolean {
 function hasStoredNumber(value: number | string | null | undefined): boolean {
   if (value === null || value === undefined || value === "") return false;
   return Number.isFinite(Number(value));
-}
-
-export function categorizeAccountType(rawType?: string | null): AccountCategory {
-  if (!rawType) return "other";
-  const t = rawType.trim().toLowerCase();
-
-  if (t === "current" || t === "checking") return "cash";
-  if (t === "saving" || t === "savings") return "savings";
-  if (t === "investment" || t === "investments" || t === "isa" || t === "gia") return "investments";
-  if (t === "pension" || t === "pensions" || t === "sipp") return "pensions";
-  if (t === "credit card" || t === "credit_card" || t === "loan" || t === "overdraft") {
-    return "debt";
-  }
-  // "Owed" is money someone owes the user (an IOU): an asset, not cash in hand and never a debt
-  // to pay off. Web and mobile have always treated it so; the engine had it as debt (E23).
-  if (t === "owed") return "other";
-  if (t === "property") return "property";
-  if (t === "student loan" || t === "student_loan") return "studentLoans";
-  if (t === "mortgage" || t === "mortgages") return "mortgages";
-
-  return "other";
-}
-
-export function isLiabilityCategory(category: AccountCategory): boolean {
-  return category === "debt" || category === "mortgages";
 }
 
 /**
@@ -282,23 +261,37 @@ export class PortfolioSnapshot {
     return this.resolvedAccounts.filter((a) => a.category === category);
   }
 
-  getTotalNetWorth(): number {
-    return this.resolvedAccounts.reduce((sum, a) => sum + a.netWorthBalance, 0);
+  /**
+   * Signed contribution of each account under the basis: real sign for assets, minus the amount
+   * owed for liabilities and (when counted) student loans, 0 for accounts the basis leaves out.
+   */
+  netWorthBalanceOf(a: ResolvedAccount, basis: NetWorthBasis): number {
+    if (!countsTowardNetWorth(a.category, basis)) return 0;
+    if (a.category === "studentLoans") return -a.nominalBalance;
+    return a.isLiability ? -a.nominalBalance : a.nominalBalance;
+  }
+
+  getTotalNetWorth(basis: NetWorthBasis): number {
+    return this.resolvedAccounts.reduce((sum, a) => sum + this.netWorthBalanceOf(a, basis), 0);
   }
 
   /** Positive asset balances only; an overdrawn account counts under liabilities instead. */
-  getTotalAssets(): number {
+  getTotalAssets(basis: NetWorthBasis): number {
     return this.resolvedAccounts
-      .filter((a) => a.isAsset)
+      .filter((a) => a.isAsset && countsTowardNetWorth(a.category, basis))
       .reduce((sum, a) => sum + Math.max(0, a.nominalBalance), 0);
   }
 
-  /** Amounts owed plus any overdrawn asset balances, so assets minus liabilities is net worth. */
-  getTotalLiabilities(): number {
-    return this.resolvedAccounts.reduce(
-      (sum, a) => sum + (a.isLiability ? a.nominalBalance : a.overdrawnAmount),
-      0,
-    );
+  /**
+   * Amounts owed (student loans when the basis counts them) plus any overdrawn asset balances,
+   * so assets minus liabilities is net worth.
+   */
+  getTotalLiabilities(basis: NetWorthBasis): number {
+    return this.resolvedAccounts.reduce((sum, a) => {
+      if (!countsTowardNetWorth(a.category, basis)) return sum;
+      if (a.isLiability || a.category === "studentLoans") return sum + a.nominalBalance;
+      return sum + a.overdrawnAmount;
+    }, 0);
   }
 
   /** Positive liquid balances only: an overdrawn current account is counted as debt, not netted here. */
@@ -337,7 +330,7 @@ export class PortfolioSnapshot {
       .reduce((sum, a) => sum + a.nominalBalance, 0);
   }
 
-  /** Income-contingent student loans: reported separately, never in net worth or debt totals. */
+  /** Income-contingent student loans: reported separately, never in debt totals; net worth per the basis. */
   getTotalStudentLoans(): number {
     return this.resolvedAccounts
       .filter((a) => a.category === "studentLoans")
@@ -417,11 +410,12 @@ export class PortfolioSnapshot {
    * Every month between the first and last recorded month is present. Each account carries its
    * last known value forward (C-16) and contributes nothing before its first row. Assets keep
    * their real sign: a negative asset value counts as a liability so assets minus liabilities
-   * is the signed sum. Student loans are excluded.
+   * is the signed sum. Accounts the basis leaves out are excluded; a counted student loan is a
+   * liability. The basis applies to every month (recomputed at read time).
    */
-  getMonthlyHistory(monthsCount = 12): MonthlyPortfolioHistoryPoint[] {
+  getMonthlyHistory(basis: NetWorthBasis, monthsCount = 12): MonthlyPortfolioHistoryPoint[] {
     const tracked = this.resolvedAccounts.filter(
-      (a) => a.category !== "studentLoans" && a.history.length > 0,
+      (a) => countsTowardNetWorth(a.category, basis) && a.history.length > 0,
     );
     if (tracked.length === 0) return [];
 
@@ -455,7 +449,7 @@ export class PortfolioSnapshot {
 
         const value = lastKnown.get(acc.id);
         if (value === undefined) continue;
-        if (acc.isLiability) {
+        if (acc.isLiability || acc.category === "studentLoans") {
           liabilities += Math.abs(value);
         } else if (value >= 0) {
           assets += value;

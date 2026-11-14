@@ -213,6 +213,7 @@ export const ResolvedAccountDto = z.strictObject({
   isAsset: z.boolean(),
   isLiability: z.boolean(),
   nominalBalance: Amount,
+  /** Contribution to net worth under the user's own choices (0 when left out). */
   netWorthBalance: Amount,
   latestBalance: Amount,
   overdrawnAmount: Amount,
@@ -227,6 +228,10 @@ export const ResolvedAccountDto = z.strictObject({
   history: z.array(z.strictObject({ year: Int, month: Int.min(1).max(12), value: Amount })),
 });
 export type ResolvedAccountDto = z.infer<typeof ResolvedAccountDto>;
+
+/** finance-engine `NetWorthLeftOut`. */
+export const NetWorthLeftOut = z.enum(["property", "mortgage", "studentLoan", "homeValueMissing"]);
+export type NetWorthLeftOut = z.infer<typeof NetWorthLeftOut>;
 
 /** finance-engine `MonthlyPortfolioHistoryPoint`. */
 export const PortfolioHistoryPointDto = z.strictObject({
@@ -251,10 +256,18 @@ export const PortfolioSnapshotResponse = z.strictObject({
   totalConsumerDebt: Amount,
   totalMortgageBalance: Amount,
   totalProperty: Amount,
-  /** Income-contingent: excluded from netWorth, totalLiabilities and debt totals (D-5-B). */
+  /**
+   * Income-contingent, so never in debt totals (D-5-B). In netWorth and totalLiabilities only
+   * when the user counts student loans.
+   */
   totalStudentLoans: Amount,
   resolvedAccounts: z.array(ResolvedAccountDto),
   monthlyHistory: z.array(PortfolioHistoryPointDto),
+  /**
+   * What netWorth, the totals and monthlyHistory leave out under the user's own choices, in
+   * display order. `homeValueMissing`: a mortgage counts with no home value saved beside it.
+   */
+  netWorthLeavesOut: z.array(NetWorthLeftOut),
   currency: Currency,
 });
 export type PortfolioSnapshotResponse = z.infer<typeof PortfolioSnapshotResponse>;

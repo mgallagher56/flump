@@ -1,3 +1,4 @@
+import { DEFAULT_NET_WORTH_BASIS } from "../../../net-worth-basis.js";
 import { budgetEntry } from "../builders.js";
 import type { PersonaFixture } from "../types.js";
 
@@ -6,6 +7,7 @@ import type { PersonaFixture } from "../types.js";
  * home mortgage nearly paid off (36 months left). Contributions are stored per pot (D21).
  */
 export const gareth: PersonaFixture = {
+  netWorthBasis: DEFAULT_NET_WORTH_BASIS,
   profile: {
     annualSalary: 72000,
     employmentType: "employed",

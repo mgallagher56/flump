@@ -9,6 +9,11 @@ import {
   evaluateUkStudentLoan,
   filterConsumerDebts,
 } from "./debt-payoff.js";
+import {
+  joinNetWorthLeftOut,
+  type NetWorthBasis,
+  type NetWorthLeftOut,
+} from "./net-worth-basis.js";
 import { buildFinancialPicture } from "./picture/build.js";
 import { isFigureKnown } from "./picture/figure.js";
 import { type ProfileFacts, profileFactsFromProfile } from "./picture/input.js";
@@ -58,6 +63,8 @@ export interface BuildContextPackInput {
    * take-home; without them it is null rather than a guess from the defaulted baseline.
    */
   profileFacts?: ProfileFacts;
+  /** What net worth counts: the user's choices (netWorthBasisFromProfile). */
+  netWorthBasis: NetWorthBasis;
 }
 
 /** The saved baseline as the pack carries it: figures only, so no computed stage. */
@@ -90,6 +97,10 @@ export interface FlumpAiContextPack {
     weightedSavingsRate: number;
     monthlyHistory: MonthlyPortfolioHistoryPoint[];
     accounts: ResolvedAccount[];
+    /** The basis net worth, totals and history were computed under. */
+    netWorthBasis: NetWorthBasis;
+    /** What net worth leaves out under that basis, in display order. */
+    netWorthLeavesOut: NetWorthLeftOut[];
   };
   debtSummary: {
     consumerDebts: NormalizedDebtItem[];
@@ -208,6 +219,7 @@ export function buildFlumpAiContextPack(
   const picture = buildFinancialPicture(
     {
       profile: input.profileFacts ?? profileFactsFromProfile(null),
+      netWorthBasis: input.netWorthBasis,
       accounts: sanitizedRawAccounts,
       details: rawDetails,
       budget: budgetEntries,
@@ -265,8 +277,10 @@ export function buildFlumpAiContextPack(
       totalConsumerDebt: snapshot.getTotalConsumerDebt(),
       totalMortgageBalance: snapshot.getTotalMortgageBalance(),
       weightedSavingsRate: snapshot.getWeightedSavingsRate(),
-      monthlyHistory: snapshot.getMonthlyHistory(),
+      monthlyHistory: snapshot.getMonthlyHistory(input.netWorthBasis),
       accounts: resolvedAccounts,
+      netWorthBasis: picture.netWorth.basis,
+      netWorthLeavesOut: picture.netWorth.leftOut,
     },
     debtSummary: {
       consumerDebts,
@@ -344,6 +358,17 @@ function formatSignedGbp(value: number): string {
 /**
  * Formats a FlumpAiContextPack into human-readable Markdown suitable for clipboard export.
  */
+function formatLeavesOut(leftOut: readonly NetWorthLeftOut[]): string {
+  const lines: string[] = [];
+  const joined = joinNetWorthLeftOut(leftOut);
+  if (joined !== "")
+    lines.push(`\n- **Not counted in net worth, by the user's choice:** ${joined}`);
+  if (leftOut.includes("homeValueMissing")) {
+    lines.push("\n- **Home value:** not saved, so the mortgage counts without it");
+  }
+  return lines.join("");
+}
+
 export function formatAiContextPackMarkdown(pack: FlumpAiContextPack): string {
   const p = pack.portfolio;
   const b = pack.baseline;
@@ -359,7 +384,7 @@ Generated: ${pack.metadata.generatedAt} | Anonymised: ${pack.metadata.isAnonymiz
 ${pack.observations.map((o) => `  * ${o}`).join("\n") || "  * None."}
 
 ## 2. Net worth
-- **Net worth:** ${formatSignedGbp(p.netWorth)}
+- **Net worth:** ${formatSignedGbp(p.netWorth)}${formatLeavesOut(p.netWorthLeavesOut)}
 - **What you own:** £${p.totalAssets.toLocaleString("en-GB")} (cash you can get at quickly: £${p.totalLiquidCash.toLocaleString("en-GB")}, investments: £${p.totalInvestments.toLocaleString("en-GB")}, pensions: £${p.totalPensions.toLocaleString("en-GB")}${p.homeEstimate > 0 ? `, Home (your estimate): £${p.homeEstimate.toLocaleString("en-GB")}` : ""})
 - **What you owe:** £${p.totalLiabilities.toLocaleString("en-GB")} (debts: £${p.totalConsumerDebt.toLocaleString("en-GB")}, mortgages: £${p.totalMortgageBalance.toLocaleString("en-GB")})
 - **Average savings rate:** ${p.weightedSavingsRate}% AER

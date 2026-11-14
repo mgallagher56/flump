@@ -1,3 +1,4 @@
+import { DEFAULT_NET_WORTH_BASIS } from "../../../net-worth-basis.js";
 import type { RawAccountDetail } from "../../../portfolio.js";
 import type { TaxRecord } from "../../../tax-calculator.js";
 import { budgetEntry, taxRecord } from "../builders.js";
@@ -86,6 +87,7 @@ const annualRecords: TaxRecord[] = YEARS.flatMap((y) => {
 });
 
 export const heavy: PersonaFixture = {
+  netWorthBasis: DEFAULT_NET_WORTH_BASIS,
   profile: {
     annualSalary: 118000,
     employmentType: "employed",

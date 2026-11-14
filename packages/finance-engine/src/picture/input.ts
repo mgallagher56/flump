@@ -1,4 +1,5 @@
 import type { BudgetEntryItem } from "../ai-context-pack.js";
+import type { NetWorthBasis } from "../net-worth-basis.js";
 import type { RawAccount, RawAccountDetail } from "../portfolio.js";
 import type { UserProfileData } from "../profile.js";
 import type { TaxRecord } from "../tax-calculator.js";
@@ -51,6 +52,8 @@ export type MissingKey =
  */
 export interface FinancialPictureInput {
   profile: ProfileFacts;
+  /** What net worth counts (the user's choices; DEFAULT_NET_WORTH_BASIS when unset). */
+  netWorthBasis: NetWorthBasis;
   accounts: RawAccount[];
   details: RawAccountDetail[];
   budget: BudgetEntryItem[];

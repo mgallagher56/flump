@@ -2,6 +2,8 @@ import {
   type BuildContextPackInput,
   budgetEntryFromRow,
   type FinancialBaseline,
+  type NetWorthBasis,
+  netWorthBasisFromProfile,
   profileFactsFromProfile,
   type RawAccount,
   userProfileToFinancialBaseline,
@@ -186,6 +188,10 @@ export class AgentDataService implements McpUserDataProvider {
     return userProfileToFinancialBaseline(profile, userId);
   }
 
+  async getNetWorthBasis(userId: string): Promise<NetWorthBasis> {
+    return netWorthBasisFromProfile(await this.userProfileService.getProfile(userId));
+  }
+
   async getAccountSnapshots(
     userId: string,
     range: MonthRange & { accountIds?: readonly string[] },
@@ -327,6 +333,7 @@ export class AgentDataService implements McpUserDataProvider {
       baseline,
       // Saved facts without defaults: safe to spend needs real take-home, not the baseline's.
       profileFacts: profileFactsFromProfile(profile),
+      netWorthBasis: netWorthBasisFromProfile(profile),
       accounts,
       accountDetails,
       // The engine's one row mapper, as the web loaders use; notes stay for non-anonymised packs.
