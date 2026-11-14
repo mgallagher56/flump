@@ -222,6 +222,36 @@ describe.skipIf(dbMode === "skip")("authz: snapshots controller (real Postgres)"
     expect(await rowsFor(loan)).toHaveLength(1);
   });
 
+  it("R2-5: a retried calculated save for this month (response lost) is accepted", async () => {
+    const created = await h.call("post", "/accounts", h.tokens.a, {
+      name: "A Loan",
+      type: "Loan",
+      balance: 8610,
+      interestRate: 7.9,
+      monthlyContribution: 265,
+    });
+    expect(created.status).toBe(201);
+    const loan = created.body.id as string;
+    const [y, m] = THIS_MONTH.split("-").map(Number) as [number, number];
+    const previous = m === 1 ? `${y - 1}-12` : `${y}-${String(m - 1).padStart(2, "0")}`;
+    expect(
+      (await put(previous, h.tokens.a, { values: [{ accountId: loan, value: 8610 }] })).status,
+    ).toBe(200);
+    const expected = calculateCheckInBalance({
+      type: "Loan",
+      interestRate: 7.9,
+      monthlyPayment: 265,
+      base: { value: 8610, month: previous },
+      month: THIS_MONTH,
+      savedBalance: 8610,
+    });
+    const body = { values: [{ accountId: loan, value: expected?.value, source: "calculated" }] };
+    expect((await put(THIS_MONTH, h.tokens.a, body)).status).toBe(200);
+    // The first save moved the saved balance to the calculated figure; the retry still succeeds.
+    expect((await put(THIS_MONTH, h.tokens.a, body)).status).toBe(200);
+    expect(await rowsFor(loan)).toHaveLength(2);
+  });
+
   it("rejects non-UUID account ids without a 500", async () => {
     const res = await put(PAST, h.tokens.a, { values: [{ accountId: "not-a-uuid", value: 1 }] });
     // The contract rejects it at the boundary (enforce is the default, E21).
