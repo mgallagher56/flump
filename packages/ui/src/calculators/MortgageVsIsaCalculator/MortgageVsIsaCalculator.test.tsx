@@ -62,6 +62,16 @@ describe("MortgageVsIsaCalculator", () => {
     expect(toolText()).not.toMatch(/£-|-£|−£/);
   });
 
+  it("shows a neutral subtext, not years sooner, when nothing is overpaid", () => {
+    const { unmount } = render(<MortgageVsIsaCalculator initialExtra={0} />);
+    expect(screen.getByText(MORTGAGE_ISA_COPY.kpiInterestSavedNoExtra)).toBeDefined();
+    expect(screen.queryByText(/years sooner/)).toBeNull();
+    unmount();
+    render(<MortgageVsIsaCalculator initialBalance={0} />);
+    expect(screen.getByText(MORTGAGE_ISA_COPY.kpiInterestSavedNoBalance)).toBeDefined();
+    expect(screen.queryByText(/years sooner/)).toBeNull();
+  });
+
   it("keeps the years left between 1 and 40", () => {
     render(<MortgageVsIsaCalculator initialTermYears={0} />);
     expect(outcomes().getByText(MORTGAGE_ISA_COPY.kpiSetAside(1))).toBeDefined();

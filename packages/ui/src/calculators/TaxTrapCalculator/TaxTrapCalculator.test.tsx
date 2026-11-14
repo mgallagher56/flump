@@ -7,6 +7,19 @@ import { formatMoney } from "../../primitives/Money/Money";
 import { allTaxTrapCopyStrings, TAX_TRAP_COPY } from "./copy";
 import { TaxTrapCalculator } from "./TaxTrapCalculator";
 
+// Lets one test see the engine report a fallback rates year; every other test gets the real result.
+const fallback = vi.hoisted(() => ({ on: false }));
+vi.mock("@flump/finance-engine", async (importOriginal) => {
+  const engine = await importOriginal<typeof import("@flump/finance-engine")>();
+  return {
+    ...engine,
+    whatIfSacrificeChange: (...args: Parameters<typeof engine.whatIfSacrificeChange>) => {
+      const change = engine.whatIfSacrificeChange(...args);
+      return fallback.on ? { ...change, before: { ...change.before, isFallback: true } } : change;
+    },
+  };
+});
+
 const outcome = (label: string) => {
   const cards = within(screen.getByTestId("tax-trap-outcomes"));
   const labelEl = cards.getByText(label);
@@ -95,6 +108,17 @@ describe("TaxTrapCalculator", () => {
     expect(screen.getByTestId("tax-trap-outcomes").children).toHaveLength(3);
     expect(screen.getAllByTestId("projection-notice")).toHaveLength(1);
     expect(screen.queryByTestId("tax-rates-status-banner")).toBeNull();
+  });
+
+  it("explains the rates year, beside the one notice, only when the rates are a fallback year", () => {
+    fallback.on = true;
+    try {
+      render(<TaxTrapCalculator taxYear="2026/27" />);
+      expect(screen.getAllByTestId("tax-rates-status-banner")).toHaveLength(1);
+      expect(screen.getAllByTestId("projection-notice")).toHaveLength(1);
+    } finally {
+      fallback.on = false;
+    }
   });
 
   it("never passes a negative entry to the engine", () => {

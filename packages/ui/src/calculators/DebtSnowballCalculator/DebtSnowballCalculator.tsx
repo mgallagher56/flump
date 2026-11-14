@@ -7,7 +7,7 @@ import {
 } from "@flump/finance-engine";
 import { ArrowRight, Plus } from "lucide-react";
 import type { FC } from "react";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ProjectionNotice } from "../../patterns/ProjectionNotice/ProjectionNotice";
 import { SimulatorSplitLayout } from "../../patterns/SimulatorSplitLayout/SimulatorSplitLayout";
 import { Button } from "../../primitives/Button/Button";
@@ -31,6 +31,7 @@ import {
   debtIntro,
   debtList,
   debtOutcomes,
+  debtOutcomeText,
   debtRoot,
   debtRow,
   debtRowFields,
@@ -62,6 +63,9 @@ export const DEBT_SNOWBALL_COPY = {
   kpiAvalanche: "Total interest, highest rate first (avalanche)",
   kpiSnowball: "Total interest, smallest balance first (snowball)",
   paidOffIn: (duration: string) => `Paid off in ${duration}.`,
+  nothingOwed: "No balance to repay",
+  nothingOwedDetail: "There is no debt balance to pay off.",
+  nothingOwedInterest: "No interest, as there is no balance.",
   explainerTitle: "How the two methods differ",
   explainer:
     "Both methods pay every minimum and put the extra payment on one debt at a time. Highest rate first puts it on the debt with the highest interest rate; smallest balance first puts it on the smallest balance. When a debt is paid off, its payment moves to the next one.",
@@ -72,11 +76,15 @@ export const DEBT_SNOWBALL_COPY = {
 export const DEBT_SNOWBALL_DEFAULT_CTA = "Continue to sign up";
 
 /** Spoken after inputs settle (COPY-AUDIT rows for the live region): both methods, same fields. */
-export const debtSnowballAnnouncement = (comparison: {
-  avalanche: PayoffResult;
-  snowball: PayoffResult;
-}): string => {
+export const debtSnowballAnnouncement = (
+  comparison: {
+    avalanche: PayoffResult;
+    snowball: PayoffResult;
+  },
+  nothingOwed = false,
+): string => {
   const { avalanche, snowball } = comparison;
+  if (nothingOwed) return "Illustration: there is no debt balance to pay off";
   if (!avalanche.payoffAchievable || !snowball.payoffAchievable) {
     return "Illustration: the debts are not paid off at these payments";
   }
@@ -150,12 +158,25 @@ export const DebtSnowballCalculator: FC<DebtSnowballCalculatorProps> = ({
   const [debts, setDebts] = useState<DebtRowState[]>(STARTING_DEBTS);
   const [extraPayment, setExtraPayment] = useState(Math.max(0, initialExtraPayment));
   const nextId = useRef(STARTING_DEBTS.length + 1);
+  // Keyboard focus follows the row that was added, or the row before one that was removed, so it
+  // is never lost when a button unmounts.
+  const rowRefs = useRef(new Map<string, HTMLFieldSetElement>());
+  const focusRowId = useRef<string | null>(null);
+
+  useEffect(() => {
+    const id = focusRowId.current;
+    if (!id) return;
+    focusRowId.current = null;
+    rowRefs.current.get(id)?.querySelector<HTMLInputElement>("input")?.focus();
+  }, [debts]);
 
   const updateDebt = (id: string, patch: Partial<DebtRowState>) =>
     setDebts((rows) => rows.map((row) => (row.id === id ? { ...row, ...patch } : row)));
 
   const addDebt = () => {
+    if (debts.length >= MAX_DEBTS) return;
     const id = `d${nextId.current++}`;
+    focusRowId.current = id;
     setDebts((rows) =>
       rows.length >= MAX_DEBTS
         ? rows
@@ -163,8 +184,13 @@ export const DebtSnowballCalculator: FC<DebtSnowballCalculatorProps> = ({
     );
   };
 
-  const removeDebt = (id: string) =>
+  const removeDebt = (id: string) => {
+    if (debts.length <= 1) return;
+    const index = debts.findIndex((row) => row.id === id);
+    const remaining = debts.filter((row) => row.id !== id);
+    focusRowId.current = remaining[Math.max(0, index - 1)]?.id ?? null;
     setDebts((rows) => (rows.length > 1 ? rows.filter((row) => row.id !== id) : rows));
+  };
 
   const engineDebts = useMemo<DebtItem[]>(
     () =>
@@ -187,6 +213,7 @@ export const DebtSnowballCalculator: FC<DebtSnowballCalculatorProps> = ({
   const bothPaidOff = avalanche.payoffAchievable && snowball.payoffAchievable;
 
   const totalDebt = engineDebts.reduce((sum, d) => sum + (d.balance ?? 0), 0);
+  const nothingOwed = totalDebt <= 0;
 
   const handleSave = () => {
     const payload: DebtSnowballSeedPayload = {
@@ -205,23 +232,33 @@ export const DebtSnowballCalculator: FC<DebtSnowballCalculatorProps> = ({
 
   // The earlier of the two dates (with the same total paid each month they are usually the same).
   const earliest = avalanche.months <= snowball.months ? avalanche : snowball;
-  const dateValue = bothPaidOff ? earliest.debtFreeDate : DEBT_SNOWBALL_COPY.notPaidOff;
-  const dateSubtext = !bothPaidOff
-    ? DEBT_SNOWBALL_COPY.notPaidOffDetail
-    : avalanche.debtFreeDate === snowball.debtFreeDate
-      ? DEBT_SNOWBALL_COPY.dateSame
-      : DEBT_SNOWBALL_COPY.dateBoth(avalanche.debtFreeDate, snowball.debtFreeDate);
+  const dateValue = nothingOwed ? (
+    <span className={debtOutcomeText()}>{DEBT_SNOWBALL_COPY.nothingOwed}</span>
+  ) : bothPaidOff ? (
+    earliest.debtFreeDate
+  ) : (
+    DEBT_SNOWBALL_COPY.notPaidOff
+  );
+  const dateSubtext = nothingOwed
+    ? DEBT_SNOWBALL_COPY.nothingOwedDetail
+    : !bothPaidOff
+      ? DEBT_SNOWBALL_COPY.notPaidOffDetail
+      : avalanche.debtFreeDate === snowball.debtFreeDate
+        ? DEBT_SNOWBALL_COPY.dateSame
+        : DEBT_SNOWBALL_COPY.dateBoth(avalanche.debtFreeDate, snowball.debtFreeDate);
 
   const methodCard = (label: string, result: PayoffResult) => (
     <KpiCard
       label={label}
       subtext={
-        result.payoffAchievable
-          ? DEBT_SNOWBALL_COPY.paidOffIn(formatPayoffDuration(result.months))
-          : DEBT_SNOWBALL_COPY.notPaidOffDetail
+        nothingOwed
+          ? DEBT_SNOWBALL_COPY.nothingOwedInterest
+          : result.payoffAchievable
+            ? DEBT_SNOWBALL_COPY.paidOffIn(formatPayoffDuration(result.months))
+            : DEBT_SNOWBALL_COPY.notPaidOffDetail
       }
       value={
-        result.payoffAchievable ? (
+        nothingOwed || result.payoffAchievable ? (
           <Money size="lg" value={result.totalInterest} />
         ) : (
           DEBT_SNOWBALL_COPY.notPaidOff
@@ -236,7 +273,14 @@ export const DebtSnowballCalculator: FC<DebtSnowballCalculatorProps> = ({
         {debts.map((row, index) => {
           const n = index + 1;
           return (
-            <fieldset className={debtRow()} key={row.id}>
+            <fieldset
+              className={debtRow()}
+              key={row.id}
+              ref={(el) => {
+                if (el) rowRefs.current.set(row.id, el);
+                else rowRefs.current.delete(row.id);
+              }}
+            >
               {/* The legend stays the fieldset's first child so it names the group. */}
               <legend className={debtRowLegend()}>
                 {DEBT_SNOWBALL_COPY.debtLegend(n, row.kind)}
@@ -337,7 +381,11 @@ export const DebtSnowballCalculator: FC<DebtSnowballCalculatorProps> = ({
       </div>
 
       <ProjectionNotice />
-      <LiveRegion debounceMs={1000} message={debtSnowballAnnouncement(comparison)} visuallyHidden />
+      <LiveRegion
+        debounceMs={1000}
+        message={debtSnowballAnnouncement(comparison, nothingOwed)}
+        visuallyHidden
+      />
     </div>
   );
 

@@ -111,6 +111,11 @@ export const debtOutcomes = cva({
   },
 });
 
+/** A worded outcome (no balance) at the same size as a figure, so the card keeps its rhythm. */
+export const debtOutcomeText = cva({
+  base: { textStyle: "numeric.lg", color: "text.primary" },
+});
+
 export const debtExplainer = cva({
   base: {
     display: "flex",

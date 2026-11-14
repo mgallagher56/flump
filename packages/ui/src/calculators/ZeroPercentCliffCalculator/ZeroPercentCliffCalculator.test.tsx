@@ -57,6 +57,15 @@ describe("ZeroPercentCliffCalculator", () => {
     expect(toolText()).not.toMatch(/£-|-£|−£|-5%/);
   });
 
+  it("says there is no balance to repay when the balance is zero", () => {
+    render(<ZeroPercentCliffCalculator />);
+    fireEvent.change(balanceSlider(), { target: { value: "0" } });
+    expect(outcomes().getByText(ZERO_PERCENT_COPY.nothingOwed)).toBeDefined();
+    expect(outcomes().getByText(ZERO_PERCENT_COPY.nothingOwedSubtext)).toBeDefined();
+    expect(outcomes().getByText(ZERO_PERCENT_COPY.kpiLeftNothingOwedSubtext)).toBeDefined();
+    expect(toolText()).not.toMatch(/Pays off the £0|would clear it/);
+  });
+
   it("drops the interest card when the minimum alone would clear the balance", () => {
     render(<ZeroPercentCliffCalculator />);
     fireEvent.change(balanceSlider(), { target: { value: "400" } });

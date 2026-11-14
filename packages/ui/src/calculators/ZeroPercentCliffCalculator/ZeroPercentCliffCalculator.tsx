@@ -24,6 +24,7 @@ import {
   zeroHeader,
   zeroIntro,
   zeroOutcomes,
+  zeroOutcomeText,
   zeroRoot,
   zeroTitle,
 } from "./ZeroPercentCliffCalculator.styles";
@@ -46,6 +47,9 @@ export const ZERO_PERCENT_COPY = {
   kpiPayment: "Estimated monthly payment",
   kpiPaymentSubtext: (balance: number, n: number) =>
     `Pays off the ${formatBalance(balance)} balance in ${months(n)}, before any interest is charged, as long as the 0% rate applies and no fees are added.`,
+  nothingOwed: "No balance to repay",
+  nothingOwedSubtext: "There is no balance on the 0% card to pay off.",
+  kpiLeftNothingOwedSubtext: "Nothing is left when the 0% deal ends.",
   kpiLeft: "Left when the 0% deal ends, with minimum payments only",
   kpiLeftSubtext: "Assumes a minimum of 2% of today's balance (at least £25) a month.",
   kpiLeftClearedSubtext:
@@ -64,6 +68,10 @@ export const ZERO_PERCENT_DEFAULT_CTA = "Continue to sign up";
 /** Spoken after inputs settle (COPY-AUDIT row for the live region). */
 export const zeroPercentAnnouncement = (monthly: string) =>
   `Illustration: ${monthly} a month pays off the balance before the 0% deal ends`;
+
+/** Spoken when there is no balance to pay off. */
+export const ZERO_PERCENT_NOTHING_OWED_ANNOUNCEMENT =
+  "Illustration: there is no balance to pay off";
 
 const BALANCE_MAX = 20_000;
 const MONTHS_MIN = 1;
@@ -113,8 +121,11 @@ export const ZeroPercentCliffCalculator: FC<ZeroPercentCliffCalculatorProps> = (
     [balance, monthsLeft, rate],
   );
   const minimumClears = cliff.balanceRemainingIfMinimum <= 0;
+  const nothingOwed = balance <= 0;
 
-  const announcement = zeroPercentAnnouncement(formatMoney(cliff.requiredMonthlyPayment).text);
+  const announcement = nothingOwed
+    ? ZERO_PERCENT_NOTHING_OWED_ANNOUNCEMENT
+    : zeroPercentAnnouncement(formatMoney(cliff.requiredMonthlyPayment).text);
 
   const handleSave = () => {
     const payload: ZeroPercentSeedPayload = {
@@ -171,15 +182,27 @@ export const ZeroPercentCliffCalculator: FC<ZeroPercentCliffCalculatorProps> = (
       <div className={zeroOutcomes()} data-density="compact" data-testid="zero-percent-outcomes">
         <KpiCard
           label={ZERO_PERCENT_COPY.kpiPayment}
-          subtext={ZERO_PERCENT_COPY.kpiPaymentSubtext(balance, monthsLeft)}
-          value={cliff.requiredMonthlyPayment}
+          subtext={
+            nothingOwed
+              ? ZERO_PERCENT_COPY.nothingOwedSubtext
+              : ZERO_PERCENT_COPY.kpiPaymentSubtext(balance, monthsLeft)
+          }
+          value={
+            nothingOwed ? (
+              <span className={zeroOutcomeText()}>{ZERO_PERCENT_COPY.nothingOwed}</span>
+            ) : (
+              cliff.requiredMonthlyPayment
+            )
+          }
         />
         <KpiCard
           label={ZERO_PERCENT_COPY.kpiLeft}
           subtext={
-            minimumClears
-              ? ZERO_PERCENT_COPY.kpiLeftClearedSubtext
-              : ZERO_PERCENT_COPY.kpiLeftSubtext
+            nothingOwed
+              ? ZERO_PERCENT_COPY.kpiLeftNothingOwedSubtext
+              : minimumClears
+                ? ZERO_PERCENT_COPY.kpiLeftClearedSubtext
+                : ZERO_PERCENT_COPY.kpiLeftSubtext
           }
           value={<Money size="lg" value={cliff.balanceRemainingIfMinimum} />}
         />
