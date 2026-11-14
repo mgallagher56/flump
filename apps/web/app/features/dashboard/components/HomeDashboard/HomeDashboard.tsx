@@ -177,13 +177,19 @@ export const HomeDashboard: FC<HomeDashboardProps> = ({
     [enabledPages],
   );
 
-  // Sections the user has chosen to show.
-  const dashboardWidgets = useMemo<DashboardWidgetKey[]>(() => {
-    const raw =
+  // Every section the user has chosen to show, including ones for pages that are switched off, so
+  // a toggle never drops them from the saved list.
+  const savedWidgets = useMemo<DashboardWidgetKey[]>(
+    () =>
       visibilityOverride ??
-      ((profile.dashboardWidgets as DashboardWidgetKey[]) || DEFAULT_DASHBOARD_WIDGETS);
-    return raw.filter((k) => enabledPages.includes(k as AppPageKey));
-  }, [visibilityOverride, profile.dashboardWidgets, enabledPages]);
+      ((profile.dashboardWidgets as DashboardWidgetKey[]) || DEFAULT_DASHBOARD_WIDGETS),
+    [visibilityOverride, profile.dashboardWidgets],
+  );
+  // The chosen sections whose page is switched on: the ones shown.
+  const dashboardWidgets = useMemo<DashboardWidgetKey[]>(
+    () => savedWidgets.filter((k) => enabledPages.includes(k as AppPageKey)),
+    [savedWidgets, enabledPages],
+  );
 
   // Last list the backend confirmed (or, when not persisting, the last local choice). Used as the
   // revert target so a failed save never resurrects state from before an earlier successful one.
@@ -191,10 +197,11 @@ export const HomeDashboard: FC<HomeDashboardProps> = ({
   const saveSeqRef = useRef(0);
 
   const handleToggleWidget = async (key: DashboardWidgetKey) => {
-    const shown = new Set(dashboardWidgets);
+    const shown = new Set(savedWidgets);
     if (shown.has(key)) shown.delete(key);
     else shown.add(key);
-    const next = applicableKeys.filter((k) => shown.has(k));
+    // Canonical order; entries for switched-off pages are kept, not dropped.
+    const next = ALL_PAGE_KEYS.filter((k) => shown.has(k));
     const seq = ++saveSeqRef.current;
 
     setVisibilityError(null);
