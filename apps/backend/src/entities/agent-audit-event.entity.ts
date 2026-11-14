@@ -46,6 +46,6 @@ export class AgentAuditEvent {
   @Column({ name: "args_fingerprint", type: "varchar", length: 64, nullable: true })
   argsFingerprint: string | null;
 
-  @CreateDateColumn({ name: "created_at" })
+  @CreateDateColumn({ name: "created_at", type: "timestamptz" })
   createdAt: Date;
 }

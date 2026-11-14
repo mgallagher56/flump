@@ -37,7 +37,8 @@ export class AccountDetail {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ name: "account_id" })
+  /** FK_account_details_account: accounts(id) ON DELETE CASCADE (AccountIdForeignKeys1794358200000). */
+  @Column({ name: "account_id", type: "uuid" })
   accountId: string;
 
   @Column({ name: "user_id" })
@@ -67,6 +68,6 @@ export class AccountDetail {
   @Column({ name: "import_batch_id", type: "uuid", nullable: true })
   importBatchId: string | null;
 
-  @UpdateDateColumn({ name: "updated_at" })
+  @UpdateDateColumn({ name: "updated_at", type: "timestamptz" })
   updatedAt: Date;
 }

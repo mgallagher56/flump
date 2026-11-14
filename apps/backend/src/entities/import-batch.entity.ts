@@ -125,18 +125,18 @@ export class ImportBatch {
   @Column({ name: "revert_data", type: "jsonb", nullable: true })
   revertData: RevertData | null;
 
-  @CreateDateColumn({ name: "created_at" })
+  @CreateDateColumn({ name: "created_at", type: "timestamptz" })
   createdAt: Date;
 
-  @UpdateDateColumn({ name: "updated_at" })
+  @UpdateDateColumn({ name: "updated_at", type: "timestamptz" })
   updatedAt: Date;
 
-  @Column({ name: "committed_at", type: "timestamp", nullable: true })
+  @Column({ name: "committed_at", type: "timestamptz", nullable: true })
   committedAt: Date | null;
 
-  @Column({ name: "reverted_at", type: "timestamp", nullable: true })
+  @Column({ name: "reverted_at", type: "timestamptz", nullable: true })
   revertedAt: Date | null;
 
-  @Column({ name: "expires_at", type: "timestamp" })
+  @Column({ name: "expires_at", type: "timestamptz" })
   expiresAt: Date;
 }

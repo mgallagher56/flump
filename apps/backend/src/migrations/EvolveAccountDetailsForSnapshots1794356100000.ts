@@ -32,7 +32,7 @@ export class EvolveAccountDetailsForSnapshots1794356100000 implements MigrationI
 
     await queryRunner.query(
       `DELETE FROM "account_details" d
-       WHERE NOT EXISTS (SELECT 1 FROM "accounts" a WHERE a."id"::text = d."account_id")
+       WHERE NOT EXISTS (SELECT 1 FROM "accounts" a WHERE a."id"::text = d."account_id"::text)
           OR d."month" NOT BETWEEN 1 AND 12
           OR d."year" NOT BETWEEN 1900 AND 2200
           OR d."year" * 12 + d."month" >
@@ -54,7 +54,7 @@ export class EvolveAccountDetailsForSnapshots1794356100000 implements MigrationI
     );
     await queryRunner.query(
       `UPDATE "account_details" d SET "user_id" = a."user_id"
-       FROM "accounts" a WHERE a."id"::text = d."account_id" AND d."user_id" IS NULL`,
+       FROM "accounts" a WHERE a."id"::text = d."account_id"::text AND d."user_id" IS NULL`,
     );
     await queryRunner.query(
       `UPDATE "account_details"

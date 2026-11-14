@@ -3,14 +3,15 @@ import {
   buildCopiedRecordForTaxYear,
   calculateUKTax,
   getAnnualRecordEndDate,
-  getMonthsForTaxYear,
+  getNextTaxYear,
+  getPreviousTaxYear,
   getRecordAnnualTotalForTaxYear,
   getTaxYearForRecordDate,
   type TaxRecord,
 } from "./tax-calculator.js";
 import { calculateUKEWNIIncomeTaxOnTaxable, UK_EWNI_INCOME_TAX } from "./tax-rules.js";
 import { selectUkTaxVectors } from "./test-vectors/uk-tax.vectors.js";
-import { roundPence } from "./uk-tax-year.js";
+import { getUkTaxYearForDate, roundPence } from "./uk-tax-year.js";
 
 function dividendRecord(amount: number, date: string): TaxRecord {
   return {
@@ -137,37 +138,59 @@ describe("dividend vectors through calculateUKTax", () => {
   });
 });
 
-describe("getTaxYearForRecordDate (whole-month bucketing, matches getMonthsForTaxYear)", () => {
-  it("files a record by its calendar month: April onwards starts the tax year, Jan-Mar ends it", () => {
-    // Month bucketing: tax year N/N+1 owns months N-04 .. (N+1)-03, so a 1-5 April date
-    // belongs to the year starting that April (unlike getTaxYearForDate's 6 April boundary).
-    expect(getTaxYearForRecordDate("2024-04-01")).toBe("2024/25");
-    expect(getTaxYearForRecordDate("2024-04-05")).toBe("2024/25");
-    expect(getTaxYearForRecordDate("2024-04-06")).toBe("2024/25");
+describe("getTaxYearForRecordDate (6 April boundary, BE-08 M1)", () => {
+  it("files 1-5 April under the year that ends on 5 April and 6 April under the next", () => {
+    expect(getTaxYearForRecordDate("2026-04-03")).toBe("2025/26");
+    expect(getTaxYearForRecordDate("2026-04-05")).toBe("2025/26");
+    expect(getTaxYearForRecordDate("2026-04-06")).toBe("2026/27");
+    expect(getTaxYearForRecordDate("2024-04-01")).toBe("2023/24");
     expect(getTaxYearForRecordDate("2025-03-31")).toBe("2024/25");
     expect(getTaxYearForRecordDate("2025-01-15")).toBe("2024/25");
     expect(getTaxYearForRecordDate("2024-12-31")).toBe("2024/25");
-    expect(getTaxYearForRecordDate("2025-04-01")).toBe("2025/26");
   });
 
-  it("agrees with getMonthsForTaxYear for every date's own month", () => {
-    for (const date of ["2024-04-01", "2024-04-05", "2025-03-31", "2026-01-02"]) {
-      const year = getTaxYearForRecordDate(date);
-      expect(getMonthsForTaxYear(year)).toContain(date.substring(0, 7));
+  it("agrees with getUkTaxYearForDate for ISO dates", () => {
+    for (const date of ["2026-04-03", "2026-04-05", "2026-04-06", "2025-03-31", "2026-01-02"]) {
+      expect(getTaxYearForRecordDate(date)).toBe(getUkTaxYearForDate(date));
     }
+  });
+
+  it("totals agree with filing: a one-off record counts in the year it is filed under", () => {
+    for (const date of ["2026-04-01", "2026-04-03", "2026-04-05", "2026-04-06", "2026-03-31"]) {
+      const year = getTaxYearForRecordDate(date);
+      const rec = dividendRecord(100, date);
+      expect(getRecordAnnualTotalForTaxYear(rec, year), date).toBe(100);
+      expect(getRecordAnnualTotalForTaxYear(rec, getNextTaxYear(year)), date).toBe(0);
+      expect(getRecordAnnualTotalForTaxYear(rec, getPreviousTaxYear(year)), date).toBe(0);
+    }
+  });
+
+  it("a monthly record starting 3 April contributes from the earlier year", () => {
+    const rec: TaxRecord = { ...dividendRecord(100, "2026-04-03"), frequency: "monthly" };
+    expect(getRecordAnnualTotalForTaxYear(rec, "2025/26")).toBe(100);
+    expect(getRecordAnnualTotalForTaxYear(rec, "2026/27")).toBe(1200);
+  });
+
+  it("a monthly record ending 5 April stops at the end of the earlier year", () => {
+    const rec: TaxRecord = {
+      ...dividendRecord(100, "2025-04-06"),
+      frequency: "monthly",
+      endDate: "2026-04-05",
+    };
+    expect(getRecordAnnualTotalForTaxYear(rec, "2025/26")).toBe(1200);
+    expect(getRecordAnnualTotalForTaxYear(rec, "2026/27")).toBe(0);
   });
 });
 
-describe("buildCopiedRecordForTaxYear derives the source year by month bucketing", () => {
-  const base = { ...dividendRecord(100, "2024-04-01"), name: "Salary (2024/25)" };
+describe("buildCopiedRecordForTaxYear derives the source year by the 6 April boundary", () => {
+  const base = { ...dividendRecord(100, "2024-04-06"), name: "Salary (2024/25)" };
 
-  // Source year for all four dates is 2024/25 (see above); target 2025/26 => yearDiff 1,
+  // Source year for all three dates is 2024/25 (see above); target 2025/26 => yearDiff 1,
   // so each date moves forward exactly one year with day and month unchanged.
   it.each([
-    ["2024-04-01", "2025-04-01"],
-    ["2024-04-05", "2025-04-05"],
     ["2024-04-06", "2025-04-06"],
-    ["2025-03-31", "2026-03-31"],
+    ["2024-12-31", "2025-12-31"],
+    ["2025-04-05", "2026-04-05"],
   ])("copies %s to 2025/26 as %s", (from, to) => {
     const copy = buildCopiedRecordForTaxYear({ ...base, date: from }, "2025/26");
     expect(copy.date).toBe(to);
@@ -181,9 +204,19 @@ describe("buildCopiedRecordForTaxYear derives the source year by month bucketing
     expect(buildCopiedRecordForTaxYear(leapSource, "2027/28").endDate).toBe("2028-02-29");
   });
 
+  it("copies a 3 April record from the year it is filed under (2025/26 to 2026/27)", () => {
+    const copy = buildCopiedRecordForTaxYear(
+      { ...base, date: "2026-04-03", name: "Salary (2025/26)" },
+      "2026/27",
+    );
+    expect(copy.date).toBe("2027-04-03");
+    expect(copy.name).toBe("Salary (2026/27)");
+    expect(copy.notes).toBe("Copied from 2025/26");
+  });
+
   it("shifts endDate by the same whole-year difference", () => {
     const copy = buildCopiedRecordForTaxYear(
-      { ...base, date: "2024-04-01", endDate: "2025-03-31" },
+      { ...base, date: "2024-04-06", endDate: "2025-03-31" },
       "2025/26",
     );
     expect(copy.endDate).toBe("2026-03-31");
@@ -242,17 +275,17 @@ describe("annual records count once, in the tax year containing their date (E23 
     expect(getRecordAnnualTotalForTaxYear(one, "2024/25")).toBe(0);
   });
 
-  it("record rule boundary: 5 April and 6 April both file under the year starting that April; March ends the earlier year", () => {
-    expect(getRecordAnnualTotalForTaxYear(salary("x", 1000, "2024-04-05"), "2024/25")).toBe(1000);
-    expect(getRecordAnnualTotalForTaxYear(salary("x", 1000, "2024-04-05"), "2023/24")).toBe(0);
+  it("record rule boundary: 5 April ends the earlier year, 6 April starts the next", () => {
+    expect(getRecordAnnualTotalForTaxYear(salary("x", 1000, "2024-04-05"), "2023/24")).toBe(1000);
+    expect(getRecordAnnualTotalForTaxYear(salary("x", 1000, "2024-04-05"), "2024/25")).toBe(0);
     expect(getRecordAnnualTotalForTaxYear(salary("y", 1000, "2024-04-06"), "2024/25")).toBe(1000);
     expect(getRecordAnnualTotalForTaxYear(salary("z", 1000, "2024-03-31"), "2023/24")).toBe(1000);
   });
 
   it("getAnnualRecordEndDate is 5 April closing the record-rule tax year", () => {
     expect(getAnnualRecordEndDate("2024-03-31")).toBe("2024-04-05");
-    expect(getAnnualRecordEndDate("2024-04-01")).toBe("2025-04-05");
-    expect(getAnnualRecordEndDate("2024-04-05")).toBe("2025-04-05");
+    expect(getAnnualRecordEndDate("2024-04-01")).toBe("2024-04-05");
+    expect(getAnnualRecordEndDate("2024-04-05")).toBe("2024-04-05");
     expect(getAnnualRecordEndDate("2024-04-06")).toBe("2025-04-05");
     expect(getAnnualRecordEndDate("2024-12-31")).toBe("2025-04-05");
   });

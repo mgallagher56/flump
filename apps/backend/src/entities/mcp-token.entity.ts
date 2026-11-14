@@ -25,18 +25,18 @@ export class McpToken {
   @Column({ name: "anonymize_institutions", default: true })
   anonymizeInstitutions: boolean;
 
-  @Column({ name: "expires_at", type: "timestamp", nullable: true })
+  @Column({ name: "expires_at", type: "timestamptz", nullable: true })
   expiresAt: Date | null;
 
-  @Column({ name: "last_used_at", type: "timestamp", nullable: true })
+  @Column({ name: "last_used_at", type: "timestamptz", nullable: true })
   lastUsedAt: Date | null;
 
   @Column({ name: "total_tool_calls", default: 0 })
   totalToolCalls: number;
 
-  @Column({ name: "revoked_at", type: "timestamp", nullable: true })
+  @Column({ name: "revoked_at", type: "timestamptz", nullable: true })
   revokedAt: Date | null;
 
-  @CreateDateColumn({ name: "created_at" })
+  @CreateDateColumn({ name: "created_at", type: "timestamptz" })
   createdAt: Date;
 }

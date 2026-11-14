@@ -10,7 +10,8 @@ export class Transaction {
   @PrimaryGeneratedColumn("uuid")
   id: string;
 
-  @Column({ name: "account_id" })
+  /** FK_transactions_account: accounts(id) ON DELETE CASCADE (AccountIdForeignKeys1794358200000). */
+  @Column({ name: "account_id", type: "uuid" })
   accountId: string;
 
   @Column({ name: "user_id" })
@@ -25,6 +26,6 @@ export class Transaction {
   @Column()
   category: string;
 
-  @Column("timestamp", { default: () => "CURRENT_TIMESTAMP" })
+  @Column("timestamptz", { default: () => "CURRENT_TIMESTAMP" })
   timestamp: Date;
 }

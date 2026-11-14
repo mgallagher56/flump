@@ -1156,6 +1156,16 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
         [account, year, month, value],
       );
 
+    // account_id is a uuid keyed to accounts (AccountIdForeignKeys1794358200000).
+    const A1 = "00000000-0000-4000-8000-0000000000a1";
+    const A2 = "00000000-0000-4000-8000-0000000000a2";
+    const insertAccounts = () =>
+      ds.query(
+        `INSERT INTO accounts (id, user_id, name, type, balance, currency)
+         VALUES ($1, 'u', 'A1', 'Current', 0, 'GBP'), ($2, 'u', 'A2', 'Current', 0, 'GBP')`,
+        [A1, A2],
+      );
+
     // Back to the state before this migration: no index, migration forgotten.
     const rerun = async (): Promise<void> => {
       await ds.query(`DROP INDEX "${INDEX}"`);
@@ -1165,13 +1175,15 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
     it("deletes duplicates keeping the max id per account and month, then creates the index", async () => {
       await ds.runMigrations();
       await rerun();
-      await insertDetail("a1", 2026, 1, 100); // dup, oldest
-      await insertDetail("a1", 2026, 1, 150); // dup, middle (highest value, not kept)
-      await insertDetail("a1", 2026, 1, 120); // dup, max id: kept
-      await insertDetail("a1", 2026, 2, 130); // different month
-      await insertDetail("a2", 2026, 1, 900); // different account
+      await insertAccounts();
+      await insertDetail(A1, 2026, 1, 100); // dup, oldest
+      await insertDetail(A1, 2026, 1, 150); // dup, middle (highest value, not kept)
+      await insertDetail(A1, 2026, 1, 120); // dup, max id: kept
+      await insertDetail(A1, 2026, 2, 130); // different month
+      await insertDetail(A2, 2026, 1, 900); // different account
       const keep: { id: number }[] = await ds.query(
-        "SELECT max(id) AS id FROM account_details WHERE account_id = 'a1' AND month = 1",
+        "SELECT max(id) AS id FROM account_details WHERE account_id = $1 AND month = 1",
+        [A1],
       );
 
       await ds.runMigrations();
@@ -1180,22 +1192,22 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
         "SELECT id, account_id, year, month, value::float AS value FROM account_details ORDER BY account_id, month",
       );
       expect(rows).toEqual([
-        { id: keep[0]?.id, account_id: "a1", year: 2026, month: 1, value: 120 },
-        { id: expect.any(Number), account_id: "a1", year: 2026, month: 2, value: 130 },
-        { id: expect.any(Number), account_id: "a2", year: 2026, month: 1, value: 900 },
+        { id: keep[0]?.id, account_id: A1, year: 2026, month: 1, value: 120 },
+        { id: expect.any(Number), account_id: A1, year: 2026, month: 2, value: 130 },
+        { id: expect.any(Number), account_id: A2, year: 2026, month: 1, value: 900 },
       ]);
       expect(await uniqueIndex()).toHaveLength(1);
       expect((await uniqueIndex())[0]?.indexdef).toMatch(
         /UNIQUE INDEX .* \(account_id, year, month\)/,
       );
-      await expect(insertDetail("a1", 2026, 2, 1)).rejects.toThrow(/UQ_account_details/);
+      await expect(insertDetail(A1, 2026, 2, 1)).rejects.toThrow(/UQ_account_details/);
       expect(await applied()).toContain(MIGRATION);
     });
 
     it("is idempotent when the index already exists (synchronize-built database)", async () => {
       await ds.synchronize();
       expect(await uniqueIndex()).toHaveLength(1);
-      await insertDetail("a1", 2026, 1, 5);
+      await insertDetail(A1, 2026, 1, 5);
       await expect(runUpInTransaction(new UniqueAccountDetailMonth1794356000000())).resolves.toBe(
         undefined,
       );
@@ -1226,8 +1238,9 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
         await runner.release();
       }
       expect(await uniqueIndex()).toEqual([]);
-      await insertDetail("a1", 2026, 1, 1);
-      await insertDetail("a1", 2026, 1, 2);
+      await insertAccounts();
+      await insertDetail(A1, 2026, 1, 1);
+      await insertDetail(A1, 2026, 1, 2);
     });
   });
 

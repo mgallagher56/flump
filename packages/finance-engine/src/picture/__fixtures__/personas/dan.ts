@@ -41,7 +41,7 @@ export const dan: PersonaFixture = {
     budgetEntry("dan-b9", "leisure", "Leisure", 350),
   ],
   taxRecords: [
-    // Monthly rent from April 2025 with no end date: 12 months in each of the two years.
+    // Monthly rent from 6 April 2025 with no end date: 12 months in each of the two years.
     taxRecord({
       id: "dan-t1",
       type: "income",
@@ -49,7 +49,7 @@ export const dan: PersonaFixture = {
       category: "rental_income",
       name: "Rent",
       amount: 1100,
-      date: "2025-04-01",
+      date: "2025-04-06",
     }),
     // Agent fees, 10% of rent, monthly.
     taxRecord({
@@ -59,7 +59,7 @@ export const dan: PersonaFixture = {
       category: "legal_management_fees",
       name: "Letting agent",
       amount: 110,
-      date: "2025-04-01",
+      date: "2025-04-06",
     }),
     // Annual records, one per tax year, each counted once in its own year.
     taxRecord({

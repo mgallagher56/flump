@@ -58,9 +58,9 @@ export class TaxRecord {
   @Column({ name: "receipt_data", type: "text", nullable: true, select: false })
   receiptData: string | null;
 
-  @CreateDateColumn({ name: "created_at" })
+  @CreateDateColumn({ name: "created_at", type: "timestamptz" })
   createdAt: Date;
 
-  @UpdateDateColumn({ name: "updated_at" })
+  @UpdateDateColumn({ name: "updated_at", type: "timestamptz" })
   updatedAt: Date;
 }

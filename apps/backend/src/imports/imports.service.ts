@@ -609,8 +609,8 @@ export class ImportsService {
         await m.query(
           `DELETE FROM "accounts" a
            WHERE a."id" = ANY($1::uuid[]) AND a."user_id" = $2 AND a."connection_id" IS NULL
-             AND NOT EXISTS (SELECT 1 FROM "account_details" d WHERE d."account_id" = a."id"::text)
-             AND NOT EXISTS (SELECT 1 FROM "transactions" t WHERE t."account_id" = a."id"::text)`,
+             AND NOT EXISTS (SELECT 1 FROM "account_details" d WHERE d."account_id" = a."id")
+             AND NOT EXISTS (SELECT 1 FROM "transactions" t WHERE t."account_id" = a."id")`,
           [data.createdAccountIds, userId],
         );
       }
@@ -689,7 +689,7 @@ async function readExisting(
   }> = await m.query(
     `SELECT "account_id", "year", "month", "value"::text AS "value",
             to_char("as_of_date", 'YYYY-MM-DD') AS "as_of_date", "source", "import_batch_id"
-     FROM "account_details" WHERE "account_id" = ANY($1::varchar[])${lock ? " FOR UPDATE" : ""}`,
+     FROM "account_details" WHERE "account_id" = ANY($1::uuid[])${lock ? " FOR UPDATE" : ""}`,
     [accountIds],
   );
   for (const r of rows) {

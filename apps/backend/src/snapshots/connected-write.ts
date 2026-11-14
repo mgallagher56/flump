@@ -40,7 +40,7 @@ export async function writeConnectedSnapshot(
          RETURNING 1
        )
        UPDATE "accounts" SET "balance" = $5
-       WHERE "id"::text = $1 AND "user_id" = $2 AND EXISTS (SELECT 1 FROM d)
+       WHERE "id" = $1 AND "user_id" = $2 AND EXISTS (SELECT 1 FROM d)
        RETURNING 1`,
       [w.accountId, w.userId, w.year, w.month, w.value, w.asOfDate],
     );

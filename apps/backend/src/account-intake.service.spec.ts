@@ -169,6 +169,23 @@ describe("AccountIntakeService (Deep Module)", () => {
     expect(snapshot.currency).toBe("GBP");
   });
 
+  it("getPortfolioSnapshot runs two queries: accounts, then their history (audit M24)", async () => {
+    mockAccountRepo.find.mockResolvedValue([
+      { id: "acc-1", userId: "user-123", name: "Cash", type: "Current", balance: 900 },
+    ]);
+    mockAccountDetailRepo.find.mockResolvedValue([
+      { accountId: "acc-1", year: 2026, month: 1, value: 800 },
+      { accountId: "acc-1", year: 2026, month: 2, value: 900 },
+    ]);
+
+    const snapshot = await service.getPortfolioSnapshot("user-123");
+
+    expect(mockAccountRepo.find).toHaveBeenCalledTimes(1);
+    expect(mockAccountDetailRepo.find).toHaveBeenCalledTimes(1);
+    expect(snapshot.totalAssets).toBe(900);
+    expect(snapshot.monthlyHistory.length).toBeGreaterThan(0);
+  });
+
   it("deletes account and cascades delete to associated account details", async () => {
     mockAccountRepo.findOne.mockResolvedValueOnce({ id: "acc-1", userId: "user-123" });
 

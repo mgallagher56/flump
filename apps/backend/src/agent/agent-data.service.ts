@@ -120,11 +120,11 @@ function parsePgArray(value: string[] | string | null | undefined): string[] {
  * `accounts` on (id, user_id), so a row of a deleted or foreign account never comes back.
  * `$1` is the user id; `extra` is appended to the WHERE clause. The planner drives from
  * `account_details` through IDX_account_details_user_account_year_month (user_id first, then each
- * account's months in order) and hash-joins the user's accounts, so the uuid-to-text cast on
- * `a."id"` never needs an index of its own.
+ * account's months in order) and hash-joins the user's accounts (both ids are uuid since
+ * AccountIdForeignKeys1794358200000).
  */
 const ownedDetails = (extra = "") => `FROM "account_details" d
-  JOIN "accounts" a ON a."id"::text = d."account_id" AND a."user_id" = $1
+  JOIN "accounts" a ON a."id" = d."account_id" AND a."user_id" = $1
   WHERE d."user_id" = $1${extra}`;
 
 const MONTH_INDEX = `(d."year" * 12 + d."month" - 1)`;
@@ -186,7 +186,7 @@ export class AgentDataService implements McpUserDataProvider {
     let accounts = "";
     if (range.accountIds) {
       params.push([...range.accountIds]);
-      accounts = ' AND d."account_id" = ANY($4::varchar[])';
+      accounts = ' AND d."account_id"::text = ANY($4::text[])';
     }
     const columns = `d."account_id" AS "accountId", d."year", d."month", d."value", d."source"`;
     // In-range rows, plus each account's latest row before the range (the carry-forward seed).

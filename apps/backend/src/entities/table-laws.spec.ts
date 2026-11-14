@@ -1,5 +1,12 @@
 import "reflect-metadata";
-import { Column, Entity, getMetadataArgsStorage, Index, PrimaryGeneratedColumn } from "typeorm";
+import {
+  Column,
+  CreateDateColumn,
+  Entity,
+  getMetadataArgsStorage,
+  Index,
+  PrimaryGeneratedColumn,
+} from "typeorm";
 import { describe, expect, it } from "vitest";
 import { ENTITIES } from "../config/typeorm.options";
 
@@ -126,5 +133,73 @@ describe("table laws: indexed id columns", () => {
       "law_fixture_unindexed.widget_id",
     ]);
     expect(unindexedIdColumns(Indexed)).toEqual([]);
+  });
+});
+
+// Time zone law (backend audit M5, plan BE-08): every timestamp column is `timestamptz`, so an
+// instant means the same thing whatever time zone Node or Postgres runs in.
+// TimestampsWithTimeZone1794358400000 converted the existing columns; this keeps new ones right.
+const TIMESTAMP_TYPES = new Set(["timestamp", "timestamp without time zone", "datetime"]);
+
+/** `table.column` for every column stored as a timestamp without a time zone. */
+function timestampsWithoutTimeZone(entity: EntityClass): string[] {
+  const table = tableName(entity);
+  return getMetadataArgsStorage()
+    .filterColumns(entity)
+    .filter((c) => {
+      const type = typeof c.options.type === "string" ? c.options.type : undefined;
+      if (type !== undefined) return TIMESTAMP_TYPES.has(type);
+      // No explicit type: date columns and Date-typed properties default to `timestamp`.
+      if (c.mode === "createDate" || c.mode === "updateDate" || c.mode === "deleteDate") {
+        return true;
+      }
+      const target = c.target as { prototype?: object };
+      return Reflect.getMetadata("design:type", target.prototype ?? {}, c.propertyName) === Date;
+    })
+    .map((c) => `${table}.${c.options.name ?? c.propertyName}`);
+}
+
+describe("table laws: timestamps carry a time zone", () => {
+  it("every entity timestamp column is timestamptz", () => {
+    expect(ENTITIES.flatMap(timestampsWithoutTimeZone)).toEqual([]);
+  });
+
+  it("fails a column declared without a time zone, and passes it as timestamptz", () => {
+    @Entity("law_fixture_naive_time")
+    class Naive {
+      @PrimaryGeneratedColumn("uuid")
+      id: string;
+
+      @CreateDateColumn({ name: "created_at" })
+      createdAt: Date;
+
+      @Column({ name: "seen_at", type: "timestamp", nullable: true })
+      seenAt: Date | null;
+
+      @Column({ name: "synced_at", nullable: true })
+      syncedAt: Date;
+    }
+
+    @Entity("law_fixture_aware_time")
+    class Aware {
+      @PrimaryGeneratedColumn("uuid")
+      id: string;
+
+      @CreateDateColumn({ name: "created_at", type: "timestamptz" })
+      createdAt: Date;
+
+      @Column({ name: "seen_at", type: "timestamptz", nullable: true })
+      seenAt: Date | null;
+
+      @Column("date", { name: "as_of_date" })
+      asOfDate: string;
+    }
+
+    expect(timestampsWithoutTimeZone(Naive)).toEqual([
+      "law_fixture_naive_time.created_at",
+      "law_fixture_naive_time.seen_at",
+      "law_fixture_naive_time.synced_at",
+    ]);
+    expect(timestampsWithoutTimeZone(Aware)).toEqual([]);
   });
 });

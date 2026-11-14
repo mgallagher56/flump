@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { IsoDateTime, Money, Percent, Uuid } from "../primitives.js";
+import { MAX_BUDGET_CATEGORY_NAME_LENGTH, MAX_CUSTOM_BUDGET_CATEGORIES } from "./budget.js";
 
 const AvatarUrl = z
   .string()
@@ -54,7 +55,10 @@ export const UpdateProfileRequest = z.object({
   dashboardWidgetOrder: PageKeyList.optional(),
   dashboardWidgetSizes: z.record(z.string(), z.enum(["normal", "wide"])).optional(),
   dashboardWidgetConfig: z.record(z.string(), z.unknown()).optional(),
-  customBudgetCategories: z.array(z.string().min(1).max(64)).max(50).optional(),
+  customBudgetCategories: z
+    .array(z.string().min(1).max(MAX_BUDGET_CATEGORY_NAME_LENGTH))
+    .max(MAX_CUSTOM_BUDGET_CATEGORIES)
+    .optional(),
   onboardingCompleted: z.boolean().optional(),
   // E23 D06/D07 profile facts (null clears a fact back to "not set").
   taxRegion: z.enum(["ENGLAND", "WALES", "SCOTLAND", "NORTHERN_IRELAND"]).nullish(),

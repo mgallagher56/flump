@@ -30,8 +30,16 @@ export const UpdateBudgetEntryRequest = z.object({
   notes: Notes.nullish(),
 });
 
+/** Most custom budget categories one user may keep (audit L2), and the longest name. */
+export const MAX_CUSTOM_BUDGET_CATEGORIES = 50;
+export const MAX_BUDGET_CATEGORY_NAME_LENGTH = 64;
+
+/**
+ * `POST budget-entries/categories`. The handler also refuses a new category once the user has
+ * MAX_CUSTOM_BUDGET_CATEGORIES (400), since the count depends on stored data.
+ */
 export const AddBudgetCategoryRequest = z.object({
-  category: z.string().trim().min(1).max(64),
+  category: z.string().trim().min(1).max(MAX_BUDGET_CATEGORY_NAME_LENGTH),
 });
 
 /**

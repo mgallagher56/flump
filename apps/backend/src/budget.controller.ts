@@ -1,3 +1,4 @@
+import { MAX_BUDGET_CATEGORY_NAME_LENGTH, MAX_CUSTOM_BUDGET_CATEGORIES } from "@flump/api-contract";
 import {
   BadRequestException,
   Body,
@@ -241,6 +242,11 @@ export class BudgetController {
     if (!catName) {
       throw new BadRequestException("Category name is required");
     }
+    if (catName.length > MAX_BUDGET_CATEGORY_NAME_LENGTH) {
+      throw new BadRequestException(
+        `Category name may be at most ${MAX_BUDGET_CATEGORY_NAME_LENGTH} characters`,
+      );
+    }
 
     let profile = await this.userProfileRepository.findOne({ where: { userId } });
     if (!profile) {
@@ -253,6 +259,13 @@ export class BudgetController {
 
     const normalized = catName.toLowerCase();
     if (!currentCategories.includes(normalized)) {
+      // Audit L2: the list lives on the profile row, so it is capped. Re-adding an existing
+      // category stays a no-op success even at the cap.
+      if (currentCategories.length >= MAX_CUSTOM_BUDGET_CATEGORIES) {
+        throw new BadRequestException(
+          `At most ${MAX_CUSTOM_BUDGET_CATEGORIES} custom budget categories are allowed`,
+        );
+      }
       currentCategories.push(normalized);
       profile.customBudgetCategories = currentCategories;
       await this.userProfileRepository.save(profile);

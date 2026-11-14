@@ -11,6 +11,7 @@ import { In, Repository } from "typeorm";
 import { Account } from "./entities/account.entity";
 import { AccountDetail } from "./entities/account-detail.entity";
 import { BankConnection } from "./entities/bank-connection.entity";
+import { Transaction } from "./entities/transaction.entity";
 import { UserProfile } from "./entities/user-profile.entity";
 import { londonDate } from "./snapshots/london-date";
 import { resignHistoryForType, storedBalance } from "./snapshots/stored-balance";
@@ -198,6 +199,28 @@ export function currentUkYearMonth(now: Date = new Date()): { year: number; mont
 
 export interface DeleteAccountResponse {
   success: boolean;
+}
+
+interface AccountDeleteRepositories {
+  accounts: Repository<Account>;
+  details: Repository<AccountDetail>;
+  /** Absent only for test doubles without a manager; the foreign key cascades in a database. */
+  transactions?: Repository<Transaction>;
+}
+
+async function deleteOwnedAccount(
+  repos: AccountDeleteRepositories,
+  userId: string,
+  id: string,
+): Promise<DeleteAccountResponse> {
+  const account = await repos.accounts.findOne({ where: { id, userId } });
+  if (!account) {
+    throw new NotFoundException("Account not found");
+  }
+  await repos.transactions?.delete({ accountId: id });
+  await repos.details.delete({ accountId: id });
+  await repos.accounts.remove(account);
+  return { success: true };
 }
 
 export interface IAccountIntake {
@@ -454,22 +477,44 @@ export class AccountIntakeService implements IAccountIntake {
     });
   }
 
+  /**
+   * Deletes one of the caller's accounts with its history and transactions, in one transaction
+   * (E1 D-06, audit M2). The ownership check runs first, so another user's id deletes nothing and
+   * is a 404. The foreign keys cascade (AccountIdForeignKeys1794358200000); the explicit child
+   * deletes keep the order plain and hold for test doubles without a database.
+   */
   async deleteAccount(userId: string, id: string): Promise<DeleteAccountResponse> {
-    const account = await this.accountRepository.findOne({
-      where: { id, userId },
-    });
-    if (!account) {
-      throw new NotFoundException("Account not found");
+    const manager = this.accountRepository.manager;
+    if (!manager?.transaction) {
+      if (process.env.NODE_ENV === "production") {
+        throw new Error("Account deletes need a TypeORM manager to run transactionally");
+      }
+      return deleteOwnedAccount(
+        { accounts: this.accountRepository, details: this.accountDetailRepository },
+        userId,
+        id,
+      );
     }
-
-    await this.accountDetailRepository.delete({ accountId: id });
-    await this.accountRepository.remove(account);
-    return { success: true };
+    return manager.transaction((em) =>
+      deleteOwnedAccount(
+        {
+          accounts: em.getRepository(Account),
+          details: em.getRepository(AccountDetail),
+          transactions: em.getRepository(Transaction),
+        },
+        userId,
+        id,
+      ),
+    );
   }
 
+  /**
+   * Two queries (audit M24): the user's accounts, then their history. getAccounts already loads
+   * every detail of those accounts, so the snapshot reuses them instead of reading them again.
+   */
   async getPortfolioSnapshot(userId: string): Promise<PortfolioSnapshotResponse> {
     const accounts = await this.getAccounts(userId);
-    const details = await this.getAccountDetails(userId);
+    const details = accounts.flatMap((a) => a.details);
     const snapshot = new PortfolioSnapshot(accounts, details);
 
     return {

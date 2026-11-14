@@ -14,6 +14,6 @@ export class SnapshotCheckin {
   @PrimaryColumn()
   month: string;
 
-  @CreateDateColumn({ name: "completed_at" })
+  @CreateDateColumn({ name: "completed_at", type: "timestamptz" })
   completedAt: Date;
 }

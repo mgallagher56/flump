@@ -111,7 +111,7 @@ async function writeProtected(
            ("account_id", "user_id", "year", "month", "value", "as_of_date", "source",
             "import_batch_id", "updated_at")
          SELECT t.a, $1, t.y, t.m, t.v, t.d, $2, $3, now()
-         FROM unnest($4::varchar[], $5::int[], $6::int[], $7::numeric[], $8::date[])
+         FROM unnest($4::uuid[], $5::int[], $6::int[], $7::numeric[], $8::date[])
            AS t(a, y, m, v, d)
          ON CONFLICT ("account_id", "year", "month") DO UPDATE
            SET "value" = EXCLUDED."value", "as_of_date" = EXCLUDED."as_of_date",
@@ -119,7 +119,7 @@ async function writeProtected(
                "updated_at" = now()
            WHERE "account_details"."source" = 'agent'
               OR ("account_details"."account_id", "account_details"."year", "account_details"."month")
-                 IN (SELECT * FROM unnest($9::varchar[], $10::int[], $11::int[]))
+                 IN (SELECT * FROM unnest($9::uuid[], $10::int[], $11::int[]))
          RETURNING "account_id", "year", "month"`,
         [
           userId,

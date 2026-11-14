@@ -166,8 +166,13 @@ export class FinanceController {
   }
 
   @Get("transactions")
-  async getTransactions(@Req() req: AuthenticatedRequest, @Query("accountId") accountId?: string) {
-    return this.financeService.getTransactions(req.user.id, accountId);
+  async getTransactions(
+    @Req() req: AuthenticatedRequest,
+    @Query("accountId") accountId?: string,
+    @Query("limit") limit?: string,
+    @Query("offset") offset?: string,
+  ) {
+    return this.financeService.getTransactions(req.user.id, accountId, { limit, offset });
   }
 
   @Post("transactions")
