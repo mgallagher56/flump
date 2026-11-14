@@ -400,6 +400,19 @@ export const NON_USER_ENTITIES: Readonly<Record<string, string>> = {
 };
 
 /**
+ * Tables with no entity that reference a registry table, each erased by an ON DELETE CASCADE from
+ * that parent, with the reason they are not exported. The integration test fails on any other
+ * foreign key into the registry.
+ */
+export const CASCADE_ONLY_TABLES: Readonly<Record<string, { parent: string; reason: string }>> = {
+  liability_sign_backfill: {
+    parent: "accounts",
+    reason:
+      "BE-05 migration before-image (old and new balance signs) kept so its down() can restore them; rows go with the account by ON DELETE CASCADE; not exported, as the current balances are in the export",
+  },
+};
+
+/**
  * Columns whose names match /user|owner/i but are not links to a user, each with the reason.
  * Keys are `Entity.property` for the unit test; the integration test uses the column names.
  */

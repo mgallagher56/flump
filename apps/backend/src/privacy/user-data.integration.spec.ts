@@ -25,7 +25,11 @@ import { AccountDeletionService } from "./account-deletion.service";
 import { AccountExportService, ExportDeadlineError } from "./account-export.service";
 import { LoggingBankConsentRevoker } from "./bank-consent-revoker";
 import { tombstoneSubjectHash } from "./tombstone-key";
-import { NOT_USER_LINK_COLUMNS, USER_DATA_REGISTRY } from "./user-data-registry";
+import {
+  CASCADE_ONLY_TABLES,
+  NOT_USER_LINK_COLUMNS,
+  USER_DATA_REGISTRY,
+} from "./user-data-registry";
 
 // BE-04 on real Postgres: erasure completeness, two-user isolation, rollback, retry after a WorkOS
 // failure, export contents and the reset. Drops the public schema, so a throwaway database only:
@@ -232,6 +236,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("user data (real Post
        WHERE tc.table_schema = 'public' AND tc.constraint_type = 'FOREIGN KEY'`,
     );
     for (const fk of fks.filter((f) => registryTables.includes(f.parent))) {
+      if (CASCADE_ONLY_TABLES[fk.child]?.parent === fk.parent) continue;
       expect(registryTables, `${fk.child} references ${fk.parent}`).toContain(fk.child);
     }
   });
@@ -267,6 +272,26 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("user data (real Post
     expect(months).toBe(24);
     await expect(deletion.isErased(USER_A)).resolves.toBe(true);
     await expect(deletion.isErased(USER_B)).resolves.toBe(false);
+  });
+
+  it("erases cascade-only rows (the BE-05 sign before-image) with the user's accounts", async () => {
+    await seed(USER_A, "A");
+    await seed(USER_B, "B");
+    const accountOf = async (userId: string) =>
+      (await ds.getRepository(Account).findBy({ userId }))[0].id;
+    for (const userId of [USER_A, USER_B]) {
+      await ds.query(
+        `INSERT INTO liability_sign_backfill (account_id, table_name, row_id, old_value, new_value)
+         VALUES ($1, 'accounts', $2, 1, -1)`,
+        [await accountOf(userId), "row"],
+      );
+    }
+    const accountB = await accountOf(USER_B);
+    await expect(deletion.deleteAccount(USER_A)).resolves.toEqual({ status: "deleted" });
+    const rows: { account_id: string }[] = await ds.query(
+      "SELECT account_id FROM liability_sign_backfill",
+    );
+    expect(rows.map((r) => r.account_id)).toEqual([accountB]);
   });
 
   it("also removes history and transactions keyed to the user's accounts under another user_id", async () => {
