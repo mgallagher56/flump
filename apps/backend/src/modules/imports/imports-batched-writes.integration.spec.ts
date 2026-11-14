@@ -14,7 +14,7 @@ import { ImportsService } from "./imports.service";
 //     bunx vitest run src/modules/imports/imports-batched-writes.integration.spec.ts
 const TEST_DATABASE_URL = process.env.TEST_DATABASE_URL;
 const NOW = new Date("2026-11-14T12:00:00Z");
-const USER = "user-be13";
+const OWNER_ID = "owner-be13";
 
 describe.skipIf(resolveDbTestMode(process.env) === "skip")(
   "import commit and revert batch their writes (real Postgres)",
@@ -49,7 +49,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
       const [row] = await ds.query(
         `INSERT INTO accounts (user_id, name, type, balance, currency)
          VALUES ($1, $2, $3, $4, 'GBP') RETURNING id`,
-        [USER, name, type, balance],
+        [OWNER_ID, name, type, balance],
       );
       return row.id;
     };
@@ -58,7 +58,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
       await ds.query(
         `INSERT INTO account_details (account_id, user_id, year, month, value, as_of_date, source)
          VALUES ($1, $2, 2026, $3, $4, make_date(2026, $3, 1), 'manual')`,
-        [accountId, USER, month, value],
+        [accountId, OWNER_ID, month, value],
       );
     };
 
@@ -85,7 +85,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
     it("gives each new account its own id and history, then reverts them all", async () => {
       const svc = new ImportsService(ds);
       const staged = await svc.stage(
-        USER,
+        OWNER_ID,
         {
           idempotencyKey: "be13-new-accounts",
           accounts: [
@@ -102,11 +102,11 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
         },
         NOW,
       );
-      const committed = await svc.commit(USER, staged.batchId, {}, NOW);
+      const committed = await svc.commit(OWNER_ID, staged.batchId, {}, NOW);
       expect(committed.counts.new).toBe(4);
 
       const accounts: Array<{ id: string; name: string; type: string; balance: string }> =
-        await ds.query(`SELECT id, name, type, balance FROM accounts WHERE user_id = $1`, [USER]);
+        await ds.query(`SELECT id, name, type, balance FROM accounts WHERE user_id = $1`, [OWNER_ID]);
       const byName = new Map(accounts.map((a) => [a.name, a]));
       expect(accounts).toHaveLength(3);
       expect(byName.get("Stocks ISA")?.type).toBe("Investment");
@@ -117,9 +117,9 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
       expect((await history(byName.get("Credit card")!.id)).map((r) => r.value)).toEqual([-250]);
       expect((await history(byName.get("Rainy day")!.id)).map((r) => r.value)).toEqual([40, 60]);
 
-      const reverted = await svc.revert(USER, staged.batchId);
+      const reverted = await svc.revert(OWNER_ID, staged.batchId);
       expect(reverted.revert).toEqual({ restored: 0, removed: 4, kept: 0 });
-      expect(await ds.query(`SELECT id FROM accounts WHERE user_id = $1`, [USER])).toEqual([]);
+      expect(await ds.query(`SELECT id FROM accounts WHERE user_id = $1`, [OWNER_ID])).toEqual([]);
     });
 
     it("restores every overwritten row and only the balances nothing changed since", async () => {
@@ -131,7 +131,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
       await insertManual(saving, 10, 1900);
 
       const staged = await svc.stage(
-        USER,
+        OWNER_ID,
         {
           idempotencyKey: "be13-overwrite",
           accounts: [
@@ -149,7 +149,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
         NOW,
       );
       const committed = await svc.commit(
-        USER,
+        OWNER_ID,
         staged.batchId,
         {
           accountMap: { cur: current, sav: saving },
@@ -164,7 +164,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
       // The user edits the saver's balance after the commit: revert must keep it.
       await ds.query(`UPDATE accounts SET balance = 2222 WHERE id = $1`, [saving]);
 
-      const reverted = await svc.revert(USER, staged.batchId);
+      const reverted = await svc.revert(OWNER_ID, staged.batchId);
       expect(reverted.revert).toEqual({ restored: 3, removed: 2, kept: 0 });
 
       expect(await history(current)).toEqual([
