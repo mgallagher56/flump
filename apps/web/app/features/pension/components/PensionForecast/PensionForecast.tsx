@@ -211,9 +211,7 @@ export const PensionForecast: FC<PensionForecastProps> = ({
   return (
     <ScenarioZone
       announcement={
-        scenario.isModified
-          ? `estimated income ${money(result.monthlyRetirementIncome)} a month ${whenLabel}`
-          : ""
+        scenario.isModified ? `estimated pot ${money(result.finalBalance)} ${whenLabel}` : ""
       }
       id={PENSION_SCENARIO_ZONE_ID}
       isModified={scenario.isModified}

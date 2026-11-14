@@ -37,8 +37,10 @@ const Harness: FC<{
 };
 
 describe("<PensionDetails />", () => {
-  it("shows the saved facts in one card, one figure per row", () => {
+  it("keeps the saved facts behind a closed drawer, one figure per row when opened", () => {
     render(<Harness />);
+    expect(document.querySelector("dl")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Show your details" }));
     expect(screen.getByRole("heading", { level: 2, name: "Your details" })).toBeDefined();
     const rows = Array.from(document.querySelectorAll("dl > div")).map((r) => r.textContent);
     expect(rows).toEqual([
@@ -51,11 +53,13 @@ describe("<PensionDetails />", () => {
 
   it("labels the backend default rates as assumed, once", () => {
     render(<Harness ratesAssumed />);
+    fireEvent.click(screen.getByRole("button", { name: "Show your details" }));
     expect(screen.getAllByText(/Assumed: the auto-enrolment minimum/)).toHaveLength(1);
   });
 
   it("reads the contribution method as Not set until the user saves one", () => {
     render(<Harness methodSet={false} ratesAssumed />);
+    fireEvent.click(screen.getByRole("button", { name: "Show your details" }));
     expect(screen.getByText("Method").nextElementSibling?.textContent).toBe("Not set");
     expect(screen.queryByText(/^Salary sacrifice$/)).toBeNull();
   });

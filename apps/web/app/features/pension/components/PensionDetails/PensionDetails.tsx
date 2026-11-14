@@ -1,4 +1,12 @@
-import { Button, CurrencyInput, controlProps, FormField, Icon, PercentInput } from "@repo/ui";
+import {
+  Button,
+  CollapsibleDrawer,
+  CurrencyInput,
+  controlProps,
+  FormField,
+  Icon,
+  PercentInput,
+} from "@repo/ui";
 import { Check, Pencil, X } from "lucide-react";
 import { type FC, type FormEvent, type ReactNode, useState } from "react";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
@@ -256,8 +264,12 @@ export const PensionDetails: FC<PensionDetailsProps> = ({
           onEditingChange={onEditingChange}
           onSave={onSave}
         />
-      ) : (
-        <>
+      ) : null}
+      {children}
+      {/* The saved facts sit behind a quiet drawer, closed by default, so the first view keeps
+          to the headline and the strip (E16 P1.1). "Edit details" stays visible above. */}
+      {!isEditing && (
+        <CollapsibleDrawer title="Show your details" variant="quiet">
           <dl className={factList()}>
             <div className={factRow()}>
               <dt>Salary</dt>
@@ -279,9 +291,8 @@ export const PensionDetails: FC<PensionDetailsProps> = ({
             </div>
           </dl>
           {ratesAssumed && <p className={mutedNote()}>{ASSUMED_RATE_LABEL}</p>}
-        </>
+        </CollapsibleDrawer>
       )}
-      {children}
     </section>
   );
 };

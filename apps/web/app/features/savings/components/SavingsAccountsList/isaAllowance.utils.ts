@@ -1,9 +1,16 @@
 /** The adult ISA allowance for a tax year. */
 export const ISA_ALLOWANCE = 20_000;
 
-/** An account counts as an ISA when its name says so ("Cash ISA", "Stocks and Shares ISA"). */
-export const isIsaAccount = (name: string | null | undefined): boolean =>
-  /\bisa\b/i.test(name ?? "");
+/**
+ * An account counts towards the adult allowance when its name says it is an ISA ("Cash ISA",
+ * "Stocks and Shares ISA", "Lifetime ISA", "LISA"). Junior ISAs ("Junior ISA", "JISA") have their
+ * own allowance and are left out.
+ */
+export const isIsaAccount = (name: string | null | undefined): boolean => {
+  const text = name ?? "";
+  if (/\bjunior\s+isa\b|\bjisa\b/i.test(text)) return false;
+  return /\b(?:l?isa)\b/i.test(text);
+};
 
 /**
  * Months of the current tax year (from 6 April) that have started, counting the current one:

@@ -44,8 +44,3 @@ export const allowanceNote = cva({
     fontVariantNumeric: "tabular-nums",
   },
 });
-
-/** "a month" beside the outcome: body size, so the figure never wraps at 375. */
-export const outcomeSuffix = cva({
-  base: { textStyle: "body.md", color: "text.secondary", whiteSpace: "nowrap" },
-});

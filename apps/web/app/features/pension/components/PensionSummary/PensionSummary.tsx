@@ -100,7 +100,7 @@ export const PensionSummary: FC<PensionSummaryProps> = ({
                   ? ASSUMED_RATES_CAPTION
                   : includesPotPayments
                     ? "You, your employer and payments into your pots"
-                    : undefined
+                    : "You and your employer"
             }
             value={monthlyTotal}
             valueFormat={{ fractionDigits: 0 }}

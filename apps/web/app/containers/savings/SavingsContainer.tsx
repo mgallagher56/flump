@@ -20,9 +20,11 @@ import {
   type DepositTimelineValues,
   depositOutcomeText,
 } from "~/features/savings/components/DepositTimeline";
-import { estimateIsaUsed, IsaAllowance } from "~/features/savings/components/IsaAllowance";
 import { PayRiseScenario } from "~/features/savings/components/PayRiseScenario";
-import { SavingsAccountsList } from "~/features/savings/components/SavingsAccountsList";
+import {
+  estimateIsaUsed,
+  SavingsAccountsList,
+} from "~/features/savings/components/SavingsAccountsList";
 import {
   DEFAULT_FORECAST_YEARS,
   forecastOutcomeText,
@@ -151,10 +153,12 @@ export const SavingsContainer: FC = () => {
   );
   const deposit = useScenarioState(savedDeposit);
 
-  const isModified = forecast.isModified || deposit.isModified;
+  // A handed-over pay rise is a scenario input too: it marks the zone modified and Reset clears it.
+  const isModified = forecast.isModified || deposit.isModified || payRiseMonthly > 0;
   const resetScenario = () => {
     forecast.reset();
     deposit.reset();
+    if (payRiseMonthly > 0) removePayRise();
   };
   const announcement =
     tool === "forecast"
@@ -192,11 +196,7 @@ export const SavingsContainer: FC = () => {
             totalSavingsBalance={saved.total}
           />
 
-          <SavingsAccountsList accounts={savingsAccounts} />
-
-          {saved.isaUsed !== null && saved.isaUsed > 0 ? (
-            <IsaAllowance used={saved.isaUsed} />
-          ) : null}
+          <SavingsAccountsList accounts={savingsAccounts} isaUsed={saved.isaUsed} />
 
           <ScenarioZone
             announcement={announcement}
