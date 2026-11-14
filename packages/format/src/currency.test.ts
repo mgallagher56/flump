@@ -1,20 +1,25 @@
 import { describe, expect, it } from "vitest";
-import { formatCurrency, formatPercent, speakCurrency } from "./currency.js";
+import { formatCompactCurrency, formatCurrency, formatPercent, speakCurrency } from "./currency.js";
 
 describe("formatCurrency", () => {
-  it("formats GBP with grouping and two decimals", () => {
-    expect(formatCurrency(1234.5)).toBe("£1,234.50");
-    expect(formatCurrency(1234.5, "GBP")).toBe("£1,234.50");
+  it("formats whole pounds by default, with grouping", () => {
+    expect(formatCurrency(1234.5)).toBe("£1,235");
+    expect(formatCurrency(1234.4, "GBP")).toBe("£1,234");
   });
-  it("uses a true minus for negatives", () => {
-    expect(formatCurrency(-1234.5)).toBe("−£1,234.50");
+  it("shows pence with fractionDigits: 2", () => {
+    expect(formatCurrency(1234.5, "GBP", { fractionDigits: 2 })).toBe("£1,234.50");
+  });
+  it("uses the hyphen-minus that Money shows for negatives", () => {
+    expect(formatCurrency(-1234)).toBe("-£1,234");
+    expect(formatCurrency(-1234.5, "GBP", { fractionDigits: 2 })).toBe("-£1,234.50");
   });
   it("does not show a minus for values that round to zero", () => {
-    expect(formatCurrency(-0.001)).toBe("£0.00");
-    expect(formatCurrency(-0)).toBe("£0.00");
+    expect(formatCurrency(-0.001, "GBP", { fractionDigits: 2 })).toBe("£0.00");
+    expect(formatCurrency(-0.4)).toBe("£0");
+    expect(formatCurrency(-0)).toBe("£0");
   });
-  it("renders 0 as £0.00 but null/undefined as the placeholder", () => {
-    expect(formatCurrency(0)).toBe("£0.00");
+  it("renders 0 as £0 but null/undefined as the placeholder", () => {
+    expect(formatCurrency(0)).toBe("£0");
     expect(formatCurrency(null)).toBe("Not set");
     expect(formatCurrency(undefined)).toBe("Not set");
     expect(formatCurrency(null, "GBP", { placeholder: "-" })).toBe("-");
@@ -24,59 +29,55 @@ describe("formatCurrency", () => {
     expect(formatCurrency(Number.POSITIVE_INFINITY)).toBe("Not set");
     expect(formatCurrency(Number.NEGATIVE_INFINITY, "GBP", { placeholder: "n/a" })).toBe("n/a");
   });
-  it("supports other currencies", () => {
-    expect(formatCurrency(10, "EUR")).toBe("€10.00");
+  it("supports other currencies with Intl's en-GB symbols", () => {
+    expect(formatCurrency(10, "EUR")).toBe("€10");
+    expect(formatCurrency(5, "USD")).toBe("US$5");
   });
-  it("falls back without throwing for unknown or malformed codes", () => {
+  it("falls back to GBP without throwing for malformed or empty codes", () => {
+    expect(formatCurrency(5, "not-a-code")).toBe("£5");
+    expect(formatCurrency(-5, "not-a-code")).toBe("-£5");
+    expect(formatCurrency(5, "")).toBe("£5");
     expect(() => formatCurrency(5, "ZZZ")).not.toThrow();
-    expect(formatCurrency(5, "ZZZ")).toContain("5.00");
-    expect(() => formatCurrency(5, "not-a-code")).not.toThrow();
-    expect(formatCurrency(5, "not-a-code")).toContain("5.00");
-    expect(formatCurrency(-5, "not-a-code")).toBe("−NOT-A-CODE 5.00");
   });
   it("compacts large values", () => {
-    expect(formatCurrency(950, "GBP", { compact: true })).toBe("£950");
+    expect(formatCompactCurrency(950)).toBe("£950");
+    expect(formatCompactCurrency(1500)).toBe("£1.5k");
+    expect(formatCompactCurrency(250000)).toBe("£250k");
+    expect(formatCompactCurrency(1234567)).toBe("£1.2m");
+    expect(formatCompactCurrency(2_500_000_000)).toBe("£2.5bn");
+    expect(formatCompactCurrency(3_000_000_000_000)).toBe("£3tn");
+    expect(formatCompactCurrency(-1500)).toBe("-£1.5k");
+    expect(formatCompactCurrency(0)).toBe("£0");
+    expect(formatCompactCurrency(null)).toBe("Not set");
     expect(formatCurrency(1500, "GBP", { compact: true })).toBe("£1.5k");
-    expect(formatCurrency(250000, "GBP", { compact: true })).toBe("£250k");
-    expect(formatCurrency(1234567, "GBP", { compact: true })).toBe("£1.2m");
-    expect(formatCurrency(2_500_000_000, "GBP", { compact: true })).toBe("£2.5bn");
-    expect(formatCurrency(-1500, "GBP", { compact: true })).toBe("−£1.5k");
-    expect(formatCurrency(999_999, "GBP", { compact: true })).toBe("£1m");
-    expect(formatCurrency(0, "GBP", { compact: true })).toBe("£0");
-    expect(formatCurrency(null, "GBP", { compact: true })).toBe("Not set");
+    expect(formatCompactCurrency(1500, "USD")).toBe("US$1.5k");
   });
-  it("rounds up across unit boundaries when compacting", () => {
-    expect(formatCurrency(999.5, "GBP", { compact: true })).toBe("£1k");
-    expect(formatCurrency(999.4, "GBP", { compact: true })).toBe("£999");
-    expect(formatCurrency(999_950, "GBP", { compact: true })).toBe("£1m");
-    expect(formatCurrency(999_950_000, "GBP", { compact: true })).toBe("£1bn");
-  });
-  it("uses the narrow symbol for USD regardless of call order", () => {
-    expect(formatCurrency(5, "USD")).toBe("$5.00");
-    expect(formatCurrency(1500, "USD", { compact: true })).toBe("$1.5k");
-    expect(formatCurrency(5, "USD")).toBe("$5.00");
-  });
-  it("falls back to GBP for an empty currency code", () => {
-    expect(formatCurrency(5, "")).toBe("£5.00");
-    expect(speakCurrency(5, "")).toBe("5 pounds");
+  it("rounds across unit boundaries when compacting", () => {
+    expect(formatCompactCurrency(999.5)).toBe("£999.5");
+    expect(formatCompactCurrency(999.96)).toBe("£1k");
+    expect(formatCompactCurrency(999_999)).toBe("£1m");
+    expect(formatCompactCurrency(999_950)).toBe("£1m");
+    expect(formatCompactCurrency(999_950_000)).toBe("£1bn");
+    expect(formatCompactCurrency(-0.04)).toBe("£0");
   });
   it("stays correct after the formatter cache is exercised heavily", () => {
     for (let i = 0; i < 120; i++) formatPercent(1.5, { fractionDigits: i % 20 });
-    expect(formatCurrency(1234.5)).toBe("£1,234.50");
+    expect(formatCurrency(1234.5, "GBP", { fractionDigits: 2 })).toBe("£1,234.50");
   });
 });
 
 describe("formatPercent", () => {
-  it("formats percentage points", () => {
-    expect(formatPercent(4.5)).toBe("4.5%");
-    expect(formatPercent(4)).toBe("4%");
+  it("formats percentage points with fixed digits (0 by default)", () => {
+    expect(formatPercent(4.5, { fractionDigits: 1 })).toBe("4.5%");
+    expect(formatPercent(4, { fractionDigits: 1 })).toBe("4.0%");
+    expect(formatPercent(4.4)).toBe("4%");
     expect(formatPercent(4.567, { fractionDigits: 2 })).toBe("4.57%");
   });
   it("accepts fractions", () => {
-    expect(formatPercent(0.045, { fraction: true })).toBe("4.5%");
+    expect(formatPercent(0.045, { fraction: true, fractionDigits: 1 })).toBe("4.5%");
   });
-  it("uses a true minus and placeholder", () => {
-    expect(formatPercent(-2.5)).toBe("−2.5%");
+  it("uses the hyphen-minus and the placeholder", () => {
+    expect(formatPercent(-2.5, { fractionDigits: 1 })).toBe("-2.5%");
     expect(formatPercent(null)).toBe("Not set");
     expect(formatPercent(Number.NaN, { placeholder: "-" })).toBe("-");
     expect(formatPercent(-0.001)).toBe("0%");
@@ -84,7 +85,7 @@ describe("formatPercent", () => {
   it("clamps fractionDigits so it never throws", () => {
     expect(() => formatPercent(1.5, { fractionDigits: 100 })).not.toThrow();
     expect(() => formatPercent(1.5, { fractionDigits: -3 })).not.toThrow();
-    expect(() => formatPercent(1.5, { fractionDigits: Number.NaN })).not.toThrow();
+    expect(formatPercent(1.5, { fractionDigits: Number.NaN })).toBe("2%");
     expect(formatPercent(4.56, { fractionDigits: -3 })).toBe("5%");
   });
 });
@@ -97,6 +98,7 @@ describe("speakCurrency", () => {
     expect(speakCurrency(0.5)).toBe("50 pence");
     expect(speakCurrency(0)).toBe("0 pounds");
     expect(speakCurrency(2)).toBe("2 pounds");
+    expect(speakCurrency(5, "")).toBe("5 pounds");
   });
   it("speaks negatives, placeholders and other currencies", () => {
     expect(speakCurrency(-3.2)).toBe("minus 3 pounds and 20 pence");

@@ -95,3 +95,52 @@ export function formatTaxYear(startYear: number): string {
   const end = String((startYear + 1) % 100).padStart(2, "0");
   return `${startYear}/${end}`;
 }
+
+const LONG_MONTHS = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+];
+
+export interface FormatMonthYearOptions extends FormatOptions {
+  /** "short" gives "Mar 2030" (the default), "long" gives "March 2030". */
+  month?: "short" | "long";
+}
+
+/** "Mar 2030". Hand-built like `formatDate`, so ICU's "Sept" cannot leak in on any engine. */
+export function formatMonthYear(input: DateInput, options: FormatMonthYearOptions = {}): string {
+  const { placeholder = DEFAULT_PLACEHOLDER, month = "short" } = options;
+  const parts = parseCalendar(input);
+  if (!parts) return placeholder;
+  return `${(month === "long" ? LONG_MONTHS : MONTHS)[parts.m]} ${parts.y}`;
+}
+
+const plural = (n: number, unit: string): string => `${n} ${unit}${n === 1 ? "" : "s"}`;
+
+/**
+ * A number of months as "3 years 4 months", dropping a zero part ("2 years", "5 months"); zero
+ * reads "0 months". Rounds to whole months. Negative or non-finite input gives the placeholder.
+ */
+export function formatDuration(
+  months: number | null | undefined,
+  options: FormatOptions = {},
+): string {
+  const { placeholder = DEFAULT_PLACEHOLDER } = options;
+  if (typeof months !== "number" || !Number.isFinite(months) || months < 0) return placeholder;
+  const total = Math.round(months);
+  const years = Math.floor(total / 12);
+  const rest = total % 12;
+  const parts: string[] = [];
+  if (years > 0) parts.push(plural(years, "year"));
+  if (rest > 0 || years === 0) parts.push(plural(rest, "month"));
+  return parts.join(" ");
+}

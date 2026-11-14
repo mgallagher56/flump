@@ -3,7 +3,8 @@ import { defineConfig } from "vitest/config";
 export default defineConfig({
   test: {
     include: ["src/**/*.{test,spec}.ts"],
-    exclude: ["node_modules", "dist"],
+    // fixtures.bun.test.ts imports bun:test and runs under `bun test` (see package.json).
+    exclude: ["node_modules", "dist", "src/**/*.bun.test.ts"],
     coverage: {
       provider: "v8",
       include: ["src/**/*.ts"],
