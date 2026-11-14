@@ -7,7 +7,7 @@ import {
   Landmark,
   type LucideIcon,
   PiggyBank,
-  Receipt,
+  ReceiptPoundSterling,
   TrendingUp,
 } from "lucide-react";
 import { css } from "../../../styled-system/css";
@@ -30,7 +30,7 @@ const DOMAINS: { domain: IconTileDomain; icon: LucideIcon; label: string }[] = [
   { domain: "savings", icon: PiggyBank, label: "Savings" },
   { domain: "debt", icon: CreditCard, label: "Debts" },
   { domain: "pay", icon: Banknote, label: "Take-home pay" },
-  { domain: "tax", icon: Receipt, label: "Tax" },
+  { domain: "tax", icon: ReceiptPoundSterling, label: "Tax" },
 ];
 
 const list = css({

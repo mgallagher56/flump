@@ -2,8 +2,12 @@ import { sva } from "../../../styled-system/css";
 
 /**
  * E16 4.4 scenario zone: lighter than the saved "Your details" card, so the illustration never
- * outweighs saved facts. A `surface.subtle` fill with a 1px dashed outline reads as "not saved"
- * through shape and words, never colour alone. Never `surface.hero`.
+ * outweighs saved facts. No fill: the zone shows the page canvas through a 1px dashed outline, which
+ * reads as "not saved" through shape and words, never colour alone. A fill could not be quieter than
+ * a card in both themes: `surface.subtle` sits below the card in light (#f0ebe2 under #fffdf9) but
+ * above it in dark (#2e2a26 over #272320), so in dark the zone outweighed "Your details", and
+ * `surface.sunken` reads as a hole in dark. The canvas is the quietest surface in both. Never
+ * `surface.hero`.
  */
 export const scenarioZone = sva({
   slots: [
@@ -22,7 +26,7 @@ export const scenarioZone = sva({
       display: "flex",
       flexDirection: "column",
       gap: "4",
-      backgroundColor: "surface.subtle",
+      backgroundColor: "transparent",
       borderWidth: "1px",
       borderStyle: "dashed",
       borderColor: "border",

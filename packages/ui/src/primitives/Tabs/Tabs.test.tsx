@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { SegmentedTabs, scrollSelectedTabIntoView, Tabs } from "./Tabs";
+import { SegmentedTabs, scrollSelectedTabIntoView, Tabs, updateOverflowCue } from "./Tabs";
 
 describe("Tabs Primitive", () => {
   const items = [
@@ -47,6 +47,29 @@ describe("Tabs Primitive", () => {
     scrollSelectedTabIntoView(scroller);
     expect(scroller.scrollLeft).toBe(150);
     expect(() => scrollSelectedTabIntoView(null)).not.toThrow();
+  });
+
+  it("marks the edges that hide tabs, and neither when the list fits", () => {
+    const scroller = document.createElement("div");
+    const size = (scrollWidth: number, clientWidth: number, scrollLeft: number) => {
+      Object.defineProperty(scroller, "scrollWidth", { value: scrollWidth, configurable: true });
+      Object.defineProperty(scroller, "clientWidth", { value: clientWidth, configurable: true });
+      scroller.scrollLeft = scrollLeft;
+      updateOverflowCue(scroller);
+    };
+    size(300, 300, 0);
+    expect(scroller.hasAttribute("data-overflow-start")).toBe(false);
+    expect(scroller.hasAttribute("data-overflow-end")).toBe(false);
+    size(500, 300, 0);
+    expect(scroller.hasAttribute("data-overflow-start")).toBe(false);
+    expect(scroller.hasAttribute("data-overflow-end")).toBe(true);
+    size(500, 300, 100);
+    expect(scroller.hasAttribute("data-overflow-start")).toBe(true);
+    expect(scroller.hasAttribute("data-overflow-end")).toBe(true);
+    size(500, 300, 200);
+    expect(scroller.hasAttribute("data-overflow-start")).toBe(true);
+    expect(scroller.hasAttribute("data-overflow-end")).toBe(false);
+    expect(() => updateOverflowCue(null)).not.toThrow();
   });
 
   it("keeps every panel mounted and hides the inactive ones", () => {

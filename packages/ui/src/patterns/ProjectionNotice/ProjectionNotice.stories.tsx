@@ -12,13 +12,26 @@ const meta: Meta<typeof ProjectionNotice> = {
 export default meta;
 type Story = StoryObj<typeof ProjectionNotice>;
 
+/** The alpha channel of a computed CSS colour in any notation (`transparent`, `rgba()`, `oklch()`). */
+const alphaOf = (colour: string): number => {
+  if (colour === "transparent") return 0;
+  const match = colour.match(/^[a-z]+\((.*)\)$/i);
+  if (!match?.[1]) throw new Error(`Unrecognised colour: ${colour}`);
+  const parts = match[1].split(/[\s,/]+/).filter(Boolean);
+  // Three channels means no alpha: fully opaque.
+  if (parts.length < 4) return 1;
+  const alpha = parts[parts.length - 1] as string;
+  return alpha.endsWith("%") ? Number.parseFloat(alpha) / 100 : Number.parseFloat(alpha);
+};
+
 const defaultPlay: Story["play"] = async ({ canvasElement }) => {
   const canvas = within(canvasElement);
   const note = canvas.getByRole("note", { name: "Guidance, not advice" });
   await expect(note).toHaveTextContent(PROJECTION_NOTICE_TEXT);
   await expect(note).toHaveAttribute("data-notice", "projection");
-  // The quiet note style has no fill in either theme.
-  await expect(getComputedStyle(note).backgroundColor).toBe("rgba(0, 0, 0, 0)");
+  // The quiet note style has no fill in either theme. The browser may report a transparent
+  // background as `rgba(0, 0, 0, 0)` or `oklch(0 0 0 / 0)`, so check the alpha, whatever the notation.
+  await expect(alphaOf(getComputedStyle(note).backgroundColor)).toBe(0);
 };
 
 /** The quiet `note` style: secondary text, small info icon, top hairline, no fill. */

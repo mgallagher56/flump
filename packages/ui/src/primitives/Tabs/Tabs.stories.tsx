@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { expect, fn, userEvent, within } from "@storybook/test";
+import { expect, fn, userEvent, waitFor, within } from "@storybook/test";
 import { useState } from "react";
 import { css } from "../../../styled-system/css";
 import { type TabItem, Tabs, type TabsSize } from "./Tabs";
@@ -117,11 +117,32 @@ const itemCountsPlay: Story["play"] = async ({ canvasElement }) => {
   await expect(ni).toHaveFocus();
   await expect(ni).toHaveAttribute("aria-selected", "true");
   await userEvent.keyboard("{End}");
-  await expect(four.getByRole("tab", { name: "Self assessment" })).toHaveFocus();
+  const last = four.getByRole("tab", { name: "Self assessment" });
+  await expect(last).toHaveFocus();
+  // Focus never replaces the selected pill: the focused, selected tab keeps its card fill.
+  const fourList = canvas.getByRole("tablist", { name: "Four sections" });
+  await expect(getComputedStyle(last).backgroundColor).not.toBe(
+    getComputedStyle(fourList).backgroundColor,
+  );
+  await expect(getComputedStyle(last).outlineStyle).toBe("solid");
 
-  // No tab list widens the page at 375px: a long list scrolls inside itself.
+  // Scroll cue: a clipped edge fades; a list that fits has no fade.
+  const scrollerOf = (name: string) =>
+    canvas.getByRole("tablist", { name }).parentElement as HTMLElement;
+  await expect(scrollerOf("Two views")).not.toHaveAttribute("data-overflow-end");
+  await expect(scrollerOf("Two views")).not.toHaveAttribute("data-overflow-start");
+  await waitFor(() => expect(scrollerOf("Three tools")).toHaveAttribute("data-overflow-end"));
+  await expect(getComputedStyle(scrollerOf("Three tools")).maskImage).toContain("gradient");
+  // Scrolled to the last tab: the start edge hides tabs, the end edge does not.
+  await waitFor(() => expect(scrollerOf("Four sections")).toHaveAttribute("data-overflow-start"));
+  await expect(scrollerOf("Four sections")).not.toHaveAttribute("data-overflow-end");
+
+  // No tab list widens the page on a small phone (mobile1, 320px): the track (the `tablist`) may be
+  // wider than the screen, but it scrolls inside its scroller, and the scroller stays on screen.
   for (const list of canvas.getAllByRole("tablist")) {
-    await expect(list.getBoundingClientRect().right).toBeLessThanOrEqual(window.innerWidth);
+    const scroller = list.parentElement as HTMLElement;
+    await expect(scroller).toHaveAttribute("data-tabs-scroller");
+    await expect(scroller.getBoundingClientRect().right).toBeLessThanOrEqual(window.innerWidth);
   }
   await expect(document.documentElement.scrollWidth).toBeLessThanOrEqual(window.innerWidth);
   // Each Tabs root stays within its parent's width, however long its list.
@@ -134,7 +155,7 @@ const itemCountsPlay: Story["play"] = async ({ canvasElement }) => {
   }
 };
 
-/** Two, three and four items at 375px (the maximum is four), plus the small size. */
+/** Two, three and four items on a small phone (mobile1, 320px; the maximum is four), plus the small size. */
 export const ItemCounts: Story = {
   render: () => <ItemCountsGrid />,
   parameters: { layout: "padded", viewport: { defaultViewport: "mobile1" } },

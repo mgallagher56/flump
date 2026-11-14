@@ -51,6 +51,7 @@ import {
   formGrid,
   listItemButton,
   listItemMeta,
+  listItemName,
   listReset,
   mutedText,
   outcome,
@@ -229,7 +230,9 @@ const TemplateChart: FC<{ points: readonly ChartPoint[] }> = ({ points }) => {
           </text>
         </g>
       ))}
-      {firstProjected === -1 ? null : (
+      {/* The band marks where the projection starts; when every point is projected (the simulator)
+          the dashed line already says so, and a band over the whole plot would mark nothing. */}
+      {firstProjected <= 0 ? null : (
         <rect
           className={chartBand}
           height={H - PAD.t - PAD.b}
@@ -396,7 +399,7 @@ export const DashboardTemplate: FC = () => {
               <tr data-list-row="" key={a.id}>
                 <Td>
                   <span className={listItemMeta}>
-                    <span>{a.name}</span>
+                    <span className={listItemName}>{a.name}</span>
                     <span className={mutedText}>{a.kind}</span>
                   </span>
                 </Td>
@@ -607,12 +610,18 @@ export const SimulatorTemplate: FC = () => {
                       <dd className={figureText}>{paidOff}</dd>
                     </div>
                     <div className={outcomeSupportItem}>
+                      {/* At the saved figures the scenario is the plan: say so rather than
+                          "Less interest than your plan £0" beside the saved extra payment. */}
                       <dt>
-                        {interestSaved >= 0
-                          ? "Less interest than your plan"
-                          : "More interest than your plan"}
+                        {interestSaved === 0
+                          ? "Interest against your plan"
+                          : interestSaved > 0
+                            ? "Less interest than your plan"
+                            : "More interest than your plan"}
                       </dt>
-                      <dd className={figureText}>{pounds(Math.abs(interestSaved))}</dd>
+                      <dd className={figureText}>
+                        {interestSaved === 0 ? "No change" : pounds(Math.abs(interestSaved))}
+                      </dd>
                     </div>
                   </dl>
                 ) : null}
@@ -783,7 +792,7 @@ export const ListDetailTemplate: FC = () => {
                   type="button"
                 >
                   <span className={listItemMeta}>
-                    <span>{a.name}</span>
+                    <span className={listItemName}>{a.name}</span>
                     <span className={mutedText}>{a.kind}</span>
                   </span>
                   <Money size="sm" value={a.balance} />
@@ -821,7 +830,7 @@ export const EmptyTemplate: FC = () => (
     <div className={centred}>
       <EmptyState
         action={<Button>Add an account</Button>}
-        description="Add a current account, savings or pension and your totals will appear here. It only takes a minute."
+        description="Add a current account, savings or pension and your totals will appear here."
         headingLevel="h2"
         illustration={<Illustration scene="empty-accounts" />}
         title="No accounts yet"

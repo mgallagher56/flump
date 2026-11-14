@@ -147,6 +147,8 @@ export const proseText = css({
 });
 
 export const listItemMeta = css({ display: "flex", flexDirection: "column", gap: "1" });
+/** The account name leads the row: body size in primary text, above the smaller secondary type. */
+export const listItemName = css({ textStyle: "body.md", color: "text.primary" });
 
 export const figureText = css({ fontVariantNumeric: "tabular-nums", fontWeight: "semibold" });
 

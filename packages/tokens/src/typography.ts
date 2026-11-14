@@ -58,6 +58,13 @@ const TABULAR = "tabular-nums";
  * `fontSizes` scale; `scripts/check-style-literals.ts` ratchets raw sizes out. Sentence case
  * everywhere: no style sets uppercase or caps tracking (E16 P7.3).
  */
+/**
+ * Plus Jakarta Sans has a narrow space (about 0.2em), and the headings' tight tracking narrows it
+ * further, so at 600 to 700 weight "Your details" read as "Yourdetails". Widening word gaps only
+ * restores the space without loosening the letters. Web only: React Native has no word spacing.
+ */
+const HEADING_WORD_SPACING = "0.05em";
+
 export const textStyles = {
   display: {
     value: {
@@ -66,6 +73,7 @@ export const textStyles = {
       fontWeight: "700",
       lineHeight: "1.2",
       letterSpacing: "-0.02em",
+      wordSpacing: HEADING_WORD_SPACING,
     },
   },
   heading: {
@@ -76,6 +84,7 @@ export const textStyles = {
         fontWeight: "700",
         lineHeight: "1.2",
         letterSpacing: "-0.02em",
+        wordSpacing: HEADING_WORD_SPACING,
       },
     },
     lg: {
@@ -85,6 +94,7 @@ export const textStyles = {
         fontWeight: "600",
         lineHeight: "1.3",
         letterSpacing: "-0.01em",
+        wordSpacing: HEADING_WORD_SPACING,
       },
     },
     md: {
@@ -94,6 +104,7 @@ export const textStyles = {
         fontWeight: "600",
         lineHeight: "1.3",
         letterSpacing: "-0.01em",
+        wordSpacing: HEADING_WORD_SPACING,
       },
     },
     sm: {
@@ -103,6 +114,7 @@ export const textStyles = {
         fontWeight: "600",
         lineHeight: "1.4",
         letterSpacing: "0em",
+        wordSpacing: HEADING_WORD_SPACING,
       },
     },
   },

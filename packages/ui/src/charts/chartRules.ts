@@ -8,7 +8,7 @@ export const CHART_RULES = {
   gradientMaxOpacity: 0.15,
   /**
    * Donut and pie charts show at most this many slices, with the tail grouped as "Other"
-   * (E16 ruling U6: 5). Pass it to `capSeriesWithOther(items, CHART_RULES.donutMaxSlices)`.
+   * (E16 ruling U6: 5). `capSeriesWithOther` defaults to it.
    */
   donutMaxSlices: 5,
   /** Up to this many series are labelled at the line end; a legend only above it (E16 P10.2). */

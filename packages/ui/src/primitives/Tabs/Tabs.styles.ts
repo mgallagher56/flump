@@ -11,6 +11,10 @@ export const tabsRoot = cva({
  * width, so a grid or flex parent can never be pushed wider than the page by a long tab list. As a
  * block it takes its parent's full width; the triggers' focus ring is drawn inside the trigger
  * (`outlineOffset: -2px`), so the scroll clip never cuts it.
+ *
+ * Scroll cue: when tabs are hidden past an edge, Tabs sets `data-overflow-start` or
+ * `data-overflow-end` and that edge fades out through a mask, so a clipped list reads as "more this
+ * way". The mask is static (no animation), so it needs no reduced-motion handling.
  */
 export const tabsScroller = cva({
   base: {
@@ -22,6 +26,14 @@ export const tabsScroller = cva({
     overflowY: "hidden",
     overscrollBehaviorX: "contain",
     scrollbarWidth: "thin",
+    "--tabs-fade-start": "0px",
+    "--tabs-fade-end": "0px",
+    "&[data-overflow-start], &[data-overflow-end]": {
+      maskImage:
+        "linear-gradient(to right, transparent 0, black var(--tabs-fade-start), black calc(100% - var(--tabs-fade-end)), transparent 100%)",
+    },
+    "&[data-overflow-start]": { "--tabs-fade-start": "token(spacing.8, 2rem)" },
+    "&[data-overflow-end]": { "--tabs-fade-end": "token(spacing.8, 2rem)" },
   },
 });
 
