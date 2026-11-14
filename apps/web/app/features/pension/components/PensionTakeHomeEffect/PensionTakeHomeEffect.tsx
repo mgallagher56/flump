@@ -40,8 +40,8 @@ export const PENSION_TAKE_HOME_COPY = {
   tableTitle: "Where the change in take-home pay comes from",
   partColumn: "Part",
   changeColumn: "Change a year",
-  noChange:
-    "Move your contribution away from your saved figure to see the estimated effect on take-home pay.",
+  noChangeValue: "No change",
+  noChange: "Move your contribution to see the estimated effect on take-home pay.",
   missing: "Add your employment type, salary and pension details in",
   missingLink: "Profile",
   missingTail: "to see the estimated effect on take-home pay.",
@@ -113,14 +113,21 @@ export const PensionTakeHomeEffect: FC<PensionTakeHomeEffectProps> = ({ effect }
     );
   }
   if (!result) {
+    // At the saved contribution the outcome slot still reads as an outcome: "No change".
     return (
-      <p
-        className={effectNote()}
+      <div
+        className={effectRoot()}
         data-testid="pension-take-home-effect"
         id="pension-take-home-effect"
       >
-        {PENSION_TAKE_HOME_COPY.noChange}
-      </p>
+        <div>
+          <p className={outcomeLabel()}>{PENSION_TAKE_HOME_COPY.outcomeLabel}</p>
+          <p className={outcomeValue()} data-figure="takeHome.delta">
+            {PENSION_TAKE_HOME_COPY.noChangeValue}
+          </p>
+        </div>
+        <p className={effectNote()}>{PENSION_TAKE_HOME_COPY.noChange}</p>
+      </div>
     );
   }
 

@@ -12,10 +12,12 @@ describe("nearDataAxis", () => {
     expect(savings.ticks).toEqual([20_000, 30_000, 40_000]);
   });
 
-  it("keeps £0 when the data starts near it, and never goes below it", () => {
+  it("starts just below small positive data rather than at £0, and never goes below it", () => {
     const axis = nearDataAxis([9_000, 205_628]);
-    expect(axis.domain[0]).toBe(0);
-    expect(axis.ticks[0]).toBe(0);
+    expect(axis.domain[0]).toBe(5_000);
+    expect(axis.ticks).toEqual([50_000, 100_000, 150_000, 200_000]);
+    expect(nearDataAxis([100, 205_628]).domain[0]).toBe(0);
+    expect(nearDataAxis([0, 205_628]).ticks[0]).toBe(0);
   });
 
   it("always gives 3 or 4 ticks inside the domain", () => {

@@ -46,7 +46,10 @@ describe("<ForecastChart />", () => {
   it("is a named figure with a one-sentence summary and no figures in the default view", () => {
     const { container } = renderChart();
     const figure = screen.getByRole("figure", { name: "Pot each year" });
-    expect(figure.textContent).toContain("Your pot each year to retirement, in today's money.");
+    // The summary is for screen readers (the outcome above shows the end figure).
+    expect(figure.textContent).toMatch(
+      /Your estimated pot each year to retirement, in today's money, reaching about £[\d,]+\./,
+    );
     expect(screen.queryByText(/legend|Projected total/i)).toBeNull();
     expect(countFigures(container)).toBe(0);
   });

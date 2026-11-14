@@ -170,7 +170,20 @@ import { expectPageRules } from "@repo/ui/testing";
 import TaxContainer, { TAX_UNVERIFIED_LEAD } from "./TaxContainer";
 
 const openDrawer = (name: RegExp) => fireEvent.click(screen.getByRole("button", { name }));
-const openRecords = () => openDrawer(/^All records/);
+/** The records drawer lists the selected year's records, so it opens on 2024/25. */
+const openRecords = () => {
+  fireEvent.change(screen.getByLabelText("Tax year"), { target: { value: "2024/25" } });
+  openDrawer(/^Records$/);
+};
+/** Picks an item from a menu opened by the named button. */
+const pickFromMenu = async (
+  user: ReturnType<typeof userEvent.setup>,
+  trigger: string,
+  item: string,
+) => {
+  await user.click(screen.getByRole("button", { name: trigger }));
+  await user.click(await screen.findByRole("menuitem", { name: item }));
+};
 
 /** Buttons a person can reach without opening a drawer, menu or dialog. */
 const firstViewButtons = () => screen.getAllByRole("button");
@@ -220,14 +233,13 @@ describe("TaxContainer, opted in", () => {
     expect(container.textContent).not.toMatch(/Figures are estimates for guidance only/);
   });
 
-  it("has no next £1,000 explorer and no £100,000 banner, only a link to take-home", () => {
+  it("has no next £1,000 explorer, no £100,000 banner and no link away", () => {
     const { container } = render(<TaxContainer />);
     expect(container.querySelector("#tax-pay-planner")).toBeNull();
     expect(container.textContent).not.toMatch(/next £1,000/i);
     expect(container.textContent).not.toContain("£100,000");
     expect(screen.queryByRole("alert")).toBeNull();
-    const link = screen.getByRole("link", { name: /more pay is worth/ });
-    expect(link.getAttribute("href")).toBe("/app/take-home");
+    expect(screen.queryByRole("link", { name: /more pay is worth/ })).toBeNull();
   });
 
   it("shows summary figures without pence and no 0 records badges", () => {
@@ -324,11 +336,12 @@ describe("TaxContainer, opted in", () => {
   });
 
   describe("destructive confirmations", () => {
-    it("confirms a record delete by name, then submits", () => {
+    it("confirms a record delete by name, then submits", async () => {
+      const user = userEvent.setup();
       mockSubmit.mockClear();
       render(<TaxContainer />);
       openRecords();
-      fireEvent.click(screen.getByRole("button", { name: "Delete Flat rent (2024/25)" }));
+      await pickFromMenu(user, "Actions for Flat rent (2024/25)", "Delete");
       expect(mockSubmit).not.toHaveBeenCalled();
       expect(screen.getByText("Delete Flat rent (2024/25)?")).toBeDefined();
       fireEvent.click(screen.getByRole("button", { name: "Delete record" }));
@@ -338,11 +351,12 @@ describe("TaxContainer, opted in", () => {
       );
     });
 
-    it("a failed record delete shows the error inline and keeps the dialog open", () => {
+    it("a failed record delete shows the error inline and keeps the dialog open", async () => {
+      const user = userEvent.setup();
       fetcherData.current = null;
       const { rerender } = render(<TaxContainer />);
       openRecords();
-      fireEvent.click(screen.getAllByRole("button", { name: /^Delete .*\(2024\/25\)$/ })[0]);
+      await pickFromMenu(user, "Actions for Flat rent (2024/25)", "Delete");
       fireEvent.click(screen.getByRole("button", { name: "Delete record" }));
       fetcherData.current = { success: false, error: "We could not reach the server. Try again." };
       rerender(<TaxContainer />);
@@ -356,21 +370,22 @@ describe("TaxContainer, opted in", () => {
       fetcherData.current = null;
     });
 
-    it("cancelling a record delete submits nothing", () => {
+    it("cancelling a record delete submits nothing", async () => {
+      const user = userEvent.setup();
       mockSubmit.mockClear();
       render(<TaxContainer />);
       openRecords();
-      fireEvent.click(screen.getAllByRole("button", { name: /^Delete .*\(2024\/25\)$/ })[0]);
+      await pickFromMenu(user, "Actions for Flat rent (2024/25)", "Delete");
       fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
       expect(mockSubmit).not.toHaveBeenCalled();
     });
 
-    it("confirms a tax year delete with the record count and ids", () => {
+    it("confirms a tax year delete, from the menu beside the year, with the count and ids", async () => {
+      const user = userEvent.setup();
       mockSubmit.mockClear();
       render(<TaxContainer />);
       fireEvent.change(screen.getByLabelText("Tax year"), { target: { value: "2024/25" } });
-      openRecords();
-      fireEvent.click(screen.getByRole("button", { name: "Delete all records for 2024/25" }));
+      await pickFromMenu(user, "More for 2024/25", "Delete all records for 2024/25");
       const dialog = screen.getByRole("alertdialog");
       expect(dialog.textContent).toContain("Delete all 6 records for 2024/25?");
       expect(dialog.textContent).toContain("cannot be undone");
@@ -387,7 +402,7 @@ describe("TaxContainer, opted in", () => {
     it("never offers a delete-year control for an empty year", () => {
       mockLoaderRecords = [];
       const { unmount } = render(<TaxContainer />);
-      expect(screen.queryByRole("button", { name: /^Delete all records/ })).toBeNull();
+      expect(screen.queryByRole("button", { name: /^More for/ })).toBeNull();
       unmount();
       mockLoaderRecords = mockRecords;
     });
@@ -473,13 +488,12 @@ describe("TaxContainer, opted in", () => {
       mockLoaderRecords = mockRecords;
     });
 
-    it("views the receipt through the receipt route, never an inline data URL", () => {
+    it("views the receipt through the receipt route, never an inline data URL", async () => {
+      const user = userEvent.setup();
       mockLoaderRecords = [withReceipt];
       const { container } = render(<TaxContainer />);
       openRecords();
-      fireEvent.click(
-        screen.getByRole("button", { name: "View receipt for Flat repairs (2024/25)" }),
-      );
+      await pickFromMenu(user, "Actions for Flat repairs (2024/25)", "View receipt");
       const img = document.body.querySelector('img[src="/app/tax/receipts/rec-receipt"]');
       expect(img).not.toBeNull();
       expect(container.innerHTML + document.body.innerHTML).not.toContain("data:");

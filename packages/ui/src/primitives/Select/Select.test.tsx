@@ -63,4 +63,16 @@ describe("Select", () => {
     );
     expect(screen.getByRole("option", { name: "Joint" })).toBeTruthy();
   });
+
+  it("does not set tabular figures on word options, so hyphens stay narrow (R2-8)", () => {
+    render(
+      <Select
+        aria-label="Employment"
+        options={[{ value: "self", label: "Self-employed" }]}
+        value="self"
+        onChange={vi.fn()}
+      />,
+    );
+    expect(screen.getByRole("combobox").className).not.toContain("tabular-nums");
+  });
 });

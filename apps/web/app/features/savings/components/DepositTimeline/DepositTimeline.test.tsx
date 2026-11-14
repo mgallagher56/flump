@@ -3,6 +3,7 @@ import { useState } from "react";
 import { describe, expect, it, vi } from "vitest";
 import {
   DEPOSIT_EMPTY_TEXT,
+  DEPOSIT_OUTCOME_LABEL,
   DepositTimeline,
   type DepositTimelineValues,
   defaultDepositTarget,
@@ -51,10 +52,10 @@ describe("depositOutcomeText", () => {
 });
 
 describe("defaults and ranges", () => {
-  it("opens on the next round £1,000 above the starting amount", () => {
-    expect(defaultDepositTarget(3200)).toBe(4000);
-    expect(defaultDepositTarget(4000)).toBe(5000);
-    expect(defaultDepositTarget(null)).toBe(1000);
+  it("opens on the next round £5,000 above the starting amount", () => {
+    expect(defaultDepositTarget(3200)).toBe(5000);
+    expect(defaultDepositTarget(5000)).toBe(10000);
+    expect(defaultDepositTarget(null)).toBe(5000);
   });
 
   it("sets slider ranges from the saved figures that hold them", () => {
@@ -89,8 +90,8 @@ describe("<DepositTimeline />", () => {
     const onChange = vi.fn();
     render(<Harness initial={values({ targetDeposit: 6000 })} onChange={onChange} />);
     expect(screen.getByTestId("deposit-timeline-outcome").textContent).toBe("3 months");
-    expect(screen.getByText("Estimated time to reach £6,000")).toBeDefined();
-    expect(screen.getByText("Reached by").nextElementSibling?.textContent).toBe("February 2027");
+    expect(screen.getByText(DEPOSIT_OUTCOME_LABEL)).toBeDefined();
+    expect(screen.getByText("Reached by").nextElementSibling?.textContent).toBe("Feb 2027");
     expect(screen.getByText("Still to save").nextElementSibling?.textContent).toBe("£1,000");
     fireEvent.change(screen.getByLabelText("Target amount"), { target: { value: "20000" } });
     expect(onChange).toHaveBeenCalled();
@@ -98,9 +99,8 @@ describe("<DepositTimeline />", () => {
     // The tool starts from the saved total, which the zone already states: two sliders only.
     expect(screen.queryByLabelText("Starting amount")).toBeNull();
     expect(screen.getAllByRole("slider")).toHaveLength(2);
-    expect(
-      screen.getByText("This estimate does not include interest or changes in investment value."),
-    ).toBeDefined();
+    // The label carries the one assumption, so there is no separate note.
+    expect(screen.queryByText(/does not include interest/)).toBeNull();
   });
 
   it("states the reached and not-reachable cases in words", () => {

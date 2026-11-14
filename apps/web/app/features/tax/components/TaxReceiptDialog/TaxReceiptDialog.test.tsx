@@ -21,6 +21,22 @@ describe("TaxReceiptDialog", () => {
     );
     const img = screen.getByRole("img", { name: "Receipt for Laptop" });
     expect(img.getAttribute("src")).toBe("/app/tax/receipts/r4");
+    const open = screen.getByRole("link", { name: "Open" });
+    expect(open.getAttribute("target")).toBe("_blank");
+    expect(open.getAttribute("href")).toBe("/app/tax/receipts/r4");
+  });
+
+  it("shows a file tile with the name when the image cannot be shown", () => {
+    render(
+      <TaxReceiptDialog
+        record={{ ...pdf, receiptMimeType: "image/png", receiptFilename: "laptop.png" }}
+        onClose={vi.fn()}
+      />,
+    );
+    fireEvent.error(screen.getByRole("img", { name: "Receipt for Laptop" }));
+    expect(screen.queryByRole("img", { name: "Receipt for Laptop" })).toBeNull();
+    expect(screen.getByText("No preview for this file")).toBeDefined();
+    expect(screen.getByText("laptop.png")).toBeDefined();
   });
 
   it("is closed with no record and calls onClose from the Close button", () => {

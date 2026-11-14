@@ -9,7 +9,10 @@ import {
   EmptyState,
   FormField,
   Icon,
+  IconButton,
   Illustration,
+  Menu,
+  type MenuEntry,
   Money,
   Select,
   Table,
@@ -18,23 +21,28 @@ import {
   THead,
   Th,
 } from "@repo/ui";
-import { Paperclip, Trash2 } from "lucide-react";
+import { cx } from "@repo/ui/styled-system/css";
+import { MoreHorizontal } from "lucide-react";
 import { type FC, useMemo, useState } from "react";
-import { FREQUENCY_LABEL, recordAmount, SOURCE_LABEL, SOURCE_OPTIONS } from "../../tax-labels";
+import { categoryShortLabel, recordAmount, SOURCE_LABEL, SOURCE_OPTIONS } from "../../tax-labels";
 import {
-  actions,
+  amountCell,
+  amountUnit,
   cellMuted,
   filters,
-  iconButton,
   nameButton,
   pager,
   pagerButtons,
   root,
   secondaryLine,
   summary,
+  visuallyHidden,
+  wideOnly,
 } from "./TaxRecordsTable.styles";
 
 export const TAX_RECORDS_PAGE_SIZE = 10;
+/** The source and type filters show only past this many records in the year. */
+export const TAX_RECORDS_FILTER_FROM = 8;
 
 const dateFormat = new Intl.DateTimeFormat("en-GB", {
   day: "numeric",
@@ -47,12 +55,22 @@ const formatDate = (iso: string) => {
 };
 const countFormat = new Intl.NumberFormat("en-GB");
 
-const categoryName = (catId: string, source: TaxSource) =>
-  getCategoriesForSource(source).find((c) => c.id === catId)?.name ?? catId;
+const categoryName = (catId: string, source: TaxSource) => {
+  const category = getCategoriesForSource(source).find((c) => c.id === catId);
+  return category ? categoryShortLabel(category) : catId;
+};
+
+/** How often an amount is paid, after the amount: "£1,500 a month". A one-off has none. */
+const PER: Record<TaxRecord["frequency"], string> = {
+  "one-off": "",
+  monthly: "a month",
+  annual: "a year",
+};
 
 export interface TaxRecordsTableProps {
   records: TaxRecord[];
-  availableYears: string[];
+  /** The page's tax year: the table lists the records that count towards it. */
+  taxYear: string;
   onEdit: (record: TaxRecord) => void;
   onDelete: (id: string) => void;
   onViewReceipt: (record: TaxRecord) => void;
@@ -60,30 +78,39 @@ export interface TaxRecordsTableProps {
 }
 
 /**
- * Every tax record, filterable by year, source and type, ten to a page. Each record's name is a
- * button that opens it for editing, so the table works from the keyboard (E8 J-03).
+ * The records that count towards the page's tax year, ten to a page. Each record's name is a
+ * button that opens it for editing, so the table works from the keyboard (E8 J-03); its other
+ * actions are in one menu at the end of the row. Under `md` the row is the name, its category,
+ * the amount and the menu; the date and source columns join from `md`. The source column shows
+ * only when the year has more than one source, and the filters only past eight records.
  */
 export const TaxRecordsTable: FC<TaxRecordsTableProps> = ({
   records,
-  availableYears,
+  taxYear,
   onEdit,
   onDelete,
   onViewReceipt,
   onAdd,
 }) => {
-  const [year, setYear] = useState("all");
   const [source, setSource] = useState<"all" | TaxSource>("all");
   const [type, setType] = useState<"all" | "income" | "expense">("all");
   const [page, setPage] = useState(0);
 
+  const inYear = useMemo(
+    () => records.filter((r) => isRecordActiveInTaxYear(r, taxYear)),
+    [records, taxYear],
+  );
+  const showFilters = inYear.length > TAX_RECORDS_FILTER_FROM;
+  const sources = new Set(inYear.map((r) => r.source));
+  const showSource = sources.size > 1;
+
   const filtered = useMemo(
     () =>
-      records
-        .filter((r) => year === "all" || isRecordActiveInTaxYear(r, year))
-        .filter((r) => source === "all" || r.source === source)
-        .filter((r) => type === "all" || r.type === type)
+      inYear
+        .filter((r) => !showFilters || source === "all" || r.source === source)
+        .filter((r) => !showFilters || type === "all" || r.type === type)
         .sort((a, b) => b.date.localeCompare(a.date) || a.name.localeCompare(b.name)),
-    [records, year, source, type],
+    [inYear, showFilters, source, type],
   );
 
   const pageCount = Math.max(1, Math.ceil(filtered.length / TAX_RECORDS_PAGE_SIZE));
@@ -98,13 +125,13 @@ export const TaxRecordsTable: FC<TaxRecordsTableProps> = ({
       setPage(0);
     };
 
-  if (records.length === 0) {
+  if (inYear.length === 0) {
     return (
       <EmptyState
         headingLevel="h3"
         illustration={<Illustration scene="empty-accounts" size="sm" />}
-        title="No records added"
-        description="Add income or a cost and it will appear here, with every tax year it counts towards."
+        title={`No records for ${taxYear}`}
+        description="Add income or a cost and it will appear here."
         action={
           <Button type="button" onClick={onAdd}>
             Add record
@@ -116,76 +143,84 @@ export const TaxRecordsTable: FC<TaxRecordsTableProps> = ({
 
   return (
     <div className={root()}>
-      <div className={filters()}>
-        <FormField label="Tax year">
-          {(field) => (
-            <Select id={field.id} value={year} onChange={(e) => onFilter(setYear)(e.target.value)}>
-              <option value="all">All tax years</option>
-              {availableYears.map((y) => (
-                <option key={y} value={y}>
-                  {y}
-                </option>
-              ))}
-            </Select>
-          )}
-        </FormField>
-        <FormField label="Income source">
-          {(field) => (
-            <Select
-              id={field.id}
-              value={source}
-              onChange={(e) => onFilter(setSource)(e.target.value as "all" | TaxSource)}
-            >
-              <option value="all">All sources</option>
-              {SOURCE_OPTIONS.map((o) => (
-                <option key={o.value} value={o.value}>
-                  {o.label}
-                </option>
-              ))}
-            </Select>
-          )}
-        </FormField>
-        <FormField label="Type">
-          {(field) => (
-            <Select
-              id={field.id}
-              value={type}
-              onChange={(e) => onFilter(setType)(e.target.value as "all" | "income" | "expense")}
-            >
-              <option value="all">Income and costs</option>
-              <option value="income">Income</option>
-              <option value="expense">Costs</option>
-            </Select>
-          )}
-        </FormField>
-      </div>
+      {showFilters ? (
+        <div className={filters()}>
+          <FormField label="Income source">
+            {(field) => (
+              <Select
+                id={field.id}
+                value={source}
+                onChange={(e) => onFilter(setSource)(e.target.value as "all" | TaxSource)}
+              >
+                <option value="all">All sources</option>
+                {SOURCE_OPTIONS.filter((o) => sources.has(o.value)).map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
+              </Select>
+            )}
+          </FormField>
+          <FormField label="Type">
+            {(field) => (
+              <Select
+                id={field.id}
+                value={type}
+                onChange={(e) => onFilter(setType)(e.target.value as "all" | "income" | "expense")}
+              >
+                <option value="all">Income and costs</option>
+                <option value="income">Income</option>
+                <option value="expense">Costs</option>
+              </Select>
+            )}
+          </FormField>
+        </div>
+      ) : null}
 
-      <p aria-live="polite" className={summary()}>
-        {filtered.length === 0
-          ? "No records match these filters."
-          : `Showing ${countFormat.format(start + 1)} to ${countFormat.format(
-              start + rows.length,
-            )} of ${countFormat.format(filtered.length)} records`}
-      </p>
+      {showFilters || pageCount > 1 ? (
+        <p aria-live="polite" className={summary()}>
+          {filtered.length === 0
+            ? "No records match these filters."
+            : `Showing ${countFormat.format(start + 1)} to ${countFormat.format(
+                start + rows.length,
+              )} of ${countFormat.format(filtered.length)} records`}
+        </p>
+      ) : null}
 
       {rows.length > 0 ? (
-        <Table caption="Tax records">
+        <Table caption={`Records for ${taxYear}`}>
           <THead>
             <tr>
               <Th>Record</Th>
-              <Th>Source</Th>
-              <Th>Date</Th>
-              <Th>How often</Th>
+              {showSource ? <Th className={wideOnly()}>Source</Th> : null}
+              <Th className={wideOnly()}>Date</Th>
               <Th numeric>Amount</Th>
               <Th numeric>
-                <span>Actions</span>
+                <span className={visuallyHidden()}>Actions</span>
               </Th>
             </tr>
           </THead>
           <TBody>
             {rows.map((record) => {
               const amount = recordAmount(record);
-              const isIncome = record.type === "income";
+              const per = PER[record.frequency];
+              const items: MenuEntry[] = [
+                ...(record.hasReceipt
+                  ? [
+                      {
+                        id: `receipt-${record.id}`,
+                        label: "View receipt",
+                        onSelect: () => onViewReceipt(record),
+                      },
+                    ]
+                  : []),
+                {
+                  id: `delete-${record.id}`,
+                  label: "Delete",
+                  tone: "danger" as const,
+                  onSelect: () => onDelete(record.id),
+                },
+              ];
               return (
                 <tr key={record.id}>
                   <Td>
@@ -197,40 +232,31 @@ export const TaxRecordsTable: FC<TaxRecordsTableProps> = ({
                       {record.endDate ? `, until ${formatDate(record.endDate)}` : ""}
                     </span>
                   </Td>
-                  <Td className={cellMuted()}>{SOURCE_LABEL[record.source]}</Td>
-                  <Td className={cellMuted()}>{formatDate(record.date)}</Td>
-                  <Td className={cellMuted()}>{FREQUENCY_LABEL[record.frequency]}</Td>
+                  {showSource ? (
+                    <Td className={cx(cellMuted(), wideOnly())}>{SOURCE_LABEL[record.source]}</Td>
+                  ) : null}
+                  <Td className={cx(cellMuted(), wideOnly())}>{formatDate(record.date)}</Td>
                   <Td numeric>
-                    <Money
-                      fractionDigits={Number.isInteger(amount) ? 0 : 2}
-                      size="sm"
-                      signDisplay="always"
-                      value={isIncome ? amount : -amount}
-                    />
+                    <span className={amountCell()}>
+                      <Money
+                        fractionDigits={Number.isInteger(amount) ? 0 : 2}
+                        size="sm"
+                        value={record.type === "income" ? amount : -amount}
+                      />
+                      {per ? <span className={amountUnit()}>{per}</span> : null}
+                    </span>
                   </Td>
                   <Td numeric>
-                    <span className={actions()}>
-                      {record.hasReceipt ? (
-                        <button
-                          aria-label={`View receipt for ${record.name}`}
-                          className={iconButton()}
-                          title="View receipt"
-                          type="button"
-                          onClick={() => onViewReceipt(record)}
-                        >
-                          <Icon icon={Paperclip} size="sm" />
-                        </button>
-                      ) : null}
-                      <button
-                        aria-label={`Delete ${record.name}`}
-                        className={iconButton()}
-                        title={`Delete ${record.name}`}
-                        type="button"
-                        onClick={() => onDelete(record.id)}
-                      >
-                        <Icon icon={Trash2} size="sm" />
-                      </button>
-                    </span>
+                    <Menu
+                      align="end"
+                      aria-label={`Actions for ${record.name}`}
+                      items={items}
+                      trigger={
+                        <IconButton label={`Actions for ${record.name}`} size="sm">
+                          <Icon icon={MoreHorizontal} size="sm" />
+                        </IconButton>
+                      }
+                    />
                   </Td>
                 </tr>
               );

@@ -79,7 +79,7 @@ describe("formatting", () => {
     expect(formatDuration(36)).toBe("3 years");
   });
   it("shows a computed rate to 1 decimal place", () => {
-    expect(formatRate(4)).toBe("4.0%");
+    expect(formatRate(4)).toBe("4%");
     expect(formatRate(6.375)).toBe("6.4%");
   });
 });

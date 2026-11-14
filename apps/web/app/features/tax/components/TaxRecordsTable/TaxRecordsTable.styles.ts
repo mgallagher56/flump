@@ -7,7 +7,7 @@ export const root = cva({
 export const filters = cva({
   base: {
     display: "grid",
-    gridTemplateColumns: { base: "1fr", sm: "repeat(3, minmax(0, 1fr))" },
+    gridTemplateColumns: { base: "1fr", sm: "repeat(2, minmax(0, 1fr))" },
     gap: "3",
     alignItems: "end",
   },
@@ -60,33 +60,26 @@ export const cellMuted = cva({
   base: { color: "text.secondary", fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap" },
 });
 
-export const actions = cva({
-  base: { display: "inline-flex", gap: "1", justifyContent: "flex-end" },
+/** Columns that join the row from `md`: under it a row is the name, the amount and the menu. */
+export const wideOnly = cva({
+  base: { display: { base: "none", md: "table-cell" } },
 });
 
-export const iconButton = cva({
+/** The amount, then how often it is paid ("£1,500 a month"). */
+export const amountCell = cva({
   base: {
     display: "inline-flex",
-    alignItems: "center",
-    justifyContent: "center",
-    width: "8",
-    height: "8",
-    borderRadius: "md",
-    border: "none",
-    background: "transparent",
-    color: "text.secondary",
-    cursor: "pointer",
-    _hover: { backgroundColor: "surface.subtle", color: "text.primary" },
-    _focusVisible: {
-      outlineWidth: "2px",
-      outlineStyle: "solid",
-      outlineColor: "border.focusRing",
-      outlineOffset: "1px",
-    },
-    "@media (pointer: coarse)": { width: "touch", height: "touch" },
-    // Forced colours drop the transparent fill: keep a visible edge on each icon button.
-    "@media (forced-colors: active)": { border: "1px solid ButtonText" },
+    // Under `md` "a month" goes under the amount, so the row keeps room for its menu.
+    flexDirection: { base: "column", md: "row" },
+    alignItems: { base: "flex-end", md: "baseline" },
+    gap: { base: "0", md: "1" },
+    whiteSpace: "nowrap",
+    fontVariantNumeric: "tabular-nums",
   },
+});
+
+export const amountUnit = cva({
+  base: { textStyle: "body.sm", color: "text.muted" },
 });
 
 export const pager = cva({
@@ -101,4 +94,9 @@ export const pager = cva({
 
 export const pagerButtons = cva({
   base: { display: "inline-flex", gap: "2" },
+});
+
+/** The actions column's heading is for screen readers: the menu button names itself. */
+export const visuallyHidden = cva({
+  base: { srOnly: true },
 });

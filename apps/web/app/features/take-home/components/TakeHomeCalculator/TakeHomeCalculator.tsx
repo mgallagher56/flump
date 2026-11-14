@@ -28,7 +28,6 @@ import { NextPoundExplorer, useNextPoundScenario } from "../NextPoundExplorer";
 import { PayRiseTool } from "../PayRiseTool";
 import { monthlyPayParts, TakeHomeBreakdown } from "../TakeHomeBreakdown";
 import {
-  answerCard,
   calculatorRoot,
   detailHint,
   detailItem,
@@ -36,6 +35,7 @@ import {
   detailList,
   detailNote,
   detailValue,
+  payStrip,
   zoneLink,
 } from "./TakeHomeCalculator.styles";
 
@@ -45,8 +45,6 @@ const TOOLS = [
   { value: "next-pound", label: EXPLORER_COPY.tabNextThousand },
 ];
 const PROFILE_HREF = "/app/profile";
-/** Caption for the two cards that come off pay, so all three cards carry one. */
-const OFF_CAPTION = "Comes off your pay each month";
 
 /** Plain names for the facts take-home needs, for the one setup prompt. */
 const MISSING_LABELS: Partial<Record<MissingKey, string>> = {
@@ -74,7 +72,7 @@ export interface TakeHomeCalculatorProps {
 
 /**
  * Take-home page body: saved salary as the hero, the take-home estimate as the first KPI,
- * "Where your pay goes" from saved figures,
+ * every part of the pay behind one quiet "Show details",
  * then one ScenarioZone holding the what-ifs ("A pay rise", "The next £1,000").
  */
 export const TakeHomeCalculator: FC<TakeHomeCalculatorProps> = ({
@@ -213,21 +211,13 @@ export const TakeHomeCalculator: FC<TakeHomeCalculatorProps> = ({
   // Take-home, then what comes off in two cards, so the three add up to the monthly pay before
   // tax. With no pension or student loan the second and third are Income Tax and National
   // Insurance, so the strip stays three cards; a part that is nothing reads "None", never £0.
-  const offWords = [
-    "tax",
-    "National Insurance",
-    ...(parts.pension > 0 ? ["pension"] : []),
-    ...(parts.studentLoan > 0 ? ["student loan"] : []),
-  ];
-  const takeHomeCaption = `After ${offWords.slice(0, -1).join(", ")} and ${offWords[offWords.length - 1]}`;
-  // The answer carries a teal top rule (className only: KpiCard is not changed, and the hero tone
-  // stays with the saved salary, D2). The other two are quieter, with one caption each.
+  // The Estimate badge marks the answer; the other two cards are named by their labels alone,
+  // and only the answer carries an explanation (one InfoTip in the strip).
   const takeHomeCard = (
     <KpiCard
       key="take-home"
       action={estimateBadge}
-      className={answerCard()}
-      subtext={takeHomeCaption}
+      subtext="After tax and deductions"
       explain={`Your saved salary before tax, less Income Tax, National Insurance, pension and student loan, at ${taxYear} rates.`}
       label="Monthly take-home pay"
       value={parts.takeHome}
@@ -238,18 +228,14 @@ export const TakeHomeCalculator: FC<TakeHomeCalculatorProps> = ({
     pensionAndLoan > 0 ? (
       <KpiCard
         key="tax"
-        explain={`Income Tax and employee National Insurance on your saved salary, at ${taxYear} rates.`}
         label="Tax and National Insurance"
-        subtext={OFF_CAPTION}
         value={parts.incomeTax + parts.nationalInsurance}
         valueFormat={{ fractionDigits: 0 }}
       />
     ) : (
       <KpiCard
         key="income-tax"
-        explain={`Income Tax on your saved salary, at ${taxYear} rates.`}
         label="Income Tax"
-        subtext={OFF_CAPTION}
         notSetLabel="None"
         unset={parts.incomeTax <= 0}
         value={parts.incomeTax}
@@ -262,28 +248,18 @@ export const TakeHomeCalculator: FC<TakeHomeCalculatorProps> = ({
       : parts.pension > 0
         ? "Pension"
         : "Student loan";
-  const pensionExplain =
-    parts.pension > 0 && parts.studentLoan > 0
-      ? "Your saved pension contribution, and repayments on your saved student loan plan."
-      : parts.pension > 0
-        ? "Your saved pension contribution, as a share of your salary."
-        : "Repayments on your saved student loan plan.";
   const thirdCard =
     pensionAndLoan > 0 ? (
       <KpiCard
         key="pension"
-        explain={pensionExplain}
         label={pensionLabel}
-        subtext={OFF_CAPTION}
         value={pensionAndLoan}
         valueFormat={{ fractionDigits: 0 }}
       />
     ) : (
       <KpiCard
         key="ni"
-        explain={`Employee National Insurance on your saved salary, at ${taxYear} rates.`}
         label="National Insurance"
-        subtext={OFF_CAPTION}
         notSetLabel="None"
         unset={parts.nationalInsurance <= 0}
         value={parts.nationalInsurance}
@@ -327,7 +303,7 @@ export const TakeHomeCalculator: FC<TakeHomeCalculatorProps> = ({
 
       {/* The estimate is the first KPI, never the hero (D2). The three cards add up to the monthly
           pay before tax, so the strip explains itself. */}
-      <KpiStrip items={[takeHomeCard, secondCard, thirdCard]} />
+      <KpiStrip className={payStrip()} items={[takeHomeCard, secondCard, thirdCard]} />
 
       <TakeHomeBreakdown
         details={details}
@@ -345,8 +321,6 @@ export const TakeHomeCalculator: FC<TakeHomeCalculatorProps> = ({
             ? `estimated change in take-home pay ${formatCurrency(monthlyIncrease)} a month`
             : undefined
         }
-        basis="Starting from your saved salary, pension and student loan."
-        footer={profileLink("Update your details", "link")}
         id="scenario-zone"
         isModified={payRiseModified || nextPound.isModified}
         notice={<ProjectionNotice lead={DELTA_PANEL_COPY.unverifiedBanner} />}

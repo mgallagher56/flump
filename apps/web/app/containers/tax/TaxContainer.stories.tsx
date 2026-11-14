@@ -201,7 +201,7 @@ export const OptedInWithData: Story = {
 export const RecordsDrawer: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    const [drawer] = await canvas.findAllByRole("button", { name: /^All records/ });
+    const [drawer] = await canvas.findAllByRole("button", { name: /^Records$/ });
     await userEvent.click(drawer);
     await expect((await canvas.findAllByRole("table")).length).toBeGreaterThan(0);
   },

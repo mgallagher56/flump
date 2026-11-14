@@ -8,6 +8,7 @@ import { Skeleton } from "../Skeleton/Skeleton";
 import { StatusBadge, type StatusBadgeVariants } from "../StatusBadge/StatusBadge";
 import { VisuallyHidden } from "../VisuallyHidden/VisuallyHidden";
 import {
+  kpiAction,
   kpiCardContainer,
   kpiDeltaContent,
   kpiDeltaRow,
@@ -171,17 +172,12 @@ export const KpiCard: FC<KpiCardProps> = ({
       data-tone={cardTone === "hero" ? "hero" : undefined}
       data-unset={isKpiCardUnset({ value, loading, unset }) || undefined}
     >
-      <div className={kpiEyebrow()}>
+      <div className={kpiEyebrow()} data-kpi-eyebrow="">
         <span className={kpiLabel({ tone: cardTone })}>
-          {label}
-          {explain ? (
-            <>
-              {" "}
-              <InfoTip term={label}>{explain}</InfoTip>
-            </>
-          ) : null}
+          <span>{label}</span>
+          {explain ? <InfoTip term={label}>{explain}</InfoTip> : null}
         </span>
-        {action && <div>{action}</div>}
+        {action && <div className={kpiAction()}>{action}</div>}
       </div>
 
       <div className={kpiValueRow()}>

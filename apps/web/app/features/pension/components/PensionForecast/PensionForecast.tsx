@@ -6,7 +6,7 @@ import {
   SimulatorSplitLayout,
   Tabs,
 } from "@repo/ui";
-import { type FC, useMemo } from "react";
+import { type FC, type ReactNode, useMemo } from "react";
 import { Link } from "react-router";
 import { formatEstimate } from "~/utils/roundEstimate";
 import { type ForecastInput, type ForecastResult, projectPension } from "../../forecast";
@@ -82,6 +82,8 @@ export interface PensionForecastProps extends PensionForecastBase {
   onToolChange: (tool: PensionTool) => void;
   /** True when the page shows another tax figure (the £100,000 line), so the notice needs the lead. */
   showsOtherTaxFigure?: boolean;
+  /** The quiet "Assumptions and UK rules" drawer, placed in the zone footer above the notice. */
+  assumptions?: ReactNode;
 }
 
 /**
@@ -100,6 +102,7 @@ export const PensionForecast: FC<PensionForecastProps> = ({
   tool,
   onToolChange,
   showsOtherTaxFigure = false,
+  assumptions,
   ...base
 }) => {
   const { values } = scenario;
@@ -140,9 +143,12 @@ export const PensionForecast: FC<PensionForecastProps> = ({
       <ScenarioZone
         id={PENSION_SCENARIO_ZONE_ID}
         notice={
-          <ProjectionNotice
-            lead={showsOtherTaxFigure ? DELTA_PANEL_COPY.unverifiedBanner : undefined}
-          />
+          <>
+            {assumptions}
+            <ProjectionNotice
+              lead={showsOtherTaxFigure ? DELTA_PANEL_COPY.unverifiedBanner : undefined}
+            />
+          </>
         }
         title={PENSION_ZONE_TITLE}
       >
@@ -180,6 +186,7 @@ export const PensionForecast: FC<PensionForecastProps> = ({
             adjustForInflation={values.adjustForInflation}
             annotationLabel="Retirement"
             result={result}
+            taxFreeLumpSum={result.taxFreeLumpSum}
           />
         </div>
       }
@@ -216,11 +223,16 @@ export const PensionForecast: FC<PensionForecastProps> = ({
       id={PENSION_SCENARIO_ZONE_ID}
       isModified={scenario.isModified}
       notice={
-        <ProjectionNotice
-          lead={
-            showsTakeHomeTax || showsOtherTaxFigure ? DELTA_PANEL_COPY.unverifiedBanner : undefined
-          }
-        />
+        <>
+          {assumptions}
+          <ProjectionNotice
+            lead={
+              showsTakeHomeTax || showsOtherTaxFigure
+                ? DELTA_PANEL_COPY.unverifiedBanner
+                : undefined
+            }
+          />
+        </>
       }
       title={PENSION_ZONE_TITLE}
       tools={

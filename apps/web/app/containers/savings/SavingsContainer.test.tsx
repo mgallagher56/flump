@@ -95,7 +95,7 @@ describe("SavingsContainer", () => {
     expect(screen.getByTestId("hero-figure").textContent).toContain("£21,000");
     expect(screen.getByText("Saved each month")).toBeDefined();
     expect(screen.getByText("Average rate")).toBeDefined();
-    expect(screen.getByText("4.0%")).toBeDefined();
+    expect(screen.getByText("4%")).toBeDefined();
     expect(screen.getByText("Paid into ISAs this tax year")).toBeDefined();
     // The allowance is shown once, as the KPI: no second ISA bar in the accounts card.
     expect(screen.queryByTestId("isa-allowance")).toBeNull();
@@ -173,7 +173,7 @@ describe("SavingsContainer", () => {
       const before = savedFacts();
       const outcomeBefore = screen.getByTestId("savings-forecast-outcome").textContent;
 
-      fireEvent.change(screen.getByLabelText("Average rate (AER)"), {
+      fireEvent.change(screen.getByLabelText("Rate (AER)"), {
         target: { value: "6" },
       });
       fireEvent.change(screen.getByLabelText("Years ahead"), {
@@ -231,16 +231,16 @@ describe("SavingsContainer", () => {
       fireEvent.pointerDown(tab, { button: 0 });
       fireEvent.keyDown(tab, { key: "Enter", code: "Enter" });
       fireEvent.mouseDown(tab);
-      // The tool opens on a default target (the next round £1,000 above the saved total).
+      // The tool opens on a default target (the next round £5,000 above the saved total).
       const target = screen.getByLabelText("Target amount") as HTMLInputElement;
-      expect(target.value).toBe("22000");
+      expect(target.value).toBe("25000");
       expect(screen.getByTestId("deposit-timeline-outcome").textContent).not.toBe(
         "Enter a target amount to see an estimate.",
       );
       expect((screen.getByLabelText("Monthly saving") as HTMLInputElement).value).toMatch(/300/);
       fireEvent.change(target, { target: { value: "31000" } });
       expect(screen.getByTestId("deposit-timeline-outcome").textContent).toBe("2 years 10 months");
-      expect(screen.getByText("Estimated time to reach £31,000")).toBeDefined();
+      expect(screen.getByText("Time to your target, not counting interest")).toBeDefined();
       expect(mockSubmit).not.toHaveBeenCalled();
     });
   });

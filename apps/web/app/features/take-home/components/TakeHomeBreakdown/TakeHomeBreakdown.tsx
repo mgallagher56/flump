@@ -1,16 +1,6 @@
 import { CollapsibleDrawer, Money, Table, TBody, Td, THead, Th, Tr } from "@repo/ui";
 import type { FC, ReactNode } from "react";
-import {
-  bar,
-  barLabel,
-  barLabels,
-  cardBody,
-  cardTitle,
-  drawerBody,
-  segment,
-  swatch,
-  takeHomeRow,
-} from "./TakeHomeBreakdown.styles";
+import { cardBody, drawerBody, takeHomeRow } from "./TakeHomeBreakdown.styles";
 
 export type PayPartKey = "incomeTax" | "nationalInsurance" | "pension" | "studentLoan" | "takeHome";
 
@@ -77,97 +67,20 @@ const TABLE_ORDER: readonly PayPartKey[] = [
 ];
 
 /**
- * "Where your pay goes": one thin bar, teal for take-home pay and two quiet neutrals for what
- * comes off (tax and National Insurance, then pension and student loan), named at its two ends.
- * The figures are in the KPI strip above, so the table of every part, a month, waits behind a
- * quiet "Show details" disclosure with the other details.
+ * Every part of the pay, a month, behind one quiet "Show details" disclosure under the KPI strip.
+ * The strip already splits the monthly pay, so nothing here is shown until it is opened.
  */
 export const TakeHomeBreakdown: FC<TakeHomeBreakdownProps> = ({ details, ...figures }) => {
   const parts = monthlyPayParts(figures);
-  const taxAndNi = parts.incomeTax + parts.nationalInsurance;
-  const pensionAndLoan = parts.pension + parts.studentLoan;
-  const total = parts.takeHome + taxAndNi + pensionAndLoan;
-  // Take-home first (teal), then what comes off, with a hairline gap between neighbours.
-  const shares = [
-    { key: "takeHome", value: parts.takeHome },
-    { key: "taxAndNi", value: taxAndNi },
-    { key: "pensionAndLoan", value: pensionAndLoan },
-  ] as const;
-  const visible = shares.filter((s) => s.value > 0);
-  const GAP = 0.4;
-  let cursor = 0;
-  const segments = visible.map((s, i) => {
-    const share = total > 0 ? (s.value / total) * 100 : 0;
-    const x = cursor;
-    cursor += share;
-    const width = Math.max(0, share - (i < visible.length - 1 ? GAP : 0));
-    return { key: s.key, x, width };
-  });
   const rows = TABLE_ORDER.filter((k) => k === "takeHome" || parts[k] > 0);
-  // One label per segment, named as the strip names its cards, with the segment's own colour.
-  const pensionLabel =
-    parts.pension > 0 && parts.studentLoan > 0
-      ? "Pension and student loan"
-      : parts.pension > 0
-        ? "Pension"
-        : "Student loan";
-  const SEGMENT_LABELS: Record<(typeof shares)[number]["key"], string> = {
-    takeHome: PAY_PART_LABELS.takeHome,
-    taxAndNi: "Tax and National Insurance",
-    pensionAndLoan: pensionLabel,
-  };
 
   return (
-    // A slim section on the page, not a card: it holds no figure of its own (the strip above has
-    // them), so it is the labelled bar and the one disclosure with the table.
     <section
-      aria-labelledby="where-your-pay-goes"
+      aria-label="Where your pay goes"
       className={cardBody()}
       data-testid="take-home-breakdown"
       id="take-home-breakdown"
     >
-      <h2 className={cardTitle()} id="where-your-pay-goes">
-        Where your pay goes
-      </h2>
-
-      {/* Decorative: the strip above and the table below carry every value. */}
-      <div aria-hidden="true">
-        <div className={bar()} data-testid="pay-bar" id="pay-bar">
-          {/* A 100-unit-wide SVG stretched to the card: each segment's width is its share. */}
-          <svg
-            aria-hidden="true"
-            focusable="false"
-            height="100%"
-            preserveAspectRatio="none"
-            viewBox="0 0 100 1"
-            width="100%"
-          >
-            {segments.map((s) => (
-              <rect
-                key={s.key}
-                className={segment({ part: s.key })}
-                height="1"
-                width={s.width}
-                x={s.x}
-                y="0"
-              />
-            ))}
-          </svg>
-        </div>
-        {/* A label for each segment, in bar order: in a row from `sm`, stacked on a phone. */}
-        <ul className={barLabels()}>
-          {visible.map((v) => (
-            <li
-              key={v.key}
-              className={barLabel({ tone: v.key === "takeHome" ? "takeHome" : undefined })}
-            >
-              <span className={swatch({ part: v.key })} />
-              {SEGMENT_LABELS[v.key]}
-            </li>
-          ))}
-        </ul>
-      </div>
-
       <CollapsibleDrawer title="Show details" variant="quiet">
         <div className={drawerBody()}>
           <Table caption="Where your pay goes each month">

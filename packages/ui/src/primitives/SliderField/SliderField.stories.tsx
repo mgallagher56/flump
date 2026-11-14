@@ -159,3 +159,33 @@ export const LongLabel: Story = {
     helperText: "Based on your sample surplus of £610 a month.",
   },
 };
+
+const spacedSuffixArgs: Partial<SliderFieldProps> = {
+  label: "Time horizon",
+  value: 5,
+  min: 1,
+  max: 40,
+  step: 1,
+  unitPrefix: "",
+  unitSuffix: " years",
+};
+
+const spacedSuffixPlay: Story["play"] = async ({ canvasElement }) => {
+  const suffix = within(canvasElement).getByText(" years", { normalizer: (s) => s });
+  // The leading space survives in the flex pill, so it reads "5 years", not "5years" (R2-8).
+  await expect(suffix.textContent).toBe(" years");
+  await expect(getComputedStyle(suffix).whiteSpace).toBe("pre");
+};
+
+/** A suffix with its own leading space keeps it in the pill. */
+export const SpacedSuffix: Story = {
+  args: spacedSuffixArgs,
+  globals: { theme: "light" },
+  play: spacedSuffixPlay,
+};
+
+export const SpacedSuffixDark: Story = {
+  args: spacedSuffixArgs,
+  globals: { theme: "dark" },
+  play: spacedSuffixPlay,
+};

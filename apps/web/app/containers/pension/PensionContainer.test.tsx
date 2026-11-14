@@ -164,10 +164,10 @@ describe("PensionContainer", () => {
       const cards = Array.from(strip.children).map((c) => c.textContent ?? "");
       expect(cards).toHaveLength(3);
       expect(cards[0]).toMatch(
-        /^Estimated income at retirement Estimate£[\d,]+A month, in today's money$/,
+        /^Estimated income at retirement ?Estimate£[\d,]+A month, in today's money$/,
       );
       expect(cards[1]).toBe("Going in each month£532You and your employer");
-      expect(cards[2]).toBe("Retirement age 67Assumed: your State Pension age");
+      expect(cards[2]).toMatch(/^Retirement age ?67Assumed: your State Pension age$/);
       const firstView = document.createElement("div");
       firstView.append(
         (container.querySelector("[data-tone='hero']") as HTMLElement).cloneNode(true),
@@ -192,8 +192,8 @@ describe("PensionContainer", () => {
       ]);
       const pots = details.querySelectorAll("[data-list-row]");
       expect(pots).toHaveLength(1);
-      // The pot row shows its balance and one edit button (R2-8), even with one pot.
-      expect(pots[0]?.textContent).toContain("£96,000");
+      // With one pot the hero carries the balance, so the row shows the name and one edit button.
+      expect(pots[0]?.textContent).not.toContain("£96,000");
       const row = within(pots[0] as HTMLElement);
       expect(row.getAllByRole("button", { name: /^Edit / })).toHaveLength(1);
       expect(row.queryByRole("button", { name: /^Delete / })).toBeNull();

@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from "@storybook/react";
 import { expect, userEvent, waitFor, within } from "@storybook/test";
 import { css } from "../../../styled-system/css";
 import { Money } from "../Money/Money";
+import { StatusBadge } from "../StatusBadge/StatusBadge";
 import { KpiCard } from "./KpiCard";
 
 const link = css({ color: "primary", textDecoration: "underline", fontWeight: "medium" });
@@ -330,3 +331,61 @@ export const WithExplainHero: Story = {
   args: { ...WithExplain.args, tone: "hero" },
 };
 export const WithExplainHeroDark: Story = { ...WithExplainHero, globals: { theme: "dark" } };
+
+const fourUp = css({
+  display: "grid",
+  gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+  gap: "3",
+  // Wider than the meta's 20rem frame (story decorators add to it, never replace it).
+  width: "64rem",
+  maxWidth: "95vw",
+});
+
+/**
+ * R2-8: one strip mixing every label-row combination (InfoTip yes or no, badge yes or no). The
+ * label rows are one height and every value sits on the same line.
+ */
+const LabelRowMix = () => (
+  <div className={fourUp}>
+    <KpiCard label="Savings" value={12400} />
+    <KpiCard
+      action={<StatusBadge variant="neutral">Estimate</StatusBadge>}
+      label="Tax due"
+      value={3200}
+    />
+    <KpiCard
+      explain="Your saved cash divided by what you spend each month."
+      label="Cover"
+      value="7 months"
+    />
+    <KpiCard
+      action={<StatusBadge variant="neutral">Estimate</StatusBadge>}
+      explain="Income tax and National Insurance on this year's pay."
+      label="Take-home"
+      value={2850}
+    />
+  </div>
+);
+
+const labelRowMixPlay: Story["play"] = async ({ canvasElement }) => {
+  const rows = [...canvasElement.querySelectorAll("[data-kpi-eyebrow]")];
+  const values = [...canvasElement.querySelectorAll("[data-kpi-value]")];
+  await expect(rows).toHaveLength(4);
+  const heights = rows.map((r) => Math.round(r.getBoundingClientRect().height));
+  await expect(new Set(heights).size).toBe(1);
+  const tops = values.map((v) => v.getBoundingClientRect().top);
+  await expect(Math.max(...tops) - Math.min(...tops)).toBeLessThanOrEqual(1);
+};
+
+export const LabelRowAlignment: Story = {
+  decorators: [],
+  parameters: { layout: "padded" },
+  render: () => <LabelRowMix />,
+  globals: { theme: "light" },
+  play: labelRowMixPlay,
+};
+
+export const LabelRowAlignmentDark: Story = {
+  ...LabelRowAlignment,
+  globals: { theme: "dark" },
+};

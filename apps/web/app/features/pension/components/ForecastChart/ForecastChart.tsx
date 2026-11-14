@@ -21,9 +21,10 @@ import {
   YAxis,
 } from "recharts";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
+import { formatEstimate } from "~/utils/roundEstimate";
 import { nearDataAxis } from "~/utils/yAxisTicks";
 import type { ForecastResult } from "../../forecast";
-import { annotationChip, annotationText, chartWrap } from "./ForecastChart.styles";
+import { annotationChip, annotationText, chartWrap, dataNote } from "./ForecastChart.styles";
 
 /** Four at most: an end-anchored last tick beside a centred one crowds at 375 with more. */
 const MAX_TICKS = Math.min(4, CHART_AXIS_DEFAULTS.maxXTicks);
@@ -35,6 +36,9 @@ const NARROW_MAX_TICKS = 3;
 const CHIP_HEIGHT = 22;
 const CHIP_PADDING = 8;
 const CHIP_CHAR_WIDTH = 7;
+/** The chip's right edge sits on the end dot's right edge (its radius), just above the dot. */
+const CHIP_ANCHOR_X = 5;
+const CHIP_ANCHOR_GAP = 9;
 
 /**
  * Evenly spaced year ticks (every 1, 2, 5, 10 or 20 years) that end on the retirement year,
@@ -59,6 +63,8 @@ export interface ForecastChartProps {
   adjustForInflation: boolean;
   /** Short annotation at the last point, for example "Retirement". */
   annotationLabel: string;
+  /** Tax-free lump sum at retirement, shown above the year table behind "Show data". */
+  taxFreeLumpSum?: number;
 }
 
 /**
@@ -70,6 +76,7 @@ export const ForecastChart: FC<ForecastChartProps> = ({
   result,
   adjustForInflation,
   annotationLabel,
+  taxFreeLumpSum,
 }) => {
   const { formatCurrency } = useFormatCurrency();
   const startYear = new Date().getFullYear();
@@ -96,34 +103,41 @@ export const ForecastChart: FC<ForecastChartProps> = ({
       <ChartFigure
         annotation={last ? { x: last.calendarYear, label: annotationLabel } : undefined}
         dataTable={
-          <Table caption="Estimated pension pot by year">
-            <THead>
-              <tr>
-                <Th>Year</Th>
-                <Th numeric>Estimated pot</Th>
-                <Th numeric>Paid in</Th>
-                <Th numeric>Investment growth</Th>
-              </tr>
-            </THead>
-            <TBody>
-              {points.map((row) => (
-                <tr key={row.calendarYear}>
-                  <Th scope="row">{row.calendarYear}</Th>
-                  <Td numeric>{formatCurrency(row.totalPot)}</Td>
-                  <Td numeric>{formatCurrency(row.totalContribs)}</Td>
-                  <Td numeric>{formatCurrency(row.growth)}</Td>
+          <>
+            {taxFreeLumpSum !== undefined && (
+              <p className={dataNote()} data-testid="pension-lump-sum" id="pension-lump-sum">
+                Tax-free lump sum at retirement: {formatEstimate(taxFreeLumpSum).toLowerCase()}.
+              </p>
+            )}
+            <Table caption="Estimated pension pot by year">
+              <THead>
+                <tr>
+                  <Th>Year</Th>
+                  <Th numeric>Estimated pot</Th>
+                  <Th numeric>Paid in</Th>
+                  <Th numeric>Investment growth</Th>
                 </tr>
-              ))}
-            </TBody>
-          </Table>
+              </THead>
+              <TBody>
+                {points.map((row) => (
+                  <tr key={row.calendarYear}>
+                    <Th scope="row">{row.calendarYear}</Th>
+                    <Td numeric>{formatCurrency(row.totalPot)}</Td>
+                    <Td numeric>{formatCurrency(row.totalContribs)}</Td>
+                    <Td numeric>{formatCurrency(row.growth)}</Td>
+                  </tr>
+                ))}
+              </TBody>
+            </Table>
+          </>
         }
         maxTicks={maxTicks}
         pointCount={points.length}
-        summary={
-          adjustForInflation
-            ? "Your pot each year to retirement, in today's money."
-            : "Your pot each year to retirement, before inflation."
-        }
+        // The outcome above already states the end figure, so the summary is for screen readers.
+        showSummary={false}
+        summary={`Your estimated pot each year to retirement, ${
+          adjustForInflation ? "in today's money" : "before inflation"
+        }${last ? `, reaching ${formatEstimate(last.totalPot).toLowerCase()}` : ""}.`}
         title="Pot each year"
       >
         <div className={chartWrap()}>
@@ -190,11 +204,11 @@ export const ForecastChart: FC<ForecastChartProps> = ({
               {last ? (
                 <ReferenceDot
                   fill={chartColor("primary")}
-                  // Above and left of the end dot on a small chip, so it never sits on the line
-                  // or clips at the right edge (P10.3).
+                  // On a small chip whose right edge lines up with the end dot, just above it, so
+                  // it reads as the dot's label, never sits on the line and never clips (P10.3).
                   label={({ viewBox }: { viewBox?: { x?: number; y?: number } }) => {
-                    const x = (viewBox?.x ?? 0) - 6;
-                    const y = (viewBox?.y ?? 0) - 8;
+                    const x = (viewBox?.x ?? 0) + CHIP_ANCHOR_X;
+                    const y = (viewBox?.y ?? 0) - CHIP_ANCHOR_GAP;
                     const width = annotationLabel.length * CHIP_CHAR_WIDTH + CHIP_PADDING * 2;
                     return (
                       <g>

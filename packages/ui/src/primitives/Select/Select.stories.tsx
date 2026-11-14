@@ -107,3 +107,37 @@ export const LongContent: Story = {
   ),
   globals: { theme: "light" },
 };
+
+const employment = [
+  { value: "employed", label: "Employed" },
+  { value: "self-employed", label: "Self-employed" },
+];
+
+/** R2-8: a hyphenated option keeps a normal hyphen (no tabular figures on the trigger text). */
+const HyphenField = () => (
+  <div className={css({ maxWidth: "360px" })}>
+    <FormField label="Employment">
+      {(field) => (
+        <Select {...controlProps(field)} defaultValue="self-employed" options={employment} />
+      )}
+    </FormField>
+  </div>
+);
+
+const hyphenPlay: Story["play"] = async ({ canvasElement }) => {
+  const select = within(canvasElement).getByLabelText("Employment");
+  await expect(select).toHaveValue("self-employed");
+  await expect(getComputedStyle(select).fontVariantNumeric).toBe("normal");
+};
+
+export const HyphenatedOption: Story = {
+  render: () => <HyphenField />,
+  globals: { theme: "light" },
+  play: hyphenPlay,
+};
+
+export const HyphenatedOptionDark: Story = {
+  render: () => <HyphenField />,
+  globals: { theme: "dark" },
+  play: hyphenPlay,
+};

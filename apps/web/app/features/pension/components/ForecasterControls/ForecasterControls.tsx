@@ -14,11 +14,15 @@ export interface ContributionSliderProps {
   scenario: PensionScenario;
 }
 
+/** Whole percentages read "5%", others keep one decimal place: "5.5%". */
+export const percentDigits = (value: number | null | undefined): number =>
+  typeof value === "number" && Number.isInteger(value) ? 0 : 1;
+
 /** Shared by both tools, so the same scenario value drives each. */
 export const ContributionSlider: FC<ContributionSliderProps> = ({ scenario }) => (
   <SliderField
     format="percent"
-    fractionDigits={1}
+    fractionDigits={percentDigits(scenario.values.contributionPercent)}
     helperText={scenario.isEdited("contributionPercent") ? "Edited. Not saved." : undefined}
     label="Your contribution"
     max={MAX_CONTRIBUTION_PERCENT}
@@ -79,7 +83,7 @@ export const ForecasterControls: FC<ForecasterControlsProps> = ({
 
       <SliderField
         format="percent"
-        fractionDigits={1}
+        fractionDigits={percentDigits(values.growthRate)}
         helperText={isEdited("growthRate") ? "Edited. Not saved." : undefined}
         label="Growth a year"
         max={12}

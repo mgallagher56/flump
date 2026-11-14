@@ -101,4 +101,50 @@ describe("TaxRecordDialog", () => {
     expect(onOpenChange).toHaveBeenCalledWith(false);
     expect(onSave).not.toHaveBeenCalled();
   });
+
+  it("asks for the amount before the income source and type (R2-8)", () => {
+    const { dialog } = setup();
+    const fields = [...dialog.querySelectorAll("input, select")].map(
+      (el) => el.getAttribute("id") ?? "",
+    );
+    const amount = within(dialog).getByLabelText(/^Amount/).id;
+    const source = within(dialog).getByLabelText("Income source").id;
+    expect(fields.indexOf(amount)).toBeLessThan(fields.indexOf(source));
+    expect(fields.indexOf(amount)).toBe(1);
+  });
+
+  it("keeps category and notes under More details and still saves the category", () => {
+    const { dialog, onSave } = setup({ ...draft, name: "Rent", amount: 900 });
+    const toggle = within(dialog).getByRole("button", { name: "More details" });
+    expect(toggle.getAttribute("aria-expanded")).toBe("false");
+    fireEvent.click(toggle);
+    const category = within(dialog).getByLabelText("Category") as HTMLSelectElement;
+    expect(within(dialog).getByLabelText(/^Notes/)).toBeDefined();
+    fireEvent.change(within(dialog).getByLabelText("Income source"), {
+      target: { value: "self-employed" },
+    });
+    fireEvent.change(within(dialog).getByLabelText("Type"), { target: { value: "expense" } });
+    fireEvent.change(category, { target: { value: "legal_finance_fees" } });
+    expect(
+      within(dialog).getByRole("option", { name: "Accountant, legal and bank fees" }),
+    ).toBeDefined();
+    fireEvent.click(within(dialog).getByRole("button", { name: "Add record" }));
+    expect(onSave).toHaveBeenCalledWith(
+      expect.objectContaining({ category: "legal_finance_fees", source: "self-employed" }),
+    );
+  });
+
+  it("opens More details when an edited record already has notes", () => {
+    const { dialog } = setup({ ...draft, name: "Rent", amount: 900, notes: "Flat 2" }, "edit");
+    expect(
+      within(dialog).getByRole("button", { name: "More details" }).getAttribute("aria-expanded"),
+    ).toBe("true");
+    expect((within(dialog).getByLabelText(/^Notes/) as HTMLInputElement).value).toBe("Flat 2");
+  });
+
+  it("keeps the actions in a sticky footer", () => {
+    const { dialog } = setup();
+    const footer = within(dialog).getByRole("button", { name: "Add record" }).parentElement;
+    expect(footer?.className).toContain("pos_sticky");
+  });
 });

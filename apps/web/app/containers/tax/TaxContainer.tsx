@@ -16,14 +16,18 @@ import {
   CollapsibleDrawer,
   DELTA_PANEL_COPY,
   EmptyState,
+  Icon,
+  IconButton,
   Illustration,
+  Menu,
   PageBody,
   PageHeader,
   ProjectionNotice,
   TaxRatesStatusBanner,
 } from "@repo/ui";
+import { MoreHorizontal } from "lucide-react";
 import { type FC, useCallback, useMemo, useState } from "react";
-import { Link, useFetcher, useLoaderData, useRevalidator } from "react-router";
+import { useFetcher, useLoaderData, useRevalidator } from "react-router";
 import { ConfirmDialog } from "~/features/feedback/components/ConfirmDialog";
 import { useFetcherOutcome } from "~/features/feedback/hooks/useFetcherOutcome";
 import { AddIncomeMenu } from "~/features/tax/components/AddIncomeMenu";
@@ -44,10 +48,11 @@ import { isPageEnabled } from "~/utils/pageConfig";
 import {
   drawers,
   errorText,
+  headerActions,
+  narrowOnly,
   numeric,
   pageRoot,
-  quietAction,
-  textLink,
+  wideOnly,
 } from "./TaxContainer.styles";
 
 /** The one standard tax caveat (copy audit ruling 3), folded into the page's single notice. */
@@ -137,14 +142,19 @@ const SelfAssessmentOff: FC<{
 
   return (
     <PageBody className={pageRoot()} data-testid="tax-page">
-      <PageHeader title={PAGE_TITLE} />
+      <PageHeader
+        description="Income outside PAYE, its costs and an estimated tax bill for each tax year."
+        title={PAGE_TITLE}
+      />
       <EmptyState
+        description="You can turn it off again in Settings."
         action={
           <Button pending={saving} type="button" variant="primary" onClick={turnOn}>
             Turn on Self Assessment
           </Button>
         }
         id="self-assessment-off"
+        size="sm"
         illustration={<Illustration scene="empty-accounts" size="sm" />}
         tone="card"
         title="Self Assessment is for income outside PAYE, such as self-employment or rent"
@@ -372,17 +382,43 @@ const SelfAssessmentPage: FC<{
         title={PAGE_TITLE}
         subtitle="Income outside PAYE, its costs and an estimated tax bill for each tax year."
         actions={
-          <TaxYearBar
-            years={availableYears}
-            selectedYear={selectedTaxYear}
-            onSelectYear={setChosenYear}
-          />
+          <div className={headerActions()}>
+            <TaxYearBar
+              years={availableYears}
+              selectedYear={selectedTaxYear}
+              onSelectYear={setChosenYear}
+            />
+            {/* From `md` only: under it the h1's row has room for the year alone, and the same
+                action sits at the foot of the records. */}
+            {recordsInSelectedTaxYear.length > 0 ? (
+              <span className={wideOnly()}>
+                <Menu
+                  align="end"
+                  aria-label={`More for ${selectedTaxYear}`}
+                  id="tax-year-menu"
+                  items={[
+                    {
+                      id: "delete-tax-year",
+                      label: `Delete all records for ${selectedTaxYear}`,
+                      tone: "danger",
+                      onSelect: () => setTaxYearToDelete(selectedTaxYear),
+                    },
+                  ]}
+                  trigger={
+                    <IconButton label={`More for ${selectedTaxYear}`} size="sm" variant="outline">
+                      <Icon icon={MoreHorizontal} size="sm" />
+                    </IconButton>
+                  }
+                />
+              </span>
+            ) : null}
+          </div>
         }
       />
 
       <TaxRatesStatusBanner {...ratesContext} />
 
-      {saveOutcome.error ? (
+      {saveOutcome.error && !isRecordDialogOpen ? (
         <p className={errorText()} role="alert">
           {saveOutcome.error}
         </p>
@@ -395,8 +431,6 @@ const SelfAssessmentPage: FC<{
         result={activeYearData}
         taxYear={selectedTaxYear}
       />
-
-      {showEstimate ? <ProjectionNotice lead={TAX_UNVERIFIED_LEAD} /> : null}
 
       {/* How the estimate is worked out sits with the estimate, before the list of sources. */}
       {showEstimate && activeYearData ? (
@@ -417,19 +451,12 @@ const SelfAssessmentPage: FC<{
 
       <TaxSourcesPanel action={addIncome} records={initialRecords} taxYear={selectedTaxYear} />
 
-      <p className={textLink()}>
-        <Link to="/app/take-home">See what more pay is worth after tax</Link>
-      </p>
-
       <div className={drawers()}>
-        {initialRecords.length > 0 ? (
-          <CollapsibleDrawer
-            title={`All records (${countFormat.format(initialRecords.length)})`}
-            variant="quiet"
-          >
+        {hasRecordsInYear ? (
+          <CollapsibleDrawer title="Records" variant="quiet">
             <TaxRecordsTable
               records={initialRecords}
-              availableYears={availableYears}
+              taxYear={selectedTaxYear}
               onEdit={onOpenEditModal}
               onDelete={(id) =>
                 setTransactionToDelete(initialRecords.find((r) => r.id === id) ?? null)
@@ -439,7 +466,7 @@ const SelfAssessmentPage: FC<{
             />
             {recordsInSelectedTaxYear.length > 0 ? (
               <Button
-                className={quietAction()}
+                className={narrowOnly()}
                 size="sm"
                 type="button"
                 variant="ghost"
@@ -462,12 +489,16 @@ const SelfAssessmentPage: FC<{
         ) : null}
       </div>
 
+      {/* The page's one notice, at its foot, under everything it covers. */}
+      {showEstimate ? <ProjectionNotice lead={TAX_UNVERIFIED_LEAD} /> : null}
+
       <TaxRecordDialog
         open={isRecordDialogOpen}
         onOpenChange={setIsRecordDialogOpen}
         mode={editingRecord ? "edit" : "add"}
         initial={draft}
         onSave={handleSaveTransaction}
+        saveError={saveOutcome.error}
       />
 
       <TaxReceiptDialog record={activeReceiptRecord} onClose={() => setActiveReceiptRecord(null)} />

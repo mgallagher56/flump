@@ -197,4 +197,32 @@ describe("KpiCard value size (R2-2)", () => {
     fireEvent.click(screen.getByRole("button", { name: "About Months of cover" }));
     expect(screen.getByText("Your saved cash divided by what you spend each month.")).toBeDefined();
   });
+
+  it("keeps one label row height with or without an InfoTip or a badge (R2-8)", () => {
+    const combos = [
+      {},
+      { explain: "How it is worked out." },
+      { action: <span>Estimate</span> },
+      { explain: "How it is worked out.", action: <span>Estimate</span> },
+    ];
+    const rowClasses = combos.map((extra) => {
+      const { container, unmount } = render(<KpiCard label="Tax due" value={3200} {...extra} />);
+      const row = container.querySelector("[data-kpi-eyebrow]") as HTMLElement;
+      const label = row.firstElementChild as HTMLElement;
+      // The row and the label are held at the InfoTip trigger's height (24px).
+      expect(row.className).toContain("min-h_6");
+      expect(label.className).toContain("min-h_6");
+      expect(label.className).toContain("ai_center");
+      // A badge sits in a fixed-height slot, so it cannot make the row taller.
+      if ("action" in extra) {
+        const slot = row.lastElementChild as HTMLElement;
+        expect(slot.className).toContain("h_6");
+        expect(slot.textContent).toBe("Estimate");
+      }
+      const classes = `${row.className}|${label.className}`;
+      unmount();
+      return classes;
+    });
+    expect(new Set(rowClasses).size).toBe(1);
+  });
 });

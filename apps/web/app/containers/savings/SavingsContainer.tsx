@@ -24,6 +24,7 @@ import {
 import { PayRiseScenario } from "~/features/savings/components/PayRiseScenario";
 import {
   estimateIsaUsed,
+  isIsaAccount,
   SavingsAccountsList,
 } from "~/features/savings/components/SavingsAccountsList";
 import {
@@ -182,7 +183,8 @@ export const SavingsContainer: FC = () => {
       <PageHeader
         actions={
           hasAccounts ? (
-            <Button onClick={() => setIsAddModalOpen(true)}>
+            // Compact, the same as "Add pension pot", so at 375 it does not push the hero down.
+            <Button size="sm" onClick={() => setIsAddModalOpen(true)}>
               <Icon icon={Plus} size="sm" />
               Add account
             </Button>
@@ -197,6 +199,7 @@ export const SavingsContainer: FC = () => {
           <SavingsSummaryCards
             accountCount={savingsAccounts.length}
             averageRate={saved.averageRate}
+            hasIsaAccount={savingsAccounts.some((acc) => isIsaAccount(acc.name))}
             isaUsed={saved.isaUsed}
             monthlySaving={saved.monthly}
             totalSavingsBalance={saved.total}

@@ -44,7 +44,6 @@ export const PayRiseTool: FC<PayRiseToolProps> = ({
       // The same control as "The next £1,000": a slider with an editable value pill.
       <SliderField
         format="currency"
-        helperText="Move the slider or type a figure to see the estimated change in your monthly take-home pay."
         label="Pay rise a year, before tax"
         max={PAY_RISE_MAX}
         min={0}

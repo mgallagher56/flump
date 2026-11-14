@@ -82,6 +82,11 @@ export const actionsCell = cva({
   base: { display: "flex", justifyContent: "flex-end", gap: "4px" },
 });
 
+/** The "Edit" word shows from sm up; below it the button is the pencil alone. */
+export const editLabel = cva({
+  base: { display: { base: "none", sm: "inline" } },
+});
+
 export const drawerWrap = cva({
   base: { marginTop: "4px" },
 });
