@@ -36,7 +36,7 @@ describe("Marketing McpPage", () => {
     expect(screen.getByText(/Institution names are replaced with generic labels/i)).toBeDefined();
     expect(screen.getByText("Setting up Flump MCP (preview)")).toBeDefined();
     expect(screen.getByTestId("mcp-preview-badge").textContent).toMatch(/preview/i);
-    expect(screen.getByText("10 read-only tools for your saved data")).toBeDefined();
+    expect(screen.getByText("10 tools that read your saved data")).toBeDefined();
 
     // Every tool the MCP server serves today, and none it has removed (E17 re-plan, #637).
     for (const name of [

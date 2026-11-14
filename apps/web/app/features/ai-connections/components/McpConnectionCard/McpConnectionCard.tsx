@@ -98,6 +98,10 @@ export const McpConnectionCard: FC<McpConnectionCardProps> = ({
   const [copiedToken, setCopiedToken] = useState<boolean>(false);
   const [exportingContextPack, setExportingContextPack] = useState<boolean>(false);
   const [exportedSuccess, setExportedSuccess] = useState<boolean>(false);
+  /** A safe, user-facing message from the last failed create, revoke or export. */
+  const [actionError, setActionError] = useState<string | null>(null);
+  const errorText = (e: unknown, fallback: string) =>
+    e instanceof Error && e.message ? e.message : fallback;
 
   const activeTokenPlaceholder =
     newlyCreatedToken ||
@@ -115,6 +119,7 @@ export const McpConnectionCard: FC<McpConnectionCardProps> = ({
   const handleCreateToken = async () => {
     if (!tokenName.trim()) return;
     setGenerating(true);
+    setActionError(null);
     try {
       // The API only issues expiring tokens (E17 D5-A, E20-N16): 7, 30, 90 or 365 days.
       const expiryDays = TOKEN_EXPIRY_DAYS.find((d) => String(d) === expirySelection) ?? 90;
@@ -149,20 +154,27 @@ export const McpConnectionCard: FC<McpConnectionCardProps> = ({
       ]);
       setShowGenerateForm(false);
       setAllowStaging(false);
+    } catch (e) {
+      setActionError(errorText(e, "The token could not be created. Try again in a moment."));
     } finally {
       setGenerating(false);
     }
   };
 
   const handleRevoke = async (id: string) => {
-    if (onRevokeToken) {
-      await onRevokeToken(id);
+    setActionError(null);
+    try {
+      if (onRevokeToken) await onRevokeToken(id);
+    } catch (e) {
+      setActionError(errorText(e, "The token could not be revoked. Try again in a moment."));
+      return;
     }
     setTokens((prev) => prev.map((t) => (t.id === id ? { ...t, isRevoked: true } : t)));
   };
 
   const handleExportContextPack = async (format: "clipboard" | "json" | "markdown") => {
     setExportingContextPack(true);
+    setActionError(null);
     try {
       let data: { pack: any; markdown: string };
       if (onFetchContextPack) {
@@ -204,6 +216,8 @@ export const McpConnectionCard: FC<McpConnectionCardProps> = ({
         a.click();
         URL.revokeObjectURL(url);
       }
+    } catch {
+      setActionError("The context pack could not be loaded. Try again in a moment.");
     } finally {
       setExportingContextPack(false);
     }
@@ -416,6 +430,17 @@ export const McpConnectionCard: FC<McpConnectionCardProps> = ({
             <div className={toggleKnob({ checked: anonymizeInstitutions })} />
           </button>
         </div>
+
+        {actionError ? (
+          <p
+            className={css({ margin: 0, fontSize: "sm", color: "status.danger.text" })}
+            data-testid="mcp-token-error"
+            id="mcp-token-error"
+            role="alert"
+          >
+            {actionError}
+          </p>
+        ) : null}
 
         {/* Newly Created Token Alert */}
         {newlyCreatedToken && (

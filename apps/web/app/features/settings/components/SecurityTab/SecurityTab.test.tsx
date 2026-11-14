@@ -18,6 +18,14 @@ vi.mock("~/hooks/useUserProfile", async () => {
   };
 });
 
+const mcp = {
+  tokens: null as unknown[] | null,
+  create: vi.fn(),
+  revoke: vi.fn(),
+  contextPack: vi.fn(),
+};
+vi.mock("~/features/ai-connections/useMcpTokens", () => ({ useMcpTokens: () => mcp }));
+
 describe("<SecurityTab />", () => {
   beforeEach(() => vi.clearAllMocks());
 
@@ -59,5 +67,24 @@ describe("<SecurityTab />", () => {
       screen.getByText("Model Context Protocol (MCP) & AI Connections (preview)"),
     ).toBeDefined();
     expect(screen.getByTestId("offline-context-pack-card")).toBeDefined();
+  });
+
+  it("connects the AI connection card to the token API", () => {
+    mcp.tokens = [];
+    render(<SecurityTab email="user@example.com" />);
+    expect(screen.queryByTestId("token-creation-unavailable")).toBeNull();
+    fireEvent.click(screen.getByTestId("generate-token-trigger"));
+    fireEvent.click(screen.getByTestId("confirm-generate-token"));
+    expect(mcp.create).toHaveBeenCalledWith("Claude Desktop", true, 90, false);
+  });
+
+  it("links to Imports only once a token can stage", () => {
+    mcp.tokens = [{ id: "t", name: "a", tokenPrefix: "p", scopes: ["mcp:read:anonymized"] }];
+    const { unmount } = render(<SecurityTab email="user@example.com" />);
+    expect(screen.queryByTestId("settings-imports-link")).toBeNull();
+    unmount();
+    mcp.tokens = [{ id: "t", name: "a", tokenPrefix: "p", scopes: ["write:stage"] }];
+    render(<SecurityTab email="user@example.com" />);
+    expect(screen.getByTestId("settings-imports-link").getAttribute("href")).toBe("/app/imports");
   });
 });
