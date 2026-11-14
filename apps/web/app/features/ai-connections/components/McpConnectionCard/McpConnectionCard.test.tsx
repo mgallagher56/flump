@@ -215,4 +215,49 @@ describe("McpConnectionCard Feature Component", () => {
     expect(screen.getByTestId("download-md-btn")).toBeDefined();
     expect(screen.getByTestId("download-json-btn")).toBeDefined();
   });
+
+  it("shows a known safe message when creating fails, and a fixed line for anything else", async () => {
+    const failing = vi
+      .fn()
+      .mockRejectedValueOnce(new Error("Connection tokens are not available for your account yet."))
+      .mockRejectedValueOnce(new Error("internal stack trace"));
+    render(<McpConnectionCard onGenerateToken={failing} />);
+    fireEvent.click(screen.getByTestId("generate-token-trigger"));
+    fireEvent.click(screen.getByTestId("confirm-generate-token"));
+    expect((await screen.findByRole("alert")).textContent).toBe(
+      "Connection tokens are not available for your account yet.",
+    );
+    fireEvent.click(screen.getByTestId("confirm-generate-token"));
+    await waitFor(() =>
+      expect(screen.getByRole("alert").textContent).toBe(
+        "The token could not be created. Try again in a moment.",
+      ),
+    );
+  });
+
+  it("keeps a token active and shows an error when revoking fails", async () => {
+    const revoke = vi.fn().mockRejectedValue(new Error("boom"));
+    const tokens = [
+      {
+        id: "tok_rev_1",
+        name: "Claude Desktop",
+        tokenPrefix: "flump_pat_aaaa...bbbb",
+        scopes: ["mcp:read:anonymized"],
+        anonymizeInstitutions: true,
+        expiresAt: null,
+        lastUsedAt: null,
+        totalToolCalls: 1,
+        createdAt: "2026-11-01T00:00:00.000Z",
+        isRevoked: false,
+        isExpired: false,
+      },
+    ];
+    render(<McpConnectionCard initialTokens={tokens} onRevokeToken={revoke} />);
+    fireEvent.keyDown(screen.getByRole("tab", { name: /Active Tokens/i }), { key: "Enter" });
+    fireEvent.click(screen.getByTestId("revoke-token-tok_rev_1"));
+    expect((await screen.findByRole("alert")).textContent).toBe(
+      "The token could not be revoked. Try again in a moment.",
+    );
+    expect(screen.queryByText("Revoked")).toBeNull();
+  });
 });

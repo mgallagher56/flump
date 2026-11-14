@@ -6,10 +6,14 @@ import type {
   McpTokenItem,
 } from "./components/McpConnectionCard/McpConnectionCard";
 
-export const TOKENS_UNAVAILABLE = "Connection tokens are not available for your account yet.";
-export const CREATE_FAILED = "The token could not be created. Try again in a moment.";
-export const REVOKE_FAILED = "The token could not be revoked. Try again in a moment.";
-export const RATE_LIMITED = "Too many tokens created recently. Try again later.";
+import {
+  CREATE_FAILED,
+  RATE_LIMITED,
+  REVOKE_FAILED,
+  TOKENS_UNAVAILABLE,
+} from "./components/McpConnectionCard/McpConnectionCard";
+
+export { CREATE_FAILED, RATE_LIMITED, REVOKE_FAILED, TOKENS_UNAVAILABLE };
 
 /** A short, honest message for a failed call; the backend's own text is never shown. */
 function messageFor(error: unknown, fallback: string): string {
