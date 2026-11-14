@@ -78,10 +78,11 @@ describe("ScenarioZone", () => {
     expect(screen.queryByTestId("projection-notice")).toBeNull();
   });
 
-  it("uses the lighter E16 surface: subtle fill and a 1px dashed outline", () => {
+  it("is quieter than a card: no fill (the canvas shows through) and a 1px dashed outline", () => {
     render(<ScenarioZone>x</ScenarioZone>);
     const cls = screen.getByTestId("scenario-zone").className;
-    expect(cls).toContain("surface.subtle");
+    expect(cls).toContain("bg-c_transparent");
+    expect(cls).not.toContain("surface.subtle");
     expect(cls).not.toContain("surface.sunken");
     expect(cls).toContain("bd-w_1px");
     expect(cls).toContain("border-style_dashed");

@@ -26,6 +26,18 @@ export const scrollSelectedTabIntoView = (scroller: HTMLElement | null): void =>
   else if (tab.right > box.right) scroller.scrollLeft += tab.right - box.right;
 };
 
+/**
+ * Marks which edges of a scrolling tab list hide tabs (`data-overflow-start` / `data-overflow-end`),
+ * so the scroller can fade that edge as a cue that there is more to scroll to. A list that fits
+ * carries neither attribute and draws no fade.
+ */
+export const updateOverflowCue = (scroller: HTMLElement | null): void => {
+  if (!scroller) return;
+  const max = scroller.scrollWidth - scroller.clientWidth;
+  scroller.toggleAttribute("data-overflow-start", max > 1 && scroller.scrollLeft > 1);
+  scroller.toggleAttribute("data-overflow-end", max > 1 && scroller.scrollLeft < max - 1);
+};
+
 // Replaced statically by the bundler (Vite, Storybook); declared here to avoid a node types dependency.
 declare const process: { env: { NODE_ENV?: string } };
 
@@ -159,7 +171,25 @@ const TabsRoot: FC<TabsProps> = ({
   // Keep the selected tab visible in a list that scrolls (on mount and when the value changes).
   useEffect(() => {
     scrollSelectedTabIntoView(scrollerRef.current);
+    updateOverflowCue(scrollerRef.current);
   }, [value]);
+
+  // The overflow cue follows scrolling and resizing. Effects only run in the browser, so the server
+  // render has no cue and nothing to mismatch on hydration. Re-measured when the items change.
+  useEffect(() => {
+    const scroller = scrollerRef.current;
+    if (!scroller) return;
+    const update = () => updateOverflowCue(scroller);
+    update();
+    scroller.addEventListener("scroll", update, { passive: true });
+    const observer = typeof ResizeObserver === "function" ? new ResizeObserver(update) : null;
+    observer?.observe(scroller);
+    if (scroller.firstElementChild) observer?.observe(scroller.firstElementChild);
+    return () => {
+      scroller.removeEventListener("scroll", update);
+      observer?.disconnect();
+    };
+  }, [items]);
 
   useEffect(() => {
     if (process.env.NODE_ENV !== "production" && items.length > TABS_MAX_ITEMS) {

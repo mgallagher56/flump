@@ -291,7 +291,7 @@ export const MarginalRateExplorer: FC<MarginalRateExplorerProps> = ({
         value={bonus}
         onChange={(v) => set("bonus", v)}
       />
-      {/* Named by its title, "More details"; the visible action text is left out. Holds every
+      {/* Named by its title, "More options"; the visible action text is left out. Holds every
           input past the first three (gross pay, bonus and the extra pension), state in the parent. */}
       <CollapsibleDrawer closedLabel="" openLabel="" title={EXPLORER_COPY.moreDetails}>
         <div className={explorerDetails()}>

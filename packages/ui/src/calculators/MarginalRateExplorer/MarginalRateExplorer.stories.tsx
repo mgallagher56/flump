@@ -27,8 +27,8 @@ export const Default: Story = {
     await expect(canvas.getByTestId("take-home-delta-pension")).toHaveTextContent(
       "An extra £1,000 a year into your pension",
     );
-    // Region, pension type, student loans and the tax year sit under More details.
-    await userEvent.click(canvas.getByRole("button", { name: "More details" }));
+    // Region, pension type, student loans and the tax year sit under More options.
+    await userEvent.click(canvas.getByRole("button", { name: "More options" }));
     await expect(canvas.getByLabelText("Where you pay tax")).toBeInTheDocument();
   },
 };

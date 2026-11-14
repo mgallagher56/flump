@@ -25,7 +25,8 @@ describe("IconTile", () => {
 
   it("uses a neutral surface for pay and tax, and when nothing is given", () => {
     const { container, rerender } = render(<IconTile domain="tax" icon={Landmark} />);
-    expect(container.firstElementChild?.className).toContain("surface.sunken");
+    expect(container.firstElementChild?.className).toContain("surface.subtle");
+    expect(container.firstElementChild?.className).toContain("bd-c_border");
     rerender(<IconTile icon={Landmark} />);
     expect(container.firstElementChild?.getAttribute("data-tile-tone")).toBe("neutral");
   });

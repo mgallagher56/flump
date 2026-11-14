@@ -141,13 +141,13 @@ describe("MarginalRateExplorer", () => {
     expect(document.getElementById("marginal-rate-explorer")).not.toBeNull();
   });
 
-  it("shows three inputs at most, with region and pension type under More details", () => {
+  it("shows three inputs at most, with region and pension type under More options", () => {
     render(<MarginalRateExplorerStandalone initialValues={{ taxYear: "2026/27" }} />);
     // Gross pay, bonus and the "Model a pension contribution" button.
     expect(screen.getAllByRole("slider")).toHaveLength(2);
     expect(screen.queryByRole("combobox")).toBeNull();
     expect(screen.queryByLabelText("Where you pay tax")).toBeNull();
-    fireEvent.click(screen.getByRole("button", { name: "More details" }));
+    fireEvent.click(screen.getByRole("button", { name: "More options" }));
     fireEvent.change(screen.getByLabelText("Where you pay tax"), {
       target: { value: "SCOTLAND" },
     });
