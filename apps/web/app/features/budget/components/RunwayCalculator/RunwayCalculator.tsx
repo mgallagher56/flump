@@ -404,7 +404,12 @@ export const RunwayCalculator: FC<RunwayCalculatorProps> = ({
         {isScenarioModified ? "Months of cover in this illustration" : "Months of cover"}
       </p>
       <p className={scenarioValue()} data-testid="runway-outcome" id="runway-outcome">
-        {coverLabel}
+        {saved && !isScenarioModified ? (
+          // Untouched, the outcome is the saved figure, so the consistency check can read it.
+          <span data-figure="monthsOfCover">{coverLabel}</span>
+        ) : (
+          coverLabel
+        )}
       </p>
       <p className={introText()}>
         An estimate of how long the money you can draw on would last if your income stopped,
