@@ -15,6 +15,8 @@ import {
 vi.mock("react-router", async () => await vi.importActual("react-router"));
 
 const mockUpdateProfile = vi.hoisted(() => vi.fn());
+const ALL_ENABLED = ["accounts", "budget", "savings", "pension", "mortgage", "tax", "debt"];
+const mockEnabledPages = vi.hoisted(() => ({ current: null as string[] | null }));
 
 vi.mock("~/hooks/useUserProfile", async (importOriginal) => {
   const actual: any = await importOriginal();
@@ -37,7 +39,7 @@ vi.mock("~/hooks/useUserProfile", async (importOriginal) => {
           userId: "u1",
           firstName: "Alex",
           currency: "GBP",
-          enabledPages: ["accounts", "budget", "savings", "pension", "mortgage", "tax", "debt"],
+          enabledPages: mockEnabledPages.current ?? ALL_ENABLED,
           dashboardWidgets: widgets,
           dashboardWidgetOrder: ["tax", "accounts"],
           dashboardWidgetSizes: { accounts: "wide" },
@@ -318,6 +320,23 @@ describe("HomeDashboard", () => {
     expect(payload.dashboardWidgets).not.toContain("debt");
     fireEvent.click(within(dialog).getByRole("button", { name: "Done" }));
     await waitFor(() => expect(screen.queryByTestId("widget-card-debt")).toBeNull());
+  });
+
+  it("keeps saved sections for switched-off pages when another section is toggled", async () => {
+    mockEnabledPages.current = ["accounts", "budget", "savings", "pension", "tax", "debt"];
+    try {
+      renderDashboard(withDebt);
+      fireEvent.click(screen.getByRole("button", { name: /Choose what shows here/ }));
+      const dialog = screen.getByRole("dialog", { name: "Choose what shows here" });
+      fireEvent.click(within(dialog).getByRole("checkbox", { name: /^Debt/ }));
+      await waitFor(() => expect(mockUpdateProfile).toHaveBeenCalledTimes(1));
+      const payload = mockUpdateProfile.mock.calls[0]?.[0];
+      expect(payload.dashboardWidgets).not.toContain("debt");
+      // The mortgage page is off, but its saved choice survives for when it is switched back on.
+      expect(payload.dashboardWidgets).toContain("mortgage");
+    } finally {
+      mockEnabledPages.current = null;
+    }
   });
 
   it("restores the choice and says the dashboard is unchanged when saving fails", async () => {
