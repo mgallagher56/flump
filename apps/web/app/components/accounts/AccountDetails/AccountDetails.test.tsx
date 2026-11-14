@@ -176,3 +176,13 @@ describe("<AccountDetails />", () => {
     expect(mocks.mockFetcherSubmit).not.toHaveBeenCalled();
   });
 });
+
+describe("sourceLabel (check-in sources, R2-5)", () => {
+  test("names calculated and confirmed months, and leaves typed figures unlabelled", async () => {
+    const { sourceLabel } = await import("./AccountDetails");
+    expect(sourceLabel("calculated")).toBe("Calculated");
+    expect(sourceLabel("confirmed")).toBe("No change");
+    expect(sourceLabel("manual")).toBeNull();
+    expect(sourceLabel(undefined)).toBeNull();
+  });
+});

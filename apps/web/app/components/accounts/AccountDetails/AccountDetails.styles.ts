@@ -35,6 +35,11 @@ export const monthCell = cva({
   base: { color: "text.primary", textStyle: "label.md", fontVariantNumeric: "tabular-nums" },
 });
 
+/** "Calculated" or "No change" under a month's balance: quiet text, never colour alone. */
+export const sourceTag = cva({
+  base: { display: "block", textStyle: "body.sm", color: "text.muted" },
+});
+
 export const mutedFigure = cva({
   base: { color: "text.muted", fontVariantNumeric: "tabular-nums" },
 });
