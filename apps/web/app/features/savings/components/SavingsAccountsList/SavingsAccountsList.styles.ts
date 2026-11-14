@@ -72,7 +72,7 @@ export const isaNote = cva({
 });
 
 export const accountMeta = cva({
-  base: { display: "flex", flexDirection: "column", gap: "2px", minWidth: 0, flex: "1 1 7rem" },
+  base: { display: "flex", flexDirection: "column", gap: "2px", minWidth: "5rem", flex: "1 1 0" },
 });
 
 export const accountLink = cva({
