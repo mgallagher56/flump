@@ -82,8 +82,9 @@ export const topBarLink = cva({
     minH: "8",
     px: { base: "3", _navInline: "2.5" },
     borderRadius: "full",
-    // Link icons only where there is room for them (from navWide); tablets show text only.
-    "& > svg": { display: { base: "none", _navWide: "inline-block" } },
+    // Text-only links at every width, on both sites: icons pushed the web bar past 1024px and
+    // added nothing the words do not say (the drawer and bottom bar keep their icons).
+    "& > svg": { display: "none" },
     backgroundColor: "transparent",
     borderWidth: "0",
     color: "text.secondary",

@@ -517,7 +517,7 @@ exports[`<Header /> > renders correctly when user logged in 1`] = `
             >
               <button
                 aria-expanded="false"
-                class="d_inline-flex ai_center gap_2 min-h_8 px_3 navInline:px_2.5 bdr_full [&_>_svg]:d_none [&_>_svg]:navWide:d_inline-block bg-c_transparent bd-w_0 c_text.secondary textStyle_label.md fw_semibold white-space_nowrap td_none cursor_pointer motionSafe:trs-prop_background-color,_color motionSafe:trs-dur_fast motionSafe:trs-tmf_standard hover:bg-c_surface.sunken hover:c_text.primary focusVisible:ring_2px_solid focusVisible:ring-c_border.focusRing focusVisible:ring-o_2px [&[aria-current="page"]]:bg-c_primary.subtle [&[aria-current="page"]]:c_primary"
+                class="d_inline-flex ai_center gap_2 min-h_8 px_3 navInline:px_2.5 bdr_full [&_>_svg]:d_none bg-c_transparent bd-w_0 c_text.secondary textStyle_label.md fw_semibold white-space_nowrap td_none cursor_pointer motionSafe:trs-prop_background-color,_color motionSafe:trs-dur_fast motionSafe:trs-tmf_standard hover:bg-c_surface.sunken hover:c_text.primary focusVisible:ring_2px_solid focusVisible:ring-c_border.focusRing focusVisible:ring-o_2px [&[aria-current="page"]]:bg-c_primary.subtle [&[aria-current="page"]]:c_primary"
                 type="button"
               >
                 <svg
@@ -577,7 +577,7 @@ exports[`<Header /> > renders correctly when user logged in 1`] = `
             >
               <button
                 aria-expanded="false"
-                class="d_inline-flex ai_center gap_2 min-h_8 px_3 navInline:px_2.5 bdr_full [&_>_svg]:d_none [&_>_svg]:navWide:d_inline-block bg-c_transparent bd-w_0 c_text.secondary textStyle_label.md fw_semibold white-space_nowrap td_none cursor_pointer motionSafe:trs-prop_background-color,_color motionSafe:trs-dur_fast motionSafe:trs-tmf_standard hover:bg-c_surface.sunken hover:c_text.primary focusVisible:ring_2px_solid focusVisible:ring-c_border.focusRing focusVisible:ring-o_2px [&[aria-current="page"]]:bg-c_primary.subtle [&[aria-current="page"]]:c_primary"
+                class="d_inline-flex ai_center gap_2 min-h_8 px_3 navInline:px_2.5 bdr_full [&_>_svg]:d_none bg-c_transparent bd-w_0 c_text.secondary textStyle_label.md fw_semibold white-space_nowrap td_none cursor_pointer motionSafe:trs-prop_background-color,_color motionSafe:trs-dur_fast motionSafe:trs-tmf_standard hover:bg-c_surface.sunken hover:c_text.primary focusVisible:ring_2px_solid focusVisible:ring-c_border.focusRing focusVisible:ring-o_2px [&[aria-current="page"]]:bg-c_primary.subtle [&[aria-current="page"]]:c_primary"
                 type="button"
               >
                 <svg
