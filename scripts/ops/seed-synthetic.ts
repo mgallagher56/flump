@@ -39,6 +39,8 @@ export const USER_DATA_TABLES = [
   "liability_sign_backfill",
   "accounts",
   "bank_connections",
+  // BE-12 pending bank OAuth consents (random state hash and PKCE verifier, ten minutes).
+  "bank_oauth_states",
   "budget_entries",
   "agent_audit_events",
   "mcp_tokens",

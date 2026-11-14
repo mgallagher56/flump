@@ -17,6 +17,7 @@ const NOT_INDEXED_ON_PURPOSE: Record<string, string> = {
   "agent_audit_events.token_id":
     "never filtered on; IDX_agent_audit_events_user_created serves reads",
   "bank_connections.institution_id": "a provider identifier, never filtered on",
+  "bank_oauth_states.institution_id": "compared after the state_hash lookup, never filtered on",
 };
 
 // biome-ignore lint/complexity/noBannedTypes: TypeORM entity classes are typed as Function

@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { validateSignConvention } from "../../core/sign-enforcement.js";
-import { CsvStatementParser, parseBankCsvContent } from "./csv.js";
+import { CsvAmountError, parseBankCsvContent } from "./csv.js";
 
-describe("banking server: CsvStatementParser", () => {
+describe("banking server: parseBankCsvContent", () => {
   const monzoCsv = `Transaction ID,Date,Time,Type,Name,Emoji,Category,Amount,Currency,Local amount,Local currency,Notes and #tags,Address,Description
 tx_001,01/02/2026,14:22:00,Card Payment,Tesco Express,,Groceries,-24.50,GBP,-24.50,GBP,,,Tesco Express London
 tx_002,02/02/2026,08:30:00,Faster payment,ACME Corp Payroll,,Income,2600.00,GBP,2600.00,GBP,,,Salary February
@@ -54,26 +54,6 @@ tx_004,04/02/2026,12:00:00,Direct Debit,Octopus Energy,,Bills,-110.00,GBP,-110.0
     expect(payment?.amountGbp).toBe(500);
   });
 
-  it("operates CsvStatementParser via BankingProviderAdapter interface", async () => {
-    const parser = new CsvStatementParser();
-    const exchanged = await parser.exchangePublicToken(monzoCsv);
-    expect(exchanged.accessTokenEncrypted).toBeDefined();
-
-    const accounts = await parser.getAccounts(exchanged.accessTokenEncrypted);
-    expect(accounts.length).toBe(1);
-
-    const sync = await parser.syncTransactions(exchanged.accessTokenEncrypted);
-    expect(sync.added.length).toBe(4);
-  });
-
-  it("creates a csv upload link session and revokes without error", async () => {
-    const parser = new CsvStatementParser();
-    const link = await parser.createLinkSession("user 1");
-    expect(link.linkTokenOrUrl).toBe("csv://upload?userId=user%201");
-    expect(new Date(link.expiresAt).getTime()).toBeGreaterThan(Date.now());
-    await expect(parser.revokeConnection("ignored")).resolves.toBeUndefined();
-  });
-
   it("parses a generic HSBC-style statement (date, description, amount, balance)", () => {
     const csv = `Date,Description,Amount,Balance
 09/02/2026,Co-op Food,-12.30,500.00
@@ -82,5 +62,39 @@ tx_004,04/02/2026,12:00:00,Direct Debit,Octopus Energy,,Bills,-110.00,GBP,-110.0
     expect(transactions).toHaveLength(2);
     expect(transactions[0]?.amountGbp).toBe(-12.3);
     expect(transactions[1]?.amountGbp).toBe(2000);
+  });
+
+  it("accepts amounts with a currency symbol and thousands separator", () => {
+    const csv = `Date,Description,Amount,Balance
+09/02/2026,Salary,"£1,234.50",500.00`;
+    const { transactions } = parseBankCsvContent(csv);
+    expect(transactions[0]?.amountGbp).toBe(1234.5);
+  });
+
+  it.each([
+    ["an empty amount cell", "10/02/2026,Mystery,,500.00"],
+    ["an unreadable amount cell", "10/02/2026,Mystery,SECRET-n/a,500.00"],
+    ["a lone minus sign", "10/02/2026,Mystery,-,500.00"],
+  ])("rejects %s with the data row number and no cell content", (_, badRow) => {
+    const csv = `Date,Description,Amount,Balance
+09/02/2026,Co-op Food,-12.30,500.00
+${badRow}`;
+    let error: unknown;
+    try {
+      parseBankCsvContent(csv);
+    } catch (e) {
+      error = e;
+    }
+    expect(error).toBeInstanceOf(CsvAmountError);
+    expect((error as CsvAmountError).row).toBe(2);
+    expect((error as Error).message).toMatch(/row 2/);
+    expect((error as Error).message).not.toContain("SECRET");
+    expect((error as Error).message).not.toContain("Mystery");
+  });
+
+  it("rejects a Monzo row whose amount column is missing", () => {
+    const csv = `Transaction ID,Date,Time,Type,Name,Emoji,Category,Amount,Currency,Local amount,Local currency,Notes and #tags,Address,Description
+tx_001,01/02/2026,14:22:00,Card Payment,Tesco Express,,Groceries`;
+    expect(() => parseBankCsvContent(csv)).toThrow(CsvAmountError);
   });
 });

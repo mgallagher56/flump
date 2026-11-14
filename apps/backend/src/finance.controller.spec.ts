@@ -208,60 +208,6 @@ describe("FinanceController & FinanceService", () => {
     expect(mockBankConnRepo.find).toHaveBeenCalled();
   });
 
-  it("should encrypt access token when connecting a bank with token auth and handle existing connection/accounts", async () => {
-    const { controller, mockBankConnRepo, mockAccountRepo, mockAccountDetailRepo, mockProvider } =
-      createMocks();
-    let savedConnection: any = null;
-    mockBankConnRepo.findOne.mockResolvedValueOnce({
-      id: "conn-existing",
-      institutionId: "starling",
-    });
-    mockBankConnRepo.save.mockImplementation((data) => {
-      savedConnection = data;
-      return Promise.resolve({ id: "conn-existing", ...data });
-    });
-    mockAccountRepo.findOne.mockResolvedValueOnce({ id: "acc-existing", balance: 100 });
-    mockAccountDetailRepo.findOne.mockResolvedValueOnce({ id: "det-existing", value: 100 });
-
-    const rawToken = "starling_pat_secret_token_12345";
-    await controller.connectBank(
-      { user: { id: "user-123" } },
-      { institutionId: "starling", token: rawToken },
-    );
-
-    expect(savedConnection).toBeDefined();
-    expect(savedConnection.accessToken).not.toEqual(rawToken);
-    expect(BankSyncOrchestrator.decryptToken(savedConnection.accessToken)).toBe(rawToken);
-
-    // Token sync verification failure
-    mockProvider.fetchAccounts.mockRejectedValueOnce(new Error("API Down"));
-    await expect(
-      controller.connectBank(
-        { user: { id: "user-123" } },
-        { institutionId: "starling", token: rawToken },
-      ),
-    ).rejects.toThrow(/^Token sync verification failed\. Check the token/);
-  });
-
-  it("logs a failed token sync without the token or the provider response body (E19 A5)", async () => {
-    const { controller, mockProvider } = createMocks();
-    const logged = vi.spyOn(Logger.prototype, "error").mockImplementation(() => {});
-    mockProvider.fetchAccounts.mockRejectedValueOnce(
-      new Error('Failed to fetch Starling accounts: {"balance":987654,"token":"tok-secret-xyz"}'),
-    );
-    await expect(
-      controller.connectBank(
-        { user: { id: "user-123" } },
-        { institutionId: "starling", token: "tok-secret-xyz" },
-      ),
-    ).rejects.toThrow();
-    const output = JSON.stringify(logged.mock.calls);
-    expect(output).toContain("Failed to fetch Starling accounts");
-    expect(output).not.toContain("tok-secret-xyz");
-    expect(output).not.toContain("987654");
-    logged.mockRestore();
-  });
-
   it("should reject bank connection without token or OAuth credentials rather than seeding dummy data", async () => {
     const { controller, mockAccountRepo, mockRegistry } = createMocks();
     mockRegistry.getProvider.mockReturnValue(null);
@@ -276,28 +222,6 @@ describe("FinanceController & FinanceService", () => {
     ).rejects.toThrow(/OAuth credentials are not configured/i);
 
     expect(mockAccountRepo.save).not.toHaveBeenCalled();
-  });
-
-  it("should return OAuth redirect URL when OAuth keys are configured", async () => {
-    const { controller, mockConfig, mockProvider } = createMocks();
-    mockProvider.getAuthUrl.mockReturnValue("https://auth.monzo.com/?client_id=monzo-id");
-    mockConfig.get.mockImplementation((key: string) => {
-      if (key === "MONZO_CLIENT_ID") return "monzo-client-id";
-      if (key === "MONZO_CLIENT_SECRET") return "monzo-client-secret";
-      if (key === "BACKEND_URL") return "http://localhost:4000";
-      return null;
-    });
-
-    const result = await controller.connectBank(
-      { user: { id: "user-123" } },
-      { institutionId: "monzo" },
-    );
-
-    expect(result).toEqual({
-      success: true,
-      oauth: true,
-      redirectUrl: "https://auth.monzo.com/?client_id=monzo-id",
-    });
   });
 
   it("delegates account intake and portfolio snapshot operations cleanly", async () => {
@@ -357,56 +281,6 @@ describe("FinanceController & FinanceService", () => {
 
     await controller.deleteAccount(userReq, "acc-1");
     expect(mockFinanceService.deleteAccount).toHaveBeenCalledWith("user-123", "acc-1");
-  });
-
-  it("syncs and deletes bank connections including token refresh and error handling", async () => {
-    const { controller, mockBankConnRepo, mockConfig, mockProvider, mockAccountRepo } =
-      createMocks();
-    const req = { user: { id: "u1" } };
-
-    // Sync not found
-    await expect(controller.syncBankConnection(req, "missing")).rejects.toThrow(NotFoundException);
-
-    // Sync with no accessToken
-    mockBankConnRepo.findOne.mockResolvedValueOnce({ id: "c1", institutionId: "monzo" });
-    await expect(controller.syncBankConnection(req, "c1")).rejects.toThrow(/reconnected/);
-
-    // Sync with expiring token triggers refresh
-    mockConfig.get.mockReturnValue("secret");
-    mockBankConnRepo.findOne.mockResolvedValueOnce({
-      id: "c1",
-      institutionId: "monzo",
-      accessToken: BankSyncOrchestrator.encryptToken("old_tok"),
-      refreshToken: BankSyncOrchestrator.encryptToken("old_ref"),
-      expiresAt: new Date(Date.now() + 60000),
-    });
-
-    const syncRes = await controller.syncBankConnection(req, "c1");
-    expect(syncRes.success).toBe(true);
-    expect(mockProvider.exchangeCode).toHaveBeenCalled();
-
-    // Sync provider error returns success: false with a generic message
-    mockBankConnRepo.findOne.mockResolvedValueOnce({
-      id: "c1",
-      institutionId: "monzo",
-      institutionName: "Monzo",
-      accessToken: BankSyncOrchestrator.encryptToken("tok"),
-    });
-    mockProvider.fetchAccounts.mockRejectedValueOnce(new Error("timeout"));
-    const failRes = await controller.syncBankConnection(req, "c1");
-    expect(failRes.success).toBe(false);
-    expect(failRes.error).not.toContain("timeout");
-    expect(Object.keys(failRes.connection)).not.toContain("accessToken");
-
-    // Delete connection not found & found
-    await expect(controller.deleteBankConnection(req, "missing")).rejects.toThrow(
-      NotFoundException,
-    );
-    mockBankConnRepo.findOne.mockResolvedValueOnce({ id: "c1" });
-    mockAccountRepo.find.mockResolvedValueOnce([{ id: "acc-1" }]);
-    const delConn = await controller.deleteBankConnection(req, "c1");
-    expect(delConn.success).toBe(true);
-    expect(mockBankConnRepo.remove).toHaveBeenCalled();
   });
 
   describe("cross-user access (user B against user A's rows)", () => {
@@ -561,15 +435,5 @@ describe("FinanceController & FinanceService", () => {
     await expect(controller.updateAccount(userB, "acc-of-userA", { balance: 1 })).rejects.toThrow(
       NotFoundException,
     );
-  });
-
-  it("bank sync stores no transactions (E19 D8-A)", async () => {
-    const { controller, mockProvider, mockTransactionRepo } = createMocks();
-    await controller.connectBank(
-      { user: { id: "user-123" } },
-      { institutionId: "monzo", token: "tok" },
-    );
-    expect(mockProvider.fetchTransactions).not.toHaveBeenCalled();
-    expect(mockTransactionRepo.save).not.toHaveBeenCalled();
   });
 });

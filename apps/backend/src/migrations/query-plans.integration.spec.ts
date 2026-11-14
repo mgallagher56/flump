@@ -76,7 +76,8 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
         expect(onTable.length, `no plan node reads ${query.table}`).toBeGreaterThan(0);
         expect(onTable.map((n) => n["Node Type"])).not.toContain("Seq Scan");
         // A Bitmap Heap Scan names its index on the Bitmap Index Scan child, not on itself.
-        expect(nodes.map((n) => n["Index Name"])).toContain(query.index);
+        const accepted = [query.index, ...(query.alsoAccepted ?? [])];
+        expect(nodes.some((n) => accepted.includes(n["Index Name"] as string))).toBe(true);
       },
     );
   },

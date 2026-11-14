@@ -3619,7 +3619,7 @@
                       },
                       "status": {
                         "type": "string",
-                        "enum": ["connected", "disconnected", "error"]
+                        "enum": ["connected", "disconnected", "error", "needs_reconnect"]
                       },
                       "authType": {
                         "type": "string",
@@ -3702,7 +3702,7 @@
                             },
                             "status": {
                               "type": "string",
-                              "enum": ["connected", "disconnected", "error"]
+                              "enum": ["connected", "disconnected", "error", "needs_reconnect"]
                             },
                             "authType": {
                               "type": "string",
@@ -3878,7 +3878,7 @@
                             },
                             "status": {
                               "type": "string",
-                              "enum": ["connected", "disconnected", "error"]
+                              "enum": ["connected", "disconnected", "error", "needs_reconnect"]
                             },
                             "authType": {
                               "type": "string",
@@ -3912,6 +3912,23 @@
                         },
                         "message": {
                           "type": "string"
+                        },
+                        "accounts": {
+                          "type": "object",
+                          "properties": {
+                            "updated": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 9007199254740991
+                            },
+                            "skipped": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 9007199254740991
+                            }
+                          },
+                          "required": ["updated", "skipped"],
+                          "additionalProperties": false
                         }
                       },
                       "required": ["success", "connection", "message"],
@@ -3941,7 +3958,7 @@
                             },
                             "status": {
                               "type": "string",
-                              "enum": ["connected", "disconnected", "error"]
+                              "enum": ["connected", "disconnected", "error", "needs_reconnect"]
                             },
                             "authType": {
                               "type": "string",
@@ -4048,7 +4065,7 @@
                             },
                             "status": {
                               "type": "string",
-                              "enum": ["connected", "disconnected", "error"]
+                              "enum": ["connected", "disconnected", "error", "needs_reconnect"]
                             },
                             "authType": {
                               "type": "string",
@@ -4082,6 +4099,23 @@
                         },
                         "message": {
                           "type": "string"
+                        },
+                        "accounts": {
+                          "type": "object",
+                          "properties": {
+                            "updated": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 9007199254740991
+                            },
+                            "skipped": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 9007199254740991
+                            }
+                          },
+                          "required": ["updated", "skipped"],
+                          "additionalProperties": false
                         }
                       },
                       "required": ["success", "connection", "message"],
@@ -4111,7 +4145,7 @@
                             },
                             "status": {
                               "type": "string",
-                              "enum": ["connected", "disconnected", "error"]
+                              "enum": ["connected", "disconnected", "error", "needs_reconnect"]
                             },
                             "authType": {
                               "type": "string",
@@ -4196,9 +4230,12 @@
                     "success": {
                       "type": "boolean",
                       "const": true
+                    },
+                    "consentRevoked": {
+                      "type": "boolean"
                     }
                   },
-                  "required": ["success"],
+                  "required": ["success", "consentRevoked"],
                   "additionalProperties": false
                 }
               }

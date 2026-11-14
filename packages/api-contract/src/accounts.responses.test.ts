@@ -289,7 +289,24 @@ describe("bank-connections responses", () => {
   });
 
   it("accepts sync success and the generic failure", () => {
-    ok(SyncBankConnectionResponse, { success: true, connection, message: "Sync'd 2 accounts." });
+    ok(SyncBankConnectionResponse, { success: true, connection, message: "Synced 2 accounts." });
+    ok(SyncBankConnectionResponse, {
+      success: true,
+      connection,
+      message: "Updated 2 of 3 accounts.",
+      accounts: { updated: 2, skipped: 1 },
+    });
+    bad(SyncBankConnectionResponse, {
+      success: true,
+      connection,
+      message: "ok",
+      accounts: { updated: -1, skipped: 0 },
+    });
+    ok(SyncBankConnectionResponse, {
+      success: false,
+      connection: { ...connection, status: "needs_reconnect" },
+      error: "This bank connection needs to be reconnected.",
+    });
     ok(SyncBankConnectionResponse, {
       success: false,
       connection: { ...connection, status: "error" },
@@ -299,7 +316,9 @@ describe("bank-connections responses", () => {
   });
 
   it("accepts the delete result and rejects extra keys", () => {
-    ok(DeleteBankConnectionResponse, { success: true });
-    bad(DeleteBankConnectionResponse, { success: false });
+    ok(DeleteBankConnectionResponse, { success: true, consentRevoked: true });
+    ok(DeleteBankConnectionResponse, { success: true, consentRevoked: false });
+    bad(DeleteBankConnectionResponse, { success: true });
+    bad(DeleteBankConnectionResponse, { success: false, consentRevoked: true });
   });
 });

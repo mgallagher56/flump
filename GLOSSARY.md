@@ -22,9 +22,9 @@ The algorithmic schedule for clearing non-mortgage liabilities. Implementations 
 
 ## Open Banking & Aggregation
 
-### BankingProviderAdapter
+### BankProvider
 
-The standard seam decoupling Flump from third-party open banking protocols. Exposes `createLinkSession`, `exchangePublicToken`, `getAccounts`, `syncTransactions`, and `revokeConnection`. Adapters include Plaid, Monzo, Starling, Sandbox, and manual CSV.
+The seam decoupling Flump from each bank or broker's API (`packages/banking/src/server/interface.ts`). Exposes `getAuthUrl`, `exchangeCode`, `refreshToken`, `revokeConnection`, `fetchAccounts` and `fetchTransactions`, and rejects with a `BankProviderError` rather than substituting default data. Implemented by the Monzo, Starling, Trading 212 and Open Banking standard providers. It replaced the older `BankingProviderAdapter`, which has been deleted.
 
 ### BankSyncOrchestrator
 

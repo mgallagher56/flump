@@ -45,6 +45,7 @@ const ENTITY_TABLES = [
   "accounts",
   "agent_audit_events",
   "bank_connections",
+  "bank_oauth_states",
   "budget_entries",
   "import_batches",
   "mcp_tokens",
@@ -165,7 +166,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
     }
   };
 
-  it("creates all eleven tables on an empty database", async () => {
+  it("creates all twelve tables on an empty database", async () => {
     await ds.runMigrations();
     expect(await tables()).toEqual(ENTITY_TABLES);
   });

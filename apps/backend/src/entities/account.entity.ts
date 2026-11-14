@@ -10,6 +10,11 @@ import { numericTransformer } from "./numeric.transformer";
   "CHK_accounts_liability_balance_non_positive",
   `"type" NOT IN ('Mortgage', 'Credit Card', 'Loan', 'Overdraft', 'Student Loan') OR "balance" <= 0`,
 )
+// BE-12 (audit H4): one row per synced bank account (migration BankSyncIntegrity1794358400000).
+@Index("UQ_accounts_user_connection_external", ["userId", "connectionId", "externalAccountId"], {
+  unique: true,
+  where: '"connection_id" IS NOT NULL AND "external_account_id" IS NOT NULL',
+})
 export class Account {
   @PrimaryGeneratedColumn("uuid")
   id: string;
