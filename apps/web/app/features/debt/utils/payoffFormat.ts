@@ -10,11 +10,3 @@ export const formatPayoffDuration = (totalMonths: number): string => {
   const rest = months % 12;
   return rest === 0 ? plural(years, "year") : `${plural(years, "year")} ${plural(rest, "month")}`;
 };
-
-/** Interest in the first 12 months of a payoff schedule (the "interest this year" estimate). */
-export const interestInFirstYear = (
-  schedule: ReadonlyArray<{ month: number; totalInterestPaidThisMonth: number }>,
-): number =>
-  schedule
-    .filter((m) => m.month >= 1 && m.month <= 12)
-    .reduce((sum, m) => sum + m.totalInterestPaidThisMonth, 0);

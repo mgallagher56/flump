@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { expect, fireEvent, within } from "storybook/test";
+import { expect, fireEvent, fn, within } from "storybook/test";
 import { OverpayVsSaveCompare } from "./OverpayVsSaveCompare";
 
 const meta: Meta<typeof OverpayVsSaveCompare> = {
@@ -14,6 +14,7 @@ const meta: Meta<typeof OverpayVsSaveCompare> = {
     remainingTerm: 25,
     overpayment: 300,
     mortgageType: "repayment",
+    onOverpaymentChange: fn(),
   },
 };
 
@@ -49,6 +50,13 @@ export const NotSet: Story = {
 
 export const NoOverpaymentBudget: Story = {
   args: { overpayment: 0 },
+  play: async ({ canvasElement, args }) => {
+    const canvas = within(canvasElement);
+    await expect(canvasElement.textContent).not.toMatch(/Overpay.{0,4} tab/);
+    const [amount] = canvas.getAllByLabelText("Amount each month");
+    fireEvent.change(amount as HTMLElement, { target: { value: "200" } });
+    await expect(args.onOverpaymentChange).toHaveBeenCalledWith(200);
+  },
 };
 
 export const Dark: Story = { globals: { theme: "dark" } };

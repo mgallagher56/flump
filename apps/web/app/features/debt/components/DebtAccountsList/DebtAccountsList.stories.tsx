@@ -6,7 +6,7 @@ import { DebtAccountsList } from "./DebtAccountsList";
 const debts: DebtItem[] = [
   {
     id: "d1",
-    name: "Barclaycard Platinum",
+    name: "Everyday credit card",
     type: "credit_card",
     balance: 3000,
     apr: 22.9,
@@ -14,7 +14,7 @@ const debts: DebtItem[] = [
   },
   {
     id: "d2",
-    name: "Tesco Loan",
+    name: "Car loan",
     type: "loan",
     balance: 4500,
     apr: 0,
@@ -35,16 +35,18 @@ export default meta;
 type Story = StoryObj<typeof DebtAccountsList>;
 
 // The Storybook decorator renders light and dark side by side, so queries use the "all" variants.
-/** Shows "Rate not added" and the estimated-minimum marker. */
-export const WithUnknownAprAndEstimatedMinimum: Story = {
+/** Shows "Rate not added"; delete is reached through the row's one Edit control. */
+export const WithUnknownApr: Story = {
   play: async ({ canvasElement, args }) => {
     const canvas = within(canvasElement);
+    const body = within(document.body);
     await expect(canvas.queryAllByText("Not set").length).toBe(0);
     await expect(canvas.getAllByText("Rate not added").length).toBeGreaterThan(0);
-    await expect(canvas.getAllByText(/\(estimate\)/).length).toBeGreaterThan(0);
+    await expect(canvas.queryAllByRole("button", { name: /^Delete/ }).length).toBe(0);
     await userEvent.click(
-      canvas.getAllByRole("button", { name: "Delete Tesco Loan" })[0] as HTMLElement,
+      canvas.getAllByRole("button", { name: "Edit Car loan" })[0] as HTMLElement,
     );
+    await userEvent.click(await body.findByRole("button", { name: "Delete debt" }));
     await expect(args.onDeleteDebt).toHaveBeenCalledWith("d2");
   },
 };

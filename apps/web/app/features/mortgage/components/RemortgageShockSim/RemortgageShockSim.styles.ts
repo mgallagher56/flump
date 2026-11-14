@@ -44,10 +44,24 @@ export const remainingText = css({
   ...numeric,
 });
 
+export const outcomeLabel = css({
+  textStyle: "label.md",
+  color: "text.secondary",
+  margin: 0,
+});
+
+/** The one outcome sentence. Never `surface.hero`: this is a scenario outcome. */
+export const outcomeValue = css({
+  textStyle: "numeric.lg",
+  color: "text.primary",
+  margin: 0,
+  ...numeric,
+});
+
 export const resultList = cva({
   base: {
     display: "grid",
-    gridTemplateColumns: { base: "minmax(0, 1fr)", sm: "repeat(3, minmax(0, 1fr))" },
+    gridTemplateColumns: { base: "minmax(0, 1fr)", sm: "repeat(2, minmax(0, 1fr))" },
     gap: "12px 24px",
     margin: 0,
   },
@@ -69,52 +83,11 @@ export const resultUnit = css({
   color: "text.secondary",
 });
 
-export const ltvBox = cva({
-  base: {
-    paddingTop: "16px",
-    borderTopWidth: "1px",
-    borderTopStyle: "solid",
-    borderTopColor: "border.subtle",
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    flexWrap: "wrap",
-    gap: "12px",
-    minWidth: 0,
-  },
-});
-
-export const ltvHeading = css({
-  display: "flex",
-  alignItems: "baseline",
-  flexWrap: "wrap",
-  gap: "8px",
-  textStyle: "label.md",
-  color: "text.primary",
-  m: 0,
-  ...numeric,
-});
-
-export const ltvMuted = css({
-  textStyle: "body.sm",
-  color: "text.muted",
-});
-
 export const ltvBody = css({
   textStyle: "body.sm",
   color: "text.secondary",
   mt: "4px",
   mb: 0,
   maxWidth: "60ch",
-  ...numeric,
-});
-
-export const ltvTotal = css({
-  display: "flex",
-  flexDirection: "column",
-  gap: "2px",
-  textAlign: { base: "left", sm: "right" },
-  textStyle: "label.sm",
-  color: "text.muted",
   ...numeric,
 });

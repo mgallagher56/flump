@@ -39,16 +39,32 @@ describe("AddDebtDialog", () => {
     }
   });
 
+  it("uses the shared Select for the type, a provider-free example and no Delete action", () => {
+    open();
+    const type = screen.getByLabelText("Type") as HTMLSelectElement;
+    expect(type.tagName).toBe("SELECT");
+    expect(type.value).toBe("credit_card");
+    expect(
+      (screen.getByLabelText(/^Name of the debt/) as HTMLInputElement).getAttribute("placeholder"),
+    ).toBe("For example, credit card or car loan");
+    expect(screen.queryByRole("button", { name: "Delete debt" })).toBeNull();
+    for (const label of ["Balance you owe", "Minimum payment each month"]) {
+      expect(
+        (screen.getByLabelText(new RegExp(`^${label}`)) as HTMLInputElement).getAttribute("type"),
+      ).not.toBe("number");
+    }
+  });
+
   it("submits a full liability", () => {
     const { onAddDebt, onClose } = open();
-    fill("Name of the debt", "Amex Gold");
+    fill("Name of the debt", "Holiday card");
     fireEvent.change(screen.getByLabelText("Type"), { target: { value: "loan" } });
     fill("Balance you owe", "3500");
     fill("Interest rate", "19.9");
     fill("Minimum payment each month", "90");
     submit();
     expect(onAddDebt).toHaveBeenCalledWith({
-      name: "Amex Gold",
+      name: "Holiday card",
       balance: 3500,
       apr: 19.9,
       aprKnown: true,
@@ -61,13 +77,13 @@ describe("AddDebtDialog", () => {
 
   it("needs only a name and balance; blank APR and minimum are flagged unknown", () => {
     const { onAddDebt } = open();
-    fill("Name of the debt", "Klarna");
+    fill("Name of the debt", "Sofa payments");
     fill("Balance you owe", "250");
     submit();
     expect(onAddDebt).toHaveBeenCalledTimes(1);
     const submitted = onAddDebt.mock.calls[0][0];
     expect(submitted).toMatchObject({
-      name: "Klarna",
+      name: "Sofa payments",
       balance: 250,
       aprKnown: false,
       minimumPaymentEstimated: true,
@@ -105,7 +121,7 @@ describe("AddDebtDialog", () => {
 describe("AddDebtDialog in edit mode", () => {
   const debt = {
     id: "d1",
-    name: "Barclaycard",
+    name: "Everyday card",
     balance: 1000,
     apr: 21.9,
     aprKnown: true,
@@ -113,18 +129,36 @@ describe("AddDebtDialog in edit mode", () => {
     minimumPaymentEstimated: false,
     type: "credit_card" as const,
   };
-  const renderEdit = (onEditDebt = vi.fn(), onClose = vi.fn()) => {
+  const renderEdit = (onEditDebt = vi.fn(), onClose = vi.fn(), onDeleteDebt = vi.fn()) => {
     customRender(
       <AddDebtDialog
         debt={debt}
         isOpen
         onAddDebt={vi.fn()}
         onClose={onClose}
+        onDeleteDebt={onDeleteDebt}
         onEditDebt={onEditDebt}
       />,
     );
-    return { onEditDebt, onClose };
+    return { onEditDebt, onClose, onDeleteDebt };
   };
+
+  it("offers Delete debt, which closes the dialog and hands the id to the page", () => {
+    const { onClose, onDeleteDebt, onEditDebt } = renderEdit();
+    fireEvent.click(screen.getByRole("button", { name: "Delete debt" }));
+    expect(onClose).toHaveBeenCalledTimes(1);
+    expect(onDeleteDebt).toHaveBeenCalledWith("d1");
+    expect(onEditDebt).not.toHaveBeenCalled();
+  });
+
+  it("keeps each footer button on one line", () => {
+    renderEdit();
+    for (const name of ["Delete debt", "Cancel", "Save changes"]) {
+      expect(screen.getByRole("button", { name }).className).toMatch(
+        /white-space_nowrap|ws_nowrap/,
+      );
+    }
+  });
 
   it("offers no balance field and sends only the changed fields", () => {
     const { onEditDebt } = renderEdit();

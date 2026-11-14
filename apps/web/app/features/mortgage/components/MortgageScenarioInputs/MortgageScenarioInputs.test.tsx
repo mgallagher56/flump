@@ -11,6 +11,39 @@ describe("<MortgageScenarioInputs />", () => {
     expect(screen.queryByText(/Changed from your saved figure/)).toBeNull();
   });
 
+  it("shows a stored term as years and months and a rate as entered", () => {
+    render(
+      <MortgageScenarioInputs
+        isEdited={() => false}
+        values={{ loanAmount: 186000, interestRate: 4.5, remainingTerm: 218 / 12 }}
+        onChange={vi.fn()}
+      />,
+    );
+    expect((screen.getByLabelText("Years left to try input") as HTMLInputElement).value).toBe("18");
+    expect((screen.getByLabelText("Months input") as HTMLInputElement).value).toBe("2");
+    expect(document.body.textContent).not.toContain("18.17");
+    expect((screen.getByLabelText("Rate to try input") as HTMLInputElement).value).toBe("4.5%");
+  });
+
+  it("edits the term in whole months, keeping it to at least 1 month", () => {
+    const onChange = vi.fn();
+    render(
+      <MortgageScenarioInputs
+        isEdited={() => false}
+        values={{ ...values, remainingTerm: 218 / 12 }}
+        onChange={onChange}
+      />,
+    );
+    fireEvent.keyDown(screen.getByRole("slider", { name: "Months" }), { key: "ArrowRight" });
+    expect(onChange).toHaveBeenLastCalledWith("remainingTerm", 219 / 12);
+    fireEvent.keyDown(screen.getByRole("slider", { name: "Years left to try" }), {
+      key: "ArrowLeft",
+    });
+    expect(onChange).toHaveBeenLastCalledWith("remainingTerm", 206 / 12);
+    fireEvent.keyDown(screen.getByRole("slider", { name: "Years left to try" }), { key: "Home" });
+    expect(onChange).toHaveBeenLastCalledWith("remainingTerm", 2 / 12);
+  });
+
   it("marks an edited input in words", () => {
     render(
       <MortgageScenarioInputs

@@ -11,29 +11,6 @@ export const toolHint = css({
   margin: 0,
 });
 
-export const scheduleSummary = cva({
-  base: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "6px",
-    margin: 0,
-    textStyle: "body.sm",
-    color: "text.secondary",
-  },
-});
-
-export const summaryRow = cva({
-  base: {
-    display: "flex",
-    flexWrap: "wrap",
-    alignItems: "baseline",
-    justifyContent: "space-between",
-    gap: "4px 12px",
-    fontVariantNumeric: "tabular-nums",
-    "& dd": { margin: 0 },
-  },
-});
-
 export const chartWrap = cva({
   base: {
     height: "300px",
@@ -55,41 +32,7 @@ export const chartWrap = cva({
   },
 });
 
-export const chartLegend = cva({
-  base: {
-    display: "flex",
-    flexWrap: "wrap",
-    gap: "8px 16px",
-    marginTop: "8px",
-    fontSize: "xs",
-    color: "text.muted",
-  },
-});
-
-export const chartLegendItem = cva({
-  base: {
-    display: "inline-flex",
-    alignItems: "center",
-    gap: "8px",
-  },
-});
-
-export const legendSwatch = cva({
-  base: {
-    width: "24px",
-    height: "0",
-    borderTopWidth: "3px",
-    flexShrink: 0,
-  },
-  variants: {
-    kind: {
-      standard: { borderTopStyle: "solid", borderTopColor: "chart.debt" },
-      overpay: { borderTopStyle: "dashed", borderTopColor: "chart.projection" },
-    },
-  },
-  defaultVariants: { kind: "standard" },
-});
-
+/** A series name drawn at its line end (R2-2 direct labels), in place of a swatch legend. */
 export const dataTable = cva({
   base: {
     width: "100%",
@@ -140,6 +83,13 @@ export const outcomeNote = css({
   color: "text.secondary",
   margin: 0,
   fontVariantNumeric: "tabular-nums",
+});
+
+/** The one short prompt shown at £0 in place of an outcome (as on the debt page). */
+export const outcomePrompt = css({
+  textStyle: "body.md",
+  color: "text.secondary",
+  margin: 0,
 });
 
 export const outcomeSupport = cva({

@@ -4,7 +4,15 @@ import {
   calculateZeroPercentCliff,
   evaluateUkStudentLoan,
 } from "@flump/finance-engine";
-import { CurrencyInput, controlProps, FormField, PercentInput, Tabs, TextInput } from "@repo/ui";
+import {
+  CurrencyInput,
+  controlProps,
+  FormField,
+  PercentInput,
+  Select,
+  Tabs,
+  TextInput,
+} from "@repo/ui";
 import { cx } from "@repo/ui/styled-system/css";
 import { type FC, type ReactNode, useMemo, useState } from "react";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
@@ -18,7 +26,6 @@ import {
   keyFigure,
   keyFigureLabel,
   keyFigureValue,
-  nativeSelect,
   resultBox,
   resultHeading,
   resultNote,
@@ -27,6 +34,14 @@ import {
 
 type ToolId = "cliff" | "overdraft" | "balloon" | "student";
 type StudentPlan = "plan1" | "plan2" | "plan4" | "plan5" | "postgrad";
+
+const STUDENT_PLAN_OPTIONS: { value: StudentPlan; label: string }[] = [
+  { value: "plan1", label: "Plan 1 (before 2012 England and Wales, Northern Ireland)" },
+  { value: "plan2", label: "Plan 2 (2012 to 2023 England and Wales)" },
+  { value: "plan4", label: "Plan 4 (Scotland)" },
+  { value: "plan5", label: "Plan 5 (from 2023 England)" },
+  { value: "postgrad", label: "Postgraduate loan" },
+];
 
 const TOOLS: { value: ToolId; label: string }[] = [
   { value: "cliff", label: "When a 0% deal ends" },
@@ -307,21 +322,12 @@ export const UkDebtInstrumentsCard: FC<UkDebtInstrumentsCardProps> = ({ classNam
       <div className={inputStack()}>
         <FormField label="Student loan plan">
           {(field) => (
-            // TODO(E15 T2.2b): swap for @repo/ui Select
-            <select
-              className={nativeSelect()}
-              id={field.id}
+            <Select
+              {...controlProps(field)}
+              options={STUDENT_PLAN_OPTIONS}
               value={studentPlan}
               onChange={(e) => setStudentPlan(e.target.value as StudentPlan)}
-            >
-              <option value="plan1">
-                Plan 1 (before 2012 England and Wales, Northern Ireland)
-              </option>
-              <option value="plan2">Plan 2 (2012 to 2023 England and Wales)</option>
-              <option value="plan4">Plan 4 (Scotland)</option>
-              <option value="plan5">Plan 5 (from 2023 England)</option>
-              <option value="postgrad">Postgraduate loan</option>
-            </select>
+            />
           )}
         </FormField>
         <FormField label="Yearly salary before tax">

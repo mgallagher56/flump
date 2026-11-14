@@ -76,8 +76,4 @@ export const balanceFigure = css({
   color: "text.primary",
 });
 
-export const actionsCell = cva({
-  base: { display: "inline-flex", alignItems: "center", gap: "4px" },
-});
-
 export const drawerWrap = css({ marginTop: "8px" });

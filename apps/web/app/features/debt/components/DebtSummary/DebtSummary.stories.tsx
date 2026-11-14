@@ -11,7 +11,6 @@ const meta: Meta<typeof DebtSummary> = {
     debtCount: 2,
     monthlyMinimumTotal: 210,
     debtFreeDate: "August 2028",
-    interestThisYear: 640,
     onAddRate: fn(),
   },
 };

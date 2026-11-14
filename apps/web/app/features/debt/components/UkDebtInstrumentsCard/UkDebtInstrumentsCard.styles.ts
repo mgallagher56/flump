@@ -23,27 +23,6 @@ export const inputStack = cva({
   base: { display: "flex", flexDirection: "column", gap: "16px", minWidth: 0 },
 });
 
-export const nativeSelect = cva({
-  base: {
-    width: "100%",
-    minHeight: "44px",
-    paddingX: "12px",
-    borderRadius: "md",
-    borderWidth: "1px",
-    borderStyle: "solid",
-    borderColor: "border.input",
-    backgroundColor: "surface.card",
-    color: "text.primary",
-    textStyle: "body.md",
-    cursor: "pointer",
-    _focusVisible: {
-      outline: "2px solid",
-      outlineColor: "border.focusRing",
-      outlineOffset: "2px",
-    },
-  },
-});
-
 export const resultBox = cva({
   base: {
     minWidth: 0,

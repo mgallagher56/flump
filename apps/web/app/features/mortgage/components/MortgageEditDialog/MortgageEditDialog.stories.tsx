@@ -17,7 +17,8 @@ const meta: Meta<typeof MortgageEditDialog> = {
     onSelectAccount: fn(),
     editLoanAmount: 150000,
     editInterestRate: "4.5",
-    editRemainingTerm: "25",
+    editTermYears: "25",
+    editTermMonths: "0",
     editMortgageType: "repayment",
     editFixEndDate: "",
     editPayment: 833.76,
@@ -26,9 +27,12 @@ const meta: Meta<typeof MortgageEditDialog> = {
     onSave: fn(),
     onEditLoanAmountChange: fn(),
     onEditInterestRateChange: fn(),
-    onEditRemainingTermChange: fn(),
+    onEditTermYearsChange: fn(),
+    onEditTermMonthsChange: fn(),
     onEditMortgageTypeChange: fn(),
     onEditFixEndDateChange: fn(),
+    editMonthlyPayment: 833.76,
+    onEditMonthlyPaymentChange: fn(),
   },
 };
 
@@ -43,6 +47,21 @@ export const Residential: Story = {
     if (!save) throw new Error("Save button missing");
     await userEvent.click(save);
     await expect(args.onSave).toHaveBeenCalled();
+  },
+};
+
+/** No payment entered: the estimate shows in whole pounds; the term is in years and months. */
+export const NoPaymentEntered: Story = {
+  args: {
+    editMonthlyPayment: null,
+    editTermYears: "18",
+    editTermMonths: "2",
+    editPayment: 1250.32,
+  },
+  play: async ({ canvasElement }) => {
+    const body = within(canvasElement.ownerDocument.body);
+    await expect(body.getAllByText("Monthly payment (estimate)")[0]).toBeInTheDocument();
+    await expect(body.getAllByLabelText(/^Months/)[0]).toHaveValue("2");
   },
 };
 

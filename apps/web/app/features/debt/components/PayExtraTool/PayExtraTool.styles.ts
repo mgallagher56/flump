@@ -36,11 +36,9 @@ export const leftOverRow = css({
 
 export const orderHint = css({ margin: "0", textStyle: "body.sm", color: "text.secondary" });
 
-// Scenario outcome: one figure plus 2 supporting (P1.7). Plain text on the zone surface, never
+// Scenario outcome: the change plus at most one supporting figure (P1.7). Plain text on the zone surface, never
 // the hero surface and no nested card.
 export const outcome = css({ display: "flex", flexDirection: "column", gap: "1" });
-
-export const outcomeLabel = css({ margin: "0", textStyle: "body.sm", color: "text.secondary" });
 
 export const outcomeValue = css({
   margin: "0",
@@ -48,6 +46,9 @@ export const outcomeValue = css({
   fontVariantNumeric: "tabular-nums",
   color: "text.primary",
 });
+
+/** At £0: a plain prompt in place of a figure. */
+export const outcomePrompt = css({ margin: "0", textStyle: "body.md", color: "text.secondary" });
 
 export const outcomeSupport = css({
   display: "flex",

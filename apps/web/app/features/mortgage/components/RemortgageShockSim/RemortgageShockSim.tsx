@@ -1,4 +1,4 @@
-import { Money, Select, SimulatorSplitLayout, SliderField } from "@repo/ui";
+import { Select, SimulatorSplitLayout, SliderField } from "@repo/ui";
 import { type FC, useEffect, useMemo, useRef, useState } from "react";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import { monthlyMortgagePayment } from "~/utils/mortgagePayment";
@@ -6,10 +6,8 @@ import {
   fieldGroup,
   fieldLabel,
   ltvBody,
-  ltvBox,
-  ltvHeading,
-  ltvMuted,
-  ltvTotal,
+  outcomeLabel,
+  outcomeValue,
   panel,
   remainingText,
   resultItem,
@@ -23,13 +21,23 @@ import {
 export interface RemortgageShockSimProps {
   currentBalance: number;
   currentRate: number;
-  propertyValue?: number;
   /** ISO date the current fixed rate ends (profile renewal date), when known. */
   fixEndDate?: string | null;
-  /** The user's remaining term in years, when known. Seeds the term assumption. */
+  /**
+   * The scenario's remaining term in years (More options), used unrounded so the payment matches
+   * the KPI. The tool has no term control of its own; 25 years is used only when none is known.
+   */
   remainingTermYears?: number;
   /** Repayment or interest-only, as saved. The payment uses the same formula as the KPI. */
   mortgageType?: "repayment" | "interest-only";
+  /**
+   * The current monthly payment the page shows (the saved payment, else the page's estimate), so
+   * every payment figure on the page is one figure. Computed here when not given: the page leaves
+   * it out once the scenario's balance, rate or term differ from the saved ones.
+   */
+  currentPayment?: number | null;
+  /** True when `currentPayment` is the payment the user saved, not an estimate. */
+  currentPaymentIsSaved?: boolean;
 }
 
 const MONTHS = [
@@ -48,10 +56,6 @@ const MONTHS = [
 ] as const;
 
 const rateFormat = new Intl.NumberFormat("en-GB", { maximumFractionDigits: 2 });
-const ltvFormat = new Intl.NumberFormat("en-GB", {
-  minimumFractionDigits: 1,
-  maximumFractionDigits: 1,
-});
 
 /** "18 months", or "2 years 3 months" from 24 months up (copy guide 4.3). */
 const formatMonthsLeft = (months: number): string => {
@@ -64,14 +68,6 @@ const formatMonthsLeft = (months: number): string => {
 };
 
 const DEFAULT_TERM_YEARS = 25;
-const DEFAULT_TERM_MIN = 5;
-const DEFAULT_TERM_MAX = 40;
-
-/** The term slider works in whole years, so a known term is rounded and kept to at least 1. */
-const seedTerm = (remainingTermYears?: number): number =>
-  remainingTermYears && remainingTermYears > 0
-    ? Math.max(1, Math.round(remainingTermYears))
-    : DEFAULT_TERM_YEARS;
 
 const parseFixEnd = (fixEndDate?: string | null) => {
   const match = /^(\d{4})-(\d{2})/.exec(fixEndDate ?? "");
@@ -84,45 +80,31 @@ const parseFixEnd = (fixEndDate?: string | null) => {
 export const RemortgageShockSim: FC<RemortgageShockSimProps> = ({
   currentBalance,
   currentRate,
-  propertyValue: rawPropertyValue,
   fixEndDate,
   remainingTermYears,
   mortgageType = "repayment",
+  currentPayment,
+  currentPaymentIsSaved = false,
 }) => {
   const { formatCurrency } = useFormatCurrency();
 
   const balanceKnown = currentBalance > 0;
   const rateKnown = currentRate > 0;
-  const propertyValueKnown = typeof rawPropertyValue === "number" && rawPropertyValue > 0;
-  const propertyValue = propertyValueKnown ? (rawPropertyValue as number) : 0;
-  const currentLtv =
-    balanceKnown && propertyValueKnown ? (currentBalance / propertyValue) * 100 : 0;
 
   const thisYear = new Date().getFullYear();
   // The fix end date is only ever what the user (or their profile) supplied; nothing is assumed.
   const [fixEndYear, setFixEndYear] = useState<number | "">(() => parseFixEnd(fixEndDate).year);
   const [fixEndMonth, setFixEndMonth] = useState<number | "">(() => parseFixEnd(fixEndDate).month);
   const [projectedNewRate, setProjectedNewRate] = useState<number>(5.2);
-  // The user's own term when known; otherwise an editable 25-year assumption.
-  const [termYears, setTermYears] = useState<number>(() => seedTerm(remainingTermYears));
 
   // Props reseed the sim when they change, unless the user has since edited that value.
   const fixEndEdited = useRef(false);
-  const termEdited = useRef(false);
   useEffect(() => {
     if (fixEndEdited.current) return;
     const next = parseFixEnd(fixEndDate);
     setFixEndYear(next.year);
     setFixEndMonth(next.month);
   }, [fixEndDate]);
-  useEffect(() => {
-    if (termEdited.current) return;
-    setTermYears(seedTerm(remainingTermYears));
-  }, [remainingTermYears]);
-
-  // Widen the slider when the seeded term falls outside the usual 5 to 40 years.
-  const termMin = Math.min(DEFAULT_TERM_MIN, termYears);
-  const termMax = Math.max(DEFAULT_TERM_MAX, termYears);
 
   const yearOptions = useMemo(() => {
     const years = Array.from({ length: 8 }, (_, i) => thisYear + i);
@@ -141,28 +123,37 @@ export const RemortgageShockSim: FC<RemortgageShockSimProps> = ({
     return Math.max(1, diff);
   }, [fixEndYear, fixEndMonth]);
 
-  // The same payment formula as the mortgage KPI (monthlyMortgagePayment), over the user's exact
-  // remaining term until they move the whole-year term slider, so both show one figure.
+  // The same payment formula as the mortgage KPI (monthlyMortgagePayment), over the scenario's
+  // exact remaining term, so both show one figure.
   const paymentTerm =
-    !termEdited.current && remainingTermYears && remainingTermYears > 0
-      ? remainingTermYears
-      : termYears;
+    remainingTermYears && remainingTermYears > 0 ? remainingTermYears : DEFAULT_TERM_YEARS;
   const calculateMonthly = (bal: number, ratePct: number) =>
     monthlyMortgagePayment(bal, ratePct, paymentTerm, mortgageType);
 
-  const currentMonthly = calculateMonthly(currentBalance, currentRate);
-  const newMonthly = calculateMonthly(currentBalance, projectedNewRate);
-  const monthlyShock = Math.max(0, newMonthly - currentMonthly);
-
-  // Target LTV milestone (e.g. 75% or 60%)
-  const nextTargetLtv = currentLtv > 75 ? 75 : currentLtv > 60 ? 60 : 50;
-  const targetBalance = (propertyValue * nextTargetLtv) / 100;
-  const requiredOverpaymentToReachTier = Math.max(0, currentBalance - targetBalance);
-  const monthlyOverpaymentNeeded =
-    monthsRemaining === null ? null : Math.round(requiredOverpaymentToReachTier / monthsRemaining);
+  const hasGivenPayment = typeof currentPayment === "number" && currentPayment > 0;
+  const currentMonthly = hasGivenPayment
+    ? (currentPayment as number)
+    : calculateMonthly(currentBalance, currentRate);
+  // The change is formula against formula (same balance and term, two rates), so equal rates
+  // always give no change. A saved payment then moves by that change; else the formula figure.
+  const formulaChange =
+    calculateMonthly(currentBalance, projectedNewRate) -
+    calculateMonthly(currentBalance, currentRate);
+  const newMonthly = hasGivenPayment
+    ? Math.max(0, (currentPayment as number) + formulaChange)
+    : calculateMonthly(currentBalance, projectedNewRate);
+  // Whole pounds, so the sentence agrees with the two figures beside it.
+  const monthlyChange = Math.round(newMonthly) - Math.round(currentMonthly);
+  const fromWhen =
+    fixEndYear !== "" && fixEndMonth !== ""
+      ? `from ${MONTHS[fixEndMonth - 1]} ${fixEndYear}`
+      : "after your fixed rate ends";
+  const outcomeSentence =
+    monthlyChange === 0
+      ? "No change"
+      : `${monthlyChange > 0 ? "+" : "\u2212"}${formatCurrency(Math.abs(monthlyChange))} a month ${fromWhen}`;
 
   const paymentsKnown = balanceKnown && rateKnown;
-  const ltvKnown = balanceKnown && propertyValueKnown;
 
   const controls = (
     <div className={panel()}>
@@ -212,80 +203,39 @@ export const RemortgageShockSim: FC<RemortgageShockSimProps> = ({
         value={projectedNewRate}
         onChange={setProjectedNewRate}
       />
-
-      <SliderField
-        helperText="Assumption: the years left used to estimate your monthly payments."
-        label="Years left"
-        max={termMax}
-        min={termMin}
-        step={1}
-        unitSuffix="years"
-        value={termYears}
-        onChange={(value) => {
-          termEdited.current = true;
-          setTermYears(value);
-        }}
-      />
     </div>
   );
 
   const content = (
     <>
       {paymentsKnown ? (
-        <dl className={resultList()} data-testid="remortgage-results">
-          <div className={resultItem()}>
-            <dt>Current payment (estimate)</dt>
-            <dd>
-              {formatCurrency(currentMonthly)} <span className={resultUnit}>a month</span>
-            </dd>
+        <>
+          <div data-testid="remortgage-outcome" id="remortgage-outcome">
+            <p className={outcomeLabel}>Change in monthly payment (estimate)</p>
+            <p className={outcomeValue}>{outcomeSentence}</p>
           </div>
-          <div className={resultItem()}>
-            <dt>Payment at the new rate (estimate)</dt>
-            <dd>
-              {formatCurrency(newMonthly)} <span className={resultUnit}>a month</span>
-            </dd>
-          </div>
-          <div className={resultItem()}>
-            <dt>Change in monthly payment (estimate)</dt>
-            <dd>
-              {monthlyShock > 0 ? "+" : ""}
-              {formatCurrency(monthlyShock)} <span className={resultUnit}>a month</span>
-            </dd>
-          </div>
-        </dl>
+          <dl className={resultList()} data-testid="remortgage-results" id="remortgage-results">
+            <div className={resultItem()}>
+              <dt>Payment at the new rate (estimate)</dt>
+              <dd>
+                {formatCurrency(newMonthly)} <span className={resultUnit}>a month</span>
+              </dd>
+            </div>
+            <div className={resultItem()}>
+              <dt>
+                {currentPaymentIsSaved && hasGivenPayment
+                  ? "Current payment"
+                  : "Current payment (estimate)"}
+              </dt>
+              <dd>
+                {formatCurrency(currentMonthly)} <span className={resultUnit}>a month</span>
+              </dd>
+            </div>
+          </dl>
+        </>
       ) : (
         <p className={ltvBody}>
           Add your balance and interest rate to see your payment at a different rate.
-        </p>
-      )}
-
-      {ltvKnown ? (
-        <div className={ltvBox()} id="remortgage-ltv-box">
-          <div>
-            <h4 className={ltvHeading}>
-              {`Next LTV band: ${nextTargetLtv}%`}
-              <span className={ltvMuted}>{`(current LTV: ${ltvFormat.format(currentLtv)}%)`}</span>
-            </h4>
-            <p className={ltvBody}>
-              {requiredOverpaymentToReachTier > 0
-                ? monthlyOverpaymentNeeded === null
-                  ? `Estimate: overpaying ${formatCurrency(requiredOverpaymentToReachTier)} in total would reach ${nextTargetLtv}% LTV. Set your fixed rate end date to see a monthly figure. Your lender sets its own bands.`
-                  : `Estimate: overpaying ${formatCurrency(monthlyOverpaymentNeeded)} a month until your fixed rate ends would reach ${nextTargetLtv}% LTV. Your lender sets its own bands.`
-                : `Your LTV is already within the ${nextTargetLtv}% band.`}
-            </p>
-          </div>
-          {requiredOverpaymentToReachTier > 0 ? (
-            <div className={ltvTotal}>
-              <span>Total overpayment to reach the band (estimate)</span>
-              <Money size="lg" tone="default" value={requiredOverpaymentToReachTier} />
-            </div>
-          ) : null}
-        </div>
-      ) : (
-        <p className={ltvBody} id="remortgage-ltv-not-set">
-          {balanceKnown
-            ? "Add your property value to see your loan to value (LTV) and the next LTV band."
-            : "Add your mortgage balance and property value to see your loan to value (LTV) and the next LTV band."}
         </p>
       )}
     </>
@@ -294,8 +244,7 @@ export const RemortgageShockSim: FC<RemortgageShockSimProps> = ({
   return (
     <div className={simRoot()} data-testid="remortgage-shock-sim" id="remortgage-shock-sim">
       <p className={simDescription}>
-        Model your payment at a different rate when your fixed rate ends. See the overpayment that
-        would reach the next loan to value (LTV) band.
+        Model your payment at a different rate when your fixed rate ends.
       </p>
       <SimulatorSplitLayout
         content={content}

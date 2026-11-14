@@ -8,7 +8,6 @@ const props: DebtSummaryProps = {
   debtCount: 2,
   monthlyMinimumTotal: 210,
   debtFreeDate: "August 2028",
-  interestThisYear: 640,
 };
 
 describe("<DebtSummary />", () => {
@@ -23,9 +22,8 @@ describe("<DebtSummary />", () => {
     expect(getByText("Debt-free date")).toBeDefined();
     expect(container.textContent).toContain("August 2028");
     expect(container.textContent).toContain("Estimate");
-    expect(getByText("Interest this year")).toBeDefined();
+    expect(container.textContent).not.toContain("Interest this year");
     expect(container.textContent).toContain("£210");
-    expect(container.textContent).toContain("£640");
   });
 
   test("shows a liability stored as a negative balance as a positive amount owed", () => {
@@ -42,7 +40,6 @@ describe("<DebtSummary />", () => {
     );
     expect(container.textContent).not.toContain("Not set");
     expect(container.textContent).not.toContain("August 2028");
-    expect(container.textContent).not.toContain("£640");
     expect(getByText("Add the rate for 2 debts to see your debt-free date")).toBeDefined();
     fireEvent.click(getByRole("button", { name: "Add a rate" }));
     expect(onAddRate).toHaveBeenCalledTimes(1);
@@ -52,6 +49,20 @@ describe("<DebtSummary />", () => {
     const { container } = customRender(<DebtSummary {...props} payoffAchievable={false} />);
     expect(container.textContent).toContain("Not paid off");
     expect(container.textContent).not.toContain("August 2028");
+  });
+
+  test("explains each computed figure, so both label rows carry an info button", () => {
+    const { getByRole, queryByRole } = customRender(<DebtSummary {...props} />);
+    expect(getByRole("button", { name: "About Debt-free date" })).toBeDefined();
+    // The monthly total is added up from the saved minimums; the hero (a saved total) has none.
+    expect(getByRole("button", { name: "About Paying each month" })).toBeDefined();
+    expect(queryByRole("button", { name: "About Total you owe" })).toBeNull();
+  });
+
+  test("passes plain values so every KPI value renders at the strip's one size", () => {
+    const { container } = customRender(<DebtSummary {...props} />);
+    expect(container.textContent).not.toContain("a month£");
+    expect(container.textContent).not.toMatch(/£210\s*a month/);
   });
 
   test("flags estimated minimum payments in plain words", () => {

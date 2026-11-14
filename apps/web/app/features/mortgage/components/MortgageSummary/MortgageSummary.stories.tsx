@@ -36,4 +36,12 @@ export const BuyToLet: Story = {
 
 export const JustSaved: Story = { args: { saveMessage: "Saved repayment type and term" } };
 
+/** The seeded homeowner: 218 months left reads "18 years 2 months". */
+export const YearsAndMonths: Story = {
+  args: { remainingTerm: 218 / 12 },
+  play: async ({ canvasElement }) => {
+    await expect(canvasElement.textContent).toContain("18 years 2 months");
+  },
+};
+
 export const Dark: Story = { globals: { theme: "dark" } };

@@ -1,6 +1,5 @@
 import { UpdateAccountResponse } from "@flump/api-contract";
 import {
-  calculateLtvMilestones,
   isBuyToLetAccountName,
   isFigureKnown,
   PortfolioSnapshot,
@@ -9,7 +8,9 @@ import {
 import {
   Button,
   CollapsibleDrawer,
+  EmptyState,
   HeroFigure,
+  Illustration,
   KpiCard,
   KpiStrip,
   LiveRegion,
@@ -24,24 +25,24 @@ import {
 import { type FC, type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { useLoaderData, useNavigate, useSearchParams } from "react-router";
 import { BtlOverview } from "~/features/mortgage/components/BtlOverview";
-import { LtvMilestones } from "~/features/mortgage/components/LtvMilestones";
 import { MortgageAlerts } from "~/features/mortgage/components/MortgageAlerts";
 import { MortgageEditDialog } from "~/features/mortgage/components/MortgageEditDialog";
 import { MortgageScenarioInputs } from "~/features/mortgage/components/MortgageScenarioInputs";
 import { MortgageSummary } from "~/features/mortgage/components/MortgageSummary";
 import { MortgageTracker } from "~/features/mortgage/components/MortgageTracker";
-import {
-  OVERPAYMENT_ERC_NOTE,
-  OverpaymentSimulator,
-} from "~/features/mortgage/components/OverpaymentSimulator";
+import { OverpaymentSimulator } from "~/features/mortgage/components/OverpaymentSimulator";
 import { OverpayVsSaveCompare } from "~/features/mortgage/components/OverpayVsSaveCompare";
 import { RemortgageShockSim } from "~/features/mortgage/components/RemortgageShockSim";
+import {
+  formatIsoMonthYear,
+  formatYearsLeft,
+  rateFractionDigits,
+} from "~/features/mortgage/mortgageFormat";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import { useScenarioState } from "~/hooks/useScenarioState";
 import { useUserProfile } from "~/hooks/useUserProfile";
 import type { loader } from "~/routes/app.mortgage";
 import { apiFetch } from "~/services/api-client";
-import { useFinancialBaseline } from "~/state/baseline.store";
 import { buildWorkspacePicture } from "~/utils/financialPicture";
 import { monthlyMortgagePayment } from "~/utils/mortgagePayment";
 import {
@@ -54,11 +55,32 @@ import {
   promptBlock,
   promptDivider,
   promptStatus,
-  promptText,
   promptTitle,
   savedSection,
   tabPanel,
 } from "./MortgageContainer.styles";
+
+/** The monthly payment saved on an account (its monthly contribution), or 0 when none is saved. */
+const storedMonthlyPayment = (rows: readonly { id?: string }[], id: string | null): number => {
+  if (!id) return 0;
+  const row = rows.find((a) => a.id === id) as { monthlyContribution?: unknown } | undefined;
+  const stored = Number(row?.monthlyContribution);
+  return Number.isFinite(stored) && stored > 0 ? stored : 0;
+};
+
+/** Loan to value to at most 1 decimal place, trailing zero dropped: 60 -> "60%", 38.7 -> "38.7%". */
+const ltvFractionDigits = (ltv: number): number =>
+  Number.isInteger(Math.round(ltv * 10) / 10) ? 0 : 1;
+
+/**
+ * The term typed as years and months, in whole months (1..600), or 0 when nothing usable is typed.
+ * A blank part counts as 0, so "18" years and "" months is 216 months.
+ */
+const typedTermMonths = (years: string, months: string): number => {
+  const part = (text: string) => (text.trim() === "" ? 0 : Number(text));
+  const total = Math.round(part(years) * 12 + part(months));
+  return Number.isFinite(total) && total > 0 ? Math.min(600, Math.max(1, total)) : 0;
+};
 
 const formatList = (items: string[]): string =>
   items.length <= 1 ? items.join("") : `${items.slice(0, -1).join(", ")} and ${items.at(-1)}`;
@@ -80,14 +102,6 @@ const CATEGORY_TABS = [
 const isScenarioTool = (value: string | null): value is ScenarioTool =>
   SCENARIO_TOOLS.some((tool) => tool.value === value);
 
-const rateFormat = new Intl.NumberFormat("en-GB", { maximumFractionDigits: 2 });
-const termFormat = new Intl.NumberFormat("en-GB", { maximumFractionDigits: 1 });
-const monthYearFormat = new Intl.DateTimeFormat("en-GB", {
-  month: "short",
-  year: "numeric",
-  timeZone: "UTC",
-});
-
 const SCENARIO_ZONE_ID = "mortgage-scenario";
 
 const scrollToId = (id: string) => {
@@ -101,30 +115,12 @@ const longDate = (iso: string | null | undefined): string | null => {
   return date.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
 };
 
-/** "Jun 2027" for a stored ISO date, or `null` when it cannot be read. */
-const monthYear = (iso: string): string | null => {
-  const parsed = new Date(`${iso.slice(0, 10)}T00:00:00Z`);
-  return Number.isNaN(parsed.getTime()) ? null : monthYearFormat.format(parsed);
-};
-
-/** The month the saved term ends: today plus the years left, as "Jun 2051". */
-const payoffMonth = (termYears: number): string => {
-  const now = new Date();
-  const end = new Date(
-    Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + Math.round(termYears * 12), 1),
-  );
-  return monthYearFormat.format(end);
-};
-
-const years = (term: number) => `${termFormat.format(term)} ${term === 1 ? "year" : "years"}`;
-
 const MortgageContainer: FC = () => {
   const { accounts = [], accountDetails = [], userProfile } = useLoaderData<typeof loader>();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { profile, setProfile, updateProfile } = useUserProfile();
   const { formatCurrency } = useFormatCurrency();
-  const { baseline } = useFinancialBaseline();
 
   // Sync profile from loader into atom. Until it has synced, the loader's profile is the source.
   const [profileSynced, setProfileSynced] = useState(false);
@@ -154,7 +150,14 @@ const MortgageContainer: FC = () => {
   const [editLoanAmount, setEditLoanAmount] = useState<number>(userProfile?.mortgageBalance ?? 0);
   // Held as strings so a cleared field stays empty instead of showing 0.
   const [editInterestRate, setEditInterestRate] = useState("");
-  const [editRemainingTerm, setEditRemainingTerm] = useState("");
+  const [editTermYears, setEditTermYears] = useState("");
+  const [editTermMonths, setEditTermMonths] = useState("");
+  // Prefills the term fields from a term in years (stored as whole months), empty when unset.
+  const setEditTerm = (termYears: number) => {
+    const total = termYears > 0 ? Math.round(termYears * 12) : 0;
+    setEditTermYears(total > 0 ? String(Math.floor(total / 12)) : "");
+    setEditTermMonths(total > 0 ? String(total % 12) : "");
+  };
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [editMortgageType, setEditMortgageType] = useState<"repayment" | "interest-only">(
@@ -164,6 +167,8 @@ const MortgageContainer: FC = () => {
   // Only a date the user changed in this form is sent, so switching accounts or reseeding the form
   // can never clear a stored fixed rate end date.
   const [editFixEndTouched, setEditFixEndTouched] = useState(false);
+  // The monthly payment typed in the form; sent only when it differs from the stored one.
+  const [editMonthlyPayment, setEditMonthlyPayment] = useState<number | null>(null);
   // Account fields saved on this page, laid over the loader rows until the next load, so the
   // picture below reads what was just stored.
   const [accountPatches, setAccountPatches] = useState<Record<string, Record<string, unknown>>>({});
@@ -198,6 +203,14 @@ const MortgageContainer: FC = () => {
     : null;
   const selectedFixEndDate = selectedFixEnd?.date ?? null;
 
+  // The payment the user saved on the selected residential mortgage account (stored as the
+  // account's monthly contribution). A saved fact, so it can be the hero (ruling D2). Read from
+  // the patched rows, so a payment saved on this page shows at once.
+  const storedPayment = useMemo(() => {
+    if (propertyCategory === "btl" || !selectedAccountId) return 0;
+    return storedMonthlyPayment(pictureAccounts, selectedAccountId);
+  }, [pictureAccounts, selectedAccountId, propertyCategory]);
+
   // What can be stored: a linked residential account holds balance, rate and term. Buy to let
   // keeps balance and rate on the profile. Anything else would only be held in memory, so the
   // edit form does not offer it.
@@ -221,19 +234,19 @@ const MortgageContainer: FC = () => {
   const startEditing = () => {
     setEditLoanAmount(loanAmount);
     setEditInterestRate(interestRate > 0 ? String(interestRate) : "");
-    setEditRemainingTerm(remainingTerm > 0 ? String(Math.round(remainingTerm * 100) / 100) : "");
+    setEditTerm(remainingTerm);
     setSaveError(null);
     setEditMortgageType(mortgageType);
     setEditFixEndDate(selectedFixEndDate ?? "");
     setEditFixEndTouched(false);
+    setEditMonthlyPayment(storedPayment > 0 ? storedPayment : null);
     setIsEditing(true);
   };
 
   const handleSaveMortgageDetails = async () => {
     const rate = Math.max(0, Number(editInterestRate));
     // Term is stored in whole months (1..600), so clamp once and show what is stored.
-    const rawTerm = Math.max(0, Number(editRemainingTerm));
-    const termMonths = rawTerm > 0 ? Math.min(600, Math.max(1, Math.round(rawTerm * 12))) : 0;
+    const termMonths = typedTermMonths(editTermYears, editTermMonths);
     const term = termMonths / 12;
     setSaveError(null);
     const saved = ["repayment type"];
@@ -259,6 +272,7 @@ const MortgageContainer: FC = () => {
             interestRate?: number;
             termMonths?: number;
             fixedRateEndDate?: string | null;
+            monthlyContribution?: number | null;
           } = {};
           if (editLoanAmount > 0 && editLoanAmount !== loanAmount) body.balance = -editLoanAmount;
           if (rate > 0) body.interestRate = rate;
@@ -267,6 +281,12 @@ const MortgageContainer: FC = () => {
           const fixEnd = editFixEndDate.trim() === "" ? null : editFixEndDate.trim();
           if (editFixEndTouched && fixEnd !== (selectedFixEndDate ?? null)) {
             body.fixedRateEndDate = fixEnd;
+          }
+          // An emptied payment clears the stored one; an unchanged one is not sent.
+          const payment =
+            editMonthlyPayment !== null && editMonthlyPayment > 0 ? editMonthlyPayment : null;
+          if (payment !== (storedPayment > 0 ? storedPayment : null)) {
+            body.monthlyContribution = payment;
           }
           if (Object.keys(body).length > 0) {
             await apiFetch(`/accounts/${selectedAccountId}`, {
@@ -293,6 +313,7 @@ const MortgageContainer: FC = () => {
             saved.push("term");
           }
           if (body.fixedRateEndDate !== undefined) saved.push("fixed rate end date");
+          if (body.monthlyContribution !== undefined) saved.push("monthly payment");
         }
       }
       setMortgageType(editMortgageType);
@@ -359,12 +380,6 @@ const MortgageContainer: FC = () => {
     : !isBtl && residentialLtv
       ? residentialLtv.percent
       : (ltvLoan / propertyValue) * 100;
-
-  const ltvMilestones = useMemo(() => {
-    if (!hasLtvData) return [];
-    const fixEnd = isBtl ? undefined : (selectedFixEndDate ?? undefined);
-    return calculateLtvMilestones(propertyValue, ltvLoan, fixEnd);
-  }, [hasLtvData, propertyValue, ltvLoan, isBtl, selectedFixEndDate]);
 
   // The selected account's stored fix-end date, from the picture. Shown as a fact within six
   // months of the end, and once it has ended.
@@ -452,12 +467,14 @@ const MortgageContainer: FC = () => {
     setRemainingTerm(figures.term);
     setEditLoanAmount(figures.balance);
     setEditInterestRate(figures.rate > 0 ? String(figures.rate) : "");
-    setEditRemainingTerm(figures.term > 0 ? String(Math.round(figures.term * 100) / 100) : "");
+    setEditTerm(figures.term);
     const fixEnd = id
       ? picture.fixedRateEnds.find((fact) => fact.accountId === id)?.date
       : undefined;
     setEditFixEndDate(fixEnd ?? "");
     setEditFixEndTouched(false);
+    const payment = storedMonthlyPayment(pictureAccounts, id);
+    setEditMonthlyPayment(payment > 0 ? payment : null);
   };
 
   const switchToCategory = (cat: PropertyCategory) => {
@@ -494,8 +511,8 @@ const MortgageContainer: FC = () => {
 
   // Headline outcome only; empty (nothing announced) until balance, rate and term are all known.
   const mortgageHeadline =
-    isComplete && currentMonthlyPayment > 0
-      ? `Monthly mortgage payment ${formatCurrency(currentMonthlyPayment)}`
+    isComplete && (storedPayment > 0 || currentMonthlyPayment > 0)
+      ? `Monthly mortgage payment ${formatCurrency(storedPayment > 0 ? storedPayment : currentMonthlyPayment)}`
       : "";
 
   const btlMonthlyRent = profileFacts.buyToLetMonthlyRental || 0;
@@ -505,16 +522,19 @@ const MortgageContainer: FC = () => {
       ? ((btlMonthlyRent * 12) / btlPropertyValue) * 100
       : null;
 
+  const editTermTotal = typedTermMonths(editTermYears, editTermMonths);
   const editPayment =
-    editLoanAmount > 0 && Number(editInterestRate) > 0 && Number(editRemainingTerm) > 0
+    editLoanAmount > 0 && Number(editInterestRate) > 0 && editTermTotal > 0
       ? monthlyMortgagePayment(
           editLoanAmount,
           Number(editInterestRate),
-          Number(editRemainingTerm),
+          editTermTotal / 12,
           editMortgageType,
         )
       : null;
   const knownMonthlyPayment = currentMonthlyPayment > 0 ? currentMonthlyPayment : null;
+  // The one payment figure on the page: the saved payment, else the estimate.
+  const pagePayment = storedPayment > 0 ? storedPayment : knownMonthlyPayment;
 
   // "Last updated" for the Saved line: this session's save, else the newest stored month for the
   // linked account, else when the profile was last changed.
@@ -544,6 +564,12 @@ const MortgageContainer: FC = () => {
 
   // Scenario outputs. These read scenario values only, and nothing above reads them.
   const scenarioValues = scenario.values;
+  // The rate-change tool starts from the saved payment only while the scenario's balance, rate
+  // and term are still the saved ones; once any moves, both of its figures come from the formula.
+  const scenarioMatchesSaved =
+    scenarioValues.loanAmount === loanAmount &&
+    scenarioValues.interestRate === interestRate &&
+    scenarioValues.remainingTerm === remainingTerm;
   const scenarioPayment = monthlyMortgagePayment(
     scenarioValues.loanAmount,
     scenarioValues.interestRate,
@@ -559,10 +585,6 @@ const MortgageContainer: FC = () => {
         }`
       : "";
 
-  const savedBasis = `Starting from your figures: ${formatCurrency(loanAmount)} at ${rateFormat.format(interestRate)}%${
-    remainingTerm > 0 ? `, ${years(remainingTerm)} left` : ""
-  }`;
-
   const selectedAccount = selectedAccountId
     ? mortgageAccounts.find((acc: any) => acc.id === selectedAccountId)
     : null;
@@ -576,7 +598,8 @@ const MortgageContainer: FC = () => {
       editLoanAmount={editLoanAmount}
       editMortgageType={editMortgageType}
       editPayment={editPayment}
-      editRemainingTerm={editRemainingTerm}
+      editTermMonths={editTermMonths}
+      editTermYears={editTermYears}
       mortgageAccounts={isBtl ? [] : mortgageAccounts}
       open={isEditing}
       propertyCategory={propertyCategory}
@@ -588,19 +611,32 @@ const MortgageContainer: FC = () => {
         setEditFixEndTouched(true);
       }}
       onEditInterestRateChange={setEditInterestRate}
+      editMonthlyPayment={editMonthlyPayment}
       onEditLoanAmountChange={setEditLoanAmount}
+      onEditMonthlyPaymentChange={setEditMonthlyPayment}
       onEditMortgageTypeChange={setEditMortgageType}
-      onEditRemainingTermChange={setEditRemainingTerm}
+      onEditTermMonthsChange={setEditTermMonths}
+      onEditTermYearsChange={setEditTermYears}
       onOpenChange={setIsEditing}
       onSave={handleSaveMortgageDetails}
       onSelectAccount={selectAccount}
     />
   );
 
+  const noAccount = !isBtl && mortgageAccounts.length === 0;
+  // Someone with no mortgage on record may not have one, so the empty view assumes nothing.
+  const assumesNoMortgage = noAccount && !profileFacts.hasMortgage;
+
   const header = (
     <>
       <PageHeader
-        subtitle="What you owe on your mortgage, what it costs each month and when it would be paid off."
+        description={
+          // The empty state carries the explanation, as on the debt page, so both empty pages
+          // start at the same height.
+          noAccount
+            ? undefined
+            : "What you owe on your mortgage, what it costs each month and when the term ends."
+        }
         title="Your mortgage"
       />
       {showCategoryTabs ? (
@@ -630,26 +666,51 @@ const MortgageContainer: FC = () => {
     if (interestRate > 0) {
       known.push({
         label: "Interest rate",
-        value: <Num fractionDigits={2} kind="percent" size="md" value={interestRate} />,
+        value: (
+          <Num
+            fractionDigits={rateFractionDigits(interestRate)}
+            kind="percent"
+            size="md"
+            value={interestRate}
+          />
+        ),
       });
     }
     if (!isBtl && remainingTerm > 0) {
-      known.push({ label: "Years left", value: years(remainingTerm) });
+      known.push({ label: "Years left", value: formatYearsLeft(remainingTerm) });
     }
-    const noAccount = !isBtl && mortgageAccounts.length === 0;
-    const prompt = noAccount
-      ? profileFacts.hasMortgage
-        ? {
-            title: "No mortgage account added",
-            text: "Your details say you have a mortgage, but no mortgage account has been added. Add one to see your figures here.",
-          }
-        : { title: "Add your mortgage to see your payment, balance and payoff date", text: null }
-      : {
-          title: isBtl
-            ? `Add your buy to let mortgage ${formatList(missingMortgageDetails)} to see your monthly payment and what overpaying would change`
-            : `Add your ${formatList(missingMortgageDetails)} to see your payoff date and what overpaying would change`,
-          text: null,
-        };
+    const prompt = {
+      title: isBtl
+        ? `Add your buy to let mortgage ${formatList(missingMortgageDetails)} to see your monthly payment and what overpaying would change`
+        : `Add your ${formatList(missingMortgageDetails)} to see when the term ends and what overpaying would change`,
+    };
+
+    // EMPTY STATE: no residential mortgage account. Full width, with its illustration and one button.
+    if (noAccount) {
+      return (
+        <PageBody className={pageRoot()}>
+          {editDialog}
+          <div className={partialStack()}>
+            {header}
+            <EmptyState
+              action={
+                <Button onClick={() => navigate("/app/accounts")}>
+                  {assumesNoMortgage ? "Add a mortgage" : "Add mortgage account"}
+                </Button>
+              }
+              description={
+                assumesNoMortgage
+                  ? "If you have a mortgage, add it to see your payment and when the term ends."
+                  : "Your details say you have a mortgage, but no mortgage account has been added. Add one to see your figures here."
+              }
+              id="mortgage-empty"
+              illustration={<Illustration scene="empty-accounts" size="md" />}
+              title={assumesNoMortgage ? "No mortgage added" : "No mortgage account added"}
+            />
+          </div>
+        </PageBody>
+      );
+    }
 
     return (
       <PageBody className={pageRoot()}>
@@ -677,13 +738,8 @@ const MortgageContainer: FC = () => {
               <h2 className={promptTitle()} id="mortgage-prompt-title">
                 {prompt.title}
               </h2>
-              {prompt.text ? <p className={promptText()}>{prompt.text}</p> : null}
               <div>
-                {noAccount ? (
-                  <Button onClick={() => navigate("/app/accounts")}>Add mortgage account</Button>
-                ) : (
-                  <Button onClick={startEditing}>Add mortgage details</Button>
-                )}
+                <Button onClick={startEditing}>Add mortgage details</Button>
               </div>
               {saveMessage ? (
                 <p className={promptStatus()} role="status">
@@ -697,22 +753,25 @@ const MortgageContainer: FC = () => {
     );
   }
 
-  // COMPLETE STATE: the hero is the saved balance (ruling 7: a saved fact, never an estimate), then
-  // a strip of up to four with the estimates first, "Your details", the zone and the drawers.
-  const fixEndCaption =
+  // COMPLETE STATE (ruling D2: the hero is a saved fact, never an estimate). One code path: the
+  // hero is the saved monthly payment when there is one, else the saved balance. The strip below
+  // keeps to three: the other of those two, the rate and loan to value.
+  const fixEndText =
     !isBtl && selectedFixEnd
       ? selectedFixEnd.ended
         ? "Fixed rate has ended"
         : (() => {
-            const when = monthYear(selectedFixEnd.date);
+            const when = formatIsoMonthYear(selectedFixEnd.date);
             return when ? `Fixed until ${when}` : undefined;
           })()
       : undefined;
 
-  const isInterestOnly = mortgageType === "interest-only";
-  const typeText = isInterestOnly ? "Interest-only" : "Repayment";
-  const showPayoff = !isBtl && remainingTerm > 0;
-  const heroSubline = isBtl ? `Buy to let, ${typeText.toLowerCase()}` : `${typeText} mortgage`;
+  const typeText = mortgageType === "interest-only" ? "Interest-only" : "Repayment";
+  // Saved facts only (ruling D2): the stored fixed rate end date, else the repayment type. A term
+  // end month would be today plus the stored term, which drifts, so it never sits here.
+  const heroSubline =
+    fixEndText ?? (isBtl ? `Buy to let, ${typeText.toLowerCase()}` : `${typeText} mortgage`);
+  const heroIsPayment = storedPayment > 0;
 
   return (
     <PageBody className={pageRoot()}>
@@ -726,42 +785,63 @@ const MortgageContainer: FC = () => {
         data-testid="mortgage-saved"
         id="mortgage-saved"
       >
-        <HeroFigure
-          emptyAction={
-            <Button size="sm" variant="ghost" onClick={startEditing}>
-              Add your balance
-            </Button>
-          }
-          emptyPrompt="Add your remaining balance to see it here."
-          id="mortgage-hero"
-          label="Remaining balance"
-          subline={heroSubline}
-          value={loanAmount > 0 ? loanAmount : null}
-        />
-        <KpiStrip columns={showPayoff ? 4 : 3}>
-          {/* Buy to let stores no term, so it has no payoff date. */}
-          {showPayoff ? (
-            <KpiCard
-              label={isInterestOnly ? "Term ends" : "Paid off by"}
-              subtext={isInterestOnly ? "Estimate. The loan is still owed then." : "Estimate"}
-              value={<span data-figure="">{payoffMonth(remainingTerm)}</span>}
-            />
-          ) : null}
-          <KpiCard
-            emptyAction={
-              <Button size="sm" variant="ghost" onClick={startEditing}>
-                Edit your details
-              </Button>
-            }
+        {heroIsPayment ? (
+          <HeroFigure
+            id="mortgage-hero"
             label="Monthly payment"
-            subtext="Estimate"
-            value={knownMonthlyPayment === null ? null : Math.round(knownMonthlyPayment)}
+            subline={heroSubline}
+            value={Math.round(storedPayment)}
             valueFormat={{ fractionDigits: 0 }}
           />
+        ) : (
+          <HeroFigure
+            emptyAction={
+              <Button size="sm" variant="ghost" onClick={startEditing}>
+                Add your balance
+              </Button>
+            }
+            emptyPrompt="Add your remaining balance to see it here."
+            id="mortgage-hero"
+            label="Remaining balance"
+            subline={heroSubline}
+            value={loanAmount > 0 ? loanAmount : null}
+          />
+        )}
+        <KpiStrip columns={3}>
+          {heroIsPayment ? (
+            <KpiCard
+              label="Remaining balance"
+              value={loanAmount > 0 ? loanAmount : null}
+              valueFormat={{ fractionDigits: 0 }}
+            />
+          ) : (
+            <KpiCard
+              emptyAction={
+                <Button size="sm" variant="ghost" onClick={startEditing}>
+                  Edit your details
+                </Button>
+              }
+              explain={
+                isBtl
+                  ? "Worked out from your balance and interest rate."
+                  : "Worked out from your balance, interest rate and years left."
+              }
+              label="Monthly payment"
+              subtext="Estimate"
+              value={knownMonthlyPayment === null ? null : Math.round(knownMonthlyPayment)}
+              valueFormat={{ fractionDigits: 0 }}
+            />
+          )}
           <KpiCard
             label="Interest rate"
-            subtext={fixEndCaption}
-            value={<Num fractionDigits={2} kind="percent" size="lg" value={interestRate} />}
+            value={
+              <Num
+                fractionDigits={rateFractionDigits(interestRate)}
+                kind="percent"
+                size="kpi"
+                value={interestRate}
+              />
+            }
           />
           <KpiCard
             emptyAction={
@@ -773,10 +853,20 @@ const MortgageContainer: FC = () => {
                 {isBtl ? "Add the property value" : "Add your home's value"}
               </Button>
             }
+            explain={
+              isBtl
+                ? "Your buy to let mortgage balance divided by the property value you saved."
+                : "Your mortgage balance divided by the home value you saved."
+            }
             label="Loan to value"
             value={
               hasLtvData ? (
-                <Num fractionDigits={1} kind="percent" size="lg" value={currentLtv} />
+                <Num
+                  fractionDigits={ltvFractionDigits(currentLtv)}
+                  kind="percent"
+                  size="kpi"
+                  value={currentLtv}
+                />
               ) : null
             }
           />
@@ -786,16 +876,6 @@ const MortgageContainer: FC = () => {
       <MortgageAlerts
         refinanceWarning={refinanceWarning}
         onModelRateChange={() => openScenarioTool("rate-change")}
-      />
-
-      <MortgageSummary
-        accountName={selectedAccount ? String(selectedAccount.name ?? "Mortgage") : null}
-        lastUpdated={lastUpdated}
-        mortgageType={mortgageType}
-        propertyCategory={propertyCategory}
-        remainingTerm={remainingTerm}
-        saveMessage={saveMessage}
-        onEdit={startEditing}
       />
 
       {isBtl ? (
@@ -810,7 +890,6 @@ const MortgageContainer: FC = () => {
 
       <ScenarioZone
         announcement={scenarioAnnouncement}
-        basis={savedBasis}
         footer={
           <Button size="sm" variant="ghost" onClick={startEditing}>
             Update your details
@@ -818,7 +897,7 @@ const MortgageContainer: FC = () => {
         }
         id={SCENARIO_ZONE_ID}
         isModified={scenario.isModified}
-        notice={<ProjectionNotice lead={OVERPAYMENT_ERC_NOTE} />}
+        notice={<ProjectionNotice />}
         title="Model a change to your mortgage"
         onReset={scenario.reset}
       >
@@ -840,10 +919,11 @@ const MortgageContainer: FC = () => {
             "rate-change": (
               <RemortgageShockSim
                 currentBalance={scenarioValues.loanAmount}
+                currentPayment={scenarioMatchesSaved ? pagePayment : undefined}
+                currentPaymentIsSaved={scenarioMatchesSaved && storedPayment > 0}
                 currentRate={scenarioValues.interestRate}
                 fixEndDate={isBtl ? null : selectedFixEndDate}
                 mortgageType={mortgageType}
-                propertyValue={propertyValue || undefined}
                 remainingTermYears={
                   scenarioValues.remainingTerm > 0 ? scenarioValues.remainingTerm : undefined
                 }
@@ -856,6 +936,7 @@ const MortgageContainer: FC = () => {
                 mortgageType={mortgageType}
                 overpayment={scenarioValues.overpayment}
                 remainingTerm={scenarioValues.remainingTerm}
+                onOverpaymentChange={(value) => scenario.set("overpayment", value)}
               />
             ),
           }}
@@ -872,6 +953,17 @@ const MortgageContainer: FC = () => {
         </CollapsibleDrawer>
       </ScenarioZone>
 
+      {/* Below the zone, so the first view is the hero and three figures (number budget). */}
+      <MortgageSummary
+        accountName={selectedAccount ? String(selectedAccount.name ?? "Mortgage") : null}
+        lastUpdated={lastUpdated}
+        mortgageType={mortgageType}
+        propertyCategory={propertyCategory}
+        remainingTerm={remainingTerm}
+        saveMessage={saveMessage}
+        onEdit={startEditing}
+      />
+
       {!isBtl ? (
         <CollapsibleDrawer title="Show cost details" variant="quiet">
           <MortgageTracker
@@ -879,22 +971,6 @@ const MortgageContainer: FC = () => {
             loanAmount={loanAmount}
             mortgageType={mortgageType}
             remainingTerm={remainingTerm}
-          />
-        </CollapsibleDrawer>
-      ) : null}
-
-      {hasLtvData ? (
-        <CollapsibleDrawer title="Show loan to value bands" variant="quiet">
-          <LtvMilestones
-            currentLtv={currentLtv}
-            loanAmount={ltvLoan}
-            milestones={ltvMilestones}
-            ownershipSharePct={baseline.propertyOwnershipSharePct ?? 100}
-            propertyValue={propertyValue}
-            onModelOverpayment={(amount) => {
-              scenario.set("overpayment", amount);
-              openScenarioTool("overpayment");
-            }}
           />
         </CollapsibleDrawer>
       ) : null}

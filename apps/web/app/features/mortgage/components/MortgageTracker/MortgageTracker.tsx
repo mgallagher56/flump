@@ -31,7 +31,6 @@ const percentFormat = new Intl.NumberFormat("en-GB", {
   minimumFractionDigits: 1,
   maximumFractionDigits: 1,
 });
-const termFormat = new Intl.NumberFormat("en-GB", { maximumFractionDigits: 1 });
 
 export const MortgageTracker: FC<MortgageTrackerProps> = ({
   loanAmount,
@@ -69,7 +68,6 @@ export const MortgageTracker: FC<MortgageTrackerProps> = ({
   const totalInterest = isInterestOnly ? scheduledTotal : Math.max(0, scheduledTotal - loanAmount);
   const totalPaid = isInterestOnly ? totalInterest + loanAmount : scheduledTotal;
   const interestPercentage = totalPaid > 0 ? (totalInterest / totalPaid) * 100 : 0;
-  const years = `${termFormat.format(remainingTerm)} ${remainingTerm === 1 ? "year" : "years"}`;
 
   return (
     <div className={resultsBody()} data-testid="mortgage-cost-details">
@@ -116,12 +114,6 @@ export const MortgageTracker: FC<MortgageTrackerProps> = ({
           </span>
         </div>
       </div>
-
-      <p className={summaryText}>
-        {isInterestOnly
-          ? `Estimate: on an interest-only mortgage over ${years}, the interest is ${formatCurrency(totalInterest)}. The loan of ${formatCurrency(loanAmount)} is still owed in full at the end of the term. To see what overpaying would change, use "Model a change to your mortgage".`
-          : `Estimate: over ${years}, the total to pay is ${formatCurrency(totalPaid)}. That is ${formatCurrency(loanAmount)} of loan and ${formatCurrency(totalInterest)} of interest. To see what overpaying would change, use "Model a change to your mortgage".`}
-      </p>
     </div>
   );
 };

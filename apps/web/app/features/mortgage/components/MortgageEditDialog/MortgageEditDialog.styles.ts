@@ -14,6 +14,17 @@ export const editGrid = cva({
   },
 });
 
+/** "Years left" and "Months" side by side in one grid cell. */
+export const termPair = cva({
+  base: {
+    display: "grid",
+    gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+    gap: "14px",
+    alignItems: "start",
+    "& > *": { minWidth: 0 },
+  },
+});
+
 export const estimateRow = cva({
   base: {
     display: "flex",

@@ -35,3 +35,23 @@ export const Default: Story = {
     await expect(args.onModelOverpayment).toHaveBeenCalledWith(250);
   },
 };
+
+/** Every band already reached: one row, not four that read the same. */
+export const AllWithin: Story = {
+  args: {
+    currentLtv: 38.7,
+    loanAmount: 135400,
+    propertyValue: 350000,
+    milestones: [90, 85, 75, 60].map((targetLtvPct) => ({
+      targetLtvPct,
+      isAchieved: true,
+      lumpSumNeededGbp: 0,
+    })),
+  },
+  play: async ({ canvasElement }) => {
+    await expect(canvasElement.querySelectorAll("[data-list-row]")).toHaveLength(1);
+    await expect(canvasElement.textContent).not.toMatch(/Share you own/);
+  },
+};
+
+export const Dark: Story = { globals: { theme: "dark" } };

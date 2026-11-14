@@ -3,9 +3,18 @@ import {
   type DebtItem,
   PortfolioSnapshot,
 } from "@flump/finance-engine";
-import { Button, CollapsibleDrawer, PageHeader, ProjectionNotice, ScenarioZone } from "@repo/ui";
+import {
+  Button,
+  CollapsibleDrawer,
+  EmptyState,
+  Illustration,
+  PageBody,
+  PageHeader,
+  ProjectionNotice,
+  ScenarioZone,
+} from "@repo/ui";
 import type { ToolSlug } from "@repo/ui/tools";
-import { type FC, useMemo, useState } from "react";
+import { type FC, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useFetcher, useLoaderData } from "react-router";
 import { AddDebtDialog } from "~/features/debt/components/AddDebtDialog";
 import { DebtAccountsList } from "~/features/debt/components/DebtAccountsList";
@@ -14,12 +23,11 @@ import { DebtSummary } from "~/features/debt/components/DebtSummary";
 import { PayExtraTool } from "~/features/debt/components/PayExtraTool";
 import { UkDebtInstrumentsCard } from "~/features/debt/components/UkDebtInstrumentsCard";
 import { debtItemToAccountPayload } from "~/features/debt/utils/debtAccountMapping";
-import { interestInFirstYear } from "~/features/debt/utils/payoffFormat";
 import { ConfirmDialog } from "~/features/feedback/components/ConfirmDialog";
 import { useFetcherOutcome } from "~/features/feedback/hooks/useFetcherOutcome";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import { useScenarioState } from "~/hooks/useScenarioState";
-import { errorBanner, footerLink, pageRoot, plainLink } from "./DebtContainer.styles";
+import { emptyStack, emptyWrap, errorBanner, pageRoot, plainLink } from "./DebtContainer.styles";
 
 /** The overpay-or-save calculator (D5 replaces the debt "into savings" tool with this link). */
 const OVERPAY_OR_SAVE_SLUG: ToolSlug = "mortgage-overpayment-vs-isa-calculator";
@@ -95,8 +103,35 @@ export const DebtContainer: FC = () => {
 
   const fetcher = useFetcher();
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
-  const deleteOutcome = useFetcherOutcome(fetcher, { onSuccess: () => setConfirmDeleteId(null) });
+  const returnFocusToEdit = useRef<string | null>(null);
+  const confirmDeleteIdRef = useRef<string | null>(null);
+  confirmDeleteIdRef.current = confirmDeleteId;
+  const deleteOutcome = useFetcherOutcome(fetcher, {
+    onSuccess: () => {
+      // The deleted debt's Edit button is gone, so focus falls back to the list heading.
+      returnFocusToEdit.current = confirmDeleteIdRef.current;
+      setConfirmDeleteId(null);
+    },
+  });
   const debtToDelete = debts.find((d) => d.id === confirmDeleteId);
+  // The confirm dialog opens from the edit dialog's "Delete debt", which is gone by then, so a
+  // cancelled delete returns focus to that debt's Edit button instead of the page.
+  useEffect(() => {
+    if (confirmDeleteId !== null) return;
+    const id = returnFocusToEdit.current;
+    if (!id) return;
+    returnFocusToEdit.current = null;
+    // After the dialog's own focus return, which runs on a zero timeout as it unmounts.
+    const timer = setTimeout(() => {
+      const edit = document.querySelector<HTMLElement>(`[data-debt-edit="${CSS.escape(id)}"]`);
+      // The last debt deleted: the empty state's "Add a debt" takes focus.
+      const fallback =
+        document.getElementById("debt-accounts-heading") ??
+        document.querySelector<HTMLElement>("[data-debt-empty-action]");
+      (edit ?? fallback)?.focus();
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [confirmDeleteId]);
   const failedResult = fetcher.data as { success?: boolean; error?: string } | undefined;
   const saveError =
     debtToDelete === undefined && failedResult?.success === false
@@ -146,34 +181,44 @@ export const DebtContainer: FC = () => {
     fetcher.submit(fields, { method: "POST", action: "/app/debt" });
   };
 
-  return (
-    <div className={pageRoot}>
-      <PageHeader
-        actions={
+  const header = (
+    <PageHeader
+      actions={
+        // With no debts the empty state holds the one "Add a debt" button.
+        hasDebts ? (
           <Button type="button" onClick={() => setIsAddModalOpen(true)}>
             Add a debt
           </Button>
-        }
-        description={
-          hasDebts
-            ? "What you owe, and an estimate of when it would be paid off at minimum payments."
-            : "Add a credit card, loan or overdraft to see when it would be paid off."
-        }
-        title="Your debts"
-      />
+        ) : undefined
+      }
+      description={
+        // The empty state below carries the explanation, so the header does not repeat it.
+        hasDebts
+          ? "What you owe, and an estimate of when it would be paid off at minimum payments."
+          : undefined
+      }
+      title="Your debts"
+    />
+  );
 
-      {saveError ? (
-        <p className={errorBanner} role="alert">
-          {saveError}
-        </p>
-      ) : null}
+  const errorAlert = saveError ? (
+    <p className={errorBanner} role="alert">
+      {saveError}
+    </p>
+  ) : null;
+
+  return (
+    <PageBody className={pageRoot}>
+      {/* With no debts the header and empty state sit together, as on the mortgage page, so both
+          empty pages start at the same height. */}
+      {hasDebts ? header : null}
+      {hasDebts ? errorAlert : null}
 
       {hasDebts ? (
         <>
           <DebtSummary
             debtCount={debts.length}
             debtFreeDate={savedComparison.minimumOnly.debtFreeDate}
-            interestThisYear={interestInFirstYear(savedComparison.minimumOnly.monthlySchedule)}
             minimumEstimated={minimumEstimated}
             missingAprCount={missingApr.length}
             monthlyMinimumTotal={totalMin}
@@ -209,9 +254,11 @@ export const DebtContainer: FC = () => {
               />
             }
             footer={
-              <button
-                className={footerLink}
+              // The same control as the mortgage page's zone footer.
+              <Button
+                size="sm"
                 type="button"
+                variant="ghost"
                 onClick={() => {
                   const heading = document.getElementById("debt-accounts-heading");
                   heading?.scrollIntoView?.({ block: "start" });
@@ -219,7 +266,7 @@ export const DebtContainer: FC = () => {
                 }}
               >
                 Update your details
-              </button>
+              </Button>
             }
             isModified={scenario.isModified}
             title="Model a change to your debts"
@@ -246,7 +293,29 @@ export const DebtContainer: FC = () => {
             <UkDebtInstrumentsCard />
           </CollapsibleDrawer>
         </>
-      ) : null}
+      ) : (
+        <div className={emptyStack}>
+          {header}
+          {errorAlert}
+          <div className={emptyWrap}>
+            <EmptyState
+              action={
+                <Button
+                  data-debt-empty-action=""
+                  type="button"
+                  onClick={() => setIsAddModalOpen(true)}
+                >
+                  Add a debt
+                </Button>
+              }
+              description="Add a credit card, loan or overdraft to see when it would be paid off at your minimum payments."
+              id="debt-empty"
+              illustration={<Illustration scene="empty-accounts" />}
+              title="No debts added"
+            />
+          </div>
+        </div>
+      )}
 
       {/* Shown to every user in the same place, never triggered by their figures (R3 exception, R4). */}
       <DebtHelpLink />
@@ -264,6 +333,7 @@ export const DebtContainer: FC = () => {
         }}
         onOpenChange={(open) => {
           if (!open) {
+            returnFocusToEdit.current = confirmDeleteId;
             setConfirmDeleteId(null);
             deleteOutcome.dismiss();
           }
@@ -275,7 +345,7 @@ export const DebtContainer: FC = () => {
         onAddDebt={handleAddDebt}
         onClose={() => setIsAddModalOpen(false)}
       />
-    </div>
+    </PageBody>
   );
 };
 

@@ -17,6 +17,11 @@ export const inputsGrid = cva({
   },
 });
 
+/** "Years" and "Months" side by side in the term's one grid cell. */
+export const termPair = cva({
+  base: { display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: "4" },
+});
+
 export const editedMark = cva({
   base: {
     textStyle: "label.sm",

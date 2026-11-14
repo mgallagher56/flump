@@ -1,12 +1,11 @@
 import type { DebtItem } from "@flump/finance-engine";
 import { CollapsibleDrawer, Icon, IconButton } from "@repo/ui";
 import { cx } from "@repo/ui/styled-system/css";
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil } from "lucide-react";
 import { type FC, useState } from "react";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import { AddDebtDialog } from "../AddDebtDialog";
 import {
-  actionsCell,
   balanceFigure,
   drawerWrap,
   listCard,
@@ -22,6 +21,7 @@ import {
 
 export interface DebtAccountsListProps {
   debts: DebtItem[];
+  /** Called from the edit dialog's "Delete debt" action; the page confirms before deleting. */
   onDeleteDebt: (id: string) => void;
   onUpdateDebt: (id: string, updates: Partial<DebtItem>) => void;
   /**
@@ -48,12 +48,12 @@ const TYPE_LABELS: Record<string, string> = {
 const typeLabel = (type: DebtItem["type"] | undefined): string =>
   (type && TYPE_LABELS[type]) || "Other";
 
-const aprFormat = new Intl.NumberFormat("en-GB", { maximumFractionDigits: 2 });
-
 /**
- * "Your debts" (E16 PR 6): one figure per row, the balance owed (always shown as a positive
- * amount, though liabilities are stored negative). The rate and minimum payment sit in the row
- * detail. Rows are marked `data-list-row`: the user's own list is budgeted per row (P1.4).
+ * "Your debts" (E16 PR 6, R2-7): one figure per row, the balance owed (always shown as a positive
+ * amount, though liabilities are stored negative). The row detail is the type label, plus "Rate
+ * not added" as a prompt when the APR is missing. The rate and minimum payment are seen and
+ * changed in the edit dialog, which also holds delete: one edit control per row. Rows are marked
+ * `data-list-row`: the user's own list is budgeted per row (P1.4).
  */
 export const DebtAccountsList: FC<DebtAccountsListProps> = ({
   debts,
@@ -80,38 +80,25 @@ export const DebtAccountsList: FC<DebtAccountsListProps> = ({
             <span className={rowName}>{debt.name}</span>
             <span className={rowDetail}>
               {typeLabel(debt.type)}
-              {" · "}
               {debt.aprKnown === false ? (
-                <span>Rate not added</span>
-              ) : (
-                `${aprFormat.format(debt.apr ?? 0)}% APR`
-              )}
-              {" · "}
-              {`${formatCurrency(debt.minimumPayment ?? 0)} a month minimum${
-                debt.minimumPaymentEstimated ? " (estimate)" : ""
-              }`}
+                <>
+                  {" · "}
+                  <span>Rate not added</span>
+                </>
+              ) : null}
             </span>
           </div>
           <div className={rowFigures}>
             <span className={balanceFigure}>{formatCurrency(Math.abs(debt.balance ?? 0))}</span>
-            <span className={actionsCell()}>
-              <IconButton
-                label={`Edit ${debt.name}`}
-                size="sm"
-                type="button"
-                onClick={() => setEditingId(debt.id)}
-              >
-                <Icon icon={Pencil} size="sm" />
-              </IconButton>
-              <IconButton
-                label={`Delete ${debt.name}`}
-                size="sm"
-                type="button"
-                onClick={() => onDeleteDebt(debt.id)}
-              >
-                <Icon icon={Trash2} size="sm" />
-              </IconButton>
-            </span>
+            <IconButton
+              data-debt-edit={debt.id}
+              label={`Edit ${debt.name}`}
+              size="md"
+              type="button"
+              onClick={() => setEditingId(debt.id)}
+            >
+              <Icon icon={Pencil} size="sm" />
+            </IconButton>
           </div>
         </li>
       ))}
@@ -127,7 +114,9 @@ export const DebtAccountsList: FC<DebtAccountsListProps> = ({
         <h2 className={listHeading} id="debt-accounts-heading" tabIndex={-1}>
           Your debts
         </h2>
-        <p className={listSubtitle}>Select edit to change a name, rate or minimum payment.</p>
+        <p className={listSubtitle}>
+          Select edit on a debt to see or change its rate and minimum payment.
+        </p>
       </div>
 
       {debts.length === 0 ? (
@@ -158,6 +147,7 @@ export const DebtAccountsList: FC<DebtAccountsListProps> = ({
           isOpen
           onAddDebt={() => undefined}
           onClose={() => setEditingId(null)}
+          onDeleteDebt={onDeleteDebt}
           onEditDebt={onUpdateDebt}
         />
       ) : null}

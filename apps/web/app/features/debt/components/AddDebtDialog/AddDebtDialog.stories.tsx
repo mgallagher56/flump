@@ -5,7 +5,7 @@ import { AddDebtDialog } from "./AddDebtDialog";
 
 const debt: DebtItem = {
   id: "d1",
-  name: "Barclaycard Platinum",
+  name: "Everyday credit card",
   type: "credit_card",
   balance: 3000,
   apr: 22.9,
@@ -16,7 +16,7 @@ const meta: Meta<typeof AddDebtDialog> = {
   title: "3. Patterns/Debt/AddDebtDialog",
   component: AddDebtDialog,
   parameters: { layout: "fullscreen" },
-  args: { isOpen: true, onClose: fn(), onAddDebt: fn(), onEditDebt: fn() },
+  args: { isOpen: true, onClose: fn(), onAddDebt: fn(), onEditDebt: fn(), onDeleteDebt: fn() },
 };
 
 export default meta;
@@ -26,11 +26,11 @@ type Story = StoryObj<typeof AddDebtDialog>;
 export const AddMode: Story = {
   play: async ({ args }) => {
     const body = within(document.body);
-    await userEvent.type(await body.findByLabelText(/^Name of the debt/), "Klarna");
+    await userEvent.type(await body.findByLabelText(/^Name of the debt/), "Sofa payments");
     await userEvent.type(body.getByLabelText(/^Balance you owe/), "250");
     await userEvent.click(body.getByRole("button", { name: "Add debt" }));
     await expect(args.onAddDebt).toHaveBeenCalledWith(
-      expect.objectContaining({ name: "Klarna", balance: 250, aprKnown: false }),
+      expect.objectContaining({ name: "Sofa payments", balance: 250, aprKnown: false }),
     );
   },
 };
@@ -52,5 +52,16 @@ export const EditMode: Story = {
     await expect(await body.findByRole("dialog", { name: "Edit debt" })).toBeInTheDocument();
     await expect(body.queryByLabelText(/^Balance you owe/)).toBeNull();
     await expect(body.getByLabelText(/^Interest rate/)).toHaveValue("22.9");
+  },
+};
+
+/** Delete sits in the edit dialog, apart from Save; the page confirms before deleting. */
+export const EditModeDelete: Story = {
+  args: { debt },
+  play: async ({ args }) => {
+    const body = within(document.body);
+    await userEvent.click(await body.findByRole("button", { name: "Delete debt" }));
+    await expect(args.onClose).toHaveBeenCalled();
+    await expect(args.onDeleteDebt).toHaveBeenCalledWith("d1");
   },
 };

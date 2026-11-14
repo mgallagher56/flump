@@ -14,7 +14,6 @@
     "apps/web/app/components/accounts/BankConnectionsList/BankConnectionsList.styles.ts": 1,
     "apps/web/app/components/dialogs/connectBankWizard/ConnectBankWizard.styles.ts": 1,
     "apps/web/app/features/budget/components/AddCategoryModal/AddCategoryModal.styles.ts": 2,
-    "apps/web/app/features/debt/components/PayoffStrategyControls/PayoffStrategyControls.styles.ts": 1,
     "apps/web/app/root.tsx": 2
   },
   "inlineStyle": {
