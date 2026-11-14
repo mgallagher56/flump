@@ -5,7 +5,6 @@
   "apps/web/app/components/dialogs/connectBankWizard/ConnectBankWizard.tsx": 1,
   "apps/web/app/containers/debt/DebtContainer.styles.ts": 3,
   "apps/web/app/features/ai-connections/components/McpConnectionCard/McpConnectionCard.tsx": 3,
-  "apps/web/app/features/housing/components/HousingCostCard/HousingCostCard.styles.ts": 1,
   "apps/web/app/features/onboarding/components/FinishSummary/FinishSummary.styles.ts": 6,
   "apps/web/app/features/onboarding/components/FinishSummary/FinishSummary.tsx": 2,
   "apps/web/app/features/onboarding/components/OnboardingFlow/OnboardingFlow.styles.ts": 3,

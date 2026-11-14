@@ -7,6 +7,5 @@
   "packages/finance-engine/src/tax-rules.ts": 4,
   "packages/finance-engine/src/test-vectors/uk-tax.vectors.ts": 2,
   "packages/finance-engine/src/test-vectors/uk-whatif.vectors.ts": 2,
-  "packages/mcp/src/prompts/import-prompts.ts": 1,
-  "packages/ui/src/patterns/AllowanceProgressPill/AllowanceProgressPill.tsx": 1
+  "packages/mcp/src/prompts/import-prompts.ts": 1
 }
