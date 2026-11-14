@@ -1,7 +1,11 @@
 import { cva } from "@repo/ui/styled-system/css";
 
 export const cardBody = cva({
-  base: { display: "flex", flexDirection: "column", gap: "24px" },
+  base: { display: "flex", flexDirection: "column", gap: "20px" },
+});
+
+export const cardHeader = cva({
+  base: { display: "flex", flexDirection: "column", gap: "4px" },
 });
 
 export const cardTitle = cva({
@@ -9,78 +13,65 @@ export const cardTitle = cva({
 });
 
 export const cardSubtitle = cva({
-  base: { textStyle: "body.sm", color: "text.muted", margin: 0, marginTop: "2px" },
+  base: { textStyle: "body.sm", color: "text.secondary", margin: 0 },
 });
 
-export const chartRow = cva({
+/** One colour per pay part, shared by the bar segment and its table swatch. */
+const partColour = {
+  incomeTax: { backgroundColor: "chart.series2" },
+  nationalInsurance: { backgroundColor: "chart.series3" },
+  pension: { backgroundColor: "chart.series4" },
+  studentLoan: { backgroundColor: "chart.series5" },
+  takeHome: { backgroundColor: "chart.primary" },
+} as const;
+
+/** The same colours as SVG fills, for the bar's segments. */
+const partFill = {
+  incomeTax: { fill: "chart.series2" },
+  nationalInsurance: { fill: "chart.series3" },
+  pension: { fill: "chart.series4" },
+  studentLoan: { fill: "chart.series5" },
+  takeHome: { fill: "chart.primary" },
+} as const;
+
+export const bar = cva({
   base: {
-    display: "grid",
-    gridTemplateColumns: { base: "1fr", md: "minmax(0, 1fr) minmax(0, 1.2fr)" },
-    gap: "24px",
-    alignItems: "center",
+    display: "block",
+    height: "8px",
+    width: "100%",
+    borderRadius: "full",
+    overflow: "hidden",
+    backgroundColor: "surface.sunken",
   },
 });
 
-export const donutFrame = cva({
-  base: { position: "relative", width: "100%", height: "200px" },
+export const segment = cva({
+  variants: { part: partFill },
 });
 
-export const donutCentre = cva({
+export const swatch = cva({
   base: {
-    position: "absolute",
-    inset: 0,
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    justifyContent: "center",
-    pointerEvents: "none",
+    display: "inline-block",
+    width: "10px",
+    height: "10px",
+    borderRadius: "full",
+    flexShrink: 0,
   },
+  variants: { part: partColour },
 });
 
-export const donutCentreLabel = cva({
-  base: { textStyle: "label.sm", color: "text.muted" },
+export const partCell = cva({
+  base: { display: "inline-flex", alignItems: "center", gap: "8px" },
 });
 
-export const legend = cva({
+export const barKey = cva({
   base: {
-    listStyle: "none",
-    margin: 0,
-    padding: 0,
-    display: "flex",
-    flexDirection: "column",
-    gap: "10px",
-  },
-});
-
-export const legendRow = cva({
-  base: {
-    display: "grid",
-    gridTemplateColumns: "auto 1fr auto auto",
+    display: "inline-flex",
     alignItems: "center",
-    gap: "10px",
+    gap: "8px",
     textStyle: "body.sm",
     color: "text.secondary",
+    margin: 0,
+    marginTop: "-8px",
   },
-});
-
-export const legendShare = cva({
-  base: {
-    textStyle: "label.sm",
-    color: "text.muted",
-    fontVariantNumeric: "tabular-nums",
-    minWidth: "40px",
-    textAlign: "right",
-  },
-});
-
-// Keeps all three columns inside a 375px card: tighter cell padding, and the label wraps.
-export const compactTable = cva({
-  base: {
-    "& th, & td": { paddingX: { base: "8px", md: "14px" } },
-    "& th:first-child, & td:first-child": { whiteSpace: "normal" },
-  },
-});
-
-export const totalCell = cva({
-  base: { fontWeight: "semibold", color: "text.primary" },
 });

@@ -49,7 +49,7 @@ export const TaxReceiptDialog: FC<TaxReceiptDialogProps> = ({ record, onClose })
             </>
           )
         ) : (
-          <p className={empty()}>There is no receipt stored for this record.</p>
+          <p className={empty()}>No receipt is saved for this record.</p>
         )}
         <div className={footer()}>
           <Button type="button" variant="outline" onClick={onClose}>

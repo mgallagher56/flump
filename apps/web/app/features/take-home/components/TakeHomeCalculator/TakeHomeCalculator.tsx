@@ -1,346 +1,285 @@
 import {
   getUkTaxYearContext,
-  salarySacrificeFromProfile,
-  UK_STUDENT_LOANS,
+  isFigureKnown,
+  type MissingKey,
+  profileFactsFromProfile,
+  selectTakeHome,
 } from "@flump/finance-engine";
 import {
-  Card,
+  ButtonLink,
+  CollapsibleDrawer,
+  DELTA_PANEL_COPY,
   EXPLORER_COPY,
+  HeroFigure,
   KpiCard,
   KpiStrip,
   Money,
-  Num,
+  ProjectionNotice,
   ScenarioZone,
-  SegmentedTabs,
-  SimulatorSplitLayout,
+  StatusBadge,
+  Tabs,
   TaxRatesStatusBanner,
 } from "@repo/ui";
-import { type FC, useEffect, useMemo, useState } from "react";
+import { type FC, useMemo, useState } from "react";
 import { Link, useInRouterContext } from "react-router";
-import TaxDisclaimerButton from "~/components/core/dialogs/TaxDisclaimerButton";
 import TaxEstimateNote from "~/components/tax/TaxEstimateNote";
-import { NotSet } from "~/features/feedback/components/NotSet";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import { useUserProfile } from "~/hooks/useUserProfile";
-import { calculateUKTax } from "../../calculateUKTax";
 import { NextPoundExplorer, useNextPoundScenario } from "../NextPoundExplorer";
-import { PayRiseCard } from "../PayRiseCard";
+import { PayRiseTool } from "../PayRiseTool";
 import { TakeHomeBreakdown } from "../TakeHomeBreakdown";
-import { TakeHomeInputs } from "../TakeHomeInputs";
 import {
   calculatorRoot,
-  emptyResults,
-  estimateNote,
-  footer,
-  heroSubtext,
-  resultsStack,
-  section,
-  sectionTitle,
+  detailHint,
+  detailItem,
+  detailLabel,
+  detailList,
+  detailNote,
+  detailValue,
   zoneLink,
 } from "./TakeHomeCalculator.styles";
 
-const DEFAULT_PENSION_PERCENT = 5;
-const PERCENT_FORMAT = new Intl.NumberFormat("en-GB", {
-  style: "percent",
-  maximumFractionDigits: 1,
-});
 const DEFAULT_RAISE = 5000;
 const TOOLS = [
-  { value: "take-home", label: EXPLORER_COPY.tabYourTakeHome },
+  { value: "pay-rise", label: "A pay rise" },
   { value: "next-pound", label: EXPLORER_COPY.tabNextThousand },
 ];
+const PROFILE_HREF = "/app/profile";
+
+/** Plain names for the facts take-home needs, for the one setup prompt. */
+const MISSING_LABELS: Partial<Record<MissingKey, string>> = {
+  employmentType: "employment type",
+  pensionPercent: "pension contribution",
+  isSalarySacrifice: "pension method",
+};
+
+const listWords = (words: string[]): string =>
+  words.length <= 1
+    ? (words[0] ?? "")
+    : `${words.slice(0, -1).join(", ")} and ${words[words.length - 1]}`;
 
 export interface TakeHomeCalculatorProps {
+  /** Saved salary before tax, a year; 0, null or undefined when none is saved. */
   initialSalary?: number | null;
   onApplyIncrease: (monthlyIncrease: number) => void;
 }
 
-/** One hero for monthly take-home, a "Where you stand" strip, then inputs beside the breakdown. */
+/**
+ * Take-home page body: saved salary as the hero, the take-home estimate as the first KPI,
+ * "Where your pay goes" from saved figures,
+ * then one ScenarioZone holding the what-ifs ("A pay rise", "The next £1,000").
+ */
 export const TakeHomeCalculator: FC<TakeHomeCalculatorProps> = ({
   initialSalary,
   onApplyIncrease,
 }) => {
   const { profile } = useUserProfile();
-  const { formatCurrency, formatCurrencyDecimal } = useFormatCurrency();
+  const { formatCurrency } = useFormatCurrency();
   const inRouter = useInRouterContext();
-  // Saved figures: the headline reads these only. The scenario below starts from them.
   const savedSalary = initialSalary && initialSalary > 0 ? initialSalary : 0;
-  // The method the user saved; when never chosen (or a legacy stored default), net pay, as the
-  // dashboard and budget use.
-  const savedSacrifice = salarySacrificeFromProfile(profile) ?? false;
-  const savedEmployerNi = profile?.isSalarySacrificeEmployerNi ?? false;
-  const savedPension =
-    typeof profile?.pensionPercent === "number" && Number.isFinite(profile.pensionPercent)
-      ? profile.pensionPercent
-      : DEFAULT_PENSION_PERCENT;
-  // No invented salary: until one is known (or typed in) the results render "Not set".
-  const [grossSalary, setGrossSalary] = useState<number>(
-    initialSalary && initialSalary > 0 ? initialSalary : 0,
-  );
-  const salaryKnown = grossSalary > 0;
-  // A cleared or invalid entry is ignored, so the last valid salary and its results stay on screen.
-  const updateSalary = (value: number) => {
-    if (Number.isFinite(value) && value > 0) setGrossSalary(value);
-  };
-  const [pensionPercent, setPensionPercent] = useState<number>(savedPension);
-  const [isSalarySacrifice, setIsSalarySacrifice] = useState<boolean>(savedSacrifice);
-  const [isSalarySacrificeEmployerNi, setIsSalarySacrificeEmployerNi] =
-    useState<boolean>(savedEmployerNi);
-  const [studentLoanPlan, setStudentLoanPlan] = useState<string>("none");
-  const [salaryIncrease, setSalaryIncrease] = useState<number>(DEFAULT_RAISE);
 
   // One decision about which rates apply today. When the calendar is past the latest supported
-  // year the banner below says "Using {ratesYear} rates"; there is no silent fallback.
+  // year the banner says "Using {ratesYear} rates"; there is no silent fallback.
   const ratesContext = useMemo(() => getUkTaxYearContext(), []);
   const taxYear = ratesContext.ratesYear;
-  const studentLoanPlans = useMemo(
-    () =>
-      Object.entries(UK_STUDENT_LOANS[taxYear].plans).map(([key, plan]) => ({
-        key,
-        name: plan.name,
-        threshold: plan.threshold,
-      })),
-    [taxYear],
-  );
 
-  // Sync initialSalary from profile when loaded
-  useEffect(() => {
-    if (initialSalary) setGrossSalary(initialSalary);
-  }, [initialSalary]);
-
-  const taxResults = useMemo(
-    () =>
-      calculateUKTax(
-        grossSalary,
-        pensionPercent,
-        studentLoanPlan,
-        taxYear,
-        isSalarySacrifice,
-        isSalarySacrificeEmployerNi,
-      ),
-    [
-      grossSalary,
-      pensionPercent,
-      studentLoanPlan,
-      taxYear,
-      isSalarySacrifice,
-      isSalarySacrificeEmployerNi,
-    ],
+  // Saved figures only, through the one take-home selector every signed-in figure uses.
+  const facts = useMemo(
+    () => ({
+      ...profileFactsFromProfile(profile),
+      annualSalary: savedSalary > 0 ? savedSalary : null,
+    }),
+    [profile, savedSalary],
   );
+  const saved = useMemo(() => selectTakeHome(facts, { taxYear }), [facts, taxYear]);
 
-  // Hypothetical salary with the raise
-  const raiseResults = useMemo(
-    () =>
-      calculateUKTax(
-        grossSalary + salaryIncrease,
-        pensionPercent,
-        studentLoanPlan,
-        taxYear,
-        isSalarySacrifice,
-        isSalarySacrificeEmployerNi,
-      ),
-    [
-      grossSalary,
-      salaryIncrease,
-      pensionPercent,
-      studentLoanPlan,
-      taxYear,
-      isSalarySacrifice,
-      isSalarySacrificeEmployerNi,
-    ],
-  );
+  const [salaryIncrease, setSalaryIncrease] = useState<number>(DEFAULT_RAISE);
+  const [tool, setTool] = useState("pay-rise");
 
   const monthlyIncrease = useMemo(() => {
-    const netCurrent = taxResults.netPay / 12;
-    const netNew = raiseResults.netPay / 12;
-    return Math.max(0, netNew - netCurrent);
-  }, [taxResults, raiseResults]);
+    if (!isFigureKnown(saved) || salaryIncrease <= 0) return 0;
+    const raised = selectTakeHome(facts, {
+      taxYear,
+      overrides: { annualSalary: savedSalary + salaryIncrease },
+    });
+    return isFigureKnown(raised) ? raised.value.monthly - saved.value.monthly : 0;
+  }, [saved, facts, taxYear, savedSalary, salaryIncrease]);
 
-  // The headline reads saved figures only, never the scenario inputs.
-  const savedResults = useMemo(
-    () =>
-      calculateUKTax(savedSalary, savedPension, "none", taxYear, savedSacrifice, savedEmployerNi),
-    [savedSalary, savedPension, taxYear, savedSacrifice, savedEmployerNi],
-  );
-  const savedKnown = savedSalary > 0;
-  const effectiveRate = savedKnown
-    ? Math.round(((savedSalary - savedResults.netPay) / savedSalary) * 100)
-    : 0;
-
-  const isModified =
-    grossSalary !== savedSalary ||
-    pensionPercent !== savedPension ||
-    isSalarySacrifice !== savedSacrifice ||
-    isSalarySacrificeEmployerNi !== savedEmployerNi ||
-    studentLoanPlan !== "none" ||
-    salaryIncrease !== DEFAULT_RAISE;
-  const [tool, setTool] = useState("take-home");
   // "The next £1,000" starts from the same saved figures and resets with the zone.
   const nextPound = useNextPoundScenario({
     salary: savedSalary,
     taxRegion: profile?.taxRegion,
     studentLoanPlans: profile?.studentLoanPlans,
     studentLoanPlan: profile?.studentLoanPlan,
-    isSalarySacrifice: savedSacrifice,
-    pensionPercent: savedPension,
+    isSalarySacrifice: facts.isSalarySacrifice ?? false,
+    pensionPercent: facts.pensionPercent ?? 0,
     taxYear,
   });
+
+  const payRiseModified = salaryIncrease !== DEFAULT_RAISE;
   const resetScenario = () => {
     nextPound.reset();
-    setGrossSalary(savedSalary);
-    setPensionPercent(savedPension);
-    setIsSalarySacrifice(savedSacrifice);
-    setIsSalarySacrificeEmployerNi(savedEmployerNi);
-    setStudentLoanPlan("none");
     setSalaryIncrease(DEFAULT_RAISE);
   };
 
-  const controls = (
-    <TakeHomeInputs
-      grossSalary={grossSalary}
-      isSalarySacrifice={isSalarySacrifice}
-      isSalarySacrificeEmployerNi={isSalarySacrificeEmployerNi}
-      pensionPercent={pensionPercent}
-      studentLoanPlan={studentLoanPlan}
-      studentLoanPlans={studentLoanPlans}
-      onEmployerNiChange={setIsSalarySacrificeEmployerNi}
-      onGrossSalaryChange={updateSalary}
-      onPensionPercentChange={setPensionPercent}
-      onSalarySacrificeChange={(checked) => {
-        setIsSalarySacrifice(checked);
-        if (!checked) setIsSalarySacrificeEmployerNi(false);
-      }}
-      onStudentLoanPlanChange={setStudentLoanPlan}
+  const profileLink = (label: string, variant: "primary" | "link") =>
+    variant === "primary" ? (
+      inRouter ? (
+        <ButtonLink asChild>
+          <Link to={PROFILE_HREF}>{label}</Link>
+        </ButtonLink>
+      ) : (
+        <ButtonLink href={PROFILE_HREF}>{label}</ButtonLink>
+      )
+    ) : inRouter ? (
+      <Link className={zoneLink()} to={PROFILE_HREF}>
+        {label}
+      </Link>
+    ) : (
+      <a className={zoneLink()} href={PROFILE_HREF}>
+        {label}
+      </a>
+    );
+
+  const salaryHero = (
+    <HeroFigure
+      emptyAction={profileLink("Add salary", "primary")}
+      emptyPrompt="Add your salary before tax to see an estimate of your take-home pay."
+      label="Salary before tax"
+      subline={savedSalary > 0 ? `${formatCurrency(savedSalary / 12)} a month` : undefined}
+      value={savedSalary > 0 ? savedSalary : undefined}
+      valueFormat={{ fractionDigits: 0 }}
     />
   );
+  const estimateBadge = <StatusBadge variant="neutral">Estimate</StatusBadge>;
 
-  const content = salaryKnown ? (
-    <div className={resultsStack()}>
-      <TakeHomeBreakdown
-        grossSalary={grossSalary}
-        isSalarySacrifice={isSalarySacrifice}
-        results={taxResults}
-      />
-      <PayRiseCard
-        monthlyIncrease={monthlyIncrease}
-        salaryIncrease={salaryIncrease}
-        onApplyIncrease={onApplyIncrease}
-        onSalaryIncreaseChange={setSalaryIncrease}
-      />
-    </div>
-  ) : (
-    <Card padding="lg">
-      <p className={emptyResults()}>Add your gross salary to see your take-home pay.</p>
-    </Card>
+  if (!isFigureKnown(saved)) {
+    // The hero holds the saved fact; with no salary it is the page's one setup prompt. With a
+    // salary but other facts missing, the estimate card says what to add. No breakdown, no zone,
+    // never a £0 figure (P3, P12.2).
+    if (saved.missing.includes("annualSalary")) {
+      return <div className={calculatorRoot()}>{salaryHero}</div>;
+    }
+    const others = listWords(saved.missing.flatMap((key) => MISSING_LABELS[key] ?? []));
+    return (
+      <div className={calculatorRoot()}>
+        {salaryHero}
+        <KpiStrip
+          emptyPrompt={{
+            title: others
+              ? `Add your ${others} to see an estimate of your take-home pay`
+              : "Take-home pay cannot be worked out for this tax year yet",
+            action: others ? profileLink("Add your details", "link") : undefined,
+          }}
+          items={[
+            <KpiCard
+              key="take-home"
+              action={estimateBadge}
+              label="Monthly take-home"
+              value={null}
+            />,
+          ]}
+        />
+      </div>
+    );
+  }
+
+  const v = saved.value;
+  const salary = savedSalary;
+  const shareNotTakenHome = salary > 0 ? Math.round(((salary - v.annual) / salary) * 100) : 0;
+  const payAfterPension = Math.max(0, salary - v.pension);
+
+  const details = (
+    <CollapsibleDrawer title="Show details" variant="quiet">
+      <dl className={detailList()}>
+        <div className={detailItem()}>
+          <dt className={detailLabel()}>Share of pay not taken home</dt>
+          <dd className={detailValue()}>{`${shareNotTakenHome}%`}</dd>
+          <dd className={detailHint()}>
+            Tax, National Insurance, pension and student loan as a share of pay before tax
+          </dd>
+        </div>
+        <div className={detailItem()}>
+          <dt className={detailLabel()}>Pay after pension, before tax</dt>
+          <dd className={detailValue()}>
+            <Money size="md" value={payAfterPension} />
+          </dd>
+          <dd className={detailHint()}>Your salary before tax, less your pension contribution</dd>
+        </div>
+      </dl>
+      <TaxEstimateNote className={detailNote()} taxYear={taxYear} />
+      {saved.assumptions?.map((a) => (
+        <p key={a} className={detailNote()}>
+          {a}
+        </p>
+      ))}
+    </CollapsibleDrawer>
   );
 
   return (
     <div className={calculatorRoot()}>
       <TaxRatesStatusBanner {...ratesContext} />
 
-      {savedKnown ? (
-        <>
-          <KpiCard
-            label="Estimated monthly take-home"
-            subtext={
-              <span className={heroSubtext()}>
-                <Money size="sm" tone="onContrast" value={savedResults.netPay} />
-                <span>a year after tax, National Insurance and pension</span>
-              </span>
-            }
-            tone="hero"
-            value={savedResults.netPay / 12}
-            valueFormat={{ fractionDigits: 2 }}
-          />
-          <TaxEstimateNote className={estimateNote()} taxYear={taxYear} />
+      {salaryHero}
 
-          <section aria-labelledby="take-home-stand-heading" className={section()}>
-            <h2 className={sectionTitle()} id="take-home-stand-heading">
-              Where you stand
-            </h2>
-            <KpiStrip columns={4}>
-              <KpiCard
-                label="Weekly take-home"
-                subtext="Across 52 weeks"
-                value={<Money fractionDigits={2} size="lg" value={savedResults.netPay / 52} />}
-              />
-              <KpiCard
-                label="Daily take-home"
-                subtext="Across a five-day week"
-                value={<Money fractionDigits={2} size="lg" value={savedResults.netPay / 260} />}
-              />
-              <KpiCard
-                label="Effective tax rate"
-                subtext="Share of gross pay not taken home"
-                value={<Num fractionDigits={0} kind="percent" size="lg" value={effectiveRate} />}
-              />
-              <KpiCard
-                label="Qualifying gross"
-                subtext="Gross pay after pension"
-                value={<Money size="lg" value={savedResults.adjustedGross} />}
-              />
-            </KpiStrip>
-          </section>
-        </>
-      ) : (
-        <KpiCard
-          label="Estimated monthly take-home"
-          value={<NotSet href="/app/profile" subject="salary" />}
-        />
-      )}
+      {/* The estimate is the first KPI, never the hero (ruling 7). */}
+      <KpiStrip
+        items={[
+          <KpiCard
+            key="take-home"
+            action={estimateBadge}
+            label="Monthly take-home"
+            subtext="After tax, National Insurance, pension and student loan"
+            value={v.monthly}
+            valueFormat={{ fractionDigits: 0 }}
+          />,
+        ]}
+      />
+
+      <TakeHomeBreakdown
+        details={details}
+        incomeTax={v.incomeTax}
+        nationalInsurance={v.nationalInsurance}
+        pension={v.pension}
+        salary={salary}
+        studentLoan={v.studentLoan}
+      />
 
       <ScenarioZone
         announcement={
-          isModified && salaryKnown
-            ? `estimated monthly take-home ${formatCurrencyDecimal(taxResults.netPay / 12)}`
+          payRiseModified && tool === "pay-rise"
+            ? `estimated change in take-home pay ${formatCurrency(monthlyIncrease)} a month`
             : undefined
         }
-        basis={
-          tool === "next-pound" && !savedKnown
-            ? EXPLORER_COPY.defaultBasis
-            : savedKnown
-              ? `Starting from your figures: ${formatCurrency(savedSalary)} gross salary, ${PERCENT_FORMAT.format(savedPension / 100)} pension`
-              : "Starting from your figures: no saved salary yet"
-        }
-        footer={
-          inRouter ? (
-            <Link className={zoneLink()} to="/app/profile">
-              Update your details
-            </Link>
-          ) : (
-            <a className={zoneLink()} href="/app/profile">
-              Update your details
-            </a>
-          )
-        }
-        isModified={isModified || nextPound.isModified}
+        basis="Starting from your saved salary, pension and student loan."
+        footer={profileLink("Update your details", "link")}
+        id="scenario-zone"
+        isModified={payRiseModified || nextPound.isModified}
+        notice={<ProjectionNotice lead={DELTA_PANEL_COPY.unverifiedBanner} />}
         title="Model a change to your pay"
         onReset={resetScenario}
       >
         {/* Real tab panels; only the active one is mounted, so the explorer's curve is not worked out until opened. */}
-        <SegmentedTabs
+        <Tabs
           aria-label={EXPLORER_COPY.tabsLabel}
           items={TOOLS}
+          size="sm"
           value={tool}
           onValueChange={setTool}
         >
-          <SegmentedTabs.Panel value="take-home">
-            <SimulatorSplitLayout
-              content={content}
-              contentLabel="Illustration results"
-              controls={controls}
-              controlsLabel="Illustration inputs"
+          <Tabs.Panel value="pay-rise">
+            <PayRiseTool
+              monthlyIncrease={monthlyIncrease}
+              salaryIncrease={salaryIncrease}
+              onApplyIncrease={onApplyIncrease}
+              onSalaryIncreaseChange={setSalaryIncrease}
             />
-          </SegmentedTabs.Panel>
-          <SegmentedTabs.Panel value="next-pound">
-            <NextPoundExplorer scenario={nextPound} />
-          </SegmentedTabs.Panel>
-        </SegmentedTabs>
+          </Tabs.Panel>
+          <Tabs.Panel value="next-pound">
+            <NextPoundExplorer scenario={nextPound} unverifiedInPageNotice />
+          </Tabs.Panel>
+        </Tabs>
       </ScenarioZone>
-
-      <div className={footer()}>
-        <TaxDisclaimerButton showShortText />
-      </div>
     </div>
   );
 };

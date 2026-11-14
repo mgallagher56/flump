@@ -88,7 +88,7 @@ describe("TaxRecordDialog", () => {
       },
       "edit",
     );
-    fireEvent.click(within(dialog).getByRole("button", { name: "Remove" }));
+    fireEvent.click(within(dialog).getByRole("button", { name: "Remove receipt" }));
     fireEvent.click(within(dialog).getByRole("button", { name: "Save changes" }));
     expect(onSave).toHaveBeenCalledWith(
       expect.objectContaining({ receiptFilename: null, receiptCleared: true }),

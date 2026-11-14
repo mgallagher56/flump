@@ -84,14 +84,9 @@ export const iconButton = cva({
       outlineOffset: "1px",
     },
     "@media (pointer: coarse)": { width: "touch", height: "touch" },
+    // Forced colours drop the transparent fill: keep a visible edge on each icon button.
+    "@media (forced-colors: active)": { border: "1px solid ButtonText" },
   },
-  variants: {
-    tone: {
-      default: {},
-      danger: { _hover: { backgroundColor: "status.danger.bg", color: "status.danger.text" } },
-    },
-  },
-  defaultVariants: { tone: "default" },
 });
 
 export const pager = cva({

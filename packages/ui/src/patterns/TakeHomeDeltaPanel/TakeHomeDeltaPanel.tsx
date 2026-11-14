@@ -52,6 +52,11 @@ export interface TakeHomeDeltaPanelProps {
    * that already shows it, so the notice (a labelled landmark) appears once.
    */
   showNotice?: boolean;
+  /**
+   * With `showNotice={false}`: true when the page's one notice already leads with the
+   * "Unverified estimate" sentence, so the panel does not repeat it as quiet text. Default false.
+   */
+  unverifiedInPageNotice?: boolean;
   className?: string;
 }
 
@@ -70,6 +75,7 @@ export const TakeHomeDeltaPanel: FC<TakeHomeDeltaPanelProps> = ({
   pensionPreview,
   headingLevel = "h3",
   showNotice = true,
+  unverifiedInPageNotice = false,
   className,
 }) => {
   const Heading = headingLevel;
@@ -164,7 +170,7 @@ export const TakeHomeDeltaPanel: FC<TakeHomeDeltaPanelProps> = ({
         <ProjectionNotice
           lead={isUnverifiedEstimate ? DELTA_PANEL_COPY.unverifiedBanner : undefined}
         />
-      ) : isUnverifiedEstimate ? (
+      ) : isUnverifiedEstimate && !unverifiedInPageNotice ? (
         // The page shows its one notice elsewhere, so the sentence stays as quiet text here.
         <p className={deltaPanelUnverifiedNote()}>{DELTA_PANEL_COPY.unverifiedBanner}</p>
       ) : null}

@@ -5,6 +5,7 @@ import {
   getPreviousTaxYear,
   getTaxYearForRecordDate,
   getUkTaxYearContext,
+  isRecordActiveInTaxYear,
   isSupportedUkTaxYear,
   type TaxCalculationResult,
   type TaxRecord,
@@ -12,23 +13,20 @@ import {
 } from "@flump/finance-engine";
 import {
   Button,
-  EXPLORER_COPY,
-  Icon,
+  CollapsibleDrawer,
+  DELTA_PANEL_COPY,
+  EmptyState,
+  Illustration,
+  PageBody,
   PageHeader,
   ProjectionNotice,
-  ScenarioZone,
   TaxRatesStatusBanner,
 } from "@repo/ui";
-import { Plus } from "lucide-react";
-import { type FC, useCallback, useEffect, useMemo, useState } from "react";
-import { Link, useFetcher, useLoaderData } from "react-router";
-import TaxDisclaimerButton from "~/components/core/dialogs/TaxDisclaimerButton";
+import { type FC, useCallback, useMemo, useState } from "react";
+import { Link, useFetcher, useLoaderData, useRevalidator } from "react-router";
 import { ConfirmDialog } from "~/features/feedback/components/ConfirmDialog";
 import { useFetcherOutcome } from "~/features/feedback/hooks/useFetcherOutcome";
-import {
-  NextPoundExplorer,
-  useNextPoundScenario,
-} from "~/features/take-home/components/NextPoundExplorer";
+import { AddIncomeMenu } from "~/features/tax/components/AddIncomeMenu";
 import { CopyTaxYearModal } from "~/features/tax/components/CopyTaxYearModal";
 import { TaxHeadline } from "~/features/tax/components/TaxHeadline";
 import { TaxReceiptDialog } from "~/features/tax/components/TaxReceiptDialog";
@@ -36,27 +34,26 @@ import { TaxRecordDialog, type TaxRecordDraft } from "~/features/tax/components/
 import { TaxRecordsTable } from "~/features/tax/components/TaxRecordsTable";
 import { TaxReservePanel } from "~/features/tax/components/TaxReservePanel";
 import { TaxSourcesPanel } from "~/features/tax/components/TaxSourcesPanel";
-import { TaxTabs } from "~/features/tax/components/TaxTabs";
 import { TaxYearBar } from "~/features/tax/components/TaxYearBar";
 import { TaxYearComparison } from "~/features/tax/components/TaxYearComparison";
 import { recordAmount } from "~/features/tax/tax-labels";
-import { useFormatCurrency } from "~/hooks/useFormatCurrency";
+import { useUserProfile } from "~/hooks/useUserProfile";
 import type { loader } from "~/routes/app.self-assessment";
 import { useFinancialBaseline } from "~/state/baseline.store";
-import { getKnownTrapRegion } from "~/utils/taxTrapCopy";
-import { headerActions, iconButton, numeric, pageRoot, zoneLink } from "./TaxContainer.styles";
+import { DEFAULT_ENABLED_PAGES, isPageEnabled } from "~/utils/pageConfig";
+import {
+  drawers,
+  errorText,
+  numeric,
+  pageRoot,
+  quietAction,
+  textLink,
+} from "./TaxContainer.styles";
 
-/** Id of the pay planner zone, linked from the dashboard tax widget. */
-export const TAX_PAY_PLANNER_ID = "tax-pay-planner";
+/** The one standard tax caveat (copy audit ruling 3), folded into the page's single notice. */
+export const TAX_UNVERIFIED_LEAD = DELTA_PANEL_COPY.unverifiedBanner;
 
-type TaxTab = "streams" | "trap-reserve" | "multi-year" | "detailed";
-
-const TABS: Array<{ value: TaxTab; label: string }> = [
-  { value: "streams", label: "Income and costs" },
-  { value: "trap-reserve", label: "Payments and reserve" },
-  { value: "multi-year", label: "Year by year" },
-  { value: "detailed", label: "All records" },
-];
+const PAGE_TITLE = "Self Assessment";
 
 const emptyDraft = (source: TaxSource, type: "income" | "expense", date: string) =>
   ({
@@ -91,58 +88,117 @@ const draftFromRecord = (record: TaxRecord): TaxRecordDraft => ({
   receiptCleared: false,
 });
 
+const toNumber = (value: unknown): number | null => {
+  const n = typeof value === "string" ? Number.parseFloat(value) : Number(value);
+  return Number.isFinite(n) ? n : null;
+};
+
+const withTax = (list: string[] | null | undefined, fallback: readonly string[]) => [
+  ...(list && list.length > 0 ? list : fallback).filter((k) => k !== "tax"),
+  "tax",
+];
+
+/**
+ * Self Assessment is opt-in (E16 D3-B, D9). Someone who has not turned it on sees one empty
+ * state with one button, and no figures. Turning it on uses the same profile update as the
+ * settings toggle (page, nav entry and dashboard widget), then reloads this page's data.
+ */
+const SelfAssessmentOff: FC<{
+  enabledPages?: string[] | null;
+  dashboardWidgets?: string[] | null;
+  dashboardWidgetOrder?: string[] | null;
+  onEnabled: () => void;
+}> = ({ enabledPages, dashboardWidgets, dashboardWidgetOrder, onEnabled }) => {
+  const { updateProfile } = useUserProfile();
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const turnOn = async () => {
+    setSaving(true);
+    setError(null);
+    try {
+      await updateProfile({
+        enabledPages: withTax(enabledPages, DEFAULT_ENABLED_PAGES),
+        dashboardWidgets: withTax(dashboardWidgets, DEFAULT_ENABLED_PAGES),
+        dashboardWidgetOrder: withTax(dashboardWidgetOrder, DEFAULT_ENABLED_PAGES),
+      });
+      onEnabled();
+    } catch {
+      setError("We could not turn on Self Assessment. Try again.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <PageBody className={pageRoot()} data-testid="tax-page">
+      <PageHeader title={PAGE_TITLE} />
+      <EmptyState
+        action={
+          <Button pending={saving} type="button" variant="primary" onClick={turnOn}>
+            Turn on Self Assessment
+          </Button>
+        }
+        id="self-assessment-off"
+        illustration={<Illustration scene="empty-accounts" size="sm" />}
+        title="Self Assessment is for income outside PAYE, such as self-employment or rent"
+      />
+      {error ? (
+        <p className={errorText()} role="alert">
+          {error}
+        </p>
+      ) : null}
+    </PageBody>
+  );
+};
+
 const TaxContainer: FC = () => {
+  const { userProfile, ...loaderData } = useLoaderData<typeof loader>();
+  const revalidator = useRevalidator();
+  const [justEnabled, setJustEnabled] = useState(false);
+
+  const enabledPages = (userProfile?.enabledPages ?? null) as string[] | null;
+  const optedIn = justEnabled || isPageEnabled(enabledPages, "tax");
+
+  if (!optedIn) {
+    return (
+      <SelfAssessmentOff
+        dashboardWidgetOrder={userProfile?.dashboardWidgetOrder as string[] | null | undefined}
+        dashboardWidgets={userProfile?.dashboardWidgets as string[] | null | undefined}
+        enabledPages={enabledPages}
+        onEnabled={() => {
+          setJustEnabled(true);
+          revalidator.revalidate();
+        }}
+      />
+    );
+  }
+
+  return <SelfAssessmentPage records={loaderData.records ?? []} userProfile={userProfile} />;
+};
+
+type LoaderData = ReturnType<typeof useLoaderData<typeof loader>>;
+
+const SelfAssessmentPage: FC<{
+  records: TaxRecord[];
+  userProfile: LoaderData["userProfile"];
+}> = ({ records: initialRecords, userProfile }) => {
   const fetcher = useFetcher();
-  const { records: initialRecords = [], userProfile } = useLoaderData<typeof loader>();
 
   // Which year's rates apply today, and whether that is a fallback (E22)
   const ratesContext = useMemo(() => getUkTaxYearContext(), []);
   const currentTaxYear = getCurrentUKTaxYear();
-
-  const [activeTab, setActiveTab] = useState<TaxTab>("streams");
-  const [selectedTaxYear, setSelectedTaxYear] = useState<string>(() => getCurrentUKTaxYear());
-
   const { baseline } = useFinancialBaseline();
 
   // Salary and property share default to the baseline, then the profile.
   const profileSalary =
     baseline.annualGrossSalary > 0
       ? baseline.annualGrossSalary
-      : userProfile?.annualSalary
-        ? typeof userProfile.annualSalary === "string"
-          ? Number.parseFloat(userProfile.annualSalary)
-          : userProfile.annualSalary
-        : 0;
-
+      : (toNumber(userProfile?.annualSalary) ?? 0);
   const profileShare =
     baseline.propertyOwnershipSharePct !== undefined
       ? baseline.propertyOwnershipSharePct
-      : userProfile?.propertyOwnershipShare
-        ? typeof userProfile.propertyOwnershipShare === "string"
-          ? Number.parseFloat(userProfile.propertyOwnershipShare)
-          : userProfile.propertyOwnershipShare
-        : 100.0;
-
-  // The pay planner (E25-T13) starts from saved profile details only (not the local baseline,
-  // which the server cannot see) and never writes back.
-  const savedSalaryRaw = Number(userProfile?.annualSalary ?? 0);
-  const savedSalary = Number.isFinite(savedSalaryRaw) && savedSalaryRaw > 0 ? savedSalaryRaw : 0;
-  const savedPensionPercent = Number(userProfile?.pensionPercent ?? 0);
-  const payScenario = useNextPoundScenario({
-    salary: savedSalary,
-    taxRegion: userProfile?.taxRegion ?? null,
-    studentLoanPlans: userProfile?.studentLoanPlans ?? null,
-    studentLoanPlan: userProfile?.studentLoanPlan ?? null,
-    isSalarySacrifice: userProfile?.isSalarySacrifice === true,
-    pensionPercent: Number.isFinite(savedPensionPercent) ? savedPensionPercent : 0,
-    taxYear: ratesContext.ratesYear,
-  });
-  const { formatCurrency } = useFormatCurrency();
-  const percentFormat = new Intl.NumberFormat("en-GB", { maximumFractionDigits: 2 });
-  const plannerBasis =
-    savedSalary > 0
-      ? `Starting from your figures: ${formatCurrency(savedSalary)} gross salary, ${percentFormat.format(Number.isFinite(savedPensionPercent) ? savedPensionPercent : 0)}% pension`
-      : EXPLORER_COPY.defaultBasis;
+      : (toNumber(userProfile?.propertyOwnershipShare) ?? 100);
 
   const [payeSalary, setPayeSalary] = useState<number>(profileSalary);
   const [propertyOwnershipShare, setPropertyOwnershipShare] = useState<number>(profileShare);
@@ -155,27 +211,23 @@ const TaxContainer: FC = () => {
     return Array.from(set).sort();
   }, [currentTaxYear, initialRecords]);
 
-  useEffect(() => {
-    if (!availableYears.includes(selectedTaxYear)) {
-      setSelectedTaxYear(
-        availableYears.includes(currentTaxYear)
-          ? currentTaxYear
-          : availableYears[availableYears.length - 1],
-      );
-    }
-  }, [availableYears, selectedTaxYear, currentTaxYear]);
+  const [chosenYear, setChosenYear] = useState<string>(currentTaxYear);
+  const selectedTaxYear = availableYears.includes(chosenYear)
+    ? chosenYear
+    : availableYears.includes(currentTaxYear)
+      ? currentTaxYear
+      : (availableYears[availableYears.length - 1] ?? currentTaxYear);
 
   const [isCopyModalOpen, setIsCopyModalOpen] = useState<boolean>(false);
-  const [copyModalScope, setCopyModalScope] = useState<TaxSource | "all">("all");
 
   // Add / edit dialog
   const [isRecordDialogOpen, setIsRecordDialogOpen] = useState(false);
   const [editingRecord, setEditingRecord] = useState<TaxRecord | null>(null);
   const [draft, setDraft] = useState<TaxRecordDraft>(() =>
-    emptyDraft("rental", "income", `${currentTaxYear.split("/")[0]}-04-06`),
+    emptyDraft("self-employed", "income", `${currentTaxYear.split("/")[0]}-04-06`),
   );
 
-  const [transactionToDelete, setTransactionToDelete] = useState<string | null>(null);
+  const [transactionToDelete, setTransactionToDelete] = useState<TaxRecord | null>(null);
   const [taxYearToDelete, setTaxYearToDelete] = useState<string | null>(null);
   const deleteTransactionOutcome = useFetcherOutcome(fetcher, {
     onSuccess: () => setTransactionToDelete(null),
@@ -186,14 +238,11 @@ const TaxContainer: FC = () => {
 
   const [activeReceiptRecord, setActiveReceiptRecord] = useState<TaxRecord | null>(null);
 
-  const onOpenAddModal = (
-    defaultSource: TaxSource = "rental",
-    defaultType: "income" | "expense" = "expense",
-  ) => {
+  const onOpenAddModal = (source: TaxSource, type: "income" | "expense") => {
     // New records start on 6 April, the first day of the selected tax year.
     const startYr = selectedTaxYear.split("/")[0] || new Date().getFullYear().toString();
     setEditingRecord(null);
-    setDraft(emptyDraft(defaultSource, defaultType, `${startYr}-04-06`));
+    setDraft(emptyDraft(source, type, `${startYr}-04-06`));
     setIsRecordDialogOpen(true);
   };
 
@@ -201,36 +250,6 @@ const TaxContainer: FC = () => {
     setEditingRecord(record);
     setDraft(draftFromRecord(record));
     setIsRecordDialogOpen(true);
-  };
-
-  const handleOpenCopyModal = (scope: TaxSource | "all" = "all") => {
-    setCopyModalScope(scope);
-    setIsCopyModalOpen(true);
-  };
-
-  // Quick add from the collapsible source cards
-  const handleQuickAdd = (record: {
-    name: string;
-    source: TaxSource;
-    type: "income" | "expense";
-    category: string;
-    amount: number;
-    frequency: "one-off" | "monthly" | "annual";
-    date: string;
-  }) => {
-    fetcher.submit(
-      {
-        intent: "create-transaction",
-        name: record.name,
-        source: record.source,
-        type: record.type,
-        category: record.category,
-        amount: record.amount.toString(),
-        date: record.date,
-        frequency: record.frequency,
-      },
-      { method: "POST" },
-    );
   };
 
   const calculatedTaxYearsData = useMemo(() => {
@@ -243,13 +262,8 @@ const TaxContainer: FC = () => {
     return results;
   }, [availableYears, initialRecords, payeSalary, propertyOwnershipShare]);
 
-  const activeYearData = useMemo(
-    () =>
-      calculatedTaxYearsData[selectedTaxYear] ||
-      calculatedTaxYearsData[currentTaxYear] ||
-      Object.values(calculatedTaxYearsData)[0],
-    [calculatedTaxYearsData, selectedTaxYear, currentTaxYear],
-  );
+  const activeYearData: TaxCalculationResult | undefined =
+    calculatedTaxYearsData[selectedTaxYear] ?? Object.values(calculatedTaxYearsData)[0];
 
   const handleSaveProfile = useCallback(() => {
     setIsProfileSaving(true);
@@ -288,18 +302,19 @@ const TaxContainer: FC = () => {
   };
 
   const confirmDeleteTransaction = () => {
-    if (!transactionToDelete) {
-      setTransactionToDelete(null);
-      return;
-    }
+    if (!transactionToDelete) return;
     deleteTransactionOutcome.begin();
-    fetcher.submit({ intent: "delete-transaction", id: transactionToDelete }, { method: "POST" });
+    fetcher.submit(
+      { intent: "delete-transaction", id: transactionToDelete.id },
+      { method: "POST" },
+    );
   };
 
   const recordsInSelectedTaxYear = useMemo(
     () => initialRecords.filter((r) => getTaxYearForRecordDate(r.date) === selectedTaxYear),
     [initialRecords, selectedTaxYear],
   );
+  const hasRecordsInYear = initialRecords.some((r) => isRecordActiveInTaxYear(r, selectedTaxYear));
 
   const confirmDeleteTaxYear = () => {
     const recordIds = taxYearToDelete
@@ -321,123 +336,100 @@ const TaxContainer: FC = () => {
   const previousTaxYear = getPreviousTaxYear(selectedTaxYear);
   const countFormat = new Intl.NumberFormat("en-GB");
 
+  const addIncome = (
+    <AddIncomeMenu onAdd={onOpenAddModal} onCopyFromLastYear={() => setIsCopyModalOpen(true)} />
+  );
+  const showEstimate = activeYearData !== undefined && hasRecordsInYear;
+
   return (
-    <div className={pageRoot()}>
-      <TaxRatesStatusBanner {...ratesContext} />
-      <ProjectionNotice />
-
+    <PageBody className={pageRoot()} data-testid="tax-page">
       <PageHeader
-        title="Self Assessment"
-        subtitle="Income, allowable costs and an estimated Self Assessment bill for each tax year."
+        title={PAGE_TITLE}
+        subtitle="Income outside PAYE, its costs and an estimated tax bill for each tax year."
         actions={
-          <div className={headerActions()}>
-            <TaxDisclaimerButton showShortText />
-            <Button
-              className={iconButton()}
-              type="button"
-              onClick={() => onOpenAddModal("rental", "income")}
-            >
-              <Icon icon={Plus} size="sm" />
-              Add a record
-            </Button>
-          </div>
-        }
-      />
-
-      <TaxYearBar
-        years={availableYears}
-        selectedYear={selectedTaxYear}
-        onSelectYear={setSelectedTaxYear}
-        previousYear={previousTaxYear}
-        onCopy={() => handleOpenCopyModal("all")}
-        onDeleteYear={
-          recordsInSelectedTaxYear.length > 0
-            ? () => setTaxYearToDelete(selectedTaxYear)
-            : undefined
-        }
-      />
-
-      <TaxHeadline
-        taxYear={selectedTaxYear}
-        result={activeYearData}
-        ownershipSharePct={propertyOwnershipShare}
-      />
-
-      <TaxTabs
-        idBase="tax-view"
-        items={TABS}
-        label="Tax views"
-        value={activeTab}
-        onValueChange={setActiveTab}
-      >
-        {activeTab === "streams" ? (
-          <TaxSourcesPanel
-            records={initialRecords}
-            taxYear={selectedTaxYear}
-            previousTaxYear={previousTaxYear}
-            result={activeYearData}
-            profileSalary={profileSalary}
-            ownershipSharePct={propertyOwnershipShare}
-            onOpenAddModal={onOpenAddModal}
-            onOpenEditModal={onOpenEditModal}
-            onDeleteRecord={setTransactionToDelete}
-            onOpenCopyModal={handleOpenCopyModal}
-            onQuickAdd={handleQuickAdd}
-            onViewReceipt={setActiveReceiptRecord}
-          />
-        ) : null}
-
-        {activeTab === "trap-reserve" ? (
-          <TaxReservePanel
-            taxYear={selectedTaxYear}
-            result={activeYearData}
-            trapIncome={activeYearData?.totalGrossIncome || payeSalary}
-            trapRegion={getKnownTrapRegion(baseline)}
-            payeSalary={payeSalary}
-            onPayeSalaryChange={setPayeSalary}
-            ownershipSharePct={propertyOwnershipShare}
-            onOwnershipShareChange={setPropertyOwnershipShare}
-            onSave={handleSaveProfile}
-            saving={isProfileSaving}
-          />
-        ) : null}
-
-        {activeTab === "multi-year" ? (
-          <TaxYearComparison
+          <TaxYearBar
             years={availableYears}
             selectedYear={selectedTaxYear}
-            results={calculatedTaxYearsData}
+            onSelectYear={setChosenYear}
           />
-        ) : null}
-
-        {activeTab === "detailed" ? (
-          <TaxRecordsTable
-            records={initialRecords}
-            availableYears={availableYears}
-            onEdit={onOpenEditModal}
-            onDelete={setTransactionToDelete}
-            onViewReceipt={setActiveReceiptRecord}
-            onAdd={() => onOpenAddModal("rental", "income")}
-          />
-        ) : null}
-      </TaxTabs>
-
-      <ScenarioZone
-        basis={plannerBasis}
-        footer={
-          <Link className={zoneLink()} to="/app/profile">
-            Update your details
-          </Link>
         }
-        id={TAX_PAY_PLANNER_ID}
-        isModified={payScenario.isModified}
-        // The page's own notice above already covers this zone.
-        showNotice={false}
-        title="Model a change to your pay"
-        onReset={payScenario.reset}
-      >
-        <NextPoundExplorer scenario={payScenario} />
-      </ScenarioZone>
+      />
+
+      <TaxRatesStatusBanner {...ratesContext} />
+
+      <TaxHeadline
+        emptyAction={hasRecordsInYear ? undefined : addIncome}
+        records={initialRecords}
+        result={activeYearData}
+        taxYear={selectedTaxYear}
+      />
+
+      {showEstimate ? <ProjectionNotice lead={TAX_UNVERIFIED_LEAD} /> : null}
+
+      <TaxSourcesPanel action={addIncome} records={initialRecords} taxYear={selectedTaxYear} />
+
+      <p className={textLink()}>
+        <Link to="/app/take-home">See what more pay is worth after tax</Link>
+      </p>
+
+      <div className={drawers()}>
+        {showEstimate && activeYearData ? (
+          <CollapsibleDrawer title="How the estimate is worked out" variant="quiet">
+            <TaxReservePanel
+              taxYear={selectedTaxYear}
+              result={activeYearData}
+              totalIncome={activeYearData.totalGrossIncome || payeSalary}
+              payeSalary={payeSalary}
+              onPayeSalaryChange={setPayeSalary}
+              ownershipSharePct={propertyOwnershipShare}
+              onOwnershipShareChange={setPropertyOwnershipShare}
+              onSave={handleSaveProfile}
+              saving={isProfileSaving}
+            />
+          </CollapsibleDrawer>
+        ) : null}
+
+        {initialRecords.length > 0 ? (
+          <CollapsibleDrawer
+            itemCount={initialRecords.length}
+            itemNoun={{ one: "record", other: "records" }}
+            title="All records"
+            variant="quiet"
+          >
+            <TaxRecordsTable
+              records={initialRecords}
+              availableYears={availableYears}
+              onEdit={onOpenEditModal}
+              onDelete={(id) =>
+                setTransactionToDelete(initialRecords.find((r) => r.id === id) ?? null)
+              }
+              onViewReceipt={setActiveReceiptRecord}
+              onAdd={() => onOpenAddModal("self-employed", "income")}
+            />
+            {recordsInSelectedTaxYear.length > 0 ? (
+              <Button
+                className={quietAction()}
+                size="sm"
+                type="button"
+                variant="ghost"
+                onClick={() => setTaxYearToDelete(selectedTaxYear)}
+              >
+                Delete all records for {selectedTaxYear}
+              </Button>
+            ) : null}
+          </CollapsibleDrawer>
+        ) : null}
+
+        {availableYears.length > 1 ? (
+          <CollapsibleDrawer title="Year by year" variant="quiet">
+            <TaxYearComparison
+              years={availableYears}
+              selectedYear={selectedTaxYear}
+              results={calculatedTaxYearsData}
+            />
+          </CollapsibleDrawer>
+        ) : null}
+      </div>
 
       <TaxRecordDialog
         open={isRecordDialogOpen}
@@ -453,7 +445,7 @@ const TaxContainer: FC = () => {
         open={isCopyModalOpen}
         onClose={() => setIsCopyModalOpen(false)}
         records={initialRecords}
-        initialSourceSection={copyModalScope}
+        initialSourceSection="all"
         initialSourceYear={previousTaxYear}
         initialTargetYear={selectedTaxYear}
         availableYears={availableYears}
@@ -469,8 +461,8 @@ const TaxContainer: FC = () => {
         }}
         pending={deleteTransactionOutcome.pending}
         error={deleteTransactionOutcome.error}
-        title="Delete this record?"
-        description="This removes the record from your tax planner. This can't be undone."
+        title={`Delete ${transactionToDelete?.name ?? "this record"}?`}
+        description="It will no longer count towards your estimate. This cannot be undone."
         confirmLabel="Delete record"
         tone="danger"
         onConfirm={confirmDeleteTransaction}
@@ -493,12 +485,12 @@ const TaxContainer: FC = () => {
             records for <span className={numeric()}>{taxYearToDelete}</span>?
           </>
         }
-        description="These records are removed from your tax planner. This can't be undone."
-        confirmLabel="Delete year"
+        description="They will no longer count towards your estimate. This cannot be undone."
+        confirmLabel="Delete records"
         tone="danger"
         onConfirm={confirmDeleteTaxYear}
       />
-    </div>
+    </PageBody>
   );
 };
 

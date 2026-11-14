@@ -4,15 +4,6 @@ export const root = cva({
   base: { display: "flex", flexDirection: "column", gap: "6", minWidth: 0 },
 });
 
-export const twoUp = cva({
-  base: {
-    display: "grid",
-    gridTemplateColumns: { base: "minmax(0, 1fr)", lg: "repeat(2, minmax(0, 1fr))" },
-    gap: "5",
-    alignItems: "start",
-  },
-});
-
 export const paramsAndBreakdown = cva({
   base: {
     display: "grid",
@@ -72,4 +63,14 @@ export const row = cva({
     },
   },
   defaultVariants: { emphasis: "none" },
+});
+
+/** The one quiet line about the Personal Allowance taper (copy audit ruling 6). */
+export const taperLine = cva({
+  base: {
+    textStyle: "body.sm",
+    color: "text.secondary",
+    margin: 0,
+    fontVariantNumeric: "tabular-nums",
+  },
 });

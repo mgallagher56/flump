@@ -203,8 +203,8 @@ export const CopyTaxYearModal: FC<CopyTaxYearModalProps> = ({
       onOpenChange={(val) => {
         if (!val) onClose();
       }}
-      title="Copy figures and populate tax year"
-      description="Carry over recurring figures (rent, expenses, retainers) from a previous year. Adjust values inline or add an inflation percentage before saving."
+      title="Copy records from another tax year"
+      description="Copy regular income and costs from an earlier tax year. You can change each amount before you save."
       size="lg"
       id="copy-tax-year-dialog"
     >
@@ -212,7 +212,7 @@ export const CopyTaxYearModal: FC<CopyTaxYearModalProps> = ({
         <div className={s.controlsBar()}>
           <div className={s.yearTransfer()}>
             <div className={s.yearField()}>
-              <FormField label="Source year">
+              <FormField label="Copy from">
                 {(field) => (
                   // TODO(E15 T2.2b): swap for the @repo/ui Select primitive when it lands.
                   <select
@@ -231,7 +231,7 @@ export const CopyTaxYearModal: FC<CopyTaxYearModalProps> = ({
               <Icon icon={ArrowRight} size="sm" />
             </span>
             <div className={s.yearField()}>
-              <FormField label="Target year">
+              <FormField label="Copy to">
                 {(field) => (
                   <select
                     id={field.id}
@@ -247,7 +247,7 @@ export const CopyTaxYearModal: FC<CopyTaxYearModalProps> = ({
             </div>
           </div>
 
-          <FormField label="Section scope">
+          <FormField label="Income source">
             {(field) => (
               <select
                 id={field.id}
@@ -256,7 +256,7 @@ export const CopyTaxYearModal: FC<CopyTaxYearModalProps> = ({
                 value={sectionFilter}
                 onChange={(e) => setSectionFilter(e.target.value as TaxSource | "all")}
               >
-                <option value="all">All income sections</option>
+                <option value="all">All sources</option>
                 <option value="rental">Rental property only</option>
                 <option value="self-employed">Self-employed only</option>
                 <option value="paye">PAYE employment only</option>
@@ -274,21 +274,21 @@ export const CopyTaxYearModal: FC<CopyTaxYearModalProps> = ({
               className={s.recurringToggle({ active: recurringOnly })}
             >
               <Icon icon={Filter} size="sm" />
-              {recurringOnly ? "Recurring or fixed only" : "All records (including one-offs)"}
+              {recurringOnly ? "Regular records only" : "All records, including one-off ones"}
             </button>
           </div>
         </div>
 
         <div className={s.toolbar()}>
           <div className={s.adjustGroup()}>
-            <span className={s.mutedText()}>Adjust selected amounts:</span>
+            <span className={s.mutedText()}>Change selected amounts by</span>
             <Button
               size="sm"
               type="button"
               variant="secondary"
               onClick={() => handleApplyPercentage(0)}
             >
-              0% (keep same)
+              0% (no change)
             </Button>
             <Button
               size="sm"
@@ -315,7 +315,7 @@ export const CopyTaxYearModal: FC<CopyTaxYearModalProps> = ({
               checked={capPreviousOpenEnded}
               onChange={(e) => setCapPreviousOpenEnded(e.target.checked)}
             />
-            Cap previous open-ended records to 31 Mar
+            End the earlier records with no end date on 31 March
           </label>
         </div>
 
@@ -326,9 +326,7 @@ export const CopyTaxYearModal: FC<CopyTaxYearModalProps> = ({
           className={s.tableScroll()}
         >
           {candidateRecords.length === 0 ? (
-            <div className={s.empty()}>
-              No active records found in {sourceYear} matching the selected criteria.
-            </div>
+            <div className={s.empty()}>No records in {sourceYear} match these choices.</div>
           ) : (
             <table className={s.table()}>
               <thead className={s.headRow()}>
@@ -345,7 +343,7 @@ export const CopyTaxYearModal: FC<CopyTaxYearModalProps> = ({
                   <th className={s.th()}>New name ({targetYear})</th>
                   <th className={s.th()}>Section</th>
                   <th className={s.th()}>Frequency</th>
-                  <th className={s.th({ align: "end" })}>Previous</th>
+                  <th className={s.th({ align: "end" })}>Amount in {sourceYear}</th>
                   <th className={s.th({ align: "end", amount: true })}>New amount (£)</th>
                 </tr>
               </thead>
@@ -436,7 +434,7 @@ export const CopyTaxYearModal: FC<CopyTaxYearModalProps> = ({
               onClick={handleSubmit}
             >
               <Icon icon={Copy} size="sm" />
-              Copy {selectedCount} records to {targetYear}
+              Copy records
             </Button>
           </div>
         </div>

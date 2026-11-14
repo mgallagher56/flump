@@ -134,6 +134,8 @@ export interface MarginalRateExplorerProps {
   headingLevel?: "h2" | "h3" | "h4";
   /** Shows the panel's "Guidance, not advice" notice. Pass false inside a ScenarioZone, which has its own. */
   showNotice?: boolean;
+  /** Passed to the delta panel: the page's notice already carries the "Unverified estimate" sentence. */
+  unverifiedInPageNotice?: boolean;
   className?: string;
 }
 
@@ -145,6 +147,7 @@ export const MarginalRateExplorer: FC<MarginalRateExplorerProps> = ({
   onChange,
   headingLevel = "h3",
   showNotice = true,
+  unverifiedInPageNotice = false,
   className,
 }) => {
   const {
@@ -464,6 +467,7 @@ export const MarginalRateExplorer: FC<MarginalRateExplorerProps> = ({
         }
         ratesYear={delta.before.ratesYear}
         showNotice={showNotice}
+        unverifiedInPageNotice={unverifiedInPageNotice}
         takeHome={delta.deltaTakeHome}
       />
       <LiveRegion debounceMs={1000} message={announcement} visuallyHidden />

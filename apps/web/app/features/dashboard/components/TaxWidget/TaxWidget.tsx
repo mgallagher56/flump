@@ -47,8 +47,8 @@ export const TAX_WIDGET_COPY = {
 export const thresholdDistance = (label: string, gross: string, distance: string): string =>
   `${label} at ${gross} gross pay, ${distance} above your pay`;
 
-/** Where the pay planner lives (TaxContainer's ScenarioZone). */
-export const TAX_PLANNER_HREF = "/app/self-assessment#tax-pay-planner";
+/** Where the pay planner lives: the take-home page owns "The next £1,000". */
+export const TAX_PLANNER_HREF = "/app/take-home";
 
 const pctDigits = (n: number) => (Number.isInteger(n) ? 0 : 1);
 

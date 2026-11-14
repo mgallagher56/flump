@@ -59,15 +59,21 @@ export function useNextPoundScenario(saved: NextPoundSaved): NextPoundScenario {
 
 export interface NextPoundExplorerProps {
   scenario: NextPoundScenario;
+  /** True when the page's one notice already leads with the "Unverified estimate" sentence. */
+  unverifiedInPageNotice?: boolean;
 }
 
 /** "The next £1,000" tool for the take-home ScenarioZone. */
-export const NextPoundExplorer: FC<NextPoundExplorerProps> = ({ scenario }) => (
+export const NextPoundExplorer: FC<NextPoundExplorerProps> = ({
+  scenario,
+  unverifiedInPageNotice = false,
+}) => (
   <div className={nextPoundRoot()} data-testid="next-pound-explorer" id="next-pound-explorer">
     {/* Always inside a ScenarioZone or a page that shows the notice, so the panel leaves it out. */}
     <MarginalRateExplorer
       headingLevel="h3"
       showNotice={false}
+      unverifiedInPageNotice={unverifiedInPageNotice}
       values={scenario.values}
       onChange={scenario.set}
     />
