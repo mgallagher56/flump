@@ -4,7 +4,7 @@ import { Button } from "../../primitives/Button/Button";
 import { PageHeader } from "./PageHeader";
 
 const meta: Meta<typeof PageHeader> = {
-  title: "3. Financial Patterns & Sections/PageHeader",
+  title: "3. Patterns/PageHeader",
   component: PageHeader,
   parameters: {
     layout: "padded",

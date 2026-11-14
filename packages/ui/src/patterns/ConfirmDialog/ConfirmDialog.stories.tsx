@@ -18,7 +18,7 @@ const DarkRoot = ({ children }: { children: ReactNode }) => {
 };
 
 const meta: Meta<typeof ConfirmDialog> = {
-  title: "3. Financial Patterns & Sections/ConfirmDialog",
+  title: "3. Patterns/ConfirmDialog",
   component: ConfirmDialog,
   // The Storybook decorator renders every story side by side in Light and Dark by default.
   parameters: { layout: "padded" },

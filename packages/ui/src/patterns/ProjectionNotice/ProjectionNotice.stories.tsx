@@ -4,7 +4,7 @@ import { css } from "../../../styled-system/css";
 import { PROJECTION_NOTICE_TEXT, ProjectionNotice } from "./ProjectionNotice";
 
 const meta: Meta<typeof ProjectionNotice> = {
-  title: "3. Financial Patterns & Sections/ProjectionNotice",
+  title: "3. Patterns/ProjectionNotice",
   component: ProjectionNotice,
   parameters: { layout: "padded" },
 };

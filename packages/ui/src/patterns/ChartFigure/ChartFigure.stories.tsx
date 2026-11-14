@@ -58,7 +58,7 @@ const legendItems = [
 ] as const;
 
 const meta: Meta<typeof ChartFigure> = {
-  title: "3. Financial Patterns & Sections/ChartFigure",
+  title: "4. Charts/ChartFigure",
   component: ChartFigure,
   parameters: { layout: "padded" },
   args: {

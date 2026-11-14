@@ -9,7 +9,7 @@ const onDismiss = fn();
 const onPrimary = fn();
 
 const meta: Meta<typeof CoachCard> = {
-  title: "3. Financial Patterns & Sections/CoachCard",
+  title: "3. Patterns/CoachCard",
   component: CoachCard,
   parameters: { layout: "padded" },
   args: {

@@ -4,22 +4,20 @@ import {
   type DebtItem,
   type PayoffResult,
 } from "@flump/finance-engine";
-import { type FC, type HTMLAttributes, useEffect, useMemo, useState } from "react";
+import { type FC, type HTMLAttributes, type ReactNode, useEffect, useMemo, useState } from "react";
 import { cx } from "../../../styled-system/css";
 import { formatAxisCurrency } from "../../charts/formatAxisCurrency";
 import { ChartFigure } from "../../patterns/ChartFigure/ChartFigure";
-import { ChartLegend, type ChartLegendItem } from "../../patterns/ChartLegend/ChartLegend";
 import { EmptyState } from "../../patterns/EmptyState/EmptyState";
+import { HeroFigure } from "../../patterns/HeroFigure/HeroFigure";
 import { KpiStrip } from "../../patterns/KpiStrip/KpiStrip";
 import { PageHeader } from "../../patterns/PageHeader/PageHeader";
-import {
-  PROJECTION_NOTICE_TEXT,
-  ProjectionNotice,
-} from "../../patterns/ProjectionNotice/ProjectionNotice";
-import { SimulatorSplitLayout } from "../../patterns/SimulatorSplitLayout/SimulatorSplitLayout";
+import { ProjectionNotice } from "../../patterns/ProjectionNotice/ProjectionNotice";
+import { ScenarioZone } from "../../patterns/ScenarioZone/ScenarioZone";
 import { Button } from "../../primitives/Button/Button";
 import { Card } from "../../primitives/Card/Card";
 import { Checkbox } from "../../primitives/Checkbox/Checkbox";
+import { CollapsibleDrawer } from "../../primitives/CollapsibleDrawer/CollapsibleDrawer";
 import { CurrencyInput } from "../../primitives/CurrencyInput/CurrencyInput";
 import { controlProps, FormField } from "../../primitives/FormField/FormField";
 import { Illustration } from "../../primitives/Illustration/Illustration";
@@ -31,6 +29,7 @@ import { Skeleton } from "../../primitives/Skeleton/Skeleton";
 import { SliderField } from "../../primitives/SliderField/SliderField";
 import { Switch } from "../../primitives/Switch/Switch";
 import { Table, TBody, Td, THead, Th } from "../../primitives/Table/Table";
+import { Tabs } from "../../primitives/Tabs/Tabs";
 import { TextInput } from "../../primitives/TextInput/TextInput";
 import {
   buttonRow,
@@ -43,6 +42,8 @@ import {
   chartLine,
   chartProjectionLine,
   chartSvg,
+  detailsList,
+  detailsRow,
   figureText,
   formFull,
   formGrid,
@@ -50,23 +51,37 @@ import {
   listItemMeta,
   listReset,
   mutedText,
+  outcome,
+  outcomeLabel,
+  outcomeSupport,
+  outcomeSupportItem,
+  outcomeValue,
   page,
   pageBody,
   pageSkeletonCard,
   pageSkeletonHeader,
   pageSkeletonHero,
   pageSkeletonKpis,
+  plainLink,
+  proseText,
   split,
   splitDetail,
   splitList,
   stack,
+  toolStack,
 } from "./PageTemplates.styles";
 
 /**
- * Page templates: compositions of the Phase 2 kit that anchor visual regression and show how a
- * screen is put together. They hold no business logic of their own. Every figure is derived from
- * the sample rows below (or from `@flump/finance-engine` for the simulator), never typed in twice,
- * and every chart is labelled as sample data. Screens copy the shape, not the data.
+ * Page templates: compositions of the kit that anchor visual regression and show how a screen is
+ * put together. Each page PR matches them (E16 plan P1 to P13). They hold no business logic of
+ * their own. Every figure is derived from the sample rows below (or from `@flump/finance-engine`
+ * for the simulator), never typed in twice, and each page says it shows sample data. Screens copy
+ * the shape, not the data.
+ *
+ * The shape, in order (P13): `PageBody`, `PageHeader` (one primary action), `HeroFigure`, a
+ * `KpiStrip` of 3 cards (none repeats the headline, captions carry no figures), the "Your details"
+ * card, the `ScenarioZone` (one tool visible, one outcome, one chart, the page's single
+ * `ProjectionNotice` in its footer), then quiet drawers.
  *
  * The templates share one directory (not one per template) because they share the sample data and
  * the chart helper; this is an intentional exception to one-component-per-directory.
@@ -91,23 +106,30 @@ const ACCOUNTS: readonly SampleAccount[] = [
 const sumOf = (rows: readonly SampleAccount[]): number =>
   Math.round(rows.reduce((total, row) => total + row.balance, 0) * 100) / 100;
 
-const sumKind = (kind: SampleAccount["kind"]): number =>
-  sumOf(ACCOUNTS.filter((a) => a.kind === kind));
+const sumKinds = (...kinds: SampleAccount["kind"][]): number =>
+  sumOf(ACCOUNTS.filter((a) => kinds.includes(a.kind)));
 
 const NET_WORTH = sumOf(ACCOUNTS);
 const DEBT_OWED = Math.abs(sumOf(ACCOUNTS.filter((a) => a.balance < 0)));
 
-const pounds = (value: number): string => formatMoney(value).text;
+/** Whole pounds, en-GB (P8). */
+const pounds = (value: number): string => formatMoney(value, { fractionDigits: 0 }).text;
 
-const SAMPLE_NOTICE = (
-  <ProjectionNotice>{`Sample data. ${PROJECTION_NOTICE_TEXT}`}</ProjectionNotice>
-);
+/** Durations over 24 months read as years and months (P8): "3 years 4 months". */
+export const formatDuration = (totalMonths: number): string => {
+  const months = Math.max(0, Math.round(totalMonths));
+  const plural = (n: number, one: string) => `${n} ${one}${n === 1 ? "" : "s"}`;
+  if (months < 24) return plural(months, "month");
+  const years = Math.floor(months / 12);
+  const rest = months % 12;
+  return rest === 0 ? plural(years, "year") : `${plural(years, "year")} ${plural(rest, "month")}`;
+};
 
 // ---- Chart helper -------------------------------------------------------------------------
 
 interface ChartPoint {
   label: string;
-  /** Short axis label. */
+  /** Axis label. Empty for no tick; at most 6 are drawn (P10.4). */
   short: string;
   value: number;
   projected: boolean;
@@ -128,9 +150,8 @@ const MONTHS = [
   "December",
 ] as const;
 
-/** Sample shape: nine months of history ending at today's figure, then three projected months. */
-const SAMPLE_SHAPE = [0.78, 0.8, 0.82, 0.85, 0.88, 0.91, 0.94, 0.97, 1, 1.03, 1.06, 1.09] as const;
-const CURRENT_INDEX = 8;
+/** Sample shape: nine months of history ending at today's figure (September). */
+const SAMPLE_SHAPE = [0.78, 0.8, 0.82, 0.85, 0.88, 0.91, 0.94, 0.97, 1] as const;
 
 /** Sample monthly history that ends exactly at `current`, so the chart agrees with the figures. */
 const sampleHistory = (current: number): ChartPoint[] =>
@@ -138,12 +159,13 @@ const sampleHistory = (current: number): ChartPoint[] =>
     label: MONTHS[i] ?? "",
     short: (MONTHS[i] ?? "").slice(0, 3),
     value: Math.round(current * factor),
-    projected: i > CURRENT_INDEX,
+    projected: false,
   }));
 
 const W = 900;
 const H = 240;
 const PAD = { l: 64, r: 8, t: 12, b: 36 };
+const MAX_TICKS = 6;
 
 const niceCeil = (max: number): number => {
   if (max <= 0) return 1;
@@ -163,7 +185,8 @@ const TemplateChart: FC<{ points: readonly ChartPoint[] }> = ({ points }) => {
   // The dashed line starts at the last real point so the two lines join.
   const projectedStart = Math.max(firstProjected - 1, 0);
   const projected = firstProjected === -1 ? [] : points.slice(projectedStart);
-  const labelEvery = Math.ceil(points.length / 6);
+  const ticked = points.map((p, i) => ({ p, i })).filter(({ p }) => p.short !== "");
+  const tickEvery = Math.ceil(ticked.length / MAX_TICKS);
   return (
     <svg
       aria-hidden="true"
@@ -193,8 +216,8 @@ const TemplateChart: FC<{ points: readonly ChartPoint[] }> = ({ points }) => {
       {projected.length > 1 ? (
         <polyline className={chartProjectionLine} points={coords(projected, projectedStart)} />
       ) : null}
-      {points.map((p, i) =>
-        i % labelEvery === 0 ? (
+      {ticked.map(({ p, i }, n) =>
+        n % tickEvery === 0 ? (
           <text className={chartAxisText} key={p.label} textAnchor="middle" x={x(i)} y={H - 10}>
             {p.short}
           </text>
@@ -206,154 +229,168 @@ const TemplateChart: FC<{ points: readonly ChartPoint[] }> = ({ points }) => {
 
 interface SeriesFigureProps {
   title: string;
-  /** What the plotted figure is, for the legend and summary, e.g. "Net worth". */
+  /** What the plotted figure is, for the data table, e.g. "Net worth". */
   measure: string;
   points: readonly ChartPoint[];
-  /** Sentence after the derived figures, e.g. a note on how the series was built. */
-  note: string;
+  /** One sentence, at most 2 figures, none repeating a figure shown elsewhere on the page (P10.1). */
+  summary: string;
   headingLevel?: "h2" | "h3";
+  /** Hide the title visually where a nearby heading already names the chart. */
+  hideTitle?: boolean;
 }
 
-/** A titled, summarised chart whose summary and data table come from the same points. */
+/**
+ * A titled, summarised chart. One series is labelled by the title, so there is no legend (P10.2);
+ * the data table sits behind the quiet "Show data" button (P10.5); the page owns the one notice.
+ */
 const SeriesFigure: FC<SeriesFigureProps> = ({
   title,
   measure,
   points,
-  note,
+  summary,
   headingLevel = "h2",
-}) => {
-  const first = points[0];
-  const last = points[points.length - 1];
-  const hasActual = points.some((p) => !p.projected);
-  const legend: ChartLegendItem[] = [
-    ...(hasActual
-      ? [{ id: "actual", label: measure, color: "primary", swatch: "line" } as const]
-      : []),
-    ...(points.some((p) => p.projected)
-      ? [
-          {
-            id: "projection",
-            label: hasActual ? "Projection" : `${measure} (projection)`,
-            color: "projection",
-            swatch: "dashed",
-          } as const,
-        ]
-      : []),
-  ];
+  hideTitle = false,
+}) => (
+  <ChartFigure
+    dataTable={
+      <Table caption={`${measure} by month`}>
+        <THead>
+          <tr>
+            <Th>Month</Th>
+            <Th numeric>{measure}</Th>
+          </tr>
+        </THead>
+        <TBody>
+          {points.map((p) => (
+            <tr key={p.label}>
+              <Td>{p.projected ? `${p.label} (projected)` : p.label}</Td>
+              <Td numeric>
+                <Money size="sm" value={p.value} />
+              </Td>
+            </tr>
+          ))}
+        </TBody>
+      </Table>
+    }
+    headingLevel={headingLevel}
+    hideTitle={hideTitle}
+    pointCount={points.length}
+    showSummary
+    summary={summary}
+    title={title}
+  >
+    <TemplateChart points={points} />
+  </ChartFigure>
+);
+
+// ---- Templates ----------------------------------------------------------------------------
+
+/** The page frame a template renders in: the canvas and `main` landmark the app shell supplies. */
+const TemplatePage: FC<{ children: ReactNode }> = ({ children }) => (
+  <main className={page}>
+    <PageBody>{children}</PageBody>
+  </main>
+);
+
+/**
+ * Home (P13, P1.8): header with one primary action, the net worth hero with one delta, three
+ * supporting KPIs, the accounts list (one figure per row) and a history chart. No projection is
+ * drawn, so the page carries no projection notice. At most 10 figures.
+ */
+export const DashboardTemplate: FC = () => {
+  const history = sampleHistory(NET_WORTH);
+  const lastMonth = history[history.length - 2]?.value ?? NET_WORTH;
+  const change = Math.round(NET_WORTH) - lastMonth;
   return (
-    <ChartFigure
-      dataTable={
-        <Table caption={`${measure} by month`}>
+    <TemplatePage>
+      <PageHeader
+        actions={<Button>Add account</Button>}
+        badge="Sample data"
+        description="Everything you own and owe, in one place."
+        title="Home"
+      />
+      <HeroFigure
+        delta={{
+          direction: change >= 0 ? "up" : "down",
+          text: `${pounds(Math.abs(change))} since last month`,
+          polarity: "asset",
+        }}
+        label="Net worth"
+        value={NET_WORTH}
+      />
+      <KpiStrip
+        items={[
+          <KpiCard
+            key="sav"
+            label="Savings and investments"
+            subtext="Easy-access saver and ISA"
+            value={sumKinds("Savings", "Investment")}
+            valueFormat={{ fractionDigits: 0 }}
+          />,
+          <KpiCard
+            key="pen"
+            label="Pension"
+            subtext="Workplace pension"
+            value={sumKinds("Pension")}
+            valueFormat={{ fractionDigits: 0 }}
+          />,
+          <KpiCard
+            key="debt"
+            label="What you owe"
+            subtext="Everyday credit card"
+            value={DEBT_OWED}
+            valueFormat={{ fractionDigits: 0 }}
+          />,
+        ]}
+      />
+      <Card aria-labelledby="your-accounts" as="section" padding="lg">
+        <div className={cardHeader}>
+          <h2 className={cardTitle} id="your-accounts">
+            Your accounts
+          </h2>
+        </div>
+        <Table caption="Your accounts">
           <THead>
             <tr>
-              <Th>Month</Th>
-              <Th numeric>{measure}</Th>
+              <Th>Account</Th>
+              <Th>Type</Th>
+              <Th numeric>Balance</Th>
             </tr>
           </THead>
           <TBody>
-            {points.map((p) => (
-              <tr key={p.label}>
-                <Td>{p.projected ? `${p.label} (projected)` : p.label}</Td>
+            {ACCOUNTS.map((a) => (
+              <tr data-list-row="" key={a.id}>
+                <Td>{a.name}</Td>
+                <Td>{a.kind}</Td>
                 <Td numeric>
-                  <Money size="sm" value={p.value} />
+                  <Money size="sm" value={a.balance} />
                 </Td>
               </tr>
             ))}
           </TBody>
         </Table>
-      }
-      headingLevel={headingLevel}
-      legend={<ChartLegend items={legend} />}
-      notice={SAMPLE_NOTICE}
-      showSummary
-      summary={`${measure} goes from ${pounds(first?.value ?? 0)} at the start (${first?.label ?? ""}) to ${pounds(last?.value ?? 0)} at the end (${last?.label ?? ""}). ${note}`}
-      title={title}
-    >
-      <TemplateChart points={points} />
-    </ChartFigure>
+      </Card>
+      <Card aria-label="Net worth over time" as="section" elevation="resting" padding="lg">
+        <SeriesFigure
+          measure="Net worth"
+          points={history}
+          summary={`Your net worth has grown every month since January, when it was ${pounds(history[0]?.value ?? 0)}.`}
+          title="Your net worth this year"
+        />
+      </Card>
+    </TemplatePage>
   );
 };
 
-// ---- Shared pieces ------------------------------------------------------------------------
-
-const AccountsTable: FC = () => (
-  <Table caption="Your accounts">
-    <THead>
-      <tr>
-        <Th>Account</Th>
-        <Th>Type</Th>
-        <Th numeric>Balance</Th>
-      </tr>
-    </THead>
-    <TBody>
-      {ACCOUNTS.map((a) => (
-        <tr key={a.id}>
-          <Td>{a.name}</Td>
-          <Td>{a.kind}</Td>
-          <Td numeric>
-            <Money fractionDigits={2} size="sm" value={a.balance} />
-          </Td>
-        </tr>
-      ))}
-    </TBody>
-  </Table>
-);
-
-// ---- Templates ----------------------------------------------------------------------------
-
-/** Home: header, one hero KPI plus up to three more in a single row, chart, accounts table. */
-export const DashboardTemplate: FC = () => (
-  <main className={page}>
-    <PageHeader
-      actions={<Button>Add account</Button>}
-      description="Sample figures, so you can see how the page fits together."
-      title="Home"
-    />
-    <KpiStrip
-      items={[
-        <KpiCard
-          key="nw"
-          label="Net worth"
-          tone="hero"
-          value={NET_WORTH}
-          valueFormat={{ fractionDigits: 2 }}
-        />,
-        <KpiCard
-          key="sav"
-          label="Savings"
-          value={sumKind("Savings")}
-          valueFormat={{ fractionDigits: 2 }}
-        />,
-        <KpiCard key="debt" label="Debt" value={DEBT_OWED} valueFormat={{ fractionDigits: 2 }} />,
-        <KpiCard
-          key="pen"
-          label="Pension"
-          value={sumKind("Pension")}
-          valueFormat={{ fractionDigits: 2 }}
-        />,
-      ]}
-    />
-    <Card aria-label="Net worth chart" as="section" elevation="resting" padding="lg">
-      <SeriesFigure
-        measure="Net worth"
-        note="The last three months are a projection."
-        points={sampleHistory(NET_WORTH)}
-        title="Your net worth over the past year (sample data)"
-      />
-    </Card>
-    <Card aria-label="Accounts" as="section" padding="lg">
-      <div className={cardHeader}>
-        <h2 className={cardTitle}>Accounts</h2>
-      </div>
-      <AccountsTable />
-    </Card>
-  </main>
-);
-
 const STRATEGIES = [
-  { value: "avalanche", label: "Avalanche", description: "Pay the highest interest rate first" },
-  { value: "snowball", label: "Snowball", description: "Pay the smallest balance first" },
+  { value: "avalanche", label: "Highest rate first", description: "Saves the most interest" },
+  { value: "snowball", label: "Smallest balance first", description: "Clears a debt sooner" },
 ] as const;
+
+const STRATEGY_LABEL: Record<string, string> = {
+  avalanche: "highest rate first",
+  snowball: "smallest balance first",
+};
 
 const sampleDebts = (cardApr: number): DebtItem[] => [
   {
@@ -376,110 +413,235 @@ const sampleDebts = (cardApr: number): DebtItem[] => [
     id: "store",
     name: "Store card",
     balanceGbp: 520,
-    interestRateApr: 29.9,
+    interestRateApr: 19.9,
     minimumPaymentGbp: 25,
     debtType: "credit_card",
   },
 ];
 
-const debtPoints = (result: PayoffResult, start: number): ChartPoint[] => [
-  { label: "Now", short: "Now", value: Math.round(start), projected: true },
-  ...result.monthlySchedule.map((m) => ({
-    label: `Month ${m.month}`,
-    short: `M${m.month}`,
-    value: Math.round(m.totalBalance),
-    projected: true,
-  })),
-];
+/** The saved plan the scenario starts from. Scenario inputs never write back to it. */
+const SAVED = { extra: 50, cardApr: 22.9, strategy: "avalanche" } as const;
 
-/** Simulator: sticky parameter column on the left, outcome and chart on the right. */
+/** Sample start month for the chart's axis: December 2026. */
+const START_YEAR = 2026;
+const START_MONTH = 11;
+
+const monthAt = (offset: number): { label: string; year: number; month: number } => {
+  const index = START_MONTH + offset;
+  const month = index % 12;
+  const year = START_YEAR + Math.floor(index / 12);
+  return { label: `${(MONTHS[month] ?? "").slice(0, 3)} ${year}`, year, month };
+};
+
+const debtPoints = (result: PayoffResult, start: number): ChartPoint[] =>
+  [{ month: 0, totalBalance: start }, ...result.monthlySchedule].map((m) => {
+    const at = monthAt(m.month);
+    return {
+      label: at.label,
+      // Years, not "Month 12" (P10.4): a tick at each January.
+      short: at.month === 0 ? String(at.year) : "",
+      value: Math.round(m.totalBalance),
+      projected: true,
+    };
+  });
+
+const runPlan = (debts: DebtItem[], extra: number, strategy: string): PayoffResult =>
+  strategy === "snowball" ? calculateSnowball(debts, extra) : calculateAvalanche(debts, extra);
+
+/**
+ * Simulator (P13, P1.7): saved facts first (hero, KPIs, "Your details"), then a visibly lighter
+ * `ScenarioZone` with two tools (one visible, at most 3 inputs), one outcome figure plus 2
+ * supporting, one chart, and the page's single projection notice in the zone footer. At most 12
+ * figures.
+ */
 export const SimulatorTemplate: FC = () => {
-  const [extra, setExtra] = useState(150);
-  const [cardApr, setCardApr] = useState(22.9);
-  const [strategy, setStrategy] = useState("avalanche");
+  const [tool, setTool] = useState("extra");
+  const [extra, setExtra] = useState<number>(SAVED.extra);
+  const [cardApr, setCardApr] = useState<number>(SAVED.cardApr);
+  const [strategy, setStrategy] = useState<string>(SAVED.strategy);
+
+  const savedDebts = useMemo(() => sampleDebts(SAVED.cardApr), []);
+  const savedPlan = useMemo(() => runPlan(savedDebts, SAVED.extra, SAVED.strategy), [savedDebts]);
   const debts = useMemo(() => sampleDebts(cardApr), [cardApr]);
-  const startBalance = debts.reduce((t, d) => t + (d.balanceGbp ?? 0), 0);
-  const minimums = debts.reduce((t, d) => t + (d.minimumPaymentGbp ?? 0), 0);
-  // The real payoff engine, so the strategy control changes the result.
-  const result = useMemo(
-    () =>
-      strategy === "snowball" ? calculateSnowball(debts, extra) : calculateAvalanche(debts, extra),
-    [debts, extra, strategy],
+  // The real payoff calculation, so every input changes the result.
+  const plan = useMemo(() => runPlan(debts, extra, strategy), [debts, extra, strategy]);
+
+  const total = savedDebts.reduce((t, d) => t + (d.balanceGbp ?? 0), 0);
+  const minimums = savedDebts.reduce((t, d) => t + (d.minimumPaymentGbp ?? 0), 0);
+  const highest = savedDebts.reduce((top, d) =>
+    (d.interestRateApr ?? 0) > (top.interestRateApr ?? 0) ? d : top,
   );
-  const achievable = result.payoffAchievable !== false;
-  const points = useMemo(() => debtPoints(result, startBalance), [result, startBalance]);
+  const achievable = plan.payoffAchievable !== false;
+  const points = useMemo(() => debtPoints(plan, total), [plan, total]);
+  const isModified =
+    extra !== SAVED.extra || cardApr !== SAVED.cardApr || strategy !== SAVED.strategy;
+  const interestSaved = Math.round(savedPlan.totalInterest - plan.totalInterest);
+  const paidOff = monthAt(plan.months).label;
+
+  const reset = () => {
+    setExtra(SAVED.extra);
+    setCardApr(SAVED.cardApr);
+    setStrategy(SAVED.strategy);
+    setTool("extra");
+  };
+
   return (
-    <main className={page}>
+    <TemplatePage>
       <PageHeader
-        description="Sample debts. Figures are calculated by Flump."
+        actions={<Button>Add a debt</Button>}
+        badge="Sample data"
+        description="See how your debts come down, and try a change."
         title="Debt payoff"
       />
-      <SimulatorSplitLayout
-        content={
-          <div className={stack}>
-            <KpiStrip
-              items={[
-                <KpiCard
-                  key="free"
-                  label="Debt-free in"
-                  tone="hero"
-                  value={
-                    achievable ? (
-                      <span className={figureText}>{result.months} months</span>
-                    ) : undefined
-                  }
-                />,
-                <KpiCard
-                  key="int"
-                  label="Interest paid"
-                  value={achievable ? Math.round(result.totalInterest) : undefined}
-                />,
-                <KpiCard key="pay" label="Monthly payment" value={minimums + extra} />,
-              ]}
-            />
-            <Card aria-label="Balance over time" as="section" padding="lg">
-              <SeriesFigure
-                measure="Debt remaining"
-                note={`Calculated with the ${strategy} strategy and ${pounds(extra)} extra a month, on sample debts.`}
-                points={points}
-                title="How your debt falls (sample debts)"
-              />
-            </Card>
-          </div>
-        }
-        controls={
-          <div className={stack}>
-            <SliderField
-              format="currency"
-              helperText={`On top of ${pounds(minimums)} in minimum payments.`}
-              label="Extra each month"
-              max={500}
-              min={0}
-              onChange={setExtra}
-              step={10}
-              value={extra}
-            />
-            <SliderField
-              format="percent"
-              fractionDigits={1}
-              label="Credit card interest rate (APR)"
-              max={40}
-              min={0}
-              onChange={setCardApr}
-              step={0.1}
-              value={cardApr}
-            />
-            <RadioCardGroup
-              legend="Payoff strategy"
-              onValueChange={setStrategy}
-              options={STRATEGIES}
-              value={strategy}
-            />
-          </div>
-        }
-        summary={<span>{achievable ? `Debt-free in ${result.months} months` : "Not set"}</span>}
+      <HeroFigure label="Debt total" subline="Across your three debts" value={total} />
+      <KpiStrip
+        items={[
+          <KpiCard
+            key="pay"
+            label="Paying each month"
+            subtext="Minimums plus your extra payment"
+            value={minimums + SAVED.extra}
+            valueFormat={{ fractionDigits: 0 }}
+          />,
+          <KpiCard
+            key="int"
+            label="Interest to pay"
+            subtext="If your payments stay the same"
+            value={Math.round(savedPlan.totalInterest)}
+            valueFormat={{ fractionDigits: 0 }}
+          />,
+          <KpiCard
+            key="rate"
+            label="Highest rate"
+            subtext={highest.name}
+            value={<span className={figureText}>{`${highest.interestRateApr}% APR`}</span>}
+          />,
+        ]}
       />
-    </main>
+      <Card
+        aria-labelledby="your-details"
+        as="section"
+        elevation="resting"
+        id="details"
+        padding="lg"
+      >
+        <div className={cardHeader}>
+          <h2 className={cardTitle} id="your-details">
+            Your details
+          </h2>
+        </div>
+        <ul className={detailsList}>
+          {savedDebts.map((d) => (
+            <li className={detailsRow} data-list-row="" key={d.id}>
+              <span>{d.name}</span>
+              <Money size="sm" value={d.balanceGbp ?? 0} />
+            </li>
+          ))}
+        </ul>
+      </Card>
+      <ScenarioZone
+        announcement={
+          isModified ? `debt-free in ${formatDuration(plan.months)}, last payment ${paidOff}` : ""
+        }
+        basis="Starting from your saved debts and payments."
+        footer={
+          <a className={plainLink} href="#details">
+            Update your details
+          </a>
+        }
+        isModified={isModified}
+        notice={<ProjectionNotice />}
+        onReset={reset}
+        tools={
+          <Tabs
+            aria-label="Ways to change your plan"
+            items={[
+              { value: "extra", label: "Pay extra" },
+              { value: "rate", label: "Change a rate" },
+            ]}
+            onValueChange={setTool}
+            panelClassName={toolStack}
+            panels={{
+              extra: (
+                <>
+                  <SliderField
+                    format="currency"
+                    helperText="On top of your minimum payments."
+                    label="Extra each month"
+                    max={500}
+                    min={0}
+                    onChange={setExtra}
+                    step={10}
+                    value={extra}
+                  />
+                  <RadioCardGroup
+                    legend="Which debt to pay first"
+                    onValueChange={setStrategy}
+                    options={STRATEGIES}
+                    value={strategy}
+                  />
+                </>
+              ),
+              rate: (
+                <SliderField
+                  format="percent"
+                  fractionDigits={1}
+                  label="Credit card interest rate (APR)"
+                  max={40}
+                  min={0}
+                  onChange={setCardApr}
+                  step={0.1}
+                  value={cardApr}
+                />
+              ),
+            }}
+            size="sm"
+            value={tool}
+          />
+        }
+      >
+        <div className={outcome} data-testid="scenario-outcome">
+          <p className={outcomeLabel}>Debt-free in</p>
+          <p className={outcomeValue}>
+            {achievable ? formatDuration(plan.months) : "Not paid off at these payments"}
+          </p>
+          {achievable ? (
+            <dl className={outcomeSupport}>
+              <div className={outcomeSupportItem}>
+                <dt>Last payment</dt>
+                <dd className={figureText}>{paidOff}</dd>
+              </div>
+              <div className={outcomeSupportItem}>
+                <dt>
+                  {interestSaved >= 0
+                    ? "Less interest than your plan"
+                    : "More interest than your plan"}
+                </dt>
+                <dd className={figureText}>{pounds(Math.abs(interestSaved))}</dd>
+              </div>
+            </dl>
+          ) : null}
+        </div>
+        <SeriesFigure
+          headingLevel="h3"
+          hideTitle
+          measure="Debt remaining"
+          points={points}
+          summary={
+            achievable
+              ? `Your total debt comes down every month to zero, paying ${STRATEGY_LABEL[strategy] ?? strategy}.`
+              : "At these payments your debts are not paid off."
+          }
+          title="How your debt comes down"
+        />
+      </ScenarioZone>
+      <CollapsibleDrawer title="How this is worked out" variant="quiet">
+        <p className={proseText}>
+          Each month we add interest to every debt, pay the minimums, and put your extra payment
+          towards one debt. When a debt is paid off, its payment moves to the next one.
+        </p>
+      </CollapsibleDrawer>
+    </TemplatePage>
   );
 };
 
@@ -490,7 +652,7 @@ export const FormTemplate: FC = () => {
   const balanceError =
     submitted && balance === null ? "Enter a balance, or leave it for later." : undefined;
   return (
-    <main className={page}>
+    <TemplatePage>
       <PageHeader description="Tell us a little about the account." title="Add an account" />
       <Card aria-label="Account details" as="section" padding="lg">
         <form
@@ -551,7 +713,7 @@ export const FormTemplate: FC = () => {
           </div>
         </form>
       </Card>
-    </main>
+    </TemplatePage>
   );
 };
 
@@ -560,13 +722,13 @@ export const ListDetailTemplate: FC = () => {
   const [selectedId, setSelectedId] = useState(ACCOUNTS[1]?.id ?? "");
   const selected = ACCOUNTS.find((a) => a.id === selectedId) ?? ACCOUNTS[0];
   return (
-    <main className={page}>
-      <PageHeader actions={<Button>Add account</Button>} title="Accounts" />
+    <TemplatePage>
+      <PageHeader actions={<Button>Add account</Button>} badge="Sample data" title="Accounts" />
       <div className={split}>
         <section aria-label="Account list" className={splitList}>
           <ul className={listReset}>
             {ACCOUNTS.map((a) => (
-              <li key={a.id}>
+              <li data-list-row="" key={a.id}>
                 <button
                   aria-current={a.id === selectedId ? "true" : undefined}
                   className={listItemButton}
@@ -577,7 +739,7 @@ export const ListDetailTemplate: FC = () => {
                     <span>{a.name}</span>
                     <span className={mutedText}>{a.kind}</span>
                   </span>
-                  <Money fractionDigits={2} size="sm" value={a.balance} />
+                  <Money size="sm" value={a.balance} />
                 </button>
               </li>
             ))}
@@ -587,69 +749,53 @@ export const ListDetailTemplate: FC = () => {
           {selected ? (
             <>
               <h2 className={cardTitle}>{selected.name}</h2>
-              <KpiStrip
-                items={[
-                  <KpiCard
-                    key="bal"
-                    label={selected.balance < 0 ? "Owed" : "Balance"}
-                    value={Math.abs(selected.balance)}
-                    valueFormat={{ fractionDigits: 2 }}
-                  />,
-                  <KpiCard
-                    key="kind"
-                    label="Account type"
-                    value={<span className={figureText}>{selected.kind}</span>}
-                  />,
-                ]}
-              />
               <Card padding="lg">
                 <SeriesFigure
                   headingLevel="h3"
                   key={selected.id}
                   measure={selected.balance < 0 ? "Amount owed" : "Balance"}
-                  note="The last three months are a projection."
                   points={sampleHistory(Math.abs(selected.balance))}
-                  title={`${selected.name} (sample data)`}
+                  summary={`${selected.balance < 0 ? "The amount owed" : "The balance"} has changed every month since January.`}
+                  title={`${selected.name} this year`}
                 />
               </Card>
             </>
           ) : null}
         </section>
       </div>
-    </main>
+    </TemplatePage>
   );
 };
 
-/** Empty: first-run state with one illustration and one clear next step. */
+/** Empty (P12.2): the page header and one empty state, with one illustration and one button. */
 export const EmptyTemplate: FC = () => (
-  <main className={page}>
+  <TemplatePage>
     <PageHeader title="Accounts" />
     <div className={centred}>
       <EmptyState
         action={<Button>Add an account</Button>}
-        description="Add a current account, savings or pension and your totals will appear here."
+        description="Add a current account, savings or pension and your totals will appear here. It only takes a minute."
         headingLevel="h2"
         illustration={<Illustration scene="empty-accounts" />}
-        secondaryAction={<Button variant="secondary">Connect a bank</Button>}
         title="No accounts yet"
       />
     </div>
-  </main>
+  </TemplatePage>
 );
 
-/** Error: a recoverable problem, plain wording, a way back. */
+/** Error (P12.3): a recoverable problem, plain wording, one way back. */
 export const ErrorTemplate: FC = () => (
-  <main className={page}>
+  <TemplatePage>
     <div className={centred}>
       <EmptyState
         action={<Button>Back to home</Button>}
         description="That page does not exist, or it has moved. Your figures are safe."
-        headingLevel="h2"
+        headingLevel="h1"
         illustration={<Illustration scene="not-found" />}
         title="We could not find that page"
       />
     </div>
-  </main>
+  </TemplatePage>
 );
 
 /* -------------------------------------------------------------------------------------------- */
@@ -663,8 +809,15 @@ export interface PageBodyProps extends HTMLAttributes<HTMLDivElement> {}
  * at 375, 24px from `md` and 40px from `lg`, 20px (32px from `lg`) above the h1, and 32px between
  * sections. Children render in the P13 order: `PageHeader`, `HeroFigure`, `KpiStrip`, "Your
  * details", `ScenarioZone`, drawers. It is a plain `div` because `AppShell` already supplies the
- * `main` landmark. `AppShell` still pads its main area today; a page adopting `PageBody` inside the
- * shell takes the shell's padding off in the same change, so the gutters are not applied twice.
+ * `main` landmark.
+ *
+ * Gutters are applied once. Inside an element marked `data-page-shell` (AppShell's `main` sets it,
+ * because it already pads its content with the same 16/24/40px gutters and 20/32px top space),
+ * `PageBody` drops its own horizontal gutters and top space and keeps only the width cap and the
+ * section gap, so a page looks the same before and after it adopts `PageBody`. Outside a shell (a
+ * signed-out page, a story) `PageBody` supplies the gutters itself. A shell that pads its content
+ * must set `data-page-shell` on that element; when the shell padding is later removed, drop the
+ * attribute too and `PageBody` becomes the only source of gutters.
  */
 export const PageBody: FC<PageBodyProps> = ({ className, ...props }) => (
   <div className={cx(pageBody, className)} {...props} />

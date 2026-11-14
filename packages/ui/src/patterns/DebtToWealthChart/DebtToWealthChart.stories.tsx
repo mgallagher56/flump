@@ -3,7 +3,7 @@ import { expect, within } from "@storybook/test";
 import { DebtToWealthChart } from "./DebtToWealthChart";
 
 const meta: Meta<typeof DebtToWealthChart> = {
-  title: "3. Financial Patterns & Sections/DebtToWealthChart",
+  title: "4. Charts/DebtToWealthChart",
   component: DebtToWealthChart,
   parameters: {
     layout: "centered",

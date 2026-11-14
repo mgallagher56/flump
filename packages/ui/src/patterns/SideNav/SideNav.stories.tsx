@@ -4,7 +4,7 @@ import { sampleNavItems } from "../AppShell/AppShell.fixtures";
 import { SideNav } from "./SideNav";
 
 const meta: Meta<typeof SideNav> = {
-  title: "3. Financial Patterns & Sections/SideNav",
+  title: "3. Patterns/SideNav",
   component: SideNav,
   parameters: { layout: "fullscreen" },
   args: { items: sampleNavItems, activeKey: "home" },

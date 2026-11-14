@@ -10,7 +10,7 @@ const Stateful = ({ initial = "system" }: { initial?: ThemePreference }) => {
 };
 
 const meta: Meta<typeof Stateful> = {
-  title: "3. Financial Patterns & Sections/ThemeToggle",
+  title: "3. Patterns/ThemeToggle",
   component: Stateful,
 };
 

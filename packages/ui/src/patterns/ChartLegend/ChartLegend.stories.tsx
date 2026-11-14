@@ -4,7 +4,7 @@ import { css } from "../../../styled-system/css";
 import { ChartLegend } from "./ChartLegend";
 
 const meta: Meta<typeof ChartLegend> = {
-  title: "3. Financial Patterns & Sections/ChartLegend",
+  title: "4. Charts/ChartLegend",
   component: ChartLegend,
   parameters: { layout: "padded" },
   args: {

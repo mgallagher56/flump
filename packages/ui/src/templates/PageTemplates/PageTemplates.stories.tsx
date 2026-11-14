@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { expect, userEvent, within } from "@storybook/test";
+import { expect, userEvent, waitFor, within } from "@storybook/test";
+import { expectPageRules } from "../../testing";
 import {
   DashboardTemplate,
   EmptyTemplate,
@@ -13,21 +14,24 @@ import {
 
 // Axe runs on every story through the preview-level `a11y.test: "error"` setting, in both themes.
 const meta: Meta = {
-  title: "4. Page Templates/Templates",
+  title: "6. Pages/Templates",
   parameters: { layout: "fullscreen" },
 };
 
 export default meta;
 type Story = StoryObj;
 
+// The reference each page PR matches: P1 figure budgets, one hero, one projection notice.
 const dashboardPlay: Story["play"] = async ({ canvasElement }) => {
   const canvas = within(canvasElement);
   await expect(canvas.getByRole("heading", { level: 1, name: "Home" })).toBeInTheDocument();
   await expect(
-    canvas.getByRole("figure", { name: "Your net worth over the past year (sample data)" }),
+    canvas.getByRole("figure", { name: "Your net worth this year" }),
   ).toBeInTheDocument();
   await expect(canvas.getByRole("table", { name: "Your accounts" })).toBeInTheDocument();
-  await expect(canvas.getAllByText("£99,629.43").length).toBeGreaterThan(0);
+  await expect(canvas.getByText("£99,629")).toBeInTheDocument();
+  // No projection is drawn, so no projection notice.
+  expectPageRules(canvasElement, { maxFigures: 10, maxNotSet: 0, projectionNotices: 0 });
 };
 
 export const Dashboard: Story = { render: () => <DashboardTemplate />, play: dashboardPlay };
@@ -40,11 +44,32 @@ export const DashboardDark: Story = {
 const simulatorPlay: Story["play"] = async ({ canvasElement }) => {
   const canvas = within(canvasElement);
   await expect(canvas.getByRole("heading", { level: 1, name: "Debt payoff" })).toBeInTheDocument();
-  const before = canvas.getByRole("figure").textContent;
-  await userEvent.click(canvas.getByRole("radio", { name: /Snowball/ }));
-  await expect(canvas.getByRole("radio", { name: /Snowball/ })).toBeChecked();
-  // The strategy runs the real payoff engine, so the chart summary changes.
-  await expect(canvas.getByRole("figure").textContent).not.toEqual(before);
+  expectPageRules(canvasElement, { maxFigures: 12, maxNotSet: 0, projectionNotices: 1 });
+
+  // The scenario zone is lighter than the saved "Your details" card: no shadow, dashed edge.
+  const zone = canvas.getByTestId("scenario-zone");
+  const details = canvas.getByRole("region", { name: "Your details" });
+  await expect(getComputedStyle(zone).boxShadow).toBe("none");
+  await expect(getComputedStyle(zone).borderTopStyle).toBe("dashed");
+  await expect(getComputedStyle(details).borderTopStyle).toBe("solid");
+  await expect(getComputedStyle(zone).backgroundColor).not.toBe(
+    getComputedStyle(details).backgroundColor,
+  );
+  // The one notice sits in the zone footer.
+  await expect(
+    within(canvas.getByTestId("scenario-zone-footer")).getByRole("note"),
+  ).toBeInTheDocument();
+
+  const outcome = canvas.getByTestId("scenario-outcome");
+  const before = outcome.textContent;
+  await userEvent.click(canvas.getByRole("radio", { name: /Smallest balance first/ }));
+  // The strategy runs the real payoff calculation, so the outcome changes.
+  await waitFor(() => expect(outcome.textContent).not.toEqual(before));
+  const reset = canvas.getByRole("button", { name: "Reset to saved figures" });
+  await expect(reset).toBeEnabled();
+  await userEvent.click(reset);
+  await waitFor(() => expect(outcome.textContent).toEqual(before));
+  expectPageRules(canvasElement, { maxFigures: 12, maxNotSet: 0, projectionNotices: 1 });
 };
 
 export const Simulator: Story = { render: () => <SimulatorTemplate />, play: simulatorPlay };
@@ -82,7 +107,7 @@ const listDetailPlay: Story["play"] = async ({ canvasElement }) => {
     canvas.getByRole("heading", { level: 2, name: "Workplace pension" }),
   ).toBeInTheDocument();
   await expect(
-    canvas.getByRole("figure", { name: "Workplace pension (sample data)" }),
+    canvas.getByRole("figure", { name: "Workplace pension this year" }),
   ).toBeInTheDocument();
 };
 

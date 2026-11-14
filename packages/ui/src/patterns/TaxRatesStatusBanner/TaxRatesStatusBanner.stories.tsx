@@ -3,7 +3,7 @@ import { expect, userEvent, within } from "@storybook/test";
 import { TaxRatesStatusBanner } from "./TaxRatesStatusBanner";
 
 const meta: Meta<typeof TaxRatesStatusBanner> = {
-  title: "3. Financial Patterns & Sections/TaxRatesStatusBanner",
+  title: "3. Patterns/TaxRatesStatusBanner",
   component: TaxRatesStatusBanner,
   parameters: { layout: "padded" },
   args: { calendarYear: "2027/28", ratesYear: "2026/27", isFallback: true },

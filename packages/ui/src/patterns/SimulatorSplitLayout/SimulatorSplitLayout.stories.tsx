@@ -107,7 +107,7 @@ const Demo = () => {
 };
 
 const meta: Meta<typeof SimulatorSplitLayout> = {
-  title: "3. Financial Patterns & Sections/SimulatorSplitLayout",
+  title: "3. Patterns/SimulatorSplitLayout",
   component: SimulatorSplitLayout,
   parameters: {
     layout: "padded",

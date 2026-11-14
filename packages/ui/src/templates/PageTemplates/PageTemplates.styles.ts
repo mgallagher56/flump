@@ -1,13 +1,10 @@
 import { css } from "../../../styled-system/css";
 
+/** The canvas and `main` landmark a template renders on; `PageBody` inside it sets the layout. */
 export const page = css({
-  display: "flex",
-  flexDirection: "column",
-  gap: "6",
   width: "100%",
-  maxWidth: "1200px",
-  marginInline: "auto",
-  p: { base: "4", md: "6" },
+  minHeight: "100%",
+  pb: "10",
   backgroundColor: "surface.canvas",
   color: "text.primary",
 });
@@ -88,6 +85,67 @@ export const listItemButton = css({
   "&[aria-current='true']": { borderColor: "primary.border", backgroundColor: "primary.subtle" },
 });
 
+// "Your details": the saved facts, one figure per row (P1.4).
+export const detailsList = css({ listStyle: "none", margin: "0", p: "0" });
+
+export const detailsRow = css({
+  display: "flex",
+  alignItems: "baseline",
+  justifyContent: "space-between",
+  gap: "3",
+  py: "3",
+  textStyle: "body.md",
+  color: "text.primary",
+  "&:not(:last-child)": {
+    borderBottomWidth: "1px",
+    borderBottomStyle: "solid",
+    borderBottomColor: "border.subtle",
+  },
+});
+
+// Scenario outcome: one figure plus at most 2 supporting (P1.7). Plain text on the zone surface,
+// never the hero surface and no nested card.
+export const outcome = css({ display: "flex", flexDirection: "column", gap: "1" });
+export const outcomeLabel = css({ margin: "0", textStyle: "body.sm", color: "text.secondary" });
+export const outcomeValue = css({
+  margin: "0",
+  textStyle: "numeric.kpi",
+  fontVariantNumeric: "tabular-nums",
+  color: "text.primary",
+});
+export const outcomeSupport = css({
+  display: "flex",
+  flexWrap: "wrap",
+  gap: "6",
+  margin: "0",
+  mt: "2",
+});
+export const outcomeSupportItem = css({
+  display: "flex",
+  flexDirection: "column",
+  gap: "0.5",
+  textStyle: "body.sm",
+  color: "text.secondary",
+  "& dd": { margin: "0", textStyle: "body.md", color: "text.primary" },
+});
+
+export const toolStack = css({ display: "flex", flexDirection: "column", gap: "4", pt: "4" });
+
+export const plainLink = css({
+  color: "primary",
+  textDecoration: "underline",
+  fontWeight: "medium",
+  textStyle: "body.sm",
+  _focusVisible: { outline: "2px solid", outlineColor: "border.focusRing", outlineOffset: "2px" },
+});
+
+export const proseText = css({
+  margin: "0",
+  maxWidth: "65ch",
+  textStyle: "body.md",
+  color: "text.secondary",
+});
+
 export const listItemMeta = css({ display: "flex", flexDirection: "column", gap: "1" });
 
 export const figureText = css({ fontVariantNumeric: "tabular-nums", fontWeight: "semibold" });
@@ -126,6 +184,9 @@ export const pageBody = css({
   px: { base: "page.gutter.sm", md: "page.gutter.md", lg: "page.gutter.lg" },
   pt: { base: "page.top.sm", lg: "page.top.lg" },
   color: "text.primary",
+  // Inside a shell that already pads its content (AppShell's main today), the shell's padding is
+  // the gutter, so it is not applied twice. The shell padding matches these tokens.
+  "[data-page-shell] &": { px: "0", pt: "0" },
 });
 
 // PageSkeleton (plan P12.1): header, hero block, 3 KPI cards, 2 cards.

@@ -8,8 +8,8 @@ import { TypographyScale } from "./TypographyScale";
 describe("TypographyScale Foundation", () => {
   it("renders type scale and font family specimens", () => {
     render(<TypographyScale />);
-    expect(screen.getByText("Flump Typography Scale & Tabular Numbers")).toBeDefined();
-    expect(screen.getByText("Tabular Numbers Alignment Test")).toBeDefined();
+    expect(screen.getByText("Type scale and tabular numbers")).toBeDefined();
+    expect(screen.getByText("Tabular numbers line up")).toBeDefined();
   });
 
   it("renders every fontSizes key with a statically extractable class (4xl to 6xl included)", () => {
@@ -28,7 +28,7 @@ describe("TypographyScale Foundation", () => {
 
   it("renders every text style specimen", () => {
     render(<TypographyScale />);
-    expect(screen.getByText("Text Styles")).toBeDefined();
+    expect(screen.getByText("Text styles")).toBeDefined();
     for (const name of [
       "display",
       "heading.xl",

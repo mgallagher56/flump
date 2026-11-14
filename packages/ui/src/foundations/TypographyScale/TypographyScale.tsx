@@ -59,10 +59,10 @@ const FONT_SIZE_CLASSES: Record<keyof typeof fontSizes, string> = {
 
 export const TypographyScale: FC = () => {
   const tabularSpecimens = [
-    { label: "High Net Worth", valueA: "£1,240,500", valueB: "£85,200" },
-    { label: "Monthly Surplus", valueA: "£1,450.50", valueB: "£250.00" },
-    { label: "APR Comparison", valueA: "29.90%", valueB: "4.50%" },
-    { label: "Tax Liability", valueA: "£101,081", valueB: "£8,450" },
+    { label: "Net worth", valueA: "£1,240,500", valueB: "£85,200" },
+    { label: "Left over each month", valueA: "£1,450", valueB: "£250" },
+    { label: "Interest rate (APR)", valueA: "29.9%", valueB: "4.5%" },
+    { label: "Tax to pay", valueA: "£101,081", valueB: "£8,450" },
   ];
 
   return (
@@ -82,7 +82,7 @@ export const TypographyScale: FC = () => {
             fontWeight: "bold",
           })}
         >
-          Flump Typography Scale & Tabular Numbers
+          Type scale and tabular numbers
         </h1>
         <p className={css({ fontSize: "sm", color: "text.muted", mt: "4px" })}>
           Font roles: heading (Plus Jakarta Sans), body and numeric (Inter), mono (system stack).
@@ -100,12 +100,12 @@ export const TypographyScale: FC = () => {
             mb: "16px",
           })}
         >
-          Font Family Definitions
+          Font families
         </h2>
         <div className={css({ display: "flex", flexDirection: "column", gap: "16px" })}>
           <div>
             <div className={css({ fontSize: "xs", color: "text.muted", mb: "4px" })}>
-              Display (Headings & Hero KPIs)
+              Display (headings and headline figures)
             </div>
             <div className={css({ fontFamily: "display", fontSize: "xl", fontWeight: "bold" })}>
               Plus Jakarta Sans — The British Personal Finance OS (£100,000)
@@ -117,7 +117,7 @@ export const TypographyScale: FC = () => {
 
           <div>
             <div className={css({ fontSize: "xs", color: "text.muted", mb: "4px" })}>
-              Sans (Body & Form Inputs)
+              Sans (body text and form inputs)
             </div>
             <div className={css({ fontFamily: "sans", fontSize: "md" })}>
               Inter — Clear, readable UI typography optimized for density and contrast.
@@ -127,7 +127,7 @@ export const TypographyScale: FC = () => {
 
           <div>
             <div className={css({ fontSize: "xs", color: "text.muted", mb: "4px" })}>
-              Mono (Tax Codes & Account Numbers)
+              Mono (tax codes and account numbers)
             </div>
             <div className={css({ fontFamily: "mono", fontSize: "sm" })}>
               System monospace — 1257L / 08-92-41 / 2024-25 TAX YEAR
@@ -147,7 +147,7 @@ export const TypographyScale: FC = () => {
             mb: "8px",
           })}
         >
-          Text Styles
+          Text styles
         </h2>
         <p className={css({ fontSize: "xs", color: "text.muted", mb: "16px" })}>
           Use <code>textStyle</code> instead of assembling size, weight and line height by hand.
@@ -171,7 +171,7 @@ export const TypographyScale: FC = () => {
         ))}
       </div>
 
-      {/* Font Size Hierarchy */}
+      {/* Font size hierarchy */}
       <div className={specimenSection()}>
         <h2
           className={css({
@@ -181,7 +181,7 @@ export const TypographyScale: FC = () => {
             mb: "16px",
           })}
         >
-          Type Scale (12px minimum floor)
+          Type scale (12px minimum)
         </h2>
         {(Object.keys(fontSizes) as (keyof typeof fontSizes)[]).map((key) => (
           <div key={key} className={specimenRow()} data-testid={`font-size-${key}`}>
@@ -217,10 +217,10 @@ export const TypographyScale: FC = () => {
             mb: "8px",
           })}
         >
-          Tabular Numbers Alignment Test
+          Tabular numbers line up
         </h2>
         <p className={css({ fontSize: "xs", color: "text.muted", mb: "16px" })}>
-          Assures strict vertical column alignment across varying currency digits.
+          Figures stay in line down a column, whatever their digits.
         </p>
 
         <div className={css({ maxWidth: "420px" })}>

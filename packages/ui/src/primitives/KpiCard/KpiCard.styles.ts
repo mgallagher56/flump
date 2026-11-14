@@ -102,24 +102,12 @@ export const kpiSubtext = cva({
   defaultVariants: { tone: "default" },
 });
 
+/**
+ * Wraps the shared `Skeleton` (E16 P12: one skeleton primitive). The text skeleton is 1em tall, so
+ * the KPI value text style sizes it to the value it stands in for.
+ */
 export const kpiLoadingBar = cva({
-  base: {
-    height: "2rem",
-    width: "60%",
-    borderRadius: "md",
-    backgroundColor: "surface.sunken",
-    _motionSafe: {
-      bgGradient: "to-r",
-      gradientFrom: "surface.sunken",
-      gradientVia: "surface.subtle",
-      gradientTo: "surface.sunken",
-      backgroundSize: "200% 100%",
-      animationName: "shimmer",
-      animationDuration: "slow",
-      animationTimingFunction: "standard",
-      animationIterationCount: "infinite",
-    },
-  },
+  base: { width: "60%", textStyle: "numeric.kpi" },
 });
 
 /** E16 P3.1: "Not set" in `numeric.unset`, muted, never larger or heavier than a real value. */

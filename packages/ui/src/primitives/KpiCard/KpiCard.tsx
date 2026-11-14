@@ -3,6 +3,7 @@ import type { FC, ReactNode } from "react";
 import { cx } from "../../../styled-system/css";
 import { Icon } from "../Icon/Icon";
 import { Money, type MoneyProps } from "../Money/Money";
+import { Skeleton } from "../Skeleton/Skeleton";
 import { StatusBadge, type StatusBadgeVariants } from "../StatusBadge/StatusBadge";
 import { VisuallyHidden } from "../VisuallyHidden/VisuallyHidden";
 import {
@@ -165,10 +166,9 @@ export const KpiCard: FC<KpiCardProps> = ({
 
       <div className={kpiValueRow()}>
         {loading ? (
-          <>
-            <div aria-hidden="true" className={kpiLoadingBar()} />
-            <VisuallyHidden>Loading</VisuallyHidden>
-          </>
+          <div className={kpiLoadingBar()}>
+            <Skeleton label="Loading" />
+          </div>
         ) : isEmpty ? (
           // E16 P3.1: body size, regular weight, muted, so it never outranks a real value.
           <span className={kpiNotSet()} data-unknown="true">
