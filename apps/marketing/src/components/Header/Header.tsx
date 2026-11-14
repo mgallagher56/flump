@@ -108,7 +108,6 @@ export const Header: FC = () => {
       <TopBar
         actions={
           <>
-            <ThemeToggle onChange={setPreference} preference={preference} />
             <div className={headerAuth()}>
               {hasSession ? (
                 <Button asChild className={headerButton()} size="sm" variant="primary">
@@ -137,6 +136,7 @@ export const Header: FC = () => {
           </>
         }
         activeKey={activeKey}
+        inlineActions={<ThemeToggle onChange={setPreference} preference={preference} />}
         items={items}
         logo={<HomeLogo renderLink={renderHomeLogoLink} />}
         menuControls={DRAWER_ID}

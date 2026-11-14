@@ -83,4 +83,25 @@ describe("TopBar", () => {
     fireEvent.blur(inside, { relatedTarget: screen.getByRole("link", { name: "Home" }) });
     expect(trigger.getAttribute("aria-expanded")).toBe("false");
   });
+  it("renders inline actions in a wrapper hidden below the nav breakpoint", () => {
+    render(
+      <TopBar
+        actions={<button type="button">Account</button>}
+        inlineActions={<button type="button">Theme</button>}
+        items={sampleNavItems}
+      />,
+    );
+    const theme = screen.getByRole("button", { name: "Theme" });
+    expect(theme.parentElement?.className).toContain("navInline");
+    expect(screen.getByRole("button", { name: "Account" })).toBeDefined();
+  });
+
+  it("reports the menu state on the menu button", () => {
+    render(
+      <TopBar items={sampleNavItems} menuControls="drawer" menuExpanded onMenuClick={() => {}} />,
+    );
+    const button = screen.getByRole("button", { name: "Open menu" });
+    expect(button.getAttribute("aria-expanded")).toBe("true");
+    expect(button.getAttribute("aria-controls")).toBe("drawer");
+  });
 });
