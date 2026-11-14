@@ -44,54 +44,68 @@ interface ToolCatalogEntry {
   samplePrompt: string;
 }
 
+/** The tools Flump MCP serves today (after the E17 re-plan), read tools first. */
 const MCP_TOOLS: ToolCatalogEntry[] = [
+  {
+    name: "get_financial_snapshot",
+    description:
+      "A one-call summary of your saved figures: net worth, cash, investments, pensions and debts, plus your monthly surplus and months of cover when you have a budget. Anything you have not recorded is reported as missing, never guessed.",
+    samplePrompt: "Give me a summary of my finances from what I have saved in Flump.",
+  },
+  {
+    name: "get_budget_summary",
+    description:
+      "Monthly totals from your budget entries: income, essential and discretionary spending, surplus and spending by category. Weekly and annual entries are converted to monthly.",
+    samplePrompt: "How much do I spend each month on essentials, and what is left over?",
+  },
+  {
+    name: "list_accounts",
+    description:
+      "Lists your saved accounts with a generic label, category and balance. Mortgages show the remaining term and fixed-rate end date when you have recorded them.",
+    samplePrompt: "When does the fixed rate on my mortgage end?",
+  },
+  {
+    name: "get_balance_history",
+    description:
+      "Month-end balances recorded in Flump between two months, per account, per category or as a net worth total, monthly, quarterly or yearly.",
+    samplePrompt: "How has my net worth changed over the last 12 months?",
+  },
+  {
+    name: "get_data_coverage",
+    description:
+      "Shows which months have a recorded balance for each account, and where the gaps are.",
+    samplePrompt: "Which months are missing from my savings account history?",
+  },
+  {
+    name: "get_debt_overview",
+    description:
+      "Your debts with balance, APR and minimum payment, plus overdraft, mortgage and student loan totals. An APR you have not recorded is reported as unknown, not guessed.",
+    samplePrompt: "What do I owe in total, and what are the minimum payments each month?",
+  },
   {
     name: "simulate_debt_payoff",
     description:
-      "Compares Avalanche (highest APR) vs Snowball (lowest balance) payoff schedules. Flags Promotional expiry alerts and projects 5-year post-debt compounding.",
+      "Sets the avalanche (highest APR first) and snowball (smallest balance first) orders side by side for your recorded debts, with an optional extra monthly amount.",
     samplePrompt: "What is the total interest under avalanche and under snowball for my debts?",
   },
   {
-    name: "simulate_uk_tax_and_pension_sacrifice",
+    name: "list_tax_records",
     description:
-      "Calculates take-home pay, Income Tax and National Insurance, and how a pension contribution or salary sacrifice changes them. It also covers Scottish bands, Gift Aid and the Personal Allowance taper.",
-    samplePrompt: "What would my monthly take-home be if I paid 5% into my pension?",
+      "The income and expense records you keep for a UK tax year, with totals by source and a month-by-month or per-category breakdown.",
+    samplePrompt: "What income have I recorded so far this tax year?",
   },
   {
-    name: "compare_mortgage_overpay_vs_isa",
+    name: "get_tax_year_position",
     description:
-      "Compares paying down a fixed mortgage vs investing in a Stocks and Shares ISA, showing the LTV brackets (85%, 80%, 75%, 60%) reached before fix expiry.",
-    samplePrompt: "What is my LTV at fix expiry if I overpay £300 a month?",
+      "Your UK tax position for a tax year from your saved salary and tax records: income by source, the income tax bands for your region, National Insurance, and where income sits against the Personal Allowance taper.",
+    samplePrompt: "Which income tax band does my salary reach this tax year?",
   },
   {
-    name: "calculate_self_assessment_and_section24",
+    name: "project_net_worth",
     description:
-      "Calculates landlord Section 24 20% finance cost reducers and computes 31 January and 31 July Payments on Account (POA) reserves for Self Assessment.",
-    samplePrompt: "What are my Payments on Account for buy-to-let rent?",
-  },
-  {
-    name: "project_wealth_scenario",
-    description:
-      "Runs 30-year multi-variable net worth projections with life events: BUY_HOME, HAVE_CHILD, REMORTGAGE_SHOCK, and EARLY_RETIRE_57.",
-    samplePrompt: "Simulate my net worth if interest rates stay high for 5 years.",
-  },
-  {
-    name: "evaluate_cashflow_runway_and_health",
-    description:
-      "Calculates your Emergency runway (in months), net cashflow margins, and a comprehensive 0–100 financial resilience score.",
-    samplePrompt: "What is my Emergency runway if my income stops tomorrow?",
-  },
-  {
-    name: "evaluate_uk_student_loan",
-    description:
-      "Simulates UK Student Loan (Plans 1, 2, 4, 5, and Postgraduate) write-off against voluntary overpayment, alongside an ISA growth comparison.",
-    samplePrompt: "Will my Plan 2 student loan be written off before I repay it in full?",
-  },
-  {
-    name: "query_transactions_and_spending",
-    description:
-      "Searches and aggregates sanitised spending categories, recurring direct debits, and priority vs flexible budget allocations.",
-    samplePrompt: "Summarise my top recurring subscriptions and flexible spending this month.",
+      "Projects net worth year by year from your recorded balances, with and without up to 10 events that each carry a one-off or monthly cost you set. You choose the expected return.",
+    samplePrompt:
+      "How could my net worth change over 10 years at a 4% return if I start renting somewhere bigger?",
   },
 ];
 
@@ -103,7 +117,7 @@ export const McpPage: FC = () => {
     <div className={pageShell()} id="mcp-marketing-page" data-testid="mcp-marketing-page">
       <PageMeta
         title="Flump for AI | Model Context Protocol (MCP) Server (Preview)"
-        description="Preview: run the Flump Model Context Protocol (MCP) server from source and give AI agents deterministic UK financial calculations. Tools currently run against baseline sample data."
+        description="Preview: connect an MCP client such as Claude Desktop to Flump and ask questions about your own saved finances. Read-only tools, with UK tax figures from a deterministic engine."
       />
 
       <Header />
@@ -119,15 +133,13 @@ export const McpPage: FC = () => {
               Preview
             </span>
 
-            <h1 className={heroHeading()}>
-              Give your AI agent deterministic UK financial intelligence
-            </h1>
+            <h1 className={heroHeading()}>Ask your AI assistant about your own saved finances</h1>
 
             <p className={heroLead()}>
-              Flump MCP is a preview for MCP clients such as Claude Desktop and Cursor. Its tools
-              run take-home pay, debt payoff and wealth projection simulations from a deterministic
-              calculation engine. In preview they use <strong>baseline sample data</strong>, not
-              your own figures.
+              Flump MCP is a preview for MCP clients such as Claude Desktop and Cursor. Its
+              read-only tools answer questions from the accounts, budget, debts and tax records you
+              have saved in Flump, and UK tax and debt figures come from a deterministic calculation
+              engine.
             </p>
 
             <div className={flex({ gap: "4", flexWrap: "wrap", justify: "center", pt: "2" })}>
@@ -165,7 +177,7 @@ export const McpPage: FC = () => {
               <h3 className={cardTitle()}>Deterministic calculations</h3>
               <p className={cardBody()}>
                 Tools run calculation functions from <code>@flump/finance-engine</code>, so the same
-                inputs always give the same tax, Section 24 and debt payoff results.
+                inputs always give the same tax, debt payoff and net worth results.
               </p>
             </div>
 
@@ -248,7 +260,7 @@ export const McpPage: FC = () => {
                   Local CLI (preview): run Flump MCP from source. Setup guide coming soon.
                 </p>
                 <p className={stepText()}>
-                  In preview, the tools currently work against baseline sample data.
+                  The tools read the figures you have saved in Flump and cannot change them.
                 </p>
               </div>
             </div>
@@ -259,10 +271,12 @@ export const McpPage: FC = () => {
         <section className={sectionContainer()}>
           <div className={sectionHeader()}>
             <span className={sectionKicker()}>Tool catalogue</span>
-            <h2 className={sectionHeading()}>8 deterministic financial tools for AI agents</h2>
+            <h2 className={sectionHeading()}>
+              {MCP_TOOLS.length} read-only tools for your saved data
+            </h2>
             <p className={sectionSubheading()}>
-              Your connected AI agent can invoke any of these read-only tools with custom
-              parameters.
+              Your connected AI assistant can call any of these tools. None of them can change your
+              data.
             </p>
           </div>
 
@@ -291,8 +305,8 @@ export const McpPage: FC = () => {
           <div className={ctaInner()}>
             <h2 className={sectionHeading()}>Try the MCP preview</h2>
             <p className={sectionSubheading()}>
-              Generate a read-only MCP token in your Flump profile. The preview tools use sample
-              data.
+              Generate a read-only MCP token in your Flump profile. The tools read your saved data
+              and cannot change it.
             </p>
             <div className={flex({ gap: "4", justify: "center", flexWrap: "wrap", pt: "2" })}>
               <a href={`${appUrl}/app/profile`} className={linkReset()}>

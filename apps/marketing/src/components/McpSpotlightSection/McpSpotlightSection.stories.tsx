@@ -17,10 +17,10 @@ const assertSpotlight: Story["play"] = async ({ canvasElement }) => {
   const canvas = within(canvasElement);
 
   await expect(
-    canvas.getByText(/Give Claude and Cursor deterministic UK tax and finance tools/i),
+    canvas.getByText(/Ask Claude or Cursor about your own saved finances/i),
   ).toBeInTheDocument();
 
-  await expect(canvas.getByText(/simulate_uk_tax_and_pension_sacrifice/i)).toBeInTheDocument();
+  await expect(canvas.getByText("get_tax_year_position")).toBeInTheDocument();
 
   const exploreLink = canvas.getByRole("link", {
     name: /Explore MCP & setup guides/i,
