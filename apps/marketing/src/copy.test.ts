@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
+import { TOOL_CATALOGUE } from "@repo/ui/tools";
 import { describe, expect, it } from "vitest";
-import { TOOLS_CATALOG } from "./pages/ToolsIndexPage";
 import { CANONICAL_TOOL_SLUGS } from "./utils/toolSlugs";
 
 const read = (rel: string) => fs.readFileSync(path.resolve(__dirname, rel), "utf-8");
@@ -20,7 +20,7 @@ describe("marketing copy (R-10)", () => {
 
 describe("tool slugs", () => {
   it("canonical slugs match the tools catalogue", () => {
-    expect(TOOLS_CATALOG.map((t) => t.slug).sort()).toEqual([...CANONICAL_TOOL_SLUGS].sort());
+    expect(TOOL_CATALOGUE.map((t) => t.slug).sort()).toEqual([...CANONICAL_TOOL_SLUGS].sort());
   });
 });
 

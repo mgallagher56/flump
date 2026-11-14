@@ -1,3 +1,4 @@
+import { Icon } from "@repo/ui";
 import {
   DebtSnowballCalculator,
   MarginalRateExplorerStandalone,
@@ -9,41 +10,87 @@ import {
   ZeroPercentCliffCalculator,
 } from "@repo/ui/calculators";
 import { css } from "@repo/ui/styled-system/css";
+import { getToolEntry, getToolGuide, resolveToolSlug } from "@repo/ui/tools";
+import { ToolGuide } from "@repo/ui/tools/guide";
+import { ChevronRight } from "lucide-react";
 import type { FC } from "react";
-import { FiArrowLeft } from "react-icons/fi";
 import { Link, useParams } from "react-router-dom";
 import { Footer } from "../components/Footer";
 import { Header } from "../components/Header";
 import { PageMeta } from "../components/PageMeta";
 import { signupCta } from "../utils/site";
-import { isKnownToolSlug, TOOL_SLUG_ALIASES } from "../utils/toolSlugs";
+import { isKnownToolSlug } from "../utils/toolSlugs";
 import { NotFoundPage } from "./NotFoundPage";
-import { TOOLS_CATALOG } from "./ToolsIndexPage";
 
-const containerStyle = css({
-  maxWidth: "5xl",
-  mx: "auto",
-  py: "12",
-  px: "4",
+const pageStyle = css({ minHeight: "100vh", display: "flex", flexDirection: "column" });
+
+const mainStyle = css({ flex: "1" });
+
+const containerStyle = css({ maxWidth: "5xl", mx: "auto", py: "8", px: "4" });
+
+const crumbListStyle = css({
+  listStyle: "none",
+  padding: "0",
+  margin: "0",
+  marginBottom: "4",
+  display: "flex",
+  flexWrap: "wrap",
+  alignItems: "center",
+  gap: "1.5",
+  fontSize: "sm",
+  color: "text.secondary",
 });
 
+const crumbItemStyle = css({ display: "inline-flex", alignItems: "center", gap: "1.5" });
+
+const crumbLinkStyle = css({
+  color: "primary",
+  fontWeight: "600",
+  textDecoration: "none",
+  _hover: { textDecoration: "underline" },
+  _focusVisible: { outline: "2px solid", outlineColor: "border.focusRing", outlineOffset: "2px" },
+});
+
+const headerBlockStyle = css({ marginBottom: "6" });
+
+const titleStyle = css({
+  fontFamily: "display",
+  fontSize: "clamp(2rem, 3.5vw, 2.75rem)",
+  fontWeight: "800",
+  lineHeight: "1.15",
+  color: "text.primary",
+  marginBottom: "2",
+});
+
+const descriptionStyle = css({
+  fontSize: "lg",
+  color: "text.secondary",
+  maxWidth: "3xl",
+  lineHeight: "1.6",
+});
+
+const guideStyle = css({ marginTop: "10" });
+
+/**
+ * One public calculator: breadcrumb, h1, one line, the calculator (which carries the page's one
+ * notice), then the shared guide and FAQ, collapsed (E16 PR 11, D11).
+ */
 export const ToolPage: FC = () => {
   const { slug: rawSlug } = useParams<{ slug: string }>();
   const cta = signupCta();
   // Lower-cased like the router, the HTTP status and the canonical, so /tools/UK-… is the page,
   // not a "Page not found" served with 200.
   const slug = rawSlug?.toLowerCase();
-  const normalizedSlug = slug ? (TOOL_SLUG_ALIASES[slug] ?? slug) : slug;
+  const normalizedSlug = resolveToolSlug(slug);
 
-  const toolMeta = TOOLS_CATALOG.find((t) => t.slug === normalizedSlug);
-  if (!toolMeta || !isKnownToolSlug(slug)) {
+  if (!normalizedSlug || !isKnownToolSlug(slug)) {
     return <NotFoundPage />;
   }
+  const tool = getToolEntry(normalizedSlug);
+  const guide = getToolGuide(normalizedSlug);
 
   // Invite-only: the button asks for an invite. Open: it hands the calculation to the web app.
-  const ctaText = cta.external
-    ? "Open this calculation in your Flump workspace →"
-    : `${cta.label} →`;
+  const ctaText = cta.external ? "Continue in Flump" : `${cta.label} →`;
   // Only hand figures to the web app when sign-up is open; an invite request has nowhere to restore them.
   const persistSeed = cta.external;
 
@@ -54,137 +101,97 @@ export const ToolPage: FC = () => {
   };
 
   return (
-    <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
-      <PageMeta
-        title={`${toolMeta.title} | Free UK Calculator | Flump`}
-        description={toolMeta.desc}
-      />
+    <div className={pageStyle}>
+      <PageMeta title={`${tool.metaTitle} | Flump`} description={tool.description} />
 
       <Header />
 
-      <main style={{ flex: 1 }} id="main" tabIndex={-1}>
+      <main className={mainStyle} id="main" tabIndex={-1}>
         <section className={containerStyle}>
-          {/* Breadcrumb / Back Link */}
-          <div style={{ marginBottom: "20px" }}>
-            <Link
-              to="/tools"
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "6px",
-                color: "var(--colors-primary)",
-                textDecoration: "none",
-                fontSize: "14px",
-                fontWeight: "600",
-              }}
-            >
-              <FiArrowLeft /> All UK calculators
-            </Link>
+          <nav aria-label="Breadcrumb">
+            <ol className={crumbListStyle}>
+              <li className={crumbItemStyle}>
+                <Link className={crumbLinkStyle} to="/tools">
+                  All calculators
+                </Link>
+                <Icon icon={ChevronRight} size="sm" />
+              </li>
+              <li aria-current="page" className={crumbItemStyle}>
+                {tool.title}
+              </li>
+            </ol>
+          </nav>
+
+          <div className={headerBlockStyle}>
+            <h1 className={titleStyle}>{tool.title}</h1>
+            <p className={descriptionStyle}>{tool.description}</p>
           </div>
 
-          {/* Every calculator carries its own single "Guidance, not advice" notice (E16 PR 10). */}
-          <div style={{ marginBottom: "32px" }}>
-            <span
-              style={{
-                fontSize: "12px",
-                fontWeight: "600",
-                letterSpacing: "0.01em",
-                backgroundColor: "var(--colors-surface-subtle)",
-                color: "var(--colors-primary)",
-                border: "1px solid var(--colors-border)",
-                padding: "3px 10px",
-                borderRadius: "9999px",
-              }}
-            >
-              {toolMeta.badge}
-            </span>
-            <h1
-              style={{
-                fontSize: "clamp(2rem, 3.5vw, 2.75rem)",
-                fontWeight: "800",
-                color: "var(--colors-text-primary, #0f172a)",
-                marginTop: "12px",
-                marginBottom: "8px",
-              }}
-            >
-              {toolMeta.title}
-            </h1>
-            <p
-              style={{
-                fontSize: "1.1rem",
-                color: "var(--colors-text-muted, #64748b)",
-                maxWidth: "750px",
-                lineHeight: "1.6",
-              }}
-            >
-              {toolMeta.desc}
-            </p>
+          <section aria-label="Calculator" data-tool-calculator="">
+            {normalizedSlug === "uk-100k-tax-trap-calculator" && (
+              <TaxTrapCalculator
+                ctaText={ctaText}
+                onSaveAndContinue={handleContinue}
+                persistSeed={persistSeed}
+              />
+            )}
+
+            {normalizedSlug === "uk-debt-snowball-vs-avalanche-calculator" && (
+              <DebtSnowballCalculator
+                ctaText={ctaText}
+                onSaveAndContinue={handleContinue}
+                persistSeed={persistSeed}
+              />
+            )}
+
+            {normalizedSlug === "0-percent-balance-transfer-payoff-calculator" && (
+              <ZeroPercentCliffCalculator
+                ctaText={ctaText}
+                onSaveAndContinue={handleContinue}
+                persistSeed={persistSeed}
+              />
+            )}
+
+            {normalizedSlug === "section-24-landlord-tax-calculator" && (
+              <Section24Calculator
+                ctaText={ctaText}
+                onSaveAndContinue={handleContinue}
+                persistSeed={persistSeed}
+              />
+            )}
+
+            {normalizedSlug === "mortgage-overpayment-vs-isa-calculator" && (
+              <MortgageVsIsaCalculator
+                ctaText={ctaText}
+                onSaveAndContinue={handleContinue}
+                persistSeed={persistSeed}
+              />
+            )}
+
+            {normalizedSlug === "overdraft-cost-and-payoff-calculator" && (
+              <OverdraftCostCalculator
+                ctaText={ctaText}
+                onSaveAndContinue={handleContinue}
+                persistSeed={persistSeed}
+              />
+            )}
+
+            {normalizedSlug === "uk-pay-rise-take-home-calculator" && (
+              <MarginalRateExplorerStandalone headingLevel="h2" />
+            )}
+
+            {normalizedSlug === "uk-student-loan-overpay-or-invest-calculator" && (
+              <StudentLoanCalculator
+                ctaText={ctaText}
+                onSaveAndContinue={handleContinue}
+                persistSeed={persistSeed}
+              />
+            )}
+          </section>
+
+          <div className={guideStyle}>
+            <ToolGuide faqs={guide.faqs} guideSections={guide.guideSections} />
           </div>
-
-          {/* Render Active Modular Calculator */}
-          {normalizedSlug === "uk-100k-tax-trap-calculator" && (
-            <TaxTrapCalculator
-              ctaText={ctaText}
-              onSaveAndContinue={handleContinue}
-              persistSeed={persistSeed}
-            />
-          )}
-
-          {normalizedSlug === "uk-debt-snowball-vs-avalanche-calculator" && (
-            <DebtSnowballCalculator
-              ctaText={ctaText}
-              onSaveAndContinue={handleContinue}
-              persistSeed={persistSeed}
-            />
-          )}
-
-          {(normalizedSlug === "0-percent-balance-transfer-payoff-calculator" ||
-            normalizedSlug === "zero-percent-balance-transfer-calculator") && (
-            <ZeroPercentCliffCalculator
-              ctaText={ctaText}
-              onSaveAndContinue={handleContinue}
-              persistSeed={persistSeed}
-            />
-          )}
-
-          {(normalizedSlug === "section-24-landlord-tax-calculator" ||
-            normalizedSlug === "landlord-section-24-tax-calculator") && (
-            <Section24Calculator
-              ctaText={ctaText}
-              onSaveAndContinue={handleContinue}
-              persistSeed={persistSeed}
-            />
-          )}
-
-          {normalizedSlug === "mortgage-overpayment-vs-isa-calculator" && (
-            <MortgageVsIsaCalculator
-              ctaText={ctaText}
-              onSaveAndContinue={handleContinue}
-              persistSeed={persistSeed}
-            />
-          )}
-
-          {(normalizedSlug === "overdraft-cost-and-payoff-calculator" ||
-            normalizedSlug === "overdraft-interest-calculator") && (
-            <OverdraftCostCalculator
-              ctaText={ctaText}
-              onSaveAndContinue={handleContinue}
-              persistSeed={persistSeed}
-            />
-          )}
-
-          {normalizedSlug === "uk-pay-rise-take-home-calculator" && (
-            <MarginalRateExplorerStandalone headingLevel="h2" />
-          )}
-
-          {(normalizedSlug === "uk-student-loan-overpay-or-invest-calculator" ||
-            normalizedSlug === "student-loan-plan-2-calculator") && (
-            <StudentLoanCalculator
-              ctaText={ctaText}
-              onSaveAndContinue={handleContinue}
-              persistSeed={persistSeed}
-            />
-          )}
         </section>
       </main>
 

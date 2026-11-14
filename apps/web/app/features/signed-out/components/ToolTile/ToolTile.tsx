@@ -1,21 +1,20 @@
-import { Card, Heading, Icon, Text } from "@repo/ui";
+import { Card, Heading, Icon, IconTile, Text } from "@repo/ui";
+import type { ToolCatalogueEntry } from "@repo/ui/tools";
+import { TOOL_ICONS } from "@repo/ui/tools/icons";
 import { ArrowRight } from "lucide-react";
 import type { FC } from "react";
 import { Link as RouterLink } from "react-router";
-import type { ToolTileData } from "../../toolsCatalog";
-import { tileCard, tileCta, tileIcon, tileLink } from "./ToolTile.styles";
+import { tileCard, tileCta, tileLink } from "./ToolTile.styles";
 
 export interface ToolTileProps {
-  tool: ToolTileData;
+  tool: ToolCatalogueEntry;
 }
 
 /** One calculator tile. Every tool uses the same size and treatment, so none is featured. */
 export const ToolTile: FC<ToolTileProps> = ({ tool }) => (
   <RouterLink className={tileLink()} to={`/tools/${tool.slug}`}>
     <Card as="article" className={tileCard()} elevation="interactive" padding="lg">
-      <span className={tileIcon()}>
-        <Icon icon={tool.icon} />
-      </span>
+      <IconTile domain={tool.domain} icon={TOOL_ICONS[tool.icon]} />
       <Heading as="h2" size="md">
         {tool.title}
       </Heading>

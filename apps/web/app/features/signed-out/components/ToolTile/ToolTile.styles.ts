@@ -15,19 +15,6 @@ export const tileCard = cva({
   base: { display: "flex", flexDirection: "column", gap: "12px", width: "100%" },
 });
 
-export const tileIcon = cva({
-  base: {
-    display: "inline-flex",
-    alignItems: "center",
-    justifyContent: "center",
-    width: "44px",
-    height: "44px",
-    borderRadius: "lg",
-    backgroundColor: "primary.subtle",
-    color: "primary",
-  },
-});
-
 export const tileCta = cva({
   base: {
     marginTop: "auto",

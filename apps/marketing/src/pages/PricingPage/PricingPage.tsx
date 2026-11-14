@@ -1,12 +1,12 @@
 import { formatPrice } from "@flump/business-details";
 import { Button } from "@repo/ui";
+import { TOOL_CATALOGUE } from "@repo/ui/tools";
 import { type FC, useState } from "react";
 import { Footer } from "../../components/Footer";
 import { Header } from "../../components/Header";
 import { PageMeta } from "../../components/PageMeta";
 import { PRICING } from "../../utils/pricing";
 import { signupCta } from "../../utils/site";
-import { TOOLS_CATALOG } from "../ToolsIndexPage";
 import {
   cardGridStyle,
   cardStyle,
@@ -62,7 +62,7 @@ const featureIcon = (kind: "check" | "clock", className: string) => (
 );
 
 /** Every calculator on the tools page, in the same order and with the same names. */
-const FREE_FEATURES = TOOLS_CATALOG.map((tool) => tool.title);
+const FREE_FEATURES = TOOL_CATALOGUE.map((tool) => tool.title);
 
 const BETA_STATEMENT =
   "Flump is a free, invite-only beta. Nothing is charged. A paid plan may come later and its price is not set.";

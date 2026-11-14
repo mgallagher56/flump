@@ -1,7 +1,9 @@
-import { render, screen, within } from "@testing-library/react";
+import { expectPageRules } from "@repo/ui/testing";
+import { getToolEntry, getToolGuide, TOOL_CATALOGUE, TOOL_SLUGS } from "@repo/ui/tools";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
-import ToolsIndex from "./tools._index";
+import ToolsIndex, { meta as indexMeta } from "./tools._index";
 import { loader as slugLoader, meta as slugMeta, ToolDetailPage } from "./tools.$slug";
 
 vi.mock("react-router", async (importOriginal) => ({
@@ -27,33 +29,117 @@ vi.mock("react-router", async (importOriginal) => ({
 
 import { useLoaderData } from "react-router";
 
+async function renderTool(slug: string) {
+  const res = await slugLoader({
+    params: { slug },
+    request: new Request(`http://localhost/tools/${slug}`),
+  } as any);
+  vi.mocked(useLoaderData).mockReturnValue(res);
+  return render(<ToolDetailPage />);
+}
+
+const BANNED = [
+  /ENGINE/,
+  /mathematically/i,
+  /guaranteed/i,
+  /\bsyncs\b/i,
+  /\bmonitors\b/i,
+  /tax trap/i,
+];
+
 describe("Tools Routes", () => {
-  it("renders ToolsIndex with every calculator listed", () => {
+  it("renders ToolsIndex with every catalogue title in catalogue order", () => {
     render(<ToolsIndex />);
 
     expect(
-      screen.getByRole("heading", { level: 1, name: /free uk money calculators/i }),
-    ).toBeDefined();
-    expect(
-      within(screen.getByRole("list", { name: "Calculators" })).getAllByRole("heading", {
-        level: 2,
+      screen.getByRole("heading", {
+        level: 1,
+        name: "UK money calculators, free during the beta",
       }),
-    ).toHaveLength(8);
-    expect(screen.getByText(/£100k–£125k tax trap calculator/i)).toBeDefined();
-    expect(screen.getByText(/mortgage overpay vs isa calculator/i)).toBeDefined();
-    expect(screen.getByText(/section 24 landlord tax calculator/i)).toBeDefined();
-    expect(screen.getByText(/debt payoff: snowball vs avalanche calculator/i)).toBeDefined();
-    expect(screen.getByText(/what you keep from a pay rise/i)).toBeDefined();
+    ).toBeDefined();
+    const titles = within(screen.getByRole("list", { name: "Calculators" }))
+      .getAllByRole("heading", { level: 2 })
+      .map((h) => h.textContent);
+    expect(titles).toEqual(TOOL_CATALOGUE.map((t) => t.title));
   });
 
-  it("leads the index with debt and does not feature the £100k tool first", () => {
+  it("puts no notice on the index and drops the saved-data claim", () => {
+    const { container } = render(<ToolsIndex />);
+    expect(container.querySelectorAll('[role="note"]')).toHaveLength(0);
+    expectPageRules(container, { projectionNotices: 0 });
+    expect(container.textContent).not.toMatch(/nothing you enter is saved/i);
+    for (const pattern of BANNED) expect(container.textContent).not.toMatch(pattern);
+  });
+
+  it("titles the index with the beta wording", () => {
+    expect(indexMeta({} as any)).toContainEqual({
+      title: "UK money calculators, free during the beta | Flump",
+    });
+  });
+
+  it("leads the index with debt and lists the income above £100,000 tool last", () => {
     render(<ToolsIndex />);
-    const hrefs = screen
+    const hrefs = within(screen.getByRole("list", { name: "Calculators" }))
       .getAllByRole("link")
       .map((a) => a.getAttribute("href"))
       .filter((h) => h?.startsWith("/tools/"));
     expect(hrefs[0]).toBe("/tools/uk-debt-snowball-vs-avalanche-calculator");
-    expect(hrefs[0]).not.toBe("/tools/uk-100k-tax-trap-calculator");
+    expect(hrefs.at(-1)).toBe("/tools/uk-100k-tax-trap-calculator");
+  });
+
+  it.each(TOOL_SLUGS)("%s: breadcrumb, h1 and one line, then the tool", async (slug) => {
+    const { container } = await renderTool(slug);
+    const entry = getToolEntry(slug);
+
+    expect(screen.getByRole("heading", { level: 1, name: entry.title })).toBeDefined();
+    const calculator = screen.getByRole("region", { name: "Calculator" });
+    // The one line sits above the tool (a calculator may repeat it inside its own card).
+    const lines = screen.getAllByText(entry.description).filter((el) => !calculator.contains(el));
+    expect(lines).toHaveLength(1);
+    expect(calculator.hasAttribute("aria-describedby")).toBe(false);
+
+    // Exactly one notice, and it is the calculator's own.
+    const notes = container.querySelectorAll('[role="note"]');
+    expect(notes).toHaveLength(1);
+    expect(calculator.contains(notes[0] as Node)).toBe(true);
+
+    // Before the tool: only the breadcrumb and the page header (h1 and description).
+    const before = Array.from(container.querySelectorAll("nav, h1, p, [role='note'], img, span"))
+      .filter((el) => el.compareDocumentPosition(calculator) & Node.DOCUMENT_POSITION_FOLLOWING)
+      .filter((el) => !calculator.contains(el));
+    const breadcrumb = screen.getByRole("navigation", { name: "Breadcrumb" });
+    for (const el of before) {
+      const allowed =
+        breadcrumb.contains(el) ||
+        el.closest("h1") !== null ||
+        el.closest("p")?.textContent === entry.description;
+      expect(allowed, `unexpected ${el.tagName} "${el.textContent}" above the tool`).toBe(true);
+    }
+
+    // Guide and FAQ are closed native details, with their text in the markup.
+    const details = Array.from(container.querySelectorAll("[data-tool-guide] details"));
+    expect(details).toHaveLength(2);
+    for (const d of details) expect(d.hasAttribute("open")).toBe(false);
+    expect(container.textContent).toContain(getToolGuide(slug).faqs[0]?.a ?? "");
+    expect(container.textContent).not.toMatch(/illustration only/i);
+    for (const pattern of BANNED) expect(container.textContent).not.toMatch(pattern);
+  });
+
+  it("breadcrumb has no category crumb", async () => {
+    await renderTool("uk-100k-tax-trap-calculator");
+    const crumbs = within(screen.getByRole("navigation", { name: "Breadcrumb" })).getAllByRole(
+      "listitem",
+    );
+    expect(crumbs.map((c) => c.textContent?.trim())).toEqual([
+      "All calculators",
+      "Pension contributions and income above £100,000",
+    ]);
+  });
+
+  it("opens the guide for the income above £100,000 tool", async () => {
+    await renderTool("uk-100k-tax-trap-calculator");
+    fireEvent.click(document.querySelector("[data-tool-guide] summary") as HTMLElement);
+    expect(screen.getByRole("heading", { name: "What changes above £100,000" })).toBeDefined();
   });
 
   it("slug loader returns the requested tool or throws 404", async () => {
@@ -71,63 +157,6 @@ describe("Tools Routes", () => {
         request: new Request("http://localhost/tools/unknown-calc"),
       } as any),
     ).rejects.toThrow();
-  });
-
-  it("renders ToolDetailPage for tax trap calculator", async () => {
-    const res = await slugLoader({
-      params: { slug: "uk-100k-tax-trap-calculator" },
-      request: new Request("http://localhost/tools/uk-100k-tax-trap-calculator"),
-    } as any);
-    vi.mocked(useLoaderData).mockReturnValue(res);
-
-    render(<ToolDetailPage />);
-
-    expect(
-      screen.getByRole("heading", {
-        level: 1,
-        name: /uk £100k–£125k tax trap and childcare threshold calculator/i,
-      }),
-    ).toBeDefined();
-    expect(screen.getByText(/what is the uk £100,000 tax trap\?/i)).toBeDefined();
-    expect(screen.getByText(/illustration only/i)).toBeDefined();
-    const calculator = screen.getByRole("region", { name: "Calculator, illustration" });
-    expect(calculator.getAttribute("aria-describedby")).toBe("tool-sample-data-label");
-    expect(document.getElementById("tool-sample-data-label")).not.toBeNull();
-    expect(screen.getAllByText(/frequently asked questions/i).length).toBeGreaterThan(0);
-  });
-
-  it("renders ToolDetailPage for mortgage vs isa comparator", async () => {
-    const res = await slugLoader({
-      params: { slug: "mortgage-overpayment-vs-isa-calculator" },
-      request: new Request("http://localhost/tools/mortgage-overpayment-vs-isa-calculator"),
-    } as any);
-    vi.mocked(useLoaderData).mockReturnValue(res);
-
-    render(<ToolDetailPage />);
-
-    expect(
-      screen.getByRole("heading", {
-        level: 1,
-        name: /mortgage overpayment vs stocks and shares isa calculator/i,
-      }),
-    ).toBeDefined();
-  });
-
-  it("renders ToolDetailPage for section 24 landlord calculator", async () => {
-    const res = await slugLoader({
-      params: { slug: "section-24-landlord-tax-calculator" },
-      request: new Request("http://localhost/tools/section-24-landlord-tax-calculator"),
-    } as any);
-    vi.mocked(useLoaderData).mockReturnValue(res);
-
-    render(<ToolDetailPage />);
-
-    expect(
-      screen.getByRole("heading", {
-        level: 1,
-        name: /section 24 landlord mortgage relief and tax calculator/i,
-      }),
-    ).toBeDefined();
   });
 
   it.each([
@@ -168,37 +197,21 @@ describe("Tools Routes", () => {
     expect((thrown as Response).headers.get("Location")).toBe(`/tools/${to}?ref=1`);
   });
 
-  it("renders ToolDetailPage for the pay rise take-home calculator", async () => {
-    const res = await slugLoader({
-      params: { slug: "uk-pay-rise-take-home-calculator" },
-      request: new Request("http://localhost/tools/uk-pay-rise-take-home-calculator"),
-    } as any);
-    vi.mocked(useLoaderData).mockReturnValue(res);
-
-    render(<ToolDetailPage />);
-
-    expect(
-      screen.getByRole("heading", { level: 1, name: /what you keep from a pay rise/i }),
-    ).toBeDefined();
-    expect(screen.getByRole("region", { name: "Calculator, illustration" })).toBeDefined();
+  it("slugMeta returns the catalogue meta title and description", () => {
+    const tool = getToolEntry("uk-pay-rise-take-home-calculator");
+    expect(slugMeta({ data: { tool } } as any)).toEqual([
+      { title: `${tool.metaTitle} | Flump` },
+      { name: "description", content: tool.description },
+    ]);
+    expect(slugMeta({ data: null } as any)).toEqual([{ title: "Calculator not found | Flump" }]);
   });
 
-  it("slugMeta returns correct tags", () => {
-    const tags = slugMeta({
-      data: {
-        tool: {
-          metaTitle: "Test Title",
-          metaDescription: "Test Description",
-        },
-      },
-    } as any);
-
-    expect(tags).toEqual([
-      { title: "Test Title" },
-      { name: "description", content: "Test Description" },
-    ]);
-
-    const notFoundTags = slugMeta({ data: null } as any);
-    expect(notFoundTags).toEqual([{ title: "Tool Not Found | Flump" }]);
+  it("404s an unknown slug with the plain not-found line", async () => {
+    const thrown = await slugLoader({
+      params: { slug: "unknown-calc" },
+      request: new Request("http://localhost/tools/unknown-calc"),
+    } as any).catch((e: unknown) => e);
+    expect((thrown as Response).status).toBe(404);
+    expect(await (thrown as Response).text()).toBe("We cannot find that calculator.");
   });
 });

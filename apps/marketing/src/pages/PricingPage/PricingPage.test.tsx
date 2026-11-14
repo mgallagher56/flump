@@ -1,11 +1,11 @@
 import { BUSINESS_DETAILS, formatPrice } from "@flump/business-details";
+import { TOOL_CATALOGUE } from "@repo/ui/tools";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { HelmetProvider } from "react-helmet-async";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { signupCta } from "../../utils/site";
 import { CANONICAL_TOOL_SLUGS } from "../../utils/toolSlugs";
-import { TOOLS_CATALOG } from "../ToolsIndexPage";
 import { PricingPage } from "./PricingPage";
 
 const renderPage = () =>
@@ -70,9 +70,9 @@ describe("PricingPage", () => {
     const { container } = renderPage();
     expect(container.textContent).not.toMatch(/CSV|auto-categorisation|FCA|real-time/i);
     // The free list is the tools catalogue: every calculator, none missing or renamed.
-    for (const tool of TOOLS_CATALOG)
+    for (const tool of TOOL_CATALOGUE)
       expect(screen.getAllByText(tool.title).length).toBeGreaterThan(0);
-    expect(TOOLS_CATALOG).toHaveLength(CANONICAL_TOOL_SLUGS.length);
+    expect(TOOL_CATALOGUE).toHaveLength(CANONICAL_TOOL_SLUGS.length);
     expect(container.textContent).not.toMatch(/30-year|£0|per month, free/i);
   });
 
