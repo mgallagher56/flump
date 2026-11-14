@@ -504,9 +504,10 @@ describe.each(BALANCE_CASES)(
         const value = heroPounds(page.container);
         const text = page.container.textContent ?? "";
         if (month === "current month not recorded") {
-          expect(text).toContain("November 2026 not recorded yet");
+          // R2-5: an unrecorded month says when the history was last updated, not a change.
+          expect(text).toContain("Last updated");
         } else {
-          expect(text).not.toContain("not recorded yet");
+          expect(text).not.toContain("Last updated");
         }
         page.unmount();
         return value;
@@ -602,7 +603,8 @@ describe.each(BASIS_CASES)(
         bankConnectionsEnabled: false,
       };
       const page = render(<AccountsContainer />);
-      const total = page.container.querySelector("#accounts-net-worth dd");
+      // R2-5: net worth is the accounts page's hero; its value is the paragraph after the label.
+      const total = page.container.querySelector("#accounts-net-worth p:not([id])");
       expect(total).not.toBeNull();
       const reading = {
         key: "netWorth",

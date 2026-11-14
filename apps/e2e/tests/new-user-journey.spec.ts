@@ -82,7 +82,8 @@ test("a new user sets up, adds an account and a budget entry, and the dashboard 
   await test.step("add a first account with a balance", async () => {
     await open(page, "/app/accounts");
     await expect(page.getByRole("heading", { name: "No accounts yet" })).toBeVisible();
-    await page.getByRole("button", { name: "Add account", exact: true }).click();
+    // A link before hydration (#701), so it works as soon as it shows.
+    await page.getByRole("link", { name: "Add account", exact: true }).click();
 
     const dialog = page.getByRole("dialog", { name: "Add account" });
     await dialog.getByRole("textbox", { name: "Name" }).fill(ACCOUNT.name);
