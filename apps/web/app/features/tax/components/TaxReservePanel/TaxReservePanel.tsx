@@ -1,4 +1,8 @@
-import type { TaxCalculationResult } from "@flump/finance-engine";
+import {
+  getLatestSupportedUkTaxYear,
+  getUkTaxYearRules,
+  type TaxCalculationResult,
+} from "@flump/finance-engine";
 import { Button, Card, CurrencyInput, controlProps, FormField, Money, TextInput } from "@repo/ui";
 import { type FC, type ReactNode, useEffect, useState } from "react";
 import { NotSet } from "~/features/feedback/components/NotSet";
@@ -16,8 +20,9 @@ import {
 } from "./TaxReservePanel.styles";
 
 /** The Personal Allowance taper band (copy audit ruling 6). */
-const TAPER_START = 100_000;
-const TAPER_END = 125_140;
+const LATEST_RULES = getUkTaxYearRules(getLatestSupportedUkTaxYear());
+const TAPER_START = LATEST_RULES.ewni.personalAllowanceTaperStart;
+const TAPER_END = LATEST_RULES.taperEnd;
 const TAPER_NOTE_FROM = 90_000;
 
 export interface TaxReservePanelProps {

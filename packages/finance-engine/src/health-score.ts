@@ -7,6 +7,7 @@ import type {
   HealthScoreResult,
   SafeToSpendResult,
 } from "./types.js";
+import { getLatestSupportedUkTaxYear, getUkTaxYearRules } from "./uk-tax-year.js";
 
 export interface HealthScoreInput {
   stage: FinancialStage;
@@ -166,13 +167,17 @@ export function calculateFinancialHealthScore(input: HealthScoreInput): HealthSc
 
     // 2. £100k 60% Tax Trap Mitigation (Weight 0.35)
     const adjIncome = input.adjustedNetIncomeGbp ?? 0;
+    // The taper band comes from the latest year's rules, the year the wording below names.
+    const latestRules = getUkTaxYearRules(getLatestSupportedUkTaxYear());
+    const taperStart = latestRules.ewni.personalAllowanceTaperStart;
+    const taperEnd = latestRules.taperEnd;
     let taxTrapScore = 100;
-    if (adjIncome > 100000 && adjIncome <= 125140) {
+    if (adjIncome > taperStart && adjIncome <= taperEnd) {
       taxTrapScore = 40;
       observations.push(
         `Adjusted net income is £${Math.round(adjIncome).toLocaleString("en-GB")}, in the £100,000 to £125,140 band where the Personal Allowance reduces.`,
       );
-    } else if (adjIncome > 125140) {
+    } else if (adjIncome > taperEnd) {
       taxTrapScore = 70;
     }
 
@@ -181,7 +186,7 @@ export function calculateFinancialHealthScore(input: HealthScoreInput): HealthSc
       score: taxTrapScore,
       weight: 0.35,
       comment:
-        adjIncome > 100000 && adjIncome <= 125140
+        adjIncome > taperStart && adjIncome <= taperEnd
           ? "Estimate: income is in the £100,000 to £125,140 band."
           : "Estimate: income is outside the £100,000 to £125,140 band.",
     });

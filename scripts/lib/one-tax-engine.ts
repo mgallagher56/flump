@@ -20,9 +20,13 @@ export const REMOVED_IMPLEMENTATIONS = [
   "buildLegacyUKConfig",
 ] as const;
 
-/** Fields of the rules tables that only tax arithmetic needs. */
+/**
+ * What only tax arithmetic needs: the rate and threshold fields of the rules tables (by any
+ * access: `.mainRate`, destructured `mainRate`, `["mainRate"]`), the Scottish band list, and the
+ * current thresholds typed as numbers (12,570, 37,700, 50,270, 125,140).
+ */
 export const RATE_FIELD =
-  /\.(?:mainRate|upperRate|basicRate|higherRate|additionalRate)\b|\b(?:primaryThreshold|upperEarningsLimit|lowerProfitsLimit|upperProfitsLimit|basicRateBandWidth|additionalRateThreshold)\b/g;
+  /\b(?:mainRate|upperRate|primaryThreshold|upperEarningsLimit|lowerProfitsLimit|upperProfitsLimit|basicRateBandWidth|additionalRateThreshold)\b|\.(?:basicRate|higherRate|additionalRate)\b|\bscotland\.bands\b|\b(?:12_?570|37_?700|50_?270|125_?140)\b/g;
 
 /** The rules: the tables and the functions that apply them. No ceiling. */
 export const RULES_FILES: readonly string[] = [
@@ -36,7 +40,7 @@ export const RULES_FILES: readonly string[] = [
  */
 export const ALLOWED_READERS: Readonly<Record<string, { max: number; reason: string }>> = {
   "packages/finance-engine/src/uk-tax.ts": {
-    max: 16,
+    max: 21,
     reason:
       "Deprecated UK_TAX_CONSTANTS, the marginal rate label in the tax trap analysis and the Personal Savings Allowance band edge. Totals come from computeUkTakeHome.",
   },
@@ -46,8 +50,18 @@ export const ALLOWED_READERS: Readonly<Record<string, { max: number; reason: str
       "Stacks savings and dividends on top of non-savings income (band edges and dividend rates). Income Tax, the taper and Class 4 come from the rule functions.",
   },
   "packages/finance-engine/src/uk-tax-thresholds.ts": {
-    max: 6,
+    max: 8,
     reason: "Lists the thresholds as labelled points for charts. It computes no tax.",
+  },
+  "packages/finance-engine/src/section24.ts": {
+    max: 1,
+    reason:
+      "Labels whether other income reaches the higher rate. The tax comes from the rule functions.",
+  },
+  "apps/web/app/features/pension/forecast.ts": {
+    max: 1,
+    reason:
+      "50,270 here is the upper limit of qualifying earnings for workplace pension contributions, a pension rule, not an Income Tax band.",
   },
   "packages/finance-engine/src/uk-take-home.ts": {
     max: 1,

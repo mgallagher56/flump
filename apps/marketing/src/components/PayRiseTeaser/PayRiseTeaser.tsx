@@ -1,5 +1,7 @@
 import {
   calculateUkTax,
+  getLatestSupportedUkTaxYear,
+  getUkTaxYearRules,
   type OnboardingSeedPayload,
   persistOnboardingSeed,
 } from "@flump/finance-engine";
@@ -38,8 +40,9 @@ export const DEFAULT_RISE_GBP = 2_000;
 export const PAY_RISE_TOOL_PATH = "/tools/uk-pay-rise-take-home-calculator";
 
 /** The Personal Allowance taper band, used only to explain the rate a visitor's own figures hit. */
-const TAPER_START_GBP = 100_000;
-const TAPER_END_GBP = 125_140;
+const LATEST_RULES = getUkTaxYearRules(getLatestSupportedUkTaxYear());
+const TAPER_START_GBP = LATEST_RULES.ewni.personalAllowanceTaperStart;
+const TAPER_END_GBP = LATEST_RULES.taperEnd;
 
 /** "2026/27" as "2026 to 2027" (copy guide 4.3: tax years in words). */
 export const taxYearInWords = (taxYear: string): string => {

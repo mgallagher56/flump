@@ -77,6 +77,15 @@ describe("findPossibleDuplicateDebtRows", () => {
       expect(find([row("Car insurance", 62)], [debt("Car", 265)])).toEqual([]);
     });
 
+    it("an account called Car and a row called Car insurance for the same amount", () => {
+      expect(find([row("Car insurance", 45)], [debt("Car", 45)])).toEqual([]);
+      expect(find([row("Card protection", 30)], [debt("Card", 30, "Credit Card")])).toEqual([]);
+      // The debt's own payment is still found.
+      expect(find([row("Car monthly payment", 45)], [debt("Car", 45)])).toEqual([
+        "Car monthly payment -> Car",
+      ]);
+    });
+
     it("part of a word: an account called Car and a row called Carpet cleaning", () => {
       expect(find([row("Carpet cleaning", 265)], [debt("Car", 265)])).toEqual([]);
     });

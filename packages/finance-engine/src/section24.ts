@@ -83,7 +83,7 @@ export function calculateSection24Tax(input: Section24Input): Section24Result {
   // Not floored: under Section 24 the tax is worked out before mortgage interest, so a landlord
   // can owe tax and still make a cash loss. The result shows that loss rather than £0.
   const actualCashProfit = netRentalProfitBeforeFinance - shareMortgageInterest;
-  const isHigherRate = otherIncome >= 50270;
+  const isHigherRate = otherIncome >= rules.ewni.personalAllowance + rules.ewni.basicRateBandWidth;
   // Pre-Section 24: interest was deducted, so the cash profit is the taxable slice. Same slice
   // method and allowance taper as above, so the "penalty" is only the effect of Section 24. A
   // property loss was carried forward against later property profit, not set against other

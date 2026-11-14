@@ -261,7 +261,18 @@ export function computeUkTakeHome(
   const otherIncome = nonNeg(s.otherIncome);
   const selfEmployed = s.selfEmployed === true;
 
-  const method = s.pension ? s.pension.method : null;
+  // Salary sacrifice needs an employer, so a self-employed contribution is never treated as one
+  // (it would lower Class 4). It is taken as a net pay style deduction, the treatment take-home
+  // has always used for self-employed people. UNVERIFIED: a personal pension is usually relief at source.
+  const askedMethod = s.pension ? s.pension.method : null;
+  const method = selfEmployed && askedMethod === "salary-sacrifice" ? "net-pay" : askedMethod;
+  if (
+    selfEmployed &&
+    method === "net-pay" &&
+    pensionContribution(nonNeg(s.salary), s.pension) > 0
+  ) {
+    assume("pensionMethodAssumed", true);
+  }
   if (s.pension && s.pension.amount === undefined && nonNeg(s.pension.pct) > 0) {
     assume("pensionPctOfSalary");
   }

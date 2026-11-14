@@ -121,6 +121,35 @@ describe("logged payslips and the saved salary", () => {
     });
   });
 
+  describe("someone paid in the first five days of the month", () => {
+    const payDates = [
+      "2026-05-01",
+      "2026-06-01",
+      "2026-07-01",
+      "2026-08-01",
+      "2026-09-01",
+      "2026-10-01",
+      "2026-11-01",
+      "2026-12-01",
+      "2027-01-01",
+      "2027-02-01",
+      "2027-03-01",
+      "2027-04-01",
+    ];
+
+    it("twelve payslips from 1 May to 1 April are the whole year, not thirteen months", () => {
+      const slips = payDates.map((date) => payslip(5000, date));
+      // The 1 April 2026 payslip belongs to 2025/26, so these twelve are every pay date in the year.
+      expect(calculateUKTax(Y, slips, 60000, 100).effectivePayeSalary).toBe(60000);
+    });
+
+    it("eleven of the twelve leave one month to the saved salary", () => {
+      const slips = payDates.slice(0, 11).map((date) => payslip(5000, date));
+      // 11 x 5,000 + 58,000 / 12 = 59,833.33.
+      expect(calculateUKTax(Y, slips, SAVED, 100).effectivePayeSalary).toBeCloseTo(59833.33, 2);
+    });
+  });
+
   describe("bonus records still add to the salary (C-10)", () => {
     const bonus = record({ category: "paye_bonus", amount: 3000, date: "2026-12-20" });
 
