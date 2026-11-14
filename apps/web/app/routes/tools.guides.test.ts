@@ -1,5 +1,5 @@
 import { ADVICE_PATTERNS } from "@flump/finance-engine";
-import { TOOL_SLUGS } from "@repo/ui/tools";
+import { getToolGuide, TOOL_SLUGS, type ToolSlug } from "@repo/ui/tools";
 import { describe, expect, it } from "vitest";
 import { loader } from "./tools.$slug";
 
@@ -30,6 +30,14 @@ const HYPE_OR_DIRECTIVE = [
   /\bpsychological\b/i,
   /\bworking harder\b/i,
   /\bmost (effective|significant)\b/i,
+  /tax trap/i,
+  /mathematically/i,
+  /guaranteed/i,
+  /\bsyncs?\b/i,
+  /\bmonitors?\b/i,
+  /ENGINE/,
+  /index fund/i,
+  /Stocks & Shares/,
 ];
 
 async function toolText(slug: string): Promise<string> {
@@ -37,13 +45,13 @@ async function toolText(slug: string): Promise<string> {
     params: { slug },
     request: new Request(`http://localhost/tools/${slug}`),
   } as never);
+  const guide = getToolGuide(tool.slug as ToolSlug);
   return [
     tool.metaTitle,
-    tool.metaDescription,
     tool.title,
-    tool.subtitle,
-    ...tool.guideSections.flatMap((s) => [s.heading, ...s.body]),
-    ...tool.faqs.flatMap((f) => [f.q, f.a]),
+    tool.description,
+    ...guide.guideSections.flatMap((s) => [s.heading, ...s.body]),
+    ...guide.faqs.flatMap((f) => [f.q, f.a]),
   ].join("\n");
 }
 

@@ -12,7 +12,7 @@ vi.mock("react-router", () => ({
 describe("SignedOutFooter", () => {
   it("renders the calculator, account and support links", () => {
     render(<SignedOutFooter />);
-    expect(screen.getByRole("navigation", { name: "Free calculators" })).toBeDefined();
+    expect(screen.getByRole("navigation", { name: "Calculators" })).toBeDefined();
     expect(screen.getByRole("link", { name: "All calculators" }).getAttribute("href")).toBe(
       "/tools",
     );
@@ -21,6 +21,16 @@ describe("SignedOutFooter", () => {
     expect(screen.getByRole("link", { name: "Send feedback" }).getAttribute("href")).toContain(
       SUPPORT_EMAIL,
     );
+  });
+
+  it("links the first four catalogue tools by their short titles", async () => {
+    const { TOOL_CATALOGUE } = await import("@repo/ui/tools");
+    render(<SignedOutFooter />);
+    for (const tool of TOOL_CATALOGUE.slice(0, 4)) {
+      expect(screen.getByRole("link", { name: tool.shortTitle }).getAttribute("href")).toBe(
+        `/tools/${tool.slug}`,
+      );
+    }
   });
 
   it("shows the company line from the business details config", () => {

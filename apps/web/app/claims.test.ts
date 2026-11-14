@@ -65,3 +65,26 @@ describe("web claims guard", () => {
     expect(hits, "FCA reference found in scoped copy").toEqual([]);
   });
 });
+
+/**
+ * Public calculator pages (E16 PR 11): the tool pages, the index and the shared catalogue and
+ * guides they read carry no hooks or feature claims the calculators do not back.
+ */
+const TOOL_PAGE_BANNED = /ENGINE|Mathematically|guaranteed|\bsyncs\b|\bmonitors\b|tax trap/i;
+
+describe("public calculator copy guard (E16 PR 11)", () => {
+  const toolSources = read([
+    join(__dirname, "routes", "tools.$slug.tsx"),
+    join(__dirname, "routes", "tools._index.tsx"),
+    ...files(join(__dirname, "..", "..", "..", "packages", "ui", "src", "tools")),
+  ]);
+
+  it("scans the tool pages and the shared catalogue", () => {
+    expect(toolSources.length).toBeGreaterThanOrEqual(5);
+  });
+
+  it("has no hook or unsupported claim", () => {
+    const hits = toolSources.filter(([, text]) => TOOL_PAGE_BANNED.test(text)).map(([f]) => f);
+    expect(hits).toEqual([]);
+  });
+});

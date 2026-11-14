@@ -9,11 +9,12 @@ vi.mock("react-router", () => ({
 
 describe("ToolBreadcrumbs", () => {
   it("links back to /tools and marks the current page", () => {
-    render(<ToolBreadcrumbs category="UK Debt Management" title="Payoff calculator" />);
+    render(<ToolBreadcrumbs title="Payoff calculator" />);
     expect(screen.getByRole("link", { name: /All calculators/ }).getAttribute("href")).toBe(
       "/tools",
     );
-    expect(screen.getByText("UK Debt Management")).toBeDefined();
+    // Two crumbs only: All calculators, then the tool (no category crumb).
+    expect(screen.getAllByRole("listitem")).toHaveLength(2);
     expect(screen.getByText("Payoff calculator").getAttribute("aria-current")).toBe("page");
   });
 });

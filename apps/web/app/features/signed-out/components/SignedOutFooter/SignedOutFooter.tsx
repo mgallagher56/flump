@@ -1,9 +1,9 @@
 import { companyLine } from "@flump/business-details";
 import { SiteFooter, type SiteFooterRenderLink } from "@repo/ui";
+import { TOOL_CATALOGUE } from "@repo/ui/tools";
 import type { FC } from "react";
 import { Link as RouterLink } from "react-router";
 import { APP_VERSION, feedbackMailto } from "~/utils/support";
-import { TOOL_TILES } from "../../toolsCatalog";
 
 const renderLink: SiteFooterRenderLink = (link, className, children) => (
   <RouterLink className={className} to={link.href}>
@@ -17,13 +17,13 @@ const renderLink: SiteFooterRenderLink = (link, className, children) => (
  */
 export const SignedOutFooter: FC = () => (
   <SiteFooter
-    blurb="UK budget, debt and tax calculators. Estimates for guidance, not advice."
+    blurb="UK debt, mortgage, student loan and tax calculators. Estimates for guidance, not advice."
     bottom={companyLine(new Date().getFullYear())}
     columns={[
       {
-        heading: "Free calculators",
+        heading: "Calculators",
         links: [
-          ...TOOL_TILES.slice(0, 4).map((tool) => ({
+          ...TOOL_CATALOGUE.slice(0, 4).map((tool) => ({
             key: tool.slug,
             label: tool.shortTitle,
             href: `/tools/${tool.slug}`,

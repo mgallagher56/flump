@@ -59,6 +59,31 @@ describe("claims guard", () => {
 });
 
 /**
+ * Public calculator pages (E16 PR 11): the tool page, the index and the shared catalogue and
+ * guides they read carry no hooks or feature claims the calculators do not back.
+ */
+describe("public calculator copy guard (E16 PR 11)", () => {
+  const banned = /ENGINE|Mathematically|guaranteed|\bsyncs\b|\bmonitors\b|tax trap/i;
+  const toolSources = [
+    join(__dirname, "pages", "ToolPage.tsx"),
+    join(__dirname, "pages", "ToolsIndexPage.tsx"),
+    ...files(join(__dirname, "..", "..", "..", "packages", "ui", "src", "tools")),
+  ].map((f) => [f, readFileSync(f, "utf8")] as const);
+
+  it("has no hook or unsupported claim", () => {
+    expect(toolSources.length).toBeGreaterThanOrEqual(5);
+    const hits = toolSources.filter(([, text]) => banned.test(text)).map(([f]) => f);
+    expect(hits).toEqual([]);
+  });
+
+  it("uses no react-icons and no dollar icon on the tool pages", () => {
+    for (const [file, text] of toolSources.slice(0, 2)) {
+      expect(text, file).not.toMatch(/react-icons|FiDollarSign|DollarSign/);
+    }
+  });
+});
+
+/**
  * Sign-up CTA guard (E24-T3). The web app sign-up path appears only in utils/site.ts, so no CTA
  * can link to a sign-up that the invite-only beta refuses.
  */

@@ -3,7 +3,5 @@ export * from "./components/SandboxBar";
 export * from "./components/SignedOutFooter";
 export * from "./components/SignedOutPage";
 export * from "./components/ToolBreadcrumbs";
-export * from "./components/ToolGuide";
 export * from "./components/ToolsGrid";
 export * from "./components/ToolTile";
-export * from "./toolsCatalog";
