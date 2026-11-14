@@ -16,7 +16,7 @@ export const Defaults: Story = {
   play: async ({ canvasElement, args }) => {
     const canvas = within(canvasElement);
     const studentLoan = canvas.getByRole("switch", {
-      name: "Count my student loan as a debt in my net worth.",
+      name: "Count your student loan as a debt",
     });
     await userEvent.click(studentLoan);
     await expect(args.onSave).toHaveBeenCalledWith({ netWorthCountsStudentLoan: true });
@@ -33,7 +33,7 @@ export const SaveFails: Story = {
     const canvas = within(canvasElement);
     await userEvent.click(
       canvas.getByRole("switch", {
-        name: "Count property I own, less the mortgage on it, in my net worth.",
+        name: "Count property you own, less the mortgage on it",
       }),
     );
     await expect(await canvas.findByRole("alert")).toBeDefined();

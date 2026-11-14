@@ -13,11 +13,12 @@ import { choiceList, choicesAnchor } from "./NetWorthChoices.styles";
 export const NET_WORTH_CHOICES_ID = "net-worth";
 
 export const NET_WORTH_CHOICES_TITLE = "What counts in your net worth";
-export const PROPERTY_CHOICE_LABEL =
-  "Count property I own, less the mortgage on it, in my net worth.";
-export const STUDENT_LOAN_CHOICE_LABEL = "Count my student loan as a debt in my net worth.";
+export const PROPERTY_CHOICE_LABEL = "Count property you own, less the mortgage on it";
+export const STUDENT_LOAN_CHOICE_LABEL = "Count your student loan as a debt";
 export const NET_WORTH_CHOICES_HELPER =
-  "Other loans, including ones secured on your home, always count. Changes are saved straight away.";
+  "Other debts, including loans secured on your home, always count. Changes are saved straight away.";
+
+const HELPER_ID = "net-worth-choices-helper";
 export const NET_WORTH_CHOICES_ERROR =
   "We could not save that change. Nothing has changed. Try again.";
 
@@ -61,6 +62,9 @@ export const NetWorthChoices: FC<NetWorthChoicesProps> = ({
   }, []);
 
   const change = async (key: keyof typeof values, on: boolean) => {
+    // While a save is in flight the switches stay focusable (aria-disabled, not disabled, so
+    // keyboard focus is kept) and further changes are ignored; the controlled value holds.
+    if (saving) return;
     const previous = values;
     setValues({ ...values, [key]: on });
     setSaving(true);
@@ -90,22 +94,24 @@ export const NetWorthChoices: FC<NetWorthChoicesProps> = ({
       <h2 className={sectionHeading()} id="net-worth-choices-heading">
         {NET_WORTH_CHOICES_TITLE}
       </h2>
-      <p className={sectionLead()} id="net-worth-choices-helper">
+      <p className={sectionLead()} id={HELPER_ID}>
         {NET_WORTH_CHOICES_HELPER}
       </p>
       <div className={choiceList()}>
         <Switch
+          aria-describedby={HELPER_ID}
+          aria-disabled={saving || undefined}
           checked={values.countProperty}
           data-testid="net-worth-counts-property"
-          disabled={saving}
           id="net-worth-counts-property"
           label={PROPERTY_CHOICE_LABEL}
           onChange={(e) => change("countProperty", e.target.checked)}
         />
         <Switch
+          aria-describedby={HELPER_ID}
+          aria-disabled={saving || undefined}
           checked={values.countStudentLoan}
           data-testid="net-worth-counts-student-loan"
-          disabled={saving}
           id="net-worth-counts-student-loan"
           label={STUDENT_LOAN_CHOICE_LABEL}
           onChange={(e) => change("countStudentLoan", e.target.checked)}

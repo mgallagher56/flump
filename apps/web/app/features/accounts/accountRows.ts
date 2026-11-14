@@ -51,18 +51,27 @@ const monthLabel = (month: number, year: number): string =>
  * The saved balance is the current balance (D22). Recorded months are history: they never replace
  * the saved balance, and the latest one is used only when no balance is saved. The change is
  * against the latest recorded month before the current one.
+ *
+ * `detailsAreThisAccounts`: the caller passes only this account's recorded months (an account
+ * detail loader), so a row without an account id belongs to it. Otherwise a row without an id
+ * matches no account, so one stray row never counts for every account.
  */
 export const summariseAccountBalance = (
   account: AccountRowSource,
   accountDetails: DetailWithAccount[],
   now: Date = new Date(),
+  detailsAreThisAccounts = false,
 ): AccountBalanceSummary => {
   const id = account.id ?? "";
   const type = account.type ?? "";
   const currentM = now.getMonth() + 1;
   const currentY = now.getFullYear();
   const history = accountDetails
-    .filter((detail) => !id || (detail.account_id || detail.accountId || id) === id)
+    .filter((detail) => {
+      const detailId = detail.account_id || detail.accountId;
+      if (!detailId) return detailsAreThisAccounts;
+      return !id || detailId === id;
+    })
     .filter(
       (detail) => !isFutureMonth(detail.month as number, detail.year as number, currentM, currentY),
     )

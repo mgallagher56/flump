@@ -420,7 +420,7 @@ export const BudgetSetupWizard: FC<BudgetSetupWizardProps> = ({
         max={steps.length - 1}
         height={6}
       />
-      <ol aria-label="Setup steps" className={stepList()}>
+      <ol aria-label="Budget steps" className={stepList()}>
         {steps
           .filter((s) => s !== "welcome")
           .map((step) => {
@@ -595,7 +595,7 @@ export const BudgetSetupWizard: FC<BudgetSetupWizardProps> = ({
             ) : isLast ? (
               <>
                 <Icon icon={CheckCircle2} size="sm" />
-                {isEdit ? "Done" : "Finish setup"}
+                {isEdit ? "Finish editing" : "Finish setup"}
               </>
             ) : (
               <>

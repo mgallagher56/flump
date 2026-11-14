@@ -34,7 +34,9 @@ const AccountDetailContainer: FC = () => {
 
   // The hero shows the saved balance, the same figure as the accounts list and net worth (D22).
   const summary = useMemo(
-    () => summariseAccountBalance(account ?? {}, (accountDetails ?? []) as never[]),
+    // The loader returns this account's recorded months only.
+    () =>
+      summariseAccountBalance(account ?? {}, (accountDetails ?? []) as never[], new Date(), true),
     [account, accountDetails],
   );
   const current = summary.balance ?? 0;
