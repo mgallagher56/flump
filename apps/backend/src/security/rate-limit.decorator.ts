@@ -16,6 +16,8 @@ export const RATE_LIMIT_POLICIES = {
   bank: [{ limit: 10, windowMs: HOUR }],
   /** Bulk record writes (copy tax year); a large copy is several chunked requests. */
   bulkWrite: [{ limit: 30, windowMs: HOUR }],
+  /** Import staging (E17 re-plan section 7): 30 stage calls an hour per user. */
+  importStage: [{ limit: 30, windowMs: HOUR }],
   write: [{ limit: 120, windowMs: MINUTE }],
   read: [{ limit: 600, windowMs: MINUTE }],
   /** Receipt downloads move up to 5 MB each, so they get a tighter read class. */

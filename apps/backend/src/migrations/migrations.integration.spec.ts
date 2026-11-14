@@ -37,8 +37,10 @@ let MIGRATIONS: MigrationClass[] = [];
 const ENTITY_TABLES = [
   "account_details",
   "accounts",
+  "agent_audit_events",
   "bank_connections",
   "budget_entries",
+  "import_batches",
   "mcp_tokens",
   "snapshot_checkins",
   "tax_records",
@@ -118,6 +120,11 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
     return rows.map((r) => r.name);
   };
 
+  // Undoes migrations newest first until `name` itself has been undone.
+  const undoThrough = async (name: string): Promise<void> => {
+    while ((await applied()).includes(name)) await ds.undoLastMigration();
+  };
+
   const insertConnections = (rows: [string, string, string | null][]): Promise<unknown> =>
     ds.query(
       `INSERT INTO bank_connections (user_id, institution_id, institution_name, access_token, refresh_token, status)
@@ -139,7 +146,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
     }
   };
 
-  it("creates all nine tables on an empty database", async () => {
+  it("creates all eleven tables on an empty database", async () => {
     await ds.runMigrations();
     expect(await tables()).toEqual(ENTITY_TABLES);
   });
@@ -506,7 +513,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
     // legacy shape can be seeded and the real up() run on top of it.
     const legacy = async (): Promise<{ a: string; b: string }> => {
       await ds.runMigrations();
-      await ds.undoLastMigration();
+      await undoThrough(MIGRATION);
       // Back to before E23's unique index too, so legacy duplicate rows can be seeded.
       await ds.query('DROP INDEX IF EXISTS "UQ_account_details_account_year_month"');
       await ds.query("DELETE FROM migrations WHERE name = 'UniqueAccountDetailMonth1794356000000'");
@@ -528,7 +535,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
 
     it("down() removes the new columns, constraints and table", async () => {
       await ds.runMigrations();
-      await ds.undoLastMigration();
+      await undoThrough(MIGRATION);
       expect(await tables()).not.toContain("snapshot_checkins");
       const cols: { column_name: string }[] = await ds.query(
         "SELECT column_name FROM information_schema.columns WHERE table_name = 'account_details'",
@@ -1086,6 +1093,81 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
       expect(await uniqueIndex()).toEqual([]);
       await insertDetail("a1", 2026, 1, 1);
       await insertDetail("a1", 2026, 1, 2);
+    });
+  });
+
+  describe("AddImportBatchesAndAgentAudit1794356200000 (E17 PR C)", () => {
+    const MIGRATION = "AddImportBatchesAndAgentAudit1794356200000";
+
+    const account = async (): Promise<string> => {
+      const rows: { id: string }[] = await ds.query(
+        `INSERT INTO accounts (user_id, name, type, balance, currency)
+         VALUES ('user-a', 'Acc', 'Current', 10, 'GBP') RETURNING id`,
+      );
+      return rows[0].id;
+    };
+    const batch = async (key = "k-1"): Promise<string> => {
+      const rows: { id: string }[] = await ds.query(
+        `INSERT INTO import_batches (user_id, idempotency_key, payload, counts, expires_at)
+         VALUES ('user-a', $1, '{}', '{}', now() + interval '7 days') RETURNING id`,
+        [key],
+      );
+      return rows[0].id;
+    };
+
+    it("allows source agent with a batch id, nulls it when the batch goes, and keys are unique per user", async () => {
+      await ds.runMigrations();
+      const id = await account();
+      const b = await batch();
+      await ds.query(
+        `INSERT INTO account_details (account_id, user_id, year, month, value, as_of_date, source, import_batch_id)
+         VALUES ($1, 'user-a', 2026, 1, 5, '2026-01-31', 'agent', $2)`,
+        [id, b],
+      );
+      await expect(batch()).rejects.toThrow(/UQ_import_batches_user_idempotency_key/);
+      await expect(
+        ds.query(`UPDATE import_batches SET status = 'pending' WHERE id = $1`, [b]),
+      ).rejects.toThrow(/CHK_import_batches_status/);
+      await ds.query("DELETE FROM import_batches WHERE id = $1", [b]);
+      expect(await ds.query("SELECT source, import_batch_id FROM account_details")).toEqual([
+        { source: "agent", import_batch_id: null },
+      ]);
+      await expect(
+        ds.query(
+          `INSERT INTO agent_audit_events (user_id, tool_name, outcome, latency_ms, response_bytes)
+           VALUES ('user-a', 't', 'maybe', 1, 1)`,
+        ),
+      ).rejects.toThrow(/CHK_agent_audit_events_outcome/);
+    });
+
+    it("down() drops the tables and column, relabels agent rows manual and restores the old CHECK", async () => {
+      await ds.runMigrations();
+      const id = await account();
+      await ds.query(
+        `INSERT INTO account_details (account_id, user_id, year, month, value, as_of_date, source)
+         VALUES ($1, 'user-a', 2026, 1, 5, '2026-01-31', 'agent')`,
+        [id],
+      );
+      await undoThrough(MIGRATION);
+      expect(await tables()).not.toContain("import_batches");
+      expect(await tables()).not.toContain("agent_audit_events");
+      const cols: { column_name: string }[] = await ds.query(
+        "SELECT column_name FROM information_schema.columns WHERE table_name = 'account_details'",
+      );
+      expect(cols.map((c) => c.column_name)).not.toContain("import_batch_id");
+      expect(await ds.query("SELECT source, value FROM account_details")).toEqual([
+        { source: "manual", value: "5.00" },
+      ]);
+      await expect(
+        ds.query(
+          `INSERT INTO account_details (account_id, user_id, year, month, value, as_of_date, source)
+           VALUES ($1, 'user-a', 2026, 2, 5, '2026-02-28', 'agent')`,
+          [id],
+        ),
+      ).rejects.toThrow(/CHK_account_details_source/);
+      // And up again on top of the reverted schema.
+      await ds.runMigrations();
+      expect(await tables()).toEqual(ENTITY_TABLES);
     });
   });
 });

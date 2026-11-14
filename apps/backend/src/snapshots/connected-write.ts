@@ -15,8 +15,9 @@ export interface ConnectedSnapshotWrite {
 
 /**
  * E30 D7, atomically: record a connected value for the month and move the account's balance to it,
- * unless the user entered that month's value by hand (`source = 'manual'`), in which case neither
- * changes. One SQL statement, so a manual write landing at any moment cannot be overwritten by a
+ * unless the user entered that month's value by hand (`source = 'manual'`) or committed it from an
+ * import (`source = 'agent'`, E17 re-plan section 7: sticky against bank sync), in which case
+ * neither changes. One SQL statement, so a manual write landing at any moment cannot be overwritten by a
  * sync that read an older state. Returns true when the value was written.
  *
  * Test doubles without raw SQL fall back to a read-then-write with the same rule.
@@ -34,8 +35,8 @@ export async function writeConnectedSnapshot(
          VALUES ($1, $2, $3, $4, $5, $6, 'connected', now())
          ON CONFLICT ("account_id", "year", "month") DO UPDATE
            SET "value" = EXCLUDED."value", "as_of_date" = EXCLUDED."as_of_date",
-               "source" = 'connected', "updated_at" = now()
-           WHERE "account_details"."source" <> 'manual'
+               "source" = 'connected', "import_batch_id" = NULL, "updated_at" = now()
+           WHERE "account_details"."source" NOT IN ('manual', 'agent')
          RETURNING 1
        )
        UPDATE "accounts" SET "balance" = $5
@@ -51,7 +52,7 @@ export async function writeConnectedSnapshot(
   const existing = details.findOne
     ? await details.findOne({ where: { accountId: w.accountId, year: w.year, month: w.month } })
     : null;
-  if (existing?.source === "manual") return false;
+  if (existing?.source === "manual" || existing?.source === "agent") return false;
   await details.upsert(
     {
       accountId: w.accountId,
@@ -61,6 +62,7 @@ export async function writeConnectedSnapshot(
       value: w.value,
       asOfDate: w.asOfDate,
       source: "connected",
+      importBatchId: null,
     },
     ["accountId", "year", "month"],
   );

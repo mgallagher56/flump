@@ -2,7 +2,13 @@ import { Check, Column, Entity, Index, PrimaryGeneratedColumn, UpdateDateColumn 
 import { numericTransformer } from "./numeric.transformer";
 
 /** How a monthly value got into the table (E30). */
-export const ACCOUNT_DETAIL_SOURCES = ["onboarding", "manual", "connected", "backfill"] as const;
+export const ACCOUNT_DETAIL_SOURCES = [
+  "onboarding",
+  "manual",
+  "connected",
+  "backfill",
+  "agent",
+] as const;
 export type AccountDetailSource = (typeof ACCOUNT_DETAIL_SOURCES)[number];
 
 /**
@@ -18,7 +24,7 @@ export type AccountDetailSource = (typeof ACCOUNT_DETAIL_SOURCES)[number];
 @Check("CHK_account_details_month", `"month" BETWEEN 1 AND 12`)
 @Check(
   "CHK_account_details_source",
-  `"source" IN ('onboarding', 'manual', 'connected', 'backfill')`,
+  `"source" IN ('onboarding', 'manual', 'connected', 'backfill', 'agent')`,
 )
 @Check(
   "CHK_account_details_as_of_month",
@@ -50,6 +56,14 @@ export class AccountDetail {
 
   @Column({ type: "varchar", default: "manual" })
   source: AccountDetailSource;
+
+  /**
+   * The import batch that wrote this value (E17 re-plan PR C), else null. Every non-import write
+   * clears it, so "still owned by the batch" is `import_batch_id = batch AND source = 'agent'`.
+   */
+  @Index("IDX_account_details_import_batch")
+  @Column({ name: "import_batch_id", type: "uuid", nullable: true })
+  importBatchId: string | null;
 
   @UpdateDateColumn({ name: "updated_at" })
   updatedAt: Date;
