@@ -29,8 +29,9 @@ export const intro = cva({
   base: { textStyle: "body.lg", color: "text.secondary", margin: 0 },
 });
 
+/** Quiet second line under the address while the mailbox is a placeholder (owner item, E7 D4). */
 export const placeholderNote = cva({
-  base: { color: "text.muted" },
+  base: { display: "block", textStyle: "body.sm", color: "text.muted", mt: "1" },
 });
 
 export const card = cva({
