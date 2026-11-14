@@ -311,7 +311,7 @@ describe("<MortgageContainer />", () => {
     const { getByText, getByTestId } = customRender(<MortgageContainer />);
     expect(getByTestId("housing-cost-card")).toBeDefined();
     expect(getByText("Monthly mortgage payment (estimate)")).toBeDefined();
-    expect(getByTestId("housing-cost-share").textContent).toMatch(
+    expect(getByTestId("housing-cost-card-share").textContent).toMatch(
       /^\d+(\.\d)?% of your estimated take-home pay$/,
     );
   });

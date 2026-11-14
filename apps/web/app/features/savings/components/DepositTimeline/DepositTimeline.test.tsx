@@ -64,7 +64,7 @@ describe("<DepositTimeline />", () => {
   it("starts with a blank target and updates the outcome as the user types", () => {
     const onChange = vi.fn();
     render(<Harness initial={values()} onChange={onChange} />);
-    const target = screen.getByLabelText("Target deposit") as HTMLInputElement;
+    const target = screen.getByLabelText("Target amount") as HTMLInputElement;
     expect(target.value).toBe("");
     expect(screen.getByTestId("deposit-timeline-outcome").textContent).toBe(DEPOSIT_EMPTY_TEXT);
     fireEvent.change(target, { target: { value: "20000" } });
@@ -72,7 +72,9 @@ describe("<DepositTimeline />", () => {
     expect(screen.getByTestId("deposit-timeline-outcome").textContent).toBe(
       "Estimated time to reach target: 38 months (3 years 2 months)",
     );
-    expect(screen.getByText("From your saved savings accounts")).toBeDefined();
-    expect(screen.getByText("Estimate only. Does not include interest.")).toBeDefined();
+    expect(screen.getByText("From your saved savings and investment accounts")).toBeDefined();
+    expect(
+      screen.getByText("Estimate only. Does not include interest or changes in investment value."),
+    ).toBeDefined();
   });
 });

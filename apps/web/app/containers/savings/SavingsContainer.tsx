@@ -239,6 +239,18 @@ export const SavingsContainer: FC = () => {
                 portfolioInterestRate={weightedInterestRate}
                 startingBalance={totalSavingsBalance}
               />
+              <ScenarioZone
+                announcement={depositAnnouncement}
+                id="deposit-timeline"
+                isModified={depositScenario.isModified}
+                title="Model a change to your savings"
+                onReset={depositScenario.reset}
+              >
+                <DepositTimeline
+                  values={depositScenario.values}
+                  onChange={(key, value) => depositScenario.set(key, value)}
+                />
+              </ScenarioZone>
             </>
           ),
           accounts: (
@@ -258,19 +270,6 @@ export const SavingsContainer: FC = () => {
         value={activeTab}
         onValueChange={(value) => setActiveTab(value as typeof activeTab)}
       />
-
-      <ScenarioZone
-        announcement={depositAnnouncement}
-        id="deposit-timeline"
-        isModified={depositScenario.isModified}
-        title="Model a change to your savings"
-        onReset={depositScenario.reset}
-      >
-        <DepositTimeline
-          values={depositScenario.values}
-          onChange={(key, value) => depositScenario.set(key, value)}
-        />
-      </ScenarioZone>
 
       <AddSavingsAccountDialog isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} />
     </div>

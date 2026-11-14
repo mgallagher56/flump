@@ -27,8 +27,8 @@ type Story = StoryObj<typeof Stateful>;
 export const Empty: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    const target = canvas.getAllByLabelText("Target deposit")[0];
-    if (!target) throw new Error("Target deposit field missing");
+    const target = canvas.getAllByLabelText("Target amount")[0];
+    if (!target) throw new Error("Target amount field missing");
     await expect(target).toHaveValue("");
     await userEvent.type(target, "20000");
     await expect(

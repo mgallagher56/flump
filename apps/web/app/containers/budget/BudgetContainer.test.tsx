@@ -287,7 +287,7 @@ describe("BudgetContainer", () => {
         monthlyHousingCost: 900,
       }),
     );
-    expect((await screen.findByTestId("housing-cost-share")).textContent).toMatch(
+    expect((await screen.findByTestId("housing-cost-card-share")).textContent).toMatch(
       /% of your estimated take-home pay$/,
     );
   });
