@@ -225,4 +225,10 @@ describe("KpiCard value size (R2-2)", () => {
     });
     expect(new Set(rowClasses).size).toBe(1);
   });
+
+  it("reads its not-set label when unset is true, even with a value", () => {
+    render(<KpiCard label="National Insurance" notSetLabel="None" unset value={0} />);
+    expect(screen.getByText("None")).toBeDefined();
+    expect(screen.queryByText("£0")).toBeNull();
+  });
 });
