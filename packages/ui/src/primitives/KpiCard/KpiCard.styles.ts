@@ -87,9 +87,9 @@ export const kpiHeroValue = cva({
     // value down instead. The card is the container and every card in a strip has the same
     // width, so the strip still shows one size. Scale tokens only. Round 4: a 2-up card on a
     // phone (about 8rem inside its padding) keeps "£186,550" readable at 2xl rather than md;
-    // only a card under 7rem steps further down.
+    // only a card under 7rem (a 2x2 strip at 320px holding "minus £1,234,567") steps to md.
     "@container (min-width: 7.01rem) and (max-width: 14rem)": { fontSize: "2xl" },
-    "@container (max-width: 7rem)": { fontSize: "lg" },
+    "@container (max-width: 7rem)": { fontSize: "md" },
     fontVariantNumeric: "tabular-nums",
     color: "text.primary",
     margin: "0",
