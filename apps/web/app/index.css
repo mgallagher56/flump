@@ -233,6 +233,8 @@ html {
    1024px), the same switch as useIsMobile and the Panda lg / _navCollapsed styles. */
 @media (max-width: 1023.98px) {
   html {
-    scroll-padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px));
+    /* Keep in step with --app-bottom-bar-offset (72px) in root.tsx, so keyboard focus never lands
+       under the bar (WCAG 2.4.11). The variable lives below <html>, so the value is repeated. */
+    scroll-padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px));
   }
 }
