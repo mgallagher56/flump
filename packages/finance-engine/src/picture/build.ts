@@ -1,16 +1,19 @@
 import type { BudgetEntryItem } from "../ai-context-pack.js";
 import { PortfolioSnapshot, type RawAccount, type RawAccountDetail } from "../portfolio.js";
 import type { UserProfileData } from "../profile.js";
+import type { TaxRecord } from "../tax-calculator.js";
 import type { UkTaxYear } from "../types.js";
 import type { Figure } from "./figure.js";
 import { type FinancialPictureInput, profileFactsFromProfile } from "./input.js";
 import { type BudgetTotals, selectBudgetTotals } from "./selectors/budget-totals.js";
+import { type EstimatedTaxDue, selectEstimatedTaxDue } from "./selectors/estimated-tax-due.js";
 import {
   type AccountFixedRateEnd,
   type HousingCost,
   selectFixedRateEnds,
   selectHousingCost,
 } from "./selectors/housing-cost.js";
+import { type LoanToValue, selectLoanToValue } from "./selectors/loan-to-value.js";
 import { type MonthsOfCover, selectMonthsOfCover } from "./selectors/months-of-cover.js";
 import {
   type DebtTotals,
@@ -36,6 +39,10 @@ export interface FinancialPicture {
   housingCost: Figure<HousingCost>;
   /** Mortgage accounts with a stored fix-end date, as of the build date (E32). */
   fixedRateEnds: AccountFixedRateEnd[];
+  /** Mortgage balance over the home value net worth counts (E16 PR 3). */
+  loanToValue: Figure<LoanToValue>;
+  /** Self assessment estimate on income outside PAYE, current tax year (C-11). */
+  estimatedTaxDue: Figure<EstimatedTaxDue>;
 }
 
 export interface BuildFinancialPictureOptions {
@@ -57,10 +64,14 @@ export function buildFinancialPicture(
     budget: selectBudgetTotals(input.budget),
     safeToSpend: selectSafeToSpend(takeHome, input.budget, snapshot),
     monthsOfCover: selectMonthsOfCover(input.budget, snapshot),
-    netWorth: selectNetWorth(snapshot),
+    netWorth: selectNetWorth(snapshot, input.profile),
     debt: selectDebtTotals(snapshot),
     housingCost: selectHousingCost(input.profile, takeHome, snapshot, input.accounts),
     fixedRateEnds: selectFixedRateEnds(input.accounts, opts.asOf ?? new Date()),
+    loanToValue: selectLoanToValue(snapshot, input.profile),
+    estimatedTaxDue: selectEstimatedTaxDue(input.profile, input.taxRecords, {
+      taxYear: opts.taxYear,
+    }),
   };
 }
 
@@ -80,6 +91,7 @@ export interface FinancialPictureRows {
   accounts?: readonly RawAccount[] | null;
   accountDetails?: readonly RawAccountDetail[] | null;
   budgetEntries?: readonly BudgetRowLike[] | null;
+  taxRecords?: readonly TaxRecord[] | null;
 }
 
 /** Maps one budget row. Unreadable amounts become 0; a missing frequency means monthly. */
@@ -107,5 +119,6 @@ export function financialPictureInputFromRows(rows: FinancialPictureRows): Finan
     accounts: Array.isArray(rows.accounts) ? [...rows.accounts] : [],
     details: Array.isArray(rows.accountDetails) ? [...rows.accountDetails] : [],
     budget: Array.isArray(rows.budgetEntries) ? rows.budgetEntries.map(budgetEntryFromRow) : [],
+    taxRecords: Array.isArray(rows.taxRecords) ? [...rows.taxRecords] : [],
   };
 }

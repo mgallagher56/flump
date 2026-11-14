@@ -75,6 +75,8 @@ export interface FlumpAiContextPack {
   portfolio: {
     netWorth: number;
     totalAssets: number;
+    /** The user's own home estimate counted in net worth, "Home (your estimate)"; 0 if none. */
+    homeEstimate: number;
     totalLiabilities: number;
     totalLiquidCash: number;
     totalInvestments: number;
@@ -246,9 +248,11 @@ export function buildFlumpAiContextPack(
     baseline: safeBaseline,
     observations,
     portfolio: {
-      netWorth: snapshot.getTotalNetWorth(),
-      totalAssets: snapshot.getTotalAssets(),
-      totalLiabilities: snapshot.getTotalLiabilities(),
+      // From the picture, so the home estimate (D3) counts here exactly as on the web.
+      netWorth: picture.netWorth.netWorth,
+      totalAssets: picture.netWorth.totalAssets,
+      homeEstimate: picture.netWorth.homeEstimate,
+      totalLiabilities: picture.netWorth.totalLiabilities,
       totalLiquidCash: snapshot.getTotalLiquidCash(),
       totalInvestments: snapshot.getTotalInvestments(),
       totalPensions: snapshot.getTotalPensions(),
@@ -350,7 +354,7 @@ ${pack.observations.map((o) => `  * ${o}`).join("\n") || "  * None."}
 
 ## 2. Net worth
 - **Net worth:** ${formatSignedGbp(p.netWorth)}
-- **What you own:** £${p.totalAssets.toLocaleString("en-GB")} (cash you can get at quickly: £${p.totalLiquidCash.toLocaleString("en-GB")}, investments: £${p.totalInvestments.toLocaleString("en-GB")}, pensions: £${p.totalPensions.toLocaleString("en-GB")})
+- **What you own:** £${p.totalAssets.toLocaleString("en-GB")} (cash you can get at quickly: £${p.totalLiquidCash.toLocaleString("en-GB")}, investments: £${p.totalInvestments.toLocaleString("en-GB")}, pensions: £${p.totalPensions.toLocaleString("en-GB")}${p.homeEstimate > 0 ? `, Home (your estimate): £${p.homeEstimate.toLocaleString("en-GB")}` : ""})
 - **What you owe:** £${p.totalLiabilities.toLocaleString("en-GB")} (debts: £${p.totalConsumerDebt.toLocaleString("en-GB")}, mortgages: £${p.totalMortgageBalance.toLocaleString("en-GB")})
 - **Average savings rate:** ${p.weightedSavingsRate}% AER
 

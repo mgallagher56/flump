@@ -26,6 +26,7 @@ import {
 import { buildFinancialPicture } from "./build.js";
 import { isFigureKnown } from "./figure.js";
 import { profileFactsFromProfile } from "./input.js";
+import { HOME_ESTIMATE_LABEL } from "./selectors/portfolio-totals.js";
 import { selectTakeHome, type TakeHome } from "./selectors/take-home.js";
 
 /**
@@ -112,8 +113,10 @@ describe.each(NAMES)("persona %s: portfolio totals", (name) => {
 
   it("matches the hand-derived totals", () => {
     const snap = snapshot(fixture);
-    expect(snap.getTotalNetWorth()).toBe(p.netWorth);
-    expect(snap.getTotalAssets()).toBe(p.totalAssets);
+    // Account rows only: the profile home estimate (D3) is added by the picture, not the snapshot.
+    const home = p.homeEstimate ?? 0;
+    expect(snap.getTotalNetWorth()).toBe(p.netWorth - home);
+    expect(snap.getTotalAssets()).toBe(p.totalAssets - home);
     expect(snap.getTotalLiabilities()).toBe(p.totalLiabilities);
     expect(snap.getTotalConsumerDebt()).toBe(p.consumerDebt);
     expect(snap.getTotalLiquidCash()).toBe(p.liquidCash);
@@ -295,7 +298,8 @@ describe("P3 Gareth", () => {
   });
 });
 
-describe.each(NAMES)("persona %s: housing cost (E32)", (name) => {
+// The homeowner answers housing (a mortgage); every other persona leaves it unanswered.
+describe.each(NAMES.filter((n) => n !== "homeowner"))("persona %s: housing cost (E32)", (name) => {
   const { fixture } = PERSONAS[name];
 
   it("is unknown and names the housing status while it is not answered", () => {
@@ -420,6 +424,8 @@ describe("new user", () => {
       housingStatus: null,
       monthlyHousingCost: null,
       mortgageType: null,
+      homeValue: null,
+      propertyOwnershipShare: null,
     });
     expect(facts).toEqual(newUser.profile);
   });
@@ -564,8 +570,80 @@ describe.each(NAMES)("persona %s: financial picture (E23 section 2)", (name) => 
 
   it("net worth and debt come from the same snapshot the portfolio test checks", () => {
     expect(picture.netWorth.netWorth).toBe(expected.portfolio.netWorth);
+    expect(picture.netWorth.totalAssets).toBe(expected.portfolio.totalAssets);
+    expect(picture.netWorth.homeEstimate).toBe(expected.portfolio.homeEstimate ?? 0);
+    // Net worth is always assets minus liabilities, home estimate included.
+    expect(picture.netWorth.totalAssets - picture.netWorth.totalLiabilities).toBe(
+      picture.netWorth.netWorth,
+    );
     expect(picture.netWorth.liquidCash).toBe(expected.portfolio.liquidCash);
     expect(picture.debt.consumerDebt).toBe(expected.portfolio.consumerDebt);
     expect(picture.debt.debtCount).toBe(expected.portfolio.debtItemIds.length);
+  });
+});
+
+describe("E16 PR 3 homeowner: the home counts once, labelled (D3)", () => {
+  const { fixture } = PERSONAS.homeowner;
+  const picture = buildFinancialPicture(fixture, OPTS);
+
+  it("net worth is 310,000 + 21,000 + 96,000 - 186,000 = 241,000, with the home its own part", () => {
+    expect(picture.netWorth.netWorth).toBe(241000);
+    expect(picture.netWorth.homeEstimate).toBe(310000);
+    expect(picture.netWorth.property).toBe(0);
+    expect(HOME_ESTIMATE_LABEL).toBe("Home (your estimate)");
+  });
+
+  it("loan to value is 186,000 / 310,000 = 60%, from the same home value", () => {
+    expect(picture.loanToValue).toEqual({
+      status: "known",
+      value: {
+        percent: 60,
+        homeValue: 310000,
+        mortgageBalance: 186000,
+        homeValueSource: "estimate",
+      },
+      provenance: "derived",
+    });
+  });
+
+  it("is the same 241,000 when onboarding saved the home as a Property account instead", () => {
+    const asAccount: PersonaFixture = {
+      ...fixture,
+      accounts: [
+        ...fixture.accounts,
+        { id: "homeowner-home", name: HOME_ESTIMATE_LABEL, type: "Property", balance: 310000 },
+      ],
+    };
+    const p = buildFinancialPicture(asAccount, OPTS);
+    // The account wins; the profile estimate is not added on top (no double count).
+    expect(p.netWorth.netWorth).toBe(241000);
+    expect(p.netWorth.homeEstimate).toBe(0);
+    expect(p.netWorth.property).toBe(310000);
+    expect(isFigureKnown(p.loanToValue) && p.loanToValue.value.percent).toBe(60);
+  });
+
+  it("has no estimated tax due: PAYE only, nothing outside PAYE to estimate", () => {
+    expect(picture.estimatedTaxDue).toEqual({
+      status: "unknown",
+      missing: ["untaxedIncomeRecords"],
+      reason: "not-set",
+    });
+  });
+});
+
+describe("estimated tax due across the personas (C-11)", () => {
+  it("is unknown for PAYE-only personas and known for the rental and self-employed ones", () => {
+    const status = (name: PersonaName) =>
+      buildFinancialPicture(PERSONAS[name].fixture, OPTS).estimatedTaxDue.status;
+    expect(status("sam")).toBe("unknown");
+    expect(status("homeowner")).toBe("unknown");
+    expect(status("dan")).toBe("known");
+    expect(status("heavy")).toBe("known");
+  });
+
+  it("equals calculateUKTax's tax on top of PAYE for Dan's rental records", () => {
+    const fig = buildFinancialPicture(dan, OPTS).estimatedTaxDue;
+    const direct = calculateUKTax(TAX_YEAR, dan.taxRecords, 46000, 100).netAdditionalTaxToPay;
+    expect(isFigureKnown(fig) && fig.value.amount).toBe(Math.round(direct));
   });
 });

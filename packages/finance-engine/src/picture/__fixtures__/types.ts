@@ -41,6 +41,8 @@ export interface PortfolioExpectation {
   investments: number;
   pensions: number;
   property: number;
+  /** The profile home estimate counted in net worth (D3); absent means 0. */
+  homeEstimate?: number;
   studentLoans: number;
   mortgageBalance: number;
   debtItemIds: string[];

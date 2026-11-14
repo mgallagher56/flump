@@ -12,6 +12,8 @@ export const newUser: PersonaFixture = {
     housingStatus: null,
     monthlyHousingCost: null,
     mortgageType: null,
+    homeValue: null,
+    propertyOwnershipShare: null,
   },
   accounts: [],
   details: [],
