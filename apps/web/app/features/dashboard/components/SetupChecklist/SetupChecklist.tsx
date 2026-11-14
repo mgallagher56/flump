@@ -142,6 +142,7 @@ export const SetupChecklist: FC<SetupChecklistProps> = (props) => {
             aria-expanded={expanded}
             className={toggle()}
             data-testid="setup-checklist-toggle"
+            id="setup-checklist-toggle"
             type="button"
             onClick={() => setExpanded(!expanded)}
           >
@@ -154,6 +155,8 @@ export const SetupChecklist: FC<SetupChecklistProps> = (props) => {
         <button
           aria-label="Hide setup checklist"
           className={dismissButton()}
+          data-testid="setup-checklist-hide"
+          id="setup-checklist-hide"
           title="Hide setup checklist"
           type="button"
           onClick={() => {

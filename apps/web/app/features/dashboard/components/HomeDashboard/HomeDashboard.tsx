@@ -1,4 +1,3 @@
-import { HOME_ESTIMATE_LABEL } from "@flump/finance-engine";
 import {
   Button,
   DELTA_PANEL_COPY,
@@ -69,6 +68,10 @@ export interface HomeDashboardProps {
   /** Drawn last inside the page body (the sandbox's closing sign-up). */
   footer?: ReactNode;
 }
+
+export const HERO_LABEL = "Net worth";
+/** The hero label when net worth includes the home at the user's own estimate (D3). */
+export const HERO_LABEL_WITH_HOME = "Net worth, including your home estimate";
 
 /** At most four section cards render (plan D1, E16 P1.8). */
 export const MAX_SECTION_CARDS = 4;
@@ -244,6 +247,9 @@ export const HomeDashboard: FC<HomeDashboardProps> = ({
     (pensionData?.potsCount ?? 0) > 0 ? finiteOrNull(pensionData?.totalPensionBalance) : null;
   const currentMonth = checkIn?.currentMonth ?? londonMonth();
   const delta = netWorthDelta(netWorth, netWorthPrior, currentMonth);
+  // D3: when net worth counts the user's own home estimate, the hero label says so in every case,
+  // so the label survives alongside the delta (the hero has room for a delta or a sub-line only).
+  const heroLabel = homeEstimate !== null && homeEstimate > 0 ? HERO_LABEL_WITH_HOME : HERO_LABEL;
 
   const showsTaxEstimate = cards.includes("tax") && taxCardShowsEstimate(taxData);
   const showsDebtEstimate = cards.includes("debt") && debtCardShowsEstimate(debtData);
@@ -273,7 +279,7 @@ export const HomeDashboard: FC<HomeDashboardProps> = ({
       {delta ? (
         <HeroFigure
           delta={delta}
-          label="Net worth"
+          label={heroLabel}
           value={netWorth === null ? null : heroValue(netWorth)}
         />
       ) : (
@@ -284,12 +290,7 @@ export const HomeDashboard: FC<HomeDashboardProps> = ({
             </Button>
           }
           emptyPrompt="Add an account to see your net worth."
-          label="Net worth"
-          subline={
-            homeEstimate !== null && homeEstimate > 0
-              ? `Includes ${HOME_ESTIMATE_LABEL}`
-              : undefined
-          }
+          label={heroLabel}
           value={netWorth === null ? null : heroValue(netWorth)}
         />
       )}
@@ -355,6 +356,7 @@ export const HomeDashboard: FC<HomeDashboardProps> = ({
 
       <WidgetVisibilityPanel
         error={visibilityError}
+        maxVisible={MAX_SECTION_CARDS}
         open={panelOpen}
         visibleKeys={dashboardWidgets}
         widgetKeys={applicableKeys}

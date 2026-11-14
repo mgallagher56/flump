@@ -44,7 +44,7 @@ describe("SandboxRoute", () => {
   it("has robots noindex meta tag", () => {
     const metaTags = meta({} as any);
     expect(metaTags).toEqual([
-      { title: "Sample data | Flump" },
+      { title: "Example figures | Flump" },
       { name: "robots", content: "noindex, nofollow" },
     ]);
   });

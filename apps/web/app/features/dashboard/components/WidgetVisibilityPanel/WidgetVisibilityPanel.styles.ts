@@ -95,3 +95,7 @@ export const panelRowHint = cva({
 export const panelFooter = cva({
   base: { display: "flex", justifyContent: "flex-end", marginTop: "8px" },
 });
+
+export const panelCapHint = cva({
+  base: { margin: 0, textStyle: "body.sm", color: "text.secondary" },
+});
