@@ -40,6 +40,8 @@ export const ONBOARDING_PROFILE = {
 export const ONBOARDING_ACCOUNTS = [
   { name: "Cash and emergency savings", type: "Saving", balance: 5000, isCurrent: true },
   { name: "Workplace and personal pension", type: "Pension", balance: 15000, isCurrent: true },
+  // E16 D3: the owner's home estimate, so net worth and loan to value count it.
+  { name: "Home (your estimate)", type: "Property", balance: 300000, isCurrent: true },
   { name: "Residential Mortgage", type: "Mortgage", balance: 200000, isCurrent: true },
   { name: "Cards and loans baseline", type: "Credit Card", balance: 2000, isCurrent: true },
 ];
