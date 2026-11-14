@@ -8,6 +8,7 @@ import {
 import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { In, Repository } from "typeorm";
+import { recordAuditEvent } from "./audit/audit-events";
 import { claimVersion, preconditionFailed } from "./contract/etag";
 import { type KeysetOrder, keysetPage, type Page, type PageRequest } from "./contract/pagination";
 import { Account } from "./entities/account.entity";
@@ -583,8 +584,8 @@ export class AccountIntakeService implements IAccountIntake {
     if (!manager?.transaction) {
       throw new Error("Account deletes need a TypeORM manager to run transactionally");
     }
-    return manager.transaction((em) =>
-      deleteOwnedAccount(
+    return manager.transaction(async (em) => {
+      const result = await deleteOwnedAccount(
         {
           accounts: em.getRepository(Account),
           details: em.getRepository(AccountDetail),
@@ -592,8 +593,11 @@ export class AccountIntakeService implements IAccountIntake {
         },
         userId,
         id,
-      ),
-    );
+      );
+      // BE-06 (H12): recorded in the delete's transaction, so one cannot happen without the other.
+      await recordAuditEvent(em, { userId, action: "account.deleted", targetId: id });
+      return result;
+    });
   }
 
   /**

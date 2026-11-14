@@ -184,6 +184,22 @@ describe("HttpMcpHandler hardening", () => {
     vi.restoreAllMocks();
   });
 
+  it("logs through the injected logger by error name only, never the console (L6)", async () => {
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    const logger = { warn: vi.fn(), error: vi.fn() };
+    const h = new HttpMcpHandler({ dataProvider: {} as McpUserDataProvider, logger });
+    (h as any).verifier = {
+      verifyAuthorizationHeader: async () => {
+        throw new Error(`db down for ${PAT}`);
+      },
+    };
+    expect((await h.handleWebRequest(webReq(`Bearer ${PAT}`))).status).toBe(400);
+    expect(consoleSpy).not.toHaveBeenCalled();
+    consoleSpy.mockRestore();
+    expect(logger.error).toHaveBeenCalledWith("MCP request failed: Error");
+    expect(JSON.stringify(logger.error.mock.calls)).not.toContain(PAT);
+  });
+
   it("clears the IP's failure count after a successful authentication (web)", async () => {
     const limiter = new FailedAuthLimiter(2, 60_000);
     const handler = new HttpMcpHandler({

@@ -1,3 +1,4 @@
+export * from "./audit.js";
 export * from "./auth/failed-auth-limiter.js";
 export * from "./auth/limit-store.js";
 export * from "./auth/rate-limiter.js";
@@ -6,6 +7,7 @@ export * from "./auth/token-verifier.js";
 export * from "./define-tool.js";
 export * from "./envelope.js";
 export * from "./errors.js";
+export * from "./logger.js";
 export * from "./policy/index.js";
 export * from "./prompts/import-prompts.js";
 export * from "./provider/in-memory.js";

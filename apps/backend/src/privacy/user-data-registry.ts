@@ -3,9 +3,11 @@ import type { ObjectLiteral } from "typeorm";
 import { Account } from "../entities/account.entity";
 import { AccountDetail } from "../entities/account-detail.entity";
 import { AgentAuditEvent } from "../entities/agent-audit-event.entity";
+import { AuditEvent } from "../entities/audit-event.entity";
 import { BankConnection } from "../entities/bank-connection.entity";
 import { BankOAuthState } from "../entities/bank-oauth-state.entity";
 import { BudgetEntry } from "../entities/budget-entry.entity";
+import { Consent } from "../entities/consent.entity";
 import { IdempotencyKey } from "../entities/idempotency-key.entity";
 import { ImportBatch } from "../entities/import-batch.entity";
 import { McpToken } from "../entities/mcp-token.entity";
@@ -316,6 +318,40 @@ export const USER_DATA_REGISTRY: readonly UserDataTable[] = [
     },
   }),
   table({
+    entity: AuditEvent,
+    key: "auditEvents",
+    deleteOnErasure: true,
+    export: {
+      shape: "rows",
+      columns: ["id", "action", "actorType", "targetId", "requestId", "metadata", "createdAt"],
+      excluded: { userId: USER_ID_IN_ENVELOPE },
+      orderBy: ["id"],
+      batchSize: 500,
+    },
+    reset: {
+      kind: "keep",
+      reason:
+        "security record of sensitive actions (BE-06, H12), the reset itself among them; kept 13 months by the retention job",
+    },
+  }),
+  table({
+    entity: Consent,
+    key: "consents",
+    deleteOnErasure: true,
+    export: {
+      shape: "rows",
+      columns: ["id", "kind", "version", "targetId", "grantedAt", "withdrawnAt"],
+      excluded: { userId: USER_ID_IN_ENVELOPE },
+      orderBy: ["id"],
+      batchSize: 500,
+    },
+    reset: {
+      kind: "keep",
+      reason:
+        "record of what the person agreed to and when; the reset withdraws the AI and bank consents rather than deleting them",
+    },
+  }),
+  table({
     entity: McpToken,
     key: "mcpTokens",
     deleteOnErasure: true,
@@ -422,6 +458,7 @@ export const USER_DATA_REGISTRY: readonly UserDataTable[] = [
         "housingStatus",
         "monthlyHousingCost",
         "monthlyOtherOutgoings",
+        "lastActiveAt",
         "createdAt",
         "updatedAt",
       ],

@@ -5,6 +5,8 @@ import type { EntityManager } from "typeorm";
 // Audit M4: the OAuth state was `institutionId:userId`, guessable, so a forged callback could
 // link an attacker's bank to a victim's account. It is now 256 random bits, stored only as a
 // hash, single use and valid for ten minutes, and every consent carries a PKCE S256 challenge.
+// BE-06: when the callback is built it must write the `bank_connection.connected` audit row and
+// the `bank_access` consent in the transaction that stores the tokens (see finance.service.ts).
 // No callback route exists yet (bank connections are off, D11); `consumeOAuthState` is what it
 // must call before exchanging the code.
 

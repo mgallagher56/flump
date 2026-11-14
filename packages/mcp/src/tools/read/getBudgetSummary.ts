@@ -1,4 +1,4 @@
-import { MCP_NOTICE } from "@flump/finance-engine";
+import { anonymousBudgetEntryLabels, MCP_NOTICE } from "@flump/finance-engine";
 import { z } from "zod";
 import { defineFlumpTool } from "../../define-tool.js";
 import {
@@ -7,6 +7,7 @@ import {
   type Missing,
   round2,
   safeText,
+  sanitiseText,
   summariseBudget,
   toMonthly,
 } from "./common.js";
@@ -76,15 +77,15 @@ export const getBudgetSummary = defineFlumpTool({
       surplus = round2(b.monthlyIncome - b.essentialMonthly - b.discretionaryMonthly);
     }
 
-    let incomeOrdinal = 0;
+    // M-PRIV4: anonymised, an entry name ("Rent to J Smith") never reaches the agent; it becomes
+    // the category plus an ordinal ("Housing #2"), or "Income #1" for income.
+    const generic = m.anonymise
+      ? anonymousBudgetEntryLabels(entries, (category) => sanitiseText(category, 48))
+      : undefined;
     const detail =
       responseFormat === "detailed"
-        ? entries.map((e) => ({
-            name: e.isIncome
-              ? m.anonymise
-                ? `Income #${++incomeOrdinal}`
-                : e.name
-              : safeText(e.name, m.anonymise),
+        ? entries.map((e, i) => ({
+            name: generic ? (generic[i] ?? "Budget entry") : sanitiseText(e.name),
             category: safeText(e.category, m.anonymise),
             monthlyGbp: round2(toMonthly(e.amount, e.frequency)),
             isIncome: e.isIncome,

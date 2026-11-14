@@ -238,6 +238,49 @@ describe("read tools v2: oversized fixtures", () => {
     }
   });
 
+  it("get_budget_summary anonymised: entry names become category plus ordinal (M-PRIV4)", async () => {
+    const names = [
+      "Rent to J Smith",
+      "Pocket money for Ella",
+      "Acme Ltd salary",
+      "Gym at 1 High St",
+    ];
+    const entry = (name: string, category: string, isIncome = false) => ({
+      id: name,
+      category,
+      name,
+      amount: 100,
+      frequency: "monthly",
+      isIncome,
+      isEssential: !isIncome,
+    });
+    const anon = await connectTestClient({
+      ...emptyUser,
+      budgetEntries: [
+        entry(names[0] as string, "Housing"),
+        entry(names[1] as string, "Housing"),
+        entry(names[2] as string, "Salary", true),
+        entry(names[3] as string, "Leisure"),
+      ],
+    });
+    try {
+      for (const responseFormat of ["concise", "detailed"] as const) {
+        const text = await anon.callText("get_budget_summary", { responseFormat });
+        for (const name of names) expect(text, responseFormat).not.toContain(name);
+        expect(text).not.toMatch(/Smith|Ella|Acme|High St/);
+      }
+      const e = await call(anon, "get_budget_summary", { responseFormat: "detailed" });
+      expect(e.result.entries.map((x: { name: string }) => x.name)).toEqual([
+        "Housing #1",
+        "Housing #2",
+        "Income #1",
+        "Leisure #1",
+      ]);
+    } finally {
+      await anon.close();
+    }
+  });
+
   it("truncates get_budget_summary and merges categories that scrub to the same name", async () => {
     const budgetEntries = Array.from({ length: 400 }, (_, i) => ({
       id: `b${i}`,
@@ -331,9 +374,12 @@ describe("read tools v2: prompt-injection hardening", () => {
       const accounts =
         (await h.callText("list_accounts")) + (await h.callText("get_debt_overview"));
       expect(accounts).not.toMatch(/Ignore previous|SYSTEM|AAAA/);
-      // Budget text is free text that only has institution names scrubbed: it is still capped and flattened.
+      // The entry name is replaced by its category plus an ordinal; the category is free text that
+      // only has institution names scrubbed, so it is capped and flattened.
       const budget = await call(h, "get_budget_summary", { responseFormat: "detailed" });
       const entry = budget.result.entries[0];
+      expect(entry.name).not.toMatch(/AAAA/);
+      expect(entry.name).toMatch(/ #1$/);
       expect(entry.name.length).toBeLessThanOrEqual(60);
       expect(entry.category).not.toMatch(/[\n\r]/);
     } finally {

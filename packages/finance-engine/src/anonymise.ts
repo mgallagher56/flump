@@ -124,3 +124,33 @@ export function genericAccountLabel(type: string | null | undefined, ordinal: nu
   const typeKey = (type || "other").toString().replace(/\s+/g, " ");
   return `${typeKey} Account #${ordinal}`;
 }
+
+/** The fields of a budget entry that its generic label is built from. */
+export interface BudgetEntryLabelInput {
+  category: string;
+  isIncome: boolean;
+}
+
+/**
+ * Generic labels for budget entries in anonymised mode (M-PRIV4), one per entry in the given order.
+ * The free-text entry name ("Rent to J Smith") is never used: income becomes "Income #1",
+ * "Income #2"; anything else becomes its scrubbed category plus a per-category ordinal
+ * ("Housing #1", "Housing #2"), the same pattern as income and the generic account labels.
+ * `cleanCategory` lets a caller cap or flatten the scrubbed category before the ordinal is added,
+ * so the ordinal is never cut off.
+ */
+export function anonymousBudgetEntryLabels(
+  entries: readonly BudgetEntryLabelInput[],
+  cleanCategory: (scrubbed: string) => string = (s) => s,
+): string[] {
+  const ordinals = new Map<string, number>();
+  let income = 0;
+  return entries.map((entry) => {
+    if (entry.isIncome) return `Income #${++income}`;
+    const category =
+      cleanCategory(anonymiseDescription(entry.category ?? "")).trim() || "Budget entry";
+    const n = (ordinals.get(category) ?? 0) + 1;
+    ordinals.set(category, n);
+    return `${category} #${n}`;
+  });
+}

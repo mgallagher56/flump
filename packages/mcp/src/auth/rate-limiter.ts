@@ -1,3 +1,4 @@
+import { errorName, type McpLogger, stderrLogger } from "../logger.js";
 import {
   isMissingTableError,
   type LimitDecision,
@@ -38,6 +39,7 @@ export class McpRateLimiter {
     maxPerMinute = 60,
     maxPerHour = 300,
     private readonly store: LimitStore = new MemoryLimitStore(),
+    private readonly logger: McpLogger = stderrLogger,
   ) {
     this.minute = { limit: maxPerMinute, windowMs: MINUTE_MS };
     this.hour = { limit: maxPerHour, windowMs: HOUR_MS };
@@ -56,14 +58,14 @@ export class McpRateLimiter {
     } catch (err) {
       if (isMissingTableError(err)) {
         if (!this.missingTable) {
-          console.error("MCP limit store table is missing (unmigrated schema): limits in memory");
+          this.logger.warn(
+            "MCP limit store table is missing (unmigrated schema): limits in memory",
+          );
         }
         this.missingTable = true;
         decision = await this.fallback.hit(`mcp:${key}`, windows, now);
       } else {
-        console.error(
-          `MCP rate-limit store failed, allowing the request: ${err instanceof Error ? err.name : "error"}`,
-        );
+        this.logger.error(`MCP rate-limit store failed, allowing the request: ${errorName(err)}`);
         return { allowed: true, limit: this.minute.limit, remaining: 0, resetSeconds: 60 };
       }
     }

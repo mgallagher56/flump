@@ -90,7 +90,9 @@ describe("FinanceController & FinanceService", () => {
       get: vi.fn().mockReturnValue(null),
     };
 
+    const mockAuditInsert = vi.fn().mockResolvedValue(undefined);
     withManager(mockAccountRepo, {
+      AuditEvent: { insert: mockAuditInsert },
       Account: mockAccountRepo,
       AccountDetail: mockAccountDetailRepo,
       Transaction: mockTransactionRepo,
@@ -111,6 +113,7 @@ describe("FinanceController & FinanceService", () => {
       controller,
       service,
       mockBankConnRepo,
+      mockAuditInsert,
       mockAccountRepo,
       mockAccountDetailRepo,
       mockTransactionRepo,
@@ -134,7 +137,7 @@ describe("FinanceController & FinanceService", () => {
   });
 
   it("handles account CRUD without seeding", async () => {
-    const { controller, mockAccountRepo, mockAccountDetailRepo } = createMocks();
+    const { controller, mockAccountRepo, mockAccountDetailRepo, mockAuditInsert } = createMocks();
     const req = { user: { id: "u1" } };
 
     // An empty repository yields no accounts and nothing is written
@@ -172,6 +175,9 @@ describe("FinanceController & FinanceService", () => {
     const delRes = await controller.deleteAccount(req, "acc-1");
     expect(delRes.success).toBe(true);
     expect(mockAccountDetailRepo.delete).toHaveBeenCalledWith({ accountId: "acc-1" });
+    expect(mockAuditInsert).toHaveBeenCalledWith(
+      expect.objectContaining({ userId: "u1", action: "account.deleted" }),
+    );
   });
 
   it("passes mortgage term fields through create and update, and rejects invalid ones", async () => {

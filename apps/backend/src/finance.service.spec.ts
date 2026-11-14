@@ -58,12 +58,14 @@ describe("FinanceService", () => {
       const { service, accountRepo, transactionRepo, accountDetailRepo } = createService();
       accountRepo.findOne.mockResolvedValue({ id: "acc-1", userId: "userA", balance: "0" });
       const inTransaction = vi.fn();
+      const auditInsert = vi.fn().mockResolvedValue(undefined);
       const em = {
         getRepository: (entity: { name: string }) =>
           ({
             Account: accountRepo,
             Transaction: transactionRepo,
             AccountDetail: accountDetailRepo,
+            AuditEvent: { insert: auditInsert },
           })[entity.name],
       };
       (accountRepo as any).manager = {
@@ -81,6 +83,9 @@ describe("FinanceService", () => {
       expect(transactionRepo.delete).toHaveBeenCalledWith({ accountId: "acc-1" });
       expect(accountDetailRepo.delete).toHaveBeenCalledWith({ accountId: "acc-1" });
       expect(accountRepo.remove).toHaveBeenCalledWith(expect.objectContaining({ id: "acc-1" }));
+      expect(auditInsert).toHaveBeenCalledWith(
+        expect.objectContaining({ userId: "userA", action: "account.deleted" }),
+      );
       const order = (fn: { mock: { invocationCallOrder: number[] } }) =>
         fn.mock.invocationCallOrder[0] ?? 0;
       expect(order(accountRepo.findOne)).toBeLessThan(order(transactionRepo.delete));

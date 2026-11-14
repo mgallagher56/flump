@@ -1,4 +1,8 @@
-import { anonymiseDescription, genericAccountLabel } from "./anonymise.js";
+import {
+  anonymiseDescription,
+  anonymousBudgetEntryLabels,
+  genericAccountLabel,
+} from "./anonymise.js";
 import {
   calculateDebtSchedule,
   compareAvalancheAndSnowball,
@@ -181,18 +185,20 @@ export function buildFlumpAiContextPack(
   }
 
   // 5. Budget & Runway Evaluation
-  let incomeOrdinal = 0;
-  const budgetEntries = (input.budgetEntries ?? []).map((entry, idx) => {
-    let name = entry.name;
-    if (isAnonymized) {
-      // Income names can carry an employer; use a generic label. Other names are scrubbed.
-      name = entry.isIncome ? `Income #${++incomeOrdinal}` : anonymiseDescription(entry.name);
-    }
+  // M-PRIV4: anonymised, no free-text entry name leaves: income becomes "Income #n" and every
+  // other entry its (scrubbed) category plus an ordinal, as the MCP budget tool does.
+  const rawBudgetEntries = input.budgetEntries ?? [];
+  const anonymousLabels = isAnonymized ? anonymousBudgetEntryLabels(rawBudgetEntries) : undefined;
+  const budgetEntries = rawBudgetEntries.map((entry, idx) => {
+    const name = anonymousLabels ? (anonymousLabels[idx] ?? "Budget entry") : entry.name;
     // Free-text notes can hold anything, so they are dropped when anonymised.
     const { notes, ...rest } = entry;
     return {
       ...rest,
       ...(isAnonymized || notes === undefined ? {} : { notes }),
+      ...(isAnonymized && typeof entry.category === "string"
+        ? { category: anonymiseDescription(entry.category) }
+        : {}),
       id: entry.id || `b_${idx}`,
       name,
     };

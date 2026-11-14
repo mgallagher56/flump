@@ -9,9 +9,11 @@ import { Account } from "../entities/account.entity";
 import { AccountDeletionTombstone } from "../entities/account-deletion-tombstone.entity";
 import { AccountDetail } from "../entities/account-detail.entity";
 import { AgentAuditEvent } from "../entities/agent-audit-event.entity";
+import { AuditEvent } from "../entities/audit-event.entity";
 import { BankConnection } from "../entities/bank-connection.entity";
 import { BankOAuthState } from "../entities/bank-oauth-state.entity";
 import { BudgetEntry } from "../entities/budget-entry.entity";
+import { Consent } from "../entities/consent.entity";
 import { IdempotencyKey } from "../entities/idempotency-key.entity";
 import { ImportBatch } from "../entities/import-batch.entity";
 import { McpToken } from "../entities/mcp-token.entity";
@@ -202,6 +204,17 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("user data (real Post
         responseBody: { name: `${label} saver SECRET-echo` },
         responseHeaders: { etag: '"1"' },
       }),
+    );
+    await m.save(
+      m.create(AuditEvent, {
+        userId,
+        action: "mcp_token.minted",
+        targetId: token.id,
+        metadata: { scopes: ["mcp:simulate"] },
+      }),
+    );
+    await m.save(
+      m.create(Consent, { userId, kind: "ai_access", version: "mcp:simulate", targetId: token.id }),
     );
     await m.save(
       m.create(UserProfile, {
@@ -562,10 +575,13 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("user data (real Post
       account_details: 0,
       accounts: 0,
       agent_audit_events: 1,
+      // BE-06: kept by a reset, plus the reset's own record; the consent is withdrawn, not deleted.
+      audit_events: 2,
       bank_connections: 0,
       bank_oauth_states: 0,
       budget_entries: 0,
       idempotency_keys: 0,
+      consents: 1,
       import_batches: 0,
       mcp_tokens: 0,
       snapshot_checkins: 0,

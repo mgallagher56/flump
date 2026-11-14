@@ -2,16 +2,70 @@ import { WRITE_STAGE_SCOPE as ContractWriteStageScope } from "@flump/api-contrac
 import { WRITE_STAGE_SCOPE } from "@flump/mcp";
 import { BadRequestException } from "@nestjs/common";
 import { describe, expect, it, vi } from "vitest";
+import { AuditEvent } from "../entities/audit-event.entity";
+import { Consent } from "../entities/consent.entity";
+import { McpToken } from "../entities/mcp-token.entity";
 import { McpTokenService } from "./mcp-token.service";
 
 function buildTokenService() {
   const repo = {
     create: (v: any) => ({ ...v }),
     save: vi.fn(async (v: any) => ({ id: "tok_new", createdAt: new Date(), ...v })),
+    manager: {} as any,
   };
+  const auditInsert = vi.fn(async () => undefined);
+  const consentInsert = vi.fn(async () => undefined);
+  const consentUpdate = vi.fn(async () => ({ affected: 1 }));
+  const tokenUpdate = vi.fn(async () => ({ affected: 1 }));
+  const m = {
+    getRepository: (entity: unknown) => {
+      if (entity === McpToken) return { save: repo.save, update: tokenUpdate };
+      if (entity === AuditEvent) return { insert: auditInsert };
+      if (entity === Consent) return { insert: consentInsert, update: consentUpdate };
+      throw new Error("unexpected repository");
+    },
+  };
+  repo.manager = { transaction: async (fn: (m: unknown) => unknown) => fn(m) };
   const service = new McpTokenService(repo as never);
-  return { service, repo };
+  return { service, repo, auditInsert, consentInsert, consentUpdate, tokenUpdate };
 }
+
+describe("McpTokenService audit trail (BE-06)", () => {
+  it("records mcp_token.minted and an ai_access consent when a token is created", async () => {
+    const { service, auditInsert, consentInsert } = buildTokenService();
+    await service.createPatToken("u1", "Cursor");
+    expect(auditInsert).toHaveBeenCalledWith(
+      expect.objectContaining({ userId: "u1", action: "mcp_token.minted" }),
+    );
+    expect(consentInsert).toHaveBeenCalledWith(
+      expect.objectContaining({ userId: "u1", kind: "ai_access", targetId: "tok_new" }),
+    );
+  });
+
+  it("records mcp_token.revoked and withdraws the consent when a token is revoked", async () => {
+    const { service, repo, auditInsert, consentUpdate, tokenUpdate } = buildTokenService();
+    (repo as any).findOne = vi.fn(async () => ({ id: "tok_1", userId: "u1", revokedAt: null }));
+    await service.revokeToken("u1", "tok_1");
+    expect(tokenUpdate).toHaveBeenCalled();
+    expect(auditInsert).toHaveBeenCalledWith(
+      expect.objectContaining({ action: "mcp_token.revoked" }),
+    );
+    expect(consentUpdate).toHaveBeenCalled();
+  });
+
+  it("writes nothing when the token is already revoked", async () => {
+    const { service, repo, auditInsert, consentUpdate, tokenUpdate } = buildTokenService();
+    (repo as any).findOne = vi.fn(async () => ({
+      id: "tok_1",
+      userId: "u1",
+      revokedAt: new Date(),
+    }));
+    await expect(service.revokeToken("u1", "tok_1")).resolves.toEqual({ success: true });
+    expect(tokenUpdate).not.toHaveBeenCalled();
+    expect(auditInsert).not.toHaveBeenCalled();
+    expect(consentUpdate).not.toHaveBeenCalled();
+  });
+});
 
 describe("McpTokenService.createPatToken lifecycle rules (E20-N16)", () => {
   it("defaults expiry to 90 days when none is given", async () => {

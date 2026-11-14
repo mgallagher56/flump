@@ -5,6 +5,7 @@ import { BackendError, callBackend } from "@flump/api-client";
 import { ContextPackResponse } from "@flump/api-contract";
 import type { BuildContextPackInput, FinancialBaseline } from "@flump/finance-engine";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { type McpLogger, stderrLogger } from "../logger.js";
 import { inMemoryQueries } from "../provider/in-memory.js";
 import { createFlumpMcpServer } from "../server.js";
 import type { McpUserDataProvider } from "../types.js";
@@ -58,6 +59,8 @@ export async function runStdio(
   env: Record<string, string | undefined>,
   fetchImpl: typeof fetch = fetch,
   connect: Connect = connectStdio,
+  // stdout carries the protocol here, so logs go to stderr only.
+  logger: McpLogger = stderrLogger,
 ): Promise<void> {
   const pat = env.FLUMP_PAT;
   if (!pat) throw new PatRejectedError();
@@ -115,6 +118,7 @@ export async function runStdio(
       type: "pat",
     },
     dataProvider,
+    logger,
   });
   await connect(server);
 }
@@ -123,7 +127,9 @@ const isMain =
   !!process.argv[1] && import.meta.url === pathToFileURL(realpathSync(process.argv[1])).href;
 if (isMain) {
   runStdio(process.env).catch((err) => {
-    console.error(err instanceof PatRejectedError ? err.message : `Flump MCP stdio failed: ${err}`);
+    stderrLogger.error(
+      err instanceof PatRejectedError ? err.message : `Flump MCP stdio failed: ${err}`,
+    );
     process.exit(1);
   });
 }

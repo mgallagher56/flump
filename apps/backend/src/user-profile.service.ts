@@ -13,6 +13,8 @@ import {
 } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { DataSource, type EntityTarget, In, type ObjectLiteral, Repository } from "typeorm";
+import { recordAuditEvent } from "./audit/audit-events";
+import { withdrawAllConsents } from "./audit/consents";
 import { preconditionFailed, withVersionClaim } from "./contract/etag";
 import { Account } from "./entities/account.entity";
 import { AccountDetail } from "./entities/account-detail.entity";
@@ -108,8 +110,10 @@ function moneyOrNull(value: unknown, field: string): number | null {
 
 /** The profile row as it goes on the wire (E21 contract): every key present, decimals as numbers. */
 function formatProfileRow(profile: UserProfile) {
+  // last_active_at is retention bookkeeping (BE-06), not part of the profile contract.
+  const { lastActiveAt: _lastActiveAt, ...rest } = profile;
   return {
-    ...profile,
+    ...rest,
     // Nullable columns with no DB default are absent from a just-inserted entity; pin them to
     // null so every response has the same keys (E21 contract).
     displayName: profile.displayName ?? null,
@@ -682,9 +686,19 @@ export class UserProfileService implements ProfileLifecycle {
 
     let outcome: { saved: UserProfile; counts: FinancialDataResetCounts };
     if (this.dataSource) {
-      outcome = await this.dataSource.transaction(async (manager) =>
-        performReset((entity) => manager.getRepository(entity)),
-      );
+      outcome = await this.dataSource.transaction(async (manager) => {
+        const result = await performReset((entity) => manager.getRepository(entity));
+        // BE-06: the reset revoked every AI token and bank connection, so their consents close,
+        // and the action is recorded in the same transaction.
+        await withdrawAllConsents(manager, { userId, kind: "ai_access" });
+        await withdrawAllConsents(manager, { userId, kind: "bank_access" });
+        await recordAuditEvent(manager, {
+          userId,
+          action: "financial_data.reset",
+          metadata: { removed: result.counts },
+        });
+        return result;
+      });
     } else {
       outcome = await performReset((entity) => injected.get(entity));
     }

@@ -109,7 +109,9 @@ describe("budget notes anonymisation (E17-N4)", () => {
       { anonymizeInstitutions: true },
     );
     expect(JSON.stringify(pack)).not.toContain("Landlord");
-    expect(pack.budgetSummary.entries[0]?.name).toBe("Rent via Bank");
+    // M-PRIV4 (BE-06): the free-text name becomes category plus ordinal.
+    expect(pack.budgetSummary.entries[0]?.name).toBe("housing #1");
+    expect(JSON.stringify(pack)).not.toContain("Rent via");
   });
 
   it("keeps notes when not anonymised", () => {

@@ -19,6 +19,8 @@ import {
   type UpdateAccountDto,
   type UpdateBalancesDto,
 } from "./account-intake.service";
+import { recordAuditEvent } from "./audit/audit-events";
+import { grantConsentOnce, withdrawConsent } from "./audit/consents";
 import { toPublicConnection } from "./bank-connection.public";
 import { revokeConnectionConsent } from "./bank-connection-consent";
 import { issueOAuthState, withPkceChallenge } from "./bank-connection-oauth";
@@ -235,26 +237,44 @@ export class FinanceService {
 
     // 1. Token-based auth: store the token (encrypted, bound to the connection id), then sync.
     if (token) {
-      // One connection per user and bank (unique index): a double-clicked connect reuses it.
-      const [row] = (await this.bankConnectionRepository.query(
-        `INSERT INTO "bank_connections" ("user_id", "institution_id", "institution_name", "status", "auth_type")
-         VALUES ($1, $2, $3, 'connected', 'token')
-         ON CONFLICT ("user_id", "institution_id") DO UPDATE SET "updated_at" = now()
-         RETURNING "id"`,
-        [userId, institutionId, institutionName],
-      )) as Array<{ id: string }>;
-      const id = (row as { id: string }).id;
-      // The token is bound to the row id (AAD), so it is written once the id is known.
-      await this.bankConnectionRepository.update(
-        { id, userId },
-        {
-          status: "connected",
-          authType: "token",
-          accessToken: BankSyncOrchestrator.encryptToken(token, accessTokenAad(id)),
-          refreshToken: null,
-          expiresAt: null,
-        },
-      );
+      // One transaction (BE-06): the connection, its stored token, the audit row (H12) and the
+      // bank-access consent (M-PRIV3) commit together, before the sync verifies the token.
+      const id = await this.bankConnectionRepository.manager.transaction(async (m) => {
+        // One connection per user and bank (unique index): a double-clicked connect reuses it.
+        const [row] = (await m.query(
+          `INSERT INTO "bank_connections" ("user_id", "institution_id", "institution_name", "status", "auth_type")
+           VALUES ($1, $2, $3, 'connected', 'token')
+           ON CONFLICT ("user_id", "institution_id") DO UPDATE SET "updated_at" = now()
+           RETURNING "id"`,
+          [userId, institutionId, institutionName],
+        )) as Array<{ id: string }>;
+        const connectionId = (row as { id: string }).id;
+        // The token is bound to the row id (AAD), so it is written once the id is known.
+        await m.getRepository(BankConnection).update(
+          { id: connectionId, userId },
+          {
+            status: "connected",
+            authType: "token",
+            accessToken: BankSyncOrchestrator.encryptToken(token, accessTokenAad(connectionId)),
+            refreshToken: null,
+            expiresAt: null,
+          },
+        );
+        // Every token stored is recorded; a reconnect of the same bank keeps its first consent.
+        await recordAuditEvent(m, {
+          userId,
+          action: "bank_connection.connected",
+          targetId: connectionId,
+          metadata: { institutionId, authType: "token" },
+        });
+        await grantConsentOnce(m, {
+          userId,
+          kind: "bank_access",
+          version: `${institutionId}:token`,
+          targetId: connectionId,
+        });
+        return connectionId;
+      });
 
       const result = await this.runSync(userId, id, provider);
       if (result.kind === "busy") throw new ConflictException(SYNC_BUSY_MESSAGE);
@@ -398,7 +418,19 @@ export class FinanceService {
     const outcome = this.providerRegistry
       ? await revokeConnectionConsent(this.providerRegistry, connection)
       : "no_token";
-    await this.bankSync().deleteConnectionData(connection.id, userId);
+    // BE-06: the audit row and consent withdrawal commit with the deletion.
+    await this.bankSync().deleteConnectionData(connection.id, userId, async (m) => {
+      await recordAuditEvent(m, {
+        userId,
+        action: "bank_connection.disconnected",
+        targetId: connection.id,
+        metadata: {
+          institutionId: connection.institutionId,
+          consentRevoked: outcome === "revoked",
+        },
+      });
+      await withdrawConsent(m, { userId, kind: "bank_access", targetId: connection.id });
+    });
     return { success: true, consentRevoked: outcome === "revoked" };
   }
 

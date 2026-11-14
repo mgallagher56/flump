@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { ToolAnnotations } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
+import { fireAudit } from "./audit.js";
 import {
   hasScopes,
   insufficientScopeMessage,
@@ -24,6 +25,7 @@ import {
   FlumpToolError,
   internalErrorBody,
 } from "./errors.js";
+import { stderrLogger } from "./logger.js";
 import type { McpServerContext } from "./types.js";
 
 export interface FlumpToolDefinition<I extends z.ZodRawShape, R extends z.ZodType> {
@@ -54,6 +56,46 @@ const DEFAULT_ANNOTATIONS: ToolAnnotations = {
 
 function authorized(ctx: McpServerContext, requirement: ScopeRequirement): boolean {
   return ctx.authorize ? ctx.authorize(requirement) : hasScopes(ctx.token.scopes, requirement);
+}
+
+type ValidateToolInput = (tool: unknown, args: unknown, toolName: string) => Promise<unknown>;
+
+/** Per server: what to run when the SDK rejects a call to one of our tools for schema-invalid input. */
+const schemaRejectionHooks = new WeakMap<McpServer, Map<string, (err: unknown) => void>>();
+
+/**
+ * The SDK validates `tools/call` input against the registered schema BEFORE our callback runs, so
+ * a rejected call never reaches `run`. This wraps the server's `validateToolInput` (private in the
+ * SDK's types, public at runtime) once per server, so such a rejection still writes its audit row
+ * (H12). It throws at registration if the SDK drops the method, instead of silently not auditing.
+ */
+function onSdkSchemaRejection(server: McpServer, name: string, hook: (err: unknown) => void) {
+  let hooks = schemaRejectionHooks.get(server);
+  if (!hooks) {
+    const target = server as unknown as { validateToolInput?: ValidateToolInput };
+    const original = target.validateToolInput;
+    if (typeof original !== "function") {
+      throw new Error(
+        "MCP SDK has no validateToolInput: schema-invalid tool calls would not be audited.",
+      );
+    }
+    const registry = new Map<string, (err: unknown) => void>();
+    target.validateToolInput = async function (this: unknown, tool, args, toolName) {
+      try {
+        return await original.call(this, tool, args, toolName);
+      } catch (err) {
+        try {
+          registry.get(toolName)?.(err);
+        } catch {
+          // Swallowed: auditing must never change the SDK's answer.
+        }
+        throw err;
+      }
+    };
+    hooks = registry;
+    schemaRejectionHooks.set(server, hooks);
+  }
+  hooks.set(name, hook);
 }
 
 /**
@@ -94,22 +136,16 @@ export function defineFlumpTool<I extends z.ZodRawShape, R extends z.ZodType>(
           outcome: "ok" | "error" | "denied",
           responseText: string,
           errorCode?: FlumpErrorBody["code"],
-        ) => {
-          try {
-            const pending = ctx.audit?.({
-              tool: definition.name,
-              outcome,
-              ...(errorCode ? { errorCode } : {}),
-              durationMs: Date.now() - started,
-              responseBytes: Buffer.byteLength(responseText, "utf8"),
-              scopesUsed,
-              ...(argsFingerprint ? { argsFingerprint } : {}),
-            });
-            if (pending) pending.catch(() => {});
-          } catch {
-            // Swallowed.
-          }
-        };
+        ) =>
+          fireAudit(ctx.audit, {
+            tool: definition.name,
+            outcome,
+            ...(errorCode ? { errorCode } : {}),
+            durationMs: Date.now() - started,
+            responseBytes: Buffer.byteLength(responseText, "utf8"),
+            scopesUsed,
+            ...(argsFingerprint ? { argsFingerprint } : {}),
+          });
         const fail = (body: FlumpErrorBody) => {
           const result = errorResult(body);
           report(
@@ -178,10 +214,32 @@ export function defineFlumpTool<I extends z.ZodRawShape, R extends z.ZodType>(
           if (err instanceof FlumpToolError) return fail(err.toBody());
           // No message, stack or input leaves the handler: only a correlation id.
           const body = internalErrorBody(randomUUID());
-          console.error(`[flump-mcp] tool ${definition.name} failed (${body.correlationId})`);
+          (ctx.logger ?? stderrLogger).error(
+            `[flump-mcp] tool ${definition.name} failed (${body.correlationId})`,
+          );
           return fail(body);
         }
       };
+
+      // H12: one `error` row (INVALID_ARGUMENT, no fingerprint) for a call the SDK rejects.
+      onSdkSchemaRejection(server, definition.name, (err) => {
+        const started = Date.now();
+        const responseText = err instanceof Error ? err.message : String(err);
+        getContext()
+          .then((ctx) =>
+            fireAudit(ctx.audit, {
+              tool: definition.name,
+              outcome: "error",
+              errorCode: "INVALID_ARGUMENT",
+              durationMs: Date.now() - started,
+              responseBytes: Buffer.byteLength(responseText, "utf8"),
+              scopesUsed: [...requirement.anyOf, ...requirement.allOf].filter((s) =>
+                ctx.token.scopes.includes(s),
+              ),
+            }),
+          )
+          .catch(() => {});
+      });
 
       const registered = server.registerTool(
         definition.name,
@@ -194,7 +252,8 @@ export function defineFlumpTool<I extends z.ZodRawShape, R extends z.ZodType>(
         },
         // The SDK validates input against `inputSchema` BEFORE this callback runs, so a client sending
         // schema-invalid input gets the SDK's plain-text "Input validation error" (which may echo
-        // unrecognised keys), not our INVALID_ARGUMENT JSON, and the call is not audited. The strict
+        // unrecognised keys), not our INVALID_ARGUMENT JSON; `onSdkSchemaRejection` above still
+        // writes its audit row. The strict
         // schema stays registered so tools/list advertises it; that list is not scope-filtered, so
         // validating before the scope check reveals nothing new. `run` re-validates for direct
         // invocation and semantic checks.

@@ -4,12 +4,12 @@ import { APP_INTERCEPTOR } from "@nestjs/core";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { AccountIntakeService } from "./account-intake.service";
 import { AgentAuditService } from "./agent/agent-audit.service";
-import { AgentAuditPurgeScheduler } from "./agent/agent-audit-purge.scheduler";
 import { AgentDataService } from "./agent/agent-data.service";
 import { McpImportsAdapter } from "./agent/mcp-imports.adapter";
 import { McpTokenService } from "./agent/mcp-token.service";
 import { AppController } from "./app.controller";
 import { AppService } from "./app.service";
+import { LastActiveInterceptor } from "./audit/last-active.interceptor";
 import { AuthModule } from "./auth/auth.module";
 import { ERASED_ACCOUNT_CHECK } from "./auth/erased-account";
 import { BudgetController } from "./budget.controller";
@@ -79,7 +79,6 @@ import { UserProfileService } from "./user-profile.service";
     SnapshotsService,
     ImportsService,
     AgentAuditService,
-    AgentAuditPurgeScheduler,
     McpImportsAdapter,
     UserProfileService,
     AccountDeletionService,
@@ -100,6 +99,8 @@ import { UserProfileService } from "./user-profile.service";
     { provide: APP_INTERCEPTOR, useClass: ContractShadowInterceptor },
     // After the contract interceptor, so the key's hash is over the parsed request body.
     { provide: APP_INTERCEPTOR, useClass: IdempotencyInterceptor },
+    // BE-06: last_active_at for the 24-month inactive-account rule (D4).
+    { provide: APP_INTERCEPTOR, useClass: LastActiveInterceptor },
     {
       provide: USER_IDENTITY_ADAPTER,
       useClass: WorkOSIdentityAdapter,

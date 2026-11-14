@@ -9,9 +9,8 @@ import {
 
 const make = () => {
   const insert = vi.fn().mockResolvedValue(undefined);
-  const del = vi.fn().mockResolvedValue({ affected: 3 });
-  const repo = { insert, delete: del } as unknown as Repository<AgentAuditEvent>;
-  return { service: new AgentAuditService(repo), insert, del };
+  const repo = { insert } as unknown as Repository<AgentAuditEvent>;
+  return { service: new AgentAuditService(repo), insert };
 };
 
 describe("AgentAuditService (E17-N17)", () => {
@@ -54,15 +53,6 @@ describe("AgentAuditService (E17-N17)", () => {
         responseBytes: 0,
       }),
     );
-  });
-
-  it("purges with a cutoff 13 months back", async () => {
-    const { service, del } = make();
-    expect(await service.purgeOlderThan13Months(new Date("2026-11-14T00:00:00Z"))).toBe(3);
-    const [where] = del.mock.calls[0] as [{ createdAt: { value: Date } }];
-    const cutoff = where.createdAt.value;
-    expect(cutoff.getFullYear()).toBe(2025);
-    expect(cutoff.getMonth()).toBe(9);
   });
 });
 

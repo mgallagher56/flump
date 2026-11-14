@@ -87,14 +87,32 @@ describe("McpTokenService.recordRequest (E17-N6)", () => {
     const qb: any = {};
     for (const m of ["update", "set", "where", "setParameter"]) qb[m] = vi.fn(() => qb);
     qb.execute = vi.fn().mockResolvedValue(undefined);
-    const repo = { createQueryBuilder: vi.fn(() => qb) };
+    const query = vi.fn().mockResolvedValue([]);
+    const repo = { createQueryBuilder: vi.fn(() => qb), query };
     const service = new McpTokenService(repo as never);
     await service.recordRequest("tok_1", 3);
+    // BE-06: AI-connection use marks the owner active (at most daily), keyed by the token id.
+    expect(query).toHaveBeenCalledWith(expect.stringContaining('"last_active_at" = now()'), [
+      "tok_1",
+    ]);
     const set = qb.set.mock.calls[0][0];
     expect(set.totalToolCalls()).toBe("total_tool_calls + :n");
     expect(set.lastUsedAt()).toBe("now()");
     expect(qb.setParameter).toHaveBeenCalledWith("n", 3);
     expect(qb.where).toHaveBeenCalledWith("id = :id", { id: "tok_1" });
     expect(qb.execute).toHaveBeenCalledTimes(1);
+  });
+
+  it("never fails the MCP request when the activity write fails", async () => {
+    const qb: any = {};
+    for (const m of ["update", "set", "where", "setParameter"]) qb[m] = vi.fn(() => qb);
+    qb.execute = vi.fn().mockResolvedValue(undefined);
+    const repo = {
+      createQueryBuilder: vi.fn(() => qb),
+      query: vi.fn().mockRejectedValue(new Error("x")),
+    };
+    await expect(
+      new McpTokenService(repo as never).recordRequest("tok_1", 1),
+    ).resolves.toBeUndefined();
   });
 });

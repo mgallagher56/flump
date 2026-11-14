@@ -7,6 +7,7 @@ import type {
 } from "@flump/finance-engine";
 import type { ScopeRequirement } from "./auth/scopes.js";
 import type { VerifiedToken } from "./auth/token-verifier.js";
+import type { McpLogger } from "./logger.js";
 
 /** One stored monthly value (`account_details`), as the ranged reads return it. */
 export interface AccountSnapshotRow {
@@ -160,6 +161,10 @@ export interface McpImportProvider {
  * optional keyed fingerprint of the arguments, made by the context's `fingerprintArgs`.
  */
 export interface McpAuditEvent {
+  /**
+   * The tool name, or for a prompt or resource read a fixed identifier such as `prompt_get_...`
+   * or `resource_read_...` (always matches `/^[a-z][a-z0-9_]{0,63}$/`, never user data).
+   */
   tool: string;
   outcome: "ok" | "error" | "denied";
   errorCode?: string;
@@ -187,4 +192,6 @@ export interface McpServerContext {
   fingerprintArgs?: (args: unknown) => string | null;
   /** Optional audit sink; failures are swallowed. */
   audit?: (event: McpAuditEvent) => void | Promise<void>;
+  /** Where tool failures are logged (L6). Default: stderr. */
+  logger?: McpLogger;
 }

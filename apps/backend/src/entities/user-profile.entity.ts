@@ -2,6 +2,7 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  Index,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from "typeorm";
@@ -288,6 +289,14 @@ export class UserProfile {
     transformer: numericTransformer,
   })
   monthlyOtherOutgoings: number | null;
+
+  /**
+   * Last authenticated request, at day precision (BE-06, ruling D4: accounts inactive for 24 months
+   * are due for erasure). Written by LastActiveInterceptor; new rows start at now().
+   */
+  @Index("IDX_user_profiles_last_active_at")
+  @Column({ name: "last_active_at", type: "timestamptz", default: () => "now()" })
+  lastActiveAt: Date;
 
   @CreateDateColumn({ name: "created_at", type: "timestamptz" })
   createdAt: Date;
