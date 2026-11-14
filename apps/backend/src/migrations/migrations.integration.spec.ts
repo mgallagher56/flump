@@ -9,7 +9,7 @@ import { AccountDetailsUserMonthIndex1794357300000 } from "./AccountDetailsUserM
 import { AddAccountStudentLoanPlanAndCurrencyDefault1794355800000 } from "./AddAccountStudentLoanPlanAndCurrencyDefault1794355800000";
 import { AddMortgageTermColumns1794355600000 } from "./AddMortgageTermColumns1794355600000";
 import { AddProfileFacts1794355723000 } from "./AddProfileFacts1794355723000";
-import { AddUserIdIndexes1794357420000, USER_ID_INDEXES } from "./AddUserIdIndexes1794357420000";
+import { AddUserIdIndexes1794358100000, USER_ID_INDEXES } from "./AddUserIdIndexes1794358100000";
 import { BackfillAnnualTaxRecordEndDate1794355900000 } from "./BackfillAnnualTaxRecordEndDate1794355900000";
 import { Baseline1794355200000 } from "./Baseline1794355200000";
 import { ClearBankTokens1794355300000 } from "./ClearBankTokens1794355300000";
@@ -1048,7 +1048,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
     });
   });
 
-  describe("AddUserIdIndexes1794357420000", () => {
+  describe("AddUserIdIndexes1794358100000", () => {
     const NAMES = USER_ID_INDEXES.map((i) => i.name).sort();
 
     const userIdIndexes = async (): Promise<{ name: string; def: string; valid: boolean }[]> =>
@@ -1071,12 +1071,12 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
         );
       }
 
-      await undoThrough("AddUserIdIndexes1794357420000");
+      await undoThrough("AddUserIdIndexes1794358100000");
       expect(await userIdIndexes()).toEqual([]);
     });
 
     it("runs outside a transaction, as CREATE INDEX CONCURRENTLY requires", () => {
-      expect(new AddUserIdIndexes1794357420000().transaction).toBe(false);
+      expect(new AddUserIdIndexes1794358100000().transaction).toBe(false);
     });
 
     it("rebuilds an index a crashed concurrent build left INVALID", async () => {
@@ -1089,11 +1089,11 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
       ).toBe(false);
 
       // A crash mid-build never records the migration, so the next boot runs up() again.
-      await ds.query("DELETE FROM migrations WHERE name = 'AddUserIdIndexes1794357420000'");
+      await ds.query("DELETE FROM migrations WHERE name = 'AddUserIdIndexes1794358100000'");
 
       const runner = ds.createQueryRunner();
       try {
-        await new AddUserIdIndexes1794357420000().up(runner);
+        await new AddUserIdIndexes1794358100000().up(runner);
         // The pool's limits are back on the connection afterwards.
         expect(await runner.query("SHOW statement_timeout")).toEqual([
           { statement_timeout: "10s" },

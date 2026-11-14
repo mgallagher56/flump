@@ -30,6 +30,13 @@ const INDIRECT: Record<string, (typeof APPS)[number][]> = {
   SENTRY_DSN: ["backend", "web"],
   SENTRY_ENVIRONMENT: ["backend", "web"],
   LOG_FORMAT: ["backend"],
+  // Read by name from POOL_SETTINGS in apps/backend/src/config/db.config.ts.
+  DB_POOL_MAX: ["backend"],
+  DB_POOL_CONNECTION_TIMEOUT_MS: ["backend"],
+  DB_POOL_IDLE_TIMEOUT_MS: ["backend"],
+  DB_STATEMENT_TIMEOUT_MS: ["backend"],
+  DB_LOCK_TIMEOUT_MS: ["backend"],
+  DB_IDLE_IN_TRANSACTION_TIMEOUT_MS: ["backend"],
 };
 
 const SECTION_HEADING: Record<(typeof APPS)[number], string> = {

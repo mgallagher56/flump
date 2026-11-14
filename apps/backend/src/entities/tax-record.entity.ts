@@ -8,7 +8,7 @@ import {
 } from "typeorm";
 import { numericTransformer } from "./numeric.transformer";
 
-// A user's tax records by date, newest first (scanned backwards). (AddUserIdIndexes1794357420000)
+// A user's tax records by date, newest first (scanned backwards). (AddUserIdIndexes1794358100000)
 @Index("IDX_tax_records_user_date", ["userId", "date"])
 @Entity("tax_records")
 export class TaxRecord {

@@ -1,7 +1,7 @@
 import { Check, Column, CreateDateColumn, Entity, Index, PrimaryGeneratedColumn } from "typeorm";
 import { numericTransformer } from "./numeric.transformer";
 
-// Every page loads a user's accounts in creation order. (AddUserIdIndexes1794357420000)
+// Every page loads a user's accounts in creation order. (AddUserIdIndexes1794358100000)
 @Index("IDX_accounts_user_created", ["userId", "createdAt"])
 @Entity("accounts")
 // BE-05 stored-balance rule (migration LiabilitySignRule1794358050000). Declared here too so a

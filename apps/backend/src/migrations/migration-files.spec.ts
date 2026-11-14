@@ -16,7 +16,7 @@ describe("migration file names", () => {
     // before waiting on the lock, which the helpers do (see takeMigrationLock).
     const newer = readdirSync(__dirname).filter((f) => {
       const stamp = f.match(/(\d{13})\.ts$/)?.[1];
-      return !f.endsWith(".spec.ts") && stamp !== undefined && stamp > "1794357420000";
+      return !f.endsWith(".spec.ts") && stamp !== undefined && stamp > "1794358100000";
     });
     for (const file of newer) {
       const source = readFileSync(join(__dirname, file), "utf8");

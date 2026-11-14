@@ -49,19 +49,24 @@ export const USER_ID_INDEXES = [
  * down() runs inside the transaction TypeORM opens for a revert, so it uses a plain DROP INDEX:
  * that takes an ACCESS EXCLUSIVE lock, but only for the moment it takes to drop the index.
  */
-export class AddUserIdIndexes1794357420000 implements MigrationInterface {
-  name = "AddUserIdIndexes1794357420000";
+export class AddUserIdIndexes1794358100000 implements MigrationInterface {
+  name = "AddUserIdIndexes1794358100000";
   transaction = false;
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     await withSessionMigrationLock(queryRunner, async () => {
       // Another instance may have finished this migration while we waited for the lock; TypeORM
       // computed its pending list before that, so skip rather than build again and record twice.
-      const recorded: unknown[] = await queryRunner.query(
-        "SELECT 1 FROM migrations WHERE name = $1",
-        [this.name],
+      const [{ present }] = await queryRunner.query(
+        "SELECT to_regclass('migrations') IS NOT NULL AS present",
       );
-      if (recorded.length > 0) return;
+      if (present) {
+        const recorded: unknown[] = await queryRunner.query(
+          "SELECT 1 FROM migrations WHERE name = $1",
+          [this.name],
+        );
+        if (recorded.length > 0) return;
+      }
       for (const index of USER_ID_INDEXES) {
         const invalid: unknown[] = await queryRunner.query(
           `SELECT 1 FROM pg_index i
