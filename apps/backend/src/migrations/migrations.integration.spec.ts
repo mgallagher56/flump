@@ -9,6 +9,7 @@ import { AccountDetailsUserMonthIndex1794357300000 } from "./AccountDetailsUserM
 import { AddAccountStudentLoanPlanAndCurrencyDefault1794355800000 } from "./AddAccountStudentLoanPlanAndCurrencyDefault1794355800000";
 import { AddMortgageTermColumns1794355600000 } from "./AddMortgageTermColumns1794355600000";
 import { AddProfileFacts1794355723000 } from "./AddProfileFacts1794355723000";
+import { AddUserIdIndexes1794357420000, USER_ID_INDEXES } from "./AddUserIdIndexes1794357420000";
 import { BackfillAnnualTaxRecordEndDate1794355900000 } from "./BackfillAnnualTaxRecordEndDate1794355900000";
 import { Baseline1794355200000 } from "./Baseline1794355200000";
 import { ClearBankTokens1794355300000 } from "./ClearBankTokens1794355300000";
@@ -212,7 +213,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
   });
 
   it("clears tokens on every connection and keeps disconnected ones disconnected", async () => {
-    await ds.runMigrations({ transaction: "all" });
+    await ds.runMigrations();
     // Re-open the window: forget the clear migration so it runs against seeded rows.
     await ds.query("DELETE FROM migrations WHERE name = 'ClearBankTokens1794355300000'");
     await insertConnections([
@@ -1044,6 +1045,91 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
       const after = await indexNames();
       expect(after).toContain("IDX_account_details_user");
       expect(after).not.toContain("IDX_account_details_user_account_year_month");
+    });
+  });
+
+  describe("AddUserIdIndexes1794357420000", () => {
+    const NAMES = USER_ID_INDEXES.map((i) => i.name).sort();
+
+    const userIdIndexes = async (): Promise<{ name: string; def: string; valid: boolean }[]> =>
+      ds.query(
+        `SELECT c.relname AS name, pg_get_indexdef(i.indexrelid) AS def, i.indisvalid AS valid
+         FROM pg_index i JOIN pg_class c ON c.oid = i.indexrelid
+         WHERE c.relname = ANY($1) ORDER BY c.relname`,
+        [NAMES],
+      );
+
+    it("builds every index, valid and with the planned columns; down() drops them all", async () => {
+      await ds.runMigrations();
+      const built = await userIdIndexes();
+      expect(built.map((b) => b.name)).toEqual(NAMES);
+      for (const index of USER_ID_INDEXES) {
+        const row = built.find((b) => b.name === index.name);
+        expect(row?.valid).toBe(true);
+        expect(row?.def.replaceAll('"', "")).toContain(
+          `ON public.${index.table} USING btree (${index.columns.join(", ")})`,
+        );
+      }
+
+      await undoThrough("AddUserIdIndexes1794357420000");
+      expect(await userIdIndexes()).toEqual([]);
+    });
+
+    it("runs outside a transaction, as CREATE INDEX CONCURRENTLY requires", () => {
+      expect(new AddUserIdIndexes1794357420000().transaction).toBe(false);
+    });
+
+    it("rebuilds an index a crashed concurrent build left INVALID", async () => {
+      await ds.runMigrations();
+      await ds.query(
+        "UPDATE pg_index SET indisvalid = false WHERE indexrelid = '\"IDX_transactions_account\"'::regclass",
+      );
+      expect(
+        (await userIdIndexes()).find((b) => b.name === "IDX_transactions_account")?.valid,
+      ).toBe(false);
+
+      const runner = ds.createQueryRunner();
+      try {
+        await new AddUserIdIndexes1794357420000().up(runner);
+        // The pool's limits are back on the connection afterwards.
+        expect(await runner.query("SHOW statement_timeout")).toEqual([
+          { statement_timeout: "10s" },
+        ]);
+        expect(await runner.query("SHOW lock_timeout")).toEqual([{ lock_timeout: "5s" }]);
+      } finally {
+        await runner.release();
+      }
+      expect((await userIdIndexes()).every((b) => b.valid)).toBe(true);
+    });
+  });
+
+  // The catalog twin of src/entities/table-laws.spec.ts: what the migrations really built.
+  describe("table laws on the migrated schema", () => {
+    it("every user_id column leads an index (unique and primary keys count)", async () => {
+      await ds.runMigrations();
+      const missing: { table_name: string }[] = await ds.query(
+        `SELECT c.table_name FROM information_schema.columns c
+         WHERE c.table_schema = 'public' AND c.column_name = 'user_id'
+           AND NOT EXISTS (
+             SELECT 1 FROM pg_index i
+             JOIN pg_attribute a ON a.attrelid = i.indrelid AND a.attnum = i.indkey[0]
+             WHERE i.indrelid = format('public.%I', c.table_name)::regclass AND a.attname = 'user_id'
+           )
+         ORDER BY c.table_name`,
+      );
+      expect(missing).toEqual([]);
+    });
+
+    it("every foreign key's first column leads an index", async () => {
+      await ds.runMigrations();
+      const missing: { constraint: string }[] = await ds.query(
+        `SELECT con.conname AS constraint FROM pg_constraint con
+         WHERE con.contype = 'f' AND con.connamespace = 'public'::regnamespace
+           AND NOT EXISTS (
+             SELECT 1 FROM pg_index i WHERE i.indrelid = con.conrelid AND i.indkey[0] = con.conkey[1]
+           )`,
+      );
+      expect(missing).toEqual([]);
     });
   });
 

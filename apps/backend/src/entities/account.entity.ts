@@ -1,6 +1,8 @@
-import { Check, Column, CreateDateColumn, Entity, PrimaryGeneratedColumn } from "typeorm";
+import { Check, Column, CreateDateColumn, Entity, Index, PrimaryGeneratedColumn } from "typeorm";
 import { numericTransformer } from "./numeric.transformer";
 
+// Every page loads a user's accounts in creation order. (AddUserIdIndexes1794357420000)
+@Index("IDX_accounts_user_created", ["userId", "createdAt"])
 @Entity("accounts")
 // BE-05 stored-balance rule (migration LiabilitySignRule1794358050000). Declared here too so a
 // synchronize-built dev database keeps it instead of dropping it as an unknown check.

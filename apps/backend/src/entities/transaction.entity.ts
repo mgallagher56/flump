@@ -1,6 +1,10 @@
-import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, Index, PrimaryGeneratedColumn } from "typeorm";
 import { numericTransformer } from "./numeric.transformer";
 
+// Lists a user's transactions newest first (finance.service getTransactions, agent queries). (AddUserIdIndexes1794357420000)
+@Index("IDX_transactions_user_timestamp", ["userId", "timestamp"])
+// Per-account reads and deletes, and the import revert NOT EXISTS check. (AddUserIdIndexes1794357420000)
+@Index("IDX_transactions_account", ["accountId"])
 @Entity("transactions")
 export class Transaction {
   @PrimaryGeneratedColumn("uuid")

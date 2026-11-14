@@ -1,3 +1,4 @@
+import "./config/timezone";
 import "./instrument";
 import "reflect-metadata";
 import { ConfigService } from "@nestjs/config";

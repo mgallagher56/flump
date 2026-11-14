@@ -55,4 +55,26 @@ describe("typeOrmOptionsFromEnv", () => {
     expect(o.ssl).toBe(false);
     expect(o.synchronize).toBe(false);
   });
+
+  it("runs each migration in its own transaction so one can opt out", () => {
+    const o = typeOrmOptionsFromEnv({ NODE_ENV: "development" }) as Record<string, unknown>;
+    expect(o.migrationsTransactionMode).toBe("each");
+  });
+
+  it("hands the pool limits and a UTC session to pg", () => {
+    const o = typeOrmOptionsFromEnv({
+      NODE_ENV: "development",
+      DB_POOL_MAX: "7",
+      DB_LOCK_TIMEOUT_MS: "2000",
+    }) as { extra: Record<string, unknown> };
+    expect(o.extra).toEqual({
+      max: 7,
+      connectionTimeoutMillis: 5_000,
+      idleTimeoutMillis: 30_000,
+      statement_timeout: 10_000,
+      lock_timeout: 2_000,
+      idle_in_transaction_session_timeout: 30_000,
+      options: "-c TimeZone=UTC",
+    });
+  });
 });
