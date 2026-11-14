@@ -24,7 +24,8 @@ export const homeLogoLink = cva({
       bottom: "-6px",
       height: "3px",
       borderRadius: "full",
-      backgroundColor: "primary",
+      // A graphic-only fill (no text on it).
+      backgroundColor: "chart.primary",
     },
     _navWide: { '&[aria-current="page"]::after': { display: "none" } },
   },
