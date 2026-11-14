@@ -3,7 +3,7 @@ import { expect, fn, userEvent, within } from "storybook/test";
 import { UnsavedChangesDialog } from "./UnsavedChangesDialog";
 
 const meta: Meta<typeof UnsavedChangesDialog> = {
-  title: "3. Financial Patterns & Sections/Settings/UnsavedChangesDialog",
+  title: "3. Patterns/Settings/UnsavedChangesDialog",
   component: UnsavedChangesDialog,
   args: { open: true, onDiscard: fn(), onKeepEditing: fn() },
 };

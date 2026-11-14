@@ -14,7 +14,7 @@ const Stateful = ({ initial }: { initial: DepositTimelineValues }) => {
 };
 
 const meta: Meta<typeof Stateful> = {
-  title: "3. Financial Patterns & Sections/DepositTimeline",
+  title: "3. Patterns/Savings/DepositTimeline",
   component: Stateful,
   parameters: { layout: "padded" },
   args: { initial: { targetDeposit: null, monthlySaving: 400, startingAmount: 5000 } },

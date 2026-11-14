@@ -3,7 +3,7 @@ import { expect, fn, userEvent, within } from "storybook/test";
 import MobileNavDrawer from "./MobileNavDrawer";
 
 const meta: Meta<typeof MobileNavDrawer> = {
-  title: "Navigation/MobileNavDrawer",
+  title: "3. Patterns/Navigation/MobileNavDrawer",
   component: MobileNavDrawer,
   tags: ["autodocs"],
   parameters: { layout: "fullscreen", viewport: { defaultViewport: "mobile1" } },

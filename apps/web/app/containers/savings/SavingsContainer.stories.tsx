@@ -27,7 +27,7 @@ const loaderData = {
 };
 
 const meta: Meta<typeof SavingsContainer> = {
-  title: "Screens/Savings",
+  title: "6. Pages/Savings",
   component: SavingsContainer,
   parameters: { layout: "fullscreen", router: { loaderData } },
 };

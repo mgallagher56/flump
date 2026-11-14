@@ -7,7 +7,7 @@ const at = (pathname: string) => ({
 });
 
 const meta: Meta<typeof AppBottomBar> = {
-  title: "Navigation/AppBottomBar",
+  title: "3. Patterns/Navigation/AppBottomBar",
   component: AppBottomBar,
   parameters: { layout: "fullscreen", viewport: { defaultViewport: "mobile1" } },
 };

@@ -3,7 +3,7 @@ import { expect, fn, userEvent, within } from "storybook/test";
 import { AddCategoryModal } from "./AddCategoryModal";
 
 const meta: Meta<typeof AddCategoryModal> = {
-  title: "3. Financial Patterns & Sections/Budget/AddCategoryModal",
+  title: "3. Patterns/Budget/AddCategoryModal",
   component: AddCategoryModal,
   parameters: { layout: "padded" },
   args: {

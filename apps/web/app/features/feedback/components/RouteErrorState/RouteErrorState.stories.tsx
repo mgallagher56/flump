@@ -3,7 +3,7 @@ import { expect, fn, userEvent, within } from "storybook/test";
 import { RouteErrorState } from "./RouteErrorState";
 
 const meta: Meta<typeof RouteErrorState> = {
-  title: "3. Financial Patterns & Sections/RouteErrorState",
+  title: "3. Patterns/Feedback/RouteErrorState",
   component: RouteErrorState,
   // The Storybook decorator renders every story side by side in Light and Dark by default.
   parameters: { layout: "padded" },

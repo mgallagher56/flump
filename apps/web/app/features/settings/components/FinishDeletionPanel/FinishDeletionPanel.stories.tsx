@@ -3,7 +3,7 @@ import { expect, fn, userEvent, within } from "storybook/test";
 import { FinishDeletionPanel } from "./FinishDeletionPanel";
 
 const meta: Meta<typeof FinishDeletionPanel> = {
-  title: "3. Financial Patterns & Sections/Settings/FinishDeletionPanel",
+  title: "3. Patterns/Settings/FinishDeletionPanel",
   component: FinishDeletionPanel,
   args: { status: "idle", onConfirm: fn() },
   parameters: { layout: "padded" },

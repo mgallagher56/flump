@@ -3,7 +3,7 @@ import { expect, screen, userEvent } from "storybook/test";
 import ConnectBankWizard from "./ConnectBankWizard";
 
 const meta: Meta<typeof ConnectBankWizard> = {
-  title: "Dialogs/ConnectBankWizard",
+  title: "3. Patterns/Dialogs/ConnectBankWizard",
   component: ConnectBankWizard,
 };
 

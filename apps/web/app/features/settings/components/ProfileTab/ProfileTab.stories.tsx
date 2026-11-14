@@ -4,7 +4,7 @@ import { DEFAULT_PROFILE } from "~/hooks/useUserProfile";
 import { ProfileTab } from "./ProfileTab";
 
 const meta: Meta<typeof ProfileTab> = {
-  title: "3. Financial Patterns & Sections/Settings/ProfileTab",
+  title: "3. Patterns/Settings/ProfileTab",
   component: ProfileTab,
   parameters: { layout: "padded" },
   args: {

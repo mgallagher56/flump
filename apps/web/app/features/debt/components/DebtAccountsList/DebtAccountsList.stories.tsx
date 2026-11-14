@@ -25,7 +25,7 @@ const debts: DebtItem[] = [
 ];
 
 const meta: Meta<typeof DebtAccountsList> = {
-  title: "3. Financial Patterns & Sections/DebtAccountsList",
+  title: "3. Patterns/Debt/DebtAccountsList",
   component: DebtAccountsList,
   parameters: { layout: "padded" },
   args: { debts, onDeleteDebt: fn(), onUpdateDebt: fn() },

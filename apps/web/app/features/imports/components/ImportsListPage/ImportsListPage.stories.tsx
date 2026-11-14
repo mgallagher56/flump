@@ -4,7 +4,7 @@ import { BATCH_LIST } from "../../fixtures";
 import { ImportsListPage } from "./ImportsListPage";
 
 const meta: Meta<typeof ImportsListPage> = {
-  title: "4. Pages/Imports/ImportsListPage",
+  title: "6. Pages/Imports/ImportsListPage",
   component: ImportsListPage,
   parameters: { layout: "fullscreen" },
   args: { batches: BATCH_LIST },

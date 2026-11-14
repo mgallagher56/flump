@@ -8,7 +8,7 @@ const pair = buildSnapshotHistory(EXAMPLE_ACCOUNTS, exampleDetails(TWO_MONTHS), 
 const trend = buildSnapshotHistory(EXAMPLE_ACCOUNTS, exampleDetails(TREND_MONTHS), "2026-11");
 
 const meta: Meta<typeof MonthlyChangeTable> = {
-  title: "3. Financial Patterns & Sections/Snapshot/MonthlyChangeTable",
+  title: "3. Patterns/Snapshot/MonthlyChangeTable",
   component: MonthlyChangeTable,
   parameters: { layout: "padded" },
 };

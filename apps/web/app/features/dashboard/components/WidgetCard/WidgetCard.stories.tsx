@@ -5,7 +5,7 @@ import { SampleModeProvider } from "~/context/SampleModeContext";
 import { WidgetCard } from "./WidgetCard";
 
 const meta: Meta<typeof WidgetCard> = {
-  title: "3. Financial Patterns & Sections/WidgetCard",
+  title: "3. Patterns/Dashboard/WidgetCard",
   component: WidgetCard,
   parameters: { layout: "padded" },
   args: {

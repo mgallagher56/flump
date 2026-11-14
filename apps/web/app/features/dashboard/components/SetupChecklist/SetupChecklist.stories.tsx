@@ -13,7 +13,7 @@ const incomplete = {
 };
 
 const meta: Meta<typeof SetupChecklist> = {
-  title: "3. Financial Patterns & Sections/SetupChecklist",
+  title: "3. Patterns/Dashboard/SetupChecklist",
   component: SetupChecklist,
   parameters: { layout: "padded" },
   args: incomplete,

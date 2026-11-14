@@ -4,7 +4,7 @@ import { PaymentsOnAccountCard } from "./PaymentsOnAccountCard";
 
 /** The Storybook preview renders every story side by side in light and dark. */
 const meta: Meta<typeof PaymentsOnAccountCard> = {
-  title: "Tax/PaymentsOnAccountCard",
+  title: "3. Patterns/Tax/PaymentsOnAccountCard",
   component: PaymentsOnAccountCard,
   tags: ["autodocs"],
   args: { annualSelfAssessmentTax: 4800, taxYear: "2026/27" },

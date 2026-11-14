@@ -3,7 +3,7 @@ import { expect, fn, within } from "storybook/test";
 import { OverpaymentSimulator } from "./OverpaymentSimulator";
 
 const meta: Meta<typeof OverpaymentSimulator> = {
-  title: "3. Financial Patterns & Sections/OverpaymentSimulator",
+  title: "5. Calculators/Mortgage/OverpaymentSimulator",
   component: OverpaymentSimulator,
   parameters: {
     layout: "padded",

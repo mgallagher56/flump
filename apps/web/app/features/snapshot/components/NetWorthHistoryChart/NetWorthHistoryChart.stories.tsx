@@ -8,7 +8,7 @@ const trend = buildSnapshotHistory(EXAMPLE_ACCOUNTS, exampleDetails(TREND_MONTHS
 const pair = buildSnapshotHistory(EXAMPLE_ACCOUNTS, exampleDetails(TWO_MONTHS), "2026-11");
 
 const meta: Meta<typeof NetWorthHistoryChart> = {
-  title: "3. Financial Patterns & Sections/Snapshot/NetWorthHistoryChart",
+  title: "4. Charts/Snapshot/NetWorthHistoryChart",
   component: NetWorthHistoryChart,
   parameters: { layout: "padded" },
 };

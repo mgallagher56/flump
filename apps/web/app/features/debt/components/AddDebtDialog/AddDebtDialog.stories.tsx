@@ -13,7 +13,7 @@ const debt: DebtItem = {
 };
 
 const meta: Meta<typeof AddDebtDialog> = {
-  title: "3. Financial Patterns & Sections/AddDebtDialog",
+  title: "3. Patterns/Debt/AddDebtDialog",
   component: AddDebtDialog,
   parameters: { layout: "fullscreen" },
   args: { isOpen: true, onClose: fn(), onAddDebt: fn(), onEditDebt: fn() },

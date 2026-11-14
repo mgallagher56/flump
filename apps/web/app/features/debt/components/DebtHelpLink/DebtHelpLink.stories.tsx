@@ -4,7 +4,7 @@ import { DebtHelpLink } from "./DebtHelpLink";
 
 /** The Storybook preview renders every story side by side in light and dark. */
 const meta: Meta<typeof DebtHelpLink> = {
-  title: "Debt/DebtHelpLink",
+  title: "3. Patterns/Debt/DebtHelpLink",
   component: DebtHelpLink,
   parameters: { layout: "padded" },
 };

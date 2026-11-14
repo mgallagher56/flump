@@ -40,7 +40,7 @@ const populated: HomeDashboardProps = {
 };
 
 const meta: Meta<typeof HomeDashboard> = {
-  title: "3. Financial Patterns & Sections/HomeDashboard",
+  title: "6. Pages/Dashboard/HomeDashboard",
   component: HomeDashboard,
   parameters: { layout: "fullscreen" },
   args: populated,

@@ -13,7 +13,7 @@ const FACTS: ProfileFacts = {
 };
 
 const meta: Meta<typeof PensionTakeHomeEffect> = {
-  title: "3. Financial Patterns & Sections/PensionTakeHomeEffect",
+  title: "3. Patterns/Pension/PensionTakeHomeEffect",
   component: PensionTakeHomeEffect,
   parameters: { layout: "padded" },
   args: { effect: computePensionTakeHomeEffect(FACTS, 1200) },

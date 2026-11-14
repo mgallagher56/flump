@@ -18,7 +18,7 @@ const loaderData = {
 };
 
 const meta: Meta<typeof BudgetContainer> = {
-  title: "5. Pages/Budget",
+  title: "6. Pages/Budget",
   component: BudgetContainer,
   parameters: { layout: "fullscreen", router: { loaderData } },
 };

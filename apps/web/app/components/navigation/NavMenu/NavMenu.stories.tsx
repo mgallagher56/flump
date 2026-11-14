@@ -6,7 +6,7 @@ import NavMenu from "./NavMenu";
 const HOME = { key: "home", route: "/" };
 
 const meta: Meta<typeof NavMenu> = {
-  title: "Navigation/NavMenu",
+  title: "3. Patterns/Navigation/NavMenu",
   component: NavMenu,
   tags: ["autodocs"],
 };

@@ -3,7 +3,7 @@ import { expect, within } from "storybook/test";
 import { AccountDeletedNotice } from "./AccountDeletedNotice";
 
 const meta: Meta<typeof AccountDeletedNotice> = {
-  title: "3. Financial Patterns & Sections/Settings/AccountDeletedNotice",
+  title: "3. Patterns/Settings/AccountDeletedNotice",
   component: AccountDeletedNotice,
   args: { homeUrl: "https://example.com" },
   parameters: { layout: "padded" },

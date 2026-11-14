@@ -3,7 +3,7 @@ import { expect, within } from "storybook/test";
 import { TaxWidget } from "./TaxWidget";
 
 const meta: Meta<typeof TaxWidget> = {
-  title: "3. Financial Patterns & Sections/TaxWidget",
+  title: "3. Patterns/Dashboard/TaxWidget",
   component: TaxWidget,
   parameters: { layout: "padded" },
   args: { data: { estimatedTaxDue: 4400, recordsCount: 3 } },

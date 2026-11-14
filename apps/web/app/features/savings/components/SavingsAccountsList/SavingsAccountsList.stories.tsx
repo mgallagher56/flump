@@ -22,7 +22,7 @@ const accounts = [
 ] as never[];
 
 const meta: Meta<typeof SavingsAccountsList> = {
-  title: "3. Financial Patterns & Sections/SavingsAccountsList",
+  title: "3. Patterns/Savings/SavingsAccountsList",
   component: SavingsAccountsList,
   args: { accounts },
 };

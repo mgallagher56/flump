@@ -3,7 +3,7 @@ import { expect, fn, userEvent, within } from "storybook/test";
 import { MortgageAlerts } from "./MortgageAlerts";
 
 const meta: Meta<typeof MortgageAlerts> = {
-  title: "3. Financial Patterns & Sections/MortgageAlerts",
+  title: "3. Patterns/Mortgage/MortgageAlerts",
   component: MortgageAlerts,
   parameters: { layout: "padded" },
   args: {

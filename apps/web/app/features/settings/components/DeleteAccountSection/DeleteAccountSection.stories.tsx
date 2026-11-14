@@ -3,7 +3,7 @@ import { expect, fn, userEvent, within } from "storybook/test";
 import { DeleteAccountSection } from "./DeleteAccountSection";
 
 const meta: Meta<typeof DeleteAccountSection> = {
-  title: "3. Financial Patterns & Sections/Settings/DeleteAccountSection",
+  title: "3. Patterns/Settings/DeleteAccountSection",
   component: DeleteAccountSection,
   args: { status: "idle", onConfirm: fn() },
   parameters: { layout: "padded" },

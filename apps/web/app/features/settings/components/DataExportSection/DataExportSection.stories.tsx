@@ -4,7 +4,7 @@ import { AccountExportError } from "~/features/settings/accountExport";
 import { DataExportSection } from "./DataExportSection";
 
 const meta: Meta<typeof DataExportSection> = {
-  title: "3. Financial Patterns & Sections/Settings/DataExportSection",
+  title: "3. Patterns/Settings/DataExportSection",
   component: DataExportSection,
   parameters: { layout: "padded" },
 };

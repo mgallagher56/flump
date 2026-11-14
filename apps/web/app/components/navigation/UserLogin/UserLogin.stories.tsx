@@ -3,7 +3,7 @@ import { expect, within } from "storybook/test";
 import UserLogin from "./UserLogin";
 
 const meta: Meta<typeof UserLogin> = {
-  title: "Navigation/UserLogin",
+  title: "3. Patterns/Navigation/UserLogin",
   component: UserLogin,
   tags: ["autodocs"],
 };

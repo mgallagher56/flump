@@ -3,7 +3,7 @@ import { expect, within } from "storybook/test";
 import { TaxEstimateNote } from "./TaxEstimateNote";
 
 const meta: Meta<typeof TaxEstimateNote> = {
-  title: "3. Financial Patterns & Sections/TaxEstimateNote",
+  title: "3. Patterns/Tax/TaxEstimateNote",
   component: TaxEstimateNote,
   // The Storybook decorator renders every story side by side in Light and Dark by default.
   args: { taxYear: "2026/27" },

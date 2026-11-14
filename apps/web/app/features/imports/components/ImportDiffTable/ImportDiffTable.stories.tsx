@@ -23,7 +23,7 @@ const Stateful = (props: Omit<ImportDiffTableProps, "ticked" | "onToggle">) => {
 };
 
 const meta: Meta<typeof Stateful> = {
-  title: "3. Financial Patterns & Sections/Imports/ImportDiffTable",
+  title: "3. Patterns/Imports/ImportDiffTable",
   component: Stateful,
   args: { accounts: PREVIEW_ACCOUNTS, rows: PREVIEW_ROWS },
 };

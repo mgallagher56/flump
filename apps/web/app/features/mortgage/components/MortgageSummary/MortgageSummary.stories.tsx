@@ -3,7 +3,7 @@ import { expect, fn, userEvent, within } from "storybook/test";
 import { MortgageSummary } from "./MortgageSummary";
 
 const meta: Meta<typeof MortgageSummary> = {
-  title: "3. Financial Patterns & Sections/MortgageSummary",
+  title: "3. Patterns/Mortgage/MortgageSummary",
   component: MortgageSummary,
   parameters: { layout: "padded" },
   args: {

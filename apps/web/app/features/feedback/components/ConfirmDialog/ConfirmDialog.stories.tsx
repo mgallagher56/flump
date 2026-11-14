@@ -5,7 +5,7 @@ import { ConfirmDialog } from "./ConfirmDialog";
 // The full story set lives with the component in `packages/ui` (E15 T2.5). This single story
 // proves the legacy import path still renders while screens migrate.
 const meta: Meta<typeof ConfirmDialog> = {
-  title: "9. Legacy/ConfirmDialog web re-export",
+  title: "3. Patterns/Feedback/ConfirmDialog (web re-export)",
   component: ConfirmDialog,
   parameters: { layout: "padded" },
   args: {

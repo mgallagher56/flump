@@ -3,7 +3,7 @@ import { expect, fn, userEvent, within } from "storybook/test";
 import { MortgageEditDialog } from "./MortgageEditDialog";
 
 const meta: Meta<typeof MortgageEditDialog> = {
-  title: "3. Financial Patterns & Sections/MortgageEditDialog",
+  title: "3. Patterns/Mortgage/MortgageEditDialog",
   component: MortgageEditDialog,
   parameters: { layout: "padded" },
   args: {

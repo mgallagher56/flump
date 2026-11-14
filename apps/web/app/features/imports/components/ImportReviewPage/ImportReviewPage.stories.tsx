@@ -12,7 +12,7 @@ import {
 import { ImportReviewPage } from "./ImportReviewPage";
 
 const meta: Meta<typeof ImportReviewPage> = {
-  title: "4. Pages/Imports/ImportReviewPage",
+  title: "6. Pages/Imports/ImportReviewPage",
   component: ImportReviewPage,
   parameters: { layout: "fullscreen" },
   args: {

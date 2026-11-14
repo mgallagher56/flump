@@ -5,7 +5,7 @@ import { DEFAULT_PROFILE } from "~/hooks/useUserProfile";
 import { SettingsPage } from "./SettingsPage";
 
 const meta: Meta<typeof SettingsPage> = {
-  title: "3. Financial Patterns & Sections/Settings/SettingsPage",
+  title: "6. Pages/Settings/SettingsPage",
   component: SettingsPage,
   parameters: { layout: "padded" },
   args: {

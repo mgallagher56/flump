@@ -4,7 +4,7 @@ import { AddIncomeMenu } from "./AddIncomeMenu";
 
 /** The Storybook preview renders every story side by side in light and dark. */
 const meta: Meta<typeof AddIncomeMenu> = {
-  title: "Tax/AddIncomeMenu",
+  title: "3. Patterns/Tax/AddIncomeMenu",
   component: AddIncomeMenu,
   tags: ["autodocs"],
   args: { onAdd: fn(), onCopyFromLastYear: fn() },

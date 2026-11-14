@@ -4,7 +4,7 @@ import { StepHarness } from "../../testing";
 import { SavingsDebtStep } from "./SavingsDebtStep";
 
 const meta: Meta<typeof SavingsDebtStep> = {
-  title: "Onboarding/SavingsDebtStep",
+  title: "3. Patterns/Onboarding/SavingsDebtStep",
   component: SavingsDebtStep,
   parameters: { layout: "padded" },
   args: { onBack: fn(), onNext: fn(), onSkip: fn() },

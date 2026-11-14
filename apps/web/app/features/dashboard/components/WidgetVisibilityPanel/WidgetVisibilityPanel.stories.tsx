@@ -5,7 +5,7 @@ import type { DashboardWidgetKey } from "~/utils/pageConfig";
 import { WidgetVisibilityPanel } from "./WidgetVisibilityPanel";
 
 const meta: Meta<typeof WidgetVisibilityPanel> = {
-  title: "3. Financial Patterns & Sections/WidgetVisibilityPanel",
+  title: "3. Patterns/Dashboard/WidgetVisibilityPanel",
   component: WidgetVisibilityPanel,
   parameters: { layout: "padded" },
   args: {

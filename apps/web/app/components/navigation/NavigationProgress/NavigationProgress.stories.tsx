@@ -14,7 +14,7 @@ const InFlight = () => (
 );
 
 const meta: Meta<typeof NavigationProgress> = {
-  title: "Navigation/NavigationProgress",
+  title: "3. Patterns/Navigation/NavigationProgress",
   component: NavigationProgress,
   parameters: { layout: "fullscreen" },
 };

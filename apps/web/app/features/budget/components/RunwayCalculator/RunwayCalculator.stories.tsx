@@ -4,7 +4,7 @@ import { sampleBudgetEntries } from "../../sampleBudgetEntries";
 import { RunwayCalculator } from "./RunwayCalculator";
 
 const meta: Meta<typeof RunwayCalculator> = {
-  title: "3. Financial Patterns & Sections/Budget/RunwayCalculator",
+  title: "5. Calculators/Budget/RunwayCalculator",
   component: RunwayCalculator,
   parameters: { layout: "padded" },
   args: {
