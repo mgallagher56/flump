@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.35.0](https://github.com/mgallagher56/flump/compare/flump/web-v1.34.0...flump/web-v1.35.0) (2026-11-14)
+
+
+### Features ✨
+
+* **tools:** R2-3 calculator bodies and tool pages ([63070e7](https://github.com/mgallagher56/flump/commit/63070e7374f894843c094607115aec482840f301))
+
+
+### Bug Fixes 🪲
+
+* **tools:** R2-3 copy check and re-score fixes ([9b15252](https://github.com/mgallagher56/flump/commit/9b15252549a2fa8f8ee0b1ef61092f065723c42d))
+* **tools:** R2-3 review fixes ([9a7ac02](https://github.com/mgallagher56/flump/commit/9a7ac02f87a5a4ce0252ed9a1baa542eb6068ee6))
+
 ## [1.34.0](https://github.com/mgallagher56/flump/compare/flump/web-v1.33.0...flump/web-v1.34.0) (2026-11-14)
 
 
