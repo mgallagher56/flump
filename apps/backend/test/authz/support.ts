@@ -9,8 +9,10 @@ import { DEV_BYPASS_TOKEN } from "../../src/auth/dev-bypass.verifier";
 import { createTestJwks } from "../../src/auth/testing/test-jwks";
 import { TOKEN_VERIFIER } from "../../src/auth/token-verifier";
 import { WorkOsJwtVerifier } from "../../src/auth/workos-jwt.verifier";
+import { validateBootEnv } from "../../src/config/boot-guards";
 import { applySecurity } from "../../src/config/security.config";
 import { McpService } from "../../src/modules/agent/mcp.service";
+import { requestContextMiddleware } from "../../src/observability/request-context.middleware";
 import { RateLimitStore } from "../../src/security/rate-limit.store";
 import { assertSafeTestDatabase } from "../../src/testing/assertSafeTestDatabase";
 
@@ -72,7 +74,17 @@ export interface AuthzHarness {
 /** Fields an attacker adds to a write body to try to take over or re-parent a row. */
 export const probeBody = (victimRowId: string) => ({ id: victimRowId, userId: USER_A });
 
-export async function bootAuthzHarness(): Promise<AuthzHarness> {
+/**
+ * `env`: applied after the harness defaults (undefined deletes the variable), restored by close().
+ * `likeMain`: boot as main.ts does: validateBootEnv first (schema and boot guards), the request
+ * context middleware, then applySecurity with the same three variables main.ts passes.
+ */
+interface HarnessOptions {
+  env?: Record<string, string | undefined>;
+  likeMain?: boolean;
+}
+
+export async function bootAuthzHarness(options: HarnessOptions = {}): Promise<AuthzHarness> {
   const databaseUrl = process.env.TEST_DATABASE_URL as string;
   // Before any connection or schema drop.
   assertSafeTestDatabase(databaseUrl, process.env);
@@ -91,6 +103,11 @@ export async function bootAuthzHarness(): Promise<AuthzHarness> {
   process.env.DATABASE_URL = databaseUrl;
   process.env.DB_SSL = "false";
   process.env.DB_SYNCHRONIZE = "false";
+  for (const [name, value] of Object.entries(options.env ?? {})) {
+    if (value === undefined) delete process.env[name];
+    else process.env[name] = value;
+  }
+  if (options.likeMain) validateBootEnv(process.env);
 
   const target = new URL(databaseUrl);
   const reset = new DataSource({
@@ -123,7 +140,16 @@ export async function bootAuthzHarness(): Promise<AuthzHarness> {
     .compile();
   // As main.ts: bodyParser off, then the real security setup (which mounts the /v1 alias).
   const app = moduleRef.createNestApplication({ bodyParser: false });
-  applySecurity(app, { NODE_ENV: process.env.NODE_ENV });
+  if (options.likeMain) {
+    app.use(requestContextMiddleware);
+    applySecurity(app, {
+      NODE_ENV: process.env.NODE_ENV,
+      CORS_ALLOWED_ORIGINS: process.env.CORS_ALLOWED_ORIGINS,
+      TRUST_PROXY_HOPS: process.env.TRUST_PROXY_HOPS,
+    });
+  } else {
+    applySecurity(app, { NODE_ENV: process.env.NODE_ENV });
+  }
   await app.init();
   // The harness is only meaningful if the real verifier is in front of every route.
   if (!(app.get(TOKEN_VERIFIER) instanceof WorkOsJwtVerifier)) {
