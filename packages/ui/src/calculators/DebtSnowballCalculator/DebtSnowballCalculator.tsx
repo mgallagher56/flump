@@ -40,7 +40,6 @@ import {
   debtRowActions,
   debtRowFields,
   debtRowLegend,
-  debtSplit,
   debtTitle,
 } from "./DebtSnowballCalculator.styles";
 
@@ -326,6 +325,29 @@ export const DebtSnowballCalculator: FC<DebtSnowballCalculatorProps> = ({
               <legend className={debtRowLegend()}>
                 {DEBT_SNOWBALL_COPY.debtLegend(n, row.kind)}
               </legend>
+              {/* Before the fields in the DOM, as on screen, so focus order matches. */}
+              <div className={debtRowActions()}>
+                <Button
+                  aria-controls={panelId}
+                  aria-expanded={open}
+                  aria-label={DEBT_SNOWBALL_COPY.editLabel(n)}
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => toggleRow(row.id)}
+                >
+                  {DEBT_SNOWBALL_COPY.edit}
+                </Button>
+                {debts.length > 1 ? (
+                  <Button
+                    aria-label={DEBT_SNOWBALL_COPY.removeLabel(n)}
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => removeDebt(row.id)}
+                  >
+                    {DEBT_SNOWBALL_COPY.remove}
+                  </Button>
+                ) : null}
+              </div>
               {/* Balance, then (behind Edit) the minimum beside it and the rate below. */}
               <div className={debtRowFields()} id={panelId}>
                 <FormField label={DEBT_SNOWBALL_COPY.balance}>
@@ -374,28 +396,6 @@ export const DebtSnowballCalculator: FC<DebtSnowballCalculatorProps> = ({
                       )}
                     </FormField>
                   </>
-                ) : null}
-              </div>
-              <div className={debtRowActions()}>
-                <Button
-                  aria-controls={panelId}
-                  aria-expanded={open}
-                  aria-label={DEBT_SNOWBALL_COPY.editLabel(n)}
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => toggleRow(row.id)}
-                >
-                  {DEBT_SNOWBALL_COPY.edit}
-                </Button>
-                {debts.length > 1 ? (
-                  <Button
-                    aria-label={DEBT_SNOWBALL_COPY.removeLabel(n)}
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => removeDebt(row.id)}
-                  >
-                    {DEBT_SNOWBALL_COPY.remove}
-                  </Button>
                 ) : null}
               </div>
             </fieldset>
@@ -491,9 +491,7 @@ export const DebtSnowballCalculator: FC<DebtSnowballCalculatorProps> = ({
         </div>
       )}
 
-      {/* Under lg the results come first, so the answer is not 1,300px down on a phone. */}
       <SimulatorSplitLayout
-        className={debtSplit()}
         content={content}
         contentLabel={DEBT_SNOWBALL_COPY.contentLabel}
         controls={controls}

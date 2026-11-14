@@ -38,9 +38,8 @@ describe("TaxTrapCalculator", () => {
         formatMoney(-expected.deltaTakeHome).text,
       ),
     );
-    expect(outcome(TAX_TRAP_COPY.kpiPersonalAllowance)).toContain(
-      formatMoney(expected.after.personalAllowance).text,
-    );
+    // The Personal Allowance is in the details table, not a third card (first view at most 3 figures).
+    expect(screen.queryByText(TAX_TRAP_COPY.kpiPersonalAllowance)).toBeNull();
     expect(screen.queryByRole("table")).toBeNull();
     openDetails();
     const table = screen.getByRole("table", { name: TAX_TRAP_COPY.factsCaption });
@@ -109,10 +108,10 @@ describe("TaxTrapCalculator", () => {
     );
   });
 
-  it("has three visible inputs, one outcome with two supporting figures, and exactly one notice", () => {
+  it("has three visible inputs, one outcome with one supporting figure, and exactly one notice", () => {
     render(<TaxTrapCalculator taxYear="2026/27" />);
     expect(screen.getAllByRole("slider").length + screen.getAllByRole("combobox").length).toBe(3);
-    expect(screen.getByTestId("tax-trap-outcomes").children).toHaveLength(3);
+    expect(screen.getByTestId("tax-trap-outcomes").children).toHaveLength(2);
     expect(screen.getAllByTestId("projection-notice")).toHaveLength(1);
     expect(screen.queryByTestId("tax-rates-status-banner")).toBeNull();
   });

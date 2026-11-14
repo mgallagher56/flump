@@ -51,7 +51,8 @@ export const MORTGAGE_ISA_COPY = {
   kpiInterestSavedNoBalance: "No mortgage balance entered.",
   kpiInterestSavedNoExtra: "No overpayment entered.",
   kpiIsaGrowth: "ISA: estimated growth",
-  kpiIsaGrowthSubtext: "On top of the money paid in, at the growth rate you entered.",
+  kpiIsaGrowthSubtext:
+    "On top of the money paid in, at the growth rate you entered. ISA growth is not fixed and can be negative.",
   explainerTitle: "How this is worked out",
   /** "Overpaying pays the mortgage off 5 years 4 months sooner, if the rate stays the same." */
   explainerSooner: (sooner: string) =>
@@ -117,7 +118,6 @@ export const MortgageVsIsaCalculator: FC<MortgageVsIsaCalculatorProps> = ({
   initialTermYears = 20,
   embedded = false,
 }) => {
-  // Embedded, the page's h1 sits directly above, so section headings step down to h2.
   // Clamped so a negative entry never reaches the engine.
   const [balance, setBalance] = useState(Math.max(0, initialBalance));
   const [rate, setRate] = useState(Math.max(0, initialRate));

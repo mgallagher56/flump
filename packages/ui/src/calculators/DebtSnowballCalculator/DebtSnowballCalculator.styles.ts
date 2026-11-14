@@ -99,11 +99,6 @@ export const debtAddButton = cva({
   base: { alignSelf: "flex-start", gap: "2" },
 });
 
-/** Under lg the results column comes before the debts, so the answer shows first on a phone. */
-export const debtSplit = cva({
-  base: { "& > section:last-of-type": { order: { base: "-1", lg: "0" } } },
-});
-
 /** Right column: the outcome, the two methods, the sign-up button and the details. */
 export const debtContent = cva({
   base: { display: "flex", flexDirection: "column", gap: "5", minWidth: "0" },

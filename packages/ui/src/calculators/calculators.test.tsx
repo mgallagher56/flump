@@ -44,8 +44,8 @@ describe("UI Calculators", () => {
       render(<MortgageVsIsaCalculator ctaText="Save and continue" onSaveAndContinue={onSave} />);
 
       expect(screen.getByRole("heading", { name: /Mortgage overpayment or ISA/i })).toBeDefined();
-      fireEvent.click(screen.getByRole("button", { name: "How this is worked out" }));
-      expect(screen.getByText(/ISA growth is not fixed and can be negative/i)).toBeDefined();
+      // The caveat shows in the first view, under the ISA figure.
+      expect(screen.getAllByText(/ISA growth is not fixed and can be negative/i).length).toBe(1);
 
       const slider = screen.getByLabelText("Mortgage balance");
       fireEvent.change(slider, { target: { value: "300000" } });
