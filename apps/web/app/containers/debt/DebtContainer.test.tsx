@@ -157,7 +157,7 @@ describe("DebtContainer", () => {
     expect(hero?.textContent).toContain("Total you owe");
     expect(hero?.textContent).toContain("£7,500");
     expect(screen.getByText("Debt-free by")).toBeDefined();
-    expect(screen.getAllByText(/Estimate at your current payments/).length).toBe(2);
+    expect(screen.getAllByText("Estimate").length).toBe(2);
     expect(screen.getByText("Interest this year")).toBeDefined();
   });
 
@@ -174,6 +174,14 @@ describe("DebtContainer", () => {
         expect(
           screen.getByText("Add the rate for 2 debts to see your debt-free date"),
         ).toBeDefined();
+        // One prompt only: rows say "Rate not added" with no button of their own.
+        expect(screen.getAllByRole("button", { name: /Add (a|the) rate/ })).toHaveLength(1);
+        expect(screen.getAllByText("Rate not added")).toHaveLength(2);
+        const notices = document.querySelectorAll("[data-notice='projection']");
+        expect(notices).toHaveLength(1);
+        expect(notices[0]?.textContent).toContain(
+          "Some debts have no APR set, so the estimate uses 0% for them",
+        );
         fireEvent.click(screen.getByRole("button", { name: "Add a rate" }));
         expect(screen.getByRole("dialog", { name: "Edit debt" })).toBeDefined();
       },
@@ -220,7 +228,8 @@ describe("DebtContainer", () => {
   it("passes what the budget leaves over, not a hard-coded fallback", () => {
     render(<DebtContainer />);
     expect(screen.getByText("Your budget has £420 left over each month.")).toBeDefined();
-    expect(screen.queryByTestId("left-over-unknown-note")).toBeNull();
+    const notice = document.querySelector("[data-notice='projection']");
+    expect(notice?.textContent).not.toContain("We do not know what you have left over");
   });
 
   it("shows the budget prompt when nothing is known about what is left over", () => {
@@ -235,7 +244,11 @@ describe("DebtContainer", () => {
         "Set up your budget to see what you have left over each month",
       );
       expect(prompt.closest("a")?.getAttribute("href")).toBe("/app/budget");
-      expect(screen.getByTestId("left-over-unknown-note").textContent).toMatch(/^Illustration:/);
+      const notices = document.querySelectorAll("[data-notice='projection']");
+      expect(notices).toHaveLength(1);
+      expect(notices[0]?.textContent).toContain(
+        "We do not know what you have left over each month, so these results assume you can afford the extra payment you choose.",
+      );
     } finally {
       loaderState.debtInputs = {
         monthlySurplus: 420,
@@ -411,13 +424,11 @@ describe("DebtContainer scenario zone", () => {
 
   const savedText = (container: HTMLElement) => firstView(container).textContent;
 
-  it("has one tool: one slider, one payoff-order Tabs, starting at £0 with the saved basis line", () => {
+  it("has one tool: one slider, one payoff-order Tabs, starting at £0, with no repeated saved figures", () => {
     render(<DebtContainer />);
     const zone = screen.getByRole("region", { name: "Model a change to your debts" });
     expect(zone.textContent).toContain("Illustration, not saved");
-    expect(zone.textContent).toContain(
-      "Starting from your figures: £7,500 owed across 2 debts, £240 a month in minimum payments",
-    );
+    expect(zone.textContent).not.toContain("Starting from your figures");
     expect(within(zone).getAllByRole("slider")).toHaveLength(1);
     expect(within(zone).getAllByRole("tablist")).toHaveLength(1);
     const slider = within(zone).getByRole("slider", { name: /Extra payment each month/i });

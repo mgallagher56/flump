@@ -3,7 +3,7 @@ import { AUTH_STATE } from "../support/auth";
 
 test.use({ storageState: AUTH_STATE });
 
-test("a missing term shows one prompt; once saved, the hero is the monthly payment and the outcome is plain", async ({
+test("a missing term shows one prompt; once saved, the hero is the saved balance and the outcome is plain", async ({
   page,
 }) => {
   await page.goto("/app/mortgage");
@@ -17,10 +17,11 @@ test("a missing term shows one prompt; once saved, the hero is the monthly payme
   await page.getByLabel("Years left", { exact: true }).fill("25");
   await page.getByRole("button", { name: "Save", exact: true }).click();
 
-  // The page's single hero surface is the saved monthly payment, never a scenario outcome.
+  // The page's single hero surface is the saved balance, never a scenario outcome.
   const hero = page.locator('[data-tone="hero"]');
   await expect(hero).toHaveCount(1);
-  await expect(hero).toContainText("Monthly payment");
+  await expect(hero).toContainText("Remaining balance");
+  await expect(page.getByText("Paid off by", { exact: true })).toBeVisible();
   await page.getByRole("tab", { name: "Overpay", exact: true }).click();
   await expect(page.getByText("Paid off sooner by", { exact: true })).toBeVisible();
   await expect(page.getByText("Less interest in total (estimate)", { exact: true })).toBeVisible();

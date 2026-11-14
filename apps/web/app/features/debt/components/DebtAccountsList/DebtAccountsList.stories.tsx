@@ -35,14 +35,12 @@ export default meta;
 type Story = StoryObj<typeof DebtAccountsList>;
 
 // The Storybook decorator renders light and dark side by side, so queries use the "all" variants.
-/** Shows the "Add the rate" link and the estimated-minimum marker. */
+/** Shows "Rate not added" and the estimated-minimum marker. */
 export const WithUnknownAprAndEstimatedMinimum: Story = {
   play: async ({ canvasElement, args }) => {
     const canvas = within(canvasElement);
     await expect(canvas.queryAllByText("Not set").length).toBe(0);
-    await expect(
-      canvas.getAllByRole("button", { name: "Add the rate for Tesco Loan" }).length,
-    ).toBeGreaterThan(0);
+    await expect(canvas.getAllByText("Rate not added").length).toBeGreaterThan(0);
     await expect(canvas.getAllByText(/\(estimate\)/).length).toBeGreaterThan(0);
     await userEvent.click(
       canvas.getAllByRole("button", { name: "Delete Tesco Loan" })[0] as HTMLElement,

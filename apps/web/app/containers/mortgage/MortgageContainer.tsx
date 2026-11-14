@@ -45,6 +45,7 @@ import { buildWorkspacePicture } from "~/utils/financialPicture";
 import { monthlyMortgagePayment } from "~/utils/mortgagePayment";
 import {
   pageRoot,
+  partialStack,
   plainFigure,
   plainFigureLabel,
   plainFigures,
@@ -158,6 +159,9 @@ const MortgageContainer: FC = () => {
     userProfile?.mortgageType || "repayment",
   );
   const [editFixEndDate, setEditFixEndDate] = useState("");
+  // Only a date the user changed in this form is sent, so switching accounts or reseeding the form
+  // can never clear a stored fixed rate end date.
+  const [editFixEndTouched, setEditFixEndTouched] = useState(false);
   // Account fields saved on this page, laid over the loader rows until the next load, so the
   // picture below reads what was just stored.
   const [accountPatches, setAccountPatches] = useState<Record<string, Record<string, unknown>>>({});
@@ -219,6 +223,7 @@ const MortgageContainer: FC = () => {
     setSaveError(null);
     setEditMortgageType(mortgageType);
     setEditFixEndDate(selectedFixEndDate ?? "");
+    setEditFixEndTouched(false);
     setIsEditing(true);
   };
 
@@ -258,7 +263,9 @@ const MortgageContainer: FC = () => {
           if (termMonths > 0) body.termMonths = termMonths;
           // An emptied date clears the stored one.
           const fixEnd = editFixEndDate.trim() === "" ? null : editFixEndDate.trim();
-          if (fixEnd !== (selectedFixEndDate ?? null)) body.fixedRateEndDate = fixEnd;
+          if (editFixEndTouched && fixEnd !== (selectedFixEndDate ?? null)) {
+            body.fixedRateEndDate = fixEnd;
+          }
           if (Object.keys(body).length > 0) {
             await apiFetch(`/accounts/${selectedAccountId}`, { method: "PATCH", body });
             const accountId = selectedAccountId;
@@ -444,6 +451,7 @@ const MortgageContainer: FC = () => {
       ? picture.fixedRateEnds.find((fact) => fact.accountId === id)?.date
       : undefined;
     setEditFixEndDate(fixEnd ?? "");
+    setEditFixEndTouched(false);
   };
 
   const switchToCategory = (cat: PropertyCategory) => {
@@ -569,7 +577,10 @@ const MortgageContainer: FC = () => {
       saveError={saveError}
       selectedAccountId={selectedAccountId}
       onAddAccount={() => navigate("/app/accounts")}
-      onEditFixEndDateChange={setEditFixEndDate}
+      onEditFixEndDateChange={(value) => {
+        setEditFixEndDate(value);
+        setEditFixEndTouched(true);
+      }}
       onEditInterestRateChange={setEditInterestRate}
       onEditLoanAmountChange={setEditLoanAmount}
       onEditMortgageTypeChange={setEditMortgageType}
@@ -636,47 +647,50 @@ const MortgageContainer: FC = () => {
 
     return (
       <PageBody className={pageRoot()}>
-        {header}
-        <section
-          aria-labelledby="mortgage-prompt-title"
-          className={promptBlock()}
-          data-testid="mortgage-prompt"
-          id="mortgage-prompt"
-        >
-          {known.length > 0 ? (
-            <dl className={plainFigures()}>
-              {known.slice(0, 2).map((figure) => (
-                <div className={plainFigure()} key={figure.label}>
-                  <dt className={plainFigureLabel()}>{figure.label}</dt>
-                  <dd className={plainFigureValue()}>{figure.value}</dd>
-                </div>
-              ))}
-            </dl>
-          ) : null}
-          <h2 className={promptTitle()} id="mortgage-prompt-title">
-            {prompt.title}
-          </h2>
-          {prompt.text ? <p className={promptText()}>{prompt.text}</p> : null}
-          <div>
-            {noAccount ? (
-              <Button onClick={() => navigate("/app/accounts")}>Add mortgage account</Button>
-            ) : (
-              <Button onClick={startEditing}>Add mortgage details</Button>
-            )}
-          </div>
-          {saveMessage ? (
-            <p className={promptStatus()} role="status">
-              {saveMessage}
-            </p>
-          ) : null}
-        </section>
+        {/* First child in both states, so switching state never remounts an open dialog. */}
         {editDialog}
+        <div className={partialStack()}>
+          {header}
+          <section
+            aria-labelledby="mortgage-prompt-title"
+            className={promptBlock()}
+            data-testid="mortgage-prompt"
+            id="mortgage-prompt"
+          >
+            {known.length > 0 ? (
+              <dl className={plainFigures()}>
+                {known.slice(0, 2).map((figure) => (
+                  <div className={plainFigure()} key={figure.label}>
+                    <dt className={plainFigureLabel()}>{figure.label}</dt>
+                    <dd className={plainFigureValue()}>{figure.value}</dd>
+                  </div>
+                ))}
+              </dl>
+            ) : null}
+            <h2 className={promptTitle()} id="mortgage-prompt-title">
+              {prompt.title}
+            </h2>
+            {prompt.text ? <p className={promptText()}>{prompt.text}</p> : null}
+            <div>
+              {noAccount ? (
+                <Button onClick={() => navigate("/app/accounts")}>Add mortgage account</Button>
+              ) : (
+                <Button onClick={startEditing}>Add mortgage details</Button>
+              )}
+            </div>
+            {saveMessage ? (
+              <p className={promptStatus()} role="status">
+                {saveMessage}
+              </p>
+            ) : null}
+          </section>
+        </div>
       </PageBody>
     );
   }
 
-  // COMPLETE STATE: hero payment (saved figures), a strip of three, "Your details", the scenario
-  // zone and the quiet drawers.
+  // COMPLETE STATE: the hero is the saved balance (ruling 7: a saved fact, never an estimate), then
+  // a strip of up to four with the estimates first, "Your details", the zone and the drawers.
   const fixEndCaption =
     !isBtl && selectedFixEnd
       ? selectedFixEnd.ended
@@ -687,15 +701,14 @@ const MortgageContainer: FC = () => {
           })()
       : undefined;
 
-  const heroSubline =
-    mortgageType === "interest-only"
-      ? "Interest-only, so the loan is still owed at the end of the term"
-      : remainingTerm > 0
-        ? `Estimate: paid off by ${payoffMonth(remainingTerm)}`
-        : "Repayment";
+  const isInterestOnly = mortgageType === "interest-only";
+  const typeText = isInterestOnly ? "Interest-only" : "Repayment";
+  const showPayoff = !isBtl && remainingTerm > 0;
+  const heroSubline = isBtl ? `Buy to let, ${typeText.toLowerCase()}` : `${typeText} mortgage`;
 
   return (
     <PageBody className={pageRoot()}>
+      {editDialog}
       <LiveRegion debounceMs={1000} message={mortgageHeadline} visuallyHidden />
       {header}
 
@@ -708,19 +721,33 @@ const MortgageContainer: FC = () => {
         <HeroFigure
           emptyAction={
             <Button size="sm" variant="ghost" onClick={startEditing}>
-              Edit your details
+              Add your balance
             </Button>
           }
-          emptyPrompt="The payment is worked out for interest-only buy to let mortgages, as no term is saved for buy to let."
+          emptyPrompt="Add your remaining balance to see it here."
           id="mortgage-hero"
-          label="Monthly payment"
+          label="Remaining balance"
           subline={heroSubline}
-          value={knownMonthlyPayment === null ? null : Math.round(knownMonthlyPayment)}
+          value={loanAmount > 0 ? loanAmount : null}
         />
-        <KpiStrip>
+        <KpiStrip columns={showPayoff ? 4 : 3}>
+          {/* Buy to let stores no term, so it has no payoff date. */}
+          {showPayoff ? (
+            <KpiCard
+              label={isInterestOnly ? "Term ends" : "Paid off by"}
+              subtext={isInterestOnly ? "Estimate. The loan is still owed then" : "Estimate"}
+              value={<span data-figure="">{payoffMonth(remainingTerm)}</span>}
+            />
+          ) : null}
           <KpiCard
-            label="Remaining balance"
-            value={loanAmount}
+            emptyAction={
+              <Button size="sm" variant="ghost" onClick={startEditing}>
+                Edit your details
+              </Button>
+            }
+            label="Monthly payment"
+            subtext="Estimate"
+            value={knownMonthlyPayment === null ? null : Math.round(knownMonthlyPayment)}
             valueFormat={{ fractionDigits: 0 }}
           />
           <KpiCard
@@ -862,8 +889,6 @@ const MortgageContainer: FC = () => {
           />
         </CollapsibleDrawer>
       ) : null}
-
-      {editDialog}
     </PageBody>
   );
 };

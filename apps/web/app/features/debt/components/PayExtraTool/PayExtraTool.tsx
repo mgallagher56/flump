@@ -62,8 +62,6 @@ export interface PayExtraToolProps {
   onSelectStrategy: (strategy: PayoffOrder) => void;
   /** What the budget leaves over each month, or null when there is no budget with income. */
   budgetLeftOver: number | null;
-  /** True when any debt has no stored APR (it is modelled at 0%). */
-  aprUnknown?: boolean;
   /** Total balance of the debts in the payoff plan today: the chart's first point. */
   startBalance: number;
 }
@@ -123,7 +121,6 @@ export const PayExtraTool: FC<PayExtraToolProps> = ({
   selectedStrategy,
   onSelectStrategy,
   budgetLeftOver,
-  aprUnknown = false,
   startBalance,
 }) => {
   const { formatCurrency } = useFormatCurrency();
@@ -202,17 +199,11 @@ export const PayExtraTool: FC<PayExtraToolProps> = ({
         onChange={onChangeExtraPayment}
       />
       {budgetLeftOver === null ? (
-        <>
-          <p className={mutedNote}>
-            <Link className={noteLink} to="/app/budget">
-              Set up your budget to see what you have left over each month
-            </Link>
-          </p>
-          <p className={mutedNote} data-testid="left-over-unknown-note" id="left-over-unknown-note">
-            Illustration: we do not know what you have left over each month. These results assume
-            you can afford the extra payment you choose.
-          </p>
-        </>
+        <p className={mutedNote}>
+          <Link className={noteLink} to="/app/budget">
+            Set up your budget to see what you have left over each month
+          </Link>
+        </p>
       ) : leftOver > 0 ? (
         <div className={leftOverRow}>
           <span>Your budget has {formatCurrency(leftOver)} left over each month.</span>
@@ -227,12 +218,6 @@ export const PayExtraTool: FC<PayExtraToolProps> = ({
             </Button>
           ) : null}
         </div>
-      ) : null}
-      {aprUnknown ? (
-        <p className={mutedNote} data-testid="apr-unknown-note" id="apr-unknown-note">
-          Some debts have no APR set. The estimate uses 0% for them, so the real dates may be later
-          and the interest higher.
-        </p>
       ) : null}
     </div>
   );

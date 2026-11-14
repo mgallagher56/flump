@@ -22,7 +22,7 @@ describe("<DebtSummary />", () => {
     expect(heroes[0]?.textContent).not.toContain("August 2028");
     expect(getByText("Debt-free by")).toBeDefined();
     expect(container.textContent).toContain("August 2028");
-    expect(container.textContent).toContain("Estimate at your current payments");
+    expect(container.textContent).toContain("Estimate");
     expect(getByText("Interest this year")).toBeDefined();
     expect(container.textContent).toContain("£210");
     expect(container.textContent).toContain("£640");
@@ -51,15 +51,11 @@ describe("<DebtSummary />", () => {
   test("payments that never pay off the debt are stated, not projected", () => {
     const { container } = customRender(<DebtSummary {...props} payoffAchievable={false} />);
     expect(container.textContent).toContain("Not paid off");
-    expect(container.textContent).toContain(
-      "Estimate: at the minimum payments, these debts are not paid off",
-    );
     expect(container.textContent).not.toContain("August 2028");
   });
 
   test("flags estimated minimum payments in plain words", () => {
     const { container } = customRender(<DebtSummary {...props} minimumEstimated />);
     expect(container.textContent).toContain("Minimum payments, some are estimates");
-    expect(container.textContent).toContain("Some minimum payments are estimates");
   });
 });

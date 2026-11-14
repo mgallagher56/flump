@@ -15,6 +15,14 @@ export const savedSection = cva({
   base: { display: "flex", flexDirection: "column", gap: "16px", minWidth: 0 },
 });
 
+/**
+ * Partial state: the header and the prompt sit together, so the page's section gap does not open a
+ * hole between the h1 and the figures (PageHeader already brings its own bottom margin).
+ */
+export const partialStack = cva({
+  base: { display: "flex", flexDirection: "column", minWidth: 0 },
+});
+
 /** The partial state: up to two plain figures and one prompt, on the page surface (no card). */
 export const promptBlock = cva({
   base: {
@@ -33,7 +41,6 @@ export const plainFigures = cva({
     flexWrap: "wrap",
     gap: "16px 40px",
     margin: 0,
-    marginBottom: "8px",
   },
 });
 

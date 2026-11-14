@@ -48,6 +48,6 @@ export const PaymentsNeverPayOff: Story = {
 export const EstimatedMinimums: Story = {
   args: { minimumEstimated: true },
   play: async ({ canvasElement }) => {
-    await expect(canvasElement.textContent).toContain("Some minimum payments are estimates");
+    await expect(canvasElement.textContent).toContain("some are estimates");
   },
 };

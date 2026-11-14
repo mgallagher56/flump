@@ -73,11 +73,10 @@ describe("PayExtraTool", () => {
     expect(props.onChangeExtraPayment).toHaveBeenCalledWith(420);
   });
 
-  it("without a budget, links to it and says the result assumes the amount is affordable", () => {
+  it("without a budget, links to it (the caveat lives in the zone's one notice)", () => {
     renderTool({ budgetLeftOver: null });
     const link = screen.getByText("Set up your budget to see what you have left over each month");
     expect(link.closest("a")?.getAttribute("href")).toBe("/app/budget");
-    expect(screen.getByTestId("left-over-unknown-note").textContent).toMatch(/^Illustration:/);
   });
 
   it("titles the chart and summarises it in one sentence, with no legend", () => {

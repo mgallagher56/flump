@@ -34,8 +34,12 @@ describe("<MortgageEditDialog />", () => {
     customRender(<MortgageEditDialog {...props} />);
     const dialog = screen.getByRole("dialog", { name: "Edit your mortgage details" });
     expect(dialog.querySelector('input[type="number"]')).toBeNull();
-    fireEvent.change(screen.getByLabelText("Mortgage account"), { target: { value: "" } });
-    expect(props.onSelectAccount).toHaveBeenCalledWith(null);
+    const select = screen.getByLabelText("Mortgage account") as HTMLSelectElement;
+    // No "none" option: unlinking would blank the form and could clear stored figures on save.
+    expect(Array.from(select.options).map((o) => o.value)).toEqual(["m1"]);
+    expect(select.textContent).not.toMatch(/No account linked/);
+    fireEvent.change(select, { target: { value: "m1" } });
+    expect(props.onSelectAccount).toHaveBeenCalledWith("m1");
     fireEvent.change(screen.getByLabelText(/^Interest rate/), { target: { value: "4.5" } });
     expect(props.onEditInterestRateChange).toHaveBeenCalledWith("4.5");
     fireEvent.change(screen.getByLabelText(/^Years left/), { target: { value: "18" } });

@@ -43,7 +43,6 @@ export const DebtSummary: FC<DebtSummaryProps> = ({
 }) => {
   const { formatCurrency } = useFormatCurrency();
   const aprUnknown = missingAprCount > 0;
-  const estimatesNote = minimumEstimated ? ". Some minimum payments are estimates" : "";
 
   return (
     <div className={summaryStack}>
@@ -69,11 +68,7 @@ export const DebtSummary: FC<DebtSummaryProps> = ({
           <KpiCard
             key="date"
             label="Debt-free by"
-            subtext={
-              payoffAchievable
-                ? `Estimate at your current payments${estimatesNote}`
-                : "Estimate: at the minimum payments, these debts are not paid off"
-            }
+            subtext="Estimate"
             unset={aprUnknown}
             value={
               aprUnknown ? null : (
@@ -95,7 +90,7 @@ export const DebtSummary: FC<DebtSummaryProps> = ({
           <KpiCard
             key="interest"
             label="Interest this year"
-            subtext={`Estimate at your current payments${estimatesNote}`}
+            subtext="Estimate"
             unset={aprUnknown}
             value={aprUnknown ? null : <Money size="lg" value={interestThisYear} />}
           />,

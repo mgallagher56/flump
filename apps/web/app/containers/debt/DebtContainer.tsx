@@ -3,7 +3,7 @@ import {
   type DebtItem,
   PortfolioSnapshot,
 } from "@flump/finance-engine";
-import { Button, CollapsibleDrawer, PageHeader, ScenarioZone } from "@repo/ui";
+import { Button, CollapsibleDrawer, PageHeader, ProjectionNotice, ScenarioZone } from "@repo/ui";
 import type { ToolSlug } from "@repo/ui/tools";
 import { type FC, useMemo, useState } from "react";
 import { Link, useFetcher, useLoaderData } from "react-router";
@@ -19,7 +19,7 @@ import { ConfirmDialog } from "~/features/feedback/components/ConfirmDialog";
 import { useFetcherOutcome } from "~/features/feedback/hooks/useFetcherOutcome";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import { useScenarioState } from "~/hooks/useScenarioState";
-import { basisText, errorBanner, footerLink, pageRoot, plainLink } from "./DebtContainer.styles";
+import { errorBanner, footerLink, pageRoot, plainLink } from "./DebtContainer.styles";
 
 /** The overpay-or-save calculator (D5 replaces the debt "into savings" tool with this link). */
 const OVERPAY_OR_SAVE_SLUG: ToolSlug = "mortgage-overpayment-vs-isa-calculator";
@@ -192,12 +192,21 @@ export const DebtContainer: FC = () => {
 
           <ScenarioZone
             announcement={debtHeadline}
-            basis={
-              <span
-                className={basisText}
-              >{`Starting from your figures: ${formatCurrency(totalDebt)} owed across ${debts.length} ${
-                debts.length === 1 ? "debt" : "debts"
-              }, ${formatCurrency(totalMin)} a month in minimum payments`}</span>
+            notice={
+              <ProjectionNotice
+                lead={
+                  [
+                    budgetLeftOver === null
+                      ? "We do not know what you have left over each month, so these results assume you can afford the extra payment you choose."
+                      : "",
+                    aprUnknown
+                      ? "Some debts have no APR set, so the estimate uses 0% for them and the real dates may be later."
+                      : "",
+                  ]
+                    .filter(Boolean)
+                    .join(" ") || undefined
+                }
+              />
             }
             footer={
               <button
@@ -217,7 +226,6 @@ export const DebtContainer: FC = () => {
             onReset={scenario.reset}
           >
             <PayExtraTool
-              aprUnknown={aprUnknown}
               budgetLeftOver={budgetLeftOver}
               comparison={comparison}
               extraPayment={extraPayment}
