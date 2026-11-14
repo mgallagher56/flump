@@ -1,6 +1,7 @@
 import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { AppShell } from "../../patterns/AppShell/AppShell";
+import { PageHeader } from "../../patterns/PageHeader";
 import { expectPageRules } from "../../testing";
 import {
   DashboardTemplate,
@@ -143,6 +144,20 @@ describe("PageBody", () => {
     expect(body.getAttribute("aria-label")).toBe("Page");
     expect(within(body).getByRole("heading", { level: 1 })).toBeDefined();
     expect(body.className).toContain("max-w_page.max");
+  });
+
+  it("leaves only the 32px section gap between the header and the hero (P13)", () => {
+    render(
+      <PageBody data-testid="body">
+        <PageHeader title="Your budget" subtitle="Your income and spending." />
+        <div>Hero</div>
+      </PageBody>,
+    );
+    const body = screen.getByTestId("body");
+    expect(body.className).toContain("gap_page.section");
+    // The header's own bottom margin is switched off for a direct child, so it does not stack.
+    expect(body.className).toContain("[&_>_header]:mb_0");
+    expect(body.querySelector(":scope > header")).not.toBeNull();
   });
 
   it("supplies its own gutters, and drops them inside a shell that already pads the page", () => {
