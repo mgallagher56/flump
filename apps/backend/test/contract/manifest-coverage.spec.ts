@@ -4,6 +4,7 @@ import { RequestMethod } from "@nestjs/common";
 import { METHOD_METADATA, PATH_METADATA } from "@nestjs/common/constants";
 import { describe, expect, it } from "vitest";
 import { AppModule } from "../../src/app.module";
+import { moduleControllers } from "../../src/testing/module-controllers";
 
 /**
  * Route coverage (E21 T0.8): the manifest in @flump/api-contract and the routes Nest registers
@@ -21,8 +22,7 @@ const VERBS: Record<number, string> = {
 const clean = (value: string) => value.replace(/^\/+|\/+$/g, "");
 
 function registeredRoutes(): string[] {
-  const controllers: Array<new (...args: never[]) => unknown> =
-    Reflect.getMetadata("controllers", AppModule) ?? [];
+  const controllers = moduleControllers(AppModule);
   const routes: string[] = [];
   for (const controller of controllers) {
     const prefix = (Reflect.getMetadata(PATH_METADATA, controller) as string | undefined) ?? "/";

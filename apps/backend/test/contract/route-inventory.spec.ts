@@ -6,6 +6,7 @@ import { METHOD_METADATA, PATH_METADATA } from "@nestjs/common/constants";
 import { describe, expect, it } from "vitest";
 import { AppModule } from "../../src/app.module";
 import { API_VERSION_PREFIX, v1AliasMiddleware } from "../../src/config/v1-alias.middleware";
+import { moduleControllers } from "../../src/testing/module-controllers";
 
 /**
  * Route inventory guard (E23 section 9.3, B1).
@@ -162,8 +163,7 @@ const VERBS: Record<number, Method> = {
 };
 
 function backendRoutes(): Array<{ method: Method; path: string }> {
-  const controllers: Array<new (...args: never[]) => unknown> =
-    Reflect.getMetadata("controllers", AppModule) ?? [];
+  const controllers = moduleControllers(AppModule);
   const join2 = (a: string, b: string) =>
     `/${[a, b]
       .map((s) => s.replace(/^\/+|\/+$/g, ""))

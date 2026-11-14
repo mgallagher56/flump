@@ -3,6 +3,7 @@ import { RequestMethod } from "@nestjs/common";
 import { GUARDS_METADATA, METHOD_METADATA, PATH_METADATA } from "@nestjs/common/constants";
 import { AppModule } from "../../src/app.module";
 import { AuthGuard } from "../../src/auth/auth.guard";
+import { moduleControllers } from "../../src/testing/module-controllers";
 
 export interface RegisteredRoute {
   /** "METHOD /path" with Nest `:param` syntax, the matrix key. */
@@ -39,8 +40,7 @@ function handlerNames(proto: object): string[] {
  * level. APP_GUARD providers are not counted: only an explicit AuthGuard proves authentication.
  */
 export function registeredRoutes(): RegisteredRoute[] {
-  const controllers: Array<new (...args: never[]) => unknown> =
-    Reflect.getMetadata("controllers", AppModule) ?? [];
+  const controllers = moduleControllers(AppModule);
   const routes: RegisteredRoute[] = [];
   for (const controller of controllers) {
     const prefix = (Reflect.getMetadata(PATH_METADATA, controller) as string | undefined) ?? "/";

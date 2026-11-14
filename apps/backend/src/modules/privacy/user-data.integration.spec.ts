@@ -42,7 +42,7 @@ import {
 //   docker run --rm -d --name flump-pg-test -e POSTGRES_PASSWORD=postgres \
 //     -e POSTGRES_DB=flump_privacy_test -p 55432:5432 postgres:18-alpine
 //   TEST_DATABASE_URL=postgres://postgres:postgres@localhost:55432/flump_privacy_test \
-//     bunx vitest run src/privacy
+//     bunx vitest run src/modules/privacy
 // made-up test user ids and fake token strings the export test proves are left out
 // nosemgrep: ajinabraham.njsscan.generic.hardcoded_secrets.node_username
 const USER_A = "user_01HZX3Q9V7C2M8N4P6R0S5T1WA";

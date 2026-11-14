@@ -33,7 +33,7 @@ import type { BankProviderRegistry } from "./providers/provider.registry";
 // provider or the fake bank (D11: never a real provider). Same throwaway-database rules as
 // migrations.integration.spec.ts (this suite DROPs the public schema):
 //   TEST_DATABASE_URL=postgres://postgres:postgres@localhost:55512/flump_be12_test \
-//     bunx vitest run src/bank-connection-sync.integration.spec.ts
+//     bunx vitest run src/modules/banking/bank-connection-sync.integration.spec.ts
 const TEST_DATABASE_URL = process.env.TEST_DATABASE_URL;
 const PERSON = "user-be12";
 const OTHER_PERSON = "user-be12-other";
