@@ -83,7 +83,11 @@ describe("capSeriesWithOther", () => {
     const result = capSeriesWithOther(items);
     expect(result).toEqual(items);
     expect(result).not.toBe(items);
-    expect(capSeriesWithOther(mk(1, 2, 3, 4, 5, 6))).toHaveLength(6);
+    expect(capSeriesWithOther(mk(1, 2, 3, 4, 5))).toHaveLength(5);
+  });
+
+  it("defaults to the donut cap of 5 slices", () => {
+    expect(capSeriesWithOther(mk(6, 5, 4, 3, 2, 1))).toHaveLength(CHART_RULES.donutMaxSlices);
   });
 
   it("handles empty input", () => {
@@ -92,9 +96,9 @@ describe("capSeriesWithOther", () => {
 
   it("groups the tail into Other so the result has at most max slices", () => {
     const result = capSeriesWithOther(mk(10, 9, 8, 7, 6, 5, 4, 3));
-    expect(result).toHaveLength(6);
-    expect(result.map((r) => r.label)).toEqual(["s0", "s1", "s2", "s3", "s4", "Other"]);
-    expect(result[5]?.value).toBe(5 + 4 + 3);
+    expect(result).toHaveLength(5);
+    expect(result.map((r) => r.label)).toEqual(["s0", "s1", "s2", "s3", "Other"]);
+    expect(result[4]?.value).toBe(6 + 5 + 4 + 3);
   });
 
   it("ranks by value, keeping the largest regardless of input order", () => {
@@ -118,7 +122,7 @@ describe("CHART_RULES", () => {
   it("documents the spec rules", () => {
     expect(CHART_RULES.legendMinSeries).toBe(2);
     expect(CHART_RULES.gradientMaxOpacity).toBe(0.15);
-    expect(CHART_RULES.donutMaxSlices).toBe(6);
+    expect(CHART_RULES.donutMaxSlices).toBe(5);
     expect(CHART_RULES.nonColourCueRequired).toBe(true);
     expect(CHART_RULES.colourBy).toBe("entity");
   });
