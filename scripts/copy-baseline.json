@@ -1,11 +1,5 @@
 {
-  "apps/marketing/src/components/BaselineSnapshotPreview.tsx": 1,
-  "apps/marketing/src/components/Header/Header.tsx": 2,
-  "apps/marketing/src/components/HomeFAQ.tsx": 1,
   "apps/marketing/src/components/McpSpotlightSection/McpSpotlightSection.tsx": 3,
-  "apps/marketing/src/components/PayRiseTeaser/PayRiseTeaser.tsx": 1,
-  "apps/marketing/src/components/SecurityPrivacySection.tsx": 1,
-  "apps/marketing/src/pages/McpPage/McpPage.tsx": 7,
   "apps/web/app/features/ai-connections/components/McpConnectionCard/McpConnectionCard.tsx": 1,
   "apps/web/app/features/budget/components/AddCategoryModal/AddCategoryModal.tsx": 1,
   "apps/web/app/features/debt/components/AddDebtDialog/AddDebtDialog.tsx": 1,
