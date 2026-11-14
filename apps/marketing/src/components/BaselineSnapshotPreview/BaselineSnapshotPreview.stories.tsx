@@ -3,7 +3,7 @@ import { expect, within } from "storybook/test";
 import { BaselineSnapshotPreview } from "./BaselineSnapshotPreview";
 
 const meta: Meta<typeof BaselineSnapshotPreview> = {
-  title: "Marketing/BaselineSnapshotPreview",
+  title: "3. Patterns/Marketing/BaselineSnapshotPreview",
   component: BaselineSnapshotPreview,
   parameters: { layout: "padded" },
 };

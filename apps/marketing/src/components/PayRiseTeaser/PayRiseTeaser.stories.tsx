@@ -4,7 +4,7 @@ import { expect, fireEvent, within } from "storybook/test";
 import { PayRiseTeaser } from "./PayRiseTeaser";
 
 const meta: Meta<typeof PayRiseTeaser> = {
-  title: "Marketing/PayRiseTeaser",
+  title: "3. Patterns/Marketing/PayRiseTeaser",
   component: PayRiseTeaser,
   parameters: { layout: "fullscreen" },
   decorators: [

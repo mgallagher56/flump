@@ -4,7 +4,7 @@ import { expect, within } from "storybook/test";
 import { DisclosurePolicySection } from "./DisclosurePolicySection";
 
 const meta: Meta<typeof DisclosurePolicySection> = {
-  title: "Marketing/DisclosurePolicySection",
+  title: "3. Patterns/Marketing/DisclosurePolicySection",
   component: DisclosurePolicySection,
 };
 

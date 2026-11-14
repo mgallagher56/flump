@@ -4,7 +4,7 @@ import { expect, within } from "storybook/test";
 import { SecurityPrivacySection } from "./SecurityPrivacySection";
 
 const meta: Meta<typeof SecurityPrivacySection> = {
-  title: "Marketing/SecurityPrivacySection",
+  title: "3. Patterns/Marketing/SecurityPrivacySection",
   component: SecurityPrivacySection,
   parameters: { layout: "fullscreen" },
   decorators: [

@@ -4,7 +4,7 @@ import { expect, userEvent, within } from "storybook/test";
 import { HomeFAQ } from "./HomeFAQ";
 
 const meta: Meta<typeof HomeFAQ> = {
-  title: "Marketing/HomeFAQ",
+  title: "3. Patterns/Marketing/HomeFAQ",
   component: HomeFAQ,
   parameters: { layout: "padded" },
   decorators: [
