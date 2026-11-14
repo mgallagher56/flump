@@ -321,4 +321,107 @@ describe("PAYE bonus records add to the salary, never replace it (C-10)", () => 
     expect(r.personalAllowance).toBe(7570);
     expect(r.payeTaxDue).toBe(33432);
   });
+
+  // Logged employee pension (net pay arrangement) comes off the profile salary even when no
+  // salary record is logged: 50,000 - 4,000 = 46,000; 33,430 x 20% = 6,686.
+  it("logged employee pension comes off the profile salary with no salary record logged", () => {
+    const r = calculateUKTax(Y, [paye("pension", "paye_pension", 4000)], 50000, 100);
+    expect(r.effectivePayeSalary).toBe(46000);
+    expect(r.payeTaxDue).toBe(6686);
+  });
+});
+
+describe("tax due on income outside PAYE (golden, 2026/27 England, Wales and NI)", () => {
+  // Personal allowance 12,570 tapered 1 for 2 above 100,000; basic band 37,700 at 20%, higher 40%,
+  // additional 45% above taxable 125,140. Savings starting rate band 5,000 at 0%, reduced 1 for 1
+  // by non-savings taxable income. Dividends 10.75% basic, allowance 500. Hand-derived figures.
+  const Y = "2026/27";
+  const rec = (category: string, source: TaxRecord["source"], amount: number): TaxRecord => ({
+    ...dividendRecord(amount, "2026-06-01"),
+    id: `${source}-${category}`,
+    source,
+    category,
+    name: category,
+  });
+  const rent = (amount: number) => rec("rental_income", "rental", amount);
+  const tradingIncome = (amount: number) => rec("self_employed_income", "self-employed", amount);
+
+  it("PAYE is deducted with the allowance tapered by the salary alone: 95,000 salary + 20,000 rent", () => {
+    const r = calculateUKTax(Y, [rent(20000)], 95000, 100);
+    // Liability: allowance 12,570 - 7,500 = 5,070; taxable 109,930; 7,540 + 72,230 x 40% = 36,432.
+    expect(r.totalTaxDue).toBe(36432);
+    // PAYE: full 12,570 allowance on 95,000; taxable 82,430; 7,540 + 44,730 x 40% = 25,432.
+    expect(r.payeTaxDue).toBe(25432);
+    expect(r.netAdditionalTaxToPay).toBe(11000);
+  });
+
+  it("120,000 salary + 10,000 rent: 44,703 liability - 39,432 PAYE = 5,271", () => {
+    const r = calculateUKTax(Y, [rent(10000)], 120000, 100);
+    expect(r.totalTaxDue).toBe(44703);
+    expect(r.payeTaxDue).toBe(39432);
+    expect(r.netAdditionalTaxToPay).toBe(5271);
+  });
+
+  it("unused allowance covers savings: 10,000 trading profit + 3,000 interest = 0", () => {
+    const r = calculateUKTax(Y, [tradingIncome(10000), savingsRecord(3000, "2026-06-01")], 0, 100);
+    expect(r.taxableSavingsInterest).toBe(0);
+    expect(r.savingsTaxDue).toBe(0);
+    expect(r.netAdditionalTaxToPay).toBe(0);
+  });
+
+  it("no employment, 10,000 interest sits inside the allowance = 0", () => {
+    const r = calculateUKTax(Y, [savingsRecord(10000, "2026-06-01")], 0, 100);
+    expect(r.savingsTaxDue).toBe(0);
+    expect(r.netAdditionalTaxToPay).toBe(0);
+  });
+
+  it("starting rate for savings: 0 salary, 20,000 interest; 12,570 allowance, 5,000 at 0%, 1,000 PSA, 1,430 at 20% = 286", () => {
+    const r = calculateUKTax(Y, [savingsRecord(20000, "2026-06-01")], 0, 100);
+    expect(r.taxableSavingsInterest).toBe(1430);
+    expect(r.savingsTaxDue).toBeCloseTo(286, 2);
+  });
+
+  it("starting rate shrinks 1 for 1 with non-savings income above the allowance: 15,570 salary, 3,000 interest", () => {
+    // Non-savings taxable 3,000 leaves a 2,000 starting band; 1,000 PSA; nothing left to tax.
+    const r = calculateUKTax(Y, [savingsRecord(3000, "2026-06-01")], 15570, 100);
+    expect(r.savingsTaxDue).toBe(0);
+    // 4,000 interest leaves 1,000 at 20% = 200.
+    const r2 = calculateUKTax(Y, [savingsRecord(4000, "2026-06-01")], 15570, 100);
+    expect(r2.savingsTaxDue).toBeCloseTo(200, 2);
+  });
+
+  it("unused allowance then covers dividends: 5,000 profit + 20,000 dividends = 1,282", () => {
+    const r = calculateUKTax(Y, [tradingIncome(5000), dividendRecord(20000, "2026-06-01")], 0, 100);
+    // 7,570 allowance left after profit; 12,430 dividends - 500 allowance = 11,930 x 10.75%.
+    expect(r.taxableDividends).toBe(11930);
+    expect(Math.round(r.netAdditionalTaxToPay)).toBe(1282);
+  });
+
+  it("Section 24 credit still holds: 49,000 salary + 10,000 rent with 6,000 mortgage interest = 2,546", () => {
+    const r = calculateUKTax(
+      Y,
+      [rent(10000), rec("mortgage_interest", "rental", 6000)],
+      49000,
+      100,
+    );
+    // 46,430 taxable: 11,032 - 7,286 PAYE = 3,746 on the rent, less 20% x 6,000 = 1,200 credit.
+    expect(r.rentalPropertyTaxCredit).toBe(1200);
+    expect(r.netAdditionalTaxToPay).toBe(2546);
+  });
+
+  it("losses never go below 0: rental and trading losses give 0", () => {
+    const r = calculateUKTax(
+      Y,
+      [
+        rent(5000),
+        rec("repairs_maintenance", "rental", 8000),
+        rec("office_costs", "self-employed", 3000),
+      ],
+      30000,
+      100,
+    );
+    expect(r.rentalProfitBeforeInterest).toBe(0);
+    expect(r.seProfit).toBe(0);
+    expect(r.netAdditionalTaxToPay).toBe(0);
+  });
 });

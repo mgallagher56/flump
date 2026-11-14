@@ -237,6 +237,11 @@ export interface UkSavingsRules {
   psaBasic: number;
   psaHigher: number;
   psaAdditional: number;
+  /**
+   * Starting rate for savings band (0%), reduced 1 for 1 by non-savings income above the
+   * personal allowance.
+   */
+  startingRateBand: number;
 }
 
 export interface UkDividendRules {
@@ -249,7 +254,14 @@ export interface UkDividendRules {
 // PSA 1,000 / 500 / 0: https://www.gov.uk/apply-tax-free-interest-on-savings/how-much-is-tax-free
 // (current guidance, no tax year named, so only treated as verified for 2026/27).
 // Carried over unchanged from tax-calculator.ts and uk-tax.ts for every year.
-const SAVINGS: UkSavingsRules = { psaBasic: 1000, psaHigher: 500, psaAdditional: 0 };
+// Starting rate for savings 5,000 at 0%: same page ("starting rate for savings"), unchanged
+// since 2015/16 and carried for every supported year.
+const SAVINGS: UkSavingsRules = {
+  psaBasic: 1000,
+  psaHigher: 500,
+  psaAdditional: 0,
+  startingRateBand: 5000,
+};
 
 // Dividends: https://www.gov.uk/tax-on-dividends and
 // https://www.gov.uk/government/publications/rates-and-allowances-income-tax/income-tax-rates-and-allowances-current-and-past
