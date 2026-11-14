@@ -18,6 +18,6 @@ export const TOOL_SHORT_LABELS: Record<ToolSlug, string> = {
   "mortgage-overpayment-vs-isa-calculator": "Mortgage vs Stocks and Shares ISA",
   "uk-student-loan-overpay-or-invest-calculator": "Student loan repayments",
   "uk-pay-rise-take-home-calculator": "What you keep from a pay rise",
-  "uk-100k-tax-trap-calculator": "£100k tax trap calculator",
+  "uk-100k-tax-trap-calculator": "Income between £100,000 and £125,140",
   "section-24-landlord-tax-calculator": "Section 24 landlord tax",
 };
