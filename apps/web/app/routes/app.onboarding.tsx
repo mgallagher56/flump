@@ -2,6 +2,7 @@ import {
   type ActionFunctionArgs,
   data,
   type LoaderFunctionArgs,
+  type MetaFunction,
   redirect,
   useActionData,
   useLoaderData,
@@ -22,6 +23,8 @@ import {
 
 /** Setup is a focused flow: no app navigation (UX N9). The app shell reads this. */
 export const handle = FOCUSED_SHELL_HANDLE;
+
+export const meta: MetaFunction = () => [{ title: "Set up | Flump" }];
 
 export const loader = async (args: LoaderFunctionArgs) => {
   const { user, accessToken } = await getAuthSession(args, { ensureSignedIn: true });
