@@ -19,7 +19,7 @@ const stage = {
 const view = {
   batchId: BATCH,
   status: "staged",
-  counts: { new: 1, overwrite: 0, unchanged: 0, errors: 0 },
+  counts: { staged: 1, new: null, overwrite: null, unchanged: null, skipped: null, errors: 0 },
   rows: 2,
   validationErrors: [{ ref: "acc_1", month: "2099-01", code: "future_month" }],
   skippedManual: [],
@@ -55,6 +55,11 @@ describe("import contract (E17 PR C)", () => {
     expect(checkAgainst(StageImportRequest, badMonth).ok).toBe(false);
     const badValue = { ...stage, balances: [{ ...stage.balances[0], value: 1.005 }] };
     expect(checkAgainst(StageImportRequest, badValue).ok).toBe(false);
+    const accounts = Array.from({ length: 201 }, (_, i) => ({
+      ...stage.accounts[0],
+      ref: `a${i}`,
+    }));
+    expect(checkAgainst(StageImportRequest, { ...stage, accounts }).ok).toBe(false);
     const many = Array.from({ length: MAX_IMPORT_ROWS + 1 }, () => stage.balances[0]);
     expect(checkAgainst(StageImportRequest, { ...stage, balances: many }).ok).toBe(false);
   });
@@ -77,5 +82,10 @@ describe("import contract (E17 PR C)", () => {
     const withValue = { ...view, validationErrors: [{ ...view.validationErrors[0], value: 1 }] };
     expect(checkAgainst(ImportBatchResponse, withValue).ok).toBe(false);
     expect(checkAgainst(ImportBatchResponse, { ...view, status: "pending" }).ok).toBe(false);
+    const committed = {
+      ...view,
+      counts: { ...view.counts, new: 1, overwrite: 0, unchanged: 0, skipped: 0 },
+    };
+    expect(checkAgainst(ImportBatchResponse, committed).ok).toBe(true);
   });
 });

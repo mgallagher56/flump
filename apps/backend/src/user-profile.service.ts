@@ -130,6 +130,9 @@ export class UserProfileService implements ProfileLifecycle {
     @Optional()
     @InjectRepository(SnapshotCheckin)
     private readonly snapshotCheckinRepository?: Repository<SnapshotCheckin>,
+    @Optional()
+    @InjectRepository(ImportBatch)
+    private readonly importBatchRepository?: Repository<ImportBatch>,
   ) {}
 
   formatProfile(profile: UserProfile): any {
@@ -549,6 +552,7 @@ export class UserProfileService implements ProfileLifecycle {
         this.taxRecordRepository,
         this.userProfileRepository,
         this.snapshotCheckinRepository,
+        this.importBatchRepository,
       );
     }
 

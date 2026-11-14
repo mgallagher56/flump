@@ -26,6 +26,7 @@ export class AddImportBatchesAndAgentAudit1794356200000 implements MigrationInte
          "idempotency_key" character varying NOT NULL,
          "payload" jsonb NOT NULL,
          "counts" jsonb NOT NULL,
+         "validation_errors" jsonb NOT NULL,
          "revert_data" jsonb,
          "created_at" TIMESTAMP NOT NULL DEFAULT now(),
          "updated_at" TIMESTAMP NOT NULL DEFAULT now(),
@@ -52,10 +53,13 @@ export class AddImportBatchesAndAgentAudit1794356200000 implements MigrationInte
     await queryRunner.query(
       `ALTER TABLE "account_details" DROP CONSTRAINT IF EXISTS "${BATCH_FK}"`,
     );
+    // NOT VALID then VALIDATE: the add takes a brief lock only, the scan runs under a weaker one.
     await queryRunner.query(
       `ALTER TABLE "account_details" ADD CONSTRAINT "${BATCH_FK}"
-         FOREIGN KEY ("import_batch_id") REFERENCES "import_batches"("id") ON DELETE SET NULL`,
+         FOREIGN KEY ("import_batch_id") REFERENCES "import_batches"("id") ON DELETE SET NULL
+         NOT VALID`,
     );
+    await queryRunner.query(`ALTER TABLE "account_details" VALIDATE CONSTRAINT "${BATCH_FK}"`);
     await queryRunner.query(
       `CREATE INDEX IF NOT EXISTS "IDX_account_details_import_batch"
          ON "account_details" ("import_batch_id")`,
@@ -65,8 +69,9 @@ export class AddImportBatchesAndAgentAudit1794356200000 implements MigrationInte
     );
     await queryRunner.query(
       `ALTER TABLE "account_details" ADD CONSTRAINT "${SOURCE_CHECK}"
-         CHECK ("source" IN ('onboarding', 'manual', 'connected', 'backfill', 'agent'))`,
+         CHECK ("source" IN ('onboarding', 'manual', 'connected', 'backfill', 'agent')) NOT VALID`,
     );
+    await queryRunner.query(`ALTER TABLE "account_details" VALIDATE CONSTRAINT "${SOURCE_CHECK}"`);
 
     await queryRunner.query(
       `CREATE TABLE IF NOT EXISTS "agent_audit_events" (

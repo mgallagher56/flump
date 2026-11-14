@@ -1,16 +1,16 @@
 import { Body, Controller, Get, Param, Post, Req, UseGuards } from "@nestjs/common";
 import { AuthGuard } from "../auth/auth.guard";
 import type { AuthenticatedRequest } from "../finance.controller";
-import { McpAllowlistGuard } from "../mcp-access";
 import { RateLimit } from "../security/rate-limit.decorator";
 import { type CommitImportInput, ImportsService, type StageImportInput } from "./imports.service";
+import { ImportsAccessGuard } from "./imports-access.guard";
 
 /**
- * The import primitive under session auth (E17 re-plan PR C). Owner-only during rollout: the same
- * allowlist as AI connections (`MCP_ALLOWED_USER_IDS`). The user id comes from the token only.
+ * The import primitive under session auth (E17 re-plan PR C). Owner-only during rollout
+ * (ImportsAccessGuard). The user id comes from the token only.
  */
 @Controller()
-@UseGuards(AuthGuard, McpAllowlistGuard)
+@UseGuards(AuthGuard, ImportsAccessGuard)
 export class ImportsController {
   constructor(private readonly imports: ImportsService) {}
 

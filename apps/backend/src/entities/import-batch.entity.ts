@@ -39,11 +39,27 @@ export interface ImportPayload {
   chunkKeys: string[];
 }
 
+/**
+ * Stored counts. `rows` (accounts plus balances) and `staged` (balances) survive the payload being
+ * cleared at commit. new, overwrite, unchanged and skipped are null until commit: before accounts
+ * are mapped nothing can be compared with live data.
+ */
 export interface ImportCounts {
-  new: number;
-  overwrite: number;
-  unchanged: number;
+  rows: number;
+  staged: number;
+  new: number | null;
+  overwrite: number | null;
+  unchanged: number | null;
+  /** Rows not written because they would overwrite a protected value (not ticked). */
+  skipped: number | null;
   errors: number;
+}
+
+/** One refused staged row: ref, month and code only. */
+export interface StageValidationError {
+  ref: string;
+  month?: string;
+  code: string;
 }
 
 /** A row the commit wrote, with what was there before, so revert can put it back. */
@@ -61,7 +77,13 @@ export interface RevertData {
   /** Accounts the commit created (ref null in the map). */
   createdAccountIds: string[];
   /** Current-month balance moves: the balance before and the one the commit set. */
-  balances: Array<{ accountId: string; prior: number; written: number }>;
+  balances: Array<{
+    accountId: string;
+    year: number;
+    month: number;
+    prior: number;
+    written: number;
+  }>;
   /** Row keys (`ref:YYYY-MM`) skipped because they would overwrite a non-agent value. */
   skippedManual: string[];
   /** Set by revert. */
@@ -95,6 +117,10 @@ export class ImportBatch {
 
   @Column({ type: "jsonb" })
   counts: ImportCounts;
+
+  /** Validation errors per stage call, keyed by its idempotency key, so a replay returns them. */
+  @Column({ name: "validation_errors", type: "jsonb" })
+  validationErrors: Record<string, StageValidationError[]>;
 
   @Column({ name: "revert_data", type: "jsonb", nullable: true })
   revertData: RevertData | null;

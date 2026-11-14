@@ -29,6 +29,19 @@ const TOOL_NAME = /^[a-z][a-z0-9_]{0,63}$/;
 const ERROR_CODE = /^[A-Za-z0-9_.-]{1,64}$/;
 const SCOPE = /^[a-z][a-z:_-]{0,63}$/;
 
+/** JSON with object keys sorted at every level, so equal arguments always hash the same. */
+export function canonicalJson(value: unknown): string {
+  if (Array.isArray(value)) return `[${value.map((v) => canonicalJson(v ?? null)).join(",")}]`;
+  if (value && typeof value === "object") {
+    const entries = Object.keys(value as Record<string, unknown>)
+      .filter((k) => (value as Record<string, unknown>)[k] !== undefined)
+      .sort()
+      .map((k) => `${JSON.stringify(k)}:${canonicalJson((value as Record<string, unknown>)[k])}`);
+    return `{${entries.join(",")}}`;
+  }
+  return JSON.stringify(value) ?? "null";
+}
+
 /** Client names are self-reported: keep a short identifier-like token, never free text. */
 function safeClientName(raw: unknown): string | null {
   if (typeof raw !== "string") return null;
@@ -55,7 +68,7 @@ export class AgentAuditService {
   /** HMAC-SHA256 of the canonical JSON of `args` under `MCP_AUDIT_HMAC_KEY`; null when unset. */
   fingerprint(args: unknown, key = process.env.MCP_AUDIT_HMAC_KEY): string | null {
     if (!key || args === undefined) return null;
-    return createHmac("sha256", key).update(JSON.stringify(args)).digest("hex");
+    return createHmac("sha256", key).update(canonicalJson(args)).digest("hex");
   }
 
   async record(input: AgentAuditInput): Promise<void> {
