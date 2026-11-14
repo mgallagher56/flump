@@ -63,6 +63,17 @@ export const Phone: Story = {
     const body = within(canvasElement.ownerDocument.body);
     const dialog = await body.findByRole("dialog", { name: "Add liability account" });
     await expect(dialog).toBeVisible();
+    // Under md (768px) the dialog is presented like Sheet: full width, resting on the bottom edge.
+    // waitFor lets the slide-up finish before measuring.
+    if (window.innerWidth < 768) {
+      await waitFor(() => {
+        const box = dialog.getBoundingClientRect();
+        expect(box.left).toBeLessThanOrEqual(0.5);
+        expect(box.width).toBeGreaterThanOrEqual(document.documentElement.clientWidth - 1);
+        expect(box.width).toBeLessThanOrEqual(window.innerWidth);
+        expect(Math.abs(box.bottom - window.innerHeight)).toBeLessThanOrEqual(1);
+      });
+    }
   },
 };
 

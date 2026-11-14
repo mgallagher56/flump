@@ -1,7 +1,7 @@
 import { cva } from "@repo/ui/styled-system/css";
 
 export const summaryRoot = cva({
-  base: { display: "flex", flexDirection: "column", gap: "16px", minWidth: 0 },
+  base: { display: "flex", flexDirection: "column", gap: "4", minWidth: 0 },
 });
 
 export const summaryHeading = cva({
@@ -16,7 +16,7 @@ export const summaryHeading = cva({
 });
 
 export const summarySubheading = cva({
-  base: { margin: 0, marginBottom: "4px", textStyle: "label.md", color: "text.primary" },
+  base: { margin: 0, marginBottom: "1", textStyle: "label.md", color: "text.primary" },
 });
 
 export const changesList = cva({
@@ -28,8 +28,8 @@ export const changeRow = cva({
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
-    gap: "12px",
-    py: "8px",
+    gap: "3",
+    py: "2",
     borderBottomWidth: "1px",
     borderBottomStyle: "solid",
     borderBottomColor: "border.subtle",
@@ -45,7 +45,7 @@ export const changeFigure = cva({
   base: {
     display: "inline-flex",
     alignItems: "center",
-    gap: "8px",
+    gap: "2",
     flexShrink: 0,
     textStyle: "numeric.sm",
     color: "text.primary",
@@ -55,7 +55,7 @@ export const changeFigure = cva({
 
 /** Net worth: the label, the summary's largest figure, then the change against last month. */
 export const netWorthBlock = cva({
-  base: { display: "flex", flexDirection: "column", gap: "2px", minWidth: 0 },
+  base: { display: "flex", flexDirection: "column", gap: "0.5", minWidth: 0 },
 });
 
 export const netWorthLabel = cva({
@@ -86,7 +86,7 @@ export const summaryActions = cva({
     flexDirection: { base: "column-reverse", sm: "row" },
     alignItems: { base: "stretch", sm: "center" },
     justifyContent: "space-between",
-    gap: "8px",
+    gap: "2",
     "& > button": { minHeight: "6" },
   },
 });

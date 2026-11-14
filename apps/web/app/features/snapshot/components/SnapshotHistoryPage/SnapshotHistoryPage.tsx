@@ -24,12 +24,7 @@ import {
 import type { SaveSnapshot } from "../../useSaveSnapshot";
 import { type CheckInMode, CheckInSheet } from "../CheckInSheet";
 import { MonthlyChangeTable } from "../MonthlyChangeTable";
-import {
-  dataRowNote,
-  MIN_CHART_MONTHS,
-  NetWorthHistoryChart,
-  quietLink,
-} from "../NetWorthHistoryChart";
+import { MIN_CHART_MONTHS, NetWorthHistoryChart } from "../NetWorthHistoryChart";
 import { changesBody, sectionStack } from "./SnapshotHistoryPage.styles";
 
 export interface SnapshotHistoryPageProps {
@@ -242,20 +237,21 @@ export const SnapshotHistoryPage: FC<SnapshotHistoryPageProps> = ({
                 <>
                   {/* Before the chart shows, the one primary button leads the row (P7.4). */}
                   {enoughForChart ? null : checkInButton}
-                  <button
-                    className={quietLink()}
+                  <Button
                     data-testid="snapshot-open-backfill"
                     disabled={!hasAccounts}
                     id="snapshot-open-backfill"
                     onClick={() => setSheet("backfill")}
+                    size="sm"
                     type="button"
+                    variant="link"
                   >
                     Add earlier months
-                  </button>
-                  {thisMonthRecorded ? (
-                    <p className={dataRowNote()}>Next check-in: {nextCheckInDate(currentMonth)}</p>
-                  ) : null}
+                  </Button>
                 </>
+              }
+              dataNote={
+                thisMonthRecorded ? `Next check-in: ${nextCheckInDate(currentMonth)}` : undefined
               }
               notEnoughDataText={fewMonthsPrompt(recordedMonths)}
               points={toChartPoints(series)}

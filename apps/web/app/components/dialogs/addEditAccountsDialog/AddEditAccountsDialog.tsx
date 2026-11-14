@@ -297,6 +297,7 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
             <div className={dialogFooterGroup()}>
               <Button
                 disabled={deleteOutcome.pending}
+                data-testid="account-delete-cancel"
                 id="account-delete-cancel"
                 onClick={cancelDelete}
                 ref={cancelDeleteRef}
@@ -308,6 +309,7 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
               <Button
                 aria-busy={deleteOutcome.pending || undefined}
                 disabled={deleteOutcome.pending}
+                data-testid="account-delete-confirm"
                 id="account-delete-confirm"
                 onClick={handleConfirmRemoveAccount}
                 type="button"

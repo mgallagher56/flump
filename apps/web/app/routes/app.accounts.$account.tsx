@@ -21,8 +21,8 @@ export const loader = async (args: LoaderFunctionArgs) => {
         signal: args.request.signal,
         schema: AccountResponse,
       }),
-      // The net worth choices only: without them the defaults apply, so a failure here never
-      // blocks the account page.
+      // The net worth choices only: a failure here never blocks the account page. It leaves the
+      // basis unknown (null), so the page says nothing about net worth rather than guess.
       backendFetch("/user-profile", {
         accessToken,
         signal: args.request.signal,
@@ -32,7 +32,8 @@ export const loader = async (args: LoaderFunctionArgs) => {
     if (!account) throw new BackendError("not-found", `/accounts/${accountId}`);
     const accountDetails = account.details || [];
     // Whether this account counts toward net worth follows the user's choices (net worth choices).
-    const basis = netWorthBasisFromProfile(userProfile);
+    // A profile that loaded but has no choices gets the defaults; a failed fetch stays unknown.
+    const basis = userProfile === null ? null : netWorthBasisFromProfile(userProfile);
     return data({ account, accountDetails, basis, user });
   } catch (error) {
     throwRouteError(error);
