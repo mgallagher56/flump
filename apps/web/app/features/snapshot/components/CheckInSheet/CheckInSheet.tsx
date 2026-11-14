@@ -105,12 +105,13 @@ const MonthlyCheckInSheet: FC<CheckInSheetProps> = ({
 
   return (
     <Sheet
-      description={CHECK_IN_COPY.description}
+      // The month leads the description: a title with it wraps at "check-" on a phone.
+      description={`${formatMonth(currentMonth)}. ${CHECK_IN_COPY.description}`}
       id="snapshot-check-in"
       onOpenChange={handleOpenChange}
       open={open}
       side="right"
-      title={`Monthly check-in: ${formatMonth(currentMonth)}`}
+      title="Monthly check-in"
     >
       {steps.length === 0 ? (
         <p className={checkInIntro()}>{CHECK_IN_COPY.empty}</p>

@@ -105,7 +105,7 @@ describe("SnapshotHistoryPage", () => {
     await userEvent.click(
       within(screen.getByTestId("snapshot-empty")).getByRole("button", { name: "Update balances" }),
     );
-    expect(screen.getByRole("dialog", { name: "Monthly check-in: November 2026" })).toBeDefined();
+    expect(screen.getByRole("dialog", { name: "Monthly check-in" })).toBeDefined();
   });
 
   it("with no accounts, points to adding one", () => {
@@ -143,7 +143,7 @@ describe("SnapshotHistoryPage", () => {
     expectPageRules(container, { maxFigures: 4, maxNotSet: 0, projectionNotices: 0 });
     expectPageRules(firstView(), { maxFigures: 4 });
     await userEvent.click(screen.getByRole("button", { name: "Update balances" }));
-    expect(screen.getByRole("dialog", { name: "Monthly check-in: November 2026" })).toBeDefined();
+    expect(screen.getByRole("dialog", { name: "Monthly check-in" })).toBeDefined();
   });
 
   it("with two months, shows the change as the hero and the account table, still no chart", async () => {
@@ -215,7 +215,7 @@ describe("SnapshotHistoryPage", () => {
 
   it("opens the check-in on arrival from the dashboard link", () => {
     renderPage({ initialSheet: "checkIn" });
-    expect(screen.getByRole("dialog", { name: "Monthly check-in: November 2026" })).toBeDefined();
+    expect(screen.getByRole("dialog", { name: "Monthly check-in" })).toBeDefined();
   });
 
   it("opens back-fill from Add earlier months", async () => {

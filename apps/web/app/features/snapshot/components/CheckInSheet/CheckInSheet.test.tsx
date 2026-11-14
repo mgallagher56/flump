@@ -63,9 +63,9 @@ describe("CheckInSheet", () => {
   describe("monthly check-in", () => {
     it("goes account by account in one list from md, skipping connected accounts", () => {
       setup();
-      expect(screen.getByRole("dialog", { name: "Monthly check-in: November 2026" })).toBeDefined();
+      expect(screen.getByRole("dialog", { name: "Monthly check-in" })).toBeDefined();
       expect(screen.getByTestId("checkin-list")).toBeDefined();
-      expect(screen.getByText("October 2026: £1,200")).toBeDefined();
+      expect(screen.getByText("Current balance: £1,500")).toBeDefined();
       expect(screen.getByRole("textbox", { name: /New balance.*Current account/ })).toBeDefined();
       expect(screen.getByRole("textbox", { name: /Amount owed now.*Mortgage/ })).toBeDefined();
       expect(screen.queryByText("Joint account")).toBeNull();
@@ -87,8 +87,9 @@ describe("CheckInSheet", () => {
         month: "2026-11",
         payload: {
           values: [
-            { accountId: CURRENT, value: 1200, source: "confirmed" },
-            { accountId: MORTGAGE, value: 181000, source: "confirmed" },
+            // No change repeats each saved balance (D22), not October's recorded figure.
+            { accountId: CURRENT, value: 1500, source: "confirmed" },
+            { accountId: MORTGAGE, value: 180000, source: "confirmed" },
           ],
           complete: true,
         },
@@ -96,9 +97,10 @@ describe("CheckInSheet", () => {
         skipped: 0,
         quiet: true,
       });
-      // The connected account counts at its saved balance this month: £900 up on October.
+      // Against October: current +£300, mortgage £1,000 less owed, and the connected account
+      // counts at its saved balance this month (+£900).
       expect(screen.getByTestId("checkin-net-worth").textContent).toBe(
-        "Net worth: −£178,900, up £900 on October 2026.",
+        "Net worth: −£177,600, up £2,200 on October 2026.",
       );
       expect(refresh).not.toHaveBeenCalled();
       await userEvent.click(screen.getByRole("button", { name: "Done" }));

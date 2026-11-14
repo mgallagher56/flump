@@ -77,7 +77,7 @@ export function statusText(
  * statements of how a figure was given.
  */
 export const CHECK_IN_COPY = {
-  description: "Update each balance or keep last month's figure. Each one saves as you go.",
+  description: "Update each balance or keep it as it is. Each one saves as you go.",
   update: "Update",
   noChange: "No change",
   keep: "Keep this figure",
@@ -122,11 +122,10 @@ export function checkInProgress(position: number, total: number): string {
   return `${position} of ${total}`;
 }
 
-/** Last month's figure: "October 2026: £3,360", the saved balance, or no figure yet. */
-export function lastFigureText(lastValue: number | null, lastMonth: MonthKey | null): string {
+/** The figure "No change" keeps: the saved current balance (D22), or no figure yet. */
+export function lastFigureText(lastValue: number | null): string {
   if (lastValue === null) return "No balance recorded yet";
-  if (lastMonth === null) return `Saved balance: ${checkInMoney(lastValue)}`;
-  return `${formatMonth(lastMonth)}: ${checkInMoney(lastValue)}`;
+  return `Current balance: ${checkInMoney(lastValue)}`;
 }
 
 /** A done step: "Updated £3,400", "No change" or "Calculated £185,447". */

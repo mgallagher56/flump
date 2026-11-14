@@ -43,7 +43,7 @@ describe("CheckInStep", () => {
   it("shows the account, last month's figure and the two choices", () => {
     render(<Harness accountId={everyday} onAnswer={vi.fn()} />);
     expect(screen.getByRole("heading", { name: "Everyday account" })).toBeDefined();
-    expect(screen.getByText("October 2026: £3,360")).toBeDefined();
+    expect(screen.getByText("Current balance: £3,360")).toBeDefined();
     expect(screen.getByRole("textbox", { name: /New balance/ })).toBeDefined();
     const update = screen.getByRole("button", { name: "Update" }) as HTMLButtonElement;
     expect(update.disabled).toBe(true);
@@ -102,6 +102,6 @@ describe("CheckInStep", () => {
     render(<Harness accountId={everyday} layout="row" onAnswer={vi.fn()} />);
     await userEvent.click(screen.getByRole("button", { name: "No change" }));
     await waitFor(() => expect(screen.getByTestId(`checkin-status-${everyday}`)).toBeDefined());
-    expect(screen.queryByText("October 2026: £3,360")).toBeNull();
+    expect(screen.queryByText("Current balance: £3,360")).toBeNull();
   });
 });

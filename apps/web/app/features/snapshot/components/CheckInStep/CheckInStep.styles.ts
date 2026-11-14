@@ -11,6 +11,8 @@ export const stepHead = cva({
 export const stepName = cva({
   base: {
     margin: 0,
+    // Focus moves here by script for screen readers; a heading is not a control, so no ring.
+    _focus: { outline: "none" },
     textStyle: "label.md",
     color: "text.primary",
     overflowWrap: "anywhere",

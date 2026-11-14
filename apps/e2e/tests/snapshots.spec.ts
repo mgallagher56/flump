@@ -23,18 +23,19 @@ test("monthly check-in saves this month's balances and the history page shows th
   await card.getByRole("link", { name: /^(Record|Update) balances$/ }).click();
   await expect(page).toHaveURL(/\/app\/accounts\/history\?checkIn=1$/);
 
-  const sheet = page.getByRole("dialog", { name: `Monthly check-in: ${month}` });
+  // R2-5: the account-by-account check-in. From md (the default desktop viewport) it is one list.
+  const sheet = page.getByRole("dialog", { name: "Monthly check-in" });
   await expect(sheet).toBeVisible();
-  // Seeded accounts are prefilled (with last month's value, or today's balance when new).
-  const current = sheet.getByRole("textbox", { name: "Current account: balance" });
-  await expect(current).not.toHaveValue("");
+  await expect(sheet).toContainText(month);
   // The seeded balance again, so the persona still matches and the next run need not re-seed.
+  const current = sheet.getByRole("textbox", { name: /^New balance\s*,\s*Current account$/ });
   await current.fill("3,400");
-  await sheet.getByRole("button", { name: "Save balances" }).click();
+  // Enter confirms the row and saves it at once (save as you go), then moves to the next row.
+  await current.press("Enter");
+  await expect(sheet.getByText("Updated £3,400")).toBeVisible();
 
-  // Saved through PUT /api/snapshots/:month, confirmed with a toast, then reloaded from the server.
-  // Exact match: the toast also renders a screen-reader status line ("Success: Balances saved ...").
-  await expect(page.getByText(`Balances saved for ${month}`, { exact: true })).toBeVisible();
+  // Closing reloads the page's saved data; an interrupted check-in resumes where it stopped.
+  await page.keyboard.press("Escape");
   await expect(sheet).toBeHidden();
   await expect(page.getByRole("heading", { level: 1, name: "Net worth history" })).toBeVisible();
   await expect(page.getByTestId("hero-figure")).toBeVisible();

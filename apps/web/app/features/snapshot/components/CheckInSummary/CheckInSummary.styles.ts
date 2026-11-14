@@ -7,6 +7,8 @@ export const summaryRoot = cva({
 export const summaryHeading = cva({
   base: {
     margin: 0,
+    // Focus moves here by script for screen readers; a heading is not a control, so no ring.
+    _focus: { outline: "none" },
     textStyle: "heading.sm",
     color: "text.primary",
     _focusVisible: {
