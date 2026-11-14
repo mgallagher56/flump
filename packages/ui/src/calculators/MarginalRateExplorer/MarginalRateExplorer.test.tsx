@@ -37,12 +37,12 @@ describe("MarginalRateExplorer", () => {
     expect(outcomes.textContent).toContain("£720");
     expect(outcomes.textContent).toContain("Estimated share deducted from the next £1,000");
     expect(screen.getByText("28%")).toBeDefined();
-    // The 2026/27 rules are not yet signed off: the chart carries the notice, and so does the panel.
+    // The 2026/27 rules are not yet signed off: the panel says so once, and the chart does not repeat it.
     const figure = screen.getByRole("figure", {
       name: "Estimated share deducted from the next £1,000, by pay before tax",
     });
-    expect(within(figure).getByText(/^Unverified estimate\. These tax figures/)).toBeDefined();
-    expect(screen.getAllByText(/^Unverified estimate\. These tax figures/)).toHaveLength(2);
+    expect(within(figure).queryByText(/^Unverified estimate\. These tax figures/)).toBeNull();
+    expect(screen.getAllByText(/^Unverified estimate\. These tax figures/)).toHaveLength(1);
   });
 
   it("draws the chart with thresholds and your pay", () => {
@@ -137,8 +137,24 @@ describe("MarginalRateExplorer", () => {
 
   it("does not use a KpiStrip for scenario outcomes", () => {
     render(<MarginalRateExplorerStandalone initialValues={{ taxYear: "2026/27" }} />);
-    expect(screen.getByTestId("explorer-outcomes").children).toHaveLength(4);
+    expect(screen.getByTestId("explorer-outcomes").children).toHaveLength(3);
     expect(document.getElementById("marginal-rate-explorer")).not.toBeNull();
+  });
+
+  it("shows three inputs at most, with region and pension type under More details", () => {
+    render(<MarginalRateExplorerStandalone initialValues={{ taxYear: "2026/27" }} />);
+    // Gross pay, bonus and the "Model a pension contribution" button.
+    expect(screen.getAllByRole("slider")).toHaveLength(2);
+    expect(screen.queryByRole("combobox")).toBeNull();
+    expect(screen.queryByLabelText("Where you pay tax")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "More details" }));
+    fireEvent.change(screen.getByLabelText("Where you pay tax"), {
+      target: { value: "SCOTLAND" },
+    });
+    expect(screen.getByLabelText("Pension contribution type")).toBeDefined();
+    expect(screen.getByTestId("take-home-delta-sentence").textContent).not.toContain(
+      "£200 Income Tax",
+    );
   });
 
   it("parses plan strings in a fixed order", () => {
