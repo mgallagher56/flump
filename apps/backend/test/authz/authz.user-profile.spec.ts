@@ -244,6 +244,7 @@ describe.skipIf(dbMode === "skip")("authz: user-profile controller (real Postgre
 
     const res = await h.call("post", "/user-profile/reset-financial-data", h.tokens.b, {
       ...probeBody(profileAId),
+      confirmation: "RESET",
     });
     expect(res.status).toBeLessThan(300);
     expect(res.body.profile.userId).toBe(USER_B);
@@ -257,6 +258,14 @@ describe.skipIf(dbMode === "skip")("authz: user-profile controller (real Postgre
     expect(await tax().countBy({ userId: USER_A })).toBe(1);
     await expectProfileAUntouched();
     ran("POST /user-profile/reset-financial-data");
+  });
+
+  it("POST /user-profile/reset-financial-data: without the confirmation phrase is a 400 that wipes nothing", async () => {
+    await seedFinancialData(h.tokens.b, "B");
+    const res = await h.call("post", "/user-profile/reset-financial-data", h.tokens.b, {});
+    expect(res.status).toBe(400);
+    expect(await budget().countBy({ userId: USER_B })).toBeGreaterThan(0);
+    expect(await tax().countBy({ userId: USER_B })).toBeGreaterThan(0);
   });
 
   it("POST /user-profile/send-password-reset: resolves the caller's own address, body ignored", async () => {

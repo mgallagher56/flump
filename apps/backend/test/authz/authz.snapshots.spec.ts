@@ -307,7 +307,9 @@ describe.skipIf(dbMode === "skip")("authz: snapshots controller (real Postgres)"
   it("reset-financial-data erases the user's history and check-ins, and only theirs", async () => {
     await put(PAST, h.tokens.a, { values: [{ accountId: accountA, value: 1 }], complete: true });
     await put(PAST, h.tokens.b, { values: [{ accountId: accountB, value: 2 }], complete: true });
-    const res = await h.call("post", "/user-profile/reset-financial-data", h.tokens.a);
+    const res = await h.call("post", "/user-profile/reset-financial-data", h.tokens.a, {
+      confirmation: "RESET",
+    });
     expect(res.status).toBeLessThan(300);
     expect(await details().findBy({ userId: USER_A })).toHaveLength(0);
     expect(
