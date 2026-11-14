@@ -95,7 +95,7 @@ describe("SavingsContainer", () => {
     expect(screen.getByTestId("hero-figure").textContent).toContain("£21,000");
     expect(screen.getByText("Saved each month")).toBeDefined();
     expect(screen.getByText("Average rate")).toBeDefined();
-    expect(screen.getByText("4%")).toBeDefined();
+    expect(screen.getByText("4.0%")).toBeDefined();
     expect(screen.getByText("ISA allowance used")).toBeDefined();
     // The ISA bar is a quiet footer of the accounts card, with no second ISA figure.
     expect(

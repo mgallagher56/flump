@@ -27,7 +27,7 @@ export const Saved: Story = {
   play: async ({ args, canvasElement }) => {
     const canvas = within(canvasElement);
     await userEvent.click(
-      canvas.getAllByRole("button", { name: "Show your details" })[0] as HTMLElement,
+      canvas.getAllByRole("button", { name: "Salary and contributions" })[0] as HTMLElement,
     );
     await expect(canvas.getAllByText("Salary sacrifice")[0]).toBeDefined();
     await userEvent.click(

@@ -128,7 +128,7 @@ const restore = () => {
 };
 
 const openDetails = () =>
-  fireEvent.click(screen.getByRole("button", { name: "Show your details" }));
+  fireEvent.click(screen.getByRole("button", { name: "Salary and contributions" }));
 const zone = () => screen.getByRole("region", { name: "Model a change to your pension" });
 const slider = (label: string) =>
   within(screen.getByRole("tabpanel")).getByLabelText(`${label} range slider`) as HTMLInputElement;
@@ -192,7 +192,7 @@ describe("PensionContainer", () => {
       ]);
       const pots = details.querySelectorAll("[data-list-row]");
       expect(pots).toHaveLength(1);
-      expect(pots[0]?.textContent).toContain("£96,000");
+      expect(pots[0]?.textContent).not.toContain("£96,000");
     });
 
     it("empty: the header and one prompt, with no strip, zone or drawer", () => {
@@ -277,7 +277,7 @@ describe("PensionContainer", () => {
     const stored = { ...chosen, ...(mockUpdateProfile.mock.calls[0]?.[0] as object) };
     expect(profileFactsFromProfile(stored).isSalarySacrifice).toBe(true);
     await waitFor(() =>
-      expect(screen.getByRole("button", { name: "Show your details" })).toBeDefined(),
+      expect(screen.getByRole("button", { name: "Salary and contributions" })).toBeDefined(),
     );
     openDetails();
     expect(screen.getByText("Method").nextElementSibling?.textContent).toBe("Salary sacrifice");

@@ -148,10 +148,7 @@ export const SavingsAccountsList: FC<SavingsAccountsListProps> = ({ accounts, is
               valueDisplay=""
               valueText={`Estimate: ${pounds.format(Math.min(isaUsed, ISA_ALLOWANCE))} of ${pounds.format(ISA_ALLOWANCE)} used`}
             />
-            <p className={isaNote()}>
-              The allowance is <Money size="sm" value={ISA_ALLOWANCE} /> a tax year and resets on 6
-              April.
-            </p>
+            <p className={isaNote()}>The allowance resets each tax year on 6 April.</p>
           </div>
         ) : null}
       </Card>
