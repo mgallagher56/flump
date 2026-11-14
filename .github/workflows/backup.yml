@@ -1,0 +1,92 @@
+name: 💾 Backup restore test
+
+# BE-03 (finding H1): proves a backup made by scripts/ops/backup-run.ts restores completely.
+# Seeds a Postgres 18 database with every migration, the synthetic personas and a table of
+# awkward types, backs it up encrypted, restores it into an empty database and compares every
+# table's row count and checksum (scripts/ops/backup-roundtrip.test.ts). Also builds the backup
+# cron image so a broken Dockerfile is caught before the owner's cron service runs it.
+# Never touches a real database: the only Postgres is the service container below.
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+  # Weekly (Wednesdays 05:41 UTC): catches drift in the runner image or the Postgres 18 image.
+  schedule:
+    - cron: "41 5 * * 3"
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+jobs:
+  roundtrip:
+    name: 💾 Backup and restore roundtrip
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: flump_backup_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d flump_backup_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+
+    env:
+      TEST_DATABASE_URL: postgres://postgres:postgres@localhost:5432/flump_backup_test
+      REQUIRE_DB_TESTS: "1"
+      # A missing tool fails the job instead of skipping the roundtrip.
+      REQUIRE_BACKUP_ROUNDTRIP: "1"
+
+    steps:
+      - name: ⬇️ Checkout repo
+        uses: actions/checkout@v7.0.1
+
+      - name: ⚙️ Setup Bun and install dependencies
+        uses: ./.github/actions/bun-setup
+
+      # The runner ships client 16, which cannot dump a 18 server. PGDG has 18.
+      - name: 🐘 Install Postgres 18 client and age
+        run: |
+          sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
+          sudo apt-get install -y --no-install-recommends postgresql-client-18 age
+          echo "/usr/lib/postgresql/18/bin" >> "$GITHUB_PATH"
+
+      - name: 🔎 Tool versions
+        run: |
+          pg_dump --version
+          pg_restore --version
+          psql --version
+          age --version
+
+      - name: 💾 Backup, restore and compare
+        run: bun test scripts/ops/backup-roundtrip.test.ts scripts/ops/backup-lib.test.ts
+
+      - name: 🐳 Build the backup cron image
+        run: docker build -f scripts/ops/backup.Dockerfile -t flump-backup:ci .
+
+      - name: 🐳 Cron image has the tools it needs
+        run: |
+          docker run --rm flump-backup:ci sh -c 'pg_dump --version && age --version && bun --version'
+          # With no configuration the job must refuse (exit 2), not dump anything.
+          set +e
+          docker run --rm flump-backup:ci
+          code=$?
+          set -e
+          echo "exit with no configuration: $code"
+          [ "$code" -eq 2 ]
