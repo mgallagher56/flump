@@ -5,6 +5,7 @@ import { MemoryRouter } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 import {
   fewMonthsPrompt,
+  heroSubline,
   SnapshotHistoryPage,
   type SnapshotHistoryPageProps,
 } from "./SnapshotHistoryPage";
@@ -13,9 +14,11 @@ vi.mock("react-router", async () => await vi.importActual("react-router"));
 
 const CURRENT = "a0000000-0000-4000-8000-000000000001";
 const MORTGAGE = "a0000000-0000-4000-8000-000000000003";
+// No saved balances: these tests are about recorded months. The current month's saved-balance
+// end point is covered in snapshotModel.test.ts and the consistency harness.
 const accounts = [
-  { id: CURRENT, name: "Current account", type: "Current", balance: 1500 },
-  { id: MORTGAGE, name: "Mortgage", type: "Mortgage", balance: -180000 },
+  { id: CURRENT, name: "Current account", type: "Current" },
+  { id: MORTGAGE, name: "Mortgage", type: "Mortgage" },
 ];
 const row = (accountId: string, year: number, month: number, value: number) => ({
   accountId,
@@ -56,6 +59,17 @@ const TREND = [
   row(CURRENT, 2026, 8, 2100),
   row(CURRENT, 2026, 10, 1900),
 ];
+
+describe("heroSubline", () => {
+  it("names the month compared with, and the current month only when it is not recorded", () => {
+    expect(
+      heroSubline({ month: "2026-10" }, { month: "2026-11", allCarried: false }, "2026-11"),
+    ).toBe("Against October 2026");
+    expect(
+      heroSubline({ month: "2026-10" }, { month: "2026-11", allCarried: true }, "2026-11"),
+    ).toBe("Against October 2026. This month is not recorded yet");
+  });
+});
 
 describe("SnapshotHistoryPage", () => {
   it("with no history, prompts for the first check-in", async () => {
@@ -121,7 +135,10 @@ describe("SnapshotHistoryPage", () => {
     const hero = screen.getByTestId("hero-figure");
     expect(hero.getAttribute("data-tone")).toBe("hero");
     expect(hero.textContent).toContain("+£800");
-    expect(hero.textContent).toContain("Since September 2026");
+    // The change is October against September; November has no check-in yet.
+    expect(hero.textContent).toContain("Change in October 2026");
+    expect(hero.textContent).not.toContain("since last month");
+    expect(hero.textContent).toContain("Against September 2026. This month is not recorded yet");
     expect(screen.getByText(fewMonthsPrompt(2))).toBeDefined();
     expect(screen.queryByTestId("net-worth-history-chart")).toBeNull();
     expect(screen.getByRole("heading", { name: "Change by account" })).toBeDefined();
@@ -135,7 +152,7 @@ describe("SnapshotHistoryPage", () => {
   it("with three or more months, shows the hero change, the chart with its summary and the tables", () => {
     const { container } = renderPage({ accountDetails: TREND });
     expect(screen.getByTestId("hero-figure").textContent).toContain("-£200");
-    expect(screen.getByTestId("hero-figure").textContent).toContain("Since August 2026");
+    expect(screen.getByTestId("hero-figure").textContent).toContain("Against August 2026");
     expect(screen.getByTestId("net-worth-history-chart")).toBeDefined();
     expect(
       screen.getByText("Net worth each month since July 2026, ending at £1,900."),

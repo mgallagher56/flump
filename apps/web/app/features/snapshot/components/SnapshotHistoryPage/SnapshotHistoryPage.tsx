@@ -34,6 +34,22 @@ export const fewMonthsPrompt = (recordedMonths: number): string =>
   `You have ${MONTH_WORDS[recordedMonths] ?? `${recordedMonths} months`} of history. The chart appears after your third check-in.`;
 
 /**
+ * "Against September 2026", plus "This month is not recorded yet" when the current month has no
+ * check-in, so the hero never reads as this month's change. One line with one date, so the first
+ * view stays inside the number budget (P1).
+ */
+export const heroSubline = (
+  previous: { month: MonthKey },
+  end: { month: MonthKey; allCarried: boolean } | undefined,
+  currentMonth: MonthKey,
+): string => {
+  const against = `Against ${formatMonth(previous.month)}`;
+  return end?.month === currentMonth && end.allCarried
+    ? `${against}. This month is not recorded yet`
+    : against;
+};
+
+/**
  * Net worth history (E30, E16 PR 5). Saved data only: every figure comes from recorded monthly
  * balances, and the only writes are the check-in and back-fill saves. First view (P13): the h1, the
  * change since the previous recorded month as the hero, then the chart with its summary and the end
@@ -140,10 +156,10 @@ export const SnapshotHistoryPage: FC<SnapshotHistoryPageProps> = ({
         />
       ) : (
         <>
-          {latestChange !== null && previous ? (
+          {latestChange !== null && latest && previous ? (
             <HeroFigure
-              label="Change since last month"
-              subline={`Since ${formatMonth(previous.month)}`}
+              label={`Change in ${formatMonth(latest.month)}`}
+              subline={heroSubline(previous, end, currentMonth)}
               value={latestChange}
               valueFormat={{ fractionDigits: 0, signDisplay: "always" }}
             />
