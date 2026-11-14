@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import { HelmetProvider } from "react-helmet-async";
 import { MemoryRouter } from "react-router-dom";
-import { expect, userEvent, within } from "storybook/test";
+import { expect, userEvent, waitFor, within } from "storybook/test";
 import { McpPage } from "./McpPage";
 
 const meta: Meta<typeof McpPage> = {
@@ -29,7 +29,7 @@ const assertMcpPage: Story["play"] = async ({ canvasElement }) => {
   ).toBeVisible();
   await expect(canvas.queryByTestId("mcp-technical-details")).not.toBeInTheDocument();
   await userEvent.click(canvas.getByRole("button", { name: "Show technical details" }));
-  await expect(canvas.getByTestId("mcp-tool-get_tax_year_position")).toBeVisible();
+  await waitFor(() => expect(canvas.getByTestId("mcp-tool-get_tax_year_position")).toBeVisible());
 };
 
 export const Light: Story = { globals: { theme: "light" }, play: assertMcpPage };

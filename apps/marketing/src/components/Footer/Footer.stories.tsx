@@ -13,7 +13,7 @@ type Story = StoryObj<typeof Footer>;
 
 const play: Story["play"] = async ({ canvasElement }) => {
   const canvas = within(canvasElement);
-  await expect(canvas.getByRole("navigation", { name: "Calculators" })).toBeInTheDocument();
+  await expect(canvas.getByRole("navigation", { name: "Product" })).toBeInTheDocument();
   await expect(canvas.getByRole("link", { name: "Contact" })).toHaveAttribute("href", "/contact");
 };
 
