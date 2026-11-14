@@ -43,6 +43,9 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
       const options = typeOrmOptionsFromEnv({
         NODE_ENV: "test",
         DATABASE_URL: TEST_DATABASE_URL,
+        // The seed inserts in bulk; keep it clear of the pool's 10 s statement cap.
+        DB_STATEMENT_TIMEOUT_MS: "600000",
+        DB_LOCK_TIMEOUT_MS: "60000",
       }) as DataSourceOptions;
       ds = new DataSource({
         ...options,

@@ -73,12 +73,13 @@ export function typeOrmOptionsFromEnv(env: Env): TypeOrmModuleOptions {
     migrationsRun: db.migrationsRun,
     // Each migration runs in its own transaction, so one that must not (an index built
     // CONCURRENTLY) can opt out with `transaction = false`. Every migration takes the shared
-    // advisory lock itself (config/migration-lock.ts), so instances still serialise.
+    // advisory lock itself (config/migration-lock.ts), so instances still serialise. Trade-off:
+    // if migration N fails, migrations 1..N-1 stay committed (each must be safe on its own).
     migrationsTransactionMode: "each",
     // Handed to the pg Pool. Fail fast instead of queueing forever: a request waits at most
     // connectionTimeoutMillis for a connection, and Postgres cancels a statement, a lock wait
     // or an idle open transaction past its limit. These apply to migrations at boot too; a
-    // migration that needs longer must lift them for its own session (see AddUserIdIndexes).
+    // migration lifts them for itself through the helpers in config/migration-lock.ts.
     extra: {
       max: db.pool.max,
       connectionTimeoutMillis: db.pool.connectionTimeoutMillis,

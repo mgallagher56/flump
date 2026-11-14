@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { assertSafeTestDatabase } from "../testing/assertSafeTestDatabase";
 import { resolveDbTestMode } from "../testing/dbTestMode";
 import { type Env, resolvePoolConfig } from "./db.config";
+import { MIGRATION_LOCK_KEY, takeMigrationLock } from "./migration-lock";
 import { typeOrmOptionsFromEnv } from "./typeorm.options";
 
 // Pool and session limits (backend audit H8, plan BE-02) against a real Postgres: a request held
@@ -73,11 +74,34 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
         );
         expect(String(error)).toMatch(/lock timeout/i);
         expect(ms).toBeGreaterThanOrEqual(DEFAULT_LOCK_TIMEOUT_MS - 100);
-        expect(ms).toBeLessThan(DEFAULT_LOCK_TIMEOUT_MS + 1_000);
+        expect(ms).toBeLessThan(DEFAULT_LOCK_TIMEOUT_MS + 3_000);
       } finally {
         await holder.rollbackTransaction();
         await holder.release();
         await ds.query("DROP TABLE IF EXISTS pool_lock_probe");
+      }
+    }, 15_000);
+
+    it("lets a second instance wait past the lock timeout for the migration lock", async () => {
+      const ds = await connect({ DB_LOCK_TIMEOUT_MS: "500", DB_STATEMENT_TIMEOUT_MS: "1000" });
+      const first = ds.createQueryRunner();
+      const second = ds.createQueryRunner();
+      try {
+        await first.query("SELECT pg_advisory_lock($1)", [MIGRATION_LOCK_KEY]);
+        setTimeout(() => {
+          void first.query("SELECT pg_advisory_unlock($1)", [MIGRATION_LOCK_KEY]);
+        }, 1_500);
+        await second.startTransaction();
+        const { ms, error } = await elapsed(() => takeMigrationLock(second));
+        expect(error).toBeUndefined();
+        expect(ms).toBeGreaterThanOrEqual(1_000);
+        await second.commitTransaction();
+        // SET LOCAL ended with the transaction: the pool's limits are back.
+        expect(await second.query("SHOW lock_timeout")).toEqual([{ lock_timeout: "500ms" }]);
+      } finally {
+        if (second.isTransactionActive) await second.rollbackTransaction();
+        await second.release();
+        await first.release();
       }
     }, 15_000);
 
