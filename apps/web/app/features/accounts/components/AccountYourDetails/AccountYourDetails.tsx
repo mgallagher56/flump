@@ -59,7 +59,7 @@ export const AccountYourDetails: FC<AccountYourDetailsProps> = ({
         <div className={fact()}>
           <dt className={factLabel()}>{isLiabilityType(type) ? "Amount owed" : "Balance"}</dt>
           <dd className={factValue()}>
-            <Money fractionDigits={2} size="md" value={balance} />
+            <Money size="md" value={balance} />
           </dd>
         </div>
       </dl>

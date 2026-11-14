@@ -1,8 +1,13 @@
+import { expectPageRules } from "@repo/ui/testing";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 import { describe, expect, it, vi } from "vitest";
-import { SnapshotHistoryPage, type SnapshotHistoryPageProps } from "./SnapshotHistoryPage";
+import {
+  fewMonthsPrompt,
+  SnapshotHistoryPage,
+  type SnapshotHistoryPageProps,
+} from "./SnapshotHistoryPage";
 
 vi.mock("react-router", async () => await vi.importActual("react-router"));
 
@@ -26,20 +31,40 @@ const renderPage = (props: Partial<SnapshotHistoryPageProps> = {}) =>
         accountDetails={[]}
         accounts={accounts}
         currentMonth="2026-11"
-        monthlySurplus={400}
-        monthsOfCover={3.25}
         onSave={vi.fn(async () => true)}
         {...props}
       />
     </MemoryRouter>,
   );
 
+/** The first view (P13): the header, the hero and the chart figure, in page order. */
+const firstView = (): HTMLElement => {
+  const root = document.createElement("div");
+  const header = screen.getByRole("heading", { level: 1 }).closest("header");
+  for (const el of [
+    header ?? screen.getByRole("heading", { level: 1 }),
+    screen.getByTestId("hero-figure"),
+    screen.getByRole("figure", { name: "Net worth over time" }),
+  ]) {
+    root.appendChild(el.cloneNode(true));
+  }
+  return root;
+};
+
+const TREND = [
+  row(CURRENT, 2026, 7, 2000),
+  row(CURRENT, 2026, 8, 2100),
+  row(CURRENT, 2026, 10, 1900),
+];
+
 describe("SnapshotHistoryPage", () => {
   it("with no history, prompts for the first check-in", async () => {
-    renderPage();
+    const { container } = renderPage();
     expect(screen.getByRole("heading", { level: 1, name: "Net worth history" })).toBeDefined();
+    expect(screen.getByText("Your net worth, recorded once a month.")).toBeDefined();
     expect(screen.getByRole("heading", { name: "No monthly balances yet" })).toBeDefined();
-    expect(screen.queryByText(/months? of history/)).toBeNull();
+    expect(screen.queryByTestId("hero-figure")).toBeNull();
+    expectPageRules(container, { maxFigures: 0, projectionNotices: 0 });
     await userEvent.click(
       within(screen.getByTestId("snapshot-empty")).getByRole("button", { name: "Update balances" }),
     );
@@ -51,43 +76,41 @@ describe("SnapshotHistoryPage", () => {
     expect(screen.getByRole("link", { name: "Add an account" }).getAttribute("href")).toBe(
       "/app/accounts",
     );
-    expect(
-      (screen.getByRole("button", { name: "Update balances" }) as HTMLButtonElement).disabled,
-    ).toBe(true);
   });
 
-  it("with one month, shows the point, a projection, the next check-in and months of cover", () => {
-    renderPage({
+  it("words the prompt by month count", () => {
+    expect(fewMonthsPrompt(1)).toBe(
+      "You have one month of history. The chart appears after your third check-in.",
+    );
+    expect(fewMonthsPrompt(2)).toBe(
+      "You have two months of history. The chart appears after your third check-in.",
+    );
+  });
+
+  it("with one month, shows no chart and no change, only the prompt and the check-in button", async () => {
+    const { container } = renderPage({
       accountDetails: [row(CURRENT, 2026, 10, 2000), row(MORTGAGE, 2026, 10, -150000)],
     });
-    expect(screen.getAllByText("1 month of history").length).toBeGreaterThan(0);
-    expect(screen.getByText("Net worth, October 2026")).toBeDefined();
-    expect(screen.getAllByText("1 December 2026").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("3.3 months").length).toBeGreaterThan(0);
-    // The label states the selector's real formula: essentials plus debt minimums, not budget only.
-    expect(
-      screen.getByText(/current and savings accounts ÷ essential spending and debt minimums/),
-    ).toBeDefined();
-    expect(screen.getByRole("note", { name: "Guidance, not advice" }).textContent).toMatch(
-      /Projection, not a forecast: it assumes your budget surplus of £400 a month/,
-    );
-    expect(screen.getByText("Last recorded month: October 2026")).toBeDefined();
-    // No deltas yet.
-    expect(screen.queryByText(/Net worth changed by/)).toBeNull();
+    const hero = screen.getByTestId("hero-figure");
+    expect(hero.getAttribute("data-tone")).toBeNull();
+    expect(hero.textContent).toContain("Change since last month");
+    expect(hero.textContent).toContain("No earlier month");
+    expect(hero.textContent).not.toMatch(/£/);
+    expect(screen.getByText("Net worth recorded for October 2026: -£148,000.")).toBeDefined();
+    expect(screen.getByText(fewMonthsPrompt(1))).toBeDefined();
+    expect(screen.queryByTestId("net-worth-history-chart")).toBeNull();
+    expect(screen.getByText("Next check-in: 1 December 2026")).toBeDefined();
+    // Months of cover moved to Budget; no projection, so no notice.
+    expect(screen.queryByText(/Months of cover/)).toBeNull();
+    expect(screen.queryByText(/Projection|Estimate/)).toBeNull();
+    expectPageRules(container, { maxFigures: 4, maxNotSet: 0, projectionNotices: 0 });
+    expectPageRules(firstView(), { maxFigures: 4 });
+    await userEvent.click(screen.getByRole("button", { name: "Update balances" }));
+    expect(screen.getByRole("dialog", { name: "Monthly check-in: November 2026" })).toBeDefined();
   });
 
-  it("with one month and no budget, shows the point without a projection", () => {
-    renderPage({
-      accountDetails: [row(CURRENT, 2026, 10, 2000)],
-      monthlySurplus: null,
-      monthsOfCover: null,
-    });
-    expect(screen.queryByRole("note", { name: "Guidance, not advice" })).toBeNull();
-    expect(screen.getAllByText("Not set").length).toBeGreaterThan(0);
-  });
-
-  it("with two months, shows changes only, with no trend chart", () => {
-    renderPage({
+  it("with two months, shows the change as the hero and the account table, still no chart", () => {
+    const { container } = renderPage({
       accountDetails: [
         row(CURRENT, 2026, 9, 2000),
         row(MORTGAGE, 2026, 9, -150000),
@@ -95,26 +118,43 @@ describe("SnapshotHistoryPage", () => {
         row(MORTGAGE, 2026, 10, -149500),
       ],
     });
-    expect(screen.getByText("Net worth changed by +£800 since September 2026.")).toBeDefined();
+    const hero = screen.getByTestId("hero-figure");
+    expect(hero.getAttribute("data-tone")).toBe("hero");
+    expect(hero.textContent).toContain("+£800");
+    expect(hero.textContent).toContain("Since September 2026");
+    expect(screen.getByText(fewMonthsPrompt(2))).toBeDefined();
+    expect(screen.queryByTestId("net-worth-history-chart")).toBeNull();
     expect(screen.getByRole("heading", { name: "Change by account" })).toBeDefined();
     expect(screen.queryByRole("heading", { name: "Change by month" })).toBeNull();
-    expect(screen.queryByTestId("net-worth-history-legend")).toBeNull();
     const mortgage = screen.getByRole("rowheader", { name: "Mortgage (owed)" }).closest("tr");
     expect(mortgage?.textContent).toContain("−£500");
+    expectPageRules(container, { maxFigures: 10, projectionNotices: 0 });
+    expectPageRules(firstView(), { maxFigures: 4 });
   });
 
-  it("with three or more months, shows the trend, the account changes and the month table", () => {
-    renderPage({
-      accountDetails: [
-        row(CURRENT, 2026, 7, 2000),
-        row(CURRENT, 2026, 8, 2100),
-        row(CURRENT, 2026, 10, 1900),
-      ],
-    });
-    expect(screen.getAllByText("3 months of history").length).toBeGreaterThan(0);
-    expect(screen.getByText("Net worth changed by −£200 since August 2026.")).toBeDefined();
+  it("with three or more months, shows the hero change, the chart with its summary and the tables", () => {
+    const { container } = renderPage({ accountDetails: TREND });
+    expect(screen.getByTestId("hero-figure").textContent).toContain("-£200");
+    expect(screen.getByTestId("hero-figure").textContent).toContain("Since August 2026");
+    expect(screen.getByTestId("net-worth-history-chart")).toBeDefined();
+    expect(
+      screen.getByText("Net worth each month since July 2026, ending at £1,900."),
+    ).toBeDefined();
+    expect(screen.queryByText(/The chart appears after/)).toBeNull();
     expect(screen.getByTestId("net-worth-history-legend").textContent).toContain("Carried forward");
     expect(screen.getByRole("heading", { name: "Change by month" })).toBeDefined();
+    // The check-in button moves to the header once the chart shows: one primary button.
+    expect(screen.getAllByRole("button", { name: "Update balances" })).toHaveLength(1);
+    expectPageRules(container, { maxFigures: 10, projectionNotices: 0 });
+    expectPageRules(firstView(), { maxFigures: 4 });
+  });
+
+  it("collapses the month table into a quiet drawer once over 8 rows", () => {
+    renderPage({
+      accountDetails: Array.from({ length: 10 }, (_, i) => row(CURRENT, 2026, i + 1, 1000 + i)),
+    });
+    const toggle = screen.getByRole("button", { name: /Change by month/ });
+    expect(toggle.getAttribute("aria-expanded")).toBe("false");
   });
 
   it("opens the check-in on arrival from the dashboard link", () => {

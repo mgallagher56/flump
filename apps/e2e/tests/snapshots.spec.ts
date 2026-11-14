@@ -35,8 +35,8 @@ test("monthly check-in saves this month's balances and the history page shows th
   await expect(page.getByText(`Balances saved for ${month}`)).toBeVisible();
   await expect(sheet).toBeHidden();
   await expect(page.getByRole("heading", { level: 1, name: "Net worth history" })).toBeVisible();
-  await expect(page.getByText(`Last recorded month: ${month}`)).toBeVisible();
-  await expect(page.getByText(/\d+ months? of history/).first()).toBeVisible();
+  await expect(page.getByTestId("hero-figure")).toBeVisible();
+  await expect(page.getByText(/^Net worth (recorded for|each month since) /).first()).toBeVisible();
 
   // The Accounts nav item stays active on its sub-page.
   await expect(page.getByRole("link", { name: "Accounts", exact: true }).first()).toHaveAttribute(

@@ -157,7 +157,7 @@ describe("<AccountDetails />", () => {
   test("shows the chart first and the ledger on its own tab, newest month first", async () => {
     const { getByRole, getAllByRole, user } = customRender(<AccountDetails />);
     expect(getByRole("tab", { name: "Balance over time" })).toBeDefined();
-    await user.click(getByRole("tab", { name: "Monthly ledger" }));
+    await user.click(getByRole("tab", { name: "Month by month" }));
     const ledger = getByRole("table", { name: "Monthly balances, newest first" });
     const firstMonth = getAllByRole("row", { hidden: true }).find((row) => ledger.contains(row));
     expect(firstMonth).toBeDefined();
@@ -166,7 +166,7 @@ describe("<AccountDetails />", () => {
 
   test("keeps months beyond the first eight behind a drawer", () => {
     const { getByText } = customRender(<AccountDetails />);
-    expect(getByText("Earlier months")).toBeDefined();
+    expect(getByText(/Show earlier months/)).toBeDefined();
   });
 
   test("is read-only: no inputs, delete-year buttons or edit controls", () => {

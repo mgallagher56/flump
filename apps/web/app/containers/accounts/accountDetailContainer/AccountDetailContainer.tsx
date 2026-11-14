@@ -1,4 +1,4 @@
-import { Icon, KpiCard, PageHeader } from "@repo/ui";
+import { HeroFigure, Icon, PageBody, PageHeader } from "@repo/ui";
 import { ArrowLeft } from "lucide-react";
 import { type FC, useMemo } from "react";
 import { Link, useLoaderData } from "react-router";
@@ -8,7 +8,26 @@ import { lastUpdatedLabel } from "~/features/accounts/accountRows";
 import { AccountYourDetails } from "~/features/accounts/components/AccountYourDetails";
 import type { loader } from "~/routes/app.accounts.$account";
 import { isFutureMonth } from "~/utils/accounts";
-import { backLink, notFound, pageRoot } from "./AccountDetailContainer.styles";
+import { backLink, notFound } from "./AccountDetailContainer.styles";
+
+const percent = new Intl.NumberFormat("en-GB", { maximumFractionDigits: 0 });
+
+/**
+ * "Up 4% on last month", "Down 12% on last month", "No change on last month" or "No earlier
+ * month". The direction is in the words, never only in an arrow or colour (copy guide 3.3, 4.2).
+ */
+export const changeLine = (change: number | null): string => {
+  if (change === null) return "No earlier month";
+  if (change === 0) return "No change on last month";
+  return `${change > 0 ? "Up" : "Down"} ${percent.format(Math.abs(change))}% on last month`;
+};
+
+const BackLink: FC = () => (
+  <Link className={backLink()} to="/app/accounts">
+    <Icon icon={ArrowLeft} size="sm" />
+    Back to accounts
+  </Link>
+);
 
 const AccountDetailContainer: FC = () => {
   const { account, accountDetails = [] } = useLoaderData<typeof loader>();
@@ -24,56 +43,39 @@ const AccountDetailContainer: FC = () => {
 
     const latest = sorted[sorted.length - 1];
     const prev = sorted[sorted.length - 2];
-    // Liabilities are stored as minus the amount owed; show the amount owed.
+    // What you owe is stored as minus the amount owed; show the amount owed.
     const current = toDisplayBalance(account?.type, Number(latest.value));
     const prevBalance = prev ? toDisplayBalance(account?.type, Number(prev.value)) : undefined;
-    const percent =
+    const change =
       prevBalance !== undefined && prevBalance !== 0
         ? Math.round(((current - prevBalance) / prevBalance) * 100)
         : null;
-    return { current, change: percent };
+    return { current, change };
   }, [account, accountDetails]);
 
   if (!account) {
     return (
-      <div className={pageRoot()}>
-        <p className={notFound()}>Account not found.</p>
-      </div>
+      <PageBody>
+        <BackLink />
+        <p className={notFound()}>We cannot find that account.</p>
+      </PageBody>
     );
   }
 
   const isLiability = isLiabilityType(account.type);
-  const change = balanceStats.change;
-  const delta =
-    change === null
-      ? undefined
-      : {
-          direction:
-            change > 0 ? ("up" as const) : change < 0 ? ("down" as const) : ("flat" as const),
-          text:
-            change === 0
-              ? "No change on last month"
-              : `${new Intl.NumberFormat("en-GB", { maximumFractionDigits: 0 }).format(Math.abs(change))}% on last month`,
-          polarity: isLiability ? ("liability" as const) : ("asset" as const),
-        };
 
   return (
-    <div className={pageRoot()}>
-      <Link className={backLink()} to="/app/accounts">
-        <Icon icon={ArrowLeft} size="sm" />
-        Back to accounts
-      </Link>
+    <PageBody>
+      <BackLink />
 
       <PageHeader
-        subtitle={`${account.type ?? "Account"} account. Your balance history, month by month.`}
+        description={`${account.type ?? "Account"} account. Your balance history, month by month.`}
         title={account.name ?? "Account"}
       />
 
-      <KpiCard
-        delta={delta}
+      <HeroFigure
         label={isLiability ? "Amount owed" : "Current balance"}
-        subtext="Latest balance you recorded"
-        tone="hero"
+        subline={changeLine(balanceStats.change)}
         value={balanceStats.current}
       />
 
@@ -86,7 +88,7 @@ const AccountDetailContainer: FC = () => {
       />
 
       <AccountDetails />
-    </div>
+    </PageBody>
   );
 };
 

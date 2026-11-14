@@ -4,8 +4,8 @@ import {
   EmptyState,
   Illustration,
   Money,
-  SegmentedTabs,
   Table,
+  Tabs,
   TBody,
   Td,
   THead,
@@ -124,19 +124,13 @@ const AccountDetails: FC = () => {
               <span className={monthCell()}>{row.label}</span>
             </Td>
             <Td label="Balance" numeric>
-              <Money fractionDigits={2} size="sm" value={row.balance} />
+              <Money size="sm" value={row.balance} />
             </Td>
             <Td label="Change on last month" numeric>
               {row.change === null ? (
                 <span className={mutedFigure()}>First month</span>
               ) : (
-                <Money
-                  fractionDigits={2}
-                  signDisplay="always"
-                  size="sm"
-                  tone="muted"
-                  value={row.change}
-                />
+                <Money signDisplay="always" size="sm" tone="muted" value={row.change} />
               )}
             </Td>
           </Tr>
@@ -150,11 +144,11 @@ const AccountDetails: FC = () => {
 
   return (
     <div className={detailsRoot()}>
-      <SegmentedTabs
+      <Tabs
         aria-label="Account history views"
         items={[
           { value: "chart", label: "Balance over time" },
-          { value: "ledger", label: "Monthly ledger" },
+          { value: "ledger", label: "Month by month" },
         ]}
         panelClassName={panel()}
         panels={{
@@ -168,7 +162,9 @@ const AccountDetails: FC = () => {
                     title={`${account?.name ?? "Account"} balance history`}
                   />
                 ) : (
-                  <div className={chartEmpty()}>Not enough data to draw the chart yet.</div>
+                  <div className={chartEmpty()}>
+                    The chart appears once this account has more monthly balances.
+                  </div>
                 )}
               </div>
             </Card>
@@ -184,11 +180,10 @@ const AccountDetails: FC = () => {
                   {rest.length > 0 && (
                     <div className={drawerWrap()}>
                       <CollapsibleDrawer
-                        closedLabel="Show all"
                         itemCount={rest.length}
                         itemNoun={{ one: "month", other: "months" }}
-                        openLabel="Show fewer"
-                        title="Earlier months"
+                        title="Show earlier months"
+                        variant="quiet"
                       >
                         {ledgerTable(rest, "Earlier monthly balances")}
                       </CollapsibleDrawer>
@@ -218,14 +213,13 @@ const AccountDetails: FC = () => {
                               <span className={monthCell()}>{row.year}</span>
                             </Td>
                             <Td label="Year-end balance" numeric>
-                              <Money fractionDigits={2} size="sm" value={row.yearEnd} />
+                              <Money size="sm" value={row.yearEnd} />
                             </Td>
                             <Td label="Monthly average" numeric>
-                              <Money fractionDigits={2} size="sm" value={row.average} />
+                              <Money size="sm" value={row.average} />
                             </Td>
                             <Td label="Change in year" numeric>
                               <Money
-                                fractionDigits={2}
                                 signDisplay="always"
                                 size="sm"
                                 tone="muted"

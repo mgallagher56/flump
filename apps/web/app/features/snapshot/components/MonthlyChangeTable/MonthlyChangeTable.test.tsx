@@ -44,9 +44,7 @@ describe("MonthlyChangeTable", () => {
         variant="accounts"
       />,
     );
-    expect(
-      screen.getByText("September 2026 to October 2026. Debts show the amount owed."),
-    ).toBeDefined();
+    expect(screen.getByText("Debts show the amount owed.")).toBeDefined();
     const mortgage = screen.getByRole("rowheader", { name: "Mortgage (owed)" }).closest("tr");
     expect(mortgage?.textContent).toContain("−£500");
     expect(mortgage?.textContent).toContain("down £500");

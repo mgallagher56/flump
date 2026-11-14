@@ -17,8 +17,6 @@ const meta: Meta<typeof SnapshotHistoryPage> = {
     accounts: EXAMPLE_ACCOUNTS,
     accountDetails: [],
     currentMonth: "2026-11",
-    monthlySurplus: 420,
-    monthsOfCover: 3.4,
     onSave: fn(async () => true),
   },
 };
@@ -37,7 +35,7 @@ export const OneMonth: Story = {
   args: { accountDetails: exampleDetails(ONE_MONTH) },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    await expect(canvas.getAllByText("1 December 2026")[0]).toBeDefined();
+    await expect(canvas.getAllByText(/You have one month of history/)[0]).toBeDefined();
   },
 };
 
@@ -45,7 +43,7 @@ export const TwoMonths: Story = {
   args: { accountDetails: exampleDetails(TWO_MONTHS) },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    await expect(canvas.getAllByText(/Net worth changed by/)[0]).toBeDefined();
+    await expect(canvas.getAllByText(/You have two months of history/)[0]).toBeDefined();
   },
 };
 
@@ -53,6 +51,6 @@ export const Trend: Story = {
   args: { accountDetails: exampleDetails(TREND_MONTHS) },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    await expect(canvas.getAllByText("11 months of history")[0]).toBeDefined();
+    await expect(canvas.getAllByText(/^Net worth each month since/)[0]).toBeDefined();
   },
 };

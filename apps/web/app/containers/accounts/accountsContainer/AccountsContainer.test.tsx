@@ -1,3 +1,4 @@
+import { expectPageRules } from "@repo/ui/testing";
 import { fireEvent, waitFor } from "@testing-library/react";
 import mockAccounts from "__mocks__/accounts";
 import type { ReactNode } from "react";
@@ -44,32 +45,45 @@ vi.mock("~/hooks/useFormatCurrency", () => ({
 }));
 
 describe("<AccountsContainer />", () => {
-  test("shows an empty state with an add button when no accounts exist", () => {
+  test("shows an empty state with one primary add button when no accounts exist", () => {
     mocks.mockUseLoaderData.mockReturnValue({ accounts: [] });
-    const { getByText, queryByText } = customRender(<AccountsContainer />);
+    const { getByText, container } = customRender(<AccountsContainer />);
     expect(getByText("No accounts yet")).toBeDefined();
-    expect(queryByText("Where you stand")).toBeNull();
+    expectPageRules(container, { maxFigures: 0 });
+    expect(container.querySelectorAll('[data-variant="primary"]').length).toBe(1);
   });
 
-  test("renders one hero, a four-figure strip and accounts grouped by type", () => {
+  test("first view: h1, one primary button, two groups and net worth once, no hero", () => {
     mocks.mockUseLoaderData.mockReturnValue({
-      accounts: mockAccounts,
-      accountDetails: [
-        {
-          id: 1,
-          account_id: mockAccounts[0].id,
-          month: currentMonth,
-          year: currentYear,
-          value: 1000,
-        },
+      accounts: [
+        { id: "a1", name: "Monzo", type: "Current", balance: 5000 },
+        { id: "i1", name: "Stocks and shares ISA", type: "Investment", balance: 12000 },
+        { id: "h1", name: "Home (your estimate)", type: "Property", balance: 250000 },
+        { id: "m1", name: "Nationwide", type: "Mortgage", balance: -180000 },
       ],
+      accountDetails: [],
     });
-    const { getByRole, getAllByRole } = customRender(<AccountsContainer />);
+    const { container, getByRole, getAllByText, queryByText } = customRender(<AccountsContainer />);
     expect(getByRole("heading", { level: 1, name: "Your accounts" })).toBeDefined();
-    expect(getByRole("heading", { name: "Where you stand" })).toBeDefined();
-    // Each type present in the data gets its own heading.
-    const groupHeadings = getAllByRole("heading", { level: 3 }).map((h) => h.textContent);
-    expect(groupHeadings).toContain("Current");
+    expect(getByRole("heading", { level: 2, name: "What you own" })).toBeDefined();
+    expect(getByRole("heading", { level: 2, name: "What you owe" })).toBeDefined();
+    expect(getByRole("table", { name: "What you own" }).textContent).toContain(
+      "Home (your estimate)",
+    );
+    expect(getAllByText("Net worth")).toHaveLength(1);
+    expect(container.querySelector('[data-tone="hero"]')).toBeNull();
+    // Two totals and net worth; rows are budgeted per row (P1.4).
+    expectPageRules(container, { maxFigures: 4, maxNotSet: 0, projectionNotices: 0 });
+    for (const gone of [
+      "Where you stand",
+      "Where your assets sit",
+      "ISA allowance",
+      "Assets",
+      "Liabilities",
+    ]) {
+      expect(queryByText(gone)).toBeNull();
+    }
+    expect(getByRole("link", { name: "See your ISA allowance" })).toBeDefined();
   });
 
   test("should open modal to add an account", async () => {
@@ -83,6 +97,9 @@ describe("<AccountsContainer />", () => {
     });
   });
 
+  const netWorthText = (container: HTMLElement) =>
+    container.querySelector("#accounts-net-worth dd")?.textContent;
+
   test("counts a negative stored liability as money owed, reducing net worth", () => {
     mocks.mockUseLoaderData.mockReturnValue({
       accounts: [
@@ -95,35 +112,9 @@ describe("<AccountsContainer />", () => {
     const { container } = customRender(<AccountsContainer />);
     const text = container.textContent ?? "";
     expect(text).toContain("£1,500");
-    expect(text).toContain("£3,500");
+    expect(netWorthText(container)).toBe("£3,500");
     expect(text).not.toContain("£-");
   });
-
-  test("shows the savings allowance for the band the loader derived, never a hard-coded one", () => {
-    mocks.mockUseLoaderData.mockReturnValue({
-      accounts: [{ id: "a1", name: "Current", type: "Current", balance: 4000 }],
-      accountDetails: [],
-      psaTaxBand: "basic",
-    });
-    const { container } = customRender(<AccountsContainer />);
-    const text = container.textContent ?? "";
-    expect(text).toContain("Personal Savings Allowance (basic rate):");
-    expect(text).not.toContain("higher rate");
-  });
-
-  test("claims no savings allowance band when income is unknown", () => {
-    mocks.mockUseLoaderData.mockReturnValue({
-      accounts: [{ id: "a1", name: "Current", type: "Current", balance: 4000 }],
-      accountDetails: [],
-      psaTaxBand: null,
-    });
-    const { container } = customRender(<AccountsContainer />);
-    const text = container.textContent ?? "";
-    expect(text).toContain("Add your income to see your allowance");
-    expect(text).not.toMatch(/\((basic|higher|additional) rate\)/);
-  });
-
-  const openOverview = () => customRender(<AccountsContainer />);
 
   test("counts Property as an asset, not a liability", () => {
     mocks.mockUseLoaderData.mockReturnValue({
@@ -134,15 +125,12 @@ describe("<AccountsContainer />", () => {
       ],
       accountDetails: [],
     });
-    const { container } = openOverview();
-    const text = container.textContent ?? "";
-    // assets 255,000, liabilities 100,000, net worth 155,000
-    expect(text).toContain("£255,000");
-    expect(text).toContain("£155,000");
-    expect(text).toContain("Property");
+    const { container } = customRender(<AccountsContainer />);
+    expect(container.textContent).toContain("£255,000");
+    expect(netWorthText(container)).toBe("£155,000");
   });
 
-  test("counts Owed (money owed to the user) as an asset, not a liability", () => {
+  test("counts Owed (money owed to the user) as something you own", () => {
     mocks.mockUseLoaderData.mockReturnValue({
       accounts: [
         { id: "a1", name: "Current", type: "Current", balance: 5000 },
@@ -151,13 +139,13 @@ describe("<AccountsContainer />", () => {
       ],
       accountDetails: [],
     });
-    const text = openOverview().container.textContent ?? "";
-    // assets 5,500, liabilities 1,000, net worth 4,500
-    expect(text).toContain("£5,500");
-    expect(text).toContain("£4,500");
+    const { container, getByRole } = customRender(<AccountsContainer />);
+    expect(getByRole("table", { name: "What you own" }).textContent).toContain("John Smith");
+    expect(container.textContent).toContain("£5,500");
+    expect(netWorthText(container)).toBe("£4,500");
   });
 
-  test("excludes a Student Loan from net worth and shows it on its own line", () => {
+  test("excludes a Student Loan from net worth and says so", () => {
     mocks.mockUseLoaderData.mockReturnValue({
       accounts: [
         { id: "a1", name: "Current", type: "Current", balance: 5000 },
@@ -165,23 +153,34 @@ describe("<AccountsContainer />", () => {
       ],
       accountDetails: [],
     });
-    const { container, getByTestId } = openOverview();
-    const line = getByTestId("student-loans-line");
-    expect(line.textContent).toContain("Student loans (not in net worth): £40,000");
-    expect(line.textContent).toContain("written off");
-    const text = container.textContent ?? "";
-    expect(text).toContain("Net worth");
-    expect(text).toContain("£5,000");
-    expect(text).not.toContain("£-35,000");
-    expect(text).not.toContain("£35,000");
+    const { container, getByText } = customRender(<AccountsContainer />);
+    expect(getByText(/Student loans are not in this total or your net worth/)).toBeDefined();
+    expect(netWorthText(container)).toBe("£5,000");
   });
 
-  test("hides the student loan line when there is no student loan", () => {
+  test("hides bank connections unless the account is allowlisted (D8)", () => {
+    const connection = {
+      id: "c1",
+      institutionName: "Monzo Bank",
+      status: "connected",
+      lastSyncedAt: "2026-11-04T12:00:00Z",
+      createdAt: "2026-01-01T00:00:00Z",
+    };
     mocks.mockUseLoaderData.mockReturnValue({
       accounts: [{ id: "a1", name: "Current", type: "Current", balance: 5000 }],
-      accountDetails: [],
+      bankConnections: [connection],
+      bankConnectionsEnabled: false,
     });
-    const { queryByTestId } = openOverview();
-    expect(queryByTestId("student-loans-line")).toBeNull();
+    const hidden = customRender(<AccountsContainer />);
+    expect(hidden.queryByText("Connected banks")).toBeNull();
+    hidden.unmount();
+
+    mocks.mockUseLoaderData.mockReturnValue({
+      accounts: [{ id: "a1", name: "Current", type: "Current", balance: 5000 }],
+      bankConnections: [connection],
+      bankConnectionsEnabled: true,
+    });
+    const shown = customRender(<AccountsContainer />);
+    expect(shown.getByText("Connected banks")).toBeDefined();
   });
 });

@@ -27,67 +27,73 @@ const row = (over: Partial<AccountRow>): AccountRow => ({
   ...over,
 });
 
+const props = { totalOwn: 0, totalOwe: 0, netWorth: 0 };
+
 describe("<AccountsGroupList />", () => {
-  test("groups accounts by type with a heading and a link to each account", () => {
+  test("splits rows into what you own and what you owe, each with a type column and total", () => {
+    const { getByRole, getByText } = customRender(
+      <AccountsGroupList
+        netWorth={12000}
+        rows={[
+          row({ id: "a1", name: "Monzo current", type: "Current", balance: 2000 }),
+          row({ id: "h1", name: "Home (your estimate)", type: "Property", balance: 250000 }),
+          row({ id: "m1", name: "Nationwide", type: "Mortgage", balance: 240000 }),
+        ]}
+        totalOwe={240000}
+        totalOwn={252000}
+      />,
+    );
+    const own = getByRole("table", { name: "What you own" });
+    const owe = getByRole("table", { name: "What you owe" });
+    expect(own.textContent).toContain("Home (your estimate)");
+    expect(own.textContent).toContain("Property");
+    expect(owe.textContent).toContain("Nationwide");
+    expect(getByRole("columnheader", { name: "Amount owed" })).toBeDefined();
+    expect(getByText("Total you own").nextElementSibling?.textContent).toBe("£252,000");
+    expect(getByText("Total you owe").nextElementSibling?.textContent).toBe("£240,000");
+    expect(getByText("Net worth").nextElementSibling?.textContent).toBe("£12,000");
+  });
+
+  test("shows no change column: change on last month lives on the account page", () => {
+    const { queryByText } = customRender(<AccountsGroupList {...props} rows={[row({})]} />);
+    expect(queryByText(/on last month/i)).toBeNull();
+    expect(queryByText("No earlier month")).toBeNull();
+  });
+
+  test("shows whole pounds, never pence", () => {
+    const { container } = customRender(
+      <AccountsGroupList {...props} rows={[row({ balance: 2450.5 })]} />,
+    );
+    expect(container.textContent).toContain("£2,451");
+    expect(container.textContent).not.toContain(".50");
+  });
+
+  test("links an ISA row to its allowance on the savings page", () => {
     const { getByRole } = customRender(
       <AccountsGroupList
-        rows={[
-          row({}),
-          row({
-            id: "d1",
-            name: "Barclaycard",
-            type: "Credit Card",
-            balance: 300,
-            changePercent: -10,
-          }),
-        ]}
+        {...props}
+        rows={[row({ id: "i1", name: "Vanguard stocks and shares ISA", type: "Investment" })]}
       />,
     );
-    expect(getByRole("heading", { name: "Current" })).toBeDefined();
-    expect(getByRole("heading", { name: "Credit Card" })).toBeDefined();
-    expect(getByRole("link", { name: "Monzo current" }).getAttribute("href")).toBe(
-      "/app/accounts/a1",
+    expect(getByRole("link", { name: "See your ISA allowance" }).getAttribute("href")).toBe(
+      "/app/savings",
     );
   });
 
-  test("shows balances in whole pounds like the rest of the app", () => {
-    const { getAllByText, queryByText } = customRender(
-      <AccountsGroupList rows={[row({ balance: 4000 })]} />,
-    );
-    // The row balance and the group total.
-    expect(getAllByText("£4,000").length).toBeGreaterThan(0);
-    expect(queryByText("£4,000.00")).toBeNull();
+  test("keeps rows beyond the first eight behind a quiet drawer", () => {
+    const rows = Array.from({ length: 10 }, (_, i) => row({ id: `a${i}`, name: `Account ${i}` }));
+    const { getByRole } = customRender(<AccountsGroupList {...props} rows={rows} />);
+    const trigger = getByRole("button", { name: /Show 2 more accounts/ });
+    expect(trigger.getAttribute("aria-expanded")).toBe("false");
   });
 
-  test("states the change in words, not colour alone", () => {
+  test("notes that a student loan is not in the total or net worth", () => {
     const { getByText } = customRender(
       <AccountsGroupList
-        rows={[
-          row({}),
-          row({
-            id: "a2",
-            name: "Savings pot",
-            type: "Current",
-            changePercent: -3,
-            favourable: false,
-          }),
-        ]}
+        {...props}
+        rows={[row({ id: "s1", name: "SLC", type: "Student Loan" })]}
       />,
     );
-    expect(getByText("Up", { exact: false })).toBeDefined();
-    expect(getByText("Down", { exact: false })).toBeDefined();
-  });
-
-  test("keeps rows past the eighth behind a drawer", () => {
-    const rows = Array.from({ length: 10 }, (_, i) => row({ id: `a${i}`, name: `Account ${i}` }));
-    const { getByText } = customRender(<AccountsGroupList rows={rows} />);
-    expect(getByText("2 more accounts")).toBeDefined();
-  });
-
-  test("shows Not set when there is no balance", () => {
-    const { getByText } = customRender(
-      <AccountsGroupList rows={[row({ balance: undefined, changePercent: null })]} />,
-    );
-    expect(getByText("Not set")).toBeDefined();
+    expect(getByText(/Student loans are not in this total or your net worth/)).toBeDefined();
   });
 });

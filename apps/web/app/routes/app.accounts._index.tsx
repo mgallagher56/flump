@@ -1,8 +1,3 @@
-import {
-  otherAnnualIncomeFromProfile,
-  profileFactsFromProfile,
-  selectPsaBand,
-} from "@flump/finance-engine";
 import type { ReactElement } from "react";
 import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "react-router";
 import { data } from "react-router";
@@ -85,7 +80,7 @@ export const action = async (args: ActionFunctionArgs) => {
 
         // Bank OAuth is cut (E16): the /auth/callback route no longer exists.
         return data(
-          { success: false, error: "Bank connections via OAuth are not available." },
+          { success: false, error: "Connecting a bank is not available at the moment." },
           { status: 501 },
         );
       }
@@ -117,18 +112,12 @@ export const loader = async (args: LoaderFunctionArgs) => {
       bankConnectionsEnabled = false;
     }
   }
-  // The PSA band comes from the saved income (salary plus second and rental income) and tax
-  // region; null (no salary saved) claims no band.
-  const psaTaxBand = selectPsaBand(profileFactsFromProfile(userProfile), {
-    otherAnnualIncome: otherAnnualIncomeFromProfile(userProfile),
-  });
   // The profile carries the user's own home estimate, which net worth counts (E16 D3).
   return data({
     accounts,
     accountDetails,
     bankConnections,
     bankConnectionsEnabled,
-    psaTaxBand,
     user,
     userProfile,
   });

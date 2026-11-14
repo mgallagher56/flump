@@ -1,74 +1,49 @@
-import {
-  Button,
-  Card,
-  EmptyState,
-  KpiCard,
-  KpiStrip,
-  PageHeader,
-  ProjectionNotice,
-  StatusBadge,
-} from "@repo/ui";
+import { Button, EmptyState, HeroFigure, PageBody, PageHeader } from "@repo/ui";
 import { type FC, useMemo, useState } from "react";
 import { Link } from "react-router";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
-import { formatSignedChange, netWorthChangeSentence } from "../../snapshotCopy";
 import {
   type AccountDetailInput,
   buildSnapshotHistory,
   formatMonth,
-  historyCountLabel,
-  latestRecordedMonth,
   type MonthKey,
   nextCheckInDate,
-  projectFromSnapshot,
   type SnapshotAccountInput,
   toChartPoints,
 } from "../../snapshotModel";
 import type { SaveSnapshot } from "../../useSaveSnapshot";
 import { type CheckInMode, CheckInSheet } from "../CheckInSheet";
 import { MonthlyChangeTable } from "../MonthlyChangeTable";
-import { NetWorthHistoryChart } from "../NetWorthHistoryChart";
-import {
-  actionsRow,
-  changeSentence,
-  factLabel,
-  factList,
-  factValue,
-  page,
-  savedLine,
-  sectionHeading,
-  sectionStack,
-} from "./SnapshotHistoryPage.styles";
+import { MIN_CHART_MONTHS, NetWorthHistoryChart } from "../NetWorthHistoryChart";
+import { actionsRow, checkInLine, promptActions, sectionStack } from "./SnapshotHistoryPage.styles";
 
 export interface SnapshotHistoryPageProps {
   accounts: readonly SnapshotAccountInput[];
   accountDetails: readonly AccountDetailInput[];
   /** The current Europe/London month. */
   currentMonth: MonthKey;
-  /** Saved budget surplus a month, or null when there is no budget. Drives the single-month projection. */
-  monthlySurplus: number | null;
-  /** Saved cash divided by essential monthly spending (the Budget runway), or null when unknown. */
-  monthsOfCover: number | null;
   onSave: SaveSnapshot;
   /** Opens the check-in on arrival (the dashboard's "Monthly check-in" link). */
   initialSheet?: CheckInMode | null;
 }
 
-const PROJECTION_MONTHS = 6;
-const COVER_FORMAT = new Intl.NumberFormat("en-GB", { maximumFractionDigits: 1 });
+const MONTH_WORDS = ["no months", "one month", "two months"] as const;
+
+/** "You have one month of history. The chart appears after your third check-in." (P10.6) */
+export const fewMonthsPrompt = (recordedMonths: number): string =>
+  `You have ${MONTH_WORDS[recordedMonths] ?? `${recordedMonths} months`} of history. The chart appears after your third check-in.`;
 
 /**
- * Net worth history (E30). Saved data only: every figure comes from recorded monthly balances,
- * and the only writes are the check-in and back-fill saves. What the page shows depends on how
- * many months are recorded: none (a prompt), one (the point, a projection, the next check-in and
- * months of cover), two (changes only) and three or more (the trend).
+ * Net worth history (E30, E16 PR 5). Saved data only: every figure comes from recorded monthly
+ * balances, and the only writes are the check-in and back-fill saves. First view (P13): the h1, the
+ * change since the previous recorded month as the hero, then the chart with its summary and the end
+ * point labelled with net worth. With fewer than 3 recorded months there is no chart (P10.6): the
+ * summary, one prompt and the check-in button show instead.
  */
 export const SnapshotHistoryPage: FC<SnapshotHistoryPageProps> = ({
   accounts,
   accountDetails,
   currentMonth,
-  monthlySurplus,
-  monthsOfCover,
   onSave,
   initialSheet = null,
 }) => {
@@ -78,98 +53,62 @@ export const SnapshotHistoryPage: FC<SnapshotHistoryPageProps> = ({
     () => buildSnapshotHistory(accounts, accountDetails, currentMonth),
     [accounts, accountDetails, currentMonth],
   );
-  const lastRecorded = latestRecordedMonth(accountDetails);
   const hasAccounts = accounts.length > 0;
-  const { stage, series } = history;
+  const { stage, series, recordedMonths } = history;
   // Compare recorded months only: a current month with no check-in yet is carried, not a change.
   const latest = history.latestRecorded;
   const previous = history.previousRecorded;
   const latestChange = latest && previous ? latest.netWorth - previous.netWorth : null;
-  const recordedPoint = latest;
-  const projection =
-    stage === "single" && recordedPoint
-      ? projectFromSnapshot(recordedPoint, monthlySurplus, PROJECTION_MONTHS)
-      : [];
-  const singlePoints =
-    stage === "single" && recordedPoint
-      ? toChartPoints(series.filter((p) => p.month === recordedPoint.month))
-      : [];
+  const enoughForChart = recordedMonths >= MIN_CHART_MONTHS;
+  const first = series[0];
+  const end = series.at(-1);
 
-  const coverKnown = monthsOfCover !== null && Number.isFinite(monthsOfCover);
-  const coverText = coverKnown
-    ? `${COVER_FORMAT.format(monthsOfCover)} ${COVER_FORMAT.format(monthsOfCover) === "1" ? "month" : "months"}`
-    : "Not set";
-
-  const actions = (
-    <div className={actionsRow()}>
-      <Button
-        disabled={!hasAccounts}
-        id="snapshot-open-backfill"
-        data-testid="snapshot-open-backfill"
-        onClick={() => setSheet("backfill")}
-        type="button"
-        variant="secondary"
-      >
-        Add earlier months
-      </Button>
-      <Button
-        disabled={!hasAccounts}
-        id="snapshot-open-check-in"
-        data-testid="snapshot-open-check-in"
-        onClick={() => setSheet("checkIn")}
-        type="button"
-      >
-        Update balances
-      </Button>
-    </div>
+  const checkInButton = (
+    <Button
+      disabled={!hasAccounts}
+      id="snapshot-open-check-in"
+      data-testid="snapshot-open-check-in"
+      onClick={() => setSheet("checkIn")}
+      type="button"
+    >
+      Update balances
+    </Button>
   );
 
-  // Figures only: dates and counts sit in the saved-state line and the description, so the
-  // strip never wraps a long text value at phone width.
-  const netWorthKpi = latest ? (
-    <KpiCard
-      key="nw"
-      label={`Net worth, ${formatMonth(latest.month)}`}
-      tone="hero"
-      value={latest.netWorth}
-    />
-  ) : null;
-  const kpis =
-    !latest || !netWorthKpi
-      ? null
-      : stage === "single" || !previous || latestChange === null
-        ? ([netWorthKpi] as const)
-        : ([
-            netWorthKpi,
-            <KpiCard
-              key="change"
-              label={`Change since ${formatMonth(previous.month)}`}
-              value={formatSignedChange(latestChange)}
-            />,
-          ] as const);
+  // One primary button on the page (P7.4): in the header once the chart shows, otherwise beside the
+  // "chart appears after your third check-in" prompt.
+  const headerActions =
+    stage === "none" ? undefined : (
+      <div className={actionsRow()}>
+        <Button
+          disabled={!hasAccounts}
+          id="snapshot-open-backfill"
+          data-testid="snapshot-open-backfill"
+          onClick={() => setSheet("backfill")}
+          type="button"
+          variant="secondary"
+        >
+          Add earlier months
+        </Button>
+        {enoughForChart ? checkInButton : null}
+      </div>
+    );
+
+  // At most 2 figures (P10.1). The end point's net worth is also the chart's direct label.
+  const summary =
+    enoughForChart && first && end
+      ? `Net worth each month since ${formatMonth(first.month)}, ending at ${formatCurrency(end.netWorth)}.`
+      : latest
+        ? `Net worth recorded for ${formatMonth(latest.month)}: ${formatCurrency(latest.netWorth)}.`
+        : "";
 
   return (
-    <div className={page()} id="snapshot-history" data-testid="snapshot-history">
+    <PageBody data-testid="snapshot-history" id="snapshot-history">
       <PageHeader
-        actions={actions}
-        description={
-          stage === "none"
-            ? "Your monthly balances, recorded once a month."
-            : historyCountLabel(history.recordedMonths)
-        }
+        actions={headerActions}
+        description="Your net worth, recorded once a month."
         title="Net worth history"
       />
-
-      {lastRecorded ? (
-        <p className={savedLine()}>
-          <StatusBadge variant="neutral">Saved</StatusBadge>
-          <span>Last recorded month: {formatMonth(lastRecorded)}</span>
-          <span aria-hidden="true">·</span>
-          <span>Next check-in: {nextCheckInDate(currentMonth)}</span>
-        </p>
-      ) : null}
-
-      {kpis ? <KpiStrip items={kpis} /> : null}
 
       {stage === "none" ? (
         <EmptyState
@@ -199,81 +138,52 @@ export const SnapshotHistoryPage: FC<SnapshotHistoryPageProps> = ({
           }
           title="No monthly balances yet"
         />
-      ) : null}
+      ) : (
+        <>
+          {latestChange !== null && previous ? (
+            <HeroFigure
+              label="Change since last month"
+              subline={`Since ${formatMonth(previous.month)}`}
+              value={latestChange}
+              valueFormat={{ fractionDigits: 0, signDisplay: "always" }}
+            />
+          ) : (
+            <HeroFigure
+              emptyPrompt="The change shows once you have two months recorded."
+              label="Change since last month"
+              notSetLabel="No earlier month"
+            />
+          )}
 
-      {stage === "single" && recordedPoint ? (
-        <section aria-labelledby="snapshot-first-heading" className={sectionStack()}>
-          <h2 className={sectionHeading()} id="snapshot-first-heading">
-            Your first month
-          </h2>
-          <NetWorthHistoryChart
-            points={singlePoints}
-            projection={projection}
-            summary={
-              projection.length > 0
-                ? `Net worth recorded for ${formatMonth(recordedPoint.month)}: ${formatCurrency(recordedPoint.netWorth)}. The dashed line is a projection from your budget surplus of ${formatCurrency(monthlySurplus ?? 0)} a month.`
-                : `Net worth recorded for ${formatMonth(recordedPoint.month)}: ${formatCurrency(recordedPoint.netWorth)}.`
-            }
-          />
-          {projection.length > 0 ? (
-            <ProjectionNotice>
-              Projection, not a forecast: it assumes your budget surplus of{" "}
-              {formatCurrency(monthlySurplus ?? 0)} a month carries on unchanged. Your next check-in
-              replaces it with what actually happened.
-            </ProjectionNotice>
-          ) : null}
-          <Card as="section" aria-label="What happens next" padding="md">
-            <dl className={factList()}>
-              <div>
-                <dt className={factLabel()}>Next check-in</dt>
-                <dd className={factValue()}>{nextCheckInDate(currentMonth)}</dd>
-              </div>
-              <div>
-                <dt className={factLabel()}>Months of cover</dt>
-                <dd className={factValue()}>
-                  {coverText}
-                  {coverKnown ? (
-                    <span className={factLabel()}>
-                      {" "}
-                      (current and savings accounts ÷ essential spending and debt minimums)
-                    </span>
-                  ) : null}
-                </dd>
-              </div>
-            </dl>
-          </Card>
-        </section>
-      ) : null}
-
-      {(stage === "pair" || stage === "trend") && latest && previous ? (
-        <section aria-labelledby="snapshot-changes-heading" className={sectionStack()}>
-          <h2 className={sectionHeading()} id="snapshot-changes-heading">
-            Month-on-month changes
-          </h2>
-          {latestChange !== null ? (
-            <p className={changeSentence()} id="snapshot-change-sentence">
-              {netWorthChangeSentence(latestChange, previous.month)}
-            </p>
-          ) : null}
-          {stage === "trend" ? (
+          <section className={sectionStack()}>
             <NetWorthHistoryChart
+              notEnoughDataText={fewMonthsPrompt(recordedMonths)}
               points={toChartPoints(series)}
-              summary={`Net worth over ${series.length} months, from ${formatCurrency(series[0]?.netWorth ?? 0)} in ${formatMonth(series[0]?.month ?? latest.month)} to ${formatCurrency(latest.netWorth)} in ${formatMonth(latest.month)}.`}
+              recordedMonths={recordedMonths}
+              summary={summary}
             />
+            {enoughForChart ? null : <div className={promptActions()}>{checkInButton}</div>}
+            <p className={checkInLine()}>Next check-in: {nextCheckInDate(currentMonth)}</p>
+          </section>
+
+          {latest && previous && (history.accountChanges.length > 0 || enoughForChart) ? (
+            // Each table carries its own heading ("Change by account", "Change by month").
+            <div className={sectionStack()}>
+              {history.accountChanges.length > 0 ? (
+                <MonthlyChangeTable
+                  month={latest.month}
+                  previousMonth={previous.month}
+                  rows={history.accountChanges}
+                  variant="accounts"
+                />
+              ) : null}
+              {enoughForChart ? (
+                <MonthlyChangeTable rows={history.monthChanges} variant="months" />
+              ) : null}
+            </div>
           ) : null}
-          {history.accountChanges.length > 0 ? (
-            <MonthlyChangeTable
-              month={latest.month}
-              previousMonth={previous.month}
-              rows={history.accountChanges}
-              variant="accounts"
-            />
-          ) : null}
-          {stage === "trend" ? (
-            <MonthlyChangeTable rows={history.monthChanges} variant="months" />
-          ) : null}
-        </section>
-      ) : null}
+        </>
+      )}
 
       {sheet ? (
         <CheckInSheet
@@ -289,7 +199,7 @@ export const SnapshotHistoryPage: FC<SnapshotHistoryPageProps> = ({
           open
         />
       ) : null}
-    </div>
+    </PageBody>
   );
 };
 

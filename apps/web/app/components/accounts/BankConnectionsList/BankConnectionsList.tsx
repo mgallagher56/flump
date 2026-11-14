@@ -39,13 +39,13 @@ export interface BankConnectionsListProps {
 
 const formatDate = (dateStr: string) => {
   const date = new Date(dateStr);
-  if (Number.isNaN(date.getTime())) return "Never";
-  return date.toLocaleString("en-GB", {
+  if (Number.isNaN(date.getTime())) return "Not updated yet";
+  return `Updated ${date.toLocaleString("en-GB", {
     day: "2-digit",
     month: "short",
     hour: "2-digit",
     minute: "2-digit",
-  });
+  })}`;
 };
 
 const BankConnectionsList: FC<BankConnectionsListProps> = ({
@@ -80,10 +80,10 @@ const BankConnectionsList: FC<BankConnectionsListProps> = ({
       <div className={listHeader()}>
         <div>
           <h2 className={listTitle()} id="bank-connections-heading">
-            Synced bank connections
+            Connected banks
           </h2>
           <p className={listDescription()}>
-            Manage your connected bank credentials and balance feeds.
+            Banks you have connected, and when each was last updated.
           </p>
         </div>
         {canConnect && connections.length > 0 && (
@@ -102,8 +102,8 @@ const BankConnectionsList: FC<BankConnectionsListProps> = ({
         pending={disconnectOutcome.pending}
         error={disconnectOutcome.error}
         title={`Disconnect ${disconnectTarget?.institutionName ?? "this bank"}?`}
-        description="Synced accounts and transactions from this bank will be removed."
-        confirmLabel="Disconnect"
+        description="Accounts and transactions that came from this bank will be removed from Flump."
+        confirmLabel="Disconnect bank"
         tone="danger"
         onConfirm={handleConfirmDisconnect}
       />
@@ -125,9 +125,7 @@ const BankConnectionsList: FC<BankConnectionsListProps> = ({
                     </span>
                     <div className={connectionText()}>
                       <p className={connectionName()}>{conn.institutionName}</p>
-                      <p className={connectionMeta()}>
-                        Last synced: {formatDate(conn.lastSyncedAt)}
-                      </p>
+                      <p className={connectionMeta()}>{formatDate(conn.lastSyncedAt)}</p>
                       <StatusBadge
                         size="sm"
                         variant={
@@ -140,12 +138,12 @@ const BankConnectionsList: FC<BankConnectionsListProps> = ({
                       >
                         {conn.status === "connected" ? (
                           <>
-                            <Icon icon={CircleCheck} size="sm" /> Synced
+                            <Icon icon={CircleCheck} size="sm" /> Connected
                           </>
                         ) : (
                           <>
                             <Icon icon={CircleAlert} size="sm" />{" "}
-                            {conn.status === "disconnected" ? "Disconnected" : "Error"}
+                            {conn.status === "disconnected" ? "Not connected" : "Could not update"}
                           </>
                         )}
                       </StatusBadge>
@@ -162,7 +160,7 @@ const BankConnectionsList: FC<BankConnectionsListProps> = ({
                       <span className={isSyncing ? spinning() : undefined}>
                         <Icon icon={RefreshCw} size="sm" />
                       </span>
-                      {isSyncing ? "Syncing" : "Sync now"}
+                      {isSyncing ? "Updating…" : "Update now"}
                       <VisuallyHidden> for {conn.institutionName}</VisuallyHidden>
                     </Button>
                     <Button
@@ -188,7 +186,7 @@ const BankConnectionsList: FC<BankConnectionsListProps> = ({
                 <ConnectBankWizard onSuccess={() => revalidator.revalidate()} />
               ) : undefined
             }
-            description="Connect your banks to pull in balances for current, savings, mortgage, credit card and investment accounts."
+            description="Connect a bank to bring in your balances."
             headingLevel="h3"
             icon={<Icon icon={Landmark} size="lg" />}
             title="No connected banks"

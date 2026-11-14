@@ -25,7 +25,7 @@ describe("<AccountYourDetails />", () => {
     expect(getByRole("heading", { name: "Your account" })).toBeDefined();
     expect(getByText("Saved")).toBeDefined();
     expect(getByText("Last updated March 2026")).toBeDefined();
-    expect(getByText("£2,450.00")).toBeDefined();
+    expect(getByText("£2,450")).toBeDefined();
     expect(getByRole("button", { name: "edit" })).toBeDefined();
   });
 

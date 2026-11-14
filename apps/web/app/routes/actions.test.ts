@@ -447,7 +447,7 @@ describe("accounts action, connectBank", () => {
     // The failed backend call is tolerated; bank OAuth is cut so there is no redirect to offer.
     expect(res.data).toEqual({
       success: false,
-      error: "Bank connections via OAuth are not available.",
+      error: "Connecting a bank is not available at the moment.",
     });
     expect(res.init?.status).toBe(501);
   });
@@ -618,7 +618,7 @@ describe("action edge cases", () => {
     expect(res.init?.status ?? res.status).toBe(501);
     expect(res.data).toEqual({
       success: false,
-      error: "Bank connections via OAuth are not available.",
+      error: "Connecting a bank is not available at the moment.",
     });
   });
 });

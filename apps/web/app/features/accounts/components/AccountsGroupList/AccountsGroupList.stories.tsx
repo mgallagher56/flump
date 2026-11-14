@@ -12,7 +12,7 @@ const meta: Meta<typeof AccountsGroupList> = {
         id: "a1",
         name: "Monzo current",
         type: "Current",
-        balance: 2450.5,
+        balance: 2450,
         changePercent: 4,
         favourable: true,
       },
@@ -41,6 +41,9 @@ const meta: Meta<typeof AccountsGroupList> = {
         favourable: true,
       },
     ],
+    totalOwn: 14850,
+    totalOwe: 182640,
+    netWorth: -167790,
   },
 };
 
@@ -51,6 +54,8 @@ export const Default: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     await expect(canvas.getByRole("link", { name: "Monzo current" })).toBeDefined();
-    await expect(canvas.getByRole("heading", { name: "Mortgage" })).toBeDefined();
+    await expect(canvas.getByRole("heading", { name: "What you own" })).toBeDefined();
+    await expect(canvas.getByRole("heading", { name: "What you owe" })).toBeDefined();
+    await expect(canvas.getByText("Net worth")).toBeDefined();
   },
 };
