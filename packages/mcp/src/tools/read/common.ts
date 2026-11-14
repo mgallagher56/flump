@@ -3,6 +3,7 @@ import {
   anonymiseDescription,
   type BudgetEntryItem,
   type BuildContextPackInput,
+  DEFAULT_NET_WORTH_BASIS,
   genericAccountLabel,
   type NetWorthBasis,
   type NetWorthLeftOut,
@@ -141,7 +142,8 @@ export async function loadReadModel(ctx: McpServerContext): Promise<ReadModel> {
     anonymizeInstitutions: anonymise,
   });
   const snapshot = new PortfolioSnapshot(raw.accounts ?? [], raw.accountDetails ?? []);
-  const basis = raw.netWorthBasis;
+  // The provider boundary: a provider built before the choices existed sends no basis.
+  const basis = raw.netWorthBasis ?? { ...DEFAULT_NET_WORTH_BASIS };
   return {
     raw,
     snapshot,
@@ -167,12 +169,12 @@ export function netWorthBasisNotes(basis: NetWorthBasis, leftOut: readonly NetWo
   const notes: string[] = [];
   notes.push(
     basis.countStudentLoan
-      ? "Student loans count as a debt in net worth and liabilitiesGbp, as the user chose. They are never in debt totals."
-      : "Student loans are not counted in net worth, as the user chose. They are never in debt totals.",
+      ? "Student loans count as a debt in net worth and liabilitiesGbp under the user's settings. They are never in debt totals."
+      : "Student loans are not counted in net worth under the user's settings. They are never in debt totals.",
   );
   if (!basis.countProperty && (leftOut.includes("property") || leftOut.includes("mortgage"))) {
     notes.push(
-      "Property values and mortgage balances are not counted in net worth, as the user chose. propertyGbp and mortgageGbp still show the saved amounts.",
+      "Property values and mortgage balances are not counted in net worth under the user's settings. propertyGbp and mortgageGbp still show the saved amounts.",
     );
   }
   if (leftOut.includes("homeValueMissing")) {

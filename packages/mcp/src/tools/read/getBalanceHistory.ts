@@ -429,14 +429,14 @@ export const getBalanceHistory = defineFlumpTool({
         : []),
       ...(index.accounts.some((a) => a.category === "studentLoans") && !basis.countStudentLoan
         ? [
-            "Student loans are not counted in net worth, as the user chose, so they do not appear here, even when asked for by id or category.",
+            "Student loans are not counted in net worth under the user's settings, so they do not appear here, even when asked for by id or category.",
           ]
         : []),
       ...(input.groupBy === "total" &&
       !basis.countProperty &&
       (leftOut.includes("property") || leftOut.includes("mortgage"))
         ? [
-            "Property values and mortgage balances are not counted in net worth, as the user chose, so the total leaves them out. Ask per account or per category to see them.",
+            "Property values and mortgage balances are not counted in net worth under the user's settings, so the total leaves them out. Ask per account or per category to see them.",
           ]
         : []),
     ];
