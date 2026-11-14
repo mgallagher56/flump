@@ -352,8 +352,8 @@ const BudgetContainer: FC = () => {
         actions={
           view === "editing" ? (
             <Button
-              data-testid="setup-wizard-btn"
-              id="setup-wizard-btn"
+              data-testid="finish-editing-btn"
+              id="finish-editing-btn"
               onClick={() => setView("budget")}
             >
               Finish editing

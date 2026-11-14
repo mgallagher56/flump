@@ -59,6 +59,15 @@ describe("rankCategories", () => {
     expect(rankCategories([INCOME_CATEGORY], [])).toEqual([]);
   });
 
+  it("treats an entry in the income category as income even when its flag is off", () => {
+    const rows = rankCategories(
+      ["housing", INCOME_CATEGORY],
+      [entry({}), entry({ id: "u", category: INCOME_CATEGORY, amount: 900, isIncome: false })],
+    );
+    expect(rows.map((r) => r.category)).toEqual(["housing"]);
+    expect(rows[0]?.total).toBe(1000);
+  });
+
   it("keeps a mixed category but counts only its spending", () => {
     const rows = rankCategories(
       ["pets"],

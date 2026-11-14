@@ -82,6 +82,16 @@ describe("BudgetEditor", () => {
     expect(onUpdate).toHaveBeenCalledWith("b-1", { amount: 1350 });
   });
 
+  it("restores the saved amount when the field is cleared and left, saving nothing", () => {
+    const { onUpdate } = setup();
+    const amount = screen.getByTestId("budget-editor-amount-b-1") as HTMLInputElement;
+    fireEvent.focus(amount);
+    fireEvent.change(amount, { target: { value: "" } });
+    fireEvent.blur(amount);
+    expect(onUpdate).not.toHaveBeenCalled();
+    expect(amount.value).toContain("1,200");
+  });
+
   it("does not save an unchanged amount", () => {
     const { onUpdate } = setup();
     const amount = screen.getByTestId("budget-editor-amount-b-1");
@@ -175,7 +185,7 @@ describe("BudgetEditor", () => {
 
   it("asks before removing, naming the entry, then deletes", async () => {
     const { onDelete } = setup();
-    fireEvent.click(screen.getByRole("button", { name: "Remove Rent" }));
+    fireEvent.click(screen.getByRole("button", { name: "Delete Rent" }));
     const dialog = await screen.findByRole("alertdialog");
     expect(within(dialog).getByText("Delete Rent?")).toBeDefined();
     expect(dialog.textContent).toContain("£1,200");
@@ -187,7 +197,7 @@ describe("BudgetEditor", () => {
 
   it("cancelling the remove deletes nothing", async () => {
     const { onDelete } = setup();
-    fireEvent.click(screen.getByRole("button", { name: "Remove Gym" }));
+    fireEvent.click(screen.getByRole("button", { name: "Delete Gym" }));
     const dialog = await screen.findByRole("alertdialog");
     fireEvent.click(within(dialog).getByRole("button", { name: "Cancel" }));
     await waitFor(() => expect(screen.queryByRole("alertdialog")).toBeNull());
@@ -208,10 +218,10 @@ describe("BudgetEditor", () => {
     fireEvent.click(screen.getByTestId("budget-editor-add-bills"));
     expect(await screen.findByText("Entry added")).toBeDefined();
 
-    fireEvent.click(screen.getByRole("button", { name: "Remove Rent" }));
+    fireEvent.click(screen.getByRole("button", { name: "Delete Rent" }));
     const dialog = await screen.findByRole("alertdialog");
     fireEvent.click(within(dialog).getByRole("button", { name: "Delete entry" }));
-    expect(await screen.findByText("Entry removed")).toBeDefined();
+    expect(await screen.findByText("Entry deleted")).toBeDefined();
   });
 
   it("shows no toast when a save fails", async () => {
@@ -220,5 +230,115 @@ describe("BudgetEditor", () => {
       target: { value: "weekly" },
     });
     await waitFor(() => expect(screen.queryByText("Saved")).toBeNull());
+  });
+
+  it("names the openers, gives examples in the add rows and says when a section is empty", () => {
+    setup();
+    expect(screen.getByTestId("budget-editor-open-add-income").textContent).toBe("Add income");
+    expect(screen.getByTestId("budget-editor-open-add-bills").textContent).toBe("Add to bills");
+    fireEvent.click(screen.getByTestId("budget-editor-open-add-income"));
+    expect(
+      (screen.getByTestId("budget-editor-new-name-income") as HTMLInputElement).placeholder,
+    ).toBe("For example, Child Benefit");
+    fireEvent.click(screen.getByTestId("budget-editor-open-add-pets"));
+    const petsName = screen.getByLabelText("New entry name in Pets") as HTMLInputElement;
+    expect(petsName.placeholder).toBe("Name");
+    expect(screen.getAllByText("No entries added").length).toBeGreaterThan(0);
+    const cancel = screen.getByTestId("budget-editor-cancel-add-pets");
+    expect(cancel.id).toBe("budget-editor-cancel-add-pets");
+    const remove = screen.getByTestId("budget-editor-remove-b-1");
+    expect(remove.getAttribute("title")).toBe("Delete Rent");
+  });
+
+  it("returns focus to the opener after a Cancel", () => {
+    setup();
+    fireEvent.click(screen.getByTestId("budget-editor-open-add-bills"));
+    expect(document.activeElement).toBe(screen.getByTestId("budget-editor-new-name-bills"));
+    fireEvent.click(screen.getByTestId("budget-editor-cancel-add-bills"));
+    expect(document.activeElement).toBe(screen.getByTestId("budget-editor-open-add-bills"));
+  });
+
+  it("returns focus to the opener after a successful Add", async () => {
+    setup();
+    fireEvent.click(screen.getByTestId("budget-editor-open-add-bills"));
+    fireEvent.change(screen.getByTestId("budget-editor-new-name-bills"), {
+      target: { value: "Water" },
+    });
+    fireEvent.click(screen.getByTestId("budget-editor-add-bills"));
+    await waitFor(() =>
+      expect(document.activeElement).toBe(screen.getByTestId("budget-editor-open-add-bills")),
+    );
+  });
+
+  it("after a delete, moves focus to the next row's name, or to the section heading", async () => {
+    const twoRows = [row({}), row({ id: "b-4", name: "Service charge" }), ...entries.slice(1)];
+    const onDelete = vi.fn().mockResolvedValue(true);
+    const { rerender } = render(
+      <BudgetEditor
+        categories={["housing", "income"]}
+        entries={twoRows}
+        onAdd={vi.fn()}
+        onDelete={onDelete}
+        onUpdate={vi.fn()}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Delete Rent" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Delete entry" }));
+    await waitFor(() => expect(onDelete).toHaveBeenCalledWith("b-1"));
+    const remaining = twoRows.filter((e) => e.id !== "b-1");
+    rerender(
+      <BudgetEditor
+        categories={["housing", "income"]}
+        entries={remaining}
+        onAdd={vi.fn()}
+        onDelete={onDelete}
+        onUpdate={vi.fn()}
+      />,
+    );
+    await waitFor(() =>
+      expect(document.activeElement).toBe(screen.getByTestId("budget-editor-name-b-4")),
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Delete Service charge" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Delete entry" }));
+    await waitFor(() => expect(onDelete).toHaveBeenCalledWith("b-4"));
+    rerender(
+      <BudgetEditor
+        categories={["housing", "income"]}
+        entries={remaining.filter((e) => e.id !== "b-4")}
+        onAdd={vi.fn()}
+        onDelete={onDelete}
+        onUpdate={vi.fn()}
+      />,
+    );
+    await waitFor(() =>
+      expect(document.activeElement).toBe(
+        screen.getByRole("heading", { level: 3, name: "Housing" }),
+      ),
+    );
+  });
+
+  it("shows unflagged entries in the income category under Money in", () => {
+    setup({
+      entries: [row({ id: "b-9", name: "Pension", category: "income", isIncome: false })],
+    });
+    const moneyIn = screen.getByRole("heading", { level: 3, name: "Money in" }).closest("section");
+    expect(moneyIn && within(moneyIn).getByTestId("budget-editor-name-b-9")).toBeTruthy();
+    expect(screen.queryByTestId("budget-editor-essential-b-9")).toBeNull();
+  });
+
+  it("keeps a custom category that holds only income from looking empty", () => {
+    const onDeleteCategory = vi.fn();
+    setup({
+      categories: ["housing", "side-work", "pets"],
+      entries: [row({ id: "s", category: "side-work", name: "Tutoring", isIncome: true })],
+      onDeleteCategory,
+      removableCategories: ["side-work", "pets"],
+    });
+    expect(screen.queryByTestId("budget-editor-remove-category-side-work")).toBeNull();
+    const removePets = screen.getByTestId("budget-editor-remove-category-pets");
+    expect(removePets.id).toBe("budget-editor-remove-category-pets");
+    fireEvent.click(removePets);
+    expect(onDeleteCategory).toHaveBeenCalledWith("pets");
   });
 });

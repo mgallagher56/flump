@@ -13,6 +13,7 @@ import { Plus, Trash2 } from "lucide-react";
 import { type FC, type FormEvent, useEffect, useRef, useState } from "react";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import { type BudgetEntry, getCategoryLabel } from "~/types/budget";
+import { INCOME_CATEGORY as INCOME, isIncomeEntry } from "../../income";
 import {
   addAmount,
   addRow,
@@ -52,9 +53,21 @@ const FREQUENCY_OPTIONS = [
   { value: "weekly", label: "a week" },
 ] as const;
 
-const INCOME = "income";
+/** A safe id fragment from a category name (custom names may hold spaces or symbols). */
+const categorySlug = (category: string) =>
+  category
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "") || "category";
 
-const isIncomeEntry = (entry: BudgetEntry) => entry.isIncome || entry.category === INCOME;
+/** An example for each section's add row, so the empty name field says what goes in it. */
+const NAME_EXAMPLES: Record<string, string> = {
+  income: "For example, Child Benefit",
+  housing: "For example, Rent",
+  bills: "For example, Water",
+  expenses: "For example, Gym",
+  savings: "For example, Holiday fund",
+};
 
 const sectionLabel = (category: string) =>
   category === INCOME ? "Money in" : getCategoryLabel(category);
@@ -96,7 +109,13 @@ const EntryRow: FC<EntryRowProps> = ({ entry, onSave, onRemove }) => {
 
   const saveAmount = () => {
     const next = amountRef.current;
-    if (next === null || next === toAmount(entry.amount)) return;
+    if (next === null) {
+      // A cleared amount is not a change: show the saved amount again and save nothing.
+      amountRef.current = toAmount(entry.amount);
+      setAmount(toAmount(entry.amount));
+      return;
+    }
+    if (next === toAmount(entry.amount)) return;
     void onSave(entry.id, { amount: next });
   };
 
@@ -156,11 +175,11 @@ const EntryRow: FC<EntryRowProps> = ({ entry, onSave, onRemove }) => {
         )}
       </div>
       <Button
-        aria-label={`Remove ${entry.name}`}
+        aria-label={`Delete ${entry.name}`}
         data-testid={`budget-editor-remove-${entry.id}`}
         id={`budget-editor-remove-${entry.id}`}
         size="sm"
-        title={`Remove ${entry.name}`}
+        title={`Delete ${entry.name}`}
         variant="ghost"
         onClick={() => onRemove(entry)}
       >
@@ -172,6 +191,8 @@ const EntryRow: FC<EntryRowProps> = ({ entry, onSave, onRemove }) => {
 
 interface AddEntryRowProps {
   category: string;
+  /** The id fragment for this section's controls. */
+  slug: string;
   label: string;
   onAdd: (name: string, amount: number) => Promise<boolean>;
 }
@@ -180,9 +201,12 @@ interface AddEntryRowProps {
  * The add row that closes each section: a quiet "Add to …" button that opens a name and amount
  * row in place, so the editor does not show an empty form under every section.
  */
-const AddEntryRow: FC<AddEntryRowProps> = ({ category, label, onAdd }) => {
+const AddEntryRow: FC<AddEntryRowProps> = ({ category, slug, label, onAdd }) => {
   const [open, setOpen] = useState(false);
   const nameRef = useRef<HTMLInputElement>(null);
+  const openerRef = useRef<HTMLButtonElement>(null);
+  // Set when the row closes from an Add or a Cancel, so focus goes back to the opener (UX A3).
+  const returnFocus = useRef(false);
   const [name, setName] = useState("");
   const [amount, setAmount] = useState<number | null>(null);
   const [adding, setAdding] = useState(false);
@@ -195,29 +219,38 @@ const AddEntryRow: FC<AddEntryRowProps> = ({ category, label, onAdd }) => {
     const added = await onAdd(trimmed, amount ?? 0);
     setAdding(false);
     // Keep what was typed when the save failed, so it can be tried again.
-    if (added) {
-      setName("");
-      setAmount(null);
-      setOpen(false);
-    }
+    if (added) close();
+  };
+
+  const close = () => {
+    returnFocus.current = true;
+    setName("");
+    setAmount(null);
+    setOpen(false);
   };
 
   useEffect(() => {
-    if (open) nameRef.current?.focus();
+    if (open) {
+      nameRef.current?.focus();
+    } else if (returnFocus.current) {
+      returnFocus.current = false;
+      openerRef.current?.focus();
+    }
   }, [open]);
 
   if (!open) {
     return (
       <div>
         <Button
-          data-testid={`budget-editor-open-add-${category}`}
-          id={`budget-editor-open-add-${category}`}
+          ref={openerRef}
+          data-testid={`budget-editor-open-add-${slug}`}
+          id={`budget-editor-open-add-${slug}`}
           size="sm"
           variant="ghost"
           onClick={() => setOpen(true)}
         >
           <Icon icon={Plus} size="sm" />
-          Add to {label.toLowerCase()}
+          {category === INCOME ? "Add income" : `Add to ${label.toLowerCase()}`}
         </Button>
       </div>
     );
@@ -228,9 +261,9 @@ const AddEntryRow: FC<AddEntryRowProps> = ({ category, label, onAdd }) => {
       <TextInput
         ref={nameRef}
         aria-label={`New entry name in ${label}`}
-        data-testid={`budget-editor-new-name-${category}`}
-        id={`budget-editor-new-name-${category}`}
-        placeholder="Name"
+        data-testid={`budget-editor-new-name-${slug}`}
+        id={`budget-editor-new-name-${slug}`}
+        placeholder={NAME_EXAMPLES[category] ?? "Name"}
         size="sm"
         value={name}
         onChange={(event) => setName(event.target.value)}
@@ -238,8 +271,8 @@ const AddEntryRow: FC<AddEntryRowProps> = ({ category, label, onAdd }) => {
       <div className={addAmount()}>
         <CurrencyInput
           aria-label={`New entry amount in ${label}`}
-          data-testid={`budget-editor-new-amount-${category}`}
-          id={`budget-editor-new-amount-${category}`}
+          data-testid={`budget-editor-new-amount-${slug}`}
+          id={`budget-editor-new-amount-${slug}`}
           size="sm"
           value={amount}
           onValueChange={setAmount}
@@ -247,9 +280,9 @@ const AddEntryRow: FC<AddEntryRowProps> = ({ category, label, onAdd }) => {
       </div>
       <Button
         aria-label={`Add to ${label}`}
-        data-testid={`budget-editor-add-${category}`}
+        data-testid={`budget-editor-add-${slug}`}
         disabled={!name.trim() || adding}
-        id={`budget-editor-add-${category}`}
+        id={`budget-editor-add-${slug}`}
         size="sm"
         type="submit"
         variant="outline"
@@ -258,13 +291,11 @@ const AddEntryRow: FC<AddEntryRowProps> = ({ category, label, onAdd }) => {
         {adding ? "Adding…" : "Add"}
       </Button>
       <Button
+        data-testid={`budget-editor-cancel-add-${slug}`}
+        id={`budget-editor-cancel-add-${slug}`}
         size="sm"
         variant="ghost"
-        onClick={() => {
-          setOpen(false);
-          setName("");
-          setAmount(null);
-        }}
+        onClick={close}
       >
         Cancel
       </Button>
@@ -291,6 +322,8 @@ export const BudgetEditor: FC<BudgetEditorProps> = ({
   const { formatCurrencyDecimal } = useFormatCurrency();
   const [toRemove, setToRemove] = useState<BudgetEntry | null>(null);
   const [removing, setRemoving] = useState(false);
+  // Where focus goes once a deleted row has gone (UX A3): the next row's name, else the heading.
+  const pendingFocus = useRef<string | null>(null);
   const editor = budgetEditor();
   const section = editorSection();
 
@@ -334,8 +367,32 @@ export const BudgetEditor: FC<BudgetEditorProps> = ({
     }
   };
 
+  /** The next row's name field in the deleted entry's section, else that section's heading. */
+  const focusTargetAfterDelete = (entry: BudgetEntry) => {
+    const category = isIncomeEntry(entry) ? INCOME : entry.category;
+    const rows = entriesFor(category);
+    const index = rows.findIndex((e) => e.id === entry.id);
+    const next = rows[index + 1] ?? rows[index - 1];
+    return next
+      ? `budget-editor-name-${next.id}`
+      : `budget-editor-section-${categorySlug(category)}`;
+  };
+
+  // Runs after every render until the target is on the page, so it lands once the row has gone
+  // and the dialog has let go of focus.
+  useEffect(() => {
+    const id = pendingFocus.current;
+    if (!id || toRemove) return;
+    const target = document.getElementById(id);
+    if (target) {
+      pendingFocus.current = null;
+      target.focus();
+    }
+  });
+
   const confirmRemove = async () => {
     if (!toRemove) return;
+    const target = focusTargetAfterDelete(toRemove);
     setRemoving(true);
     let removed = false;
     try {
@@ -343,9 +400,10 @@ export const BudgetEditor: FC<BudgetEditorProps> = ({
     } catch {
       removed = false;
     }
+    if (removed) pendingFocus.current = target;
     setRemoving(false);
     setToRemove(null);
-    if (removed) toast?.toast({ title: "Entry removed" });
+    if (removed) toast?.toast({ title: "Entry deleted" });
   };
 
   return (
@@ -367,15 +425,24 @@ export const BudgetEditor: FC<BudgetEditorProps> = ({
         {sectionOrder.map((category) => {
           const label = sectionLabel(category);
           const rows = entriesFor(category);
-          const headingId = `budget-editor-section-${category}`;
+          const slug = categorySlug(category);
+          const headingId = `budget-editor-section-${slug}`;
+          // Income entries in a custom category show under Money in but still belong to it.
+          const isEmpty = !entries.some((e) => e.category === category);
           return (
             <section aria-labelledby={headingId} className={section.root} key={category}>
               <div className={section.headingRow}>
-                <h3 className={section.heading} id={headingId}>
+                <h3 className={section.heading} id={headingId} tabIndex={-1}>
                   {label}
                 </h3>
-                {onDeleteCategory && removableCategories.includes(category) && rows.length === 0 ? (
-                  <Button size="sm" variant="ghost" onClick={() => onDeleteCategory(category)}>
+                {onDeleteCategory && removableCategories.includes(category) && isEmpty ? (
+                  <Button
+                    data-testid={`budget-editor-remove-category-${slug}`}
+                    id={`budget-editor-remove-category-${slug}`}
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => onDeleteCategory(category)}
+                  >
                     Remove {label.toLowerCase()}
                   </Button>
                 ) : null}
@@ -387,9 +454,9 @@ export const BudgetEditor: FC<BudgetEditorProps> = ({
                   ))}
                 </ul>
               ) : (
-                <p className={section.empty}>Nothing here yet.</p>
+                <p className={section.empty}>No entries added</p>
               )}
-              <AddEntryRow category={category} label={label} onAdd={add(category)} />
+              <AddEntryRow category={category} label={label} slug={slug} onAdd={add(category)} />
             </section>
           );
         })}
