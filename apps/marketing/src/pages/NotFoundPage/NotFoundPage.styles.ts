@@ -12,28 +12,41 @@ export const pageShell = cva({
 
 export const mainContent = cva({
   base: {
-    flex: 1,
+    flex: "1",
+    width: "100%",
     maxWidth: "2xl",
     mx: "auto",
-    py: "24",
+    py: { base: "16", md: "24" },
     px: "4",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    gap: "4",
     textAlign: "center",
+    _focus: { outline: "none" },
   },
 });
 
 export const headingStyle = cva({
-  base: { fontSize: "clamp(2rem, 4vw, 3rem)", fontWeight: "800", color: "text.primary" },
+  base: { textStyle: "heading.xl", color: "text.primary", margin: 0 },
 });
 
 export const bodyStyle = cva({
-  base: { fontSize: "1.1rem", color: "text.secondary", mt: "3", mb: "8" },
+  base: { textStyle: "body.lg", color: "text.secondary", margin: 0 },
 });
 
 export const homeLinkStyle = cva({
   base: {
-    color: "primary",
-    fontWeight: "600",
+    color: "text.primary",
+    fontWeight: "semibold",
     textDecoration: "underline",
-    _focusVisible: { outline: "2px solid", outlineColor: "border.focusRing", outlineOffset: "2px" },
+    textUnderlineOffset: "3px",
+    _hover: { color: "primary.hover" },
+    _focusVisible: {
+      outlineWidth: "2px",
+      outlineStyle: "solid",
+      outlineColor: "border.focusRing",
+      outlineOffset: "2px",
+    },
   },
 });

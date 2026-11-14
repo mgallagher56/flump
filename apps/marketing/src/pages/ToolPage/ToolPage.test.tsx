@@ -22,9 +22,12 @@ describe("ToolPage", () => {
     const tool = TOOL_CATALOGUE[0];
     renderAt(`/tools/${tool?.slug}`);
     expect(screen.getByRole("heading", { level: 1, name: tool?.title })).toBeTruthy();
-    expect(screen.getByRole("link", { name: "All calculators" }).getAttribute("href")).toBe(
-      "/tools",
-    );
+    // The breadcrumb's link; the footer has its own "All calculators" link (PR 12).
+    expect(
+      within(screen.getByRole("main"))
+        .getByRole("link", { name: "All calculators" })
+        .getAttribute("href"),
+    ).toBe("/tools");
   });
 
   it("renders the calculator for a slug in any case, matching the 200 status and canonical", () => {

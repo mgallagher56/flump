@@ -2,7 +2,6 @@ import { BUSINESS_DETAILS } from "@flump/business-details";
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it } from "vitest";
-import { CANONICAL_TOOL_SLUGS } from "../../utils/toolSlugs";
 import { Footer } from "./Footer";
 
 const renderFooter = () =>
@@ -30,7 +29,7 @@ describe("Footer", () => {
   it("uses the shared footer headings (brand h2, columns h3) with no skipped levels", () => {
     renderFooter();
     expect(screen.getByRole("heading", { level: 2, name: "Flump" })).toBeDefined();
-    expect(screen.getByRole("heading", { level: 3, name: "Calculators" })).toBeDefined();
+    expect(screen.getByRole("heading", { level: 3, name: "Product" })).toBeDefined();
     expect(screen.queryAllByRole("heading", { level: 4 })).toHaveLength(0);
   });
 
@@ -42,11 +41,31 @@ describe("Footer", () => {
     );
   });
 
-  it("links to every calculator, in the tools page order", () => {
+  it("links to the calculators once, through the tools index", () => {
     renderFooter();
-    const nav = screen.getByRole("heading", { level: 3, name: "Calculators" }).parentElement;
-    const hrefs = Array.from(nav?.querySelectorAll("a") ?? []).map((a) => a.getAttribute("href"));
-    expect(hrefs).toEqual(CANONICAL_TOOL_SLUGS.map((slug) => `/tools/${slug}`));
+    expect(screen.getByRole("link", { name: "All calculators" }).getAttribute("href")).toBe(
+      "/tools",
+    );
+    const toolLinks = Array.from(document.querySelectorAll('a[href^="/tools/"]'));
+    expect(toolLinks).toHaveLength(0);
+    expect(screen.queryByRole("heading", { name: "Calculators" })).toBeNull();
+  });
+
+  it("names its product column 'Product', not the brand again", () => {
+    renderFooter();
+    expect(screen.getByRole("heading", { name: "Product" })).toBeDefined();
+  });
+
+  it("links to the AI connection page, which has left the home page (D13)", () => {
+    renderFooter();
+    expect(screen.getByRole("link", { name: "AI connection (MCP)" }).getAttribute("href")).toBe(
+      "/mcp",
+    );
+  });
+
+  it("shows placeholder business details as quiet text, with no warning colour or outline", () => {
+    const { container } = renderFooter();
+    expect(container.innerHTML).not.toMatch(/status-warning|status-danger|dashed/);
   });
 
   it("links to the security page", () => {

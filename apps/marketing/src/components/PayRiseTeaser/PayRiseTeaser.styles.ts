@@ -24,51 +24,24 @@ export const teaserOutcome = cva({
     display: "flex",
     flexDirection: "column",
     gap: "4",
-    padding: { base: "5", md: "6" },
-    borderRadius: "xl",
-    backgroundColor: "surface.sunken",
-    borderWidth: "1px",
-    borderStyle: "solid",
-    borderColor: "border.subtle",
   },
 });
 
 export const outcomeLabel = cva({
-  base: {
-    fontSize: "xs",
-    fontWeight: "semibold",
-    letterSpacing: "0.01em",
-    color: "text.secondary",
-  },
+  base: { textStyle: "label.md", color: "text.secondary" },
 });
 
 export const outcomeHeadline = cva({
   base: {
-    fontFamily: "display",
-    fontSize: { base: "2xl", md: "3xl" },
-    fontWeight: "bold",
-    lineHeight: "1.2",
+    textStyle: "numeric.kpi",
     color: "text.primary",
     margin: "0",
     fontVariantNumeric: "tabular-nums",
   },
 });
 
-export const outcomeSub = cva({
-  base: {
-    fontSize: "sm",
-    color: "text.secondary",
-    margin: "0",
-    fontVariantNumeric: "tabular-nums",
-  },
-});
-
 export const breakdownList = cva({
-  base: {
-    display: "flex",
-    flexDirection: "column",
-    margin: "0",
-  },
+  base: { display: "flex", flexDirection: "column", margin: "0" },
 });
 
 export const breakdownRow = cva({
@@ -77,9 +50,9 @@ export const breakdownRow = cva({
     justifyContent: "space-between",
     gap: "4",
     paddingY: "2",
-    fontSize: "sm",
+    textStyle: "body.sm",
     borderBottomWidth: "1px",
-    borderBottomStyle: "dashed",
+    borderBottomStyle: "solid",
     borderBottomColor: "border.subtle",
   },
 });
@@ -97,21 +70,18 @@ export const breakdownValue = cva({
   },
 });
 
-export const teaserFootnote = cva({
-  base: {
-    fontSize: "xs",
-    lineHeight: "1.6",
-    color: "text.muted",
-    margin: "0",
-  },
+export const taperNote = cva({
+  base: { textStyle: "body.sm", color: "text.secondary", margin: "0" },
 });
 
-export const teaserButton = cva({
-  base: {
-    width: "100%",
-    display: "inline-flex",
-    justifyContent: "center",
-    alignItems: "center",
-    gap: "2",
-  },
+export const teaserActions = cva({
+  base: { display: "flex", flexWrap: "wrap", gap: "3" },
+});
+
+export const taperFigure = cva({
+  base: { fontVariantNumeric: "tabular-nums" },
+});
+
+export const assumptionsText = cva({
+  base: { textStyle: "body.sm", color: "text.secondary", margin: 0, mt: "6" },
 });

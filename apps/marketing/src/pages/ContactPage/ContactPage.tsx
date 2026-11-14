@@ -1,39 +1,35 @@
 import { BUSINESS_DETAILS } from "@flump/business-details";
-import { Button } from "@repo/ui";
+import { Card } from "@repo/ui";
 import type { FC } from "react";
 import { Link } from "react-router-dom";
 import { Footer } from "../../components/Footer";
 import { Header } from "../../components/Header";
 import { PageMeta } from "../../components/PageMeta";
-import { mailto, PRIVACY_EMAIL, SUPPORT_EMAIL } from "../../utils/site";
+import { mailto, SUPPORT_EMAIL } from "../../utils/site";
 import {
-  bodyStyle,
-  buttonLinkStyle,
-  containerStyle,
-  eyebrowStyle,
-  headingStyle,
-  introStyle,
-  linkStyle,
-  mainStyle,
-  noteStyle,
-  pageStyle,
-  sectionHeadingStyle,
-  sectionStyle,
+  body,
+  card,
+  cardGrid,
+  cardHeading,
+  container,
+  headerBlock,
+  heading,
+  intro,
+  link,
+  mainContent,
+  pageShell,
+  placeholderNote,
 } from "./ContactPage.styles";
 
-const INVITE_SUBJECT = "Flump beta invite request";
 const SUPPORT_SUBJECT = "Flump support";
-const FEEDBACK_SUBJECT = "Flump feedback";
-const PRIVACY_SUBJECT = "Flump privacy request";
-const COMPLAINT_SUBJECT = "Flump complaint";
 
 /**
- * Support, feedback, beta invite request, security and complaints (E24-T2). One mailbox, no
- * response-time promise. The complaints wording is held for the owner (E19), so that section is
- * a heading and the mailbox only. Mail subjects never carry financial data.
+ * Contact (E16 PR 12): two cards in one column, general and security. One mailbox, one mailto
+ * link per card and no response-time promise. Privacy requests and complaints go to the same
+ * mailbox (E19 holds any further wording). Mail subjects never carry financial data.
  */
 export const ContactPage: FC = () => (
-  <div className={pageStyle()}>
+  <div className={pageShell()}>
     <PageMeta
       title="Contact | Flump"
       description="Contact Flump for support or feedback, to ask for a beta invite, or to raise a complaint."
@@ -41,96 +37,56 @@ export const ContactPage: FC = () => (
 
     <Header />
 
-    <main className={mainStyle()} id="main" tabIndex={-1}>
-      <div className={containerStyle()}>
-        <span className={eyebrowStyle()}>Contact</span>
-        <h1 className={headingStyle()}>Contact Flump</h1>
-        <p className={introStyle()}>
-          Flump is a free, invite-only beta. Email is the only way to reach us for now.
-        </p>
-        {BUSINESS_DETAILS.supportEmail.isPlaceholder && (
-          <p className={noteStyle()}>
-            The email address on this page is a placeholder while we finish setting up, so it is not
-            monitored yet.
-          </p>
-        )}
+    <main className={mainContent()} id="main" tabIndex={-1}>
+      <div className={container()}>
+        <div className={headerBlock()}>
+          <h1 className={heading()}>Contact Flump</h1>
+          <p className={intro()}>Flump is free during the beta. You can reach us by email.</p>
+        </div>
 
-        <section className={sectionStyle()} aria-labelledby="contact-support">
-          <h2 id="contact-support" className={sectionHeadingStyle()}>
-            Support
-          </h2>
-          <p className={bodyStyle()}>
-            Email{" "}
-            <a href={mailto(SUPPORT_EMAIL, SUPPORT_SUBJECT)} className={linkStyle()}>
-              {SUPPORT_EMAIL}
-            </a>{" "}
-            with a question or a problem. Please do not include account numbers, balances or other
-            financial details in your message.
-          </p>
-        </section>
+        <div className={cardGrid()}>
+          <Card
+            aria-labelledby="contact-general"
+            as="section"
+            className={card()}
+            id="beta"
+            padding="lg"
+          >
+            <h2 className={cardHeading()} id="contact-general">
+              General
+            </h2>
+            <p className={body()}>
+              Email{" "}
+              <a className={link()} href={mailto(SUPPORT_EMAIL, SUPPORT_SUBJECT)}>
+                {SUPPORT_EMAIL}
+              </a>{" "}
+              to ask for an invite (sign-up is invite-only), or with a question, a problem,
+              feedback, a privacy request or a complaint.
+              {BUSINESS_DETAILS.supportEmail.isPlaceholder && (
+                <span className={placeholderNote()}>
+                  {" "}
+                  This is a placeholder address while we finish setting up, so it is not monitored
+                  yet.
+                </span>
+              )}{" "}
+              Please do not include account numbers, balances or other financial details in your
+              message.
+            </p>
+          </Card>
 
-        <section className={sectionStyle()} aria-labelledby="contact-feedback">
-          <h2 id="contact-feedback" className={sectionHeadingStyle()}>
-            Feedback
-          </h2>
-          <p className={bodyStyle()}>
-            Tell us what is unclear, missing or wrong in a calculator or on this site.{" "}
-            <a href={mailto(SUPPORT_EMAIL, FEEDBACK_SUBJECT)} className={linkStyle()}>
-              Send feedback
-            </a>
-            .
-          </p>
-        </section>
-
-        <section id="beta" className={sectionStyle()} aria-labelledby="contact-beta">
-          <h2 id="contact-beta" className={sectionHeadingStyle()}>
-            Request a beta invite
-          </h2>
-          <p className={bodyStyle()}>
-            Sign-up is invite-only while we test with a small group. Ask for an invite by email and
-            we will add you to the list. Nothing is charged during the beta.
-          </p>
-          <a href={mailto(SUPPORT_EMAIL, INVITE_SUBJECT)} className={buttonLinkStyle()}>
-            <Button size="md" variant="primary">
-              Email for an invite
-            </Button>
-          </a>
-        </section>
-
-        <section className={sectionStyle()} aria-labelledby="contact-security">
-          <h2 id="contact-security" className={sectionHeadingStyle()}>
-            Security
-          </h2>
-          <p className={bodyStyle()}>
-            To report a vulnerability, see{" "}
-            <Link to="/security" className={linkStyle()}>
-              Security and privacy
-            </Link>
-            .
-          </p>
-        </section>
-
-        <section className={sectionStyle()} aria-labelledby="contact-privacy">
-          <h2 id="contact-privacy" className={sectionHeadingStyle()}>
-            Privacy and your data
-          </h2>
-          <p className={bodyStyle()}>
-            <a href={mailto(PRIVACY_EMAIL, PRIVACY_SUBJECT)} className={linkStyle()}>
-              {PRIVACY_EMAIL}
-            </a>
-          </p>
-        </section>
-
-        <section className={sectionStyle()} aria-labelledby="contact-complaints">
-          <h2 id="contact-complaints" className={sectionHeadingStyle()}>
-            Complaints
-          </h2>
-          <p className={bodyStyle()}>
-            <a href={mailto(SUPPORT_EMAIL, COMPLAINT_SUBJECT)} className={linkStyle()}>
-              {SUPPORT_EMAIL}
-            </a>
-          </p>
-        </section>
+          <Card aria-labelledby="contact-security" as="section" className={card()} padding="lg">
+            <h2 className={cardHeading()} id="contact-security">
+              Security
+            </h2>
+            <p className={body()}>
+              To report a vulnerability, see{" "}
+              <Link className={link()} to="/security">
+                Security and privacy
+              </Link>
+              .
+            </p>
+          </Card>
+        </div>
       </div>
     </main>
 

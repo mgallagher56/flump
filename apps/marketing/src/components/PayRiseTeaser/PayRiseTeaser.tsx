@@ -3,22 +3,31 @@ import {
   type OnboardingSeedPayload,
   persistOnboardingSeed,
 } from "@flump/finance-engine";
-import { Button, Card, formatMoney, Icon, InlineAlert, SectionBand, SliderField } from "@repo/ui";
-import { ArrowRight } from "lucide-react";
-import { type FC, useMemo, useState } from "react";
-import { signupCta } from "../../utils/site";
 import {
+  Button,
+  Card,
+  DELTA_PANEL_COPY,
+  formatMoney,
+  ProjectionNotice,
+  SliderField,
+} from "@repo/ui";
+import { type FC, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
+import { signupCta } from "../../utils/site";
+import { MarketingSection } from "../MarketingSection";
+import {
+  assumptionsText,
   breakdownList,
   breakdownRow,
   breakdownTerm,
   breakdownValue,
   outcomeHeadline,
   outcomeLabel,
-  outcomeSub,
-  teaserButton,
+  taperFigure,
+  taperNote,
+  teaserActions,
   teaserCard,
   teaserControls,
-  teaserFootnote,
   teaserOutcome,
 } from "./PayRiseTeaser.styles";
 
@@ -26,12 +35,20 @@ import {
 export const DEFAULT_SALARY_GBP = 39_000;
 export const DEFAULT_RISE_GBP = 2_000;
 
+/** The full pay-rise tool on this site. */
+export const PAY_RISE_TOOL_PATH = "/tools/uk-pay-rise-take-home-calculator";
+
 /** The Personal Allowance taper band, used only to explain the rate a visitor's own figures hit. */
 const TAPER_START_GBP = 100_000;
 const TAPER_END_GBP = 125_140;
 
+/** "2026/27" as "2026 to 2027" (copy guide 4.3: tax years in words). */
+export const taxYearInWords = (taxYear: string): string => {
+  const start = Number.parseInt(taxYear.slice(0, 4), 10);
+  return Number.isFinite(start) ? `${start} to ${start + 1}` : taxYear;
+};
+
 const gbp = (value: number) => formatMoney(value, { fractionDigits: 0 }).text;
-const pct = new Intl.NumberFormat("en-GB", { maximumFractionDigits: 0 });
 
 export interface PayRiseResult {
   keptAnnual: number;
@@ -60,69 +77,60 @@ export function payRiseResult(salary: number, rise: number): PayRiseResult {
   };
 }
 
+/**
+ * The home page's one live teaser (E16 PR 12): two sliders, one outcome figure and two supporting
+ * rows (P1), and the page's single notice, with the "Unverified estimate" lead (ruling 3, R6).
+ */
 export const PayRiseTeaser: FC = () => {
   const [salary, setSalary] = useState<number>(DEFAULT_SALARY_GBP);
   const [rise, setRise] = useState<number>(DEFAULT_RISE_GBP);
   const cta = signupCta();
   const result = useMemo(() => payRiseResult(salary, rise), [salary, rise]);
 
-  const handleSave = () => {
+  // Open sign-up only: hand the visitor's own salary to onboarding. Invite-only stores nothing.
+  const handleStart = () => {
     const payload: OnboardingSeedPayload = {
       timestamp: Date.now(),
       annualGrossSalary: salary,
       inferredModules: ["budget", "tax", "forecast"],
     };
-    // Invite-only: skip the onboarding hand-off, sign-up is closed (E24-T3).
-    if (cta.external) persistOnboardingSeed(payload);
+    persistOnboardingSeed(payload);
     window.location.href = cta.href;
   };
 
   return (
-    <SectionBand
+    <MarketingSection
       id="pay-rise"
-      tone="tinted"
-      indexBadge="UK take-home"
+      subtitle="Move the sliders to see an estimate of how much of a rise reaches your pay after Income Tax and National Insurance."
       title="What you keep from a pay rise"
-      subtitle="Move the sliders to see an estimate of how much of a rise reaches your pay packet after Income Tax and National Insurance."
     >
-      <Card padding="lg" elevation="floating">
+      <Card padding="lg">
         <div className={teaserCard()}>
           <div className={teaserControls()}>
             <SliderField
-              label="Current salary (before tax)"
-              value={salary}
-              min={12_000}
-              max={150_000}
-              step={500}
               format="currency"
+              label="Current salary (before tax)"
+              max={150_000}
+              min={12_000}
+              step={500}
+              value={salary}
               onChange={setSalary}
             />
             <SliderField
-              label="Pay rise (a year)"
-              value={rise}
-              min={0}
-              max={20_000}
-              step={250}
               format="currency"
+              label="Pay rise (a year)"
+              max={20_000}
+              min={0}
+              step={250}
+              value={rise}
               onChange={setRise}
             />
-            <p className={teaserFootnote()}>
-              Unverified example for the {result.taxYear} tax year, using the bands for England,
-              Wales and Northern Ireland, with no pension contribution or student loan. Your own
-              figures may differ.
-            </p>
           </div>
 
           <div className={teaserOutcome()} data-testid="pay-rise-outcome">
             <span className={outcomeLabel()}>Estimated take-home from the rise</span>
-            <div aria-live="polite" aria-atomic="true">
-              <p className={outcomeHeadline()}>
-                {gbp(result.keptAnnual)} a year of {gbp(rise)}
-              </p>
-              <p className={outcomeSub()}>
-                About {gbp(result.keptMonthly)} a month, or {pct.format(result.keptPct)}% of the
-                rise.
-              </p>
+            <div aria-atomic="true" aria-live="polite">
+              <p className={outcomeHeadline()}>{gbp(result.keptAnnual)} a year</p>
             </div>
 
             <dl className={breakdownList()}>
@@ -137,20 +145,35 @@ export const PayRiseTeaser: FC = () => {
             </dl>
 
             {result.entersTaperBand && (
-              <InlineAlert tone="info" title="Personal Allowance taper">
-                Between £100,000 and £125,140, the Personal Allowance reduces by £1 for every £2 of
-                income, so less of each extra pound reaches take-home in that band.
-              </InlineAlert>
+              <p className={taperNote()} data-testid="pay-rise-taper-note">
+                Between <span className={taperFigure()}>£100,000</span> and{" "}
+                <span className={taperFigure()}>£125,140</span>, the Personal Allowance reduces by{" "}
+                <span className={taperFigure()}>£1</span> for every{" "}
+                <span className={taperFigure()}>£2</span> of income. Less of each extra pound
+                reaches take-home pay in that band.
+              </p>
             )}
 
-            <Button size="md" variant="primary" onClick={handleSave} className={teaserButton()}>
-              {cta.external ? "Save this salary baseline" : cta.label}{" "}
-              <Icon icon={ArrowRight} size="sm" />
-            </Button>
+            <div className={teaserActions()}>
+              {cta.external ? (
+                <Button size="md" variant="outline" onClick={handleStart}>
+                  Start with this salary
+                </Button>
+              ) : (
+                <Button asChild size="md" variant="outline">
+                  <Link to={PAY_RISE_TOOL_PATH}>Open the full calculator</Link>
+                </Button>
+              )}
+            </div>
           </div>
         </div>
+        <p className={assumptionsText()} data-testid="pay-rise-assumptions">
+          Uses the {taxYearInWords(result.taxYear)} tax year and the bands for England, Wales and
+          Northern Ireland, with no pension contribution or student loan.
+        </p>
+        <ProjectionNotice lead={DELTA_PANEL_COPY.unverifiedBanner} />
       </Card>
-    </SectionBand>
+    </MarketingSection>
   );
 };
 

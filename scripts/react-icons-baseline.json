@@ -1,10 +1,5 @@
 {
-  "apps/marketing/src/components/BaselineSnapshotPreview.tsx": 1,
-  "apps/marketing/src/components/HomeFAQ.tsx": 1,
   "apps/marketing/src/components/McpSpotlightSection/McpSpotlightSection.tsx": 1,
-  "apps/marketing/src/components/SecurityPrivacySection.tsx": 1,
-  "apps/marketing/src/pages/McpPage/McpPage.tsx": 1,
-  "apps/marketing/src/pages/SecurityPage.tsx": 1,
   "apps/web/app/components/core/dialogs/TaxDisclaimerButton.tsx": 1,
   "apps/web/app/components/core/disclosure/CollapsibleSection.tsx": 1
 }

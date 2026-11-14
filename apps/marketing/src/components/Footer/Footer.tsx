@@ -4,12 +4,11 @@ import { ExternalLink } from "lucide-react";
 import type { FC } from "react";
 import { Link } from "react-router-dom";
 import { mailto, signupCta } from "../../utils/site";
-import { CANONICAL_TOOL_SLUGS, TOOL_SHORT_LABELS } from "../../utils/toolSlugs";
 import { getAppUrl } from "../../utils/url";
 import {
   footerBottomRow,
+  footerCompanyLine,
   footerExternalIcon,
-  footerPlaceholder,
   footerSpacing,
 } from "./Footer.styles";
 
@@ -31,7 +30,8 @@ export const Footer: FC = () => {
       bottom={
         <div className={footerBottomRow()}>
           <span
-            className={BUSINESS_DETAILS.legalName.isPlaceholder ? footerPlaceholder() : undefined}
+            className={footerCompanyLine()}
+            data-placeholder={BUSINESS_DETAILS.legalName.isPlaceholder || undefined}
           >
             {companyLine(currentYear)}
           </span>
@@ -43,28 +43,21 @@ export const Footer: FC = () => {
       className={footerSpacing()}
       columns={[
         {
-          heading: "Calculators",
-          links: CANONICAL_TOOL_SLUGS.map((slug) => ({
-            key: slug,
-            label: TOOL_SHORT_LABELS[slug],
-            href: `/tools/${slug}`,
-          })),
-        },
-        {
-          heading: "Platform",
+          heading: "Product",
           links: [
+            { key: "tools", label: "All calculators", href: "/tools" },
             {
               key: "demo",
               label: (
                 <>
-                  Live interactive demo
+                  Try sample data
                   <ExternalLink aria-hidden="true" className={footerExternalIcon()} size={11} />
                 </>
               ),
               href: `${appUrl}/sandbox`,
               newTab: true,
             },
-            { key: "mcp", label: "AI and MCP", href: "/mcp" },
+            { key: "mcp", label: "AI connection (MCP)", href: "/mcp" },
             { key: "pricing", label: "Pricing", href: "/pricing" },
             {
               key: "signin",
@@ -73,11 +66,6 @@ export const Footer: FC = () => {
               external: true,
             },
             { key: "cta", label: cta.label, href: cta.href, external: cta.external },
-          ],
-        },
-        {
-          heading: "Security and support",
-          links: [
             { key: "security", label: "Security and privacy", href: "/security" },
             { key: "contact", label: "Contact", href: "/contact" },
           ],

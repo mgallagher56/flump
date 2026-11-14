@@ -1,0 +1,15 @@
+{
+  // McpPage.test.tsx reads the registered tool names from packages/mcp source (E16 PR 12), and
+  // marketing does not depend on @flump/mcp, so declare that source as a test input. Otherwise a
+  // new MCP tool would leave a cached, stale pass for the drift test.
+  "$schema": "https://turborepo.com/schema.json",
+  "extends": ["//"],
+  "tasks": {
+    "test": {
+      "inputs": ["$TURBO_DEFAULT$", "$TURBO_ROOT$/packages/mcp/src/tools/**"]
+    },
+    "test:coverage": {
+      "inputs": ["$TURBO_DEFAULT$", "$TURBO_ROOT$/packages/mcp/src/tools/**"]
+    }
+  }
+}

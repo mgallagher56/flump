@@ -37,6 +37,15 @@ const BANNED: Array<[RegExp, string]> = [
   ],
   [/No credit card/i, "E"],
   [
+    /£4\.99|£49\b|billed annually|Annual billing/i,
+    "P3 (E16 D10 b: no example price or billing toggle)",
+  ],
+  [
+    /bank (connection|feeds?|sync)[^".]{0,40}(coming soon|planned)|coming soon[^".]{0,40}bank/i,
+    "D1-b (E16 PR 12: signed-out copy promises no bank feed)",
+  ],
+  [/Pricing for Flump has not been announced/, "H5/P1 (one pricing statement)"],
+  [
     /safe harbou?r|we will not (take|pursue) legal/i,
     "E20 Q13 (no legal promise in disclosure copy)",
   ],

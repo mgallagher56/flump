@@ -1,4 +1,3 @@
-import { BUSINESS_DETAILS } from "@flump/business-details";
 import type { Meta, StoryObj } from "@storybook/react";
 import { HelmetProvider } from "react-helmet-async";
 import { MemoryRouter } from "react-router-dom";
@@ -28,16 +27,16 @@ const assertPage: Story["play"] = async ({ canvasElement }) => {
   await expect(
     canvas.getByRole("heading", { level: 1, name: "Contact Flump" }),
   ).toBeInTheDocument();
-  const invite = canvas.getByRole("link", { name: "Email for an invite" });
-  await expect(invite.getAttribute("href")).toBe(
-    `mailto:${BUSINESS_DETAILS.supportEmail.value}?subject=Flump%20beta%20invite%20request`,
-  );
+  await expect(
+    within(canvas.getByRole("main")).queryByRole("link", { name: "Request an invite" }),
+  ).toBeNull();
   await expect(canvasElement.querySelector("#beta")).not.toBeNull();
 };
 
-export const Light: Story = { play: assertPage };
+export const Light: Story = { globals: { theme: "light" }, play: assertPage };
 
 export const Dark: Story = {
   globals: { theme: "dark" },
+  parameters: { backgrounds: { default: "dark" } },
   play: assertPage,
 };
