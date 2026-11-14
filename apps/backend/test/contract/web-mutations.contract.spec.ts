@@ -15,7 +15,6 @@ import {
   ACCOUNT_UPDATE_PAYLOADS,
   BUDGET_CATEGORY_PAYLOAD,
   BUDGET_CREATE_PAYLOAD,
-  BUDGET_FIELDS_NOT_PERSISTED,
   BUDGET_UPDATE_PAYLOAD,
   CHECK_IN_ACCOUNTS,
   CHECK_IN_BALANCES,
@@ -23,7 +22,6 @@ import {
   ONBOARDING_BUDGET_ENTRIES,
   ONBOARDING_COMPLETE,
   ONBOARDING_PROFILE,
-  PROFILE_FIELDS_NOT_PERSISTED,
 } from "./web-payloads";
 
 // The real option builder, except that migrations are passed as classes and run on boot: the glob
@@ -60,9 +58,6 @@ vi.mock("../../src/config/typeorm.options", async (importOriginal) => {
  */
 const TEST_DATABASE_URL = process.env.TEST_DATABASE_URL;
 const AUTH = { Authorization: `Bearer ${DEV_BYPASS_TOKEN}` };
-
-const omit = <T extends object>(source: T, keys: readonly string[]) =>
-  Object.fromEntries(Object.entries(source).filter(([k]) => !keys.includes(k)));
 
 /** A sent account body as the API stores it: liabilities negative (BE-05 sign rule). */
 const asStored = <T extends Record<string, unknown>>(body: T, type?: unknown): T =>
@@ -234,7 +229,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
 
         const profile = (await get("/user-profile")).body;
         expect(profile).toMatchObject({
-          ...omit(ONBOARDING_PROFILE, PROFILE_FIELDS_NOT_PERSISTED),
+          ...ONBOARDING_PROFILE,
           onboardingCompleted: true,
         });
         expect(typeof profile.annualSalary).toBe("number");
@@ -254,19 +249,6 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
           const stored = entries.find((e) => e.name === sent.name);
           expect(stored, `entry ${sent.name} stored`).toMatchObject(sent);
           expect(typeof stored?.amount).toBe("number");
-        }
-      });
-
-      // D02b: the web sends these but the backend has no column, so they vanish on save.
-      // When the backend persists a field, remove it from PROFILE_FIELDS_NOT_PERSISTED.
-      it("documents the onboarding profile fields the backend still drops (D02b)", async () => {
-        expect2xx(await send("patch", "/user-profile", ONBOARDING_PROFILE), "PATCH /user-profile");
-        const profile = (await get("/user-profile")).body;
-        for (const field of PROFILE_FIELDS_NOT_PERSISTED) {
-          expect(
-            profile[field],
-            `${field} is now persisted: remove it from PROFILE_FIELDS_NOT_PERSISTED`,
-          ).toBeUndefined();
         }
       });
 
@@ -457,31 +439,17 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
 
         const listed = (await get("/budget-entries")).body as Array<Record<string, unknown>>;
         expect(listed).toHaveLength(1);
-        expect(listed[0]).toMatchObject(omit(BUDGET_CREATE_PAYLOAD, BUDGET_FIELDS_NOT_PERSISTED));
+        expect(listed[0]).toMatchObject(BUDGET_CREATE_PAYLOAD);
         expect(typeof listed[0].amount).toBe("number");
 
         const updated = await send("patch", `/budget-entries/${id}`, BUDGET_UPDATE_PAYLOAD);
         expect2xx(updated, `PATCH /budget-entries/${id}`);
         const after = ((await get("/budget-entries")).body as Array<Record<string, unknown>>)[0];
-        expect(after).toMatchObject(omit(BUDGET_UPDATE_PAYLOAD, BUDGET_FIELDS_NOT_PERSISTED));
+        expect(after).toMatchObject(BUDGET_UPDATE_PAYLOAD);
         expect(typeof after.amount).toBe("number");
 
         expect2xx(await send("delete", `/budget-entries/${id}`), `DELETE /budget-entries/${id}`);
         expect((await get("/budget-entries")).body).toEqual([]);
-      });
-
-      // The web sends contractEndDate; the backend has no column for it, so a real date is lost.
-      it("documents the budget fields the backend still drops", async () => {
-        const created = await send("post", "/budget-entries", BUDGET_CREATE_PAYLOAD);
-        const id = created.body.id as string;
-        await send("patch", `/budget-entries/${id}`, BUDGET_UPDATE_PAYLOAD);
-        const stored = ((await get("/budget-entries")).body as Array<Record<string, unknown>>)[0];
-        for (const field of BUDGET_FIELDS_NOT_PERSISTED) {
-          expect(
-            stored[field],
-            `${field} is now persisted: remove it from BUDGET_FIELDS_NOT_PERSISTED`,
-          ).toBeUndefined();
-        }
       });
 
       it("accepts a custom category and seeds defaults on explicit request", async () => {

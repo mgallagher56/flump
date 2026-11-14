@@ -3826,26 +3826,14 @@
                     "minLength": 1,
                     "type": "string"
                   },
-                  "contractEndDate": {
-                    "description": "Ignored. Not stored.",
-                    "type": ["string", "null"]
-                  },
                   "frequency": {
                     "enum": ["monthly", "annual", "weekly"],
                     "type": "string"
-                  },
-                  "isDefault": {
-                    "description": "Ignored. Server-owned.",
-                    "type": "boolean"
                   },
                   "isEssential": {
                     "type": "boolean"
                   },
                   "isIncome": {
-                    "type": "boolean"
-                  },
-                  "isPrimaryIncome": {
-                    "description": "Ignored. Server-owned.",
                     "type": "boolean"
                   },
                   "name": {
@@ -4510,10 +4498,6 @@
                     "maxLength": 64,
                     "minLength": 1,
                     "type": "string"
-                  },
-                  "contractEndDate": {
-                    "description": "Ignored. Not stored.",
-                    "type": ["string", "null"]
                   },
                   "frequency": {
                     "enum": ["monthly", "annual", "weekly"],
@@ -11332,18 +11316,6 @@
                   },
                   "hasSecondIncome": {
                     "type": "boolean"
-                  },
-                  "homeValue": {
-                    "anyOf": [
-                      {
-                        "description": "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.",
-                        "type": "number"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ],
-                    "description": "Ignored. Not stored on the profile."
                   },
                   "housingStatus": {
                     "anyOf": [

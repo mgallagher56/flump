@@ -18,9 +18,8 @@ const PageKeyList = z.array(z.string().min(1).max(64)).max(20);
 export const HousingStatus = z.enum(["renting", "mortgage", "own_outright", "living_with_family"]);
 
 /**
- * PATCH /user-profile: every field `UserProfileService.updateProfile` reads, plus `homeValue`,
- * which the web sends and the backend ignores. Unknown keys are rejected (BE-09). Both `null` and
- * absent are accepted on nullable columns.
+ * PATCH /user-profile: every field `UserProfileService.updateProfile` reads. Unknown keys are
+ * rejected (BE-09). Both `null` and absent are accepted on nullable columns.
  */
 export const UpdateProfileRequest = z.strictObject({
   displayName: ShortText.nullish(),
@@ -73,11 +72,6 @@ export const UpdateProfileRequest = z.strictObject({
   housingStatus: HousingStatus.nullish(),
   monthlyHousingCost: Money.nullish(),
   monthlyOtherOutgoings: Money.nullish(),
-  /**
-   * Accepted and ignored (BE-09): onboarding still sends it and request bodies are strict. The
-   * home value becomes a Property account row (E23 section 3.1). Remove once the web stops (BE-10).
-   */
-  homeValue: Money.nullish().meta({ description: "Ignored. Not stored on the profile." }),
 });
 export type UpdateProfileRequest = z.infer<typeof UpdateProfileRequest>;
 

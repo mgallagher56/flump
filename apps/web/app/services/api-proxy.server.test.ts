@@ -7,6 +7,7 @@ vi.mock("~/utils/auth.server", () => ({ getAuthSession: vi.fn() }));
 import { runWithRequestId } from "~/security/request-id.server";
 import {
   API_ALLOW_LIST,
+  forwardedQuery,
   handleApiProxy,
   MAX_BODY_BYTES,
   matchAllowList,
@@ -64,8 +65,35 @@ describe("allow-list", () => {
         "GET,POST /accounts",
         "PATCH /accounts/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}",
         "PUT /snapshots/\\d{4}-(0[1-9]|1[0-2])",
+        "GET,POST /mcp-tokens",
+        "DELETE /mcp-tokens/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}",
+        "GET /mcp-tokens/context-pack",
+        "POST /imports/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}/(preview|commit|revert)",
       ]
     `);
+  });
+
+  it("forwards anonymize only on the context pack, and only true or false", () => {
+    const q = (text: string, path: string) =>
+      forwardedQuery(new URLSearchParams(text), "GET", path);
+    expect(q("anonymize=true", "/mcp-tokens/context-pack")).toBe("?anonymize=true");
+    expect(q("anonymize=false", "/mcp-tokens/context-pack")).toBe("?anonymize=false");
+    expect(q("anonymize=yes", "/mcp-tokens/context-pack")).toBeNull();
+    expect(q("limit=10", "/mcp-tokens/context-pack")).toBeNull();
+    expect(q("anonymize=true", "/mcp-tokens")).toBeNull();
+    expect(q("limit=10", "/mcp-tokens")).toBe("?limit=10");
+    expect(q("constructor=x", "/mcp-tokens/context-pack")).toBeNull();
+  });
+
+  it.each([
+    ["GET", `/imports/${UUID}`],
+    ["GET", "/imports"],
+    ["POST", "/imports"],
+    ["GET", `/mcp-tokens/${UUID}/activity`],
+    ["POST", `/imports/${UUID}/delete`],
+    ["DELETE", "/mcp-tokens/not-a-uuid"],
+  ])("refuses %s %s", (method, path) => {
+    expect(matchAllowList(method, path)).toBe(false);
   });
 
   it.each([
@@ -85,6 +113,13 @@ describe("allow-list", () => {
     ["PATCH", `/accounts/${UUID.toUpperCase()}`],
     ["PUT", "/snapshots/2026-11"],
     ["PUT", "/snapshots/2000-01"],
+    ["GET", "/mcp-tokens"],
+    ["POST", "/mcp-tokens"],
+    ["DELETE", `/mcp-tokens/${UUID}`],
+    ["GET", "/mcp-tokens/context-pack"],
+    ["POST", `/imports/${UUID}/preview`],
+    ["POST", `/imports/${UUID}/commit`],
+    ["POST", `/imports/${UUID}/revert`],
   ])("passes %s %s through to the backend with the bearer token", async (method, path) => {
     const fetchImpl = vi.fn(async () => new Response('{"ok":1}', { status: 200 }));
     const body = method === "GET" || method === "DELETE" ? undefined : '{"a":1}';
@@ -569,6 +604,16 @@ describe("v1 write conventions and paging (BE-10)", () => {
       "https://backend.test/v1/budget-entries?limit=50&cursor=abc_DEF-0",
     );
     expect(res.headers.get("X-Next-Cursor")).toBe("abc_DEF-1");
+  });
+
+  it("forwards anonymize to the context pack", async () => {
+    const fetchImpl = ok();
+    await run(req("GET", "/api/mcp-tokens/context-pack?anonymize=false"), {
+      fetchImpl: fetchImpl as never,
+    });
+    expect(sent(fetchImpl)[0]).toBe(
+      "https://backend.test/v1/mcp-tokens/context-pack?anonymize=false",
+    );
   });
 
   it("refuses any other query parameter and drops a malformed X-Next-Cursor", async () => {

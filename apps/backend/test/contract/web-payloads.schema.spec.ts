@@ -10,7 +10,6 @@ import {
   ONBOARDING_BUDGET_ENTRIES,
   ONBOARDING_COMPLETE,
   ONBOARDING_PROFILE,
-  PROFILE_FIELDS_NOT_PERSISTED,
 } from "./web-payloads";
 
 /**
@@ -20,8 +19,8 @@ import {
  * the production shadow log.
  *
  * Request schemas are strict (BE-09): an unknown key is a 400, so every payload must be clean. The
- * fields the web sends that the backend ignores (homeValue, contractEndDate, isDefault,
- * isPrimaryIncome) are listed in the schemas as accepted and ignored until the web stops (BE-10).
+ * keys the backend used to accept and ignore (homeValue, contractEndDate, isDefault,
+ * isPrimaryIncome) left the schemas once the web stopped sending them (BE-10).
  */
 const body = (id: string) => {
   const route = allRoutes.find((r) => r.id === id);
@@ -37,12 +36,9 @@ const violations = (id: string, payload: unknown) => {
 const unknown = (keys: readonly string[]) => keys.map((k) => `${k}:unrecognized_keys`).sort();
 
 describe("web payloads against @flump/api-contract schemas", () => {
-  it("onboarding profile is clean, including the fields the backend ignores", () => {
+  it("onboarding profile is clean, and the ignored homeValue is now refused (BE-10)", () => {
     expect(violations("profile.update", ONBOARDING_PROFILE)).toEqual([]);
-    for (const field of PROFILE_FIELDS_NOT_PERSISTED) {
-      const shape = (body("profile.update") as unknown as { shape: object }).shape;
-      expect(Object.keys(shape)).toContain(field);
-    }
+    expect(violations("profile.update", { homeValue: 300000 })).toEqual(unknown(["homeValue"]));
     expect(violations("profile.update", { ...ONBOARDING_COMPLETE, surprise: 1 })).toEqual(
       unknown(["surprise"]),
     );
@@ -68,8 +64,16 @@ describe("web payloads against @flump/api-contract schemas", () => {
     }
   });
 
-  it("budget payloads are clean, including the keys the backend ignores", () => {
+  it("budget payloads are clean, and the once-ignored keys are now refused (BE-10)", () => {
     expect(violations("budget.create", BUDGET_CREATE_PAYLOAD)).toEqual([]);
+    expect(
+      violations("budget.create", {
+        ...BUDGET_CREATE_PAYLOAD,
+        isPrimaryIncome: false,
+        isDefault: false,
+        contractEndDate: null,
+      }),
+    ).toEqual(unknown(["contractEndDate", "isDefault", "isPrimaryIncome"]));
     expect(violations("budget.update", BUDGET_UPDATE_PAYLOAD)).toEqual([]);
     expect(violations("budget.update", { ...BUDGET_UPDATE_PAYLOAD, userId: "x" })).toEqual(
       unknown(["userId"]),
