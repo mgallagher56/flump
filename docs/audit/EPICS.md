@@ -781,28 +781,57 @@ Source: independent Fable review of the epic portfolio against `main` at e4ff6c3
 
 ### Launch-readiness checklist (public launch)
 
-Checked against `origin/main` on 2026-11-14. A box is ticked only where there is evidence in code or merged PRs.
+Checked against `origin/main` on 2026-11-14. A box is ticked only where there is evidence in code or merged PRs. Each line's text must match `docs/launch/readiness.json` exactly (`scripts/check-launch-readiness.test.ts`), so the notes sit on indented sub-bullets.
 
-- [ ] Staging environment exists and every release goes there first. *Not met:* the one Railway environment is now staging (DECISIONS round 6), and no production environment exists yet. Staging runbook in #464.
-- [ ] Automated backups on, and one restore drill documented. *Owner action:* scripts and runbook are ready (#466), but `docs/runbooks/drill-log.md` has no entries.
-- [ ] Healthchecks, error tracking, uptime alerts and a rollback runbook. *Partly:* healthchecks (#471) and Sentry scrubbing (#481, #492, #505) are in code, and rollback steps sit inside other runbooks. *Owner action:* set the Sentry DSN and the uptime monitors.
-- [ ] New-user journey passes an automated end-to-end test (sign up, onboarding, add account, dashboard). *Not met:* `apps/e2e` covers sign-in and the dashboard only.
-- [ ] Owner has signed off all seven years of tax vectors; no flat-rate or invented figure remains (C-11, C-15). *Owner action:* all vectors have `signedOffBy: null`. C-15 is fixed (#583). C-11 is hidden as `null`, not computed.
-- [x] 2027/28 handling defined; stale-rates banner in place. Strict resolver (#411), the 1 March CI check and the banner on the tax pages. The banner is still missing on savings, budget, onboarding and home (E22).
-- [ ] Access token not exposed to browser JS; CSP, HSTS and frame headers on web and backend. *Partly:* the token stays on the server (#569, #578) and HSTS and frame headers are enforced, but the full web CSP is report-only (#603).
-- [x] Rate limiting on auth-adjacent and MCP endpoints; password change needs re-auth. Rate limiting in #473 and #511. Password change was removed, and the reset email uses the session user.
-- [x] Request validation on every mutating endpoint; two-user IDOR test suite green. Contract enforce mode (#634) and the authz suites (#516, #574).
-- [ ] Secrets from git history rotated (D-12); WorkOS issuer pinned; gitleaks in CI. *Owner action:* rotation. The issuer is pinned (#530) and gitleaks runs in CI (#462).
-- [ ] Privacy policy, terms and cookie position published; ICO fee paid; DPIA done. *Not met:* there are no legal pages. *Owner action:* the ICO fee, and signing the DPIA (still a v0.2 draft).
-- [ ] Account deletion and data export work end to end, including the WorkOS user. *Not started:* only a reset of financial data exists.
-- [ ] Data region decided (EU or UK) or the transfer documented. *Owner action:* EU West is decided (DECISIONS round 3) and `docs/runbooks/region-move.md` exists. Not shown as done.
-- [ ] FCA perimeter view obtained; bank connect off or covered; "guidance, not advice" on all projections. *Owner action:* the perimeter view (E29b). Bank connect is owner-only (#414), and the guidance notice is done (#417).
-- [ ] No placeholder text in the production build; real company details, security contact and support mailbox. *Owner action:* the guard is built (#489, #526), but `packages/business-details` still holds placeholders.
-- [ ] Custom domain live; cookie domain logic corrected; noindex removed deliberately. *Owner action:* the domain. The cookie logic is fixed (E20), and the launch-gated noindex switch is ready (#506).
-- [ ] Pricing or free-beta position stated truthfully on the pricing page. *Owner attestation pending:* the page is done (#601), but `readiness.json` points at the old file path.
-- [x] Docker images build in CI, run non-root, and shared-package changes trigger a deploy. Done in #465 and #484, plus the watch patterns.
-- [ ] axe passes on kept screens in light and dark; accessibility statement published. *Not met:* there is no accessibility statement, and the Storybook a11y job is still advisory until 2026-11-25.
-- [ ] Features marked cut by E16 are removed or flagged off, not merely hidden. *Owner attestation pending:* E16 PRs 1 to 8 merged (#399 to #410).
+- [ ] Staging environment exists and every release goes there first
+  - Not met: the one Railway environment is now staging (DECISIONS round 6), and no production environment exists yet. Staging runbook in #464.
+- [ ] Automated backups on, and one restore drill documented
+  - Owner action: the scripts and runbook are ready (#466), but `docs/runbooks/drill-log.md` has no entries.
+- [ ] Healthchecks, error tracking, uptime alerts and a rollback runbook
+  - Partly: healthchecks (#471) and Sentry scrubbing (#481, #492, #505) are in code, and rollback steps sit inside other runbooks.
+  - Owner action: set the Sentry DSN and the uptime monitors.
+- [ ] New-user journey passes an automated end-to-end test (sign up, onboarding, add account, dashboard)
+  - Not met: `apps/e2e` covers sign-in and the dashboard only.
+- [ ] Owner has signed off all seven years of tax vectors; no flat-rate or invented figure remains (C-11, C-15)
+  - Owner action: all vectors have `signedOffBy: null`.
+  - C-15 is fixed (#583). C-11 is hidden as `null`, not computed.
+- [x] 2027/28 handling defined; stale-rates banner in place
+  - Done: the strict resolver (#411), the 1 March CI check, and the banner on the tax pages.
+  - The banner is still missing on savings, budget, onboarding and home (E22).
+- [ ] Access token not exposed to browser JS; CSP, HSTS and frame headers on web and backend
+  - Partly: the token stays on the server (#569, #578), and HSTS and frame headers are enforced.
+  - Missing: the full web CSP is report-only (#603).
+- [x] Rate limiting on auth-adjacent and MCP endpoints; password change needs re-auth
+  - Rate limiting in #473 and #511. Password change was removed, and the reset email uses the session user.
+- [x] Request validation on every mutating endpoint; two-user IDOR test suite green
+  - Contract enforce mode (#634) and the authz suites (#516, #574).
+- [ ] Secrets from git history rotated (D-12); WorkOS issuer pinned; gitleaks in CI
+  - Owner action: the rotation.
+  - Done: the issuer is pinned (#530), and gitleaks runs in CI (#462).
+- [ ] Privacy policy, terms and cookie position published; ICO fee paid; DPIA done
+  - Not met: there are no legal pages.
+  - Owner action: pay the ICO fee and sign the DPIA (still a v0.2 draft).
+- [ ] Account deletion and data export work end to end, including the WorkOS user
+  - Not started: only a reset of financial data exists.
+- [ ] Data region decided (EU or UK) or the transfer documented
+  - Owner action: EU West is decided (DECISIONS round 3), and `docs/runbooks/region-move.md` exists.
+  - The move is not shown as done.
+- [ ] FCA perimeter view obtained; bank connect off or covered; "guidance, not advice" on all projections
+  - Owner action: the perimeter view (E29b).
+  - Done: bank connect is owner-only (#414), and the guidance notice is in place (#417).
+- [ ] No placeholder text in the production build; real company details, security contact and support mailbox
+  - Owner action: the guard is built (#489, #526), but `packages/business-details` still holds placeholders.
+- [ ] Custom domain live; cookie domain logic corrected; noindex removed deliberately
+  - Owner action: the domain.
+  - Done: the cookie logic is fixed (E20), and the launch-gated noindex switch is ready (#506).
+- [ ] Pricing or free-beta position stated truthfully on the pricing page
+  - Owner attestation pending: the page is done (#601), but `readiness.json` points at the old file path.
+- [x] Docker images build in CI, run non-root, and shared-package changes trigger a deploy
+  - Done in #465 and #484, plus the watch patterns.
+- [ ] axe passes on kept screens in light and dark; accessibility statement published
+  - Not met: there is no accessibility statement, and the Storybook a11y job is advisory until 2026-11-25.
+- [ ] Features marked cut by E16 are removed or flagged off, not merely hidden
+  - Owner attestation pending: E16 PRs 1 to 8 merged (#399 to #410).
 
 # Added 2026-11-12 from the UK market research (E25 to E29)
 
