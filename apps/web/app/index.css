@@ -205,7 +205,8 @@
   --header-height: 64px;
 }
 
-@media (min-width: 768px) {
+/* Same switch as the top bar (NAV_BREAKPOINT, 64rem = 1024px), where it grows to its inline height. */
+@media (min-width: 64rem) {
   :root {
     --header-height: 72px;
   }
@@ -226,8 +227,9 @@ html {
   scroll-padding-top: var(--header-height, 64px);
 }
 
-/* MobileBottomBar (64px, fixed) is only shown below the md breakpoint (768px). */
-@media (max-width: 767.98px) {
+/* MobileBottomBar (fixed) is only shown below the shared nav breakpoint (NAV_BREAKPOINT, 64rem =
+   1024px), the same switch as useIsMobile and the Panda lg / _navCollapsed styles. */
+@media (max-width: 1023.98px) {
   html {
     scroll-padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px));
   }

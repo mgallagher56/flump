@@ -12,7 +12,7 @@ type Story = StoryObj<typeof AvatarMenu>;
 
 export const Closed: Story = {
   play: async ({ canvasElement }) => {
-    const trigger = within(canvasElement).getByRole("button", { name: /Account menu/ });
+    const trigger = within(canvasElement).getByRole("button", { name: /account menu/i });
     await expect(trigger).toHaveAttribute("aria-expanded", "false");
   },
 };
@@ -20,7 +20,7 @@ export const Closed: Story = {
 export const Open: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    const trigger = canvas.getByRole("button", { name: /Account menu/ });
+    const trigger = canvas.getByRole("button", { name: /account menu/i });
     await userEvent.click(trigger);
     await expect(trigger).toHaveAttribute("aria-expanded", "true");
     await expect(canvas.getAllByRole("menuitem")).toHaveLength(4);

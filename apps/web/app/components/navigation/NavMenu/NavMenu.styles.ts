@@ -123,3 +123,26 @@ export const flyoutLabel = cva({
 export const flyoutDescription = cva({
   base: { textStyle: "body.sm", color: "text.muted", lineHeight: 1.35 },
 });
+
+/** Desktop row of links and dropdown triggers. */
+export const desktopGroup = cva({
+  base: { display: "flex", flexDirection: "row", alignItems: "center", gap: "2" },
+});
+
+/** Drawer link: full width, left aligned, 48px tall for touch. */
+export const mobileLink = cva({
+  base: {
+    width: "100%",
+    minHeight: "12",
+    justifyContent: "flex-start",
+    px: "4",
+    py: "3",
+    borderRadius: "lg",
+    textStyle: "body.md",
+    gap: "3",
+  },
+});
+
+export const linkIcon = cva({
+  base: { display: "inline-flex", alignItems: "center" },
+});

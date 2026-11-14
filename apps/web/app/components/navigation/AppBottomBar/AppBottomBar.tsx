@@ -17,7 +17,8 @@ export interface AppBottomBarProps {
 /**
  * The app's bottom bar, built on the @repo/ui MobileBottomBar. Signed-in users get it everywhere
  * (the shell reserves its space); the signed-out visitor gets it on the demo sandbox only, with a
- * spacer so it never covers content. "More" opens the navigation drawer (Debt lives there).
+ * spacer so it never covers content. Below the nav breakpoint it is the only navigation control (the
+ * header drops its menu button): "More" opens the navigation drawer (Debt lives there).
  */
 export const AppBottomBar: FC<AppBottomBarProps> = ({ user, onMoreClick }) => {
   const { pathname } = useLocation();
@@ -30,8 +31,9 @@ export const AppBottomBar: FC<AppBottomBarProps> = ({ user, onMoreClick }) => {
     () =>
       createRenderNavLink({
         buttonKey: MORE_NAV_KEY,
-        buttonLabel: "More navigation options",
+        buttonLabel: "More pages",
         buttonExpanded: isMobileDrawerOpen,
+        buttonControls: "mobile-nav-drawer",
         onButtonClick: onMoreClick ?? toggleMobileDrawer,
         disabledKeys: sandbox
           ? new Set(
@@ -51,7 +53,7 @@ export const AppBottomBar: FC<AppBottomBarProps> = ({ user, onMoreClick }) => {
       <MobileBottomBar
         activeKey={findActiveBottomBarKey(pathname)}
         items={items}
-        label="Mobile Bottom Navigation"
+        label="Main navigation"
         renderLink={renderLink}
       />
     </>

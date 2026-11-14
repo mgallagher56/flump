@@ -1,5 +1,6 @@
-import { render, screen } from "@testing-library/react";
-import { createRoutesStub, data } from "react-router";
+import { fireEvent, render, screen, within } from "@testing-library/react";
+import mockUser from "__mocks__/user";
+import { createRoutesStub, data, Link } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // The global test setup stubs parts of react-router; the root boundary needs the real router.
@@ -7,9 +8,32 @@ vi.mock("react-router", async () => await vi.importActual("react-router"));
 vi.mock("./utils/auth.server", () => ({ getAuthSession: vi.fn() }));
 
 import App, { ErrorBoundary, loader } from "./root";
+import * as splatRoute from "./routes/$";
 import { getAuthSession } from "./utils/auth.server";
 
+const ENV = { SENTRY_DSN: "", SENTRY_ENVIRONMENT: "", SENTRY_RELEASE: "" };
+const rootData = (user: unknown) => () => ({ locale: "en", user, userProfile: null, ENV });
+
+const primaryNavHrefs = () =>
+  Array.from(screen.getByRole("navigation", { name: "Primary" }).querySelectorAll("a")).map((a) =>
+    a.getAttribute("href"),
+  );
+
 const NullFallback = () => null;
+
+function ThrowingPage(): never {
+  throw new Error("render failed");
+}
+
+function GoSlowLink() {
+  return <Link to="/slow">Go slow</Link>;
+}
+
+function SlowPage() {
+  return <p>Slow page</p>;
+}
+
+const neverResolves = () => new Promise(() => {});
 
 function RouteContent() {
   return <p>Route content</p>;
@@ -45,6 +69,33 @@ describe("root ErrorBoundary", () => {
     expect(document.documentElement.getAttribute("data-theme")).toBeTruthy();
   });
 
+  it("keeps the normal header, signed out, when the root loader itself failed", async () => {
+    renderRootBoundary(data({ kind: "unavailable" }, { status: 503 }));
+    await screen.findByRole("heading", { name: "We could not reach Flump" });
+    expect(screen.getByRole("navigation", { name: "Primary" })).toBeDefined();
+    expect(screen.getByRole("link", { name: "logIn" }).getAttribute("href")).toBe("/login");
+    expect(document.documentElement.getAttribute("lang")).toBe("en-GB");
+    expect(document.title).toBe("This page did not load");
+  });
+
+  it("keeps the signed-in header when a page fails below the root loader", async () => {
+    const Stub = createRoutesStub([
+      {
+        id: "root",
+        path: "/",
+        loader: rootData(mockUser),
+        Component: ThrowingPage,
+        ErrorBoundary,
+        HydrateFallback: NullFallback,
+      },
+    ]);
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    render(<Stub initialEntries={["/"]} />, { container: document });
+    await screen.findByRole("heading", { name: "We could not load this page" });
+    expect(primaryNavHrefs()).toContain("/app/accounts");
+    expect(screen.queryByRole("link", { name: "logIn" })).toBeNull();
+  });
+
   it("renders the unknown state for a plain Error without leaking its message", async () => {
     renderRootBoundary(new Error("secret token abc123"));
 
@@ -57,17 +108,79 @@ describe("root ErrorBoundary", () => {
   });
 });
 
+describe("root App 404", () => {
+  const renderUnknownAppUrl = (user: unknown) => {
+    const Stub = createRoutesStub([
+      {
+        id: "root",
+        path: "/",
+        loader: rootData(user),
+        Component: App as any,
+        HydrateFallback: NullFallback,
+        children: [
+          {
+            path: "*",
+            loader: splatRoute.loader,
+            Component: splatRoute.default,
+            ErrorBoundary: splatRoute.ErrorBoundary,
+          },
+        ],
+      },
+    ]);
+    return render(<Stub initialEntries={["/app/not-a-page"]} />, { container: document });
+  };
+
+  it("an unknown /app/* URL keeps the signed-in header and offers one way back", async () => {
+    renderUnknownAppUrl(mockUser);
+    expect(await screen.findByRole("heading", { name: "We cannot find that page" })).toBeDefined();
+    expect(primaryNavHrefs()).toContain("/app/accounts");
+    const main = screen.getByRole("main");
+    expect(within(main).getAllByRole("link")).toHaveLength(1);
+    expect(within(main).getByRole("link", { name: "Back to home" }).getAttribute("href")).toBe("/");
+    expect(document.documentElement.getAttribute("lang")).toBe("en-GB");
+  });
+
+  it("an unknown URL keeps the signed-out header for a visitor", async () => {
+    renderUnknownAppUrl(null);
+    expect(await screen.findByRole("heading", { name: "We cannot find that page" })).toBeDefined();
+    expect(screen.getByRole("navigation", { name: "Primary" })).toBeDefined();
+    expect(screen.getByRole("link", { name: "logIn" })).toBeDefined();
+    expect(
+      within(screen.getByRole("main")).getByRole("link", { name: "Go to Flump" }),
+    ).toBeDefined();
+  });
+});
+
+describe("root App loading state", () => {
+  it("shows PageSkeleton while a slow navigation to another page loads", async () => {
+    const Stub = createRoutesStub([
+      {
+        id: "root",
+        path: "/",
+        loader: rootData(null),
+        Component: App as any,
+        HydrateFallback: NullFallback,
+        children: [
+          { index: true, Component: GoSlowLink },
+          { path: "slow", loader: neverResolves, Component: SlowPage },
+        ],
+      },
+    ]);
+    render(<Stub initialEntries={["/"]} />, { container: document });
+    fireEvent.click(await screen.findByRole("link", { name: "Go slow" }));
+    expect(await screen.findByTestId("page-skeleton", {}, { timeout: 2000 })).toBeDefined();
+    expect(
+      screen.getByText("Go slow").closest("[data-route-outlet]")?.getAttribute("data-route-outlet"),
+    ).toBe("pending");
+  });
+});
+
 describe("root App landmarks", () => {
   it("skip link targets the main landmark", async () => {
     const Stub = createRoutesStub([
       {
         path: "/",
-        loader: () => ({
-          locale: "en",
-          user: null,
-          userProfile: null,
-          ENV: { SENTRY_DSN: "", SENTRY_ENVIRONMENT: "", SENTRY_RELEASE: "" },
-        }),
+        loader: rootData(null),
         Component: App as any,
         HydrateFallback: NullFallback,
       },

@@ -1,7 +1,7 @@
 import { renderHook } from "@testing-library/react";
 import { afterEach, describe, expect, test, vi } from "vitest";
 
-import useIsMobile from "./useIsMobile";
+import useIsMobile, { NAV_COLLAPSED_MEDIA_QUERY } from "./useIsMobile";
 
 function stubViewport(matches: boolean) {
   vi.stubGlobal(
@@ -20,7 +20,7 @@ describe("useIsMobile", () => {
     vi.unstubAllGlobals();
   });
 
-  test("returns false when the screen is more than 768px wide", () => {
+  test("returns false when matchMedia is unavailable", () => {
     const { result } = renderHook(() => useIsMobile());
     expect(result.current).toBe(false);
   });
@@ -34,6 +34,13 @@ describe("useIsMobile", () => {
       return value;
     });
     expect(renders[0]).toBe(false);
+  });
+
+  test("follows the shared nav breakpoint (64rem, 1024px), not a separate 768px one", () => {
+    expect(NAV_COLLAPSED_MEDIA_QUERY).toBe("not all and (min-width: 64rem)");
+    stubViewport(true);
+    renderHook(() => useIsMobile());
+    expect(window.matchMedia).toHaveBeenCalledWith(NAV_COLLAPSED_MEDIA_QUERY);
   });
 
   test("syncs to true after mount on a narrow viewport", () => {

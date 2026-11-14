@@ -75,10 +75,6 @@ export const JUDGEMENT_ALLOW_LIST: ReadonlyArray<{ path: string; reason: string 
     reason: "warns that Flump's own tax rates are provisional or a fallback, not the user's money",
   },
   {
-    path: "apps/web/app/features/feedback/components/ErrorShell/",
-    reason: "error page shell",
-  },
-  {
     path: "apps/web/app/features/feedback/components/RouteErrorBoundary/",
     reason: "route error boundary",
   },

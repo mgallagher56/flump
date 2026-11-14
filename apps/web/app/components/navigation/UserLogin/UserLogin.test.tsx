@@ -15,12 +15,13 @@ vi.mock("react-router", async () => {
   return {
     ...actual,
     useLoaderData: mocks.mockUseLoaderData,
+    Link: ({ children, to, ...props }: any) => (
+      <a {...props} href={to}>
+        {children}
+      </a>
+    ),
   };
 });
-
-vi.mock("app/components/core/buttons/FLPLinkButton", () => ({
-  default: (props: any) => <div>{props.text}</div>,
-}));
 
 const UserLoginRoute = () => <UserLogin />;
 const Stub = createRoutesStub([{ path: "/", Component: UserLoginRoute }]);
@@ -28,16 +29,31 @@ const Stub = createRoutesStub([{ path: "/", Component: UserLoginRoute }]);
 const renderWithRouter = () => customRender(<Stub />);
 
 describe("<UserLogin />", () => {
-  test("renders as expected when user not logged in", () => {
+  test("offers sign up and sign in as links when signed out", () => {
     mocks.mockUseLoaderData.mockReturnValue({ user: undefined });
-    const { baseElement } = renderWithRouter();
-    expect(baseElement).toMatchSnapshot();
+    const { getByRole } = renderWithRouter();
+    expect(getByRole("link", { name: "signUp" }).getAttribute("href")).toBe("/signup");
+    expect(getByRole("link", { name: "logIn" }).getAttribute("href")).toBe("/login");
   });
-  test("renders signed out when logged in", () => {
+
+  test("renders the links with the design-system button styles, not the legacy FLP ones", () => {
+    mocks.mockUseLoaderData.mockReturnValue({ user: undefined });
+    const { getByRole } = renderWithRouter();
+    expect(getByRole("link", { name: "signUp" }).getAttribute("data-variant")).toBe("ghost");
+  });
+
+  test("treats missing root loader data (root error boundary) as signed out", () => {
+    mocks.mockUseLoaderData.mockReturnValue(undefined);
+    const { getByRole } = renderWithRouter();
+    expect(getByRole("link", { name: "logIn" })).toBeDefined();
+  });
+
+  test("renders sign out when logged in", () => {
     mocks.mockUseLoaderData.mockReturnValue({ user: mockUser });
     const { getByText } = renderWithRouter();
     expect(getByText("logOut")).toBeDefined();
   });
+
   test("logs out through a POST form, not a link", () => {
     mocks.mockUseLoaderData.mockReturnValue({ user: mockUser });
     const { getByRole, container } = renderWithRouter();

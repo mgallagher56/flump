@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { loader } from "./$feature._index";
+import { RouteErrorBoundary } from "~/features/feedback/components/RouteErrorBoundary";
+import { ErrorBoundary, loader } from "./$feature._index";
 
 describe("$feature._index redirect route", () => {
   it("redirects legacy root paths to /app paths", async () => {
@@ -36,5 +37,9 @@ describe("$feature._index redirect route", () => {
     }
     expect(thrown).toBeInstanceOf(Response);
     expect((thrown as Response).status).toBe(404);
+  });
+
+  it("renders its 404 inside the root layout (with the header), not the root boundary", () => {
+    expect(ErrorBoundary).toBe(RouteErrorBoundary);
   });
 });

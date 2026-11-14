@@ -27,6 +27,8 @@ describe("catch-all splat route", () => {
   });
 
   it("titles the page", () => {
-    expect(meta({} as Parameters<typeof meta>[0])).toEqual([{ title: "Page not found | Flump" }]);
+    expect(meta({} as Parameters<typeof meta>[0])).toEqual([
+      { title: "We cannot find that page | Flump" },
+    ]);
   });
 });

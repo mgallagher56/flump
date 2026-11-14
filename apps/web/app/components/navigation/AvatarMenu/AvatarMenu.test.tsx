@@ -28,7 +28,7 @@ describe("<AvatarMenu />", () => {
     expect(screen.queryByRole("menu")).toBeNull();
   });
 
-  it("lists Settings, Connect AI, Free calculators and Log out", () => {
+  it("lists Settings, Connect AI, Free calculators and Sign out", () => {
     customRender(<AvatarMenu user={{ id: "1" }} />);
     open();
     const links = screen.getAllByRole("menuitem").filter((el) => el.tagName === "A");

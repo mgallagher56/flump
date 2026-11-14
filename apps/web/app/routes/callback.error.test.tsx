@@ -19,11 +19,9 @@ describe("callback error rendering", () => {
     loaderData.value = { error: { message: "invalid_grant: code abc123", description: "secret" } };
     const { container } = render(<CallbackRoute />);
     expect(
-      screen.getByRole("heading", { level: 1, name: "We couldn't sign you in" }),
+      screen.getByRole("heading", { level: 1, name: "We could not sign you in" }),
     ).toBeDefined();
-    expect(screen.getByRole("link", { name: "Try signing in again" }).getAttribute("href")).toBe(
-      "/login",
-    );
+    expect(screen.getByRole("link", { name: "Sign in again" }).getAttribute("href")).toBe("/login");
     expect(container.textContent).not.toContain("invalid_grant");
     expect(container.textContent).not.toContain("secret");
     expect(container.textContent).not.toContain("!");

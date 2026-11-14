@@ -67,7 +67,7 @@ describe("apps/web index.css", () => {
     expect(unlayered).toContain("scroll-padding-top");
     expect(unlayered).toContain("scroll-padding-bottom");
     expect(unlayered).toMatch(
-      /max-width:\s*767\.98px\)\s*\{\s*html\s*\{[^}]*scroll-padding-bottom/,
+      /max-width:\s*1023\.98px\)\s*\{\s*html\s*\{[^}]*scroll-padding-bottom/,
     );
   });
 
