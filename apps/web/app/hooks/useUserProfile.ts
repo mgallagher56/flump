@@ -73,6 +73,9 @@ export interface UserProfile {
   dashboardWidgetSizes: Record<string, "normal" | "wide">;
   dashboardWidgetConfig: Record<string, any>;
   customBudgetCategories?: string[];
+  /** Net worth choices: property with its mortgage (default on), student loan (default off). */
+  netWorthCountsProperty?: boolean;
+  netWorthCountsStudentLoan?: boolean;
   hasResetFinancialData?: boolean;
   onboardingCompleted?: boolean;
   createdAt: string;
