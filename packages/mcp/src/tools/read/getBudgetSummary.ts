@@ -53,7 +53,7 @@ export const getBudgetSummary = defineFlumpTool({
   name: "get_budget_summary",
   title: "Budget summary",
   description:
-    "Monthly budget totals from the user's budget entries: income, essential and discretionary spending, surplus, and spending by category. Weekly and annual entries are converted to monthly. Income and surplus are null (with a question in missing[]) when no income entry exists; salary-based guesses are never used. Detailed format lists each entry.",
+    "Monthly budget totals from the user's budget entries: income, essential and flexible spending, the amount left over each month, and spending by category. Weekly and annual entries are converted to monthly. Income and the left-over amount are null (with a question in missing[]) when no income entry exists; salary-based guesses are never used. Detailed format lists each entry.",
   input: {},
   result,
   maxTokens: 1500,
@@ -100,7 +100,7 @@ export const getBudgetSummary = defineFlumpTool({
         monthlySurplusBeforeDebtGbp: surplus,
         entryCount: entries.length,
         notes: [
-          "Surplus here is before any debt payments (get_financial_snapshot gives the figure after stored minimums); see get_debt_overview for minimums.",
+          "The left-over figure here is income minus spending, before any debt payments. get_financial_snapshot gives it after saved minimum payments, and get_debt_overview lists the minimums.",
         ],
         categories: mergeCategories(
           b.byCategory.map((c) => ({

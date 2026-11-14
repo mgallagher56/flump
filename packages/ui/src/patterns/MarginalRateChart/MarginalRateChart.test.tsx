@@ -15,7 +15,7 @@ const renderChart = (props: Partial<React.ComponentProps<typeof MarginalRateChar
       steppedZones={SAMPLE_ZONES}
       summary={SAMPLE_SUMMARY}
       thresholds={SAMPLE_THRESHOLDS}
-      title="Estimated share deducted from the next £1,000, by gross pay"
+      title="Estimated share deducted from the next £1,000, by pay before tax"
       yourPay={39_000}
       {...props}
     />,
@@ -26,7 +26,7 @@ describe("MarginalRateChart", () => {
     renderChart();
     expect(
       screen.getByRole("figure", {
-        name: "Estimated share deducted from the next £1,000, by gross pay",
+        name: "Estimated share deducted from the next £1,000, by pay before tax",
       }),
     ).toBeDefined();
     expect(screen.getByText(SAMPLE_SUMMARY)).toBeDefined();
@@ -38,8 +38,8 @@ describe("MarginalRateChart", () => {
     // £12,570, £50,270 and £125,140 each carry two thresholds.
     expect(markers).toHaveLength(6);
     const names = markers.map((m) => m.querySelector("title")?.textContent);
-    expect(names).toContain("Income Tax starts; National Insurance starts: £12,570 gross pay");
-    expect(names).toContain("Personal Allowance starts to reduce: £100,000 gross pay");
+    expect(names).toContain("Income Tax starts; National Insurance starts: £12,570 pay before tax");
+    expect(names).toContain("Personal Allowance starts to reduce: £100,000 pay before tax");
   });
 
   it("marks your pay and the stepped zone", () => {
@@ -61,7 +61,7 @@ describe("MarginalRateChart", () => {
     const marker = screen.getAllByTestId("marginal-rate-threshold-hit")[1] as Element;
     fireEvent.mouseEnter(marker);
     expect(screen.getByTestId("marginal-rate-tooltip").textContent).toBe(
-      "Higher rate (40%); National Insurance upper limit: £50,270 gross pay",
+      "Higher rate (40%); National Insurance upper limit: £50,270 pay before tax",
     );
     fireEvent.mouseLeave(marker);
     expect(screen.queryByTestId("marginal-rate-tooltip")).toBeNull();
@@ -71,7 +71,7 @@ describe("MarginalRateChart", () => {
     renderChart();
     const marker = screen.getAllByTestId("marginal-rate-threshold-hit")[0] as HTMLElement;
     expect(marker.getAttribute("aria-label")).toBe(
-      "Income Tax starts; National Insurance starts: £12,570 gross pay",
+      "Income Tax starts; National Insurance starts: £12,570 pay before tax",
     );
     fireEvent.focus(marker);
     expect(screen.getByTestId("marginal-rate-tooltip").textContent).toContain("£12,570");
@@ -91,7 +91,7 @@ describe("MarginalRateChart", () => {
         points={SAMPLE_POINTS}
         summary={SAMPLE_SUMMARY}
         thresholds={SAMPLE_THRESHOLDS.slice(2)}
-        title="Estimated share deducted from the next £1,000, by gross pay"
+        title="Estimated share deducted from the next £1,000, by pay before tax"
       />,
     );
     expect(screen.getByTestId("marginal-rate-tooltip").textContent).toContain("£50,270");
@@ -117,7 +117,7 @@ describe("MarginalRateChart", () => {
     fireEvent.click(screen.getByRole("button", { name: "Show data" }));
     const table = screen.getByRole("table");
     expect(table.querySelectorAll("tbody tr")).toHaveLength(31);
-    expect(screen.getByRole("columnheader", { name: "Gross pay" })).toBeDefined();
+    expect(screen.getByRole("columnheader", { name: "Pay before tax" })).toBeDefined();
     expect(
       screen.getByRole("columnheader", { name: "Estimated share deducted from the next £1,000" }),
     ).toBeDefined();

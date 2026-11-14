@@ -25,11 +25,11 @@ export function getTaxTrapCopy(analysis: TaxTrapAnalysis): TaxTrapCopy {
   return {
     incomeTaxRate,
     effectiveRate,
-    breakdown: `${incomeTaxRate} income tax, ${effectiveRate} including NI`,
+    breakdown: `${incomeTaxRate} Income Tax, ${effectiveRate} including National Insurance`,
   };
 }
 
-export const REGION_ASSUMPTION_LABEL = "Assuming England, Wales and Northern Ireland rates.";
+export const REGION_ASSUMPTION_LABEL = "Uses England, Wales and Northern Ireland rates.";
 
 /** Where a user sets their tax region after onboarding (profile settings, E23 D-4-C). */
 export const REGION_SETTINGS_PATH = "/app/profile";

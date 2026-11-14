@@ -102,7 +102,7 @@ describe("useUserProfile", () => {
 
     (global.fetch as any).mockResolvedValueOnce(jsonRes({}, 400));
     await expect(result.current.sendPasswordResetEmail()).rejects.toThrow(
-      "Failed to send password reset email",
+      "We could not send the password reset email. Try again.",
     );
 
     // resetFinancialData success & failure
@@ -125,16 +125,16 @@ describe("useUserProfile", () => {
         jsonRes({ message: "Internal stack trace" }, status),
       );
       await expect(result.current.sendPasswordResetEmail()).rejects.toThrow(
-        "Failed to send password reset email",
+        "We could not send the password reset email. Try again.",
       );
     }
     (global.fetch as any).mockResolvedValueOnce(jsonRes({ message: "boom" }, 500));
     await expect(result.current.sendPasswordResetEmail()).rejects.toThrow(
-      "Failed to send password reset email",
+      "We could not send the password reset email. Try again.",
     );
     (global.fetch as any).mockResolvedValueOnce(jsonRes({ message: "boom" }, 403));
     await expect(result.current.resetFinancialData()).rejects.toThrow(
-      "Failed to reset financial data",
+      "We could not reset your financial data. Try again.",
     );
   });
 

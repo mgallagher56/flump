@@ -20,7 +20,9 @@ describe("runStdio", () => {
       PatRejectedError,
     );
     expect(fetchImpl).not.toHaveBeenCalled();
-    expect(PAT_REJECTED_MESSAGE).toBe("PAT rejected: create one in Flump, AI connections");
+    expect(PAT_REJECTED_MESSAGE).toBe(
+      "Personal access token rejected. Create a new one in Flump under AI connections.",
+    );
   });
 
   for (const status of [401, 403, 404, 500]) {

@@ -65,8 +65,8 @@ describe("FlumpAiContextPack Builder & Markdown Formatter", () => {
 
     // Verify markdown serialization
     const md = formatAiContextPackMarkdown(pack);
-    expect(md).toContain("# FLUMP UK FINANCIAL CONTEXT PACK");
-    expect(md).toContain("Total Net Worth");
+    expect(md).toContain("# Flump context pack");
+    expect(md).toContain("**Net worth:**");
     expect(md).not.toContain("usr_secret_12345");
   });
 
@@ -167,7 +167,8 @@ describe("buildFlumpAiContextPack budget summary comes from the financial pictur
     expect(pack.budgetSummary.essentialBillsMonthly).toBeNull();
     expect(pack.budgetSummary.safeToSpend).toBeNull();
     expect(pack.budgetSummary.emergencyRunwayMonths).toBeNull();
-    expect(formatAiContextPackMarkdown(pack)).toContain("**Months of Cover:** Not set");
+    expect(formatAiContextPackMarkdown(pack)).toContain("**Months of cover:** Not set");
+    expect(pack.observations).toEqual([]);
   });
 
   it("uses saved profile facts for safe to spend, and budget rows for totals", () => {
@@ -207,5 +208,76 @@ describe("buildFlumpAiContextPack budget summary comes from the financial pictur
     expect(pack.budgetSummary.essentialBillsMonthly).toBe(1000);
     expect(pack.budgetSummary.emergencyRunwayMonths).toBe(3);
     expect(pack.budgetSummary.safeToSpend?.weeklyAllowance).toBeGreaterThan(0);
+    expect(pack.observations).toEqual([
+      "Cash covers 3.0 months of essential spending.",
+      "£1,400 a month is left over after the spending and saving in the budget.",
+    ]);
+  });
+});
+
+describe("the pack carries figures only (copy audit ruling 2, 2026-11-14)", () => {
+  const debtPack = () =>
+    buildFlumpAiContextPack({
+      baseline: { ...DEFAULT_FINANCIAL_BASELINE, userId: "u", annualGrossSalary: 110000 },
+      accounts: [
+        { id: "c", name: "Card", type: "Credit Card", balance: 6000, interestRate: 24.9 },
+        { id: "s", name: "Saver", type: "Saving", balance: 400 },
+      ],
+      budgetEntries: [
+        {
+          id: "i",
+          category: "income",
+          name: "Pay",
+          amount: 1500,
+          frequency: "monthly",
+          isIncome: true,
+          isEssential: false,
+        },
+        {
+          id: "r",
+          category: "housing",
+          name: "Rent",
+          amount: 1800,
+          frequency: "monthly",
+          isIncome: false,
+          isEssential: true,
+        },
+      ],
+    });
+
+  const allKeys = (value: unknown, out: string[] = []): string[] => {
+    if (Array.isArray(value)) for (const v of value) allKeys(v, out);
+    else if (value && typeof value === "object") {
+      for (const [k, v] of Object.entries(value)) {
+        out.push(k);
+        allKeys(v, out);
+      }
+    }
+    return out;
+  };
+
+  it.each([
+    ["an empty pack", () => buildFlumpAiContextPack({ baseline: DEFAULT_FINANCIAL_BASELINE })],
+    ["a pack with debt, a short budget and income in the £100,000 band", debtPack],
+  ])("has no score, grade or stage key or word in the JSON or Markdown: %s", (_label, build) => {
+    const pack = build();
+    const md = formatAiContextPackMarkdown(pack);
+    for (const key of allKeys(pack)) {
+      expect(key).not.toMatch(/score|grade|stage|priorit|heroMetric/i);
+    }
+    for (const text of [md, JSON.stringify(pack)]) {
+      expect(text).not.toMatch(/\bscore\b|\bgrade\b|\bstage\b|stage_\d/i);
+      expect(text).not.toMatch(/CRITICAL|NEEDS_ATTENTION|EXCELLENT|Stage 1|priority/i);
+    }
+  });
+
+  it("states figures as neutral observations in a fixed order", () => {
+    const pack = debtPack();
+    expect(pack.observations[0]).toBe(
+      "Debts total £6,000, not counting mortgages and student loans.",
+    );
+    expect(pack.observations).toContain(
+      "Spending and saving in the budget are £300 a month more than income.",
+    );
   });
 });

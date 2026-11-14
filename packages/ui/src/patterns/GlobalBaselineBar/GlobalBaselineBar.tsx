@@ -22,7 +22,7 @@ export const GlobalBaselineBar: FC<GlobalBaselineBarProps> = ({
   pensionPct,
   isSalarySacrifice = true,
   region = "UK PAYE",
-  stageName = "Your baseline",
+  stageName = "Your figures",
   stageVariant = "neutral",
   isWhatIfActive = false,
   onCommit,
@@ -62,7 +62,7 @@ export const GlobalBaselineBar: FC<GlobalBaselineBarProps> = ({
               <strong className={css({ fontVariantNumeric: "tabular-nums" })}>
                 {currentPension}%
               </strong>{" "}
-              {isSalarySacrifice ? "(Sal Sac)" : "(Net)"}
+              {isSalarySacrifice ? "(salary sacrifice)" : "(Net)"}
             </span>
             <span className={css({ color: "border" })}>•</span>
             <span className={css({ color: "text.muted" })}>{region}</span>
@@ -70,19 +70,19 @@ export const GlobalBaselineBar: FC<GlobalBaselineBarProps> = ({
 
           {isWhatIfActive && (
             <StatusBadge size="sm" variant="brand">
-              What-If Active
+              Illustration, not saved
             </StatusBadge>
           )}
         </div>
 
         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
           <Button size="sm" variant="secondary" onClick={() => setIsExpanded((prev) => !prev)}>
-            {isExpanded ? "Hide Details" : "Adjust Baseline"}
+            {isExpanded ? "Hide details" : "Model a change"}
           </Button>
 
           {isWhatIfActive && onReset && (
             <Button size="sm" variant="outline" onClick={onReset}>
-              Reset
+              Reset to saved figures
             </Button>
           )}
 
@@ -121,7 +121,7 @@ export const GlobalBaselineBar: FC<GlobalBaselineBarProps> = ({
               })}
               htmlFor="baseline-salary-input"
             >
-              Gross Annual Salary (£)
+              Yearly salary before tax
             </label>
             <input
               id="baseline-salary-input"
@@ -155,7 +155,7 @@ export const GlobalBaselineBar: FC<GlobalBaselineBarProps> = ({
               })}
               htmlFor="baseline-pension-input"
             >
-              Workplace Pension Contribution (%)
+              Workplace pension contribution (% of salary)
             </label>
             <input
               id="baseline-pension-input"

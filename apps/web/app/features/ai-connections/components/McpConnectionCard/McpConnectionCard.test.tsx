@@ -6,12 +6,10 @@ describe("McpConnectionCard Feature Component", () => {
   it("renders connection card and toggles anonymization switch", () => {
     render(<McpConnectionCard />);
 
-    expect(
-      screen.getByText("Model Context Protocol (MCP) & AI Connections (preview)"),
-    ).toBeDefined();
-    expect(screen.getByText("Anonymize Bank & Institution Names over MCP")).toBeDefined();
+    expect(screen.getByText("AI connections (preview)")).toBeDefined();
+    expect(screen.getByText("Hide bank and provider names from AI assistants")).toBeDefined();
 
-    const toggle = screen.getByRole("button", { name: "Toggle bank name anonymization" });
+    const toggle = screen.getByRole("button", { name: "Hide bank and provider names" });
     fireEvent.click(toggle);
     // Toggled without throwing
     expect(toggle).toBeDefined();
@@ -37,16 +35,18 @@ describe("McpConnectionCard Feature Component", () => {
     render(<McpConnectionCard initialTokens={initialTokens} />);
 
     // Default tab shows the Local CLI preview note, with no npx snippet or remote URL
-    expect(screen.getByText("Setting up Flump MCP (preview)")).toBeDefined();
+    expect(screen.getByText("Run Flump's MCP server yourself (preview)")).toBeDefined();
     expect(
-      screen.getByText("Local CLI (preview): run Flump MCP from source. Setup guide coming soon."),
+      screen.getByText(
+        "You can run Flump's MCP server from the source code on your own computer. There is no setup guide yet.",
+      ),
     ).toBeDefined();
     expect(screen.queryByText(/npx/)).toBeNull();
     expect(screen.queryByText(/OAuth 2\.1/)).toBeNull();
     expect(screen.queryByRole("tab", { name: /Remote MCP/ })).toBeNull();
 
     // Click Active Tokens tab
-    const activeTab = screen.getByRole("tab", { name: /Active Tokens/i });
+    const activeTab = screen.getByRole("tab", { name: /Active tokens/i });
     fireEvent.keyDown(activeTab, { key: "Enter", code: "Enter" });
     expect(screen.getByTestId("active-tokens-table")).toBeDefined();
     expect(screen.getByText("Cursor AI")).toBeDefined();
@@ -69,7 +69,7 @@ describe("McpConnectionCard Feature Component", () => {
     const openBtn = screen.getByTestId("generate-token-trigger");
     fireEvent.click(openBtn);
 
-    const nameInput = screen.getByLabelText("Connection / Client Name");
+    const nameInput = screen.getByLabelText("Connection name");
     fireEvent.change(nameInput, { target: { value: "ChatGPT Action" } });
 
     const submitBtn = screen.getByTestId("confirm-generate-token");
@@ -95,11 +95,11 @@ describe("McpConnectionCard Feature Component", () => {
     });
     render(<McpConnectionCard onGenerateToken={mockGenerate} />);
     fireEvent.click(screen.getByTestId("generate-token-trigger"));
-    fireEvent.change(screen.getByLabelText("Connection / Client Name"), {
+    fireEvent.change(screen.getByLabelText("Connection name"), {
       target: { value: "Client" },
     });
 
-    const select = screen.getByLabelText("Token Expiry") as HTMLSelectElement;
+    const select = screen.getByLabelText("Token expires after") as HTMLSelectElement;
     expect(Array.from(select.options).map((o) => o.value)).toEqual(["7", "30", "90", "365"]);
     expect(screen.queryByText(/Never/)).toBeNull();
 
@@ -121,7 +121,7 @@ describe("McpConnectionCard Feature Component", () => {
     render(<McpConnectionCard onGenerateToken={mockGenerate} />);
     fireEvent.click(screen.getByTestId("mcp-anonymize-toggle"));
     fireEvent.click(screen.getByTestId("generate-token-trigger"));
-    fireEvent.change(screen.getByLabelText("Connection / Client Name"), {
+    fireEvent.change(screen.getByLabelText("Connection name"), {
       target: { value: "Client" },
     });
     fireEvent.click(screen.getByTestId("confirm-generate-token"));
@@ -141,17 +141,17 @@ describe("McpConnectionCard Feature Component", () => {
     render(<McpConnectionCard onGenerateToken={mockGenerate} />);
     fireEvent.click(screen.getByTestId("generate-token-trigger"));
     const toggle = screen.getByRole("switch", {
-      name: "Let this connection stage imports for you to review",
+      name: "Let this connection prepare imports for you to review",
     }) as HTMLInputElement;
     expect(toggle.checked).toBe(false);
-    fireEvent.change(screen.getByLabelText("Connection / Client Name"), {
+    fireEvent.change(screen.getByLabelText("Connection name"), {
       target: { value: "Client" },
     });
     fireEvent.click(toggle);
     fireEvent.click(screen.getByTestId("confirm-generate-token"));
     await waitFor(() => expect(mockGenerate).toHaveBeenCalledWith("Client", true, 90, true));
-    fireEvent.keyDown(screen.getByRole("tab", { name: /Active Tokens/ }), { key: "Enter" });
-    expect(screen.getByText("Can stage imports")).toBeDefined();
+    fireEvent.keyDown(screen.getByRole("tab", { name: /Active tokens/ }), { key: "Enter" });
+    expect(screen.getByText("Can prepare imports")).toBeDefined();
   });
 
   it("revokes an active token on user click", async () => {
@@ -174,7 +174,7 @@ describe("McpConnectionCard Feature Component", () => {
 
     render(<McpConnectionCard initialTokens={initialTokens} onRevokeToken={mockRevoke} />);
 
-    const activeTab = screen.getByRole("tab", { name: /Active Tokens/i });
+    const activeTab = screen.getByRole("tab", { name: /Active tokens/i });
     fireEvent.keyDown(activeTab, { key: "Enter", code: "Enter" });
 
     const revokeBtn = screen.getByTestId("revoke-token-tok_rev_1");
@@ -194,10 +194,10 @@ describe("McpConnectionCard Feature Component", () => {
   it("describes calculations and anonymisation without overclaiming", () => {
     const { container } = render(<McpConnectionCard />);
     expect(
-      screen.getByText("Deterministic calculations from the Flump finance engine"),
+      screen.getByText("Flump calculates the figures it sends to the AI assistant"),
     ).toBeDefined();
     expect(
-      screen.getByText("Institution names are replaced with generic labels by default"),
+      screen.getByText("Bank and provider names are replaced with generic labels by default"),
     ).toBeDefined();
     expect(container.textContent ?? "").not.toMatch(/hallucinat|PII Scrubbed|account numbers/i);
   });
@@ -253,7 +253,7 @@ describe("McpConnectionCard Feature Component", () => {
       },
     ];
     render(<McpConnectionCard initialTokens={tokens} onRevokeToken={revoke} />);
-    fireEvent.keyDown(screen.getByRole("tab", { name: /Active Tokens/i }), { key: "Enter" });
+    fireEvent.keyDown(screen.getByRole("tab", { name: /Active tokens/i }), { key: "Enter" });
     fireEvent.click(screen.getByTestId("revoke-token-tok_rev_1"));
     expect((await screen.findByRole("alert")).textContent).toBe(
       "The token could not be revoked. Try again in a moment.",

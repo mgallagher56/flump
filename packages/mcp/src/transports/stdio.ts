@@ -7,7 +7,8 @@ import { inMemoryQueries } from "../provider/in-memory.js";
 import { createFlumpMcpServer } from "../server.js";
 import type { McpUserDataProvider } from "../types.js";
 
-export const PAT_REJECTED_MESSAGE = "PAT rejected: create one in Flump, AI connections";
+export const PAT_REJECTED_MESSAGE =
+  "Personal access token rejected. Create a new one in Flump under AI connections.";
 
 export class PatRejectedError extends Error {
   constructor(message = PAT_REJECTED_MESSAGE) {

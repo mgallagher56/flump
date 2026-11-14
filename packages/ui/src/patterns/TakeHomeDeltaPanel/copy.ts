@@ -150,7 +150,7 @@ export function pensionPreviewSentence(
 export const EXPLORER_COPY = {
   controlsLabel: "Your pay details",
   contentLabel: "The next £1,000",
-  grossPay: "Gross pay a year",
+  grossPay: "Pay before tax a year",
   bonus: "Bonus a year",
   region: "Where you pay tax",
   regionOptions: {
@@ -174,20 +174,20 @@ export const EXPLORER_COPY = {
   kpiNextPound: "Estimated share deducted from the next £1,000",
   kpiTakeHome: "Estimated take-home a year",
   kpiTaxYear: "Tax year",
-  chartTitle: "Estimated share deducted from the next £1,000, by gross pay",
-  chartXAxis: "Gross pay",
+  chartTitle: "Estimated share deducted from the next £1,000, by pay before tax",
+  chartXAxis: "Pay before tax",
   chartYAxis: "Estimated share deducted from the next £1,000",
   chartLine: "Estimated share deducted from the next £1,000",
   chartThresholds: "Thresholds",
   yourPay: "Your pay",
-  tableGross: "Gross pay",
+  tableGross: "Pay before tax",
   tableRate: "Estimated share deducted from the next £1,000",
   modelPension: "Model a pension contribution",
   extraPension: "Extra pension contribution",
   tabYourTakeHome: "Your take-home",
   tabNextThousand: "The next £1,000",
   tabsLabel: "Take-home tools",
-  defaultBasis: "No saved salary yet, so this uses an example gross pay of £39,000",
+  defaultBasis: "No salary saved, so this uses an example: £39,000 a year before tax",
 } as const;
 
 /** Chart text alternative. */
@@ -196,14 +196,14 @@ export function chartSummary(
   yourPay: string | null,
   yourRate: string | null,
 ): string {
-  const range = `The estimated share of the next £1,000 of pay that is deducted, at each gross pay from £0 to ${maxGross}.`;
+  const range = `The estimated share of the next £1,000 of pay that is deducted, at each level of pay before tax from £0 to ${maxGross}.`;
   return yourPay && yourRate
     ? `${range} At your pay of ${yourPay}, it is an estimated ${yourRate}.`
     : range;
 }
 
 export const thresholdTooltip = (label: string, gross: string): string =>
-  `${label}: ${gross} gross pay`;
+  `${label}: ${gross} pay before tax`;
 
 export const liveTakeHomeMessage = (takeHome: string): string =>
   `Take-home from the next £1,000: an estimated ${takeHome}`;

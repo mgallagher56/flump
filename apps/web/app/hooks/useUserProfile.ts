@@ -323,7 +323,7 @@ export function useUserProfile() {
         { method: "POST" },
       );
     } catch (err) {
-      throw messageFrom(err, "Failed to send password reset email");
+      throw messageFrom(err, "We could not send the password reset email. Try again.");
     }
   }, []);
 
@@ -336,7 +336,7 @@ export function useUserProfile() {
         body: { confirmation: RESET_FINANCIAL_DATA_CONFIRMATION },
       });
     } catch (err) {
-      throw messageFrom(err, "Failed to reset financial data");
+      throw messageFrom(err, "We could not reset your financial data. Try again.");
     }
     if (result?.profile) {
       setProfile(result.profile);

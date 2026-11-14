@@ -46,8 +46,7 @@ const pack = {
     currency: "GBP",
   },
   baseline: { userId: "anonymous-user", annualGrossSalary: 42000 },
-  stageEvaluation: { canonicalStage: "BUILD_BUFFER", headline: "Build your buffer" },
-  healthScore: { overallScore: 62, grade: "C", observations: [] },
+  observations: ["Cash covers 2.7 months of essential spending."],
   portfolio: {
     netWorth: 12500.5,
     totalAssets: 15000,
@@ -150,6 +149,17 @@ describe("mcp-tokens response schemas", () => {
 
   it("ContextPackResponse accepts a serialised pack", () => {
     expect(checkAgainst(ContextPackResponse, { pack, markdown: "# FLUMP" })).toEqual({ ok: true });
+  });
+
+  it("ContextPackResponse rejects a health score, grade or stage (figures only, ruling 2)", () => {
+    for (const extra of [
+      { healthScore: { overallScore: 62, grade: "C" } },
+      { stageEvaluation: { canonicalStage: "STAGE_2_BUFFER_BUILD" } },
+    ]) {
+      expect(
+        checkAgainst(ContextPackResponse, { pack: { ...pack, ...extra }, markdown: "" }).ok,
+      ).toBe(false);
+    }
   });
 
   it("ContextPackResponse flags a provider field leaking into a pack account", () => {

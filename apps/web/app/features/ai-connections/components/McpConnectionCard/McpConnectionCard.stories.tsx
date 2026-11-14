@@ -40,7 +40,7 @@ export const Default: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     await userEvent.click(canvas.getByTestId("generate-token-trigger"));
-    const select = canvas.getByLabelText("Token Expiry") as HTMLSelectElement;
+    const select = canvas.getByLabelText("Token expires after") as HTMLSelectElement;
     await expect(Array.from(select.options).map((o) => o.value)).toEqual(["7", "30", "90", "365"]);
     await expect(select.value).toBe("90");
     await expect(canvas.queryByText(/Never/)).toBeNull();
@@ -84,12 +84,10 @@ export const WithActiveTokens: Story = {
     const canvas = within(canvasElement);
 
     // 1. Verify header exists
-    await expect(
-      canvas.getByText("Model Context Protocol (MCP) & AI Connections (preview)"),
-    ).toBeInTheDocument();
+    await expect(canvas.getByText("AI connections (preview)")).toBeInTheDocument();
 
     // 2. Toggle anonymization switch
-    const toggle = canvas.getByRole("button", { name: "Toggle bank name anonymization" });
+    const toggle = canvas.getByRole("button", { name: "Hide bank and provider names" });
     await expect(toggle).toBeInTheDocument();
     await userEvent.click(toggle);
 
@@ -97,7 +95,7 @@ export const WithActiveTokens: Story = {
     await expect(canvas.getByTestId("local-cli-preview")).toBeInTheDocument();
 
     // 4. Switch to Active Tokens tab
-    const activeTab = canvas.getByRole("tab", { name: /Active Tokens/i });
+    const activeTab = canvas.getByRole("tab", { name: /Active tokens/i });
     await userEvent.click(activeTab);
     await expect(canvas.getByTestId("active-tokens-table")).toBeInTheDocument();
 
@@ -113,7 +111,7 @@ export const StagingOptIn: Story = {
     const canvas = within(canvasElement);
     await userEvent.click(canvas.getByTestId("generate-token-trigger"));
     const toggle = canvas.getByRole("switch", {
-      name: "Let this connection stage imports for you to review",
+      name: "Let this connection prepare imports for you to review",
     }) as HTMLInputElement;
     await expect(toggle.checked).toBe(false);
     await userEvent.click(toggle);

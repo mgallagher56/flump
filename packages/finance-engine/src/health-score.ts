@@ -47,13 +47,13 @@ export function calculateFinancialHealthScore(input: HealthScoreInput): HealthSc
     else if (highInterestDebt > 0) debtScore = 80;
 
     components.push({
-      name: "High-Interest Debt Load",
+      name: "Card, loan and overdraft debt",
       score: debtScore,
       weight: 0.4,
       comment:
         highInterestDebt > 0
           ? `£${highInterestDebt.toLocaleString()} in high-APR credit/overdrafts needing immediate Avalanche payoff.`
-          : "Zero high-interest commercial debt.",
+          : "No card, loan or overdraft debt.",
     });
     if (highInterestDebt > 0) {
       observations.push(
@@ -71,35 +71,30 @@ export function calculateFinancialHealthScore(input: HealthScoreInput): HealthSc
     else cashFlowScore = Math.max(10, 50 - Math.abs(surplus) / 10);
 
     components.push({
-      name: "Priority Bills & Cash Flow Protection",
+      name: "Income after essential spending and minimum payments",
       score: Math.min(100, Math.round(cashFlowScore)),
       weight: 0.35,
       comment:
         surplus >= 0
-          ? `Safe cash flow surplus of £${Math.round(surplus)}/mo after priority obligations.`
-          : `Deficit of £${Math.abs(Math.round(surplus))}/mo. Priority bills are at risk.`,
+          ? `£${Math.round(surplus).toLocaleString("en-GB")} a month left over after essential spending and minimum debt payments.`
+          : `Short by £${Math.abs(Math.round(surplus)).toLocaleString("en-GB")} a month after essential spending and minimum debt payments.`,
     });
     if (surplus < 0) {
       observations.push(
-        `Priority bills and minimum debt payments exceed net income by £${Math.abs(Math.round(surplus)).toLocaleString("en-GB")} a month.`,
+        `Essential spending and minimum debt payments are £${Math.abs(Math.round(surplus)).toLocaleString("en-GB")} a month more than income.`,
       );
     }
 
     // 3. Starter Buffer (£1,000) (Weight 0.25)
     const starterScore = Math.min(100, Math.round((emergencyFund / 1000) * 100));
     components.push({
-      name: "Starter Buffer (£1k)",
+      name: "Cash savings",
       score: starterScore,
       weight: 0.25,
-      comment:
-        emergencyFund >= 1000
-          ? "£1,000 starter buffer secured to prevent relapsing into debt."
-          : `£${Math.round(emergencyFund)} / £1,000 starter buffer established.`,
+      comment: `Cash savings are £${Math.round(emergencyFund).toLocaleString("en-GB")}.`,
     });
     if (emergencyFund < 1000) {
-      observations.push(
-        `Cash savings are £${Math.round(emergencyFund).toLocaleString("en-GB")}, against a £1,000 starter buffer.`,
-      );
+      observations.push(`Cash savings are £${Math.round(emergencyFund).toLocaleString("en-GB")}.`);
     }
   } else if (stage === "STAGE_2_BUFFER_BUILD") {
     // 1. Emergency Runway (Weight 0.50) - Target 3-6 months
@@ -109,15 +104,13 @@ export function calculateFinancialHealthScore(input: HealthScoreInput): HealthSc
     else runwayScore = (runwayMonths / 3) * 80;
 
     components.push({
-      name: "Emergency Living Runway",
+      name: "Months of cover",
       score: Math.min(100, Math.round(runwayScore)),
       weight: 0.5,
-      comment: `${runwayMonths.toFixed(1)} months of essential expenses covered (Target: 3-6 months).`,
+      comment: `Cash covers ${runwayMonths.toFixed(1)} months of essential spending.`,
     });
     if (runwayMonths < 3) {
-      observations.push(
-        `Cash covers ${runwayMonths.toFixed(1)} months of essential bills; 3 months would be £${Math.round(essentialBills * 3).toLocaleString("en-GB")}.`,
-      );
+      observations.push(`Cash covers ${runwayMonths.toFixed(1)} months of essential spending.`);
     }
 
     // 2. Cash Savings Yield Optimization (Weight 0.25)
@@ -128,7 +121,7 @@ export function calculateFinancialHealthScore(input: HealthScoreInput): HealthSc
     else yieldScore = 40;
 
     components.push({
-      name: "Cash yield and allowance optimisation",
+      name: "Savings rate",
       score: yieldScore,
       weight: 0.25,
       comment: `Earning ${yieldApr.toFixed(1)}% AER on liquid savings.`,
@@ -140,10 +133,13 @@ export function calculateFinancialHealthScore(input: HealthScoreInput): HealthSc
     // 3. Debt-Free Maintenance (Weight 0.25)
     const debtFreeScore = totalDebt === 0 ? 100 : Math.max(0, 100 - (totalDebt / 500) * 20);
     components.push({
-      name: "Zero Consumer Debt Maintenance",
+      name: "Card, loan and overdraft debt",
       score: Math.round(debtFreeScore),
       weight: 0.25,
-      comment: totalDebt === 0 ? "No consumer debt." : `£${totalDebt} residual balance remaining.`,
+      comment:
+        totalDebt === 0
+          ? "No card, loan or overdraft debt."
+          : `£${Math.round(totalDebt).toLocaleString("en-GB")} of card, loan and overdraft debt.`,
     });
   } else {
     // STAGE_3_WEALTH_OPTIMIZE
@@ -155,10 +151,10 @@ export function calculateFinancialHealthScore(input: HealthScoreInput): HealthSc
     const allowanceScore = Math.round((isaRatio * 0.5 + pensionRatio * 0.5) * 100);
 
     components.push({
-      name: "Tax-Advantaged Allowance Utilization",
+      name: "ISA and pension allowances used",
       score: allowanceScore,
       weight: 0.4,
-      comment: `Utilized £${Math.round(isaUsed).toLocaleString()} / £20k ISA and £${Math.round(pensionUsed).toLocaleString()} / £60k Pension allowance.`,
+      comment: `ISA allowance used: £${Math.round(isaUsed).toLocaleString("en-GB")} of £20,000. Pension annual allowance used: £${Math.round(pensionUsed).toLocaleString("en-GB")} of £60,000.`,
     });
     if (isaRatio < 0.5) {
       observations.push(
@@ -172,29 +168,29 @@ export function calculateFinancialHealthScore(input: HealthScoreInput): HealthSc
     if (adjIncome > 100000 && adjIncome <= 125140) {
       taxTrapScore = 40;
       observations.push(
-        `Adjusted net income is £${Math.round(adjIncome).toLocaleString("en-GB")}, in the £100,000 to £125,140 band where the personal allowance tapers.`,
+        `Adjusted net income is £${Math.round(adjIncome).toLocaleString("en-GB")}, in the £100,000 to £125,140 band where the Personal Allowance reduces.`,
       );
     } else if (adjIncome > 125140) {
       taxTrapScore = 70;
     }
 
     components.push({
-      name: "£100k Tax Trap Mitigation",
+      name: "Income and the £100,000 to £125,140 band",
       score: taxTrapScore,
       weight: 0.35,
       comment:
         adjIncome > 100000 && adjIncome <= 125140
           ? "Caught in the UK 60% tax trap (£100k - £125k band)."
-          : "Tax band fully optimized or not in 60% trap zone.",
+          : "Estimate: income is outside the £100,000 to £125,140 band.",
     });
 
     // 3. Emergency Runway & Liquidity (Weight 0.25)
     const runwayScore = Math.min(100, Math.round((runwayMonths / 6) * 100));
     components.push({
-      name: "Runway & Liquid Reserves",
+      name: "Months of cover",
       score: runwayScore,
       weight: 0.25,
-      comment: `${runwayMonths.toFixed(1)} months living runway preserved.`,
+      comment: `Cash covers ${runwayMonths.toFixed(1)} months of essential spending.`,
     });
   }
 
@@ -284,8 +280,9 @@ export function evaluateFinancialStage(params: {
       emergencyRunwayMonths,
       starterBufferMet,
       primaryHeroMetric: "unsecured_debt",
-      headline: "Debt or negative monthly surplus",
-      subline: "High-interest balances or a negative monthly surplus are present.",
+      headline: "Debts recorded, or spending above income",
+      subline:
+        "Debt on a card or overdraft, or at 6.5% APR or more, is recorded, or monthly spending is more than income.",
     };
   }
 
@@ -300,8 +297,8 @@ export function evaluateFinancialStage(params: {
       emergencyRunwayMonths,
       starterBufferMet,
       primaryHeroMetric: "emergency_runway",
-      headline: "Building cash reserves",
-      subline: "Cash covers less than 3 months of essential expenses.",
+      headline: "Months of cover",
+      subline: "Cash covers less than 3 months of essential spending.",
     };
   }
 
@@ -315,8 +312,8 @@ export function evaluateFinancialStage(params: {
     emergencyRunwayMonths,
     starterBufferMet: true,
     primaryHeroMetric: "net_worth",
-    headline: "Reserves in place",
+    headline: "Months of cover",
     subline:
-      "No high-interest debt, a monthly surplus and at least 3 months of essential expenses in cash.",
+      "No card or overdraft debt, none at 6.5% APR or more, income covers spending, and cash covers at least 3 months of essential spending.",
   };
 }

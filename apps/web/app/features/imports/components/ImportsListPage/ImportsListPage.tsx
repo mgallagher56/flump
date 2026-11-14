@@ -46,7 +46,7 @@ export const ImportsListPage: FC<ImportsListPageProps> = ({ batches }) => {
     <Table caption="Your imports, newest first" stacked>
       <THead>
         <Tr>
-          <Th>Staged</Th>
+          <Th>Received</Th>
           <Th>Status</Th>
           <Th>Outcome</Th>
           <Th align="end">Action</Th>
@@ -65,7 +65,7 @@ export const ImportsListPage: FC<ImportsListPageProps> = ({ batches }) => {
             <Td align="end" label="Action">
               <Button asChild size="sm" variant={b.status === "staged" ? "primary" : "ghost"}>
                 <Link
-                  aria-label={`${b.status === "staged" ? "Review" : "View"} import staged ${formatDate(b.createdAt)}`}
+                  aria-label={`${b.status === "staged" ? "Review" : "View"} import received ${formatDate(b.createdAt)}`}
                   data-testid={`import-open-${b.batchId}`}
                   id={`import-open-${b.batchId}`}
                   to={`/app/imports/${b.batchId}`}

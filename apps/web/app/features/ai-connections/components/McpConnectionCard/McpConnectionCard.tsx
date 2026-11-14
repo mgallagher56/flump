@@ -38,7 +38,7 @@ const SAFE_MESSAGES = new Set([TOKENS_UNAVAILABLE, CREATE_FAILED, REVOKE_FAILED,
 
 /** The opt-in write scope (E17 re-plan section 5): stage only, never commit. */
 export const STAGE_SCOPE = "write:stage";
-export const STAGING_TOGGLE_LABEL = "Let this connection stage imports for you to review";
+export const STAGING_TOGGLE_LABEL = "Let this connection prepare imports for you to review";
 export const STAGING_TOGGLE_HINT =
   "The assistant can prepare balances, such as from a spreadsheet, as an import. Nothing is saved until you review it and confirm in Flump. It cannot confirm imports or delete anything. Off by default.";
 const EXPIRY_LABELS: Record<(typeof TOKEN_EXPIRY_DAYS)[number], string> = {
@@ -195,7 +195,7 @@ export const McpConnectionCard: FC<McpConnectionCardProps> = ({
               generatedAt: new Date().toISOString(),
             },
           },
-          markdown: `# FLUMP UK FINANCIAL CONTEXT PACK\nAnonymized: ${anonymizeInstitutions ? "YES" : "NO"}\n`,
+          markdown: `# Flump context pack\nAnonymised: ${anonymizeInstitutions ? "yes" : "no"}\n`,
         };
       }
 
@@ -261,7 +261,7 @@ export const McpConnectionCard: FC<McpConnectionCardProps> = ({
                   margin: 0,
                 })}
               >
-                Model Context Protocol (MCP) & AI Connections (preview)
+                AI connections (preview)
               </h3>
               <p
                 className={css({
@@ -304,10 +304,10 @@ export const McpConnectionCard: FC<McpConnectionCardProps> = ({
             <span
               className={css({ fontSize: "xs", fontWeight: "semibold", color: "text.primary" })}
             >
-              Deterministic Math
+              Calculated by Flump
             </span>
             <span className={css({ fontSize: "11px", color: "text.muted" })}>
-              Deterministic calculations from the Flump finance engine
+              Flump calculates the figures it sends to the AI assistant
             </span>
           </div>
 
@@ -327,10 +327,10 @@ export const McpConnectionCard: FC<McpConnectionCardProps> = ({
             <span
               className={css({ fontSize: "xs", fontWeight: "semibold", color: "text.primary" })}
             >
-              Institution names anonymised
+              Bank names hidden
             </span>
             <span className={css({ fontSize: "11px", color: "text.muted" })}>
-              Institution names are replaced with generic labels by default
+              Bank and provider names are replaced with generic labels by default
             </span>
           </div>
 
@@ -373,10 +373,10 @@ export const McpConnectionCard: FC<McpConnectionCardProps> = ({
             <span
               className={css({ fontSize: "xs", fontWeight: "semibold", color: "text.primary" })}
             >
-              Rate Limited
+              Request limit
             </span>
             <span className={css({ fontSize: "11px", color: "text.muted" })}>
-              60 req/min bucket prevents runaway loops
+              Up to 60 requests a minute
             </span>
           </div>
         </div>
@@ -406,7 +406,7 @@ export const McpConnectionCard: FC<McpConnectionCardProps> = ({
                   display: "block",
                 })}
               >
-                Anonymize Bank & Institution Names over MCP
+                Hide bank and provider names from AI assistants
               </span>
               <span
                 className={css({
@@ -415,20 +415,19 @@ export const McpConnectionCard: FC<McpConnectionCardProps> = ({
                   display: "block",
                 })}
               >
-                Replaces bank names (e.g. &quot;Monzo&quot;) with generic indexed labels (e.g.
-                &quot;Current Account #1&quot;).
+                Replaces bank names with generic labels.
               </span>
               <span
                 className={css({ fontSize: "11px", color: "text.muted", display: "block" })}
                 data-testid="mcp-token-anonymise-hint"
               >
-                Tokens always anonymise institution names until step-up verification is available.
+                For now, bank and provider names are always hidden, whatever this setting says.
               </span>
             </div>
           </div>
 
           <button
-            aria-label="Toggle bank name anonymization"
+            aria-label="Hide bank and provider names"
             className={toggleSwitch({ checked: anonymizeInstitutions })}
             id="mcp-anonymize-toggle"
             data-testid="mcp-anonymize-toggle"
@@ -480,7 +479,7 @@ export const McpConnectionCard: FC<McpConnectionCardProps> = ({
                   color: "status.positive.text",
                 })}
               >
-                AI Connection Token Generated! Copy it now (it won&apos;t be shown again):
+                Token created. Copy it now. It will not be shown again.
               </span>
             </div>
             <div
@@ -527,8 +526,8 @@ export const McpConnectionCard: FC<McpConnectionCardProps> = ({
             className={css({ fontSize: "sm", color: "text.muted" })}
             data-testid="token-creation-unavailable"
           >
-            Connection tokens are not available yet. Use the offline context pack below to share an
-            anonymised summary with an AI assistant.
+            Connection tokens are not available yet. You can export a summary below, with bank names
+            hidden, to share with an AI assistant.
           </p>
         ) : !showGenerateForm ? (
           <div className={flex({ justify: "flex-start" })}>
@@ -539,8 +538,8 @@ export const McpConnectionCard: FC<McpConnectionCardProps> = ({
               variant="outline"
               onClick={() => setShowGenerateForm(true)}
             >
-              <Icon icon={KeyRound} size="sm" className={css({ mr: "1.5" })} />+ Generate New AI
-              Connection Token
+              <Icon icon={KeyRound} size="sm" className={css({ mr: "1.5" })} />
+              Create token
             </Button>
           </div>
         ) : (
@@ -577,7 +576,7 @@ export const McpConnectionCard: FC<McpConnectionCardProps> = ({
                   })}
                   htmlFor="mcp-token-name"
                 >
-                  Connection / Client Name
+                  Connection name
                 </label>
                 <input
                   className={css({
@@ -598,7 +597,7 @@ export const McpConnectionCard: FC<McpConnectionCardProps> = ({
                     },
                   })}
                   id="mcp-token-name"
-                  placeholder="e.g. Claude Desktop, Cursor AI"
+                  placeholder="For example, Claude Desktop"
                   type="text"
                   value={tokenName}
                   onChange={(e) => setTokenName(e.target.value)}
@@ -616,7 +615,7 @@ export const McpConnectionCard: FC<McpConnectionCardProps> = ({
                   })}
                   htmlFor="mcp-token-expiry"
                 >
-                  Token Expiry
+                  Token expires after
                 </label>
                 <select
                   className={css({
@@ -671,7 +670,7 @@ export const McpConnectionCard: FC<McpConnectionCardProps> = ({
                 variant="primary"
                 onClick={handleCreateToken}
               >
-                {generating ? "Generating..." : "Create Token"}
+                {generating ? "Creating…" : "Create token"}
               </Button>
             </div>
           </div>
@@ -680,12 +679,12 @@ export const McpConnectionCard: FC<McpConnectionCardProps> = ({
         {/* 3-Tab Setup Snippet Box */}
         <div className={stack({ gap: "2.5" })}>
           <SegmentedTabs
-            aria-label="MCP Client Setup Options"
+            aria-label="AI connection setup"
             items={[
-              { value: "local_cli", label: "Local CLI (preview)" },
+              { value: "local_cli", label: "Run it yourself (preview)" },
               {
                 value: "active_tokens",
-                label: `Active Tokens (${tokens.filter((t) => !t.isRevoked && !t.isExpired).length})`,
+                label: `Active tokens (${tokens.filter((t) => !t.isRevoked && !t.isExpired).length})`,
               },
             ]}
             value={activeTab}
@@ -711,10 +710,11 @@ export const McpConnectionCard: FC<McpConnectionCardProps> = ({
               id="local-cli-preview"
             >
               <span className={css({ fontWeight: "semibold", color: "text.primary" })}>
-                Setting up Flump MCP (preview)
+                Run Flump's MCP server yourself (preview)
               </span>
               <span className={css({ color: "text.secondary" })}>
-                Local CLI (preview): run Flump MCP from source. Setup guide coming soon.
+                You can run Flump's MCP server from the source code on your own computer. There is
+                no setup guide yet.
               </span>
             </div>
           )}
@@ -735,11 +735,11 @@ export const McpConnectionCard: FC<McpConnectionCardProps> = ({
               <table className={tokenTable()}>
                 <thead>
                   <tr>
-                    <th className={tokenTableHeader()}>Client Name</th>
-                    <th className={tokenTableHeader()}>Token Prefix</th>
-                    <th className={tokenTableHeader()}>Privacy Scope</th>
-                    <th className={tokenTableHeader()}>Last Used</th>
-                    <th className={tokenTableHeader()}>Tool Calls</th>
+                    <th className={tokenTableHeader()}>Connection name</th>
+                    <th className={tokenTableHeader()}>Token starts with</th>
+                    <th className={tokenTableHeader()}>What it can see and do</th>
+                    <th className={tokenTableHeader()}>Last used</th>
+                    <th className={tokenTableHeader()}>Requests</th>
                     <th className={tokenTableHeader()}>Status</th>
                     <th className={cx(tokenTableHeader(), css({ textAlign: "right" }))}>Action</th>
                   </tr>
@@ -751,9 +751,7 @@ export const McpConnectionCard: FC<McpConnectionCardProps> = ({
                         className={cx(tokenTableCell(), css({ textAlign: "center", p: "5" }))}
                         colSpan={7}
                       >
-                        <span className={css({ color: "text.muted" })}>
-                          No AI connection tokens generated yet.
-                        </span>
+                        <span className={css({ color: "text.muted" })}>No tokens created</span>
                       </td>
                     </tr>
                   ) : (
@@ -769,11 +767,11 @@ export const McpConnectionCard: FC<McpConnectionCardProps> = ({
                               size="sm"
                               variant={tok.anonymizeInstitutions ? "info" : "warning"}
                             >
-                              {tok.anonymizeInstitutions ? "Anonymized" : "Full Names"}
+                              {tok.anonymizeInstitutions ? "Names hidden" : "Names shown"}
                             </StatusBadge>
                             {tok.scopes.includes(STAGE_SCOPE) ? (
                               <StatusBadge size="sm" variant="neutral">
-                                Can stage imports
+                                Can prepare imports
                               </StatusBadge>
                             ) : null}
                           </div>
@@ -787,7 +785,7 @@ export const McpConnectionCard: FC<McpConnectionCardProps> = ({
                         <td className={tokenTableCell()}>
                           {tok.isRevoked ? (
                             <StatusBadge size="sm" variant="danger">
-                              Revoked
+                              Disconnected
                             </StatusBadge>
                           ) : tok.isExpired ? (
                             <StatusBadge size="sm" variant="warning">
@@ -802,7 +800,7 @@ export const McpConnectionCard: FC<McpConnectionCardProps> = ({
                         <td className={cx(tokenTableCell(), css({ textAlign: "right" }))}>
                           {!tok.isRevoked && (
                             <button
-                              aria-label={`Revoke token ${tok.name}`}
+                              aria-label={`Disconnect ${tok.name}`}
                               className={css({
                                 border: "none",
                                 background: "none",
@@ -819,7 +817,7 @@ export const McpConnectionCard: FC<McpConnectionCardProps> = ({
                               onClick={() => handleRevoke(tok.id)}
                             >
                               <Icon icon={Trash2} size="sm" className={css({ mr: "1" })} />
-                              Revoke
+                              Disconnect
                             </button>
                           )}
                         </td>
@@ -865,7 +863,7 @@ export const McpConnectionCard: FC<McpConnectionCardProps> = ({
                   margin: 0,
                 })}
               >
-                Offline AI Context Pack Exporter
+                Export a summary for an AI assistant
               </h3>
               <p
                 className={css({
@@ -874,8 +872,8 @@ export const McpConnectionCard: FC<McpConnectionCardProps> = ({
                   margin: "2px 0 0 0",
                 })}
               >
-                Prefer not to connect a live agent? Export your snapshot to paste into an AI
-                assistant of your choice.
+                Export a summary of your figures to paste into any AI assistant, without connecting
+                one.
               </p>
             </div>
           </div>
@@ -895,7 +893,7 @@ export const McpConnectionCard: FC<McpConnectionCardProps> = ({
             ) : (
               <Icon icon={Copy} size="sm" className={css({ mr: "1.5" })} />
             )}
-            {exportedSuccess ? "Copied to Clipboard!" : "Copy Context Pack to Clipboard"}
+            {exportedSuccess ? "Copied" : "Copy summary"}
           </Button>
 
           <Button
@@ -907,7 +905,7 @@ export const McpConnectionCard: FC<McpConnectionCardProps> = ({
             onClick={() => handleExportContextPack("markdown")}
           >
             <Icon icon={Download} size="sm" className={css({ mr: "1.5" })} />
-            Download .md
+            Download as Markdown
           </Button>
 
           <Button
@@ -919,7 +917,7 @@ export const McpConnectionCard: FC<McpConnectionCardProps> = ({
             onClick={() => handleExportContextPack("json")}
           >
             <Icon icon={Download} size="sm" className={css({ mr: "1.5" })} />
-            Download .json
+            Download as JSON
           </Button>
         </div>
       </div>

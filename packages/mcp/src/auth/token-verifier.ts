@@ -122,15 +122,15 @@ export class TokenVerifier {
     if (this.tokenStore) {
       const record = await this.tokenStore.findTokenByHash(hash);
       if (!record) {
-        throw new AuthenticationError("Invalid Personal Access Token.");
+        throw new AuthenticationError("This personal access token is not recognised.");
       }
 
       if (record.revokedAt) {
-        throw new AuthenticationError("This AI Connection token has been revoked.");
+        throw new AuthenticationError("This AI connection token has been revoked.");
       }
 
       if (record.expiresAt && new Date(record.expiresAt).getTime() < Date.now()) {
-        throw new AuthenticationError("This AI Connection token has expired.");
+        throw new AuthenticationError("This AI connection token has expired.");
       }
 
       const scopes = filterKnownScopes(record.scopes ?? ["mcp:read:anonymized", "mcp:simulate"]);
@@ -144,6 +144,6 @@ export class TokenVerifier {
       };
     }
 
-    throw new AuthenticationError("Invalid Personal Access Token.");
+    throw new AuthenticationError("This personal access token is not recognised.");
   }
 }

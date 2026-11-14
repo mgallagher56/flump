@@ -220,7 +220,7 @@ export const ImportReviewPage: FC<ImportReviewPageProps> = ({
           </div>
         )}
         <ConfirmDialog
-          cancelLabel="Keep import"
+          cancelLabel="Cancel"
           confirmLabel="Undo import"
           description={UNDO_CONFIRM}
           error={undoError}

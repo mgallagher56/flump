@@ -76,7 +76,7 @@ export class FlumpToolError extends Error {
 export function internalErrorBody(correlationId: string = randomUUID()): FlumpErrorBody {
   return {
     code: "INTERNAL",
-    message: "The tool failed unexpectedly.",
+    message: "Flump could not run this tool.",
     hint: "Try again. If it keeps failing, quote the correlation id to support.",
     retryable: true,
     correlationId,

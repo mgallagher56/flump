@@ -1830,6 +1830,8 @@ See "Rulings of 2026-11-14" near the top of this document: several items below a
 
 ## Shared surfaces A. `packages/ui` (outside calculators) and web files no page PR owns
 
+> **Applied on 2026-11-14 in the shared-surfaces PR.** Rows not applied, and why: a row marked "check:", "Leave current" or "Needs the owner"; a row that needs markup or logic rather than a string (the 5 April day count in `AllowanceProgressPill`, the "{…} calls" plural, removing the "Official MCP SDK" badge, the "Commit to Profile" button in the unused `GlobalBaselineBar`, the `SliderField` accessible name, which 20 page-owned tests select on); `onboarding-seed.ts` names, which are idempotency keys; `ASK_NO_ACCOUNTS` in MCP, because a tool that stages imports exists; and the context pack key `recommendedSacrifice`, which is an engine type that page files read. These go to the final sweep.
+
 Line numbers are the source line the text sits on (checked in the file), which for JSX text is often one line after the inventory's line. `{…}` is an interpolated value.
 
 ### `packages/ui` patterns and primitives: 3/10
@@ -2067,6 +2069,8 @@ See "Rulings of 2026-11-14" near the top of this document: several items below a
 - `packages/ui/src/patterns/GlobalBaselineBar` "Commit to Profile": the button's handler saves what-if values, which R5 forbids whatever the label says. The component is unused; the owner may prefer to delete it.
 
 ## Shared surfaces B. MCP tool and prompt text, and finance-engine strings that reach a screen or a model
+
+> **Applied on 2026-11-14 in the shared-surfaces PR.** Rows not applied, and why: a row marked "check:", "Leave current" or "Needs the owner"; a row that needs markup or logic rather than a string (the 5 April day count in `AllowanceProgressPill`, the "{…} calls" plural, removing the "Official MCP SDK" badge, the "Commit to Profile" button in the unused `GlobalBaselineBar`, the `SliderField` accessible name, which 20 page-owned tests select on); `onboarding-seed.ts` names, which are idempotency keys; `ASK_NO_ACCOUNTS` in MCP, because a tool that stages imports exists; and the context pack key `recommendedSacrifice`, which is an engine type that page files read. These go to the final sweep.
 
 Notes for whoever applies these rows:
 

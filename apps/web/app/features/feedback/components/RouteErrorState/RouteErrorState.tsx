@@ -39,9 +39,9 @@ interface Copy {
 }
 
 const GENERIC: Copy = {
-  badge: "Something went wrong",
-  heading: "We couldn't load your data",
-  body: "Something went wrong on our side. Try again in a moment. If it keeps happening, report it and we'll look into it.",
+  badge: "Could not load",
+  heading: "We could not load this page",
+  body: "This is a problem on our side. Try again in a moment, or report it if it keeps happening.",
   scene: "empty-accounts",
 };
 
@@ -57,29 +57,29 @@ function copyFor(kind: RouteErrorStateProps["kind"]): Copy {
     case "forbidden":
       return {
         badge: "No access",
-        heading: "You don't have access to this",
-        body: "Your account can't open this page. If you think that's wrong, contact support.",
+        heading: "You do not have access to this page",
+        body: "Your account cannot open this page. If that looks wrong, contact support.",
         scene: "not-found",
       };
     case "not-invited":
       return {
         badge: "Invite only",
         heading: "Flump is invite-only for now",
-        body: "You're signed in, but this account hasn't been invited to the beta yet. Sign out and use an invited account, or ask the person who invited you.",
+        body: "You are signed in, but this account has not been invited to the beta. Sign out and use an invited account, or ask the person who invited you.",
         scene: "onboarding",
       };
     case "not-found":
       return {
         badge: "Not found",
-        heading: "We couldn't find that",
-        body: "The page may have moved, or the link may be out of date. Head back to Flump to carry on.",
+        heading: "We cannot find that page",
+        body: "The page may have moved, or the link may be out of date.",
         scene: "not-found",
       };
     case "unavailable":
       return {
         badge: "Connection problem",
-        heading: "We couldn't reach Flump",
-        body: "Check your connection, then try again. If you're online, we may be having a short outage.",
+        heading: "We could not reach Flump",
+        body: "Check your connection, then try again. If you are online, Flump may be down for a short time.",
         scene: "empty-accounts",
       };
     default:
@@ -141,7 +141,7 @@ export const RouteErrorState: FC<RouteErrorStateProps> = ({
         ) : null}
         {showRetry && onRetry ? (
           <Button type="button" variant="primary" onClick={onRetry} disabled={retrying}>
-            {retrying ? "Trying again..." : "Try again"}
+            {retrying ? "Trying again…" : "Try again"}
           </Button>
         ) : null}
         {primaryHref ? (

@@ -7767,19 +7767,11 @@
                           },
                           "additionalProperties": {}
                         },
-                        "stageEvaluation": {
-                          "type": "object",
-                          "propertyNames": {
+                        "observations": {
+                          "type": "array",
+                          "items": {
                             "type": "string"
-                          },
-                          "additionalProperties": {}
-                        },
-                        "healthScore": {
-                          "type": "object",
-                          "propertyNames": {
-                            "type": "string"
-                          },
-                          "additionalProperties": {}
+                          }
                         },
                         "portfolio": {
                           "type": "object",
@@ -8152,8 +8144,7 @@
                       "required": [
                         "metadata",
                         "baseline",
-                        "stageEvaluation",
-                        "healthScore",
+                        "observations",
                         "portfolio",
                         "debtSummary",
                         "budgetSummary",

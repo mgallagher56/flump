@@ -18,6 +18,6 @@ export const Default: Story = {
   parameters: { a11y: { config: { rules: [{ id: "color-contrast", enabled: false }] } } },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    await expect(canvas.getByText("The Debt-to-Wealth Crossover Bridge")).toBeInTheDocument();
+    await expect(canvas.getByText("Example: after the debts are paid off")).toBeInTheDocument();
   },
 };

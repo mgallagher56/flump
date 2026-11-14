@@ -80,7 +80,7 @@ describe("<NextPoundExplorer />", () => {
     const fetchSpy = vi.spyOn(globalThis, "fetch");
     render(<Harness seed={saved} />);
     expect(screen.getByTestId("modified").textContent).toBe("false");
-    expect((screen.getByLabelText("Gross pay a year input") as HTMLInputElement).value).toBe(
+    expect((screen.getByLabelText("Pay before tax a year input") as HTMLInputElement).value).toBe(
       "£45,000",
     );
     fireEvent.click(screen.getByRole("button", { name: "Model a pension contribution" }));

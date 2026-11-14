@@ -63,9 +63,7 @@ describe("<SecurityTab />", () => {
 
   it("holds the MCP connection card", () => {
     render(<SecurityTab email="user@example.com" />);
-    expect(
-      screen.getByText("Model Context Protocol (MCP) & AI Connections (preview)"),
-    ).toBeDefined();
+    expect(screen.getByText("AI connections (preview)")).toBeDefined();
     expect(screen.getByTestId("offline-context-pack-card")).toBeDefined();
   });
 

@@ -35,7 +35,7 @@ export const TaxRatesStatusBanner: FC<TaxRatesStatusBannerProps> = ({
     <div role="status" className={taxRatesBanner({ kind })} data-testid="tax-rates-status-banner">
       <span>{message}</span>
       <button type="button" className={taxRatesBannerDismiss()} onClick={() => setDismissed(true)}>
-        Dismiss
+        Dismiss notice
       </button>
     </div>
   );

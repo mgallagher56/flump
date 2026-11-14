@@ -26,7 +26,7 @@ exports[`MCP surface snapshot (E17-N1) > pins prompts/list (re-plan PR D adds tw
 exports[`MCP surface snapshot (E17-N1) > pins resources/list 1`] = `
 [
   {
-    "description": "What Flump's data means: account categories, the sign convention for liabilities, monthly history and carry-forward, and tax-record categories. Contains no user data.",
+    "description": "What Flump's data means: account categories, the sign convention for what is owed, monthly history and carry-forward, and tax-record categories. Contains no user data.",
     "mimeType": "application/json",
     "name": "schema",
     "title": "Flump data dictionary",
@@ -63,7 +63,7 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
       "openWorldHint": false,
       "readOnlyHint": true,
     },
-    "description": "One-call summary of the user's finances: net worth, assets, liabilities, cash, investments, pensions, debts and (when a budget exists) monthly surplus and emergency runway. Built only from recorded accounts and budget entries; anything not recorded is null and listed in missing[] with a question to ask the user. Pass asOfMonth (YYYY-MM) for balances as at the end of a past month, from recorded monthly history (budget figures are then null, as the budget is not kept by month). Start here before drilling into other tools.",
+    "description": "Summary of the user's figures in one call: net worth, what they own (assetsGbp), what they owe (liabilitiesGbp), cash, investments, pensions, debts and, when a budget exists, the amount left over each month (monthlySurplusAfterStoredMinimumsGbp) and months of cover (emergencyRunwayMonths). Built only from recorded accounts and budget entries; anything not recorded is null and listed in missing[] with a question to ask the user. Pass asOfMonth (in the form 2025-04) for balances as at the end of a past month, from recorded monthly history (budget figures are then null, as the budget is not kept by month). Call this first for a summary.",
     "execution": {
       "taskSupport": "forbidden",
     },
@@ -71,7 +71,7 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
       "$schema": "http://json-schema.org/draft-07/schema#",
       "properties": {
         "asOfMonth": {
-          "description": "Balances as at the end of this past month (YYYY-MM); omit for current balances",
+          "description": "Month in the form 2025-04. Gives balances as at the end of that past month. Leave out for current balances.",
           "pattern": "^\\d{4}-(0[1-9]|1[0-2])$",
           "type": "string",
         },
@@ -321,7 +321,7 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
       ],
       "type": "object",
     },
-    "title": "Financial snapshot",
+    "title": "Summary of your figures",
   },
   {
     "_meta": undefined,
@@ -331,7 +331,7 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
       "openWorldHint": false,
       "readOnlyHint": true,
     },
-    "description": "Month-end balances recorded in Flump between two months, per account, per category or as a net-worth total, at monthly, calendar-quarter or calendar-year intervals (a period cut short by the range is flagged partial). metric balance gives the value at the end of each period; delta gives the change from the end of the previous period (current minus previous, up or down); pctDelta gives that change as a percentage. Liabilities are the amount owed as a positive number. A month with no recorded value carries the last known value forward and is flagged carriedForward; source says how each value was recorded. Student loans are excluded. Results are paged: ask for the next page while page is below totalPages.",
+    "description": "Month-end balances recorded in Flump between two months, per account, per category or as a net-worth total, at monthly, calendar-quarter or calendar-year intervals (a period cut short by the range is flagged partial). metric balance gives the value at the end of each period; delta gives the change from the end of the previous period (current minus previous, up or down); pctDelta gives that change as a percentage. Debts and mortgages are the amount owed as a positive number. A month with no recorded value carries the last known value forward and is flagged carriedForward; source says how each value was recorded. Student loans are excluded. Results are paged: ask for the next page while page is below totalPages.",
     "execution": {
       "taskSupport": "forbidden",
     },
@@ -363,7 +363,7 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
           "type": "string",
         },
         "from": {
-          "description": "First month, YYYY-MM",
+          "description": "First month, in the form 2025-04",
           "pattern": "^(19|2[01])\\d{2}-(0[1-9]|1[0-2])$",
           "type": "string",
         },
@@ -412,7 +412,7 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
           "type": "string",
         },
         "to": {
-          "description": "Last month, YYYY-MM",
+          "description": "Last month, in the form 2025-04",
           "pattern": "^(19|2[01])\\d{2}-(0[1-9]|1[0-2])$",
           "type": "string",
         },
@@ -1014,7 +1014,7 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
       "openWorldHint": false,
       "readOnlyHint": true,
     },
-    "description": "Lists the user's accounts with a short opaque id, a label, category and balance. Liabilities show the amount owed as a positive number with isLiability true. Mortgages add the remaining term and fixed-rate end date, and pensions the monthly contribution, when stored (null when not). Institution names are replaced with generic labels unless the token has full read access.",
+    "description": "Lists the user's accounts with a short opaque id, a label, category and balance. Debts, mortgages and student loans show the amount owed as a positive number, with isLiability true. Mortgages add the remaining term and fixed-rate end date, and pensions the monthly contribution, when stored (null when not). Institution names are replaced with generic labels unless the token has full read access.",
     "execution": {
       "taskSupport": "forbidden",
     },
@@ -1278,7 +1278,7 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
       "openWorldHint": false,
       "readOnlyHint": true,
     },
-    "description": "Monthly budget totals from the user's budget entries: income, essential and discretionary spending, surplus, and spending by category. Weekly and annual entries are converted to monthly. Income and surplus are null (with a question in missing[]) when no income entry exists; salary-based guesses are never used. Detailed format lists each entry.",
+    "description": "Monthly budget totals from the user's budget entries: income, essential and flexible spending, the amount left over each month, and spending by category. Weekly and annual entries are converted to monthly. Income and the left-over amount are null (with a question in missing[]) when no income entry exists; salary-based guesses are never used. Detailed format lists each entry.",
     "execution": {
       "taskSupport": "forbidden",
     },
@@ -1536,7 +1536,7 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
       "openWorldHint": false,
       "readOnlyHint": true,
     },
-    "description": "The user's debts: each consumer debt with balance, APR and minimum payment, plus totals for overdrafts, mortgage and student loans. An unrecorded APR is reported as null with aprStatus unknown and a question in missing[]; it is never guessed. Minimum payments that are not recorded are estimated and flagged. No payoff schedules; use a simulation tool for those.",
+    "description": "The user's debts: each consumer debt with balance, APR and minimum payment, plus totals for overdrafts, mortgage and student loans. An unrecorded APR is reported as null with aprStatus unknown and a question in missing[]; it is never guessed. Minimum payments that are not recorded are estimated and flagged. No payoff schedules; simulate_debt_payoff gives those.",
     "execution": {
       "taskSupport": "forbidden",
     },
@@ -2166,7 +2166,7 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
       "openWorldHint": false,
       "readOnlyHint": true,
     },
-    "description": "The user's UK tax position for a tax year, from their stored salary and tax records: income by source, where total income sits against the Personal Allowance taper (100,000 to 125,140 in recent years), the income tax bands for their region (including Scottish bands), the High Income Child Benefit Charge thresholds, the Section 24 finance-cost credit on rental income, and the estimated tax and Self Assessment figures shown on the Flump Tax page. Facts and estimates only.",
+    "description": "The user's UK tax position for a tax year, from their stored salary and tax records: income by source, where total income sits against the Personal Allowance taper (£100,000 to £125,140 in recent years), the income tax bands for their region (including Scottish bands), the High Income Child Benefit Charge thresholds, the Section 24 finance-cost credit on rental income, and the tax and Self Assessment estimates shown on the Flump tax page. Facts and estimates only.",
     "execution": {
       "taskSupport": "forbidden",
     },
@@ -2857,7 +2857,7 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
       "openWorldHint": false,
       "readOnlyHint": true,
     },
-    "description": "Simulates paying off the user's recorded consumer debts (up to 20) with an optional extra monthly amount, under the avalanche (highest APR first) and snowball (smallest balance first) orderings, against minimum payments only. Debts with no recorded APR are left out and listed in missing[] unless an APR is supplied in debts[]; an APR is never guessed. Minimum payments that are not recorded are estimated and flagged. includeSchedule adds a yearly or monthly (at most 24 months) table for the first strategy. Student loans and mortgages are not included.",
+    "description": "Models paying off the user's recorded debts (up to 20) with an optional extra monthly amount, with highest rate first (avalanche) and smallest balance first (snowball), beside minimum payments only. Debts with no recorded APR are left out and listed in missing[] unless an APR is supplied in debts[]; an APR is never guessed. Minimum payments that are not recorded are estimated and flagged. includeSchedule adds a yearly or monthly (at most 24 months) table for the first strategy. Student loans and mortgages are not included.",
     "execution": {
       "taskSupport": "forbidden",
     },
@@ -2921,7 +2921,7 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
         },
         "strategy": {
           "default": "compare",
-          "description": "Ordering to simulate; compare returns avalanche, snowball and minimum-only",
+          "description": "Ordering to model; compare returns avalanche, snowball and minimum-only",
           "enum": [
             "avalanche",
             "snowball",
@@ -3199,7 +3199,7 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
       ],
       "type": "object",
     },
-    "title": "Simulate debt payoff",
+    "title": "Model debt payoff",
   },
   {
     "_meta": undefined,
@@ -3209,7 +3209,7 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
       "openWorldHint": false,
       "readOnlyHint": true,
     },
-    "description": "Projects net worth year by year from the recorded account balances, with and without up to 10 events that each carry an explicit one-off and/or monthly cost. The expected investment return is required. Monthly saving defaults to the budget surplus when a budget exists and is otherwise reported in missing[] and set to zero. Cash (4%), pension (6.5%) and property (2.5%) growth use those rates unless supplied; each is listed in assumptions. Mortgage repayments are not modelled, so equity grows only with property growth. Concise format returns every fifth year; detailed adds the balance breakdown.",
+    "description": "Estimates net worth year by year from the recorded account balances, with and without up to 10 events that each carry a one-off cost, a monthly cost or both. The expected investment return is required. Monthly saving defaults to the amount left over in the budget when a budget exists and is otherwise reported in missing[] and set to zero. Cash (4%), pension (6.5%) and property (2.5%) growth use those rates unless supplied; each is listed in assumptions. Mortgage repayments are not modelled, so equity grows only with property growth. Concise format returns every fifth year; detailed adds the balance breakdown.",
     "execution": {
       "taskSupport": "forbidden",
     },
@@ -3287,7 +3287,7 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
           "type": "integer",
         },
         "monthlySavingGbp": {
-          "description": "Amount saved each month, in GBP. Defaults to the budget surplus.",
+          "description": "Amount saved each month, in GBP. Defaults to the amount left over in the budget.",
           "maximum": 100000,
           "minimum": 0,
           "type": "number",
@@ -3554,7 +3554,7 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
       ],
       "type": "object",
     },
-    "title": "Project net worth",
+    "title": "Estimate future net worth",
   },
   {
     "_meta": undefined,

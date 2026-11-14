@@ -107,14 +107,14 @@ function toRows(
 
 export const simulateDebtPayoff = defineFlumpTool({
   name: "simulate_debt_payoff",
-  title: "Simulate debt payoff",
+  title: "Model debt payoff",
   description:
-    "Simulates paying off the user's recorded consumer debts (up to 20) with an optional extra monthly amount, under the avalanche (highest APR first) and snowball (smallest balance first) orderings, against minimum payments only. Debts with no recorded APR are left out and listed in missing[] unless an APR is supplied in debts[]; an APR is never guessed. Minimum payments that are not recorded are estimated and flagged. includeSchedule adds a yearly or monthly (at most 24 months) table for the first strategy. Student loans and mortgages are not included.",
+    "Models paying off the user's recorded debts (up to 20) with an optional extra monthly amount, with highest rate first (avalanche) and smallest balance first (snowball), beside minimum payments only. Debts with no recorded APR are left out and listed in missing[] unless an APR is supplied in debts[]; an APR is never guessed. Minimum payments that are not recorded are estimated and flagged. includeSchedule adds a yearly or monthly (at most 24 months) table for the first strategy. Student loans and mortgages are not included.",
   input: {
     strategy: z
       .enum(["avalanche", "snowball", "compare"])
       .default("compare")
-      .describe("Ordering to simulate; compare returns avalanche, snowball and minimum-only"),
+      .describe("Ordering to model; compare returns avalanche, snowball and minimum-only"),
     extraMonthlyGbp: gbpInput(
       "Extra amount paid each month on top of the minimums, in GBP. Omit for none.",
       100_000,
@@ -137,7 +137,7 @@ export const simulateDebtPayoff = defineFlumpTool({
     const items = m.snapshot.toDebtItems();
     if (items.length > MAX_DEBTS) {
       throw new FlumpToolError("INVALID_ARGUMENT", `More than ${MAX_DEBTS} debts are recorded.`, {
-        hint: "Simulate again once some debts are cleared or combined.",
+        hint: `This tool models at most ${MAX_DEBTS} debts at once.`,
       });
     }
     const idByUuid = new Map(items.map((d) => [d.id, m.idOf("acc", d.id)]));
@@ -175,7 +175,7 @@ export const simulateDebtPayoff = defineFlumpTool({
         excluded.push(id);
         aprMissing.push({
           field: `debts.${id}.aprPct`,
-          why: `The APR on ${ref} (${id}) is not recorded, so it was left out of the simulation.`,
+          why: `The APR on ${ref} (${id}) is not recorded, so it was left out of the calculation.`,
           askUser: `What is the APR on your ${ref}?`,
         });
         continue;
@@ -213,7 +213,7 @@ export const simulateDebtPayoff = defineFlumpTool({
       assumptions.push(
         derived(
           "minimumPaymentGbp",
-          "Minimum payments that are not recorded are estimated as the greater of 25 pounds or 2.5% of the balance.",
+          "Minimum payments that are not recorded are estimated as the greater of £25 or 2.5% of the balance.",
         ),
       );
     }
@@ -222,7 +222,7 @@ export const simulateDebtPayoff = defineFlumpTool({
       ...(m.accounts.length === 0 ? [ASK_NO_ACCOUNTS] : []),
       ...capMissing(aprMissing, {
         field: "debts.aprPct",
-        why: "Several debts have no recorded APR and were left out of the simulation.",
+        why: "Several debts have no recorded APR and were left out of the calculation.",
         askUser: "What is the APR on each of your debts?",
       }),
     ];
@@ -234,7 +234,9 @@ export const simulateDebtPayoff = defineFlumpTool({
 
     if (sim.length === 0 || startingDebtGbp <= 0) {
       if (excluded.length === 0 && m.accounts.length > 0) {
-        notes.push("No consumer debts are recorded, so there is nothing to simulate.");
+        notes.push(
+          "No debts other than mortgages and student loans are recorded, so there is nothing to model.",
+        );
       }
       return {
         result: {
@@ -272,7 +274,7 @@ export const simulateDebtPayoff = defineFlumpTool({
 
     if (strategies.some((s) => !s.payoffAchievable)) {
       notes.push(
-        "At least one ordering does not clear the debts within 30 years at these payments.",
+        "At least one ordering does not pay off the debts within 30 years at these payments.",
       );
     }
     const out: z.infer<typeof result> = {

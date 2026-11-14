@@ -25,14 +25,14 @@ export function throwRouteError(err: unknown): never {
 }
 
 const ACTION_MESSAGE_BY_KIND: Record<BackendErrorKind, string> = {
-  unavailable: "We couldn't reach the server. Please try again.",
-  server: "Something went wrong on our side. Please try again.",
-  "bad-response": "Something went wrong on our side. Please try again.",
-  "not-found": "We couldn't find that. It may have been removed.",
-  forbidden: "You don't have permission to do that.",
+  unavailable: "We could not reach Flump. Check your connection and try again.",
+  server: "That did not work because of a problem on our side. Try again in a moment.",
+  "bad-response": "That did not work because of a problem on our side. Try again in a moment.",
+  "not-found": "We could not find that. It may have been deleted.",
+  forbidden: "Your account does not have permission to do that.",
   "not-invited": "This account has not been invited to the Flump beta yet.",
-  client: "We couldn't save that. Check the details and try again.",
-  unauthorised: "Your session has ended. Please sign in again.",
+  client: "We could not save that. Check the details and try again.",
+  unauthorised: "Your session has ended. Sign in again.",
 };
 
 /**

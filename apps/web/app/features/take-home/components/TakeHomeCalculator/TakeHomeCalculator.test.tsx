@@ -239,23 +239,29 @@ describe("<TakeHomeCalculator /> the next £1,000", () => {
     expect(container.querySelector('[data-testid="marginal-rate-explorer"]')).toBeNull();
     openTool(getByRole);
     expect(container.querySelector('[data-testid="marginal-rate-explorer"]')).not.toBeNull();
-    expect((getByLabelText("Gross pay a year input") as HTMLInputElement).value).toBe("£45,000");
+    expect((getByLabelText("Pay before tax a year input") as HTMLInputElement).value).toBe(
+      "£45,000",
+    );
     // A real tab panel, labelled by and controlled from its tab.
     const panel = getByRole("tabpanel", { name: "The next £1,000" });
     expect(getByRole("tab", { name: "The next £1,000" }).getAttribute("aria-controls")).toBe(
       panel.id,
     );
 
-    fireEvent.change(getByLabelText("Gross pay a year range slider"), {
+    fireEvent.change(getByLabelText("Pay before tax a year range slider"), {
       target: { value: "80000" },
     });
     fireEvent.click(getByRole("button", { name: "Model a pension contribution" }));
-    expect((getByLabelText("Gross pay a year input") as HTMLInputElement).value).toBe("£80,000");
+    expect((getByLabelText("Pay before tax a year input") as HTMLInputElement).value).toBe(
+      "£80,000",
+    );
     fireEvent.click(getByRole("button", { name: "Reset to saved figures" }));
     expect(
       (getByRole("button", { name: "Reset to saved figures" }) as HTMLButtonElement).disabled,
     ).toBe(true);
-    expect((getByLabelText("Gross pay a year input") as HTMLInputElement).value).toBe("£45,000");
+    expect((getByLabelText("Pay before tax a year input") as HTMLInputElement).value).toBe(
+      "£45,000",
+    );
     expect(getByRole("button", { name: "Model a pension contribution" })).toBeDefined();
   });
 
@@ -263,7 +269,7 @@ describe("<TakeHomeCalculator /> the next £1,000", () => {
     const { getByRole, getByText } = customRender(<TakeHomeCalculator onApplyIncrease={vi.fn()} />);
     openTool(getByRole);
     expect(
-      getByText("No saved salary yet, so this uses an example gross pay of £39,000"),
+      getByText("No salary saved, so this uses an example: £39,000 a year before tax"),
     ).toBeDefined();
   });
 });

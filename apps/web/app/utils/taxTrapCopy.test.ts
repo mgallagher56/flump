@@ -15,7 +15,7 @@ describe("taxTrapCopy", () => {
 
     expect(copy.incomeTaxRate).toBe(formatTrapRate(analysis.marginalRatePct));
     expect(copy.effectiveRate).toBe(formatTrapRate(analysis.effectiveMarginalRatePct));
-    expect(copy.breakdown).toBe("60% income tax, 62% including NI");
+    expect(copy.breakdown).toBe("60% Income Tax, 62% including National Insurance");
   });
 
   it("follows the engine when the rates differ (Scotland)", () => {
@@ -24,7 +24,7 @@ describe("taxTrapCopy", () => {
 
     expect(copy.incomeTaxRate).toBe("67.5%");
     expect(copy.effectiveRate).toBe("69.5%");
-    expect(copy.breakdown).toBe("67.5% income tax, 69.5% including NI");
+    expect(copy.breakdown).toBe("67.5% Income Tax, 69.5% including National Insurance");
   });
 
   it("treats a region as known only when the user set it (E23 D-4)", () => {

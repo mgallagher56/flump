@@ -79,7 +79,7 @@ export const compareMortgageOverpayVsInvest = defineFlumpTool({
       "Investment growth uses one constant return, with no charges, tax or market fall modelled.",
       "The mortgage rate is held at its recorded value for the whole term.",
       "Returns are nominal and compounded monthly at the annual rate divided by 12.",
-      "If overpaying clears the mortgage early, the overpaying side stops paying then; the invested side keeps adding the same amount to the end of the term.",
+      "If overpaying pays off the mortgage early, the overpaying side stops paying then. The invested side keeps adding the same amount to the end of the term.",
     ];
     const empty = (missing: Missing[], accountId: string | null = null) => ({
       result: {

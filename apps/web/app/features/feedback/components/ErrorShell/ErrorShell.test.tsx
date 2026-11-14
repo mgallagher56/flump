@@ -15,7 +15,7 @@ describe("ErrorShell", () => {
         </ErrorShell>
       </MemoryRouter>,
     );
-    expect(screen.getByRole("link", { name: "Skip to content" }).getAttribute("href")).toBe(
+    expect(screen.getByRole("link", { name: "Skip to main content" }).getAttribute("href")).toBe(
       "#main-content",
     );
     expect(screen.getByRole("link", { name: "Flump home" }).getAttribute("href")).toBe("/");

@@ -214,7 +214,7 @@ export function summariseBudget(entries: readonly BudgetEntryItem[]): MonthlyBud
 
 export const MISSING_INCOME: Missing = {
   field: "monthlyIncome",
-  why: "No income entry in the budget, and profile-derived take-home is not available to this tool yet.",
+  why: "No income entry in the budget. This tool does not yet use take-home pay worked out from the saved salary.",
   askUser: "What is your monthly take-home pay after tax?",
 };
 

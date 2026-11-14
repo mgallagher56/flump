@@ -30,7 +30,7 @@ describe("TaxRatesStatusBanner", () => {
 
   it("can be dismissed", () => {
     render(<TaxRatesStatusBanner calendarYear="2027/28" ratesYear="2026/27" isFallback />);
-    fireEvent.click(screen.getByRole("button", { name: "Dismiss" }));
+    fireEvent.click(screen.getByRole("button", { name: "Dismiss notice" }));
     expect(screen.queryByRole("status")).toBeNull();
   });
 });

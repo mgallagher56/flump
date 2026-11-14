@@ -59,10 +59,14 @@ export const getDataCoverage = defineFlumpTool({
     const selected = index.accounts.filter((a) => !category || a.category === category);
     const totalPages = Math.ceil(selected.length / ACCOUNTS_PER_PAGE);
     if (totalPages > 0 && page > totalPages) {
-      throw new FlumpToolError("INVALID_ARGUMENT", `There are only ${totalPages} page(s).`, {
-        field: "page",
-        hint: "Ask for page 1.",
-      });
+      throw new FlumpToolError(
+        "INVALID_ARGUMENT",
+        `Page ${page} does not exist. Pages available: ${totalPages}.`,
+        {
+          field: "page",
+          hint: "Ask for page 1.",
+        },
+      );
     }
     const pageAccounts = selected.slice((page - 1) * ACCOUNTS_PER_PAGE, page * ACCOUNTS_PER_PAGE);
     const withHistory = selected.filter((a) => coverage.has(a.id)).length;

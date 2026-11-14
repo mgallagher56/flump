@@ -51,7 +51,7 @@ export const listAccounts = defineFlumpTool({
   name: "list_accounts",
   title: "List accounts",
   description:
-    "Lists the user's accounts with a short opaque id, a label, category and balance. Liabilities show the amount owed as a positive number with isLiability true. Mortgages add the remaining term and fixed-rate end date, and pensions the monthly contribution, when stored (null when not). Institution names are replaced with generic labels unless the token has full read access.",
+    "Lists the user's accounts with a short opaque id, a label, category and balance. Debts, mortgages and student loans show the amount owed as a positive number, with isLiability true. Mortgages add the remaining term and fixed-rate end date, and pensions the monthly contribution, when stored (null when not). Institution names are replaced with generic labels unless the token has full read access.",
   input: {
     category: z
       .enum(CATEGORIES)
@@ -92,14 +92,14 @@ export const listAccounts = defineFlumpTool({
     for (const r of unknownDebt) {
       debtMissing.push({
         field: `accounts.${r.id}.interestRatePct`,
-        why: `The interest rate on ${refs.get(r.id) ?? "Debt account"} (${r.id}) is not recorded.`,
+        why: `The APR on ${refs.get(r.id) ?? "Debt account"} (${r.id}) is not recorded.`,
         askUser: `What is the APR on your ${refs.get(r.id) ?? "Debt account"}?`,
       });
     }
     missing.push(
       ...capMissing(debtMissing, {
         field: "accounts.interestRatePct",
-        why: "Several debts have no recorded interest rate.",
+        why: "Several debts have no recorded APR.",
         askUser: "What is the APR on each of your debts?",
       }),
     );

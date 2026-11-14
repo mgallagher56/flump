@@ -24,7 +24,7 @@ export const IsaAllowance: Story = {
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    await expect(canvas.getByText("UK ISA Annual Allowance")).toBeInTheDocument();
+    await expect(canvas.getByText("ISA allowance")).toBeInTheDocument();
     await expect(canvas.getByText("£20,000 / Tax Year")).toBeInTheDocument();
   },
 };

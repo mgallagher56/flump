@@ -336,10 +336,10 @@ describe("debt-payoff module", () => {
 
     it("evaluateUkStudentLoan reasoning states the projected outcome without imperatives or advice wording", () => {
       const written = evaluateUkStudentLoan("plan2", 35000, 90000, "2025/26");
-      expect(written.reasoning).toContain("written off before it is repaid");
+      expect(written.reasoning).toContain("do not pay off the £90,000 balance");
       expect(written.reasoning).not.toMatch(/gift|prioritise|should|consider/i);
       const repaid = evaluateUkStudentLoan("plan2", 80000, 5000, "2025/26");
-      expect(repaid.reasoning).toContain("is projected to clear");
+      expect(repaid.reasoning).toContain("Estimate: repayments of");
     });
 
     it("evaluateUkStudentLoan agrees for PLAN_2 and plan2 spellings", () => {

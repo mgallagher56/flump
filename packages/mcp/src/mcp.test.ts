@@ -27,7 +27,7 @@ describe("McpRateLimiter", () => {
     const blockedRes = limiter.checkLimit("user_1", now);
     expect(blockedRes.allowed).toBe(false);
     expect(blockedRes.statusCode).toBe(429);
-    expect(blockedRes.message).toContain("60 requests per minute exceeded");
+    expect(blockedRes.message).toContain("The limit is 60 a minute");
 
     // Advance 61 seconds: should reset
     const nextMinuteRes = limiter.checkLimit("user_1", now + 61_000);
@@ -88,7 +88,7 @@ describe("TokenVerifier", () => {
 
     const verifier = new TokenVerifier({ tokenStore: mockStore });
     await expect(verifier.verifyAuthorizationHeader(`Bearer ${rawToken}`)).rejects.toThrow(
-      "This AI Connection token has been revoked",
+      "This AI connection token has been revoked",
     );
   });
 
