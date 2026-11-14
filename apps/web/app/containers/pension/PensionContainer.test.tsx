@@ -137,6 +137,47 @@ describe("PensionContainer", () => {
     );
   });
 
+  it("editing only the salary never saves the guessed contribution method", async () => {
+    mockUpdateProfile.mockClear();
+    render(<PensionContainer />);
+    fireEvent.click(screen.getByRole("button", { name: /Edit details/i }));
+    fireEvent.change(screen.getByLabelText(/Annual salary/), { target: { value: "60000" } });
+    fireEvent.click(screen.getByRole("button", { name: /Save details/i }));
+    await waitFor(() => expect(mockUpdateProfile).toHaveBeenCalled());
+    const sent = mockUpdateProfile.mock.calls[0]![0] as Record<string, unknown>;
+    expect(sent.annualSalary).toBe(60000);
+    expect(sent).not.toHaveProperty("isSalarySacrifice");
+    expect(sent).not.toHaveProperty("isSalarySacrificeEmployerNi");
+  });
+
+  it("after a salary-only save, the pension page and take-home read the same method", async () => {
+    const { profileFactsFromProfile } = await import("@flump/finance-engine");
+    const chosen = {
+      ...defaultProfileData,
+      pensionPercent: 6,
+      pensionEmployerPercent: 4,
+      isSalarySacrifice: true,
+    };
+    testLoaderData = { ...defaultLoaderData, userProfile: chosen };
+    testProfileData = chosen;
+    mockUpdateProfile.mockClear();
+    try {
+      render(<PensionContainer />);
+      fireEvent.click(screen.getByRole("button", { name: /Edit details/i }));
+      fireEvent.change(screen.getByLabelText(/Annual salary/), { target: { value: "60000" } });
+      fireEvent.click(screen.getByRole("button", { name: /Save details/i }));
+      await waitFor(() => expect(mockUpdateProfile).toHaveBeenCalled());
+      const stored = { ...chosen, ...(mockUpdateProfile.mock.calls[0]![0] as object) };
+      // The stored choice is untouched, so take-home (the engine) still reads salary sacrifice...
+      expect(profileFactsFromProfile(stored).isSalarySacrifice).toBe(true);
+      // ...and so does the pension page.
+      expect(screen.getByText(/· Salary sacrifice$/)).toBeDefined();
+    } finally {
+      testLoaderData = defaultLoaderData;
+      testProfileData = defaultProfileData;
+    }
+  });
+
   it("reads the contribution method as Not set while the pension facts are the defaults", () => {
     render(<PensionContainer />);
     expect(screen.getByText(/Contribution method: Not set/)).toBeDefined();

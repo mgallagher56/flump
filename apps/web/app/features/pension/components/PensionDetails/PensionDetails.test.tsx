@@ -78,9 +78,21 @@ describe("<PensionDetails />", () => {
         employerPercent: 4,
         isSalarySacrifice: true,
         isSalarySacrificeEmployerNi: true,
+        methodChanged: true,
       }),
     );
     await waitFor(() => expect(screen.queryByRole("button", { name: "Save details" })).toBeNull());
+  });
+
+  it("marks the method unchanged when only the salary is edited", async () => {
+    const onSave = vi.fn().mockResolvedValue(undefined);
+    render(<Harness onSave={onSave} />);
+    fireEvent.click(screen.getByRole("button", { name: "Edit details" }));
+    fireEvent.change(screen.getByLabelText(/Annual salary/), { target: { value: "60000" } });
+    fireEvent.click(screen.getByRole("button", { name: "Save details" }));
+    await waitFor(() =>
+      expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ methodChanged: false })),
+    );
   });
 
   it("lets the salary be cleared without snapping back to 0", () => {
