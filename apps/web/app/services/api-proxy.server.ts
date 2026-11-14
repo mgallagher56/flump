@@ -26,13 +26,27 @@ import { signedClientIpHeaders } from "./client-ip.server";
 // Hex digits match in either case; the literal path segments are case-sensitive.
 const UUID = "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}";
 
+/** Checks one query value; the proxy forwards a parameter only when its check passes. */
+type QueryCheck = (value: string) => boolean;
+
+/** The paging parameters every GET may carry: `limit` (digits) and `cursor` (an X-Next-Cursor). */
+const PAGE_QUERY: Readonly<Record<string, QueryCheck>> = {
+  limit: (value) => /^\d{1,4}$/.test(value),
+  cursor: (value) => PageCursor.safeParse(value).success,
+};
+
 export interface ProxyRule {
   methods: readonly string[];
   /** Path pattern relative to `/api`, matched against the whole normalised path. */
   pattern: string;
+  /** Query parameters this route forwards on GET. Default: the paging parameters. */
+  query?: Readonly<Record<string, QueryCheck>>;
 }
 
-/** Exactly the browser calls in the E20 inventory. A snapshot test fails if this grows. */
+/**
+ * The browser calls, each a contract route. A snapshot test fails if this changes, and
+ * api-proxy.allowlist.test.ts fails when a browser `apiFetch` call is not listed here.
+ */
 export const API_ALLOW_LIST: readonly ProxyRule[] = [
   { methods: ["PATCH"], pattern: "/user-profile" },
   { methods: ["PATCH"], pattern: "/user-profile/checklist" },
@@ -46,11 +60,23 @@ export const API_ALLOW_LIST: readonly ProxyRule[] = [
   { methods: ["PATCH"], pattern: `/accounts/${UUID}` },
   // E30 monthly check-in and back-fill: one month (YYYY-MM) per request.
   { methods: ["PUT"], pattern: "/snapshots/\\d{4}-(0[1-9]|1[0-2])" },
+  // AI connections (settings): list, create and revoke tokens, and preview the context pack.
+  { methods: ["GET", "POST"], pattern: "/mcp-tokens" },
+  { methods: ["DELETE"], pattern: `/mcp-tokens/${UUID}` },
+  {
+    methods: ["GET"],
+    pattern: "/mcp-tokens/context-pack",
+    query: { anonymize: (value) => value === "true" || value === "false" },
+  },
+  // Imports (E17): the review page's preview, commit and revert (the list and the batch load in
+  // loaders, server-side). The backend answers 404 to a user the imports rollout does not include.
+  { methods: ["POST"], pattern: `/imports/${UUID}/(preview|commit|revert)` },
 ];
 
 const COMPILED = API_ALLOW_LIST.map((rule) => ({
   methods: rule.methods,
   regex: new RegExp(`^${rule.pattern}$`),
+  query: rule.query ?? PAGE_QUERY,
 }));
 
 export const MAX_BODY_BYTES = 64 * 1024;
@@ -78,21 +104,31 @@ export function normaliseApiPath(rawPathname: string): string | null {
   return rest.length > 1 && rest.endsWith("/") ? rest.slice(0, -1) : rest;
 }
 
+function findRule(method: string, path: string) {
+  return COMPILED.find((rule) => rule.methods.includes(method) && rule.regex.test(path));
+}
+
 export function matchAllowList(method: string, path: string): boolean {
-  return COMPILED.some((rule) => rule.methods.includes(method) && rule.regex.test(path));
+  return findRule(method, path) !== undefined;
 }
 
 /**
- * The query string forwarded upstream: only `limit` (digits) and `cursor` (an X-Next-Cursor
- * value) on GET. Empty string when there is none; null when anything else is present, so the
- * proxy stays an allow-list for query parameters too.
+ * The query string forwarded upstream: on GET only, and only the parameters the matched rule
+ * lists (by default `limit` and `cursor`), each passing its check. Empty string when there is
+ * none; null when anything else is present, so the proxy stays an allow-list for query
+ * parameters too.
  */
-export function forwardedQuery(params: URLSearchParams, method: string): string | null {
+export function forwardedQuery(
+  params: URLSearchParams,
+  method: string,
+  path: string,
+): string | null {
+  const allowed = findRule(method, path)?.query ?? PAGE_QUERY;
   const out = new URLSearchParams();
   for (const [key, value] of params) {
     if (method !== "GET" || out.has(key)) return null;
-    if (key === "limit" && /^\d{1,4}$/.test(value)) out.set(key, value);
-    else if (key === "cursor" && PageCursor.safeParse(value).success) out.set(key, value);
+    const check = Object.hasOwn(allowed, key) ? allowed[key] : undefined;
+    if (check?.(value)) out.set(key, value);
     else return null;
   }
   const text = out.toString();
@@ -244,7 +280,7 @@ export async function handleApiProxy(
     }
     headers[IF_MATCH_HEADER] = ifMatch;
   }
-  const query = forwardedQuery(new URL(request.url).searchParams, method);
+  const query = forwardedQuery(new URL(request.url).searchParams, method, endpoint);
   if (query === null) return json(400, { kind: "client" }, cookieHeaders);
   const controller = new AbortController();
   const onAbort = () => controller.abort(request.signal.reason);

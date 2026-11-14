@@ -1,1 +1,27 @@
-[]
+[
+  {
+    "kind": "removed-request-field",
+    "where": "POST /v1/budget-entries request body.contractEndDate",
+    "reason": "Accepted and ignored since BE-09 (no column). The web stopped sending it in BE-10 (#691); no other client sends it."
+  },
+  {
+    "kind": "removed-request-field",
+    "where": "POST /v1/budget-entries request body.isDefault",
+    "reason": "Accepted and ignored since BE-09 (server-owned). The web stopped sending it in BE-10 (#691); no other client sends it."
+  },
+  {
+    "kind": "removed-request-field",
+    "where": "POST /v1/budget-entries request body.isPrimaryIncome",
+    "reason": "Accepted and ignored since BE-09 (server-owned). The web stopped sending it in BE-10 (#691); no other client sends it."
+  },
+  {
+    "kind": "removed-request-field",
+    "where": "PATCH /v1/budget-entries/{id} request body.contractEndDate",
+    "reason": "Accepted and ignored since BE-09 (no column). The web stopped sending it in BE-10 (#691); no other client sends it."
+  },
+  {
+    "kind": "removed-request-field",
+    "where": "PATCH /v1/user-profile request body.homeValue",
+    "reason": "Accepted and ignored since BE-09 (becomes a Property account). The web stopped sending it in BE-10 (#691); no other client sends it."
+  }
+]

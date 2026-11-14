@@ -28,7 +28,6 @@ export const ONBOARDING_PROFILE = {
   monthlyHousingCost: 900,
   monthlyOtherOutgoings: 700,
   hasMortgage: true,
-  homeValue: 300000,
   pensionPercent: 5,
   isSalarySacrifice: false,
   enabledPages: ONBOARDING_PAGES,
@@ -73,14 +72,6 @@ export const ONBOARDING_BUDGET_ENTRIES = [
 
 /** PATCH /user-profile sent last by onboarding. */
 export const ONBOARDING_COMPLETE = { onboardingCompleted: true };
-
-/**
- * Profile fields the web sends during onboarding that the backend does not persist at all.
- * The contract test asserts they are still dropped, so fixing the backend forces this list to
- * shrink rather than leaving a stale exemption. `homeValue` becomes a Property account row
- * (E23 section 3.1, P1-3); every other onboarding answer is now stored (D07).
- */
-export const PROFILE_FIELDS_NOT_PERSISTED = ["homeValue"] as const;
 
 /** Account create/update bodies, keyed by the web page that sends them. */
 export const ACCOUNT_CREATE_PAYLOADS = {
@@ -152,18 +143,15 @@ export const ACCOUNT_UPDATE_PAYLOADS = {
   mortgagePage: { interestRate: 3.99 },
 } as const;
 
-/** POST /budget-entries as sent by BudgetCategoryTable (full BudgetEntry minus server fields). */
+/** POST /budget-entries as sent by BudgetCategoryTable (writable fields only, BE-10). */
 export const BUDGET_CREATE_PAYLOAD = {
   category: "bills",
   name: "Broadband",
   amount: 35.99,
   frequency: "monthly",
   isIncome: false,
-  isPrimaryIncome: false,
   isEssential: true,
   notes: "Fibre 900",
-  isDefault: false,
-  contractEndDate: null,
 };
 
 /** PATCH /budget-entries/:id as sent by BudgetCategoryTable's edit row. */
@@ -173,11 +161,7 @@ export const BUDGET_UPDATE_PAYLOAD = {
   frequency: "annual",
   notes: null,
   isEssential: false,
-  contractEndDate: "2027-06-30",
 };
-
-/** Budget fields the web sends that the backend has no column for (silently dropped). */
-export const BUDGET_FIELDS_NOT_PERSISTED = ["contractEndDate"] as const;
 
 /** POST /budget-entries/categories */
 export const BUDGET_CATEGORY_PAYLOAD = { category: "Pets" };

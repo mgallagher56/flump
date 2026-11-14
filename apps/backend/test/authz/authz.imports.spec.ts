@@ -936,4 +936,26 @@ describe.skipIf(dbMode === "skip")("authz: imports controller (real Postgres)", 
     }
     expect(await events.count()).toBe(1);
   });
+
+  it("an allowlist lets the listed user list batches on /v1 and answers a neutral 404 to anyone else", async () => {
+    const saved = {
+      MCP_OPEN_ACCESS: process.env.MCP_OPEN_ACCESS,
+      MCP_ALLOWED_USER_IDS: process.env.MCP_ALLOWED_USER_IDS,
+    };
+    process.env.MCP_OPEN_ACCESS = "false";
+    process.env.MCP_ALLOWED_USER_IDS = USER_A;
+    try {
+      const allowed = await h.call("get", "/v1/imports", h.tokens.a);
+      expect(allowed.status).toBe(200);
+
+      const refused = await h.call("get", "/v1/imports", h.tokens.b);
+      expect(refused.status).toBe(404);
+      expect(sansRequestId(refused.body)).toMatchObject({ code: "not_found" });
+    } finally {
+      for (const [k, v] of Object.entries(saved)) {
+        if (v === undefined) delete process.env[k];
+        else process.env[k] = v;
+      }
+    }
+  });
 });

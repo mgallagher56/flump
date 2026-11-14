@@ -1,22 +1,11 @@
 import { z } from "zod";
-import { IsoDate, IsoDateTime, Money, Notes, ResponseMoney, Uuid } from "../primitives.js";
+import { IsoDateTime, Money, Notes, ResponseMoney, Uuid } from "../primitives.js";
 
 export const BUDGET_FREQUENCIES = ["monthly", "annual", "weekly"] as const;
 export const BudgetFrequency = z.enum(BUDGET_FREQUENCIES);
 
 /** Budget categories stay open: web sends "living" and custom categories. */
 export const BudgetCategory = z.string().trim().min(1).max(64);
-
-/**
- * Accepted and ignored (BE-09): the web budget table and wizard still send these with every new
- * entry, and request bodies are strict. `isPrimaryIncome` and `isDefault` are server-owned and
- * `contractEndDate` has no column. Remove them once the web stops sending them (BE-10).
- */
-const IgnoredBudgetFields = {
-  isPrimaryIncome: z.boolean().optional().meta({ description: "Ignored. Server-owned." }),
-  isDefault: z.boolean().optional().meta({ description: "Ignored. Server-owned." }),
-  contractEndDate: IsoDate.nullish().meta({ description: "Ignored. Not stored." }),
-};
 
 export const CreateBudgetEntryRequest = z.strictObject({
   category: BudgetCategory,
@@ -28,7 +17,6 @@ export const CreateBudgetEntryRequest = z.strictObject({
   isIncome: z.boolean().optional(),
   isEssential: z.boolean().optional(),
   notes: Notes.nullish(),
-  ...IgnoredBudgetFields,
 });
 export type CreateBudgetEntryRequest = z.infer<typeof CreateBudgetEntryRequest>;
 
@@ -41,7 +29,6 @@ export const UpdateBudgetEntryRequest = z.strictObject({
   isIncome: z.boolean().optional(),
   isEssential: z.boolean().optional(),
   notes: Notes.nullish(),
-  contractEndDate: IgnoredBudgetFields.contractEndDate,
 });
 export type UpdateBudgetEntryRequest = z.infer<typeof UpdateBudgetEntryRequest>;
 
