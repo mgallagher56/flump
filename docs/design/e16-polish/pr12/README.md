@@ -27,17 +27,17 @@ Files: `<page>-<width>-<theme>-<before|after>.jpg` for `home`, `pricing`, `secur
 - **Header, footer, 404:** copy tidied; the footer links the AI connection page; the placeholder company line uses a neutral dashed outline instead of the warning colour.
 - `<html lang="en-GB">`.
 
-## Re-score (visual / simplicity)
+## Re-score (visual / simplicity, independent design-critique after round 3)
 
 | Page     | Before  | After     |
 | -------- | ------- | --------- |
-| Home     | 7 / 6   | 9.5 / 9.5 |
-| Pricing  | 6 / 5   | 9 / 9     |
-| Security | 7 / 8   | 9.5 / 10  |
-| MCP      | 6.5 / 5 | 9.5 / 9.5 |
-| Contact  | 7 / 7.5 | 9.5 / 10  |
+| Home     | 7 / 6   | 9.5 / 9   |
+| Pricing  | 6 / 5   | 9.5 / 9.5 |
+| Security | 7 / 8   | 9.5 / 9.5 |
+| MCP      | 6.5 / 5 | 9 / 9.5   |
+| Contact  | 7 / 7.5 | 9.5 / 9   |
 
-Below 10 because of: the footer's long calculator column and "vs" labels (`utils/toolSlugs.ts`, PR 11); the pricing list's catalogue titles, including "£100k–£125k tax trap" (PR 11); nothing else on these pages (the footer top margin is gone).
+Round 4 then fixed the items that re-score listed as fixable in code (contact invite paragraph, footer heading spacing, security tile tone, MCP disclosure toggle, hero preview empty area, header label at 375); it was not re-scored again. Below 10 because of owner-only items: placeholder support and security addresses, company number and registered office (known #13), no real price (D10 caps pricing), copy sign-off (D15). Home simplicity keeps the pay-rise teaser's always-visible assumptions line, which the copy check requires.
 
 ## Round 2
 
