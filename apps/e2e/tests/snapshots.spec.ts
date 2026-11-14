@@ -32,7 +32,8 @@ test("monthly check-in saves this month's balances and the history page shows th
   await sheet.getByRole("button", { name: "Save balances" }).click();
 
   // Saved through PUT /api/snapshots/:month, confirmed with a toast, then reloaded from the server.
-  await expect(page.getByText(`Balances saved for ${month}`)).toBeVisible();
+  // Exact match: the toast also renders a screen-reader status line ("Success: Balances saved ...").
+  await expect(page.getByText(`Balances saved for ${month}`, { exact: true })).toBeVisible();
   await expect(sheet).toBeHidden();
   await expect(page.getByRole("heading", { level: 1, name: "Net worth history" })).toBeVisible();
   await expect(page.getByTestId("hero-figure")).toBeVisible();
