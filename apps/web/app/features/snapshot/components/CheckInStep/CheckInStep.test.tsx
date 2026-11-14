@@ -66,7 +66,9 @@ describe("CheckInStep", () => {
     expect(screen.getByText("Calculated")).toBeDefined();
     expect(screen.getByText("£186,000")).toBeDefined();
     expect(
-      screen.getByText("From your rate of 4.5% and monthly payment of £1,250 since October 2026."),
+      screen.getByText(
+        "From your interest rate of 4.5% and monthly payment of £1,250 since October 2026.",
+      ),
     ).toBeDefined();
     expect(screen.queryByRole("textbox")).toBeNull();
     await userEvent.click(screen.getByRole("button", { name: "Keep this figure" }));

@@ -28,7 +28,7 @@ describe("check-in wording", () => {
   test("explains a calculated figure from the rate, the payment and the base month", () => {
     const [m] = buildCheckInSteps([mortgage], [row(10, -186550)], MONTH);
     expect(calculatedExplain(m!.calculated!)).toBe(
-      "From your rate of 4.5% and monthly payment of £1,250 since October 2026.",
+      "From your interest rate of 4.5% and monthly payment of £1,250 since October 2026.",
     );
   });
 
