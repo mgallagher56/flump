@@ -17,6 +17,7 @@ import {
   financialPictureInputFromRows,
   isFigureKnown,
   type NetWorthBasis,
+  resolveNetWorthScope,
 } from "@flump/finance-engine";
 import { PERSONAS, type PersonaFixture, type PersonaName } from "@flump/finance-engine/testing";
 import { cleanup, render } from "@testing-library/react";
@@ -34,6 +35,7 @@ vi.mock("react-router", async () => {
     useNavigate: () => vi.fn(),
     useSearchParams: () => [new URLSearchParams(), vi.fn()],
     useFetcher: () => ({ state: "idle", data: undefined, submit: vi.fn(), load: vi.fn() }),
+    useRevalidator: () => ({ state: "idle", revalidate: vi.fn() }),
   };
 });
 
@@ -67,16 +69,31 @@ vi.mock("recharts", async () => {
 });
 
 import AccountDetailContainer from "~/containers/accounts/accountDetailContainer/AccountDetailContainer";
+import AccountsContainer from "~/containers/accounts/accountsContainer/AccountsContainer";
 import { isLiabilityType } from "~/containers/accounts/utils";
 import BudgetContainer from "~/containers/budget/BudgetContainer";
 import { DebtContainer } from "~/containers/debt/DebtContainer";
 import MortgageContainer from "~/containers/mortgage/MortgageContainer";
 import { buildAccountRows } from "~/features/accounts/accountRows";
 import { HomeDashboard } from "~/features/dashboard/components/HomeDashboard";
-import { buildSnapshotHistory } from "~/features/snapshot/snapshotModel";
+import {
+  addMonths,
+  buildCheckInRows,
+  buildSnapshotHistory,
+  londonMonth,
+} from "~/features/snapshot/snapshotModel";
 import { loader as dashboardLoader } from "~/routes/_index";
+import { loader as historyLoader } from "~/routes/app.accounts.history";
 import { loader as debtLoader } from "~/routes/app.debt";
 import { loadWorkspaceSnapshot } from "~/services/backend-client.server";
+
+/** The four net worth choice combinations; the first is the default (today's figures). */
+const ALL_BASES: NetWorthBasis[] = [
+  { countProperty: true, countStudentLoan: false },
+  { countProperty: true, countStudentLoan: true },
+  { countProperty: false, countStudentLoan: false },
+  { countProperty: false, countStudentLoan: true },
+];
 
 type CaseName = PersonaName | "noIncomeRows";
 
@@ -384,11 +401,9 @@ interface BalanceCase {
 }
 
 const BALANCE_CASES: BalanceCase[] = (["homeowner", "sam"] as const).flatMap((name) =>
-  (["current month not recorded", "current month recorded"] as const).map((month) => ({
-    name,
-    month,
-    basis: PERSONAS[name].fixture.netWorthBasis,
-  })),
+  (["current month not recorded", "current month recorded"] as const).flatMap((month) =>
+    ALL_BASES.map((basis) => ({ name, month, basis })),
+  ),
 );
 
 /**
@@ -432,7 +447,7 @@ const heroPounds = (container: HTMLElement): number => {
 };
 
 describe.each(BALANCE_CASES)(
-  "$name, $month: one balance per account, one net worth",
+  "$name, $month, $basis: one balance per account, one net worth",
   ({ name, month, basis }) => {
     const fixture = PERSONAS[name].fixture;
     const details = historyFor(fixture, month);
@@ -493,6 +508,136 @@ describe.each(BALANCE_CASES)(
         expect(heroes[i]).toBe(Math.abs(Number(account.balance)));
       });
       expect(countedSum(fixture.accounts, (i) => heroes[i] ?? 0, basis)).toBe(netWorth);
+    });
+  },
+);
+
+/**
+ * Net worth choices: under each of the four combinations, every surface that shows net worth
+ * equals the picture's figure, for every persona. The choices travel as profile fields, so the
+ * loaders must read them from the saved profile, not a default.
+ */
+const BASIS_CASES = (Object.keys(PERSONAS) as PersonaName[]).flatMap((name) =>
+  ALL_BASES.map((basis) => ({ name, basis })),
+);
+
+describe.each(BASIS_CASES)(
+  "persona $name, $basis: net worth under the choice",
+  ({ name, basis }) => {
+    const fixture = PERSONAS[name].fixture;
+    const base = workspace(fixture);
+    const rows = {
+      ...base,
+      userProfile: {
+        ...base.userProfile,
+        netWorthCountsProperty: basis.countProperty,
+        netWorthCountsStudentLoan: basis.countStudentLoan,
+      },
+    };
+    const picture = buildFinancialPicture(
+      financialPictureInputFromRows({
+        profile: rows.userProfile,
+        accounts: rows.accounts,
+        accountDetails: rows.accountDetails,
+        budgetEntries: rows.budgetEntries,
+        taxRecords: rows.taxRecords,
+      }),
+    );
+    const netWorth = picture.netWorth.netWorth;
+    const leftOut = resolveNetWorthScope(fixture.accounts, basis).leftOut;
+
+    beforeEach(() => {
+      vi.mocked(loadWorkspaceSnapshot).mockResolvedValue(rows as never);
+    });
+
+    it("the picture is computed under the saved choice", () => {
+      expect(picture.netWorth.basis).toEqual(basis);
+      expect(picture.netWorth.leftOut).toEqual(leftOut);
+    });
+
+    it("the dashboard hero shows the picture's net worth, with the line only when something is left out", async () => {
+      const data = await payload(await dashboardLoader(args()));
+      expect(data.accountsData.netWorth).toBe(netWorth);
+      expect(data.accountsData.leftOut).toEqual(leftOut);
+      const home = render(
+        <HomeDashboard
+          {...data}
+          checklistProps={{
+            hasAccounts: data.hasAccounts,
+            hasBudget: data.hasBudget,
+            hasMortgageAccount: data.hasMortgageAccount,
+            hasPension: data.hasPension,
+            hasProfile: data.hasProfile,
+            hasRunForecast: data.hasRunForecast,
+            hasSavings: data.hasSavings,
+            hasTax: false,
+            completedSteps: [],
+          }}
+          persistVisibility={false}
+        />,
+      );
+      const figures = collect(home.container, "dashboard").filter((r) => r.key === "netWorth");
+      if (fixture.accounts.length > 0) expect(figures.length).toBeGreaterThan(0);
+      for (const r of figures) expect(matches(r, netWorth)).toBe(true);
+      const line = home.container.querySelector("#dashboard-net-worth-basis");
+      expect(line !== null).toBe(fixture.accounts.length > 0 && leftOut.length > 0);
+      expect(line?.textContent ?? "").not.toMatch(/\d|£/);
+      home.unmount();
+    });
+
+    it("the accounts totals show the picture's net worth and always link to the choices", () => {
+      if (fixture.accounts.length === 0) return;
+      loaderState.data = {
+        accounts: rows.accounts,
+        accountDetails: rows.accountDetails,
+        userProfile: rows.userProfile,
+        bankConnections: [],
+        bankConnectionsEnabled: false,
+      };
+      const page = render(<AccountsContainer />);
+      const total = page.container.querySelector("#accounts-net-worth dd");
+      expect(total).not.toBeNull();
+      const reading = {
+        key: "netWorth",
+        surface: "accounts",
+        text: "",
+        ...parseFigure(total as Element),
+      };
+      expect(matches(reading, netWorth)).toBe(true);
+      const line = page.container.querySelector("#accounts-net-worth-basis");
+      expect(line?.textContent).toContain("Change what counts");
+      page.unmount();
+    });
+
+    it("the history loader passes the choice and the latest point equals the picture", async () => {
+      const data = await payload(await historyLoader(args("/app/accounts/history")));
+      expect(data.basis).toEqual(basis);
+      // Last month recorded at other values, so the series has a current-month point to check.
+      const current = londonMonth();
+      const [year, month] = addMonths(current, -1).split("-").map(Number);
+      const lastMonth = fixture.accounts.map((a) => ({
+        accountId: a.id,
+        year,
+        month,
+        value: Math.round(Number(a.balance) * 0.9),
+      }));
+      const history = buildSnapshotHistory(fixture.accounts, lastMonth, current, data.basis);
+      if (fixture.accounts.length > 0) {
+        expect(history.latest?.month).toBe(current);
+        expect(history.latest?.netWorth).toBe(netWorth);
+      }
+    });
+
+    it("the check-in counts exactly the accounts the picture counts", () => {
+      const month = londonMonth();
+      const checkIn = buildCheckInRows(fixture.accounts, fixture.details, month, month, basis);
+      const counted = new Set(checkIn.filter((r) => !r.outsideNetWorth).map((r) => r.accountId));
+      const sum = fixture.accounts.reduce((total, a) => {
+        if (!counted.has(String(a.id).toLowerCase())) return total;
+        const value = Number(a.balance);
+        return total + (isLiabilityType(String(a.type)) ? -Math.abs(value) : value);
+      }, 0);
+      expect(sum).toBe(netWorth);
     });
   },
 );
