@@ -1,24 +1,66 @@
+import {
+  asArray,
+  asDate,
+  asRecord,
+  asString,
+  BankMalformedResponseError,
+  minorUnitsToMajor,
+  optionalString,
+  type ProviderCallContext,
+  pathSegment,
+  providerFetchJson,
+} from "@flump/banking/server";
 import { Injectable } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
-import {
-  IBankProvider,
+import { authorizationCodeForm, refreshTokenForm, requestOAuthToken } from "./oauth-token";
+import type {
+  BankProvider,
+  FetchTransactionsOptions,
   ProviderAccount,
+  ProviderCallOptions,
   ProviderTransaction,
+  RevokeResult,
   TokenResponse,
 } from "./provider.interface";
 
+const PROVIDER = "starling";
+const DEFAULT_FEED_DAYS = 90;
+
+function ctx(operation: string, deadline?: AbortSignal): ProviderCallContext {
+  return { provider: PROVIDER, operation, deadline };
+}
+
+function mapCategory(starlingCat: string): string {
+  if (["GROCERIES", "EATING_OUT"].includes(starlingCat)) return "Food";
+  if (["BILLS_AND_SERVICES", "UTILITIES"].includes(starlingCat)) return "Utilities";
+  if (starlingCat === "INCOME") return "Salary";
+  if (starlingCat === "TRANSPORT") return "Transport";
+  if (starlingCat === "SHOPPING") return "Shopping";
+  return "General";
+}
+
+function accountName(accountType: unknown): string {
+  if (accountType === "JOINT") return "Starling Joint Account";
+  if (accountType === "SOLE_TRADER") return "Starling Sole Trader Account";
+  return "Starling Current Account";
+}
+
 @Injectable()
-export class StarlingProvider implements IBankProvider {
+export class StarlingProvider implements BankProvider {
   constructor(private readonly configService: ConfigService) {}
 
+  private useSandbox(): boolean {
+    return this.configService.get<string>("STARLING_USE_SANDBOX") === "true";
+  }
+
   private getBaseUrl(): string {
-    const useSandbox = this.configService.get<string>("STARLING_USE_SANDBOX") === "true";
-    return useSandbox ? "https://api-sandbox.starlingbank.com" : "https://api.starlingbank.com";
+    return this.useSandbox()
+      ? "https://api-sandbox.starlingbank.com"
+      : "https://api.starlingbank.com";
   }
 
   getAuthUrl(clientId: string, redirectUri: string, state: string): string {
-    const useSandbox = this.configService.get<string>("STARLING_USE_SANDBOX") === "true";
-    const host = useSandbox
+    const host = this.useSandbox()
       ? "https://oauth-sandbox.starlingbank.com"
       : "https://oauth.starlingbank.com";
     const params = new URLSearchParams({
@@ -30,126 +72,108 @@ export class StarlingProvider implements IBankProvider {
     return `${host}/?${params.toString()}`;
   }
 
-  async exchangeCode(
+  exchangeCode(
     clientId: string,
     clientSecret: string,
     redirectUri: string,
     code: string,
   ): Promise<TokenResponse> {
-    const body = new URLSearchParams({
-      grant_type: "authorization_code",
-      client_id: clientId,
-      client_secret: clientSecret,
-      redirect_uri: redirectUri,
-      code: code,
-    });
-
-    const url = `${this.getBaseUrl()}/oauth/access-token`;
-    const res = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body: body.toString(),
-    });
-
-    if (!res.ok) {
-      const errText = await res.text();
-      throw new Error(`Starling token exchange failed: ${errText}`);
-    }
-
-    const data = await res.json();
-    return {
-      accessToken: data.access_token,
-      refreshToken: data.refresh_token,
-      expiresIn: data.expires_in,
-    };
+    return requestOAuthToken(
+      `${this.getBaseUrl()}/oauth/access-token`,
+      authorizationCodeForm(clientId, clientSecret, redirectUri, code),
+      ctx("exchange code"),
+    );
   }
 
-  async fetchAccounts(accessToken: string): Promise<ProviderAccount[]> {
-    const url = `${this.getBaseUrl()}/api/v2/accounts`;
-    const res = await fetch(url, {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        Accept: "application/json",
-      },
-    });
+  refreshToken(
+    clientId: string,
+    clientSecret: string,
+    refreshToken: string,
+  ): Promise<TokenResponse> {
+    return requestOAuthToken(
+      `${this.getBaseUrl()}/oauth/access-token`,
+      refreshTokenForm(clientId, clientSecret, refreshToken),
+      ctx("refresh token"),
+    );
+  }
 
-    if (!res.ok) {
-      throw new Error(`Failed to fetch Starling accounts: ${await res.text()}`);
-    }
+  /** No documented revocation endpoint: the user removes access in the Starling app. */
+  async revokeConnection(_accessToken: string): Promise<RevokeResult> {
+    return { revoked: false, reason: "unsupported" };
+  }
 
-    const accountsData = await res.json();
+  async fetchAccounts(
+    accessToken: string,
+    options?: ProviderCallOptions,
+  ): Promise<ProviderAccount[]> {
+    const headers = { Authorization: `Bearer ${accessToken}`, Accept: "application/json" };
+    const base = this.getBaseUrl();
+    const accountsCtx = ctx("fetch accounts", options?.signal);
+    const accountsData = asRecord(
+      await providerFetchJson(`${base}/api/v2/accounts`, { headers }, accountsCtx),
+      "body",
+      accountsCtx,
+    );
+    const accounts = asArray(accountsData.accounts, "accounts", accountsCtx).map((raw) =>
+      asRecord(raw, "accounts[]", accountsCtx),
+    );
+
     const providerAccounts: ProviderAccount[] = [];
+    for (const acc of accounts) {
+      const accountUid = asString(acc.accountUid, "accounts[].accountUid", accountsCtx);
+      const categoryUid = asString(acc.defaultCategory, "accounts[].defaultCategory", accountsCtx);
 
-    for (const acc of accountsData.accounts || []) {
-      const accountUid = acc.accountUid;
-      const categoryUid = acc.defaultCategory;
+      // A balance we could not read fails the whole fetch (audit H2): it is never reported as 0.
+      const balanceCtx = ctx("fetch balance", options?.signal);
+      const balData = asRecord(
+        await providerFetchJson(
+          `${base}/api/v2/accounts/${pathSegment(accountUid, "accounts[].accountUid", balanceCtx)}/balance`,
+          { headers },
+          balanceCtx,
+        ),
+        "body",
+        balanceCtx,
+      );
+      const effective = asRecord(balData.effectiveBalance, "effectiveBalance", balanceCtx);
 
-      // Get Account balance
-      let balance = 0;
-      try {
-        const balUrl = `${this.getBaseUrl()}/api/v2/accounts/${accountUid}/balance`;
-        const balRes = await fetch(balUrl, {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            Accept: "application/json",
-          },
-        });
-        if (balRes.ok) {
-          const balData = await balRes.json();
-          // Starling returns balance in minorUnits
-          balance = (balData.effectiveBalance?.minorUnits || 0) / 100;
-        }
-      } catch (_err) {
-        // Fallback to 0 if balance fetch fails
-      }
-
-      // Map Type
-      const type: "Current" | "Saving" | "Mortgage" | "Credit Card" | "Investment" = "Current";
-      let name = "Starling Current Account";
-      if (acc.accountType === "JOINT") {
-        name = "Starling Joint Account";
-      } else if (acc.accountType === "SOLE_TRADER") {
-        name = "Starling Sole Trader Account";
-      }
-
-      // For Starling, both accountUid and defaultCategory (categoryUid) are needed for transaction feed queries.
-      // We encode both in externalAccountId as "accountUid:categoryUid".
+      // Transaction feeds need both ids, so the external id encodes "accountUid:categoryUid".
       providerAccounts.push({
         externalAccountId: `${accountUid}:${categoryUid}`,
-        name,
-        type,
-        balance,
-        currency: acc.currency || "GBP",
+        name: accountName(acc.accountType),
+        type: "Current",
+        balance: minorUnitsToMajor(effective.minorUnits, "effectiveBalance.minorUnits", balanceCtx),
+        currency: optionalString(acc.currency) ?? "GBP",
       });
     }
 
-    // Starling Savings Spaces (represented as Savings accounts)
-    // Starling allows fetching savings goals/spaces per account.
-    for (const mainAcc of accountsData.accounts || []) {
-      try {
-        const spacesUrl = `${this.getBaseUrl()}/api/v2/sub-accounts/${mainAcc.accountUid}/savings-goals`;
-        const spacesRes = await fetch(spacesUrl, {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            Accept: "application/json",
-          },
+    // Savings spaces are separate savings accounts; a failed call fails the fetch rather than
+    // silently dropping them.
+    for (const acc of accounts) {
+      const accountUid = asString(acc.accountUid, "accounts[].accountUid", accountsCtx);
+      const spacesCtx = ctx("fetch savings spaces", options?.signal);
+      const spacesData = asRecord(
+        await providerFetchJson(
+          `${base}/api/v2/account/${pathSegment(accountUid, "accounts[].accountUid", spacesCtx)}/savings-goals`,
+          { headers },
+          spacesCtx,
+        ),
+        "body",
+        spacesCtx,
+      );
+      for (const rawSpace of asArray(spacesData.savingsGoals, "savingsGoals", spacesCtx)) {
+        const space = asRecord(rawSpace, "savingsGoals[]", spacesCtx);
+        const totalSaved = asRecord(space.totalSaved, "savingsGoals[].totalSaved", spacesCtx);
+        providerAccounts.push({
+          externalAccountId: `space:${accountUid}:${asString(space.savingsGoalUid, "savingsGoals[].savingsGoalUid", spacesCtx)}`,
+          name: `Starling Saving: ${optionalString(space.name) ?? "Space"}`,
+          type: "Saving",
+          balance: minorUnitsToMajor(
+            totalSaved.minorUnits,
+            "savingsGoals[].totalSaved.minorUnits",
+            spacesCtx,
+          ),
+          currency: optionalString(totalSaved.currency) ?? "GBP",
         });
-        if (spacesRes.ok) {
-          const spacesData = await spacesRes.json();
-          for (const space of spacesData.savingsGoals || []) {
-            providerAccounts.push({
-              externalAccountId: `space:${mainAcc.accountUid}:${space.savingsGoalUid}`,
-              name: `Starling Saving: ${space.name}`,
-              type: "Saving",
-              balance: (space.totalSaved?.minorUnits || 0) / 100,
-              currency: space.totalSaved?.currency || "GBP",
-            });
-          }
-        }
-      } catch (_err) {
-        // Skip spaces on error
       }
     }
 
@@ -159,59 +183,52 @@ export class StarlingProvider implements IBankProvider {
   async fetchTransactions(
     accessToken: string,
     externalAccountId: string,
-    _details?: any,
+    options?: FetchTransactionsOptions,
   ): Promise<ProviderTransaction[]> {
-    if (externalAccountId.startsWith("space:")) {
-      // Starling savings spaces don't have a direct transactions feed API in the same format
-      return [];
-    }
+    // Savings spaces have no transaction feed in this API: nothing to fetch, by design.
+    if (externalAccountId.startsWith("space:")) return [];
 
+    const txCtx = ctx("fetch transactions", options?.signal);
     const [accountUid, categoryUid] = externalAccountId.split(":");
-    if (!accountUid || !categoryUid) return [];
-
-    const url = `${this.getBaseUrl()}/api/v2/feed/account/${accountUid}/category/${categoryUid}`;
-    const res = await fetch(url, {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        Accept: "application/json",
-      },
-    });
-
-    if (!res.ok) {
-      return [];
+    if (!accountUid || !categoryUid) {
+      throw new BankMalformedResponseError({ ...txCtx, field: "externalAccountId" });
     }
 
-    const feedData = await res.json();
+    // The feed requires `changesSince`; without it Starling answers 400.
+    const since = options?.since ?? new Date(Date.now() - DEFAULT_FEED_DAYS * 24 * 60 * 60 * 1000);
+    const query = new URLSearchParams({ changesSince: since.toISOString() });
+    const feedData = asRecord(
+      await providerFetchJson(
+        `${this.getBaseUrl()}/api/v2/feed/account/${pathSegment(accountUid, "externalAccountId", txCtx)}/category/${pathSegment(categoryUid, "externalAccountId", txCtx)}?${query.toString()}`,
+        { headers: { Authorization: `Bearer ${accessToken}`, Accept: "application/json" } },
+        txCtx,
+      ),
+      "body",
+      txCtx,
+    );
+
     const transactions: ProviderTransaction[] = [];
-
-    for (const item of feedData.feedItems || []) {
-      const isOut = item.direction === "OUT";
-      const rawAmount = (item.amount?.minorUnits || 0) / 100;
-      const amount = isOut ? -rawAmount : rawAmount;
-
-      // Translate Starling spendingCategory to standard categories
-      let category = "General";
-      const starlingCat = item.spendingCategory || "";
-      if (["GROCERIES", "EATING_OUT"].includes(starlingCat)) {
-        category = "Food";
-      } else if (["BILLS_AND_SERVICES", "UTILITIES"].includes(starlingCat)) {
-        category = "Utilities";
-      } else if (starlingCat === "INCOME") {
-        category = "Salary";
-      } else if (starlingCat === "TRANSPORT") {
-        category = "Transport";
-      } else if (starlingCat === "SHOPPING") {
-        category = "Shopping";
+    for (const raw of asArray(feedData.feedItems, "feedItems", txCtx)) {
+      const item = asRecord(raw, "feedItems[]", txCtx);
+      if (item.direction !== "IN" && item.direction !== "OUT") {
+        throw new BankMalformedResponseError({ ...txCtx, field: "feedItems[].direction" });
       }
-
+      const amountObj = asRecord(item.amount, "feedItems[].amount", txCtx);
+      const magnitude = minorUnitsToMajor(
+        amountObj.minorUnits,
+        "feedItems[].amount.minorUnits",
+        txCtx,
+      );
       transactions.push({
-        amount,
-        description: item.counterPartyName || item.reference || "Starling Sync Transaction",
-        category,
-        timestamp: new Date(item.transactionTime),
+        amount: item.direction === "OUT" ? -magnitude : magnitude,
+        description:
+          optionalString(item.counterPartyName) ??
+          optionalString(item.reference) ??
+          "Starling Sync Transaction",
+        category: mapCategory(optionalString(item.spendingCategory) ?? ""),
+        timestamp: asDate(item.transactionTime, "feedItems[].transactionTime", txCtx),
       });
     }
-
     return transactions;
   }
 }
