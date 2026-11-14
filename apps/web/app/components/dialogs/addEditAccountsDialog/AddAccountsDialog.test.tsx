@@ -72,3 +72,24 @@ describe("<AddAccountDialogBtn", () => {
     },
   );
 });
+
+describe("before hydration (#701)", () => {
+  test("with fallbackHref the trigger is a real link, and a click opens the dialog in place", async () => {
+    mocks.mockUseLoaderData.mockReturnValue({ user: mockUser });
+    const { getByRole, user } = customRender(
+      <AddEditAccountsDialogBtn fallbackHref="/app/accounts?add=1" variant="primary" />,
+    );
+    const link = getByRole("link", { name: "addAccount" });
+    expect(link.getAttribute("href")).toBe("/app/accounts?add=1");
+    await user.click(link);
+    expect(getByRole("dialog")).toBeDefined();
+  });
+
+  test("defaultOpen opens the dialog on first render (arrived through the link)", () => {
+    mocks.mockUseLoaderData.mockReturnValue({ user: mockUser });
+    const { getByRole } = customRender(
+      <AddEditAccountsDialogBtn defaultOpen fallbackHref="/app/accounts?add=1" variant="primary" />,
+    );
+    expect(getByRole("dialog")).toBeDefined();
+  });
+});
