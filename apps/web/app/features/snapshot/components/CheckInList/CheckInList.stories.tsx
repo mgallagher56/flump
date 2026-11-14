@@ -33,13 +33,17 @@ export const KeyboardFlow: Story = {
   play: async ({ canvasElement, args }) => {
     const canvas = within(canvasElement);
     await userEvent.click(canvas.getByTestId(`checkin-value-${everyday}`));
+    // An empty Enter only moves on; a typed figure saves as Update.
     await userEvent.keyboard("{Enter}");
     await waitFor(() =>
       expect(document.activeElement).toBe(canvas.getByTestId(`checkin-value-${card}`)),
     );
-    await expect(args.onSave).toHaveBeenCalledTimes(1);
+    await expect(args.onSave).not.toHaveBeenCalled();
+    await userEvent.click(canvas.getByTestId(`checkin-value-${everyday}`));
+    await userEvent.keyboard("3400{Enter}");
+    await waitFor(() => expect(args.onSave).toHaveBeenCalledTimes(1));
     await expect((await canvas.findByTestId(`checkin-status-${everyday}`)).textContent).toBe(
-      "No change",
+      "Updated £3,400",
     );
   },
 };

@@ -1,7 +1,7 @@
 import { ChartFigure } from "@repo/ui";
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { MonthLinePlot, monthTicks, yTicks } from "./MonthLinePlot";
+import { endLabelDy, MonthLinePlot, monthTicks, yTicks } from "./MonthLinePlot";
 
 vi.mock("recharts", async () => {
   const actual = await vi.importActual("recharts");
@@ -56,5 +56,23 @@ describe("MonthLinePlot", () => {
     expect(yTicks([0, 20000])).toEqual([0, 5000, 10000, 15000, 20000]);
     expect(yTicks([-10000, 10000])).toEqual([-10000, -5000, 0, 5000, 10000]);
     expect(yTicks([5, 5])).toEqual([5]);
+  });
+});
+
+describe("endLabelDy", () => {
+  const dot = { x: 500, y: 100 };
+  it("keeps the default offset when the line rises into the end point", () => {
+    // Pixel y grows downwards: the earlier point is lower on screen.
+    expect(endLabelDy(dot, [{ x: 400, y: 150 }, dot], 80, -14)).toBe(-14);
+  });
+
+  it("lifts the label clear of a line that comes down into the end point", () => {
+    // 80px left of the dot the line is 40 * 80 / 100 = 32px above it, plus the 8px gap.
+    expect(endLabelDy(dot, [{ x: 400, y: 60 }, dot], 80, -14)).toBeCloseTo(-40);
+  });
+
+  it("uses the highest point of the line within the label's span", () => {
+    const line = [{ x: 300, y: 100 }, { x: 440, y: 50 }, dot];
+    expect(endLabelDy(dot, line, 100, -14)).toBe(-58);
   });
 });

@@ -302,7 +302,7 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
                 onClick={cancelDelete}
                 ref={cancelDeleteRef}
                 type="button"
-                variant="outline"
+                variant="ghost"
               >
                 Cancel
               </Button>

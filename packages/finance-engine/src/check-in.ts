@@ -605,13 +605,16 @@ export type DoneKind = "updated" | "noChange" | "calculated";
 const samePence = (a: number, b: number) => Math.round(a * 100) === Math.round(b * 100);
 
 /**
- * How a done step reads. An answer from this check-in reads by its source. A figure recorded
- * before (whose source may not be stored yet) reads as No change when it repeats `lastValue`.
+ * How a done step reads. A figure with a known source (an answer from this check-in, or a row
+ * already recorded this month) reads by that source: manual is Updated, confirmed is No change,
+ * calculated is Calculated. The saved balance is never compared then, because saving the month
+ * moves it to the same figure. Only a recorded row with no known source falls back to comparing
+ * with `lastValue`.
  */
 export function doneKind(step: CheckInStep, figure: StepFigure): DoneKind {
   if (figure.source === "calculated") return "calculated";
   if (figure.source === "confirmed") return "noChange";
-  if (figure.fromSession) return "updated";
+  if (figure.source === "manual" || figure.fromSession) return "updated";
   return step.lastValue !== null && samePence(figure.value, step.lastValue)
     ? "noChange"
     : "updated";

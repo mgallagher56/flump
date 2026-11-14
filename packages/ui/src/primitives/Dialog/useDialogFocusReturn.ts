@@ -42,9 +42,10 @@ const focusMainLandmark = () => {
 /**
  * Focus return for controlled (Trigger-less) Radix dialogs and sheets. Spread the two handlers
  * onto `RadixDialog.Content`. Shared by Dialog and Sheet so both keep the Safari/Firefox and
- * removed-opener fixes.
+ * removed-opener fixes. `returnFocusTo` names the control focus lands on when the dialog opened
+ * with nothing focused (opened from a URL, say), instead of the page body.
  */
-export const useDialogFocusReturn = () => {
+export const useDialogFocusReturn = (returnFocusTo?: () => HTMLElement | null) => {
   const returnFocusRef = useRef<HTMLElement | null>(null);
   useEffect(trackPointerTarget, []);
   return {
@@ -59,7 +60,13 @@ export const useDialogFocusReturn = () => {
       const active = document.activeElement;
       if (active && active !== document.body) return;
       event.preventDefault();
-      if (target?.isConnected) target.focus();
+      if (target?.isConnected) {
+        target.focus();
+        return;
+      }
+      // Opened with nothing focused (for example from a URL): the page names its own control.
+      const fallback = returnFocusTo?.();
+      if (fallback?.isConnected) fallback.focus();
       else if (target) focusMainLandmark();
     },
   };

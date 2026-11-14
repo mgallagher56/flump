@@ -22,10 +22,13 @@ import {
   toChartPoints,
 } from "../../snapshotModel";
 import type { SaveSnapshot } from "../../useSaveSnapshot";
-import { type CheckInMode, CheckInSheet } from "../CheckInSheet";
+import { type CheckInMode, CheckInSheet, firstShownElement } from "../CheckInSheet";
 import { MonthlyChangeTable } from "../MonthlyChangeTable";
 import { MIN_CHART_MONTHS, NetWorthHistoryChart } from "../NetWorthHistoryChart";
-import { changesBody, sectionStack } from "./SnapshotHistoryPage.styles";
+import { changesBody, flushLink, sectionStack } from "./SnapshotHistoryPage.styles";
+
+/** Opened from "?checkIn=1", the check-in returns focus to the page's "Update balances". */
+const RETURN_FOCUS_TO = firstShownElement(["snapshot-open-check-in"]);
 
 export interface SnapshotHistoryPageProps {
   accounts: readonly SnapshotAccountInput[];
@@ -189,7 +192,7 @@ export const SnapshotHistoryPage: FC<SnapshotHistoryPageProps> = ({
         <EmptyState
           action={
             hasAccounts ? (
-              <Button onClick={() => setSheet("checkIn")} type="button">
+              <Button id="snapshot-open-check-in" onClick={() => setSheet("checkIn")} type="button">
                 Update balances
               </Button>
             ) : (
@@ -240,6 +243,7 @@ export const SnapshotHistoryPage: FC<SnapshotHistoryPageProps> = ({
                   {/* Before the chart shows, the one primary button leads the row (P7.4). */}
                   {enoughForChart ? null : checkInButton}
                   <Button
+                    className={flushLink()}
                     data-testid="snapshot-open-backfill"
                     disabled={!hasAccounts}
                     id="snapshot-open-backfill"
@@ -287,6 +291,7 @@ export const SnapshotHistoryPage: FC<SnapshotHistoryPageProps> = ({
           }}
           onSave={onSave}
           open
+          returnFocusTo={RETURN_FOCUS_TO}
         />
       ) : null}
     </PageBody>

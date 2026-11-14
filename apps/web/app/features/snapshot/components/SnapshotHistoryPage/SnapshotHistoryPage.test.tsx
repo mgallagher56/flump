@@ -1,6 +1,6 @@
 import { DEFAULT_NET_WORTH_BASIS } from "@flump/finance-engine";
 import { expectPageRules } from "@repo/ui/testing";
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 import { describe, expect, it, vi } from "vitest";
@@ -252,6 +252,16 @@ describe("SnapshotHistoryPage", () => {
   it("opens the check-in on arrival from the dashboard link", () => {
     renderPage({ initialSheet: "checkIn" });
     expect(screen.getByRole("dialog", { name: "Monthly check-in" })).toBeDefined();
+  });
+
+  it("opened from the URL, Escape returns focus to Update balances, not the page body", async () => {
+    renderPage({ accountDetails: TREND, initialSheet: "checkIn" });
+    expect(screen.getByRole("dialog", { name: "Monthly check-in" })).toBeDefined();
+    await userEvent.keyboard("{Escape}");
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    await waitFor(() =>
+      expect(document.activeElement).toBe(screen.getByRole("button", { name: "Update balances" })),
+    );
   });
 
   it("opens back-fill from Add earlier months", async () => {

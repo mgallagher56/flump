@@ -1,5 +1,6 @@
 import { categorizeAccountType, type NetWorthLeftOut } from "@flump/finance-engine";
 import {
+  Button,
   Card,
   DataList,
   type DataListItem,
@@ -33,7 +34,6 @@ import {
   group,
   groupsGrid,
   groupTitle,
-  historyLink,
   isaLink,
   listInCard,
   listRoot,
@@ -276,14 +276,11 @@ export const AccountsGroupList: FC<AccountsGroupListProps> = ({
         <div className={netWorthLinks()}>
           {/* The one place the choice is always reachable from the figure, even with nothing left out. */}
           <NetWorthBasisLine alwaysShowLink id="accounts-net-worth-basis" leftOut={leftOut} />
-          <Link
-            className={historyLink()}
-            data-testid="accounts-view-history"
-            id="accounts-view-history"
-            to={HISTORY_HREF}
-          >
-            See how it has changed
-          </Link>
+          <Button asChild size="sm" variant="link">
+            <Link data-testid="accounts-view-history" id="accounts-view-history" to={HISTORY_HREF}>
+              See how it has changed
+            </Link>
+          </Button>
         </div>
         {afterNetWorth}
       </div>

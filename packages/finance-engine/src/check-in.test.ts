@@ -381,10 +381,28 @@ describe("done steps", () => {
     expect(doneKind(byId("c"), f)).toBe("updated");
   });
 
-  it("a figure recorded before reads as No change when it repeats the saved balance", () => {
-    expect(doneKind(byId("c"), stepFigure(byId("c"), null)!)).toBe("noChange");
+  it("a row recorded this month reads by its source, even when the saved balance now matches it", () => {
+    // Saving the month moves the saved balance to the typed figure, so a typed (manual) row equal
+    // to `lastValue` is still Updated on reopening.
+    expect(byId("c").lastValue).toBe(3400);
+    expect(doneKind(byId("c"), stepFigure(byId("c"), null)!)).toBe("updated");
     expect(doneKind(byId("v"), stepFigure(byId("v"), null)!)).toBe("updated");
     expect(doneKind(byId("m"), stepFigure(byId("m"), null)!)).toBe("calculated");
+    const confirmed = buildCheckInSteps(accounts, [row("C", 11, 3400, "confirmed")], MONTH);
+    const c = confirmed.find((s) => s.accountId === "c")!;
+    expect(doneKind(c, stepFigure(c, null)!)).toBe("noChange");
+  });
+
+  it("a recorded row with no known source reads as No change when it repeats the saved balance", () => {
+    const old = buildCheckInSteps(
+      accounts,
+      [row("C", 11, 3400, "backfill"), row("V", 11, 7500, "backfill")],
+      MONTH,
+    );
+    const c = old.find((s) => s.accountId === "c")!;
+    expect(doneKind(c, stepFigure(c, null)!)).toBe("noChange");
+    const v = old.find((s) => s.accountId === "v")!;
+    expect(doneKind(v, stepFigure(v, null)!)).toBe("updated");
   });
 
   it("an open step has no figure", () => {

@@ -32,6 +32,11 @@ export interface DialogProps {
   size?: "sm" | "md" | "lg";
   /** Accessible name for the close button. */
   closeLabel?: string;
+  /**
+   * The control focus returns to on close when the dialog opened with nothing focused (for
+   * example from a URL). Without it focus would fall to the page body.
+   */
+  returnFocusTo?: () => HTMLElement | null;
   /** Stable id for the dialog content (also set as data-testid). */
   id?: string;
   className?: string;
@@ -54,9 +59,10 @@ export const Dialog: FC<DialogProps> = ({
   closeLabel = "Close",
   id,
   className,
+  returnFocusTo,
 }) => {
   // Controlled dialogs have no Radix Trigger, so remember what had focus and restore it on close.
-  const focusReturn = useDialogFocusReturn();
+  const focusReturn = useDialogFocusReturn(returnFocusTo);
   return (
     <RadixDialog.Root open={open} onOpenChange={onOpenChange}>
       <RadixDialog.Portal>

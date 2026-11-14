@@ -5,7 +5,7 @@ import { useLoaderData, useSearchParams } from "react-router";
 import AddEditAccountsDialogBtn from "~/components/dialogs/addEditAccountsDialog/AddEditAccountsDialog";
 import { buildAccountRows } from "~/features/accounts/accountRows";
 import { AccountsGroupList } from "~/features/accounts/components/AccountsGroupList";
-import { CheckInSheet } from "~/features/snapshot/components/CheckInSheet";
+import { CheckInSheet, firstShownElement } from "~/features/snapshot/components/CheckInSheet";
 import { londonMonth } from "~/features/snapshot/snapshotModel";
 import { useSaveSnapshot } from "~/features/snapshot/useSaveSnapshot";
 import type { loader } from "~/routes/app.accounts._index";
@@ -15,6 +15,11 @@ import { emptyWrap, headerActions, phoneOnly, wideOnly } from "./AccountsContain
 
 const ADD_HREF = "/app/accounts?add=1";
 const CHECK_IN_HREF = "/app/accounts?checkIn=1";
+// Opened from "?checkIn=1", the check-in returns focus to whichever "Update balances" is shown.
+const RETURN_FOCUS_TO = firstShownElement([
+  "accounts-open-check-in",
+  "accounts-open-check-in-phone",
+]);
 
 /**
  * The accounts list (E16 PR 5): the h1 with one primary action, then what you own, what you owe
@@ -129,6 +134,7 @@ const AccountsContainer: FC = () => {
             onOpenChange={setCheckInOpen}
             onSave={saveSnapshot}
             open={checkInOpen}
+            returnFocusTo={RETURN_FOCUS_TO}
           />
         </>
       ) : (
