@@ -115,6 +115,8 @@ describe("tax-year defaults and verification (E17-N5, re-plan PR A)", () => {
     }
     const uris = (await h.client.listResources()).resources.map((r) => r.uri);
     expect(uris).toEqual(["flump://schema"]);
-    expect(h.client.getServerCapabilities()?.prompts).toBeUndefined();
+    // Only PR D's two import prompts exist; the legacy prompts are gone.
+    const prompts = (await h.client.listPrompts()).prompts.map((p) => p.name).sort();
+    expect(prompts).toEqual(["import-spreadsheet", "monthly-check-in"]);
   });
 });

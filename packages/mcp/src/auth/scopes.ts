@@ -2,7 +2,9 @@
  * MCP scope enforcement (E20-N17, using today's scope names).
  *
  * Every tool, resource and prompt needs `mcp:read:anonymized` or `mcp:read:full`.
- * Simulation tools additionally need `mcp:simulate`. Every registered primitive
+ * Simulation tools additionally need `mcp:simulate`. The staging tools and the import prompts
+ * additionally need `write:stage` (re-plan PR D), an opt-in scope chosen when the token is minted.
+ * It lets a token stage an import batch for review, never commit, revert or delete. Every registered primitive
  * must have an entry in the tables below (fail closed): the facade throws at
  * construction otherwise, and a runtime lookup of an unlisted name is denied.
  *
@@ -11,7 +13,19 @@
  * `defineFlumpTool` (E17-N8) check scopes themselves and throw if `update({ callback })` is used.
  */
 
-export const MCP_SCOPES = ["mcp:read:anonymized", "mcp:read:full", "mcp:simulate"] as const;
+/**
+ * `write:stage` has no `mcp:` prefix: it is the name the re-plan (section 5) and the web token
+ * form use, and it is the scope string stored on the token.
+ */
+export const MCP_SCOPES = [
+  "mcp:read:anonymized",
+  "mcp:read:full",
+  "mcp:simulate",
+  "write:stage",
+] as const;
+
+/** The opt-in staging scope (E17 re-plan PR D). */
+export const WRITE_STAGE_SCOPE = "write:stage" satisfies McpScope;
 
 export type McpScope = (typeof MCP_SCOPES)[number];
 
@@ -33,6 +47,12 @@ const SIMULATE: ScopeRequirement = {
   allOf: ["mcp:simulate"],
 };
 
+/** Staging needs a read scope too, so a staging token can also read what it staged against. */
+const STAGE: ScopeRequirement = {
+  anyOf: READ.anyOf,
+  allOf: ["write:stage"],
+};
+
 export const TOOL_SCOPES: Readonly<Record<string, ScopeRequirement>> = {
   // Read tools (E17-N9, plus the 2026-11 re-plan PR B query reads and the one tax tool).
   get_financial_snapshot: READ,
@@ -47,6 +67,9 @@ export const TOOL_SCOPES: Readonly<Record<string, ScopeRequirement>> = {
   compare_mortgage_overpay_vs_invest: SIMULATE,
   simulate_debt_payoff: SIMULATE,
   project_net_worth: SIMULATE,
+  // Write tools (re-plan PR D): stage and read back an import batch. Nothing here can commit.
+  stage_import: STAGE,
+  get_import_status: STAGE,
 };
 
 /** `schema` is the data dictionary; it holds no user data but stays behind a read scope. */
@@ -54,8 +77,11 @@ export const RESOURCE_SCOPES: Readonly<Record<string, ScopeRequirement>> = {
   schema: READ,
 };
 
-/** No prompts until the re-plan's PR D adds `import-spreadsheet` and `monthly-check-in`. */
-export const PROMPT_SCOPES: Readonly<Record<string, ScopeRequirement>> = {};
+/** The import prompts (re-plan PR D) drive `stage_import`, so they need the staging scope. */
+export const PROMPT_SCOPES: Readonly<Record<string, ScopeRequirement>> = {
+  "import-spreadsheet": STAGE,
+  "monthly-check-in": STAGE,
+};
 
 export type McpPrimitiveKind = "tool" | "resource" | "prompt";
 

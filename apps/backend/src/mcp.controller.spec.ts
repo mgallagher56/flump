@@ -1,5 +1,6 @@
 import { BadRequestException, ParseUUIDPipe } from "@nestjs/common";
 import { describe, expect, it, vi } from "vitest";
+import { encodeActivityCursor } from "./agent/agent-audit.service";
 import type { McpTokenService } from "./agent/mcp-token.service";
 import { AuthGuard } from "./auth/auth.guard";
 import { McpController } from "./mcp.controller";
@@ -36,7 +37,63 @@ describe("McpController", () => {
     revokeToken: vi.fn().mockResolvedValue({ success: true }),
   } as unknown as McpTokenService;
 
-  const controller = new McpController(mockMcpService, mockTokenService);
+  const mockAudit = {
+    listForToken: vi.fn().mockResolvedValue({ events: [], nextBefore: null }),
+  };
+  const controller = new McpController(mockMcpService, mockTokenService, mockAudit as never);
+  const TOKEN_ID = "00000000-0000-4000-8000-000000000001";
+
+  it("passes allowStaging through to the token service (default left to the service)", async () => {
+    await controller.createToken({ user: { id: "u_1" } }, { name: "Stager", allowStaging: true });
+    expect(mockTokenService.createPatToken).toHaveBeenLastCalledWith("u_1", "Stager", {
+      expiryDays: undefined,
+      anonymizeInstitutions: undefined,
+      allowStaging: true,
+    });
+  });
+
+  it("activity: returns the owner's page with the parsed limit and cursor", async () => {
+    (mockTokenService as unknown as { ownsToken: unknown }).ownsToken = vi
+      .fn()
+      .mockResolvedValue(true);
+    await controller.getActivity({ user: { id: "u_1" } }, TOKEN_ID, {
+      limit: "10",
+      before: encodeActivityCursor(TOKEN_ID),
+    });
+    expect(mockAudit.listForToken).toHaveBeenLastCalledWith("u_1", TOKEN_ID, {
+      limit: 10,
+      before: encodeActivityCursor(TOKEN_ID),
+    });
+  });
+
+  it("activity: another user's token is a 404 and reads nothing", async () => {
+    (mockTokenService as unknown as { ownsToken: unknown }).ownsToken = vi
+      .fn()
+      .mockResolvedValue(false);
+    mockAudit.listForToken.mockClear();
+    await expect(controller.getActivity({ user: { id: "u_2" } }, TOKEN_ID, {})).rejects.toThrow(
+      "not found",
+    );
+    expect(mockAudit.listForToken).not.toHaveBeenCalled();
+  });
+
+  it("activity: rejects a limit over 100 or a bad cursor with 400", async () => {
+    for (const query of [
+      { limit: "101" },
+      { limit: "0" },
+      { before: "yesterday" },
+      { before: "bm90LWEtdXVpZA" },
+    ]) {
+      await expect(
+        controller.getActivity({ user: { id: "u_1" } }, TOKEN_ID, query),
+      ).rejects.toBeInstanceOf(BadRequestException);
+    }
+  });
+
+  it("activity: session auth only, with a UUID param", () => {
+    const guards = Reflect.getMetadata("__guards__", McpController.prototype.getActivity);
+    expect(guards).toEqual([AuthGuard]);
+  });
 
   it("lists active AI connection tokens", async () => {
     const tokens = await controller.listTokens({ user: { id: "u_1" } });

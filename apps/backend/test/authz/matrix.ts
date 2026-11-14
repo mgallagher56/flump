@@ -96,6 +96,7 @@ export const ROUTE_MATRIX: Readonly<Record<string, MatrixRow>> = {
   "POST /mcp-tokens": mcpTokens,
   "DELETE /mcp-tokens/:id": mcpTokens,
   "GET /mcp-tokens/context-pack": mcpTokens,
+  "GET /mcp-tokens/:id/activity": mcpTokens,
 };
 
 /** Routes allowed to carry no AuthGuard. Anything else without one fails the meta-test. */

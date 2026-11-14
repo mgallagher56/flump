@@ -9,10 +9,26 @@ import {
   type VerifiedToken,
 } from "../auth/token-verifier.js";
 import { createFlumpMcpServer } from "../server.js";
-import type { McpUserDataProvider } from "../types.js";
+import type { McpAuditEvent, McpImportProvider, McpUserDataProvider } from "../types.js";
+
+/** Who made an audited call: the verified token plus the self-reported client, if any. */
+export interface McpAuditCaller {
+  token: VerifiedToken;
+  /** Self-reported (the User-Agent header); the sink must sanitise it. */
+  clientName?: string;
+}
 
 export interface HttpTransportOptions extends TokenVerifierOptions {
   dataProvider: McpUserDataProvider;
+  /** Staging access for the write tools (re-plan PR D). Without it they refuse. */
+  imports?: McpImportProvider;
+  /**
+   * Audit sink for every tool call (E17-N17), run in this process so a client cannot skip it.
+   * Failures are swallowed.
+   */
+  audit?: (caller: McpAuditCaller, event: McpAuditEvent) => void | Promise<void>;
+  /** Keyed fingerprint of a call's arguments for the audit row; null when no key is set. */
+  fingerprintArgs?: (args: unknown) => string | null;
   rateLimiter?: McpRateLimiter;
   /** Pre-auth limiter for failed attempts per client IP (default 10 per minute). */
   failedAuthLimiter?: FailedAuthLimiter;
@@ -106,6 +122,7 @@ export class HttpMcpHandler {
   private readonly rateLimiter: McpRateLimiter;
   private readonly failedAuthLimiter: FailedAuthLimiter;
   private readonly dataProvider: McpUserDataProvider;
+  private readonly options: HttpTransportOptions;
   private readonly isEnabled: () => boolean;
   private readonly allowedOrigins: ReadonlySet<string>;
 
@@ -116,6 +133,23 @@ export class HttpMcpHandler {
     this.rateLimiter = options.rateLimiter ?? new McpRateLimiter(60, 300);
     this.failedAuthLimiter = options.failedAuthLimiter ?? new FailedAuthLimiter(10, 60_000);
     this.dataProvider = options.dataProvider;
+    this.options = options;
+  }
+
+  /** One server per request, carrying this request's caller into the audit sink. */
+  private serverFor(verified: VerifiedToken, userAgent: unknown) {
+    const { audit, imports, fingerprintArgs } = this.options;
+    const caller: McpAuditCaller = {
+      token: verified,
+      ...(typeof userAgent === "string" ? { clientName: userAgent } : {}),
+    };
+    return createFlumpMcpServer({
+      token: verified,
+      dataProvider: this.dataProvider,
+      ...(imports ? { imports } : {}),
+      ...(audit ? { audit: (event: McpAuditEvent) => audit(caller, event) } : {}),
+      ...(fingerprintArgs ? { fingerprintArgs } : {}),
+    });
   }
 
   /** Awaits the usage write; a failure is logged and never fails the request. */
@@ -185,10 +219,7 @@ export class HttpMcpHandler {
       await this.recordUsage(verified, parsedBody ?? req.body);
 
       // 3. Create server and transport instance for this request
-      const mcpServer = createFlumpMcpServer({
-        token: verified,
-        dataProvider: this.dataProvider,
-      });
+      const mcpServer = this.serverFor(verified, req.headers?.["user-agent"]);
 
       const transport = new StreamableHTTPServerTransport();
       await mcpServer.connect(transport);
@@ -273,10 +304,7 @@ export class HttpMcpHandler {
       }
       await this.recordUsage(verified, body);
 
-      const mcpServer = createFlumpMcpServer({
-        token: verified,
-        dataProvider: this.dataProvider,
-      });
+      const mcpServer = this.serverFor(verified, request.headers.get("user-agent"));
 
       const transport = new WebStandardStreamableHTTPServerTransport();
       await mcpServer.connect(transport);

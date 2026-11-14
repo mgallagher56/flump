@@ -28,8 +28,9 @@ describe("MCP surface snapshot (E17-N1)", () => {
     expect(resources).toMatchSnapshot();
   });
 
-  it("registers no prompts (2026-11 re-plan PR A; PR D adds two)", () => {
-    expect(h.client.getServerCapabilities()?.prompts).toBeUndefined();
+  it("pins prompts/list (re-plan PR D adds two)", async () => {
+    const { prompts } = await h.client.listPrompts();
+    expect(prompts).toMatchSnapshot();
   });
 });
 

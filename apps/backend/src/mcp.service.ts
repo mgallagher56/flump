@@ -1,11 +1,14 @@
 import { buildFlumpAiContextPack, formatAiContextPackMarkdown } from "@flump/finance-engine";
-import { HttpMcpHandler } from "@flump/mcp";
+import { HttpMcpHandler, type McpAuditCaller, type McpAuditEvent } from "@flump/mcp";
 import { Inject, Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
+import { AgentAuditService } from "./agent/agent-audit.service";
 import { AgentDataService } from "./agent/agent-data.service";
+import { McpImportsAdapter } from "./agent/mcp-imports.adapter";
 import { McpTokenService } from "./agent/mcp-token.service";
 import { AUTH_MODE } from "./auth/auth.module";
 import { DEV_BYPASS_TOKEN, DEV_USER } from "./auth/dev-bypass.verifier";
+import { webOriginBootWarning } from "./imports/review-url";
 import {
   isProductionLike,
   mcpAllowedOriginsBootWarning,
@@ -24,13 +27,27 @@ export class McpService {
     private readonly agentData: AgentDataService,
     private readonly configService: ConfigService,
     @Inject(AUTH_MODE) authMode: "workos" | "dev",
+    private readonly audit: AgentAuditService,
+    private readonly importsAdapter: McpImportsAdapter,
   ) {
     const warning = mcpOpenAccessBootWarning(process.env);
     if (warning) this.logger.warn(warning);
     const originWarning = mcpAllowedOriginsBootWarning(process.env);
     if (originWarning) this.logger.warn(originWarning);
+    const webOriginWarning = webOriginBootWarning(process.env);
+    if (webOriginWarning) this.logger.warn(webOriginWarning);
+    if (!process.env.MCP_AUDIT_HMAC_KEY) {
+      this.logger.warn(
+        "MCP_AUDIT_HMAC_KEY is not set: MCP audit rows will have no argument fingerprint.",
+      );
+    }
     this.httpHandler = new HttpMcpHandler({
       dataProvider: this.agentData,
+      // E17 re-plan PR D: staging (write:stage enforced again in the adapter) and the audit trail.
+      // Both run in this process, so no client can skip the audit.
+      imports: this.importsAdapter,
+      audit: (caller, event) => this.recordAudit(caller, event),
+      fingerprintArgs: (args) => this.audit.fingerprint(args),
       // E20-N18: the kill switch is read per request; origins are read once at boot.
       isEnabled: () => readMcpAccessConfig(process.env).enabled,
       allowedOrigins: readMcpAccessConfig(process.env).allowedOrigins,
@@ -43,6 +60,26 @@ export class McpService {
       expectedAudience: this.configService.get<string>("MCP_AUDIENCE") || "flump-mcp",
       authServerUrl: this.configService.get<string>("AUTH_SERVER_URL") || "https://api.workos.com",
     });
+  }
+
+  /** One audit row per tool call. A failed write is logged and never fails the call. */
+  async recordAudit(caller: McpAuditCaller, event: McpAuditEvent): Promise<void> {
+    try {
+      await this.audit.record({
+        userId: caller.token.userId,
+        tokenId: caller.token.tokenId ?? null,
+        clientName: caller.clientName ?? null,
+        toolName: event.tool,
+        scopesUsed: event.scopesUsed,
+        outcome: event.outcome,
+        errorCode: event.errorCode ?? null,
+        latencyMs: event.durationMs,
+        responseBytes: event.responseBytes,
+        argsFingerprint: event.argsFingerprint ?? null,
+      });
+    } catch (err) {
+      this.logger.error(`mcp_audit_write_failed: ${err instanceof Error ? err.name : "error"}`);
+    }
   }
 
   getHttpHandler(): HttpMcpHandler {

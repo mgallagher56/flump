@@ -84,6 +84,11 @@ describe.skipIf(dbMode === "skip")("authz: mcp-tokens controller (real Postgres)
         method: "get",
         path: () => "/mcp-tokens/context-pack",
       },
+      {
+        key: "GET /mcp-tokens/:id/activity",
+        method: "get",
+        path: () => `/mcp-tokens/${tokenA.id}/activity`,
+      },
     ];
 
     it.each(routes.map((r) => [r.key, r] as const))(
@@ -101,6 +106,54 @@ describe.skipIf(dbMode === "skip")("authz: mcp-tokens controller (real Postgres)
         ran(route.key, "authn");
       },
     );
+  });
+
+  it("GET /mcp-tokens/:id/activity: A reads own token's activity, B gets 404 for it and a missing id", async () => {
+    const own = await h.call("get", `/mcp-tokens/${tokenA.id}/activity`, h.tokens.a);
+    expect(own.status).toBe(200);
+    expect(own.body).toEqual({ events: [], nextBefore: null });
+    expect((await h.call("get", `/mcp-tokens/${tokenA.id}/activity`, h.tokens.b)).status).toBe(404);
+    expect((await h.call("get", `/mcp-tokens/${MISSING_ID}/activity`, h.tokens.a)).status).toBe(
+      404,
+    );
+    expect(
+      (await h.call("get", `/mcp-tokens/${tokenA.id}/activity?limit=500`, h.tokens.a)).status,
+    ).toBe(400);
+    await expectTokenAUntouched();
+    ran("GET /mcp-tokens/:id/activity");
+  });
+
+  it("GET /mcp-tokens/:id/activity: rows sharing one timestamp page without gaps or repeats", async () => {
+    // Five rows with an identical created_at (microsecond precision), as a burst of calls can make.
+    await h.dataSource.query(
+      `INSERT INTO agent_audit_events
+         (user_id, token_id, tool_name, outcome, latency_ms, response_bytes, created_at)
+       SELECT $1, $2::uuid, 'list_accounts', 'ok', 1, 1, '2026-11-14 10:00:00.123456'
+       FROM generate_series(1, 5)`,
+      [USER_A, tokenA.id],
+    );
+    const seen: string[] = [];
+    let cursor: string | null = null;
+    const sizes: number[] = [];
+    do {
+      const query: string = cursor ? `&before=${encodeURIComponent(cursor)}` : "";
+      const res = await h.call(
+        "get",
+        `/mcp-tokens/${tokenA.id}/activity?limit=2${query}`,
+        h.tokens.a,
+      );
+      expect(res.status).toBe(200);
+      sizes.push(res.body.events.length);
+      seen.push(...res.body.events.map((e: { id: string }) => e.id));
+      cursor = res.body.nextBefore;
+    } while (cursor && sizes.length < 10);
+    expect(sizes).toEqual([2, 2, 1]);
+    expect(new Set(seen).size).toBe(5);
+    // A cursor from another token's row (or a garbled one) never reaches other rows.
+    expect(
+      (await h.call("get", `/mcp-tokens/${tokenA.id}/activity?before=bm90LWEtdXVpZA`, h.tokens.a))
+        .status,
+    ).toBe(400);
   });
 
   it("GET /mcp-tokens: A sees own tokens (never the secret), B sees none of them", async () => {

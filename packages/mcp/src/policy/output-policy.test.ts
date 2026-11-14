@@ -206,8 +206,27 @@ describe("MCP surface output policy (E29-T6)", () => {
           }
         }
 
-        // No prompts are registered (re-plan PR A); PR D's prompts must be added to this walk.
-        expect(h.client.getServerCapabilities()?.prompts).toBeUndefined();
+        // Every prompt (re-plan PR D): its description and every message text.
+        const { prompts } = await h.client.listPrompts();
+        expect(prompts.map((p) => p.name).sort()).toEqual([
+          "import-spreadsheet",
+          "monthly-check-in",
+        ]);
+        for (const p of prompts) {
+          for (const v of collectDescriptionViolations(p.description ?? "")) {
+            found.push({ surface: `prompt-desc:${p.name}`, v });
+          }
+          for (const args of [{}, { month: "2026-01" }]) {
+            if (p.name === "import-spreadsheet" && "month" in args) continue;
+            const { messages } = await h.client.getPrompt({ name: p.name, arguments: args });
+            for (const m of messages) {
+              const text = m.content.type === "text" ? m.content.text : "";
+              for (const v of collectDescriptionViolations(text)) {
+                found.push({ surface: `prompt:${p.name}`, v });
+              }
+            }
+          }
+        }
       } finally {
         await h.close();
       }

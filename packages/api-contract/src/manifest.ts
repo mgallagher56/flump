@@ -17,7 +17,7 @@ import {
   RevertImportRequest,
   StageImportRequest,
 } from "./domains/imports.js";
-import { CreateMcpTokenRequest } from "./domains/mcp-tokens.js";
+import { CreateMcpTokenRequest, McpTokenActivityQuery } from "./domains/mcp-tokens.js";
 import {
   ResetFinancialDataRequest,
   UpdateChecklistRequest,
@@ -53,6 +53,7 @@ import {
   ImportBatchListResponse,
   ImportBatchResponse,
   ImportPreviewResponse,
+  McpTokenActivityResponse,
   McpTokenListResponse,
   PortfolioSnapshotResponse,
   ReadinessResponse,
@@ -592,6 +593,17 @@ export const routes = {
       params: IdParams,
       group: "mcp-tokens",
       response: RevokeMcpTokenResponse,
+    }),
+    activity: defineRoute({
+      id: "mcpTokens.activity",
+      method: "GET",
+      path: "mcp-tokens/:id/activity",
+      auth: "user",
+      ownership: "user",
+      params: IdParams,
+      query: McpTokenActivityQuery,
+      group: "mcp-tokens",
+      response: McpTokenActivityResponse,
     }),
     contextPack: defineRoute({
       id: "mcpTokens.contextPack",

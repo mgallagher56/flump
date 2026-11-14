@@ -72,6 +72,9 @@ export const SCHEMA_DOCUMENT = {
     project_net_worth: "Net worth projection at a given return, with optional events.",
     compare_mortgage_overpay_vs_invest:
       "Deprecated: overpaying a mortgage beside investing the same amount.",
+    stage_import:
+      "Stages the user's own accounts and month-end balances for them to review and commit in Flump. Never saves anything itself.",
+    get_import_status: "Whether a staged import is waiting for review, committed or expired.",
   },
 } as const;
 

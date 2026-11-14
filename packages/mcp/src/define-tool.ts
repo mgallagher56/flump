@@ -85,14 +85,25 @@ export function defineFlumpTool<I extends z.ZodRawShape, R extends z.ZodType>(
       const run = async (rawArgs: unknown): Promise<ErrorResult | Record<string, unknown>> => {
         const started = Date.now();
         const ctx = await getContext();
+        // The scopes this call needed that the token holds (identifiers only, for the audit row).
+        const needed = [...requirement.anyOf, ...requirement.allOf];
+        const scopesUsed = needed.filter((s) => ctx.token.scopes.includes(s));
+        let argsFingerprint: string | undefined;
         // Fire and forget: a slow or failing sink must never delay or break a tool call.
-        const report = (outcome: "ok" | "error", errorCode?: FlumpErrorBody["code"]) => {
+        const report = (
+          outcome: "ok" | "error" | "denied",
+          responseText: string,
+          errorCode?: FlumpErrorBody["code"],
+        ) => {
           try {
             const pending = ctx.audit?.({
               tool: definition.name,
               outcome,
               ...(errorCode ? { errorCode } : {}),
               durationMs: Date.now() - started,
+              responseBytes: Buffer.byteLength(responseText, "utf8"),
+              scopesUsed,
+              ...(argsFingerprint ? { argsFingerprint } : {}),
             });
             if (pending) pending.catch(() => {});
           } catch {
@@ -100,8 +111,13 @@ export function defineFlumpTool<I extends z.ZodRawShape, R extends z.ZodType>(
           }
         };
         const fail = (body: FlumpErrorBody) => {
-          report("error", body.code);
-          return errorResult(body);
+          const result = errorResult(body);
+          report(
+            body.code === "INSUFFICIENT_SCOPE" ? "denied" : "error",
+            result.content[0]?.text ?? "",
+            body.code,
+          );
+          return result;
         };
 
         if (!authorized(ctx, requirement)) {
@@ -126,6 +142,12 @@ export function defineFlumpTool<I extends z.ZodRawShape, R extends z.ZodType>(
         }
 
         try {
+          argsFingerprint = ctx.fingerprintArgs?.(parsed.data) ?? undefined;
+        } catch {
+          // Swallowed: a broken fingerprint must not break the call.
+        }
+
+        try {
           const { responseFormat, ...input } = parsed.data as { responseFormat: ResponseFormat };
           const output = await definition.handler(input as z.infer<z.ZodObject<I>>, ctx, {
             responseFormat,
@@ -147,7 +169,7 @@ export function defineFlumpTool<I extends z.ZodRawShape, R extends z.ZodType>(
               retryable: false,
             });
           }
-          report("ok");
+          report("ok", fitted.text);
           return {
             content: [{ type: "text", text: fitted.text }],
             structuredContent: fitted.envelope,

@@ -49,11 +49,11 @@ Spec: [E17-mcp-replan-2026-11.md](E17-mcp-replan-2026-11.md) sections 5 to 7 and
 
 ## Audit table (E17-N17)
 
-- `AgentAuditService.record()` and `purgeOlderThan13Months()` exist and are tested on Postgres. They are not wired into `packages/mcp` and there is no `GET /mcp-tokens/:id/activity` route; both are PR D. Nothing schedules the daily purge yet, because there is no scheduler; PR D should add one.
+- `AgentAuditService.record()` and `purgeOlderThan13Months()` exist and are tested on Postgres. PR D wired them in: every MCP tool call is audited, `GET /mcp-tokens/:id/activity` reads the rows and a daily scheduler runs the purge (see [E17-PR-D-notes.md](E17-PR-D-notes.md)).
 - `args_fingerprint` is an HMAC of canonical JSON (keys sorted at every level), and null when `MCP_AUDIT_HMAC_KEY` is unset. The owner sets that key.
 - Self-reported client names are cut down to `[A-Za-z0-9 ._/-]` and at most 64 characters. Invalid tool names become `unknown`, and invalid scopes and error codes are dropped.
 
 ## Not done here
 
-- `packages/mcp` `SNAPSHOT_SOURCES` does not list `agent` yet, so `get_balance_history` and `get_data_coverage` report agent rows as `other` until PR D adds it.
+- `packages/mcp` `SNAPSHOT_SOURCES` did not list `agent`; PR D added it.
 - E19 account deletion (when it lands) must also delete `import_batches` and `agent_audit_events`.

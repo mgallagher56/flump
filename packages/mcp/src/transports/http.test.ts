@@ -2,6 +2,7 @@ import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/
 import { describe, expect, it, vi } from "vitest";
 import { FailedAuthLimiter } from "../auth/failed-auth-limiter.js";
 import { hashPatToken } from "../auth/token-verifier.js";
+import { createFakeImports, SEEDED_BATCH_ID } from "../testing/fake-imports.js";
 import type { McpUserDataProvider } from "../types.js";
 import { countToolCalls, HttpMcpHandler, MAX_BATCH_COUNTED, MAX_BODY_BYTES } from "./http.js";
 
@@ -542,5 +543,63 @@ describe("HttpMcpHandler kill switch and Origin validation (E20-N18)", () => {
     // Mirrors mcp.service.ts: allowedOrigins comes from readMcpAccessConfig, which drops null and *.
     const h = new HttpMcpHandler({ dataProvider: dp, allowedOrigins: [] });
     expect((await h.handleWebRequest(webReq("null"))).status).toBe(403);
+  });
+});
+
+describe("audit and staging wiring (re-plan PR D)", () => {
+  it("passes the verified token, client name and staging provider to every tool call", async () => {
+    const events: Array<{ tokenId?: string; clientName?: string; tool: string; outcome: string }> =
+      [];
+    const handler = new HttpMcpHandler({
+      dataProvider: {} as McpUserDataProvider,
+      tokenStore: {
+        findTokenByHash: async () => ({
+          id: "tok-9",
+          userId: "user-9",
+          tokenHash: hashPatToken(PAT),
+          scopes: ["mcp:read:anonymized"],
+          anonymizeInstitutions: true,
+          expiresAt: null,
+          revokedAt: null,
+        }),
+      },
+      imports: createFakeImports(),
+      fingerprintArgs: () => "f".repeat(64),
+      audit: (caller, event) => {
+        events.push({
+          tokenId: caller.token.tokenId,
+          clientName: caller.clientName,
+          tool: event.tool,
+          outcome: event.outcome,
+        });
+      },
+    });
+    const res = await handler.handleWebRequest(
+      new Request("http://localhost/mcp", {
+        method: "POST",
+        headers: {
+          authorization: `Bearer ${PAT}`,
+          "content-type": "application/json",
+          accept: "application/json, text/event-stream",
+          "user-agent": "test-client/1.0",
+        },
+        body: JSON.stringify({
+          jsonrpc: "2.0",
+          id: 1,
+          method: "tools/call",
+          params: { name: "get_import_status", arguments: { batchId: SEEDED_BATCH_ID } },
+        }),
+      }),
+    );
+    await res.text();
+    // The token lacks write:stage, so the call is refused and audited as denied.
+    expect(events).toEqual([
+      {
+        tokenId: "tok-9",
+        clientName: "test-client/1.0",
+        tool: "get_import_status",
+        outcome: "denied",
+      },
+    ]);
   });
 });

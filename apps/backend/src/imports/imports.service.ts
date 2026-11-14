@@ -257,6 +257,22 @@ export class ImportsService {
     });
   }
 
+  /**
+   * True when `idempotencyKey` already names one of the user's stage calls, so `stage` would
+   * replay it. Read-only and unlocked: a hint for callers (the MCP adapter skips the rate limit
+   * for a replay); `stage` itself stays the source of truth.
+   */
+  async isReplay(userId: string, idempotencyKey: string): Promise<boolean> {
+    const rows: unknown[] = await this.dataSource.query(
+      `SELECT 1 FROM "import_batches"
+       WHERE "user_id" = $1
+         AND ("idempotency_key" = $2 OR "payload"->'chunkKeys' @> jsonb_build_array($2::text))
+       LIMIT 1`,
+      [userId, idempotencyKey],
+    );
+    return rows.length > 0;
+  }
+
   async get(userId: string, id: string, now: Date = new Date()): Promise<ImportBatchView> {
     let batch = await findOwned(this.dataSource.manager, userId, id);
     if (!batch) throw new NotFoundException(NOT_FOUND);

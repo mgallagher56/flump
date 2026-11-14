@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 
-/** Tool error codes (E17 draft 6.6). */
+/** Tool error codes (E17 draft 6.6; CONFLICT, LIMIT_EXCEEDED and UNAVAILABLE added for staging, re-plan PR D). */
 export const FLUMP_ERROR_CODES = [
   "INVALID_ARGUMENT",
   "MISSING_DATA",
@@ -11,6 +11,12 @@ export const FLUMP_ERROR_CODES = [
   "RATE_LIMITED",
   "CONFIRMATION_EXPIRED",
   "CONFIRMATION_MISMATCH",
+  /** The request conflicts with the batch's state (not open, expired, key reused). */
+  "CONFLICT",
+  /** A cap was reached (rows per batch, open batches per user). Not retryable as sent. */
+  "LIMIT_EXCEEDED",
+  /** The tool exists but this connection cannot run it (staging over stdio). Not a scope problem. */
+  "UNAVAILABLE",
   "INTERNAL",
 ] as const;
 
