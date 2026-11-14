@@ -53,11 +53,17 @@ check-in endpoint, which accepts past months), so history charts and "since last
 have data. The current month is left unrecorded, so the dashboard's check-in card shows.
 Dates are relative to `FROZEN_NOW` when the servers run under the frozen clock, else to today.
 
-`applyPersona(page, name)` is idempotent: when the stored accounts, budget and salary already
-match it writes nothing. Otherwise it clears the user's financial data with
+`applyPersona(page, name)` is idempotent: when the stored accounts, budget, salary and months of
+history already match it writes nothing. Otherwise it clears the user's financial data with
 `POST /user-profile/reset-financial-data` (only if there is anything to clear: that endpoint is
 rate-limited to 10 calls an hour per user) and writes the persona again. A reset leaves the
 profile's `hasResetFinancialData` flag set; nothing the personas show depends on it.
+
+Two things to know when running locally against a database you keep. A visual run spends two
+resets (homeowner, then renter), so about five runs an hour reach the limit and the seed fails
+with 429: recreate the database. And the smoke suite's check-in test records the current month,
+which the seed does not undo, so a visual run after it shows no check-in prompt: recreate the
+database before comparing shots. CI always starts from an empty database.
 
 ## Known gaps
 
