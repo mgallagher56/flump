@@ -656,6 +656,8 @@ describe("ScrubbingConsoleLogger through a Nest app", () => {
 
     it("falls through to the generic scrubber on a user id, an extra key or a non-uuid id", () => {
       // The generic scrubber blanks UUIDs, so a passed-through shape is the only way one survives.
+      // a made-up test id, not a credential
+      // nosemgrep: ajinabraham.njsscan.generic.hardcoded_secrets.node_username
       const userId = "223e4567-e89b-12d3-a456-426614174999";
       const cases: Record<string, unknown>[] = [
         { ...event, userId },

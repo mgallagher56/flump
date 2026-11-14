@@ -180,6 +180,8 @@ export type ResetFinancialDataResponse = z.infer<typeof ResetFinancialDataRespon
  * The phrase the person types to confirm account deletion (BE-04). The backend requires it in
  * the request body too, so the confirmation is not only a browser check.
  */
+// the word the person types to confirm deletion, not a credential
+// nosemgrep: ajinabraham.njsscan.generic.hardcoded_secrets.node_username
 export const DELETE_USER_CONFIRMATION = "DELETE";
 
 /** DELETE /user-profile request body. */
