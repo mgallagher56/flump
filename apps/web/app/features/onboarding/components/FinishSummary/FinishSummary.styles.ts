@@ -10,6 +10,7 @@ export const finishSummaryRecipe = sva({
     "row",
     "rowLabel",
     "rowValue",
+    "empty",
     "modules",
     "missing",
     "saved",
@@ -51,6 +52,7 @@ export const finishSummaryRecipe = sva({
       textAlign: "right",
       margin: 0,
     },
+    empty: { textStyle: "body.sm", color: "text.secondary", margin: 0 },
     modules: {
       display: "flex",
       flexWrap: "wrap",

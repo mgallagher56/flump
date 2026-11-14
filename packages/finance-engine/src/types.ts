@@ -34,7 +34,8 @@ export type UkEmploymentStatus = "PAYE" | "SELF_EMPLOYED" | "MIXED" | "OTHER";
 
 export type UkStudentLoanPlan = "NONE" | "PLAN_1" | "PLAN_2" | "PLAN_4" | "PLAN_5" | "POSTGRAD";
 
-export type HousingStatus = "RENTING" | "MORTGAGE" | "OWN_OUTRIGHT";
+/** Where the person lives. Absent means not answered, never renting. */
+export type HousingStatus = "RENTING" | "MORTGAGE" | "OWN_OUTRIGHT" | "LIVING_WITH_FAMILY";
 
 export interface FinancialBaseline {
   userId: string;

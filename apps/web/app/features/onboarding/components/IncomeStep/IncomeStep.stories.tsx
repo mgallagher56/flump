@@ -7,7 +7,7 @@ const meta: Meta<typeof IncomeStep> = {
   title: "Onboarding/IncomeStep",
   component: IncomeStep,
   parameters: { layout: "padded" },
-  args: { onNext: fn(), onSkip: fn() },
+  args: { onNext: fn() },
   render: (args) => (
     <StepHarness>
       {({ values, update }) => <IncomeStep {...args} update={update} values={values} />}
@@ -21,19 +21,20 @@ export const Empty: Story = {
   play: async ({ canvasElement, args }) => {
     const canvas = within(canvasElement);
     await userEvent.click(canvas.getByRole("button", { name: "£45,000" }));
-    await expect(canvas.getByRole("textbox", { name: /^annual gross salary/i })).toHaveValue(
+    await expect(canvas.getByRole("textbox", { name: /^yearly salary before tax/i })).toHaveValue(
       "45,000",
     );
-    await userEvent.click(canvas.getByRole("button", { name: "Skip for now" }));
-    await expect(args.onSkip).toHaveBeenCalled();
+    await expect(canvas.queryByRole("button", { name: /skip/i })).toBeNull();
+    await userEvent.click(canvas.getByRole("button", { name: /^next/i }));
+    await expect(args.onNext).toHaveBeenCalled();
   },
 };
 
 export const TakeHomeMode: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    await userEvent.click(canvas.getByRole("radio", { name: /take-home after tax/i }));
-    await expect(canvas.getByRole("radio", { name: /take-home after tax/i })).toBeChecked();
+    await userEvent.click(canvas.getByRole("radio", { name: /^take-home pay/i }));
+    await expect(canvas.getByRole("radio", { name: /^take-home pay/i })).toBeChecked();
     await expect(canvas.getByRole("textbox", { name: /monthly take-home pay/i })).toBeVisible();
   },
 };
@@ -43,10 +44,11 @@ export const ShowMissing: Story = {
   args: { showMissing: true },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    await expect(canvas.getByRole("textbox", { name: /^annual gross salary/i })).toHaveAttribute(
-      "aria-invalid",
-      "true",
-    );
-    await expect(canvas.getByText("Choose where you pay tax")).toBeVisible();
+    await expect(
+      canvas.getByRole("textbox", { name: /^yearly salary before tax/i }),
+    ).toHaveAttribute("aria-invalid", "true");
+    await expect(
+      canvas.getByText("Choose where you pay tax", { ignore: "script, style, option" }),
+    ).toBeVisible();
   },
 };

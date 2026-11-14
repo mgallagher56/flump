@@ -6,8 +6,9 @@ import type { TakeHome } from "./take-home.js";
 
 /** What one month of housing costs, and its share of take-home pay. Facts only: no benchmark. */
 export interface HousingCost {
-  kind: "rent" | "mortgage";
-  /** Pounds a month. Always above 0 when known. */
+  /** "household": living with family or friends, paying what they choose towards the household. */
+  kind: "rent" | "mortgage" | "household";
+  /** Pounds a month. Above 0 when known, except "household", where £0 is a real answer. */
   monthly: number;
   /** The take-home monthly figure the share is taken from. */
   takeHomeMonthly: number;
@@ -81,6 +82,10 @@ export function selectHousingCost(
       monthly = saved;
       if (monthly === null) missing.push("mortgageDetails");
     }
+  } else if (profile.housingStatus === "living_with_family") {
+    // The amount is optional and £0 is valid: an empty amount means nothing is paid.
+    kind = "household";
+    monthly = saved ?? 0;
   } else {
     missing.push("housingStatus");
   }

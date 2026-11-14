@@ -1,3 +1,4 @@
+import type { Page } from "@playwright/test";
 import { MARKETING_URL } from "../support/env";
 
 export interface VisualRoute {
@@ -7,13 +8,33 @@ export interface VisualRoute {
   url: string;
   /** Needs the seeded dev-session user. */
   signedIn: boolean;
+  /** Runs after the page settles, to reach a state behind a click (for example a later step). */
+  prepare?: (page: Page) => Promise<void>;
+  /** HTTP status the page answers with; defaults to any status below 400. */
+  expectedStatus?: number;
 }
 
-const web = (name: string, path: string, signedIn = true): VisualRoute => ({
+const web = (
+  name: string,
+  path: string,
+  signedIn = true,
+  prepare?: VisualRoute["prepare"],
+): VisualRoute => ({
   name: `web-${name}`,
   url: path,
   signedIn,
+  prepare,
 });
+
+/**
+ * Setup renders for any signed-in user (the route never redirects someone who has finished), and
+ * a finished profile starts the flow empty, so the seeded dev-session user gives a stable shot
+ * without a second, un-onboarded user or any bypass. Nothing here saves: no Finish, no Save and exit.
+ */
+const toHousingStep = async (page: Page) => {
+  await page.getByRole("button", { name: /^next/i }).click();
+  await page.getByRole("heading", { level: 2, name: "Housing and spending" }).waitFor();
+};
 
 const marketing = (name: string, path: string): VisualRoute => ({
   name: `marketing-${name}`,
@@ -35,7 +56,11 @@ export const VISUAL_ROUTES: readonly VisualRoute[] = [
   web("forecast", "/app/forecast"),
   web("mortgage", "/app/mortgage"),
   web("pension", "/app/pension"),
+  web("onboarding", "/app/onboarding"),
+  web("onboarding-housing", "/app/onboarding", true, toHousingStep),
   web("profile", "/app/profile"),
+  { ...web("not-found-app", "/app/not-a-page"), expectedStatus: 404 },
+  { ...web("not-found", "/not-a-page", false), expectedStatus: 404 },
   web("savings", "/app/savings"),
   web("self-assessment", "/app/self-assessment"),
   web("take-home", "/app/take-home"),

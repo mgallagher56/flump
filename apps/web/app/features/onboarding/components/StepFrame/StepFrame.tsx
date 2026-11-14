@@ -10,10 +10,11 @@ export interface StepFrameProps {
   description?: string;
   children: ReactNode;
   onBack?: () => void;
-  /** Shows "Skip for now", which moves on and keeps anything already entered on this step. */
+  /**
+   * Optional steps only: shows "Skip this step" as a text link under the actions, which moves on
+   * and keeps anything already entered. Never given on a required step.
+   */
   onSkip?: () => void;
-  /** Draws "Skip for now" as the primary button, for optional steps where skipping is the usual path. */
-  skipPrimary?: boolean;
   onNext?: () => void;
   nextLabel?: string;
   /** Move focus to the heading when the step appears (not on first load). */
@@ -27,7 +28,6 @@ export const StepFrame: FC<StepFrameProps> = ({
   children,
   onBack,
   onSkip,
-  skipPrimary = false,
   onNext,
   nextLabel = "Next",
   focusOnMount = false,
@@ -63,19 +63,19 @@ export const StepFrame: FC<StepFrameProps> = ({
         ) : (
           <span />
         )}
-        <div className={classes.actionsEnd}>
-          {onSkip ? (
-            <Button onClick={onSkip} type="button" variant={skipPrimary ? "primary" : "outline"}>
-              Skip for now
-            </Button>
-          ) : null}
-          {onNext ? (
-            <Button onClick={onNext} type="button">
-              {nextLabel} <Icon icon={ArrowRight} size="sm" />
-            </Button>
-          ) : null}
-        </div>
+        {onNext ? (
+          <Button onClick={onNext} type="button">
+            {nextLabel} <Icon icon={ArrowRight} size="sm" />
+          </Button>
+        ) : null}
       </div>
+      {onSkip ? (
+        <div className={classes.skip}>
+          <Button onClick={onSkip} size="sm" type="button" variant="link">
+            Skip this step
+          </Button>
+        </div>
+      ) : null}
     </section>
   );
 };

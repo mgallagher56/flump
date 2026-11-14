@@ -1,7 +1,7 @@
 import { sva } from "@repo/ui/styled-system/css";
 
 export const onboardingHeaderRecipe = sva({
-  slots: ["root", "text"],
+  slots: ["root", "text", "exit"],
   base: {
     root: {
       display: "flex",
@@ -12,6 +12,7 @@ export const onboardingHeaderRecipe = sva({
       borderBottomStyle: "solid",
       borderBottomColor: "border.subtle",
     },
-    text: { display: "flex", flexDirection: "column", gap: "0.5", minWidth: 0 },
+    text: { display: "flex", flexDirection: "column", gap: "0.5", minWidth: 0, flex: "1 1 auto" },
+    exit: { flex: "none", alignSelf: "flex-start" },
   },
 });

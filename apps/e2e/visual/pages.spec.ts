@@ -28,9 +28,17 @@ for (const route of VISUAL_ROUTES) {
     test(`${route.name} renders as the baseline`, async ({ page }, testInfo) => {
       await syncBrowserClock(page);
       const response = await page.goto(route.url);
-      expect(response?.status(), `${route.url} status`).toBeLessThan(400);
+      if (route.expectedStatus) {
+        expect(response?.status(), `${route.url} status`).toBe(route.expectedStatus);
+      } else {
+        expect(response?.status(), `${route.url} status`).toBeLessThan(400);
+      }
       if (route.signedIn) await expect(page).not.toHaveURL(/\/login|\/sandbox/);
       await settle(page);
+      if (route.prepare) {
+        await route.prepare(page);
+        await settle(page);
+      }
 
       // The theme under test is the one the project emulates through prefers-color-scheme.
       const scheme = testInfo.project.use.colorScheme;

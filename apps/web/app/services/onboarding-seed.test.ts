@@ -86,5 +86,20 @@ describe("buildOnboardingSeedJobs", () => {
   it("names the housing entry after the housing status", () => {
     const renting = buildOnboardingSeedJobs({ ...input, housingStatus: "renting" });
     expect(renting.some((j) => j.key === "entry:Rent Payment")).toBe(true);
+    const family = buildOnboardingSeedJobs({
+      ...input,
+      housingStatus: "living_with_family",
+      propertyValue: 250000,
+      mortgageBalance: 0,
+    });
+    expect(family.some((j) => j.key === "entry:Household contribution")).toBe(true);
+    expect(family.some((j) => j.payload.type === "Property")).toBe(false);
+  });
+
+  it("names no housing entry as rent when housing is not answered", () => {
+    const unset = buildOnboardingSeedJobs({ ...input, housingStatus: null });
+    expect(
+      unset.some((j) => j.endpoint === "/budget-entries" && j.payload.category === "housing"),
+    ).toBe(false);
   });
 });

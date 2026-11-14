@@ -19,7 +19,7 @@ export const DEFAULT_FINANCIAL_BASELINE: FinancialBaseline = {
   annualGrossSalary: 45000,
   monthlyTakeHomeOverride: undefined,
   annualBonusOrSideIncome: 0,
-  housingStatus: "RENTING",
+  // No housing status: an unanswered question is never presumed to be renting.
   monthlyHousingCost: 900,
   propertyValue: 0,
   mortgageBalance: 0,
@@ -62,7 +62,7 @@ export interface UserProfileData {
   secondIncomeMonthly?: number | null;
   hasRentalIncome?: boolean;
   rentalIncomeMonthly?: number | null;
-  housingStatus?: "renting" | "mortgage" | "own_outright" | null;
+  housingStatus?: "renting" | "mortgage" | "own_outright" | "living_with_family" | null;
   monthlyHousingCost?: number | null;
   monthlyOtherOutgoings?: number | null;
   totalCashSavings?: number | null;
@@ -142,15 +142,27 @@ export function normalizeEmploymentStatus(
 }
 
 /**
- * Normalizes housing status to canonical HousingStatus
+ * Normalizes housing status to canonical HousingStatus. Unanswered (or unrecognised) stays
+ * undefined, never renting; only a saved mortgage balance implies a mortgage.
  */
-export function normalizeHousingStatus(status?: string | null, mortgageBalance = 0): HousingStatus {
-  if (!status) return mortgageBalance > 0 ? "MORTGAGE" : "RENTING";
-  const s = status.toUpperCase();
+export function normalizeHousingStatus(
+  status?: string | null,
+  mortgageBalance = 0,
+): HousingStatus | undefined {
+  const s = status ? status.toUpperCase() : "";
+  if (s === "RENTING") return "RENTING";
   if (s === "MORTGAGE") return "MORTGAGE";
   if (s === "OWN_OUTRIGHT" || s === "OWNOUTRIGHT" || s === "OWNED") return "OWN_OUTRIGHT";
-  return "RENTING";
+  if (s === "LIVING_WITH_FAMILY") return "LIVING_WITH_FAMILY";
+  return mortgageBalance > 0 ? "MORTGAGE" : undefined;
 }
+
+/**
+ * True unless the person said they rent or pay a mortgage. An unsaved housing cost is then £0:
+ * no rent is presumed for someone who owns outright, lives with family or has not answered.
+ */
+const noRentOrMortgage = (status: HousingStatus | undefined) =>
+  status !== "RENTING" && status !== "MORTGAGE";
 
 /**
  * Converts a UserProfile (or partial UserProfileData) into a FinancialBaseline.
@@ -217,7 +229,7 @@ export function userProfileToFinancialBaseline(
     monthlyHousingCost:
       profile.monthlyHousingCost !== null && profile.monthlyHousingCost !== undefined
         ? Number(profile.monthlyHousingCost)
-        : housingStatus === "OWN_OUTRIGHT"
+        : noRentOrMortgage(housingStatus)
           ? 0
           : DEFAULT_FINANCIAL_BASELINE.monthlyHousingCost,
     propertyValue:
@@ -274,12 +286,14 @@ export function financialBaselineToUserProfileUpdate(
         ? "employed"
         : "other";
 
-  const housingStatus =
-    baseline.housingStatus === "MORTGAGE"
-      ? "mortgage"
-      : baseline.housingStatus === "OWN_OUTRIGHT"
-        ? "own_outright"
-        : "renting";
+  const HOUSING: Record<HousingStatus, NonNullable<UserProfileData["housingStatus"]>> = {
+    RENTING: "renting",
+    MORTGAGE: "mortgage",
+    OWN_OUTRIGHT: "own_outright",
+    LIVING_WITH_FAMILY: "living_with_family",
+  };
+  // Not answered stays null: never written back as renting.
+  const housingStatus = baseline.housingStatus ? HOUSING[baseline.housingStatus] : null;
 
   return {
     age: baseline.age ?? null,
@@ -322,7 +336,7 @@ export function hydrateBaselineFromSeed(seed: AnySeedPayload, userId = ""): Fina
   const propertyValue = seedAny.propertyValue ?? 0;
   const housingStatus = normalizeHousingStatus(seedAny.housingStatus, mortgageBalance);
   const monthlyHousingCost =
-    seedAny.monthlyHousingCost ?? (housingStatus === "OWN_OUTRIGHT" ? 0 : 900);
+    seedAny.monthlyHousingCost ?? (noRentOrMortgage(housingStatus) ? 0 : 900);
   const monthlyOtherOutgoings = seedAny.monthlyOtherOutgoings ?? 1100;
   const totalPensionPot = seedAny.totalPensionPot ?? seedAny.initialInvestments ?? 15000;
   const age = seedAny.age ?? 32;

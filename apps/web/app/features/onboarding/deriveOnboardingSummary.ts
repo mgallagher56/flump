@@ -1,5 +1,5 @@
 import { isFigureKnown, type ProfileFacts, selectTakeHome } from "@flump/finance-engine";
-import type { OnboardingValues } from "./types";
+import { type OnboardingValues, ownsHome } from "./types";
 
 const percentFormat = new Intl.NumberFormat("en-GB", { maximumFractionDigits: 2 });
 
@@ -85,13 +85,17 @@ export function deriveOnboardingSummary(values: OnboardingValues): OnboardingSum
     }
   }
 
-  const monthlyHousing =
-    values.housingStatus === "own_outright" ? 0 : (values.monthlyHousingCost ?? 0);
+  // Own with no mortgage, or not answered, has no housing payment. Living with family or
+  // friends counts what the person pays, which is optional, so empty is £0.
+  const paysForHousing =
+    values.housingStatus === "renting" ||
+    values.housingStatus === "mortgage" ||
+    values.housingStatus === "living_with_family";
+  const monthlyHousing = paysForHousing ? (values.monthlyHousingCost ?? 0) : 0;
   const otherOutgoings = values.monthlyOtherOutgoings ?? 0;
-  const homeEquity =
-    values.housingStatus === "renting"
-      ? 0
-      : Math.max(0, (values.propertyValue ?? 0) - (values.mortgageBalance ?? 0));
+  const homeEquity = ownsHome(values.housingStatus)
+    ? Math.max(0, (values.propertyValue ?? 0) - (values.mortgageBalance ?? 0))
+    : 0;
   const startingNetWorth =
     (values.cashSavings ?? 0) + (values.pensionPot ?? 0) + homeEquity - (values.unsecuredDebt ?? 0);
 

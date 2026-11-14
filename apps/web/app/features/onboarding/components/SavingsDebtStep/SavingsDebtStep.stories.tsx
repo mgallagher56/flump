@@ -21,7 +21,7 @@ export const Empty: Story = {
   play: async ({ canvasElement, args }) => {
     const canvas = within(canvasElement);
     await userEvent.type(canvas.getByLabelText(/cash and isa savings/i), "5000");
-    await userEvent.click(canvas.getByRole("button", { name: "Skip for now" }));
+    await userEvent.click(canvas.getByRole("button", { name: "Skip this step" }));
     await expect(args.onSkip).toHaveBeenCalled();
   },
 };

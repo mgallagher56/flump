@@ -1,11 +1,14 @@
-import { Button, Card, Icon, Stepper } from "@repo/ui";
+import { Card, Icon, Stepper } from "@repo/ui";
 import { TriangleAlert } from "lucide-react";
 import { type FC, useEffect, useState } from "react";
+import type { UserProfile } from "~/hooks/useUserProfile";
 import { deriveOnboardingSummary } from "../../deriveOnboardingSummary";
+import { valuesFromProfile } from "../../draft";
 import { inferModules } from "../../inferModules";
-import { REVIEW_STEP, STEP_IDS, STEP_LABELS } from "../../types";
+import { REVIEW_STEP, STEP_IDS, STEPPER_LABELS } from "../../types";
 import { useFinishOnboarding } from "../../useFinishOnboarding";
 import { stepperStates, useOnboardingForm } from "../../useOnboardingForm";
+import { useSaveAndExit } from "../../useSaveAndExit";
 import { useSeedHydration } from "../../useSeedHydration";
 import { BankStep } from "../BankStep";
 import { FinishSummary } from "../FinishSummary";
@@ -20,18 +23,25 @@ import { onboardingFlowRecipe } from "./OnboardingFlow.styles";
 export interface OnboardingFlowProps {
   /** An error from the route action, shown in the same alert as a client-side save error. */
   actionError?: string | null;
+  /** The saved profile, so setup picks up after "Save and exit". */
+  savedProfile?: Partial<UserProfile> | null;
 }
 
-const STEPPER_STEPS = STEP_IDS.map((id) => ({ id, label: STEP_LABELS[id] }));
+// One-word names so no step wraps; phones show only the current step (the Stepper's summary).
+const STEPPER_STEPS = STEP_IDS.map((id) => ({ id, label: STEPPER_LABELS[id] }));
 
-export const OnboardingFlow: FC<OnboardingFlowProps> = ({ actionError = null }) => {
+export const OnboardingFlow: FC<OnboardingFlowProps> = ({
+  actionError = null,
+  savedProfile = null,
+}) => {
   const classes = onboardingFlowRecipe();
-  const form = useOnboardingForm();
+  const form = useOnboardingForm(valuesFromProfile(savedProfile));
   const { values, step } = form;
   const summary = deriveOnboardingSummary(values);
   const modules = inferModules(values);
   const { finish, isSubmitting, error, saveState } = useFinishOnboarding(values, summary);
   const seed = useSeedHydration(form.update);
+  const exit = useSaveAndExit(values);
   const [hasMoved, setHasMoved] = useState(false);
   const moved =
     <A extends unknown[]>(fn: (...args: A) => void) =>
@@ -60,13 +70,13 @@ export const OnboardingFlow: FC<OnboardingFlowProps> = ({ actionError = null }) 
   }, [step]);
 
   // On the review the finish error sits beside the Finish button instead, so it is announced once.
-  const alertText = step === REVIEW_STEP ? actionError : (error ?? actionError);
+  const alertText = exit.error ?? (step === REVIEW_STEP ? actionError : (error ?? actionError));
   const common = { focusOnMount: hasMoved };
 
   return (
     <div className={classes.page}>
       <div className={classes.inner}>
-        <OnboardingHeader />
+        <OnboardingHeader isSaving={exit.isSaving} onSaveAndExit={exit.saveAndExit} />
         <Stepper
           current={step}
           label="Setup progress"
@@ -74,23 +84,6 @@ export const OnboardingFlow: FC<OnboardingFlowProps> = ({ actionError = null }) 
           states={stepperStates(form.outcomes, step)}
           steps={STEPPER_STEPS}
         />
-        {/* Phones only: the full stepper row (whose steps are the buttons) is hidden there. */}
-        <nav aria-label="Go to a step" className={classes.stepNav}>
-          {STEPPER_STEPS.map((s, index) =>
-            index + 1 === step ? null : (
-              <Button
-                key={s.id}
-                onClick={() => goTo(index + 1)}
-                size="sm"
-                type="button"
-                variant="link"
-              >
-                {s.label}
-              </Button>
-            ),
-          )}
-        </nav>
-
         {alertText ? (
           <div className={classes.alert} role="alert">
             <Icon icon={TriangleAlert} size="sm" />
@@ -115,7 +108,6 @@ export const OnboardingFlow: FC<OnboardingFlowProps> = ({ actionError = null }) 
             <IncomeStep
               {...common}
               onNext={next}
-              onSkip={() => skip(1)}
               showMissing={form.showMissing}
               update={form.update}
               values={values}
@@ -142,7 +134,7 @@ export const OnboardingFlow: FC<OnboardingFlowProps> = ({ actionError = null }) 
               values={values}
             />
           ) : null}
-          {step === 4 ? <BankStep {...common} onBack={back} onSkip={() => skip(4)} /> : null}
+          {step === 4 ? <BankStep {...common} onBack={back} onNext={next} /> : null}
           {step === REVIEW_STEP ? (
             <FinishSummary
               error={error}

@@ -8,6 +8,7 @@ import {
   DELETE_USER_CONFIRMATION,
   DeleteUserRequest,
   DeleteUserResponse,
+  HousingStatus,
   UpdateChecklistRequest,
   UpdateProfileRequest,
 } from "./domains/profile.js";
@@ -27,6 +28,21 @@ describe("UpdateProfileRequest", () => {
       true,
     );
     expect(UpdateProfileRequest.safeParse({ pensionPercent: 101 }).success).toBe(false);
+  });
+
+  it("accepts living with family or friends, with £0 or no amount, and rejects unknown statuses", () => {
+    const parse = (body: Record<string, unknown>) => UpdateProfileRequest.safeParse(body).success;
+    expect(parse({ housingStatus: "living_with_family" })).toBe(true);
+    expect(parse({ housingStatus: "living_with_family", monthlyHousingCost: 0 })).toBe(true);
+    expect(parse({ housingStatus: "living_with_family", monthlyHousingCost: null })).toBe(true);
+    expect(parse({ housingStatus: null })).toBe(true);
+    expect(parse({ housingStatus: "castle" })).toBe(false);
+    expect(HousingStatus.options).toEqual([
+      "renting",
+      "mortgage",
+      "own_outright",
+      "living_with_family",
+    ]);
   });
 });
 

@@ -15,7 +15,7 @@ export interface ProfileFacts {
    * E32 housing facts. Optional so callers that only build take-home facts need not list them;
    * profileFactsFromProfile always sets them, null when unanswered.
    */
-  housingStatus?: "renting" | "mortgage" | "own_outright" | null;
+  housingStatus?: "renting" | "mortgage" | "own_outright" | "living_with_family" | null;
   /** Saved monthly rent (renters) or mortgage payment (owners), as the user entered it. */
   monthlyHousingCost?: number | null;
   mortgageType?: "repayment" | "interest-only" | null;
@@ -71,7 +71,7 @@ function toNumber(value: unknown): number | null {
 
 const REGIONS = ["ENGLAND", "WALES", "SCOTLAND", "NORTHERN_IRELAND"] as const;
 const EMPLOYMENT = ["employed", "self-employed", "other"] as const;
-const HOUSING = ["renting", "mortgage", "own_outright"] as const;
+const HOUSING = ["renting", "mortgage", "own_outright", "living_with_family"] as const;
 const MORTGAGE_TYPES = ["repayment", "interest-only"] as const;
 
 /**

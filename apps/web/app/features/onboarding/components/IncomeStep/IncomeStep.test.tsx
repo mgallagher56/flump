@@ -11,12 +11,10 @@ import {
 } from "./IncomeStep";
 
 const setup = ({
-  onSkip = vi.fn(),
   onNext = vi.fn(),
   initial,
   showMissing,
 }: {
-  onSkip?: () => void;
   onNext?: () => void;
   initial?: Partial<OnboardingValues>;
   showMissing?: boolean;
@@ -24,19 +22,16 @@ const setup = ({
   render(
     <StepHarness initial={initial}>
       {({ values, update }) => (
-        <IncomeStep
-          onNext={onNext}
-          onSkip={onSkip}
-          showMissing={showMissing}
-          update={update}
-          values={values}
-        />
+        <IncomeStep onNext={onNext} showMissing={showMissing} update={update} values={values} />
       )}
     </StepHarness>,
   );
 
+/** The region error repeats the select's placeholder, so text queries skip the option. */
+const NOT_OPTION = { ignore: "script, style, option" };
+
 const grossInput = () =>
-  screen.getByRole("textbox", { name: /^annual gross salary/i }) as HTMLInputElement;
+  screen.getByRole("textbox", { name: /^yearly salary before tax/i }) as HTMLInputElement;
 /** jest-dom is not set up in apps/web, so read the native checked state. */
 const radioChecked = (name: RegExp) =>
   (screen.getByRole("radio", { name }) as HTMLInputElement).checked;
@@ -46,10 +41,10 @@ describe("<IncomeStep />", () => {
   it("switches between gross and take-home entry", () => {
     setup();
     expect(grossInput()).toBeDefined();
-    fireEvent.click(screen.getByRole("radio", { name: /take-home after tax/i }));
-    expect(radioChecked(/take-home after tax/i)).toBe(true);
+    fireEvent.click(screen.getByRole("radio", { name: /^take-home pay/i }));
+    expect(radioChecked(/^take-home pay/i)).toBe(true);
     expect(screen.getByRole("textbox", { name: /monthly take-home pay/i })).toBeDefined();
-    expect(screen.queryByRole("group", { name: /typical salaries/i })).toBeNull();
+    expect(screen.queryByRole("group", { name: /example salaries/i })).toBeNull();
   });
 
   it("keeps an empty income empty and a typed 0 as 0", () => {
@@ -95,15 +90,15 @@ describe("<IncomeStep />", () => {
     expect(grossInput().getAttribute("aria-describedby")).toContain("baseline-income-error");
     expect(screen.getByText(MISSING_GROSS_ERROR)).toBeDefined();
     expect(regionSelect().hasAttribute("aria-invalid")).toBe(false);
-    expect(screen.queryByText(MISSING_REGION_ERROR)).toBeNull();
+    expect(screen.queryByText(MISSING_REGION_ERROR, NOT_OPTION)).toBeNull();
   });
 
   it("clears a missing-field error once the field is filled", () => {
     setup({ showMissing: true, initial: { incomeMode: "net" } });
     expect(screen.getByText(MISSING_TAKE_HOME_ERROR)).toBeDefined();
-    expect(screen.getByText(MISSING_REGION_ERROR)).toBeDefined();
+    expect(screen.getByText(MISSING_REGION_ERROR, NOT_OPTION)).toBeDefined();
     fireEvent.change(regionSelect(), { target: { value: "ENGLAND" } });
-    expect(screen.queryByText(MISSING_REGION_ERROR)).toBeNull();
+    expect(screen.queryByText(MISSING_REGION_ERROR, NOT_OPTION)).toBeNull();
   });
 
   it("shows no missing-field errors by default", () => {
@@ -114,7 +109,7 @@ describe("<IncomeStep />", () => {
 
   it("explains an age that cannot be saved", () => {
     setup();
-    const age = screen.getByRole("spinbutton", { name: /current age/i });
+    const age = screen.getByRole("spinbutton", { name: /your age/i });
     fireEvent.change(age, { target: { value: "12" } });
     expect(screen.getByText(AGE_ERROR)).toBeDefined();
     expect(age.getAttribute("aria-invalid")).toBe("true");
@@ -122,14 +117,12 @@ describe("<IncomeStep />", () => {
     expect(screen.queryByText(AGE_ERROR)).toBeNull();
   });
 
-  it("calls onSkip and onNext, and has no Back on the first step", () => {
-    const onSkip = vi.fn();
+  it("is a required step: Next only, with no skip and no Back", () => {
     const onNext = vi.fn();
-    setup({ onSkip, onNext });
+    setup({ onNext });
     expect(screen.queryByRole("button", { name: "Back" })).toBeNull();
-    fireEvent.click(screen.getByRole("button", { name: "Skip for now" }));
+    expect(screen.queryByRole("button", { name: /skip/i })).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: /^next/i }));
-    expect(onSkip).toHaveBeenCalled();
     expect(onNext).toHaveBeenCalled();
   });
 });

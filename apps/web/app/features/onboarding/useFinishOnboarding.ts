@@ -13,11 +13,12 @@ import { useOnboardingNotify } from "./notify";
 import type { OnboardingValues } from "./types";
 
 /** Nothing could be confirmed as saved. */
-export const FINISH_ERROR = "We couldn't save your details. Check your connection and try again.";
+export const FINISH_ERROR =
+  "We could not save your details. They are still in this browser tab. Check your connection and try again.";
 /** The profile saved but some accounts or budget entries did not. */
 export const PARTIAL_FINISH_ERROR =
-  "We saved some of your details but not all. Check your connection and finish again to add the rest.";
-export const SAVED_MESSAGE = "Your details are saved";
+  "We saved some of your details, but not all. Check your connection, then finish again to save the rest.";
+export const SAVED_MESSAGE = "Details saved";
 
 /**
  * What the account holds after the last Finish attempt: `idle` before any failed attempt,
@@ -75,8 +76,10 @@ export function useFinishOnboarding(values: OnboardingValues, summary: Onboardin
         employmentType: values.employmentType,
         taxRegion: values.taxRegion ?? undefined,
         studentLoanPlans: values.studentLoanPlan === "NONE" ? [] : [values.studentLoanPlan],
-        housingStatus: values.housingStatus,
-        monthlyHousingCost: summary.monthlyHousing,
+        // Not answered sends nothing, so a saved answer is never cleared or presumed.
+        ...(values.housingStatus === null
+          ? {}
+          : { housingStatus: values.housingStatus, monthlyHousingCost: summary.monthlyHousing }),
         monthlyOtherOutgoings: summary.otherOutgoings,
         hasMortgage: values.housingStatus === "mortgage" || mortgageBalance > 0,
         homeValue: propertyValue > 0 ? propertyValue : null,

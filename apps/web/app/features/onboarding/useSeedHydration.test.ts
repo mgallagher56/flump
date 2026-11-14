@@ -56,4 +56,33 @@ describe("valuesFromSeed", () => {
     expect(patch.mortgageBalance).toBeNull();
     expect(patch.unsecuredDebt).toBeNull();
   });
+
+  it("never presumes renting, or a default rent or spending, when the seed has no housing answer", () => {
+    const patch = valuesFromSeed({ annualIncome: 60000, timestamp: Date.now() } as never);
+    expect(patch.housingStatus).toBeUndefined();
+    expect(patch.monthlyHousingCost).toBeUndefined();
+    expect(patch.monthlyOtherOutgoings).toBeUndefined();
+  });
+
+  it("carries a living with family answer and its amount", () => {
+    const patch = valuesFromSeed({
+      annualIncome: 60000,
+      housingStatus: "LIVING_WITH_FAMILY",
+      monthlyHousingCost: 200,
+      timestamp: Date.now(),
+    } as never);
+    expect(patch.housingStatus).toBe("living_with_family");
+    expect(patch.monthlyHousingCost).toBe(200);
+    expect(patch.propertyValue).toBeUndefined();
+  });
+
+  it("reads a mortgage balance as a mortgage", () => {
+    const patch = valuesFromSeed({
+      mortgageBalance: 150000,
+      propertyValue: 300000,
+      timestamp: Date.now(),
+    } as never);
+    expect(patch.housingStatus).toBe("mortgage");
+    expect(patch.propertyValue).toBe(300000);
+  });
 });

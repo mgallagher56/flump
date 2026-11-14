@@ -38,7 +38,7 @@ const rowValue = (label: string) =>
   screen.getByText(label, { selector: "dt" }).nextElementSibling?.textContent;
 
 describe("<FinishSummary />", () => {
-  it("shows one hero headline and the figures", () => {
+  it("shows the take-home estimate in the default style, never the hero (D2)", () => {
     const { container } = render(
       <FinishSummary
         isSubmitting={false}
@@ -55,8 +55,11 @@ describe("<FinishSummary />", () => {
         values={{ ...INITIAL_VALUES, incomeMode: "net", monthlyTakeHome: 3000, taxRegion: "WALES" }}
       />,
     );
-    expect(container.querySelectorAll("[data-tone='hero']")).toHaveLength(1);
+    expect(container.querySelectorAll("[data-tone='hero']")).toHaveLength(0);
+    expect(screen.getByText("Monthly take-home pay (estimate)")).toBeDefined();
     expect(container.textContent).toContain("£3,000");
+    // One figure on the review: no left over or net worth beside the take-home.
+    expect(container.textContent).not.toMatch(/surplus|left over each month|net worth/i);
     expect(screen.getByText("Wales")).toBeDefined();
   });
 
@@ -80,18 +83,27 @@ describe("<FinishSummary />", () => {
     expect(finish.disabled).toBe(true);
     expect(finish.getAttribute("aria-describedby")).toBe(hint.id);
     expect(hint.textContent).toMatch(/enter your income and choose where you pay tax/i);
-    fireEvent.click(screen.getByRole("button", { name: /go to you and income/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^Edit you and income$/ }));
     expect(onEdit).toHaveBeenCalledWith(1);
   });
 
-  it("shows Not set for anything skipped", () => {
+  it("lists only what was entered: no Not set or Not applicable rows", () => {
     setup({ grossSalary: 45000, taxRegion: "ENGLAND" });
-    expect(screen.getAllByText("Not set").length).toBeGreaterThan(3);
+    expect(document.body.textContent).not.toMatch(/Not set|Not applicable/);
+    expect(screen.queryByText("Age", { selector: "dt" })).toBeNull();
+    expect(screen.queryByText("Housing", { selector: "dt" })).toBeNull();
+    expect(screen.getAllByText("Nothing added yet.")).toHaveLength(2);
+  });
+
+  it("calls the modules list Sections we have set up for you", () => {
+    setup({ grossSalary: 45000, taxRegion: "ENGLAND" });
+    expect(screen.getByRole("list", { name: "Sections we have set up for you" })).toBeDefined();
+    expect(screen.queryByText(/modules switched on/i)).toBeNull();
   });
 
   it("edit buttons jump to their step", () => {
     const { onEdit } = setup({});
-    fireEvent.click(screen.getByRole("button", { name: "Edit Housing and outgoings" }));
+    fireEvent.click(screen.getByRole("button", { name: "Edit Housing and spending" }));
     fireEvent.click(screen.getByRole("button", { name: "Edit Savings and debt" }));
     expect(onEdit).toHaveBeenNthCalledWith(1, 2);
     expect(onEdit).toHaveBeenNthCalledWith(2, 3);
@@ -105,7 +117,9 @@ describe("<FinishSummary />", () => {
   it("says some details are saved after a partial save", () => {
     setup({ grossSalary: 45000, taxRegion: "ENGLAND" }, { saveState: "partial" });
     const note = screen.getByTestId("onboarding-saved-note").textContent ?? "";
-    expect(note).toBe("Some details are saved. Finish again to add the rest.");
+    expect(note).toBe(
+      'Some of your details are saved. Select "Finish and open dashboard" again to save the rest.',
+    );
     expect(note).not.toMatch(/nothing is saved/i);
   });
 
@@ -138,21 +152,47 @@ describe("<FinishSummary />", () => {
     expect(onFinish).not.toHaveBeenCalled();
   });
 
-  it("uses the missing-fields handler for Go to You and income when given", () => {
+  it("uses the missing-fields handler for Edit you and income when given", () => {
     const onFixMissing = vi.fn();
     const { onEdit } = setup({}, { onFixMissing });
-    fireEvent.click(screen.getByRole("button", { name: /go to you and income/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^Edit you and income$/ }));
     expect(onFixMissing).toHaveBeenCalled();
     expect(onEdit).not.toHaveBeenCalled();
   });
 
-  it("lists every income, housing and savings answer, Not set when empty", () => {
+  it("lists the answers given and leaves out the empty ones", () => {
     setup({ grossSalary: 45000, taxRegion: "ENGLAND", housingStatus: "mortgage" });
     expect(rowValue("How you earn")).toBe("Employed");
     expect(rowValue("Student loan plan")).toBe("None");
-    expect(rowValue("Pension contribution")).toBe("Not set");
-    expect(rowValue("Property value")).toBe("Not set");
-    expect(rowValue("Mortgage balance")).toBe("Not set");
+    expect(rowValue("Housing")).toBe("Paying a mortgage");
+    expect(screen.queryByText("Pension contribution", { selector: "dt" })).toBeNull();
+    expect(screen.queryByText("What your home is worth", { selector: "dt" })).toBeNull();
+    expect(screen.queryByText("Mortgage left to pay", { selector: "dt" })).toBeNull();
+  });
+
+  it("labels each housing answer's amount and shows no rent row for other answers", () => {
+    setup({
+      grossSalary: 45000,
+      taxRegion: "ENGLAND",
+      housingStatus: "living_with_family",
+      monthlyHousingCost: 0,
+      monthlyOtherOutgoings: 600,
+    });
+    expect(rowValue("Housing")).toBe("Living with family or friends");
+    expect(rowValue("What you pay each month")).toBe("£0 a month");
+    expect(rowValue("Other monthly spending")).toBe("£600 a month");
+    expect(screen.queryByText("Monthly rent", { selector: "dt" })).toBeNull();
+  });
+
+  it("shows no housing cost row when owning with no mortgage", () => {
+    setup({
+      grossSalary: 45000,
+      taxRegion: "ENGLAND",
+      housingStatus: "own_outright",
+      monthlyHousingCost: 900,
+    });
+    expect(rowValue("Housing")).toBe("Own with no mortgage");
+    expect(screen.queryByText("Monthly rent", { selector: "dt" })).toBeNull();
   });
 
   it("formats the pension contribution and housing figures", () => {
@@ -167,18 +207,18 @@ describe("<FinishSummary />", () => {
       employmentType: "self-employed",
     });
     expect(rowValue("Pension contribution")).toBe("5%");
-    expect(rowValue("Property value")).toBe("£300,000");
-    expect(rowValue("Mortgage balance")).toBe("£200,000");
+    expect(rowValue("What your home is worth")).toBe("£300,000");
+    expect(rowValue("Mortgage left to pay")).toBe("£200,000");
     expect(rowValue("Student loan plan")).toBe("Plan 2");
     expect(rowValue("How you earn")).toBe("Self-employed");
   });
 
-  it("shows Not set for an age that cannot be saved", () => {
+  it("leaves out an age that cannot be saved", () => {
     setup({ grossSalary: 45000, taxRegion: "ENGLAND", age: 12 });
-    expect(rowValue("Age")).toBe("Not set");
+    expect(screen.queryByText("Age", { selector: "dt" })).toBeNull();
   });
 
-  it("states the region assumption on the hero when no region is chosen", () => {
+  it("states the region assumption on the take-home when no region is chosen", () => {
     const { container } = render(
       <FinishSummary
         isSubmitting={false}

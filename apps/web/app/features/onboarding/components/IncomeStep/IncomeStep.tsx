@@ -11,14 +11,19 @@ import type { FC } from "react";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import type { TaxRegion } from "~/hooks/useUserProfile";
 import { AGE_ERROR, AGE_MAX, AGE_MIN, isInvalidAge } from "../../age";
-import type { EmploymentType, IncomeMode, OnboardingValues } from "../../types";
+import {
+  type EmploymentType,
+  type IncomeMode,
+  type OnboardingValues,
+  STEP_LABELS,
+} from "../../types";
 import { StepFrame } from "../StepFrame";
 import { incomeStepRecipe } from "./IncomeStep.styles";
 
-/** Typical annual salaries, offered as shortcuts. Not a recommendation of any figure. */
+/** Example yearly salaries, offered as shortcuts. Not a recommendation or a comparison. */
 export const SALARY_PRESETS = [32000, 45000, 65000] as const;
 
-export const MISSING_GROSS_ERROR = "Enter your annual gross salary";
+export const MISSING_GROSS_ERROR = "Enter your yearly salary before tax";
 export const MISSING_TAKE_HOME_ERROR = "Enter your monthly take-home pay";
 export const MISSING_REGION_ERROR = "Choose where you pay tax";
 
@@ -35,7 +40,7 @@ const STUDENT_LOAN_OPTIONS = [
   { value: "PLAN_2", label: "Plan 2" },
   { value: "PLAN_4", label: "Plan 4 (Scotland)" },
   { value: "PLAN_5", label: "Plan 5" },
-  { value: "POSTGRAD", label: "Postgraduate Loan" },
+  { value: "POSTGRAD", label: "Postgraduate loan" },
 ];
 
 const EMPLOYMENT_OPTIONS = [
@@ -43,20 +48,19 @@ const EMPLOYMENT_OPTIONS = [
   {
     value: "self-employed",
     label: "Self-employed",
-    description: "Class 4 NI and Self Assessment",
+    description: "You pay tax through Self Assessment",
   },
 ];
 
 const INCOME_MODE_OPTIONS = [
-  { value: "gross", label: "Salary before tax", description: "Annual figure" },
-  { value: "net", label: "Take-home after tax", description: "Monthly" },
+  { value: "gross", label: "Salary before tax", description: "A year" },
+  { value: "net", label: "Take-home pay", description: "A month" },
 ];
 
 export interface IncomeStepProps {
   values: OnboardingValues;
   update: (patch: Partial<OnboardingValues>) => void;
   onNext: () => void;
-  onSkip: () => void;
   focusOnMount?: boolean;
   /** Mark the empty fields Finish needs (set when the review sends the user here). */
   showMissing?: boolean;
@@ -66,7 +70,6 @@ export const IncomeStep: FC<IncomeStepProps> = ({
   values,
   update,
   onNext,
-  onSkip,
   focusOnMount,
   showMissing = false,
 }) => {
@@ -83,16 +86,15 @@ export const IncomeStep: FC<IncomeStepProps> = ({
 
   return (
     <StepFrame
-      description="Your income gives your take-home pay. Skip anything you would rather add later."
+      description="We work out your take-home pay from your income. Leave out anything you would rather add later."
       focusOnMount={focusOnMount}
       id="income"
       nextLabel="Next"
       onNext={onNext}
-      onSkip={onSkip}
-      title="You and income"
+      title={STEP_LABELS.income}
     >
       <div className={classes.pair}>
-        <FormField error={ageError} id="baseline-age" label="Current age">
+        <FormField error={ageError} id="baseline-age" label="Your age">
           {(field) => (
             <TextInput
               {...controlProps(field)}
@@ -102,7 +104,7 @@ export const IncomeStep: FC<IncomeStepProps> = ({
               onChange={(event) =>
                 update({ age: event.target.value === "" ? null : Number(event.target.value) })
               }
-              placeholder="e.g. 32"
+              placeholder="For example, 32"
               type="number"
               value={values.age ?? ""}
             />
@@ -121,7 +123,7 @@ export const IncomeStep: FC<IncomeStepProps> = ({
 
       <RadioCardGroup
         id="onboarding-income-mode"
-        legend="How you want to enter income"
+        legend="How to enter your income"
         name="onboarding-income-mode"
         onValueChange={(next) => update({ incomeMode: next as IncomeMode })}
         options={INCOME_MODE_OPTIONS}
@@ -131,9 +133,9 @@ export const IncomeStep: FC<IncomeStepProps> = ({
       {gross ? (
         <FormField
           error={incomeError}
-          hint="Needed to finish setup."
+          hint="We need this to finish setting up."
           id="baseline-income"
-          label="Annual gross salary"
+          label="Yearly salary before tax"
           required
         >
           {(field) => (
@@ -142,11 +144,11 @@ export const IncomeStep: FC<IncomeStepProps> = ({
                 {...controlProps(field)}
                 min={0}
                 onValueChange={(grossSalary) => update({ grossSalary })}
-                placeholder="e.g. 45,000"
+                placeholder="For example, 45,000"
                 value={values.grossSalary}
               />
               <fieldset className={classes.presets}>
-                <legend className={classes.presetLabel}>Typical salaries</legend>
+                <legend className={classes.presetLabel}>Example salaries</legend>
                 {SALARY_PRESETS.map((preset) => (
                   <Button
                     aria-pressed={values.grossSalary === preset}
@@ -167,7 +169,7 @@ export const IncomeStep: FC<IncomeStepProps> = ({
       ) : (
         <FormField
           error={incomeError}
-          hint="Needed to finish setup."
+          hint="We need this to finish setting up."
           id="baseline-income"
           label="Monthly take-home pay"
           required
@@ -177,7 +179,7 @@ export const IncomeStep: FC<IncomeStepProps> = ({
               {...controlProps(field)}
               min={0}
               onValueChange={(monthlyTakeHome) => update({ monthlyTakeHome })}
-              placeholder="e.g. 2,900"
+              placeholder="For example, 2,900"
               value={values.monthlyTakeHome}
             />
           )}
@@ -186,7 +188,7 @@ export const IncomeStep: FC<IncomeStepProps> = ({
 
       <FormField
         error={regionError}
-        hint="Scotland has its own income tax rates, so this changes your take-home pay. Needed to finish setup."
+        hint="Scotland has its own Income Tax rates, so this changes your take-home pay. We need this to finish setting up."
         id="baseline-tax-region"
         label="Where do you pay tax?"
         required
@@ -198,7 +200,7 @@ export const IncomeStep: FC<IncomeStepProps> = ({
               update({ taxRegion: (event.target.value || null) as TaxRegion | null })
             }
             options={REGION_OPTIONS}
-            placeholder="Choose where you live"
+            placeholder="Choose where you pay tax"
             value={values.taxRegion ?? ""}
           />
         )}

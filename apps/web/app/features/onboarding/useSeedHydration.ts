@@ -4,7 +4,7 @@ import {
   readOnboardingSeed,
 } from "@flump/finance-engine";
 import { useEffect, useState } from "react";
-import type { OnboardingValues } from "./types";
+import { type OnboardingValues, ownsHome } from "./types";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -31,17 +31,24 @@ export function valuesFromSeed(parsed: OnboardingSeedPayload): Partial<Onboardin
   if (hydrated.totalCashSavings > 0) patch.cashSavings = hydrated.totalCashSavings;
   if (hydrated.totalPensionPot > 0) patch.pensionPot = hydrated.totalPensionPot;
   patch.mortgageBalance = hydrated.mortgageBalance > 0 ? hydrated.mortgageBalance : null;
-  if (hydrated.mortgageBalance > 0) {
-    patch.housingStatus = "mortgage";
+  // Housing comes only from what the seed says; with no answer it stays unanswered, never renting.
+  const HOUSING = {
+    RENTING: "renting",
+    MORTGAGE: "mortgage",
+    OWN_OUTRIGHT: "own_outright",
+    LIVING_WITH_FAMILY: "living_with_family",
+  } as const;
+  if (hydrated.housingStatus) patch.housingStatus = HOUSING[hydrated.housingStatus];
+  if (ownsHome(patch.housingStatus ?? null)) {
     patch.propertyValue = hydrated.propertyValue > 0 ? hydrated.propertyValue : null;
-  } else if (hydrated.housingStatus === "OWN_OUTRIGHT") {
-    patch.housingStatus = "own_outright";
-  } else {
-    patch.housingStatus = "renting";
   }
   patch.unsecuredDebt = hydrated.totalUnsecuredDebt > 0 ? hydrated.totalUnsecuredDebt : null;
-  if (hydrated.monthlyHousingCost > 0) patch.monthlyHousingCost = hydrated.monthlyHousingCost;
-  if (hydrated.monthlyOtherOutgoings > 0) {
+  // The engine fills a default housing cost and other spending when a seed has none; only a
+  // figure the seed actually carries is used, so no default reads as the person's own.
+  if (parsed.monthlyHousingCost !== undefined && hydrated.monthlyHousingCost > 0) {
+    patch.monthlyHousingCost = hydrated.monthlyHousingCost;
+  }
+  if (parsed.monthlyOtherOutgoings !== undefined && hydrated.monthlyOtherOutgoings > 0) {
     patch.monthlyOtherOutgoings = hydrated.monthlyOtherOutgoings;
   }
   return patch;
