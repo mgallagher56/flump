@@ -63,7 +63,7 @@ const TABULAR = "tabular-nums";
  * further, so at 600 to 700 weight "Your details" read as "Yourdetails". Widening word gaps only
  * restores the space without loosening the letters. Web only: React Native has no word spacing.
  */
-const HEADING_WORD_SPACING = "0.05em";
+const HEADING_WORD_SPACING = "0.12em";
 
 export const textStyles = {
   display: {

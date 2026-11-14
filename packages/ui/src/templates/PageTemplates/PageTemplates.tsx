@@ -72,6 +72,7 @@ import {
   splitList,
   stack,
   toolStack,
+  wrapCell,
 } from "./PageTemplates.styles";
 
 /**
@@ -397,7 +398,7 @@ export const DashboardTemplate: FC = () => {
                 type is secondary text under the name. */}
             {ACCOUNTS.map((a) => (
               <tr data-list-row="" key={a.id}>
-                <Td>
+                <Td className={wrapCell}>
                   <span className={listItemMeta}>
                     <span className={listItemName}>{a.name}</span>
                     <span className={mutedText}>{a.kind}</span>
