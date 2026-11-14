@@ -399,9 +399,7 @@ const SelfAssessmentPage: FC<{
 
         {initialRecords.length > 0 ? (
           <CollapsibleDrawer
-            itemCount={initialRecords.length}
-            itemNoun={{ one: "record", other: "records" }}
-            title="All records"
+            title={`All records (${countFormat.format(initialRecords.length)})`}
             variant="quiet"
           >
             <TaxRecordsTable

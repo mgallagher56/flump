@@ -74,7 +74,7 @@ export const countUnsetKpis = (content: ReactNode): { total: number; unset: numb
 
 /**
  * Top-level page metrics: 3 cards by default, 4 at most, in one row from `sm` upwards. At phone
- * width 3 cards stack in one column and 4 sit 2x2, so no card is ever left alone on a row. Uses compact density. With `items`, `columns` follows the item count unless
+ * width 2 or 3 cards stack in one column and 4 sit 2x2, so no card is ever left alone on a row. Uses compact density. With `items`, `columns` follows the item count unless
  * given. When half or more cards are unset, one `EmptyState` prompt replaces the strip (P3.2).
  */
 export const KpiStrip: FC<KpiStripProps> = ({

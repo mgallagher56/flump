@@ -147,6 +147,12 @@ export const theadRecipe = cva({
 export const tbodyRecipe = cva({
   base: {
     "& tr:hover": { backgroundColor: "surface.subtle" },
+    // Row headers (`<Th scope="row">`) carry the same divider as `Td`, so it spans the whole row.
+    "& th": {
+      borderBottomWidth: "1px",
+      borderBottomStyle: "solid",
+      borderBottomColor: "border.subtle",
+    },
     "& tr:last-child td, & tr:last-child th": { borderBottomWidth: "0" },
   },
 });
