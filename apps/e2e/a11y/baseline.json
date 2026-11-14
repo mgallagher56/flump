@@ -1,22 +1,4 @@
 {
   "generated": true,
-  "routes": {
-    "web-accounts": {
-      "1280-dark": {
-        "axe": {
-          "target-size": 2
-        }
-      },
-      "1280-forced-colours": {
-        "axe": {
-          "target-size": 2
-        }
-      },
-      "1280-light": {
-        "axe": {
-          "target-size": 2
-        }
-      }
-    }
-  }
+  "routes": {}
 }
