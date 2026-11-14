@@ -650,4 +650,49 @@ describe("<MortgageContainer />", () => {
       }
     });
   });
+
+  describe("loan to value for the onboarded homeowner (E16 PR 3 regression)", () => {
+    const homeownerAccounts = [
+      { id: "cash", name: "Cash and emergency savings", type: "Saving", balance: 21000 },
+      { id: "pot", name: "Workplace and personal pension", type: "Pension", balance: 96000 },
+      { id: "m1", name: "Residential Mortgage", type: "Mortgage", balance: 186000 },
+    ];
+    const ltvHeading = (container: HTMLElement) =>
+      container.querySelector("#ltv-milestones-heading")?.textContent ?? "";
+
+    test("shows 60% from the saved home estimate and mortgage balance", () => {
+      loaderData = {
+        accounts: homeownerAccounts,
+        accountDetails: [],
+        userProfile: { housingStatus: "mortgage", homeValue: 310000 },
+      };
+      const { container, queryByText } = customRender(<MortgageContainer />);
+      expect(ltvHeading(container)).toContain("Current LTV: 60.0%");
+      expect(queryByText(/Add your mortgage balance and property value/)).toBeNull();
+    });
+
+    test("shows 60% when the home is saved as a Property account (the profile has no value)", () => {
+      loaderData = {
+        accounts: [
+          ...homeownerAccounts,
+          { id: "home", name: "Home (your estimate)", type: "Property", balance: 310000 },
+        ],
+        accountDetails: [],
+        userProfile: { housingStatus: "mortgage" },
+      };
+      const { container } = customRender(<MortgageContainer />);
+      expect(ltvHeading(container)).toContain("Current LTV: 60.0%");
+    });
+
+    test("stays not available, never 0%, without a home value", () => {
+      loaderData = {
+        accounts: homeownerAccounts,
+        accountDetails: [],
+        userProfile: { housingStatus: "mortgage" },
+      };
+      const { container, getByText } = customRender(<MortgageContainer />);
+      expect(container.querySelector("#ltv-milestones-heading")).toBeNull();
+      expect(getByText(/Add your mortgage balance and property value/)).toBeDefined();
+    });
+  });
 });
