@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { expect, fn, userEvent, within } from "storybook/test";
+import { expect, userEvent, within } from "storybook/test";
 import { sampleBudgetEntries } from "../../sampleBudgetEntries";
 import { RunwayCalculator } from "./RunwayCalculator";
 
@@ -29,7 +29,6 @@ const meta: Meta<typeof RunwayCalculator> = {
       },
     ],
     accountDetails: [],
-    onNavigateToForecast: fn(),
   },
 };
 
@@ -40,11 +39,15 @@ type Story = StoryObj<typeof RunwayCalculator>;
 export const Default: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    const toggle = canvas.getAllByRole("switch", {
-      name: "Include Monzo current in this illustration",
-    })[0];
+    const more = canvas.getAllByRole("button", { name: "More options" })[0];
+    if (!more) throw new Error("More options missing");
+    await userEvent.click(more);
+    const toggle = canvas.getAllByRole("switch", { name: "Monzo current" })[0] as
+      | HTMLInputElement
+      | undefined;
     if (!toggle) throw new Error("Switch missing");
+    await expect(toggle.checked).toBe(true);
     await userEvent.click(toggle);
-    await expect(toggle.getAttribute("aria-checked")).toBe("false");
+    await expect(toggle.checked).toBe(false);
   },
 };

@@ -2,6 +2,7 @@ import { type FinancialPicture, isFigureKnown } from "@flump/finance-engine";
 import { HeroFigure, KpiCard, KpiStrip } from "@repo/ui";
 import { type FC, useMemo } from "react";
 import { SampleAwareLink } from "~/components/navigation/SampleAwareLink";
+import { formatMonthsOfCover } from "~/features/dashboard/components/BudgetWidget";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import type { BudgetEntry } from "~/types/budget";
 import { buildWorkspacePicture } from "~/utils/financialPicture";
@@ -14,12 +15,14 @@ export interface BudgetOverviewProps {
    * loaders use). The overview never adds rows up itself (E23 section 2). Saved data only: no
    * scenario input ever reaches these figures.
    */
-  picture?: Pick<FinancialPicture, "budget" | "safeToSpend">;
+  picture?: Pick<FinancialPicture, "budget" | "safeToSpend" | "monthsOfCover">;
 }
 
 /**
- * The budget page's first view (E16 PR 5): one headline, "Left over each month", with weekly safe
- * to spend as its sub-line, then 3 supporting figures. Facts only, in the usual colours: a budget
+ * The budget page's first view (E16 R2-6): one headline, "Left over each month", with weekly safe
+ * to spend as its sub-line, then 2 supporting figures: money in (income is not a spending
+ * category, so it shows here and nowhere else) and the saved months of cover, which the scenario
+ * zone below starts from. 4 figures in all (N1 4). Facts only, in the usual colours: a budget
  * that is short each month says so plainly, with no alarm styling and no list of services.
  */
 export const BudgetOverview: FC<BudgetOverviewProps> = ({ entries, picture: pictureProp }) => {
@@ -31,6 +34,7 @@ export const BudgetOverview: FC<BudgetOverviewProps> = ({ entries, picture: pict
     [pictureProp, entries],
   );
   const budget = isFigureKnown(picture.budget) ? picture.budget.value : null;
+  const cover = isFigureKnown(picture.monthsOfCover) ? picture.monthsOfCover.value : null;
   const safeToSpend = isFigureKnown(picture.safeToSpend) ? picture.safeToSpend.value : null;
   const salaryMissing =
     !isFigureKnown(picture.safeToSpend) &&
@@ -63,6 +67,7 @@ export const BudgetOverview: FC<BudgetOverviewProps> = ({ entries, picture: pict
     <div className={overviewRoot()}>
       <HeroFigure
         emptyPrompt="Add your income to see what is left over each month."
+        explain="Money in each month, minus your bills, spending and savings in your budget."
         label={isShort ? "Short each month" : "Left over each month"}
         subline={subline}
         value={
@@ -78,27 +83,27 @@ export const BudgetOverview: FC<BudgetOverviewProps> = ({ entries, picture: pict
         }
       />
       <KpiStrip
+        emptyPrompt={{
+          title: "Add your income and essential spending to see money in and months of cover",
+        }}
         items={[
           <KpiCard
             key="income"
-            label="Money in"
-            subtext="Each month"
+            label="Money in each month"
             value={hasIncome ? (budget?.income ?? 0) : null}
             valueFormat={{ fractionDigits: 0 }}
           />,
           <KpiCard
-            key="essentials"
-            label="Bills and essentials"
-            subtext="Each month"
-            value={budget?.essentials ?? 0}
-            valueFormat={{ fractionDigits: 0 }}
-          />,
-          <KpiCard
-            key="flexible"
-            label="Flexible spending"
-            subtext="Each month"
-            value={budget?.discretionary ?? 0}
-            valueFormat={{ fractionDigits: 0 }}
+            explain="How long your current and savings accounts would last if your income stopped, paying essential spending and minimum debt payments. From your saved budget and balances."
+            key="cover"
+            label="Months of cover"
+            value={
+              cover ? (
+                <span className={figure()} data-figure="monthsOfCover">
+                  {formatMonthsOfCover(cover.months)}
+                </span>
+              ) : null
+            }
           />,
         ]}
       />

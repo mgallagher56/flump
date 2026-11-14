@@ -41,6 +41,18 @@ export const Default: Story = {
     await userEvent.click(housing);
     await expect(housing).toHaveAttribute("aria-expanded", "true");
     await expect(canvas.getAllByText("Entries for housing")[0]).toBeDefined();
+    // Income is money in, so it is not a row here.
+    await expect(canvas.queryAllByTestId("budget-category-income")).toHaveLength(0);
+  },
+};
+
+/** The housing row names how you pay for housing in place of its entry count. */
+export const WithHousingMeta: Story = {
+  args: { metaFor: (cat: string) => (cat === "housing" ? "Renting" : undefined) },
+  play: async ({ canvasElement }) => {
+    const housing = within(canvasElement).getAllByTestId("budget-category-housing")[0];
+    if (!housing) throw new Error("Housing row missing");
+    await expect(within(housing).getByText("Renting")).toBeDefined();
   },
 };
 

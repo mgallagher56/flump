@@ -6,45 +6,34 @@ import {
   PortfolioSnapshot,
 } from "@flump/finance-engine";
 import {
-  Button,
+  CollapsibleDrawer,
   CurrencyInput,
   FormField,
-  Icon,
   Money,
-  ProgressBar,
   ProjectionNotice,
   ScenarioZone,
   SimulatorSplitLayout,
+  Switch,
 } from "@repo/ui";
-import { ArrowRight } from "lucide-react";
-import { type FC, type ReactNode, useEffect, useMemo, useState } from "react";
+import { type FC, useEffect, useMemo, useState } from "react";
 import { formatMonthsOfCover } from "~/features/dashboard/components/BudgetWidget";
 import type { BudgetEntry } from "~/types/budget";
-import { CATEGORY_LABELS, toMonthly } from "~/types/budget";
+import { toMonthly } from "~/types/budget";
 import { buildWorkspacePicture } from "~/utils/financialPicture";
 import type { RunwayScenario } from "~/utils/runwayStorage";
 import {
   breakdownList,
   breakdownRow,
-  bulkActions,
-  cardHeader,
-  cardTitle,
-  cardTitleRow,
-  ctaRow,
+  controlsStack,
   introText,
-  mutedNote,
-  rowList,
+  optionGroup,
+  optionHint,
+  optionLegend,
+  optionsStack,
+  outcome,
+  outcomeLabel,
   runwayRoot,
   scenarioValue,
-  switchButton,
-  toggleEnd,
-  toggleInfo,
-  toggleMeta,
-  toggleName,
-  toggleRow,
-  toolGroup,
-  totalRow,
-  whatIfGrid,
 } from "./RunwayCalculator.styles";
 
 interface Account {
@@ -66,7 +55,6 @@ export interface RunwayCalculatorProps {
   entries: BudgetEntry[];
   accounts: Account[];
   accountDetails: AccountDetail[];
-  onNavigateToForecast: () => void;
   /**
    * Months of cover from saved data, from the engine's financial picture (E23). The headline and
    * the scenario's starting point read only this. Built from the props when not given.
@@ -83,75 +71,49 @@ export interface RunwayCalculatorProps {
 
 const EXPENSE_CATEGORIES: BudgetEntry["category"][] = ["housing", "bills", "expenses"];
 
-interface ToggleItemProps {
+interface OptionItem {
+  id: string;
   name: string;
+  amount: number;
+  /** Shown after the amount: "a month" for budget lines, nothing for balances. */
+  perMonth: boolean;
   checked: boolean;
-  switchLabel: string;
-  switchTitle?: string;
-  meta: ReactNode;
-  amount?: ReactNode;
   onToggle: () => void;
 }
 
-const ToggleItem: FC<ToggleItemProps> = ({
-  name,
-  checked,
-  switchLabel,
-  switchTitle,
-  meta,
-  amount,
-  onToggle,
-}) => (
-  <div className={toggleRow({ on: checked })}>
-    <div className={toggleInfo()}>
-      <p className={toggleName()}>{name}</p>
-      <div className={toggleMeta()}>{meta}</div>
-    </div>
-    <div className={toggleEnd()}>
-      {amount}
-      <button
-        aria-checked={checked}
-        aria-label={switchLabel}
-        className={switchButton()}
-        role="switch"
-        title={switchTitle}
-        type="button"
-        onClick={onToggle}
-      />
-    </div>
-  </div>
-);
+/** One group of switches inside "More options": a plain label, no heading, no nested card. */
+const OptionGroup: FC<{ label: string; items: OptionItem[] }> = ({ label, items }) =>
+  items.length === 0 ? null : (
+    <fieldset className={optionGroup()}>
+      <legend className={optionLegend()}>{label}</legend>
+      {items.map((item) => (
+        <Switch
+          checked={item.checked}
+          hint={
+            <span className={optionHint()}>
+              <Money size="sm" tone="muted" value={item.amount} />
+              {item.perMonth ? " a month" : null}
+            </span>
+          }
+          key={item.id}
+          label={item.name}
+          onChange={item.onToggle}
+        />
+      ))}
+    </fieldset>
+  );
 
-interface BulkProps {
-  onAll: () => void;
-  onNone: () => void;
-  label: string;
-}
-
-const BulkButtons: FC<BulkProps> = ({ onAll, onNone, label }) => (
-  <div className={bulkActions()}>
-    <Button aria-label={`Include all your ${label}`} size="sm" variant="ghost" onClick={onAll}>
-      All
-    </Button>
-    <Button aria-label={`Include none of your ${label}`} size="sm" variant="ghost" onClick={onNone}>
-      None
-    </Button>
-  </div>
-);
-
-const describeCover = (pool: number, monthlyBurn: number) => {
-  const months = monthlyBurn > 0 ? pool / monthlyBurn : Number.POSITIVE_INFINITY;
-  return {
-    months,
-    label: monthlyBurn > 0 ? formatMonthsOfCover(Math.round(months * 10) / 10) : "No end date",
-  };
-};
+const describeCover = (pool: number, monthlyBurn: number) => ({
+  label:
+    monthlyBurn > 0
+      ? formatMonthsOfCover(Math.round((pool / monthlyBurn) * 10) / 10)
+      : "No end date",
+});
 
 export const RunwayCalculator: FC<RunwayCalculatorProps> = ({
   entries,
   accounts,
   accountDetails,
-  onNavigateToForecast,
   baseline: baselineProp,
   scenario,
   onScenarioChange,
@@ -272,32 +234,14 @@ export const RunwayCalculator: FC<RunwayCalculatorProps> = ({
     emit({ includedAccounts: next });
   };
 
-  const setAllAccounts = (included: boolean) => {
-    const next = Object.fromEntries(poolAccounts.map((a) => [a.id, included]));
-    setIncludedAccounts(next);
-    emit({ includedAccounts: next });
-  };
-
   const toggleIncome = (incomeId: string) => {
     const next = { ...keptIncome, [incomeId]: !keptIncome[incomeId] };
     setKeptIncome(next);
     emit({ keptIncome: next });
   };
 
-  const setAllIncome = (kept: boolean) => {
-    const next = Object.fromEntries(nonPrimaryIncome.map((e) => [e.id, kept]));
-    setKeptIncome(next);
-    emit({ keptIncome: next });
-  };
-
   const toggleExpense = (expenseId: string) => {
     const next = { ...keptExpenses, [expenseId]: !keptExpenses[expenseId] };
-    setKeptExpenses(next);
-    emit({ keptExpenses: next });
-  };
-
-  const setCategoryExpenses = (catEntries: BudgetEntry[], kept: boolean) => {
-    const next = { ...keptExpenses, ...Object.fromEntries(catEntries.map((e) => [e.id, kept])) };
     setKeptExpenses(next);
     emit({ keptExpenses: next });
   };
@@ -363,253 +307,129 @@ export const RunwayCalculator: FC<RunwayCalculatorProps> = ({
     0,
     totalSelectedExpenses + debtNotInBudget - totalKeptIncome - extraMonthlyCut,
   );
-  const { months: coverMonths, label: coverLabel } = describeCover(pool, monthlyBurn);
-
-  // Bar capped at 24 months for display. Neutral colour: Flump sets no target here.
-  const displayMax = 24;
-  const barPct = Math.min((coverMonths / displayMax) * 100, 100);
+  // With no saved figure and nothing to pay, there is nothing to show yet: "Not set", never infinity.
+  const coverLabel =
+    !saved && monthlyBurn === 0 ? "Not set" : describeCover(pool, monthlyBurn).label;
 
   const groupedExpenses = useMemo(() => {
     // Standard categories first, then debt and custom ones, so every counted row can be switched.
     const extra = expenseEntries
       .map((e) => e.category)
       .filter((c, i, all) => !EXPENSE_CATEGORIES.includes(c) && all.indexOf(c) === i);
-    return [...EXPENSE_CATEGORIES, ...extra]
-      .map((cat) => ({ cat, entries: expenseEntries.filter((e) => e.category === cat) }))
-      .filter((g) => g.entries.length > 0);
+    return [...EXPENSE_CATEGORIES, ...extra].flatMap((cat) =>
+      expenseEntries.filter((e) => e.category === cat),
+    );
   }, [expenseEntries]);
 
-  const poolCard = (
-    <div className={toolGroup()}>
-      <div className={cardHeader()}>
-        <div className={cardTitleRow()}>
-          <h3 className={cardTitle()}>Money to draw on</h3>
-        </div>
-        {poolAccounts.length > 0 && (
-          <BulkButtons
-            label="accounts"
-            onAll={() => setAllAccounts(true)}
-            onNone={() => setAllAccounts(false)}
+  const controls = (
+    <div className={controlsStack()}>
+      <FormField
+        hint="A one-off payment added to what you can draw on"
+        label="Redundancy pay or lump sum"
+      >
+        {(field) => (
+          <CurrencyInput
+            id={field.id}
+            aria-describedby={field.describedBy}
+            placeholder="0"
+            value={severanceLump === 0 ? null : severanceLump}
+            onValueChange={(v) => handleSeveranceChange(v ?? 0)}
           />
         )}
-      </div>
-      <p className={mutedNote()}>
-        Your saved figure counts current and savings accounts. Switch accounts on or off to see the
-        difference.
-      </p>
-      {poolAccounts.length === 0 ? (
-        <p className={mutedNote()}>No current, savings or investment accounts yet.</p>
-      ) : (
-        <div className={rowList()}>
-          {poolAccounts.map((acc) => {
-            const isIncluded = !!includedAccounts[acc.id];
-            return (
-              <ToggleItem
-                key={acc.id}
-                amount={<Money size="sm" value={getLatestBalance(acc.id)} />}
-                checked={isIncluded}
-                meta={
-                  <>
-                    <span>{acc.type}</span>
-                    <span aria-hidden="true">·</span>
-                    <span>{isIncluded ? "included" : "excluded"}</span>
-                  </>
-                }
-                name={acc.name}
-                switchLabel={`Include ${acc.name} in this illustration`}
-                onToggle={() => toggleAccount(acc.id)}
-              />
-            );
-          })}
-          <div className={totalRow()}>
-            <span>Total to draw on</span>
-            <Money size="md" value={totalPool} />
-          </div>
-        </div>
-      )}
+      </FormField>
+      <FormField label="Spending you would cut, a month">
+        {(field) => (
+          <CurrencyInput
+            id={field.id}
+            aria-describedby={field.describedBy}
+            placeholder="0"
+            value={extraMonthlyCut === 0 ? null : extraMonthlyCut}
+            onValueChange={(v) => handleExtraCutChange(v ?? 0)}
+          />
+        )}
+      </FormField>
     </div>
   );
 
-  const controls = (
-    <>
-      {poolCard}
-      <div className={toolGroup()}>
-        <div className={cardHeader()}>
-          <div className={cardTitleRow()}>
-            <h3 className={cardTitle()}>What if</h3>
-          </div>
-        </div>
-        <div className={whatIfGrid()}>
-          <FormField
-            hint="A one-off payment added to what you can draw on"
-            label="Redundancy pay or lump sum"
-          >
-            {(field) => (
-              <CurrencyInput
-                id={field.id}
-                aria-describedby={field.describedBy}
-                placeholder="0"
-                value={severanceLump === 0 ? null : severanceLump}
-                onValueChange={(v) => handleSeveranceChange(v ?? 0)}
-              />
-            )}
-          </FormField>
-          <FormField label="Spending you would cut, a month">
-            {(field) => (
-              <CurrencyInput
-                id={field.id}
-                aria-describedby={field.describedBy}
-                placeholder="0"
-                value={extraMonthlyCut === 0 ? null : extraMonthlyCut}
-                onValueChange={(v) => handleExtraCutChange(v ?? 0)}
-              />
-            )}
-          </FormField>
-        </div>
+  // Line-by-line switches stay one tap away, so the first view holds two inputs (P1.7). They sit
+  // below the outcome, so opening them never pushes it out of view on a phone.
+  const moreOptions = (
+    <CollapsibleDrawer title="More options" variant="quiet">
+      <div className={optionsStack()}>
+        <OptionGroup
+          items={poolAccounts.map((acc) => ({
+            id: acc.id,
+            name: acc.name,
+            amount: getLatestBalance(acc.id),
+            perMonth: false,
+            checked: !!includedAccounts[acc.id],
+            onToggle: () => toggleAccount(acc.id),
+          }))}
+          label="Accounts to draw on"
+        />
+        <OptionGroup
+          items={nonPrimaryIncome.map((e) => ({
+            id: e.id,
+            name: e.name,
+            amount: toMonthly(e),
+            perMonth: true,
+            checked: !!keptIncome[e.id],
+            onToggle: () => toggleIncome(e.id),
+          }))}
+          label="Income you would keep"
+        />
+        <OptionGroup
+          items={groupedExpenses.map((e) => ({
+            id: e.id,
+            name: e.name,
+            amount: toMonthly(e),
+            perMonth: true,
+            checked: !!keptExpenses[e.id],
+            onToggle: () => toggleExpense(e.id),
+          }))}
+          label="Spending you would keep"
+        />
       </div>
-    </>
+    </CollapsibleDrawer>
   );
 
+  // One outcome and two supporting figures (P1.7). The saved figure is the KPI above the zone.
   const content = (
-    <>
-      <div className={toolGroup()}>
-        <p className={introText()}>
-          Months of cover is how long your current and savings accounts would last if your income
-          stopped. It counts essential spending and minimum debt payments. Changes you make in the
-          illustration are not saved.
-        </p>
-        <h3 className={cardTitle()}>Months of cover in this illustration</h3>
-        <p className={scenarioValue()}>{coverLabel}</p>
-        <div className={breakdownList()}>
-          <ProgressBar
-            label="Months of cover, up to 24 months"
-            max={displayMax}
-            value={Number.isFinite(coverMonths) ? Math.min(coverMonths, displayMax) : displayMax}
-            valueDisplay={
-              barPct >= 100 ? "24+ months" : `${Math.floor(coverMonths)} of ${displayMax} months`
-            }
-            variant="primary"
-          />
-          <div className={breakdownRow()}>
-            <span>Money to draw on</span>
+    <div className={outcome()}>
+      <p className={outcomeLabel()}>Months of cover in this illustration</p>
+      <p className={scenarioValue()} data-testid="runway-outcome" id="runway-outcome">
+        {coverLabel}
+      </p>
+      <p className={introText()}>
+        How long the money you can draw on would last if your income stopped, paying essential
+        spending and minimum debt payments.
+      </p>
+      <dl className={breakdownList()}>
+        <div className={breakdownRow()}>
+          <dt>Money to draw on</dt>
+          <dd>
             <Money size="sm" value={pool} />
-          </div>
-          <div className={breakdownRow()}>
-            <span>Income you would keep, a month</span>
-            <Money size="sm" value={totalKeptIncome} />
-          </div>
-          <div className={breakdownRow()}>
-            <span>Spending you would keep, a month</span>
-            <Money size="sm" value={totalSelectedExpenses} />
-          </div>
-          {debtNotInBudget > 0 && (
-            <div className={breakdownRow()}>
-              <span>Minimum debt payments not in your budget, a month</span>
-              <Money size="sm" value={debtNotInBudget} />
-            </div>
-          )}
-          <div className={breakdownRow()}>
-            <strong>Monthly spending</strong>
-            <Money size="md" value={monthlyBurn} />
-          </div>
+          </dd>
         </div>
-        <div className={ctaRow()}>
-          <Button variant="outline" onClick={onNavigateToForecast}>
-            Open the savings page
-            <Icon icon={ArrowRight} size="sm" />
-          </Button>
+        <div className={breakdownRow()}>
+          <dt>Spending each month</dt>
+          <dd>
+            <Money size="sm" value={monthlyBurn} />
+          </dd>
         </div>
-      </div>
-
-      {nonPrimaryIncome.length > 0 && (
-        <div className={toolGroup()}>
-          <div className={cardHeader()}>
-            <div className={cardTitleRow()}>
-              <h3 className={cardTitle()}>Income you would keep</h3>
-            </div>
-            <BulkButtons
-              label="income"
-              onAll={() => setAllIncome(true)}
-              onNone={() => setAllIncome(false)}
-            />
-          </div>
-          <div className={rowList()}>
-            {nonPrimaryIncome.map((e) => {
-              const isKept = !!keptIncome[e.id];
-              return (
-                <ToggleItem
-                  key={e.id}
-                  checked={isKept}
-                  meta={
-                    <>
-                      <Money size="sm" tone="muted" value={toMonthly(e)} />
-                      <span>a month</span>
-                      <span aria-hidden="true">·</span>
-                      <span>{isKept ? "kept" : "excluded"}</span>
-                    </>
-                  }
-                  name={e.name}
-                  switchLabel={`Keep ${e.name} income`}
-                  onToggle={() => toggleIncome(e.id)}
-                />
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {groupedExpenses.map(({ cat, entries: catEntries }) => (
-        <div className={toolGroup()} key={cat}>
-          <div className={cardHeader()}>
-            <h3 className={cardTitle()}>{CATEGORY_LABELS[cat] ?? cat}</h3>
-            <BulkButtons
-              label={String(CATEGORY_LABELS[cat] ?? cat).toLowerCase()}
-              onAll={() => setCategoryExpenses(catEntries, true)}
-              onNone={() => setCategoryExpenses(catEntries, false)}
-            />
-          </div>
-          <div className={rowList()}>
-            {catEntries.map((e) => (
-              <ToggleItem
-                key={e.id}
-                checked={!!keptExpenses[e.id]}
-                meta={
-                  <>
-                    <Money size="sm" tone="muted" value={toMonthly(e)} />
-                    <span>a month</span>
-                    <span aria-hidden="true">·</span>
-                    <span>{e.isEssential ? "essential" : "flexible"}</span>
-                  </>
-                }
-                name={e.name}
-                switchLabel={`Keep ${e.name} expense`}
-                switchTitle={keptExpenses[e.id] ? "Keeping this" : "Cutting this"}
-                onToggle={() => toggleExpense(e.id)}
-              />
-            ))}
-          </div>
-        </div>
-      ))}
-    </>
+      </dl>
+    </div>
   );
-
-  const savedLabel = saved ? formatMonthsOfCover(saved.months) : null;
 
   return (
     <div className={runwayRoot()}>
       <ScenarioZone
+        announcement={isScenarioModified ? `${coverLabel} of cover` : ""}
         basis={
-          // The saved figure, from saved data only: the illustration below never changes it.
           <span data-testid="runway-basis" id="runway-basis">
-            {saved ? (
-              <>
-                Starting from your saved months of cover:{" "}
-                <span data-figure="monthsOfCover">{savedLabel}</span>, from{" "}
-                <Money size="sm" value={saved.liquidCash} /> in current and savings accounts
-              </>
-            ) : (
-              "Starting from your budget entries. Months of cover shows once your budget has essential spending."
-            )}
+            {saved
+              ? "Starting from your saved budget and your current and savings accounts."
+              : "Starting from your budget entries. Months of cover shows once your budget has essential spending."}
           </span>
         }
         isModified={isScenarioModified}
@@ -623,6 +443,7 @@ export const RunwayCalculator: FC<RunwayCalculatorProps> = ({
           controls={controls}
           controlsLabel="Months of cover illustration"
         />
+        {moreOptions}
       </ScenarioZone>
     </div>
   );
