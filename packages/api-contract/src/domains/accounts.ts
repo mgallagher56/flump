@@ -94,7 +94,13 @@ const Int = z.number().int();
 /** The caller's own user id (an identity-provider id, not always a UUID). */
 const OwnerId = z.string().min(1);
 
-export const ACCOUNT_DETAIL_SOURCES = ["onboarding", "manual", "connected", "backfill"] as const;
+export const ACCOUNT_DETAIL_SOURCES = [
+  "onboarding",
+  "manual",
+  "connected",
+  "backfill",
+  "agent",
+] as const;
 export const AccountDetailSource = z.enum(ACCOUNT_DETAIL_SOURCES);
 
 /** One monthly value of an account (the `account_details` row as stored). */
@@ -108,6 +114,8 @@ export const AccountDetailDto = z.strictObject({
   value: Amount,
   asOfDate: IsoDate,
   source: AccountDetailSource,
+  /** The import batch that wrote the value (E17 PR C), else null. */
+  importBatchId: Uuid.nullable(),
   updatedAt: IsoDateTime,
 });
 export type AccountDetailDto = z.infer<typeof AccountDetailDto>;

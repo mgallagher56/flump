@@ -13,6 +13,7 @@ describe("UserProfileService (Deep Module)", () => {
   let mockBudgetEntryRepo: any;
   let mockTaxRecordRepo: any;
   let mockCheckinRepo: any;
+  let mockImportRepo: any;
   let identityAdapter: InMemoryIdentityAdapter;
   let mockDataSource: any;
 
@@ -44,6 +45,9 @@ describe("UserProfileService (Deep Module)", () => {
     mockCheckinRepo = {
       delete: vi.fn().mockResolvedValue({ affected: 1 }),
     };
+    mockImportRepo = {
+      delete: vi.fn().mockResolvedValue({ affected: 1 }),
+    };
     identityAdapter = new InMemoryIdentityAdapter();
     mockDataSource = {
       transaction: vi.fn(async (cb) => {
@@ -57,6 +61,7 @@ describe("UserProfileService (Deep Module)", () => {
             if (entityClass.name === "BudgetEntry") return mockBudgetEntryRepo;
             if (entityClass.name === "TaxRecord") return mockTaxRecordRepo;
             if (entityClass.name === "SnapshotCheckin") return mockCheckinRepo;
+            if (entityClass.name === "ImportBatch") return mockImportRepo;
             return {};
           },
         };
@@ -93,6 +98,7 @@ describe("UserProfileService (Deep Module)", () => {
     expect(mockTaxRecordRepo.delete).toHaveBeenCalledWith({ userId: "user-123" });
     expect(mockAccountDetailRepo.delete).toHaveBeenCalledWith({ userId: "user-123" });
     expect(mockCheckinRepo.delete).toHaveBeenCalledWith({ userId: "user-123" });
+    expect(mockImportRepo.delete).toHaveBeenCalledWith({ userId: "user-123" });
 
     expect(result.success).toBe(true);
     expect(result.profile.hasResetFinancialData).toBe(true);

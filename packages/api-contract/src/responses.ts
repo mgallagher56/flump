@@ -26,6 +26,7 @@ export {
   BudgetEntryResponse,
   DeleteBudgetEntryResponse,
 } from "./domains/budget.js";
+export { ImportBatchResponse } from "./domains/imports.js";
 export {
   ContextPackResponse,
   CreateMcpTokenResponse,

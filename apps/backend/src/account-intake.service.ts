@@ -387,11 +387,11 @@ export class AccountIntakeService implements IAccountIntake {
     const asOfDate = londonDate();
     const [year, month] = asOfDate.split("-").map(Number) as [number, number];
     // A balance edit or check-in is a manual snapshot value (E30): it also sticks against sync.
-    return details.upsert({ accountId, userId, year, month, value, asOfDate, source: "manual" }, [
-      "accountId",
-      "year",
-      "month",
-    ]);
+    // Clearing import_batch_id hands the row back to the user: an import revert no longer owns it.
+    return details.upsert(
+      { accountId, userId, year, month, value, asOfDate, source: "manual", importBatchId: null },
+      ["accountId", "year", "month"],
+    );
   }
 
   async updateAccount(userId: string, id: string, body: UpdateAccountDto): Promise<Account> {

@@ -10,6 +10,12 @@ import {
   CreateBudgetEntryRequest,
   UpdateBudgetEntryRequest,
 } from "./domains/budget.js";
+import {
+  CommitImportRequest,
+  ImportIdParams,
+  RevertImportRequest,
+  StageImportRequest,
+} from "./domains/imports.js";
 import { CreateMcpTokenRequest } from "./domains/mcp-tokens.js";
 import { UpdateChecklistRequest, UpdateProfileRequest } from "./domains/profile.js";
 import { SnapshotMonthParams, UpsertSnapshotRequest } from "./domains/snapshots.js";
@@ -39,6 +45,7 @@ import {
   DeleteBudgetEntryResponse,
   DeleteTaxRecordResponse,
   HealthResponse,
+  ImportBatchResponse,
   McpTokenListResponse,
   PortfolioSnapshotResponse,
   ReadinessResponse,
@@ -92,6 +99,7 @@ export const CONTRACT_GROUPS = [
   "bank-connections",
   "transactions",
   "snapshots",
+  "imports",
   "mcp-tokens",
   "app",
 ] as const;
@@ -217,6 +225,50 @@ export const routes = {
       body: UpsertSnapshotRequest,
       group: "snapshots",
       response: UpsertSnapshotResponse,
+    }),
+  },
+  imports: {
+    stage: defineRoute({
+      id: "imports.stage",
+      method: "POST",
+      path: "imports",
+      auth: "user",
+      ownership: "user",
+      body: StageImportRequest,
+      group: "imports",
+      response: ImportBatchResponse,
+    }),
+    get: defineRoute({
+      id: "imports.get",
+      method: "GET",
+      path: "imports/:id",
+      auth: "user",
+      ownership: "user",
+      params: ImportIdParams,
+      group: "imports",
+      response: ImportBatchResponse,
+    }),
+    commit: defineRoute({
+      id: "imports.commit",
+      method: "POST",
+      path: "imports/:id/commit",
+      auth: "user",
+      ownership: "user",
+      params: ImportIdParams,
+      body: CommitImportRequest,
+      group: "imports",
+      response: ImportBatchResponse,
+    }),
+    revert: defineRoute({
+      id: "imports.revert",
+      method: "POST",
+      path: "imports/:id/revert",
+      auth: "user",
+      ownership: "user",
+      params: ImportIdParams,
+      body: RevertImportRequest,
+      group: "imports",
+      response: ImportBatchResponse,
     }),
   },
   transactions: {

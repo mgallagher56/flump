@@ -70,6 +70,7 @@ const detail = {
   value: 1100.1,
   asOfDate: "2026-10-31",
   source: "manual",
+  importBatchId: null,
   updatedAt: "2026-10-31T20:00:00.000Z",
 };
 

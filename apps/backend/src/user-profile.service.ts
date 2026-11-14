@@ -12,6 +12,7 @@ import { Account } from "./entities/account.entity";
 import { AccountDetail } from "./entities/account-detail.entity";
 import { BankConnection } from "./entities/bank-connection.entity";
 import { BudgetEntry } from "./entities/budget-entry.entity";
+import { ImportBatch } from "./entities/import-batch.entity";
 import { SnapshotCheckin } from "./entities/snapshot-checkin.entity";
 import { TaxRecord } from "./entities/tax-record.entity";
 import { Transaction } from "./entities/transaction.entity";
@@ -466,6 +467,7 @@ export class UserProfileService implements ProfileLifecycle {
       taxRepo: Repository<TaxRecord>,
       profileRepo: Repository<UserProfile>,
       checkinRepo: Repository<SnapshotCheckin> | undefined,
+      importRepo?: Repository<ImportBatch>,
     ) => {
       const accounts = await accountRepo.find({
         where: { userId },
@@ -479,6 +481,8 @@ export class UserProfileService implements ProfileLifecycle {
         await detailRepo.delete({ accountId: In(accountIds) });
       }
       await checkinRepo?.delete({ userId });
+      // Staged imports hold account names and values (E17 PR C), so they go with the rest.
+      await importRepo?.delete({ userId });
 
       await txRepo.delete({ userId });
       await accountRepo.delete({ userId });
@@ -532,6 +536,7 @@ export class UserProfileService implements ProfileLifecycle {
           manager.getRepository(TaxRecord),
           manager.getRepository(UserProfile),
           manager.getRepository(SnapshotCheckin),
+          manager.getRepository(ImportBatch),
         );
       });
     } else {

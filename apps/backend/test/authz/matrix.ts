@@ -11,7 +11,7 @@
 export type MatrixRow =
   | {
       status: "covered";
-      spec: "finance" | "budget" | "tax" | "user-profile" | "mcp-tokens" | "snapshots";
+      spec: "finance" | "budget" | "tax" | "user-profile" | "mcp-tokens" | "snapshots" | "imports";
     }
   | { status: "public"; reason: string; spec?: "mcp" };
 
@@ -21,6 +21,7 @@ const tax = { status: "covered", spec: "tax" } as const;
 const userProfile = { status: "covered", spec: "user-profile" } as const;
 const mcpTokens = { status: "covered", spec: "mcp-tokens" } as const;
 const snapshots = { status: "covered", spec: "snapshots" } as const;
+const imports = { status: "covered", spec: "imports" } as const;
 const mcpTransport = {
   status: "public",
   reason: "MCP transport, authenticates with a PAT itself (authz.mcp.spec.ts)",
@@ -81,6 +82,12 @@ export const ROUTE_MATRIX: Readonly<Record<string, MatrixRow>> = {
 
   // Monthly snapshots (E30).
   "PUT /snapshots/:month": snapshots,
+
+  // Import pipeline (E17 re-plan PR C).
+  "POST /imports": imports,
+  "GET /imports/:id": imports,
+  "POST /imports/:id/commit": imports,
+  "POST /imports/:id/revert": imports,
 
   // MCP token management (E20-N23). The /mcp transport itself is public, see above.
   "GET /mcp-tokens": mcpTokens,

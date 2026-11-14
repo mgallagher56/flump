@@ -3,6 +3,7 @@ import { ConfigModule } from "@nestjs/config";
 import { APP_INTERCEPTOR } from "@nestjs/core";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { AccountIntakeService } from "./account-intake.service";
+import { AgentAuditService } from "./agent/agent-audit.service";
 import { AgentDataService } from "./agent/agent-data.service";
 import { McpTokenService } from "./agent/mcp-token.service";
 import { AppController } from "./app.controller";
@@ -16,6 +17,8 @@ import { FinanceController } from "./finance.controller";
 import { FinanceService } from "./finance.service";
 import { HealthController } from "./health/health.controller";
 import { USER_IDENTITY_ADAPTER, WorkOSIdentityAdapter } from "./identity/identity.adapter";
+import { ImportsController } from "./imports/imports.controller";
+import { ImportsService } from "./imports/imports.service";
 import { McpController } from "./mcp.controller";
 import { McpService } from "./mcp.service";
 import { ObservabilityModule } from "./observability/observability.module";
@@ -52,6 +55,7 @@ import { UserProfileService } from "./user-profile.service";
     BudgetController,
     TaxController,
     SnapshotsController,
+    ImportsController,
     McpController,
   ],
   providers: [
@@ -59,6 +63,8 @@ import { UserProfileService } from "./user-profile.service";
     AccountIntakeService,
     FinanceService,
     SnapshotsService,
+    ImportsService,
+    AgentAuditService,
     UserProfileService,
     McpTokenService,
     AgentDataService,

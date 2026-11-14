@@ -2,8 +2,10 @@ import { join } from "node:path";
 import type { TypeOrmModuleOptions } from "@nestjs/typeorm";
 import { Account } from "../entities/account.entity";
 import { AccountDetail } from "../entities/account-detail.entity";
+import { AgentAuditEvent } from "../entities/agent-audit-event.entity";
 import { BankConnection } from "../entities/bank-connection.entity";
 import { BudgetEntry } from "../entities/budget-entry.entity";
+import { ImportBatch } from "../entities/import-batch.entity";
 import { McpToken } from "../entities/mcp-token.entity";
 import { SnapshotCheckin } from "../entities/snapshot-checkin.entity";
 import { TaxRecord } from "../entities/tax-record.entity";
@@ -22,6 +24,8 @@ export const ENTITIES: Function[] = [
   TaxRecord,
   McpToken,
   SnapshotCheckin,
+  ImportBatch,
+  AgentAuditEvent,
 ];
 
 // Relative to this file so it resolves under both `bun src/...` (ts) and dist/ (js).
