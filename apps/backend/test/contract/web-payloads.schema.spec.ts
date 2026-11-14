@@ -19,8 +19,9 @@ import {
  * schema, or a schema that starts rejecting what web sends, fails here before it can show up in
  * the production shadow log.
  *
- * The EXPECTED_UNKNOWN_KEYS lists are the known mismatches. They are shrink-only: fixing the web
- * or adding the backend field means removing the entry.
+ * Request schemas are strict (BE-09): an unknown key is a 400, so every payload must be clean. The
+ * fields the web sends that the backend ignores (homeValue, contractEndDate, isDefault,
+ * isPrimaryIncome) are listed in the schemas as accepted and ignored until the web stops (BE-10).
  */
 const body = (id: string) => {
   const route = allRoutes.find((r) => r.id === id);
@@ -36,9 +37,14 @@ const violations = (id: string, payload: unknown) => {
 const unknown = (keys: readonly string[]) => keys.map((k) => `${k}:unrecognized_keys`).sort();
 
 describe("web payloads against @flump/api-contract schemas", () => {
-  it("onboarding profile: only the fields the backend drops are flagged", () => {
-    expect(violations("profile.update", ONBOARDING_PROFILE)).toEqual(
-      unknown(PROFILE_FIELDS_NOT_PERSISTED),
+  it("onboarding profile is clean, including the fields the backend ignores", () => {
+    expect(violations("profile.update", ONBOARDING_PROFILE)).toEqual([]);
+    for (const field of PROFILE_FIELDS_NOT_PERSISTED) {
+      const shape = (body("profile.update") as unknown as { shape: object }).shape;
+      expect(Object.keys(shape)).toContain(field);
+    }
+    expect(violations("profile.update", { ...ONBOARDING_COMPLETE, surprise: 1 })).toEqual(
+      unknown(["surprise"]),
     );
     expect(violations("profile.update", ONBOARDING_COMPLETE)).toEqual([]);
   });
@@ -62,12 +68,11 @@ describe("web payloads against @flump/api-contract schemas", () => {
     }
   });
 
-  it("budget payloads: server-owned and unpersisted keys are flagged as unknown", () => {
-    expect(violations("budget.create", BUDGET_CREATE_PAYLOAD)).toEqual(
-      unknown(["contractEndDate", "isDefault", "isPrimaryIncome"]),
-    );
-    expect(violations("budget.update", BUDGET_UPDATE_PAYLOAD)).toEqual(
-      unknown(["contractEndDate"]),
+  it("budget payloads are clean, including the keys the backend ignores", () => {
+    expect(violations("budget.create", BUDGET_CREATE_PAYLOAD)).toEqual([]);
+    expect(violations("budget.update", BUDGET_UPDATE_PAYLOAD)).toEqual([]);
+    expect(violations("budget.update", { ...BUDGET_UPDATE_PAYLOAD, userId: "x" })).toEqual(
+      unknown(["userId"]),
     );
     expect(violations("budget.addCategory", BUDGET_CATEGORY_PAYLOAD)).toEqual([]);
   });

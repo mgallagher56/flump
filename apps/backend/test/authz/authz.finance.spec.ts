@@ -8,8 +8,10 @@ import { ROUTE_MATRIX } from "./matrix";
 import {
   type AuthzHarness,
   bootAuthzHarness,
+  expectProbeRejected,
   MISSING_ID,
   probeBody,
+  sansRequestId,
   truncateAll,
   USER_A,
   USER_B,
@@ -99,7 +101,7 @@ describe.skipIf(dbMode === "skip")("authz: finance controller (real Postgres)", 
     const missing = await h.call(method, missingPath, h.tokens.b, body);
     expect(asB.status).toBe(404);
     expect(missing.status).toBe(404);
-    expect(asB.body).toEqual(missing.body);
+    expect(sansRequestId(asB.body)).toEqual(sansRequestId(missing.body));
   };
 
   const expectAccountUntouched = async () => {
@@ -300,7 +302,7 @@ describe.skipIf(dbMode === "skip")("authz: finance controller (real Postgres)", 
         type: "Current",
         balance: 7,
       });
-      expect(bCreate.status).toBeLessThan(500);
+      expectProbeRejected(bCreate);
       await expectAccountUntouched();
       const bRows = await accounts().findBy({ userId: USER_B });
       for (const row of bRows) expect(row.id).not.toBe(accountId);
@@ -317,7 +319,9 @@ describe.skipIf(dbMode === "skip")("authz: finance controller (real Postgres)", 
         expect(Number(own.body.balance)).toBe(99);
         await accounts().update({ id: accountId }, { balance: 1204.5 });
 
-        const body = { ...probeBody(accountId), name: "pwned", balance: 1 };
+        const probe = { ...probeBody(accountId), name: "pwned", balance: 1 };
+        expectProbeRejected(await h.call(verb, `/accounts/${accountId}`, h.tokens.b, probe));
+        const body = { name: "pwned", balance: 1 };
         await expectSameAsNotFound(verb, `/accounts/${accountId}`, `/accounts/${MISSING_ID}`, body);
         await expectAccountUntouched();
         ran(key);
@@ -351,7 +355,7 @@ describe.skipIf(dbMode === "skip")("authz: finance controller (real Postgres)", 
       });
       expect(asB.status).toBe(404);
       expect(missing.status).toBe(404);
-      expect(asB.body).toEqual(missing.body);
+      expect(sansRequestId(asB.body)).toEqual(sansRequestId(missing.body));
       await expectAccountUntouched();
       const bRow = await accounts().findOneBy({ id: bOwn.body.id });
       expect(Number(bRow?.balance)).toBe(10);
@@ -382,8 +386,16 @@ describe.skipIf(dbMode === "skip")("authz: finance controller (real Postgres)", 
       expect(own.body.userId).toBe(USER_A);
 
       const before = await transactions().count();
+      expectProbeRejected(
+        await h.call("post", "/transactions", h.tokens.b, {
+          ...probeBody(accountId),
+          accountId,
+          amount: 5000,
+          description: "injected",
+          category: "x",
+        }),
+      );
       const body = (id: string) => ({
-        ...probeBody(accountId),
         accountId: id,
         amount: 5000,
         description: "injected",
@@ -393,7 +405,7 @@ describe.skipIf(dbMode === "skip")("authz: finance controller (real Postgres)", 
       const missing = await h.call("post", "/transactions", h.tokens.b, body(MISSING_ID));
       expect(asB.status).toBe(404);
       expect(missing.status).toBe(404);
-      expect(asB.body).toEqual(missing.body);
+      expect(sansRequestId(asB.body)).toEqual(sansRequestId(missing.body));
       expect(await transactions().count()).toBe(before);
       expect(await transactions().findBy({ userId: USER_B })).toEqual([]);
       ran("POST /transactions");

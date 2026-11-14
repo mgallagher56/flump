@@ -59,6 +59,12 @@ describe("applySecurity", () => {
     expect(app.enableCors).toHaveBeenCalledWith(
       expect.objectContaining({ origin: ["https://a.example"], credentials: false }),
     );
+    // Scripts may read the paging cursor, the ETag and the replay flag (BE-09).
+    expect(app.enableCors).toHaveBeenCalledWith(
+      expect.objectContaining({
+        exposedHeaders: expect.arrayContaining(["X-Next-Cursor", "ETag", "Idempotent-Replayed"]),
+      }),
+    );
     expect(app.set).toHaveBeenCalledWith("trust proxy", 1);
     // v1 alias + helmet + tax json + default json
     expect(app.use).toHaveBeenCalledTimes(4);

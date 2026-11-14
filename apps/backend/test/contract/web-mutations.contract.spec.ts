@@ -135,19 +135,13 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
 
     afterAll(async () => {
       expect([...responseViolations].sort()).toEqual([]);
-      // E21 shadow validator: the only mismatches between web payloads and the contract schemas
-      // are the fields the backend drops. Shrink-only: remove entries as web or backend are fixed.
-      expect([...shadowViolations].sort()).toEqual(
-        [
-          "budget.create body contractEndDate unrecognized_keys",
-          "budget.create body isDefault unrecognized_keys",
-          "budget.create body isPrimaryIncome unrecognized_keys",
-          "budget.update body contractEndDate unrecognized_keys",
-          ...PROFILE_FIELDS_NOT_PERSISTED.map(
-            (field) => `profile.update body ${field} unrecognized_keys`,
-          ),
-        ].sort(),
-      );
+      // Request schemas are strict (BE-09): every web payload must match the contract exactly. The
+      // fields the backend drops are listed in the schemas as accepted and ignored. The only
+      // violations are the deliberate 400 probes below (taxRegion MARS, studentLoanPlans PLAN_9).
+      expect([...shadowViolations].sort()).toEqual([
+        "profile.update body studentLoanPlans.0 invalid_value",
+        "profile.update body taxRegion invalid_value",
+      ]);
       await app?.close();
       for (const key of Object.keys(process.env)) {
         if (!(key in savedEnv)) delete process.env[key];

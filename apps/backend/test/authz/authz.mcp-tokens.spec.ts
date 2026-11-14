@@ -6,8 +6,10 @@ import { ROUTE_MATRIX } from "./matrix";
 import {
   type AuthzHarness,
   bootAuthzHarness,
+  expectProbeRejected,
   MISSING_ID,
   probeBody,
+  sansRequestId,
   truncateAll,
   USER_A,
   USER_B,
@@ -117,7 +119,7 @@ describe.skipIf(dbMode === "skip")("authz: mcp-tokens controller (real Postgres)
       404,
     );
     expect(
-      (await h.call("get", `/mcp-tokens/${tokenA.id}/activity?limit=500`, h.tokens.a)).status,
+      (await h.call("get", `/mcp-tokens/${tokenA.id}/activity?limit=501`, h.tokens.a)).status,
     ).toBe(400);
     await expectTokenAUntouched();
     ran("GET /mcp-tokens/:id/activity");
@@ -175,9 +177,16 @@ describe.skipIf(dbMode === "skip")("authz: mcp-tokens controller (real Postgres)
     ran("GET /mcp-tokens");
   });
 
-  it("POST /mcp-tokens: B's probe body mints a token owned by B and leaves A's untouched", async () => {
+  it("POST /mcp-tokens: B's probe body is rejected; B mints a token owned by B, A's untouched", async () => {
+    expectProbeRejected(
+      await h.call("post", "/mcp-tokens", h.tokens.b, {
+        ...probeBody(tokenA.id),
+        name: "B agent",
+        expiryDays: 30,
+      }),
+    );
+    await expectTokenAUntouched();
     const res = await h.call("post", "/mcp-tokens", h.tokens.b, {
-      ...probeBody(tokenA.id),
       name: "B agent",
       expiryDays: 30,
     });
@@ -197,7 +206,7 @@ describe.skipIf(dbMode === "skip")("authz: mcp-tokens controller (real Postgres)
     const missing = await h.call("delete", `/mcp-tokens/${MISSING_ID}`, h.tokens.b);
     expect(asB.status).toBe(404);
     expect(missing.status).toBe(404);
-    expect(asB.body).toEqual(missing.body);
+    expect(sansRequestId(asB.body)).toEqual(sansRequestId(missing.body));
     await expectTokenAUntouched();
 
     const own = await h.call("delete", `/mcp-tokens/${tokenA.id}`, h.tokens.a);

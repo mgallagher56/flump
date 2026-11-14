@@ -7,6 +7,7 @@ import { AgentAuditEvent } from "../entities/agent-audit-event.entity";
 import { BankConnection } from "../entities/bank-connection.entity";
 import { BankOAuthState } from "../entities/bank-oauth-state.entity";
 import { BudgetEntry } from "../entities/budget-entry.entity";
+import { IdempotencyKey } from "../entities/idempotency-key.entity";
 import { ImportBatch } from "../entities/import-batch.entity";
 import { McpToken } from "../entities/mcp-token.entity";
 import { SnapshotCheckin } from "../entities/snapshot-checkin.entity";
@@ -30,6 +31,7 @@ export const ENTITIES: Function[] = [
   ImportBatch,
   AgentAuditEvent,
   AccountDeletionTombstone,
+  IdempotencyKey,
 ];
 
 // Relative to this file so it resolves under both `bun src/...` (ts) and dist/ (js).

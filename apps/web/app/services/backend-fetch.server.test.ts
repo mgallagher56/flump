@@ -62,6 +62,13 @@ describe("backendFetch", () => {
     expect(err.status).toBe(403);
   });
 
+  it("reads not_invited from the BE-09 error envelope's code", async () => {
+    const envelope = { code: "not_invited", message: "Not invited", requestId: "r-1" };
+    fetchMock.mockResolvedValue(new Response(JSON.stringify(envelope), { status: 403 }));
+    const err = await rejection(backendFetch("/accounts", { accessToken: "tok" }));
+    expect(err.kind).toBe("not-invited");
+  });
+
   it("maps a network failure to unavailable with no status", async () => {
     fetchMock.mockRejectedValue(new TypeError("fetch failed"));
     const err = await rejection(backendFetch("/x", { accessToken: "t", retries: 0 }));

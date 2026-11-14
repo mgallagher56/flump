@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { IsoDate, IsoDateTime, Money, Notes, Uuid } from "../primitives.js";
+import { IsoDate, IsoDateTime, Money, Notes, ResponseMoney, Uuid } from "../primitives.js";
 
 export const TAX_RECORD_TYPES = ["income", "expense"] as const;
 export const TAX_RECORD_SOURCES = ["paye", "self-employed", "rental", "savings"] as const;
@@ -29,7 +29,7 @@ const taxRecordFields = {
 };
 
 /** `frequency` defaults to "one-off" in the column, so it is optional on create. */
-export const CreateTaxRecordRequest = z.object({
+export const CreateTaxRecordRequest = z.strictObject({
   ...taxRecordFields,
   frequency: taxRecordFields.frequency.optional(),
   endDate: taxRecordFields.endDate.optional(),
@@ -45,10 +45,10 @@ export const UpdateTaxRecordRequest = CreateTaxRecordRequest.partial();
 export const MAX_BULK_TAX_RECORDS = 500;
 
 /** One previous-year record to close: web sends `{id, endDate}` pairs (CopyTaxYearModal). */
-export const TaxRecordCap = z.object({ id: z.uuid(), endDate: IsoDate });
+export const TaxRecordCap = z.strictObject({ id: z.uuid(), endDate: IsoDate });
 export type TaxRecordCap = z.infer<typeof TaxRecordCap>;
 
-export const BulkCreateTaxRecordsRequest = z.object({
+export const BulkCreateTaxRecordsRequest = z.strictObject({
   records: z.array(CreateTaxRecordRequest).max(MAX_BULK_TAX_RECORDS),
   capPreviousRecordIds: z.array(TaxRecordCap).max(MAX_BULK_TAX_RECORDS).optional(),
 });
@@ -66,7 +66,7 @@ export const TaxRecordDto = z.strictObject({
   source: z.enum(TAX_RECORD_SOURCES),
   category: z.string(),
   name: z.string(),
-  amount: z.number().finite(),
+  amount: ResponseMoney,
   frequency: z.enum(TAX_RECORD_FREQUENCIES),
   date: IsoDate,
   endDate: IsoDate.nullable(),
@@ -90,3 +90,7 @@ export type TaxRecordResponse = z.infer<typeof TaxRecordResponse>;
 /** `DELETE tax-records/:id`. */
 export const DeleteTaxRecordResponse = z.strictObject({ success: z.literal(true) });
 export type DeleteTaxRecordResponse = z.infer<typeof DeleteTaxRecordResponse>;
+
+// Parsed request types (z.output: what a handler receives in enforce mode).
+export type CreateTaxRecordRequest = z.infer<typeof CreateTaxRecordRequest>;
+export type UpdateTaxRecordRequest = z.infer<typeof UpdateTaxRecordRequest>;

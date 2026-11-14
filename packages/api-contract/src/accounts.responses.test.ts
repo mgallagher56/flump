@@ -31,7 +31,6 @@ const USER_ID = "user_01HXYZABCDEF";
 
 const account = {
   id: ACCOUNT_ID,
-  userId: USER_ID,
   name: "Everyday current",
   type: "Current",
   balance: 1234.56,
@@ -43,8 +42,8 @@ const account = {
   currency: "GBP",
   studentLoanPlan: null,
   connectionId: null,
-  externalAccountId: null,
   createdAt: "2026-01-04T09:12:00.000Z",
+  updatedAt: "2026-01-05T10:00:00.000Z",
 };
 
 const mortgage = {
@@ -58,7 +57,6 @@ const mortgage = {
   termMonths: 300,
   fixedRateEndDate: "2028-03-31",
   connectionId: CONNECTION_ID,
-  externalAccountId: "ext-123",
 };
 
 const detail = {
@@ -130,6 +128,13 @@ describe("accounts responses", () => {
     ]);
     ok(AccountResponse, { ...account, details: [detail] });
     bad(AccountResponse, { ...account, details: [detail], accessToken: "x" });
+  });
+
+  it("never carries the owner id or the provider's account id (BE-09, audit L3)", () => {
+    bad(AccountResponse, { ...account, details: [], userId: USER_ID });
+    bad(AccountResponse, { ...account, details: [], externalAccountId: "ext-123" });
+    bad(CreateAccountResponse, { ...account, userId: USER_ID });
+    bad(UpdateAccountResponse, { ...account, externalAccountId: null });
   });
 
   it("carries a liability's balance and history negative, a Student Loan included (BE-05)", () => {

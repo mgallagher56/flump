@@ -1,23 +1,46 @@
-import { MAX_BUDGET_CATEGORY_NAME_LENGTH, MAX_CUSTOM_BUDGET_CATEGORIES } from "@flump/api-contract";
+import {
+  type AddBudgetCategoryRequest,
+  type CreateBudgetEntryRequest,
+  MAX_BUDGET_CATEGORY_NAME_LENGTH,
+  MAX_CUSTOM_BUDGET_CATEGORIES,
+  type UpdateBudgetEntryRequest,
+} from "@flump/api-contract";
 import {
   BadRequestException,
   Body,
   Controller,
   Delete,
   Get,
+  Headers,
+  HttpCode,
   NotFoundException,
   Param,
   Patch,
   Post,
+  Query,
   Req,
+  Res,
   UseGuards,
 } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
+import type { Response } from "express";
 import { Repository } from "typeorm";
 import { AuthGuard } from "./auth/auth.guard";
+import type { AuthenticatedRequest } from "./auth/authenticated-request";
+import { expectedVersion, setEtag, withVersionClaim } from "./contract/etag";
+import { type KeysetOrder, keysetPage, resolvePage, sendPage } from "./contract/pagination";
 import { BudgetEntry } from "./entities/budget-entry.entity";
 import { UserProfile } from "./entities/user-profile.entity";
 import { RateLimit } from "./security/rate-limit.decorator";
+
+/** GET /budget-entries order: oldest first, id as tiebreak (keyset pagination, BE-09). */
+const BUDGET_ORDER: KeysetOrder = {
+  keys: [
+    { column: '"b"."created_at"', kind: "timestamp" },
+    { column: '"b"."id"', kind: "uuid" },
+  ],
+  direction: "ASC",
+};
 
 type BudgetCategory = "housing" | "bills" | "expenses" | "savings" | "income" | string;
 type BudgetFrequency = "monthly" | "annual" | "weekly";
@@ -213,17 +236,23 @@ export class BudgetController {
   }
 
   @Get("budget-entries")
-  async getBudgetEntries(@Req() req: any): Promise<BudgetEntry[]> {
-    const userId = req.user.id;
-    // The entity's numeric transformer already returns `amount` as a number.
-    return this.budgetEntryRepository.find({
-      where: { userId },
-      order: { createdAt: "ASC" },
-    });
+  @HttpCode(200)
+  async getBudgetEntries(
+    @Req() req: AuthenticatedRequest,
+    @Query() query?: unknown,
+    @Res({ passthrough: true }) res?: Response,
+  ): Promise<BudgetEntry[]> {
+    // Keyset-paginated (BE-09): `?limit=&cursor=`, next cursor in X-Next-Cursor. The entity's
+    // numeric transformer already returns `amount` as a number.
+    const qb = this.budgetEntryRepository
+      .createQueryBuilder("b")
+      .where("b.userId = :userId", { userId: req.user.id });
+    return sendPage(res, await keysetPage(qb, BUDGET_ORDER, resolvePage(query, "budget")));
   }
 
   @Post("budget-entries/seed-defaults")
-  async seedDefaultBudgetEntries(@Req() req: any): Promise<BudgetEntry[]> {
+  @HttpCode(200)
+  async seedDefaultBudgetEntries(@Req() req: AuthenticatedRequest): Promise<BudgetEntry[]> {
     const userId = req.user.id;
     await this.seedDefaults(userId);
     return this.budgetEntryRepository.find({
@@ -233,9 +262,10 @@ export class BudgetController {
   }
 
   @Post("budget-entries/categories")
+  @HttpCode(201)
   async addCustomCategory(
-    @Req() req: any,
-    @Body() body: { category: string },
+    @Req() req: AuthenticatedRequest,
+    @Body() body: AddBudgetCategoryRequest,
   ): Promise<{ success: boolean; categories: string[] }> {
     const userId = req.user.id;
     const catName = body?.category?.trim();
@@ -275,20 +305,10 @@ export class BudgetController {
   }
 
   @Post("budget-entries")
+  @HttpCode(201)
   async createBudgetEntry(
-    @Req() req: any,
-    @Body()
-    body: {
-      category: BudgetCategory;
-      name?: string;
-      /** Alias for `name`, accepted for older clients. */
-      title?: string;
-      amount: number;
-      frequency?: BudgetFrequency;
-      isIncome?: boolean;
-      isEssential?: boolean;
-      notes?: string | null;
-    },
+    @Req() req: AuthenticatedRequest,
+    @Body() body: CreateBudgetEntryRequest,
   ): Promise<BudgetEntry> {
     const userId = req.user.id;
     const name = resolveEntryName(body);
@@ -311,23 +331,34 @@ export class BudgetController {
   }
 
   @Patch("budget-entries/:id")
+  @HttpCode(200)
   async updateBudgetEntry(
-    @Req() req: any,
+    @Req() req: AuthenticatedRequest,
     @Param("id") id: string,
-    @Body()
-    body: {
-      category?: BudgetCategory;
-      name?: string;
-      title?: string;
-      amount?: number;
-      frequency?: BudgetFrequency;
-      isIncome?: boolean;
-      isEssential?: boolean;
-      notes?: string | null;
-    },
+    @Body() body: UpdateBudgetEntryRequest,
+    @Headers("if-match") ifMatch?: string,
+    @Res({ passthrough: true }) res?: Response,
   ): Promise<BudgetEntry> {
     const userId = req.user.id;
-    const entry = await this.budgetEntryRepository.findOne({ where: { id, userId } });
+    // `If-Match` makes the update conditional (412 when stale, BE-09); the answer carries the ETag.
+    const saved = await withVersionClaim(
+      this.budgetEntryRepository,
+      { id, user_id: userId },
+      expectedVersion(ifMatch),
+      () => new NotFoundException("Budget entry not found"),
+      (repository) => this.applyBudgetUpdate(repository, userId, id, body),
+    );
+    setEtag(res, saved.updatedAt);
+    return saved;
+  }
+
+  private async applyBudgetUpdate(
+    repository: Repository<BudgetEntry>,
+    userId: string,
+    id: string,
+    body: UpdateBudgetEntryRequest,
+  ): Promise<BudgetEntry> {
+    const entry = await repository.findOne({ where: { id, userId } });
 
     if (!entry) {
       throw new NotFoundException("Budget entry not found");
@@ -345,12 +376,16 @@ export class BudgetController {
     if (body.isEssential !== undefined) entry.isEssential = body.isEssential;
     if (body.notes !== undefined) entry.notes = body.notes ?? null;
 
-    return this.budgetEntryRepository.save(entry);
+    return repository.save(entry);
   }
 
   @Delete("budget-entries/:id")
+  @HttpCode(200)
   @RateLimit("destructive")
-  async deleteBudgetEntry(@Req() req: any, @Param("id") id: string): Promise<{ success: boolean }> {
+  async deleteBudgetEntry(
+    @Req() req: AuthenticatedRequest,
+    @Param("id") id: string,
+  ): Promise<{ success: boolean }> {
     const userId = req.user.id;
     const entry = await this.budgetEntryRepository.findOne({ where: { id, userId } });
 

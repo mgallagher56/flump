@@ -1,5 +1,6 @@
 import { resolveBankingKey, resolveBankingKeyring } from "@flump/banking/server";
 import { Global, Logger, Module } from "@nestjs/common";
+import { assertContractModeForEnv } from "./contract-mode.config";
 import { type DbConfig, resolveDbConfig } from "./db.config";
 
 export const BOOT_CONFIG = "BOOT_CONFIG";
@@ -18,6 +19,7 @@ export interface BootConfig {
         const db = resolveDbConfig(process.env);
         resolveBankingKey(process.env);
         resolveBankingKeyring(process.env);
+        assertContractModeForEnv(process.env);
         const logger = new Logger("AppConfigModule");
         for (const warning of db.warnings) {
           logger.warn(warning);

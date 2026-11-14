@@ -6,8 +6,10 @@ import { ROUTE_MATRIX } from "./matrix";
 import {
   type AuthzHarness,
   bootAuthzHarness,
+  expectProbeRejected,
   MISSING_ID,
   probeBody,
+  sansRequestId,
   truncateAll,
   USER_A,
   USER_B,
@@ -92,7 +94,7 @@ describe.skipIf(dbMode === "skip")("authz: tax controller (real Postgres)", () =
     const missing = await h.call(method, `/tax-records/${MISSING_ID}`, h.tokens.b, body);
     expect(asB.status).toBe(404);
     expect(missing.status).toBe(404);
-    expect(asB.body).toEqual(missing.body);
+    expect(sansRequestId(asB.body)).toEqual(sansRequestId(missing.body));
   };
 
   describe("authentication (every tax route)", () => {
@@ -183,7 +185,7 @@ describe.skipIf(dbMode === "skip")("authz: tax controller (real Postgres)", () =
     const missing = await h.call("get", `/tax-records/${MISSING_ID}/receipt`, h.tokens.b);
     expect(asB.status).toBe(404);
     expect(missing.status).toBe(404);
-    expect(asB.body).toEqual(missing.body);
+    expect(sansRequestId(asB.body)).toEqual(sansRequestId(missing.body));
     // No receipt byte reaches B in any form.
     expect(asB.text).not.toContain("PDF");
     expect(asB.text).not.toContain(PDF_BYTES.toString("base64"));
@@ -191,11 +193,15 @@ describe.skipIf(dbMode === "skip")("authz: tax controller (real Postgres)", () =
     ran("GET /tax-records/:id/receipt");
   });
 
-  it("POST /tax-records: B's probe body cannot re-parent or overwrite A's row", async () => {
-    const res = await h.call("post", "/tax-records", h.tokens.b, {
-      ...probeBody(recordId),
-      ...recordBody("B salary"),
-    });
+  it("POST /tax-records: B's probe body is rejected and cannot touch A's row", async () => {
+    expectProbeRejected(
+      await h.call("post", "/tax-records", h.tokens.b, {
+        ...probeBody(recordId),
+        ...recordBody("B salary"),
+      }),
+    );
+    await expectRecordUntouched();
+    const res = await h.call("post", "/tax-records", h.tokens.b, recordBody("B salary"));
     expect(res.status).toBe(201);
     expect(res.body.userId).toBe(USER_B);
     expect(res.body.id).not.toBe(recordId);
@@ -210,8 +216,13 @@ describe.skipIf(dbMode === "skip")("authz: tax controller (real Postgres)", () =
     expect(own.body.amount).toBe(1200);
     await records().update({ id: recordId }, { amount: 1000 });
 
+    expectProbeRejected(
+      await h.call("patch", `/tax-records/${recordId}`, h.tokens.b, {
+        ...probeBody(recordId),
+        name: "pwned",
+      }),
+    );
     await expectSameAsNotFound("patch", {
-      ...probeBody(recordId),
       name: "pwned",
       amount: 1,
       endDate: "2030-01-01",
@@ -232,9 +243,17 @@ describe.skipIf(dbMode === "skip")("authz: tax controller (real Postgres)", () =
   });
 
   describe("POST /tax-records/bulk", () => {
-    it("creates only the caller's rows; a record carrying A's id/userId cannot overwrite A's", async () => {
+    it("creates only the caller's rows; a record carrying A's id/userId is rejected", async () => {
+      expectProbeRejected(
+        await h.call("post", "/tax-records/bulk", h.tokens.b, {
+          records: [{ ...probeBody(recordId), ...recordBody("B bulk 1") }, recordBody("B bulk 2")],
+        }),
+        "body.records.0",
+      );
+      await expectRecordUntouched();
+      expect(await records().findBy({ userId: USER_B })).toHaveLength(0);
       const res = await h.call("post", "/tax-records/bulk", h.tokens.b, {
-        records: [{ ...probeBody(recordId), ...recordBody("B bulk 1") }, recordBody("B bulk 2")],
+        records: [recordBody("B bulk 1"), recordBody("B bulk 2")],
       });
       expect(res.status).toBe(201);
       expect(res.body).toHaveLength(2);

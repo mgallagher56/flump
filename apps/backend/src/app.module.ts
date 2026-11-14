@@ -16,6 +16,8 @@ import { BudgetController } from "./budget.controller";
 import { AppConfigModule, BOOT_CONFIG } from "./config/config.module";
 import { ENTITIES, typeOrmOptionsFromEnv } from "./config/typeorm.options";
 import { ContractShadowInterceptor } from "./contract/contract-shadow.interceptor";
+import { DeprecationInterceptor } from "./contract/deprecation.interceptor";
+import { IdempotencyInterceptor } from "./contract/idempotency.interceptor";
 import { FinanceController } from "./finance.controller";
 import { FinanceService } from "./finance.service";
 import { HealthController } from "./health/health.controller";
@@ -94,7 +96,10 @@ import { UserProfileService } from "./user-profile.service";
     StarlingProvider,
     Trading212Provider,
     BankProviderRegistry,
+    { provide: APP_INTERCEPTOR, useClass: DeprecationInterceptor },
     { provide: APP_INTERCEPTOR, useClass: ContractShadowInterceptor },
+    // After the contract interceptor, so the key's hash is over the parsed request body.
+    { provide: APP_INTERCEPTOR, useClass: IdempotencyInterceptor },
     {
       provide: USER_IDENTITY_ADAPTER,
       useClass: WorkOSIdentityAdapter,

@@ -39,7 +39,7 @@ export async function writeConnectedSnapshot(
            WHERE "account_details"."source" NOT IN ('manual', 'agent')
          RETURNING 1
        )
-       UPDATE "accounts" SET "balance" = $5
+       UPDATE "accounts" SET "balance" = $5, "updated_at" = now()
        WHERE "id" = $1 AND "user_id" = $2 AND EXISTS (SELECT 1 FROM d)
        RETURNING 1`,
       [w.accountId, w.userId, w.year, w.month, w.value, w.asOfDate],

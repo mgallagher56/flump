@@ -16,6 +16,7 @@ describe("UserProfileService (Deep Module)", () => {
   let mockImportRepo: any;
   let mockMcpTokenRepo: any;
   let mockBankOAuthStateRepo: any;
+  let mockIdempotencyRepo: any;
   let identityAdapter: InMemoryIdentityAdapter;
   let mockDataSource: any;
 
@@ -56,6 +57,9 @@ describe("UserProfileService (Deep Module)", () => {
     mockBankOAuthStateRepo = {
       delete: vi.fn().mockResolvedValue({ affected: 0 }),
     };
+    mockIdempotencyRepo = {
+      delete: vi.fn().mockResolvedValue({ affected: 2 }),
+    };
     identityAdapter = new InMemoryIdentityAdapter();
     mockDataSource = {
       transaction: vi.fn(async (cb) => {
@@ -72,6 +76,7 @@ describe("UserProfileService (Deep Module)", () => {
             if (entityClass.name === "ImportBatch") return mockImportRepo;
             if (entityClass.name === "McpToken") return mockMcpTokenRepo;
             if (entityClass.name === "BankOAuthState") return mockBankOAuthStateRepo;
+            if (entityClass.name === "IdempotencyKey") return mockIdempotencyRepo;
             return {};
           },
         };
@@ -111,6 +116,8 @@ describe("UserProfileService (Deep Module)", () => {
     expect(mockImportRepo.delete).toHaveBeenCalledWith({ userId: "user-123" });
     // M-PRIV1: MCP tokens are revoked (deleted).
     expect(mockMcpTokenRepo.delete).toHaveBeenCalledWith({ userId: "user-123" });
+    // Registry table (BE-09): stored create responses echo the erased rows.
+    expect(mockIdempotencyRepo.delete).toHaveBeenCalledWith({ userId: "user-123" });
 
     expect(result.success).toBe(true);
     expect(result.profile.hasResetFinancialData).toBe(true);

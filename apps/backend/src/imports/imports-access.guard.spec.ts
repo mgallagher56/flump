@@ -23,7 +23,7 @@ describe("ImportsAccessGuard", () => {
       expect.unreachable();
     } catch (err) {
       const body = (err as { getResponse: () => object }).getResponse();
-      expect(body).toEqual({ statusCode: 404, error: "not_found", message: "Not found" });
+      expect(body).toEqual({ code: "not_found", message: "Not found" });
       expect(JSON.stringify(body)).not.toMatch(/AI|MCP/);
     }
   });

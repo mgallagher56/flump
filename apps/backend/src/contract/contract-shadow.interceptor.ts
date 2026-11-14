@@ -1,7 +1,7 @@
 import {
   CONTRACT_GROUPS,
-  checkAgainst,
   findRoute,
+  parseAgainst,
   type RouteDefinition,
   type ValidationIssue,
 } from "@flump/api-contract";
@@ -91,11 +91,39 @@ interface RequestLike {
   body?: unknown;
 }
 
+type RequestPart = "params" | "query" | "body";
+
+interface CheckResult {
+  group: string;
+  route: RouteDefinition;
+  blocking: ValidationIssue[];
+  /** The zod-parsed value of each part the route has a schema for. */
+  parsed: Partial<Record<RequestPart, unknown>>;
+}
+
 /**
- * Shadow-mode request validation (E21 section 5.1). Validates params, query and body against the
- * route's schema from `@flump/api-contract` and logs mismatches (paths and codes only, never
- * values). The original request is always passed through untouched and the interceptor never
- * throws, so client behaviour cannot change.
+ * Puts the parsed value on the request. `req.query` is a getter in Express 5, so it is redefined
+ * as an own property rather than assigned.
+ */
+const replacePart = (req: RequestLike, part: RequestPart, value: unknown): void => {
+  if (part === "query") {
+    Object.defineProperty(req, "query", {
+      value,
+      writable: true,
+      configurable: true,
+      enumerable: true,
+    });
+    return;
+  }
+  req[part] = value;
+};
+
+/**
+ * Request contract check (E21, BE-09). Validates params, query and body against the route's
+ * schemas from `@flump/api-contract`. In enforce mode an invalid request (including any unknown
+ * key: request schemas are strict) is a 400 `validation_failed`, and a valid one reaches the
+ * handler as the zod-parsed output (trimmed strings, coerced numbers), so handlers never read the
+ * raw body. Shadow mode only logs (paths and codes, never values) and passes the request through.
  */
 @Injectable()
 export class ContractShadowInterceptor implements NestInterceptor {
@@ -106,48 +134,50 @@ export class ContractShadowInterceptor implements NestInterceptor {
   intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
     const mode = resolveContractMode();
     if (mode === "off" || context.getType() !== "http") return next.handle();
-    let blocking: ValidationIssue[] = [];
+    const req = context.switchToHttp().getRequest<RequestLike>();
+    let result: CheckResult | null = null;
     let enforced = false;
-    let rejectedRoute: RouteDefinition | undefined;
-    let matched: RouteDefinition | undefined;
     try {
-      const result = this.check(context.switchToHttp().getRequest<RequestLike>());
-      matched = result?.route;
+      result = this.check(req);
       if (mode === "enforce" && result) {
         const groups = resolveEnforcedGroups();
         enforced = groups === "all" || groups.has(result.group);
-        blocking = result.blocking;
-        rejectedRoute = result.route;
       }
     } catch (error) {
       // A bug in the checker must never affect the request.
       this.logger.warn(`contract check failed: ${error instanceof Error ? error.name : "error"}`);
     }
-    if (enforced && blocking.length > 0) {
-      // Paths and codes only, never values. Unknown keys never block: the web sends fields the
-      // backend drops (E21 section 5.3) and they are stripped, not rejected.
-      // Own log line so the 400 rate can be watched when enforcement is switched on. Unsampled on
-      // purpose (it is the rate meter), and it must never turn the 400 into a 500.
+    if (enforced && result && result.blocking.length > 0) {
+      const { route, blocking } = result;
+      // Own log line so the 400 rate can be watched. Paths and codes only, never values or
+      // messages. Unsampled on purpose (it is the rate meter), and it must never turn the 400
+      // into a 500.
       try {
         this.logger.warn(
           JSON.stringify({
             event: "contract_rejected",
-            method: rejectedRoute?.method,
-            pathTemplate: rejectedRoute ? `/${rejectedRoute.path}` : undefined,
-            routeId: rejectedRoute?.id,
-            issues: blocking.slice(0, MAX_ISSUES_LOGGED),
+            method: route.method,
+            pathTemplate: `/${route.path}`,
+            routeId: route.id,
+            issues: blocking.slice(0, MAX_ISSUES_LOGGED).map(({ path, code }) => ({ path, code })),
           }),
         );
       } catch {
         // logging failure is ignored
       }
       throw new BadRequestException({
-        statusCode: 400,
-        error: "Bad Request",
+        code: "validation_failed",
         message: "Request failed validation",
         issues: blocking.slice(0, MAX_ISSUES_LOGGED),
       });
     }
+    if (enforced && result) {
+      // M-API3 / M6: the handler reads the parsed contract output, never the raw input.
+      for (const [part, value] of Object.entries(result.parsed) as [RequestPart, unknown][]) {
+        replacePart(req, part, value);
+      }
+    }
+    const matched = result?.route;
     const responseSchema = matched?.response;
     if (!matched || !responseSchema) return next.handle();
     const route = matched;
@@ -177,52 +207,56 @@ export class ContractShadowInterceptor implements NestInterceptor {
     }
   }
 
-  private check(
-    req: RequestLike,
-  ): { group: string; route: RouteDefinition; blocking: ValidationIssue[] } | null {
+  private check(req: RequestLike): CheckResult | null {
     const path = typeof req.route?.path === "string" ? req.route.path.replace(/^\//, "") : null;
     if (path === null || !req.method) return null;
     const route = findRoute(req.method.toUpperCase(), path);
     if (!route) return null;
-    const blocking = [
-      ...this.validate(route, "params", route.params, req.params),
-      ...this.validate(route, "query", route.query, req.query),
-      ...this.validate(route, "body", route.body, req.body ?? {}),
-    ];
-    return { group: route.group, route, blocking };
+    const blocking: ValidationIssue[] = [];
+    const parsed: CheckResult["parsed"] = {};
+    for (const [part, schema, value] of [
+      ["params", route.params, req.params],
+      ["query", route.query, req.query],
+      ["body", route.body, req.body ?? {}],
+    ] as const) {
+      if (!schema) continue;
+      const outcome = this.validate(route, part, schema, value);
+      if (outcome.ok) parsed[part] = outcome.data;
+      else blocking.push(...outcome.issues);
+    }
+    return { group: route.group, route, blocking, parsed };
   }
 
   private validate(
     route: RouteDefinition,
     part: ContractViolation["part"],
-    schema: RouteDefinition["params"],
+    schema: NonNullable<RouteDefinition["params"]>,
     value: unknown,
-  ): ValidationIssue[] {
-    if (!schema) return [];
-    const result = checkAgainst(schema, value);
-    if (result.ok) return [];
-    const blocking = result.issues
-      .filter((issue) => issue.code !== "unrecognized_keys")
-      .map((issue) => ({
-        path: `${part}${issue.path === "(root)" ? "" : `.${issue.path}`}`.slice(0, MAX_PATH_CHARS),
-        code: issue.code,
-      }));
+  ): { ok: true; data: unknown } | { ok: false; issues: ValidationIssue[] } {
+    const result = parseAgainst(schema, value);
+    if (result.ok) return result;
+    const issues = result.issues.map((issue) => ({
+      path: `${part}${issue.path === "(root)" ? "" : `.${issue.path}`}`.slice(0, MAX_PATH_CHARS),
+      code: issue.code,
+      message: issue.message ?? issue.code,
+    }));
     const key = part === "response" ? `${route.id}:response` : route.id;
     const count = (this.counts.get(key) ?? 0) + 1;
     this.counts.set(key, count);
-    if (!shouldLogOccurrence(count)) return blocking;
+    if (!shouldLogOccurrence(count)) return { ok: false, issues };
     const violation: ContractViolation = {
       event: part === "response" ? "contract_response_violation" : "contract_violation",
       routeId: route.id,
       method: route.method,
       pathTemplate: `/${route.path}`,
       part,
+      // Paths and codes only in logs: never values, and not the messages either.
       issues: result.issues
         .slice(0, MAX_ISSUES_LOGGED)
-        .map((issue) => ({ ...issue, path: issue.path.slice(0, MAX_PATH_CHARS) })),
+        .map((issue) => ({ path: issue.path.slice(0, MAX_PATH_CHARS), code: issue.code })),
       count,
     };
     this.logger.warn(JSON.stringify(violation));
-    return blocking;
+    return { ok: false, issues };
   }
 }

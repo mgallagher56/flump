@@ -1,7 +1,8 @@
 import { z } from "zod";
-import { IsoDateTime, Money, Uuid } from "../primitives.js";
+import { PAGE_LIMITS, pageQueryShape } from "../pagination.js";
+import { IsoDateTime, Money, ResponseMoney, Uuid } from "../primitives.js";
 
-export const CreateTransactionRequest = z.object({
+export const CreateTransactionRequest = z.strictObject({
   accountId: Uuid,
   /** Signed: negative is money out. */
   amount: Money,
@@ -16,7 +17,7 @@ export const TransactionDto = z.strictObject({
   /** The caller's own user id. */
   userId: z.string().min(1),
   /** Signed: negative is money out. */
-  amount: z.number().finite(),
+  amount: ResponseMoney,
   description: z.string(),
   category: z.string(),
   timestamp: IsoDateTime,
@@ -31,19 +32,28 @@ export type TransactionListResponse = z.infer<typeof TransactionListResponse>;
 export const CreateTransactionResponse = TransactionDto;
 export type CreateTransactionResponse = z.infer<typeof CreateTransactionResponse>;
 
-/** Rows `GET /transactions` returns when no `limit` is sent, and the most it ever returns. */
-export const DEFAULT_TRANSACTION_PAGE = 500;
-export const MAX_TRANSACTION_PAGE = 1000;
+/**
+ * Rows `GET /transactions` returns when no `limit` is sent, and the most it ever returns (BE-08).
+ * PAGE_LIMITS.transactions holds the values, so the keyset paging (BE-09) and these names agree.
+ */
+export const DEFAULT_TRANSACTION_PAGE = PAGE_LIMITS.transactions.default;
+export const MAX_TRANSACTION_PAGE = PAGE_LIMITS.transactions.max;
 /** Deepest `offset` accepted, so a page can never ask Postgres to skip an unbounded number of rows. */
 export const MAX_TRANSACTION_OFFSET = 100_000;
 
 /**
- * GET /transactions. `accountId` narrows to one of the caller's accounts; `limit` (default
- * DEFAULT_TRANSACTION_PAGE, at most MAX_TRANSACTION_PAGE) and `offset` page through the list,
- * newest first. The response stays a plain array.
+ * GET /transactions, newest first. `accountId` narrows to one of the caller's accounts. `limit`
+ * (default DEFAULT_TRANSACTION_PAGE, at most MAX_TRANSACTION_PAGE) sizes the page; the next page is
+ * the `X-Next-Cursor` header's value sent back as `cursor` (BE-09). `offset` (BE-08) still skips
+ * rows for clients that page by position; it cannot be combined with `cursor`. The response stays
+ * a plain array.
  */
-export const TransactionListQuery = z.object({
+export const TransactionListQuery = z.strictObject({
   accountId: Uuid.optional(),
-  limit: z.coerce.number().int().min(1).max(MAX_TRANSACTION_PAGE).optional(),
+  ...pageQueryShape("transactions"),
   offset: z.coerce.number().int().min(0).max(MAX_TRANSACTION_OFFSET).optional(),
 });
+
+// Parsed request types (z.output: what a handler receives in enforce mode).
+export type CreateTransactionRequest = z.infer<typeof CreateTransactionRequest>;
+export type TransactionListQuery = z.infer<typeof TransactionListQuery>;

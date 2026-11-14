@@ -31,6 +31,7 @@ import {
   UpdateTaxRecordRequest,
 } from "./domains/tax.js";
 import { CreateTransactionRequest, TransactionListQuery } from "./domains/transactions.js";
+import { type PageKind, pageQuery } from "./pagination.js";
 import { Uuid } from "./primitives.js";
 import {
   AccountDetailListResponse,
@@ -76,6 +77,11 @@ import {
 
 export type HttpMethod = "GET" | "POST" | "PATCH" | "PUT" | "DELETE";
 
+export type SuccessStatus = 200 | 201 | 204;
+
+/** The success status of a route: its `status`, else 200. */
+export const successStatusOf = (route: RouteDefinition): SuccessStatus => route.status ?? 200;
+
 export interface RouteDefinition {
   /** Stable id, `<domain>.<operation>`. Used as the key in logs and tests. */
   readonly id: string;
@@ -95,11 +101,46 @@ export interface RouteDefinition {
    * Absent only for routes in NON_JSON_RESPONSE_ROUTES.
    */
   readonly response?: z.ZodType;
+  /**
+   * The success status (BE-09, M-API5). Default 200. Creates are 201; a delete with no body is
+   * 204. The controller's `@HttpCode` must match (test/contract/http-status.spec.ts).
+   */
+  readonly status?: SuccessStatus;
   /** Request-schema group, for promoting groups to enforcement one at a time later. */
   readonly group: ContractGroup;
   /** Deprecated alias of another route id (kept for old clients). */
   readonly aliasOf?: string;
+  /**
+   * A paginated list (BE-09, M-API1): the query takes `limit` and `cursor` sized by
+   * `PAGE_LIMITS[page]`, and the response carries the next cursor in `X-Next-Cursor`.
+   */
+  readonly page?: PageKind;
+  /**
+   * Resource versioning (BE-09, M7): `read` answers with an `ETag`; `conditional` also accepts
+   * `If-Match` and answers 412 `precondition_failed` when the resource has changed since.
+   */
+  readonly etag?: "read" | "conditional";
 }
+
+/**
+ * Create routes that take no `Idempotency-Key` header, each with its reason. Shrink-only.
+ * - `imports.stage`: carries its own `idempotencyKey` in the body (E17).
+ * - `mcpTokens.create`: the response holds the plaintext token, shown once; storing it to replay
+ *   would keep a usable secret in the database.
+ * - `bankConnections.connect`: the request body carries a bank token or OAuth code; storing an
+ *   unkeyed hash of it would keep a guessable fingerprint of a credential.
+ */
+export const IDEMPOTENCY_EXCLUDED_ROUTES = [
+  "imports.stage",
+  "mcpTokens.create",
+  "bankConnections.connect",
+] as const;
+
+/** Whether a route accepts the `Idempotency-Key` header: every create POST not excluded above. */
+export const isIdempotentRoute = (route: RouteDefinition): boolean =>
+  route.method === "POST" &&
+  successStatusOf(route) === 201 &&
+  !(IDEMPOTENCY_EXCLUDED_ROUTES as readonly string[]).includes(route.id);
 
 export const CONTRACT_GROUPS = [
   "accounts",
@@ -117,8 +158,8 @@ export type ContractGroup = (typeof CONTRACT_GROUPS)[number];
 
 export const defineRoute = <const R extends RouteDefinition>(route: R): R => route;
 
-const IdParams = z.object({ id: Uuid });
-const AnonymizeQuery = z.object({ anonymize: z.string().optional() });
+const IdParams = z.strictObject({ id: Uuid });
+const AnonymizeQuery = z.strictObject({ anonymize: z.string().optional() });
 
 export const routes = {
   accounts: {
@@ -130,6 +171,8 @@ export const routes = {
       ownership: "user",
       group: "accounts",
       response: AccountListResponse,
+      page: "accounts",
+      query: pageQuery("accounts"),
     }),
     listDetails: defineRoute({
       id: "accounts.listDetails",
@@ -139,6 +182,8 @@ export const routes = {
       ownership: "user",
       group: "accounts",
       response: AccountDetailListResponse,
+      page: "accountDetails",
+      query: pageQuery("accountDetails"),
     }),
     get: defineRoute({
       id: "accounts.get",
@@ -149,6 +194,7 @@ export const routes = {
       params: IdParams,
       group: "accounts",
       response: AccountResponse,
+      etag: "read",
     }),
     getDetails: defineRoute({
       id: "accounts.getDetails",
@@ -159,6 +205,8 @@ export const routes = {
       params: IdParams,
       group: "accounts",
       response: AccountDetailListResponse,
+      page: "accountDetails",
+      query: pageQuery("accountDetails"),
     }),
     portfolioSnapshot: defineRoute({
       id: "accounts.portfolioSnapshot",
@@ -172,6 +220,7 @@ export const routes = {
     create: defineRoute({
       id: "accounts.create",
       method: "POST",
+      status: 201,
       path: "accounts",
       auth: "user",
       ownership: "user",
@@ -201,6 +250,7 @@ export const routes = {
       group: "accounts",
       response: UpdateAccountResponse,
       aliasOf: "accounts.update",
+      etag: "conditional",
     }),
     update: defineRoute({
       id: "accounts.update",
@@ -212,6 +262,7 @@ export const routes = {
       body: UpdateAccountRequest,
       group: "accounts",
       response: UpdateAccountResponse,
+      etag: "conditional",
     }),
     remove: defineRoute({
       id: "accounts.remove",
@@ -241,6 +292,7 @@ export const routes = {
     stage: defineRoute({
       id: "imports.stage",
       method: "POST",
+      status: 201,
       path: "imports",
       auth: "user",
       ownership: "user",
@@ -256,6 +308,8 @@ export const routes = {
       ownership: "user",
       group: "imports",
       response: ImportBatchListResponse,
+      page: "imports",
+      query: pageQuery("imports"),
     }),
     get: defineRoute({
       id: "imports.get",
@@ -311,10 +365,12 @@ export const routes = {
       query: TransactionListQuery,
       group: "transactions",
       response: TransactionListResponse,
+      page: "transactions",
     }),
     create: defineRoute({
       id: "transactions.create",
       method: "POST",
+      status: 201,
       path: "transactions",
       auth: "user",
       ownership: "user",
@@ -332,6 +388,8 @@ export const routes = {
       ownership: "user",
       group: "bank-connections",
       response: BankConnectionListResponse,
+      page: "bankConnections",
+      query: pageQuery("bankConnections"),
     }),
     capability: defineRoute({
       id: "bankConnections.capability",
@@ -345,6 +403,7 @@ export const routes = {
     connect: defineRoute({
       id: "bankConnections.connect",
       method: "POST",
+      status: 201,
       path: "bank-connections",
       auth: "user",
       ownership: "user",
@@ -393,6 +452,8 @@ export const routes = {
       ownership: "user",
       group: "budget",
       response: BudgetEntryListResponse,
+      page: "budget",
+      query: pageQuery("budget"),
     }),
     seedDefaults: defineRoute({
       id: "budget.seedDefaults",
@@ -406,6 +467,7 @@ export const routes = {
     addCategory: defineRoute({
       id: "budget.addCategory",
       method: "POST",
+      status: 201,
       path: "budget-entries/categories",
       auth: "user",
       ownership: "user",
@@ -416,6 +478,7 @@ export const routes = {
     create: defineRoute({
       id: "budget.create",
       method: "POST",
+      status: 201,
       path: "budget-entries",
       auth: "user",
       ownership: "user",
@@ -433,6 +496,7 @@ export const routes = {
       body: UpdateBudgetEntryRequest,
       group: "budget",
       response: BudgetEntryResponse,
+      etag: "conditional",
     }),
     remove: defineRoute({
       id: "budget.remove",
@@ -454,6 +518,8 @@ export const routes = {
       ownership: "user",
       group: "tax",
       response: TaxRecordListResponse,
+      page: "tax",
+      query: pageQuery("tax"),
     }),
     get: defineRoute({
       id: "tax.get",
@@ -464,6 +530,7 @@ export const routes = {
       params: IdParams,
       group: "tax",
       response: TaxRecordResponse,
+      etag: "read",
     }),
     receipt: defineRoute({
       id: "tax.receipt",
@@ -477,6 +544,7 @@ export const routes = {
     bulkCreate: defineRoute({
       id: "tax.bulkCreate",
       method: "POST",
+      status: 201,
       path: "tax-records/bulk",
       auth: "user",
       ownership: "user",
@@ -487,6 +555,7 @@ export const routes = {
     create: defineRoute({
       id: "tax.create",
       method: "POST",
+      status: 201,
       path: "tax-records",
       auth: "user",
       ownership: "user",
@@ -504,6 +573,7 @@ export const routes = {
       body: UpdateTaxRecordRequest,
       group: "tax",
       response: TaxRecordResponse,
+      etag: "conditional",
     }),
     remove: defineRoute({
       id: "tax.remove",
@@ -525,6 +595,7 @@ export const routes = {
       ownership: "user",
       group: "profile",
       response: UserProfileResponse,
+      etag: "read",
     }),
     update: defineRoute({
       id: "profile.update",
@@ -535,6 +606,7 @@ export const routes = {
       body: UpdateProfileRequest,
       group: "profile",
       response: UpdateProfileResponse,
+      etag: "conditional",
     }),
     sendPasswordReset: defineRoute({
       id: "profile.sendPasswordReset",
@@ -593,10 +665,13 @@ export const routes = {
       ownership: "user",
       group: "mcp-tokens",
       response: McpTokenListResponse,
+      page: "mcpTokens",
+      query: pageQuery("mcpTokens"),
     }),
     create: defineRoute({
       id: "mcpTokens.create",
       method: "POST",
+      status: 201,
       path: "mcp-tokens",
       auth: "user",
       ownership: "user",

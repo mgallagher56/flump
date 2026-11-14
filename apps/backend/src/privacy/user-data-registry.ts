@@ -6,6 +6,7 @@ import { AgentAuditEvent } from "../entities/agent-audit-event.entity";
 import { BankConnection } from "../entities/bank-connection.entity";
 import { BankOAuthState } from "../entities/bank-oauth-state.entity";
 import { BudgetEntry } from "../entities/budget-entry.entity";
+import { IdempotencyKey } from "../entities/idempotency-key.entity";
 import { ImportBatch } from "../entities/import-batch.entity";
 import { McpToken } from "../entities/mcp-token.entity";
 import { SnapshotCheckin } from "../entities/snapshot-checkin.entity";
@@ -167,6 +168,7 @@ export const USER_DATA_REGISTRY: readonly UserDataTable[] = [
         "connectionId",
         "externalAccountId",
         "createdAt",
+        "updatedAt",
       ],
       excluded: { userId: USER_ID_IN_ENVELOPE },
       orderBy: ["id"],
@@ -341,6 +343,30 @@ export const USER_DATA_REGISTRY: readonly UserDataTable[] = [
     reset: {
       kind: "revoke",
       reason: "an agent token reads financial data; a reset must not leave a working one behind",
+    },
+  }),
+  table({
+    entity: IdempotencyKey,
+    key: "idempotencyKeys",
+    deleteOnErasure: true,
+    export: {
+      shape: "rows",
+      columns: ["id", "routeId", "statusCode", "createdAt"],
+      excluded: {
+        userId: USER_ID_IN_ENVELOPE,
+        key: "a random retry key made by the client, not personal data",
+        requestHash: "a hash of a request body, with no meaning outside the server",
+        responseBody:
+          "a stored copy of a create response; the rows it describes are exported above",
+        responseHeaders: "the ETag and Location of a stored create response, operational only",
+      },
+      orderBy: ["id"],
+      batchSize: 500,
+    },
+    reset: {
+      kind: "financial-clear",
+      reason:
+        "stored create responses (BE-09 Idempotency-Key) echo the accounts and amounts a reset removes",
     },
   }),
   table({

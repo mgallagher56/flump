@@ -1,4 +1,5 @@
 import { createHmac } from "node:crypto";
+import { PAGE_LIMITS } from "@flump/api-contract";
 import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { LessThan, type Repository } from "typeorm";
@@ -37,7 +38,9 @@ export interface AgentAuditActivity {
   createdAt: string;
 }
 
-export const MAX_ACTIVITY_PAGE = 100;
+/** Activity page sizes come from the contract (PAGE_LIMITS.activity, BE-09). */
+export const MAX_ACTIVITY_PAGE = PAGE_LIMITS.activity.max;
+const DEFAULT_ACTIVITY_PAGE = PAGE_LIMITS.activity.default;
 const RETENTION_MONTHS = 13;
 const INT_MAX = 2_147_483_647;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -142,7 +145,10 @@ export class AgentAuditService {
     tokenId: string,
     options: { limit?: number; before?: string } = {},
   ): Promise<{ events: AgentAuditActivity[]; nextBefore: string | null }> {
-    const limit = Math.min(MAX_ACTIVITY_PAGE, Math.max(1, Math.floor(options.limit ?? 50)));
+    const limit = Math.min(
+      MAX_ACTIVITY_PAGE,
+      Math.max(1, Math.floor(options.limit ?? DEFAULT_ACTIVITY_PAGE)),
+    );
     const qb = this.events
       .createQueryBuilder("e")
       .where("e.userId = :userId", { userId })

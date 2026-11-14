@@ -15,7 +15,7 @@ export function rejectRateLimited(
     `ratelimit_exceeded route=${routeTemplate}${userId ? ` user=${userId}` : ""} retryAfter=${decision.retryAfterSeconds}`,
   );
   throw new HttpException(
-    { statusCode: 429, error: "rate_limited", message: "Too many requests. Try again later." },
+    { code: "rate_limited", message: "Too many requests. Try again later." },
     HttpStatus.TOO_MANY_REQUESTS,
   );
 }

@@ -7,8 +7,10 @@ import { ROUTE_MATRIX } from "./matrix";
 import {
   type AuthzHarness,
   bootAuthzHarness,
+  expectProbeRejected,
   MISSING_ID,
   probeBody,
+  sansRequestId,
   truncateAll,
   USER_A,
   USER_B,
@@ -66,7 +68,7 @@ describe.skipIf(dbMode === "skip")("authz: budget controller (real Postgres)", (
     const missing = await h.call(method, `/budget-entries/${MISSING_ID}`, h.tokens.b, body);
     expect(asB.status).toBe(404);
     expect(missing.status).toBe(404);
-    expect(asB.body).toEqual(missing.body);
+    expect(sansRequestId(asB.body)).toEqual(sansRequestId(missing.body));
   };
 
   const expectEntryUntouched = async () => {
@@ -142,14 +144,14 @@ describe.skipIf(dbMode === "skip")("authz: budget controller (real Postgres)", (
     ran("GET /budget-entries");
   });
 
-  it("POST /budget-entries: A 201; a probe body from B cannot re-parent or overwrite A's row", async () => {
-    const res = await h.call("post", "/budget-entries", h.tokens.b, {
-      ...probeBody(entryId),
-      category: "housing",
-      name: "B rent",
-      amount: 1,
-    });
-    expect(res.status).toBeLessThan(300);
+  it("POST /budget-entries: A 201; a probe body from B is rejected and cannot touch A's row", async () => {
+    const body = { category: "housing", name: "B rent", amount: 1 };
+    expectProbeRejected(
+      await h.call("post", "/budget-entries", h.tokens.b, { ...probeBody(entryId), ...body }),
+    );
+    await expectEntryUntouched();
+    const res = await h.call("post", "/budget-entries", h.tokens.b, body);
+    expect(res.status).toBe(201);
     expect(res.body.userId).toBe(USER_B);
     expect(res.body.id).not.toBe(entryId);
     await expectEntryUntouched();
@@ -163,7 +165,13 @@ describe.skipIf(dbMode === "skip")("authz: budget controller (real Postgres)", (
     expect(own.body.amount).toBe(950);
     await entries().update({ id: entryId }, { amount: 900 });
 
-    await expectSameAsNotFound("patch", { ...probeBody(entryId), name: "pwned", amount: 1 });
+    expectProbeRejected(
+      await h.call("patch", `/budget-entries/${entryId}`, h.tokens.b, {
+        ...probeBody(entryId),
+        name: "pwned",
+      }),
+    );
+    await expectSameAsNotFound("patch", { name: "pwned", amount: 1 });
     await expectEntryUntouched();
     ran("PATCH /budget-entries/:id");
   });
@@ -192,15 +200,20 @@ describe.skipIf(dbMode === "skip")("authz: budget controller (real Postgres)", (
     ran("POST /budget-entries/seed-defaults");
   });
 
-  it("POST /budget-entries/categories: custom categories are per user, probe body ignored", async () => {
+  it("POST /budget-entries/categories: custom categories are per user, probe body rejected", async () => {
     const aRes = await h.call("post", "/budget-entries/categories", h.tokens.a, {
       category: "Pets",
     });
     expect(aRes.status).toBeLessThan(300);
     expect(aRes.body.categories).toEqual(["pets"]);
 
+    expectProbeRejected(
+      await h.call("post", "/budget-entries/categories", h.tokens.b, {
+        ...probeBody(entryId),
+        category: "Holidays",
+      }),
+    );
     const bRes = await h.call("post", "/budget-entries/categories", h.tokens.b, {
-      ...probeBody(entryId),
       category: "Holidays",
     });
     expect(bRes.status).toBeLessThan(300);
@@ -246,10 +259,10 @@ describe.skipIf(dbMode === "skip")("authz: budget controller (real Postgres)", (
           { name: "pwned" },
         );
         expect(asB.status).toBe(404);
-        expect(asB.body).toEqual(missing.body);
+        expect(sansRequestId(asB.body)).toEqual(sansRequestId(missing.body));
         const delB = await h.call("delete", `${prefix}/budget-entries/${entryId}`, h.tokens.b);
         expect(delB.status).toBe(404);
-        expect(delB.body).toEqual(missing.body);
+        expect(sansRequestId(delB.body)).toEqual(sansRequestId(missing.body));
         await expectEntryUntouched();
       },
     );

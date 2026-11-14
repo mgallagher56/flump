@@ -31,7 +31,16 @@ import { BudgetEntry } from "../entities/budget-entry.entity";
 import { TaxRecord } from "../entities/tax-record.entity";
 import { Transaction } from "../entities/transaction.entity";
 import { FinanceService } from "../finance.service";
-import { UserProfileService } from "../user-profile.service";
+import { type ProfileView, UserProfileService } from "../user-profile.service";
+
+/** The profile as the engine reads it: the wire shape, dates as ISO strings. */
+const isoOf = (value: unknown): string | undefined =>
+  value instanceof Date ? value.toISOString() : typeof value === "string" ? value : undefined;
+const wireProfile = (profile: ProfileView) => ({
+  ...profile,
+  createdAt: isoOf(profile.createdAt),
+  updatedAt: isoOf(profile.updatedAt),
+});
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -173,7 +182,8 @@ export class AgentDataService implements McpUserDataProvider {
   }
 
   async getBaseline(userId: string): Promise<FinancialBaseline> {
-    return userProfileToFinancialBaseline(await this.userProfileService.getProfile(userId), userId);
+    const profile = wireProfile(await this.userProfileService.getProfile(userId));
+    return userProfileToFinancialBaseline(profile, userId);
   }
 
   async getAccountSnapshots(
@@ -296,7 +306,7 @@ export class AgentDataService implements McpUserDataProvider {
     userId: string,
     options: { anonymizeInstitutions?: boolean } = {},
   ): Promise<BuildContextPackInput> {
-    const profile = await this.userProfileService.getProfile(userId);
+    const profile = wireProfile(await this.userProfileService.getProfile(userId));
     const baseline = userProfileToFinancialBaseline(profile, userId);
 
     const accounts = await this.financeService.getAccounts(userId);

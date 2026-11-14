@@ -12,6 +12,7 @@ import { AgentAuditEvent } from "../entities/agent-audit-event.entity";
 import { BankConnection } from "../entities/bank-connection.entity";
 import { BankOAuthState } from "../entities/bank-oauth-state.entity";
 import { BudgetEntry } from "../entities/budget-entry.entity";
+import { IdempotencyKey } from "../entities/idempotency-key.entity";
 import { ImportBatch } from "../entities/import-batch.entity";
 import { McpToken } from "../entities/mcp-token.entity";
 import { SnapshotCheckin } from "../entities/snapshot-checkin.entity";
@@ -189,6 +190,17 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("user data (real Post
         latencyMs: 12,
         responseBytes: 345,
         argsFingerprint: "f".repeat(64),
+      }),
+    );
+    await m.save(
+      m.create(IdempotencyKey, {
+        userId,
+        routeId: "accounts.create",
+        key: `idem-key-SECRET-${label}`,
+        requestHash: "e".repeat(64),
+        statusCode: 201,
+        responseBody: { name: `${label} saver SECRET-echo` },
+        responseHeaders: { etag: '"1"' },
       }),
     );
     await m.save(
@@ -553,6 +565,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("user data (real Post
       bank_connections: 0,
       bank_oauth_states: 0,
       budget_entries: 0,
+      idempotency_keys: 0,
       import_batches: 0,
       mcp_tokens: 0,
       snapshot_checkins: 0,

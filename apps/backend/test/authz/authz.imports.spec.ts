@@ -10,7 +10,14 @@ import { londonDate, londonYearMonth, monthKey } from "../../src/snapshots/londo
 import { writeSnapshotRows } from "../../src/snapshots/snapshot-write";
 import { resolveDbTestMode } from "../../src/testing/dbTestMode";
 import { ROUTE_MATRIX } from "./matrix";
-import { type AuthzHarness, bootAuthzHarness, MISSING_ID, truncateAll, USER_A } from "./support";
+import {
+  type AuthzHarness,
+  bootAuthzHarness,
+  MISSING_ID,
+  sansRequestId,
+  truncateAll,
+  USER_A,
+} from "./support";
 
 vi.mock("../../src/config/typeorm.options", async (importOriginal) =>
   (await import("./support.js")).withMigrations(await importOriginal()),
@@ -206,7 +213,7 @@ describe.skipIf(dbMode === "skip")("authz: imports controller (real Postgres)", 
     for (const [foreign, missing] of pairs) {
       expect(foreign.status).toBe(404);
       expect(missing.status).toBe(404);
-      expect(foreign.body).toEqual(missing.body);
+      expect(sansRequestId(foreign.body)).toEqual(sansRequestId(missing.body));
     }
     expect((await batches().findOneByOrFail({ id })).status).toBe("staged");
     expect(await details().count()).toBe(0);
@@ -437,7 +444,7 @@ describe.skipIf(dbMode === "skip")("authz: imports controller (real Postgres)", 
     });
     const id = res.body.batchId as string;
     const done = await commit(h.tokens.a, id, { accountMap: { mine: accountA, isa: null } });
-    expect(done.status).toBe(201);
+    expect(done.status).toBe(200);
     expect(done.body).toMatchObject({
       status: "committed",
       counts: { staged: 3, new: 3, overwrite: 0, unchanged: 0, skipped: 0, errors: 0 },
@@ -558,7 +565,7 @@ describe.skipIf(dbMode === "skip")("authz: imports controller (real Postgres)", 
     });
 
     const undone = await revert(h.tokens.a, id);
-    expect(undone.status).toBe(201);
+    expect(undone.status).toBe(200);
     expect(undone.body).toMatchObject({
       status: "reverted",
       revert: { restored: 1, removed: 2, kept: 2 },
@@ -619,7 +626,7 @@ describe.skipIf(dbMode === "skip")("authz: imports controller (real Postgres)", 
     const res = await h.call("post", "/user-profile/reset-financial-data", h.tokens.a, {
       confirmation: "RESET",
     });
-    expect(res.status).toBe(201);
+    expect(res.status).toBe(200);
     expect(await batches().countBy({ userId: USER_A })).toBe(0);
     expect(await batches().count()).toBe(1);
   });

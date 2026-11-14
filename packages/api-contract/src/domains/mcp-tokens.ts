@@ -1,11 +1,12 @@
 import { z } from "zod";
-import { IsoDateTime, Uuid } from "../primitives.js";
+import { PAGE_LIMITS } from "../pagination.js";
+import { IsoDateTime, ResponseMoney, Uuid } from "../primitives.js";
 import { ResolvedAccountDto } from "./accounts.js";
 
 /** Expiry choices (E17 D5-A). `null` ("never expires") is rejected. */
 export const PAT_EXPIRY_DAYS = [7, 30, 90, 365] as const;
 
-export const CreateMcpTokenRequest = z.object({
+export const CreateMcpTokenRequest = z.strictObject({
   name: z.string().trim().min(1).max(64),
   expiryDays: z
     .number()
@@ -26,8 +27,10 @@ export const CreateMcpTokenRequest = z.object({
  */
 export const WRITE_STAGE_SCOPE = "write:stage";
 
-/** Most activity rows one page returns. */
-export const MAX_ACTIVITY_PAGE = 100;
+/** Most activity rows one page returns (PAGE_LIMITS.activity). */
+export const MAX_ACTIVITY_PAGE = PAGE_LIMITS.activity.max;
+/** Activity rows a page returns when the request names no `limit`. */
+export const DEFAULT_ACTIVITY_PAGE = PAGE_LIMITS.activity.default;
 
 /**
  * Opaque paging cursor for the activity route (a compound created_at plus id position, encoded by
@@ -38,10 +41,10 @@ export const ActivityCursor = z
   .regex(/^[A-Za-z0-9_-]{1,128}$/, "must be a cursor from nextBefore");
 
 /**
- * GET /mcp-tokens/:id/activity query. `limit` defaults to 50; `before` (the previous page's
+ * GET /mcp-tokens/:id/activity query. `limit` defaults to DEFAULT_ACTIVITY_PAGE; `before` (the previous page's
  * `nextBefore`) pages back in time.
  */
-export const McpTokenActivityQuery = z.object({
+export const McpTokenActivityQuery = z.strictObject({
   limit: z.coerce.number().int().min(1).max(MAX_ACTIVITY_PAGE).optional(),
   before: ActivityCursor.optional(),
 });
@@ -127,7 +130,7 @@ const ContextPackBudgetEntry = z.strictObject({
   id: z.string(),
   category: z.string(),
   name: z.string(),
-  amount: z.number().finite(),
+  amount: ResponseMoney,
   frequency: z.string(),
   isIncome: z.boolean(),
   isEssential: z.boolean(),
@@ -200,3 +203,6 @@ export const ContextPackResponse = z.strictObject({
   markdown: z.string(),
 });
 export type ContextPackResponse = z.infer<typeof ContextPackResponse>;
+
+// Parsed request types (z.output: what a handler receives in enforce mode).
+export type CreateMcpTokenRequest = z.infer<typeof CreateMcpTokenRequest>;

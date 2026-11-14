@@ -201,3 +201,33 @@ export async function truncateAll(dataSource: DataSource): Promise<void> {
   const tables = dataSource.entityMetadatas.map((m) => `"${m.tableName}"`).join(", ");
   await dataSource.query(`TRUNCATE ${tables} CASCADE`);
 }
+
+/**
+ * An error body without its `requestId` (BE-09): every response has its own id, so "identical to
+ * not-found" compares everything else. Asserts the id is there, so the envelope is checked too.
+ */
+export function sansRequestId(body: unknown): unknown {
+  if (body === null || typeof body !== "object" || Array.isArray(body)) return body;
+  const { requestId, ...rest } = body as Record<string, unknown>;
+  if (typeof requestId !== "string" || requestId.length === 0) {
+    throw new Error(`error body has no requestId: ${JSON.stringify(body)}`);
+  }
+  return rest;
+}
+
+/**
+ * Since BE-09 request bodies are strict: a body carrying `id` or `userId` (probeBody) is a 400
+ * `validation_failed` naming both keys, before any handler or database work.
+ */
+export function expectProbeRejected(res: { status: number; body: unknown }, prefix = "body"): void {
+  const body = res.body as { code?: string; issues?: Array<{ path: string; code: string }> };
+  if (res.status !== 400 || body.code !== "validation_failed") {
+    throw new Error(`expected a 400 validation_failed, got ${res.status} ${JSON.stringify(body)}`);
+  }
+  for (const key of ["id", "userId"]) {
+    const path = `${prefix}.${key}`;
+    if (!body.issues?.some((i) => i.path === path && i.code === "unrecognized_keys")) {
+      throw new Error(`expected an unrecognized_keys issue at ${path}: ${JSON.stringify(body)}`);
+    }
+  }
+}

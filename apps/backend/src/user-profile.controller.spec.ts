@@ -1,4 +1,9 @@
-import { BadRequestException, ForbiddenException, Logger } from "@nestjs/common";
+import {
+  BadRequestException,
+  ForbiddenException,
+  Logger,
+  ServiceUnavailableException,
+} from "@nestjs/common";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { UserProfileController } from "./user-profile.controller";
 
@@ -175,7 +180,7 @@ describe("UserProfileController", () => {
       ["the wrong phrase", { confirmation: "reset" }],
       ["a non-string phrase", { confirmation: true }],
     ])("rejects %s with a 400 and deletes nothing", async (_label, body) => {
-      await expect(controller.resetFinancialData(req, body)).rejects.toBeInstanceOf(
+      await expect(controller.resetFinancialData(req, body as never)).rejects.toBeInstanceOf(
         BadRequestException,
       );
       expect(mockAccountRepo.delete).not.toHaveBeenCalled();
@@ -191,7 +196,8 @@ describe("UserProfileController", () => {
       });
       const log = vi.spyOn(Logger.prototype, "log").mockImplementation(() => undefined);
 
-      await controller.resetFinancialData(req, { confirmation: "RESET", extra: 1 });
+      // Raw input as with CONTRACT_MODE=off: the handler still checks only the phrase.
+      await controller.resetFinancialData(req, { confirmation: "RESET", extra: 1 } as never);
 
       const events = log.mock.calls
         .map(([message]) => JSON.stringify(message))
@@ -211,6 +217,7 @@ describe("UserProfileController", () => {
         budgetEntries: 3,
         taxRecords: 4,
         mcpTokens: 0,
+        idempotencyKeys: 0,
       });
       expect(events[0]).not.toContain("jane@example.com");
       expect(events[0]).not.toContain("80000");
@@ -256,7 +263,7 @@ describe("UserProfileController", () => {
           isSalarySacrifice: true,
           isSalarySacrificeEmployerNi: true,
           monthlySavingsTarget: 800,
-          savingsAllocationMode: "pro_rata",
+          savingsAllocationMode: "pro_rata" as never,
           savingsDefaultInterestRate: 4.5,
           enabledPages: ["accounts"],
           dashboardWidgets: ["accounts"],
@@ -321,9 +328,9 @@ describe("UserProfileController account deletion and export (BE-04)", () => {
     ["the reset phrase", { confirmation: "RESET" }],
   ])("deleteUser rejects %s with a 400 and deletes nothing", async (_label, body) => {
     const deleteAccount = vi.fn();
-    await expect(make({ deleteAccount }).deleteUser({ user: fresh }, body)).rejects.toBeInstanceOf(
-      BadRequestException,
-    );
+    await expect(
+      make({ deleteAccount }).deleteUser({ user: fresh }, body as never),
+    ).rejects.toBeInstanceOf(BadRequestException);
     expect(deleteAccount).not.toHaveBeenCalled();
   });
 
@@ -338,10 +345,10 @@ describe("UserProfileController account deletion and export (BE-04)", () => {
   it("deleteUser passes the caller's own id and returns the service outcome", async () => {
     const deleteAccount = vi.fn().mockResolvedValue({ status: "identity_pending" });
     await expect(
-      make({ deleteAccount }).deleteUser(
-        { user: fresh },
-        { confirmation: "DELETE", userId: "someone-else" },
-      ),
+      make({ deleteAccount }).deleteUser({ user: fresh }, {
+        confirmation: "DELETE",
+        userId: "someone-else",
+      } as never),
     ).resolves.toEqual({ status: "identity_pending" });
     expect(deleteAccount).toHaveBeenCalledWith("user-123");
   });
@@ -410,10 +417,12 @@ describe("UserProfileController account deletion and export (BE-04)", () => {
   it("exportData answers 503 if it fails before any byte, and cuts the stream if after", async () => {
     vi.spyOn(Logger.prototype, "warn").mockImplementation(() => undefined);
     const early = fakeRes();
-    await make(undefined, {
-      writeExport: vi.fn().mockRejectedValue(new Error("db down")),
-    }).exportData({ user: fresh }, early.res as never);
-    expect(early.res.statusCode).toBe(503);
+    // Thrown, so the exception filter writes the 503 in the shared error envelope (BE-09).
+    await expect(
+      make(undefined, {
+        writeExport: vi.fn().mockRejectedValue(new Error("db down")),
+      }).exportData({ user: fresh }, early.res as never),
+    ).rejects.toBeInstanceOf(ServiceUnavailableException);
     expect(early.headers["content-disposition"]).toBeUndefined();
 
     const late = fakeRes();

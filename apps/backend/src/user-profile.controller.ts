@@ -2,6 +2,8 @@ import {
   DeleteUserRequest,
   type DeleteUserResponse,
   ResetFinancialDataRequest,
+  type UpdateChecklistRequest,
+  type UpdateProfileRequest,
 } from "@flump/api-contract";
 import {
   BadRequestException,
@@ -9,6 +11,7 @@ import {
   Controller,
   Delete,
   Get,
+  Headers,
   HttpCode,
   Inject,
   Logger,
@@ -20,13 +23,14 @@ import {
   ServiceUnavailableException,
   UseGuards,
 } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config"; // <-- Fixed: Removed 'type'
+import { ConfigService } from "@nestjs/config";
 import { InjectRepository } from "@nestjs/typeorm";
 import type { Response } from "express";
 import { Repository } from "typeorm";
 import { AuthGuard } from "./auth/auth.guard";
+import type { AuthenticatedRequest } from "./auth/authenticated-request";
 import { AllowErasedAccount } from "./auth/erased-account";
-import type { AuthenticatedUser } from "./auth/token-verifier";
+import { expectedVersion, setEtag } from "./contract/etag";
 import { Account } from "./entities/account.entity";
 import { AccountDetail } from "./entities/account-detail.entity";
 import { BankConnection } from "./entities/bank-connection.entity";
@@ -42,7 +46,11 @@ import {
 import { AccountExportService, exportFileName } from "./privacy/account-export.service";
 import { assertRecentLogin } from "./privacy/recent-login";
 import { RateLimit } from "./security/rate-limit.decorator";
-import { UserProfileService } from "./user-profile.service";
+import {
+  type ProfileView,
+  type ResetFinancialDataResult,
+  UserProfileService,
+} from "./user-profile.service";
 
 @Controller()
 @UseGuards(AuthGuard)
@@ -83,30 +91,55 @@ export class UserProfileController {
   }
 
   @Get("user-profile")
-  async getUserProfile(@Req() req: any): Promise<any> {
-    return this.userProfileService.getProfile(req.user.id, req.user?.email);
+  @HttpCode(200)
+  async getUserProfile(
+    @Req() req: AuthenticatedRequest,
+    @Res({ passthrough: true }) res?: Response,
+  ): Promise<ProfileView> {
+    const profile = await this.userProfileService.getProfile(req.user.id, req.user?.email);
+    setEtag(res, profile.updatedAt);
+    return profile;
   }
 
   @Patch("user-profile")
-  async updateUserProfile(@Req() req: any, @Body() updateData: any): Promise<any> {
-    return this.userProfileService.updateProfile(req.user.id, updateData, req.user?.email);
+  @HttpCode(200)
+  async updateUserProfile(
+    @Req() req: AuthenticatedRequest,
+    @Body() updateData: UpdateProfileRequest,
+    @Headers("if-match") ifMatch?: string,
+    @Res({ passthrough: true }) res?: Response,
+  ): Promise<ProfileView> {
+    // `If-Match` makes the update conditional (412 when stale, BE-09); the answer carries the ETag.
+    const profile = await this.userProfileService.updateProfile(
+      req.user.id,
+      updateData,
+      req.user?.email,
+      expectedVersion(ifMatch),
+    );
+    setEtag(res, profile.updatedAt);
+    return profile;
   }
 
-  /** Body is intentionally ignored: the reset goes to the caller's own email. */
+  /** Takes no body: the reset goes to the caller's own email. */
   @Post("user-profile/send-password-reset")
+  @HttpCode(200)
   @RateLimit("credential")
-  async sendPasswordReset(@Req() req: any): Promise<{ success: true }> {
+  async sendPasswordReset(@Req() req: AuthenticatedRequest): Promise<{ success: true }> {
     return this.userProfileService.sendPasswordReset(req.user.id);
   }
 
   /**
    * Destructive: the body must carry the typed confirmation phrase. Checked here as well as by
-   * the contract interceptor, so the reset stays guarded even when contract enforcement is off.
+   * the contract interceptor, so the reset stays guarded even when contract enforcement is off
+   * (allowed outside production only).
    */
   @Post("user-profile/reset-financial-data")
+  @HttpCode(200)
   @RateLimit("destructive")
-  async resetFinancialData(@Req() req: any, @Body() body: unknown): Promise<any> {
-    // Only the phrase is checked: unknown keys are stripped, not rejected, as by the interceptor.
+  async resetFinancialData(
+    @Req() req: AuthenticatedRequest,
+    @Body() body: ResetFinancialDataRequest,
+  ): Promise<ResetFinancialDataResult> {
     const confirmation = (body as { confirmation?: unknown } | null)?.confirmation;
     if (!ResetFinancialDataRequest.shape.confirmation.safeParse(confirmation).success) {
       throw new BadRequestException("Type RESET to confirm.");
@@ -131,8 +164,8 @@ export class UserProfileController {
   @HttpCode(200)
   @RateLimit("destructive")
   async deleteUser(
-    @Req() req: { user: AuthenticatedUser },
-    @Body() body: unknown,
+    @Req() req: AuthenticatedRequest,
+    @Body() body: DeleteUserRequest,
   ): Promise<DeleteUserResponse> {
     const confirmation = (body as { confirmation?: unknown } | null)?.confirmation;
     if (!DeleteUserRequest.shape.confirmation.safeParse(confirmation).success) {
@@ -150,7 +183,8 @@ export class UserProfileController {
    */
   @Get("user-profile/export")
   @RateLimit("dataExport")
-  async exportData(@Req() req: { user: AuthenticatedUser }, @Res() res: Response): Promise<void> {
+  @HttpCode(200)
+  async exportData(@Req() req: AuthenticatedRequest, @Res() res: Response): Promise<void> {
     if (!this.accountExport)
       throw new ServiceUnavailableException(
         "Downloading your data is not available right now. Try again later.",
@@ -183,9 +217,8 @@ export class UserProfileController {
       this.logger.warn(`Export failed: ${safeErrorSummary(err)}`);
       if (!res.headersSent) {
         res.removeHeader("Content-Disposition");
-        res
-          .status(503)
-          .json({ statusCode: 503, message: "We could not prepare your download. Try again." });
+        // Thrown so the exception filter answers in the shared error envelope (BE-09).
+        throw new ServiceUnavailableException("We could not prepare your download. Try again.");
       } else {
         res.destroy();
       }
@@ -193,10 +226,11 @@ export class UserProfileController {
   }
 
   @Patch("user-profile/checklist")
+  @HttpCode(200)
   async updateChecklist(
-    @Req() req: any,
-    @Body() body: { step: string; completed: boolean },
-  ): Promise<any> {
+    @Req() req: AuthenticatedRequest,
+    @Body() body: UpdateChecklistRequest,
+  ): Promise<ProfileView> {
     return this.userProfileService.updateChecklist(
       req.user.id,
       body.step,

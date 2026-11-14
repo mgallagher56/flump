@@ -79,6 +79,7 @@ describe("AccountExportDocument (BE-04)", () => {
     importBatches: [],
     mcpTokens: [],
     agentAuditEvents: [],
+    idempotencyKeys: [],
   };
 
   it("accepts an empty export and requires every section", () => {

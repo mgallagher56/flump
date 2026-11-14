@@ -29,12 +29,12 @@ export const ImportRowKey = z
   .string()
   .regex(/^[A-Za-z0-9_.-]{1,64}:\d{4}-(0[1-9]|1[0-2])$/, "must be ref:YYYY-MM");
 
-export const ImportAccount = z.object({
+export const ImportAccount = z.strictObject({
   ref: ImportRef,
   name: Name,
   type: AccountType,
   details: z
-    .object({
+    .strictObject({
       interestRate: Percent.optional(),
       monthlyContribution: MoneyNonNegative.optional(),
       termMonths: TermMonths.optional(),
@@ -43,7 +43,7 @@ export const ImportAccount = z.object({
     .optional(),
 });
 
-export const ImportBalance = z.object({
+export const ImportBalance = z.strictObject({
   accountRef: ImportRef,
   month: SnapshotMonth,
   /** Signed as in the sheet; liabilities are stored negative by account type, as snapshots are. */
@@ -55,7 +55,7 @@ export const ImportBalance = z.object({
  * batch (409 if sent with a different `batchId`); `batchId` appends a chunk to an open (staged)
  * batch of the caller's.
  */
-export const StageImportRequest = z.object({
+export const StageImportRequest = z.strictObject({
   batchId: Uuid.optional(),
   idempotencyKey: z
     .string()
@@ -64,7 +64,7 @@ export const StageImportRequest = z.object({
   balances: z.array(ImportBalance).max(MAX_IMPORT_ROWS),
 });
 
-export const ImportIdParams = z.object({ id: Uuid });
+export const ImportIdParams = z.strictObject({ id: Uuid });
 
 /**
  * POST /imports/:id/commit. `accountMap[ref]` is an existing account id of the caller's, or null
@@ -72,7 +72,7 @@ export const ImportIdParams = z.object({ id: Uuid });
  * from an import (`source` other than `agent`) are skipped unless their key is in
  * `overwriteManual`.
  */
-export const CommitImportRequest = z.object({
+export const CommitImportRequest = z.strictObject({
   accountMap: z.record(ImportRef, Uuid.nullable()).optional(),
   overwriteManual: z.array(ImportRowKey).max(MAX_IMPORT_ROWS).optional(),
 });
@@ -81,12 +81,12 @@ export const CommitImportRequest = z.object({
  * POST /imports/:id/preview. A dry run of a commit with this account map, for the review page.
  * Writes nothing. Takes the same `accountMap` as commit; ticks are applied by the page.
  */
-export const PreviewImportRequest = z.object({
+export const PreviewImportRequest = z.strictObject({
   accountMap: z.record(ImportRef, Uuid.nullable()).optional(),
 });
 
 /** POST /imports/:id/revert takes no options. */
-export const RevertImportRequest = z.object({});
+export const RevertImportRequest = z.strictObject({});
 
 export const IMPORT_BATCH_STATUSES = ["staged", "committed", "reverted", "expired"] as const;
 export const ImportBatchStatus = z.enum(IMPORT_BATCH_STATUSES);
@@ -199,3 +199,10 @@ export const ImportPreviewResponse = z.strictObject({
   }),
 });
 export type ImportPreviewResponse = z.infer<typeof ImportPreviewResponse>;
+
+// Parsed request types (z.output: what a handler receives in enforce mode).
+export type StageImportRequest = z.infer<typeof StageImportRequest>;
+export type CommitImportRequest = z.infer<typeof CommitImportRequest>;
+export type PreviewImportRequest = z.infer<typeof PreviewImportRequest>;
+export type RevertImportRequest = z.infer<typeof RevertImportRequest>;
+export type ImportIdParams = z.infer<typeof ImportIdParams>;

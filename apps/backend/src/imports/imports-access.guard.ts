@@ -17,6 +17,6 @@ export class ImportsAccessGuard implements CanActivate {
   canActivate(context: ExecutionContext): boolean {
     const request = context.switchToHttp().getRequest();
     if (isMcpUserAllowed(readMcpAccessConfig(process.env), request.user?.id)) return true;
-    throw new NotFoundException({ statusCode: 404, error: "not_found", message: "Not found" });
+    throw new NotFoundException({ code: "not_found", message: "Not found" });
   }
 }
