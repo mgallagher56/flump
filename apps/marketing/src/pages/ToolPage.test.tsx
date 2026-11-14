@@ -25,6 +25,22 @@ describe("ToolPage", () => {
     expect(screen.getByText("All UK calculators")).toBeTruthy();
   });
 
+  it("renders the calculator for a slug in any case, matching the 200 status and canonical", () => {
+    renderAt("/tools/UK-100K-Tax-Trap-Calculator");
+    expect(screen.getByRole("heading", { level: 1, name: /tax trap/i })).toBeTruthy();
+    expect(screen.queryByText("Page not found")).toBeNull();
+  });
+
+  it("shows one 'Guidance, not advice' notice on every calculator page", () => {
+    for (const tool of TOOLS_CATALOG) {
+      const { unmount } = renderAt(`/tools/${tool.slug}`);
+      expect(screen.getAllByRole("complementary", { name: "Guidance, not advice" })).toHaveLength(
+        1,
+      );
+      unmount();
+    }
+  });
+
   it("asks for a beta invite instead of linking a closed sign-up", () => {
     renderAt("/tools/uk-100k-tax-trap-calculator");
     expect(screen.getAllByText(/Request an invite/).length).toBeGreaterThan(0);

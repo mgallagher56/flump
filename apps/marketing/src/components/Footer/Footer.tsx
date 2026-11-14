@@ -4,6 +4,7 @@ import { ExternalLink } from "lucide-react";
 import type { FC } from "react";
 import { Link } from "react-router-dom";
 import { mailto, signupCta } from "../../utils/site";
+import { CANONICAL_TOOL_SLUGS, TOOL_SHORT_LABELS } from "../../utils/toolSlugs";
 import { getAppUrl } from "../../utils/url";
 import {
   footerBottomRow,
@@ -43,43 +44,11 @@ export const Footer: FC = () => {
       columns={[
         {
           heading: "Calculators",
-          links: [
-            {
-              key: "snowball",
-              label: "Snowball vs avalanche",
-              href: "/tools/uk-debt-snowball-vs-avalanche-calculator",
-            },
-            {
-              key: "balance-transfer",
-              label: "0% balance transfer calculator",
-              href: "/tools/0-percent-balance-transfer-payoff-calculator",
-            },
-            {
-              key: "overdraft",
-              label: "Overdraft cost and payoff",
-              href: "/tools/overdraft-cost-and-payoff-calculator",
-            },
-            {
-              key: "mortgage-isa",
-              label: "Mortgage vs Stocks and Shares ISA",
-              href: "/tools/mortgage-overpayment-vs-isa-calculator",
-            },
-            {
-              key: "student-loan",
-              label: "Student loan overpayments",
-              href: "/tools/uk-student-loan-overpay-or-invest-calculator",
-            },
-            {
-              key: "tax-trap",
-              label: "£100k tax trap calculator",
-              href: "/tools/uk-100k-tax-trap-calculator",
-            },
-            {
-              key: "section-24",
-              label: "Section 24 landlord tax",
-              href: "/tools/section-24-landlord-tax-calculator",
-            },
-          ],
+          links: CANONICAL_TOOL_SLUGS.map((slug) => ({
+            key: slug,
+            label: TOOL_SHORT_LABELS[slug],
+            href: `/tools/${slug}`,
+          })),
         },
         {
           heading: "Platform",
@@ -95,11 +64,11 @@ export const Footer: FC = () => {
               href: `${appUrl}/sandbox`,
               newTab: true,
             },
-            { key: "mcp", label: "AI & MCP Protocol", href: "/mcp" },
-            { key: "pricing", label: "Pricing plans", href: "/pricing" },
+            { key: "mcp", label: "AI and MCP", href: "/mcp" },
+            { key: "pricing", label: "Pricing", href: "/pricing" },
             {
               key: "signin",
-              label: "Sign in to web app",
+              label: "Sign in",
               href: `${appUrl}/login`,
               external: true,
             },

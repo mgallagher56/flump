@@ -16,9 +16,13 @@ export const NotFoundPage: FC = () => (
     <Helmet>
       <title>Page not found | Flump</title>
       <meta name="robots" content="noindex" />
+      <meta
+        name="description"
+        content="This page could not be found. Go back to the Flump home page or browse the free UK calculators."
+      />
     </Helmet>
     <Header />
-    <main className={mainContent()}>
+    <main className={mainContent()} id="main" tabIndex={-1}>
       <h1 className={headingStyle()}>Page not found</h1>
       <p className={bodyStyle()}>
         We could not find that page. It may have moved, or the address may be mistyped.

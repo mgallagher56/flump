@@ -36,17 +36,17 @@ export interface OverdraftCostCalculatorProps {
 
 export const OverdraftCostCalculator: FC<OverdraftCostCalculatorProps> = ({
   onSaveAndContinue,
-  ctaText = "Eliminate your overdraft with Flump →",
+  ctaText = "Add your overdraft to Flump →",
   persistSeed = true,
 }) => {
   const [balance, setBalance] = useState<number>(1200);
   const [earRate, setEarRate] = useState<number>(39.9);
 
-  const cost = useMemo(() => {
-    return calculateOverdraftCost(balance, earRate);
-  }, [balance, earRate]);
+  const cost = useMemo(() => calculateOverdraftCost(balance, earRate), [balance, earRate]);
+  // Interest on each £100 of the balance, for the "how it is worked out" note.
+  const perHundred = useMemo(() => calculateOverdraftCost(100, earRate), [earRate]);
 
-  const headline = `Overdraft costs £${Math.round(cost.annualPoundCost).toLocaleString(
+  const headline = `An estimated £${Math.round(cost.annualPoundCost).toLocaleString(
     "en-GB",
   )} a year in interest`;
 
@@ -69,10 +69,10 @@ export const OverdraftCostCalculator: FC<OverdraftCostCalculatorProps> = ({
     <div className={cardStyle} data-testid="overdraft-cost-tool">
       <div className={headerStyle}>
         <div>
-          <h2 className={titleStyle}>Overdraft interest cost calculator</h2>
+          <h2 className={titleStyle}>Arranged overdraft cost calculator</h2>
           <p className={introStyle}>
-            UK banks charge effective rates approaching 40% EAR on arranged overdrafts. Calculate
-            your stealth annual fee.
+            Estimate the interest an arranged overdraft costs over a year at the rate your bank
+            charges. Your bank shows the rate as an EAR on your statement and its website.
           </p>
         </div>
       </div>
@@ -89,13 +89,13 @@ export const OverdraftCostCalculator: FC<OverdraftCostCalculatorProps> = ({
               min={50}
               type="number"
               value={balance}
-              onChange={(e) => setBalance(Number(e.target.value) || 0)}
+              onChange={(e) => setBalance(Math.max(0, Number(e.target.value) || 0))}
             />
           </div>
 
           <div className={inputGroupStyle}>
             <label className={fieldLabelStyle} htmlFor="overdraft-ear-rate">
-              Bank EAR rate (%) (UK standard is ~39.9%)
+              Your bank's overdraft rate (EAR, %)
             </label>
             <input
               id="overdraft-ear-rate"
@@ -103,7 +103,7 @@ export const OverdraftCostCalculator: FC<OverdraftCostCalculatorProps> = ({
               step="0.1"
               type="number"
               value={earRate}
-              onChange={(e) => setEarRate(Number(e.target.value) || 0)}
+              onChange={(e) => setEarRate(Math.max(0, Number(e.target.value) || 0))}
             />
           </div>
         </div>
@@ -111,24 +111,22 @@ export const OverdraftCostCalculator: FC<OverdraftCostCalculatorProps> = ({
         <div className={resultsBoxStyle}>
           <LiveRegion debounceMs={1000} message={headline} visuallyHidden />
           <div>
-            <span className={badgeRecipe({ tone: "danger" })}>Annual bank interest cost</span>
+            <span className={badgeRecipe({ tone: "danger" })}>Estimated interest a year</span>
             <div className={figureRecipe({ tone: "danger" })}>
               £{Math.round(cost.annualPoundCost).toLocaleString("en-GB")} / year
             </div>
             <p className={noteStyle}>
-              Directly debited as ~£{penceFormatter.format(cost.monthlyPoundCost)}/month from your
-              regular checking balance.
+              About £{penceFormatter.format(cost.monthlyPoundCost)} a month, taken from your current
+              account.
             </p>
           </div>
 
           <div className={calloutRecipe({ tone: "neutral" })}>
-            <div className={calloutTitleRecipe({ tone: "neutral" })}>
-              Why overdrafts are dangerous
-            </div>
+            <div className={calloutTitleRecipe({ tone: "neutral" })}>How this is worked out</div>
             <p className={calloutBodyRecipe({ tone: "neutral" })}>
-              Because there is no fixed repayment date or separate statement, persistent overdrafts
-              act as an indefinite 40% APR revolving charge. Clearing a £1,200 overdraft delivers an
-              immediate guaranteed 39.9% tax-free return on your money.
+              The balance times the EAR, as if £{balance.toLocaleString("en-GB")} stayed overdrawn
+              all year. At {earRate.toLocaleString("en-GB")}% EAR, each £100 paid off lowers the
+              yearly interest by about £{penceFormatter.format(perHundred.annualPoundCost)}.
             </p>
           </div>
 

@@ -21,7 +21,7 @@ const CASES: {
   {
     name: "DebtSnowballCalculator",
     element: <DebtSnowballCalculator />,
-    control: () => screen.getByRole("slider", { name: /Monthly overpayment surplus slider/i }),
+    control: () => screen.getByRole("slider", { name: /Extra each month slider/i }),
     value: "150",
     expected: /^Debt-free by .+, total interest £[\d,]+$/,
   },
@@ -30,21 +30,21 @@ const CASES: {
     element: <MortgageVsIsaCalculator />,
     control: () => screen.getByLabelText("Mortgage balance slider"),
     value: "300000",
-    expected: /Overpaying saves £[\d,]+ interest; the ISA would grow to £[\d,]+/,
+    expected: /Overpaying would save an estimated £[\d,]+ interest; the ISA would grow to £[\d,]+/,
   },
   {
     name: "OverdraftCostCalculator",
     element: <OverdraftCostCalculator />,
     control: () => screen.getByLabelText("Average overdraft balance used (£)"),
     value: "2000",
-    expected: /Overdraft costs £798 a year/,
+    expected: /An estimated £798 a year in interest/,
   },
   {
     name: "Section24Calculator",
     element: <Section24Calculator />,
     control: () => screen.getByLabelText("Gross annual rental income slider"),
     value: "25000",
-    expected: /Tax due £[\d,]+ a year, leaving £[\d,]+ cash in pocket/,
+    expected: /Estimated tax £[\d,]+ a year, leaving £[\d,]+ cash in pocket/,
   },
   {
     name: "StudentLoanCalculator",
@@ -66,7 +66,7 @@ const CASES: {
     element: <ZeroPercentCliffCalculator />,
     control: () => screen.getByLabelText("Current 0% card balance (£)"),
     value: "4800",
-    expected: /Pay £267 a month to clear the balance/,
+    expected: /About £267 a month would clear the balance/,
   },
 ];
 

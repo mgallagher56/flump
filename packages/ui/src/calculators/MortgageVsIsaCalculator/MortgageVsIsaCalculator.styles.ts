@@ -157,6 +157,7 @@ export const metricValueStyle = cva({
       warning: { color: "status.warning.text" },
       positive: { color: "status.positive.text" },
       danger: { color: "status.danger.text" },
+      neutral: { color: "text.primary" },
     },
   },
   defaultVariants: { tone: "positive" },
@@ -194,5 +195,3 @@ export const ctaCopyStyle = css({ maxWidth: "440px" });
 export const ctaTitleStyle = css({ textStyle: "label.md", color: "text.primary" });
 
 export const ctaNoteStyle = css({ textStyle: "body.sm", color: "text.muted", margin: 0 });
-
-export const ctaIconStyle = css({ marginLeft: "1.5" });

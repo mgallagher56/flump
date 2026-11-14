@@ -735,13 +735,18 @@ export function evaluateUkStudentLoan(
   const monthlyRepayment = roundPence(annualRepayment / 12);
 
   const interestAccumulation = currentBalance * 0.065;
+  // Nothing left to repay is not "written off first".
+  const nothingOwed = currentBalance <= 0;
   const willLikelyRepayBeforeWriteOff =
-    annualRepayment > interestAccumulation * 1.5 &&
-    currentBalance < annualRepayment * (cfg.writeOffYears / 2);
+    nothingOwed ||
+    (annualRepayment > interestAccumulation * 1.5 &&
+      currentBalance < annualRepayment * (cfg.writeOffYears / 2));
 
-  const reasoning = willLikelyRepayBeforeWriteOff
-    ? `Your annual repayment of £${Math.round(annualRepayment).toLocaleString("en-GB")} is projected to clear the £${Math.round(currentBalance).toLocaleString("en-GB")} balance before the ${cfg.writeOffYears}-year statutory write-off.`
-    : `Your annual repayment of £${Math.round(annualRepayment).toLocaleString("en-GB")} is not projected to clear the £${Math.round(currentBalance).toLocaleString("en-GB")} balance before the ${cfg.writeOffYears}-year statutory write-off, so in this projection the balance is written off before it is repaid.`;
+  const reasoning = nothingOwed
+    ? "There is no balance left to repay."
+    : willLikelyRepayBeforeWriteOff
+      ? `Your annual repayment of £${Math.round(annualRepayment).toLocaleString("en-GB")} is projected to clear the £${Math.round(currentBalance).toLocaleString("en-GB")} balance before the ${cfg.writeOffYears}-year statutory write-off.`
+      : `Your annual repayment of £${Math.round(annualRepayment).toLocaleString("en-GB")} is not projected to clear the £${Math.round(currentBalance).toLocaleString("en-GB")} balance before the ${cfg.writeOffYears}-year statutory write-off, so in this projection the balance is written off before it is repaid.`;
 
   return {
     plan: key,

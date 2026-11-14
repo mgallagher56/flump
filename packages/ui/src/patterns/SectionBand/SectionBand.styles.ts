@@ -52,8 +52,13 @@ export const indexBadgeRecipe = cva({
   variants: {
     contrast: {
       true: {
-        backgroundColor: "rgba(255, 255, 255, 0.12)",
-        color: "chart.accentCyan",
+        backgroundColor: "transparent",
+        borderWidth: "1px",
+        borderStyle: "solid",
+        borderColor: "currentColor",
+        // Text on the contrast band; chart.accentCyan is a graphic colour and failed AA as text
+        // (2.08:1 light, 3.67:1 dark).
+        color: "text.onContrast",
       },
       false: {
         backgroundColor: "primary.subtle",
@@ -102,7 +107,7 @@ export const sectionSubtitleRecipe = cva({
   variants: {
     contrast: {
       true: {
-        color: "rgba(255, 255, 255, 0.75)",
+        color: "text.onContrast",
       },
       false: {
         color: "text.muted",

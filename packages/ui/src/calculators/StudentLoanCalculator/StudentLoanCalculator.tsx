@@ -31,7 +31,7 @@ export interface StudentLoanCalculatorProps {
 
 export const StudentLoanCalculator: FC<StudentLoanCalculatorProps> = ({
   onSaveAndContinue,
-  ctaText = "Model your full career trajectory in Flump →",
+  ctaText = "Add your student loan to Flump →",
   persistSeed = true,
 }) => {
   const [plan, setPlan] = useState<"plan1" | "plan2" | "plan4" | "plan5" | "postgrad">("plan2");
@@ -106,7 +106,7 @@ export const StudentLoanCalculator: FC<StudentLoanCalculatorProps> = ({
               step={1000}
               type="number"
               value={salary}
-              onChange={(e) => setSalary(Number(e.target.value) || 0)}
+              onChange={(e) => setSalary(Math.max(0, Number(e.target.value) || 0))}
             />
           </div>
 
@@ -121,7 +121,7 @@ export const StudentLoanCalculator: FC<StudentLoanCalculatorProps> = ({
               step={1000}
               type="number"
               value={balance}
-              onChange={(e) => setBalance(Number(e.target.value) || 0)}
+              onChange={(e) => setBalance(Math.max(0, Number(e.target.value) || 0))}
             />
           </div>
         </div>
@@ -147,6 +147,10 @@ export const StudentLoanCalculator: FC<StudentLoanCalculatorProps> = ({
           <div className={calloutRecipe({ tone })}>
             <div className={calloutTitleRecipe({ tone })}>How the projection works out</div>
             <p className={calloutBodyRecipe({ tone })}>{evaluation.reasoning}</p>
+            <p className={calloutBodyRecipe({ tone })}>
+              This is a rough check, not a year-by-year projection. It assumes interest of 6.5% a
+              year and that your salary stays the same.
+            </p>
           </div>
 
           <Button className={ctaStyle} onClick={handleSave} size="md">

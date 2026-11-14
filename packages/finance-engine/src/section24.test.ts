@@ -65,4 +65,31 @@ describe("section24 module", () => {
     expect(res.finalTaxDue).toBe(4800);
     expect(res.financeCredit).toBe(1600);
   });
+
+  it("applies the Personal Allowance taper when total income passes £100,000", () => {
+    // £110,000 other income + £16,000 rental profit = £126,000: the allowance is fully lost.
+    // Tax on £126,000 (no allowance) = 7,540 + 34,976 + 387 = £42,903.
+    // Tax on £110,000 (allowance £7,570) = 7,540 + 25,892 = £33,432.
+    // Rental slice £9,471, less the £1,600 finance cost credit = £7,871.
+    const res = calculateSection24Tax({
+      grossRentalIncomeGbp: 18000,
+      allowableExpensesGbp: 2000,
+      mortgageInterestGbp: 8000,
+      otherTaxableIncomeGbp: 110000,
+      taxYear: "2026/27",
+    });
+    expect(res.netRentalTaxLiabilityGbp).toBe(7871);
+  });
+
+  it("gives the same answer as the flat bands below the taper", () => {
+    const res = calculateSection24Tax({
+      grossRentalIncomeGbp: 18000,
+      allowableExpensesGbp: 2000,
+      mortgageInterestGbp: 8000,
+      otherTaxableIncomeGbp: 32000,
+      taxYear: "2026/27",
+    });
+    // £16,000 at 20% = £3,200, less £1,600 credit.
+    expect(res.netRentalTaxLiabilityGbp).toBe(1600);
+  });
 });

@@ -12,9 +12,9 @@ describe("Section24Tool", () => {
     render(<Section24Tool />);
 
     expect(screen.getByText(/section 24 buy-to-let mortgage relief calculator/i)).toBeDefined();
-    expect(screen.getByText(/hmrc tax due on rental/i)).toBeDefined();
-    expect(screen.getByText(/true effective tax rate/i)).toBeDefined();
-    expect(screen.getByText(/net cash retained/i)).toBeDefined();
+    expect(screen.getByText(/estimated income tax on rental profit/i)).toBeDefined();
+    expect(screen.getByText(/tax as a share of taxable profit/i)).toBeDefined();
+    expect(screen.getByText(/rental cash left after tax/i)).toBeDefined();
   });
 
   it("updates calculations when rental income slider is adjusted", () => {

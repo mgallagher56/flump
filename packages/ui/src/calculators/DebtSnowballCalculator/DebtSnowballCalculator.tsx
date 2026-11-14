@@ -63,7 +63,7 @@ export const DebtSnowballCalculator: FC<DebtSnowballCalculatorProps> = ({
     return [
       {
         id: "d1",
-        name: "Credit Card",
+        name: "credit card",
         balance: cardBalance,
         apr: cardApr,
         minimumPayment: cardMin,
@@ -71,7 +71,7 @@ export const DebtSnowballCalculator: FC<DebtSnowballCalculatorProps> = ({
       },
       {
         id: "d2",
-        name: "Personal Loan",
+        name: "personal loan",
         balance: loanBalance,
         apr: loanApr,
         minimumPayment: loanMin,
@@ -88,7 +88,7 @@ export const DebtSnowballCalculator: FC<DebtSnowballCalculatorProps> = ({
     ? `Debt-free by ${comparison.avalanche.debtFreeDate}, total interest £${Math.round(
         comparison.avalanche.totalInterest,
       ).toLocaleString("en-GB")}`
-    : "These payments will not clear the debt";
+    : "These payments would not clear the debts";
 
   const handleSave = () => {
     const totalDebt = cardBalance + loanBalance;
@@ -132,7 +132,7 @@ export const DebtSnowballCalculator: FC<DebtSnowballCalculatorProps> = ({
                   className={textInputStyle}
                   type="number"
                   value={cardBalance}
-                  onChange={(e) => setCardBalance(Number(e.target.value) || 0)}
+                  onChange={(e) => setCardBalance(Math.max(0, Number(e.target.value) || 0))}
                 />
               </div>
               <div className={inputGroupStyle}>
@@ -145,7 +145,7 @@ export const DebtSnowballCalculator: FC<DebtSnowballCalculatorProps> = ({
                   step="0.1"
                   type="number"
                   value={cardApr}
-                  onChange={(e) => setCardApr(Number(e.target.value) || 0)}
+                  onChange={(e) => setCardApr(Math.max(0, Number(e.target.value) || 0))}
                 />
               </div>
               <div className={inputGroupStyle}>
@@ -157,7 +157,7 @@ export const DebtSnowballCalculator: FC<DebtSnowballCalculatorProps> = ({
                   className={textInputStyle}
                   type="number"
                   value={cardMin}
-                  onChange={(e) => setCardMin(Number(e.target.value) || 0)}
+                  onChange={(e) => setCardMin(Math.max(0, Number(e.target.value) || 0))}
                 />
               </div>
             </div>
@@ -175,7 +175,7 @@ export const DebtSnowballCalculator: FC<DebtSnowballCalculatorProps> = ({
                   className={textInputStyle}
                   type="number"
                   value={loanBalance}
-                  onChange={(e) => setLoanBalance(Number(e.target.value) || 0)}
+                  onChange={(e) => setLoanBalance(Math.max(0, Number(e.target.value) || 0))}
                 />
               </div>
               <div className={inputGroupStyle}>
@@ -188,7 +188,7 @@ export const DebtSnowballCalculator: FC<DebtSnowballCalculatorProps> = ({
                   step="0.1"
                   type="number"
                   value={loanApr}
-                  onChange={(e) => setLoanApr(Number(e.target.value) || 0)}
+                  onChange={(e) => setLoanApr(Math.max(0, Number(e.target.value) || 0))}
                 />
               </div>
               <div className={inputGroupStyle}>
@@ -200,7 +200,7 @@ export const DebtSnowballCalculator: FC<DebtSnowballCalculatorProps> = ({
                   className={textInputStyle}
                   type="number"
                   value={loanMin}
-                  onChange={(e) => setLoanMin(Number(e.target.value) || 0)}
+                  onChange={(e) => setLoanMin(Math.max(0, Number(e.target.value) || 0))}
                 />
               </div>
             </div>
@@ -209,7 +209,7 @@ export const DebtSnowballCalculator: FC<DebtSnowballCalculatorProps> = ({
           <div className={inputGroupStyle}>
             <div className={surplusRowStyle}>
               <label htmlFor="extra-payment-input" className={surplusLabelStyle}>
-                Monthly overpayment surplus
+                Extra each month, on top of the minimums
               </label>
               <div className={pillWrapStyle}>
                 <span className={pillPrefixStyle}>+£</span>
@@ -220,14 +220,14 @@ export const DebtSnowballCalculator: FC<DebtSnowballCalculatorProps> = ({
                   min={0}
                   step={10}
                   value={extraPayment}
-                  onChange={(e) => setExtraPayment(Number(e.target.value) || 0)}
+                  onChange={(e) => setExtraPayment(Math.max(0, Number(e.target.value) || 0))}
                 />
                 <span className={pillSuffixStyle}>/mo</span>
               </div>
             </div>
             <input
               id="extra-payment-slider"
-              aria-label="Monthly overpayment surplus slider"
+              aria-label="Extra each month slider"
               className={rangeStyle}
               max={500}
               min={0}
@@ -245,15 +245,26 @@ export const DebtSnowballCalculator: FC<DebtSnowballCalculatorProps> = ({
             <span className={tagStyle({ tone: "warning" })}>
               Avalanche strategy (highest APR first)
             </span>
-            <div className={heroFigureStyle}>Debt free: {comparison.avalanche.debtFreeDate}</div>
-            <p className={captionStyle}>
-              {comparison.avalanche.months} months total • Shaves{" "}
-              {comparison.monthsShavedAvalancheVsMin} months off minimum payments
-            </p>
+            {comparison.avalanche.payoffAchievable ? (
+              <>
+                <div className={heroFigureStyle}>
+                  Debt free: {comparison.avalanche.debtFreeDate}
+                </div>
+                <p className={captionStyle}>
+                  {comparison.avalanche.months} months, total interest £
+                  {Math.round(comparison.avalanche.totalInterest).toLocaleString("en-GB")}.{" "}
+                  {comparison.monthsShavedAvalancheVsMin} months sooner than paying only the
+                  minimums
+                </p>
+              </>
+            ) : (
+              <div className={heroFigureStyle}>These payments would not clear the debts</div>
+            )}
           </div>
-
           <div className={savedBoxStyle}>
-            <span className={savedLabelStyle}>Total interest saved vs minimum payments:</span>
+            <span className={savedLabelStyle}>
+              Interest saved compared with paying only the minimums
+            </span>
             <div className={savedFigureStyle}>
               £{Math.round(comparison.interestSavedAvalancheVsMin).toLocaleString("en-GB")}
             </div>
@@ -263,10 +274,17 @@ export const DebtSnowballCalculator: FC<DebtSnowballCalculatorProps> = ({
             <span className={tagStyle({ tone: "info" })}>
               Snowball strategy (smallest balance first)
             </span>
-            <div className={snowballWinStyle}>{comparison.snowballFirstWinDescription}</div>
+            <div className={snowballWinStyle}>
+              {comparison.snowball.quickWinDebtName
+                ? `Snowball clears the ${comparison.snowball.quickWinDebtName} first`
+                : comparison.snowballFirstWinDescription}
+            </div>
             <p className={captionStyle}>
-              Full payoff in {comparison.snowball.months} months (Total interest: £
-              {Math.round(comparison.snowball.totalInterest).toLocaleString("en-GB")})
+              {comparison.snowball.payoffAchievable
+                ? `${comparison.snowball.months} months, total interest £${Math.round(
+                    comparison.snowball.totalInterest,
+                  ).toLocaleString("en-GB")}`
+                : "These payments would not clear the debts"}
             </p>
           </div>
 

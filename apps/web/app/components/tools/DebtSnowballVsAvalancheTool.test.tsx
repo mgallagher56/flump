@@ -20,7 +20,7 @@ describe("DebtSnowballVsAvalancheTool", () => {
   it("updates payoff when extra payment slider moves", () => {
     render(<DebtSnowballVsAvalancheTool />);
 
-    const slider = screen.getByRole("slider", { name: /Monthly overpayment surplus/i });
+    const slider = screen.getByRole("slider", { name: /Extra each month/i });
     fireEvent.change(slider, { target: { value: "150" } });
 
     expect(screen.getAllByDisplayValue("150").length).toBeGreaterThan(0);

@@ -83,7 +83,7 @@ export const SecurityPage: FC = () => {
 
       <Header />
 
-      <main style={{ flex: 1 }}>
+      <main style={{ flex: 1 }} id="main" tabIndex={-1}>
         <section className={containerStyle}>
           <div style={{ textAlign: "center", marginBottom: "40px" }}>
             <span className={eyebrowStyle}>Trust and transparency hub</span>

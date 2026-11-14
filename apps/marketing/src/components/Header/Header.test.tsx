@@ -3,12 +3,29 @@ import { HelmetProvider } from "react-helmet-async";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it } from "vitest";
 import { ThemeProvider } from "../../context/ThemeContext";
-import { Header } from "./Header";
+import { CANONICAL_TOOL_SLUGS } from "../../utils/toolSlugs";
+import { Header, MAIN_ID } from "./Header";
 
 describe("Header", () => {
   beforeEach(() => {
     // biome-ignore lint/suspicious/noDocumentCookie: Cookie testing helper
     document.cookie = "flump_has_session=; path=/; max-age=0";
+  });
+
+  it("starts with a skip link to the main landmark and counts every calculator", () => {
+    render(
+      <HelmetProvider>
+        <ThemeProvider>
+          <MemoryRouter>
+            <Header />
+          </MemoryRouter>
+        </ThemeProvider>
+      </HelmetProvider>,
+    );
+    const skip = screen.getByRole("link", { name: "Skip to main content" });
+    expect(skip.getAttribute("href")).toBe(`#${MAIN_ID}`);
+    fireEvent.click(screen.getByRole("button", { name: /open navigation menu/i }));
+    expect(screen.getByText(`${CANONICAL_TOOL_SLUGS.length} tools`)).toBeDefined();
   });
 
   it("renders desktop navigation links, 'Sign in', the invite CTA, and theme toggle when no session", () => {
@@ -27,7 +44,7 @@ describe("Header", () => {
     expect(screen.getByRole("link", { name: /security/i })).toBeDefined();
     expect(screen.getByRole("link", { name: /live demo/i })).toBeDefined();
 
-    expect(screen.getByText("Sign in")).toBeDefined();
+    expect(screen.getAllByText("Sign in").length).toBeGreaterThan(0);
     expect(screen.getByText("Request an invite").closest("a")?.getAttribute("href")).toBe(
       "/contact#beta",
     );

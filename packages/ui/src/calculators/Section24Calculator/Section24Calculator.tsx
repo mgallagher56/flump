@@ -1,7 +1,6 @@
 import { calculateSection24LandlordTax, persistOnboardingSeed } from "@flump/finance-engine";
 import type { FC } from "react";
 import { useMemo, useState } from "react";
-import { FiArrowRight } from "react-icons/fi";
 import { Button } from "../../primitives/Button";
 import { LiveRegion } from "../../primitives/LiveRegion";
 import {
@@ -10,7 +9,6 @@ import {
   badgeStyle,
   cardStyle,
   ctaCopyStyle,
-  ctaIconStyle,
   ctaNoteStyle,
   ctaRowStyle,
   ctaTitleStyle,
@@ -69,7 +67,7 @@ export const Section24Calculator: FC<Section24CalculatorProps> = ({
     };
   }, [rentalIncome, mortgageInterest, allowableExpenses, otherIncome]);
 
-  const headline = `Tax due £${Math.round(calc.finalTaxDue).toLocaleString(
+  const headline = `Estimated tax £${Math.round(calc.finalTaxDue).toLocaleString(
     "en-GB",
   )} a year, leaving £${Math.round(calc.netCashInPocket).toLocaleString("en-GB")} cash in pocket`;
 
@@ -93,7 +91,9 @@ export const Section24Calculator: FC<Section24CalculatorProps> = ({
     <div className={cardStyle} data-testid="section-24-tool">
       <div className={headerStyle}>
         <div className={badgeRowStyle}>
-          <span className={badgeStyle({ tone: "info" })}>HMRC landlord tax rules</span>
+          <span className={badgeStyle({ tone: "info" })}>
+            Estimate, England, Wales and NI rates
+          </span>
         </div>
         <h2 className={titleStyle}>Section 24 buy-to-let mortgage relief calculator</h2>
         <p className={subtitleStyle}>
@@ -117,7 +117,7 @@ export const Section24Calculator: FC<Section24CalculatorProps> = ({
                 min={0}
                 step={1000}
                 value={rentalIncome}
-                onChange={(e) => setRentalIncome(Number(e.target.value) || 0)}
+                onChange={(e) => setRentalIncome(Math.max(0, Number(e.target.value) || 0))}
               />
             </div>
           </div>
@@ -148,7 +148,7 @@ export const Section24Calculator: FC<Section24CalculatorProps> = ({
                 min={0}
                 step={500}
                 value={mortgageInterest}
-                onChange={(e) => setMortgageInterest(Number(e.target.value) || 0)}
+                onChange={(e) => setMortgageInterest(Math.max(0, Number(e.target.value) || 0))}
               />
             </div>
           </div>
@@ -179,7 +179,7 @@ export const Section24Calculator: FC<Section24CalculatorProps> = ({
                 min={0}
                 step={250}
                 value={allowableExpenses}
-                onChange={(e) => setAllowableExpenses(Number(e.target.value) || 0)}
+                onChange={(e) => setAllowableExpenses(Math.max(0, Number(e.target.value) || 0))}
               />
             </div>
           </div>
@@ -210,7 +210,7 @@ export const Section24Calculator: FC<Section24CalculatorProps> = ({
                 min={0}
                 step={2500}
                 value={otherIncome}
-                onChange={(e) => setOtherIncome(Number(e.target.value) || 0)}
+                onChange={(e) => setOtherIncome(Math.max(0, Number(e.target.value) || 0))}
               />
             </div>
           </div>
@@ -232,7 +232,7 @@ export const Section24Calculator: FC<Section24CalculatorProps> = ({
       <LiveRegion debounceMs={1000} message={headline} visuallyHidden />
       <div className={metricsGridStyle}>
         <div className={metricCard}>
-          <span className={metricLabelStyle}>HMRC tax due on rental</span>
+          <span className={metricLabelStyle}>Estimated Income Tax on rental profit</span>
           <span className={metricValueStyle({ tone: "danger" })}>
             £{Math.round(calc.finalTaxDue).toLocaleString("en-GB")}
           </span>
@@ -243,24 +243,24 @@ export const Section24Calculator: FC<Section24CalculatorProps> = ({
         </div>
 
         <div className={metricCard}>
-          <span className={metricLabelStyle}>True effective tax rate</span>
+          <span className={metricLabelStyle}>Tax as a share of taxable profit</span>
           <span className={metricValueStyle({ tone: "warning" })}>
             {oneDecimalFormatter.format(calc.effectiveTaxRate)}%
           </span>
           <span className={metricNoteStyle}>
-            Tax paid relative to your £{Math.round(calc.actualCashProfit).toLocaleString("en-GB")}{" "}
-            real cash profit
+            Of £{Math.round(calc.section24TaxableProfit).toLocaleString("en-GB")} taxable rental
+            profit (rent less expenses; mortgage interest is not deducted)
           </span>
         </div>
 
         <div className={metricCard}>
-          <span className={metricLabelStyle}>Net cash retained</span>
+          <span className={metricLabelStyle}>Rental cash left after tax</span>
           <span className={metricValueStyle({ tone: "positive" })}>
             £{Math.round(calc.netCashInPocket).toLocaleString("en-GB")} / yr
           </span>
           <span className={metricNoteStyle}>
-            £{Math.round(calc.netCashInPocket / 12).toLocaleString("en-GB")}/mo cash in pocket after
-            tax & mortgage
+            About £{Math.round(calc.netCashInPocket / 12).toLocaleString("en-GB")} a month after
+            expenses, mortgage interest and this tax
           </span>
         </div>
       </div>
@@ -268,17 +268,15 @@ export const Section24Calculator: FC<Section24CalculatorProps> = ({
       {/* CTA */}
       <div className={ctaRowStyle}>
         <div className={ctaCopyStyle}>
-          <span className={ctaTitleStyle}>
-            Need automated HMRC Self Assessment and property tax tracking?
-          </span>
+          <span className={ctaTitleStyle}>Keep rental income with the rest of your tax year</span>
           <p className={ctaNoteStyle}>
-            Flump automatically models Section 24 adjustments, joint spousal splits, and Payments on
-            Account.
+            In Flump you record rental income and costs yourself, and see an estimate of Section 24,
+            your ownership share and payments on account. Flump does not file your tax return.
           </p>
         </div>
 
         <Button onClick={handleSave} size="lg">
-          {ctaText} <FiArrowRight aria-hidden="true" className={ctaIconStyle} />
+          {ctaText}
         </Button>
       </div>
     </div>
