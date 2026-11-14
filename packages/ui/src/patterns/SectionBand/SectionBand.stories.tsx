@@ -14,7 +14,7 @@ const placeholder = css({
 });
 
 const meta: Meta<typeof SectionBand> = {
-  title: "3. Financial Patterns & Sections/SectionBand",
+  title: "3. Patterns/SectionBand",
   component: SectionBand,
   parameters: {
     layout: "fullscreen",

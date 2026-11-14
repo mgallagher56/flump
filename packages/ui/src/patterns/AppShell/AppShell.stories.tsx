@@ -4,7 +4,7 @@ import { sampleNavItems } from "../AppShell/AppShell.fixtures";
 import { AppShell } from "./AppShell";
 
 const meta: Meta<typeof AppShell> = {
-  title: "3. Financial Patterns & Sections/AppShell",
+  title: "3. Patterns/AppShell",
   component: AppShell,
   parameters: { layout: "fullscreen" },
   args: {

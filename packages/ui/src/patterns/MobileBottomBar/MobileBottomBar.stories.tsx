@@ -4,7 +4,7 @@ import { sampleNavItems } from "../AppShell/AppShell.fixtures";
 import { MobileBottomBar } from "./MobileBottomBar";
 
 const meta: Meta<typeof MobileBottomBar> = {
-  title: "3. Financial Patterns & Sections/MobileBottomBar",
+  title: "3. Patterns/MobileBottomBar",
   component: MobileBottomBar,
   parameters: { layout: "fullscreen" },
   args: { items: sampleNavItems, activeKey: "home" },

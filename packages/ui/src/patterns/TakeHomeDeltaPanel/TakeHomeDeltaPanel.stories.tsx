@@ -3,7 +3,7 @@ import { expect, within } from "@storybook/test";
 import { TakeHomeDeltaPanel } from "./TakeHomeDeltaPanel";
 
 const meta: Meta<typeof TakeHomeDeltaPanel> = {
-  title: "3. Financial Patterns & Sections/TakeHomeDeltaPanel",
+  title: "3. Patterns/TakeHomeDeltaPanel",
   component: TakeHomeDeltaPanel,
   parameters: { layout: "padded" },
   args: {

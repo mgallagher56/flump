@@ -3,7 +3,7 @@ import { expect, within } from "@storybook/test";
 import { AppSectionDivider } from "./AppSectionDivider";
 
 const meta: Meta<typeof AppSectionDivider> = {
-  title: "3. Financial Patterns & Sections/AppSectionDivider",
+  title: "3. Patterns/AppSectionDivider",
   component: AppSectionDivider,
   parameters: {
     layout: "padded",

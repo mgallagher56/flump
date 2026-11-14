@@ -4,7 +4,7 @@ import { sampleNavItems } from "../AppShell/AppShell.fixtures";
 import { TopBar } from "./TopBar";
 
 const meta: Meta<typeof TopBar> = {
-  title: "3. Financial Patterns & Sections/TopBar",
+  title: "3. Patterns/TopBar",
   component: TopBar,
   parameters: { layout: "fullscreen" },
   args: {

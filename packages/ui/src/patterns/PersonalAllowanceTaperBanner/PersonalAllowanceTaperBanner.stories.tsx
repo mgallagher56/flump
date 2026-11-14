@@ -3,7 +3,7 @@ import { expect, within } from "@storybook/test";
 import { PersonalAllowanceTaperBanner } from "./PersonalAllowanceTaperBanner";
 
 const meta: Meta<typeof PersonalAllowanceTaperBanner> = {
-  title: "3. Financial Patterns & Sections/PersonalAllowanceTaperBanner",
+  title: "3. Patterns/PersonalAllowanceTaperBanner",
   component: PersonalAllowanceTaperBanner,
   parameters: {
     layout: "padded",

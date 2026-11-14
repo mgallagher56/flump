@@ -20,7 +20,7 @@ const Illustration = () => (
 );
 
 const meta: Meta<typeof EmptyState> = {
-  title: "3. Financial Patterns & Sections/EmptyState",
+  title: "3. Patterns/EmptyState",
   component: EmptyState,
   parameters: {
     layout: "padded",

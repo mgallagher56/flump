@@ -17,14 +17,14 @@ export const Dark: Story = {
   globals: { theme: "dark" },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    await expect(canvas.getByText("Text Styles")).toBeInTheDocument();
+    await expect(canvas.getByText("Text styles")).toBeInTheDocument();
   },
 };
 
 export const Default: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    await expect(canvas.getByText("Flump Typography Scale & Tabular Numbers")).toBeInTheDocument();
-    await expect(canvas.getByText("Tabular Numbers Alignment Test")).toBeInTheDocument();
+    await expect(canvas.getByText("Type scale and tabular numbers")).toBeInTheDocument();
+    await expect(canvas.getByText("Tabular numbers line up")).toBeInTheDocument();
   },
 };

@@ -5,7 +5,7 @@ import { Button } from "../../primitives/Button/Button";
 import { HeroFigure } from "./HeroFigure";
 
 const meta: Meta<typeof HeroFigure> = {
-  title: "3. Financial Patterns & Sections/HeroFigure",
+  title: "3. Patterns/HeroFigure",
   component: HeroFigure,
   parameters: { layout: "padded" },
   args: {

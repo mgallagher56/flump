@@ -59,7 +59,8 @@ export const AppShell: FC<AppShellProps> = ({
           <SideNav activeKey={activeKey} items={items} renderLink={renderLink} />
         </div>
       )}
-      <main className={appShellMain()} id={mainId} tabIndex={-1}>
+      {/* `data-page-shell`: this element already pads the page, so `PageBody` drops its own gutters. */}
+      <main className={appShellMain()} data-page-shell="" id={mainId} tabIndex={-1}>
         {children}
       </main>
     </div>

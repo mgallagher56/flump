@@ -10,7 +10,7 @@ import {
 } from "./MarginalRateChart.fixtures";
 
 const meta: Meta<typeof MarginalRateChart> = {
-  title: "3. Financial Patterns & Sections/MarginalRateChart",
+  title: "4. Charts/MarginalRateChart",
   component: MarginalRateChart,
   parameters: { layout: "padded" },
   args: {

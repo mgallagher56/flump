@@ -3,7 +3,7 @@ import { expect, within } from "@storybook/test";
 import { GlobalBaselineBar } from "./GlobalBaselineBar";
 
 const meta: Meta<typeof GlobalBaselineBar> = {
-  title: "3. Financial Patterns & Sections/GlobalBaselineBar",
+  title: "3. Patterns/GlobalBaselineBar",
   component: GlobalBaselineBar,
   parameters: {
     layout: "padded",

@@ -3,7 +3,7 @@ import { expect, within } from "@storybook/test";
 import { ChartTooltipContent } from "./ChartTooltipContent";
 
 const meta: Meta<typeof ChartTooltipContent> = {
-  title: "3. Financial Patterns & Sections/ChartTooltipContent",
+  title: "4. Charts/ChartTooltipContent",
   component: ChartTooltipContent,
   parameters: { layout: "padded" },
   args: {

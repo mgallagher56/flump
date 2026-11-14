@@ -7,7 +7,7 @@ import { Tabs } from "../../primitives/Tabs";
 import { SCENARIO_RESET_LABEL, ScenarioZone } from "./ScenarioZone";
 
 const meta: Meta<typeof ScenarioZone> = {
-  title: "3. Financial Patterns & Sections/ScenarioZone",
+  title: "3. Patterns/ScenarioZone",
   component: ScenarioZone,
   parameters: { layout: "padded" },
   args: {

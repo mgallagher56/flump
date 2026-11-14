@@ -32,7 +32,7 @@ const Demo = () => {
 };
 
 const meta: Meta<typeof Demo> = {
-  title: "3. Financial Patterns & Sections/NavDrawer",
+  title: "3. Patterns/NavDrawer",
   component: Demo,
   parameters: { layout: "fullscreen" },
 };

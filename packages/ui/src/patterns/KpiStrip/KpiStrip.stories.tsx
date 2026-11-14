@@ -8,7 +8,7 @@ import { KpiStrip } from "./KpiStrip";
 const phoneWidth = css({ width: "100%", maxWidth: "343px" });
 
 const meta: Meta<typeof KpiStrip> = {
-  title: "3. Financial Patterns & Sections/KpiStrip",
+  title: "3. Patterns/KpiStrip",
   component: KpiStrip,
   parameters: {
     layout: "padded",
