@@ -1,4 +1,10 @@
 import { Injectable, Logger } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { In, Repository } from "typeorm";
+import { revokeConnectionConsent } from "../bank-connection-consent";
+import { BankConnection } from "../entities/bank-connection.entity";
+import { safeErrorSummary } from "../log-safe";
+import { BankProviderRegistry } from "../providers/provider.registry";
 
 export const BANK_CONSENT_REVOKER = "BANK_CONSENT_REVOKER";
 
@@ -13,14 +19,51 @@ export interface BankConnectionRef {
  * Seam for revoking consent at the bank before Flump deletes its copy of a connection (BE-04, H10).
  * Called before account deletion and financial reset. It must never throw for a provider failure:
  * the person's request to erase their data goes ahead regardless, and a failure is logged.
- * BE-12 replaces the default with real provider calls.
+ * The app uses ProviderBankConsentRevoker (BE-12).
  */
 export interface BankConsentRevoker {
   revokeAll(userId: string, connections: readonly BankConnectionRef[]): Promise<void>;
 }
 
 /**
- * Default until BE-12: records that consent should have been revoked, without calling any bank.
+ * BE-12 (audit H10): revokes consent at each provider before the rows are deleted. Called outside
+ * the deleting transaction. It reads the stored tokens itself (the refs carry ids only), calls each
+ * provider once with a time limit (one retry when the provider says "try later"), and logs counts
+ * only. It never throws.
+ */
+@Injectable()
+export class ProviderBankConsentRevoker implements BankConsentRevoker {
+  private readonly logger = new Logger("BankConsentRevoker");
+
+  constructor(
+    @InjectRepository(BankConnection)
+    private readonly connections: Repository<BankConnection>,
+    private readonly providers: BankProviderRegistry,
+  ) {}
+
+  async revokeAll(userId: string, refs: readonly BankConnectionRef[]): Promise<void> {
+    if (refs.length === 0) return;
+    const counts = { revoked: 0, unsupported: 0, failed: 0, no_token: 0 };
+    try {
+      const rows = await this.connections.find({
+        where: { userId, id: In(refs.map((r) => r.id)) },
+        select: { id: true, institutionId: true, accessToken: true },
+      });
+      for (const row of rows) {
+        counts[await revokeConnectionConsent(this.providers, row)] += 1;
+      }
+      this.logger.log(
+        JSON.stringify({ event: "bank_consent_revoke", connections: rows.length, ...counts }),
+      );
+    } catch (err) {
+      this.logger.warn(`Bank consent revoke failed: ${safeErrorSummary(err)}`);
+    }
+  }
+}
+
+/**
+ * Records that consent should have been revoked, without calling any bank (tests, and any context
+ * without provider wiring).
  * The event carries the institution ids and a count only: no user id, tokens or names.
  */
 @Injectable()
