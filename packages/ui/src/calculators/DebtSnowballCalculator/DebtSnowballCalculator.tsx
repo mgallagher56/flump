@@ -84,6 +84,7 @@ export const DebtSnowballCalculator: FC<DebtSnowballCalculatorProps> = ({
     return compareAvalancheAndSnowball(debts, extraPayment);
   }, [debts, extraPayment]);
 
+  const minimumsClear = comparison.minimumOnly.payoffAchievable;
   const headline = comparison.avalanche.payoffAchievable
     ? `Debt-free by ${comparison.avalanche.debtFreeDate}, total interest £${Math.round(
         comparison.avalanche.totalInterest,
@@ -253,22 +254,26 @@ export const DebtSnowballCalculator: FC<DebtSnowballCalculatorProps> = ({
                 <p className={captionStyle}>
                   {comparison.avalanche.months} months, total interest £
                   {Math.round(comparison.avalanche.totalInterest).toLocaleString("en-GB")}.{" "}
-                  {comparison.monthsShavedAvalancheVsMin} months sooner than paying only the
-                  minimums
+                  {minimumsClear
+                    ? `${comparison.monthsShavedAvalancheVsMin} months sooner than paying only the minimums`
+                    : "Paying only the minimums would not clear these debts"}
                 </p>
               </>
             ) : (
               <div className={heroFigureStyle}>These payments would not clear the debts</div>
             )}
           </div>
-          <div className={savedBoxStyle}>
-            <span className={savedLabelStyle}>
-              Interest saved compared with paying only the minimums
-            </span>
-            <div className={savedFigureStyle}>
-              £{Math.round(comparison.interestSavedAvalancheVsMin).toLocaleString("en-GB")}
+          {/* The minimums-only run stops at 30 years; its figures mean nothing if it never clears. */}
+          {minimumsClear && comparison.avalanche.payoffAchievable && (
+            <div className={savedBoxStyle}>
+              <span className={savedLabelStyle}>
+                Interest saved compared with paying only the minimums
+              </span>
+              <div className={savedFigureStyle}>
+                £{Math.round(comparison.interestSavedAvalancheVsMin).toLocaleString("en-GB")}
+              </div>
             </div>
-          </div>
+          )}
 
           <div>
             <span className={tagStyle({ tone: "info" })}>

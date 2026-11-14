@@ -78,6 +78,8 @@ const useOverflowsX = (ref: { current: HTMLElement | null }): boolean => {
     if (typeof ResizeObserver === "undefined") return;
     const observer = new ResizeObserver(check);
     observer.observe(el);
+    // The table can widen inside a wrapper that keeps its width (new figures, fonts loading).
+    if (el.firstElementChild) observer.observe(el.firstElementChild);
     return () => observer.disconnect();
   }, [ref]);
   return overflows;

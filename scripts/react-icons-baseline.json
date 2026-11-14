@@ -10,6 +10,5 @@
   "apps/web/app/components/core/dialogs/TaxDisclaimerButton.tsx": 1,
   "apps/web/app/components/core/disclosure/CollapsibleSection.tsx": 1,
   "packages/ui/src/calculators/MortgageVsIsaCalculator/MortgageVsIsaCalculator.tsx": 1,
-  "packages/ui/src/calculators/Section24Calculator/Section24Calculator.tsx": 1,
   "packages/ui/src/calculators/ZeroPercentCliffCalculator/ZeroPercentCliffCalculator.tsx": 1
 }
