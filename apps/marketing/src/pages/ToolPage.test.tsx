@@ -35,9 +35,7 @@ describe("ToolPage", () => {
     "shows one 'Guidance, not advice' notice on /tools/%s",
     (slug) => {
       renderAt(`/tools/${slug}`);
-      expect(screen.getAllByRole("complementary", { name: "Guidance, not advice" })).toHaveLength(
-        1,
-      );
+      expect(screen.getAllByRole("note", { name: "Guidance, not advice" })).toHaveLength(1);
     },
   );
 

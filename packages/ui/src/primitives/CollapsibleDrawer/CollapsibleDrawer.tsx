@@ -53,9 +53,21 @@ export interface CollapsibleDrawerProps {
 
 const countFormat = new Intl.NumberFormat("en-GB");
 
+const SHOW = "Show";
+
+/** True when `char` is a word character (letter, digit or underscore), matching regex `\w`. */
+const isWordChar = (char: string): boolean =>
+  (char >= "a" && char <= "z") ||
+  (char >= "A" && char <= "Z") ||
+  (char >= "0" && char <= "9") ||
+  char === "_";
+
 /** The quiet trigger's open text: `openLabel`, else "Show X" as "Hide X", else the title. */
-export const quietOpenLabel = (title: string, openLabel?: string): string =>
-  openLabel ?? (/^Show\b/.test(title) ? title.replace(/^Show/, "Hide") : title);
+export const quietOpenLabel = (title: string, openLabel?: string): string => {
+  if (openLabel !== undefined) return openLabel;
+  const startsWithShowWord = title.startsWith(SHOW) && !isWordChar(title.charAt(SHOW.length));
+  return startsWithShowWord ? `Hide${title.slice(SHOW.length)}` : title;
+};
 
 export const CollapsibleDrawer: FC<CollapsibleDrawerProps> = ({
   title,
