@@ -54,7 +54,7 @@ export const headerActions = cva({
 });
 
 export const nameCell = cva({
-  base: { display: "flex", flexDirection: "column", gap: "6px", minWidth: "180px" },
+  base: { display: "flex", flexDirection: "column", gap: "6px", minWidth: 0 },
 });
 
 export const nameText = cva({
@@ -79,7 +79,14 @@ export const frequencyText = cva({
 });
 
 export const actionsCell = cva({
-  base: { display: "flex", justifyContent: "flex-end", gap: "4px" },
+  // Stacked on a phone so both actions fit beside the amount without clipping.
+  base: {
+    display: "flex",
+    flexDirection: { base: "column", sm: "row" },
+    alignItems: "flex-end",
+    justifyContent: "flex-end",
+    gap: "4px",
+  },
 });
 
 export const drawerWrap = cva({

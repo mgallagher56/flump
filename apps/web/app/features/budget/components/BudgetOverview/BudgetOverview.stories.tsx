@@ -20,7 +20,7 @@ export const Default: Story = {
     const canvas = within(canvasElement);
     await expect(canvas.getAllByText("Left over each month")[0]).toBeDefined();
     await expect(canvas.getAllByText("Money in each month")[0]).toBeDefined();
-    await expect(canvas.getAllByText("Months of cover")[0]).toBeDefined();
+    await expect(canvas.getAllByText("Going out each month")[0]).toBeDefined();
   },
 };
 

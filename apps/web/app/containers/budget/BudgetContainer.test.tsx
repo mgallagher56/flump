@@ -155,7 +155,8 @@ describe("BudgetContainer", () => {
     expect(countFigures(hero)).toBeLessThanOrEqual(2);
     const firstView = hero.parentElement as HTMLElement;
     expect(within(firstView).getByText("Money in each month")).toBeDefined();
-    expect(within(firstView).getByText("Months of cover")).toBeDefined();
+    expect(within(firstView).getByText("Going out each month")).toBeDefined();
+    expect(within(firstView).queryByText("Months of cover")).toBeNull();
     expect(within(firstView).queryByText("Bills and essentials")).toBeNull();
     expect(within(firstView).queryByText("Flexible spending")).toBeNull();
     expectPageRules(firstView, { maxFigures: 4, maxNotSet: 1 });
@@ -168,7 +169,10 @@ describe("BudgetContainer", () => {
     expect(screen.queryByText("Fixed and flexible")).toBeNull();
     expect(screen.queryByRole("heading", { name: "Your details" })).toBeNull();
     expect(screen.getAllByRole("button", { name: "Add category" })).toHaveLength(1);
-    expect(screen.getByRole("region", { name: "Model a change to your budget" })).toBeDefined();
+    const zone = screen.getByRole("region", { name: "Model a change to your budget" });
+    // The saved months of cover shows once, as the zone outcome.
+    expect(screen.getAllByText("Months of cover")).toHaveLength(1);
+    expect(within(zone).getByText("Months of cover")).toBeDefined();
     expect(screen.getByRole("link", { name: /MoneyHelper/ })).toBeDefined();
     expectPageRules(container, { maxNotSet: 1, projectionNotices: 1 });
     // The hero and strip come before the list and the zone, and nothing sits above the h1.

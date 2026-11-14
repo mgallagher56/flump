@@ -28,6 +28,7 @@ import {
   introText,
   optionGroup,
   optionHint,
+  optionItems,
   optionLegend,
   optionsStack,
   outcome,
@@ -86,20 +87,22 @@ const OptionGroup: FC<{ label: string; items: OptionItem[] }> = ({ label, items 
   items.length === 0 ? null : (
     <fieldset className={optionGroup()}>
       <legend className={optionLegend()}>{label}</legend>
-      {items.map((item) => (
-        <Switch
-          checked={item.checked}
-          hint={
-            <span className={optionHint()}>
-              <Money size="sm" tone="muted" value={item.amount} />
-              {item.perMonth ? " a month" : null}
-            </span>
-          }
-          key={item.id}
-          label={item.name}
-          onChange={item.onToggle}
-        />
-      ))}
+      <div className={optionItems()}>
+        {items.map((item) => (
+          <Switch
+            checked={item.checked}
+            hint={
+              <span className={optionHint()}>
+                <Money size="sm" tone="muted" value={item.amount} />
+                {item.perMonth ? " a month" : null}
+              </span>
+            }
+            key={item.id}
+            label={item.name}
+            onChange={item.onToggle}
+          />
+        ))}
+      </div>
     </fieldset>
   );
 
@@ -393,10 +396,13 @@ export const RunwayCalculator: FC<RunwayCalculatorProps> = ({
     </CollapsibleDrawer>
   );
 
-  // One outcome and two supporting figures (P1.7). The saved figure is the KPI above the zone.
+  // One outcome and two supporting figures (P1.7).
   const content = (
     <div className={outcome()}>
-      <p className={outcomeLabel()}>Months of cover in this illustration</p>
+      {/* Untouched, this is the saved figure (its one place on the page); changed, an illustration. */}
+      <p className={outcomeLabel()}>
+        {isScenarioModified ? "Months of cover in this illustration" : "Months of cover"}
+      </p>
       <p className={scenarioValue()} data-testid="runway-outcome" id="runway-outcome">
         {coverLabel}
       </p>
@@ -412,7 +418,7 @@ export const RunwayCalculator: FC<RunwayCalculatorProps> = ({
           </dd>
         </div>
         <div className={breakdownRow()}>
-          <dt>Going out each month</dt>
+          <dt>Spending to cover each month</dt>
           <dd>
             <Money size="sm" value={monthlyBurn} />
           </dd>

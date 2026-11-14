@@ -168,7 +168,6 @@ export const BudgetCategoryTable: FC<BudgetCategoryTableProps> = ({
       <THead>
         <tr>
           <Th>Name</Th>
-          <Th>How often</Th>
           <Th numeric>Amount a month</Th>
           <Th>
             <VisuallyHidden>Actions</VisuallyHidden>
@@ -183,21 +182,20 @@ export const BudgetCategoryTable: FC<BudgetCategoryTableProps> = ({
                 <p className={nameText()}>{entry.name}</p>
                 <div className={badgeRow()}>
                   {!isIncome && (
-                    <StatusBadge variant={entry.isEssential ? "info" : "neutral"}>
+                    <StatusBadge variant="neutral">
                       {entry.isEssential ? "Essential" : "Flexible"}
                     </StatusBadge>
                   )}
                   {entry.isPrimaryIncome && <StatusBadge variant="brand">Main income</StatusBadge>}
                   <RenewalBadge entry={entry} />
                 </div>
+                {/* How often sits under the name, so the table fits a phone without clipping. */}
+                <span className={frequencyText()}>{frequencyDetail(entry)}</span>
                 {entry.notes && <p className={noteText()}>{entry.notes}</p>}
               </div>
             </Td>
-            <Td>
-              <span className={frequencyText()}>{frequencyDetail(entry)}</span>
-            </Td>
             <Td numeric>
-              <Money fractionDigits={2} size="sm" value={Math.abs(toMonthly(entry))} />
+              <Money fractionDigits={0} size="sm" value={Math.abs(toMonthly(entry))} />
             </Td>
             <Td>
               <div className={actionsCell()}>
