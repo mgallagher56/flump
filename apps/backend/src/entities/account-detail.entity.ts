@@ -2,7 +2,16 @@ import { Check, Column, Entity, Index, PrimaryGeneratedColumn, UpdateDateColumn 
 import { numericTransformer } from "./numeric.transformer";
 
 /** How a monthly value got into the table (E30). */
-const ACCOUNT_DETAIL_SOURCES = ["onboarding", "manual", "connected", "backfill", "agent"] as const;
+const ACCOUNT_DETAIL_SOURCES = [
+  "onboarding",
+  "manual",
+  "connected",
+  "backfill",
+  "agent",
+  // R2-5 check-in (AllowCheckInSources1794900000000): "No change", and a kept calculated balance.
+  "confirmed",
+  "calculated",
+] as const;
 export type AccountDetailSource = (typeof ACCOUNT_DETAIL_SOURCES)[number];
 
 /**
@@ -21,7 +30,7 @@ export type AccountDetailSource = (typeof ACCOUNT_DETAIL_SOURCES)[number];
 @Check("CHK_account_details_month", `"month" BETWEEN 1 AND 12`)
 @Check(
   "CHK_account_details_source",
-  `"source" IN ('onboarding', 'manual', 'connected', 'backfill', 'agent')`,
+  `"source" IN ('onboarding', 'manual', 'connected', 'backfill', 'agent', 'confirmed', 'calculated')`,
 )
 @Check(
   "CHK_account_details_as_of_month",

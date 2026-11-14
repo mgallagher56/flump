@@ -6,12 +6,23 @@ export const SnapshotMonth = z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/, "must b
 
 export const SnapshotMonthParams = z.strictObject({ month: SnapshotMonth });
 
+/** The sources a client may send through `PUT /snapshots/:month`. */
+export const SNAPSHOT_WRITE_SOURCES = ["manual", "confirmed", "calculated"] as const;
+export const SnapshotWriteSource = z.enum(SNAPSHOT_WRITE_SOURCES);
+export type SnapshotWriteSource = z.infer<typeof SnapshotWriteSource>;
+
 export const SnapshotValue = z.strictObject({
   accountId: Uuid,
   /** Signed, like an account balance. Liabilities are stored positive and signed by account type. */
   value: Money,
   /** A date inside `month`. Omitted means the last day of the month (today for the current month). */
   asOfDate: IsoDate.optional(),
+  /**
+   * How the figure was given (R2-5 check-in): typed (`manual`, the default), "No change"
+   * (`confirmed`) or a kept calculated loan balance (`calculated`, recomputed by the server).
+   * Other sources are set by the server only.
+   */
+  source: SnapshotWriteSource.optional(),
 });
 
 /**
@@ -33,7 +44,7 @@ export const UpsertSnapshotResponse = z.strictObject({
       /** As stored: liabilities negative whatever sign was sent. */
       value: ResponseMoney,
       asOfDate: IsoDate,
-      source: z.literal("manual"),
+      source: SnapshotWriteSource,
     }),
   ),
   completed: z.boolean(),

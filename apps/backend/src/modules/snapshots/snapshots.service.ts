@@ -1,6 +1,8 @@
+import { SNAPSHOT_WRITE_SOURCES, type SnapshotWriteSource } from "@flump/api-contract";
+import { calculateCheckInBalance } from "@flump/finance-engine";
 import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
 import { InjectDataSource } from "@nestjs/typeorm";
-import { DataSource, In } from "typeorm";
+import { DataSource, type EntityManager, In } from "typeorm";
 import { Account } from "../../entities/account.entity";
 import { isRealDate, londonDate, londonYearMonth, monthKey } from "./london-date";
 import { checkSnapshotMonth, defaultAsOfDate, isValidSnapshotValue, UUID } from "./snapshot-rules";
@@ -13,6 +15,8 @@ interface SnapshotValueInput {
   accountId: string;
   value: number;
   asOfDate?: string;
+  /** manual (default), confirmed or calculated; anything else is rejected (R2-5). */
+  source?: string;
 }
 
 export interface UpsertSnapshotInput {
@@ -22,7 +26,12 @@ export interface UpsertSnapshotInput {
 
 export interface UpsertSnapshotResult {
   month: string;
-  values: Array<{ accountId: string; value: number; asOfDate: string; source: "manual" }>;
+  values: Array<{
+    accountId: string;
+    value: number;
+    asOfDate: string;
+    source: SnapshotWriteSource;
+  }>;
   completed: boolean;
 }
 
@@ -91,7 +100,13 @@ export class SnapshotsService {
         }
         asOfDate = entry.asOfDate;
       }
-      return { accountId, value, asOfDate };
+      // The server decides which sources a client may send: onboarding, connected, backfill and
+      // agent stay server-set (R2-5).
+      const source = entry.source ?? "manual";
+      if (!(SNAPSHOT_WRITE_SOURCES as readonly string[]).includes(source)) {
+        throw new BadRequestException("source must be manual, confirmed or calculated");
+      }
+      return { accountId, value, asOfDate, source: source as SnapshotWriteSource };
     });
     // Stable lock order for concurrent batches (the response keeps this order).
     rows.sort((x, y) => (x.accountId < y.accountId ? -1 : x.accountId > y.accountId ? 1 : 0));
@@ -105,11 +120,12 @@ export class SnapshotsService {
         const owned = ids.every((id) => UUID.test(id))
           ? await manager.find(Account, {
               where: { id: In(ids), userId },
-              select: { id: true, type: true },
+              select: { id: true, type: true, interestRate: true, monthlyContribution: true },
             })
           : [];
         if (owned.length !== ids.length) throw new NotFoundException("Account not found");
         for (const a of owned) types.set(a.id, a.type);
+        await this.checkCalculatedValues(manager, userId, rows, owned, monthKey(target));
         // Liabilities are stored negative, as connected sync does, whatever sign was typed.
         for (const r of rows) {
           r.value = storedBalance(types.get(r.accountId) ?? "", r.value);
@@ -136,9 +152,54 @@ export class SnapshotsService {
         accountId: r.accountId,
         value: r.value,
         asOfDate: r.asOfDate,
-        source: "manual" as const,
+        source: r.source,
       })),
       completed: input.complete === true,
     };
+  }
+
+  /**
+   * A `calculated` value must be the figure the engine works out from the account's rate, regular
+   * payment and latest earlier recorded value, to the penny, so the label cannot be put on an
+   * arbitrary number (R2-5). Anything else fails the whole request and nothing is written.
+   */
+  private async checkCalculatedValues(
+    manager: EntityManager,
+    userId: string,
+    rows: ReadonlyArray<{ accountId: string; value: number; source: SnapshotWriteSource }>,
+    accounts: ReadonlyArray<Pick<Account, "id" | "type" | "interestRate" | "monthlyContribution">>,
+    month: string,
+  ): Promise<void> {
+    const calculated = rows.filter((r) => r.source === "calculated");
+    if (calculated.length === 0) return;
+    const [year, monthNumber] = month.split("-").map(Number) as [number, number];
+    const bases: Array<{ account_id: string; year: number; month: number; value: string }> =
+      await manager.query(
+        `SELECT DISTINCT ON ("account_id") "account_id", "year", "month", "value"
+           FROM "account_details"
+          WHERE "user_id" = $1 AND "account_id" = ANY($2::uuid[])
+            AND ("year" * 12 + "month") < ($3::int * 12 + $4::int)
+          ORDER BY "account_id", "year" DESC, "month" DESC`,
+        [userId, calculated.map((r) => r.accountId), year, monthNumber],
+      );
+    for (const r of calculated) {
+      const account = accounts.find((a) => a.id === r.accountId);
+      const base = bases.find((b) => b.account_id === r.accountId);
+      const expected = calculateCheckInBalance({
+        type: account?.type,
+        interestRate: account?.interestRate,
+        monthlyPayment: account?.monthlyContribution,
+        base: base
+          ? {
+              value: Number(base.value),
+              month: `${base.year}-${String(base.month).padStart(2, "0")}`,
+            }
+          : null,
+        month,
+      });
+      if (!expected || Math.round(Math.abs(r.value) * 100) !== Math.round(expected.value * 100)) {
+        throw new BadRequestException("a calculated value must match the calculated balance");
+      }
+    }
   }
 }
