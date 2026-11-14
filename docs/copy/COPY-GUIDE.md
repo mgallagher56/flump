@@ -40,11 +40,11 @@ Write to "you". Call ourselves "Flump" or "we". Use contractions where they soun
 
 Say what a thing does, with the figure. No superlatives, no pseudo-engineering words, no promises. The guard blocks: supercharge, unlock, crush, effortless, magic, bank-grade, enterprise-grade, engineered for, zero-latency, air-gapped, radar, financial freedom, instant insights.
 
-| Don't (from our screens)                                   | Do                                                       |
-| ---------------------------------------------------------- | -------------------------------------------------------- |
-| "Widget unlocked on the dashboard"                         | "Now on your dashboard"                                  |
-| "UK tax figures come from a deterministic engine"          | "Tax figures are calculated from the published UK rates" |
-| "Your live financial snapshot across your active modules." | "Your figures in one place."                             |
+| Don't (from our screens)                                   | Do                                                         |
+| ---------------------------------------------------------- | ---------------------------------------------------------- |
+| "Widget unlocked on the dashboard"                         | "Now on your dashboard"                                    |
+| "UK tax figures come from a deterministic engine"          | "Tax figures are calculated by Flump, not by the AI model" |
+| "Your live financial snapshot across your active modules." | "Your figures in one place."                               |
 
 ### 2.3 No judgement (owner rule)
 
@@ -169,7 +169,7 @@ This is where finance copy most often misleads. Rules:
 6. **No false precision.** A 30-year estimate is rounded: to the nearest £1,000 above £100,000, the nearest £100 above £10,000. A date decades away is a year, not a day.
 7. **"Can", not "will".** "Estimate", not "will be". Never "guaranteed", "certain", "risk-free", "safe" about an outcome (existing guard).
 8. **Tax outputs say "Unverified estimate"** until the tax vectors are signed off (R6), once per surface.
-9. **Never present an estimate in the hero style reserved for saved figures** (AGENTS.md section 3: `surface.hero` never goes on a scenario outcome).
+9. **Never put a what-if result in the hero style** (AGENTS.md section 3: `surface.hero` never goes on a scenario outcome). Whether an estimate computed only from saved figures may be a page's hero is plan decision D2, which waits for the owner. Until then the hero is a saved fact, and where a page already shows an estimate there it is labelled "Estimate".
 10. **Anchors.** A default or example value steers people. Defaults are neutral (the person's own saved figure, or empty), examples are labelled "Example", and a minimum payment is never shown as the suggested amount.
 
 ### 4.5 Comparisons
@@ -214,7 +214,7 @@ One sentence under the h1 at most, and only if the heading alone does not say wh
 - The label says what happens on this page in this state: "Edit budget" when one exists, not "Create budget" (P7.4). One primary button per page.
 - Never "OK", "Submit", "Yes", "No", "Click here", "Learn more", "Read more". A link names where it goes: "How the estimate is worked out".
 - "Select" or "choose", not "click" or "tap".
-- An external link says so: "MoneyHelper debt advice (opens in a new tab)".
+- An external link says so: "HMRC guidance on Self Assessment (opens in a new tab)". The MoneyHelper line keeps its own fixed wording (7.3).
 - A button prompted by a computed result may say "Model this …". It never says "Apply" (R5). A pre-fill button says "Use" (rulings log).
 - A pending state repeats the verb: "Saving…". Use the ellipsis character only for pending states and truncation.
 
@@ -318,46 +318,46 @@ One approved word for each concept. Use it in headings, labels, hints, errors, M
 
 ### 6.1 Approved terms
 
-| Concept                                         | Approved                                                            | Never                                                                                                      |
-| ----------------------------------------------- | ------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| Everything owned minus everything owed          | net worth                                                           | wealth, balance sheet                                                                                      |
-| Things of value a person has                    | what you own; or name it (savings, home, pension)                   | assets                                                                                                     |
-| Money a person owes                             | debt, debts, what you owe                                           | liability, liabilities, "Liability 1"                                                                      |
-| Who a debt is owed to                           | lender                                                              | creditor                                                                                                   |
-| Pay after tax, NI, pension and student loan     | take-home pay                                                       | net pay, net income, "Take-Home Pay"                                                                       |
-| Pay before deductions                           | salary before tax; pay before tax                                   | gross, gross salary (allowed once, in brackets, on a payslip-matching field)                               |
-| Income minus spending, positive                 | left over each month                                                | surplus, monthly surplus, disposable income                                                                |
-| Income minus spending, negative                 | short each month                                                    | deficit, overspend, in the red                                                                             |
-| Spending a person can vary                      | flexible spending                                                   | discretionary, discretionary allowance                                                                     |
-| Spending a person cannot easily vary            | essential spending; bills                                           | fixed costs, non-discretionary                                                                             |
-| Money left this week after bills and saving     | safe to spend                                                       | guilt-free, allowance                                                                                      |
-| Cash divided by monthly essential spending      | months of cover                                                     | runway, emergency runway, survival                                                                         |
-| Money in current and instant-access accounts    | cash you can get at quickly                                         | liquid cash, liquidity                                                                                     |
-| How pay is split across tax, bills and the rest | where your pay goes                                                 | cashflow waterfall, allocation engine                                                                      |
-| Balance-weighted mean rate                      | average rate                                                        | weighted by balance, blended rate                                                                          |
-| Earnings used for auto-enrolment contributions  | pay that counts for your pension                                    | qualifying gross, qualifying earnings (allowed in a hint: "your scheme may call this qualifying earnings") |
-| A computed future or tax figure                 | estimate                                                            | forecast (as a label), prediction, will                                                                    |
-| A what-if result                                | illustration                                                        | simulation, draft, preview                                                                                 |
-| Trying different inputs                         | model (verb): "Model a change to your mortgage"                     | simulate, optimise, play with                                                                              |
-| Putting two options side by side                | compare                                                             | choose between, which is better                                                                            |
-| The person's stored details                     | your figures; your details; saved                                   | baseline, profile data, inputs                                                                             |
-| The dashboard as a whole                        | your picture; your figures                                          | snapshot, overview engine                                                                                  |
-| The monthly saved record of net worth           | monthly check-in                                                    | snapshot                                                                                                   |
-| A block on a page                               | section; or name it ("the debt section")                            | module, widget, card (in copy)                                                                             |
-| Finishing first-time setup                      | finish setting up                                                   | refine, drill down, complete your profile                                                                  |
-| A linked bank                                   | connected bank; connected, updated                                  | synced, sync, bank feed, credentials                                                                       |
-| A linked AI client                              | AI connection                                                       | agent link, integration                                                                                    |
-| Paying a debt early                             | paid off; the date is the "debt-free date"                          | crushed, eliminated, cleared, escaped                                                                      |
-| Paying extra on a mortgage or loan              | overpayment, overpay                                                | prepayment                                                                                                 |
-| How a loan balance falls over time              | repayment schedule                                                  | amortisation schedule (allowed once in a guide, defined)                                                   |
-| Loan as a share of the home's value             | loan to value (LTV) on first use, then LTV                          | equity ratio                                                                                               |
-| End of a 0% or fixed deal                       | when the 0% deal ends; when your fixed rate ends                    | cliff, promotional cliff, rate shock                                                                       |
-| Debt methods                                    | highest rate first (avalanche); smallest balance first (snowball)   | mathematically optimal, psychological momentum                                                             |
-| Income between £100,000 and £125,140            | "above £100,000", "below £100,000", "the £100,000 to £125,140 band" | tax trap, 60% trap, escape, reclaim your allowance                                                         |
-| The tax return system                           | Self Assessment                                                     | self-assessment, SA                                                                                        |
-| Money HMRC expects                              | tax bill; tax to pay                                                | tax liability                                                                                              |
-| Pension paid in via salary                      | salary sacrifice                                                    | sacrifice (alone), salary exchange                                                                         |
-| Sample figures                                  | sample data; "Example" on a single figure                           | demo, dummy, fake, mock                                                                                    |
+| Concept                                         | Approved                                                            | Never                                                                                                                   |
+| ----------------------------------------------- | ------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| Everything owned minus everything owed          | net worth                                                           | wealth, balance sheet                                                                                                   |
+| Things of value a person has                    | what you own; or name it (savings, home, pension)                   | assets                                                                                                                  |
+| Money a person owes                             | debt, debts, what you owe                                           | liability, liabilities, "Liability 1"                                                                                   |
+| Who a debt is owed to                           | lender                                                              | creditor                                                                                                                |
+| Pay after tax, NI, pension and student loan     | take-home pay                                                       | net pay, net income, "Take-Home Pay" ("net pay arrangement" is fine: it is HMRC's name for a pension tax relief method) |
+| Pay before deductions                           | salary before tax; pay before tax                                   | gross, gross salary (allowed once, in brackets, on a payslip-matching field)                                            |
+| Income minus spending, positive                 | left over each month; "left over this month" for one named month    | surplus, monthly surplus, disposable income                                                                             |
+| Income minus spending, negative                 | short each month                                                    | deficit, overspend, in the red                                                                                          |
+| Spending a person can vary                      | flexible spending                                                   | discretionary, discretionary allowance                                                                                  |
+| Spending a person cannot easily vary            | essential spending; bills                                           | fixed costs, non-discretionary                                                                                          |
+| Money left this week after bills and saving     | safe to spend                                                       | guilt-free, allowance                                                                                                   |
+| Cash divided by monthly essential spending      | months of cover                                                     | runway, emergency runway, survival                                                                                      |
+| Money in current and instant-access accounts    | cash you can get at quickly                                         | liquid cash, liquidity                                                                                                  |
+| How pay is split across tax, bills and the rest | where your pay goes                                                 | cashflow waterfall, allocation engine                                                                                   |
+| Balance-weighted mean rate                      | average rate                                                        | weighted by balance, blended rate                                                                                       |
+| Earnings used for auto-enrolment contributions  | pay that counts for your pension                                    | qualifying gross, qualifying earnings (allowed in a hint: "your scheme may call this qualifying earnings")              |
+| A computed future or tax figure                 | estimate                                                            | forecast (as a label), prediction, will                                                                                 |
+| A what-if result                                | illustration                                                        | simulation, draft, preview                                                                                              |
+| Trying different inputs                         | model (verb): "Model a change to your mortgage"                     | simulate, optimise, play with                                                                                           |
+| Putting two options side by side                | compare                                                             | choose between, which is better                                                                                         |
+| The person's stored details                     | your figures; your details; saved                                   | baseline, profile data, inputs                                                                                          |
+| The dashboard as a whole                        | your money (the page title); your picture; your figures             | snapshot, overview engine                                                                                               |
+| The monthly saved record of net worth           | monthly check-in                                                    | snapshot                                                                                                                |
+| A block on a page                               | section; or name it ("the debt section")                            | module, widget, card (in copy)                                                                                          |
+| Finishing first-time setup                      | finish setting up                                                   | refine, drill down, complete your profile                                                                               |
+| A linked bank                                   | connected bank; connected, updated                                  | synced, sync, bank feed, credentials                                                                                    |
+| A linked AI client                              | AI connection                                                       | agent link, integration                                                                                                 |
+| Paying a debt early                             | paid off; the date is the "debt-free date"                          | crushed, eliminated, cleared, escaped                                                                                   |
+| Paying extra on a mortgage or loan              | overpayment, overpay                                                | prepayment                                                                                                              |
+| How a loan balance falls over time              | repayment schedule                                                  | amortisation schedule (allowed once in a guide, defined)                                                                |
+| Loan as a share of the home's value             | loan to value (LTV) on first use, then LTV                          | equity ratio                                                                                                            |
+| End of a 0% or fixed deal                       | when the 0% deal ends; when your fixed rate ends                    | cliff, promotional cliff, rate shock                                                                                    |
+| Debt methods                                    | highest rate first (avalanche); smallest balance first (snowball)   | mathematically optimal, psychological momentum                                                                          |
+| Income between £100,000 and £125,140            | "above £100,000", "below £100,000", "the £100,000 to £125,140 band" | tax trap, 60% trap, escape, reclaim your allowance                                                                      |
+| The tax return system                           | Self Assessment                                                     | self-assessment, SA                                                                                                     |
+| Money HMRC expects                              | tax bill; tax to pay                                                | tax liability                                                                                                           |
+| Pension paid in via salary                      | salary sacrifice                                                    | sacrifice (alone), salary exchange                                                                                      |
+| Sample figures                                  | sample data; "Example" on a single figure                           | demo, dummy, fake, mock                                                                                                 |
 
 Abbreviations: spell out on first use on a page unless it is one of APR, AER, ISA, NI, PAYE, HMRC, which most readers know. Always spell out LTV, EAR, SIPP, CGT, MCP on first use.
 
@@ -427,6 +427,20 @@ These strings are fixed. A copy change to any of them needs the owner, and for t
 - No "bank-level", "military-grade", "secure" as a bare adjective, "trusted by", "award-winning", user counts or testimonials without evidence.
 - "Free" means free with no condition, or the condition is in the same sentence.
 - Signed-out pages never show sample figures as if they were the visitor's.
+- **A page may only describe what the tool on that page does today.** A title, description, meta description, catalogue entry or callout names the inputs the tool has and the outputs it shows, nothing more. If the calculator has no pension input, the description does not mention pensions. Check the tool before writing about it.
+- No verb that claims a connection or automation the visitor's session does not have: "syncs", "automatically monitors", "tracks live", "files your return".
+- No scare words and no promise of money: "dangerous", "stealth", "hidden", "trap", "guaranteed", "Save £…" as a headline. State the cost or the difference as an estimate with its assumption.
+- An example in a callout uses the figures the person entered, or is labelled "Example". It never shows a fixed figure as if it were theirs.
+
+| Claim (from our pages)                                                               | Why it fails                                                          | Write                                                                                                                                     |
+| ------------------------------------------------------------------------------------ | --------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| "Flump syncs your live balance and monitors fixed-rate renewal dates automatically"  | No bank connection; figures are typed in                              | "Enter your balance and rate to see the estimate."                                                                                        |
+| "Overdraft cost and payoff modeller … how regular payments change the time to clear" | The calculator shows yearly cost only                                 | "Overdraft cost calculator. See what an overdraft costs over a year at a given EAR."                                                      |
+| "Student loan overpayment comparison, using salary growth assumptions"               | No overpay-or-invest comparison and no salary growth                  | "See yearly repayments on a Plan 1, 2, 4 or 5 student loan and whether the balance is repaid before it is written off, in this estimate." |
+| "See how pension contributions change the taxable bands" (Section 24)                | There is no pension input                                             | "See how the mortgage interest restriction changes the tax on rental profit."                                                             |
+| "Why overdrafts are dangerous", "stealth annual fee"                                 | Scare words (2.3) and a judgement of a product type (R3)              | "What an overdraft costs over a year"                                                                                                     |
+| "Clearing a £1,200 overdraft delivers an immediate guaranteed 39.9% tax-free return" | "Guaranteed", a fixed example shown as theirs, and advice-shaped (R2) | "At {rate}% EAR, a {balance} overdraft costs an estimated {cost} a year."                                                                 |
+| "Save £36,349"                                                                       | A promise of money as a headline (R8)                                 | "Estimate: £36,349 less interest over the term, if the rate stays at 4.5%."                                                               |
 
 ### 7.5 Benefits and debt help
 

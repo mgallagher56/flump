@@ -220,6 +220,12 @@ export const COPY_RULES: CopyRule[] = [
     "say what happened, in the reader's words, and how to fix it",
   ),
   banned(
+    "unsupported-claim",
+    "7.4",
+    "stealth|dangerous|automatically (?:monitors?|tracks?|syncs?|models?|files?)|monitors? (?:your|fixed)|save (?:up to )?£|hidden (?:fees?|costs?|charges?)",
+    "describe only what the tool on the page does today; state a cost as an estimate (E7)",
+  ),
+  banned(
     "click-here",
     "5.3",
     "click here|click (?:on )?the|learn more|read more|find out more",
