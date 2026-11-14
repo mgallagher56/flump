@@ -92,10 +92,12 @@ test("a new user sets up, adds an account and a budget entry, and the dashboard 
     await dialog.getByRole("button", { name: "Add account", exact: true }).click();
     await expect(dialog).toBeHidden();
 
-    const owned = page.getByRole("table", { name: "What you own" });
-    await expect(
-      owned.getByRole("row", { name: `${ACCOUNT.name} Current account ${ACCOUNT.shown}` }),
-    ).toBeVisible();
+    // R2-5: each group is a list; the row shows the name, its type and the balance.
+    const owned = page.getByRole("list", { name: "What you own" });
+    const row = owned.getByRole("listitem").filter({ hasText: ACCOUNT.name });
+    await expect(row).toBeVisible();
+    await expect(row).toContainText("Current account");
+    await expect(row).toContainText(ACCOUNT.shown);
   });
 
   await test.step("add a first budget entry", async () => {
