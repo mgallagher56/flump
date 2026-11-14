@@ -90,11 +90,13 @@ export const frequencyField = cva({
 /** The add row closing each section: name, amount and the Add button. */
 export const addRow = cva({
   base: {
-    display: "grid",
-    gridTemplateColumns: { base: "minmax(0, 1fr) auto", md: "minmax(0, 1fr) 140px auto" },
+    // Name on its own line on a phone, then amount, Add and Cancel; one line from md.
+    display: "flex",
+    flexWrap: "wrap",
     gap: "3",
     alignItems: "center",
     pt: "2",
+    "& > :first-child": { flex: { base: "1 1 100%", md: "1 1 0" }, minWidth: 0 },
     fontVariantNumeric: "tabular-nums",
   },
 });
@@ -102,8 +104,6 @@ export const addRow = cva({
 export const addAmount = cva({
   base: {
     width: "140px",
-    gridColumn: { base: "1 / 2", md: "auto" },
-    gridRow: { base: 2, md: "auto" },
     fontVariantNumeric: "tabular-nums",
   },
 });
