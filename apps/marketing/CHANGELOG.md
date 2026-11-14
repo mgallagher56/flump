@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.34.2](https://github.com/mgallagher56/flump/compare/flump/marketing-v1.34.1...flump/marketing-v1.34.2) (2026-11-14)
+
+
+### Bug Fixes 🪲
+
+* **engine:** review fixes: pay dates in the first days of the month, self-employed sacrifice, tighter one-engine guard ([bfc04a3](https://github.com/mgallagher56/flump/commit/bfc04a3273c683742f4f398e43c9289a2e3ed1eb))
+
 ## [1.34.1](https://github.com/mgallagher56/flump/compare/flump/marketing-v1.34.0...flump/marketing-v1.34.1) (2026-11-14)
 
 

@@ -1,5 +1,43 @@
 # Changelog
 
+## [1.39.0](https://github.com/mgallagher56/flump/compare/flump/web-v1.38.0...flump/web-v1.39.0) (2026-11-14)
+
+
+### Features ✨
+
+* **backend,mcp:** PAT input route for MCP stdio, client policy route, token list refresh ([bc10b6e](https://github.com/mgallagher56/flump/commit/bc10b6e3f960f42c4b3491411d138672c85a5cec))
+* **engine:** one tax engine, Self Assessment allowances, payments on account and payslip months ([f3231b3](https://github.com/mgallagher56/flump/commit/f3231b3fdf4381538038b3da4690ae5fdfea347e))
+* **web:** account-by-account monthly check-in (R2-5) ([0415b82](https://github.com/mgallagher56/flump/commit/0415b82b75f7da324e5b59a186409840b1c75284))
+* **web:** label calculated and confirmed figures in the history change table ([f2df35f](https://github.com/mgallagher56/flump/commit/f2df35f02298f39185f686ba9755bed078219948))
+* **web:** label calculated and confirmed months on the account page ([1b431d7](https://github.com/mgallagher56/flump/commit/1b431d70f018bf42826d5ef2755f411f85e7a56d))
+* **web:** R2-5 accounts, account detail, history and account dialog polish ([6d29b9b](https://github.com/mgallagher56/flump/commit/6d29b9b0e23f1d83c9f42e3972430f0c504a5be7))
+* **web:** R2-7 debt and mortgage pages, round 2 ([55885eb](https://github.com/mgallagher56/flump/commit/55885eb8e28f754f1b6c3ded7c293dba07ea8c19))
+
+
+### Bug Fixes 🪲
+
+* **engine:** review fixes: pay dates in the first days of the month, self-employed sacrifice, tighter one-engine guard ([bfc04a3](https://github.com/mgallagher56/flump/commit/bfc04a3273c683742f4f398e43c9289a2e3ed1eb))
+* **web:** accounts buttons work before hydration ([#701](https://github.com/mgallagher56/flump/issues/701)) ([c6b7fcd](https://github.com/mgallagher56/flump/commit/c6b7fcd31a080fcc022c73ec4b6f9a5cd0198e04))
+* **web:** accounts names underline on hover, one debt tint, not-counted group in the grid; even chart gridlines ([1e34839](https://github.com/mgallagher56/flump/commit/1e348391835e0cd5407ed28a11416932fa8849de))
+* **web:** R2-5 review fixes ([988efde](https://github.com/mgallagher56/flump/commit/988efdedc09e0aafba491f3fd12519787f2d6cf6))
+* **web:** R2-7 term inputs on their own row; no extra label at £0 overpayment ([2d3c324](https://github.com/mgallagher56/flump/commit/2d3c324b500723cecafed455e027de4725bfd93a))
+* **web:** re-score fixes for accounts and account detail ([96feefc](https://github.com/mgallagher56/flump/commit/96feefcef27e115c200f202ae85513e94b522db7))
+* **web:** re-score fixes for the check-in and history ([f4e04d0](https://github.com/mgallagher56/flump/commit/f4e04d03a8422a7a00976276c04c52e65a6f6fbf))
+* **web:** round 3 re-score fixes for the check-in and history ([2137066](https://github.com/mgallagher56/flump/commit/21370668ea4c1eb690df2925e52ecfa5e687481a))
+* **web:** the calculated figure names its interest rate (copy check) ([23c791b](https://github.com/mgallagher56/flump/commit/23c791bc3cc435a52cb46704d491460544846cb5))
+* **web:** whole-pound axis on the account chart; sentence-case account types in the dialog ([bbffdb5](https://github.com/mgallagher56/flump/commit/bbffdb533e574565c6febbed4b0f1edaa7b88da7))
+
+
+### Refactor 🔥
+
+* check-in logic in the engine; No change keeps the saved balance ([fa18993](https://github.com/mgallagher56/flump/commit/fa189934ae84337c077582345d4604a04362a0b2))
+
+
+### Tests 🧪
+
+* consistency and new-user journey follow the R2-5 accounts hero and links ([aae51d1](https://github.com/mgallagher56/flump/commit/aae51d12457bb563de03709281bdec9757631a22))
+* R2-7 mortgage hero is the saved payment; LTV as entered; empty state in the consistency check ([13744a7](https://github.com/mgallagher56/flump/commit/13744a7094406dc7a471091015f80fd961211c0e))
+
 ## [1.38.0](https://github.com/mgallagher56/flump/compare/flump/web-v1.37.0...flump/web-v1.38.0) (2026-11-14)
 
 
