@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.34.0](https://github.com/mgallagher56/flump/compare/flump/marketing-v1.33.0...flump/marketing-v1.34.0) (2026-11-14)
+
+
+### Features ✨
+
+* **chrome:** R2-4 dashboard, sandbox and app chrome ([89a08cd](https://github.com/mgallagher56/flump/commit/89a08cdd5b2880061f5bdc1c01f2fad9b6836eb3))
+* **marketing:** R2-10 five home bands, tagline, shared 404 and copy fixes ([aa3a432](https://github.com/mgallagher56/flump/commit/aa3a432ffeeb6d5b9942ab6cb72afb80c73c080b))
+
+
+### Bug Fixes 🪲
+
+* **chrome:** R2-4 re-score and code review fixes ([47f3765](https://github.com/mgallagher56/flump/commit/47f3765a966e8691de17cfb3a5b5eedb8c9f283b))
+* **marketing:** contact placeholder note on its own quiet line ([3c17be7](https://github.com/mgallagher56/flump/commit/3c17be7e1bf7010943d1b3bb6090c5bde969e37d))
+* **marketing:** R2-10 review and re-score fixes ([bc0a701](https://github.com/mgallagher56/flump/commit/bc0a70193e6e232c3e9aa02b1dd26ae6a5831713))
+
 ## [1.33.0](https://github.com/mgallagher56/flump/compare/flump/marketing-v1.32.0...flump/marketing-v1.33.0) (2026-11-14)
 
 

@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.36.0](https://github.com/mgallagher56/flump/compare/flump/web-v1.35.0...flump/web-v1.36.0) (2026-11-14)
+
+
+### Features ✨
+
+* **chrome:** R2-4 dashboard, sandbox and app chrome ([89a08cd](https://github.com/mgallagher56/flump/commit/89a08cdd5b2880061f5bdc1c01f2fad9b6836eb3))
+
+
+### Bug Fixes 🪲
+
+* **chrome:** R2-4 re-score and code review fixes ([47f3765](https://github.com/mgallagher56/flump/commit/47f3765a966e8691de17cfb3a5b5eedb8c9f283b))
+* **chrome:** R2-4 review fixes: dialog description id, tokens, hook and inert-state tests ([8da69e2](https://github.com/mgallagher56/flump/commit/8da69e24308c51d61b6d807576538a27f841a8e4))
+* **chrome:** text-only top bar links so the web bar fits at 1024 ([055cd9f](https://github.com/mgallagher56/flump/commit/055cd9fbbb6bb593c6fb94fe744e011b0c6540bc))
+* **sandbox:** a household tab never grows past its row at 320 ([0572afd](https://github.com/mgallagher56/flump/commit/0572afddea2712ea0b40cc74f8da486c370d717a))
+
 ## [1.35.0](https://github.com/mgallagher56/flump/compare/flump/web-v1.34.0...flump/web-v1.35.0) (2026-11-14)
 
 
