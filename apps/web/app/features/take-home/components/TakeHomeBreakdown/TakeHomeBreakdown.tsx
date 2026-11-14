@@ -9,6 +9,7 @@ import {
   cardTitle,
   drawerBody,
   segment,
+  swatch,
   takeHomeRow,
 } from "./TakeHomeBreakdown.styles";
 
@@ -104,14 +105,18 @@ export const TakeHomeBreakdown: FC<TakeHomeBreakdownProps> = ({ details, ...figu
     return { key: s.key, x, width };
   });
   const rows = TABLE_ORDER.filter((k) => k === "takeHome" || parts[k] > 0);
-  // The right end names what the grey part holds, in the order the strip shows it.
-  const offWords = [
-    "Tax",
-    "National Insurance",
-    ...(parts.pension > 0 ? ["pension"] : []),
-    ...(parts.studentLoan > 0 ? ["student loan"] : []),
-  ];
-  const offLabel = `${offWords.slice(0, -1).join(", ")} and ${offWords[offWords.length - 1]}`;
+  // One label per segment, named as the strip names its cards, with the segment's own colour.
+  const pensionLabel =
+    parts.pension > 0 && parts.studentLoan > 0
+      ? "Pension and student loan"
+      : parts.pension > 0
+        ? "Pension"
+        : "Student loan";
+  const SEGMENT_LABELS: Record<(typeof shares)[number]["key"], string> = {
+    takeHome: PAY_PART_LABELS.takeHome,
+    taxAndNi: "Tax and National Insurance",
+    pensionAndLoan: pensionLabel,
+  };
 
   return (
     <Card
@@ -152,11 +157,18 @@ export const TakeHomeBreakdown: FC<TakeHomeBreakdownProps> = ({ details, ...figu
             ))}
           </svg>
         </div>
-        {/* Direct labels at the bar's two ends, in place of a legend. */}
-        <div className={barLabels()}>
-          <span className={barLabel({ tone: "takeHome" })}>{PAY_PART_LABELS.takeHome}</span>
-          <span className={barLabel({ end: true })}>{offLabel}</span>
-        </div>
+        {/* A label for each segment, in bar order: in a row from `sm`, stacked on a phone. */}
+        <ul className={barLabels()}>
+          {visible.map((v) => (
+            <li
+              key={v.key}
+              className={barLabel({ tone: v.key === "takeHome" ? "takeHome" : undefined })}
+            >
+              <span className={swatch({ part: v.key })} />
+              {SEGMENT_LABELS[v.key]}
+            </li>
+          ))}
+        </ul>
       </div>
 
       <CollapsibleDrawer title="Show details" variant="quiet">

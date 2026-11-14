@@ -7,6 +7,7 @@ import { ConfirmDialog } from "~/features/feedback/components/ConfirmDialog";
 import { useFetcherOutcome } from "~/features/feedback/hooks/useFetcherOutcome";
 import { AddPensionAccountDialog } from "../AddPensionAccountDialog";
 import {
+  drawerWrap,
   listRoot,
   potActions,
   potBalance,
@@ -104,14 +105,16 @@ export const PensionAccountsList: FC<PensionAccountsListProps> = ({ accounts }) 
       </VisuallyHidden>
       {renderRows(accounts.slice(0, VISIBLE_ROWS))}
       {rest.length > 0 && (
-        <CollapsibleDrawer
-          itemCount={rest.length}
-          itemNoun={{ one: "more pot", other: "more pots" }}
-          title="Show all pots"
-          variant="quiet"
-        >
-          {renderRows(rest)}
-        </CollapsibleDrawer>
+        <div className={drawerWrap()}>
+          <CollapsibleDrawer
+            itemCount={rest.length}
+            itemNoun={{ one: "more pot", other: "more pots" }}
+            title="Show all pots"
+            variant="quiet"
+          >
+            {renderRows(rest)}
+          </CollapsibleDrawer>
+        </div>
       )}
 
       {editingAccount && (

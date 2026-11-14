@@ -1,4 +1,4 @@
-import { HeroFigure, KpiCard, KpiStrip, StatusBadge } from "@repo/ui";
+import { HeroFigure, KpiCard, KpiStrip } from "@repo/ui";
 import type { FC, ReactElement } from "react";
 import { formatRate } from "../SavingsForecast/savingsForecast.utils";
 import { kpiFigure } from "./SavingsSummaryCards.styles";
@@ -19,7 +19,7 @@ const isReal = (value: number | null): value is number =>
 
 export const ISA_NONE = "None";
 export const ISA_EXPLAIN =
-  "Estimated from what you save each month into accounts with ISA in their name, since 6 April. The allowance is £20,000 a year.";
+  "Your saved monthly amount into accounts with ISA in their name, for each month since 6 April. The ISA allowance is £20,000 a year.";
 
 export const KPI_PROMPT_TITLE =
   "Add what you save each month and your interest rates to see more here";
@@ -63,15 +63,10 @@ export const SavingsSummaryCards: FC<SavingsSummaryCardsProps> = ({
   if (cards.length > 0) {
     cards.push(
       <KpiCard
-        key="isa"
-        action={
-          <StatusBadge size="sm" variant="neutral">
-            Estimate
-          </StatusBadge>
-        }
         explain={ISA_EXPLAIN}
-        label="ISA allowance used"
-        subtext="This tax year, from your monthly saving into ISAs"
+        key="isa"
+        label="Paid into ISAs this tax year"
+        subtext="From what you save each month, since 6 April"
         value={isReal(isaUsed) ? isaUsed : <span className={kpiFigure()}>{ISA_NONE}</span>}
         valueFormat={{ fractionDigits: 0 }}
       />,

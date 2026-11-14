@@ -1,19 +1,11 @@
 import { cva } from "@repo/ui/styled-system/css";
 
-/** Saved facts: card surface and default border, never the dashed scenario treatment. */
+/**
+ * Saved facts as a plain section, like "Your accounts" on savings (R2-8): a heading, the pots in
+ * one card, then the salary drawer. No outer card, so the section reads lighter than the zone.
+ */
 export const detailsRoot = cva({
-  base: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "16px",
-    minWidth: 0,
-    padding: { base: "16px", md: "24px" },
-    borderRadius: "xl",
-    borderWidth: "1px",
-    borderStyle: "solid",
-    borderColor: "border",
-    backgroundColor: "surface.card",
-  },
+  base: { display: "flex", flexDirection: "column", gap: "16px", minWidth: 0 },
 });
 
 export const detailsHeader = cva({
@@ -27,7 +19,7 @@ export const detailsHeader = cva({
 });
 
 export const detailsTitle = cva({
-  base: { margin: 0, textStyle: "heading.md", color: "text.primary" },
+  base: { margin: 0, textStyle: "heading.lg", color: "text.primary" },
 });
 
 export const buttonRow = cva({

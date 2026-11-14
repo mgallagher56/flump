@@ -1,9 +1,17 @@
 import { getCategoriesForSource, type TaxRecord, type TaxSource } from "@flump/finance-engine";
-import { Button, CurrencyInput, controlProps, Dialog, FormField, Icon, TextInput } from "@repo/ui";
+import {
+  Button,
+  CurrencyInput,
+  controlProps,
+  Dialog,
+  FormField,
+  Icon,
+  Select,
+  TextInput,
+} from "@repo/ui";
 import { Camera, FileText, Image as ImageIcon, Upload } from "lucide-react";
 import { type ChangeEvent, type FC, type FormEvent, useState } from "react";
 import { isAcceptableReceiptFile, RECEIPT_ACCEPT } from "~/containers/tax/receipt-file";
-import { nativeSelect } from "../../select.styles";
 import { FREQUENCY_OPTIONS, SOURCE_OPTIONS } from "../../tax-labels";
 import {
   fieldRow,
@@ -152,10 +160,9 @@ export const TaxRecordDialog: FC<TaxRecordDialogProps> = ({
         <div className={fieldRow()}>
           <FormField label="Income source">
             {(field) => (
-              <select
+              <Select
                 id={field.id}
                 aria-describedby={field.describedBy}
-                className={nativeSelect()}
                 value={draft.source}
                 onChange={(e) => changeSourceOrType(e.target.value as TaxSource, draft.type)}
               >
@@ -164,15 +171,14 @@ export const TaxRecordDialog: FC<TaxRecordDialogProps> = ({
                     {o.label}
                   </option>
                 ))}
-              </select>
+              </Select>
             )}
           </FormField>
           <FormField label="Type">
             {(field) => (
-              <select
+              <Select
                 id={field.id}
                 aria-describedby={field.describedBy}
-                className={nativeSelect()}
                 value={draft.type}
                 onChange={(e) =>
                   changeSourceOrType(draft.source, e.target.value as "income" | "expense")
@@ -180,17 +186,16 @@ export const TaxRecordDialog: FC<TaxRecordDialogProps> = ({
               >
                 <option value="income">Income</option>
                 <option value="expense">Cost</option>
-              </select>
+              </Select>
             )}
           </FormField>
         </div>
 
         <FormField label="Category">
           {(field) => (
-            <select
+            <Select
               id={field.id}
               aria-describedby={field.describedBy}
-              className={nativeSelect()}
               value={draft.category}
               onChange={(e) => set("category", e.target.value)}
             >
@@ -199,7 +204,7 @@ export const TaxRecordDialog: FC<TaxRecordDialogProps> = ({
                   {c.name}
                 </option>
               ))}
-            </select>
+            </Select>
           )}
         </FormField>
 
@@ -220,10 +225,9 @@ export const TaxRecordDialog: FC<TaxRecordDialogProps> = ({
           </FormField>
           <FormField label="How often">
             {(field) => (
-              <select
+              <Select
                 id={field.id}
                 aria-describedby={field.describedBy}
-                className={nativeSelect()}
                 value={draft.frequency}
                 onChange={(e) => set("frequency", e.target.value as TaxRecord["frequency"])}
               >
@@ -232,7 +236,7 @@ export const TaxRecordDialog: FC<TaxRecordDialogProps> = ({
                     {o.label}
                   </option>
                 ))}
-              </select>
+              </Select>
             )}
           </FormField>
         </div>

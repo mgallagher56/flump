@@ -19,8 +19,9 @@ describe("SavingsSummaryCards", () => {
     expect(screen.getByText("Saved each month")).toBeDefined();
     expect(screen.getByText("Average rate")).toBeDefined();
     expect(screen.getByText("4.0%")).toBeDefined();
-    expect(screen.getByText("ISA allowance used")).toBeDefined();
-    expect(screen.getByText("Estimate")).toBeDefined();
+    expect(screen.getByText("Paid into ISAs this tax year")).toBeDefined();
+    // A fact from saved figures, so no Estimate chip.
+    expect(screen.queryByText("Estimate")).toBeNull();
     expect(screen.queryByText("Weighted by balance (AER)")).toBeNull();
   });
 
@@ -36,7 +37,7 @@ describe("SavingsSummaryCards", () => {
     );
     expect(screen.queryByText("Average rate")).toBeNull();
     // No ISA saving is stated as a fact in words, never as £0.
-    expect(screen.getByText("ISA allowance used")).toBeDefined();
+    expect(screen.getByText("Paid into ISAs this tax year")).toBeDefined();
     expect(screen.getByText("None")).toBeDefined();
     expect(container.textContent).not.toMatch(/£0(?![\d,])|0\.00%/);
   });

@@ -72,11 +72,12 @@ describe("<TakeHomeCalculator /> saved figures", () => {
   });
 
   test("includes the saved student loan in the third KPI and as its own row", () => {
-    const { container, getByRole, getByText } = customRender(
+    const { container, getAllByText, getByRole, getByText } = customRender(
       <TakeHomeCalculator initialSalary={45000} onApplyIncrease={vi.fn()} />,
       withProfile({ studentLoanPlans: ["PLAN_2"] } as Partial<UserProfile>),
     );
-    expect(getByText("Pension and student loan")).toBeDefined();
+    // Once as the third KPI, once under its bar segment.
+    expect(getAllByText("Pension and student loan")).toHaveLength(2);
     expect(getByText("After tax, National Insurance, pension and student loan")).toBeDefined();
     expect(container.querySelectorAll("[data-kpi-value]").length).toBe(3);
     fireEvent.click(getByRole("button", { name: "Show details" }));

@@ -39,7 +39,8 @@ describe("MarginalRateExplorer inside a ScenarioZone", () => {
     const outcome = screen.getByTestId("explorer-outcomes");
     expect(outcome.querySelector("[data-kpi-value]")).toBeNull();
     expect(within(outcome).getByText("Estimated take-home from the next £1,000")).toBeDefined();
-    expect(screen.getAllByTestId("marginal-rate-threshold")).toHaveLength(2);
+    // At £58,000 only the higher rate (£50,270) is near; £100,000 is too far off to mark.
+    expect(screen.getAllByTestId("marginal-rate-threshold")).toHaveLength(1);
     // The tax year and the caption wait in the one disclosure, so the first view is the outcome.
     expect(screen.queryByText(/^As at tax year/)).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "How this is worked out" }));

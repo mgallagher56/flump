@@ -3,12 +3,12 @@ import { niceStep } from "@repo/ui";
 export interface NearDataAxis {
   /** Domain for the y axis: a little below the lowest value and a little above the highest. */
   domain: [number, number];
-  /** Round ticks inside the domain, 3 to 5 of them, so the last always sits inside the plot. */
+  /** Round ticks inside the domain, 3 or 4 of them, so the last always sits inside the plot. */
   ticks: number[];
 }
 
-/** Most y ticks (P10.4 at 375: more than five crowd a 160px plot). */
-export const MAX_Y_TICKS = 5;
+/** Most y ticks (P10.4 at 375: more than four crowd a 160px plot). */
+export const MAX_Y_TICKS = 4;
 
 /**
  * A y axis that starts near the data (R2-8): ticks are round multiples of a nice step, and the

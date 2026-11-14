@@ -40,13 +40,16 @@ const Harness = ({ initial }: { initial: SavingsForecastValues }) => {
 };
 
 describe("SavingsForecast", () => {
-  it("shows one outcome with two supporting figures and a chart", () => {
+  it("shows one outcome figure, with what you pay in and the interest behind Show data", () => {
     render(<Harness initial={filled} />);
     const outcome = screen.getByTestId("savings-forecast-outcome");
     expect(outcome.textContent).toContain("Estimated balance in 5 years");
-    expect(outcome.textContent).toContain("You pay in");
-    expect(outcome.textContent).toContain("£18,000");
-    expect(outcome.textContent).toContain("Interest");
+    expect(outcome.textContent).not.toContain("You pay in");
+    expect(screen.queryByTestId("savings-forecast-split")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: /Show data/ }));
+    const split = screen.getByTestId("savings-forecast-split");
+    expect(split.textContent).toContain("You pay in£18,000");
+    expect(split.textContent).toMatch(/InterestAbout £[\d,]+/);
     expect(screen.queryByText(FORECAST_PROMPT)).toBeNull();
   });
 
