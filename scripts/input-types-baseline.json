@@ -6,7 +6,7 @@
   "apps/web/app/features/tax/components/TaxIncomeSectionCard/TaxIncomeSectionCard.tsx": 1,
   "apps/web/app/features/tax/components/TaxReservePanel/TaxReservePanel.tsx": 1,
   "packages/ui/src/calculators/DebtSnowballCalculator/DebtSnowballCalculator.tsx": 7,
-  "packages/ui/src/calculators/MortgageVsIsaCalculator/MortgageVsIsaCalculator.tsx": 4,
+  "packages/ui/src/calculators/MortgageVsIsaCalculator/MortgageVsIsaCalculator.tsx": 5,
   "packages/ui/src/calculators/OverdraftCostCalculator/OverdraftCostCalculator.tsx": 2,
   "packages/ui/src/calculators/Section24Calculator/Section24Calculator.tsx": 4,
   "packages/ui/src/calculators/StudentLoanCalculator/StudentLoanCalculator.tsx": 2,
