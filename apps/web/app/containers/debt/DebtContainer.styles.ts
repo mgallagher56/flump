@@ -38,6 +38,3 @@ export const plainLink = css({
   textStyle: "body.sm",
   _focusVisible: { outline: "2px solid", outlineColor: "border.focusRing", outlineOffset: "2px" },
 });
-
-/** The scenario zone's "Starting from your figures" line holds money: tabular figures. */
-export const basisText = css({ fontVariantNumeric: "tabular-nums" });

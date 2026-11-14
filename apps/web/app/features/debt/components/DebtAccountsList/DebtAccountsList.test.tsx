@@ -45,7 +45,7 @@ describe("DebtAccountsList", () => {
     expect(row.queryByText(/[-−]£/)).toBeNull();
   });
 
-  it("offers Add the rate where the APR is unknown, never 'Not set', and keeps 0% as 0%", () => {
+  it("says 'Rate not added' with no extra button where the APR is unknown, and keeps 0% as 0%", () => {
     customRender(
       <DebtAccountsList
         {...baseProps}
@@ -56,15 +56,16 @@ describe("DebtAccountsList", () => {
       />,
     );
     expect(screen.queryByText("Not set")).toBeNull();
-    expect(screen.getByRole("button", { name: "Add the rate for Mystery card" })).toBeDefined();
+    expect(screen.getByText("Rate not added")).toBeDefined();
+    expect(screen.queryByRole("button", { name: /Add the rate/ })).toBeNull();
     expect(screen.getAllByText(/(^|\s)0% APR/)).toHaveLength(1);
   });
 
-  it("opens the edit dialog from Add the rate", () => {
+  it("opens the edit dialog from Edit for a debt with no rate", () => {
     customRender(
       <DebtAccountsList {...baseProps} debts={[debt({ id: "a", apr: 0, aprKnown: false })]} />,
     );
-    fireEvent.click(screen.getByRole("button", { name: "Add the rate for Card" }));
+    fireEvent.click(screen.getByRole("button", { name: "Edit Card" }));
     expect(screen.getByRole("dialog", { name: "Edit debt" })).toBeDefined();
   });
 

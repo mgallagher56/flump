@@ -32,7 +32,10 @@ export interface MortgageEditDialogProps {
   canSaveFigures: boolean;
   /** True when the term and fixed rate end date can be stored too (a linked mortgage account). */
   canSaveTerm: boolean;
-  /** Residential mortgage accounts the page can read from. The choice is not stored. */
+  /**
+   * Residential mortgage accounts the page can read from. The choice is not stored. There is no
+   * "none" option: unlinking would blank the form and risk clearing stored figures on save.
+   */
   mortgageAccounts?: readonly MortgageAccountOption[];
   selectedAccountId?: string | null;
   onSelectAccount?: (id: string | null) => void;
@@ -123,7 +126,6 @@ export const MortgageEditDialog: FC<MortgageEditDialogProps> = ({
                   value: account.id,
                   label: `${account.name ?? "Mortgage"} (${formatCurrency(Math.abs(account.balance ?? 0))})`,
                 }))}
-                placeholder="No account linked"
                 value={selectedAccountId ?? ""}
                 onChange={(event) => onSelectAccount(event.target.value || null)}
               />

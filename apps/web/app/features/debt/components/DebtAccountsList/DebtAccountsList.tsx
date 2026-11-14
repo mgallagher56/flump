@@ -1,5 +1,5 @@
 import type { DebtItem } from "@flump/finance-engine";
-import { Button, CollapsibleDrawer, Icon, IconButton } from "@repo/ui";
+import { CollapsibleDrawer, Icon, IconButton } from "@repo/ui";
 import { cx } from "@repo/ui/styled-system/css";
 import { Pencil, Trash2 } from "lucide-react";
 import { type FC, useState } from "react";
@@ -82,15 +82,7 @@ export const DebtAccountsList: FC<DebtAccountsListProps> = ({
               {typeLabel(debt.type)}
               {" · "}
               {debt.aprKnown === false ? (
-                <Button
-                  aria-label={`Add the rate for ${debt.name}`}
-                  size="sm"
-                  type="button"
-                  variant="link"
-                  onClick={() => setEditingId(debt.id)}
-                >
-                  Add the rate
-                </Button>
+                <span>Rate not added</span>
               ) : (
                 `${aprFormat.format(debt.apr ?? 0)}% APR`
               )}
