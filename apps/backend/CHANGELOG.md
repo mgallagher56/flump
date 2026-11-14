@@ -1,5 +1,70 @@
 # Changelog
 
+## [1.31.0](https://github.com/mgallagher56/flump/compare/flump/backend-v1.30.0...flump/backend-v1.31.0) (2026-11-14)
+
+
+### Features ✨
+
+* **api-client,web,mcp:** BE-10 contract-typed clients on /v1 ([15548e0](https://github.com/mgallagher56/flump/commit/15548e065e7c33b4343e16ea610f5c64cf4d1288))
+* **api-contract,backend:** E17 PR C import backend (stage, commit, revert) and agent audit table ([906a307](https://github.com/mgallagher56/flump/commit/906a3075e77cd2b3aef56851f3f77b026c1bc368))
+* **backend,api-contract:** BE-09 API contract, server side ([10d45c4](https://github.com/mgallagher56/flump/commit/10d45c4880b551ba45957f3d370ed369dc68cc24))
+* **backend,api-contract:** import preview (dry run) and list routes ([5a5d40e](https://github.com/mgallagher56/flump/commit/5a5d40e723e5285b7ad9242ff2f7ae5dae8d567b))
+* **backend,web:** BE-07 security, config and observability hardening ([1c5a385](https://github.com/mgallagher56/flump/commit/1c5a385f91072ba1342b705aed47d00ff0f8ca13))
+* **backend:** account deletion tombstone table (BE-04) ([c23a278](https://github.com/mgallagher56/flump/commit/c23a278c3e0e0986f4e71a3aefe1bedc77df17de))
+* **backend:** account deletion, data export and full reset (BE-04) ([23f26ca](https://github.com/mgallagher56/flump/commit/23f26ca2aacadd3e963652d04b2fc54ee579f0dd))
+* **backend:** audit trail, retention purge and consents (BE-06) ([a0ab6a6](https://github.com/mgallagher56/flump/commit/a0ab6a6491b8f11d99b607c4deec8a53038f5d02))
+* **backend:** data integrity II — tax year, foreign keys, transactions (BE-08) ([b264b8e](https://github.com/mgallagher56/flump/commit/b264b8ef0a317844ec6764850ee22cd86930d2fc))
+* **backend:** sweep expired idempotency keys in the retention job (BE-06) ([b808e9a](https://github.com/mgallagher56/flump/commit/b808e9a27c720bd9c0c723d7563ecca9d3745640))
+* **backend:** user_id indexes, pool limits and UTC pin (BE-02) ([9809a34](https://github.com/mgallagher56/flump/commit/9809a3439fbc7b9043556efc6405b6a276970816))
+* **housing:** E32 housing cost share, fix-end date and deposit timeline ([859cdb6](https://github.com/mgallagher56/flump/commit/859cdb6fe83f93bd5f0d2198222b3d0d0f06226b))
+* **mcp,backend,api-contract:** E17 PR D staging tools, write:stage scope and audit trail ([e86d614](https://github.com/mgallagher56/flump/commit/e86d614c5b4af2aea954940def4656c20225dbf0))
+* **web,backend:** E16 PR 9 onboarding focused shell and neutral housing option ([e4ee952](https://github.com/mgallagher56/flump/commit/e4ee9525e8620764d8f95656b47fc71cd01f9a99))
+
+
+### Bug Fixes 🪲
+
+* adapt BE-04 to the BE-01 and BE-02 laws after rebase ([4422623](https://github.com/mgallagher56/flump/commit/4422623b0abc574dc757933021335265737495a1))
+* apply BE-07 security and code review findings ([24ccb8c](https://github.com/mgallagher56/flump/commit/24ccb8c009272081071d3c605052343f1fd4bd21))
+* apply review and design-comparison findings ([b725ea6](https://github.com/mgallagher56/flump/commit/b725ea67fb12a76f4b019ce5af7a27d34ff244be))
+* **backend,api-contract:** apply E17 PR C review findings to the import pipeline ([26914b5](https://github.com/mgallagher56/flump/commit/26914b52f139d8547e5c120d41f9ccd77c68427a))
+* **backend,web,ops:** BE-07 CI fixes ([6bcd81a](https://github.com/mgallagher56/flump/commit/6bcd81a6e1a16a544c5862bd1c941d4c085ba0e9))
+* **backend:** BE-02 review fixes for the migration lock and timeouts ([f3f0ec7](https://github.com/mgallagher56/flump/commit/f3f0ec748c4f326a116c90563a2f813f492e026d))
+* **backend:** BE-04 review findings for deletion, export and copy ([9300ae1](https://github.com/mgallagher56/flump/commit/9300ae173c1abf1a0d01ad537c201d7a8ab92482))
+* **backend:** BE-05 review fixes: seed signs, function search_path, down() lock, entity check ([ff11a22](https://github.com/mgallagher56/flump/commit/ff11a22f3605e1b30b422f65ad15f6af4ec9f242))
+* **backend:** BE-06 CI after rebase: runbook row, seed snapshot, Semgrep ([ddb8828](https://github.com/mgallagher56/flump/commit/ddb8828355aa3793a25605e44dd2291e65d43cd8))
+* **backend:** BE-08 review fixes ([478a20d](https://github.com/mgallagher56/flump/commit/478a20db7f93c99abaf847ca2a5d5af91776f11a))
+* **backend:** BE-12 bank sync, tokens and consent behind the flag ([49941ff](https://github.com/mgallagher56/flump/commit/49941ff4ba988ed2fa3029d9e97116faf096a36a))
+* **backend:** BE-12 real bank consent revocation behind the BE-04 seam ([c44e5ac](https://github.com/mgallagher56/flump/commit/c44e5ac7f7e5898bbe9657ef48981b0d3e05cf3a))
+* **backend:** cover the BE-05 sign before-image in the user-data registry ([d5778b2](https://github.com/mgallagher56/flump/commit/d5778b27c6b19e7c5fd44b8d1798f5542b8b0cbb))
+* **backend:** one liability sign rule on every write path, backfill and DB checks (BE-05) ([2be3c8a](https://github.com/mgallagher56/flump/commit/2be3c8a164222baf277b648addac5225d24d7e25))
+* **backend:** order BE-02 migration after BE-05 and fix CI ([a7835fb](https://github.com/mgallagher56/flump/commit/a7835fbc1b09665a6af10a3ab6dac50be6d28fc3))
+* **backend:** order the timestamptz migration after BE-12; convert BE-04 tombstone timestamps ([a944648](https://github.com/mgallagher56/flump/commit/a944648ecf16060e101b6717b62e679b26a2a5b5))
+* **backend:** register bank_oauth_states in the user-data registry (main green) ([ff440c7](https://github.com/mgallagher56/flump/commit/ff440c7a36d42cbdb5ba7ba37cf54208b1149269))
+* **backend:** typed failure codes in the bank consent audit event, fake-provider tests, data map ([ac6f391](https://github.com/mgallagher56/flump/commit/ac6f3916e0214032c19473e82ed954edccee5c5d))
+* **banking:** BE-11 bank provider safety behind the flag ([2d4a662](https://github.com/mgallagher56/flump/commit/2d4a662417569edcd1c878b8820c65ec626022aa))
+* follow-up sweep after the E21-E31 merges ([4de8bdb](https://github.com/mgallagher56/flump/commit/4de8bdbf9a7a3fc4ecdce4fc7546eaa3e8cca843))
+* mark Semgrep false positives and teach the staging seed about tombstones ([9fd5f41](https://github.com/mgallagher56/flump/commit/9fd5f418828db461cdf5ee3c15e27b8a5e27d5a5))
+* **ops:** uuid account_id in seed and cleanup scripts; rename Semgrep-flagged test ids ([64bf029](https://github.com/mgallagher56/flump/commit/64bf02990de0ce0771ae82f111502b07ee3de649))
+* pre-release pass defects (tax band, 404, tool catalogue, debt payoff, donuts, take-home, titles, layout) ([5341239](https://github.com/mgallagher56/flump/commit/5341239d3dd745dff8af2ffa3f46799d6c9e0634))
+* **security:** server-side reset confirmation, audit event, review fixes ([e71c422](https://github.com/mgallagher56/flump/commit/e71c42289ffba64a30ee37a2539d8aeea1bc45c0))
+* **web,backend:** E16 PR 9 review fixes ([5c3ad19](https://github.com/mgallagher56/flump/commit/5c3ad1989c12b928c6198df0fcbbc0297da585ae))
+* **web:** home counted once from its Property account; mortgage LTV is residential ([8aec193](https://github.com/mgallagher56/flump/commit/8aec1938ff6783fef2ac37549d2b151da0b4da79))
+
+
+### CI 🤖
+
+* **be-01:** merge gate, supply-chain hardening and readiness paths ([808ab8e](https://github.com/mgallagher56/flump/commit/808ab8e41bbc72e3d968c75d58482fa3da0a98f2))
+* **be-01:** review fixes for the Docker change filter, Semgrep errors and the any baseline ([ad1259d](https://github.com/mgallagher56/flump/commit/ad1259da39d5a98df24b43f8750d29be87a7e568))
+
+
+### Tests 🧪
+
+* **backend:** authz reset calls send the confirmation phrase; 400 without it ([7208d37](https://github.com/mgallagher56/flump/commit/7208d3728774b8e23eb6c02ea73bfa82218dd31b))
+* **backend:** imports authz reset sends the confirmation phrase ([42acb39](https://github.com/mgallagher56/flump/commit/42acb397b379e77b1bfbf70f4a9f8a76eea6b461))
+* **backend:** manager stubs for transactional doubles; no explicit any in orphan counts ([3f3aca2](https://github.com/mgallagher56/flump/commit/3f3aca2b2076372a41b1f72f2373ac92c7964ba9))
+* **backend:** profile facts now carry homeValue and propertyOwnershipShare ([699690c](https://github.com/mgallagher56/flump/commit/699690c5fc86dbaaa2f4cbf3fb1c3d6f0a9bc926))
+* **contract:** onboarding seeds the home estimate as a Property account ([2ef6f7f](https://github.com/mgallagher56/flump/commit/2ef6f7f0e73c995c2cf5d94eaeced5facb377e0d))
+
 ## [1.30.0](https://github.com/mgallagher56/flump/compare/flump/backend-v1.29.0...flump/backend-v1.30.0) (2026-11-14)
 
 

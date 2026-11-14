@@ -1,5 +1,123 @@
 # Changelog
 
+## [1.33.0](https://github.com/mgallagher56/flump/compare/flump/web-v1.32.0...flump/web-v1.33.0) (2026-11-14)
+
+
+### Features ✨
+
+* **api-client,web,mcp:** BE-10 contract-typed clients on /v1 ([15548e0](https://github.com/mgallagher56/flump/commit/15548e065e7c33b4343e16ea610f5c64cf4d1288))
+* **backend,api-contract:** BE-09 API contract, server side ([10d45c4](https://github.com/mgallagher56/flump/commit/10d45c4880b551ba45957f3d370ed369dc68cc24))
+* **backend,web:** BE-07 security, config and observability hardening ([1c5a385](https://github.com/mgallagher56/flump/commit/1c5a385f91072ba1342b705aed47d00ff0f8ca13))
+* **backend:** data integrity II — tax year, foreign keys, transactions (BE-08) ([b264b8e](https://github.com/mgallagher56/flump/commit/b264b8ef0a317844ec6764850ee22cd86930d2fc))
+* **housing:** E32 housing cost share, fix-end date and deposit timeline ([859cdb6](https://github.com/mgallagher56/flump/commit/859cdb6fe83f93bd5f0d2198222b3d0d0f06226b))
+* **ui,web,marketing:** one shared chrome for the marketing site and the app ([c2105f1](https://github.com/mgallagher56/flump/commit/c2105f10d186e6148f47c6b1d34e0f55e6aecab9))
+* **ui:** E16 PR 2 components: Tabs, quiet notice, lighter scenario zone, HeroFigure, IconTile, KpiCard unset, ChartFigure rules, PageBody, PageSkeleton, page rules helper ([1edd67d](https://github.com/mgallagher56/flump/commit/1edd67d865214a9014111f719d43a06f6e034d4d))
+* **ui:** E16 PR 2 templates on the new pieces, seven Storybook groups, PageBody inside AppShell ([4a28c53](https://github.com/mgallagher56/flump/commit/4a28c53e70d6f305f306420e3503de71497987a3))
+* **ui:** rebuild mortgage vs ISA and student loan calculators on simulator pattern (E16 PR 10) ([0af5479](https://github.com/mgallagher56/flump/commit/0af5479e2a226a96fd53be10d61387f2511c40a8))
+* **ui:** rebuild TaxTrapCalculator on the E25 engine (E25-T11) ([bc9574d](https://github.com/mgallagher56/flump/commit/bc9574d13bcaa0a4dc6b5e53823c46ebaba4b806))
+* **web,backend:** E16 PR 9 onboarding focused shell and neutral housing option ([e4ee952](https://github.com/mgallagher56/flump/commit/e4ee9525e8620764d8f95656b47fc71cd01f9a99))
+* **web,marketing,ui:** E16 polish PR 11, one catalogue and tool pages ([e532141](https://github.com/mgallagher56/flump/commit/e5321411e24c1f3c711a878bd4b7f9b8fe796054))
+* **web,marketing:** connect the token card, link Imports, correct the read-only MCP copy ([6a80630](https://github.com/mgallagher56/flump/commit/6a80630a71fa6efbfc45a2cec1d4d29c834d3e0c))
+* **web:** ask for a fresh sign-in when delete or reset needs a recent login ([028d9d0](https://github.com/mgallagher56/flump/commit/028d9d01ccef35472d5649f68f1916796f379e00))
+* **web:** delete-account action and streamed data export route for BE-04 ([4f85545](https://github.com/mgallagher56/flump/commit/4f85545bfbdce291554a0e32f239055073ffc426))
+* **web:** download your data and delete your account in the settings Data tab ([bb300f7](https://github.com/mgallagher56/flump/commit/bb300f75f26351e79935456f0472a1848dbe9fd2))
+* **web:** E16 polish PR 6, debt and mortgage pages ([c473d2c](https://github.com/mgallagher56/flump/commit/c473d2c399548dda008cb4eda878648e971a1713))
+* **web:** E16 polish PR 8, take-home and self assessment ([016679e](https://github.com/mgallagher56/flump/commit/016679e59386de9322a967088dedfb943f35dc03))
+* **web:** E16 PR 4 dashboard: one hero, three KPIs, up to four section cards ([6b472fe](https://github.com/mgallagher56/flump/commit/6b472fe668d345f40b7ee1b0c84c44c2cdcba4e0))
+* **web:** E16 PR 4 sandbox: same layout, two notices, two Sign up buttons ([61b25c0](https://github.com/mgallagher56/flump/commit/61b25c01ac347dc5515d78325f1f5e3a8f452db3))
+* **web:** E16 PR 5 accounts and net worth history polish ([8ff3f37](https://github.com/mgallagher56/flump/commit/8ff3f373b8e4d21ceb4e94024b3f6da45cb16776))
+* **web:** E16 PR 5 budget polish ([5962a0d](https://github.com/mgallagher56/flump/commit/5962a0d1511b9cdde9de4c964a3b0df39277c21b))
+* **web:** E16 PR 7 pension and savings on the number budget ([9915628](https://github.com/mgallagher56/flump/commit/9915628abfe282b7ec05ca0fba999df8f6023ba2))
+* **web:** E16 PR 9 app chrome, error pages and root skeleton ([e5a55cb](https://github.com/mgallagher56/flump/commit/e5a55cbfdd4a7c42cd78853a31ec140a734d3682))
+* **web:** E16 PR 9 settings and dialogs polish ([5376ec3](https://github.com/mgallagher56/flump/commit/5376ec398717f746a6f1796f7c5125f92e987886))
+* **web:** E25 planner on the tax and pension pages, and next-£1,000 facts on the tax widget (E25-T13, T14) ([5827558](https://github.com/mgallagher56/flump/commit/58275581d75cdf77596b831860f32f9b1a0560dd))
+* **web:** home estimate in net worth, estimated tax due on the dashboard ([74ad88f](https://github.com/mgallagher56/flump/commit/74ad88f25d509a4f56b7c1ced934dfd628122a2d))
+* **web:** let a person with an erased account finish deleting it after a reload ([075bc86](https://github.com/mgallagher56/flump/commit/075bc86948363c4db403ce070f7ece6ce08515ab))
+* **web:** review, commit and undo flow for staged imports; staging opt-in on the token card ([dac582c](https://github.com/mgallagher56/flump/commit/dac582c8428d3c61f58890881c386bf83416ee18))
+
+
+### Bug Fixes 🪲
+
+* apply BE-07 security and code review findings ([24ccb8c](https://github.com/mgallagher56/flump/commit/24ccb8c009272081071d3c605052343f1fd4bd21))
+* apply E25 review findings (copy, saved-only seeds, taper surfacing) ([59ef70f](https://github.com/mgallagher56/flump/commit/59ef70fc51ea946a4d2e88402c7fa8b6dfb5783b))
+* apply review and design-comparison findings ([b725ea6](https://github.com/mgallagher56/flump/commit/b725ea67fb12a76f4b019ce5af7a27d34ff244be))
+* **backend,web,ops:** BE-07 CI fixes ([6bcd81a](https://github.com/mgallagher56/flump/commit/6bcd81a6e1a16a544c5862bd1c941d4c085ba0e9))
+* **copy:** apply the copy guide to shared UI, MCP and finance-engine text ([5ed44d5](https://github.com/mgallagher56/flump/commit/5ed44d50fd97a27fce6898c867c9145c2e0f7675))
+* **copy:** final sweep, strings only, with re-scored audit ([9ef943b](https://github.com/mgallagher56/flump/commit/9ef943b71fea360cb44c98327d0ea34eadaaa41e))
+* follow-up sweep after the E21-E31 merges ([4de8bdb](https://github.com/mgallagher56/flump/commit/4de8bdbf9a7a3fc4ecdce4fc7546eaa3e8cca843))
+* **housing:** apply E32 copy and UI review findings ([de11185](https://github.com/mgallagher56/flump/commit/de11185c6f8a8720d851c9e9ff49ce27faa93e4d))
+* **marketing:** pre-release pass: calculator claims and maths, contrast, tool lists ([43377a5](https://github.com/mgallagher56/flump/commit/43377a5d4f89844b59617f42bf383a81c4d2fe60))
+* **mortgage:** loan to value from the picture, not the unsaved profile home value ([274c42d](https://github.com/mgallagher56/flump/commit/274c42d8dd2eecf7d03cd2ee8561a89e81a2d0e2))
+* **onboarding:** a re-run never seeds a second home when any Property account exists ([29dec77](https://github.com/mgallagher56/flump/commit/29dec77cf46ce72662c56f8536cf306103677583))
+* **onboarding:** live take-home uses the engine's one take-home selector ([f3f7a75](https://github.com/mgallagher56/flump/commit/f3f7a75619654f5212673c651d6b06cc4d4ef5d2))
+* **onboarding:** save the home estimate as a Property account at finish ([20e2da3](https://github.com/mgallagher56/flump/commit/20e2da378df24c787e1dcbff389ffe184f28cead))
+* **ops:** uuid account_id in seed and cleanup scripts; rename Semgrep-flagged test ids ([64bf029](https://github.com/mgallagher56/flump/commit/64bf02990de0ce0771ae82f111502b07ee3de649))
+* **pension:** contribution method and growth are never shown as chosen when assumed ([d371c98](https://github.com/mgallagher56/flump/commit/d371c98c92a52a4e7301553eafc8099caafa5479))
+* **pension:** the contribution method is saved only when the user changes it ([89aa397](https://github.com/mgallagher56/flump/commit/89aa397a2f89515d23933ff88ecad165c70035ac))
+* plain sign display and keep the tax trap tool title ([305cade](https://github.com/mgallagher56/flump/commit/305cade355b65cfbd9849125c7706bfa9bbd18fb))
+* pre-release pass defects (tax band, 404, tool catalogue, debt payoff, donuts, take-home, titles, layout) ([5341239](https://github.com/mgallagher56/flump/commit/5341239d3dd745dff8af2ffa3f46799d6c9e0634))
+* **savings:** one scenario zone and one guidance notice on the savings page ([7b9b642](https://github.com/mgallagher56/flump/commit/7b9b642573df9bc61801ef324f7ad331d9462bbf))
+* **security:** server-side reset confirmation, audit event, review fixes ([e71c422](https://github.com/mgallagher56/flump/commit/e71c42289ffba64a30ee37a2539d8aeea1bc45c0))
+* **ui,web,marketing:** review fixes for shared chrome ([6614cb9](https://github.com/mgallagher56/flump/commit/6614cb96d523fd7251e9c9c558289810a2e9dfbf))
+* **ui,web,marketing:** theme toggle in the drawer below the nav breakpoint; parity screenshots ([6b3605e](https://github.com/mgallagher56/flump/commit/6b3605e010f7fe3408a1a68df55c4ebdf87692be))
+* **ui:** E16 PR 2 CI fixes: note-role notice query, tabs snapshot, no regex in quietOpenLabel ([ee041be](https://github.com/mgallagher56/flump/commit/ee041be1c079e45dc9f51215954b9613f5952c42))
+* **ui:** E16 PR 2 review fixes: one primary check, split layout in simulator, visible chart summaries, web page shell, figure counting, one notice on take-home delta, 375 layouts ([9a7e490](https://github.com/mgallagher56/flump/commit/9a7e4906b83ca260a0e3b0783e9345100c9351db))
+* **ui:** taper calculator to the PR 10 acceptance list ([19459ad](https://github.com/mgallagher56/flump/commit/19459ad80cf0e0cf3141e3e68fcacbe9f39ff9a3))
+* **web,backend:** E16 PR 9 review fixes ([5c3ad19](https://github.com/mgallagher56/flump/commit/5c3ad1989c12b928c6198df0fcbbc0297da585ae))
+* **web,e2e:** titles on six signed-in routes; review fixes for the visual guard ([9d585e2](https://github.com/mgallagher56/flump/commit/9d585e2557de6b50bc4109e78324b43c5bfc9a22))
+* **web,marketing,ui:** PR 11 review fixes ([1dbd7b1](https://github.com/mgallagher56/flump/commit/1dbd7b1387e87bde65e68fc53f342a8b1f2767de))
+* **web,marketing:** review fixes for the token card and MCP copy ([417483e](https://github.com/mgallagher56/flump/commit/417483ed1bddb7cb967aabc43fb4f60af2e8af60))
+* **web,ui:** PR 8 visual fixes at 375 ([487fb69](https://github.com/mgallagher56/flump/commit/487fb69f8067221c9023c50c02e276b8986f341d))
+* **web:** 404 page uses a neutral badge and border; scripted heading focus draws no ring ([0d20d90](https://github.com/mgallagher56/flump/commit/0d20d9021818fbd41a9f7b10acdd38ae975220bb))
+* **web:** accounts list shows the type under the name on a phone ([a5398b7](https://github.com/mgallagher56/flump/commit/a5398b74cec08b9e915abc6863af48451b551854))
+* **web:** BE-04 review fixes for account deletion and export ([96939d4](https://github.com/mgallagher56/flump/commit/96939d41e9ac795e6f5ee70820609f6c00051fcc))
+* **web:** build on Railway again, Sentry token as a build-stage arg ([13bcd1b](https://github.com/mgallagher56/flump/commit/13bcd1ba23b8d1c06183d313c86ab5912965efa0))
+* **web:** E16 PR 4 group setup and check-in rows; e2e specs for new copy; baselines ([0f5cf1c](https://github.com/mgallagher56/flump/commit/0f5cf1c258e1819d3df3da9115300895818182d6))
+* **web:** E16 PR 4 review: home estimate label, honest section cap, ids, sandbox title ([326c20e](https://github.com/mgallagher56/flump/commit/326c20e21156ee989d0ce6c1a40e4584e81d38e4))
+* **web:** E16 PR 5 review fixes ([11b484d](https://github.com/mgallagher56/flump/commit/11b484d6c863e938318c4c56efb161b39869beeb))
+* **web:** E16 PR 6 review fixes: balance hero on mortgage, one rate prompt on debt, keep stored fix-end date ([3b8bf19](https://github.com/mgallagher56/flump/commit/3b8bf197f1dfe93bf0cfb57476206a1f50c531df))
+* **web:** E16 PR 7 critique and review fixes ([9616800](https://github.com/mgallagher56/flump/commit/96168002326fad51c196488b4487face9efc642a))
+* **web:** E16 PR 7 last critique fixes ([82e7dc0](https://github.com/mgallagher56/flump/commit/82e7dc0d7ef9bbb63cf1e64f5dcd711beb01975e))
+* **web:** E16 PR 7 savings rows keep the balance on the name line; screenshots README ([3e05687](https://github.com/mgallagher56/flump/commit/3e05687b94b6eb8cc6212132d633eaf5db74bfe3))
+* **web:** error heading takes focus only after an in-app navigation ([d0cbcd8](https://github.com/mgallagher56/flump/commit/d0cbcd8999ad95ac9e33ec35dd333a23cd8ba12f))
+* **web:** home counted once from its Property account; mortgage LTV is residential ([8aec193](https://github.com/mgallagher56/flump/commit/8aec1938ff6783fef2ac37549d2b151da0b4da79))
+* **web:** literal import route paths for the route inventory ([bded59f](https://github.com/mgallagher56/flump/commit/bded59fc440849f140404a4101a59d58ba8822ce))
+* **web:** mortgage partial state groups saved figures and prompt in one card ([497a19e](https://github.com/mgallagher56/flump/commit/497a19e5b5bf6b0a72e676099859e969e7d329e4))
+* **web:** onboarding has a page title; regenerate visual baselines for E16 PR 9 ([e282557](https://github.com/mgallagher56/flump/commit/e2825574bea42247c984639a3254806ca5472a68))
+* **web:** order the change-by-account table by name, not by random account id ([5c3721b](https://github.com/mgallagher56/flump/commit/5c3721b76285821971c3ecea64123989ba8aa22b))
+* **web:** PR 8 review fixes ([e62894f](https://github.com/mgallagher56/flump/commit/e62894f155e049be25c598bf8db6739a7bb1e79e))
+* **web:** review fixes for the import review page ([6d0eac8](https://github.com/mgallagher56/flump/commit/6d0eac8c7527638f34759444501aa16d8f90cdf7))
+* **web:** Storybook router mock re-exports Route, Routes and useParams for marketing page stories ([a7534b4](https://github.com/mgallagher56/flump/commit/a7534b4755340a6bfadfd8513543e572c64d367d))
+* **web:** the dashboard tax card shows the estimate's bands note ([cad9895](https://github.com/mgallagher56/flump/commit/cad98953fb1a162e50a306c1e9ed867fa62d8b02))
+* **web:** tool page drops its page-level notice; the calculator carries the one notice ([4112527](https://github.com/mgallagher56/flump/commit/411252782d1eee25f932f9fa9fd1e24e0ce48b8c))
+
+
+### CI 🤖
+
+* **be-01:** merge gate, supply-chain hardening and readiness paths ([808ab8e](https://github.com/mgallagher56/flump/commit/808ab8e41bbc72e3d968c75d58482fa3da0a98f2))
+
+
+### Refactor 🔥
+
+* **ui:** delete five components no app renders ([168073b](https://github.com/mgallagher56/flump/commit/168073b55bd2024df01485678d54a40140703144))
+* **web:** remove the legacy FLP component layer ([f98ddb1](https://github.com/mgallagher56/flump/commit/f98ddb1b2605ab01f48de33c2b7fd81421e38403))
+
+
+### Tests 🧪
+
+* **contract:** onboarding seeds the home estimate as a Property account ([2ef6f7f](https://github.com/mgallagher56/flump/commit/2ef6f7f0e73c995c2cf5d94eaeced5facb377e0d))
+* **e2e:** E16 PR 9 baselines and after shots; onboarding lead hidden on phones ([8c4d269](https://github.com/mgallagher56/flump/commit/8c4d26937bb326dc8182c59650a20222000c3f5d))
+* **web:** bank connections list uses the new connect wording ([a30f20b](https://github.com/mgallagher56/flump/commit/a30f20bf4b006eb42c04acedc4a497a31032670e))
+* **web:** consistency harness: safe to spend is a budget figure after E16 PR 4 ([5006403](https://github.com/mgallagher56/flump/commit/50064033445466de841fdbf88996cbf2888d11a1))
+* **web:** cover the import routes in the token sweep and route-key ratchets ([79b9bc9](https://github.com/mgallagher56/flump/commit/79b9bc9de365003923d97db92130d9caf51604ec))
+* **web:** drop stale token and advice allow-list entries after the dialog copy change ([947b6db](https://github.com/mgallagher56/flump/commit/947b6db214dad42473d41d7f4a0b7d2f3dbb513a))
+
+
+### Miscellaneous 🙃
+
+* **storybook:** retitle web stories into the six design-system groups ([8ddfa2c](https://github.com/mgallagher56/flump/commit/8ddfa2cf8f20b6c890809ea372e3f6166984c5d0))
+* **ui:** one notice per tool page, story group 5, caller tests and law baselines for PR 10 ([370104c](https://github.com/mgallagher56/flump/commit/370104c18218d02b1b61b9c73f01a6b7b91b76d2))
+
 ## [1.32.0](https://github.com/mgallagher56/flump/compare/flump/web-v1.31.0...flump/web-v1.32.0) (2026-11-14)
 
 
