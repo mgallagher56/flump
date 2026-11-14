@@ -1,7 +1,7 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { WorkOS } from "@workos-inc/node";
-import { safeErrorSummary } from "../log-safe";
+import { safeErrorSummary } from "../common/log-safe";
 
 /**
  * Port decoupling user identity operations from third-party auth SDKs.

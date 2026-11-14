@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { BudgetController } from "../../src/budget.controller";
-import { FinanceController } from "../../src/finance.controller";
 import { HealthController } from "../../src/health/health.controller";
-import { McpController } from "../../src/mcp.controller";
+import { McpController } from "../../src/modules/agent/mcp.controller";
+import { BudgetController } from "../../src/modules/budget/budget.controller";
+import { FinanceController } from "../../src/modules/finance/finance.controller";
+import { UserProfileController } from "../../src/modules/profile/user-profile.controller";
+import { TaxController } from "../../src/modules/tax/tax.controller";
 import { RATE_LIMIT_CLASS, RATE_LIMIT_SKIP } from "../../src/security/rate-limit.decorator";
-import { TaxController } from "../../src/tax.controller";
-import { UserProfileController } from "../../src/user-profile.controller";
 
 describe("rate limit classes on real controllers", () => {
   const classOf = (proto: object, method: string) =>

@@ -10,7 +10,7 @@ import { createTestJwks } from "../../src/auth/testing/test-jwks";
 import { TOKEN_VERIFIER } from "../../src/auth/token-verifier";
 import { WorkOsJwtVerifier } from "../../src/auth/workos-jwt.verifier";
 import { applySecurity } from "../../src/config/security.config";
-import { McpService } from "../../src/mcp.service";
+import { McpService } from "../../src/modules/agent/mcp.service";
 import { RateLimitStore } from "../../src/security/rate-limit.store";
 import { assertSafeTestDatabase } from "../../src/testing/assertSafeTestDatabase";
 

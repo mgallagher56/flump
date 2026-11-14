@@ -8,9 +8,9 @@ import {
   UnauthorizedException,
 } from "@nestjs/common";
 import { ModuleRef } from "@nestjs/core";
-import { accountDeletedException } from "../privacy/recent-login";
 import { isBetaUserAllowed } from "./beta-access";
 import { ALLOW_ERASED, ERASED_ACCOUNT_CHECK, type ErasedAccountCheck } from "./erased-account";
+import { accountDeletedException } from "./recent-login";
 import { TOKEN_VERIFIER, type TokenVerifier } from "./token-verifier";
 
 @Injectable()

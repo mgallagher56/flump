@@ -1,14 +1,14 @@
 import "reflect-metadata";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
-import { AgentAuditService } from "../../src/agent/agent-audit.service";
 import { Account } from "../../src/entities/account.entity";
 import { AccountDetail } from "../../src/entities/account-detail.entity";
 import { AgentAuditEvent } from "../../src/entities/agent-audit-event.entity";
 import { ImportBatch } from "../../src/entities/import-batch.entity";
 import { runRetentionPurge } from "../../src/jobs/retention";
-import { writeConnectedSnapshot } from "../../src/snapshots/connected-write";
-import { londonDate, londonYearMonth, monthKey } from "../../src/snapshots/london-date";
-import { writeSnapshotRows } from "../../src/snapshots/snapshot-write";
+import { AgentAuditService } from "../../src/modules/agent/agent-audit.service";
+import { writeConnectedSnapshot } from "../../src/modules/snapshots/connected-write";
+import { londonDate, londonYearMonth, monthKey } from "../../src/modules/snapshots/london-date";
+import { writeSnapshotRows } from "../../src/modules/snapshots/snapshot-write";
 import { resolveDbTestMode } from "../../src/testing/dbTestMode";
 import { ROUTE_MATRIX } from "./matrix";
 import {

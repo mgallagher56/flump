@@ -59,10 +59,16 @@ describe("bank-provider call law (BE-11, H2, H5)", () => {
   });
 
   test("covers production source only", () => {
-    expect(isCoveredFile("apps/backend/src/providers/monzo.provider.ts")).toBe(true);
-    expect(isCoveredFile("apps/backend/src/providers/monzo.provider.spec.ts")).toBe(false);
+    expect(isCoveredFile("apps/backend/src/modules/banking/providers/monzo.provider.ts")).toBe(
+      true,
+    );
+    expect(isCoveredFile("apps/backend/src/modules/banking/providers/monzo.provider.spec.ts")).toBe(
+      false,
+    );
     expect(isCoveredFile("packages/banking/src/server/provider-fetch.test.ts")).toBe(false);
-    expect(isCoveredFile("apps/backend/src/providers/__fixtures__/fake-bank.ts")).toBe(false);
+    expect(
+      isCoveredFile("apps/backend/src/modules/banking/providers/__fixtures__/fake-bank.ts"),
+    ).toBe(false);
     expect(isCoveredFile("packages/banking/src/server/provider-fetch.ts")).toBe(true);
     expect(isCoveredFile("packages/banking/src/server/adapters/csv.ts")).toBe(false);
   });

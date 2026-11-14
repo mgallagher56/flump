@@ -15,7 +15,10 @@ import { join, relative, resolve } from "node:path";
 const repoRoot = resolve(import.meta.dir, "../..");
 
 /** Directories the law covers, relative to the repo root. */
-export const PROVIDER_CODE_ROOTS = ["apps/backend/src/providers", "packages/banking/src/server"];
+export const PROVIDER_CODE_ROOTS = [
+  "apps/backend/src/modules/banking/providers",
+  "packages/banking/src/server",
+];
 
 /** In `packages/banking/src/server`, only the provider HTTP layer is bank-call code. */
 const BANKING_PROVIDER_FILE = /^packages\/banking\/src\/server\/(provider-[\w-]+|interface)\.ts$/;

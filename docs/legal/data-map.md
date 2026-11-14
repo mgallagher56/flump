@@ -46,7 +46,7 @@ in PR 421. BE-04 added account deletion, the data export and a fuller financial 
 
 ## Account deletion, export and reset (BE-04)
 
-Every table that carries `user_id` is listed once in `apps/backend/src/privacy/user-data-registry.ts`
+Every table that carries `user_id` is listed once in `apps/backend/src/modules/privacy/user-data-registry.ts`
 with its delete, export and reset handling. A unit test fails when an entity with a user id is not
 in the registry, or when a column is neither exported nor excluded with a reason; a real-Postgres
 test checks the catalogue's `user_id` tables against the registry.

@@ -9,7 +9,7 @@ import {
   USER_IDENTITY_ADAPTER,
   type WorkOSIdentityAdapter,
 } from "../../src/identity/identity.adapter";
-import { AccountDeletionService } from "../../src/privacy/account-deletion.service";
+import { AccountDeletionService } from "../../src/modules/privacy/account-deletion.service";
 import { resolveDbTestMode } from "../../src/testing/dbTestMode";
 import { ROUTE_MATRIX } from "./matrix";
 import {

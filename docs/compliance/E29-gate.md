@@ -90,7 +90,7 @@ All money and engagement decisions are the owner's.
 | Marketing claims guard        | `apps/marketing/src/claims.test.ts`                                   | E29-T3 | `claims.test.ts` exists, without advice patterns                                           |
 | MCP output policy             | `packages/mcp/src/policy/output-policy.ts`                            | E29-T6 | Not landed                                                                                 |
 | Canonical notices             | `packages/finance-engine/src/disclaimers.ts`                          | E29-T7 | Not landed                                                                                 |
-| MCP and PAT allowlist         | `apps/backend/src/mcp-access.ts`                                      | E29-T8 | Not landed                                                                                 |
+| MCP and PAT allowlist         | `apps/backend/src/auth/mcp-access.ts`                                 | E29-T8 | Not landed                                                                                 |
 
 ## Requests to other lanes (from E29-T6)
 

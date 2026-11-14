@@ -11,7 +11,7 @@ import {
   DETAIL_TRIGGER,
   LIABILITY_TYPES_SQL,
   TYPE_TRIGGER,
-} from "../snapshots/liability-sign-backfill";
+} from "../integrity/liability-sign-backfill";
 
 const TYPE_FN = "flump_check_liability_type_change";
 const DETAIL_FN = "flump_check_liability_detail_sign";

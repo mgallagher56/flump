@@ -11,21 +11,21 @@ How to read the references: `path:line` was checked on 2026-11-12. **[V-code]** 
 
 ### Fact 1. Bank data by personal access token [V-code]
 
-- The user pastes a Monzo or Starling personal access token, or a Trading 212 key. The wizard describes this as "Preview: connect via Personal Access Token or OAuth" (`apps/web/app/components/dialogs/connectBankWizard/ConnectBankWizard.tsx:89`). The form action is the `connectBank` intent (`apps/web/app/routes/app.accounts._index.tsx:55`) and the API route is `POST bank-connections` (`apps/backend/src/finance.controller.ts:176-180`).
-- The backend encrypts the token with `BankSyncOrchestrator.encryptToken` and stores it on the connection (`apps/backend/src/finance.service.ts:178`).
-- Monzo calls: `https://api.monzo.com/accounts` (`apps/backend/src/providers/monzo.provider.ts:58`), `/balance` (`:78`), `/pots` (`:105`) and `/transactions` (`:135`). Trading 212: `/api/v0/equity/account/cash` (`apps/backend/src/providers/trading212.provider.ts:58`), `/account/info` (`:76`) and `/equity/history/orders` (`:110`). Starling calls are in `apps/backend/src/providers/starling.provider.ts:48-173`.
+- The user pastes a Monzo or Starling personal access token, or a Trading 212 key. The wizard describes this as "Preview: connect via Personal Access Token or OAuth" (`apps/web/app/components/dialogs/connectBankWizard/ConnectBankWizard.tsx:89`). The form action is the `connectBank` intent (`apps/web/app/routes/app.accounts._index.tsx:55`) and the API route is `POST bank-connections` (`apps/backend/src/modules/finance/finance.controller.ts:176-180`).
+- The backend encrypts the token with `BankSyncOrchestrator.encryptToken` and stores it on the connection (`apps/backend/src/modules/finance/finance.service.ts:178`).
+- Monzo calls: `https://api.monzo.com/accounts` (`apps/backend/src/modules/banking/providers/monzo.provider.ts:58`), `/balance` (`:78`), `/pots` (`:105`) and `/transactions` (`:135`). Trading 212: `/api/v0/equity/account/cash` (`apps/backend/src/modules/banking/providers/trading212.provider.ts:58`), `/account/info` (`:76`) and `/equity/history/orders` (`:110`). Starling calls are in `apps/backend/src/modules/banking/providers/starling.provider.ts:48-173`.
 - **Change since the E19 plan:** synced transactions are no longer stored, and a migration removes those already stored (`apps/backend/src/migrations/DeleteSyncedTransactions1794355500000.ts`; `docs/legal/data-map.md`). Balances and accounts are still stored.
 - Data is shown back to the user with manually entered accounts, as net worth and debt.
 
 ### Fact 2. OAuth and open banking [V-code]
 
-- OAuth endpoints for HSBC, Barclays, Revolut and Santander are configured (`apps/backend/src/providers/open-banking-standard.provider.ts:21-44`; the E19 plan also named NatWest, Lloyds and Chase, so the solicitor should treat the list as indicative).
-- The service builds a redirect URI `${BACKEND_URL}/bank-connections/callback` only when a client id and secret are configured for the institution (`apps/backend/src/finance.service.ts:200-209`).
-- No route found handling `bank-connections/callback` at `73dc5227`: `apps/backend/src/finance.controller.ts` has `bank-connections` routes at `:166,172,176-190` only. So the OAuth flow appears not to complete. This is the E19 D-05 finding, re-checked.
+- OAuth endpoints for HSBC, Barclays, Revolut and Santander are configured (`apps/backend/src/modules/banking/providers/open-banking-standard.provider.ts:21-44`; the E19 plan also named NatWest, Lloyds and Chase, so the solicitor should treat the list as indicative).
+- The service builds a redirect URI `${BACKEND_URL}/bank-connections/callback` only when a client id and secret are configured for the institution (`apps/backend/src/modules/finance/finance.service.ts:200-209`).
+- No route found handling `bank-connections/callback` at `73dc5227`: `apps/backend/src/modules/finance/finance.controller.ts` has `bank-connections` routes at `:166,172,176-190` only. So the OAuth flow appears not to complete. This is the E19 D-05 finding, re-checked.
 
 ### Fact 3. Where bank connect is offered [V-code]
 
-- Bank connection is owner-allowlisted. `isBankConnectionAllowed` (`apps/backend/src/bank-connections.access.ts:16-31`) allows ids in `BANK_CONNECTIONS_ALLOWED_USER_IDS`, or everyone when `BANK_CONNECTIONS_ENABLED=true`, and defaults to off in production. `BankConnectionsEnabledGuard` (`:33-44`) returns a 404 `feature_disabled`. It guards `POST bank-connections` and the neighbouring routes (`apps/backend/src/finance.controller.ts:178,184,190`), and the capability endpoint reports it (`:172-175`). Reading and disconnecting existing connections is not gated.
+- Bank connection is owner-allowlisted. `isBankConnectionAllowed` (`apps/backend/src/modules/banking/bank-connections.access.ts:16-31`) allows ids in `BANK_CONNECTIONS_ALLOWED_USER_IDS`, or everyone when `BANK_CONNECTIONS_ENABLED=true`, and defaults to off in production. `BankConnectionsEnabledGuard` (`:33-44`) returns a 404 `feature_disabled`. It guards `POST bank-connections` and the neighbouring routes (`apps/backend/src/modules/finance/finance.controller.ts:178,184,190`), and the capability endpoint reports it (`:172-175`). Reading and disconnecting existing connections is not gated.
 - **Production environment values are not visible from the repo.** The owner must confirm the Railway values before this brief is sent.
 - Sign-up goes through WorkOS AuthKit (`apps/web/app/routes/signup._index.tsx:23`, `getSignUpUrl`). The route contains no allowlist. Whether sign-up is invite-only is a WorkOS configuration, not evidenced in code [owner to confirm].
 - Marketing says bank connection is coming soon (`apps/marketing/src/pages/SecurityPage.tsx:83`).
@@ -48,12 +48,12 @@ How to read the references: `path:line` was checked on 2026-11-12. **[V-code]** 
 
 ### Fact 5. MCP and AI assistants [V-code]
 
-- A user creates a personal access token (`POST mcp-tokens`, `apps/backend/src/mcp.controller.ts:58-60`) and gives it to an AI client of their choice, which calls tools over MCP (`@Post("mcp")` at `:33`). Tokens are stored as a hash (`apps/backend/src/entities/mcp-token.entity.ts:3`, `docs/legal/data-map.md`). Outputs are not stored.
+- A user creates a personal access token (`POST mcp-tokens`, `apps/backend/src/modules/agent/mcp.controller.ts:58-60`) and gives it to an AI client of their choice, which calls tools over MCP (`@Post("mcp")` at `:33`). Tokens are stored as a hash (`apps/backend/src/entities/mcp-token.entity.ts:3`, `docs/legal/data-map.md`). Outputs are not stored.
 - **Refreshed 2026-11-14 after the E17 re-plan prune (#637) [V-code].** The tools are listed in the scope table `packages/mcp/src/auth/scopes.ts` (`TOOL_SCOPES`): eight reads of the user's own data (`get_financial_snapshot`, `get_balance_history`, `get_data_coverage`, `list_accounts`, `get_budget_summary`, `get_debt_overview`, `list_tax_records`, `get_tax_year_position`) and three simulations on recorded data (`simulate_debt_payoff`, `project_net_worth`, and `compare_mortgage_overpay_vs_invest`, deprecated and first to cut). Every tool declares `readOnlyHint: true` (`packages/mcp/src/define-tool.ts:49`, `tools/simulate/common.ts:16`). There is one resource, `flump://schema` (a data dictionary), and **no prompts**: the three advisor prompts were deleted.
-- **Today there is no write tool.** Tokens are minted with read and simulate scopes only (`apps/backend/src/agent/mcp-token.service.ts:111`).
+- **Today there is no write tool.** Tokens are minted with read and simulate scopes only (`apps/backend/src/modules/agent/mcp-token.service.ts:111`).
 - **Planned: staged data entry [Planned, E17 re-plan PRs C to E; DECISIONS round 9].** An AI client with a new opt-in `write:stage` scope will be able to **stage** an import of the user's own figures (for example monthly balances from the user's spreadsheet). Nothing changes in the user's live data until the user reviews and **commits** the batch in the Flump web app under their own signed-in session; no MCP token can commit, edit or delete. Batches are capped, expire after 7 days and can be reverted as a whole. Rows carry an `agent` source marker. The data-protection analysis is the DPIA addendum ([dpia-mcp.md](dpia-mcp.md) section 11, draft). The owner's working view is that recording a user's own figures is bookkeeping, not advice (question 16).
 - The context pack, a text file designed to be pasted into a model, is downloadable at `GET mcp-tokens/context-pack` (`mcp.controller.ts:91-92`). Its wording was swept for advice-style lines in the E29 copy sweep (`a2fcc245`, `4a8288fd`); the v0.1 path:line references no longer apply.
-- **Access is restricted [V-code].** `POST mcp-tokens` and the context pack sit behind the kill switch, sign-in and the owner allowlist (`McpKillSwitchGuard`, `AuthGuard`, `McpAllowlistGuard`, `mcp.controller.ts:58-60,91-92`; `apps/backend/src/mcp-access.ts`). The owner confirms the production values: `MCP_ALLOWED_USER_IDS` set to the owner's id and `MCP_OPEN_ACCESS` unset or false.
+- **Access is restricted [V-code].** `POST mcp-tokens` and the context pack sit behind the kill switch, sign-in and the owner allowlist (`McpKillSwitchGuard`, `AuthGuard`, `McpAllowlistGuard`, `mcp.controller.ts:58-60,91-92`; `apps/backend/src/auth/mcp-access.ts`). The owner confirms the production values: `MCP_ALLOWED_USER_IDS` set to the owner's id and `MCP_OPEN_ACCESS` unset or false.
 
 ### Fact 6. No products [V-code, with caveat]
 
@@ -76,20 +76,20 @@ From E19 section 5.2 (read from primary sources by an earlier agent; PERG 15 cou
 
 ## 3. What has been built to reduce risk
 
-| Mitigation                                                            | State                              | Reference                                                            |
-| --------------------------------------------------------------------- | ---------------------------------- | -------------------------------------------------------------------- |
-| Bank connect owner-allowlisted, off by default in production          | In place [V-code]                  | `apps/backend/src/bank-connections.access.ts:16-44`                  |
-| Synced transactions not stored                                        | In place [V-code]                  | `DeleteSyncedTransactions1794355500000.ts`                           |
-| Guidance-not-advice notice on projection pages                        | In place, interim wording [V-code] | `ProjectionNotice.tsx:9-10`                                          |
-| Written advice boundary rules R1 to R8                                | Drafted, unsigned                  | [advice-boundary-policy.md](../compliance/advice-boundary-policy.md) |
-| Advice-language guard with a shrinking allow-list (web and marketing) | **[Planned]**                      | E29-T3                                                               |
-| MCP output and description policy, checked by tests                   | In place [V-code, 2026-11-14]      | `packages/mcp/src/policy/output-policy.ts` and its tests (E29-T6)    |
-| Canonical notices, including the beta notice                          | **[Planned]**                      | E29-T7                                                               |
-| MCP and PAT creation allowlisted                                      | In place [V-code, 2026-11-14]      | `apps/backend/src/mcp-access.ts`, `mcp.controller.ts:58-60,91-92`    |
-| Draft DPIA for MCP                                                    | Drafted v0.2, unsigned             | [dpia-mcp.md](dpia-mcp.md); section 11 covers staged imports (draft) |
-| MCP advisor prompts and the student-loan and legacy tax tools removed | In place [V-code, 2026-11-14]      | E17 re-plan prune (#637); `packages/mcp/src/auth/scopes.ts`          |
-| Copy rewrite and neutral engine observations                          | **[Planned]**                      | E29-T4, T5                                                           |
-| Gate checklist                                                        | Drafted                            | [E29-gate.md](../compliance/E29-gate.md)                             |
+| Mitigation                                                            | State                              | Reference                                                              |
+| --------------------------------------------------------------------- | ---------------------------------- | ---------------------------------------------------------------------- |
+| Bank connect owner-allowlisted, off by default in production          | In place [V-code]                  | `apps/backend/src/modules/banking/bank-connections.access.ts:16-44`    |
+| Synced transactions not stored                                        | In place [V-code]                  | `DeleteSyncedTransactions1794355500000.ts`                             |
+| Guidance-not-advice notice on projection pages                        | In place, interim wording [V-code] | `ProjectionNotice.tsx:9-10`                                            |
+| Written advice boundary rules R1 to R8                                | Drafted, unsigned                  | [advice-boundary-policy.md](../compliance/advice-boundary-policy.md)   |
+| Advice-language guard with a shrinking allow-list (web and marketing) | **[Planned]**                      | E29-T3                                                                 |
+| MCP output and description policy, checked by tests                   | In place [V-code, 2026-11-14]      | `packages/mcp/src/policy/output-policy.ts` and its tests (E29-T6)      |
+| Canonical notices, including the beta notice                          | **[Planned]**                      | E29-T7                                                                 |
+| MCP and PAT creation allowlisted                                      | In place [V-code, 2026-11-14]      | `apps/backend/src/auth/mcp-access.ts`, `mcp.controller.ts:58-60,91-92` |
+| Draft DPIA for MCP                                                    | Drafted v0.2, unsigned             | [dpia-mcp.md](dpia-mcp.md); section 11 covers staged imports (draft)   |
+| MCP advisor prompts and the student-loan and legacy tax tools removed | In place [V-code, 2026-11-14]      | E17 re-plan prune (#637); `packages/mcp/src/auth/scopes.ts`            |
+| Copy rewrite and neutral engine observations                          | **[Planned]**                      | E29-T4, T5                                                             |
+| Gate checklist                                                        | Drafted                            | [E29-gate.md](../compliance/E29-gate.md)                               |
 
 ## 4. Scope of the near-term product
 
