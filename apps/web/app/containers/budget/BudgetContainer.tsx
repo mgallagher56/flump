@@ -5,7 +5,11 @@ import {
   DeleteBudgetEntryResponse,
   etagFor,
 } from "@flump/api-contract";
-import { PortfolioSnapshot } from "@flump/finance-engine";
+import {
+  DEBT_CATEGORY,
+  findPossibleDuplicateDebtRows,
+  PortfolioSnapshot,
+} from "@flump/finance-engine";
 import {
   Button,
   DataList,
@@ -15,6 +19,7 @@ import {
   InlineAlert,
   PageBody,
   PageHeader,
+  useOptionalToast,
 } from "@repo/ui";
 import { ListChecks, Pencil } from "lucide-react";
 import { type FC, useEffect, useMemo, useRef, useState } from "react";
@@ -24,6 +29,7 @@ import { BudgetCategoryList } from "~/features/budget/components/BudgetCategoryL
 import { BudgetEditor } from "~/features/budget/components/BudgetEditor";
 import { BudgetOverview } from "~/features/budget/components/BudgetOverview";
 import { BudgetSetupWizard } from "~/features/budget/components/BudgetSetupWizard";
+import { DuplicateDebtNotice } from "~/features/budget/components/DuplicateDebtNotice";
 import { RunwayCalculator } from "~/features/budget/components/RunwayCalculator";
 import { DebtHelpLink } from "~/features/debt/components/DebtHelpLink";
 import {
@@ -59,6 +65,31 @@ function writableEntryFields<T extends Partial<BudgetEntry>>(entry: T) {
     ...fields
   } = entry;
   return fields;
+}
+
+/**
+ * Entries the person chose to keep where they are, remembered for this browser session only: the
+ * profile has no field for it, and a schema change is out of scope. Storage can be unavailable
+ * (private windows, blocked site data), so every read and write is guarded.
+ */
+const KEPT_DEBT_ROWS_KEY = "flump.budget.keptDebtRows";
+
+function readKeptDebtRows(): string[] {
+  try {
+    const raw = window.sessionStorage.getItem(KEPT_DEBT_ROWS_KEY);
+    const parsed: unknown = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed.filter((id) => typeof id === "string") : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeKeptDebtRows(ids: string[]): void {
+  try {
+    window.sessionStorage.setItem(KEPT_DEBT_ROWS_KEY, JSON.stringify(ids));
+  } catch {
+    // Kept for this page view only.
+  }
 }
 
 const BudgetContainer: FC = () => {
@@ -136,9 +167,13 @@ const BudgetContainer: FC = () => {
     }));
   }, [accountDetails]);
 
+  const snapshot = useMemo(
+    () => new PortfolioSnapshot(accounts, accountDetails),
+    [accounts, accountDetails],
+  );
+
   // Sync current balance for all accounts from latest accountDetails or direct balance
   const accountsWithBalances = useMemo(() => {
-    const snapshot = new PortfolioSnapshot(accounts, accountDetails);
     return accounts.map((acc: any) => {
       const resolved = snapshot.getAccount(acc.id);
       return {
@@ -146,7 +181,7 @@ const BudgetContainer: FC = () => {
         balance: resolved?.nominalBalance ?? (Number(acc.balance) || 0),
       };
     });
-  }, [accounts, accountDetails]);
+  }, [accounts, snapshot]);
 
   // Housing saved on this page, laid over the loader profile until the next load (E32).
   const [savedHousing, setSavedHousing] = useState<{
@@ -251,6 +286,52 @@ const BudgetContainer: FC = () => {
     setActionError(null);
     setEntries((prev) => prev.filter((e) => e.id !== id));
     return true;
+  };
+
+  // Entries that may be a debt's own payment, so counted twice. Read view only; the engine only
+  // reports them and changes no total.
+  const [keptDebtRows, setKeptDebtRows] = useState<string[]>([]);
+  // Read after mount, so the server and first client render agree.
+  useEffect(() => {
+    const stored = readKeptDebtRows();
+    if (stored.length > 0) setKeptDebtRows((prev) => Array.from(new Set([...prev, ...stored])));
+  }, []);
+  const duplicateDebtRows = useMemo(
+    () =>
+      findPossibleDuplicateDebtRows(
+        entries.map((e) => ({ ...e, amount: Number(e.amount) || 0 })),
+        snapshot,
+      ).filter((c) => !keptDebtRows.includes(c.rowId)),
+    [entries, snapshot, keptDebtRows],
+  );
+  const toastApi = useOptionalToast();
+
+  const keepDebtRow = (rowId: string) => {
+    setKeptDebtRows((prev) => {
+      const next = prev.includes(rowId) ? prev : [...prev, rowId];
+      writeKeptDebtRows(next);
+      return next;
+    });
+  };
+
+  const moveRowToDebts = async (rowId: string) => {
+    await updateEntry(rowId, { category: DEBT_CATEGORY });
+    toastApi?.toast({ title: "Saved" });
+  };
+
+  const renderDuplicateNotices = (category: string) => {
+    const inCategory = duplicateDebtRows.filter((c) => c.rowCategory === category);
+    if (inCategory.length === 0) return null;
+    return inCategory.map((c) => (
+      <DuplicateDebtNotice
+        debtAccountName={c.debtAccountName}
+        key={c.rowId}
+        monthlyAmount={c.monthlyAmount}
+        rowName={c.rowName}
+        onKeep={() => keepDebtRow(c.rowId)}
+        onMove={() => moveRowToDebts(c.rowId)}
+      />
+    ));
   };
 
   const handleWizardComplete = async () => {
@@ -438,6 +519,7 @@ const BudgetContainer: FC = () => {
                   : undefined
               }
               metaFor={(cat) => (cat === "housing" ? housingTenureLabel(housingStatus) : undefined)}
+              noticeFor={renderDuplicateNotices}
               openCategory={openCategory}
               renderEntries={renderEntries}
               onToggleCategory={(cat) => setOpenCategory((prev) => (prev === cat ? null : cat))}

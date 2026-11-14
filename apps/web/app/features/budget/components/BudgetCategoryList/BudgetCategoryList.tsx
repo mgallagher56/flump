@@ -40,6 +40,11 @@ export interface BudgetCategoryListProps {
    * row's amount ("£1,250 a month, open the mortgage page").
    */
   hrefFor?: (category: string) => { to: string; page: string } | undefined;
+  /**
+   * A quiet note shown under a row, outside its opened entries, so it is seen without opening
+   * the category (e.g. an entry that may already be counted with your debts).
+   */
+  noticeFor?: (category: string) => ReactNode;
 }
 
 export interface CategoryRow {
@@ -97,6 +102,7 @@ export const BudgetCategoryList: FC<BudgetCategoryListProps> = ({
   onAddCategory,
   metaFor,
   hrefFor,
+  noticeFor,
 }) => {
   const slots = categoryList();
   const rows = useMemo(() => rankCategories(categories, entries), [categories, entries]);
@@ -115,6 +121,7 @@ export const BudgetCategoryList: FC<BudgetCategoryListProps> = ({
           const panelId = `budget-category-${slug}-entries`;
           const meta = metaFor?.(row.category);
           const link = hrefFor?.(row.category);
+          const notice = noticeFor?.(row.category) ?? null;
           const identity = (end: ReactNode, spoken?: string) => (
             <span className={slots.identity}>
               <span className={slots.text}>
@@ -153,6 +160,7 @@ export const BudgetCategoryList: FC<BudgetCategoryListProps> = ({
                     spoken,
                   )}
                 </SampleAwareLink>
+                {notice}
               </li>
             );
           }
@@ -173,6 +181,7 @@ export const BudgetCategoryList: FC<BudgetCategoryListProps> = ({
                   </span>,
                 )}
               </button>
+              {notice}
               <div className={entriesPanel()} hidden={!open} id={panelId}>
                 {open ? renderEntries(row.category) : null}
               </div>
