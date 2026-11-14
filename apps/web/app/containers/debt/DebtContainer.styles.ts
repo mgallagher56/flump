@@ -1,11 +1,16 @@
 import { css } from "@repo/ui/styled-system/css";
 
-export const pageRoot = css({
-  display: "flex",
-  flexDirection: "column",
-  gap: "20px",
-  paddingBottom: "64px",
-});
+/** `PageBody` sets the width, gutters and gaps; the page keeps only its bottom space. */
+export const pageRoot = css({ paddingBottom: "64px", minWidth: 0, width: "100%" });
+
+/**
+ * Empty page: the header and the empty state sit together (PageHeader brings its own bottom
+ * margin), matching the mortgage page's empty view so both start at the same height.
+ */
+export const emptyStack = css({ display: "flex", flexDirection: "column", minWidth: 0 });
+
+/** The empty state spans the page's full content width. */
+export const emptyWrap = css({ width: "100%" });
 
 /** A failed save: a real error, so the danger status colours apply (not a judgement). */
 export const errorBanner = css({
@@ -18,17 +23,6 @@ export const errorBanner = css({
   backgroundColor: "status.danger.bg",
   color: "status.danger.text",
   fontSize: "sm",
-});
-
-export const footerLink = css({
-  padding: 0,
-  background: "transparent",
-  border: "none",
-  color: "primary",
-  textDecoration: "underline",
-  cursor: "pointer",
-  minHeight: "touch",
-  _focusVisible: { outline: "2px solid", outlineColor: "border.focusRing", outlineOffset: "2px" },
 });
 
 export const plainLink = css({

@@ -9,7 +9,8 @@ describe("<MortgageTracker />", () => {
     expect(getByText("Total interest (estimate)")).toBeDefined();
     expect(getByText("Total to pay (estimate)")).toBeDefined();
     expect(getByText(/40.0% of the total is interest/)).toBeDefined();
-    expect(getByText(/^Estimate: over 25 years, the total to pay is/)).toBeDefined();
+    // The three figures are stated once, with no sentence restating them.
+    expect(container.textContent).not.toMatch(/Estimate: over|To see what overpaying/);
     expect(container.querySelectorAll("input, select")).toHaveLength(0);
     // The monthly payment is the page's hero, never repeated here.
     expect(container.textContent).not.toContain("Monthly payment");
@@ -22,7 +23,14 @@ describe("<MortgageTracker />", () => {
       <MortgageTracker {...defaultProps} mortgageType="interest-only" />,
     );
     expect(getByText("Loan to repay at the end of the term")).toBeDefined();
-    expect(getByText(/is still owed in full at the end of the term/)).toBeDefined();
+    expect(getByText(/Loan to repay at the end:/)).toBeDefined();
+  });
+
+  test("works over a stored term in months without decimal noise", () => {
+    const { container } = customRender(
+      <MortgageTracker {...defaultProps} remainingTerm={218 / 12} />,
+    );
+    expect(container.textContent ?? "").not.toMatch(/NaN|Infinity|18\.1/);
   });
 
   test("says what is missing, never zero, when the inputs are unknown", () => {

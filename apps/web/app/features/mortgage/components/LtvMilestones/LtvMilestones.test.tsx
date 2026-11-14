@@ -31,9 +31,34 @@ describe("<LtvMilestones />", () => {
     expect(screen.getByText("Above this band")).toBeDefined();
     expect(screen.getByText("Your LTV is within this band")).toBeDefined();
     expect(screen.getByText(/less to owe to reach this band/)).toBeDefined();
-    expect(screen.getByText(/Current LTV: 80.0%/)).toBeDefined();
+    expect(screen.getByText(/Current LTV: 80%/)).toBeDefined();
+    expect(container.textContent).not.toMatch(/80\.0%/);
+    // Owning all of it is the usual case, so no share line.
+    expect(container.textContent).not.toMatch(/Share you own/);
     expect(container.textContent).not.toMatch(/Unlocked|Locked|tier|unlock|\/mo/);
     expect(container.innerHTML).not.toMatch(/positive|warning|danger/);
+  });
+
+  it("collapses bands the LTV is already within into one row, and shows a part share", () => {
+    const { container } = render(
+      <LtvMilestones
+        currentLtv={38.7}
+        loanAmount={135400}
+        milestones={[90, 85, 75, 60].map((targetLtvPct) => ({
+          targetLtvPct,
+          isAchieved: true,
+          lumpSumNeededGbp: 0,
+        }))}
+        ownershipSharePct={50}
+        propertyValue={350000}
+        onModelOverpayment={vi.fn()}
+      />,
+    );
+    expect(container.querySelectorAll("[data-list-row]")).toHaveLength(1);
+    expect(screen.getByText("90%, 85%, 75% and 60% LTV bands")).toBeDefined();
+    expect(screen.getByText("Your LTV is within these bands")).toBeDefined();
+    expect(screen.getByText(/Current LTV: 38.7%/)).toBeDefined();
+    expect(container.textContent).toMatch(/Share you own/);
   });
 
   it("models the monthly overpayment for a band", () => {

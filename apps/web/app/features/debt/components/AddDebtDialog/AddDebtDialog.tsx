@@ -6,10 +6,12 @@ import {
   Dialog,
   FormField,
   PercentInput,
+  Select,
   TextInput,
 } from "@repo/ui";
+import { cx } from "@repo/ui/styled-system/css";
 import { type FC, type FormEvent, useState } from "react";
-import { debtForm, fieldRow, nativeSelect } from "./AddDebtDialog.styles";
+import { debtForm, deleteAction, fieldRow, footerButton } from "./AddDebtDialog.styles";
 
 export interface AddDebtDialogProps {
   isOpen: boolean;
@@ -22,14 +24,28 @@ export interface AddDebtDialogProps {
   debt?: DebtItem;
   /** Called in edit mode with only the fields that changed. */
   onEditDebt?: (id: string, updates: Partial<DebtItem>) => void;
+  /**
+   * Edit mode only: the "Delete debt" action closes this dialog and calls this with the debt's id.
+   * The page asks for confirmation before anything is deleted.
+   */
+  onDeleteDebt?: (id: string) => void;
 }
 
 const FORM_ID = "add-debt-form";
 
+const TYPE_OPTIONS: { value: NonNullable<DebtItem["type"]>; label: string }[] = [
+  { value: "credit_card", label: "Credit card" },
+  { value: "loan", label: "Personal loan" },
+  { value: "overdraft", label: "Arranged overdraft" },
+  { value: "bnpl", label: "Buy now, pay later" },
+  { value: "car_finance", label: "Car finance or HP" },
+  { value: "other", label: "Other debt" },
+];
+
 const toFieldValue = (value: number | undefined): number | null =>
   value === undefined || !Number.isFinite(value) ? null : value;
 
-interface DebtFormProps extends Omit<AddDebtDialogProps, "isOpen"> {}
+interface DebtFormProps extends Omit<AddDebtDialogProps, "isOpen" | "onDeleteDebt"> {}
 
 /** Mounted only while the dialog is open, so the fields restart from the debt being edited. */
 const DebtForm: FC<DebtFormProps> = ({ onClose, onAddDebt, debt, onEditDebt }) => {
@@ -100,7 +116,7 @@ const DebtForm: FC<DebtFormProps> = ({ onClose, onAddDebt, debt, onEditDebt }) =
         {(field) => (
           <TextInput
             {...controlProps(field)}
-            placeholder="For example, Barclaycard Platinum, Klarna or overdraft"
+            placeholder="For example, credit card or car loan"
             value={name}
             onChange={(e) => setName(e.target.value)}
           />
@@ -111,20 +127,12 @@ const DebtForm: FC<DebtFormProps> = ({ onClose, onAddDebt, debt, onEditDebt }) =
         <div className={fieldRow()}>
           <FormField label="Type">
             {(field) => (
-              // TODO(E15 T2.2b): swap for @repo/ui Select
-              <select
-                className={nativeSelect()}
-                id={field.id}
+              <Select
+                {...controlProps(field)}
+                options={TYPE_OPTIONS}
                 value={type}
                 onChange={(e) => setType(e.target.value as DebtItem["type"])}
-              >
-                <option value="credit_card">Credit card</option>
-                <option value="loan">Personal loan</option>
-                <option value="overdraft">Arranged overdraft</option>
-                <option value="bnpl">Buy now, pay later</option>
-                <option value="car_finance">Car finance or HP</option>
-                <option value="other">Other debt</option>
-              </select>
+              />
             )}
           </FormField>
           <FormField error={submitted ? balanceError : undefined} label="Balance you owe" required>
@@ -161,8 +169,14 @@ const DebtForm: FC<DebtFormProps> = ({ onClose, onAddDebt, debt, onEditDebt }) =
   );
 };
 
-export const AddDebtDialog: FC<AddDebtDialogProps> = ({ isOpen, onClose, ...formProps }) => {
-  const isEdit = formProps.debt !== undefined;
+export const AddDebtDialog: FC<AddDebtDialogProps> = ({
+  isOpen,
+  onClose,
+  onDeleteDebt,
+  ...formProps
+}) => {
+  const { debt } = formProps;
+  const isEdit = debt !== undefined;
   return (
     <Dialog
       closeLabel="Close"
@@ -173,10 +187,23 @@ export const AddDebtDialog: FC<AddDebtDialogProps> = ({ isOpen, onClose, ...form
       }
       footer={
         <>
-          <Button type="button" variant="ghost" onClick={onClose}>
+          {debt && onDeleteDebt ? (
+            <Button
+              className={cx(deleteAction, footerButton)}
+              type="button"
+              variant="outline"
+              onClick={() => {
+                onClose();
+                onDeleteDebt(debt.id);
+              }}
+            >
+              Delete debt
+            </Button>
+          ) : null}
+          <Button className={footerButton} type="button" variant="ghost" onClick={onClose}>
             Cancel
           </Button>
-          <Button form={FORM_ID} type="submit">
+          <Button className={footerButton} form={FORM_ID} type="submit">
             {isEdit ? "Save changes" : "Add debt"}
           </Button>
         </>

@@ -70,7 +70,7 @@ const okFetch = () => vi.spyOn(globalThis, "fetch").mockImplementation(contractF
 
 /** Radix tabs select on mouse down, not click. */
 const selectTab = (name: string | RegExp) => fireEvent.mouseDown(screen.getByRole("tab", { name }));
-/** A field in the edit dialog (the hidden rate change tool has its own "Years left" slider). */
+/** A field in the edit dialog. */
 const field = (label: RegExp) =>
   within(screen.getByRole("dialog")).getByLabelText(label) as HTMLInputElement;
 const openEdit = () => fireEvent.click(screen.getByRole("button", { name: /^Edit$/ }));
@@ -96,12 +96,14 @@ describe("<MortgageContainer />", () => {
       expect(getByRole("heading", { level: 1, name: "Your mortgage" })).toBeDefined();
       expect(
         getByRole("heading", {
-          name: "Add your years left to see your payoff date and what overpaying would change",
+          name: "Add your years left to see when the term ends and what overpaying would change",
         }),
       ).toBeDefined();
       const prompt = container.querySelector("#mortgage-prompt") as HTMLElement;
       expect(prompt.textContent).toContain("£135,400");
-      expect(prompt.textContent).toContain("4.50%");
+      // Rates show as entered, never padded to "4.50%".
+      expect(prompt.textContent).toContain("4.5%");
+      expect(prompt.textContent).not.toContain("4.50%");
       expect(countFigures(container)).toBe(2);
       expect(countNotSet(container)).toBe(0);
       expect(queryByRole("region", { name: "Model a change to your mortgage" })).toBeNull();
@@ -114,7 +116,7 @@ describe("<MortgageContainer />", () => {
       const { getByRole, queryByText } = customRender(<MortgageContainer />);
       expect(
         getByRole("heading", {
-          name: "Add your interest rate and years left to see your payoff date and what overpaying would change",
+          name: "Add your interest rate and years left to see when the term ends and what overpaying would change",
         }),
       ).toBeDefined();
       expect(queryByText(/150,000/)).toBeNull();
@@ -133,23 +135,28 @@ describe("<MortgageContainer />", () => {
       expect(field(/^Interest rate/)).toBeDefined();
     });
 
-    test("with no mortgage account, one prompt sends the user to add one", () => {
+    test("with no mortgage on record, the empty state does not assume one", () => {
       loaderData = { accounts: [], accountDetails: [] };
-      const { getByRole, queryByText, container } = customRender(<MortgageContainer />);
+      const { getByRole, getByText, queryByText, container } = customRender(<MortgageContainer />);
+      const empty = container.querySelector("#mortgage-empty") as HTMLElement;
+      expect(empty).not.toBeNull();
+      expect(container.querySelector("#mortgage-empty-illustration")).not.toBeNull();
+      expect(getByRole("heading", { name: "No mortgage added" })).toBeDefined();
       expect(
-        getByRole("heading", {
-          name: "Add your mortgage to see your payment, balance and payoff date",
-        }),
+        getByText("If you have a mortgage, add it to see your payment and when the term ends."),
       ).toBeDefined();
+      // No copy that assumes the reader owns a home or has a mortgage.
+      expect(container.textContent).not.toMatch(/What you owe on your mortgage|payoff date/);
       expect(queryByText(/150,000/)).toBeNull();
       expect(countNotSet(container)).toBe(0);
-      fireEvent.click(getByRole("button", { name: "Add mortgage account" }));
+      fireEvent.click(getByRole("button", { name: "Add a mortgage" }));
       expect(mockNavigate).toHaveBeenCalledWith("/app/accounts");
     });
 
-    test("details that say there is a mortgage but no account get one factual prompt", () => {
+    test("details that say there is a mortgage but no account keep the factual empty state", () => {
       loaderData = { accounts: [], accountDetails: [], userProfile: { hasMortgage: true } };
-      const { getByRole, getByText, getAllByRole } = customRender(<MortgageContainer />);
+      const { getByRole, getByText, getAllByRole, container } = customRender(<MortgageContainer />);
+      expect(container.querySelector("#mortgage-empty")).not.toBeNull();
       expect(getByRole("heading", { name: "No mortgage account added" })).toBeDefined();
       expect(getByText(/Your details say you have a mortgage/)).toBeDefined();
       expect(getAllByRole("button", { name: "Add mortgage account" })).toHaveLength(1);
@@ -164,7 +171,7 @@ describe("<MortgageContainer />", () => {
   });
 
   describe("complete state", () => {
-    test("hero is the saved balance; the strip of four leads with the estimates", () => {
+    test("hero is the saved balance when no payment is saved; a strip of three", () => {
       loaderData = loaded();
       const { container, getByText } = customRender(<MortgageContainer />);
       const heroes = container.querySelectorAll("[data-tone='hero']");
@@ -175,37 +182,102 @@ describe("<MortgageContainer />", () => {
       expect(hero.textContent).toContain("£135,400");
       expect(hero.textContent).not.toMatch(/Estimate|Monthly payment|paid off/i);
       const saved = container.querySelector("#mortgage-saved") as HTMLElement;
-      expect(saved.textContent).toMatch(/Paid off by[A-Z][a-z]{2,3} \d{4}Estimate/);
-      expect(saved.textContent).toMatch(/Monthly payment£\d{3}Estimate/);
-      expect(saved.textContent).toContain("4.50%");
+      // Ruling D2: the subline is a saved fact (the repayment type), never a term end month.
+      expect(hero.textContent).toContain("Repayment mortgage");
+      expect(hero.textContent).not.toMatch(/Term ends/);
+      expect(saved.textContent).not.toMatch(/Paid off by|Sept/);
+      expect(saved.textContent).toMatch(/Monthly payment.*£\d{3}Estimate/);
+      expect(saved.querySelectorAll("[data-kpi-value]")).toHaveLength(3);
+      expect(saved.textContent).toContain("4.5%");
+      expect(saved.textContent).not.toContain("4.50%");
       expect(saved.textContent).toContain("Loan to value");
       expect(saved.textContent).toContain("38.7%");
       // The balance is the hero, so it is not repeated as a KPI.
       expect(saved.textContent?.match(/£135,400/g)).toHaveLength(1);
-      expect(saved.textContent?.indexOf("Paid off by")).toBeLessThan(
-        saved.textContent?.indexOf("Monthly payment") ?? 0,
-      );
       expect(getByText("Your details")).toBeDefined();
+    });
+
+    test("a saved monthly payment is the hero, with the fixed rate end as its subline", () => {
+      // The seeded homeowner: £186,000 at 4.5%, 218 months left, £1,250 a month saved.
+      loaderData = {
+        accounts: [
+          account({
+            balance: -186000,
+            interestRate: 4.5,
+            termMonths: 218,
+            monthlyContribution: 1250,
+            fixedRateEndDate: "2099-07-01",
+          }),
+          { id: "home", name: "Home", type: "Property", balance: 310000 },
+        ],
+        accountDetails: [],
+        userProfile: {},
+      };
+      const { container, getByText } = customRender(<MortgageContainer />);
+      const heroes = container.querySelectorAll("[data-tone='hero']");
+      expect(heroes).toHaveLength(1);
+      const hero = heroes[0] as HTMLElement;
+      expect(hero.textContent).toContain("Monthly payment");
+      expect(hero.textContent).toContain("£1,250");
+      expect(hero.textContent).toContain("Fixed until Jul 2099");
+      expect(hero.textContent).not.toMatch(/Term ends|Estimate|Paid off/i);
+      const saved = container.querySelector("#mortgage-saved") as HTMLElement;
+      expect(saved.querySelectorAll("[data-kpi-value]")).toHaveLength(3);
+      expect(saved.textContent).toContain("Remaining balance");
+      expect(saved.textContent).toContain("£186,000");
+      // The rate KPI does not repeat the fix end.
+      expect(saved.textContent?.match(/Fixed until/g)).toHaveLength(1);
+      // Loan to value to at most 1 place, a trailing zero dropped.
+      expect(saved.textContent).toContain("60%");
+      expect(saved.textContent).not.toContain("60.0%");
+      expect(saved.textContent).not.toMatch(/Estimate/);
+      // "Your details" shows years left in years and months.
+      expect(getByText("18 years 2 months")).toBeDefined();
+      expectPageRules(container, { maxNotSet: 0, projectionNotices: 1 });
+    });
+
+    test("the rate change tool shows the saved payment as the current payment", () => {
+      loaderData = {
+        accounts: [
+          account({ interestRate: 4.5, termMonths: 218, monthlyContribution: 1250 }),
+          { id: "home", name: "Home", type: "Property", balance: 350000 },
+        ],
+        accountDetails: [],
+        userProfile: {},
+      };
+      const { container } = customRender(<MortgageContainer />);
+      selectTab("Rate change");
+      const results = container.querySelector("#remortgage-results") as HTMLElement;
+      expect(results.textContent).toContain("Current payment£1,250");
+      expect(results.textContent).not.toContain("Current payment (estimate)");
     });
 
     test("page rules: one hero, one notice below the h1, one primary, first view within budget", () => {
       loaderData = loaded();
       const { container } = customRender(<MortgageContainer />);
       expectPageRules(container, { maxNotSet: 0, projectionNotices: 1 });
-      const firstView = [
-        container.querySelector("#mortgage-saved"),
-        container.querySelector("#mortgage-summary"),
-      ];
-      const figures = firstView.reduce((sum, el) => sum + (el ? countFigures(el) : 0), 0);
-      expect(figures).toBeLessThanOrEqual(10);
+      // First view: the hero and three KPIs. "Your details" sits below the scenario zone.
+      expect(countFigures(container.querySelector("#mortgage-saved") as HTMLElement)).toBe(4);
+      const zone = container.querySelector("#mortgage-scenario") as HTMLElement;
+      const summary = container.querySelector("#mortgage-summary") as HTMLElement;
+      expect(zone.compareDocumentPosition(summary) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     });
 
-    test("the fixed rate end date is the rate's caption", () => {
+    test("the fixed rate end date is the hero subline", () => {
       loaderData = loaded({ fixedRateEndDate: "2099-10-01" });
       const { container } = customRender(<MortgageContainer />);
-      expect(container.querySelector("#mortgage-saved")?.textContent).toContain(
-        "Fixed until Oct 2099",
-      );
+      const hero = container.querySelector("[data-tone='hero']") as HTMLElement;
+      expect(hero.textContent).toContain("Fixed until Oct 2099");
+      expect(
+        container.querySelector("#mortgage-saved")?.textContent?.match(/Fixed until/g),
+      ).toHaveLength(1);
+    });
+
+    test("an ended fixed rate reads as ended in the hero subline", () => {
+      loaderData = loaded({ fixedRateEndDate: "2001-01-01" });
+      const { container } = customRender(<MortgageContainer />);
+      const hero = container.querySelector("[data-tone='hero']") as HTMLElement;
+      expect(hero.textContent).toContain("Fixed rate has ended");
     });
 
     test("loan to value without a home value is one Not set with one action", () => {
@@ -217,16 +289,15 @@ describe("<MortgageContainer />", () => {
       expect(mockNavigate).toHaveBeenCalledWith("/app/accounts");
     });
 
-    test("cost details and loan to value bands are quiet drawers, closed at first", () => {
+    test("cost details are a quiet drawer, closed at first, and there is no bands drawer", () => {
       loaderData = loaded();
-      const { container, getByRole } = customRender(<MortgageContainer />);
+      const { container, getByRole, queryByRole } = customRender(<MortgageContainer />);
       expect(container.querySelector("#mock-tracker")).toBeNull();
       fireEvent.click(getByRole("button", { name: "Show cost details" }));
       expect(container.querySelector("#mock-tracker")).not.toBeNull();
-      fireEvent.click(getByRole("button", { name: "Show loan to value bands" }));
-      expect(container.querySelector("#ltv-milestones-heading")?.textContent).toContain(
-        "Current LTV: 38.7%",
-      );
+      // Loan to value stays as the KPI only.
+      expect(queryByRole("button", { name: "Show loan to value bands" })).toBeNull();
+      expect(container.querySelector("#ltv-milestones-heading")).toBeNull();
     });
 
     test("no separate housing cost card: the payment is in the strip", () => {
@@ -291,12 +362,12 @@ describe("<MortgageContainer />", () => {
       );
     });
 
-    test("the one notice is the standard notice with the ERC fact as its lead", () => {
+    test("the one notice is the standard notice, with no ERC lead", () => {
       loaderData = loaded();
       const { container } = customRender(<MortgageContainer />);
       const notices = container.querySelectorAll("[data-notice='projection']");
       expect(notices).toHaveLength(1);
-      expect(notices[0]?.textContent).toMatch(/^Many fixed-rate deals allow overpayments/);
+      expect(notices[0]?.textContent).not.toMatch(/fixed-rate deals|early repayment/);
     });
 
     test("starting figures sit behind More options and start from the saved figures", () => {
@@ -340,21 +411,44 @@ describe("<MortgageContainer />", () => {
       expect(window.location.search).toBe("");
     });
 
-    test("the zone states its starting point and reset is absent until a change", () => {
+    test("the zone does not repeat the saved figures and reset is absent until a change", () => {
       loaderData = loaded();
-      const { getByText, queryByRole } = customRender(<MortgageContainer />);
-      expect(
-        getByText(/Starting from your figures: £135,400 at 4.5%, 20 years left/),
-      ).toBeDefined();
+      const { queryByText, queryByRole } = customRender(<MortgageContainer />);
+      // The starting figures are the inputs under More options, so no basis line repeats them.
+      expect(queryByText(/Starting from your figures/)).toBeNull();
       expect(queryByRole("button", { name: "Reset to saved figures" })).toBeNull();
     });
 
-    test("the rate change tool uses the user's real property value and fix date", () => {
+    test("the rate change tool uses the fix date, and the zone has one More options", () => {
       loaderData = loaded({ fixedRateEndDate: "2099-10-01" });
-      const { getAllByText, queryByText } = customRender(<MortgageContainer />);
+      const { queryByText } = customRender(<MortgageContainer />);
       selectTab("Rate change");
-      expect(getAllByText(/current LTV:/i).length).toBeGreaterThan(0);
+      // No loan to value bands in the tool.
+      expect(screen.getAllByRole("button", { name: "More options" })).toHaveLength(1);
+      expect(queryByText(/Next LTV band/)).toBeNull();
       expect(queryByText(/Fixed rate end date not set/)).toBeNull();
+    });
+
+    test("once the rate to try differs from the saved rate, the rate change tool drops the saved payment", () => {
+      loaderData = {
+        accounts: [
+          account({ interestRate: 4.5, termMonths: 218, monthlyContribution: 1250 }),
+          { id: "home", name: "Home", type: "Property", balance: 350000 },
+        ],
+        accountDetails: [],
+        userProfile: {},
+      };
+      const { container, getByRole, getByLabelText } = customRender(<MortgageContainer />);
+      fireEvent.click(getByRole("button", { name: "More options" }));
+      fireEvent.change(getByLabelText("Rate to try"), { target: { value: "3" } });
+      selectTab("Rate change");
+      const results = container.querySelector("#remortgage-results") as HTMLElement;
+      expect(results.textContent).toContain("Current payment (estimate)");
+      expect(results.textContent).not.toContain("£1,250");
+      // The default new rate (5.2%) is higher than 3%, so the change is never a fall.
+      const outcome = container.querySelector("#remortgage-outcome") as HTMLElement;
+      expect(outcome.textContent).toMatch(/\+£[\d,]+ a month/);
+      expect(outcome.textContent).not.toMatch(/\u2212£/);
     });
 
     test("Update your details opens the dialog with the saved values, not the scenario", () => {
@@ -412,7 +506,7 @@ describe("<MortgageContainer />", () => {
       expect(hero?.textContent).toContain("£200,000");
       // Buy to let stores no term, so there is no payoff date; the payment is an estimate.
       const saved = container.querySelector("#mortgage-saved")?.textContent ?? "";
-      expect(saved).toMatch(/Monthly payment£833Estimate/);
+      expect(saved).toMatch(/Monthly payment.*£833Estimate/);
       expect(saved).not.toContain("Paid off by");
       expect(getByText("Your buy to let properties")).toBeDefined();
       expect(container.textContent).not.toMatch(/Section 24/);
@@ -498,6 +592,7 @@ describe("<MortgageContainer />", () => {
       fireEvent.click(getByRole("button", { name: "Add mortgage details" }));
       fireEvent.change(field(/^Interest rate/), { target: { value: "4.5" } });
       fireEvent.change(field(/^Years left/), { target: { value: "18" } });
+      fireEvent.change(field(/^Months/), { target: { value: "2" } });
       fireEvent.click(getByRole("radio", { name: /Interest-only/ }));
       fireEvent.click(getByRole("radio", { name: /Repayment/ }));
       save();
@@ -511,13 +606,75 @@ describe("<MortgageContainer />", () => {
       expect(JSON.stringify(accountPatch[1])).not.toMatch(/authorization|bearer/i);
       expect(JSON.parse(String((accountPatch[1] as RequestInit).body))).toEqual({
         interestRate: 4.5,
-        termMonths: 216,
+        termMonths: 218,
       });
       const profilePatch = calls.find(([url]) => String(url).endsWith("/user-profile"));
       if (!profilePatch) throw new Error("expected a profile PATCH");
       const profileBody = JSON.parse(String((profilePatch[1] as RequestInit).body));
       for (const key of ["mortgageRate", "mortgageTermYears", "mortgageBalance", "homeValue"]) {
         expect(profileBody).not.toHaveProperty(key);
+      }
+    });
+
+    test("saves the monthly payment on the account and the hero shows it at once", async () => {
+      setApiEnv();
+      loaderData = loaded();
+      const fetchSpy = okFetch();
+      const { container, findAllByText } = customRender(<MortgageContainer />);
+      openEdit();
+      const input = field(/^Monthly payment/);
+      expect(input.value).toBe("");
+      fireEvent.change(input, { target: { value: "1300" } });
+      fireEvent.blur(input);
+      save();
+      await findAllByText(/monthly payment/);
+      const call = patches(fetchSpy).find(([url]) => String(url).endsWith("/accounts/m1"));
+      if (!call) throw new Error("expected an account PATCH");
+      expect(JSON.parse(String((call[1] as RequestInit).body))).toMatchObject({
+        monthlyContribution: 1300,
+      });
+      const hero = container.querySelector("[data-tone='hero']") as HTMLElement;
+      expect(hero.textContent).toContain("Monthly payment");
+      expect(hero.textContent).toContain("£1,300");
+    });
+
+    test("clearing the saved monthly payment sends null and the hero falls back to the balance", async () => {
+      setApiEnv();
+      loaderData = loaded({ monthlyContribution: 1250 });
+      const fetchSpy = okFetch();
+      const { container, findAllByText } = customRender(<MortgageContainer />);
+      expect(container.querySelector("[data-tone='hero']")?.textContent).toContain(
+        "Monthly payment",
+      );
+      openEdit();
+      const input = field(/^Monthly payment/);
+      fireEvent.change(input, { target: { value: "" } });
+      fireEvent.blur(input);
+      save();
+      await findAllByText(/monthly payment/);
+      const call = patches(fetchSpy).find(([url]) => String(url).endsWith("/accounts/m1"));
+      if (!call) throw new Error("expected an account PATCH");
+      expect(JSON.parse(String((call[1] as RequestInit).body))).toMatchObject({
+        monthlyContribution: null,
+      });
+      const hero = container.querySelector("[data-tone='hero']") as HTMLElement;
+      expect(hero.textContent).toContain("Remaining balance");
+      expect(hero.textContent).not.toContain("£1,250");
+    });
+
+    test("an unchanged monthly payment is not sent", async () => {
+      setApiEnv();
+      loaderData = loaded({ monthlyContribution: 1250 });
+      const fetchSpy = okFetch();
+      const { findAllByText } = customRender(<MortgageContainer />);
+      openEdit();
+      expect(field(/^Monthly payment/).value).toContain("1,250");
+      save();
+      await findAllByText(/Saved repayment type/);
+      for (const [, init] of patches(fetchSpy)) {
+        expect(JSON.parse(String((init as RequestInit).body))).not.toHaveProperty(
+          "monthlyContribution",
+        );
       }
     });
 
@@ -538,6 +695,15 @@ describe("<MortgageContainer />", () => {
       });
       openEdit();
       expect(field(/^Years left/).value).toBe("50");
+      expect(field(/^Months/).value).toBe("0");
+    });
+
+    test("prefills a stored term as whole years and months, never decimal years", () => {
+      loaderData = { ...defaultLoaderData(), accounts: [account({ termMonths: 218 })] };
+      const { getByRole } = customRender(<MortgageContainer />);
+      fireEvent.click(getByRole("button", { name: "Add mortgage details" }));
+      expect(field(/^Years left/).value).toBe("18");
+      expect(field(/^Months/).value).toBe("2");
     });
 
     test("saves the fixed rate end date on the account, and an emptied date clears it (E32)", async () => {
@@ -712,12 +878,8 @@ describe("<MortgageContainer />", () => {
         accountDetails: [],
         userProfile: { housingStatus: "mortgage" },
       };
-      const { container, getByRole } = customRender(<MortgageContainer />);
-      expect(ltvStrip(container)).toContain("60.0%");
-      fireEvent.click(getByRole("button", { name: "Show loan to value bands" }));
-      expect(container.querySelector("#ltv-milestones-heading")?.textContent).toContain(
-        "Current LTV: 60.0%",
-      );
+      const { container } = customRender(<MortgageContainer />);
+      expect(ltvStrip(container)).toContain("60%");
     });
 
     test("leaves buy-to-let out: still 60% with a BTL flat and BTL mortgage listed first", () => {
@@ -732,7 +894,7 @@ describe("<MortgageContainer />", () => {
         userProfile: { housingStatus: "mortgage" },
       };
       const { container } = customRender(<MortgageContainer />);
-      expect(ltvStrip(container)).toContain("60.0%");
+      expect(ltvStrip(container)).toContain("60%");
     });
 
     test("measures the selected residential mortgage, not every mortgage added up", () => {
@@ -747,7 +909,7 @@ describe("<MortgageContainer />", () => {
       };
       const { container } = customRender(<MortgageContainer />);
       // m1 (186,000) is selected first: 186,000 / 310,000, not 217,000 / 310,000.
-      expect(ltvStrip(container)).toContain("60.0%");
+      expect(ltvStrip(container)).toContain("60%");
     });
 
     test("a profile homeValue alone is never used (the backend does not store it)", () => {
@@ -757,7 +919,7 @@ describe("<MortgageContainer />", () => {
         userProfile: { housingStatus: "mortgage", homeValue: 310000 },
       };
       const { container } = customRender(<MortgageContainer />);
-      expect(ltvStrip(container)).not.toContain("60.0%");
+      expect(ltvStrip(container)).not.toContain("60%");
       expect(screen.queryByRole("button", { name: "Show loan to value bands" })).toBeNull();
     });
 

@@ -1,7 +1,15 @@
 import { fireEvent } from "@testing-library/react";
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import customRender from "~/testUtils/customRender";
-import { OverpayVsSaveCompare } from "./OverpayVsSaveCompare";
+import {
+  OverpayVsSaveCompare as Compare,
+  type OverpayVsSaveCompareProps,
+} from "./OverpayVsSaveCompare";
+
+const OverpayVsSaveCompare = (
+  props: Omit<OverpayVsSaveCompareProps, "onOverpaymentChange"> &
+    Partial<Pick<OverpayVsSaveCompareProps, "onOverpaymentChange">>,
+) => <Compare onOverpaymentChange={vi.fn()} {...props} />;
 
 describe("<OverpayVsSaveCompare />", () => {
   const defaultProps = {
@@ -22,9 +30,13 @@ describe("<OverpayVsSaveCompare />", () => {
     expect(getByText("Savings interest rate")).toBeDefined();
     expect(getByText("Tax on your savings interest")).toBeDefined();
     expect(getByText("Years to compare")).toBeDefined();
-    // The two options carry the same weight: no danger or positive tones on either rate.
-    expect(getByTestId("overpay-compare-mortgage-rate").outerHTML).not.toMatch(/danger|positive/);
+    // No neutral fact takes a danger or positive tone.
     expect(getByTestId("overpay-compare-net-rate").outerHTML).not.toMatch(/danger|positive/);
+    // One outcome: the label names the higher total, and no extra sentence restates it.
+    expect(getByText("Overpaying the mortgage gives more over 10 years (estimate)")).toBeDefined();
+    // The horizon is said once, in the headline: no lead line repeats it.
+    expect(document.body.textContent?.match(/over 10 years/g)).toHaveLength(1);
+    expect(document.body.textContent).not.toMatch(/gives the higher total/);
   });
 
   test("allows changing savings rate slider and tax wrapper select", () => {
@@ -55,15 +67,36 @@ describe("<OverpayVsSaveCompare />", () => {
     );
 
     expect(document.body.textContent).toMatch(/saving the money gives a total £[\d,.]+ higher/i);
-    expect(getByText("Difference over 10 years (estimate)")).toBeDefined();
+    expect(getByText("Saving the money gives more over 10 years (estimate)")).toBeDefined();
   });
 
-  test("handles zero parameters cleanly", () => {
-    const { getByText } = customRender(
+  test("handles zero parameters cleanly, with no pointer to another tab", () => {
+    const { container } = customRender(
       <OverpayVsSaveCompare loanAmount={0} interestRate={0} remainingTerm={0} overpayment={0} />,
     );
+    expect(container.textContent).not.toMatch(/No overpayment set|Overpay.{0,4} tab|NaN/);
+  });
 
-    expect(getByText("No overpayment set")).toBeDefined();
+  test("has its own amount slider, bound to the shared overpayment", () => {
+    const onOverpaymentChange = vi.fn();
+    const { getByLabelText } = customRender(
+      <OverpayVsSaveCompare {...defaultProps} onOverpaymentChange={onOverpaymentChange} />,
+    );
+    const amount = getByLabelText("Amount each month") as HTMLInputElement;
+    expect(amount.value).toBe("300");
+    expect(amount.max).toBe("2500");
+    fireEvent.change(amount, { target: { value: "400" } });
+    expect(onOverpaymentChange).toHaveBeenCalledWith(400);
+  });
+
+  test("with no amount chosen it asks for one in place, not on the Overpay tab", () => {
+    const { getByText, container } = customRender(
+      <OverpayVsSaveCompare {...defaultProps} overpayment={0} />,
+    );
+    expect(
+      getByText("Choose an amount each month to compare overpaying with saving."),
+    ).toBeDefined();
+    expect(container.textContent).not.toMatch(/tab/i);
   });
 
   test("empty profile (all zeros) shows no NaN or Infinity", () => {
@@ -76,10 +109,9 @@ describe("<OverpayVsSaveCompare />", () => {
 
 describe("<OverpayVsSaveCompare /> unknown inputs and caveats", () => {
   test("says what to add rather than 0% when the mortgage details are missing", () => {
-    const { getByText, getByTestId, container } = customRender(
+    const { getByText, container } = customRender(
       <OverpayVsSaveCompare loanAmount={0} interestRate={0} overpayment={300} remainingTerm={0} />,
     );
-    expect(getByTestId("overpay-compare-mortgage-rate").textContent).toContain("Not set");
     expect(getByText(/Add your mortgage balance, interest rate and years left/)).toBeDefined();
     expect(container.textContent ?? "").not.toMatch(/0\.00%|£\s*0(?:[,.]0+)*(?!\d)/);
   });
@@ -97,6 +129,17 @@ describe("<OverpayVsSaveCompare /> unknown inputs and caveats", () => {
     expect(container.textContent).not.toMatch(/early repayment charge|Always keep/);
   });
 
+  test("shows rates as entered, not padded to two places", () => {
+    const { getByLabelText, getByTestId } = customRender(
+      <OverpayVsSaveCompare
+        {...{ loanAmount: 250000, interestRate: 4.5, overpayment: 300, remainingTerm: 25 }}
+      />,
+    );
+    expect((getByLabelText("Savings interest rate input") as HTMLInputElement).value).toBe("4.8%");
+    expect(getByTestId("overpay-compare-net-rate").textContent).toContain("4.8%");
+    expect(document.body.textContent).not.toMatch(/4\.50%|4\.80%/);
+  });
+
   test("moving the savings rate slider updates the net savings rate", () => {
     const { getByLabelText, getByTestId } = customRender(
       <OverpayVsSaveCompare
@@ -109,7 +152,7 @@ describe("<OverpayVsSaveCompare /> unknown inputs and caveats", () => {
     fireEvent.change(getByLabelText("Savings interest rate"), {
       target: { value: "6" },
     });
-    expect(getByTestId("overpay-compare-net-rate").textContent).toContain("6.00%");
+    expect(getByTestId("overpay-compare-net-rate").textContent).toContain("6%");
   });
 });
 
@@ -140,7 +183,7 @@ describe("<OverpayVsSaveCompare /> horizon rule", () => {
     expect(horizon.min).toBe("1");
     expect(horizon.max).toBe("1");
     expect(horizon.value).toBe("1");
-    expect(container.textContent ?? "").toContain("Estimate over 1 year,");
+    expect(container.textContent ?? "").toMatch(/over 1 year \(estimate\)/);
     expect(container.textContent ?? "").not.toMatch(/NaN|Infinity/);
   });
 
@@ -151,6 +194,6 @@ describe("<OverpayVsSaveCompare /> horizon rule", () => {
     const horizon = getByLabelText("Years to compare") as HTMLInputElement;
     expect(horizon.max).toBe("7");
     fireEvent.change(horizon, { target: { value: "5" } });
-    expect(container.textContent ?? "").toContain("Estimate over 5 years,");
+    expect(container.textContent ?? "").toMatch(/over 5 years \(estimate\)/);
   });
 });

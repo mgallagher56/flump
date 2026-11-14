@@ -1,30 +1,33 @@
 import {
+  CHART_INK,
   ChartFigure,
+  ChartLegend,
   chartColor,
   formatAxisCurrency,
-  Money,
+  formatMonthTick,
+  niceYDomain,
   SimulatorSplitLayout,
   SliderField,
+  useChartFigure,
 } from "@repo/ui";
-import { type FC, useId, useMemo } from "react";
+import { type FC, useId, useMemo, useState } from "react";
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { chartCursorProps } from "~/features/charts/utils/chartProps";
+import { evenYearTicks, maxYearTicks } from "~/features/mortgage/chartAxis";
+import { formatDuration, formatRate } from "~/features/mortgage/mortgageFormat";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import {
-  chartLegend,
-  chartLegendItem,
   chartWrap,
   controlsBody,
   dataCell,
   dataTable,
-  legendSwatch,
   outcomeColumn,
   outcomeLabel,
   outcomeNote,
+  outcomePrompt,
   outcomeSupport,
   outcomeValue,
-  scheduleSummary,
   stateNote,
-  summaryRow,
   supportItem,
   toolHint,
 } from "./OverpaymentSimulator.styles";
@@ -38,26 +41,135 @@ export interface OverpaymentSimulatorProps {
   mortgageType?: "repayment" | "interest-only";
 }
 
-/** The early repayment charge fact. The page shows it once, as the lead of the zone's notice. */
+/** The early repayment charge fact, shown once as a quiet helper line under the overpayment slider. */
 export const OVERPAYMENT_ERC_NOTE =
   "Many fixed-rate deals allow overpayments of up to 10% of the balance a year with no charge. Above that, an early repayment charge (ERC) may apply. Your lender's terms set out the limit.";
 
+/** The overpayment slider range, shared with the overpay or save tool so both tabs agree. */
+export const OVERPAYMENT_RANGE = { min: 0, max: 2500, step: 20 } as const;
+
 interface ChartRow {
-  yearLabel: string;
-  "Standard Plan": number;
-  "With Overpayment": number;
+  /** Calendar year, as "2030". */
+  year: string;
+  /** Month and year of the point, as "Nov 2030": the tooltip label. */
+  month: string;
+  standard: number;
+  overpay: number;
 }
 
-const pluralise = (count: number, unit: string) => `${count} ${unit}${count === 1 ? "" : "s"}`;
+interface PlotProps {
+  rows: readonly ChartRow[];
+  showOverpay: boolean;
+  standardName: string;
+  overpayName: string;
+  gradientId: string;
+  formatCurrency: (value: number) => string;
+}
 
-/** "2 years 3 months", dropping a zero part. Zero in total reads "0 months". */
-const formatDuration = (totalMonths: number): string => {
-  const years = Math.floor(totalMonths / 12);
-  const months = totalMonths % 12;
-  const parts: string[] = [];
-  if (years > 0) parts.push(pluralise(years, "year"));
-  if (months > 0 || years === 0) parts.push(pluralise(months, "month"));
-  return parts.join(" ");
+/**
+ * The drawing. Reads ticks from the enclosing ChartFigure. Lines carry no direct labels: one line
+ * is named by the figure title, two by the figure's legend.
+ */
+const Plot: FC<PlotProps> = ({
+  rows,
+  showOverpay,
+  standardName,
+  overpayName,
+  gradientId,
+  formatCurrency,
+}) => {
+  const { maxTicks, plotPaddingRight } = useChartFigure();
+  // Measured so a narrow plot keeps to a few year ticks (0 until measured: treated as wide).
+  const [width, setWidth] = useState(0);
+  const ticks = evenYearTicks(
+    rows.map((row) => row.year),
+    maxYearTicks(width, maxTicks),
+  );
+  const lastYear = rows.at(-1)?.year;
+  // A little headroom over the balance, not a jump to the next round £100k.
+  const domain = niceYDomain(
+    rows.flatMap((row) => (showOverpay ? [row.standard, row.overpay] : [row.standard])),
+    { padRatio: 0.05 },
+  );
+  return (
+    <div className={chartWrap()}>
+      <ResponsiveContainer height="100%" width="100%" onResize={(w) => setWidth(w)}>
+        <AreaChart
+          data={[...rows]}
+          margin={{ top: 24, right: plotPaddingRight, left: -10, bottom: 0 }}
+        >
+          <defs>
+            <linearGradient id={gradientId} x1="0" x2="0" y1="0" y2="1">
+              <stop offset="5%" stopColor={chartColor("debt")} stopOpacity={0.12} />
+              <stop offset="95%" stopColor={chartColor("debt")} stopOpacity={0} />
+            </linearGradient>
+          </defs>
+          <XAxis
+            axisLine={false}
+            dataKey="year"
+            interval={0}
+            tick={(tick: {
+              x?: number | string;
+              y?: number | string;
+              index?: number;
+              payload?: { value?: string | number };
+            }) => (
+              <text
+                fill={CHART_INK.axisText}
+                fontSize={11}
+                textAnchor={tick.payload?.value === lastYear ? "end" : "middle"}
+                x={Number(tick.x ?? 0)}
+                y={Number(tick.y ?? 0) + 12}
+              >
+                {tick.payload?.value}
+              </text>
+            )}
+            tickLine={false}
+            tickMargin={8}
+            ticks={ticks}
+          />
+          <YAxis
+            axisLine={false}
+            domain={domain}
+            fontSize={11}
+            tickFormatter={(val) => formatAxisCurrency(Number(val))}
+            tickLine={false}
+            tickMargin={8}
+          />
+          <Tooltip
+            cursor={chartCursorProps}
+            formatter={(value) => formatCurrency(Number(value))}
+            labelFormatter={(year, payload) =>
+              (payload?.[0]?.payload as ChartRow | undefined)?.month ?? String(year)
+            }
+          />
+          <Area
+            activeDot={{ r: 6 }}
+            dataKey="standard"
+            fill={`url(#${gradientId})`}
+            isAnimationActive={false}
+            name={standardName}
+            stroke={chartColor("debt")}
+            strokeWidth={3}
+            type="monotone"
+          />
+          {showOverpay ? (
+            <Area
+              activeDot={{ r: 6 }}
+              dataKey="overpay"
+              fill="none"
+              isAnimationActive={false}
+              name={overpayName}
+              stroke={chartColor("projection")}
+              strokeDasharray="7 6"
+              strokeWidth={3}
+              type="monotone"
+            />
+          ) : null}
+        </AreaChart>
+      </ResponsiveContainer>
+    </div>
+  );
 };
 
 export const OverpaymentSimulator: FC<OverpaymentSimulatorProps> = ({
@@ -80,7 +192,7 @@ export const OverpaymentSimulator: FC<OverpaymentSimulatorProps> = ({
 
     const r = interestRate / 100;
     const i = r / 12;
-    const totalMonths = remainingTerm * 12;
+    const totalMonths = Math.round(remainingTerm * 12);
 
     // Monthly scheduled payment
     let monthlyScheduled = isInterestOnly
@@ -153,24 +265,31 @@ export const OverpaymentSimulator: FC<OverpaymentSimulatorProps> = ({
       overpayMonthsToZero = totalMonths;
     }
 
-    // Group by year for the chart to keep performance high and graph clean
-    const chartData: ChartRow[] = [
-      {
-        yearLabel: "Now",
-        "Standard Plan": Math.round(loanAmount),
-        "With Overpayment": Math.round(loanAmount),
-      },
-    ];
-
-    for (let y = 1; y <= remainingTerm; y++) {
-      const monthIdx = y * 12;
-      chartData.push({
-        yearLabel: `Year ${y}`,
-        "Standard Plan": Math.round(
-          standardBalances[monthIdx] ?? (isInterestOnly ? loanAmount : 0),
-        ),
-        "With Overpayment": Math.round(overpayBalances[monthIdx] ?? 0),
-      });
+    // One point a year, labelled with the calendar year (this year first), and the end of the
+    // term as the last point when it falls part way through a year.
+    const now = new Date();
+    const dateAt = (monthIdx: number) => new Date(now.getFullYear(), now.getMonth() + monthIdx, 1);
+    // Built from a "YYYY-MM" key so the month never shifts with the time zone ("Sep", never "Sept").
+    const monthAt = (monthIdx: number) => {
+      const date = dateAt(monthIdx);
+      return formatMonthTick(
+        `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`,
+      );
+    };
+    const rowAt = (monthIdx: number): ChartRow => ({
+      year: String(dateAt(monthIdx).getFullYear()),
+      month: monthAt(monthIdx),
+      standard: Math.round(standardBalances[monthIdx] ?? (isInterestOnly ? loanAmount : 0)),
+      overpay: Math.round(overpayBalances[monthIdx] ?? 0),
+    });
+    const chartData: ChartRow[] = [];
+    for (let monthIdx = 0; monthIdx <= totalMonths; monthIdx += 12) {
+      chartData.push(rowAt(monthIdx));
+    }
+    if (totalMonths % 12 !== 0) {
+      const end = rowAt(totalMonths);
+      if (chartData.at(-1)?.year === end.year) chartData[chartData.length - 1] = end;
+      else chartData.push(end);
     }
 
     const monthsSaved = Math.max(0, totalMonths - overpayMonthsToZero);
@@ -186,11 +305,11 @@ export const OverpaymentSimulator: FC<OverpaymentSimulatorProps> = ({
       monthsSaved,
       newTermMonths: overpayMonthsToZero,
       principalReduced,
+      totalMonths,
       chartData,
     };
   }, [hasInputs, loanAmount, interestRate, remainingTerm, overpayment, isInterestOnly]);
 
-  const monthlyScheduled = simulation?.monthlyScheduled ?? null;
   const interestSaved = simulation?.interestSaved ?? null;
   const monthsSaved = simulation?.monthsSaved ?? null;
   const showBulletReduced = isInterestOnly && monthsSaved === 0;
@@ -203,37 +322,16 @@ export const OverpaymentSimulator: FC<OverpaymentSimulatorProps> = ({
 
       <SliderField
         format="currency"
+        helperText={OVERPAYMENT_ERC_NOTE}
         label="Extra each month"
-        max={2500}
-        min={0}
-        step={20}
+        max={OVERPAYMENT_RANGE.max}
+        min={OVERPAYMENT_RANGE.min}
+        step={OVERPAYMENT_RANGE.step}
         value={overpayment}
         onChange={onOverpaymentChange}
       />
-
-      {monthlyScheduled === null ? null : (
-        <dl className={scheduleSummary()}>
-          <div className={summaryRow()}>
-            <dt>Usual {isInterestOnly ? "interest" : "monthly"} payment:</dt>
-            <dd>
-              <Money size="sm" value={monthlyScheduled} />
-            </dd>
-          </div>
-          <div className={summaryRow()}>
-            <dt>Total each month:</dt>
-            <dd>
-              <Money size="sm" value={monthlyScheduled + overpayment} />
-            </dd>
-          </div>
-        </dl>
-      )}
     </div>
   );
-
-  const chartData = simulation?.chartData ?? [];
-
-  const hasOverpayment = overpayment > 0;
-  const standardTermLabel = formatDuration(remainingTerm * 12);
 
   if (simulation === null) {
     return (
@@ -251,64 +349,100 @@ export const OverpaymentSimulator: FC<OverpaymentSimulatorProps> = ({
     );
   }
 
+  const chartData = simulation.chartData;
+  const hasOverpayment = overpayment > 0;
+  const standardTermLabel = formatDuration(simulation.totalMonths);
+
   const outcomeText = showBulletReduced
     ? `${formatCurrency(simulation.principalReduced)} less`
     : monthsSaved !== null && monthsSaved > 0
       ? formatDuration(monthsSaved)
-      : "No change yet";
-  const outcomeDetail = showBulletReduced
-    ? `Left to repay at the end of the term: ${formatCurrency(loanAmount - simulation.principalReduced)}.`
-    : hasOverpayment && monthsSaved !== null && monthsSaved > 0
-      ? `Paid off in ${formatDuration(simulation.newTermMonths)} instead of ${standardTermLabel}.`
-      : `Add a monthly overpayment to see the change. Term now: ${standardTermLabel}.`;
+      : "The same payoff date";
+
+  const standardName = hasOverpayment ? "No overpayment" : "Balance owed";
+  // The slider's value pill names the amount, so the line's name does not repeat it.
+  const overpayName = "With overpayment";
 
   const content = (
     <div className={outcomeColumn()}>
-      <div data-testid="overpayment-outcome" id="overpayment-outcome">
-        <p className={outcomeLabel}>
-          {showBulletReduced ? "Less to repay at the end of the term" : "Paid off sooner by"}
-        </p>
-        <p className={outcomeValue}>{outcomeText}</p>
-        <p className={outcomeNote}>{outcomeDetail}</p>
-      </div>
+      {hasOverpayment ? (
+        <>
+          <div data-testid="overpayment-outcome" id="overpayment-outcome">
+            <p className={outcomeLabel}>
+              {showBulletReduced ? "Less to repay at the end of the term" : "Paid off sooner by"}
+            </p>
+            <p className={outcomeValue}>{outcomeText}</p>
+          </div>
 
-      <dl className={outcomeSupport()}>
-        <div className={supportItem()}>
-          <dt>
-            {isInterestOnly ? "Interest payment with the extra" : "Monthly payment with the extra"}
-          </dt>
-          <dd>{formatCurrency(simulation.monthlyScheduled + overpayment)}</dd>
+          <dl className={outcomeSupport()}>
+            <div className={supportItem()}>
+              <dt>
+                {isInterestOnly
+                  ? "Interest payment with the extra"
+                  : "Monthly payment with the extra"}
+              </dt>
+              <dd>{formatCurrency(simulation.monthlyScheduled + overpayment)}</dd>
+            </div>
+            <div className={supportItem()}>
+              <dt>Less interest in total (estimate)</dt>
+              <dd>{formatCurrency(interestSaved ?? 0)}</dd>
+            </div>
+          </dl>
+        </>
+      ) : (
+        // At £0 there is no change to state: one short prompt, no figures (the payment and the
+        // term are already on the page).
+        <div data-testid="overpayment-outcome" id="overpayment-outcome">
+          <p className={outcomeLabel}>With no overpayment</p>
+          <p className={outcomePrompt}>Move the slider to see what changes</p>
         </div>
-        <div className={supportItem()}>
-          <dt>Less interest in total (estimate)</dt>
-          <dd>{formatCurrency(interestSaved ?? 0)}</dd>
-        </div>
-      </dl>
+      )}
 
       <ChartFigure
         dataTable={
           <table className={dataTable()}>
-            <caption>Mortgage balance by year, no overpayment and with overpayment</caption>
+            <caption>
+              {hasOverpayment
+                ? "Mortgage balance by year, no overpayment and with overpayment"
+                : "Mortgage balance by year"}
+            </caption>
             <thead>
               <tr>
                 <th scope="col">Year</th>
-                <th scope="col">Balance owed, no overpayment</th>
-                <th scope="col">Balance owed, with overpayment</th>
+                <th scope="col">
+                  {hasOverpayment ? "Balance owed, no overpayment" : "Balance owed"}
+                </th>
+                {hasOverpayment ? <th scope="col">Balance owed, with overpayment</th> : null}
               </tr>
             </thead>
             <tbody>
               {chartData.map((row) => (
-                <tr key={row.yearLabel}>
+                <tr key={row.year}>
                   <th className={dataCell} scope="row">
-                    {row.yearLabel}
+                    {row.year}
                   </th>
-                  <td className={dataCell}>{formatCurrency(row["Standard Plan"])}</td>
-                  <td className={dataCell}>{formatCurrency(row["With Overpayment"])}</td>
+                  <td className={dataCell}>{formatCurrency(row.standard)}</td>
+                  {hasOverpayment ? (
+                    <td className={dataCell}>{formatCurrency(row.overpay)}</td>
+                  ) : null}
                 </tr>
               ))}
             </tbody>
           </table>
         }
+        // One line is named by the title; two are named by the legend, never by labels on the plot.
+        directLabels={false}
+        legend={
+          hasOverpayment ? (
+            <ChartLegend
+              items={[
+                { id: "standard", label: standardName, color: "debt" },
+                { id: "overpay", label: overpayName, color: "projection", swatch: "dashed" },
+              ]}
+            />
+          ) : undefined
+        }
+        seriesCount={hasOverpayment ? 2 : 1}
         summary={
           hasOverpayment && interestSaved !== null && interestSaved > 0
             ? `Illustration: overpaying ${formatCurrency(overpayment)} a month means ${formatCurrency(interestSaved)} less interest in total${
@@ -316,79 +450,26 @@ export const OverpaymentSimulator: FC<OverpaymentSimulatorProps> = ({
                   ? ` and the mortgage paid off ${formatDuration(monthsSaved)} sooner`
                   : ""
               }.`
-            : "Add a monthly overpayment to see the change in interest."
+            : isInterestOnly
+              ? `Illustration: the balance owed stays at ${formatCurrency(loanAmount)} for the whole term.`
+              : `Illustration: the mortgage is paid off over ${standardTermLabel}.`
         }
+        // The outcome above already says what changes (and at £0 the summary would only repeat
+        // the term), so the summary stays for screen readers.
+        showSummary={false}
         hideTitle
         title="Mortgage balance by year"
       >
-        <div className={chartLegend()}>
-          <span className={chartLegendItem()}>
-            <span aria-hidden="true" className={legendSwatch({ kind: "standard" })} />
-            {isInterestOnly
-              ? `No overpayment, the full ${formatCurrency(loanAmount)} is due at the end (solid)`
-              : `No overpayment, ends after ${standardTermLabel} (solid)`}
-          </span>
-          <span className={chartLegendItem()}>
-            <span aria-hidden="true" className={legendSwatch({ kind: "overpay" })} />
-            {hasOverpayment
-              ? `With ${formatCurrency(overpayment)} a month extra${
-                  isInterestOnly ? "" : `, ends after ${formatDuration(simulation.newTermMonths)}`
-                } (dashed)`
-              : "With overpayment (dashed)"}
-          </span>
-        </div>
-        <div className={chartWrap()}>
-          <ResponsiveContainer height="100%" width="100%">
-            <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
-              <defs>
-                <linearGradient id={gradientId} x1="0" x2="0" y1="0" y2="1">
-                  <stop offset="5%" stopColor={chartColor("debt")} stopOpacity={0.12} />
-                  <stop offset="95%" stopColor={chartColor("debt")} stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <XAxis
-                axisLine={false}
-                dataKey="yearLabel"
-                fontSize={11}
-                tickLine={false}
-                tickMargin={8}
-              />
-              <YAxis
-                axisLine={false}
-                fontSize={11}
-                tickFormatter={(val) => formatAxisCurrency(Number(val))}
-                tickLine={false}
-                tickMargin={8}
-              />
-              <Tooltip formatter={(value) => formatCurrency(Number(value))} />
-              <Area
-                activeDot={{ r: 6 }}
-                dataKey="Standard Plan"
-                fill={`url(#${gradientId})`}
-                isAnimationActive={false}
-                name="No overpayment"
-                stroke={chartColor("debt")}
-                strokeWidth={3}
-                type="monotone"
-              />
-              <Area
-                activeDot={{ r: 6 }}
-                dataKey="With Overpayment"
-                fill="none"
-                isAnimationActive={false}
-                name="With overpayment"
-                stroke={chartColor("projection")}
-                strokeDasharray="7 6"
-                strokeWidth={3}
-                type="monotone"
-              />
-            </AreaChart>
-          </ResponsiveContainer>
-        </div>
+        <Plot
+          formatCurrency={formatCurrency}
+          gradientId={gradientId}
+          overpayName={overpayName}
+          rows={chartData}
+          showOverpay={hasOverpayment}
+          standardName={standardName}
+        />
         <p className={stateNote}>
-          Assumes the rate stays at{" "}
-          {new Intl.NumberFormat("en-GB", { maximumFractionDigits: 2 }).format(interestRate)}% for
-          the whole term.
+          Assumes the rate stays at {formatRate(interestRate)} for the whole term.
         </p>
       </ChartFigure>
     </div>

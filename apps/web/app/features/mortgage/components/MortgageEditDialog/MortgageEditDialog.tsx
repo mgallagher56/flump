@@ -13,7 +13,13 @@ import {
 } from "@repo/ui";
 import type { FC } from "react";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
-import { dialogBody, editGrid, estimateRow, unsavedNote } from "./MortgageEditDialog.styles";
+import {
+  dialogBody,
+  editGrid,
+  estimateRow,
+  termPair,
+  unsavedNote,
+} from "./MortgageEditDialog.styles";
 
 export type MortgageKind = "repayment" | "interest-only";
 
@@ -42,10 +48,14 @@ export interface MortgageEditDialogProps {
   editLoanAmount: number;
   /** Held as strings so a cleared field stays empty instead of showing 0. */
   editInterestRate: string;
-  editRemainingTerm: string;
+  /** Years and months left, as typed. Saved together as `termMonths` (years * 12 + months). */
+  editTermYears: string;
+  editTermMonths: string;
   editMortgageType: MortgageKind;
   /** Fixed rate end date being edited (YYYY-MM-DD, or "" for none). */
   editFixEndDate?: string;
+  /** Monthly payment being edited (saved on a linked residential account); `null` when empty. */
+  editMonthlyPayment?: number | null;
   /** Payment for the values typed in the form; `null` when any is missing. */
   editPayment: number | null;
   saveError: string | null;
@@ -53,9 +63,11 @@ export interface MortgageEditDialogProps {
   onSave: () => void;
   onEditLoanAmountChange: (value: number) => void;
   onEditInterestRateChange: (value: string) => void;
-  onEditRemainingTermChange: (value: string) => void;
+  onEditTermYearsChange: (value: string) => void;
+  onEditTermMonthsChange: (value: string) => void;
   onEditMortgageTypeChange: (value: MortgageKind) => void;
   onEditFixEndDateChange?: (value: string) => void;
+  onEditMonthlyPaymentChange?: (value: number | null) => void;
 }
 
 const TYPE_OPTIONS = [
@@ -65,7 +77,7 @@ const TYPE_OPTIONS = [
 
 /**
  * The one place saved mortgage figures change (E16 PR 6): balance, rate, years left, fixed rate end
- * date and repayment type, plus which mortgage account the page reads. Opened from "Edit" in
+ * date, monthly payment and repayment type, plus which mortgage account the page reads. Opened from "Edit" in
  * "Your details", the page prompt and the scenario zone's "Update your details".
  */
 export const MortgageEditDialog: FC<MortgageEditDialogProps> = ({
@@ -79,21 +91,26 @@ export const MortgageEditDialog: FC<MortgageEditDialogProps> = ({
   onSelectAccount,
   editLoanAmount,
   editInterestRate,
-  editRemainingTerm,
+  editTermYears,
+  editTermMonths,
   editMortgageType,
   editFixEndDate = "",
+  editMonthlyPayment = null,
   editPayment,
   saveError: errorText,
   onAddAccount,
   onSave,
   onEditLoanAmountChange,
   onEditInterestRateChange,
-  onEditRemainingTermChange,
+  onEditTermYearsChange,
+  onEditTermMonthsChange,
   onEditMortgageTypeChange,
   onEditFixEndDateChange,
+  onEditMonthlyPaymentChange,
 }) => {
   const { formatCurrency } = useFormatCurrency();
   const rateValue = editInterestRate.trim() === "" ? null : Number(editInterestRate);
+  const hasEnteredPayment = editMonthlyPayment !== null && editMonthlyPayment > 0;
 
   return (
     <Dialog
@@ -168,17 +185,30 @@ export const MortgageEditDialog: FC<MortgageEditDialogProps> = ({
               </Button>
             </div>
           )}
+          {/* The term is stored in whole months, so it is typed as whole years and months. */}
           {canSaveTerm ? (
-            <FormField hint="Saved on your mortgage account" label="Years left">
-              {(field) => (
-                <TextInput
-                  {...controlProps(field)}
-                  inputMode="decimal"
-                  value={editRemainingTerm}
-                  onChange={(e) => onEditRemainingTermChange(e.target.value)}
-                />
-              )}
-            </FormField>
+            <div className={termPair()}>
+              <FormField hint="Saved on your mortgage account" label="Years left">
+                {(field) => (
+                  <TextInput
+                    {...controlProps(field)}
+                    inputMode="numeric"
+                    value={editTermYears}
+                    onChange={(e) => onEditTermYearsChange(e.target.value)}
+                  />
+                )}
+              </FormField>
+              <FormField label="Months">
+                {(field) => (
+                  <TextInput
+                    {...controlProps(field)}
+                    inputMode="numeric"
+                    value={editTermMonths}
+                    onChange={(e) => onEditTermMonthsChange(e.target.value)}
+                  />
+                )}
+              </FormField>
+            </div>
           ) : null}
           {canSaveTerm && onEditFixEndDateChange ? (
             <FormField label="Fixed rate end date (optional)">
@@ -192,6 +222,20 @@ export const MortgageEditDialog: FC<MortgageEditDialogProps> = ({
               )}
             </FormField>
           ) : null}
+          {canSaveTerm && onEditMonthlyPaymentChange ? (
+            <FormField
+              hint="The amount you pay your lender each month, without any overpayment."
+              label="Monthly payment"
+            >
+              {(field) => (
+                <CurrencyInput
+                  {...controlProps(field)}
+                  value={editMonthlyPayment}
+                  onValueChange={(v) => onEditMonthlyPaymentChange(v)}
+                />
+              )}
+            </FormField>
+          ) : null}
         </div>
 
         <RadioCardGroup
@@ -201,10 +245,15 @@ export const MortgageEditDialog: FC<MortgageEditDialogProps> = ({
           onValueChange={(value) => onEditMortgageTypeChange(value as MortgageKind)}
         />
 
-        {canSaveFigures && canSaveTerm ? (
+        {/* The estimate shows only while no payment is entered: an entered payment is the fact. */}
+        {canSaveFigures && canSaveTerm && !hasEnteredPayment ? (
           <div className={estimateRow()}>
             <span>Monthly payment (estimate)</span>
-            <Money fractionDigits={2} size="md" value={editPayment} />
+            <Money
+              fractionDigits={0}
+              size="md"
+              value={editPayment === null ? null : Math.round(editPayment)}
+            />
           </div>
         ) : null}
       </div>

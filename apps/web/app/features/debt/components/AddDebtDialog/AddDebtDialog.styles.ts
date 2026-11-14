@@ -1,4 +1,4 @@
-import { cva } from "@repo/ui/styled-system/css";
+import { css, cva } from "@repo/ui/styled-system/css";
 
 export const debtForm = cva({
   base: {
@@ -17,23 +17,12 @@ export const fieldRow = cva({
   },
 });
 
-export const nativeSelect = cva({
-  base: {
-    width: "100%",
-    minHeight: "44px",
-    paddingX: "12px",
-    borderRadius: "md",
-    borderWidth: "1px",
-    borderStyle: "solid",
-    borderColor: "border.input",
-    backgroundColor: "surface.card",
-    color: "text.primary",
-    textStyle: "body.md",
-    cursor: "pointer",
-    _focusVisible: {
-      outline: "2px solid",
-      outlineColor: "border.focusRing",
-      outlineOffset: "2px",
-    },
-  },
-});
+/**
+ * Edit mode's "Delete debt": a quiet outline button set apart from Save. The dialog footer stacks
+ * its buttons below `sm` (this one last) and puts it on the left from `sm`. It stays neutral (the
+ * judgement guard keeps danger colours for the confirmation step, which is danger-toned).
+ */
+export const deleteAction = css({ sm: { marginInlineEnd: "auto" } });
+
+/** Footer buttons keep their label on one line; the footer stacks them below `sm` instead. */
+export const footerButton = css({ whiteSpace: "nowrap", flexShrink: 0 });

@@ -46,4 +46,11 @@ describe("<MortgageSummary />", () => {
     expect(screen.getByRole("status").textContent).toBe("Saved interest rate");
     expect(screen.queryByText("Years left")).toBeNull();
   });
+
+  it("shows years left in years and months, never as a decimal", () => {
+    render(<MortgageSummary {...base({ remainingTerm: 218 / 12 })} />);
+    const card = screen.getByTestId("mortgage-summary");
+    expect(card.textContent).toContain("18 years 2 months");
+    expect(card.textContent).not.toMatch(/18\.2/);
+  });
 });

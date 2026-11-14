@@ -1,6 +1,7 @@
 import { Button, Icon } from "@repo/ui";
 import { Check } from "lucide-react";
 import type { FC } from "react";
+import { formatYearsLeft } from "~/features/mortgage/mortgageFormat";
 import {
   detailLabel,
   detailRow,
@@ -13,8 +14,6 @@ import {
   summaryHeader,
   summaryTitle,
 } from "./MortgageSummary.styles";
-
-const termFormat = new Intl.NumberFormat("en-GB", { maximumFractionDigits: 1 });
 
 export type MortgageKind = "repayment" | "interest-only";
 
@@ -97,9 +96,7 @@ export const MortgageSummary: FC<MortgageSummaryProps> = ({
         {!isBtl && remainingTerm > 0 ? (
           <div className={detailRow()}>
             <dt className={detailLabel()}>Years left</dt>
-            <dd className={detailValue()}>
-              {termFormat.format(remainingTerm)} {remainingTerm === 1 ? "year" : "years"}
-            </dd>
+            <dd className={detailValue()}>{formatYearsLeft(remainingTerm)}</dd>
           </div>
         ) : null}
       </dl>

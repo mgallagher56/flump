@@ -1,7 +1,7 @@
-import { Button, HeroFigure, KpiCard, KpiStrip, Money } from "@repo/ui";
+import { Button, HeroFigure, KpiCard, KpiStrip } from "@repo/ui";
 import type { FC } from "react";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
-import { figure, perMonth, summaryStack } from "./DebtSummary.styles";
+import { summaryStack } from "./DebtSummary.styles";
 
 export interface DebtSummaryProps {
   /** Saved total owed, always a positive amount (liabilities are stored negative). */
@@ -12,8 +12,6 @@ export interface DebtSummaryProps {
   monthlyMinimumTotal: number;
   /** Debt-free date when paying the minimum payments only (an estimate). */
   debtFreeDate: string;
-  /** Interest in the next 12 months at the minimum payments (an estimate). */
-  interestThisYear: number;
   /** How many debts have no stored APR. Any missing APR means the estimates cannot be worked out. */
   missingAprCount?: number;
   /** True when any minimum payment is an estimate rather than a stored figure. */
@@ -24,18 +22,21 @@ export interface DebtSummaryProps {
   onAddRate?: () => void;
 }
 
+/** How the debt-free date is worked out (UX extra C): its inputs and assumptions, no judgement. */
+export const ESTIMATE_EXPLAIN =
+  "Worked out from your saved balances, APRs and minimum payments. It assumes no new borrowing and that rates stay the same.";
+
 /**
- * Debt page first view (E16 PR 6, ruling D2): the saved total in `HeroFigure`, then a strip of 3.
+ * Debt page first view (E16 PR 6, ruling D2): the saved total in `HeroFigure`, then a strip of 2.
  * The debt-free date is an estimate, so it is the first KPI with an "Estimate" caption, never the
- * hero. Saved figures only: nothing here reads the scenario zone. With an APR missing, the two
- * estimates cannot be worked out and one prompt with one button replaces the strip (P3.2).
+ * hero. Saved figures only: nothing here reads the scenario zone. With an APR missing, the date
+ * cannot be worked out and one prompt with one button replaces the strip (P3.2).
  */
 export const DebtSummary: FC<DebtSummaryProps> = ({
   totalDebt,
   debtCount,
   monthlyMinimumTotal,
   debtFreeDate,
-  interestThisYear,
   missingAprCount = 0,
   minimumEstimated = false,
   payoffAchievable = true,
@@ -66,33 +67,25 @@ export const DebtSummary: FC<DebtSummaryProps> = ({
         }}
         items={[
           <KpiCard
+            explain={ESTIMATE_EXPLAIN}
             key="date"
             label="Debt-free date"
             subtext="Estimate"
             unset={aprUnknown}
-            value={
-              aprUnknown ? null : (
-                <span className={figure}>{payoffAchievable ? debtFreeDate : "Not paid off"}</span>
-              )
-            }
+            value={aprUnknown ? null : payoffAchievable ? debtFreeDate : "Not paid off"}
           />,
           <KpiCard
+            // The total is added up from the saved minimums. The explain also keeps this card's
+            // label row the same height as its neighbour, which carries an info button.
+            explain={
+              minimumEstimated
+                ? "The minimum payments saved on your debts, added up. Where none is saved, an estimate is used."
+                : "The minimum payments saved on your debts, added up."
+            }
             key="monthly"
             label="Paying each month"
             subtext={`Minimum payments${minimumEstimated ? ", some are estimates" : ""}`}
-            value={
-              <span className={figure}>
-                <Money size="lg" value={monthlyMinimumTotal} />
-                <span className={perMonth}>a month</span>
-              </span>
-            }
-          />,
-          <KpiCard
-            key="interest"
-            label="Interest this year"
-            subtext="Estimate"
-            unset={aprUnknown}
-            value={aprUnknown ? null : <Money size="lg" value={interestThisYear} />}
+            value={monthlyMinimumTotal}
           />,
         ]}
       />

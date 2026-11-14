@@ -11,7 +11,6 @@ const meta: Meta<typeof RemortgageShockSim> = {
   args: {
     currentBalance: 280000,
     currentRate: 2.5,
-    propertyValue: 350000,
   },
 };
 
@@ -28,22 +27,27 @@ export const Populated: Story = {
   },
 };
 
-export const NoPropertyValue: Story = {
-  args: { propertyValue: undefined },
+export const SavedPayment: Story = {
+  args: {
+    currentBalance: 186000,
+    currentRate: 4.5,
+    currentPayment: 1250,
+    currentPaymentIsSaved: true,
+    fixEndDate: "2028-07-01",
+    remainingTermYears: 218 / 12,
+  },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    await expect(
-      canvas.getAllByText(/Add your property value to see your loan to value/)[0],
-    ).toBeInTheDocument();
+    await expect(canvas.getAllByText(/a month from Jul 2028/)[0]).toBeInTheDocument();
+    await expect(canvas.getAllByText("Current payment")[0]).toBeInTheDocument();
   },
 };
 
 export const NotSet: Story = {
-  args: { currentBalance: 0, currentRate: 0, propertyValue: undefined },
+  args: { currentBalance: 0, currentRate: 0 },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    await expect(
-      canvas.getAllByText(/Add your mortgage balance and property value/)[0],
-    ).toBeInTheDocument();
+    await expect(canvas.getAllByText(/Add your balance and interest rate/)[0]).toBeInTheDocument();
+    await expect(canvas.queryByRole("button", { name: "More options" })).toBeNull();
   },
 };

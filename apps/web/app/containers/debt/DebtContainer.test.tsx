@@ -1,5 +1,5 @@
 import { expectPageRules } from "@repo/ui/testing";
-import { act, fireEvent, render, screen, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import DebtContainer from "./DebtContainer";
 
@@ -27,7 +27,7 @@ vi.mock("react-router", () => ({
         : [
             {
               id: "acc-cc",
-              name: "Barclaycard Platinum",
+              name: "Everyday credit card",
               type: "Credit Card",
               balance: 3000,
               interestRate: 22.9,
@@ -36,7 +36,7 @@ vi.mock("react-router", () => ({
             },
             {
               id: "acc-loan",
-              name: "Tesco Loan",
+              name: "Car loan",
               type: "Loan",
               balance: 4500,
               interestRate: 7.9,
@@ -106,6 +106,16 @@ const firstView = (container: HTMLElement): HTMLElement => {
   return clone;
 };
 
+/** Delete lives in the edit dialog: open the row's one Edit control, then "Delete debt". */
+const openDeleteFor = (name: string) => {
+  fireEvent.click(screen.getByRole("button", { name: `Edit ${name}` }));
+  fireEvent.click(
+    within(screen.getByRole("dialog", { name: "Edit debt" })).getByRole("button", {
+      name: "Delete debt",
+    }),
+  );
+};
+
 describe("DebtContainer", () => {
   beforeEach(() => {
     fetcherState.submit.mockReset();
@@ -140,9 +150,14 @@ describe("DebtContainer", () => {
       const { container } = render(<DebtContainer />);
       expectPageRules(container, { maxFigures: 0, maxNotSet: 0, projectionNotices: 0 });
       expect(screen.getByRole("heading", { level: 1, name: "Your debts" })).toBeDefined();
+      expect(screen.getByRole("heading", { level: 2, name: "No debts added" })).toBeDefined();
       expect(
-        screen.getByText("Add a credit card, loan or overdraft to see when it would be paid off."),
+        screen.getByText(
+          "Add a credit card, loan or overdraft to see when it would be paid off at your minimum payments.",
+        ),
       ).toBeDefined();
+      expect(screen.getByTestId("debt-empty-illustration")).toBeDefined();
+      expect(screen.getAllByRole("button", { name: "Add a debt" })).toHaveLength(1);
       expect(screen.queryAllByRole("tab")).toHaveLength(0);
       expect(screen.queryByText("Total you owe")).toBeNull();
       expect(screen.queryByRole("region", { name: "Model a change to your debts" })).toBeNull();
@@ -157,15 +172,15 @@ describe("DebtContainer", () => {
     expect(hero?.textContent).toContain("Total you owe");
     expect(hero?.textContent).toContain("£7,500");
     expect(screen.getAllByText("Debt-free date").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("Estimate").length).toBe(2);
-    expect(screen.getByText("Interest this year")).toBeDefined();
+    expect(screen.getAllByText("Estimate").length).toBe(1);
+    expect(screen.queryByText("Interest this year")).toBeNull();
   });
 
   it("missing APRs give one prompt with one button, and no 'Not set' cards", () => {
     withAccounts(
       [
-        { id: "acc-cc", name: "Barclaycard", type: "Credit Card", balance: 3000 },
-        { id: "acc-loan", name: "Tesco Loan", type: "Loan", balance: 4500 },
+        { id: "acc-cc", name: "Everyday card", type: "Credit Card", balance: 3000 },
+        { id: "acc-loan", name: "Car loan", type: "Loan", balance: 4500 },
       ],
       () => {
         const { container } = render(<DebtContainer />);
@@ -193,7 +208,7 @@ describe("DebtContainer", () => {
       [
         {
           id: "acc-cc",
-          name: "Barclaycard",
+          name: "Everyday card",
           type: "Credit Card",
           balance: -3000,
           interestRate: 20,
@@ -217,7 +232,15 @@ describe("DebtContainer", () => {
 
   it("marks estimated minimum payments as estimates", () => {
     withAccounts(
-      [{ id: "acc-cc", name: "Barclaycard", type: "Credit Card", balance: 3000, interestRate: 20 }],
+      [
+        {
+          id: "acc-cc",
+          name: "Everyday card",
+          type: "Credit Card",
+          balance: 3000,
+          interestRate: 20,
+        },
+      ],
       () => {
         render(<DebtContainer />);
         expect(screen.getByText(/Minimum payments, some are estimates/)).toBeDefined();
@@ -227,7 +250,7 @@ describe("DebtContainer", () => {
 
   it("passes what the budget leaves over, not a hard-coded fallback", () => {
     render(<DebtContainer />);
-    expect(screen.getByText("Your budget has £420 left over each month.")).toBeDefined();
+    expect(screen.getByRole("button", { name: "Use the £420 left over" })).toBeDefined();
     const notice = document.querySelector("[data-notice='projection']");
     expect(notice?.textContent).not.toContain("We do not know what you have left over");
   });
@@ -308,10 +331,12 @@ describe("DebtContainer", () => {
 
   it("asks for confirmation before deleting and only submits after confirming", () => {
     render(<DebtContainer />);
-    fireEvent.click(screen.getByRole("button", { name: /Delete Tesco Loan/i }));
+    expect(screen.queryByRole("button", { name: /^Delete Car loan/ })).toBeNull();
+    openDeleteFor("Car loan");
+    expect(screen.queryByRole("dialog", { name: "Edit debt" })).toBeNull();
 
     const dialog = screen.getByRole("alertdialog");
-    expect(within(dialog).getByText(/Delete Tesco Loan\?/)).toBeDefined();
+    expect(within(dialog).getByText(/Delete Car loan\?/)).toBeDefined();
     expect(
       within(dialog).getByText("Its history will be deleted too. This cannot be undone."),
     ).toBeDefined();
@@ -326,7 +351,7 @@ describe("DebtContainer", () => {
 
   it("edits a debt, sending only the changed APR and never the balance", () => {
     render(<DebtContainer />);
-    fireEvent.click(screen.getByRole("button", { name: "Edit Barclaycard Platinum" }));
+    fireEvent.click(screen.getByRole("button", { name: "Edit Everyday credit card" }));
     fireEvent.change(screen.getByLabelText(/^Interest rate/), { target: { value: "" } });
     fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
     expect(fetcherState.submit).toHaveBeenCalledWith(
@@ -337,11 +362,87 @@ describe("DebtContainer", () => {
 
   it("does not submit when the delete confirmation is cancelled", () => {
     render(<DebtContainer />);
-    fireEvent.click(screen.getByRole("button", { name: /Delete Tesco Loan/i }));
+    openDeleteFor("Car loan");
     fireEvent.click(
       within(screen.getByRole("alertdialog")).getByRole("button", { name: "Cancel" }),
     );
     expect(fetcherState.submit).not.toHaveBeenCalled();
+  });
+
+  it("returns focus to that debt's Edit button when the delete confirmation is cancelled", async () => {
+    render(<DebtContainer />);
+    // As in a browser, each button takes focus when it is clicked.
+    const edit = screen.getByRole("button", { name: "Edit Car loan" });
+    edit.focus();
+    fireEvent.click(edit);
+    const remove = within(screen.getByRole("dialog", { name: "Edit debt" })).getByRole("button", {
+      name: "Delete debt",
+    });
+    remove.focus();
+    fireEvent.click(remove);
+    const cancel = within(screen.getByRole("alertdialog")).getByRole("button", { name: "Cancel" });
+    await waitFor(() => expect(document.activeElement).toBe(cancel));
+    cancel.focus();
+    fireEvent.click(cancel);
+    await waitFor(() =>
+      expect(document.activeElement).toBe(screen.getByRole("button", { name: "Edit Car loan" })),
+    );
+    // Still there after the dialog's own focus return has run.
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(document.activeElement).toBe(screen.getByRole("button", { name: "Edit Car loan" }));
+  });
+
+  it("after a successful delete, focus lands on the Your debts heading", async () => {
+    const { rerender } = render(<DebtContainer />);
+    openDeleteFor("Car loan");
+    fireEvent.click(
+      within(screen.getByRole("alertdialog")).getByRole("button", { name: "Delete debt" }),
+    );
+    // The action succeeds and the loader revalidates without the deleted debt.
+    loaderState.accountsOverride = [
+      {
+        id: "acc-cc",
+        name: "Everyday credit card",
+        type: "Credit Card",
+        balance: 3000,
+        interestRate: 22.9,
+        monthlyContribution: 90,
+        monthlyContributionKnown: true,
+      },
+    ];
+    fetcherState.data = { success: true };
+    rerender(<DebtContainer />);
+    const heading = () => screen.getByRole("heading", { name: "Your debts", level: 2 });
+    await waitFor(() => expect(document.activeElement).toBe(heading()));
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(document.activeElement).toBe(heading());
+    expect(screen.queryByRole("alertdialog")).toBeNull();
+  });
+
+  it("after the last debt is deleted, focus lands on the empty state's Add a debt", async () => {
+    loaderState.accountsOverride = [
+      {
+        id: "acc-loan",
+        name: "Car loan",
+        type: "Loan",
+        balance: 4500,
+        interestRate: 7.9,
+        monthlyContribution: 150,
+        monthlyContributionKnown: true,
+      },
+    ];
+    const { rerender } = render(<DebtContainer />);
+    openDeleteFor("Car loan");
+    fireEvent.click(
+      within(screen.getByRole("alertdialog")).getByRole("button", { name: "Delete debt" }),
+    );
+    loaderState.accountsOverride = [];
+    fetcherState.data = { success: true };
+    rerender(<DebtContainer />);
+    const add = () => screen.getByRole("button", { name: "Add a debt" });
+    await waitFor(() => expect(document.activeElement).toBe(add()));
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(document.activeElement).toBe(add());
   });
 
   it("shows a failed save as an alert when no confirmation is open", () => {
@@ -363,7 +464,7 @@ describe("DebtContainer", () => {
 
   it("surfaces a failed delete inline and keeps the dialog open", () => {
     const { rerender } = render(<DebtContainer />);
-    fireEvent.click(screen.getByRole("button", { name: /Delete Tesco Loan/i }));
+    openDeleteFor("Car loan");
     fireEvent.click(
       within(screen.getByRole("alertdialog")).getByRole("button", { name: "Delete debt" }),
     );
@@ -404,7 +505,7 @@ describe("DebtContainer live region", () => {
 
   it("keeps the headline empty when minimum payments are estimated", () => {
     loaderState.accountsOverride = [
-      { id: "acc-cc", name: "Barclaycard", type: "Credit Card", balance: 3000, interestRate: 20 },
+      { id: "acc-cc", name: "Everyday card", type: "Credit Card", balance: 3000, interestRate: 20 },
     ];
     render(<DebtContainer />);
     const region = screen.getByRole("status");
@@ -456,7 +557,7 @@ describe("DebtContainer scenario zone", () => {
       target: { value: "300" },
     });
     fireEvent.mouseDown(screen.getByRole("tab", { name: "Smallest balance first" }), { button: 0 });
-    fireEvent.click(screen.getByRole("button", { name: /Use £420 left over/ }));
+    fireEvent.click(screen.getByRole("button", { name: /Use the £420 left over/ }));
 
     expect(savedText(container)).toBe(before);
     expect(document.querySelectorAll("[data-tone='hero']")).toHaveLength(1);

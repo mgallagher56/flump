@@ -30,6 +30,15 @@ export interface LtvMilestonesProps {
   onModelOverpayment: (monthlyAmount: number) => void;
 }
 
+const ltvFormat = new Intl.NumberFormat("en-GB", { maximumFractionDigits: 1 });
+
+const formatBandList = (pcts: number[]): string => {
+  const items = pcts.map((p) => `${p}%`);
+  return items.length <= 1
+    ? items.join("")
+    : `${items.slice(0, -1).join(", ")} and ${items.at(-1)}`;
+};
+
 /**
  * Loan to value bands (E16 PR 6), shown in the "Show loan to value bands" drawer. Facts only: each
  * band says whether the LTV is within it and, if not, the amount less to owe. No status colours,
@@ -42,61 +51,74 @@ export const LtvMilestones: FC<LtvMilestonesProps> = ({
   ownershipSharePct,
   milestones,
   onModelOverpayment,
-}) => (
-  <div className={ltvBody()} data-testid="ltv-milestones" id="ltv-milestones">
-    <div className={ltvHeader()}>
-      <div>
-        <p className={ltvEyebrow()}>Loan to value (LTV) bands</p>
-        <h3 className={ltvHeading()} id="ltv-milestones-heading">
-          Current LTV: {currentLtv.toFixed(1)}% (<Money size="sm" value={loanAmount} /> /{" "}
-          <Money size="sm" value={propertyValue} />)
-        </h3>
+}) => {
+  // Bands the LTV is already within all read the same, so they share one row.
+  const achieved = milestones.filter((m) => m.isAchieved).map((m) => m.targetLtvPct);
+  const above = milestones.filter((m) => !m.isAchieved);
+  return (
+    <div className={ltvBody()} data-testid="ltv-milestones" id="ltv-milestones">
+      <div className={ltvHeader()}>
+        <div>
+          <p className={ltvEyebrow()}>Loan to value (LTV) bands</p>
+          <h3 className={ltvHeading()} id="ltv-milestones-heading">
+            Current LTV: {ltvFormat.format(currentLtv)}% (<Money size="sm" value={loanAmount} /> /{" "}
+            <Money size="sm" value={propertyValue} />)
+          </h3>
+        </div>
+        {/* Owning all of it is the usual case, so the share shows only when it is less. */}
+        {ownershipSharePct < 100 ? (
+          <p className={ltvShare()}>
+            Share you own: <Num size="sm" value={ownershipSharePct} kind="percent" />
+          </p>
+        ) : null}
       </div>
-      <p className={ltvShare()}>
-        Share you own: <Num size="sm" value={ownershipSharePct} kind="percent" />
-      </p>
-    </div>
 
-    <ul className={tierGrid()}>
-      {milestones.map((m) => {
-        const monthly = m.requiredMonthlyOverpaymentBeforeFixGbp;
-        return (
-          <li className={tierCard()} data-list-row="" key={m.targetLtvPct}>
+      <ul className={tierGrid()}>
+        {achieved.length > 0 ? (
+          <li className={tierCard()} data-list-row="" key="achieved">
             <div className={tierTop()}>
-              <span className={tierTitle()}>{m.targetLtvPct}% LTV band</span>
+              <span className={tierTitle()}>
+                {formatBandList(achieved)} LTV {achieved.length === 1 ? "band" : "bands"}
+              </span>
               <span className={tierState()}>
-                {m.isAchieved ? "At or below this band" : "Above this band"}
+                {achieved.length === 1 ? "At or below this band" : "At or below these bands"}
               </span>
             </div>
             <div className={tierBody()}>
-              {m.isAchieved ? (
-                "Your LTV is within this band"
-              ) : (
-                <>
-                  <div>
-                    <Money size="sm" value={m.lumpSumNeededGbp} /> less to owe to reach this band
-                  </div>
-                  {monthly ? (
-                    <div>
-                      <Money size="sm" value={monthly} /> a month until your fixed rate ends
-                      (estimate)
-                      <div>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => onModelOverpayment(monthly)}
-                        >
-                          Model <Money size="sm" value={monthly} /> a month
-                        </Button>
-                      </div>
-                    </div>
-                  ) : null}
-                </>
-              )}
+              {achieved.length === 1
+                ? "Your LTV is within this band"
+                : "Your LTV is within these bands"}
             </div>
           </li>
-        );
-      })}
-    </ul>
-  </div>
-);
+        ) : null}
+        {above.map((m) => {
+          const monthly = m.requiredMonthlyOverpaymentBeforeFixGbp;
+          return (
+            <li className={tierCard()} data-list-row="" key={m.targetLtvPct}>
+              <div className={tierTop()}>
+                <span className={tierTitle()}>{m.targetLtvPct}% LTV band</span>
+                <span className={tierState()}>Above this band</span>
+              </div>
+              <div className={tierBody()}>
+                <div>
+                  <Money size="sm" value={m.lumpSumNeededGbp} /> less to owe to reach this band
+                </div>
+                {monthly ? (
+                  <div>
+                    <Money size="sm" value={monthly} /> a month until your fixed rate ends
+                    (estimate)
+                    <div>
+                      <Button size="sm" variant="ghost" onClick={() => onModelOverpayment(monthly)}>
+                        Model <Money size="sm" value={monthly} /> a month
+                      </Button>
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+};

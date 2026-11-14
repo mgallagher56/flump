@@ -1,5 +1,4 @@
 {
-  "apps/web/app/features/debt/components/AddDebtDialog/AddDebtDialog.tsx": 1,
   "apps/web/app/features/pension/components/AddPensionAccountDialog/AddPensionAccountDialog.tsx": 1,
   "apps/web/app/features/pension/components/ForecasterControls/ForecasterControls.tsx": 1,
   "apps/web/app/features/savings/components/AnnualAllowancePill/AnnualAllowancePill.tsx": 2,

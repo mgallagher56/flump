@@ -43,7 +43,11 @@ export const InterestOnly: Story = {
 export const ZeroOverpayment: Story = {
   args: { overpayment: 0 },
   play: async ({ canvasElement }) => {
-    await expect(canvasElement.textContent).toContain("No change yet");
+    await expect(canvasElement.textContent).toContain("Move the slider to see what changes");
+    await expect(canvasElement.textContent).not.toMatch(/No change yet|Total each month/);
+    // One line: the figure title names it, so there is no plot label and no legend.
+    await expect(canvasElement.querySelector("[data-direct-label]")).toBeNull();
+    await expect(canvasElement.textContent).not.toMatch(/\(solid\)|\(dashed\)/);
     await expect(canvasElement.textContent).not.toMatch(/\b0 months?\b/);
   },
 };
@@ -52,6 +56,17 @@ export const NotSet: Story = {
   args: { loanAmount: 0, interestRate: 0, remainingTerm: 0, overpayment: 0 },
   play: async ({ canvasElement }) => {
     await expect(canvasElement.textContent).not.toContain("Not set");
+  },
+};
+
+/** The seeded homeowner: 218 months left, so the last point is the year the term ends. */
+export const SeededHomeowner: Story = {
+  args: { loanAmount: 186000, interestRate: 4.5, remainingTerm: 218 / 12, overpayment: 100 },
+  play: async ({ canvasElement }) => {
+    await expect(canvasElement.textContent).toContain("Paid off sooner by");
+    // One outcome: no sentence under it restates the new term.
+    await expect(canvasElement.textContent).not.toMatch(/instead of 18 years 2 months/);
+    await expect(canvasElement.textContent).not.toMatch(/Year \d/);
   },
 };
 

@@ -11,6 +11,8 @@ import {
 } from "@repo/ui";
 import { type FC, useMemo, useState } from "react";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { OVERPAYMENT_RANGE } from "~/features/mortgage/components/OverpaymentSimulator";
+import { rateFractionDigits } from "~/features/mortgage/mortgageFormat";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import { usePrefersReducedMotion } from "~/hooks/usePrefersReducedMotion";
 import {
@@ -35,7 +37,10 @@ export interface OverpayVsSaveCompareProps {
   loanAmount: number;
   interestRate: number; // Mortgage Rate
   remainingTerm: number;
-  overpayment: number; // Monthly budget
+  /** The monthly amount compared. Shared with the Overpay tab through the scenario state. */
+  overpayment: number;
+  /** Sets the shared overpayment, so this tab and the Overpay tab always show one amount. */
+  onOverpaymentChange: (value: number) => void;
   mortgageType?: "repayment" | "interest-only";
 }
 
@@ -51,6 +56,7 @@ export const OverpayVsSaveCompare: FC<OverpayVsSaveCompareProps> = ({
   interestRate,
   remainingTerm,
   overpayment,
+  onOverpaymentChange,
   mortgageType = "repayment",
 }) => {
   const { formatCurrency } = useFormatCurrency();
@@ -205,16 +211,31 @@ export const OverpayVsSaveCompare: FC<OverpayVsSaveCompareProps> = ({
   ];
 
   const years = `${actualHorizon} ${actualHorizon === 1 ? "year" : "years"}`;
+  const outcomeText =
+    difference < 1
+      ? `Both give about the same over ${years} (estimate)`
+      : `${isOverpayBetter ? "Overpaying the mortgage" : "Saving the money"} gives more over ${years} (estimate)`;
 
   const controls = (
     <div className={controlPanel()}>
       <p className={panelHint}>
-        Assumptions you can change: your savings rate and the tax on your savings interest.
+        Assumptions you can change: the amount each month, your savings rate and the tax on your
+        savings interest.
       </p>
 
       <SliderField
+        format="currency"
+        label="Amount each month"
+        max={OVERPAYMENT_RANGE.max}
+        min={OVERPAYMENT_RANGE.min}
+        step={OVERPAYMENT_RANGE.step}
+        value={overpayment}
+        onChange={onOverpaymentChange}
+      />
+
+      <SliderField
         format="percent"
-        fractionDigits={2}
+        fractionDigits={rateFractionDigits(savingsRate)}
         helperText="Assumption: change this to match your account."
         label="Savings interest rate"
         max={12}
@@ -235,6 +256,22 @@ export const OverpayVsSaveCompare: FC<OverpayVsSaveCompareProps> = ({
         )}
       </FormField>
 
+      <dl className={rateList}>
+        <div className={rateRow}>
+          <dt>Savings interest rate after tax</dt>
+          <dd>
+            <Num
+              data-testid="overpay-compare-net-rate"
+              fractionDigits={rateFractionDigits(netSavingsRate)}
+              id="overpay-compare-net-rate"
+              kind="percent"
+              size="sm"
+              value={netSavingsRate}
+            />
+          </dd>
+        </div>
+      </dl>
+
       <SliderField
         helperText="Assumption: whole years to compare, up to your remaining term."
         label="Years to compare"
@@ -250,166 +287,118 @@ export const OverpayVsSaveCompare: FC<OverpayVsSaveCompareProps> = ({
 
   const content = (
     <div className={resultsBody()}>
-      <p className={panelHint}>
-        {overpayment > 0 && inputsKnown
-          ? `Estimate over ${years}, with ${formatCurrency(overpayment)} a month.`
-          : "Estimate based on the figures you have set."}
-      </p>
-
-      {overpayment <= 0 ? (
-        <div id="overpay-compare-no-budget">
-          <p className={outcomeLabel}>No overpayment set</p>
-          <p className={outcomeNote}>
-            Set a monthly overpayment on the &ldquo;Overpay&rdquo; tab to compare the two.
-          </p>
-        </div>
-      ) : (
+      {inputsKnown && overpayment <= 0 ? (
+        <p className={outcomeNote} id="overpay-compare-no-amount">
+          Choose an amount each month to compare overpaying with saving.
+        </p>
+      ) : inputsKnown ? (
         <>
+          <div data-testid="overpay-compare-outcome" id="overpay-compare-outcome">
+            {/* One outcome: the label names the option with the higher total, so no extra
+                sentence restates it. */}
+            <p className={outcomeLabel}>{outcomeText}</p>
+            <p className={outcomeValue}>{formatCurrency(difference)}</p>
+          </div>
+
           <dl className={rateList}>
             <div className={rateRow}>
-              <dt>Mortgage interest rate</dt>
-              <dd>
-                <Num
-                  data-testid="overpay-compare-mortgage-rate"
-                  fractionDigits={2}
-                  id="overpay-compare-mortgage-rate"
-                  kind="percent"
-                  size="sm"
-                  value={interestRate > 0 ? interestRate : null}
-                />
-              </dd>
+              <dt>Overpaying is worth (estimate)</dt>
+              <dd>{formatCurrency(debtReduction)}</dd>
             </div>
             <div className={rateRow}>
-              <dt>Savings interest rate after tax</dt>
-              <dd>
-                <Num
-                  data-testid="overpay-compare-net-rate"
-                  fractionDigits={2}
-                  id="overpay-compare-net-rate"
-                  kind="percent"
-                  size="sm"
-                  value={netSavingsRate}
-                />
-              </dd>
+              <dt>Saving is worth (estimate)</dt>
+              <dd>{formatCurrency(savingsBalance)}</dd>
             </div>
           </dl>
 
-          {inputsKnown ? (
-            <>
-              <div data-testid="overpay-compare-outcome" id="overpay-compare-outcome">
-                <p className={outcomeLabel}>Difference over {years} (estimate)</p>
-                <p className={outcomeValue}>{formatCurrency(difference)}</p>
-                <p className={outcomeNote}>
-                  In this estimate,{" "}
-                  {isOverpayBetter ? "overpaying the mortgage" : "saving the money"} gives the
-                  higher total.
-                </p>
-              </div>
-
-              <dl className={rateList}>
-                <div className={rateRow}>
-                  <dt>Overpaying is worth (estimate)</dt>
-                  <dd>{formatCurrency(debtReduction)}</dd>
-                </div>
-                <div className={rateRow}>
-                  <dt>Saving is worth (estimate)</dt>
-                  <dd>{formatCurrency(savingsBalance)}</dd>
-                </div>
-              </dl>
-
-              <ChartFigure
-                dataTable={
-                  <table className={dataTable}>
-                    <caption>Overpaying the mortgage compared with saving</caption>
-                    <thead>
-                      <tr>
-                        <th scope="col">Option</th>
-                        <th scope="col">Money paid in</th>
-                        <th scope="col">Interest saved or earned after tax</th>
-                        <th scope="col">Total</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {chartData.map((row) => (
-                        <tr key={row.name}>
-                          <th scope="row">{row.name}</th>
-                          <td className={dataCell}>{formatCurrency(row["Money paid in"])}</td>
-                          <td className={dataCell}>
-                            {formatCurrency(
-                              "Interest saved" in row
-                                ? row["Interest saved"]
-                                : row["Interest earned after tax"],
-                            )}
-                          </td>
-                          <td className={dataCell}>{formatCurrency(row.Total)}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                }
-                summary={`Over ${years}, ${
-                  isOverpayBetter ? "overpaying the mortgage" : "saving the money"
-                } gives a total ${formatCurrency(difference)} higher in this estimate.`}
-                hideTitle
-                title="Overpay or save comparison"
-              >
-                <div className={chartWrapper}>
-                  <ResponsiveContainer height="100%" width="100%">
-                    <BarChart
-                      data={chartData}
-                      margin={{ top: 10, right: 10, left: -10, bottom: 0 }}
-                    >
-                      <CartesianGrid
-                        stroke={chartColor("grid")}
-                        strokeDasharray="3 3"
-                        vertical={false}
-                      />
-                      <XAxis dataKey="name" fontSize={11} tickLine={false} />
-                      <YAxis
-                        axisLine={false}
-                        fontSize={11}
-                        tickFormatter={(val: number) => formatAxisCurrency(val)}
-                        tickLine={false}
-                      />
-                      <Tooltip
-                        contentStyle={tooltipContentStyle}
-                        formatter={(value) => formatCurrency(Number(value))}
-                        itemStyle={tooltipItemStyle}
-                        labelStyle={tooltipLabelStyle}
-                      />
-                      <Bar
-                        dataKey="Money paid in"
-                        fill={chartColor("primary")}
-                        isAnimationActive={!reducedMotion}
-                        radius={[4, 4, 0, 0]}
-                        stackId="a"
-                      />
-                      <Bar
-                        dataKey={isOverpayBetter ? "Interest saved" : "Interest earned after tax"}
-                        fill={chartColor("wealth")}
-                        isAnimationActive={!reducedMotion}
-                        radius={[4, 4, 0, 0]}
-                        stackId="a"
-                      />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </ChartFigure>
-            </>
-          ) : (
-            <p className={outcomeNote} id="overpay-compare-not-set">
-              Add your mortgage balance, interest rate and years left to compare overpaying with
-              saving.
-            </p>
-          )}
-
-          <p className={noteText}>
-            This estimate assumes interest you do not pay on the mortgage is not taxed, and savings
-            interest is taxed at the rate you chose above. Money overpaid on a mortgage usually
-            cannot be taken back out.
-          </p>
+          <ChartFigure
+            dataTable={
+              <table className={dataTable}>
+                <caption>Overpaying the mortgage compared with saving</caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Option</th>
+                    <th scope="col">Money paid in</th>
+                    <th scope="col">Interest saved or earned after tax</th>
+                    <th scope="col">Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {chartData.map((row) => (
+                    <tr key={row.name}>
+                      <th scope="row">{row.name}</th>
+                      <td className={dataCell}>{formatCurrency(row["Money paid in"])}</td>
+                      <td className={dataCell}>
+                        {formatCurrency(
+                          "Interest saved" in row
+                            ? row["Interest saved"]
+                            : row["Interest earned after tax"],
+                        )}
+                      </td>
+                      <td className={dataCell}>{formatCurrency(row.Total)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            }
+            summary={`Over ${years}, ${
+              isOverpayBetter ? "overpaying the mortgage" : "saving the money"
+            } gives a total ${formatCurrency(difference)} higher in this estimate.`}
+            hideTitle
+            showSummary={false}
+            title="Overpay or save comparison"
+          >
+            <div className={chartWrapper}>
+              <ResponsiveContainer height="100%" width="100%">
+                <BarChart data={chartData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+                  <CartesianGrid
+                    stroke={chartColor("grid")}
+                    strokeDasharray="3 3"
+                    vertical={false}
+                  />
+                  <XAxis dataKey="name" fontSize={11} tickLine={false} />
+                  <YAxis
+                    axisLine={false}
+                    fontSize={11}
+                    tickFormatter={(val: number) => formatAxisCurrency(val)}
+                    tickLine={false}
+                  />
+                  <Tooltip
+                    contentStyle={tooltipContentStyle}
+                    formatter={(value) => formatCurrency(Number(value))}
+                    itemStyle={tooltipItemStyle}
+                    labelStyle={tooltipLabelStyle}
+                  />
+                  <Bar
+                    dataKey="Money paid in"
+                    fill={chartColor("primary")}
+                    isAnimationActive={!reducedMotion}
+                    radius={[4, 4, 0, 0]}
+                    stackId="a"
+                  />
+                  <Bar
+                    dataKey={isOverpayBetter ? "Interest saved" : "Interest earned after tax"}
+                    fill={chartColor("wealth")}
+                    isAnimationActive={!reducedMotion}
+                    radius={[4, 4, 0, 0]}
+                    stackId="a"
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </ChartFigure>
         </>
+      ) : (
+        <p className={outcomeNote} id="overpay-compare-not-set">
+          Add your mortgage balance, interest rate and years left to compare overpaying with saving.
+        </p>
       )}
+
+      <p className={noteText}>
+        This estimate assumes interest you do not pay on the mortgage is not taxed, and savings
+        interest is taxed at the rate you chose above. Money overpaid on a mortgage usually cannot
+        be taken back out.
+      </p>
     </div>
   );
 

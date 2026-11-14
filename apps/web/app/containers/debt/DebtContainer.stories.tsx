@@ -5,7 +5,7 @@ import DebtContainer from "./DebtContainer";
 const debts = [
   {
     id: "acc-cc",
-    name: "Barclaycard Platinum",
+    name: "Everyday credit card",
     type: "Credit Card",
     balance: 3000,
     interestRate: 22.9,
@@ -14,7 +14,7 @@ const debts = [
   },
   {
     id: "acc-loan",
-    name: "Tesco Loan",
+    name: "Car loan",
     type: "Loan",
     balance: 4500,
     interestRate: 7.9,
@@ -67,7 +67,7 @@ export const AprNotSet: Story = {
   },
 };
 
-/** No debts: the h1, a short intro, one Add button and the MoneyHelper line. */
+/** No debts: the h1, the empty state with its illustration and one Add button, and the MoneyHelper line. */
 export const Empty: Story = {
   parameters: { router: { loaderData: loaderData([]) } },
   play: async ({ canvasElement }) => {
@@ -75,6 +75,7 @@ export const Empty: Story = {
     await expect(
       (await canvas.findAllByRole("button", { name: "Add a debt" })).length,
     ).toBeGreaterThan(0);
+    await expect(canvas.getAllByText("No debts added").length).toBeGreaterThan(0);
     await expect(canvas.queryAllByRole("tab").length).toBe(0);
     await expect(
       canvas.getAllByRole("complementary", { name: "Debt advice" }).length,
