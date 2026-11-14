@@ -1,5 +1,25 @@
 # Changelog
 
+## [1.33.0](https://github.com/mgallagher56/flump/compare/flump/backend-v1.32.2...flump/backend-v1.33.0) (2026-11-14)
+
+
+### Features ✨
+
+* **backend,mcp:** PAT input route for MCP stdio, client policy route, token list refresh ([bc10b6e](https://github.com/mgallagher56/flump/commit/bc10b6e3f960f42c4b3491411d138672c85a5cec))
+* **backend:** check-in sources confirmed and calculated (R2-5) ([05f47e5](https://github.com/mgallagher56/flump/commit/05f47e57a4b304457015ff964fa26622ab481425))
+
+
+### Bug Fixes 🪲
+
+* **backend:** AllowCheckInSources takes the lock through takeMigrationLock ([27e271d](https://github.com/mgallagher56/flump/commit/27e271d56b6f43919cf2ebfa2ead707cc535dab4))
+* **check-in:** accept a retried calculated save; drop an unused helper (review) ([8b6e655](https://github.com/mgallagher56/flump/commit/8b6e6551734236e016e24a15664c19aed669cf66))
+* **check-in:** no calculated figure once the saved balance has moved on ([e7d493f](https://github.com/mgallagher56/flump/commit/e7d493fa05822dd6a46f7460eca517a24b0b31f2))
+
+
+### Tests 🧪
+
+* **backend:** migration test uses at() under strict indexed access ([e28e59f](https://github.com/mgallagher56/flump/commit/e28e59fcfffbef176d81dce216011daf541c646c))
+
 ## [1.32.2](https://github.com/mgallagher56/flump/compare/flump/backend-v1.32.1...flump/backend-v1.32.2) (2026-11-14)
 
 

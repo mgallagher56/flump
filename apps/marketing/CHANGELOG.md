@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.34.2](https://github.com/mgallagher56/flump/compare/flump/marketing-v1.34.1...flump/marketing-v1.34.2) (2026-11-14)
+
+
+### Bug Fixes 🪲
+
+* **engine:** review fixes: pay dates in the first days of the month, self-employed sacrifice, tighter one-engine guard ([bfc04a3](https://github.com/mgallagher56/flump/commit/bfc04a3273c683742f4f398e43c9289a2e3ed1eb))
+* **ui,web,marketing:** round 4 review fixes: long titles wrap, zone basis line back, sample label, marketing preview test ([9e07097](https://github.com/mgallagher56/flump/commit/9e0709701edf4451f92d4ad40e05cbe04420006c))
+* **web:** round-3 review and re-score fixes for settings and onboarding (R3) ([9fc173d](https://github.com/mgallagher56/flump/commit/9fc173d1c9fb8f7fdea7e07d09d89b5659c7e9a1))
+
+
+### Tests 🧪
+
+* R3 follow-ups for the marketing MCP line and the 14px tab snapshot ([eb1aa8e](https://github.com/mgallagher56/flump/commit/eb1aa8e291297fd85e32242cdb57a4a1ef2732da))
+
 ## [1.34.1](https://github.com/mgallagher56/flump/compare/flump/marketing-v1.34.0...flump/marketing-v1.34.1) (2026-11-14)
 
 
