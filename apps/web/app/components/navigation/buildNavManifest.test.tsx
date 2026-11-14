@@ -60,6 +60,25 @@ describe("active keys", () => {
     expect(findActiveBottomBarKey("/app/debt")).toBeUndefined();
     expect(findActiveBottomBarKey("/sandbox")).toBe("home");
   });
+  it.each([
+    ["/", "home"],
+    ["/app/accounts", "accounts"],
+    ["/app/accounts/history", "accounts"],
+    ["/app/accounts/abc", "accounts"],
+    ["/app/budget", "budget"],
+    ["/app/take-home", "taxAndPay"],
+    ["/app/self-assessment", "taxAndPay"],
+    ["/app/savings", undefined],
+    ["/app/pension", undefined],
+    ["/app/debt", undefined],
+    ["/app/mortgage", undefined],
+    ["/app/profile", undefined],
+    ["/app/imports", undefined],
+    ["/app/budgeting", undefined],
+    ["/tools", undefined],
+  ])("bottom bar: %s marks %s and nothing unrelated", (pathname, key) => {
+    expect(findActiveBottomBarKey(pathname)).toBe(key);
+  });
 });
 
 describe("buildBottomBarItems", () => {

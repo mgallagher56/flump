@@ -1,14 +1,17 @@
 import { fireEvent, screen } from "@testing-library/react";
 import { vi } from "vitest";
 import customRender from "~/testUtils/customRender";
-import MobileNavDrawer from "./MobileNavDrawer";
+import MobileNavDrawer, { currentFooterRow } from "./MobileNavDrawer";
+
+const mockLocation = { pathname: "/", search: "" };
 
 vi.mock("react-router", async () => {
   const actual: Record<string, unknown> = await vi.importActual("react-router");
   return {
     ...actual,
-    Link: ({ children, to, onClick }: any) => (
-      <a href={to} onClick={onClick}>
+    useLocation: () => mockLocation,
+    Link: ({ children, to, onClick, "aria-current": ariaCurrent }: any) => (
+      <a aria-current={ariaCurrent} href={to} onClick={onClick}>
         {children}
       </a>
     ),
@@ -151,5 +154,37 @@ describe("<MobileNavDrawer /> sandbox", () => {
   test("shows only Home when signed out outside the sandbox", () => {
     customRender(<MobileNavDrawer isOpen={true} user={null} onClose={vi.fn()} />);
     expect(screen.queryByTestId("nav-disabled-debt")).toBeNull();
+  });
+});
+
+describe("<MobileNavDrawer /> current page", () => {
+  afterEach(() => {
+    mockLocation.pathname = "/";
+    mockLocation.search = "";
+  });
+
+  test.each([
+    ["/app/profile", "", "settings"],
+    ["/app/profile", "?tab=security", "settings"],
+    ["/app/profile", "?tab=ai_connections", "connectAi"],
+    ["/tools", "", "tools"],
+    ["/tools/mortgage-overpayment-vs-isa-calculator", "", "tools"],
+    ["/app/mortgage", "", undefined],
+    ["/app/budget", "", undefined],
+    ["/toolsmith", "", undefined],
+  ])("%s%s marks %s", (pathname, search, row) => {
+    expect(currentFooterRow(pathname, search)).toBe(row);
+  });
+
+  test("marks only the current footer row, so Settings and Connect AI never both show current", () => {
+    mockLocation.pathname = "/app/profile";
+    mockLocation.search = "?tab=ai_connections";
+    customRender(<MobileNavDrawer isOpen={true} user={{ id: "1" }} onClose={vi.fn()} />);
+    const current = screen
+      .getAllByRole("link")
+      .filter((link) => link.getAttribute("aria-current") === "page");
+    expect(current.map((link) => link.getAttribute("href"))).toEqual([
+      "/app/profile?tab=ai_connections",
+    ]);
   });
 });

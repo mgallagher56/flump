@@ -3,7 +3,7 @@ import { cx } from "@repo/ui/styled-system/css";
 import { Calculator, Settings, Sparkles } from "lucide-react";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
-import { Link } from "react-router";
+import { Link, useLocation } from "react-router";
 import NavMenu from "~/components/navigation/NavMenu";
 import { mobileLink } from "~/components/navigation/NavMenu/NavMenu.styles";
 import {
@@ -33,8 +33,25 @@ const SANDBOX_DISABLED_KEYS = new Set(
   AUTH_NAV_ROUTES.flatMap((route) => (route.children ? route.children : [route]).map((r) => r.key)),
 );
 
-/** Settings, Connect AI and Calculators use the same row as the pages above them. */
-const footerLinkClass = cx(buttonVariants({ variant: "ghost" }), mobileLink());
+/**
+ * Settings, Connect AI and Calculators use the same row as the pages above them, and the same
+ * "current" fill (NavMenu draws its current page with the secondary variant).
+ */
+const footerLinkClass = (current: boolean) =>
+  cx(buttonVariants({ variant: current ? "secondary" : "ghost" }), mobileLink());
+
+/**
+ * Which footer row is the current page. Settings and Connect AI share `/app/profile`, so the tab
+ * decides between them; a plain NavLink would mark both.
+ */
+export function currentFooterRow(
+  pathname: string,
+  search: string,
+): "settings" | "connectAi" | "tools" | undefined {
+  if (pathname === "/tools" || pathname.startsWith("/tools/")) return "tools";
+  if (pathname !== "/app/profile" && !pathname.startsWith("/app/profile/")) return undefined;
+  return new URLSearchParams(search).get("tab") === "ai_connections" ? "connectAi" : "settings";
+}
 
 // Pages the phone bottom bar already lists (Home, Accounts, Budget, Pay) and the page "Pay" opens.
 const BAR_KEYS = new Set([...BOTTOM_BAR_TABS.map((tab) => tab.key), "takeHome"]);
@@ -57,6 +74,12 @@ export function withoutBarPages(routes: NavRouteItem[]): NavRouteItem[] {
 const MobileNavDrawer: FC<MobileNavDrawerProps> = ({ isOpen, onClose, user, sandbox }) => {
   const { t } = useTranslation();
   const { profile } = useUserProfile();
+  const { pathname, search } = useLocation();
+  const currentRow = currentFooterRow(pathname, search);
+  const rowProps = (row: NonNullable<typeof currentRow>) => ({
+    "aria-current": currentRow === row ? ("page" as const) : undefined,
+    className: footerLinkClass(currentRow === row),
+  });
 
   const enabled = profile.enabledPages || [];
   const authRoutes = user
@@ -75,15 +98,15 @@ const MobileNavDrawer: FC<MobileNavDrawerProps> = ({ isOpen, onClose, user, sand
           {!!user && (
             <>
               {/* Same row as the pages above: icon, then label. */}
-              <Link className={footerLinkClass} to="/app/profile" onClick={onClose}>
+              <Link {...rowProps("settings")} to="/app/profile" onClick={onClose}>
                 <Icon icon={Settings} size="sm" />
                 <span>{t("settings", "Settings")}</span>
               </Link>
-              <Link className={footerLinkClass} to={CONNECT_AI_ROUTE} onClick={onClose}>
+              <Link {...rowProps("connectAi")} to={CONNECT_AI_ROUTE} onClick={onClose}>
                 <Icon icon={Sparkles} size="sm" />
                 <span>{t("connectAi", "Connect AI")}</span>
               </Link>
-              <Link className={footerLinkClass} to="/tools" onClick={onClose}>
+              <Link {...rowProps("tools")} to="/tools" onClick={onClose}>
                 <Icon icon={Calculator} size="sm" />
                 <span>{t("freeCalculators", "Free calculators")}</span>
               </Link>
