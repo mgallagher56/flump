@@ -8,12 +8,21 @@ import type { Page } from "@playwright/test";
  * element boundary, `data-figure` elements count once, hidden text and `[data-list-row]` rows are
  * skipped. Only the money, percentage and duration patterns are used (dates are left out, as in
  * the first audit). N1 is distinct figures in the first view, N distinct figures on the page.
+ *
+ * First-view rule (coordinator ruling 2026-11-14, UX-GUIDELINES H2): a figure counts for N1 only
+ * if its whole card is inside the viewport. Its card is the nearest ancestor drawn as a card (a
+ * visible border, shadow or filled background with rounded corners, such as KpiCard, a section
+ * card or the hero); a figure with no card counts when its own box is wholly inside. A card the
+ * fold cuts through counts toward N but not N1. Headings and buttons still count when any part
+ * shows.
  */
 export interface DomMetrics {
   h1: string;
   title: string;
   foldNumbers: number;
   foldDistinct: number;
+  /** N1 under the old rule (any part of the figure showing), kept to compare the two rules. */
+  foldDistinctAnyPart: number;
   pageNumbers: number;
   pageDistinct: number;
   foldHeadings: string[];
@@ -66,6 +75,30 @@ export function readMetrics(page: Page): Promise<DomMetrics> {
       const rect = el.getBoundingClientRect();
       return rect.width > 0 && rect.top < foldHeight && rect.bottom > 0;
     };
+    // The nearest ancestor drawn as a card: rounded, with a border, a shadow or its own fill.
+    const cardOf = (el: Element): Element => {
+      for (
+        let node: Element | null = el;
+        node && node !== document.body;
+        node = node.parentElement
+      ) {
+        const style = getComputedStyle(node);
+        if (parseFloat(style.borderTopLeftRadius) <= 0) continue;
+        const bordered = parseFloat(style.borderTopWidth) > 0 && style.borderTopStyle !== "none";
+        const shadowed = style.boxShadow !== "none";
+        const filled =
+          style.backgroundColor !== "rgba(0, 0, 0, 0)" && style.backgroundColor !== "transparent";
+        const rect = node.getBoundingClientRect();
+        // A rounded pill around the figure itself (a badge) is not the card.
+        if ((bordered || shadowed || filled) && rect.height > 48) return node;
+      }
+      return el;
+    };
+    // N1: the whole card (or the figure's own box) is inside the viewport.
+    const figureInFold = (el: Element): boolean => {
+      const rect = cardOf(el).getBoundingClientRect();
+      return rect.width > 0 && rect.top >= 0 && rect.bottom <= foldHeight;
+    };
 
     type Run = { text: string; el: Element; marked: boolean };
     const runs: Run[] = [];
@@ -91,17 +124,18 @@ export function readMetrics(page: Page): Promise<DomMetrics> {
     };
     visit(document.body);
 
-    const figures: Array<{ text: string; fold: boolean }> = [];
+    const figures: Array<{ text: string; fold: boolean; partial: boolean }> = [];
     let notSet = 0;
     for (const run of runs) {
-      const fold = inFold(run.el);
+      const fold = figureInFold(run.el);
+      const partial = inFold(run.el);
       if (run.marked) {
-        figures.push({ text: run.text, fold });
+        figures.push({ text: run.text, fold, partial });
         continue;
       }
       notSet += run.text.match(/\bNot set\b/g)?.length ?? 0;
       for (const match of run.text.matchAll(combined))
-        figures.push({ text: match[0].trim(), fold });
+        figures.push({ text: match[0].trim(), fold, partial });
     }
     const foldFigures = figures.filter((f) => f.fold);
 
@@ -139,6 +173,7 @@ export function readMetrics(page: Page): Promise<DomMetrics> {
       title: document.title,
       foldNumbers: foldFigures.length,
       foldDistinct: new Set(foldFigures.map((f) => f.text)).size,
+      foldDistinctAnyPart: new Set(figures.filter((f) => f.partial).map((f) => f.text)).size,
       pageNumbers: figures.length,
       pageDistinct: new Set(figures.map((f) => f.text)).size,
       foldHeadings: headings.filter(inFold).map((h) => `${h.tagName}:${label(h)}`),
