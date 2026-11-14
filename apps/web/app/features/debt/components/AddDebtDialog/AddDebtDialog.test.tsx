@@ -11,21 +11,21 @@ const open = () => {
   return { onAddDebt, onClose, ...view };
 };
 
-const submit = () => fireEvent.click(screen.getByRole("button", { name: "Add liability" }));
+const submit = () => fireEvent.click(screen.getByRole("button", { name: "Add debt" }));
 const fill = (label: string, value: string) =>
   fireEvent.change(screen.getByLabelText(new RegExp(`^${label}`)), { target: { value } });
 
 describe("AddDebtDialog", () => {
   it("renders nothing while closed", () => {
     customRender(<AddDebtDialog isOpen={false} onAddDebt={vi.fn()} onClose={vi.fn()} />);
-    expect(screen.queryByText("Add liability account")).toBeNull();
+    expect(screen.queryByText("Add a debt")).toBeNull();
   });
 
   it("is a labelled modal that closes on Escape and via its close button", () => {
     const { onClose } = open();
-    const dialog = screen.getByRole("dialog", { name: "Add liability account" });
+    const dialog = screen.getByRole("dialog", { name: "Add a debt" });
     expect(dialog.getAttribute("aria-modal")).toBe("true");
-    expect(screen.getByText(/to model payoff/)).toBeDefined();
+    expect(screen.getByText(/Only the name and balance are needed/)).toBeDefined();
     fireEvent.keyDown(dialog, { key: "Escape", code: "Escape" });
     expect(onClose).toHaveBeenCalledTimes(1);
     fireEvent.click(screen.getByRole("button", { name: "Close" }));
@@ -34,7 +34,7 @@ describe("AddDebtDialog", () => {
 
   it("starts with empty balance, APR and minimum fields", () => {
     open();
-    for (const label of ["Balance you owe", "APR", "Minimum payment each month"]) {
+    for (const label of ["Balance you owe", "Interest rate", "Minimum payment each month"]) {
       expect((screen.getByLabelText(new RegExp(`^${label}`)) as HTMLInputElement).value).toBe("");
     }
   });
@@ -44,7 +44,7 @@ describe("AddDebtDialog", () => {
     fill("Name of the debt", "Amex Gold");
     fireEvent.change(screen.getByLabelText("Type"), { target: { value: "loan" } });
     fill("Balance you owe", "3500");
-    fill("APR", "19.9");
+    fill("Interest rate", "19.9");
     fill("Minimum payment each month", "90");
     submit();
     expect(onAddDebt).toHaveBeenCalledWith({
@@ -83,7 +83,7 @@ describe("AddDebtDialog", () => {
     const { onAddDebt } = open();
     fill("Name of the debt", "0% card");
     fill("Balance you owe", "900");
-    fill("APR", "0");
+    fill("Interest rate", "0");
     submit();
     const submitted = onAddDebt.mock.calls[0][0];
     expect(submitted.aprKnown).toBe(true);
@@ -129,7 +129,7 @@ describe("AddDebtDialog in edit mode", () => {
   it("offers no balance field and sends only the changed fields", () => {
     const { onEditDebt } = renderEdit();
     expect(screen.queryByLabelText(/^Balance you owe/)).toBeNull();
-    fill("APR", "");
+    fill("Interest rate", "");
     fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
     expect(onEditDebt).toHaveBeenCalledWith("d1", { apr: 0, aprKnown: false });
   });

@@ -110,7 +110,7 @@ describe("<HousingCostCard />", () => {
     fireEvent.click(screen.getByRole("button", { name: "Save rent" }));
     expect(await screen.findByRole("alert")).toBeDefined();
     expect(screen.getByRole("alert").textContent).toBe(
-      "Could not save your rent. Please try again.",
+      "We could not save your rent. Nothing has changed. Try again.",
     );
   });
 
@@ -145,7 +145,7 @@ describe("<HousingCostCard />", () => {
     const onSaveRent = vi.fn().mockResolvedValue(undefined);
     render(<HousingCostCard housingCost={rent} savedRent={900} onSaveRent={onSaveRent} />);
     fireEvent.click(screen.getByRole("button", { name: "Save rent" }));
-    expect((await screen.findAllByText("Rent saved.")).length).toBeGreaterThan(0);
+    expect((await screen.findAllByText("Rent saved")).length).toBeGreaterThan(0);
   });
 
   it("offers no rent field for a mortgage", () => {

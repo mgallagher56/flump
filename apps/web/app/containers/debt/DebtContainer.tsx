@@ -1,58 +1,36 @@
 import {
-  calculateDebtSchedule,
   compareAvalancheAndSnowball,
   type DebtItem,
-  evaluateFinancialStage,
   PortfolioSnapshot,
 } from "@flump/finance-engine";
-import {
-  Button,
-  EmptyState,
-  Icon,
-  Illustration,
-  PageHeader,
-  ScenarioZone,
-  SimulatorSplitLayout,
-} from "@repo/ui";
-import { BookOpen, CreditCard, type LucideIcon, TriangleAlert } from "lucide-react";
+import { Button, CollapsibleDrawer, PageHeader, ScenarioZone } from "@repo/ui";
+import type { ToolSlug } from "@repo/ui/tools";
 import { type FC, useMemo, useState } from "react";
 import { Link, useFetcher, useLoaderData } from "react-router";
 import { AddDebtDialog } from "~/features/debt/components/AddDebtDialog";
 import { DebtAccountsList } from "~/features/debt/components/DebtAccountsList";
 import { DebtHelpLink } from "~/features/debt/components/DebtHelpLink";
 import { DebtSummary } from "~/features/debt/components/DebtSummary";
-import { DebtToWealthBridgeCard } from "~/features/debt/components/DebtToWealthBridgeCard";
-import { PayoffStrategySwitcher } from "~/features/debt/components/PayoffStrategySwitcher";
+import { PayExtraTool } from "~/features/debt/components/PayExtraTool";
 import { UkDebtInstrumentsCard } from "~/features/debt/components/UkDebtInstrumentsCard";
 import { debtItemToAccountPayload } from "~/features/debt/utils/debtAccountMapping";
+import { interestInFirstYear } from "~/features/debt/utils/payoffFormat";
 import { ConfirmDialog } from "~/features/feedback/components/ConfirmDialog";
 import { useFetcherOutcome } from "~/features/feedback/hooks/useFetcherOutcome";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import { useScenarioState } from "~/hooks/useScenarioState";
-import { useUserProfile } from "~/hooks/useUserProfile";
-import {
-  controlsStack,
-  errorBanner,
-  footerLink,
-  mutedNote,
-  noteLink,
-  pageRoot,
-  promoAlert,
-  promoAlertHeading,
-  promoAlertRow,
-  strong,
-  tabButton,
-  tabList,
-} from "./DebtContainer.styles";
+import { basisText, errorBanner, footerLink, pageRoot, plainLink } from "./DebtContainer.styles";
 
-type DebtTab = "accounts" | "instruments";
+/** The overpay-or-save calculator (D5 replaces the debt "into savings" tool with this link). */
+const OVERPAY_OR_SAVE_SLUG: ToolSlug = "mortgage-overpayment-vs-isa-calculator";
 
 const SAVED_SCENARIO = { extraPayment: 0, strategy: "avalanche" as "avalanche" | "snowball" };
+
+export const SAVE_ERROR_FALLBACK = "We could not save that debt. Nothing has changed. Try again.";
 
 export const DebtContainer: FC = () => {
   const loaderData = useLoaderData<any>();
   const { formatCurrency } = useFormatCurrency();
-  const { profile } = useUserProfile();
 
   const debtInputs = loaderData?.debtInputs as
     | {
@@ -62,14 +40,11 @@ export const DebtContainer: FC = () => {
         totalDebt?: number;
       }
     | undefined;
-  const monthlySurplus = debtInputs?.monthlySurplus ?? null;
-  const budgetSurplus = monthlySurplus ?? 0;
-
-  // Tab state
-  const [activeTab, setActiveTab] = useState<DebtTab>("accounts");
+  const budgetLeftOver = debtInputs?.monthlySurplus ?? null;
 
   // Debts come straight from the user's liability accounts. Add, edit and delete persist through
-  // the route action, and the loader revalidation refreshes this list.
+  // the route action, and the loader revalidation refreshes this list. Balances are amounts owed:
+  // liabilities are stored negative (#665), so every figure below uses the absolute value.
   const accounts = loaderData?.accounts;
   const accountDetails = loaderData?.accountDetails;
   const debts = useMemo<DebtItem[]>(
@@ -77,57 +52,44 @@ export const DebtContainer: FC = () => {
     [accounts, accountDetails],
   );
 
-  // Scenario state: container memory only (shared hook). It never reaches the KPI strip, the saved
-  // list, the URL, storage or the network, and it starts at £0 (no invented or surplus default).
+  // Scenario state: container memory only (shared hook). It never reaches the hero, the KPI
+  // strip, the saved list, the URL, storage or the network, and it starts at £0.
   const scenario = useScenarioState(SAVED_SCENARIO);
   const extraPayment = scenario.values.extraPayment;
   const selectedStrategy = scenario.values.strategy;
-  const setExtraPayment = (amount: number) => scenario.set("extraPayment", amount);
-  const setSelectedStrategy = (strategy: "avalanche" | "snowball") =>
-    scenario.set("strategy", strategy);
   const [isAddModalOpen, setIsAddModalOpen] = useState<boolean>(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
 
-  // Financial stage evaluation
-  const stageEval = useMemo(() => {
-    return evaluateFinancialStage({
-      debts,
-      monthlySurplus: budgetSurplus,
-      liquidSavings: debtInputs?.liquidSavings ?? 0,
-      monthlyEssentialExpenses: debtInputs?.monthlyEssentialExpenses ?? 0,
-    });
-  }, [debts, budgetSurplus, debtInputs?.liquidSavings, debtInputs?.monthlyEssentialExpenses]);
-
-  // Strategy comparison and promotional cliff detection
-  const comparison = useMemo(() => {
-    return compareAvalancheAndSnowball(debts, extraPayment);
-  }, [debts, extraPayment]);
-
-  // Saved figures: minimum payments only. Used by the KPI strip and the 0% promo alert.
+  const comparison = useMemo(
+    () => compareAvalancheAndSnowball(debts, extraPayment),
+    [debts, extraPayment],
+  );
+  // Saved figures: minimum payments only. Used by the first view.
   const savedComparison = useMemo(() => compareAvalancheAndSnowball(debts, 0), [debts]);
-  const savedSchedule = useMemo(() => calculateDebtSchedule(debts, 0, "AVALANCHE"), [debts]);
-  const promoAlerts = savedSchedule.promoCliffAlerts.filter((a) => a.hasCliffRisk);
 
   const activeResult =
     selectedStrategy === "avalanche" ? comparison.avalanche : comparison.snowball;
+  const payoffBalance = debts.reduce((sum, d) => sum + Math.abs(d.balance ?? 0), 0);
   // Total debt is the picture's figure, so an overdrawn current account counts here as it does
-  // on the dashboard (it is never a payoff item, so the schedules below leave it out).
-  const totalDebt = debtInputs?.totalDebt ?? debts.reduce((sum, d) => sum + d.balance, 0);
-  const totalMin = debts.reduce((sum, d) => sum + d.minimumPayment, 0);
+  // on the dashboard (it is never a payoff item, so the schedules leave it out).
+  const totalDebt = Math.abs(debtInputs?.totalDebt ?? payoffBalance);
+  const totalMin = debts.reduce((sum, d) => sum + (d.minimumPayment ?? 0), 0);
   const hasDebts = debts.length > 0;
   // An unset APR is modelled as 0%, which would invent optimistic dates and savings.
-  const aprUnknown = debts.some((d) => d.aprKnown === false);
+  const missingApr = debts.filter((d) => d.aprKnown === false);
+  const aprUnknown = missingApr.length > 0;
   const minimumEstimated = debts.some((d) => d.minimumPaymentEstimated === true);
 
   // Scenario outcome only; empty (nothing announced) until the extra payment is above £0, when
-  // there are no debts, an APR is unknown (figures would be invented), minimum payments are
-  // estimated or the payments never clear the debt.
+  // an APR is unknown (figures would be invented), minimum payments are estimated or the payments
+  // never pay off the debt.
   const debtHeadline =
     hasDebts &&
     scenario.isModified &&
     extraPayment > 0 &&
     !aprUnknown &&
     !minimumEstimated &&
-    activeResult.payoffAchievable
+    activeResult.payoffAchievable !== false
       ? `debt-free by ${activeResult.debtFreeDate}, total interest ${formatCurrency(activeResult.totalInterest)}`
       : "";
 
@@ -138,7 +100,7 @@ export const DebtContainer: FC = () => {
   const failedResult = fetcher.data as { success?: boolean; error?: string } | undefined;
   const saveError =
     debtToDelete === undefined && failedResult?.success === false
-      ? (failedResult.error ?? "Something went wrong. Please try again.")
+      ? (failedResult.error ?? SAVE_ERROR_FALLBACK)
       : null;
 
   const handleAddDebt = (newDebt: Omit<DebtItem, "id">) => {
@@ -184,87 +146,21 @@ export const DebtContainer: FC = () => {
     fetcher.submit(fields, { method: "POST", action: "/app/debt" });
   };
 
-  const tabItems: { id: DebtTab; label: string; icon: LucideIcon }[] = [
-    {
-      id: "accounts",
-      label: hasDebts ? `Your debts (${debts.length})` : "Your debts",
-      icon: CreditCard,
-    },
-    { id: "instruments", label: "UK debt rules and help", icon: BookOpen },
-  ];
-  const panelProps = (id: DebtTab) => ({
-    "aria-labelledby": `debt-tab-${id}`,
-    hidden: activeTab !== id,
-    id: `debt-panel-${id}`,
-    role: "tabpanel" as const,
-    tabIndex: 0,
-  });
-
-  const controls = (
-    <div className={controlsStack}>
-      {monthlySurplus === null ? (
-        <p className={mutedNote}>
-          <Link className={noteLink} to="/app/budget">
-            Set up your budget to see your monthly surplus
-          </Link>
-        </p>
-      ) : null}
-      {aprUnknown ? (
-        <p className={mutedNote} data-testid="apr-unknown-note">
-          Some debts have no APR set. The payoff plan assumes 0% for them, so its dates and interest
-          may be too optimistic.
-        </p>
-      ) : null}
-      <PayoffStrategySwitcher
-        budgetSurplus={Math.max(0, budgetSurplus)}
-        comparison={comparison}
-        extraPayment={extraPayment}
-        selectedStrategy={selectedStrategy}
-        onChangeExtraPayment={setExtraPayment}
-        onSelectStrategy={setSelectedStrategy}
-      />
-      {monthlySurplus === null ? (
-        <p className={mutedNote} id="surplus-unknown-note">
-          Illustrative only: we do not know your monthly surplus, so these payoff results assume the
-          overpayment you choose is affordable.
-        </p>
-      ) : null}
-    </div>
-  );
-
   return (
     <div className={pageRoot}>
       <PageHeader
-        subtitle="See how long your debts could take to clear, compare payoff orders and keep track of 0% offers."
+        actions={
+          <Button type="button" onClick={() => setIsAddModalOpen(true)}>
+            Add a debt
+          </Button>
+        }
+        description={
+          hasDebts
+            ? "What you owe, and an estimate of when it would be paid off at minimum payments."
+            : "Add a credit card, loan or overdraft to see when it would be paid off."
+        }
         title="Your debts"
       />
-
-      {promoAlerts.length > 0 && (
-        <section aria-labelledby="debt-promo-alert-title" className={promoAlert()}>
-          <h2 className={promoAlertHeading} id="debt-promo-alert-title">
-            <Icon icon={TriangleAlert} size="sm" />
-            0% balance transfer ending soon
-          </h2>
-          {promoAlerts.map((alert) => (
-            <div className={promoAlertRow()} key={alert.debtId}>
-              <p>
-                <strong className={strong}>{alert.debtName}</strong>: the 0% rate ends on{" "}
-                <strong className={strong}>{alert.promoExpiryDate}</strong>. At your current
-                payments,{" "}
-                <span className={strong}>{formatCurrency(alert.projectedBalanceAtExpiryGbp)}</span>{" "}
-                would then be charged at <strong className={strong}>{alert.revertApr}% APR</strong>.
-              </p>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => setExtraPayment(alert.requiredMonthlyToClearBeforeCliff)}
-              >
-                Model {formatCurrency(alert.requiredMonthlyToClearBeforeCliff)} a month
-              </Button>
-            </div>
-          ))}
-        </section>
-      )}
 
       {saveError ? (
         <p className={errorBanner} role="alert">
@@ -273,129 +169,83 @@ export const DebtContainer: FC = () => {
       ) : null}
 
       {hasDebts ? (
-        <DebtSummary
-          aprUnknown={aprUnknown}
-          debtFreeDate={savedComparison.minimumOnly.debtFreeDate}
-          highInterestDebt={stageEval.highInterestDebt}
-          minimumEstimated={minimumEstimated}
-          monthlyMinimumTotal={totalMin}
-          payoffAchievable={savedComparison.minimumOnly.payoffAchievable}
-          totalDebt={totalDebt}
-          totalInterest={savedComparison.minimumOnly.totalInterest}
-        />
-      ) : null}
+        <>
+          <DebtSummary
+            debtCount={debts.length}
+            debtFreeDate={savedComparison.minimumOnly.debtFreeDate}
+            interestThisYear={interestInFirstYear(savedComparison.minimumOnly.monthlySchedule)}
+            minimumEstimated={minimumEstimated}
+            missingAprCount={missingApr.length}
+            monthlyMinimumTotal={totalMin}
+            payoffAchievable={savedComparison.minimumOnly.payoffAchievable !== false}
+            totalDebt={totalDebt}
+            onAddRate={() => setEditingId(missingApr[0]?.id ?? null)}
+          />
 
-      {/* Roving-tabindex tabs on plain buttons, as on the mortgage page.
-          TODO(E15 Phase 2): adopt @repo/ui SegmentedTabs once it renders its panels; today its
-          aria-controls point at panels that do not exist, which axe flags. */}
-      <div aria-label="Debt tools" className={tabList()} role="tablist">
-        {tabItems.map((tab, index) => (
-          <button
-            aria-controls={`debt-panel-${tab.id}`}
-            aria-selected={activeTab === tab.id}
-            className={tabButton({ active: activeTab === tab.id })}
-            id={`debt-tab-${tab.id}`}
-            key={tab.id}
-            role="tab"
-            tabIndex={activeTab === tab.id ? 0 : -1}
-            type="button"
-            onClick={() => setActiveTab(tab.id)}
-            onKeyDown={(event) => {
-              if (event.ctrlKey || event.altKey || event.metaKey || event.shiftKey) return;
-              const last = tabItems.length - 1;
-              const next =
-                event.key === "ArrowRight"
-                  ? (index + 1) % tabItems.length
-                  : event.key === "ArrowLeft"
-                    ? (index + last) % tabItems.length
-                    : event.key === "Home"
-                      ? 0
-                      : event.key === "End"
-                        ? last
-                        : null;
-              if (next === null) return;
-              event.preventDefault();
-              setActiveTab(tabItems[next].id);
-              document.getElementById(`debt-tab-${tabItems[next].id}`)?.focus();
-            }}
-          >
-            <Icon icon={tab.icon} size="sm" />
-            {tab.label}
-          </button>
-        ))}
-      </div>
-
-      <div {...panelProps("accounts")}>
-        {hasDebts ? (
           <DebtAccountsList
             debts={debts}
-            onAddDebt={() => setIsAddModalOpen(true)}
+            editingId={editingId}
             onDeleteDebt={(id) => setConfirmDeleteId(id)}
+            onEditingIdChange={setEditingId}
             onUpdateDebt={handleUpdateDebt}
           />
-        ) : (
-          <EmptyState
-            action={
-              <Button type="button" onClick={() => setIsAddModalOpen(true)}>
-                Add debt
-              </Button>
-            }
-            description="Add your credit cards, loans and overdrafts to compare payoff plans."
-            illustration={<Illustration scene="empty-accounts" />}
-            title="No debts yet"
-          />
-        )}
-      </div>
 
-      {/* The scenario zone stays mounted so the illustration survives a tab switch. */}
-      {hasDebts ? (
-        <ScenarioZone
-          announcement={debtHeadline}
-          basis={`Starting from your figures: ${formatCurrency(totalDebt)} owed across ${debts.length} ${
-            debts.length === 1 ? "debt" : "debts"
-          }, ${formatCurrency(totalMin)} a month in minimums`}
-          footer={
-            <button
-              className={footerLink}
-              type="button"
-              onClick={() => {
-                setActiveTab("accounts");
-                document.getElementById("debt-tab-accounts")?.focus();
-              }}
-            >
-              Update your details
-            </button>
-          }
-          isModified={scenario.isModified}
-          title="Model a change to your debts"
-          onReset={scenario.reset}
-        >
-          <SimulatorSplitLayout
-            content={
-              <DebtToWealthBridgeCard
-                debts={debts}
-                extraPayment={extraPayment}
-                strategy={selectedStrategy}
-              />
+          <ScenarioZone
+            announcement={debtHeadline}
+            basis={
+              <span
+                className={basisText}
+              >{`Starting from your figures: ${formatCurrency(totalDebt)} owed across ${debts.length} ${
+                debts.length === 1 ? "debt" : "debts"
+              }, ${formatCurrency(totalMin)} a month in minimum payments`}</span>
             }
-            contentLabel="Debt payoff results"
-            controls={controls}
-            controlsLabel="Payoff settings"
-            controlsSpan={5}
-          />
-        </ScenarioZone>
+            footer={
+              <button
+                className={footerLink}
+                type="button"
+                onClick={() => {
+                  const heading = document.getElementById("debt-accounts-heading");
+                  heading?.scrollIntoView?.({ block: "start" });
+                  heading?.focus();
+                }}
+              >
+                Update your details
+              </button>
+            }
+            isModified={scenario.isModified}
+            title="Model a change to your debts"
+            onReset={scenario.reset}
+          >
+            <PayExtraTool
+              aprUnknown={aprUnknown}
+              budgetLeftOver={budgetLeftOver}
+              comparison={comparison}
+              extraPayment={extraPayment}
+              selectedStrategy={selectedStrategy}
+              startBalance={payoffBalance}
+              onChangeExtraPayment={(amount) => scenario.set("extraPayment", amount)}
+              onSelectStrategy={(strategy) => scenario.set("strategy", strategy)}
+            />
+          </ScenarioZone>
+
+          <p>
+            <Link className={plainLink} to={`/tools/${OVERPAY_OR_SAVE_SLUG}`}>
+              Compare paying off early with saving
+            </Link>
+          </p>
+
+          <CollapsibleDrawer title="UK debt calculators" variant="quiet">
+            <UkDebtInstrumentsCard />
+          </CollapsibleDrawer>
+        </>
       ) : null}
-
-      <div {...panelProps("instruments")}>
-        <UkDebtInstrumentsCard />
-      </div>
 
       {/* Shown to every user in the same place, never triggered by their figures (R3 exception, R4). */}
       <DebtHelpLink />
 
       <ConfirmDialog
         confirmLabel="Delete debt"
-        description="This deletes the account and its history. This can't be undone."
+        description="Its history will be deleted too. This cannot be undone."
         error={deleteOutcome.error}
         open={debtToDelete !== undefined}
         pending={deleteOutcome.pending}

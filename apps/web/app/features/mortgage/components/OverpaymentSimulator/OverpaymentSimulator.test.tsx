@@ -3,161 +3,47 @@ import { describe, expect, test, vi } from "vitest";
 import customRender from "~/testUtils/customRender";
 import { OVERPAYMENT_ERC_NOTE, OverpaymentSimulator } from "./OverpaymentSimulator";
 
+const props = {
+  loanAmount: 200000,
+  interestRate: 4,
+  remainingTerm: 25,
+  overpayment: 200,
+  onOverpaymentChange: vi.fn(),
+};
+
 describe("<OverpaymentSimulator />", () => {
-  const defaultProps = {
-    loanAmount: 200000,
-    interestRate: 4,
-    remainingTerm: 25,
-    overpayment: 200,
-    onOverpaymentChange: vi.fn(),
-  };
-
-  test("renders parameter controls, stats, and amortisation savings", () => {
-    const { getByText, getByLabelText } = customRender(<OverpaymentSimulator {...defaultProps} />);
-
-    expect(getByText("Overpayment")).toBeDefined();
-    expect(getByText("How your balance falls")).toBeDefined();
-    expect(getByText("Time shaved off")).toBeDefined();
-    expect(getByText("Interest saved")).toBeDefined();
-    expect(getByText(/Total monthly outflow:/i)).toBeDefined();
-
-    // Verify slider change
-    const slider = document.querySelector("input[type='range']") as HTMLInputElement;
-    fireEvent.change(slider, { target: { value: "300" } });
-    expect(defaultProps.onOverpaymentChange).toHaveBeenCalledWith(300);
-
-    // Verify number input change
-    const numberInput = getByLabelText("Monthly overpayment input");
-    fireEvent.change(numberInput, { target: { value: "400" } });
-    fireEvent.blur(numberInput);
-    expect(defaultProps.onOverpaymentChange).toHaveBeenCalledWith(400);
+  test("shows one outcome, two supporting figures and the chart, with no nested cards", () => {
+    const { getByText, container } = customRender(<OverpaymentSimulator {...props} />);
+    expect(getByText("Paid off sooner by")).toBeDefined();
+    expect(getByText("Monthly payment with the extra")).toBeDefined();
+    expect(getByText("Less interest in total (estimate)")).toBeDefined();
+    expect(getByText(/Total each month:/)).toBeDefined();
+    expect(getByText(/instead of 25 years/)).toBeDefined();
+    // A scenario outcome is never the hero surface, and the zone holds no cards of its own.
+    expect(container.querySelectorAll("[data-tone='hero']")).toHaveLength(0);
+    expect(container.querySelectorAll("[data-kpi-card], [data-testid='kpi-card']")).toHaveLength(0);
+    expect(container.textContent).not.toMatch(/Time shaved off|outflow|Projection|\/mo\b/);
   });
 
-  test("renders with interest-only mortgage type", () => {
-    const { getByText } = customRender(
-      <OverpaymentSimulator {...defaultProps} mortgageType="interest-only" overpayment={500} />,
-    );
-
-    expect(getByText("How your balance falls")).toBeDefined();
-    expect(getByText(/Scheduled Interest Payment:/i)).toBeDefined();
-    expect(getByText("Bullet balance reduced")).toBeDefined();
-  });
-
-  test("handles zero values cleanly without NaN errors", () => {
-    const { getByText } = customRender(
-      <OverpaymentSimulator
-        {...defaultProps}
-        loanAmount={0}
-        interestRate={0}
-        remainingTerm={0}
-        overpayment={0}
-      />,
-    );
-
-    expect(getByText("How your balance falls")).toBeDefined();
-  });
-
-  test("empty profile (all zeros) shows no NaN, Infinity or zero-month result", () => {
-    const { container } = customRender(
-      <OverpaymentSimulator {...defaultProps} interestRate={0} loanAmount={0} remainingTerm={0} />,
-    );
-    const text = container.textContent ?? "";
-    expect(text).not.toMatch(/NaN|Infinity/);
-    expect(text).not.toMatch(/\b0 months?\b/i);
-  });
-});
-
-describe("<OverpaymentSimulator /> unknown inputs and copy", () => {
-  test("shows Not set for the results when the mortgage details are missing", () => {
-    const { getAllByText, getByText } = customRender(
-      <OverpaymentSimulator
-        loanAmount={0}
-        interestRate={0}
-        remainingTerm={0}
-        overpayment={0}
-        onOverpaymentChange={vi.fn()}
-      />,
-    );
-    expect(getAllByText("Not set").length).toBeGreaterThanOrEqual(5);
-    expect(getByText("Mortgage details not set")).toBeDefined();
-  });
-
-  test("shows the early repayment charge caveat as a callout beside the results", () => {
-    const { getByText } = customRender(
-      <OverpaymentSimulator
-        loanAmount={200000}
-        interestRate={4}
-        remainingTerm={25}
-        overpayment={200}
-        onOverpaymentChange={vi.fn()}
-      />,
-    );
-    expect(getByText(OVERPAYMENT_ERC_NOTE)).toBeDefined();
-  });
-
-  test("drives the overpayment through the named range slider", () => {
+  test("drives the overpayment through the slider and its value field", () => {
     const onOverpaymentChange = vi.fn();
     const { getByLabelText } = customRender(
-      <OverpaymentSimulator
-        loanAmount={200000}
-        interestRate={4}
-        remainingTerm={25}
-        overpayment={200}
-        onOverpaymentChange={onOverpaymentChange}
-      />,
+      <OverpaymentSimulator {...props} onOverpaymentChange={onOverpaymentChange} />,
     );
-    fireEvent.change(getByLabelText("Monthly overpayment range slider"), {
+    fireEvent.change(getByLabelText("Extra each month range slider"), {
       target: { value: "500" },
     });
     expect(onOverpaymentChange).toHaveBeenCalledWith(500);
   });
-});
 
-describe("<OverpaymentSimulator /> chart accessibility", () => {
-  test("exposes the projection as a named figure with the interest saved headline", () => {
-    const { getByRole } = customRender(
-      <OverpaymentSimulator
-        loanAmount={200000}
-        interestRate={4}
-        remainingTerm={25}
-        overpayment={200}
-        onOverpaymentChange={vi.fn()}
-      />,
+  test("interest-only shows the smaller loan left at the end, and no end date for the plain line", () => {
+    const { getByText, container } = customRender(
+      <OverpaymentSimulator {...props} mortgageType="interest-only" overpayment={500} />,
     );
-
-    const figure = getByRole("figure", { name: "Mortgage balance projection" });
-    expect(figure.textContent).toMatch(/Overpaying £200 a month saves £[\d,]+ in total interest/);
-  });
-});
-
-describe("<OverpaymentSimulator /> hero card", () => {
-  const props = {
-    loanAmount: 200000,
-    interestRate: 4,
-    remainingTerm: 25,
-    overpayment: 200,
-    onOverpaymentChange: vi.fn(),
-  };
-
-  test("shows 'Time shaved off' as a plain card, never the hero surface (it is a scenario outcome)", () => {
-    const { getByText } = customRender(<OverpaymentSimulator {...props} />);
-    expect(document.querySelectorAll("[data-tone='hero']")).toHaveLength(0);
-    expect(getByText("Time shaved off")).toBeDefined();
-    expect(document.body.textContent).toMatch(/Mortgage-free \d+ years?( \d+ months?)? sooner/);
-    expect(document.body.textContent).toMatch(/instead of 25 years/);
-  });
-
-  test("shows at most four KPIs in the strip under the hero, in plain language", () => {
-    const { getByText } = customRender(<OverpaymentSimulator {...props} />);
-    for (const label of [
-      "Monthly payment",
-      "Total interest, no overpayment",
-      "Total interest with overpayment",
-      "Interest saved",
-    ]) {
-      expect(getByText(label)).toBeDefined();
-    }
-    expect(getByText(/Assumes the rate stays at 4% for the whole term/)).toBeDefined();
+    expect(getByText("Less to repay at the end of the term")).toBeDefined();
+    expect(getByText(/Usual interest payment:/)).toBeDefined();
+    expect(container.textContent).toMatch(/the full £200,000 is due at the end/);
+    expect(container.textContent).not.toMatch(/No overpayment, ends after/);
   });
 
   test("says no change yet when there is no overpayment, never a zero-month result", () => {
@@ -166,14 +52,27 @@ describe("<OverpaymentSimulator /> hero card", () => {
     expect(container.textContent).not.toMatch(/\b0 months?\b/i);
   });
 
-  test("shows 'Bullet balance reduced' for interest-only mortgages, without the hero surface", () => {
-    const { getByText } = customRender(
-      <OverpaymentSimulator {...props} mortgageType="interest-only" overpayment={500} />,
+  test("with missing figures it says what to add, with no Not set, NaN or Infinity", () => {
+    const { container, getByText } = customRender(
+      <OverpaymentSimulator {...props} loanAmount={0} interestRate={0} remainingTerm={0} />,
     );
-    expect(document.querySelectorAll("[data-tone='hero']")).toHaveLength(0);
-    expect(getByText("Bullet balance reduced")).toBeDefined();
-    // Interest-only balances never fall without overpaying, so the legend never claims an end date.
-    expect(document.body.textContent).toMatch(/the full £200,000 is due at the end/);
-    expect(document.body.textContent).not.toMatch(/No overpayment, ends after/);
+    expect(getByText(/Add your balance, interest rate and years left/)).toBeDefined();
+    expect(container.textContent).not.toMatch(/NaN|Infinity|Not set|\b0 months?\b/);
+  });
+
+  test("names the chart and describes the illustration in one sentence", () => {
+    const { getByRole } = customRender(<OverpaymentSimulator {...props} />);
+    const figure = getByRole("figure", { name: "Mortgage balance by year" });
+    expect(figure.textContent).toMatch(
+      /Illustration: overpaying £200 a month means £[\d,]+ less interest in total/,
+    );
+    expect(figure.textContent).toMatch(/Assumes the rate stays at 4% for the whole term\./);
+    expect(figure.textContent).not.toMatch(/Projection, not a forecast/);
+  });
+
+  test("the early repayment charge fact is exported for the zone notice, not drawn here", () => {
+    const { queryByText } = customRender(<OverpaymentSimulator {...props} />);
+    expect(OVERPAYMENT_ERC_NOTE).toMatch(/^Many fixed-rate deals allow overpayments/);
+    expect(queryByText(OVERPAYMENT_ERC_NOTE)).toBeNull();
   });
 });

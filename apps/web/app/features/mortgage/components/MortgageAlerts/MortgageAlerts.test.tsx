@@ -3,72 +3,45 @@ import { describe, expect, it, vi } from "vitest";
 import { MortgageAlerts } from "./MortgageAlerts";
 
 describe("<MortgageAlerts />", () => {
-  it("renders nothing when there is nothing to warn about", () => {
+  it("renders nothing when no fixed rate end date is due", () => {
     const { container } = render(
-      <MortgageAlerts
-        refinanceWarning={null}
-        showMissingAccount={false}
-        onAddAccount={vi.fn()}
-        onSimulateRateShock={vi.fn()}
-      />,
+      <MortgageAlerts refinanceWarning={null} onModelRateChange={vi.fn()} />,
     );
     expect(container.firstChild).toBeNull();
   });
 
-  it("shows the refinance warning with an en-GB date and the ERC caveat", () => {
-    const onSimulate = vi.fn();
+  it("states when the fixed rate ends, with no judgement, and opens the rate change tool", () => {
+    const onModel = vi.fn();
     render(
       <MortgageAlerts
         refinanceWarning={{ diffMonths: 3, date: "2027-02-01" }}
-        showMissingAccount={false}
-        onAddAccount={vi.fn()}
-        onSimulateRateShock={onSimulate}
+        onModelRateChange={onModel}
       />,
     );
-    expect(screen.getByText("Your fixed-rate deal ends in 3 months")).toBeDefined();
-    expect(screen.getByText("1 February 2027")).toBeDefined();
-    expect(screen.getByText(/early repayment charge \(ERC\)/)).toBeDefined();
-    // Facts only (E29/E32): no advice to compare deals, no claim about what usually happens.
-    const banner = screen.getByTestId("mortgage-refinance-warning");
-    expect(banner.textContent).not.toMatch(/worth comparing|usually raises/i);
-    expect(banner.className).toMatch(/info/);
-    fireEvent.click(screen.getByRole("button", { name: "Simulate rate shock" }));
-    expect(onSimulate).toHaveBeenCalled();
+    const line = screen.getByTestId("mortgage-refinance-warning");
+    expect(line.textContent).toMatch(/^Your fixed rate ends in 3 months\./);
+    // Facts only (E29/E32, E16 PR 6): no advice, no alarm, no status colour or warning icon.
+    expect(line.textContent).not.toMatch(/worth comparing|usually raises|shock|alert/i);
+    expect(line.className).not.toMatch(/warning|danger|info/);
+    expect(line.querySelector("svg")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Model a rate change" }));
+    expect(onModel).toHaveBeenCalled();
   });
 
   it("says when the fix ends within the month, and when it has ended", () => {
-    const props = {
-      showMissingAccount: false,
-      onAddAccount: vi.fn(),
-      onSimulateRateShock: vi.fn(),
-    };
     const { rerender } = render(
       <MortgageAlerts
-        {...props}
         refinanceWarning={{ diffMonths: 0, ended: false, date: "2026-12-01" }}
+        onModelRateChange={vi.fn()}
       />,
     );
-    expect(screen.getByText("Your fixed-rate deal ends in less than a month")).toBeDefined();
+    expect(screen.getByText(/Your fixed rate ends in less than a month\./)).toBeDefined();
     rerender(
       <MortgageAlerts
-        {...props}
         refinanceWarning={{ diffMonths: 0, ended: true, date: "2026-10-01" }}
+        onModelRateChange={vi.fn()}
       />,
     );
-    expect(screen.getByText("Your fixed-rate deal has ended")).toBeDefined();
-  });
-
-  it("offers to add a missing mortgage account", () => {
-    const onAdd = vi.fn();
-    render(
-      <MortgageAlerts
-        refinanceWarning={null}
-        showMissingAccount
-        onAddAccount={onAdd}
-        onSimulateRateShock={vi.fn()}
-      />,
-    );
-    fireEvent.click(screen.getByRole("button", { name: "Add account" }));
-    expect(onAdd).toHaveBeenCalled();
+    expect(screen.getByText(/Your fixed rate has ended\./)).toBeDefined();
   });
 });

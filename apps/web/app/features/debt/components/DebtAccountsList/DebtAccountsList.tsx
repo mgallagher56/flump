@@ -1,55 +1,47 @@
 import type { DebtItem } from "@flump/finance-engine";
-import {
-  Button,
-  CollapsibleDrawer,
-  EmptyState,
-  Icon,
-  IconButton,
-  Table,
-  TBody,
-  Td,
-  THead,
-  Th,
-  Tr,
-  VisuallyHidden,
-} from "@repo/ui";
+import { Button, CollapsibleDrawer, Icon, IconButton } from "@repo/ui";
 import { cx } from "@repo/ui/styled-system/css";
-import { CreditCard, Pencil, Plus, Trash2 } from "lucide-react";
+import { Pencil, Trash2 } from "lucide-react";
 import { type FC, useState } from "react";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import { AddDebtDialog } from "../AddDebtDialog";
 import {
   actionsCell,
-  aprCell,
-  aprNotSet,
-  creditorName,
-  deleteAction,
+  balanceFigure,
   drawerWrap,
-  figure,
   listCard,
-  listHeader,
   listHeading,
+  listReset,
   listSubtitle,
-  mutedFigure,
+  rowDetail,
+  rowFigures,
+  rowItem,
+  rowMain,
+  rowName,
 } from "./DebtAccountsList.styles";
 
 export interface DebtAccountsListProps {
   debts: DebtItem[];
-  onAddDebt: () => void;
   onDeleteDebt: (id: string) => void;
   onUpdateDebt: (id: string, updates: Partial<DebtItem>) => void;
+  /**
+   * The debt whose edit form is open. Pass with `onEditingIdChange` to open it from elsewhere on
+   * the page (the "Add a rate" prompt); leave both out and the list manages it.
+   */
+  editingId?: string | null;
+  onEditingIdChange?: (id: string | null) => void;
   className?: string;
 }
 
-/** Law 3: a table over eight rows keeps the rest behind a drawer. */
+/** Law 3: a list over eight rows keeps the rest behind a drawer. */
 const VISIBLE_ROWS = 8;
 
 const TYPE_LABELS: Record<string, string> = {
   credit_card: "Credit card",
   loan: "Personal loan",
   overdraft: "Overdraft",
-  bnpl: "Buy-now-pay-later",
-  car_finance: "Car finance",
+  bnpl: "Buy now, pay later",
+  car_finance: "Car finance or HP",
   other: "Other",
 };
 
@@ -58,88 +50,80 @@ const typeLabel = (type: DebtItem["type"] | undefined): string =>
 
 const aprFormat = new Intl.NumberFormat("en-GB", { maximumFractionDigits: 2 });
 
+/**
+ * "Your debts" (E16 PR 6): one figure per row, the balance owed (always shown as a positive
+ * amount, though liabilities are stored negative). The rate and minimum payment sit in the row
+ * detail. Rows are marked `data-list-row`: the user's own list is budgeted per row (P1.4).
+ */
 export const DebtAccountsList: FC<DebtAccountsListProps> = ({
   debts,
-  onAddDebt,
   onDeleteDebt,
   onUpdateDebt,
+  editingId: controlledEditingId,
+  onEditingIdChange,
   className,
 }) => {
   const { formatCurrency } = useFormatCurrency();
-  const [editingId, setEditingId] = useState<string | null>(null);
+  const [ownEditingId, setOwnEditingId] = useState<string | null>(null);
+  const editingId = controlledEditingId !== undefined ? controlledEditingId : ownEditingId;
+  const setEditingId = (id: string | null) => {
+    setOwnEditingId(id);
+    onEditingIdChange?.(id);
+  };
   const editingDebt = debts.find((d) => d.id === editingId);
 
-  const renderTable = (rows: DebtItem[], caption: string) => (
-    <Table appearance="soft" caption={caption} stacked>
-      <THead>
-        <Tr>
-          <Th>Creditor</Th>
-          <Th>Type</Th>
-          <Th numeric>Balance</Th>
-          <Th numeric>APR</Th>
-          <Th numeric>Minimum a month</Th>
-          <Th numeric>
-            <VisuallyHidden>Actions</VisuallyHidden>
-          </Th>
-        </Tr>
-      </THead>
-      <TBody>
-        {rows.map((debt) => (
-          <Tr key={debt.id}>
-            <Th scope="row">
-              <span className={creditorName}>{debt.name}</span>
-            </Th>
-            <Td label="Type">{typeLabel(debt.type)}</Td>
-            <Td align="end" label="Balance">
-              <span className={figure}>{formatCurrency(debt.balance)}</span>
-            </Td>
-            <Td align="end" label="APR">
+  const renderRows = (rows: DebtItem[], label: string) => (
+    <ul aria-label={label} className={listReset}>
+      {rows.map((debt) => (
+        <li className={rowItem} data-list-row="" key={debt.id}>
+          <div className={rowMain}>
+            <span className={rowName}>{debt.name}</span>
+            <span className={rowDetail}>
+              {typeLabel(debt.type)}
+              {" · "}
               {debt.aprKnown === false ? (
-                <span className={aprCell()}>
-                  <span className={aprNotSet}>Not set</span>
-                  <Button
-                    aria-label={`Add APR for ${debt.name}`}
-                    size="sm"
-                    type="button"
-                    variant="link"
-                    onClick={() => setEditingId(debt.id)}
-                  >
-                    Add APR
-                  </Button>
-                </span>
-              ) : (
-                <span className={figure}>{aprFormat.format(debt.apr)}%</span>
-              )}
-            </Td>
-            <Td align="end" label="Minimum a month">
-              <span className={figure}>{formatCurrency(debt.minimumPayment)}</span>
-              {debt.minimumPaymentEstimated ? <span className={mutedFigure}>estimated</span> : null}
-            </Td>
-            <Td align="end" label="Actions">
-              <span className={actionsCell()}>
-                <IconButton
-                  label={`Edit ${debt.name}`}
+                <Button
+                  aria-label={`Add the rate for ${debt.name}`}
                   size="sm"
                   type="button"
+                  variant="link"
                   onClick={() => setEditingId(debt.id)}
                 >
-                  <Icon icon={Pencil} size="sm" />
-                </IconButton>
-                <IconButton
-                  className={deleteAction}
-                  label={`Delete ${debt.name}`}
-                  size="sm"
-                  type="button"
-                  onClick={() => onDeleteDebt(debt.id)}
-                >
-                  <Icon icon={Trash2} size="sm" />
-                </IconButton>
-              </span>
-            </Td>
-          </Tr>
-        ))}
-      </TBody>
-    </Table>
+                  Add the rate
+                </Button>
+              ) : (
+                `${aprFormat.format(debt.apr ?? 0)}% APR`
+              )}
+              {" · "}
+              {`${formatCurrency(debt.minimumPayment ?? 0)} a month minimum${
+                debt.minimumPaymentEstimated ? " (estimate)" : ""
+              }`}
+            </span>
+          </div>
+          <div className={rowFigures}>
+            <span className={balanceFigure}>{formatCurrency(Math.abs(debt.balance ?? 0))}</span>
+            <span className={actionsCell()}>
+              <IconButton
+                label={`Edit ${debt.name}`}
+                size="sm"
+                type="button"
+                onClick={() => setEditingId(debt.id)}
+              >
+                <Icon icon={Pencil} size="sm" />
+              </IconButton>
+              <IconButton
+                label={`Delete ${debt.name}`}
+                size="sm"
+                type="button"
+                onClick={() => onDeleteDebt(debt.id)}
+              >
+                <Icon icon={Trash2} size="sm" />
+              </IconButton>
+            </span>
+          </div>
+        </li>
+      ))}
+    </ul>
   );
 
   const visible = debts.slice(0, VISIBLE_ROWS);
@@ -147,34 +131,18 @@ export const DebtAccountsList: FC<DebtAccountsListProps> = ({
 
   return (
     <section aria-labelledby="debt-accounts-heading" className={cx(listCard(), className)}>
-      <div className={listHeader()}>
-        <div>
-          <h2 className={listHeading} id="debt-accounts-heading">
-            Active liability accounts
-          </h2>
-          <p className={listSubtitle}>
-            Your credit cards, loans, overdrafts and store cards. Select edit to change a name, APR
-            or minimum payment.
-          </p>
-        </div>
-        <Button size="sm" type="button" onClick={onAddDebt}>
-          <Icon icon={Plus} size="sm" />
-          Add debt
-        </Button>
+      <div>
+        <h2 className={listHeading} id="debt-accounts-heading" tabIndex={-1}>
+          Your debts
+        </h2>
+        <p className={listSubtitle}>Select edit to change a name, rate or minimum payment.</p>
       </div>
 
       {debts.length === 0 ? (
-        <EmptyState
-          description="Add a credit card, loan or overdraft to see it here."
-          headingLevel="h3"
-          icon={<Icon icon={CreditCard} />}
-          size="sm"
-          title="No active debts recorded."
-          tone="muted"
-        />
+        <p className={listSubtitle}>No debts added</p>
       ) : (
         <>
-          {renderTable(visible, "Liability accounts")}
+          {renderRows(visible, "Your debts")}
           {rest.length > 0 ? (
             <div className={drawerWrap}>
               <CollapsibleDrawer
@@ -184,7 +152,7 @@ export const DebtAccountsList: FC<DebtAccountsListProps> = ({
                 openLabel="Hide the rest"
                 title="More debts"
               >
-                {renderTable(rest, "More debts")}
+                {renderRows(rest, "More debts")}
               </CollapsibleDrawer>
             </div>
           ) : null}

@@ -6,7 +6,7 @@ import { RemortgageShockSim } from "./RemortgageShockSim";
 const ZERO_MONEY = /£\s*0(?:[,.]0+)*(?!\d)/;
 
 describe("RemortgageShockSim", () => {
-  it("renders remortgage shock simulator, monthly shock, and target LTV milestone", () => {
+  it("shows the payment change and the next LTV band as estimates", () => {
     render(
       <RemortgageShockSim
         currentBalance={280000}
@@ -16,10 +16,13 @@ describe("RemortgageShockSim", () => {
       />,
     );
 
-    expect(screen.getByText("Mortgage deal expiry and remortgage shock simulator")).toBeDefined();
-    expect(screen.getByText(/months remaining on current 2.5% fix/i)).toBeDefined();
-    expect(screen.getByText(/projected payment shock/i)).toBeDefined();
-    expect(screen.getByText(/target ltv tier: 75%/i)).toBeDefined();
+    expect(screen.getByText(/left on your 2.5% fixed rate/i)).toBeDefined();
+    expect(screen.getByText("Change in monthly payment (estimate)")).toBeDefined();
+    expect(screen.getByText(/Next LTV band: 75%/)).toBeDefined();
+    // No alarm wording or danger colour on an ordinary rate change.
+    expect(document.body.textContent).not.toMatch(/shock|tier|bracket|\/mo\b/i);
+    const change = screen.getByText("Change in monthly payment (estimate)").nextElementSibling;
+    expect(change?.outerHTML ?? "").not.toMatch(/danger/);
   });
 
   it("empty profile (zero balance and rate) shows no NaN or Infinity", () => {
@@ -27,29 +30,29 @@ describe("RemortgageShockSim", () => {
     expect(container.textContent ?? "").not.toMatch(/NaN|Infinity/);
   });
 
-  it("renders Not set rather than £0 when balance and rate are unknown", () => {
+  it("says what to add rather than £0 when balance and rate are unknown", () => {
     const { container } = render(<RemortgageShockSim currentBalance={0} currentRate={0} />);
-    expect(container.textContent ?? "").toContain("Not set");
-    expect(container.textContent ?? "").toContain("LTV not set");
+    expect(container.textContent ?? "").toContain("Add your balance and interest rate");
+    expect(container.textContent ?? "").toContain("Add your mortgage balance and property value");
     expect(container.textContent ?? "").not.toMatch(ZERO_MONEY);
   });
 
   it("does not invent a property value when none is supplied", () => {
     render(<RemortgageShockSim currentBalance={280000} currentRate={2.5} />);
-    expect(screen.getByText("LTV not set")).toBeDefined();
-    expect(screen.queryByText(/target ltv tier/i)).toBeNull();
+    expect(screen.getByText(/Add your property value to see your loan to value/)).toBeDefined();
+    expect(screen.queryByText(/^Next LTV band:/)).toBeNull();
   });
 
   it("uses a real property value when supplied", () => {
     render(<RemortgageShockSim currentBalance={280000} currentRate={2.5} propertyValue={350000} />);
-    expect(screen.queryByText("LTV not set")).toBeNull();
+    expect(screen.queryByText(/Add your property value/)).toBeNull();
     expect(screen.getByText(/current LTV: 80.0%/i)).toBeDefined();
   });
 
   it("does not invent a fix end date", () => {
     render(<RemortgageShockSim currentBalance={280000} currentRate={2.5} propertyValue={350000} />);
-    expect(screen.getByText(/fix end date not set/i)).toBeDefined();
-    expect(screen.queryByText(/months remaining/i)).toBeNull();
+    expect(screen.getByText(/Fixed rate end date not set/)).toBeDefined();
+    expect(screen.queryByText(/left on your/i)).toBeNull();
   });
 
   it("seeds the end date and term from the user's own figures", () => {
@@ -61,27 +64,26 @@ describe("RemortgageShockSim", () => {
         remainingTermYears={18}
       />,
     );
-    expect(screen.getByText(/months remaining on current 2.5% fix/i)).toBeDefined();
-    expect(
-      (screen.getByLabelText("Remaining term (years) range slider") as HTMLInputElement).value,
-    ).toBe("18");
+    // Over 24 months reads as years and months.
+    expect(screen.getByText(/\d+ years( \d+ months?)? left on your 2.5% fixed rate/)).toBeDefined();
+    expect((screen.getByLabelText("Years left range slider") as HTMLInputElement).value).toBe("18");
   });
 
-  it("moving the projected rate slider changes the estimated payment shock", () => {
+  it("moving the new rate slider changes the estimated payment", () => {
     render(<RemortgageShockSim currentBalance={280000} currentRate={2.5} propertyValue={350000} />);
     const before = document.body.textContent;
-    fireEvent.change(screen.getByLabelText("Projected renewal rate range slider"), {
+    fireEvent.change(screen.getByLabelText("Rate after your fixed rate ends range slider"), {
       target: { value: "8" },
     });
     expect(
-      (screen.getByLabelText("Projected renewal rate range slider") as HTMLInputElement).value,
+      (screen.getByLabelText("Rate after your fixed rate ends range slider") as HTMLInputElement)
+        .value,
     ).toBe("8");
     expect(document.body.textContent).not.toBe(before);
   });
 
   describe("reseeding from props", () => {
-    const term = () =>
-      screen.getByLabelText("Remaining term (years) range slider") as HTMLInputElement;
+    const term = () => screen.getByLabelText("Years left range slider") as HTMLInputElement;
     const year = () => screen.getByLabelText("Fixed rate end year") as HTMLSelectElement;
     const month = () => screen.getByLabelText("Fixed rate end month") as HTMLSelectElement;
     const base = { currentBalance: 280000, currentRate: 2.5 };

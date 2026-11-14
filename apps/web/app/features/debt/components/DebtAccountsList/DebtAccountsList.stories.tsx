@@ -28,19 +28,22 @@ const meta: Meta<typeof DebtAccountsList> = {
   title: "3. Financial Patterns & Sections/DebtAccountsList",
   component: DebtAccountsList,
   parameters: { layout: "padded" },
-  args: { debts, onAddDebt: fn(), onDeleteDebt: fn(), onUpdateDebt: fn() },
+  args: { debts, onDeleteDebt: fn(), onUpdateDebt: fn() },
 };
 
 export default meta;
 type Story = StoryObj<typeof DebtAccountsList>;
 
 // The Storybook decorator renders light and dark side by side, so queries use the "all" variants.
-/** Shows the "Not set" APR and estimated-minimum markers. */
+/** Shows the "Add the rate" link and the estimated-minimum marker. */
 export const WithUnknownAprAndEstimatedMinimum: Story = {
   play: async ({ canvasElement, args }) => {
     const canvas = within(canvasElement);
-    await expect(canvas.getAllByText("Not set").length).toBeGreaterThan(0);
-    await expect(canvas.getAllByText("estimated").length).toBeGreaterThan(0);
+    await expect(canvas.queryAllByText("Not set").length).toBe(0);
+    await expect(
+      canvas.getAllByRole("button", { name: "Add the rate for Tesco Loan" }).length,
+    ).toBeGreaterThan(0);
+    await expect(canvas.getAllByText(/\(estimate\)/).length).toBeGreaterThan(0);
     await userEvent.click(
       canvas.getAllByRole("button", { name: "Delete Tesco Loan" })[0] as HTMLElement,
     );
@@ -52,6 +55,6 @@ export const Empty: Story = {
   args: { debts: [] },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    await expect(canvas.getAllByText("No active debts recorded.").length).toBeGreaterThan(0);
+    await expect(canvas.getAllByText("No debts added").length).toBeGreaterThan(0);
   },
 };

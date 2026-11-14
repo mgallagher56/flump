@@ -24,24 +24,20 @@ type Story = StoryObj<typeof OverpaymentSimulator>;
 export const Populated: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    await expect(canvas.getAllByText("How your balance falls").length).toBeGreaterThan(0);
-    await expect(
-      canvas.getAllByLabelText("Monthly overpayment range slider").length,
-    ).toBeGreaterThan(0);
-    await expect(canvas.getAllByText(/early repayment charge/).length).toBeGreaterThan(0);
-    // "Time shaved off" is a scenario outcome, so it is a plain card and never the hero surface.
+    await expect(canvas.getAllByText("Paid off sooner by").length).toBeGreaterThan(0);
+    await expect(canvas.getAllByLabelText("Extra each month range slider").length).toBeGreaterThan(
+      0,
+    );
+    // A scenario outcome is never the hero surface.
     await expect(canvasElement.querySelectorAll("[data-tone='hero']")).toHaveLength(0);
-    await expect(canvas.getAllByText("Time shaved off").length).toBeGreaterThan(0);
   },
 };
 
 export const InterestOnly: Story = {
   args: { mortgageType: "interest-only", overpayment: 500 },
   play: async ({ canvasElement }) => {
-    // Interest-only saves no time, so the headline card becomes "Bullet balance reduced".
-    await expect(canvasElement.querySelectorAll("[data-tone='hero']")).toHaveLength(0);
     await expect(
-      within(canvasElement).getAllByText("Bullet balance reduced").length,
+      within(canvasElement).getAllByText("Less to repay at the end of the term").length,
     ).toBeGreaterThan(0);
   },
 };
@@ -49,8 +45,6 @@ export const InterestOnly: Story = {
 export const ZeroOverpayment: Story = {
   args: { overpayment: 0 },
   play: async ({ canvasElement }) => {
-    // With no overpayment the card says so plainly instead of showing a zero-month result.
-    await expect(canvasElement.querySelectorAll("[data-tone='hero']")).toHaveLength(0);
     await expect(canvasElement.textContent).toContain("No change yet");
     await expect(canvasElement.textContent).not.toMatch(/\b0 months?\b/);
   },
@@ -59,8 +53,8 @@ export const ZeroOverpayment: Story = {
 export const NotSet: Story = {
   args: { loanAmount: 0, interestRate: 0, remainingTerm: 0, overpayment: 0 },
   play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement);
-    await expect(canvas.getAllByText("Mortgage details not set").length).toBeGreaterThan(0);
-    await expect(canvas.getAllByText("Not set").length).toBeGreaterThan(0);
+    await expect(canvasElement.textContent).not.toContain("Not set");
   },
 };
+
+export const Dark: Story = { globals: { theme: "dark" } };

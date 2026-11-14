@@ -11,7 +11,6 @@ const meta: Meta<typeof BtlOverview> = {
     monthlyRent: 1200,
     grossYield: 5.76,
     monthlyPayment: 480,
-    mortgageType: "interest-only",
     onConfigure: fn(),
   },
 };
@@ -22,7 +21,7 @@ type Story = StoryObj<typeof BtlOverview>;
 export const Populated: Story = {
   play: async ({ canvasElement, args }) => {
     const button = within(canvasElement).getAllByRole("button", {
-      name: /Configure in profile/,
+      name: "Edit your details",
     })[0];
     if (!button) throw new Error("Configure button missing");
     await userEvent.click(button);
@@ -33,6 +32,10 @@ export const Populated: Story = {
 export const NotSet: Story = {
   args: { monthlyRent: 0, grossYield: null, monthlyPayment: null, propertyCount: null },
   play: async ({ canvasElement }) => {
-    await expect(within(canvasElement).getAllByText("Not set").length).toBeGreaterThan(0);
+    await expect(
+      within(canvasElement).getAllByText(/Add your monthly rent and property value/).length,
+    ).toBeGreaterThan(0);
   },
 };
+
+export const Dark: Story = { globals: { theme: "dark" } };

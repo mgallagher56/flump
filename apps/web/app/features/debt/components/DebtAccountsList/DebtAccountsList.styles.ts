@@ -15,16 +15,6 @@ export const listCard = cva({
   },
 });
 
-export const listHeader = cva({
-  base: {
-    display: "flex",
-    flexWrap: "wrap",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: "12px",
-  },
-});
-
 export const listHeading = css({
   margin: 0,
   textStyle: "heading.md",
@@ -38,35 +28,56 @@ export const listSubtitle = css({
   color: "text.muted",
 });
 
-export const creditorName = css({ fontWeight: "semibold", color: "text.primary" });
-
-export const figure = css({ fontVariantNumeric: "tabular-nums", color: "text.primary" });
-
-export const mutedFigure = css({
-  color: "text.muted",
-  fontSize: "xs",
-  marginInlineStart: "6px",
+export const listReset = css({
+  listStyle: "none",
+  margin: 0,
+  padding: 0,
+  display: "flex",
+  flexDirection: "column",
 });
 
-export const aprCell = cva({
-  base: {
-    display: "inline-flex",
-    flexWrap: "wrap",
-    alignItems: "center",
-    justifyContent: "flex-end",
-    gap: "4px 8px",
-    fontVariantNumeric: "tabular-nums",
-  },
+export const rowItem = css({
+  display: "flex",
+  flexWrap: "wrap",
+  alignItems: "center",
+  justifyContent: "space-between",
+  gap: "8px 16px",
+  paddingBlock: "12px",
+  borderBottomWidth: "1px",
+  borderBottomStyle: "solid",
+  borderBottomColor: "border.subtle",
+  _last: { borderBottomWidth: 0 },
 });
 
-export const aprNotSet = css({ color: "text.muted" });
+export const rowMain = css({ display: "flex", flexDirection: "column", gap: "2px", minWidth: 0 });
+
+export const rowName = css({ fontWeight: "semibold", color: "text.primary" });
+
+export const rowDetail = css({
+  display: "inline-flex",
+  flexWrap: "wrap",
+  alignItems: "center",
+  gap: "0 4px",
+  fontSize: "sm",
+  color: "text.secondary",
+  fontVariantNumeric: "tabular-nums",
+});
+
+export const rowFigures = css({
+  display: "flex",
+  alignItems: "center",
+  gap: "8px",
+  marginInlineStart: "auto",
+});
+
+export const balanceFigure = css({
+  fontVariantNumeric: "tabular-nums",
+  fontWeight: "semibold",
+  color: "text.primary",
+});
 
 export const actionsCell = cva({
   base: { display: "inline-flex", alignItems: "center", gap: "4px" },
-});
-
-export const deleteAction = css({
-  color: "status.danger.text",
 });
 
 export const drawerWrap = css({ marginTop: "8px" });

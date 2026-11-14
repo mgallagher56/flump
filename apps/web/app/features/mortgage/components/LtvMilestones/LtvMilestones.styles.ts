@@ -1,17 +1,13 @@
 import { cva } from "@repo/ui/styled-system/css";
 
-export const ltvCard = cva({
+/** Drawer content: no card chrome of its own (E16 PR 6). */
+export const ltvBody = cva({
   base: {
-    backgroundColor: "surface.card",
-    borderRadius: "xl",
-    borderWidth: "1px",
-    borderStyle: "solid",
-    borderColor: "border.subtle",
-    p: { base: "16px", md: "20px" },
     display: "flex",
     flexDirection: "column",
     gap: "16px",
     minWidth: 0,
+    fontVariantNumeric: "tabular-nums",
   },
 });
 
@@ -19,7 +15,7 @@ export const ltvHeader = cva({
   base: {
     display: "flex",
     justifyContent: "space-between",
-    alignItems: "center",
+    alignItems: "flex-end",
     flexWrap: "wrap",
     gap: "8px",
   },
@@ -39,8 +35,20 @@ export const ltvHeading = cva({
   },
 });
 
+export const ltvShare = cva({
+  base: {
+    textStyle: "label.sm",
+    color: "text.secondary",
+    margin: 0,
+    fontVariantNumeric: "tabular-nums",
+  },
+});
+
 export const tierGrid = cva({
   base: {
+    listStyle: "none",
+    margin: 0,
+    padding: 0,
     display: "grid",
     gridTemplateColumns: "repeat(auto-fit, minmax(min(220px, 100%), 1fr))",
     gap: "12px",
@@ -49,21 +57,15 @@ export const tierGrid = cva({
 
 export const tierCard = cva({
   base: {
-    p: "14px",
-    borderRadius: "lg",
-    borderWidth: "1px",
-    borderStyle: "solid",
+    py: "12px",
+    borderTopWidth: "1px",
+    borderTopStyle: "solid",
+    borderTopColor: "border.subtle",
     display: "flex",
     flexDirection: "column",
     gap: "6px",
     minWidth: 0,
     fontVariantNumeric: "tabular-nums",
-  },
-  variants: {
-    achieved: {
-      true: { backgroundColor: "status.positive.bg", borderColor: "status.positive.border" },
-      false: { backgroundColor: "status.warning.bg", borderColor: "status.warning.border" },
-    },
   },
 });
 
@@ -71,7 +73,7 @@ export const tierTop = cva({
   base: {
     display: "flex",
     justifyContent: "space-between",
-    alignItems: "center",
+    alignItems: "baseline",
     gap: "8px",
     flexWrap: "wrap",
   },
@@ -79,6 +81,10 @@ export const tierTop = cva({
 
 export const tierTitle = cva({
   base: { textStyle: "label.md", color: "text.primary" },
+});
+
+export const tierState = cva({
+  base: { textStyle: "label.sm", color: "text.muted" },
 });
 
 export const tierBody = cva({

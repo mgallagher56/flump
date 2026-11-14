@@ -38,7 +38,8 @@ const formatDate = (iso: string): string => {
   return Number.isNaN(parsed.getTime()) ? iso : dateFormat.format(parsed);
 };
 
-export const RENT_MISSING_TEXT = "Not known yet. Add your monthly rent to see this.";
+export const RENT_MISSING_TEXT =
+  "Not known yet. Add what you pay for housing each month to see this.";
 export const SALARY_MISSING_TEXT = "Not known yet. Add your salary to see this.";
 export const MORTGAGE_MISSING_TEXT =
   "Not known yet. Add your mortgage balance, rate and term to see this.";
@@ -106,9 +107,9 @@ export const HousingCostCard: FC<HousingCostCardProps> = ({
     setSavedNotice("");
     try {
       await onSaveRent(rent);
-      setSavedNotice("Rent saved.");
+      setSavedNotice("Rent saved");
     } catch {
-      setError("Could not save your rent. Please try again.");
+      setError("We could not save your rent. Nothing has changed. Try again.");
     } finally {
       setSaving(false);
     }

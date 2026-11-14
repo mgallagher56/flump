@@ -1,20 +1,9 @@
-import {
-  EmptyState,
-  Icon,
-  KpiCard,
-  KpiStrip,
-  Money,
-  SimulatorSplitLayout,
-  SliderField,
-  StatusBadge,
-} from "@repo/ui";
-import { Clock, Home } from "lucide-react";
+import { Money, Select, SimulatorSplitLayout, SliderField } from "@repo/ui";
 import { type FC, useEffect, useMemo, useRef, useState } from "react";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import {
   fieldGroup,
   fieldLabel,
-  kpiNote,
   ltvBody,
   ltvBox,
   ltvHeading,
@@ -22,14 +11,12 @@ import {
   ltvTotal,
   panel,
   remainingText,
+  resultItem,
+  resultList,
+  resultUnit,
   selectRow,
-  selectStyle,
   simDescription,
-  simHeader,
   simRoot,
-  simTitle,
-  titleIcon,
-  titleRow,
 } from "./RemortgageShockSim.styles";
 
 export interface RemortgageShockSimProps {
@@ -62,6 +49,16 @@ const ltvFormat = new Intl.NumberFormat("en-GB", {
   minimumFractionDigits: 1,
   maximumFractionDigits: 1,
 });
+
+/** "18 months", or "2 years 3 months" from 24 months up (copy guide 4.3). */
+const formatMonthsLeft = (months: number): string => {
+  if (months < 24) return `${months} ${months === 1 ? "month" : "months"}`;
+  const years = Math.floor(months / 12);
+  const rest = months % 12;
+  return rest === 0
+    ? `${years} years`
+    : `${years} years ${rest} ${rest === 1 ? "month" : "months"}`;
+};
 
 const DEFAULT_TERM_YEARS = 25;
 const DEFAULT_TERM_MIN = 5;
@@ -167,68 +164,57 @@ export const RemortgageShockSim: FC<RemortgageShockSimProps> = ({
       <div className={fieldGroup}>
         <span className={fieldLabel}>Fixed rate ends on</span>
         <div className={selectRow}>
-          <select
+          <Select
             aria-label="Fixed rate end month"
-            className={selectStyle}
             id="deal-end-month"
-            value={fixEndMonth}
+            options={MONTHS.map((m, i) => ({ value: String(i + 1), label: m }))}
+            placeholder="Month"
+            value={fixEndMonth === "" ? "" : String(fixEndMonth)}
             onChange={(e) => {
               fixEndEdited.current = true;
               setFixEndMonth(e.target.value === "" ? "" : Number(e.target.value));
             }}
-          >
-            <option value="">Month</option>
-            {MONTHS.map((m, i) => (
-              <option key={m} value={i + 1}>
-                {m}
-              </option>
-            ))}
-          </select>
-          <select
+          />
+          <Select
             aria-label="Fixed rate end year"
-            className={selectStyle}
             id="deal-end-year"
-            value={fixEndYear}
+            options={yearOptions.map((y) => ({ value: String(y), label: String(y) }))}
+            placeholder="Year"
+            value={fixEndYear === "" ? "" : String(fixEndYear)}
             onChange={(e) => {
               fixEndEdited.current = true;
               setFixEndYear(e.target.value === "" ? "" : Number(e.target.value));
             }}
-          >
-            <option value="">Year</option>
-            {yearOptions.map((y) => (
-              <option key={y} value={y}>
-                {y}
-              </option>
-            ))}
-          </select>
+          />
         </div>
         <p className={remainingText} id="remortgage-months-remaining">
           {monthsRemaining === null
-            ? "Fix end date not set. Choose a month and year to see the time left on your fix."
+            ? "Fixed rate end date not set. Choose a month and year to see the time left."
             : rateKnown
-              ? `${monthsRemaining} months remaining on current ${rateFormat.format(currentRate)}% fix`
-              : `${monthsRemaining} months remaining on your current fix`}
+              ? `${formatMonthsLeft(monthsRemaining)} left on your ${rateFormat.format(currentRate)}% fixed rate`
+              : `${formatMonthsLeft(monthsRemaining)} left on your fixed rate`}
         </p>
       </div>
 
       <SliderField
-        helperText="Assumption: set the rate you expect to pay after your deal ends. Check your lender's current rates."
-        label="Projected renewal rate"
+        format="percent"
+        fractionDigits={1}
+        helperText="Assumption: the rate after your fixed rate ends. Your lender publishes its current rates."
+        label="Rate after your fixed rate ends"
         max={8.5}
         min={2}
         step={0.1}
-        unitSuffix="%"
         value={projectedNewRate}
         onChange={setProjectedNewRate}
       />
 
       <SliderField
-        helperText="Assumption: the term used to estimate your monthly payments."
-        label="Remaining term (years)"
+        helperText="Assumption: the years left used to estimate your monthly payments."
+        label="Years left"
         max={termMax}
         min={termMin}
         step={1}
-        unitSuffix="yrs"
+        unitSuffix="years"
         value={termYears}
         onChange={(value) => {
           termEdited.current = true;
@@ -240,96 +226,77 @@ export const RemortgageShockSim: FC<RemortgageShockSimProps> = ({
 
   const content = (
     <>
-      <KpiStrip columns={3}>
-        <KpiCard
-          label="Current payment (estimate)"
-          subtext={<span className={kpiNote}>per month</span>}
-          value={paymentsKnown ? <Money size="lg" value={currentMonthly} /> : null}
-        />
-        <KpiCard
-          label="Payment at projected rate (estimate)"
-          subtext={<span className={kpiNote}>per month</span>}
-          value={paymentsKnown ? <Money size="lg" value={newMonthly} /> : null}
-        />
-        <KpiCard
-          label="Projected payment shock (estimate)"
-          subtext={<span className={kpiNote}>extra per month</span>}
-          value={
-            paymentsKnown ? (
-              <Money
-                signDisplay={monthlyShock > 0 ? "always" : "auto"}
-                size="lg"
-                tone={monthlyShock > 0 ? "danger" : "default"}
-                value={monthlyShock}
-              />
-            ) : null
-          }
-        />
-      </KpiStrip>
+      {paymentsKnown ? (
+        <dl className={resultList()} data-testid="remortgage-results">
+          <div className={resultItem()}>
+            <dt>Current payment (estimate)</dt>
+            <dd>
+              {formatCurrency(currentMonthly)} <span className={resultUnit}>a month</span>
+            </dd>
+          </div>
+          <div className={resultItem()}>
+            <dt>Payment at the new rate (estimate)</dt>
+            <dd>
+              {formatCurrency(newMonthly)} <span className={resultUnit}>a month</span>
+            </dd>
+          </div>
+          <div className={resultItem()}>
+            <dt>Change in monthly payment (estimate)</dt>
+            <dd>
+              {monthlyShock > 0 ? "+" : ""}
+              {formatCurrency(monthlyShock)} <span className={resultUnit}>a month</span>
+            </dd>
+          </div>
+        </dl>
+      ) : (
+        <p className={ltvBody}>
+          Add your balance and interest rate to see your payment at a different rate.
+        </p>
+      )}
 
       {ltvKnown ? (
         <div className={ltvBox()} id="remortgage-ltv-box">
           <div>
             <h4 className={ltvHeading}>
-              {`Target LTV tier: ${nextTargetLtv}%`}
+              {`Next LTV band: ${nextTargetLtv}%`}
               <span className={ltvMuted}>{`(current LTV: ${ltvFormat.format(currentLtv)}%)`}</span>
             </h4>
             <p className={ltvBody}>
               {requiredOverpaymentToReachTier > 0
                 ? monthlyOverpaymentNeeded === null
-                  ? `Estimate: you would need to overpay ${formatCurrency(requiredOverpaymentToReachTier)} in total to reach ${nextTargetLtv}% LTV. Set your fix end date to see a monthly figure. Check your lender's bands.`
-                  : `Estimate: overpay ${formatCurrency(monthlyOverpaymentNeeded)}/mo before renewal to reach ${nextTargetLtv}% LTV. Lenders price some deals by LTV band, so this may open up lower rates. Check your lender's bands.`
-                : `Already within the ${nextTargetLtv}% LTV bracket.`}
+                  ? `Estimate: overpaying ${formatCurrency(requiredOverpaymentToReachTier)} in total would reach ${nextTargetLtv}% LTV. Set your fixed rate end date to see a monthly figure. Your lender sets its own bands.`
+                  : `Estimate: overpaying ${formatCurrency(monthlyOverpaymentNeeded)} a month until your fixed rate ends would reach ${nextTargetLtv}% LTV. Your lender sets its own bands.`
+                : `Your LTV is already within the ${nextTargetLtv}% band.`}
             </p>
           </div>
           {requiredOverpaymentToReachTier > 0 ? (
             <div className={ltvTotal}>
-              <span>Total overpay to reach tier (estimate)</span>
+              <span>Total overpayment to reach the band (estimate)</span>
               <Money size="lg" tone="default" value={requiredOverpaymentToReachTier} />
             </div>
           ) : null}
         </div>
       ) : (
-        <EmptyState
-          description={
-            balanceKnown
-              ? "Add your property value to see your loan to value (LTV) and the next LTV tier."
-              : "Add your mortgage balance and property value to see your loan to value (LTV) and the next LTV tier."
-          }
-          headingLevel="h3"
-          icon={<Icon icon={Home} size="lg" />}
-          id="remortgage-ltv-not-set"
-          size="sm"
-          title="LTV not set"
-        />
+        <p className={ltvBody} id="remortgage-ltv-not-set">
+          {balanceKnown
+            ? "Add your property value to see your loan to value (LTV) and the next LTV band."
+            : "Add your mortgage balance and property value to see your loan to value (LTV) and the next LTV band."}
+        </p>
       )}
     </>
   );
 
   return (
     <div className={simRoot()} data-testid="remortgage-shock-sim" id="remortgage-shock-sim">
-      <div className={simHeader}>
-        <div>
-          <div className={titleRow}>
-            <span className={titleIcon}>
-              <Icon icon={Clock} size="sm" />
-            </span>
-            <h3 className={simTitle}>Mortgage deal expiry and remortgage shock simulator</h3>
-            <StatusBadge size="sm" variant="neutral">
-              Estimate
-            </StatusBadge>
-          </div>
-          <p className={simDescription}>
-            Model payment changes when your fixed deal ends and see how overpaying could reach a
-            lower LTV bracket.
-          </p>
-        </div>
-      </div>
+      <p className={simDescription}>
+        Model your payment at a different rate when your fixed rate ends. See the overpayment that
+        would reach the next loan to value (LTV) band.
+      </p>
       <SimulatorSplitLayout
         content={content}
-        contentLabel="Remortgage estimates"
+        contentLabel="Rate change estimates"
         controls={controls}
-        controlsLabel="Remortgage assumptions"
+        controlsLabel="Rate change assumptions"
       />
     </div>
   );

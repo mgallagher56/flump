@@ -20,7 +20,6 @@
     "apps/web/app/features/ai-connections/components/McpConnectionCard/McpConnectionCard.tsx": 7,
     "apps/web/app/features/charts/utils/chartProps.ts": 1,
     "apps/web/app/features/charts/utils/legacyTooltipStyles.ts": 3,
-    "apps/web/app/features/debt/components/DebtToWealthBridgeCard/DebtToWealthBridgeCard.tsx": 2,
     "apps/web/app/features/mortgage/components/OverpayVsSaveCompare/OverpayVsSaveCompare.styles.ts": 3,
     "apps/web/app/features/mortgage/components/OverpayVsSaveCompare/OverpayVsSaveCompare.tsx": 2,
     "apps/web/app/features/mortgage/components/OverpaymentSimulator/OverpaymentSimulator.tsx": 2,

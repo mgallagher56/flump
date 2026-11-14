@@ -17,7 +17,7 @@ describe("signed-in page titles", () => {
     ["/", dashboardMeta, "Dashboard | Flump"],
     ["/app/accounts", accountsMeta, "Accounts | Flump"],
     ["/app/budget", budgetMeta, "Budget | Flump"],
-    ["/app/debt", debtMeta, "Debt payoff | Flump"],
+    ["/app/debt", debtMeta, "Debt | Flump"],
     ["/app/mortgage", mortgageMeta, "Mortgage | Flump"],
     ["/app/profile", profileMeta, "Settings | Flump"],
     ["/app/self-assessment (and /app/tax)", selfAssessmentMeta, "Self Assessment | Flump"],

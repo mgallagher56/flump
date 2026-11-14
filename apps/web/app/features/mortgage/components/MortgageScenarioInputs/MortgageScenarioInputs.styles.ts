@@ -1,26 +1,12 @@
 import { cva } from "@repo/ui/styled-system/css";
 
-export const inputsCard = cva({
-  base: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "16px",
-    backgroundColor: "surface.card",
-    borderWidth: "1px",
-    borderStyle: "solid",
-    borderColor: "border.subtle",
-    borderRadius: "xl",
-    p: { base: "16px", md: "20px" },
-    minWidth: 0,
-  },
-});
-
-export const inputsHeading = cva({
-  base: { textStyle: "heading.sm", color: "text.primary", margin: 0 },
+/** Sits on the scenario zone surface inside "More options": no card chrome (E16 PR 6). */
+export const inputsBody = cva({
+  base: { display: "flex", flexDirection: "column", gap: "16px", minWidth: 0 },
 });
 
 export const inputsHint = cva({
-  base: { textStyle: "body.sm", color: "text.muted", margin: 0 },
+  base: { textStyle: "body.sm", color: "text.secondary", margin: 0 },
 });
 
 export const inputsGrid = cva({

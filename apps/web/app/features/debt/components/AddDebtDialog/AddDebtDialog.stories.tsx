@@ -28,7 +28,7 @@ export const AddMode: Story = {
     const body = within(document.body);
     await userEvent.type(await body.findByLabelText(/^Name of the debt/), "Klarna");
     await userEvent.type(body.getByLabelText(/^Balance you owe/), "250");
-    await userEvent.click(body.getByRole("button", { name: "Add liability" }));
+    await userEvent.click(body.getByRole("button", { name: "Add debt" }));
     await expect(args.onAddDebt).toHaveBeenCalledWith(
       expect.objectContaining({ name: "Klarna", balance: 250, aprKnown: false }),
     );
@@ -38,7 +38,7 @@ export const AddMode: Story = {
 export const ValidationErrors: Story = {
   play: async () => {
     const body = within(document.body);
-    await userEvent.click(await body.findByRole("button", { name: "Add liability" }));
+    await userEvent.click(await body.findByRole("button", { name: "Add debt" }));
     await expect(body.getByText("Enter a name for this debt.")).toBeInTheDocument();
     await expect(body.getByText("Enter the balance you owe, more than £0.")).toBeInTheDocument();
   },
@@ -51,6 +51,6 @@ export const EditMode: Story = {
     const body = within(document.body);
     await expect(await body.findByRole("dialog", { name: "Edit debt" })).toBeInTheDocument();
     await expect(body.queryByLabelText(/^Balance you owe/)).toBeNull();
-    await expect(body.getByLabelText(/^APR/)).toHaveValue("22.9");
+    await expect(body.getByLabelText(/^Interest rate/)).toHaveValue("22.9");
   },
 };

@@ -1,48 +1,65 @@
-import { describe, expect, test } from "vitest";
+import { fireEvent } from "@testing-library/react";
+import { describe, expect, test, vi } from "vitest";
 import customRender from "~/testUtils/customRender";
 import { DebtSummary, type DebtSummaryProps } from "./DebtSummary";
 
 const props: DebtSummaryProps = {
   totalDebt: 8400,
-  highInterestDebt: 5200,
+  debtCount: 2,
   monthlyMinimumTotal: 210,
-  debtFreeDate: "Aug 2028",
-  totalInterest: 640,
+  debtFreeDate: "August 2028",
+  interestThisYear: 640,
 };
 
 describe("<DebtSummary />", () => {
-  test("shows four KPIs with 'Debt-free by' as the single hero", () => {
+  test("puts the saved total in the hero and the estimated date first in the strip", () => {
     const { container, getByText } = customRender(<DebtSummary {...props} />);
     const heroes = container.querySelectorAll("[data-tone='hero']");
     expect(heroes).toHaveLength(1);
-    expect(heroes[0]?.textContent).toContain("Debt-free by");
-    expect(heroes[0]?.textContent).toContain("Aug 2028");
-    expect(heroes[0]?.textContent).toContain("Paying the minimums only");
-    for (const label of ["Total you owe", "Paying each month", "Interest to pay"]) {
-      expect(getByText(label)).toBeDefined();
-    }
+    expect(heroes[0]?.textContent).toContain("Total you owe");
+    expect(heroes[0]?.textContent).toContain("£8,400");
+    expect(heroes[0]?.textContent).not.toMatch(/estimate/i);
+    expect(heroes[0]?.textContent).not.toContain("August 2028");
+    expect(getByText("Debt-free by")).toBeDefined();
+    expect(container.textContent).toContain("August 2028");
+    expect(container.textContent).toContain("Estimate at your current payments");
+    expect(getByText("Interest this year")).toBeDefined();
     expect(container.textContent).toContain("£210");
     expect(container.textContent).toContain("£640");
   });
 
-  test("an unknown APR never shows an invented date or saving, and drops the hero", () => {
-    const { container, getAllByText } = customRender(<DebtSummary {...props} aprUnknown />);
-    expect(container.querySelectorAll("[data-tone='hero']")).toHaveLength(0);
-    expect(container.textContent).not.toContain("Aug 2028");
+  test("shows a liability stored as a negative balance as a positive amount owed", () => {
+    const { container } = customRender(<DebtSummary {...props} totalDebt={-8400} />);
+    const hero = container.querySelector("[data-tone='hero']");
+    expect(hero?.textContent).toContain("£8,400");
+    expect(hero?.textContent).not.toMatch(/[-−]£|minus/);
+  });
+
+  test("a missing APR shows one prompt with one button, never 'Not set' cards", () => {
+    const onAddRate = vi.fn();
+    const { container, getByRole, getByText } = customRender(
+      <DebtSummary {...props} missingAprCount={2} onAddRate={onAddRate} />,
+    );
+    expect(container.textContent).not.toContain("Not set");
+    expect(container.textContent).not.toContain("August 2028");
     expect(container.textContent).not.toContain("£640");
-    expect(getAllByText("Not set")).toHaveLength(2);
-    expect(getAllByText("Add each debt's APR to calculate this")).toHaveLength(2);
+    expect(getByText("Add the rate for 2 debts to see your debt-free date")).toBeDefined();
+    fireEvent.click(getByRole("button", { name: "Add a rate" }));
+    expect(onAddRate).toHaveBeenCalledTimes(1);
   });
 
-  test("payments that never clear the debt are stated, not projected", () => {
+  test("payments that never pay off the debt are stated, not projected", () => {
     const { container } = customRender(<DebtSummary {...props} payoffAchievable={false} />);
-    expect(container.textContent).toContain("Your minimum payments do not clear the debt yet");
-    expect(container.textContent).not.toContain("Aug 2028");
+    expect(container.textContent).toContain("Not paid off");
+    expect(container.textContent).toContain(
+      "Estimate: at the minimum payments, these debts are not paid off",
+    );
+    expect(container.textContent).not.toContain("August 2028");
   });
 
-  test("flags estimated minimums in plain words", () => {
+  test("flags estimated minimum payments in plain words", () => {
     const { container } = customRender(<DebtSummary {...props} minimumEstimated />);
-    expect(container.textContent).toContain("(minimums estimated)");
-    expect(container.querySelector("[data-tone='hero']")?.textContent).toContain("estimated");
+    expect(container.textContent).toContain("Minimum payments, some are estimates");
+    expect(container.textContent).toContain("Some minimum payments are estimates");
   });
 });

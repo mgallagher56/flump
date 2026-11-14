@@ -3,38 +3,43 @@ import { describe, expect, it, vi } from "vitest";
 import { BtlOverview } from "./BtlOverview";
 
 describe("<BtlOverview />", () => {
-  it("shows Not set for rent, yield and cash flow when nothing is entered", () => {
+  it("shows one prompt, not a row of Not set, when nothing is entered", () => {
     render(
       <BtlOverview
         grossYield={null}
         monthlyPayment={null}
         monthlyRent={0}
-        mortgageType="interest-only"
         propertyCount={null}
         onConfigure={vi.fn()}
       />,
     );
-    expect(screen.getAllByText("Not set")).toHaveLength(4);
+    expect(screen.queryAllByText("Not set").length).toBeLessThanOrEqual(1);
+    expect(
+      screen.getByText("Add your monthly rent and property value to see your rental yield"),
+    ).toBeDefined();
     expect(screen.getByText("Number of properties not set")).toBeDefined();
-    expect(screen.queryByText(/^Managing/)).toBeNull();
-    expect(screen.getByText(/Section 24 rule:/)).toBeDefined();
+    // No tax rule under the person's own figure.
+    expect(screen.queryByText(/Section 24/)).toBeNull();
   });
 
-  it("computes net cash flow from rent and payment", () => {
+  it("works out the rent left after the mortgage payment, with no status colour", () => {
     const onConfigure = vi.fn();
-    render(
+    const { container } = render(
       <BtlOverview
         grossYield={6}
         monthlyPayment={400}
         monthlyRent={1000}
-        mortgageType="repayment"
         propertyCount={2}
         onConfigure={onConfigure}
       />,
     );
-    expect(screen.getByText("Managing 2 properties")).toBeDefined();
+    expect(screen.getByText("Your buy to let properties")).toBeDefined();
+    expect(screen.getByText("2 properties")).toBeDefined();
+    expect(screen.getByText("Rent left after the mortgage payment (estimate)")).toBeDefined();
     expect(screen.getByText("+£600.00")).toBeDefined();
-    fireEvent.click(screen.getByRole("button", { name: /Configure in profile/ }));
+    expect(container.textContent).not.toMatch(/Gross|net cash flow/i);
+    expect(container.innerHTML).not.toMatch(/danger|positive/);
+    fireEvent.click(screen.getAllByRole("button", { name: "Edit your details" })[0] as HTMLElement);
     expect(onConfigure).toHaveBeenCalled();
   });
 });
