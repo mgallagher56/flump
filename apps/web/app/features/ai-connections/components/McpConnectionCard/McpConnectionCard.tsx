@@ -1,6 +1,7 @@
 import {
   Button,
   Card,
+  CollapsibleDrawer,
   ConfirmDialog,
   controlProps,
   FormField,
@@ -11,6 +12,7 @@ import {
   Switch,
   TextInput,
   useOptionalToast,
+  VisuallyHidden,
 } from "@repo/ui";
 import { cx } from "@repo/ui/styled-system/css";
 import { Check, Copy, Download, KeyRound } from "lucide-react";
@@ -28,7 +30,9 @@ import {
   formActions,
   formGrid,
   formStack,
+  setupLink,
   setupNote,
+  setupSteps,
   tokenCell,
   tokenLabel,
   tokenList,
@@ -99,8 +103,19 @@ export interface McpConnectionCardProps {
   ) => Promise<CreatedTokenResult>;
   onRevokeToken?: (tokenId: string) => Promise<void>;
   onFetchContextPack?: (anonymize: boolean) => Promise<{ pack: any; markdown: string }>;
+  /** The marketing page that explains AI connections in full; the steps link to it. */
+  guideUrl?: string;
   className?: string;
 }
+
+/** The in-place setup steps (owner ruling: the preview never ships without guidance). */
+export const HOW_TO_CONNECT_TITLE = "How to connect";
+export const HOW_TO_CONNECT_STEPS = [
+  "Create a token below and copy it. It is shown only once.",
+  "In your AI assistant, add Flump as a custom connector (an MCP server).",
+  "Paste the token when the assistant asks for one.",
+  "Ask about the figures you have saved. You can disconnect it here at any time.",
+] as const;
 
 /** A positive toast through the app's ToastProvider; a no-op without one (isolated tests). */
 const useNotify = () => {
@@ -126,6 +141,7 @@ export const McpConnectionCard: FC<McpConnectionCardProps> = ({
   onGenerateToken,
   onRevokeToken,
   onFetchContextPack,
+  guideUrl,
   className,
 }) => {
   const notify = useNotify();
@@ -452,10 +468,21 @@ export const McpConnectionCard: FC<McpConnectionCardProps> = ({
 
         {tokenRows}
 
-        <p className={setupNote()} data-testid="set-up-panel" id="set-up-panel">
-          There is no setup guide yet. You can run Flump's Model Context Protocol (MCP) server
-          yourself, from the source code on your own computer.
-        </p>
+        <CollapsibleDrawer title={HOW_TO_CONNECT_TITLE} variant="quiet">
+          <div className={setupNote()} data-testid="set-up-panel" id="set-up-panel">
+            <ol className={setupSteps()}>
+              {HOW_TO_CONNECT_STEPS.map((step) => (
+                <li key={step}>{step}</li>
+              ))}
+            </ol>
+            {guideUrl ? (
+              <a className={setupLink()} href={guideUrl} rel="noopener" target="_blank">
+                Read more about AI connections
+                <VisuallyHidden> (opens in a new tab)</VisuallyHidden>
+              </a>
+            ) : null}
+          </div>
+        </CollapsibleDrawer>
       </Card>
 
       <Card

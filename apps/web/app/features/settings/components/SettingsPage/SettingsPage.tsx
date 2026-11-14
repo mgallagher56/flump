@@ -14,6 +14,8 @@ import { type UserProfile, useUserProfile } from "~/hooks/useUserProfile";
 export interface SettingsPageProps {
   /** The profile from the route loader. */
   initialProfile: UserProfile;
+  /** The public AI connections page (marketing `/mcp#setup`), for the Security tab's steps. */
+  aiGuideUrl?: string;
   /** The signed-in auth user. */
   user?: {
     email?: string;
@@ -28,7 +30,7 @@ export interface SettingsPageProps {
  * with no hero. The email shows once, on the Security tab. Every change on the Profile tab saves
  * straight away, so there is no save button and nothing unsaved to guard when switching tabs.
  */
-export const SettingsPage: FC<SettingsPageProps> = ({ initialProfile, user }) => {
+export const SettingsPage: FC<SettingsPageProps> = ({ initialProfile, user, aiGuideUrl }) => {
   const { profile } = useUserProfile();
   const effectiveProfile = profile.id ? profile : initialProfile;
   const email = user?.email || effectiveProfile.email;
@@ -62,7 +64,7 @@ export const SettingsPage: FC<SettingsPageProps> = ({ initialProfile, user }) =>
           <ProfileTab key={effectiveProfile.id} profile={effectiveProfile} user={user} />
         </Tabs.Panel>
         <Tabs.Panel value="security">
-          <SecurityTab email={email} />
+          <SecurityTab email={email} guideUrl={aiGuideUrl} />
         </Tabs.Panel>
         <Tabs.Panel value="data">
           <DataTab />

@@ -17,6 +17,7 @@ import { backendFetch } from "~/services/backend-client.server";
 import { BackendError } from "~/services/backend-error";
 import { throwRouteError } from "~/services/route-error.server";
 import { getAuthSession } from "~/utils/auth.server";
+import { getMarketingUrl } from "~/utils/marketingUrl";
 
 export const meta: MetaFunction = () => [{ title: "Settings | Flump" }];
 
@@ -29,7 +30,11 @@ export const loader = async (args: LoaderFunctionArgs) => {
       signal: args.request.signal,
       schema: UserProfileResponse,
     });
-    return data({ userProfile, user });
+    return data({
+      userProfile,
+      user,
+      aiGuideUrl: `${getMarketingUrl(args.request.url)}/mcp#setup`,
+    });
   } catch (error) {
     throwRouteError(error);
   }
@@ -49,7 +54,7 @@ export const shouldRevalidate: ShouldRevalidateFunction = ({
 }) => (formData?.get("intent") === DELETE_ACCOUNT_INTENT ? false : defaultShouldRevalidate);
 
 const ProfileRoute = (): ReactElement => {
-  const { userProfile, user } = useLoaderData<typeof loader>();
+  const { userProfile, user, aiGuideUrl } = useLoaderData<typeof loader>();
   const { setProfile } = useUserProfile();
 
   // Seed the Jotai atom so other features get the current profile
@@ -57,7 +62,7 @@ const ProfileRoute = (): ReactElement => {
     if (userProfile) setProfile(userProfile);
   }, [userProfile, setProfile]);
 
-  return <SettingsPage initialProfile={userProfile} user={user} />;
+  return <SettingsPage aiGuideUrl={aiGuideUrl} initialProfile={userProfile} user={user} />;
 };
 
 export default ProfileRoute;

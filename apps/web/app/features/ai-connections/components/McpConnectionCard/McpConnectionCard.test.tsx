@@ -1,7 +1,12 @@
 import { ToastProvider } from "@repo/ui";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { McpConnectionCard, type McpTokenItem } from "./McpConnectionCard";
+import {
+  HOW_TO_CONNECT_STEPS,
+  HOW_TO_CONNECT_TITLE,
+  McpConnectionCard,
+  type McpTokenItem,
+} from "./McpConnectionCard";
 
 // Sample values only, built at runtime with no entropy: never a real token.
 const SAMPLE_TOKEN = `flump_pat_${"x".repeat(32)}`;
@@ -57,13 +62,18 @@ describe("McpConnectionCard", () => {
     expect(text).not.toMatch(/hallucinat|PII Scrubbed|account numbers|read-only safe/i);
   });
 
-  it("has no inner tabs and shows the setup line once, as a muted line", () => {
-    render(<McpConnectionCard />);
+  it("has no inner tabs and offers the setup steps in a closed How to connect disclosure", () => {
+    render(<McpConnectionCard guideUrl="https://example.test/mcp#setup" />);
     expect(screen.queryByRole("tab")).toBeNull();
     expect(screen.queryByRole("tablist")).toBeNull();
-    expect(screen.getByTestId("set-up-panel").textContent).toContain(
-      "There is no setup guide yet.",
-    );
+    const toggle = screen.getByRole("button", { name: HOW_TO_CONNECT_TITLE });
+    expect(toggle.getAttribute("aria-expanded")).toBe("false");
+    fireEvent.click(toggle);
+    const panel = screen.getByTestId("set-up-panel");
+    expect(within(panel).getAllByRole("listitem")).toHaveLength(HOW_TO_CONNECT_STEPS.length);
+    const link = within(panel).getByRole("link", { name: /Read more about AI connections/ });
+    expect(link.getAttribute("href")).toBe("https://example.test/mcp#setup");
+    expect(screen.queryByText(/no setup guide/)).toBeNull();
     expect(screen.queryByText(/npx/)).toBeNull();
     expect(screen.queryByText(/OAuth 2\.1/)).toBeNull();
   });

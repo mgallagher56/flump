@@ -25,10 +25,12 @@ import {
 export interface SecurityTabProps {
   /** The sign-in email shown to the person. */
   email?: string | null;
+  /** The public AI connections page, linked from the card's "How to connect" steps. */
+  guideUrl?: string;
 }
 
 /** Sign-in security and AI access: password reset by email and the MCP connection card. */
-export const SecurityTab: FC<SecurityTabProps> = ({ email }) => {
+export const SecurityTab: FC<SecurityTabProps> = ({ email, guideUrl }) => {
   const { sendPasswordResetEmail } = useUserProfile();
   // A toast as well as the status line; a no-op when rendered without a ToastProvider.
   const toast = useOptionalToast()?.toast;
@@ -123,6 +125,7 @@ export const SecurityTab: FC<SecurityTabProps> = ({ email }) => {
         onFetchContextPack={mcp.contextPack}
         onGenerateToken={mcp.create}
         onRevokeToken={mcp.revoke}
+        guideUrl={guideUrl}
       />
 
       {canStage ? (
