@@ -333,14 +333,19 @@ const BudgetContainer: FC = () => {
       <DataList
         items={entries
           .filter((e) => e.category === category && !e.isIncome)
-          .map((e, _i, rows) => ({
-            id: e.id,
-            label: e.name,
-            secondary: entrySecondary(e),
-            // A single entry is the row's own total, so its figure would only repeat it (P6).
-            value: rows.length > 1 ? Math.abs(toMonthly(e)) : undefined,
-            valueProps: { fractionDigits: 0 },
-          }))}
+          .map((e, _i, rows) =>
+            // A single entry is the row's own total, so its figure would only repeat it (P6):
+            // its kind takes the figure's place instead of leaving a gap.
+            rows.length > 1
+              ? {
+                  id: e.id,
+                  label: e.name,
+                  secondary: entrySecondary(e),
+                  value: Math.abs(toMonthly(e)),
+                  valueProps: { fractionDigits: 0, size: "sm" as const },
+                }
+              : { id: e.id, label: e.name, valueDisplay: entrySecondary(e) },
+          )}
         label={`${getCategoryLabel(category)} entries`}
         noun={{ one: "entry", other: "entries" }}
       />
