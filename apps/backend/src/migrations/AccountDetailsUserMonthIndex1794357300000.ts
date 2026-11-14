@@ -7,6 +7,8 @@ import { MIGRATION_LOCK_KEY } from "../config/migration-lock";
 // query; this composite index serves the filter and the order together. It covers every query the
 // single-column IDX_account_details_user served (user_id is its leading column), so that index is
 // dropped. down() restores it.
+// A plain (not CONCURRENTLY) build: it blocks writes to account_details while it runs, which is
+// brief at current table sizes and keeps it inside the migration transaction and advisory lock.
 const INDEX = "IDX_account_details_user_account_year_month";
 const OLD_INDEX = "IDX_account_details_user";
 

@@ -8,7 +8,7 @@ import {
   statusText,
   tabStack,
 } from "~/features/settings/settings.styles";
-import { useUserProfile } from "~/hooks/useUserProfile";
+import { RESET_FINANCIAL_DATA_CONFIRMATION, useUserProfile } from "~/hooks/useUserProfile";
 import {
   dangerCopy,
   dangerRow,
@@ -142,7 +142,7 @@ export const DataTab: FC = () => {
         confirmLabel="Reset everything"
         pendingLabel="Resetting"
         tone="danger"
-        requireText="RESET"
+        requireText={RESET_FINANCIAL_DATA_CONFIRMATION}
         pending={resettingData || resetSuccess}
         error={resetError}
         onConfirm={handleResetFinancialData}

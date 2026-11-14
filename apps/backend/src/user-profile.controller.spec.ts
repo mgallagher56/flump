@@ -1,3 +1,4 @@
+import { BadRequestException, Logger } from "@nestjs/common";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { UserProfileController } from "./user-profile.controller";
 
@@ -124,9 +125,10 @@ describe("UserProfileController", () => {
         hasResetFinancialData: false,
       });
 
-      const res = await controller.resetFinancialData({
-        user: { id: "user-123", email: "jane@example.com" },
-      });
+      const res = await controller.resetFinancialData(
+        { user: { id: "user-123", email: "jane@example.com" } },
+        { confirmation: "RESET" },
+      );
 
       expect(mockAccountRepo.find).toHaveBeenCalledWith(
         expect.objectContaining({ where: { userId: "user-123" } }),
@@ -158,6 +160,57 @@ describe("UserProfileController", () => {
       expect(res.profile.pensionPercent).toBe(0);
       expect(res.profile.pensionEmployerPercent).toBe(0);
       expect(res.profile.customBudgetCategories).toEqual([]);
+    });
+  });
+
+  describe("resetFinancialData confirmation and audit (security review)", () => {
+    const req = { user: { id: "user-123", email: "jane@example.com" } };
+
+    it.each([
+      ["no body", undefined],
+      ["an empty body", {}],
+      ["the wrong phrase", { confirmation: "reset" }],
+      ["a non-string phrase", { confirmation: true }],
+    ])("rejects %s with a 400 and deletes nothing", async (_label, body) => {
+      await expect(controller.resetFinancialData(req, body)).rejects.toBeInstanceOf(
+        BadRequestException,
+      );
+      expect(mockAccountRepo.delete).not.toHaveBeenCalled();
+      expect(mockTransactionRepo.delete).not.toHaveBeenCalled();
+      expect(mockUserProfileRepo.save).not.toHaveBeenCalled();
+    });
+
+    it("logs one financial_data_reset event with the user id and row counts only", async () => {
+      mockUserProfileRepo.findOne.mockResolvedValueOnce({
+        userId: "user-123",
+        annualSalary: 80000,
+        displayName: "Jane Smith",
+      });
+      const log = vi.spyOn(Logger.prototype, "log").mockImplementation(() => undefined);
+
+      await controller.resetFinancialData(req, { confirmation: "RESET", extra: 1 });
+
+      const events = log.mock.calls
+        .map(([message]) => JSON.stringify(message))
+        .filter((m) => m.includes("financial_data_reset"));
+      expect(events).toHaveLength(1);
+      const event = JSON.parse(events[0]);
+      expect(Object.keys(event).sort()).toEqual(["event", "removed", "userId"]);
+      expect(event.userId).toBe("user-123");
+      expect(event.removed).toEqual({
+        accountDetails: 4,
+        snapshotCheckins: 0,
+        importBatches: 0,
+        transactions: 5,
+        accounts: 1,
+        bankConnections: 1,
+        budgetEntries: 3,
+        taxRecords: 4,
+      });
+      expect(events[0]).not.toContain("jane@example.com");
+      expect(events[0]).not.toContain("80000");
+      expect(events[0]).not.toContain("Jane");
+      log.mockRestore();
     });
   });
 

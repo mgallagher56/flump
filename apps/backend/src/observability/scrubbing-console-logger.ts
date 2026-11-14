@@ -72,6 +72,38 @@ function isAccessLogEntry(value: Record<string, unknown>): boolean {
   );
 }
 
+/** Audit events (security review) that may name the acting user: each is counts only. */
+const AUDIT_EVENTS: readonly string[] = ["financial_data_reset"];
+/** A user id: a UUID, or a WorkOS user id (`user_` plus a 26-character ULID). */
+const USER_ID =
+  /^(?:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}|user_[0-9A-Z]{26})$/i;
+const COUNT_KEY = /^[A-Za-z]{1,40}$/;
+const MAX_AUDIT_COUNTS = 16;
+
+/**
+ * True only for an exact audit event: `{ event, userId, removed }` with a known event name, a
+ * user id in strict id shape and `removed` holding at most 16 whole, non-negative counts under
+ * plain word keys. The generic scrubber would blank the user id (its long-token rule matches any
+ * UUID), leaving an audit trail that does not say whose data was reset. Anything else, including
+ * one extra key, falls through to the generic scrubber.
+ */
+function isAuditEventEntry(value: Record<string, unknown>): boolean {
+  const keys = Object.keys(value).sort();
+  if (keys.join(",") !== "event,removed,userId") return false;
+  if (typeof value.event !== "string" || !AUDIT_EVENTS.includes(value.event)) return false;
+  if (typeof value.userId !== "string" || !USER_ID.test(value.userId)) return false;
+  const removed = value.removed;
+  if (!isPlainObject(removed)) return false;
+  const entries = Object.entries(removed);
+  return (
+    entries.length <= MAX_AUDIT_COUNTS &&
+    entries.every(
+      ([k, n]) =>
+        COUNT_KEY.test(k) && Number.isInteger(n) && (n as number) >= 0 && (n as number) < 1e9,
+    )
+  );
+}
+
 /** Own error fields that are safe to print as-is: SQLSTATEs, errno names, HTTP statuses. */
 function isSafeErrorField(key: string, value: unknown): boolean {
   if (key === "code") return typeof value === "string" && ERROR_CODE.test(value);
@@ -210,6 +242,9 @@ function sanitizeError(error: Error, depth = 0): Error {
 
 function sanitizeObject(value: Record<string, unknown>): Record<string, unknown> {
   if (isAccessLogEntry(value)) return { ...value };
+  if (isAuditEventEntry(value)) {
+    return { ...value, removed: { ...(value.removed as Record<string, unknown>) } };
+  }
   // redactDeep walks the whole object once, with its depth and node bounds.
   return redactDeep(value) as Record<string, unknown>;
 }

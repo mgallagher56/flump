@@ -105,6 +105,24 @@ describe("UserProfileService (Deep Module)", () => {
     expect(result.profile.annualSalary).toBeNull();
   });
 
+  it("logs financial_data_reset only after the transaction commits", async () => {
+    const log = vi.spyOn(Logger.prototype, "log").mockImplementation(() => undefined);
+    const resetEvents = () =>
+      log.mock.calls.filter(([m]) => JSON.stringify(m).includes("financial_data_reset"));
+
+    mockDataSource.transaction.mockRejectedValueOnce(new Error("rollback"));
+    await expect(service.resetFinancialData("user-123")).rejects.toThrow("rollback");
+    expect(resetEvents()).toHaveLength(0);
+
+    mockUserProfileRepo.findOne.mockResolvedValueOnce({ userId: "user-123" });
+    await service.resetFinancialData("user-123");
+    expect(resetEvents()).toHaveLength(1);
+    expect((resetEvents()[0][0] as { removed: { snapshotCheckins: number } }).removed).toEqual(
+      expect.objectContaining({ snapshotCheckins: 1 }),
+    );
+    log.mockRestore();
+  });
+
   it("filters the retired forecast module key on read without touching the stored row", async () => {
     const stored = {
       id: "profile-1",

@@ -158,7 +158,6 @@ export const PersonalAllowanceTaperBanner: FC<PersonalAllowanceTaperBannerProps>
 
         <input
           id={sliderId}
-          aria-label="Pension sacrifice amount"
           className={css({
             width: "100%",
             accentColor: "token(colors.primary)",

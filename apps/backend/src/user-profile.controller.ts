@@ -1,4 +1,6 @@
+import { ResetFinancialDataRequest } from "@flump/api-contract";
 import {
+  BadRequestException,
   Body,
   Controller,
   Get,
@@ -75,9 +77,18 @@ export class UserProfileController {
     return this.userProfileService.sendPasswordReset(req.user.id);
   }
 
+  /**
+   * Destructive: the body must carry the typed confirmation phrase. Checked here as well as by
+   * the contract interceptor, so the reset stays guarded even when contract enforcement is off.
+   */
   @Post("user-profile/reset-financial-data")
   @RateLimit("destructive")
-  async resetFinancialData(@Req() req: any): Promise<any> {
+  async resetFinancialData(@Req() req: any, @Body() body: unknown): Promise<any> {
+    // Only the phrase is checked: unknown keys are stripped, not rejected, as by the interceptor.
+    const confirmation = (body as { confirmation?: unknown } | null)?.confirmation;
+    if (!ResetFinancialDataRequest.shape.confirmation.safeParse(confirmation).success) {
+      throw new BadRequestException("Type the confirmation phrase to reset your financial data.");
+    }
     return this.userProfileService.resetFinancialData(req.user.id, req.user?.email);
   }
 
