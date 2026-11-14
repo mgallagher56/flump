@@ -59,9 +59,7 @@ export interface PensionTakeHomeEffectProps {
 }
 
 const COMPONENT_ROWS = DELTA_TABLE_ROWS.filter((r) => r.key !== "pension");
-const money = (n: number, signed = false) =>
-  formatMoney(n, { fractionDigits: 0, ...(signed ? { signDisplay: "exceptZero" as const } : {}) })
-    .text;
+const money = (n: number) => formatMoney(n, { fractionDigits: 0 }).text;
 
 /**
  * What the pension scenario's extra monthly payment does to take-home, from the engine's
@@ -149,7 +147,7 @@ export const PensionTakeHomeEffect: FC<PensionTakeHomeEffectProps> = ({ facts, e
               <Tr key={key}>
                 <Th scope="row">{label}</Th>
                 <Td label={PENSION_TAKE_HOME_COPY.changeColumn} numeric>
-                  {money(result.components[key], true)}
+                  {money(result.components[key])}
                 </Td>
               </Tr>
             ))}
