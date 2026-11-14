@@ -1,181 +1,248 @@
 import type { ProfileFacts } from "@flump/finance-engine";
-import { Button, ScenarioZone, SimulatorSplitLayout } from "@repo/ui";
+import {
+  DELTA_PANEL_COPY,
+  formatMoney,
+  ProjectionNotice,
+  ScenarioZone,
+  SimulatorSplitLayout,
+  Tabs,
+} from "@repo/ui";
 import { type FC, useMemo } from "react";
 import { Link } from "react-router";
-import { useFormatCurrency } from "~/hooks/useFormatCurrency";
-import { projectPension } from "../../forecast";
-import type { PensionScenario } from "../../usePensionScenario";
-import { ForecastAssumptions } from "../ForecastAssumptions";
+import { type ForecastInput, type ForecastResult, projectPension } from "../../forecast";
+import type { PensionScenario, PensionScenarioValues } from "../../usePensionScenario";
 import { ForecastChart } from "../ForecastChart";
-import { ForecasterControls } from "../ForecasterControls";
+import { ContributionSlider, ForecasterControls } from "../ForecasterControls";
 import { ForecasterResults } from "../ForecasterResults";
-import { PensionTakeHomeEffect } from "../PensionTakeHomeEffect";
 import {
-  forecastStack,
-  growthNote,
-  noSalaryLink,
-  noSalaryNote,
-  zoneFooter,
-  zoneFooterNote,
-} from "./PensionForecast.styles";
+  computePensionTakeHomeEffect,
+  isTakeHomeEffectUnverified,
+  PensionTakeHomeEffect,
+} from "../PensionTakeHomeEffect";
+import { forecastStack, noSalaryLink, noSalaryNote } from "./PensionForecast.styles";
 
 export const PENSION_SCENARIO_ZONE_ID = "pension-scenario-zone";
-const ZONE_TITLE = "Model a change to your pension";
-const ZONE_FOOTER_NOTE = "Changes here are not saved.";
+export const PENSION_ZONE_TITLE = "Model a change to your pension";
 
-export interface PensionForecastProps {
-  scenario: PensionScenario;
-  /** Saved facts. Read only: the zone never writes to them. */
-  hasSalary: boolean;
+export type PensionTool = "retirement" | "takeHome";
+
+export const PENSION_TOOL_LABELS: Record<PensionTool, string> = {
+  retirement: "At retirement",
+  takeHome: "Take-home pay",
+};
+
+/** Saved facts the projection starts from. Read only: the zone never writes to them. */
+export interface PensionForecastBase {
   salary: number;
-  employeePercent: number;
   employerPercent: number;
   isSalarySacrifice: boolean;
   passEmployerNi: boolean;
   currentPotTotal: number;
   directMonthlyContrib: number;
-  portfolioReturnRate: number;
-  /** True when no pot has a growth rate, so the starting rate is a placeholder. */
-  growthRateIsPlaceholder: boolean;
-  hasPots: boolean;
-  /** Saved profile facts for the take-home effect of the extra monthly lever. Read only. */
-  takeHomeFacts?: ProfileFacts;
-  onEditDetails?: () => void;
 }
 
-const pct = new Intl.NumberFormat("en-GB", { maximumFractionDigits: 2 });
+/** One projection input from the saved base plus scenario (or saved) values. */
+export const buildForecastInput = (
+  base: PensionForecastBase,
+  values: PensionScenarioValues,
+): ForecastInput => ({
+  startingPot: base.currentPotTotal,
+  salary: base.salary,
+  employeePercent: values.contributionPercent,
+  employerPercent: base.employerPercent,
+  isSalarySacrifice: base.isSalarySacrifice,
+  passEmployerNi: base.passEmployerNi,
+  directMonthlyContrib: base.directMonthlyContrib,
+  extraMonthly: 0,
+  growthRate: values.growthRate,
+  horizonYears: values.horizonYears,
+  useQualifyingEarnings: values.useQualifyingEarnings,
+  adjustForInflation: values.adjustForInflation,
+  includeStatePension: values.includeStatePension,
+});
+
+/** "at 67" when the age is known, else "in 25 years". */
+export const retirementWhenLabel = (currentAge: number | null, horizonYears: number): string =>
+  currentAge !== null
+    ? `at ${currentAge + horizonYears}`
+    : `in ${horizonYears} ${horizonYears === 1 ? "year" : "years"}`;
+
+export interface PensionForecastProps extends PensionForecastBase {
+  scenario: PensionScenario;
+  /** The same projection at the saved figures (also read by the page's estimate KPI). */
+  savedResult: ForecastResult;
+  hasSalary: boolean;
+  /** Saved age, when known, so the time input reads as a retirement age. */
+  currentAge: number | null;
+  /** Saved contribution, so the take-home tool works out the change from it. */
+  savedEmployeePercent: number;
+  /** Saved profile facts for the take-home tool. Omit to show the retirement tool only. */
+  takeHomeFacts?: ProfileFacts;
+  tool: PensionTool;
+  onToolChange: (tool: PensionTool) => void;
+  /** True when the page shows another tax figure (the £100,000 line), so the notice needs the lead. */
+  showsOtherTaxFigure?: boolean;
+}
+
+const money = (n: number) => formatMoney(n, { fractionDigits: 0 }).text;
 
 /**
- * The pension scenario zone with the forecast inside it. Salary and contribution percentages are
- * saved facts shown as the basis line; the levers are illustration-only and live in `scenario`.
+ * The page's one ScenarioZone (E16 P1.7): up to two tools as `Tabs`, one visible at a time, each a
+ * `SimulatorSplitLayout` with at most three inputs on the left and one outcome on the right. The
+ * page's single notice sits in the zone footer, with the standard "Unverified estimate" sentence
+ * first whenever a tax figure is shown.
  */
 export const PensionForecast: FC<PensionForecastProps> = ({
   scenario,
+  savedResult,
   hasSalary,
-  salary,
-  employeePercent,
-  employerPercent,
-  isSalarySacrifice,
-  passEmployerNi,
-  currentPotTotal,
-  directMonthlyContrib,
-  portfolioReturnRate,
-  growthRateIsPlaceholder,
-  hasPots,
+  currentAge,
+  savedEmployeePercent,
   takeHomeFacts,
-  onEditDetails,
+  tool,
+  onToolChange,
+  showsOtherTaxFigure = false,
+  ...base
 }) => {
-  const { formatCurrency } = useFormatCurrency();
   const { values } = scenario;
-
   const result = useMemo(
     () =>
-      projectPension({
-        startingPot: currentPotTotal,
-        salary,
-        employeePercent,
-        employerPercent,
-        isSalarySacrifice,
-        passEmployerNi,
-        directMonthlyContrib,
-        extraMonthly: values.extraMonthly,
-        growthRate: values.growthRate,
-        horizonYears: values.horizonYears,
-        useQualifyingEarnings: values.useQualifyingEarnings,
-        adjustForInflation: values.adjustForInflation,
-        includeStatePension: values.includeStatePension,
-      }),
+      projectPension(
+        buildForecastInput(
+          {
+            salary: base.salary,
+            employerPercent: base.employerPercent,
+            isSalarySacrifice: base.isSalarySacrifice,
+            passEmployerNi: base.passEmployerNi,
+            currentPotTotal: base.currentPotTotal,
+            directMonthlyContrib: base.directMonthlyContrib,
+          },
+          values,
+        ),
+      ),
     [
-      currentPotTotal,
-      salary,
-      employeePercent,
-      employerPercent,
-      isSalarySacrifice,
-      passEmployerNi,
-      directMonthlyContrib,
+      base.salary,
+      base.employerPercent,
+      base.isSalarySacrifice,
+      base.passEmployerNi,
+      base.currentPotTotal,
+      base.directMonthlyContrib,
       values,
     ],
   );
 
+  const deltaYear = (base.salary * (values.contributionPercent - savedEmployeePercent)) / 100;
+  const effect = useMemo(
+    () => (takeHomeFacts ? computePensionTakeHomeEffect(takeHomeFacts, deltaYear) : null),
+    [takeHomeFacts, deltaYear],
+  );
+
   if (!hasSalary) {
     return (
-      <ScenarioZone id={PENSION_SCENARIO_ZONE_ID} title={ZONE_TITLE}>
+      <ScenarioZone
+        id={PENSION_SCENARIO_ZONE_ID}
+        notice={
+          <ProjectionNotice
+            lead={showsOtherTaxFigure ? DELTA_PANEL_COPY.unverifiedBanner : undefined}
+          />
+        }
+        title={PENSION_ZONE_TITLE}
+      >
         <p className={noSalaryNote()}>
           Add your salary in{" "}
           <Link className={noSalaryLink()} to="/app/profile">
             Profile
           </Link>{" "}
-          to project your pension.
+          to see a pension estimate.
         </p>
       </ScenarioZone>
     );
   }
 
-  const years = values.horizonYears === 1 ? "year" : "years";
+  const activeTool: PensionTool = effect ? tool : "retirement";
+  const showsTakeHomeTax =
+    activeTool === "takeHome" && effect !== null && isTakeHomeEffectUnverified(effect);
+  const whenLabel = retirementWhenLabel(currentAge, values.horizonYears);
+  const statePensionMonthly = Math.round(result.statePensionAnnual / 12);
+
+  const retirementTool = (
+    <SimulatorSplitLayout
+      content={
+        <div className={forecastStack()}>
+          <ForecasterResults
+            inTodaysMoney={values.adjustForInflation}
+            result={result}
+            savedResult={savedResult}
+            whenLabel={whenLabel}
+          />
+          <ForecastChart
+            adjustForInflation={values.adjustForInflation}
+            annotationLabel={
+              currentAge !== null ? `Retire at ${currentAge + values.horizonYears}` : "Retire"
+            }
+            result={result}
+            whenLabel={whenLabel}
+          />
+        </div>
+      }
+      contentLabel="Your result"
+      controls={
+        <ForecasterControls
+          currentAge={currentAge}
+          scenario={scenario}
+          statePensionMonthly={statePensionMonthly}
+        />
+      }
+      controlsLabel="Your what-if inputs"
+      controlsSpan={4}
+    />
+  );
+
+  const takeHomeTool = effect ? (
+    <SimulatorSplitLayout
+      content={<PensionTakeHomeEffect effect={effect} />}
+      contentLabel="Your result"
+      controls={<ContributionSlider scenario={scenario} />}
+      controlsLabel="Your what-if inputs"
+      controlsSpan={4}
+    />
+  ) : null;
+
   return (
     <ScenarioZone
       announcement={
         scenario.isModified
-          ? `projected pot ${formatCurrency(result.finalBalance)} in ${values.horizonYears} ${years}, about ${formatCurrency(result.monthlyRetirementIncome)} a month`
+          ? `estimated income ${money(result.monthlyRetirementIncome)} a month ${whenLabel}`
           : ""
-      }
-      basis={`Starting from your figures: ${formatCurrency(salary)} salary, ${pct.format(employeePercent)}% you and ${pct.format(employerPercent)}% your employer`}
-      footer={
-        onEditDetails ? (
-          <div className={zoneFooter()}>
-            <p className={zoneFooterNote()}>{ZONE_FOOTER_NOTE}</p>
-            <Button size="sm" type="button" variant="link" onClick={onEditDetails}>
-              Update your details
-            </Button>
-          </div>
-        ) : null
       }
       id={PENSION_SCENARIO_ZONE_ID}
       isModified={scenario.isModified}
-      title={ZONE_TITLE}
+      notice={
+        <ProjectionNotice
+          lead={
+            showsTakeHomeTax || showsOtherTaxFigure ? DELTA_PANEL_COPY.unverifiedBanner : undefined
+          }
+        />
+      }
+      title={PENSION_ZONE_TITLE}
+      tools={
+        takeHomeTool ? (
+          <Tabs
+            aria-label="Pension tools"
+            items={[
+              { value: "retirement", label: PENSION_TOOL_LABELS.retirement },
+              { value: "takeHome", label: PENSION_TOOL_LABELS.takeHome },
+            ]}
+            panels={{ retirement: retirementTool, takeHome: takeHomeTool }}
+            size="sm"
+            value={activeTool}
+            onValueChange={(v) => onToolChange(v as PensionTool)}
+          />
+        ) : undefined
+      }
       onReset={scenario.reset}
     >
-      {hasPots && growthRateIsPlaceholder && (
-        <p className={growthNote()}>Assumes 5% growth a year. Edit a pot to set its own rate.</p>
-      )}
-      <SimulatorSplitLayout
-        content={
-          <div className={forecastStack()}>
-            <ForecasterResults
-              directMonthlyContrib={directMonthlyContrib}
-              horizonYears={values.horizonYears}
-              result={result}
-            />
-            {takeHomeFacts ? (
-              <PensionTakeHomeEffect extraMonthly={values.extraMonthly} facts={takeHomeFacts} />
-            ) : null}
-            <ForecastChart
-              adjustForInflation={values.adjustForInflation}
-              growthRate={values.growthRate}
-              horizonYears={values.horizonYears}
-              result={result}
-            />
-          </div>
-        }
-        contentLabel="Illustrated outcome"
-        controls={
-          <div className={forecastStack()}>
-            <ForecasterControls
-              portfolioReturnRate={portfolioReturnRate}
-              realGrowthRate={result.effectiveAnnualRate}
-              scenario={scenario}
-            />
-            <ForecastAssumptions
-              isSalarySacrifice={isSalarySacrifice}
-              passEmployerNi={passEmployerNi}
-              scenario={scenario}
-              statePensionMonthly={Math.round(result.statePensionAnnual / 12)}
-            />
-          </div>
-        }
-        controlsLabel="What-if levers"
-        controlsSpan={4}
-      />
+      {takeHomeTool ? null : retirementTool}
     </ScenarioZone>
   );
 };

@@ -5,7 +5,7 @@ import { PayRiseScenario } from "./PayRiseScenario";
 describe("<PayRiseScenario />", () => {
   it("shows the pay rise as a yearly scenario input", () => {
     render(<PayRiseScenario monthlyIncrease={230} onRemove={vi.fn()} />);
-    expect(screen.getByText(/Pay rise from take-home:/)).toBeDefined();
+    expect(screen.getByText(/Pay rise from the take-home pay tool:/)).toBeDefined();
     expect(screen.getByText("£2,760")).toBeDefined();
   });
 

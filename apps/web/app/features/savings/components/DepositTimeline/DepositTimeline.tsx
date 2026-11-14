@@ -1,6 +1,7 @@
 import { monthsToTarget } from "@flump/finance-engine";
 import { CurrencyInput, controlProps, FormField, SimulatorSplitLayout } from "@repo/ui";
 import type { FC } from "react";
+import { formatDuration } from "../SavingsForecast/savingsForecast.utils";
 import {
   timelineControls,
   timelineNote,
@@ -24,11 +25,6 @@ export interface DepositTimelineProps {
   ) => void;
 }
 
-const countFormat = new Intl.NumberFormat("en-GB", { maximumFractionDigits: 0 });
-
-const plural = (n: number, one: string, many: string) =>
-  `${countFormat.format(n)} ${n === 1 ? one : many}`;
-
 export const DEPOSIT_EMPTY_TEXT = "Enter a target amount to see an estimate.";
 
 /** The one outcome line for the current inputs. */
@@ -43,12 +39,7 @@ export function depositOutcomeText(values: DepositTimelineValues): string {
   if (result.status === "not-reachable") {
     return "With no monthly saving, this target is not reached in this estimate.";
   }
-  const { months } = result;
-  const split =
-    months >= 12
-      ? ` (${plural(Math.floor(months / 12), "year", "years")} ${plural(months % 12, "month", "months")})`
-      : "";
-  return `Estimated time to reach target: ${plural(months, "month", "months")}${split}`;
+  return `Estimated time to reach target: ${formatDuration(result.months)}`;
 }
 
 /**
@@ -79,7 +70,7 @@ export const DepositTimeline: FC<DepositTimelineProps> = ({ values, onChange }) 
             />
           )}
         </FormField>
-        <FormField hint="From your saved savings and investment accounts" label="Starting amount">
+        <FormField hint="The total in your savings and investment accounts" label="Starting amount">
           {(field) => (
             <CurrencyInput
               {...controlProps(field)}
@@ -101,7 +92,7 @@ export const DepositTimeline: FC<DepositTimelineProps> = ({ values, onChange }) 
           {depositOutcomeText(values)}
         </p>
         <p className={timelineNote()}>
-          Estimate only. Does not include interest or changes in investment value.
+          This estimate does not include interest or changes in investment value.
         </p>
       </div>
     }

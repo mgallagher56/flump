@@ -1,5 +1,6 @@
+import { expectPageRules } from "@repo/ui/testing";
 import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 const mockNavigate = vi.hoisted(() => vi.fn());
 const mockSubmit = vi.hoisted(() => vi.fn());
@@ -7,43 +8,44 @@ const mockLocation = vi.hoisted(() => ({
   current: { pathname: "/app/savings", hash: "", state: null as unknown },
 }));
 
+/** Realistic filled fixture: £21,000 at 4%, £300 a month (of which £200 into an ISA). */
+const FILLED = [
+  {
+    id: "acc-1",
+    name: "Easy access saver",
+    type: "Saving",
+    balance: 9000,
+    interestRate: 4,
+    monthlyContribution: 100,
+  },
+  {
+    id: "acc-2",
+    name: "Cash ISA",
+    type: "Saving",
+    balance: 12000,
+    interestRate: 4,
+    monthlyContribution: 200,
+  },
+];
+
+const loader = vi.hoisted(() => ({ accounts: [] as unknown[] }));
+
 vi.mock("react-router", () => ({
   useInRouterContext: () => false,
   useLoaderData: () => ({
-    accounts: [
-      {
-        id: "acc-1",
-        name: "High Yield Saver",
-        type: "Saving",
-        balance: 5000,
-        interestRate: 4.5,
-        monthlyContribution: 250,
-      },
-      {
-        id: "acc-2",
-        name: "Vanguard ISA",
-        type: "Investment",
-        balance: 15000,
-        interestRate: 7.0,
-        monthlyContribution: 300,
-      },
-    ],
+    accounts: loader.accounts,
     accountDetails: [],
     budgetEntries: [],
-    userProfile: {
-      savingsAllocationMode: "per_account",
-      monthlySavingsTarget: 550,
-      savingsDefaultInterestRate: 5.0,
-      setupChecklistCompletedSteps: [],
-    },
+    userProfile: { setupChecklistCompletedSteps: [] },
   }),
   useNavigate: () => mockNavigate,
   useLocation: () => mockLocation.current,
-  useFetcher: () => ({
-    submit: mockSubmit,
-    state: "idle",
-    data: null,
-  }),
+  useFetcher: () => ({ submit: mockSubmit, state: "idle", data: null }),
+  Link: ({ to, children, ...rest }: any) => (
+    <a href={to} {...rest}>
+      {children}
+    </a>
+  ),
 }));
 
 vi.mock("~/hooks/useUserProfile", async (importOriginal) => {
@@ -51,22 +53,12 @@ vi.mock("~/hooks/useUserProfile", async (importOriginal) => {
   return {
     ...actual,
     useUserProfile: () => ({
-      profile: {
-        savingsAllocationMode: "per_account",
-        monthlySavingsTarget: 550,
-        savingsDefaultInterestRate: 5.0,
-        setupChecklistCompletedSteps: [],
-      },
+      profile: { setupChecklistCompletedSteps: [] },
       setProfile: vi.fn(),
       markChecklistStep: vi.fn().mockResolvedValue({}),
     }),
   };
 });
-
-vi.mock("~/utils/utils", () => ({
-  currentMonth: 6,
-  currentYear: 2026,
-}));
 
 vi.mock("recharts", async () => {
   const actual: any = await vi.importActual("recharts");
@@ -80,32 +72,80 @@ vi.mock("recharts", async () => {
 
 import SavingsContainer, { parsePayRise } from "./SavingsContainer";
 
-describe("SavingsContainer", () => {
-  it("renders page header and main savings sections", () => {
-    render(<SavingsContainer />);
+const zone = () => screen.getByRole("region", { name: "Model a change to your savings" });
 
+/** The saved facts: hero plus KPI strip. */
+const savedFacts = () =>
+  [
+    screen.getByTestId("hero-figure").textContent,
+    screen.getByText("Saved each month").closest("[data-density]")?.textContent,
+  ].join("|");
+
+describe("SavingsContainer", () => {
+  afterEach(() => {
+    loader.accounts = FILLED;
+    mockLocation.current = { pathname: "/app/savings", hash: "", state: null };
+    mockSubmit.mockClear();
+  });
+  loader.accounts = FILLED;
+
+  it("shows the h1, one hero and up to 3 real KPIs, and keeps the page rules", () => {
+    const { container } = render(<SavingsContainer />);
     expect(screen.getByRole("heading", { level: 1, name: "Your savings" })).toBeDefined();
-    expect(screen.getByText("Total savings")).toBeDefined();
-    expect(screen.getByRole("heading", { name: "Where you stand" })).toBeDefined();
-    expect(screen.getByText("Your accounts")).toBeDefined();
-    expect(screen.getByText("Savings projection")).toBeDefined();
+    expect(screen.getByTestId("hero-figure").textContent).toContain("£21,000");
+    expect(screen.getByText("Saved each month")).toBeDefined();
+    expect(screen.getByText("Average rate")).toBeDefined();
+    expect(screen.getByText("4%")).toBeDefined();
+    expect(screen.getByText("ISA allowance used")).toBeDefined();
+    expect(screen.queryByText("Weighted by balance (AER)")).toBeNull();
+    expect(screen.queryByText("Where you stand")).toBeNull();
+    expect(screen.queryByText("Milestones")).toBeNull();
+    expect(screen.getAllByRole("region", { name: "Model a change to your savings" })).toHaveLength(
+      1,
+    );
+    expectPageRules(container, { maxFigures: 12, maxNotSet: 0, projectionNotices: 1 });
   });
 
-  it("displays savings accounts in the list and switches tabs", () => {
+  it("puts the one notice in the zone footer, below the h1", () => {
     render(<SavingsContainer />);
+    const notes = screen.getAllByRole("note", { name: "Guidance, not advice" });
+    expect(notes).toHaveLength(1);
+    expect(screen.getByTestId("scenario-zone-footer").contains(notes[0] as Node)).toBe(true);
+  });
 
-    expect(screen.getAllByText("High Yield Saver").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("Vanguard ISA").length).toBeGreaterThan(0);
+  it("has no slider outside the scenario zone", () => {
+    render(<SavingsContainer />);
+    for (const slider of screen.getAllByRole("slider")) {
+      expect(zone().contains(slider)).toBe(true);
+    }
+  });
 
-    fireEvent.mouseDown(screen.getByRole("tab", { name: /Accounts/ }));
-    expect(screen.getByRole("tab", { name: /Accounts/ }).getAttribute("aria-selected")).toBe(
-      "true",
-    );
-    fireEvent.mouseDown(screen.getByRole("tab", { name: "Allowances" }));
-    expect(screen.queryByRole("tab", { name: /Take-home/i })).toBeNull();
-    fireEvent.mouseDown(screen.getByRole("tab", { name: "Forecast" }));
+  it("never shows a £0 or 0.00% KPI when monthly amounts and rates are not set", () => {
+    loader.accounts = [{ id: "a", name: "Saver", type: "Saving", balance: 5000 }];
+    const { container } = render(<SavingsContainer />);
+    expect(screen.getByText(/Add what you save each month and your interest rates/)).toBeDefined();
+    expect(screen.queryByText("Saved each month")).toBeNull();
+    expect(container.textContent).not.toContain("0.00%");
+    // £0 a month and no rate: no chart, a prompt instead (P10.6).
+    expect(screen.queryByTestId("savings-forecast-outcome")).toBeNull();
+    expect(
+      screen.getAllByText(
+        "Add a monthly amount or an interest rate to see how your savings could grow.",
+      ).length,
+    ).toBeGreaterThan(0);
+    expectPageRules(container, { maxFigures: 12, projectionNotices: 1 });
+  });
 
-    fireEvent.click(screen.getAllByRole("button", { name: /Add account/i })[0]);
+  it("shows only the header and one empty state with no accounts", () => {
+    loader.accounts = [];
+    const { container } = render(<SavingsContainer />);
+    expect(screen.getByText("No savings accounts yet")).toBeDefined();
+    expect(screen.queryByRole("region", { name: "Model a change to your savings" })).toBeNull();
+    expect(screen.queryByRole("tab")).toBeNull();
+    expect(screen.queryByTestId("hero-figure")).toBeNull();
+    expectPageRules(container, { maxFigures: 0, maxNotSet: 0, projectionNotices: 0 });
+    fireEvent.click(screen.getByRole("button", { name: "Add an account" }));
+    expect(screen.getByRole("dialog", { name: "Add a savings account" })).toBeDefined();
   });
 
   it("redirects the old #takehome link to the Take-home pay page", () => {
@@ -123,81 +163,66 @@ describe("SavingsContainer", () => {
     expect(parsePayRise({ payRise: "abc" })).toBe(0);
   });
 
-  describe("pay rise from take-home", () => {
-    afterEach(() => {
-      mockLocation.current = { pathname: "/app/savings", hash: "", state: null };
-    });
-
-    it("shows nothing when no pay rise was handed over", () => {
-      render(<SavingsContainer />);
-      expect(screen.queryByText(/Pay rise from take-home:/)).toBeNull();
-    });
-
-    it("shows it as a removable scenario input and leaves the saved figures alone", () => {
-      const { container, rerender } = render(<SavingsContainer />);
-      const savedFigures = screen.getByRole("heading", { name: "Where you stand" }).parentElement
-        ?.textContent;
-
-      mockLocation.current = {
-        pathname: "/app/savings",
-        hash: "#forecast",
-        state: { payRise: 230 },
-      };
-      mockSubmit.mockClear();
-      rerender(<SavingsContainer />);
-      expect(screen.getByText(/Pay rise from take-home:/)).toBeDefined();
-      expect(screen.getByText("£2,760")).toBeDefined();
-      // The pay rise row sits in the one savings scenario zone, with its single badge.
-      const zone = screen.getByRole("region", { name: "Model a change to your savings" });
-      expect(zone.textContent).toContain("Pay rise from take-home:");
-      expect(screen.getAllByText("Illustration, not saved")).toHaveLength(1);
-      expect(screen.getAllByRole("note", { name: "Guidance, not advice" })).toHaveLength(1);
-      expect(
-        screen.getByRole("heading", { name: "Where you stand" }).parentElement?.textContent,
-      ).toBe(savedFigures);
-      expect(mockSubmit).not.toHaveBeenCalled();
-
-      fireEvent.click(screen.getByRole("button", { name: /Remove/ }));
-      expect(screen.queryByText(/Pay rise from take-home:/)).toBeNull();
-      expect(mockNavigate).toHaveBeenCalledWith("/app/savings#forecast", {
-        replace: true,
-        state: null,
-      });
-      expect(mockSubmit).not.toHaveBeenCalled();
-      expect(container.textContent).not.toContain("?payRise");
-    });
-  });
-  describe("deposit timeline (E32)", () => {
-    it("lives in the forecaster panel only, not under every tab", () => {
-      render(<SavingsContainer />);
-      expect(screen.getByRole("region", { name: "Model a change to your savings" })).toBeDefined();
-      fireEvent.mouseDown(screen.getByRole("tab", { name: /Accounts/ }));
-      expect(screen.queryByRole("region", { name: "Model a change to your savings" })).toBeNull();
-    });
-
-    it("models a target in a scenario zone, seeded from saved figures, and never saves it", () => {
+  describe("saved versus scenario", () => {
+    it("moving the forecast inputs never changes the hero, the KPIs or saved data", () => {
       const setItem = vi.spyOn(Storage.prototype, "setItem");
       render(<SavingsContainer />);
-      const zone = screen.getByRole("region", { name: "Model a change to your savings" });
-      expect(zone.textContent).toContain("Illustration, not saved");
+      const before = savedFacts();
+      const outcomeBefore = screen.getByTestId("savings-forecast-outcome").textContent;
+
+      fireEvent.change(screen.getByLabelText("Interest rate (AER) range slider"), {
+        target: { value: "6" },
+      });
+      fireEvent.change(screen.getByLabelText("Years ahead range slider"), {
+        target: { value: "12" },
+      });
+      fireEvent.change(screen.getByLabelText("Monthly amount"), { target: { value: "800" } });
+      fireEvent.click(screen.getByRole("button", { name: /More options/ }));
+      fireEvent.click(screen.getByLabelText("Show in today's money"));
+
+      expect(screen.getByTestId("savings-forecast-outcome").textContent).not.toBe(outcomeBefore);
+      expect(savedFacts()).toBe(before);
+      expect(mockSubmit).not.toHaveBeenCalled();
+      expect(setItem).not.toHaveBeenCalled();
+      expect(mockNavigate).not.toHaveBeenCalledWith(expect.stringContaining("?"));
+
+      const reset = screen.getByRole("button", { name: "Reset to saved figures" });
+      expect(reset.hasAttribute("disabled")).toBe(false);
+      fireEvent.click(reset);
+      expect(screen.getByTestId("savings-forecast-outcome").textContent).toBe(outcomeBefore);
+      setItem.mockRestore();
+    });
+
+    it("shows a handed-over pay rise as a removable input in the zone only", () => {
+      const { rerender } = render(<SavingsContainer />);
+      const before = savedFacts();
+      mockLocation.current = { pathname: "/app/savings", hash: "", state: { payRise: 230 } };
+      rerender(<SavingsContainer />);
+      expect(zone().textContent).toContain("Pay rise from the take-home pay tool:");
+      expect(screen.getByText("£2,760")).toBeDefined();
+      expect(screen.getAllByText("Illustration, not saved")).toHaveLength(1);
+      expect(savedFacts()).toBe(before);
+
+      fireEvent.click(screen.getByRole("button", { name: "Remove pay rise" }));
+      expect(screen.queryByText(/Pay rise from the take-home pay tool:/)).toBeNull();
+      expect(mockNavigate).toHaveBeenCalledWith("/app/savings", { replace: true, state: null });
+      expect(mockSubmit).not.toHaveBeenCalled();
+    });
+
+    it("models a target in the second tool, seeded from saved figures, and never saves it", () => {
+      render(<SavingsContainer />);
+      const tab = screen.getByRole("tab", { name: "Time to a target" });
+      fireEvent.pointerDown(tab, { button: 0 });
+      fireEvent.keyDown(tab, { key: "Enter", code: "Enter" });
+      fireEvent.mouseDown(tab);
       const target = screen.getByLabelText("Target amount") as HTMLInputElement;
       expect(target.value).toBe("");
-      // Saved figures: £20,000 across both accounts, £550 a month of stored contributions.
-      expect((screen.getByLabelText("Monthly saving") as HTMLInputElement).value).toMatch(/550/);
-      expect(screen.getByTestId("deposit-timeline-outcome").textContent).toBe(
-        "Enter a target amount to see an estimate.",
-      );
-
+      expect((screen.getByLabelText("Monthly saving") as HTMLInputElement).value).toMatch(/300/);
       fireEvent.change(target, { target: { value: "31000" } });
       expect(screen.getByTestId("deposit-timeline-outcome").textContent).toBe(
-        "Estimated time to reach target: 20 months (1 year 8 months)",
+        "Estimated time to reach target: 2 years 10 months",
       );
-      expect(setItem).not.toHaveBeenCalled();
       expect(mockSubmit).not.toHaveBeenCalled();
-
-      fireEvent.click(screen.getByRole("button", { name: "Reset to saved figures" }));
-      expect((screen.getByLabelText("Target amount") as HTMLInputElement).value).toBe("");
-      setItem.mockRestore();
     });
   });
 });

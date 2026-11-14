@@ -1,3 +1,4 @@
+import { countFigures } from "@repo/ui/testing";
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { projectPension } from "../../forecast";
@@ -19,43 +20,50 @@ vi.mock("recharts", async () => {
   };
 });
 
-const result = projectPension({
-  startingPot: 20000,
-  salary: 50000,
-  employeePercent: 5,
-  employerPercent: 3,
-  isSalarySacrifice: false,
-  passEmployerNi: false,
-  directMonthlyContrib: 50,
-  extraMonthly: 0,
-  growthRate: 5,
-  horizonYears: 25,
-  useQualifyingEarnings: false,
-  adjustForInflation: false,
-  includeStatePension: false,
-});
+const result = (horizonYears: number) =>
+  projectPension({
+    startingPot: 20000,
+    salary: 50000,
+    employeePercent: 5,
+    employerPercent: 3,
+    isSalarySacrifice: false,
+    passEmployerNi: false,
+    directMonthlyContrib: 50,
+    extraMonthly: 0,
+    growthRate: 5,
+    horizonYears,
+    useQualifyingEarnings: false,
+    adjustForInflation: true,
+    includeStatePension: false,
+  });
+
+const renderChart = (horizonYears = 25) =>
+  render(
+    <ForecastChart
+      adjustForInflation
+      annotationLabel="Retire at 67"
+      result={result(horizonYears)}
+      whenLabel="at 67"
+    />,
+  );
 
 describe("<ForecastChart />", () => {
-  it("is a named figure with a text summary and the stated assumptions", () => {
-    render(
-      <ForecastChart adjustForInflation={false} growthRate={5} horizonYears={25} result={result} />,
-    );
-    const figure = screen.getByRole("figure", { name: "Pension pot projection" });
-    expect(figure.textContent).toMatch(/Projected pension pot after 25 years: £[\d,]+/);
-    expect(
-      screen.getByText("Assumes 5% a year growth and a 4% drawdown; projection, not a forecast."),
-    ).toBeDefined();
+  it("is a named figure with a one-sentence summary and no figures in the default view", () => {
+    const { container } = renderChart();
+    const figure = screen.getByRole("figure", { name: "Estimated pension pot" });
+    expect(figure.textContent).toContain("Your pot each year to 67, in today's money.");
+    expect(screen.queryByText(/legend|Projected total/i)).toBeNull();
+    expect(countFigures(container)).toBe(0);
   });
 
-  it("keeps the year-by-year table behind the show data drawer", () => {
-    render(
-      <ForecastChart adjustForInflation={false} growthRate={5} horizonYears={25} result={result} />,
-    );
+  it("keeps the year-by-year table behind the quiet show data button", () => {
+    renderChart();
     expect(screen.getByRole("button", { name: /Show data/ })).toBeDefined();
+    expect(screen.queryByRole("table")).toBeNull();
   });
 
-  it("states the inflation adjustment", () => {
-    render(<ForecastChart adjustForInflation growthRate={5} horizonYears={25} result={result} />);
-    expect(screen.getByText(/after 2.5% inflation/)).toBeDefined();
+  it("draws no chart for fewer than three points", () => {
+    renderChart(1);
+    expect(screen.getByText(/not enough figures/i)).toBeDefined();
   });
 });

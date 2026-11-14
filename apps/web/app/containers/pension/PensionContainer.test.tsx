@@ -1,4 +1,5 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { expectPageRules } from "@repo/ui/testing";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mockSubmit = vi.hoisted(() => vi.fn());
@@ -90,9 +91,120 @@ vi.mock("recharts", async () => {
 
 import PensionContainer from "./PensionContainer";
 
-const openTab = (name: RegExp) => fireEvent.click(screen.getByRole("tab", { name }));
+const AGE = 35;
+/** The onboarded user from the E16 audit: £58,000, 8% and 3%, one £96,000 pot. */
+const FILLED = {
+  accounts: [
+    {
+      id: "w1",
+      name: "Workplace pot",
+      type: "Pension",
+      balance: 96000,
+      interestRate: 5,
+      monthlyContribution: null,
+      isCurrent: true,
+    },
+  ],
+  accountDetails: [],
+  userProfile: {
+    annualSalary: 58000,
+    pensionPercent: 8,
+    pensionEmployerPercent: 3,
+    isSalarySacrifice: false,
+    isSalarySacrificeEmployerNi: false,
+    employmentType: "employed",
+    birthYear: new Date().getFullYear() - AGE,
+    setupChecklistCompletedSteps: ["pension"],
+  },
+};
+
+const useFixture = (data: any) => {
+  testLoaderData = data;
+  testProfileData = data.userProfile;
+};
+const restore = () => {
+  testLoaderData = defaultLoaderData;
+  testProfileData = defaultProfileData;
+};
+
+const zone = () => screen.getByRole("region", { name: "Model a change to your pension" });
+const slider = (label: string) =>
+  within(screen.getByRole("tabpanel")).getByLabelText(`${label} range slider`) as HTMLInputElement;
+const savedText = () =>
+  [
+    document.querySelector("[data-tone='hero']")?.textContent,
+    document.querySelector("[data-density='compact']")?.textContent,
+    document.getElementById("pension-details")?.textContent,
+  ].join("|");
 
 describe("PensionContainer", () => {
+  beforeEach(restore);
+
+  describe("page rules (E16 PR 7)", () => {
+    it("filled: one hero, one primary button, one notice, at most 12 figures before disclosure", () => {
+      useFixture(FILLED);
+      const { container } = render(<PensionContainer />);
+      expectPageRules(container, { maxFigures: 12, maxNotSet: 0, projectionNotices: 1 });
+      const hero = container.querySelector("[data-tone='hero']");
+      expect(hero?.textContent).toContain("Total in your pots");
+      expect(hero?.textContent).toContain("£96,000");
+      // No chips, no PLSA bar, no "Employer and growth" sentence in the default view.
+      expect(container.textContent).not.toMatch(/PLSA|Living Standards|Employer and growth/);
+      expect(screen.queryByRole("button", { name: /^\d+%$/ })).toBeNull();
+    });
+
+    it("filled: the first view is the hero plus a strip of three, the estimate first", () => {
+      useFixture(FILLED);
+      const { container } = render(<PensionContainer />);
+      const headings = screen.getAllByRole("heading").map((h) => h.tagName);
+      expect(headings[0]).toBe("H1");
+      const strip = container.querySelector("[data-density='compact']") as HTMLElement;
+      const cards = Array.from(strip.children).map((c) => c.textContent ?? "");
+      expect(cards).toHaveLength(3);
+      expect(cards[0]).toMatch(
+        /^Estimated income at retirementEstimate£[\d,]+A month, in today's money$/,
+      );
+      expect(cards[1]).toBe("Going in each month£532");
+      expect(cards[2]).toBe("Retirement age67Your State Pension age");
+      const firstView = document.createElement("div");
+      firstView.append(
+        (container.querySelector("[data-tone='hero']") as HTMLElement).cloneNode(true),
+        strip.cloneNode(true),
+      );
+      expectPageRules(firstView, { maxFigures: 4 });
+    });
+
+    it("filled: the details card holds salary, both contributions and method, then the pots", () => {
+      useFixture(FILLED);
+      render(<PensionContainer />);
+      const details = screen.getByRole("region", { name: "Your details" });
+      const rows = Array.from(details.querySelectorAll("dl > div")).map((r) => r.textContent);
+      expect(rows).toEqual([
+        "Salary£58,000 a year",
+        "You pay8% of salary",
+        "Employer pays3% of salary",
+        "MethodNo salary sacrifice",
+      ]);
+      const pots = details.querySelectorAll("[data-list-row]");
+      expect(pots).toHaveLength(1);
+      expect(pots[0]?.textContent).toContain("£96,000");
+    });
+
+    it("empty: the header and one prompt, with no strip, zone or drawer", () => {
+      useFixture({
+        accounts: [],
+        accountDetails: [],
+        userProfile: { annualSalary: null, setupChecklistCompletedSteps: ["pension"] },
+      });
+      const { container } = render(<PensionContainer />);
+      expectPageRules(container, { maxFigures: 0, projectionNotices: 0 });
+      expect(screen.getByRole("heading", { level: 2, name: "No pension pots yet" })).toBeDefined();
+      expect(screen.getAllByRole("button", { name: "Add pension pot" })).toHaveLength(1);
+      expect(screen.queryByRole("region", { name: /Model a change/ })).toBeNull();
+      expect(container.querySelector("[data-density='compact']")).toBeNull();
+    });
+  });
+
   it("scrolls to and focuses the details card for the #pension-details deep link", async () => {
     mockHash = "#pension-details";
     const scroll = vi.fn();
@@ -100,39 +212,27 @@ describe("PensionContainer", () => {
     try {
       render(<PensionContainer />);
       await vi.waitFor(() => expect(scroll).toHaveBeenCalled());
-      expect(document.getElementById("pension-details")).not.toBeNull();
       expect(document.activeElement?.id).toBe("pension-details");
     } finally {
       mockHash = "";
     }
   });
 
-  it("shows saved details and edits employer NI pass-through, saving to the profile", async () => {
+  it("edits employer National Insurance, saving to the profile", async () => {
     render(<PensionContainer />);
-
-    expect(screen.getByRole("heading", { level: 1, name: "Your pension" })).toBeDefined();
-    expect(screen.getByRole("heading", { level: 2, name: "Your details" })).toBeDefined();
-
     fireEvent.click(screen.getByRole("button", { name: /Edit details/i }));
-
-    // Both checkboxes exist. The stored true alongside the default 5% / 3% rates is the legacy
-    // column default, not a choice, so the method starts unticked until the user picks it.
-    const sacrifice = screen.getByLabelText(/Salary Sacrifice \(saves NI\)/i) as HTMLInputElement;
+    // The stored true alongside the default 5% / 3% rates is the legacy column default, not a
+    // choice, so the method starts unticked until the user picks it.
+    const sacrifice = screen.getByLabelText(/Paid by salary sacrifice/i) as HTMLInputElement;
     expect(sacrifice.checked).toBe(false);
     fireEvent.click(sacrifice);
-    const employerNiCheckbox = screen.getByLabelText(/Pass on Employer NI/i);
-    expect((employerNiCheckbox as HTMLInputElement).checked).toBe(false);
-    fireEvent.click(employerNiCheckbox);
-    expect((employerNiCheckbox as HTMLInputElement).checked).toBe(true);
-
+    const employerNi = screen.getByLabelText(/Employer adds its National Insurance/i);
+    fireEvent.click(employerNi);
+    expect((employerNi as HTMLInputElement).checked).toBe(true);
     fireEvent.click(screen.getByRole("button", { name: /Save details/i }));
-
     await waitFor(() =>
       expect(mockUpdateProfile).toHaveBeenCalledWith(
-        expect.objectContaining({
-          isSalarySacrifice: true,
-          isSalarySacrificeEmployerNi: true,
-        }),
+        expect.objectContaining({ isSalarySacrifice: true, isSalarySacrificeEmployerNi: true }),
       ),
     );
   });
@@ -141,10 +241,12 @@ describe("PensionContainer", () => {
     mockUpdateProfile.mockClear();
     render(<PensionContainer />);
     fireEvent.click(screen.getByRole("button", { name: /Edit details/i }));
-    fireEvent.change(screen.getByLabelText(/Annual salary/), { target: { value: "60000" } });
+    fireEvent.change(screen.getByLabelText(/Yearly salary before tax/), {
+      target: { value: "60000" },
+    });
     fireEvent.click(screen.getByRole("button", { name: /Save details/i }));
     await waitFor(() => expect(mockUpdateProfile).toHaveBeenCalled());
-    const sent = mockUpdateProfile.mock.calls[0]![0] as Record<string, unknown>;
+    const sent = mockUpdateProfile.mock.calls[0]?.[0] as Record<string, unknown>;
     expect(sent.annualSalary).toBe(60000);
     expect(sent).not.toHaveProperty("isSalarySacrifice");
     expect(sent).not.toHaveProperty("isSalarySacrificeEmployerNi");
@@ -158,462 +260,273 @@ describe("PensionContainer", () => {
       pensionEmployerPercent: 4,
       isSalarySacrifice: true,
     };
-    testLoaderData = { ...defaultLoaderData, userProfile: chosen };
-    testProfileData = chosen;
+    useFixture({ ...defaultLoaderData, userProfile: chosen });
     mockUpdateProfile.mockClear();
-    try {
-      render(<PensionContainer />);
-      fireEvent.click(screen.getByRole("button", { name: /Edit details/i }));
-      fireEvent.change(screen.getByLabelText(/Annual salary/), { target: { value: "60000" } });
-      fireEvent.click(screen.getByRole("button", { name: /Save details/i }));
-      await waitFor(() => expect(mockUpdateProfile).toHaveBeenCalled());
-      const stored = { ...chosen, ...(mockUpdateProfile.mock.calls[0]![0] as object) };
-      // The stored choice is untouched, so take-home (the engine) still reads salary sacrifice...
-      expect(profileFactsFromProfile(stored).isSalarySacrifice).toBe(true);
-      // ...and so does the pension page.
-      expect(screen.getByText(/· Salary sacrifice$/)).toBeDefined();
-    } finally {
-      testLoaderData = defaultLoaderData;
-      testProfileData = defaultProfileData;
-    }
+    render(<PensionContainer />);
+    fireEvent.click(screen.getByRole("button", { name: /Edit details/i }));
+    fireEvent.change(screen.getByLabelText(/Yearly salary before tax/), {
+      target: { value: "60000" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /Save details/i }));
+    await waitFor(() => expect(mockUpdateProfile).toHaveBeenCalled());
+    const stored = { ...chosen, ...(mockUpdateProfile.mock.calls[0]?.[0] as object) };
+    expect(profileFactsFromProfile(stored).isSalarySacrifice).toBe(true);
+    expect(screen.getByText("Method").nextElementSibling?.textContent).toBe("Salary sacrifice");
   });
 
   it("reads the contribution method as Not set while the pension facts are the defaults", () => {
     render(<PensionContainer />);
-    expect(screen.getByText(/Contribution method: Not set/)).toBeDefined();
-    expect(screen.queryByText(/· Salary sacrifice$/)).toBeNull();
+    expect(screen.getByText("Method").nextElementSibling?.textContent).toBe("Not set");
+    expect(screen.getAllByText(/Assumed: the auto-enrolment minimum/)).toHaveLength(1);
   });
 
-  it("calculates total monthly inflow correctly, taking direct contributions only from current pots", () => {
+  it("totals what goes in each month, counting direct payments only from current pots", () => {
+    useFixture({
+      ...defaultLoaderData,
+      userProfile: { ...defaultProfileData, birthYear: new Date().getFullYear() - AGE },
+    });
+    const { container } = render(<PensionContainer />);
+    const strip = container.querySelector("[data-density='compact']") as HTMLElement;
+    // £208 you + £125 employer + £100 into the current pot; the past pot's £50 is not counted.
+    expect(strip.textContent).toContain("Going in each month£433");
+    // The default fixture holds the backend's 5% and 3%: the caption says so, with no figure.
+    expect(strip.textContent).toContain("Assumed rates. Edit to match your payslip");
+    const rows = container.querySelectorAll("[data-list-row]");
+    expect(rows[0]?.textContent).toContain("Current pot");
+    expect(rows[1]?.textContent).toContain("Past pot");
+  });
+
+  it("without a saved age the estimate and retirement age give one prompt, never a guess", () => {
     render(<PensionContainer />);
-
-    // Going in each month includes the £100 direct contribution from the current pot, not the past pot
-    expect(screen.getByText("Going in each month")).toBeDefined();
-    expect(screen.getByText("£433")).toBeDefined();
-    expect(screen.getByText(/plus payments into your pots/)).toBeDefined();
-    expect(screen.getAllByText("Current Workplace Pot").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("Old Employer Pot").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("Current pot").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("Past pot").length).toBeGreaterThan(0);
+    expect(screen.getByText(/Add your year of birth and salary/)).toBeDefined();
+    expect(screen.queryByText("Retirement age")).toBeNull();
+    // The zone falls back to years until retirement for the illustration only.
+    expect(slider("Years until you retire")).toBeDefined();
   });
 
-  it("handles reset financial data state with zero values", () => {
-    testLoaderData = {
-      accounts: [],
-      accountDetails: [],
-      userProfile: {
-        annualSalary: null,
-        pensionPercent: 0,
-        pensionEmployerPercent: 0,
-        hasResetFinancialData: true,
-        setupChecklistCompletedSteps: ["pension"],
-      },
-    };
-
-    testProfileData = {
-      annualSalary: null,
-      pensionPercent: 0,
-      pensionEmployerPercent: 0,
-      hasResetFinancialData: true,
-      setupChecklistCompletedSteps: ["pension"],
-    };
-
+  it("a pot with no growth rate leaves the estimate Not set; a 0% rate is kept", () => {
+    useFixture({
+      ...FILLED,
+      accounts: [{ id: "p", name: "Pot", type: "Pension", balance: 1000, interestRate: null }],
+    });
+    const { unmount } = render(<PensionContainer />);
+    expect(screen.getByRole("link", { name: "Add a growth rate to a pot" })).toBeDefined();
+    fireEvent.click(screen.getByRole("button", { name: "Assumptions and UK rules" }));
+    expect(screen.getByText(/No growth rate is set on your pots/)).toBeDefined();
+    unmount();
+    useFixture({
+      ...FILLED,
+      accounts: [{ id: "p", name: "Pot", type: "Pension", balance: 1000, interestRate: 0 }],
+    });
     render(<PensionContainer />);
-    // No pots and no salary: honest "not set" states, never a made-up zero or hero block.
-    expect(screen.getByText("Add a pension pot to see its value")).toBeDefined();
-    expect(screen.getByText("Add a pension pot to see its value")).toBeDefined();
-    expect(screen.getByText("Needs your salary and contribution rate")).toBeDefined();
+    expect(screen.queryByRole("link", { name: "Add a growth rate to a pot" })).toBeNull();
   });
 
-  describe("page shell", () => {
-    beforeEach(() => {
-      testLoaderData = defaultLoaderData;
-      testProfileData = defaultProfileData;
+  it("keeps a saved 0% contribution rate as 0%", () => {
+    useFixture({
+      ...FILLED,
+      userProfile: { ...FILLED.userProfile, pensionPercent: 0, pensionEmployerPercent: 0 },
     });
-
-    it("puts the h1 first, uses one hero block and a real tablist with hidden panels", () => {
-      const { container } = render(<PensionContainer />);
-      const headings = screen.getAllByRole("heading").map((h) => h.tagName);
-      expect(headings[0]).toBe("H1");
-      expect(container.querySelectorAll("[data-tone='hero']")).toHaveLength(1);
-
-      const tabs = screen.getAllByRole("tab");
-      expect(tabs.map((t) => t.textContent)).toEqual([
-        "Forecast",
-        "Your pots (2)",
-        "Contributions and allowances",
-      ]);
-      expect(tabs[0].getAttribute("aria-selected")).toBe("true");
-      expect(tabs[0].getAttribute("tabindex")).toBe("0");
-      expect(tabs[1].getAttribute("tabindex")).toBe("-1");
-      expect(screen.getByRole("tabpanel", { name: "Forecast" })).toBeDefined();
-      // Inactive panels are hidden from the accessibility tree.
-      expect(screen.queryByRole("tabpanel", { name: /Your pots/ })).toBeNull();
-      openTab(/Your pots/);
-      expect(screen.getByRole("tabpanel", { name: /Your pots/ })).toBeDefined();
-      expect(screen.queryByRole("tabpanel", { name: "Forecast" })).toBeNull();
-    });
-
-    it("moves between tabs with the arrow, Home and End keys", () => {
-      render(<PensionContainer />);
-      const tabs = screen.getAllByRole("tab");
-      tabs[0].focus();
-      fireEvent.keyDown(tabs[0], { key: "ArrowRight" });
-      expect(tabs[1].getAttribute("aria-selected")).toBe("true");
-      expect(document.activeElement).toBe(tabs[1]);
-      fireEvent.keyDown(tabs[1], { key: "End" });
-      expect(tabs[2].getAttribute("aria-selected")).toBe("true");
-      fireEvent.keyDown(tabs[2], { key: "ArrowRight" });
-      expect(tabs[0].getAttribute("aria-selected")).toBe("true");
-      fireEvent.keyDown(tabs[0], { key: "ArrowLeft" });
-      expect(tabs[2].getAttribute("aria-selected")).toBe("true");
-      fireEvent.keyDown(tabs[2], { key: "Home" });
-      expect(tabs[0].getAttribute("aria-selected")).toBe("true");
-    });
-
-    it("lets the salary field be cleared without snapping back to 0", () => {
-      render(<PensionContainer />);
-      fireEvent.click(screen.getByRole("button", { name: /Edit details/i }));
-      const salary = screen.getByLabelText(/Annual salary/i) as HTMLInputElement;
-      fireEvent.change(salary, { target: { value: "" } });
-      expect(salary.value).toBe("");
-    });
+    render(<PensionContainer />);
+    const details = screen.getByRole("region", { name: "Your details" });
+    expect(within(details).getByText("You pay").nextElementSibling?.textContent).toBe(
+      "0% of salary",
+    );
   });
 
-  describe("assumptions", () => {
-    const setProfile = (profile: Record<string, unknown>) => {
-      testLoaderData = { accounts: [], accountDetails: [], userProfile: profile };
-      testProfileData = profile;
-    };
-
-    it("no salary shows the add-salary prompt, not a projection", () => {
-      setProfile({
-        annualSalary: null,
-        pensionPercent: 5,
-        pensionEmployerPercent: 3,
-        setupChecklistCompletedSteps: ["pension"],
-      });
-      const { container } = render(<PensionContainer />);
-
-      const prompt = screen.getByText(/Add your salary in/);
-      expect(prompt.textContent).toContain("to project your pension.");
-      expect(screen.getByRole("link", { name: "Profile" }).getAttribute("href")).toBe(
-        "/app/profile",
-      );
-      expect(screen.queryByText(/45,000/)).toBeNull();
-      expect(container.querySelector("input[type='range']")).toBeNull();
+  it("with pots but no salary, the zone asks for the salary instead of projecting", () => {
+    useFixture({
+      ...FILLED,
+      userProfile: { ...FILLED.userProfile, annualSalary: null },
     });
+    const { container } = render(<PensionContainer />);
+    expect(screen.getByText(/to see a pension estimate/)).toBeDefined();
+    expect(container.querySelector("input[type='range']")).toBeNull();
+  });
 
-    it("tax trap callout reads both engine rates and never says 60% alone", () => {
-      setProfile({
-        annualSalary: 110000,
-        pensionPercent: 0,
-        pensionEmployerPercent: 0,
-        setupChecklistCompletedSteps: ["pension"],
-      });
-      const { container } = render(<PensionContainer />);
-
-      expect(container.textContent).toContain("60% marginal rate (unverified estimate)");
-      expect(container.textContent).toContain("60% Income Tax, 62% including National Insurance");
-      expect(container.textContent).not.toContain("effective 60% marginal tax rate");
-    });
-
-    it("the taper note states facts only, with no apply button (E31, R5, R8)", () => {
-      setProfile({
-        annualSalary: 110000,
-        pensionPercent: 0,
-        pensionEmployerPercent: 0,
-        setupChecklistCompletedSteps: ["pension"],
-      });
-      const { container } = render(<PensionContainer />);
-      const note = container.querySelector('[aria-labelledby="pension-trap-title"]');
-      expect(note).not.toBeNull();
-      expect(note?.textContent).not.toMatch(/tax trap detected|restores your full|escape|reclaim/i);
-      expect(screen.queryByRole("button", { name: /^apply/i })).toBeNull();
-    });
-
-    describe("taper note gating on saved adjusted net income (E31)", () => {
-      const trapNote = (container: HTMLElement) =>
-        container.querySelector('[aria-labelledby="pension-trap-title"]');
-      const saved = (annualSalary: number) =>
-        setProfile({
+  describe("the £100,000 line (E31, ruling 6)", () => {
+    const trapNote = () => document.getElementById("pension-trap-note");
+    const saved = (annualSalary: number, extra: Record<string, unknown> = {}) =>
+      useFixture({
+        ...FILLED,
+        userProfile: {
+          ...FILLED.userProfile,
           annualSalary,
           pensionPercent: 0,
           pensionEmployerPercent: 0,
-          setupChecklistCompletedSteps: ["pension"],
-        });
-
-      // A saved baseline with no salary or contribution, so the profile figures drive the income.
-      beforeEach(async () => {
-        const { getDefaultStore } = await import("jotai");
-        const { financialBaselineAtom, NO_SALARY_BASELINE } = await import(
-          "~/state/baseline.store"
-        );
-        getDefaultStore().set(financialBaselineAtom, {
-          ...NO_SALARY_BASELINE,
-          pensionContributionPct: 0,
-        });
+          ...extra,
+        },
       });
 
-      it("is hidden below £90,000", () => {
-        saved(89_999);
-        const { container } = render(<PensionContainer />);
-        expect(trapNote(container)).toBeNull();
-      });
-
-      it("is hidden above £125,140", () => {
-        saved(125_141);
-        const { container } = render(<PensionContainer />);
-        expect(trapNote(container)).toBeNull();
-      });
-
-      it("is shown at £100,000, stating facts with no action", () => {
-        saved(100_000);
-        const { container } = render(<PensionContainer />);
-        expect(trapNote(container)).not.toBeNull();
-        expect(trapNote(container)?.textContent).toContain("£100,000");
-        expect(screen.queryByRole("button", { name: "Model this contribution" })).toBeNull();
-      });
-
-      it("uses saved adjusted net income, net of a salary sacrifice contribution", () => {
-        setProfile({
-          annualSalary: 130_000,
-          pensionPercent: 10,
-          pensionEmployerPercent: 0,
-          isSalarySacrifice: true,
-          setupChecklistCompletedSteps: ["pension"],
-        });
-        const { container } = render(<PensionContainer />);
-        // £130,000 less 10% sacrifice is £117,000: inside the band.
-        expect(trapNote(container)).not.toBeNull();
-      });
-
-      it("renders after the KPI strip, the tabs and the scenario zone", () => {
-        saved(110_000);
-        // Pots give the KPI strip its hero block.
-        testLoaderData = { ...testLoaderData, accounts: defaultLoaderData.accounts };
-        const { container } = render(<PensionContainer />);
-        const note = trapNote(container) as Element;
-        const precedesNote = (el: Element | null) =>
-          Boolean(el && el.compareDocumentPosition(note) & Node.DOCUMENT_POSITION_FOLLOWING);
-        expect(precedesNote(container.querySelector("[data-tone='hero']"))).toBe(true);
-        expect(precedesNote(screen.getByRole("tablist", { name: "Pension tools" }))).toBe(true);
-        expect(precedesNote(container.querySelector("#pension-panel-forecaster"))).toBe(true);
-        expect(precedesNote(container.querySelector("#pension-panel-rules"))).toBe(true);
+    beforeEach(async () => {
+      const { getDefaultStore } = await import("jotai");
+      const { financialBaselineAtom, NO_SALARY_BASELINE } = await import("~/state/baseline.store");
+      getDefaultStore().set(financialBaselineAtom, {
+        ...NO_SALARY_BASELINE,
+        pensionContributionPct: 0,
       });
     });
 
-    it("shows no taper note below the band", () => {
-      setProfile({
-        annualSalary: 39000,
-        pensionPercent: 5,
-        pensionEmployerPercent: 3,
-        setupChecklistCompletedSteps: ["pension"],
-      });
-      const { container } = render(<PensionContainer />);
-      expect(container.querySelector('[aria-labelledby="pension-trap-title"]')).toBeNull();
+    it("is hidden below £90,000 and above £125,140", () => {
+      saved(89_999);
+      const { unmount } = render(<PensionContainer />);
+      expect(trapNote()).toBeNull();
+      unmount();
+      saved(125_141);
+      render(<PensionContainer />);
+      expect(trapNote()).toBeNull();
     });
 
-    it("Model this contribution seeds the extra-contribution lever and makes no save call", () => {
-      setProfile({
-        annualSalary: 110000,
-        pensionPercent: 5,
-        pensionEmployerPercent: 3,
-        setupChecklistCompletedSteps: ["pension"],
-      });
+    it("in the band: one factual line with no heading or warning, after the scenario zone", () => {
+      saved(110_000);
+      render(<PensionContainer />);
+      const note = trapNote() as HTMLElement;
+      expect(note.textContent).toContain(
+        "Your adjusted net income is above £100,000, where the Personal Allowance reduces.",
+      );
+      // One standard notice per page: the line carries no badge of its own.
+      expect(note.textContent).not.toContain("Unverified estimate");
+      expect(within(note).queryByRole("heading")).toBeNull();
+      expect(note.textContent).not.toMatch(/marginal rate|£100k|trap|escape/i);
+      expect(zone().compareDocumentPosition(note) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+      // The page's one notice carries the standard unverified sentence.
+      expect(zone().querySelector("[data-notice='projection']")?.textContent).toContain(
+        "Unverified estimate.",
+      );
+    });
+
+    it("below £100,000: states the threshold, with no action", () => {
+      saved(95_000);
+      render(<PensionContainer />);
+      expect(trapNote()?.textContent).toContain(
+        "The Personal Allowance reduces when adjusted net income is above £100,000.",
+      );
+      expect(zone().querySelector("[data-notice='projection']")?.textContent).toContain(
+        "Unverified estimate.",
+      );
+      expect(screen.queryByRole("button", { name: "Model this contribution" })).toBeNull();
+    });
+
+    it("uses saved adjusted net income, net of a salary sacrifice contribution", () => {
+      saved(130_000, { pensionPercent: 10, isSalarySacrifice: true });
+      render(<PensionContainer />);
+      // £130,000 less 10% sacrifice is £117,000: inside the band.
+      expect(trapNote()).not.toBeNull();
+    });
+
+    it("Model this contribution seeds the contribution input and makes no save call", () => {
+      saved(110_000, { pensionPercent: 5, pensionEmployerPercent: 4 });
       mockUpdateProfile.mockClear();
       mockSubmit.mockClear();
       render(<PensionContainer />);
-      openTab(/Your pots/);
-      const extra = () =>
-        screen.getByLabelText("Extra each month range slider") as HTMLInputElement;
-      expect(extra().value).toBe("0");
-
-      expect(document.body.textContent).toContain("Adjusted net income above £100,000");
-      expect(document.body.textContent).not.toContain("Actionable");
+      fireEvent.mouseDown(screen.getByRole("tab", { name: "Take-home pay" }), {
+        button: 0,
+      });
       const scrolled: (string | undefined)[] = [];
       Element.prototype.scrollIntoView = function (this: Element) {
         scrolled.push(this.id);
       };
       fireEvent.click(screen.getByRole("button", { name: "Model this contribution" }));
       expect(scrolled).toContain("pension-scenario-zone");
-
-      expect(Number(extra().value)).toBeGreaterThan(0);
-      // Back on the forecast tab, which holds the scenario zone.
-      expect(screen.getByRole("tab", { name: "Forecast" }).getAttribute("aria-selected")).toBe(
+      expect(screen.getByRole("tab", { name: "At retirement" }).getAttribute("aria-selected")).toBe(
         "true",
       );
-      expect(screen.getByRole("button", { name: "Reset to saved figures" })).toBeDefined();
+      expect(Number(slider("Your contribution").value)).toBeGreaterThan(5);
       expect(mockUpdateProfile).not.toHaveBeenCalled();
       expect(mockSubmit).not.toHaveBeenCalled();
     });
 
-    it("tax trap callout uses Scottish rates for a Scottish baseline, else labels the assumption", async () => {
+    it("labels the region assumption unless the baseline is Scottish", async () => {
       const { getDefaultStore } = await import("jotai");
       const { financialBaselineAtom, NO_SALARY_BASELINE } = await import("~/state/baseline.store");
       const store = getDefaultStore();
-      const profile = {
-        annualSalary: 110000,
-        pensionPercent: 0,
-        pensionEmployerPercent: 0,
-        setupChecklistCompletedSteps: ["pension"],
-      };
-
       store.set(financialBaselineAtom, { ...NO_SALARY_BASELINE, ukRegion: "SCOTLAND" });
-      setProfile(profile);
+      saved(110_000);
       const scottish = render(<PensionContainer />);
-      expect(scottish.container.textContent).toContain(
-        "67.5% Income Tax, 69.5% including National Insurance",
-      );
       expect(screen.queryByText(/uses England, Wales and Northern Ireland/i)).toBeNull();
       scottish.unmount();
-
       store.set(financialBaselineAtom, NO_SALARY_BASELINE);
-      setProfile(profile);
+      saved(110_000);
       render(<PensionContainer />);
       expect(screen.getByText(/uses England, Wales and Northern Ireland/i)).toBeDefined();
-      // Region can now be set in profile settings (E23 D-4-C), so the label links there.
       expect(screen.getByRole("link", { name: /set your region/i }).getAttribute("href")).toBe(
         "/app/profile",
       );
     });
-
-    it("backend default rates (5% + 3%) show the default label", () => {
-      setProfile({
-        annualSalary: 50000,
-        pensionPercent: 5,
-        pensionEmployerPercent: 3,
-        setupChecklistCompletedSteps: ["pension"],
-      });
-      render(<PensionContainer />);
-      expect(
-        screen.getAllByText("Default: auto-enrolment minimum. Edit to match your payslip").length,
-      ).toBe(2);
-    });
-
-    it("non-default rates do not show the default label", () => {
-      setProfile({
-        annualSalary: 50000,
-        pensionPercent: 6,
-        pensionEmployerPercent: 4,
-        setupChecklistCompletedSteps: ["pension"],
-      });
-      render(<PensionContainer />);
-      expect(screen.queryByText(/Default: auto-enrolment minimum/)).toBeNull();
-    });
-
-    it("a pot with no growth rate is labelled as a placeholder, a 0% rate is kept", () => {
-      testLoaderData = {
-        accounts: [{ id: "p", name: "Pot", type: "Pension", balance: 1000, interestRate: null }],
-        accountDetails: [],
-        userProfile: { annualSalary: 50000, setupChecklistCompletedSteps: ["pension"] },
-      };
-      testProfileData = testLoaderData.userProfile;
-      const { unmount } = render(<PensionContainer />);
-      expect(screen.getByText(/No growth rate is set on your pots/)).toBeDefined();
-      unmount();
-      testLoaderData.accounts[0].interestRate = 0;
-      render(<PensionContainer />);
-      expect(screen.queryByText(/No growth rate is set on your pots/)).toBeNull();
-    });
-
-    it("keeps a saved 0% contribution rate as 0%", () => {
-      setProfile({
-        annualSalary: 50000,
-        pensionPercent: 0,
-        pensionEmployerPercent: 0,
-        createdAt: "2026-11-01T09:00:00.000Z",
-        updatedAt: "2026-11-05T10:30:00.000Z",
-        setupChecklistCompletedSteps: ["pension"],
-      });
-      render(<PensionContainer />);
-      expect(screen.getByText(/You:/).parentElement?.textContent).toContain("0%");
-      expect(screen.queryByText(/Default: auto-enrolment minimum/)).toBeNull();
-    });
   });
 
-  describe("scenario zone", () => {
+  describe("saved versus scenario", () => {
     beforeEach(() => {
-      testLoaderData = defaultLoaderData;
-      testProfileData = defaultProfileData;
+      useFixture(FILLED);
       mockSubmit.mockClear();
       mockUpdateProfile.mockClear();
     });
 
-    const summaryText = () =>
-      screen.getAllByText("Total in your pots")[0].closest("[data-density='compact']")?.textContent;
-    const detailsText = () => document.getElementById("pension-details")?.textContent;
-    const slider = (label: string) =>
-      screen.getByLabelText(`${label} range slider`) as HTMLInputElement;
-
-    it("changing every scenario lever leaves the saved KPIs and details alone and makes no request", () => {
+    it("changing every scenario input leaves the hero, strip and details alone and makes no request", () => {
       const fetchSpy = vi.fn();
       vi.stubGlobal("fetch", fetchSpy);
       render(<PensionContainer />);
-      const kpis = summaryText();
-      const details = detailsText();
-      expect(kpis).toContain("£30,000");
-
-      fireEvent.change(slider("Extra each month"), { target: { value: "400" } });
-      fireEvent.change(slider("Years to retirement"), { target: { value: "10" } });
+      const before = savedText();
+      fireEvent.change(slider("Your contribution"), { target: { value: "12" } });
+      fireEvent.change(slider("Retirement age"), { target: { value: "60" } });
       fireEvent.change(slider("Growth a year"), { target: { value: "9" } });
-      fireEvent.click(screen.getByRole("button", { name: "3%" }));
-      fireEvent.click(screen.getByLabelText(/Qualifying earnings only/));
+      fireEvent.click(screen.getByRole("button", { name: "More options" }));
+      fireEvent.click(screen.getByLabelText(/Only pay that counts/));
       fireEvent.click(screen.getByLabelText(/today's money/));
       fireEvent.click(screen.getByLabelText(/full new State Pension/));
-
-      expect(screen.getByRole("button", { name: "Reset to saved figures" })).toBeDefined();
-      expect(summaryText()).toBe(kpis);
-      expect(detailsText()).toBe(details);
+      fireEvent.mouseDown(screen.getByRole("tab", { name: "Take-home pay" }), {
+        button: 0,
+      });
+      expect(savedText()).toBe(before);
+      expect(
+        (screen.getByRole("button", { name: "Reset to saved figures" }) as HTMLButtonElement)
+          .disabled,
+      ).toBe(false);
       expect(mockSubmit).not.toHaveBeenCalled();
       expect(mockUpdateProfile).not.toHaveBeenCalled();
       expect(fetchSpy).not.toHaveBeenCalled();
       vi.unstubAllGlobals();
     });
 
+    it("Reset to saved figures returns every input to the saved value", () => {
+      render(<PensionContainer />);
+      const labels = ["Your contribution", "Retirement age", "Growth a year"];
+      const before = labels.map((l) => slider(l).value);
+      expect(before).toEqual(["8", "67", "5"]);
+      fireEvent.change(slider("Your contribution"), { target: { value: "12" } });
+      fireEvent.change(slider("Retirement age"), { target: { value: "60" } });
+      fireEvent.change(slider("Growth a year"), { target: { value: "9" } });
+      fireEvent.click(screen.getByRole("button", { name: "Reset to saved figures" }));
+      expect(labels.map((l) => slider(l).value)).toEqual(before);
+      expect(screen.getByText("No change")).toBeDefined();
+    });
+
+    it("keeps the scenario when switching tools and back", () => {
+      render(<PensionContainer />);
+      fireEvent.change(slider("Your contribution"), { target: { value: "10" } });
+      fireEvent.mouseDown(screen.getByRole("tab", { name: "Take-home pay" }), {
+        button: 0,
+      });
+      expect(slider("Your contribution").value).toBe("10");
+      fireEvent.mouseDown(screen.getByRole("tab", { name: "At retirement" }), {
+        button: 0,
+      });
+      expect(slider("Your contribution").value).toBe("10");
+    });
+
+    it("puts the saved details before the scenario zone, and the zone holds no hero", () => {
+      render(<PensionContainer />);
+      const details = document.getElementById("pension-details") as HTMLElement;
+      expect(
+        details.compareDocumentPosition(zone()) & Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
+      expect(zone().querySelectorAll("[data-tone='hero']")).toHaveLength(0);
+    });
+
     it("has no Sync to profile or Apply control anywhere", () => {
       render(<PensionContainer />);
       expect(screen.queryByText(/sync/i)).toBeNull();
       expect(screen.queryByRole("button", { name: /apply/i })).toBeNull();
-    });
-
-    it("Reset to saved figures returns every lever to the saved value", () => {
-      render(<PensionContainer />);
-      const before = ["Extra each month", "Years to retirement", "Growth a year"].map(
-        (l) => slider(l).value,
-      );
-      fireEvent.change(slider("Extra each month"), { target: { value: "400" } });
-      fireEvent.change(slider("Years to retirement"), { target: { value: "10" } });
-      fireEvent.change(slider("Growth a year"), { target: { value: "9" } });
-      fireEvent.click(screen.getByLabelText(/today's money/));
-      fireEvent.click(screen.getByRole("button", { name: "Reset to saved figures" }));
-      expect(
-        ["Extra each month", "Years to retirement", "Growth a year"].map((l) => slider(l).value),
-      ).toEqual(before);
-      expect((screen.getByLabelText(/today's money/) as HTMLInputElement).checked).toBe(false);
-      expect(
-        (screen.getByRole("button", { name: "Reset to saved figures" }) as HTMLButtonElement)
-          .disabled,
-      ).toBe(true);
-    });
-
-    it("keeps the scenario when switching tabs and back", () => {
-      render(<PensionContainer />);
-      fireEvent.change(slider("Extra each month"), { target: { value: "250" } });
-      openTab(/Your pots/);
-      openTab(/^Forecast$/);
-      expect(slider("Extra each month").value).toBe("250");
-    });
-
-    it("puts the saved details before the scenario zone, and uses one hero", () => {
-      const { container } = render(<PensionContainer />);
-      const details = document.getElementById("pension-details");
-      const zone = screen.getByRole("region", { name: "Model a change to your pension" });
-      expect(
-        details && zone && details.compareDocumentPosition(zone) & Node.DOCUMENT_POSITION_FOLLOWING,
-      ).toBeTruthy();
-      expect(container.querySelectorAll("[data-tone='hero']")).toHaveLength(1);
-      expect(zone.querySelectorAll("[data-tone='hero']")).toHaveLength(0);
     });
   });
 });

@@ -1,20 +1,17 @@
 import { css } from "@repo/ui/styled-system/css";
 
-export const figure = css({
-  display: "inline-flex",
-  alignItems: "baseline",
-  gap: "6px",
-  fontVariantNumeric: "tabular-nums",
-});
+export const figureText = css({ fontVariantNumeric: "tabular-nums" });
 
-export const perMonth = css({
-  fontSize: "sm",
-  fontWeight: "normal",
-  color: "text.muted",
-});
-
-/** Matches `Money size="lg"` so a percentage reads at the same scale as the money cards. */
-export const rateValue = css({
-  textStyle: "numeric.lg",
-  fontVariantNumeric: "tabular-nums",
+/** The single "Not set" action under a card or the hero: a plain text link. */
+export const promptLink = css({
+  appearance: "none",
+  background: "none",
+  border: "none",
+  p: "0",
+  cursor: "pointer",
+  color: "primary",
+  textDecoration: "underline",
+  fontWeight: "medium",
+  textStyle: "body.sm",
+  _focusVisible: { outline: "2px solid", outlineColor: "border.focusRing", outlineOffset: "2px" },
 });

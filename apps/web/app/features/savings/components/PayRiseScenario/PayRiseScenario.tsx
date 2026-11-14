@@ -1,7 +1,7 @@
 import { Button, Icon, Money } from "@repo/ui";
 import { X } from "lucide-react";
 import type { FC } from "react";
-import { removeLabel, rowRoot, rowText } from "./PayRiseScenario.styles";
+import { rowRoot, rowText } from "./PayRiseScenario.styles";
 
 export interface PayRiseScenarioProps {
   /** Extra take-home a month from the pay rise modelled on the Take-home page. */
@@ -17,11 +17,12 @@ export interface PayRiseScenarioProps {
 export const PayRiseScenario: FC<PayRiseScenarioProps> = ({ monthlyIncrease, onRemove }) => (
   <div className={rowRoot()}>
     <p className={rowText()}>
-      Pay rise from take-home: <Money size="md" value={Math.round(monthlyIncrease * 12)} /> a year
+      Pay rise from the take-home pay tool:{" "}
+      <Money size="md" value={Math.round(monthlyIncrease * 12)} /> a year
     </p>
     <Button size="sm" variant="outline" onClick={onRemove}>
       <Icon icon={X} size="sm" />
-      Remove<span className={removeLabel()}> pay rise from take-home</span>
+      Remove pay rise
     </Button>
   </div>
 );

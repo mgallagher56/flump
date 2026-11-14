@@ -1,45 +1,32 @@
 import { cva } from "@repo/ui/styled-system/css";
 
+/** Sits on the zone surface: no nested card (E16 PR 2 handover). */
 export const controlsPanel = cva({
+  base: { display: "flex", flexDirection: "column", gap: "4", minWidth: 0 },
+});
+
+export const toggleList = cva({
+  base: { display: "flex", flexDirection: "column", gap: "2", pt: "2" },
+});
+
+export const toggleRow = cva({
   base: {
     display: "flex",
-    flexDirection: "column",
-    gap: "20px",
-    minWidth: 0,
-    padding: { base: "16px", md: "20px" },
-    backgroundColor: "surface.card",
-    borderRadius: "xl",
-    borderWidth: "1px",
-    borderStyle: "solid",
-    borderColor: "border.subtle",
+    alignItems: "flex-start",
+    gap: "2.5",
+    textStyle: "body.md",
+    color: "text.primary",
+    cursor: "pointer",
+    minHeight: "touch",
+    "& input": { marginTop: "1", width: "18px", height: "18px", accentColor: "primary.solid" },
   },
 });
 
-export const controlsHeading = cva({
-  base: { margin: 0, textStyle: "heading.sm", color: "text.primary" },
-});
-
-export const controlsHint = cva({
-  base: { margin: "4px 0 0", textStyle: "body.sm", color: "text.muted" },
-});
-
-export const presetGroup = cva({
-  base: { display: "flex", flexDirection: "column", gap: "8px", margin: 0, padding: 0, border: 0 },
-});
-
-export const presetLegend = cva({
-  base: { padding: 0, textStyle: "label.md", color: "text.secondary" },
-});
-
-export const presetRow = cva({
-  base: { display: "flex", flexWrap: "wrap", gap: "6px" },
-});
-
-export const realRateNote = cva({
+export const toggleHint = cva({
   base: {
-    margin: 0,
+    display: "block",
     textStyle: "body.sm",
-    color: "text.muted",
+    color: "text.secondary",
     fontVariantNumeric: "tabular-nums",
   },
 });

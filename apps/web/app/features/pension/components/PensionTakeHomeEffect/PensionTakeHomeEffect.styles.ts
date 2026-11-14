@@ -5,35 +5,8 @@ export const effectRoot = cva({
     display: "flex",
     flexDirection: "column",
     gap: "3",
-    padding: "4",
-    borderRadius: "xl",
-    borderWidth: "1px",
-    borderStyle: "solid",
-    borderColor: "border.subtle",
-    backgroundColor: "surface.card",
     fontVariantNumeric: "tabular-nums",
     minWidth: "0",
-  },
-});
-
-export const effectHeader = cva({
-  base: { display: "flex", flexWrap: "wrap", alignItems: "center", gap: "2" },
-});
-
-export const effectTitle = cva({
-  base: { textStyle: "heading.sm", color: "text.primary", margin: "0", marginRight: "auto" },
-});
-
-export const effectBadges = cva({
-  base: { display: "flex", flexWrap: "wrap", gap: "2" },
-});
-
-export const effectSentence = cva({
-  base: {
-    textStyle: "body.md",
-    color: "text.primary",
-    margin: "0",
-    fontVariantNumeric: "tabular-nums",
   },
 });
 
@@ -49,17 +22,47 @@ export const effectLink = cva({
   },
 });
 
-export const effectUnverified = cva({
+export const outcomeLabel = cva({
   base: {
-    margin: "0",
-    paddingBlock: "3",
-    paddingInline: "4",
-    borderRadius: "lg",
-    borderWidth: "1px",
-    borderStyle: "solid",
-    borderColor: "status.warning.border",
-    backgroundColor: "status.warning.bg",
-    color: "status.warning.text",
+    margin: 0,
+    display: "flex",
+    flexWrap: "wrap",
+    alignItems: "center",
+    gap: "2",
     textStyle: "body.sm",
+    color: "text.secondary",
   },
+});
+
+export const outcomeValue = cva({
+  base: {
+    margin: 0,
+    textStyle: "numeric.kpi",
+    fontVariantNumeric: "tabular-nums",
+    color: "text.primary",
+  },
+});
+
+export const outcomeSupport = cva({
+  base: { display: "flex", flexWrap: "wrap", gap: "6", margin: 0, mt: "2" },
+});
+
+export const outcomeSupportItem = cva({
+  base: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "0.5",
+    textStyle: "body.sm",
+    color: "text.secondary",
+    "& dd": {
+      margin: 0,
+      textStyle: "body.md",
+      color: "text.primary",
+      fontVariantNumeric: "tabular-nums",
+    },
+  },
+});
+
+export const outcomeSuffix = cva({
+  base: { textStyle: "body.md", color: "text.secondary", whiteSpace: "nowrap" },
 });

@@ -12,11 +12,6 @@ export const INFLATION_RATE = 2.5;
 /** Drawdown rate behind the "estimated retirement income" figure. Shown next to the figure. */
 export const SAFE_WITHDRAWAL_RATE = 0.04;
 
-// PLSA UK Retirement Living Standards (single person, monthly).
-export const PLSA_MINIMUM = 1200;
-export const PLSA_MODERATE = 2608;
-export const PLSA_COMFORTABLE = 3591;
-
 /** Full new State Pension for the current tax year (sourced, per-year registry in finance-engine). */
 export const currentStatePensionAnnual = (): number =>
   getUkTaxYearRules(resolveUkTaxYear()).statePension.fullNewAnnual;
@@ -42,12 +37,12 @@ export interface ForecastInput {
 
 export interface ForecastPoint {
   year: string;
+  /** Whole years from now (0 is today). */
+  yearIndex: number;
   totalPot: number;
   totalContribs: number;
   growth: number;
 }
-
-export type PlsaTier = "comfortable" | "moderate" | "minimum" | "below";
 
 export interface ForecastResult {
   pensionableSalary: number;
@@ -66,17 +61,8 @@ export interface ForecastResult {
   drawdownPotAfterLumpSum: number;
   annualRetirementIncome: number;
   monthlyRetirementIncome: number;
-  plsaTier: PlsaTier;
-  plsaProgressPct: number;
   statePensionAnnual: number;
 }
-
-export const plsaTierFor = (monthlyIncome: number): PlsaTier => {
-  if (monthlyIncome >= PLSA_COMFORTABLE) return "comfortable";
-  if (monthlyIncome >= PLSA_MODERATE) return "moderate";
-  if (monthlyIncome >= PLSA_MINIMUM) return "minimum";
-  return "below";
-};
 
 /** Compound projection. Pure: the same inputs always give the same figures. */
 export const projectPension = (input: ForecastInput): ForecastResult => {
@@ -127,6 +113,7 @@ export const projectPension = (input: ForecastInput): ForecastResult => {
   const chartData: ForecastPoint[] = [
     {
       year: "Year 0",
+      yearIndex: 0,
       totalPot: Math.round(startingPot),
       totalContribs: Math.round(startingPot),
       growth: 0,
@@ -144,6 +131,7 @@ export const projectPension = (input: ForecastInput): ForecastResult => {
       const principal = startingPot + paid;
       chartData.push({
         year: `Year ${m / 12}`,
+        yearIndex: m / 12,
         totalPot: Math.round(balance),
         totalContribs: Math.round(principal),
         growth: Math.round(Math.max(0, balance - principal)),
@@ -180,8 +168,6 @@ export const projectPension = (input: ForecastInput): ForecastResult => {
     drawdownPotAfterLumpSum,
     annualRetirementIncome,
     monthlyRetirementIncome,
-    plsaTier: plsaTierFor(monthlyRetirementIncome),
-    plsaProgressPct: Math.min(100, (monthlyRetirementIncome / PLSA_COMFORTABLE) * 100),
     statePensionAnnual,
   };
 };

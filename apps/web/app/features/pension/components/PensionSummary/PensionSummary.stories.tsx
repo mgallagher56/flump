@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { expect } from "storybook/test";
+import { expect, fn, within } from "storybook/test";
 import { PensionSummary } from "./PensionSummary";
 
 const meta: Meta<typeof PensionSummary> = {
@@ -7,44 +7,36 @@ const meta: Meta<typeof PensionSummary> = {
   component: PensionSummary,
   parameters: { layout: "padded" },
   args: {
-    totalValue: 25000,
-    potsCount: 2,
-    hasSalary: true,
-    monthlyEmployeeContrib: 188,
-    monthlyEmployerContrib: 113,
-    directMonthlyContrib: 50,
-    employeePercent: 5,
-    employerPercent: 3,
-    netMonthlyCost: 135,
-    taxReliefMonthly: 53,
-    weightedReturnRate: 5.4,
+    totalValue: 96000,
+    potsCount: 1,
+    estimatedMonthlyIncome: 1240,
+    monthlyTotal: 532,
+    retirementAge: 67,
+    onAddPot: fn(),
   },
 };
 
 export default meta;
 type Story = StoryObj<typeof PensionSummary>;
 
+// The Storybook decorator renders light and dark side by side, so queries use the first match.
+
 export const Populated: Story = {
   play: async ({ canvasElement }) => {
-    const hero = canvasElement.querySelectorAll("[data-tone='hero']");
-    await expect(hero.length).toBeGreaterThan(0);
-    await expect(hero[0]?.textContent).toContain("Total in your pots");
+    await expect(canvasElement.querySelectorAll("[data-tone='hero']").length).toBeGreaterThan(0);
+    await expect(within(canvasElement).getAllByText("Estimate")[0]).toBeDefined();
   },
 };
 
-export const NoPotsOrSalary: Story = {
-  args: {
-    potsCount: 0,
-    totalValue: 0,
-    hasSalary: false,
-    directMonthlyContrib: 0,
-    monthlyEmployeeContrib: 0,
-    monthlyEmployerContrib: 0,
-    netMonthlyCost: 0,
-    taxReliefMonthly: 0,
-  },
-  play: async ({ canvasElement }) => {
+export const NoPots: Story = {
+  args: { potsCount: 0, totalValue: 0, estimatedMonthlyIncome: null },
+  play: async ({ canvasElement, args }) => {
     await expect(canvasElement.querySelectorAll("[data-tone='hero']").length).toBe(0);
-    await expect(canvasElement.textContent).toContain("Add a pension pot to see its value");
+    within(canvasElement).getAllByRole("button", { name: "Add pension pot" })[0]?.click();
+    await expect(args.onAddPot).toHaveBeenCalled();
   },
+};
+
+export const MostlyUnknown: Story = {
+  args: { estimatedMonthlyIncome: null, retirementAge: null },
 };

@@ -1,36 +1,20 @@
-import {
-  Button,
-  CurrencyInput,
-  controlProps,
-  FormField,
-  Icon,
-  PercentInput,
-  StatusBadge,
-} from "@repo/ui";
+import { Button, CurrencyInput, controlProps, FormField, Icon, PercentInput } from "@repo/ui";
 import { Check, Pencil, X } from "lucide-react";
-import { type FC, type FormEvent, useState } from "react";
+import { type FC, type FormEvent, type ReactNode, useState } from "react";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import {
-  assumedLabel,
   buttonRow,
   checkHint,
   checkRow,
   checkStack,
   detailsHeader,
-  detailsHeadingRow,
   detailsRoot,
   detailsTitle,
-  dot,
   editGrid,
-  employeeSegment,
-  employerSegment,
-  legendGroup,
-  legendItem,
-  legendRow,
+  factList,
+  factRow,
+  factValue,
   mutedNote,
-  niNote,
-  proportionBar,
-  savedDate,
 } from "./PensionDetails.styles";
 
 export interface PensionDetailsSaveValues {
@@ -53,30 +37,23 @@ export interface PensionDetailsProps {
   employerPercent: number;
   isSalarySacrifice: boolean;
   isSalarySacrificeEmployerNi: boolean;
-  monthlyEmployeeContrib: number;
-  standardMonthlyEmployerContrib: number;
-  monthlyEmployerNiContrib: number;
   /** True for the backend default 5% and 3%, which the user may never have chosen. */
   ratesAssumed: boolean;
   /** False until the user saves a contribution method: it then reads "Not set". */
   methodSet?: boolean;
-  /** ISO timestamp of the last profile save, when known. */
-  updatedAt?: string | null;
   isEditing: boolean;
   onEditingChange: (editing: boolean) => void;
   /** Saves to the profile. Rejects on failure. */
   onSave: (values: PensionDetailsSaveValues) => Promise<void>;
+  /** Shown under the saved facts inside the same card (the pots list). */
+  children?: ReactNode;
 }
 
 const percentFormat = new Intl.NumberFormat("en-GB", { maximumFractionDigits: 1 });
 const formatPercent = (value: number) => `${percentFormat.format(value)}%`;
-const dateFormat = new Intl.DateTimeFormat("en-GB", {
-  day: "numeric",
-  month: "short",
-  year: "numeric",
-});
+const NOT_SET = "Not set";
 
-const ASSUMED_RATE_LABEL = "Default: auto-enrolment minimum. Edit to match your payslip";
+const ASSUMED_RATE_LABEL = "Assumed: the auto-enrolment minimum. Edit to match your payslip.";
 
 type FormProps = Pick<
   PensionDetailsProps,
@@ -131,7 +108,7 @@ const DetailsForm: FC<FormProps> = ({
   return (
     <form aria-label="Edit your pension details" onSubmit={submit}>
       <div className={editGrid()}>
-        <FormField label="Annual salary">
+        <FormField label="Yearly salary before tax">
           {(field) => (
             <CurrencyInput
               {...controlProps(field)}
@@ -141,7 +118,7 @@ const DetailsForm: FC<FormProps> = ({
             />
           )}
         </FormField>
-        <FormField label="Your contribution">
+        <FormField label="Your contribution (% of salary)">
           {(field) => (
             <PercentInput
               {...controlProps(field)}
@@ -152,7 +129,7 @@ const DetailsForm: FC<FormProps> = ({
             />
           )}
         </FormField>
-        <FormField label="Employer contribution">
+        <FormField label="Employer contribution (% of salary)">
           {(field) => (
             <PercentInput
               {...controlProps(field)}
@@ -175,7 +152,12 @@ const DetailsForm: FC<FormProps> = ({
                 if (!e.target.checked) setEmployerNi(false);
               }}
             />
-            <span>Salary sacrifice (saves NI)</span>
+            <span>
+              Paid by salary sacrifice
+              <span className={checkHint()}>
+                Taken from your pay before Income Tax and National Insurance.
+              </span>
+            </span>
           </label>
           <label
             className={checkRow()}
@@ -193,11 +175,11 @@ const DetailsForm: FC<FormProps> = ({
               }}
             />
             <span>
-              Pass on employer NI
+              Employer adds its National Insurance
               <span className={checkHint()}>
                 {sacrifice
-                  ? "Your employer reinvests their NI saving into your pot"
-                  : "Needs salary sacrifice"}
+                  ? "Your employer adds the National Insurance it no longer pays to your pension."
+                  : "Only with salary sacrifice"}
               </span>
             </span>
           </label>
@@ -218,8 +200,8 @@ const DetailsForm: FC<FormProps> = ({
 };
 
 /**
- * "Your details": the saved salary and contribution facts, and the only place they are edited.
- * Reads saved data only; the scenario zone never writes here.
+ * "Your details": the saved salary and contribution facts in one card, and the only place they
+ * are edited. Reads saved data only; the scenario zone never writes here. One figure per row.
  */
 export const PensionDetails: FC<PensionDetailsProps> = ({
   hasSalary,
@@ -228,22 +210,21 @@ export const PensionDetails: FC<PensionDetailsProps> = ({
   employerPercent,
   isSalarySacrifice,
   isSalarySacrificeEmployerNi,
-  monthlyEmployeeContrib,
-  standardMonthlyEmployerContrib,
-  monthlyEmployerNiContrib,
   ratesAssumed,
   methodSet = true,
-  updatedAt,
   isEditing,
   onEditingChange,
   onSave,
+  children,
 }) => {
   const { formatCurrency } = useFormatCurrency();
-  const share = employeePercent + employerPercent || 1;
-  const employeeShare = (employeePercent / share) * 100;
-  const employerShare = (employerPercent / share) * 100;
-  const updated = updatedAt ? new Date(updatedAt) : null;
-  const hasUpdated = updated !== null && !Number.isNaN(updated.getTime());
+  const method = !methodSet
+    ? NOT_SET
+    : isSalarySacrifice
+      ? isSalarySacrificeEmployerNi
+        ? "Salary sacrifice, employer adds its National Insurance"
+        : "Salary sacrifice"
+      : "No salary sacrifice";
 
   return (
     <section
@@ -254,20 +235,9 @@ export const PensionDetails: FC<PensionDetailsProps> = ({
       tabIndex={-1}
     >
       <div className={detailsHeader()}>
-        <div className={detailsHeadingRow()}>
-          <h2 className={detailsTitle()} id="pension-details-title">
-            Your details
-          </h2>
-          <StatusBadge size="sm" variant="positive">
-            Saved
-          </StatusBadge>
-          {hasUpdated && (
-            <span className={savedDate()}>
-              Last updated{" "}
-              <time dateTime={updated.toISOString()}>{dateFormat.format(updated)}</time>
-            </span>
-          )}
-        </div>
+        <h2 className={detailsTitle()} id="pension-details-title">
+          Your details
+        </h2>
         {!isEditing && (
           <Button size="sm" type="button" variant="outline" onClick={() => onEditingChange(true)}>
             <Icon icon={Pencil} size="sm" />
@@ -276,7 +246,7 @@ export const PensionDetails: FC<PensionDetailsProps> = ({
         )}
       </div>
 
-      {isEditing && (
+      {isEditing ? (
         <DetailsForm
           annualSalary={annualSalary}
           employeePercent={employeePercent}
@@ -286,53 +256,32 @@ export const PensionDetails: FC<PensionDetailsProps> = ({
           onEditingChange={onEditingChange}
           onSave={onSave}
         />
+      ) : (
+        <>
+          <dl className={factList()}>
+            <div className={factRow()}>
+              <dt>Salary</dt>
+              <dd className={factValue({ unset: !hasSalary })}>
+                {hasSalary ? `${formatCurrency(annualSalary)} a year` : NOT_SET}
+              </dd>
+            </div>
+            <div className={factRow()}>
+              <dt>You pay</dt>
+              <dd className={factValue()}>{formatPercent(employeePercent)} of salary</dd>
+            </div>
+            <div className={factRow()}>
+              <dt>Employer pays</dt>
+              <dd className={factValue()}>{formatPercent(employerPercent)} of salary</dd>
+            </div>
+            <div className={factRow()}>
+              <dt>Method</dt>
+              <dd className={factValue({ unset: !methodSet, wrap: true })}>{method}</dd>
+            </div>
+          </dl>
+          {ratesAssumed && <p className={mutedNote()}>{ASSUMED_RATE_LABEL}</p>}
+        </>
       )}
-
-      {/* SVG rect widths are attributes, so the split needs no inline style. */}
-      <svg
-        aria-hidden="true"
-        className={proportionBar()}
-        preserveAspectRatio="none"
-        viewBox="0 0 100 12"
-      >
-        <rect className={employeeSegment()} height="12" width={employeeShare} x="0" />
-        <rect className={employerSegment()} height="12" width={employerShare} x={employeeShare} />
-      </svg>
-
-      <div className={legendRow()}>
-        <div className={legendGroup()}>
-          <span className={legendItem()}>
-            <span aria-hidden="true" className={dot({ series: "employee" })} />
-            <span>
-              <strong>You:</strong> {formatPercent(employeePercent)} (
-              {formatCurrency(monthlyEmployeeContrib)} a month)
-              {ratesAssumed && <span className={assumedLabel()}>{ASSUMED_RATE_LABEL}</span>}
-            </span>
-          </span>
-          <span className={legendItem()}>
-            <span aria-hidden="true" className={dot({ series: "employer" })} />
-            <span>
-              <strong>Employer:</strong> {formatPercent(employerPercent)} (
-              {formatCurrency(standardMonthlyEmployerContrib)} a month
-              {monthlyEmployerNiContrib > 0 && (
-                <span className={niNote()}>+ {formatCurrency(monthlyEmployerNiContrib)} NI</span>
-              )}
-              ){ratesAssumed && <span className={assumedLabel()}>{ASSUMED_RATE_LABEL}</span>}
-            </span>
-          </span>
-        </div>
-        <p className={mutedNote()}>
-          Salary:{" "}
-          <strong>{hasSalary ? `${formatCurrency(annualSalary)} a year` : "not set"}</strong> ·{" "}
-          {!methodSet
-            ? "Contribution method: Not set"
-            : isSalarySacrifice
-              ? isSalarySacrificeEmployerNi
-                ? "Salary sacrifice and employer NI"
-                : "Salary sacrifice"
-              : "Net pay"}
-        </p>
-      </div>
+      {children}
     </section>
   );
 };

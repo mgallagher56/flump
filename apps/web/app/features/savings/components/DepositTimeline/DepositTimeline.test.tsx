@@ -20,12 +20,12 @@ describe("depositOutcomeText", () => {
     expect(depositOutcomeText(values())).toBe(DEPOSIT_EMPTY_TEXT);
   });
 
-  it("gives months, and years and months from a year on", () => {
+  it("gives months, and years and months over 24 months", () => {
     expect(depositOutcomeText(values({ targetDeposit: 20000 }))).toBe(
-      "Estimated time to reach target: 38 months (3 years 2 months)",
+      "Estimated time to reach target: 3 years 2 months",
     );
     expect(depositOutcomeText(values({ targetDeposit: 9800, monthlySaving: 400 }))).toBe(
-      "Estimated time to reach target: 12 months (1 year 0 months)",
+      "Estimated time to reach target: 12 months",
     );
     expect(depositOutcomeText(values({ targetDeposit: 5400, monthlySaving: 400 }))).toBe(
       "Estimated time to reach target: 1 month",
@@ -70,11 +70,11 @@ describe("<DepositTimeline />", () => {
     fireEvent.change(target, { target: { value: "20000" } });
     expect(onChange).toHaveBeenCalled();
     expect(screen.getByTestId("deposit-timeline-outcome").textContent).toBe(
-      "Estimated time to reach target: 38 months (3 years 2 months)",
+      "Estimated time to reach target: 3 years 2 months",
     );
-    expect(screen.getByText("From your saved savings and investment accounts")).toBeDefined();
+    expect(screen.getByText("The total in your savings and investment accounts")).toBeDefined();
     expect(
-      screen.getByText("Estimate only. Does not include interest or changes in investment value."),
+      screen.getByText("This estimate does not include interest or changes in investment value."),
     ).toBeDefined();
   });
 });

@@ -9,58 +9,40 @@ vi.mock("~/hooks/useFormatCurrency", () => ({
 }));
 
 let current: PensionScenario;
-const Harness: FC<{ portfolioReturnRate?: number }> = ({ portfolioReturnRate }) => {
-  current = usePensionScenario(6);
-  return <ForecasterControls portfolioReturnRate={portfolioReturnRate} scenario={current} />;
+const Harness: FC<{ age: number | null }> = ({ age }) => {
+  current = usePensionScenario({ contributionPercent: 8, horizonYears: 32, growthRate: 6 });
+  return <ForecasterControls currentAge={age} scenario={current} statePensionMonthly={1000} />;
 };
 
+const slider = (label: string) =>
+  screen.getByLabelText(`${label} range slider`) as HTMLInputElement;
+
 describe("<ForecasterControls />", () => {
-  it("offers only scenario levers, no salary or contribution fields", () => {
-    render(<Harness portfolioReturnRate={6} />);
-    expect(screen.getByLabelText("Extra each month range slider")).toBeDefined();
-    expect(screen.getByLabelText("Years to retirement range slider")).toBeDefined();
-    expect(screen.getByLabelText("Growth a year range slider")).toBeDefined();
-    expect(screen.queryByLabelText(/salary/i)).toBeNull();
-    expect(screen.queryByLabelText(/employer contrib/i)).toBeNull();
+  it("shows three inputs, with the UK rule options behind More options", () => {
+    render(<Harness age={35} />);
+    expect(screen.getAllByRole("slider")).toHaveLength(3);
+    expect(slider("Your contribution").value).toBe("8");
+    expect(slider("Retirement age").value).toBe("67");
+    expect(slider("Growth a year").value).toBe("6");
+    expect(screen.queryByRole("checkbox")).toBeNull();
+    expect(screen.queryByLabelText(/salary before tax/i)).toBeNull();
+    expect(screen.queryByRole("button", { name: /%/ })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "More options" }));
+    expect(screen.getAllByRole("checkbox")).toHaveLength(3);
   });
 
-  it("moving a lever updates scenario state and notes the edit", () => {
-    render(<Harness />);
-    fireEvent.change(screen.getByLabelText("Extra each month range slider"), {
-      target: { value: "150" },
-    });
-    expect(current.values.extraMonthly).toBe(150);
-    expect(current.isModified).toBe(true);
-    expect(screen.getByText(/Edited\. Not saved\./)).toBeDefined();
-  });
-
-  it("quick growth rates set the rate and mark the pressed one", () => {
-    render(<Harness portfolioReturnRate={6} />);
-    fireEvent.click(screen.getByRole("button", { name: "9%" }));
-    expect(current.values.growthRate).toBe(9);
-    expect(screen.getByRole("button", { name: "9%" }).getAttribute("aria-pressed")).toBe("true");
-    expect(
-      screen.getByRole("button", { name: "Your pots (6%)" }).getAttribute("aria-pressed"),
-    ).toBe("false");
-  });
-
-  it("presses only one chip when your pots' rate matches a preset", () => {
-    render(<Harness portfolioReturnRate={5} />);
-    fireEvent.click(screen.getByRole("button", { name: "Your pots (5%)" }));
-    expect(current.values.growthRate).toBe(5);
-    const pressed = screen
-      .getAllByRole("button")
-      .filter((b) => b.getAttribute("aria-pressed") === "true");
-    expect(pressed.map((b) => b.textContent)).toEqual(["Your pots (5%)"]);
-    expect(screen.getByRole("button", { name: "5%" }).getAttribute("aria-pressed")).toBe("false");
-  });
-
-  it("a cleared pill does not snap the value to 0", () => {
-    render(<Harness />);
-    const pill = screen.getByLabelText("Years to retirement input") as HTMLInputElement;
-    fireEvent.focus(pill);
-    fireEvent.change(pill, { target: { value: "" } });
-    fireEvent.blur(pill);
+  it("moving the retirement age changes the years in the scenario and notes the edit", () => {
+    render(<Harness age={35} />);
+    fireEvent.change(slider("Retirement age"), { target: { value: "60" } });
     expect(current.values.horizonYears).toBe(25);
+    fireEvent.change(slider("Your contribution"), { target: { value: "10" } });
+    expect(current.values.contributionPercent).toBe(10);
+    expect(screen.getAllByText("Edited. Not saved.")).toHaveLength(2);
+  });
+
+  it("without a saved age, the time input is years until you retire", () => {
+    render(<Harness age={null} />);
+    expect(slider("Years until you retire").value).toBe("32");
+    expect(screen.queryByLabelText("Retirement age range slider")).toBeNull();
   });
 });

@@ -1,27 +1,17 @@
+import { expectPageRules } from "@repo/ui/testing";
 import type { Meta, StoryObj } from "@storybook/react";
 import { expect, fireEvent, userEvent, within } from "storybook/test";
 import PensionContainer from "./PensionContainer";
 
-const accounts = [
-  {
-    id: "p1",
-    name: "Current Workplace Pot",
-    type: "Pension",
-    balance: 10000,
-    interestRate: 6,
-    monthlyContribution: 100,
-    isCurrent: true,
-  },
-  {
-    id: "p2",
-    name: "Old Employer Pot",
-    type: "Pension",
-    balance: 20000,
-    interestRate: 5,
-    monthlyContribution: 50,
-    isCurrent: false,
-  },
-];
+const workplacePot = {
+  id: "w1",
+  name: "Workplace pot",
+  type: "Pension",
+  balance: 96000,
+  interestRate: 5,
+  monthlyContribution: null,
+  isCurrent: true,
+};
 
 const loaderData = (acc: unknown[], userProfile: Record<string, unknown>) => ({
   accounts: acc,
@@ -29,48 +19,68 @@ const loaderData = (acc: unknown[], userProfile: Record<string, unknown>) => ({
   userProfile: { setupChecklistCompletedSteps: ["pension"], ...userProfile },
 });
 
-const salaried = {
-  annualSalary: 50000,
-  pensionPercent: 6,
-  pensionEmployerPercent: 4,
-  isSalarySacrifice: true,
+/** The onboarded user from the E16 audit: £58,000, 8% and 3%, one £96,000 pot. */
+const onboarded = {
+  annualSalary: 58000,
+  pensionPercent: 8,
+  pensionEmployerPercent: 3,
+  isSalarySacrifice: false,
   isSalarySacrificeEmployerNi: false,
   employmentType: "employed",
+  birthYear: new Date().getFullYear() - 35,
 };
 
 // The Storybook react-router mock serves `parameters.router.loaderData` to useLoaderData.
 const meta: Meta<typeof PensionContainer> = {
   title: "4. Pages/Pension",
   component: PensionContainer,
-  parameters: { layout: "padded", router: { loaderData: loaderData(accounts, salaried) } },
+  parameters: { layout: "padded", router: { loaderData: loaderData([workplacePot], onboarded) } },
 };
 
 export default meta;
 type Story = StoryObj<typeof PensionContainer>;
 
-export const Populated: Story = {
+// The Storybook decorator renders light and dark side by side, so each theme is checked alone.
+const themes = (canvasElement: HTMLElement): HTMLElement[] => {
+  const roots = Array.from(canvasElement.querySelectorAll<HTMLElement>("[data-theme]")).filter(
+    (el) => !el.querySelector("[data-theme]"),
+  );
+  return roots.length > 0 ? roots : [canvasElement];
+};
+
+export const Filled: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     await expect((await canvas.findAllByText("Total in your pots")).length).toBeGreaterThan(0);
-    await expect(canvasElement.querySelectorAll("[data-tone='hero']").length).toBeGreaterThan(0);
+    for (const root of themes(canvasElement)) {
+      expectPageRules(root, { maxFigures: 12, projectionNotices: 1 });
+    }
   },
 };
 
-export const NoSalaryOrPots: Story = {
+export const Empty: Story = {
   parameters: { router: { loaderData: loaderData([], { annualSalary: null }) } },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    await expect(
-      (await canvas.findAllByText("Add a pension pot to see its value")).length,
-    ).toBeGreaterThan(0);
+    await expect((await canvas.findAllByText("No pension pots yet")).length).toBeGreaterThan(0);
     await expect(canvasElement.querySelectorAll("[data-tone='hero']").length).toBe(0);
   },
 };
 
-export const TaxTrap: Story = {
+export const AgeNotSaved: Story = {
+  parameters: {
+    router: { loaderData: loaderData([workplacePot], { ...onboarded, birthYear: null }) },
+  },
+};
+
+export const TaxBand: Story = {
   parameters: {
     router: {
-      loaderData: loaderData(accounts, { ...salaried, annualSalary: 110000, pensionPercent: 0 }),
+      loaderData: loaderData([workplacePot], {
+        ...onboarded,
+        annualSalary: 110000,
+        pensionPercent: 0,
+      }),
     },
   },
   play: async ({ canvasElement }) => {
@@ -78,43 +88,24 @@ export const TaxTrap: Story = {
     await expect(
       (await canvas.findAllByRole("button", { name: "Model this contribution" })).length,
     ).toBeGreaterThan(0);
-    // E31: the taper note follows the main content rather than leading the page.
-    const note = canvasElement.querySelector('[aria-labelledby="pension-trap-title"]');
-    const tabs = canvas.getByRole("tablist", { name: "Pension tools" });
-    await expect(
-      Boolean(note && tabs.compareDocumentPosition(note) & Node.DOCUMENT_POSITION_FOLLOWING),
-    ).toBe(true);
-  },
-};
-
-// E31: adjusted net income outside £90,000 to £125,140 shows no taper note.
-export const TaxTrapAboveBand: Story = {
-  parameters: {
-    router: {
-      loaderData: loaderData(accounts, { ...salaried, annualSalary: 140000, pensionPercent: 0 }),
-    },
-  },
-  play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement);
-    await expect((await canvas.findAllByText("Total in your pots")).length).toBeGreaterThan(0);
-    await expect(canvasElement.querySelector('[aria-labelledby="pension-trap-title"]')).toBeNull();
   },
 };
 
 export const ScenarioZone: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    const zone = await canvas.findByRole("region", { name: "Model a change to your pension" });
+    const zone = (
+      await canvas.findAllByRole("region", { name: "Model a change to your pension" })
+    )[0] as HTMLElement;
     await expect(within(zone).getByText("Illustration, not saved")).toBeDefined();
-    await expect(zone.querySelectorAll("[data-tone='hero']").length).toBe(0);
     const heroBefore = canvasElement.querySelector("[data-tone='hero']")?.textContent;
-    fireEvent.change(within(zone).getByLabelText("Extra each month range slider"), {
-      target: { value: "300" },
-    });
-    await userEvent.click(
-      await within(zone).findByRole("button", { name: "Reset to saved figures" }),
+    fireEvent.change(
+      within(zone).getAllByLabelText("Your contribution range slider")[0] as HTMLElement,
+      {
+        target: { value: "12" },
+      },
     );
+    await userEvent.click(within(zone).getByRole("button", { name: "Reset to saved figures" }));
     await expect(canvasElement.querySelector("[data-tone='hero']")?.textContent).toBe(heroBefore);
-    await expect(canvas.queryByText(/sync/i)).toBeNull();
   },
 };
