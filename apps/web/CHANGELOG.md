@@ -1,5 +1,62 @@
 # Changelog
 
+## [1.39.0](https://github.com/mgallagher56/flump/compare/flump/web-v1.38.0...flump/web-v1.39.0) (2026-11-14)
+
+
+### Features ✨
+
+* **backend,mcp:** PAT input route for MCP stdio, client policy route, token list refresh ([bc10b6e](https://github.com/mgallagher56/flump/commit/bc10b6e3f960f42c4b3491411d138672c85a5cec))
+* **engine:** one tax engine, Self Assessment allowances, payments on account and payslip months ([f3231b3](https://github.com/mgallagher56/flump/commit/f3231b3fdf4381538038b3da4690ae5fdfea347e))
+* **polish:** R2-8 round 3: cut and collapse to the independent gap list ([55f26e7](https://github.com/mgallagher56/flump/commit/55f26e790c3fbc606dac0e307c0f18897a21535f))
+* **tax:** say when the estimate used a trading or property allowance; no repeated hero figure ([63774c3](https://github.com/mgallagher56/flump/commit/63774c3494fc0954fa6bcb70d6b29ef29ae66dc0))
+* **ui,web:** round 4: 32px header-to-hero gap in PageBody; two-line editor rows on phones ([26c777f](https://github.com/mgallagher56/flump/commit/26c777f70a3b9e0c1ae9986cfeec0b80abf15f6a))
+* **ui,web:** round 4: two-card KpiStrip as equal halves with captions (STYLE-GUIDE); zone footer link at the leading edge; budget alignment fixes ([f81df53](https://github.com/mgallagher56/flump/commit/f81df53c61e1886b3ed1838b324185a65d3dea57))
+* **web,ui:** round 4 budget: fewer marks, linked homeowner housing, one order; hero without disc, two-up KPIs on phones ([2110f52](https://github.com/mgallagher56/flump/commit/2110f52fb6a661849a49d54cbf0e85b6acc705a2))
+* **web:** account-by-account monthly check-in (R2-5) ([0415b82](https://github.com/mgallagher56/flump/commit/0415b82b75f7da324e5b59a186409840b1c75284))
+* **web:** How to connect steps on the AI connections preview; even settings grid (R3) ([e08d75d](https://github.com/mgallagher56/flump/commit/e08d75d510a9e016fda2294e6d6f37173c9580ce))
+* **web:** label calculated and confirmed figures in the history change table ([f2df35f](https://github.com/mgallagher56/flump/commit/f2df35f02298f39185f686ba9755bed078219948))
+* **web:** label calculated and confirmed months on the account page ([1b431d7](https://github.com/mgallagher56/flump/commit/1b431d70f018bf42826d5ef2755f411f85e7a56d))
+* **web:** onboarding take-home sits above the actions; quieter review (R3) ([42154eb](https://github.com/mgallagher56/flump/commit/42154eb4bfe39199eebc531d7a2867d6c0ec52f2))
+* **web:** R2-5 accounts, account detail, history and account dialog polish ([6d29b9b](https://github.com/mgallagher56/flump/commit/6d29b9b0e23f1d83c9f42e3972430f0c504a5be7))
+* **web:** R2-7 debt and mortgage pages, round 2 ([55885eb](https://github.com/mgallagher56/flump/commit/55885eb8e28f754f1b6c3ded7c293dba07ea8c19))
+* **web:** round 4: prompt to move a budget row that looks like an already-counted debt payment ([65bf24e](https://github.com/mgallagher56/flump/commit/65bf24eaba836b4bd1ba0d783acc9d139083c840))
+
+
+### Bug Fixes 🪲
+
+* **check-in:** accept a retried calculated save; drop an unused helper (review) ([8b6e655](https://github.com/mgallagher56/flump/commit/8b6e6551734236e016e24a15664c19aed669cf66))
+* **check-in:** no calculated figure once the saved balance has moved on ([e7d493f](https://github.com/mgallagher56/flump/commit/e7d493fa05822dd6a46f7460eca517a24b0b31f2))
+* **engine:** review fixes: pay dates in the first days of the month, self-employed sacrifice, tighter one-engine guard ([bfc04a3](https://github.com/mgallagher56/flump/commit/bfc04a3273c683742f4f398e43c9289a2e3ed1eb))
+* **polish:** R2-8 round 3 review fixes ([71f7ffb](https://github.com/mgallagher56/flump/commit/71f7ffb1954ecbd4c072956fe5a97e73e760973c))
+* **ui,web,marketing:** round 4 review fixes: long titles wrap, zone basis line back, sample label, marketing preview test ([9e07097](https://github.com/mgallagher56/flump/commit/9e0709701edf4451f92d4ad40e05cbe04420006c))
+* **ui,web:** round 4 re-score fixes: header grid keeps description with the h1, 2-up KPI values readable on phones, 32px hero-to-strip gap on budget ([caf6380](https://github.com/mgallagher56/flump/commit/caf6380519f4cae79a7bfe4c764ba11c634895d0))
+* **ui,web:** round 4: header wraps actions instead of crushing the h1; editor rows two lines at 375 ([239934d](https://github.com/mgallagher56/flump/commit/239934d7f444fb6b904110e10b4e8f08eee6a078))
+* **ui:** Tabs panel leaves the tab order when it holds controls; 14px tab labels; calmer dark success (R3) ([374e819](https://github.com/mgallagher56/flump/commit/374e81940ff538d92e6c912ae6718a21c642d7a6))
+* **web:** a Debt category row gets its own icon ([d4304a3](https://github.com/mgallagher56/flump/commit/d4304a33c82558b972d1707c356b500030d9d6fc))
+* **web:** accounts buttons work before hydration ([#701](https://github.com/mgallagher56/flump/issues/701)) ([c6b7fcd](https://github.com/mgallagher56/flump/commit/c6b7fcd31a080fcc022c73ec4b6f9a5cd0198e04))
+* **web:** accounts names underline on hover, one debt tint, not-counted group in the grid; even chart gridlines ([1e34839](https://github.com/mgallagher56/flump/commit/1e348391835e0cd5407ed28a11416932fa8849de))
+* **web:** duplicate-debt note: focus moves to the row after Move or Keep; one note per category; pure state update ([9b8b207](https://github.com/mgallagher56/flump/commit/9b8b2075bf60d3cf4c5d34fd6acf9fecbd71e98a))
+* **web:** R2-5 review fixes ([988efde](https://github.com/mgallagher56/flump/commit/988efdedc09e0aafba491f3fd12519787f2d6cf6))
+* **web:** R2-7 term inputs on their own row; no extra label at £0 overpayment ([2d3c324](https://github.com/mgallagher56/flump/commit/2d3c324b500723cecafed455e027de4725bfd93a))
+* **web:** re-score fixes for accounts and account detail ([96feefc](https://github.com/mgallagher56/flump/commit/96feefcef27e115c200f202ae85513e94b522db7))
+* **web:** re-score fixes for the check-in and history ([f4e04d0](https://github.com/mgallagher56/flump/commit/f4e04d03a8422a7a00976276c04c52e65a6f6fbf))
+* **web:** round 3 re-score fixes for the check-in and history ([2137066](https://github.com/mgallagher56/flump/commit/21370668ea4c1eb690df2925e52ecfa5e687481a))
+* **web:** round-3 review and re-score fixes for settings and onboarding (R3) ([9fc173d](https://github.com/mgallagher56/flump/commit/9fc173d1c9fb8f7fdea7e07d09d89b5659c7e9a1))
+* **web:** send someone who has finished setup to the dashboard (R3) ([811d3cb](https://github.com/mgallagher56/flump/commit/811d3cb572dec442d9b2bde20a836b1062c55e10))
+* **web:** the calculated figure names its interest rate (copy check) ([23c791b](https://github.com/mgallagher56/flump/commit/23c791bc3cc435a52cb46704d491460544846cb5))
+* **web:** whole-pound axis on the account chart; sentence-case account types in the dialog ([bbffdb5](https://github.com/mgallagher56/flump/commit/bbffdb533e574565c6febbed4b0f1edaa7b88da7))
+
+
+### Refactor 🔥
+
+* check-in logic in the engine; No change keeps the saved balance ([fa18993](https://github.com/mgallagher56/flump/commit/fa189934ae84337c077582345d4604a04362a0b2))
+
+
+### Tests 🧪
+
+* consistency and new-user journey follow the R2-5 accounts hero and links ([aae51d1](https://github.com/mgallagher56/flump/commit/aae51d12457bb563de03709281bdec9757631a22))
+* R2-7 mortgage hero is the saved payment; LTV as entered; empty state in the consistency check ([13744a7](https://github.com/mgallagher56/flump/commit/13744a7094406dc7a471091015f80fd961211c0e))
+
 ## [1.38.0](https://github.com/mgallagher56/flump/compare/flump/web-v1.37.0...flump/web-v1.38.0) (2026-11-14)
 
 
