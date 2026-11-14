@@ -3,7 +3,7 @@ import { expect, fn, userEvent, within } from "storybook/test";
 import { AddPensionAccountDialog } from "./AddPensionAccountDialog";
 
 const meta: Meta<typeof AddPensionAccountDialog> = {
-  title: "3. Financial Patterns & Sections/AddPensionAccountDialog",
+  title: "3. Patterns/Pension/AddPensionAccountDialog",
   component: AddPensionAccountDialog,
   args: { isOpen: true, onClose: fn() },
 };

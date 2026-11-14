@@ -14,7 +14,7 @@ const summary: DebtSummary = {
 };
 
 const meta: Meta<typeof DebtWidget> = {
-  title: "3. Financial Patterns & Sections/DebtWidget",
+  title: "3. Patterns/Dashboard/DebtWidget",
   component: DebtWidget,
   parameters: { layout: "padded" },
   args: { data: summary },

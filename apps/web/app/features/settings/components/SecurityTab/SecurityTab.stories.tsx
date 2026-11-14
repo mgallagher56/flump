@@ -3,7 +3,7 @@ import { expect, userEvent, within } from "storybook/test";
 import { SecurityTab } from "./SecurityTab";
 
 const meta: Meta<typeof SecurityTab> = {
-  title: "3. Financial Patterns & Sections/Settings/SecurityTab",
+  title: "3. Patterns/Settings/SecurityTab",
   component: SecurityTab,
   parameters: { layout: "padded" },
   args: { email: "jane.doe@example.com" },

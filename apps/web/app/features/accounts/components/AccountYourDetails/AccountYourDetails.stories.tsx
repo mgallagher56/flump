@@ -3,7 +3,7 @@ import { expect, within } from "storybook/test";
 import { AccountYourDetails } from "./AccountYourDetails";
 
 const meta: Meta<typeof AccountYourDetails> = {
-  title: "Accounts/AccountYourDetails",
+  title: "3. Patterns/Accounts/AccountYourDetails",
   component: AccountYourDetails,
   parameters: {
     router: {

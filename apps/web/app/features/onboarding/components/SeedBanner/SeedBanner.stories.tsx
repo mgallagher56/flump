@@ -3,7 +3,7 @@ import { expect, fn, userEvent, within } from "storybook/test";
 import { SeedBanner } from "./SeedBanner";
 
 const meta: Meta<typeof SeedBanner> = {
-  title: "Onboarding/SeedBanner",
+  title: "3. Patterns/Onboarding/SeedBanner",
   component: SeedBanner,
   parameters: { layout: "padded" },
   args: {

@@ -3,7 +3,7 @@ import { expect, within } from "storybook/test";
 import { MortgageTracker } from "./MortgageTracker";
 
 const meta: Meta<typeof MortgageTracker> = {
-  title: "3. Financial Patterns & Sections/MortgageTracker",
+  title: "3. Patterns/Mortgage/MortgageTracker",
   component: MortgageTracker,
   parameters: { layout: "padded" },
   args: { loanAmount: 150000, interestRate: 4.5, remainingTerm: 25 },

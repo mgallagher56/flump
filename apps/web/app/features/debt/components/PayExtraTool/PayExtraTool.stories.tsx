@@ -26,7 +26,7 @@ const Stateful = ({ budgetLeftOver }: { budgetLeftOver: number | null }) => {
 };
 
 const meta: Meta<typeof Stateful> = {
-  title: "3. Financial Patterns & Sections/PayExtraTool",
+  title: "5. Calculators/Debt/PayExtraTool",
   component: Stateful,
   parameters: { layout: "padded" },
   args: { budgetLeftOver: 420 },

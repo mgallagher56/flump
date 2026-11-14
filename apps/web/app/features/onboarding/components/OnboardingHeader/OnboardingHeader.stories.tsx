@@ -3,7 +3,7 @@ import { expect, fn, userEvent, within } from "storybook/test";
 import { OnboardingHeader } from "./OnboardingHeader";
 
 const meta: Meta<typeof OnboardingHeader> = {
-  title: "Onboarding/OnboardingHeader",
+  title: "3. Patterns/Onboarding/OnboardingHeader",
   component: OnboardingHeader,
   parameters: { layout: "padded" },
   args: { onSaveAndExit: fn() },

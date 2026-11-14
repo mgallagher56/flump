@@ -25,7 +25,7 @@ function RouteContent() {
 }
 
 const meta: Meta<typeof RouteErrorBoundary> = {
-  title: "3. Financial Patterns & Sections/RouteErrorBoundary",
+  title: "3. Patterns/Feedback/RouteErrorBoundary",
   component: RouteErrorBoundary,
   // The Storybook decorator renders every story side by side in Light and Dark by default.
   parameters: { layout: "padded" },

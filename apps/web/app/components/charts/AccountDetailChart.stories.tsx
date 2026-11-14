@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from "@storybook/react";
 import AccountDetailChart from "./AccountDetailChart";
 
 const meta: Meta<typeof AccountDetailChart> = {
-  title: "Charts/AccountDetailChart",
+  title: "4. Charts/AccountDetailChart",
   component: AccountDetailChart,
   tags: ["autodocs"],
   decorators: [

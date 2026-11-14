@@ -16,7 +16,7 @@ const Harness = ({ initial }: { initial: SavingsForecastValues }) => {
 };
 
 const meta: Meta<typeof Harness> = {
-  title: "3. Financial Patterns & Sections/SavingsForecast",
+  title: "5. Calculators/Savings/SavingsForecast",
   component: Harness,
   args: { initial: { monthly: 300, rate: 4, years: 5, todaysMoney: false, goal: null } },
 };

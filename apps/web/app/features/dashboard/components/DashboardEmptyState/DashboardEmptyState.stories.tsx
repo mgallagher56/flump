@@ -3,7 +3,7 @@ import { expect, fn, userEvent, within } from "storybook/test";
 import { DashboardEmptyState } from "./DashboardEmptyState";
 
 const meta: Meta<typeof DashboardEmptyState> = {
-  title: "3. Financial Patterns & Sections/DashboardEmptyState",
+  title: "3. Patterns/Dashboard/DashboardEmptyState",
   component: DashboardEmptyState,
   parameters: { layout: "padded" },
   args: { reason: "setup", onChooseWidgets: fn() },

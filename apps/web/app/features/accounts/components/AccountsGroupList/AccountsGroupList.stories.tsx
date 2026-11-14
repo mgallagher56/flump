@@ -3,7 +3,7 @@ import { expect, within } from "storybook/test";
 import { AccountsGroupList } from "./AccountsGroupList";
 
 const meta: Meta<typeof AccountsGroupList> = {
-  title: "Accounts/AccountsGroupList",
+  title: "3. Patterns/Accounts/AccountsGroupList",
   component: AccountsGroupList,
   parameters: { router: { loaderData: { accounts: [], bankConnectionsEnabled: false } } },
   args: {

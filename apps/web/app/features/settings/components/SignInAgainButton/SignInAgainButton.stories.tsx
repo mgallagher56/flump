@@ -3,7 +3,7 @@ import { expect, within } from "storybook/test";
 import { SignInAgainButton } from "./SignInAgainButton";
 
 const meta: Meta<typeof SignInAgainButton> = {
-  title: "3. Financial Patterns & Sections/Settings/SignInAgainButton",
+  title: "3. Patterns/Settings/SignInAgainButton",
   component: SignInAgainButton,
   parameters: { layout: "padded" },
 };

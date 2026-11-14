@@ -30,7 +30,7 @@ const connections = [
 ];
 
 const meta: Meta<typeof BankConnectionsList> = {
-  title: "Accounts/BankConnectionsList",
+  title: "3. Patterns/Accounts/BankConnectionsList",
   component: BankConnectionsList,
   args: { connections, canConnect: true },
 };

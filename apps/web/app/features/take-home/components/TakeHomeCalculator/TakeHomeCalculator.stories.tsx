@@ -23,7 +23,7 @@ const withSavedProfile =
   };
 
 const meta: Meta<typeof TakeHomeCalculator> = {
-  title: "3. Financial Patterns & Sections/Take-home/TakeHomeCalculator",
+  title: "5. Calculators/Take-home/TakeHomeCalculator",
   component: TakeHomeCalculator,
   parameters: { layout: "padded" },
   args: { initialSalary: 62000, onApplyIncrease: fn() },

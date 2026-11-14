@@ -114,7 +114,7 @@ const Demo = ({ sample = false }: { sample?: boolean }) => {
 };
 
 const meta: Meta<typeof Demo> = {
-  title: "Charts/Chart kit (recharts adapters)",
+  title: "4. Charts/Chart kit (recharts adapters)",
   component: Demo,
   parameters: { layout: "padded" },
 };

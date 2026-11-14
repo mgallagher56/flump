@@ -4,7 +4,7 @@ import { expect, within } from "storybook/test";
 import { DisabledNavItem } from "./DisabledNavItem";
 
 const meta: Meta<typeof DisabledNavItem> = {
-  title: "Navigation/DisabledNavItem",
+  title: "3. Patterns/Navigation/DisabledNavItem",
   component: DisabledNavItem,
   args: { id: "nav-disabled-debt", label: "Debt", icon: <TrendingDown size={16} /> },
 };

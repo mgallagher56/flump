@@ -15,7 +15,7 @@ const loaderData = {
 };
 
 const meta: Meta<typeof TakeHomeContainer> = {
-  title: "Screens/Take-home",
+  title: "6. Pages/Take-home",
   component: TakeHomeContainer,
   parameters: { layout: "fullscreen", router: { loaderData } },
 };

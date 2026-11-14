@@ -24,7 +24,7 @@ const accounts = [
 ] as never[];
 
 const meta: Meta<typeof PensionAccountsList> = {
-  title: "3. Financial Patterns & Sections/PensionAccountsList",
+  title: "3. Patterns/Pension/PensionAccountsList",
   component: PensionAccountsList,
   parameters: { layout: "padded" },
   args: { accounts },

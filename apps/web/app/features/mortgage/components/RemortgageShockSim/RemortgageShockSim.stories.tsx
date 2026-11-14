@@ -3,7 +3,7 @@ import { expect, fireEvent, within } from "storybook/test";
 import { RemortgageShockSim } from "./RemortgageShockSim";
 
 const meta: Meta<typeof RemortgageShockSim> = {
-  title: "3. Financial Patterns & Sections/RemortgageShockSim",
+  title: "5. Calculators/Mortgage/RemortgageShockSim",
   component: RemortgageShockSim,
   parameters: {
     layout: "padded",

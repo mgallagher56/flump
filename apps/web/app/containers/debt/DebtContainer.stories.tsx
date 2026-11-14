@@ -32,7 +32,7 @@ const loaderData = (accounts: unknown[]) => ({
 
 // The Storybook react-router mock serves `parameters.router.loaderData` to useLoaderData.
 const meta: Meta<typeof DebtContainer> = {
-  title: "4. Pages/Debt",
+  title: "6. Pages/Debt",
   component: DebtContainer,
   parameters: { layout: "padded", router: { loaderData: loaderData(debts) } },
 };

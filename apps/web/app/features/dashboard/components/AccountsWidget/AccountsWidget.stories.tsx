@@ -3,7 +3,7 @@ import { expect, within } from "storybook/test";
 import { AccountsWidget } from "./AccountsWidget";
 
 const meta: Meta<typeof AccountsWidget> = {
-  title: "3. Financial Patterns & Sections/AccountsWidget",
+  title: "3. Patterns/Dashboard/AccountsWidget",
   component: AccountsWidget,
   parameters: { layout: "padded" },
   args: { data: { accountsCount: 4 } },

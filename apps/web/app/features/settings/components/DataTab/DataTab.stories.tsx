@@ -3,7 +3,7 @@ import { expect, userEvent, within } from "storybook/test";
 import { DataTab } from "./DataTab";
 
 const meta: Meta<typeof DataTab> = {
-  title: "3. Financial Patterns & Sections/Settings/DataTab",
+  title: "3. Patterns/Settings/DataTab",
   component: DataTab,
   parameters: { layout: "padded" },
 };

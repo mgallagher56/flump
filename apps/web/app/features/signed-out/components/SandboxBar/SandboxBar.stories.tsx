@@ -10,7 +10,7 @@ const personas = [
 ] as const;
 
 const meta: Meta<typeof SandboxBar> = {
-  title: "Signed-out/SandboxBar",
+  title: "3. Patterns/Signed-out/SandboxBar",
   component: SandboxBar,
   parameters: { layout: "padded" },
 };

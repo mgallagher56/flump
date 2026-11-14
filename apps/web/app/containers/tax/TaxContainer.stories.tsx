@@ -178,7 +178,7 @@ const optedOutLoaderData = {
 
 /** The Storybook preview renders every story side by side in light and dark. */
 const meta = {
-  title: "Screens/Tax",
+  title: "6. Pages/Tax",
   component: TaxContainer,
   parameters: { layout: "fullscreen", router: { loaderData } },
 } satisfies Meta<typeof TaxContainer>;

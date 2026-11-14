@@ -3,7 +3,7 @@ import { expect, fireEvent, within } from "storybook/test";
 import { OverpayVsSaveCompare } from "./OverpayVsSaveCompare";
 
 const meta: Meta<typeof OverpayVsSaveCompare> = {
-  title: "3. Financial Patterns & Sections/OverpayVsSaveCompare",
+  title: "3. Patterns/Mortgage/OverpayVsSaveCompare",
   component: OverpayVsSaveCompare,
   parameters: {
     layout: "padded",

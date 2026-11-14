@@ -10,7 +10,7 @@ import {
 import { SnapshotHistoryPage } from "./SnapshotHistoryPage";
 
 const meta: Meta<typeof SnapshotHistoryPage> = {
-  title: "4. Pages/Snapshot/SnapshotHistoryPage",
+  title: "6. Pages/Snapshot/SnapshotHistoryPage",
   component: SnapshotHistoryPage,
   parameters: { layout: "fullscreen" },
   args: {

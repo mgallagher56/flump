@@ -4,7 +4,7 @@ import { expect, fn, within } from "storybook/test";
 import { MortgageScenarioInputs } from "./MortgageScenarioInputs";
 
 const meta: Meta<typeof MortgageScenarioInputs> = {
-  title: "3. Financial Patterns & Sections/MortgageScenarioInputs",
+  title: "3. Patterns/Mortgage/MortgageScenarioInputs",
   component: MortgageScenarioInputs,
   parameters: { layout: "padded" },
   args: {

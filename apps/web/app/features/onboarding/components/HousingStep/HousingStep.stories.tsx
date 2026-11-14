@@ -4,7 +4,7 @@ import { StepHarness } from "../../testing";
 import { HousingStep } from "./HousingStep";
 
 const meta: Meta<typeof HousingStep> = {
-  title: "Onboarding/HousingStep",
+  title: "3. Patterns/Onboarding/HousingStep",
   component: HousingStep,
   parameters: { layout: "padded" },
   args: { onBack: fn(), onNext: fn(), onSkip: fn() },

@@ -3,7 +3,7 @@ import { expect, fn, userEvent, within } from "storybook/test";
 import { BankStep } from "./BankStep";
 
 const meta: Meta<typeof BankStep> = {
-  title: "Onboarding/BankStep",
+  title: "3. Patterns/Onboarding/BankStep",
   component: BankStep,
   parameters: { layout: "padded" },
   args: { onBack: fn(), onNext: fn() },

@@ -18,7 +18,7 @@ const Stateful = () => {
 };
 
 const meta: Meta<typeof Stateful> = {
-  title: "3. Financial Patterns & Sections/Imports/AccountMappingPanel",
+  title: "3. Patterns/Imports/AccountMappingPanel",
   component: Stateful,
 };
 

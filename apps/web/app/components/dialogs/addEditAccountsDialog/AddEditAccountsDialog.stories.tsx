@@ -19,7 +19,7 @@ const DarkRoot = ({ children }: { children: ReactNode }) => {
 };
 
 const meta: Meta<typeof AddEditAccountsDialogBtn> = {
-  title: "Dialogs/AddEditAccountsDialog",
+  title: "3. Patterns/Dialogs/AddEditAccountsDialog",
   component: AddEditAccountsDialogBtn,
   tags: ["autodocs"],
 };

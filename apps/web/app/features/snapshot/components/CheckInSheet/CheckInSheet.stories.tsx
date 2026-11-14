@@ -4,7 +4,7 @@ import { EXAMPLE_ACCOUNTS, exampleDetails, TWO_MONTHS } from "../../fixtures";
 import { CheckInSheet } from "./CheckInSheet";
 
 const meta: Meta<typeof CheckInSheet> = {
-  title: "3. Financial Patterns & Sections/Snapshot/CheckInSheet",
+  title: "3. Patterns/Snapshot/CheckInSheet",
   component: CheckInSheet,
   parameters: { layout: "fullscreen" },
   args: {

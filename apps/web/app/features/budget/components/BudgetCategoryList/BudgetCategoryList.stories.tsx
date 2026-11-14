@@ -16,7 +16,7 @@ const Stateful = (args: BudgetCategoryListProps) => {
 };
 
 const meta: Meta<typeof BudgetCategoryList> = {
-  title: "3. Financial Patterns & Sections/Budget/BudgetCategoryList",
+  title: "3. Patterns/Budget/BudgetCategoryList",
   component: BudgetCategoryList,
   parameters: { layout: "padded" },
   args: {

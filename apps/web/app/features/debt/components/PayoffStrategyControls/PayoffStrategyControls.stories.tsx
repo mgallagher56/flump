@@ -3,7 +3,7 @@ import { expect, fn, userEvent, within } from "storybook/test";
 import { PayoffStrategyControls } from "./PayoffStrategyControls";
 
 const meta: Meta<typeof PayoffStrategyControls> = {
-  title: "3. Financial Patterns & Sections/PayoffStrategyControls",
+  title: "3. Patterns/Debt/PayoffStrategyControls",
   component: PayoffStrategyControls,
   parameters: {
     layout: "centered",

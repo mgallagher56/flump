@@ -3,7 +3,7 @@ import { expect, userEvent, within } from "storybook/test";
 import { OnboardingFlow } from "./OnboardingFlow";
 
 const meta: Meta<typeof OnboardingFlow> = {
-  title: "Onboarding/OnboardingFlow",
+  title: "6. Pages/Onboarding/OnboardingFlow",
   component: OnboardingFlow,
   parameters: { layout: "fullscreen" },
 };

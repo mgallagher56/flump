@@ -3,7 +3,7 @@ import { expect, fn, userEvent, within } from "storybook/test";
 import { StepFrame } from "./StepFrame";
 
 const meta: Meta<typeof StepFrame> = {
-  title: "Onboarding/StepFrame",
+  title: "3. Patterns/Onboarding/StepFrame",
   component: StepFrame,
   parameters: { layout: "padded" },
   args: {

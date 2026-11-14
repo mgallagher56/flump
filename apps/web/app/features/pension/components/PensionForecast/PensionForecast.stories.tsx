@@ -52,7 +52,7 @@ const Demo: FC<{ hasSalary?: boolean; age?: number | null }> = ({ hasSalary = tr
 };
 
 const meta: Meta<typeof Demo> = {
-  title: "3. Financial Patterns & Sections/PensionForecast",
+  title: "5. Calculators/Pension/PensionForecast",
   component: Demo,
   parameters: { layout: "padded" },
 };

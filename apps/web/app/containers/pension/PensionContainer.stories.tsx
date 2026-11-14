@@ -32,7 +32,7 @@ const onboarded = {
 
 // The Storybook react-router mock serves `parameters.router.loaderData` to useLoaderData.
 const meta: Meta<typeof PensionContainer> = {
-  title: "4. Pages/Pension",
+  title: "6. Pages/Pension",
   component: PensionContainer,
   parameters: { layout: "padded", router: { loaderData: loaderData([workplacePot], onboarded) } },
 };

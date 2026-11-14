@@ -3,7 +3,7 @@ import { expect, fn, userEvent, within } from "storybook/test";
 import { McpConnectionCard } from "./McpConnectionCard";
 
 const meta: Meta<typeof McpConnectionCard> = {
-  title: "3. Financial Patterns & Sections/McpConnectionCard",
+  title: "3. Patterns/AI connections/McpConnectionCard",
   component: McpConnectionCard,
   parameters: {
     layout: "padded",

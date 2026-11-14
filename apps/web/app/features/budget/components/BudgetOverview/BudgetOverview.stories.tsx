@@ -5,7 +5,7 @@ import { sampleBudgetEntries } from "../../sampleBudgetEntries";
 import { BudgetOverview } from "./BudgetOverview";
 
 const meta: Meta<typeof BudgetOverview> = {
-  title: "3. Financial Patterns & Sections/Budget/BudgetOverview",
+  title: "3. Patterns/Budget/BudgetOverview",
   component: BudgetOverview,
   parameters: { layout: "padded" },
   args: { entries: sampleBudgetEntries() },

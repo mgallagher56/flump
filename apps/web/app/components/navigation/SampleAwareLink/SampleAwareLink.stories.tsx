@@ -6,7 +6,7 @@ import { SampleModeProvider } from "~/context/SampleModeContext";
 import { SampleAwareLink } from "./SampleAwareLink";
 
 const meta: Meta<typeof SampleAwareLink> = {
-  title: "Navigation/SampleAwareLink",
+  title: "3. Patterns/Navigation/SampleAwareLink",
   component: SampleAwareLink,
   decorators: [
     (Story) => (

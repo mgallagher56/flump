@@ -3,7 +3,7 @@ import { expect, within } from "storybook/test";
 import { MonthlyCheckInCard } from "./MonthlyCheckInCard";
 
 const meta: Meta<typeof MonthlyCheckInCard> = {
-  title: "3. Financial Patterns & Sections/Snapshot/MonthlyCheckInCard",
+  title: "3. Patterns/Snapshot/MonthlyCheckInCard",
   component: MonthlyCheckInCard,
   parameters: { layout: "padded" },
   args: { currentMonth: "2026-11", lastRecordedMonth: "2026-10" },

@@ -11,7 +11,7 @@ const make = (patch: Partial<OnboardingValues>) => {
 };
 
 const meta: Meta<typeof FinishSummary> = {
-  title: "Onboarding/FinishSummary",
+  title: "3. Patterns/Onboarding/FinishSummary",
   component: FinishSummary,
   parameters: { layout: "padded" },
   args: { isSubmitting: false, onBack: fn(), onEdit: fn(), onFinish: fn() },

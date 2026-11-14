@@ -3,7 +3,7 @@ import { expect, within } from "storybook/test";
 import { DashboardKpiStrip } from "./DashboardKpiStrip";
 
 const meta: Meta<typeof DashboardKpiStrip> = {
-  title: "3. Financial Patterns & Sections/DashboardKpiStrip",
+  title: "3. Patterns/Dashboard/DashboardKpiStrip",
   component: DashboardKpiStrip,
   parameters: { layout: "padded" },
   args: {

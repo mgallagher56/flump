@@ -5,7 +5,7 @@ import { INITIAL_VALUES } from "../../types";
 import { LiveSummaryBar } from "./LiveSummaryBar";
 
 const meta: Meta<typeof LiveSummaryBar> = {
-  title: "Onboarding/LiveSummaryBar",
+  title: "3. Patterns/Onboarding/LiveSummaryBar",
   component: LiveSummaryBar,
   parameters: { layout: "padded" },
 };

@@ -4,7 +4,7 @@ import { sampleBudgetEntries } from "../../sampleBudgetEntries";
 import { BudgetSetupWizard } from "./BudgetSetupWizard";
 
 const meta: Meta<typeof BudgetSetupWizard> = {
-  title: "3. Financial Patterns & Sections/Budget/BudgetSetupWizard",
+  title: "3. Patterns/Budget/BudgetSetupWizard",
   component: BudgetSetupWizard,
   parameters: { layout: "padded" },
   args: {

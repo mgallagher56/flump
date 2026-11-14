@@ -4,7 +4,7 @@ import { StepHarness } from "../../testing";
 import { IncomeStep } from "./IncomeStep";
 
 const meta: Meta<typeof IncomeStep> = {
-  title: "Onboarding/IncomeStep",
+  title: "3. Patterns/Onboarding/IncomeStep",
   component: IncomeStep,
   parameters: { layout: "padded" },
   args: { onNext: fn() },

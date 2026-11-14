@@ -3,7 +3,7 @@ import { expect, within } from "storybook/test";
 import { AnnualAllowancePill } from "./AnnualAllowancePill";
 
 const meta: Meta<typeof AnnualAllowancePill> = {
-  title: "3. Financial Patterns & Sections/AnnualAllowancePill",
+  title: "3. Patterns/Savings/AnnualAllowancePill",
   component: AnnualAllowancePill,
   parameters: { layout: "padded" },
 };

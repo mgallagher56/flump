@@ -3,7 +3,7 @@ import { expect, userEvent, within } from "storybook/test";
 import AvatarMenu from "./AvatarMenu";
 
 const meta: Meta<typeof AvatarMenu> = {
-  title: "Navigation/AvatarMenu",
+  title: "3. Patterns/Navigation/AvatarMenu",
   component: AvatarMenu,
   args: { user: { id: "1", firstName: "Sam", lastName: "Jordan" } },
 };

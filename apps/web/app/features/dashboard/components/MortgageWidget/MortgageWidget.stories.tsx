@@ -3,7 +3,7 @@ import { expect, within } from "storybook/test";
 import { MortgageWidget } from "./MortgageWidget";
 
 const meta: Meta<typeof MortgageWidget> = {
-  title: "3. Financial Patterns & Sections/MortgageWidget",
+  title: "3. Patterns/Dashboard/MortgageWidget",
   component: MortgageWidget,
   parameters: { layout: "padded" },
   args: { data: { mortgageBalance: 186000, hasMortgageAccount: true } },

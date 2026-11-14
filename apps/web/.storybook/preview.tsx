@@ -42,7 +42,7 @@ const preview: Preview = {
   },
   parameters: {
     options: {
-      // E16 plan 4.6: the seven top-level groups, in this order. Groups not listed sort after them.
+      // E16 plan 4.6: the six top-level groups, in this order. Groups not listed sort after them.
       storySort: {
         order: [
           "1. Foundations",
@@ -51,7 +51,6 @@ const preview: Preview = {
           "4. Charts",
           "5. Calculators",
           "6. Pages",
-          "9. Legacy",
         ],
       },
     },

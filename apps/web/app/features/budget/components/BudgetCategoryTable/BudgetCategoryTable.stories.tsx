@@ -21,7 +21,7 @@ const bill = (n: number, over: Partial<BudgetEntry> = {}): BudgetEntry => ({
 });
 
 const meta: Meta<typeof BudgetCategoryTable> = {
-  title: "3. Financial Patterns & Sections/Budget/BudgetCategoryTable",
+  title: "3. Patterns/Budget/BudgetCategoryTable",
   component: BudgetCategoryTable,
   parameters: { layout: "padded" },
   args: {

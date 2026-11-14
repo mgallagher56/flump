@@ -3,7 +3,7 @@ import { expect, within } from "storybook/test";
 import { NotSet } from "./NotSet";
 
 const meta: Meta<typeof NotSet> = {
-  title: "3. Financial Patterns & Sections/NotSet",
+  title: "3. Patterns/Feedback/NotSet",
   component: NotSet,
   // The Storybook decorator renders every story side by side in Light and Dark by default.
   args: { href: "/app/profile", subject: "salary" },
