@@ -1,6 +1,7 @@
 import { join } from "node:path";
 import type { TypeOrmModuleOptions } from "@nestjs/typeorm";
 import { Account } from "../entities/account.entity";
+import { AccountDeletionTombstone } from "../entities/account-deletion-tombstone.entity";
 import { AccountDetail } from "../entities/account-detail.entity";
 import { AgentAuditEvent } from "../entities/agent-audit-event.entity";
 import { BankConnection } from "../entities/bank-connection.entity";
@@ -26,6 +27,7 @@ export const ENTITIES: Function[] = [
   SnapshotCheckin,
   ImportBatch,
   AgentAuditEvent,
+  AccountDeletionTombstone,
 ];
 
 // Relative to this file so it resolves under both `bun src/...` (ts) and dist/ (js).
