@@ -30,15 +30,19 @@ import type { AccountRow } from "../../accountRows";
 import {
   accountCell,
   accountLink,
+  accountName,
   group,
   groupHeader,
   groupTitle,
+  isaLink,
   listRoot,
   mutedText,
   note,
+  phoneType,
   totalLabel,
   totalRow,
   typeCell,
+  typeColumn,
 } from "./AccountsGroupList.styles";
 
 export interface AccountsGroupListProps {
@@ -154,20 +158,21 @@ const renderTable = (rows: AccountRow[], caption: string, amountLabel: string) =
                 domain={TYPE_DOMAIN[row.type] ?? "net-worth"}
                 icon={TYPE_ICON[row.type] ?? Wallet}
               />
-              <Link className={accountLink()} to={`/app/accounts/${row.id}`}>
-                {row.name}
-              </Link>
+              <span className={accountName()}>
+                <Link className={accountLink()} to={`/app/accounts/${row.id}`}>
+                  {row.name}
+                </Link>
+                <span className={phoneType()}>{TYPE_LABEL[row.type] ?? row.type}</span>
+                {isIsa(row) ? (
+                  <Link className={isaLink()} to="/app/savings">
+                    See your ISA allowance
+                  </Link>
+                ) : null}
+              </span>
             </div>
           </Td>
-          <Td label="Type">
-            <span className={typeCell()}>
-              <span>{TYPE_LABEL[row.type] ?? row.type}</span>
-              {isIsa(row) ? (
-                <Link className={accountLink()} to="/app/savings">
-                  See your ISA allowance
-                </Link>
-              ) : null}
-            </span>
+          <Td className={typeColumn()} label="Type">
+            <span className={typeCell()}>{TYPE_LABEL[row.type] ?? row.type}</span>
           </Td>
           <Td label={amountLabel} numeric>
             {row.balance !== undefined ? (

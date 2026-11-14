@@ -88,3 +88,34 @@ export const totalLabel = cva({
 export const note = cva({
   base: { textStyle: "body.sm", color: "text.secondary", margin: 0, maxWidth: "65ch" },
 });
+
+/** Name plus, on a phone, the type underneath (the Type column is hidden while stacked). */
+export const accountName = cva({
+  base: { display: "flex", flexDirection: "column", gap: "2px", minWidth: 0 },
+});
+
+export const phoneType = cva({
+  base: {
+    display: { base: "block", md: "none" },
+    textStyle: "body.sm",
+    color: "text.secondary",
+  },
+});
+
+/** Hides the Type cell while the table is stacked; outranks the stacked table's cell rule. */
+export const typeColumn = cva({
+  base: { "table tbody tr &": { display: { base: "none", md: "table-cell" } } },
+});
+
+/** The ISA row's link to its allowance, under the account name at every width. */
+export const isaLink = cva({
+  base: {
+    textStyle: "body.sm",
+    color: "primary",
+    textDecoration: "underline",
+    textUnderlineOffset: "3px",
+    width: "fit-content",
+    borderRadius: "sm",
+    _focusVisible: { outline: "2px solid", outlineColor: "border.focusRing", outlineOffset: "2px" },
+  },
+});
