@@ -118,7 +118,9 @@ export const RouteErrorState: FC<RouteErrorStateProps> = ({
       <div className={errorStateIllustration()}>
         <Illustration scene={copy.scene} size="sm" />
       </div>
-      <span className={errorStateBadge()}>{copy.badge}</span>
+      <span className={errorStateBadge({ tone: kind === "not-found" ? "neutral" : "danger" })}>
+        {copy.badge}
+      </span>
       <Heading ref={headingRef} className={errorStateHeading()} tabIndex={-1}>
         {copy.heading}
       </Heading>
