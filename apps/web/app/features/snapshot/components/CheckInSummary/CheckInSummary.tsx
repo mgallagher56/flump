@@ -1,14 +1,7 @@
 import { Button, StatusBadge } from "@repo/ui";
 import { type FC, useEffect, useRef, useState } from "react";
 import type { CheckInSummary as CheckInSummaryModel } from "../../checkInModel";
-import {
-  CHECK_IN_COPY,
-  checkInNetWorthText,
-  checkInSavedText,
-  checkInWholePounds,
-  noBalancesChangedText,
-} from "../../snapshotCopy";
-import type { MonthKey } from "../../snapshotModel";
+import { CHECK_IN_COPY, checkInNetWorthText, checkInWholePounds } from "../../snapshotCopy";
 import {
   changeFigure,
   changeName,
@@ -25,7 +18,6 @@ import {
 export const SUMMARY_VISIBLE = 8;
 
 export interface CheckInSummaryProps {
-  month: MonthKey;
   summary: CheckInSummaryModel;
   onDone: () => void;
   /** Back to the accounts to correct one. */
@@ -33,15 +25,12 @@ export interface CheckInSummaryProps {
 }
 
 /**
- * The end of the check-in: saved for the month, what changed, and net worth against last month.
- * Facts only: no verdict, no praise, and the same sentence whichever way net worth moved.
+ * The end of the check-in: saved, what the user changed, and net worth against last month. The
+ * month is in the sheet subtitle, so the heading does not repeat it. With nothing changed the list
+ * and its heading are left out, and the net worth line stands alone. Facts only: no verdict, no
+ * praise, and the same sentence whichever way net worth moved.
  */
-export const CheckInSummary: FC<CheckInSummaryProps> = ({
-  month,
-  summary,
-  onDone,
-  onChangeBalance,
-}) => {
+export const CheckInSummary: FC<CheckInSummaryProps> = ({ summary, onDone, onChangeBalance }) => {
   const [showAll, setShowAll] = useState(false);
   const heading = useRef<HTMLHeadingElement>(null);
   useEffect(() => {
@@ -52,7 +41,7 @@ export const CheckInSummary: FC<CheckInSummaryProps> = ({
   return (
     <div className={summaryRoot()} data-testid="checkin-summary" id="checkin-summary">
       <h3 className={summaryHeading()} ref={heading} tabIndex={-1}>
-        {checkInSavedText(month)}
+        {CHECK_IN_COPY.saved}
       </h3>
 
       {summary.changed.length > 0 ? (
@@ -87,9 +76,7 @@ export const CheckInSummary: FC<CheckInSummaryProps> = ({
             </Button>
           ) : null}
         </section>
-      ) : (
-        <p className={summaryLine()}>{noBalancesChangedText(summary.previousMonth)}</p>
-      )}
+      ) : null}
 
       {summary.netWorth !== null ? (
         <p className={summaryLine()} data-testid="checkin-net-worth" id="checkin-net-worth">

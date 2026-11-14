@@ -7,7 +7,6 @@ const meta: Meta<typeof CheckInSummary> = {
   component: CheckInSummary,
   parameters: { layout: "padded" },
   args: {
-    month: "2026-11",
     onDone: fn(),
     onChangeBalance: fn(),
     summary: {
@@ -42,7 +41,8 @@ export const NothingChanged: Story = {
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    await expect(canvas.getByText("No balances changed since October 2026.")).toBeDefined();
+    await expect(canvas.queryByRole("heading", { name: "What changed" })).toBeNull();
+    await expect(canvas.getByText("Net worth: £231,400, the same as October 2026.")).toBeDefined();
   },
 };
 

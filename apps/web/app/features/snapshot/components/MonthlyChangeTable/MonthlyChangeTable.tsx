@@ -9,7 +9,13 @@ import {
   type MonthChangeRow,
   type MonthKey,
 } from "../../snapshotModel";
-import { changeCell, tableBlock, tableNote, wideOnly } from "./MonthlyChangeTable.styles";
+import {
+  changeCell,
+  changeTable,
+  tableBlock,
+  tableNote,
+  wideOnly,
+} from "./MonthlyChangeTable.styles";
 
 export type MonthlyChangeTableProps =
   | {
@@ -45,6 +51,7 @@ export const MonthlyChangeTable: FC<MonthlyChangeTableProps> = (props) => {
     note = "Debts show the amount owed.";
     table = (
       <Table
+        className={changeTable()}
         caption={`Change by account, ${formatMonth(props.previousMonth)} to ${formatMonth(props.month)}`}
       >
         <THead>
@@ -84,7 +91,7 @@ export const MonthlyChangeTable: FC<MonthlyChangeTableProps> = (props) => {
   } else {
     note = "Net worth at each month, and the change from the month before.";
     table = (
-      <Table caption="Net worth change by month">
+      <Table caption="Net worth change by month" className={changeTable()}>
         <THead>
           <Tr>
             <Th>Month</Th>

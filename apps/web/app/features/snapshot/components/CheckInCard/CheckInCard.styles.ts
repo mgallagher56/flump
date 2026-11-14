@@ -12,19 +12,25 @@ export const cardSurface = cva({
     borderWidth: "1px",
     borderStyle: "solid",
     borderColor: "border",
+    // One height for every account, open or done, so the sheet does not jump between steps at
+    // 375. Taller steps (a calculated figure with a statement prompt) still grow.
+    minHeight: "15rem",
   },
 });
 
+/** Back and Next. Holds a button's height when neither shows, so the sheet keeps its height. */
 export const cardNav = cva({
   base: {
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
     gap: "8px",
+    minHeight: "density.control.md",
+    "@media (pointer: coarse)": { minHeight: "touch" },
   },
 });
 
-/** A quiet text button, still a 24px target at least. */
+/** "No change to the rest": the same quiet ghost button as in the desktop list. */
 export const restButton = cva({
-  base: { alignSelf: "flex-start", minHeight: "6" },
+  base: { alignSelf: "flex-start" },
 });

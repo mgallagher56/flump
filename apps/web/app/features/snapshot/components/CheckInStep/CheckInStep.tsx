@@ -57,9 +57,10 @@ export function focusCheckInStep(accountId: string): void {
 }
 
 /**
- * One account in the monthly check-in, worded the same on a phone card and in the desktop list:
- * the account, last month's figure and two choices (Update or No change). A loan or mortgage with
- * a known rate and payment shows its calculated figure instead, kept with one press. A done step
+ * One account in the monthly check-in, worded and styled the same on a phone card and in the
+ * desktop list: the account, its saved balance and two choices (Update or No change). A loan or
+ * mortgage with a known rate and payment shows its calculated figure instead (no saved balance
+ * beside it), kept with one press. A done step
  * reads as a status ("Updated £3,400") with a Change button.
  */
 export const CheckInStep: FC<CheckInStepProps> = ({
@@ -132,7 +133,7 @@ export const CheckInStep: FC<CheckInStepProps> = ({
         <div className={stepHead()}>
           {nameEl}
           {typeLabel ? <p className={stepMeta()}>{typeLabel}</p> : null}
-          <p className={stepMeta()}>{lastFigureText(step.lastValue)}</p>
+          {step.calculated ? null : <p className={stepMeta()}>{lastFigureText(step.lastValue)}</p>}
         </div>
         <div className={doneRow()}>
           <p
@@ -158,7 +159,10 @@ export const CheckInStep: FC<CheckInStepProps> = ({
       <div className={stepHead()}>
         {nameEl}
         {typeLabel ? <p className={stepMeta()}>{typeLabel}</p> : null}
-        <p className={stepMeta()}>{lastFigureText(step.lastValue)}</p>
+        {/* A calculated step shows its figure, the explain line and the statement prompt only:
+            the saved balance beside it ("Current balance: £8,400" by "Calculated £8,402") reads
+            as two answers. */}
+        {calc ? null : <p className={stepMeta()}>{lastFigureText(step.lastValue)}</p>}
       </div>
 
       {calc ? (
@@ -228,8 +232,8 @@ export const CheckInStep: FC<CheckInStepProps> = ({
               onClick={() => onAnswer(step, { kind: "noChange" })}
               size="sm"
               type="button"
-              // In the list, Update is each row's primary; No change is the quieter choice.
-              variant={layout === "row" ? "ghost" : "secondary"}
+              // One secondary style at both widths: Update is the primary, No change the quieter.
+              variant="secondary"
             >
               {CHECK_IN_COPY.noChange}
             </Button>

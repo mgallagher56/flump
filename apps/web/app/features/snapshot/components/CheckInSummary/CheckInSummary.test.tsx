@@ -17,7 +17,6 @@ const setup = (summary: Partial<Summary> = {}) => {
   const onChangeBalance = vi.fn();
   render(
     <CheckInSummary
-      month="2026-11"
       onChangeBalance={onChangeBalance}
       onDone={onDone}
       summary={{
@@ -33,9 +32,10 @@ const setup = (summary: Partial<Summary> = {}) => {
 };
 
 describe("CheckInSummary", () => {
-  it("states the month, what changed and net worth against last month", () => {
+  it("states it is saved, what changed and net worth against last month", () => {
     setup();
-    expect(screen.getByRole("heading", { name: "Check-in saved for November 2026" })).toBeDefined();
+    expect(screen.getByRole("heading", { name: "Check-in saved" })).toBeDefined();
+    expect(screen.getByRole("heading", { name: "What changed" })).toBeDefined();
     expect(screen.getByText("Account 1")).toBeDefined();
     expect(screen.getByText("Calculated")).toBeDefined();
     expect(screen.getByText("Net worth: £231,400, up £1,250 on October 2026.")).toBeDefined();
@@ -55,9 +55,11 @@ describe("CheckInSummary", () => {
     expect(screen.getAllByRole("listitem")).toHaveLength(11);
   });
 
-  it("says when nothing changed", () => {
+  it("leaves out the list when nothing changed, keeping the net worth line", () => {
     setup({ changed: [], change: 0 });
-    expect(screen.getByText("No balances changed since October 2026.")).toBeDefined();
+    expect(screen.queryByRole("heading", { name: "What changed" })).toBeNull();
+    expect(screen.queryByRole("list")).toBeNull();
+    expect(document.body.textContent).not.toMatch(/No balances changed/);
     expect(screen.getByText("Net worth: £231,400, the same as October 2026.")).toBeDefined();
   });
 

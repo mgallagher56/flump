@@ -82,7 +82,7 @@ describe("CheckInSheet", () => {
     it("saves quietly as it goes, shows the summary and reloads saved data once on Done", async () => {
       const { onSave, onOpenChange, refresh } = setup();
       await userEvent.click(screen.getByRole("button", { name: "No change to the rest" }));
-      await screen.findByRole("heading", { name: "Check-in saved for November 2026" });
+      await screen.findByRole("heading", { name: "Check-in saved" });
       expect(onSave).toHaveBeenCalledWith({
         month: "2026-11",
         payload: {

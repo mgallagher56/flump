@@ -55,18 +55,9 @@ export const doneStatus = cva({
   },
 });
 
+/** The calculated figure and its lines: flat on the step's own surface, no box inside the card. */
 export const calculatedBlock = cva({
-  base: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "4px",
-    padding: "12px",
-    borderRadius: "card",
-    backgroundColor: "surface.sunken",
-    borderWidth: "1px",
-    borderStyle: "solid",
-    borderColor: "border.subtle",
-  },
+  base: { display: "flex", flexDirection: "column", gap: "4px" },
 });
 
 export const calculatedFigure = cva({
@@ -96,6 +87,7 @@ export const fieldLabel = cva({
   base: { display: "block", marginBottom: "4px", textStyle: "label.sm", color: "text.primary" },
 });
 
+/** The step's buttons at their own width on both layouts, so each looks the same on a phone. */
 export const actions = cva({
   base: {
     display: "flex",
@@ -105,7 +97,7 @@ export const actions = cva({
   },
   variants: {
     layout: {
-      card: { "& > button": { flex: "1 1 auto" } },
+      card: {},
       row: {},
     },
   },

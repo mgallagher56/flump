@@ -118,6 +118,9 @@ export const SnapshotHistoryPage: FC<SnapshotHistoryPageProps> = ({
   const latestChange = latest && previous ? latest.netWorth - previous.netWorth : null;
   const enoughForChart = recordedMonths >= MIN_CHART_MONTHS;
   const end = series.at(-1);
+  // The next check-in date shows only once this month is recorded; before that the hero subline
+  // says this month is not recorded yet, and a December date beside it would contradict it.
+  const thisMonthRecorded = end?.month === currentMonth && !end.allCarried;
   const [changesTab, setChangesTab] = useState<"accounts" | "months">("accounts");
 
   const checkInButton = (
@@ -243,7 +246,9 @@ export const SnapshotHistoryPage: FC<SnapshotHistoryPageProps> = ({
             />
             {enoughForChart ? null : <div className={promptActions()}>{checkInButton}</div>}
             <div className={checkInRow()}>
-              <p className={checkInLine()}>Next check-in: {nextCheckInDate(currentMonth)}</p>
+              {thisMonthRecorded ? (
+                <p className={checkInLine()}>Next check-in: {nextCheckInDate(currentMonth)}</p>
+              ) : null}
               <Button
                 disabled={!hasAccounts}
                 id="snapshot-open-backfill"
