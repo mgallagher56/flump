@@ -1,16 +1,17 @@
 import {
-  buildLegacyUKConfig,
-  calculateUKEWNIIncomeTaxOnTaxable,
-  getAvailableUKTaxYears,
-  UK_EWNI_INCOME_TAX,
-  type UKEWNIIncomeTaxYear,
-  type UKLegacyTaxYearConfig,
-} from "./tax-rules.js";
+  calculatePropertyProfit,
+  calculateSelfAssessmentPayments,
+  calculateTradingProfit,
+  type SelfAssessmentPayments,
+} from "./uk-self-assessment.js";
 import {
+  calculateClass4Ni,
+  calculateIncomeTaxOnTaxable,
+  calculatePersonalAllowanceForYear,
   getUkTaxYearForDate,
   getUkTaxYearRules,
   resolveUkTaxYear,
-  type UkDividendRules,
+  type UkTaxYearRules,
 } from "./uk-tax-year.js";
 
 export type TaxSource = "paye" | "self-employed" | "rental" | "savings";
@@ -68,20 +69,6 @@ export interface UserProfile {
   propertyOwnershipShare: number | string;
   setupChecklistCompletedSteps: string[];
 }
-
-/**
- * Legacy shape kept for backwards compatibility with calculateUKTax().
- * All values now sourced from taxRules.ts via buildLegacyUKConfig().
- */
-export type TaxYearConfig = UKLegacyTaxYearConfig;
-
-/**
- * TAX_YEARS is now derived from the canonical taxRules.ts data file.
- * This record is rebuilt lazily on first access and cached.
- */
-export const TAX_YEARS: Record<string, TaxYearConfig> = Object.fromEntries(
-  getAvailableUKTaxYears().map((year: string) => [year, buildLegacyUKConfig(year)]),
-);
 
 export const RENTAL_CATEGORIES = [
   { id: "rental_income", name: "Rental income", type: "income" as const },
@@ -382,7 +369,12 @@ export interface TaxCalculationResult {
   // Self Employed totals
   seIncomeGross: number;
   seExpenses: number;
+  /** Taxable profit: income less the recorded costs, or less the trading allowance if larger. */
   seProfit: number;
+  /** Trading allowance deducted in place of the recorded costs (0 when the costs were used). */
+  tradingAllowanceUsed: number;
+  /** Property allowance deducted in place of the recorded costs and finance cost relief. */
+  propertyAllowanceUsed: number;
 
   // Savings & Dividends totals
   savingsInterestGross: number;
@@ -413,6 +405,11 @@ export interface TaxCalculationResult {
   totalNIDue: number;
   totalTaxDue: number; // Total combined tax due (Income Tax + NI)
   netAdditionalTaxToPay: number; // totalTaxDue - PAYE tax already paid
+  /**
+   * When `netAdditionalTaxToPay` is due: the bill on 31 January after the year, plus payments on
+   * account towards the next year when they apply. PAYE tax counts as taken at source.
+   */
+  payments: SelfAssessmentPayments;
 }
 
 export function calculateUKTax(
@@ -423,12 +420,11 @@ export function calculateUKTax(
 ): TaxCalculationResult {
   // Strict (E22): an unsupported year throws UnsupportedUkTaxYearError instead of
   // silently using 2024/25. Callers should check classifyUkTaxYear() first.
-  resolveUkTaxYear(taxYear);
-  const config = TAX_YEARS[taxYear] ?? buildLegacyUKConfig(taxYear);
-  const ewni = UK_EWNI_INCOME_TAX[taxYear]!;
-  const months = getMonthsForTaxYear(taxYear);
-  // Per-year dividend and savings tables (uk-tax-year.ts).
+  // Every rate, threshold and band comes from the year's rules (uk-tax-year.ts): this ledger adds
+  // up the records and stacks the income types, and holds no rate table of its own.
   const yearRules = getUkTaxYearRules(resolveUkTaxYear(taxYear));
+  const ewni = yearRules.ewni;
+  const months = getMonthsForTaxYear(taxYear);
 
   // 1. Calculate Gross Totals for all 4 sources
   let rentalIncomeGross = 0;
@@ -535,223 +531,261 @@ export function calculateUKTax(
     }
   }
 
-  // Effective PAYE salary (C-10): the base is the logged salary records when there are any,
-  // otherwise the profile/param salary. Bonus, commission, overtime and benefit records add to
-  // that base (a lone bonus never replaces the salary); logged employee pension comes off.
-  const basePayeSalary = payeSalaryRecords > 0 ? payeSalaryRecords : payeSalary;
+  // Effective PAYE salary. A salary record for the whole year (frequency "annual") is the year's
+  // salary and stands in for the saved one. Otherwise the salary is built month by month: a month
+  // with a logged payslip uses what was logged, and every other month uses a twelfth of the saved
+  // salary, so one payslip never replaces the whole salary. Bonus, commission, overtime and benefit
+  // records add to that base (C-10); logged employee pension comes off.
+  const hasAnnualSalaryRecord = records.some(
+    (r) =>
+      r.source === "paye" &&
+      r.category === "paye_salary" &&
+      r.frequency === "annual" &&
+      getRecordAnnualTotalForTaxYear(r, taxYear) > 0,
+  );
+  const salaryByMonth = payeRecordValues.paye_salary ?? [];
+  const monthsWithoutPayslip = months.filter((_month, i) => !((salaryByMonth[i] ?? 0) > 0)).length;
+  const basePayeSalary = hasAnnualSalaryRecord
+    ? payeSalaryRecords
+    : payeSalaryRecords + (payeSalary * monthsWithoutPayslip) / months.length;
   const effectivePayeSalary = Math.max(0, basePayeSalary + payeExtrasRecords - payeExpenses);
 
-  // Calculate profits
+  // Profits as recorded (for profit and loss reporting; no allowance).
   const rentalProfitBeforeInterest = Math.max(0, rentalIncomeGross - rentalExpensesExclInterest);
   const rentalProfitPostInterest = Math.max(0, rentalProfitBeforeInterest - rentalMortgageInterest);
-  const seProfit = Math.max(0, seIncomeGross - seExpenses);
+  // Taxable trading profit: the recorded costs or the trading allowance, whichever is larger.
+  const trading = calculateTradingProfit(seIncomeGross, seExpenses, yearRules);
+  const seProfit = trading.profit;
 
   // Ownership shares
   const shareFactor = propertyOwnershipShare / 100;
   const rentalIncomeGrossShare = rentalIncomeGross * shareFactor;
   const rentalExpensesExclInterestShare = rentalExpensesExclInterest * shareFactor;
   const rentalMortgageInterestShare = rentalMortgageInterest * shareFactor;
-  const rentalProfitBeforeInterestShare = rentalProfitBeforeInterest * shareFactor;
 
-  // Net taxable savings interest before PSA
-  const netTaxableSavingsInterest = Math.max(0, savingsInterestGross - savingsExpenses);
+  // Property income can be taxed two ways. With the recorded costs, finance costs earn the
+  // Section 24 credit. With the property allowance, neither the costs nor the finance cost credit
+  // can be claimed. A return can use either, so the estimate works out both and keeps the one with
+  // the lower total. With no rental income both routes are the same.
+  const withCosts = assess({
+    rentalProfitBeforeInterestShare: rentalProfitBeforeInterest * shareFactor,
+    creditableFinanceCosts: rentalMortgageInterestShare,
+    propertyAllowanceUsed: 0,
+  });
+  const allowanceRoute = calculatePropertyProfit(rentalIncomeGrossShare, 0, yearRules);
+  if (allowanceRoute.allowanceUsed === 0) return withCosts;
+  const withAllowance = assess({
+    rentalProfitBeforeInterestShare: allowanceRoute.profit,
+    creditableFinanceCosts: 0,
+    propertyAllowanceUsed: allowanceRoute.allowanceUsed,
+  });
+  return withAllowance.totalTaxDue < withCosts.totalTaxDue ? withAllowance : withCosts;
 
-  // 2. Tax Calculations
-  // Total income for tax rate and allowance determination
-  const nonSavingsGross = effectivePayeSalary + seProfit + rentalProfitBeforeInterestShare;
-  const totalGrossIncome = nonSavingsGross + netTaxableSavingsInterest + dividendIncomeGross;
+  function assess(property: {
+    rentalProfitBeforeInterestShare: number;
+    /** Finance costs that earn the Section 24 credit on this route. */
+    creditableFinanceCosts: number;
+    propertyAllowanceUsed: number;
+  }): TaxCalculationResult {
+    const { rentalProfitBeforeInterestShare, creditableFinanceCosts } = property;
 
-  // Personal Allowance with Tapering above £100,000
-  const taperedAllowance = (income: number): number =>
-    income > 100000
-      ? Math.max(0, config.personalAllowance - Math.floor((income - 100000) / 2))
-      : config.personalAllowance;
-  const personalAllowance = taperedAllowance(totalGrossIncome);
+    // Net taxable savings interest before PSA
+    const netTaxableSavingsInterest = Math.max(0, savingsInterestGross - savingsExpenses);
 
-  // Tax the employer deducts under PAYE: the employer only sees the salary, so it is taxed with
-  // the allowance tapered by the salary alone. Any further taper from other income is part of the
-  // tax still to pay, not of the PAYE already paid.
-  const payeTaxable = Math.max(0, effectivePayeSalary - taperedAllowance(effectivePayeSalary));
-  const payeTaxDue = calculateIncomeTaxForTaxable(payeTaxable, ewni);
+    // 2. Tax Calculations
+    // Total income for tax rate and allowance determination
+    const nonSavingsGross = effectivePayeSalary + seProfit + rentalProfitBeforeInterestShare;
+    const totalGrossIncome = nonSavingsGross + netTaxableSavingsInterest + dividendIncomeGross;
 
-  // The allowance is set against non-savings income first, then savings, then dividends.
-  const allowanceOnNonSavings = Math.min(personalAllowance, nonSavingsGross);
-  const allowanceOnSavings = Math.min(
-    personalAllowance - allowanceOnNonSavings,
-    netTaxableSavingsInterest,
-  );
-  const allowanceOnDividends = Math.min(
-    personalAllowance - allowanceOnNonSavings - allowanceOnSavings,
-    dividendIncomeGross,
-  );
-  const savingsAfterAllowance = netTaxableSavingsInterest - allowanceOnSavings;
-  const dividendsAfterAllowance = dividendIncomeGross - allowanceOnDividends;
+    // Personal Allowance, tapered above the year's taper start.
+    const taperedAllowance = (income: number): number =>
+      calculatePersonalAllowanceForYear(income, yearRules);
+    const personalAllowance = taperedAllowance(totalGrossIncome);
 
-  // Personal Savings Allowance (PSA)
-  // Basic rate taxpayers: £1,000; Higher rate: £500; Additional rate: £0
-  let personalSavingsAllowance = yearRules.savings.psaBasic;
-  // Band is chosen from taxable income (after the tapered personal allowance), against the
-  // shared EWNI thresholds: higher above basicRateBandWidth, additional above additionalRateThreshold.
-  const taxableForPsa = Math.max(0, totalGrossIncome - personalAllowance);
-  if (taxableForPsa > ewni.additionalRateThreshold) {
-    personalSavingsAllowance = yearRules.savings.psaAdditional;
-  } else if (taxableForPsa > ewni.basicRateBandWidth) {
-    personalSavingsAllowance = yearRules.savings.psaHigher;
-  }
+    // Tax the employer deducts under PAYE: the employer only sees the salary, so it is taxed with
+    // the allowance tapered by the salary alone. Any further taper from other income is part of the
+    // tax still to pay, not of the PAYE already paid.
+    const payeTaxable = Math.max(0, effectivePayeSalary - taperedAllowance(effectivePayeSalary));
+    const payeTaxDue = incomeTaxOn(payeTaxable);
 
-  // Dividend Allowance (per-year table)
-  const dividendAllowance = yearRules.dividends.allowance;
-
-  // Tax on non-savings + non-dividends
-  const nonSavingsTaxable = Math.max(0, nonSavingsGross - personalAllowance);
-
-  // Starting rate for savings (0%): 5,000 less non-savings income above the allowance. It and the
-  // PSA are 0% bands that still occupy band space, so the savings left over stack above them.
-  const startingRateUsed = Math.min(
-    Math.max(0, yearRules.savings.startingRateBand - nonSavingsTaxable),
-    savingsAfterAllowance,
-  );
-  const psaUsed = Math.min(personalSavingsAllowance, savingsAfterAllowance - startingRateUsed);
-  const taxableSavingsInterest = savingsAfterAllowance - startingRateUsed - psaUsed;
-  const dividendAllowanceUsed = Math.min(dividendsAfterAllowance, dividendAllowance);
-  const taxableDividends = dividendsAfterAllowance - dividendAllowanceUsed;
-  const nonSavingsIncomeTaxBeforeCredit = calculateIncomeTaxForTaxable(nonSavingsTaxable, ewni);
-
-  // Section 24 Rental Property Finance Tax Credit
-  const maxCreditBase = Math.min(
-    rentalMortgageInterestShare,
-    rentalProfitBeforeInterestShare,
-    nonSavingsTaxable,
-  );
-  const rentalPropertyTaxCredit = Math.max(0, maxCreditBase * 0.2);
-
-  // Allocate Income Tax components
-  const totalTaxableExclRental = Math.max(0, effectivePayeSalary + seProfit - personalAllowance);
-  const incomeTaxExclRental = calculateIncomeTaxForTaxable(totalTaxableExclRental, ewni);
-
-  const rentalPropertyTaxDueBeforeCredit = Math.max(
-    0,
-    nonSavingsIncomeTaxBeforeCredit - incomeTaxExclRental,
-  );
-  const rentalPropertyTaxDueAfterCredit = Math.max(
-    0,
-    rentalPropertyTaxDueBeforeCredit - rentalPropertyTaxCredit,
-  );
-
-  const seTaxDue = Math.max(0, incomeTaxExclRental - payeTaxDue);
-
-  // National Insurance Class 4 (on Self Employed profits)
-  let seClass4NIDue = 0;
-  if (seProfit > config.class4LowerLimit) {
-    const niBasicBand = Math.min(
-      seProfit - config.class4LowerLimit,
-      config.class4UpperLimit - config.class4LowerLimit,
+    // The allowance is set against non-savings income first, then savings, then dividends.
+    const allowanceOnNonSavings = Math.min(personalAllowance, nonSavingsGross);
+    const allowanceOnSavings = Math.min(
+      personalAllowance - allowanceOnNonSavings,
+      netTaxableSavingsInterest,
     );
-    const niHigherBand = Math.max(0, seProfit - config.class4UpperLimit);
-    seClass4NIDue = niBasicBand * config.class4BasicRate + niHigherBand * config.class4HigherRate;
-  }
+    const allowanceOnDividends = Math.min(
+      personalAllowance - allowanceOnNonSavings - allowanceOnSavings,
+      dividendIncomeGross,
+    );
+    const savingsAfterAllowance = netTaxableSavingsInterest - allowanceOnSavings;
+    const dividendsAfterAllowance = dividendIncomeGross - allowanceOnDividends;
 
-  // Savings tax (stacked above non-savings income)
-  let savingsTaxDue = 0;
-  if (taxableSavingsInterest > 0) {
-    const zeroRatedTop = nonSavingsTaxable + startingRateUsed + psaUsed;
-    savingsTaxDue = Math.max(
+    // Personal Savings Allowance (PSA)
+    // Basic rate taxpayers: £1,000; Higher rate: £500; Additional rate: £0
+    let personalSavingsAllowance = yearRules.savings.psaBasic;
+    // Band is chosen from taxable income (after the tapered personal allowance), against the
+    // shared EWNI thresholds: higher above basicRateBandWidth, additional above additionalRateThreshold.
+    const taxableForPsa = Math.max(0, totalGrossIncome - personalAllowance);
+    if (taxableForPsa > ewni.additionalRateThreshold) {
+      personalSavingsAllowance = yearRules.savings.psaAdditional;
+    } else if (taxableForPsa > ewni.basicRateBandWidth) {
+      personalSavingsAllowance = yearRules.savings.psaHigher;
+    }
+
+    // Dividend Allowance (per-year table)
+    const dividendAllowance = yearRules.dividends.allowance;
+
+    // Tax on non-savings + non-dividends
+    const nonSavingsTaxable = Math.max(0, nonSavingsGross - personalAllowance);
+
+    // Starting rate for savings (0%): 5,000 less non-savings income above the allowance. It and the
+    // PSA are 0% bands that still occupy band space, so the savings left over stack above them.
+    const startingRateUsed = Math.min(
+      Math.max(0, yearRules.savings.startingRateBand - nonSavingsTaxable),
+      savingsAfterAllowance,
+    );
+    const psaUsed = Math.min(personalSavingsAllowance, savingsAfterAllowance - startingRateUsed);
+    const taxableSavingsInterest = savingsAfterAllowance - startingRateUsed - psaUsed;
+    const dividendAllowanceUsed = Math.min(dividendsAfterAllowance, dividendAllowance);
+    const taxableDividends = dividendsAfterAllowance - dividendAllowanceUsed;
+    const nonSavingsIncomeTaxBeforeCredit = incomeTaxOn(nonSavingsTaxable);
+
+    // Section 24 Rental Property Finance Tax Credit
+    const maxCreditBase = Math.min(
+      creditableFinanceCosts,
+      rentalProfitBeforeInterestShare,
+      nonSavingsTaxable,
+    );
+    const rentalPropertyTaxCredit = Math.max(0, maxCreditBase * 0.2);
+
+    // Allocate Income Tax components
+    const totalTaxableExclRental = Math.max(0, effectivePayeSalary + seProfit - personalAllowance);
+    const incomeTaxExclRental = incomeTaxOn(totalTaxableExclRental);
+
+    const rentalPropertyTaxDueBeforeCredit = Math.max(
       0,
-      calculateIncomeTaxForTaxable(zeroRatedTop + taxableSavingsInterest, ewni) -
-        calculateIncomeTaxForTaxable(zeroRatedTop, ewni),
+      nonSavingsIncomeTaxBeforeCredit - incomeTaxExclRental,
     );
-  }
+    const rentalPropertyTaxDueAfterCredit = Math.max(
+      0,
+      rentalPropertyTaxDueBeforeCredit - rentalPropertyTaxCredit,
+    );
 
-  // Dividend tax (stacked at top of all income, taxed at the year's dividend rates)
-  let dividendTaxDue = 0;
-  if (taxableDividends > 0) {
-    const priorTaxable = nonSavingsTaxable + savingsAfterAllowance;
-    dividendTaxDue = calculateDividendTaxForStack(
-      priorTaxable,
+    const seTaxDue = Math.max(0, incomeTaxExclRental - payeTaxDue);
+
+    // Class 4 National Insurance on self-employed profit: the main rate between the lower and
+    // upper profits limits, the upper rate above.
+    const seClass4NIDue = calculateClass4Ni(seProfit, yearRules);
+
+    // Savings tax (stacked above non-savings income)
+    let savingsTaxDue = 0;
+    if (taxableSavingsInterest > 0) {
+      const zeroRatedTop = nonSavingsTaxable + startingRateUsed + psaUsed;
+      savingsTaxDue = Math.max(
+        0,
+        incomeTaxOn(zeroRatedTop + taxableSavingsInterest) - incomeTaxOn(zeroRatedTop),
+      );
+    }
+
+    // Dividend tax (stacked at top of all income, taxed at the year's dividend rates)
+    let dividendTaxDue = 0;
+    if (taxableDividends > 0) {
+      const priorTaxable = nonSavingsTaxable + savingsAfterAllowance;
+      dividendTaxDue = calculateDividendTaxForStack(
+        priorTaxable,
+        taxableDividends,
+        dividendAllowanceUsed,
+        yearRules,
+      );
+    }
+
+    const totalNonSavingsIncomeTax = Math.max(
+      0,
+      nonSavingsIncomeTaxBeforeCredit - rentalPropertyTaxCredit,
+    );
+    const totalIncomeTaxDue = totalNonSavingsIncomeTax + savingsTaxDue + dividendTaxDue;
+    const totalNIDue = seClass4NIDue;
+    const totalTaxDue = totalIncomeTaxDue + totalNIDue;
+
+    const netAdditionalTaxToPay = Math.max(0, totalTaxDue - payeTaxDue);
+    const totalTaxable = Math.max(0, totalGrossIncome - personalAllowance);
+
+    return {
+      taxYear,
+      payeSalary: effectivePayeSalary,
+      propertyOwnershipShare,
+
+      payeIncomeGross,
+      payeExpenses,
+      effectivePayeSalary,
+
+      rentalIncomeGross,
+      rentalExpensesExclInterest,
+      rentalMortgageInterest,
+      rentalProfitBeforeInterest,
+      rentalProfitPostInterest,
+      rentalIncomeGrossShare,
+      rentalExpensesExclInterestShare,
+      rentalMortgageInterestShare,
+      rentalProfitBeforeInterestShare,
+      rentalProfitPostInterestShare: rentalProfitPostInterest * shareFactor,
+
+      seIncomeGross,
+      seExpenses,
+      seProfit,
+      tradingAllowanceUsed: trading.allowanceUsed,
+      propertyAllowanceUsed: property.propertyAllowanceUsed,
+
+      savingsInterestGross,
+      isaInterestGross,
+      dividendIncomeGross,
+      savingsExpenses,
+      personalSavingsAllowance,
+      dividendAllowance,
+      taxableSavingsInterest,
       taxableDividends,
-      dividendAllowanceUsed,
-      ewni,
-      yearRules.dividends,
-    );
+      savingsTaxDue,
+      dividendTaxDue,
+
+      totalGrossIncome,
+      personalAllowance,
+      totalTaxableIncome: totalTaxable,
+      payeTaxDue,
+      seTaxDue,
+      seClass4NIDue,
+      rentalPropertyTaxDueBeforeCredit,
+      rentalPropertyTaxCredit,
+      rentalPropertyTaxDueAfterCredit,
+      totalIncomeTaxDue,
+      totalNIDue,
+      totalTaxDue,
+      netAdditionalTaxToPay,
+      payments: calculateSelfAssessmentPayments({
+        taxYear,
+        bill: netAdditionalTaxToPay,
+        taxDeductedAtSource: payeTaxDue,
+      }),
+    };
   }
 
-  const totalNonSavingsIncomeTax = Math.max(
-    0,
-    nonSavingsIncomeTaxBeforeCredit - rentalPropertyTaxCredit,
-  );
-  const totalIncomeTaxDue = totalNonSavingsIncomeTax + savingsTaxDue + dividendTaxDue;
-  const totalNIDue = seClass4NIDue;
-  const totalTaxDue = totalIncomeTaxDue + totalNIDue;
-
-  const netAdditionalTaxToPay = Math.max(0, totalTaxDue - payeTaxDue);
-  const totalTaxable = Math.max(0, totalGrossIncome - personalAllowance);
-
-  return {
-    taxYear,
-    payeSalary: effectivePayeSalary,
-    propertyOwnershipShare,
-
-    payeIncomeGross,
-    payeExpenses,
-    effectivePayeSalary,
-
-    rentalIncomeGross,
-    rentalExpensesExclInterest,
-    rentalMortgageInterest,
-    rentalProfitBeforeInterest,
-    rentalProfitPostInterest,
-    rentalIncomeGrossShare,
-    rentalExpensesExclInterestShare,
-    rentalMortgageInterestShare,
-    rentalProfitBeforeInterestShare,
-    rentalProfitPostInterestShare: rentalProfitPostInterest * shareFactor,
-
-    seIncomeGross,
-    seExpenses,
-    seProfit,
-
-    savingsInterestGross,
-    isaInterestGross,
-    dividendIncomeGross,
-    savingsExpenses,
-    personalSavingsAllowance,
-    dividendAllowance,
-    taxableSavingsInterest,
-    taxableDividends,
-    savingsTaxDue,
-    dividendTaxDue,
-
-    totalGrossIncome,
-    personalAllowance,
-    totalTaxableIncome: totalTaxable,
-    payeTaxDue,
-    seTaxDue,
-    seClass4NIDue,
-    rentalPropertyTaxDueBeforeCredit,
-    rentalPropertyTaxCredit,
-    rentalPropertyTaxDueAfterCredit,
-    totalIncomeTaxDue,
-    totalNIDue,
-    totalTaxDue,
-    netAdditionalTaxToPay,
-  };
-}
-
-function calculateIncomeTaxForTaxable(taxable: number, ewni: UKEWNIIncomeTaxYear): number {
-  return calculateUKEWNIIncomeTaxOnTaxable(taxable, ewni);
+  /** Income Tax on taxable non-savings income, at the year's England, Wales and NI bands. */
+  function incomeTaxOn(taxable: number): number {
+    return calculateIncomeTaxOnTaxable(taxable, yearRules, "ENGLAND_NI_WALES").total;
+  }
 }
 
 function calculateDividendTaxForStack(
   priorTaxable: number,
   dividends: number,
   allowanceUsed: number,
-  ewni: UKEWNIIncomeTaxYear,
-  rates: UkDividendRules,
+  rules: UkTaxYearRules,
 ): number {
   if (dividends <= 0) return 0;
-  // Both are taxable-income thresholds (shared with calculateUKEWNIIncomeTaxOnTaxable).
-  const basicThreshold = ewni.basicRateBandWidth;
-  const higherThreshold = ewni.additionalRateThreshold;
+  const rates = rules.dividends;
+  // Both are taxable-income thresholds, the same band edges calculateIncomeTaxOnTaxable uses.
+  const basicThreshold = rules.ewni.basicRateBandWidth;
+  const higherThreshold = rules.ewni.additionalRateThreshold;
 
   const basicDividendRate = rates.basicRate;
   const higherDividendRate = rates.higherRate;

@@ -312,6 +312,14 @@ export interface UkTaxCalculationInput {
   netBtlProfitGbp?: number;
   pensionContributionPct?: number;
   isSalarySacrifice?: boolean;
+  /**
+   * How the employee pension is paid. Wins over `isSalarySacrifice` when set. "relief-at-source"
+   * means `pensionContributionPct` of salary is paid from take-home and the provider adds basic
+   * rate relief; the grossed-up amount widens the basic rate band.
+   */
+  pensionMethod?: "salary-sacrifice" | "net-pay" | "relief-at-source";
+  /** True when `grossSalary` is self-employed profit: Class 4 National Insurance, not Class 1. */
+  selfEmployed?: boolean;
   employerPensionMatchPct?: number;
   studentLoanPlan?: UkStudentLoanPlan;
   taxYear?: UkTaxYear;

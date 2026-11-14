@@ -15,19 +15,22 @@ import {
   analyzeTaxTrap,
   calculateEmployerNISavings,
   calculateEwniIncomeTax,
-  calculateNationalInsurance,
   calculatePersonalAllowance,
   calculateScottishIncomeTax,
   calculateStudentLoanDeduction,
   calculateTaxTrapRelief,
-  calculateUKTakeHome,
   calculateUkTax,
   getTaxYearRemainingDays,
   isInTaxTrapAlertBand,
   STUDENT_LOAN_THRESHOLDS,
   toStudentLoanPlanKey,
 } from "./uk-tax.js";
-import { getCurrentUkTaxYear, UnsupportedUkTaxYearError } from "./uk-tax-year.js";
+import {
+  calculateEmployeeNi,
+  getCurrentUkTaxYear,
+  getUkTaxYearRules,
+  UnsupportedUkTaxYearError,
+} from "./uk-tax-year.js";
 
 afterEach(() => {
   vi.useRealTimers();
@@ -299,21 +302,23 @@ describe("uk-tax module", () => {
     });
   });
 
-  describe("calculateNationalInsurance", () => {
+  describe("calculateEmployeeNi (2025/26 Class 1)", () => {
+    const ni = (pay: number) => calculateEmployeeNi(pay, getUkTaxYearRules("2025/26"));
+
     it("returns 0 below primary threshold of £12,570", () => {
-      expect(calculateNationalInsurance(12000)).toBe(0);
+      expect(ni(12000)).toBe(0);
     });
 
     it("calculates 8% main rate up to £50,270", () => {
       // (£30,000 - £12,570) * 8% = £17,430 * 0.08 = £1,394.40
-      expect(calculateNationalInsurance(30000)).toBe(1394.4);
+      expect(ni(30000)).toBe(1394.4);
     });
 
     it("calculates 2% upper rate above £50,270", () => {
       // Main rate band: (£50,270 - £12,570) * 8% = £37,700 * 0.08 = £3,016
       // Upper band: (£60,000 - £50,270) * 2% = £9,730 * 0.02 = £194.60
       // Total = £3,210.60
-      expect(calculateNationalInsurance(60000)).toBe(3210.6);
+      expect(ni(60000)).toBe(3210.6);
     });
   });
 
@@ -460,12 +465,6 @@ describe("uk-tax module", () => {
       });
       expect(res.allowances.personalSavingsAllowanceGbp).toBe(1000); // Basic rate
       expect(res.allowances.marginalIncomeTaxBand).toBe("BASIC");
-    });
-
-    it("calculates UK take home with calculateUKTakeHome helper", () => {
-      const res = calculateUKTakeHome(45000, 5, true);
-      expect(res.netAnnual).toBeGreaterThan(0);
-      expect(res.trapAnalysis.isInTaxTrap).toBe(false);
     });
   });
 

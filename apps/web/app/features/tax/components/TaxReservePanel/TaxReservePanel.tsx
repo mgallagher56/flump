@@ -196,6 +196,7 @@ export const TaxReservePanel: FC<TaxReservePanelProps> = ({
 
       <PaymentsOnAccountCard
         annualSelfAssessmentTax={result.netAdditionalTaxToPay}
+        taxDeductedAtSource={result.payeTaxDue}
         taxYear={taxYear}
       />
     </div>

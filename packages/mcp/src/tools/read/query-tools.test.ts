@@ -546,14 +546,15 @@ describe("query reads (re-plan PR B)", () => {
         Math.round(ledger.rentalPropertyTaxCredit * 100) / 100,
       );
       expect(e.result.section24.financeCostsShareGbp).toBe(4800);
-      // 98,000 + 5,000 + 12,000 rental profit before finance costs = 115,000: inside the taper. The
-      // 50 expense has a category the engine does not know, so it is left out (as on the Tax page).
+      // 98,000 + 4,000 (5,000 self-employed income less the 1,000 trading allowance) + 12,000 rental
+      // profit before finance costs = 114,000: inside the taper, 7,000 of the allowance lost. The 50
+      // expense has a category the engine does not know, so it is left out (as on the Tax page).
       expect(e.result.personalAllowance).toMatchObject({
         standardGbp: 12570,
         taperStartGbp: 100000,
         taperEndGbp: 125140,
         position: "in_taper",
-        reducedByGbp: 7500,
+        reducedByGbp: 7000,
       });
       expect(e.result.childBenefitCharge).toMatchObject({
         thresholdGbp: 60000,

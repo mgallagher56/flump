@@ -1,16 +1,19 @@
 import { describe, expect, it } from "vitest";
 import {
-  buildLegacyUKConfig,
-  calculateScottishIncomeTaxOnTaxable,
-  calculateUKEWNIIncomeTaxOnTaxable,
-  calculateUKEWNITakeHome,
   getAvailableUKTaxYears,
   getCurrentUKTaxYear,
   TAX_DISCLAIMER,
   UK_EWNI_INCOME_TAX,
-  UK_SCOTLAND_INCOME_TAX,
 } from "./tax-rules.js";
-import { UnsupportedUkTaxYearError } from "./uk-tax-year.js";
+import { computeUkTakeHome } from "./uk-take-home.js";
+import {
+  calculateIncomeTaxOnTaxable,
+  getUkTaxYearRules,
+  resolveUkTaxYear,
+  UnsupportedUkTaxYearError,
+} from "./uk-tax-year.js";
+
+const EWNI = "ENGLAND_NI_WALES" as const;
 
 describe("tax-rules", () => {
   it("exports disclaimers", () => {
@@ -28,136 +31,151 @@ describe("tax-rules", () => {
     expect(typeof currentUK).toBe("string");
   });
 
-  it("builds legacy UK config", () => {
-    const config24 = buildLegacyUKConfig("2024/25");
-    expect(config24.personalAllowance).toBe(12570);
-    expect(config24.higherRateLimit).toBe(125140);
-
-    const config23 = buildLegacyUKConfig("2023/24");
-    expect(config23.personalAllowance).toBe(12570);
-
-    expect(() => buildLegacyUKConfig("1999/00")).toThrow(UnsupportedUkTaxYearError);
+  it("holds the personal allowance and additional-rate threshold per year", () => {
+    expect(UK_EWNI_INCOME_TAX["2024/25"]?.personalAllowance).toBe(12570);
+    expect(UK_EWNI_INCOME_TAX["2024/25"]?.additionalRateThreshold).toBe(125140);
+    expect(UK_EWNI_INCOME_TAX["2023/24"]?.personalAllowance).toBe(12570);
+    expect(() => resolveUkTaxYear("1999/00")).toThrow(UnsupportedUkTaxYearError);
   });
 
   it("calculates UK EWNI Income Tax on taxable amounts across bands", () => {
-    const yearConfig = UK_EWNI_INCOME_TAX["2024/25"]!;
+    const rules = getUkTaxYearRules("2024/25");
+    const tax = (taxable: number) => calculateIncomeTaxOnTaxable(taxable, rules, EWNI).total;
 
     // 0 taxable
-    expect(calculateUKEWNIIncomeTaxOnTaxable(0, yearConfig)).toBe(0);
+    expect(tax(0)).toBe(0);
 
     // Basic rate only (£20,000 taxable at 20%)
-    const basicTax = calculateUKEWNIIncomeTaxOnTaxable(20000, yearConfig);
-    expect(basicTax).toBe(4000);
+    expect(tax(20000)).toBe(4000);
 
-    // Higher rate band (£50,000 taxable: 37700 @ 20% + 12300 @ 40%)
-    const higherTax = calculateUKEWNIIncomeTaxOnTaxable(50000, yearConfig);
-    expect(higherTax).toBe(37700 * 0.2 + 12300 * 0.4);
+    // Higher rate band (£50,000 taxable: 37,700 @ 20% + 12,300 @ 40% = 7,540 + 4,920)
+    const higherTax = tax(50000);
+    expect(higherTax).toBe(12460);
 
-    // Additional rate band (£150,000 taxable)
-    const addTax = calculateUKEWNIIncomeTaxOnTaxable(150000, yearConfig);
+    // Additional rate band (£150,000 taxable):
+    // 37,700 @ 20% = 7,540; (125,140 - 37,700) = 87,440 @ 40% = 34,976;
+    // (150,000 - 125,140) = 24,860 @ 45% = 11,187. Total 53,703.
+    const addTax = tax(150000);
     expect(addTax).toBeGreaterThan(higherTax);
+    expect(addTax).toBe(53703);
   });
 
   it("calculates Scottish Income Tax across all bands", () => {
-    const scotConfig = UK_SCOTLAND_INCOME_TAX["2024/25"]!;
-    expect(calculateScottishIncomeTaxOnTaxable(0, scotConfig)).toBe(0);
+    const rules = getUkTaxYearRules("2024/25");
+    const tax = (taxable: number) => calculateIncomeTaxOnTaxable(taxable, rules, "SCOTLAND").total;
+    expect(tax(0)).toBe(0);
 
     // Starter band (up to £2,306 at 19%)
-    const starterTax = calculateScottishIncomeTaxOnTaxable(2000, scotConfig);
+    const starterTax = tax(2000);
     expect(starterTax).toBeCloseTo(2000 * 0.19, 1);
 
     // Intermediate/higher
-    const higherTax = calculateScottishIncomeTaxOnTaxable(50000, scotConfig);
+    const higherTax = tax(50000);
     expect(higherTax).toBeGreaterThan(starterTax);
   });
 
   it("calculates UK EWNI take home for employed and self-employed", () => {
-    const employedRes = calculateUKEWNITakeHome(50000, "employed", 5, true, "2024/25");
-    expect(employedRes.gross).toBe(50000);
-    expect(employedRes.netAnnual).toBeGreaterThan(0);
-    expect(employedRes.monthlyTakeHome).toBe(Math.round(employedRes.netAnnual / 12));
-    expect(employedRes.ni).toBeGreaterThan(0);
+    const employedRes = computeUkTakeHome({
+      taxYear: "2024/25",
+      region: EWNI,
+      salary: 50000,
+      pension: { method: "salary-sacrifice", pct: 5 },
+    });
+    expect(employedRes.grossPay).toBe(50000);
+    expect(employedRes.takeHome).toBeGreaterThan(0);
+    expect(employedRes.nationalInsurance).toBeGreaterThan(0);
     expect(employedRes.studentLoan).toBe(0);
 
-    // With non-salary sacrifice
-    const nonSacrificeRes = calculateUKEWNITakeHome(50000, "employed", 5, false, "2024/25");
-    expect(nonSacrificeRes.netAnnual).toBeGreaterThan(0);
+    // Net-pay pension (not salary sacrifice)
+    const nonSacrificeRes = computeUkTakeHome({
+      taxYear: "2024/25",
+      region: EWNI,
+      salary: 50000,
+      pension: { method: "net-pay", pct: 5 },
+    });
+    expect(nonSacrificeRes.takeHome).toBeGreaterThan(0);
 
     // Self-employed
-    const selfEmployedRes = calculateUKEWNITakeHome(50000, "self-employed", 0, false, "2024/25");
-    expect(selfEmployedRes.gross).toBe(50000);
-    expect(selfEmployedRes.ni).toBeGreaterThan(0);
+    const selfEmployedRes = computeUkTakeHome({
+      taxYear: "2024/25",
+      region: EWNI,
+      salary: 50000,
+      selfEmployed: true,
+    });
+    expect(selfEmployedRes.grossPay).toBe(50000);
+    expect(selfEmployedRes.niClass).toBe("class4");
+    expect(selfEmployedRes.nationalInsurance).toBeGreaterThan(0);
 
-    // High earner (> £100,000)
-    const highEarnerRes = calculateUKEWNITakeHome(130000, "employed", 0, false, "2024/25");
+    // High earner (> £100,000): 130,000 tapers the whole 12,570 away
+    const highEarnerRes = computeUkTakeHome({ taxYear: "2024/25", region: EWNI, salary: 130000 });
     expect(highEarnerRes.personalAllowance).toBe(0);
 
-    // Zero or other employment type
-    const zeroRes = calculateUKEWNITakeHome(0, "employed", 0, false, "2024/25");
-    expect(zeroRes.netAnnual).toBe(0);
+    // Zero income
+    const zeroRes = computeUkTakeHome({ taxYear: "2024/25", region: EWNI, salary: 0 });
+    expect(zeroRes.takeHome).toBe(0);
     expect(zeroRes.incomeTax).toBe(0);
-
-    const otherRes = calculateUKEWNITakeHome(50000, "other", 0, false, "2024/25");
-    expect(otherRes.netAnnual).toBe(50000);
   });
 });
 
-describe("calculateUKEWNIIncomeTaxOnTaxable additional-rate threshold (E4 T4)", () => {
+describe("EWNI income tax additional-rate threshold (E4 T4)", () => {
   it("taxable 125140 in 2025/26 is 42516, not 43144.50", () => {
-    expect(calculateUKEWNIIncomeTaxOnTaxable(125140, UK_EWNI_INCOME_TAX["2025/26"]!)).toBe(42516);
+    expect(calculateIncomeTaxOnTaxable(125140, getUkTaxYearRules("2025/26"), EWNI).total).toBe(
+      42516,
+    );
   });
 
   it("taxable 150000 in 2026/27 is 53703", () => {
-    expect(calculateUKEWNIIncomeTaxOnTaxable(150000, UK_EWNI_INCOME_TAX["2026/27"]!)).toBe(53703);
+    expect(calculateIncomeTaxOnTaxable(150000, getUkTaxYearRules("2026/27"), EWNI).total).toBe(
+      53703,
+    );
   });
 
-  describe("calculateUKEWNITakeHome student loan", () => {
-    // Plan 2 on 35,000, no pension: 2025/26 (35000-28470)*9% = 587.70 -> 588 (whole pounds);
-    // 2026/27 (35000-29385)*9% = 505.35 -> 505. Thresholds: GOV.UK employer rates pages.
+  describe("take-home student loan", () => {
+    const studentLoan = (
+      taxYear: string,
+      salary: number,
+      plans: readonly ("plan2" | "plan4")[],
+      pension?: { method: "salary-sacrifice" | "net-pay"; pct: number },
+    ) =>
+      computeUkTakeHome({ taxYear, region: EWNI, salary, studentLoans: plans, pension })
+        .studentLoan;
+
+    // Plan 2 on 35,000, no pension, rounded to pence:
+    // 2025/26 (35000-28470)*9% = 6530*0.09 = 587.70;
+    // 2026/27 (35000-29385)*9% = 5615*0.09 = 505.35. Thresholds: GOV.UK employer rates pages.
+    // (The deleted whole-pound wrapper gave 588 and 505.)
     it("reads the per-year student loan table", () => {
-      expect(
-        calculateUKEWNITakeHome(35000, "employed", 0, false, "2025/26", "plan2").studentLoan,
-      ).toBe(588);
-      expect(
-        calculateUKEWNITakeHome(35000, "employed", 0, false, "2026/27", "plan2").studentLoan,
-      ).toBe(505);
+      expect(studentLoan("2025/26", 35000, ["plan2"])).toBe(587.7);
+      expect(studentLoan("2026/27", 35000, ["plan2"])).toBe(505.35);
     });
 
     it("returns 0 for none and below threshold", () => {
-      expect(
-        calculateUKEWNITakeHome(35000, "employed", 0, false, "2026/27", "none").studentLoan,
-      ).toBe(0);
-      expect(
-        calculateUKEWNITakeHome(25000, "employed", 0, false, "2026/27", "plan2").studentLoan,
-      ).toBe(0);
+      expect(studentLoan("2026/27", 35000, [])).toBe(0);
+      expect(studentLoan("2026/27", 25000, ["plan2"])).toBe(0);
     });
 
-    // I4: only salary sacrifice reduces student-loan earnings (calculateUkTax already does this).
-    // Plan 2 2026/27 on 35,000 with 5% pension (1,750):
-    //   not sacrifice: (35000-29385)*9% = 505.35 -> 505
-    //   sacrifice:     (33250-29385)*9% = 347.85 -> 348
+    // I4: only salary sacrifice reduces student-loan earnings.
+    // Plan 2 2026/27 on 35,000 with 5% pension (1,750), rounded to pence:
+    //   net pay:   (35000-29385)*9% = 5615*0.09 = 505.35
+    //   sacrifice: (33250-29385)*9% = 3865*0.09 = 347.85 (the whole-pound wrapper gave 348)
     it("only salary sacrifice reduces student loan earnings", () => {
-      expect(
-        calculateUKEWNITakeHome(35000, "employed", 5, false, "2026/27", "plan2").studentLoan,
-      ).toBe(505);
-      expect(
-        calculateUKEWNITakeHome(35000, "employed", 5, true, "2026/27", "plan2").studentLoan,
-      ).toBe(348);
+      expect(studentLoan("2026/27", 35000, ["plan2"], { method: "net-pay", pct: 5 })).toBe(505.35);
+      expect(studentLoan("2026/27", 35000, ["plan2"], { method: "salary-sacrifice", pct: 5 })).toBe(
+        347.85,
+      );
     });
 
     it("floors the personal allowance taper to whole pounds", () => {
       // 110,001: taper = floor(10,001/2) = 5,000 -> PA 7,570, taxable 102,431
-      // (an unfloored 5,000.5 gave taxable 102,431.5 -> 102,432)
-      const res = calculateUKEWNITakeHome(110001, "employed", 0, false, "2026/27");
+      // (an unfloored 5,000.5 gave taxable 102,431.5)
+      const res = computeUkTakeHome({ taxYear: "2026/27", region: EWNI, salary: 110001 });
       expect(res.personalAllowance).toBe(7570);
       expect(res.taxableIncome).toBe(102431);
     });
 
     it("throws when the plan has no verified entry for the year (no silent zero)", () => {
       // 2020/21 page lists no Plan 4 threshold
-      expect(() =>
-        calculateUKEWNITakeHome(35000, "employed", 0, false, "2020/21", "plan4"),
-      ).toThrow(UnsupportedUkTaxYearError);
+      expect(() => studentLoan("2020/21", 35000, ["plan4"])).toThrow(UnsupportedUkTaxYearError);
     });
   });
 });

@@ -17,9 +17,9 @@ This section was audited against `origin/main` at 7b9b6425. Every epic below car
 | 3 | E11 F-11, E23 | E2E test of the new-user journey: sign up, onboarding, add account, budget entry | Partly |
 | 4 | E20 | Enforce the full web CSP (report-only since #603) | Partly |
 | 5 | E18 | A production environment separate from staging, so releases go to staging first | Not started |
-| 6 | E23, E4 C-11 | Compute the real estimated tax due (now `null`); verify C-17 | Partly |
-| 7 | E4 C-10 | A lone bonus record replaces the salary | Not started |
-| 8 | E25 T5, T15, E4 B-07 | Rebuild `calculateUkTax` as an adapter; one-engine guard; move web calculators onto finance-engine | Partly |
+| 6 | E23, E4 C-11 | Compute the real estimated tax due (now `null`); verify C-17 | Done (`selectEstimatedTaxDue` feeds the dashboard; C-17 verified: providers throw, never report 0) |
+| 7 | E4 C-10 | A lone bonus record replaces the salary | Done (bfcb776a); one payslip no longer replaces the saved salary either (engine PR) |
+| 8 | E25 T5, T15, E4 B-07 | Rebuild `calculateUkTax` as an adapter; one-engine guard; move web calculators onto finance-engine | Done for tax (engine PR): adapter, `check-one-tax-engine` in `check:laws`. The B-07 mortgage and savings formulas in web remain |
 | 9 | E22 | Stale-rates banner on savings, budget, onboarding and home | Partly |
 | 10 | E24 | Fix stale paths in `docs/launch/readiness.json` | Done (BE-01) |
 | 11 | E8 | Make the Storybook a11y job blocking (due 2026-11-25) | Done in the repo (BE-01); owner adds the required check |
@@ -44,7 +44,7 @@ This section was audited against `origin/main` at 7b9b6425. Every epic below car
 
 | Epic | Action |
 |---|---|
-| E4, E22, E25 | Sign off the tax vectors (294 unsigned); verify the 2027/28 figures |
+| E4, E22, E25 | Sign off the tax vectors (334 unsigned, 41 of them the Self Assessment vectors added by the engine PR); verify the 2027/28 figures |
 | E18 | Run and log the backup restore drill; set the Sentry DSN and uptime monitors; create a production environment |
 | E3 D-12 | Rotate the WorkOS key from git history |
 | E19, E29b | ICO fee; legal text; data region move; FCA perimeter view from the solicitor |
@@ -279,8 +279,9 @@ E1 blocks E2, E5 and E6 (do not build on an unauthenticated backend). E3, E4 and
 - **Status (2026-11-14, checked against `origin/main`):** mostly done.
   - The engine track merged as #379, despite its DRAFT title: C-01, C-02, C-03, C-06, C-07, C-08, C-13, C-14 and F-06.
   - C-15 and F-02 merged in #583.
-  - Still open: C-10 is not started, C-11 only hides the figure, and the B-07 web calculators still have their own formulas.
-  - Owner action: all 294 vectors are unsigned (`signedOffBy` is null), so every figure stays unverified.
+  - C-10 and C-11 are done (bfcb776a, `selectEstimatedTaxDue`). The engine PR added the trading and property allowances, payments on account and month-by-month payslips, and removed the second tax implementations.
+  - Still open: the B-07 web mortgage and savings calculators still have their own (non-tax) formulas.
+  - Owner action: all 334 vectors are unsigned (`signedOffBy` is null), so every figure stays unverified.
 - **Severity:** P0
 - **Blocked by:** none
 - **Done when:** Tax, NI, student-loan and Scottish figures match the published rules for each supported tax year, backed by test vectors written before the fix; no money arithmetic produces impossible results.
@@ -327,14 +328,14 @@ E1 blocks E2, E5 and E6 (do not build on an unauthenticated backend). E3, E4 and
 
 #### C-10: A lone bonus record replaces the whole salary
 
-- **Status (2026-11-14):** NOT STARTED. `tax-calculator.ts:497-525` still lets any `paye_bonus` record replace the profile salary, and decision D3 is unresolved.
+- **Status (2026-11-14):** DONE (bfcb776a): bonus, commission, overtime and benefit records add to the salary. The engine PR also stops one logged payslip replacing the saved salary: payslips cover their own months and the saved salary covers the rest.
 - Severity P1, effort S, location `packages/finance-engine/src/tax-calculator.ts:463-465`
 - Acceptance: Add logged income to the profile salary or require an explicit mode.
 - Blocked by: none
 
 #### C-11: Dashboard estimated tax due is a flat 29% of all records
 
-- **Status (2026-11-14):** PARTLY. The flat 29% is gone (#391), but `apps/web/app/routes/_index.tsx:157` sets `estimatedTaxDue = null` instead of calling the engine. The real figure moved to E23.
+- **Status (2026-11-14):** DONE. `selectEstimatedTaxDue` (finance-engine picture) computes the figure and `apps/web/app/routes/_index.tsx` reads it; it is unknown, not £0, when there is no income outside PAYE.
 - Severity P1, effort S, location `apps/web/app/routes/_index.tsx:138-146`
 - Acceptance: Call calculateUKTax for the current tax year.
 - Blocked by: none
@@ -748,10 +749,9 @@ Source: independent Fable review of the epic portfolio against `main` at e4ff6c3
     - C-15 and C-16 (#583, #608);
     - one financial picture for safe to spend, months of cover and budget totals, with a cross-page consistency harness (#638).
   - Partly:
-    - C-11: `_index.tsx:157` hides the figure (`estimatedTaxDue = null`) instead of computing it;
-    - one take-home source across pages (waits on E25 T5 and T15);
     - T-FIX-7.
-  - Unverified: C-17, T-FIX-4 and T-FIX-6.
+  - Done since: C-11 (`selectEstimatedTaxDue`), one take-home source (E25 T5 and T15, engine PR), and C-17 verified (bank providers throw on a failed balance call, pinned by `provider-failure-modes.spec.ts`).
+  - Unverified: T-FIX-4 and T-FIX-6.
   - Missing: the Playwright smoke test for onboarding, adding an account and budget entry; `apps/e2e` covers only sign-in and the dashboard.
 - **Labels:** ready-for-agent for T-FIX items
 
@@ -849,8 +849,7 @@ Source: [docs/research/market-research-2026-11.md](../research/market-research-2
     - the engine (take-home core, thresholds, what-if, marginal-rate curve; T4 and T6 to T8, #631);
     - the marginal-rate explorer with the public pay-rise tool (T9, T10, T12, #639);
     - the calculator rebuild, planner and tax widget (T11, T13, T14, #649).
-  - Partly: the T5 adapter. `calculateUkTax` (`uk-tax.ts:420`) is still a separate engine, shown to agree with `computeUkTakeHome` by a differential test (`uk-take-home.test.ts:120`), not rebuilt as an adapter over it.
-  - Not started: T15, the one-engine guard in `check:laws`; two app call sites still use `calculateUKEWNITakeHome`.
+  - Done (engine PR): T5, `calculateUkTax` is an adapter over `computeUkTakeHome`; `calculateUKEWNITakeHome` and the other second implementations are deleted. T15, `scripts/check-one-tax-engine.ts` runs in `check:laws`.
   - Figures stay "unverified" until the owner signs the tax vectors (E4).
 - **Labels:** needs-triage
 

@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { UK_SELF_ASSESSMENT_VECTORS } from "../packages/finance-engine/src/test-vectors/uk-self-assessment.vectors";
 import { UK_TAX_VECTORS } from "../packages/finance-engine/src/test-vectors/uk-tax.vectors";
 import { UK_WHATIF_VECTORS } from "../packages/finance-engine/src/test-vectors/uk-whatif.vectors";
 import { compareUnsignedToBaseline, unsignedVectorIds } from "./lib/tax-signoff";
@@ -31,7 +32,11 @@ describe("unsigned tax vector ratchet (BE-08)", () => {
     const baseline = JSON.parse(
       readFileSync(resolve(import.meta.dir, "tax-signoff-baseline.json"), "utf8"),
     );
-    const now = unsignedVectorIds([...UK_TAX_VECTORS, ...UK_WHATIF_VECTORS]);
+    const now = unsignedVectorIds([
+      ...UK_TAX_VECTORS,
+      ...UK_WHATIF_VECTORS,
+      ...UK_SELF_ASSESSMENT_VECTORS,
+    ]);
     expect(compareUnsignedToBaseline(now, baseline)).toEqual({ added: [], stale: [] });
   });
 });

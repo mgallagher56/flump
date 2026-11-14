@@ -11,8 +11,8 @@
  * pence-rounded difference. What-if deltas are differences of pence values, so they are exact to the
  * penny and do not drift.
  *
- * `calculateUkTax` is not rewritten here. The differential test in uk-take-home.test.ts proves the two
- * agree on every input they share, so E23's `selectTakeHome` and this core give the same figures.
+ * This is the only take-home calculation (E25-T5): `calculateUkTax` in uk-tax.ts is an adapter that
+ * maps its inputs onto a scenario here, so `selectTakeHome` and every calculator show the same figures.
  */
 
 import { getTaxFeatureVerification, type UkTaxFeature } from "./tax-year-verification.js";
@@ -25,6 +25,7 @@ import {
   type UkScheduledRuleId,
 } from "./uk-scheduled-rules.js";
 import {
+  calculateClass4Ni,
   calculateEmployeeNi,
   calculateEmployerNiSaving,
   calculateIncomeTaxOnTaxable,
@@ -69,6 +70,17 @@ export interface UkIncomeScenario {
   region?: UkTaxRegion;
   salary: number;
   bonus?: number;
+  /**
+   * True when `salary` is self-employed profit, not pay from an employer: Class 4 National
+   * Insurance is charged on it in place of Class 1. Salary sacrifice does not apply.
+   */
+  selfEmployed?: boolean;
+  /**
+   * Other income taxed with the pay but not through payroll, such as rental profit (pounds a
+   * year). It is taxed as non-savings income and carries no National Insurance or student loan
+   * repayment here.
+   */
+  otherIncome?: number;
   pension?: UkPensionInput;
   studentLoans?: readonly UkStudentLoanPlanKey[];
   /** Opt-in. Omitted means no Child Benefit is claimed. */
@@ -113,6 +125,12 @@ export interface UkTakeHomeBreakdown {
   region: UkTaxRegion;
   /** Salary plus bonus. */
   grossPay: number;
+  /** Other income taxed with the pay (0 when none was given). */
+  otherIncome: number;
+  /** Income before the personal allowance: pay and other income, less a sacrifice or net-pay pension. */
+  incomeBeforeAllowance: number;
+  /** Which National Insurance class `nationalInsurance` is. */
+  niClass: "class1" | "class4";
   /** What leaves pay for the pension: the sacrifice, the net-pay contribution or the net RAS payment. */
   pensionEmployee: number;
   /** What reaches the pension from the employee, after basic-rate relief at source. */
@@ -133,7 +151,7 @@ export interface UkTakeHomeBreakdown {
   childBenefit: number;
   hicbcPercent: number;
   hicbc: number;
-  /** grossPay - pensionEmployee - incomeTax - nationalInsurance - studentLoan - hicbc. */
+  /** grossPay + otherIncome - pensionEmployee - incomeTax - nationalInsurance - studentLoan - hicbc. */
   takeHome: number;
   assumptions: UkTakeHomeAssumption[];
   /** Grossed-up relief at source plus grossed-up Gift Aid: how far band edges above the basic rate move. */
@@ -240,6 +258,8 @@ export function computeUkTakeHome(
   const salary = nonNeg(s.salary);
   const bonus = nonNeg(s.bonus);
   const grossPay = salary + bonus;
+  const otherIncome = nonNeg(s.otherIncome);
+  const selfEmployed = s.selfEmployed === true;
 
   const method = s.pension ? s.pension.method : null;
   if (s.pension && s.pension.amount === undefined && nonNeg(s.pension.pct) > 0) {
@@ -266,7 +286,7 @@ export function computeUkTakeHome(
   const giftAidGross = nonNeg(s.giftAidNet) * rules.giftAidGrossUp;
 
   const employmentIncome = grossPay - sacrifice;
-  const incomeBeforeAllowance = Math.max(0, employmentIncome - netPay);
+  const incomeBeforeAllowance = Math.max(0, employmentIncome + otherIncome - netPay);
   const adjustedNetIncome = Math.max(0, incomeBeforeAllowance - rasGross - giftAidGross);
   const personalAllowance = calculatePersonalAllowanceForYear(adjustedNetIncome, rules);
   const taxableIncome = Math.max(0, incomeBeforeAllowance - personalAllowance);
@@ -286,7 +306,9 @@ export function computeUkTakeHome(
       assume("studentLoanUnderScheduledCap", true);
     }
   }
-  const nationalInsurance = calculateEmployeeNi(niPay, rules);
+  const nationalInsurance = selfEmployed
+    ? calculateClass4Ni(niPay, rules)
+    : calculateEmployeeNi(niPay, rules);
 
   const studentLoanPay = employmentIncome;
   const loans = studentLoanRepayments(studentLoanPay, s.studentLoans ?? [], rules);
@@ -312,13 +334,13 @@ export function computeUkTakeHome(
 
   const pensionEmployee = roundPence(contribution);
   const takeHome = roundPence(
-    grossPay - pensionEmployee - incomeTax - nationalInsurance - loans.total - hicbc,
+    grossPay + otherIncome - pensionEmployee - incomeTax - nationalInsurance - loans.total - hicbc,
   );
 
   const touched: UkRuleKey[] = [
     "personalAllowance",
     region === "SCOTLAND" ? "incomeTaxScotland" : "incomeTaxEwni",
-    "niClass1",
+    selfEmployed ? "niClass4" : "niClass1",
   ];
   if (adjustedNetIncome > rules.ewni.personalAllowanceTaperStart)
     touched.push("personalAllowanceTaper");
@@ -338,6 +360,9 @@ export function computeUkTakeHome(
     ...year,
     region,
     grossPay: roundPence(grossPay),
+    otherIncome: roundPence(otherIncome),
+    incomeBeforeAllowance: roundPence(incomeBeforeAllowance),
+    niClass: selfEmployed ? "class4" : "class1",
     pensionEmployee,
     pensionGross: roundPence(method === "relief-at-source" ? rasGross : contribution),
     pensionMethod: method,

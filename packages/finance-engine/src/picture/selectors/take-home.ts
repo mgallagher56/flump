@@ -1,12 +1,7 @@
 import { normalizeStudentLoanPlan, pickEnginePlan } from "../../profile.js";
 import type { UkStudentLoanPlan, UkTaxRegion, UkTaxYear } from "../../types.js";
 import { calculateUkTax } from "../../uk-tax.js";
-import {
-  calculateClass4Ni,
-  getUkTaxYearRules,
-  resolveUkTaxYear,
-  UnsupportedUkTaxYearError,
-} from "../../uk-tax-year.js";
+import { resolveUkTaxYear, UnsupportedUkTaxYearError } from "../../uk-tax-year.js";
 import { type Figure, figureKnown, figureUnknown } from "../figure.js";
 import type { FactKey, ProfileFacts } from "../input.js";
 
@@ -75,17 +70,22 @@ export function selectTakeHome(
     grossSalary: salary,
     pensionContributionPct: pensionPercent,
     isSalarySacrifice: selfEmployed ? false : f.isSalarySacrifice === true,
+    // A saved "relief at source" answer wins; salary sacrifice is a payroll arrangement only.
+    pensionMethod: selfEmployed
+      ? f.pensionMethod === "relief-at-source"
+        ? "relief-at-source"
+        : undefined
+      : (f.pensionMethod ?? undefined),
+    // Self-employed: the saved income is profit, so Class 4 National Insurance applies.
+    selfEmployed,
     studentLoanPlan,
     region,
     taxYear,
   });
 
-  const nationalInsurance = selfEmployed
-    ? calculateClass4Ni(salary, getUkTaxYearRules(taxYear))
-    : result.nationalInsuranceGbp;
+  const nationalInsurance = result.nationalInsuranceGbp;
   const pension = result.employeePensionDeductionGbp;
-  const annualRaw =
-    salary - pension - result.incomeTaxGbp - nationalInsurance - result.studentLoanDeductionGbp;
+  const annualRaw = result.netTakeHomePayAnnualGbp;
   const annual = Math.round(annualRaw);
 
   return figureKnown<TakeHome>(

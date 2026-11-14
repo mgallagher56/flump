@@ -3,6 +3,7 @@
  * E25-T8 appends `getTaxFeatureVerification(year, feature)` to this file.
  */
 import { type SignableVector, yearVerification } from "./test-vectors/signoff.js";
+import { UK_SELF_ASSESSMENT_VECTORS } from "./test-vectors/uk-self-assessment.vectors.js";
 import { UK_TAX_VECTORS } from "./test-vectors/uk-tax.vectors.js";
 import { selectUkWhatIfVectors, type UkTaxFeature } from "./test-vectors/uk-whatif.vectors.js";
 
@@ -12,7 +13,8 @@ export { yearVerification };
 export type TaxVerification = { status: "verified" | "unverified"; detail: string };
 
 export function getTaxYearVerification(year: string): TaxVerification {
-  const status = yearVerification(year, UK_TAX_VECTORS);
+  // The year is verified only when the Self Assessment vectors are signed too.
+  const status = yearVerification(year, [...UK_TAX_VECTORS, ...UK_SELF_ASSESSMENT_VECTORS]);
   return status === "verified"
     ? {
         status,

@@ -54,7 +54,7 @@ export const heavyTaxYearsExpected: Record<string, TaxYearRecordExpectation> = {
     rentalProfitBeforeInterest: 11430, // 14,400 - 2,970
     seIncomeGross: 4800, // 400 x 12
     seExpenses: 240,
-    seProfit: 4560, // 4,800 - 240
+    seProfit: 3800, // 4,800 - 1,000 trading allowance (larger than the 240 costs)
     savingsInterestGross: 410,
     dividendIncomeGross: 300,
   },
@@ -65,7 +65,7 @@ export const heavyTaxYearsExpected: Record<string, TaxYearRecordExpectation> = {
     rentalProfitBeforeInterest: 12560, // 14,400 - 1,840
     seIncomeGross: 4800,
     seExpenses: 240,
-    seProfit: 4560,
+    seProfit: 3800,
     savingsInterestGross: 520,
     dividendIncomeGross: 420,
   },
@@ -76,7 +76,7 @@ export const heavyTaxYearsExpected: Record<string, TaxYearRecordExpectation> = {
     rentalProfitBeforeInterest: 11650, // 14,400 - 2,750
     seIncomeGross: 4800,
     seExpenses: 260,
-    seProfit: 4540, // 4,800 - 260
+    seProfit: 3800, // 4,800 - 1,000 trading allowance (larger than the 260 costs)
     savingsInterestGross: 690,
     dividendIncomeGross: 510,
   },
@@ -87,7 +87,7 @@ export const heavyTaxYearsExpected: Record<string, TaxYearRecordExpectation> = {
     rentalProfitBeforeInterest: 12530, // 14,400 - 1,870
     seIncomeGross: 4800,
     seExpenses: 260,
-    seProfit: 4540,
+    seProfit: 3800,
     savingsInterestGross: 710,
     dividendIncomeGross: 480,
   },

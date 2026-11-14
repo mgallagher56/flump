@@ -30,7 +30,10 @@ export type UkRuleKey =
   | "isaAllowance"
   | "statePension"
   | "hicbc"
-  | "childBenefit";
+  | "childBenefit"
+  | "tradingAllowance"
+  | "propertyAllowance"
+  | "paymentsOnAccount";
 
 export type UkRuleStatus = "verified" | "unverified";
 
@@ -64,6 +67,9 @@ export const UK_RULE_KEYS: readonly UkRuleKey[] = [
   "statePension",
   "hicbc",
   "childBenefit",
+  "tradingAllowance",
+  "propertyAllowance",
+  "paymentsOnAccount",
 ];
 
 const INCOME_TAX_PAST =
@@ -73,6 +79,13 @@ const NIC_RATES =
   "https://www.gov.uk/government/publications/rates-and-allowances-national-insurance-contributions/rates-and-allowances-national-insurance-contributions";
 const ADJUSTED_NET_INCOME = "https://www.gov.uk/guidance/adjusted-net-income";
 const TAX_ON_DIVIDENDS = "https://www.gov.uk/tax-on-dividends";
+// Read 2026-11-14: "up to GBP1,000 each tax year" for property or trading income; current guidance, no year named.
+const TRADING_PROPERTY_ALLOWANCES =
+  "https://www.gov.uk/guidance/tax-free-allowances-on-property-and-trading-income";
+// Read 2026-11-14: no payments on account when the last bill was less than GBP1,000 or more than 80% of the
+// tax owed was already deducted; each payment is half the previous bill, due 31 January and 31 July.
+const PAYMENTS_ON_ACCOUNT =
+  "https://www.gov.uk/understand-self-assessment-bill/payments-on-account";
 const GIFT_AID = "https://www.gov.uk/donating-to-charity/gift-aid";
 // Current guidance, no tax year named: PSA 1,000 / 500 / 0.
 const PSA = "https://www.gov.uk/apply-tax-free-interest-on-savings/how-much-is-tax-free";
@@ -283,6 +296,24 @@ function buildYear(year: UkTaxYear): UkRuleSources {
     statePension: UK_STATE_PENSION_SOURCES[year],
     hicbc: verified(HICBC_PAGE),
     childBenefit: childBenefitSource(year),
+    tradingAllowance: is2026
+      ? verified(TRADING_PROPERTY_ALLOWANCES)
+      : unverified(
+          TRADING_PROPERTY_ALLOWANCES,
+          "trading allowance 1,000 is only confirmed as current guidance, not for this year",
+        ),
+    propertyAllowance: is2026
+      ? verified(TRADING_PROPERTY_ALLOWANCES)
+      : unverified(
+          TRADING_PROPERTY_ALLOWANCES,
+          "property allowance 1,000 is only confirmed as current guidance, not for this year",
+        ),
+    paymentsOnAccount: is2026
+      ? verified(PAYMENTS_ON_ACCOUNT)
+      : unverified(
+          PAYMENTS_ON_ACCOUNT,
+          "payments on account thresholds (1,000 and 80%) are only confirmed as current guidance, not for this year",
+        ),
   };
 }
 

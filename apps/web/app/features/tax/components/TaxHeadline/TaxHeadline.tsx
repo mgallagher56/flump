@@ -103,7 +103,11 @@ export const TaxHeadline: FC<TaxHeadlineProps> = ({
           />
           <KpiCard
             label="Bill due"
-            subtext="Balancing payment"
+            subtext={
+              result?.payments.paymentsOnAccountDue
+                ? "This year's bill and a first payment on account"
+                : "Balancing payment"
+            }
             value={
               <span className={cx(kpiMoney(), date())}>
                 {dateFormat.format(billDueDate(taxYear))}

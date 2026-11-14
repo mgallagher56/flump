@@ -9,9 +9,13 @@ import {
   getTaxYearForRecordDate,
   type TaxRecord,
 } from "./tax-calculator.js";
-import { calculateUKEWNIIncomeTaxOnTaxable, UK_EWNI_INCOME_TAX } from "./tax-rules.js";
 import { selectUkTaxVectors } from "./test-vectors/uk-tax.vectors.js";
-import { getUkTaxYearForDate, roundPence } from "./uk-tax-year.js";
+import {
+  calculateIncomeTaxOnTaxable,
+  getUkTaxYearForDate,
+  getUkTaxYearRules,
+  roundPence,
+} from "./uk-tax-year.js";
 
 function dividendRecord(amount: number, date: string): TaxRecord {
   return {
@@ -38,21 +42,24 @@ function savingsRecord(amount: number, date: string): TaxRecord {
   return { ...dividendRecord(amount, date), category: "savings_interest", name: "Interest" };
 }
 
-describe("calculateUKEWNIIncomeTaxOnTaxable (shared EWNI band function)", () => {
+describe("calculateIncomeTaxOnTaxable (shared EWNI band function)", () => {
+  const ewniTax = (taxable: number, year: "2020/21" | "2025/26" | "2026/27") =>
+    calculateIncomeTaxOnTaxable(taxable, getUkTaxYearRules(year), "ENGLAND_NI_WALES").total;
+
   // Source: https://www.gov.uk/income-tax-rates (2025/26, 2026/27): additional rate
   // above 125,140 taxable income. 37,700 x 20% + (125,140 - 37,700) x 40% = 7,540 + 34,976.
   it("125140 taxable 2025/26 is 42516 (45% starts above taxable 125140)", () => {
-    expect(calculateUKEWNIIncomeTaxOnTaxable(125140, UK_EWNI_INCOME_TAX["2025/26"]!)).toBe(42516);
+    expect(ewniTax(125140, "2025/26")).toBe(42516);
   });
 
   // 42516 + (150000 - 125140) x 45% = 42516 + 11187 = 53703
   it("150000 taxable 2026/27 is 53703", () => {
-    expect(calculateUKEWNIIncomeTaxOnTaxable(150000, UK_EWNI_INCOME_TAX["2026/27"]!)).toBe(53703);
+    expect(ewniTax(150000, "2026/27")).toBe(53703);
   });
 
   // Pre-2023/24 the additional rate starts above taxable 150,000 (2020/21: 37500 x 20% + 112500 x 40%).
   it("150000 taxable 2020/21 has no additional-rate tax (52500)", () => {
-    expect(calculateUKEWNIIncomeTaxOnTaxable(150000, UK_EWNI_INCOME_TAX["2020/21"]!)).toBe(52500);
+    expect(ewniTax(150000, "2020/21")).toBe(52500);
   });
 });
 
@@ -381,18 +388,23 @@ describe("tax due on income outside PAYE (golden, 2026/27 England, Wales and NI)
 
   it("PAYE is deducted with the allowance tapered by the salary alone: 95,000 salary + 20,000 rent", () => {
     const r = calculateUKTax(Y, [rent(20000)], 95000, 100);
-    // Liability: allowance 12,570 - 7,500 = 5,070; taxable 109,930; 7,540 + 72,230 x 40% = 36,432.
-    expect(r.totalTaxDue).toBe(36432);
+    // No costs recorded, so the 1,000 property allowance comes off the rent: profit 19,000.
+    // Liability: total 114,000; allowance 12,570 - 7,000 = 5,570; taxable 108,430;
+    // 7,540 + 70,730 x 40% = 35,832.
+    expect(r.propertyAllowanceUsed).toBe(1000);
+    expect(r.totalTaxDue).toBe(35832);
     // PAYE: full 12,570 allowance on 95,000; taxable 82,430; 7,540 + 44,730 x 40% = 25,432.
     expect(r.payeTaxDue).toBe(25432);
-    expect(r.netAdditionalTaxToPay).toBe(11000);
+    expect(r.netAdditionalTaxToPay).toBe(10400);
   });
 
-  it("120,000 salary + 10,000 rent: 44,703 liability - 39,432 PAYE = 5,271", () => {
+  it("120,000 salary + 10,000 rent: 44,253 liability - 39,432 PAYE = 4,821", () => {
     const r = calculateUKTax(Y, [rent(10000)], 120000, 100);
-    expect(r.totalTaxDue).toBe(44703);
+    // Rent less the 1,000 property allowance: 9,000. Total 129,000, no personal allowance left:
+    // 7,540 + 87,440 x 40% + 3,860 x 45% = 44,253.
+    expect(r.totalTaxDue).toBe(44253);
     expect(r.payeTaxDue).toBe(39432);
-    expect(r.netAdditionalTaxToPay).toBe(5271);
+    expect(r.netAdditionalTaxToPay).toBe(4821);
   });
 
   it("unused allowance covers savings: 10,000 trading profit + 3,000 interest = 0", () => {
@@ -423,11 +435,13 @@ describe("tax due on income outside PAYE (golden, 2026/27 England, Wales and NI)
     expect(r2.savingsTaxDue).toBeCloseTo(200, 2);
   });
 
-  it("unused allowance then covers dividends: 5,000 profit + 20,000 dividends = 1,282", () => {
+  it("unused allowance then covers dividends: 5,000 trading income + 20,000 dividends = 1,175", () => {
     const r = calculateUKTax(Y, [tradingIncome(5000), dividendRecord(20000, "2026-06-01")], 0, 100);
-    // 7,570 allowance left after profit; 12,430 dividends - 500 allowance = 11,930 x 10.75%.
-    expect(r.taxableDividends).toBe(11930);
-    expect(Math.round(r.netAdditionalTaxToPay)).toBe(1282);
+    // Profit 4,000 after the 1,000 trading allowance; 8,570 personal allowance left;
+    // 11,430 dividends - 500 allowance = 10,930 x 10.75% = 1,174.98.
+    expect(r.seProfit).toBe(4000);
+    expect(r.taxableDividends).toBe(10930);
+    expect(Math.round(r.netAdditionalTaxToPay)).toBe(1175);
   });
 
   it("Section 24 credit still holds: 49,000 salary + 10,000 rent with 6,000 mortgage interest = 2,546", () => {
