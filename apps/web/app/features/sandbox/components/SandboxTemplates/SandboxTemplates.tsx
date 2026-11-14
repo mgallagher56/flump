@@ -7,9 +7,9 @@ import {
   KpiCard,
   KpiStrip,
   PageHeader,
+  PersonalAllowanceTaperBanner,
   SimulatorSplitLayout,
   Table,
-  TaxTrapEscapeBanner,
   TBody,
   Td,
   THead,
@@ -213,7 +213,7 @@ export const Stage3View: FC = () => (
       title="Personal allowance taper scenario"
     />
     <div style={{ marginBottom: "24px" }}>
-      <TaxTrapEscapeBanner grossIncome={112000} />
+      <PersonalAllowanceTaperBanner grossIncome={112000} />
     </div>
     <div
       style={{

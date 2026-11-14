@@ -78,8 +78,8 @@ export const Stage2CrossoverMobile: Story = {
   render: () => <Stage2View />,
 };
 
-export const Stage3TaxTrapDesktop: Story = {
-  name: "Stage 3: Tax Trap Escape (Desktop 1440px)",
+export const Stage3AllowanceTaperDesktop: Story = {
+  name: "Stage 3: Personal allowance taper (Desktop 1440px)",
   parameters: {
     // E8 waiver: heading-order
     a11y: { config: { rules: [{ id: "heading-order", enabled: false }] } },
@@ -92,8 +92,8 @@ export const Stage3TaxTrapDesktop: Story = {
   },
 };
 
-export const Stage3TaxTrapMobile: Story = {
-  name: "Stage 3: Tax Trap Escape (Mobile 375px)",
+export const Stage3AllowanceTaperMobile: Story = {
+  name: "Stage 3: Personal allowance taper (Mobile 375px)",
   parameters: {
     // E8 waiver: heading-order
     a11y: { config: { rules: [{ id: "heading-order", enabled: false }] } },

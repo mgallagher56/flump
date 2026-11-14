@@ -30,7 +30,7 @@ export const TOOL_TILES: readonly ToolTileData[] = [
     shortTitle: "Snowball vs avalanche",
     title: "Debt payoff: snowball vs avalanche calculator",
     description:
-      "Compare mathematical interest savings against psychological momentum across a credit card and a loan.",
+      "Compare paying the highest rate first with clearing the smallest balance first, across a credit card and a loan.",
     icon: Flame,
   },
   {

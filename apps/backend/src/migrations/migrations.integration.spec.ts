@@ -5,6 +5,7 @@ import { typeOrmOptionsFromEnv } from "../config/typeorm.options";
 import { assertSafeTestDatabase } from "../testing/assertSafeTestDatabase";
 import { resolveDbTestMode } from "../testing/dbTestMode";
 import { discoverMigrations, type MigrationClass } from "../testing/discoverMigrations";
+import { AccountDetailsUserMonthIndex1794357300000 } from "./AccountDetailsUserMonthIndex1794357300000";
 import { AddAccountStudentLoanPlanAndCurrencyDefault1794355800000 } from "./AddAccountStudentLoanPlanAndCurrencyDefault1794355800000";
 import { AddMortgageTermColumns1794355600000 } from "./AddMortgageTermColumns1794355600000";
 import { AddProfileFacts1794355723000 } from "./AddProfileFacts1794355723000";
@@ -140,6 +141,19 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
     try {
       await runner.startTransaction();
       await migration.up(runner);
+      await runner.commitTransaction();
+    } finally {
+      await runner.release();
+    }
+  };
+
+  const runMigrationDown = async (migration: {
+    down: (qr: import("typeorm").QueryRunner) => Promise<void>;
+  }): Promise<void> => {
+    const runner = ds.createQueryRunner();
+    try {
+      await runner.startTransaction();
+      await migration.down(runner);
       await runner.commitTransaction();
     } finally {
       await runner.release();
@@ -509,8 +523,8 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
   describe("EvolveAccountDetailsForSnapshots1794356100000 (E30)", () => {
     const MIGRATION = "EvolveAccountDetailsForSnapshots1794356100000";
 
-    // Brings the schema to the state before this migration (full up, then its own down), so the
-    // legacy shape can be seeded and the real up() run on top of it.
+    // Brings the schema to the state before this migration (full up, then the downs back to and
+    // including its own), so the legacy shape can be seeded and the real up() run on top of it.
     const legacy = async (): Promise<{ a: string; b: string }> => {
       await ds.runMigrations();
       await undoThrough(MIGRATION);
@@ -1001,6 +1015,31 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
         await runner.release();
       }
       expect(await endDateOf(id)).toBe("2024-04-05");
+    });
+  });
+
+  describe("AccountDetailsUserMonthIndex1794357300000", () => {
+    const indexNames = async (): Promise<string[]> => {
+      const rows: { indexname: string }[] = await ds.query(
+        `SELECT indexname FROM pg_indexes
+         WHERE schemaname = 'public' AND tablename = 'account_details' ORDER BY indexname`,
+      );
+      return rows.map((r) => r.indexname);
+    };
+
+    it("replaces the user_id index with (user_id, account_id, year, month); down() restores it", async () => {
+      await ds.runMigrations();
+      const defs: { indexdef: string }[] = await ds.query(
+        `SELECT indexdef FROM pg_indexes
+         WHERE schemaname = 'public' AND indexname = 'IDX_account_details_user_account_year_month'`,
+      );
+      expect(defs[0]?.indexdef).toMatch(/\(user_id, account_id, year, month\)/);
+      expect(await indexNames()).not.toContain("IDX_account_details_user");
+
+      await runMigrationDown(new AccountDetailsUserMonthIndex1794357300000());
+      const after = await indexNames();
+      expect(after).toContain("IDX_account_details_user");
+      expect(after).not.toContain("IDX_account_details_user_account_year_month");
     });
   });
 

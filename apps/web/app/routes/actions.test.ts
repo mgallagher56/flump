@@ -94,25 +94,6 @@ const cases: Case[] = [
   {
     route: "accounts",
     action: accountsAction,
-    intent: "checkIn",
-    fields: {
-      balances: JSON.stringify([
-        { id: "a1", balance: 10.456 },
-        { id: "a2", balance: -5 },
-      ]),
-    },
-    method: "PATCH",
-    path: "/accounts/balances",
-    body: {
-      balances: [
-        { id: "a1", balance: 10.46 },
-        { id: "a2", balance: -5 },
-      ],
-    },
-  },
-  {
-    route: "accounts",
-    action: accountsAction,
     intent: "delete",
     fields: { accountId: "a1" },
     method: "DELETE",

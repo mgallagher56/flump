@@ -1,6 +1,89 @@
 import { getCurrentUKTaxYear, PortfolioSnapshot } from "@flump/finance-engine";
+import { isLiabilityType } from "~/containers/accounts/utils";
 import type { UserProfile } from "~/hooks/useUserProfile";
 import { buildDebtSummary } from "~/utils/debtSummary";
+import { buildWorkspacePicture, knownOrNull } from "~/utils/financialPicture";
+
+interface DemoAccount {
+  type: string;
+  balance: number;
+  monthlyContribution: number | null;
+}
+
+/**
+ * Derived figures for a sample persona, built the way the dashboard loader builds them: from the
+ * persona's own rows through the engine's financial picture (E23 section 2). Only the rows are
+ * hand-written; net worth, budget totals, safe to spend and months of cover are never typed in.
+ */
+function demoFigures(
+  accounts: readonly DemoAccount[],
+  budgetEntries: readonly unknown[],
+  userProfile: Partial<UserProfile>,
+) {
+  const snapshot = new PortfolioSnapshot([...accounts] as never, []);
+  const picture = buildWorkspacePicture(
+    { userProfile, accounts, accountDetails: [], budgetEntries },
+    { snapshot },
+  );
+  const { totalAssets, totalLiabilities, netWorth, liquidCash } = picture.netWorth;
+  const budget = knownOrNull(picture.budget);
+  const safeToSpend = knownOrNull(picture.safeToSpend);
+  const monthsOfCover = knownOrNull(picture.monthsOfCover);
+  const monthlyIncome = budget?.income ?? 0;
+  const monthlyOutgoings = budget?.outgoings ?? 0;
+
+  const typeTotals: Record<string, number> = {};
+  for (const a of accounts) {
+    typeTotals[a.type] =
+      (typeTotals[a.type] ?? 0) + (isLiabilityType(a.type) ? Math.abs(a.balance) : a.balance);
+  }
+  const savingsAccounts = accounts.filter((a) => a.type === "Saving" || a.type === "Investment");
+  const totalSavingsBalance = savingsAccounts.reduce((sum, a) => sum + a.balance, 0);
+
+  return {
+    accountsData: {
+      netWorth,
+      totalAssets,
+      totalLiabilities,
+      liquidCash,
+      accountsCount: accounts.length,
+      typeTotals,
+    },
+    budgetData: {
+      budgetKnown: budget !== null,
+      monthlyIncome,
+      monthlyExpenses: monthlyOutgoings,
+      monthlySurplus: budget?.hasIncome ? budget.surplus : null,
+      monthlyEssentials: monthsOfCover?.monthlyEssentials ?? null,
+      budgetedSavings: budget?.savings ?? 0,
+      livingExpenses: monthlyOutgoings,
+      savingsRatePct:
+        monthlyIncome > 0
+          ? Math.min(
+              100,
+              Math.max(0, Math.round(((monthlyIncome - monthlyOutgoings) / monthlyIncome) * 100)),
+            )
+          : 0,
+      safeToSpendWeekly: safeToSpend?.weekly ?? null,
+      safeToSpendShortfall: safeToSpend?.monthlyShortfall ?? null,
+      takeHomeMonthly: knownOrNull(picture.takeHome)?.monthly ?? null,
+      monthsOfCover: monthsOfCover?.months ?? null,
+    },
+    savingsData: {
+      totalSavingsBalance,
+      totalMonthlyContributions: savingsAccounts.reduce(
+        (sum, a) => sum + (a.monthlyContribution ?? 0),
+        0,
+      ),
+      weightedInterestRate:
+        totalSavingsBalance > 0 ? Number(snapshot.getWeightedSavingsRate(0).toFixed(2)) : null,
+      accountsCount: savingsAccounts.length,
+    },
+    monthlySavingRate: Math.max(0, monthlyIncome - monthlyOutgoings),
+    totalPensionBalance: snapshot.getTotalPensions(),
+    snapshot,
+  };
+}
 
 export function isDemoMode(url: URL | string): boolean {
   try {
@@ -61,7 +144,7 @@ export function getSandboxPersonaData(persona: "debt" | "medium" | "high" | "wea
         id: "b1",
         category: "Income",
         name: "Take-Home Salary (£34k)",
-        amount: 2450,
+        amount: 2220,
         frequency: "monthly",
         isIncome: true,
       },
@@ -72,6 +155,7 @@ export function getSandboxPersonaData(persona: "debt" | "medium" | "high" | "wea
         amount: 950,
         frequency: "monthly",
         isIncome: false,
+        isEssential: true,
       },
       {
         id: "b3",
@@ -80,6 +164,7 @@ export function getSandboxPersonaData(persona: "debt" | "medium" | "high" | "wea
         amount: 450,
         frequency: "monthly",
         isIncome: false,
+        isEssential: true,
       },
       {
         id: "b4",
@@ -88,6 +173,7 @@ export function getSandboxPersonaData(persona: "debt" | "medium" | "high" | "wea
         amount: 450,
         frequency: "monthly",
         isIncome: false,
+        isEssential: true,
       },
     ];
 
@@ -96,7 +182,11 @@ export function getSandboxPersonaData(persona: "debt" | "medium" | "high" | "wea
       firstName: "Sam",
       lastName: "Jordan",
       annualSalary: 34000,
-      monthlyTakeHome: 2450,
+      employmentType: "employed",
+      pensionPercent: 5,
+      pensionEmployerPercent: 3,
+      isSalarySacrifice: false,
+      monthlyTakeHome: 2220,
       hasMortgage: false,
       hasBuyToLet: false,
       enabledPages: ["accounts", "budget", "debt", "pension", "tax"],
@@ -108,6 +198,8 @@ export function getSandboxPersonaData(persona: "debt" | "medium" | "high" | "wea
       },
       dashboardWidgetOrder: ["accounts", "budget", "debt"],
     };
+
+    const figures = demoFigures(debtAccounts, budgetEntries, userProfile);
 
     return {
       persona: "debt" as const,
@@ -127,38 +219,17 @@ export function getSandboxPersonaData(persona: "debt" | "medium" | "high" | "wea
       hasProfile: true,
       hasRunForecast: false,
       completedSteps: ["accounts", "debt", "budget"],
-      accountsData: {
-        netWorth: -7050,
-        totalAssets: 950,
-        totalLiabilities: 8000,
-        accountsCount: 4,
-        typeTotals: { Current: 950, "Credit Card": 4500, Overdraft: 1200, Loan: 2300 },
-        liquidCash: 950,
-      },
+      accountsData: figures.accountsData,
       budgetData: {
-        monthlyIncome: 2450,
+        ...figures.budgetData,
         annualSalary: 34000,
-        monthlyExpenses: 1850,
-        monthlySurplus: 600,
-        budgetedSavings: 0,
-        livingExpenses: 1400,
-        savingsRatePct: 0,
-        runwayMonths: 0.7,
-        runwayLabel: "0.7 mos",
         rawEntries: budgetEntries,
         rawAccounts: debtAccounts,
         rawAccountDetails: [],
-        // Illustrative sample figures in the picture's shape (E23).
-        safeToSpendWeekly: 138,
-        monthsOfCover: 0.7,
       },
-      savingsData: {
-        totalSavingsBalance: 0,
-        totalMonthlyContributions: 0,
-        weightedInterestRate: 0,
-        accountsCount: 0,
-      },
+      savingsData: figures.savingsData,
       pensionData: {
+        // The pension pot is not one of this persona's accounts, so it is a profile figure.
         totalPensionBalance: 6500,
         potsCount: 1,
         employeePercent: 5.0,
@@ -173,10 +244,10 @@ export function getSandboxPersonaData(persona: "debt" | "medium" | "high" | "wea
         hasMortgageAccount: false,
       },
       forecastData: {
-        totalAssets: 950,
-        monthlySavingRate: 600,
+        totalAssets: figures.accountsData.totalAssets,
+        monthlySavingRate: figures.monthlySavingRate,
         annualSalary: 34000,
-        estimatedTakeHome: 2450,
+        estimatedTakeHome: figures.budgetData.takeHomeMonthly,
       },
       taxData: {
         taxYear: getCurrentUKTaxYear(),
@@ -187,7 +258,7 @@ export function getSandboxPersonaData(persona: "debt" | "medium" | "high" | "wea
         recordsCount: 1,
       },
       // Computed by the engine from the persona's own accounts, so the date is relative to now.
-      debtData: buildDebtSummary(new PortfolioSnapshot(debtAccounts, [])),
+      debtData: buildDebtSummary(figures.snapshot),
     };
   }
 
@@ -244,6 +315,7 @@ export function getSandboxPersonaData(persona: "debt" | "medium" | "high" | "wea
         amount: 1070,
         frequency: "monthly",
         isIncome: false,
+        isEssential: true,
       },
       {
         id: "mb3",
@@ -252,6 +324,7 @@ export function getSandboxPersonaData(persona: "debt" | "medium" | "high" | "wea
         amount: 350,
         frequency: "monthly",
         isIncome: false,
+        isEssential: true,
       },
       {
         id: "mb4",
@@ -260,6 +333,7 @@ export function getSandboxPersonaData(persona: "debt" | "medium" | "high" | "wea
         amount: 250,
         frequency: "monthly",
         isIncome: false,
+        isEssential: false,
       },
       {
         id: "mb5",
@@ -276,6 +350,10 @@ export function getSandboxPersonaData(persona: "debt" | "medium" | "high" | "wea
       firstName: "Jordan",
       lastName: "Taylor",
       annualSalary: 39000,
+      employmentType: "employed",
+      pensionPercent: 5,
+      pensionEmployerPercent: 3,
+      isSalarySacrifice: false,
       monthlyTakeHome: 2503,
       hasMortgage: false,
       hasBuyToLet: false,
@@ -289,6 +367,8 @@ export function getSandboxPersonaData(persona: "debt" | "medium" | "high" | "wea
       },
       dashboardWidgetOrder: ["accounts", "budget", "savings", "pension"],
     };
+
+    const figures = demoFigures(mediumAccounts, budgetEntries, userProfile);
 
     return {
       persona: "medium" as const,
@@ -308,38 +388,17 @@ export function getSandboxPersonaData(persona: "debt" | "medium" | "high" | "wea
       hasProfile: true,
       hasRunForecast: true,
       completedSteps: ["accounts", "budget", "savings", "pension"],
-      accountsData: {
-        netWorth: 43300,
-        totalAssets: 43300,
-        totalLiabilities: 0,
-        accountsCount: 3,
-        typeTotals: { Current: 2800, Saving: 12500, Pension: 28000 },
-        liquidCash: 15300,
-      },
+      accountsData: figures.accountsData,
       budgetData: {
-        monthlyIncome: 2503,
+        ...figures.budgetData,
         annualSalary: 39000,
-        monthlyExpenses: 1970,
-        monthlySurplus: 533,
-        budgetedSavings: 300,
-        livingExpenses: 1670,
-        savingsRatePct: 33,
-        runwayMonths: 7.5,
-        runwayLabel: "7.5 mos",
         rawEntries: budgetEntries,
         rawAccounts: mediumAccounts,
         rawAccountDetails: [],
-        safeToSpendWeekly: 162,
-        monthsOfCover: 7.5,
       },
-      savingsData: {
-        totalSavingsBalance: 12500,
-        totalMonthlyContributions: 300,
-        weightedInterestRate: 4.75,
-        accountsCount: 1,
-      },
+      savingsData: figures.savingsData,
       pensionData: {
-        totalPensionBalance: 28000,
+        totalPensionBalance: figures.totalPensionBalance,
         potsCount: 1,
         employeePercent: 5.0,
         employerPercent: 3.0,
@@ -353,10 +412,10 @@ export function getSandboxPersonaData(persona: "debt" | "medium" | "high" | "wea
         hasMortgageAccount: false,
       },
       forecastData: {
-        totalAssets: 43300,
-        monthlySavingRate: 560,
+        totalAssets: figures.accountsData.totalAssets,
+        monthlySavingRate: figures.monthlySavingRate,
         annualSalary: 39000,
-        estimatedTakeHome: 2503,
+        estimatedTakeHome: figures.budgetData.takeHomeMonthly,
       },
       taxData: {
         taxYear: getCurrentUKTaxYear(),
@@ -432,6 +491,26 @@ export function getSandboxPersonaData(persona: "debt" | "medium" | "high" | "wea
       monthlyContribution: 680,
       isCurrent: true,
     },
+    {
+      id: "demo-high-acc-7",
+      name: "Home",
+      type: "Property",
+      balance: 458000,
+      currency: "GBP",
+      interestRate: null,
+      monthlyContribution: null,
+      isCurrent: true,
+    },
+    {
+      id: "demo-high-acc-8",
+      name: "Buy-to-let property",
+      type: "Property",
+      balance: 260000,
+      currency: "GBP",
+      interestRate: null,
+      monthlyContribution: null,
+      isCurrent: true,
+    },
   ];
 
   const highBudgetEntries = [
@@ -439,7 +518,7 @@ export function getSandboxPersonaData(persona: "debt" | "medium" | "high" | "wea
       id: "hb1",
       category: "Income",
       name: "PAYE Take-Home (£100k - £8k Pension Sacrifice)",
-      amount: 5480,
+      amount: 5326,
       frequency: "monthly",
       isIncome: true,
     },
@@ -458,6 +537,7 @@ export function getSandboxPersonaData(persona: "debt" | "medium" | "high" | "wea
       amount: 1450,
       frequency: "monthly",
       isIncome: false,
+      isEssential: true,
     },
     {
       id: "hb4",
@@ -466,6 +546,7 @@ export function getSandboxPersonaData(persona: "debt" | "medium" | "high" | "wea
       amount: 680,
       frequency: "monthly",
       isIncome: false,
+      isEssential: true,
     },
     {
       id: "hb5",
@@ -474,6 +555,7 @@ export function getSandboxPersonaData(persona: "debt" | "medium" | "high" | "wea
       amount: 450,
       frequency: "monthly",
       isIncome: false,
+      isEssential: true,
     },
     {
       id: "hb6",
@@ -482,6 +564,7 @@ export function getSandboxPersonaData(persona: "debt" | "medium" | "high" | "wea
       amount: 1170,
       frequency: "monthly",
       isIncome: false,
+      isEssential: true,
     },
     {
       id: "hb7",
@@ -498,7 +581,8 @@ export function getSandboxPersonaData(persona: "debt" | "medium" | "high" | "wea
     firstName: "Morgan",
     lastName: "Vance",
     annualSalary: 100000,
-    monthlyTakeHome: 5480,
+    employmentType: "employed",
+    monthlyTakeHome: 5326,
     hasSecondIncome: false,
     hasRentalIncome: true,
     rentalIncomeMonthly: 1200,
@@ -526,6 +610,9 @@ export function getSandboxPersonaData(persona: "debt" | "medium" | "high" | "wea
     dashboardWidgetOrder: ["accounts", "budget", "tax", "pension", "mortgage"],
   };
 
+  const figures = demoFigures(highAccounts, highBudgetEntries, userProfile);
+  const residentialMortgage = highAccounts[4]!;
+
   return {
     persona: "high" as const,
     user: {
@@ -544,44 +631,17 @@ export function getSandboxPersonaData(persona: "debt" | "medium" | "high" | "wea
     hasProfile: true,
     hasRunForecast: true,
     completedSteps: ["accounts", "budget", "tax", "pension", "mortgage"],
-    accountsData: {
-      netWorth: 441500,
-      totalAssets: 921500,
-      totalLiabilities: 480000,
-      accountsCount: 6,
-      typeTotals: {
-        Current: 6500,
-        Investment: 65000,
-        Saving: 22000,
-        Pension: 110000,
-        Mortgage: 480000,
-      },
-      liquidCash: 28500,
-    },
+    accountsData: figures.accountsData,
     budgetData: {
-      monthlyIncome: 6680,
+      ...figures.budgetData,
       annualSalary: 100000,
-      monthlyExpenses: 4950,
-      monthlySurplus: 1730,
-      budgetedSavings: 1200,
-      livingExpenses: 3750,
-      savingsRatePct: 44,
-      runwayMonths: 12.0,
-      runwayLabel: "1 yr",
       rawEntries: highBudgetEntries,
       rawAccounts: highAccounts,
       rawAccountDetails: [],
-      safeToSpendWeekly: 399,
-      monthsOfCover: 12,
     },
-    savingsData: {
-      totalSavingsBalance: 87000,
-      totalMonthlyContributions: 1500,
-      weightedInterestRate: 6.8,
-      accountsCount: 2,
-    },
+    savingsData: figures.savingsData,
     pensionData: {
-      totalPensionBalance: 110000,
+      totalPensionBalance: figures.totalPensionBalance,
       potsCount: 2,
       employeePercent: 8.0,
       employerPercent: 5.0,
@@ -589,16 +649,16 @@ export function getSandboxPersonaData(persona: "debt" | "medium" | "high" | "wea
       monthlyContributionEst: 1083,
     },
     mortgageData: {
-      mortgageBalance: 310000,
-      interestRate: 3.9,
+      mortgageBalance: residentialMortgage.balance,
+      interestRate: residentialMortgage.interestRate,
       remainingTermYears: 22,
       hasMortgageAccount: true,
     },
     forecastData: {
-      totalAssets: 921500,
-      monthlySavingRate: 2283,
+      totalAssets: figures.accountsData.totalAssets,
+      monthlySavingRate: figures.monthlySavingRate,
       annualSalary: 100000,
-      estimatedTakeHome: 5480,
+      estimatedTakeHome: figures.budgetData.takeHomeMonthly,
     },
     taxData: {
       taxYear: getCurrentUKTaxYear(),
