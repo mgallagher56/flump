@@ -12,3 +12,5 @@ export const perMonth = css({
   fontWeight: "normal",
   color: "text.muted",
 });
+
+export const summaryStack = css({ display: "flex", flexDirection: "column", gap: "4" });

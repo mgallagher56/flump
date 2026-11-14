@@ -7,7 +7,7 @@ const values = { loanAmount: 180000, interestRate: 4.5, remainingTerm: 20 };
 describe("<MortgageScenarioInputs />", () => {
   it("renders the three starting figures and says they only change the illustration", () => {
     render(<MortgageScenarioInputs isEdited={() => false} values={values} onChange={vi.fn()} />);
-    expect(screen.getByText(/only change the illustration/i)).toBeDefined();
+    expect(screen.getByText(/only changes the illustration/i)).toBeDefined();
     expect(screen.queryByText(/Changed from your saved figure/)).toBeNull();
   });
 

@@ -59,7 +59,10 @@ export const action = async (args: ActionFunctionArgs) => {
     } else if (intent === "deleteDebt") {
       await backendFetch(`/accounts/${accountId}`, { accessToken: token, method: "DELETE" });
     } else {
-      return data({ success: false as const, error: "Unknown action." }, { status: 400 });
+      return data(
+        { success: false as const, error: "We could not do that. Nothing has changed. Try again." },
+        { status: 400 },
+      );
     }
 
     return data({ success: true });
@@ -68,7 +71,7 @@ export const action = async (args: ActionFunctionArgs) => {
   }
 };
 
-export const meta: MetaFunction = () => [{ title: "Debt payoff | Flump" }];
+export const meta: MetaFunction = () => [{ title: "Debt | Flump" }];
 
 export const loader = async (args: LoaderFunctionArgs) => {
   const { accounts, accountDetails, userProfile, budgetEntries, user } =

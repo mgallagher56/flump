@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 import customRender from "~/testUtils/customRender";
 import { DebtAccountsList } from "./DebtAccountsList";
 
-const baseProps = { onAddDebt: vi.fn(), onDeleteDebt: vi.fn(), onUpdateDebt: vi.fn() };
+const baseProps = { onDeleteDebt: vi.fn(), onUpdateDebt: vi.fn() };
 
 const debt = (over: Partial<DebtItem> & { id: string }): DebtItem => ({
   name: "Card",
@@ -16,7 +16,36 @@ const debt = (over: Partial<DebtItem> & { id: string }): DebtItem => ({
 });
 
 describe("DebtAccountsList", () => {
-  it("shows Not set with an Add APR affordance where the APR is unknown, and keeps 0% as 0%", () => {
+  it("titles the list 'Your debts' and marks each row as a list row", () => {
+    const { container } = customRender(
+      <DebtAccountsList {...baseProps} debts={[debt({ id: "a" }), debt({ id: "b" })]} />,
+    );
+    expect(screen.getByRole("heading", { level: 2, name: "Your debts" })).toBeDefined();
+    expect(container.querySelectorAll("[data-list-row]")).toHaveLength(2);
+    expect(container.textContent).not.toMatch(/liability|creditor/i);
+  });
+
+  it("shows the balance as the row figure, with the rate and minimum in the row detail", () => {
+    customRender(
+      <DebtAccountsList
+        {...baseProps}
+        debts={[debt({ id: "a", balance: 3000, apr: 22.9, minimumPayment: 90 })]}
+      />,
+    );
+    const row = within(screen.getByRole("listitem"));
+    expect(row.getByText("£3,000")).toBeDefined();
+    expect(row.getByText(/22\.9% APR/)).toBeDefined();
+    expect(row.getByText(/£90 a month minimum/)).toBeDefined();
+  });
+
+  it("shows a balance stored as a negative amount (#665) as a positive amount owed", () => {
+    customRender(<DebtAccountsList {...baseProps} debts={[debt({ id: "a", balance: -4500 })]} />);
+    const row = within(screen.getByRole("listitem"));
+    expect(row.getByText("£4,500")).toBeDefined();
+    expect(row.queryByText(/[-−]£/)).toBeNull();
+  });
+
+  it("offers Add the rate where the APR is unknown, never 'Not set', and keeps 0% as 0%", () => {
     customRender(
       <DebtAccountsList
         {...baseProps}
@@ -26,16 +55,29 @@ describe("DebtAccountsList", () => {
         ]}
       />,
     );
-    expect(screen.getAllByText("Not set")).toHaveLength(1);
-    expect(screen.getByRole("button", { name: "Add APR for Mystery card" })).toBeDefined();
-    expect(screen.getAllByText("0%")).toHaveLength(1);
+    expect(screen.queryByText("Not set")).toBeNull();
+    expect(screen.getByRole("button", { name: "Add the rate for Mystery card" })).toBeDefined();
+    expect(screen.getAllByText(/(^|\s)0% APR/)).toHaveLength(1);
   });
 
-  it("opens the edit dialog from Add APR", () => {
+  it("opens the edit dialog from Add the rate", () => {
     customRender(
       <DebtAccountsList {...baseProps} debts={[debt({ id: "a", apr: 0, aprKnown: false })]} />,
     );
-    fireEvent.click(screen.getByRole("button", { name: "Add APR for Card" }));
+    fireEvent.click(screen.getByRole("button", { name: "Add the rate for Card" }));
+    expect(screen.getByRole("dialog", { name: "Edit debt" })).toBeDefined();
+  });
+
+  it("opens the edit dialog when the page sets editingId", () => {
+    const onEditingIdChange = vi.fn();
+    customRender(
+      <DebtAccountsList
+        {...baseProps}
+        debts={[debt({ id: "a" })]}
+        editingId="a"
+        onEditingIdChange={onEditingIdChange}
+      />,
+    );
     expect(screen.getByRole("dialog", { name: "Edit debt" })).toBeDefined();
   });
 
@@ -49,7 +91,7 @@ describe("DebtAccountsList", () => {
         ]}
       />,
     );
-    expect(screen.getAllByText("estimated")).toHaveLength(1);
+    expect(screen.getAllByText(/\(estimate\)/)).toHaveLength(1);
   });
 
   it("lets a user clear the APR via an Edit dialog, sending only the changed fields", () => {
@@ -63,45 +105,32 @@ describe("DebtAccountsList", () => {
     );
     fireEvent.click(screen.getByRole("button", { name: "Edit Card" }));
     expect(screen.queryByLabelText(/^Balance you owe/)).toBeNull();
-    fireEvent.change(screen.getByLabelText(/^APR/), { target: { value: "" } });
+    fireEvent.change(screen.getByLabelText(/^Interest rate/), { target: { value: "" } });
     fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
     expect(onUpdateDebt).toHaveBeenCalledWith("a", { apr: 0, aprKnown: false });
     expect(screen.queryByRole("button", { name: "Save changes" })).toBeNull();
   });
 
-  it("calls the add and delete callbacks", () => {
-    const onAddDebt = vi.fn();
+  it("calls the delete callback", () => {
     const onDeleteDebt = vi.fn();
     customRender(
-      <DebtAccountsList
-        {...baseProps}
-        debts={[debt({ id: "a" })]}
-        onAddDebt={onAddDebt}
-        onDeleteDebt={onDeleteDebt}
-      />,
+      <DebtAccountsList {...baseProps} debts={[debt({ id: "a" })]} onDeleteDebt={onDeleteDebt} />,
     );
-    fireEvent.click(screen.getByRole("button", { name: /Add debt/ }));
     fireEvent.click(screen.getByRole("button", { name: "Delete Card" }));
-    expect(onAddDebt).toHaveBeenCalled();
     expect(onDeleteDebt).toHaveBeenCalledWith("a");
   });
 
   it("keeps rows past the eighth behind a drawer", () => {
     const many = Array.from({ length: 10 }, (_, i) => debt({ id: `d${i}`, name: `Debt ${i}` }));
     customRender(<DebtAccountsList {...baseProps} debts={many} />);
-    expect(screen.getByRole("table", { name: "Liability accounts" })).toBeDefined();
     expect(
-      within(screen.getByRole("table", { name: "Liability accounts" })).getAllByRole("row"),
-    ).toHaveLength(9);
+      within(screen.getByRole("list", { name: "Your debts" })).getAllByRole("listitem"),
+    ).toHaveLength(8);
     expect(screen.getByText("More debts")).toBeDefined();
   });
 
-  it("uses a level 2 heading and a plain empty state", () => {
+  it("states an empty list plainly", () => {
     customRender(<DebtAccountsList {...baseProps} debts={[]} />);
-    expect(
-      screen.getByRole("heading", { level: 2, name: "Active liability accounts" }),
-    ).toBeDefined();
-    expect(screen.getByRole("button", { name: /Add debt/ })).toBeDefined();
-    expect(screen.getByText("No active debts recorded.")).toBeDefined();
+    expect(screen.getByText("No debts added")).toBeDefined();
   });
 });

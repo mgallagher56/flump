@@ -4,119 +4,46 @@ import { MortgageSummary, type MortgageSummaryProps } from "./MortgageSummary";
 
 const base = (over: Partial<MortgageSummaryProps> = {}): MortgageSummaryProps => ({
   propertyCategory: "residential",
-  loanAmount: 150000,
-  interestRate: 4.5,
-  remainingTerm: 25,
   mortgageType: "repayment",
-  monthlyPayment: 833.76,
-  isEditing: false,
-  editLoanAmount: 150000,
-  editInterestRate: "4.5",
-  editRemainingTerm: "25",
-  editMortgageType: "repayment",
-  editPayment: 833.76,
-  saveMessage: null,
-  saveError: null,
-  canSaveFigures: true,
-  canSaveTerm: true,
+  remainingTerm: 25,
+  accountName: "HSBC Fixed Mortgage",
   lastUpdated: "Last updated June 2026",
-  onAddAccount: vi.fn(),
-  onStartEditing: vi.fn(),
-  onCancelEditing: vi.fn(),
-  onSave: vi.fn(),
-  onEditLoanAmountChange: vi.fn(),
-  onEditInterestRateChange: vi.fn(),
-  onEditRemainingTermChange: vi.fn(),
-  onEditMortgageTypeChange: vi.fn(),
+  saveMessage: null,
+  onEdit: vi.fn(),
   ...over,
 });
 
-describe("<MortgageSummary /> fixed rate end date (E32)", () => {
-  it("offers an optional date field with the term when it can be stored", () => {
-    const onChange = vi.fn();
-    render(
-      <MortgageSummary
-        {...base({ isEditing: true, editFixEndDate: "", onEditFixEndDateChange: onChange })}
-      />,
-    );
-    const input = screen.getByLabelText(/Fixed rate end date \(optional\)/) as HTMLInputElement;
-    expect(input.type).toBe("date");
-    expect(input.value).toBe("");
-    fireEvent.change(input, { target: { value: "2027-06-30" } });
-    expect(onChange).toHaveBeenCalledWith("2027-06-30");
-  });
-
-  it("hides the date field when the term cannot be stored", () => {
-    render(
-      <MortgageSummary
-        {...base({ isEditing: true, canSaveTerm: false, onEditFixEndDateChange: vi.fn() })}
-      />,
-    );
-    expect(screen.queryByLabelText(/Fixed rate end date/)).toBeNull();
-  });
-});
-
 describe("<MortgageSummary />", () => {
-  it("shows four KPIs with known values", () => {
-    render(<MortgageSummary {...base()} />);
-    expect(screen.getByText("Remaining balance")).toBeDefined();
-    expect(screen.getByText("25 years")).toBeDefined();
-    expect(screen.queryByText("Not set")).toBeNull();
+  it("lists the saved details the headline does not show, with one Edit button", () => {
+    const props = base();
+    render(<MortgageSummary {...props} />);
+    expect(screen.getByRole("heading", { name: "Your details" })).toBeDefined();
+    const card = screen.getByTestId("mortgage-summary");
+    expect(card.textContent).toContain("HSBC Fixed Mortgage");
+    expect(card.textContent).toContain("Repayment");
+    expect(card.textContent).toContain("25 years");
+    expect(card.textContent).toContain("Saved. Last updated June 2026");
+    // Balance, rate and payment are in the hero and strip, so never repeated here.
+    expect(card.textContent).not.toMatch(/£|%/);
+    expect(card.textContent).not.toContain("Not set");
+    fireEvent.click(screen.getByRole("button", { name: "Edit" }));
+    expect(props.onEdit).toHaveBeenCalled();
   });
 
-  it("renders Not set with an action for unknown values, never zero", () => {
-    const onStartEditing = vi.fn();
+  it("buy to let lists no account and no term", () => {
     render(
-      <MortgageSummary
-        {...base({
-          loanAmount: 0,
-          interestRate: 0,
-          remainingTerm: 0,
-          monthlyPayment: null,
-          onStartEditing,
-        })}
-      />,
+      <MortgageSummary {...base({ propertyCategory: "btl", mortgageType: "interest-only" })} />,
     );
-    expect(screen.getAllByText("Not set")).toHaveLength(4);
-    expect(screen.queryByText(/0 years/)).toBeNull();
-    fireEvent.click(screen.getByRole("button", { name: "Add interest rate" }));
-    expect(onStartEditing).toHaveBeenCalled();
+    const card = screen.getByTestId("mortgage-summary");
+    expect(card.textContent).toContain("Buy to let");
+    expect(card.textContent).toContain("Interest-only");
+    expect(card.textContent).not.toContain("Mortgage account");
+    expect(card.textContent).not.toContain("Years left");
   });
 
-  it("reports repayment type changes while editing", () => {
-    const onEditMortgageTypeChange = vi.fn();
-    render(<MortgageSummary {...base({ isEditing: true, onEditMortgageTypeChange })} />);
-    fireEvent.click(screen.getByRole("button", { name: "Interest-only" }));
-    expect(onEditMortgageTypeChange).toHaveBeenCalledWith("interest-only");
-  });
-
-  it("shows a Saved line with the last-updated date and an Edit button", () => {
-    render(<MortgageSummary {...base()} />);
-    expect(screen.getByTestId("mortgage-saved-line").textContent).toContain(
-      "Saved. Last updated June 2026",
-    );
-    expect(screen.getByRole("button", { name: "Edit" })).toBeDefined();
-  });
-
-  it("puts the hero surface on the saved balance", () => {
-    const { container } = render(<MortgageSummary {...base()} />);
-    const hero = container.querySelectorAll("[data-tone='hero']");
-    expect(hero).toHaveLength(1);
-    expect(hero[0]?.textContent).toContain("Remaining balance");
-  });
-
-  it("offers the balance and rate fields only when they can be saved", () => {
-    const { rerender } = render(<MortgageSummary {...base({ isEditing: true })} />);
-    expect(screen.getByLabelText(/^Remaining balance/)).toBeDefined();
-    const onAddAccount = vi.fn();
-    rerender(
-      <MortgageSummary
-        {...base({ isEditing: true, canSaveFigures: false, canSaveTerm: false, onAddAccount })}
-      />,
-    );
-    expect(screen.queryByLabelText(/^Remaining balance/)).toBeNull();
-    expect(screen.queryByLabelText(/^Interest rate/)).toBeNull();
-    fireEvent.click(screen.getByRole("button", { name: "Add mortgage account" }));
-    expect(onAddAccount).toHaveBeenCalled();
+  it("announces a save, and leaves out a term that is not saved", () => {
+    render(<MortgageSummary {...base({ remainingTerm: 0, saveMessage: "Saved interest rate" })} />);
+    expect(screen.getByRole("status").textContent).toBe("Saved interest rate");
+    expect(screen.queryByText("Years left")).toBeNull();
   });
 });

@@ -21,12 +21,12 @@ type Story = StoryObj<typeof RemortgageShockSim>;
 export const Populated: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    await expect(canvas.getAllByText(/Projected payment shock/)[0]).toBeInTheDocument();
-    const [slider] = canvas.getAllByLabelText("Projected renewal rate range slider");
+    await expect(canvas.getAllByText(/Change in monthly payment/)[0]).toBeInTheDocument();
+    const [slider] = canvas.getAllByLabelText("Rate after your fixed rate ends range slider");
     fireEvent.change(slider as HTMLElement, { target: { value: "7" } });
-    await expect(canvas.getAllByLabelText("Projected renewal rate range slider")[0]).toHaveValue(
-      "7",
-    );
+    await expect(
+      canvas.getAllByLabelText("Rate after your fixed rate ends range slider")[0],
+    ).toHaveValue("7");
   },
 };
 
@@ -34,7 +34,9 @@ export const NoPropertyValue: Story = {
   args: { propertyValue: undefined },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    await expect(canvas.getAllByText("LTV not set")[0]).toBeInTheDocument();
+    await expect(
+      canvas.getAllByText(/Add your property value to see your loan to value/)[0],
+    ).toBeInTheDocument();
   },
 };
 
@@ -42,6 +44,8 @@ export const NotSet: Story = {
   args: { currentBalance: 0, currentRate: 0, propertyValue: undefined },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    await expect(canvas.getAllByText("Not set").length).toBeGreaterThan(0);
+    await expect(
+      canvas.getAllByText(/Add your mortgage balance and property value/)[0],
+    ).toBeInTheDocument();
   },
 };

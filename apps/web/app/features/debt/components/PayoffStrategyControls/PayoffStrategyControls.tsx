@@ -50,7 +50,7 @@ export const PayoffStrategyControls: FC<PayoffStrategyControlsProps> = ({
       <SliderField
         helperText={
           monthsSaved !== undefined && monthsSaved > 0
-            ? `${monthsSaved} months sooner than minimum payments.`
+            ? `Illustration: paid off ${monthsSaved} ${monthsSaved === 1 ? "month" : "months"} sooner than with minimum payments only`
             : "Move the slider to model an extra payment."
         }
         label="Extra payment each month"
@@ -65,7 +65,7 @@ export const PayoffStrategyControls: FC<PayoffStrategyControlsProps> = ({
 
       {interestSaved !== undefined && (
         <div className={impactRow}>
-          <span className={impactTitle}>Interest saved versus minimum payments</span>
+          <span className={impactTitle}>Interest saved compared with minimum payments only</span>
           <StatusBadge data-testid="interest-saved-badge" size="sm" variant="positive">
             {money.format(interestSaved)} saved
           </StatusBadge>
@@ -96,7 +96,7 @@ export const PayoffStrategyControls: FC<PayoffStrategyControlsProps> = ({
             <Icon icon={Snowflake} size="sm" />
             Smallest balance first (snowball)
           </span>
-          <span className={strategyCardHint}>Pays the smallest balance first.</span>
+          <span className={strategyCardHint}>Pays the debt with the smallest balance first.</span>
         </button>
       </div>
     </div>

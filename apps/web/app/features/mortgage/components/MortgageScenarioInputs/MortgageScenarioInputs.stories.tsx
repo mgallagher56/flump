@@ -1,12 +1,6 @@
-import { ScenarioZone } from "@repo/ui";
-import { css } from "@repo/ui/styled-system/css";
 import type { Meta, StoryObj } from "@storybook/react";
-import { useMemo, useState } from "react";
-import { expect, fireEvent, fn, within } from "storybook/test";
-import { useScenarioState } from "~/hooks/useScenarioState";
-import { MortgageSummary } from "../MortgageSummary";
-import { MortgageTracker } from "../MortgageTracker";
-import { OverpaymentSimulator } from "../OverpaymentSimulator";
+import { useState } from "react";
+import { expect, fn, within } from "storybook/test";
 import { MortgageScenarioInputs } from "./MortgageScenarioInputs";
 
 const meta: Meta<typeof MortgageScenarioInputs> = {
@@ -47,3 +41,5 @@ export const Interactive: Story = {
     );
   },
 };
+
+export const Dark: Story = { globals: { theme: "dark" } };

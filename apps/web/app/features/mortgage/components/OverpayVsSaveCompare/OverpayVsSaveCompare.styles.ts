@@ -3,196 +3,55 @@ import { token } from "@repo/ui/styled-system/tokens";
 
 const numeric = { fontVariantNumeric: "tabular-nums" } as const;
 
+/** Controls and results sit on the scenario zone surface: no cards (E16 PR 6). */
 export const controlPanel = cva({
-  base: {
-    p: { base: "16px", md: "20px" },
-    backgroundColor: "surface.card",
-    borderRadius: "xl",
-    borderWidth: "1px",
-    borderStyle: "solid",
-    borderColor: "border.subtle",
-    display: "flex",
-    flexDirection: "column",
-    gap: "20px",
-    minWidth: 0,
-  },
-});
-
-export const panelTitle = css({
-  fontSize: "md",
-  fontWeight: "semibold",
-  color: "text.primary",
-  m: 0,
+  base: { display: "flex", flexDirection: "column", gap: "16px", minWidth: 0 },
 });
 
 export const panelHint = css({
-  fontSize: "xs",
-  color: "text.muted",
+  textStyle: "body.sm",
+  color: "text.secondary",
   m: 0,
   ...numeric,
 });
 
-export const fieldGroup = css({
-  display: "flex",
-  flexDirection: "column",
-  gap: "8px",
-  minWidth: 0,
-});
-
-export const fieldLabel = css({
-  fontSize: "xs",
-  fontWeight: "semibold",
-  color: "text.secondary",
-});
-
-export const selectStyle = css({
-  width: "100%",
-  minWidth: 0,
-  p: "10px 12px",
-  borderRadius: "md",
-  borderWidth: "1px",
-  borderStyle: "solid",
-  borderColor: "border.input",
-  fontSize: "sm",
-  backgroundColor: "surface.card",
-  color: "text.primary",
-  _focusVisible: {
-    outlineWidth: "2px",
-    outlineStyle: "solid",
-    outlineColor: "border.focusRing",
-    outlineOffset: "2px",
-  },
-});
-
-export const resultsCard = cva({
-  base: {
-    p: { base: "16px", md: "20px" },
-    backgroundColor: "surface.card",
-    borderRadius: "xl",
-    borderWidth: "1px",
-    borderStyle: "solid",
-    borderColor: "border.subtle",
-    display: "flex",
-    flexDirection: "column",
-    gap: "16px",
-    minWidth: 0,
-  },
-});
-
-export const resultsHeader = css({
-  display: "flex",
-  flexDirection: "column",
-  gap: "4px",
+export const resultsBody = cva({
+  base: { display: "flex", flexDirection: "column", gap: "16px", minWidth: 0, ...numeric },
 });
 
 export const rateList = css({
-  display: "flex",
-  flexDirection: "column",
+  display: "grid",
+  gridTemplateColumns: { base: "minmax(0, 1fr)", sm: "repeat(2, minmax(0, 1fr))" },
+  gap: "12px 24px",
   m: 0,
-  p: 0,
 });
 
 export const rateRow = css({
   display: "flex",
-  justifyContent: "space-between",
-  alignItems: "center",
-  flexWrap: "wrap",
-  gap: "8px",
-  py: "12px",
-  borderBottomWidth: "1px",
-  borderBottomStyle: "solid",
-  borderBottomColor: "border.subtle",
+  flexDirection: "column",
+  gap: "2px",
+  minWidth: 0,
+  "& dt": { textStyle: "label.sm", color: "text.muted" },
+  "& dd": { m: 0, color: "text.primary", ...numeric },
 });
 
-export const rateLabel = css({
-  fontSize: "sm",
-  color: "text.secondary",
-  m: 0,
-});
+export const outcomeLabel = css({ textStyle: "label.md", color: "text.secondary", m: 0 });
 
-export const rateValue = cva({
-  base: {
-    fontSize: "sm",
-    fontWeight: "bold",
-    m: 0,
-    ...numeric,
-  },
-  variants: {
-    tone: {
-      danger: { color: "status.danger.text" },
-      positive: { color: "status.positive.text" },
-    },
-  },
-  defaultVariants: { tone: "positive" },
-});
-
-export const verdictPanel = cva({
-  base: {
-    p: "16px",
-    borderRadius: "lg",
-    borderWidth: "1px",
-    borderStyle: "solid",
-    display: "flex",
-    flexDirection: "column",
-    gap: "8px",
-    minWidth: 0,
-  },
-  variants: {
-    outcome: {
-      // Same weight for both outcomes (R1): neither result is coloured as the "good" one.
-      overpay: { borderColor: "border.subtle", backgroundColor: "surface.subtle" },
-      save: { borderColor: "border.subtle", backgroundColor: "surface.subtle" },
-    },
-  },
-  defaultVariants: { outcome: "overpay" },
-});
-
-export const verdictTitle = cva({
-  base: {
-    display: "flex",
-    alignItems: "center",
-    gap: "8px",
-    fontSize: "md",
-    fontWeight: "bold",
-    m: 0,
-  },
-  variants: {
-    outcome: {
-      overpay: { color: "text.primary" },
-      save: { color: "text.primary" },
-    },
-  },
-  defaultVariants: { outcome: "overpay" },
-});
-
-export const verdictText = css({
-  fontSize: "xs",
-  color: "text.secondary",
-  lineHeight: "1.5",
+/** Never `surface.hero`: this is a scenario outcome. */
+export const outcomeValue = css({
+  textStyle: "numeric.lg",
+  color: "text.primary",
   m: 0,
   ...numeric,
 });
 
-export const noteRow = css({
-  display: "flex",
-  alignItems: "flex-start",
-  gap: "8px",
-  color: "text.muted",
-  minWidth: 0,
-});
-
-export const noteIcon = css({
-  flexShrink: 0,
-  mt: "2px",
-});
+export const outcomeNote = css({ textStyle: "body.sm", color: "text.secondary", m: 0, ...numeric });
 
 export const noteText = css({
-  fontSize: "xs",
+  textStyle: "body.sm",
   color: "text.muted",
-  lineHeight: "1.5",
   m: 0,
-  minWidth: 0,
-  ...numeric,
+  maxWidth: "70ch",
 });
 
 export const chartWrapper = css({
@@ -214,15 +73,8 @@ export const dataTable = css({
   "& th, & td": { textAlign: "left", p: "6px 8px" },
 });
 
-export const dataCell = css({
-  ...numeric,
-});
+export const dataCell = css({ ...numeric });
 
-export const kpiNote = css({
-  ...numeric,
-});
-
-/** Recharts takes style objects rather than classes, so tooltip tokens resolve here. */
 export const tooltipContentStyle = {
   backgroundColor: token.var("colors.surface.overlay"),
   borderColor: token.var("colors.border"),

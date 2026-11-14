@@ -323,11 +323,16 @@ describe.each(NAMES)("persona %s: one figure, every surface", (name) => {
       userProfile: rows.userProfile,
     };
     const page = render(<MortgageContainer />);
-    const heading = page.container.querySelector("#ltv-milestones-heading")?.textContent ?? "";
-    if (isFigureKnown(picture.loanToValue)) {
-      expect(heading).toContain(`Current LTV: ${picture.loanToValue.value.percent.toFixed(1)}%`);
-    } else {
-      expect(heading).toBe("");
+    // E16 PR 6: loan to value is a KPI in the saved strip, shown once balance, rate and term are
+    // saved. With any of them missing the page shows one prompt and no loan to value at all.
+    const strip = page.container.querySelector("#mortgage-saved")?.textContent ?? "";
+    const prompt = page.container.querySelector("#mortgage-prompt");
+    expect(strip !== "" || prompt !== null).toBe(true);
+    if (strip !== "" && isFigureKnown(picture.loanToValue)) {
+      expect(strip).toContain(`Loan to value${picture.loanToValue.value.percent.toFixed(1)}%`);
+    }
+    if (!isFigureKnown(picture.loanToValue)) {
+      expect(strip).not.toMatch(/Loan to value\d/);
     }
     page.unmount();
   });

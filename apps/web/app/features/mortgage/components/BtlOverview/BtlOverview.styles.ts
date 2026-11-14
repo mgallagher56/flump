@@ -6,12 +6,14 @@ export const btlCard = cva({
     borderRadius: "xl",
     borderWidth: "1px",
     borderStyle: "solid",
-    borderColor: "border.subtle",
+    borderColor: "border",
+    boxShadow: "card",
     p: { base: "16px", md: "20px" },
     display: "flex",
     flexDirection: "column",
-    gap: "14px",
+    gap: "16px",
     minWidth: 0,
+    fontVariantNumeric: "tabular-nums",
   },
 });
 
@@ -19,39 +21,22 @@ export const btlHeader = cva({
   base: {
     display: "flex",
     justifyContent: "space-between",
-    alignItems: "center",
+    alignItems: "flex-start",
     flexWrap: "wrap",
     gap: "12px",
   },
 });
 
-export const btlTitleRow = cva({
-  base: { display: "flex", alignItems: "center", gap: "10px", color: "text.primary" },
-});
-
 export const btlTitle = cva({
-  base: { textStyle: "heading.sm", margin: 0, color: "text.primary" },
+  base: { textStyle: "heading.md", color: "text.primary", margin: 0 },
 });
 
 export const btlSubtitle = cva({
   base: {
     textStyle: "body.sm",
-    color: "text.muted",
+    color: "text.secondary",
     margin: 0,
+    marginTop: "2px",
     fontVariantNumeric: "tabular-nums",
   },
-});
-
-export const noteRow = cva({
-  base: {
-    display: "flex",
-    alignItems: "flex-start",
-    gap: "8px",
-    textStyle: "body.sm",
-    color: "text.muted",
-  },
-});
-
-export const noteIcon = cva({
-  base: { color: "status.info.text", marginTop: "2px", flexShrink: 0 },
 });

@@ -15,8 +15,8 @@ type Story = StoryObj<typeof UkDebtInstrumentsCard>;
 export const ZeroPercentExpiry: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    await expect(canvas.getAllByText("Promotional expiry diagnosis").length).toBeGreaterThan(0);
-    await expect(canvas.getAllByText(/Window active/).length).toBeGreaterThan(0);
+    await expect(canvas.getAllByText("When the 0% deal ends").length).toBeGreaterThan(0);
+    await expect(canvas.getAllByText(/are left on the 0% deal/).length).toBeGreaterThan(0);
   },
 };
 
@@ -36,6 +36,6 @@ export const StudentLoan: Story = {
     await userEvent.click(
       canvas.getAllByRole("tab", { name: /Student loan outlook/ })[0] as HTMLElement,
     );
-    await expect(canvas.getAllByText(/Projected outcome/).length).toBeGreaterThan(0);
+    await expect(canvas.getAllByText(/in this estimate the balance is/).length).toBeGreaterThan(0);
   },
 };

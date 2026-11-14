@@ -121,9 +121,9 @@ const DebtForm: FC<DebtFormProps> = ({ onClose, onAddDebt, debt, onEditDebt }) =
                 <option value="credit_card">Credit card</option>
                 <option value="loan">Personal loan</option>
                 <option value="overdraft">Arranged overdraft</option>
-                <option value="bnpl">Buy-now-pay-later</option>
+                <option value="bnpl">Buy now, pay later</option>
                 <option value="car_finance">Car finance or HP</option>
-                <option value="other">Other liability</option>
+                <option value="other">Other debt</option>
               </select>
             )}
           </FormField>
@@ -138,27 +138,19 @@ const DebtForm: FC<DebtFormProps> = ({ onClose, onAddDebt, debt, onEditDebt }) =
       <div className={fieldRow()}>
         <FormField
           error={aprError}
-          hint="Optional. Leave blank if you do not know it yet."
-          label="APR (%)"
+          hint="A percentage, such as the rate on your statement. Leave blank if you do not know it yet."
+          label="Interest rate (APR) (optional)"
         >
-          {(field) => (
-            <PercentInput
-              {...controlProps(field)}
-              placeholder="Not set"
-              value={apr}
-              onValueChange={setApr}
-            />
-          )}
+          {(field) => <PercentInput {...controlProps(field)} value={apr} onValueChange={setApr} />}
         </FormField>
         <FormField
           error={minimumError}
-          hint="Optional. Leave blank if you do not know it yet."
-          label="Minimum payment each month"
+          hint="The amount on your statement. Leave blank if you do not know it yet."
+          label="Minimum payment each month (optional)"
         >
           {(field) => (
             <CurrencyInput
               {...controlProps(field)}
-              placeholder="Not set"
               value={minimumPayment}
               onValueChange={setMinimumPayment}
             />
@@ -177,7 +169,7 @@ export const AddDebtDialog: FC<AddDebtDialogProps> = ({ isOpen, onClose, ...form
       description={
         isEdit
           ? "Change the name, APR or minimum payment. Leave the APR or minimum blank if you do not know it yet."
-          : "Log a credit card, loan or overdraft to model payoff. Only the name and balance are required."
+          : "Add a credit card, loan or overdraft. Only the name and balance are needed."
       }
       footer={
         <>
@@ -185,13 +177,13 @@ export const AddDebtDialog: FC<AddDebtDialogProps> = ({ isOpen, onClose, ...form
             Cancel
           </Button>
           <Button form={FORM_ID} type="submit">
-            {isEdit ? "Save changes" : "Add liability"}
+            {isEdit ? "Save changes" : "Add debt"}
           </Button>
         </>
       }
       id="add-debt-dialog"
       open={isOpen}
-      title={isEdit ? "Edit debt" : "Add liability account"}
+      title={isEdit ? "Edit debt" : "Add a debt"}
       onOpenChange={(open) => {
         if (!open) onClose();
       }}
