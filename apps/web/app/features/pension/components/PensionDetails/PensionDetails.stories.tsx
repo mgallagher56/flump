@@ -14,11 +14,7 @@ const meta: Meta<typeof PensionDetails> = {
     isEditing: false,
     isSalarySacrifice: true,
     isSalarySacrificeEmployerNi: false,
-    monthlyEmployeeContrib: 250,
-    monthlyEmployerNiContrib: 0,
     ratesAssumed: false,
-    standardMonthlyEmployerContrib: 167,
-    updatedAt: "2026-11-05T10:30:00.000Z",
     onEditingChange: fn(),
     onSave: fn().mockResolvedValue(undefined),
   },
@@ -30,8 +26,10 @@ type Story = StoryObj<typeof PensionDetails>;
 export const Saved: Story = {
   play: async ({ args, canvasElement }) => {
     const canvas = within(canvasElement);
-    await expect(canvas.getByText("Saved")).toBeDefined();
-    await userEvent.click(canvas.getByRole("button", { name: "Edit details" }));
+    await expect(canvas.getAllByText("Salary sacrifice")[0]).toBeDefined();
+    await userEvent.click(
+      canvas.getAllByRole("button", { name: "Edit details" })[0] as HTMLElement,
+    );
     await expect(args.onEditingChange).toHaveBeenCalledWith(true);
   },
 };
@@ -40,8 +38,8 @@ export const Editing: Story = {
   args: { isEditing: true },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    await expect(canvas.getByLabelText(/Annual salary/)).toBeDefined();
-    await expect(canvas.getByRole("button", { name: "Save details" })).toBeDefined();
+    await expect(canvas.getAllByLabelText(/Yearly salary before tax/)[0]).toBeDefined();
+    await expect(canvas.getAllByRole("button", { name: "Save details" })[0]).toBeDefined();
   },
 };
 

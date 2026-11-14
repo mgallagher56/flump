@@ -1,77 +1,91 @@
-import { describe, expect, test } from "vitest";
+import { expectPageRules } from "@repo/ui/testing";
+import { fireEvent } from "@testing-library/react";
+import { describe, expect, test, vi } from "vitest";
 import customRender from "~/testUtils/customRender";
 import { PensionSummary, type PensionSummaryProps } from "./PensionSummary";
 
+vi.mock("react-router", () => ({
+  Link: ({
+    children,
+    to,
+    className,
+  }: {
+    children: React.ReactNode;
+    to: string;
+    className?: string;
+  }) => (
+    <a className={className} href={to}>
+      {children}
+    </a>
+  ),
+}));
+
 const props: PensionSummaryProps = {
-  totalValue: 25000,
-  potsCount: 2,
-  hasSalary: true,
-  monthlyEmployeeContrib: 188,
-  monthlyEmployerContrib: 113,
-  directMonthlyContrib: 50,
-  employeePercent: 5,
-  employerPercent: 3,
-  netMonthlyCost: 135,
-  taxReliefMonthly: 53,
-  weightedReturnRate: 5.4,
+  totalValue: 96000,
+  potsCount: 1,
+  estimatedMonthlyIncome: 1240,
+  monthlyTotal: 532,
+  retirementAge: 67,
+  onAddPot: () => {},
 };
 
 describe("<PensionSummary />", () => {
-  test("shows four KPIs with 'Total in your pots' as the single hero", () => {
-    const { container, getByText } = customRender(<PensionSummary {...props} />);
+  test("the saved pot total is the one hero and the estimate is the first KPI", () => {
+    const { container, getAllByRole } = customRender(<PensionSummary {...props} />);
     const heroes = container.querySelectorAll("[data-tone='hero']");
     expect(heroes).toHaveLength(1);
     expect(heroes[0]?.textContent).toContain("Total in your pots");
-    expect(heroes[0]?.textContent).toContain("£25,000");
-    expect(heroes[0]?.textContent).toContain("Across 2 pension pots");
-    for (const label of ["Going in each month", "Your cost after tax relief", "Assumed growth"]) {
-      expect(getByText(label)).toBeDefined();
-    }
-    expect(container.textContent).toContain("£351");
-    expect(container.textContent).toContain("£135");
-    expect(container.textContent).toContain("5.4% a year");
-  });
-
-  test("no pots drops the hero and shows honest empty states, not zeros", () => {
-    const { container, getByText } = customRender(
-      <PensionSummary {...props} potsCount={0} totalValue={0} />,
+    expect(heroes[0]?.textContent).toContain("£96,000");
+    expect(heroes[0]?.textContent).not.toMatch(/estimate/i);
+    const labels = Array.from(container.querySelectorAll("[data-density='compact'] > *")).map(
+      (card) => card.textContent ?? "",
     );
-    expect(container.querySelectorAll("[data-tone='hero']")).toHaveLength(0);
-    expect(getByText("Add a pension pot to see its value")).toBeDefined();
-    expect(container.textContent).not.toContain("5.4%");
+    expect(labels[0]).toContain("Estimated income at retirement");
+    expect(labels[0]).toContain("Estimate");
+    expect(labels[1]).toContain("Going in each month");
+    expect(labels[2]).toContain("Retirement age");
+    expect(getAllByRole("group").length).toBeGreaterThan(0);
+    // Hero plus three KPIs: four figures, none in a caption.
+    expectPageRules(container, { maxFigures: 4 });
   });
 
-  test("no salary never invents employee, employer or tax relief figures", () => {
-    const { container } = customRender(
+  test("captions carry no figures", () => {
+    const { getByText } = customRender(<PensionSummary {...props} />);
+    for (const caption of ["A month, in today's money", "Your State Pension age"]) {
+      expect(getByText(caption).textContent).not.toMatch(/£|%|\d/);
+    }
+  });
+
+  test("unknown values read Not set with one action, never zero", () => {
+    const onAddPot = vi.fn();
+    const { container, getByRole, queryByText } = customRender(
       <PensionSummary
         {...props}
-        directMonthlyContrib={0}
-        hasSalary={false}
-        monthlyEmployeeContrib={0}
-        monthlyEmployerContrib={0}
-        netMonthlyCost={0}
-        taxReliefMonthly={0}
+        onAddPot={onAddPot}
+        estimateMissing={{ label: "Add a growth rate", to: "/app/pension" }}
+        estimatedMonthlyIncome={null}
+        potsCount={0}
+        totalValue={0}
       />,
     );
-    expect(container.textContent).toContain(
-      "Add your salary to include your own and your employer's contributions",
-    );
-    expect(container.textContent).toContain("Needs your salary and contribution rate");
-    expect(container.textContent).not.toContain("£351");
-    expect(container.textContent).not.toContain("£135");
+    expect(container.querySelectorAll("[data-tone='hero']")).toHaveLength(0);
+    expect(queryByText("£0")).toBeNull();
+    fireEvent.click(getByRole("button", { name: "Add pension pot" }));
+    expect(onAddPot).toHaveBeenCalled();
+    expect(getByRole("link", { name: "Add a growth rate" })).toBeDefined();
   });
 
-  test("a placeholder growth rate stays out of the saved summary (scenario zone only)", () => {
-    const { container } = customRender(
-      <PensionSummary {...props} growthRateIsPlaceholder weightedReturnRate={5} />,
-    );
-    expect(container.textContent).toContain("No growth rate is set on your pots");
-    expect(container.textContent).not.toContain("5%");
+  test("assumed rates are named in the captions, with no figure", () => {
+    const { getByText } = customRender(<PensionSummary {...props} ratesAssumed />);
+    expect(getByText("Assumed rates. Edit to match your payslip")).toBeDefined();
+    expect(getByText("A month, in today's money, on assumed rates")).toBeDefined();
   });
 
-  test("keeps KPI values out of the heading outline", () => {
-    const { queryAllByRole, queryAllByRole: status } = customRender(<PensionSummary {...props} />);
-    expect(queryAllByRole("heading")).toHaveLength(0);
-    expect(status("status")).toHaveLength(0);
+  test("a mostly unknown strip becomes one prompt", () => {
+    const { getByText, queryByText } = customRender(
+      <PensionSummary {...props} estimatedMonthlyIncome={null} retirementAge={null} />,
+    );
+    expect(getByText(/Add your year of birth and salary/)).toBeDefined();
+    expect(queryByText("Going in each month")).toBeNull();
   });
 });

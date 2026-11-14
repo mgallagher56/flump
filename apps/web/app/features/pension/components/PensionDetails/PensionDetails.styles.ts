@@ -26,16 +26,8 @@ export const detailsHeader = cva({
   },
 });
 
-export const detailsHeadingRow = cva({
-  base: { display: "flex", flexWrap: "wrap", alignItems: "center", gap: "8px 12px" },
-});
-
 export const detailsTitle = cva({
   base: { margin: 0, textStyle: "heading.md", color: "text.primary" },
-});
-
-export const savedDate = cva({
-  base: { textStyle: "body.sm", color: "text.muted", fontVariantNumeric: "tabular-nums" },
 });
 
 export const buttonRow = cva({
@@ -92,60 +84,41 @@ export const checkHint = cva({
   base: { display: "block", textStyle: "body.sm", color: "text.muted" },
 });
 
-export const proportionBar = cva({
-  base: {
-    display: "block",
-    height: "12px",
-    width: "100%",
-    borderRadius: "full",
-    backgroundColor: "border.subtle",
-    overflow: "hidden",
-  },
+export const factList = cva({
+  base: { margin: 0, display: "flex", flexDirection: "column" },
 });
 
-export const employeeSegment = cva({ base: { fill: "chart.primary" } });
-export const employerSegment = cva({ base: { fill: "chart.debt" } });
-
-export const legendRow = cva({
+export const factRow = cva({
   base: {
     display: "flex",
     flexWrap: "wrap",
-    alignItems: "center",
+    rowGap: "0",
+    alignItems: "baseline",
     justifyContent: "space-between",
-    gap: "12px",
+    gap: "3",
+    py: "1",
     textStyle: "body.md",
-    fontVariantNumeric: "tabular-nums",
+    color: "text.secondary",
+    "&:not(:last-child)": {
+      borderBottomWidth: "1px",
+      borderBottomStyle: "solid",
+      borderBottomColor: "border.subtle",
+    },
+    "& dt": { whiteSpace: "nowrap" },
+    "& dd": { margin: 0, textAlign: "right" },
   },
 });
 
-export const legendGroup = cva({
-  base: { display: "flex", flexWrap: "wrap", gap: "8px 24px" },
-});
-
-export const legendItem = cva({
-  base: { display: "flex", alignItems: "baseline", gap: "8px" },
-});
-
-export const dot = cva({
+export const factValue = cva({
   base: {
-    width: "10px",
-    height: "10px",
-    borderRadius: "full",
-    display: "inline-block",
-    flexShrink: 0,
+    color: "text.primary",
+    fontVariantNumeric: "tabular-nums",
+    fontWeight: "medium",
+    whiteSpace: "nowrap",
   },
   variants: {
-    series: {
-      employee: { backgroundColor: "chart.primary" },
-      employer: { backgroundColor: "chart.debt" },
-    },
+    unset: { true: { color: "text.muted", fontWeight: "normal" } },
+    /** The method can be a long phrase, so it alone may wrap. */
+    wrap: { true: { whiteSpace: "normal" } },
   },
-});
-
-export const assumedLabel = cva({
-  base: { display: "block", textStyle: "body.sm", color: "text.muted", fontStyle: "italic" },
-});
-
-export const niNote = cva({
-  base: { marginLeft: "4px", color: "status.positive.text" },
 });

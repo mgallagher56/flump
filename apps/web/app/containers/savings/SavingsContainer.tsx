@@ -1,24 +1,38 @@
 import { PortfolioSnapshot } from "@flump/finance-engine";
-import { Button, Icon, PageHeader, ProjectionNotice, ScenarioZone, SegmentedTabs } from "@repo/ui";
+import {
+  Button,
+  EmptyState,
+  Icon,
+  Illustration,
+  PageBody,
+  PageHeader,
+  ProjectionNotice,
+  ScenarioZone,
+  Tabs,
+} from "@repo/ui";
 import { Plus } from "lucide-react";
 import { type FC, useEffect, useMemo, useState } from "react";
 import { useLoaderData, useLocation, useNavigate } from "react-router";
 import type { Account } from "~/containers/accounts/types";
 import { AddSavingsAccountDialog } from "~/features/savings/components/AddSavingsAccountDialog";
-import { AnnualAllowancePill } from "~/features/savings/components/AnnualAllowancePill";
 import {
   DepositTimeline,
   type DepositTimelineValues,
   depositOutcomeText,
 } from "~/features/savings/components/DepositTimeline";
+import { estimateIsaUsed, IsaAllowance } from "~/features/savings/components/IsaAllowance";
 import { PayRiseScenario } from "~/features/savings/components/PayRiseScenario";
 import { SavingsAccountsList } from "~/features/savings/components/SavingsAccountsList";
-import { SavingsForecasterCard } from "~/features/savings/components/SavingsForecasterCard";
+import {
+  DEFAULT_FORECAST_YEARS,
+  forecastOutcomeText,
+  SavingsForecast,
+  type SavingsForecastValues,
+} from "~/features/savings/components/SavingsForecast";
 import { SavingsSummaryCards } from "~/features/savings/components/SavingsSummaryCards";
-import { calculateOneYearCompoundInterest } from "~/features/savings/interest";
 import { useScenarioState } from "~/hooks/useScenarioState";
 import { useUserProfile } from "~/hooks/useUserProfile";
-import { pageRoot, tabPanel, tabsRoot } from "./SavingsContainer.styles";
+import { emptyWrap, toolPanel } from "./SavingsContainer.styles";
 
 /**
  * Monthly pay rise handed over from Take-home pay in router state (never the URL); 0 when absent
@@ -29,24 +43,30 @@ export const parsePayRise = (state: unknown): number => {
   return Number.isFinite(value) && value > 0 ? Math.round(value) : 0;
 };
 
+const isSavingsType = (acc: Account) => acc.type === "Saving" || acc.type === "Investment";
+
+const isStored = (value: unknown): boolean =>
+  value !== undefined && value !== null && value !== "" && Number.isFinite(Number(value));
+
+type Tool = "forecast" | "deposit";
+
 export const SavingsContainer: FC = () => {
   const loaderData = useLoaderData<any>();
   const accounts: Account[] = loaderData?.accounts || [];
   const accountDetails: any[] = loaderData?.accountDetails || [];
   const userProfile = loaderData?.userProfile;
 
-  const { profile, setProfile, markChecklistStep } = useUserProfile();
+  const { setProfile, markChecklistStep } = useUserProfile();
 
   useEffect(() => {
-    if (userProfile) {
-      setProfile(userProfile);
-    }
+    if (userProfile) setProfile(userProfile);
   }, [userProfile, setProfile]);
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<"forecaster" | "accounts" | "allowance">("forecaster");
+  const [tool, setTool] = useState<Tool>("forecast");
+
   // Scenario input only: the extra monthly take-home from a pay rise modelled on Take-home pay
-  // (arrives in router state). It feeds the forecaster, never the saved figures above it.
+  // (arrives in router state). It feeds the forecast, never the saved figures above it.
   const location = useLocation();
   const [payRiseMonthly, setPayRiseMonthly] = useState(() => parsePayRise(location?.state));
   const navigate = useNavigate();
@@ -62,222 +82,189 @@ export const SavingsContainer: FC = () => {
   useEffect(() => {
     if (typeof window === "undefined") return;
     // Take-home pay moved to its own page (T-IA-3): old #takehome links go there.
-    if (window.location.hash === "#takehome") {
-      navigate("/app/take-home", { replace: true });
-      return;
-    }
+    if (window.location.hash === "#takehome") navigate("/app/take-home", { replace: true });
   }, [navigate]);
 
   useEffect(() => {
     const payRise = parsePayRise(location?.state);
     if (payRise > 0) setPayRiseMonthly(payRise);
   }, [location?.state]);
+
+  // Saved figures only: these feed the hero and the KPI strip, and seed the scenario inputs.
   const savingsAccounts = useMemo(() => {
     const snapshot = new PortfolioSnapshot(accounts, accountDetails);
-    return accounts
-      .filter((acc) => acc.type === "Saving" || acc.type === "Investment")
-      .map((acc) => {
-        const resolved = snapshot.getAccount(acc.id);
-        return {
-          ...acc,
-          balance: resolved?.nominalBalance ?? (Number(acc.balance) || 0),
-          interestRate:
-            acc.interestRate !== undefined && acc.interestRate !== null
-              ? Number(acc.interestRate)
-              : 0,
-          monthlyContribution:
-            acc.monthlyContribution !== undefined && acc.monthlyContribution !== null
-              ? Number(acc.monthlyContribution)
-              : 0,
-        };
-      });
+    return accounts.filter(isSavingsType).map((acc) => ({
+      ...acc,
+      balance: snapshot.getAccount(acc.id)?.nominalBalance ?? (Number(acc.balance) || 0),
+    }));
   }, [accounts, accountDetails]);
 
-  // Mark setup checklist step as completed if accounts exist
   useEffect(() => {
-    if (savingsAccounts.length > 0) {
-      markChecklistStep("savings", true).catch(() => {});
-    }
+    if (savingsAccounts.length > 0) markChecklistStep("savings", true).catch(() => {});
   }, [savingsAccounts.length, markChecklistStep]);
 
-  // Calculations
-  const totalSavingsBalance = useMemo(() => {
-    return savingsAccounts.reduce((sum, acc) => sum + (Number(acc.balance) || 0), 0);
+  const saved = useMemo(() => {
+    const total = savingsAccounts.reduce((sum, acc) => sum + (Number(acc.balance) || 0), 0);
+    const withMonthly = savingsAccounts.filter((acc) => isStored(acc.monthlyContribution));
+    const monthly =
+      withMonthly.length > 0
+        ? withMonthly.reduce((sum, acc) => sum + Number(acc.monthlyContribution), 0)
+        : null;
+    // Average AER over the accounts that store a rate, weighted by balance (simple mean when
+    // those balances are all 0). Accounts without a rate are left out, never counted as 0%.
+    const rated = savingsAccounts.filter((acc) => isStored(acc.interestRate));
+    let averageRate: number | null = null;
+    if (rated.length > 0) {
+      const ratedBalance = rated.reduce((sum, acc) => sum + Math.max(0, Number(acc.balance)), 0);
+      averageRate =
+        ratedBalance > 0
+          ? rated.reduce(
+              (sum, acc) => sum + Math.max(0, Number(acc.balance)) * Number(acc.interestRate),
+              0,
+            ) / ratedBalance
+          : rated.reduce((sum, acc) => sum + Number(acc.interestRate), 0) / rated.length;
+    }
+    return {
+      total,
+      monthly,
+      averageRate,
+      isaUsed: estimateIsaUsed(savingsAccounts),
+    };
   }, [savingsAccounts]);
 
-  const totalMonthlySavings = useMemo(() => {
-    return savingsAccounts.reduce((sum, acc) => sum + (Number(acc.monthlyContribution) || 0), 0);
-  }, [savingsAccounts]);
-
-  // Deposit timeline (E32): seeded from saved figures, in memory only. The monthly saving stays
-  // empty unless at least one savings account stores a contribution; no target is ever suggested.
-  const hasStoredContribution = useMemo(
-    () =>
-      accounts.some(
-        (acc) =>
-          (acc.type === "Saving" || acc.type === "Investment") &&
-          acc.monthlyContribution !== undefined &&
-          acc.monthlyContribution !== null,
-      ),
-    [accounts],
-  );
-  const savedDepositFigures = useMemo<DepositTimelineValues>(
+  // What-if inputs, in memory only (useScenarioState): nothing here reaches saved data.
+  const savedForecast = useMemo<SavingsForecastValues>(
     () => ({
-      targetDeposit: null,
-      monthlySaving: hasStoredContribution ? totalMonthlySavings : null,
-      startingAmount: totalSavingsBalance,
+      monthly: saved.monthly,
+      rate: saved.averageRate === null ? null : Math.round(saved.averageRate * 10) / 10,
+      years: DEFAULT_FORECAST_YEARS,
+      todaysMoney: false,
+      goal: null,
     }),
-    [hasStoredContribution, totalMonthlySavings, totalSavingsBalance],
+    [saved.monthly, saved.averageRate],
   );
-  const depositScenario = useScenarioState(savedDepositFigures);
-  const depositAnnouncement = depositScenario.isModified
-    ? depositOutcomeText(depositScenario.values)
-    : "";
+  const forecast = useScenarioState(savedForecast);
 
-  const weightedInterestRate = useMemo(() => {
-    const defaultRate = Number(profile.savingsDefaultInterestRate ?? 0);
-    if (totalSavingsBalance <= 0) {
-      if (savingsAccounts.length === 0) return defaultRate;
-      const sumRates = savingsAccounts.reduce(
-        (sum, acc) => sum + (Number(acc.interestRate) || 0),
-        0,
-      );
-      const avg = sumRates / savingsAccounts.length;
-      return Number.isFinite(avg) && avg > 0 ? Number(avg) : defaultRate;
-    }
+  const savedDeposit = useMemo<DepositTimelineValues>(
+    () => ({ targetDeposit: null, monthlySaving: saved.monthly, startingAmount: saved.total }),
+    [saved.monthly, saved.total],
+  );
+  const deposit = useScenarioState(savedDeposit);
 
-    let weightedSum = 0;
-    savingsAccounts.forEach((acc) => {
-      const bal = Number(acc.balance) || 0;
-      const rate = Number(acc.interestRate) || 0;
-      weightedSum += bal * rate;
-    });
+  const isModified = forecast.isModified || deposit.isModified;
+  const resetScenario = () => {
+    forecast.reset();
+    deposit.reset();
+  };
+  const announcement =
+    tool === "forecast"
+      ? forecast.isModified
+        ? forecastOutcomeText(forecast.values, saved.total, payRiseMonthly)
+        : ""
+      : deposit.isModified
+        ? depositOutcomeText(deposit.values)
+        : "";
 
-    const calculated = weightedSum / totalSavingsBalance;
-    return Number.isFinite(calculated) ? Number(calculated) : defaultRate;
-  }, [savingsAccounts, totalSavingsBalance, profile.savingsDefaultInterestRate]);
-
-  const estimatedAnnualInterest = useMemo(() => {
-    return savingsAccounts.reduce(
-      (sum, acc) =>
-        sum +
-        calculateOneYearCompoundInterest(
-          Number(acc.balance) || 0,
-          Number(acc.interestRate) || 0,
-          Number(acc.monthlyContribution) || 0,
-        ),
-      0,
-    );
-  }, [savingsAccounts]);
-
-  // 10-year projection calculation for summary card (per-account compounding)
-  const projectedTenYearBalance = useMemo(() => {
-    if (savingsAccounts.length > 0) {
-      return savingsAccounts.reduce((total, acc) => {
-        let b = Number(acc.balance) || 0;
-        const mRate = (Number(acc.interestRate) || 0) / 100 / 12;
-        const mCont = Number(acc.monthlyContribution) || 0;
-        for (let m = 0; m < 120; m++) {
-          b = b * (1 + mRate) + mCont;
-        }
-        return total + b;
-      }, 0);
-    }
-
-    const monthlyRate = (weightedInterestRate ?? 0) / 100 / 12;
-    let b = totalSavingsBalance;
-    for (let m = 0; m < 120; m++) {
-      b = b * (1 + monthlyRate) + totalMonthlySavings;
-    }
-    return b;
-  }, [savingsAccounts, totalSavingsBalance, weightedInterestRate, totalMonthlySavings]);
-
-  const tabItems = [
-    { value: "forecaster", label: "Forecast" },
-    { value: "accounts", label: `Accounts (${savingsAccounts.length})` },
-    { value: "allowance", label: "Allowances" },
-  ];
+  const hasAccounts = savingsAccounts.length > 0;
 
   return (
-    <div className={pageRoot()}>
-      <ProjectionNotice />
+    <PageBody>
       <PageHeader
         actions={
-          <Button onClick={() => setIsAddModalOpen(true)}>
-            <Icon icon={Plus} size="sm" />
-            Add account
-          </Button>
+          hasAccounts ? (
+            <Button onClick={() => setIsAddModalOpen(true)}>
+              <Icon icon={Plus} size="sm" />
+              Add account
+            </Button>
+          ) : undefined
         }
-        subtitle="Your balances, what you save each month and where it could get to."
+        description="Your balances, what you save each month and where it could get to."
         title="Your savings"
       />
 
-      <SavingsSummaryCards
-        accountCount={savingsAccounts.length}
-        estimatedAnnualInterest={estimatedAnnualInterest}
-        monthlyTakeHome={profile.monthlyTakeHome}
-        projectedTenYearBalance={projectedTenYearBalance}
-        totalMonthlySavings={totalMonthlySavings}
-        totalSavingsBalance={totalSavingsBalance}
-        weightedInterestRate={weightedInterestRate}
-      />
+      {hasAccounts ? (
+        <>
+          <SavingsSummaryCards
+            accountCount={savingsAccounts.length}
+            averageRate={saved.averageRate}
+            isaUsed={saved.isaUsed}
+            monthlySaving={saved.monthly}
+            totalSavingsBalance={saved.total}
+          />
 
-      <SegmentedTabs
-        aria-label="Savings views"
-        className={tabsRoot()}
-        items={tabItems}
-        panelClassName={tabPanel()}
-        panels={{
-          forecaster: (
-            <>
-              <SavingsForecasterCard
-                accounts={savingsAccounts}
-                monthlyContribution={totalMonthlySavings + payRiseMonthly}
-                portfolioInterestRate={weightedInterestRate}
-                startingBalance={totalSavingsBalance}
+          <SavingsAccountsList accounts={savingsAccounts} />
+
+          {saved.isaUsed !== null && saved.isaUsed > 0 ? (
+            <IsaAllowance used={saved.isaUsed} />
+          ) : null}
+
+          <ScenarioZone
+            announcement={announcement}
+            basis="Starting from your saved accounts."
+            id="savings-scenario"
+            isModified={isModified}
+            notice={<ProjectionNotice />}
+            title="Model a change to your savings"
+            tools={
+              <Tabs
+                aria-label="Ways to model your savings"
+                items={[
+                  { value: "forecast", label: "How it could grow" },
+                  { value: "deposit", label: "Time to a target" },
+                ]}
+                panelClassName={toolPanel()}
+                panels={{
+                  forecast: (
+                    <SavingsForecast
+                      payRise={
+                        payRiseMonthly > 0 ? (
+                          <PayRiseScenario
+                            monthlyIncrease={payRiseMonthly}
+                            onRemove={removePayRise}
+                          />
+                        ) : undefined
+                      }
+                      payRiseMonthly={payRiseMonthly}
+                      startingBalance={saved.total}
+                      values={forecast.values}
+                      onChange={(key, value) => forecast.set(key, value)}
+                    />
+                  ),
+                  deposit: (
+                    <DepositTimeline
+                      values={deposit.values}
+                      onChange={(key, value) => deposit.set(key, value)}
+                    />
+                  ),
+                }}
+                size="sm"
+                value={tool}
+                onValueChange={(value) => setTool(value as Tool)}
               />
-              {/* One savings zone for every what-if on this tab. The page already shows the
-                  ProjectionNotice, so the zone leaves its own out (one landmark per page). */}
-              <ScenarioZone
-                announcement={depositAnnouncement}
-                id="deposit-timeline"
-                isModified={depositScenario.isModified}
-                showNotice={false}
-                title="Model a change to your savings"
-                tools={
-                  payRiseMonthly > 0 ? (
-                    <PayRiseScenario monthlyIncrease={payRiseMonthly} onRemove={removePayRise} />
-                  ) : undefined
-                }
-                onReset={depositScenario.reset}
-              >
-                <DepositTimeline
-                  values={depositScenario.values}
-                  onChange={(key, value) => depositScenario.set(key, value)}
-                />
-              </ScenarioZone>
-            </>
-          ),
-          accounts: (
-            <SavingsAccountsList
-              accounts={savingsAccounts}
-              onOpenAddModal={() => setIsAddModalOpen(true)}
-            />
-          ),
-          allowance: (
-            <AnnualAllowancePill
-              currentAmount={totalSavingsBalance}
-              savingsInterest={estimatedAnnualInterest}
-              type="isa"
-            />
-          ),
-        }}
-        value={activeTab}
-        onValueChange={(value) => setActiveTab(value as typeof activeTab)}
-      />
+            }
+            onReset={resetScenario}
+          />
+        </>
+      ) : (
+        <div className={emptyWrap()}>
+          <EmptyState
+            action={
+              <Button onClick={() => setIsAddModalOpen(true)}>
+                <Icon icon={Plus} size="sm" />
+                Add an account
+              </Button>
+            }
+            description="Add a savings account or investment to see your total, what you save each month and where it could get to."
+            headingLevel="h2"
+            id="savings-empty"
+            illustration={<Illustration scene="onboarding" />}
+            title="No savings accounts yet"
+          />
+        </div>
+      )}
 
       <AddSavingsAccountDialog isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} />
-    </div>
+    </PageBody>
   );
 };
 

@@ -19,7 +19,7 @@ describe("AddSavingsAccountDialog", () => {
     expect(screen.getByLabelText(/Account name/)).toBeDefined();
     expect(screen.getByLabelText("Account type")).toBeDefined();
     expect(screen.getByLabelText("Current balance")).toBeDefined();
-    expect(screen.getByLabelText("Interest rate (AER, %)")).toBeDefined();
+    expect(screen.getByLabelText("Interest rate (AER)")).toBeDefined();
     expect(screen.getByLabelText("Saved each month")).toBeDefined();
   });
 
@@ -31,7 +31,7 @@ describe("AddSavingsAccountDialog", () => {
     expect(add.disabled).toBe(false);
   });
 
-  it("submits the create intent with the unchanged payload and closes", () => {
+  it("submits the create intent, leaving an empty rate and monthly amount unset, and closes", () => {
     const onClose = vi.fn();
     render(<AddSavingsAccountDialog isOpen={true} onClose={onClose} />);
     fireEvent.change(screen.getByLabelText(/Account name/), { target: { value: " Marcus " } });
@@ -45,8 +45,8 @@ describe("AddSavingsAccountDialog", () => {
         name: "Marcus",
         type: "Saving",
         balance: "1200",
-        interestRate: "4.5",
-        monthlyContribution: "100",
+        interestRate: "",
+        monthlyContribution: "",
       },
       { method: "POST", action: "/app/savings" },
     );

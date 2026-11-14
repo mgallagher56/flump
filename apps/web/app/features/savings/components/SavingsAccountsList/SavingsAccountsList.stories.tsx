@@ -1,11 +1,11 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { expect, fn, userEvent, within } from "storybook/test";
+import { expect, userEvent, within } from "storybook/test";
 import { SavingsAccountsList } from "./SavingsAccountsList";
 
 const accounts = [
   {
     id: "a1",
-    name: "Marcus easy access",
+    name: "Easy access saver",
     type: "Saving",
     balance: 12400,
     interestRate: 4.5,
@@ -13,7 +13,7 @@ const accounts = [
   },
   {
     id: "a2",
-    name: "Vanguard ISA",
+    name: "Stocks and Shares ISA",
     type: "Investment",
     balance: 18650,
     interestRate: 6.5,
@@ -24,7 +24,7 @@ const accounts = [
 const meta: Meta<typeof SavingsAccountsList> = {
   title: "3. Financial Patterns & Sections/SavingsAccountsList",
   component: SavingsAccountsList,
-  args: { accounts, onOpenAddModal: fn(), variant: "desktop" },
+  args: { accounts },
 };
 
 export default meta;
@@ -33,11 +33,9 @@ type Story = StoryObj<typeof SavingsAccountsList>;
 export const Default: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    await userEvent.click(
-      canvas.getAllByRole("button", { name: /Edit balance for Vanguard ISA/ })[0],
-    );
-    await expect(canvas.getAllByRole("spinbutton")[0]).toBeDefined();
+    await userEvent.click(canvas.getAllByRole("button", { name: "Delete Easy access saver" })[0]);
+    await expect(
+      within(document.body).getAllByRole("alertdialog", { name: "Delete Easy access saver?" })[0],
+    ).toBeDefined();
   },
 };
-
-export const Empty: Story = { args: { accounts: [] } };

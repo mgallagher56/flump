@@ -32,7 +32,7 @@ export const Empty: Story = {
     await expect(target).toHaveValue("");
     await userEvent.type(target, "20000");
     await expect(
-      canvas.getAllByText("Estimated time to reach target: 38 months (3 years 2 months)").length,
+      canvas.getAllByText("Estimated time to reach target: 3 years 2 months").length,
     ).toBeGreaterThan(0);
   },
 };

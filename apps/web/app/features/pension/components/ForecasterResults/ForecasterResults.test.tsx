@@ -1,47 +1,49 @@
+import { expectPageRules } from "@repo/ui/testing";
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
-import { projectPension } from "../../forecast";
+import { describe, expect, it } from "vitest";
+import { type ForecastInput, projectPension } from "../../forecast";
 import { ForecasterResults } from "./ForecasterResults";
 
-vi.mock("~/hooks/useFormatCurrency", () => ({
-  useFormatCurrency: () => ({
-    formatCurrency: (v: number) => `£${Math.round(v).toLocaleString("en-GB")}`,
-  }),
-}));
-
-const input = {
-  startingPot: 20000,
-  salary: 50000,
-  employeePercent: 5,
+const input: ForecastInput = {
+  startingPot: 96000,
+  salary: 58000,
+  employeePercent: 8,
   employerPercent: 3,
   isSalarySacrifice: false,
   passEmployerNi: false,
-  directMonthlyContrib: 50,
+  directMonthlyContrib: 0,
   extraMonthly: 0,
   growthRate: 5,
-  horizonYears: 25,
+  horizonYears: 32,
   useQualifyingEarnings: false,
-  adjustForInflation: false,
+  adjustForInflation: true,
   includeStatePension: false,
 };
 
 describe("<ForecasterResults />", () => {
-  it("shows the projected pot and income without the hero tone", () => {
-    const result = projectPension(input);
+  it("shows one outcome and two supporting figures, with no change at the saved figures", () => {
+    const saved = projectPension(input);
     const { container } = render(
-      <ForecasterResults directMonthlyContrib={50} horizonYears={25} result={result} />,
+      <ForecasterResults inTodaysMoney result={saved} savedResult={saved} whenLabel="at 67" />,
     );
-    expect(screen.getByText("Projected pot in 25 years")).toBeDefined();
-    expect(screen.getByText("Estimated income")).toBeDefined();
-    expect(screen.getByText("Your contributions")).toBeDefined();
-    expect(container.querySelectorAll("[data-tone='hero']")).toHaveLength(0);
-    expect(screen.getByTestId("pension-estimate-note").textContent).toMatch(/4% yearly drawdown/);
-    expect(screen.getByText(/UK Retirement Living Standards/)).toBeDefined();
+    expect(screen.getByText("Estimated income at retirement")).toBeDefined();
+    expect(screen.getByText("Pot at 67")).toBeDefined();
+    expect(screen.getByText("No change")).toBeDefined();
+    expect(screen.queryByText(/PLSA|standard/i)).toBeNull();
+    expectPageRules(container, { maxFigures: 2 });
   });
 
-  it("warns when payments go over the annual allowance", () => {
-    const result = projectPension({ ...input, extraMonthly: 5000 });
-    render(<ForecasterResults directMonthlyContrib={50} horizonYears={25} result={result} />);
+  it("states the change against the saved figures", () => {
+    const saved = projectPension(input);
+    const more = projectPension({ ...input, employeePercent: 12 });
+    render(<ForecasterResults inTodaysMoney result={more} savedResult={saved} whenLabel="at 67" />);
+    const change = screen.getByText("Against your saved figures").nextElementSibling;
+    expect(change?.textContent).toMatch(/^\+£[\d,]+ a month$/);
+  });
+
+  it("notes the annual allowance in a neutral style only when the illustration is above it", () => {
+    const big = projectPension({ ...input, salary: 300000, employeePercent: 30 });
+    render(<ForecasterResults inTodaysMoney result={big} savedResult={big} whenLabel="at 67" />);
     expect(screen.getByText("Above the annual allowance")).toBeDefined();
   });
 });

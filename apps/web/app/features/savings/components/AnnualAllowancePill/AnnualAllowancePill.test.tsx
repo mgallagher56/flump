@@ -7,9 +7,9 @@ describe("AnnualAllowancePill", () => {
     render(<AnnualAllowancePill type="isa" currentAmount={8500} savingsInterest={300} />);
 
     expect(screen.getByText("ISA allowance")).toBeDefined();
-    expect(screen.getByText("£11,500 left to use this tax year")).toBeDefined();
+    expect(screen.getByText("£11,500 unused this tax year")).toBeDefined();
     expect(screen.getByText(/Limit £20,000 a tax year/)).toBeDefined();
-    expect(screen.getByText(/days until 5 April/)).toBeDefined();
+    expect(screen.queryByText(/days until 5 April/)).toBeNull();
     expect(screen.getByText(/Personal Savings Allowance/)).toBeDefined();
     expect(screen.getByRole("progressbar", { name: "ISA allowance used" })).toBeDefined();
   });
@@ -28,16 +28,16 @@ describe("AnnualAllowancePill", () => {
   it("renders the pension allowance with the £60,000 limit", () => {
     render(<AnnualAllowancePill type="pension" currentAmount={25000} />);
 
-    expect(screen.getByText("Pension allowance")).toBeDefined();
+    expect(screen.getByText("Pension annual allowance")).toBeDefined();
     expect(screen.getByText(/Limit £60,000 a tax year/)).toBeDefined();
-    expect(screen.getByText("£35,000 left to use this tax year")).toBeDefined();
+    expect(screen.getByText("£35,000 unused this tax year")).toBeDefined();
     expect(screen.queryByText(/Personal Savings Allowance/)).toBeNull();
   });
 
   it("shows the basic-rate £1,000 allowance for a basic-rate taxpayer", () => {
     render(<AnnualAllowancePill type="isa" currentAmount={0} taxBand="basic" />);
     expect(screen.getByText(/Personal Savings Allowance \(basic rate\):/)).toBeDefined();
-    expect(screen.getByText(/£1,000 of interest a year without tax/)).toBeDefined();
+    expect(screen.getByText(/£1,000 of interest a year with no tax to pay/)).toBeDefined();
     expect(screen.queryByText(/higher rate/)).toBeNull();
   });
 

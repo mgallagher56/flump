@@ -1,8 +1,17 @@
-import { act, fireEvent, render, screen } from "@testing-library/react";
-import type { FC } from "react";
+import type { ProfileFacts } from "@flump/finance-engine";
+import { DELTA_PANEL_COPY } from "@repo/ui";
+import { expectPageRules } from "@repo/ui/testing";
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
+import { type FC, useMemo, useState } from "react";
 import { describe, expect, it, vi } from "vitest";
+import { projectPension } from "../../forecast";
 import { usePensionScenario } from "../../usePensionScenario";
-import { PensionForecast, type PensionForecastProps } from "./PensionForecast";
+import {
+  buildForecastInput,
+  PensionForecast,
+  type PensionForecastBase,
+  type PensionTool,
+} from "./PensionForecast";
 
 vi.mock("react-router", () => ({
   Link: ({ children, to }: { children: React.ReactNode; to: string }) => (
@@ -24,106 +33,138 @@ vi.mock("recharts", async () => {
   };
 });
 
-const facts: Omit<PensionForecastProps, "scenario"> = {
-  hasSalary: true,
-  salary: 50000,
-  employeePercent: 6,
-  employerPercent: 4,
-  isSalarySacrifice: true,
+const base: PensionForecastBase = {
+  salary: 58000,
+  employerPercent: 3,
+  isSalarySacrifice: false,
   passEmployerNi: false,
-  currentPotTotal: 30000,
-  directMonthlyContrib: 100,
-  portfolioReturnRate: 5.4,
-  growthRateIsPlaceholder: false,
-  hasPots: true,
+  currentPotTotal: 96000,
+  directMonthlyContrib: 0,
 };
 
-const onEditDetails = vi.fn();
-const Harness: FC<Partial<typeof facts>> = (over) => {
-  const scenario = usePensionScenario(5.4);
-  return <PensionForecast {...facts} {...over} scenario={scenario} onEditDetails={onEditDetails} />;
+const FACTS: ProfileFacts = {
+  annualSalary: 58000,
+  employmentType: "employed",
+  taxRegion: "ENGLAND",
+  studentLoanPlans: [],
+  pensionPercent: 8,
+  isSalarySacrifice: false,
 };
+
+const Harness: FC<{
+  hasSalary?: boolean;
+  takeHome?: boolean;
+  age?: number | null;
+  otherTax?: boolean;
+}> = ({ hasSalary = true, takeHome = true, age = 35, otherTax = false }) => {
+  const scenario = usePensionScenario({ contributionPercent: 8, horizonYears: 32, growthRate: 5 });
+  const [tool, setTool] = useState<PensionTool>("retirement");
+  const savedResult = useMemo(
+    () => projectPension(buildForecastInput(base, scenario.saved)),
+    [scenario.saved],
+  );
+  return (
+    <PensionForecast
+      {...base}
+      currentAge={age}
+      hasSalary={hasSalary}
+      savedEmployeePercent={8}
+      savedResult={savedResult}
+      scenario={scenario}
+      showsOtherTaxFigure={otherTax}
+      takeHomeFacts={takeHome ? FACTS : undefined}
+      tool={tool}
+      onToolChange={setTool}
+    />
+  );
+};
+
+const zone = () => screen.getByRole("region", { name: "Model a change to your pension" });
+const visiblePanel = () => screen.getByRole("tabpanel");
 
 describe("<PensionForecast />", () => {
-  it("is one scenario zone with the basis line from saved facts", () => {
+  it("has one footer action, the reset, and no link away from the zone", () => {
     render(<Harness />);
-    expect(screen.getAllByRole("region", { name: "Model a change to your pension" })).toHaveLength(
-      1,
-    );
+    const footer = within(zone()).getByTestId("scenario-zone-footer");
     expect(
-      screen.getByText("Starting from your figures: £50,000 salary, 6% you and 4% your employer"),
-    ).toBeDefined();
-    expect(
-      (screen.getByRole("button", { name: /Reset to saved figures/ }) as HTMLButtonElement)
-        .disabled,
-    ).toBe(true);
-    expect(screen.queryByRole("button", { name: /Sync/i })).toBeNull();
-    expect(screen.queryByRole("button", { name: /Apply/i })).toBeNull();
+      within(footer)
+        .getAllByRole("button")
+        .map((b) => b.textContent),
+    ).toEqual(["Reset to saved figures"]);
   });
 
-  it("moving a lever enables Reset, and Reset restores the saved figures", () => {
+  it("is one zone with two tools as tabs, one visible, at most three inputs and one notice", () => {
     render(<Harness />);
-    const extra = screen.getByLabelText("Extra each month range slider") as HTMLInputElement;
-    fireEvent.change(extra, { target: { value: "200" } });
-    expect(extra.value).toBe("200");
-    fireEvent.click(screen.getByRole("button", { name: "Reset to saved figures" }));
-    expect((screen.getByLabelText("Extra each month range slider") as HTMLInputElement).value).toBe(
-      "0",
-    );
-    expect(
-      (screen.getByRole("button", { name: "Reset to saved figures" }) as HTMLButtonElement)
-        .disabled,
-    ).toBe(true);
+    expect(within(zone()).getByText("Illustration, not saved")).toBeDefined();
+    expect(screen.getAllByRole("tab").map((t) => t.textContent)).toEqual([
+      "At retirement",
+      "Take-home pay",
+    ]);
+    expect(within(visiblePanel()).getAllByRole("slider")).toHaveLength(3);
+    expect(zone().querySelectorAll("[data-notice='projection']")).toHaveLength(1);
+    expect(zone().querySelectorAll("[data-tone='hero']")).toHaveLength(0);
+    // One outcome, two supporting figures, two slider values; the chart adds none.
+    expectPageRules(zone(), { maxFigures: 5, projectionNotices: 1 });
+  });
+
+  it("hides the tabs when only the retirement tool is available", () => {
+    render(<Harness takeHome={false} />);
+    expect(screen.queryByRole("tab")).toBeNull();
+    expect(screen.getAllByRole("slider")).toHaveLength(3);
+  });
+
+  it("moving an input enables Reset, and Reset restores the saved figures", () => {
+    render(<Harness />);
+    const reset = screen.getByRole("button", {
+      name: "Reset to saved figures",
+    }) as HTMLButtonElement;
+    expect(reset.disabled).toBe(true);
+    expect(screen.getByText("No change")).toBeDefined();
+    fireEvent.change(within(visiblePanel()).getByLabelText("Your contribution range slider"), {
+      target: { value: "12" },
+    });
+    expect(reset.disabled).toBe(false);
+    expect(screen.queryByText("No change")).toBeNull();
+    fireEvent.click(reset);
+    expect(screen.getByText("No change")).toBeDefined();
+  });
+
+  it("the take-home tool reads the same contribution and adds the unverified lead to the notice", () => {
+    render(<Harness />);
+    fireEvent.change(within(visiblePanel()).getByLabelText("Your contribution range slider"), {
+      target: { value: "10" },
+    });
+    fireEvent.mouseDown(screen.getByRole("tab", { name: "Take-home pay" }), {
+      button: 0,
+    });
+    expect(within(visiblePanel()).getAllByRole("slider")).toHaveLength(1);
+    expect(screen.getByText("Change in take-home pay")).toBeDefined();
+    const notice = zone().querySelector("[data-notice='projection']");
+    expect(notice?.textContent).toContain(DELTA_PANEL_COPY.unverifiedBanner);
   });
 
   it("no salary shows the prompt and no projection", () => {
-    render(<Harness hasSalary={false} salary={0} />);
-    expect(screen.getByText(/Add your salary in/).textContent).toContain(
-      "to project your pension.",
-    );
-    expect(screen.queryByLabelText("Extra each month range slider")).toBeNull();
+    render(<Harness hasSalary={false} />);
+    expect(screen.getByText(/to see a pension estimate/)).toBeDefined();
+    expect(screen.queryByRole("slider")).toBeNull();
   });
 
-  it("the footer notes that changes are not saved beside 'Update your details'", () => {
-    render(<Harness />);
-    const note = screen.getByText("Changes here are not saved.");
-    const link = screen.getByRole("button", { name: "Update your details" });
-    // Same footer row, note first so it sits on the left and the link on the right.
-    expect(note.parentElement).toBe(link.parentElement);
-    expect(note.compareDocumentPosition(link) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-  });
-
-  it("'Update your details' opens the saved details and carries no scenario values", () => {
-    onEditDetails.mockClear();
-    render(<Harness />);
-    fireEvent.change(screen.getByLabelText("Extra each month range slider"), {
-      target: { value: "200" },
-    });
-    fireEvent.click(screen.getByRole("button", { name: "Update your details" }));
-    expect(onEditDetails).toHaveBeenCalledTimes(1);
-    // Only the click event is passed: no scenario values travel with it.
-    const args = onEditDetails.mock.calls[0] ?? [];
-    expect(
-      args.every((arg) => arg === undefined || arg instanceof Event || "nativeEvent" in arg),
-    ).toBe(true);
-  });
-
-  it("announces an 'Illustration:' outcome only after a lever moves, once the debounce passes", () => {
+  it("announces an 'Illustration:' outcome only after an input moves", () => {
     vi.useFakeTimers();
     try {
-      render(<Harness />);
-      const region = screen.getByRole("status");
+      render(<Harness takeHome={false} />);
+      const region = within(zone()).getByRole("status");
       act(() => {
         vi.advanceTimersByTime(1000);
       });
       expect(region.textContent).toBe("");
-      fireEvent.change(screen.getByLabelText("Extra each month range slider"), {
-        target: { value: "200" },
+      fireEvent.change(screen.getByLabelText("Retirement age range slider"), {
+        target: { value: "60" },
       });
       act(() => {
         vi.advanceTimersByTime(500);
       });
-      expect(region.textContent).toMatch(/^Illustration: projected pot £[\d,]+ in 25 years/);
+      expect(region.textContent).toMatch(/^Illustration: estimated income £[\d,]+ a month at 60/);
     } finally {
       vi.useRealTimers();
     }

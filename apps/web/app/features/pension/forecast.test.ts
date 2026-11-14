@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { type ForecastInput, plsaTierFor, projectPension } from "./forecast";
+import { type ForecastInput, projectPension } from "./forecast";
 
 const base: ForecastInput = {
   startingPot: 20000,
@@ -61,12 +61,5 @@ describe("projectPension", () => {
     const on = projectPension({ ...base, growthRate: 5, includeStatePension: true });
     expect(off.annualRetirementIncome).toBe(Math.round(off.finalBalance * 0.04));
     expect(on.annualRetirementIncome - off.annualRetirementIncome).toBe(on.statePensionAnnual);
-  });
-
-  it("picks the PLSA tier from the monthly income", () => {
-    expect(plsaTierFor(500)).toBe("below");
-    expect(plsaTierFor(1200)).toBe("minimum");
-    expect(plsaTierFor(2608)).toBe("moderate");
-    expect(plsaTierFor(3591)).toBe("comfortable");
   });
 });

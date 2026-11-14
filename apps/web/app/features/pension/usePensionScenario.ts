@@ -3,12 +3,13 @@ import { type ScenarioState, useScenarioState } from "~/hooks/useScenarioState";
 
 /**
  * Pension what-if state: a typed adapter over the shared `useScenarioState` (in-memory only,
- * seeded from saved figures, nothing is written anywhere). `saved` is exposed so the controls can
- * show the saved figure beside an edited one.
+ * seeded from saved figures, nothing is written anywhere). `saved` is exposed so the zone can
+ * compare the illustration with the saved figures.
  */
 export type PensionScenarioValues = {
-  /** Extra personal payment each month, on top of everything saved. */
-  extraMonthly: number;
+  /** Your contribution as a percentage of salary (8 means 8%). */
+  contributionPercent: number;
+  /** Whole years until retirement. Shown as a retirement age when the user's age is known. */
   horizonYears: number;
   /** Annual growth as a percentage figure (5 means 5%). */
   growthRate: number;
@@ -17,23 +18,35 @@ export type PensionScenarioValues = {
   includeStatePension: boolean;
 };
 
+/** Years used only inside the illustration when the user's age is not saved. */
 export const DEFAULT_HORIZON_YEARS = 25;
+
+export interface PensionScenarioSeed {
+  contributionPercent: number;
+  horizonYears: number;
+  growthRate: number;
+}
 
 export type PensionScenario = ScenarioState<PensionScenarioValues> & {
   saved: PensionScenarioValues;
 };
 
-export const usePensionScenario = (savedGrowthRate: number): PensionScenario => {
+export const usePensionScenario = ({
+  contributionPercent,
+  horizonYears,
+  growthRate,
+}: PensionScenarioSeed): PensionScenario => {
   const saved = useMemo<PensionScenarioValues>(
     () => ({
-      extraMonthly: 0,
-      horizonYears: DEFAULT_HORIZON_YEARS,
-      growthRate: savedGrowthRate,
+      contributionPercent,
+      horizonYears,
+      growthRate,
       useQualifyingEarnings: false,
-      adjustForInflation: false,
+      // Figures read "in today's money" by default, matching the saved estimate.
+      adjustForInflation: true,
       includeStatePension: false,
     }),
-    [savedGrowthRate],
+    [contributionPercent, horizonYears, growthRate],
   );
   const state = useScenarioState(saved);
   return { ...state, saved };

@@ -13,12 +13,10 @@ const Harness: FC<{
   onSave?: () => Promise<void>;
   ratesAssumed?: boolean;
   methodSet?: boolean;
-  updatedAt?: string | null;
 }> = ({
   onSave = vi.fn().mockResolvedValue(undefined),
   ratesAssumed = false,
   methodSet = true,
-  updatedAt = null,
 }) => {
   const [editing, setEditing] = useState(false);
   return (
@@ -30,12 +28,8 @@ const Harness: FC<{
       isEditing={editing}
       isSalarySacrifice
       isSalarySacrificeEmployerNi={false}
-      monthlyEmployeeContrib={250}
-      monthlyEmployerNiContrib={0}
       methodSet={methodSet}
       ratesAssumed={ratesAssumed}
-      standardMonthlyEmployerContrib={167}
-      updatedAt={updatedAt}
       onEditingChange={setEditing}
       onSave={onSave}
     />
@@ -43,33 +37,37 @@ const Harness: FC<{
 };
 
 describe("<PensionDetails />", () => {
-  it("shows saved facts with the Saved state and last updated date", () => {
-    render(<Harness updatedAt="2026-11-05T10:30:00.000Z" />);
+  it("shows the saved facts in one card, one figure per row", () => {
+    render(<Harness />);
     expect(screen.getByRole("heading", { level: 2, name: "Your details" })).toBeDefined();
-    expect(screen.getByText("Saved")).toBeDefined();
-    expect(screen.getByText("5 Nov 2026")).toBeDefined();
-    expect(screen.getByText(/You:/).parentElement?.textContent).toContain("6%");
-    expect(screen.getByText(/Employer:/).parentElement?.textContent).toContain("4%");
-    expect(screen.getByText("£50,000 a year")).toBeDefined();
+    const rows = Array.from(document.querySelectorAll("dl > div")).map((r) => r.textContent);
+    expect(rows).toEqual([
+      "Salary£50,000 a year",
+      "You pay6% of salary",
+      "Employer pays4% of salary",
+      "MethodSalary sacrifice",
+    ]);
   });
 
-  it("labels the backend default rates as assumed", () => {
+  it("labels the backend default rates as assumed, once", () => {
     render(<Harness ratesAssumed />);
-    expect(screen.getAllByText(/Default: auto-enrolment minimum/)).toHaveLength(2);
+    expect(screen.getAllByText(/Assumed: the auto-enrolment minimum/)).toHaveLength(1);
   });
 
   it("reads the contribution method as Not set until the user saves one", () => {
     render(<Harness methodSet={false} ratesAssumed />);
-    expect(screen.getByText(/Contribution method: Not set/)).toBeDefined();
-    expect(screen.queryByText(/Salary sacrifice$/)).toBeNull();
+    expect(screen.getByText("Method").nextElementSibling?.textContent).toBe("Not set");
+    expect(screen.queryByText(/^Salary sacrifice$/)).toBeNull();
   });
 
   it("edits and saves the salary sacrifice settings", async () => {
     const onSave = vi.fn().mockResolvedValue(undefined);
     render(<Harness onSave={onSave} />);
     fireEvent.click(screen.getByRole("button", { name: "Edit details" }));
-    expect((screen.getByLabelText(/Pass on employer NI/) as HTMLInputElement).checked).toBe(false);
-    fireEvent.click(screen.getByLabelText(/Pass on employer NI/));
+    expect(
+      (screen.getByLabelText(/Employer adds its National Insurance/) as HTMLInputElement).checked,
+    ).toBe(false);
+    fireEvent.click(screen.getByLabelText(/Employer adds its National Insurance/));
     fireEvent.click(screen.getByRole("button", { name: "Save details" }));
     await waitFor(() =>
       expect(onSave).toHaveBeenCalledWith({
@@ -88,7 +86,9 @@ describe("<PensionDetails />", () => {
     const onSave = vi.fn().mockResolvedValue(undefined);
     render(<Harness onSave={onSave} />);
     fireEvent.click(screen.getByRole("button", { name: "Edit details" }));
-    fireEvent.change(screen.getByLabelText(/Annual salary/), { target: { value: "60000" } });
+    fireEvent.change(screen.getByLabelText(/Yearly salary before tax/), {
+      target: { value: "60000" },
+    });
     fireEvent.click(screen.getByRole("button", { name: "Save details" }));
     await waitFor(() =>
       expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ methodChanged: false })),
@@ -98,7 +98,7 @@ describe("<PensionDetails />", () => {
   it("lets the salary be cleared without snapping back to 0", () => {
     render(<Harness />);
     fireEvent.click(screen.getByRole("button", { name: "Edit details" }));
-    const salary = screen.getByLabelText(/Annual salary/) as HTMLInputElement;
+    const salary = screen.getByLabelText(/Yearly salary before tax/) as HTMLInputElement;
     fireEvent.change(salary, { target: { value: "" } });
     expect(salary.value).toBe("");
   });

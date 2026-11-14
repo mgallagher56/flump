@@ -24,7 +24,6 @@
     "apps/web/app/features/mortgage/components/OverpayVsSaveCompare/OverpayVsSaveCompare.tsx": 2,
     "apps/web/app/features/mortgage/components/OverpaymentSimulator/OverpaymentSimulator.tsx": 2,
     "apps/web/app/features/pension/components/ForecastChart/ForecastChart.tsx": 2,
-    "apps/web/app/features/savings/components/SavingsForecasterCard/SavingsForecasterCard.tsx": 2,
     "packages/ui/src/foundations/ColorPalette/ColorPalette.tsx": 2,
     "packages/ui/src/foundations/DirectionCSignoff/DirectionCSignoff.styles.ts": 1,
     "packages/ui/src/foundations/SpacingAndRadii/SpacingAndRadii.tsx": 2,

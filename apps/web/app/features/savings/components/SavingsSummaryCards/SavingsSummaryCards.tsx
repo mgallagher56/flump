@@ -1,99 +1,99 @@
-import { KpiCard, KpiStrip, Money, Num } from "@repo/ui";
-import type { FC } from "react";
-import { section, sectionTitle, summaryRoot } from "./SavingsSummaryCards.styles";
+import { HeroFigure, KpiCard, KpiStrip, StatusBadge } from "@repo/ui";
+import type { FC, ReactElement } from "react";
+import { formatRate } from "../SavingsForecast/savingsForecast.utils";
+import { kpiFigure } from "./SavingsSummaryCards.styles";
 
 export interface SavingsSummaryCardsProps {
   totalSavingsBalance: number;
-  totalMonthlySavings: number;
-  weightedInterestRate: number;
-  projectedTenYearBalance: number;
   accountCount: number;
-  estimatedAnnualInterest?: number;
-  monthlyTakeHome?: number | null;
+  /** Total saved each month across the accounts. Null or 0 hides the card. */
+  monthlySaving: number | null;
+  /** Average AER across the accounts that store a rate. Null or 0 hides the card. */
+  averageRate: number | null;
+  /** ISA allowance used this tax year. Null or 0 hides the card. */
+  isaUsed: number | null;
 }
 
-const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
+const isReal = (value: number | null): value is number =>
+  value !== null && Number.isFinite(value) && value > 0;
 
-/** One hero for the total saved, then a single "Where you stand" strip of four figures. */
+export const KPI_PROMPT_TITLE =
+  "Add what you save each month and your interest rates to see more here";
+
+/**
+ * The saved facts at the top of the page: the hero "Total savings", then a strip of up to 3 real
+ * values. A card without a real value is hidden (P3.3), never shown as £0 or 0%; when none is
+ * set, one prompt replaces the strip (P3.2).
+ */
 export const SavingsSummaryCards: FC<SavingsSummaryCardsProps> = ({
   totalSavingsBalance,
-  totalMonthlySavings,
-  weightedInterestRate,
-  projectedTenYearBalance,
   accountCount,
-  estimatedAnnualInterest,
-  monthlyTakeHome,
+  monthlySaving,
+  averageRate,
+  isaUsed,
 }) => {
-  const safeRate = Number(weightedInterestRate) || 0;
-
-  // 12 months of compounding with the regular monthly saving, used when no estimate is passed in.
-  const monthlyRate = safeRate / 100 / 12;
-  let balAfterOneYear = totalSavingsBalance;
-  for (let m = 0; m < 12; m++) {
-    balAfterOneYear = balAfterOneYear * (1 + monthlyRate) + totalMonthlySavings;
+  const cards: ReactElement[] = [];
+  if (isReal(monthlySaving)) {
+    cards.push(
+      <KpiCard
+        key="monthly"
+        label="Saved each month"
+        subtext="Across your accounts"
+        value={Math.round(monthlySaving)}
+        valueFormat={{ fractionDigits: 0 }}
+      />,
+    );
   }
-  const compoundOneYearInterest = Math.max(
-    0,
-    balAfterOneYear - totalSavingsBalance - totalMonthlySavings * 12,
-  );
-  const yearlyInterest = estimatedAnnualInterest ?? compoundOneYearInterest;
-
-  const takeHome = Number(monthlyTakeHome) || 0;
-  const savingsRate =
-    takeHome > 0 && totalMonthlySavings > 0 ? (totalMonthlySavings / takeHome) * 100 : null;
+  if (isReal(averageRate)) {
+    cards.push(
+      <KpiCard
+        key="rate"
+        label="Average rate"
+        subtext="AER across your accounts"
+        value={<span className={kpiFigure()}>{formatRate(averageRate)}</span>}
+      />,
+    );
+  }
+  if (isReal(isaUsed)) {
+    cards.push(
+      <KpiCard
+        key="isa"
+        action={
+          <StatusBadge size="sm" variant="neutral">
+            Estimate
+          </StatusBadge>
+        }
+        label="ISA allowance used"
+        subtext="This tax year, from your monthly saving into ISAs"
+        value={isaUsed}
+        valueFormat={{ fractionDigits: 0 }}
+      />,
+    );
+  }
 
   return (
-    <div className={summaryRoot()}>
-      <KpiCard
+    <>
+      <HeroFigure
         label="Total savings"
-        subtext={`Across ${plural(accountCount, "savings or investment account", "savings and investment accounts")}`}
-        tone="hero"
+        subline={`Across ${accountCount === 1 ? "1 savings or investment account" : `${accountCount} savings and investment accounts`}`}
         value={totalSavingsBalance}
+        valueFormat={{ fractionDigits: 0 }}
       />
-
-      <section aria-labelledby="savings-stand-heading" className={section()}>
-        <h2 className={sectionTitle()} id="savings-stand-heading">
-          Where you stand
-        </h2>
-        <KpiStrip columns={4}>
-          <KpiCard
-            label="Saved each month"
-            subtext={
-              savingsRate === null ? (
-                "Regular saving across your accounts"
-              ) : (
-                <>
-                  <Num
-                    fractionDigits={1}
-                    kind="percent"
-                    size="sm"
-                    tone="muted"
-                    value={savingsRate}
-                  />{" "}
-                  of your take-home pay
-                </>
-              )
-            }
-            value={<Money size="lg" value={totalMonthlySavings} />}
-          />
-          <KpiCard
-            label="Average interest rate"
-            subtext="Weighted by balance (AER)"
-            value={<Num fractionDigits={2} kind="percent" size="lg" value={safeRate} />}
-          />
-          <KpiCard
-            label="Interest in a year"
-            subtext="Estimate at today's rates"
-            value={<Money size="lg" value={Math.round(yearlyInterest)} />}
-          />
-          <KpiCard
-            label="Projected in 10 years"
-            subtext="Projection from your current saving and rates"
-            value={<Money size="lg" value={Math.round(projectedTenYearBalance)} />}
-          />
+      {cards.length > 0 ? (
+        <KpiStrip columns={cards.length as 1 | 2 | 3}>{cards}</KpiStrip>
+      ) : (
+        <KpiStrip
+          emptyPrompt={{
+            title: KPI_PROMPT_TITLE,
+            description: "Edit an account in the list below to add them.",
+            id: "savings-kpi-prompt",
+          }}
+        >
+          <KpiCard label="Saved each month" value={null} />
+          <KpiCard label="Average rate" value={null} />
         </KpiStrip>
-      </section>
-    </div>
+      )}
+    </>
   );
 };
 

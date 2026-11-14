@@ -8,7 +8,7 @@ import { actionErrorResponse } from "~/services/route-error.server";
 import { getAuthSession, requireAccessToken } from "~/utils/auth.server";
 import { roundTo2dp } from "~/utils/roundTo2dp";
 
-export const meta: MetaFunction = () => [{ title: "Pension & Retirement | Flump" }];
+export const meta: MetaFunction = () => [{ title: "Your pension | Flump" }];
 
 export const action = async (args: ActionFunctionArgs) => {
   const { accessToken } = await getAuthSession(args, { ensureSignedIn: true });

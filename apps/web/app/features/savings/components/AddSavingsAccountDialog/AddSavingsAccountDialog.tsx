@@ -1,8 +1,17 @@
-import { Button, CurrencyInput, controlProps, Dialog, FormField, TextInput } from "@repo/ui";
+import {
+  Button,
+  CurrencyInput,
+  controlProps,
+  Dialog,
+  FormField,
+  PercentInput,
+  Select,
+  TextInput,
+} from "@repo/ui";
 import { type FC, type FormEvent, useState } from "react";
 import { useFetcher } from "react-router";
 import type { Account } from "~/containers/accounts/types";
-import { accountForm, fieldRow, formActions, nativeSelect } from "./AddSavingsAccountDialog.styles";
+import { accountForm, fieldRow, formActions } from "./AddSavingsAccountDialog.styles";
 
 export interface AddSavingsAccountDialogProps {
   accountToEdit?: Account | null;
@@ -30,13 +39,13 @@ const AccountForm: FC<AccountFormProps> = ({ accountToEdit, onClose }) => {
     accountToEdit?.type === "Investment" ? "Investment" : "Saving",
   );
   const [balance, setBalance] = useState<number | null>(toNumberOrNull(accountToEdit?.balance));
-  const [interestRate, setInterestRate] = useState<string>(
-    accountToEdit?.interestRate !== undefined && accountToEdit.interestRate !== null
-      ? String(accountToEdit.interestRate)
-      : "4.5",
+  // No assumed defaults: a new account starts with an empty rate and monthly amount, and empty
+  // fields are saved as "not set" rather than 0.
+  const [interestRate, setInterestRate] = useState<number | null>(
+    toNumberOrNull(accountToEdit?.interestRate),
   );
   const [monthlyContribution, setMonthlyContribution] = useState<number | null>(
-    accountToEdit ? toNumberOrNull(accountToEdit.monthlyContribution) : 100,
+    toNumberOrNull(accountToEdit?.monthlyContribution),
   );
 
   const canSave = name.trim().length > 0;
@@ -52,8 +61,8 @@ const AccountForm: FC<AccountFormProps> = ({ accountToEdit, onClose }) => {
         name: name.trim(),
         type,
         balance: String(Number(balance) || 0),
-        interestRate: interestRate !== "" ? String(Number(interestRate) || 0) : "0",
-        monthlyContribution: String(Number(monthlyContribution) || 0),
+        interestRate: interestRate === null ? "" : String(interestRate),
+        monthlyContribution: monthlyContribution === null ? "" : String(monthlyContribution),
       },
       { method: "POST", action: "/app/savings" },
     );
@@ -66,7 +75,7 @@ const AccountForm: FC<AccountFormProps> = ({ accountToEdit, onClose }) => {
         {(field) => (
           <TextInput
             {...controlProps(field)}
-            placeholder="For example, Marcus easy access or Vanguard ISA"
+            placeholder="For example, easy access savings or Cash ISA"
             value={name}
             onChange={(e) => setName(e.target.value)}
           />
@@ -75,16 +84,15 @@ const AccountForm: FC<AccountFormProps> = ({ accountToEdit, onClose }) => {
 
       <FormField label="Account type">
         {(field) => (
-          // TODO(E15 T2.2b): swap for @repo/ui Select
-          <select
-            className={nativeSelect()}
-            id={field.id}
+          <Select
+            {...controlProps(field)}
+            options={[
+              { value: "Saving", label: "Savings account or Cash ISA" },
+              { value: "Investment", label: "Investment or Stocks and Shares ISA" },
+            ]}
             value={type}
             onChange={(e) => setType(e.target.value as SavingsType)}
-          >
-            <option value="Saving">Savings account or cash ISA</option>
-            <option value="Investment">Investment or stocks and shares ISA</option>
-          </select>
+          />
         )}
       </FormField>
 
@@ -94,18 +102,14 @@ const AccountForm: FC<AccountFormProps> = ({ accountToEdit, onClose }) => {
             <CurrencyInput {...controlProps(field)} value={balance} onValueChange={setBalance} />
           )}
         </FormField>
-        <FormField label="Interest rate (AER, %)">
+        <FormField label="Interest rate (AER)">
           {(field) => (
-            <TextInput
+            <PercentInput
               {...controlProps(field)}
-              inputMode="decimal"
-              max="100"
-              min="0"
-              placeholder="For example, 4.5"
-              step="any"
-              type="number"
+              max={100}
+              min={0}
               value={interestRate}
-              onChange={(e) => setInterestRate(e.target.value)}
+              onValueChange={setInterestRate}
             />
           )}
         </FormField>

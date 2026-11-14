@@ -1,136 +1,123 @@
-import { KpiCard, KpiStrip, Money } from "@repo/ui";
-import type { FC } from "react";
-import { figure, perMonth, rateValue } from "./PensionSummary.styles";
+import { HeroFigure, KpiCard, KpiStrip, StatusBadge } from "@repo/ui";
+import type { FC, ReactNode } from "react";
+import { Link } from "react-router";
+import { figureText, promptLink } from "./PensionSummary.styles";
 
 export interface PensionSummaryProps {
+  /** Saved total across every pot. */
   totalValue: number;
   potsCount: number;
-  /** True when a salary is stored, so employee and employer amounts are real figures. */
-  hasSalary: boolean;
-  monthlyEmployeeContrib: number;
-  monthlyEmployerContrib: number;
-  directMonthlyContrib: number;
-  employeePercent: number;
-  employerPercent: number;
-  /** Monthly cost of the employee contribution after tax relief; 0 when it cannot be worked out. */
-  netMonthlyCost: number;
-  taxReliefMonthly: number;
-  weightedReturnRate: number;
-  /** True when no pot has a growth rate, so `weightedReturnRate` is a placeholder. */
-  growthRateIsPlaceholder?: boolean;
+  /** Saved estimate of monthly income at retirement, in today's money. `null` when unknown. */
+  estimatedMonthlyIncome: number | null;
+  /** What to add before the estimate can be worked out, for example "Add your year of birth". */
+  estimateMissing?: { label: string; to: string };
+  /** You plus your employer (and any fixed pot payments) each month. `null` when unknown. */
+  monthlyTotal: number | null;
+  /** True when fixed payments into pots are part of `monthlyTotal`. */
+  includesPotPayments?: boolean;
+  /** True when the contribution rates are the backend defaults, which the user may not have chosen. */
+  ratesAssumed?: boolean;
+  /** The age the estimate runs to (the State Pension age). `null` when the user's age is unknown. */
+  retirementAge: number | null;
+  /** Opens the add-pot dialog, shown in the hero when there are no pots. */
+  onAddPot: () => void;
 }
 
-/**
- * Pension page KPI strip (E15 T3.5). Four cards at most. "Total in your pots" is the page's
- * single `surface.hero` block and falls back to a plain "Not set" card when there are none.
- * Anything that cannot be worked out is passed as null so the card says so instead of showing 0.
- */
-const pctFormat = new Intl.NumberFormat("en-GB", {
-  minimumFractionDigits: 1,
-  maximumFractionDigits: 1,
-});
+const PROFILE_PATH = "/app/profile";
+const ASSUMED_RATES_CAPTION = "Assumed rates. Edit to match your payslip";
 
+const promptTo = (label: string, to: string): ReactNode => (
+  <Link className={promptLink} to={to}>
+    {label}
+  </Link>
+);
+
+/**
+ * Saved figures only (E16 PR 7, ruling D2): the hero is the saved "Total in your pots", never an
+ * estimate. The estimated income is the first KPI, tagged "Estimate". Captions carry no figures.
+ */
 export const PensionSummary: FC<PensionSummaryProps> = ({
   totalValue,
   potsCount,
-  hasSalary,
-  monthlyEmployeeContrib,
-  monthlyEmployerContrib,
-  directMonthlyContrib,
-  employeePercent,
-  employerPercent,
-  netMonthlyCost,
-  taxReliefMonthly,
-  weightedReturnRate,
-  growthRateIsPlaceholder = false,
+  estimatedMonthlyIncome,
+  estimateMissing,
+  monthlyTotal,
+  includesPotPayments = false,
+  ratesAssumed = false,
+  retirementAge,
+  onAddPot,
 }) => {
   const hasPots = potsCount > 0;
-  const pct = (n: number) => `${pctFormat.format(n)}%`;
-  // Without a salary the employee and employer amounts are unknown; direct pot payments still count.
-  const monthlyTotal = hasSalary
-    ? monthlyEmployeeContrib + monthlyEmployerContrib + directMonthlyContrib
-    : directMonthlyContrib > 0
-      ? directMonthlyContrib
-      : null;
-  const costKnown = hasSalary && netMonthlyCost > 0;
-
   return (
-    <KpiStrip columns={4}>
-      <KpiCard
+    <>
+      <HeroFigure
+        emptyAction={
+          <button className={promptLink} type="button" onClick={onAddPot}>
+            Add pension pot
+          </button>
+        }
+        emptyPrompt="Add a pension pot to see its value."
         label="Total in your pots"
-        subtext={
-          hasPots
-            ? `Across ${potsCount} ${potsCount === 1 ? "pension pot" : "pension pots"}`
-            : "Add a pension pot to see its value"
-        }
-        tone="hero"
-        value={hasPots ? <Money size="kpi" tone="onContrast" value={totalValue} /> : null}
+        subline={`In ${potsCount} ${potsCount === 1 ? "pension pot" : "pension pots"}`}
+        value={hasPots ? totalValue : null}
+        valueFormat={{ fractionDigits: 0 }}
       />
-      <KpiCard
-        label="Going in each month"
-        subtext={
-          monthlyTotal === null
-            ? "Add your salary to include your own and your employer's contributions"
-            : hasSalary
-              ? `Your ${pct(employeePercent)} and your employer's ${pct(employerPercent)} of salary${
-                  directMonthlyContrib > 0 ? ", plus payments into your pots" : ""
-                }`
-              : "Payments into your pots only; salary not set"
-        }
-        value={
-          monthlyTotal === null ? null : (
-            <span className={figure}>
-              <Money size="lg" value={monthlyTotal} />
-              <span className={perMonth}>a month</span>
-            </span>
-          )
-        }
+      <KpiStrip
+        emptyPrompt={{
+          title: "Add your year of birth and salary to see your estimated income at retirement",
+          action: promptTo("Update your details", PROFILE_PATH),
+        }}
+        items={[
+          <KpiCard
+            action={
+              <StatusBadge size="sm" variant="neutral">
+                Estimate
+              </StatusBadge>
+            }
+            emptyAction={
+              estimateMissing ? promptTo(estimateMissing.label, estimateMissing.to) : undefined
+            }
+            key="estimate"
+            label="Estimated income at retirement"
+            subtext={
+              estimatedMonthlyIncome === null
+                ? undefined
+                : ratesAssumed
+                  ? "A month, in today's money, on assumed rates"
+                  : "A month, in today's money"
+            }
+            value={estimatedMonthlyIncome}
+            valueFormat={{ fractionDigits: 0 }}
+          />,
+          <KpiCard
+            emptyAction={promptTo("Add your salary", PROFILE_PATH)}
+            key="monthly"
+            label="Going in each month"
+            subtext={
+              monthlyTotal === null
+                ? undefined
+                : ratesAssumed
+                  ? ASSUMED_RATES_CAPTION
+                  : includesPotPayments
+                    ? "You, your employer and payments into your pots"
+                    : undefined
+            }
+            value={monthlyTotal}
+            valueFormat={{ fractionDigits: 0 }}
+          />,
+          <KpiCard
+            emptyAction={promptTo("Add your year of birth", PROFILE_PATH)}
+            key="age"
+            label="Retirement age"
+            subtext={retirementAge === null ? undefined : "Your State Pension age"}
+            unset={retirementAge === null}
+            value={
+              retirementAge === null ? null : <span className={figureText}>{retirementAge}</span>
+            }
+          />,
+        ]}
       />
-      <KpiCard
-        label="Your cost after tax relief"
-        subtext={
-          costKnown ? (
-            taxReliefMonthly > 0 ? (
-              <>
-                After <Money size="sm" value={taxReliefMonthly} /> a month tax relief on{" "}
-                <Money size="sm" value={monthlyEmployeeContrib} /> paid in
-              </>
-            ) : (
-              "No tax relief on your contribution"
-            )
-          ) : (
-            "Needs your salary and contribution rate"
-          )
-        }
-        value={
-          costKnown ? (
-            <span className={figure}>
-              <Money size="lg" value={netMonthlyCost} />
-              <span className={perMonth}>a month</span>
-            </span>
-          ) : null
-        }
-      />
-      <KpiCard
-        label="Assumed growth"
-        subtext={
-          !hasPots
-            ? "Set when you add a pot"
-            : growthRateIsPlaceholder
-              ? "No growth rate is set on your pots"
-              : "Average across your pots, weighted by value"
-        }
-        value={
-          // A placeholder rate is an assumption, so it only appears in the scenario zone.
-          hasPots && !growthRateIsPlaceholder ? (
-            <span className={figure}>
-              <span className={rateValue}>{pct(weightedReturnRate)}</span>{" "}
-              <span className={perMonth}>a year</span>
-            </span>
-          ) : null
-        }
-      />
-    </KpiStrip>
+    </>
   );
 };
 

@@ -22,58 +22,54 @@ vi.mock("react-router", () => ({
 import { PensionAccountsList } from "./PensionAccountsList";
 
 describe("PensionAccountsList", () => {
-  it("renders the empty state when no pots exist", () => {
-    render(<PensionAccountsList accounts={[]} onOpenAddModal={vi.fn()} variant="desktop" />);
-
-    expect(screen.getByText(/No individual pension pots tracked yet/i)).toBeDefined();
-    expect(screen.getByRole("button", { name: "Add your first pension pot" })).toBeDefined();
+  it("renders nothing when there are no pots", () => {
+    const { container } = render(<PensionAccountsList accounts={[]} />);
+    expect(container.innerHTML).toBe("");
   });
 
-  it("renders table of pension pots, pot allocation breakdown, and consolidation tip when small pot exists", () => {
+  it("lists each pot with one figure per row: the balance", () => {
     const mockAccounts = [
       {
         id: "p1",
-        name: "Nest Workplace Pension",
+        name: "Workplace pot",
         type: "Pension",
         balance: 3000,
         interestRate: 5.0,
-        monthlyContribution: 0,
         isCurrent: true,
       },
       {
         id: "p2",
-        name: "Aviva Old Employer Pot",
+        name: "Old employer pot",
         type: "Pension",
         balance: 27000,
         interestRate: 6.0,
-        monthlyContribution: 0,
         isCurrent: false,
       },
     ];
+    const { container } = render(<PensionAccountsList accounts={mockAccounts as any} />);
+    const rows = container.querySelectorAll("[data-list-row]");
+    expect(rows).toHaveLength(2);
+    expect(rows[0]?.textContent).toContain("Workplace pot");
+    expect(rows[0]?.textContent).toContain("Current pot");
+    expect(rows[0]?.textContent).toContain("£3,000");
+    expect(rows[1]?.textContent).toContain("Past pot");
+    expect(rows[1]?.textContent).toContain("£27,000");
+    // Rates and shares live in the pot's edit dialog, not the row.
+    expect(container.textContent).not.toMatch(/%/);
+  });
 
-    render(
-      <PensionAccountsList
-        accounts={mockAccounts as any}
-        onOpenAddModal={vi.fn()}
-        variant="desktop"
-      />,
-    );
-
-    expect(screen.getAllByText("Nest Workplace Pension").length).toBeGreaterThan(0);
-    expect(screen.getByText("£3,000")).toBeDefined();
-    expect(screen.getAllByText("Aviva Old Employer Pot").length).toBeGreaterThan(0);
-    expect(screen.getByText("£27,000")).toBeDefined();
-    expect(screen.getByText("5.0%")).toBeDefined();
-    expect(screen.getByText("6.0%")).toBeDefined();
-    expect(screen.getByText("Pot allocation")).toBeDefined();
-    // A factual note, never a suggestion to consolidate.
-    expect(screen.getByText("1 past pot and 1 pot under £5,000.")).toBeDefined();
-    expect(screen.queryByText(/Consolidation Tip/i)).toBeNull();
-
-    // Check badges and contributions
-    expect(screen.getByText("Current pot")).toBeDefined();
-    expect(screen.getByText("Past pot")).toBeDefined();
-    expect(screen.getByText("None (past pot)")).toBeDefined();
+  it("keeps pots after the eighth behind a drawer", () => {
+    const many = Array.from({ length: 10 }, (_, i) => ({
+      id: `p${i}`,
+      name: `Pot ${i}`,
+      type: "Pension",
+      balance: 1000 + i,
+      isCurrent: true,
+    }));
+    const { container } = render(<PensionAccountsList accounts={many as any} />);
+    expect(container.querySelectorAll("[data-list-row]")).toHaveLength(8);
+    fireEvent.click(screen.getByRole("button", { name: /Show all pots/ }));
+    expect(container.querySelectorAll("[data-list-row]")).toHaveLength(10);
   });
 
   describe("delete confirmation", () => {
@@ -93,9 +89,7 @@ describe("PensionAccountsList", () => {
       mockSubmit.mockClear();
       const confirmSpy = vi.fn();
       vi.stubGlobal("confirm", confirmSpy);
-      render(
-        <PensionAccountsList accounts={pots as any} onOpenAddModal={vi.fn()} variant="desktop" />,
-      );
+      render(<PensionAccountsList accounts={pots as any} />);
       fireEvent.click(screen.getAllByRole("button", { name: "Delete Nest Workplace Pension" })[0]);
       expect(
         screen.getByRole("alertdialog", { name: "Delete Nest Workplace Pension?" }),
@@ -113,9 +107,7 @@ describe("PensionAccountsList", () => {
     it("a failed delete shows the error inline and keeps the dialog open; success closes it", () => {
       mockSubmit.mockClear();
       fetcherData.current = null;
-      const ui = () => (
-        <PensionAccountsList accounts={pots as any} onOpenAddModal={vi.fn()} variant="desktop" />
-      );
+      const ui = () => <PensionAccountsList accounts={pots as any} />;
       const { rerender } = render(ui());
       fireEvent.click(screen.getAllByRole("button", { name: "Delete Nest Workplace Pension" })[0]);
       fireEvent.click(screen.getByRole("button", { name: "Delete pot" }));
@@ -139,9 +131,7 @@ describe("PensionAccountsList", () => {
 
     it("cancel does nothing", () => {
       mockSubmit.mockClear();
-      render(
-        <PensionAccountsList accounts={pots as any} onOpenAddModal={vi.fn()} variant="desktop" />,
-      );
+      render(<PensionAccountsList accounts={pots as any} />);
       fireEvent.click(screen.getAllByRole("button", { name: "Delete Nest Workplace Pension" })[0]);
       fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
       expect(mockSubmit).not.toHaveBeenCalled();

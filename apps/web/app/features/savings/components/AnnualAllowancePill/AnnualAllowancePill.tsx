@@ -1,6 +1,6 @@
-import { Icon, ProgressBar, StatusBadge } from "@repo/ui";
-import { Clock, PiggyBank, TrendingUp } from "lucide-react";
-import { type FC, useMemo } from "react";
+import { Icon, ProgressBar } from "@repo/ui";
+import { PiggyBank, TrendingUp } from "lucide-react";
+import type { FC } from "react";
 import {
   pillHeader,
   pillIcon,
@@ -43,16 +43,6 @@ export const AnnualAllowancePill: FC<AnnualAllowancePillProps> = ({
   const progressVariant =
     percentage >= 100 ? "danger" : percentage >= 85 ? "warning" : isIsa ? "positive" : "primary";
 
-  // Days until the next 5 April, when the tax year ends.
-  const daysUntilApril5 = useMemo(() => {
-    const now = new Date();
-    let target = new Date(now.getFullYear(), 3, 5, 23, 59, 59);
-    if (now > target) {
-      target = new Date(now.getFullYear() + 1, 3, 5, 23, 59, 59);
-    }
-    return Math.max(0, Math.ceil((target.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)));
-  }, []);
-
   // Personal Savings Allowance (PSA)
   const psaLimit =
     taxBand === undefined ? null : taxBand === "basic" ? 1000 : taxBand === "higher" ? 500 : 0;
@@ -70,14 +60,10 @@ export const AnnualAllowancePill: FC<AnnualAllowancePillProps> = ({
             <Icon icon={isIsa ? PiggyBank : TrendingUp} size="md" />
           </span>
           <div>
-            <h3 className={pillTitle()}>{isIsa ? "ISA allowance" : "Pension allowance"}</h3>
-            <p className={pillSubtitle()}>{formatGBP(remaining)} left to use this tax year</p>
+            <h3 className={pillTitle()}>{isIsa ? "ISA allowance" : "Pension annual allowance"}</h3>
+            <p className={pillSubtitle()}>{formatGBP(remaining)} unused this tax year</p>
           </div>
         </div>
-        <StatusBadge size="sm" variant="warning">
-          <Icon icon={Clock} size="sm" />
-          {daysUntilApril5} {daysUntilApril5 === 1 ? "day" : "days"} until 5 April
-        </StatusBadge>
       </div>
 
       <div>
@@ -109,7 +95,7 @@ export const AnnualAllowancePill: FC<AnnualAllowancePillProps> = ({
               : "cash ISAs, stocks and shares ISAs and Lifetime ISAs."
             : "workplace pension, SIPP and personal pension contributions."}
         </span>
-        {isIsa && <span>Resets 6 April</span>}
+        <span>Resets on 6 April</span>
       </div>
 
       {isIsa && psaLimit === null && (
@@ -126,7 +112,7 @@ export const AnnualAllowancePill: FC<AnnualAllowancePillProps> = ({
         <div className={psaRow()}>
           <span>
             <strong>Personal Savings Allowance ({taxBand} rate):</strong> {formatGBP(psaLimit)} of
-            interest a year without tax
+            interest a year with no tax to pay
           </span>
           <span>
             {savingsInterest > 0

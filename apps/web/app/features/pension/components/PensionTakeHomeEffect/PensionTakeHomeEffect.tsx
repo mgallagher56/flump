@@ -2,14 +2,14 @@ import {
   getUkTaxYearContext,
   incomeScenarioFromFacts,
   type ProfileFacts,
+  type UkWhatIfResult,
   whatIfSacrificeChange,
 } from "@flump/finance-engine";
 import {
   asAtTaxYear,
-  DELTA_PANEL_COPY,
+  CollapsibleDrawer,
   DELTA_TABLE_ROWS,
   formatMoney,
-  pensionPreviewSentence,
   StatusBadge,
   Table,
   TaxRatesStatusBanner,
@@ -22,58 +22,80 @@ import {
 import { type FC, useMemo } from "react";
 import { Link } from "react-router";
 import {
-  effectBadges,
-  effectHeader,
   effectLink,
   effectNote,
   effectRoot,
-  effectSentence,
-  effectTitle,
-  effectUnverified,
+  outcomeLabel,
+  outcomeSuffix,
+  outcomeSupport,
+  outcomeSupportItem,
+  outcomeValue,
 } from "./PensionTakeHomeEffect.styles";
 
 export const PENSION_TAKE_HOME_COPY = {
-  heading: "Effect on take-home",
-  tableCaption: "Where the change in take-home comes from",
+  outcomeLabel: "Change in take-home pay",
+  perMonth: "a month",
+  reachesPension: "Extra into your pension",
+  reliefLabel: "Covered by tax and National Insurance relief",
+  tableTitle: "Where the change in take-home pay comes from",
   partColumn: "Part",
   changeColumn: "Change a year",
-  noExtra: "Set an extra amount each month to see the estimated effect on take-home.",
+  noChange:
+    "Move your contribution away from your saved figure to see the estimated effect on take-home pay.",
   missing: "Add your employment type, salary and pension details in",
   missingLink: "Profile",
-  missingTail: "to see the estimated effect on take-home.",
-  methodSalarySacrifice:
-    "Assumes the extra is paid through your employer by salary sacrifice, like your current contribution.",
+  missingTail: "to see the estimated effect on take-home pay.",
+  methodSalarySacrifice: "Assumes the change is paid by salary sacrifice, like your contribution.",
   methodNetPay:
-    "Assumes the extra is taken from your pay before Income Tax (a net pay arrangement), like your current contribution.",
-  methodAssumed: "Assumes the extra is paid through your employer by salary sacrifice.",
+    "Assumes the change is taken from your pay before Income Tax, like your contribution.",
+  methodAssumed: "Assumes the change is paid by salary sacrifice.",
 } as const;
 
-export const monthlyTakeHomeSentence = (monthly: string): string =>
-  `That is about ${monthly} a month less take-home.`;
+export interface PensionTakeHomeEffectData {
+  /** Saved facts still missing before the engine can work out take-home pay. */
+  missing: readonly string[];
+  /** `null` when facts are missing or the change is zero. */
+  result: UkWhatIfResult | null;
+  /** True when the saved facts carry no pension method, so salary sacrifice is assumed. */
+  methodAssumed: boolean;
+}
+
+/**
+ * The engine's take-home effect of changing the yearly pension contribution by `deltaYear`
+ * pounds. Pure: the zone also reads it to decide whether the notice needs the unverified lead.
+ */
+export const computePensionTakeHomeEffect = (
+  facts: ProfileFacts,
+  deltaYear: number,
+): PensionTakeHomeEffectData => {
+  const { scenario, missing } = incomeScenarioFromFacts(facts);
+  const rounded = Math.round(deltaYear);
+  return {
+    missing,
+    result: missing.length === 0 && rounded !== 0 ? whatIfSacrificeChange(scenario, rounded) : null,
+    methodAssumed: scenario.pension === undefined,
+  };
+};
+
+export const isTakeHomeEffectUnverified = (effect: PensionTakeHomeEffectData): boolean =>
+  Boolean(effect.result?.before.isUnverifiedEstimate || effect.result?.after.isUnverifiedEstimate);
 
 export interface PensionTakeHomeEffectProps {
-  /** Saved profile facts. Read only. */
-  facts: ProfileFacts;
-  /** The scenario's extra monthly contribution. Never saved. */
-  extraMonthly: number;
+  effect: PensionTakeHomeEffectData;
 }
 
 const COMPONENT_ROWS = DELTA_TABLE_ROWS.filter((r) => r.key !== "pension");
 const money = (n: number) => formatMoney(n, { fractionDigits: 0 }).text;
+const signed = (n: number) => formatMoney(n, { fractionDigits: 0, signDisplay: "always" }).text;
 
 /**
- * What the pension scenario's extra monthly payment does to take-home, from the engine's
- * `whatIfSacrificeChange`. Illustration only: lives inside the pension ScenarioZone.
+ * The "Effect on take-home pay" tool's outcome: one figure (the monthly change) and two
+ * supporting figures. Illustration only, inside the pension ScenarioZone. The standard
+ * "Unverified estimate" sentence goes in the zone's one notice, not here.
  */
-export const PensionTakeHomeEffect: FC<PensionTakeHomeEffectProps> = ({ facts, extraMonthly }) => {
-  const { scenario, missing } = useMemo(() => incomeScenarioFromFacts(facts), [facts]);
-  const extraYear = Math.max(0, extraMonthly) * 12;
-  const result = useMemo(
-    () =>
-      missing.length === 0 && extraYear > 0 ? whatIfSacrificeChange(scenario, extraYear) : null,
-    [scenario, missing, extraYear],
-  );
+export const PensionTakeHomeEffect: FC<PensionTakeHomeEffectProps> = ({ effect }) => {
   const context = useMemo(() => getUkTaxYearContext(), []);
+  const { missing, result } = effect;
 
   if (missing.length > 0) {
     return (
@@ -97,21 +119,21 @@ export const PensionTakeHomeEffect: FC<PensionTakeHomeEffectProps> = ({ facts, e
         data-testid="pension-take-home-effect"
         id="pension-take-home-effect"
       >
-        {PENSION_TAKE_HOME_COPY.noExtra}
+        {PENSION_TAKE_HOME_COPY.noChange}
       </p>
     );
   }
 
   const { before, after } = result;
-  const unverified = before.isUnverifiedEstimate || after.isUnverifiedEstimate;
-  const takeHomeFall = -result.deltaTakeHome;
+  const takeHomeMonthly = result.deltaTakeHome / 12;
+  const pensionMonthly = result.deltaPensionGross / 12;
+  const reliefMonthly = Math.abs(pensionMonthly) - Math.abs(takeHomeMonthly);
   const rows = COMPONENT_ROWS.filter(({ key }) => result.components[key] !== 0);
-  const methodNote =
-    scenario.pension === undefined
-      ? PENSION_TAKE_HOME_COPY.methodAssumed
-      : after.pensionMethod === "net-pay"
-        ? PENSION_TAKE_HOME_COPY.methodNetPay
-        : PENSION_TAKE_HOME_COPY.methodSalarySacrifice;
+  const methodNote = effect.methodAssumed
+    ? PENSION_TAKE_HOME_COPY.methodAssumed
+    : after.pensionMethod === "net-pay"
+      ? PENSION_TAKE_HOME_COPY.methodNetPay
+      : PENSION_TAKE_HOME_COPY.methodSalarySacrifice;
 
   return (
     <div
@@ -119,54 +141,62 @@ export const PensionTakeHomeEffect: FC<PensionTakeHomeEffectProps> = ({ facts, e
       data-testid="pension-take-home-effect"
       id="pension-take-home-effect"
     >
-      <div className={effectHeader()}>
-        <h3 className={effectTitle()}>{PENSION_TAKE_HOME_COPY.heading}</h3>
-        <div className={effectBadges()}>
-          <StatusBadge variant="neutral">{asAtTaxYear(before.ratesYear)}</StatusBadge>
-          <StatusBadge variant={unverified ? "warning" : "info"}>
-            {unverified ? DELTA_PANEL_COPY.unverifiedBadge : DELTA_PANEL_COPY.estimateBadge}
-          </StatusBadge>
-        </div>
-      </div>
       <TaxRatesStatusBanner
         calendarYear={context.calendarYear}
         isFallback={before.isFallback}
         ratesYear={before.ratesYear}
       />
-      {unverified ? (
-        <p className={effectUnverified()}>{DELTA_PANEL_COPY.unverifiedBanner}</p>
-      ) : null}
-      <p className={effectSentence()} data-figure="takeHome.delta">
-        {pensionPreviewSentence(
-          money(extraYear),
-          money(takeHomeFall),
-          money(result.deltaPensionGross),
-        )}{" "}
-        {monthlyTakeHomeSentence(money(takeHomeFall / 12))}
-      </p>
-      {rows.length > 0 ? (
-        <Table caption={PENSION_TAKE_HOME_COPY.tableCaption}>
-          <THead>
-            <Tr>
-              <Th scope="col">{PENSION_TAKE_HOME_COPY.partColumn}</Th>
-              <Th numeric scope="col">
-                {PENSION_TAKE_HOME_COPY.changeColumn}
-              </Th>
-            </Tr>
-          </THead>
-          <TBody>
-            {rows.map(({ key, label }) => (
-              <Tr key={key}>
-                <Th scope="row">{label}</Th>
-                <Td label={PENSION_TAKE_HOME_COPY.changeColumn} numeric>
-                  {money(result.components[key])}
-                </Td>
-              </Tr>
-            ))}
-          </TBody>
-        </Table>
-      ) : null}
+      <div>
+        <p className={outcomeLabel()}>
+          {PENSION_TAKE_HOME_COPY.outcomeLabel}{" "}
+          <StatusBadge size="sm" variant="neutral">
+            {asAtTaxYear(before.ratesYear)}
+          </StatusBadge>
+        </p>
+        <p className={outcomeValue()} data-figure="takeHome.delta">
+          {signed(takeHomeMonthly)}{" "}
+          <span className={outcomeSuffix()}>{PENSION_TAKE_HOME_COPY.perMonth}</span>
+        </p>
+        <dl className={outcomeSupport()}>
+          <div className={outcomeSupportItem()}>
+            <dt>{PENSION_TAKE_HOME_COPY.reachesPension}</dt>
+            <dd>
+              {signed(pensionMonthly)} {PENSION_TAKE_HOME_COPY.perMonth}
+            </dd>
+          </div>
+          <div className={outcomeSupportItem()}>
+            <dt>{PENSION_TAKE_HOME_COPY.reliefLabel}</dt>
+            <dd>
+              {money(Math.max(0, reliefMonthly))} {PENSION_TAKE_HOME_COPY.perMonth}
+            </dd>
+          </div>
+        </dl>
+      </div>
       <p className={effectNote()}>{methodNote}</p>
+      {rows.length > 0 ? (
+        <CollapsibleDrawer title="Show details" variant="quiet">
+          <Table caption={PENSION_TAKE_HOME_COPY.tableTitle}>
+            <THead>
+              <Tr>
+                <Th scope="col">{PENSION_TAKE_HOME_COPY.partColumn}</Th>
+                <Th numeric scope="col">
+                  {PENSION_TAKE_HOME_COPY.changeColumn}
+                </Th>
+              </Tr>
+            </THead>
+            <TBody>
+              {rows.map(({ key, label }) => (
+                <Tr key={key}>
+                  <Th scope="row">{label}</Th>
+                  <Td label={PENSION_TAKE_HOME_COPY.changeColumn} numeric>
+                    {money(result.components[key])}
+                  </Td>
+                </Tr>
+              ))}
+            </TBody>
+          </Table>
+        </CollapsibleDrawer>
+      ) : null}
     </div>
   );
 };
