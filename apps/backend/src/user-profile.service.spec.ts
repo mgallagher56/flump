@@ -14,6 +14,7 @@ describe("UserProfileService (Deep Module)", () => {
   let mockTaxRecordRepo: any;
   let mockCheckinRepo: any;
   let mockImportRepo: any;
+  let mockMcpTokenRepo: any;
   let identityAdapter: InMemoryIdentityAdapter;
   let mockDataSource: any;
 
@@ -48,6 +49,9 @@ describe("UserProfileService (Deep Module)", () => {
     mockImportRepo = {
       delete: vi.fn().mockResolvedValue({ affected: 1 }),
     };
+    mockMcpTokenRepo = {
+      delete: vi.fn().mockResolvedValue({ affected: 2 }),
+    };
     identityAdapter = new InMemoryIdentityAdapter();
     mockDataSource = {
       transaction: vi.fn(async (cb) => {
@@ -62,6 +66,7 @@ describe("UserProfileService (Deep Module)", () => {
             if (entityClass.name === "TaxRecord") return mockTaxRecordRepo;
             if (entityClass.name === "SnapshotCheckin") return mockCheckinRepo;
             if (entityClass.name === "ImportBatch") return mockImportRepo;
+            if (entityClass.name === "McpToken") return mockMcpTokenRepo;
             return {};
           },
         };
@@ -99,10 +104,103 @@ describe("UserProfileService (Deep Module)", () => {
     expect(mockAccountDetailRepo.delete).toHaveBeenCalledWith({ userId: "user-123" });
     expect(mockCheckinRepo.delete).toHaveBeenCalledWith({ userId: "user-123" });
     expect(mockImportRepo.delete).toHaveBeenCalledWith({ userId: "user-123" });
+    // M-PRIV1: MCP tokens are revoked (deleted).
+    expect(mockMcpTokenRepo.delete).toHaveBeenCalledWith({ userId: "user-123" });
 
     expect(result.success).toBe(true);
     expect(result.profile.hasResetFinancialData).toBe(true);
     expect(result.profile.annualSalary).toBeNull();
+  });
+
+  it("clears the leftover financial profile facts on reset (M-PRIV1) and keeps identity", async () => {
+    mockUserProfileRepo.findOne.mockResolvedValueOnce({
+      userId: "user-123",
+      firstName: "Jane",
+      currency: "GBP",
+      employmentType: "employed",
+      taxRegion: "SCOTLAND",
+      birthYear: 1990,
+      studentLoanPlans: ["PLAN_2"],
+      housingStatus: "renting",
+      monthlyHousingCost: 900,
+      monthlyOtherOutgoings: 300,
+      savingsDefaultInterestRate: 4.2,
+    });
+    await service.resetFinancialData("user-123");
+    const saved = mockUserProfileRepo.save.mock.calls.at(-1)[0];
+    expect(saved).toMatchObject({
+      firstName: "Jane",
+      currency: "GBP",
+      employmentType: null,
+      taxRegion: null,
+      birthYear: null,
+      studentLoanPlans: null,
+      housingStatus: null,
+      monthlyHousingCost: null,
+      monthlyOtherOutgoings: null,
+      savingsDefaultInterestRate: 5,
+      hasResetFinancialData: true,
+    });
+  });
+
+  it("calls the bank-revoke seam with connection identifiers before the reset", async () => {
+    const revokeAll = vi.fn().mockResolvedValue(undefined);
+    mockBankConnectionRepo.find = vi
+      .fn()
+      .mockResolvedValue([{ id: "c1", institutionId: "monzo", authType: "oauth" }]);
+    const withSeam = new UserProfileService(
+      mockUserProfileRepo,
+      mockAccountRepo,
+      mockTransactionRepo,
+      mockAccountDetailRepo,
+      mockBankConnectionRepo,
+      mockBudgetEntryRepo,
+      mockTaxRecordRepo,
+      identityAdapter,
+      mockDataSource,
+      undefined,
+      undefined,
+      undefined,
+      { revokeAll },
+    );
+    mockUserProfileRepo.findOne.mockResolvedValueOnce({ userId: "user-123" });
+    await withSeam.resetFinancialData("user-123");
+    expect(revokeAll).toHaveBeenCalledWith("user-123", [
+      { id: "c1", institutionId: "monzo", authType: "oauth" },
+    ]);
+    expect(revokeAll.mock.invocationCallOrder[0]).toBeLessThan(
+      mockDataSource.transaction.mock.invocationCallOrder[0],
+    );
+    // A failing seam never blocks the reset.
+    revokeAll.mockRejectedValueOnce(new Error("bank down"));
+    vi.spyOn(Logger.prototype, "warn").mockImplementation(() => {});
+    mockUserProfileRepo.findOne.mockResolvedValueOnce({ userId: "user-123" });
+    await expect(withSeam.resetFinancialData("user-123")).resolves.toMatchObject({
+      success: true,
+    });
+  });
+
+  it("refuses to create a fresh profile for an erased account (no row recreated after deletion)", async () => {
+    const accountDeletion = { isErased: vi.fn().mockResolvedValue(true) };
+    const guarded = new UserProfileService(
+      mockUserProfileRepo,
+      mockAccountRepo,
+      mockTransactionRepo,
+      mockAccountDetailRepo,
+      mockBankConnectionRepo,
+      mockBudgetEntryRepo,
+      mockTaxRecordRepo,
+      identityAdapter,
+      mockDataSource,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      accountDeletion as never,
+    );
+    mockUserProfileRepo.findOne.mockResolvedValueOnce(null);
+    await expect(guarded.getProfile("user-gone")).rejects.toThrow("This account has been deleted.");
+    expect(mockUserProfileRepo.save).not.toHaveBeenCalled();
   });
 
   it("logs financial_data_reset only after the transaction commits", async () => {

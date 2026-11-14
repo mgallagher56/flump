@@ -20,6 +20,8 @@ export const RATE_LIMIT_POLICIES = {
   importStage: [{ limit: 30, windowMs: HOUR }],
   write: [{ limit: 120, windowMs: MINUTE }],
   read: [{ limit: 600, windowMs: MINUTE }],
+  /** The full data export (BE-04) reads every table the user has: 10 an hour per user. */
+  dataExport: [{ limit: 10, windowMs: HOUR }],
   /** Receipt downloads move up to 5 MB each, so they get a tighter read class. */
   receiptRead: [{ limit: 30, windowMs: MINUTE }],
 } as const satisfies Record<string, readonly RateLimitWindow[]>;

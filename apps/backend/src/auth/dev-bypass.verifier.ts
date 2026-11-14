@@ -8,6 +8,8 @@ export class DevBypassVerifier implements TokenVerifier {
     if (token !== DEV_BYPASS_TOKEN) {
       throw new Error("invalid token");
     }
-    return DEV_USER;
+    // Local development only: the dev user counts as just signed in, so the recent-login check on
+    // destructive routes (BE-04) does not block local testing.
+    return { ...DEV_USER, authTime: Math.floor(Date.now() / 1000) };
   }
 }

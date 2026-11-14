@@ -72,26 +72,36 @@ function isAccessLogEntry(value: Record<string, unknown>): boolean {
   );
 }
 
-/** Audit events (security review) that may name the acting user: each is counts only. */
-const AUDIT_EVENTS: readonly string[] = ["financial_data_reset"];
+/**
+ * Audit events (security review), each counts only, and the one id each may carry: the acting
+ * user for a reset, the tombstone (never the user) for an account deletion (BE-04).
+ */
+const AUDIT_EVENTS: Readonly<Record<string, "userId" | "tombstoneId">> = {
+  financial_data_reset: "userId",
+  account_deleted: "tombstoneId",
+};
 /** A user id: a UUID, or a WorkOS user id (`user_` plus a 26-character ULID). */
 const USER_ID =
   /^(?:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}|user_[0-9A-Z]{26})$/i;
+const TOMBSTONE_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const COUNT_KEY = /^[A-Za-z]{1,40}$/;
 const MAX_AUDIT_COUNTS = 16;
 
 /**
- * True only for an exact audit event: `{ event, userId, removed }` with a known event name, a
- * user id in strict id shape and `removed` holding at most 16 whole, non-negative counts under
- * plain word keys. The generic scrubber would blank the user id (its long-token rule matches any
- * UUID), leaving an audit trail that does not say whose data was reset. Anything else, including
- * one extra key, falls through to the generic scrubber.
+ * True only for an exact audit event: `{ event, <id>, removed }` with a known event name, its id
+ * key (`userId` in strict id shape, or `tombstoneId` as a UUID) and `removed` holding at most 16
+ * whole, non-negative counts under plain word keys. The generic scrubber would blank the id (its
+ * long-token rule matches any UUID), leaving an audit trail that does not say whose data it was.
+ * Anything else, including one extra key, falls through to the generic scrubber.
  */
 function isAuditEventEntry(value: Record<string, unknown>): boolean {
+  if (typeof value.event !== "string" || !Object.hasOwn(AUDIT_EVENTS, value.event)) return false;
+  const idKey = AUDIT_EVENTS[value.event];
   const keys = Object.keys(value).sort();
-  if (keys.join(",") !== "event,removed,userId") return false;
-  if (typeof value.event !== "string" || !AUDIT_EVENTS.includes(value.event)) return false;
-  if (typeof value.userId !== "string" || !USER_ID.test(value.userId)) return false;
+  if (keys.join(",") !== ["event", "removed", idKey].sort().join(",")) return false;
+  const id = value[idKey];
+  if (typeof id !== "string" || !(idKey === "userId" ? USER_ID : TOMBSTONE_ID).test(id))
+    return false;
   const removed = value.removed;
   if (!isPlainObject(removed)) return false;
   const entries = Object.entries(removed);

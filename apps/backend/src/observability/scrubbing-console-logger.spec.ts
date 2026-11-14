@@ -643,6 +643,42 @@ describe("ScrubbingConsoleLogger through a Nest app", () => {
     });
   });
 
+  describe("audit event pass-through (account_deleted, BE-04)", () => {
+    const event = {
+      event: "account_deleted",
+      tombstoneId: "123e4567-e89b-12d3-a456-426614174000",
+      removed: { accounts: 3, transactions: 120, profile: 1 },
+    };
+
+    it("keeps the tombstone id and counts", () => {
+      expect(sanitizeLogValue(event)).toEqual(event);
+    });
+
+    it("falls through to the generic scrubber on a user id, an extra key or a non-uuid id", () => {
+      // The generic scrubber blanks UUIDs, so a passed-through shape is the only way one survives.
+      const userId = "223e4567-e89b-12d3-a456-426614174999";
+      const cases: Record<string, unknown>[] = [
+        { ...event, userId },
+        { event: "account_deleted", userId, removed: event.removed },
+        { ...event, tombstoneId: "user_01HZX3Q9V7C2M8N4P6R0S5T1WY", note: userId },
+        { ...event, email: EMAIL },
+      ];
+      for (const c of cases) {
+        const out = JSON.stringify(sanitizeLogValue(c));
+        expect(out).not.toContain(userId);
+        expect(out).not.toContain(event.tombstoneId);
+        expect(out).not.toContain(EMAIL);
+      }
+      // A financial_data_reset event may not swap its user id for a tombstone id.
+      const swapped = {
+        event: "financial_data_reset",
+        tombstoneId: event.tombstoneId,
+        removed: event.removed,
+      };
+      expect(JSON.stringify(sanitizeLogValue(swapped))).not.toContain(event.tombstoneId);
+    });
+  });
+
   describe("error field passthrough", () => {
     it("keeps SQLSTATE, errno names, numeric status and severity but not other fields", () => {
       const e = Object.assign(new Error("x"), {
