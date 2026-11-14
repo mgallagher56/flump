@@ -51,6 +51,7 @@ import {
   headerActions,
   narrowOnly,
   numeric,
+  otherDatesHeading,
   pageRoot,
   wideOnly,
 } from "./TaxContainer.styles";
@@ -264,12 +265,15 @@ const SelfAssessmentPage: FC<{
     const startYr = selectedTaxYear.split("/")[0] || new Date().getFullYear().toString();
     setEditingRecord(null);
     setDraft(emptyDraft(source, type, `${startYr}-04-06`));
+    // A new dialog never opens with the alert from an earlier failed save.
+    saveOutcome.dismiss();
     setIsRecordDialogOpen(true);
   };
 
   const onOpenEditModal = (record: TaxRecord) => {
     setEditingRecord(record);
     setDraft(draftFromRecord(record));
+    saveOutcome.dismiss();
     setIsRecordDialogOpen(true);
   };
 
@@ -341,6 +345,17 @@ const SelfAssessmentPage: FC<{
     [initialRecords, selectedTaxYear],
   );
   const hasRecordsInYear = initialRecords.some((r) => isRecordActiveInTaxYear(r, selectedTaxYear));
+  // Records that count towards none of the years on offer (dated outside the supported years,
+  // saved before the dialog checked). They stay listed under every year, so each can still be
+  // opened, changed or deleted.
+  const isOtherDate = useCallback(
+    (r: TaxRecord) => !availableYears.some((year) => isRecordActiveInTaxYear(r, year)),
+    [availableYears],
+  );
+  const otherDateRecords = useMemo(
+    () => initialRecords.filter(isOtherDate),
+    [initialRecords, isOtherDate],
+  );
 
   const confirmDeleteTaxYear = () => {
     const recordIds = taxYearToDelete
@@ -452,7 +467,7 @@ const SelfAssessmentPage: FC<{
       <TaxSourcesPanel action={addIncome} records={initialRecords} taxYear={selectedTaxYear} />
 
       <div className={drawers()}>
-        {hasRecordsInYear ? (
+        {hasRecordsInYear || otherDateRecords.length > 0 ? (
           <CollapsibleDrawer title="Records" variant="quiet">
             <TaxRecordsTable
               records={initialRecords}
@@ -464,6 +479,25 @@ const SelfAssessmentPage: FC<{
               onViewReceipt={setActiveReceiptRecord}
               onAdd={() => onOpenAddModal("self-employed", "income")}
             />
+            {otherDateRecords.length > 0 ? (
+              <>
+                <h3 className={otherDatesHeading()}>
+                  {`Other dates (${countFormat.format(otherDateRecords.length)})`}
+                </h3>
+                <TaxRecordsTable
+                  caption="Records on other dates"
+                  include={isOtherDate}
+                  records={initialRecords}
+                  taxYear={selectedTaxYear}
+                  onEdit={onOpenEditModal}
+                  onDelete={(id) =>
+                    setTransactionToDelete(initialRecords.find((r) => r.id === id) ?? null)
+                  }
+                  onViewReceipt={setActiveReceiptRecord}
+                  onAdd={() => onOpenAddModal("self-employed", "income")}
+                />
+              </>
+            ) : null}
             {recordsInSelectedTaxYear.length > 0 ? (
               <Button
                 className={narrowOnly()}
@@ -494,7 +528,10 @@ const SelfAssessmentPage: FC<{
 
       <TaxRecordDialog
         open={isRecordDialogOpen}
-        onOpenChange={setIsRecordDialogOpen}
+        onOpenChange={(open) => {
+          setIsRecordDialogOpen(open);
+          if (!open) saveOutcome.dismiss();
+        }}
         mode={editingRecord ? "edit" : "add"}
         initial={draft}
         onSave={handleSaveTransaction}
@@ -547,7 +584,14 @@ const SelfAssessmentPage: FC<{
             records for <span className={numeric()}>{taxYearToDelete}</span>?
           </>
         }
-        description="They will no longer count towards your estimate. This cannot be undone."
+        description={
+          <>
+            Deletes the{" "}
+            <span className={numeric()}>{countFormat.format(recordsInSelectedTaxYear.length)}</span>{" "}
+            records dated in <span className={numeric()}>{taxYearToDelete}</span>. Records that
+            started in an earlier year and repeat into this one are kept. This cannot be undone.
+          </>
+        }
         confirmLabel="Delete records"
         tone="danger"
         onConfirm={confirmDeleteTaxYear}

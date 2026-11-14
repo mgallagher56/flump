@@ -54,6 +54,18 @@ describe("MarginalRateExplorer inside a ScenarioZone", () => {
     expect(screen.getByText("The rest goes to tax and other deductions.")).toBeDefined();
   });
 
+  it("shows one line under the zone chart with the outcome in words, two figures at most", () => {
+    const values = { ...DEFAULTS_2026, grossPay: 58_000 };
+    render(
+      <MarginalRateExplorer inScenarioZone showNotice={false} values={values} onChange={vi.fn()} />,
+    );
+    const figure = screen.getByRole("figure", { name: "Share deducted, by pay" });
+    const summary = document.getElementById(figure.getAttribute("aria-describedby") ?? "");
+    expect(summary?.textContent).toMatch(/^Of the next £1,000, about £[\d,]+ reaches your pay\.$/);
+    expect(summary?.textContent?.match(/£[\d,]+/g)).toHaveLength(2);
+    expect(summary?.className).toContain("textStyle_body.sm");
+  });
+
   it("ends with one quiet disclosure holding the breakdown, the assumptions and the chart data", () => {
     render(
       <MarginalRateExplorer

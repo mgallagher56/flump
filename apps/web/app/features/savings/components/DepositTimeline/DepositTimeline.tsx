@@ -1,7 +1,7 @@
 import { monthsToTarget } from "@flump/finance-engine";
 import {
   formatMoney,
-  formatMonthTick,
+  formatMonthYear,
   niceStep,
   SimulatorSplitLayout,
   SliderField,
@@ -109,10 +109,10 @@ export function depositOutcomeText(values: DepositTimelineValues): string {
 
 /**
  * The month a target is met, `months` whole months after `today`, as a short date: "Sep 2027"
- * (three-letter months, copy guide 4.3). Built in UTC so the month never shifts.
+ * (three-letter months from `formatMonthYear`, copy guide 4.3).
  */
 export const reachedByMonth = (today: Date, months: number): string =>
-  formatMonthTick(new Date(Date.UTC(today.getFullYear(), today.getMonth() + months, 1)));
+  formatMonthYear(new Date(today.getFullYear(), today.getMonth() + months, 1));
 
 const money = (n: number) => formatMoney(n, { fractionDigits: 0 }).text;
 

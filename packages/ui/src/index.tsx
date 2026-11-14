@@ -83,7 +83,11 @@ export {
   PageSkeleton,
   type PageSkeletonProps,
 } from "./templates/PageTemplates";
+
 // Page-rules test helpers are not exported here: import them from "@repo/ui/testing".
 
+// Short dates ("31 Jan 2028", "Jan 2027") with hand-built three-letter months (copy guide 4.3).
+// The web app does not depend on `@flump/format` directly, so it takes them from here.
+export { formatDate, formatMonthYear } from "@flump/format";
 // Export Tokens
 export * from "./tokens";

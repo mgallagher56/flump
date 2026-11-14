@@ -43,15 +43,13 @@ const renderChart = (horizonYears = 25) =>
   );
 
 describe("<ForecastChart />", () => {
-  it("is a named figure with a one-sentence summary and no figures in the default view", () => {
+  it("is a named figure with a visible one-line summary holding one figure (P10.1)", () => {
     const { container } = renderChart();
     const figure = screen.getByRole("figure", { name: "Pot each year" });
-    // The summary is for screen readers (the outcome above shows the end figure).
-    expect(figure.textContent).toMatch(
-      /Your estimated pot each year to retirement, in today's money, reaching about £[\d,]+\./,
-    );
+    const summary = screen.getByText(/^Reaches about £[\d,]+ at retirement, in today's money\.$/);
+    expect(figure.contains(summary)).toBe(true);
     expect(screen.queryByText(/legend|Projected total/i)).toBeNull();
-    expect(countFigures(container)).toBe(0);
+    expect(countFigures(container)).toBe(1);
   });
 
   it("keeps the year-by-year table behind the quiet show data button", () => {

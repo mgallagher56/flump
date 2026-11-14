@@ -8,6 +8,7 @@ import {
   Button,
   EmptyState,
   FormField,
+  formatDate,
   Icon,
   IconButton,
   Illustration,
@@ -29,6 +30,7 @@ import {
   amountCell,
   amountUnit,
   cellMuted,
+  dateFigures,
   filters,
   nameButton,
   pager,
@@ -44,15 +46,8 @@ export const TAX_RECORDS_PAGE_SIZE = 10;
 /** The source and type filters show only past this many records in the year. */
 export const TAX_RECORDS_FILTER_FROM = 8;
 
-const dateFormat = new Intl.DateTimeFormat("en-GB", {
-  day: "numeric",
-  month: "short",
-  year: "numeric",
-});
-const formatDate = (iso: string) => {
-  const d = new Date(`${iso}T00:00:00`);
-  return Number.isNaN(d.getTime()) ? iso : dateFormat.format(d);
-};
+/** "6 Apr 2026" from `@repo/ui`'s short date (three-letter months); an unreadable date shows as is. */
+const shortDate = (iso: string) => formatDate(iso, { placeholder: iso });
 const countFormat = new Intl.NumberFormat("en-GB");
 
 const categoryName = (catId: string, source: TaxSource) => {
@@ -75,6 +70,10 @@ export interface TaxRecordsTableProps {
   onDelete: (id: string) => void;
   onViewReceipt: (record: TaxRecord) => void;
   onAdd: () => void;
+  /** Which records to list. By default, the ones that count towards `taxYear`. */
+  include?: (record: TaxRecord) => boolean;
+  /** The table's caption. By default, "Records for 2026/27". */
+  caption?: string;
 }
 
 /**
@@ -91,14 +90,16 @@ export const TaxRecordsTable: FC<TaxRecordsTableProps> = ({
   onDelete,
   onViewReceipt,
   onAdd,
+  include,
+  caption,
 }) => {
   const [source, setSource] = useState<"all" | TaxSource>("all");
   const [type, setType] = useState<"all" | "income" | "expense">("all");
   const [page, setPage] = useState(0);
 
   const inYear = useMemo(
-    () => records.filter((r) => isRecordActiveInTaxYear(r, taxYear)),
-    [records, taxYear],
+    () => records.filter(include ?? ((r) => isRecordActiveInTaxYear(r, taxYear))),
+    [records, taxYear, include],
   );
   const showFilters = inYear.length > TAX_RECORDS_FILTER_FROM;
   const sources = new Set(inYear.map((r) => r.source));
@@ -188,11 +189,15 @@ export const TaxRecordsTable: FC<TaxRecordsTableProps> = ({
       ) : null}
 
       {rows.length > 0 ? (
-        <Table caption={`Records for ${taxYear}`}>
+        <Table caption={caption ?? `Records for ${taxYear}`}>
           <THead>
             <tr>
-              <Th>Record</Th>
-              {showSource ? <Th className={wideOnly()}>Source</Th> : null}
+              <Th text>Record</Th>
+              {showSource ? (
+                <Th className={wideOnly()} text>
+                  Source
+                </Th>
+              ) : null}
               <Th className={wideOnly()}>Date</Th>
               <Th numeric>Amount</Th>
               <Th numeric>
@@ -223,19 +228,25 @@ export const TaxRecordsTable: FC<TaxRecordsTableProps> = ({
               ];
               return (
                 <tr key={record.id}>
-                  <Td>
+                  <Td text>
                     <button className={nameButton()} type="button" onClick={() => onEdit(record)}>
                       {record.name}
                     </button>
                     <span className={secondaryLine()}>
                       {categoryName(record.category, record.source)}
-                      {record.endDate ? `, until ${formatDate(record.endDate)}` : ""}
+                      {record.endDate ? (
+                        <>
+                          , until <span className={dateFigures()}>{shortDate(record.endDate)}</span>
+                        </>
+                      ) : null}
                     </span>
                   </Td>
                   {showSource ? (
-                    <Td className={cx(cellMuted(), wideOnly())}>{SOURCE_LABEL[record.source]}</Td>
+                    <Td className={cx(cellMuted(), wideOnly())} text>
+                      {SOURCE_LABEL[record.source]}
+                    </Td>
                   ) : null}
-                  <Td className={cx(cellMuted(), wideOnly())}>{formatDate(record.date)}</Td>
+                  <Td className={cx(cellMuted(), wideOnly())}>{shortDate(record.date)}</Td>
                   <Td numeric>
                     <span className={amountCell()}>
                       <Money

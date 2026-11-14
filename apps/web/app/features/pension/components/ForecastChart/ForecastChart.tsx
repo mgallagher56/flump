@@ -133,11 +133,16 @@ export const ForecastChart: FC<ForecastChartProps> = ({
         }
         maxTicks={maxTicks}
         pointCount={points.length}
-        // The outcome above already states the end figure, so the summary is for screen readers.
-        showSummary={false}
-        summary={`Your estimated pot each year to retirement, ${
-          adjustForInflation ? "in today's money" : "before inflation"
-        }${last ? `, reaching ${formatEstimate(last.totalPot).toLowerCase()}` : ""}.`}
+        // One visible line under the title with one figure, as the savings chart has (P10.1).
+        summary={
+          last
+            ? `Reaches ${formatEstimate(last.totalPot).toLowerCase()} at retirement, ${
+                adjustForInflation ? "in today's money" : "before inflation"
+              }.`
+            : `Your estimated pot each year to retirement, ${
+                adjustForInflation ? "in today's money" : "before inflation"
+              }.`
+        }
         title="Pot each year"
       >
         <div className={chartWrap()}>

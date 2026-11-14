@@ -84,8 +84,9 @@ export const tableElement = cva({
     width: "100%",
     textAlign: "start",
     color: "text.primary",
-    // Tabular figures live on `numeric` cells only: Inter's tnum also widens the hyphen, so a
-    // word cell such as "Self-employed" read as "Self - employed" (R2-8).
+    // Tabular figures by default (years, dates and money in any cell). Inter's tnum also widens
+    // the hyphen, so word cells that hold hyphenated words opt out with `text` (R2-8).
+    fontVariantNumeric: "tabular-nums",
   },
   variants: {
     appearance: {
@@ -177,12 +178,9 @@ export const thRecipe = cva({
       classic: { paddingBlock: "10px" },
       soft: { paddingBlock: "12px" },
     },
-    numeric: {
-      true: { fontVariantNumeric: "tabular-nums" },
-      false: { fontVariantNumeric: "normal" },
-    },
+    text: { true: { fontVariantNumeric: "normal" }, false: {} },
   },
-  defaultVariants: { align: "start", appearance: "classic", numeric: false },
+  defaultVariants: { align: "start", appearance: "classic", text: false },
 });
 
 export const tdRecipe = cva({
@@ -200,12 +198,10 @@ export const tdRecipe = cva({
       classic: { whiteSpace: "nowrap" },
       soft: {},
     },
-    numeric: {
-      true: { whiteSpace: "nowrap", fontVariantNumeric: "tabular-nums" },
-      false: { fontVariantNumeric: "normal" },
-    },
+    numeric: { true: { whiteSpace: "nowrap", fontVariantNumeric: "tabular-nums" }, false: {} },
+    text: { true: { fontVariantNumeric: "normal" }, false: {} },
   },
-  defaultVariants: { align: "start", appearance: "classic", numeric: false },
+  defaultVariants: { align: "start", appearance: "classic", numeric: false, text: false },
 });
 
 export const cellPrimary = cva({

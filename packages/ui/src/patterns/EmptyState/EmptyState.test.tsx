@@ -117,6 +117,9 @@ describe("EmptyState card tone (R2-8)", () => {
     const root = container.querySelector("section") as HTMLElement;
     expect(root.className).toContain("bg-c_surface.card");
     expect(root.className).toContain("bd-c_border.subtle");
+    // Flat in dark: the canvas behind it and no shadow, so it does not read as a raised slab.
+    expect(root.className).toContain("dark:bg-c_surface.canvas");
+    expect(root.className).toContain("dark:bx-sh_none");
     rerender(<EmptyState title="Turn it on" />);
     expect((container.querySelector("section") as HTMLElement).className).toContain(
       "bg-c_surface.sunken",

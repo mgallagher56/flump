@@ -71,7 +71,14 @@ export const emptyStateRecipe = sva({
       },
       card: {
         root: {
-          backgroundColor: "surface.card",
+          // In dark a card fill reads as a raised slab on the canvas, so the card is flat there:
+          // the canvas behind it, no shadow, the border alone.
+          backgroundColor: {
+            base: "surface.card",
+            _dark: "surface.canvas",
+            _systemDark: "surface.canvas",
+          },
+          boxShadow: { base: "none", _dark: "none", _systemDark: "none" },
           borderWidth: "1px",
           borderStyle: "solid",
           borderColor: "border.subtle",

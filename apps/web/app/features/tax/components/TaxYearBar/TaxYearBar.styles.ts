@@ -25,6 +25,14 @@ export const label = cva({
   },
 });
 
+/**
+ * The className lands on the Select's wrapper, and a native `<select>` does not inherit font
+ * settings, so the years ("2026/27") get tabular figures on the element itself.
+ */
 export const select = cva({
-  base: { fontVariantNumeric: "tabular-nums", minWidth: { base: "0", md: "8rem" } },
+  base: {
+    fontVariantNumeric: "tabular-nums",
+    minWidth: { base: "0", md: "8rem" },
+    "& select": { fontVariantNumeric: "tabular-nums" },
+  },
 });

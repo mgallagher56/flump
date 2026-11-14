@@ -122,7 +122,7 @@ export const PensionTakeHomeEffect: FC<PensionTakeHomeEffectProps> = ({ effect }
       >
         <div>
           <p className={outcomeLabel()}>{PENSION_TAKE_HOME_COPY.outcomeLabel}</p>
-          <p className={outcomeValue()} data-figure="takeHome.delta">
+          <p className={outcomeValue({ quiet: true })} data-figure="takeHome.delta">
             {PENSION_TAKE_HOME_COPY.noChangeValue}
           </p>
         </div>

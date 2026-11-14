@@ -216,20 +216,23 @@ export const Classic: Story = {
 };
 
 /**
- * R2-8: a word with a hyphen beside a money figure. Only the `numeric` cell has tabular figures,
- * because Inter's tnum also widens the hyphen ("Self - employed").
+ * R2-8: a word with a hyphen beside a year and a money figure. Cells have tabular figures by
+ * default; the word cells opt out with `text`, because Inter's tnum also widens the hyphen
+ * ("Self - employed").
  */
 const WordsAndFigures = () => (
   <Table caption="Income by employment">
     <THead>
       <tr>
-        <Th>Employment</Th>
+        <Th text>Employment</Th>
+        <Th>Year</Th>
         <Th numeric>Income</Th>
       </tr>
     </THead>
     <TBody>
       <tr>
-        <Td>Self-employed</Td>
+        <Td text>Self-employed</Td>
+        <Td>2026/27</Td>
         <Td numeric>£1,234</Td>
       </tr>
     </TBody>
@@ -240,6 +243,9 @@ const wordsAndFiguresPlay: Story["play"] = async ({ canvasElement }) => {
   const canvas = within(canvasElement);
   await expect(getComputedStyle(canvas.getByText("Self-employed")).fontVariantNumeric).toBe(
     "normal",
+  );
+  await expect(getComputedStyle(canvas.getByText("2026/27")).fontVariantNumeric).toBe(
+    "tabular-nums",
   );
   await expect(getComputedStyle(canvas.getByText("£1,234")).fontVariantNumeric).toBe(
     "tabular-nums",

@@ -41,6 +41,11 @@ export const outcomeValue = cva({
     fontVariantNumeric: "tabular-nums",
     color: "text.primary",
   },
+  variants: {
+    // "No change" at defaults is words, not a figure: body size until an input moves.
+    quiet: { true: { textStyle: "body.md", color: "text.secondary" }, false: {} },
+  },
+  defaultVariants: { quiet: false },
 });
 
 export const outcomeSupport = cva({

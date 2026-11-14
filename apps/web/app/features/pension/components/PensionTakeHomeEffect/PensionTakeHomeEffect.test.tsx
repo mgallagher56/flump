@@ -55,6 +55,10 @@ describe("<PensionTakeHomeEffect />", () => {
     renderEffect(FACTS, 0);
     expect(screen.getByText(PENSION_TAKE_HOME_COPY.outcomeLabel)).toBeDefined();
     expect(document.querySelector('[data-figure="takeHome.delta"]')?.textContent).toBe("No change");
+    // Words at body size, not a hero-size figure, until an input moves.
+    const noChange = document.querySelector('[data-figure="takeHome.delta"]');
+    expect(noChange?.className).toContain("textStyle_body.md");
+    expect(noChange?.className).not.toContain("textStyle_numeric.kpi");
     expect(screen.getByText(PENSION_TAKE_HOME_COPY.noChange)).toBeDefined();
   });
 

@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { TaxRecordDialog, type TaxRecordDraft } from "./TaxRecordDialog";
+import { RECORD_DATE_RANGE_ERROR, TaxRecordDialog, type TaxRecordDraft } from "./TaxRecordDialog";
 
 const draft: TaxRecordDraft = {
   name: "",
@@ -49,6 +49,24 @@ describe("TaxRecordDialog", () => {
     expect(onSave).not.toHaveBeenCalled();
     expect(within(dialog).getByText("Enter a name for this record.")).toBeDefined();
     expect(within(dialog).getByLabelText(/^Name/).getAttribute("aria-invalid")).toBe("true");
+  });
+
+  it("rejects a date outside the supported tax years, so no record is saved out of sight", () => {
+    expect(RECORD_DATE_RANGE_ERROR).toBe("Enter a date between 6 April 2020 and 5 April 2027.");
+    const { dialog, onSave } = setup({ ...draft, name: "Rent", amount: 900, date: "2019-05-01" });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Add record" }));
+    expect(onSave).not.toHaveBeenCalled();
+    expect(within(dialog).getByText(RECORD_DATE_RANGE_ERROR)).toBeDefined();
+    fireEvent.change(within(dialog).getByLabelText(/^First payment/), {
+      target: { value: "2027-04-06" },
+    });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Add record" }));
+    expect(onSave).not.toHaveBeenCalled();
+    fireEvent.change(within(dialog).getByLabelText(/^First payment/), {
+      target: { value: "2027-04-05" },
+    });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Add record" }));
+    expect(onSave).toHaveBeenCalledTimes(1);
   });
 
   it("resets the category when the source changes and saves the draft", () => {

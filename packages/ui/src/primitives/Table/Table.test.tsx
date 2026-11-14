@@ -289,28 +289,32 @@ describe("Table Primitive", () => {
     client.mockRestore();
   });
 
-  it("keeps tabular figures on numeric cells only, so word cells keep a normal hyphen (R2-8)", () => {
+  it("keeps tabular figures by default and lets a `text` cell opt out for its hyphen (R2-8)", () => {
     // Inter's tnum widens "-" (7.4px to 10.4px at 16px), so "Self-employed" read "Self - employed".
     const { container } = render(
       <Table>
         <THead>
           <tr>
-            <Th>Employment</Th>
+            <Th text>Employment</Th>
+            <Th>Year</Th>
             <Th numeric>Income</Th>
           </tr>
         </THead>
         <TBody>
           <tr>
-            <Td>Self-employed</Td>
+            <Td text>Self-employed</Td>
+            <Td>2026/27</Td>
             <Td numeric>£1,234</Td>
           </tr>
         </TBody>
       </Table>,
     );
-    expect(container.querySelector("table")?.className).not.toContain("tabular-nums");
-    expect(screen.getByText("Self-employed").className).not.toContain("tabular-nums");
-    expect(screen.getByText("Employment").className).not.toContain("tabular-nums");
+    expect(container.querySelector("table")?.className).toContain("tabular-nums");
+    // A default cell inherits the table's tabular figures and does not reset them.
+    expect(screen.getByText("2026/27").className).not.toContain("fv-num_normal");
+    expect(screen.getByText("Year").className).not.toContain("fv-num_normal");
+    expect(screen.getByText("Self-employed").className).toContain("fv-num_normal");
+    expect(screen.getByText("Employment").className).toContain("fv-num_normal");
     expect(screen.getByText("£1,234").className).toContain("tabular-nums");
-    expect(screen.getByText("Income").className).toContain("tabular-nums");
   });
 });

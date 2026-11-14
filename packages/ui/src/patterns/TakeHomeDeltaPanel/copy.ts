@@ -175,6 +175,11 @@ export function chartSummary(inRange: boolean, maxGross: string): string {
     : `Your pay is above the ${maxGross} the chart goes up to.`;
 }
 
+/** The zone chart's one visible line: the outcome above in words, two figures at most (P10.1). */
+export function zoneChartSummary(step: string, takeHome: string): string {
+  return `Of the next ${step}, about ${takeHome} reaches your pay.`;
+}
+
 export const thresholdTooltip = (label: string, gross: string): string =>
   `${label}: ${gross} pay before tax`;
 
@@ -219,6 +224,7 @@ export function allCopyStrings(): string[] {
     pensionPreviewSentence("£1,000", "£550", "£1,000"),
     chartSummary(true, "£150,000"),
     chartSummary(false, "£150,000"),
+    zoneChartSummary("£1,000", "£580"),
     thresholdTooltip("Higher rate (40%)", "£50,270"),
     liveTakeHomeMessage("£720"),
   );
