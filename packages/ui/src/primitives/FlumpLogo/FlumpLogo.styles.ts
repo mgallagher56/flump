@@ -12,10 +12,14 @@ export const flumpLogoRecipe = cva({
   defaultVariants: { size: "md" },
 });
 
-/** Teal family: deep teal on light, the mint-teal on dark, via the semantic primary tokens. */
+/**
+ * Teal family: deep teal on light, the mint-teal on dark, via the semantic primary tokens.
+ * Panda has no colour utility for `stopColor`, so a bare token name is emitted as an invalid
+ * value and the stop falls back to black. `token()` resolves it to the CSS variable.
+ */
 export const logoClasses = {
-  bodyTop: css({ stopColor: "primary" }),
-  bodyBottom: css({ stopColor: "primary.hover" }),
+  bodyTop: css({ stopColor: "token(colors.primary)" }),
+  bodyBottom: css({ stopColor: "token(colors.primary.hover)" }),
   shadow: css({ fill: "text.primary", opacity: 0.18 }),
   highlight: css({ fill: "text.onContrast" }),
 };
