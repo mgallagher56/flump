@@ -27,6 +27,9 @@ export const Default: Story = {
     await expect(canvas.getByTestId("take-home-delta-pension")).toHaveTextContent(
       "An extra £1,000 a year into your pension",
     );
+    // Region, pension type, student loans and the tax year sit under More details.
+    await userEvent.click(canvas.getByRole("button", { name: "More details" }));
+    await expect(canvas.getByLabelText("Where you pay tax")).toBeInTheDocument();
   },
 };
 
@@ -46,4 +49,10 @@ export const Scotland: Story = {
   args: { initialValues: { taxYear: "2026/27", region: "SCOTLAND", grossPay: 45_000 } },
 };
 
+export const Light: Story = { ...Default, globals: { theme: "light" } };
+
 export const Dark: Story = { ...Default, globals: { theme: "dark" } };
+
+export const Mobile: Story = {
+  parameters: { viewport: { defaultViewport: "mobile1" } },
+};

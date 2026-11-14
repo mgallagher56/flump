@@ -16,7 +16,6 @@ import { MarginalRateChart } from "../../patterns/MarginalRateChart/MarginalRate
 import { SimulatorSplitLayout } from "../../patterns/SimulatorSplitLayout/SimulatorSplitLayout";
 import {
   chartSummary,
-  DELTA_PANEL_COPY,
   EXPLORER_COPY,
   liveTakeHomeMessage,
   STEPPED_ZONE_LABEL,
@@ -41,10 +40,8 @@ import {
   explorerDetails,
   explorerFieldset,
   explorerLegend,
-  explorerNumeric,
   explorerOutcomes,
   explorerRoot,
-  explorerUnverified,
 } from "./MarginalRateExplorer.styles";
 
 export type MarginalRateExplorerRegion = "ENGLAND_NI_WALES" | "SCOTLAND";
@@ -294,50 +291,56 @@ export const MarginalRateExplorer: FC<MarginalRateExplorerProps> = ({
         value={bonus}
         onChange={(v) => set("bonus", v)}
       />
-      <FormField label={EXPLORER_COPY.region}>
-        {(field) => (
-          <Select
-            aria-describedby={field.describedBy}
-            id={field.id}
-            options={[
-              { value: "ENGLAND_NI_WALES", label: EXPLORER_COPY.regionOptions.ENGLAND_NI_WALES },
-              { value: "SCOTLAND", label: EXPLORER_COPY.regionOptions.SCOTLAND },
-            ]}
-            value={region}
-            onChange={(e) => set("region", e.target.value as MarginalRateExplorerRegion)}
-          />
-        )}
-      </FormField>
-      <FormField label={EXPLORER_COPY.pensionMethod}>
-        {(field) => (
-          <Select
-            aria-describedby={field.describedBy}
-            id={field.id}
-            options={(
-              Object.keys(EXPLORER_COPY.pensionMethodOptions) as MarginalRateExplorerPensionMethod[]
-            ).map((value) => ({ value, label: EXPLORER_COPY.pensionMethodOptions[value] }))}
-            value={pensionMethod}
-            onChange={(e) =>
-              set("pensionMethod", e.target.value as MarginalRateExplorerPensionMethod)
-            }
-          />
-        )}
-      </FormField>
-      {pensionMethod !== "none" ? (
-        <SliderField
-          format="currency"
-          label={EXPLORER_COPY.pensionAmount}
-          max={40_000}
-          min={0}
-          step={100}
-          value={pensionAmount}
-          onChange={(v) => set("pensionAmount", v)}
-        />
-      ) : null}
-
-      {/* Named by its title, "More details"; the visible action text is left out. */}
+      {/* Named by its title, "More details"; the visible action text is left out. Holds every
+          input past the first three (gross pay, bonus and the extra pension), state in the parent. */}
       <CollapsibleDrawer closedLabel="" openLabel="" title={EXPLORER_COPY.moreDetails}>
         <div className={explorerDetails()}>
+          <FormField label={EXPLORER_COPY.region}>
+            {(field) => (
+              <Select
+                aria-describedby={field.describedBy}
+                id={field.id}
+                options={[
+                  {
+                    value: "ENGLAND_NI_WALES",
+                    label: EXPLORER_COPY.regionOptions.ENGLAND_NI_WALES,
+                  },
+                  { value: "SCOTLAND", label: EXPLORER_COPY.regionOptions.SCOTLAND },
+                ]}
+                value={region}
+                onChange={(e) => set("region", e.target.value as MarginalRateExplorerRegion)}
+              />
+            )}
+          </FormField>
+          <FormField label={EXPLORER_COPY.pensionMethod}>
+            {(field) => (
+              <Select
+                aria-describedby={field.describedBy}
+                id={field.id}
+                options={(
+                  Object.keys(
+                    EXPLORER_COPY.pensionMethodOptions,
+                  ) as MarginalRateExplorerPensionMethod[]
+                ).map((value) => ({ value, label: EXPLORER_COPY.pensionMethodOptions[value] }))}
+                value={pensionMethod}
+                onChange={(e) =>
+                  set("pensionMethod", e.target.value as MarginalRateExplorerPensionMethod)
+                }
+              />
+            )}
+          </FormField>
+          {pensionMethod !== "none" ? (
+            <SliderField
+              format="currency"
+              label={EXPLORER_COPY.pensionAmount}
+              max={40_000}
+              min={0}
+              step={100}
+              value={pensionAmount}
+              onChange={(v) => set("pensionAmount", v)}
+            />
+          ) : null}
+
           <fieldset className={explorerFieldset()}>
             <legend className={explorerLegend()}>{EXPLORER_COPY.studentLoans}</legend>
             {plansForYear.map((plan) => (
@@ -414,7 +417,8 @@ export const MarginalRateExplorer: FC<MarginalRateExplorerProps> = ({
       <div className={explorerOutcomes()} data-density="compact" data-testid="explorer-outcomes">
         <KpiCard
           label={EXPLORER_COPY.kpiNextThousand}
-          value={<Money fractionDigits={takeHomeDigits} size="lg" value={delta.deltaTakeHome} />}
+          value={delta.deltaTakeHome}
+          valueFormat={{ fractionDigits: takeHomeDigits }}
         />
         <KpiCard
           label={EXPLORER_COPY.kpiNextPound}
@@ -431,18 +435,9 @@ export const MarginalRateExplorer: FC<MarginalRateExplorerProps> = ({
           label={EXPLORER_COPY.kpiTakeHome}
           value={<Money size="lg" value={delta.before.takeHome} />}
         />
-        <KpiCard
-          label={EXPLORER_COPY.kpiTaxYear}
-          value={<span className={explorerNumeric()}>{delta.before.ratesYear}</span>}
-        />
       </div>
       <MarginalRateChart
         headingLevel={headingLevel}
-        notice={
-          unverified ? (
-            <p className={explorerUnverified()}>{DELTA_PANEL_COPY.unverifiedBanner}</p>
-          ) : undefined
-        }
         points={points}
         steppedZones={zones}
         summary={summary}
@@ -471,7 +466,7 @@ export const MarginalRateExplorer: FC<MarginalRateExplorerProps> = ({
         showNotice={showNotice}
         takeHome={delta.deltaTakeHome}
       />
-      <LiveRegion debounceMs={800} message={announcement} visuallyHidden />
+      <LiveRegion debounceMs={1000} message={announcement} visuallyHidden />
     </div>
   );
 
