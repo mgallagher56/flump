@@ -176,4 +176,19 @@ describe("<BudgetCategoryList />", () => {
     fireEvent.click(buttons[0] as HTMLElement);
     expect(onAddCategory).toHaveBeenCalled();
   });
+
+  it("shows a row's notice under it, outside its closed entries", () => {
+    customRender(
+      <BudgetCategoryList
+        {...props}
+        noticeFor={(cat) => (cat === "bills" ? <div role="note">Bills note</div> : null)}
+      />,
+    );
+    const note = screen.getByRole("note");
+    expect(note.textContent).toBe("Bills note");
+    expect(note.closest("[hidden]")).toBeNull();
+    expect(
+      note.closest("[data-list-row]")?.contains(screen.getByTestId("budget-category-bills")),
+    ).toBe(true);
+  });
 });

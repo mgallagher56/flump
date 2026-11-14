@@ -74,6 +74,7 @@ vi.mock("recharts", async () => {
   };
 });
 
+import { ToastProvider } from "@repo/ui";
 import { apiFetch, apiFetchAll } from "~/services/api-client";
 import { BackendError, kindFromStatus } from "~/services/backend-error";
 import BudgetContainer from "./BudgetContainer";
@@ -455,5 +456,100 @@ describe("BudgetContainer", () => {
         monthlyHousingCost: 0,
       }),
     );
+  });
+
+  describe("an entry that may already be counted with your debts", () => {
+    const withDuplicate = () => ({
+      ...baseLoaderData,
+      accounts: [
+        ...baseLoaderData.accounts,
+        {
+          id: "acc-3",
+          name: "Car loan",
+          type: "Loan",
+          balance: -5000,
+          interestRate: 7.9,
+          monthlyContribution: 265,
+        },
+      ],
+      budgetEntries: [
+        ...withBudget,
+        row({ id: "b-4", name: "Car loan payment", category: "bills", amount: 265 }),
+      ],
+    });
+
+    beforeEach(() => {
+      window.sessionStorage.clear();
+    });
+
+    it("shows one note under the category row, without opening it", () => {
+      mockLoaderData = withDuplicate();
+      render(<BudgetContainer />);
+      const note = screen.getByRole("note", { name: "About Car loan payment" });
+      expect(note.textContent).toContain(
+        "This looks like your Car loan payment of £265 a month, which is already counted with your debts.",
+      );
+      expect(screen.getAllByRole("note", { name: /^About/ })).toHaveLength(1);
+      expect(screen.getByTestId("budget-category-bills").getAttribute("aria-expanded")).toBe(
+        "false",
+      );
+      // Not in the editor.
+      fireEvent.click(screen.getByRole("button", { name: "Edit budget" }));
+      expect(screen.queryByRole("note", { name: /^About/ })).toBeNull();
+    });
+
+    it("Move to debts saves the entry in the debt category and says Saved", async () => {
+      mockLoaderData = withDuplicate();
+      vi.mocked(apiFetch).mockResolvedValueOnce(
+        row({ id: "b-4", name: "Car loan payment", category: "debt", amount: 265 }) as any,
+      );
+      render(
+        <ToastProvider>
+          <BudgetContainer />
+        </ToastProvider>,
+      );
+      fireEvent.click(screen.getByRole("button", { name: "Move to debts" }));
+      await waitFor(() =>
+        expect(apiFetch).toHaveBeenCalledWith(
+          "/budget-entries/b-4",
+          expect.objectContaining({ method: "PATCH", body: { category: "debt" } }),
+        ),
+      );
+      expect(await screen.findByText("Saved")).toBeDefined();
+      expect(screen.queryByRole("note", { name: /^About/ })).toBeNull();
+      expect(screen.getByTestId("budget-category-debt")).toBeDefined();
+    });
+
+    it("a failed move keeps the note and shows the page error", async () => {
+      mockLoaderData = withDuplicate();
+      vi.mocked(apiFetch).mockRejectedValueOnce(new Error("offline"));
+      render(<BudgetContainer />);
+      fireEvent.click(screen.getByRole("button", { name: "Move to debts" }));
+      expect(
+        await screen.findByText("We could not save your changes. Nothing has changed. Try again."),
+      ).toBeDefined();
+      expect(screen.getByRole("note", { name: /^About/ })).toBeDefined();
+    });
+
+    it("Keep it here hides the note and remembers it for the session", () => {
+      mockLoaderData = withDuplicate();
+      const { unmount } = render(<BudgetContainer />);
+      fireEvent.click(screen.getByRole("button", { name: "Keep it here" }));
+      expect(screen.queryByRole("note", { name: /^About/ })).toBeNull();
+      expect(apiFetch).not.toHaveBeenCalled();
+      expect(
+        JSON.parse(window.sessionStorage.getItem("flump.budget.keptDebtRows") ?? "[]"),
+      ).toEqual(["b-4"]);
+      unmount();
+      render(<BudgetContainer />);
+      expect(screen.queryByRole("note", { name: /^About/ })).toBeNull();
+    });
+
+    it("no matching debt: no note", () => {
+      mockLoaderData = { ...withDuplicate(), accounts: baseLoaderData.accounts };
+      render(<BudgetContainer />);
+      expect(screen.queryByRole("note", { name: /About/ })).toBeNull();
+      expect(screen.queryByRole("note", { name: /^About/ })).toBeNull();
+    });
   });
 });
