@@ -176,3 +176,26 @@ describe("CurrencyInput edge cases", () => {
     expect(onInvalid).not.toHaveBeenCalled();
   });
 });
+
+describe("grouping while typing (R2-5)", () => {
+  it("shows thousands separators as the figure is typed and reports the number", () => {
+    const onValueChange = vi.fn();
+    render(<CurrencyInput aria-label="Balance" onValueChange={onValueChange} value={null} />);
+    const input = screen.getByRole("textbox", { name: "Balance" }) as HTMLInputElement;
+    fireEvent.change(input, { target: { value: "1234" } });
+    expect(input.value).toBe("1,234");
+    expect(onValueChange).toHaveBeenLastCalledWith(1234);
+    fireEvent.change(input, { target: { value: "1,2345" } });
+    expect(input.value).toBe("12,345");
+    expect(onValueChange).toHaveBeenLastCalledWith(12345);
+  });
+
+  it("keeps a trailing point and the pence typed so far", () => {
+    render(<CurrencyInput aria-label="Balance" value={null} />);
+    const input = screen.getByRole("textbox", { name: "Balance" }) as HTMLInputElement;
+    fireEvent.change(input, { target: { value: "1234." } });
+    expect(input.value).toBe("1,234.");
+    fireEvent.change(input, { target: { value: "1,234.5" } });
+    expect(input.value).toBe("1,234.5");
+  });
+});

@@ -8,9 +8,11 @@ export const dialogOverlayRecipe = cva({
     // Above MobileBottomBar (80), the nav drawer (90/100) and every token layer, so a dialog is never covered.
     zIndex: 200,
     display: "flex",
-    alignItems: "center",
+    // One rule with Sheet (STYLE-GUIDE "Dialog or sheet"): under md every modal rises from the
+    // bottom of the screen; from md a dialog is centred.
+    alignItems: { base: "flex-end", md: "center" },
     justifyContent: "center",
-    padding: { base: "2.5", sm: "4" },
+    padding: { base: "0", md: "4" },
   },
 });
 
@@ -18,31 +20,38 @@ export const dialogContentRecipe = cva({
   base: {
     backgroundColor: "surface.overlay",
     color: "text.primary",
-    borderRadius: "tray",
+    borderRadius: { base: "0", md: "tray" },
+    borderTopLeftRadius: "tray",
+    borderTopRightRadius: "tray",
     border: "1px solid",
     borderColor: "border.subtle",
+    borderBottomWidth: { base: "0", md: "1px" },
     boxShadow: "overlay",
     width: "100%",
     // Dynamic viewport units: on a phone `vh` counts the area under the browser's toolbars, so a
-    // tall dialog's last field and actions sat behind the toolbar and the bottom bar (R2-8).
-    maxHeight: { base: "94dvh", md: "85dvh" },
+    // tall dialog's last field and actions sat behind the toolbar and the bottom bar (R2-8). 90 on
+    // a phone, the same as Sheet (STYLE-GUIDE 12.3).
+    maxHeight: { base: "90dvh", md: "85dvh" },
     overflowY: "auto",
-    padding: { base: "5", sm: "7" },
+    padding: { base: "5", md: "7" },
+    // Phone: clear of the home indicator, like a bottom sheet.
+    paddingBottom: { base: "calc({spacing.5} + env(safe-area-inset-bottom, 0px))", md: "7" },
     display: "flex",
     flexDirection: "column",
     gap: "5",
     outline: "none",
     _motionSafe: {
-      animationName: "scaleIn",
+      animationName: { base: "slideUp", md: "scaleIn" },
       animationDuration: "base",
       animationTimingFunction: "enter",
     },
   },
   variants: {
     size: {
-      sm: { maxWidth: "400px" },
-      md: { maxWidth: "480px" },
-      lg: { maxWidth: "640px" },
+      // Full width as a phone bottom sheet; the size applies from md.
+      sm: { maxWidth: { base: "100%", md: "400px" } },
+      md: { maxWidth: { base: "100%", md: "480px" } },
+      lg: { maxWidth: { base: "100%", md: "640px" } },
     },
   },
   defaultVariants: { size: "md" },

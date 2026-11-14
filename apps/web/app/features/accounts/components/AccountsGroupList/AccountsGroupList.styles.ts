@@ -107,7 +107,7 @@ export const netWorthLinks = cva({
     display: "flex",
     flexWrap: "wrap",
     alignItems: "baseline",
-    justifyContent: "space-between",
+    justifyContent: "flex-start",
     columnGap: "16px",
     rowGap: "8px",
   },

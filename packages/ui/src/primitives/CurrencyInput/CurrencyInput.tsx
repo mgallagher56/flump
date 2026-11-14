@@ -56,6 +56,8 @@ export const CurrencyInput: FC<CurrencyInputProps> = ({
     max,
     allowed: MONEY_CHARS,
     symbol: "£",
+    // Money reads in thousands as it is typed, the same as everywhere else it shows (R2-5).
+    groupWhileTyping: true,
   });
 
   return (
