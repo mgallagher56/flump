@@ -162,6 +162,7 @@ export default function App() {
                   })}
                 >
                   <main
+                    data-page-shell="web"
                     id="main-content"
                     tabIndex={-1}
                     className={css({

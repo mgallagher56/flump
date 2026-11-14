@@ -32,8 +32,7 @@
     "packages/ui/src/patterns/DebtToWealthChart/DebtToWealthChart.tsx": 4,
     "packages/ui/src/patterns/PersonalAllowanceTaperBanner/PersonalAllowanceTaperBanner.tsx": 1,
     "packages/ui/src/patterns/SectionBand/SectionBand.styles.ts": 3,
-    "packages/ui/src/primitives/KpiCard/KpiCard.styles.ts": 1,
-    "packages/ui/src/templates/PageTemplates/PageTemplates.styles.ts": 1
+    "packages/ui/src/primitives/KpiCard/KpiCard.styles.ts": 1
   },
   "fontWeight": {
     "apps/marketing/src/components/BaselineSnapshotPreview.tsx": 4,

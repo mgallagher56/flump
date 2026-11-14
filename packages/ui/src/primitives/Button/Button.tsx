@@ -24,6 +24,10 @@ export type ButtonProps = ComponentProps<"button"> &
     pending?: boolean;
   };
 
+/**
+ * A button. It renders `data-variant` with its resolved variant ("primary" when none is given), so
+ * page tests can find the primary action (`expectPageRules` allows at most one, E16 P7.4).
+ */
 export const Button = ({
   asChild,
   className,
@@ -46,13 +50,25 @@ export const Button = ({
 
   if (asChild) {
     return (
-      <Slot className={classes} {...busy} onClick={handleClick} {...props}>
+      <Slot
+        className={classes}
+        data-variant={variant ?? "primary"}
+        {...busy}
+        onClick={handleClick}
+        {...props}
+      >
         {children}
       </Slot>
     );
   }
   return (
-    <button className={classes} {...busy} onClick={handleClick} {...props}>
+    <button
+      className={classes}
+      data-variant={variant ?? "primary"}
+      {...busy}
+      onClick={handleClick}
+      {...props}
+    >
       {pending ? <span className={buttonContentRecipe({ pending })}>{children}</span> : children}
       {pending ? <span aria-hidden="true" className={buttonSpinnerRecipe()} /> : null}
     </button>
@@ -106,7 +122,11 @@ export const ButtonLink = ({
 }: ButtonLinkProps) => {
   const Comp = asChild ? Slot : "a";
   return (
-    <Comp className={cx(buttonRecipe({ variant, size }), className)} {...props}>
+    <Comp
+      className={cx(buttonRecipe({ variant, size }), className)}
+      data-variant={variant ?? "primary"}
+      {...props}
+    >
       {children}
     </Comp>
   );

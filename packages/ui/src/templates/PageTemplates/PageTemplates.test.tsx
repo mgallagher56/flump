@@ -24,6 +24,19 @@ describe("PageTemplates", () => {
     ).not.toThrow();
   });
 
+  it("dashboard accounts table has two columns, the type as secondary text under the name", () => {
+    render(<DashboardTemplate />);
+    const table = screen.getByRole("table", { name: "Your accounts" });
+    expect(
+      within(table)
+        .getAllByRole("columnheader")
+        .map((th) => th.textContent),
+    ).toEqual(["Account", "Balance"]);
+    const firstRow = within(table).getAllByRole("row")[1] as HTMLElement;
+    expect(within(firstRow).getAllByRole("cell")).toHaveLength(2);
+    expect(within(firstRow).getByText("Current")).toBeDefined();
+  });
+
   it("dashboard figures all come from the account rows, in whole pounds", () => {
     render(<DashboardTemplate />);
     // 3,240.18 + 14,300 + 22,150 + 61,800 - 1,860.75, shown once, as the hero.
@@ -52,6 +65,18 @@ describe("PageTemplates", () => {
     const zone = screen.getByTestId("scenario-zone");
     expect(zone.querySelector('[data-tone="hero"]')).toBeNull();
     expect(screen.getByRole("region", { name: "Your details" })).toBeDefined();
+  });
+
+  it("simulator splits the zone: inputs in the left column, outcome and chart on the right", () => {
+    render(<SimulatorTemplate />);
+    const zone = screen.getByTestId("scenario-zone");
+    const controls = within(zone).getByRole("region", { name: "Your what-if inputs" });
+    const results = within(zone).getByRole("region", { name: "Your result" });
+    expect(within(controls).getAllByRole("tab")).toHaveLength(2);
+    expect(within(results).getByTestId("scenario-outcome")).toBeDefined();
+    expect(within(results).getByRole("figure")).toBeDefined();
+    // Controls come first in document order, so they sit left from lg and above under lg.
+    expect(controls.compareDocumentPosition(results) & 4).toBeTruthy();
   });
 
   it("simulator shows one tool at a time, with at most 3 inputs", () => {
@@ -133,8 +158,35 @@ describe("PageBody", () => {
     // Standalone gutters (P13 tokens) ...
     expect(body.className).toContain("px_page.gutter.sm");
     // ... switched off under a `data-page-shell` ancestor, which AppShell's main sets.
-    expect(body.className).toContain("[[data-page-shell]_&]:px_0");
+    expect(body.className).toContain('[[data-page-shell=""]_&]:px_0');
+    expect(body.className).toContain('[[data-page-shell=""]_&]:pt_0');
+    expect(body.closest("[data-page-shell]")?.getAttribute("data-page-shell")).toBe("");
     expect(body.closest("[data-page-shell]")?.tagName).toBe("MAIN");
+  });
+
+  it("inside the apps/web root main adds only what that shell leaves short of P13", () => {
+    render(
+      <main data-page-shell="web">
+        <PageBody data-testid="body">
+          <h1>Your money</h1>
+        </PageBody>
+      </main>,
+    );
+    const cls = screen.getByTestId("body").className;
+    // The shell pads 12/24px sides and 16/24px top; PageBody tops that up to 16/24/40 and 20/32.
+    for (const expected of [
+      '[[data-page-shell="web"]_&]:px_1',
+      '[[data-page-shell="web"]_&]:md:px_0',
+      '[[data-page-shell="web"]_&]:lg:px_4',
+      '[[data-page-shell="web"]_&]:pt_1',
+      '[[data-page-shell="web"]_&]:md:pt_0',
+      '[[data-page-shell="web"]_&]:lg:pt_2',
+      '[[data-page-shell="web"]_&]:md:mt_-1',
+    ]) {
+      expect(cls).toContain(expected);
+    }
+    // The AppShell rule (exact empty value) does not reach the web shell.
+    expect(screen.getByTestId("body").closest('[data-page-shell=""]')).toBeNull();
   });
 });
 
@@ -163,20 +215,28 @@ describe("PageSkeleton", () => {
 
   it("has a header, a hero block, 3 KPI cards and 2 cards, announced as loading", () => {
     render(<PageSkeleton delayMs={0} />);
-    const skeleton = screen.getByRole("status");
-    expect(skeleton.getAttribute("aria-busy")).toBe("true");
-    expect(within(skeleton).getByText("Loading page")).toBeDefined();
+    const status = screen.getByRole("status");
+    expect(status.textContent).toBe("Loading page");
+    // aria-busy sits on the skeleton container, never on the live region.
+    expect(status.hasAttribute("aria-busy")).toBe(false);
+    expect(screen.getByTestId("page-skeleton").getAttribute("aria-busy")).toBe("true");
+    expect(screen.getByTestId("page-skeleton").id).toBe("page-skeleton");
+    expect(status.id).toBe("page-skeleton-status");
     expect(screen.getAllByTestId("page-skeleton-kpi")).toHaveLength(3);
     expect(screen.getAllByTestId("page-skeleton-card")).toHaveLength(2);
   });
 
-  it("takes a custom label and delay", () => {
+  it("keeps an empty status region mounted, and fills it after the delay", () => {
     vi.useFakeTimers();
     render(<PageSkeleton delayMs={500} label="Loading your debts" />);
+    const status = screen.getByRole("status");
+    expect(status.textContent).toBe("");
     act(() => vi.advanceTimersByTime(300));
-    expect(screen.queryByRole("status")).toBeNull();
+    expect(status.textContent).toBe("");
     act(() => vi.advanceTimersByTime(200));
-    expect(screen.getByText("Loading your debts")).toBeDefined();
+    // The same element, so the change is announced as a live-region update.
+    expect(screen.getByRole("status")).toBe(status);
+    expect(status.textContent).toBe("Loading your debts");
   });
 
   it("cancels the timer when unmounted before the delay", () => {

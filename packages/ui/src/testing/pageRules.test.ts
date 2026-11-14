@@ -93,9 +93,39 @@ describe("countFigures", () => {
     expect(countFigures(dom("<p>£320 a month at 4.5% until Mar 2030</p>"))).toBe(3);
   });
 
-  it("joins text split across inline elements", () => {
-    const root = dom("<p><span>£</span><strong>1,250</strong> left over</p>");
+  it("never joins text from adjacent inline elements into one figure", () => {
+    // Two figures side by side in inline elements stay two, and neither absorbs the other.
+    const side = dom("<p><span>£1,250</span><span>5%</span></p>");
+    expect(findFigures(side)).toEqual([
+      { kind: "money", text: "£1,250" },
+      { kind: "percent", text: "5%" },
+    ]);
+    // "Mar" and "2030" in different elements are not a date; "£" and "1,250" are not money.
+    const split = dom("<p><span>Mar</span> 2030, <span>£</span><strong>1,250</strong></p>");
+    expect(countFigures(split)).toBe(0);
+    // Digits in one element and "%" in the next are not a percentage.
+    expect(countFigures(dom("<p><b>12</b><i>%</i></p>"))).toBe(0);
+  });
+
+  it("joins adjacent text nodes of one element (React splits {n} months into two)", () => {
+    const root = dom("<p></p>");
+    const p = root.querySelector("p") as HTMLParagraphElement;
+    p.append(document.createTextNode("18"), document.createTextNode(" months"));
+    expect(findFigures(root)).toEqual([{ kind: "duration", text: "18 months" }]);
+  });
+
+  it("counts a figure inside an inline element of a sentence", () => {
+    const root = dom("<p>You pay <strong>£1,250</strong> a month</p>");
     expect(findFigures(root)).toEqual([{ kind: "money", text: "£1,250" }]);
+  });
+
+  it("counts en-GB numeric dates, with a four or two digit year", () => {
+    const root = dom("<p>Due 14/11/2026</p><p>Paid 1/3/26</p><p>Tax year 2025/26</p>");
+    expect(findFigures(root).map((f) => [f.kind, f.text])).toEqual([
+      ["date", "14/11/2026"],
+      ["date", "1/3/26"],
+      ["date", "2025/26"],
+    ]);
   });
 
   it("does not join text across block elements", () => {
@@ -210,6 +240,20 @@ describe("expectPageRules", () => {
   it("fails with two hero blocks", () => {
     const root = page('<div data-tone="hero">£1</div><div data-tone="hero">£2</div>');
     expect(() => expectPageRules(root)).toThrow(/2 hero blocks/);
+  });
+
+  it("fails with two shown primary buttons, counting links and ignoring hidden ones (P7.4)", () => {
+    const one = page(
+      '<button data-variant="primary">Save</button><button data-variant="secondary">Cancel</button>' +
+        '<div hidden><button data-variant="primary">Hidden</button></div>' +
+        '<div aria-hidden="true"><a data-variant="primary" href="#">Hidden</a></div>' +
+        '<div data-variant="primary">Not a button</div>',
+    );
+    expect(() => expectPageRules(one)).not.toThrow();
+    const two = page(
+      '<button data-variant="primary">Save</button><a data-variant="primary" href="#">Add</a>',
+    );
+    expect(() => expectPageRules(two)).toThrow(/2 primary buttons; at most one/);
   });
 
   it("allows no projection notice by default, fails with two", () => {

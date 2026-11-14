@@ -119,8 +119,8 @@ export const Quiet: Story = {
     await userEvent.click(trigger);
     await expect(trigger).toHaveAttribute("aria-expanded", "true");
     await expect(canvas.getByRole("table")).toBeInTheDocument();
-    // The name does not change while open; aria-expanded carries the state.
-    await expect(canvas.getByRole("button", { name: "Show data" })).toBe(trigger);
+    // The visible label (and so the name) reads "Hide data" while open; aria-expanded stays.
+    await expect(canvas.getByRole("button", { name: "Hide data" })).toBe(trigger);
   },
 };
 

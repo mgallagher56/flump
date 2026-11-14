@@ -19,6 +19,19 @@ describe("Button Primitive", () => {
     expect(cls).not.toMatch(/(^|\s)bg_primary(\s|$)/);
   });
 
+  it("renders its resolved variant as data-variant, primary by default", () => {
+    render(
+      <>
+        <Button>Save</Button>
+        <Button variant="secondary">Cancel</Button>
+        <ButtonLink href="/x">Go</ButtonLink>
+      </>,
+    );
+    expect(screen.getByRole("button", { name: "Save" }).dataset.variant).toBe("primary");
+    expect(screen.getByRole("button", { name: "Cancel" }).dataset.variant).toBe("secondary");
+    expect(screen.getByRole("link", { name: "Go" }).dataset.variant).toBe("primary");
+  });
+
   it("applies disabled attributes correctly", () => {
     render(<Button disabled>Disabled Action</Button>);
     const btn = screen.getByRole("button", { name: "Disabled Action" });

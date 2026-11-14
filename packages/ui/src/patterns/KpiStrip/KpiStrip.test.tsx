@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+import { Fragment } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { KpiCard } from "../../primitives/KpiCard/KpiCard";
 import { countUnsetKpis, KpiStrip } from "./KpiStrip";
@@ -140,6 +141,56 @@ describe("KpiStrip Pattern", () => {
         <div key="c">C</div>,
       ]),
     ).toEqual({ total: 3, unset: 1 });
+  });
+
+  it("looks through Fragments when counting unset cards", () => {
+    expect(
+      countUnsetKpis(
+        <>
+          <KpiCard label="A" value={null} />
+          <Fragment key="nested">
+            <KpiCard label="B" value={null} />
+            <KpiCard label="C" value={1} />
+          </Fragment>
+        </>,
+      ),
+    ).toEqual({ total: 3, unset: 2 });
+  });
+
+  it("gives each empty prompt a unique id by default, and keeps a given one", () => {
+    const strip = (id?: string) => (
+      <KpiStrip emptyPrompt={{ title: `Add details ${id ?? "x"}`, id }}>
+        <KpiCard label="Rate" value={null} />
+      </KpiStrip>
+    );
+    const { container } = render(
+      <>
+        {strip()}
+        {strip()}
+        {strip("mine")}
+      </>,
+    );
+    const ids = Array.from(container.querySelectorAll("[data-kpi-strip='empty'] > [id]")).map(
+      (el) => el.id,
+    );
+    expect(ids).toHaveLength(3);
+    expect(new Set(ids).size).toBe(3);
+    expect(ids).not.toContain("kpi-strip-empty");
+    expect(ids[2]).toBe("mine");
+  });
+
+  it("stacks 3 cards in one column at phone width, so none is orphaned (2 + 1)", () => {
+    const { container } = render(
+      <KpiStrip columns={3}>
+        <div>A</div>
+        <div>B</div>
+        <div>C</div>
+      </KpiStrip>,
+    );
+    const cls = container.firstElementChild?.className ?? "";
+    expect(cls).toContain("grid-tc_minmax(0,_1fr)");
+    expect(cls).toContain("sm:grid-tc_repeat(3,_minmax(0,_1fr))");
+    expect(cls).not.toContain("grid-tc_repeat(2");
   });
 
   it("rejects a fifth item at compile time", () => {

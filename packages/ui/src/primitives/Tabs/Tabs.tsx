@@ -7,10 +7,24 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import { cx } from "../../../styled-system/css";
-import { tabPanel, tabsList, tabsRoot, tabTrigger } from "./Tabs.styles";
+import { tabPanel, tabsList, tabsRoot, tabsScroller, tabTrigger } from "./Tabs.styles";
+
+/**
+ * Scroll `scroller` sideways just enough to show its selected tab. Only `scrollLeft` changes, so
+ * the page never jumps vertically (unlike `scrollIntoView`).
+ */
+export const scrollSelectedTabIntoView = (scroller: HTMLElement | null): void => {
+  const active = scroller?.querySelector<HTMLElement>('[role="tab"][data-state="active"]');
+  if (!scroller || !active) return;
+  const box = scroller.getBoundingClientRect();
+  const tab = active.getBoundingClientRect();
+  if (tab.left < box.left) scroller.scrollLeft -= box.left - tab.left;
+  else if (tab.right > box.right) scroller.scrollLeft += tab.right - box.right;
+};
 
 // Replaced statically by the bundler (Vite, Storybook); declared here to avoid a node types dependency.
 declare const process: { env: { NODE_ENV?: string } };
@@ -140,6 +154,12 @@ const TabsRoot: FC<TabsProps> = ({
     });
   }, []);
   const registry = useMemo(() => ({ setMounted }), [setMounted]);
+  const scrollerRef = useRef<HTMLDivElement>(null);
+
+  // Keep the selected tab visible in a list that scrolls (on mount and when the value changes).
+  useEffect(() => {
+    scrollSelectedTabIntoView(scrollerRef.current);
+  }, [value]);
 
   useEffect(() => {
     if (process.env.NODE_ENV !== "production" && items.length > TABS_MAX_ITEMS) {
@@ -157,20 +177,22 @@ const TabsRoot: FC<TabsProps> = ({
         value={value}
         onValueChange={onValueChange}
       >
-        <RadixTabs.List aria-label={ariaLabel} className={cx(tabsList({ size }))}>
-          {items.map((item) => (
-            <RadixTabs.Trigger
-              key={item.value}
-              className={cx(tabTrigger({ size }))}
-              disabled={item.disabled}
-              value={item.value}
-              // Radix always sets aria-controls; strip it when no panel is mounted for this tab.
-              {...(mounted.has(item.value) ? {} : { "aria-controls": undefined })}
-            >
-              {item.label}
-            </RadixTabs.Trigger>
-          ))}
-        </RadixTabs.List>
+        <div className={tabsScroller()} data-tabs-scroller="" ref={scrollerRef}>
+          <RadixTabs.List aria-label={ariaLabel} className={cx(tabsList({ size }))}>
+            {items.map((item) => (
+              <RadixTabs.Trigger
+                key={item.value}
+                className={cx(tabTrigger({ size }))}
+                disabled={item.disabled}
+                value={item.value}
+                // Radix always sets aria-controls; strip it when no panel is mounted for this tab.
+                {...(mounted.has(item.value) ? {} : { "aria-controls": undefined })}
+              >
+                {item.label}
+              </RadixTabs.Trigger>
+            ))}
+          </RadixTabs.List>
+        </div>
         {panels
           ? items.map((item) =>
               panels[item.value] === undefined ? null : (

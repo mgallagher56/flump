@@ -40,9 +40,11 @@ export interface CollapsibleDrawerProps {
   /**
    * `card` (default): a bordered card with a full-width header row, for schedules and ledgers.
    * `quiet`: a small text button ("Show details", "Show data") with no card chrome, for secondary
-   * detail under a chart or figure (plan P10.5). Only `title` (and `itemCount`) show on its trigger;
-   * `badge`, `subtitle`, `openLabel` and `closedLabel` are ignored, and `aria-expanded` carries the
-   * open state, so the button's name stays the same while open.
+   * detail under a chart or figure (plan P10.5). Its trigger shows `title` (and `itemCount`) while
+   * closed and `openLabel` while open; without `openLabel`, a title starting "Show" reads "Hide"
+   * instead ("Show data" becomes "Hide data") and any other title stays as it is. The accessible
+   * name follows the visible text (WCAG 2.5.3) and `aria-expanded` carries the open state.
+   * `badge`, `subtitle` and `closedLabel` are ignored.
    */
   variant?: "card" | "quiet";
   children: ReactNode;
@@ -50,6 +52,10 @@ export interface CollapsibleDrawerProps {
 }
 
 const countFormat = new Intl.NumberFormat("en-GB");
+
+/** The quiet trigger's open text: `openLabel`, else "Show X" as "Hide X", else the title. */
+export const quietOpenLabel = (title: string, openLabel?: string): string =>
+  openLabel ?? (/^Show\b/.test(title) ? title.replace(/^Show/, "Hide") : title);
 
 export const CollapsibleDrawer: FC<CollapsibleDrawerProps> = ({
   title,
@@ -82,7 +88,7 @@ export const CollapsibleDrawer: FC<CollapsibleDrawerProps> = ({
           type="button"
           onClick={() => setIsOpen((prev) => !prev)}
         >
-          {title}
+          {isOpen ? quietOpenLabel(title, openLabel) : title}
           {countText && <span className={drawerCount()}>{countText}</span>}
           <span aria-hidden="true" className={drawerChevron({ open: isOpen })}>
             <Icon icon={ChevronDown} size="sm" />

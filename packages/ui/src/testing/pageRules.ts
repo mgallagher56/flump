@@ -14,12 +14,17 @@
  * - Anything not shown is skipped: `aria-hidden="true"`, the `hidden` attribute, `<template>`,
  *   `<script>`, `<style>`, visually hidden text (the `VisuallyHidden` recipe class) and
  *   `[data-figure-ignore]` (an escape hatch for decorative text the patterns misread).
- * - Text in the remaining elements is matched against these patterns, never across a block
- *   boundary (a `div`, `p`, `li`, cell or heading ends a run of text):
+ * - Text in the remaining elements is matched against these patterns one text run at a time. A
+ *   run is the adjacent text nodes of one element (React splits `{n} months` into two nodes);
+ *   every element boundary, inline or block, ends it. So text in two elements is never joined
+ *   into one figure: `<span>Mar</span> 2030` is not a date. (`Money` renders its whole value as
+ *   one text node, so no figure in the kit is split across elements; mark one that is with
+ *   `data-figure`.)
  *   - money: `£1,234`, `-£1,234.56`, `−£3.4k`, `£1.2m`, `£1.5bn`;
  *   - percentage: `5%`, `24.9%`, `5.25 %`;
  *   - duration: `3 years 4 months`, `1 year`, `18 months`, `6 weeks`, `10 days` (one figure each);
- *   - date: `Mar 2030`, `March 2030`, `1 Mar 2030`, `2025/26` (a tax year).
+ *   - date: `Mar 2030`, `March 2030`, `1 Mar 2030`, en-GB numeric `14/11/2026` or `14/11/26`,
+ *     and `2025/26` (a tax year).
  *   Bare numbers and bare years ("2030") are not figures: axis ticks and counts would swamp them.
  */
 import { visuallyHiddenRecipe } from "../primitives/VisuallyHidden/VisuallyHidden.styles";
@@ -44,61 +49,15 @@ const PATTERNS: ReadonlyArray<{ kind: Exclude<FigureKind, "marked">; source: str
     source:
       "\\b\\d+ (?:years?|yrs?)(?: (?:and )?\\d+ months?)?\\b|\\b\\d+ (?:months?|weeks?|days?)\\b",
   },
-  { kind: "date", source: `\\b(?:\\d{1,2} )?${MONTH} \\d{4}\\b|\\b\\d{4}/\\d{2}\\b` },
+  {
+    kind: "date",
+    source: `\\b(?:\\d{1,2} )?${MONTH} \\d{4}\\b|\\b\\d{1,2}/\\d{1,2}/(?:\\d{4}|\\d{2})\\b|\\b\\d{4}/\\d{2}\\b`,
+  },
 ];
 
 const COMBINED = new RegExp(PATTERNS.map((p) => `(${p.source})`).join("|"), "g");
 
 const SKIP_TAGS = new Set(["SCRIPT", "STYLE", "TEMPLATE", "NOSCRIPT", "SVG"]);
-
-/** Elements that end a run of text, so a pattern never joins words from two blocks. */
-const BLOCK_TAGS = new Set([
-  "ADDRESS",
-  "ARTICLE",
-  "ASIDE",
-  "BLOCKQUOTE",
-  "BR",
-  "BUTTON",
-  "CAPTION",
-  "DD",
-  "DETAILS",
-  "DIALOG",
-  "DIV",
-  "DL",
-  "DT",
-  "FIELDSET",
-  "FIGCAPTION",
-  "FIGURE",
-  "FOOTER",
-  "FORM",
-  "H1",
-  "H2",
-  "H3",
-  "H4",
-  "H5",
-  "H6",
-  "HEADER",
-  "HR",
-  "LABEL",
-  "LEGEND",
-  "LI",
-  "MAIN",
-  "NAV",
-  "OL",
-  "OPTION",
-  "P",
-  "SECTION",
-  "SELECT",
-  "SUMMARY",
-  "TABLE",
-  "TBODY",
-  "TD",
-  "TFOOT",
-  "TH",
-  "THEAD",
-  "TR",
-  "UL",
-]);
 
 let hiddenClasses: string[] | undefined;
 const visuallyHiddenClasses = (): string[] => {
@@ -121,10 +80,26 @@ const isSkipped = (el: Element): boolean =>
 
 const NOT_SET = /\bNot set\b/g;
 
+/**
+ * A primary action: the `Button`, `ButtonLink` and `IconButton` primitives render their resolved
+ * variant as `data-variant` ("primary" when none is given). Only buttons and links count, so other
+ * components that use `data-variant` for their own styling are never mistaken for one.
+ */
+const PRIMARY_SELECTOR = 'button[data-variant="primary"], a[data-variant="primary"]';
+
+/** True when `el` or an ancestor up to `root` is hidden from everyone (not just visually). */
+const isInSkipped = (el: Element, root: Element): boolean => {
+  for (let node: Element | null = el; node; node = node.parentElement) {
+    if (node.hasAttribute("hidden") || node.getAttribute("aria-hidden") === "true") return true;
+    if (node === root) break;
+  }
+  return false;
+};
+
 type Run = { kind: "text" | "marked"; text: string };
 
 /**
- * The shown text under `root`, as runs that never cross a block boundary. A `data-figure` element
+ * The shown text under `root`, as runs that never cross an element boundary. A `data-figure` element
  * is one `marked` run; skipped elements (see the module comment) contribute nothing.
  */
 function readRuns(root: Element): Run[] {
@@ -150,10 +125,10 @@ function readRuns(root: Element): Run[] {
       runs.push({ kind: "marked", text: (el.textContent ?? "").replace(/\s+/g, " ").trim() });
       return;
     }
-    const block = BLOCK_TAGS.has(el.tagName.toUpperCase());
-    if (block) flush();
+    // Every element starts and ends a run, so text from two elements is never joined.
+    flush();
     for (const child of Array.from(el.childNodes)) visit(child);
-    if (block) flush();
+    flush();
   };
 
   if (isSkipped(root)) return runs;
@@ -206,6 +181,9 @@ export interface PageRulesOptions {
  * - at most `maxFigures` figures (`countFigures`);
  * - at most `maxNotSet` "Not set" values;
  * - at most one `[data-tone="hero"]` (P2.2);
+ * - at most one shown primary button or button-styled link (P7.4), found by the
+ *   `data-variant="primary"` that the Button primitives render; hidden ones (`hidden`,
+ *   `aria-hidden="true"`, such as an inactive tab panel) do not count;
  * - at most one `[data-notice="projection"]`, or exactly `projectionNotices` (P4.1);
  * - no projection notice before the page's h1 in document order (P4.1, "never above the h1").
  */
@@ -231,6 +209,13 @@ export function expectPageRules(root: Element, options: PageRulesOptions = {}): 
 
   const heroes = root.querySelectorAll('[data-tone="hero"]').length;
   if (heroes > 1) problems.push(`Has ${heroes} hero blocks; at most one is allowed`);
+
+  const primaries = Array.from(root.querySelectorAll(PRIMARY_SELECTOR)).filter(
+    (el) => !isInSkipped(el, root),
+  ).length;
+  if (primaries > 1) {
+    problems.push(`Has ${primaries} primary buttons; at most one is allowed (P7.4)`);
+  }
 
   const notices = Array.from(root.querySelectorAll('[data-notice="projection"]'));
   if (options.projectionNotices !== undefined) {

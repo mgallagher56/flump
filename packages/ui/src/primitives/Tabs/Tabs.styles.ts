@@ -6,22 +6,36 @@ export const tabsRoot = cva({
 });
 
 /**
- * Segmented track. At 375px a list wider than its parent scrolls sideways inside itself
- * (`overflowX: auto`) rather than overflowing the page.
+ * Holds the track and scrolls it sideways when it is wider than the space it has (375px with four
+ * tabs). `contain: inline-size` stops the track's width counting towards its ancestors' minimum
+ * width, so a grid or flex parent can never be pushed wider than the page by a long tab list. As a
+ * block it takes its parent's full width; the triggers' focus ring is drawn inside the trigger
+ * (`outlineOffset: -2px`), so the scroll clip never cuts it.
  */
+export const tabsScroller = cva({
+  base: {
+    display: "block",
+    width: "100%",
+    maxWidth: "100%",
+    contain: "inline-size",
+    overflowX: "auto",
+    overflowY: "hidden",
+    overscrollBehaviorX: "contain",
+    scrollbarWidth: "thin",
+  },
+});
+
+/** Segmented track, as wide as its tabs; `tabsScroller` scrolls it when that is too wide. */
 export const tabsList = cva({
   base: {
     display: "inline-flex",
     alignItems: "center",
+    verticalAlign: "top",
     backgroundColor: "surface.sunken",
     borderRadius: "xl",
     borderWidth: "1px",
     borderStyle: "solid",
     borderColor: "border.subtle",
-    maxWidth: "100%",
-    overflowX: "auto",
-    overscrollBehaviorX: "contain",
-    scrollbarWidth: "thin",
   },
   variants: {
     size: {

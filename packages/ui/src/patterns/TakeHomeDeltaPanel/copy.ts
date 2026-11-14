@@ -165,7 +165,7 @@ export const EXPLORER_COPY = {
     "relief-at-source": "Relief at source",
   },
   pensionAmount: "Pension contribution a year",
-  moreDetails: "More details",
+  moreDetails: "More options",
   studentLoans: "Student loan plans",
   childBenefit: "Include Child Benefit",
   children: "Children receiving Child Benefit",

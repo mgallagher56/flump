@@ -1,4 +1,13 @@
-import { Children, type FC, isValidElement, type ReactNode, useEffect } from "react";
+import {
+  Children,
+  type FC,
+  Fragment,
+  isValidElement,
+  type ReactElement,
+  type ReactNode,
+  useEffect,
+  useId,
+} from "react";
 import { cx, type RecipeVariantProps } from "../../../styled-system/css";
 import { isKpiCardUnset, KpiCard, type KpiCardProps } from "../../primitives/KpiCard/KpiCard";
 import { EmptyState } from "../EmptyState/EmptyState";
@@ -25,7 +34,7 @@ export interface KpiStripEmptyPrompt {
   action?: ReactNode;
   /** Defaults to `h2`. */
   headingLevel?: "h2" | "h3";
-  /** Element id for the prompt. Defaults to "kpi-strip-empty". */
+  /** Element id for the prompt. Defaults to a unique id from `useId`, so two strips never clash. */
   id?: string;
 }
 
@@ -50,15 +59,22 @@ const isUnsetChild = (child: ReactNode): boolean => {
   return child.type === KpiCard ? isKpiCardUnset(props) : false;
 };
 
-/** Counts the strip's cards and how many of them are unset. */
+/** The strip's card elements, with Fragments (at any depth) flattened into their children. */
+const flattenCards = (content: ReactNode): ReactElement[] =>
+  Children.toArray(content).flatMap((child) => {
+    if (!isValidElement<{ children?: ReactNode }>(child)) return [];
+    return child.type === Fragment ? flattenCards(child.props.children) : [child];
+  });
+
+/** Counts the strip's cards and how many of them are unset. Fragments are looked through. */
 export const countUnsetKpis = (content: ReactNode): { total: number; unset: number } => {
-  const cards = Children.toArray(content).filter(isValidElement);
+  const cards = flattenCards(content);
   return { total: cards.length, unset: cards.filter(isUnsetChild).length };
 };
 
 /**
- * Top-level page metrics: 3 cards by default, 4 at most, in one row from `sm` upwards and 2x2 at
- * phone width (I-09). Uses compact density. With `items`, `columns` follows the item count unless
+ * Top-level page metrics: 3 cards by default, 4 at most, in one row from `sm` upwards. At phone
+ * width 3 cards stack in one column and 4 sit 2x2, so no card is ever left alone on a row. Uses compact density. With `items`, `columns` follows the item count unless
  * given. When half or more cards are unset, one `EmptyState` prompt replaces the strip (P3.2).
  */
 export const KpiStrip: FC<KpiStripProps> = ({
@@ -69,6 +85,7 @@ export const KpiStrip: FC<KpiStripProps> = ({
   className,
 }) => {
   const content = items ?? children;
+  const generatedPromptId = useId();
   const { total, unset } = countUnsetKpis(content);
   const mostlyUnset = total > 0 && unset * 2 >= total;
 
@@ -87,7 +104,7 @@ export const KpiStrip: FC<KpiStripProps> = ({
           action={emptyPrompt.action}
           description={emptyPrompt.description}
           headingLevel={emptyPrompt.headingLevel ?? "h2"}
-          id={emptyPrompt.id ?? "kpi-strip-empty"}
+          id={emptyPrompt.id ?? generatedPromptId}
           size="sm"
           title={emptyPrompt.title}
           tone="muted"

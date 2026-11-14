@@ -61,17 +61,7 @@ export const deltaPanelUnverified = cva({
   base: { color: "status.warning.text", fontWeight: "medium" },
 });
 
-export const deltaPanelBanner = cva({
-  base: {
-    margin: "0",
-    paddingBlock: "3",
-    paddingInline: "4",
-    borderRadius: "lg",
-    borderWidth: "1px",
-    borderStyle: "solid",
-    borderColor: "status.warning.border",
-    backgroundColor: "status.warning.bg",
-    color: "status.warning.text",
-    textStyle: "body.sm",
-  },
+/** The unverified sentence when the page's one notice lives elsewhere: quiet text, no status fill. */
+export const deltaPanelUnverifiedNote = cva({
+  base: { margin: "0", textStyle: "body.sm", color: "text.secondary" },
 });

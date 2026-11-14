@@ -78,10 +78,10 @@ describe("MarginalRateExplorer", () => {
     ).toBeDefined();
   });
 
-  it("offers the year's student loan plans under More details, closed by default", () => {
+  it("offers the year's student loan plans under More options, closed by default", () => {
     render(<MarginalRateExplorerStandalone initialValues={{ taxYear: "2026/27" }} />);
     expect(screen.queryByRole("group", { name: "Student loan plans" })).toBeNull();
-    fireEvent.click(screen.getByRole("button", { name: "More details" }));
+    fireEvent.click(screen.getByRole("button", { name: "More options" }));
     const group = screen.getByRole("group", { name: "Student loan plans" });
     expect(within(group).getByLabelText("Plan 2")).toBeDefined();
     expect(within(group).getByLabelText("Postgraduate loan")).toBeDefined();
@@ -106,7 +106,7 @@ describe("MarginalRateExplorer", () => {
     );
     const sentence = () => screen.getByTestId("take-home-delta-sentence").textContent;
     expect(sentence()).toContain("student loan");
-    fireEvent.click(screen.getByRole("button", { name: "More details" }));
+    fireEvent.click(screen.getByRole("button", { name: "More options" }));
     fireEvent.change(screen.getByLabelText("Tax year"), { target: { value: "2022/23" } });
     expect(sentence()).not.toContain("student loan");
     expect(screen.queryByLabelText("Plan 5")).toBeNull();

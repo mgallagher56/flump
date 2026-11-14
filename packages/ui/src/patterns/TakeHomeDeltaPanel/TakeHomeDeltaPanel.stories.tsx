@@ -49,6 +49,10 @@ export const UnverifiedWithChildBenefit: Story = {
     const canvas = within(canvasElement);
     await expect(canvas.getByText("Unverified estimate")).toBeInTheDocument();
     await expect(canvas.getByText("(not yet confirmed)")).toBeInTheDocument();
+    // One notice: the unverified sentence leads the guidance note (E16 P4.1, P4.3).
+    const notices = canvasElement.querySelectorAll("[data-notice]");
+    await expect(notices).toHaveLength(1);
+    await expect(notices[0]?.textContent).toMatch(/^Unverified estimate\. These tax figures/);
   },
 };
 
