@@ -119,8 +119,9 @@ export const marginalRateHitArea = cva({
   },
 });
 
+/** "Your pay": a solid neutral line, so the page gains no new hue (the curve is the one teal). */
 export const marginalRateYourPay = cva({
-  base: { stroke: "chart.warning", strokeWidth: "2.5" },
+  base: { stroke: "text.secondary", strokeWidth: "2.5" },
 });
 
 export const marginalRateYourPayText = cva({
@@ -128,7 +129,7 @@ export const marginalRateYourPayText = cva({
 });
 
 export const marginalRateYourPayDot = cva({
-  base: { fill: "chart.warning" },
+  base: { fill: "text.secondary" },
 });
 
 export const marginalRateTable = cva({

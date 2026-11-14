@@ -17,8 +17,25 @@ describe("TaxRecordsTable", () => {
     setup();
     const rows = within(screen.getByRole("table")).getAllByRole("row");
     expect(rows[1].textContent).toContain("Laptop");
-    expect(rows[1].textContent).toContain("-£1,299.00");
+    // Whole pounds, as everywhere on the page; pence only where the record was entered with them.
+    expect(rows[1].textContent).toContain("-£1,299");
+    expect(rows[1].textContent).not.toContain("£1,299.00");
     expect(screen.getByText("Showing 1 to 6 of 6 records")).toBeDefined();
+  });
+
+  it("shows pence only on an amount entered with pence", () => {
+    const base = taxRecordsFixture[0];
+    render(
+      <TaxRecordsTable
+        records={[{ ...base, id: "p1", name: "Stamps", amount: 12.5 }]}
+        availableYears={["2025/26", "2026/27"]}
+        onAdd={vi.fn()}
+        onDelete={vi.fn()}
+        onEdit={vi.fn()}
+        onViewReceipt={vi.fn()}
+      />,
+    );
+    expect(within(screen.getByRole("table")).getAllByText(/£12\.50/).length).toBeGreaterThan(0);
   });
 
   it("filters by source and type", () => {

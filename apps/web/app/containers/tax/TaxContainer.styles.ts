@@ -4,7 +4,7 @@ export const pageRoot = cva({
   base: {
     display: "flex",
     flexDirection: "column",
-    gap: "6",
+    gap: "page.section",
     width: "100%",
     minWidth: 0,
     paddingBottom: { base: "6", md: "12" },

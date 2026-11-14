@@ -23,13 +23,14 @@ export const rowList = cva({
 });
 
 /** Name and type on the left; balance and actions on the right, on one line from 375. */
+/** Name on the left (wraps), balance and Edit on the right, never closer than a 16px gap. */
 export const row = cva({
   base: {
     display: "flex",
-    flexWrap: "wrap",
+    flexWrap: "nowrap",
     alignItems: "center",
     justifyContent: "space-between",
-    gap: "2",
+    gap: "4",
     paddingX: "4",
     paddingY: "3",
     minWidth: 0,
@@ -50,7 +51,7 @@ export const balance = cva({
 });
 
 export const accountMeta = cva({
-  base: { display: "flex", flexDirection: "column", gap: "2px", minWidth: "5rem", flex: "1 1 0" },
+  base: { display: "flex", flexDirection: "column", gap: "2px", minWidth: 0, flex: "1 1 auto" },
 });
 
 export const accountLink = cva({

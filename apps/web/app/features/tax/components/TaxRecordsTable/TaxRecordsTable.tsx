@@ -11,6 +11,7 @@ import {
   Icon,
   Illustration,
   Money,
+  Select,
   Table,
   TBody,
   Td,
@@ -19,7 +20,6 @@ import {
 } from "@repo/ui";
 import { Paperclip, Trash2 } from "lucide-react";
 import { type FC, useMemo, useState } from "react";
-import { nativeSelect } from "../../select.styles";
 import { FREQUENCY_LABEL, recordAmount, SOURCE_LABEL, SOURCE_OPTIONS } from "../../tax-labels";
 import {
   actions,
@@ -119,26 +119,20 @@ export const TaxRecordsTable: FC<TaxRecordsTableProps> = ({
       <div className={filters()}>
         <FormField label="Tax year">
           {(field) => (
-            <select
-              id={field.id}
-              className={nativeSelect()}
-              value={year}
-              onChange={(e) => onFilter(setYear)(e.target.value)}
-            >
+            <Select id={field.id} value={year} onChange={(e) => onFilter(setYear)(e.target.value)}>
               <option value="all">All tax years</option>
               {availableYears.map((y) => (
                 <option key={y} value={y}>
                   {y}
                 </option>
               ))}
-            </select>
+            </Select>
           )}
         </FormField>
         <FormField label="Income source">
           {(field) => (
-            <select
+            <Select
               id={field.id}
-              className={nativeSelect()}
               value={source}
               onChange={(e) => onFilter(setSource)(e.target.value as "all" | TaxSource)}
             >
@@ -148,21 +142,20 @@ export const TaxRecordsTable: FC<TaxRecordsTableProps> = ({
                   {o.label}
                 </option>
               ))}
-            </select>
+            </Select>
           )}
         </FormField>
         <FormField label="Type">
           {(field) => (
-            <select
+            <Select
               id={field.id}
-              className={nativeSelect()}
               value={type}
               onChange={(e) => onFilter(setType)(e.target.value as "all" | "income" | "expense")}
             >
               <option value="all">Income and costs</option>
               <option value="income">Income</option>
               <option value="expense">Costs</option>
-            </select>
+            </Select>
           )}
         </FormField>
       </div>
@@ -209,7 +202,7 @@ export const TaxRecordsTable: FC<TaxRecordsTableProps> = ({
                   <Td className={cellMuted()}>{FREQUENCY_LABEL[record.frequency]}</Td>
                   <Td numeric>
                     <Money
-                      fractionDigits={2}
+                      fractionDigits={Number.isInteger(amount) ? 0 : 2}
                       size="sm"
                       signDisplay="always"
                       value={isIncome ? amount : -amount}
