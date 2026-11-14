@@ -31,15 +31,15 @@ describe("ToolPage", () => {
     expect(screen.queryByText("Page not found")).toBeNull();
   });
 
-  it("shows one 'Guidance, not advice' notice on every calculator page", () => {
-    for (const tool of TOOLS_CATALOG) {
-      const { unmount } = renderAt(`/tools/${tool.slug}`);
+  it.each(TOOLS_CATALOG.map((tool) => tool.slug))(
+    "shows one 'Guidance, not advice' notice on /tools/%s",
+    (slug) => {
+      renderAt(`/tools/${slug}`);
       expect(screen.getAllByRole("complementary", { name: "Guidance, not advice" })).toHaveLength(
         1,
       );
-      unmount();
-    }
-  });
+    },
+  );
 
   it("asks for a beta invite instead of linking a closed sign-up", () => {
     renderAt("/tools/uk-100k-tax-trap-calculator");
