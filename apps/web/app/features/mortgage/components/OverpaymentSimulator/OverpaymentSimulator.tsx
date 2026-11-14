@@ -393,7 +393,6 @@ export const OverpaymentSimulator: FC<OverpaymentSimulatorProps> = ({
         // At £0 there is no change to state: one short prompt, no figures (the payment and the
         // term are already on the page).
         <div data-testid="overpayment-outcome" id="overpayment-outcome">
-          <p className={outcomeLabel}>With no overpayment</p>
           <p className={outcomePrompt}>Move the slider to see what changes</p>
         </div>
       )}
