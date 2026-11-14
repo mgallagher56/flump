@@ -230,20 +230,25 @@ export const SavingsContainer: FC = () => {
         panels={{
           forecaster: (
             <>
-              {payRiseMonthly > 0 && (
-                <PayRiseScenario monthlyIncrease={payRiseMonthly} onRemove={removePayRise} />
-              )}
               <SavingsForecasterCard
                 accounts={savingsAccounts}
                 monthlyContribution={totalMonthlySavings + payRiseMonthly}
                 portfolioInterestRate={weightedInterestRate}
                 startingBalance={totalSavingsBalance}
               />
+              {/* One savings zone for every what-if on this tab. The page already shows the
+                  ProjectionNotice, so the zone leaves its own out (one landmark per page). */}
               <ScenarioZone
                 announcement={depositAnnouncement}
                 id="deposit-timeline"
                 isModified={depositScenario.isModified}
+                showNotice={false}
                 title="Model a change to your savings"
+                tools={
+                  payRiseMonthly > 0 ? (
+                    <PayRiseScenario monthlyIncrease={payRiseMonthly} onRemove={removePayRise} />
+                  ) : undefined
+                }
                 onReset={depositScenario.reset}
               >
                 <DepositTimeline

@@ -147,8 +147,13 @@ describe("SavingsContainer", () => {
       rerender(<SavingsContainer />);
       expect(screen.getByText(/Pay rise from take-home:/)).toBeDefined();
       expect(screen.getByText("£2,760")).toBeDefined();
-      // The pay rise row and the deposit timeline zone (E32) each carry the badge.
-      expect(screen.getAllByText("Illustration, not saved")).toHaveLength(2);
+      // The pay rise row sits in the one savings scenario zone, with its single badge.
+      const zone = screen.getByRole("region", { name: "Model a change to your savings" });
+      expect(zone.textContent).toContain("Pay rise from take-home:");
+      expect(screen.getAllByText("Illustration, not saved")).toHaveLength(1);
+      expect(screen.getAllByRole("complementary", { name: "Guidance, not advice" })).toHaveLength(
+        1,
+      );
       expect(
         screen.getByRole("heading", { name: "Where you stand" }).parentElement?.textContent,
       ).toBe(savedFigures);
