@@ -23,13 +23,6 @@ export const ADVICE_ALLOWLIST: AdviceAllowEntry[] = [
     reason: "Disclaimer: tells the user to consult a qualified adviser.",
     owner: "E29-T3",
   },
-  {
-    file: "apps/web/app/components/dialogs/addEditAccountsDialog/AddEditAccountsDialog.tsx",
-    patternId: "move-into-wrapper",
-    kind: "permanent",
-    reason: "Account-type description ('Invest, Stocks ISA & CFD sync'), not an instruction.",
-    owner: "E29-T3",
-  },
 
   {
     file: "packages/mcp/src/evals/graders.ts",
