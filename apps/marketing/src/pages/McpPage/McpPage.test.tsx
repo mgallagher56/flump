@@ -78,7 +78,7 @@ describe("Marketing McpPage (E16 PR 12)", () => {
     expect(screen.getByTestId("mcp-technical-details")).toBeDefined();
     expect(screen.getByText(/Institution names are replaced with generic labels/)).toBeDefined();
     expect(screen.getByText(/short for Model Context Protocol/)).toBeDefined();
-    expect(screen.getByText(/runs from source code, with no installer/)).toBeDefined();
+    expect(screen.getByText(/The steps to connect are in the Flump app/)).toBeDefined();
     expect(document.body.textContent).toContain("Flump MCP tools have no payment feature");
   });
 
