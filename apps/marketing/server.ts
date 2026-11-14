@@ -10,7 +10,13 @@ import { applyServerHardening } from "./server/hardening";
 import { buildHeadMeta, splitHoistables } from "./server/headMeta";
 import { registerOps } from "./server/ops";
 import { rateLimit } from "./server/rateLimit";
-import { buildCsp, genericServerError, injectThemeNonce, resolveAppUrl } from "./server/security";
+import {
+  buildCsp,
+  genericServerError,
+  injectThemeNonce,
+  resolveAppUrl,
+  setStaticCacheHeaders,
+} from "./server/security";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -64,6 +70,7 @@ async function createServer() {
         extensions: [],
         // Keep /.well-known/* reachable (sirv hides dotfiles by default).
         dotfiles: true,
+        setHeaders: setStaticCacheHeaders,
       }) as any,
     );
   }

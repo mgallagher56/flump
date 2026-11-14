@@ -24,6 +24,20 @@ import {
   titleStyle,
 } from "./ZeroPercentCliffCalculator.styles.js";
 
+const currency = (digits: number) =>
+  new Intl.NumberFormat("en-GB", {
+    style: "currency",
+    currency: "GBP",
+    minimumFractionDigits: digits,
+    maximumFractionDigits: digits,
+  });
+const wholeFormatter = currency(0);
+const penceFormatter = currency(2);
+/** £3,600 for whole pounds, £3,600.50 when there are pence. */
+const formatBalance = (n: number) =>
+  (Number.isInteger(n) ? wholeFormatter : penceFormatter).format(n);
+const wholePounds = (n: number) => `£${Math.round(n).toLocaleString("en-GB")}`;
+
 export interface ZeroPercentCliffCalculatorProps {
   onSaveAndContinue?: (payload: any) => void;
   ctaText?: string;
@@ -44,9 +58,8 @@ export const ZeroPercentCliffCalculator: FC<ZeroPercentCliffCalculatorProps> = (
     return calculateZeroPercentCliff(balance, months, revertApr);
   }, [balance, months, revertApr]);
 
-  const headline = `Pay £${Math.round(cliff.requiredMonthlyPayment).toLocaleString(
-    "en-GB",
-  )} a month to clear the balance before the 0% offer ends`;
+  const headline = `About ${wholePounds(cliff.requiredMonthlyPayment)} a month would clear the balance before the 0% offer ends`;
+  const minimumClears = cliff.balanceRemainingIfMinimum <= 0;
 
   const handleSave = () => {
     const payload = {
@@ -69,8 +82,8 @@ export const ZeroPercentCliffCalculator: FC<ZeroPercentCliffCalculatorProps> = (
         <div>
           <h2 className={titleStyle}>0% balance transfer promotional expiry calculator</h2>
           <p className={introStyle}>
-            Calculate the exact monthly repayment needed to clear your card before the 0%
-            promotional window expires.
+            Estimate the monthly payment that would clear your card before the 0% promotional rate
+            ends.
           </p>
         </div>
       </div>
@@ -87,7 +100,7 @@ export const ZeroPercentCliffCalculator: FC<ZeroPercentCliffCalculatorProps> = (
               min={100}
               type="number"
               value={balance}
-              onChange={(e) => setBalance(Number(e.target.value) || 0)}
+              onChange={(e) => setBalance(Math.max(0, Number(e.target.value) || 0))}
             />
           </div>
 
@@ -102,7 +115,9 @@ export const ZeroPercentCliffCalculator: FC<ZeroPercentCliffCalculatorProps> = (
               min={1}
               type="number"
               value={months}
-              onChange={(e) => setMonths(Number(e.target.value) || 1)}
+              onChange={(e) =>
+                setMonths(Math.min(48, Math.max(1, Math.round(Number(e.target.value)) || 1)))
+              }
             />
           </div>
 
@@ -116,7 +131,7 @@ export const ZeroPercentCliffCalculator: FC<ZeroPercentCliffCalculatorProps> = (
               step="0.1"
               type="number"
               value={revertApr}
-              onChange={(e) => setRevertApr(Number(e.target.value) || 0)}
+              onChange={(e) => setRevertApr(Math.max(0, Number(e.target.value) || 0))}
             />
           </div>
         </div>
@@ -126,24 +141,30 @@ export const ZeroPercentCliffCalculator: FC<ZeroPercentCliffCalculatorProps> = (
           <div>
             <span className={badgeRecipe({ tone: "positive" })}>Target monthly payment</span>
             <div className={figureRecipe({ tone: "positive" })}>
-              £{Math.round(cliff.requiredMonthlyPayment).toLocaleString("en-GB")} / month
+              {wholePounds(cliff.requiredMonthlyPayment)} / month
             </div>
             <p className={noteStyle}>
-              Clears the entire £{balance.toLocaleString("en-GB")} balance across {months} months
-              without paying £1 in interest.
+              Paying this each month would clear the {formatBalance(balance)} balance in {months}{" "}
+              {months === 1 ? "month" : "months"} with no interest, as long as the 0% rate applies
+              and no fees are added.
             </p>
           </div>
 
           <div className={calloutRecipe({ tone: "danger" })}>
             <div className={alertHeadingStyle}>
               <FaExclamationTriangle aria-hidden="true" size={16} />
-              <strong className={calloutTitleRecipe({ tone: "danger" })}>Revert APR alert</strong>
+              <strong className={calloutTitleRecipe({ tone: "danger" })}>
+                If you pay only the minimum
+              </strong>
             </div>
             <p className={calloutBodyRecipe({ tone: "danger" })}>
-              If you pay only minimums, you will reach the {revertApr}% revert date with ~£
-              {Math.round(cliff.balanceRemainingIfMinimum).toLocaleString("en-GB")} unpaid, costing
-              £{Math.round(cliff.penaltyInterestFirstYearIfUnpaid).toLocaleString("en-GB")} in
-              first-year interest.
+              {minimumClears
+                ? "A minimum of 2% of today's balance (at least £25) a month would clear it before the 0% rate ends."
+                : `A minimum of 2% of today's balance (at least £25) a month would leave about ${wholePounds(
+                    cliff.balanceRemainingIfMinimum,
+                  )} when the 0% rate ends. At ${revertApr.toLocaleString("en-GB")}% that is about ${wholePounds(
+                    cliff.penaltyInterestFirstYearIfUnpaid,
+                  )} of interest over the next year if nothing more were paid.`}
             </p>
           </div>
 

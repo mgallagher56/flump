@@ -4,6 +4,8 @@ import { HelmetProvider } from "react-helmet-async";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { signupCta } from "../../utils/site";
+import { CANONICAL_TOOL_SLUGS } from "../../utils/toolSlugs";
+import { TOOLS_CATALOG } from "../ToolsIndexPage";
 import { PricingPage } from "./PricingPage";
 
 const renderPage = () =>
@@ -67,8 +69,10 @@ describe("PricingPage", () => {
   it("claims only shipped features", () => {
     const { container } = renderPage();
     expect(container.textContent).not.toMatch(/CSV|auto-categorisation|FCA|real-time/i);
-    expect(screen.getByText("Section 24 landlord tax calculator")).toBeDefined();
-    expect(screen.getByText("UK marginal rates, thresholds and the £100k taper")).toBeDefined();
+    // The free list is the tools catalogue: every calculator, none missing or renamed.
+    for (const tool of TOOLS_CATALOG)
+      expect(screen.getAllByText(tool.title).length).toBeGreaterThan(0);
+    expect(TOOLS_CATALOG).toHaveLength(CANONICAL_TOOL_SLUGS.length);
     expect(container.textContent).not.toMatch(/30-year|£0|per month, free/i);
   });
 

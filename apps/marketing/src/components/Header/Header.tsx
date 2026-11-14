@@ -18,6 +18,7 @@ import { type FC, useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useThemeContext } from "../../context/ThemeContext";
 import { signupCta } from "../../utils/site";
+import { CANONICAL_TOOL_SLUGS } from "../../utils/toolSlugs";
 import { getAppUrl } from "../../utils/url";
 import {
   drawerCta,
@@ -39,6 +40,9 @@ interface MarketingNavItem extends AppNavItem {
 }
 
 const DRAWER_ID = "mobile-nav-drawer";
+
+/** `id` of every page's `<main>`, target of the skip link. */
+export const MAIN_ID = "main";
 
 const renderHomeLogoLink = (props: HomeLogoLinkProps) => <Link to="/" {...props} />;
 
@@ -65,8 +69,13 @@ export const Header: FC = () => {
 
   const items = useMemo<MarketingNavItem[]>(
     () => [
-      { key: "tools", label: "Calculators", href: "/tools", hint: "6 tools" },
-      { key: "pricing", label: "Pricing", href: "/pricing", hint: "Plans and pricing" },
+      {
+        key: "tools",
+        label: "Calculators",
+        href: "/tools",
+        hint: `${CANONICAL_TOOL_SLUGS.length} tools`,
+      },
+      { key: "pricing", label: "Pricing", href: "/pricing", hint: "Free during the beta" },
       { key: "security", label: "Security", href: "/security", hint: "Security and privacy" },
       { key: "mcp", label: "AI & MCP", href: "/mcp", hint: "Claude & Cursor" },
       {
@@ -107,6 +116,9 @@ export const Header: FC = () => {
 
   return (
     <>
+      <VisuallyHidden as="a" focusable href={`#${MAIN_ID}`}>
+        Skip to main content
+      </VisuallyHidden>
       <TopBar
         actions={
           <>
@@ -123,7 +135,7 @@ export const Header: FC = () => {
                   <Button asChild className={headerButton()} size="sm" variant="ghost">
                     <a href={`${appUrl}/login`}>
                       <span className={fullLabel()}>Sign in</span>
-                      <span className={shortLabel()}>Log in</span>
+                      <span className={shortLabel()}>Sign in</span>
                     </a>
                   </Button>
                   <Button asChild className={headerButton()} size="sm" variant="primary">

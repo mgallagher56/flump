@@ -29,8 +29,11 @@ const containerStyle = css({
 });
 
 export const ToolPage: FC = () => {
-  const { slug } = useParams<{ slug: string }>();
+  const { slug: rawSlug } = useParams<{ slug: string }>();
   const cta = signupCta();
+  // Lower-cased like the router, the HTTP status and the canonical, so /tools/UK-… is the page,
+  // not a "Page not found" served with 200.
+  const slug = rawSlug?.toLowerCase();
   const normalizedSlug = slug ? (TOOL_SLUG_ALIASES[slug] ?? slug) : slug;
 
   const toolMeta = TOOLS_CATALOG.find((t) => t.slug === normalizedSlug);
@@ -44,6 +47,7 @@ export const ToolPage: FC = () => {
     : `${cta.label} →`;
   // Only hand figures to the web app when sign-up is open; an invite request has nowhere to restore them.
   const persistSeed = cta.external;
+  const hasOwnNotice = normalizedSlug === "uk-pay-rise-take-home-calculator";
 
   const handleContinue = () => {
     if (typeof window !== "undefined") {
@@ -60,7 +64,7 @@ export const ToolPage: FC = () => {
 
       <Header />
 
-      <main style={{ flex: 1 }}>
+      <main style={{ flex: 1 }} id="main" tabIndex={-1}>
         <section className={containerStyle}>
           {/* Breadcrumb / Back Link */}
           <div style={{ marginBottom: "20px" }}>
@@ -80,9 +84,12 @@ export const ToolPage: FC = () => {
             </Link>
           </div>
 
-          <div style={{ marginBottom: "24px" }}>
-            <ProjectionNotice />
-          </div>
+          {/* The pay-rise explorer carries its own "Guidance, not advice" notice. */}
+          {!hasOwnNotice && (
+            <div style={{ marginBottom: "24px" }}>
+              <ProjectionNotice />
+            </div>
+          )}
 
           <div style={{ marginBottom: "32px" }}>
             <span

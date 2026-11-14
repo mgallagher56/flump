@@ -24,4 +24,19 @@ describe("Section24Calculator", () => {
     fireEvent.click(screen.getByRole("button", { name: /Track your properties/ }));
     expect(onSave).toHaveBeenCalledTimes(1);
   });
+
+  it("labels the rate against taxable profit, matching the engine (£4,800 of £16,000 = 30%)", () => {
+    render(<Section24Calculator />);
+    const text = screen.getByTestId("section-24-tool").textContent ?? "";
+    expect(text).toContain("Tax as a share of taxable profit");
+    expect(text).toContain("30.0%");
+    expect(text).toContain("Of £16,000 taxable rental profit");
+    expect(text).not.toMatch(/real cash profit/);
+  });
+
+  it("claims no automation or HMRC filing", () => {
+    const { container } = render(<Section24Calculator />);
+    expect(container.textContent).not.toMatch(/automat|HMRC tax due|HMRC landlord/i);
+    expect(container.textContent).toContain("Flump does not file your tax return.");
+  });
 });

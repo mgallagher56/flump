@@ -256,4 +256,36 @@ describe("Table Primitive", () => {
     );
     expect((container.firstElementChild as HTMLElement).className).not.toContain("bd-w_1px");
   });
+
+  it("makes the wrapper a focusable, labelled region only when the table overflows sideways", () => {
+    const widths = vi.spyOn(HTMLElement.prototype, "scrollWidth", "get").mockReturnValue(800);
+    const client = vi.spyOn(HTMLElement.prototype, "clientWidth", "get").mockReturnValue(300);
+    const { container, unmount } = render(
+      <Table caption="Estimated figures">
+        <TBody>
+          <Tr>
+            <Td>£1</Td>
+          </Tr>
+        </TBody>
+      </Table>,
+    );
+    const wrapper = container.firstElementChild as HTMLElement;
+    expect(wrapper.getAttribute("tabindex")).toBe("0");
+    expect(wrapper.getAttribute("role")).toBe("region");
+    expect(wrapper.getAttribute("aria-label")).toBe("Estimated figures");
+    unmount();
+    widths.mockReturnValue(300);
+    const { container: fits } = render(
+      <Table caption="Estimated figures">
+        <TBody>
+          <Tr>
+            <Td>£1</Td>
+          </Tr>
+        </TBody>
+      </Table>,
+    );
+    expect((fits.firstElementChild as HTMLElement).hasAttribute("tabindex")).toBe(false);
+    widths.mockRestore();
+    client.mockRestore();
+  });
 });

@@ -7,6 +7,7 @@ import {
   genericServerError,
   injectThemeNonce,
   resolveAppUrl,
+  setStaticCacheHeaders,
   THEME_MARKER,
 } from "./security";
 
@@ -96,5 +97,31 @@ describe("injectThemeNonce", () => {
 
   it("emits a plain script tag with no nonce", () => {
     expect(injectThemeNonce(index, "")).toContain("<script>");
+  });
+});
+
+describe("setStaticCacheHeaders", () => {
+  const headersFor = (pathname: string) => {
+    const set: Record<string, string> = {};
+    setStaticCacheHeaders(
+      {
+        setHeader: (k, v) => {
+          set[k] = v;
+        },
+      },
+      pathname,
+    );
+    return set;
+  };
+
+  it("caches hashed Vite assets for a year", () => {
+    expect(headersFor("/assets/index-BQEXo7Me.js")["Cache-Control"]).toBe(
+      "public, max-age=31536000, immutable",
+    );
+  });
+
+  it("leaves unhashed files to the default", () => {
+    expect(headersFor("/favicon.svg")).toEqual({});
+    expect(headersFor("/.well-known/security.txt")).toEqual({});
   });
 });

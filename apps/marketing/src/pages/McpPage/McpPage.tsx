@@ -122,7 +122,7 @@ export const McpPage: FC = () => {
 
       <Header />
 
-      <main className={mainContent()}>
+      <main className={mainContent()} id="main" tabIndex={-1}>
         {/* Hero Section */}
         <section className={heroSection()}>
           <div className={`${heroInner()} ${stack({ gap: "6", align: "center" })}`}>
@@ -167,8 +167,9 @@ export const McpPage: FC = () => {
               Deterministic UK calculations and tools that read your saved data
             </h2>
             <p className={sectionSubheading()}>
-              General-purpose language models can get UK tax bands, NI tapering and amortisation
-              maths wrong. Flump MCP tools calculate these with a deterministic engine instead.
+              General-purpose language models can get UK tax bands, the Personal Allowance taper and
+              amortisation maths wrong. Flump MCP tools calculate these with a deterministic engine
+              instead.
             </p>
           </div>
 

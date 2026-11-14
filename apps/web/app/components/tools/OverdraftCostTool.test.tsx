@@ -7,8 +7,8 @@ describe("<OverdraftCostTool />", () => {
   test("renders overdraft cost calculator with inputs and results", () => {
     const { getByText, getByDisplayValue } = customRender(<OverdraftCostTool />);
 
-    expect(getByText(/Overdraft interest cost calculator/i)).toBeDefined();
-    expect(getByText(/Annual bank interest cost/i)).toBeDefined();
+    expect(getByText(/Arranged overdraft cost calculator/i)).toBeDefined();
+    expect(getByText(/Estimated interest a year/i)).toBeDefined();
 
     // Verify inputs can be updated
     const balanceInput = getByDisplayValue("1200");

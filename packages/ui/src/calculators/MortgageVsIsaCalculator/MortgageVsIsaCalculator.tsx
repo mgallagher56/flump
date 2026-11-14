@@ -1,7 +1,7 @@
-import { persistOnboardingSeed } from "@flump/finance-engine";
+import { calculateMortgageVsIsa, persistOnboardingSeed } from "@flump/finance-engine";
 import type { FC } from "react";
 import { useMemo, useState } from "react";
-import { FiArrowRight, FiHome, FiTrendingUp } from "react-icons/fi";
+import { FiHome, FiTrendingUp } from "react-icons/fi";
 import { Button } from "../../primitives/Button";
 import { LiveRegion } from "../../primitives/LiveRegion";
 import {
@@ -10,7 +10,6 @@ import {
   badgeStyle,
   cardStyle,
   ctaCopyStyle,
-  ctaIconStyle,
   ctaNoteStyle,
   ctaRowStyle,
   ctaTitleStyle,
@@ -57,68 +56,27 @@ export const MortgageVsIsaCalculator: FC<MortgageVsIsaCalculatorProps> = ({
   const [monthlyContribution, setMonthlyContribution] = useState<number>(350);
   const [isaExpectedReturn, setIsaExpectedReturn] = useState<number>(7.0);
 
+  // All maths is the engine's (calculateMortgageVsIsa); the component only formats it.
   const simulation = useMemo(() => {
-    const months = remainingYears * 12;
-    const monthlyRate = interestRate / 100 / 12;
-    const monthlyIsaRate = isaExpectedReturn / 100 / 12;
-
-    // Standard mortgage monthly payment
-    const standardPayment =
-      monthlyRate > 0
-        ? (mortgageBalance * monthlyRate * (1 + monthlyRate) ** months) /
-          ((1 + monthlyRate) ** months - 1)
-        : mortgageBalance / months;
-
-    // 1. Overpayment amortization
-    let bal = mortgageBalance;
-    let totalInterestOverpay = 0;
-    let monthsToZero = 0;
-    for (let m = 1; m <= months; m++) {
-      if (bal <= 0) break;
-      const interest = bal * monthlyRate;
-      totalInterestOverpay += interest;
-      const principal = Math.min(bal, standardPayment + monthlyContribution - interest);
-      bal -= principal;
-      monthsToZero = m;
-    }
-
-    // Standard total interest without overpayment
-    let standardBal = mortgageBalance;
-    let totalStandardInterest = 0;
-    for (let m = 1; m <= months; m++) {
-      if (standardBal <= 0) break;
-      const interest = standardBal * monthlyRate;
-      totalStandardInterest += interest;
-      const principal = Math.min(standardBal, standardPayment - interest);
-      standardBal -= principal;
-    }
-
-    const interestSaved = Math.max(0, totalStandardInterest - totalInterestOverpay);
-    const monthsShaved = Math.max(0, months - monthsToZero);
-    const yearsShaved = monthsShaved / 12;
-
-    // 2. ISA compound investment pot
-    let isaPot = 0;
-    for (let m = 1; m <= months; m++) {
-      isaPot = (isaPot + monthlyContribution) * (1 + monthlyIsaRate);
-    }
-    const totalIsaContributed = monthlyContribution * months;
-    const isaGrowth = Math.max(0, isaPot - totalIsaContributed);
-
-    // Net advantage of ISA over mortgage interest saved
-    const isaNetAdvantage = isaPot - (totalIsaContributed + interestSaved);
-
+    const res = calculateMortgageVsIsa(
+      Math.max(0, mortgageBalance),
+      Math.max(0, interestRate),
+      Math.max(1, remainingYears),
+      Math.max(0, monthlyContribution),
+      Math.max(0, isaExpectedReturn),
+    );
     return {
-      standardPayment,
-      interestSaved,
-      yearsShaved,
-      isaPot,
-      isaGrowth,
-      isaNetAdvantage,
+      interestSaved: res.interestSaved,
+      yearsShaved: Number(res.yearsShaved),
+      isaPot: res.isaAccumulatedValue,
+      isaGrowth: res.isaGrowth,
+      isaNetAdvantage: res.netWealthDelta,
     };
   }, [mortgageBalance, interestRate, remainingYears, monthlyContribution, isaExpectedReturn]);
 
-  const headline = `Overpaying saves £${Math.round(simulation.interestSaved).toLocaleString(
+  const headline = `Overpaying would save an estimated £${Math.round(
+    simulation.interestSaved,
+  ).toLocaleString(
     "en-GB",
   )} interest; the ISA would grow to £${Math.round(simulation.isaPot).toLocaleString("en-GB")}`;
 
@@ -142,12 +100,13 @@ export const MortgageVsIsaCalculator: FC<MortgageVsIsaCalculatorProps> = ({
     <div className={cardStyle} data-testid="mortgage-vs-isa-tool">
       <div className={headerStyle}>
         <div className={badgeRowStyle}>
-          <span className={badgeStyle({ tone: "warning" })}>UK Mortgage & Wealth Engine</span>
+          <span className={badgeStyle({ tone: "warning" })}>Estimate</span>
         </div>
-        <h2 className={titleStyle}>Mortgage overpayment vs stocks and shares ISA comparator</h2>
+        <h2 className={titleStyle}>Mortgage overpayment vs Stocks and Shares ISA</h2>
         <p className={subtitleStyle}>
-          Mathematically compare the guaranteed interest savings of mortgage overpayments against
-          the compound returns of a tax-sheltered UK Stocks & Shares ISA.
+          Compare the interest a monthly overpayment would save at your mortgage rate with what the
+          same amount might grow to in a Stocks and Shares ISA at a return you choose. ISA returns
+          are not guaranteed and can be negative.
         </p>
       </div>
 
@@ -166,7 +125,7 @@ export const MortgageVsIsaCalculator: FC<MortgageVsIsaCalculatorProps> = ({
                 min={0}
                 step={5000}
                 value={mortgageBalance}
-                onChange={(e) => setMortgageBalance(Number(e.target.value) || 0)}
+                onChange={(e) => setMortgageBalance(Math.max(0, Number(e.target.value) || 0))}
               />
             </div>
           </div>
@@ -197,7 +156,7 @@ export const MortgageVsIsaCalculator: FC<MortgageVsIsaCalculatorProps> = ({
                 max={20}
                 step={0.1}
                 value={interestRate}
-                onChange={(e) => setInterestRate(Number(e.target.value) || 0)}
+                onChange={(e) => setInterestRate(Math.max(0, Number(e.target.value) || 0))}
               />
               <span className={adornmentStyle({ side: "end" })}>%</span>
             </div>
@@ -217,8 +176,44 @@ export const MortgageVsIsaCalculator: FC<MortgageVsIsaCalculatorProps> = ({
 
         <div className={inputGroupStyle}>
           <div className={inputRowStyle}>
+            <label className={labelStyle} htmlFor="mortgage-term">
+              Remaining mortgage term
+            </label>
+            <div className={inputWrapStyle}>
+              <input
+                className={numberInputStyle({ tone: "warning", width: "sm", adornment: "end" })}
+                id="mortgage-term"
+                type="number"
+                min={1}
+                max={40}
+                step={1}
+                value={remainingYears}
+                onChange={(e) =>
+                  setRemainingYears(
+                    Math.min(40, Math.max(1, Math.round(Number(e.target.value)) || 1)),
+                  )
+                }
+              />
+              <span className={unitStyle}>years</span>
+            </div>
+          </div>
+          <input
+            className={sliderStyle}
+            id="mortgage-term-slider"
+            aria-label="Remaining mortgage term slider"
+            max={35}
+            min={5}
+            onChange={(e) => setRemainingYears(Number(e.target.value))}
+            step={1}
+            type="range"
+            value={remainingYears}
+          />
+        </div>
+
+        <div className={inputGroupStyle}>
+          <div className={inputRowStyle}>
             <label className={labelStyle} htmlFor="monthly-extra">
-              Monthly extra cash
+              Monthly overpayment
             </label>
             <div className={inputWrapStyle}>
               <span className={adornmentStyle({ side: "start" })}>£</span>
@@ -229,7 +224,7 @@ export const MortgageVsIsaCalculator: FC<MortgageVsIsaCalculatorProps> = ({
                 min={0}
                 step={25}
                 value={monthlyContribution}
-                onChange={(e) => setMonthlyContribution(Number(e.target.value) || 0)}
+                onChange={(e) => setMonthlyContribution(Math.max(0, Number(e.target.value) || 0))}
               />
               <span className={unitStyle}>/mo</span>
             </div>
@@ -237,7 +232,7 @@ export const MortgageVsIsaCalculator: FC<MortgageVsIsaCalculatorProps> = ({
           <input
             className={sliderStyle}
             id="monthly-extra-slider"
-            aria-label="Monthly extra cash slider"
+            aria-label="Monthly overpayment slider"
             max={1500}
             min={50}
             onChange={(e) => setMonthlyContribution(Number(e.target.value))}
@@ -261,7 +256,7 @@ export const MortgageVsIsaCalculator: FC<MortgageVsIsaCalculatorProps> = ({
                 max={25}
                 step={0.25}
                 value={isaExpectedReturn}
-                onChange={(e) => setIsaExpectedReturn(Number(e.target.value) || 0)}
+                onChange={(e) => setIsaExpectedReturn(Math.max(0, Number(e.target.value) || 0))}
               />
               <span className={adornmentStyle({ side: "end" })}>%</span>
             </div>
@@ -286,13 +281,15 @@ export const MortgageVsIsaCalculator: FC<MortgageVsIsaCalculatorProps> = ({
         <div className={metricCard}>
           <div className={metricHeaderStyle}>
             <FiHome aria-hidden="true" className={metricIconStyle({ tone: "warning" })} size={14} />
-            <span className={metricLabelStyle}>Mortgage overpay</span>
+            <span className={metricLabelStyle}>Mortgage interest saved</span>
           </div>
           <span className={metricValueStyle({ tone: "warning" })}>
-            Save £{Math.round(simulation.interestSaved).toLocaleString("en-GB")}
+            £{Math.round(simulation.interestSaved).toLocaleString("en-GB")}
           </span>
           <span className={metricNoteStyle}>
-            Shaves ~{oneDecimalFormatter.format(simulation.yearsShaved)} years off loan term
+            Estimate. The mortgage would end about{" "}
+            {oneDecimalFormatter.format(simulation.yearsShaved)} years sooner, if the rate stays the
+            same
           </span>
         </div>
 
@@ -303,47 +300,48 @@ export const MortgageVsIsaCalculator: FC<MortgageVsIsaCalculatorProps> = ({
               className={metricIconStyle({ tone: "positive" })}
               size={14}
             />
-            <span className={metricLabelStyle}>Stocks and shares ISA pot</span>
+            <span className={metricLabelStyle}>Stocks and Shares ISA value</span>
           </div>
           <span className={metricValueStyle({ tone: "positive" })}>
             £{Math.round(simulation.isaPot).toLocaleString("en-GB")}
           </span>
           <span className={metricNoteStyle}>
-            Includes £{Math.round(simulation.isaGrowth).toLocaleString("en-GB")} in tax-free returns
+            Estimate, including £{Math.round(simulation.isaGrowth).toLocaleString("en-GB")} of
+            growth at the return you chose
           </span>
         </div>
 
         <div className={metricCard}>
-          <span className={metricLabelStyle}>ISA net wealth spread</span>
-          <span
-            className={metricValueStyle({
-              tone: simulation.isaNetAdvantage >= 0 ? "positive" : "danger",
-            })}
-          >
-            {simulation.isaNetAdvantage >= 0 ? "+" : ""}£
-            {Math.round(simulation.isaNetAdvantage).toLocaleString("en-GB")}
+          <span className={metricLabelStyle}>Difference between the two</span>
+          <span className={metricValueStyle({ tone: "neutral" })}>
+            {simulation.isaNetAdvantage >= 0 ? "+" : "−"}£
+            {Math.abs(Math.round(simulation.isaNetAdvantage)).toLocaleString("en-GB")}
           </span>
           <span className={metricNoteStyle}>
             {simulation.isaNetAdvantage >= 0
-              ? "Expected net wealth gain from investing"
-              : "Overpaying mortgage yields higher return"}
+              ? "ISA growth above the interest saved, in this estimate"
+              : "Interest saved above the ISA growth, in this estimate"}
           </span>
         </div>
       </div>
+      <p className={metricNoteStyle}>
+        Both are compared over the remaining term you set. The estimate does not count investing the
+        mortgage payment once the mortgage is cleared early, charges, or early repayment limits on
+        your mortgage.
+      </p>
 
       {/* CTA */}
       <div className={ctaRowStyle}>
         <div className={ctaCopyStyle}>
-          <span className={ctaTitleStyle}>
-            Ready to track your mortgage deal expiry & live ISA yields?
-          </span>
+          <span className={ctaTitleStyle}>Keep your mortgage alongside the rest of your money</span>
           <p className={ctaNoteStyle}>
-            Flump syncs your live balance and monitors fixed-rate renewal dates automatically.
+            In Flump you enter your mortgage balance and fixed-rate end date yourself and see them
+            next to your savings, debts and pension.
           </p>
         </div>
 
         <Button onClick={handleSave} size="lg">
-          {ctaText} <FiArrowRight aria-hidden="true" className={ctaIconStyle} />
+          {ctaText}
         </Button>
       </div>
     </div>

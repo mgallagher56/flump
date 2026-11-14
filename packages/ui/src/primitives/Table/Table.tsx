@@ -8,6 +8,7 @@ import {
   useContext,
   useEffect,
   useRef,
+  useState,
 } from "react";
 import { cx } from "../../../styled-system/css";
 import { VisuallyHidden } from "../VisuallyHidden";
@@ -63,6 +64,25 @@ export interface TableProps extends HTMLAttributes<HTMLTableElement> {
   stacked?: boolean;
 }
 
+/**
+ * True while the element is wider than its box (the table scrolls sideways). Measured after
+ * mount and on resize, so server render and first paint stay unchanged.
+ */
+const useOverflowsX = (ref: { current: HTMLElement | null }): boolean => {
+  const [overflows, setOverflows] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const check = () => setOverflows(el.scrollWidth > el.clientWidth + 1);
+    check();
+    if (typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(check);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [ref]);
+  return overflows;
+};
+
 export const Table: FC<TableProps> = ({
   children,
   className,
@@ -72,32 +92,36 @@ export const Table: FC<TableProps> = ({
   stickyHeader = false,
   stacked = false,
   ...props
-}) => (
-  <TableContext.Provider value={{ stacked, appearance }}>
-    <div
-      {...(stickyHeader
-        ? // A scrollable region must be reachable by keyboard.
-          { role: "region", "aria-label": caption ?? "Table", tabIndex: 0 }
-        : {})}
-      className={tableWrapper({ appearance, sticky: stickyHeader })}
-    >
-      <table
-        className={cx(tableElement({ appearance, stacked, sticky: stickyHeader }), className)}
-        role={stacked ? "table" : undefined}
-        {...props}
+}) => {
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const overflowsX = useOverflowsX(wrapperRef);
+  // A scrollable region must be reachable by keyboard (WCAG 2.1.1, axe scrollable-region-focusable).
+  const scrollable = stickyHeader || overflowsX;
+  return (
+    <TableContext.Provider value={{ stacked, appearance }}>
+      <div
+        ref={wrapperRef}
+        {...(scrollable ? { role: "region", "aria-label": caption ?? "Table", tabIndex: 0 } : {})}
+        className={tableWrapper({ appearance, sticky: stickyHeader })}
       >
-        {caption ? (
-          showCaption ? (
-            <caption className={captionRecipe()}>{caption}</caption>
-          ) : (
-            <VisuallyHidden as="caption">{caption}</VisuallyHidden>
-          )
-        ) : null}
-        {children}
-      </table>
-    </div>
-  </TableContext.Provider>
-);
+        <table
+          className={cx(tableElement({ appearance, stacked, sticky: stickyHeader }), className)}
+          role={stacked ? "table" : undefined}
+          {...props}
+        >
+          {caption ? (
+            showCaption ? (
+              <caption className={captionRecipe()}>{caption}</caption>
+            ) : (
+              <VisuallyHidden as="caption">{caption}</VisuallyHidden>
+            )
+          ) : null}
+          {children}
+        </table>
+      </div>
+    </TableContext.Provider>
+  );
+};
 
 export const THead: FC<HTMLAttributes<HTMLTableSectionElement>> = ({
   children,

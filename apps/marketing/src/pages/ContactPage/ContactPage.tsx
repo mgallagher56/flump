@@ -41,7 +41,7 @@ export const ContactPage: FC = () => (
 
     <Header />
 
-    <main className={mainStyle()}>
+    <main className={mainStyle()} id="main" tabIndex={-1}>
       <div className={containerStyle()}>
         <span className={eyebrowStyle()}>Contact</span>
         <h1 className={headingStyle()}>Contact Flump</h1>

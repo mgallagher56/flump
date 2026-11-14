@@ -6,6 +6,7 @@ import { Header } from "../../components/Header";
 import { PageMeta } from "../../components/PageMeta";
 import { PRICING } from "../../utils/pricing";
 import { signupCta } from "../../utils/site";
+import { TOOLS_CATALOG } from "../ToolsIndexPage";
 import {
   cardGridStyle,
   cardStyle,
@@ -60,15 +61,8 @@ const featureIcon = (kind: "check" | "clock", className: string) => (
   </svg>
 );
 
-const FREE_FEATURES = [
-  "Debt snowball vs avalanche payoff",
-  "0% balance transfer payoff calculator",
-  "Arranged overdraft cost and payoff modeller",
-  "Mortgage overpayment vs Stocks and Shares ISA",
-  "Student loan overpayment comparison",
-  "UK marginal rates, thresholds and the £100k taper",
-  "Section 24 landlord tax calculator",
-];
+/** Every calculator on the tools page, in the same order and with the same names. */
+const FREE_FEATURES = TOOLS_CATALOG.map((tool) => tool.title);
 
 const BETA_STATEMENT =
   "Flump is a free, invite-only beta. Nothing is charged. A paid plan may come later and its price is not set.";
@@ -89,7 +83,7 @@ export const PricingPage: FC = () => {
 
       <Header />
 
-      <main className={mainStyle}>
+      <main className={mainStyle} id="main" tabIndex={-1}>
         <section className={containerStyle}>
           <div className={headerBlockStyle}>
             <span className={eyebrowStyle}>Pricing</span>

@@ -21,7 +21,7 @@ describe("UI Calculators", () => {
       expect(screen.getByText(/Avalanche strategy/i)).toBeDefined();
       expect(screen.getByText(/Snowball strategy/i)).toBeDefined();
 
-      const slider = screen.getByRole("slider", { name: /Monthly overpayment surplus slider/i });
+      const slider = screen.getByRole("slider", { name: /Extra each month slider/i });
       fireEvent.change(slider, { target: { value: "150" } });
       expect(screen.getAllByDisplayValue("150").length).toBeGreaterThan(0);
 
@@ -60,9 +60,9 @@ describe("UI Calculators", () => {
       render(<MortgageVsIsaCalculator ctaText="Save and continue" onSaveAndContinue={onSave} />);
 
       expect(
-        screen.getByText(/Mortgage overpayment vs stocks and shares ISA comparator/i),
+        screen.getByRole("heading", { name: /Mortgage overpayment vs Stocks and Shares ISA/i }),
       ).toBeDefined();
-      expect(screen.getByText(/UK Mortgage & Wealth Engine/i)).toBeDefined();
+      expect(screen.getByText(/ISA returns are not guaranteed/i)).toBeDefined();
 
       const slider = screen.getByLabelText("Mortgage balance slider");
       fireEvent.change(slider, { target: { value: "300000" } });
@@ -79,8 +79,8 @@ describe("UI Calculators", () => {
       const onSave = vi.fn();
       render(<OverdraftCostCalculator ctaText="Save and continue" onSaveAndContinue={onSave} />);
 
-      expect(screen.getByText(/Overdraft interest cost calculator/i)).toBeDefined();
-      expect(screen.getByText(/Annual bank interest cost/i)).toBeDefined();
+      expect(screen.getByText(/Arranged overdraft cost calculator/i)).toBeDefined();
+      expect(screen.getByText(/Estimated interest a year/i)).toBeDefined();
 
       const input = screen.getByLabelText("Average overdraft balance used (£)");
       fireEvent.change(input, { target: { value: "1500" } });
@@ -98,7 +98,7 @@ describe("UI Calculators", () => {
       render(<Section24Calculator ctaText="Save and continue" onSaveAndContinue={onSave} />);
 
       expect(screen.getByText(/Section 24 buy-to-let mortgage relief calculator/i)).toBeDefined();
-      expect(screen.getByText(/HMRC Landlord Tax Rules/i)).toBeDefined();
+      expect(screen.getByText(/Estimated Income Tax on rental profit/i)).toBeDefined();
 
       const slider = screen.getByLabelText("Gross annual rental income slider");
       fireEvent.change(slider, { target: { value: "25000" } });
@@ -173,7 +173,7 @@ describe("UI Calculators", () => {
 
       expect(screen.getByText(/0% balance transfer promotional expiry calculator/i)).toBeDefined();
       expect(screen.getByText(/Target monthly payment/i)).toBeDefined();
-      expect(screen.getByText(/Revert APR alert/i)).toBeDefined();
+      expect(screen.getByText(/If you pay only the minimum/i)).toBeDefined();
 
       const input = screen.getByLabelText("Current 0% card balance (£)");
       fireEvent.change(input, { target: { value: "3500" } });

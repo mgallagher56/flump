@@ -150,20 +150,20 @@ const ENTRIES: Record<ToolCatalogEntry["slug"], Omit<ToolCatalogEntry, "slug">> 
     badge: "Credit cards",
   },
   "overdraft-cost-and-payoff-calculator": {
-    title: "Arranged overdraft cost and payoff modeller",
-    desc: "Model what an arranged UK overdraft costs over time and how regular payments change the time taken to clear the balance.",
+    title: "Arranged overdraft cost calculator",
+    desc: "Estimate what an arranged UK overdraft costs in interest over a year, and roughly how much that is each month, at the EAR your bank charges.",
     icon: <FiDollarSign size={22} aria-hidden="true" />,
     badge: "Banking fees",
   },
   "mortgage-overpayment-vs-isa-calculator": {
     title: "Mortgage overpayment vs Stocks and Shares ISA",
-    desc: "Compare the interest saved by paying down your UK mortgage with possible equity market growth over 5 to 25 years. Guidance, not advice.",
+    desc: "Compare the interest a monthly overpayment would save on your UK mortgage with what the same money might grow to in a Stocks and Shares ISA over the remaining term you set.",
     icon: <FiTrendingUp size={22} aria-hidden="true" />,
     badge: "Mortgages and wealth",
   },
   "uk-student-loan-overpay-or-invest-calculator": {
-    title: "Student loan (Plan 2 / Plan 5) overpayment comparison",
-    desc: "Compare a UK student loan treated as a graduate tax with paying it down, using salary growth assumptions.",
+    title: "Student loan repayment and write-off estimate",
+    desc: "Estimate the yearly repayment on each UK student loan plan from your salary, and whether a rough projection clears the balance before it is written off.",
     icon: <FiBookOpen size={22} aria-hidden="true" />,
     badge: "Student finance",
   },
@@ -181,7 +181,7 @@ const ENTRIES: Record<ToolCatalogEntry["slug"], Omit<ToolCatalogEntry, "slug">> 
   },
   "section-24-landlord-tax-calculator": {
     title: "Section 24 buy-to-let landlord tax calculator",
-    desc: "Model how mortgage interest relief restriction impacts higher-rate landlords and see how pension contributions change the taxable bands.",
+    desc: "Estimate the Income Tax on rental profit under the Section 24 finance cost restriction, with the 20% tax credit for mortgage interest, alongside your other income.",
     icon: <FiHome size={22} aria-hidden="true" />,
     badge: "Property tax",
   },
@@ -203,7 +203,7 @@ export const ToolsIndexPage: FC = () => {
 
       <Header />
 
-      <main style={{ flex: 1 }}>
+      <main style={{ flex: 1 }} id="main" tabIndex={-1}>
         <section className={containerStyle}>
           <div className={headerBlockStyle}>
             <span className={eyebrowStyle}>Public tools directory</span>

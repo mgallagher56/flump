@@ -45,6 +45,19 @@ export function buildCsp({ isProd, nonce }: CspOptions): string {
   ].join("; ");
 }
 
+/**
+ * sirv `setHeaders`: Vite's `/assets/*` files have a content hash in the name, so they can be
+ * cached for a year. Everything else (favicon, illustrations, /.well-known) keeps sirv's default.
+ */
+export function setStaticCacheHeaders(
+  res: { setHeader: (name: string, value: string) => void },
+  pathname: string,
+): void {
+  if (pathname.startsWith("/assets/")) {
+    res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+  }
+}
+
 /** Logs the error server-side and returns the only body a client may see. */
 export function genericServerError(
   err: unknown,

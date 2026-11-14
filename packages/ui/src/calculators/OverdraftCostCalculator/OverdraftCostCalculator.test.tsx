@@ -33,6 +33,31 @@ describe("OverdraftCostCalculator", () => {
     fireEvent.change(screen.getByLabelText("Average overdraft balance used (£)"), {
       target: { value: "30000" },
     });
-    expect(screen.getByText(/~£997\.50\/month/)).toBeDefined();
+    expect(screen.getByText(/About £997\.50 a month/)).toBeDefined();
+  });
+
+  it("explains the figures from the entered balance and rate, not fixed numbers", () => {
+    render(<OverdraftCostCalculator />);
+    fireEvent.change(screen.getByLabelText("Average overdraft balance used (£)"), {
+      target: { value: "500" },
+    });
+    fireEvent.change(screen.getByLabelText("Your bank's overdraft rate (EAR, %)"), {
+      target: { value: "35" },
+    });
+    const text = screen.getByTestId("overdraft-cost-tool").textContent ?? "";
+    expect(text).toContain("£175 / year");
+    expect(text).toContain("as if £500 stayed overdrawn");
+    expect(text).toContain(
+      "At 35% EAR, each £100 paid off lowers the yearly interest by about £35.00",
+    );
+    expect(text).not.toMatch(/£1,200|guaranteed|dangerous|stealth|checking/i);
+  });
+
+  it("does not show a negative cost for a negative rate", () => {
+    render(<OverdraftCostCalculator />);
+    fireEvent.change(screen.getByLabelText("Your bank's overdraft rate (EAR, %)"), {
+      target: { value: "-5" },
+    });
+    expect(screen.getByTestId("overdraft-cost-tool").textContent).not.toMatch(/£-|-£/);
   });
 });

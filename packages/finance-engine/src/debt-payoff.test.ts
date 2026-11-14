@@ -309,6 +309,12 @@ describe("debt-payoff module", () => {
       expect(cost.monthlyPoundCost).toBe(33.25);
     });
 
+    it("evaluateUkStudentLoan treats a zero balance as nothing to repay", () => {
+      const sl = evaluateUkStudentLoan("plan2", 20000, 0, "2026/27");
+      expect(sl.projectedOutcome).toBe("repaid_before_write_off");
+      expect(sl.reasoning).toBe("There is no balance left to repay.");
+    });
+
     it("evaluateUkStudentLoan reads the per-year table (2025/26 Plan 2)", () => {
       // https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2025-to-2026
       // threshold 28,470; (35,000 - 28,470) * 9% = 587.70; monthly 587.70 / 12 = 48.975 -> 48.98

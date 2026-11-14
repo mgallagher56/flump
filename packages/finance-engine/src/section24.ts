@@ -1,4 +1,10 @@
 import type { Section24Input, Section24Result } from "./types.js";
+import {
+  calculateIncomeTaxOnTaxable,
+  calculatePersonalAllowanceForYear,
+  getUkTaxYearRules,
+  resolveUkTaxYear,
+} from "./uk-tax-year.js";
 
 /**
  * Calculates Section 24 Buy-to-Let Landlord Tax and HMRC Payments on Account Reserve.
@@ -21,30 +27,18 @@ export function calculateSection24Tax(input: Section24Input): Section24Result {
   const otherIncome = Math.max(0, input.otherTaxableIncomeGbp);
   const totalCombinedIncome = otherIncome + taxableRentalProfit;
 
-  // Calculate tax on the rental portion
-  // Band thresholds:
-  // Personal allowance: 12570
-  // Higher rate threshold: 50270
-  // Additional rate threshold: 125140
+  // Tax on the rental slice = tax on (other + rental) minus tax on other alone, using the
+  // tax year's rUK bands and the Personal Allowance taper (above £100,000 the allowance falls by
+  // £1 for every £2, so the slice can be taxed at an effective 60%).
+  const rules = getUkTaxYearRules(resolveUkTaxYear(input.taxYear));
+  const computeIncomeTax = (income: number): number => {
+    const allowance = calculatePersonalAllowanceForYear(income, rules);
+    return calculateIncomeTaxOnTaxable(Math.max(0, income - allowance), rules, "ENGLAND_NI_WALES")
+      .total;
+  };
+
   let taxOnTotal = 0;
   let taxOnOtherOnly = 0;
-
-  const computeIncomeTax = (income: number): number => {
-    if (income <= 12570) return 0;
-    let tax = 0;
-    const basicPortion = Math.min(income, 50270) - 12570;
-    if (basicPortion > 0) tax += basicPortion * 0.2;
-
-    if (income > 50270) {
-      const higherPortion = Math.min(income, 125140) - 50270;
-      if (higherPortion > 0) tax += higherPortion * 0.4;
-    }
-
-    if (income > 125140) {
-      tax += (income - 125140) * 0.45;
-    }
-    return tax;
-  };
 
   taxOnTotal = computeIncomeTax(totalCombinedIncome);
   taxOnOtherOnly = computeIncomeTax(otherIncome);

@@ -28,7 +28,7 @@ export const HomePage: FC = () => {
 
       <Header />
 
-      <main style={{ flex: 1 }}>
+      <main style={{ flex: 1 }} id="main" tabIndex={-1}>
         {/* Section 00: Hero Section with Architectural Grid & Radial Glow */}
         <section
           style={{

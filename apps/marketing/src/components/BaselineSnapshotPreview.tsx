@@ -102,6 +102,37 @@ const livePreviewLinkStyle = css({
   },
 });
 
+/**
+ * Illustrative split of the £4,400 take-home. £195 a week is £845 a month (195 × 52 ÷ 12), and
+ * 2,715 + 845 + 840 = 4,400, so the parts, the percentages and the headline figures agree.
+ */
+export const BREAKDOWN = [
+  {
+    key: "fixed",
+    label: "Housing and fixed bills",
+    amount: "£2,715",
+    legend: "",
+    pct: 62,
+    fill: "var(--colors-chart-series1)",
+  },
+  {
+    key: "safe",
+    label: "Safe to spend",
+    amount: "£845",
+    legend: "£195/wk · ",
+    pct: 19,
+    fill: "var(--colors-chart-series2)",
+  },
+  {
+    key: "surplus",
+    label: "Surplus",
+    amount: "£840",
+    legend: "+£840/mo · ",
+    pct: 19,
+    fill: "var(--colors-chart-series3)",
+  },
+] as const;
+
 export const BaselineSnapshotPreview: FC = () => {
   const appUrl = getAppUrl();
   return (
@@ -114,9 +145,8 @@ export const BaselineSnapshotPreview: FC = () => {
               width: "10px",
               height: "10px",
               borderRadius: "50%",
-              backgroundColor: "var(--colors-success-500)",
+              backgroundColor: "var(--colors-status-positive-solid)",
               display: "inline-block",
-              boxShadow: "0 0 8px rgba(16, 185, 129, 0.6)",
             }}
           />
           <strong
@@ -140,7 +170,7 @@ export const BaselineSnapshotPreview: FC = () => {
           <span
             style={{
               fontSize: "12px",
-              color: "var(--colors-text-muted)",
+              color: "var(--colors-text-secondary)",
               fontWeight: "600",
               letterSpacing: "0.01em",
             }}
@@ -152,13 +182,13 @@ export const BaselineSnapshotPreview: FC = () => {
             style={{
               fontSize: "1.75rem",
               fontWeight: "800",
-              color: "var(--colors-success-500)",
+              color: "var(--colors-status-positive-text)",
               lineHeight: 1.15,
             }}
           >
             £68,400
           </div>
-          <span style={{ fontSize: "12px", color: "var(--colors-text-muted)" }}>
+          <span style={{ fontSize: "12px", color: "var(--colors-text-secondary)" }}>
             Cash, savings and pensions, minus debts
           </span>
         </div>
@@ -167,7 +197,7 @@ export const BaselineSnapshotPreview: FC = () => {
           <span
             style={{
               fontSize: "12px",
-              color: "var(--colors-text-muted)",
+              color: "var(--colors-text-secondary)",
               fontWeight: "600",
               letterSpacing: "0.01em",
             }}
@@ -185,12 +215,16 @@ export const BaselineSnapshotPreview: FC = () => {
           >
             +£840
             <span
-              style={{ fontSize: "12px", fontWeight: "normal", color: "var(--colors-text-muted)" }}
+              style={{
+                fontSize: "12px",
+                fontWeight: "normal",
+                color: "var(--colors-text-secondary)",
+              }}
             >
               /mo
             </span>
           </div>
-          <span style={{ fontSize: "12px", color: "var(--colors-text-muted)" }}>
+          <span style={{ fontSize: "12px", color: "var(--colors-text-secondary)" }}>
             After tax, NI, and fixed outgoings
           </span>
         </div>
@@ -199,7 +233,7 @@ export const BaselineSnapshotPreview: FC = () => {
           <span
             style={{
               fontSize: "12px",
-              color: "var(--colors-text-muted)",
+              color: "var(--colors-text-secondary)",
               fontWeight: "600",
               letterSpacing: "0.01em",
             }}
@@ -211,18 +245,22 @@ export const BaselineSnapshotPreview: FC = () => {
             style={{
               fontSize: "1.75rem",
               fontWeight: "800",
-              color: "var(--colors-info-500)",
+              color: "var(--colors-status-info-text)",
               lineHeight: 1.15,
             }}
           >
             £195
             <span
-              style={{ fontSize: "12px", fontWeight: "normal", color: "var(--colors-text-muted)" }}
+              style={{
+                fontSize: "12px",
+                fontWeight: "normal",
+                color: "var(--colors-text-secondary)",
+              }}
             >
               /wk
             </span>
           </div>
-          <span style={{ fontSize: "12px", color: "var(--colors-text-muted)" }}>
+          <span style={{ fontSize: "12px", color: "var(--colors-text-secondary)" }}>
             Discretionary weekly cash
           </span>
         </div>
@@ -231,7 +269,7 @@ export const BaselineSnapshotPreview: FC = () => {
           <span
             style={{
               fontSize: "12px",
-              color: "var(--colors-text-muted)",
+              color: "var(--colors-text-secondary)",
               fontWeight: "600",
               letterSpacing: "0.01em",
             }}
@@ -241,7 +279,7 @@ export const BaselineSnapshotPreview: FC = () => {
           <div className={coverFigureStyle}>
             6.4 <span className={coverUnitStyle}>months</span>
           </div>
-          <span style={{ fontSize: "12px", color: "var(--colors-text-muted)" }}>
+          <span style={{ fontSize: "12px", color: "var(--colors-text-secondary)" }}>
             Essential costs your savings would cover
           </span>
         </div>
@@ -265,20 +303,20 @@ export const BaselineSnapshotPreview: FC = () => {
               color: "var(--colors-text-primary)",
             }}
           >
-            Monthly cashflow breakdown
+            Where the take-home goes
           </span>
           <span
             className="tabular-nums"
-            style={{ fontSize: "12px", color: "var(--colors-text-muted)" }}
+            style={{ fontSize: "12px", color: "var(--colors-text-secondary)" }}
           >
-            Estimated take-home: £4,200/mo
+            Estimated take-home: £4,400/mo
           </span>
         </div>
 
-        {/* Proportional Stacked Allocation Bar */}
+        {/* Proportional bar of the £4,400 take-home: the parts add up to it. */}
         <div
           role="img"
-          aria-label="Cashflow allocation diagram: 24% UK Tax and NI, 42% Housing and Fixed Bills, 18% Safe to Spend, 16% Surplus to Wealth"
+          aria-label={`Example take-home of £4,400 a month: ${BREAKDOWN.map((p) => `${p.label} ${p.amount}, ${p.pct}%`).join("; ")}`}
           style={{
             height: "14px",
             borderRadius: "9999px",
@@ -288,79 +326,43 @@ export const BaselineSnapshotPreview: FC = () => {
             backgroundColor: "var(--colors-border)",
           }}
         >
-          <div
-            style={{ width: "24%", backgroundColor: "var(--colors-slate-500)" }}
-            title="Tax & NI: £1,008 (24%)"
-          />
-          <div
-            style={{ width: "42%", backgroundColor: "var(--colors-destructive-500)" }}
-            title="Fixed Bills & Housing: £1,764 (42%)"
-          />
-          <div
-            style={{ width: "18%", backgroundColor: "var(--colors-info-500)" }}
-            title="Safe to spend: £756 (18% / £195/wk)"
-          />
-          <div
-            style={{ width: "16%", backgroundColor: "var(--colors-success-500)" }}
-            title="Invested Surplus: £672 (16%)"
-          />
+          {BREAKDOWN.map((part) => (
+            <div
+              key={part.key}
+              style={{ width: `${part.pct}%`, backgroundColor: part.fill }}
+              title={`${part.label}: ${part.amount} (${part.pct}%)`}
+            />
+          ))}
         </div>
 
         {/* Diagram Legend */}
         <div
+          className="tabular-nums"
           style={{
             display: "flex",
             flexWrap: "wrap",
             gap: "16px",
             marginTop: "12px",
             fontSize: "12px",
-            color: "var(--colors-text-muted)",
+            color: "var(--colors-text-secondary)",
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-            <span
-              style={{
-                width: "8px",
-                height: "8px",
-                borderRadius: "50%",
-                backgroundColor: "var(--colors-slate-500)",
-              }}
-            />
-            <span>Tax and NI (24%)</span>
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-            <span
-              style={{
-                width: "8px",
-                height: "8px",
-                borderRadius: "50%",
-                backgroundColor: "var(--colors-destructive-500)",
-              }}
-            />
-            <span>Fixed bills (42%)</span>
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-            <span
-              style={{
-                width: "8px",
-                height: "8px",
-                borderRadius: "50%",
-                backgroundColor: "var(--colors-info-500)",
-              }}
-            />
-            <span>Safe to spend (£195/wk · 18%)</span>
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-            <span
-              style={{
-                width: "8px",
-                height: "8px",
-                borderRadius: "50%",
-                backgroundColor: "var(--colors-success-500)",
-              }}
-            />
-            <strong style={{ color: "var(--colors-success-500)" }}>Surplus (+£840/mo · 16%)</strong>
-          </div>
+          {BREAKDOWN.map((part) => (
+            <div key={part.key} style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+              <span
+                style={{
+                  width: "8px",
+                  height: "8px",
+                  borderRadius: "50%",
+                  backgroundColor: part.fill,
+                }}
+              />
+              <span>
+                {part.label} ({part.legend}
+                {part.pct}%)
+              </span>
+            </div>
+          ))}
         </div>
       </div>
 
@@ -371,10 +373,13 @@ export const BaselineSnapshotPreview: FC = () => {
             display: "flex",
             alignItems: "center",
             gap: "8px",
-            color: "var(--colors-success-DEFAULT)",
+            color: "var(--colors-text-primary)",
           }}
         >
-          <FiShield size={16} style={{ color: "var(--colors-success-500)", flexShrink: 0 }} />
+          <FiShield
+            size={16}
+            style={{ color: "var(--colors-status-positive-text)", flexShrink: 0 }}
+          />
           <span>
             <strong>Zero setup hassle:</strong> Enter rough totals to start. Add accounts and
             details only when you choose.

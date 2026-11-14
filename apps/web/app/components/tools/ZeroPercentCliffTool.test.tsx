@@ -9,7 +9,7 @@ describe("<ZeroPercentCliffTool />", () => {
 
     expect(getByText(/0% balance transfer promotional expiry calculator/i)).toBeDefined();
     expect(getByText(/Target monthly payment/i)).toBeDefined();
-    expect(getByText(/Revert APR alert/i)).toBeDefined();
+    expect(getByText(/If you pay only the minimum/i)).toBeDefined();
 
     // Update inputs
     const balanceInput = getByDisplayValue("3600");

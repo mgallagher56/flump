@@ -2,6 +2,7 @@ import { BUSINESS_DETAILS } from "@flump/business-details";
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it } from "vitest";
+import { CANONICAL_TOOL_SLUGS } from "../../utils/toolSlugs";
 import { Footer } from "./Footer";
 
 const renderFooter = () =>
@@ -39,6 +40,13 @@ describe("Footer", () => {
     expect(screen.getByRole("link", { name: "Request an invite" }).getAttribute("href")).toBe(
       "/contact#beta",
     );
+  });
+
+  it("links to every calculator, in the tools page order", () => {
+    renderFooter();
+    const nav = screen.getByRole("heading", { level: 3, name: "Calculators" }).parentElement;
+    const hrefs = Array.from(nav?.querySelectorAll("a") ?? []).map((a) => a.getAttribute("href"));
+    expect(hrefs).toEqual(CANONICAL_TOOL_SLUGS.map((slug) => `/tools/${slug}`));
   });
 
   it("links to the security page", () => {
