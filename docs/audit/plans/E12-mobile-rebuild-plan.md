@@ -940,6 +940,7 @@ Section 2.11's recommendation stands. The research checked the alternatives (Sty
 - **Styling library.** `StyleSheet` with `useTheme()` as in T2.3 remains the default. If the M2 spike wants adaptive themes without a provider re-render, Unistyles 3 accepts the same generated object; that is the only alternative to consider. Do not add NativeWind, Tamagui or react-native-web.
 - **DTCG later, not now.** If a design tool joins the workflow, emit W3C Design Tokens JSON with a resolver file as a further output of the same TypeScript source. It never becomes the authored source.
 - **T1.15 to T1.16b can land ahead of the mobile app** (assessment Extra F), since they touch no app code and the web output is byte-identical.
+- **Status (2026-11-14): done ahead of the app in PR #\_\_\_.** T1.15: `@flump/tokens` (`packages/tokens`) holds the token files and their tests; `packages/ui/src/tokens` re-exports it and the ui, web and marketing `styled-system` output was byte-identical before and after. T1.16: `packages/tokens/scripts/build-native-tokens.ts` writes `src/native.generated.ts` (`@flump/tokens/native`) with the scope above; the drift test re-renders it in CI. T1.16b: `packages/ui/src/tokens/tokens.contract.test.ts` compares it with `panda codegen --spec` (what it does not cover is listed in CROSS-PLATFORM section 2). T1.17, generated-values part: the pair matrix moved to `packages/tokens/src/contrast.ts` and runs on both outputs; the mobile-only pairs from 5.2 remain for the app.
 
 ### 12.3 Component catalogue: names and parity
 
@@ -950,6 +951,8 @@ New task **T2.x, parity matrix as data (S) [P1]:** keep the matrix as a typed ta
 ### 12.4 Formatting
 
 `@flump/format` (2.12) is the one formatter for web, marketing and mobile. Addition: Hermes uses each platform's own number and date formatting, so en-GB output can differ between iOS and Android. **T0.4 must capture output on both platforms**, and the package's snapshot tests run on V8, Hermes iOS and Hermes Android with the same expected strings (`£1,234`, `-£1,234`, `12.5%`, `Mar 2030`). Whole pounds where a figure is read; pence only where the user types or reconciles.
+
+Status (2026-11-14): `@flump/format` now matches what `Money` and `Num` show (whole pounds by default, ASCII hyphen-minus, invalid code falls back to GBP), which replaces T1.13's "true minus" and "`0` is `£0.00`" so web and mobile agree; it gained `formatCompactCurrency`, `formatMonthYear` and `formatDuration`. The shared fixture `@flump/format/fixtures` runs on V8 and JavaScriptCore and is pinned to `Money` by `packages/ui/src/format.parity.test.ts`; T0.4 adds the Hermes runs.
 
 ### 12.5 Accessibility additions to 5.1
 

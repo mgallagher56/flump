@@ -1,6 +1,6 @@
 # E15 design tokens: architecture note
 
-Scope: `packages/ui/src/tokens/` and `packages/ui/panda.preset.ts`. Direction: round 5 hybrid, Direction C's "Warm guide" palette (teal, sand, warm charcoal) on A's structure, with B's compact density available for simulators, tables and account lists. System theme is the default; `data-theme="light|dark"` overrides.
+Scope: `packages/tokens/src/` (`@flump/tokens`, moved from `packages/ui/src/tokens/` by E12 T1.15; `@repo/ui` re-exports it) and `packages/ui/panda.preset.ts`. Direction: round 5 hybrid, Direction C's "Warm guide" palette (teal, sand, warm charcoal) on A's structure, with B's compact density available for simulators, tables and account lists. System theme is the default; `data-theme="light|dark"` overrides.
 
 ## Layers
 
@@ -17,7 +17,7 @@ Components use one vocabulary: `variant` (visual treatment, e.g. `solid | subtle
 
 ## Plain-values rule (for E12)
 
-Raw token objects (`fontFamilies`, `textStyles`, `durations`, `easings`, `zIndex`, `sizes`, `motionKeyframes`) hold plain strings and numbers only: no token references, no Panda-only syntax, so another runtime can read them as data. The exceptions are `semanticTokens`, which by definition use `{ base, _dark }` / `{ base, _compact }` and `{token.path}` references. Durations and easings are plain strings; reduced motion is the consumer's job (apply keyframes only under `_motionSafe`).
+Raw token objects (`fontFamilies`, `textStyles`, `durations`, `easings`, `zIndex`, `sizes`, `motionKeyframes`) hold plain strings and numbers only: no token references, no Panda-only syntax, so another runtime can read them as data. The exceptions are `semanticTokens`, which by definition use `{ base, _dark }` / `{ base, _compact }` and `{token.path}` references. Durations and easings are plain strings; reduced motion is the consumer's job (apply keyframes only under `_motionSafe`). The rule now has a consumer: `packages/tokens/scripts/build-native-tokens.ts` reads these objects (and resolves the semantic references per theme) to write the React Native theme `@flump/tokens/native`; anything it cannot translate (a unit other than `px`, `rem` or `ms`, a non-bezier easing, an unresolved reference) fails the build of that file and its tests.
 
 ## Unknown values: "Not set" (D16)
 

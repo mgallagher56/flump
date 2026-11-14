@@ -35,7 +35,7 @@ Author all component styles in `ComponentName.styles.ts` using Panda CSS `cva` o
 
 ### Canonical Token Namespaces
 
-Use **only** these 6 semantic token namespaces (`packages/ui/src/tokens/index.ts`):
+Use **only** these 6 semantic token namespaces (`packages/tokens/src/index.ts`, re-exported by `@repo/ui`):
 
 | Namespace   | Allowed Tokens                                                                                                                                                                                         | Typical Usage                                                                                                                                                                                                  |
 | :---------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

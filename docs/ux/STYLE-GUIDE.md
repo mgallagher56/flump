@@ -6,7 +6,7 @@ This is the one description of how Flump looks. It states the visual language in
 
 ## How to read this guide
 
-- **The code is the source of the values.** Tokens live in `packages/ui/src/tokens/`. If a value here disagrees with the token files, the token files win and this guide is corrected in the same PR. Full tables with contrast measurements are in [`docs/design/e15/tokens.md`](../design/e15/tokens.md).
+- **The code is the source of the values.** Tokens live in `packages/tokens/src/` (`@flump/tokens`; `@repo/ui` re-exports them, and the native theme is generated from them). If a value here disagrees with the token files, the token files win and this guide is corrected in the same PR. Full tables with contrast measurements are in [`docs/design/e15/tokens.md`](../design/e15/tokens.md).
 - **This guide describes where we are going.** Items marked **[PR 1]** or **[PR 2]** are defined by the polish plan ([`docs/design/e16-polish/PLAN.md`](../design/e16-polish/PLAN.md), sections 4.1 to 4.5) and arrive with those PRs. Until they merge, the token or component may not exist on `main`. Hex values for PR 1 items are the plan's starting points; the shipped value is whatever passes `tokens.a11y.test.ts` with `KNOWN_FAILURES` empty.
 - **Units.** Sizes are in CSS px. One px is one iOS point and one Android dp. Type sizes are authored in rem on the web so they follow the user's browser setting, and scale with the system font size on native.
 - Every rule ends with how it is checked: **Enforced by** a named law or test, **Proposed check** for a check described in [UX-ASSESSMENT-2026-11.md](./UX-ASSESSMENT-2026-11.md) section 6 that does not exist yet, or **Review only**.
