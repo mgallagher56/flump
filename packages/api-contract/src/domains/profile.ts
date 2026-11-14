@@ -156,6 +156,18 @@ export type UpdateChecklistResponse = z.infer<typeof UpdateChecklistResponse>;
 export const SendPasswordResetResponse = z.strictObject({ success: z.literal(true) });
 export type SendPasswordResetResponse = z.infer<typeof SendPasswordResetResponse>;
 
+/**
+ * The phrase the person types to confirm the destructive reset. The backend requires it in the
+ * request body too, so the confirmation is not only a browser check.
+ */
+export const RESET_FINANCIAL_DATA_CONFIRMATION = "RESET";
+
+/** POST /user-profile/reset-financial-data request body. */
+export const ResetFinancialDataRequest = z.strictObject({
+  confirmation: z.literal(RESET_FINANCIAL_DATA_CONFIRMATION),
+});
+export type ResetFinancialDataRequest = z.infer<typeof ResetFinancialDataRequest>;
+
 /** POST /user-profile/reset-financial-data */
 export const ResetFinancialDataResponse = z.strictObject({
   success: z.literal(true),

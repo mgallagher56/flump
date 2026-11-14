@@ -17,7 +17,11 @@ import {
   StageImportRequest,
 } from "./domains/imports.js";
 import { CreateMcpTokenRequest } from "./domains/mcp-tokens.js";
-import { UpdateChecklistRequest, UpdateProfileRequest } from "./domains/profile.js";
+import {
+  ResetFinancialDataRequest,
+  UpdateChecklistRequest,
+  UpdateProfileRequest,
+} from "./domains/profile.js";
 import { SnapshotMonthParams, UpsertSnapshotRequest } from "./domains/snapshots.js";
 import {
   BulkCreateTaxRecordsRequest,
@@ -521,6 +525,7 @@ export const routes = {
       path: "user-profile/reset-financial-data",
       auth: "user",
       ownership: "user",
+      body: ResetFinancialDataRequest,
       group: "profile",
       response: ResetFinancialDataResponse,
     }),

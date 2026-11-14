@@ -103,6 +103,18 @@ export interface ProfileLifecycle {
   updateChecklist(userId: string, step: string, completed: boolean, email?: string): Promise<any>;
 }
 
+/** Rows removed by a financial data reset, per table (counts only, for the audit event). */
+export interface FinancialDataResetCounts {
+  accounts: number;
+  accountDetails: number;
+  snapshotCheckins: number;
+  importBatches: number;
+  transactions: number;
+  bankConnections: number;
+  budgetEntries: number;
+  taxRecords: number;
+}
+
 @Injectable()
 export class UserProfileService implements ProfileLifecycle {
   private readonly logger = new Logger(UserProfileService.name);
@@ -476,22 +488,27 @@ export class UserProfileService implements ProfileLifecycle {
         where: { userId },
         select: { id: true },
       });
+      // Rows removed per table, for the audit event. `affected` is a count, never a value.
+      const removed = (result: { affected?: number | null } | undefined): number =>
+        result?.affected ?? 0;
       // Monthly history carries user_id (E30), so it is erased by owner; the account-id delete
       // stays as a belt and braces for any row whose user_id somehow differs.
-      await detailRepo.delete({ userId });
+      let accountDetails = removed(await detailRepo.delete({ userId }));
       if (accounts.length > 0) {
         const accountIds = accounts.map((a) => a.id);
-        await detailRepo.delete({ accountId: In(accountIds) });
+        accountDetails += removed(await detailRepo.delete({ accountId: In(accountIds) }));
       }
-      await checkinRepo?.delete({ userId });
-      // Staged imports hold account names and values (E17 PR C), so they go with the rest.
-      await importRepo?.delete({ userId });
-
-      await txRepo.delete({ userId });
-      await accountRepo.delete({ userId });
-      await bankRepo.delete({ userId });
-      await budgetRepo.delete({ userId });
-      await taxRepo.delete({ userId });
+      const counts: FinancialDataResetCounts = {
+        accountDetails,
+        snapshotCheckins: removed(await checkinRepo?.delete({ userId })),
+        // Staged imports hold account names and values (E17 PR C), so they go with the rest.
+        importBatches: removed(await importRepo?.delete({ userId })),
+        transactions: removed(await txRepo.delete({ userId })),
+        accounts: removed(await accountRepo.delete({ userId })),
+        bankConnections: removed(await bankRepo.delete({ userId })),
+        budgetEntries: removed(await budgetRepo.delete({ userId })),
+        taxRecords: removed(await taxRepo.delete({ userId })),
+      };
 
       let profile = await profileRepo.findOne({ where: { userId } });
       if (!profile) {
@@ -524,12 +541,12 @@ export class UserProfileService implements ProfileLifecycle {
       profile.hasResetFinancialData = true;
       profile.onboardingCompleted = false;
 
-      return await profileRepo.save(profile);
+      return { saved: await profileRepo.save(profile), counts };
     };
 
-    let saved: UserProfile;
+    let outcome: { saved: UserProfile; counts: FinancialDataResetCounts };
     if (this.dataSource) {
-      saved = await this.dataSource.transaction(async (manager) => {
+      outcome = await this.dataSource.transaction(async (manager) => {
         return performReset(
           manager.getRepository(Account),
           manager.getRepository(AccountDetail),
@@ -543,7 +560,7 @@ export class UserProfileService implements ProfileLifecycle {
         );
       });
     } else {
-      saved = await performReset(
+      outcome = await performReset(
         this.accountRepository,
         this.accountDetailRepository,
         this.transactionRepository,
@@ -554,6 +571,18 @@ export class UserProfileService implements ProfileLifecycle {
         this.snapshotCheckinRepository,
         this.importBatchRepository,
       );
+    }
+    const { saved, counts } = outcome;
+
+    // Audit trail (security review): one structured event after the transaction has committed.
+    // The user id and row counts only; no amounts, names or email. A logging failure never turns
+    // a completed reset into an error.
+    try {
+      // A plain object, not a string: the log scrubber passes this exact shape through with the
+      // user id intact (isAuditEventEntry) and would blank the id inside a string.
+      this.logger.log({ event: "financial_data_reset", userId, removed: counts });
+    } catch {
+      // logging failure is ignored
     }
 
     return {

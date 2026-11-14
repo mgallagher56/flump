@@ -6553,6 +6553,24 @@
             "description": "Missing or invalid credentials."
           }
         },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "confirmation": {
+                    "type": "string",
+                    "const": "RESET"
+                  }
+                },
+                "required": ["confirmation"],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
         "security": [
           {
             "bearerAuth": []

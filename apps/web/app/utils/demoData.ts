@@ -1,10 +1,10 @@
-import { getCurrentUKTaxYear, PortfolioSnapshot } from "@flump/finance-engine";
+import { getCurrentUKTaxYear, PortfolioSnapshot, type RawAccount } from "@flump/finance-engine";
 import { isLiabilityType } from "~/containers/accounts/utils";
 import type { UserProfile } from "~/hooks/useUserProfile";
 import { buildDebtSummary } from "~/utils/debtSummary";
 import { buildWorkspacePicture, knownOrNull } from "~/utils/financialPicture";
 
-interface DemoAccount {
+interface DemoAccount extends RawAccount {
   type: string;
   balance: number;
   monthlyContribution: number | null;
@@ -20,7 +20,7 @@ function demoFigures(
   budgetEntries: readonly unknown[],
   userProfile: Partial<UserProfile>,
 ) {
-  const snapshot = new PortfolioSnapshot([...accounts] as never, []);
+  const snapshot = new PortfolioSnapshot([...accounts], []);
   const picture = buildWorkspacePicture(
     { userProfile, accounts, accountDetails: [], budgetEntries },
     { snapshot },
@@ -611,7 +611,7 @@ export function getSandboxPersonaData(persona: "debt" | "medium" | "high" | "wea
   };
 
   const figures = demoFigures(highAccounts, highBudgetEntries, userProfile);
-  const residentialMortgage = highAccounts[4]!;
+  const residentialMortgage = highAccounts.find((a) => a.id === "demo-high-acc-5")!;
 
   return {
     persona: "high" as const,

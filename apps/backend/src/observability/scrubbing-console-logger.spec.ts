@@ -603,6 +603,46 @@ describe("ScrubbingConsoleLogger through a Nest app", () => {
     });
   });
 
+  describe("audit event pass-through (financial_data_reset)", () => {
+    const event = {
+      event: "financial_data_reset",
+      userId: "123e4567-e89b-12d3-a456-426614174000",
+      removed: { accounts: 3, transactions: 120, taxRecords: 0 },
+    };
+
+    it("keeps the user id and counts through the real JSON logger", () => {
+      const out = capture();
+      createAppLogger({ LOG_FORMAT: "json" }).log(event, "UserProfileService");
+      expect(out()).toContain(event.userId);
+      expect(out()).toContain('"transactions":120');
+      expect(out()).not.toContain("[redacted]");
+    });
+
+    it("accepts a WorkOS user id", () => {
+      const workos = { ...event, userId: "user_01HZX3Q9V7C2M8N4P6R0S5T1WY" };
+      expect(sanitizeLogValue(workos)).toEqual(workos);
+    });
+
+    it("scrubs anything outside the exact shape", () => {
+      const cases: Record<string, unknown>[] = [
+        { ...event, email: EMAIL },
+        { ...event, event: "something_else" },
+        { ...event, userId: EMAIL },
+        { ...event, removed: { accounts: "3" } },
+        { ...event, removed: { accounts: 1.5 } },
+        { ...event, removed: [1, 2] },
+      ];
+      for (const c of cases) {
+        const out = JSON.stringify(sanitizeLogValue(c));
+        expect(out).not.toContain(event.userId);
+        expect(out).not.toContain(EMAIL);
+      }
+      // A non-word count key also fails the shape (the generic scrubber then handles the object).
+      const oddKey = JSON.stringify(sanitizeLogValue({ ...event, removed: { "a b": 1 } }));
+      expect(oddKey).not.toContain(event.userId);
+    });
+  });
+
   describe("error field passthrough", () => {
     it("keeps SQLSTATE, errno names, numeric status and severity but not other fields", () => {
       const e = Object.assign(new Error("x"), {

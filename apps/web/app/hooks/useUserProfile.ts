@@ -267,6 +267,12 @@ export function profileToBaseline(profile: UserProfile | Partial<UserProfile>): 
     : baseline;
 }
 
+/**
+ * The phrase typed to confirm a financial data reset. Must equal RESET_FINANCIAL_DATA_CONFIRMATION
+ * in @flump/api-contract: the backend rejects the reset without it.
+ */
+export const RESET_FINANCIAL_DATA_CONFIRMATION = "RESET";
+
 export function useUserProfile() {
   const [profile, rawSetProfile] = useAtom(userProfileAtom);
   const [, rawSetBaseline] = useAtom(financialBaselineAtom);
@@ -323,9 +329,10 @@ export function useUserProfile() {
   const resetFinancialData = useCallback(async (): Promise<void> => {
     let result: { profile?: UserProfile } | undefined;
     try {
+      // The backend requires the typed phrase too (security review), not only the dialog.
       result = await apiFetch<{ profile?: UserProfile }>("/user-profile/reset-financial-data", {
         method: "POST",
-        body: {},
+        body: { confirmation: RESET_FINANCIAL_DATA_CONFIRMATION },
       });
     } catch (err) {
       throw messageFrom(err, "Failed to reset financial data");

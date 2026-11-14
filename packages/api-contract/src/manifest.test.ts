@@ -27,7 +27,6 @@ describe("route manifest", () => {
       "bankConnections.sync",
       "budget.seedDefaults",
       "mcp.post",
-      "profile.resetFinancialData",
       "profile.sendPasswordReset",
     ]);
   });

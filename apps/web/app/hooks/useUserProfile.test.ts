@@ -168,5 +168,7 @@ describe("useUserProfile", () => {
         method: "POST",
       }),
     );
+    const [, init] = (global.fetch as any).mock.calls.at(-1);
+    expect(JSON.parse(init.body)).toEqual({ confirmation: "RESET" });
   });
 });

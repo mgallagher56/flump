@@ -25,7 +25,7 @@ describe("PersonalAllowanceTaperBanner", () => {
 
   it("uses engine figures, not 62% of the whole sacrifice, when income is above the band", () => {
     render(<PersonalAllowanceTaperBanner grossIncome={140000} />);
-    fireEvent.change(screen.getByLabelText("Pension sacrifice amount"), {
+    fireEvent.change(screen.getByLabelText("Pension salary sacrifice"), {
       target: { value: "40000" },
     });
     const expected = taxAndNi(140000) - taxAndNi(100000);
