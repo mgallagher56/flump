@@ -330,6 +330,13 @@ export const BudgetEditor: FC<BudgetEditorProps> = ({
         },
       }
     : null;
+
+  // Leaving edit mode clears the last save message, so it never sits beside a scenario.
+  useEffect(() => {
+    return () => {
+      if (lastToast.current) toastApi?.dismiss(lastToast.current);
+    };
+  }, [toastApi]);
   const [toRemove, setToRemove] = useState<BudgetEntry | null>(null);
   const [removing, setRemoving] = useState(false);
   // Where focus goes once a deleted row has gone (UX A3): the next row's name, else the heading.

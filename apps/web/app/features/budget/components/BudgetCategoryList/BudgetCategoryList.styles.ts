@@ -83,8 +83,9 @@ export const shareBar = cva({
   base: { pb: "3", mt: "-1" },
 });
 
+/** The opened entries, indented under their category so they read as its parts. */
 export const entriesPanel = cva({
-  base: { pt: "1", pb: "4" },
+  base: { pt: "1", pb: "4", pl: { base: "4", md: "9" } },
 });
 
 export const listFoot = cva({
