@@ -147,15 +147,16 @@ describe("UI Calculators", () => {
   });
 
   describe("TaxTrapCalculator", () => {
-    it("renders and computes £100k-£125k 60% tax trap", () => {
+    it("renders the taper calculator from the engine and pre-fills on continue", () => {
       const onSave = vi.fn();
       render(<TaxTrapCalculator ctaText="Save and continue" onSaveAndContinue={onSave} />);
 
-      expect(screen.getByText(/Interactive £100k–£125k Tax Trap Modeller/i)).toBeDefined();
-      expect(screen.getByText(/60% Trap Active/i)).toBeDefined();
-      expect(screen.getByText(/Tax and NI saved/i)).toBeDefined();
+      expect(
+        screen.getByText(/Pension contributions and the £100,000 Personal Allowance taper/i),
+      ).toBeDefined();
+      expect(screen.getByText(/Reaches your pension/i)).toBeDefined();
 
-      const slider = screen.getByRole("slider", { name: /Total Gross UK Income/i });
+      const slider = screen.getByRole("slider", { name: /Gross pay a year/i });
       fireEvent.change(slider, { target: { value: "110000" } });
       expect(screen.getAllByDisplayValue("110000").length).toBeGreaterThan(0);
 

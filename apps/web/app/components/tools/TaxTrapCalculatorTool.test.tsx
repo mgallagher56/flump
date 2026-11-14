@@ -8,29 +8,31 @@ vi.mock("react-router", () => ({
 }));
 
 describe("TaxTrapCalculatorTool", () => {
-  it("renders with default £115k income and 60% trap active badge", () => {
+  it("renders the engine-backed taper calculator with the £115k example", () => {
     render(<TaxTrapCalculatorTool />);
 
-    expect(screen.getByText(/interactive £100k–£125k tax trap modeller/i)).toBeDefined();
-    expect(screen.getByText(/60% trap active/i)).toBeDefined();
-    expect(screen.getByText(/tax and ni saved/i)).toBeDefined();
-    expect(screen.getByText(/personal allowance reclaimed/i)).toBeDefined();
+    expect(
+      screen.getByText(/pension contributions and the £100,000 personal allowance taper/i),
+    ).toBeDefined();
+    expect(screen.getByText(/reaches your pension/i)).toBeDefined();
+    expect(screen.getByText(/estimated personal allowance/i)).toBeDefined();
+    expect(screen.getAllByDisplayValue("115000").length).toBeGreaterThan(0);
   });
 
-  it("updates calculations when gross income slider changes", () => {
+  it("updates when the gross pay slider changes", () => {
     render(<TaxTrapCalculatorTool />);
 
-    const incomeSlider = screen.getByRole("slider", { name: /total gross uk income/i });
+    const incomeSlider = screen.getByRole("slider", { name: /gross pay a year range slider/i });
     fireEvent.change(incomeSlider, { target: { value: "105000" } });
 
     expect(screen.getAllByDisplayValue("105000").length).toBeGreaterThan(0);
   });
 
-  it("saves scenario seed to localStorage and navigates to /signup on CTA click", () => {
+  it("saves the onboarding seed and navigates to /signup on CTA click", () => {
     const setItemSpy = vi.spyOn(Storage.prototype, "setItem");
     render(<TaxTrapCalculatorTool />);
 
-    const ctaButton = screen.getByRole("button", { name: /save scenario and continue free/i });
+    const ctaButton = screen.getByRole("button", { name: /continue with these figures/i });
     fireEvent.click(ctaButton);
 
     expect(setItemSpy).toHaveBeenCalledWith("flump_onboarding_seed", expect.any(String));

@@ -56,9 +56,10 @@ const CASES: {
   {
     name: "TaxTrapCalculator",
     element: <TaxTrapCalculator />,
-    control: () => screen.getByRole("slider", { name: /Total Gross UK Income/i }),
+    control: () => screen.getByRole("slider", { name: /Gross pay a year range slider/i }),
     value: "105000",
-    expected: /Estimated tax and NI saved £[\d,]+/,
+    expected:
+      /An extra £10,000 a year into your pension would lower take-home by an estimated £[\d,]+/,
   },
   {
     name: "ZeroPercentCliffCalculator",

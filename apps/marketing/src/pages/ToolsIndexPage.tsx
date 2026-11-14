@@ -174,8 +174,8 @@ const ENTRIES: Record<ToolCatalogEntry["slug"], Omit<ToolCatalogEntry, "slug">> 
     badge: "Income tax",
   },
   "uk-100k-tax-trap-calculator": {
-    title: "£100k–£125k tax trap and childcare calculator",
-    desc: "Model how the Personal Allowance taper changes the effective marginal rate between £100,000 and £125,140, and how a pension contribution changes adjusted net income, alongside 30 hours free childcare eligibility.",
+    title: "£100k–£125k Personal Allowance taper calculator",
+    desc: "Estimate how a pension contribution changes adjusted net income, the Personal Allowance and take-home pay between £100,000 and £125,140, with the childcare income limit stated. Unverified estimate.",
     icon: <FiPercent size={22} aria-hidden="true" />,
     badge: "HMRC income tax",
   },

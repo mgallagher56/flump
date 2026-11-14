@@ -18,12 +18,7 @@ describe("calculator text inputs use the input boundary token", () => {
 });
 
 describe("number inputs in calculators use the input boundary token via styles files", () => {
-  const dirs = [
-    "MortgageVsIsaCalculator",
-    "Section24Calculator",
-    "TaxTrapCalculator",
-    "DebtSnowballCalculator",
-  ];
+  const dirs = ["MortgageVsIsaCalculator", "Section24Calculator", "DebtSnowballCalculator"];
   it.each(dirs)("%s has no inline styles and uses border.input", (dir) => {
     const tsx = readFileSync(join(__dirname, dir, `${dir}.tsx`), "utf8");
     const styles = readFileSync(join(__dirname, dir, `${dir}.styles.ts`), "utf8");
