@@ -240,8 +240,15 @@ export const AccountsGroupList: FC<AccountsGroupListProps> = ({
   afterNetWorth,
 }) => {
   const counted = rows.filter((row) => !isLeftOut(row, leftOut));
-  const own = counted.filter((row) => !isLiabilityType(row.type)).sort(byType);
-  const owe = counted.filter((row) => isLiabilityType(row.type)).sort(byType);
+  // The engine counts an overdrawn account (a current account below zero) as money owed, not as
+  // a negative asset, so it sits under "What you owe" as the amount owed and each total adds up.
+  const overdrawn = (row: AccountRow) =>
+    !isLiabilityType(row.type) && row.balance !== undefined && row.balance < 0;
+  const own = counted.filter((row) => !isLiabilityType(row.type) && !overdrawn(row)).sort(byType);
+  const owe = counted
+    .filter((row) => isLiabilityType(row.type) || overdrawn(row))
+    .map((row) => (overdrawn(row) ? { ...row, balance: Math.abs(row.balance ?? 0) } : row))
+    .sort(byType);
   const notCounted = rows.filter((row) => isLeftOut(row, leftOut)).sort(byType);
   const countedStudentLoan = owe.some((row) => row.type === STUDENT_LOAN);
   const leftOutStudentLoan = notCounted.some((row) => row.type === STUDENT_LOAN);
@@ -281,7 +288,12 @@ export const AccountsGroupList: FC<AccountsGroupListProps> = ({
         <div className={netWorthLinks()}>
           {/* The one place the choice is always reachable from the figure, even with nothing left out. */}
           <NetWorthBasisLine alwaysShowLink id="accounts-net-worth-basis" leftOut={leftOut} />
-          <Link className={historyLink()} id="accounts-view-history" to={HISTORY_HREF}>
+          <Link
+            className={historyLink()}
+            data-testid="accounts-view-history"
+            id="accounts-view-history"
+            to={HISTORY_HREF}
+          >
             See how it has changed
           </Link>
         </div>

@@ -35,9 +35,7 @@ const setup = (summary: Partial<Summary> = {}) => {
 describe("CheckInSummary", () => {
   it("states the month, what changed and net worth against last month", () => {
     setup();
-    expect(
-      screen.getByRole("heading", { name: "Check-in saved for November 2026." }),
-    ).toBeDefined();
+    expect(screen.getByRole("heading", { name: "Check-in saved for November 2026" })).toBeDefined();
     expect(screen.getByText("Account 1")).toBeDefined();
     expect(screen.getByText("Calculated")).toBeDefined();
     expect(screen.getByText("Net worth: £231,400, up £1,250 on October 2026.")).toBeDefined();

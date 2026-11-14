@@ -7,6 +7,7 @@ import AddEditAccountsDialogBtn from "~/components/dialogs/addEditAccountsDialog
 import { type AccountType, isLiabilityType } from "~/containers/accounts/utils";
 import { lastUpdatedLabel, summariseAccountBalance } from "~/features/accounts/accountRows";
 import { TYPE_LABEL } from "~/features/accounts/components/AccountsGroupList";
+import { londonMonth } from "~/features/snapshot/snapshotModel";
 import type { loader } from "~/routes/app.accounts.$account";
 import { backLink, notFound } from "./AccountDetailContainer.styles";
 
@@ -43,12 +44,11 @@ const AccountDetailContainer: FC = () => {
   const current = summary.balance ?? 0;
   const lastUpdated = lastUpdatedLabel(accountDetails as never[]);
   // When this month is not recorded, say which month the history last has (R2-5), not a change.
-  const now = new Date();
+  // The current month on the Europe/London clock, as the backend keys it (not the device's).
+  const [cy, cm] = londonMonth().split("-").map(Number);
   const currentSource = (
     accountDetails as { month?: number; year?: number; source?: string }[]
-  ).find(
-    (d) => Number(d.month) === now.getMonth() + 1 && Number(d.year) === now.getFullYear(),
-  )?.source;
+  ).find((d) => Number(d.month) === cm && Number(d.year) === cy)?.source;
   // A calculated figure says so wherever it appears (R2-5 check-in).
   const subline = summary.currentRecorded
     ? currentSource === "calculated"

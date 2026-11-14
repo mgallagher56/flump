@@ -135,9 +135,9 @@ export function doneText(kind: "updated" | "noChange" | "calculated", value: num
   return `Updated ${checkInMoney(value)}`;
 }
 
-/** "Check-in saved for November 2026." */
+/** "Check-in saved for November 2026" (a heading: no full stop). */
 export function checkInSavedText(month: MonthKey): string {
-  return `Check-in saved for ${formatMonth(month)}.`;
+  return `Check-in saved for ${formatMonth(month)}`;
 }
 
 /** "No balances changed since October 2026." */

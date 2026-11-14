@@ -29,7 +29,9 @@ export function rejectsSource(err: unknown): boolean {
   if (!err || typeof err !== "object") return false;
   const { status, detail } = err as { status?: number; detail?: string };
   if (status !== 400) return false;
-  return detail === undefined || /source|unrecogni[sz]ed/i.test(detail);
+  // Only a rejection that names `source` (an older backend's "Unrecognized key: source"): any other
+  // 400 is a real error, and stripping the source would store a calculated figure as typed.
+  return typeof detail === "string" && /\bsource\b/i.test(detail);
 }
 
 /**
