@@ -53,8 +53,8 @@ check-in endpoint, which accepts past months), so history charts and "since last
 have data. The current month is left unrecorded, so the dashboard's check-in card shows.
 Dates are relative to `FROZEN_NOW` when the servers run under the frozen clock, else to today.
 
-`applyPersona(page, name)` is idempotent: when the stored accounts, budget, salary and months of
-history already match it writes nothing. Otherwise it clears the user's financial data with
+`applyPersona(page, name)` is idempotent: when the stored accounts, budget and salary already
+match it writes nothing (it does not check the months of history). Otherwise it clears the user's financial data with
 `POST /user-profile/reset-financial-data` (only if there is anything to clear: that endpoint is
 rate-limited to 10 calls an hour per user) and writes the persona again. A reset leaves the
 profile's `hasResetFinancialData` flag set; nothing the personas show depends on it.
