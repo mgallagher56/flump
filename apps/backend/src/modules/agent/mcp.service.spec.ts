@@ -16,7 +16,7 @@ vi.mock("@flump/mcp", async (importOriginal) => {
 });
 
 import { DEV_BYPASS_TOKEN, DEV_USER } from "../../auth/dev-bypass.verifier";
-import { FinanceService } from "../finance/finance.service";
+import { financeServiceWithIntake } from "../../testing/finance-service";
 import { UserProfileService } from "../profile/user-profile.service";
 import { AgentDataService } from "./agent-data.service";
 import { McpService } from "./mcp.service";
@@ -275,7 +275,7 @@ describe("McpService.getContextPack for a brand-new user", () => {
     const connections = memoryRepo();
 
     const config = { get: vi.fn().mockReturnValue(undefined) };
-    const finance = new FinanceService(
+    const finance = financeServiceWithIntake(
       accounts as never,
       transactions as never,
       details as never,

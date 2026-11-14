@@ -1,10 +1,9 @@
 import { BankSyncOrchestrator } from "@flump/banking/server";
-import { BadRequestException, Logger, NotFoundException } from "@nestjs/common";
+import { BadRequestException, NotFoundException } from "@nestjs/common";
 import { describe, expect, it, vi } from "vitest";
+import { financeServiceWithIntake } from "../../testing/finance-service";
 import { createInMemoryRepository } from "../../testing/in-memory-repository";
 import { withManager } from "../../testing/with-manager";
-import { londonDate } from "../snapshots/london-date";
-import { FinanceService } from "./finance.service";
 
 const createService = () => {
   const accountRepo = {
@@ -26,7 +25,7 @@ const createService = () => {
     AccountDetail: accountDetailRepo,
     Transaction: transactionRepo,
   });
-  const service = new FinanceService(
+  const service = financeServiceWithIntake(
     accountRepo as any,
     transactionRepo as any,
     accountDetailRepo as any,
@@ -188,7 +187,7 @@ describe("FinanceService", () => {
     const createBankService = (seed: Record<string, unknown>[]) => {
       const bankRepo = createInMemoryRepository(seed);
       const provider = { fetchAccounts: vi.fn().mockResolvedValue([]) };
-      const service = new FinanceService(
+      const service = financeServiceWithIntake(
         {} as any,
         {} as any,
         {} as any,

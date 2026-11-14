@@ -17,11 +17,11 @@ import { LiabilitySignRule1794358050000 } from "../../migrations/LiabilitySignRu
 import { assertSafeTestDatabase } from "../../testing/assertSafeTestDatabase";
 import { resolveDbTestMode } from "../../testing/dbTestMode";
 import { discoverMigrations, type MigrationClass } from "../../testing/discoverMigrations";
+import { financeServiceWithIntake } from "../../testing/finance-service";
 import { accessTokenAad } from "../banking/bank-connection-sync";
 import type { BankProvider } from "../banking/providers/provider.interface";
 import type { BankProviderRegistry } from "../banking/providers/provider.registry";
 import { AccountIntakeService } from "../finance/account-intake.service";
-import { FinanceService } from "../finance/finance.service";
 import { ImportsService } from "../imports/imports.service";
 import { writeOnboardingSnapshot } from "./first-snapshot";
 import { SnapshotsService } from "./snapshots.service";
@@ -529,7 +529,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
         const registry = {
           getProvider: () => ({ fetchAccounts: async () => provided }) as unknown as BankProvider,
         } as unknown as BankProviderRegistry;
-        const finance = new FinanceService(
+        const finance = financeServiceWithIntake(
           ds.getRepository(Account),
           ds.getRepository(Transaction),
           ds.getRepository(AccountDetail),

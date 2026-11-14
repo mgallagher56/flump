@@ -4,7 +4,10 @@ import { ConfigModule, ConfigService } from "@nestjs/config";
 import { Test } from "@nestjs/testing";
 import { getRepositoryToken, TypeOrmModule } from "@nestjs/typeorm";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { AppModule } from "../app.module";
 import { AuthModule } from "../auth/auth.module";
+import { ERASED_ACCOUNT_CHECK } from "../auth/erased-account";
+import { TOKEN_VERIFIER } from "../auth/token-verifier";
 import { typeOrmOptionsFromEnv } from "../config/typeorm.options";
 import { Account } from "../entities/account.entity";
 import { AccountDetail } from "../entities/account-detail.entity";
@@ -43,15 +46,21 @@ import { TaxModule } from "./tax/tax.module";
  * module declares its own repositories and imports instead of leaning on a sibling.
  */
 describe("a missing provider fails at boot", () => {
+  // Guards resolve at compile time, so the AuthGuard needs its verifier to reach the real gap.
+  const verifier = { provide: TOKEN_VERIFIER, useValue: {} };
+
   it("TaxController without TaxService", async () => {
     await expect(
-      Test.createTestingModule({ controllers: [TaxController] }).compile(),
+      Test.createTestingModule({ controllers: [TaxController], providers: [verifier] }).compile(),
     ).rejects.toThrow(/TaxService/);
   });
 
   it("BudgetController without BudgetService", async () => {
     await expect(
-      Test.createTestingModule({ controllers: [BudgetController] }).compile(),
+      Test.createTestingModule({
+        controllers: [BudgetController],
+        providers: [verifier],
+      }).compile(),
     ).rejects.toThrow(/BudgetService/);
   });
 
@@ -60,6 +69,7 @@ describe("a missing provider fails at boot", () => {
       Test.createTestingModule({
         controllers: [UserProfileController],
         providers: [
+          verifier,
           { provide: UserProfileService, useValue: {} },
           { provide: AccountExportService, useValue: {} },
         ],
@@ -86,6 +96,35 @@ describe("a missing provider fails at boot", () => {
   });
 });
 
+/** Modules reachable from `root` through `imports`, dynamic modules followed through `module`. */
+function reachableModules(root: unknown, seen = new Set<unknown>()): Set<unknown> {
+  const moduleClass =
+    root && typeof root === "object" ? (root as { module?: unknown }).module : root;
+  if (typeof moduleClass !== "function" || seen.has(moduleClass)) return seen;
+  seen.add(moduleClass);
+  for (const imported of Reflect.getMetadata("imports", moduleClass) ?? []) {
+    reachableModules(imported, seen);
+  }
+  return seen;
+}
+
+describe("the erased-account port stays wired (BE-04)", () => {
+  // AuthGuard resolves ERASED_ACCOUNT_CHECK lazily and lets requests through when it is absent,
+  // so losing the PrivacyModule import would silently switch the check off.
+  it("AppModule reaches a module that provides and exports ERASED_ACCOUNT_CHECK", () => {
+    const providing = [...reachableModules(AppModule)].filter((m) => {
+      const providers: unknown[] = Reflect.getMetadata("providers", m as object) ?? [];
+      const exportsList: unknown[] = Reflect.getMetadata("exports", m as object) ?? [];
+      const provides = providers.some(
+        (p) =>
+          typeof p === "object" && (p as { provide?: unknown }).provide === ERASED_ACCOUNT_CHECK,
+      );
+      return provides && exportsList.includes(ERASED_ACCOUNT_CHECK);
+    });
+    expect(providing).toEqual([PrivacyModule]);
+  });
+});
+
 describe.skipIf(resolveDbTestMode(process.env) === "skip")("each domain module boots alone", () => {
   const savedEnv = { ...process.env };
 
@@ -93,7 +132,9 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("each domain module b
     const databaseUrl = process.env.TEST_DATABASE_URL as string;
     assertSafeTestDatabase(databaseUrl, process.env);
     process.env.NODE_ENV = "test";
-    process.env.AUTH_DEV_BYPASS = "true";
+    // Real "workos" mode with a placeholder client id; the verifier is stubbed below.
+    delete process.env.AUTH_DEV_BYPASS;
+    process.env.WORKOS_CLIENT_ID = "client_test";
     delete process.env.RAILWAY_ENVIRONMENT;
     process.env.DATABASE_URL = databaseUrl;
     process.env.DB_SSL = "false";
@@ -122,10 +163,19 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("each domain module b
       imports: [
         ConfigModule.forRoot({ isGlobal: true }),
         AuthModule,
-        TypeOrmModule.forRoot({ ...typeOrmOptionsFromEnv(process.env), migrationsRun: false }),
+        TypeOrmModule.forRoot({
+          ...typeOrmOptionsFromEnv(process.env),
+          // No schema work: the boot only needs a connection.
+          migrations: [],
+          migrationsRun: false,
+          retryAttempts: 0,
+        }),
         domainModule,
       ],
-    }).compile();
+    })
+      .overrideProvider(TOKEN_VERIFIER)
+      .useValue({})
+      .compile();
     try {
       for (const token of resolves) expect(moduleRef.get(token, { strict: false })).toBeDefined();
     } finally {
