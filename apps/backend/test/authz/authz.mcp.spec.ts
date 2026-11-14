@@ -69,7 +69,7 @@ describe.skipIf(dbMode === "skip")("authz: /mcp transport (real Postgres)", () =
 
   beforeEach(async () => {
     await truncateAll(h.dataSource);
-    h.resetRateLimits();
+    await h.resetRateLimits();
     patA = await mint(h.tokens.a, "A agent");
     patB = await mint(h.tokens.b, "B agent");
   });

@@ -51,7 +51,7 @@ describe.skipIf(dbMode === "skip")("authz: budget controller (real Postgres)", (
 
   beforeEach(async () => {
     await truncateAll(h.dataSource);
-    h.resetRateLimits();
+    await h.resetRateLimits();
     const created = await h.call("post", "/budget-entries", h.tokens.a, {
       category: "housing",
       name: "A rent",

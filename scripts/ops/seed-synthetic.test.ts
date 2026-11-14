@@ -175,6 +175,7 @@ describe.skipIf(!DB_TESTS_ENABLED)("seed-synthetic (real Postgres, all migration
         if (table === "account_details") continue; // keyed by account id, checked below
         if (table === "liability_sign_backfill") continue; // keyed by account id, no user_id
         if (table === "account_deletion_tombstones") continue; // a keyed hash, no user_id
+        if (table === "rate_limit_buckets") continue; // counters by key, no user_id; emptied
         const { rows } = await client.query(
           `SELECT count(*)::int AS n FROM "${table}" WHERE NOT (user_id = ANY($1::text[]))`,
           [ids],

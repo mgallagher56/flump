@@ -65,7 +65,7 @@ export interface AuthzHarness {
   tokens: { a: string; b: string; stale: string; expired: string; dev: string };
   call(method: HttpMethod, path: string, token?: string, body?: object): request.Test;
   /** Per-user and per-IP limits (tokenMint 5/h, destructive 10/h) would otherwise 429 the matrix. */
-  resetRateLimits(): void;
+  resetRateLimits(): Promise<void>;
   close(): Promise<void>;
 }
 
@@ -132,7 +132,7 @@ export async function bootAuthzHarness(): Promise<AuthzHarness> {
 
   const rateLimitStore = app.get(RateLimitStore);
   const mcpHandler = app.get(McpService).getHttpHandler() as unknown as {
-    failedAuthLimiter: { entries: Map<string, unknown> };
+    failedAuthLimiter: { fallback: { buckets: Map<string, unknown> } };
   };
 
   // auth_time = now: a fresh sign-in, so the recent-login check on destructive routes passes.
@@ -154,11 +154,13 @@ export async function bootAuthzHarness(): Promise<AuthzHarness> {
       if (token) req = req.set("Authorization", `Bearer ${token}`);
       return body ? req.send(body) : req;
     },
-    resetRateLimits() {
+    async resetRateLimits() {
       (rateLimitStore as unknown as { buckets: Map<string, unknown> }).buckets.clear();
-      // /mcp has its own failed-auth limiter (10 failures a minute per IP, cleared at most once
-      // per window), so a test that expects several 401s starts from an empty one.
-      mcpHandler.failedAuthLimiter.entries.clear();
+      // The sensitive buckets and the /mcp failed-auth limiter (10 failures a minute per IP,
+      // cleared at most once per window) live in the shared Postgres store (BE-07), so a test that
+      // expects several 401s starts from an empty table, and from an empty in-memory fallback.
+      await app.get(DataSource).query(`DELETE FROM "rate_limit_buckets"`);
+      mcpHandler.failedAuthLimiter.fallback.buckets.clear();
     },
     async close() {
       await app.close();

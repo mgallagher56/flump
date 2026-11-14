@@ -83,7 +83,7 @@ describe.skipIf(dbMode === "skip")("authz: user-profile controller (real Postgre
     await truncateAll(h.dataSource);
     // Tombstones were truncated: drop the guard's cached "erased" answers with them.
     h.app.get(AccountDeletionService).clearErasedCache();
-    h.resetRateLimits();
+    await h.resetRateLimits();
     lookedUp.length = 0;
     resetSentTo.length = 0;
     deletedLogins.length = 0;

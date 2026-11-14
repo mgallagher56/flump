@@ -64,7 +64,7 @@ describe.skipIf(dbMode === "skip")("authz: tax controller (real Postgres)", () =
 
   beforeEach(async () => {
     await truncateAll(h.dataSource);
-    h.resetRateLimits();
+    await h.resetRateLimits();
     const created = await h.call(
       "post",
       "/tax-records",

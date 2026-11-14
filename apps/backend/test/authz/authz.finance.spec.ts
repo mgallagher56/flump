@@ -59,7 +59,7 @@ describe.skipIf(dbMode === "skip")("authz: finance controller (real Postgres)", 
 
   beforeEach(async () => {
     await truncateAll(h.dataSource);
-    h.resetRateLimits();
+    await h.resetRateLimits();
     const created = await h.call("post", "/accounts", h.tokens.a, {
       name: "A Saver",
       type: "Saving",

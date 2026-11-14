@@ -52,7 +52,11 @@ export function normalizeIpKey(ip: string): string {
 /** Seconds a caller is held off when the store fails during `attempt`. */
 export const FAIL_CLOSED_RETRY_SECONDS = 30;
 
-const errName = (err: unknown) => (err instanceof Error ? err.name : "error");
+/** Logs a store failure by the error's name only: never its message or stack, which may echo a key. */
+const logStoreFailure = (when: string, err: unknown) =>
+  console.error(
+    `MCP failed-auth store failed${when}: ${err instanceof Error ? err.name : "error"}`,
+  );
 
 export class FailedAuthLimiter {
   private readonly window: LimitWindow;
@@ -99,7 +103,7 @@ export class FailedAuthLimiter {
         ? { blocked: false, retryAfterSeconds: 0 }
         : { blocked: true, retryAfterSeconds: d.retryAfterSeconds };
     } catch (err) {
-      console.error(`MCP failed-auth store failed, refusing: ${errName(err)}`);
+      logStoreFailure(", refusing", err);
       return { blocked: true, retryAfterSeconds: FAIL_CLOSED_RETRY_SECONDS };
     }
   }
@@ -112,7 +116,7 @@ export class FailedAuthLimiter {
     try {
       await this.run((s) => s.refund(failKey(normalizeIpKey(rawIp)), this.window, now));
     } catch (err) {
-      console.error(`MCP failed-auth store failed on refund: ${errName(err)}`);
+      logStoreFailure(" on refund", err);
     }
   }
 
@@ -133,7 +137,7 @@ export class FailedAuthLimiter {
         if (marker.allowed) await s.reset(failKey(key), this.window);
       });
     } catch (err) {
-      console.error(`MCP failed-auth store failed on success: ${errName(err)}`);
+      logStoreFailure(" on success", err);
     }
   }
 }
