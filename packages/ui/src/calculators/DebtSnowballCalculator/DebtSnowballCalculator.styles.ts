@@ -144,3 +144,8 @@ export const debtDetails = cva({
 export const debtCta = cva({
   base: { alignSelf: { base: "stretch", sm: "flex-start" }, gap: "2" },
 });
+
+/** The two quiet drawers ("Show details", the explainer) as one group with one even gap. */
+export const debtDrawers = cva({
+  base: { display: "flex", flexDirection: "column", gap: "2", minWidth: "0" },
+});

@@ -142,7 +142,7 @@ describe("UI Calculators", () => {
         screen.getByRole("heading", { name: "When a 0% balance transfer ends" }),
       ).toBeDefined();
       expect(screen.getByText(/Estimated monthly payment/i)).toBeDefined();
-      expect(screen.getByText(/minimum payments only/i)).toBeDefined();
+      expect(screen.getByText(/Left after minimum payments/i)).toBeDefined();
 
       const slider = screen.getByLabelText("Balance on the 0% card");
       fireEvent.change(slider, { target: { value: "3500" } });

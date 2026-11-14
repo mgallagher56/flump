@@ -75,6 +75,12 @@ describe("TakeHomeDeltaPanel", () => {
     expect(screen.queryByText("Unverified estimate")).toBeNull();
   });
 
+  it("leaves out the tax year badge when the caller shows it", () => {
+    renderPanel({ showTaxYearBadge: false });
+    expect(screen.queryByText("As at tax year 2026/27")).toBeNull();
+    expect(screen.getByText("Estimate")).toBeDefined();
+  });
+
   it("shows Unverified estimate, the banner and (not yet confirmed) when unverified", () => {
     renderPanel({
       isUnverifiedEstimate: true,

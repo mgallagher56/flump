@@ -146,9 +146,9 @@ export const EXPLORER_COPY = {
   children: "Children receiving Child Benefit",
   taxYear: "Tax year",
   kpiNextThousand: "Estimated take-home from the next £1,000",
-  kpiNextPound: "Estimated share deducted from the next £1,000",
+  kpiNextThousandSubtext: "The rest goes to tax and other deductions.",
   kpiTaxYear: "Tax year",
-  chartTitle: "Estimated share deducted from the next £1,000, by pay before tax",
+  chartTitle: "Estimated share deducted from the next £1,000, by pay",
   chartXAxis: "Pay before tax",
   /** Drawn at the end of the line (direct label, P10.2), so the title is not repeated. */
   chartLineLabel: "Share deducted",

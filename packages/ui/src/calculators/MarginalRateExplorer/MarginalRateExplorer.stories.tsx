@@ -47,9 +47,11 @@ export const Embedded: Story = {
     await expect(
       canvas.getByRole("heading", {
         level: 2,
-        name: "Estimated share deducted from the next £1,000, by pay before tax",
+        name: "Estimated share deducted from the next £1,000, by pay",
       }),
     ).toBeInTheDocument();
+    // One tax year badge, at the top of the results.
+    await expect(canvas.getAllByText(/^As at tax year/)).toHaveLength(1);
     await userEvent.click(canvas.getByRole("button", { name: "Request an invite" }));
     await expect(args.onSaveAndContinue).toHaveBeenCalledWith(
       expect.objectContaining({ annualIncome: 39_000 }),

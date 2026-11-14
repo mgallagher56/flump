@@ -254,6 +254,10 @@ export const TaxTrapCalculator: FC<TaxTrapCalculatorProps> = ({
 
   const content = (
     <div className={taxTrapContent()}>
+      {/* The tax year sits at the top of the results, in the same place as the pay rise tool. */}
+      <div className={taxTrapBadges()}>
+        <StatusBadge variant="neutral">{asAtTaxYear(before.ratesYear)}</StatusBadge>
+      </div>
       {/* Only when the rates are a fallback year, so a normal year still shows one notice. */}
       {isFallback ? (
         <TaxRatesStatusBanner
@@ -271,11 +275,7 @@ export const TaxTrapCalculator: FC<TaxTrapCalculatorProps> = ({
             takeHomeDown ? TAX_TRAP_COPY.kpiTakeHomeReduction : TAX_TRAP_COPY.kpiTakeHomeChange
           }
           subtext={sacrifice > 0 ? TAX_TRAP_COPY.kpiTakeHomeSubtext : TAX_TRAP_COPY.noContribution}
-          value={
-            <span data-testid="tax-trap-headline">
-              <Money size="lg" value={takeHomeDown ? takeHomeCost : 0} />
-            </span>
-          }
+          value={takeHomeDown ? takeHomeCost : 0}
         />
         <KpiCard
           label={
@@ -289,12 +289,12 @@ export const TaxTrapCalculator: FC<TaxTrapCalculatorProps> = ({
         {ctaLabel(ctaText)} <Icon icon={ArrowRight} size="sm" />
       </Button>
 
-      <p className={taxTrapNote()} data-testid="tax-trap-fact-line">
-        {factLine(threshold)}
-      </p>
-
       <CollapsibleDrawer title={TAX_TRAP_COPY.details} variant="quiet">
         <div className={taxTrapDetails()}>
+          <p className={taxTrapNote()} data-testid="tax-trap-fact-line">
+            {factLine(threshold)}
+          </p>
+
           <Table caption={TAX_TRAP_COPY.factsCaption}>
             <THead>
               <Tr>
@@ -368,17 +368,12 @@ export const TaxTrapCalculator: FC<TaxTrapCalculatorProps> = ({
 
   return (
     <div className={taxTrapRoot()} data-testid="tax-trap-calculator-tool">
-      <div className={taxTrapHeader()}>
-        <div className={taxTrapBadges()}>
-          <StatusBadge variant="neutral">{asAtTaxYear(before.ratesYear)}</StatusBadge>
+      {embedded ? null : (
+        <div className={taxTrapHeader()}>
+          <h2 className={taxTrapTitle()}>{TAX_TRAP_COPY.title}</h2>
+          <p className={taxTrapIntro()}>{TAX_TRAP_COPY.intro}</p>
         </div>
-        {embedded ? null : (
-          <>
-            <h2 className={taxTrapTitle()}>{TAX_TRAP_COPY.title}</h2>
-            <p className={taxTrapIntro()}>{TAX_TRAP_COPY.intro}</p>
-          </>
-        )}
-      </div>
+      )}
 
       <SimulatorSplitLayout
         content={content}

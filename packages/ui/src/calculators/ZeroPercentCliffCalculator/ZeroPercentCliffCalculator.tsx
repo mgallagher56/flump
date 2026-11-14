@@ -41,17 +41,19 @@ export const ZERO_PERCENT_COPY = {
     "Pays off the balance before the deal ends and interest starts, as long as no fees are added.",
   nothingOwed: "No balance to repay",
   nothingOwedSubtext: "There is no balance on the 0% card to pay off.",
-  kpiLeftNothingOwedSubtext: "Nothing is left when the 0% deal ends.",
-  kpiLeft: "Left when the deal ends, minimum payments only",
-  kpiLeftSubtext: "Assumes the minimum payment stays at the amount set by today's balance.",
-  kpiLeftClearedSubtext: "Minimum payments alone would pay it off before the deal ends.",
-  kpiInterest: "Estimated interest, first year after the deal",
-  kpiInterestSubtext: "On the amount left, at the rate you entered, if nothing more were paid.",
+  kpiLeftNothingOwedSubtext: "Nothing is left when the deal ends.",
+  kpiLeft: "Left after minimum payments",
+  kpiLeftSubtext: "At today's minimum payment.",
+  kpiLeftClearedSubtext: "Minimum payments clear it in time.",
+  kpiInterest: "Estimated first-year interest",
+  kpiInterestSubtext: "If nothing more were paid.",
   explainerTitle: "What happens when the 0% deal ends",
   explainer:
     "Any balance left when the 0% deal ends is charged interest at the card's standard rate. Fees, such as a balance transfer fee, are not included here.",
   minimumExplainer:
-    "The minimum payment is taken as 2% of today's balance, or £25 if that is more, each month.",
+    "The minimum payment is taken as 2% of today's balance, or £25 if that is more, each month. It stays at that amount until the deal ends.",
+  interestExplainer:
+    "The interest estimate is for the first year after the deal ends, on the amount left, at the rate you entered.",
   controlsLabel: "0% deal details",
   contentLabel: "Estimated payment",
 } as const;
@@ -219,6 +221,7 @@ export const ZeroPercentCliffCalculator: FC<ZeroPercentCliffCalculatorProps> = (
         <div className={zeroExplainer()}>
           <p>{ZERO_PERCENT_COPY.explainer}</p>
           <p>{ZERO_PERCENT_COPY.minimumExplainer}</p>
+          <p>{ZERO_PERCENT_COPY.interestExplainer}</p>
         </div>
       </CollapsibleDrawer>
 

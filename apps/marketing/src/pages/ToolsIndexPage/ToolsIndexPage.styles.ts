@@ -28,7 +28,8 @@ export const toolCardStyle = css({
   border: "1px solid",
   borderColor: "border",
   borderRadius: "card",
-  p: "6",
+  // The same padding as the web tile (`Card padding="lg"`), so both indexes line up.
+  p: { base: "5", md: "7" },
   textDecoration: "none",
   color: "inherit",
   boxShadow: "card",

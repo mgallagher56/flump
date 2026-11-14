@@ -15,8 +15,10 @@ type Story = StoryObj<typeof TaxTrapCalculator>;
 
 const play: Story["play"] = async ({ canvasElement, args }) => {
   const canvas = within(canvasElement);
-  const headline = canvas.getByTestId("tax-trap-headline");
+  // The headline card is the first outcome card.
+  const headline = canvas.getByTestId("tax-trap-outcomes").children[0] as HTMLElement;
   const headlineBefore = headline.textContent;
+  await expect(canvas.getByText("As at tax year 2026/27")).toBeInTheDocument();
 
   // The table, taper and childcare text sit behind "Show details".
   await userEvent.click(canvas.getByRole("button", { name: TAX_TRAP_COPY.details }));

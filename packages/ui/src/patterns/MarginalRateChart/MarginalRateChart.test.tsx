@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import { MarginalRateChart } from "./MarginalRateChart";
+import { lineLabelSpot, MarginalRateChart } from "./MarginalRateChart";
 import {
   SAMPLE_POINTS,
   SAMPLE_SUMMARY,
@@ -15,7 +15,7 @@ const renderChart = (props: Partial<React.ComponentProps<typeof MarginalRateChar
       steppedZones={SAMPLE_ZONES}
       summary={SAMPLE_SUMMARY}
       thresholds={SAMPLE_THRESHOLDS}
-      title="Estimated share deducted from the next £1,000, by pay before tax"
+      title="Estimated share deducted from the next £1,000, by pay"
       yourPay={39_000}
       {...props}
     />,
@@ -26,7 +26,7 @@ describe("MarginalRateChart", () => {
     renderChart();
     expect(
       screen.getByRole("figure", {
-        name: "Estimated share deducted from the next £1,000, by pay before tax",
+        name: "Estimated share deducted from the next £1,000, by pay",
       }),
     ).toBeDefined();
     expect(screen.getByText(SAMPLE_SUMMARY)).toBeDefined();
@@ -50,6 +50,23 @@ describe("MarginalRateChart", () => {
     expect(screen.getAllByTestId("marginal-rate-stepped-zone")).toHaveLength(1);
   });
 
+  it("places the line label in the right-most gap clear of every vertical line", () => {
+    // A threshold 20px from the right edge: the label moves left of it, with clearance.
+    expect(lineLabelSpot([100, 380], 40, 400, 90)).toEqual({ x: 374, clear: true });
+    // A wide last gap keeps the label at the end of the line.
+    expect(lineLabelSpot([100, 200], 40, 400, 90)).toEqual({ x: 400, clear: true });
+    // No gap wide enough: the end of the plot.
+    expect(lineLabelSpot([60, 90, 120], 40, 140, 90)).toEqual({ x: 140, clear: false });
+  });
+
+  it("can keep the summary for screen readers only", () => {
+    renderChart({ showSummary: false });
+    const figure = screen.getByRole("figure");
+    const summary = document.getElementById(figure.getAttribute("aria-describedby") ?? "");
+    expect(summary?.textContent).toBe(SAMPLE_SUMMARY);
+    expect(summary?.className).not.toContain("textStyle_body.sm");
+  });
+
   it("labels the line, your pay and the stepped zone directly, with no legend", () => {
     const { container } = renderChart();
     expect(screen.getByTestId("marginal-rate-line-label").textContent).toBe("Share deducted");
@@ -60,7 +77,7 @@ describe("MarginalRateChart", () => {
 
   it("does not repeat the title as an axis label", () => {
     renderChart();
-    const title = "Estimated share deducted from the next £1,000, by pay before tax";
+    const title = "Estimated share deducted from the next £1,000, by pay";
     expect(screen.getAllByText(/Estimated share deducted from the next £1,000/)).toHaveLength(1);
     expect(screen.getByRole("heading", { name: title })).toBeDefined();
   });
@@ -112,7 +129,7 @@ describe("MarginalRateChart", () => {
         points={SAMPLE_POINTS}
         summary={SAMPLE_SUMMARY}
         thresholds={SAMPLE_THRESHOLDS.slice(2)}
-        title="Estimated share deducted from the next £1,000, by pay before tax"
+        title="Estimated share deducted from the next £1,000, by pay"
       />,
     );
     expect(screen.getByTestId("marginal-rate-tooltip").textContent).toContain("£50,270");

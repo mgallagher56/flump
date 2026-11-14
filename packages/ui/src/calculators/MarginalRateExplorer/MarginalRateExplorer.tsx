@@ -17,6 +17,7 @@ import { cx } from "../../../styled-system/css";
 import { MarginalRateChart } from "../../patterns/MarginalRateChart/MarginalRateChart";
 import { SimulatorSplitLayout } from "../../patterns/SimulatorSplitLayout/SimulatorSplitLayout";
 import {
+  asAtTaxYear,
   chartSummary,
   EXPLORER_COPY,
   liveTakeHomeMessage,
@@ -32,13 +33,15 @@ import { FormField } from "../../primitives/FormField/FormField";
 import { Icon } from "../../primitives/Icon";
 import { KpiCard } from "../../primitives/KpiCard/KpiCard";
 import { LiveRegion } from "../../primitives/LiveRegion/LiveRegion";
-import { formatMoney, Num } from "../../primitives/Money/Money";
+import { formatMoney } from "../../primitives/Money/Money";
 import { Select } from "../../primitives/Select/Select";
 import { SliderField } from "../../primitives/SliderField/SliderField";
+import { StatusBadge } from "../../primitives/StatusBadge/StatusBadge";
 import { Switch } from "../../primitives/Switch/Switch";
 import { ctaLabel } from "../ctaLabel";
 import {
   explorerAction,
+  explorerBadges,
   explorerCard,
   explorerContent,
   explorerControls,
@@ -159,8 +162,6 @@ export interface MarginalRateExplorerProps {
   unverifiedInPageNotice?: boolean;
   className?: string;
 }
-
-const pctDigits = (n: number) => (Number.isInteger(n) ? 0 : 1);
 
 /** Controlled "next £1,000" explorer: what a pay rise leaves after tax, NI, student loan and the HICBC. */
 export const MarginalRateExplorer: FC<MarginalRateExplorerProps> = ({
@@ -448,29 +449,25 @@ export const MarginalRateExplorer: FC<MarginalRateExplorerProps> = ({
 
   const content = (
     <div className={explorerContent()}>
-      {/* Scenario outcomes, not saved figures, so plain outcome cards rather than a KpiStrip. */}
+      {/* The tax year sits at the top of the results, in the same place as the tax trap tool. */}
+      <div className={explorerBadges()}>
+        <StatusBadge variant="neutral">{asAtTaxYear(delta.before.ratesYear)}</StatusBadge>
+      </div>
+      {/* Scenario outcome, not a saved figure, so a plain outcome card rather than a KpiStrip. The
+          share deducted is the rest of the £1,000, so it is a caption, not a second card. */}
       <div className={explorerOutcomes()} data-density="compact" data-testid="explorer-outcomes">
         <KpiCard
           label={EXPLORER_COPY.kpiNextThousand}
+          subtext={EXPLORER_COPY.kpiNextThousandSubtext}
           value={delta.deltaTakeHome}
           valueFormat={{ fractionDigits: takeHomeDigits }}
-        />
-        <KpiCard
-          label={EXPLORER_COPY.kpiNextPound}
-          value={
-            <Num
-              fractionDigits={pctDigits(delta.effectiveMarginalRatePct)}
-              kind="percent"
-              size="lg"
-              value={delta.effectiveMarginalRatePct}
-            />
-          }
         />
       </div>
       {cta}
       <MarginalRateChart
         headingLevel={sectionHeading}
         points={points}
+        showSummary={!inRange}
         steppedZones={zones}
         summary={summary}
         thresholds={thresholds}
@@ -496,6 +493,7 @@ export const MarginalRateExplorer: FC<MarginalRateExplorerProps> = ({
         }
         ratesYear={delta.before.ratesYear}
         showNotice={showNotice}
+        showTaxYearBadge={false}
         unverifiedInPageNotice={unverifiedInPageNotice}
         takeHome={delta.deltaTakeHome}
       />
