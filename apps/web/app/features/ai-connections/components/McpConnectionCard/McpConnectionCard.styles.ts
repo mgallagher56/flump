@@ -56,7 +56,27 @@ export const tokenValue = cva({
 
 /** The single muted line at the foot of the AI connections card. */
 export const setupNote = cva({
-  base: { textStyle: "body.sm", color: "text.muted", margin: 0 },
+  base: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "3",
+    textStyle: "body.sm",
+    color: "text.secondary",
+  },
+});
+
+export const setupSteps = cva({
+  base: { margin: 0, paddingInlineStart: "5", display: "flex", flexDirection: "column", gap: "2" },
+});
+
+export const setupLink = cva({
+  base: {
+    color: "primary",
+    fontWeight: "semibold",
+    textDecoration: "underline",
+    textUnderlineOffset: "2px",
+    alignSelf: "flex-start",
+  },
 });
 
 /** The tokens, one row each. Rows stack on phones and never scroll sideways. */

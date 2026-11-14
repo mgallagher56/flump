@@ -17,7 +17,8 @@ export const tabGrid = cva({
   base: {
     display: "grid",
     gridTemplateColumns: { base: "minmax(0, 1fr)", lg: "repeat(2, minmax(0, 1fr))" },
-    alignItems: "start",
+    // Cards in a row share a height, so the two columns line up with even gaps.
+    alignItems: "stretch",
     gap: "6",
     minWidth: 0,
   },
