@@ -57,7 +57,8 @@ export const personaTabs = cva({
     maxWidth: "100%",
     "& [data-tabs-scroller]": { overflowX: "visible", contain: "none", maskImage: "none" },
     "& [role=tablist]": { display: "flex", flexWrap: "wrap", maxWidth: "100%" },
-    "& [role=tab]": { whiteSpace: "normal", textAlign: "center", minWidth: 0 },
+    // A tab never grows past its row: a long label wraps inside it instead of overflowing.
+    "& [role=tab]": { whiteSpace: "normal", textAlign: "center", minWidth: 0, maxWidth: "100%" },
   },
 });
 
