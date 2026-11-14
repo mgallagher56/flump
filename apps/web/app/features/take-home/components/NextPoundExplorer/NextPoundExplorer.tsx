@@ -64,7 +64,13 @@ export interface NextPoundExplorerProps {
 /** "The next £1,000" tool for the take-home ScenarioZone. */
 export const NextPoundExplorer: FC<NextPoundExplorerProps> = ({ scenario }) => (
   <div className={nextPoundRoot()} data-testid="next-pound-explorer" id="next-pound-explorer">
-    <MarginalRateExplorer headingLevel="h3" values={scenario.values} onChange={scenario.set} />
+    {/* Always inside a ScenarioZone or a page that shows the notice, so the panel leaves it out. */}
+    <MarginalRateExplorer
+      headingLevel="h3"
+      showNotice={false}
+      values={scenario.values}
+      onChange={scenario.set}
+    />
   </div>
 );
 

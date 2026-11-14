@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { describe, expect, it, vi } from "vitest";
-import { TaxWidget, type TaxWidgetProps } from "./TaxWidget";
+import { TAX_PLANNER_HREF, TAX_WIDGET_COPY, TaxWidget, type TaxWidgetProps } from "./TaxWidget";
 
 // The global test setup stubs Link to its children; these tests need real anchors.
 vi.mock("react-router", async () => await vi.importActual("react-router"));
@@ -60,5 +60,52 @@ describe("<TaxWidget />", () => {
     const headings = screen.getAllByRole("heading");
     expect(headings).toHaveLength(1);
     expect(headings[0]?.textContent).toBe("Self Assessment");
+  });
+
+  describe("next £1,000 facts (E25-T14)", () => {
+    const marginal: NonNullable<TaxWidgetProps["data"]["marginal"]> = {
+      nextThousandDeductedPct: 42,
+      takeHomeFromNextThousand: 580,
+      ratesYear: "2026/27",
+      isUnverifiedEstimate: true,
+      nextThreshold: {
+        kind: "higherRate",
+        band: { name: "Higher", rate: 0.4 },
+        grossAt: 50270,
+        distance: 2270,
+      },
+    };
+
+    it("shows the engine's facts with the as-at year, and links to the pay planner", () => {
+      renderWidget({ ...data, marginal });
+      const block = document.querySelector("[data-testid=tax-widget-marginal]") as HTMLElement;
+      expect(block.textContent).toContain("As at tax year 2026/27");
+      expect(block.textContent).toContain("Unverified estimate");
+      expect(block.textContent).toContain("£580");
+      expect(block.textContent).toContain("42%");
+      expect(block.textContent).toContain(
+        "Higher rate (40%) at £50,270 gross pay, £2,270 above your pay",
+      );
+      expect(
+        screen.getByRole("link", { name: TAX_WIDGET_COPY.plannerLink }).getAttribute("href"),
+      ).toBe(TAX_PLANNER_HREF);
+    });
+
+    it("says Estimate once the figures are signed off", () => {
+      renderWidget({ ...data, marginal: { ...marginal, isUnverifiedEstimate: false } });
+      const block = document.querySelector("[data-testid=tax-widget-marginal]") as HTMLElement;
+      expect(block.textContent).toContain("Estimate");
+      expect(block.textContent).not.toContain("Unverified estimate");
+    });
+
+    it("leaves the threshold row out when none lies above", () => {
+      renderWidget({ ...data, marginal: { ...marginal, nextThreshold: null } });
+      expect(screen.queryByText(TAX_WIDGET_COPY.nextThreshold)).toBeNull();
+    });
+
+    it("shows nothing about the next £1,000 when the facts are unknown", () => {
+      renderWidget({ ...data, marginal: null });
+      expect(document.querySelector("[data-testid=tax-widget-marginal]")).toBeNull();
+    });
   });
 });

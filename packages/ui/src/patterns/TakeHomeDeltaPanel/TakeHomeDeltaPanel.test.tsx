@@ -89,7 +89,12 @@ describe("TakeHomeDeltaPanel", () => {
     for (const cell of cells) expect(cell.className).toMatch(/tabular-nums|fv-num_tabular/);
   });
 
-  it("always renders the guidance notice and the fallback banner when rates are older", () => {
+  it("leaves the guidance notice to the surrounding zone when asked", () => {
+    renderPanel({ showNotice: false });
+    expect(screen.queryByTestId("projection-notice")).toBeNull();
+  });
+
+  it("renders the guidance notice by default and the fallback banner when rates are older", () => {
     renderPanel({ isFallback: true, calendarYear: "2027/28" });
     expect(screen.getByTestId("projection-notice")).toBeDefined();
     expect(screen.getByText(/Using 2026\/27 rates/)).toBeDefined();

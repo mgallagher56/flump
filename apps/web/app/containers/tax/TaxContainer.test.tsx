@@ -190,8 +190,13 @@ describe("TaxContainer & Calculation Tools", () => {
       /Estimate for \d{4}\/\d{2}, based on the figures you entered/,
     )[0];
     expect(note.closest('[role="status"]')).toBeNull();
-    expect(screen.queryAllByRole("status")).toHaveLength(0);
-    const headingTexts = screen.getAllByRole("heading").map((h) => h.textContent ?? "");
+    // The pay planner's ScenarioZone has its own live regions and "next £1,000" headings.
+    const outsidePlanner = (el: HTMLElement) => !el.closest("#tax-pay-planner");
+    expect(screen.queryAllByRole("status").filter(outsidePlanner)).toHaveLength(0);
+    const headingTexts = screen
+      .getAllByRole("heading")
+      .filter(outsidePlanner)
+      .map((h) => h.textContent ?? "");
     expect(headingTexts.some((t) => t.includes("£"))).toBe(false);
   });
 
