@@ -1,9 +1,0 @@
-// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
-
-exports[`<FlpCard /> > it renders a ChakraUI Card component with title as expected 1`] = `
-<div
-  class="pos_relative trs_border-color_0.15s_ease,_box-shadow_0.15s_ease bd_1px_solid bd-c_border bdr_xl bg-c_surface c_text.primary bx-sh_card p_4 md:p_6 d_flex flex-d_column [&[data-interactive='true']:hover]:bd-c_primary [&[data-interactive='true']:hover]:bx-sh_cardHover"
-  data-variant="desktop"
-  title="FLPCard"
-/>
-`;

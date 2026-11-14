@@ -17,7 +17,7 @@ The five files:
 - `ComponentName/ComponentName.test.tsx` (Vitest unit test)
 - `ComponentName/index.ts` (Barrel export)
 
-Direction of travel (E15 phase 3 target, not yet enforced): web pages move from the legacy `FLP*` layer and inline styles to `@repo/ui` primitives and patterns.
+Direction of travel (E15 phase 3 target, not yet enforced): web pages move from inline styles to `@repo/ui` primitives and patterns. The legacy `FLP*` layer (`apps/web/app/components/core`) has been removed and `architecture.laws.test.ts` forbids it returning.
 
 ## 2. DESIGN TOKEN & STYLING LAWS
 
@@ -38,7 +38,7 @@ Direction of travel (E15 phase 3 target, not yet enforced): web pages move from 
 - **Saved vs Scenario:** Headline figures and `<KpiStrip>`s read saved loader data only; what-if inputs live in a `<ScenarioZone>` driven by `useScenarioState`, and scenario inputs never write to saved data (no "apply", no localStorage, no money in URLs) and `surface.hero` never goes on a scenario outcome.
 - **No Uncollapsed Raw Schedules:** Any table exceeding 8 rows (Amortisation schedules, 12-month ledgers, multi-year tax tables) must live inside a `<CollapsibleDrawer>` or secondary tab.
 - **Number Budget and One Notice:** Each view keeps to the number budget and shows one headline figure, and each surface carries at most one quiet notice, as set out in principles P1, P2 and P4 of [`docs/design/e16-polish/PLAN.md`](./docs/design/e16-polish/PLAN.md).
-- **One Tabs Component:** Tabbed views use the single tabs component from `@repo/ui` (today `SegmentedTabs`; E16 PR 2 consolidates it as `Tabs`); no new `FLPTabs` or hand-built tab rows.
+- **One Tabs Component:** Tabbed views use the single tabs component from `@repo/ui` (today `SegmentedTabs`; E16 PR 2 consolidates it as `Tabs`); no hand-built tab rows.
 - **Page Template:** Every app page renders through `<PageBody>` (content width `sizes.page.max`, `spacing.page.*` gutters and gaps) and shows its headline figure in `<HeroFigure>`, the only place `surface.hero` and `numeric.hero` appear (E16 P2 and P13). Direction of travel: `PageBody` and `HeroFigure` land with E16 PR 2 and pages adopt them in the page PRs; until then this is not enforced and existing `surface.hero` uses (KpiCard `tone="hero"` and others) stay.
 - **Type and Motion Come From Tokens:** Font sizes come from textStyles or the `fontSizes` scale, weights stop at 700, and transitions use the `durations` and `easings` tokens; `bun scripts/check-style-literals.ts` ratchets raw values (and inline `style=` in the apps) down.
 

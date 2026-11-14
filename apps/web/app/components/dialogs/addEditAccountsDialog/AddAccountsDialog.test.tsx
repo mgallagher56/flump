@@ -44,7 +44,7 @@ describe("<AddAccountDialogBtn", () => {
 
     await user.type(nameInput, "Starling");
 
-    // Since FLPSelect is structured as a combobox or select, we just click the Confirm button
+    // The account type keeps its default, so we just click the Confirm button
     // which triggers submitAction.
     const addAccountBtn = getAllByText("addAccount")[2];
     expect(addAccountBtn).toBeDefined();
