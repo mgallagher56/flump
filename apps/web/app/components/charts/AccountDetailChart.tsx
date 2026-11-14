@@ -81,8 +81,8 @@ const AccountDetailChart: FC<AccountDetailChartProps> = ({
       new Intl.NumberFormat("en-GB", {
         style: "currency",
         currency: "GBP",
-        notation: "compact",
-        maximumSignificantDigits: 3,
+        // Whole pounds: a compact "£38.1k" hides the round step the ticks are on.
+        maximumFractionDigits: 0,
       }),
     [],
   );

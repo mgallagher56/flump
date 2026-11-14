@@ -18,6 +18,7 @@ import {
   isLiabilityType,
   STUDENT_LOAN_PLAN_OPTIONS,
 } from "~/containers/accounts/utils";
+import { TYPE_LABEL } from "~/features/accounts/components/AccountsGroupList";
 import { ConfirmDialog } from "~/features/feedback/components/ConfirmDialog";
 import { useFetcherOutcome } from "~/features/feedback/hooks/useFetcherOutcome";
 import type { loader } from "~/routes/app.accounts._index";
@@ -307,7 +308,10 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
               <Select
                 {...controlProps(field)}
                 name="type"
-                options={accountTypeArray.map((type) => ({ value: type, label: type }))}
+                options={accountTypeArray.map((type) => ({
+                  value: type,
+                  label: TYPE_LABEL[type] ?? type,
+                }))}
                 value={formInput.type?.[0] ?? ""}
                 onChange={onChangeTypeInput}
               />
