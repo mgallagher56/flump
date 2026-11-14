@@ -13,14 +13,14 @@ export const optionsStack = cva({
   base: { display: "flex", flexDirection: "column", gap: "6", paddingTop: "2" },
 });
 
-/** Switches fill the zone width: 1 column on a phone, 4 on a wide screen, so each switch sits near its label. */
+/** Switches fill the zone width: 1 column on a phone, 4 on a wide screen, near their labels. */
 export const optionItems = cva({
   base: {
     display: "grid",
     gridTemplateColumns: {
       base: "1fr",
       md: "repeat(2, minmax(0, 1fr))",
-      lg: "repeat(3, minmax(0, 1fr))",
+      lg: "repeat(4, minmax(0, 1fr))",
     },
     columnGap: "8",
     rowGap: "2",
