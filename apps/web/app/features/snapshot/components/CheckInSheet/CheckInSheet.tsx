@@ -10,7 +10,8 @@ import {
 } from "@repo/ui";
 import { type FC, useEffect, useMemo, useState } from "react";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
-import { statusText } from "../../snapshotCopy";
+import { buildCheckInSummary, type CheckInAccountInput } from "../../checkInModel";
+import { CHECK_IN_COPY, statusText } from "../../snapshotCopy";
 import {
   type AccountDetailInput,
   addMonths,
@@ -19,9 +20,13 @@ import {
   compareMonths,
   formatMonth,
   type MonthKey,
-  type SnapshotAccountInput,
 } from "../../snapshotModel";
+import { useBelowMd } from "../../useBelowMd";
+import { useCheckIn } from "../../useCheckIn";
 import type { SaveSnapshot } from "../../useSaveSnapshot";
+import { CheckInCard } from "../CheckInCard";
+import { CheckInList } from "../CheckInList";
+import { CheckInSummary } from "../CheckInSummary";
 import {
   accountList,
   accountName,
@@ -39,7 +44,8 @@ export type CheckInMode = "checkIn" | "backfill";
 export interface CheckInSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  accounts: readonly SnapshotAccountInput[];
+  /** Loans and mortgages may carry their rate, payment, term and fixed-rate end. */
+  accounts: readonly CheckInAccountInput[];
   accountDetails: readonly AccountDetailInput[];
   /** The current Europe/London month. */
   currentMonth: MonthKey;
@@ -61,12 +67,76 @@ const MONTH_OPTIONS = Array.from({ length: 12 }, (_, i) => ({
 }));
 
 /**
- * The monthly check-in (E30). Lists every account with last month's value prefilled; connected
- * accounts are marked as filled in by the bank sync, and an account with no value this month says
- * when it was last updated. Saving writes saved data (`PUT /snapshots/:month`); an empty field is
- * skipped, so a partial save is fine. In back-fill mode the same list records an earlier month.
+ * The monthly check-in. "checkIn" goes account by account (R2-5): one card per account on a phone,
+ * one list from md, each answer saved as it is given. "backfill" keeps the list form for an
+ * earlier month.
  */
-export const CheckInSheet: FC<CheckInSheetProps> = ({
+export const CheckInSheet: FC<CheckInSheetProps> = (props) =>
+  props.mode === "backfill" ? <ListFormSheet {...props} /> : <MonthlyCheckInSheet {...props} />;
+
+/**
+ * The account-by-account check-in for the current month. Each answer is saved quietly as it is
+ * given; saved data reloads once, when the sheet closes.
+ */
+const MonthlyCheckInSheet: FC<CheckInSheetProps> = ({
+  open,
+  onOpenChange,
+  accounts,
+  accountDetails,
+  currentMonth,
+  onSave,
+  basis,
+}) => {
+  const checkIn = useCheckIn({ accounts, accountDetails, month: currentMonth, open, onSave });
+  const phone = useBelowMd();
+  const { steps, answers, finished } = checkIn;
+  const summary = useMemo(
+    () =>
+      finished
+        ? buildCheckInSummary(steps, answers, accounts, accountDetails, currentMonth, basis)
+        : null,
+    [finished, steps, answers, accounts, accountDetails, currentMonth, basis],
+  );
+
+  const handleOpenChange = (next: boolean) => {
+    if (!next && checkIn.takeDirty()) onSave.refresh?.();
+    onOpenChange(next);
+  };
+
+  return (
+    <Sheet
+      description={CHECK_IN_COPY.description}
+      id="snapshot-check-in"
+      onOpenChange={handleOpenChange}
+      open={open}
+      side="right"
+      title={`Monthly check-in: ${formatMonth(currentMonth)}`}
+    >
+      {steps.length === 0 ? (
+        <p className={checkInIntro()}>{CHECK_IN_COPY.empty}</p>
+      ) : summary ? (
+        <CheckInSummary
+          month={currentMonth}
+          onChangeBalance={checkIn.reopen}
+          onDone={() => handleOpenChange(false)}
+          summary={summary}
+        />
+      ) : phone ? (
+        <CheckInCard checkIn={checkIn} />
+      ) : (
+        <CheckInList checkIn={checkIn} />
+      )}
+    </Sheet>
+  );
+};
+
+/**
+ * The list form (E30), kept for back-fill. Lists every account with that month's value
+ * prefilled; connected accounts are marked as filled in by the bank sync, and an account with no
+ * value that month says when it was last updated. Saving writes saved data
+ * (`PUT /snapshots/:month`); an empty field is skipped, so a partial save is fine.
+ */
+const ListFormSheet: FC<CheckInSheetProps> = ({
   open,
   onOpenChange,
   accounts,

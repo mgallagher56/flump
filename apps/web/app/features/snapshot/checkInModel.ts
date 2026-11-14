@@ -1,10 +1,13 @@
 import {
+  calculateCheckInBalance,
   categorizeAccountType,
   isLiabilityCategory,
-  projectAmortisedBalance,
+  type NetWorthBasis,
 } from "@flump/finance-engine";
 import {
   type AccountDetailInput,
+  addMonths,
+  buildSnapshotHistory,
   compareMonths,
   formatMonth,
   type MonthKey,
@@ -17,6 +20,13 @@ import {
  * order, the calculated figure for loans with a known rate and payment, and the payloads. Every
  * write goes through the existing `PUT /snapshots/:month` upsert.
  */
+
+/**
+ * Send each value's `source` with the save (`PUT /snapshots/:month` accepts it, and checks a
+ * `calculated` value against the engine to the penny). An older backend that rejects `source`
+ * gets the same save again without it (see `withoutSource`).
+ */
+export const CHECK_IN_SENDS_SOURCE = true;
 
 /** How a check-in figure was given. Stored as the snapshot row's `source`. */
 export type CheckInSource = "manual" | "confirmed" | "calculated";
@@ -79,8 +89,6 @@ export const CHECK_IN_TYPE_ORDER: readonly string[] = [
   "Student Loan",
 ];
 
-const CALCULABLE_TYPES = new Set(["Mortgage", "Loan"]);
-
 const MONTH_RE = /^(\d{4})-(0[1-9]|1[0-2])$/;
 
 const monthIndex = (month: MonthKey): number => {
@@ -135,25 +143,14 @@ export function calculateBalance(
   base: { value: number; month: MonthKey } | null,
   month: MonthKey,
 ): CalculatedFigure | null {
-  if (!CALCULABLE_TYPES.has(String(account.type ?? ""))) return null;
-  const rate = asNumber(account.interestRate);
-  const payment = asNumber(account.monthlyContribution);
-  if (rate === null || rate < 0 || payment === null || payment <= 0 || !base) return null;
-  const months = monthIndex(month) - monthIndex(base.month);
-  if (!Number.isFinite(months) || months < 1) return null;
-  const baseValue = Math.abs(base.value);
-  return {
-    value: projectAmortisedBalance({
-      balanceGbp: baseValue,
-      interestRateApr: rate,
-      monthlyPaymentGbp: payment,
-      months,
-    }),
-    baseValue,
-    baseMonth: base.month,
-    interestRate: rate,
-    monthlyPayment: payment,
-  };
+  // The engine's rule, shared with the backend's check of a `calculated` value.
+  return calculateCheckInBalance({
+    type: account.type,
+    interestRate: account.interestRate,
+    monthlyPayment: account.monthlyContribution,
+    base,
+    month,
+  });
 }
 
 /**
@@ -201,7 +198,10 @@ export function buildCheckInSteps(
     .map(({ account }) => {
       const accountId = String(account.id).toLowerCase();
       const type = String(account.type ?? "other");
-      const isLiability = isLiabilityCategory(categorizeAccountType(type));
+      // A student loan is stored as a negative amount owed like any other debt, so the check-in
+      // shows and sends it as the positive amount owed (the backend signs it by type).
+      const category = categorizeAccountType(type);
+      const isLiability = isLiabilityCategory(category) || category === "studentLoans";
       const rows = rowsFor(accountId, details);
       const atMonth = rows.find((r) => r.month === month) ?? null;
       const before = rows.filter((r) => compareMonths(r.month, month) < 0).at(-1) ?? null;
@@ -312,6 +312,130 @@ export function calculatedExplain(c: CalculatedFigure): string {
 /** The statement prompt's words. Plain, no alarm. */
 export function statementPromptText(p: StatementPrompt): string {
   return p.kind === "fixedRateEnded"
-    ? `Your fixed rate ended in ${formatMonth(p.endedMonth)}, so the rate may have changed. Worth checking this against a statement.`
+    ? `Your fixed rate ended in ${formatMonth(p.endedMonth)}, so the rate may have changed. Worth checking it against a statement.`
     : "It has been a year since you entered this balance yourself. Worth checking it against a statement.";
+}
+
+/** What a step holds for the month: this check-in's answer, else what was already recorded. */
+export interface StepFigure {
+  value: number;
+  source: CheckInSource | null;
+  /** Answered in this check-in (not recorded before it opened). */
+  fromSession: boolean;
+}
+
+const KNOWN_SOURCES = new Set<string>(["manual", "confirmed", "calculated"]);
+
+export function stepFigure(
+  step: CheckInStep,
+  answer: CheckInValue | null | undefined,
+): StepFigure | null {
+  if (answer) return { value: answer.value, source: answer.source, fromSession: true };
+  if (!step.recorded) return null;
+  const source = step.recorded.source;
+  return {
+    value: step.recorded.value,
+    source: source && KNOWN_SOURCES.has(source) ? (source as CheckInSource) : null,
+    fromSession: false,
+  };
+}
+
+export type DoneKind = "updated" | "noChange" | "calculated";
+
+const samePence = (a: number, b: number) => Math.round(a * 100) === Math.round(b * 100);
+
+/**
+ * How a done step reads. An answer from this check-in reads by its source. A figure recorded
+ * before (whose source may not be stored yet) reads as No change when it repeats last month.
+ */
+export function doneKind(step: CheckInStep, figure: StepFigure): DoneKind {
+  if (figure.source === "calculated") return "calculated";
+  if (figure.source === "confirmed") return "noChange";
+  if (figure.fromSession) return "updated";
+  return step.lastValue !== null && samePence(figure.value, step.lastValue)
+    ? "noChange"
+    : "updated";
+}
+
+export interface CheckInChange {
+  accountId: string;
+  name: string;
+  /** As the user sees it: debts positive. */
+  value: number;
+  calculated: boolean;
+}
+
+export interface CheckInSummary {
+  /** Accounts whose figure differs from last month, in check-in order. */
+  changed: CheckInChange[];
+  /** Net worth for the check-in month under the user's basis, from the saved values. */
+  netWorth: number | null;
+  /** Change on the month before, or null with nothing to compare. */
+  change: number | null;
+  previousMonth: MonthKey;
+}
+
+/**
+ * The end-of-check-in summary: what changed, and net worth against last month under the user's
+ * basis. The answers are merged into the saved history the way the backend stores them (debts
+ * negative), so the figure matches the history page once it reloads.
+ */
+export function buildCheckInSummary(
+  steps: readonly CheckInStep[],
+  answers: Readonly<Record<string, CheckInValue>>,
+  accounts: readonly SnapshotAccountInput[],
+  details: readonly AccountDetailInput[],
+  month: MonthKey,
+  basis: NetWorthBasis,
+): CheckInSummary {
+  const changed: CheckInChange[] = [];
+  for (const step of steps) {
+    const figure = stepFigure(step, answers[step.accountId]);
+    if (!figure) continue;
+    if (step.lastValue !== null && samePence(figure.value, step.lastValue)) continue;
+    changed.push({
+      accountId: step.accountId,
+      name: step.name,
+      value: figure.value,
+      calculated: figure.source === "calculated",
+    });
+  }
+  const [year, monthNum] = month.split("-").map(Number) as [number, number];
+  const answered = new Set(Object.keys(answers));
+  const owed = new Map(steps.map((s) => [s.accountId, s.isLiability]));
+  const merged: AccountDetailInput[] = [
+    ...(details ?? []).filter((d) => {
+      const id = String(d.accountId ?? d.account_id ?? "").toLowerCase();
+      return !(answered.has(id) && Number(d.year) === year && Number(d.month) === monthNum);
+    }),
+    ...Object.values(answers).map((a) => ({
+      accountId: a.accountId,
+      year,
+      month: monthNum,
+      value: owed.get(a.accountId) ? -Math.abs(a.value) : a.value,
+    })),
+  ];
+  const history = buildSnapshotHistory(accounts, merged, month, basis);
+  const previousMonth = addMonths(month, -1);
+  const now = history.series.find((p) => p.month === month) ?? null;
+  const before = history.series.find((p) => p.month === previousMonth) ?? null;
+  return {
+    changed,
+    netWorth: now ? now.netWorth : null,
+    change: now && before ? now.netWorth - before.netWorth : null,
+    previousMonth,
+  };
+}
+
+/** The same payload with every `source` removed, for a backend that does not accept it yet. */
+export function withoutSource(payload: SnapshotPayload): SnapshotPayload {
+  return {
+    ...payload,
+    values: payload.values.map(({ accountId, value }) => ({ accountId, value })),
+  };
+}
+
+/** True when the payload carries a `source` on any value. */
+export function hasSource(payload: SnapshotPayload): boolean {
+  return payload.values.some((v) => v.source !== undefined);
 }

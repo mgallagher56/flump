@@ -70,3 +70,97 @@ export function statusText(
       return "No balance recorded yet";
   }
 }
+
+/**
+ * The account-by-account check-in (R2-5). The same words on a phone card and in the desktop
+ * list. Nothing grades a balance or the person: "Updated", "No change" and "Calculated" are
+ * statements of how a figure was given.
+ */
+export const CHECK_IN_COPY = {
+  description: "Update each balance or keep last month's figure. Each one saves as you go.",
+  update: "Update",
+  noChange: "No change",
+  keep: "Keep this figure",
+  enterDifferent: "Enter a different figure",
+  calculated: "Calculated",
+  rest: "No change to the rest",
+  change: "Change",
+  back: "Back",
+  next: "Next",
+  saving: "Saving…",
+  newBalance: "New balance",
+  owedNow: "Amount owed now",
+  stepError: "We could not save this balance. Nothing has changed. Try again.",
+  restError: "We could not save these balances. Nothing has changed. Try again.",
+  tryAgain: "Try again",
+  whatChanged: "What changed",
+  showAll: "Show all",
+  done: "Done",
+  changeBalance: "Change a balance",
+  empty: "Add an account first, then its balance appears here.",
+} as const;
+
+/** "£3,360", or "£3,412.50" when the figure has pence (a true minus when negative). */
+export function checkInMoney(value: number): string {
+  const pence = Math.round(Math.abs(value) * 100) % 100 !== 0;
+  const body = new Intl.NumberFormat("en-GB", {
+    style: "currency",
+    currency: "GBP",
+    minimumFractionDigits: pence ? 2 : 0,
+    maximumFractionDigits: pence ? 2 : 0,
+  }).format(Math.abs(value));
+  return value < 0 ? `−${body}` : body;
+}
+
+/** A calculated figure is read in whole pounds: "£185,447". */
+export function checkInWholePounds(value: number): string {
+  return gbp(0).format(Math.round(value));
+}
+
+/** "3 of 8". */
+export function checkInProgress(position: number, total: number): string {
+  return `${position} of ${total}`;
+}
+
+/** Last month's figure: "October 2026: £3,360", the saved balance, or no figure yet. */
+export function lastFigureText(lastValue: number | null, lastMonth: MonthKey | null): string {
+  if (lastValue === null) return "No balance recorded yet";
+  if (lastMonth === null) return `Saved balance: ${checkInMoney(lastValue)}`;
+  return `${formatMonth(lastMonth)}: ${checkInMoney(lastValue)}`;
+}
+
+/** A done step: "Updated £3,400", "No change" or "Calculated £185,447". */
+export function doneText(kind: "updated" | "noChange" | "calculated", value: number): string {
+  if (kind === "noChange") return CHECK_IN_COPY.noChange;
+  if (kind === "calculated") return `${CHECK_IN_COPY.calculated} ${checkInWholePounds(value)}`;
+  return `Updated ${checkInMoney(value)}`;
+}
+
+/** "Check-in saved for November 2026." */
+export function checkInSavedText(month: MonthKey): string {
+  return `Check-in saved for ${formatMonth(month)}.`;
+}
+
+/** "No balances changed since October 2026." */
+export function noBalancesChangedText(since: MonthKey): string {
+  return `No balances changed since ${formatMonth(since)}.`;
+}
+
+/**
+ * "Net worth: £231,400, up £1,250 on October 2026." The same sentence in both directions (R1);
+ * with nothing to compare it states the figure alone.
+ */
+export function checkInNetWorthText(
+  netWorth: number,
+  change: number | null,
+  since: MonthKey,
+): string {
+  const whole = Math.round(netWorth);
+  // A true minus sign on a negative total (copy guide 4.1).
+  const total = whole < 0 ? `−${gbp(0).format(-whole)}` : gbp(0).format(whole);
+  if (change === null) return `Net worth: ${total}.`;
+  const rounded = Math.round(change);
+  if (rounded === 0) return `Net worth: ${total}, the same as ${formatMonth(since)}.`;
+  const direction = rounded > 0 ? "up" : "down";
+  return `Net worth: ${total}, ${direction} ${gbp(0).format(Math.abs(rounded))} on ${formatMonth(since)}.`;
+}

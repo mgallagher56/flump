@@ -1,7 +1,15 @@
 import { describe, expect, it } from "vitest";
 import {
+  CHECK_IN_COPY,
+  checkInMoney,
+  checkInNetWorthText,
+  checkInProgress,
+  checkInSavedText,
+  doneText,
   formatSignedChange,
+  lastFigureText,
   netWorthChangeSentence,
+  noBalancesChangedText,
   SAVE_ERROR_TOAST,
   savedToast,
   spokenChange,
@@ -40,5 +48,48 @@ describe("snapshot copy", () => {
     for (const s of ["connected", "recorded", "notUpdated", "noHistory"] as const) {
       expect(statusText(s, "2026-11", "2026-10")).not.toMatch(/overdue|behind|missed|streak/i);
     }
+  });
+});
+
+describe("check-in copy", () => {
+  it("states last month's figure, the saved balance or no figure", () => {
+    expect(lastFigureText(3360, "2026-10")).toBe("October 2026: £3,360");
+    expect(lastFigureText(3412.5, "2026-10")).toBe("October 2026: £3,412.50");
+    expect(lastFigureText(1200, null)).toBe("Saved balance: £1,200");
+    expect(lastFigureText(null, null)).toBe("No balance recorded yet");
+  });
+
+  it("words a done step as a plain status", () => {
+    expect(doneText("updated", 3400)).toBe("Updated £3,400");
+    expect(doneText("noChange", 3400)).toBe("No change");
+    expect(doneText("calculated", 185447.4)).toBe("Calculated £185,447");
+    expect(checkInProgress(3, 8)).toBe("3 of 8");
+    expect(checkInMoney(-250)).toBe("−£250");
+  });
+
+  it("states net worth against last month the same way in both directions", () => {
+    expect(checkInSavedText("2026-11")).toBe("Check-in saved for November 2026.");
+    expect(checkInNetWorthText(231400, 1250, "2026-10")).toBe(
+      "Net worth: £231,400, up £1,250 on October 2026.",
+    );
+    expect(checkInNetWorthText(231400, -1250, "2026-10")).toBe(
+      "Net worth: £231,400, down £1,250 on October 2026.",
+    );
+    expect(checkInNetWorthText(231400, 0.3, "2026-10")).toBe(
+      "Net worth: £231,400, the same as October 2026.",
+    );
+    expect(checkInNetWorthText(-4200, null, "2026-10")).toBe("Net worth: −£4,200.");
+    expect(noBalancesChangedText("2026-10")).toBe("No balances changed since October 2026.");
+  });
+
+  it("uses no verdict words, exclamation marks, em dashes or ampersands", () => {
+    const all = [
+      ...Object.values(CHECK_IN_COPY),
+      checkInSavedText("2026-11"),
+      checkInNetWorthText(1000, 50, "2026-10"),
+      checkInNetWorthText(1000, -50, "2026-10"),
+    ].join(" ");
+    expect(all).not.toMatch(/well done|great|good|bad|only|just|congrat|behind|overdue/i);
+    expect(all).not.toMatch(/[!—&]/);
   });
 });
