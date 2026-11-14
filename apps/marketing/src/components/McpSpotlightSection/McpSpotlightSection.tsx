@@ -60,21 +60,21 @@ export const McpSpotlightSection: FC = () => {
             </div>
 
             <h2 className={spotlightHeading()}>
-              Give Claude and Cursor deterministic UK tax and finance tools
+              Ask Claude or Cursor about your own saved finances
             </h2>
 
             <p className={spotlightLead()}>
-              Flump's MCP server exposes 8 deterministic financial simulation tools to MCP clients
-              such as Claude Desktop and Cursor. In preview they run against{" "}
-              <strong>baseline sample data</strong>.
+              Flump's MCP server lets MCP clients such as Claude Desktop and Cursor answer questions
+              from the accounts, budget, debts and tax records you have saved in Flump. The tools
+              are <strong>read-only</strong>, and UK tax figures come from a deterministic engine.
             </p>
 
             <div className={stack({ gap: "3" })}>
               <div className={bulletRow()}>
                 <FiCheckCircle className={bulletIcon({ tone: "positive" })} size={18} />
                 <span>
-                  <strong>Deterministic engine:</strong> UK tax bands, National Insurance, pensions
-                  and student loans.
+                  <strong>Deterministic engine:</strong> UK tax bands, National Insurance, debt
+                  payoff and net worth projections.
                 </span>
               </div>
               <div className={bulletRow()}>
@@ -118,12 +118,12 @@ export const McpSpotlightSection: FC = () => {
               </div>
 
               <div className={terminalPromptLine()}>
-                &gt; "What would my monthly take-home be on a £39,000 salary if I paid 5% into my
-                pension by salary sacrifice?"
+                &gt; "Which income tax band does my salary reach this tax year, and how much income
+                tax and National Insurance is that?"
               </div>
 
               <div className={terminalToolLine()}>
-                ⚡ Calling tool: <code>simulate_uk_tax_and_pension_sacrifice</code>
+                ⚡ Calling tool: <code>get_tax_year_position</code>
               </div>
 
               <section
@@ -138,34 +138,51 @@ export const McpSpotlightSection: FC = () => {
                 <br />
                 <span className={payloadBracket()}>{"{"}</span>
                 <br />
-                &nbsp;&nbsp;<span className={payloadKey()}>"grossIncomeGbp":</span>{" "}
-                <span className={payloadNum()}>39000</span>,
+                &nbsp;&nbsp;<span className={payloadKey()}>"income":</span>{" "}
+                <span className={payloadBracket()}>{"{"}</span>
                 <br />
-                &nbsp;&nbsp;<span className={payloadKey()}>"adjustedNetIncomeGbp":</span>{" "}
-                <span className={payloadNum()}>37050</span>,
+                &nbsp;&nbsp;&nbsp;&nbsp;<span className={payloadKey()}>"totalGbp":</span>{" "}
+                <span className={payloadNum()}>39000</span>
                 <br />
-                &nbsp;&nbsp;<span className={payloadKey()}>"incomeTaxGbp":</span>{" "}
-                <span className={payloadNum()}>4896</span>,
+                &nbsp;&nbsp;<span className={payloadBracket()}>{"}"}</span>,
                 <br />
-                &nbsp;&nbsp;<span className={payloadKey()}>"nationalInsuranceGbp":</span>{" "}
-                <span className={payloadNum()}>1958.4</span>,
+                &nbsp;&nbsp;<span className={payloadKey()}>"personalAllowance":</span>{" "}
+                <span className={payloadBracket()}>{"{"}</span>
                 <br />
-                &nbsp;&nbsp;<span className={payloadKey()}>"netTakeHomeMonthlyGbp":</span>{" "}
-                <span className={payloadNum()}>2516.3</span>,
+                &nbsp;&nbsp;&nbsp;&nbsp;<span className={payloadKey()}>"position":</span>{" "}
+                <span className={payloadNum()}>"below_taper"</span>
                 <br />
-                &nbsp;&nbsp;<span className={payloadKey()}>"effectiveTaxRatePct":</span>{" "}
-                <span className={payloadNum()}>17.6</span>
+                &nbsp;&nbsp;<span className={payloadBracket()}>{"}"}</span>,
+                <br />
+                &nbsp;&nbsp;<span className={payloadKey()}>"incomeTaxBands":</span>{" "}
+                <span className={payloadBracket()}>{"{"}</span>
+                <br />
+                &nbsp;&nbsp;&nbsp;&nbsp;<span className={payloadKey()}>"topBand":</span>{" "}
+                <span className={payloadNum()}>"Basic"</span>
+                <br />
+                &nbsp;&nbsp;<span className={payloadBracket()}>{"}"}</span>,
+                <br />
+                &nbsp;&nbsp;<span className={payloadKey()}>"estimate":</span>{" "}
+                <span className={payloadBracket()}>{"{"}</span>
+                <br />
+                &nbsp;&nbsp;&nbsp;&nbsp;<span className={payloadKey()}>"incomeTaxGbp":</span>{" "}
+                <span className={payloadNum()}>5286</span>,
+                <br />
+                &nbsp;&nbsp;&nbsp;&nbsp;
+                <span className={payloadKey()}>"nationalInsuranceGbp":</span>{" "}
+                <span className={payloadNum()}>2114.4</span>
+                <br />
+                &nbsp;&nbsp;<span className={payloadBracket()}>{"}"}</span>
                 <br />
                 <span className={payloadBracket()}>{"}"}</span>
               </section>
 
               <div className={terminalSummary()}>
                 <strong className={terminalSummaryStrong()}>Example output:</strong> for an
-                illustrative £39,000 salary in England, Wales or Northern Ireland with 5% paid into
-                a pension by salary sacrifice, £1,950 a year goes into the pension and monthly
-                take-home is an estimated £2,516, which is £117 a month less than with no
-                contribution. These figures are an unverified example for the 2026/27 tax year, not
-                advice.
+                illustrative £39,000 salary recorded for 2026/27 in England, Wales or Northern
+                Ireland, income sits below the Personal Allowance taper and its top slice is in the
+                basic rate band. Estimated income tax is £5,286 and National Insurance £2,114. These
+                figures are an unverified example, not advice.
               </div>
             </div>
           </div>
