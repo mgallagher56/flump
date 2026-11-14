@@ -59,7 +59,7 @@ export const getFinancialSnapshot = defineFlumpTool({
   name: "get_financial_snapshot",
   title: "Summary of your figures",
   description:
-    "Summary of the user's figures in one call: net worth, what they own (assetsGbp), what they owe (liabilitiesGbp), cash, investments, pensions, debts and, when a budget exists, the amount left over each month (monthlySurplusAfterStoredMinimumsGbp) and months of cover (emergencyRunwayMonths). Built only from recorded accounts and budget entries; anything not recorded is null and listed in missing[] with a question to ask the user. Pass asOfMonth (in the form 2025-04) for balances as at the end of a past month, from recorded monthly history (budget figures are then null, as the budget is not kept by month). Call this first for a summary.",
+    "Summary of the user's figures in one call: net worth, what they own (assetsGbp), what they owe (liabilitiesGbp), cash, investments, pensions, debts and, when a budget exists, the amount left over each month (monthlySurplusAfterStoredMinimumsGbp) and months of cover (emergencyRunwayMonths). Built only from recorded accounts and budget entries; anything not recorded is null and listed in missing[] with a question to ask the user. Pass asOfMonth (in the form 2025-04) for balances as at the end of a past month, from recorded monthly history (budget figures are then null, as the budget is not kept by month). Net worth follows the user's own settings for property and student loans; netWorthLeavesOut lists what it leaves out. Call this first for a summary.",
   input: {
     asOfMonth: z
       .string()

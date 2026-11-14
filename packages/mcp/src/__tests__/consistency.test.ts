@@ -10,6 +10,9 @@ import {
   buildFlumpAiContextPack,
   type FinancialBaseline,
   isFigureKnown,
+  type NetWorthBasis,
+  PortfolioSnapshot,
+  resolveSnapshotNetWorthScope,
 } from "@flump/finance-engine";
 import { PERSONAS, type PersonaName } from "@flump/finance-engine/testing";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
@@ -48,6 +51,7 @@ describe.each(NAMES)("persona %s: MCP resources match the financial picture", (n
     h = await connectTestClient({
       baseline: BASELINE,
       profileFacts: fixture.profile,
+      netWorthBasis: fixture.netWorthBasis,
       accounts: fixture.accounts,
       accountDetails: fixture.details,
       budgetEntries: fixture.budget,
@@ -70,6 +74,7 @@ describe.each(NAMES)("persona %s: MCP resources match the financial picture", (n
     const pack = buildFlumpAiContextPack({
       baseline: BASELINE,
       profileFacts: fixture.profile,
+      netWorthBasis: fixture.netWorthBasis,
       accounts: fixture.accounts,
       accountDetails: fixture.details,
       budgetEntries: fixture.budget,
@@ -116,3 +121,93 @@ describe.each(NAMES)("persona %s: MCP resources match the financial picture", (n
     expect(accounts.consumerDebtGbp).toBe(picture.debt.consumerDebt);
   });
 });
+
+const BASES: NetWorthBasis[] = [
+  { countProperty: true, countStudentLoan: false },
+  { countProperty: true, countStudentLoan: true },
+  { countProperty: false, countStudentLoan: false },
+  { countProperty: false, countStudentLoan: true },
+];
+
+interface Envelope<T> {
+  result: T;
+}
+
+describe.each(NAMES.flatMap((name) => BASES.map((basis) => [name, basis] as const)))(
+  "persona %s under %o: MCP net worth matches the picture",
+  (name, basis) => {
+    const { fixture } = PERSONAS[name];
+    const input = {
+      baseline: BASELINE,
+      profileFacts: fixture.profile,
+      netWorthBasis: basis,
+      accounts: fixture.accounts,
+      accountDetails: fixture.details,
+      budgetEntries: fixture.budget,
+      taxRecords: fixture.taxRecords,
+    };
+    let h: TestHarness;
+    beforeAll(async () => {
+      h = await connectTestClient(input);
+    });
+    afterAll(async () => h.close());
+
+    const picture = () => buildFinancialPicture({ ...fixture, netWorthBasis: basis });
+
+    it("context pack: net worth, totals and leave-out list", () => {
+      const p = picture();
+      const pack = buildFlumpAiContextPack(input);
+      expect(pack.portfolio.netWorth).toBe(p.netWorth.netWorth);
+      expect(pack.portfolio.totalAssets).toBe(p.netWorth.totalAssets);
+      expect(pack.portfolio.totalLiabilities).toBe(p.netWorth.totalLiabilities);
+      expect(pack.portfolio.netWorthLeavesOut).toEqual(p.netWorth.leftOut);
+    });
+
+    it("get_financial_snapshot: net worth, totals and leave-out list", async () => {
+      const p = picture();
+      const round2 = (n: number) => Math.round(n * 100) / 100;
+      const e = (await h.callJson("get_financial_snapshot")) as Envelope<{
+        netWorthGbp: number;
+        assetsGbp: number;
+        liabilitiesGbp: number;
+        netWorthLeavesOut: string[];
+      }>;
+      expect(e.result.netWorthGbp).toBe(round2(p.netWorth.netWorth));
+      expect(e.result.assetsGbp).toBe(round2(p.netWorth.totalAssets));
+      expect(e.result.liabilitiesGbp).toBe(round2(p.netWorth.totalLiabilities));
+      expect(e.result.netWorthLeavesOut).toEqual(p.netWorth.leftOut);
+    });
+
+    it("get_balance_history total: every month matches the engine history", async () => {
+      const history = new PortfolioSnapshot(fixture.accounts, fixture.details).getMonthlyHistory(
+        basis,
+        120,
+      );
+      const leftOut = resolveSnapshotNetWorthScope(
+        new PortfolioSnapshot(fixture.accounts, fixture.details),
+        basis,
+      ).leftOut;
+      const first = history[0];
+      const last = history[history.length - 1];
+      if (!first || !last) return;
+      const month = (p: { year: number; month: number }) =>
+        `${p.year}-${String(p.month).padStart(2, "0")}`;
+      const e = (await h.callJson("get_balance_history", {
+        from: month(first),
+        to: month(last),
+        groupBy: "total",
+      })) as Envelope<{
+        series: Array<{ points: Array<{ period: string; value: number }> }>;
+        netWorthLeavesOut: string[];
+      }>;
+      expect(e.result.netWorthLeavesOut).toEqual(leftOut);
+      const points = e.result.series[0]?.points ?? [];
+      const expected = history
+        .filter((p) => p.totalAssets !== 0 || p.totalLiabilities !== 0)
+        .map((p) => ({ period: month(p), value: Math.round(p.netWorth * 100) / 100 }));
+      expect(points.map((p) => ({ period: p.period, value: p.value }))).toEqual(
+        expect.arrayContaining(expected),
+      );
+    });
+  },
+);

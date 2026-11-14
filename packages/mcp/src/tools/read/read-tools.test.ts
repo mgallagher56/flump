@@ -71,6 +71,7 @@ describe("read tools v2: mixed persona golden outputs", () => {
       monthlySurplusAfterStoredMinimumsGbp: 3200 - 1120 - 216.67 - 200,
       emergencyRunwayMonths: 9,
       asOfMonth: null,
+      netWorthLeavesOut: [],
       notes: expect.arrayContaining([expect.stringMatching(/Student loans/)]),
     });
     // The card has no stored minimum: it is excluded and the response says so.

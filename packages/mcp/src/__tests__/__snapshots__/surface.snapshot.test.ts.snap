@@ -63,7 +63,7 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
       "openWorldHint": false,
       "readOnlyHint": true,
     },
-    "description": "Summary of the user's figures in one call: net worth, what they own (assetsGbp), what they owe (liabilitiesGbp), cash, investments, pensions, debts and, when a budget exists, the amount left over each month (monthlySurplusAfterStoredMinimumsGbp) and months of cover (emergencyRunwayMonths). Built only from recorded accounts and budget entries; anything not recorded is null and listed in missing[] with a question to ask the user. Pass asOfMonth (in the form 2025-04) for balances as at the end of a past month, from recorded monthly history (budget figures are then null, as the budget is not kept by month). Call this first for a summary.",
+    "description": "Summary of the user's figures in one call: net worth, what they own (assetsGbp), what they owe (liabilitiesGbp), cash, investments, pensions, debts and, when a budget exists, the amount left over each month (monthlySurplusAfterStoredMinimumsGbp) and months of cover (emergencyRunwayMonths). Built only from recorded accounts and budget entries; anything not recorded is null and listed in missing[] with a question to ask the user. Pass asOfMonth (in the form 2025-04) for balances as at the end of a past month, from recorded monthly history (budget figures are then null, as the budget is not kept by month). Net worth follows the user's own settings for property and student loans; netWorthLeavesOut lists what it leaves out. Call this first for a summary.",
     "execution": {
       "taskSupport": "forbidden",
     },
@@ -236,6 +236,18 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
             "netWorthGbp": {
               "type": "number",
             },
+            "netWorthLeavesOut": {
+              "items": {
+                "enum": [
+                  "property",
+                  "mortgage",
+                  "studentLoan",
+                  "homeValueMissing",
+                ],
+                "type": "string",
+              },
+              "type": "array",
+            },
             "notes": {
               "items": {
                 "type": "string",
@@ -273,6 +285,7 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
             "monthlySurplusAfterStoredMinimumsGbp",
             "emergencyRunwayMonths",
             "asOfMonth",
+            "netWorthLeavesOut",
             "notes",
           ],
           "type": "object",
@@ -331,7 +344,7 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
       "openWorldHint": false,
       "readOnlyHint": true,
     },
-    "description": "Month-end balances recorded in Flump between two months, per account, per category or as a net-worth total, at monthly, calendar-quarter or calendar-year intervals (a period cut short by the range is flagged partial). metric balance gives the value at the end of each period; delta gives the change from the end of the previous period (current minus previous, up or down); pctDelta gives that change as a percentage. Debts and mortgages are the amount owed as a positive number. A month with no recorded value carries the last known value forward and is flagged carriedForward; source says how each value was recorded. Student loans are excluded. Results are paged: ask for the next page while page is below totalPages.",
+    "description": "Month-end balances recorded in Flump between two months, per account, per category or as a net-worth total, at monthly, calendar-quarter or calendar-year intervals (a period cut short by the range is flagged partial). metric balance gives the value at the end of each period; delta gives the change from the end of the previous period (current minus previous, up or down); pctDelta gives that change as a percentage. Debts and mortgages are the amount owed as a positive number. A month with no recorded value carries the last known value forward and is flagged carriedForward; source says how each value was recorded. Net worth follows the user's own choices of what counts (netWorthLeavesOut): student loans appear only when the user counts them, and property and mortgages are left out of the total when the user does not count them. Results are paged: ask for the next page while page is below totalPages.",
     "execution": {
       "taskSupport": "forbidden",
     },
@@ -542,6 +555,18 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
               ],
               "type": "string",
             },
+            "netWorthLeavesOut": {
+              "items": {
+                "enum": [
+                  "property",
+                  "mortgage",
+                  "studentLoan",
+                  "homeValueMissing",
+                ],
+                "type": "string",
+              },
+              "type": "array",
+            },
             "notes": {
               "items": {
                 "type": "string",
@@ -649,6 +674,7 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
             "seriesCount",
             "page",
             "totalPages",
+            "netWorthLeavesOut",
             "notes",
           ],
           "type": "object",

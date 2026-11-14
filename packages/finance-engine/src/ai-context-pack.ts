@@ -362,7 +362,7 @@ function formatLeavesOut(leftOut: readonly NetWorthLeftOut[]): string {
   const lines: string[] = [];
   const joined = joinNetWorthLeftOut(leftOut);
   if (joined !== "")
-    lines.push(`\n- **Not counted in net worth, by the user's choice:** ${joined}`);
+    lines.push(`\n- **Not counted in net worth (the user's settings):** ${joined}`);
   if (leftOut.includes("homeValueMissing")) {
     lines.push("\n- **Home value:** not saved, so the mortgage counts without it");
   }

@@ -349,7 +349,7 @@ describe("net worth choices in the pack", () => {
       expect(pack.portfolio.netWorthBasis).toEqual({ countProperty, countStudentLoan });
       const md = formatAiContextPackMarkdown(pack);
       if (line === null) expect(md).not.toContain("Not counted in net worth");
-      else expect(md).toContain(`Not counted in net worth, by the user's choice:** ${line}`);
+      else expect(md).toContain(`Not counted in net worth (the user's settings):** ${line}`);
     },
   );
 
