@@ -343,20 +343,27 @@ export function buildSnapshotHistory(
   const recorded = series.filter((p) => !p.allCarried);
   const latestRecorded = recorded.at(-1) ?? null;
   const previousRecorded = recorded.at(-2) ?? null;
+  // Sorted by name, then id: the engine returns rows in account-id order, and ids are random, so
+  // without this the table order changed from one user (and one test run) to the next.
   const accountChanges: AccountChange[] =
     latestRecorded && previousRecorded
-      ? selectAccountDeltas(previousRecorded, latestRecorded).map((d) => {
-          const a = latestRecorded.accounts.find((x) => x.accountId === d.accountId);
-          return {
-            accountId: d.accountId,
-            name: String(names.get(d.accountId) || "Account"),
-            isLiability: a?.isLiability ?? false,
-            current: d.current,
-            previous: d.previous,
-            change: d.change,
-            carried: a?.carried ?? false,
-          };
-        })
+      ? selectAccountDeltas(previousRecorded, latestRecorded)
+          .map((d) => {
+            const a = latestRecorded.accounts.find((x) => x.accountId === d.accountId);
+            return {
+              accountId: d.accountId,
+              name: String(names.get(d.accountId) || "Account"),
+              isLiability: a?.isLiability ?? false,
+              current: d.current,
+              previous: d.previous,
+              change: d.change,
+              carried: a?.carried ?? false,
+            };
+          })
+          .sort(
+            (x, y) =>
+              x.name.localeCompare(y.name, "en-GB") || x.accountId.localeCompare(y.accountId),
+          )
       : [];
   return {
     stage,
