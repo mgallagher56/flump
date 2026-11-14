@@ -430,6 +430,14 @@ export const RunwayCalculator: FC<RunwayCalculatorProps> = ({
     <div className={runwayRoot()}>
       <ScenarioZone
         announcement={isScenarioModified ? `${coverLabel} of cover` : ""}
+        // UX-GUIDELINES S5: every zone states the saved figures it starts from.
+        basis={
+          <span data-testid="runway-basis" id="runway-basis">
+            {saved
+              ? "Starting from your saved budget and accounts."
+              : "Starting from your budget. Months of cover shows once it has essential spending."}
+          </span>
+        }
         isModified={isScenarioModified}
         notice={<ProjectionNotice />}
         title="Model a change to your budget"

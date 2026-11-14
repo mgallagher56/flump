@@ -30,7 +30,11 @@ export const pageHeaderTitle = cva({
     color: "text.primary",
     margin: "0",
     order: { base: 1, md: 0 },
-    flex: { base: "1 0 auto", md: "none" },
+    // Grows beside the actions; a title longer than the line shrinks and wraps instead of running
+    // off the screen. Actions that do not fit beside it wrap onto their own line.
+    flex: { base: "1 1 auto", md: "none" },
+    minWidth: 0,
+    overflowWrap: "anywhere",
   },
 });
 

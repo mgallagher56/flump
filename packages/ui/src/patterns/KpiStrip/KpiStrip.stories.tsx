@@ -92,6 +92,14 @@ export const TwoUpCappedDark: Story = {
   play: twoPlay,
 };
 
+/** Round 4: on a phone the two cards sit side by side, so the next section stays in view. */
+export const TwoUpPhone: Story = {
+  render: () => <TwoUp />,
+  globals: { theme: "light" },
+  parameters: { viewport: { defaultViewport: "mobile1" } },
+  play: twoPlay,
+};
+
 /**
  * R2-2: a money value with a unit, a date, a plain number and a percentage share one value size,
  * and the cards stay level although only one has a caption.
