@@ -1,5 +1,13 @@
 import { categorizeAccountType, type NetWorthLeftOut } from "@flump/finance-engine";
-import { Card, DataList, type DataListItem, IconTile, type IconTileDomain, Money } from "@repo/ui";
+import {
+  Card,
+  DataList,
+  type DataListItem,
+  HeroFigure,
+  IconTile,
+  type IconTileDomain,
+  Money,
+} from "@repo/ui";
 import {
   CreditCard,
   HandCoins,
@@ -23,6 +31,7 @@ import {
   accountName,
   accountType,
   group,
+  groupsGrid,
   groupTitle,
   historyLink,
   isaLink,
@@ -51,7 +60,7 @@ export interface AccountsGroupListProps {
   afterNetWorth?: ReactNode;
 }
 
-const STUDENT_LOAN_FACTS =
+export const STUDENT_LOAN_FACTS =
   "Repayments come out of your pay as you earn, and any balance left at the end of the repayment term is written off.";
 
 /** The student loan footnote follows the user's choice; the facts about repayment stay. */
@@ -255,36 +264,14 @@ export const AccountsGroupList: FC<AccountsGroupListProps> = ({
 
   return (
     <div className={listRoot()}>
-      {own.length > 0 ? (
-        <Group
-          id="accounts-own-heading"
-          rows={own}
-          title="What you own"
-          total={{ text: "Total you own", value: totalOwn }}
-        />
-      ) : null}
-      {owe.length > 0 ? (
-        <Group
-          footnote={countedStudentLoan ? studentLoanFootnote(true) : undefined}
-          id="accounts-owe-heading"
-          rows={owe}
-          title="What you owe"
-          total={{ text: "Total you owe", value: totalOwe }}
-        />
-      ) : null}
+      {/* Net worth is the page's one headline figure (P2), at the top, with what it leaves out. */}
       <div className={netWorthBlock()}>
-        <Card padding="none">
-          <dl
-            className={totalRow({ emphasis: true })}
-            data-testid="accounts-net-worth"
-            id="accounts-net-worth"
-          >
-            <dt className={totalLabel({ emphasis: true })}>Net worth</dt>
-            <dd>
-              <Money size="md" value={netWorth} />
-            </dd>
-          </dl>
-        </Card>
+        <HeroFigure
+          explain="What you own minus what you owe, from the balances saved on this page, under your choices about what counts."
+          id="accounts-net-worth"
+          label="Net worth"
+          value={netWorth}
+        />
         <div className={netWorthLinks()}>
           {/* The one place the choice is always reachable from the figure, even with nothing left out. */}
           <NetWorthBasisLine alwaysShowLink id="accounts-net-worth-basis" leftOut={leftOut} />
@@ -299,9 +286,30 @@ export const AccountsGroupList: FC<AccountsGroupListProps> = ({
         </div>
         {afterNetWorth}
       </div>
+      <div className={groupsGrid()}>
+        {own.length > 0 ? (
+          <Group
+            id="accounts-own-heading"
+            rows={own}
+            title="What you own"
+            // A total that repeats its one row is noise.
+            total={own.length > 1 ? { text: "Total you own", value: totalOwn } : undefined}
+          />
+        ) : null}
+        {owe.length > 0 ? (
+          <Group
+            footnote={countedStudentLoan ? studentLoanFootnote(true) : undefined}
+            id="accounts-owe-heading"
+            rows={owe}
+            title="What you owe"
+            total={owe.length > 1 ? { text: "Total you owe", value: totalOwe } : undefined}
+          />
+        ) : null}
+      </div>
       {notCounted.length > 0 ? (
         <Group
-          footnote={leftOutStudentLoan ? studentLoanFootnote(false) : undefined}
+          // The heading and the line under net worth already say it is left out; keep the facts.
+          footnote={leftOutStudentLoan ? STUDENT_LOAN_FACTS : undefined}
           id="accounts-not-counted-heading"
           rows={notCounted}
           title="Not counted in net worth"

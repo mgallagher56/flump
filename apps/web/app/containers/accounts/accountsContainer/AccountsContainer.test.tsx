@@ -52,7 +52,7 @@ describe("<AccountsContainer />", () => {
     expect(container.querySelectorAll('[data-variant="primary"]').length).toBe(1);
   });
 
-  test("first view: h1, one primary button, two groups and net worth once, no hero", () => {
+  test("first view: h1, one primary button, two groups and net worth once as the one hero", () => {
     mocks.mockUseLoaderData.mockReturnValue({
       accounts: [
         { id: "a1", name: "Monzo", type: "Current", balance: 5000 },
@@ -70,7 +70,10 @@ describe("<AccountsContainer />", () => {
       "Home (your estimate)",
     );
     expect(getAllByText("Net worth")).toHaveLength(1);
-    expect(container.querySelector('[data-tone="hero"]')).toBeNull();
+    expect(container.querySelectorAll('[data-tone="hero"]')).toHaveLength(1);
+    expect(container.querySelector('[data-testid="accounts-net-worth"]')?.textContent).toContain(
+      "£87,000",
+    );
     // Two totals and net worth, plus one balance per account row (four here).
     expectPageRules(container, { maxFigures: 7, maxNotSet: 0, projectionNotices: 0 });
     for (const gone of [
@@ -97,7 +100,7 @@ describe("<AccountsContainer />", () => {
   });
 
   const netWorthText = (container: HTMLElement) =>
-    container.querySelector("#accounts-net-worth dd")?.textContent;
+    container.querySelector('[data-testid="accounts-net-worth"]')?.textContent ?? "";
 
   test("counts a negative stored liability as money owed, reducing net worth", () => {
     mocks.mockUseLoaderData.mockReturnValue({
@@ -111,7 +114,7 @@ describe("<AccountsContainer />", () => {
     const { container } = customRender(<AccountsContainer />);
     const text = container.textContent ?? "";
     expect(text).toContain("£1,500");
-    expect(netWorthText(container)).toBe("£3,500");
+    expect(netWorthText(container)).toContain("£3,500");
     expect(text).not.toContain("£-");
   });
 
@@ -126,7 +129,7 @@ describe("<AccountsContainer />", () => {
     });
     const { container } = customRender(<AccountsContainer />);
     expect(container.textContent).toContain("£255,000");
-    expect(netWorthText(container)).toBe("£155,000");
+    expect(netWorthText(container)).toContain("£155,000");
   });
 
   test("counts Owed (money owed to the user) as something you own", () => {
@@ -141,7 +144,7 @@ describe("<AccountsContainer />", () => {
     const { container, getByRole } = customRender(<AccountsContainer />);
     expect(getByRole("list", { name: "What you own" }).textContent).toContain("John Smith");
     expect(container.textContent).toContain("£5,500");
-    expect(netWorthText(container)).toBe("£4,500");
+    expect(netWorthText(container)).toContain("£4,500");
   });
 
   test("excludes a Student Loan from net worth and says so", () => {
@@ -153,10 +156,8 @@ describe("<AccountsContainer />", () => {
       accountDetails: [],
     });
     const { container, getByText, getByRole } = customRender(<AccountsContainer />);
-    expect(
-      getByText(/Student loans are not in your net worth\. Repayments come out/),
-    ).toBeDefined();
-    expect(netWorthText(container)).toBe("£5,000");
+    expect(getByText(/Repayments come out of your pay as you earn/)).toBeDefined();
+    expect(netWorthText(container)).toContain("£5,000");
     expect(getByRole("list", { name: "Not counted in net worth" }).textContent).toContain("SLC");
   });
 

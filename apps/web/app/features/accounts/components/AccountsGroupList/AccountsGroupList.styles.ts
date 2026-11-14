@@ -71,10 +71,22 @@ export const note = cva({
   base: { textStyle: "body.sm", color: "text.secondary", margin: 0, maxWidth: "65ch" },
 });
 
+/** What you own and what you owe side by side from lg, so a name sits near its figure. */
+export const groupsGrid = cva({
+  base: {
+    display: "grid",
+    gridTemplateColumns: { base: "1fr", lg: "1fr 1fr" },
+    alignItems: "start",
+    gap: { base: "24px", md: "32px" },
+    minWidth: 0,
+  },
+});
+
 /** The DataList inside a card: rows padded to the card edge, figures centred on the row. */
 export const listInCard = cva({
   base: {
-    "& > ul > li": { paddingInline: "16px", alignItems: "center" },
+    // One row height whether or not a type line shows under the name.
+    "& > ul > li": { paddingInline: "16px", alignItems: "center", minHeight: "72px" },
     "& > div": { paddingInline: "16px", paddingBlockEnd: "12px" },
   },
 });
