@@ -1,6 +1,6 @@
 import type { ReactElement } from "react";
 import { useEffect } from "react";
-import type { LoaderFunctionArgs } from "react-router";
+import type { LoaderFunctionArgs, MetaFunction } from "react-router";
 import { data, useLoaderData } from "react-router";
 import { SettingsPage } from "~/features/settings/components/SettingsPage";
 import type { UserProfile } from "~/hooks/useUserProfile";
@@ -9,6 +9,8 @@ import { backendFetch } from "~/services/backend-client.server";
 import { BackendError } from "~/services/backend-error";
 import { throwRouteError } from "~/services/route-error.server";
 import { getAuthSession } from "~/utils/auth.server";
+
+export const meta: MetaFunction = () => [{ title: "Profile | Flump" }];
 
 export const loader = async (args: LoaderFunctionArgs) => {
   const { user, accessToken } = await getAuthSession(args, { ensureSignedIn: true });

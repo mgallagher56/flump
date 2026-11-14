@@ -1,5 +1,5 @@
 import type { ReactElement } from "react";
-import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
+import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "react-router";
 import { data } from "react-router";
 import DebtContainer from "~/containers/debt/DebtContainer";
 import { buildDebtInputs } from "~/features/debt/utils/debtInputs";
@@ -67,6 +67,8 @@ export const action = async (args: ActionFunctionArgs) => {
     return actionErrorResponse(error);
   }
 };
+
+export const meta: MetaFunction = () => [{ title: "Debt payoff | Flump" }];
 
 export const loader = async (args: LoaderFunctionArgs) => {
   const { accounts, accountDetails, userProfile, budgetEntries, user } =

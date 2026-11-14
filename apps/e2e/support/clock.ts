@@ -6,9 +6,10 @@ import { existsSync } from "node:fs";
  */
 export const FROZEN_NOW = "2026-11-14T12:00:00Z";
 
+// The multithreaded build: Bun runs JavaScript and I/O on several threads.
 const LIBFAKETIME = [
-  "/usr/lib/x86_64-linux-gnu/faketime/libfaketime.so.1",
-  "/usr/lib/aarch64-linux-gnu/faketime/libfaketime.so.1",
+  "/usr/lib/x86_64-linux-gnu/faketime/libfaketimeMT.so.1",
+  "/usr/lib/aarch64-linux-gnu/faketime/libfaketimeMT.so.1",
 ].find((path) => existsSync(path));
 
 /**
@@ -28,8 +29,12 @@ export function frozenClockEnv(): Record<string, string> {
   return {
     LD_PRELOAD: LIBFAKETIME,
     FAKETIME: `@${at}`,
+    // UTC like the deployed servers. FROZEN_NOW is midday in winter, so UTC and the browser's
+    // Europe/London agree on the date; keep it away from midnight and British Summer Time.
     TZ: "UTC",
     // Monotonic clocks stay real, so timeouts and performance timers behave normally.
     FAKETIME_DONT_FAKE_MONOTONIC: "1",
+    // File timestamps stay real, so build output and caches are not seen as from the future.
+    NO_FAKE_STAT: "1",
   };
 }
