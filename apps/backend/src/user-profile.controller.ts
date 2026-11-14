@@ -26,6 +26,7 @@ import type { Response } from "express";
 import { Repository } from "typeorm";
 import { AuthGuard } from "./auth/auth.guard";
 import { AllowErasedAccount } from "./auth/erased-account";
+import type { AuthenticatedUser } from "./auth/token-verifier";
 import { Account } from "./entities/account.entity";
 import { AccountDetail } from "./entities/account-detail.entity";
 import { BankConnection } from "./entities/bank-connection.entity";
@@ -129,7 +130,10 @@ export class UserProfileController {
   @AllowErasedAccount()
   @HttpCode(200)
   @RateLimit("destructive")
-  async deleteUser(@Req() req: any, @Body() body: unknown): Promise<DeleteUserResponse> {
+  async deleteUser(
+    @Req() req: { user: AuthenticatedUser },
+    @Body() body: unknown,
+  ): Promise<DeleteUserResponse> {
     const confirmation = (body as { confirmation?: unknown } | null)?.confirmation;
     if (!DeleteUserRequest.shape.confirmation.safeParse(confirmation).success) {
       throw new BadRequestException("Type DELETE to confirm.");
@@ -146,7 +150,7 @@ export class UserProfileController {
    */
   @Get("user-profile/export")
   @RateLimit("dataExport")
-  async exportData(@Req() req: any, @Res() res: Response): Promise<void> {
+  async exportData(@Req() req: { user: AuthenticatedUser }, @Res() res: Response): Promise<void> {
     if (!this.accountExport)
       throw new ServiceUnavailableException(
         "Downloading your data is not available right now. Try again later.",

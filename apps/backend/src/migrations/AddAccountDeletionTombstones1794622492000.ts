@@ -1,5 +1,5 @@
 import type { MigrationInterface, QueryRunner } from "typeorm";
-import { MIGRATION_LOCK_KEY } from "../config/migration-lock";
+import { takeMigrationLock } from "../config/migration-lock";
 
 // BE-04 (account deletion). Additive only: creates `account_deletion_tombstones`, one row per
 // erased account holding a keyed hash of the user id, the deletion time, when the WorkOS login was
@@ -9,7 +9,7 @@ export class AddAccountDeletionTombstones1794622492000 implements MigrationInter
   name = "AddAccountDeletionTombstones1794622492000";
 
   public async up(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query("SELECT pg_advisory_xact_lock($1)", [MIGRATION_LOCK_KEY]);
+    await takeMigrationLock(queryRunner);
     await queryRunner.query(
       `CREATE TABLE IF NOT EXISTS "account_deletion_tombstones" (
          "id" uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -31,7 +31,7 @@ export class AddAccountDeletionTombstones1794622492000 implements MigrationInter
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query("SELECT pg_advisory_xact_lock($1)", [MIGRATION_LOCK_KEY]);
+    await takeMigrationLock(queryRunner);
     await queryRunner.query(`DROP TABLE IF EXISTS "account_deletion_tombstones"`);
   }
 }
