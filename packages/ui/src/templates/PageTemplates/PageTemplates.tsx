@@ -4,9 +4,11 @@ import {
   type DebtItem,
   type PayoffResult,
 } from "@flump/finance-engine";
+import { durations } from "@flump/tokens/native";
 import { type FC, type HTMLAttributes, type ReactNode, useEffect, useMemo, useState } from "react";
 import { cx } from "../../../styled-system/css";
 import { formatAxisCurrency } from "../../charts/formatAxisCurrency";
+import { useDelayedPending } from "../../hooks/useDelayedPending";
 import { ChartFigure } from "../../patterns/ChartFigure/ChartFigure";
 import { EmptyState } from "../../patterns/EmptyState/EmptyState";
 import { HeroFigure } from "../../patterns/HeroFigure/HeroFigure";
@@ -888,7 +890,7 @@ export const PageBody: FC<PageBodyProps> = ({ className, ...props }) => (
 export interface PageSkeletonProps {
   /**
    * Milliseconds to wait before showing the skeleton, so a fast loader never flashes it (P12.1).
-   * Defaults to 200. Pass 0 to show it at once.
+   * Defaults to `durations.pendingDelay` (200). Pass 0 to show it at once.
    */
   delayMs?: number;
   /** Visually hidden loading message. Defaults to "Loading page". */
@@ -898,28 +900,20 @@ export interface PageSkeletonProps {
 
 /**
  * The loading placeholder every route shows while its loader is pending (plan P12.1): header, hero
- * block, 3 KPI cards and 2 cards, laid out in `PageBody`. Built from `Skeleton`, so it shimmers
+ * block, 3 KPI cards and 2 cards, laid out in `PageBody`. Built from `Skeleton`, so it pulses
  * only when motion is allowed. Draws nothing until `delayMs` has passed. A visually hidden
  * `role="status"` region is mounted from the start and gets `label` when the skeleton appears, so
  * screen readers announce it; `aria-busy` sits on the skeleton container only, never on the live
  * region (a busy live region is not announced).
  */
 export const PageSkeleton: FC<PageSkeletonProps> = ({
-  delayMs = 200,
+  delayMs = durations.pendingDelay,
   label = "Loading page",
   className,
 }) => {
-  const [visible, setVisible] = useState(delayMs <= 0);
-
-  useEffect(() => {
-    if (delayMs <= 0) {
-      setVisible(true);
-      return;
-    }
-    setVisible(false);
-    const timer = setTimeout(() => setVisible(true), delayMs);
-    return () => clearTimeout(timer);
-  }, [delayMs]);
+  // The shared loading timer, so this skeleton keeps the same delay as every other loading state.
+  const delayed = useDelayedPending(true, { delayMs: Math.max(delayMs, 0) });
+  const visible = delayMs <= 0 || delayed;
 
   return (
     <>

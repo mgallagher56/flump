@@ -46,6 +46,11 @@ export interface TopBarProps {
   renderLink?: AppNavRenderLink;
   /** Shows the menu button below the shared nav breakpoint (`NAV_BREAKPOINT`) and calls this when pressed. */
   onMenuClick?: () => void;
+  /**
+   * Where the menu button stops showing: below `NAV_BREAKPOINT` (`inline`, default) or below
+   * `NAV_WIDE_BREAKPOINT` (`wide`), for a bar whose `wideOnly` links live in the menu on tablets.
+   */
+  menuBelow?: "inline" | "wide";
   menuLabel?: string;
   /** Whether the menu the button opens is showing; sets `aria-expanded` on the menu button. */
   menuExpanded?: boolean;
@@ -138,6 +143,7 @@ export const TopBar: FC<TopBarProps> = ({
   inlineActions,
   renderLink = defaultRenderLink,
   onMenuClick,
+  menuBelow = "inline",
   menuLabel = "Open menu",
   menuExpanded,
   menuControls,
@@ -151,7 +157,7 @@ export const TopBar: FC<TopBarProps> = ({
           aria-controls={menuExpanded ? menuControls : undefined}
           aria-expanded={menuExpanded}
           aria-label={menuLabel}
-          className={topBarMenuButton()}
+          className={topBarMenuButton({ below: menuBelow })}
           onClick={onMenuClick}
           size="icon"
           type="button"
@@ -177,7 +183,7 @@ export const TopBar: FC<TopBarProps> = ({
               );
             }
             return (
-              <li className={topBarNavItem()} key={item.key}>
+              <li className={topBarNavItem({ wideOnly: item.wideOnly })} key={item.key}>
                 {renderLink(
                   item,
                   topBarLink(),

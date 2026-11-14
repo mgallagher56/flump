@@ -19,6 +19,11 @@ export interface AppNavItem {
   children?: AppNavChild[];
   /** Short count or status, for example "3". Rendered with tabular numerals. */
   badge?: string | number;
+  /**
+   * `TopBar` only: a lower-priority link shown inline from `navWide` (1024px) up. Below that it is
+   * left out of the inline bar, so the site must list it in the menu (`menuBelow="wide"`).
+   */
+  wideOnly?: boolean;
 }
 
 /**

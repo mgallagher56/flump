@@ -109,11 +109,20 @@ describe("native.generated.ts", () => {
   });
 
   it("emits motion, stacking and breakpoints as numbers", () => {
-    expect(native.durations).toEqual({ base: 200, fast: 120, instant: 0, loop: 800, slow: 320 });
+    expect(native.durations).toEqual({
+      base: 200,
+      fast: 120,
+      instant: 0,
+      loop: 800,
+      pendingDelay: 200,
+      pendingMinimum: 400,
+      reveal: 150,
+      slow: 320,
+    });
     expect(native.easings.standard).toEqual([0.2, 0.6, 0.2, 1]);
     expect(native.zIndex.modal).toBe(50);
     expect(native.zIndex.hide).toBe(-1);
-    expect(native.breakpoints).toMatchObject({ md: 768, lg: 1024, nav: 1024 });
+    expect(native.breakpoints).toMatchObject({ md: 768, lg: 1024, nav: 768 });
   });
 });
 

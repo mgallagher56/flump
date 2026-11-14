@@ -20,3 +20,15 @@ const play: Story["play"] = async ({ canvasElement }) => {
 export const Light: Story = { globals: { theme: "light" }, play };
 
 export const Dark: Story = { globals: { theme: "dark" }, play };
+
+/** 768px: three links, the one-button theme switch and the CTA; the rest is in the menu. */
+export const Tablet: Story = {
+  globals: { theme: "light" },
+  parameters: { viewport: { defaultViewport: "tablet" } },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(canvas.getByRole("button", { name: /open navigation menu/i })).toBeInTheDocument();
+  },
+};
+
+export const TabletDark: Story = { ...Tablet, globals: { theme: "dark" } };

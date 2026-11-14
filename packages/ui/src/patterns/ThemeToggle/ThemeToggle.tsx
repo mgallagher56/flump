@@ -4,10 +4,14 @@ import type { FC } from "react";
 import { cx } from "../../../styled-system/css";
 import type { ThemePreference } from "../../hooks/useThemePreference";
 import { Icon } from "../../primitives/Icon/Icon";
-import { themeToggleGroup, themeToggleOption } from "./ThemeToggle.styles";
+import { themeToggleCycle, themeToggleGroup, themeToggleOption } from "./ThemeToggle.styles";
 
-const OPTIONS: { value: ThemePreference; label: string; icon: LucideIcon }[] = [
-  { value: "system", label: "System theme", icon: Monitor },
+type ThemeOption = { value: ThemePreference; label: string; icon: LucideIcon };
+
+const SYSTEM_OPTION: ThemeOption = { value: "system", label: "System theme", icon: Monitor };
+
+const OPTIONS: ThemeOption[] = [
+  SYSTEM_OPTION,
   { value: "light", label: "Light theme", icon: Sun },
   { value: "dark", label: "Dark theme", icon: Moon },
 ];
@@ -22,6 +26,12 @@ export interface ThemeToggleProps {
    * such as the copy in the mobile drawer.
    */
   id?: string;
+  /**
+   * `segmented` (default) shows the three choices side by side. `cycle` is one 44px button that
+   * shows the current choice and moves to the next on each press, for a narrow top bar (phones and
+   * tablets).
+   */
+  variant?: "segmented" | "cycle";
 }
 
 /**
@@ -33,30 +43,54 @@ export const ThemeToggle: FC<ThemeToggleProps> = ({
   onChange,
   className,
   id = "theme-toggle",
-}) => (
-  <fieldset
-    aria-label="Colour theme"
-    className={cx(themeToggleGroup(), className)}
-    data-testid={id}
-    id={id}
-  >
-    {OPTIONS.map(({ value, label, icon }) => {
-      const checked = preference === value;
-      return (
-        <button
-          key={value}
-          aria-pressed={checked}
-          aria-label={label}
-          className={themeToggleOption()}
-          data-testid={`${id}-${value}`}
-          type="button"
-          onClick={() => onChange(value)}
-        >
-          <Icon icon={icon} size="sm" />
-        </button>
-      );
-    })}
-  </fieldset>
-);
+  variant = "segmented",
+}) => {
+  if (variant === "cycle") {
+    const index = Math.max(
+      0,
+      OPTIONS.findIndex((option) => option.value === preference),
+    );
+    const current = OPTIONS[index] ?? SYSTEM_OPTION;
+    const next = OPTIONS[(index + 1) % OPTIONS.length] ?? SYSTEM_OPTION;
+    return (
+      <button
+        aria-label={`Colour theme: ${current.value}. Change to ${next.value}`}
+        className={cx(themeToggleCycle(), className)}
+        data-testid={id}
+        id={id}
+        title={`Colour theme: ${current.value}`}
+        type="button"
+        onClick={() => onChange(next.value)}
+      >
+        <Icon icon={current.icon} size="sm" />
+      </button>
+    );
+  }
+  return (
+    <fieldset
+      aria-label="Colour theme"
+      className={cx(themeToggleGroup(), className)}
+      data-testid={id}
+      id={id}
+    >
+      {OPTIONS.map(({ value, label, icon }) => {
+        const checked = preference === value;
+        return (
+          <button
+            key={value}
+            aria-pressed={checked}
+            aria-label={label}
+            className={themeToggleOption()}
+            data-testid={`${id}-${value}`}
+            type="button"
+            onClick={() => onChange(value)}
+          >
+            <Icon icon={icon} size="sm" />
+          </button>
+        );
+      })}
+    </fieldset>
+  );
+};
 
 export default ThemeToggle;

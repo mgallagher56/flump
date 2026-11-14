@@ -18,9 +18,10 @@ export const topBarInner = cva({
   base: {
     display: "flex",
     alignItems: "center",
-    gap: { base: "3", _navInline: "5" },
+    // Tablets (navInline up to navWide) get the compact desktop bar so it fits at 768px.
+    gap: { base: "3", _navWide: "5" },
     minHeight: { base: "14", _navInline: "18" },
-    px: { base: "4", _navInline: "10" },
+    px: { base: "4", _navInline: "6", _navWide: "10" },
     py: "2",
     maxWidth: "1536px",
     marginX: "auto",
@@ -32,7 +33,15 @@ export const topBarLogo = cva({
 });
 
 export const topBarMenuButton = cva({
-  base: { display: { base: "inline-flex", _navInline: "none" } },
+  // A 44px touch target (sizes.touch), only below the nav breakpoint.
+  base: { display: "inline-flex", minW: "touch", minH: "touch" },
+  variants: {
+    below: {
+      inline: { _navInline: { display: "none" } },
+      wide: { _navWide: { display: "none" } },
+    },
+  },
+  defaultVariants: { below: "inline" },
 });
 
 export const topBarNav = cva({
@@ -40,7 +49,7 @@ export const topBarNav = cva({
     display: { base: "none", _navInline: "block" },
     flex: "1",
     minWidth: 0,
-    marginLeft: "3",
+    marginLeft: { base: "3", _navInline: "1", _navWide: "3" },
   },
 });
 
@@ -58,6 +67,11 @@ export const topBarList = cva({
 
 export const topBarNavItem = cva({
   base: { position: "relative", flexShrink: 0 },
+  variants: {
+    // Lower-priority links: in the menu on tablets, inline from navWide.
+    wideOnly: { true: { display: "none", _navWide: { display: "list-item" } }, false: {} },
+  },
+  defaultVariants: { wideOnly: false },
 });
 
 export const topBarLink = cva({
@@ -66,8 +80,10 @@ export const topBarLink = cva({
     alignItems: "center",
     gap: "2",
     minH: "8",
-    px: "3",
+    px: { base: "3", _navInline: "2.5" },
     borderRadius: "full",
+    // Link icons only where there is room for them (from navWide); tablets show text only.
+    "& > svg": { display: { base: "none", _navWide: "inline-block" } },
     backgroundColor: "transparent",
     borderWidth: "0",
     color: "text.secondary",

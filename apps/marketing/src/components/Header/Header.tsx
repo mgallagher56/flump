@@ -21,6 +21,7 @@ import { signupCta } from "../../utils/site";
 import { CANONICAL_TOOL_SLUGS } from "../../utils/toolSlugs";
 import { getAppUrl } from "../../utils/url";
 import {
+  belowWide,
   drawerCta,
   drawerCtas,
   drawerLinkHint,
@@ -30,6 +31,7 @@ import {
   headerAuth,
   headerButton,
   shortLabel,
+  wideOnly,
 } from "./Header.styles";
 
 interface MarketingNavItem extends AppNavItem {
@@ -77,9 +79,17 @@ export const Header: FC = () => {
       },
       { key: "pricing", label: "Pricing", href: "/pricing", hint: "Free during the beta" },
       { key: "security", label: "Security", href: "/security", hint: "Security and privacy" },
-      { key: "mcp", label: "AI connection", href: "/mcp", hint: "Claude and Cursor" },
+      // Lower priority: inline from 1024px (navWide); in the menu on tablets and phones.
+      {
+        key: "mcp",
+        label: "AI connection",
+        href: "/mcp",
+        hint: "Claude and Cursor",
+        wideOnly: true,
+      },
       {
         key: "demo",
+        wideOnly: true,
         label: "Sample data",
         href: `${appUrl}/sandbox`,
         hint: "Try it without signing in",
@@ -122,6 +132,17 @@ export const Header: FC = () => {
       <TopBar
         actions={
           <>
+            {/* One 44px button below 1024px (as in the web app); the three-way switch from there. */}
+            <ThemeToggle
+              className={belowWide()}
+              id="theme-toggle-compact"
+              onChange={setPreference}
+              preference={preference}
+              variant="cycle"
+            />
+            <div className={wideOnly()}>
+              <ThemeToggle onChange={setPreference} preference={preference} />
+            </div>
             <div className={headerAuth()}>
               {hasSession ? (
                 <Button asChild className={headerButton()} size="sm" variant="primary">
@@ -132,7 +153,13 @@ export const Header: FC = () => {
                 </Button>
               ) : (
                 <>
-                  <Button asChild className={headerButton()} size="sm" variant="ghost">
+                  {/* From 1024px only; on tablets and phones "Sign in" is in the menu. */}
+                  <Button
+                    asChild
+                    className={cx(headerButton(), wideOnly())}
+                    size="sm"
+                    variant="ghost"
+                  >
                     <a href={`${appUrl}/login`}>
                       <span className={fullLabel()}>Sign in</span>
                       <span className={shortLabel()}>Sign in</span>
@@ -150,11 +177,11 @@ export const Header: FC = () => {
           </>
         }
         activeKey={activeKey}
-        inlineActions={<ThemeToggle onChange={setPreference} preference={preference} />}
         items={items}
         logo={<HomeLogo renderLink={renderHomeLogoLink} />}
         menuControls={DRAWER_ID}
         menuExpanded={mobileMenuOpen}
+        menuBelow="wide"
         menuLabel="Open navigation menu"
         navLabel="Primary"
         renderLink={renderLink}
@@ -183,11 +210,6 @@ export const Header: FC = () => {
                 </Button>
               </>
             )}
-            <ThemeToggle
-              id="theme-toggle-drawer"
-              onChange={setPreference}
-              preference={preference}
-            />
           </div>
         }
         id={DRAWER_ID}

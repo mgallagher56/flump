@@ -53,3 +53,32 @@ export const themeToggleOption = cva({
     },
   },
 });
+
+/** The one-button `cycle` variant: a 44px round button at every width (a touch target first). */
+export const themeToggleCycle = cva({
+  base: {
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: "0",
+    width: "44px",
+    height: "44px",
+    // Quiet like the ghost menu button beside it: no fill until hovered.
+    borderRadius: "full",
+    borderWidth: "0",
+    backgroundColor: "transparent",
+    color: "text.secondary",
+    cursor: "pointer",
+    _motionSafe: {
+      transitionProperty: "background-color, color",
+      transitionDuration: "fast",
+      transitionTimingFunction: "standard",
+    },
+    _hover: { color: "text.primary", backgroundColor: "surface.sunken" },
+    _focusVisible: {
+      outline: "2px solid",
+      outlineColor: "border.focusRing",
+      outlineOffset: "2px",
+    },
+  },
+});

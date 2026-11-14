@@ -93,8 +93,9 @@ describe("AppShell", () => {
     expect(seen.every((v) => v === "page")).toBe(true);
   });
 
-  it("keeps the mobile bar visible up to lg so tablets always have navigation", async () => {
+  it("shows the mobile bar on phones only: it hides at the shared nav breakpoint (768px)", async () => {
     const { mobileBottomBarRoot } = await import("../MobileBottomBar/MobileBottomBar.styles");
-    expect(mobileBottomBarRoot()).toContain("lg:d_none");
+    expect(mobileBottomBarRoot()).toContain("navInline:d_none");
+    expect(mobileBottomBarRoot()).not.toContain("lg:d_none");
   });
 });

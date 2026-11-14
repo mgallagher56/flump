@@ -210,6 +210,10 @@ export const loader = async (args: LoaderFunctionArgs) => {
     },
     budgetData: {
       budgetKnown: budget !== null,
+      // Whether the budget holds income only (set up straight after onboarding): the dashboard then
+      // shows the income and asks for spending, never income minus nothing as "left over".
+      hasIncome: budget?.hasIncome ?? false,
+      hasSpending: Array.isArray(budgetEntries) && budgetEntries.some((e: any) => !e?.isIncome),
       monthlyIncome,
       // Essentials plus discretionary; planned savings is its own line.
       monthlyExpenses: monthlyOutgoings,
@@ -313,6 +317,8 @@ const Index = (): ReactElement => {
 
     const safeBudgetData = budgetData || {
       budgetKnown: false,
+      hasIncome: false,
+      hasSpending: false,
       monthlyIncome: 0,
       monthlyExpenses: 0,
       monthlySurplus: null,

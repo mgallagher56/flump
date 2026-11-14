@@ -42,3 +42,26 @@ export const Collapsed: Story = {
   globals: { theme: "light" },
   parameters: { viewport: { defaultViewport: "mobile1" } },
 };
+
+/**
+ * Tablet (768px to 1023px): `wideOnly` links leave the inline bar and the menu button stays
+ * (`menuBelow="wide"`), as on the marketing site.
+ */
+export const Tablet: Story = {
+  args: {
+    items: [
+      ...sampleNavItems.slice(0, 2),
+      { key: "extra", label: "Lower priority", href: "/extra", wideOnly: true },
+    ],
+    menuBelow: "wide",
+    onMenuClick: () => undefined,
+  },
+  globals: { theme: "light" },
+  parameters: { viewport: { defaultViewport: "tablet" } },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(canvas.getByRole("button", { name: "Open menu" })).toBeInTheDocument();
+  },
+};
+
+export const TabletDark: Story = { ...Tablet, globals: { theme: "dark" } };

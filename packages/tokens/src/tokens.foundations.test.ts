@@ -247,14 +247,18 @@ describe("E15 motion", () => {
       base: "200ms",
       slow: "320ms",
       loop: "800ms",
+      reveal: "150ms",
+      pendingDelay: "200ms",
+      pendingMinimum: "400ms",
     });
     for (const e of Object.values(easings)) expect(e.value).toMatch(/^cubic-bezier\(/);
     expect(Object.keys(easings).sort()).toEqual(["enter", "exit", "standard"]);
   });
 
-  it("defines the five keyframes", () => {
+  it("defines the six keyframes", () => {
     expect(Object.keys(motionKeyframes).sort()).toEqual([
       "fadeIn",
+      "pulse",
       "scaleIn",
       "shimmer",
       "slideInRight",

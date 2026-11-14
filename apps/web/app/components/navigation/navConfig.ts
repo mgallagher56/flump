@@ -46,7 +46,7 @@ export const HOME_NAV_ROUTE: NavRouteItem = { key: "home", route: "/", icon: Hou
 
 /**
  * Signed-in navigation: the single source for the desktop header and the mobile drawer (IA review
- * T-IA-5). Order: Accounts, Budget, Tax and pay, Savings and pension, Borrowing. Forecast is not
+ * T-IA-5). Order: Accounts, Budget, Pay, Savings and pension, Borrowing. Forecast is not
  * listed (it redirects to Savings) and Self Assessment is opt-in, so it only appears when enabled.
  * A group left with one visible page collapses to a direct link (see `filterNavRoutes`).
  */
@@ -95,6 +95,8 @@ export const AUTH_NAV_ROUTES: NavRouteItem[] = [
   {
     key: "borrowing",
     icon: TrendingDown,
+    // "Borrowing" for everyone, even when only the debt page is on (one nav label, RESCORE R2-4).
+    collapseTo: "group",
     children: [
       {
         key: "debt",
@@ -152,12 +154,12 @@ export interface BottomBarTab {
 }
 
 /**
- * Bottom bar tabs (IA review T-IA-4): Home, Accounts, Budget, Tax and pay, then a More button.
+ * Bottom bar tabs (IA review T-IA-4): Home, Accounts, Budget, Pay, then a More button.
  * All four are always-on pages. The signed-in bar and the signed-out sandbox bar share this list.
  */
 export const BOTTOM_BAR_TABS: BottomBarTab[] = [
   { key: "home", label: "Home", to: "/", icon: House },
   { key: "accounts", label: "Accounts", to: "/app/accounts", icon: Scale },
   { key: "budget", label: "Budget", to: "/app/budget", icon: Wallet },
-  { key: "taxAndPay", label: "Tax and pay", to: "/app/take-home", icon: Calculator },
+  { key: "taxAndPay", label: "Pay", to: "/app/take-home", icon: Calculator },
 ];

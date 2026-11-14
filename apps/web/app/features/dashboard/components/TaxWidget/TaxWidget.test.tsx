@@ -13,10 +13,14 @@ const renderWidget = (estimatedTaxDue: number | null, recordsCount = 3) =>
   );
 
 describe("TaxWidget", () => {
-  it("labels the tax figure as an unverified estimate", () => {
+  it('puts the "Unverified estimate" badge beside the tax figure', () => {
     renderWidget(4400);
-    expect(TAX_DUE_LABEL).toBe("Tax due this tax year (unverified estimate)");
+    expect(TAX_DUE_LABEL).toBe("Tax due this tax year");
     expect(screen.getByText(TAX_DUE_LABEL)).toBeTruthy();
+    expect(screen.getByText("Self Assessment")).toBeTruthy();
+    const badge = screen.getByTestId("tax-unverified-badge");
+    expect(badge.textContent).toBe("Unverified estimate");
+    expect(badge.parentElement?.querySelector('[data-figure="tax.estimatedDue"]')).toBeTruthy();
     expect(screen.getByText("£4,400")).toBeTruthy();
     expect(screen.getAllByRole("link")).toHaveLength(1);
     expect(taxCardShowsEstimate({ estimatedTaxDue: 4400, recordsCount: 3 })).toBe(true);
@@ -25,6 +29,7 @@ describe("TaxWidget", () => {
   it('reads "Not set" with nothing to estimate, and offers to add income', () => {
     renderWidget(null, 0);
     expect(screen.getByText("Not set")).toBeTruthy();
+    expect(screen.queryByTestId("tax-unverified-badge")).toBeNull();
     expect(screen.getByRole("link", { name: /Add income/ })).toBeTruthy();
     expect(taxCardShowsEstimate({ estimatedTaxDue: null, recordsCount: 0 })).toBe(false);
   });

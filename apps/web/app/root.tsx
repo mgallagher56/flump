@@ -1,13 +1,7 @@
 import { UserProfileResponse } from "@flump/api-contract";
-import {
-  PageSkeleton,
-  THEME_INIT_SCRIPT,
-  ToastProvider,
-  useThemePreference,
-  VisuallyHidden,
-} from "@repo/ui";
-import { css } from "@repo/ui/styled-system/css";
-import { type ReactNode, useEffect, useState } from "react";
+import { THEME_INIT_SCRIPT, ToastProvider, useThemePreference, VisuallyHidden } from "@repo/ui";
+import { css, cx } from "@repo/ui/styled-system/css";
+import { type ReactNode, useEffect } from "react";
 import type { LoaderFunctionArgs } from "react-router";
 import {
   isRouteErrorResponse,
@@ -18,8 +12,6 @@ import {
   Scripts,
   ScrollRestoration,
   useLoaderData,
-  useLocation,
-  useNavigation,
   useRouteError,
   useRouteLoaderData,
 } from "react-router";
@@ -102,48 +94,22 @@ export const loader = async (args: LoaderFunctionArgs) => {
   };
 };
 
+/** Until hydration, header and nav buttons show a progress cursor: a click there cannot act yet. */
+const preHydrationChrome = css({
+  "&:not([data-hydrated]) :is(header, nav) button": { cursor: "progress" },
+});
+
 /** Every page is British English, whatever the i18next language code says. */
 const DOCUMENT_LANG = "en-GB";
 
-/** How long a navigation may run before its page is swapped for the skeleton (plan P12.1). */
-const SKELETON_DELAY_MS = 200;
-
 /**
- * The route outlet, swapped for `PageSkeleton` while a navigation to another page is loading and
- * has run longer than `SKELETON_DELAY_MS` (a fast loader never flashes it). The old page stays
- * mounted but hidden, so nothing is lost if the navigation is cancelled. Same-page revalidations
- * (a form save, a tab in the query string) keep the page in view.
+ * The route outlet. While a navigation loads, the current page stays on screen untouched and the
+ * only loading signal is the thin `NavigationProgress` bar (after the shared delay); the new page
+ * replaces it in one step when its data is ready. No generic page skeleton: one that does not match
+ * the destination moves the layout twice (UX-GUIDELINES "Loading").
  */
 function RouteOutlet() {
-  const navigation = useNavigation();
-  const { pathname } = useLocation();
-  const loadingOtherPage =
-    navigation.state === "loading" &&
-    navigation.location !== undefined &&
-    navigation.location.pathname !== pathname;
-  const [showSkeleton, setShowSkeleton] = useState(false);
-
-  useEffect(() => {
-    if (!loadingOtherPage) {
-      setShowSkeleton(false);
-      return;
-    }
-    const timer = setTimeout(() => setShowSkeleton(true), SKELETON_DELAY_MS);
-    return () => clearTimeout(timer);
-  }, [loadingOtherPage]);
-
-  const pending = loadingOtherPage && showSkeleton;
-  return (
-    <>
-      {pending && <PageSkeleton delayMs={0} />}
-      <div
-        className={css({ display: pending ? "none" : "contents" })}
-        data-route-outlet={pending ? "pending" : "ready"}
-      >
-        <Outlet />
-      </div>
-    </>
-  );
+  return <Outlet />;
 }
 
 interface AppShellProps {
@@ -170,11 +136,12 @@ function AppShell({ user, focused = false, children }: AppShellProps) {
           sticky parts sit below it). */}
       <div
         className={css({
-          // Mirrors the TopBar min-height (spacing tokens 14 and 18); keep the two in step.
-          "--app-header-offset": { base: "3.5rem", lg: "4.5rem" },
+          // Mirrors the TopBar min-height (spacing tokens 14 and 18); keep the two in step. Both
+          // switch at the shared nav breakpoint, where the bottom bar gives way to the top nav.
+          "--app-header-offset": { base: "3.5rem", _navInline: "4.5rem" },
           "--app-bottom-bar-offset": {
             base: hasBottomBarOffset ? "72px" : "0px",
-            lg: "0px",
+            _navInline: "0px",
           },
         })}
       >
@@ -200,7 +167,7 @@ function AppShell({ user, focused = false, children }: AppShellProps) {
                   base: hasBottomBarOffset
                     ? "calc(var(--app-bottom-bar-offset) + env(safe-area-inset-bottom, 0px))"
                     : "0",
-                  lg: "0",
+                  _navInline: "0",
                 },
               })}
             >
@@ -224,6 +191,12 @@ export default function App() {
   // Sign-out wipes this browser's per-user storage (E19 A6); covers every form posting to /logout.
   useEffect(() => watchLogoutForms(), []);
 
+  // The hydration signal: chrome controls read it to stop looking pressable before script runs,
+  // and end-to-end tests wait on `html[data-hydrated]` instead of a timeout.
+  useEffect(() => {
+    document.documentElement.dataset.hydrated = "true";
+  }, []);
+
   useEffect(() => {
     if (userProfile) {
       setProfile(userProfile);
@@ -231,7 +204,11 @@ export default function App() {
   }, [userProfile, setProfile]);
 
   return (
-    <html className={theme === "dark" ? "dark" : ""} data-theme={theme} lang={DOCUMENT_LANG}>
+    <html
+      className={cx(theme === "dark" ? "dark" : undefined, preHydrationChrome)}
+      data-theme={theme}
+      lang={DOCUMENT_LANG}
+    >
       <head>
         <meta charSet="utf-8" />
         <meta content="width=device-width,initial-scale=1,viewport-fit=cover" name="viewport" />
@@ -286,7 +263,11 @@ export function ErrorBoundary() {
   // keeps the normal chrome (header for the user's state, bottom bar on a phone) and the error
   // state gives one way back.
   return (
-    <html className={theme === "dark" ? "dark" : ""} data-theme={theme} lang={DOCUMENT_LANG}>
+    <html
+      className={cx(theme === "dark" ? "dark" : undefined, preHydrationChrome)}
+      data-theme={theme}
+      lang={DOCUMENT_LANG}
+    >
       <head>
         <meta charSet="utf-8" />
         <meta content="width=device-width,initial-scale=1,viewport-fit=cover" name="viewport" />

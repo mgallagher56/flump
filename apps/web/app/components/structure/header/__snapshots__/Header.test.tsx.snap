@@ -7,12 +7,12 @@ exports[`<Header /> > renders as expected by default 1`] = `
       class="pos_sticky top_0 z_header w_100% bg-c_color-mix(in_srgb,_token(colors.surface.canvas)_88%,_transparent) bkdp_blur(14px) bd-b-w_1px border-bottom-style_solid bd-b-c_border.subtle"
     >
       <div
-        class="d_flex ai_center gap_3 navInline:gap_5 min-h_14 navInline:min-h_18 px_4 navInline:px_10 py_2 max-w_1536px mx_auto"
+        class="d_flex ai_center gap_3 navWide:gap_5 min-h_14 navInline:min-h_18 px_4 navInline:px_6 navWide:px_10 py_2 max-w_1536px mx_auto"
       >
         <button
           aria-expanded="false"
           aria-label="Open navigation menu"
-          class="pos_relative d_inline-flex ai_center jc_center gap_2 bdr_xl bd-w_1.5px border-style_solid bd-c_transparent fw_bold cursor_pointer lh_1.25 ta_center td_none py_2 [@media_(pointer:_coarse)]:min-h_touch [@media_(pointer:_coarse)]:min-w_touch motionSafe:trs-prop_background-color,_border-color,_box-shadow,_transform,_opacity motionSafe:trs-dur_fast motionSafe:trs-tmf_standard motionSafe:hover:trf_translateY(-2px) motionSafe:active:trf_scale(0.97) [&:is(:disabled,_[disabled])]:bg_transparent [&:is(:disabled,_[disabled])]:c_text.muted [&:is(:disabled,_[disabled])]:bd-c_transparent [&:is(:disabled,_[disabled])]:cursor_not-allowed [&:is(:disabled,_[disabled])]:bx-sh_none [&[aria-busy=true]]:cursor_progress focusVisible:ring_2px_solid focusVisible:ring-c_border.focusRing focusVisible:ring-o_2px bg_transparent c_text.primary hover:bg_surface.subtle h_10 w_10 px_0 d_inline-flex navInline:d_none"
+          class="pos_relative d_inline-flex ai_center jc_center gap_2 bdr_xl bd-w_1.5px border-style_solid bd-c_transparent fw_bold cursor_pointer lh_1.25 ta_center td_none py_2 [@media_(pointer:_coarse)]:min-h_touch [@media_(pointer:_coarse)]:min-w_touch motionSafe:trs-prop_background-color,_border-color,_box-shadow,_transform,_opacity motionSafe:trs-dur_fast motionSafe:trs-tmf_standard motionSafe:hover:trf_translateY(-2px) motionSafe:active:trf_scale(0.97) [&:is(:disabled,_[disabled])]:bg_transparent [&:is(:disabled,_[disabled])]:c_text.muted [&:is(:disabled,_[disabled])]:bd-c_transparent [&:is(:disabled,_[disabled])]:cursor_not-allowed [&:is(:disabled,_[disabled])]:bx-sh_none [&[aria-busy=true]]:cursor_progress focusVisible:ring_2px_solid focusVisible:ring-c_border.focusRing focusVisible:ring-o_2px bg_transparent c_text.primary hover:bg_surface.subtle h_10 w_10 px_0 d_inline-flex min-w_touch min-h_touch navInline:d_none"
           data-variant="ghost"
           type="button"
         >
@@ -55,7 +55,7 @@ exports[`<Header /> > renders as expected by default 1`] = `
         </div>
         <nav
           aria-label="Primary"
-          class="d_none navInline:d_block flex_1 min-w_0 ml_3"
+          class="d_none navInline:d_block flex_1 min-w_0 ml_3 navInline:ml_1 navWide:ml_3"
         >
           <ul
             class="d_flex ai_center gap_1 flex-wrap_nowrap li-s_none p_0 m_0"
@@ -97,8 +97,51 @@ exports[`<Header /> > renders as expected by default 1`] = `
         <div
           class="d_flex ai_center gap_3 ml_auto flex-sh_0"
         >
+          <button
+            aria-label="Colour theme: system. Change to light"
+            class="d_inline-flex ai_center jc_center flex-sh_0 w_44px h_44px bdr_full bd-w_0 bg-c_transparent c_text.secondary cursor_pointer motionSafe:trs-prop_background-color,_color motionSafe:trs-dur_fast motionSafe:trs-tmf_standard hover:c_text.primary hover:bg-c_surface.sunken focusVisible:ring_2px_solid focusVisible:ring-c_border.focusRing focusVisible:ring-o_2px navWide:d_none"
+            data-testid="theme-toggle-compact"
+            id="theme-toggle-compact"
+            title="Colour theme: system"
+            type="button"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-monitor d_inline-block flex-sh_0 c_currentColor va_middle w_16px h_16px"
+              fill="none"
+              focusable="false"
+              height="16"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="16"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <rect
+                height="14"
+                rx="2"
+                width="20"
+                x="2"
+                y="3"
+              />
+              <line
+                x1="8"
+                x2="16"
+                y1="21"
+                y2="21"
+              />
+              <line
+                x1="12"
+                x2="12"
+                y1="17"
+                y2="21"
+              />
+            </svg>
+          </button>
           <div
-            class="d_none navInline:d_flex ai_center gap_3"
+            class="d_none navWide:d_flex"
           >
             <fieldset
               aria-label="Colour theme"
@@ -245,8 +288,40 @@ exports[`<Header /> > renders correctly when user logged in 1`] = `
       class="pos_sticky top_0 z_header w_100% bg-c_color-mix(in_srgb,_token(colors.surface.canvas)_88%,_transparent) bkdp_blur(14px) bd-b-w_1px border-bottom-style_solid bd-b-c_border.subtle"
     >
       <div
-        class="d_flex ai_center gap_3 navInline:gap_5 min-h_14 navInline:min-h_18 px_4 navInline:px_10 py_2 max-w_1536px mx_auto"
+        class="d_flex ai_center gap_3 navWide:gap_5 min-h_14 navInline:min-h_18 px_4 navInline:px_6 navWide:px_10 py_2 max-w_1536px mx_auto"
       >
+        <button
+          aria-expanded="false"
+          aria-label="Open navigation menu"
+          class="pos_relative d_inline-flex ai_center jc_center gap_2 bdr_xl bd-w_1.5px border-style_solid bd-c_transparent fw_bold cursor_pointer lh_1.25 ta_center td_none py_2 [@media_(pointer:_coarse)]:min-h_touch [@media_(pointer:_coarse)]:min-w_touch motionSafe:trs-prop_background-color,_border-color,_box-shadow,_transform,_opacity motionSafe:trs-dur_fast motionSafe:trs-tmf_standard motionSafe:hover:trf_translateY(-2px) motionSafe:active:trf_scale(0.97) [&:is(:disabled,_[disabled])]:bg_transparent [&:is(:disabled,_[disabled])]:c_text.muted [&:is(:disabled,_[disabled])]:bd-c_transparent [&:is(:disabled,_[disabled])]:cursor_not-allowed [&:is(:disabled,_[disabled])]:bx-sh_none [&[aria-busy=true]]:cursor_progress focusVisible:ring_2px_solid focusVisible:ring-c_border.focusRing focusVisible:ring-o_2px bg_transparent c_text.primary hover:bg_surface.subtle h_10 w_10 px_0 d_inline-flex min-w_touch min-h_touch navInline:d_none"
+          data-variant="ghost"
+          type="button"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-menu d_inline-block flex-sh_0 c_currentColor va_middle w_20px h_20px"
+            fill="none"
+            focusable="false"
+            height="20"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="20"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M4 5h16"
+            />
+            <path
+              d="M4 12h16"
+            />
+            <path
+              d="M4 19h16"
+            />
+          </svg>
+        </button>
         <div
           class="d_inline-flex ai_center flex-sh_0"
         >
@@ -261,7 +336,7 @@ exports[`<Header /> > renders correctly when user logged in 1`] = `
         </div>
         <nav
           aria-label="Primary"
-          class="d_none navInline:d_block flex_1 min-w_0 ml_3"
+          class="d_none navInline:d_block flex_1 min-w_0 ml_3 navInline:ml_1 navWide:ml_3"
         >
           <ul
             class="d_flex ai_center gap_1 flex-wrap_nowrap li-s_none p_0 m_0"
@@ -442,7 +517,7 @@ exports[`<Header /> > renders correctly when user logged in 1`] = `
             >
               <button
                 aria-expanded="false"
-                class="d_inline-flex ai_center gap_2 min-h_8 px_3 bdr_full bg-c_transparent bd-w_0 c_text.secondary textStyle_label.md fw_semibold white-space_nowrap td_none cursor_pointer motionSafe:trs-prop_background-color,_color motionSafe:trs-dur_fast motionSafe:trs-tmf_standard hover:bg-c_surface.sunken hover:c_text.primary focusVisible:ring_2px_solid focusVisible:ring-c_border.focusRing focusVisible:ring-o_2px [&[aria-current="page"]]:bg-c_primary.subtle [&[aria-current="page"]]:c_primary"
+                class="d_inline-flex ai_center gap_2 min-h_8 px_3 navInline:px_2.5 bdr_full [&_>_svg]:d_none [&_>_svg]:navWide:d_inline-block bg-c_transparent bd-w_0 c_text.secondary textStyle_label.md fw_semibold white-space_nowrap td_none cursor_pointer motionSafe:trs-prop_background-color,_color motionSafe:trs-dur_fast motionSafe:trs-tmf_standard hover:bg-c_surface.sunken hover:c_text.primary focusVisible:ring_2px_solid focusVisible:ring-c_border.focusRing focusVisible:ring-o_2px [&[aria-current="page"]]:bg-c_primary.subtle [&[aria-current="page"]]:c_primary"
                 type="button"
               >
                 <svg
@@ -479,7 +554,7 @@ exports[`<Header /> > renders correctly when user logged in 1`] = `
             >
               <button
                 aria-expanded="false"
-                class="d_inline-flex ai_center gap_2 min-h_8 px_3 bdr_full bg-c_transparent bd-w_0 c_text.secondary textStyle_label.md fw_semibold white-space_nowrap td_none cursor_pointer motionSafe:trs-prop_background-color,_color motionSafe:trs-dur_fast motionSafe:trs-tmf_standard hover:bg-c_surface.sunken hover:c_text.primary focusVisible:ring_2px_solid focusVisible:ring-c_border.focusRing focusVisible:ring-o_2px [&[aria-current="page"]]:bg-c_primary.subtle [&[aria-current="page"]]:c_primary"
+                class="d_inline-flex ai_center gap_2 min-h_8 px_3 navInline:px_2.5 bdr_full [&_>_svg]:d_none [&_>_svg]:navWide:d_inline-block bg-c_transparent bd-w_0 c_text.secondary textStyle_label.md fw_semibold white-space_nowrap td_none cursor_pointer motionSafe:trs-prop_background-color,_color motionSafe:trs-dur_fast motionSafe:trs-tmf_standard hover:bg-c_surface.sunken hover:c_text.primary focusVisible:ring_2px_solid focusVisible:ring-c_border.focusRing focusVisible:ring-o_2px [&[aria-current="page"]]:bg-c_primary.subtle [&[aria-current="page"]]:c_primary"
                 type="button"
               >
                 <svg
@@ -513,8 +588,51 @@ exports[`<Header /> > renders correctly when user logged in 1`] = `
         <div
           class="d_flex ai_center gap_3 ml_auto flex-sh_0"
         >
+          <button
+            aria-label="Colour theme: system. Change to light"
+            class="d_inline-flex ai_center jc_center flex-sh_0 w_44px h_44px bdr_full bd-w_0 bg-c_transparent c_text.secondary cursor_pointer motionSafe:trs-prop_background-color,_color motionSafe:trs-dur_fast motionSafe:trs-tmf_standard hover:c_text.primary hover:bg-c_surface.sunken focusVisible:ring_2px_solid focusVisible:ring-c_border.focusRing focusVisible:ring-o_2px navWide:d_none"
+            data-testid="theme-toggle-compact"
+            id="theme-toggle-compact"
+            title="Colour theme: system"
+            type="button"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-monitor d_inline-block flex-sh_0 c_currentColor va_middle w_16px h_16px"
+              fill="none"
+              focusable="false"
+              height="16"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="16"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <rect
+                height="14"
+                rx="2"
+                width="20"
+                x="2"
+                y="3"
+              />
+              <line
+                x1="8"
+                x2="16"
+                y1="21"
+                y2="21"
+              />
+              <line
+                x1="12"
+                x2="12"
+                y1="17"
+                y2="21"
+              />
+            </svg>
+          </button>
           <div
-            class="d_none navInline:d_flex ai_center gap_3"
+            class="d_none navWide:d_flex"
           >
             <fieldset
               aria-label="Colour theme"
@@ -661,12 +779,12 @@ exports[`<Header /> > renders without ColorModeSwitch 1`] = `
       class="pos_sticky top_0 z_header w_100% bg-c_color-mix(in_srgb,_token(colors.surface.canvas)_88%,_transparent) bkdp_blur(14px) bd-b-w_1px border-bottom-style_solid bd-b-c_border.subtle"
     >
       <div
-        class="d_flex ai_center gap_3 navInline:gap_5 min-h_14 navInline:min-h_18 px_4 navInline:px_10 py_2 max-w_1536px mx_auto"
+        class="d_flex ai_center gap_3 navWide:gap_5 min-h_14 navInline:min-h_18 px_4 navInline:px_6 navWide:px_10 py_2 max-w_1536px mx_auto"
       >
         <button
           aria-expanded="false"
           aria-label="Open navigation menu"
-          class="pos_relative d_inline-flex ai_center jc_center gap_2 bdr_xl bd-w_1.5px border-style_solid bd-c_transparent fw_bold cursor_pointer lh_1.25 ta_center td_none py_2 [@media_(pointer:_coarse)]:min-h_touch [@media_(pointer:_coarse)]:min-w_touch motionSafe:trs-prop_background-color,_border-color,_box-shadow,_transform,_opacity motionSafe:trs-dur_fast motionSafe:trs-tmf_standard motionSafe:hover:trf_translateY(-2px) motionSafe:active:trf_scale(0.97) [&:is(:disabled,_[disabled])]:bg_transparent [&:is(:disabled,_[disabled])]:c_text.muted [&:is(:disabled,_[disabled])]:bd-c_transparent [&:is(:disabled,_[disabled])]:cursor_not-allowed [&:is(:disabled,_[disabled])]:bx-sh_none [&[aria-busy=true]]:cursor_progress focusVisible:ring_2px_solid focusVisible:ring-c_border.focusRing focusVisible:ring-o_2px bg_transparent c_text.primary hover:bg_surface.subtle h_10 w_10 px_0 d_inline-flex navInline:d_none"
+          class="pos_relative d_inline-flex ai_center jc_center gap_2 bdr_xl bd-w_1.5px border-style_solid bd-c_transparent fw_bold cursor_pointer lh_1.25 ta_center td_none py_2 [@media_(pointer:_coarse)]:min-h_touch [@media_(pointer:_coarse)]:min-w_touch motionSafe:trs-prop_background-color,_border-color,_box-shadow,_transform,_opacity motionSafe:trs-dur_fast motionSafe:trs-tmf_standard motionSafe:hover:trf_translateY(-2px) motionSafe:active:trf_scale(0.97) [&:is(:disabled,_[disabled])]:bg_transparent [&:is(:disabled,_[disabled])]:c_text.muted [&:is(:disabled,_[disabled])]:bd-c_transparent [&:is(:disabled,_[disabled])]:cursor_not-allowed [&:is(:disabled,_[disabled])]:bx-sh_none [&[aria-busy=true]]:cursor_progress focusVisible:ring_2px_solid focusVisible:ring-c_border.focusRing focusVisible:ring-o_2px bg_transparent c_text.primary hover:bg_surface.subtle h_10 w_10 px_0 d_inline-flex min-w_touch min-h_touch navInline:d_none"
           data-variant="ghost"
           type="button"
         >
@@ -709,7 +827,7 @@ exports[`<Header /> > renders without ColorModeSwitch 1`] = `
         </div>
         <nav
           aria-label="Primary"
-          class="d_none navInline:d_block flex_1 min-w_0 ml_3"
+          class="d_none navInline:d_block flex_1 min-w_0 ml_3 navInline:ml_1 navWide:ml_3"
         >
           <ul
             class="d_flex ai_center gap_1 flex-wrap_nowrap li-s_none p_0 m_0"
@@ -751,8 +869,51 @@ exports[`<Header /> > renders without ColorModeSwitch 1`] = `
         <div
           class="d_flex ai_center gap_3 ml_auto flex-sh_0"
         >
+          <button
+            aria-label="Colour theme: system. Change to light"
+            class="d_inline-flex ai_center jc_center flex-sh_0 w_44px h_44px bdr_full bd-w_0 bg-c_transparent c_text.secondary cursor_pointer motionSafe:trs-prop_background-color,_color motionSafe:trs-dur_fast motionSafe:trs-tmf_standard hover:c_text.primary hover:bg-c_surface.sunken focusVisible:ring_2px_solid focusVisible:ring-c_border.focusRing focusVisible:ring-o_2px navWide:d_none"
+            data-testid="theme-toggle-compact"
+            id="theme-toggle-compact"
+            title="Colour theme: system"
+            type="button"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-monitor d_inline-block flex-sh_0 c_currentColor va_middle w_16px h_16px"
+              fill="none"
+              focusable="false"
+              height="16"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="16"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <rect
+                height="14"
+                rx="2"
+                width="20"
+                x="2"
+                y="3"
+              />
+              <line
+                x1="8"
+                x2="16"
+                y1="21"
+                y2="21"
+              />
+              <line
+                x1="12"
+                x2="12"
+                y1="17"
+                y2="21"
+              />
+            </svg>
+          </button>
           <div
-            class="d_none navInline:d_flex ai_center gap_3"
+            class="d_none navWide:d_flex"
           >
             <fieldset
               aria-label="Colour theme"

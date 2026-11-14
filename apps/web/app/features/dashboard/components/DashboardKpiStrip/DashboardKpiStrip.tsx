@@ -1,24 +1,33 @@
 import { Button, KpiCard, KpiStrip, Money } from "@repo/ui";
-import type { FC } from "react";
+import type { FC, ReactElement } from "react";
 import { SampleAwareLink } from "~/components/navigation/SampleAwareLink";
-import { formatMonthsOfCover } from "../BudgetWidget";
-import { kpiFigure } from "./DashboardKpiStrip.styles";
+import { kpiFigure, kpiPromptLink } from "./DashboardKpiStrip.styles";
 
 export interface DashboardKpiStripProps {
   /** `null` for any figure that is unknown. Only a real zero is shown as £0. */
   monthlySurplus: number | null;
-  monthsOfCover: number | null;
+  /**
+   * The monthly income in the saved budget when the budget holds income but no spending yet (set
+   * up straight after onboarding). The first card then shows this income and asks for spending,
+   * instead of a "left over" that would only be income minus nothing. `null` otherwise.
+   */
+  incomeOnly?: number | null;
   /** Total owed on cards, loans and overdrafts; `null` or 0 when there is none. */
   totalOwed: number | null;
-  /** Pension pots total, shown in the third card when there is no debt. */
+  /** Pension pots total, shown in the second card when there is no debt. */
   pensionPot: number | null;
-  /** Whether a budget exists (months of cover then only needs accounts). */
-  budgetKnown: boolean;
 }
 
-/** True when the third card shows the debt total, so the pension card keeps the pot. */
+/** True when the second card shows the debt total, so the pension card keeps the pot. */
 export const stripShowsDebt = (totalOwed: number | null): boolean =>
   totalOwed !== null && totalOwed > 0;
+
+/** How "left over each month" is worked out, for the card's explain tip (copy guide: plain, no judgement). */
+export const INCOME_ONLY_LABEL = "Income in your budget";
+export const ADD_SPENDING_PROMPT = "Add your spending to see what is left over each month";
+
+export const LEFT_OVER_EXPLAIN =
+  "The income in your budget, minus your bills, living costs and what you put aside for savings each month.";
 
 const addLink = (to: string, text: string) => (
   <Button asChild size="sm" variant="ghost">
@@ -27,88 +36,90 @@ const addLink = (to: string, text: string) => (
 );
 
 /**
- * The dashboard's three supporting figures (E16 P1.5): what is left over each month, months of
- * cover, and the total owed if there is any debt, otherwise the pension pots. Net worth is the hero
- * and never repeats here. Captions carry no figures. Negative amounts keep the usual colour.
+ * The dashboard's two supporting figures (E16 P1.5, R2-4 number budget N1 4: the hero, its delta
+ * and these two): what is left over each month, and the total owed if there is any debt, otherwise
+ * the pension pots. Months of cover belongs to Budget (P6) and net worth is the hero, so neither
+ * repeats here. Captions carry no figures. Negative amounts keep the usual colour.
+ *
+ * With no budget the strip is one prompt. With a budget but no pension or debt, the strip holds the
+ * one known figure: a second card reading "Not set" would be half the strip (P3.2).
  */
 export const DashboardKpiStrip: FC<DashboardKpiStripProps> = ({
   monthlySurplus,
-  monthsOfCover,
+  incomeOnly = null,
   totalOwed,
   pensionPot,
-  budgetKnown,
 }) => {
   const short = monthlySurplus !== null && monthlySurplus < 0;
   const showDebt = stripShowsDebt(totalOwed);
 
+  const leftOver =
+    incomeOnly !== null ? (
+      <KpiCard
+        key="income"
+        label={INCOME_ONLY_LABEL}
+        subtext={
+          <SampleAwareLink className={kpiPromptLink()} id="dashboard-add-spending" to="/app/budget">
+            {ADD_SPENDING_PROMPT}
+          </SampleAwareLink>
+        }
+        unset={false}
+        value={
+          <span className={kpiFigure()} data-figure="budget.income">
+            <Money fractionDigits={0} size="kpi" value={incomeOnly} />
+          </span>
+        }
+      />
+    ) : (
+      <KpiCard
+        emptyAction={monthlySurplus === null ? addLink("/app/budget", "Add your budget") : null}
+        explain={monthlySurplus === null ? undefined : LEFT_OVER_EXPLAIN}
+        key="left-over"
+        label={short ? "Short each month" : "Left over each month"}
+        unset={monthlySurplus === null}
+        value={
+          monthlySurplus === null ? null : (
+            <span className={kpiFigure()} data-figure="budget.surplus">
+              <Money fractionDigits={0} size="kpi" value={monthlySurplus} />
+            </span>
+          )
+        }
+      />
+    );
+
+  const second: ReactElement | null = showDebt ? (
+    <KpiCard
+      key="owed"
+      label="What you owe"
+      subtext="Cards, loans and overdrafts"
+      unset={false}
+      value={
+        <span className={kpiFigure()} data-figure="debt.total">
+          <Money fractionDigits={0} size="kpi" value={totalOwed} />
+        </span>
+      }
+    />
+  ) : pensionPot === null ? null : (
+    <KpiCard
+      key="pension"
+      label="Pension pots"
+      unset={false}
+      value={
+        <span className={kpiFigure()}>
+          <Money fractionDigits={0} size="kpi" value={pensionPot} />
+        </span>
+      }
+    />
+  );
+
   return (
     <KpiStrip
       emptyPrompt={{
-        title: "Add your budget to see what is left over each month and your months of cover",
+        title: "Add your budget to see what is left over each month",
         action: addLink("/app/budget", "Add your budget"),
         id: "dashboard-kpi-prompt",
       }}
-      items={[
-        <KpiCard
-          emptyAction={monthlySurplus === null ? addLink("/app/budget", "Add your budget") : null}
-          key="left-over"
-          label={short ? "Short each month" : "Left over each month"}
-          unset={monthlySurplus === null}
-          value={
-            monthlySurplus === null ? null : (
-              <span className={kpiFigure()} data-figure="budget.surplus">
-                <Money fractionDigits={0} size="kpi" value={monthlySurplus} />
-              </span>
-            )
-          }
-        />,
-        <KpiCard
-          emptyAction={
-            monthsOfCover === null
-              ? budgetKnown
-                ? addLink("/app/accounts", "Add your accounts")
-                : addLink("/app/budget", "Add your budget")
-              : null
-          }
-          key="cover"
-          label="Months of cover"
-          unset={monthsOfCover === null}
-          value={
-            monthsOfCover === null ? null : (
-              <span className={kpiFigure()} data-figure="monthsOfCover">
-                {formatMonthsOfCover(monthsOfCover)}
-              </span>
-            )
-          }
-        />,
-        showDebt ? (
-          <KpiCard
-            key="owed"
-            label="What you owe"
-            subtext="Cards, loans and overdrafts"
-            unset={false}
-            value={
-              <span className={kpiFigure()} data-figure="debt.total">
-                <Money fractionDigits={0} size="kpi" value={totalOwed} />
-              </span>
-            }
-          />
-        ) : (
-          <KpiCard
-            emptyAction={pensionPot === null ? addLink("/app/accounts", "Add a pension") : null}
-            key="pension"
-            label="Pension pots"
-            unset={pensionPot === null}
-            value={
-              pensionPot === null ? null : (
-                <span className={kpiFigure()}>
-                  <Money fractionDigits={0} size="kpi" value={pensionPot} />
-                </span>
-              )
-            }
-          />
-        ),
-      ]}
+      items={second ? [leftOver, second] : [leftOver]}
     />
   );
 };

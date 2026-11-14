@@ -56,6 +56,7 @@ export * from "./primitives/KpiCard";
 export { LiveRegion, type LiveRegionProps } from "./primitives/LiveRegion";
 export * from "./primitives/Menu";
 export * from "./primitives/Money";
+export * from "./primitives/PendingReveal";
 export * from "./primitives/PercentInput";
 export * from "./primitives/Popover";
 export * from "./primitives/ProgressBar";

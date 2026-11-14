@@ -2,7 +2,8 @@ import { cva } from "../../../styled-system/css";
 
 export const mobileBottomBarRoot = cva({
   base: {
-    display: { base: "block", lg: "none" },
+    // Phones only: from the shared nav breakpoint (768px) the desktop navigation shows instead.
+    display: { base: "block", _navInline: "none" },
     position: "fixed",
     bottom: "0",
     left: "0",

@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { AUTH_STATE } from "../support/auth";
 import { MARKETING_URL } from "../support/env";
+import { waitForHydration } from "../support/page";
 
 test.describe("sign in and out", () => {
   test("signing in lands on the dashboard with the net worth headline", async ({ page }) => {
@@ -22,6 +23,8 @@ test.describe("sign in and out", () => {
 
     test("logging out returns to the public marketing page", async ({ page }) => {
       await page.goto("/");
+      // A click before hydration does nothing, so wait for the app's hydration signal first.
+      await waitForHydration(page);
       // Sign out lives in the account menu (T-IA-6): open it, then pick the menu item.
       await page.getByRole("button", { name: "Account menu" }).first().click();
       await page.getByRole("menuitem", { name: "Sign out" }).click();

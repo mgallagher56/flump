@@ -94,7 +94,7 @@ export function findActiveNavKey(items: AppNavItem[], pathname: string): string 
   return items.find((item) => !item.children && matches(pathname, item.href))?.key;
 }
 
-/** Bottom bar tabs (Home, Accounts, Budget, Tax and pay) plus the More button that opens the drawer. */
+/** Bottom bar tabs (Home, Accounts, Budget, Pay) plus the More button that opens the drawer. */
 export function buildBottomBarItems(t: Translate, sandbox = false): AppNavItem[] {
   const tabs = BOTTOM_BAR_TABS.map<AppNavItem>((tab) => ({
     key: tab.key,
@@ -113,7 +113,7 @@ export function buildBottomBarItems(t: Translate, sandbox = false): AppNavItem[]
   ];
 }
 
-/** Active bottom bar tab. Tax and pay also owns Self Assessment. */
+/** Active bottom bar tab. Pay also owns Self Assessment. */
 export function findActiveBottomBarKey(pathname: string): string | undefined {
   if (pathname === SANDBOX_ROUTE || pathname === `${SANDBOX_ROUTE}/`) return "home";
   if (pathname === "/") return "home";

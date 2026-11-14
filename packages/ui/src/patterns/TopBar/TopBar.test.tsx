@@ -104,4 +104,30 @@ describe("TopBar", () => {
     expect(button.getAttribute("aria-expanded")).toBe("true");
     expect(button.getAttribute("aria-controls")).toBe("drawer");
   });
+
+  it("keeps wideOnly links out of the inline bar below navWide", () => {
+    render(
+      <TopBar
+        items={[
+          { key: "a", label: "Always", href: "/a" },
+          { key: "b", label: "Wide only", href: "/b", wideOnly: true },
+        ]}
+      />,
+    );
+    const wideItem = screen.getByRole("link", { name: "Wide only" }).closest("li");
+    const alwaysItem = screen.getByRole("link", { name: "Always" }).closest("li");
+    expect(wideItem?.className).toContain("navWide:d_list-item");
+    expect(wideItem?.className).toContain("d_none");
+    expect(alwaysItem?.className).not.toContain("navWide:d_list-item");
+  });
+
+  it("shows the menu button up to navWide when menuBelow is wide, a 44px target", () => {
+    const { rerender } = render(<TopBar items={sampleNavItems} onMenuClick={() => {}} />);
+    const button = () => screen.getByRole("button", { name: "Open menu" });
+    expect(button().className).toContain("navInline:d_none");
+    expect(button().className).toContain("min-w_touch");
+    rerender(<TopBar items={sampleNavItems} menuBelow="wide" onMenuClick={() => {}} />);
+    expect(button().className).toContain("navWide:d_none");
+    expect(button().className).not.toContain("navInline:d_none");
+  });
 });

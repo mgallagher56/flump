@@ -96,6 +96,18 @@ export const panelFooter = cva({
   base: { display: "flex", justifyContent: "flex-end", marginTop: "8px" },
 });
 
-export const panelCapHint = cva({
-  base: { margin: 0, textStyle: "body.sm", color: "text.secondary" },
+/** Whether a ticked section shows now; quiet text, pushed to the row's end. */
+export const panelRowStatus = cva({
+  base: {
+    marginLeft: "auto",
+    flexShrink: 0,
+    textStyle: "label.sm",
+    whiteSpace: "nowrap",
+  },
+  variants: {
+    shown: {
+      true: { color: "text.primary" },
+      false: { color: "text.muted" },
+    },
+  },
 });

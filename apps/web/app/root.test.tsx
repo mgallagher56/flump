@@ -177,7 +177,7 @@ describe("root App 404", () => {
 });
 
 describe("root App loading state", () => {
-  it("shows PageSkeleton while a slow navigation to another page loads", async () => {
+  it("keeps the current page on screen while a slow navigation loads, with only the progress bar", async () => {
     const Stub = createRoutesStub([
       {
         id: "root",
@@ -193,10 +193,10 @@ describe("root App loading state", () => {
     ]);
     render(<Stub initialEntries={["/"]} />, { container: document });
     fireEvent.click(await screen.findByRole("link", { name: "Go slow" }));
-    expect(await screen.findByTestId("page-skeleton", {}, { timeout: 2000 })).toBeDefined();
-    expect(
-      screen.getByText("Go slow").closest("[data-route-outlet]")?.getAttribute("data-route-outlet"),
-    ).toBe("pending");
+    // The progress bar appears after the shared delay; the old page is never swapped for a skeleton.
+    expect(await screen.findByRole("progressbar", {}, { timeout: 2000 })).toBeDefined();
+    expect(screen.queryByTestId("page-skeleton")).toBeNull();
+    expect(screen.getByText("Go slow").closest("[style*='display: none']")).toBeNull();
   });
 });
 

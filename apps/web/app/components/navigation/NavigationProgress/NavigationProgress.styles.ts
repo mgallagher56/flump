@@ -1,6 +1,6 @@
 import { cva } from "@repo/ui/styled-system/css";
 
-/** Thin indeterminate bar pinned above the header while a navigation is in flight. */
+/** Thin indeterminate bar pinned above the header while a slow navigation is in flight. */
 export const navigationProgressBar = cva({
   base: {
     position: "fixed",
@@ -11,15 +11,13 @@ export const navigationProgressBar = cva({
     zIndex: "toast",
     pointerEvents: "none",
     backgroundColor: "chart.primary",
-    // Reduced motion: a static bar still signals loading; motion only when allowed.
+    // Reduced motion: a static bar still signals loading. Otherwise a slow, gentle pulse (a sweep
+    // read as flicker on short loads).
     _motionSafe: {
-      backgroundColor: "transparent",
-      backgroundImage:
-        "linear-gradient(90deg, {colors.chart.primary} 0%, {colors.primary.border} 50%, {colors.chart.primary} 100%)",
-      backgroundSize: "200% 100%",
-      animationName: "shimmer",
-      animationDuration: "slow",
+      animationName: "pulse",
+      animationDuration: "loop",
       animationTimingFunction: "standard",
+      animationDirection: "alternate",
       animationIterationCount: "infinite",
     },
   },

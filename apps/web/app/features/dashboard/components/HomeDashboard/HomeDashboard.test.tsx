@@ -10,6 +10,7 @@ import {
   MAX_SECTION_CARDS,
   selectSectionCards,
 } from "./HomeDashboard";
+import { dashboardHeader, showHideButton } from "./HomeDashboard.styles";
 
 // The global test setup stubs Link to its children; these tests need real anchors.
 vi.mock("react-router", async () => await vi.importActual("react-router"));
@@ -295,6 +296,52 @@ describe("HomeDashboard", () => {
     ).toMatch(/^Unverified estimate\./);
   });
 
+  it("after onboarding, with income but no spending, shows the income and asks for spending", () => {
+    renderDashboard({
+      ...noDebt,
+      budgetData: {
+        budgetKnown: true,
+        hasIncome: true,
+        hasSpending: false,
+        monthlyIncome: 2085,
+        monthlyExpenses: 0,
+        // The loader's surplus is income minus nothing here; the dashboard must not show it.
+        monthlySurplus: 2085,
+      },
+    });
+    expect(screen.getByText("Income in your budget")).toBeTruthy();
+    expect(
+      screen.getByRole("link", { name: "Add your spending to see what is left over each month" }),
+    ).toBeTruthy();
+    expect(screen.queryByText(/Left over each month/)).toBeNull();
+    expect(document.querySelector('[data-figure="budget.surplus"]')).toBeNull();
+    expect(screen.queryByText("Add your budget to see what is left over each month")).toBeNull();
+  });
+
+  it("keeps the h1 and the icon-only sections button on one row below md", () => {
+    renderDashboard(noDebt);
+    const button = screen.getByRole("button", { name: "Choose what shows here" });
+    for (const cls of showHideButton().split(" ")) expect(button.classList).toContain(cls);
+    const header = screen.getByRole("heading", { level: 1 }).closest("header");
+    for (const cls of dashboardHeader().split(" ")) expect(header?.classList).toContain(cls);
+    expect(dashboardHeader()).toMatch(/mdDown:flex-wrap_nowrap/);
+    expect(showHideButton()).toMatch(/mdDown:w_touch/);
+  });
+
+  it("keeps the add-your-budget prompt when the budget has no income either", () => {
+    renderDashboard({
+      ...noDebt,
+      budgetData: {
+        budgetKnown: false,
+        monthlyIncome: 0,
+        monthlyExpenses: 0,
+        monthlySurplus: null,
+      },
+    });
+    expect(screen.getByText("Add your budget to see what is left over each month")).toBeTruthy();
+    expect(screen.queryByText("Income in your budget")).toBeNull();
+  });
+
   it("shows no notice when every card is a saved fact", () => {
     renderDashboard({ ...noDebt, taxData: { estimatedTaxDue: null, recordsCount: 0 } });
     expect(document.querySelector('[data-notice="projection"]')).toBeNull();
@@ -321,11 +368,7 @@ describe("HomeDashboard", () => {
     const { container } = renderDashboard(nearEmpty);
     expectPageRules(container, { maxFigures: 0, maxNotSet: 1, projectionNotices: 0 });
     expect(screen.getByText("Add an account to see your net worth.")).toBeTruthy();
-    expect(
-      screen.getByText(
-        "Add your budget to see what is left over each month and your months of cover",
-      ),
-    ).toBeTruthy();
+    expect(screen.getByText("Add your budget to see what is left over each month")).toBeTruthy();
     expect(screen.getByText("Nothing to show yet")).toBeTruthy();
     expect(container.querySelector('[data-tone="hero"]')).toBeNull();
     expect(userFacingText(container)).not.toMatch(FORBIDDEN);
@@ -375,7 +418,7 @@ describe("HomeDashboard", () => {
     ).toBe(true);
   });
 
-  it("is honest about the cap: at four ticked, the rest are disabled with one hint", async () => {
+  it("is honest about the cap: at four ticked, the rest are disabled and point to the rule", async () => {
     renderDashboard(withDebt);
     fireEvent.click(screen.getByRole("button", { name: /Choose what shows here/ }));
     const dialog = screen.getByRole("dialog", { name: "Choose what shows here" });
@@ -383,13 +426,11 @@ describe("HomeDashboard", () => {
     for (const name of [/^Accounts/, /^Budget/, /^Self Assessment/]) {
       fireEvent.click(within(dialog).getByRole("checkbox", { name }));
     }
-    await waitFor(() =>
-      expect(within(dialog).getByText("Up to 4 sections show here.")).toBeTruthy(),
-    );
     const accounts = within(dialog).getByRole("checkbox", {
       name: /^Accounts/,
     }) as HTMLInputElement;
-    expect(accounts.disabled).toBe(true);
+    await waitFor(() => expect(accounts.disabled).toBe(true));
+    expect(accounts.getAttribute("aria-describedby")).toBe("widget-visibility-rule");
   });
 
   it("shows the all-hidden empty state that reopens the choices", async () => {

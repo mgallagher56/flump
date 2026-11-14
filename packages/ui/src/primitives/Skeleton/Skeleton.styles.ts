@@ -4,16 +4,14 @@ export const skeletonRecipe = cva({
   base: {
     display: "block",
     backgroundColor: "surface.sunken",
-    // Shimmer only when motion is allowed; otherwise a flat placeholder.
+    // A slow, gentle pulse only when motion is allowed (a sweeping shimmer read as flicker on short
+    // loads); otherwise a flat placeholder. Show skeletons through `PendingReveal`, which holds them
+    // back on fast loads.
     _motionSafe: {
-      bgGradient: "to-r",
-      gradientFrom: "surface.sunken",
-      gradientVia: "surface.card",
-      gradientTo: "surface.sunken",
-      backgroundSize: "200% 100%",
-      animationName: "shimmer",
-      animationDuration: "slow",
+      animationName: "pulse",
+      animationDuration: "loop",
       animationTimingFunction: "standard",
+      animationDirection: "alternate",
       animationIterationCount: "infinite",
     },
   },
