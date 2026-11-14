@@ -19,8 +19,8 @@ on:
         type: boolean
         default: true
 
+# The Turbo token is scoped to the two steps that use it, not the whole workflow.
 env:
-  TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
   TURBO_TEAM: ${{ vars.TURBO_TEAM }}
 
 concurrency:
@@ -82,9 +82,11 @@ jobs:
         with:
           turbo: true
           ghToken: ${{ secrets.GITHUB_TOKEN }}
-          turboToken: ${{ env.TURBO_TOKEN }}
+          turboToken: ${{ secrets.TURBO_TOKEN }}
 
       - name: 🏗️ Build all packages
+        env:
+          TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
         run: bun run build
 
       # While the committed baseline says "generated": false this records instead of failing,

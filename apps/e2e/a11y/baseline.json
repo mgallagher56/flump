@@ -2,137 +2,35 @@
   "generated": true,
   "routes": {
     "marketing-home": {
-      "1280-dark": {
-        "axe": {
-          "color-contrast": 11
-        },
-        "focus": {
-          "no-skip-link": 1
-        }
-      },
       "1280-forced-colours": {
         "axe": {
-          "color-contrast": 26
-        },
-        "focus": {
-          "no-skip-link": 1
+          "color-contrast": 24
         }
       },
       "1280-light": {
-        "axe": {
-          "color-contrast": 14
-        },
-        "focus": {
-          "no-skip-link": 1
-        },
         "lang": {
           "html-lang-not-en-GB": 1
-        }
-      },
-      "375-dark": {
-        "axe": {
-          "color-contrast": 11
-        },
-        "focus": {
-          "no-skip-link": 1
-        }
-      },
-      "375-light": {
-        "axe": {
-          "color-contrast": 14
-        },
-        "focus": {
-          "no-skip-link": 1
         }
       }
     },
     "marketing-mcp": {
-      "1280-dark": {
-        "focus": {
-          "no-skip-link": 1
-        }
-      },
-      "1280-forced-colours": {
-        "focus": {
-          "no-skip-link": 1
-        }
-      },
       "1280-light": {
-        "focus": {
-          "no-skip-link": 1
-        },
         "lang": {
           "html-lang-not-en-GB": 1
-        }
-      },
-      "375-dark": {
-        "focus": {
-          "no-skip-link": 1
-        }
-      },
-      "375-light": {
-        "focus": {
-          "no-skip-link": 1
         }
       }
     },
     "marketing-pricing": {
-      "1280-dark": {
-        "focus": {
-          "no-skip-link": 1
-        }
-      },
-      "1280-forced-colours": {
-        "focus": {
-          "no-skip-link": 1
-        }
-      },
       "1280-light": {
-        "focus": {
-          "no-skip-link": 1
-        },
         "lang": {
           "html-lang-not-en-GB": 1
-        }
-      },
-      "375-dark": {
-        "focus": {
-          "no-skip-link": 1
-        }
-      },
-      "375-light": {
-        "focus": {
-          "no-skip-link": 1
         }
       }
     },
     "marketing-tools": {
-      "1280-dark": {
-        "focus": {
-          "no-skip-link": 1
-        }
-      },
-      "1280-forced-colours": {
-        "focus": {
-          "no-skip-link": 1
-        }
-      },
       "1280-light": {
-        "focus": {
-          "no-skip-link": 1
-        },
         "lang": {
           "html-lang-not-en-GB": 1
-        }
-      },
-      "375-dark": {
-        "focus": {
-          "no-skip-link": 1
-        }
-      },
-      "375-light": {
-        "focus": {
-          "no-skip-link": 1
         }
       }
     },
@@ -171,6 +69,11 @@
       "1280-light": {
         "lang": {
           "html-lang-not-en-GB": 1
+        }
+      },
+      "320-reflow": {
+        "reflow": {
+          "horizontal-overflow": 1
         }
       }
     },
@@ -278,16 +181,6 @@
       "1280-light": {
         "lang": {
           "html-lang-not-en-GB": 1
-        }
-      },
-      "375-dark": {
-        "axe": {
-          "scrollable-region-focusable": 1
-        }
-      },
-      "375-light": {
-        "axe": {
-          "scrollable-region-focusable": 1
         }
       }
     }
