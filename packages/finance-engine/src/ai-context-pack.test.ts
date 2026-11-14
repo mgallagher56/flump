@@ -349,7 +349,39 @@ describe("net worth choices in the pack", () => {
       expect(pack.portfolio.netWorthBasis).toEqual({ countProperty, countStudentLoan });
       const md = formatAiContextPackMarkdown(pack);
       if (line === null) expect(md).not.toContain("Not counted in net worth");
-      else expect(md).toContain(`Not counted in net worth (the user's settings):** ${line}`);
+      else expect(md).toContain(`Not counted in net worth (the user's choice):** ${line}`);
+    },
+  );
+
+  it.each([
+    [true, false, true, false],
+    [true, true, true, true],
+    [false, false, false, false],
+    [false, true, false, true],
+  ] as const)(
+    "the breakdown agrees with the totals: property %s, student loan %s",
+    (countProperty, countStudentLoan, showsProperty, showsStudentLoan) => {
+      const pack = buildFlumpAiContextPack(
+        {
+          netWorthBasis: { countProperty, countStudentLoan },
+          baseline: DEFAULT_FINANCIAL_BASELINE,
+          accounts: [
+            { id: "home", name: "Home (your estimate)", type: "Property", balance: 300000 },
+            ...accounts.filter((a) => a.id !== "home"),
+          ],
+        },
+        // Named accounts, so the home estimate is found by its label.
+        { anonymizeInstitutions: false },
+      );
+      const md = formatAiContextPackMarkdown(pack);
+      const own = md.split("\n").find((l) => l.startsWith("- **What you own:**")) ?? "";
+      const owe = md.split("\n").find((l) => l.startsWith("- **What you owe:**")) ?? "";
+      expect(own.includes("Home (your estimate): £300,000")).toBe(showsProperty);
+      expect(owe.includes("mortgages: £186,000")).toBe(showsProperty);
+      expect(owe.includes("student loans: £25,000")).toBe(showsStudentLoan);
+      // The parts shown add up to the total owed.
+      const total = (countProperty ? 186000 : 0) + (countStudentLoan ? 25000 : 0);
+      expect(owe).toContain(`What you owe:** £${total.toLocaleString("en-GB")} `);
     },
   );
 

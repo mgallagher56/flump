@@ -364,8 +364,7 @@ function formatSignedGbp(value: number): string {
 function formatLeavesOut(leftOut: readonly NetWorthLeftOut[]): string {
   const lines: string[] = [];
   const joined = joinNetWorthLeftOut(leftOut);
-  if (joined !== "")
-    lines.push(`\n- **Not counted in net worth (the user's settings):** ${joined}`);
+  if (joined !== "") lines.push(`\n- **Not counted in net worth (the user's choice):** ${joined}`);
   if (leftOut.includes("homeValueMissing")) {
     lines.push("\n- **Home value:** not saved, so the mortgage counts without it");
   }
@@ -378,6 +377,11 @@ export function formatAiContextPackMarkdown(pack: FlumpAiContextPack): string {
   const d = pack.debtSummary;
   const bg = pack.budgetSummary;
   const tx = pack.taxSummary.ukTaxCalculation;
+  // The breakdown shows only the parts the totals include under the user's choices.
+  const { countProperty, countStudentLoan } = p.netWorthBasis;
+  const studentLoans = p.accounts
+    .filter((a) => a.category === "studentLoans")
+    .reduce((sum, a) => sum + a.nominalBalance, 0);
 
   return `# Flump context pack
 Generated: ${pack.metadata.generatedAt} | Anonymised: ${pack.metadata.isAnonymized ? "yes" : "no"} | Currency: ${pack.metadata.currency}
@@ -388,8 +392,8 @@ ${pack.observations.map((o) => `  * ${o}`).join("\n") || "  * None."}
 
 ## 2. Net worth
 - **Net worth:** ${formatSignedGbp(p.netWorth)}${formatLeavesOut(p.netWorthLeavesOut)}
-- **What you own:** £${p.totalAssets.toLocaleString("en-GB")} (cash you can get at quickly: £${p.totalLiquidCash.toLocaleString("en-GB")}, investments: £${p.totalInvestments.toLocaleString("en-GB")}, pensions: £${p.totalPensions.toLocaleString("en-GB")}${p.homeEstimate > 0 ? `, Home (your estimate): £${p.homeEstimate.toLocaleString("en-GB")}` : ""})
-- **What you owe:** £${p.totalLiabilities.toLocaleString("en-GB")} (debts: £${p.totalConsumerDebt.toLocaleString("en-GB")}, mortgages: £${p.totalMortgageBalance.toLocaleString("en-GB")})
+- **What you own:** £${p.totalAssets.toLocaleString("en-GB")} (cash you can get at quickly: £${p.totalLiquidCash.toLocaleString("en-GB")}, investments: £${p.totalInvestments.toLocaleString("en-GB")}, pensions: £${p.totalPensions.toLocaleString("en-GB")}${countProperty && p.homeEstimate > 0 ? `, Home (your estimate): £${p.homeEstimate.toLocaleString("en-GB")}` : ""})
+- **What you owe:** £${p.totalLiabilities.toLocaleString("en-GB")} (debts: £${p.totalConsumerDebt.toLocaleString("en-GB")}${countProperty ? `, mortgages: £${p.totalMortgageBalance.toLocaleString("en-GB")}` : ""}${countStudentLoan ? `, student loans: £${studentLoans.toLocaleString("en-GB")}` : ""})
 - **Average savings rate:** ${p.weightedSavingsRate}% AER
 
 ### Accounts:

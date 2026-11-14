@@ -1,4 +1,9 @@
-import { type BuildContextPackInput, calculateUKTax, type TaxRecord } from "@flump/finance-engine";
+import {
+  type BuildContextPackInput,
+  calculateUKTax,
+  getUkCalendarDate,
+  type TaxRecord,
+} from "@flump/finance-engine";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import type { VerifiedToken } from "../../auth/token-verifier.js";
 import { collectToolOutputViolations } from "../../policy/output-policy.js";
@@ -179,6 +184,30 @@ describe("query reads (re-plan PR B)", () => {
       expect(Object.keys(byKey)).not.toContain(acc(ID.student));
       expect(e.missing[0]?.field).toBe("accountHistory.accounts");
       expect(JSON.stringify(e)).not.toMatch(/Monzo|Barclays|Amex|Halifax|22222222/);
+    });
+
+    it("ends on the saved balances when the range reaches the current month with no row for it", async () => {
+      const now = getUkCalendarDate(new Date()).slice(0, 7);
+      const [year, month] = now.split("-").map(Number) as [number, number];
+      const prev = month === 1 ? { y: year - 1, m: 12 } : { y: year, m: month - 1 };
+      const p = await connectTestClient({
+        ...emptyUser,
+        accounts: [
+          { id: "s1", name: "s", type: "Saving", balance: 5000 },
+          { id: "m1", name: "m", type: "Mortgage", balance: 150000 },
+        ],
+        accountDetails: [
+          { accountId: "s1", year: prev.y, month: prev.m, value: 4000 },
+          { accountId: "m1", year: prev.y, month: prev.m, value: 151000 },
+        ],
+      });
+      try {
+        const e = (await p.callJson("get_balance_history", { from: now, to: now })) as Env;
+        // Saved balances, not the carried previous month: 5,000 - 150,000.
+        expect(e.result.series[0].points[0].value).toBe(5000 - 150000);
+      } finally {
+        await p.close();
+      }
     });
 
     it("total and category groupings, delta and pctDelta, current minus previous", async () => {
@@ -653,19 +682,41 @@ describe("query reads (re-plan PR B)", () => {
 
     it("rebuilds totals from monthly history with carry-forward", async () => {
       const e = await call("get_financial_snapshot", { asOfMonth: "2025-04" });
-      // Saver 6400 (carried), card owed 1500 (carried), mortgage 202000 (carried).
+      // Saver 6400 (carried), card owed 1500 (carried), mortgage 202000 (carried), student loan
+      // 30000 (carried): shown as a part, left out of net worth under the default choices.
       expect(e.result).toMatchObject({
         asOfMonth: "2025-04",
         liquidCashGbp: 6400,
         consumerDebtGbp: 1500,
         mortgageGbp: 202000,
         netWorthGbp: 6400 - 1500 - 202000,
-        studentLoanGbp: null,
+        liabilitiesGbp: 1500 + 202000,
+        studentLoanGbp: 30000,
         monthlyIncomeGbp: null,
         emergencyRunwayMonths: null,
-        accountCount: 3,
+        accountCount: 4,
       });
-      expect(e.result.notes[0]).toMatch(/Accounts repeating their last earlier value.*3 of 3/);
+      expect(e.result.notes[0]).toMatch(/Accounts repeating their last earlier value.*4 of 4/);
+    });
+
+    it("shows every category part and applies the choices only to the totals", async () => {
+      const p = await connectTestClient({
+        ...persona,
+        netWorthBasis: { countProperty: false, countStudentLoan: true },
+      });
+      try {
+        const e = (await p.callJson("get_financial_snapshot", { asOfMonth: "2025-04" })) as Env;
+        expect(e.result).toMatchObject({
+          mortgageGbp: 202000,
+          studentLoanGbp: 30000,
+          netWorthGbp: 6400 - 1500 - 30000,
+          liabilitiesGbp: 1500 + 30000,
+          netWorthLeavesOut: ["mortgage"],
+        });
+        expect(e.result.notes.join(" ")).toMatch(/propertyGbp and mortgageGbp still show/);
+      } finally {
+        await p.close();
+      }
     });
 
     it("refuses a future month and reports months before any history", async () => {

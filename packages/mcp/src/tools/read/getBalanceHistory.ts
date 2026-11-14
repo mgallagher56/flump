@@ -1,5 +1,6 @@
 import {
   countsTowardNetWorth,
+  getUkCalendarDate,
   MCP_NOTICE,
   type NetWorthBasis,
   type ResolvedAccount,
@@ -66,7 +67,7 @@ const result = z.object({
   page: z.number(),
   totalPages: z.number(),
   /**
-   * What the net-worth total leaves out under the user's own choices, in display order;
+   * What the net-worth total leaves out under the user's choices, in display order;
    * homeValueMissing means a mortgage counts with no home value saved.
    */
   netWorthLeavesOut: z.array(z.enum(NET_WORTH_LEFT_OUT_VALUES)),
@@ -133,13 +134,20 @@ interface Cell {
   source: string;
 }
 
-/** month index -> account id -> value, from the E30 selector (carry-forward, liabilities as owed). */
+/**
+ * month index -> account id -> value, from the E30 selector (carry-forward, liabilities as owed).
+ * When `to` is the current Europe/London month, an account with no row that month shows its saved
+ * balance, as on the web history page, so the range ends on the figures every other page shows.
+ */
 function buildGrid(
   accounts: readonly ResolvedAccount[],
   rows: readonly AccountSnapshotRow[],
   to: number,
   basis: NetWorthBasis,
 ): Map<number, Map<string, Cell>> {
+  const currentMonth = parseMonth(getUkCalendarDate(new Date()).slice(0, 7));
+  const currentBalances =
+    to === currentMonth ? new Map(accounts.map((a) => [a.id, a.nominalBalance])) : undefined;
   const sourceAt = new Map<string, string>();
   for (const r of rows) {
     sourceAt.set(`${r.accountId}|${monthIndex(r.year, r.month)}`, safeSnapshotSource(r.source));
@@ -148,7 +156,7 @@ function buildGrid(
     accounts.map((a) => ({ id: a.id, type: a.rawType })),
     rows,
     basis,
-    { through: monthLabel(to) },
+    { through: monthLabel(to), currentBalances },
   );
   const grid = new Map<number, Map<string, Cell>>();
   const lastSource = new Map<string, string>();
@@ -213,7 +221,7 @@ export const getBalanceHistory = defineFlumpTool({
   name: "get_balance_history",
   title: "Balance history",
   description:
-    "Month-end balances recorded in Flump between two months, per account, per category or as a net-worth total, at monthly, calendar-quarter or calendar-year intervals (a period cut short by the range is flagged partial). metric balance gives the value at the end of each period; delta gives the change from the end of the previous period (current minus previous, up or down); pctDelta gives that change as a percentage. Debts and mortgages are the amount owed as a positive number. A month with no recorded value carries the last known value forward and is flagged carriedForward; source says how each value was recorded. Net worth follows the user's own choices of what counts (netWorthLeavesOut): student loans appear only when the user counts them, and property and mortgages are left out of the total when the user does not count them. Results are paged: ask for the next page while page is below totalPages.",
+    "Month-end balances recorded in Flump between two months, per account, per category or as a net-worth total, at monthly, calendar-quarter or calendar-year intervals (a period cut short by the range is flagged partial). metric balance gives the value at the end of each period; delta gives the change from the end of the previous period (current minus previous, up or down); pctDelta gives that change as a percentage. Debts and mortgages are the amount owed as a positive number. A month with no recorded value carries the last known value forward and is flagged carriedForward; source says how each value was recorded. Net worth follows the user's choices of what counts (netWorthLeavesOut): student loans appear only when the user counts them, and property and mortgages are left out of the total when the user does not count them. Results are paged: ask for the next page while page is below totalPages.",
   input: {
     from: MONTH.describe("First month, in the form 2025-04"),
     to: MONTH.describe("Last month, in the form 2025-04"),
@@ -299,7 +307,11 @@ export const getBalanceHistory = defineFlumpTool({
           });
     const cells = buildGrid(selected, rows, to, listBasis);
     const recorded = new Set(rows.map((r) => r.accountId));
-    const withData = selected.filter((a) => recorded.has(a.id));
+    const withRecorded = selected.filter((a) => recorded.has(a.id));
+    // An account with no recorded month still joins the current month at its saved balance
+    // (buildGrid), so it is a member of the series there, as on the web history page.
+    const inGrid = new Set([...cells.values()].flatMap((m) => [...m.keys()]));
+    const withData = selected.filter((a) => recorded.has(a.id) || inGrid.has(a.id));
 
     let groups: Group[];
     if (input.groupBy === "account") {
@@ -402,7 +414,7 @@ export const getBalanceHistory = defineFlumpTool({
     });
 
     const missing: Missing[] = [];
-    if (selected.length > 0 && withData.length === 0) {
+    if (selected.length > 0 && withRecorded.length === 0) {
       missing.push({
         field: "accountHistory",
         why: "No month-end balance is recorded on or before the requested months for the selected accounts.",
@@ -429,14 +441,14 @@ export const getBalanceHistory = defineFlumpTool({
         : []),
       ...(index.accounts.some((a) => a.category === "studentLoans") && !basis.countStudentLoan
         ? [
-            "Student loans are not counted in net worth under the user's settings, so they do not appear here, even when asked for by id or category.",
+            "Student loans are not counted in net worth under the user's choices, so they do not appear here, even when asked for by id or category.",
           ]
         : []),
       ...(input.groupBy === "total" &&
       !basis.countProperty &&
       (leftOut.includes("property") || leftOut.includes("mortgage"))
         ? [
-            "Property values and mortgage balances are not counted in net worth under the user's settings, so the total leaves them out. Ask per account or per category to see them.",
+            "Property values and mortgage balances are not counted in net worth under the user's choices, so the total leaves them out. Ask per account or per category to see them.",
           ]
         : []),
     ];
