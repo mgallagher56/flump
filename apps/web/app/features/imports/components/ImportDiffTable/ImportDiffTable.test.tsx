@@ -17,7 +17,7 @@ describe("ImportDiffTable", () => {
     );
     const tick = screen.getByRole("checkbox", { name: /Replace the value you entered/ });
     expect((tick as HTMLInputElement).checked).toBe(false);
-    expect(screen.getAllByText("Kept unless ticked").length).toBe(1);
+    expect(screen.getAllByText("Skipped unless ticked").length).toBe(1);
     await userEvent.setup().click(tick);
     expect(onToggle).toHaveBeenCalledWith("saver:2026-09", true);
   });
@@ -31,7 +31,7 @@ describe("ImportDiffTable", () => {
         ticked={new Set(["saver:2026-09"])}
       />,
     );
-    expect(screen.getAllByText("Will replace").length).toBe(1);
+    expect(screen.getAllByText("Will be saved").length).toBe(1);
   });
 
   it("puts more than 8 rows in a drawer and has no flagged list when nothing is flagged", () => {

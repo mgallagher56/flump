@@ -3,8 +3,10 @@ import type { CommitPlan, ImportStatus, PreviewRow } from "./importModel";
 
 /** Copy for the import review (E17 re-plan PR E). Neutral and factual; en-GB. */
 
+export const formatCount = (n: number) => new Intl.NumberFormat("en-GB").format(n);
+
 const plural = (n: number, one: string, other: string) =>
-  `${new Intl.NumberFormat("en-GB").format(n)} ${n === 1 ? one : other}`;
+  `${formatCount(n)} ${n === 1 ? one : other}`;
 
 export const balancesLabel = (n: number) => plural(n, "monthly balance", "monthly balances");
 export const accountsLabel = (n: number) => plural(n, "account", "accounts");
@@ -78,15 +80,15 @@ export function rowStatusLabel(row: PreviewRow): string {
 export function planSentence(plan: CommitPlan): string {
   const parts = [
     `${plural(plan.new, "new balance", "new balances")}`,
-    `${plan.overwrite} replaced`,
-    `${plan.unchanged} unchanged`,
+    `${formatCount(plan.overwrite)} replaced`,
+    `${formatCount(plan.unchanged)} unchanged`,
   ];
-  if (plan.kept > 0) parts.push(`${plan.kept} kept as they are`);
+  if (plan.kept > 0) parts.push(`${formatCount(plan.kept)} skipped`);
   return `${parts.join(", ")}.`;
 }
 
 export const FLAGGED_HELP =
-  "Rows marked for review would replace a value already saved in Flump. They are left as they are unless you tick them.";
+  "These rows would replace a value already saved in Flump, or this month's balance from your bank. They are skipped unless you tick them.";
 
 export const commitButtonLabel = (n: number) =>
   n === 0 ? "Nothing to save" : `Save ${balancesLabel(n)}`;
@@ -99,7 +101,10 @@ export const REVERT_ERROR =
   "The import could not be undone. Nothing has changed. Try again in a moment.";
 
 export const UNDO_CONFIRM =
-  "Balances this import saved go back to what they were before. Any you have changed since stay as they are, and new accounts it created are removed if nothing else uses them.";
+  "Balances this import replaced go back to what they were before, and balances it added are removed. Any that have changed since stay as they are, and new accounts it created are removed if nothing else uses them.";
+
+export const invalidRowsLine = (n: number) =>
+  `${formatCount(n)} staged ${n === 1 ? "row was" : "rows were"} not valid (for example a future month) and will not be saved.`;
 
 export function savedSentence(counts: {
   new: number | null;
@@ -110,16 +115,16 @@ export function savedSentence(counts: {
   const n = (v: number | null) => v ?? 0;
   const parts = [
     `${plural(n(counts.new), "new balance", "new balances")} saved`,
-    `${n(counts.overwrite)} replaced`,
-    `${n(counts.unchanged)} unchanged`,
+    `${formatCount(n(counts.overwrite))} replaced`,
+    `${formatCount(n(counts.unchanged))} unchanged`,
   ];
-  if (n(counts.skipped) > 0) parts.push(`${n(counts.skipped)} kept as they were`);
+  if (n(counts.skipped) > 0) parts.push(`${formatCount(n(counts.skipped))} skipped`);
   return `${parts.join(", ")}.`;
 }
 
 export function undoneSentence(r: { restored: number; removed: number; kept: number }): string {
-  const parts = [`${r.restored} restored`, `${r.removed} removed`];
-  if (r.kept > 0) parts.push(`${r.kept} left as you changed them`);
+  const parts = [`${formatCount(r.restored)} restored`, `${formatCount(r.removed)} removed`];
+  if (r.kept > 0) parts.push(`${formatCount(r.kept)} left as they are now`);
   return `Import undone: ${parts.join(", ")}.`;
 }
 

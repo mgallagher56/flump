@@ -24,3 +24,7 @@ export const flaggedList = cva({
 export const tableCard = cva({
   base: { minWidth: 0, fontVariantNumeric: "tabular-nums" },
 });
+
+export const section = cva({
+  base: { display: "flex", flexDirection: "column", gap: "12px", minWidth: 0 },
+});

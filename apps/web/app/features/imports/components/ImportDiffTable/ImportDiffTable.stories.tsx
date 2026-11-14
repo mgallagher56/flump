@@ -35,7 +35,7 @@ export const WithFlaggedRow: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     await userEvent.click(canvas.getByRole("checkbox", { name: /Replace the value you entered/ }));
-    await expect(canvas.getAllByText("Will replace")[0]).toBeDefined();
+    await expect(canvas.getAllByText("Will be saved")[0]).toBeDefined();
   },
 };
 
