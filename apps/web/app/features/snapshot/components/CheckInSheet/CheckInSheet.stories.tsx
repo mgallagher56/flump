@@ -1,7 +1,13 @@
 import { DEFAULT_NET_WORTH_BASIS } from "@flump/finance-engine";
 import type { Meta, StoryObj } from "@storybook/react";
 import { expect, fn, userEvent, within } from "storybook/test";
-import { EXAMPLE_ACCOUNTS, exampleDetails, TWO_MONTHS } from "../../fixtures";
+import {
+  CHECK_IN_ACCOUNTS,
+  CHECK_IN_DETAILS,
+  EXAMPLE_ACCOUNTS,
+  exampleDetails,
+  TWO_MONTHS,
+} from "../../fixtures";
 import { CheckInSheet } from "./CheckInSheet";
 
 const meta: Meta<typeof CheckInSheet> = {
@@ -12,8 +18,8 @@ const meta: Meta<typeof CheckInSheet> = {
     open: true,
     onOpenChange: fn(),
     onSave: fn(async () => true),
-    accounts: EXAMPLE_ACCOUNTS,
-    accountDetails: exampleDetails(TWO_MONTHS),
+    accounts: CHECK_IN_ACCOUNTS,
+    accountDetails: CHECK_IN_DETAILS,
     currentMonth: "2026-11",
     mode: "checkIn",
     basis: DEFAULT_NET_WORTH_BASIS,
@@ -26,30 +32,40 @@ type Story = StoryObj<typeof CheckInSheet>;
 export const MonthlyCheckIn: Story = {
   play: async ({ args }) => {
     const body = within(document.body);
-    await expect((await body.findAllByText("Connected: updates from your bank"))[0]).toBeDefined();
-    await userEvent.click(body.getAllByRole("button", { name: "Save balances" })[0] as HTMLElement);
+    const field = await body.findByRole("textbox", { name: /New balance.*Everyday account/ });
+    await userEvent.type(field, "3412.50{Enter}");
     await expect(args.onSave).toHaveBeenCalledWith(
-      expect.objectContaining({ month: "2026-11", saved: 3, skipped: 0 }),
+      expect.objectContaining({ month: "2026-11", quiet: true }),
     );
+    await expect(await body.findByText("Updated £3,412.50")).toBeDefined();
   },
 };
 
-export const PartialSave: Story = {
+export const MonthlyCheckInDark: Story = { ...MonthlyCheckIn, globals: { theme: "dark" } };
+
+export const NoChangeToTheRest: Story = {
   play: async ({ args }) => {
     const body = within(document.body);
-    const isa = (await body.findAllByRole("textbox", { name: "Stocks ISA: balance" }))[0];
-    await userEvent.clear(isa as HTMLElement);
-    await userEvent.click(body.getAllByRole("button", { name: "Save balances" })[0] as HTMLElement);
-    await expect(args.onSave).toHaveBeenCalledWith(
-      expect.objectContaining({ saved: 2, skipped: 1 }),
-    );
+    await userEvent.click(await body.findByRole("button", { name: "No change to the rest" }));
+    await expect(
+      await body.findByRole("heading", { name: "Check-in saved for November 2026." }),
+    ).toBeDefined();
+    await expect(args.onSave).toHaveBeenCalledTimes(1);
   },
 };
 
+export const NoChangeToTheRestDark: Story = { ...NoChangeToTheRest, globals: { theme: "dark" } };
+
 export const AddEarlierMonth: Story = {
-  args: { mode: "backfill" },
+  args: {
+    mode: "backfill",
+    accounts: EXAMPLE_ACCOUNTS,
+    accountDetails: exampleDetails(TWO_MONTHS),
+  },
   play: async () => {
     const body = within(document.body);
     await expect((await body.findAllByRole("combobox", { name: "Year" }))[0]).toBeDefined();
   },
 };
+
+export const AddEarlierMonthDark: Story = { ...AddEarlierMonth, globals: { theme: "dark" } };

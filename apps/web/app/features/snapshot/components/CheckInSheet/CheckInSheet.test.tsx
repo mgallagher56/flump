@@ -1,7 +1,7 @@
 import { DEFAULT_NET_WORTH_BASIS } from "@flump/finance-engine";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import type { SaveSnapshotArgs } from "../../useSaveSnapshot";
 import { CheckInSheet, type CheckInSheetProps } from "./CheckInSheet";
 
@@ -20,8 +20,23 @@ const details = [
   { accountId: CURRENT, year: 2024, month: 3, value: 640 },
 ];
 
+const phoneWidth = () => {
+  Object.defineProperty(window, "matchMedia", {
+    configurable: true,
+    value: vi.fn(() => ({
+      matches: true,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    })),
+  });
+};
+
 const setup = (props: Partial<CheckInSheetProps> = {}) => {
-  const onSave = vi.fn(async (_args: SaveSnapshotArgs) => true);
+  const refresh = vi.fn();
+  const onSave = Object.assign(
+    vi.fn(async (_args: SaveSnapshotArgs) => true),
+    { refresh },
+  );
   const onOpenChange = vi.fn();
   render(
     <CheckInSheet
@@ -35,83 +50,75 @@ const setup = (props: Partial<CheckInSheetProps> = {}) => {
       {...props}
     />,
   );
-  return { onSave, onOpenChange };
+  return { onSave, onOpenChange, refresh };
 };
 
 const field = (name: RegExp) => screen.getByRole("textbox", { name }) as HTMLInputElement;
 
 describe("CheckInSheet", () => {
-  it("lists every account with last month's value and its state", () => {
-    setup();
-    expect(screen.getByRole("dialog", { name: "Monthly check-in: November 2026" })).toBeDefined();
-    expect(field(/Current account: balance/).value).toBe("1,200");
-    expect(field(/Mortgage: amount owed/).value).toBe("181,000");
-    expect(screen.getAllByText("Not updated since October 2026")).toHaveLength(2);
-    // Connected accounts are not editable: the bank sync fills them in.
-    expect(screen.getByText("Connected: updates from your bank")).toBeDefined();
-    expect(screen.queryByRole("textbox", { name: /Joint account/ })).toBeNull();
+  afterEach(() => {
+    Reflect.deleteProperty(window, "matchMedia");
   });
 
-  it("saves every manual account for the month and closes", async () => {
-    const { onSave, onOpenChange } = setup();
-    await userEvent.click(screen.getByRole("button", { name: "Save balances" }));
-    await waitFor(() => expect(onOpenChange).toHaveBeenCalledWith(false));
-    expect(onSave).toHaveBeenCalledWith({
-      month: "2026-11",
-      payload: {
-        values: [
-          { accountId: CURRENT, value: 1200 },
-          { accountId: MORTGAGE, value: 181000 },
-        ],
-        complete: true,
-      },
-      saved: 2,
-      skipped: 0,
+  describe("monthly check-in", () => {
+    it("goes account by account in one list from md, skipping connected accounts", () => {
+      setup();
+      expect(screen.getByRole("dialog", { name: "Monthly check-in: November 2026" })).toBeDefined();
+      expect(screen.getByTestId("checkin-list")).toBeDefined();
+      expect(screen.getByText("October 2026: £1,200")).toBeDefined();
+      expect(screen.getByRole("textbox", { name: /New balance.*Current account/ })).toBeDefined();
+      expect(screen.getByRole("textbox", { name: /Amount owed now.*Mortgage/ })).toBeDefined();
+      expect(screen.queryByText("Joint account")).toBeNull();
     });
-  });
 
-  it("sends an edited value", async () => {
-    const { onSave } = setup();
-    const input = field(/Current account: balance/);
-    await userEvent.clear(input);
-    await userEvent.type(input, "1650.25");
-    await userEvent.click(screen.getByRole("button", { name: "Save balances" }));
-    await waitFor(() => expect(onSave).toHaveBeenCalled());
-    expect(onSave.mock.calls[0]?.[0].payload.values[0]).toEqual({
-      accountId: CURRENT,
-      value: 1650.25,
+    it("shows one card per account below md", () => {
+      phoneWidth();
+      setup();
+      expect(screen.getByTestId("checkin-card")).toBeDefined();
+      expect(screen.getByText("1 of 2")).toBeDefined();
+      expect(screen.queryByTestId("checkin-list")).toBeNull();
     });
-  });
 
-  it("allows a partial save: an emptied field is skipped", async () => {
-    const { onSave } = setup();
-    await userEvent.clear(field(/Mortgage: amount owed/));
-    expect(screen.getByText(/1 of 2 balances ready to save. Empty ones keep/)).toBeDefined();
-    await userEvent.click(screen.getByRole("button", { name: "Save balances" }));
-    await waitFor(() => expect(onSave).toHaveBeenCalled());
-    expect(onSave.mock.calls[0]?.[0]).toEqual({
-      month: "2026-11",
-      payload: { values: [{ accountId: CURRENT, value: 1200 }] },
-      saved: 1,
-      skipped: 1,
+    it("saves quietly as it goes, shows the summary and reloads saved data once on Done", async () => {
+      const { onSave, onOpenChange, refresh } = setup();
+      await userEvent.click(screen.getByRole("button", { name: "No change to the rest" }));
+      await screen.findByRole("heading", { name: "Check-in saved for November 2026." });
+      expect(onSave).toHaveBeenCalledWith({
+        month: "2026-11",
+        payload: {
+          values: [
+            { accountId: CURRENT, value: 1200, source: "confirmed" },
+            { accountId: MORTGAGE, value: 181000, source: "confirmed" },
+          ],
+          complete: true,
+        },
+        saved: 2,
+        skipped: 0,
+        quiet: true,
+      });
+      // The connected account counts at its saved balance this month: £900 up on October.
+      expect(screen.getByTestId("checkin-net-worth").textContent).toBe(
+        "Net worth: −£178,900, up £900 on October 2026.",
+      );
+      expect(refresh).not.toHaveBeenCalled();
+      await userEvent.click(screen.getByRole("button", { name: "Done" }));
+      expect(refresh).toHaveBeenCalledTimes(1);
+      expect(onOpenChange).toHaveBeenCalledWith(false);
     });
-  });
 
-  it("keeps the sheet open when the save fails", async () => {
-    const onSave = vi.fn(async () => false);
-    const { onOpenChange } = setup({ onSave });
-    await userEvent.click(screen.getByRole("button", { name: "Save balances" }));
-    await waitFor(() => expect(onSave).toHaveBeenCalled());
-    expect(onOpenChange).not.toHaveBeenCalledWith(false);
-  });
+    it("does not reload saved data when nothing was saved", async () => {
+      const { refresh, onOpenChange } = setup();
+      await userEvent.click(screen.getByRole("button", { name: "Close" }));
+      expect(onOpenChange).toHaveBeenCalledWith(false);
+      expect(refresh).not.toHaveBeenCalled();
+    });
 
-  it("disables save when every field is empty", async () => {
-    setup();
-    await userEvent.clear(field(/Current account: balance/));
-    await userEvent.clear(field(/Mortgage: amount owed/));
-    expect(
-      (screen.getByRole("button", { name: "Save balances" }) as HTMLButtonElement).disabled,
-    ).toBe(true);
+    it("says to add an account when there is none to check in", () => {
+      setup({ accounts: [accounts[2] as (typeof accounts)[number]] });
+      expect(
+        screen.getByText("Add an account first, then its balance appears here."),
+      ).toBeDefined();
+    });
   });
 
   describe("back-fill", () => {
@@ -152,9 +159,9 @@ describe("CheckInSheet", () => {
     });
   });
 
-  describe("net worth choices", () => {
+  describe("net worth choices (back-fill list)", () => {
     it("says a row is not counted only when the choices leave its kind out", () => {
-      setup({ basis: { countProperty: false, countStudentLoan: false } });
+      setup({ mode: "backfill", basis: { countProperty: false, countStudentLoan: false } });
       const mortgage = screen.getByText("Mortgage", { selector: "p" }).parentElement;
       expect(mortgage?.textContent).toContain("Not counted in net worth");
       const current = screen.getByText("Current account", { selector: "p" }).parentElement;
@@ -162,7 +169,7 @@ describe("CheckInSheet", () => {
     });
 
     it("counts the mortgage under the default choices", () => {
-      setup();
+      setup({ mode: "backfill" });
       expect(screen.queryByText(/Not counted in net worth/)).toBeNull();
     });
   });

@@ -1,13 +1,20 @@
+import { DEFAULT_NET_WORTH_BASIS } from "@flump/finance-engine";
 import { describe, expect, test } from "vitest";
 import {
   answerValue,
   buildCheckInSteps,
+  buildCheckInSummary,
+  CHECK_IN_SENDS_SOURCE,
   type CheckInAccountInput,
   calculatedExplain,
   checkInPayload,
+  doneKind,
+  hasSource,
   restAnswer,
   resumeIndex,
   statementPromptText,
+  stepFigure,
+  withoutSource,
 } from "./checkInModel";
 import type { AccountDetailInput } from "./snapshotModel";
 
@@ -159,7 +166,7 @@ describe("statement prompt", () => {
     );
     expect(m?.statementPrompt).toEqual({ kind: "fixedRateEnded", endedMonth: "2026-06" });
     expect(statementPromptText(m!.statementPrompt!)).toBe(
-      "Your fixed rate ended in June 2026, so the rate may have changed. Worth checking this against a statement.",
+      "Your fixed rate ended in June 2026, so the rate may have changed. Worth checking it against a statement.",
     );
   });
 
@@ -172,5 +179,112 @@ describe("statement prompt", () => {
       MONTH,
     )[0];
     expect(old?.statementPrompt).toEqual({ kind: "yearSinceTyped" });
+  });
+});
+
+describe("sources", () => {
+  test("values are sent with their source", () => {
+    expect(CHECK_IN_SENDS_SOURCE).toBe(true);
+  });
+
+  test("withoutSource strips every source for an older backend", () => {
+    const payload = {
+      values: [{ accountId: "c", value: 1, source: "manual" as const }],
+      complete: true,
+    };
+    expect(hasSource(payload)).toBe(true);
+    expect(withoutSource(payload)).toEqual({
+      values: [{ accountId: "c", value: 1 }],
+      complete: true,
+    });
+    expect(hasSource(withoutSource(payload))).toBe(false);
+  });
+});
+
+describe("student loans", () => {
+  test("show and send the positive amount owed, like any other debt", () => {
+    const loan = buildCheckInSteps(accounts, details, MONTH).find((s) => s.accountId === "s");
+    expect(loan?.isLiability).toBe(true);
+    expect(loan?.lastValue).toBe(38400);
+    expect(loan?.calculated).toBeNull();
+  });
+});
+
+describe("done steps", () => {
+  const steps = buildCheckInSteps(
+    accounts,
+    [...details, row("C", 11, 3360), row("V", 11, 7500), row("M", 11, -185999.56, "calculated")],
+    MONTH,
+  );
+  const byId = (id: string) => steps.find((s) => s.accountId === id) as (typeof steps)[number];
+
+  test("an answer from this check-in reads by its source", () => {
+    const c = byId("c");
+    const f = stepFigure(c, { accountId: "c", value: 3360, source: "manual" });
+    expect(f).toEqual({ value: 3360, source: "manual", fromSession: true });
+    expect(doneKind(c, f as NonNullable<typeof f>)).toBe("updated");
+  });
+
+  test("a figure recorded before reads as No change when it repeats last month", () => {
+    const c = stepFigure(byId("c"), null);
+    expect(doneKind(byId("c"), c as NonNullable<typeof c>)).toBe("noChange");
+    const v = stepFigure(byId("v"), null);
+    expect(doneKind(byId("v"), v as NonNullable<typeof v>)).toBe("updated");
+    const m = stepFigure(byId("m"), null);
+    expect(doneKind(byId("m"), m as NonNullable<typeof m>)).toBe("calculated");
+  });
+
+  test("an open step has no figure", () => {
+    expect(stepFigure(byId("p"), null)).toBeNull();
+  });
+});
+
+describe("summary", () => {
+  const steps = buildCheckInSteps(accounts, details, MONTH);
+  const answer = (id: string, value: number, source: "manual" | "confirmed" | "calculated") => ({
+    accountId: id,
+    value,
+    source,
+  });
+
+  test("lists what changed and net worth against last month under the basis", () => {
+    const answers = {
+      c: answer("c", 3500, "manual"),
+      v: answer("v", 7380, "confirmed"),
+      m: answer("m", 185999.56, "calculated"),
+    };
+    const summary = buildCheckInSummary(
+      steps,
+      answers,
+      accounts,
+      details,
+      MONTH,
+      DEFAULT_NET_WORTH_BASIS,
+    );
+    expect(summary.changed.map((c) => [c.name, c.value, c.calculated])).toEqual([
+      ["Current account", 3500, false],
+      ["Residential mortgage", 185999.56, true],
+    ]);
+    expect(summary.previousMonth).toBe("2026-10");
+    // Current account +140 and mortgage 550.44 less owed; accounts not yet checked in count at
+    // their saved balance this month (pension +900, car loan 210 less owed): +1,800.44.
+    expect(summary.change).toBeCloseTo(1800.44, 2);
+    expect(summary.netWorth).not.toBeNull();
+  });
+
+  test("with nothing changed the change is zero", () => {
+    const answers = Object.fromEntries(
+      steps.map((s) => [s.accountId, answerValue(s, { kind: "noChange" }) as never]),
+    );
+    const summary = buildCheckInSummary(
+      steps,
+      answers,
+      accounts,
+      details,
+      MONTH,
+      DEFAULT_NET_WORTH_BASIS,
+    );
+    expect(summary.changed).toEqual([]);
+    expect(summary.change).toBe(0);
   });
 });

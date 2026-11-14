@@ -64,3 +64,43 @@ export const TREND_MONTHS = [
   "2026-09",
   "2026-10",
 ];
+
+/**
+ * The account-by-account check-in (R2-5): a current account, a credit card, an ISA and a
+ * mortgage with a rate and payment (so its figure is calculated). October 2026 is recorded.
+ */
+export const CHECK_IN_ACCOUNTS = [
+  {
+    id: "b0000000-0000-4000-8000-000000000001",
+    name: "Everyday account",
+    type: "Current",
+    balance: 3360,
+  },
+  {
+    id: "b0000000-0000-4000-8000-000000000002",
+    name: "Stocks ISA",
+    type: "Investment",
+    balance: 14200,
+  },
+  {
+    id: "b0000000-0000-4000-8000-000000000003",
+    name: "Residential mortgage",
+    type: "Mortgage",
+    balance: -186550,
+    interestRate: 4.5,
+    monthlyContribution: 1250,
+  },
+  {
+    id: "b0000000-0000-4000-8000-000000000004",
+    name: "Credit card",
+    type: "Credit Card",
+    balance: -640,
+  },
+];
+
+export const CHECK_IN_DETAILS = [
+  { accountId: CHECK_IN_ACCOUNTS[0]?.id, year: 2026, month: 10, value: 3360, source: "manual" },
+  { accountId: CHECK_IN_ACCOUNTS[1]?.id, year: 2026, month: 10, value: 14200, source: "manual" },
+  { accountId: CHECK_IN_ACCOUNTS[2]?.id, year: 2026, month: 10, value: -186550, source: "manual" },
+  { accountId: CHECK_IN_ACCOUNTS[3]?.id, year: 2026, month: 10, value: -640, source: "manual" },
+];
