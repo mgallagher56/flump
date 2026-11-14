@@ -9,8 +9,10 @@ describe("AccountIntakeService (Deep Module)", () => {
   let mockAccountDetailRepo: any;
   let mockUserProfileRepo: any;
   let mockBankConnectionRepo: any;
+  let mockAuditInsert: any;
 
   beforeEach(() => {
+    mockAuditInsert = vi.fn().mockResolvedValue(undefined);
     mockAccountRepo = {
       find: vi.fn(),
       findOne: vi.fn(),
@@ -32,6 +34,7 @@ describe("AccountIntakeService (Deep Module)", () => {
           getRepository: (entity: { name: string }) => {
             if (entity.name === "AccountDetail") return mockAccountDetailRepo;
             if (entity.name === "Transaction") return { delete: vi.fn() };
+            if (entity.name === "AuditEvent") return { insert: mockAuditInsert };
             return mockAccountRepo;
           },
         }),
@@ -205,6 +208,9 @@ describe("AccountIntakeService (Deep Module)", () => {
     expect(result.success).toBe(true);
     expect(mockAccountDetailRepo.delete).toHaveBeenCalledWith({ accountId: "acc-1" });
     expect(mockAccountRepo.remove).toHaveBeenCalled();
+    expect(mockAuditInsert).toHaveBeenCalledWith(
+      expect.objectContaining({ userId: "user-123", action: "account.deleted" }),
+    );
   });
   describe("student loan plan", () => {
     const loan = { name: "SL", type: "Student Loan", balance: 40000, currency: "GBP" };

@@ -96,6 +96,8 @@ describe("AccountExportDocument (BE-04)", () => {
     mcpTokens: [],
     agentAuditEvents: [],
     idempotencyKeys: [],
+    auditEvents: [],
+    consents: [],
   };
 
   it("accepts an empty export and requires every section", () => {

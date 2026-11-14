@@ -23,6 +23,9 @@ const NOT_INDEXED_ON_PURPOSE: Record<string, string> = {
   "accounts.external_account_id": "only read together with user_id and connection_id",
   "agent_audit_events.token_id":
     "never filtered on; IDX_agent_audit_events_user_created serves reads",
+  "audit_events.target_id":
+    "read only with the user id (export, erasure), which leads IDX_audit_events_user_created",
+  "audit_events.request_id": "joined to log lines by hand during an incident, never filtered on",
   "bank_connections.institution_id": "a provider identifier, never filtered on",
   "bank_oauth_states.institution_id": "compared after the state_hash lookup, never filtered on",
   "idempotency_keys.route_id":

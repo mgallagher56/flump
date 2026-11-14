@@ -19,8 +19,12 @@ describe("UserProfileService (Deep Module)", () => {
   let mockIdempotencyRepo: any;
   let identityAdapter: InMemoryIdentityAdapter;
   let mockDataSource: any;
+  let mockAuditInsert: any;
+  let mockConsentUpdate: any;
 
   beforeEach(() => {
+    mockAuditInsert = vi.fn().mockResolvedValue(undefined);
+    mockConsentUpdate = vi.fn().mockResolvedValue({ affected: 0 });
     mockUserProfileRepo = {
       findOne: vi.fn(),
       save: vi.fn((entity) => Promise.resolve({ id: "profile-1", ...entity })),
@@ -77,6 +81,8 @@ describe("UserProfileService (Deep Module)", () => {
             if (entityClass.name === "McpToken") return mockMcpTokenRepo;
             if (entityClass.name === "BankOAuthState") return mockBankOAuthStateRepo;
             if (entityClass.name === "IdempotencyKey") return mockIdempotencyRepo;
+            if (entityClass.name === "AuditEvent") return { insert: mockAuditInsert };
+            if (entityClass.name === "Consent") return { update: mockConsentUpdate };
             return {};
           },
         };
@@ -106,6 +112,10 @@ describe("UserProfileService (Deep Module)", () => {
     const result = await service.resetFinancialData("user-123", "user@example.com");
 
     expect(mockDataSource.transaction).toHaveBeenCalledTimes(1);
+    expect(mockAuditInsert).toHaveBeenCalledWith(
+      expect.objectContaining({ userId: "user-123", action: "financial_data.reset" }),
+    );
+    expect(mockConsentUpdate).toHaveBeenCalledTimes(2);
     expect(mockAccountRepo.delete).toHaveBeenCalledWith({ userId: "user-123" });
     expect(mockTransactionRepo.delete).toHaveBeenCalledWith({ userId: "user-123" });
     expect(mockBankConnectionRepo.delete).toHaveBeenCalledWith({ userId: "user-123" });

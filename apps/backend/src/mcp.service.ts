@@ -22,6 +22,8 @@ import { SHARED_RATE_LIMIT_STORE } from "./security/shared-rate-limit";
 @Injectable()
 export class McpService {
   private readonly logger = new Logger(McpService.name);
+  /** L6: the MCP package (handler, limiters, tools) logs through Nest, not `console`. */
+  private readonly mcpLogger = new Logger("FlumpMcp");
   private httpHandler: HttpMcpHandler;
 
   constructor(
@@ -67,10 +69,14 @@ export class McpService {
         : {}),
       expectedAudience: this.configService.get<string>("MCP_AUDIENCE") || "flump-mcp",
       authServerUrl: this.configService.get<string>("AUTH_SERVER_URL") || "https://api.workos.com",
+      logger: this.mcpLogger,
     });
   }
 
-  /** One audit row per tool call. A failed write is logged and never fails the call. */
+  /**
+   * One audit row per tool call, prompt get and resource read (prompts and resources are named
+   * `prompt_get_*` and `resource_read_*`). A failed write is logged and never fails the call.
+   */
   async recordAudit(caller: McpAuditCaller, event: McpAuditEvent): Promise<void> {
     try {
       await this.audit.record({

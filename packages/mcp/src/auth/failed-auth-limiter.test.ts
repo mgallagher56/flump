@@ -139,6 +139,15 @@ describe("FailedAuthLimiter", () => {
     spy.mockRestore();
   });
 
+  it("logs store failures through an injected logger, not the console (L6)", async () => {
+    const spy = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    const logger = { warn: vi.fn(), error: vi.fn() };
+    await new FailedAuthLimiter(10, 60_000, broken(), logger).attempt("1.1.1.1");
+    expect(spy).not.toHaveBeenCalled();
+    spy.mockRestore();
+    expect(logger.error).toHaveBeenCalledWith("MCP failed-auth store failed, refusing: Error");
+  });
+
   it("falls back to memory when the store's table is missing (42P01)", async () => {
     const spy = vi.spyOn(console, "error").mockImplementation(() => undefined);
     const l = new FailedAuthLimiter(2, 60_000, broken("42P01"));

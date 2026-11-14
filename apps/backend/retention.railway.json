@@ -1,0 +1,13 @@
+{
+  "$schema": "https://railway.com/railway.schema.json",
+  "build": {
+    "builder": "DOCKERFILE",
+    "dockerfilePath": "apps/backend/Dockerfile",
+    "watchPatterns": ["apps/backend/CHANGELOG.md"]
+  },
+  "deploy": {
+    "startCommand": "bun dist/jobs/retention-purge.js",
+    "cronSchedule": "15 3 * * *",
+    "restartPolicyType": "NEVER"
+  }
+}

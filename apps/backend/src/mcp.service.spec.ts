@@ -1,3 +1,4 @@
+import { Logger } from "@nestjs/common";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const handlerOptions: any[] = [];
@@ -70,6 +71,38 @@ describe("McpService audit and staging wiring (E17 re-plan PR D)", () => {
     expect(options.fingerprintArgs({ x: 1 })).toBe("a".repeat(64));
     expect(audit.fingerprint).toHaveBeenCalledWith({ x: 1 });
     expect(typeof options.audit).toBe("function");
+  });
+
+  it("hands the handler a Nest logger so MCP logs never go to console (L6)", () => {
+    const { options } = make();
+    expect(options.logger).toBeInstanceOf(Logger);
+    expect(typeof options.logger.warn).toBe("function");
+    expect(typeof options.logger.error).toBe("function");
+  });
+
+  it("records a prompt or resource read under its fixed audit name (H12)", async () => {
+    const { options, audit } = make();
+    await options.audit(
+      {
+        token: {
+          userId: "u1",
+          tokenId: "t1",
+          scopes: [],
+          anonymizeInstitutions: true,
+          type: "pat",
+        },
+      },
+      {
+        tool: "resource_read_schema",
+        outcome: "ok",
+        durationMs: 1,
+        responseBytes: 10,
+        scopesUsed: ["mcp:read:anonymized"],
+      },
+    );
+    expect(audit.record).toHaveBeenCalledWith(
+      expect.objectContaining({ toolName: "resource_read_schema", outcome: "ok" }),
+    );
   });
 
   it("records one audit row per tool call with the caller's identifiers", async () => {

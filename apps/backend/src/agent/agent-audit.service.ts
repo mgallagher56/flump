@@ -2,7 +2,7 @@ import { createHmac } from "node:crypto";
 import { PAGE_LIMITS } from "@flump/api-contract";
 import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { LessThan, type Repository } from "typeorm";
+import type { Repository } from "typeorm";
 import {
   AGENT_AUDIT_OUTCOMES,
   AgentAuditEvent,
@@ -41,7 +41,6 @@ export interface AgentAuditActivity {
 /** Activity page sizes come from the contract (PAGE_LIMITS.activity, BE-09). */
 export const MAX_ACTIVITY_PAGE = PAGE_LIMITS.activity.max;
 const DEFAULT_ACTIVITY_PAGE = PAGE_LIMITS.activity.default;
-const RETENTION_MONTHS = 13;
 const INT_MAX = 2_147_483_647;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const TOOL_NAME = /^[a-z][a-z0-9_]{0,63}$/;
@@ -185,13 +184,5 @@ export class AgentAuditService {
       })),
       nextBefore: rows.length > limit && last ? encodeActivityCursor(last.id) : null,
     };
-  }
-
-  /** Deletes rows older than 13 months; returns how many. Run daily by AgentAuditPurgeScheduler. */
-  async purgeOlderThan13Months(now: Date = new Date()): Promise<number> {
-    const cutoff = new Date(now);
-    cutoff.setMonth(cutoff.getMonth() - RETENTION_MONTHS);
-    const result = await this.events.delete({ createdAt: LessThan(cutoff) });
-    return result.affected ?? 0;
   }
 }

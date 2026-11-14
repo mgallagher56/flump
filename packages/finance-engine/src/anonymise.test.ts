@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   anonymiseDescription,
+  anonymousBudgetEntryLabels,
   INSTITUTION_SCRUB_LIST,
   redactAccountNumbers,
   scrubInstitutionNames,
@@ -64,5 +65,27 @@ describe("scrubInstitutionNames (E17-N4)", () => {
     );
     expect(redactAccountNumbers("Ref 12345")).toBe("Ref 12345");
     expect(anonymiseDescription("Monzo 12-34-56 12345678")).toBe("Bank [redacted] [redacted]");
+  });
+});
+
+describe("anonymousBudgetEntryLabels (M-PRIV4)", () => {
+  it("labels entries by category plus ordinal and never uses the entry name", () => {
+    const labels = anonymousBudgetEntryLabels([
+      { category: "Housing", isIncome: false },
+      { category: "Salary", isIncome: true },
+      { category: "Housing", isIncome: false },
+      { category: "Food", isIncome: false },
+      { category: "Bonus", isIncome: true },
+    ]);
+    expect(labels).toEqual(["Housing #1", "Income #1", "Housing #2", "Food #1", "Income #2"]);
+  });
+
+  it("scrubs institution names and account numbers from the category", () => {
+    expect(
+      anonymousBudgetEntryLabels([
+        { category: "Monzo 12345678", isIncome: false },
+        { category: "  ", isIncome: false },
+      ]),
+    ).toEqual(["Bank [redacted] #1", "Budget entry #1"]);
   });
 });

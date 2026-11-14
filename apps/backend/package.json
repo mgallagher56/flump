@@ -17,7 +17,8 @@
     "migration:revert": "bun ./node_modules/typeorm/cli.js -d src/data-source.ts migration:revert",
     "migration:generate": "bun ./node_modules/typeorm/cli.js -d src/data-source.ts migration:generate",
     "liability-signs:dry-run": "bun src/scripts/liability-signs-dry-run.ts",
-    "account-orphans:report": "bun src/scripts/account-orphans-report.ts"
+    "account-orphans:report": "bun src/scripts/account-orphans-report.ts",
+    "retention:purge": "bun src/jobs/retention-purge.ts"
   },
   "dependencies": {
     "@flump/api-contract": "workspace:*",

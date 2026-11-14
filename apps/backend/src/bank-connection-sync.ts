@@ -296,7 +296,15 @@ export class BankConnectionSync {
   }
 
   /** Deletes a connection and everything synced from it, in one transaction. */
-  async deleteConnectionData(connectionId: string, userId: string): Promise<void> {
+  /**
+   * `alsoInTransaction` runs last in the same transaction (BE-06: the disconnect's audit row and
+   * consent withdrawal), so the deletion and its record commit or roll back together.
+   */
+  async deleteConnectionData(
+    connectionId: string,
+    userId: string,
+    alsoInTransaction?: (manager: EntityManager) => Promise<unknown>,
+  ): Promise<void> {
     await this.dataSource.transaction(async (manager) => {
       // Waits for a running sync's account writes to commit, so they are deleted too.
       await manager.query(
@@ -321,6 +329,7 @@ export class BankConnectionSync {
         connectionId,
         userId,
       ]);
+      await alsoInTransaction?.(manager);
     });
   }
 }

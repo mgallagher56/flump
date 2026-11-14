@@ -1,3 +1,4 @@
+import { errorName, type McpLogger, stderrLogger } from "../logger.js";
 import {
   isMissingTableError,
   type LimitStore,
@@ -52,12 +53,6 @@ export function normalizeIpKey(ip: string): string {
 /** Seconds a caller is held off when the store fails during `attempt`. */
 export const FAIL_CLOSED_RETRY_SECONDS = 30;
 
-/** Logs a store failure by the error's name only: never its message or stack, which may echo a key. */
-const logStoreFailure = (when: string, err: unknown) =>
-  console.error(
-    `MCP failed-auth store failed${when}: ${err instanceof Error ? err.name : "error"}`,
-  );
-
 export class FailedAuthLimiter {
   private readonly window: LimitWindow;
   /** Same bucket as `window`, read with a limit of 1: "is anything still counted?". */
@@ -72,10 +67,16 @@ export class FailedAuthLimiter {
     maxAttempts = 10,
     windowMs = 60_000,
     private readonly store: LimitStore = new MemoryLimitStore(),
+    private readonly logger: McpLogger = stderrLogger,
   ) {
     this.window = { limit: maxAttempts, windowMs };
     this.anyAttempt = { limit: 1, windowMs };
     this.clearMarker = { limit: 1, windowMs };
+  }
+
+  /** Logs a store failure by the error's name only: never its message or stack, which may echo a key. */
+  private logStoreFailure(when: string, err: unknown): void {
+    this.logger.error(`MCP failed-auth store failed${when}: ${errorName(err)}`);
   }
 
   /** The store, or memory once the store reported its table missing. */
@@ -86,7 +87,7 @@ export class FailedAuthLimiter {
     } catch (err) {
       if (!isMissingTableError(err)) throw err;
       this.missingTable = true;
-      console.error("MCP limit store table is missing (unmigrated schema): limits in memory");
+      this.logger.warn("MCP limit store table is missing (unmigrated schema): limits in memory");
       return op(this.fallback);
     }
   }
@@ -103,7 +104,7 @@ export class FailedAuthLimiter {
         ? { blocked: false, retryAfterSeconds: 0 }
         : { blocked: true, retryAfterSeconds: d.retryAfterSeconds };
     } catch (err) {
-      logStoreFailure(", refusing", err);
+      this.logStoreFailure(", refusing", err);
       return { blocked: true, retryAfterSeconds: FAIL_CLOSED_RETRY_SECONDS };
     }
   }
@@ -116,7 +117,7 @@ export class FailedAuthLimiter {
     try {
       await this.run((s) => s.refund(failKey(normalizeIpKey(rawIp)), this.window, now));
     } catch (err) {
-      logStoreFailure(" on refund", err);
+      this.logStoreFailure(" on refund", err);
     }
   }
 
@@ -137,7 +138,7 @@ export class FailedAuthLimiter {
         if (marker.allowed) await s.reset(failKey(key), this.window);
       });
     } catch (err) {
-      logStoreFailure(" on success", err);
+      this.logStoreFailure(" on success", err);
     }
   }
 }

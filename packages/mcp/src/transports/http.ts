@@ -9,6 +9,7 @@ import {
   type TokenVerifierOptions,
   type VerifiedToken,
 } from "../auth/token-verifier.js";
+import { errorName, type McpLogger, stderrLogger } from "../logger.js";
 import { createFlumpMcpServer } from "../server.js";
 import type { McpAuditEvent, McpImportProvider, McpUserDataProvider } from "../types.js";
 
@@ -51,6 +52,11 @@ export interface HttpTransportOptions extends TokenVerifierOptions {
    * Default: empty, so any browser origin is rejected.
    */
   allowedOrigins?: readonly string[];
+  /**
+   * Where the handler, its default limiters and its tools log (L6). The backend passes a Nest
+   * `Logger`. Default: stderr.
+   */
+  logger?: McpLogger;
 }
 
 /** Normalises an origin for comparison: trimmed, lower-cased, no trailing slash. */
@@ -135,14 +141,18 @@ export class HttpMcpHandler {
   private readonly options: HttpTransportOptions;
   private readonly isEnabled: () => boolean;
   private readonly allowedOrigins: ReadonlySet<string>;
+  private readonly logger: McpLogger;
 
   constructor(options: HttpTransportOptions) {
+    this.logger = options.logger ?? stderrLogger;
     this.isEnabled = options.isEnabled ?? (() => true);
     this.allowedOrigins = new Set((options.allowedOrigins ?? []).map(normalizeOrigin));
     this.verifier = new TokenVerifier(options);
-    this.rateLimiter = options.rateLimiter ?? new McpRateLimiter(60, 300, options.limitStore);
+    this.rateLimiter =
+      options.rateLimiter ?? new McpRateLimiter(60, 300, options.limitStore, this.logger);
     this.failedAuthLimiter =
-      options.failedAuthLimiter ?? new FailedAuthLimiter(10, 60_000, options.limitStore);
+      options.failedAuthLimiter ??
+      new FailedAuthLimiter(10, 60_000, options.limitStore, this.logger);
     this.dataProvider = options.dataProvider;
     this.options = options;
   }
@@ -160,6 +170,7 @@ export class HttpMcpHandler {
       ...(imports ? { imports } : {}),
       ...(audit ? { audit: (event: McpAuditEvent) => audit(caller, event) } : {}),
       ...(fingerprintArgs ? { fingerprintArgs } : {}),
+      logger: this.logger,
     });
   }
 
@@ -169,7 +180,7 @@ export class HttpMcpHandler {
     try {
       await this.verifier.recordRequest(verified.tokenId, countToolCalls(body));
     } catch (err) {
-      console.error("Failed to record MCP token usage:", err);
+      this.logger.error(`Failed to record MCP token usage: ${errorName(err)}`);
     }
   }
 
@@ -249,7 +260,7 @@ export class HttpMcpHandler {
       }
       // Not a guess: the verifier or a later step failed for another reason.
       if (!verifiedOk) await this.failedAuthLimiter.forgive(ip);
-      console.error("MCP request failed:", err);
+      this.logger.error(`MCP request failed: ${errorName(err)}`);
       res.status(400).json(GENERIC_BAD_REQUEST);
     }
   }
@@ -341,7 +352,7 @@ export class HttpMcpHandler {
       }
       // Not a guess: the verifier or a later step failed for another reason.
       if (!verifiedOk) await this.failedAuthLimiter.forgive(ip);
-      console.error("MCP request failed:", err);
+      this.logger.error(`MCP request failed: ${errorName(err)}`);
       return new Response(JSON.stringify(GENERIC_BAD_REQUEST), {
         status: 400,
         headers: { "Content-Type": "application/json" },

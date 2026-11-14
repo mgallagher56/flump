@@ -1,6 +1,7 @@
 import type { AccountExportKey, DeleteUserResponse } from "@flump/api-contract";
 import { Inject, Injectable, Logger, ServiceUnavailableException } from "@nestjs/common";
 import { DataSource, type EntityManager, In, LessThan } from "typeorm";
+import { recordAuditEvent } from "../audit/audit-events";
 import type { ErasedAccountCheck } from "../auth/erased-account";
 import { Account } from "../entities/account.entity";
 import { AccountDeletionTombstone } from "../entities/account-deletion-tombstone.entity";
@@ -108,7 +109,7 @@ export class AccountDeletionService implements ErasedAccountCheck {
       const now = new Date();
       const tombstones = manager.getRepository(AccountDeletionTombstone);
       // A retry keeps the first deletion time: ON CONFLICT DO NOTHING, then read the row back.
-      await tombstones
+      const inserted = await tombstones
         .createQueryBuilder()
         .insert()
         .values({
@@ -118,10 +119,22 @@ export class AccountDeletionService implements ErasedAccountCheck {
           expiresAt: tombstoneExpiry(now),
         })
         .orIgnore()
+        .returning(["id"])
         .execute();
       // Opportunistic retention: tombstones past their 24 months go on the next write.
       await tombstones.delete({ expiresAt: LessThan(now) });
       const tombstone = await tombstones.findOneByOrFail({ subjectHash });
+      // BE-06 (H12): one audit row per erasure, written with the tombstone it describes. No user
+      // id (the account is gone): the tombstone id links the two. A retry finds the first
+      // tombstone (the insert was ignored and returned no row) and records nothing new.
+      if (Array.isArray(inserted.raw) && inserted.raw.length > 0) {
+        await recordAuditEvent(manager, {
+          userId: null,
+          action: "user.deleted",
+          targetId: tombstone.id,
+          metadata: { removed },
+        });
+      }
       return { tombstone, removed };
     });
 

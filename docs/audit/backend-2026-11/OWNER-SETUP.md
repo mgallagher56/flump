@@ -233,3 +233,32 @@ The migration `AddRateLimitBuckets1794632012000` adds one table, `rate_limit_buc
 - A web page's response carries `Content-Security-Policy` (not `-Report-Only`) and an `x-request-id`; the same id appears on the backend log line for that request.
 - A Sentry web error shows a readable stack trace, and `https://<web-origin>/assets/<file>.js.map` returns 404.
 - Repeated failed sign-ins stay limited after a redeploy.
+
+## BE-06 Audit trail, retention and consents (findings H12, M-PRIV2, M-PRIV3, M-PRIV4, L6)
+
+The retention purge is a command a Railway cron service runs once a day (ruling D5). It never runs inside the API. Policies (ruling D4): audit records 13 months (`audit_events`, `agent_audit_events`), import batches 30 days after their last change, revoked or expired AI tokens 13 months, pending bank consents 1 day after expiry, deletion tombstones at their 24-month expiry, idempotency keys after their 24-hour TTL (BE-09), the BE-05 sign before-image 90 days. Accounts with no sign-in for 24 months are **counted, not erased** (the log line `retention inactive_accounts_due=N`); see the follow-up below.
+
+### Before deploying
+
+- [ ] Run the backup drill (BE-03 "Before deploying any PR with an irreversible migration"). The BE-06 migration is additive and its `down()` only drops the new tables and column, but the deploy rule applies to every migration. Date: ____
+- [ ] Optional: remove `AGENT_AUDIT_PURGE_ENABLED` from the backend's Railway variables. The in-process purge it controlled is gone; the variable is still accepted, so leaving it does no harm.
+
+### 1. Retention cron service
+
+- [ ] In the production environment: New, GitHub Repo, this repository. Name it `retention`.
+- [ ] Settings, Config-as-code: set the path to `apps/backend/retention.railway.json`. This builds the backend image (`apps/backend/Dockerfile`), sets the start command `bun dist/jobs/retention-purge.js`, the schedule `15 3 * * *` (03:15 UTC, after the 02:30 backup) and restart policy `NEVER`. Confirm Settings shows the cron schedule. No public domain.
+- [ ] Variables: `DATABASE_URL=${{Postgres.DATABASE_URL}}` and `NODE_ENV=production`, plus `DB_SSL` and `DB_SSL_CA` if the backend service sets them (copy them as reference variables). Nothing else: the command reads only the database settings. Do **not** use the read-only backup role here; the purge deletes rows.
+- [ ] Optional heartbeat: a second cron monitor (as for the backup, `uptime-and-alerts.md`) and `RETENTION_HEARTBEAT_URL=<https monitor URL>` on this service. The command pings it only after a successful run.
+- [ ] Trigger one run now (Cron Runs, Run now). Pass: the log shows one `retention <table> deleted=<n>` line per policy, then `retention inactive_accounts_due=<n>`, and exit 0. Date: ____
+- [ ] Staging: the same service in the staging environment, pointed at the staging database, is fine and recommended.
+
+### 2. Checks after deploy
+
+- [ ] Mint and revoke an AI token in the web app, then in `railway connect Postgres`: `SELECT action, created_at FROM audit_events ORDER BY created_at DESC LIMIT 2;` shows `mcp_token.revoked` and `mcp_token.minted`, and `SELECT kind, withdrawn_at IS NOT NULL FROM consents ORDER BY granted_at DESC LIMIT 1;` shows `ai_access | t`.
+- [ ] `UPDATE audit_events SET action = action;` fails with `audit_events is append-only` (run it inside `BEGIN; ... ROLLBACK;`).
+
+### Follow-ups the owner decides
+
+- **Inactive-account erasure (D4).** Flump now records `last_active_at` and the job reports accounts past 24 months. Erasing them automatically needs a notice email some weeks before (no email sending exists yet) and a run of the account-deletion service from the job. The earliest any beta account can reach 24 months is late 2028.
+- **Restricted database role for `audit_events`.** The append-only trigger stops the app rewriting a row by mistake; it does not stop someone holding the app's database credential from deleting rows or dropping the trigger. A separate app role without DELETE or TRUNCATE on `audit_events` (with the retention job on its own role) closes that. Optional before public launch.
+- **Terms acceptance record (M-PRIV3).** The `consents` table has a `terms` kind, but the web app has no acceptance step to write it. Adding one needs the terms version from the legal pages and a small route.

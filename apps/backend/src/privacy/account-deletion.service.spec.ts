@@ -9,15 +9,28 @@ import { USER_DATA_REGISTRY } from "./user-data-registry";
 /** A DataSource stand-in: every delete reports one row; one tombstone row is kept in memory. */
 function fakeDataSource() {
   const deletes: string[] = [];
-  let tombstone: { id: string; identityDeletedAt: Date | null } | null = null;
+  let tombstone: { id: string; deletedAt: Date; identityDeletedAt: Date | null } | null = null;
+  const auditInsert = vi.fn(async () => undefined);
+  let pending: Date | null = null;
   const tombstoneRepo = {
     createQueryBuilder: () => {
       const qb = {
         insert: () => qb,
-        values: () => qb,
+        values: (v: { deletedAt: Date }) => {
+          pending = v.deletedAt;
+          return qb;
+        },
         orIgnore: () => qb,
+        returning: () => qb,
         execute: async () => {
-          tombstone ??= { id: "11111111-1111-4111-8111-111111111111", identityDeletedAt: null };
+          // ON CONFLICT DO NOTHING: a retry keeps the first deletion time and returns no row.
+          if (tombstone) return { raw: [] };
+          tombstone = {
+            id: "11111111-1111-4111-8111-111111111111",
+            deletedAt: pending as Date,
+            identityDeletedAt: null,
+          };
+          return { raw: [{ id: tombstone.id }] };
         },
       };
       return qb;
@@ -29,24 +42,25 @@ function fakeDataSource() {
       if (tombstone) tombstone.identityDeletedAt = patch.identityDeletedAt;
     }),
   };
-  const repoFor = (entity: { name: string }) =>
-    entity.name === "AccountDeletionTombstone"
-      ? tombstoneRepo
-      : {
-          delete: async () => {
-            deletes.push(entity.name);
-            return { affected: 1 };
-          },
-          find: async () =>
-            entity.name === "BankConnection"
-              ? [{ id: "c1", institutionId: "monzo", authType: "oauth" }]
-              : [],
-        };
+  const repoFor = (entity: { name: string }) => {
+    if (entity.name === "AccountDeletionTombstone") return tombstoneRepo;
+    return {
+      delete: async () => {
+        deletes.push(entity.name);
+        return { affected: 1 };
+      },
+      find: async () =>
+        entity.name === "BankConnection"
+          ? [{ id: "c1", institutionId: "monzo", authType: "oauth" }]
+          : [],
+      insert: entity.name === "AuditEvent" ? auditInsert : undefined,
+    };
+  };
   const ds = {
     transaction: vi.fn(async (cb: (m: unknown) => unknown) => cb({ getRepository: repoFor })),
     getRepository: repoFor,
   };
-  return { ds, deletes, tombstoneRepo, current: () => tombstone };
+  return { ds, deletes, tombstoneRepo, auditInsert, current: () => tombstone };
 }
 
 describe("AccountDeletionService", () => {
@@ -86,6 +100,13 @@ describe("AccountDeletionService", () => {
       { id: "c1", institutionId: "monzo", authType: "oauth" },
     ]);
     expect(f.current()?.identityDeletedAt).toBeInstanceOf(Date);
+    expect(f.auditInsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: null,
+        action: "user.deleted",
+        targetId: "11111111-1111-4111-8111-111111111111",
+      }),
+    );
     const events = log.mock.calls.map((call: unknown[]) => call[0] as Record<string, unknown>);
     const deleted = events.filter((e: Record<string, unknown>) => e?.event === "account_deleted");
     expect(deleted).toHaveLength(1);
@@ -113,6 +134,9 @@ describe("AccountDeletionService", () => {
     // Once the login is gone, a further retry does not call WorkOS again.
     await expect(service.deleteAccount("user_A")).resolves.toEqual({ status: "deleted" });
     expect(identity.deletedUsers).toEqual(["user_A"]);
+
+    // Only the first deletion is recorded; the retries find the earlier tombstone.
+    expect(f.auditInsert).toHaveBeenCalledTimes(1);
   });
 
   it("fails closed with 503 when the tombstone key is missing in production", async () => {

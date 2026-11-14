@@ -397,11 +397,58 @@ describe("defineFlumpTool scopes and hooks", () => {
     expect(JSON.stringify(events)).not.toContain("secret-detail");
   });
 
-  it("does not audit SDK-level schema rejections (no authenticated action ran)", async () => {
+  it("audits an SDK-level schema rejection once, as INVALID_ARGUMENT with no fingerprint (H12)", async () => {
     const events: McpAuditEvent[] = [];
-    const { call } = await connect(def(), { ctx: { audit: (e) => void events.push(e) } });
-    await call({ n: -1 }).catch(() => {});
-    expect(events).toEqual([]);
+    const fingerprintArgs = vi.fn(() => "fp");
+    const { call } = await connect(def(), {
+      ctx: { audit: (e) => void events.push(e), fingerprintArgs },
+    });
+    const res = await call({ n: -1, secret: "Rent to J Smith" });
+    expect(res.isError).toBe(true);
+    await vi.waitFor(() => expect(events).toHaveLength(1));
+    expect(events[0]).toMatchObject({
+      tool: NAME,
+      outcome: "error",
+      errorCode: "INVALID_ARGUMENT",
+      scopesUsed: ["mcp:read:anonymized"],
+    });
+    expect(events[0]?.responseBytes).toBe(Buffer.byteLength(text(res), "utf8"));
+    expect(events[0]).not.toHaveProperty("argsFingerprint");
+    expect(fingerprintArgs).not.toHaveBeenCalled();
+    expect(JSON.stringify(events)).not.toContain("J Smith");
+  });
+
+  it("a hanging, rejecting or throwing sink never changes an SDK schema rejection", async () => {
+    for (const audit of [
+      () => new Promise<void>(() => {}),
+      () => Promise.reject(new Error("x")),
+      () => {
+        throw new Error("sink down");
+      },
+    ]) {
+      const { call } = await connect(def(), { ctx: { audit } });
+      const res = await call({ n: -1 });
+      expect(res.isError).toBe(true);
+      expect(text(res)).toContain("Input validation error");
+    }
+  });
+
+  it("logs an unexpected exception through the injected logger, not the console", async () => {
+    const spy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const logger = { warn: vi.fn(), error: vi.fn() };
+    const { call } = await connect(
+      def({
+        handler: () => {
+          throw new Error("secret balance 12345");
+        },
+      }),
+      { ctx: { logger } },
+    );
+    await call({ n: 0 });
+    expect(spy).not.toHaveBeenCalled();
+    spy.mockRestore();
+    expect(logger.error).toHaveBeenCalledTimes(1);
+    expect(String(logger.error.mock.calls[0]?.[0])).not.toContain("secret");
   });
 
   it("does not wait for a hanging audit sink", async () => {

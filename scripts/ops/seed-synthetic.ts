@@ -43,6 +43,9 @@ export const USER_DATA_TABLES = [
   "bank_oauth_states",
   "budget_entries",
   "agent_audit_events",
+  // BE-06 sensitive-action records and consents (user_id is null only for user.deleted rows).
+  "audit_events",
+  "consents",
   "mcp_tokens",
   // BE-09 stored create responses for Idempotency-Key retries (they echo the rows they created).
   "idempotency_keys",

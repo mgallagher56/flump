@@ -279,6 +279,8 @@ export const AccountExportProfile = z.strictObject({
   housingStatus: NullableText,
   monthlyHousingCost: NullableNumber,
   monthlyOtherOutgoings: NullableNumber,
+  /** Last authenticated request, day precision (BE-06: 24-month inactivity rule). */
+  lastActiveAt: ExportTimestamp,
   createdAt: ExportTimestamp,
   updatedAt: ExportTimestamp,
 });
@@ -446,6 +448,27 @@ export const AccountExportIdempotencyKey = z.strictObject({
   createdAt: ExportTimestamp,
 });
 
+/** `auditEvents`: sensitive actions on the account (BE-06): identifiers and counts, no amounts. */
+export const AccountExportAuditEvent = z.strictObject({
+  id: Uuid,
+  action: z.string(),
+  actorType: z.string(),
+  targetId: Uuid.nullable(),
+  requestId: NullableText,
+  metadata: z.record(z.string(), z.union([z.string(), z.number(), z.boolean(), TextList])),
+  createdAt: ExportTimestamp,
+});
+
+/** `consents`: what the person agreed to (AI access, bank access) and when it was withdrawn. */
+export const AccountExportConsent = z.strictObject({
+  id: Uuid,
+  kind: z.string(),
+  version: z.string(),
+  targetId: Uuid.nullable(),
+  grantedAt: ExportTimestamp,
+  withdrawnAt: NullableExportTimestamp,
+});
+
 /** GET /user-profile/export: the whole document (`schemaVersion` first). */
 export const AccountExportDocument = z.strictObject({
   schemaVersion: z.literal(ACCOUNT_EXPORT_SCHEMA_VERSION),
@@ -467,6 +490,8 @@ export const AccountExportDocument = z.strictObject({
   mcpTokens: z.array(AccountExportMcpToken),
   agentAuditEvents: z.array(AccountExportAgentAuditEvent),
   idempotencyKeys: z.array(AccountExportIdempotencyKey),
+  auditEvents: z.array(AccountExportAuditEvent),
+  consents: z.array(AccountExportConsent),
 });
 export type AccountExportDocument = z.infer<typeof AccountExportDocument>;
 
@@ -494,4 +519,6 @@ export const ACCOUNT_EXPORT_SECTIONS = {
   mcpTokens: AccountExportMcpToken,
   agentAuditEvents: AccountExportAgentAuditEvent,
   idempotencyKeys: AccountExportIdempotencyKey,
+  auditEvents: AccountExportAuditEvent,
+  consents: AccountExportConsent,
 } as const satisfies Record<AccountExportKey, z.ZodType>;

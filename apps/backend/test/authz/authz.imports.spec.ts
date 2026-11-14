@@ -5,6 +5,7 @@ import { Account } from "../../src/entities/account.entity";
 import { AccountDetail } from "../../src/entities/account-detail.entity";
 import { AgentAuditEvent } from "../../src/entities/agent-audit-event.entity";
 import { ImportBatch } from "../../src/entities/import-batch.entity";
+import { runRetentionPurge } from "../../src/jobs/retention";
 import { writeConnectedSnapshot } from "../../src/snapshots/connected-write";
 import { londonDate, londonYearMonth, monthKey } from "../../src/snapshots/london-date";
 import { writeSnapshotRows } from "../../src/snapshots/snapshot-write";
@@ -926,7 +927,13 @@ describe.skipIf(dbMode === "skip")("authz: imports controller (real Postgres)", 
       latencyMs: 1,
       responseBytes: 0,
     });
-    expect(await audit.purgeOlderThan13Months()).toBe(1);
+    // BE-06: the retention job (a Railway cron command) owns the 13-month purge.
+    const runner = h.dataSource.createQueryRunner();
+    try {
+      expect((await runRetentionPurge(runner)).deleted.agent_audit_events).toBe(1);
+    } finally {
+      await runner.release();
+    }
     expect(await events.count()).toBe(1);
   });
 });

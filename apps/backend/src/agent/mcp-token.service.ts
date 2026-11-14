@@ -7,7 +7,9 @@ import {
 } from "@flump/mcp";
 import { BadRequestException, Injectable, Logger, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
+import { IsNull, Repository } from "typeorm";
+import { recordAuditEvent } from "../audit/audit-events";
+import { grantConsent, withdrawConsent } from "../audit/consents";
 import { type KeysetOrder, keysetPage, type PageRequest } from "../contract/pagination";
 import { McpToken } from "../entities/mcp-token.entity";
 import { isMcpUserAllowed, readMcpAccessConfig } from "../mcp-access";
@@ -61,6 +63,17 @@ export class McpTokenService implements McpTokenStoreAdapter {
       .where("id = :id", { id: tokenId })
       .setParameter("n", toolCalls)
       .execute();
+    // BE-06 (D4): use through an AI connection counts as activity for the 24-month rule. At most
+    // one write a day per user; never fails the MCP request.
+    await this.mcpTokenRepository
+      .query(
+        `UPDATE "user_profiles" p SET "last_active_at" = now()
+         FROM "mcp_tokens" t
+         WHERE t."id" = $1 AND p."user_id" = t."user_id"
+           AND p."last_active_at" < now() - interval '1 day'`,
+        [tokenId],
+      )
+      .catch(() => undefined);
   }
 
   // --- Token Management CRUD ---
@@ -135,7 +148,24 @@ export class McpTokenService implements McpTokenStoreAdapter {
       expiresAt,
     });
 
-    const saved = await this.mcpTokenRepository.save(token);
+    // BE-06: the token, its audit record (H12) and the AI-access consent (M-PRIV3) in one
+    // transaction: a token never exists without the record of its minting.
+    const saved = await this.mcpTokenRepository.manager.transaction(async (m) => {
+      const row = await m.getRepository(McpToken).save(token);
+      await recordAuditEvent(m, {
+        userId,
+        action: "mcp_token.minted",
+        targetId: row.id,
+        metadata: { scopes, expiryDays, allowStaging: options.allowStaging === true },
+      });
+      await grantConsent(m, {
+        userId,
+        kind: "ai_access",
+        version: scopes.join(","),
+        targetId: row.id,
+      });
+      return row;
+    });
 
     return {
       id: saved.id,
@@ -179,8 +209,18 @@ export class McpTokenService implements McpTokenStoreAdapter {
       throw new NotFoundException("AI Connection token not found.");
     }
 
-    token.revokedAt = new Date();
-    await this.mcpTokenRepository.save(token);
+    // Revoking twice keeps the first revocation time and records nothing new.
+    if (token.revokedAt) return { success: true };
+    const now = new Date();
+    await this.mcpTokenRepository.manager.transaction(async (m) => {
+      // Only the request that actually sets revoked_at records it (two concurrent revokes).
+      const result = await m
+        .getRepository(McpToken)
+        .update({ id: token.id, userId, revokedAt: IsNull() }, { revokedAt: now });
+      if ((result.affected ?? 0) !== 1) return;
+      await recordAuditEvent(m, { userId, action: "mcp_token.revoked", targetId: token.id });
+      await withdrawConsent(m, { userId, kind: "ai_access", targetId: token.id }, now);
+    });
     return { success: true };
   }
 }

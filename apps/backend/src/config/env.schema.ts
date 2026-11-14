@@ -128,6 +128,8 @@ export const backendEnvSchema = z.looseObject({
   MCP_ALLOWED_ORIGINS: text(),
   MCP_AUDIENCE: text(),
   AUTH_SERVER_URL: url(["https:"]),
+  // Ignored since BE-06 (the purge moved to the retention cron); still accepted so an old value
+  // left in Railway does not fail boot.
   AGENT_AUDIT_PURGE_ENABLED: bool(),
 
   // Access gates
