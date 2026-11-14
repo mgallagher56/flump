@@ -2,6 +2,7 @@ export * from "./ai-context-pack.js";
 export * from "./anonymise.js";
 export * from "./compliance/advice-lexicon.js";
 export * from "./debt-payoff.js";
+export * from "./deposit-timeline.js";
 export * from "./disclaimers.js";
 export * from "./forecast.js";
 export * from "./health-score.js";

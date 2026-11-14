@@ -1,16 +1,22 @@
 import { PortfolioSnapshot } from "@flump/finance-engine";
-import { Button, Icon, PageHeader, ProjectionNotice, SegmentedTabs } from "@repo/ui";
+import { Button, Icon, PageHeader, ProjectionNotice, ScenarioZone, SegmentedTabs } from "@repo/ui";
 import { Plus } from "lucide-react";
 import { type FC, useEffect, useMemo, useState } from "react";
 import { useLoaderData, useLocation, useNavigate } from "react-router";
 import type { Account } from "~/containers/accounts/types";
 import { AddSavingsAccountDialog } from "~/features/savings/components/AddSavingsAccountDialog";
 import { AnnualAllowancePill } from "~/features/savings/components/AnnualAllowancePill";
+import {
+  DepositTimeline,
+  type DepositTimelineValues,
+  depositOutcomeText,
+} from "~/features/savings/components/DepositTimeline";
 import { PayRiseScenario } from "~/features/savings/components/PayRiseScenario";
 import { SavingsAccountsList } from "~/features/savings/components/SavingsAccountsList";
 import { SavingsForecasterCard } from "~/features/savings/components/SavingsForecasterCard";
 import { SavingsSummaryCards } from "~/features/savings/components/SavingsSummaryCards";
 import { calculateOneYearCompoundInterest } from "~/features/savings/interest";
+import { useScenarioState } from "~/hooks/useScenarioState";
 import { useUserProfile } from "~/hooks/useUserProfile";
 import { pageRoot, tabPanel, tabsRoot } from "./SavingsContainer.styles";
 
@@ -102,6 +108,31 @@ export const SavingsContainer: FC = () => {
   const totalMonthlySavings = useMemo(() => {
     return savingsAccounts.reduce((sum, acc) => sum + (Number(acc.monthlyContribution) || 0), 0);
   }, [savingsAccounts]);
+
+  // Deposit timeline (E32): seeded from saved figures, in memory only. The monthly saving stays
+  // empty unless at least one savings account stores a contribution; no target is ever suggested.
+  const hasStoredContribution = useMemo(
+    () =>
+      accounts.some(
+        (acc) =>
+          (acc.type === "Saving" || acc.type === "Investment") &&
+          acc.monthlyContribution !== undefined &&
+          acc.monthlyContribution !== null,
+      ),
+    [accounts],
+  );
+  const savedDepositFigures = useMemo<DepositTimelineValues>(
+    () => ({
+      targetDeposit: null,
+      monthlySaving: hasStoredContribution ? totalMonthlySavings : null,
+      startingAmount: totalSavingsBalance,
+    }),
+    [hasStoredContribution, totalMonthlySavings, totalSavingsBalance],
+  );
+  const depositScenario = useScenarioState(savedDepositFigures);
+  const depositAnnouncement = depositScenario.isModified
+    ? depositOutcomeText(depositScenario.values)
+    : "";
 
   const weightedInterestRate = useMemo(() => {
     const defaultRate = Number(profile.savingsDefaultInterestRate ?? 0);
@@ -227,6 +258,19 @@ export const SavingsContainer: FC = () => {
         value={activeTab}
         onValueChange={(value) => setActiveTab(value as typeof activeTab)}
       />
+
+      <ScenarioZone
+        announcement={depositAnnouncement}
+        id="deposit-timeline"
+        isModified={depositScenario.isModified}
+        title="Model a change to your savings"
+        onReset={depositScenario.reset}
+      >
+        <DepositTimeline
+          values={depositScenario.values}
+          onChange={(key, value) => depositScenario.set(key, value)}
+        />
+      </ScenarioZone>
 
       <AddSavingsAccountDialog isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} />
     </div>

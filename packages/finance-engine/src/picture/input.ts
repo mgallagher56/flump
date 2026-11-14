@@ -10,6 +10,14 @@ export interface ProfileFacts {
   studentLoanPlans: string[] | null;
   pensionPercent: number | null;
   isSalarySacrifice: boolean | null;
+  /**
+   * E32 housing facts. Optional so callers that only build take-home facts need not list them;
+   * profileFactsFromProfile always sets them, null when unanswered.
+   */
+  housingStatus?: "renting" | "mortgage" | "own_outright" | null;
+  /** Saved monthly rent (renters) or mortgage payment (owners), as the user entered it. */
+  monthlyHousingCost?: number | null;
+  mortgageType?: "repayment" | "interest-only" | null;
 }
 
 export type FactKey = keyof ProfileFacts;
@@ -18,7 +26,13 @@ export type FactKey = keyof ProfileFacts;
  * Everything a figure can be missing: a profile fact, or a kind of saved row. "budget" means no
  * budget rows at all; "budgetIncome" and "budgetEssentials" mean no row of that kind.
  */
-export type MissingKey = FactKey | "budget" | "budgetIncome" | "budgetEssentials";
+export type MissingKey =
+  | FactKey
+  | "budget"
+  | "budgetIncome"
+  | "budgetEssentials"
+  /** A stored mortgage balance, rate and term (E32 housing cost). */
+  | "mortgageDetails";
 
 /**
  * The saved rows one user's financial picture is built from (E23 section 2.1). Saved data only:
@@ -44,6 +58,8 @@ function toNumber(value: unknown): number | null {
 
 const REGIONS = ["ENGLAND", "WALES", "SCOTLAND", "NORTHERN_IRELAND"] as const;
 const EMPLOYMENT = ["employed", "self-employed", "other"] as const;
+const HOUSING = ["renting", "mortgage", "own_outright"] as const;
+const MORTGAGE_TYPES = ["repayment", "interest-only"] as const;
 
 /** Maps a stored profile to facts. Never invents a default: unanswered stays null. */
 export function profileFactsFromProfile(
@@ -67,5 +83,8 @@ export function profileFactsFromProfile(
     studentLoanPlans,
     pensionPercent: toNumber(p.pensionPercent),
     isSalarySacrifice,
+    housingStatus: HOUSING.find((h) => h === p.housingStatus) ?? null,
+    monthlyHousingCost: toNumber(p.monthlyHousingCost),
+    mortgageType: MORTGAGE_TYPES.find((t) => t === p.mortgageType) ?? null,
   };
 }

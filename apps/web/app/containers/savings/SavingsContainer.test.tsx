@@ -147,7 +147,8 @@ describe("SavingsContainer", () => {
       rerender(<SavingsContainer />);
       expect(screen.getByText(/Pay rise from take-home:/)).toBeDefined();
       expect(screen.getByText("£2,760")).toBeDefined();
-      expect(screen.getByText("Illustration, not saved")).toBeDefined();
+      // The pay rise row and the deposit timeline zone (E32) each carry the badge.
+      expect(screen.getAllByText("Illustration, not saved")).toHaveLength(2);
       expect(
         screen.getByRole("heading", { name: "Where you stand" }).parentElement?.textContent,
       ).toBe(savedFigures);
@@ -161,6 +162,32 @@ describe("SavingsContainer", () => {
       });
       expect(mockSubmit).not.toHaveBeenCalled();
       expect(container.textContent).not.toContain("?payRise");
+    });
+  });
+  describe("deposit timeline (E32)", () => {
+    it("models a target in a scenario zone, seeded from saved figures, and never saves it", () => {
+      const setItem = vi.spyOn(Storage.prototype, "setItem");
+      render(<SavingsContainer />);
+      const zone = screen.getByRole("region", { name: "Model a change to your savings" });
+      expect(zone.textContent).toContain("Illustration, not saved");
+      const target = screen.getByLabelText("Target deposit") as HTMLInputElement;
+      expect(target.value).toBe("");
+      // Saved figures: £20,000 across both accounts, £550 a month of stored contributions.
+      expect((screen.getByLabelText("Monthly saving") as HTMLInputElement).value).toMatch(/550/);
+      expect(screen.getByTestId("deposit-timeline-outcome").textContent).toBe(
+        "Enter a target deposit to see an estimate.",
+      );
+
+      fireEvent.change(target, { target: { value: "31000" } });
+      expect(screen.getByTestId("deposit-timeline-outcome").textContent).toBe(
+        "Estimated time to reach target: 20 months (1 year 8 months)",
+      );
+      expect(setItem).not.toHaveBeenCalled();
+      expect(mockSubmit).not.toHaveBeenCalled();
+
+      fireEvent.click(screen.getByRole("button", { name: "Reset to saved figures" }));
+      expect((screen.getByLabelText("Target deposit") as HTMLInputElement).value).toBe("");
+      setItem.mockRestore();
     });
   });
 });

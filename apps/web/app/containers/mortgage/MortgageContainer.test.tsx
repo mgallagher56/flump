@@ -225,6 +225,102 @@ describe("<MortgageContainer />", () => {
     expect((getByLabelText(/^Remaining term/) as HTMLInputElement).value).toBe("50");
   });
 
+  test("saves the fixed rate end date on the account, and an emptied date clears it (E32)", async () => {
+    setApiEnv();
+    loaderData = {
+      ...defaultLoaderData(),
+      accounts: [
+        {
+          id: "m1",
+          name: "HSBC Fixed Mortgage",
+          type: "Mortgage",
+          balance: -135400,
+          fixedRateEndDate: "2099-10-01",
+        },
+      ],
+    };
+    const fetchSpy = vi
+      .spyOn(globalThis, "fetch")
+      .mockImplementation(async () => new Response(JSON.stringify({}), { status: 200 }));
+    const { getByLabelText, getByRole, findByText } = customRender(<MortgageContainer />);
+    fireEvent.click(getByRole("button", { name: /^Edit$/i }));
+    const date = getByLabelText(/Fixed rate end date \(optional\)/) as HTMLInputElement;
+    expect(date.value).toBe("2099-10-01");
+    fireEvent.change(date, { target: { value: "2099-12-31" } });
+    fireEvent.click(getByRole("button", { name: /^Save$/i }));
+    await findByText(/fixed rate end date/);
+    const bodyOf = () => {
+      const call = patches(fetchSpy).find(([url]) => String(url).endsWith("/accounts/m1"));
+      if (!call) throw new Error("expected an account PATCH");
+      return JSON.parse(String((call[1] as RequestInit).body));
+    };
+    expect(bodyOf()).toEqual({ fixedRateEndDate: "2099-12-31" });
+
+    fetchSpy.mockClear();
+    fireEvent.click(getByRole("button", { name: /^Edit$/i }));
+    const again = getByLabelText(/Fixed rate end date/) as HTMLInputElement;
+    expect(again.value).toBe("2099-12-31");
+    fireEvent.change(again, { target: { value: "" } });
+    fireEvent.click(getByRole("button", { name: /^Save$/i }));
+    await findByText(/fixed rate end date/);
+    expect(bodyOf()).toEqual({ fixedRateEndDate: null });
+  });
+
+  test("the fix-end notice reads the account's stored date, as an info fact", () => {
+    const soon = new Date();
+    soon.setUTCMonth(soon.getUTCMonth() + 3);
+    loaderData = {
+      ...defaultLoaderData(),
+      accounts: [
+        {
+          id: "m1",
+          name: "HSBC Fixed Mortgage",
+          type: "Mortgage",
+          balance: -135400,
+          fixedRateEndDate: soon.toISOString().slice(0, 10),
+        },
+      ],
+    };
+    const { getByText, container } = customRender(<MortgageContainer />);
+    expect(getByText(/Your fixed-rate deal ends in [23] months/)).toBeDefined();
+    const banner = container.querySelector("#mortgage-refinance-warning");
+    expect(banner?.textContent).not.toMatch(/worth comparing|usually raises/i);
+  });
+
+  test("owners with a mortgage see their housing cost from the picture below the summary", () => {
+    loaderData = {
+      ...defaultLoaderData(),
+      accounts: [
+        {
+          id: "m1",
+          name: "HSBC Fixed Mortgage",
+          type: "Mortgage",
+          balance: -135400,
+          interestRate: 4.5,
+          termMonths: 300,
+        },
+      ],
+      userProfile: {
+        housingStatus: "mortgage",
+        annualSalary: 50000,
+        employmentType: "employed",
+        pensionPercent: 5,
+        isSalarySacrifice: false,
+      },
+    };
+    const { getByText, getByTestId } = customRender(<MortgageContainer />);
+    expect(getByTestId("housing-cost-card")).toBeDefined();
+    expect(getByText("Monthly mortgage payment (estimate)")).toBeDefined();
+    expect(getByTestId("housing-cost-share").textContent).toMatch(
+      /^\d+(\.\d)?% of your estimated take-home pay$/,
+    );
+  });
+
+  test("no housing cost card unless the profile says the home has a mortgage", () => {
+    const { queryByTestId } = customRender(<MortgageContainer />);
+    expect(queryByTestId("housing-cost-card")).toBeNull();
+  });
+
   test("the term field says it is saved when a mortgage account is linked", () => {
     const { getByText, getByRole, getByLabelText } = customRender(<MortgageContainer />);
     fireEvent.click(getByRole("button", { name: /^Edit$/i }));
@@ -238,7 +334,16 @@ describe("<MortgageContainer />", () => {
   test("the remortgage simulator uses the user's real property value and fix date", () => {
     loaderData = {
       ...defaultLoaderData(),
-      userProfile: { homeValue: 350000, mortgageRenewalDate: "2099-10-01" },
+      accounts: [
+        {
+          id: "m1",
+          name: "HSBC Fixed Mortgage",
+          type: "Mortgage",
+          balance: -135400,
+          fixedRateEndDate: "2099-10-01",
+        },
+      ],
+      userProfile: { homeValue: 350000 },
     };
     const { getByText, getAllByText, queryByText } = customRender(<MortgageContainer />);
     fireEvent.click(getByText("Rate change"));

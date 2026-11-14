@@ -203,6 +203,9 @@ describe("profileFactsFromProfile", () => {
       studentLoanPlans: null,
       pensionPercent: null,
       isSalarySacrifice: null,
+      housingStatus: null,
+      monthlyHousingCost: null,
+      mortgageType: null,
     });
   });
 

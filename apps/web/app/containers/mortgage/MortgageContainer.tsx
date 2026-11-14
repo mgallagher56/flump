@@ -3,6 +3,7 @@ import { Button, EmptyState, Icon, LiveRegion, PageHeader, ScenarioZone } from "
 import { Building2, Coins, Home, LineChart, Percent } from "lucide-react";
 import { type FC, useEffect, useMemo, useRef, useState } from "react";
 import { useLoaderData, useNavigate, useSearchParams } from "react-router";
+import { HousingCostCard } from "~/features/housing/components/HousingCostCard";
 import { BtlOverview } from "~/features/mortgage/components/BtlOverview";
 import { LtvMilestones } from "~/features/mortgage/components/LtvMilestones";
 import { MortgageAlerts } from "~/features/mortgage/components/MortgageAlerts";
@@ -18,6 +19,7 @@ import { useUserProfile } from "~/hooks/useUserProfile";
 import type { loader } from "~/routes/app.mortgage";
 import { apiFetch } from "~/services/api-client";
 import { useFinancialBaseline } from "~/state/baseline.store";
+import { buildWorkspacePicture } from "~/utils/financialPicture";
 import { monthlyMortgagePayment } from "~/utils/mortgagePayment";
 import {
   categorySwitch,
@@ -94,9 +96,40 @@ const MortgageContainer: FC = () => {
   const [editMortgageType, setEditMortgageType] = useState<"repayment" | "interest-only">(
     userProfile?.mortgageType || "repayment",
   );
+  const [editFixEndDate, setEditFixEndDate] = useState("");
+  // Account fields saved on this page, laid over the loader rows until the next load, so the
+  // picture below reads what was just stored.
+  const [accountPatches, setAccountPatches] = useState<Record<string, Record<string, unknown>>>({});
 
   // Synced account state
   const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null);
+
+  // The one financial picture (E23/E32): housing cost and fix-end dates are read from it, never
+  // recomputed here. Built from saved rows plus what this page has just saved.
+  const pictureAccounts = useMemo(
+    () =>
+      accounts.map((account: { id?: string }) =>
+        account.id && accountPatches[account.id]
+          ? { ...account, ...accountPatches[account.id] }
+          : account,
+      ),
+    [accounts, accountPatches],
+  );
+  const picture = useMemo(
+    () =>
+      buildWorkspacePicture({
+        userProfile: userProfile
+          ? { ...userProfile, mortgageType: profile.mortgageType ?? userProfile.mortgageType }
+          : userProfile,
+        accounts: pictureAccounts,
+        accountDetails,
+      }),
+    [userProfile, profile.mortgageType, pictureAccounts, accountDetails],
+  );
+  const selectedFixEnd = selectedAccountId
+    ? (picture.fixedRateEnds.find((fact) => fact.accountId === selectedAccountId) ?? null)
+    : null;
+  const selectedFixEndDate = selectedFixEnd?.date ?? null;
 
   // What can be stored: a linked residential account holds balance, rate and term. Buy to let
   // keeps balance and rate on the profile. Anything else would only be held in memory, so the
@@ -133,6 +166,7 @@ const MortgageContainer: FC = () => {
     setEditRemainingTerm(remainingTerm > 0 ? String(Math.round(remainingTerm * 100) / 100) : "");
     setSaveError(null);
     setEditMortgageType(mortgageType);
+    setEditFixEndDate(selectedFixEndDate ?? "");
     setIsEditing(true);
     scrollToId("mortgage-summary");
   };
@@ -166,12 +200,25 @@ const MortgageContainer: FC = () => {
         if (selectedAccountId) {
           // The proxy adds the session; the browser never holds a token. Term is stored in
           // months, and the balance on a liability account is stored as a negative figure.
-          const body: { balance?: number; interestRate?: number; termMonths?: number } = {};
+          const body: {
+            balance?: number;
+            interestRate?: number;
+            termMonths?: number;
+            fixedRateEndDate?: string | null;
+          } = {};
           if (editLoanAmount > 0 && editLoanAmount !== loanAmount) body.balance = -editLoanAmount;
           if (rate > 0) body.interestRate = rate;
           if (termMonths > 0) body.termMonths = termMonths;
+          // An emptied date clears the stored one.
+          const fixEnd = editFixEndDate.trim() === "" ? null : editFixEndDate.trim();
+          if (fixEnd !== (selectedFixEndDate ?? null)) body.fixedRateEndDate = fixEnd;
           if (Object.keys(body).length > 0) {
             await apiFetch(`/accounts/${selectedAccountId}`, { method: "PATCH", body });
+            const accountId = selectedAccountId;
+            setAccountPatches((prev) => ({
+              ...prev,
+              [accountId]: { ...prev[accountId], ...body },
+            }));
           }
           if (body.balance !== undefined) {
             next.loanAmount = editLoanAmount;
@@ -185,6 +232,7 @@ const MortgageContainer: FC = () => {
             next.remainingTerm = term;
             saved.push("term");
           }
+          if (body.fixedRateEndDate !== undefined) saved.push("fixed rate end date");
         }
       }
       setMortgageType(editMortgageType);
@@ -223,23 +271,23 @@ const MortgageContainer: FC = () => {
 
   const ltvMilestones = useMemo(() => {
     if (!hasLtvData) return [];
-    return calculateLtvMilestones(propertyValue, loanAmount, profile.mortgageRenewalDate);
-  }, [hasLtvData, propertyValue, loanAmount, profile.mortgageRenewalDate]);
+    const fixEnd =
+      propertyCategory === "residential" ? (selectedFixEndDate ?? undefined) : undefined;
+    return calculateLtvMilestones(propertyValue, loanAmount, fixEnd);
+  }, [hasLtvData, propertyValue, loanAmount, propertyCategory, selectedFixEndDate]);
 
-  const refinanceWarning = useMemo(() => {
-    if (!profile.mortgageRenewalDate) return null;
-    const expiry = new Date(profile.mortgageRenewalDate).getTime();
-    if (Number.isNaN(expiry)) return null;
-    const now = new Date().getTime();
-    const diffMonths = Math.ceil((expiry - now) / (1000 * 60 * 60 * 24 * 30.4375));
-    if (diffMonths <= 6) {
-      return {
-        diffMonths,
-        date: profile.mortgageRenewalDate,
-      };
-    }
-    return null;
-  }, [profile.mortgageRenewalDate]);
+  // The selected account's stored fix-end date, from the picture. Shown as a fact within six
+  // months of the end, and once it has ended.
+  const refinanceWarning =
+    propertyCategory === "residential" &&
+    selectedFixEnd &&
+    (selectedFixEnd.ended || selectedFixEnd.monthsRemaining <= 6)
+      ? {
+          diffMonths: selectedFixEnd.monthsRemaining,
+          ended: selectedFixEnd.ended,
+          date: selectedFixEnd.date,
+        }
+      : null;
 
   // Filter for mortgage accounts
   const mortgageAccounts = useMemo(() => {
@@ -446,7 +494,13 @@ const MortgageContainer: FC = () => {
         onEditRemainingTermChange={setEditRemainingTerm}
         onSave={handleSaveMortgageDetails}
         onStartEditing={startEditing}
+        editFixEndDate={editFixEndDate}
+        onEditFixEndDateChange={setEditFixEndDate}
       />
+
+      {propertyCategory === "residential" && userProfile?.housingStatus === "mortgage" && (
+        <HousingCostCard fixedRateEnd={selectedFixEnd} housingCost={picture.housingCost} />
+      )}
 
       {missingMortgageDetails.length > 0 && propertyCategory === "residential" && (
         <div className={missingPrompt()}>
@@ -590,7 +644,7 @@ const MortgageContainer: FC = () => {
             <RemortgageShockSim
               currentBalance={scenarioValues.loanAmount}
               currentRate={scenarioValues.interestRate}
-              fixEndDate={profile.mortgageRenewalDate}
+              fixEndDate={propertyCategory === "residential" ? selectedFixEndDate : null}
               propertyValue={propertyValue || undefined}
               remainingTermYears={
                 scenarioValues.remainingTerm > 0 ? scenarioValues.remainingTerm : undefined

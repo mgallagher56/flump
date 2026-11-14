@@ -1,13 +1,22 @@
 import { Button, Icon } from "@repo/ui";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, CalendarClock } from "lucide-react";
 import type { FC } from "react";
 import { alertBanner, alertBody, alertDate, alertText, alertTitle } from "./MortgageAlerts.styles";
 
 export interface RefinanceWarning {
+  /** Whole calendar months until the fixed rate ends, never below 0. */
   diffMonths: number;
   /** The renewal date as stored (ISO date). */
   date: string;
+  /** True once the end date has passed. When absent, a diffMonths of 0 or less means ended. */
+  ended?: boolean;
 }
+
+const refinanceTitle = ({ diffMonths, ended }: RefinanceWarning): string => {
+  if (ended ?? diffMonths <= 0) return "Your fixed-rate deal has ended";
+  if (diffMonths <= 0) return "Your fixed-rate deal ends in less than a month";
+  return `Your fixed-rate deal ends in ${diffMonths} ${diffMonths === 1 ? "month" : "months"}`;
+};
 
 export interface MortgageAlertsProps {
   refinanceWarning: RefinanceWarning | null;
@@ -34,24 +43,19 @@ export const MortgageAlerts: FC<MortgageAlertsProps> = ({
     <>
       {refinanceWarning && (
         <div
-          className={alertBanner({ tone: "danger" })}
+          className={alertBanner({ tone: "info" })}
           data-testid="mortgage-refinance-warning"
           id="mortgage-refinance-warning"
         >
-          <div className={alertBody({ tone: "danger" })}>
-            <Icon icon={AlertTriangle} size="lg" />
+          <div className={alertBody({ tone: "info" })}>
+            <Icon icon={CalendarClock} size="lg" />
             <div>
-              <h3 className={alertTitle()}>
-                {refinanceWarning.diffMonths > 0
-                  ? `Your fixed-rate deal ends in ${refinanceWarning.diffMonths} ${refinanceWarning.diffMonths === 1 ? "month" : "months"}`
-                  : "Your fixed-rate deal has ended"}
-              </h3>
+              <h3 className={alertTitle()}>{refinanceTitle(refinanceWarning)}</h3>
               <p className={alertText()}>
                 Renewal date{" "}
                 <span className={alertDate()}>{formatRenewalDate(refinanceWarning.date)}</span>.
-                Moving to your lender's standard variable rate usually raises monthly payments, so
-                it is worth comparing new deals. Check your lender's terms for any early repayment
-                charge (ERC).
+                After a fixed rate ends, the rate your lender charges can change. Your lender's
+                terms set out any early repayment charge (ERC).
               </p>
             </div>
           </div>

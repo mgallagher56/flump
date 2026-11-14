@@ -263,4 +263,41 @@ describe("BudgetContainer", () => {
     );
     expect(screen.getByText("Mortgage")).toBe(row);
   });
+  it("shows the housing cost card with no budget rows, and saves rent to the profile (E32)", async () => {
+    mockLoaderData = {
+      ...mockLoaderData,
+      budgetEntries: [],
+      userProfile: {
+        ...mockLoaderData.userProfile,
+        annualSalary: 40000,
+        employmentType: "employed",
+        pensionPercent: 5,
+        isSalarySacrifice: false,
+        housingStatus: null,
+      },
+    };
+    render(<BudgetContainer />);
+    expect(screen.getByTestId("housing-cost-card")).toBeDefined();
+    expect(screen.getByText("Not known yet. Add your monthly rent to see this.")).toBeDefined();
+    fireEvent.change(screen.getByLabelText("Monthly rent"), { target: { value: "900" } });
+    fireEvent.click(screen.getByRole("button", { name: "Save rent" }));
+    await waitFor(() =>
+      expect(mockUpdateProfile).toHaveBeenCalledWith({
+        housingStatus: "renting",
+        monthlyHousingCost: 900,
+      }),
+    );
+    expect((await screen.findByTestId("housing-cost-share")).textContent).toMatch(
+      /% of your estimated take-home pay$/,
+    );
+  });
+
+  it("leaves the housing cost to the mortgage page for owners with a mortgage", () => {
+    mockLoaderData = {
+      ...mockLoaderData,
+      userProfile: { ...mockLoaderData.userProfile, housingStatus: "mortgage" },
+    };
+    render(<BudgetContainer />);
+    expect(screen.queryByTestId("housing-cost-card")).toBeNull();
+  });
 });

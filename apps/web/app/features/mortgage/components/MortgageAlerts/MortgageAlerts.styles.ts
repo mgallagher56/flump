@@ -15,6 +15,7 @@ export const alertBanner = cva({
   },
   variants: {
     tone: {
+      info: { backgroundColor: "status.info.bg", borderColor: "status.info.border" },
       danger: { backgroundColor: "status.danger.bg", borderColor: "status.danger.border" },
       warning: { backgroundColor: "status.warning.bg", borderColor: "status.warning.border" },
     },
@@ -25,6 +26,7 @@ export const alertBody = cva({
   base: { display: "flex", alignItems: "flex-start", gap: "10px", flex: "1 1 240px", minWidth: 0 },
   variants: {
     tone: {
+      info: { color: "status.info.text" },
       danger: { color: "status.danger.text" },
       warning: { color: "status.warning.text" },
     },

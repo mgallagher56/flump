@@ -280,6 +280,45 @@ describe("P3 Gareth", () => {
     const raw = fixture.accounts.find((a) => a.id === "gareth-mortgage");
     expect(raw?.termMonths).toBe(36);
   });
+
+  it("estimates the housing cost from the stored mortgage, not the budget row (E32)", () => {
+    const picture = buildFinancialPicture(
+      { ...fixture, profile: { ...fixture.profile, housingStatus: "mortgage" } },
+      OPTS,
+    );
+    if (!isFigureKnown(picture.housingCost)) throw new Error("expected known housing cost");
+    const v = picture.housingCost.value;
+    expect(v.kind).toBe("mortgage");
+    expect(v.paymentEstimated).toBe(true);
+    expect(v.takeHomeMonthly).toBe(takeHomeValue(fixture).monthly);
+    expect(v.sharePct).toBeCloseTo((v.monthly / v.takeHomeMonthly) * 100, 1);
+  });
+});
+
+describe.each(NAMES)("persona %s: housing cost (E32)", (name) => {
+  const { fixture } = PERSONAS[name];
+
+  it("is unknown and names the housing status while it is not answered", () => {
+    const fig = buildFinancialPicture(fixture, OPTS).housingCost;
+    expect(fig.status).toBe("unknown");
+    if (fig.status === "unknown") expect(fig.missing[0]).toBe("housingStatus");
+  });
+
+  it("uses the saved rent once renting is answered, whatever the budget says", () => {
+    const renting = {
+      ...fixture,
+      profile: { ...fixture.profile, housingStatus: "renting" as const, monthlyHousingCost: 875 },
+    };
+    const fig = buildFinancialPicture(renting, OPTS).housingCost;
+    const takeHome = selectTakeHome(fixture.profile, OPTS);
+    if (!isFigureKnown(takeHome)) {
+      expect(fig.status).toBe("unknown");
+      return;
+    }
+    if (!isFigureKnown(fig)) throw new Error("expected known housing cost");
+    expect(fig.value.monthly).toBe(875);
+    expect(fig.value.sharePct).toBe(Math.round((875 / takeHome.value.monthly) * 1000) / 10);
+  });
 });
 
 describe("P4 Dan: self assessment records over two tax years", () => {
@@ -378,6 +417,9 @@ describe("new user", () => {
       studentLoanPlans: null,
       pensionPercent: null,
       isSalarySacrifice: null,
+      housingStatus: null,
+      monthlyHousingCost: null,
+      mortgageType: null,
     });
     expect(facts).toEqual(newUser.profile);
   });
