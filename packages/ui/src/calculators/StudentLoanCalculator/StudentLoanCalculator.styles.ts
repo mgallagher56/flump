@@ -55,6 +55,11 @@ export const studentLoanOutcomes = cva({
   },
 });
 
+/** The projected outcome is words, not a figure: the supporting size, so the row keeps one height. */
+export const studentLoanOutcomeText = cva({
+  base: { textStyle: "numeric.lg", color: "text.primary" },
+});
+
 export const studentLoanExplainer = cva({
   base: {
     display: "flex",
