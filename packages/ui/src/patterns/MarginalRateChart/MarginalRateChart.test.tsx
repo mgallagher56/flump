@@ -50,13 +50,33 @@ describe("MarginalRateChart", () => {
     expect(screen.getAllByTestId("marginal-rate-stepped-zone")).toHaveLength(1);
   });
 
-  it("places the line label in the right-most gap clear of every vertical line", () => {
-    // A threshold 20px from the right edge: the label moves left of it, with clearance.
-    expect(lineLabelSpot([100, 380], 40, 400, 90)).toEqual({ x: 374, clear: true });
-    // A wide last gap keeps the label at the end of the line.
-    expect(lineLabelSpot([100, 200], 40, 400, 90)).toEqual({ x: 400, clear: true });
-    // No gap wide enough: the end of the plot.
-    expect(lineLabelSpot([60, 90, 120], 40, 140, 90)).toEqual({ x: 140, clear: false });
+  it("places the line label at the left end of the widest gap between vertical lines", () => {
+    // The widest gap wins, and the label starts just after the line on its left.
+    expect(lineLabelSpot([100, 380], 40, 400, 90)).toEqual({ x: 106, clear: true });
+    expect(lineLabelSpot([100, 200], 40, 400, 90)).toEqual({ x: 206, clear: true });
+    // No gap wide enough: the widest one still, kept inside the plot.
+    expect(lineLabelSpot([60, 90, 120], 40, 140, 90)).toEqual({ x: 50, clear: false });
+  });
+
+  it("anchors the line label at the start of the higher rate plateau, above the line", () => {
+    // Without Child Benefit the plateau runs from the higher rate to the taper at £100,000.
+    renderChart({ thresholds: SAMPLE_THRESHOLDS.filter((t) => !t.label.includes("Child")) });
+    const label = screen.getByTestId("marginal-rate-line-label");
+    expect(label.getAttribute("text-anchor")).toBe("start");
+    // Default width 600: plot from 46 to 586 over £150,000, so £50,270 sits at 227.0; plus 6.
+    expect(Number(label.getAttribute("x"))).toBeCloseTo(46 + (50_270 / 150_000) * 540 + 6, 1);
+    // Above the 42% plateau, not the 62% step after it.
+    const line = screen.getByTestId("marginal-rate-line");
+    const plateauY = Number(
+      line
+        .getAttribute("points")
+        ?.split(" ")
+        .find((pt) => pt.startsWith("272."))
+        ?.split(",")[1],
+    );
+    const labelY = Number(label.getAttribute("y"));
+    expect(labelY).toBeLessThan(plateauY);
+    expect(plateauY - labelY).toBeLessThan(20);
   });
 
   it("can keep the summary for screen readers only", () => {

@@ -37,7 +37,8 @@ export const SECTION24_COPY = {
     "Estimate the tax on rental income when mortgage interest gets a 20% tax credit and is not deducted from profit.",
   rentalIncome: "Rental income a year, before costs",
   mortgageInterest: "Mortgage interest a year",
-  otherIncome: "Other taxable income a year (salary or profits)",
+  otherIncome: "Other taxable income a year",
+  otherIncomeHelper: "Salary or profits.",
   moreOptions: "More options",
   allowableExpenses: "Other allowable costs a year (repairs, agent fees)",
   kpiTax: "Estimated tax on rental income",
@@ -167,6 +168,7 @@ export const Section24Calculator: FC<Section24CalculatorProps> = ({
       />
       <SliderField
         format="currency"
+        helperText={SECTION24_COPY.otherIncomeHelper}
         label={SECTION24_COPY.otherIncome}
         max={OTHER_INCOME_MAX}
         min={0}

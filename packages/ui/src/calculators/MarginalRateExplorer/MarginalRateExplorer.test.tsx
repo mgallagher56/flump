@@ -12,9 +12,14 @@ import {
 const DEFAULTS_2026 = { ...getMarginalRateExplorerDefaults(), taxYear: "2026/27" };
 const CHART_TITLE = "Estimated share deducted from the next £1,000, by pay";
 
-/** The "Where the next £1,000 goes" breakdown table's text. */
-const breakdown = () =>
-  screen.getByRole("table", { name: "Where the next £1,000 goes" }).textContent ?? "";
+const BREAKDOWN = "Where the next £1,000 goes";
+/** The breakdown table's text; the table sits in a quiet drawer, closed by default, so open it. */
+const breakdown = () => {
+  if (!screen.queryByRole("table", { name: BREAKDOWN })) {
+    fireEvent.click(screen.getByRole("button", { name: BREAKDOWN }));
+  }
+  return screen.getByRole("table", { name: BREAKDOWN }).textContent ?? "";
+};
 const openMoreOptions = () => fireEvent.click(screen.getByRole("button", { name: "More options" }));
 const modelPension = () => {
   openMoreOptions();
@@ -97,6 +102,17 @@ describe("MarginalRateExplorer", () => {
     expect(cta.compareDocumentPosition(figure) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     fireEvent.click(cta);
     expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ annualIncome: 39_000 }));
+  });
+
+  it("keeps the breakdown in a closed drawer, and puts the explainer above the notice", () => {
+    render(<MarginalRateExplorerStandalone initialValues={{ taxYear: "2026/27" }} />);
+    expect(screen.queryByRole("table", { name: BREAKDOWN })).toBeNull();
+    expect(screen.getByRole("button", { name: BREAKDOWN })).toBeDefined();
+    const explainer = screen.getByRole("button", { name: "How this is worked out" });
+    const notice = screen.getByTestId("projection-notice");
+    expect(
+      explainer.compareDocumentPosition(notice) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
   });
 
   it("uses h2 section headings when embedded, h3 otherwise, and headingLevel overrides", () => {

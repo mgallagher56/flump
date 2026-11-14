@@ -60,6 +60,12 @@ export interface TakeHomeDeltaPanelProps {
    * already shows it (the pay rise explorer shows it at the top of its results).
    */
   showTaxYearBadge?: boolean;
+  /**
+   * Put the deductions table in a quiet drawer (closed by default) and leave out the panel's own
+   * heading and badges, so the first view keeps to the headline and the chart (the pay rise tool).
+   * Default false.
+   */
+  collapseTable?: boolean;
   className?: string;
 }
 
@@ -80,6 +86,7 @@ export const TakeHomeDeltaPanel: FC<TakeHomeDeltaPanelProps> = ({
   showNotice = true,
   unverifiedInPageNotice = false,
   showTaxYearBadge = true,
+  collapseTable = false,
   className,
 }) => {
   const Heading = headingLevel;
@@ -108,23 +115,50 @@ export const TakeHomeDeltaPanel: FC<TakeHomeDeltaPanelProps> = ({
     );
   }
 
+  /* No sentence restating the table, and no take-home row: the take-home figure is already
+      the headline card (RESCORE Appendix B, pay rise item 1). The table lists the deductions. */
+  const table = (
+    <Table caption={DELTA_PANEL_COPY.tableCaption}>
+      <THead>
+        <Tr>
+          <Th scope="col">{DELTA_PANEL_COPY.partColumn}</Th>
+          <Th numeric scope="col">
+            {DELTA_PANEL_COPY.amountColumn}
+          </Th>
+        </Tr>
+      </THead>
+      <TBody>
+        {rows.map(({ key, label }) => (
+          <Tr key={key}>
+            <Th scope="row">{label}</Th>
+            <Td className={deltaPanelNumeric()} label={DELTA_PANEL_COPY.amountColumn} numeric>
+              {money(components[key])}
+            </Td>
+          </Tr>
+        ))}
+      </TBody>
+    </Table>
+  );
+
   return (
     <section
       aria-label={DELTA_PANEL_COPY.heading}
       className={cx(deltaPanelRoot(), className)}
       data-testid="take-home-delta-panel"
     >
-      <div className={deltaPanelHeader()}>
-        <Heading className={deltaPanelTitle()}>{DELTA_PANEL_COPY.heading}</Heading>
-        {showTaxYearBadge ? (
-          <StatusBadge variant="neutral">{asAtTaxYear(ratesYear)}</StatusBadge>
-        ) : null}
-        {/* Unverified, the full sentence is in the notice (or the page's notice), so no badge
-            repeats it (P4.3). */}
-        {isUnverifiedEstimate ? null : (
-          <StatusBadge variant="info">{DELTA_PANEL_COPY.estimateBadge}</StatusBadge>
-        )}
-      </div>
+      {collapseTable ? null : (
+        <div className={deltaPanelHeader()}>
+          <Heading className={deltaPanelTitle()}>{DELTA_PANEL_COPY.heading}</Heading>
+          {showTaxYearBadge ? (
+            <StatusBadge variant="neutral">{asAtTaxYear(ratesYear)}</StatusBadge>
+          ) : null}
+          {/* Unverified, the full sentence is in the notice (or the page's notice), so no badge
+              repeats it (P4.3). */}
+          {isUnverifiedEstimate ? null : (
+            <StatusBadge variant="info">{DELTA_PANEL_COPY.estimateBadge}</StatusBadge>
+          )}
+        </div>
+      )}
 
       <TaxRatesStatusBanner
         calendarYear={calendarYear}
@@ -132,44 +166,18 @@ export const TakeHomeDeltaPanel: FC<TakeHomeDeltaPanelProps> = ({
         ratesYear={ratesYear}
       />
 
-      {/* No sentence restating the table, and no take-home row: the take-home figure is already
-          the headline card (RESCORE Appendix B, pay rise item 1). The table lists the deductions. */}
-      <Table caption={DELTA_PANEL_COPY.tableCaption}>
-        <THead>
-          <Tr>
-            <Th scope="col">{DELTA_PANEL_COPY.partColumn}</Th>
-            <Th numeric scope="col">
-              {DELTA_PANEL_COPY.amountColumn}
-            </Th>
-          </Tr>
-        </THead>
-        <TBody>
-          {rows.map(({ key, label }) => (
-            <Tr key={key}>
-              <Th scope="row">{label}</Th>
-              <Td className={deltaPanelNumeric()} label={DELTA_PANEL_COPY.amountColumn} numeric>
-                {money(components[key])}
-              </Td>
-            </Tr>
-          ))}
-        </TBody>
-      </Table>
+      {collapseTable ? (
+        <CollapsibleDrawer title={DELTA_PANEL_COPY.tableCaption} variant="quiet">
+          {table}
+        </CollapsibleDrawer>
+      ) : (
+        table
+      )}
 
       {previewText ? (
         <p className={deltaPanelSentence()} data-testid="take-home-delta-pension">
           {previewText}
         </p>
-      ) : null}
-
-      {/* One notice (E16 P4.1, P4.3): the unverified sentence leads the guidance note rather than
-          sitting in a second, amber block; the header badge already flags the estimate. */}
-      {showNotice ? (
-        <ProjectionNotice
-          lead={isUnverifiedEstimate ? DELTA_PANEL_COPY.unverifiedBanner : undefined}
-        />
-      ) : isUnverifiedEstimate && !unverifiedInPageNotice ? (
-        // The page shows its one notice elsewhere, so the sentence stays as quiet text here.
-        <p className={deltaPanelUnverifiedNote()}>{DELTA_PANEL_COPY.unverifiedBanner}</p>
       ) : null}
 
       {known.length > 0 ? (
@@ -192,6 +200,17 @@ export const TakeHomeDeltaPanel: FC<TakeHomeDeltaPanelProps> = ({
             </ul>
           </div>
         </CollapsibleDrawer>
+      ) : null}
+
+      {/* One notice (E16 P4.1, P4.3), last, after the drawer as in the other tools: the unverified
+          sentence leads the guidance note rather than sitting in a second, amber block. */}
+      {showNotice ? (
+        <ProjectionNotice
+          lead={isUnverifiedEstimate ? DELTA_PANEL_COPY.unverifiedBanner : undefined}
+        />
+      ) : isUnverifiedEstimate && !unverifiedInPageNotice ? (
+        // The page shows its one notice elsewhere, so the sentence stays as quiet text here.
+        <p className={deltaPanelUnverifiedNote()}>{DELTA_PANEL_COPY.unverifiedBanner}</p>
       ) : null}
     </section>
   );

@@ -119,9 +119,11 @@ const LABEL_CHAR_W = 7;
 const LABEL_CLEARANCE = 6;
 
 /**
- * Where to draw the line's direct label so it crosses no vertical line (a dashed threshold or
- * "Your pay"): the right-hand end of the right-most gap wide enough for it. Falls back to the end
- * of the plot when no gap is wide enough (a very narrow chart).
+ * Where to draw the line's direct label (its left edge, text anchored at the start): the left end
+ * of the widest gap between vertical lines (a dashed threshold or "Your pay"), which on the pay
+ * rise curve is the long plateau between the higher rate and the Personal Allowance taper. `clear`
+ * is false when even that gap is narrower than the label (a phone), so the label may run past the
+ * next vertical line; the caller then lifts it above the line there too. Never runs off the plot.
  */
 export const lineLabelSpot = (
   verticals: readonly number[],
@@ -131,12 +133,13 @@ export const lineLabelSpot = (
 ): { x: number; clear: boolean } => {
   const inside = verticals.filter((v) => v > left && v < right).sort((a, b) => a - b);
   const edges = [left, ...inside, right];
-  for (let i = edges.length - 1; i > 0; i--) {
-    const from = i - 1 === 0 ? left : (edges[i - 1] ?? left) + LABEL_CLEARANCE;
+  let best = { from: left, to: right, width: -1 };
+  for (let i = 1; i < edges.length; i++) {
+    const from = i === 1 ? left : (edges[i - 1] ?? left) + LABEL_CLEARANCE;
     const to = i === edges.length - 1 ? right : (edges[i] ?? right) - LABEL_CLEARANCE;
-    if (to - from >= labelW) return { x: to, clear: true };
+    if (to - from > best.width) best = { from, to, width: to - from };
   }
-  return { x: right, clear: false };
+  return { x: Math.max(left, Math.min(best.from, right - labelW)), clear: best.width >= labelW };
 };
 
 const xTickStep = (max: number) => Math.max(10_000, Math.ceil(max / 3 / 10_000) * 10_000);
@@ -207,13 +210,15 @@ export const MarginalRateChart: FC<MarginalRateChartProps> = ({
     W - M.right,
     labelW,
   );
-  // Sit above the highest point of the line under the label, so the label never covers it.
+  // Sit above the highest point of the line under the label (and a little past its end, so a step
+  // just after it is cleared too), so the label never covers or touches the line.
   const rateUnderLabel = Math.max(
     0,
     ...points
-      .filter((p) => x(p.gross) >= labelSpot.x - labelW && x(p.gross) <= labelSpot.x)
+      .filter(
+        (p) => x(p.gross) >= labelSpot.x && x(p.gross) <= labelSpot.x + labelW + LABEL_CLEARANCE,
+      )
       .map((p) => p.ratePct),
-    lastPoint && !labelSpot.clear ? lastPoint.ratePct : 0,
   );
   const activeMarker = markers.find((m) => m.gross === activeGross) ?? null;
   const tipW = Math.min(TIP_W, W - 16);
@@ -344,7 +349,7 @@ export const MarginalRateChart: FC<MarginalRateChartProps> = ({
             <text
               className={marginalRateDirectLabel({ tone: "line" })}
               data-testid="marginal-rate-line-label"
-              textAnchor="end"
+              textAnchor="start"
               x={labelSpot.x}
               y={y(rateUnderLabel) - 8}
             >

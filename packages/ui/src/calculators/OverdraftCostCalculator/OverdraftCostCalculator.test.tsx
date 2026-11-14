@@ -19,8 +19,9 @@ describe("OverdraftCostCalculator", () => {
     expect(cards.getByText("£479")).toBeDefined();
     expect(cards.getByText("£40")).toBeDefined();
     expect(outcomes().textContent).toContain(`£40 ${OVERDRAFT_COPY.monthLine}`);
-    // One card only: the monthly figure is not a second card.
-    expect(outcomes().querySelectorAll("p").length).toBe(1);
+    // One card only: the monthly figure is the card's own caption, not a second card or a loose line.
+    expect(outcomes().children.length).toBe(1);
+    expect(outcomes().querySelector("p")).toBeNull();
   });
 
   it("puts the sign-up button under the result, before the explainer and notice", () => {

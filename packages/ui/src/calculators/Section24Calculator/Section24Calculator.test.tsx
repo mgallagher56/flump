@@ -169,3 +169,12 @@ describe("Section24Calculator", () => {
     expect(`${tsx}${styles}`).not.toMatch(/status\.(danger|warning)|#[0-9a-f]{3,6}\b/i);
   });
 });
+
+describe("Section24Calculator other income label", () => {
+  it("keeps the label short, with salary or profits in its helper text", () => {
+    render(<Section24Calculator />);
+    const slider = screen.getByLabelText(SECTION24_COPY.otherIncome);
+    const helper = document.getElementById(slider.getAttribute("aria-describedby") ?? "");
+    expect(helper?.textContent).toBe("Salary or profits.");
+  });
+});
