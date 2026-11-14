@@ -26,6 +26,7 @@ import {
   studentLoanHeader,
   studentLoanIntro,
   studentLoanOutcomes,
+  studentLoanOutcomeText,
   studentLoanRoot,
   studentLoanTitle,
 } from "./StudentLoanCalculator.styles";
@@ -210,7 +211,7 @@ export const StudentLoanCalculator: FC<StudentLoanCalculatorProps> = ({
         <KpiCard
           label={STUDENT_LOAN_COPY.kpiOutcome}
           subtext={outcomeReason}
-          value={outcomeValue}
+          value={<span className={studentLoanOutcomeText()}>{outcomeValue}</span>}
         />
       </div>
 
