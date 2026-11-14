@@ -10,6 +10,7 @@ import { type FC, useMemo } from "react";
 import {
   amount,
   amountCaption,
+  details,
   identity,
   meta,
   name,
@@ -66,7 +67,7 @@ export const TaxIncomeSectionCard: FC<TaxIncomeSectionCardProps> = ({
     >
       <span className={identity()}>
         <IconTile domain="tax" icon={icon} />
-        <span>
+        <span className={details()}>
           <span className={name()}>{title}</span>
           <span className={meta()}>
             {countFormat.format(count)} {count === 1 ? "record" : "records"}
@@ -77,7 +78,7 @@ export const TaxIncomeSectionCard: FC<TaxIncomeSectionCardProps> = ({
         <span className={amount()}>
           <Money fractionDigits={0} size="sm" value={net} />
         </span>
-        <span className={amountCaption()}>income less costs, a year</span>
+        <span className={amountCaption()}>a year, after costs</span>
       </span>
     </li>
   );

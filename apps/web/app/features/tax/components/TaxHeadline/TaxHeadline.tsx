@@ -4,7 +4,8 @@ import {
   type TaxCalculationResult,
   type TaxRecord,
 } from "@flump/finance-engine";
-import { HeroFigure, KpiCard, KpiStrip } from "@repo/ui";
+import { HeroFigure, KpiCard, KpiStrip, kpiMoney } from "@repo/ui";
+import { cx } from "@repo/ui/styled-system/css";
 import type { FC, ReactNode } from "react";
 import { date, root } from "./TaxHeadline.styles";
 
@@ -67,8 +68,12 @@ export const TaxHeadline: FC<TaxHeadlineProps> = ({ taxYear, records, result, em
           />
           <KpiCard
             label="Bill due"
-            subtext="Balancing payment date, 31 January after the tax year ends"
-            value={<span className={date()}>{dateFormat.format(billDueDate(taxYear))}</span>}
+            subtext="Balancing payment"
+            value={
+              <span className={cx(kpiMoney(), date())}>
+                {dateFormat.format(billDueDate(taxYear))}
+              </span>
+            }
           />
         </KpiStrip>
       ) : null}

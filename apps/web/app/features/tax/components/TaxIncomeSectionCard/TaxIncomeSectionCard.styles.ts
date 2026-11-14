@@ -15,8 +15,13 @@ export const row = cva({
   },
 });
 
+/** The name column takes priority: it grows and shrinks, the total keeps its width. */
 export const identity = cva({
-  base: { display: "flex", alignItems: "center", gap: "3", minWidth: 0 },
+  base: { display: "flex", alignItems: "center", gap: "3", minWidth: 0, flex: 1 },
+});
+
+export const details = cva({
+  base: { display: "block", minWidth: 0, flex: 1 },
 });
 
 export const name = cva({
@@ -33,7 +38,13 @@ export const meta = cva({
 });
 
 export const total = cva({
-  base: { display: "flex", flexDirection: "column", alignItems: "flex-end", flexShrink: 0 },
+  base: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "flex-end",
+    flexShrink: 0,
+    textAlign: "right",
+  },
 });
 
 export const amount = cva({
