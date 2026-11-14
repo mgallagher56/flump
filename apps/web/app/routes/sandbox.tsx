@@ -1,5 +1,6 @@
 import type { OnboardingSeedPayload } from "@flump/finance-engine";
 import { persistOnboardingSeed } from "@flump/finance-engine";
+import { Button } from "@repo/ui";
 import { useSetAtom } from "jotai";
 import { useEffect, useState } from "react";
 import {
@@ -11,15 +12,18 @@ import {
 } from "react-router";
 import { SampleModeProvider } from "~/context/SampleModeContext";
 import { HomeDashboard } from "~/features/dashboard/components/HomeDashboard";
-import { SampleDataNote } from "~/features/signed-out/components/SampleDataNote";
 import { SandboxBar } from "~/features/signed-out/components/SandboxBar";
-import { sandboxPage } from "~/features/signed-out/components/SandboxBar/SandboxBar.styles";
+import {
+  sandboxEnd,
+  sandboxEndText,
+  sandboxPage,
+} from "~/features/signed-out/components/SandboxBar/SandboxBar.styles";
 import { financialBaselineAtom, writeOnboardingSeedCookie } from "~/state/baseline.store";
 import { getAuthSession } from "~/utils/auth.server";
 import { getSandboxPersonaData } from "~/utils/demoData";
 
 export const meta: MetaFunction = () => [
-  { title: "Live Demo Sandbox | Flump (Read-Only)" },
+  { title: "Sample data | Flump" },
   { name: "robots", content: "noindex, nofollow" },
 ];
 
@@ -110,22 +114,36 @@ export default function SandboxRoute() {
 
   return (
     <div className={sandboxPage()}>
-      {/* The single "Guidance, not advice" ProjectionNotice is rendered by HomeDashboard. */}
-      <SandboxBar
-        active={activePersona}
-        onSave={handleSaveAndCreateAccount}
-        onSelect={setActivePersona}
-        personas={PERSONAS}
-      />
-
-      <SampleDataNote id="sandbox-sample-data-label">
-        Sample data: illustrative figures, not yours. Tax due and take-home here are examples.
-        Nothing here is saved to an account.
-      </SampleDataNote>
-
-      {/* Actual SPA Dashboard View */}
+      {/* The dashboard itself, with the bar as its one sample-data notice (E16 P4.4). */}
       <SampleModeProvider value>
         <HomeDashboard
+          banner={
+            <SandboxBar
+              active={activePersona}
+              onSave={handleSaveAndCreateAccount}
+              onSelect={setActivePersona}
+              personas={PERSONAS}
+            />
+          }
+          footer={
+            <section
+              aria-label="Sign up"
+              className={sandboxEnd()}
+              data-testid="sandbox-end"
+              id="sandbox-end"
+            >
+              <p className={sandboxEndText()}>Ready to use your own figures?</p>
+              <Button
+                data-testid="sandbox-end-sign-up"
+                id="sandbox-end-sign-up"
+                size="md"
+                type="button"
+                onClick={handleSaveAndCreateAccount}
+              >
+                Sign up
+              </Button>
+            </section>
+          }
           isSample
           persistVisibility={false}
           userProfile={dashboardData.userProfile}

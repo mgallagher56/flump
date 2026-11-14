@@ -26,14 +26,16 @@ vi.mock("@flump/finance-engine", async (importOriginal) => ({
 }));
 
 vi.mock("~/features/dashboard/components/HomeDashboard", () => ({
-  HomeDashboard: ({ accountsData, debtData, persistVisibility }: any) => (
+  HomeDashboard: ({ accountsData, debtData, persistVisibility, banner, footer }: any) => (
     <div id="mock-dashboard" data-persist-visibility={String(persistVisibility)}>
+      {banner}
       <span id="net-worth" data-testid="net-worth">
         {accountsData?.netWorth}
       </span>
       <span id="total-debt" data-testid="total-debt">
         {debtData?.totalDebt ?? 0}
       </span>
+      {footer}
     </div>
   ),
 }));
@@ -42,16 +44,24 @@ describe("SandboxRoute", () => {
   it("has robots noindex meta tag", () => {
     const metaTags = meta({} as any);
     expect(metaTags).toEqual([
-      { title: "Live Demo Sandbox | Flump (Read-Only)" },
+      { title: "Sample data | Flump" },
       { name: "robots", content: "noindex, nofollow" },
     ]);
   });
 
-  it("labels the persona dashboard figures as sample data", () => {
+  it("says once, in the bar, that the figures are sample data", () => {
     render(<SandboxRoute />);
-    expect(screen.getByTestId("sandbox-sample-data-label").textContent).toMatch(
-      /Sample data: illustrative figures, not yours/,
-    );
+    expect(screen.getAllByText(/Sample data: illustrative figures, not yours/)).toHaveLength(1);
+    expect(screen.queryByTestId("sandbox-sample-data-label")).toBeNull();
+  });
+
+  it("has exactly two Sign up buttons: one in the bar and one at the page end", () => {
+    render(<SandboxRoute />);
+    expect(screen.getAllByRole("button", { name: "Sign up" })).toHaveLength(2);
+    expect(
+      screen.getByTestId("sandbox-end").contains(screen.getByTestId("sandbox-end-sign-up")),
+    ).toBe(true);
+    expect(document.body.textContent).not.toMatch(/bank feeds|HMRC|Save my numbers/);
   });
 
   it("does not render its own projection notice (HomeDashboard owns the single one)", () => {
@@ -71,23 +81,23 @@ describe("SandboxRoute", () => {
     mockSearchParams = new URLSearchParams();
     render(<SandboxRoute />);
 
-    expect(screen.getByText(/Demo sandbox \(read-only\)/i)).toBeDefined();
-    const labels = Array.from(document.querySelectorAll("fieldset button")).map(
-      (button) => button.textContent,
-    );
+    const labels = screen.getAllByRole("tab").map((tab) => tab.textContent);
     expect(labels).toEqual([
       "Renting",
       "Paying off debts",
       "Paying a mortgage and letting a property",
     ]);
-    expect(screen.getByText("Renting").getAttribute("aria-pressed")).toBe("true");
+    expect(screen.getByRole("tab", { name: "Renting" }).getAttribute("aria-selected")).toBe("true");
     expect(screen.getByTestId("total-debt").textContent).toBe("0");
     expect(screen.getByTestId("net-worth").textContent).toBe("43300");
 
-    fireEvent.click(screen.getByText("Paying off debts"));
+    fireEvent.mouseDown(screen.getByRole("tab", { name: "Paying off debts" }), { button: 0 });
     expect(screen.getByTestId("total-debt").textContent).toBe("8000");
 
-    fireEvent.click(screen.getByText("Paying a mortgage and letting a property"));
+    fireEvent.mouseDown(
+      screen.getByRole("tab", { name: "Paying a mortgage and letting a property" }),
+      { button: 0 },
+    );
     expect(screen.getByTestId("total-debt").textContent).toBe("0");
     expect(screen.getByTestId("net-worth").textContent).toBe("441500");
   });
@@ -95,7 +105,7 @@ describe("SandboxRoute", () => {
   it("persona names follow the no-shaming rules (no income bands, no judgement)", () => {
     mockSearchParams = new URLSearchParams();
     render(<SandboxRoute />);
-    const text = document.querySelector("fieldset")?.textContent ?? "";
+    const text = screen.getByRole("tablist").textContent ?? "";
     expect(text).not.toMatch(/£|100k|high(er)? earner|clearing|struggl|only|just|still/i);
   });
 
@@ -113,12 +123,14 @@ describe("SandboxRoute", () => {
     expect(screen.getByTestId("net-worth").textContent).toBe("441500");
   });
 
-  it("clicking Save my numbers commits seed and navigates to /signup", () => {
+  it("either Sign up button commits the seed and navigates to /signup", () => {
     mockSearchParams = new URLSearchParams();
     render(<SandboxRoute />);
 
-    const saveBtn = screen.getByRole("button", { name: /Save my numbers and create account/i });
-    fireEvent.click(saveBtn);
+    fireEvent.click(screen.getByTestId("sandbox-bar-sign-up"));
+    expect(mockNavigate).toHaveBeenCalledWith("/signup");
+    mockNavigate.mockClear();
+    fireEvent.click(screen.getByTestId("sandbox-end-sign-up"));
 
     expect(mockNavigate).toHaveBeenCalledWith("/signup");
   });
@@ -126,7 +138,7 @@ describe("SandboxRoute", () => {
   it("save seed carries modules and stage but no salary", () => {
     mockSearchParams = new URLSearchParams();
     render(<SandboxRoute />);
-    fireEvent.click(screen.getByRole("button", { name: /Save my numbers and create account/i }));
+    fireEvent.click(screen.getByTestId("sandbox-bar-sign-up"));
     const seed = persistSeed.mock.calls.at(-1)?.[0];
     expect(seed.inferredModules.length).toBeGreaterThan(0);
     expect(seed.inferredStage).toBeDefined();
