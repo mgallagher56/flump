@@ -4,13 +4,13 @@ import {
   OPEN_BANKING_INSTITUTIONS,
   OpenBankingStandardProvider,
 } from "./open-banking-standard.provider";
-import { IBankProvider } from "./provider.interface";
+import { BankProvider } from "./provider.interface";
 import { StarlingProvider } from "./starling.provider";
 import { Trading212Provider } from "./trading212.provider";
 
 @Injectable()
 export class BankProviderRegistry {
-  private readonly providers: Map<string, IBankProvider> = new Map();
+  private readonly providers: Map<string, BankProvider> = new Map();
 
   constructor(
     private readonly monzoProvider: MonzoProvider,
@@ -27,7 +27,7 @@ export class BankProviderRegistry {
     }
   }
 
-  getProvider(institutionId: string): IBankProvider | undefined {
+  getProvider(institutionId: string): BankProvider | undefined {
     return this.providers.get(institutionId.toLowerCase());
   }
 

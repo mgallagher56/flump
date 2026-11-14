@@ -1,156 +1,135 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { createFakeBank, type FakeBank, json } from "./__fixtures__/fake-bank";
+import { openBankingCase } from "./__fixtures__/provider-cases";
 import {
   OPEN_BANKING_INSTITUTIONS,
   OpenBankingStandardProvider,
 } from "./open-banking-standard.provider";
 
+// Failure modes are covered for every provider in provider-failure-modes.spec.ts; this file
+// checks Open Banking mapping.
 describe("OpenBankingStandardProvider", () => {
-  let hsbcProvider: OpenBankingStandardProvider;
+  let bank: FakeBank;
+  const hsbc = new OpenBankingStandardProvider(OPEN_BANKING_INSTITUTIONS.hsbc as never);
 
   beforeEach(() => {
-    hsbcProvider = new OpenBankingStandardProvider(OPEN_BANKING_INSTITUTIONS.hsbc);
-    vi.restoreAllMocks();
+    bank = createFakeBank(openBankingCase.routes);
+    vi.stubGlobal("fetch", bank.fetch);
   });
 
-  it("should generate correct authorization URL for HSBC", () => {
-    const authUrl = hsbcProvider.getAuthUrl("hsbc_id", "http://localhost/cb", "state_123");
+  afterEach(() => vi.unstubAllGlobals());
+
+  it("generates the authorisation URL", () => {
+    const authUrl = hsbc.getAuthUrl("hsbc_id", "http://localhost/cb", "state_123");
     expect(authUrl).toContain("https://api.hsbc.com/oauth/v1/authorize");
     expect(authUrl).toContain("client_id=hsbc_id");
     expect(authUrl).toContain("scope=openid+accounts");
   });
 
-  it("exchanges code and handles errors", async () => {
-    globalThis.fetch = vi.fn().mockResolvedValueOnce({
-      ok: true,
-      json: () =>
-        Promise.resolve({
-          access_token: "ob_acc",
-          refresh_token: "ob_ref",
-          expires_in: 3600,
-        }),
-    });
-    const res = await hsbcProvider.exchangeCode("id", "sec", "http://cb", "code");
-    expect(res).toEqual({
-      accessToken: "ob_acc",
-      refreshToken: "ob_ref",
-      expiresIn: 3600,
-    });
-
-    globalThis.fetch = vi.fn().mockResolvedValueOnce({
-      ok: false,
-      text: () => Promise.resolve("invalid_client"),
-    });
-    await expect(hsbcProvider.exchangeCode("id", "sec", "http://cb", "bad")).rejects.toThrow(
-      "HSBC Bank token exchange failed: invalid_client",
+  it.each([
+    ["Savings", "Saving"],
+    ["CashISA", "Saving"],
+    ["Mortgage", "Mortgage"],
+    ["CreditCard", "Credit Card"],
+    ["Investment", "Investment"],
+    ["Wealth", "Investment"],
+    ["CurrentAccount", "Current"],
+  ])("maps sub-type %s to %s", async (subType, type) => {
+    bank.failAlways(
+      "accounts",
+      json({ Data: { Account: [{ AccountId: "111", AccountSubType: subType }] } }),
     );
+    const [account] = await hsbc.fetchAccounts("tok");
+    expect(account?.type).toBe(type);
   });
 
-  it("should fetch accounts and balances across subtypes from OBIE v3.1 endpoints", async () => {
-    globalThis.fetch = vi.fn().mockImplementation((url: string) => {
-      if (url.endsWith("/accounts")) {
-        return Promise.resolve({
-          ok: true,
-          json: () =>
-            Promise.resolve({
-              Data: {
-                Account: [
-                  {
-                    AccountId: "acc-1",
-                    Currency: "GBP",
-                    AccountSubType: "CurrentAccount",
-                    Nickname: "Premier Current",
-                  },
-                  {
-                    id: "acc-2",
-                    AccountSubType: "Savings",
-                    name: "ISA Saver",
-                  },
-                  {
-                    account_id: "acc-3",
-                    type: "Mortgage",
-                  },
-                  {
-                    AccountId: "acc-4",
-                    AccountSubType: "CreditCard",
-                  },
-                  {
-                    AccountId: "acc-5",
-                    AccountSubType: "WealthInvestment",
-                  },
-                ],
-              },
-            }),
-        });
-      }
-      if (url.includes("/acc-1/balances")) {
-        return Promise.resolve({
-          ok: true,
-          json: () =>
-            Promise.resolve({
-              Data: {
-                Balance: [{ Amount: { Amount: "3450.75", Currency: "GBP" } }],
-              },
-            }),
-        });
-      }
-      return Promise.reject(new Error("Balance fail"));
-    });
-
-    const accounts = await hsbcProvider.fetchAccounts("hsbc-token");
-    expect(accounts).toHaveLength(5);
-    expect(accounts[0].type).toBe("Current");
-    expect(accounts[0].balance).toBe(3450.75);
-    expect(accounts[1].type).toBe("Saving");
-    expect(accounts[2].type).toBe("Mortgage");
-    expect(accounts[3].type).toBe("Credit Card");
-    expect(accounts[4].type).toBe("Investment");
-  });
-
-  it("throws when accounts endpoint fails", async () => {
-    globalThis.fetch = vi.fn().mockResolvedValueOnce({
-      ok: false,
-      text: () => Promise.resolve("forbidden"),
-    });
-    await expect(hsbcProvider.fetchAccounts("Bearer tok")).rejects.toThrow(
-      "Failed to fetch HSBC Bank accounts: forbidden",
+  it("prefers the booked balance whatever order the types come in", async () => {
+    bank.failAlways(
+      "balance",
+      json({
+        Data: {
+          Balance: [
+            {
+              Type: "InterimAvailable",
+              Amount: { Amount: "900.00" },
+              CreditDebitIndicator: "Credit",
+            },
+            { Type: "InterimBooked", Amount: { Amount: "750.00" }, CreditDebitIndicator: "Credit" },
+          ],
+        },
+      }),
     );
+    const [account] = await hsbc.fetchAccounts("tok");
+    expect(account?.balance).toBe(750);
   });
 
-  it("fetches and maps transactions", async () => {
-    globalThis.fetch = vi.fn().mockResolvedValueOnce({ ok: false });
-    expect(await hsbcProvider.fetchTransactions("tok", "hsbc-acc-1")).toEqual([]);
+  it("rejects an empty balance list", async () => {
+    bank.failAlways("balance", json({ Data: { Balance: [] } }));
+    await expect(hsbc.fetchAccounts("tok")).rejects.toMatchObject({ code: "MALFORMED_RESPONSE" });
+  });
 
-    globalThis.fetch = vi.fn().mockRejectedValueOnce(new Error("err"));
-    expect(await hsbcProvider.fetchTransactions("tok", "hsbc-acc-1")).toEqual([]);
+  it("reads Revolut's inline balance without a balances call", async () => {
+    const revolutBank = createFakeBank([
+      {
+        key: "accounts",
+        path: /^https:\/\/b2b\.revolut\.com\/api\/1\.0\/accounts$/,
+        respond: json([{ id: "r-1", name: "Main", balance: 321.5, currency: "GBP" }]),
+      },
+    ]);
+    vi.stubGlobal("fetch", revolutBank.fetch);
+    const revolut = new OpenBankingStandardProvider(OPEN_BANKING_INSTITUTIONS.revolut as never);
+    await expect(revolut.fetchAccounts("tok")).resolves.toEqual([
+      {
+        externalAccountId: "revolut-r-1",
+        name: "Revolut Main",
+        type: "Current",
+        balance: 321.5,
+        currency: "GBP",
+      },
+    ]);
+    expect(revolutBank.unmatched).toEqual([]);
 
-    globalThis.fetch = vi.fn().mockResolvedValueOnce({
-      ok: true,
-      json: () =>
-        Promise.resolve({
-          Data: {
-            Transaction: [
-              {
-                Amount: { Amount: "45.50" },
-                CreditDebitIndicator: "Debit",
-                TransactionInformation: "Coffee Shop",
-                ProprietaryBankTransactionCode: { Code: "Food" },
-                BookingDateTime: "2026-01-10T10:00:00Z",
-              },
-              {
-                amount: 1200,
-                CreditDebitIndicator: "Credit",
-              },
-            ],
-          },
-        }),
+    revolutBank.failAlways("accounts", json([{ id: "r-1", name: "Main" }]));
+    await expect(revolut.fetchAccounts("tok")).rejects.toMatchObject({
+      code: "MALFORMED_RESPONSE",
     });
+  });
 
-    const txs = await hsbcProvider.fetchTransactions("Bearer tok", "hsbc-acc-1");
-    expect(txs).toHaveLength(2);
-    expect(txs[0].amount).toBe(-45.5);
-    expect(txs[0].description).toBe("Coffee Shop");
-    expect(txs[0].category).toBe("Food");
-    expect(txs[1].amount).toBe(1200);
-    expect(txs[1].description).toBe("Open Banking Transaction");
+  it("rejects a dot-segment account id instead of putting it in the path", async () => {
+    bank.failAlways("accounts", json({ Data: { Account: [{ AccountId: ".." }] } }));
+    await expect(hsbc.fetchAccounts("tok")).rejects.toMatchObject({ code: "MALFORMED_RESPONSE" });
+    expect(bank.calls).toHaveLength(1);
+  });
+
+  it("does not double the Bearer prefix", async () => {
+    await hsbc.fetchAccounts("Bearer tok");
+    expect(bank.calls.every((c) => c.headers.Authorization === "Bearer tok")).toBe(true);
+  });
+
+  it("accepts a bare array of accounts and an unsigned amount without an indicator", async () => {
+    bank.failAlways("accounts", json([{ id: "111", name: "Main", type: "current" }]));
+    bank.failAlways("balance", json({ balances: [{ amount: -42.1 }] }));
+    const [account] = await hsbc.fetchAccounts("tok");
+    expect(account).toMatchObject({ externalAccountId: "hsbc-111", balance: -42.1 });
+  });
+
+  it("rejects an unknown credit/debit indicator", async () => {
+    bank.failAlways(
+      "balance",
+      json({
+        Data: { Balance: [{ Amount: { Amount: "1.00" }, CreditDebitIndicator: "Sideways" }] },
+      }),
+    );
+    await expect(hsbc.fetchAccounts("tok")).rejects.toMatchObject({ code: "MALFORMED_RESPONSE" });
+  });
+
+  it("rejects a transaction without a booking date", async () => {
+    bank.failAlways(
+      "transactions",
+      json({ Data: { Transaction: [{ Amount: { Amount: "1.00" } }] } }),
+    );
+    await expect(hsbc.fetchTransactions("tok", "hsbc-111")).rejects.toMatchObject({
+      code: "MALFORMED_RESPONSE",
+    });
   });
 });

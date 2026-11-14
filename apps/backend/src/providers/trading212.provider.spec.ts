@@ -1,143 +1,82 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { createFakeBank, type FakeBank, json } from "./__fixtures__/fake-bank";
+import { trading212Case } from "./__fixtures__/provider-cases";
 import { Trading212Provider } from "./trading212.provider";
 
+// Failure modes are covered for every provider in provider-failure-modes.spec.ts; this file
+// checks Trading 212 mapping.
 describe("Trading212Provider", () => {
-  let provider: Trading212Provider;
+  let bank: FakeBank;
+  const provider = new Trading212Provider();
 
   beforeEach(() => {
-    provider = new Trading212Provider();
-    vi.restoreAllMocks();
+    bank = createFakeBank(trading212Case.routes);
+    vi.stubGlobal("fetch", bank.fetch);
   });
 
-  it("should generate correct auth url", () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it("generates the auth url", () => {
     const authUrl = provider.getAuthUrl("client_123", "http://localhost/cb", "state_abc");
     expect(authUrl).toContain("https://live.trading212.com/oauth/authorize");
     expect(authUrl).toContain("client_id=client_123");
     expect(authUrl).toContain("state=state_abc");
   });
 
-  it("exchanges code and handles error", async () => {
-    globalThis.fetch = vi.fn().mockResolvedValueOnce({
-      ok: true,
-      json: () =>
-        Promise.resolve({
-          access_token: "t212_acc",
-          refresh_token: "t212_ref",
-          expires_in: 3600,
-        }),
+  it("never falls back to a placeholder account id (it would duplicate the account)", async () => {
+    bank.failAlways("info", json({ currencyCode: "GBP" }));
+    await expect(provider.fetchAccounts("key")).rejects.toMatchObject({
+      code: "MALFORMED_RESPONSE",
     });
+  });
 
-    const res = await provider.exchangeCode("id", "sec", "http://cb", "code");
-    expect(res).toEqual({
-      accessToken: "t212_acc",
-      refreshToken: "t212_ref",
-      expiresIn: 3600,
+  it("does not use the invested figure when the total is missing", async () => {
+    bank.failAlways("cash", json({ invested: 900 }));
+    await expect(provider.fetchAccounts("key")).rejects.toMatchObject({
+      code: "MALFORMED_RESPONSE",
     });
+  });
 
-    globalThis.fetch = vi.fn().mockResolvedValueOnce({
-      ok: false,
-      text: () => Promise.resolve("denied"),
-    });
-    await expect(provider.exchangeCode("id", "sec", "http://cb", "bad")).rejects.toThrow(
-      "Trading 212 token exchange failed: denied",
+  it("a filled order without a quantity is malformed, not guessed", async () => {
+    bank.failAlways(
+      "transactions",
+      json({
+        items: [
+          {
+            status: "FILLED",
+            type: "MARKET",
+            filledValue: 5,
+            dateExecuted: "2026-11-01T00:00:00Z",
+          },
+        ],
+      }),
     );
-  });
-
-  it("should fetch account cash balance and map to Investment type", async () => {
-    globalThis.fetch = vi.fn().mockImplementation((url: string) => {
-      if (url.includes("/equity/account/cash")) {
-        return Promise.resolve({
-          ok: true,
-          json: () =>
-            Promise.resolve({
-              free: 500,
-              total: 12500.5,
-              invested: 12000.5,
-              ppl: 500,
-            }),
-        });
-      }
-      if (url.includes("/equity/account/info")) {
-        return Promise.resolve({
-          ok: true,
-          json: () =>
-            Promise.resolve({
-              id: "987654",
-              currencyCode: "GBP",
-            }),
-        });
-      }
-      return Promise.reject(new Error("Unknown URL"));
-    });
-
-    const accounts = await provider.fetchAccounts("test-t212-api-key");
-    expect(accounts).toHaveLength(1);
-    expect(accounts[0]).toEqual({
-      externalAccountId: "t212-987654",
-      name: "Trading 212 Portfolio",
-      type: "Investment",
-      balance: 12500.5,
-      currency: "GBP",
+    await expect(provider.fetchTransactions("key", "t212-1")).rejects.toMatchObject({
+      code: "MALFORMED_RESPONSE",
     });
   });
 
-  it("handles cash endpoint failure and info endpoint fallback", async () => {
-    globalThis.fetch = vi.fn().mockResolvedValueOnce({
-      ok: false,
-      text: () => Promise.resolve("bad_key"),
-    });
-    await expect(provider.fetchAccounts("Bearer bad")).rejects.toThrow(
-      "Failed to fetch Trading 212 account cash: bad_key",
+  it("accepts orders as a bare array", async () => {
+    bank.failAlways(
+      "transactions",
+      json([
+        {
+          status: "FILLED",
+          type: "LIMIT",
+          filledQuantity: -1,
+          filledValue: 10,
+          ticker: "X",
+          dateExecuted: "2026-11-01T00:00:00Z",
+        },
+      ]),
     );
-
-    globalThis.fetch = vi.fn().mockImplementation((url: string) => {
-      if (url.includes("/equity/account/cash")) {
-        return Promise.resolve({
-          ok: true,
-          json: () => Promise.resolve({ invested: 3000 }),
-        });
-      }
-      return Promise.reject(new Error("info fail"));
-    });
-    const accounts = await provider.fetchAccounts("Bearer tok");
-    expect(accounts[0].externalAccountId).toBe("t212-primary");
-    expect(accounts[0].balance).toBe(3000);
-  });
-
-  it("fetches order history as transactions", async () => {
-    globalThis.fetch = vi.fn().mockResolvedValueOnce({ ok: false });
-    expect(await provider.fetchTransactions("tok", "acc")).toEqual([]);
-
-    globalThis.fetch = vi.fn().mockRejectedValueOnce(new Error("net err"));
-    expect(await provider.fetchTransactions("tok", "acc")).toEqual([]);
-
-    globalThis.fetch = vi.fn().mockResolvedValueOnce({
-      ok: true,
-      json: () =>
-        Promise.resolve({
-          items: [
-            { status: "CANCELLED", value: 100 },
-            {
-              status: "FILLED",
-              type: "MARKET_BUY",
-              filledValue: 250.5,
-              ticker: "VWRL",
-              dateExecuted: "2026-02-01T10:00:00Z",
-            },
-            {
-              status: "FILLED",
-              type: "SELL",
-              value: 100,
-            },
-          ],
-        }),
-    });
-
-    const txs = await provider.fetchTransactions("Bearer tok", "acc");
-    expect(txs).toHaveLength(2);
-    expect(txs[0].amount).toBe(-250.5);
-    expect(txs[0].description).toBe("Bought VWRL");
-    expect(txs[1].amount).toBe(100);
-    expect(txs[1].description).toBe("Sold Equities");
+    await expect(provider.fetchTransactions("key", "t212-1")).resolves.toEqual([
+      {
+        amount: 10,
+        description: "Sold X",
+        category: "Investment",
+        timestamp: new Date("2026-11-01T00:00:00Z"),
+      },
+    ]);
   });
 });

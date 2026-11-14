@@ -1,8 +1,22 @@
-import { Injectable } from "@nestjs/common";
 import {
-  IBankProvider,
+  asArray,
+  asDate,
+  asFiniteNumber,
+  asRecord,
+  BankMalformedResponseError,
+  optionalString,
+  type ProviderCallContext,
+  pathSegment,
+  providerFetchJson,
+} from "@flump/banking/server";
+import { Injectable } from "@nestjs/common";
+import { authorizationCodeForm, refreshTokenForm, requestOAuthToken } from "./oauth-token";
+import type {
+  BankProvider,
   ProviderAccount,
+  ProviderCallOptions,
   ProviderTransaction,
+  RevokeResult,
   TokenResponse,
 } from "./provider.interface";
 
@@ -12,6 +26,11 @@ export interface OpenBankingConfig {
   authBaseUrl: string;
   tokenUrl: string;
   apiBaseUrl: string;
+  /**
+   * The balance comes inline on each account (Revolut's API) rather than from a separate
+   * `/accounts/{id}/balances` call.
+   */
+  inlineBalance?: boolean;
 }
 
 export const OPEN_BANKING_INSTITUTIONS: Record<string, OpenBankingConfig> = {
@@ -35,6 +54,7 @@ export const OPEN_BANKING_INSTITUTIONS: Record<string, OpenBankingConfig> = {
     authBaseUrl: "https://business.revolut.com/app-confirm",
     tokenUrl: "https://b2b.revolut.com/api/1.0/auth/token",
     apiBaseUrl: "https://b2b.revolut.com/api/1.0",
+    inlineBalance: true,
   },
   santander: {
     institutionId: "santander",
@@ -66,9 +86,47 @@ export const OPEN_BANKING_INSTITUTIONS: Record<string, OpenBankingConfig> = {
   },
 };
 
+const BALANCE_TYPE_PREFERENCE = [
+  "InterimBooked",
+  "ClosingBooked",
+  "InterimAvailable",
+  "ClosingAvailable",
+  "Expected",
+];
+
+/** Open Banking amounts are unsigned; `CreditDebitIndicator: "Debit"` makes them negative. */
+function signedAmount(
+  amount: number,
+  indicator: unknown,
+  field: string,
+  callCtx: ProviderCallContext,
+): number {
+  if (indicator === undefined || indicator === null) return amount;
+  const upper = typeof indicator === "string" ? indicator.toUpperCase() : "";
+  if (upper === "DEBIT") return -Math.abs(amount);
+  if (upper === "CREDIT") return Math.abs(amount);
+  throw new BankMalformedResponseError({ ...callCtx, field });
+}
+
+function accountType(subType: string): ProviderAccount["type"] {
+  if (subType.includes("saving") || subType.includes("isa")) return "Saving";
+  if (subType.includes("mortgage")) return "Mortgage";
+  if (subType.includes("credit")) return "Credit Card";
+  if (subType.includes("investment") || subType.includes("wealth")) return "Investment";
+  return "Current";
+}
+
 @Injectable()
-export class OpenBankingStandardProvider implements IBankProvider {
+export class OpenBankingStandardProvider implements BankProvider {
   constructor(private readonly config: OpenBankingConfig) {}
+
+  private ctx(operation: string, deadline?: AbortSignal): ProviderCallContext {
+    return { provider: this.config.institutionId, operation, deadline };
+  }
+
+  private bearer(accessToken: string): string {
+    return accessToken.startsWith("Bearer ") ? accessToken : `Bearer ${accessToken}`;
+  }
 
   getAuthUrl(clientId: string, redirectUri: string, state: string): string {
     const params = new URLSearchParams({
@@ -81,150 +139,206 @@ export class OpenBankingStandardProvider implements IBankProvider {
     return `${this.config.authBaseUrl}?${params.toString()}`;
   }
 
-  async exchangeCode(
+  exchangeCode(
     clientId: string,
     clientSecret: string,
     redirectUri: string,
     code: string,
   ): Promise<TokenResponse> {
-    const body = new URLSearchParams({
-      grant_type: "authorization_code",
-      client_id: clientId,
-      client_secret: clientSecret,
-      redirect_uri: redirectUri,
-      code: code,
-    });
-
-    const res = await fetch(this.config.tokenUrl, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-        Accept: "application/json",
-      },
-      body: body.toString(),
-    });
-
-    if (!res.ok) {
-      const errText = await res.text();
-      throw new Error(`${this.config.name} token exchange failed: ${errText}`);
-    }
-
-    const data = await res.json();
-    return {
-      accessToken: data.access_token || data.accessToken,
-      refreshToken: data.refresh_token || data.refreshToken,
-      expiresIn: data.expires_in || data.expiresIn,
-    };
+    return requestOAuthToken(
+      this.config.tokenUrl,
+      authorizationCodeForm(clientId, clientSecret, redirectUri, code),
+      this.ctx("exchange code"),
+    );
   }
 
-  async fetchAccounts(accessToken: string): Promise<ProviderAccount[]> {
-    const bearer = accessToken.startsWith("Bearer ") ? accessToken : `Bearer ${accessToken}`;
+  refreshToken(
+    clientId: string,
+    clientSecret: string,
+    refreshToken: string,
+  ): Promise<TokenResponse> {
+    return requestOAuthToken(
+      this.config.tokenUrl,
+      refreshTokenForm(clientId, clientSecret, refreshToken),
+      this.ctx("refresh token"),
+    );
+  }
 
-    // 1. Fetch Accounts from AISP standard endpoint
-    const res = await fetch(`${this.config.apiBaseUrl}/accounts`, {
-      headers: {
-        Authorization: bearer,
-        Accept: "application/json",
-      },
-    });
+  /**
+   * Revoking Open Banking access means deleting the account-access consent, which needs the
+   * consent id and a client-credentials token we do not hold. The user removes access in their
+   * bank's app.
+   */
+  async revokeConnection(_accessToken: string): Promise<RevokeResult> {
+    return { revoked: false, reason: "unsupported" };
+  }
 
-    if (!res.ok) {
-      const err = await res.text();
-      throw new Error(`Failed to fetch ${this.config.name} accounts: ${err}`);
-    }
-
-    const data = await res.json();
-    const rawAccounts: any[] =
-      data.Data?.Account || data.accounts || (Array.isArray(data) ? data : []);
+  async fetchAccounts(
+    accessToken: string,
+    options?: ProviderCallOptions,
+  ): Promise<ProviderAccount[]> {
+    const headers = { Authorization: this.bearer(accessToken), Accept: "application/json" };
+    const accountsCtx = this.ctx("fetch accounts", options?.signal);
+    const body = await providerFetchJson(
+      `${this.config.apiBaseUrl}/accounts`,
+      { headers },
+      accountsCtx,
+    );
+    const rawAccounts = Array.isArray(body)
+      ? body
+      : (() => {
+          const data = asRecord(body, "body", accountsCtx);
+          const nested =
+            data.Data && typeof data.Data === "object"
+              ? (data.Data as Record<string, unknown>).Account
+              : undefined;
+          return asArray(nested ?? data.accounts, "Data.Account", accountsCtx);
+        })();
 
     const providerAccounts: ProviderAccount[] = [];
-
-    for (const acc of rawAccounts) {
-      const accountId = acc.AccountId || acc.id || acc.account_id;
-      const currency = acc.Currency || acc.currency || "GBP";
+    for (const raw of rawAccounts) {
+      const acc = asRecord(raw, "Data.Account[]", accountsCtx);
+      const accountIdRaw = acc.AccountId ?? acc.id ?? acc.account_id;
+      if (typeof accountIdRaw !== "string" && typeof accountIdRaw !== "number") {
+        throw new BankMalformedResponseError({ ...accountsCtx, field: "Data.Account[].AccountId" });
+      }
+      const accountId = String(accountIdRaw);
       const nickname =
-        acc.Nickname || acc.name || acc.AccountSubType || `${this.config.name} Account`;
+        optionalString(acc.Nickname) ??
+        optionalString(acc.name) ??
+        optionalString(acc.AccountSubType) ??
+        `${this.config.name} Account`;
+      const subType = (
+        optionalString(acc.AccountSubType) ??
+        optionalString(acc.type) ??
+        ""
+      ).toLowerCase();
 
-      // Map Type
-      const subType = (acc.AccountSubType || acc.type || "").toLowerCase();
-      let type: ProviderAccount["type"] = "Current";
-      if (subType.includes("saving") || subType.includes("isa")) {
-        type = "Saving";
-      } else if (subType.includes("mortgage")) {
-        type = "Mortgage";
-      } else if (subType.includes("credit")) {
-        type = "Credit Card";
-      } else if (subType.includes("investment") || subType.includes("wealth")) {
-        type = "Investment";
-      }
-
-      // 2. Fetch Balance for this account
-      let balance = 0;
-      try {
-        const balRes = await fetch(`${this.config.apiBaseUrl}/accounts/${accountId}/balances`, {
-          headers: {
-            Authorization: bearer,
-            Accept: "application/json",
-          },
-        });
-        if (balRes.ok) {
-          const balData = await balRes.json();
-          const balObj = balData.Data?.Balance?.[0] || balData.balances?.[0] || balData;
-          const rawAmount = balObj.Amount?.Amount ?? balObj.amount ?? 0;
-          balance = Number(rawAmount);
-        }
-      } catch (_err) {
-        // Fallback to 0 if balance endpoint unavailable
-      }
+      // A balance we could not read fails the whole fetch (audit H2): it is never reported as 0.
+      const { balance, currency } = this.config.inlineBalance
+        ? {
+            balance: asFiniteNumber(acc.balance, "accounts[].balance", accountsCtx),
+            currency: undefined,
+          }
+        : await this.fetchBalance(accountId, headers, options?.signal);
 
       providerAccounts.push({
         externalAccountId: `${this.config.institutionId}-${accountId}`,
         name: `${this.config.name} ${nickname}`,
-        type,
+        type: accountType(subType),
         balance,
-        currency,
+        currency: optionalString(acc.Currency) ?? optionalString(acc.currency) ?? currency ?? "GBP",
       });
     }
 
     return providerAccounts;
   }
 
+  /**
+   * Reads one balance. Open Banking returns several balance types in no set order, so the most
+   * settled one present is used: booked before available, interim (today) before closing.
+   */
+  private async fetchBalance(
+    accountId: string,
+    headers: Record<string, string>,
+    signal: AbortSignal | undefined,
+  ): Promise<{ balance: number; currency?: string }> {
+    const balanceCtx = this.ctx("fetch balance", signal);
+    const balBody = asRecord(
+      await providerFetchJson(
+        `${this.config.apiBaseUrl}/accounts/${pathSegment(accountId, "Data.Account[].AccountId", balanceCtx)}/balances`,
+        { headers },
+        balanceCtx,
+      ),
+      "body",
+      balanceCtx,
+    );
+    const balList =
+      balBody.Data && typeof balBody.Data === "object"
+        ? (balBody.Data as Record<string, unknown>).Balance
+        : balBody.balances;
+    const balances = asArray(balList, "Data.Balance", balanceCtx).map((b) =>
+      asRecord(b, "Data.Balance[]", balanceCtx),
+    );
+    const balObj =
+      BALANCE_TYPE_PREFERENCE.map((type) => balances.find((b) => b.Type === type)).find(Boolean) ??
+      balances[0];
+    if (!balObj) throw new BankMalformedResponseError({ ...balanceCtx, field: "Data.Balance" });
+    const amountObj =
+      balObj.Amount && typeof balObj.Amount === "object"
+        ? (balObj.Amount as Record<string, unknown>)
+        : undefined;
+    const amount = asFiniteNumber(
+      amountObj?.Amount ?? balObj.amount,
+      "Data.Balance[].Amount",
+      balanceCtx,
+    );
+    return {
+      balance: signedAmount(
+        amount,
+        balObj.CreditDebitIndicator,
+        "Data.Balance[].CreditDebitIndicator",
+        balanceCtx,
+      ),
+      currency: optionalString(amountObj?.Currency),
+    };
+  }
+
   async fetchTransactions(
     accessToken: string,
     externalAccountId: string,
+    options?: ProviderCallOptions,
   ): Promise<ProviderTransaction[]> {
-    try {
-      const bearer = accessToken.startsWith("Bearer ") ? accessToken : `Bearer ${accessToken}`;
-      const internalId = externalAccountId.replace(`${this.config.institutionId}-`, "");
-      const res = await fetch(`${this.config.apiBaseUrl}/accounts/${internalId}/transactions`, {
-        headers: {
-          Authorization: bearer,
-          Accept: "application/json",
-        },
+    const txCtx = this.ctx("fetch transactions", options?.signal);
+    const prefix = `${this.config.institutionId}-`;
+    const internalId = externalAccountId.startsWith(prefix)
+      ? externalAccountId.slice(prefix.length)
+      : externalAccountId;
+    const body = asRecord(
+      await providerFetchJson(
+        `${this.config.apiBaseUrl}/accounts/${pathSegment(internalId, "externalAccountId", txCtx)}/transactions`,
+        { headers: { Authorization: this.bearer(accessToken), Accept: "application/json" } },
+        txCtx,
+      ),
+      "body",
+      txCtx,
+    );
+    const list =
+      body.Data && typeof body.Data === "object"
+        ? (body.Data as Record<string, unknown>).Transaction
+        : body.transactions;
+
+    const transactions: ProviderTransaction[] = [];
+    for (const raw of asArray(list, "Data.Transaction", txCtx)) {
+      const tx = asRecord(raw, "Data.Transaction[]", txCtx);
+      const amountObj =
+        tx.Amount && typeof tx.Amount === "object"
+          ? (tx.Amount as Record<string, unknown>)
+          : undefined;
+      const amount = asFiniteNumber(
+        amountObj?.Amount ?? tx.amount,
+        "Data.Transaction[].Amount",
+        txCtx,
+      );
+      const code =
+        tx.ProprietaryBankTransactionCode && typeof tx.ProprietaryBankTransactionCode === "object"
+          ? optionalString((tx.ProprietaryBankTransactionCode as Record<string, unknown>).Code)
+          : undefined;
+      transactions.push({
+        amount: signedAmount(
+          amount,
+          tx.CreditDebitIndicator,
+          "Data.Transaction[].CreditDebitIndicator",
+          txCtx,
+        ),
+        description:
+          optionalString(tx.TransactionInformation) ??
+          optionalString(tx.description) ??
+          "Open Banking Transaction",
+        category: code ?? "General",
+        timestamp: asDate(tx.BookingDateTime, "Data.Transaction[].BookingDateTime", txCtx),
       });
-
-      if (!res.ok) return [];
-
-      const data = await res.json();
-      const rawTxList: any[] = data.Data?.Transaction || data.transactions || [];
-      const transactions: ProviderTransaction[] = [];
-
-      for (const tx of rawTxList) {
-        const rawAmount = Number(tx.Amount?.Amount ?? tx.amount ?? 0);
-        const creditDebit = (tx.CreditDebitIndicator || "").toUpperCase();
-        const signedAmount = creditDebit === "DEBIT" ? -Math.abs(rawAmount) : Math.abs(rawAmount);
-
-        transactions.push({
-          amount: signedAmount,
-          description: tx.TransactionInformation || tx.description || "Open Banking Transaction",
-          category: tx.ProprietaryBankTransactionCode?.Code || "General",
-          timestamp: tx.BookingDateTime ? new Date(tx.BookingDateTime) : new Date(),
-        });
-      }
-
-      return transactions;
-    } catch (_err) {
-      return [];
     }
+    return transactions;
   }
 }

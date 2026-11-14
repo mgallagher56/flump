@@ -1,41 +1,21 @@
-import type { BankingProviderName, FlumpAccountCategory, NormalizedAccount } from "@flump/banking";
+import type {
+  BankingProviderName,
+  FlumpAccountCategory,
+  NormalizedAccount,
+  ProviderAccount,
+} from "@flump/banking/server";
 
-export interface TokenResponse {
-  accessToken: string;
-  refreshToken?: string;
-  expiresIn?: number;
-}
-
-export interface ProviderAccount {
-  externalAccountId: string;
-  name: string;
-  type: "Current" | "Saving" | "Mortgage" | "Credit Card" | "Investment";
-  balance: number;
-  currency: string;
-}
-
-export interface ProviderTransaction {
-  amount: number;
-  description: string;
-  category: string;
-  timestamp: Date;
-}
-
-export interface IBankProvider {
-  getAuthUrl(clientId: string, redirectUri: string, state: string): string;
-  exchangeCode(
-    clientId: string,
-    clientSecret: string,
-    redirectUri: string,
-    code: string,
-  ): Promise<TokenResponse>;
-  fetchAccounts(accessToken: string): Promise<ProviderAccount[]>;
-  fetchTransactions(
-    accessToken: string,
-    externalAccountId: string,
-    details?: any,
-  ): Promise<ProviderTransaction[]>;
-}
+// The provider interface and its types live in @flump/banking (audit M20): one definition for
+// every bank integration. Re-exported here so backend code imports from one place.
+export type {
+  BankProvider,
+  FetchTransactionsOptions,
+  ProviderAccount,
+  ProviderCallOptions,
+  ProviderTransaction,
+  RevokeResult,
+  TokenResponse,
+} from "@flump/banking/server";
 
 export function toNormalizedAccount(
   account: ProviderAccount,

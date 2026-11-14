@@ -1,13 +1,44 @@
-import { Injectable } from "@nestjs/common";
 import {
-  IBankProvider,
+  asArray,
+  asDate,
+  asRecord,
+  asString,
+  minorUnitsToMajor,
+  optionalString,
+  type ProviderCallContext,
+  providerFetch,
+  providerFetchJson,
+} from "@flump/banking/server";
+import { Injectable } from "@nestjs/common";
+import { authorizationCodeForm, refreshTokenForm, requestOAuthToken } from "./oauth-token";
+import type {
+  BankProvider,
+  FetchTransactionsOptions,
   ProviderAccount,
+  ProviderCallOptions,
   ProviderTransaction,
+  RevokeResult,
   TokenResponse,
 } from "./provider.interface";
 
+const API = "https://api.monzo.com";
+const PROVIDER = "monzo";
+
+function ctx(operation: string, deadline?: AbortSignal): ProviderCallContext {
+  return { provider: PROVIDER, operation, deadline };
+}
+
+function mapCategory(monzoCat: string): string {
+  if (["groceries", "eating_out"].includes(monzoCat)) return "Food";
+  if (["bills", "utilities"].includes(monzoCat)) return "Utilities";
+  if (monzoCat === "salary") return "Salary";
+  if (monzoCat === "transport") return "Transport";
+  if (monzoCat === "shopping") return "Shopping";
+  return "General";
+}
+
 @Injectable()
-export class MonzoProvider implements IBankProvider {
+export class MonzoProvider implements BankProvider {
   getAuthUrl(clientId: string, redirectUri: string, state: string): string {
     const params = new URLSearchParams({
       client_id: clientId,
@@ -18,108 +49,102 @@ export class MonzoProvider implements IBankProvider {
     return `https://auth.monzo.com/?${params.toString()}`;
   }
 
-  async exchangeCode(
+  exchangeCode(
     clientId: string,
     clientSecret: string,
     redirectUri: string,
     code: string,
   ): Promise<TokenResponse> {
-    const body = new URLSearchParams({
-      grant_type: "authorization_code",
-      client_id: clientId,
-      client_secret: clientSecret,
-      redirect_uri: redirectUri,
-      code: code,
-    });
-
-    const res = await fetch("https://api.monzo.com/oauth2/token", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body: body.toString(),
-    });
-
-    if (!res.ok) {
-      const errText = await res.text();
-      throw new Error(`Monzo token exchange failed: ${errText}`);
-    }
-
-    const data = await res.json();
-    return {
-      accessToken: data.access_token,
-      refreshToken: data.refresh_token,
-      expiresIn: data.expires_in,
-    };
+    return requestOAuthToken(
+      `${API}/oauth2/token`,
+      authorizationCodeForm(clientId, clientSecret, redirectUri, code),
+      ctx("exchange code"),
+    );
   }
 
-  async fetchAccounts(accessToken: string): Promise<ProviderAccount[]> {
-    // 1. Fetch main accounts
-    const res = await fetch("https://api.monzo.com/accounts", {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    });
+  refreshToken(
+    clientId: string,
+    clientSecret: string,
+    refreshToken: string,
+  ): Promise<TokenResponse> {
+    return requestOAuthToken(
+      `${API}/oauth2/token`,
+      refreshTokenForm(clientId, clientSecret, refreshToken),
+      ctx("refresh token"),
+    );
+  }
 
-    if (!res.ok) {
-      throw new Error(`Failed to fetch Monzo accounts: ${await res.text()}`);
-    }
+  async revokeConnection(accessToken: string): Promise<RevokeResult> {
+    await providerFetch(
+      `${API}/oauth2/logout`,
+      { method: "POST", headers: { Authorization: `Bearer ${accessToken}` } },
+      ctx("revoke connection"),
+    );
+    return { revoked: true };
+  }
 
-    const accountsData = await res.json();
+  async fetchAccounts(
+    accessToken: string,
+    options?: ProviderCallOptions,
+  ): Promise<ProviderAccount[]> {
+    const headers = { Authorization: `Bearer ${accessToken}` };
+    const accountsCtx = ctx("fetch accounts", options?.signal);
+    const accountsData = asRecord(
+      await providerFetchJson(`${API}/accounts`, { headers }, accountsCtx),
+      "body",
+      accountsCtx,
+    );
+
     const providerAccounts: ProviderAccount[] = [];
+    for (const raw of asArray(accountsData.accounts, "accounts", accountsCtx)) {
+      const acc = asRecord(raw, "accounts[]", accountsCtx);
+      if (acc.closed === true) continue;
+      const accountId = asString(acc.id, "accounts[].id", accountsCtx);
 
-    for (const acc of accountsData.accounts || []) {
-      if (acc.closed) continue;
-
-      // Fetch balance for this account
-      let balance = 0;
-      let currency = "GBP";
-      try {
-        const balRes = await fetch(`https://api.monzo.com/balance?account_id=${acc.id}`, {
-          headers: { Authorization: `Bearer ${accessToken}` },
-        });
-        if (balRes.ok) {
-          const balData = await balRes.json();
-          // Monzo returns balance in minor units (pence)
-          balance = (balData.balance || 0) / 100;
-          currency = balData.currency || "GBP";
-        }
-      } catch (_err) {
-        // Fallback to 0 if balance fetch fails
-      }
-
-      // Map Type
-      const isJoint = acc.type === "uk_retail_joint";
-      const name = isJoint ? "Monzo Joint Account" : "Monzo Current Account";
+      // A balance we could not read fails the whole fetch (audit H2): it is never reported as 0.
+      const balanceCtx = ctx("fetch balance", options?.signal);
+      const balData = asRecord(
+        await providerFetchJson(
+          `${API}/balance?account_id=${encodeURIComponent(accountId)}`,
+          { headers },
+          balanceCtx,
+        ),
+        "body",
+        balanceCtx,
+      );
 
       providerAccounts.push({
-        externalAccountId: acc.id,
-        name,
+        externalAccountId: accountId,
+        name: acc.type === "uk_retail_joint" ? "Monzo Joint Account" : "Monzo Current Account",
         type: "Current",
-        balance,
-        currency,
+        // Monzo reports minor units (pence).
+        balance: minorUnitsToMajor(balData.balance, "balance", balanceCtx),
+        currency: optionalString(balData.currency) ?? "GBP",
       });
 
-      // 2. Fetch Pots for this account and represent as Saving accounts
-      try {
-        const potsRes = await fetch(`https://api.monzo.com/pots?current_account_id=${acc.id}`, {
-          headers: { Authorization: `Bearer ${accessToken}` },
+      // Pots are savings accounts with their own balances; a failed pots call fails the fetch
+      // rather than silently dropping them. Only retail current accounts have pots.
+      if (acc.type !== "uk_retail" && acc.type !== "uk_retail_joint") continue;
+      const potsCtx = ctx("fetch pots", options?.signal);
+      const potsData = asRecord(
+        await providerFetchJson(
+          `${API}/pots?current_account_id=${encodeURIComponent(accountId)}`,
+          { headers },
+          potsCtx,
+        ),
+        "body",
+        potsCtx,
+      );
+      for (const rawPot of asArray(potsData.pots, "pots", potsCtx)) {
+        const pot = asRecord(rawPot, "pots[]", potsCtx);
+        if (pot.deleted === true) continue;
+        providerAccounts.push({
+          externalAccountId: asString(pot.id, "pots[].id", potsCtx),
+          name: `Monzo Pot: ${asString(pot.name, "pots[].name", potsCtx)}`,
+          type: "Saving",
+          balance: minorUnitsToMajor(pot.balance, "pots[].balance", potsCtx),
+          currency: optionalString(pot.currency) ?? "GBP",
         });
-        if (potsRes.ok) {
-          const potsData = await potsRes.json();
-          for (const pot of potsData.pots || []) {
-            if (pot.deleted) continue;
-            providerAccounts.push({
-              externalAccountId: pot.id,
-              name: `Monzo Pot: ${pot.name}`,
-              type: "Saving",
-              balance: (pot.balance || 0) / 100,
-              currency: pot.currency || "GBP",
-            });
-          }
-        }
-      } catch (_err) {
-        // Skip pots on error
       }
     }
 
@@ -129,52 +154,39 @@ export class MonzoProvider implements IBankProvider {
   async fetchTransactions(
     accessToken: string,
     externalAccountId: string,
-    details?: any,
+    options?: FetchTransactionsOptions,
   ): Promise<ProviderTransaction[]> {
-    const limit = details?.limit || 30;
-    const url = `https://api.monzo.com/transactions?account_id=${externalAccountId}&limit=${limit}`;
+    // Pots have no transaction feed in the Monzo API: there is nothing to fetch, by design.
+    if (externalAccountId.startsWith("pot_")) return [];
 
-    const res = await fetch(url, {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    });
+    const txCtx = ctx("fetch transactions", options?.signal);
+    const limit = options?.limit ?? 30;
+    const params = new URLSearchParams({ account_id: externalAccountId, limit: String(limit) });
+    const txData = asRecord(
+      await providerFetchJson(
+        `${API}/transactions?${params.toString()}`,
+        { headers: { Authorization: `Bearer ${accessToken}` } },
+        txCtx,
+      ),
+      "body",
+      txCtx,
+    );
 
-    if (!res.ok) {
-      // Pot transaction history is not queryable directly via /transactions in some cases,
-      // return empty array if failed
-      return [];
-    }
-
-    const txData = await res.json();
     const transactions: ProviderTransaction[] = [];
-
-    for (const tx of txData.transactions || []) {
+    for (const raw of asArray(txData.transactions, "transactions", txCtx)) {
+      const tx = asRecord(raw, "transactions[]", txCtx);
       if (tx.decline_reason) continue;
-
-      // Translate Monzo categories to standard categories
-      let category = "General";
-      const monzoCat = tx.category || "";
-      if (["groceries", "eating_out"].includes(monzoCat)) {
-        category = "Food";
-      } else if (["bills", "utilities"].includes(monzoCat)) {
-        category = "Utilities";
-      } else if (monzoCat === "salary") {
-        category = "Salary";
-      } else if (monzoCat === "transport") {
-        category = "Transport";
-      } else if (monzoCat === "shopping") {
-        category = "Shopping";
-      }
-
+      const merchant =
+        tx.merchant && typeof tx.merchant === "object"
+          ? optionalString((tx.merchant as Record<string, unknown>).name)
+          : undefined;
       transactions.push({
-        amount: (tx.amount || 0) / 100, // convert from pence to pounds
-        description: tx.merchant?.name || tx.description || "Monzo Sync Transaction",
-        category,
-        timestamp: new Date(tx.created),
+        amount: minorUnitsToMajor(tx.amount, "transactions[].amount", txCtx),
+        description: merchant ?? optionalString(tx.description) ?? "Monzo Sync Transaction",
+        category: mapCategory(optionalString(tx.category) ?? ""),
+        timestamp: asDate(tx.created, "transactions[].created", txCtx),
       });
     }
-
     return transactions;
   }
 }
