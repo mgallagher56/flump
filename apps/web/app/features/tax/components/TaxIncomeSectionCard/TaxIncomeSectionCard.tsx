@@ -26,6 +26,11 @@ export interface TaxIncomeSectionCardProps {
   icon: LucideIcon;
   records: TaxRecord[];
   selectedTaxYear: string;
+  /**
+   * Show the income less costs. Default true. False when this is the only source outside PAYE,
+   * because the page's "Income after costs" card already shows the same figure.
+   */
+  showTotal?: boolean;
 }
 
 /**
@@ -39,6 +44,7 @@ export const TaxIncomeSectionCard: FC<TaxIncomeSectionCardProps> = ({
   icon,
   records,
   selectedTaxYear,
+  showTotal = true,
 }) => {
   const sectionRecords = useMemo(
     () => records.filter((r) => r.source === source && isRecordActiveInTaxYear(r, selectedTaxYear)),
@@ -74,12 +80,14 @@ export const TaxIncomeSectionCard: FC<TaxIncomeSectionCardProps> = ({
           </span>
         </span>
       </span>
-      <span className={total()}>
-        <span className={amount()}>
-          <Money fractionDigits={0} size="sm" value={net} />
+      {showTotal ? (
+        <span className={total()}>
+          <span className={amount()}>
+            <Money fractionDigits={0} size="sm" value={net} />
+          </span>
+          <span className={amountCaption()}>a year, after costs</span>
         </span>
-        <span className={amountCaption()}>a year, after costs</span>
-      </span>
+      ) : null}
     </li>
   );
 };

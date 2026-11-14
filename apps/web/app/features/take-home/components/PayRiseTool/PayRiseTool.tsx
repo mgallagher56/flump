@@ -32,7 +32,7 @@ export const PayRiseTool: FC<PayRiseToolProps> = ({
           <span className={outcomeUnit()}>a month</span>
         </p>
         <div className={actionRow()}>
-          <Button variant="outline" onClick={() => onApplyIncrease(monthlyIncrease)}>
+          <Button size="sm" variant="outline" onClick={() => onApplyIncrease(monthlyIncrease)}>
             Model this in savings
             <Icon icon={ArrowRight} size="sm" />
           </Button>

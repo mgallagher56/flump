@@ -46,8 +46,8 @@ export const SavingsAccountsList: FC<SavingsAccountsListProps> = ({ accounts }) 
     ? accounts.find((acc) => acc.id === confirmDeleteId)
     : undefined;
 
-  // A list, not a table: at 320 to 375 each row wraps (name and type, then balance and actions)
-  // instead of clipping the actions or scrolling sideways.
+  // A list, not a table: at 320 to 375 the name wraps onto more lines while the balance and Edit
+  // stay right-aligned on the row, so nothing clips or scrolls sideways.
   const renderRows = (rows: Account[]) => (
     <ul aria-label="Savings and investment accounts" className={rowList()}>
       {rows.map((acc) => (

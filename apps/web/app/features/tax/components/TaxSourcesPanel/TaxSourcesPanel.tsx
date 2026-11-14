@@ -31,6 +31,13 @@ export const TaxSourcesPanel: FC<TaxSourcesPanelProps> = ({ records, taxYear, ac
   const hasRecords = records.some((r) => isRecordActiveInTaxYear(r, taxYear));
   if (!hasRecords) return null;
   const labels = Object.fromEntries(SOURCE_OPTIONS.map((o) => [o.value, o.label]));
+  // With one source outside PAYE, its income less costs is the strip's "Income after costs": the
+  // row keeps its name and count and leaves the figure to the strip, beside the bill it sets.
+  const nonPayeSources = new Set(
+    records
+      .filter((r) => r.source !== "paye" && isRecordActiveInTaxYear(r, taxYear))
+      .map((r) => r.source),
+  );
 
   return (
     <section aria-labelledby="tax-sources-heading" className={root()}>
@@ -47,6 +54,7 @@ export const TaxSourcesPanel: FC<TaxSourcesPanelProps> = ({ records, taxYear, ac
             icon={SOURCE_ICON[source]}
             records={records}
             selectedTaxYear={taxYear}
+            showTotal={source === "paye" || nonPayeSources.size > 1}
             source={source}
             title={labels[source] ?? source}
           />

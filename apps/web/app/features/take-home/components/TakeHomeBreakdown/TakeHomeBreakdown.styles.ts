@@ -1,15 +1,11 @@
 import { cva } from "@repo/ui/styled-system/css";
 
 export const cardBody = cva({
-  base: { display: "flex", flexDirection: "column", gap: "16px" },
-});
-
-export const cardHeader = cva({
-  base: { display: "flex", flexDirection: "column", gap: "4px" },
+  base: { display: "flex", flexDirection: "column", gap: "12px", minWidth: 0 },
 });
 
 export const cardTitle = cva({
-  base: { textStyle: "heading.md", color: "text.primary", margin: 0 },
+  base: { textStyle: "heading.sm", color: "text.primary", margin: 0 },
 });
 
 export const bar = cva({

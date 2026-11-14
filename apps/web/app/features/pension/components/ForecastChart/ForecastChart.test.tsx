@@ -45,7 +45,7 @@ const renderChart = (horizonYears = 25) =>
 describe("<ForecastChart />", () => {
   it("is a named figure with a one-sentence summary and no figures in the default view", () => {
     const { container } = renderChart();
-    const figure = screen.getByRole("figure", { name: "Estimated pension pot" });
+    const figure = screen.getByRole("figure", { name: "Pot each year" });
     expect(figure.textContent).toContain("Your pot each year to retirement, in today's money.");
     expect(screen.queryByText(/legend|Projected total/i)).toBeNull();
     expect(countFigures(container)).toBe(0);
@@ -61,6 +61,9 @@ describe("<ForecastChart />", () => {
     const years = Array.from({ length: 33 }, (_, i) => 2026 + i);
     expect(evenYearTicks(years)).toEqual([2028, 2038, 2048, 2058]);
     expect(evenYearTicks(years.slice(0, 11))).toEqual([2026, 2031, 2036]);
+    // Narrow charts take three at most.
+    expect(evenYearTicks(years, 3)).toHaveLength(3);
+    expect(evenYearTicks(years, 3).at(-1)).toBe(years.at(-1));
   });
 
   it("draws no chart for fewer than three points", () => {

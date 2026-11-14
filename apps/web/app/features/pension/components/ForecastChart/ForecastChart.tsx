@@ -10,7 +10,7 @@ import {
   Th,
   xTickAnchor,
 } from "@repo/ui";
-import { type FC, useMemo } from "react";
+import { type FC, useMemo, useState } from "react";
 import {
   Line,
   LineChart,
@@ -27,6 +27,9 @@ import { annotationChip, annotationText, chartWrap } from "./ForecastChart.style
 
 /** Four at most: an end-anchored last tick beside a centred one crowds at 375 with more. */
 const MAX_TICKS = Math.min(4, CHART_AXIS_DEFAULTS.maxXTicks);
+/** Three below this chart width (in px), so four-digit years never touch on a phone. */
+const NARROW_WIDTH = 480;
+const NARROW_MAX_TICKS = 3;
 
 /** Chip geometry for the annotation, in SVG units (one unit per CSS pixel). */
 const CHIP_HEIGHT = 22;
@@ -35,14 +38,14 @@ const CHIP_CHAR_WIDTH = 7;
 
 /**
  * Evenly spaced year ticks (every 1, 2, 5, 10 or 20 years) that end on the retirement year,
- * at most `MAX_TICKS` of them (P10.4).
+ * at most `maxTicks` of them (P10.4).
  */
-export const evenYearTicks = (years: readonly number[]): number[] => {
+export const evenYearTicks = (years: readonly number[], maxTicks: number = MAX_TICKS): number[] => {
   const first = years[0];
   const last = years[years.length - 1];
   if (first === undefined || last === undefined) return [];
   const span = last - first;
-  const step = [1, 2, 5, 10, 20].find((s) => Math.floor(span / s) + 1 <= MAX_TICKS) ?? 50;
+  const step = [1, 2, 5, 10, 15, 20, 25].find((s) => Math.floor(span / s) + 1 <= maxTicks) ?? 50;
   const ticks: number[] = [];
   for (let year = last; year >= first; year -= step) ticks.unshift(year);
   return ticks;
@@ -78,7 +81,13 @@ export const ForecastChart: FC<ForecastChartProps> = ({
       })),
     [result.chartData, startYear],
   );
-  const ticks = evenYearTicks(points.map((p) => p.calendarYear));
+  // The chart's own width decides the tick count (read from ResponsiveContainer's resize).
+  const [narrow, setNarrow] = useState(false);
+  const maxTicks = narrow ? NARROW_MAX_TICKS : MAX_TICKS;
+  const ticks = evenYearTicks(
+    points.map((p) => p.calendarYear),
+    maxTicks,
+  );
   const yAxis = useMemo(() => nearDataAxis(points.map((p) => p.totalPot)), [points]);
   const last = points[points.length - 1];
 
@@ -108,17 +117,21 @@ export const ForecastChart: FC<ForecastChartProps> = ({
             </TBody>
           </Table>
         }
-        maxTicks={MAX_TICKS}
+        maxTicks={maxTicks}
         pointCount={points.length}
         summary={
           adjustForInflation
             ? "Your pot each year to retirement, in today's money."
             : "Your pot each year to retirement, before inflation."
         }
-        title="Estimated pension pot"
+        title="Pot each year"
       >
         <div className={chartWrap()}>
-          <ResponsiveContainer height="100%" width="100%">
+          <ResponsiveContainer
+            height="100%"
+            width="100%"
+            onResize={(width) => setNarrow(width > 0 && width < NARROW_WIDTH)}
+          >
             <LineChart
               data={points}
               margin={{

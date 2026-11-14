@@ -1,11 +1,10 @@
-import { Card, CollapsibleDrawer, Money, Table, TBody, Td, THead, Th, Tr } from "@repo/ui";
+import { CollapsibleDrawer, Money, Table, TBody, Td, THead, Th, Tr } from "@repo/ui";
 import type { FC, ReactNode } from "react";
 import {
   bar,
   barLabel,
   barLabels,
   cardBody,
-  cardHeader,
   cardTitle,
   drawerBody,
   segment,
@@ -119,19 +118,17 @@ export const TakeHomeBreakdown: FC<TakeHomeBreakdownProps> = ({ details, ...figu
   };
 
   return (
-    <Card
+    // A slim section on the page, not a card: it holds no figure of its own (the strip above has
+    // them), so it is the labelled bar and the one disclosure with the table.
+    <section
       aria-labelledby="where-your-pay-goes"
-      as="section"
       className={cardBody()}
       data-testid="take-home-breakdown"
       id="take-home-breakdown"
-      padding="lg"
     >
-      <div className={cardHeader()}>
-        <h2 className={cardTitle()} id="where-your-pay-goes">
-          Where your pay goes
-        </h2>
-      </div>
+      <h2 className={cardTitle()} id="where-your-pay-goes">
+        Where your pay goes
+      </h2>
 
       {/* Decorative: the strip above and the table below carry every value. */}
       <div aria-hidden="true">
@@ -196,7 +193,7 @@ export const TakeHomeBreakdown: FC<TakeHomeBreakdownProps> = ({ details, ...figu
           {details}
         </div>
       </CollapsibleDrawer>
-    </Card>
+    </section>
   );
 };
 
