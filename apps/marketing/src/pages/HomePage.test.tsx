@@ -53,7 +53,9 @@ describe("Marketing HomePage (E31 majority order)", () => {
   it("keeps the £100k tax trap out of the home page body by default (the footer still links it)", () => {
     const { container } = renderHome();
     expect(container.querySelector("main")?.textContent ?? "").not.toMatch(/tax trap|60%|£100k/i);
-    expect(screen.getByRole("link", { name: "£100k tax trap calculator" })).toBeDefined();
+    expect(
+      screen.getByRole("link", { name: "Income between £100,000 and £125,140" }),
+    ).toBeDefined();
   });
 
   it("does not claim FCA Open Banking sync in the comparison matrix or elsewhere", () => {
