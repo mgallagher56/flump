@@ -139,7 +139,7 @@ export const SYNTHETIC_PERSONAS: Record<PersonaKey, SyntheticPersona> = {
       {
         name: "Synthetic P2 Mortgage",
         type: "Mortgage",
-        balance: 240000, // mortgages are stored positive; Loan and Credit Card are negative
+        balance: -240000, // every liability is stored negative (BE-05 stored-balance rule)
         interestRate: 4.1,
         termMonths: 240,
         fixedRateEndDate: "2028-03-31",
@@ -211,7 +211,7 @@ export const SYNTHETIC_PERSONAS: Record<PersonaKey, SyntheticPersona> = {
       {
         name: "Synthetic P3 Mortgage",
         type: "Mortgage",
-        balance: 28000,
+        balance: -28000,
         interestRate: 3.2,
         termMonths: 36,
         fixedRateEndDate: "2027-09-30",

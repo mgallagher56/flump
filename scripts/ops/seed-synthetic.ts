@@ -35,6 +35,8 @@ export const USER_DATA_TABLES = [
   "snapshot_checkins",
   "account_details",
   "import_batches",
+  // BE-05 before-image of re-signed liability rows (child of accounts, ON DELETE CASCADE).
+  "liability_sign_backfill",
   "accounts",
   "bank_connections",
   "budget_entries",

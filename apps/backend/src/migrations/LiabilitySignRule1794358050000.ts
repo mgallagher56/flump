@@ -91,7 +91,7 @@ export class LiabilitySignRule1794358050000 implements MigrationInterface {
     // constraint trigger: it checks the row as it stands at commit, so a transaction may re-sign
     // history and change the account type in either order.
     await queryRunner.query(
-      `CREATE OR REPLACE FUNCTION "${DETAIL_FN}"() RETURNS trigger LANGUAGE plpgsql AS $$
+      `CREATE OR REPLACE FUNCTION "${DETAIL_FN}"() RETURNS trigger LANGUAGE plpgsql SET search_path = public, pg_temp AS $$
        DECLARE
          current_value numeric;
          current_account varchar;
@@ -109,7 +109,7 @@ export class LiabilitySignRule1794358050000 implements MigrationInterface {
          END IF;
          SELECT a."type" INTO account_type FROM "accounts" a WHERE a."id" = current_account::uuid;
          IF account_type IN (${TYPES_SQL}) THEN
-           RAISE EXCEPTION 'liability history must be stored negative (account_details id %)', NEW."id"
+           RAISE EXCEPTION 'liability history must be stored negative'
              USING ERRCODE = 'check_violation', CONSTRAINT = '${DETAIL_TRIGGER}';
          END IF;
          RETURN NULL;
@@ -124,7 +124,7 @@ export class LiabilitySignRule1794358050000 implements MigrationInterface {
     );
 
     await queryRunner.query(
-      `CREATE OR REPLACE FUNCTION "${TYPE_FN}"() RETURNS trigger LANGUAGE plpgsql AS $$
+      `CREATE OR REPLACE FUNCTION "${TYPE_FN}"() RETURNS trigger LANGUAGE plpgsql SET search_path = public, pg_temp AS $$
        DECLARE
          account_type varchar;
        BEGIN
@@ -132,7 +132,7 @@ export class LiabilitySignRule1794358050000 implements MigrationInterface {
          IF account_type IN (${TYPES_SQL}) AND EXISTS (
            SELECT 1 FROM "account_details" d WHERE d."account_id" = NEW."id"::text AND d."value" > 0
          ) THEN
-           RAISE EXCEPTION 'liability history must be stored negative (account %)', NEW."id"
+           RAISE EXCEPTION 'liability history must be stored negative'
              USING ERRCODE = 'check_violation', CONSTRAINT = '${TYPE_TRIGGER}';
          END IF;
          RETURN NULL;
@@ -153,6 +153,7 @@ export class LiabilitySignRule1794358050000 implements MigrationInterface {
   public async down(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query("SELECT pg_advisory_xact_lock($1)", [MIGRATION_LOCK_KEY]);
     await queryRunner.query("SET LOCAL lock_timeout = '10s'");
+    await queryRunner.query(`LOCK TABLE "accounts", "account_details" IN SHARE ROW EXCLUSIVE MODE`);
     await queryRunner.query(`DROP TRIGGER IF EXISTS "${TYPE_TRIGGER}" ON "accounts"`);
     await queryRunner.query(`DROP FUNCTION IF EXISTS "${TYPE_FN}"()`);
     await queryRunner.query(`DROP TRIGGER IF EXISTS "${DETAIL_TRIGGER}" ON "account_details"`);
