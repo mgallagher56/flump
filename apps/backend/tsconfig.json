@@ -22,7 +22,8 @@
     "noImplicitAny": true,
     "strictBindCallApply": true,
     "noFallthroughCasesInSwitch": true,
-    "strict": false,
+    "strict": true,
+    "strictPropertyInitialization": false,
     "noUncheckedIndexedAccess": false
   },
   "include": ["src"],

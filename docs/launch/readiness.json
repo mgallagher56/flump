@@ -46,8 +46,9 @@
           "path": "docs/runbooks/uptime-and-alerts.md"
         },
         {
-          "kind": "file",
-          "path": "docs/runbooks/rollback.md"
+          "kind": "present",
+          "pattern": "^## Rollback",
+          "paths": ["docs/runbooks/launch-day.md"]
         },
         {
           "kind": "present",
@@ -63,7 +64,7 @@
       "evidence": [
         {
           "kind": "file",
-          "path": "apps/web/e2e/new-user-journey.spec.ts"
+          "path": "apps/e2e/tests/new-user-journey.spec.ts"
         }
       ]
     },
@@ -118,12 +119,12 @@
         {
           "kind": "present",
           "pattern": "strict-transport-security|hsts",
-          "paths": ["apps/web/app/entry.server.tsx"]
+          "paths": ["apps/web/app/security/headers.server.ts"]
         },
         {
           "kind": "present",
-          "pattern": "strict-transport-security|hsts",
-          "paths": ["apps/backend/src"]
+          "pattern": "strictTransportSecurity|strict-transport-security|hsts",
+          "paths": ["apps/backend/src/config/security.config.ts"]
         }
       ]
     },
@@ -302,7 +303,7 @@
       "evidence": [
         {
           "kind": "file",
-          "path": "apps/marketing/src/pages/PricingPage.tsx"
+          "path": "apps/marketing/src/pages/PricingPage/PricingPage.tsx"
         },
         {
           "kind": "owner",

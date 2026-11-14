@@ -1,5 +1,6 @@
-# Use official Bun image as base
-FROM oven/bun:1.4.4-slim AS base
+# Official Bun image, pinned by digest (M17) so a re-pushed tag cannot change the build.
+# To bump: docker buildx imagetools inspect oven/bun:<version>-slim and copy the index digest.
+FROM oven/bun:1.4.4-slim@sha256:1846adf22496bd711036aae8be147e57bdebbaea2e5264e3e0b5af1db187d9a4 AS base
 WORKDIR /app
 
 # Stage 1a: workspace manifests only. Every workspace's package.json is needed so
@@ -31,7 +32,11 @@ ARG ALLOW_INDEXING
 # Release string: Railway passes the commit sha only if declared here. vite.config.mts turns it into
 # VITE_APP_VERSION as "<apps/web version>+<7-char sha>". Public values only.
 ARG RAILWAY_GIT_COMMIT_SHA
-RUN bun run --cwd apps/web prepare && bun turbo run build --filter=@flump/web...
+# Build, then swap node_modules for a production-only install (M17): the runtime image carries
+# no devDependencies. The reinstall reuses the bun cache from the deps stage.
+RUN bun run --cwd apps/web prepare && bun turbo run build --filter=@flump/web... \
+ && find . -name node_modules -type d -prune -exec rm -rf {} + \
+ && bun install --frozen-lockfile --ignore-scripts --production --filter './' --filter '@flump/web' --filter 'marketing' --filter './packages/*'
 
 # Stage 3: Create final production image
 FROM base AS runner

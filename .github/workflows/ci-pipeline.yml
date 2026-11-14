@@ -37,7 +37,7 @@ jobs:
 
     steps:
       - name: ⬇️ Checkout repo
-        uses: actions/checkout@v7.0.1
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: ⚙️ Setup Bun and install dependencies
         uses: ./.github/actions/bun-setup
@@ -153,7 +153,7 @@ jobs:
 
     steps:
       - name: ⬇️ Checkout repo
-        uses: actions/checkout@v7.0.1
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: ⚙️ Setup Bun and install dependencies
         uses: ./.github/actions/bun-setup
@@ -167,7 +167,7 @@ jobs:
 
       - name: "Report Coverage"
         if: always() && matrix.name == 'web'
-        uses: davelosert/vitest-coverage-report-action@v2.13.2
+        uses: davelosert/vitest-coverage-report-action@74c2d9210b4fc44c84d8213f61d7ec99837b7aa0 # v2.13.2
         with:
           working-directory: "apps/web"
           threshold-icons: '{"0": "🔴", "80": "🟢"}'
@@ -220,7 +220,7 @@ jobs:
 
     steps:
       - name: ⬇️ Checkout repo
-        uses: actions/checkout@v7.0.1
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: ⚙️ Setup Bun and install dependencies
         uses: ./.github/actions/bun-setup
@@ -239,7 +239,7 @@ jobs:
 
     steps:
       - name: ⬇️ Checkout repo
-        uses: actions/checkout@v7.0.1
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: ⚙️ Setup Bun and install dependencies
         uses: ./.github/actions/bun-setup
@@ -251,9 +251,8 @@ jobs:
       - name: 🏗️ Build all packages
         run: bun run build
 
-  # E8 Storybook a11y gate. Non-required while it beds in: continue-on-error keeps a failure here
-  # from turning the pipeline red.
-  # Remove continue-on-error and make this job required on 2026-11-25 (owner: mgallagher56) if green on main for the two weeks before.
+  # E8 Storybook a11y gate. Blocking since BE-01 (green on main through the bedding-in period
+  # that ended 2026-11-25): both legs are required checks (.github/required-checks.json).
   # Light (plus the build smoke) and dark run as parallel matrix legs, each through turbo so an
   # unchanged web app (and its workspace deps) replays from the remote cache.
   storybook-a11y:
@@ -261,7 +260,6 @@ jobs:
     if: github.event_name != 'schedule'
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    continue-on-error: true
     permissions:
       actions: write
       contents: read
@@ -280,7 +278,7 @@ jobs:
 
     steps:
       - name: ⬇️ Checkout repo
-        uses: actions/checkout@v7.0.1
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: ⚙️ Setup Bun and install dependencies
         uses: ./.github/actions/bun-setup
@@ -291,7 +289,7 @@ jobs:
 
       - name: 🗂️ Cache Playwright browsers
         id: playwright-cache
-        uses: actions/cache@v6.1.0
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ hashFiles('bun.lock') }}
@@ -349,7 +347,7 @@ jobs:
 
     steps:
       - name: ⬇️ Checkout repo
-        uses: actions/checkout@v7.0.1
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: ⚙️ Setup Bun and install dependencies
         uses: ./.github/actions/bun-setup
@@ -360,7 +358,7 @@ jobs:
 
       - name: 🗂️ Cache Playwright browsers
         id: playwright-cache
-        uses: actions/cache@v6.1.0
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ hashFiles('bun.lock') }}
@@ -398,9 +396,10 @@ jobs:
           retention-days: 7
           if-no-files-found: ignore
 
-  # A new workspace must never silently break the Railway images (E12 T2.23). The three
-  # server Dockerfiles install only the workspaces they need; build them whenever a
-  # manifest, the lockfile or a Dockerfile changes.
+  # A change must never silently break the Railway images (E12 T2.23, BE-01 L10). The job is a
+  # required check, so it always runs and reports; the build steps run whenever anything that
+  # goes into an image changes (any app or package source, a manifest, the lockfile, a
+  # Dockerfile or this workflow). Docs-only and mobile-only PRs pass in seconds.
   docker-build:
     name: 🐳 Docker images
     if: github.event_name == 'pull_request'
@@ -427,29 +426,43 @@ jobs:
 
     steps:
       - name: ⬇️ Checkout repo
-        uses: actions/checkout@v7.0.1
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
 
-      - name: 🔎 Did a manifest, lockfile or Dockerfile change?
+      - name: 🔎 Did anything that goes into an image change?
         id: changed
         env:
           BASE_REF: ${{ github.base_ref }}
         run: |
           if git diff --name-only "origin/$BASE_REF...HEAD" \
-            | grep -E '(^|/)package\.json$|^bun\.lock$|^turbo\.json$|^\.npmrc$|(^|/)Dockerfile$|^\.dockerignore$|^\.github/workflows/ci-pipeline\.yml$'; then
+            | grep -E '^apps/(backend|web|marketing)/|^packages/|(^|/)package\.json$|^bun\.lock$|^turbo\.json$|^\.npmrc$|^\.dockerignore$|^\.github/(workflows/ci-pipeline\.yml|actions/)'; then
             echo "run=true" >> "$GITHUB_OUTPUT"
           else
             echo "run=false" >> "$GITHUB_OUTPUT"
           fi
 
+      # The three builds run in parallel on one BuildKit daemon, which shares the identical
+      # manifests and deps layers between them, so the job takes about as long as the slowest image.
       - name: 🐳 Build backend, web and marketing images
         if: steps.changed.outputs.run == 'true'
         run: |
-          set -e
+          set -u
+          pids=""
           for app in backend web marketing; do
-            docker build -f "apps/$app/Dockerfile" -t "flump-$app-ci" .
+            docker build --progress=plain -f "apps/$app/Dockerfile" -t "flump-$app-ci" . > "docker-$app.log" 2>&1 &
+            pids="$pids $!:$app"
           done
+          failed=0
+          for entry in $pids; do
+            pid=${entry%%:*}; app=${entry#*:}
+            if wait "$pid"; then
+              echo "::group::$app image built"; tail -n 20 "docker-$app.log"; echo "::endgroup::"
+            else
+              echo "::error title=Docker build::$app image failed to build"; tail -n 80 "docker-$app.log"; failed=1
+            fi
+          done
+          exit "$failed"
 
       - name: 🚫 No Expo or React Native in server images
         if: steps.changed.outputs.run == 'true'
@@ -544,7 +557,7 @@ jobs:
 
     steps:
       - name: ⬇️ Checkout repo
-        uses: actions/checkout@v7.0.1
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: ⚙️ Setup Bun and install dependencies
         uses: ./.github/actions/bun-setup

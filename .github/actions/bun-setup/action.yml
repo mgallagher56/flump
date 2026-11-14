@@ -17,18 +17,21 @@ runs:
   steps:
     - name: TurboRepo local server
       if: ${{ inputs.turbo == 'true' }}
-      uses: felixmosh/turborepo-gh-artifacts@v4.1.1
+      uses: felixmosh/turborepo-gh-artifacts@118f869397261f74bc39cb8565f2d02c0ed4209f # v4.1.1
       with:
         repo-token: ${{ inputs.ghToken }}
         server-token: ${{ inputs.turboToken }}
 
-    - uses: oven-sh/setup-bun@v2.2.0
+    - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
       with:
         bun-version: 1.4.4
 
     # No dependency cache on purpose: measured on real runs, restoring bun's global cache took
     # ~12 s (plus ~5 s to save it) against 5 s warm vs 7-8 s cold for the install itself.
     # Caching node_modules was no faster (10 s install plus a 6 s save).
+    # --ignore-scripts (L8): no dependency lifecycle script runs in CI, so a compromised package
+    # cannot execute code at install time. The Docker images install the same way. Husky's
+    # `prepare` hook is not needed on a runner.
     - name: Install dependencies
       shell: bash
-      run: bun install --frozen-lockfile
+      run: bun install --frozen-lockfile --ignore-scripts

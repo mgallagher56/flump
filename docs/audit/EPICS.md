@@ -21,8 +21,8 @@ This section was audited against `origin/main` at 7b9b6425. Every epic below car
 | 7 | E4 C-10 | A lone bonus record replaces the salary | Not started |
 | 8 | E25 T5, T15, E4 B-07 | Rebuild `calculateUkTax` as an adapter; one-engine guard; move web calculators onto finance-engine | Partly |
 | 9 | E22 | Stale-rates banner on savings, budget, onboarding and home | Partly |
-| 10 | E24 | Fix stale paths in `docs/launch/readiness.json` | Not started |
-| 11 | E8 | Make the Storybook a11y job blocking (due 2026-11-25) | Partly |
+| 10 | E24 | Fix stale paths in `docs/launch/readiness.json` | Done (BE-01) |
+| 11 | E8 | Make the Storybook a11y job blocking (due 2026-11-25) | Done in the repo (BE-01); owner adds the required check |
 | 12 | E1 D-06, C-18, F-03 | Transactional deleteAccount; MCP auth coverage to 80% | Partly |
 | 13 | E3 B-04, D-11, N-02 | Foreign keys and indexes; key id for bank tokens; zod env schema | Partly |
 | 14 | E7 M-09, I-07 | Widen the claims guard; mirror the copy changes in web | Partly |
@@ -765,7 +765,7 @@ Source: independent Fable review of the epic portfolio against `main` at e4ff6c3
     - launch-gated `noindex` (#506);
     - privacy-first analytics (#517);
     - a feedback mailto and a contact page (#507, #615).
-  - `bun scripts/check-launch-readiness.ts` reports 7 pass, 8 fail and 10 unattested. Some of the failures are false, because `docs/launch/readiness.json` points at files that have moved: the pricing page, the HSTS sources, `rollback.md`, and the E2E spec path.
+  - `bun scripts/check-launch-readiness.ts` reports 9 pass, 5 fail and 11 unattested. The stale paths in `docs/launch/readiness.json` (pricing page, HSTS sources, rollback runbook, E2E spec folder) were fixed in BE-01, and a test now fails if a scanned path does not exist. The five failures are real gaps: the new-user E2E spec, legal pages, deletion and export, placeholder business details and the accessibility statement.
   - Owner actions: the domain and email, real company details, and the launch attestations.
 - **Severity:** Important.
 - **Blocked by:** E18, E19, E20.
@@ -825,7 +825,7 @@ Checked against `origin/main` on 2026-11-14. A box is ticked only where there is
   - Owner action: the domain.
   - Done: the cookie logic is fixed (E20), and the launch-gated noindex switch is ready (#506).
 - [ ] Pricing or free-beta position stated truthfully on the pricing page
-  - Owner attestation pending: the page is done (#601), but `readiness.json` points at the old file path.
+  - Owner attestation pending: the page is done (#601) and `readiness.json` now points at it (BE-01).
 - [x] Docker images build in CI, run non-root, and shared-package changes trigger a deploy
   - Done in #465 and #484, plus the watch patterns.
 - [ ] axe passes on kept screens in light and dark; accessibility statement published
