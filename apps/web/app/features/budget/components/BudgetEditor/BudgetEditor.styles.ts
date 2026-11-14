@@ -2,8 +2,10 @@ import { cva, sva } from "@repo/ui/styled-system/css";
 
 /** The editor card: a heading, a quiet "saves as you go" line and one section per category. */
 export const budgetEditor = sva({
-  slots: ["header", "title", "hint", "sections", "foot"],
+  slots: ["root", "header", "title", "hint", "sections", "foot"],
   base: {
+    // 16px on a phone so each entry fits two lines at 375; the card's usual 28px from md.
+    root: { p: { base: "4", md: "7" } },
     header: { display: "flex", flexDirection: "column", gap: "1", mb: "4" },
     title: { margin: "0", textStyle: "heading.sm", color: "text.primary" },
     hint: { margin: "0", textStyle: "body.sm", color: "text.muted" },
@@ -48,25 +50,25 @@ export const editorSection = sva({
 });
 
 /**
- * An entry row in two lines on a phone: name and amount, then how often, the essential switch and
- * delete. One line from md: name, amount, how often, essential, delete.
+ * An entry row in two lines on a phone (flex wrap): name and amount, then how often, the essential
+ * switch and delete, each line sized on its own. One grid line from md: name, amount, how often,
+ * essential, delete.
  */
 export const entryRow = cva({
   base: {
-    display: "grid",
-    gridTemplateColumns: {
-      base: "auto auto minmax(0, 1fr) auto",
-      md: "minmax(0, 1fr) 140px 120px auto auto",
-    },
-    columnGap: { base: "2", md: "3" },
+    display: { base: "flex", md: "grid" },
+    flexWrap: "wrap",
+    gridTemplateColumns: { md: "minmax(0, 1fr) 140px 120px auto auto" },
+    // A 4px gap on a phone so how often, essential and delete share the second line at 375.
+    columnGap: { base: "1", md: "3" },
     rowGap: "2",
     alignItems: "center",
     py: "3",
     fontVariantNumeric: "tabular-nums",
-    // The name: across the first line on a phone, beside the amount.
+    // The name: fills the first line beside the amount (104px plus the 4px gap) on a phone.
     "& > :first-child": {
-      gridColumn: { base: "1 / 4", md: "auto" },
-      gridRow: { base: "1", md: "auto" },
+      order: { base: 1, md: 0 },
+      flex: { base: "1 1 calc(100% - 108px)", md: "none" },
       minWidth: 0,
     },
     "&:not(:last-child)": {
@@ -77,37 +79,40 @@ export const entryRow = cva({
   },
 });
 
-/** The amount, frequency and essential controls take their own grid cells. */
+/** The amount, frequency and essential controls take their own places in the row. */
 export const rowControls = cva({
   base: { display: "contents" },
 });
 
 export const amountField = cva({
   base: {
-    gridColumn: { base: "4", md: "auto" },
-    gridRow: { base: "1", md: "auto" },
+    order: { base: 2, md: 0 },
     width: { base: "104px", md: "100%" },
     fontVariantNumeric: "tabular-nums",
   },
 });
 
 export const frequencyField = cva({
-  base: { gridColumn: { base: "1", md: "auto" }, gridRow: { base: "2", md: "auto" } },
+  base: {
+    order: { base: 3, md: 0 },
+    // Its natural width on a phone, so "a month" and its arrow are never cut short.
+    flexShrink: 0,
+  },
 });
 
-/** Kept at its width on income and savings rows too, so amounts line up across sections. */
 export const essentialField = cva({
+  // Its own width on a phone, so delete still fits at the end of the second line.
   base: {
-    gridColumn: { base: "2", md: "auto" },
-    gridRow: { base: "2", md: "auto" },
+    order: { base: 4, md: 0 },
+    flex: { base: "0 0 auto", md: "none" },
     minWidth: { md: "120px" },
   },
 });
 
 export const removeCell = cva({
   base: {
-    gridColumn: { base: "4", md: "auto" },
-    gridRow: { base: "2", md: "auto" },
+    order: { base: 5, md: 0 },
+    marginInlineStart: { base: "auto", md: "0" },
     justifySelf: "end",
   },
 });

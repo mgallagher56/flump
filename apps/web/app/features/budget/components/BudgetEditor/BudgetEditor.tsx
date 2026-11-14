@@ -438,8 +438,9 @@ export const BudgetEditor: FC<BudgetEditorProps> = ({
       aria-labelledby="budget-editor-heading"
       as="section"
       data-testid="budget-editor"
+      className={editor.root}
       id="budget-editor"
-      padding="lg"
+      padding="none"
     >
       <div className={editor.header}>
         <h2 className={editor.title} id="budget-editor-heading">
