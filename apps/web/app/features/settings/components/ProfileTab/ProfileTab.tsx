@@ -1,3 +1,4 @@
+import { netWorthBasisFromProfile } from "@flump/finance-engine";
 import {
   Button,
   ButtonLink,
@@ -13,6 +14,7 @@ import { Camera, Trash2 } from "lucide-react";
 import { type ChangeEvent, type FC, type MouseEvent, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import UserAvatar from "~/components/navigation/UserAvatar";
+import { NetWorthChoices } from "~/features/settings/components/NetWorthChoices";
 import {
   fieldGrid,
   saveBar,
@@ -234,6 +236,8 @@ export const ProfileTab: FC<ProfileTabProps> = ({ profile, user, onDirtyChange }
       setModuleSaving(false);
     }
   };
+
+  const basis = netWorthBasisFromProfile(profile);
 
   const avatarProfile = {
     ...profile,
@@ -462,6 +466,12 @@ export const ProfileTab: FC<ProfileTabProps> = ({ profile, user, onDirtyChange }
           Save changes
         </Button>
       </div>
+
+      <NetWorthChoices
+        countProperty={basis.countProperty}
+        countStudentLoan={basis.countStudentLoan}
+        onSave={(update) => updateProfile(update)}
+      />
 
       <Card as="section" aria-labelledby="modules-heading" className={sectionCard()}>
         <h2 className={sectionHeading()} id="modules-heading">
