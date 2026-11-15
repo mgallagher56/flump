@@ -26,8 +26,7 @@ const repoRoot = resolve(import.meta.dir, "../..");
 const WEB_ROOT = "apps/web/app";
 const BACKEND_ROOT = "apps/backend/src";
 
-/** The web functions that send a request to the API. */
-const WEB_CALLERS = ["apiFetch", "apiFetchVersioned", "backendFetch"] as const;
+// The web functions that send a request to the API: apiFetch, apiFetchVersioned, backendFetch.
 
 type RouteLike = Pick<RouteDefinition, "id" | "method" | "path" | "etag">;
 
@@ -98,7 +97,7 @@ function templateLiteral(text: string, start: number): string | null {
 export function findWebWrites(source: string, file: string): WebWrite[] {
   const text = withoutCommentsAndImports(source);
   const writes: WebWrite[] = [];
-  const mention = new RegExp(`\\b(?:${WEB_CALLERS.join("|")})\\b`, "g");
+  const mention = /\b(?:apiFetchVersioned|apiFetch|backendFetch)\b/g;
   for (const match of text.matchAll(mention)) {
     const index = match.index ?? 0;
     const after = text.slice(index + match[0].length);
@@ -153,11 +152,12 @@ export function handlerReadsIfMatch(controllerSource: string, route: RouteLike):
     if (path !== prefix && !path.startsWith(`${prefix}/`)) return false;
     path = path.slice(prefix.length).replace(/^\//, "");
   }
-  const escaped = path.replace(/[.*+?^${}()|[\]\\/:]/g, "\\$&");
-  const decorator = new RegExp(`@${verb}\\(\\s*["']/?${escaped}["']\\s*\\)`);
-  const start = decorator.exec(controllerSource);
+  // A literal pattern, compared as text: no pattern is built from the route.
+  const start = [...controllerSource.matchAll(/@(Patch|Put)\(\s*["']\/?([^"']*)["']\s*\)/g)].find(
+    (m) => m[1] === verb && m[2] === path,
+  );
   if (!start) return false;
-  const rest = controllerSource.slice(start.index + start[0].length);
+  const rest = controllerSource.slice((start.index ?? 0) + start[0].length);
   const next = /@(?:Get|Post|Put|Patch|Delete)\(/.exec(rest);
   const handler = next ? rest.slice(0, next.index) : rest;
   return /@Headers\(\s*["']if-match["']\s*\)/i.test(handler);

@@ -263,15 +263,16 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
       expect(Number(after?.balance)).toBe(4321);
     });
 
-    it("also accepts PUT for account updates", async () => {
+    it("no longer serves the deprecated PUT alias for account updates (BE-16, L11)", async () => {
       const target = await createAccount("Contract PUT target");
       const res = await fetch(`${baseUrl}/v1/accounts/${target.id}`, {
         method: "PUT",
         headers: { Authorization: `Bearer ${DEV_TOKEN}`, "Content-Type": "application/json" },
         body: JSON.stringify({ balance: 77 }),
       });
-      expect(res.status).toBe(200);
-      expect(Number((await res.json()).balance)).toBe(77);
+      expect(res.status).toBe(404);
+      const after = (await get("/accounts", AccountListResponse)).find((a) => a.id === target.id);
+      expect(Number(after?.balance)).not.toBe(77);
     });
 
     it("creates, updates and deletes budget entries with the BudgetContainer payloads", async () => {
