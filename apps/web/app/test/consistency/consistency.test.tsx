@@ -167,6 +167,9 @@ function expectedFigures(picture: FinancialPicture): Record<string, number | nul
       ? picture.safeToSpend.value.monthly
       : null,
     monthsOfCover: isFigureKnown(picture.monthsOfCover) ? picture.monthsOfCover.value.months : null,
+    "monthsOfCover.liquidCash": isFigureKnown(picture.monthsOfCover)
+      ? picture.monthsOfCover.value.liquidCash
+      : null,
     "tax.estimatedDue": isFigureKnown(picture.estimatedTaxDue)
       ? picture.estimatedTaxDue.value.amount
       : null,
@@ -184,8 +187,9 @@ interface Reading {
 /** Reads en-GB figures: "£1,888", "+£800", "minus £300", "4.7 months", "£264.69". */
 function parseFigure(el: Element): { value: number; decimals: number } {
   const text = el.textContent ?? "";
-  // "10+ years" is any figure over 120 months: read it as its lower bound, marked with -1.
-  const years = text.match(/^(\d+)\+ years$/);
+  // "10 years" (after "More than") or "10+ years" is any figure over 120 months: read it as its
+  // lower bound, marked with -1.
+  const years = text.match(/(\d+)\+? years$/);
   if (years) return { value: Number(years[1]) * 12, decimals: -1 };
   const match = text.replace(/,/g, "").match(/\d+(\.\d+)?/);
   if (!match) throw new Error(`no number in figure text "${text}"`);

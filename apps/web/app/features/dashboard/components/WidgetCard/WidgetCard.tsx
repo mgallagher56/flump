@@ -32,8 +32,11 @@ export interface WidgetCardProps {
   label: string;
   /** The card's one figure. `null` shows "Not set" (E16 P3.1). */
   figure: ReactNode | null;
-  /** One line of text. It never contains a figure (E16 P1.8). */
-  line: string;
+  /**
+   * One line of text. It carries no figure (E16 P1.8), with one owner exception: the budget card's
+   * "Breathing room: about 1.5 months" (15 November 2026).
+   */
+  line: ReactNode;
   /** The card's one link. In the signed-out sandbox a lock icon replaces it. */
   link: WidgetCardLink;
 }

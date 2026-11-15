@@ -67,4 +67,10 @@ describe("ResultBlock", () => {
     expect(screen.getByTestId("breathing-room-result").id).toBe("breathing-room-result");
     expect(screen.getByRole("button", { name: "About breathing room" })).toBeDefined();
   });
+
+  it("can hide the label and still be named by it", () => {
+    render(<ResultBlock figure="1.5 months" hideLabel label="Breathing room" leadIn="About" />);
+    const group = screen.getByRole("group", { name: "Breathing room" });
+    expect(group.querySelector('[class*="label.md"]')).toBeNull();
+  });
 });
