@@ -1,0 +1,3295 @@
+[
+  {
+    "file": "flows/a-new-user/01-landing-step1-empty-1280-light.jpg",
+    "url": "[new-user stack]/app/onboarding",
+    "width": 1280,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentSet up FlumpAdd what you "
+  },
+  {
+    "flow": "a",
+    "width": 1280,
+    "kind": "takehome",
+    "where": "step1-empty",
+    "value": "Not set"
+  },
+  {
+    "file": "flows/a-new-user/02-step1-filled-1280-light.jpg",
+    "url": "[new-user stack]/app/onboarding",
+    "width": 1280,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "INPUT "
+  },
+  {
+    "flow": "a",
+    "width": 1280,
+    "kind": "takehome",
+    "where": "step1-filled",
+    "value": "£2,194"
+  },
+  {
+    "file": "flows/a-new-user/03-step2-empty-1280-light.jpg",
+    "url": "[new-user stack]/app/onboarding",
+    "width": 1280,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "H2 Housing and spending"
+  },
+  {
+    "flow": "a",
+    "width": 1280,
+    "kind": "takehome",
+    "where": "step2-empty",
+    "value": "£2,194"
+  },
+  {
+    "file": "flows/a-new-user/04-step2-filled-1280-light.jpg",
+    "url": "[new-user stack]/app/onboarding",
+    "width": 1280,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "INPUT "
+  },
+  {
+    "flow": "a",
+    "width": 1280,
+    "kind": "takehome",
+    "where": "step2-filled",
+    "value": "£2,194"
+  },
+  {
+    "file": "flows/a-new-user/05-step3-empty-1280-light.jpg",
+    "url": "[new-user stack]/app/onboarding",
+    "width": 1280,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "H2 Savings and debt"
+  },
+  {
+    "flow": "a",
+    "width": 1280,
+    "kind": "takehome",
+    "where": "step3-empty",
+    "value": "£2,194"
+  },
+  {
+    "file": "flows/a-new-user/06-step3-filled-1280-light.jpg",
+    "url": "[new-user stack]/app/onboarding",
+    "width": 1280,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "INPUT "
+  },
+  {
+    "flow": "a",
+    "width": 1280,
+    "kind": "takehome",
+    "where": "step3-filled",
+    "value": "£2,087"
+  },
+  {
+    "file": "flows/a-new-user/07-step4-review-1280-light.jpg",
+    "url": "[new-user stack]/app/onboarding",
+    "width": 1280,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "H2 Review what will be saved"
+  },
+  {
+    "flow": "a",
+    "width": 1280,
+    "kind": "takehome",
+    "where": "review",
+    "value": "£2,087"
+  },
+  {
+    "file": "flows/a-new-user/08-after-finish-1280-light.jpg",
+    "url": "[new-user stack]/",
+    "width": 1280,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "file": "flows/a-new-user/09-dashboard-1280-light.jpg",
+    "url": "[new-user stack]/",
+    "width": 1280,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "file": "flows/a-new-user/10-accounts-1280-light.jpg",
+    "url": "[new-user stack]/app/accounts",
+    "width": 1280,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "file": "flows/a-new-user/11-budget-1280-light.jpg",
+    "url": "[new-user stack]/app/budget",
+    "width": 1280,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "file": "flows/a-new-user/12-take-home-1280-light.jpg",
+    "url": "[new-user stack]/app/take-home",
+    "width": 1280,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "flow": "a",
+    "width": 1280,
+    "kind": "taps",
+    "taps": 15
+  },
+  {
+    "file": "flows/a-new-user/01-landing-step1-empty-375-light.jpg",
+    "url": "[new-user stack]/app/onboarding",
+    "width": 375,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentSet up FlumpAdd what you "
+  },
+  {
+    "flow": "a",
+    "width": 375,
+    "kind": "takehome",
+    "where": "step1-empty",
+    "value": "Not set"
+  },
+  {
+    "file": "flows/a-new-user/02-step1-filled-375-light.jpg",
+    "url": "[new-user stack]/app/onboarding",
+    "width": 375,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "INPUT "
+  },
+  {
+    "flow": "a",
+    "width": 375,
+    "kind": "takehome",
+    "where": "step1-filled",
+    "value": "£2,194"
+  },
+  {
+    "file": "flows/a-new-user/03-step2-empty-375-light.jpg",
+    "url": "[new-user stack]/app/onboarding",
+    "width": 375,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "H2 Housing and spending"
+  },
+  {
+    "flow": "a",
+    "width": 375,
+    "kind": "takehome",
+    "where": "step2-empty",
+    "value": "£2,194"
+  },
+  {
+    "file": "flows/a-new-user/04-step2-filled-375-light.jpg",
+    "url": "[new-user stack]/app/onboarding",
+    "width": 375,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "INPUT "
+  },
+  {
+    "flow": "a",
+    "width": 375,
+    "kind": "takehome",
+    "where": "step2-filled",
+    "value": "£2,194"
+  },
+  {
+    "file": "flows/a-new-user/05-step3-empty-375-light.jpg",
+    "url": "[new-user stack]/app/onboarding",
+    "width": 375,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "H2 Savings and debt"
+  },
+  {
+    "flow": "a",
+    "width": 375,
+    "kind": "takehome",
+    "where": "step3-empty",
+    "value": "£2,194"
+  },
+  {
+    "file": "flows/a-new-user/06-step3-filled-375-light.jpg",
+    "url": "[new-user stack]/app/onboarding",
+    "width": 375,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "INPUT "
+  },
+  {
+    "flow": "a",
+    "width": 375,
+    "kind": "takehome",
+    "where": "step3-filled",
+    "value": "£2,087"
+  },
+  {
+    "file": "flows/a-new-user/07-step4-review-375-light.jpg",
+    "url": "[new-user stack]/app/onboarding",
+    "width": 375,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "H2 Review what will be saved"
+  },
+  {
+    "flow": "a",
+    "width": 375,
+    "kind": "takehome",
+    "where": "review",
+    "value": "£2,087"
+  },
+  {
+    "file": "flows/a-new-user/08-after-finish-375-light.jpg",
+    "url": "[new-user stack]/",
+    "width": 375,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "file": "flows/a-new-user/09-dashboard-375-light.jpg",
+    "url": "[new-user stack]/",
+    "width": 375,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "file": "flows/a-new-user/10-accounts-375-light.jpg",
+    "url": "[new-user stack]/app/accounts",
+    "width": 375,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "file": "flows/a-new-user/11-budget-375-light.jpg",
+    "url": "[new-user stack]/app/budget",
+    "width": 375,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "file": "flows/a-new-user/12-take-home-375-light.jpg",
+    "url": "[new-user stack]/app/take-home",
+    "width": 375,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "file": "flows/a-new-user/13-dashboard-end-375-dark.jpg",
+    "url": "[new-user stack]/",
+    "width": 375,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "flow": "a",
+    "width": 375,
+    "kind": "taps",
+    "taps": 15
+  },
+  {
+    "file": "flows/b-check-in-short/01-dashboard-before-1280-light.jpg",
+    "url": "/",
+    "width": 1280,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "file": "flows/b-check-in-short/02-sheet-open-1280-light.jpg",
+    "url": "/app/accounts/history?checkIn=1",
+    "width": 1280,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "INPUT "
+  },
+  {
+    "flow": "b-check-in-short",
+    "width": 1280,
+    "kind": "step",
+    "i": 0,
+    "name": "Current account",
+    "action": "typed",
+    "value": "3,150"
+  },
+  {
+    "flow": "b-check-in-short",
+    "width": 1280,
+    "kind": "step",
+    "i": 1,
+    "name": "Easy access savings",
+    "action": "typed",
+    "value": "7,820"
+  },
+  {
+    "file": "flows/b-check-in-short/03-two-updated-1280-light.jpg",
+    "url": "/app/accounts/history?checkIn=1",
+    "width": 1280,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "INPUT "
+  },
+  {
+    "flow": "b-check-in-short",
+    "width": 1280,
+    "kind": "step",
+    "i": 2,
+    "name": "Cash ISA",
+    "action": "typed",
+    "value": "10,135"
+  },
+  {
+    "flow": "b-check-in-short",
+    "width": 1280,
+    "kind": "step",
+    "i": 3,
+    "name": "Credit card",
+    "action": "typed",
+    "value": "1,080"
+  },
+  {
+    "file": "flows/b-check-in-short/04-after-typing-four-1280-light.jpg",
+    "url": "/app/accounts/history?checkIn=1",
+    "width": 1280,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "INPUT "
+  },
+  {
+    "file": "flows/b-check-in-short/05-summary-1280-light.jpg",
+    "url": "/app/accounts/history?checkIn=1",
+    "width": 1280,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "H3 Check-in saved"
+  },
+  {
+    "file": "flows/b-check-in-short/06-history-after-close-1280-light.jpg",
+    "url": "/app/accounts/history?checkIn=1",
+    "width": 1280,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BUTTON Update balances"
+  },
+  {
+    "file": "flows/b-check-in-short/07-dashboard-after-1280-light.jpg",
+    "url": "/",
+    "width": 1280,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "file": "flows/b-check-in-short/08-accounts-after-1280-light.jpg",
+    "url": "/app/accounts",
+    "width": 1280,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "file": "flows/b-check-in-short/09-history-after-1280-light.jpg",
+    "url": "/app/accounts/history",
+    "width": 1280,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "flow": "b-check-in-short",
+    "width": 1280,
+    "kind": "taps",
+    "taps": 11,
+    "typed": 4
+  },
+  {
+    "file": "flows/b-check-in-short/01-dashboard-before-375-light.jpg",
+    "url": "/",
+    "width": 375,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "file": "flows/b-check-in-short/02-sheet-open-375-light.jpg",
+    "url": "/app/accounts/history?checkIn=1",
+    "width": 375,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "INPUT "
+  },
+  {
+    "file": "flows/b-check-in-short/03-step1-typed-375-light.jpg",
+    "url": "/app/accounts/history?checkIn=1",
+    "width": 375,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "INPUT "
+  },
+  {
+    "flow": "b-check-in-short",
+    "width": 375,
+    "kind": "step",
+    "i": 0,
+    "name": "Current account",
+    "action": "typed",
+    "value": "3,150"
+  },
+  {
+    "file": "flows/b-check-in-short/04-step2-typed-375-light.jpg",
+    "url": "/app/accounts/history?checkIn=1",
+    "width": 375,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "INPUT "
+  },
+  {
+    "flow": "b-check-in-short",
+    "width": 375,
+    "kind": "step",
+    "i": 1,
+    "name": "Easy access savings",
+    "action": "typed",
+    "value": "7,820"
+  },
+  {
+    "file": "flows/b-check-in-short/05-step3-typed-375-light.jpg",
+    "url": "/app/accounts/history?checkIn=1",
+    "width": 375,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "INPUT "
+  },
+  {
+    "flow": "b-check-in-short",
+    "width": 375,
+    "kind": "step",
+    "i": 2,
+    "name": "Cash ISA",
+    "action": "typed",
+    "value": "10,135"
+  },
+  {
+    "file": "flows/b-check-in-short/06-step4-typed-375-light.jpg",
+    "url": "/app/accounts/history?checkIn=1",
+    "width": 375,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "INPUT "
+  },
+  {
+    "flow": "b-check-in-short",
+    "width": 375,
+    "kind": "step",
+    "i": 3,
+    "name": "Credit card",
+    "action": "typed",
+    "value": "1,080"
+  },
+  {
+    "file": "flows/b-check-in-short/07-after-typing-four-375-light.jpg",
+    "url": "/app/accounts/history?checkIn=1",
+    "width": 375,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "INPUT "
+  },
+  {
+    "file": "flows/b-check-in-short/08-summary-375-light.jpg",
+    "url": "/app/accounts/history?checkIn=1",
+    "width": 375,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "H3 Check-in saved"
+  },
+  {
+    "file": "flows/b-check-in-short/09-history-after-close-375-light.jpg",
+    "url": "/app/accounts/history?checkIn=1",
+    "width": 375,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BUTTON Update balances"
+  },
+  {
+    "file": "flows/b-check-in-short/10-dashboard-after-375-light.jpg",
+    "url": "/",
+    "width": 375,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "file": "flows/b-check-in-short/11-accounts-after-375-light.jpg",
+    "url": "/app/accounts",
+    "width": 375,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "file": "flows/b-check-in-short/12-history-after-375-light.jpg",
+    "url": "/app/accounts/history",
+    "width": 375,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "file": "flows/b-check-in-short/13-dashboard-end-375-dark.jpg",
+    "url": "/",
+    "width": 375,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "flow": "b-check-in-short",
+    "width": 375,
+    "kind": "taps",
+    "taps": 11,
+    "typed": 4
+  },
+  {
+    "file": "flows/b-check-in-full/01-dashboard-before-1280-light.jpg",
+    "url": "/",
+    "width": 1280,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "file": "flows/b-check-in-full/02-sheet-open-1280-light.jpg",
+    "url": "/app/accounts/history?checkIn=1",
+    "width": 1280,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "INPUT "
+  },
+  {
+    "flow": "b-check-in-full",
+    "width": 1280,
+    "kind": "step",
+    "i": 0,
+    "name": "Current account",
+    "action": "typed",
+    "value": "3,150"
+  },
+  {
+    "flow": "b-check-in-full",
+    "width": 1280,
+    "kind": "step",
+    "i": 1,
+    "name": "Easy access savings",
+    "action": "no change"
+  },
+  {
+    "flow": "b-check-in-full",
+    "width": 1280,
+    "kind": "step",
+    "i": 2,
+    "name": "Cash ISA",
+    "action": "typed",
+    "value": "10,135"
+  },
+  {
+    "file": "flows/b-check-in-full/03-two-updated-1280-light.jpg",
+    "url": "/app/accounts/history?checkIn=1",
+    "width": 1280,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "INPUT "
+  },
+  {
+    "flow": "b-check-in-full",
+    "width": 1280,
+    "kind": "step",
+    "i": 3,
+    "name": "Credit card",
+    "action": "no change"
+  },
+  {
+    "flow": "b-check-in-full",
+    "width": 1280,
+    "kind": "step",
+    "i": 4,
+    "name": "Car loan",
+    "action": "typed",
+    "value": "8,190"
+  },
+  {
+    "flow": "b-check-in-full",
+    "width": 1280,
+    "kind": "step",
+    "i": 5,
+    "name": "Workplace pension",
+    "action": "no change"
+  },
+  {
+    "flow": "b-check-in-full",
+    "width": 1280,
+    "kind": "step",
+    "i": 6,
+    "name": "Home",
+    "action": "typed",
+    "value": "312,000"
+  },
+  {
+    "flow": "b-check-in-full",
+    "width": 1280,
+    "kind": "step",
+    "i": 7,
+    "name": "Residential mortgage",
+    "action": "no change"
+  },
+  {
+    "file": "flows/b-check-in-full/04-after-every-step-1280-light.jpg",
+    "url": "/app/accounts/history?checkIn=1",
+    "width": 1280,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "H3 Check-in saved"
+  },
+  {
+    "file": "flows/b-check-in-full/05-summary-1280-light.jpg",
+    "url": "/app/accounts/history?checkIn=1",
+    "width": 1280,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "H3 Check-in saved"
+  },
+  {
+    "file": "flows/b-check-in-full/06-history-after-close-1280-light.jpg",
+    "url": "/app/accounts/history?checkIn=1",
+    "width": 1280,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BUTTON Update balances"
+  },
+  {
+    "file": "flows/b-check-in-full/07-dashboard-after-1280-light.jpg",
+    "url": "/",
+    "width": 1280,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "file": "flows/b-check-in-full/08-accounts-after-1280-light.jpg",
+    "url": "/app/accounts",
+    "width": 1280,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "file": "flows/b-check-in-full/09-history-after-1280-light.jpg",
+    "url": "/app/accounts/history",
+    "width": 1280,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "flow": "b-check-in-full",
+    "width": 1280,
+    "kind": "taps",
+    "taps": 14,
+    "typed": 4
+  },
+  {
+    "file": "flows/b-check-in-full/01-dashboard-before-375-light.jpg",
+    "url": "/",
+    "width": 375,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "file": "flows/b-check-in-full/02-sheet-open-375-light.jpg",
+    "url": "/app/accounts/history?checkIn=1",
+    "width": 375,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "INPUT "
+  },
+  {
+    "file": "flows/b-check-in-full/03-step1-typed-375-light.jpg",
+    "url": "/app/accounts/history?checkIn=1",
+    "width": 375,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "INPUT "
+  },
+  {
+    "flow": "b-check-in-full",
+    "width": 375,
+    "kind": "step",
+    "i": 0,
+    "name": "Current account",
+    "action": "typed",
+    "value": "3,150"
+  },
+  {
+    "flow": "b-check-in-full",
+    "width": 375,
+    "kind": "step",
+    "i": 1,
+    "name": "Easy access savings",
+    "action": "no change"
+  },
+  {
+    "file": "flows/b-check-in-full/04-step3-typed-375-light.jpg",
+    "url": "/app/accounts/history?checkIn=1",
+    "width": 375,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "INPUT "
+  },
+  {
+    "flow": "b-check-in-full",
+    "width": 375,
+    "kind": "step",
+    "i": 2,
+    "name": "Cash ISA",
+    "action": "typed",
+    "value": "10,135"
+  },
+  {
+    "flow": "b-check-in-full",
+    "width": 375,
+    "kind": "step",
+    "i": 3,
+    "name": "Credit card",
+    "action": "no change"
+  },
+  {
+    "file": "flows/b-check-in-full/05-step5-typed-375-light.jpg",
+    "url": "/app/accounts/history?checkIn=1",
+    "width": 375,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "INPUT "
+  },
+  {
+    "flow": "b-check-in-full",
+    "width": 375,
+    "kind": "step",
+    "i": 4,
+    "name": "Car loan",
+    "action": "typed",
+    "value": "8,190"
+  },
+  {
+    "flow": "b-check-in-full",
+    "width": 375,
+    "kind": "step",
+    "i": 5,
+    "name": "Workplace pension",
+    "action": "no change"
+  },
+  {
+    "file": "flows/b-check-in-full/06-step7-typed-375-light.jpg",
+    "url": "/app/accounts/history?checkIn=1",
+    "width": 375,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "INPUT "
+  },
+  {
+    "flow": "b-check-in-full",
+    "width": 375,
+    "kind": "step",
+    "i": 6,
+    "name": "Home",
+    "action": "typed",
+    "value": "312,000"
+  },
+  {
+    "flow": "b-check-in-full",
+    "width": 375,
+    "kind": "step",
+    "i": 7,
+    "name": "Residential mortgage",
+    "action": "no change"
+  },
+  {
+    "file": "flows/b-check-in-full/07-after-every-step-375-light.jpg",
+    "url": "/app/accounts/history?checkIn=1",
+    "width": 375,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "H3 Check-in saved"
+  },
+  {
+    "file": "flows/b-check-in-full/08-summary-375-light.jpg",
+    "url": "/app/accounts/history?checkIn=1",
+    "width": 375,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "H3 Check-in saved"
+  },
+  {
+    "file": "flows/b-check-in-full/09-history-after-close-375-light.jpg",
+    "url": "/app/accounts/history?checkIn=1",
+    "width": 375,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BUTTON Update balances"
+  },
+  {
+    "file": "flows/b-check-in-full/10-dashboard-after-375-light.jpg",
+    "url": "/",
+    "width": 375,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "file": "flows/b-check-in-full/11-accounts-after-375-light.jpg",
+    "url": "/app/accounts",
+    "width": 375,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "file": "flows/b-check-in-full/12-history-after-375-light.jpg",
+    "url": "/app/accounts/history",
+    "width": 375,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "file": "flows/b-check-in-full/13-dashboard-end-375-dark.jpg",
+    "url": "/",
+    "width": 375,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "flow": "b-check-in-full",
+    "width": 375,
+    "kind": "taps",
+    "taps": 14,
+    "typed": 4
+  },
+  {
+    "file": "flows/c-budget-edit/01-budget-before-1280-light.jpg",
+    "url": "/app/budget",
+    "width": 1280,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "file": "flows/c-budget-edit/02-edit-mode-1280-light.jpg",
+    "url": "/app/budget",
+    "width": 1280,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BUTTON Finish editing"
+  },
+  {
+    "file": "flows/c-budget-edit/03-groceries-changed-1280-light.jpg",
+    "url": "/app/budget",
+    "width": 1280,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "SELECT How often for Groceries"
+  },
+  {
+    "file": "flows/c-budget-edit/04-add-category-dialog-1280-light.jpg",
+    "url": "/app/budget",
+    "width": 1280,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BUTTON Close"
+  },
+  {
+    "file": "flows/c-budget-edit/05-category-added-1280-light.jpg",
+    "url": "/app/budget",
+    "width": 1280,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BUTTON Add category"
+  },
+  {
+    "file": "flows/c-budget-edit/06-entry-added-1280-light.jpg",
+    "url": "/app/budget",
+    "width": 1280,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BUTTON Add to pets"
+  },
+  {
+    "file": "flows/c-budget-edit/07-budget-after-finish-1280-light.jpg",
+    "url": "/app/budget",
+    "width": 1280,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BUTTON Edit budget"
+  },
+  {
+    "file": "flows/c-budget-edit/08-budget-after-reload-1280-light.jpg",
+    "url": "/app/budget",
+    "width": 1280,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "file": "flows/c-budget-edit/09-dashboard-after-1280-light.jpg",
+    "url": "/",
+    "width": 1280,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "flow": "c-budget-edit",
+    "width": 1280,
+    "kind": "taps",
+    "taps": 10
+  },
+  {
+    "file": "flows/c-budget-edit/01-budget-before-375-light.jpg",
+    "url": "/app/budget",
+    "width": 375,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "file": "flows/c-budget-edit/02-edit-mode-375-light.jpg",
+    "url": "/app/budget",
+    "width": 375,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BUTTON Finish editing"
+  },
+  {
+    "file": "flows/c-budget-edit/03-groceries-changed-375-light.jpg",
+    "url": "/app/budget",
+    "width": 375,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "SELECT How often for Groceries"
+  },
+  {
+    "file": "flows/c-budget-edit/04-add-category-dialog-375-light.jpg",
+    "url": "/app/budget",
+    "width": 375,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BUTTON Close"
+  },
+  {
+    "file": "flows/c-budget-edit/05-category-added-375-light.jpg",
+    "url": "/app/budget",
+    "width": 375,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BUTTON Add category"
+  },
+  {
+    "file": "flows/c-budget-edit/06-entry-added-375-light.jpg",
+    "url": "/app/budget",
+    "width": 375,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BUTTON Add to pets"
+  },
+  {
+    "file": "flows/c-budget-edit/07-budget-after-finish-375-light.jpg",
+    "url": "/app/budget",
+    "width": 375,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BUTTON Edit budget"
+  },
+  {
+    "file": "flows/c-budget-edit/08-budget-after-reload-375-light.jpg",
+    "url": "/app/budget",
+    "width": 375,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "file": "flows/c-budget-edit/09-dashboard-after-375-light.jpg",
+    "url": "/",
+    "width": 375,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "file": "flows/c-budget-edit/10-budget-end-375-dark.jpg",
+    "url": "/app/budget",
+    "width": 375,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "flow": "c-budget-edit",
+    "width": 375,
+    "kind": "taps",
+    "taps": 10
+  },
+  {
+    "file": "flows/d-scenarios/01-debt-before-1280-light.jpg",
+    "url": "/app/debt",
+    "width": 1280,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "file": "flows/d-scenarios/02-debt-extra-200-1280-light.jpg",
+    "url": "/app/debt",
+    "width": 1280,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "INPUT Extra payment each month"
+  },
+  {
+    "file": "flows/d-scenarios/03-debt-slider-keys-1280-light.jpg",
+    "url": "/app/debt",
+    "width": 1280,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "INPUT Extra payment each month"
+  },
+  {
+    "file": "flows/d-scenarios/04-debt-smallest-first-1280-light.jpg",
+    "url": "/app/debt",
+    "width": 1280,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BUTTON Smallest balance first"
+  },
+  {
+    "file": "flows/d-scenarios/05-debt-after-reload-1280-light.jpg",
+    "url": "/app/debt",
+    "width": 1280,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "flow": "d-scenarios",
+    "width": 1280,
+    "kind": "persist",
+    "page": "debt",
+    "inputAfterReload": "£0",
+    "selectedTab": "Highest rate first"
+  },
+  {
+    "file": "flows/d-scenarios/06-mortgage-before-1280-light.jpg",
+    "url": "/app/mortgage",
+    "width": 1280,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "file": "flows/d-scenarios/07-mortgage-overpay-300-1280-light.jpg",
+    "url": "/app/mortgage",
+    "width": 1280,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "INPUT Extra each month"
+  },
+  {
+    "file": "flows/d-scenarios/08-mortgage-rate-change-open-1280-light.jpg",
+    "url": "/app/mortgage",
+    "width": 1280,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BUTTON Rate change"
+  },
+  {
+    "file": "flows/d-scenarios/09-mortgage-rate-change-moved-1280-light.jpg",
+    "url": "/app/mortgage",
+    "width": 1280,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "INPUT Rate after your fixed rate ends"
+  },
+  {
+    "file": "flows/d-scenarios/10-mortgage-overpay-or-save-open-1280-light.jpg",
+    "url": "/app/mortgage",
+    "width": 1280,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BUTTON Overpay or save"
+  },
+  {
+    "file": "flows/d-scenarios/11-mortgage-overpay-or-save-moved-1280-light.jpg",
+    "url": "/app/mortgage",
+    "width": 1280,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "INPUT Amount each month"
+  },
+  {
+    "file": "flows/d-scenarios/12-mortgage-after-reload-1280-light.jpg",
+    "url": "/app/mortgage",
+    "width": 1280,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "flow": "d-scenarios",
+    "width": 1280,
+    "kind": "persist",
+    "page": "mortgage",
+    "inputAfterReload": "£0",
+    "heroText": "Monthly payment\n\n£1,250\n\nFixed until Jul 2028"
+  },
+  {
+    "flow": "d-scenarios",
+    "width": 1280,
+    "kind": "taps",
+    "taps": 8
+  },
+  {
+    "file": "flows/d-scenarios/01-debt-before-375-light.jpg",
+    "url": "/app/debt",
+    "width": 375,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "file": "flows/d-scenarios/02-debt-extra-200-375-light.jpg",
+    "url": "/app/debt",
+    "width": 375,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "INPUT Extra payment each month"
+  },
+  {
+    "file": "flows/d-scenarios/03-debt-slider-keys-375-light.jpg",
+    "url": "/app/debt",
+    "width": 375,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "INPUT Extra payment each month"
+  },
+  {
+    "file": "flows/d-scenarios/04-debt-smallest-first-375-light.jpg",
+    "url": "/app/debt",
+    "width": 375,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BUTTON Smallest balance first"
+  },
+  {
+    "file": "flows/d-scenarios/05-debt-after-reload-375-light.jpg",
+    "url": "/app/debt",
+    "width": 375,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "flow": "d-scenarios",
+    "width": 375,
+    "kind": "persist",
+    "page": "debt",
+    "inputAfterReload": "£0",
+    "selectedTab": "Highest rate first"
+  },
+  {
+    "file": "flows/d-scenarios/06-mortgage-before-375-light.jpg",
+    "url": "/app/mortgage",
+    "width": 375,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "file": "flows/d-scenarios/07-mortgage-overpay-300-375-light.jpg",
+    "url": "/app/mortgage",
+    "width": 375,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "INPUT Extra each month"
+  },
+  {
+    "file": "flows/d-scenarios/08-mortgage-rate-change-open-375-light.jpg",
+    "url": "/app/mortgage",
+    "width": 375,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BUTTON Rate change"
+  },
+  {
+    "file": "flows/d-scenarios/09-mortgage-rate-change-moved-375-light.jpg",
+    "url": "/app/mortgage",
+    "width": 375,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "INPUT Rate after your fixed rate ends"
+  },
+  {
+    "file": "flows/d-scenarios/10-mortgage-overpay-or-save-open-375-light.jpg",
+    "url": "/app/mortgage",
+    "width": 375,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BUTTON Overpay or save"
+  },
+  {
+    "file": "flows/d-scenarios/11-mortgage-overpay-or-save-moved-375-light.jpg",
+    "url": "/app/mortgage",
+    "width": 375,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "INPUT Amount each month"
+  },
+  {
+    "file": "flows/d-scenarios/12-mortgage-after-reload-375-light.jpg",
+    "url": "/app/mortgage",
+    "width": 375,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "flow": "d-scenarios",
+    "width": 375,
+    "kind": "persist",
+    "page": "mortgage",
+    "inputAfterReload": "£0",
+    "heroText": "Monthly payment\n\n£1,250\n\nFixed until Jul 2028"
+  },
+  {
+    "file": "flows/d-scenarios/13-mortgage-end-375-dark.jpg",
+    "url": "/app/mortgage",
+    "width": 375,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "flow": "d-scenarios",
+    "width": 375,
+    "kind": "taps",
+    "taps": 8
+  },
+  {
+    "flow": "e-net-worth-homeowner",
+    "width": 1280,
+    "kind": "hero",
+    "where": "dashboard-before",
+    "hero": "Net worth £231,400 Up £2,575 since October",
+    "basis": ""
+  },
+  {
+    "file": "flows/e-net-worth-homeowner/01-dashboard-before-1280-light.jpg",
+    "url": "/",
+    "width": 1280,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "flow": "e-net-worth-homeowner",
+    "width": 1280,
+    "kind": "hero",
+    "where": "accounts-before",
+    "hero": "Net worth £231,400",
+    "basis": ""
+  },
+  {
+    "flow": "e-net-worth-homeowner",
+    "width": 1280,
+    "kind": "hero",
+    "where": "history-before",
+    "hero": "Change in October 2026 +£2,575 plus £2,575 Against September 2026. This month is not recorded yet.",
+    "basis": ""
+  },
+  {
+    "file": "flows/e-net-worth-homeowner/02-settings-before-1280-light.jpg",
+    "url": "/app/profile?tab=profile#net-worth",
+    "width": 1280,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "file": "flows/e-net-worth-homeowner/03-settings-after-1280-light.jpg",
+    "url": "/app/profile?tab=profile#net-worth",
+    "width": 1280,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "INPUT "
+  },
+  {
+    "flow": "e-net-worth-homeowner",
+    "width": 1280,
+    "kind": "switches-after-reload",
+    "property": false,
+    "studentLoan": true
+  },
+  {
+    "flow": "e-net-worth-homeowner",
+    "width": 1280,
+    "kind": "hero",
+    "where": "dashboard-after",
+    "hero": "Net worth £107,400 Up £1,525 since October",
+    "basis": "Not counting your property or mortgage. Change what counts"
+  },
+  {
+    "file": "flows/e-net-worth-homeowner/04-dashboard-after-1280-light.jpg",
+    "url": "/",
+    "width": 1280,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "flow": "e-net-worth-homeowner",
+    "width": 1280,
+    "kind": "hero",
+    "where": "accounts-after",
+    "hero": "Net worth £107,400",
+    "basis": "Not counting your property or mortgage. Change what counts"
+  },
+  {
+    "file": "flows/e-net-worth-homeowner/05-accounts-after-1280-light.jpg",
+    "url": "/app/accounts",
+    "width": 1280,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "flow": "e-net-worth-homeowner",
+    "width": 1280,
+    "kind": "hero",
+    "where": "history-after",
+    "hero": "Change in October 2026 +£1,525 plus £1,525 Against September 2026. This month is not recorded yet. Not counting your property or mortgage.",
+    "basis": "Not counting your property or mortgage."
+  },
+  {
+    "file": "flows/e-net-worth-homeowner/06-history-after-1280-light.jpg",
+    "url": "/app/accounts/history",
+    "width": 1280,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "flow": "e-net-worth-homeowner",
+    "width": 375,
+    "kind": "hero",
+    "where": "dashboard-before",
+    "hero": "Net worth £107,400 Up £1,525 since October",
+    "basis": "Not counting your property or mortgage. Change what counts"
+  },
+  {
+    "file": "flows/e-net-worth-homeowner/01-dashboard-before-375-light.jpg",
+    "url": "/",
+    "width": 375,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "flow": "e-net-worth-homeowner",
+    "width": 375,
+    "kind": "hero",
+    "where": "accounts-before",
+    "hero": "Net worth £107,400",
+    "basis": "Not counting your property or mortgage. Change what counts"
+  },
+  {
+    "flow": "e-net-worth-homeowner",
+    "width": 375,
+    "kind": "hero",
+    "where": "history-before",
+    "hero": "Change in October 2026 +£1,525 plus £1,525 Against September 2026. This month is not recorded yet. Not counting your property or mortgage.",
+    "basis": "Not counting your property or mortgage."
+  },
+  {
+    "file": "flows/e-net-worth-homeowner/02-settings-before-375-light.jpg",
+    "url": "/app/profile?tab=profile#net-worth",
+    "width": 375,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "file": "flows/e-net-worth-homeowner/03-settings-after-375-light.jpg",
+    "url": "/app/profile?tab=profile#net-worth",
+    "width": 375,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "INPUT "
+  },
+  {
+    "flow": "e-net-worth-homeowner",
+    "width": 375,
+    "kind": "switches-after-reload",
+    "property": true,
+    "studentLoan": false
+  },
+  {
+    "flow": "e-net-worth-homeowner",
+    "width": 375,
+    "kind": "hero",
+    "where": "dashboard-after",
+    "hero": "Net worth £231,400 Up £2,575 since October",
+    "basis": ""
+  },
+  {
+    "file": "flows/e-net-worth-homeowner/04-dashboard-after-375-light.jpg",
+    "url": "/",
+    "width": 375,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "flow": "e-net-worth-homeowner",
+    "width": 375,
+    "kind": "hero",
+    "where": "accounts-after",
+    "hero": "Net worth £231,400",
+    "basis": ""
+  },
+  {
+    "file": "flows/e-net-worth-homeowner/05-accounts-after-375-light.jpg",
+    "url": "/app/accounts",
+    "width": 375,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "flow": "e-net-worth-homeowner",
+    "width": 375,
+    "kind": "hero",
+    "where": "history-after",
+    "hero": "Change in October 2026 +£2,575 plus £2,575 Against September 2026. This month is not recorded yet.",
+    "basis": ""
+  },
+  {
+    "file": "flows/e-net-worth-homeowner/06-history-after-375-light.jpg",
+    "url": "/app/accounts/history",
+    "width": 375,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "file": "flows/e-net-worth-homeowner/07-dashboard-end-375-dark.jpg",
+    "url": "/",
+    "width": 375,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "flow": "e-net-worth-renter",
+    "width": 1280,
+    "kind": "hero",
+    "where": "dashboard-before",
+    "hero": "Net worth £11,700 Up £465 since October",
+    "basis": "Not counting your student loan. Change what counts"
+  },
+  {
+    "file": "flows/e-net-worth-renter/01-dashboard-before-1280-light.jpg",
+    "url": "/",
+    "width": 1280,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "flow": "e-net-worth-renter",
+    "width": 1280,
+    "kind": "hero",
+    "where": "accounts-before",
+    "hero": "Net worth £11,700",
+    "basis": "Not counting your student loan. Change what counts"
+  },
+  {
+    "flow": "e-net-worth-renter",
+    "width": 1280,
+    "kind": "hero",
+    "where": "history-before",
+    "hero": "Change in October 2026 +£465 plus £465 Against September 2026. This month is not recorded yet. Not counting your student loan.",
+    "basis": "Not counting your student loan."
+  },
+  {
+    "file": "flows/e-net-worth-renter/02-settings-before-1280-light.jpg",
+    "url": "/app/profile?tab=profile#net-worth",
+    "width": 1280,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "file": "flows/e-net-worth-renter/03-settings-after-1280-light.jpg",
+    "url": "/app/profile?tab=profile#net-worth",
+    "width": 1280,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "INPUT "
+  },
+  {
+    "flow": "e-net-worth-renter",
+    "width": 1280,
+    "kind": "switches-after-reload",
+    "property": false,
+    "studentLoan": true
+  },
+  {
+    "flow": "e-net-worth-renter",
+    "width": 1280,
+    "kind": "hero",
+    "where": "dashboard-after",
+    "hero": "Net worth -£26,800 minus £26,800 Up £345 since October",
+    "basis": ""
+  },
+  {
+    "file": "flows/e-net-worth-renter/04-dashboard-after-1280-light.jpg",
+    "url": "/",
+    "width": 1280,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "flow": "e-net-worth-renter",
+    "width": 1280,
+    "kind": "hero",
+    "where": "accounts-after",
+    "hero": "Net worth -£26,800 minus £26,800",
+    "basis": ""
+  },
+  {
+    "file": "flows/e-net-worth-renter/05-accounts-after-1280-light.jpg",
+    "url": "/app/accounts",
+    "width": 1280,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "flow": "e-net-worth-renter",
+    "width": 1280,
+    "kind": "hero",
+    "where": "history-after",
+    "hero": "Change in October 2026 +£345 plus £345 Against September 2026. This month is not recorded yet.",
+    "basis": ""
+  },
+  {
+    "file": "flows/e-net-worth-renter/06-history-after-1280-light.jpg",
+    "url": "/app/accounts/history",
+    "width": 1280,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "flow": "e-net-worth-renter",
+    "width": 375,
+    "kind": "hero",
+    "where": "dashboard-before",
+    "hero": "Net worth -£26,800 minus £26,800 Up £345 since October",
+    "basis": ""
+  },
+  {
+    "file": "flows/e-net-worth-renter/01-dashboard-before-375-light.jpg",
+    "url": "/",
+    "width": 375,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "flow": "e-net-worth-renter",
+    "width": 375,
+    "kind": "hero",
+    "where": "accounts-before",
+    "hero": "Net worth -£26,800 minus £26,800",
+    "basis": ""
+  },
+  {
+    "flow": "e-net-worth-renter",
+    "width": 375,
+    "kind": "hero",
+    "where": "history-before",
+    "hero": "Change in October 2026 +£345 plus £345 Against September 2026. This month is not recorded yet.",
+    "basis": ""
+  },
+  {
+    "file": "flows/e-net-worth-renter/02-settings-before-375-light.jpg",
+    "url": "/app/profile?tab=profile#net-worth",
+    "width": 375,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "file": "flows/e-net-worth-renter/03-settings-after-375-light.jpg",
+    "url": "/app/profile?tab=profile#net-worth",
+    "width": 375,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "INPUT "
+  },
+  {
+    "flow": "e-net-worth-renter",
+    "width": 375,
+    "kind": "switches-after-reload",
+    "property": true,
+    "studentLoan": false
+  },
+  {
+    "flow": "e-net-worth-renter",
+    "width": 375,
+    "kind": "hero",
+    "where": "dashboard-after",
+    "hero": "Net worth £11,700 Up £465 since October",
+    "basis": "Not counting your student loan. Change what counts"
+  },
+  {
+    "file": "flows/e-net-worth-renter/04-dashboard-after-375-light.jpg",
+    "url": "/",
+    "width": 375,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "flow": "e-net-worth-renter",
+    "width": 375,
+    "kind": "hero",
+    "where": "accounts-after",
+    "hero": "Net worth £11,700",
+    "basis": "Not counting your student loan. Change what counts"
+  },
+  {
+    "file": "flows/e-net-worth-renter/05-accounts-after-375-light.jpg",
+    "url": "/app/accounts",
+    "width": 375,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "flow": "e-net-worth-renter",
+    "width": 375,
+    "kind": "hero",
+    "where": "history-after",
+    "hero": "Change in October 2026 +£465 plus £465 Against September 2026. This month is not recorded yet. Not counting your student loan.",
+    "basis": "Not counting your student loan."
+  },
+  {
+    "file": "flows/e-net-worth-renter/06-history-after-375-light.jpg",
+    "url": "/app/accounts/history",
+    "width": 375,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "file": "flows/e-net-worth-renter/07-dashboard-end-375-dark.jpg",
+    "url": "/",
+    "width": 375,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "file": "flows/f-debt-empty/01-debt-empty-375-light.jpg",
+    "url": "/app/debt",
+    "width": 375,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "file": "flows/f-debt-empty/02-dashboard-no-debts-375-light.jpg",
+    "url": "/",
+    "width": 375,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "file": "flows/f-debt-empty/01-debt-empty-1280-light.jpg",
+    "url": "/app/debt",
+    "width": 1280,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "file": "flows/f-debt-empty/02-dashboard-no-debts-1280-light.jpg",
+    "url": "/",
+    "width": 1280,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "file": "flows/f-debt-empty/01-debt-empty-375-dark.jpg",
+    "url": "/app/debt",
+    "width": 375,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "file": "flows/f-account-detail/01-detail-current-account-375-light.jpg",
+    "url": "/app/accounts/369c96f5-e480-469e-8d5b-bd8aee0b03ea",
+    "width": 375,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "file": "flows/f-account-detail/02-detail-residential-mortgage-375-light.jpg",
+    "url": "/app/accounts/e8ce12ef-fb74-4113-8ed7-5df3178d76c9",
+    "width": 375,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "file": "flows/f-account-detail/03-detail-workplace-pension-375-light.jpg",
+    "url": "/app/accounts/59480daa-595f-43c0-a25d-8060447c65c6",
+    "width": 375,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "file": "flows/f-account-detail/01-detail-current-account-1280-light.jpg",
+    "url": "/app/accounts/369c96f5-e480-469e-8d5b-bd8aee0b03ea",
+    "width": 1280,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "file": "flows/f-account-detail/02-detail-residential-mortgage-1280-light.jpg",
+    "url": "/app/accounts/e8ce12ef-fb74-4113-8ed7-5df3178d76c9",
+    "width": 1280,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "file": "flows/f-account-detail/03-detail-workplace-pension-1280-light.jpg",
+    "url": "/app/accounts/59480daa-595f-43c0-a25d-8060447c65c6",
+    "width": 1280,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "file": "flows/f-account-detail/01-detail-current-account-375-dark.jpg",
+    "url": "/app/accounts/369c96f5-e480-469e-8d5b-bd8aee0b03ea",
+    "width": 375,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "file": "flows/f-account-detail/02-detail-residential-mortgage-375-dark.jpg",
+    "url": "/app/accounts/e8ce12ef-fb74-4113-8ed7-5df3178d76c9",
+    "width": 375,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "file": "flows/f-account-detail/03-detail-workplace-pension-375-dark.jpg",
+    "url": "/app/accounts/59480daa-595f-43c0-a25d-8060447c65c6",
+    "width": 375,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "file": "flows/f-buy-to-let/01-mortgage-residential-375-light.jpg",
+    "url": "/app/mortgage",
+    "width": 375,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "flow": "f-buy-to-let",
+    "width": 375,
+    "kind": "tabs",
+    "tabs": ["Residential", "Buy to let", "Overpay", "Rate change", "Overpay or save"]
+  },
+  {
+    "file": "flows/f-buy-to-let/02-mortgage-buy-to-let-375-light.jpg",
+    "url": "/app/mortgage",
+    "width": 375,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BUTTON Buy to let"
+  },
+  {
+    "file": "flows/f-buy-to-let/01-mortgage-residential-1280-light.jpg",
+    "url": "/app/mortgage",
+    "width": 1280,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "flow": "f-buy-to-let",
+    "width": 1280,
+    "kind": "tabs",
+    "tabs": ["Residential", "Buy to let", "Overpay", "Rate change", "Overpay or save"]
+  },
+  {
+    "file": "flows/f-buy-to-let/02-mortgage-buy-to-let-1280-light.jpg",
+    "url": "/app/mortgage",
+    "width": 1280,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BUTTON Buy to let"
+  },
+  {
+    "file": "flows/f-buy-to-let/03-dashboard-1280-light.jpg",
+    "url": "/",
+    "width": 1280,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "file": "flows/f-buy-to-let/04-accounts-1280-light.jpg",
+    "url": "/app/accounts",
+    "width": 1280,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "file": "flows/f-buy-to-let/01-mortgage-residential-375-dark.jpg",
+    "url": "/app/mortgage",
+    "width": 375,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "flow": "f-buy-to-let",
+    "width": 375,
+    "kind": "tabs",
+    "tabs": ["Residential", "Buy to let", "Overpay", "Rate change", "Overpay or save"]
+  },
+  {
+    "file": "flows/f-buy-to-let/02-mortgage-buy-to-let-375-dark.jpg",
+    "url": "/app/mortgage",
+    "width": 375,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BUTTON Buy to let"
+  },
+  {
+    "file": "flows/f-months-of-cover-renter/01-more-options-open-1280-light.jpg",
+    "url": "/app/budget",
+    "width": 1280,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BUTTON More options"
+  },
+  {
+    "flow": "f-months-of-cover-renter",
+    "kind": "cover",
+    "persona": "renter",
+    "untouched": "2.7 months",
+    "loaderMonths": [],
+    "loaderSnippets": 0,
+    "switches": [
+      "Current account [on] toggled=1.9 months back=2.7 months",
+      "Easy access savings [on] toggled=0.8 months back=2.7 months",
+      "Salary after tax [off] toggled=No end date back=2.7 months",
+      "Rent [on] toggled=6.2 months back=2.7 months",
+      "Council tax [on] toggled=2.9 months back=2.7 months",
+      "Energy [on] toggled=2.8 months back=2.7 months",
+      "Phone and broadband [on] toggled=2.8 months back=2.7 months",
+      "Credit card payment [on] toggled=2.8 months back=2.7 months",
+      "Groceries [on] toggled=3.2 months back=2.7 months",
+      "Travel [on] toggled=2.9 months back=2.7 months",
+      "Eating out [off] toggled=2.5 months back=2.7 months",
+      "Subscriptions [off] toggled=2.6 months back=2.7 months",
+      "Everything else [off] toggled=2.6 months back=2.7 months"
+    ],
+    "lump1000": "3.3 months",
+    "lumpCleared": "2.7 months",
+    "lumpZero": "2.7 months",
+    "label": "Months of cover"
+  },
+  {
+    "file": "flows/f-months-of-cover-homeowner/01-more-options-open-1280-light.jpg",
+    "url": "/app/budget",
+    "width": 1280,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BUTTON More options"
+  },
+  {
+    "flow": "f-months-of-cover-homeowner",
+    "kind": "cover",
+    "persona": "homeowner",
+    "untouched": "7 months",
+    "loaderMonths": [],
+    "loaderSnippets": 0,
+    "switches": [
+      "Current account [on] toggled=5.9 months back=7 months",
+      "Easy access savings [on] toggled=4.5 months back=7 months",
+      "Cash ISA [on] toggled=3.7 months back=7 months",
+      "Salary after tax [off] toggled=No end date back=7 months",
+      "Mortgage payment [on] toggled=12.1 months back=7 months",
+      "Council tax [on] toggled=7.5 months back=7 months",
+      "Energy [on] toggled=7.4 months back=7 months",
+      "Water [on] toggled=7.2 months back=7 months",
+      "Phone and broadband [on] toggled=7.2 months back=7 months",
+      "Home insurance [on] toggled=7.1 months back=7 months",
+      "Car loan payment [on] toggled=7.7 months back=7 months",
+      "Groceries [on] toggled=8.5 months back=7 months",
+      "Travel [on] toggled=7.5 months back=7 months",
+      "Eating out [off] toggled=6.8 months back=7 months",
+      "Subscriptions [off] toggled=7 months back=7 months",
+      "Everything else [off] toggled=6.6 months back=7 months"
+    ],
+    "lump1000": "7.4 months",
+    "lumpCleared": "7 months",
+    "lumpZero": "7 months",
+    "label": "Months of cover"
+  },
+  {
+    "file": "flows/f-widths-homeowner/01-dashboard-768-light.jpg",
+    "url": "/",
+    "width": 768,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "file": "flows/f-widths-homeowner/02-accounts-768-light.jpg",
+    "url": "/app/accounts",
+    "width": 768,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "file": "flows/f-widths-homeowner/03-budget-768-light.jpg",
+    "url": "/app/budget",
+    "width": 768,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "file": "flows/f-widths-homeowner/04-debt-768-light.jpg",
+    "url": "/app/debt",
+    "width": 768,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "file": "flows/f-widths-homeowner/05-web-tool-pay-rise-768-light.jpg",
+    "url": "/tools/uk-pay-rise-take-home-calculator",
+    "width": 768,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "file": "flows/f-widths-homeowner/06-mkt-home-768-light.jpg",
+    "url": "http://localhost:3124/",
+    "width": 768,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to main contentCalculatorsPricingSe"
+  },
+  {
+    "file": "flows/f-widths-homeowner/07-mkt-tool-pay-rise-768-light.jpg",
+    "url": "http://localhost:3124/tools/uk-pay-rise-take-home-calculator",
+    "width": 768,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to main contentCalculatorsPricingSe"
+  },
+  {
+    "file": "flows/f-widths-homeowner/01-dashboard-1024-light.jpg",
+    "url": "/",
+    "width": 1024,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "file": "flows/f-widths-homeowner/02-accounts-1024-light.jpg",
+    "url": "/app/accounts",
+    "width": 1024,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "file": "flows/f-widths-homeowner/03-budget-1024-light.jpg",
+    "url": "/app/budget",
+    "width": 1024,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "file": "flows/f-widths-homeowner/04-debt-1024-light.jpg",
+    "url": "/app/debt",
+    "width": 1024,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "file": "flows/f-widths-homeowner/05-web-tool-pay-rise-1024-light.jpg",
+    "url": "/tools/uk-pay-rise-take-home-calculator",
+    "width": 1024,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "file": "flows/f-widths-homeowner/06-mkt-home-1024-light.jpg",
+    "url": "http://localhost:3124/",
+    "width": 1024,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to main contentCalculatorsPricingSe"
+  },
+  {
+    "file": "flows/f-widths-homeowner/07-mkt-tool-pay-rise-1024-light.jpg",
+    "url": "http://localhost:3124/tools/uk-pay-rise-take-home-calculator",
+    "width": 1024,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to main contentCalculatorsPricingSe"
+  },
+  {
+    "file": "flows/f-320-homeowner/01-dashboard-320-light.jpg",
+    "url": "/",
+    "width": 320,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "flow": "f-320-homeowner",
+    "width": 320,
+    "kind": "clip",
+    "page": "dashboard",
+    "clipped": ["Your account menu", "Up"],
+    "overflow": false
+  },
+  {
+    "file": "flows/f-320-homeowner/02-accounts-320-light.jpg",
+    "url": "/app/accounts",
+    "width": 320,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "flow": "f-320-homeowner",
+    "width": 320,
+    "kind": "clip",
+    "page": "accounts",
+    "clipped": ["Your account menu"],
+    "overflow": false
+  },
+  {
+    "file": "flows/f-320-homeowner/03-history-320-light.jpg",
+    "url": "/app/accounts/history",
+    "width": 320,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "flow": "f-320-homeowner",
+    "width": 320,
+    "kind": "clip",
+    "page": "history",
+    "clipped": ["Your account menu", "plus £2,575", "Net worth over time"],
+    "overflow": false
+  },
+  {
+    "file": "flows/f-320-homeowner/04-budget-320-light.jpg",
+    "url": "/app/budget",
+    "width": 320,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "flow": "f-320-homeowner",
+    "width": 320,
+    "kind": "clip",
+    "page": "budget",
+    "clipped": ["Your account menu", "a month, open the mortgage page", "(opens in a new tab)"],
+    "overflow": false
+  },
+  {
+    "file": "flows/f-320-homeowner/05-debt-320-light.jpg",
+    "url": "/app/debt",
+    "width": 320,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "flow": "f-320-homeowner",
+    "width": 320,
+    "kind": "clip",
+    "page": "debt",
+    "clipped": [
+      "Your account menu",
+      "How your debt comes down",
+      "Illustration: paid off in 3 years 1 mont",
+      "(opens in a new tab)"
+    ],
+    "overflow": false
+  },
+  {
+    "file": "flows/f-320-homeowner/06-mortgage-320-light.jpg",
+    "url": "/app/mortgage",
+    "width": 320,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "flow": "f-320-homeowner",
+    "width": 320,
+    "kind": "clip",
+    "page": "mortgage",
+    "clipped": [
+      "Your account menu",
+      "Mortgage balance by year",
+      "Illustration: the mortgage is paid off o"
+    ],
+    "overflow": false
+  },
+  {
+    "file": "flows/f-320-homeowner/07-pension-320-light.jpg",
+    "url": "/app/pension",
+    "width": 320,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "flow": "f-320-homeowner",
+    "width": 320,
+    "kind": "clip",
+    "page": "pension",
+    "clipped": ["Your account menu"],
+    "overflow": false
+  },
+  {
+    "file": "flows/f-320-homeowner/08-savings-320-light.jpg",
+    "url": "/app/savings",
+    "width": 320,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "flow": "f-320-homeowner",
+    "width": 320,
+    "kind": "clip",
+    "page": "savings",
+    "clipped": ["Your account menu", "Balance", "Balance", "Estimated savings balance"],
+    "overflow": false
+  },
+  {
+    "file": "flows/f-320-homeowner/09-take-home-320-light.jpg",
+    "url": "/app/take-home",
+    "width": 320,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "flow": "f-320-homeowner",
+    "width": 320,
+    "kind": "clip",
+    "page": "take-home",
+    "clipped": ["Your account menu", "plus £222"],
+    "overflow": false
+  },
+  {
+    "file": "flows/f-320-homeowner/10-self-assessment-320-light.jpg",
+    "url": "/app/self-assessment",
+    "width": 320,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "flow": "f-320-homeowner",
+    "width": 320,
+    "kind": "clip",
+    "page": "self-assessment",
+    "clipped": ["Your account menu"],
+    "overflow": false
+  },
+  {
+    "file": "flows/f-320-homeowner/11-profile-320-light.jpg",
+    "url": "/app/profile",
+    "width": 320,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "flow": "f-320-homeowner",
+    "width": 320,
+    "kind": "clip",
+    "page": "profile",
+    "clipped": ["Your account menu"],
+    "overflow": false
+  },
+  {
+    "file": "flows/f-widths-renter/01-dashboard-768-light.jpg",
+    "url": "/",
+    "width": 768,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "file": "flows/f-widths-renter/02-accounts-768-light.jpg",
+    "url": "/app/accounts",
+    "width": 768,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "file": "flows/f-widths-renter/03-budget-768-light.jpg",
+    "url": "/app/budget",
+    "width": 768,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "file": "flows/f-widths-renter/04-debt-768-light.jpg",
+    "url": "/app/debt",
+    "width": 768,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "file": "flows/f-widths-renter/01-dashboard-1024-light.jpg",
+    "url": "/",
+    "width": 1024,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "file": "flows/f-widths-renter/02-accounts-1024-light.jpg",
+    "url": "/app/accounts",
+    "width": 1024,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "file": "flows/f-widths-renter/03-budget-1024-light.jpg",
+    "url": "/app/budget",
+    "width": 1024,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "file": "flows/f-widths-renter/04-debt-1024-light.jpg",
+    "url": "/app/debt",
+    "width": 1024,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "file": "flows/f-320-renter/01-dashboard-320-light.jpg",
+    "url": "/",
+    "width": 320,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "flow": "f-320-renter",
+    "width": 320,
+    "kind": "clip",
+    "page": "dashboard",
+    "clipped": ["Your account menu", "Up"],
+    "overflow": false
+  },
+  {
+    "file": "flows/f-320-renter/02-accounts-320-light.jpg",
+    "url": "/app/accounts",
+    "width": 320,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "flow": "f-320-renter",
+    "width": 320,
+    "kind": "clip",
+    "page": "accounts",
+    "clipped": ["Your account menu"],
+    "overflow": false
+  },
+  {
+    "file": "flows/f-320-renter/03-history-320-light.jpg",
+    "url": "/app/accounts/history",
+    "width": 320,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "flow": "f-320-renter",
+    "width": 320,
+    "kind": "clip",
+    "page": "history",
+    "clipped": ["Your account menu", "plus £465", "Net worth over time"],
+    "overflow": false
+  },
+  {
+    "file": "flows/f-320-renter/04-budget-320-light.jpg",
+    "url": "/app/budget",
+    "width": 320,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "flow": "f-320-renter",
+    "width": 320,
+    "kind": "clip",
+    "page": "budget",
+    "clipped": ["Your account menu", "(opens in a new tab)"],
+    "overflow": false
+  },
+  {
+    "file": "flows/f-320-renter/05-debt-320-light.jpg",
+    "url": "/app/debt",
+    "width": 320,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "flow": "f-320-renter",
+    "width": 320,
+    "kind": "clip",
+    "page": "debt",
+    "clipped": [
+      "Your account menu",
+      "How your debt comes down",
+      "Illustration: paid off in 4 years, £1,04",
+      "(opens in a new tab)"
+    ],
+    "overflow": false
+  },
+  {
+    "file": "flows/f-320-renter/06-mortgage-320-light.jpg",
+    "url": "/app/mortgage",
+    "width": 320,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "flow": "f-320-renter",
+    "width": 320,
+    "kind": "clip",
+    "page": "mortgage",
+    "clipped": ["Your account menu"],
+    "overflow": false
+  },
+  {
+    "file": "flows/f-320-renter/07-pension-320-light.jpg",
+    "url": "/app/pension",
+    "width": 320,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "flow": "f-320-renter",
+    "width": 320,
+    "kind": "clip",
+    "page": "pension",
+    "clipped": ["Your account menu"],
+    "overflow": false
+  },
+  {
+    "file": "flows/f-320-renter/08-savings-320-light.jpg",
+    "url": "/app/savings",
+    "width": 320,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "flow": "f-320-renter",
+    "width": 320,
+    "kind": "clip",
+    "page": "savings",
+    "clipped": ["Your account menu", "Estimated savings balance"],
+    "overflow": false
+  },
+  {
+    "file": "flows/f-320-renter/09-take-home-320-light.jpg",
+    "url": "/app/take-home",
+    "width": 320,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "flow": "f-320-renter",
+    "width": 320,
+    "kind": "clip",
+    "page": "take-home",
+    "clipped": ["Your account menu", "plus £246"],
+    "overflow": false
+  },
+  {
+    "file": "flows/f-320-renter/10-self-assessment-320-light.jpg",
+    "url": "/app/self-assessment",
+    "width": 320,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "flow": "f-320-renter",
+    "width": 320,
+    "kind": "clip",
+    "page": "self-assessment",
+    "clipped": ["Your account menu"],
+    "overflow": false
+  },
+  {
+    "file": "flows/f-320-renter/11-profile-320-light.jpg",
+    "url": "/app/profile",
+    "width": 320,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "flow": "f-320-renter",
+    "width": 320,
+    "kind": "clip",
+    "page": "profile",
+    "clipped": ["Your account menu"],
+    "overflow": false
+  },
+  {
+    "flow": "f-keyboard-check-in",
+    "width": 1280,
+    "kind": "tabs-to-link",
+    "presses": 15,
+    "last": "a[] \"Update balances\" inDialog=false y=540 ring=true",
+    "first5": [
+      "a[] \"Skip to content\" inDialog=false y=8 ring=true",
+      "a[] \"Flump home\" inDialog=false y=8 ring=true",
+      "a[] \"Home\" inDialog=false y=17 ring=true",
+      "a[] \"Accounts\" inDialog=false y=17 ring=true",
+      "a[] \"Budget\" inDialog=false y=17 ring=true"
+    ]
+  },
+  {
+    "file": "flows/f-keyboard-check-in/01-focus-on-update-balances-1280-light.jpg",
+    "url": "/",
+    "width": 1280,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "A Update balances"
+  },
+  {
+    "flow": "f-keyboard-check-in",
+    "width": 1280,
+    "kind": "focus-after-open",
+    "active": "input[] \"\" inDialog=true y=206 ring=false"
+  },
+  {
+    "file": "flows/f-keyboard-check-in/02-sheet-opened-focus-1280-light.jpg",
+    "url": "/app/accounts/history?checkIn=1",
+    "width": 1280,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "INPUT "
+  },
+  {
+    "flow": "f-keyboard-check-in",
+    "width": 1280,
+    "kind": "typing",
+    "steps": [
+      "Tab -> button[] \"No change\" inDialog=true y=210 ring=true",
+      "Tab -> input[] \"\" inDialog=true y=377 ring=false",
+      "Tab -> button[] \"No change\" inDialog=true y=381 ring=true",
+      "Tab -> input[] \"\" inDialog=true y=549 ring=false",
+      "Tab -> button[] \"No change\" inDialog=true y=553 ring=true",
+      "Tab -> input[] \"\" inDialog=true y=697 ring=false",
+      "Tab -> button[] \"No change\" inDialog=true y=701 ring=true",
+      "Tab -> input[] \"\" inDialog=true y=422 ring=false",
+      "Tab -> button[] \"No change\" inDialog=true y=426 ring=true",
+      "Tab -> input[] \"\" inDialog=true y=594 ring=false",
+      "Tab -> button[] \"No change\" inDialog=true y=598 ring=true",
+      "Tab -> input[] \"\" inDialog=true y=731 ring=false"
+    ]
+  },
+  {
+    "file": "flows/f-keyboard-check-in/03-after-three-typed-1280-light.jpg",
+    "url": "/app/accounts/history?checkIn=1",
+    "width": 1280,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "INPUT "
+  },
+  {
+    "flow": "f-keyboard-check-in",
+    "width": 1280,
+    "kind": "tab-to-rest",
+    "found": true,
+    "leftDialog": 0,
+    "noRing": 1,
+    "trail": [
+      "button[] \"No change\" inDialog=true y=731 ring=true",
+      "input[] \"\" inDialog=true y=660 ring=false",
+      "button[] \"No change\" inDialog=true y=664 ring=true",
+      "button[] \"No change to the rest\" inDialog=true y=732 ring=true"
+    ]
+  },
+  {
+    "flow": "f-keyboard-check-in",
+    "width": 1280,
+    "kind": "focus-after-rest",
+    "active": "h3[] \"Check-in saved\" inDialog=true y=93 ring=false"
+  },
+  {
+    "file": "flows/f-keyboard-check-in/04-summary-focus-1280-light.jpg",
+    "url": "/app/accounts/history?checkIn=1",
+    "width": 1280,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "H3 Check-in saved"
+  },
+  {
+    "flow": "f-keyboard-check-in",
+    "width": 1280,
+    "kind": "summary-tabs",
+    "sum": [
+      "button[] \"Change a balance\" inDialog=true y=228 ring=true",
+      "button[] \"Done\" inDialog=true y=221 ring=true",
+      "button[] \"Close\" inDialog=true y=19 ring=true",
+      "button[] \"Change a balance\" inDialog=true y=228 ring=true",
+      "button[] \"Done\" inDialog=true y=221 ring=true",
+      "button[] \"Close\" inDialog=true y=19 ring=true"
+    ]
+  },
+  {
+    "flow": "f-keyboard-check-in",
+    "width": 1280,
+    "kind": "focus-after-escape",
+    "active": "button[] \"Update balances\" inDialog=false y=99 ring=true",
+    "dialogOpen": 0
+  },
+  {
+    "file": "flows/f-keyboard-check-in/05-after-escape-1280-light.jpg",
+    "url": "/app/accounts/history?checkIn=1",
+    "width": 1280,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BUTTON Update balances"
+  },
+  {
+    "flow": "f-keyboard-check-in",
+    "width": 1280,
+    "kind": "presses",
+    "presses": 40
+  },
+  {
+    "flow": "f-keyboard-check-in",
+    "width": 375,
+    "kind": "tabs-to-link",
+    "presses": 8,
+    "last": "a[] \"Update balances\" inDialog=false y=554 ring=true",
+    "first5": [
+      "a[] \"Skip to content\" inDialog=false y=8 ring=true",
+      "button[] \"Open navigation menu\" inDialog=false y=11 ring=true",
+      "a[] \"Flump home\" inDialog=false y=8 ring=true",
+      "button[] \"Colour theme: system. Change to light\" inDialog=false y=11 ring=true",
+      "button[] \"ALYour account menu\" inDialog=false y=11 ring=true"
+    ]
+  },
+  {
+    "file": "flows/f-keyboard-check-in/01-focus-on-update-balances-375-light.jpg",
+    "url": "/",
+    "width": 375,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "A Update balances"
+  },
+  {
+    "flow": "f-keyboard-check-in",
+    "width": 375,
+    "kind": "focus-after-open",
+    "active": "input[] \"\" inDialog=true y=570 ring=false"
+  },
+  {
+    "file": "flows/f-keyboard-check-in/02-sheet-opened-focus-375-light.jpg",
+    "url": "/app/accounts/history?checkIn=1",
+    "width": 375,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "INPUT "
+  },
+  {
+    "flow": "f-keyboard-check-in",
+    "width": 375,
+    "kind": "typing",
+    "steps": [
+      "Tab -> button[] \"No change\" inDialog=true y=626 ring=true",
+      "Tab -> button[] \"No change to the rest\" inDialog=true y=682 ring=true",
+      "Tab -> button[] \"Close\" inDialog=true y=356 ring=true",
+      "Tab -> input[] \"\" inDialog=true y=570 ring=false",
+      "Tab -> button[] \"No change\" inDialog=true y=626 ring=true",
+      "Tab -> button[] \"No change to the rest\" inDialog=true y=682 ring=true",
+      "Tab -> button[] \"Close\" inDialog=true y=356 ring=true",
+      "Tab -> input[] \"\" inDialog=true y=570 ring=false",
+      "Tab -> button[] \"No change\" inDialog=true y=626 ring=true",
+      "Tab -> button[] \"No change to the rest\" inDialog=true y=682 ring=true",
+      "Tab -> button[] \"Close\" inDialog=true y=356 ring=true",
+      "Tab -> input[] \"\" inDialog=true y=570 ring=false"
+    ]
+  },
+  {
+    "file": "flows/f-keyboard-check-in/03-after-three-typed-375-light.jpg",
+    "url": "/app/accounts/history?checkIn=1",
+    "width": 375,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "INPUT "
+  },
+  {
+    "flow": "f-keyboard-check-in",
+    "width": 375,
+    "kind": "tab-to-rest",
+    "found": true,
+    "leftDialog": 0,
+    "noRing": 0,
+    "trail": [
+      "button[] \"No change\" inDialog=true y=626 ring=true",
+      "button[] \"No change to the rest\" inDialog=true y=682 ring=true"
+    ]
+  },
+  {
+    "flow": "f-keyboard-check-in",
+    "width": 375,
+    "kind": "focus-after-rest",
+    "active": "h3[] \"Check-in saved\" inDialog=true y=594 ring=false"
+  },
+  {
+    "file": "flows/f-keyboard-check-in/04-summary-focus-375-light.jpg",
+    "url": "/app/accounts/history?checkIn=1",
+    "width": 375,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "H3 Check-in saved"
+  },
+  {
+    "flow": "f-keyboard-check-in",
+    "width": 375,
+    "kind": "summary-tabs",
+    "sum": [
+      "button[] \"Change a balance\" inDialog=true y=768 ring=true",
+      "button[] \"Done\" inDialog=true y=722 ring=true",
+      "button[] \"Close\" inDialog=true y=520 ring=true",
+      "button[] \"Change a balance\" inDialog=true y=768 ring=true",
+      "button[] \"Done\" inDialog=true y=722 ring=true",
+      "button[] \"Close\" inDialog=true y=520 ring=true"
+    ]
+  },
+  {
+    "flow": "f-keyboard-check-in",
+    "width": 375,
+    "kind": "focus-after-escape",
+    "active": "button[] \"Update balances\" inDialog=false y=92 ring=true",
+    "dialogOpen": 0
+  },
+  {
+    "file": "flows/f-keyboard-check-in/05-after-escape-375-light.jpg",
+    "url": "/app/accounts/history?checkIn=1",
+    "width": 375,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BUTTON Update balances"
+  },
+  {
+    "flow": "f-keyboard-check-in",
+    "width": 375,
+    "kind": "presses",
+    "presses": 31
+  },
+  {
+    "file": "flows/f-months-of-cover-move-to-debts/01-before-move-1280-light.jpg",
+    "url": "/app/budget",
+    "width": 1280,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "file": "flows/f-months-of-cover-move-to-debts/02-after-move-1280-light.jpg",
+    "url": "/app/budget",
+    "width": 1280,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BUTTON Debt£265"
+  },
+  {
+    "flow": "f-months-of-cover-move-to-debts",
+    "kind": "move",
+    "before": "7 months",
+    "heroBefore": "Left over each month £135 £39 a week is safe to spend after essential spending, debt payments and planned savings.",
+    "after": "7.7 months",
+    "heroAfter": "Left over each month £135 £101 a week is safe to spend after essential spending, debt payments and planned savings.",
+    "going": "Going out each month\n£3,315"
+  },
+  {
+    "flow": "f-keyboard-check-in",
+    "width": 1280,
+    "kind": "tabs-to-link",
+    "presses": 15,
+    "last": "a[] \"Update balances\" inDialog=false y=540 ring=true",
+    "first5": [
+      "a[] \"Skip to content\" inDialog=false y=8 ring=true",
+      "a[] \"Flump home\" inDialog=false y=8 ring=true",
+      "a[] \"Home\" inDialog=false y=17 ring=true",
+      "a[] \"Accounts\" inDialog=false y=17 ring=true",
+      "a[] \"Budget\" inDialog=false y=17 ring=true"
+    ]
+  },
+  {
+    "file": "flows/f-keyboard-check-in/01-focus-on-update-balances-1280-light.jpg",
+    "url": "/",
+    "width": 1280,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "A Update balances"
+  },
+  {
+    "flow": "f-keyboard-check-in",
+    "width": 1280,
+    "kind": "focus-after-open",
+    "active": "input[] \"New balance in pounds, Current account\" inDialog=true y=206 ring=false"
+  },
+  {
+    "file": "flows/f-keyboard-check-in/02-sheet-opened-focus-1280-light.jpg",
+    "url": "/app/accounts/history?checkIn=1",
+    "width": 1280,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "INPUT "
+  },
+  {
+    "flow": "f-keyboard-check-in",
+    "width": 1280,
+    "kind": "typing",
+    "steps": [
+      "typed 3150 + Enter -> input[] \"New balance in pounds, Easy access savings\" inDialog=true y=296 ring=false",
+      "typed 7820 + Enter -> input[] \"New balance in pounds, Cash ISA\" inDialog=true y=364 ring=false",
+      "typed 10135 + Enter -> input[] \"Amount owed now in pounds, Credit card\" inDialog=true y=409 ring=false"
+    ]
+  },
+  {
+    "file": "flows/f-keyboard-check-in/03-after-three-typed-1280-light.jpg",
+    "url": "/app/accounts/history?checkIn=1",
+    "width": 1280,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "INPUT "
+  },
+  {
+    "flow": "f-keyboard-check-in",
+    "width": 1280,
+    "kind": "tab-to-rest",
+    "found": true,
+    "leftDialog": 0,
+    "noRing": 4,
+    "trail": [
+      "button[] \"No change\" inDialog=true y=413 ring=true",
+      "input[] \"Amount owed now in pounds, Car loan\" inDialog=true y=580 ring=false",
+      "button[] \"No change\" inDialog=true y=584 ring=true",
+      "input[] \"New balance in pounds, Workplace pension\" inDialog=true y=731 ring=false",
+      "button[] \"No change\" inDialog=true y=731 ring=true",
+      "input[] \"New balance in pounds, Home\" inDialog=true y=488 ring=false",
+      "button[] \"No change\" inDialog=true y=492 ring=true",
+      "input[] \"Amount owed now in pounds, Residential mortgage\" inDialog=true y=659 ring=false",
+      "button[] \"No change\" inDialog=true y=663 ring=true",
+      "button[] \"No change to the rest\" inDialog=true y=731 ring=true"
+    ]
+  },
+  {
+    "flow": "f-keyboard-check-in",
+    "width": 1280,
+    "kind": "focus-after-rest",
+    "active": "h3[] \"Check-in saved\" inDialog=true y=93 ring=false"
+  },
+  {
+    "file": "flows/f-keyboard-check-in/04-summary-focus-1280-light.jpg",
+    "url": "/app/accounts/history?checkIn=1",
+    "width": 1280,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "H3 Check-in saved"
+  },
+  {
+    "flow": "f-keyboard-check-in",
+    "width": 1280,
+    "kind": "summary-tabs",
+    "sum": [
+      "button[] \"Change a balance\" inDialog=true y=381 ring=true",
+      "button[] \"Done\" inDialog=true y=374 ring=true",
+      "button[] \"Close\" inDialog=true y=19 ring=true",
+      "button[] \"Change a balance\" inDialog=true y=381 ring=true",
+      "button[] \"Done\" inDialog=true y=374 ring=true",
+      "button[] \"Close\" inDialog=true y=19 ring=true"
+    ]
+  },
+  {
+    "flow": "f-keyboard-check-in",
+    "width": 1280,
+    "kind": "focus-after-escape",
+    "active": "button[] \"Update balances\" inDialog=false y=99 ring=true",
+    "dialogOpen": 0
+  },
+  {
+    "file": "flows/f-keyboard-check-in/05-after-escape-1280-light.jpg",
+    "url": "/app/accounts/history?checkIn=1",
+    "width": 1280,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BUTTON Update balances"
+  },
+  {
+    "flow": "f-keyboard-check-in",
+    "width": 1280,
+    "kind": "presses",
+    "presses": 40
+  },
+  {
+    "flow": "f-keyboard-check-in",
+    "width": 375,
+    "kind": "tabs-to-link",
+    "presses": 8,
+    "last": "a[] \"Update balances\" inDialog=false y=554 ring=true",
+    "first5": [
+      "a[] \"Skip to content\" inDialog=false y=8 ring=true",
+      "button[] \"Open navigation menu\" inDialog=false y=11 ring=true",
+      "a[] \"Flump home\" inDialog=false y=8 ring=true",
+      "button[] \"Colour theme: system. Change to light\" inDialog=false y=11 ring=true",
+      "button[] \"ALYour account menu\" inDialog=false y=11 ring=true"
+    ]
+  },
+  {
+    "file": "flows/f-keyboard-check-in/01-focus-on-update-balances-375-light.jpg",
+    "url": "/",
+    "width": 375,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "A Update balances"
+  },
+  {
+    "flow": "f-keyboard-check-in",
+    "width": 375,
+    "kind": "focus-after-open",
+    "active": "input[] \"New balance in pounds, Current account\" inDialog=true y=570 ring=false"
+  },
+  {
+    "file": "flows/f-keyboard-check-in/02-sheet-opened-focus-375-light.jpg",
+    "url": "/app/accounts/history?checkIn=1",
+    "width": 375,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "INPUT "
+  },
+  {
+    "flow": "f-keyboard-check-in",
+    "width": 375,
+    "kind": "typing",
+    "steps": [
+      "typed 3150 + Enter -> input[] \"New balance in pounds, Easy access savings\" inDialog=true y=593 ring=false",
+      "typed 7820 + Enter -> input[] \"New balance in pounds, Cash ISA\" inDialog=true y=593 ring=false",
+      "typed 10135 + Enter -> input[] \"Amount owed now in pounds, Credit card\" inDialog=true y=570 ring=false"
+    ]
+  },
+  {
+    "file": "flows/f-keyboard-check-in/03-after-three-typed-375-light.jpg",
+    "url": "/app/accounts/history?checkIn=1",
+    "width": 375,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "INPUT "
+  },
+  {
+    "flow": "f-keyboard-check-in",
+    "width": 375,
+    "kind": "tab-to-rest",
+    "found": true,
+    "leftDialog": 0,
+    "noRing": 0,
+    "trail": [
+      "button[] \"No change\" inDialog=true y=626 ring=true",
+      "button[] \"Back\" inDialog=true y=682 ring=true",
+      "button[] \"No change to the rest\" inDialog=true y=682 ring=true"
+    ]
+  },
+  {
+    "flow": "f-keyboard-check-in",
+    "width": 375,
+    "kind": "focus-after-rest",
+    "active": "h3[] \"Check-in saved\" inDialog=true y=441 ring=false"
+  },
+  {
+    "file": "flows/f-keyboard-check-in/04-summary-focus-375-light.jpg",
+    "url": "/app/accounts/history?checkIn=1",
+    "width": 375,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "H3 Check-in saved"
+  },
+  {
+    "flow": "f-keyboard-check-in",
+    "width": 375,
+    "kind": "summary-tabs",
+    "sum": [
+      "button[] \"Change a balance\" inDialog=true y=768 ring=true",
+      "button[] \"Done\" inDialog=true y=722 ring=true",
+      "button[] \"Close\" inDialog=true y=367 ring=true",
+      "button[] \"Change a balance\" inDialog=true y=768 ring=true",
+      "button[] \"Done\" inDialog=true y=722 ring=true",
+      "button[] \"Close\" inDialog=true y=367 ring=true"
+    ]
+  },
+  {
+    "flow": "f-keyboard-check-in",
+    "width": 375,
+    "kind": "focus-after-escape",
+    "active": "button[] \"Update balances\" inDialog=false y=92 ring=true",
+    "dialogOpen": 0
+  },
+  {
+    "file": "flows/f-keyboard-check-in/05-after-escape-375-light.jpg",
+    "url": "/app/accounts/history?checkIn=1",
+    "width": 375,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BUTTON Update balances"
+  },
+  {
+    "flow": "f-keyboard-check-in",
+    "width": 375,
+    "kind": "presses",
+    "presses": 26
+  },
+  {
+    "flow": "f-self-assessment",
+    "width": 1280,
+    "kind": "takehome",
+    "where": "before",
+    "hero": "Monthly take-home pay Estimate £3,451 After tax and deductions Tax and National I"
+  },
+  {
+    "file": "flows/f-self-assessment/01-opt-in-1280-light.jpg",
+    "url": "/app/self-assessment",
+    "width": 1280,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "file": "flows/f-self-assessment/02-turned-on-empty-1280-light.jpg",
+    "url": "/app/self-assessment",
+    "width": 1280,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "file": "flows/f-self-assessment/03-dialog-design-work-1280-light.jpg",
+    "url": "/app/self-assessment",
+    "width": 1280,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "INPUT "
+  },
+  {
+    "flow": "f-self-assessment",
+    "width": 1280,
+    "kind": "dialog-values",
+    "item": "Self-employed income",
+    "source": "self-employed",
+    "type": "income"
+  },
+  {
+    "file": "flows/f-self-assessment/04-after-income-1280-light.jpg",
+    "url": "/app/self-assessment",
+    "width": 1280,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "MAIN Self AssessmentIncome outside PAYE, its "
+  },
+  {
+    "file": "flows/f-self-assessment/05-dialog-software-1280-light.jpg",
+    "url": "/app/self-assessment",
+    "width": 1280,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "INPUT "
+  },
+  {
+    "flow": "f-self-assessment",
+    "width": 1280,
+    "kind": "dialog-values",
+    "item": "Cost",
+    "source": "self-employed",
+    "type": "expense"
+  },
+  {
+    "file": "flows/f-self-assessment/06-after-cost-1280-light.jpg",
+    "url": "/app/self-assessment",
+    "width": 1280,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "MAIN Self AssessmentIncome outside PAYE, its "
+  },
+  {
+    "flow": "f-self-assessment",
+    "width": 1280,
+    "kind": "tabs",
+    "tabs": []
+  },
+  {
+    "flow": "f-self-assessment",
+    "width": 1280,
+    "kind": "takehome",
+    "where": "after",
+    "hero": "Monthly take-home pay Estimate £3,451 After tax and deductions Tax and National I"
+  },
+  {
+    "file": "flows/f-self-assessment/07-dashboard-after-1280-light.jpg",
+    "url": "/",
+    "width": 1280,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "flow": "f-self-assessment",
+    "width": 375,
+    "kind": "takehome",
+    "where": "before",
+    "hero": "Monthly take-home pay Estimate £3,451 After tax and deductions Tax and National I"
+  },
+  {
+    "file": "flows/f-self-assessment/01-opt-in-375-light.jpg",
+    "url": "/app/self-assessment",
+    "width": 375,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "file": "flows/f-self-assessment/02-turned-on-empty-375-light.jpg",
+    "url": "/app/self-assessment",
+    "width": 375,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "file": "flows/f-self-assessment/03-dialog-design-work-375-light.jpg",
+    "url": "/app/self-assessment",
+    "width": 375,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "INPUT "
+  },
+  {
+    "flow": "f-self-assessment",
+    "width": 375,
+    "kind": "dialog-values",
+    "item": "Self-employed income",
+    "source": "self-employed",
+    "type": "income"
+  },
+  {
+    "file": "flows/f-self-assessment/04-after-income-375-light.jpg",
+    "url": "/app/self-assessment",
+    "width": 375,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "MAIN Self AssessmentIncome outside PAYE, its "
+  },
+  {
+    "file": "flows/f-self-assessment/05-dialog-software-375-light.jpg",
+    "url": "/app/self-assessment",
+    "width": 375,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "INPUT "
+  },
+  {
+    "flow": "f-self-assessment",
+    "width": 375,
+    "kind": "dialog-values",
+    "item": "Cost",
+    "source": "self-employed",
+    "type": "expense"
+  },
+  {
+    "file": "flows/f-self-assessment/06-after-cost-375-light.jpg",
+    "url": "/app/self-assessment",
+    "width": 375,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "MAIN Self AssessmentIncome outside PAYE, its "
+  },
+  {
+    "flow": "f-self-assessment",
+    "width": 375,
+    "kind": "tabs",
+    "tabs": []
+  },
+  {
+    "flow": "f-self-assessment",
+    "width": 375,
+    "kind": "takehome",
+    "where": "after",
+    "hero": "Monthly take-home pay Estimate £3,451 After tax and deductions Tax and National I"
+  },
+  {
+    "file": "flows/f-self-assessment/07-dashboard-after-375-light.jpg",
+    "url": "/",
+    "width": 375,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "file": "flows/f-self-assessment/08-sa-end-375-dark.jpg",
+    "url": "/app/self-assessment",
+    "width": 375,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BODY Skip to contentHomeAccountsBudgetPaySavi"
+  },
+  {
+    "file": "flows/f-dialogs-sweep-missed/01-add-account-375-light.jpg",
+    "url": "/app/accounts",
+    "width": 375,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BUTTON Close"
+  },
+  {
+    "file": "flows/f-dialogs-sweep-missed/02-budget-add-category-375-light.jpg",
+    "url": "/app/budget",
+    "width": 375,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BUTTON Close"
+  },
+  {
+    "file": "flows/f-dialogs-sweep-missed/01-add-account-1280-light.jpg",
+    "url": "/app/accounts",
+    "width": 1280,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BUTTON Close"
+  },
+  {
+    "file": "flows/f-dialogs-sweep-missed/02-budget-add-category-1280-light.jpg",
+    "url": "/app/budget",
+    "width": 1280,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BUTTON Close"
+  },
+  {
+    "file": "flows/f-dialogs-sweep-missed/01-add-account-375-dark.jpg",
+    "url": "/app/accounts",
+    "width": 375,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BUTTON Close"
+  },
+  {
+    "file": "flows/f-dialogs-sweep-missed/02-budget-add-category-375-dark.jpg",
+    "url": "/app/budget",
+    "width": 375,
+    "horizontalOverflow": false,
+    "overflowCulprits": [],
+    "focus": "BUTTON Close"
+  }
+]

@@ -1,0 +1,10 @@
+[
+  "add-account at 375 light: TimeoutError: locator.click: Timeout 15000ms exceeded.",
+  "budget-add-category at 375 light: TimeoutError: locator.click: Timeout 15000ms exceeded.",
+  "add-account at 375 dark: TimeoutError: locator.click: Timeout 15000ms exceeded.",
+  "budget-add-category at 375 dark: TimeoutError: locator.click: Timeout 15000ms exceeded.",
+  "add-account at 1280 light: TimeoutError: locator.click: Timeout 15000ms exceeded.",
+  "budget-add-category at 1280 light: TimeoutError: locator.click: Timeout 15000ms exceeded.",
+  "add-account at 1280 dark: TimeoutError: locator.click: Timeout 15000ms exceeded.",
+  "budget-add-category at 1280 dark: TimeoutError: locator.click: Timeout 15000ms exceeded."
+]
