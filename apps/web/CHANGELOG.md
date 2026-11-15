@@ -1,5 +1,26 @@
 # Changelog
 
+## [1.41.0](https://github.com/mgallagher56/flump/compare/flump/web-v1.40.0...flump/web-v1.41.0) (2026-11-15)
+
+
+### Features ✨
+
+* **ci:** BE-17 load smoke, E2E retries off and slim web image; SEC-E checkout credentials, digest pins and root-owned images ([205690c](https://github.com/mgallagher56/flump/commit/205690c96e70c4594e69e8ae2f4692b14e6a571e))
+* owner rulings of 15 Nov: estimate heroes, Debt and borrowing, net worth choices, history months, account hero, interest this year, anonymised names ([597d3dd](https://github.com/mgallagher56/flump/commit/597d3dda7c14651c3e6fbcd222ed9709565bf39b))
+* **security:** SEC-A keys required at production boot; SEC-F audit_events refuses TRUNCATE and undeclared DELETE ([3bd188b](https://github.com/mgallagher56/flump/commit/3bd188b6065297b412530398ceacd8f768cf6d57))
+
+
+### Bug Fixes 🪲
+
+* **security:** SEC-A and SEC-F review follow-ups ([e4b8473](https://github.com/mgallagher56/flump/commit/e4b847390afb767a4ba0785aa5f63bacc3979121))
+* **web:** Add common entries opens the editor with suggested rows, saved only on Save rows; wizard never duplicates; monthly after-essentials sub-line ([31c906e](https://github.com/mgallagher56/flump/commit/31c906e089733613303621e176299dd20461f136))
+* **web:** common entries review fixes: one matching rule with synonyms, accurate partial-save message, blank entries kept, Finish once anything is saved ([fd0d40d](https://github.com/mgallagher56/flump/commit/fd0d40d68841cfcf6bea1e6d9b3b7d01b71b6351))
+
+
+### Tests 🧪
+
+* header snapshots, anonymised labels in the PAT isolation spec, route inventory without the removed seed-defaults call ([73b987b](https://github.com/mgallagher56/flump/commit/73b987b280d2d34c70a84377a7dc7178d7407504))
+
 ## [1.40.0](https://github.com/mgallagher56/flump/compare/flump/web-v1.39.0...flump/web-v1.40.0) (2026-11-14)
 
 
