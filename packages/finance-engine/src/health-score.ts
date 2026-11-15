@@ -105,7 +105,7 @@ export function calculateFinancialHealthScore(input: HealthScoreInput): HealthSc
     else runwayScore = (runwayMonths / 3) * 80;
 
     components.push({
-      name: "Months of cover",
+      name: "Breathing room",
       score: Math.min(100, Math.round(runwayScore)),
       weight: 0.5,
       comment: `Cash covers ${runwayMonths.toFixed(1)} months of essential spending.`,
@@ -194,7 +194,7 @@ export function calculateFinancialHealthScore(input: HealthScoreInput): HealthSc
     // 3. Emergency Runway & Liquidity (Weight 0.25)
     const runwayScore = Math.min(100, Math.round((runwayMonths / 6) * 100));
     components.push({
-      name: "Months of cover",
+      name: "Breathing room",
       score: runwayScore,
       weight: 0.25,
       comment: `Cash covers ${runwayMonths.toFixed(1)} months of essential spending.`,
@@ -304,7 +304,7 @@ export function evaluateFinancialStage(params: {
       emergencyRunwayMonths,
       starterBufferMet,
       primaryHeroMetric: "emergency_runway",
-      headline: "Months of cover",
+      headline: "Breathing room",
       subline: "Cash covers less than 3 months of essential spending.",
     };
   }
@@ -319,7 +319,7 @@ export function evaluateFinancialStage(params: {
     emergencyRunwayMonths,
     starterBufferMet: true,
     primaryHeroMetric: "net_worth",
-    headline: "Months of cover",
+    headline: "Breathing room",
     subline:
       "No card or overdraft debt, none at 6.5% APR or more, income covers spending, and cash covers at least 3 months of essential spending.",
   };

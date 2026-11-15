@@ -49,7 +49,7 @@ export const HousingStep: FC<HousingStepProps> = ({
   const costField = status ? COST_FIELD[status] : undefined;
   return (
     <StepFrame
-      description="Your regular costs show what is left over each month and your months of cover."
+      description="Your regular costs show what is left over each month and your breathing room."
       focusOnMount={focusOnMount}
       summary={summary}
       id="housing"

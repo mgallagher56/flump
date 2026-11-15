@@ -40,7 +40,7 @@ export const HomePage: FC = () => {
     <div className={pageShell()}>
       <PageMeta
         title={SITE_TAGLINE}
-        description={`${SITE_TAGLINE}. See where you stand each month, whether you rent or pay a mortgage: your months of cover, what is left over and what a change would do, under UK rules.`}
+        description={`${SITE_TAGLINE}. See where you stand each month, whether you rent or pay a mortgage: your breathing room, what is left over and what a change would do, under UK rules.`}
       />
 
       <Header />
@@ -53,7 +53,7 @@ export const HomePage: FC = () => {
                 See where you stand each month
               </h1>
               <p className={heroLead()}>
-                Enter a few rough numbers to see your months of cover and what is left over each
+                Enter a few rough numbers to see your breathing room and what is left over each
                 month. Then see what a change would do under UK rules.
               </p>
               <div className={ctaRow()}>

@@ -6,6 +6,8 @@ import { resultBlock } from "./ResultBlock.styles";
 export interface ResultBlockRow {
   label: ReactNode;
   value: ReactNode;
+  /** Id for the row (also data-testid). */
+  id?: string;
 }
 
 export interface ResultBlockProps {
@@ -90,7 +92,7 @@ export const ResultBlock: FC<ResultBlockProps> = ({
       )}
       {note ? <p className={slots.note}>{note}</p> : null}
       {row ? (
-        <dl className={slots.row}>
+        <dl className={slots.row} data-testid={row.id} id={row.id}>
           <dt className={slots.rowLabel}>{row.label}</dt>
           <dd className={slots.rowValue}>{row.value}</dd>
         </dl>

@@ -16,7 +16,7 @@ export const MCP_TOOLS: readonly McpToolEntry[] = [
     name: "get_financial_snapshot",
     kind: "read",
     description:
-      "A summary of your saved figures: net worth, cash, investments, pensions and debts. It adds what is left over each month and your months of cover when you have a budget. Anything you have not recorded is reported as not set, never guessed.",
+      "A summary of your saved figures: net worth, cash, investments, pensions and debts. It adds what is left over each month and your breathing room when you have a budget. Anything you have not recorded is reported as not set, never guessed.",
   },
   {
     name: "get_balance_history",

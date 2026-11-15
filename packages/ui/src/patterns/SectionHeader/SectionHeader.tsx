@@ -53,7 +53,8 @@ export const SectionHeader: FC<SectionHeaderProps> = ({
       <IconTile domain={domain} icon={icon} tone={tone} />
       <div className={slots.text}>
         <div className={slots.titleRow}>
-          <Heading as={as} id={headingId} size="md">
+          {/* Focusable from script only, so "Update your details" can land on the section. */}
+          <Heading as={as} id={headingId} size="md" tabIndex={-1}>
             {title}
           </Heading>
           {titleAddon}

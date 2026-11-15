@@ -506,7 +506,7 @@ ${
 ## 4. Budget
 - **Income in your budget, a month:** ${gbpOrNotSet(bg.monthlyIncome)}
 - **Essential spending, a month:** ${gbpOrNotSet(bg.essentialBillsMonthly)}
-- **Months of cover:** ${bg.emergencyRunwayMonths === null ? "Not set" : `${bg.emergencyRunwayMonths.toFixed(1)} months`}
+- **Breathing room:** ${bg.emergencyRunwayMonths === null ? "Not set" : `${bg.emergencyRunwayMonths.toFixed(1)} months`}
 - **Safe to spend:** ${bg.safeToSpend ? `${formatSignedGbp(bg.safeToSpend.weeklyAllowance)} a week` : "Not set"}
 - **Income minus spending, a month:** ${gbpOrNotSet(bg.monthlySurplus)}
 

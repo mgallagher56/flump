@@ -14,7 +14,7 @@ type Story = StoryObj<typeof BaselineSnapshotPreview>;
 const assertPreview: Story["play"] = async ({ canvasElement }) => {
   const canvas = within(canvasElement);
   await expect(canvas.getByText("Example")).toBeVisible();
-  await expect(canvas.getByText("Months of cover")).toBeVisible();
+  await expect(canvas.getByText("Breathing room")).toBeVisible();
 };
 
 export const Light: Story = { globals: { theme: "light" }, play: assertPreview };

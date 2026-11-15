@@ -36,7 +36,7 @@ export const HOME_FAQS: HomeFaqEntry[] = [
   {
     id: "start",
     q: "How do I get started?",
-    a: "Enter a few rough numbers: your salary, rent or mortgage, bills, savings, pension and any debts. Flump shows your net worth, what is left over each month and your months of cover straight away. You can add detail whenever you want.",
+    a: "Enter a few rough numbers: your salary, rent or mortgage, bills, savings, pension and any debts. Flump shows your net worth, what is left over each month and your breathing room straight away. You can add detail whenever you want.",
   },
   {
     id: "pricing",

@@ -62,13 +62,20 @@ describe("PayExtraTool", () => {
   it("states only the change, with at most two supporting figures and no repeated date", () => {
     renderTool({ extraPayment: 200 });
     const outcome = screen.getByTestId("scenario-outcome");
-    expect(outcome.textContent).toMatch(/^Debt-free .*(months?|years?) sooner/);
+    // E17 5A: one result card, labelled for the illustration, with the change as its figure.
+    expect(screen.getAllByRole("group", { name: "With the extra payment" })).toHaveLength(1);
+    expect(outcome.querySelector('[data-slot="figure"]')?.textContent).toMatch(
+      /(months?|years?) sooner$/,
+    );
+    expect(outcome.textContent).toMatch(/Debt-free .*(months?|years?) sooner/);
     // The slider's value pill names the amount, so the outcome does not repeat it.
     expect(outcome.textContent).not.toContain("£200 extra");
     expect(screen.queryByText("Debt-free date")).toBeNull();
-    expect(outcome.querySelectorAll("dt")).toHaveLength(2);
-    expect(screen.getByText("Interest compared with minimum payments only")).toBeDefined();
-    expect(screen.getByText(/^£[\d,]+ less$/)).toBeDefined();
+    // One supporting row; the interest comparison is the card's one sentence.
+    expect(outcome.querySelectorAll("dt")).toHaveLength(1);
+    expect(
+      screen.getByText(/^Interest compared with minimum payments only: £[\d,]+ less\.$/),
+    ).toBeDefined();
   });
 
   it("shows interest this year in the result, and how the extra payment alters it", () => {
