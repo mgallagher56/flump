@@ -39,8 +39,8 @@ type Story = StoryObj<typeof RunwayCalculator>;
 export const Default: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    const more = canvas.getAllByRole("button", { name: "More options" })[0];
-    if (!more) throw new Error("More options missing");
+    const more = canvas.getAllByRole("button", { name: "Accounts and spending to include" })[0];
+    if (!more) throw new Error("Accounts and spending to include missing");
     await userEvent.click(more);
     const toggle = canvas.getAllByRole("switch", { name: "Monzo current" })[0] as
       | HTMLInputElement

@@ -163,9 +163,7 @@ describe("PensionContainer", () => {
       const strip = container.querySelector("[data-density='compact']") as HTMLElement;
       const cards = Array.from(strip.children).map((c) => c.textContent ?? "");
       expect(cards).toHaveLength(3);
-      expect(cards[0]).toMatch(
-        /^Estimated income at retirement ?Estimate£[\d,]+A month, in today's money$/,
-      );
+      expect(cards[0]).toMatch(/^Income at retirement ?Estimate£[\d,]+A month, in today's money$/);
       expect(cards[1]).toBe("Going in each month£532You and your employer");
       expect(cards[2]).toMatch(/^Retirement age ?67Assumed: your State Pension age$/);
       const firstView = document.createElement("div");
@@ -509,7 +507,7 @@ describe("PensionContainer", () => {
       fireEvent.change(slider("Your contribution"), { target: { value: "12" } });
       fireEvent.change(slider("Retirement age"), { target: { value: "60" } });
       fireEvent.change(slider("Growth a year"), { target: { value: "9" } });
-      fireEvent.click(screen.getByRole("button", { name: "More options" }));
+      fireEvent.click(screen.getByRole("button", { name: "Inflation and State Pension options" }));
       fireEvent.click(screen.getByLabelText(/Only pay that counts/));
       fireEvent.click(screen.getByLabelText(/today's money/));
       fireEvent.click(screen.getByLabelText(/full new State Pension/));

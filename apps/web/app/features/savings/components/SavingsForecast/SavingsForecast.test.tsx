@@ -49,7 +49,7 @@ describe("SavingsForecast", () => {
     fireEvent.click(screen.getByRole("button", { name: /Show data/ }));
     const split = screen.getByTestId("savings-forecast-split");
     expect(split.textContent).toContain("You pay in£18,000");
-    expect(split.textContent).toMatch(/InterestAbout £[\d,]+/);
+    expect(split.textContent).toMatch(/Interest~£[\d,]+/);
     expect(screen.queryByText(FORECAST_PROMPT)).toBeNull();
   });
 
@@ -77,7 +77,7 @@ describe("SavingsForecast", () => {
   });
 
   it("builds the announcement text", () => {
-    expect(forecastOutcomeText(filled, 21000)).toMatch(/^About £[\d,]+ in 5 years$/);
+    expect(forecastOutcomeText(filled, 21000)).toMatch(/^~£[\d,]+ in 5 years$/);
     expect(forecastOutcomeText({ ...filled, monthly: null, rate: null }, 21000)).toBe(
       FORECAST_PROMPT,
     );

@@ -287,10 +287,10 @@ export const Dark: Story = { ...Default, globals: { theme: "dark" } };
  */
 const conventionArgs = {
   title: "Your pension pot",
-  summary: "Your pot grows from £182,000 in Sep 2026 to about £236,000 in Sep 2029.",
+  summary: "Your pot grows from £182,000 in Sep 2026 to ~£236,000 in Sep 2029.",
   legend: undefined,
   dataTable: undefined,
-  annotation: { x: "2028-09", label: "About £220,000, Sep 2028" },
+  annotation: { x: "2028-09", label: "~£220,000, Sep 2028" },
   children: <ConventionChart />,
 };
 
@@ -300,7 +300,7 @@ const conventionPlay: Story["play"] = async ({ canvasElement }) => {
   const svgText = [...canvasElement.querySelectorAll("svg text")].map((t) => t.textContent);
   await expect(svgText).toContain("Pot");
   await expect(svgText).toContain("Paid in");
-  await expect(svgText).toContain("About £220,000, Sep 2028");
+  await expect(svgText).toContain("~£220,000, Sep 2028");
   await expect(svgText.some((t) => t?.includes("Sept"))).toBe(false);
   await expect(svgText).not.toContain("£0");
 };

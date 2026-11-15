@@ -372,11 +372,11 @@ describe("<MortgageContainer />", () => {
       expect(notices[0]?.textContent).not.toMatch(/fixed-rate deals|early repayment/);
     });
 
-    test("starting figures sit behind More options and start from the saved figures", () => {
+    test("starting figures sit behind Starting figures and start from the saved figures", () => {
       loaderData = loaded();
       const { getByRole, getByLabelText, queryByLabelText } = customRender(<MortgageContainer />);
       expect(queryByLabelText("Balance to try")).toBeNull();
-      fireEvent.click(getByRole("button", { name: "More options" }));
+      fireEvent.click(getByRole("button", { name: "Starting figures" }));
       expect((getByLabelText("Balance to try") as HTMLInputElement).value).toBe("135400");
       expect((getByLabelText("Rate to try") as HTMLInputElement).value).toBe("4.5");
       expect((getByLabelText("Years left to try") as HTMLInputElement).value).toBe("20");
@@ -386,7 +386,7 @@ describe("<MortgageContainer />", () => {
       loaderData = loaded();
       const fetchSpy = vi.spyOn(globalThis, "fetch");
       const { container, getAllByRole, getByRole } = customRender(<MortgageContainer />);
-      fireEvent.click(getByRole("button", { name: "More options" }));
+      fireEvent.click(getByRole("button", { name: "Starting figures" }));
       const before = savedText(container);
       const sliders = container.querySelectorAll("input[type='range']");
       expect(sliders.length).toBeGreaterThanOrEqual(3);
@@ -406,7 +406,7 @@ describe("<MortgageContainer />", () => {
       loaderData = loaded();
       const setItem = vi.spyOn(Storage.prototype, "setItem");
       const { container, getByRole } = customRender(<MortgageContainer />);
-      fireEvent.click(getByRole("button", { name: "More options" }));
+      fireEvent.click(getByRole("button", { name: "Starting figures" }));
       const slider = container.querySelector("input[type='range']") as HTMLInputElement;
       fireEvent.change(slider, { target: { value: "500000" } });
       expect(setItem).not.toHaveBeenCalled();
@@ -416,17 +416,17 @@ describe("<MortgageContainer />", () => {
     test("the zone does not repeat the saved figures and reset is absent until a change", () => {
       loaderData = loaded();
       const { queryByText, queryByRole } = customRender(<MortgageContainer />);
-      // The starting figures are the inputs under More options, so no basis line repeats them.
+      // The starting figures are the inputs under Starting figures, so no basis line repeats them.
       expect(queryByText(/Starting from your figures/)).toBeNull();
       expect(queryByRole("button", { name: "Reset to saved figures" })).toBeNull();
     });
 
-    test("the rate change tool uses the fix date, and the zone has one More options", () => {
+    test("the rate change tool uses the fix date, and the zone has one Starting figures drawer", () => {
       loaderData = loaded({ fixedRateEndDate: "2099-10-01" });
       const { queryByText } = customRender(<MortgageContainer />);
       selectTab("Rate change");
       // No loan to value bands in the tool.
-      expect(screen.getAllByRole("button", { name: "More options" })).toHaveLength(1);
+      expect(screen.getAllByRole("button", { name: "Starting figures" })).toHaveLength(1);
       expect(queryByText(/Next LTV band/)).toBeNull();
       expect(queryByText(/Fixed rate end date not set/)).toBeNull();
     });
@@ -441,7 +441,7 @@ describe("<MortgageContainer />", () => {
         userProfile: {},
       };
       const { container, getByRole, getByLabelText } = customRender(<MortgageContainer />);
-      fireEvent.click(getByRole("button", { name: "More options" }));
+      fireEvent.click(getByRole("button", { name: "Starting figures" }));
       fireEvent.change(getByLabelText("Rate to try"), { target: { value: "3" } });
       selectTab("Rate change");
       const results = container.querySelector("#remortgage-results") as HTMLElement;
@@ -456,7 +456,7 @@ describe("<MortgageContainer />", () => {
     test("Update your details opens the dialog with the saved values, not the scenario", () => {
       loaderData = loaded();
       const { container, getByRole, getByLabelText } = customRender(<MortgageContainer />);
-      fireEvent.click(getByRole("button", { name: "More options" }));
+      fireEvent.click(getByRole("button", { name: "Starting figures" }));
       const slider = container.querySelector("input[type='range']") as HTMLInputElement;
       fireEvent.change(slider, { target: { value: "500000" } });
       fireEvent.click(getByRole("button", { name: "Update your details" }));

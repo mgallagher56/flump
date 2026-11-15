@@ -50,12 +50,20 @@ describe("FormField", () => {
     expect(document.getElementById(ids[1] ?? "")?.textContent).toContain("Too high");
   });
 
-  it("shows a required marker that is not read twice", () => {
-    const { container } = renderField({ required: true });
-    expect(container.querySelector("[aria-hidden='true']")?.textContent).toBe("Required");
+  it("marks only optional fields and keeps native required without visible marker (Rule B11)", () => {
+    const { container, rerender } = renderField({ optional: true });
+    expect(container.querySelector("[aria-hidden='true']")?.textContent).toBe("(optional)");
     const input = screen.getByRole("textbox", { name: "Monthly overpayment" });
-    expect(input.hasAttribute("required")).toBe(true);
-    expect(screen.queryByText(/\(required\)/)).toBeNull();
+    expect(input.hasAttribute("required")).toBe(false);
+
+    rerender(
+      <FormField label="Monthly overpayment" required>
+        {(field) => <TextInput {...controlProps(field)} />}
+      </FormField>,
+    );
+    expect(container.querySelector("[aria-hidden='true']")).toBeNull();
+    const requiredInput = screen.getByRole("textbox", { name: "Monthly overpayment" });
+    expect(requiredInput.hasAttribute("required")).toBe(true);
   });
 
   it("honours an explicit id and generates unique ids otherwise", () => {

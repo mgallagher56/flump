@@ -39,7 +39,7 @@ describe("<BtlOverview />", () => {
     expect(screen.getByText("+£600.00")).toBeDefined();
     expect(container.textContent).not.toMatch(/Gross|net cash flow/i);
     expect(container.innerHTML).not.toMatch(/danger|positive/);
-    fireEvent.click(screen.getAllByRole("button", { name: "Edit your details" })[0] as HTMLElement);
+    fireEvent.click(screen.getAllByRole("button", { name: "Edit" })[0] as HTMLElement);
     expect(onConfigure).toHaveBeenCalled();
   });
 });

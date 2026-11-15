@@ -41,7 +41,7 @@ describe("<ForecasterResults />", () => {
     // E17 5A: one result card, named by its label, with the pot as its figure.
     const card = screen.getByRole("group", { name: "Estimated pot at retirement" });
     const value = card.querySelector('[data-slot="figure"]')?.textContent ?? "";
-    expect(value).toMatch(/^About £[\d,]+$/);
+    expect(value).toMatch(/^~£[\d,]+$/);
     expect(Number(value.replace(/\D/g, "")) % 100).toBe(0);
     expect(screen.queryByText(/PLSA|standard/i)).toBeNull();
     expectPageRules(container, { maxFigures: 2 });

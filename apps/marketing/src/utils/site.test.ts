@@ -17,7 +17,7 @@ describe("site settings", () => {
     expect(signupCta("invite-only", "https://app.example.test")).toEqual({
       href: "/contact#beta",
       label: "Request an invite",
-      shortLabel: "Request invite",
+      shortLabel: "Request an invite",
       external: false,
     });
   });

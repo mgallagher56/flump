@@ -81,14 +81,14 @@ const AccountsContainer: FC = () => {
           hasAccounts ? (
             <div className={headerActions()}>
               {/* E30 monthly check-in. From md only: a phone header holds one action. */}
-              <Button asChild className={wideOnly()} variant="secondary">
+              <Button asChild className={wideOnly()} variant="outline">
                 <a
                   data-testid="accounts-open-check-in"
                   href={CHECK_IN_HREF}
                   id="accounts-open-check-in"
                   onClick={openCheckIn}
                 >
-                  Update balances
+                  Start monthly check-in
                 </a>
               </Button>
               <AddEditAccountsDialogBtn
@@ -108,14 +108,14 @@ const AccountsContainer: FC = () => {
           <AccountsGroupList
             afterNetWorth={
               <div className={phoneOnly()}>
-                <Button asChild variant="secondary">
+                <Button asChild variant="outline">
                   <a
                     data-testid="accounts-open-check-in-phone"
                     href={CHECK_IN_HREF}
                     id="accounts-open-check-in-phone"
                     onClick={openCheckIn}
                   >
-                    Update balances
+                    Start monthly check-in
                   </a>
                 </Button>
               </div>

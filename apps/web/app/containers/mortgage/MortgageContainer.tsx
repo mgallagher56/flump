@@ -966,7 +966,7 @@ const MortgageContainer: FC = () => {
           value={scenarioTool}
           onValueChange={(value) => setScenarioTool(value as ScenarioTool)}
         />
-        <CollapsibleDrawer title="More options" variant="quiet">
+        <CollapsibleDrawer title="Starting figures" variant="quiet">
           <MortgageScenarioInputs
             isEdited={scenario.isEdited}
             values={scenarioValues}

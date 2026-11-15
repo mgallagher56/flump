@@ -19,15 +19,20 @@ describe("CheckInRow", () => {
     expect(screen.getByRole("heading", { name: "Monthly check-in" })).toBeTruthy();
     expect(screen.getByText("November balances not recorded yet")).toBeTruthy();
     expect(row.querySelectorAll("p")).toHaveLength(1);
-    const link = screen.getByRole("link", { name: "Update balances" });
+    const link = screen.getByRole("link", { name: "Start monthly check-in" });
     expect(link.getAttribute("href")).toBe("/app/accounts/history?checkIn=1");
     expect(row.textContent).not.toMatch(/overdue|streak|missed|£/i);
   });
 
-  it("offers to record balances when nothing is recorded yet", () => {
+  it("offers Continue check-in when part done (Rule B17)", () => {
+    renderRow({ currentMonth: "2026-11", lastRecordedMonth: "2026-10", partDone: true });
+    expect(screen.getByRole("link", { name: "Continue check-in" })).toBeTruthy();
+  });
+
+  it("offers to start check-in when nothing is recorded yet", () => {
     renderRow({ currentMonth: "2026-11", lastRecordedMonth: null });
     expect(screen.getByText("No balances recorded yet")).toBeTruthy();
-    expect(screen.getByRole("link", { name: "Record balances" })).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Start monthly check-in" })).toBeTruthy();
   });
 
   it("draws nothing once this month is recorded", () => {

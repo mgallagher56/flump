@@ -43,8 +43,8 @@ export const Default: Story = {
     await expect(
       within(canvas.getByRole("table", { name: "Where the next £1,000 goes" })).queryByText("£720"),
     ).not.toBeInTheDocument();
-    // Region, pension type, student loans, the tax year and the extra pension sit under More options.
-    await userEvent.click(canvas.getByRole("button", { name: "More options" }));
+    // Region, pension type, student loans, the tax year and the extra pension sit under Salary and deduction options.
+    await userEvent.click(canvas.getByRole("button", { name: "Salary and deduction options" }));
     await expect(canvas.getByLabelText("Where you pay tax")).toBeInTheDocument();
     // "Model a pension contribution" pre-fills the extra pension slider at £1,000.
     await userEvent.click(canvas.getByRole("button", { name: "Model a pension contribution" }));

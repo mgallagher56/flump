@@ -55,7 +55,7 @@ export function signupCta(mode: SignupMode = SIGNUP_MODE, appUrl: string = getAp
   return {
     href: BETA_INVITE_PATH,
     label: "Request an invite",
-    shortLabel: "Request invite",
+    shortLabel: "Request an invite",
     external: false,
   };
 }

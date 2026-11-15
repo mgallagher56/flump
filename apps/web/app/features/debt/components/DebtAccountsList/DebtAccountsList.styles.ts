@@ -70,4 +70,9 @@ export const balanceFigure = css({
   color: "text.primary",
 });
 
+/** The "Edit" word shows from sm up; below it the button is the pencil alone (Rule B13). */
+export const editLabel = cva({
+  base: { display: { base: "none", sm: "inline" } },
+});
+
 export const drawerWrap = css({ marginTop: "8px" });

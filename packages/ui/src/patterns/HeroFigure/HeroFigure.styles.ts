@@ -33,7 +33,7 @@ export const heroFigure = sva({
       // re-score), the same on every page and breakpoint whatever the figure; the end padding
       // leaves the decorative disc room beside the figure.
       width: "100%",
-      maxWidth: { base: "100%", md: "30rem" },
+      maxWidth: "100%",
       paddingInlineEnd: { md: "24" },
     },
     content: {

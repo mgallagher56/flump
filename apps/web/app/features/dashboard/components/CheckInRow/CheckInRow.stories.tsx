@@ -17,7 +17,7 @@ export const Due: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     await expect(canvas.getAllByText("November balances not recorded yet")[0]).toBeVisible();
-    await expect(canvas.getAllByRole("link", { name: "Update balances" })[0]).toBeVisible();
+    await expect(canvas.getAllByRole("link", { name: "Start monthly check-in" })[0]).toBeVisible();
   },
 };
 

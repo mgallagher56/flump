@@ -69,7 +69,7 @@ describe("<AccountsContainer />", () => {
     expect(getByRole("list", { name: "What you own" }).textContent).toContain(
       "Home (your estimate)",
     );
-    expect(getAllByText("Net worth")).toHaveLength(1);
+    expect(getAllByText("Total of the accounts listed")).toHaveLength(1);
     expect(container.querySelectorAll('[data-tone="hero"]')).toHaveLength(1);
     expect(container.querySelector('[data-testid="accounts-net-worth"]')?.textContent).toContain(
       "£87,000",
@@ -180,23 +180,23 @@ describe("<AccountsContainer />", () => {
     expect(queryByText("Monzo Bank")).toBeNull();
   });
 
-  test("header has Update balances and Add account, with no View history", () => {
+  test("header has Start monthly check-in and Add account, with no View history", () => {
     mocks.mockUseLoaderData.mockReturnValue({
       accounts: [{ id: "a1", name: "Current", type: "Current", balance: 5000 }],
       accountDetails: [],
     });
     const { getByTestId, queryByText, container } = customRender(<AccountsContainer />);
-    expect(getByTestId("accounts-open-check-in").textContent).toBe("Update balances");
+    expect(getByTestId("accounts-open-check-in").textContent).toBe("Start monthly check-in");
     expect(queryByText("View history")).toBeNull();
     expect(container.querySelectorAll('[data-variant="primary"]').length).toBe(1);
   });
 
-  test("a phone-only Update balances button sits under net worth", () => {
+  test("a phone-only Start monthly check-in button sits under net worth", () => {
     mocks.mockUseLoaderData.mockReturnValue({
       accounts: [{ id: "a1", name: "Current", type: "Current", balance: 5000 }],
       accountDetails: [],
     });
     const { getByTestId } = customRender(<AccountsContainer />);
-    expect(getByTestId("accounts-open-check-in-phone").textContent).toBe("Update balances");
+    expect(getByTestId("accounts-open-check-in-phone").textContent).toBe("Start monthly check-in");
   });
 });

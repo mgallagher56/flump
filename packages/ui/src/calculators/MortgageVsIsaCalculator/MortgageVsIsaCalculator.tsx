@@ -37,7 +37,7 @@ export const MORTGAGE_ISA_COPY = {
   balance: "Mortgage balance",
   rate: "Mortgage interest rate",
   extra: "Extra money a month",
-  moreOptions: "More options",
+  moreOptions: "Mortgage term and ISA growth",
   isaGrowth: "Assumed ISA growth a year",
   term: "Years left on the mortgage",
   /** Headline label: one fixed label in every case, so neither option reads as the winner. */

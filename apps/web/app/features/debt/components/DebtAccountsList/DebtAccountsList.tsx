@@ -1,5 +1,5 @@
 import type { DebtItem } from "@flump/finance-engine";
-import { CollapsibleDrawer, Icon, IconButton, PageSection } from "@repo/ui";
+import { Button, CollapsibleDrawer, Icon, PageSection } from "@repo/ui";
 import { CreditCard, Pencil } from "lucide-react";
 import { type FC, useState } from "react";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
@@ -7,6 +7,7 @@ import { AddDebtDialog } from "../AddDebtDialog";
 import {
   balanceFigure,
   drawerWrap,
+  editLabel,
   listCard,
   listReset,
   listSubtitle,
@@ -89,15 +90,17 @@ export const DebtAccountsList: FC<DebtAccountsListProps> = ({
           </div>
           <div className={rowFigures}>
             <span className={balanceFigure}>{formatCurrency(Math.abs(debt.balance ?? 0))}</span>
-            <IconButton
+            <Button
+              aria-label={`Edit ${debt.name}`}
               data-debt-edit={debt.id}
-              label={`Edit ${debt.name}`}
-              size="md"
+              size="sm"
               type="button"
+              variant="ghost"
               onClick={() => setEditingId(debt.id)}
             >
               <Icon icon={Pencil} size="sm" />
-            </IconButton>
+              <span className={editLabel()}>Edit</span>
+            </Button>
           </div>
         </li>
       ))}

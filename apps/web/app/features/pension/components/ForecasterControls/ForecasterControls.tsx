@@ -93,7 +93,7 @@ export const ForecasterControls: FC<ForecasterControlsProps> = ({
         onChange={(v) => set("growthRate", v)}
       />
 
-      <CollapsibleDrawer title="More options" variant="quiet">
+      <CollapsibleDrawer title="Inflation and State Pension options" variant="quiet">
         <div className={toggleList()}>
           <label className={toggleRow()} htmlFor="pension-scenario-inflation">
             <input

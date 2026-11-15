@@ -328,6 +328,20 @@ describe("<AccountDetailContainer />", () => {
       expect(getByTestId("hero-figure").textContent).toContain("Not counted in your net worth.");
       expect(getByTestId("hero-figure").textContent).not.toMatch(/November|As of/);
     });
+
+    test("defect C(e): after a future-dated import the hero figure and date line come from the same month", () => {
+      mocks.mockUseLoaderData.mockReturnValueOnce({
+        account: { id: "a1", name: "Easy saver", type: "Savings", balance: 2000 },
+        accountDetails: [
+          { month: 10, year: 2026, value: 1000 },
+          { month: 12, year: 2026, value: 2000 },
+        ],
+      } as never);
+      const { getByTestId, getByText } = customRender(<AccountDetailContainer />);
+      expect(getByTestId("hero-figure").textContent).toContain("£1,000");
+      expect(getByTestId("hero-figure").textContent).not.toContain("£2,000");
+      expect(getByText("As of October")).toBeDefined();
+    });
   });
 
   test("says what happened when the account cannot be found, with a way back", () => {

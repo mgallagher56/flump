@@ -204,7 +204,7 @@ export const SavingsForecast: FC<SavingsForecastProps> = ({
         value={values.years}
         onChange={(value) => onChange("years", value)}
       />
-      <CollapsibleDrawer title="More options" variant="quiet">
+      <CollapsibleDrawer title="Goal and inflation options" variant="quiet">
         <div className={moreOptions()}>
           <Checkbox
             checked={values.todaysMoney}

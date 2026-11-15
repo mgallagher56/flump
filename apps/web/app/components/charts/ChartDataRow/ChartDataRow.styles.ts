@@ -32,7 +32,7 @@ export const dataRowEnd = cva({
     alignItems: "center",
     columnGap: "6",
     rowGap: "1",
-    minHeight: "touch",
+    minHeight: "32px",
     minWidth: 0,
   },
   variants: {
