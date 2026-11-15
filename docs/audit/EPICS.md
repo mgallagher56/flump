@@ -34,6 +34,7 @@ Updated on 2026-11-15 from the PRs merged up to #728, the backend hand-overs and
 | 18 | E27, E28, E30 v2 | Pension projection epic; MTD decision (before April 2027); snapshot v2 | Not started |
 | 19 | Backend | Re-score follow-ups (backend-2026-11/RESCORE.md): BE-16 conditional writes, BE-17 performance and tests, BE-18 bank launch readiness, SEC-D receipt encryption, SEC-E CI and images, SEC-F audit-trail integrity; SEC-A waits for the owner's variables | Not started. BE-01 to BE-14 merged; BE-15 with SEC-B merged (#725); PAT input route and client policy route merged (#717) |
 | 20 | E16 | Design polish rounds 2 and 3 | Done: merged (#697 to #728). The R3 re-score is in `docs/design/e16-polish/RESCORE-R3.md` |
+| 21 | E33 | Retirement plan: a target the user sets, tracked each month (E27 becomes its tax slices) | Plan awaiting owner approval |
 
 ### Work in progress
 
@@ -930,6 +931,15 @@ Source: [docs/research/market-research-2026-11.md](../research/market-research-2
   - Follow-up review fixes landed in de11185c (copy and UI) and 7b9b6425 (one scenario zone and one guidance notice on the savings page).
   - Not re-checked in code: that the saved housing details feed the headline figures, and that the scenario zone never writes to saved data.
 - **Labels:** done
+
+## E33. Retirement plan: a target the user sets, tracked each month
+
+- **Severity:** P2 (owner request, 2026-11-15).
+- **Blocked by:** owner approval of the plan and its decisions RD1 to RD11; E29a for projection wording, and E29b before anyone beyond the friends beta; signed tax vectors for the tax slices (S6, S7).
+- **Done when:** a user can save a retirement age and a yearly target of their own (typed, or built from their budget entries); housing cost in retirement follows their saved housing details (a mortgage that ends, a mortgage that continues, or rent for life, each shown with the same weight); the Retirement page shows an estimated yearly income in today's money for three growth cases beside that target, with every assumption visible and editable; the pots that count are tracked month by month from the check-in; an MCP read tool and a simulate tool expose the same figures; no surface says what a user needs or should do.
+- **Notes:** E27 keeps its number and becomes slices S6 and S7 of this epic (withdrawal tax, the tax-free lump sum, UFPLS, inheritance tax on unused pensions from 6 April 2027, the MoneyHelper link, the self-employed view). The plan recommends that the Retirement Living Standards stay off the page, as E16 decision D6 left them. Plan: [E33-retirement-plan.md](plans/E33-retirement-plan.md). Companion research: [E34-shared-finances-research.md](plans/E34-shared-finances-research.md) (couples) and [E35-engagement-options.md](plans/E35-engagement-options.md) (engagement); neither is an epic until the owner decides.
+- **Status (2026-11-15):** plan only; nothing built.
+- **Labels:** needs-triage
 
 ### Addendum to E19: portability
 
