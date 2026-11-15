@@ -96,6 +96,7 @@ export const CHART_LINES = [
   "chart.warning",
   "chart.accentPurple",
   "chart.accentCyan",
+  "chart.accent",
   "chart.projection",
   "chart.baseline",
   ...CHART_SERIES,

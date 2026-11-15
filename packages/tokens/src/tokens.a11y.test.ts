@@ -804,6 +804,21 @@ describe("E17 accent namespace", () => {
     assertPair({ fg: "chart.accent", bg: "surface.card", themes: BOTH, min: 3, role: "graphic" });
   });
 
+  // Under colour-vision simulation the plum sits close to the teal (measured minimum about 6.5,
+  // deuteranopia, light), well under the 15 the adjacent series keep. So colour alone never tells
+  // chart.accent from chart.primary: the dash and the direct label in rule C7 are mandatory. The
+  // floor below only stops the two from collapsing into one colour.
+  it("chart.accent stays apart from chart.primary under every CVD simulation, though never by colour alone", () => {
+    for (const theme of BOTH) {
+      const a = toRgb(resolveColor("chart.accent", theme));
+      const b = toRgb(resolveColor("chart.primary", theme));
+      for (const kind of Object.keys(CVD)) {
+        const d = deltaE76(a, b, kind);
+        expect(d, `chart.accent vs chart.primary (${kind}, ${theme})`).toBeGreaterThanOrEqual(5);
+      }
+    }
+  });
+
   it(`accent is at least ${MIN_ACCENT_MEANING_DELTA_E} deltaE76 from every status colour and from debt, warning and wealth in charts`, () => {
     for (const theme of BOTH) {
       for (const other of MEANING_COLOURS) {
