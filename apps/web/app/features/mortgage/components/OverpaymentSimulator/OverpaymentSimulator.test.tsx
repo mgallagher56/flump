@@ -12,11 +12,15 @@ const props = {
 };
 
 describe("<OverpaymentSimulator />", () => {
-  test("shows one outcome, two supporting figures and the chart, with no nested cards", () => {
-    const { getByText, container } = customRender(<OverpaymentSimulator {...props} />);
-    expect(getByText("Paid off sooner by")).toBeDefined();
+  test("shows one result card with one note and one supporting row, and the chart", () => {
+    const { getByText, getAllByRole, container } = customRender(
+      <OverpaymentSimulator {...props} />,
+    );
+    // E17 5A: one result card, labelled by the outcome, with one row; the interest saved is its note.
+    expect(getAllByRole("group", { name: "Paid off sooner by" })).toHaveLength(1);
     expect(getByText("Monthly payment with the extra")).toBeDefined();
-    expect(getByText("Less interest in total (estimate)")).toBeDefined();
+    expect(getByText(/^Less interest in total \(estimate\): £[\d,]+\.$/)).toBeDefined();
+    expect(container.querySelectorAll("#overpayment-outcome dt")).toHaveLength(1);
     // The payment summary under the slider is gone: it repeated the figure beside the outcome.
     expect(container.textContent).not.toMatch(/Total each month|Usual monthly payment/);
     // One outcome: no extra sentence restates it under the value or above the chart.
@@ -102,7 +106,9 @@ describe("<OverpaymentSimulator />", () => {
       <OverpaymentSimulator {...props} overpayment={0} />,
     );
     const outcome = getByTestId("overpayment-outcome");
-    expect(outcome.textContent).toBe("Move the slider to see what changes");
+    expect(outcome.querySelector('[data-slot="empty"]')?.textContent).toBe(
+      "Move the slider to see what changes",
+    );
     expect(container.querySelectorAll("dl")).toHaveLength(0);
     expect(container.textContent).not.toMatch(
       /No change yet|Monthly payment with the extra|Less interest|Total each month|Usual monthly/,

@@ -35,16 +35,6 @@ export const rateRow = css({
   "& dd": { m: 0, color: "text.primary", ...numeric },
 });
 
-export const outcomeLabel = css({ textStyle: "label.md", color: "text.secondary", m: 0 });
-
-/** Never `surface.hero`: this is a scenario outcome. */
-export const outcomeValue = css({
-  textStyle: "numeric.lg",
-  color: "text.primary",
-  m: 0,
-  ...numeric,
-});
-
 export const outcomeNote = css({ textStyle: "body.sm", color: "text.secondary", m: 0, ...numeric });
 
 export const noteText = css({

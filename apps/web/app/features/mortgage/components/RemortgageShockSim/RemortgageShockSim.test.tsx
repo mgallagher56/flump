@@ -109,8 +109,10 @@ describe("RemortgageShockSim", () => {
     const outcome = screen.getByTestId("remortgage-outcome");
     expect(outcome.textContent).toMatch(/\+£\d+ a month from Sep 2099/);
     expect(document.body.textContent).not.toMatch(/Sept/);
+    // E17 5A: one result card with one supporting row; the new payment is its sentence.
     const results = screen.getByTestId("remortgage-results");
-    expect(results.querySelectorAll("dt")).toHaveLength(2);
+    expect(results.querySelectorAll("dt")).toHaveLength(1);
+    expect(outcome.textContent).toMatch(/Payment at the new rate \(estimate\): £[\d,]+ a month\./);
     // The saved payment is a fact, so it is not marked as an estimate.
     expect(screen.getByText("Current payment")).toBeDefined();
     expect(results.textContent).toContain("£1,250");
@@ -131,8 +133,8 @@ describe("RemortgageShockSim", () => {
       target: { value: "4.5" },
     });
     expect(screen.getByTestId("remortgage-outcome").textContent).toContain("No change");
-    const results = screen.getByTestId("remortgage-results");
-    expect(results.textContent?.match(/£1,300/g)).toHaveLength(2);
+    const outcome = screen.getByTestId("remortgage-outcome");
+    expect(outcome.textContent?.match(/£1,300/g)).toHaveLength(2);
   });
 
   it("moves the saved payment by the formula change between the two rates", () => {

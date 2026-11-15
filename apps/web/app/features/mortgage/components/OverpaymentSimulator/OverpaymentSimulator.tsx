@@ -6,6 +6,7 @@ import {
   formatAxisCurrency,
   formatMonthTick,
   niceYDomain,
+  ResultBlock,
   SimulatorSplitLayout,
   SliderField,
   useChartFigure,
@@ -22,13 +23,7 @@ import {
   dataCell,
   dataTable,
   outcomeColumn,
-  outcomeLabel,
-  outcomeNote,
-  outcomePrompt,
-  outcomeSupport,
-  outcomeValue,
   stateNote,
-  supportItem,
   toolHint,
 } from "./OverpaymentSimulator.styles";
 
@@ -337,9 +332,13 @@ export const OverpaymentSimulator: FC<OverpaymentSimulatorProps> = ({
     return (
       <SimulatorSplitLayout
         content={
-          <p className={outcomeNote} id="overpayment-empty">
-            Add your balance, interest rate and years left to see what overpaying would change.
-          </p>
+          <ResultBlock
+            emptyPrompt="Add your balance, interest rate and years left to see what overpaying would change."
+            figure={null}
+            hideLabel
+            id="overpayment-empty"
+            label="Paid off sooner by"
+          />
         }
         contentLabel="Overpayment results"
         controls={controls}
@@ -365,37 +364,31 @@ export const OverpaymentSimulator: FC<OverpaymentSimulatorProps> = ({
 
   const content = (
     <div className={outcomeColumn()}>
-      {hasOverpayment ? (
-        <>
-          <div data-testid="overpayment-outcome" id="overpayment-outcome">
-            <p className={outcomeLabel}>
-              {showBulletReduced ? "Less to repay at the end of the term" : "Paid off sooner by"}
-            </p>
-            <p className={outcomeValue}>{outcomeText}</p>
-          </div>
-
-          <dl className={outcomeSupport()}>
-            <div className={supportItem()}>
-              <dt>
-                {isInterestOnly
+      {/* The zone's one result card (E17 5A): the change, one sentence and one supporting row.
+          At £0 there is no change to state: one short prompt (the payment and the term are
+          already on the page). */}
+      <ResultBlock
+        emptyPrompt="Move the slider to see what changes"
+        figure={hasOverpayment ? outcomeText : null}
+        hideLabel={!hasOverpayment}
+        id="overpayment-outcome"
+        label={showBulletReduced ? "Less to repay at the end of the term" : "Paid off sooner by"}
+        note={
+          hasOverpayment
+            ? `Less interest in total (estimate): ${formatCurrency(interestSaved ?? 0)}.`
+            : undefined
+        }
+        row={
+          hasOverpayment
+            ? {
+                label: isInterestOnly
                   ? "Interest payment with the extra"
-                  : "Monthly payment with the extra"}
-              </dt>
-              <dd>{formatCurrency(simulation.monthlyScheduled + overpayment)}</dd>
-            </div>
-            <div className={supportItem()}>
-              <dt>Less interest in total (estimate)</dt>
-              <dd>{formatCurrency(interestSaved ?? 0)}</dd>
-            </div>
-          </dl>
-        </>
-      ) : (
-        // At £0 there is no change to state: one short prompt, no figures (the payment and the
-        // term are already on the page).
-        <div data-testid="overpayment-outcome" id="overpayment-outcome">
-          <p className={outcomePrompt}>Move the slider to see what changes</p>
-        </div>
-      )}
+                  : "Monthly payment with the extra",
+                value: formatCurrency(simulation.monthlyScheduled + overpayment),
+              }
+            : undefined
+        }
+      />
 
       <ChartFigure
         dataTable={

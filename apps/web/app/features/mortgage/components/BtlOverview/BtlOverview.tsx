@@ -1,6 +1,7 @@
-import { Button, KpiCard, KpiStrip, Money, Num } from "@repo/ui";
+import { Button, KpiCard, KpiStrip, Money, Num, PageSection } from "@repo/ui";
+import { Building2 } from "lucide-react";
 import type { FC } from "react";
-import { btlCard, btlHeader, btlSubtitle, btlTitle } from "./BtlOverview.styles";
+import { btlCard, btlSubtitle } from "./BtlOverview.styles";
 
 export interface BtlOverviewProps {
   /** `null` when the user has not said how many properties they let. */
@@ -35,54 +36,51 @@ export const BtlOverview: FC<BtlOverviewProps> = ({
   );
 
   return (
-    <section
-      aria-labelledby="btl-overview-title"
-      className={btlCard()}
-      data-testid="btl-overview"
+    <PageSection
+      action={edit}
+      description="Rent and rental yield for the properties you let."
+      domain="mortgage"
+      headingId="btl-overview-title"
+      icon={Building2}
       id="btl-overview"
+      title="Your buy to let properties"
     >
-      <div className={btlHeader()}>
-        <div>
-          <h2 className={btlTitle()} id="btl-overview-title">
-            Your buy to let properties
-          </h2>
-          <p className={btlSubtitle()}>
-            {propertyCount === null
-              ? "Number of properties not set"
-              : `${propertyCount} ${propertyCount === 1 ? "property" : "properties"}`}
-          </p>
-        </div>
-        {edit}
-      </div>
+      <div className={btlCard()}>
+        <p className={btlSubtitle()}>
+          {propertyCount === null
+            ? "Number of properties not set"
+            : `${propertyCount} ${propertyCount === 1 ? "property" : "properties"}`}
+        </p>
 
-      <KpiStrip
-        emptyPrompt={{
-          title: "Add your monthly rent and property value to see your rental yield",
-          action: edit,
-          headingLevel: "h3",
-        }}
-      >
-        <KpiCard
-          label="Monthly rent before costs"
-          value={hasRent ? <Money size="lg" value={monthlyRent} /> : null}
-        />
-        <KpiCard
-          label="Rental yield before costs"
-          value={
-            grossYield === null ? null : (
-              <Num fractionDigits={2} kind="percent" size="lg" value={grossYield} />
-            )
-          }
-        />
-        <KpiCard
-          label="Rent left after the mortgage payment (estimate)"
-          value={
-            rentLeft === null ? null : (
-              <Money fractionDigits={2} signDisplay="always" size="lg" value={rentLeft} />
-            )
-          }
-        />
-      </KpiStrip>
-    </section>
+        <KpiStrip
+          emptyPrompt={{
+            title: "Add your monthly rent and property value to see your rental yield",
+            action: edit,
+            headingLevel: "h3",
+          }}
+        >
+          <KpiCard
+            label="Monthly rent before costs"
+            value={hasRent ? <Money size="lg" value={monthlyRent} /> : null}
+          />
+          <KpiCard
+            label="Rental yield before costs"
+            value={
+              grossYield === null ? null : (
+                <Num fractionDigits={2} kind="percent" size="lg" value={grossYield} />
+              )
+            }
+          />
+          <KpiCard
+            label="Rent left after the mortgage payment (estimate)"
+            value={
+              rentLeft === null ? null : (
+                <Money fractionDigits={2} signDisplay="always" size="lg" value={rentLeft} />
+              )
+            }
+          />
+        </KpiStrip>
+      </div>
+    </PageSection>
   );
 };
