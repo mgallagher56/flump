@@ -428,10 +428,15 @@ describe.skipIf(dbMode === "skip")("authz: /mcp transport (real Postgres)", () =
         asA.body.input.accountDetails.every((d: { accountId: string }) => d.accountId === saver),
       ).toBe(true);
       expect(asA.body.input.budgetEntries).toEqual([
-        expect.objectContaining({ id: budget.body.id, amount: 913.37, name: "housing #1" }),
+        expect.objectContaining({ id: budget.body.id, amount: 913.37, name: "Housing 1" }),
       ]);
       expect(asA.body.input.taxRecords).toEqual([
-        expect.objectContaining({ id: taxRecord.body.id, amount: 7777.77, name: "", notes: null }),
+        expect.objectContaining({
+          id: taxRecord.body.id,
+          amount: 7777.77,
+          name: "Rental 1",
+          notes: null,
+        }),
       ]);
       // The token is anonymised, so no name, note, receipt or user id leaves, even for its owner.
       for (const hidden of ["A Secret", "A secret", "A budget note", receipt, USER_A, "a.pdf"]) {
