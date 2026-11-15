@@ -20,7 +20,8 @@ const breakdown = () => {
   }
   return screen.getByRole("table", { name: BREAKDOWN }).textContent ?? "";
 };
-const openMoreOptions = () => fireEvent.click(screen.getByRole("button", { name: "More options" }));
+const openMoreOptions = () =>
+  fireEvent.click(screen.getByRole("button", { name: "Salary and deduction options" }));
 const modelPension = () => {
   openMoreOptions();
   fireEvent.click(screen.getByRole("button", { name: "Model a pension contribution" }));
@@ -80,11 +81,13 @@ describe("MarginalRateExplorer inside a ScenarioZone", () => {
     fireEvent.click(screen.getByRole("button", { name: "How this is worked out" }));
     expect(screen.getByRole("table", { name: BREAKDOWN })).toBeDefined();
     expect(screen.getByRole("table", { name: CHART_TITLE })).toBeDefined();
-    // "More options" is the quiet text-link drawer here, named by its title open or closed.
-    fireEvent.click(screen.getByRole("button", { name: "More options" }));
-    expect(screen.getByRole("button", { name: "More options" }).getAttribute("aria-expanded")).toBe(
-      "true",
-    );
+    // "Salary and deduction options" is the quiet text-link drawer here, named by its title open or closed.
+    fireEvent.click(screen.getByRole("button", { name: "Salary and deduction options" }));
+    expect(
+      screen
+        .getByRole("button", { name: "Salary and deduction options" })
+        .getAttribute("aria-expanded"),
+    ).toBe("true");
   });
 
   it("keeps the card and every threshold on the tool pages", () => {
@@ -240,7 +243,7 @@ describe("MarginalRateExplorer", () => {
   it("offers the year's student loan plans under More options, closed by default", () => {
     render(<MarginalRateExplorerStandalone initialValues={{ taxYear: "2026/27" }} />);
     expect(screen.queryByRole("group", { name: "Student loan plans" })).toBeNull();
-    fireEvent.click(screen.getByRole("button", { name: "More options" }));
+    fireEvent.click(screen.getByRole("button", { name: "Salary and deduction options" }));
     const group = screen.getByRole("group", { name: "Student loan plans" });
     expect(within(group).getByLabelText("Plan 2")).toBeDefined();
     expect(within(group).getByLabelText("Postgraduate loan")).toBeDefined();

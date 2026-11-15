@@ -2,13 +2,13 @@ import { cva } from "@repo/ui/styled-system/css";
 
 /** Sign in / CTA group in the top bar. */
 export const headerAuth = cva({
-  base: { display: "flex", alignItems: "center", gap: { base: "1.5", sm: "2" } },
+  base: { display: "flex", alignItems: "center", gap: { base: "1", sm: "2" } },
 });
 
 /** Compact top-bar buttons: tighter padding and text on the smallest screens. */
 export const headerButton = cva({
   base: {
-    px: { base: "2.5", sm: "4" },
+    px: { base: "1.5", sm: "4" },
     fontSize: { base: "xs", sm: "sm" },
     textDecoration: "none",
   },
@@ -16,7 +16,12 @@ export const headerButton = cva({
 
 /** Label variants that swap at `sm` (full label from sm up, short label below). */
 export const fullLabel = cva({ base: { display: { base: "none", sm: "inline" } } });
-export const shortLabel = cva({ base: { display: { base: "inline", sm: "none" } } });
+export const shortLabel = cva({
+  base: {
+    display: { base: "inline", sm: "none" },
+    marginInline: "clamp(-8px, calc(100vw - 330px), 0px)",
+  },
+});
 
 /** Drawer link: label left, helper text right. */
 export const drawerLinkRow = cva({ base: { justifyContent: "space-between" } });

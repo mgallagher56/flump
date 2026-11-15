@@ -12,7 +12,8 @@ const supporting = (term: string) => {
   expect(results().getByRole("term").textContent).toBe(term);
   return results().getByRole("definition").textContent ?? "";
 };
-const openMoreOptions = () => fireEvent.click(screen.getByRole("button", { name: "More options" }));
+const openMoreOptions = () =>
+  fireEvent.click(screen.getByRole("button", { name: "Accounts and spending to include" }));
 
 describe("RunwayCalculator", () => {
   beforeEach(() => {
@@ -72,7 +73,7 @@ describe("RunwayCalculator", () => {
     expect(document.querySelector('[data-figure="monthsOfCover"]')).toBeNull();
     // The line-by-line switches wait behind "More options".
     expect(screen.queryAllByRole("switch")).toHaveLength(0);
-    const more = screen.getByRole("button", { name: "More options" });
+    const more = screen.getByRole("button", { name: "Accounts and spending to include" });
     expect(more.getAttribute("aria-expanded")).toBe("false");
     // No bulk buttons, no progress bar, no link away to another page.
     expect(screen.queryByRole("button", { name: /Include all|Include none/ })).toBeNull();

@@ -51,9 +51,9 @@ export const CheckInRow: FC<CheckInRowProps> = (props) => {
         <Icon icon={CalendarCheck} size="md" />
       </span>
       <p className={rowText()}>{checkInLine(props)}</p>
-      <Button asChild size="sm" variant="secondary">
+      <Button asChild size="sm" variant="outline">
         <Link to={CHECK_IN_ROUTE}>
-          {props.lastRecordedMonth ? "Update balances" : "Record balances"}
+          {props.partDone ? "Continue check-in" : "Start monthly check-in"}
         </Link>
       </Button>
     </section>

@@ -265,8 +265,8 @@ export const PayExtraTool: FC<PayExtraToolProps> = ({
   const interestYear = interestKnown
     ? {
         label: showBaseline
-          ? "Interest this year, with the extra payment"
-          : "Interest this year, at minimum payments",
+          ? "Interest over the next 12 months, with the extra payment"
+          : "Interest over the next 12 months, at minimum payments",
         value: formatCurrency(showBaseline ? interestYearScenario : interestYearMinimum),
         id: "interest-this-year",
       }

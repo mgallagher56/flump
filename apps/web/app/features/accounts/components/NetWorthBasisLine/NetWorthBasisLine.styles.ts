@@ -7,13 +7,12 @@ export const basisLine = cva({
 
 export const basisLink = cva({
   base: {
-    color: "text.primary",
+    color: "primary",
     textDecoration: "underline",
-    textDecorationColor: "border.strong",
     textUnderlineOffset: "3px",
     borderRadius: "sm",
     whiteSpace: "nowrap",
-    _hover: { color: "primary", textDecorationColor: "currentColor" },
+    _hover: { color: "primary.hover", textDecorationColor: "currentColor" },
     _focusVisible: { outline: "2px solid", outlineColor: "border.focusRing", outlineOffset: "2px" },
   },
 });

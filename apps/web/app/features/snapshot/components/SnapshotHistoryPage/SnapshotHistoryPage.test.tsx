@@ -152,7 +152,9 @@ describe("SnapshotHistoryPage", () => {
     expect(screen.queryByTestId("hero-figure")).toBeNull();
     expectPageRules(container, { maxFigures: 0, projectionNotices: 0 });
     await userEvent.click(
-      within(screen.getByTestId("snapshot-empty")).getByRole("button", { name: "Update balances" }),
+      within(screen.getByTestId("snapshot-empty")).getByRole("button", {
+        name: "Start monthly check-in",
+      }),
     );
     expect(screen.getByRole("dialog", { name: "Monthly check-in" })).toBeDefined();
   });
@@ -192,7 +194,7 @@ describe("SnapshotHistoryPage", () => {
     expect(screen.queryByText(/Projection|Estimate/)).toBeNull();
     expectPageRules(container, { maxFigures: 4, maxNotSet: 0, projectionNotices: 0 });
     expectPageRules(firstView(), { maxFigures: 4 });
-    await userEvent.click(screen.getByRole("button", { name: "Update balances" }));
+    await userEvent.click(screen.getByRole("button", { name: "Start monthly check-in" }));
     expect(screen.getByRole("dialog", { name: "Monthly check-in" })).toBeDefined();
   });
 
@@ -289,8 +291,8 @@ describe("SnapshotHistoryPage", () => {
     // The header holds the one primary button; back-fill is a quiet link beside "Show data".
     const header = screen.getByRole("heading", { level: 1 }).closest("header") as HTMLElement;
     expect(within(header).getAllByRole("button")).toHaveLength(1);
-    expect(within(header).getByRole("button", { name: "Update balances" })).toBeDefined();
-    expect(screen.getAllByRole("button", { name: "Update balances" })).toHaveLength(1);
+    expect(within(header).getByRole("button", { name: "Start monthly check-in" })).toBeDefined();
+    expect(screen.getAllByRole("button", { name: "Start monthly check-in" })).toHaveLength(1);
     const backfill = screen.getByTestId("snapshot-open-backfill");
     const showData = screen.getByRole("button", { name: "Show data" });
     // One row, one style: the link and "Show data" share a parent row.
@@ -315,13 +317,15 @@ describe("SnapshotHistoryPage", () => {
     expect(screen.getByRole("dialog", { name: "Monthly check-in" })).toBeDefined();
   });
 
-  it("opened from the URL, Escape returns focus to Update balances, not the page body", async () => {
+  it("opened from the URL, Escape returns focus to Start monthly check-in, not the page body", async () => {
     renderPage({ accountDetails: TREND, initialSheet: "checkIn" });
     expect(screen.getByRole("dialog", { name: "Monthly check-in" })).toBeDefined();
     await userEvent.keyboard("{Escape}");
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
     await waitFor(() =>
-      expect(document.activeElement).toBe(screen.getByRole("button", { name: "Update balances" })),
+      expect(document.activeElement).toBe(
+        screen.getByRole("button", { name: "Start monthly check-in" }),
+      ),
     );
   });
 

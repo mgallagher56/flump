@@ -14,6 +14,8 @@ export interface MonthlyCheckInCardProps {
   currentMonth: MonthKey;
   /** Latest month with a recorded balance, or null when nothing is recorded yet. */
   lastRecordedMonth: MonthKey | null;
+  /** Whether a check-in is in progress (Rule B17). */
+  partDone?: boolean;
 }
 
 /** A check-in is due when this month has no recorded balances yet. */
@@ -49,8 +51,10 @@ export const MonthlyCheckInCard: FC<MonthlyCheckInCardProps> = (props) => {
         </h2>
         <p>{text}</p>
       </div>
-      <Button asChild size="sm" variant="secondary">
-        <Link to={CHECK_IN_ROUTE}>{lastRecordedMonth ? "Update balances" : "Record balances"}</Link>
+      <Button asChild size="sm" variant="outline">
+        <Link to={CHECK_IN_ROUTE}>
+          {props.partDone ? "Continue check-in" : "Start monthly check-in"}
+        </Link>
       </Button>
     </section>
   );

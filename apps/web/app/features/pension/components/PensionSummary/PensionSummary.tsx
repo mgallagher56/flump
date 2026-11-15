@@ -79,7 +79,7 @@ export const PensionSummary: FC<PensionSummaryProps> = ({
             }
             explain="Worked out from your pots, what goes in each month and each pot's growth rate, up to your State Pension age. Shown in today's money, taking 4% of the pot a year, without the State Pension."
             key="estimate"
-            label="Estimated income at retirement"
+            label="Income at retirement"
             subtext={
               estimatedMonthlyIncome === null
                 ? undefined

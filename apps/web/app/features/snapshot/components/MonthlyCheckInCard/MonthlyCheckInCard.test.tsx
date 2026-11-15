@@ -17,7 +17,7 @@ describe("MonthlyCheckInCard", () => {
     renderCard(null);
     expect(screen.getByRole("heading", { name: "Monthly check-in" })).toBeDefined();
     expect(screen.getByText(/Record your balances once a month/)).toBeDefined();
-    expect(screen.getByRole("link", { name: "Record balances" }).getAttribute("href")).toBe(
+    expect(screen.getByRole("link", { name: "Start monthly check-in" }).getAttribute("href")).toBe(
       CHECK_IN_ROUTE,
     );
     expect(screen.getAllByRole("link")).toHaveLength(1);
@@ -28,7 +28,7 @@ describe("MonthlyCheckInCard", () => {
     const text = screen.getByText(/Last recorded month: August 2026/).textContent ?? "";
     expect(text).toMatch(/Balances for this month are not recorded yet/);
     expect(text).not.toMatch(/overdue|behind|missed|streak/i);
-    expect(screen.getByRole("link", { name: "Update balances" })).toBeDefined();
+    expect(screen.getByRole("link", { name: "Start monthly check-in" })).toBeDefined();
   });
 
   it("shows nothing once this month is recorded", () => {

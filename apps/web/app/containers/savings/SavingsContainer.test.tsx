@@ -180,7 +180,7 @@ describe("SavingsContainer", () => {
         target: { value: "12" },
       });
       fireEvent.change(screen.getByLabelText("Monthly amount"), { target: { value: "800" } });
-      fireEvent.click(screen.getByRole("button", { name: /More options/ }));
+      fireEvent.click(screen.getByRole("button", { name: /Goal and inflation options/ }));
       fireEvent.click(screen.getByLabelText("Show in today's money"));
 
       expect(screen.getByTestId("savings-forecast-outcome").textContent).not.toBe(outcomeBefore);

@@ -199,7 +199,7 @@ export const SnapshotHistoryPage: FC<SnapshotHistoryPageProps> = ({
       onClick={() => setSheet("checkIn")}
       type="button"
     >
-      Update balances
+      Start monthly check-in
     </Button>
   );
 
@@ -238,7 +238,7 @@ export const SnapshotHistoryPage: FC<SnapshotHistoryPageProps> = ({
           action={
             hasAccounts ? (
               <Button id="snapshot-open-check-in" onClick={() => setSheet("checkIn")} type="button">
-                Update balances
+                Start monthly check-in
               </Button>
             ) : (
               <Button asChild>

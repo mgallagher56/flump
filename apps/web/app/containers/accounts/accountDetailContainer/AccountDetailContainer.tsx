@@ -10,7 +10,7 @@ import { type FC, useMemo } from "react";
 import { Link, useLoaderData } from "react-router";
 import AccountDetails from "~/components/accounts/AccountDetails";
 import AddEditAccountsDialogBtn from "~/components/dialogs/addEditAccountsDialog/AddEditAccountsDialog";
-import { type AccountType, isLiabilityType } from "~/containers/accounts/utils";
+import { type AccountType, isLiabilityType, toDisplayBalance } from "~/containers/accounts/utils";
 import { summariseAccountBalance } from "~/features/accounts/accountRows";
 import { TYPE_LABEL } from "~/features/accounts/components/AccountsGroupList";
 import { londonMonth } from "~/features/snapshot/snapshotModel";
@@ -112,18 +112,43 @@ const AccountDetailContainer: FC = () => {
       summariseAccountBalance(account ?? {}, (accountDetails ?? []) as never[], new Date(), true),
     [account, accountDetails],
   );
-  const current = summary.balance ?? 0;
   // The current month on the Europe/London clock, as the backend keys it (not the device's).
   const [cy = 0, cm = 0] = londonMonth().split("-").map(Number);
+  const detailsList = (
+    accountDetails as {
+      month?: number;
+      year?: number;
+      value?: number | string;
+      source?: string | null;
+    }[]
+  ).map((d) => ({
+    month: Number(d.month),
+    year: Number(d.year),
+    value: d.value !== undefined && d.value !== null ? Number(d.value) : undefined,
+    source: d.source,
+  }));
+
+  const hasFutureDetail = detailsList.some(
+    (d) => d.month >= 1 && d.year > 0 && (d.year > cy || (d.year === cy && d.month > cm)),
+  );
+
   // The latest recorded month up to now: the month the hero's figure is from.
   const latest =
-    (accountDetails as { month?: number; year?: number; source?: string | null }[])
-      .map((d) => ({ month: Number(d.month), year: Number(d.year), source: d.source }))
+    detailsList
       .filter(
         (d) => d.month >= 1 && d.year > 0 && (d.year < cy || (d.year === cy && d.month <= cm)),
       )
       .sort((a, b) => a.year - b.year || a.month - b.month)
       .pop() ?? null;
+
+  // After a future-dated import, account.balance reflects the future import rather than
+  // the latest month up to now. Ensure the hero figure and date line always come from
+  // the same month (defect C(e)).
+  const current =
+    hasFutureDetail && latest && latest.value !== undefined
+      ? toDisplayBalance(account?.type, latest.value)
+      : (summary.balance ?? 0);
+
   const dateLine = balanceDateLine({ current: { month: cm, year: cy }, latest });
 
   if (!account) {

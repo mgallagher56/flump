@@ -14,6 +14,6 @@ export const roundEstimate = (value: number): number => {
   return rounded === 0 ? 0 : rounded;
 };
 
-/** "About £206,000": a rounded estimate in en-GB pounds. */
+/** "~£206,000": a rounded estimate in en-GB pounds (Rule B9: "~" for long-range projections, not "About"). */
 export const formatEstimate = (value: number): string =>
-  `About ${formatMoney(roundEstimate(value), { fractionDigits: 0 }).text}`;
+  `~${formatMoney(roundEstimate(value), { fractionDigits: 0 }).text}`;

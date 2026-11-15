@@ -21,8 +21,8 @@ describe("roundEstimate", () => {
     expect(roundEstimate(-13_852)).toBe(-13_900);
   });
 
-  it("formats as About £N in en-GB", () => {
-    expect(formatEstimate(205_628)).toBe("About £206,000");
-    expect(formatEstimate(51_407)).toBe("About £51,400");
+  it("formats as ~£N in en-GB (Rule B9)", () => {
+    expect(formatEstimate(205_628)).toBe("~£206,000");
+    expect(formatEstimate(51_407)).toBe("~£51,400");
   });
 });

@@ -21,7 +21,7 @@ type Story = StoryObj<typeof BtlOverview>;
 export const Populated: Story = {
   play: async ({ canvasElement, args }) => {
     const button = within(canvasElement).getAllByRole("button", {
-      name: "Edit your details",
+      name: "Edit",
     })[0];
     if (!button) throw new Error("Configure button missing");
     await userEvent.click(button);

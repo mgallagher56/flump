@@ -169,7 +169,7 @@ describe("<PensionForecast />", () => {
       act(() => {
         vi.advanceTimersByTime(500);
       });
-      expect(region.textContent).toMatch(/^Illustration: estimated pot about £[\d,]+ at 60/);
+      expect(region.textContent).toMatch(/^Illustration: estimated pot ~£[\d,]+ at 60/);
     } finally {
       vi.useRealTimers();
     }

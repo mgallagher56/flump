@@ -78,25 +78,27 @@ describe("PayExtraTool", () => {
     ).toBeDefined();
   });
 
-  it("shows interest this year in the result, and how the extra payment alters it", () => {
+  it("shows interest over the next 12 months in the result, and how the extra payment alters it", () => {
     const { unmount } = renderTool();
     const saved = screen.getByTestId("interest-this-year");
-    expect(saved.textContent).toMatch(/^Interest this year, at minimum payments£[\d,]+$/);
+    expect(saved.textContent).toMatch(
+      /^Interest over the next 12 months, at minimum payments£[\d,]+$/,
+    );
     const minimum = /£[\d,]+/.exec(saved.textContent ?? "")?.[0];
     unmount();
     renderTool({ extraPayment: 200 });
     const changed = screen.getByTestId("interest-this-year").textContent ?? "";
     // One figure only; it is lower than at the minimum payments.
-    expect(changed).toMatch(/^Interest this year, with the extra payment£[\d,]+$/);
+    expect(changed).toMatch(/^Interest over the next 12 months, with the extra payment£[\d,]+$/);
     const pounds = (text: string | undefined) => Number((text ?? "").replace(/[^\d]/g, ""));
     expect(pounds(/£[\d,]+/.exec(changed)?.[0])).toBeLessThan(pounds(minimum));
     expect(changed).not.toMatch(/\.\d{2}/);
   });
 
-  it("leaves interest this year out when a debt has no APR saved", () => {
+  it("leaves interest over the next 12 months out when a debt has no APR saved", () => {
     renderTool({ interestKnown: false });
     expect(screen.queryByTestId("interest-this-year")).toBeNull();
-    expect(screen.queryByText(/Interest this year/)).toBeNull();
+    expect(screen.queryByText(/Interest over the next 12 months/)).toBeNull();
   });
 
   it("with no extra payment, shows a prompt instead of a figure", () => {

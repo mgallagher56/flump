@@ -1,7 +1,7 @@
 import { sva } from "../../../styled-system/css";
 
 export const formFieldRecipe = sva({
-  slots: ["root", "label", "required", "hint", "error", "errorText"],
+  slots: ["root", "label", "required", "optional", "hint", "error", "errorText"],
   base: {
     root: {
       display: "flex",
@@ -15,6 +15,12 @@ export const formFieldRecipe = sva({
       fontWeight: "semibold",
     },
     required: {
+      textStyle: "body.sm",
+      fontWeight: "normal",
+      color: "text.secondary",
+      marginLeft: "2",
+    },
+    optional: {
       textStyle: "body.sm",
       fontWeight: "normal",
       color: "text.secondary",

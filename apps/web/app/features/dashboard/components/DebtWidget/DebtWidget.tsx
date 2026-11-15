@@ -50,7 +50,7 @@ export const DebtWidget: FC<DebtWidgetProps> = ({ data = null }) => {
             ? { to: "/app/accounts", label: "Add your rates" }
             : { to: "/app/debt", label: "Open debt" }
       }
-      title="Debt"
+      title="Debt and borrowing"
     />
   );
 };

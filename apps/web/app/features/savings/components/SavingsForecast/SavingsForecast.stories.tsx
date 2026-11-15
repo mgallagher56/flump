@@ -27,7 +27,7 @@ type Story = StoryObj<typeof Harness>;
 export const Filled: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    await userEvent.click(canvas.getAllByRole("button", { name: /More options/ })[0]);
+    await userEvent.click(canvas.getAllByRole("button", { name: /Goal and inflation options/ })[0]);
     await expect(canvas.getAllByLabelText("Your own goal")[0]).toBeDefined();
   },
 };

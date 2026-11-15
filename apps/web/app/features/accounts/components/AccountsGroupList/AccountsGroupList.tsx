@@ -285,7 +285,7 @@ export const AccountsGroupList: FC<AccountsGroupListProps> = ({
         <HeroFigure
           explain="What you own minus what you owe, from the balances saved on this page, under your choices about what counts."
           id="accounts-net-worth"
-          label="Net worth"
+          label="Total of the accounts listed"
           value={netWorth}
         />
         <div className={netWorthLinks()}>

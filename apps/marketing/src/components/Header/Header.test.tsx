@@ -46,13 +46,10 @@ describe("Header", () => {
     expect(screen.getByRole("link", { name: "AI connection" })).toBeDefined();
 
     expect(screen.getAllByText("Sign in").length).toBeGreaterThan(0);
-    // The compact label stays short so the header fits at 320px (a11y reflow gate).
-    expect(screen.getByText("Request an invite").closest("a")?.getAttribute("href")).toBe(
-      "/contact#beta",
-    );
-    expect(screen.getByText("Request invite").closest("a")?.getAttribute("href")).toBe(
-      "/contact#beta",
-    );
+    // Rule B15: "Request an invite" everywhere signed out.
+    const inviteLinks = screen.getAllByText("Request an invite");
+    expect(inviteLinks.length).toBeGreaterThan(0);
+    expect(inviteLinks[0].closest("a")?.getAttribute("href")).toBe("/contact#beta");
     expect(screen.getAllByRole("group", { name: "Colour theme" })).toHaveLength(1);
     expect(screen.queryByText("Go to dashboard")).toBeNull();
   });

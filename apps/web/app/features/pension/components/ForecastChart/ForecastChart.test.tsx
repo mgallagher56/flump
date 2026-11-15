@@ -46,7 +46,7 @@ describe("<ForecastChart />", () => {
   it("is a named figure with a visible one-line summary holding one figure (P10.1)", () => {
     const { container } = renderChart();
     const figure = screen.getByRole("figure", { name: "Pot each year" });
-    const summary = screen.getByText(/^Reaches about £[\d,]+ at retirement, in today's money\.$/);
+    const summary = screen.getByText(/^Reaches ~£[\d,]+ at retirement, in today's money\.$/);
     expect(figure.contains(summary)).toBe(true);
     expect(screen.queryByText(/legend|Projected total/i)).toBeNull();
     expect(countFigures(container)).toBe(1);

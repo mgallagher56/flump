@@ -40,7 +40,8 @@ describe("<PensionSummary />", () => {
     const labels = Array.from(container.querySelectorAll("[data-density='compact'] > *")).map(
       (card) => card.textContent ?? "",
     );
-    expect(labels[0]).toContain("Estimated income at retirement");
+    expect(labels[0]).toContain("Income at retirement");
+    expect(labels[0]).not.toContain("Estimated income at retirement");
     expect(labels[0]).toContain("Estimate");
     expect(labels[1]).toContain("Going in each month");
     expect(labels[2]).toContain("Retirement age");

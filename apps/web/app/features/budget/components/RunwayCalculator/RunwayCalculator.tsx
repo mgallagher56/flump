@@ -372,7 +372,7 @@ export const RunwayCalculator: FC<RunwayCalculatorProps> = ({
   // Line-by-line switches stay one tap away, so the first view holds two inputs (P1.7). They sit
   // below the outcome, so opening them never pushes it out of view on a phone.
   const moreOptions = (
-    <CollapsibleDrawer title="More options" variant="quiet">
+    <CollapsibleDrawer title="Accounts and spending to include" variant="quiet">
       <div className={optionsStack()}>
         <OptionGroup
           items={poolAccounts.map((acc) => ({

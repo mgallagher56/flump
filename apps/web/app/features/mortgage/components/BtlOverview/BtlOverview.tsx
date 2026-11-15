@@ -30,8 +30,8 @@ export const BtlOverview: FC<BtlOverviewProps> = ({
   const hasRent = monthlyRent > 0;
   const rentLeft = hasRent && monthlyPayment !== null ? monthlyRent - monthlyPayment : null;
   const edit = (
-    <Button size="sm" variant="ghost" onClick={onConfigure}>
-      Edit your details
+    <Button size="sm" variant="outline" onClick={onConfigure}>
+      Edit
     </Button>
   );
 

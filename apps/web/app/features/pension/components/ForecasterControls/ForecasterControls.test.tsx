@@ -26,7 +26,7 @@ describe("<ForecasterControls />", () => {
     expect(screen.queryByRole("checkbox")).toBeNull();
     expect(screen.queryByLabelText(/salary before tax/i)).toBeNull();
     expect(screen.queryByRole("button", { name: /%/ })).toBeNull();
-    fireEvent.click(screen.getByRole("button", { name: "More options" }));
+    fireEvent.click(screen.getByRole("button", { name: "Inflation and State Pension options" }));
     expect(screen.getAllByRole("checkbox")).toHaveLength(3);
   });
 

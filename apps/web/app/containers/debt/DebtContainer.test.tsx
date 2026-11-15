@@ -174,9 +174,9 @@ describe("DebtContainer", () => {
     expect(screen.getAllByText("Debt-free date").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Estimate").length).toBe(1);
     // Out of the first view (hero and strip), available lower down in the modelling zone.
-    expect(hero?.parentElement?.textContent ?? "").not.toMatch(/Interest this year/);
+    expect(hero?.parentElement?.textContent ?? "").not.toMatch(/Interest over the next 12 months/);
     expect(screen.getByTestId("interest-this-year").textContent).toMatch(
-      /^Interest this year, at minimum payments£[\d,]+$/,
+      /^Interest over the next 12 months, at minimum payments£[\d,]+$/,
     );
   });
 

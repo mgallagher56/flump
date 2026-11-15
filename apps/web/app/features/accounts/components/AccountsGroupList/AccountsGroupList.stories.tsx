@@ -57,7 +57,7 @@ export const Default: Story = {
     await expect(canvas.getByRole("link", { name: "Monzo current" })).toBeDefined();
     await expect(canvas.getByRole("heading", { name: "What you own" })).toBeDefined();
     await expect(canvas.getByRole("heading", { name: "What you owe" })).toBeDefined();
-    await expect(canvas.getByText("Net worth")).toBeDefined();
+    await expect(canvas.getByText("Total of the accounts listed")).toBeDefined();
   },
 };
 
