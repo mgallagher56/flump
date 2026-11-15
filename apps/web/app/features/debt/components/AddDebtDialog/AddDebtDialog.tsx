@@ -5,6 +5,7 @@ import {
   controlProps,
   Dialog,
   FormField,
+  InlineAlert,
   PercentInput,
   Select,
   TextInput,
@@ -22,8 +23,11 @@ export interface AddDebtDialogProps {
    * APR and minimum payment can be edited: the balance is not sent on edit.
    */
   debt?: DebtItem;
-  /** Called in edit mode with only the fields that changed. */
-  onEditDebt?: (id: string, updates: Partial<DebtItem>) => void;
+  /**
+   * Called in edit mode with only the fields that changed. A caller that returns a promise keeps
+   * the dialog open until it settles: `null` closes it, a message is shown and the fields stay.
+   */
+  onEditDebt?: (id: string, updates: Partial<DebtItem>) => void | Promise<string | null>;
   /**
    * Edit mode only: the "Delete debt" action closes this dialog and calls this with the debt's id.
    * The page asks for confirmation before anything is deleted.
@@ -60,6 +64,8 @@ const DebtForm: FC<DebtFormProps> = ({ onClose, onAddDebt, debt, onEditDebt }) =
   );
   const [type, setType] = useState<DebtItem["type"]>("credit_card");
   const [submitted, setSubmitted] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   const nameError = !name.trim() ? "Enter a name for this debt." : undefined;
   const balanceError =
@@ -70,10 +76,10 @@ const DebtForm: FC<DebtFormProps> = ({ onClose, onAddDebt, debt, onEditDebt }) =
   const minimumError =
     minimumPayment !== null && minimumPayment < 0 ? "The minimum cannot be negative." : undefined;
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setSubmitted(true);
-    if (nameError || balanceError || aprError || minimumError) return;
+    if (saving || nameError || balanceError || aprError || minimumError) return;
 
     if (debt) {
       const updates: Partial<DebtItem> = {};
@@ -92,7 +98,19 @@ const DebtForm: FC<DebtFormProps> = ({ onClose, onAddDebt, debt, onEditDebt }) =
         updates.minimumPayment = minimumPayment ?? 0;
         updates.minimumPaymentEstimated = minimumPayment === null;
       }
-      if (Object.keys(updates).length > 0) onEditDebt?.(debt.id, updates);
+      if (Object.keys(updates).length > 0) {
+        const result = onEditDebt?.(debt.id, updates);
+        if (result instanceof Promise) {
+          setSaving(true);
+          setSaveError(null);
+          const error = await result;
+          setSaving(false);
+          if (error !== null) {
+            setSaveError(error);
+            return;
+          }
+        }
+      }
       onClose();
       return;
     }
@@ -165,6 +183,7 @@ const DebtForm: FC<DebtFormProps> = ({ onClose, onAddDebt, debt, onEditDebt }) =
           )}
         </FormField>
       </div>
+      {saveError ? <InlineAlert tone="danger">{saveError}</InlineAlert> : null}
     </form>
   );
 };

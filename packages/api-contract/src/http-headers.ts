@@ -33,11 +33,32 @@ export const etagFor = (updatedAt: Date | string): string =>
 
 /**
  * The `updatedAt` an `If-Match` value names, or null when it is not one of this API's ETags.
- * A weak prefix (`W/`) is accepted and ignored; `*` and lists are not supported.
+ * A weak prefix (`W/`) is accepted and ignored; `*` is not supported, and a list only where
+ * `parseEtagList` is used.
  */
 export const parseEtag = (value: string): Date | null => {
   const raw = value.trim().replace(/^W\//, "");
   if (!ResourceEtag.safeParse(raw).success) return null;
   const date = new Date(raw.slice(1, -1));
   return Number.isNaN(date.getTime()) ? null : date;
+};
+
+/** Most ETags one `If-Match` list may carry (one per value of the largest snapshot batch). */
+export const MAX_ETAG_LIST = 200;
+
+/**
+ * The versions a comma-separated `If-Match` list names (`PUT /snapshots/:month`, where one request
+ * writes several rows), or null when any entry is not one of this API's ETags or the list is empty
+ * or longer than MAX_ETAG_LIST.
+ */
+export const parseEtagList = (value: string): Date[] | null => {
+  const parts = value.split(",");
+  if (parts.length > MAX_ETAG_LIST) return null;
+  const dates: Date[] = [];
+  for (const part of parts) {
+    const date = parseEtag(part);
+    if (!date) return null;
+    dates.push(date);
+  }
+  return dates;
 };

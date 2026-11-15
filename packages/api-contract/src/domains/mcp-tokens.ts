@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { PAGE_LIMITS } from "../pagination.js";
 import { IsoDateTime, ResponseMoney, Uuid } from "../primitives.js";
 import { NetWorthLeftOut, ResolvedAccountDto } from "./accounts.js";
 
@@ -26,29 +25,6 @@ export const CreateMcpTokenRequest = z.strictObject({
  * this copy is for web clients, and a backend test asserts the two are equal.
  */
 export const WRITE_STAGE_SCOPE = "write:stage";
-
-/** Most activity rows one page returns (PAGE_LIMITS.activity). */
-export const MAX_ACTIVITY_PAGE = PAGE_LIMITS.activity.max;
-/** Activity rows a page returns when the request names no `limit`. */
-export const DEFAULT_ACTIVITY_PAGE = PAGE_LIMITS.activity.default;
-
-/**
- * Opaque paging cursor for the activity route (a compound created_at plus id position, encoded by
- * the server). Clients pass back `nextBefore` unchanged and never build one.
- */
-export const ActivityCursor = z
-  .string()
-  .regex(/^[A-Za-z0-9_-]{1,128}$/, "must be a cursor from nextBefore");
-
-/**
- * GET /mcp-tokens/:id/activity query. `limit` defaults to DEFAULT_ACTIVITY_PAGE; `before` (the previous page's
- * `nextBefore`) pages back in time.
- */
-export const McpTokenActivityQuery = z.strictObject({
-  limit: z.coerce.number().int().min(1).max(MAX_ACTIVITY_PAGE).optional(),
-  before: ActivityCursor.optional(),
-});
-export type McpTokenActivityQuery = z.infer<typeof McpTokenActivityQuery>;
 
 // --- Responses (E21) ---
 // No response ever carries `tokenHash` or `revokedAt`; strict objects flag either if it leaks.
@@ -107,12 +83,12 @@ export const McpTokenActivityEvent = z.strictObject({
 });
 export type McpTokenActivityEvent = z.infer<typeof McpTokenActivityEvent>;
 
-/** GET /mcp-tokens/:id/activity: newest first; `nextBefore` is null on the last page. */
-export const McpTokenActivityResponse = z.strictObject({
-  events: z.array(McpTokenActivityEvent),
-  nextBefore: ActivityCursor.nullable(),
-});
-export type McpTokenActivityResponse = z.infer<typeof McpTokenActivityResponse>;
+/**
+ * GET /mcp-tokens/:id/activity: one page, newest first. Like every other list the body is a JSON
+ * array and the next page's cursor is in `X-Next-Cursor` (BE-16, audit N10).
+ */
+export const McpTokenActivityListResponse = z.array(McpTokenActivityEvent);
+export type McpTokenActivityListResponse = z.infer<typeof McpTokenActivityListResponse>;
 
 /** DELETE /mcp-tokens/:id */
 export const RevokeMcpTokenResponse = z.strictObject({ success: z.literal(true) });

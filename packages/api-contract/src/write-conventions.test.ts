@@ -1,8 +1,21 @@
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import { DEFAULT_TRANSACTION_PAGE, MAX_TRANSACTION_PAGE } from "./domains/transactions.js";
-import { etagFor, IdempotencyKey, parseEtag } from "./http-headers.js";
-import { allRoutes, isIdempotentRoute, type RouteDefinition, routes } from "./manifest.js";
+import {
+  etagFor,
+  IdempotencyKey,
+  MAX_ETAG_LIST,
+  parseEtag,
+  parseEtagList,
+} from "./http-headers.js";
+import {
+  allRoutes,
+  isConditionalRoute,
+  isIdempotentRoute,
+  type RouteDefinition,
+  routes,
+  UNCONDITIONAL_UPDATE_ROUTES,
+} from "./manifest.js";
 import { buildOpenApiDocument, openApiPath } from "./openapi.js";
 import { NEXT_CURSOR_HEADER, PAGE_LIMITS, PageCursor, pageQuery } from "./pagination.js";
 
@@ -131,17 +144,17 @@ describe("idempotency keys (BE-09, audit M7)", () => {
 });
 
 describe("conditional updates (BE-09, audit M7, L15)", () => {
-  it("accounts, budget entries, tax records and the profile accept If-Match", () => {
+  it("accounts, budget entries, tax records, the profile and month snapshots accept If-Match", () => {
     expect(
       allRoutes
         .filter((r) => r.etag === "conditional")
         .map((r) => r.id)
         .sort(),
     ).toEqual([
-      "accounts.replace",
       "accounts.update",
       "budget.update",
       "profile.update",
+      "snapshots.upsert",
       "tax.update",
     ]);
     for (const route of allRoutes.filter((r) => r.etag === "conditional")) {
@@ -150,6 +163,32 @@ describe("conditional updates (BE-09, audit M7, L15)", () => {
       expect(op.responses["412"], route.id).toBeDefined();
       expect(op.responses["200"]?.headers?.ETag, route.id).toBeDefined();
     }
+  });
+
+  it("every PATCH and PUT route is conditional, or a listed exception (BE-16, shrink-only)", () => {
+    const unconditional = allRoutes
+      .filter((r) => (r.method === "PATCH" || r.method === "PUT") && !isConditionalRoute(r))
+      .map((r) => r.id)
+      .sort();
+    expect(unconditional).toEqual([...UNCONDITIONAL_UPDATE_ROUTES].sort());
+    expect(unconditional).toEqual(["accounts.updateBalances", "profile.updateChecklist"]);
+  });
+
+  it("reads an If-Match list of ETags, and rejects a list with anything else in it", () => {
+    const a = etagFor(new Date("2026-11-14T09:30:00.123Z"));
+    const b = etagFor(new Date("2026-11-15T10:00:00.000Z"));
+    expect(parseEtagList(`${a}, ${b}`)?.map((d) => d.toISOString())).toEqual([
+      "2026-11-14T09:30:00.123Z",
+      "2026-11-15T10:00:00.000Z",
+    ]);
+    expect(parseEtagList(a)).toHaveLength(1);
+    expect(parseEtagList(`${a}, *`)).toBeNull();
+    expect(parseEtagList("")).toBeNull();
+    expect(parseEtagList(`${a},`)).toBeNull();
+    expect(parseEtagList(Array.from({ length: MAX_ETAG_LIST }, () => a).join(","))).toHaveLength(
+      MAX_ETAG_LIST,
+    );
+    expect(parseEtagList(Array.from({ length: MAX_ETAG_LIST + 1 }, () => a).join(","))).toBeNull();
   });
 
   it("round-trips an ETag and rejects anything else", () => {

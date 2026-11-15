@@ -1996,382 +1996,6 @@
           }
         ],
         "tags": ["accounts"]
-      },
-      "put": {
-        "deprecated": true,
-        "description": "Deprecated alias of accounts.update. Answers with Deprecation and Link headers.",
-        "operationId": "accounts.replace",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "format": "uuid",
-              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
-              "type": "string"
-            }
-          },
-          {
-            "description": "The ETag last read for this resource. When it no longer matches, nothing is written and the answer is 412 precondition_failed.",
-            "in": "header",
-            "name": "If-Match",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "additionalProperties": false,
-                "properties": {
-                  "balance": {
-                    "description": "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.",
-                    "type": "number"
-                  },
-                  "currency": {
-                    "anyOf": [
-                      {
-                        "pattern": "^[A-Z]{3}$",
-                        "type": "string"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
-                  },
-                  "externalAccountId": {
-                    "anyOf": [
-                      {
-                        "maxLength": 255,
-                        "type": "string"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
-                  },
-                  "fixedRateEndDate": {
-                    "type": ["string", "null"]
-                  },
-                  "interestRate": {
-                    "anyOf": [
-                      {
-                        "maximum": 100,
-                        "minimum": 0,
-                        "type": "number"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
-                  },
-                  "isCurrent": {
-                    "type": "boolean"
-                  },
-                  "monthlyContribution": {
-                    "anyOf": [
-                      {
-                        "description": "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.",
-                        "type": "number"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
-                  },
-                  "name": {
-                    "maxLength": 120,
-                    "minLength": 1,
-                    "type": "string"
-                  },
-                  "studentLoanPlan": {
-                    "anyOf": [
-                      {
-                        "enum": ["PLAN_1", "PLAN_2", "PLAN_4", "PLAN_5", "POSTGRAD"],
-                        "type": "string"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
-                  },
-                  "termMonths": {
-                    "anyOf": [
-                      {
-                        "maximum": 600,
-                        "minimum": 1,
-                        "type": "integer"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
-                  },
-                  "type": {
-                    "enum": [
-                      "Current",
-                      "Saving",
-                      "Mortgage",
-                      "Loan",
-                      "Credit Card",
-                      "Owed",
-                      "Investment",
-                      "Pension",
-                      "Property",
-                      "Student Loan",
-                      "Overdraft"
-                    ],
-                    "type": "string"
-                  }
-                },
-                "type": "object"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "additionalProperties": false,
-                  "properties": {
-                    "balance": {
-                      "description": "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.",
-                      "type": "number"
-                    },
-                    "connectionId": {
-                      "anyOf": [
-                        {
-                          "format": "uuid",
-                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
-                          "type": "string"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    },
-                    "createdAt": {
-                      "type": "string"
-                    },
-                    "currency": {
-                      "pattern": "^[A-Z]{3}$",
-                      "type": "string"
-                    },
-                    "fixedRateEndDate": {
-                      "type": ["string", "null"]
-                    },
-                    "id": {
-                      "format": "uuid",
-                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
-                      "type": "string"
-                    },
-                    "interestRate": {
-                      "type": ["number", "null"]
-                    },
-                    "isCurrent": {
-                      "type": "boolean"
-                    },
-                    "monthlyContribution": {
-                      "anyOf": [
-                        {
-                          "description": "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.",
-                          "type": "number"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    },
-                    "name": {
-                      "type": "string"
-                    },
-                    "studentLoanPlan": {
-                      "anyOf": [
-                        {
-                          "enum": ["PLAN_1", "PLAN_2", "PLAN_4", "PLAN_5", "POSTGRAD"],
-                          "type": "string"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    },
-                    "termMonths": {
-                      "anyOf": [
-                        {
-                          "maximum": 9007199254740991,
-                          "minimum": -9007199254740991,
-                          "type": "integer"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    },
-                    "type": {
-                      "enum": [
-                        "Current",
-                        "Saving",
-                        "Mortgage",
-                        "Loan",
-                        "Credit Card",
-                        "Owed",
-                        "Investment",
-                        "Pension",
-                        "Property",
-                        "Student Loan",
-                        "Overdraft"
-                      ],
-                      "type": "string"
-                    },
-                    "updatedAt": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "id",
-                    "name",
-                    "type",
-                    "balance",
-                    "interestRate",
-                    "monthlyContribution",
-                    "termMonths",
-                    "fixedRateEndDate",
-                    "isCurrent",
-                    "currency",
-                    "studentLoanPlan",
-                    "connectionId",
-                    "createdAt",
-                    "updatedAt"
-                  ],
-                  "type": "object"
-                }
-              }
-            },
-            "description": "Success.",
-            "headers": {
-              "ETag": {
-                "description": "The resource version, `\"<updatedAt>\"`. Send it as If-Match to make an update conditional.",
-                "schema": {
-                  "type": "string"
-                }
-              }
-            }
-          },
-          "400": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "`validation_failed`: the request does not match the contract."
-          },
-          "401": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "`unauthorized`: missing or invalid credentials."
-          },
-          "403": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "`forbidden` or `not_invited`: the account may not use this route."
-          },
-          "404": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "`not_found`: no such resource for this user."
-          },
-          "412": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "`precondition_failed`: the resource changed since the If-Match ETag was read."
-          },
-          "413": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "`payload_too_large`: the request body is over the size limit."
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "`constraint_violation`: the data breaks a stored rule and was not saved."
-          },
-          "429": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "`rate_limited`: too many requests. See the Retry-After header."
-          },
-          "500": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "`internal_error`: an unexpected failure. Quote the requestId."
-          },
-          "503": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "`service_unavailable`: busy or temporarily unavailable. See the Retry-After header."
-          }
-        },
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "tags": ["accounts"]
       }
     },
     "/v1/accounts/{id}/details": {
@@ -3228,257 +2852,6 @@
     "/v1/bank-connections/{id}/refresh": {
       "post": {
         "operationId": "bankConnections.refresh",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "format": "uuid",
-              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "anyOf": [
-                    {
-                      "additionalProperties": false,
-                      "properties": {
-                        "accounts": {
-                          "additionalProperties": false,
-                          "properties": {
-                            "skipped": {
-                              "maximum": 9007199254740991,
-                              "minimum": 0,
-                              "type": "integer"
-                            },
-                            "updated": {
-                              "maximum": 9007199254740991,
-                              "minimum": 0,
-                              "type": "integer"
-                            }
-                          },
-                          "required": ["updated", "skipped"],
-                          "type": "object"
-                        },
-                        "connection": {
-                          "additionalProperties": false,
-                          "properties": {
-                            "authType": {
-                              "enum": ["oauth", "token"],
-                              "type": "string"
-                            },
-                            "createdAt": {
-                              "type": "string"
-                            },
-                            "expiresAt": {
-                              "type": ["string", "null"]
-                            },
-                            "id": {
-                              "format": "uuid",
-                              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
-                              "type": "string"
-                            },
-                            "institutionId": {
-                              "minLength": 1,
-                              "type": "string"
-                            },
-                            "institutionName": {
-                              "type": "string"
-                            },
-                            "lastSyncedAt": {
-                              "type": "string"
-                            },
-                            "status": {
-                              "enum": ["connected", "disconnected", "error", "needs_reconnect"],
-                              "type": "string"
-                            },
-                            "updatedAt": {
-                              "type": "string"
-                            }
-                          },
-                          "required": [
-                            "id",
-                            "institutionId",
-                            "institutionName",
-                            "status",
-                            "authType",
-                            "expiresAt",
-                            "lastSyncedAt",
-                            "createdAt",
-                            "updatedAt"
-                          ],
-                          "type": "object"
-                        },
-                        "message": {
-                          "type": "string"
-                        },
-                        "success": {
-                          "const": true,
-                          "type": "boolean"
-                        }
-                      },
-                      "required": ["success", "connection", "message"],
-                      "type": "object"
-                    },
-                    {
-                      "additionalProperties": false,
-                      "properties": {
-                        "connection": {
-                          "additionalProperties": false,
-                          "properties": {
-                            "authType": {
-                              "enum": ["oauth", "token"],
-                              "type": "string"
-                            },
-                            "createdAt": {
-                              "type": "string"
-                            },
-                            "expiresAt": {
-                              "type": ["string", "null"]
-                            },
-                            "id": {
-                              "format": "uuid",
-                              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
-                              "type": "string"
-                            },
-                            "institutionId": {
-                              "minLength": 1,
-                              "type": "string"
-                            },
-                            "institutionName": {
-                              "type": "string"
-                            },
-                            "lastSyncedAt": {
-                              "type": "string"
-                            },
-                            "status": {
-                              "enum": ["connected", "disconnected", "error", "needs_reconnect"],
-                              "type": "string"
-                            },
-                            "updatedAt": {
-                              "type": "string"
-                            }
-                          },
-                          "required": [
-                            "id",
-                            "institutionId",
-                            "institutionName",
-                            "status",
-                            "authType",
-                            "expiresAt",
-                            "lastSyncedAt",
-                            "createdAt",
-                            "updatedAt"
-                          ],
-                          "type": "object"
-                        },
-                        "error": {
-                          "type": "string"
-                        },
-                        "success": {
-                          "const": false,
-                          "type": "boolean"
-                        }
-                      },
-                      "required": ["success", "connection", "error"],
-                      "type": "object"
-                    }
-                  ]
-                }
-              }
-            },
-            "description": "Success."
-          },
-          "400": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "`validation_failed`: the request does not match the contract."
-          },
-          "401": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "`unauthorized`: missing or invalid credentials."
-          },
-          "403": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "`forbidden` or `not_invited`: the account may not use this route."
-          },
-          "404": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "`not_found`: no such resource for this user."
-          },
-          "429": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "`rate_limited`: too many requests. See the Retry-After header."
-          },
-          "500": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "`internal_error`: an unexpected failure. Quote the requestId."
-          },
-          "503": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "`service_unavailable`: busy or temporarily unavailable. See the Retry-After header."
-          }
-        },
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "tags": ["bank-connections"]
-      }
-    },
-    "/v1/bank-connections/{id}/sync": {
-      "post": {
-        "deprecated": true,
-        "description": "Deprecated alias of bankConnections.refresh. Answers with Deprecation and Link headers.",
-        "operationId": "bankConnections.sync",
         "parameters": [
           {
             "in": "path",
@@ -8057,10 +7430,10 @@
           },
           {
             "in": "query",
-            "name": "before",
+            "name": "cursor",
             "required": false,
             "schema": {
-              "pattern": "^[A-Za-z0-9_-]{1,128}$",
+              "pattern": "^[A-Za-z0-9_-]{1,512}$",
               "type": "string"
             }
           }
@@ -8070,83 +7443,73 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": false,
-                  "properties": {
-                    "events": {
-                      "items": {
-                        "additionalProperties": false,
-                        "properties": {
-                          "clientName": {
-                            "type": ["string", "null"]
-                          },
-                          "createdAt": {
-                            "type": "string"
-                          },
-                          "errorCode": {
-                            "type": ["string", "null"]
-                          },
-                          "id": {
-                            "format": "uuid",
-                            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
-                            "type": "string"
-                          },
-                          "latencyMs": {
-                            "maximum": 9007199254740991,
-                            "minimum": 0,
-                            "type": "integer"
-                          },
-                          "outcome": {
-                            "enum": ["ok", "error", "denied"],
-                            "type": "string"
-                          },
-                          "responseBytes": {
-                            "maximum": 9007199254740991,
-                            "minimum": 0,
-                            "type": "integer"
-                          },
-                          "scopesUsed": {
-                            "items": {
-                              "type": "string"
-                            },
-                            "type": "array"
-                          },
-                          "toolName": {
-                            "type": "string"
-                          }
-                        },
-                        "required": [
-                          "id",
-                          "toolName",
-                          "outcome",
-                          "errorCode",
-                          "scopesUsed",
-                          "clientName",
-                          "latencyMs",
-                          "responseBytes",
-                          "createdAt"
-                        ],
-                        "type": "object"
+                  "items": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "clientName": {
+                        "type": ["string", "null"]
                       },
-                      "type": "array"
-                    },
-                    "nextBefore": {
-                      "anyOf": [
-                        {
-                          "pattern": "^[A-Za-z0-9_-]{1,128}$",
+                      "createdAt": {
+                        "type": "string"
+                      },
+                      "errorCode": {
+                        "type": ["string", "null"]
+                      },
+                      "id": {
+                        "format": "uuid",
+                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                        "type": "string"
+                      },
+                      "latencyMs": {
+                        "maximum": 9007199254740991,
+                        "minimum": 0,
+                        "type": "integer"
+                      },
+                      "outcome": {
+                        "enum": ["ok", "error", "denied"],
+                        "type": "string"
+                      },
+                      "responseBytes": {
+                        "maximum": 9007199254740991,
+                        "minimum": 0,
+                        "type": "integer"
+                      },
+                      "scopesUsed": {
+                        "items": {
                           "type": "string"
                         },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    }
+                        "type": "array"
+                      },
+                      "toolName": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "toolName",
+                      "outcome",
+                      "errorCode",
+                      "scopesUsed",
+                      "clientName",
+                      "latencyMs",
+                      "responseBytes",
+                      "createdAt"
+                    ],
+                    "type": "object"
                   },
-                  "required": ["events", "nextBefore"],
-                  "type": "object"
+                  "type": "array"
                 }
               }
             },
-            "description": "Success."
+            "description": "Success.",
+            "headers": {
+              "X-Next-Cursor": {
+                "description": "The cursor of the next page: pass it back as `?cursor=`. Absent on the last page.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
           },
           "400": {
             "content": {
@@ -9128,6 +8491,15 @@
               "pattern": "^\\d{4}-(0[1-9]|1[0-2])$",
               "type": "string"
             }
+          },
+          {
+            "description": "The ETag last read for this resource. When it no longer matches, nothing is written and the answer is 412 precondition_failed.",
+            "in": "header",
+            "name": "If-Match",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "requestBody": {
@@ -9220,7 +8592,15 @@
                 }
               }
             },
-            "description": "Success."
+            "description": "Success.",
+            "headers": {
+              "ETag": {
+                "description": "The resource version, `\"<updatedAt>\"`. Send it as If-Match to make an update conditional.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
           },
           "400": {
             "content": {
@@ -9261,6 +8641,16 @@
               }
             },
             "description": "`not_found`: no such resource for this user."
+          },
+          "412": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`precondition_failed`: the resource changed since the If-Match ETag was read."
           },
           "413": {
             "content": {

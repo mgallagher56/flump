@@ -1,1 +1,22 @@
-[]
+[
+  {
+    "kind": "removed-operation",
+    "where": "PUT /v1/accounts/{id}",
+    "reason": "BE-16 (audit L11): deprecated alias of PATCH /accounts/{id}, removed after BE-10 moved every client to PATCH. It answered with Deprecation and Link headers since BE-09. No client in this repository calls it."
+  },
+  {
+    "kind": "removed-path",
+    "where": "/v1/bank-connections/{id}/sync",
+    "reason": "BE-16 (audit L11): deprecated alias of POST /bank-connections/{id}/refresh, removed after BE-10. It answered with Deprecation and Link headers since BE-09. No client in this repository calls it."
+  },
+  {
+    "kind": "retyped-response-property",
+    "where": "GET /v1/mcp-tokens/{id}/activity 200 response",
+    "reason": "BE-16 (audit N10): the activity list now pages like every other list, a JSON array with the next cursor in X-Next-Cursor. No client called the route yet (the web app does not, and it is not on the web proxy allow-list)."
+  },
+  {
+    "kind": "removed-request-field",
+    "where": "GET /v1/mcp-tokens/{id}/activity query parameter before",
+    "reason": "BE-16 (audit N10): replaced by the standard cursor query parameter, as on every other list. No client called the route yet."
+  }
+]

@@ -17,7 +17,6 @@ import {
   Param,
   Patch,
   Post,
-  Put,
   Query,
   Req,
   Res,
@@ -123,20 +122,6 @@ export class FinanceController {
     return (await this.financeService.updateBalances(req.user.id, body)).map(toPublicAccount);
   }
 
-  // Stacking @Put and @Patch on one handler registers only the top decorator's verb, so each
-  // verb gets its own handler. The web app uses PATCH; PUT is a deprecated alias (aliasOf).
-  @Put("accounts/:id")
-  @HttpCode(200)
-  async replaceAccount(
-    @Req() req: AuthenticatedRequest,
-    @Param("id") id: string,
-    @Body() body: UpdateAccountRequest,
-    @Headers("if-match") ifMatch?: string,
-    @Res({ passthrough: true }) res?: Response,
-  ) {
-    return this.updateAccountWithVersion(req.user.id, id, body, ifMatch, res);
-  }
-
   @Patch("accounts/:id")
   @HttpCode(200)
   async updateAccount(
@@ -146,19 +131,9 @@ export class FinanceController {
     @Headers("if-match") ifMatch?: string,
     @Res({ passthrough: true }) res?: Response,
   ) {
-    return this.updateAccountWithVersion(req.user.id, id, body, ifMatch, res);
-  }
-
-  /** `If-Match` makes the update conditional (412 when stale); the answer carries the new ETag. */
-  private async updateAccountWithVersion(
-    userId: string,
-    id: string,
-    body: UpdateAccountRequest,
-    ifMatch: string | undefined,
-    res: Response | undefined,
-  ) {
+    // `If-Match` makes the update conditional (412 when stale); the answer carries the new ETag.
     const account = await this.financeService.updateAccount(
-      userId,
+      req.user.id,
       id,
       body,
       expectedVersion(ifMatch),
@@ -232,14 +207,6 @@ export class FinanceController {
   @RateLimit("bank")
   @UseGuards(BankConnectionsEnabledGuard)
   async refreshBankConnection(@Req() req: AuthenticatedRequest, @Param("id") id: string) {
-    return this.financeService.syncBankConnection(req.user.id, id);
-  }
-
-  @Post("bank-connections/:id/sync")
-  @HttpCode(200)
-  @RateLimit("bank")
-  @UseGuards(BankConnectionsEnabledGuard)
-  async syncBankConnection(@Req() req: AuthenticatedRequest, @Param("id") id: string) {
     return this.financeService.syncBankConnection(req.user.id, id);
   }
 

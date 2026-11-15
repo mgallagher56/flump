@@ -5,6 +5,7 @@ import {
   Dialog,
   FormField,
   Icon,
+  InlineAlert,
   PercentInput,
   Select,
   TextInput,
@@ -13,6 +14,8 @@ import { Trash2 } from "lucide-react";
 import { type FC, type FormEvent, useState } from "react";
 import { useFetcher } from "react-router";
 import type { Account } from "~/containers/accounts/types";
+import { useFetcherOutcome } from "~/features/feedback/hooks/useFetcherOutcome";
+import { versionField } from "~/services/conflict";
 import { accountForm, deleteAction, fieldRow, formActions } from "./AddSavingsAccountDialog.styles";
 
 export interface AddSavingsAccountDialogProps {
@@ -40,6 +43,8 @@ interface AccountFormProps {
 /** Mounted only while the dialog is open, so the fields restart from the account being edited. */
 const AccountForm: FC<AccountFormProps> = ({ accountToEdit, onClose, onDeleteRequest }) => {
   const fetcher = useFetcher();
+  // The dialog closes only once the save lands, so a refused save keeps what was typed.
+  const saveOutcome = useFetcherOutcome(fetcher, { onSuccess: onClose });
   const isEditing = !!accountToEdit;
 
   const [name, setName] = useState(accountToEdit?.name || "");
@@ -60,12 +65,14 @@ const AccountForm: FC<AccountFormProps> = ({ accountToEdit, onClose, onDeleteReq
 
   const submit = (event: FormEvent) => {
     event.preventDefault();
-    if (!canSave) return;
+    if (!canSave || saveOutcome.pending) return;
 
+    saveOutcome.begin();
     fetcher.submit(
       {
         intent: isEditing ? "updateSavingsAccount" : "createSavingsAccount",
         accountId: accountToEdit?.id || "",
+        ...versionField(accountToEdit),
         name: name.trim(),
         type,
         balance: String(Number(balance) || 0),
@@ -74,7 +81,6 @@ const AccountForm: FC<AccountFormProps> = ({ accountToEdit, onClose, onDeleteReq
       },
       { method: "POST", action: "/app/savings" },
     );
-    onClose();
   };
 
   return (
@@ -133,6 +139,8 @@ const AccountForm: FC<AccountFormProps> = ({ accountToEdit, onClose, onDeleteReq
         )}
       </FormField>
 
+      {saveOutcome.error ? <InlineAlert tone="danger">{saveOutcome.error}</InlineAlert> : null}
+
       <div className={formActions()}>
         {isEditing && onDeleteRequest ? (
           <span className={deleteAction()}>
@@ -145,7 +153,7 @@ const AccountForm: FC<AccountFormProps> = ({ accountToEdit, onClose, onDeleteReq
         <Button type="button" variant="ghost" onClick={onClose}>
           Cancel
         </Button>
-        <Button disabled={!canSave} type="submit">
+        <Button disabled={!canSave || saveOutcome.pending} type="submit">
           {isEditing ? "Save changes" : "Add account"}
         </Button>
       </div>

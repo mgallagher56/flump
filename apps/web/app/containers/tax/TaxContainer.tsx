@@ -43,6 +43,7 @@ import { TaxYearComparison } from "~/features/tax/components/TaxYearComparison";
 import { recordAmount } from "~/features/tax/tax-labels";
 import { DEFAULT_PROFILE, useUserProfile } from "~/hooks/useUserProfile";
 import type { loader } from "~/routes/app.self-assessment";
+import { PROFILE_VERSION_FIELD, versionField } from "~/services/conflict";
 import { useFinancialBaseline } from "~/state/baseline.store";
 import { isPageEnabled } from "~/utils/pageConfig";
 import {
@@ -292,21 +293,25 @@ const SelfAssessmentPage: FC<{
 
   const handleSaveProfile = useCallback(() => {
     setIsProfileSaving(true);
+    saveOutcome.begin();
     fetcher.submit(
       {
         intent: "update-profile",
         annualSalary: payeSalary.toString(),
         propertyOwnershipShare: propertyOwnershipShare.toString(),
+        ...versionField(userProfile, PROFILE_VERSION_FIELD),
       },
       { method: "POST" },
     );
     setTimeout(() => setIsProfileSaving(false), 800);
-  }, [payeSalary, propertyOwnershipShare, fetcher]);
+  }, [payeSalary, propertyOwnershipShare, fetcher, userProfile, saveOutcome.begin]);
 
   const handleSaveTransaction = (values: TaxRecordDraft) => {
     const payload = {
       intent: editingRecord ? "update-transaction" : "create-transaction",
       id: editingRecord?.id || "",
+      // The saved record's version, so a change made elsewhere is not overwritten.
+      ...versionField(initialRecords.find((r) => r.id === editingRecord?.id) ?? editingRecord),
       name: values.name,
       source: values.source,
       type: values.type,

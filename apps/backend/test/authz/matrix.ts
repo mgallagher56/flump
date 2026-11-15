@@ -48,7 +48,6 @@ export const ROUTE_MATRIX: Readonly<Record<string, MatrixRow>> = {
   "GET /accounts/:id/details": finance,
   "GET /portfolio-snapshot": finance,
   "POST /accounts": finance,
-  "PUT /accounts/:id": finance,
   "PATCH /accounts/balances": finance,
   "PATCH /accounts/:id": finance,
   "DELETE /accounts/:id": finance,
@@ -58,7 +57,6 @@ export const ROUTE_MATRIX: Readonly<Record<string, MatrixRow>> = {
   "GET /bank-connections/capability": finance,
   "POST /bank-connections": finance,
   "POST /bank-connections/:id/refresh": finance,
-  "POST /bank-connections/:id/sync": finance,
   "DELETE /bank-connections/:id": finance,
 
   // Budget controller.

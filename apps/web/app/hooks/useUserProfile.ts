@@ -5,10 +5,12 @@ import {
   UpdateProfileResponse,
 } from "@flump/api-contract";
 import { type FinancialBaseline, userProfileToFinancialBaseline } from "@flump/finance-engine";
-import { atom, useAtom } from "jotai";
+import { useOptionalToast } from "@repo/ui";
+import { atom, useAtom, useStore } from "jotai";
 import { useCallback } from "react";
 import { apiFetch } from "~/services/api-client";
 import { BackendError } from "~/services/backend-error";
+import { CONFLICT_TOAST, isConflict, reloadAfterConflict, versionEtag } from "~/services/conflict";
 import { financialBaselineAtom } from "~/state/baseline.store";
 import { stripRetiredKeys, stripRetiredRecordKeys } from "~/utils/pageConfig";
 
@@ -297,6 +299,17 @@ export class RecentLoginRequiredError extends Error {
   }
 }
 
+/**
+ * Profile writes run one at a time, in order. Each sends the version the one before it returned,
+ * so two quick saves from this tab never read as a change made somewhere else.
+ */
+let profileWrites: Promise<unknown> = Promise.resolve();
+const inOrder = <T>(write: () => Promise<T>): Promise<T> => {
+  const result = profileWrites.then(write, write);
+  profileWrites = result.catch(() => undefined);
+  return result;
+};
+
 export function useUserProfile() {
   const [profile, rawSetProfile] = useAtom(userProfileAtom);
   const [, rawSetBaseline] = useAtom(financialBaselineAtom);
@@ -313,27 +326,47 @@ export function useUserProfile() {
     [rawSetProfile, rawSetBaseline],
   );
 
+  const store = useStore();
+  const toast = useOptionalToast()?.toast;
+
   const updateProfile = useCallback(
-    async (updates: UserProfileUpdate): Promise<void> => {
-      const updated: UserProfile = await apiFetch("/user-profile", {
-        method: "PATCH",
-        body: updates,
-        schema: UpdateProfileResponse,
-      });
-      setProfile(updated);
-    },
-    [setProfile],
+    (updates: UserProfileUpdate): Promise<void> =>
+      inOrder(async () => {
+        try {
+          const updated: UserProfile = await apiFetch("/user-profile", {
+            method: "PATCH",
+            body: updates,
+            schema: UpdateProfileResponse,
+            // The version this tab last read or wrote (BE-16): a profile changed somewhere else
+            // since then is not overwritten.
+            ifMatch: versionEtag(store.get(userProfileAtom).updatedAt),
+          });
+          setProfile(updated);
+        } catch (err) {
+          // 412: say so, and reload the saved profile so the next save sends its version. The
+          // caller's form keeps what was typed, because the save rejects.
+          if (isConflict(err)) {
+            toast?.({ ...CONFLICT_TOAST, tone: "warning" });
+            reloadAfterConflict();
+          }
+          throw err;
+        }
+      }),
+    [setProfile, store, toast],
   );
 
   const markChecklistStep = useCallback(
-    async (step: string, completed: boolean): Promise<void> => {
-      const updated: UserProfile = await apiFetch("/user-profile/checklist", {
-        method: "PATCH",
-        body: { step, completed },
-        schema: UpdateChecklistResponse,
-      });
-      setProfile(updated);
-    },
+    (step: string, completed: boolean): Promise<void> =>
+      inOrder(async () => {
+        // Unconditional by contract (UNCONDITIONAL_UPDATE_ROUTES): it sets one named step. It
+        // still moves the profile's version, so it shares the queue and stores the answer.
+        const updated: UserProfile = await apiFetch("/user-profile/checklist", {
+          method: "PATCH",
+          body: { step, completed },
+          schema: UpdateChecklistResponse,
+        });
+        setProfile(updated);
+      }),
     [setProfile],
   );
 

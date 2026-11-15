@@ -9,6 +9,7 @@ import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "react
 import { data } from "react-router";
 import SavingsContainer from "~/containers/savings/SavingsContainer";
 import { backendFetch, loadWorkspaceSnapshot } from "~/services/backend-client.server";
+import { ifMatchFromForm, PROFILE_VERSION_FIELD, revalidateOnConflict } from "~/services/conflict";
 import { actionErrorResponse } from "~/services/route-error.server";
 import { getAuthSession, requireAccessToken } from "~/utils/auth.server";
 import { roundTo2dp } from "~/utils/roundTo2dp";
@@ -72,6 +73,7 @@ export const action = async (args: ActionFunctionArgs) => {
         accessToken: token,
         method: "PATCH",
         body: updatePayload,
+        ifMatch: ifMatchFromForm(formData),
       });
     } else if (intent === "deleteAccount") {
       await backendFetch(`/accounts/${encodeURIComponent(String(accountId ?? ""))}`, {
@@ -87,6 +89,7 @@ export const action = async (args: ActionFunctionArgs) => {
         schema: UpdateProfileResponse,
         accessToken: token,
         method: "PATCH",
+        ifMatch: ifMatchFromForm(formData, PROFILE_VERSION_FIELD),
         body: {
           ...(savingsAllocationMode ? { savingsAllocationMode } : {}),
           ...(monthlySavingsTarget !== null
@@ -101,6 +104,9 @@ export const action = async (args: ActionFunctionArgs) => {
     return actionErrorResponse(error);
   }
 };
+
+// A save refused with 412 reloads the saved data, so the form shows and sends the latest version.
+export const shouldRevalidate = revalidateOnConflict;
 
 export const loader = async (args: LoaderFunctionArgs) => {
   const { accounts, accountDetails, userProfile, budgetEntries, user } =

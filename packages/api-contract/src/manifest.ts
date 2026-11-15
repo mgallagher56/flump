@@ -17,7 +17,7 @@ import {
   RevertImportRequest,
   StageImportRequest,
 } from "./domains/imports.js";
-import { CreateMcpTokenRequest, McpTokenActivityQuery } from "./domains/mcp-tokens.js";
+import { CreateMcpTokenRequest } from "./domains/mcp-tokens.js";
 import {
   AcceptTermsRequest,
   DeleteUserRequest,
@@ -60,7 +60,7 @@ import {
   ImportBatchResponse,
   ImportPreviewResponse,
   McpInputResponse,
-  McpTokenActivityResponse,
+  McpTokenActivityListResponse,
   McpTokenListResponse,
   PortfolioSnapshotResponse,
   ReadinessResponse,
@@ -145,6 +145,22 @@ export const isIdempotentRoute = (route: RouteDefinition): boolean =>
   route.method === "POST" &&
   successStatusOf(route) === 201 &&
   !(IDEMPOTENCY_EXCLUDED_ROUTES as readonly string[]).includes(route.id);
+
+/**
+ * PATCH and PUT routes that take no `If-Match`, each with its reason (BE-16, audit M7). Every
+ * other update route is `etag: "conditional"`. Shrink-only.
+ * - `accounts.updateBalances`: one request sets many accounts, so no single version describes it.
+ *   No web client calls it; `PUT /snapshots/:month` replaced it and is conditional.
+ * - `profile.updateChecklist`: sets one named checklist step to done or not done. The client sends
+ *   no figure it read earlier, so there is nothing to overwrite.
+ */
+export const UNCONDITIONAL_UPDATE_ROUTES = [
+  "accounts.updateBalances",
+  "profile.updateChecklist",
+] as const;
+
+/** Whether a route accepts `If-Match` and answers 412 when the resource has changed since. */
+export const isConditionalRoute = (route: RouteDefinition): boolean => route.etag === "conditional";
 
 export const CONTRACT_GROUPS = [
   "accounts",
@@ -243,19 +259,6 @@ export const routes = {
       group: "accounts",
       response: UpdateBalancesResponse,
     }),
-    replace: defineRoute({
-      id: "accounts.replace",
-      method: "PUT",
-      path: "accounts/:id",
-      auth: "user",
-      ownership: "user",
-      params: IdParams,
-      body: UpdateAccountRequest,
-      group: "accounts",
-      response: UpdateAccountResponse,
-      aliasOf: "accounts.update",
-      etag: "conditional",
-    }),
     update: defineRoute({
       id: "accounts.update",
       method: "PATCH",
@@ -290,6 +293,7 @@ export const routes = {
       body: UpsertSnapshotRequest,
       group: "snapshots",
       response: UpsertSnapshotResponse,
+      etag: "conditional",
     }),
   },
   imports: {
@@ -424,17 +428,6 @@ export const routes = {
       params: IdParams,
       group: "bank-connections",
       response: SyncBankConnectionResponse,
-    }),
-    sync: defineRoute({
-      id: "bankConnections.sync",
-      method: "POST",
-      path: "bank-connections/:id/sync",
-      auth: "user",
-      ownership: "user",
-      params: IdParams,
-      group: "bank-connections",
-      response: SyncBankConnectionResponse,
-      aliasOf: "bankConnections.refresh",
     }),
     remove: defineRoute({
       id: "bankConnections.remove",
@@ -711,9 +704,10 @@ export const routes = {
       auth: "user",
       ownership: "user",
       params: IdParams,
-      query: McpTokenActivityQuery,
       group: "mcp-tokens",
-      response: McpTokenActivityResponse,
+      response: McpTokenActivityListResponse,
+      page: "activity",
+      query: pageQuery("activity"),
     }),
     contextPack: defineRoute({
       id: "mcpTokens.contextPack",

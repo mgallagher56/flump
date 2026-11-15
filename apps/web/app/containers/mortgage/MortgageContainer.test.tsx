@@ -46,6 +46,7 @@ const loaded = (overrides: Record<string, unknown> = {}) => ({
 // Per-test loader data; a plain variable keeps it stable across re-renders and is reset below.
 let loaderData: Record<string, unknown> = defaultLoaderData();
 const mockNavigate = vi.fn();
+const mockRevalidate = vi.fn();
 let searchParams = new URLSearchParams();
 vi.mock("react-router", async () => {
   const actual: Record<string, unknown> = await vi.importActual("react-router");
@@ -53,6 +54,7 @@ vi.mock("react-router", async () => {
     ...actual,
     useLoaderData: vi.fn(() => loaderData),
     useNavigate: () => mockNavigate,
+    useRevalidator: () => ({ revalidate: mockRevalidate, state: "idle" }),
     useSearchParams: () => [searchParams, vi.fn()],
   };
 });
@@ -765,6 +767,36 @@ describe("<MortgageContainer />", () => {
         "We could not save your mortgage details. Nothing has changed. Try again.",
       );
       expect(queryByText(/Saved repayment type/)).toBeNull();
+    });
+
+    test("sends the account's version, and a 412 says it changed somewhere else, reloads and keeps what was typed (BE-16)", async () => {
+      setApiEnv();
+      mockRevalidate.mockClear();
+      loaderData = {
+        ...defaultLoaderData(),
+        accounts: [account({ updatedAt: "2026-11-14T09:30:00.123Z" })],
+      };
+      const fetchSpy = vi
+        .spyOn(globalThis, "fetch")
+        .mockImplementation(async (url, init) =>
+          String(url).includes("/accounts/")
+            ? new Response(JSON.stringify({ kind: "client" }), { status: 412 })
+            : contractFetch()(url, init),
+        );
+      const { getByRole, findByRole, queryByText } = customRender(<MortgageContainer />);
+      fireEvent.click(getByRole("button", { name: "Add mortgage details" }));
+      fireEvent.change(field(/^Interest rate/), { target: { value: "4.5" } });
+      save();
+      expect((await findByRole("alert")).textContent).toContain(
+        "We did not save this because it was changed somewhere else. The latest version is now loaded. Check it and save again.",
+      );
+      const patch = fetchSpy.mock.calls.find(([url]) => String(url).includes("/accounts/"));
+      const sentHeaders = (patch?.[1]?.headers ?? {}) as Record<string, string>;
+      expect(sentHeaders["If-Match"]).toBe('"2026-11-14T09:30:00.123Z"');
+      expect(mockRevalidate).toHaveBeenCalledTimes(1);
+      expect(queryByText(/Saved repayment type/)).toBeNull();
+      // The edit dialog is still open with the rate that was typed.
+      expect(field(/^Interest rate/).value).toBe("4.5");
     });
 
     test("blanking the rate and term fields leaves them empty rather than 0 or 1", () => {

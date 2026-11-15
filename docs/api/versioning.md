@@ -66,16 +66,18 @@ Every list route takes `?limit=` and `?cursor=` (BE-09). The body stays a JSON a
 ## Safe retries and concurrent edits
 
 - `Idempotency-Key` (optional, 1 to 255 printable ASCII characters) on create POSTs, except `imports.stage` (its key is in the body), `mcpTokens.create` (the plaintext token is never stored to replay) and `bankConnections.connect` (its body carries a bank token or code, whose hash is never stored). A repeat with the same key and body within 24 hours returns the first status, body and `ETag` / `Location` headers (when the create set them) with `Idempotent-Replayed: true` and creates nothing; the same key with a different body is a 422 `idempotency_key_reused`; a repeat while the first is still running is a 409 `conflict`. Keys are per user and route. Expired rows are ignored, and each new claim deletes that user's expired rows; a financial data reset deletes all of them. A sweep for users who never return is left to the BE-06 retention job, and account deletion (BE-04) must delete them by `user_id` (there is no users table to cascade from).
-- `If-Match` (optional) on updates of accounts (`PATCH` and `PUT`), budget entries, tax records and the profile. Send the `ETag` header from the GET-one or the previous update (`"<updatedAt ISO string>"`). If the resource has changed since, nothing is written and the answer is a 412 `precondition_failed`. The ETag has millisecond precision (Postgres keeps microseconds; the comparison truncates the stored value to milliseconds, in UTC), so two writes to one resource within the same millisecond share a version. Without the header an update behaves as before; clients opt in with BE-10.
+- `If-Match` (optional) on updates of accounts, budget entries, tax records and the profile (`PATCH`). Send the `ETag` header from the GET-one or the previous update (`"<updatedAt ISO string>"`). If the resource has changed since, nothing is written and the answer is a 412 `precondition_failed`. The ETag has millisecond precision (Postgres keeps microseconds; the comparison truncates the stored value to milliseconds, in UTC), so two writes to one resource within the same millisecond share a version. Without the header an update behaves as before.
+- `If-Match` (optional) on `PUT /snapshots/:month` is a list, because one request writes several rows: the ETag of every row for that month the client has read (`"<updatedAt>"` of each account detail), comma separated, at most 200. The request is refused with 412, and nothing is written, when a row it would replace has a version that is not in the list. Two exceptions keep it usable: a row that does not exist yet is always written, and a row that already holds the same value, date and source is let through (a repeat of a save whose answer was lost). The answer's `ETag` is the version of every row the request wrote.
+- Every `PATCH` and `PUT` route is conditional, except the two listed with their reasons in `UNCONDITIONAL_UPDATE_ROUTES` (`packages/api-contract/src/manifest.ts`): `PATCH /accounts/balances` and `PATCH /user-profile/checklist`. The web app sends `If-Match` on every edit of a saved record and handles the 412 (BE-16). `scripts/backend-laws/check-conditional-writes.ts` (part of `check:laws`) fails a `PATCH` or `PUT` route that is neither conditional nor listed, a conditional route whose handler does not read the header, and a web caller that does not send it.
 
-## Deprecated routes, removal after BE-10
+## Deprecated routes
 
-These keep working until the clients move (BE-10). The aliases answer with `Deprecation` and `Link` headers (`aliasOf` in the manifest); the oddly named routes have no replacement yet and are listed so the next version can fix them.
+No route alias is served any more. `PUT /accounts/:id` (use `PATCH /accounts/:id`) and `POST /bank-connections/:id/sync` (use `POST /bank-connections/:id/refresh`) were removed in BE-16, after BE-10 moved every client. A future alias is declared with `aliasOf` in the manifest and answers with the deprecation headers above.
+
+These oddly named routes have no replacement yet and are listed so the next version can fix them.
 
 | Route                                     | Replacement                                     |
 | ----------------------------------------- | ----------------------------------------------- |
-| `PUT /accounts/:id`                       | `PATCH /accounts/:id` (alias)                   |
-| `POST /bank-connections/:id/sync`         | `POST /bank-connections/:id/refresh` (alias)    |
 | `GET /account-details`                    | `GET /accounts/details` (planned)               |
 | `POST /user-profile/send-password-reset`  | `POST /user-profile/password-reset` (planned)   |
 | `POST /user-profile/reset-financial-data` | `DELETE /user-profile/financial-data` (planned) |
@@ -85,3 +87,4 @@ These keep working until the clients move (BE-10). The aliases answer with `Depr
 ## Change log
 
 - BE-09: `userId` and `externalAccountId` removed from account responses (audit L3). A breaking change made within v1 on purpose: removed before any external client; internal clients updated. Account responses gained `updatedAt` (the ETag).
+- BE-16: the two deprecated aliases `PUT /accounts/:id` and `POST /bank-connections/:id/sync` removed (audit L11). `GET /mcp-tokens/:id/activity` now pages like every other list: the body is a JSON array and the next cursor is the `X-Next-Cursor` header, with `cursor` in place of `before` (audit N10). Both are breaking changes made within v1 on purpose, listed in `openapi-breaking-allowlist.json`: no client called either. `PUT /snapshots/:month` accepts an `If-Match` list and answers with an `ETag` (additive).

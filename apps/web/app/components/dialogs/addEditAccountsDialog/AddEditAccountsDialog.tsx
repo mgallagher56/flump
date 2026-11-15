@@ -21,6 +21,7 @@ import {
 import { TYPE_LABEL } from "~/features/accounts/components/AccountsGroupList";
 import { useFetcherOutcome } from "~/features/feedback/hooks/useFetcherOutcome";
 import type { loader } from "~/routes/app.accounts._index";
+import { versionField } from "~/services/conflict";
 import {
   deleteAction,
   deleteConsequence,
@@ -82,6 +83,8 @@ export interface AccountOption {
   type?: AccountType;
   balance?: number;
   studentLoanPlan?: string | null;
+  /** The saved account's version, sent with an edit so a change made elsewhere is not overwritten. */
+  updatedAt?: string;
 }
 
 interface AddEditAccountsDialogBtnProp {
@@ -228,7 +231,11 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
     fetcher.submit(
       {
         ...(isEditAccount
-          ? { intent: "update", accountId: accountId || "" }
+          ? {
+              intent: "update",
+              accountId: accountId || "",
+              ...versionField(account ?? accounts.find((option) => option.id === accountId)),
+            }
           : { intent: "create" }),
         name,
         type: accountType || "",
@@ -237,7 +244,7 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
       },
       { method: "POST" },
     );
-  }, [accountId, isEditAccount, formInput, fetcher, saveOutcome.begin]);
+  }, [accountId, account, accounts, isEditAccount, formInput, fetcher, saveOutcome.begin]);
 
   const handleConfirmRemoveAccount = useCallback(() => {
     deleteOutcome.begin();

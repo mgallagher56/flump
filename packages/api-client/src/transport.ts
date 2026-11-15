@@ -1,5 +1,6 @@
 import {
   ErrorResponse,
+  ETAG_HEADER,
   IDEMPOTENCY_KEY_HEADER,
   IF_MATCH_HEADER,
   NEXT_CURSOR_HEADER,
@@ -98,6 +99,8 @@ export interface CallResult<T> {
   data: T;
   /** The `X-Next-Cursor` response header, `null` on the last page or a non-list. */
   nextCursor: string | null;
+  /** The `ETag` response header (the version of the resource read or written), else `null`. */
+  etag: string | null;
   status: number;
   /** The response's `x-request-id`, else the one this call sent. */
   requestId?: string;
@@ -271,6 +274,7 @@ export async function callBackend<T>(
     const result = (data: T | undefined): CallResult<T | undefined> => ({
       data,
       nextCursor: nextCursor || null,
+      etag: res.headers.get(ETAG_HEADER),
       status: res.status,
       ...(requestId ? { requestId } : {}),
     });

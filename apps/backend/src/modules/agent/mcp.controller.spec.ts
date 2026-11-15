@@ -2,7 +2,6 @@ import { BadRequestException, ForbiddenException, ParseUUIDPipe } from "@nestjs/
 import { describe, expect, it, vi } from "vitest";
 import { AuthGuard } from "../../auth/auth.guard";
 import { McpAllowlistGuard, McpKillSwitchGuard } from "../../auth/mcp-access";
-import { encodeActivityCursor } from "./agent-audit.service";
 import { McpController } from "./mcp.controller";
 import type { McpService } from "./mcp.service";
 import { McpPatGuard } from "./mcp-pat.guard";
@@ -42,7 +41,7 @@ describe("McpController", () => {
   } as unknown as McpTokenService;
 
   const mockAudit = {
-    listForToken: vi.fn().mockResolvedValue({ events: [], nextBefore: null }),
+    listForToken: vi.fn().mockResolvedValue({ items: [], nextCursor: "next-activity-cursor" }),
   };
   const controller = new McpController(mockMcpService, mockTokenService, mockAudit as never);
   const TOKEN_ID = "00000000-0000-4000-8000-000000000001";
@@ -60,14 +59,20 @@ describe("McpController", () => {
     (mockTokenService as unknown as { ownsToken: unknown }).ownsToken = vi
       .fn()
       .mockResolvedValue(true);
-    await controller.getActivity({ user: { id: "u_1" } }, TOKEN_ID, {
-      limit: "10",
-      before: encodeActivityCursor(TOKEN_ID),
-    });
+    const res = { setHeader: vi.fn() };
+    const events = await controller.getActivity(
+      { user: { id: "u_1" } },
+      TOKEN_ID,
+      { limit: "10", cursor: "abc_DEF-123" },
+      res as never,
+    );
     expect(mockAudit.listForToken).toHaveBeenLastCalledWith("u_1", TOKEN_ID, {
       limit: 10,
-      before: encodeActivityCursor(TOKEN_ID),
+      cursor: "abc_DEF-123",
     });
+    // Like every other list (BE-16, N10): the body is the rows, the cursor is a header.
+    expect(events).toEqual([]);
+    expect(res.setHeader).toHaveBeenCalledWith("X-Next-Cursor", "next-activity-cursor");
   });
 
   it("activity: another user's token is a 404 and reads nothing", async () => {
@@ -85,8 +90,8 @@ describe("McpController", () => {
     for (const query of [
       { limit: "501" },
       { limit: "0" },
-      { before: "yesterday" },
-      { before: "bm90LWEtdXVpZA" },
+      { cursor: "not a cursor" },
+      { cursor: "" },
     ]) {
       await expect(
         controller.getActivity({ user: { id: "u_1" } }, TOKEN_ID, query),

@@ -1,6 +1,36 @@
 import { PreconditionFailedException } from "@nestjs/common";
 import { describe, expect, it, vi } from "vitest";
-import { expectedVersion, setEtag, withVersionClaim } from "./etag";
+import { expectedVersion, expectedVersions, setEtag, withVersionClaim } from "./etag";
+
+describe("expectedVersions (BE-16: the If-Match list of PUT /snapshots/:month)", () => {
+  it("is undefined without a header, so the write stays unconditional", () => {
+    expect(expectedVersions(undefined)).toBeUndefined();
+    expect(expectedVersions("  ")).toBeUndefined();
+  });
+
+  it("reads one ETag or a comma-separated list, also when the header arrives split", () => {
+    const a = '"2026-11-14T09:30:00.123Z"';
+    const b = '"2026-11-15T10:00:00.000Z"';
+    const iso = (dates?: Date[]) => dates?.map((d) => d.toISOString());
+    expect(iso(expectedVersions(a))).toEqual(["2026-11-14T09:30:00.123Z"]);
+    expect(iso(expectedVersions(`${a}, ${b}`))).toEqual([
+      "2026-11-14T09:30:00.123Z",
+      "2026-11-15T10:00:00.000Z",
+    ]);
+    expect(iso(expectedVersions([a, b]))).toHaveLength(2);
+  });
+
+  it("is a 412 for anything that is not a list of this API's ETags", () => {
+    for (const junk of [
+      "*",
+      "abc",
+      '"2026-11-14T09:30:00.123Z", *',
+      '"2026-11-14T09:30:00.123Z",',
+    ]) {
+      expect(() => expectedVersions(junk)).toThrow(/changed somewhere else/);
+    }
+  });
+});
 
 describe("expectedVersion", () => {
   it("is undefined without an If-Match header", () => {

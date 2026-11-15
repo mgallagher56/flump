@@ -141,12 +141,6 @@ describe.skipIf(dbMode === "skip")("authz: finance controller (real Postgres)", 
         body: { name: "x", type: "Saving", balance: 1 },
       },
       {
-        key: "PUT /accounts/:id",
-        method: "put",
-        path: () => `/accounts/${accountId}`,
-        body: { name: "pwned" },
-      },
-      {
         key: "PATCH /accounts/balances",
         method: "patch",
         path: () => "/accounts/balances",
@@ -182,11 +176,6 @@ describe.skipIf(dbMode === "skip")("authz: finance controller (real Postgres)", 
         key: "POST /bank-connections/:id/refresh",
         method: "post",
         path: () => `/bank-connections/${connectionId}/refresh`,
-      },
-      {
-        key: "POST /bank-connections/:id/sync",
-        method: "post",
-        path: () => `/bank-connections/${connectionId}/sync`,
       },
       {
         key: "DELETE /bank-connections/:id",
@@ -310,7 +299,7 @@ describe.skipIf(dbMode === "skip")("authz: finance controller (real Postgres)", 
       ran("POST /accounts");
     });
 
-    it.each(["put", "patch"] as const)(
+    it.each(["patch"] as const)(
       "%s /accounts/:id: A 200, B 404 identical to not-found, row unchanged",
       async (verb) => {
         const key = `${verb.toUpperCase()} /accounts/:id`;
@@ -429,7 +418,7 @@ describe.skipIf(dbMode === "skip")("authz: finance controller (real Postgres)", 
       ran("POST /bank-connections");
     });
 
-    it.each(["refresh", "sync"] as const)(
+    it.each(["refresh"] as const)(
       "POST /bank-connections/:id/%s: A reaches own row, B gets 404 identical to not-found",
       async (action) => {
         const own = await h.call("post", `/bank-connections/${connectionId}/${action}`, h.tokens.a);
@@ -447,6 +436,15 @@ describe.skipIf(dbMode === "skip")("authz: finance controller (real Postgres)", 
         ran(`POST /bank-connections/:id/${action}`);
       },
     );
+
+    it("the deprecated aliases are gone (BE-16, L11): /sync and PUT /accounts/:id are plain 404s", async () => {
+      const sync = await h.call("post", `/bank-connections/${connectionId}/sync`, h.tokens.a);
+      expect(sync.status).toBe(404);
+      const put = await h.call("put", `/accounts/${accountId}`, h.tokens.a, { name: "x" });
+      expect(put.status).toBe(404);
+      await expectAccountUntouched();
+      await expectConnectionUntouched();
+    });
 
     it("DELETE /bank-connections/:id: B 404 identical to not-found, row kept; A 200 removes it", async () => {
       await expectSameAsNotFound(

@@ -113,7 +113,8 @@ describe.skipIf(dbMode === "skip")("authz: mcp-tokens controller (real Postgres)
   it("GET /mcp-tokens/:id/activity: A reads own token's activity, B gets 404 for it and a missing id", async () => {
     const own = await h.call("get", `/mcp-tokens/${tokenA.id}/activity`, h.tokens.a);
     expect(own.status).toBe(200);
-    expect(own.body).toEqual({ events: [], nextBefore: null });
+    expect(own.body).toEqual([]);
+    expect(own.headers["x-next-cursor"]).toBeUndefined();
     expect((await h.call("get", `/mcp-tokens/${tokenA.id}/activity`, h.tokens.b)).status).toBe(404);
     expect((await h.call("get", `/mcp-tokens/${MISSING_ID}/activity`, h.tokens.a)).status).toBe(
       404,
@@ -138,20 +139,24 @@ describe.skipIf(dbMode === "skip")("authz: mcp-tokens controller (real Postgres)
     let cursor: string | null = null;
     const sizes: number[] = [];
     do {
-      const query: string = cursor ? `&before=${encodeURIComponent(cursor)}` : "";
+      const query: string = cursor ? `&cursor=${encodeURIComponent(cursor)}` : "";
       const res = await h.call(
         "get",
         `/mcp-tokens/${tokenA.id}/activity?limit=2${query}`,
         h.tokens.a,
       );
       expect(res.status).toBe(200);
-      sizes.push(res.body.events.length);
-      seen.push(...res.body.events.map((e: { id: string }) => e.id));
-      cursor = res.body.nextBefore;
+      sizes.push(res.body.length);
+      seen.push(...res.body.map((e: { id: string }) => e.id));
+      cursor = (res.headers["x-next-cursor"] as string | undefined) ?? null;
     } while (cursor && sizes.length < 10);
     expect(sizes).toEqual([2, 2, 1]);
     expect(new Set(seen).size).toBe(5);
-    // A cursor from another token's row (or a garbled one) never reaches other rows.
+    // A cursor that is not one of ours is a 400, and the old `before` parameter is gone.
+    expect(
+      (await h.call("get", `/mcp-tokens/${tokenA.id}/activity?cursor=bm90LWEtdXVpZA`, h.tokens.a))
+        .status,
+    ).toBe(400);
     expect(
       (await h.call("get", `/mcp-tokens/${tokenA.id}/activity?before=bm90LWEtdXVpZA`, h.tokens.a))
         .status,

@@ -1,11 +1,14 @@
+import { BadRequestException } from "@nestjs/common";
 import type { Repository } from "typeorm";
 import { describe, expect, it, vi } from "vitest";
+import { decodeCursor, encodeCursor, type KeyColumn } from "../../contract/pagination";
 import type { AgentAuditEvent } from "../../entities/agent-audit-event.entity";
-import {
-  AgentAuditService,
-  decodeActivityCursor,
-  encodeActivityCursor,
-} from "./agent-audit.service";
+import { AgentAuditService } from "./agent-audit.service";
+
+const ACTIVITY_KEYS: KeyColumn[] = [
+  { column: '"e"."created_at"', kind: "timestamp" },
+  { column: '"e"."id"', kind: "uuid" },
+];
 
 const make = () => {
   const insert = vi.fn().mockResolvedValue(undefined);
@@ -73,58 +76,65 @@ describe("AgentAuditService.listForToken (E17 re-plan PR D)", () => {
   });
 
   /** A chainable stand-in for TypeORM's query builder that records each call. */
-  const builder = (rows: unknown[]) => {
+  const builder = (rows: Array<ReturnType<typeof row>>) => {
     const calls: Array<[string, unknown[]]> = [];
     const qb: Record<string, unknown> = {};
-    for (const m of ["where", "andWhere", "orderBy", "addOrderBy", "limit"]) {
+    for (const m of ["where", "andWhere", "addSelect", "orderBy", "addOrderBy", "limit"]) {
       qb[m] = (...args: unknown[]) => {
         calls.push([m, args]);
         return qb;
       };
     }
-    qb.getMany = async () => rows;
+    qb.getRawAndEntities = async () => ({
+      entities: rows,
+      // The keyset columns as Postgres returns them: the timestamp at microsecond precision.
+      raw: rows.map((r) => ({
+        __keyset_0: `${r.createdAt.toISOString().slice(0, 23)}000`,
+        __keyset_1: r.id,
+      })),
+    });
     return { repo: { createQueryBuilder: () => qb }, calls };
   };
 
-  it("filters by user and token, caps the page and returns an opaque cursor, never the fingerprint", async () => {
+  it("filters by user and token, returns one page and the next cursor, never the fingerprint", async () => {
     const { repo, calls } = builder([row(0), row(1), row(2)]);
     const service = new AgentAuditService(repo as never);
     const page = await service.listForToken("u1", "t1", { limit: 2 });
     expect(calls).toContainEqual(["where", ["e.userId = :userId", { userId: "u1" }]]);
     expect(calls).toContainEqual(["andWhere", ["e.tokenId = :tokenId", { tokenId: "t1" }]]);
-    expect(calls).toContainEqual(["addOrderBy", ["e.id", "DESC"]]);
+    expect(calls).toContainEqual(["orderBy", ['"e"."created_at"', "DESC"]]);
+    expect(calls).toContainEqual(["addOrderBy", ['"e"."id"', "DESC"]]);
     expect(calls).toContainEqual(["limit", [3]]);
-    expect(page.events).toHaveLength(2);
-    expect(page.nextBefore).toBe(encodeActivityCursor(row(1).id));
-    expect(decodeActivityCursor(page.nextBefore as string)).toBe(row(1).id);
+    expect(page.items).toHaveLength(2);
+    // The cursor is the last row's (created_at, id), like every other list's.
+    expect(decodeCursor(page.nextCursor as string, ACTIVITY_KEYS)).toEqual([
+      `${row(1).createdAt.toISOString().slice(0, 23)}000`,
+      row(1).id,
+    ]);
     expect(JSON.stringify(page)).not.toContain("f".repeat(64));
   });
 
   it("pages with a compound (created_at, id) comparison and ends with a null cursor", async () => {
     const { repo, calls } = builder([row(0)]);
     const service = new AgentAuditService(repo as never);
-    const page = await service.listForToken("u1", "t1", {
-      limit: 5000,
-      before: encodeActivityCursor(row(5).id),
-    });
-    // Capped at PAGE_LIMITS.activity.max (500), plus the one look-ahead row.
+    const cursor = encodeCursor([`${row(5).createdAt.toISOString().slice(0, 23)}000`, row(5).id]);
+    const page = await service.listForToken("u1", "t1", { limit: 500, cursor });
     expect(calls).toContainEqual(["limit", [501]]);
     const compound = calls.find(
       ([m, a]) => m === "andWhere" && String(a[0]).includes("created_at"),
     );
     expect(String(compound?.[1][0])).toMatch(/\("e"\."created_at", "e"\."id"\) </);
-    expect(compound?.[1][1]).toEqual({ cursorId: row(5).id });
-    expect(page.nextBefore).toBeNull();
+    expect(compound?.[1][1]).toMatchObject({ __keyset1: row(5).id });
+    expect(page.nextCursor).toBeNull();
   });
 
-  it("a cursor that is not ours returns an empty page without querying", async () => {
+  it("a cursor that is not ours is a 400 and nothing is read", async () => {
     const { repo, calls } = builder([row(0)]);
     const service = new AgentAuditService(repo as never);
-    for (const bad of ["!!", encodeActivityCursor("not-a-uuid")]) {
-      expect(await service.listForToken("u1", "t1", { before: bad })).toEqual({
-        events: [],
-        nextBefore: null,
-      });
+    for (const bad of ["!!", encodeCursor(["not-a-date", "not-a-uuid"])]) {
+      await expect(
+        service.listForToken("u1", "t1", { limit: 10, cursor: bad }),
+      ).rejects.toBeInstanceOf(BadRequestException);
     }
     expect(calls.some(([m]) => m === "limit")).toBe(false);
   });

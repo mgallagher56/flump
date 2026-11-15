@@ -6,6 +6,7 @@ import {
   isAccountErased,
   type RouteErrorPayload,
 } from "./backend-error";
+import { CONFLICT_MESSAGE, CONFLICT_STATUS, isConflict } from "./conflict";
 
 const STATUS_BY_KIND: Record<BackendErrorKind, number> = {
   unavailable: 503,
@@ -47,11 +48,19 @@ const ACTION_MESSAGE_BY_KIND: Record<BackendErrorKind, string> = {
 /**
  * Turns a failed mutation into the `{ success: false, error }` shape actions return. The status is
  * the backend's own (falling back to the kind's status for network failures) and the message is
- * generic: it never carries backend text, the token or the URL. Anything that is not a BackendError,
+ * generic: it never carries backend text, the token or the URL. A 412 gets its own message. Anything that is not a BackendError,
  * such as an authkit redirect Response, is rethrown by identity.
  */
 export function actionErrorResponse(err: unknown) {
   if (!(err instanceof BackendError)) throw err;
+  // 412: the record changed since the form loaded it. The route reloads its saved data
+  // (`revalidateOnConflict`) and the form keeps what was typed.
+  if (isConflict(err)) {
+    return data(
+      { success: false as const, error: CONFLICT_MESSAGE, conflict: true as const },
+      { status: CONFLICT_STATUS },
+    );
+  }
   return data(
     { success: false as const, error: ACTION_MESSAGE_BY_KIND[err.kind] },
     { status: err.status ?? STATUS_BY_KIND[err.kind] },

@@ -504,7 +504,7 @@ describe.skipIf(dbMode === "skip")("authz: /mcp transport (real Postgres)", () =
         [USER_A, patA.id, "resource_read_raw_input", "ok"],
       ]);
       const activity = await h.call("get", `/mcp-tokens/${patA.id}/activity`, h.tokens.a);
-      expect(activity.body.events.map((e: { toolName: string }) => e.toolName)).toEqual([
+      expect(activity.body.map((e: { toolName: string }) => e.toolName)).toEqual([
         "resource_read_raw_input",
       ]);
       // B cannot read A's activity, and B's own token shows nothing.
@@ -852,16 +852,16 @@ describe.skipIf(dbMode === "skip")("authz: /mcp transport (real Postgres)", () =
       // The owner reads the activity; another user gets the same 404 as a missing token.
       const activity = await h.call("get", `/mcp-tokens/${stager.id}/activity?limit=2`, h.tokens.a);
       expect(activity.status).toBe(200);
-      expect(activity.body.events).toHaveLength(2);
-      expect(activity.body.nextBefore).toEqual(expect.any(String));
+      expect(activity.body).toHaveLength(2);
+      expect(activity.headers["x-next-cursor"]).toEqual(expect.any(String));
       expect(activity.text).not.toContain("argsFingerprint");
       const next = await h.call(
         "get",
-        `/mcp-tokens/${stager.id}/activity?before=${encodeURIComponent(activity.body.nextBefore)}`,
+        `/mcp-tokens/${stager.id}/activity?limit=2&cursor=${encodeURIComponent(activity.headers["x-next-cursor"] as string)}`,
         h.tokens.a,
       );
-      expect(next.body.events).toHaveLength(1);
-      expect(next.body.nextBefore).toBeNull();
+      expect(next.body).toHaveLength(1);
+      expect(next.headers["x-next-cursor"]).toBeUndefined();
       expect((await h.call("get", `/mcp-tokens/${stager.id}/activity`, h.tokens.b)).status).toBe(
         404,
       );

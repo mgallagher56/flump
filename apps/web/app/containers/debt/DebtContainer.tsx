@@ -27,6 +27,7 @@ import { ConfirmDialog } from "~/features/feedback/components/ConfirmDialog";
 import { useFetcherOutcome } from "~/features/feedback/hooks/useFetcherOutcome";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import { useScenarioState } from "~/hooks/useScenarioState";
+import { versionField } from "~/services/conflict";
 import { emptyStack, emptyWrap, errorBanner, pageRoot, plainLink } from "./DebtContainer.styles";
 
 /** The overpay-or-save calculator (D5 replaces the debt "into savings" tool with this link). */
@@ -113,6 +114,20 @@ export const DebtContainer: FC = () => {
       setConfirmDeleteId(null);
     },
   });
+  // An edit resolves once its save answers: null when saved, else the message to show in the
+  // dialog, which stays open with what was typed (a 412 has reloaded the saved debts by then).
+  const settleUpdate = useRef<((error: string | null) => void) | null>(null);
+  const updateOutcome = useFetcherOutcome(fetcher, {
+    onSuccess: () => {
+      settleUpdate.current?.(null);
+      settleUpdate.current = null;
+    },
+  });
+  useEffect(() => {
+    if (updateOutcome.error === null) return;
+    settleUpdate.current?.(updateOutcome.error);
+    settleUpdate.current = null;
+  }, [updateOutcome.error]);
   const debtToDelete = debts.find((d) => d.id === confirmDeleteId);
   // The confirm dialog opens from the edit dialog's "Delete debt", which is gone by then, so a
   // cancelled delete returns focus to that debt's Edit button instead of the page.
@@ -164,7 +179,10 @@ export const DebtContainer: FC = () => {
 
   // Sends only the fields that changed. Balance is not sent: the edit dialog is limited to name,
   // APR and minimum payment.
-  const handleUpdateDebt = (id: string, updates: Partial<DebtItem>) => {
+  const handleUpdateDebt = (
+    id: string,
+    updates: Partial<DebtItem>,
+  ): void | Promise<string | null> => {
     const current = debts.find((d) => d.id === id);
     if (!current) return;
     const payload = debtItemToAccountPayload({ ...current, ...updates });
@@ -178,7 +196,13 @@ export const DebtContainer: FC = () => {
         payload.monthlyContribution === null ? "" : String(payload.monthlyContribution);
     }
     if (Object.keys(fields).length === 2) return;
+    // The saved account's version, so a change made elsewhere is not overwritten.
+    Object.assign(fields, versionField(accounts?.find((a) => String(a.id) === id)));
+    updateOutcome.begin();
     fetcher.submit(fields, { method: "POST", action: "/app/debt" });
+    return new Promise((resolve) => {
+      settleUpdate.current = resolve;
+    });
   };
 
   const header = (

@@ -5,6 +5,7 @@ import {
   Dialog,
   FormField,
   Icon,
+  InlineAlert,
   PercentInput,
   TextInput,
 } from "@repo/ui";
@@ -12,6 +13,8 @@ import { Trash2 } from "lucide-react";
 import { type FC, type FormEvent, type ReactNode, useState } from "react";
 import { useFetcher } from "react-router";
 import type { Account } from "~/containers/accounts/types";
+import { useFetcherOutcome } from "~/features/feedback/hooks/useFetcherOutcome";
+import { versionField } from "~/services/conflict";
 import {
   accountForm,
   deleteAction,
@@ -66,6 +69,8 @@ interface PotFormProps {
 /** Mounted only while the dialog is open, so the fields restart from the pot being edited. */
 const PotForm: FC<PotFormProps> = ({ accountToEdit, onClose, onDeleteRequest }) => {
   const fetcher = useFetcher();
+  // The dialog closes only once the save lands, so a refused save keeps what was typed.
+  const saveOutcome = useFetcherOutcome(fetcher, { onSuccess: onClose });
   const isEditing = !!accountToEdit;
 
   const [name, setName] = useState(accountToEdit?.name || "");
@@ -83,11 +88,14 @@ const PotForm: FC<PotFormProps> = ({ accountToEdit, onClose, onDeleteRequest }) 
 
   const submit = (event: FormEvent) => {
     event.preventDefault();
-    if (!canSave) return;
+    if (!canSave || saveOutcome.pending) return;
+    saveOutcome.begin();
     fetcher.submit(
       {
         intent: isEditing ? "updatePensionAccount" : "createPensionAccount",
-        ...(isEditing && accountToEdit?.id ? { accountId: accountToEdit.id } : {}),
+        ...(isEditing && accountToEdit?.id
+          ? { accountId: accountToEdit.id, ...versionField(accountToEdit) }
+          : {}),
         name: name.trim(),
         balance: balance === null ? (isEditing ? "" : "0") : String(balance),
         interestRate:
@@ -99,7 +107,6 @@ const PotForm: FC<PotFormProps> = ({ accountToEdit, onClose, onDeleteRequest }) 
       },
       { method: "POST", action: "/app/pension" },
     );
-    onClose();
   };
 
   return (
@@ -206,6 +213,8 @@ const PotForm: FC<PotFormProps> = ({ accountToEdit, onClose, onDeleteRequest }) 
         )}
       </FormField>
 
+      {saveOutcome.error ? <InlineAlert tone="danger">{saveOutcome.error}</InlineAlert> : null}
+
       <div className={formActions()}>
         {isEditing && onDeleteRequest ? (
           <span className={deleteAction()}>
@@ -218,7 +227,7 @@ const PotForm: FC<PotFormProps> = ({ accountToEdit, onClose, onDeleteRequest }) 
         <Button type="button" variant="ghost" onClick={onClose}>
           Cancel
         </Button>
-        <Button disabled={!canSave} type="submit">
+        <Button disabled={!canSave || saveOutcome.pending} type="submit">
           {isEditing ? "Save changes" : "Add pot"}
         </Button>
       </div>

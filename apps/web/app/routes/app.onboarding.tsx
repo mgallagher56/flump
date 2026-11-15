@@ -13,6 +13,7 @@ import { FOCUSED_SHELL_HANDLE } from "~/features/onboarding/focusedShell";
 import type { UserProfile } from "~/hooks/useUserProfile";
 import { backendFetch } from "~/services/backend-client.server";
 import { BackendError } from "~/services/backend-error";
+import { ifMatchFromForm, PROFILE_VERSION_FIELD } from "~/services/conflict";
 import { actionErrorResponse, throwRouteError } from "~/services/route-error.server";
 import { getAuthSession, requireAccessToken } from "~/utils/auth.server";
 import {
@@ -64,6 +65,7 @@ export const action = async (args: ActionFunctionArgs) => {
       schema: UpdateProfileResponse,
       accessToken: token,
       method: "PATCH",
+      ifMatch: ifMatchFromForm(formData, PROFILE_VERSION_FIELD),
       body: {
         enabledPages,
         dashboardWidgets,

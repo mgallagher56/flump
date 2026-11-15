@@ -12,6 +12,7 @@ import {
   Scripts,
   ScrollRestoration,
   useLoaderData,
+  useRevalidator,
   useRouteError,
   useRouteLoaderData,
 } from "react-router";
@@ -24,6 +25,7 @@ import { useIsFocusedShell } from "./features/onboarding/focusedShell";
 import type { UserProfile } from "./hooks/useUserProfile";
 import { useUserProfile } from "./hooks/useUserProfile";
 import i18n from "./i18n";
+import { registerSavedDataReload, revalidateOnConflict } from "./services/conflict";
 import "@repo/ui/fonts.css";
 import styles from "./index.css?url";
 import { sentryPublicEnv } from "./observability/env";
@@ -42,6 +44,9 @@ export const links = () => [
 ];
 
 export const middleware = [securityMiddleware];
+
+// A save refused with 412 reloads the profile too, so the next save sends its latest version.
+export const shouldRevalidate = revalidateOnConflict;
 
 export const loader = async (args: LoaderFunctionArgs) => {
   const locale = i18n.lng;
@@ -196,6 +201,13 @@ export default function App() {
 
   // Sign-out wipes this browser's per-user storage (E19 A6); covers every form posting to /logout.
   useEffect(() => watchLogoutForms(), []);
+
+  // A browser-side save refused with 412 reloads every loader's saved data (BE-16).
+  const revalidator = useRevalidator();
+  useEffect(() => {
+    registerSavedDataReload(() => revalidator.revalidate());
+    return () => registerSavedDataReload(null);
+  }, [revalidator]);
 
   useEffect(() => {
     if (userProfile) {

@@ -27,8 +27,15 @@ export const SnapshotValue = z.strictObject({
 
 /**
  * PUT /snapshots/:month. A batch upsert of account values for one month. Partial is allowed
- * (accounts not listed are untouched), the latest write wins, and past months may be edited.
- * `complete: true` also records the check-in for the month.
+ * (accounts not listed are untouched) and past months may be edited. `complete: true` also records
+ * the check-in for the month.
+ *
+ * Without `If-Match` the latest write wins. With it (BE-16), the header lists the ETag of every
+ * row for this month the client has read (`"<updatedAt>"` of each account detail, comma
+ * separated). The write is refused with 412 `precondition_failed` when a row it would replace has
+ * a version that is not in the list, unless that row already holds the same value, date and
+ * source (a repeat of a save whose answer was lost). A row that does not exist yet is always
+ * written. The answer's `ETag` is the version of every row this request wrote.
  */
 export const UpsertSnapshotRequest = z.strictObject({
   values: z.array(SnapshotValue).max(200),
