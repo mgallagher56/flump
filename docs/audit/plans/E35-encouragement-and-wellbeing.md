@@ -24,12 +24,12 @@ These restate rules already in force: copy guide 2.3 ("Copy never judges someone
 
 | Source | Finding | What it means for Flump |
 | --- | --- | --- |
-| Gladstone, Jachimowicz and others, "Financial shame spirals", 2021 | Six studies, 9,110 people. Shame makes people withdraw from their finances, and withdrawal deepens hardship | Shame is not only unkind, it does harm. This is the evidence behind the hard constraint |
+| Gladstone, Jachimowicz and others, "Financial shame spirals", 2021 | Six studies, 9,110 people (**[U]**, read through summaries). Shame makes people withdraw from their finances, and withdrawal deepens hardship | Shame is not only unkind, it does harm. This is the evidence behind the hard constraint |
 | Money and Pensions Service, UK Strategy for Financial Wellbeing | Financial wellbeing is "feeling secure and in control" | The outcome to aim for and to ask about |
 | FCA, "Gaming trading", November 2022 | Survey of over 3,000 trading app users. Celebratory messages and confetti after a trade were associated with riskier investing; an association, not proof of cause | Never mark a financial decision or a figure. A confirmation follows an action in Flump |
 | FCA research note, trading apps experiment, 20 June 2024 | Over 9,000 people. Push notifications, a leaderboard, and points with a prize draw changed how often people traded and the risk they took | Fails N1 and N2. Notifications need their own decision |
 | FCA Consumer Duty guidance FG22/5, July 2022 | Do not exploit behavioural biases; help people make informed decisions | Not binding on Flump, adopted in `docs/compliance/consumer-duty-principles.md` |
-| Silverman and Barasch, Journal of Consumer Research, 2023 | A broken streak lowers later engagement, most when people blame themselves | A streak punishes the month someone could not face their money. Fails N3 |
+| Silverman and Barasch, Journal of Consumer Research, 2023 | A broken streak lowers later engagement, most when people blame themselves | A streak punishes the month someone skipped. Fails N3 |
 | Etkin, Journal of Consumer Research, 2016 | Measuring an activity can make it feel like work | Count nothing about how often someone uses Flump |
 | Patel and others, Annals of Internal Medicine, 2016 | Loss framing raised step counts while it lasted, not after | Loss framing fails N3 whatever it achieves |
 | Koivisto and Hamari, review of 819 studies, 2019 | Results on points, badges and leaderboards are mixed | No evidence found for them in a budgeting app (**[U]**) |
@@ -58,7 +58,7 @@ The E17 design decisions reached main on 15 November (`docs/design/e17-options/`
 | Feature | On-screen wording | Benefit to the person |
 | --- | --- | --- |
 | A goal on an account, any size | "Goal: £50 in this account by June." | Research on goal-setting aside, the person asked for it; Flump holds it for them |
-| Progress, led by what is done (O8) | "£1,800 paid off since January." beside the balance | Progress is visible from any starting point |
+| Progress, led by what is done (O8) | "£1,800 paid off since January." beside the balance. A balance that rose reads "Balance changed by +£300 since January." in the same place and style | Progress is visible from any starting point |
 | Goal reached, one plain dated line, no animation | "Balance £0. You set this goal for March 2027." | A fact they chose to track, confirmed |
 | Changing or removing a goal | "Goal changed." No "are you sure you want to give up" | Goals can move with life |
 
@@ -101,7 +101,7 @@ Rules for every screen, not only the options above.
 | Defaults | No default assumes a situation. Housing, goals and targets start empty; no screen treats owning, saving or being debt-free as the expected state | The housing question lists its options with equal weight and no pre-selection |
 | What is acknowledged | Actions in Flump and goals the user set. Never an amount, a rise or a financial decision | "November is checked in." |
 | Goals | The user's own, any size, any kind, changed or removed without comment | A £50 goal gets the same sentence as a £50,000 one |
-| Setbacks | The same voice as good news: what changed, by how much, and what the person can change in Flump. Never why, and never what they should do | "Net worth changed by -£2,300 since October 2026. Largest change: Stocks ISA, -£1,900." Then two ordinary links: "Update a figure" and "Try a what-if" |
+| A figure that moved | Whichever way a figure moved: what changed and by how much, then the same two ordinary links. Never why, and never what to do | "Net worth changed by -£2,300 since October 2026. Largest change: Stocks ISA, -£1,900." Then "Update a figure" and "Try a what-if", which also appear when the figure rose |
 | A missed month | Nothing. The next check-in starts from where things are | "Balances for January", with December carried forward and marked |
 | Opt-outs | Animations, goals and reminders each switch off in Settings, with no warning about what will be missed | "Animations: off" |
 | Free help | One line, the same for every user, in the same place, never triggered by anyone's figures (UX guideline T9). Today policy R3 allows it on the debt page only | "Free, impartial debt help is available from MoneyHelper" |
@@ -118,10 +118,10 @@ Not applied in this PR. Exact wording for the owner to approve.
 2. Use the same words for every size. A goal of £50 and a goal of £50,000 get the same sentence.
 3. Never mention a missed month, a passed date or a goal not reached. Nothing is "lost", "broken", "missed", "overdue" or "behind".
 4. No praise adjectives about money: "great", "well done", "impressive", "healthy", "on track".
-5. When a figure falls, say what changed and by how much, then what the person can change in Flump. Do not say why, and do not say what to do.
+5. Whichever way a figure moved, say what changed and by how much. The same links appear either way. Do not say why, and do not say what to do.
 6. Goals are the person's own words and numbers. Flump does not suggest one.
 
-**`docs/copy/COPY-GUIDE.md`, section 2.4, one new row.** Situation: "Finished a task they chose (check-in, setup)". Reader is likely: "Pleased". Tone: "Warm, names the action". Example: "November is checked in."
+**`docs/copy/COPY-GUIDE.md`, section 2.4, the existing Success row.** Tone stays "Proportionate, no celebration". Add a second example beside "Budget saved": "November is checked in."
 
 **`docs/ux/UX-GUIDELINES.md`, section 9.**
 
@@ -168,6 +168,7 @@ Finance apps feel cold because of jargon, judgement and dense screens, and Flump
 | W6 | A reached goal (Set 2) | No line; one plain dated line; anything more | **One plain dated line**, decided after Set 1 |
 | W7 | Free help line beyond the debt page | Keep to the debt page (policy R3 today); one more place, such as Settings, the same for everyone | **Keep to the debt page** until the owner amends R3 |
 | W8 | Push notifications (E12 O3) | None at launch; one reminder the user asks for | **None at launch**, as on record |
+| W9 | Measures that use people's money or activity (check-ins completed, goals reached, debt paid down) | Keep them, in aggregate and only against goals people set themselves; or drop them and keep the two questions and the share of accounts kept current | **Keep, in aggregate.** The independent reviewer advised dropping them: counting check-ins is close to a usage measure, and counting debt paid down treats one outcome as the right one. The owner asked for benefit to be measured this way, so the choice is the owner's |
 
 ## Sources (all read 2026-11-15)
 

@@ -8,19 +8,20 @@
 
 | Area | In place | Where |
 | --- | --- | --- |
-| Installs | `bun install --frozen-lockfile --ignore-scripts` in CI and in both Docker builds; Bun pinned to 1.4.4 | `.github/actions/bun-setup/action.yml`, `apps/backend/Dockerfile`, `apps/web/Dockerfile`, `package.json` (`packageManager`) |
+| Installs | `bun install --frozen-lockfile --ignore-scripts` in CI and in all three Docker builds; Bun pinned to 1.4.4 | `.github/actions/bun-setup/action.yml`, the backend, web and marketing Dockerfiles, `package.json` (`packageManager`) |
 | Lifecycle scripts | No `trustedDependencies` in any workspace, and Bun does not run dependencies' scripts by default | `package.json` files |
 | Updates | Renovate with a three-day release age for npm packages (`security:minimumReleaseAgeNpm`), OSV alerts on, no automerge, one grouped non-major PR | `renovate.json` |
 | Actions and images | Every third-party action pinned to a commit SHA; base images pinned by digest; a test fails on a tag-pinned image or persisted checkout credentials (SEC-E, merged) | `.github/workflows/*.yml`, `scripts/ci-config.test.ts` |
 | Scans | gitleaks on the commit range, Semgrep CE, a weekly passive ZAP baseline, `bun audit` in the pipeline | `.github/workflows/security-scan.yml`, `ci-pipeline.yml` |
 | Sign-in | WorkOS AuthKit, JWT verified on the backend, closed-beta allowlist, recent-login check for sensitive actions | `apps/backend/src/auth/` |
-| Abuse limits | IP rate limiting backed by Postgres; a signed client IP header | `apps/backend/src/security/` |
+| Abuse limits | IP and per-user rate limiting backed by Postgres; a signed client IP header; a CSRF Origin check; receipt upload validation | `apps/backend/src/security/` |
+| Backups and merge rules | A scheduled backup workflow; required CI checks before merge | `.github/workflows/backup.yml` |
 | Encryption at rest | Bank tokens under AES-256-GCM with versioned keys and a rotation runbook; HMAC-SHA256 for keyed references and tombstones | `packages/banking` (`crypto`), `docs/runbooks/bank-token-key-rotation.md`, `apps/backend/src/security/keyed-ref.ts` |
 | Incident response | A runbook that starts the 72-hour clock for the ICO at step 1 | `docs/runbooks/incident.md` |
 | Web hardening | Headers and CSP (report-only for the full policy), logging policy, threat model | `docs/security/` |
 | MCP | Allowlist, scopes, output policy tests, audit events with hashed arguments | `apps/backend/src/auth/mcp-access.ts`, `packages/mcp/src/policy/`, `agent-audit.service.ts` |
 
-**Open items already ticketed in the backend re-score** (`docs/audit/backend-2026-11/RESCORE.md`), which E36 depends on and does not repeat: SEC-A production environment checks, SEC-B MCP token tightening, SEC-D receipt encryption, SEC-F audit-trail integrity, BE-18 bank launch readiness. No commit on main names SEC-A, SEC-B, SEC-D or SEC-F, so they are treated as open (**[U]**, not re-checked in code).
+**Open items already ticketed in the backend re-score** (`docs/audit/backend-2026-11/RESCORE.md`), which E36 depends on and does not repeat: SEC-A production environment checks, SEC-D receipt encryption, SEC-F audit-trail integrity, BE-18 bank launch readiness. SEC-B (MCP token tightening) merged with BE-15 in #725. No commit on main names SEC-A, SEC-D or SEC-F, so they are treated as open (**[U]**, not re-checked in code).
 
 ## 2. Gaps and what to do
 
@@ -28,13 +29,13 @@
 
 | Gap | Action | Who |
 | --- | --- | --- |
-| Bun has no release-age delay. Renovate's delay only shapes its own PRs; a hand-run `bun add` or `bun update` can pull a version published minutes ago | Add `bunfig.toml` with `[install] minimumReleaseAge = "7d"` (Bun accepts seconds or units; exclusions go in `minimumReleaseAgeExcludes`) | Agent |
-| Renovate waits three days, not seven | Set `minimumReleaseAge` to "7 days" for npm in `renovate.json`. Urgent security fixes: a documented exception, where a named advisory allows a hand-made PR with an entry in `minimumReleaseAgeExcludes` for that exact version, removed afterwards. Whether Renovate's own vulnerability PRs skip the delay is **[U]**; test it on the first alert | Agent |
+| Bun has no release-age delay. Renovate's delay only shapes its own PRs; a hand-run `bun add` or `bun update` can pull a version published minutes ago | Add `bunfig.toml` with `[install] minimumReleaseAge = 604800` (seconds; Bun's documentation also describes unit forms; exclusions go in `minimumReleaseAgeExcludes`) | Agent |
+| Renovate waits three days, not seven | Set `minimumReleaseAge` to "7 days" for npm in `renovate.json`, including the Playwright rule, which sets its own three days. Urgent security fixes: a documented exception, where a named advisory allows a hand-made PR with an entry in `minimumReleaseAgeExcludes` for that exact version, removed afterwards. Whether Renovate's own vulnerability PRs skip the delay is **[U]**; test it on the first alert | Agent |
 | `trustedDependencies` could be added quietly | A law in `scripts/ci-config.test.ts`: the list is absent or matches an allowlist in the test, each entry with a reason | Agent |
 | No SBOM | Generate a CycloneDX SBOM for each image in CI and keep it as a build artifact for each release. Tool choice checked against current docs in the slice (**[U]**) | Agent |
 | `bun audit` can fail open | The pipeline prints a warning when the audit cannot run. Keep that, but fail the job on a known high or critical advisory with no recorded exception | Agent |
-| Dependency count | One pass: list direct dependencies per workspace, remove unused ones (knip already runs for the backend; extend to web and packages), and record why each remaining runtime dependency is needed | Agent |
-| New actions | A law that every `uses:` line is a full commit SHA or a local path, so the current state cannot regress | Agent |
+| Dependency count | One pass: list direct dependencies per workspace, remove unused ones (knip is installed and checks the backend through `check-backend-laws`; extend it to web and packages), and record why each remaining runtime dependency is needed | Agent |
+| New actions | `scripts/ci-config.test.ts` already tests SHA pins. Extend it to glob every workflow file, so a new workflow cannot skip it | Agent |
 
 ### (b) Accounts
 
@@ -46,8 +47,7 @@ All settings are in the WorkOS dashboard, so every row is an **owner-only** step
 | Passkeys are off | Enable passkeys in AuthKit. WorkOS says passkeys count as both factors, work only with the hosted UI, and are bound to the sign-in domain, so the custom AuthKit domain must be set first (E24 owner action) or early passkeys stop working |
 | Password policy | Set the strongest AuthKit password policy offered. Whether it includes a breached-password check is **[U]**: the docs found today do not say. If it does not, ask WorkOS, and do not build one in Flump (it would mean handling passwords) |
 | Bots and credential stuffing | Enable WorkOS Radar, which blocks or challenges automated sign-in attempts in hosted AuthKit with no code change. Check the plan and price first (**[U]**) |
-| Recovery | Confirm that password reset and "try another way" cannot bypass a second factor. WorkOS fixed one such bypass in January 2025 |
-| Issuer pin | Finish the deferred item Q12 in `owner-steps.md` (pin the WorkOS issuer and audience) |
+| Recovery | Confirm that password reset and "try another way" cannot bypass a second factor. WorkOS fixed one such bypass in January 2025 (**[U]**, from a search extract of its bulletins) |
 
 ### (c) Limiting the impact of a breach
 
@@ -75,8 +75,8 @@ The realistic risk for Flump is "harvest now, decrypt later": traffic recorded t
 | Risk | Action | Who |
 | --- | --- | --- |
 | Convincing phishing at scale | Passkeys (section b) are the phishing-resistant answer. Publish one line on the security page: Flump never asks for a password, code or bank login by email | Owner approves wording |
-| The public repo is read by attackers' tools | A short review of what it reveals: architecture and scan configuration are fine to show; check that runbooks carry no hostnames, project ids, email addresses or allowlist entries, and that gitleaks history scanning covers all branches. The WorkOS key in git history is already an owner action (E3 D-12) | Agent reviews; owner rotates |
-| No way to report a flaw | Add `SECURITY.md` and a `security.txt` (the marketing service already supports a `SECURITY_CONTACT` variable; no mailbox exists yet). Turn on GitHub private vulnerability reporting | Owner creates the mailbox; agent adds the files |
+| The public repo is read by attackers' tools | A short review of what it reveals: architecture and scan configuration are fine to show; check that runbooks carry no hostnames, project ids, email addresses or allowlist entries, and that gitleaks history scanning covers all branches. The WorkOS key once in git history was rotated on 2026-11-13 (E3 D-12) | Agent reviews; owner rotates |
+| No way to report a flaw | Add `SECURITY.md`. The marketing server already serves `security.txt` once a `SECURITY_CONTACT` variable is set (`apps/marketing/server/ops.ts`); no mailbox exists yet. Turn on GitHub private vulnerability reporting | Owner creates the mailbox; agent adds the files |
 | Prompt injection through MCP | Account names, notes and imported rows are attacker-controllable text that reaches a model. Add tests that such text is returned as data, never as instructions: a fixture set of injection strings through every read tool and the staged-import flow, asserting the envelope marks user text and that no write happens without the existing review step | Agent |
 | Faster scanning for known flaws | Covered by (a): patch speed with the urgent exception, and failing CI on high advisories | Agent |
 
@@ -92,7 +92,7 @@ Price is an **owner money decision**. A small web and API test from an accredite
 | --- | --- | --- |
 | H1 | Supply chain: `bunfig.toml` release age, Renovate seven days and the urgent exception, laws for `trustedDependencies` and SHA pins, audit failing on high, SBOM, dependency pass | None |
 | H2 | Reporting and repo review: `SECURITY.md`, `security.txt`, private reporting, the public-repo review, the phishing line | Owner mailbox |
-| H3 | Accounts: owner checklist for MFA, passkeys, password policy, Radar, recovery; issuer and audience pin | Owner dashboard steps; custom domain for passkeys |
+| H3 | Accounts: owner checklist for MFA, passkeys, password policy, Radar, recovery | Owner dashboard steps; custom domain for passkeys |
 | H4 | Breach impact: database roles, extended field encryption, minimisation pass, breach runbook and tabletop | SEC-D, SEC-F, BE-18 |
 | H5 | Post-quantum: edge test, crypto inventory, key-size law | H4 for the inventory |
 | H6 | MCP prompt-injection tests | E17 write tools merged |
@@ -102,7 +102,7 @@ H1, H2 and H6 can start at once and run in parallel.
 
 ## 4. Strongest argument against
 
-Flump has no users, no revenue and one developer. The biggest security risk today is not a missing control but an unfinished one: the WorkOS key still in git history, the restore drill never run, the full CSP still report-only. A new epic can become a way to do interesting work (post-quantum, SBOMs) while those stay open. On this view only H1, H2 and the owner steps in H3 are worth doing before launch, the open SEC items come first, and the rest waits for real users.
+Flump has no users, no revenue and one developer. The biggest security risk today is not a missing control but an unfinished one: the restore drill never run, the full CSP still report-only. A new epic can become a way to do interesting work (post-quantum, SBOMs) while those stay open. On this view only H1, H2 and the owner steps in H3 are worth doing before launch, the open SEC items come first, and the rest waits for real users.
 
 ## 5. Decisions for the owner
 
