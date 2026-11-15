@@ -4,6 +4,7 @@ import {
   joinNetWorthLeftOut,
   type NetWorthBasis,
   netWorthBasisFromProfile,
+  netWorthChoicesAvailable,
   resolveNetWorthScope,
 } from "./net-worth-basis.js";
 import { PERSONAS, type PersonaName } from "./picture/__fixtures__/index.js";
@@ -266,5 +267,38 @@ describe("personas under the default basis", () => {
     );
     expect(nw.netWorth).toBe(expected.portfolio.netWorth);
     expect(nw.leftOut).not.toContain("homeValueMissing");
+  });
+});
+
+describe("netWorthChoicesAvailable", () => {
+  it("offers neither choice with no property, mortgage or student loan account", () => {
+    expect(netWorthChoicesAvailable([])).toEqual({ property: false, studentLoan: false });
+    expect(
+      netWorthChoicesAvailable([{ type: "Saving" }, { type: "Credit Card" }, { type: null }, {}]),
+    ).toEqual({ property: false, studentLoan: false });
+  });
+
+  it("offers the property choice for a property account or a mortgage account alone", () => {
+    expect(netWorthChoicesAvailable([{ type: "Property" }])).toEqual({
+      property: true,
+      studentLoan: false,
+    });
+    expect(netWorthChoicesAvailable([{ type: "Mortgage" }])).toEqual({
+      property: true,
+      studentLoan: false,
+    });
+  });
+
+  it("offers the student loan choice only with a student loan account", () => {
+    expect(netWorthChoicesAvailable([{ type: "Student Loan" }, { type: "Loan" }])).toEqual({
+      property: false,
+      studentLoan: true,
+    });
+    // A personal loan is not a student loan.
+    expect(netWorthChoicesAvailable([{ type: "Loan" }]).studentLoan).toBe(false);
+  });
+
+  it("offers both for the worked example", () => {
+    expect(netWorthChoicesAvailable(example)).toEqual({ property: true, studentLoan: true });
   });
 });

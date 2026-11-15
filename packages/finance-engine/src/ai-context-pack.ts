@@ -1,6 +1,9 @@
 import {
-  anonymiseDescription,
-  anonymousBudgetEntryLabels,
+  anonymousAccountType,
+  createBudgetCategoryAnonymiser,
+  createBudgetEntryAnonymiser,
+  createTaxCategoryAnonymiser,
+  createTaxRecordAnonymiser,
   genericAccountLabel,
 } from "./anonymise.js";
 import {
@@ -77,10 +80,43 @@ export interface BuildContextPackInput {
 export const ANONYMOUS_USER_ID = "anonymous-user";
 
 /**
+ * Budget entries with every user-typed text replaced (ruling 7): the name becomes a neutral label
+ * by group ("Bills 1"), a category the user typed becomes "Custom category 1" (built-in categories
+ * stay, so totals are unchanged) and notes are dropped. Amounts, frequencies and flags stay.
+ */
+export function anonymiseBudgetEntries(entries: readonly BudgetEntryItem[]): BudgetEntryItem[] {
+  const entryLabel = createBudgetEntryAnonymiser();
+  const categoryLabel = createBudgetCategoryAnonymiser();
+  return entries.map((entry) => {
+    const { notes: _notes, ...rest } = entry;
+    return {
+      ...rest,
+      name: entryLabel(entry),
+      category: categoryLabel(typeof entry.category === "string" ? entry.category : ""),
+    };
+  });
+}
+
+/**
+ * Tax records with every user-typed text replaced (ruling 7): the name becomes a neutral label by
+ * source ("Rental 1"), a category outside the app's fixed list becomes "Custom category 1" and notes
+ * are dropped. Amounts, dates, sources and fixed category ids stay, so the tax maths is unchanged.
+ */
+export function anonymiseTaxRecords<T extends TaxRecordFields>(records: readonly T[]): T[] {
+  const nameLabel = createTaxRecordAnonymiser();
+  const categoryLabel = createTaxCategoryAnonymiser();
+  return records.map((record) => ({
+    ...record,
+    category: categoryLabel(typeof record.category === "string" ? record.category : ""),
+    name: nameLabel(record),
+    notes: null,
+  }));
+}
+
+/**
  * The raw input with every free-text or identifying field replaced, by the same rules the
- * anonymised context pack uses: accounts get generic per-type labels, budget entries their
- * generic labels and a scrubbed category with no notes, tax records no name or notes, and the
- * baseline no user id. Figures, ids, dates and types are unchanged, so every calculation on the
+ * anonymised context pack uses: accounts get generic per-type labels, budget entries and tax
+ * records the neutral labels above with no notes, and the baseline no user id. Figures, ids, dates and types are unchanged, so every calculation on the
  * result matches the same calculation on the input. Applying it twice changes nothing more.
  */
 export function anonymiseContextPackInput(input: BuildContextPackInput): BuildContextPackInput {
@@ -88,23 +124,16 @@ export function anonymiseContextPackInput(input: BuildContextPackInput): BuildCo
   const accounts = input.accounts?.map((acc) => {
     const typeKey = genericAccountLabel(acc.type, 0).replace(/ Account #0$/, "");
     counters[typeKey] = (counters[typeKey] ?? 0) + 1;
-    return { ...acc, name: genericAccountLabel(acc.type, counters[typeKey]) };
-  });
-  const labels = anonymousBudgetEntryLabels(input.budgetEntries ?? []);
-  const budgetEntries = input.budgetEntries?.map((entry, idx) => {
-    const { notes: _notes, ...rest } = entry;
     return {
-      ...rest,
-      name: labels[idx] ?? "Budget entry",
-      category: anonymiseDescription(entry.category ?? ""),
+      ...acc,
+      name: genericAccountLabel(acc.type, counters[typeKey]),
+      type: anonymousAccountType(acc.type),
     };
   });
-  const taxRecords = input.taxRecords?.map((record) => ({
-    ...record,
-    category: anonymiseDescription(record.category ?? ""),
-    name: "",
-    notes: null,
-  }));
+  const budgetEntries = input.budgetEntries
+    ? anonymiseBudgetEntries(input.budgetEntries)
+    : undefined;
+  const taxRecords = input.taxRecords ? anonymiseTaxRecords(input.taxRecords) : undefined;
   return {
     ...input,
     baseline: { ...input.baseline, userId: ANONYMOUS_USER_ID },
@@ -210,9 +239,11 @@ export function buildFlumpAiContextPack(
       categoryCounters[typeKey] = (categoryCounters[typeKey] ?? 0) + 1;
       const genericName = genericAccountLabel(acc.type, categoryCounters[typeKey]);
       accountNameMap.set(acc.id || `acc_${idx}`, genericName);
+      // The stored type is free text; only a word from the fixed list (or "Other") reaches rawType.
       return {
         ...acc,
         name: genericName,
+        type: anonymousAccountType(acc.type),
       };
     }
     return { ...acc };
@@ -246,24 +277,22 @@ export function buildFlumpAiContextPack(
   }
 
   // 5. Budget & Runway Evaluation
-  // M-PRIV4: anonymised, no free-text entry name leaves: income becomes "Income #n" and every
-  // other entry its (scrubbed) category plus an ordinal, as the MCP budget tool does.
+  // M-PRIV4 and ruling 7: anonymised, no user-typed entry or category name and no note leaves.
+  // Entries become neutral labels by group ("Bills 1", "Income 2") and typed categories
+  // "Custom category 1", as the MCP budget tool does. Built-in categories stay, so totals match.
   const rawBudgetEntries = input.budgetEntries ?? [];
-  const anonymousLabels = isAnonymized ? anonymousBudgetEntryLabels(rawBudgetEntries) : undefined;
-  const budgetEntries = rawBudgetEntries.map((entry, idx) => {
-    const name = anonymousLabels ? (anonymousLabels[idx] ?? "Budget entry") : entry.name;
-    // Free-text notes can hold anything, so they are dropped when anonymised.
+  const budgetEntries = (
+    isAnonymized ? anonymiseBudgetEntries(rawBudgetEntries) : rawBudgetEntries
+  ).map((entry, idx) => {
     const { notes, ...rest } = entry;
     return {
       ...rest,
-      ...(isAnonymized || notes === undefined ? {} : { notes }),
-      ...(isAnonymized && typeof entry.category === "string"
-        ? { category: anonymiseDescription(entry.category) }
-        : {}),
+      ...(notes === undefined ? {} : { notes }),
       id: entry.id || `b_${idx}`,
-      name,
     };
   });
+  const taxRecords =
+    isAnonymized && input.taxRecords ? anonymiseTaxRecords(input.taxRecords) : input.taxRecords;
 
   // The budget summary comes from the one financial picture, so MCP and web agree (E23).
   const picture = buildFinancialPicture(
@@ -297,10 +326,10 @@ export function buildFlumpAiContextPack(
   });
 
   let selfAssessmentLedgerSummary: TaxCalculationResult | undefined;
-  if (input.taxRecords && input.taxRecords.length > 0) {
+  if (taxRecords && taxRecords.length > 0) {
     selfAssessmentLedgerSummary = calculateUKTax(
       safeBaseline.taxYear || getCurrentUKTaxYear(),
-      input.taxRecords,
+      taxRecords,
       safeBaseline.annualGrossSalary,
       safeBaseline.propertyOwnershipSharePct ?? 100,
     );

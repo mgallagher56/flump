@@ -77,22 +77,19 @@ export const getBudgetSummary = defineFlumpTool({
       surplus = round2(b.monthlyIncome - b.essentialMonthly - b.discretionaryMonthly);
     }
 
-    // M-PRIV4: anonymised, neither an entry name ("Rent to J Smith") nor a custom category name
-    // ("Jane's nursery") reaches the agent. A custom category becomes "Custom category 1"; an
-    // entry becomes its (labelled) category plus an ordinal ("housing #2", "Custom category 1 #1"),
-    // or "Income #1" for income. One labeller per response keeps the numbering consistent.
+    // M-PRIV4 and ruling 7: anonymised, neither an entry name ("Rent to J Smith") nor a custom
+    // category name ("Jane's nursery") reaches the agent. A custom category becomes "Custom
+    // category 1"; an entry becomes a neutral label by group ("Bills 2", "Income 1", or "Entry 1"
+    // in a custom category). One labeller per response keeps the numbering consistent, and the
+    // categories are labelled in entry order before the totals are sorted.
     const categoryLabel = budgetCategoryLabeller(m.anonymise);
-    const generic = m.anonymise
-      ? anonymousBudgetEntryLabels(
-          entries.map((e) => ({ category: categoryLabel(e.category), isIncome: e.isIncome })),
-          (category) => sanitiseText(category, 48),
-        )
-      : undefined;
+    const categories = entries.map((e) => categoryLabel(e.category));
+    const generic = m.anonymise ? anonymousBudgetEntryLabels(entries) : undefined;
     const detail =
       responseFormat === "detailed"
         ? entries.map((e, i) => ({
-            name: generic ? (generic[i] ?? "Budget entry") : sanitiseText(e.name),
-            category: categoryLabel(e.category),
+            name: generic ? (generic[i] ?? "Entry") : sanitiseText(e.name),
+            category: categories[i] ?? categoryLabel(e.category),
             monthlyGbp: round2(toMonthly(e.amount, e.frequency)),
             isIncome: e.isIncome,
             isEssential: e.isEssential,

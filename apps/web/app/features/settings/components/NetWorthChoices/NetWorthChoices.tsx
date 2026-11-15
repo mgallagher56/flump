@@ -31,6 +31,14 @@ export interface NetWorthChoicesProps {
   /** The saved choices (the profile's basis). */
   countProperty: boolean;
   countStudentLoan: boolean;
+  /**
+   * Which choices to offer (owner ruling 2026-11-15): the property switch once the user has a
+   * property or mortgage account, the student loan switch once they have a student loan account.
+   * Both default to true. With neither, the whole group is hidden. Hiding a switch never changes
+   * or resets the saved choice.
+   */
+  showProperty?: boolean;
+  showStudentLoan?: boolean;
   /** Saves one change through the profile update. Rejects when the save fails. */
   onSave: (update: NetWorthChoicesUpdate) => Promise<void>;
 }
@@ -43,6 +51,8 @@ export interface NetWorthChoicesProps {
 export const NetWorthChoices: FC<NetWorthChoicesProps> = ({
   countProperty,
   countStudentLoan,
+  showProperty = true,
+  showStudentLoan = true,
   onSave,
 }) => {
   const [values, setValues] = useState({ countProperty, countStudentLoan });
@@ -83,6 +93,8 @@ export const NetWorthChoices: FC<NetWorthChoicesProps> = ({
     }
   };
 
+  if (!showProperty && !showStudentLoan) return null;
+
   return (
     <Card
       as="section"
@@ -98,24 +110,28 @@ export const NetWorthChoices: FC<NetWorthChoicesProps> = ({
         {NET_WORTH_CHOICES_HELPER}
       </p>
       <div className={choiceList()}>
-        <Switch
-          aria-describedby={HELPER_ID}
-          aria-disabled={saving || undefined}
-          checked={values.countProperty}
-          data-testid="net-worth-counts-property"
-          id="net-worth-counts-property"
-          label={PROPERTY_CHOICE_LABEL}
-          onChange={(e) => change("countProperty", e.target.checked)}
-        />
-        <Switch
-          aria-describedby={HELPER_ID}
-          aria-disabled={saving || undefined}
-          checked={values.countStudentLoan}
-          data-testid="net-worth-counts-student-loan"
-          id="net-worth-counts-student-loan"
-          label={STUDENT_LOAN_CHOICE_LABEL}
-          onChange={(e) => change("countStudentLoan", e.target.checked)}
-        />
+        {showProperty ? (
+          <Switch
+            aria-describedby={HELPER_ID}
+            aria-disabled={saving || undefined}
+            checked={values.countProperty}
+            data-testid="net-worth-counts-property"
+            id="net-worth-counts-property"
+            label={PROPERTY_CHOICE_LABEL}
+            onChange={(e) => change("countProperty", e.target.checked)}
+          />
+        ) : null}
+        {showStudentLoan ? (
+          <Switch
+            aria-describedby={HELPER_ID}
+            aria-disabled={saving || undefined}
+            checked={values.countStudentLoan}
+            data-testid="net-worth-counts-student-loan"
+            id="net-worth-counts-student-loan"
+            label={STUDENT_LOAN_CHOICE_LABEL}
+            onChange={(e) => change("countStudentLoan", e.target.checked)}
+          />
+        ) : null}
       </div>
       {error ? (
         <p

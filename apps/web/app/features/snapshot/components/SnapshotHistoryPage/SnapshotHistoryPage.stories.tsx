@@ -46,6 +46,12 @@ export const TwoMonths: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     await expect(canvas.getAllByText(/You have two months of history/)[0]).toBeDefined();
+    // November has no check-in: the hero names the recorded months and links to the check-in.
+    const hero = canvas.getByTestId("hero-figure");
+    await expect(hero).toHaveTextContent("September to October 2026.");
+    await expect(
+      within(hero).getByRole("link", { name: "November not recorded yet" }),
+    ).toBeDefined();
   },
 };
 

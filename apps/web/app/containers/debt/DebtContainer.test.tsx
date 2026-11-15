@@ -149,7 +149,7 @@ describe("DebtContainer", () => {
     withEmpty(() => {
       const { container } = render(<DebtContainer />);
       expectPageRules(container, { maxFigures: 0, maxNotSet: 0, projectionNotices: 0 });
-      expect(screen.getByRole("heading", { level: 1, name: "Your debts" })).toBeDefined();
+      expect(screen.getByRole("heading", { level: 1, name: "Debt and borrowing" })).toBeDefined();
       expect(screen.getByRole("heading", { level: 2, name: "No debts added" })).toBeDefined();
       expect(
         screen.getByText(
@@ -173,7 +173,11 @@ describe("DebtContainer", () => {
     expect(hero?.textContent).toContain("£7,500");
     expect(screen.getAllByText("Debt-free date").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Estimate").length).toBe(1);
-    expect(screen.queryByText("Interest this year")).toBeNull();
+    // Out of the first view (hero and strip), available lower down in the modelling zone.
+    expect(hero?.parentElement?.textContent ?? "").not.toMatch(/Interest this year/);
+    expect(screen.getByTestId("interest-this-year").textContent).toMatch(
+      /^Interest this year, at minimum payments£[\d,]+$/,
+    );
   });
 
   it("missing APRs give one prompt with one button, and no 'Not set' cards", () => {

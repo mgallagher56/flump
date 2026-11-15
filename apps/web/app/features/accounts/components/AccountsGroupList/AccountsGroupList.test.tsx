@@ -176,8 +176,21 @@ describe("<AccountsGroupList />", () => {
     expect(getByRole("link", { name: "SLC" })).toBeDefined();
   });
 
-  test("with nothing left out, net worth still links to what counts", () => {
-    const { getByTestId } = customRender(<AccountsGroupList {...props} rows={[row({})]} />);
+  test("with no property, mortgage or student loan account, there is no link to what counts", () => {
+    const { queryByTestId, queryByRole } = customRender(
+      <AccountsGroupList {...props} rows={[row({})]} />,
+    );
+    expect(queryByTestId("accounts-net-worth-basis")).toBeNull();
+    expect(queryByRole("link", { name: "Change what counts" })).toBeNull();
+  });
+
+  test("with nothing left out, net worth still links to what counts when a choice applies", () => {
+    const { getByTestId } = customRender(
+      <AccountsGroupList
+        {...props}
+        rows={[row({}), row({ id: "h1", name: "Home", type: "Property" })]}
+      />,
+    );
     const line = getByTestId("accounts-net-worth-basis");
     expect(line.textContent).toBe("Change what counts");
     expect(line.querySelector("a")?.getAttribute("href")).toBe(

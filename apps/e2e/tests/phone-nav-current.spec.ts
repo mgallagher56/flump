@@ -29,7 +29,7 @@ const CASES: Case[] = [
   { path: "/app/self-assessment", bar: "Pay", drawer: "Self Assessment", optional: true },
   { path: "/app/savings", bar: null, drawer: "Savings" },
   { path: "/app/pension", bar: null, drawer: "Pension" },
-  { path: "/app/debt", bar: null, drawer: "Debt" },
+  { path: "/app/debt", bar: null, drawer: "Debt and borrowing" },
   { path: "/app/mortgage", bar: null, drawer: "Mortgage" },
   { path: "/app/profile", bar: null, drawer: "Settings" },
   { path: "/app/profile?tab=ai_connections", bar: null, drawer: "Connect AI" },

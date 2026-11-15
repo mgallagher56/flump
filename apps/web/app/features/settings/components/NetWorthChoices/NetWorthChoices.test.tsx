@@ -28,6 +28,42 @@ describe("<NetWorthChoices />", () => {
     expect((studentLoanSwitch() as HTMLInputElement).checked).toBe(false);
   });
 
+  test("offers only the property switch with no student loan account", () => {
+    setup({ showStudentLoan: false });
+    expect(propertySwitch()).toBeDefined();
+    expect(screen.queryByRole("switch", { name: "Count your student loan as a debt" })).toBeNull();
+  });
+
+  test("offers only the student loan switch with no property or mortgage account", () => {
+    setup({ showProperty: false });
+    expect(studentLoanSwitch()).toBeDefined();
+    expect(screen.getAllByRole("switch")).toHaveLength(1);
+  });
+
+  test("hides the whole group when neither applies, and saves nothing", () => {
+    const { onSave } = setup({ showProperty: false, showStudentLoan: false });
+    expect(screen.queryByRole("region", { name: "What counts in your net worth" })).toBeNull();
+    expect(screen.queryByRole("switch")).toBeNull();
+    expect(onSave).not.toHaveBeenCalled();
+  });
+
+  test("a hidden switch keeps its saved choice: showing it again reads the saved value", () => {
+    const onSave = vi.fn().mockResolvedValue(undefined);
+    const { rerender } = render(
+      <NetWorthChoices
+        countProperty={false}
+        countStudentLoan
+        onSave={onSave}
+        showProperty={false}
+      />,
+    );
+    expect(onSave).not.toHaveBeenCalled();
+    rerender(<NetWorthChoices countProperty={false} countStudentLoan onSave={onSave} />);
+    expect((propertySwitch() as HTMLInputElement).checked).toBe(false);
+    expect((studentLoanSwitch() as HTMLInputElement).checked).toBe(true);
+    expect(onSave).not.toHaveBeenCalled();
+  });
+
   test("switching the student loan on saves that one field", async () => {
     const { onSave } = setup();
     fireEvent.click(studentLoanSwitch());

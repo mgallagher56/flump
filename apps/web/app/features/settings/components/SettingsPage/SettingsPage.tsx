@@ -1,3 +1,4 @@
+import type { NetWorthChoicesAvailable } from "@flump/finance-engine";
 import { PageBody, PageHeader, Tabs } from "@repo/ui";
 import { type FC, useEffect, useState } from "react";
 import { useLocation } from "react-router";
@@ -19,6 +20,8 @@ export interface SettingsPageProps {
   aiGuideUrl?: string;
   /** The address an AI assistant connects to (the backend's `/mcp`). */
   mcpServerUrl?: string;
+  /** Which net worth choices apply to the user's accounts; null when they could not be read. */
+  netWorthChoices?: NetWorthChoicesAvailable | null;
   /** The signed-in auth user. */
   user?: {
     email?: string;
@@ -38,6 +41,7 @@ export const SettingsPage: FC<SettingsPageProps> = ({
   user,
   aiGuideUrl,
   mcpServerUrl,
+  netWorthChoices,
 }) => {
   const { profile } = useUserProfile();
   const effectiveProfile = profile.id ? profile : initialProfile;
@@ -70,7 +74,12 @@ export const SettingsPage: FC<SettingsPageProps> = ({
           onValueChange={(value) => setActiveTab(value as SettingsTab)}
         >
           <Tabs.Panel value="profile">
-            <ProfileTab key={effectiveProfile.id} profile={effectiveProfile} user={user} />
+            <ProfileTab
+              key={effectiveProfile.id}
+              netWorthChoices={netWorthChoices}
+              profile={effectiveProfile}
+              user={user}
+            />
           </Tabs.Panel>
           <Tabs.Panel value="security">
             <SecurityTab email={email} guideUrl={aiGuideUrl} serverUrl={mcpServerUrl} />

@@ -2,7 +2,7 @@ import { Home, Landmark, LineChart, PiggyBank, Wallet } from "lucide-react";
 import { Icon } from "../../primitives/Icon/Icon";
 import type { AppNavItem } from "./AppNav.types";
 
-/** Sample manifest for stories and tests. Home first; Borrowing (debt) sits in slot four. */
+/** Sample manifest for stories and tests. Home first; Debt and borrowing sits in slot four. */
 export const sampleNavItems: AppNavItem[] = [
   { key: "home", label: "Home", href: "/", icon: <Icon icon={Home} size="sm" /> },
   { key: "accounts", label: "Accounts", href: "/accounts", icon: <Icon icon={Wallet} size="sm" /> },
@@ -28,7 +28,7 @@ export const sampleNavItems: AppNavItem[] = [
   },
   {
     key: "borrowing",
-    label: "Borrowing",
+    label: "Debt and borrowing",
     href: "/debt",
     icon: <Icon icon={Landmark} size="sm" />,
     badge: 2,

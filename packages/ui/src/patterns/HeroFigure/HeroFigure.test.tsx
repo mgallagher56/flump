@@ -55,9 +55,28 @@ describe("HeroFigure", () => {
     expect(screen.getByText("After bills and saving")).toBeDefined();
   });
 
-  it("never carries an Estimate tag", () => {
+  it("carries no estimate label unless one is passed (saved figures stay estimate-free)", () => {
     const { container } = render(<HeroFigure label="Net worth" value={1} />);
     expect(container.textContent).not.toMatch(/estimate/i);
+    expect(container.querySelector("[data-estimate-label]")).toBeNull();
+  });
+
+  it("shows the estimate label inside the hero, in the hero ink", () => {
+    render(
+      <HeroFigure estimateLabel="Unverified estimate" label="Monthly take-home pay" value={2900} />,
+    );
+    const group = screen.getByRole("group", { name: "Monthly take-home pay" });
+    const label = group.querySelector("[data-estimate-label]");
+    expect(label?.textContent).toBe("Unverified estimate");
+    expect(label?.className).toContain("text.onContrast");
+    expect(label?.className).not.toContain("status.");
+  });
+
+  it("drops the estimate label when the value is unknown", () => {
+    const { container } = render(
+      <HeroFigure estimateLabel="Unverified estimate" label="Monthly take-home pay" value={null} />,
+    );
+    expect(container.textContent).not.toContain("Unverified estimate");
   });
 
   it.each([null, undefined, Number.NaN, ""])(

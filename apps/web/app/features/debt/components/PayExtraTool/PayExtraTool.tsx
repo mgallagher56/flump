@@ -35,7 +35,7 @@ import {
   chartYAxisProps,
 } from "~/features/charts/utils/chartProps";
 import { monthTicks, yAxisScale } from "~/features/debt/utils/chartAxis";
-import { formatPayoffDuration } from "~/features/debt/utils/payoffFormat";
+import { formatPayoffDuration, interestInFirstYear } from "~/features/debt/utils/payoffFormat";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import {
   chartLabel,
@@ -67,6 +67,11 @@ export interface PayExtraToolProps {
   budgetLeftOver: number | null;
   /** Total balance of the debts in the payoff plan today: the chart's first point. */
   startBalance: number;
+  /**
+   * False when a debt has no APR saved (interest would be worked out at 0% for it) or a minimum
+   * payment is an estimate: the "Interest this year" figure is then left out. Default true.
+   */
+  interestKnown?: boolean;
 }
 
 /** R1: both orders carry the same fields and the same verbs. */
@@ -235,6 +240,7 @@ export const PayExtraTool: FC<PayExtraToolProps> = ({
   onSelectStrategy,
   budgetLeftOver,
   startBalance,
+  interestKnown = true,
 }) => {
   const { formatCurrency } = useFormatCurrency();
   const leftOver = Math.max(0, budgetLeftOver ?? 0);
@@ -254,6 +260,22 @@ export const PayExtraTool: FC<PayExtraToolProps> = ({
   const monthsSooner = achievable(baseline) ? Math.max(0, baseline.months - active.months) : 0;
   const interestLess = Math.max(0, baseline.totalInterest - active.totalInterest);
   const showBaseline = extraPayment > 0;
+  // "Interest this year" (owner ruling 2026-11-15): out of the first view, shown here with how the
+  // change alters it. Whole pounds, the next 12 months of each schedule.
+  const interestYearMinimum = Math.round(interestInFirstYear(baseline.monthlySchedule));
+  const interestYearScenario = Math.round(interestInFirstYear(active.monthlySchedule));
+  const interestYear = interestKnown ? (
+    <div className={outcomeSupportItem} data-testid="interest-this-year" id="interest-this-year">
+      {/* One figure (S6: at most two supporting): the minimum-payment figure shows at £0, so
+          moving the slider shows how the change alters it. */}
+      <dt>
+        {showBaseline
+          ? "Interest this year, with the extra payment"
+          : "Interest this year, at minimum payments"}
+      </dt>
+      <dd>{formatCurrency(showBaseline ? interestYearScenario : interestYearMinimum)}</dd>
+    </div>
+  ) : null;
 
   // At £0 there is no change to state: the debt-free date is in the KPI strip above, so the zone
   // shows a prompt instead of repeating it. Above £0 the outcome is only the change.
@@ -345,17 +367,25 @@ export const PayExtraTool: FC<PayExtraToolProps> = ({
         {showBaseline ? (
           <>
             <p className={outcomeValue}>{outcomeText}</p>
-            {paidOff ? (
+            {paidOff || interestYear ? (
               <dl className={outcomeSupport}>
-                <div className={outcomeSupportItem}>
-                  <dt>Interest compared with minimum payments only</dt>
-                  <dd>{interestLess > 0 ? `${formatCurrency(interestLess)} less` : "No change"}</dd>
-                </div>
+                {paidOff ? (
+                  <div className={outcomeSupportItem}>
+                    <dt>Interest compared with minimum payments only</dt>
+                    <dd>
+                      {interestLess > 0 ? `${formatCurrency(interestLess)} less` : "No change"}
+                    </dd>
+                  </div>
+                ) : null}
+                {interestYear}
               </dl>
             ) : null}
           </>
         ) : (
-          <p className={outcomePrompt}>Move the slider to see what changes</p>
+          <>
+            <p className={outcomePrompt}>Move the slider to see what changes</p>
+            {interestYear ? <dl className={outcomeSupport}>{interestYear}</dl> : null}
+          </>
         )}
       </div>
 

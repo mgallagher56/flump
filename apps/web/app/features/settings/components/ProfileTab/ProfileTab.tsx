@@ -1,4 +1,4 @@
-import { netWorthBasisFromProfile } from "@flump/finance-engine";
+import { type NetWorthChoicesAvailable, netWorthBasisFromProfile } from "@flump/finance-engine";
 import {
   Button,
   ButtonLink,
@@ -86,6 +86,11 @@ export interface ProfileTabProps {
   profile: UserProfile;
   /** The signed-in auth user, used for name and avatar fallbacks. */
   user?: { firstName?: string; lastName?: string; user_metadata?: Record<string, string> } | null;
+  /**
+   * Which net worth choices apply to the user's accounts. Undefined or null when the accounts
+   * could not be read: both choices are then offered, as unknown is not "no".
+   */
+  netWorthChoices?: NetWorthChoicesAvailable | null;
 }
 
 /**
@@ -94,7 +99,7 @@ export interface ProfileTabProps {
  * is chosen. Each save shows the saved value in place and a short "Saved" toast; a failed save puts
  * the saved value back and says so on the card, so the toast is never the only record.
  */
-export const ProfileTab: FC<ProfileTabProps> = ({ profile, user }) => {
+export const ProfileTab: FC<ProfileTabProps> = ({ profile, user, netWorthChoices }) => {
   const { updateProfile } = useUserProfile();
   const toast = useOptionalToast()?.toast;
 
@@ -445,6 +450,8 @@ export const ProfileTab: FC<ProfileTabProps> = ({ profile, user }) => {
       <NetWorthChoices
         countProperty={basis.countProperty}
         countStudentLoan={basis.countStudentLoan}
+        showProperty={netWorthChoices?.property ?? true}
+        showStudentLoan={netWorthChoices?.studentLoan ?? true}
         onSave={(update) => updateProfile(update)}
       />
 

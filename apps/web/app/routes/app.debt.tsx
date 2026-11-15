@@ -85,7 +85,7 @@ export const action = async (args: ActionFunctionArgs) => {
   }
 };
 
-export const meta: MetaFunction = () => [{ title: "Debt | Flump" }];
+export const meta: MetaFunction = () => [{ title: "Debt and borrowing | Flump" }];
 
 export const loader = async (args: LoaderFunctionArgs) => {
   const { accounts, accountDetails, userProfile, budgetEntries, user } =

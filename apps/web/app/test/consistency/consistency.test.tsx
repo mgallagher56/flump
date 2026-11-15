@@ -17,6 +17,7 @@ import {
   financialPictureInputFromRows,
   isFigureKnown,
   type NetWorthBasis,
+  netWorthChoicesAvailable,
   resolveNetWorthScope,
 } from "@flump/finance-engine";
 import { PERSONAS, type PersonaFixture, type PersonaName } from "@flump/finance-engine/testing";
@@ -507,10 +508,11 @@ describe.each(BALANCE_CASES)(
         const value = heroPounds(page.container);
         const text = page.container.textContent ?? "";
         if (month === "current month not recorded") {
-          // R2-5: an unrecorded month says when the history was last updated, not a change.
-          expect(text).toContain("Last updated");
+          // The figure is not from this month, so the hero names the month it is from.
+          expect(text).toMatch(/As of [A-Z][a-z]+/);
         } else {
-          expect(text).not.toContain("Last updated");
+          // Recorded this month: the balance alone, with no month named.
+          expect(text).not.toMatch(/As of |Last updated/);
         }
         page.unmount();
         return value;
@@ -596,7 +598,7 @@ describe.each(BASIS_CASES)(
       home.unmount();
     });
 
-    it("the accounts totals show the picture's net worth and always link to the choices", () => {
+    it("the accounts totals show the picture's net worth and link to the choices when one applies", () => {
       if (fixture.accounts.length === 0) return;
       loaderState.data = {
         accounts: rows.accounts,
@@ -617,7 +619,13 @@ describe.each(BASIS_CASES)(
       };
       expect(matches(reading, netWorth)).toBe(true);
       const line = page.container.querySelector("#accounts-net-worth-basis");
-      expect(line?.textContent).toContain("Change what counts");
+      // The link follows Settings: offered only with a property, mortgage or student loan account.
+      const choices = netWorthChoicesAvailable(fixture.accounts);
+      if (choices.property || choices.studentLoan) {
+        expect(line?.textContent).toContain("Change what counts");
+      } else {
+        expect(line).toBeNull();
+      }
       page.unmount();
     });
 

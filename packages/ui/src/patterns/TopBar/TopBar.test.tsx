@@ -9,7 +9,9 @@ describe("TopBar", () => {
     const nav = screen.getByRole("navigation", { name: "Primary" });
     expect(nav).toBeDefined();
     expect(screen.getByRole("link", { name: "Home" }).getAttribute("aria-current")).toBe("page");
-    expect(screen.getByRole("link", { name: /Borrowing/ }).getAttribute("aria-current")).toBeNull();
+    expect(
+      screen.getByRole("link", { name: /Debt and borrowing/ }).getAttribute("aria-current"),
+    ).toBeNull();
   });
 
   it("uses the renderLink slot", () => {

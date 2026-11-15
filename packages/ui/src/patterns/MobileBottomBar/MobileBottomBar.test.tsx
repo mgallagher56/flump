@@ -12,9 +12,11 @@ describe("MobileBottomBar", () => {
     expect(links[0]?.textContent).toBe("Home");
   });
 
-  it("keeps Borrowing reachable", () => {
+  it("keeps Debt and borrowing reachable", () => {
     render(<MobileBottomBar items={sampleNavItems} />);
-    expect(screen.getByRole("link", { name: "Borrowing" }).getAttribute("href")).toBe("/debt");
+    expect(screen.getByRole("link", { name: "Debt and borrowing" }).getAttribute("href")).toBe(
+      "/debt",
+    );
   });
 
   it("marks the active item, including a group whose child is active", () => {

@@ -34,6 +34,12 @@ interface HeroFigureBaseProps {
    * source and assumptions. Shown as an `InfoTip` beside the label, titled with the label.
    */
   explain?: ReactNode;
+  /**
+   * Marks the value as an estimate, inside the hero ("Unverified estimate"). Only for a page whose
+   * answer is an estimate (take-home pay, an estimated tax bill, a calculator's result). Saved
+   * figures such as net worth and balances never carry it. Not drawn when the value is unknown.
+   */
+  estimateLabel?: string;
   /** Formatting for a numeric `value`. */
   valueFormat?: Pick<MoneyProps, "compact" | "currency" | "fractionDigits" | "signDisplay">;
   /** Replaces "Not set" when the value is unknown. */
@@ -90,7 +96,8 @@ const renderValue = (
 /**
  * The page's one headline figure (E16 P2), placed directly under `PageHeader`. Draws the single
  * `surface.hero` block on the page (`data-tone="hero"`), with no decoration (E16 round 4: the disc crossed the sub-line on a phone). It never
- * holds an estimate or a scenario outcome. When the value is unknown it falls back to a plain card
+ * holds a scenario outcome. It holds an estimate only on a page whose answer is one (owner ruling
+ * 2026-11-15), and then `estimateLabel` names it inside the hero. When the value is unknown it falls back to a plain card
  * with "Not set" and one setup prompt, and the hero is not drawn.
  */
 export const HeroFigure: FC<HeroFigureProps> = ({
@@ -98,6 +105,7 @@ export const HeroFigure: FC<HeroFigureProps> = ({
   value,
   valueFormat,
   explain,
+  estimateLabel,
   delta,
   subline,
   notSetLabel = "Not set",
@@ -151,6 +159,11 @@ export const HeroFigure: FC<HeroFigureProps> = ({
           </p>
           {explain ? <InfoTip term={label}>{explain}</InfoTip> : null}
         </div>
+        {estimateLabel ? (
+          <p className={slots.estimate} data-estimate-label="true">
+            {estimateLabel}
+          </p>
+        ) : null}
         {isValidElement(value) ? (
           <div className={slots.value}>{value}</div>
         ) : (

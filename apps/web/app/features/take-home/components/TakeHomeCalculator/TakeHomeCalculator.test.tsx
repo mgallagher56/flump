@@ -47,27 +47,30 @@ const openTool = (getByRole: (role: string, opts: { name: string }) => HTMLEleme
 describe("<TakeHomeCalculator /> saved figures", () => {
   afterEach(() => vi.useRealTimers());
 
-  test("the hero is the saved salary alone; take-home is the first of three KPIs, tagged Estimate", () => {
-    const { container, getByText } = customRender(
+  test("the hero is the take-home estimate, labelled inside the hero; the strip is pay before tax and what comes off", () => {
+    const { container } = customRender(
       <TakeHomeCalculator initialSalary={32000} onApplyIncrease={vi.fn()} />,
       withProfile(),
     );
     const heroText = hero(container)?.textContent ?? "";
-    expect(heroText).toContain("Salary before tax");
-    expect(heroText).toContain("£32,000");
-    // No monthly sub-line: the strip splits the monthly pay, and it would be a fifth figure.
-    expect(heroText).not.toMatch(/a month/);
-    expect(heroText).not.toMatch(/Estimate/);
-    expect(getByText("Estimate")).toBeDefined();
+    // The hero no longer leads with the saved salary (owner ruling 2026-11-15).
+    expect(heroText).not.toContain("Salary before tax");
+    expect(heroText).not.toContain("£32,000");
     // £32,000, 5% net-pay pension, England: the same figure dashboard and budget show.
-    expect(container.textContent).toMatch(/Monthly take-home pay.*£2,10[67]/);
-    const labels = [...container.querySelectorAll("[data-kpi-value]")].length;
-    expect(labels).toBe(3);
-    // Take-home, tax and NI, and pension add up to the monthly pay before tax (£2,667).
+    expect(heroText).toMatch(/Monthly take-home pay.*£2,10[67]/);
+    // The estimate is named inside the hero itself, once.
+    expect(hero(container)?.querySelector("[data-estimate-label]")?.textContent).toBe(
+      "Unverified estimate",
+    );
+    expect(container.querySelectorAll("[data-estimate-label]")).toHaveLength(1);
     const values = [...container.querySelectorAll("[data-kpi-value]")].map((el) =>
       Number((el.textContent ?? "").replace(/[£,]/g, "")),
     );
-    expect(values.reduce((a, b) => a + b, 0)).toBe(2667);
+    expect(values).toHaveLength(3);
+    // Monthly pay before tax (£2,667) less tax and NI and pension is the hero's take-home.
+    const takeHome = Number(/£([\d,]+)/.exec(heroText)?.[1]?.replace(/,/g, ""));
+    expect(values[0]).toBe(2667);
+    expect((values[0] ?? 0) - (values[1] ?? 0) - (values[2] ?? 0)).toBe(takeHome);
     expect(container.textContent).not.toMatch(/£[\d,]+\.\d{2}/);
   });
 
@@ -145,14 +148,17 @@ describe("<TakeHomeCalculator /> empty states", () => {
   });
 
   test("names the missing facts when only the pension details are unanswered", () => {
-    const { getByText, getByRole } = customRender(
+    const { container, getByText, getByRole } = customRender(
       <TakeHomeCalculator initialSalary={45000} onApplyIncrease={vi.fn()} />,
       withProfile({ pensionPercent: null as unknown as number }),
     );
+    // The hero's own prompt names what to add; the saved salary shows beneath, never as a hero.
     expect(
-      getByText("Add your pension contribution to see an estimate of your take-home pay"),
+      getByText("Add your pension contribution to see an estimate of your take-home pay."),
     ).toBeDefined();
     expect(getByRole("link", { name: "Add your details" })).toBeDefined();
+    expect(getByText("Salary before tax")).toBeDefined();
+    expect(hero(container)).toBeNull();
   });
 });
 

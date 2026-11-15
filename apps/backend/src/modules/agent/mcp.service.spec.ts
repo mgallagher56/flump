@@ -1,3 +1,4 @@
+import { type BuildContextPackInput, DEFAULT_FINANCIAL_BASELINE } from "@flump/finance-engine";
 import type { HttpTransportOptions } from "@flump/mcp";
 import { Logger } from "@nestjs/common";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -226,6 +227,55 @@ describe("McpService dev token wiring", () => {
     build("workos");
     expect(at(handlerOptions, 0).devToken).toBeUndefined();
     expect(at(handlerOptions, 0).devUserId).toBeUndefined();
+  });
+});
+
+describe("McpService.getInput (GET /mcp/input) anonymises as the remote tools do", () => {
+  const raw: BuildContextPackInput = {
+    baseline: { ...DEFAULT_FINANCIAL_BASELINE, userId: "user_real" },
+    netWorthBasis: { countProperty: true, countStudentLoan: false },
+    accounts: [
+      { id: "acc-1", name: "Jane's joint 4471", type: "Jane's ISA 4471", balance: "500.00" },
+    ],
+    accountDetails: [],
+    budgetEntries: [],
+    taxRecords: [],
+  };
+  const make = () => {
+    const agentData = { getUserFinancialData: vi.fn().mockResolvedValue(raw) };
+    const audit = { record: vi.fn().mockResolvedValue(undefined), fingerprint: vi.fn() };
+    const service = new McpService(
+      {} as never,
+      agentData as never,
+      { get: vi.fn().mockReturnValue(undefined) } as never,
+      "workos",
+      audit as never,
+      {} as never,
+    );
+    return { service, agentData };
+  };
+  const caller = (anonymizeInstitutions: boolean, scopes: string[]) => ({
+    token: { userId: "user_real", tokenId: "tok-1", scopes, anonymizeInstitutions, type: "pat" },
+  });
+
+  it("a legacy row with the flag off but only the anonymised scope gets no real name or type", async () => {
+    const { service, agentData } = make();
+    const body = await service.getInput(caller(false, ["mcp:read:anonymized"]) as never);
+    const text = JSON.stringify(body);
+    for (const hidden of ["Jane", "4471", "user_real"]) expect(text, hidden).not.toContain(hidden);
+    expect(body.token.anonymizeInstitutions).toBe(true);
+    expect(body.input.accounts[0]).toMatchObject({ name: "Other Account #1", type: "Other" });
+    expect(agentData.getUserFinancialData).toHaveBeenCalledWith("user_real");
+  });
+
+  it("a full-read token with the flag off still gets the real names", async () => {
+    const { service } = make();
+    const body = await service.getInput(caller(false, ["mcp:read:full"]) as never);
+    expect(body.token.anonymizeInstitutions).toBe(false);
+    expect(body.input.accounts[0]).toMatchObject({
+      name: "Jane's joint 4471",
+      type: "Jane's ISA 4471",
+    });
   });
 });
 

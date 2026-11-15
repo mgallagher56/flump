@@ -19,7 +19,7 @@ const play: Story["play"] = async ({ canvasElement }) => {
   const canvas = within(canvasElement);
   await expect(canvas.getByRole("navigation", { name: "Primary mobile" })).toBeInTheDocument();
   await expect(canvas.getByRole("link", { name: "Home" })).toHaveAttribute("aria-current", "page");
-  await expect(canvas.getByRole("link", { name: "Borrowing" })).toBeInTheDocument();
+  await expect(canvas.getByRole("link", { name: "Debt and borrowing" })).toBeInTheDocument();
 };
 
 export const Light: Story = {
@@ -74,7 +74,7 @@ export const LockedAt375: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     await expect(
-      canvas.getByRole("button", { name: "Borrowing: Sign up to open" }),
+      canvas.getByRole("button", { name: "Debt and borrowing: Sign up to open" }),
     ).toBeInTheDocument();
     // Every label sits on one baseline, locked or not.
     const bottoms = Array.from(canvasElement.querySelectorAll("[data-nav-label]")).map((el) =>

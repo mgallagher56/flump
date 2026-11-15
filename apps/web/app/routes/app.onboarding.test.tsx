@@ -594,7 +594,7 @@ describe("OnboardingRoute (4-step flow)", () => {
         screen.getByRole("list", { name: /sections we have set up for you/i }).textContent ?? "";
       expect(modules).toContain("Accounts");
       expect(modules).toContain("Tax");
-      expect(modules).not.toContain("Debt");
+      expect(modules).not.toContain("Debt and borrowing");
     });
   });
 

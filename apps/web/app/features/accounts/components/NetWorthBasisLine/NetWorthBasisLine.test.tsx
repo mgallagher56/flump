@@ -53,6 +53,12 @@ describe("<NetWorthBasisLine />", () => {
     expect(screen.getByTestId("accounts-basis").textContent).toBe("Change what counts");
   });
 
+  test("shows no link when no net worth choice applies to the user's accounts", () => {
+    setup({ leftOut: [], alwaysShowLink: true, choicesAvailable: false, id: "accounts-basis" });
+    expect(screen.queryByTestId("accounts-basis")).toBeNull();
+    expect(screen.queryByRole("link", { name: "Change what counts" })).toBeNull();
+  });
+
   test("never shows a figure", () => {
     setup({ leftOut: ["property", "mortgage"] });
     expect(screen.getByTestId("net-worth-basis-line").textContent).not.toMatch(/\d|£/);

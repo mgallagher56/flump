@@ -124,8 +124,8 @@ describe("budget notes anonymisation (E17-N4)", () => {
       { anonymizeInstitutions: true },
     );
     expect(JSON.stringify(pack)).not.toContain("Landlord");
-    // M-PRIV4 (BE-06): the free-text name becomes category plus ordinal.
-    expect(pack.budgetSummary.entries[0]?.name).toBe("housing #1");
+    // M-PRIV4 (BE-06) and ruling 7: the free-text name becomes a neutral label by group.
+    expect(pack.budgetSummary.entries[0]?.name).toBe("Housing 1");
     expect(JSON.stringify(pack)).not.toContain("Rent via");
   });
 
@@ -151,7 +151,7 @@ describe("budget notes anonymisation (E17-N4)", () => {
       { anonymizeInstitutions: true },
     );
     expect(JSON.stringify(pack)).not.toContain("Acme");
-    expect(pack.budgetSummary.entries[0]?.name).toBe("Income #1");
+    expect(pack.budgetSummary.entries[0]?.name).toBe("Income 1");
   });
 
   it("omits the notes key entirely when notes are absent", () => {
@@ -462,10 +462,14 @@ describe("anonymiseContextPackInput (the raw input an anonymised token may read)
       input.accounts.map((a) => [a.id, a.type, a.balance]),
     );
     expect(out.accountDetails).toEqual(input.accountDetails);
-    expect(out.budgetEntries?.map((b) => b.name)).toEqual(["Housing #1", "Income #1"]);
+    expect(out.budgetEntries?.map((b) => b.name)).toEqual(["Housing 1", "Income 1"]);
+    // "Housing" is built in, so it stays; "Salary" was typed by the user.
+    expect(out.budgetEntries?.map((b) => b.category)).toEqual(["Housing", "Custom category 1"]);
     expect(out.budgetEntries?.every((b) => !("notes" in b))).toBe(true);
     expect(out.budgetEntries?.map((b) => b.amount)).toEqual([900, 3000]);
-    expect(out.taxRecords).toEqual([{ ...input.taxRecords[0], name: "", notes: null }]);
+    expect(out.taxRecords).toEqual([
+      { ...input.taxRecords[0], category: "Custom category 1", name: "Rental 1", notes: null },
+    ]);
     const text = JSON.stringify(out);
     for (const secret of ["Monzo", "Barclays", "J Smith", "Acme", "Example Road", "12345678"]) {
       expect(text, secret).not.toContain(secret);
@@ -486,5 +490,176 @@ describe("anonymiseContextPackInput (the raw input an anonymised token may read)
       anonymizeInstitutions: true,
     });
     expect({ ...fromScrubbed, metadata: null }).toEqual({ ...fromRaw, metadata: null });
+  });
+});
+
+describe("a legacy free-text account type never survives anonymisation", () => {
+  const input = {
+    baseline: { ...DEFAULT_FINANCIAL_BASELINE, userId: "user_real_id" },
+    netWorthBasis: { ...DEFAULT_NET_WORTH_BASIS },
+    accounts: [
+      { id: "a1", name: "Joint", type: "Jane's ISA 4471", balance: 700 },
+      { id: "a2", name: "Card", type: " credit card ", balance: 300 },
+      { id: "a3", name: "Pot", type: "Saving", balance: 1000 },
+    ],
+  };
+
+  it("the pack carries only fixed type words in names, type and rawType", () => {
+    const pack = buildFlumpAiContextPack(input, { anonymizeInstitutions: true });
+    const text = JSON.stringify(pack) + formatAiContextPackMarkdown(pack);
+    for (const secret of ["Jane", "4471"]) expect(text, secret).not.toContain(secret);
+    expect(pack.portfolio.accounts.map((a) => [a.name, a.rawType])).toEqual([
+      ["Other Account #1", "Other"],
+      ["Credit Card Account #1", "Credit Card"],
+      ["Saving Account #1", "Saving"],
+    ]);
+  });
+
+  it("the anonymised raw input maps the type too, and every total is unchanged", () => {
+    const out = anonymiseContextPackInput(input);
+    expect(out.accounts?.map((a) => [a.name, a.type])).toEqual([
+      ["Other Account #1", "Other"],
+      ["Credit Card Account #1", "Credit Card"],
+      ["Saving Account #1", "Saving"],
+    ]);
+    expect(JSON.stringify(out)).not.toContain("Jane");
+    const full = buildFlumpAiContextPack(input, { anonymizeInstitutions: false });
+    const anon = buildFlumpAiContextPack(out, { anonymizeInstitutions: true });
+    const { accounts: _a, ...anonTotals } = anon.portfolio;
+    const { accounts: _f, ...fullTotals } = full.portfolio;
+    expect(anonTotals).toEqual(fullTotals);
+    expect(anon.debtSummary.totalStartingDebtGbp).toBe(full.debtSummary.totalStartingDebtGbp);
+    expect(anon.debtSummary.consumerDebts.map((d) => d.type)).toEqual(
+      full.debtSummary.consumerDebts.map((d) => d.type),
+    );
+  });
+
+  it("a full read keeps the stored type", () => {
+    const pack = buildFlumpAiContextPack(input, { anonymizeInstitutions: false });
+    expect(pack.portfolio.accounts[0]?.rawType).toBe("Jane's ISA 4471");
+  });
+});
+
+describe("ruling 7: no user-typed budget or tax name survives anonymisation", () => {
+  // Sentinels: names that look like account names, and names that collide with fixed labels.
+  const SENTINELS = [
+    "Barclays Joint 4471",
+    "Mum's loan",
+    "Marc Gallagher ISA",
+    "Jane's nursery fund",
+    "Housing 7",
+    "Custom category 9",
+    "Flat 2 Example Road",
+    "tenant Q Zebedee",
+    "Receipt from Zebedee Ltd",
+    "Self-employed 4",
+  ];
+  const input = {
+    baseline: { ...DEFAULT_FINANCIAL_BASELINE, userId: "user_real_id", annualGrossSalary: 40000 },
+    netWorthBasis: { ...DEFAULT_NET_WORTH_BASIS },
+    accounts: [{ id: "a1", name: "Current", type: "Current", balance: 2500 }],
+    budgetEntries: [
+      ["bills", "Barclays Joint 4471", 120, false, true, "Mum's loan"],
+      ["bills", "Housing 7", 80, false, true, null],
+      ["bills", "Barclays Joint 4471", 30, false, true, null],
+      ["Marc Gallagher ISA", "Mum's loan", 200, false, false, "Jane's nursery fund"],
+      ["Custom category 9", "Jane's nursery fund", 150, false, true, null],
+      ["savings", "Marc Gallagher ISA", 300, false, false, null],
+      ["debt", "Mum's loan", 100, false, true, null],
+      ["income", "Marc Gallagher ISA", 3200, true, false, null],
+    ].map(([category, name, amount, isIncome, isEssential, notes], i) => ({
+      id: `b${i}`,
+      category: category as string,
+      name: name as string,
+      amount: amount as number,
+      frequency: "monthly",
+      isIncome: isIncome as boolean,
+      isEssential: isEssential as boolean,
+      notes: notes as string | null,
+    })),
+    taxRecords: [
+      ["rental", "rental_income", "Flat 2 Example Road", 900, "tenant Q Zebedee"],
+      ["rental", "Custom category 9", "Barclays Joint 4471", 120, "Receipt from Zebedee Ltd"],
+      ["self-employed", "self_employed_income", "Self-employed 4", 5000, null],
+      ["rental", "repairs_maintenance", "Flat 2 Example Road", 300, null],
+    ].map(([source, category, name, amount, notes], i) => ({
+      id: `t${i}`,
+      type: (category === "repairs_maintenance" ? "expense" : "income") as "income" | "expense",
+      source: source as "rental" | "self-employed",
+      category: category as string,
+      name: name as string,
+      amount: amount as number,
+      frequency: "one-off" as const,
+      date: "2026-05-01",
+      endDate: null,
+      notes: notes as string | null,
+    })),
+  };
+
+  it("labels every entry by its fixed group and keeps every amount", () => {
+    const out = anonymiseContextPackInput(input);
+    expect(out.budgetEntries?.map((b) => b.name)).toEqual([
+      "Bills 1",
+      "Bills 2",
+      "Bills 1",
+      "Entry 1",
+      "Entry 2",
+      "Savings 1",
+      "Debt 1",
+      "Income 1",
+    ]);
+    expect(out.budgetEntries?.map((b) => b.category)).toEqual([
+      "bills",
+      "bills",
+      "bills",
+      "Custom category 1",
+      "Custom category 2",
+      "savings",
+      "debt",
+      "income",
+    ]);
+    expect(out.budgetEntries?.map((b) => b.amount)).toEqual(
+      input.budgetEntries.map((b) => b.amount),
+    );
+    expect(out.taxRecords?.map((t) => [t.name, t.category, t.amount])).toEqual([
+      ["Rental 1", "rental_income", 900],
+      ["Rental 2", "Custom category 1", 120],
+      ["Self-employed 1", "self_employed_income", 5000],
+      ["Rental 1", "repairs_maintenance", 300],
+    ]);
+  });
+
+  it("leaves none of the sentinels in the pack, its Markdown or the anonymised input", () => {
+    const pack = buildFlumpAiContextPack(input, { anonymizeInstitutions: true });
+    const outputs = {
+      pack: JSON.stringify(pack),
+      markdown: formatAiContextPackMarkdown(pack),
+      input: JSON.stringify(anonymiseContextPackInput(input)),
+    };
+    for (const [where, text] of Object.entries(outputs)) {
+      for (const sentinel of SENTINELS)
+        expect(text, `${where}: ${sentinel}`).not.toContain(sentinel);
+      expect(text).not.toContain("user_real_id");
+    }
+  });
+
+  it("keeps every budget and tax total the same as the named pack", () => {
+    const named = buildFlumpAiContextPack(input, { anonymizeInstitutions: false });
+    const anonymous = buildFlumpAiContextPack(input, { anonymizeInstitutions: true });
+    expect(anonymous.budgetSummary).toEqual({
+      ...named.budgetSummary,
+      entries: anonymous.budgetSummary.entries,
+    });
+    expect(anonymous.budgetSummary.entries.map((e) => e.amount)).toEqual(
+      named.budgetSummary.entries.map((e) => e.amount),
+    );
+    expect(anonymous.taxSummary).toEqual(named.taxSummary);
+  });
+
+  it("shows the real names to a token that is not anonymised", () => {
+    const text = JSON.stringify(buildFlumpAiContextPack(input, { anonymizeInstitutions: false }));
+    for (const sentinel of ["Barclays Joint 4471", "Mum's loan", "Marc Gallagher ISA"]) {
+      expect(text).toContain(sentinel);
+    }
   });
 });

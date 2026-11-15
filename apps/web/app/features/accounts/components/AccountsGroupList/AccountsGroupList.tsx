@@ -1,4 +1,8 @@
-import { categorizeAccountType, type NetWorthLeftOut } from "@flump/finance-engine";
+import {
+  categorizeAccountType,
+  type NetWorthLeftOut,
+  netWorthChoicesAvailable,
+} from "@flump/finance-engine";
 import {
   Button,
   Card,
@@ -262,6 +266,8 @@ export const AccountsGroupList: FC<AccountsGroupListProps> = ({
   const notCounted = rows.filter((row) => isLeftOut(row, leftOut)).sort(byType);
   const countedStudentLoan = owe.some((row) => row.type === STUDENT_LOAN);
   const leftOutStudentLoan = notCounted.some((row) => row.type === STUDENT_LOAN);
+  // "Change what counts" follows Settings: offered only when a choice applies to these accounts.
+  const choices = netWorthChoicesAvailable(rows);
 
   return (
     <div className={listRoot()}>
@@ -275,7 +281,12 @@ export const AccountsGroupList: FC<AccountsGroupListProps> = ({
         />
         <div className={netWorthLinks()}>
           {/* The one place the choice is always reachable from the figure, even with nothing left out. */}
-          <NetWorthBasisLine alwaysShowLink id="accounts-net-worth-basis" leftOut={leftOut} />
+          <NetWorthBasisLine
+            alwaysShowLink
+            choicesAvailable={choices.property || choices.studentLoan}
+            id="accounts-net-worth-basis"
+            leftOut={leftOut}
+          />
           <Button asChild size="sm" variant="link">
             <Link data-testid="accounts-view-history" id="accounts-view-history" to={HISTORY_HREF}>
               See how it has changed

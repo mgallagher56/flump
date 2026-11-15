@@ -10,17 +10,21 @@ import {
 } from "./TaxHeadline";
 
 describe("TaxHeadline", () => {
-  it("puts what the user added in the hero and the estimate in the first KPI", () => {
+  it("puts the estimated bill in the hero, labelled inside it, and the recorded income in the first KPI", () => {
     const { container } = render(
       <TaxHeadline records={taxRecordsFixture} result={taxResultFixture} taxYear="2026/27" />,
     );
     const heroes = container.querySelectorAll('[data-tone="hero"]');
     expect(heroes).toHaveLength(1);
-    expect(heroes[0].textContent).toContain("Income outside PAYE");
+    expect(heroes[0].textContent).toContain("Estimated bill");
+    expect(heroes[0].textContent).not.toContain("Income outside PAYE");
     // The year is in the year control, not repeated in the hero.
     expect(heroes[0].textContent).not.toContain("2026/27");
-    expect(heroes[0].textContent).not.toMatch(/estimate/i);
-    expect(screen.getByText("Estimated bill")).toBeDefined();
+    expect(heroes[0].querySelector("[data-estimate-label]")?.textContent).toBe(
+      "Unverified estimate",
+    );
+    expect(container.querySelectorAll("[data-estimate-label]")).toHaveLength(1);
+    expect(screen.getByText("Income outside PAYE")).toBeDefined();
     expect(screen.getByText("Bill due")).toBeDefined();
     expect(screen.getByText("Income after costs")).toBeDefined();
     expect(container.querySelectorAll("[data-kpi-value]").length).toBe(3);
@@ -42,12 +46,12 @@ describe("TaxHeadline", () => {
     expect(screen.getByRole("button", { name: "Add income" })).toBeDefined();
   });
 
-  it("reconciles: income before costs in the hero, income less costs beside the bill", () => {
+  it("reconciles: income before costs in the first card, income less costs beside it", () => {
     const { container } = render(
       <TaxHeadline records={taxRecordsFixture} result={taxResultFixture} taxYear="2026/27" />,
     );
-    const hero = container.querySelector('[data-tone="hero"]')?.textContent ?? "";
-    const before = Number(/£([\d,]+)/.exec(hero)?.[1]?.replace(/,/g, ""));
+    const first = container.querySelector("[data-kpi-value]")?.textContent ?? "";
+    const before = Number(/£([\d,]+)/.exec(first)?.[1]?.replace(/,/g, ""));
     const after =
       nonPayeIncome(taxRecordsFixture, "2026/27") - nonPayeCosts(taxRecordsFixture, "2026/27");
     expect(before).toBe(nonPayeIncome(taxRecordsFixture, "2026/27"));
@@ -112,11 +116,9 @@ describe("TaxHeadline", () => {
         taxYear="2026/27"
       />,
     );
-    // The allowance changes the bill, so the line is that card's subtext, in place of its default.
-    const billCard = screen
-      .getByText("Estimated bill")
-      .closest("[data-kpi-eyebrow]")?.parentElement;
-    expect(billCard?.textContent).toContain("uses the trading allowance");
+    // The allowance changes the bill, so the line is the hero's sub-line, in place of its default.
+    const billHero = screen.getByRole("group", { name: "Estimated bill" });
+    expect(billHero.textContent).toContain("uses the trading allowance");
     const afterCard = screen
       .getByText("Income after costs")
       .closest("[data-kpi-eyebrow]")?.parentElement;
@@ -126,7 +128,7 @@ describe("TaxHeadline", () => {
     expect(screen.getByText("Your income less the costs you recorded")).toBeDefined();
   });
 
-  it("keeps the bill card's default subtext when no allowance was used", () => {
+  it("keeps the bill's default sub-line when no allowance was used", () => {
     render(<TaxHeadline records={taxRecordsFixture} result={taxResultFixture} taxYear="2026/27" />);
     expect(screen.getByText("Income Tax and National Insurance on this income")).toBeDefined();
   });

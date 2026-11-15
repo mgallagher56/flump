@@ -11,6 +11,7 @@ export const heroFigure = sva({
     "content",
     "labelRow",
     "label",
+    "estimate",
     "value",
     "delta",
     "subline",
@@ -46,6 +47,20 @@ export const heroFigure = sva({
       textStyle: "label.md",
       margin: "0",
       overflowWrap: "anywhere",
+    },
+    // The estimate label: a quiet outlined pill in the hero's own ink, so it reads on the fill in
+    // both themes and under forced colours without a status colour.
+    estimate: {
+      alignSelf: "flex-start",
+      textStyle: "label.sm",
+      margin: "0",
+      px: "2",
+      py: "0.5",
+      borderRadius: "full",
+      borderWidth: "1px",
+      borderStyle: "solid",
+      borderColor: "currentColor",
+      whiteSpace: "nowrap",
     },
     value: {
       textStyle: "numeric.hero",
@@ -105,6 +120,7 @@ export const heroFigure = sva({
           },
         },
         label: { color: "text.onContrast" },
+        estimate: { color: "text.onContrast" },
         // The InfoTip trigger defaults to text.muted, which fails on surface.hero. The extra type
         // and attribute outrank the trigger's doubled class (open state keeps its own colours).
         labelRow: {
