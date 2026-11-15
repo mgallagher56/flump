@@ -7,6 +7,7 @@ import {
   NEXT_CURSOR_HEADER,
   PageCursor,
   parseEtag,
+  parseEtagList,
 } from "@flump/api-contract";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { apiConfig } from "~/config.server";
@@ -275,7 +276,9 @@ export async function handleApiProxy(
   }
   const ifMatch = request.headers.get(IF_MATCH_HEADER);
   if (ifMatch !== null) {
-    if (method === "GET" || method === "POST" || parseEtag(ifMatch) === null) {
+    // One ETag on a PATCH; a list (one per row the request writes) on the snapshot PUT.
+    const valid = method === "PUT" ? parseEtagList(ifMatch) !== null : parseEtag(ifMatch) !== null;
+    if (method === "GET" || method === "POST" || !valid) {
       return json(400, { kind: "client" }, cookieHeaders);
     }
     headers[IF_MATCH_HEADER] = ifMatch;

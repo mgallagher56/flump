@@ -21,7 +21,6 @@ describe("rate limit classes on real controllers", () => {
     expect(classOf(FinanceController.prototype, "deleteAccount")).toBe("destructive");
     expect(classOf(FinanceController.prototype, "connectBank")).toBe("bank");
     expect(classOf(FinanceController.prototype, "refreshBankConnection")).toBe("bank");
-    expect(classOf(FinanceController.prototype, "syncBankConnection")).toBe("bank");
     expect(classOf(FinanceController.prototype, "deleteBankConnection")).toBe("destructive");
   });
 

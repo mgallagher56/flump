@@ -3,8 +3,8 @@ import { allRoutes, CONTRACT_GROUPS, findRoute, NON_JSON_RESPONSE_ROUTES } from 
 import { checkAgainst } from "./validate.js";
 
 describe("route manifest", () => {
-  it("has 58 routes (44 in the E21 plan minus the two password routes E20 deleted, plus the E19 bank capability route, plus the E20 receipt download, plus the E23 batch balances route, plus the E30 snapshot upsert, plus the six E17 import routes, plus the E17 PR D token activity route, plus the BE-04 delete and export routes, plus the PAT raw-input route the public client-policy route and the BE-15 terms-acceptance route) with unique ids and unique method+path pairs", () => {
-    expect(allRoutes).toHaveLength(58);
+  it("has 56 routes (44 in the E21 plan minus the two password routes E20 deleted, plus the E19 bank capability route, plus the E20 receipt download, plus the E23 batch balances route, plus the E30 snapshot upsert, plus the six E17 import routes, plus the E17 PR D token activity route, plus the BE-04 delete and export routes, plus the PAT raw-input route the public client-policy route and the BE-15 terms-acceptance route, minus the two deprecated aliases BE-16 removed) with unique ids and unique method+path pairs", () => {
+    expect(allRoutes).toHaveLength(56);
     expect(new Set(allRoutes.map((r) => r.id)).size).toBe(allRoutes.length);
     expect(new Set(allRoutes.map((r) => `${r.method} ${r.path}`)).size).toBe(allRoutes.length);
   });
@@ -24,7 +24,6 @@ describe("route manifest", () => {
       .sort();
     expect(bodyless).toEqual([
       "bankConnections.refresh",
-      "bankConnections.sync",
       "budget.seedDefaults",
       "mcp.post",
       "profile.sendPasswordReset",

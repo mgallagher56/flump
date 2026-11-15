@@ -21,7 +21,8 @@ export interface DebtAccountsListProps {
   debts: DebtItem[];
   /** Called from the edit dialog's "Delete debt" action; the page confirms before deleting. */
   onDeleteDebt: (id: string) => void;
-  onUpdateDebt: (id: string, updates: Partial<DebtItem>) => void;
+  /** A returned promise keeps the edit dialog open until the save settles (see AddDebtDialog). */
+  onUpdateDebt: (id: string, updates: Partial<DebtItem>) => void | Promise<string | null>;
   /**
    * The debt whose edit form is open. Pass with `onEditingIdChange` to open it from elsewhere on
    * the page (the "Add a rate" prompt); leave both out and the list manages it.

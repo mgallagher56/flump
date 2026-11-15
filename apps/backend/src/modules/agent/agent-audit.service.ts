@@ -4,6 +4,12 @@ import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import type { Repository } from "typeorm";
 import {
+  type KeysetOrder,
+  keysetPage,
+  type Page,
+  type PageRequest,
+} from "../../contract/pagination";
+import {
   AGENT_AUDIT_OUTCOMES,
   AgentAuditEvent,
   type AgentAuditOutcome,
@@ -38,9 +44,6 @@ export interface AgentAuditActivity {
   createdAt: string;
 }
 
-/** Activity page sizes come from the contract (PAGE_LIMITS.activity, BE-09). */
-const MAX_ACTIVITY_PAGE = PAGE_LIMITS.activity.max;
-const DEFAULT_ACTIVITY_PAGE = PAGE_LIMITS.activity.default;
 const INT_MAX = 2_147_483_647;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const TOOL_NAME = /^[a-z][a-z0-9_]{0,63}$/;
@@ -48,17 +51,14 @@ const ERROR_CODE = /^[A-Za-z0-9_.-]{1,64}$/;
 const SCOPE = /^[a-z][a-z:_-]{0,63}$/;
 const HEX64 = /^[0-9a-f]{64}$/;
 
-/** The opaque activity cursor: base64url of the last row's id. */
-export function encodeActivityCursor(id: string): string {
-  return Buffer.from(id, "utf8").toString("base64url");
-}
-
-/** The row id inside an activity cursor, or null when it is not one of ours. */
-export function decodeActivityCursor(cursor: string): string | null {
-  if (!/^[A-Za-z0-9_-]{1,128}$/.test(cursor)) return null;
-  const id = Buffer.from(cursor, "base64url").toString("utf8");
-  return UUID.test(id) ? id : null;
-}
+/** Newest first, with the primary key as tiebreak for rows that share a timestamp. */
+const ACTIVITY_ORDER: KeysetOrder = {
+  keys: [
+    { column: '"e"."created_at"', kind: "timestamp" },
+    { column: '"e"."id"', kind: "uuid" },
+  ],
+  direction: "DESC",
+};
 
 /** JSON with object keys sorted at every level, so equal arguments always hash the same. */
 function canonicalJson(value: unknown): string {
@@ -134,44 +134,22 @@ export class AgentAuditService {
    * must have checked that the token is the user's; the user id is in the filter as well, so a
    * token id alone never reaches another user's rows. Never returns the argument fingerprint.
    *
-   * Paging uses a compound (created_at, id) cursor. The cursor is the last row's id, opaque to
-   * clients; the database reads that row's created_at itself, at full (microsecond) precision, so
-   * rows that share a timestamp are neither skipped nor repeated across pages. A cursor that names
-   * no row of this token (purged, or another token's) returns an empty page.
+   * Paged like every other list (BE-16, audit N10): keyset on (created_at, id), read at full
+   * (microsecond) precision, so rows that share a timestamp are neither skipped nor repeated
+   * across pages.
    */
   async listForToken(
     userId: string,
     tokenId: string,
-    options: { limit?: number; before?: string } = {},
-  ): Promise<{ events: AgentAuditActivity[]; nextBefore: string | null }> {
-    const limit = Math.min(
-      MAX_ACTIVITY_PAGE,
-      Math.max(1, Math.floor(options.limit ?? DEFAULT_ACTIVITY_PAGE)),
-    );
+    page: PageRequest = { limit: PAGE_LIMITS.activity.default },
+  ): Promise<Page<AgentAuditActivity>> {
     const qb = this.events
       .createQueryBuilder("e")
       .where("e.userId = :userId", { userId })
       .andWhere("e.tokenId = :tokenId", { tokenId });
-    if (options.before !== undefined) {
-      const cursorId = decodeActivityCursor(options.before);
-      if (!cursorId) return { events: [], nextBefore: null };
-      qb.andWhere(
-        `("e"."created_at", "e"."id") < (
-           SELECT c."created_at", c."id" FROM "agent_audit_events" c
-           WHERE c."id" = :cursorId AND c."user_id" = :userId AND c."token_id" = :tokenId
-         )`,
-        { cursorId },
-      );
-    }
-    const rows = await qb
-      .orderBy("e.createdAt", "DESC")
-      .addOrderBy("e.id", "DESC")
-      .limit(limit + 1)
-      .getMany();
-    const page = rows.slice(0, limit);
-    const last = page.at(-1);
+    const { items, nextCursor } = await keysetPage(qb, ACTIVITY_ORDER, page);
     return {
-      events: page.map((r) => ({
+      items: items.map((r) => ({
         id: r.id,
         toolName: r.toolName,
         outcome: r.outcome,
@@ -182,7 +160,7 @@ export class AgentAuditService {
         responseBytes: r.responseBytes,
         createdAt: r.createdAt.toISOString(),
       })),
-      nextBefore: rows.length > limit && last ? encodeActivityCursor(last.id) : null,
+      nextCursor,
     };
   }
 }

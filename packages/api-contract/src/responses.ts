@@ -36,7 +36,7 @@ export {
   ContextPackResponse,
   CreateMcpTokenResponse,
   McpInputResponse,
-  McpTokenActivityResponse,
+  McpTokenActivityListResponse,
   McpTokenListResponse,
   RevokeMcpTokenResponse,
 } from "./domains/mcp-tokens.js";

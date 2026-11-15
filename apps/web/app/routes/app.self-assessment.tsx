@@ -10,6 +10,7 @@ import { data } from "react-router";
 import TaxContainer from "~/containers/tax/TaxContainer";
 import { backendFetch, loadWorkspaceSnapshot } from "~/services/backend-client.server";
 import { BackendError } from "~/services/backend-error";
+import { ifMatchFromForm, PROFILE_VERSION_FIELD, revalidateOnConflict } from "~/services/conflict";
 import { actionErrorResponse } from "~/services/route-error.server";
 import { getAuthSession, requireAccessToken } from "~/utils/auth.server";
 import { roundTo2dp } from "~/utils/roundTo2dp";
@@ -40,6 +41,7 @@ export const action = async (args: ActionFunctionArgs) => {
         schema: UpdateProfileResponse,
         accessToken: token,
         method: "PATCH",
+        ifMatch: ifMatchFromForm(formData, PROFILE_VERSION_FIELD),
         body: {
           annualSalary: annualSalary ? roundTo2dp(Number.parseFloat(annualSalary as string)) : null,
           propertyOwnershipShare: propertyOwnershipShare
@@ -100,6 +102,7 @@ export const action = async (args: ActionFunctionArgs) => {
         schema: TaxRecordResponse,
         accessToken: token,
         method: "PATCH",
+        ifMatch: ifMatchFromForm(formData),
         body: {
           name,
           source,
@@ -206,6 +209,9 @@ export const action = async (args: ActionFunctionArgs) => {
 };
 
 export const meta: MetaFunction = () => [{ title: "Self Assessment | Flump" }];
+
+// A save refused with 412 reloads the saved data, so the form shows and sends the latest version.
+export const shouldRevalidate = revalidateOnConflict;
 
 export const loader = async (args: LoaderFunctionArgs) => {
   const { taxRecords, userProfile, accounts, user } = await loadWorkspaceSnapshot(args, {

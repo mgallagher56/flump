@@ -2,17 +2,25 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mockSubmit = vi.hoisted(() => vi.fn());
+/** What the route action answered; set it and render again to deliver the answer. */
+const answer = vi.hoisted(() => ({ data: undefined as unknown }));
 
 vi.mock("react-router", () => ({
-  useFetcher: () => ({ submit: mockSubmit, state: "idle" }),
+  useFetcher: () => ({ submit: mockSubmit, state: "idle", data: answer.data }),
 }));
 
 import { AddPensionAccountDialog } from "./AddPensionAccountDialog";
 
 const DIRECT = "Extra paid in each month (optional)";
 
+const CONFLICT =
+  "We did not save this because it was changed somewhere else. The latest version is now loaded. Check it and save again.";
+
 describe("AddPensionAccountDialog", () => {
-  beforeEach(() => mockSubmit.mockClear());
+  beforeEach(() => {
+    mockSubmit.mockClear();
+    answer.data = undefined;
+  });
 
   it("renders the form fields when open and no default trigger", () => {
     render(<AddPensionAccountDialog isOpen={true} onClose={vi.fn()} />);
@@ -90,9 +98,10 @@ describe("AddPensionAccountDialog", () => {
     expect(direct.value).toBe("");
   });
 
-  it("keeps Add pot disabled until named, then submits the create intent", () => {
+  it("keeps Add pot disabled until named, then submits the create intent and closes once it is saved", () => {
     const onClose = vi.fn();
-    render(<AddPensionAccountDialog isOpen={true} onClose={onClose} />);
+    const dialog = () => <AddPensionAccountDialog isOpen={true} onClose={onClose} />;
+    const { rerender } = render(dialog());
     const add = screen.getByRole("button", { name: "Add pot" }) as HTMLButtonElement;
     expect(add.disabled).toBe(true);
     fireEvent.change(screen.getByLabelText(/Pot or provider name/), { target: { value: "Nest" } });
@@ -109,7 +118,56 @@ describe("AddPensionAccountDialog", () => {
       }),
       { method: "POST", action: "/app/pension" },
     );
-    expect(onClose).toHaveBeenCalled();
+    // Open until the action answers, so a refused save keeps what was typed.
+    expect(onClose).not.toHaveBeenCalled();
+    answer.data = { success: true };
+    rerender(dialog());
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it("sends the saved pot's version, and after a 412 stays open with the message and what was typed", () => {
+    const onClose = vi.fn();
+    const pot = {
+      id: "p1",
+      name: "Nest",
+      balance: 9000,
+      isCurrent: true,
+      updatedAt: "2026-11-14T09:30:00.123Z",
+    };
+    const dialog = (accountToEdit: typeof pot) => (
+      <AddPensionAccountDialog
+        accountToEdit={accountToEdit as never}
+        isOpen={true}
+        onClose={onClose}
+      />
+    );
+    const { rerender } = render(dialog(pot));
+    fireEvent.change(screen.getByLabelText(/Pot or provider name/), {
+      target: { value: "Nest workplace" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+    expect(mockSubmit.mock.calls[0]?.[0]).toMatchObject({
+      intent: "updatePensionAccount",
+      accountId: "p1",
+      name: "Nest workplace",
+      version: "2026-11-14T09:30:00.123Z",
+    });
+
+    // The pot changed somewhere else: the action answers 412 and the loader runs again.
+    answer.data = { success: false, conflict: true, error: CONFLICT };
+    rerender(dialog({ ...pot, balance: 9100, updatedAt: "2026-11-15T10:00:00.000Z" }));
+    expect(screen.getByRole("alert").textContent).toContain(CONFLICT);
+    expect(onClose).not.toHaveBeenCalled();
+    expect((screen.getByLabelText(/Pot or provider name/) as HTMLInputElement).value).toBe(
+      "Nest workplace",
+    );
+
+    // Saving again sends the latest version.
+    fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+    expect(mockSubmit.mock.calls[1]?.[0]).toMatchObject({
+      name: "Nest workplace",
+      version: "2026-11-15T10:00:00.000Z",
+    });
   });
 
   it("submits an update for an existing pot", () => {

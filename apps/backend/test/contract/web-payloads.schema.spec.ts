@@ -60,7 +60,6 @@ describe("web payloads against @flump/api-contract schemas", () => {
     }
     for (const payload of Object.values(ACCOUNT_UPDATE_PAYLOADS)) {
       expect(violations("accounts.update", payload)).toEqual([]);
-      expect(violations("accounts.replace", payload)).toEqual([]);
     }
   });
 

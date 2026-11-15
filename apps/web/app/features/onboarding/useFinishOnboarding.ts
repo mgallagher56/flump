@@ -134,11 +134,19 @@ export function useFinishOnboarding(values: OnboardingValues, summary: Onboardin
         seedJobs.map(async (job) => {
           if (!job.enabled || seededRef.current.has(job.key)) return;
           if (hasProperty && job.payload.type === "Property") return;
-          const post = { method: "POST", body: job.payload } as const;
+          // The method is written out in each call, so the conditional-writes law can read it.
           if (job.endpoint === "/accounts") {
-            await apiFetch(job.endpoint, { ...post, schema: CreateAccountResponse });
+            await apiFetch(job.endpoint, {
+              method: "POST",
+              body: job.payload,
+              schema: CreateAccountResponse,
+            });
           } else {
-            await apiFetch(job.endpoint, { ...post, schema: BudgetEntryResponse });
+            await apiFetch(job.endpoint, {
+              method: "POST",
+              body: job.payload,
+              schema: BudgetEntryResponse,
+            });
           }
           seededRef.current.add(job.key);
         }),

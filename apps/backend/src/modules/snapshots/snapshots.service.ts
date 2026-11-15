@@ -3,6 +3,7 @@ import { calculateCheckInBalance } from "@flump/finance-engine";
 import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
 import { InjectDataSource } from "@nestjs/typeorm";
 import { DataSource, type EntityManager, In } from "typeorm";
+import { preconditionFailed } from "../../contract/etag";
 import { Account } from "../../entities/account.entity";
 import { isRealDate, londonDate, londonYearMonth, monthKey } from "./london-date";
 import { checkSnapshotMonth, defaultAsOfDate, isValidSnapshotValue, UUID } from "./snapshot-rules";
@@ -51,15 +52,21 @@ export class SnapshotsService {
 
   /**
    * `PUT /snapshots/:month`: batch upsert of account values for one Europe/London month. Partial
-   * allowed, latest write wins, past months editable, future months rejected. Every account must
-   * belong to `userId`; a foreign or unknown id fails the whole request with the same 404 as an
-   * unknown account, and nothing is written.
+   * allowed, past months editable, future months rejected. Every account must belong to `userId`;
+   * a foreign or unknown id fails the whole request with the same 404 as an unknown account, and
+   * nothing is written.
+   *
+   * The latest write wins unless `options.expected` is given (the `If-Match` list, BE-16): then a
+   * row this request would replace must have one of those versions, or already hold the same
+   * figure, else the whole request is a 412 and nothing is written. `now` is the time of the
+   * write and the version (`updated_at`) of every row it stores.
    */
   async upsertMonth(
     userId: string,
     monthParam: string,
     input: UpsertSnapshotInput,
     now: Date = new Date(),
+    options: { expected?: readonly Date[] } = {},
   ): Promise<UpsertSnapshotResult> {
     const checked = checkSnapshotMonth(monthParam, now);
     if (!checked.ok) throw new BadRequestException(MONTH_ERRORS[checked.code]);
@@ -136,12 +143,15 @@ export class SnapshotsService {
         for (const r of rows) {
           r.value = storedBalance(types.get(r.accountId) ?? "", r.value);
         }
+        if (options.expected) {
+          await this.checkVersions(manager, userId, rows, target, options.expected);
+        }
       }
       await writeSnapshotRows(
         manager,
         userId,
         rows.map((r) => ({ ...r, year: target.year, month: target.month })),
-        { source: "manual", importBatchId: null, current },
+        { source: "manual", importBatchId: null, current, updatedAt: now },
       );
       if (input.complete === true) {
         await manager.query(
@@ -162,6 +172,55 @@ export class SnapshotsService {
       })),
       completed: input.complete === true,
     };
+  }
+
+  /**
+   * The `If-Match` check (BE-16). Locks the month's existing rows for the request's accounts, so
+   * a concurrent write waits and is then checked against what this one stored. A row is stale
+   * when its version (to the millisecond, as the ETag carries it) is not one the client read. A
+   * stale row that already holds the same value, date and source is let through: that is a
+   * repeat of a save whose answer was lost, and writing it again changes nothing.
+   */
+  private async checkVersions(
+    manager: EntityManager,
+    userId: string,
+    rows: ReadonlyArray<{
+      accountId: string;
+      value: number;
+      asOfDate: string;
+      source: SnapshotWriteSource;
+    }>,
+    target: { year: number; month: number },
+    expected: readonly Date[],
+  ): Promise<void> {
+    const existing: Array<{
+      account_id: string;
+      value: string;
+      as_of_date: string;
+      source: string;
+      version: string;
+    }> = await manager.query(
+      `SELECT "account_id", "value", to_char("as_of_date", 'YYYY-MM-DD') AS "as_of_date", "source",
+              to_char(date_trunc('milliseconds', "updated_at") AT TIME ZONE 'UTC',
+                      'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') AS "version"
+         FROM "account_details"
+        WHERE "user_id" = $1 AND "account_id" = ANY($2::uuid[]) AND "year" = $3 AND "month" = $4
+        ORDER BY "account_id"
+          FOR UPDATE`,
+      [userId, rows.map((r) => r.accountId), target.year, target.month],
+    );
+    const versions = new Set(expected.map((d) => d.toISOString()));
+    const pence = (v: number) => Math.round(v * 100);
+    for (const stored of existing) {
+      if (versions.has(stored.version)) continue;
+      const row = rows.find((r) => r.accountId === stored.account_id);
+      const same =
+        row !== undefined &&
+        pence(Number(stored.value)) === pence(row.value) &&
+        stored.as_of_date === row.asOfDate &&
+        stored.source === row.source;
+      if (!same) throw preconditionFailed();
+    }
   }
 
   /**

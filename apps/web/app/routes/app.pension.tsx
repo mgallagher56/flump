@@ -11,6 +11,7 @@ import { data } from "react-router";
 import PensionContainer from "~/containers/pension/PensionContainer";
 import { backendFetch, loadWorkspaceSnapshot } from "~/services/backend-client.server";
 import { BackendError } from "~/services/backend-error";
+import { ifMatchFromForm, PROFILE_VERSION_FIELD, revalidateOnConflict } from "~/services/conflict";
 import { actionErrorResponse } from "~/services/route-error.server";
 import { getAuthSession, requireAccessToken } from "~/utils/auth.server";
 import { roundTo2dp } from "~/utils/roundTo2dp";
@@ -82,6 +83,7 @@ export const action = async (args: ActionFunctionArgs) => {
         accessToken: token,
         method: "PATCH",
         body: updatePayload,
+        ifMatch: ifMatchFromForm(formData),
       });
     } else if (intent === "deletePensionAccount") {
       await backendFetch(`/accounts/${encodeURIComponent(String(accountId ?? ""))}`, {
@@ -100,6 +102,7 @@ export const action = async (args: ActionFunctionArgs) => {
         schema: UpdateProfileResponse,
         accessToken: token,
         method: "PATCH",
+        ifMatch: ifMatchFromForm(formData, PROFILE_VERSION_FIELD),
         body: {
           ...(pensionPercent !== null
             ? { pensionPercent: roundTo2dp(Number(pensionPercent)) }
@@ -147,6 +150,7 @@ export const action = async (args: ActionFunctionArgs) => {
         schema: UpdateProfileResponse,
         accessToken: token,
         method: "PATCH",
+        ifMatch: ifMatchFromForm(formData, PROFILE_VERSION_FIELD),
         body: {
           ...(annualSalary ? { annualSalary: roundTo2dp(Number(annualSalary)) } : {}),
           ...(pensionPercent ? { pensionPercent: roundTo2dp(Number(pensionPercent)) } : {}),
@@ -181,6 +185,9 @@ export const action = async (args: ActionFunctionArgs) => {
     return actionErrorResponse(error);
   }
 };
+
+// A save refused with 412 reloads the saved data, so the form shows and sends the latest version.
+export const shouldRevalidate = revalidateOnConflict;
 
 export const loader = async (args: LoaderFunctionArgs) => {
   const { accounts, accountDetails, userProfile, user } = await loadWorkspaceSnapshot(args);

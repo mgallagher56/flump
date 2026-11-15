@@ -44,7 +44,7 @@ const AccountsContainer: FC = () => {
     e.preventDefault();
     setCheckInOpen(true);
   };
-  const saveSnapshot = useSaveSnapshot();
+  const saveSnapshot = useSaveSnapshot(accountDetails);
 
   // Totals come from the finance engine so Property, Student Loan and Overdraft are classified
   // in one place, under the user's net worth choices (saved on their profile).

@@ -470,7 +470,7 @@ describe("FinanceController & FinanceService", () => {
     it("bank connection: B gets not-found on sync and delete of A's connection, which is unchanged", async () => {
       const { controller, bankConnRepo, accountRepo } = createScopedController();
 
-      await expect(controller.syncBankConnection(userB, "conn-A")).rejects.toThrow(
+      await expect(controller.refreshBankConnection(userB, "conn-A")).rejects.toThrow(
         NotFoundException,
       );
       await expect(controller.deleteBankConnection(userB, "conn-A")).rejects.toThrow(
@@ -486,40 +486,23 @@ describe("FinanceController & FinanceService", () => {
     });
   });
 
-  it("registers both sync and refresh POST routes for bank-connections/:id", () => {
+  it("serves no deprecated aliases: no sync route and no PUT for accounts/:id (BE-16, L11)", () => {
+    // RequestMethod: GET 0, POST 1, PUT 2, DELETE 3, PATCH 4.
     const proto = FinanceController.prototype as unknown as Record<string, object>;
-    const paths = Object.getOwnPropertyNames(proto)
+    const routes = Object.getOwnPropertyNames(proto)
       .map((name) => proto[name])
-      .filter(
-        (fn): fn is object => typeof fn === "function" && Reflect.getMetadata("method", fn) === 1,
-      )
-      .map((fn) => Reflect.getMetadata("path", fn));
-    expect(paths).toEqual(
-      expect.arrayContaining(["bank-connections/:id/sync", "bank-connections/:id/refresh"]),
-    );
+      .filter((fn): fn is object => typeof fn === "function" && Reflect.hasMetadata("path", fn))
+      .map((fn) => `${Reflect.getMetadata("method", fn)} ${Reflect.getMetadata("path", fn)}`);
+    expect(routes).toContain("1 bank-connections/:id/refresh");
+    expect(routes).toContain("4 accounts/:id");
+    expect(routes).not.toContain("1 bank-connections/:id/sync");
+    expect(routes.filter((r) => r.startsWith("2 "))).toEqual([]);
   });
 
-  it("registers both PUT and PATCH for accounts/:id", () => {
-    // Stacked @Put/@Patch decorators on one handler only register one verb (RequestMethod: GET 0,
-    // POST 1, PUT 2, DELETE 3, PATCH 4).
-    const proto = FinanceController.prototype as unknown as Record<string, object>;
-    const verbs = Object.getOwnPropertyNames(proto)
-      .map((name) => proto[name])
-      .filter(
-        (fn): fn is object =>
-          typeof fn === "function" && Reflect.getMetadata("path", fn) === "accounts/:id",
-      )
-      .map((fn) => Reflect.getMetadata("method", fn));
-    expect(verbs).toEqual(expect.arrayContaining([2, 4]));
-  });
-
-  it("returns 404 for another user's account on both PUT and PATCH", async () => {
+  it("returns 404 for another user's account on PATCH", async () => {
     const { controller } = createMocks();
     const userB = { user: { id: "userB" } };
 
-    await expect(controller.replaceAccount(userB, "acc-of-userA", { balance: 1 })).rejects.toThrow(
-      NotFoundException,
-    );
     await expect(controller.updateAccount(userB, "acc-of-userA", { balance: 1 })).rejects.toThrow(
       NotFoundException,
     );

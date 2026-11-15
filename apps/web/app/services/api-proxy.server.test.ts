@@ -595,6 +595,29 @@ describe("v1 write conventions and paging (BE-10)", () => {
     }
   });
 
+  it("forwards an If-Match list on the snapshot PUT only, and refuses a list with anything else in it", async () => {
+    const a = '"2026-11-14T09:30:00.000Z"';
+    const b = '"2026-11-15T10:00:00.123Z"';
+    const list = `${a}, ${b}`;
+    const body = JSON.stringify({ values: [] });
+    const fetchImpl = ok();
+    await run(req("PUT", "/api/snapshots/2026-11", { body, headers: { "If-Match": list } }), {
+      fetchImpl: fetchImpl as never,
+    });
+    expect((sent(fetchImpl)[1].headers as Record<string, string>)["If-Match"]).toBe(list);
+
+    for (const request of [
+      req("PUT", "/api/snapshots/2026-11", { body, headers: { "If-Match": `${a}, *` } }),
+      req("PUT", "/api/snapshots/2026-11", { body, headers: { "If-Match": `${a}, "x"` } }),
+      // A PATCH edits one record, so it takes one ETag.
+      req("PATCH", `/api/accounts/${UUID}`, { body: "{}", headers: { "If-Match": list } }),
+    ]) {
+      const refused = ok();
+      expect((await run(request, { fetchImpl: refused as never })).status).toBe(400);
+      expect(refused).not.toHaveBeenCalled();
+    }
+  });
+
   it("forwards only limit and cursor on GET, and passes X-Next-Cursor back", async () => {
     const fetchImpl = ok({ "X-Next-Cursor": "abc_DEF-1" });
     const res = await run(req("GET", "/api/budget-entries?limit=50&cursor=abc_DEF-0"), {

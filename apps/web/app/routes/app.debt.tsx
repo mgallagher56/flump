@@ -9,6 +9,7 @@ import { data } from "react-router";
 import DebtContainer from "~/containers/debt/DebtContainer";
 import { buildDebtInputs } from "~/features/debt/utils/debtInputs";
 import { backendFetch, loadWorkspaceSnapshot } from "~/services/backend-client.server";
+import { ifMatchFromForm, revalidateOnConflict } from "~/services/conflict";
 import { actionErrorResponse } from "~/services/route-error.server";
 import { getAuthSession, requireAccessToken } from "~/utils/auth.server";
 import { roundTo2dp } from "~/utils/roundTo2dp";
@@ -62,6 +63,7 @@ export const action = async (args: ActionFunctionArgs) => {
         accessToken: token,
         method: "PATCH",
         body,
+        ifMatch: ifMatchFromForm(formData),
       });
     } else if (intent === "deleteDebt") {
       await backendFetch(`/accounts/${accountId}`, {
@@ -86,6 +88,9 @@ export const action = async (args: ActionFunctionArgs) => {
 };
 
 export const meta: MetaFunction = () => [{ title: "Debt and borrowing | Flump" }];
+
+// A save refused with 412 reloads the saved data, so the form shows and sends the latest version.
+export const shouldRevalidate = revalidateOnConflict;
 
 export const loader = async (args: LoaderFunctionArgs) => {
   const { accounts, accountDetails, userProfile, budgetEntries, user } =

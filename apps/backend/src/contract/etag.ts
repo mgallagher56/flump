@@ -1,4 +1,4 @@
-import { ETAG_HEADER, etagFor, parseEtag } from "@flump/api-contract";
+import { ETAG_HEADER, etagFor, parseEtag, parseEtagList } from "@flump/api-contract";
 import { PreconditionFailedException } from "@nestjs/common";
 import type { ObjectLiteral, Repository } from "typeorm";
 
@@ -25,6 +25,19 @@ export function expectedVersion(ifMatch: string | string[] | undefined): Date | 
   const date = parseEtag(value);
   if (!date) throw preconditionFailed();
   return date;
+}
+
+/**
+ * The versions an `If-Match` list asks for (`PUT /snapshots/:month`, one ETag per row the client
+ * has read): undefined when there is no header. A value that is not a list of this API's ETags
+ * can never match, so it is a 412 straight away.
+ */
+export function expectedVersions(ifMatch: string | string[] | undefined): Date[] | undefined {
+  const value = Array.isArray(ifMatch) ? ifMatch.join(",") : ifMatch;
+  if (value === undefined || value.trim() === "") return undefined;
+  const dates = parseEtagList(value);
+  if (!dates) throw preconditionFailed();
+  return dates;
 }
 
 interface HeaderSink {

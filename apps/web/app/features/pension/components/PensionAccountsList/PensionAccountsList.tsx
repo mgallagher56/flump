@@ -126,7 +126,8 @@ export const PensionAccountsList: FC<PensionAccountsListProps> = ({ accounts }) 
 
       {editingAccount && (
         <AddPensionAccountDialog
-          accountToEdit={editingAccount}
+          // The saved account as loaded now, so a save after a reload sends its latest version.
+          accountToEdit={accounts.find((a) => a.id === editingAccount.id) ?? editingAccount}
           isOpen={true}
           onClose={() => setEditingAccount(null)}
           onDeleteRequest={() => {

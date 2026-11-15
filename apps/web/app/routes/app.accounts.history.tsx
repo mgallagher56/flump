@@ -30,7 +30,7 @@ export const loader = async (args: LoaderFunctionArgs) => {
 const AccountsHistory = (): ReactElement => {
   const { accounts, accountDetails, basis, currentMonth } = useLoaderData<typeof loader>();
   const [params] = useSearchParams();
-  const onSave = useSaveSnapshot();
+  const onSave = useSaveSnapshot(accountDetails);
   return (
     <SnapshotHistoryPage
       accountDetails={accountDetails}

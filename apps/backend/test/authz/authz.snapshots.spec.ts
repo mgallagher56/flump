@@ -359,6 +359,136 @@ describe.skipIf(dbMode === "skip")("authz: snapshots controller (real Postgres)"
     expect(rows[0]?.asOfDate).toBe("2001-02-10");
   });
 
+  describe("If-Match (BE-16, audit M7)", () => {
+    const pause = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+    const storedValue = async (accountId: string) => Number((await rowsFor(accountId))[0]?.value);
+
+    it("answers with the ETag of the rows it wrote", async () => {
+      const res = await put(PAST, h.tokens.a, {
+        values: [
+          { accountId: accountA, value: 100 },
+          { accountId: accountA2, value: 50 },
+        ],
+      });
+      expect(res.status).toBe(200);
+      const [rowA] = await rowsFor(accountA);
+      const [rowA2] = await rowsFor(accountA2);
+      expect(res.headers.etag).toBe(`"${rowA?.updatedAt.toISOString()}"`);
+      expect(res.headers.etag).toBe(`"${rowA2?.updatedAt.toISOString()}"`);
+    });
+
+    it("a row changed somewhere else is a 412 and nothing in the batch is written", async () => {
+      const first = await put(PAST, h.tokens.a, {
+        values: [
+          { accountId: accountA, value: 100 },
+          { accountId: accountA2, value: 50 },
+        ],
+      });
+      const read = first.headers.etag as string;
+      await pause(5);
+      // Another tab or an AI connection changes account A.
+      const elsewhere = await put(PAST, h.tokens.a, {
+        values: [{ accountId: accountA, value: 120 }],
+      });
+      expect(elsewhere.status).toBe(200);
+      expect(elsewhere.headers.etag).not.toBe(read);
+
+      // This tab still holds the version it read: refused whole, the second account too.
+      const stale = await put(PAST, h.tokens.a, {
+        values: [
+          { accountId: accountA, value: 130 },
+          { accountId: accountA2, value: 60 },
+        ],
+      }).set("If-Match", read);
+      expect(stale.status).toBe(412);
+      expect(stale.body.code).toBe("precondition_failed");
+      expect(await storedValue(accountA)).toBe(120);
+      expect(await storedValue(accountA2)).toBe(50);
+
+      // The account nobody else touched still matches the version read.
+      await pause(5);
+      const untouched = await put(PAST, h.tokens.a, {
+        values: [{ accountId: accountA2, value: 60 }],
+      }).set("If-Match", read);
+      expect(untouched.status).toBe(200);
+      expect(await storedValue(accountA2)).toBe(60);
+
+      // After reloading, the list of versions read covers both rows and the save goes through.
+      const reloaded = [elsewhere.headers.etag, untouched.headers.etag].join(", ");
+      const again = await put(PAST, h.tokens.a, {
+        values: [
+          { accountId: accountA, value: 130 },
+          { accountId: accountA2, value: 70 },
+        ],
+      }).set("If-Match", reloaded);
+      expect(again.status).toBe(200);
+      expect(await storedValue(accountA)).toBe(130);
+      expect(await storedValue(accountA2)).toBe(70);
+    });
+
+    it("a repeat of a save whose answer was lost is accepted; a different figure is not", async () => {
+      const first = await put(PAST, h.tokens.a, { values: [{ accountId: accountA, value: 100 }] });
+      const read = first.headers.etag as string;
+      await pause(5);
+      const body = { values: [{ accountId: accountA, value: 140, source: "confirmed" }] };
+      expect((await put(PAST, h.tokens.a, body).set("If-Match", read)).status).toBe(200);
+      // The answer never arrived, so the client sends the same save with the version it read.
+      await pause(5);
+      expect((await put(PAST, h.tokens.a, body).set("If-Match", read)).status).toBe(200);
+      expect(await storedValue(accountA)).toBe(140);
+      // The same stale version with another figure, date or source is a real conflict.
+      for (const value of [
+        { accountId: accountA, value: 141, source: "confirmed" },
+        { accountId: accountA, value: 140, source: "manual" },
+        { accountId: accountA, value: 140, source: "confirmed", asOfDate: "2001-02-03" },
+      ]) {
+        const res = await put(PAST, h.tokens.a, { values: [value] }).set("If-Match", read);
+        expect(res.status).toBe(412);
+      }
+      expect(await storedValue(accountA)).toBe(140);
+      expect((await rowsFor(accountA))[0]?.source).toBe("confirmed");
+    });
+
+    it("a row that does not exist yet is always written, and the check-in flag is kept", async () => {
+      const first = await put(PAST, h.tokens.a, { values: [{ accountId: accountA, value: 100 }] });
+      const res = await put(PAST, h.tokens.a, {
+        values: [{ accountId: accountA2, value: 50 }],
+        complete: true,
+      }).set("If-Match", first.headers.etag as string);
+      expect(res.status).toBe(200);
+      expect(res.body.completed).toBe(true);
+      expect(await storedValue(accountA2)).toBe(50);
+    });
+
+    it("an If-Match that is not a list of this API's ETags is a 412; another user's account stays a 404", async () => {
+      const first = await put(PAST, h.tokens.a, { values: [{ accountId: accountA, value: 100 }] });
+      for (const junk of ["*", "abc", `${first.headers.etag}, *`]) {
+        const res = await put(PAST, h.tokens.a, {
+          values: [{ accountId: accountA, value: 101 }],
+        }).set("If-Match", junk);
+        expect(res.status).toBe(412);
+      }
+      expect(await storedValue(accountA)).toBe(100);
+      // The ownership check comes first: B learns nothing about A's row from a 412.
+      const foreign = await put(PAST, h.tokens.b, {
+        values: [{ accountId: accountA, value: 1 }],
+      }).set("If-Match", first.headers.etag as string);
+      expect(foreign.status).toBe(404);
+    });
+
+    it("two saves that read the same version: one wins, the other is a 412", async () => {
+      const first = await put(PAST, h.tokens.a, { values: [{ accountId: accountA, value: 100 }] });
+      const read = first.headers.etag as string;
+      await pause(5);
+      const results = await Promise.all(
+        [201, 202].map((value) =>
+          put(PAST, h.tokens.a, { values: [{ accountId: accountA, value }] }).set("If-Match", read),
+        ),
+      );
+      expect(results.map((r) => r.status).sort()).toEqual([200, 412]);
+    });
+  });
+
   it("rejects future months, bad months, bad dates, duplicates and bad values with 400", async () => {
     const ok = [{ accountId: accountA, value: 1 }];
     const bad: Array<[string, object]> = [

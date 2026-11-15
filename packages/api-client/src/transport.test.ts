@@ -138,6 +138,16 @@ describe("write conventions", () => {
     expect(keys[3]).toBeUndefined();
   });
 
+  it("returns the response ETag, the version of what was read or written", async () => {
+    const { cfg, fetchMock } = setup();
+    const etag = '"2026-04-06T09:15:00.000Z"';
+    fetchMock.mockResolvedValueOnce(json(200, recorded.budgetEntry, { ETag: etag }));
+    fetchMock.mockResolvedValueOnce(json(200, recorded.budgetEntry));
+    const opts = { method: "PATCH", body: { amount: 1 }, schema: BudgetEntryResponse } as const;
+    expect((await callBackend(cfg, "/budget-entries/x", opts)).etag).toBe(etag);
+    expect((await callBackend(cfg, "/budget-entries/x", opts)).etag).toBeNull();
+  });
+
   it("never sends Idempotency-Key on other methods, and sends If-Match when given", async () => {
     const { cfg, fetchMock } = setup();
     fetchMock.mockResolvedValue(json(200, recorded.budgetEntry));

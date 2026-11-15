@@ -1,11 +1,6 @@
-import {
-  type CreateMcpTokenRequest,
-  MAX_ACTIVITY_PAGE,
-  McpTokenActivityQuery,
-} from "@flump/api-contract";
+import type { CreateMcpTokenRequest } from "@flump/api-contract";
 import { hasScopes, RAW_INPUT_SCOPES } from "@flump/mcp";
 import {
-  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -27,7 +22,7 @@ import type { AuthenticatedRequest } from "../../auth/authenticated-request";
 import { McpAllowlistGuard, McpKillSwitchGuard } from "../../auth/mcp-access";
 import { resolvePage, sendPage } from "../../contract/pagination";
 import { RateLimit } from "../../security/rate-limit.decorator";
-import { AgentAuditService, decodeActivityCursor } from "./agent-audit.service";
+import { AgentAuditService } from "./agent-audit.service";
 import { McpService } from "./mcp.service";
 import { McpPatGuard, type PatAuthenticatedRequest } from "./mcp-pat.guard";
 import { McpTokenService } from "./mcp-token.service";
@@ -132,25 +127,15 @@ export class McpController {
     @Req() req: AuthenticatedRequest,
     @Param("id", new ParseUUIDPipe()) id: string,
     @Query() query: unknown,
+    @Res({ passthrough: true }) res?: Response,
   ) {
     const userId = req.user.id;
-    // Parsed again so the cursor rule holds with CONTRACT_MODE=off outside production.
-    const parsed = McpTokenActivityQuery.safeParse(query ?? {});
-    if (
-      !parsed.success ||
-      (parsed.data.before !== undefined && !decodeActivityCursor(parsed.data.before))
-    ) {
-      throw new BadRequestException(
-        `limit must be 1 to ${MAX_ACTIVITY_PAGE} and before a cursor from nextBefore.`,
-      );
-    }
+    // Parsed before the ownership check, so a bad limit or cursor is a 400 whoever asks.
+    const page = resolvePage(query, "activity");
     if (!(await this.tokenService.ownsToken(userId, id))) {
       throw new NotFoundException("AI Connection token not found.");
     }
-    return this.audit.listForToken(userId, id, {
-      limit: parsed.data.limit,
-      ...(parsed.data.before ? { before: parsed.data.before } : {}),
-    });
+    return sendPage(res, await this.audit.listForToken(userId, id, page));
   }
 
   /**

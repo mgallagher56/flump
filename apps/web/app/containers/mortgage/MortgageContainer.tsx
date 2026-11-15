@@ -23,7 +23,7 @@ import {
   Tabs,
 } from "@repo/ui";
 import { type FC, type ReactNode, useEffect, useMemo, useRef, useState } from "react";
-import { useLoaderData, useNavigate, useSearchParams } from "react-router";
+import { useLoaderData, useNavigate, useRevalidator, useSearchParams } from "react-router";
 import { BtlOverview } from "~/features/mortgage/components/BtlOverview";
 import { MortgageAlerts } from "~/features/mortgage/components/MortgageAlerts";
 import { MortgageEditDialog } from "~/features/mortgage/components/MortgageEditDialog";
@@ -43,6 +43,7 @@ import { useScenarioState } from "~/hooks/useScenarioState";
 import { useUserProfile } from "~/hooks/useUserProfile";
 import type { loader } from "~/routes/app.mortgage";
 import { apiFetch } from "~/services/api-client";
+import { CONFLICT_MESSAGE, isConflict, versionEtag } from "~/services/conflict";
 import { buildWorkspacePicture } from "~/utils/financialPicture";
 import { monthlyMortgagePayment } from "~/utils/mortgagePayment";
 import {
@@ -120,6 +121,7 @@ const MortgageContainer: FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { profile, setProfile, updateProfile } = useUserProfile();
+  const revalidator = useRevalidator();
   const { formatCurrency } = useFormatCurrency();
 
   // Sync profile from loader into atom. Until it has synced, the loader's profile is the source.
@@ -289,15 +291,18 @@ const MortgageContainer: FC = () => {
             body.monthlyContribution = payment;
           }
           if (Object.keys(body).length > 0) {
-            await apiFetch(`/accounts/${selectedAccountId}`, {
+            const accountId = selectedAccountId;
+            // The version this page holds: the loader's, or the one its last save returned.
+            const held = pictureAccounts.find((a: { id?: string }) => a.id === accountId);
+            const updated = await apiFetch(`/accounts/${accountId}`, {
               method: "PATCH",
               body,
               schema: UpdateAccountResponse,
+              ifMatch: versionEtag((held as { updatedAt?: unknown } | undefined)?.updatedAt),
             });
-            const accountId = selectedAccountId;
             setAccountPatches((prev) => ({
               ...prev,
-              [accountId]: { ...prev[accountId], ...body },
+              [accountId]: { ...prev[accountId], ...body, updatedAt: updated.updatedAt },
             }));
           }
           if (body.balance !== undefined) {
@@ -327,6 +332,20 @@ const MortgageContainer: FC = () => {
     } catch (err) {
       console.error("Failed to save mortgage details:", err);
       setSaveMessage(null);
+      if (isConflict(err)) {
+        // Changed somewhere else: drop this page's copy of the account and reload the saved one.
+        // The edit dialog stays open with what was typed.
+        if (selectedAccountId) {
+          const accountId = selectedAccountId;
+          setAccountPatches((prev) => {
+            const { [accountId]: _dropped, ...rest } = prev;
+            return rest;
+          });
+        }
+        revalidator.revalidate();
+        setSaveError(CONFLICT_MESSAGE);
+        return;
+      }
       setSaveError("We could not save your mortgage details. Nothing has changed. Try again.");
     }
   };

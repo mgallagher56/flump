@@ -3,11 +3,11 @@ import {
   ContextPackResponse,
   CreateMcpTokenRequest,
   CreateMcpTokenResponse,
-  McpTokenActivityQuery,
-  McpTokenActivityResponse,
+  McpTokenActivityListResponse,
   McpTokenListResponse,
   RevokeMcpTokenResponse,
 } from "./domains/mcp-tokens.js";
+import { allRoutes } from "./manifest.js";
 import { checkAgainst } from "./validate.js";
 
 // Built at runtime and low-entropy so secret scanners do not read the fixture as a real key.
@@ -204,30 +204,30 @@ describe("mcp-tokens response schemas", () => {
     createdAt: listed.createdAt,
   };
 
-  it("McpTokenActivityResponse accepts identifiers and timings only", () => {
-    expect(checkAgainst(McpTokenActivityResponse, { events: [event], nextBefore: null })).toEqual({
-      ok: true,
-    });
+  it("McpTokenActivityListResponse accepts identifiers and timings only", () => {
+    expect(checkAgainst(McpTokenActivityListResponse, [event])).toEqual({ ok: true });
     // The argument fingerprint and any argument field are leaks.
     expect(
-      checkAgainst(McpTokenActivityResponse, {
-        events: [{ ...event, argsFingerprint: "f".repeat(64) }],
-        nextBefore: null,
-      }).ok,
+      checkAgainst(McpTokenActivityListResponse, [{ ...event, argsFingerprint: "f".repeat(64) }])
+        .ok,
     ).toBe(false);
+    expect(checkAgainst(McpTokenActivityListResponse, [{ ...event, outcome: "maybe" }]).ok).toBe(
+      false,
+    );
+    // The old paging envelope is gone: the cursor is the X-Next-Cursor header (BE-16, N10).
     expect(
-      checkAgainst(McpTokenActivityResponse, {
-        events: [{ ...event, outcome: "maybe" }],
-        nextBefore: null,
-      }).ok,
+      checkAgainst(McpTokenActivityListResponse, { events: [event], nextBefore: null }).ok,
     ).toBe(false);
   });
 
-  it("McpTokenActivityQuery caps the page and checks the cursor", () => {
-    expect(McpTokenActivityQuery.safeParse({ limit: "500" }).success).toBe(true);
-    expect(McpTokenActivityQuery.safeParse({ limit: "501" }).success).toBe(false);
-    expect(McpTokenActivityQuery.safeParse({ before: "not a cursor!" }).success).toBe(false);
-    expect(McpTokenActivityQuery.safeParse({ before: "MGI2ZjRlMWEtOWMy" }).success).toBe(true);
-    expect(McpTokenActivityQuery.safeParse({}).success).toBe(true);
+  it("the activity route pages like every other list (BE-16, N10)", () => {
+    const route = allRoutes.find((r) => r.id === "mcpTokens.activity");
+    expect(route?.page).toBe("activity");
+    expect(route?.query?.safeParse({ limit: "500" }).success).toBe(true);
+    expect(route?.query?.safeParse({ limit: "501" }).success).toBe(false);
+    expect(route?.query?.safeParse({ cursor: "not a cursor!" }).success).toBe(false);
+    expect(route?.query?.safeParse({ cursor: "MGI2ZjRlMWEtOWMy" }).success).toBe(true);
+    expect(route?.query?.safeParse({ before: "MGI2ZjRlMWEtOWMy" }).success).toBe(false);
+    expect(route?.query?.safeParse({}).success).toBe(true);
   });
 });

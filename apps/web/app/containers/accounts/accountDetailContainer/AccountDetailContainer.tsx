@@ -15,6 +15,7 @@ import { summariseAccountBalance } from "~/features/accounts/accountRows";
 import { TYPE_LABEL } from "~/features/accounts/components/AccountsGroupList";
 import { londonMonth } from "~/features/snapshot/snapshotModel";
 import type { loader } from "~/routes/app.accounts.$account";
+import { versionField } from "~/services/conflict";
 import { backLink, notFound, ownerLink } from "./AccountDetailContainer.styles";
 
 const monthName = new Intl.DateTimeFormat("en-GB", { month: "long", timeZone: "UTC" });
@@ -158,6 +159,7 @@ const AccountDetailContainer: FC = () => {
                   ? undefined
                   : Number(account.balance),
               studentLoanPlan: account.studentLoanPlan ?? null,
+              ...versionField(account, "updatedAt"),
             }}
             accountId={String(account.id ?? "")}
             isEditAccount

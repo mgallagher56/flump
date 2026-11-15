@@ -28,6 +28,11 @@ export interface SnapshotWriteOptions {
    * overwritten. Rows held back this way are not returned.
    */
   forceOverwrite?: ReadonlyArray<{ accountId: string; year: number; month: number }>;
+  /**
+   * The `updated_at` of every row a `manual` write stores (the version its ETag names). Defaults
+   * to the time of the write.
+   */
+  updatedAt?: Date;
 }
 
 const CHUNK = 1000;
@@ -72,7 +77,7 @@ async function writeAll(
   sorted: SnapshotRowWrite[],
   opts: SnapshotWriteOptions,
 ): Promise<SnapshotRowWrite[]> {
-  const updatedAt = new Date();
+  const updatedAt = opts.updatedAt ?? new Date();
   for (let i = 0; i < sorted.length; i += CHUNK) {
     await manager
       .createQueryBuilder()

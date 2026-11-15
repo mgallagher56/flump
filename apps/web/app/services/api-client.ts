@@ -73,6 +73,15 @@ export async function apiFetch<T>(
   return data;
 }
 
+/** As `apiFetch`, also returning the response's `ETag`: the version of what was read or written. */
+export async function apiFetchVersioned<T>(
+  endpoint: string,
+  opts: ApiFetchSchemaOptions<T>,
+): Promise<{ data: T; etag: string | null }> {
+  const { data, etag } = await callBackend<T>(PROXY, endpoint, opts);
+  return { data, etag };
+}
+
 /** GETs every page of a list: follows `X-Next-Cursor` until it is absent. */
 export async function apiFetchAll<T>(
   endpoint: string,

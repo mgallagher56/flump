@@ -3,7 +3,6 @@ import {
   BudgetEntryListResponse,
   BudgetEntryResponse,
   DeleteBudgetEntryResponse,
-  etagFor,
 } from "@flump/api-contract";
 import {
   DEBT_CATEGORY,
@@ -47,7 +46,7 @@ import {
 import { useUserProfile } from "~/hooks/useUserProfile";
 import type { loader } from "~/routes/app.budget";
 import { apiFetch, apiFetchAll } from "~/services/api-client";
-import { BackendError } from "~/services/backend-error";
+import { CONFLICT_MESSAGE, isConflict, versionEtag } from "~/services/conflict";
 import { type BudgetEntry, getCategoryLabel, toMonthly } from "~/types/budget";
 import { buildWorkspacePicture } from "~/utils/financialPicture";
 import { clearRunwaySettings, type RunwayScenario } from "~/utils/runwayStorage";
@@ -269,15 +268,19 @@ const BudgetContainer: FC = () => {
         method: "PATCH",
         body: writableEntryFields(update),
         schema: BudgetEntryResponse,
-        ifMatch: current?.updatedAt ? etagFor(current.updatedAt) : undefined,
+        ifMatch: versionEtag(current?.updatedAt),
       });
       setActionError(null);
       setEntries((prev) => prev.map((e) => (e.id === id ? updated : e)));
     } catch (err) {
-      setActionError("We could not save your changes. Nothing has changed. Try again.");
+      setActionError(
+        isConflict(err)
+          ? CONFLICT_MESSAGE
+          : "We could not save your changes. Nothing has changed. Try again.",
+      );
       // 412: the row changed elsewhere since it was loaded. Reload the rows so the next try sends
-      // the current version instead of failing until the page is reloaded.
-      if (err instanceof BackendError && err.status === 412) {
+      // the current version; the editor keeps what was typed because the save rejects.
+      if (isConflict(err)) {
         await apiFetchAll("/budget-entries", { schema: BudgetEntryListResponse })
           .then(setEntries)
           .catch(() => undefined);

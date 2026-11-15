@@ -576,8 +576,11 @@ describe("BudgetContainer", () => {
     expect(screen.getByTestId("budget-editor-amount-b-1")).toBeDefined();
   });
 
-  it("updates an entry after a 412 by showing the error and reloading the rows", async () => {
-    mockLoaderData = { ...baseLoaderData, budgetEntries: withBudget };
+  it("updates an entry after a 412 by saying it changed somewhere else and reloading the rows", async () => {
+    const read = withBudget.map((r) =>
+      r.id === "b-1" ? { ...r, updatedAt: "2026-06-01T08:00:00.000Z" } : r,
+    );
+    mockLoaderData = { ...baseLoaderData, budgetEntries: read };
     const serverRows = withBudget.map((r) =>
       r.id === "b-1" ? { ...r, name: "Joint mortgage", amount: 1300, updatedAt: "2026-06-02" } : r,
     );
@@ -593,11 +596,17 @@ describe("BudgetContainer", () => {
     fireEvent.change(amount, { target: { value: "1250" } });
     fireEvent.blur(amount);
 
-    const alert = await screen.findByText(/could not save your changes\. Nothing has changed/i);
+    const alert = await screen.findByText(
+      "We did not save this because it was changed somewhere else. The latest version is now loaded. Check it and save again.",
+    );
     expect(alert.closest('[role="alert"]')).not.toBeNull();
+    // The save sent the version the page had read.
     expect(apiFetch).toHaveBeenCalledWith(
       "/budget-entries/b-1",
-      expect.objectContaining({ method: "PATCH" }),
+      expect.objectContaining({
+        method: "PATCH",
+        ifMatch: '"2026-06-01T08:00:00.000Z"',
+      }),
     );
     expect(apiFetchAll).toHaveBeenCalledWith("/budget-entries", expect.anything());
     // The editor now holds the server's rows, so the next try sends the current version.

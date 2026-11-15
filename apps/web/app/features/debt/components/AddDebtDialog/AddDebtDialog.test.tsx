@@ -1,4 +1,4 @@
-import { fireEvent, screen } from "@testing-library/react";
+import { act, fireEvent, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { debtItemToAccountPayload } from "~/features/debt/utils/debtAccountMapping";
 import customRender from "~/testUtils/customRender";
@@ -166,6 +166,37 @@ describe("AddDebtDialog in edit mode", () => {
     fill("Interest rate", "");
     fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
     expect(onEditDebt).toHaveBeenCalledWith("d1", { apr: 0, aprKnown: false });
+  });
+
+  it("waits for a save that returns a promise: closes when it lands, stays open with the message when it is refused", async () => {
+    const CONFLICT =
+      "We did not save this because it was changed somewhere else. The latest version is now loaded. Check it and save again.";
+    let settle: (error: string | null) => void = () => undefined;
+    const onEditDebt = vi.fn(
+      () =>
+        new Promise<string | null>((resolve) => {
+          settle = resolve;
+        }),
+    );
+    const { onClose } = renderEdit(onEditDebt);
+    fill("Name of the debt", "Renamed card");
+    fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+    expect(onEditDebt).toHaveBeenCalledWith("d1", { name: "Renamed card" });
+    expect(onClose).not.toHaveBeenCalled();
+
+    // Refused (the debt changed somewhere else): the message shows and the typed name stays.
+    await act(async () => settle(CONFLICT));
+    expect(screen.getByRole("alert").textContent).toContain(CONFLICT);
+    expect(onClose).not.toHaveBeenCalled();
+    expect((screen.getByLabelText(/^Name of the debt/) as HTMLInputElement).value).toBe(
+      "Renamed card",
+    );
+
+    // Saving again goes through and only then closes the dialog.
+    fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+    expect(onEditDebt).toHaveBeenCalledTimes(2);
+    await act(async () => settle(null));
+    expect(onClose).toHaveBeenCalledTimes(1);
   });
 
   it("sends nothing when nothing changed, and closes", () => {

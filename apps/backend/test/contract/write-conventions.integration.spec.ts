@@ -361,7 +361,7 @@ describe.skipIf(dbMode === "skip")("write conventions (real Postgres)", () => {
       expect(foreign.status).toBe(404);
       // A value that is not one of ours can never match.
       const junk = await h
-        .call("put", `/accounts/${id}`, h.tokens.a, { name: "Junk" })
+        .call("patch", `/accounts/${id}`, h.tokens.a, { name: "Junk" })
         .set("If-Match", "*");
       expect(junk.status).toBe(412);
     });

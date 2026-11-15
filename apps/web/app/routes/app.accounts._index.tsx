@@ -18,6 +18,7 @@ import {
   loadWorkspaceSnapshot,
 } from "~/services/backend-client.server";
 import { BackendError } from "~/services/backend-error";
+import { ifMatchFromForm, revalidateOnConflict } from "~/services/conflict";
 import { actionErrorResponse } from "~/services/route-error.server";
 import { getAuthSession, requireAccessToken } from "~/utils/auth.server";
 import { roundTo2dp } from "~/utils/roundTo2dp";
@@ -39,49 +40,46 @@ export const action = async (args: ActionFunctionArgs) => {
       ? roundTo2dp(Number(rawBalance))
       : undefined;
 
-  const send = <T,>(
-    endpoint: string,
-    method: HttpMethod,
-    schema: ContractSchema<T>,
-    body?: unknown,
-  ) => backendFetch(endpoint, { accessToken: token, method, body, schema });
+  // Literal methods, so the conditional-writes law can see every write this action makes.
+  const post = <T,>(endpoint: string, schema: ContractSchema<T>, body?: unknown) =>
+    backendFetch(endpoint, { accessToken: token, method: "POST", body, schema });
+  const remove = <T,>(endpoint: string, schema: ContractSchema<T>) =>
+    backendFetch(endpoint, { accessToken: token, method: "DELETE", schema });
 
   try {
     if (intent === "create") {
-      await send("/accounts", "POST", CreateAccountResponse, {
+      await post("/accounts", CreateAccountResponse, {
         name,
         type,
         ...(studentLoanPlan !== undefined ? { studentLoanPlan } : {}),
         ...(balance !== undefined ? { balance } : {}),
       });
     } else if (intent === "update") {
-      await send(
-        `/accounts/${encodeURIComponent(String(accountId ?? ""))}`,
-        "PATCH",
-        UpdateAccountResponse,
-        {
+      await backendFetch(`/accounts/${encodeURIComponent(String(accountId ?? ""))}`, {
+        accessToken: token,
+        method: "PATCH",
+        schema: UpdateAccountResponse,
+        ifMatch: ifMatchFromForm(formData),
+        body: {
           name,
           type,
           ...(studentLoanPlan !== undefined ? { studentLoanPlan } : {}),
           ...(balance !== undefined ? { balance } : {}),
         },
-      );
+      });
     } else if (intent === "delete") {
-      await send(
+      await remove(
         `/accounts/${encodeURIComponent(String(accountId ?? ""))}`,
-        "DELETE",
         DeleteAccountResponse,
       );
     } else if (intent === "syncConnection") {
-      await send(
+      await post(
         `/bank-connections/${encodeURIComponent(String(connectionId ?? ""))}/refresh`,
-        "POST",
         SyncBankConnectionResponse,
       );
     } else if (intent === "disconnectConnection") {
-      await send(
+      await remove(
         `/bank-connections/${encodeURIComponent(String(connectionId ?? ""))}`,
-        "DELETE",
         DeleteBankConnectionResponse,
       );
     } else if (intent === "connectBank") {
@@ -92,7 +90,7 @@ export const action = async (args: ActionFunctionArgs) => {
 
       let backendData: any = null;
       try {
-        backendData = await send("/bank-connections", "POST", ConnectBankResponse, {
+        backendData = await post("/bank-connections", ConnectBankResponse, {
           institutionId,
           token: bankToken ? String(bankToken) : undefined,
         });
@@ -121,6 +119,9 @@ export const action = async (args: ActionFunctionArgs) => {
 };
 
 export const meta: MetaFunction = () => [{ title: "Accounts | Flump" }];
+
+// A save refused with 412 reloads the saved data, so the form shows and sends the latest version.
+export const shouldRevalidate = revalidateOnConflict;
 
 export const loader = async (args: LoaderFunctionArgs) => {
   const { accounts, accountDetails, bankConnections, user, accessToken, userProfile } =
