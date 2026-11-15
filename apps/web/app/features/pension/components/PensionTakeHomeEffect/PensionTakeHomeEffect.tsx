@@ -10,6 +10,7 @@ import {
   CollapsibleDrawer,
   DELTA_TABLE_ROWS,
   formatMoney,
+  ResultBlock,
   StatusBadge,
   Table,
   TaxRatesStatusBanner,
@@ -25,11 +26,8 @@ import {
   effectLink,
   effectNote,
   effectRoot,
-  outcomeLabel,
   outcomeSuffix,
-  outcomeSupport,
-  outcomeSupportItem,
-  outcomeValue,
+  quietValue,
 } from "./PensionTakeHomeEffect.styles";
 
 export const PENSION_TAKE_HOME_COPY = {
@@ -120,13 +118,19 @@ export const PensionTakeHomeEffect: FC<PensionTakeHomeEffectProps> = ({ effect }
         data-testid="pension-take-home-effect"
         id="pension-take-home-effect"
       >
-        <div>
-          <p className={outcomeLabel()}>{PENSION_TAKE_HOME_COPY.outcomeLabel}</p>
-          <p className={outcomeValue({ quiet: true })} data-figure="takeHome.delta">
-            {PENSION_TAKE_HOME_COPY.noChangeValue}
-          </p>
-        </div>
-        <p className={effectNote()}>{PENSION_TAKE_HOME_COPY.noChange}</p>
+        {/* The zone's one result card (E17 5A). "No change" is words, not a figure: body size
+            until an input moves. */}
+        <ResultBlock
+          emptyPrompt={
+            <span className={quietValue()} data-figure="takeHome.delta">
+              {PENSION_TAKE_HOME_COPY.noChangeValue}
+            </span>
+          }
+          figure={null}
+          id="pension-take-home-result"
+          label={PENSION_TAKE_HOME_COPY.outcomeLabel}
+          note={PENSION_TAKE_HOME_COPY.noChange}
+        />
       </div>
     );
   }
@@ -153,32 +157,28 @@ export const PensionTakeHomeEffect: FC<PensionTakeHomeEffectProps> = ({ effect }
         isFallback={before.isFallback}
         ratesYear={before.ratesYear}
       />
-      <div>
-        <p className={outcomeLabel()}>
-          {PENSION_TAKE_HOME_COPY.outcomeLabel}{" "}
+      {/* The zone's one result card (E17 5A): the change in take-home pay, what reaches the
+          pension as its one row, and the relief as its sentence. */}
+      <ResultBlock
+        figure={
+          <span data-figure="takeHome.delta">
+            {signed(takeHomeMonthly)}{" "}
+            <span className={outcomeSuffix()}>{PENSION_TAKE_HOME_COPY.perMonth}</span>
+          </span>
+        }
+        id="pension-take-home-result"
+        label={PENSION_TAKE_HOME_COPY.outcomeLabel}
+        labelAddon={
           <StatusBadge size="sm" variant="neutral">
             {asAtTaxYear(before.ratesYear)}
           </StatusBadge>
-        </p>
-        <p className={outcomeValue()} data-figure="takeHome.delta">
-          {signed(takeHomeMonthly)}{" "}
-          <span className={outcomeSuffix()}>{PENSION_TAKE_HOME_COPY.perMonth}</span>
-        </p>
-        <dl className={outcomeSupport()}>
-          <div className={outcomeSupportItem()}>
-            <dt>{PENSION_TAKE_HOME_COPY.reachesPension}</dt>
-            <dd>
-              {signed(pensionMonthly)} {PENSION_TAKE_HOME_COPY.perMonth}
-            </dd>
-          </div>
-          <div className={outcomeSupportItem()}>
-            <dt>{PENSION_TAKE_HOME_COPY.reliefLabel}</dt>
-            <dd>
-              {money(Math.max(0, reliefMonthly))} {PENSION_TAKE_HOME_COPY.perMonth}
-            </dd>
-          </div>
-        </dl>
-      </div>
+        }
+        note={`${PENSION_TAKE_HOME_COPY.reliefLabel}: ${money(Math.max(0, reliefMonthly))} ${PENSION_TAKE_HOME_COPY.perMonth}.`}
+        row={{
+          label: PENSION_TAKE_HOME_COPY.reachesPension,
+          value: `${signed(pensionMonthly)} ${PENSION_TAKE_HOME_COPY.perMonth}`,
+        }}
+      />
       <p className={effectNote()}>{methodNote}</p>
       {rows.length > 0 ? (
         <CollapsibleDrawer title="Show details" variant="quiet">

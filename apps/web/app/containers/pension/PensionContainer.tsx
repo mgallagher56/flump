@@ -291,13 +291,12 @@ export const PensionContainer: FC = () => {
     });
   };
 
-  // The dashboard links to #pension-details: scroll to the card and move focus there.
+  // The dashboard links to #pension-details: scroll to the section and move focus to its heading.
   useEffect(() => {
     if (hash !== "#pension-details") return;
     const frame = requestAnimationFrame(() => {
-      const target = document.getElementById("pension-details");
-      target?.scrollIntoView?.({ block: "start" });
-      target?.focus?.({ preventScroll: true });
+      document.getElementById("pension-details")?.scrollIntoView?.({ block: "start" });
+      document.getElementById("pension-details-title")?.focus?.({ preventScroll: true });
     });
     return () => cancelAnimationFrame(frame);
   }, [hash]);

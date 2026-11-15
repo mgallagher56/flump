@@ -38,8 +38,9 @@ describe("<ForecasterResults />", () => {
     expect(document.body.textContent).not.toContain("a month");
     expect(screen.queryByText("Change in monthly income")).toBeNull();
     expect(screen.queryByText("No change")).toBeNull();
-    const value =
-      screen.getByText("Estimated pot at retirement").nextElementSibling?.textContent ?? "";
+    // E17 5A: one result card, named by its label, with the pot as its figure.
+    const card = screen.getByRole("group", { name: "Estimated pot at retirement" });
+    const value = card.querySelector('[data-slot="figure"]')?.textContent ?? "";
     expect(value).toMatch(/^About £[\d,]+$/);
     expect(Number(value.replace(/\D/g, "")) % 100).toBe(0);
     expect(screen.queryByText(/PLSA|standard/i)).toBeNull();

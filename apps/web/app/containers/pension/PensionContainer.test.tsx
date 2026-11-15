@@ -214,14 +214,14 @@ describe("PensionContainer", () => {
     });
   });
 
-  it("scrolls to and focuses the details card for the #pension-details deep link", async () => {
+  it("scrolls to the details section and focuses its heading for the #pension-details deep link", async () => {
     mockHash = "#pension-details";
     const scroll = vi.fn();
     Element.prototype.scrollIntoView = scroll;
     try {
       render(<PensionContainer />);
       await vi.waitFor(() => expect(scroll).toHaveBeenCalled());
-      expect(document.activeElement?.id).toBe("pension-details");
+      expect(document.activeElement?.id).toBe("pension-details-title");
     } finally {
       mockHash = "";
     }

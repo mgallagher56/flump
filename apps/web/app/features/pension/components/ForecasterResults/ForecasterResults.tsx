@@ -1,15 +1,8 @@
-import { formatMoney, StatusBadge } from "@repo/ui";
+import { formatMoney, ResultBlock, StatusBadge } from "@repo/ui";
 import type { FC } from "react";
 import { formatEstimate } from "~/utils/roundEstimate";
 import { type ForecastResult, UK_ANNUAL_ALLOWANCE } from "../../forecast";
-import {
-  allowanceNote,
-  outcome,
-  outcomeLabel,
-  outcomeSupport,
-  outcomeSupportItem,
-  outcomeValue,
-} from "./ForecasterResults.styles";
+import { allowanceBadge } from "./ForecasterResults.styles";
 
 export interface ForecasterResultsProps {
   /** The illustration at the scenario inputs. */
@@ -25,11 +18,11 @@ export interface ForecasterResultsProps {
 const money = (n: number) => formatMoney(n, { fractionDigits: 0 }).text;
 
 /**
- * The retirement tool's outcome (E16 P1.7): one figure (the estimated pot at retirement, rounded
- * to three significant figures) and, once an input moves, the change in monthly income against
- * the saved figures. The tax-free lump sum sits behind the chart's "Show data". The saved
- * monthly income is the page's first KPI, so it is never repeated here.
- * Never the hero tone.
+ * The retirement tool's outcome (E16 P1.7) in the zone's one result card (E17 5A): one figure (the
+ * estimated pot at retirement, rounded to three significant figures) and, once an input moves, the
+ * change in monthly income against the saved figures as its one row. The tax-free lump sum sits
+ * behind the chart's "Show data". The saved monthly income is the page's first KPI, so it is never
+ * repeated here. Never the hero tone.
  */
 export const ForecasterResults: FC<ForecasterResultsProps> = ({
   result,
@@ -39,33 +32,35 @@ export const ForecasterResults: FC<ForecasterResultsProps> = ({
 }) => {
   const change = result.monthlyRetirementIncome - savedResult.monthlyRetirementIncome;
   return (
-    <div className={outcome()} data-testid="pension-scenario-outcome" id="pension-scenario-outcome">
-      <p className={outcomeLabel()}>
-        {inTodaysMoney
+    <ResultBlock
+      figure={formatEstimate(result.finalBalance)}
+      id="pension-scenario-outcome"
+      label={
+        inTodaysMoney
           ? `Estimated pot ${whenLabel}`
-          : `Estimated pot ${whenLabel}, before inflation`}
-      </p>
-      <p className={outcomeValue()}>{formatEstimate(result.finalBalance)}</p>
-      {/* Shown only once an input moves: at the saved figures it would always read "No change".
-          The tax-free lump sum sits behind the chart's "Show data", so this keeps one figure. */}
-      {change !== 0 && (
-        <dl className={outcomeSupport()}>
-          <div className={outcomeSupportItem()}>
-            <dt>Change in monthly income</dt>
-            <dd>{`${formatMoney(change, { fractionDigits: 0, signDisplay: "always" }).text} a month`}</dd>
-          </div>
-        </dl>
-      )}
-      {result.totalAnnualInflow > UK_ANNUAL_ALLOWANCE && (
-        <p className={allowanceNote()}>
-          <StatusBadge size="sm" variant="neutral">
-            Above the annual allowance
-          </StatusBadge>{" "}
-          In this illustration {money(result.totalAnnualInflow)} a year is paid in. The standard
-          annual allowance is {money(UK_ANNUAL_ALLOWANCE)}.
-        </p>
-      )}
-    </div>
+          : `Estimated pot ${whenLabel}, before inflation`
+      }
+      note={
+        result.totalAnnualInflow > UK_ANNUAL_ALLOWANCE ? (
+          <>
+            <StatusBadge className={allowanceBadge()} size="sm" variant="neutral">
+              Above the annual allowance
+            </StatusBadge>{" "}
+            In this illustration {money(result.totalAnnualInflow)} a year is paid in. The standard
+            annual allowance is {money(UK_ANNUAL_ALLOWANCE)}.
+          </>
+        ) : undefined
+      }
+      // Shown only once an input moves: at the saved figures it would always read "No change".
+      row={
+        change !== 0
+          ? {
+              label: "Change in monthly income",
+              value: `${formatMoney(change, { fractionDigits: 0, signDisplay: "always" }).text} a month`,
+            }
+          : undefined
+      }
+    />
   );
 };
 
