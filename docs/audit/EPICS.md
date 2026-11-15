@@ -8,13 +8,15 @@ Epic grouping is the lead auditor's reading of the verified titles. Severity and
 
 This section was audited against `origin/main` at 7b9b6425. Every epic below carries a dated status line, and tickets that are not done carry their own marker. "Partly" means some of the work has merged; the epic's status line says what is missing.
 
+Updated on 2026-11-15 from the PRs merged up to #728, the backend hand-overs and the backend re-score ([backend-2026-11/RESCORE.md](backend-2026-11/RESCORE.md), #722). Only the tables below were updated; the epic status lines further down are as audited, except E3.
+
 ### Engineering work not started or partly done, by launch importance
 
 | # | Epic / ticket | Work | State |
 |---|---|---|---|
-| 1 | E19 | Account deletion including the WorkOS user, and JSON data export | Not started |
+| 1 | E19 | Account deletion including the WorkOS user, and JSON data export | Done (BE-04, #668); export writes an audit row first (BE-15, #725). Until the owner sets `DELETION_TOMBSTONE_KEY`, deletion returns 503 and changes nothing |
 | 2 | E19 | Pages for the privacy policy, terms, cookie position and accessibility statement (text from owner and legal) | Not started |
-| 3 | E11 F-11, E23 | E2E test of the new-user journey: sign up, onboarding, add account, budget entry | Partly |
+| 3 | E11 F-11, E23 | E2E test of the new-user journey: sign up, onboarding, add account, budget entry | Done (#701) |
 | 4 | E20 | Enforce the full web CSP (report-only since #603) | Partly |
 | 5 | E18 | A production environment separate from staging, so releases go to staging first | Not started |
 | 6 | E23, E4 C-11 | Compute the real estimated tax due (now `null`); verify C-17 | Done (`selectEstimatedTaxDue` feeds the dashboard; C-17 verified: providers throw, never report 0) |
@@ -23,13 +25,15 @@ This section was audited against `origin/main` at 7b9b6425. Every epic below car
 | 9 | E22 | Stale-rates banner on savings, budget, onboarding and home | Partly |
 | 10 | E24 | Fix stale paths in `docs/launch/readiness.json` | Done (BE-01) |
 | 11 | E8 | Make the Storybook a11y job blocking (due 2026-11-25) | Done in the repo (BE-01); owner adds the required check |
-| 12 | E1 D-06, C-18, F-03 | Transactional deleteAccount; MCP auth coverage to 80% | Partly |
-| 13 | E3 B-04, D-11, N-02 | Foreign keys and indexes; key id for bank tokens; zod env schema | Partly |
+| 12 | E1 D-06, C-18, F-03 | Transactional deleteAccount; MCP auth coverage to 80% | Partly: deletion runs in one transaction (BE-04, #668, per the backend re-score); MCP auth coverage not re-checked |
+| 13 | E3 B-04, D-11, N-02 | Foreign keys and indexes; key id for bank tokens; zod env schema | Done in code per the backend re-score: foreign keys (BE-08, #675), indexes proven by a query-plan test, versioned bank token keys (BE-12, #672), `config/env.schema.ts` |
 | 14 | E7 M-09, I-07 | Widen the claims guard; mirror the copy changes in web | Partly |
 | 15 | E2, E1 G-03 | Salary-sacrifice defaults; delete the mock token and fake accounts in the parked mobile app | Partly |
 | 16 | E15 | Pre-release visual pass | Not started |
 | 17 | E9 H-03 | Last 17 design-token violations | Partly |
 | 18 | E27, E28, E30 v2 | Pension projection epic; MTD decision (before April 2027); snapshot v2 | Not started |
+| 19 | Backend | Re-score follow-ups (backend-2026-11/RESCORE.md): BE-16 conditional writes, BE-17 performance and tests, BE-18 bank launch readiness, SEC-D receipt encryption, SEC-E CI and images, SEC-F audit-trail integrity; SEC-A waits for the owner's variables | Not started. BE-01 to BE-14 merged; BE-15 with SEC-B merged (#725); PAT input route and client policy route merged (#717) |
+| 20 | E16 | Design polish rounds 2 and 3 | Done: merged (#697 to #728). The R3 re-score is in `docs/design/e16-polish/RESCORE-R3.md` |
 
 ### Work in progress
 
@@ -46,7 +50,8 @@ This section was audited against `origin/main` at 7b9b6425. Every epic below car
 |---|---|
 | E4, E22, E25 | Sign off the tax vectors (334 unsigned, 41 of them the Self Assessment vectors added by the engine PR); verify the 2027/28 figures |
 | E18 | Run and log the backup restore drill; set the Sentry DSN and uptime monitors; create a production environment |
-| E3 D-12 | Rotate the WorkOS key from git history |
+| E3 D-12 | Done: the WorkOS key was rotated on 2026-11-13 |
+| Backend | Set `DELETION_TOMBSTONE_KEY` (never rotate it), `WEB_CLIENT_IP_HMAC_KEY` and `WORKOS_API_KEY`; add the WorkOS logout redirects (BE-04); run the retention cron service; apply the required checks and secret scanning on GitHub; choose the terms version for consent |
 | E19, E29b | ICO fee; legal text; data region move; FCA perimeter view from the solicitor |
 | E29a, E17 PR F | Sign the advice-boundary policy and the MCP DPIA; send the Innovation Hub enquiry |
 | E24 | Custom domain and email; real company details and mailboxes; launch attestations |
@@ -213,7 +218,7 @@ E1 blocks E2, E5 and E6 (do not build on an unauthenticated backend). E3, E4 and
 - **Status (2026-11-14, checked against `origin/main`):** mostly done (#373; gitleaks in CI #462).
   - Done: D-10, N-01, C-19 and A-01. Synchronize is off, migrations run, and production rejects default passwords and verifies TLS (`config/db.config.ts`).
   - Partly: B-04, D-11 and N-02.
-  - Owner action: rotating D-12.
+  - D-12: the owner rotated the WorkOS key on 2026-11-13.
 - **Severity:** P1
 - **Blocked by:** none
 - **Done when:** Production refuses to boot with missing or insecure config; schema changes go through migrations; secrets found in git history are rotated.

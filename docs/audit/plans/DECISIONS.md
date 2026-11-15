@@ -284,3 +284,35 @@ On 2026-11-13 the owner approved the fable re-plan of the MCP surface and its re
 4. **Owner-only writes are allowed before the round 3 interviews**, rolled out through `MCP_ALLOWED_USER_IDS`.
 5. **The in-app CSV import shares the staging pipeline:** one import primitive (stage, review, commit, revert) with two front ends.
 6. **E26 is folded into E17** (EPICS.md). E17-N12 as three tools, N13 and N14 are cancelled or superseded (E17-next-phases-plan.md).
+
+# Owner decisions, round 10 (2026-11-14): product rulings for web and mobile
+
+The owner gave these rulings on 14 November 2026. They are numbered R1 to R6 in section 1.1 of [E12-mobile-rebuild-plan.md](E12-mobile-rebuild-plan.md) (revision 3, PR #700), which also says what each means for mobile. Web built them in design polish rounds 2 and 3. Where no source gives a ruling's exact terms, the item says "terms to confirm with the owner".
+
+1. **Tagline (R6).** "Flump: finance without the fog"; on its own, "Finance without the fog".
+   - Source: plan R6; built in #707 (`TAGLINE` and `SITE_TAGLINE` in `apps/marketing/src/utils/site.ts`).
+   - Where it goes and how it is written: `COPY-GUIDE.md` section 2.1. It is fixed wording (section 7.3). On mobile it goes on the sign-in screen and is the store subtitle.
+   - Supersedes: nothing; there was no tagline before.
+2. **Bottom navigation bar on phones only (R4).** The bottom bar shows below 768px. The phone top bar keeps a menu button, which opens the same drawer as More, and the light and dark toggle.
+   - Source: plan R4; built in #704 (`NAV_BREAKPOINT` 48rem, new `NAV_WIDE_BREAKPOINT` 64rem with a compact bar between the two, one-button `ThemeToggle variant="cycle"`) and #710.
+   - #710 also carries two rulings passed on by the coordinator: with the bottom bar on screen, the phone drawer lists only what the bar does not; every bottom bar label is whole at 320px.
+   - Supersedes: the 1024px navigation breakpoint and the "no second menu" reading of UX-GUIDELINES N2 (N2 and CROSS-PLATFORM now state the ruling). Still open (plan 10.3, slice S4): whether the header menu button and the More tab both stay on mobile, once the owner has seen them together on a phone.
+3. **Bank sync is deferred until Flump has revenue (R2).** When it returns, it is balances only, through an aggregator, as a new plan.
+   - Source: plan R2 and section 1.3. Web removed bank surfaces in #709 (accounts) and #712 (the onboarding bank step, and bank wording in settings). The backend refuses to boot with the bank flag on until the bank launch gate passes (`apps/backend/src/config/boot-guards.ts`).
+   - Supersedes: **E12 D6 and D19** (round 2: bank connection on mobile behind the off flag, store builds with bank connection off). Both are parked, and the store compliance line about banks (round 3, item 10) falls away.
+   - Earlier rounds kept an owner-only bank connection (round 2, E16 D4-A and E19 D3-B; round 3, items 9 and 15). Whether that owner-only path stays available, and what counts as "revenue": terms to confirm with the owner.
+4. **Net worth is the user's choice (R1).** Two settings: whether net worth counts the home (home value and mortgage together, never one side alone) and whether it counts the student loan.
+   - Source: plan R1; built in #697 (`net_worth_counts_property`, `net_worth_counts_student_loan` on the profile; `NetWorthBasis` in the engine; the switches in Settings, Profile).
+   - Defaults as built: the home counts (true) and the student loan does not (false). Loans, including secured ones, always count. The sources record these as built, not as the owner's words: defaults are terms to confirm with the owner.
+   - Supersedes: the fixed rules for the headline figure, round 2 E23 D-5-B (student loan left out) and E16 PR 3's home in net worth (#671). Each now holds only as the default of its choice.
+5. **The monthly check-in walks through each account (R3).** One step per account (one card per account on phones), each with "Update" or "No change". "No change to the rest" ends the walk-through and keeps the remaining balances. It ends on a summary of what changed and net worth against last month. It is the mobile app's most important flow.
+   - Source: plan R3; built in #709 and made faster in #727 (shortest homeowner path from 9 taps to 5). The owner chose "Calculated", not "Estimate", as the label for a computed balance (R2-5 hand-over).
+   - "No change to the rest" is in the built flow and the hand-overs, not in the ruling's own words: its terms are to confirm with the owner.
+   - Supersedes: the single check-in sheet listing every account (`CheckInSheet`, #640).
+6. **Calculated balances.** Mortgages and loans default to a calculated balance, labelled "Calculated", which the user can override (R3). The figure comes from the engine (`calculateCheckInBalance`), and the server recomputes it and rejects one that differs.
+   - When a figure is offered: only for a loan or mortgage with a saved rate and payment, and only when its saved balance equals the latest recorded month. Otherwise the check-in shows the normal Update or No change choice, and No change confirms the saved balance.
+   - Source: plan R3; #709 built the figure as an owner-approved addition. The "only when the saved balance equals the latest recorded month" rule is coordinator ruling (b), built in #724: terms to confirm with the owner.
+   - Supersedes: nothing earlier on record. A connected bank value could overwrite a calculated or confirmed row (`connected-write.ts`); that is decided when bank sync returns.
+7. **Loading (R5).** Nothing for the first 200ms or so; once shown, loading stays at least 400ms or so; no generic full-page skeleton between screens that have already loaded; safe with reduced motion.
+   - Source: plan R5; built in #704 (`useDelayedPending`, `PendingReveal`, `durations.pendingDelay`, `pendingMinimum`, `reveal`). Recorded in UX-GUIDELINES E2.
+   - Supersedes: the page skeleton after 200ms shown on every navigation (#688).
