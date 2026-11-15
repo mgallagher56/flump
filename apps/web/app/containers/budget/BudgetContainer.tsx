@@ -31,6 +31,12 @@ import { BudgetOverview } from "~/features/budget/components/BudgetOverview";
 import { BudgetSetupWizard } from "~/features/budget/components/BudgetSetupWizard";
 import { DuplicateDebtNotice } from "~/features/budget/components/DuplicateDebtNotice";
 import { RunwayCalculator } from "~/features/budget/components/RunwayCalculator";
+import {
+  type DraftBudgetEntry,
+  entryFromDraft,
+  exampleBudgetDrafts,
+  isDraftReady,
+} from "~/features/budget/exampleDrafts";
 import { DebtHelpLink } from "~/features/debt/components/DebtHelpLink";
 import {
   HousingDetails,
@@ -112,7 +118,8 @@ const BudgetContainer: FC = () => {
   const [openCategory, setOpenCategory] = useState<string | null>(null);
   const [entries, setEntries] = useState<BudgetEntry[]>(budgetEntries);
   const [isAddCategoryOpen, setIsAddCategoryOpen] = useState(false);
-  const [isSeedingDefaults, setIsSeedingDefaults] = useState(false);
+  // Suggested rows from "Add common entries": on the page only, saved only by "Save rows".
+  const [drafts, setDrafts] = useState<DraftBudgetEntry[]>([]);
 
   // Custom categories initialized from profile + any non-standard categories in entries
   const [customCategories, setCustomCategories] = useState<string[]>(() => {
@@ -351,20 +358,42 @@ const BudgetContainer: FC = () => {
     setView("budget");
   };
 
-  const handleAddSuggestedDefaults = async () => {
-    setIsSeedingDefaults(true);
-    try {
-      const updated = await apiFetch("/budget-entries/seed-defaults", {
-        method: "POST",
-        body: {},
-        schema: BudgetEntryListResponse,
-      });
-      setActionError(null);
-      setEntries(updated);
-    } catch {
-      setActionError("We could not add the example figures. Nothing has changed. Try again.");
-    } finally {
-      setIsSeedingDefaults(false);
+  // Example rows open in the editor, held on the page. Nothing is saved until "Save rows".
+  const handleAddExampleRows = () => {
+    setDrafts(exampleBudgetDrafts());
+    setView("editing");
+  };
+
+  const handleDraftChange = (id: string, update: Partial<DraftBudgetEntry>) => {
+    setDrafts((prev) => prev.map((d) => (d.id === id ? { ...d, ...update } : d)));
+  };
+
+  const handleDraftRemove = (id: string) => {
+    setDrafts((prev) => prev.filter((d) => d.id !== id));
+  };
+
+  const handleRemoveDrafts = () => {
+    setDrafts([]);
+    if (isBudgetEmpty) {
+      setView("budget");
+      requestAnimationFrame(() => document.getElementById("add-suggested-defaults-btn")?.focus());
+    }
+  };
+
+  /** Saves the example rows with an amount above £0, one at a time; blank ones are not saved. */
+  const handleSaveDrafts = async () => {
+    let saved = 0;
+    for (const draft of drafts.filter(isDraftReady)) {
+      // A failed save stops here: addEntry shows the error and the unsaved rows stay.
+      await addEntry(entryFromDraft(draft));
+      saved += 1;
+      setDrafts((prev) => prev.filter((d) => d.id !== draft.id));
+    }
+    setDrafts([]);
+    if (saved > 0) {
+      toastApi?.toast({ title: "Saved" });
+    } else if (isBudgetEmpty) {
+      setView("budget");
     }
   };
 
@@ -440,7 +469,8 @@ const BudgetContainer: FC = () => {
     <PageBody>
       <PageHeader
         actions={
-          view === "editing" ? (
+          view === "editing" && drafts.length === 0 ? (
+            // While example rows are open, the note's own buttons are the way out.
             <Button
               data-testid="finish-editing-btn"
               id="finish-editing-btn"
@@ -497,6 +527,11 @@ const BudgetContainer: FC = () => {
                 onDeleteCategory={handleDeleteCategory}
                 onUpdate={updateEntry}
                 removableCategories={customCategories}
+                drafts={drafts}
+                onDraftChange={handleDraftChange}
+                onDraftRemove={handleDraftRemove}
+                onRemoveDrafts={handleRemoveDrafts}
+                onSaveDrafts={handleSaveDrafts}
               />
             </>
           ) : isBudgetEmpty ? (
@@ -504,12 +539,11 @@ const BudgetContainer: FC = () => {
               action={
                 <Button
                   data-testid="add-suggested-defaults-btn"
-                  disabled={isSeedingDefaults}
                   id="add-suggested-defaults-btn"
                   variant="outline"
-                  onClick={handleAddSuggestedDefaults}
+                  onClick={handleAddExampleRows}
                 >
-                  {isSeedingDefaults ? "Adding…" : "Add example figures"}
+                  Add common entries
                 </Button>
               }
               description="Add your income and what you spend each month to see what is left over and how long your money lasts."

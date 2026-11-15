@@ -47,20 +47,22 @@ export const BudgetOverview: FC<BudgetOverviewProps> = ({ entries, picture: pict
 
   const subline = safeToSpend ? (
     <>
-      <span className={figure()} data-figure="safeToSpend.weekly">
-        {formatCurrency(safeToSpend.weekly, { maximumFractionDigits: 0 })}
+      {/* Monthly, to match "left over" above; a different measure, so it says what it leaves out
+          (owner ruling 2026-11-15). */}
+      <span className={figure()} data-figure="safeToSpend.monthly">
+        {formatCurrency(safeToSpend.monthly, { maximumFractionDigits: 0 })}
       </span>{" "}
-      a week is safe to spend after essential spending, debt payments and planned savings.
+      a month after essential spending, debt payments and savings, before flexible spending.
     </>
   ) : salaryMissing ? (
     <>
       <SampleAwareLink className={inlineLink()} to="/app/profile">
         Add your salary
       </SampleAwareLink>{" "}
-      to see what is safe to spend each week.
+      to see what you have each month after essential spending.
     </>
   ) : (
-    "Safe to spend each week shows once your budget has essential spending."
+    "Add your essential spending to see what you have after it each month."
   );
 
   return (

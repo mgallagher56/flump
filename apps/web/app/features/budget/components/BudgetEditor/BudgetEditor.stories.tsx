@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from "@storybook/react";
 import { useState } from "react";
 import { expect, fn, userEvent, waitFor, within } from "storybook/test";
 import type { BudgetEntry } from "~/types/budget";
+import { type DraftBudgetEntry, exampleBudgetDrafts } from "../../exampleDrafts";
 import { sampleBudgetEntries } from "../../sampleBudgetEntries";
 import { BudgetEditor, type BudgetEditorProps } from "./BudgetEditor";
 
@@ -91,5 +92,43 @@ export const AddRowOpen: Story = {
     // Leave the row open for the visual snapshot.
     await userEvent.click(scoped.getByRole("button", { name: "Add to housing" }));
     await expect(scoped.getByLabelText("New entry name in Housing")).toBeVisible();
+  },
+};
+
+/** Holds suggested rows in story state, so changes and removals show; nothing is saved. */
+const WithDrafts = (args: BudgetEditorProps) => {
+  const [drafts, setDrafts] = useState<DraftBudgetEntry[]>(exampleBudgetDrafts());
+  return (
+    <BudgetEditor
+      {...args}
+      drafts={drafts}
+      entries={[]}
+      onDraftChange={(id, update) =>
+        setDrafts((prev) => prev.map((d) => (d.id === id ? { ...d, ...update } : d)))
+      }
+      onDraftRemove={(id) => setDrafts((prev) => prev.filter((d) => d.id !== id))}
+      onRemoveDrafts={() => setDrafts([])}
+    />
+  );
+};
+
+/** "Add common entries": suggested rows with no amounts, under one note. */
+export const SuggestedRows: Story = {
+  args: { entries: [] },
+  render: (args) => <WithDrafts {...args} />,
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const editor = canvas.getAllByTestId("budget-editor")[0];
+    if (!editor) throw new Error("Editor missing");
+    const scoped = within(editor);
+    await expect(scoped.getAllByText("Suggested")).toHaveLength(8);
+    await expect(scoped.getByRole("note")).toHaveTextContent(
+      "These are common entries and are not saved yet.",
+    );
+    // Removing a suggestion asks nothing: it was never saved.
+    await userEvent.click(scoped.getByRole("button", { name: "Remove Travel" }));
+    await waitFor(() => expect(scoped.getAllByText("Suggested")).toHaveLength(7));
+    await expect(canvas.queryByRole("dialog")).toBeNull();
+    await expect(scoped.getByRole("button", { name: "Save rows" })).toBeVisible();
   },
 };

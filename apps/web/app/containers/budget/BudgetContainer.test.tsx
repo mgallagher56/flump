@@ -186,19 +186,139 @@ describe("BudgetContainer", () => {
     expect(h1.compareDocumentPosition(hero) & 4).toBeTruthy();
   });
 
-  it("renders Add example figures and calls backend seed-defaults", async () => {
-    render(<BudgetContainer />);
-    const addDefaultsBtn = screen.getByTestId("add-suggested-defaults-btn");
-    expect(addDefaultsBtn.textContent).toBe("Add example figures");
+  describe("Add common entries", () => {
+    const SAVED_ID = "11111111-1111-4111-8111-111111111111";
+    const EXAMPLES = [
+      "Take-home pay",
+      "Rent or mortgage",
+      "Council tax",
+      "Energy",
+      "Phone and broadband",
+      "Food shop",
+      "Travel",
+      "Savings",
+    ];
 
-    fireEvent.click(addDefaultsBtn);
+    it("opens the editor with suggested rows, each badged, and sends no request", () => {
+      render(<BudgetContainer />);
+      const button = screen.getByTestId("add-suggested-defaults-btn");
+      expect(button.textContent).toBe("Add common entries");
+      fireEvent.click(button);
 
-    await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining("/budget-entries/seed-defaults"),
-        expect.objectContaining({ method: "POST" }),
-      );
+      const editor = screen.getByTestId("budget-editor");
+      expect(screen.queryByText("No budget yet")).toBeNull();
+      const names = within(editor)
+        .getAllByRole("textbox")
+        .filter((el) => el.id.startsWith("budget-editor-draft-name-"))
+        .map((el) => (el as HTMLInputElement).value);
+      expect(names).toEqual(EXAMPLES);
+      expect(within(editor).getAllByText("Suggested")).toHaveLength(EXAMPLES.length);
+      // No invented figures: every amount starts empty.
+      for (const input of editor.querySelectorAll<HTMLInputElement>(
+        '[id^="budget-editor-draft-amount-"]',
+      )) {
+        expect(input.value).toBe("");
+      }
+      const note = within(editor).getByRole("note", { name: "About the suggested entries" });
+      expect(note.textContent).toContain("These are common entries and are not saved yet.");
+      // The note's buttons are the way out, so the header has no Finish editing.
+      expect(screen.queryByTestId("finish-editing-btn")).toBeNull();
+      expect(apiFetch).not.toHaveBeenCalled();
+      expect(global.fetch).not.toHaveBeenCalled();
     });
+
+    it("Save rows saves only the rows with an amount, says Saved and keeps the editor", async () => {
+      render(
+        <ToastProvider>
+          <BudgetContainer />
+        </ToastProvider>,
+      );
+      fireEvent.click(screen.getByTestId("add-suggested-defaults-btn"));
+      (global.fetch as ReturnType<typeof vi.fn>).mockImplementation(
+        async () =>
+          new Response(
+            JSON.stringify(
+              row({
+                id: SAVED_ID,
+                name: "Food shop",
+                category: "expenses",
+                amount: 320,
+                isEssential: false,
+                createdAt: "2026-11-15T00:00:00.000Z",
+                updatedAt: "2026-11-15T00:00:00.000Z",
+              }),
+            ),
+            { status: 201 },
+          ),
+      );
+      const amount = screen.getByLabelText("Amount for Food shop");
+      fireEvent.focus(amount);
+      fireEvent.change(amount, { target: { value: "320" } });
+      fireEvent.blur(amount);
+      fireEvent.click(screen.getByRole("button", { name: "Save rows" }));
+
+      await waitFor(() => expect(screen.getByText("Saved")).toBeDefined());
+      expect(global.fetch).toHaveBeenCalledTimes(1);
+      const [url, init] = (global.fetch as ReturnType<typeof vi.fn>).mock.calls[0] ?? [];
+      expect(String(url)).toMatch(/\/budget-entries$/);
+      expect(init).toMatchObject({ method: "POST" });
+      expect(JSON.parse(String(init.body))).toMatchObject({
+        category: "expenses",
+        name: "Food shop",
+        amount: 320,
+        frequency: "monthly",
+        isIncome: false,
+        isEssential: false,
+      });
+      // The blank suggestions are not saved and go; the saved row stays in the editor.
+      expect(screen.queryByText("Suggested")).toBeNull();
+      expect(screen.queryByRole("note", { name: "About the suggested entries" })).toBeNull();
+      expect(screen.getByDisplayValue("Food shop").id).toBe(`budget-editor-name-${SAVED_ID}`);
+      expect(screen.getByTestId("finish-editing-btn")).toBeDefined();
+    });
+
+    it("Remove suggestions returns to the empty state with no request", () => {
+      render(<BudgetContainer />);
+      fireEvent.click(screen.getByTestId("add-suggested-defaults-btn"));
+      fireEvent.click(screen.getByRole("button", { name: "Remove suggestions" }));
+      expect(screen.queryByTestId("budget-editor")).toBeNull();
+      expect(screen.getByText("No budget yet")).toBeDefined();
+      expect(screen.getByRole("button", { name: "Set up your budget" })).toBeDefined();
+      expect(apiFetch).not.toHaveBeenCalled();
+      expect(global.fetch).not.toHaveBeenCalled();
+    });
+
+    it("removing one suggested row asks nothing and sends no request", () => {
+      render(<BudgetContainer />);
+      fireEvent.click(screen.getByTestId("add-suggested-defaults-btn"));
+      fireEvent.click(screen.getByRole("button", { name: "Remove Travel" }));
+      expect(screen.queryByDisplayValue("Travel")).toBeNull();
+      expect(screen.queryByRole("dialog")).toBeNull();
+      expect(screen.getAllByText("Suggested")).toHaveLength(EXAMPLES.length - 1);
+      expect(global.fetch).not.toHaveBeenCalled();
+    });
+  });
+
+  it("with take-home pay unknown, the hero asks for a salary", () => {
+    mockLoaderData = {
+      ...baseLoaderData,
+      userProfile: { ...baseLoaderData.userProfile, monthlyTakeHome: null },
+      budgetEntries: withBudget,
+    };
+    render(<BudgetContainer />);
+    // The global setup renders router links as their children, so the words are checked here.
+    const hero = screen.getByTestId("hero-figure");
+    expect(hero.textContent).toMatch(/Add your salary\s+to see/);
+  });
+
+  it("with no budget, the empty state's only controls work: no hero link and no strip prompt", () => {
+    render(<BudgetContainer />);
+    // Neither the hero nor the strip shows before there is a budget, so the header button and
+    // the empty state's button are the page's only ways in.
+    expect(screen.queryByTestId("hero-figure")).toBeNull();
+    expect(screen.queryByText(/Add your income and spending/)).toBeNull();
+    expect(screen.getByRole("button", { name: "Set up your budget" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "Add common entries" })).toBeDefined();
   });
 
   it("opens Add Category modal and allows adding a new category", async () => {

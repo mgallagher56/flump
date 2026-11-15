@@ -60,7 +60,7 @@ describe("BudgetSetupWizard", () => {
 
     // Click Next to go to Defaults step
     fireEvent.click(screen.getByRole("button", { name: /next/i }));
-    expect(await screen.findByText(/start with example figures/i)).toBeDefined();
+    expect(await screen.findByText(/start with common entries/i)).toBeDefined();
 
     // Click Start blank to go to Income step
     fireEvent.click(screen.getByRole("button", { name: /start blank/i }));
@@ -217,7 +217,7 @@ describe("BudgetSetupWizard", () => {
     });
   });
 
-  it("allows applying example figures from the defaults step", async () => {
+  it("adds common entries (names only, £0) from the defaults step", async () => {
     const onAddEntry = vi.fn().mockResolvedValue(undefined);
 
     render(
@@ -235,7 +235,7 @@ describe("BudgetSetupWizard", () => {
     // Advance to Defaults step
     fireEvent.click(screen.getByRole("button", { name: /next/i }));
     const useDefaultsBtn = await screen.findByRole("button", {
-      name: /use example figures/i,
+      name: /add common entries/i,
     });
     fireEvent.click(useDefaultsBtn);
 
@@ -244,6 +244,66 @@ describe("BudgetSetupWizard", () => {
         expect.objectContaining({ name: "Rent / Mortgage", amount: 0 }),
       );
     });
+  });
+
+  const savedEntry = (name: string, category: string) => ({
+    id: `s-${name}`,
+    userId: "u",
+    name,
+    category,
+    amount: 0,
+    frequency: "monthly" as const,
+    isIncome: false,
+    isPrimaryIncome: false,
+    isEssential: true,
+    isDefault: true,
+    notes: null,
+    createdAt: "2026-11-15",
+    updatedAt: "2026-11-15",
+  });
+
+  it("never adds a common entry the budget already has (the page's button added it first)", async () => {
+    const onAddEntry = vi.fn().mockResolvedValue(undefined);
+    render(
+      <BudgetSetupWizard
+        entries={[savedEntry("Rent / Mortgage", "housing"), savedEntry("Council Tax", "bills")]}
+        monthlyTakeHome={2500}
+        onAddEntry={onAddEntry}
+        onCancel={vi.fn()}
+        onComplete={vi.fn()}
+        onDeleteEntry={vi.fn()}
+        onUpdateEntry={vi.fn()}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: /next/i }));
+    fireEvent.click(await screen.findByRole("button", { name: /add common entries/i }));
+    await waitFor(() => expect(onAddEntry).toHaveBeenCalledTimes(4));
+    const names = onAddEntry.mock.calls.map(([e]) => e.name);
+    expect(names).not.toContain("Rent / Mortgage");
+    expect(names).not.toContain("Council Tax");
+  });
+
+  it("adds nothing the second time, when the first time's entries are already there", async () => {
+    const onAddEntry = vi.fn().mockResolvedValue(undefined);
+    const props = {
+      monthlyTakeHome: 2500,
+      onAddEntry,
+      onCancel: vi.fn(),
+      onComplete: vi.fn(),
+      onDeleteEntry: vi.fn(),
+      onUpdateEntry: vi.fn(),
+    };
+    const { rerender } = render(<BudgetSetupWizard entries={[]} {...props} />);
+    fireEvent.click(screen.getByRole("button", { name: /next/i }));
+    fireEvent.click(await screen.findByRole("button", { name: /add common entries/i }));
+    await waitFor(() => expect(onAddEntry).toHaveBeenCalledTimes(6));
+    const added = onAddEntry.mock.calls.map(([e]) => savedEntry(e.name, e.category));
+    // Back to the defaults step with the six now saved, and click again.
+    rerender(<BudgetSetupWizard entries={added} {...props} />);
+    fireEvent.click(screen.getByRole("button", { name: /back/i }));
+    fireEvent.click(await screen.findByRole("button", { name: /add common entries/i }));
+    await new Promise((r) => setTimeout(r, 50));
+    expect(onAddEntry).toHaveBeenCalledTimes(6);
   });
 });
 

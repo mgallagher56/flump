@@ -143,3 +143,37 @@ export const addAmount = cva({
 export const figure = cva({
   base: { fontVariantNumeric: "tabular-nums" },
 });
+
+/**
+ * A suggested row's name with its quiet "Suggested" badge beside it from md. On a phone the note
+ * above the sections labels the rows, so the badge gives the name the line's width.
+ */
+export const draftName = cva({
+  base: {
+    display: "flex",
+    alignItems: "center",
+    gap: "2",
+    minWidth: 0,
+    "& > :first-child": { flex: "1 1 0", minWidth: 0 },
+    "& > :last-child": { flexShrink: 0, display: { base: "none", md: "inline-flex" } },
+  },
+});
+
+/** The one quiet note above the sections while example rows are on the page. */
+export const draftNote = sva({
+  slots: ["root", "text", "actions"],
+  base: {
+    root: {
+      display: "flex",
+      flexDirection: "column",
+      gap: "3",
+      mb: "6",
+      pb: "4",
+      borderBottomWidth: "1px",
+      borderBottomStyle: "solid",
+      borderBottomColor: "border.subtle",
+    },
+    text: { margin: "0", textStyle: "body.sm", color: "text.secondary" },
+    actions: { display: "flex", flexWrap: "wrap", gap: "2" },
+  },
+});

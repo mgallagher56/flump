@@ -66,7 +66,7 @@ describe("<BudgetOverview />", () => {
     expect(screen.queryByText("Each month")).toBeNull();
   });
 
-  it("shows 4 figures: the hero, weekly safe to spend, money in and going out", () => {
+  it("shows 4 figures: the hero, the monthly figure after essentials, money in and going out", () => {
     const picture = buildWorkspacePicture({
       userProfile: profile,
       accounts: [{ id: "s", name: "Saver", type: "Saving", balance: 6000, currency: "GBP" }],
@@ -76,7 +76,7 @@ describe("<BudgetOverview />", () => {
     const { container } = customRender(<BudgetOverview entries={entries} picture={picture} />);
     expect(container.querySelector('[data-figure="monthsOfCover"]')).toBeNull();
     const figures = container.querySelectorAll(
-      '[data-figure="budget.surplus"], [data-figure="safeToSpend.weekly"]',
+      '[data-figure="budget.surplus"], [data-figure="safeToSpend.monthly"]',
     );
     expect(figures).toHaveLength(2);
     // The other two are money in and going out.
@@ -102,14 +102,14 @@ describe("<BudgetOverview />", () => {
     expect(screen.queryByText("0 months")).toBeNull();
   });
 
-  it("shows weekly safe to spend as the hero's sub-line, from the picture", () => {
+  it("shows the monthly figure after essentials as the hero's sub-line, from the picture", () => {
     const picture = buildWorkspacePicture({ userProfile: profile, budgetEntries: entries });
     if (picture.safeToSpend.status !== "known") throw new Error("expected known");
     const { container } = customRender(<BudgetOverview entries={entries} picture={picture} />);
     const hero = container.querySelector('[data-tone="hero"]');
-    const weekly = hero?.querySelector('[data-figure="safeToSpend.weekly"]');
-    expect(weekly?.textContent).toBe(
-      `£${Math.round(picture.safeToSpend.value.weekly).toLocaleString("en-GB")}`,
+    const monthly = hero?.querySelector('[data-figure="safeToSpend.monthly"]');
+    expect(monthly?.textContent).toBe(
+      `£${Math.round(picture.safeToSpend.value.monthly).toLocaleString("en-GB")}`,
     );
     expect(hero?.textContent).not.toMatch(/a day/);
   });
@@ -118,7 +118,7 @@ describe("<BudgetOverview />", () => {
     customRender(<BudgetOverview entries={entries} />);
     // The global test setup renders links as their children.
     expect(
-      screen.getByText(/Add your salary to see what is safe to spend each week/),
+      screen.getByText(/Add your salary to see what you have each month after essential spending/),
     ).toBeDefined();
   });
 
