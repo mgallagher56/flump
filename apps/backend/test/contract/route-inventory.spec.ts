@@ -66,7 +66,7 @@ const KNOWN_DYNAMIC: ReadonlyArray<{ file: string; token: string; reason: string
   {
     file: "routes/app.accounts._index.tsx",
     token: "endpoint",
-    reason: "local `send` wrapper, extracted separately",
+    reason: "local `post` and `remove` wrappers, extracted separately",
   },
   {
     file: "services/backend-client.server.ts",
@@ -76,8 +76,15 @@ const KNOWN_DYNAMIC: ReadonlyArray<{ file: string; token: string; reason: string
 ];
 
 /** Wrappers whose first argument is the endpoint (and, for send, second the method). */
-const WRAPPERS: ReadonlyArray<{ file: string; name: string; methodArg: boolean }> = [
-  { file: "routes/app.accounts._index.tsx", name: "send", methodArg: true },
+const WRAPPERS: ReadonlyArray<{
+  file: string;
+  name: string;
+  methodArg: boolean;
+  /** The method a wrapper always sends (BE-16: `post` and `remove` write it out themselves). */
+  method?: Method;
+}> = [
+  { file: "routes/app.accounts._index.tsx", name: "post", methodArg: false, method: "POST" },
+  { file: "routes/app.accounts._index.tsx", name: "remove", methodArg: false, method: "DELETE" },
   { file: "services/backend-client.server.ts", name: "list", methodArg: false },
 ];
 
@@ -143,7 +150,7 @@ function extractWebCalls(
     );
     for (const m of text.matchAll(re)) {
       if (m[4]) problems.push(`${rel}: concatenated path after "${m[2]}"`);
-      let method: Method = "GET";
+      let method: Method = w.method ?? "GET";
       if (w.methodArg && m[3] !== undefined) {
         const lit = VERB_LITERAL.exec(m[3]);
         if (lit) method = lit[1] as Method;
