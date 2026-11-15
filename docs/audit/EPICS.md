@@ -34,6 +34,8 @@ Updated on 2026-11-15 from the PRs merged up to #728, the backend hand-overs and
 | 18 | E27, E28, E30 v2 | Pension projection epic; MTD decision (before April 2027); snapshot v2 | Not started |
 | 19 | Backend | Re-score follow-ups (backend-2026-11/RESCORE.md): BE-16 conditional writes, BE-17 performance and tests, BE-18 bank launch readiness, SEC-D receipt encryption, SEC-E CI and images, SEC-F audit-trail integrity; SEC-A waits for the owner's variables | Not started. BE-01 to BE-14 merged; BE-15 with SEC-B merged (#725); PAT input route and client policy route merged (#717) |
 | 20 | E16 | Design polish rounds 2 and 3 | Done: merged (#697 to #728). The R3 re-score is in `docs/design/e16-polish/RESCORE-R3.md` |
+| 21 | E33 | Retirement plan: a target the user sets, tracked each month (E27 becomes its tax slices) | Plan awaiting owner approval |
+| 22 | E36 | Security hardening before real production: supply chain, accounts, breach impact, post-quantum readiness, AI-assisted attacks, external test | Plan awaiting owner approval |
 
 ### Work in progress
 
@@ -930,6 +932,24 @@ Source: [docs/research/market-research-2026-11.md](../research/market-research-2
   - Follow-up review fixes landed in de11185c (copy and UI) and 7b9b6425 (one scenario zone and one guidance notice on the savings page).
   - Not re-checked in code: that the saved housing details feed the headline figures, and that the scenario zone never writes to saved data.
 - **Labels:** done
+
+## E33. Retirement plan: a target the user sets, tracked each month
+
+- **Severity:** P2 (owner request, 2026-11-15).
+- **Blocked by:** owner approval of the plan and its decisions RD1 to RD11; E29a for projection wording, and E29b before anyone beyond the friends beta; signed tax vectors for the tax slices (S6, S7).
+- **Done when:** a user can save a retirement age and a yearly target of their own (typed, or built from their budget entries); housing cost in retirement follows their saved housing details (a mortgage that ends, a mortgage that continues, or rent for life, each shown with the same weight); the Retirement page shows an estimated yearly income in today's money for three growth cases beside that target, with every assumption visible and editable; the pots that count are tracked month by month from the check-in; an MCP read tool and a simulate tool expose the same figures; no surface says what a user needs or should do.
+- **Notes:** E27 keeps its number and becomes slices S6 and S7 of this epic (withdrawal tax, the tax-free lump sum, UFPLS, inheritance tax on unused pensions from 6 April 2027, the MoneyHelper link, the self-employed view). The plan recommends that the Retirement Living Standards stay off the page, as E16 decision D6 left them. Plan: [E33-retirement-plan.md](plans/E33-retirement-plan.md). Companion research: [E34-shared-finances-research.md](plans/E34-shared-finances-research.md) (couples) and [E35-encouragement-and-wellbeing.md](plans/E35-encouragement-and-wellbeing.md) (encouragement and wellbeing); neither is an epic until the owner decides.
+- **Status (2026-11-15):** plan only; nothing built.
+- **Labels:** needs-triage
+
+## E36. Security hardening before real production
+
+- **Severity:** P1 before public launch (owner request, 2026-11-15); P2 for the friends beta.
+- **Blocked by:** owner approval of the plan and its decisions SD1 to SD8; the open backend re-score items SEC-A, SEC-D, SEC-F and BE-18 for slice H4; the custom domain (E24) for passkeys and the security mailbox; an owner money decision for the external test.
+- **Done when:** Bun and Renovate both wait seven days before taking a new release, with a documented urgent exception; laws keep `trustedDependencies` to an allowlist and every action pinned to a commit; each release has an SBOM and CI fails on a known high advisory; `SECURITY.md` and `security.txt` are published; MFA is required on the owner's and admins' accounts and passkeys are offered to users; the application runs under a database role with no schema rights; names and labels are encrypted at field level; the breach runbook has been exercised once; a crypto inventory exists and the edge's key exchange has been tested; prompt-injection tests cover every MCP read tool and the staged import; an external penetration test has run and its findings are fixed or accepted in writing.
+- **Notes:** the plan starts from an inventory of what is already on main (frozen lockfile with scripts off, SHA-pinned actions, digest-pinned images, gitleaks, Semgrep, ZAP, AES-256-GCM bank tokens, the 72-hour step in the incident runbook) and lists only gaps. Dashboard settings and the test budget are owner-only. Plan: [E36-security-hardening-plan.md](plans/E36-security-hardening-plan.md).
+- **Status (2026-11-15):** plan only; nothing built.
+- **Labels:** needs-triage
 
 ### Addendum to E19: portability
 
