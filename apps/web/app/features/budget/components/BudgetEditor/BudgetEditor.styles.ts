@@ -145,7 +145,7 @@ export const figure = cva({
 });
 
 /**
- * A suggested row's name with its quiet "Suggested" badge beside it from md. On a phone the note
+ * A draft row's name with its quiet "Common entry" badge beside it from md. On a phone the group
  * above the sections labels the rows, so the badge gives the name the line's width.
  */
 export const draftName = cva({
@@ -159,7 +159,7 @@ export const draftName = cva({
   },
 });
 
-/** The one quiet note above the sections while example rows are on the page. */
+/** The one labelled group above the sections while common entries are on the page. */
 export const draftNote = sva({
   slots: ["root", "text", "actions"],
   base: {

@@ -305,6 +305,58 @@ describe("BudgetSetupWizard", () => {
     await new Promise((r) => setTimeout(r, 50));
     expect(onAddEntry).toHaveBeenCalledTimes(6);
   });
+
+  it("counts synonyms as the same entry (old seed rows and the page's names)", async () => {
+    const onAddEntry = vi.fn().mockResolvedValue(undefined);
+    render(
+      <BudgetSetupWizard
+        entries={[
+          savedEntry("Rent", "housing"),
+          savedEntry("Gas", "bills"),
+          savedEntry("Electricity", "bills"),
+          savedEntry("Phone and broadband", "bills"),
+          savedEntry("Food shop", "expenses"),
+        ]}
+        monthlyTakeHome={2500}
+        onAddEntry={onAddEntry}
+        onCancel={vi.fn()}
+        onComplete={vi.fn()}
+        onDeleteEntry={vi.fn()}
+        onUpdateEntry={vi.fn()}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: /next/i }));
+    fireEvent.click(await screen.findByRole("button", { name: /add common entries/i }));
+    await waitFor(() => expect(onAddEntry).toHaveBeenCalledTimes(2));
+    expect(onAddEntry.mock.calls.map(([e]) => e.name)).toEqual(["Council Tax", "Water"]);
+  });
+
+  it("a double click adds each common entry once", async () => {
+    let release: () => void = () => undefined;
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const onAddEntry = vi.fn().mockImplementation(() => gate);
+    render(
+      <BudgetSetupWizard
+        entries={[]}
+        monthlyTakeHome={2500}
+        onAddEntry={onAddEntry}
+        onCancel={vi.fn()}
+        onComplete={vi.fn()}
+        onDeleteEntry={vi.fn()}
+        onUpdateEntry={vi.fn()}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: /next/i }));
+    const button = await screen.findByRole("button", { name: /add common entries/i });
+    fireEvent.click(button);
+    fireEvent.click(button);
+    release();
+    await waitFor(() => expect(onAddEntry).toHaveBeenCalledTimes(6));
+    await new Promise((r) => setTimeout(r, 50));
+    expect(onAddEntry).toHaveBeenCalledTimes(6);
+  });
 });
 
 afterEach(() => {

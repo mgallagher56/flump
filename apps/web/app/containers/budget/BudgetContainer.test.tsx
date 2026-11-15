@@ -188,6 +188,7 @@ describe("BudgetContainer", () => {
 
   describe("Add common entries", () => {
     const SAVED_ID = "11111111-1111-4111-8111-111111111111";
+    const SAVED_ID_2 = "22222222-2222-4222-8222-222222222222";
     const EXAMPLES = [
       "Take-home pay",
       "Rent or mortgage",
@@ -198,8 +199,40 @@ describe("BudgetContainer", () => {
       "Travel",
       "Savings",
     ];
+    const GROUP = { name: "Common entries not saved yet" };
+    const draftNames = (editor: HTMLElement) =>
+      Array.from(
+        editor.querySelectorAll<HTMLInputElement>('[id^="budget-editor-draft-name-"]'),
+      ).map((el) => el.value);
+    const savedResponse = (id: string, name: string, category: string, amount: number) =>
+      new Response(
+        JSON.stringify(
+          row({
+            id,
+            name,
+            category,
+            amount,
+            isEssential: category !== "expenses",
+            createdAt: "2026-11-15T00:00:00.000Z",
+            updatedAt: "2026-11-15T00:00:00.000Z",
+          }),
+        ),
+        { status: 201 },
+      );
+    const typeAmount = (label: string, value: string) => {
+      const amount = screen.getByLabelText(label);
+      fireEvent.focus(amount);
+      fireEvent.change(amount, { target: { value } });
+      fireEvent.blur(amount);
+    };
+    const renderWithToast = () =>
+      render(
+        <ToastProvider>
+          <BudgetContainer />
+        </ToastProvider>,
+      );
 
-    it("opens the editor with suggested rows, each badged, and sends no request", () => {
+    it("opens the editor with the common entries, each badged, and sends no request", () => {
       render(<BudgetContainer />);
       const button = screen.getByTestId("add-suggested-defaults-btn");
       expect(button.textContent).toBe("Add common entries");
@@ -207,57 +240,59 @@ describe("BudgetContainer", () => {
 
       const editor = screen.getByTestId("budget-editor");
       expect(screen.queryByText("No budget yet")).toBeNull();
-      const names = within(editor)
-        .getAllByRole("textbox")
-        .filter((el) => el.id.startsWith("budget-editor-draft-name-"))
-        .map((el) => (el as HTMLInputElement).value);
-      expect(names).toEqual(EXAMPLES);
-      expect(within(editor).getAllByText("Suggested")).toHaveLength(EXAMPLES.length);
+      expect(draftNames(editor)).toEqual(EXAMPLES);
+      expect(within(editor).getAllByText("Common entry")).toHaveLength(EXAMPLES.length);
       // No invented figures: every amount starts empty.
       for (const input of editor.querySelectorAll<HTMLInputElement>(
         '[id^="budget-editor-draft-amount-"]',
       )) {
         expect(input.value).toBe("");
       }
-      const note = within(editor).getByRole("note", { name: "About the suggested entries" });
-      expect(note.textContent).toContain("These are common entries and are not saved yet.");
-      // The note's buttons are the way out, so the header has no Finish editing.
+      const group = within(editor).getByRole("group", GROUP);
+      expect(group.textContent).toContain(
+        "These common entries are not saved yet. Fill in the amounts that apply to you, then save. Entries left blank stay here until you remove them or leave the page.",
+      );
+      expect(
+        (within(group).getByRole("button", { name: "Save entries" }) as HTMLButtonElement).disabled,
+      ).toBe(true);
+      // The group's buttons are the way out, so the header has no Finish editing.
       expect(screen.queryByTestId("finish-editing-btn")).toBeNull();
       expect(apiFetch).not.toHaveBeenCalled();
       expect(global.fetch).not.toHaveBeenCalled();
     });
 
-    it("Save rows saves only the rows with an amount, says Saved and keeps the editor", async () => {
-      render(
-        <ToastProvider>
-          <BudgetContainer />
-        </ToastProvider>,
-      );
+    it("with old £0 seed rows, shows those saved rows plus only the missing drafts", () => {
+      mockLoaderData = {
+        ...baseLoaderData,
+        budgetEntries: [
+          row({ id: "s-1", name: "Rent / Mortgage", category: "housing", amount: 0 }),
+          row({ id: "s-2", name: "Gas", category: "bills", amount: 0 }),
+          row({ id: "s-3", name: "Electricity", category: "bills", amount: 0 }),
+          row({ id: "s-4", name: "Council Tax", category: "bills", amount: 0 }),
+          row({ id: "s-5", name: "Broadband", category: "bills", amount: 0 }),
+        ],
+      };
+      render(<BudgetContainer />);
+      // £0 rows leave the budget empty, so the empty state still offers common entries.
       fireEvent.click(screen.getByTestId("add-suggested-defaults-btn"));
-      (global.fetch as ReturnType<typeof vi.fn>).mockImplementation(
-        async () =>
-          new Response(
-            JSON.stringify(
-              row({
-                id: SAVED_ID,
-                name: "Food shop",
-                category: "expenses",
-                amount: 320,
-                isEssential: false,
-                createdAt: "2026-11-15T00:00:00.000Z",
-                updatedAt: "2026-11-15T00:00:00.000Z",
-              }),
-            ),
-            { status: 201 },
-          ),
-      );
-      const amount = screen.getByLabelText("Amount for Food shop");
-      fireEvent.focus(amount);
-      fireEvent.change(amount, { target: { value: "320" } });
-      fireEvent.blur(amount);
-      fireEvent.click(screen.getByRole("button", { name: "Save rows" }));
+      const editor = screen.getByTestId("budget-editor");
+      expect(draftNames(editor)).toEqual(["Take-home pay", "Food shop", "Travel", "Savings"]);
+      for (const id of ["s-1", "s-2", "s-3", "s-4", "s-5"]) {
+        expect(within(editor).getByTestId(`budget-editor-name-${id}`)).toBeDefined();
+      }
+      expect(global.fetch).not.toHaveBeenCalled();
+    });
 
-      await waitFor(() => expect(screen.getByText("Saved")).toBeDefined());
+    it("Save entries saves the ready drafts, keeps the blank ones and says Saved 1 entry", async () => {
+      renderWithToast();
+      fireEvent.click(screen.getByTestId("add-suggested-defaults-btn"));
+      (global.fetch as ReturnType<typeof vi.fn>).mockImplementation(async () =>
+        savedResponse(SAVED_ID, "Food shop", "expenses", 320),
+      );
+      typeAmount("Amount for Food shop", "320");
+      fireEvent.click(screen.getByRole("button", { name: "Save entries" }));
+
+      await waitFor(() => expect(screen.getByText("Saved 1 entry")).toBeDefined());
       expect(global.fetch).toHaveBeenCalledTimes(1);
       const [url, init] = (global.fetch as ReturnType<typeof vi.fn>).mock.calls[0] ?? [];
       expect(String(url)).toMatch(/\/budget-entries$/);
@@ -270,31 +305,114 @@ describe("BudgetContainer", () => {
         isIncome: false,
         isEssential: false,
       });
-      // The blank suggestions are not saved and go; the saved row stays in the editor.
-      expect(screen.queryByText("Suggested")).toBeNull();
-      expect(screen.queryByRole("note", { name: "About the suggested entries" })).toBeNull();
+      // The saved draft leaves the list and shows as a saved row; the blank ones stay as drafts.
+      const editor = screen.getByTestId("budget-editor");
+      expect(draftNames(editor)).toEqual(EXAMPLES.filter((n) => n !== "Food shop"));
       expect(screen.getByDisplayValue("Food shop").id).toBe(`budget-editor-name-${SAVED_ID}`);
-      expect(screen.getByTestId("finish-editing-btn")).toBeDefined();
+      expect(within(editor).getByRole("group", GROUP)).toBeDefined();
+      // The budget is no longer empty, so focus moves to the editor heading.
+      await waitFor(() => expect(document.activeElement?.id).toBe("budget-editor-heading"));
     });
 
-    it("Remove suggestions returns to the empty state with no request", () => {
+    it("says Saved 2 entries when two drafts save", async () => {
+      renderWithToast();
+      fireEvent.click(screen.getByTestId("add-suggested-defaults-btn"));
+      (global.fetch as ReturnType<typeof vi.fn>)
+        .mockImplementationOnce(async () => savedResponse(SAVED_ID, "Council tax", "bills", 160))
+        .mockImplementationOnce(async () =>
+          savedResponse(SAVED_ID_2, "Food shop", "expenses", 320),
+        );
+      typeAmount("Amount for Council tax", "160");
+      typeAmount("Amount for Food shop", "320");
+      fireEvent.click(screen.getByRole("button", { name: "Save entries" }));
+      await waitFor(() => expect(screen.getByText("Saved 2 entries")).toBeDefined());
+      expect(global.fetch).toHaveBeenCalledTimes(2);
+    });
+
+    it("a draft with an amount but no name is not ready, and is never dropped", () => {
       render(<BudgetContainer />);
       fireEvent.click(screen.getByTestId("add-suggested-defaults-btn"));
-      fireEvent.click(screen.getByRole("button", { name: "Remove suggestions" }));
+      typeAmount("Amount for Travel", "60");
+      fireEvent.change(screen.getByLabelText("Name of Travel"), { target: { value: "" } });
+      const save = screen.getByRole("button", { name: "Save entries" }) as HTMLButtonElement;
+      expect(save.disabled).toBe(true);
+      fireEvent.click(save);
+      expect(global.fetch).not.toHaveBeenCalled();
+      expect(draftNames(screen.getByTestId("budget-editor"))).toHaveLength(EXAMPLES.length);
+    });
+
+    it("a failure partway keeps the unsaved drafts and says how many were saved", async () => {
+      renderWithToast();
+      fireEvent.click(screen.getByTestId("add-suggested-defaults-btn"));
+      (global.fetch as ReturnType<typeof vi.fn>)
+        .mockImplementationOnce(async () => savedResponse(SAVED_ID, "Council tax", "bills", 160))
+        .mockImplementation(async () => new Response(null, { status: 500 }));
+      typeAmount("Amount for Council tax", "160");
+      typeAmount("Amount for Food shop", "320");
+      fireEvent.click(screen.getByRole("button", { name: "Save entries" }));
+      expect(
+        await screen.findByText(
+          "We saved 1 of 2 entries. The others are still here, so you can try again.",
+        ),
+      ).toBeDefined();
+      expect(screen.queryByText(/Nothing has changed/)).toBeNull();
+      const editor = screen.getByTestId("budget-editor");
+      expect(draftNames(editor)).toContain("Food shop");
+      expect(draftNames(editor)).not.toContain("Council tax");
+      expect((screen.getByLabelText("Amount for Food shop") as HTMLInputElement).value).toBe("320");
+      expect(screen.queryByText(/^Saved/)).toBeNull();
+    });
+
+    it("a failure on the first save keeps every draft and shows the add error", async () => {
+      renderWithToast();
+      fireEvent.click(screen.getByTestId("add-suggested-defaults-btn"));
+      (global.fetch as ReturnType<typeof vi.fn>).mockImplementation(
+        async () => new Response(null, { status: 500 }),
+      );
+      typeAmount("Amount for Food shop", "320");
+      fireEvent.click(screen.getByRole("button", { name: "Save entries" }));
+      expect(
+        await screen.findByText("We could not add that entry. Nothing has changed. Try again."),
+      ).toBeDefined();
+      expect(draftNames(screen.getByTestId("budget-editor"))).toEqual(EXAMPLES);
+    });
+
+    it("Remove common entries returns to the empty state with no request", async () => {
+      render(<BudgetContainer />);
+      fireEvent.click(screen.getByTestId("add-suggested-defaults-btn"));
+      fireEvent.click(screen.getByRole("button", { name: "Remove common entries" }));
       expect(screen.queryByTestId("budget-editor")).toBeNull();
       expect(screen.getByText("No budget yet")).toBeDefined();
       expect(screen.getByRole("button", { name: "Set up your budget" })).toBeDefined();
+      await waitFor(() => expect(document.activeElement?.id).toBe("add-suggested-defaults-btn"));
       expect(apiFetch).not.toHaveBeenCalled();
       expect(global.fetch).not.toHaveBeenCalled();
     });
 
-    it("removing one suggested row asks nothing and sends no request", () => {
+    it("Remove common entries after a save keeps the editor and brings back Finish editing", async () => {
+      renderWithToast();
+      fireEvent.click(screen.getByTestId("add-suggested-defaults-btn"));
+      (global.fetch as ReturnType<typeof vi.fn>).mockImplementation(async () =>
+        savedResponse(SAVED_ID, "Food shop", "expenses", 320),
+      );
+      typeAmount("Amount for Food shop", "320");
+      fireEvent.click(screen.getByRole("button", { name: "Save entries" }));
+      await waitFor(() => expect(screen.getByText("Saved 1 entry")).toBeDefined());
+      fireEvent.click(screen.getByRole("button", { name: "Remove common entries" }));
+      expect(screen.queryByRole("group", GROUP)).toBeNull();
+      // Leaving the editor drops any drafts, so reopening it shows none.
+      fireEvent.click(screen.getByTestId("finish-editing-btn"));
+      fireEvent.click(screen.getByRole("button", { name: "Edit budget" }));
+      expect(draftNames(screen.getByTestId("budget-editor"))).toEqual([]);
+    });
+
+    it("removing one draft asks nothing and sends no request", () => {
       render(<BudgetContainer />);
       fireEvent.click(screen.getByTestId("add-suggested-defaults-btn"));
       fireEvent.click(screen.getByRole("button", { name: "Remove Travel" }));
       expect(screen.queryByDisplayValue("Travel")).toBeNull();
       expect(screen.queryByRole("dialog")).toBeNull();
-      expect(screen.getAllByText("Suggested")).toHaveLength(EXAMPLES.length - 1);
+      expect(screen.getAllByText("Common entry")).toHaveLength(EXAMPLES.length - 1);
       expect(global.fetch).not.toHaveBeenCalled();
     });
   });
