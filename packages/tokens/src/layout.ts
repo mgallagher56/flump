@@ -63,7 +63,7 @@ export const pageSpacing = {
       sm: { value: "20px" }, // app header to h1 at 375
       lg: { value: "32px" }, // app header to h1 from lg
     },
-    section: { value: "32px" }, // gap between page sections
+    section: { value: "36px" }, // gap between page sections (E17 5A: each section reads as its own block)
   },
 } as const;
 

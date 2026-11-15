@@ -5,6 +5,7 @@ import { css } from "../../../styled-system/css";
 import { Button } from "../../primitives/Button/Button";
 import { SliderField } from "../../primitives/SliderField";
 import { Tabs } from "../../primitives/Tabs";
+import { ResultBlock } from "../ResultBlock/ResultBlock";
 import { SCENARIO_RESET_LABEL, ScenarioZone } from "./ScenarioZone";
 
 const meta: Meta<typeof ScenarioZone> = {
@@ -279,3 +280,62 @@ export const FooterWithReset: Story = {
 };
 
 export const FooterWithoutResetDark: Story = { ...FooterWithoutReset, globals: { theme: "dark" } };
+
+const fieldStack = css({ display: "flex", flexDirection: "column", gap: "4" });
+
+const WithResultBlock = () => {
+  const [cut, setCut] = useState(0);
+  const months = Math.round((4200 / (2800 - cut)) * 10) / 10;
+  return (
+    <ScenarioZone
+      announcement={cut > 0 ? `About ${months} months of breathing room` : ""}
+      basis="Starting from your saved budget and accounts."
+      isModified={cut > 0}
+      result={
+        <ResultBlock
+          figure={`${months} months`}
+          label="Breathing room in this illustration"
+          leadIn="About"
+          row={{ label: "Money to draw on", value: "£4,200" }}
+        />
+      }
+      title="Model a change to your budget"
+      onReset={() => setCut(0)}
+    >
+      <div className={fieldStack}>
+        <SliderField
+          label="Spending you would cut each month"
+          max={1000}
+          min={0}
+          step={50}
+          format="currency"
+          value={cut}
+          onChange={setCut}
+        />
+      </div>
+    </ScenarioZone>
+  );
+};
+
+const resultPlay: Story["play"] = async ({ canvasElement }) => {
+  const canvas = within(canvasElement);
+  const zone = canvas.getByTestId("scenario-zone");
+  // E17 5A: exactly one result card in a zone, and the badge still says it is not saved.
+  await expect(within(zone).getAllByRole("group", { name: /Breathing room/ })).toHaveLength(1);
+  await expect(canvas.getByText("Illustration, not saved")).toBeVisible();
+  await expect(canvas.getByTestId("scenario-zone-result")).toHaveTextContent("About 1.5 months");
+};
+
+/** E17 5A: the zone presents its outcome in one result block, right of the inputs from tablet. */
+export const WithResult: Story = {
+  globals: { theme: "light" },
+  render: () => <WithResultBlock />,
+  play: resultPlay,
+};
+
+export const WithResultDark: Story = { ...WithResult, globals: { theme: "dark" } };
+
+export const WithResultPhone: Story = {
+  ...WithResult,
+  parameters: { viewport: { defaultViewport: "mobile1" } },
+};

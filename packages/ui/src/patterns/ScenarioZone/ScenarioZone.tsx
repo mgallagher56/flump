@@ -33,6 +33,15 @@ export interface ScenarioZoneProps {
   tools?: ReactNode;
   /** The what-if tool(s). They sit on the zone surface: no nested cards or headings. */
   children?: ReactNode;
+  /**
+   * The zone's one `ResultBlock` (E17 5A): the illustrated outcome. It sits to the right of the
+   * inputs from tablet width up and under them on a phone, and is the only card inside a zone.
+   * A zone whose tool already lays itself out (a `SimulatorSplitLayout` with a chart) puts its
+   * `ResultBlock` in that layout's content column instead and leaves this unset.
+   */
+  result?: ReactNode;
+  /** Shown under the inputs and the result, full width: a drawer of further options. */
+  extra?: ReactNode;
   /** The "Update your details" link. It opens the normal edit form with the SAVED values. */
   footer?: ReactNode;
   /**
@@ -68,6 +77,8 @@ export const ScenarioZone: FC<ScenarioZoneProps> = ({
   onReset,
   tools,
   children,
+  result,
+  extra,
   footer,
   notice,
   announcement,
@@ -103,7 +114,17 @@ export const ScenarioZone: FC<ScenarioZoneProps> = ({
         {basis ? <p className={slots.basis}>{basis}</p> : null}
       </div>
       {tools}
-      <div className={slots.body}>{children}</div>
+      {result ? (
+        <div className={slots.split} data-testid="scenario-zone-split">
+          <div className={slots.body}>{children}</div>
+          <div className={slots.result} data-testid="scenario-zone-result">
+            {result}
+          </div>
+        </div>
+      ) : (
+        <div className={slots.body}>{children}</div>
+      )}
+      {extra}
       {hasActions || resolvedNotice ? (
         // id and data-testid pair (component guidelines); a page has one scenario zone.
         <div className={slots.footer} data-testid="scenario-zone-footer" id="scenario-zone-footer">

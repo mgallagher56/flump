@@ -274,7 +274,7 @@ export const spacing = {
   "page.gutter.lg": 40,
   "page.gutter.md": 24,
   "page.gutter.sm": 16,
-  "page.section": 32,
+  "page.section": 36,
   "page.top.lg": 32,
   "page.top.sm": 20,
 } as const;
@@ -445,6 +445,14 @@ export const textStyles = {
     fontWeight: "500",
     lineHeight: 22.4,
     letterSpacing: 0,
+    fontVariant: ["tabular-nums"],
+  },
+  "numeric.result": {
+    fontFamily: "body",
+    fontSize: 36,
+    fontWeight: "700",
+    lineHeight: 43.2,
+    letterSpacing: -0.72,
     fontVariant: ["tabular-nums"],
   },
   "numeric.sm": {

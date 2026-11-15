@@ -114,7 +114,7 @@ export const PAGE_RULES: readonly PageRule[] = [
   {
     id: "P13",
     title: "Page template",
-    rule: "Every page renders through PageBody: 1200px at most, gutters of 16, 24 and 40px, 32px between sections, in the order header, hero, KPI strip, your details, scenario zone, drawers.",
+    rule: "Every page renders through PageBody: 1200px at most, gutters of 16, 24 and 40px, 36px between sections, in the order header, hero, KPI strip, your details, scenario zone, drawers.",
     good: 'PageHeader, HeroFigure, KpiStrip, then "Your details" and the ScenarioZone, all inside PageBody.',
     bad: "A page with its own 64px padding and a scenario zone placed above the KPI strip.",
   },

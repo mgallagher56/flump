@@ -196,6 +196,17 @@ export const textStyles = {
         fontVariantNumeric: TABULAR,
       },
     },
+    // The key figure in a ResultBlock (E17 5A): 36px, between the KPI value and the hero.
+    result: {
+      value: {
+        fontFamily: fontFamilies.body,
+        fontSize: "2.25rem",
+        fontWeight: "700",
+        lineHeight: "1.2",
+        letterSpacing: "-0.02em",
+        fontVariantNumeric: TABULAR,
+      },
+    },
     lg: {
       value: {
         fontFamily: fontFamilies.body,
