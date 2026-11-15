@@ -1,0 +1,114 @@
+name: 🏋️ Load smoke
+
+# BE-17 (backend audit 2026-11, finding M23). Starts the built backend on the runner against a
+# throwaway Postgres, sends a fixed-rate mix of the main read routes for 45 seconds
+# (scripts/load/load-smoke.ts) and fails if the latency percentiles or error count are over the
+# budget in scripts/load/budget.json. See scripts/load/README.md.
+#
+# It never leaves the runner: the script refuses any target that is not a loopback host, and the
+# backend runs in development mode with the dev sign-in bypass, which cannot start on Railway.
+# No repository secret is used.
+#
+# Advisory: not a required check (.github/required-checks.json). Weekly, on demand, and on pull
+# requests that change the load smoke itself. It never runs on push to main, so it cannot hold up
+# a deploy.
+on:
+  schedule:
+    - cron: "23 4 * * 2" # Tuesdays 04:23 UTC
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "scripts/load/**"
+      - ".github/workflows/load-smoke.yml"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  load-smoke:
+    name: 🏋️ Backend load smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+
+    # Throwaway Postgres; the password is a literal for this disposable container, not a secret.
+    services:
+      postgres:
+        image: postgres:18-alpine@sha256:b6972e1115a4ff8eba5d7f7d19184926d1e16d7d1136ae1e1a7ebf286da0f015
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: flump_load_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d flump_load_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+
+    env:
+      # The load script's settings. The token is the public dev bypass constant
+      # (apps/backend/src/auth/dev-bypass.verifier.ts); it is accepted in development mode only.
+      LOAD_BASE_URL: http://127.0.0.1:4100
+      LOAD_AUTH_TOKEN: mock-session-token
+      LOAD_OUTPUT: load-smoke-result.json
+
+    steps:
+      - name: ⬇️ Checkout repo
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: ⚙️ Setup Bun and install dependencies
+        uses: ./.github/actions/bun-setup
+
+      - name: 🏗️ Build the backend
+        run: bunx turbo run build --filter=backend...
+
+      # Development mode plus the dev bypass is how the E2E suite runs the backend
+      # (apps/e2e/support/servers.ts); the code is the production build output.
+      - name: 🚀 Migrate and start the backend
+        working-directory: apps/backend
+        env:
+          AUTH_DEV_BYPASS: "true"
+          NODE_ENV: development
+          PORT: "4100"
+          DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/flump_load_test
+          DB_SSL: "false"
+          CORS_ALLOWED_ORIGINS: http://localhost:3100
+          FRONTEND_URL: http://localhost:3100
+        run: |
+          set -e
+          bun run migration:run > "$RUNNER_TEMP/migrate.log" 2>&1 || { tail -n 40 "$RUNNER_TEMP/migrate.log"; exit 1; }
+          nohup bun dist/main.js > "$RUNNER_TEMP/backend.log" 2>&1 &
+          for i in $(seq 1 30); do
+            code=$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:4100/health/ready || true)
+            [ "$code" = "200" ] && { echo "ready after ~$((i * 2))s"; exit 0; }
+            sleep 2
+          done
+          echo "backend did not become ready within 60s"; tail -n 60 "$RUNNER_TEMP/backend.log"; exit 1
+
+      - name: 🏋️ Run the load smoke against the budget
+        run: bun scripts/load/load-smoke.ts
+
+      - name: 🧾 Backend log tail
+        if: failure()
+        run: tail -n 80 "$RUNNER_TEMP/backend.log" || true
+
+      - name: 📎 Upload the result
+        if: always()
+        # actions/upload-artifact v7.0.2
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: load-smoke-result
+          path: load-smoke-result.json
+          retention-days: 30
+          if-no-files-found: ignore

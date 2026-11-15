@@ -24,6 +24,7 @@
     "test:a11y": "bun run --cwd apps/e2e e2e:a11y",
     "sweep:design": "bun run --cwd apps/e2e e2e:sweep",
     "test:scripts": "bun test ./scripts",
+    "test:load": "bun scripts/load/load-smoke.ts",
     "test:coverage": "turbo run test:coverage",
     "test:storybook": "bun run --cwd apps/web test:storybook",
     "test:storybook:dark": "bun run --cwd apps/web test:storybook:dark",

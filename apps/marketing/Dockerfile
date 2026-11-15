@@ -37,10 +37,12 @@ FROM base AS runner
 ENV NODE_ENV=production
 WORKDIR /app
 
-COPY --from=build --chown=bun:bun /app/node_modules ./node_modules
-COPY --from=build --chown=bun:bun /app/packages ./packages
-COPY --from=build --chown=bun:bun /app/apps/marketing ./apps/marketing
-COPY --from=build --chown=bun:bun /app/package.json ./package.json
+# Copied as root, without --chown (S9): the server runs as `bun` and can read its code but not
+# rewrite it. Nothing in the app writes under /app at runtime.
+COPY --from=build /app/node_modules ./node_modules
+COPY --from=build /app/packages ./packages
+COPY --from=build /app/apps/marketing ./apps/marketing
+COPY --from=build /app/package.json ./package.json
 
 WORKDIR /app/apps/marketing
 EXPOSE 3001

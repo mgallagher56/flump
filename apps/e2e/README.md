@@ -12,6 +12,26 @@ bun run build
 bun run test:e2e                                           # from the repo root
 ```
 
+## Retries are off, and the quarantine list
+
+The suite runs with `retries: 0` everywhere, CI included (backend audit 2026-11, finding L10). A
+test that fails once fails the job: a pass on a second try would hide a flaky spec.
+
+If a spec turns out to be flaky and cannot be fixed straight away, do not bring retries back. Add
+it to `QUARANTINE` in [`quarantine.ts`](./quarantine.ts) with the spec file, the test title, a
+reason and the date. A quarantined test is left out of the gating run, and every CI run names it
+in the "E2E smoke" job summary with a warning on the run page, so it stays visible until fixed.
+The list holds five entries at most and `scripts/ci-config.test.ts` checks its shape. To run only
+the quarantined tests, for example to see whether one still fails:
+
+```sh
+E2E_QUARANTINE=only bun run test:e2e
+```
+
+Remove the entry in the PR that fixes the spec.
+
+## Requirements
+
 Needs Bun 1.4.4 (the version pinned in CI; older Bun cannot render the marketing site) and
 Chromium: `bunx playwright install chromium`. Failures leave a trace under
 `apps/e2e/test-results`; open it with `bunx playwright show-trace <trace.zip>`.

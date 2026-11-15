@@ -44,13 +44,13 @@ jobs:
     # Chromium builds. Keep the tag equal to @playwright/test in apps/e2e/package.json
     # (Renovate bumps them together); a bump means regenerating every baseline.
     container:
-      image: mcr.microsoft.com/playwright:v1.65.0-noble
+      image: mcr.microsoft.com/playwright:v1.65.0-noble@sha256:9beb546099e11f52d62e505537914870e01a67e0e6b00ae41da4775324e73dbe
 
     # Throwaway Postgres; the password is a literal for this disposable container, not a secret.
     # In a container job the service is reached by its name, not localhost.
     services:
       postgres:
-        image: postgres:18-alpine
+        image: postgres:18-alpine@sha256:b6972e1115a4ff8eba5d7f7d19184926d1e16d7d1136ae1e1a7ebf286da0f015
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
@@ -69,6 +69,8 @@ jobs:
     steps:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       # setup-bun extracts a zip and the Playwright image ships without unzip. faketime freezes
       # the servers' clock (apps/e2e/support/clock.ts) so dates in the shots never move.

@@ -38,8 +38,10 @@ ARG RAILWAY_GIT_COMMIT_SHA
 # The token is a build ARG too: Railway's builder rejects `RUN --mount=type=secret` (it accepts
 # cache mounts only), so a BuildKit secret cannot be used here. The ARG is declared in this build
 # stage only; the runner stage below starts from `base` and copies files out, so the token is not
-# in the final image or its history. It can remain in the builder's cache for this stage: use a
-# Sentry organisation token limited to source map upload. Absent, the build skips upload.
+# in the final image or its history. CI proves it: the Docker job builds this image with a canary
+# value and fails if the value is in the image's history or files. It can remain in the builder's
+# cache for this stage: use a Sentry organisation token limited to source map upload. Absent, the
+# build skips upload.
 ARG SENTRY_AUTH_TOKEN
 ARG SENTRY_ORG
 ARG SENTRY_PROJECT
@@ -51,16 +53,31 @@ RUN bun run --cwd apps/web prepare \
     bun turbo run build --filter=@flump/web... \
  && find . -name node_modules -type d -prune -exec rm -rf {} + \
  && bun install --frozen-lockfile --ignore-scripts --production --filter './' --filter '@flump/web' --filter 'marketing' --filter './packages/*'
+# The runtime file set (M17): the build output, the translation files the server reads from disk
+# (app/entry.server.tsx: ./public/locales), the Express server (server.ts, server/ and the two
+# app/security modules it imports) and the manifest. No routes, components, tests, stories or
+# build config. A new file server.ts imports from outside these paths must be added here; the
+# web container boot smoke in CI fails if one is missing.
+RUN mkdir -p /runtime/web/server /runtime/web/app/security /runtime/web/public \
+ && cd apps/web \
+ && cp -R build /runtime/web/build \
+ && cp -R public/locales /runtime/web/public/locales \
+ && cp package.json server.ts /runtime/web/ \
+ && find server -maxdepth 1 -name '*.ts' ! -name '*.test.ts' ! -name 'sentrySourceMaps.ts' -exec cp {} /runtime/web/server/ \; \
+ && find app/security -maxdepth 1 -name '*.server.ts' ! -name '*.test.ts' -exec cp {} /runtime/web/app/security/ \;
 
 # Stage 3: Create final production image
 FROM base AS runner
 ENV NODE_ENV=production
 WORKDIR /app
 
-COPY --from=build --chown=bun:bun /app/node_modules ./node_modules
-COPY --from=build --chown=bun:bun /app/packages ./packages
-COPY --from=build --chown=bun:bun /app/apps/web ./apps/web
-COPY --from=build --chown=bun:bun /app/package.json ./package.json
+# Copied as root, without --chown (S9): the server runs as `bun` and can read its code but not
+# rewrite it. Nothing in the app writes under /app at runtime.
+COPY --from=build /app/node_modules ./node_modules
+COPY --from=build /app/packages ./packages
+COPY --from=build /app/apps/web/node_modules ./apps/web/node_modules
+COPY --from=build /runtime/web ./apps/web
+COPY --from=build /app/package.json ./package.json
 
 WORKDIR /app/apps/web
 EXPOSE 3000
