@@ -1,6 +1,7 @@
 import type { McpInputResponse } from "@flump/api-contract";
 import { buildFlumpAiContextPack, formatAiContextPackMarkdown } from "@flump/finance-engine";
 import {
+  effectiveAnonymize,
   HttpMcpHandler,
   type McpAuditCaller,
   type McpAuditEvent,
@@ -136,7 +137,9 @@ export class McpService {
       const raw = await this.agentData.getUserFinancialData(token.userId);
       const body = {
         token: toMcpInputToken(token),
-        input: toMcpInputWire(raw, token.anonymizeInstitutions),
+        // The same rule the remote tools use: only a token with the full-read scope and the
+        // flag off gets real names (a legacy row with the flag off but only the anonymised scope does not).
+        input: toMcpInputWire(raw, effectiveAnonymize(token.anonymizeInstitutions, token.scopes)),
       };
       await this.recordInputRead(caller, {
         outcome: "ok",

@@ -46,7 +46,7 @@ export const HOME_NAV_ROUTE: NavRouteItem = { key: "home", route: "/", icon: Hou
 
 /**
  * Signed-in navigation: the single source for the desktop header and the mobile drawer (IA review
- * T-IA-5). Order: Accounts, Budget, Pay, Savings and pension, Borrowing. Forecast is not
+ * T-IA-5). Order: Accounts, Budget, Pay, Savings and pension, Debt and borrowing. Forecast is not
  * listed (it redirects to Savings) and Self Assessment is opt-in, so it only appears when enabled.
  * A group left with one visible page collapses to a direct link (see `filterNavRoutes`).
  */
@@ -95,7 +95,7 @@ export const AUTH_NAV_ROUTES: NavRouteItem[] = [
   {
     key: "borrowing",
     icon: TrendingDown,
-    // "Borrowing" for everyone, even when only the debt page is on (one nav label, RESCORE R2-4).
+    // "Debt and borrowing" for everyone, even when only the debt page is on (one nav label, RESCORE R2-4).
     collapseTo: "group",
     children: [
       {

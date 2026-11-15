@@ -1,6 +1,6 @@
 import type { McpInputResponse } from "@flump/api-contract";
 import { anonymiseContextPackInput, type BuildContextPackInput } from "@flump/finance-engine";
-import type { VerifiedToken } from "@flump/mcp";
+import { effectiveAnonymize, type VerifiedToken } from "@flump/mcp";
 
 type WireInput = McpInputResponse["input"];
 
@@ -131,6 +131,7 @@ export function toMcpInputToken(token: VerifiedToken): McpInputResponse["token"]
   return {
     id: token.tokenId ?? null,
     scopes: [...token.scopes],
-    anonymizeInstitutions: token.anonymizeInstitutions,
+    // The effective flag, so a legacy row (flag off, no full-read scope) reads as anonymised.
+    anonymizeInstitutions: effectiveAnonymize(token.anonymizeInstitutions, token.scopes),
   };
 }

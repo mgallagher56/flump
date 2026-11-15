@@ -39,3 +39,27 @@ export const SaveFails: Story = {
     await expect(await canvas.findByRole("alert")).toBeDefined();
   },
 };
+
+/** With no student loan account, only the property choice is offered. */
+export const PropertyOnly: Story = {
+  args: { showStudentLoan: false },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(canvas.getAllByRole("switch")).toHaveLength(1);
+    await expect(
+      canvas.getByRole("switch", { name: "Count property you own, less the mortgage on it" }),
+    ).toBeInTheDocument();
+  },
+};
+
+/** With no property or mortgage account, only the student loan choice is offered. */
+export const StudentLoanOnly: Story = {
+  args: { showProperty: false },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(canvas.getAllByRole("switch")).toHaveLength(1);
+    await expect(
+      canvas.getByRole("switch", { name: "Count your student loan as a debt" }),
+    ).toBeInTheDocument();
+  },
+};

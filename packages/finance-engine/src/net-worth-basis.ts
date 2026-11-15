@@ -140,6 +140,29 @@ const LEFT_OUT_WORDS: Record<Exclude<NetWorthLeftOut, "homeValueMissing">, strin
   studentLoan: "student loan",
 };
 
+/** Which of the two net worth choices apply to a user: only those they hold an account for. */
+export interface NetWorthChoicesAvailable {
+  /** The user has a property or a mortgage account, so the property choice changes a figure. */
+  property: boolean;
+  /** The user has a student loan account, so the student loan choice changes a figure. */
+  studentLoan: boolean;
+}
+
+/**
+ * Which net worth choices to offer (owner ruling 2026-11-15): the property choice once the user
+ * has a property or mortgage account, the student loan choice once they have a student loan
+ * account. This only decides what is offered; the saved choices are never changed by it.
+ */
+export function netWorthChoicesAvailable(
+  accounts: readonly { type?: string | null }[],
+): NetWorthChoicesAvailable {
+  const present = new Set(accounts.map((acc) => categorizeAccountType(acc.type ?? "other")));
+  return {
+    property: present.has("property") || present.has("mortgages"),
+    studentLoan: present.has("studentLoans"),
+  };
+}
+
 /**
  * "property, mortgage or student loan": the leave-out items in their fixed order, joined by
  * commas and "or". Empty when nothing is left out.

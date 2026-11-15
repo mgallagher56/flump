@@ -11,23 +11,39 @@ import { Link, useLoaderData } from "react-router";
 import AccountDetails from "~/components/accounts/AccountDetails";
 import AddEditAccountsDialogBtn from "~/components/dialogs/addEditAccountsDialog/AddEditAccountsDialog";
 import { type AccountType, isLiabilityType } from "~/containers/accounts/utils";
-import { lastUpdatedLabel, summariseAccountBalance } from "~/features/accounts/accountRows";
+import { summariseAccountBalance } from "~/features/accounts/accountRows";
 import { TYPE_LABEL } from "~/features/accounts/components/AccountsGroupList";
 import { londonMonth } from "~/features/snapshot/snapshotModel";
 import type { loader } from "~/routes/app.accounts.$account";
 import { backLink, notFound, ownerLink } from "./AccountDetailContainer.styles";
 
-const percent = new Intl.NumberFormat("en-GB", { maximumFractionDigits: 0 });
+const monthName = new Intl.DateTimeFormat("en-GB", { month: "long", timeZone: "UTC" });
+
+/** "October", or "October 2025" when the month is not in `currentYear`. */
+const monthWords = (month: number, year: number, currentYear: number): string => {
+  const name = monthName.format(new Date(Date.UTC(year, month - 1, 1)));
+  return year === currentYear ? name : `${name} ${year}`;
+};
+
+export interface BalanceDateInput {
+  /** The current month and year on the Europe/London clock. */
+  current: { month: number; year: number };
+  /** The latest recorded month that is not in the future, or null with no history. */
+  latest: { month: number; year: number; source?: string | null } | null;
+}
 
 /**
- * "Up 4% on October 2026", "Down 12% on last month", "No change on last month" or "No earlier
- * month". `against` names the month compared with; it defaults to "last month". The direction is in the words, never only in an arrow or colour (copy guide 3.3, 4.2).
+ * The line under the account hero that dates the figure (owner ruling 2026-11-15). The month is
+ * named only when the figure is not from the current month ("As of October"); a calculated
+ * balance says "Calculated for November"; a figure recorded this month shows the balance alone
+ * (null). With no monthly balance at all the line says so.
  */
-export const changeLine = (change: number | null, against?: string | null): string => {
-  const on = against ?? "last month";
-  if (change === null) return "No earlier month";
-  if (change === 0) return `No change on ${on}`;
-  return `${change > 0 ? "Up" : "Down"} ${percent.format(Math.abs(change))}% on ${on}`;
+export const balanceDateLine = ({ current, latest }: BalanceDateInput): string | null => {
+  if (!latest) return "No monthly balances recorded yet";
+  const words = monthWords(latest.month, latest.year, current.year);
+  if (latest.source === "calculated") return `Calculated for ${words}`;
+  const isCurrent = latest.month === current.month && latest.year === current.year;
+  return isCurrent ? null : `As of ${words}`;
 };
 
 /** "Not counted in your net worth.": said under the hero when the user's choices leave it out. */
@@ -70,9 +86,13 @@ export const ownerPageFor = (type: unknown): { to: string; label: string } | nul
   return null;
 };
 
-/** Joins two subline sentences with a full stop between them. */
-const withSentence = (first: string, second: string | null): string =>
-  second ? `${first.endsWith(".") || first.endsWith("?") ? first : `${first}.`} ${second}` : first;
+/** Joins the subline's sentences with a full stop between them; undefined when there are none. */
+const sentences = (...parts: (string | null)[]): string | undefined => {
+  const said = parts.filter((part): part is string => Boolean(part));
+  if (said.length === 0) return undefined;
+  if (said.length === 1) return said[0];
+  return said.map((part) => (part.endsWith(".") ? part : `${part}.`)).join(" ");
+};
 
 const BackLink: FC = () => (
   <Link className={backLink()} to="/app/accounts">
@@ -92,21 +112,18 @@ const AccountDetailContainer: FC = () => {
     [account, accountDetails],
   );
   const current = summary.balance ?? 0;
-  const lastUpdated = lastUpdatedLabel(accountDetails as never[]);
-  // When this month is not recorded, say which month the history last has (R2-5), not a change.
   // The current month on the Europe/London clock, as the backend keys it (not the device's).
-  const [cy, cm] = londonMonth().split("-").map(Number);
-  const currentSource = (
-    accountDetails as { month?: number; year?: number; source?: string }[]
-  ).find((d) => Number(d.month) === cm && Number(d.year) === cy)?.source;
-  // A calculated figure says so wherever it appears (R2-5 check-in).
-  const subline = summary.currentRecorded
-    ? currentSource === "calculated"
-      ? `Calculated for ${summary.currentLabel}`
-      : changeLine(summary.changePercent, summary.againstLabel)
-    : lastUpdated
-      ? `Last updated ${lastUpdated}`
-      : "No monthly balances recorded yet";
+  const [cy = 0, cm = 0] = londonMonth().split("-").map(Number);
+  // The latest recorded month up to now: the month the hero's figure is from.
+  const latest =
+    (accountDetails as { month?: number; year?: number; source?: string | null }[])
+      .map((d) => ({ month: Number(d.month), year: Number(d.year), source: d.source }))
+      .filter(
+        (d) => d.month >= 1 && d.year > 0 && (d.year < cy || (d.year === cy && d.month <= cm)),
+      )
+      .sort((a, b) => a.year - b.year || a.month - b.month)
+      .pop() ?? null;
+  const dateLine = balanceDateLine({ current: { month: cm, year: cy }, latest });
 
   if (!account) {
     return (
@@ -153,7 +170,7 @@ const AccountDetailContainer: FC = () => {
 
       <HeroFigure
         label={isLiability ? "Amount owed" : "Current balance"}
-        subline={withSentence(subline, notCounted)}
+        subline={sentences(dateLine, notCounted)}
         value={current}
       />
 

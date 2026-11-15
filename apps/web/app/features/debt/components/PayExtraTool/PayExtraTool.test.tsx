@@ -59,24 +59,46 @@ describe("PayExtraTool", () => {
     expect(props.onSelectStrategy).toHaveBeenCalledWith("snowball");
   });
 
-  it("states only the change, with at most one supporting figure and no repeated date", () => {
+  it("states only the change, with at most two supporting figures and no repeated date", () => {
     renderTool({ extraPayment: 200 });
     const outcome = screen.getByTestId("scenario-outcome");
     expect(outcome.textContent).toMatch(/^Debt-free .*(months?|years?) sooner/);
     // The slider's value pill names the amount, so the outcome does not repeat it.
     expect(outcome.textContent).not.toContain("£200 extra");
     expect(screen.queryByText("Debt-free date")).toBeNull();
-    expect(outcome.querySelectorAll("dt")).toHaveLength(1);
+    expect(outcome.querySelectorAll("dt")).toHaveLength(2);
     expect(screen.getByText("Interest compared with minimum payments only")).toBeDefined();
     expect(screen.getByText(/^£[\d,]+ less$/)).toBeDefined();
+  });
+
+  it("shows interest this year in the result, and how the extra payment alters it", () => {
+    const { unmount } = renderTool();
+    const saved = screen.getByTestId("interest-this-year");
+    expect(saved.textContent).toMatch(/^Interest this year, at minimum payments£[\d,]+$/);
+    const minimum = /£[\d,]+/.exec(saved.textContent ?? "")?.[0];
+    unmount();
+    renderTool({ extraPayment: 200 });
+    const changed = screen.getByTestId("interest-this-year").textContent ?? "";
+    // One figure only; it is lower than at the minimum payments.
+    expect(changed).toMatch(/^Interest this year, with the extra payment£[\d,]+$/);
+    const pounds = (text: string | undefined) => Number((text ?? "").replace(/[^\d]/g, ""));
+    expect(pounds(/£[\d,]+/.exec(changed)?.[0])).toBeLessThan(pounds(minimum));
+    expect(changed).not.toMatch(/\.\d{2}/);
+  });
+
+  it("leaves interest this year out when a debt has no APR saved", () => {
+    renderTool({ interestKnown: false });
+    expect(screen.queryByTestId("interest-this-year")).toBeNull();
+    expect(screen.queryByText(/Interest this year/)).toBeNull();
   });
 
   it("with no extra payment, shows a prompt instead of a figure", () => {
     renderTool();
     const outcome = screen.getByTestId("scenario-outcome");
     expect(screen.getByText("Move the slider to see what changes")).toBeDefined();
-    expect(outcome.querySelector("dl")).toBeNull();
-    expect(outcome.textContent).not.toMatch(/Paid off in|sooner|£/);
+    // The one figure at £0 is interest this year at the minimum payments.
+    expect(outcome.querySelectorAll("dt")).toHaveLength(1);
+    expect(outcome.textContent).not.toMatch(/Paid off in|sooner/);
   });
 
   it("names one line by the title only, and two lines by a legend, never by plot labels", () => {

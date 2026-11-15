@@ -4,7 +4,15 @@ import {
   type TaxCalculationResult,
   type TaxRecord,
 } from "@flump/finance-engine";
-import { Button, formatDate, HeroFigure, KpiCard, KpiStrip, kpiMoney, StatusBadge } from "@repo/ui";
+import {
+  Button,
+  DELTA_PANEL_COPY,
+  formatDate,
+  HeroFigure,
+  KpiCard,
+  KpiStrip,
+  kpiMoney,
+} from "@repo/ui";
 import { cx } from "@repo/ui/styled-system/css";
 import type { FC, ReactNode } from "react";
 import { date, root } from "./TaxHeadline.styles";
@@ -65,13 +73,14 @@ export const allowanceLine = (
 };
 
 /**
- * The first view of the page. The hero holds a saved fact (the income recorded for the year),
- * never an estimate (copy audit ruling 7, coordinator D2). The estimated bill is the first KPI,
- * marked "Estimate", then the income after costs (the total of what each source row shows) and the date the bill is due: a strip of three, never two. Before
- * costs in the hero, after costs beside the bill, so the two reconcile at a glance and the first
- * view holds four figures. The tax year is in the year control beside the heading. With no costs
- * the card says so and offers to add one. With nothing added the
- * hero asks for income and no strip is drawn, so no £0 appears.
+ * The first view of the page. The hero holds the answer the page exists to give: the estimated
+ * bill, labelled "Unverified estimate" inside the hero (owner ruling 2026-11-15, which replaces
+ * copy audit ruling 7 and coordinator D2 for calculator-style pages). The strip is the income
+ * recorded for the year before costs, the income after costs (the total of what each source row
+ * shows) and the date the bill is due: a strip of three, never two, so the first view holds four
+ * figures. The tax year is in the year control beside the heading. With no costs the card says so
+ * and offers to add one. With nothing added the hero asks for income and no strip is drawn, so no
+ * £0 appears.
  */
 export const TaxHeadline: FC<TaxHeadlineProps> = ({
   taxYear,
@@ -91,20 +100,22 @@ export const TaxHeadline: FC<TaxHeadlineProps> = ({
       <HeroFigure
         emptyAction={emptyAction}
         emptyPrompt="Add income outside PAYE, such as self-employment or rent, to see an estimated tax bill."
-        label="Income outside PAYE"
-        subline={hasIncome ? "Before costs, this tax year" : undefined}
-        value={hasIncome ? income : undefined}
+        estimateLabel={DELTA_PANEL_COPY.unverifiedBadge}
+        explain={`Income Tax and National Insurance on your income outside PAYE, after costs, on top of your salary, at ${taxYear} rates.`}
+        label="Estimated bill"
+        // The allowance changes this figure, so the line about it sits here.
+        subline={
+          hasIncome ? (allowance ?? "Income Tax and National Insurance on this income") : undefined
+        }
+        value={hasIncome ? bill : undefined}
         valueFormat={{ fractionDigits: 0 }}
       />
       {hasIncome ? (
         <KpiStrip columns={3}>
           <KpiCard
-            action={<StatusBadge variant="neutral">Estimate</StatusBadge>}
-            explain={`Income Tax and National Insurance on your income outside PAYE, after costs, on top of your salary, at ${taxYear} rates.`}
-            label="Estimated bill"
-            // The allowance changes this figure, so the line about it sits here.
-            subtext={allowance ?? "Income Tax and National Insurance on this income"}
-            value={bill}
+            label="Income outside PAYE"
+            subtext="Before costs, this tax year"
+            value={income}
             valueFormat={{ fractionDigits: 0 }}
           />
           <KpiCard
@@ -116,7 +127,7 @@ export const TaxHeadline: FC<TaxHeadlineProps> = ({
               ) : undefined
             }
             label="Income after costs"
-            // With no costs recorded the figure would repeat the hero, so the card says so instead.
+            // With no costs recorded the figure would repeat the first card, so the card says so instead.
             notSetLabel="No costs recorded"
             subtext={costs > 0 ? "Your income less the costs you recorded" : undefined}
             value={costs === 0 ? null : Math.round(income - costs)}

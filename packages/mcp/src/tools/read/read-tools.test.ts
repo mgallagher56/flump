@@ -121,7 +121,7 @@ describe("read tools v2: mixed persona golden outputs", () => {
     expect(e.result.monthlySurplusBeforeDebtGbp).toBe(1863.33);
     const text = JSON.stringify(e);
     expect(text).not.toMatch(/Acme|Barclays|secret note/);
-    expect(e.result.entries[0].name).toBe("Income #1");
+    expect(e.result.entries[0].name).toBe("Income 1");
   });
 
   it("get_debt_overview flags the unknown APR and never guesses it", async () => {
@@ -239,7 +239,7 @@ describe("read tools v2: oversized fixtures", () => {
     }
   });
 
-  it("get_budget_summary anonymised: entry names become category plus ordinal (M-PRIV4)", async () => {
+  it("get_budget_summary anonymised: entry names become a neutral label by group (M-PRIV4, ruling 7)", async () => {
     const names = [
       "Rent to J Smith",
       "Pocket money for Ella",
@@ -272,11 +272,11 @@ describe("read tools v2: oversized fixtures", () => {
       }
       const e = await call(anon, "get_budget_summary", { responseFormat: "detailed" });
       expect(e.result.entries.map((x: { name: string }) => x.name)).toEqual([
-        "Housing #1",
-        "Housing #2",
-        "Income #1",
-        // "Salary" (the income entry's category) is custom too, so it took number 1.
-        "Custom category 2 #1",
+        "Housing 1",
+        "Housing 2",
+        "Income 1",
+        // "Leisure" is a category the user typed, so it has no fixed group.
+        "Entry 1",
       ]);
     } finally {
       await anon.close();
@@ -321,10 +321,10 @@ describe("read tools v2: oversized fixtures", () => {
         "Custom category 1",
       ]);
       expect(e.result.entries.map((x: { name: string }) => x.name)).toEqual([
-        "Custom category 1 #1",
-        "bills #1",
-        "Custom category 2 #1",
-        "Custom category 1 #2",
+        "Entry 1",
+        "Bills 1",
+        "Entry 2",
+        "Entry 3",
       ]);
       const fullText = await full.callText("get_budget_summary", { responseFormat: "detailed" });
       expect(fullText).toContain("Rent to J Smith");
@@ -428,14 +428,12 @@ describe("read tools v2: prompt-injection hardening", () => {
       const accounts =
         (await h.callText("list_accounts")) + (await h.callText("get_debt_overview"));
       expect(accounts).not.toMatch(/Ignore previous|SYSTEM|AAAA/);
-      // The entry name is replaced by its category plus an ordinal; the category is free text that
-      // only has institution names scrubbed, so it is capped and flattened.
+      // Ruling 7: the typed entry name and the typed category are both replaced by neutral labels.
       const budget = await call(h, "get_budget_summary", { responseFormat: "detailed" });
       const entry = budget.result.entries[0];
-      expect(entry.name).not.toMatch(/AAAA/);
-      expect(entry.name).toMatch(/ #1$/);
-      expect(entry.name.length).toBeLessThanOrEqual(60);
-      expect(entry.category).not.toMatch(/[\n\r]/);
+      expect(entry.name).toBe("Entry 1");
+      expect(entry.category).toBe("Custom category 1");
+      expect(JSON.stringify(budget)).not.toMatch(/Ignore previous|SYSTEM|AAAA/);
     } finally {
       await h.close();
     }

@@ -24,7 +24,7 @@ export const MODULE_LABELS: Partial<Record<AppPageKey, string>> = {
   accounts: "Accounts",
   budget: "Budget",
   savings: "Savings",
-  debt: "Debt",
+  debt: "Debt and borrowing",
   pension: "Pension",
   mortgage: "Mortgage",
   tax: "Tax",

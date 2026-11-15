@@ -102,6 +102,30 @@ export const Phone: Story = {
   },
 };
 
+/**
+ * A page whose answer is an estimate (take-home pay, an estimated tax bill) names it inside the
+ * hero. Saved figures never carry the label.
+ */
+export const WithEstimateLabel: Story = {
+  args: {
+    label: "Monthly take-home pay",
+    value: 2912,
+    estimateLabel: "Unverified estimate",
+    subline: "After tax and deductions",
+  },
+  globals: { theme: "light" },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const group = canvas.getByRole("group", { name: "Monthly take-home pay" });
+    await expect(within(group).getByText("Unverified estimate")).toBeVisible();
+    await expect(document.documentElement.scrollWidth).toBeLessThanOrEqual(window.innerWidth);
+  },
+};
+export const WithEstimateLabelDark: Story = {
+  ...WithEstimateLabel,
+  globals: { theme: "dark" },
+};
+
 /** UX extra C: the hero explains how it is worked out in an InfoTip beside the label. */
 export const WithExplain: Story = {
   args: { explain: "What you own minus your debts, from your saved balances." },

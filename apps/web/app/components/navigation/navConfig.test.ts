@@ -11,7 +11,7 @@ describe("navConfig", () => {
     expect(keys(AUTH_NAV_ROUTES)).not.toContain("forecast");
   });
 
-  it("orders the top level Accounts, Budget, Tax and pay, Savings and pension, Borrowing", () => {
+  it("orders the top level Accounts, Budget, Tax and pay, Savings and pension, Debt and borrowing", () => {
     expect(topLevel(AUTH_NAV_ROUTES)).toEqual([
       "accounts",
       "budget",
@@ -21,7 +21,7 @@ describe("navConfig", () => {
     ]);
   });
 
-  it("keeps Mortgage with Debt under Borrowing, not under Savings and pension", () => {
+  it("keeps Mortgage with Debt under Debt and borrowing, not under Savings and pension", () => {
     const group = (key: string) =>
       AUTH_NAV_ROUTES.find((r) => r.key === key)?.children?.map((c) => c.key);
     expect(group("borrowing")).toEqual(["debt", "mortgage"]);
@@ -48,7 +48,7 @@ describe("navConfig", () => {
     ]);
   });
 
-  it("keeps the Borrowing label when only the debt page is left, and drops empty groups", () => {
+  it("keeps the Debt and borrowing label when only the debt page is left, and drops empty groups", () => {
     const onlyDebt = filterNavRoutes(AUTH_NAV_ROUTES, ["debt"], isPageEnabled);
     // One nav label for the debt area for everyone (RESCORE R2-4): the group's, linking to debt.
     const borrowing = onlyDebt.find((r) => r.key === "borrowing");

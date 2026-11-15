@@ -1,10 +1,12 @@
 import {
   type NetWorthBasis,
   type NetWorthLeftOut,
+  type RecordedMonthComparison,
   resolveNetWorthScope,
+  selectRecordedMonthComparison,
 } from "@flump/finance-engine";
 import { Button, CollapsibleDrawer, EmptyState, HeroFigure, PageBody, PageHeader } from "@repo/ui";
-import { type FC, useMemo, useState } from "react";
+import { type FC, type MouseEvent, useMemo, useState } from "react";
 import { Link } from "react-router";
 import {
   HOME_VALUE_MISSING_TEXT,
@@ -24,8 +26,9 @@ import {
 import type { SaveSnapshot } from "../../useSaveSnapshot";
 import { type CheckInMode, CheckInSheet, firstShownElement } from "../CheckInSheet";
 import { MonthlyChangeTable } from "../MonthlyChangeTable";
+import { CHECK_IN_ROUTE } from "../MonthlyCheckInCard";
 import { MIN_CHART_MONTHS, NetWorthHistoryChart } from "../NetWorthHistoryChart";
-import { changesBody, flushLink, sectionStack } from "./SnapshotHistoryPage.styles";
+import { changesBody, flushLink, heroPromptLink, sectionStack } from "./SnapshotHistoryPage.styles";
 
 /** Opened from "?checkIn=1", the check-in returns focus to the page's "Update balances". */
 const RETURN_FOCUS_TO = firstShownElement(["snapshot-open-check-in"]);
@@ -49,20 +52,19 @@ export const fewMonthsPrompt = (recordedMonths: number): string =>
   `You have ${MONTH_WORDS[recordedMonths] ?? `${recordedMonths} months`} of history. The chart appears after your third check-in.`;
 
 /**
- * "Against September 2026", plus "This month is not recorded yet." when the current month has no
- * check-in, so the hero never reads as this month's change. One line with one date, so the first
- * view stays inside the number budget (P1).
+ * The months the hero compares (owner ruling 4): "September to October 2026", or "December 2025 to
+ * January 2026" across a year. Both are recorded months; carried months between them are skipped.
  */
-export const heroSubline = (
-  previous: { month: MonthKey },
-  end: { month: MonthKey; allCarried: boolean } | undefined,
-  currentMonth: MonthKey,
-): string => {
-  const against = `Against ${formatMonth(previous.month)}`;
-  return end?.month === currentMonth && end.allCarried
-    ? `${against}. This month is not recorded yet.`
-    : against;
+export const comparedMonthsText = (comparison: RecordedMonthComparison): string => {
+  const { previousMonth: from, month: to } = comparison;
+  return from.year === to.year
+    ? `${from.name} to ${to.name} ${to.year}`
+    : `${from.name} ${from.year} to ${to.name} ${to.year}`;
 };
+
+/** The hero's quiet prompt while the current month has no check-in: "November not recorded yet". */
+export const notRecordedPrompt = (currentMonthName: string): string =>
+  `${currentMonthName} not recorded yet`;
 
 /**
  * What net worth leaves out, as one sentence for the hero's subline, so no line sits between the
@@ -74,7 +76,7 @@ export const basisSentence = (leftOut: readonly NetWorthLeftOut[]): string =>
 
 /**
  * Joins sentences with one space, skipping empty ones. A part followed by another gets a full stop
- * when it has none ("Against September 2026" then "Not counting your student loan.").
+ * when it has none ("Up £100 since July 2026" then "Months with no check-in show as a dashed line.").
  */
 export const sentences = (...parts: readonly string[]): string => {
   const kept = parts.filter(Boolean);
@@ -136,15 +138,49 @@ export const SnapshotHistoryPage: FC<SnapshotHistoryPageProps> = ({
   );
   const hasAccounts = accounts.length > 0;
   const { stage, series, recordedMonths } = history;
-  // Compare recorded months only: a current month with no check-in yet is carried, not a change.
   const latest = history.latestRecorded;
   const previous = history.previousRecorded;
-  const latestChange = latest && previous ? latest.netWorth - previous.netWorth : null;
+  // The hero compares the last two recorded months only (owner ruling 4): a carried month is
+  // never one side of the change. The engine picks the months; this page only words them.
+  const {
+    comparison,
+    currentMonthRecorded,
+    currentMonth: current,
+  } = useMemo(() => selectRecordedMonthComparison(series, currentMonth), [series, currentMonth]);
   const enoughForChart = recordedMonths >= MIN_CHART_MONTHS;
-  const end = series.at(-1);
-  // The next check-in date shows only once this month is recorded; before that the hero subline
-  // says this month is not recorded yet, and a December date beside it would contradict it.
-  const thisMonthRecorded = end?.month === currentMonth && !end.allCarried;
+  // The next check-in date shows only once this month is recorded; before that the hero says this
+  // month is not recorded yet, and a December date beside it would contradict it.
+  const thisMonthRecorded = currentMonthRecorded;
+  // A real link before hydration (#701: "?checkIn=1" opens the check-in on arrival); once
+  // hydrated it opens the sheet in place, as "Update balances" does.
+  const openCheckIn = (e: MouseEvent) => {
+    // A modified click (new tab or window) follows the link as usual.
+    if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
+    e.preventDefault();
+    setSheet("checkIn");
+  };
+  // The hero's one quiet notice: neutral, in the hero's own ink, never a warning.
+  const heroSubline = comparison ? (
+    <>
+      {comparedMonthsText(comparison)}.
+      {currentMonthRecorded ? null : (
+        <>
+          {" "}
+          <Link
+            className={heroPromptLink()}
+            data-testid="snapshot-hero-check-in"
+            id="snapshot-hero-check-in"
+            onClick={openCheckIn}
+            to={CHECK_IN_ROUTE}
+          >
+            {notRecordedPrompt(current.name)}
+          </Link>
+          .
+        </>
+      )}
+      {basisText ? ` ${basisText}` : null}
+    </>
+  ) : null;
 
   const checkInButton = (
     <Button
@@ -218,11 +254,11 @@ export const SnapshotHistoryPage: FC<SnapshotHistoryPageProps> = ({
         />
       ) : (
         <>
-          {latestChange !== null && latest && previous ? (
+          {comparison ? (
             <HeroFigure
-              label={`Change in ${formatMonth(latest.month)}`}
-              subline={sentences(heroSubline(previous, end, currentMonth), basisText)}
-              value={latestChange}
+              label="Net worth change"
+              subline={heroSubline}
+              value={comparison.netWorthChange}
               valueFormat={{ fractionDigits: 0, signDisplay: "always" }}
             />
           ) : (

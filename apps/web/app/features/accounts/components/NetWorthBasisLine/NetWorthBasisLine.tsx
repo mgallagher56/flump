@@ -27,6 +27,12 @@ export interface NetWorthBasisLineProps {
    * from the figure. Used once, on the accounts totals, where net worth is explained.
    */
   alwaysShowLink?: boolean;
+  /**
+   * False when the user has no property, mortgage or student loan account, so Settings offers no
+   * net worth choice: "Change what counts" is then not shown (owner ruling 2026-11-15). Default
+   * true. Anything left out means a choice exists, so the link always follows that sentence.
+   */
+  choicesAvailable?: boolean;
   id?: string;
 }
 
@@ -38,6 +44,7 @@ export interface NetWorthBasisLineProps {
 export const NetWorthBasisLine: FC<NetWorthBasisLineProps> = ({
   leftOut,
   alwaysShowLink = false,
+  choicesAvailable = true,
   id = "net-worth-basis-line",
 }) => {
   if (leftOut.includes("homeValueMissing")) {
@@ -51,7 +58,7 @@ export const NetWorthBasisLine: FC<NetWorthBasisLineProps> = ({
     );
   }
   const sentence = leftOutSentence(leftOut);
-  if (!sentence && !alwaysShowLink) return null;
+  if (!sentence && !(alwaysShowLink && choicesAvailable)) return null;
   return (
     <p className={basisLine()} data-testid={id} id={id}>
       {sentence ? `${sentence} ` : null}

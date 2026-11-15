@@ -197,7 +197,7 @@ export const DebtContainer: FC = () => {
           ? "What you owe, and an estimate of when it would be paid off at minimum payments."
           : undefined
       }
-      title="Your debts"
+      title="Debt and borrowing"
     />
   );
 
@@ -276,6 +276,7 @@ export const DebtContainer: FC = () => {
               budgetLeftOver={budgetLeftOver}
               comparison={comparison}
               extraPayment={extraPayment}
+              interestKnown={!aprUnknown && !minimumEstimated}
               selectedStrategy={selectedStrategy}
               startBalance={payoffBalance}
               onChangeExtraPayment={(amount) => scenario.set("extraPayment", amount)}

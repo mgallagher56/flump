@@ -197,16 +197,15 @@ describe("TaxContainer, opted in", () => {
     );
     expect(container.querySelectorAll('[data-tone="hero"]')).toHaveLength(1);
     const hero = container.querySelector('[data-tone="hero"]') as HTMLElement;
-    expect(hero.textContent).toContain("Income outside PAYE");
-    expect(hero.textContent).not.toMatch(/estimate/i);
-    // The estimate is the first KPI, marked as one.
-    const kpis = screen.getAllByText(/^(Estimated bill|Income after costs|Bill due)\s*$/);
+    // The hero is the answer the page exists to give, named as an estimate inside the hero.
+    expect(hero.textContent).toContain("Estimated bill");
+    expect(hero.querySelector("[data-estimate-label]")?.textContent).toBe("Unverified estimate");
+    const kpis = screen.getAllByText(/^(Income outside PAYE|Income after costs|Bill due)\s*$/);
     expect(kpis.map((k) => k.textContent?.trim())).toEqual([
-      "Estimated bill",
+      "Income outside PAYE",
       "Income after costs",
       "Bill due",
     ]);
-    expect(screen.getByText("Estimate")).toBeDefined();
   });
 
   it("meets the page rules in the first view", () => {
@@ -225,9 +224,11 @@ describe("TaxContainer, opted in", () => {
     expect(screen.queryByText(/^Copy from \d{4}/)).toBeNull();
   });
 
-  it("says Unverified estimate once, in the one notice below the h1", () => {
+  it("says the Unverified estimate sentence once, in the one notice, and labels the hero", () => {
     const { container } = render(<TaxContainer />);
-    expect(container.textContent?.match(/Unverified estimate/g)).toHaveLength(1);
+    // Twice in all: the label inside the hero and the one notice's sentence.
+    expect(container.textContent?.match(/Unverified estimate/g)).toHaveLength(2);
+    expect(container.querySelectorAll("[data-estimate-label]")).toHaveLength(1);
     const notice = screen.getByRole("note");
     expect(notice.textContent).toContain(TAX_UNVERIFIED_LEAD);
     expect(container.textContent).not.toMatch(/Figures are estimates for guidance only/);

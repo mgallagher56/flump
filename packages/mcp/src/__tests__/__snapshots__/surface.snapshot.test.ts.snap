@@ -1820,7 +1820,7 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
       "openWorldHint": false,
       "readOnlyHint": true,
     },
-    "description": "The income and expense records the user keeps for a UK tax year (PAYE, self-employment, rental and savings), with totals by source and either a month-by-month or a per-category breakdown, plus the records themselves (up to 25, or 100 in detailed format). Amounts are what each record adds up to inside the tax year. Record names appear only with full read access; notes and receipts never do.",
+    "description": "The income and expense records the user keeps for a UK tax year (PAYE, self-employment, rental and savings), with totals by source and either a month-by-month or a per-category breakdown, plus the records themselves (up to 25, or 100 in detailed format). Amounts are what each record adds up to inside the tax year. Record names appear only with full read access, otherwise a neutral label by source such as Rental 1; notes and receipts never do.",
     "execution": {
       "taskSupport": "forbidden",
     },

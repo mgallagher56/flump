@@ -36,7 +36,7 @@ export const leftOverRow = css({
 
 export const orderHint = css({ margin: "0", textStyle: "body.sm", color: "text.secondary" });
 
-// Scenario outcome: the change plus at most one supporting figure (P1.7). Plain text on the zone surface, never
+// Scenario outcome: the change plus at most two supporting figures (S6). Plain text on the zone surface, never
 // the hero surface and no nested card.
 export const outcome = css({ display: "flex", flexDirection: "column", gap: "1" });
 

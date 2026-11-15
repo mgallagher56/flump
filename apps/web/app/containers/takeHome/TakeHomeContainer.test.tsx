@@ -73,14 +73,14 @@ describe("<TakeHomeContainer /> with saved figures", () => {
     expect(counts).toEqual(PAY_PARTS.map((label) => [label, 1]));
   });
 
-  it("the hero is the saved salary; the take-home estimate is the first KPI, tagged Estimate", () => {
+  it("the hero is the take-home estimate, labelled Unverified estimate inside the hero", () => {
     const { container } = render(<TakeHomeContainer />);
-    const hero = container.querySelector('[data-tone="hero"]')?.textContent ?? "";
-    expect(hero).toContain("Salary before tax");
-    expect(hero).toContain("£45,000");
-    expect(hero).not.toMatch(/Estimate|take-home/i);
-    expect(screen.getByText("Estimate")).toBeDefined();
-    expect(screen.getByText("Monthly take-home pay")).toBeDefined();
+    const hero = container.querySelector('[data-tone="hero"]');
+    expect(hero?.textContent).toContain("Monthly take-home pay");
+    expect(hero?.textContent).not.toContain("Salary before tax");
+    expect(hero?.textContent).not.toContain("£45,000");
+    expect(hero?.querySelector("[data-estimate-label]")?.textContent).toBe("Unverified estimate");
+    expect(screen.getByText("Monthly pay before tax")).toBeDefined();
   });
 
   it("keeps the saved breakdown outside the scenario zone, which holds only the two what-ifs", () => {

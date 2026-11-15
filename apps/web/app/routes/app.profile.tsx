@@ -1,4 +1,5 @@
-import { UserProfileResponse } from "@flump/api-contract";
+import { AccountListResponse, UserProfileResponse } from "@flump/api-contract";
+import { type NetWorthChoicesAvailable, netWorthChoicesAvailable } from "@flump/finance-engine";
 import type { ReactElement } from "react";
 import { useEffect } from "react";
 import type {
@@ -14,7 +15,7 @@ import { deleteAccountAction } from "~/features/settings/account.server";
 import { SettingsPage } from "~/features/settings/components/SettingsPage";
 import type { UserProfile } from "~/hooks/useUserProfile";
 import { useUserProfile } from "~/hooks/useUserProfile";
-import { backendFetch } from "~/services/backend-client.server";
+import { backendFetch, backendFetchAll } from "~/services/backend-client.server";
 import { BackendError } from "~/services/backend-error";
 import { throwRouteError } from "~/services/route-error.server";
 import { getAuthSession } from "~/utils/auth.server";
@@ -26,13 +27,26 @@ export const loader = async (args: LoaderFunctionArgs) => {
   const { user, accessToken } = await getAuthSession(args, { ensureSignedIn: true });
   if (!accessToken) throwRouteError(new BackendError("unauthorised", "/user-profile"));
   try {
-    const userProfile: UserProfile = await backendFetch("/user-profile", {
-      accessToken,
-      signal: args.request.signal,
-      schema: UserProfileResponse,
-    });
+    // The accounts only decide which net worth choices are offered. If they cannot be read the
+    // page still loads and offers both (null: unknown is not "no").
+    const [userProfile, netWorthChoices] = await Promise.all([
+      backendFetch("/user-profile", {
+        accessToken,
+        signal: args.request.signal,
+        schema: UserProfileResponse,
+      }) as Promise<UserProfile>,
+      backendFetchAll("/accounts", {
+        accessToken,
+        signal: args.request.signal,
+        schema: AccountListResponse,
+      }).then(
+        (accounts): NetWorthChoicesAvailable | null => netWorthChoicesAvailable(accounts),
+        () => null,
+      ),
+    ]);
     return data({
       userProfile,
+      netWorthChoices,
       user,
       aiGuideUrl: `${getMarketingUrl(args.request.url)}/mcp#setup`,
       mcpServerUrl: `${apiConfig.apiBaseUrl.replace(/\/$/, "")}/mcp`,
@@ -56,7 +70,8 @@ export const shouldRevalidate: ShouldRevalidateFunction = ({
 }) => (formData?.get("intent") === DELETE_ACCOUNT_INTENT ? false : defaultShouldRevalidate);
 
 const ProfileRoute = (): ReactElement => {
-  const { userProfile, user, aiGuideUrl, mcpServerUrl } = useLoaderData<typeof loader>();
+  const { userProfile, user, aiGuideUrl, mcpServerUrl, netWorthChoices } =
+    useLoaderData<typeof loader>();
   const { setProfile } = useUserProfile();
 
   // Seed the Jotai atom so other features get the current profile
@@ -69,6 +84,7 @@ const ProfileRoute = (): ReactElement => {
       aiGuideUrl={aiGuideUrl}
       initialProfile={userProfile}
       mcpServerUrl={mcpServerUrl}
+      netWorthChoices={netWorthChoices}
       user={user}
     />
   );

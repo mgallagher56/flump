@@ -1,5 +1,6 @@
 import { McpInputResponse } from "@flump/api-contract";
 import { type BuildContextPackInput, DEFAULT_FINANCIAL_BASELINE } from "@flump/finance-engine";
+import type { McpScope } from "@flump/mcp";
 import { describe, expect, it } from "vitest";
 import { toMcpInputToken, toMcpInputWire } from "./mcp-input";
 
@@ -145,9 +146,110 @@ describe("toMcpInputWire", () => {
       name: "Current Account #1",
       balance: 1200.5,
     });
-    expect(wire.budgetEntries[0]).toMatchObject({ id: "b1", name: "Housing #1", amount: 900 });
+    expect(wire.budgetEntries[0]).toMatchObject({ id: "b1", name: "Housing 1", amount: 900 });
     expect(wire.budgetEntries[0]).not.toHaveProperty("notes");
-    expect(wire.taxRecords[0]).toMatchObject({ id: "t1", name: "", notes: null, amount: 800 });
+    expect(wire.taxRecords[0]).toMatchObject({
+      id: "t1",
+      name: "Rental 1",
+      notes: null,
+      amount: 800,
+    });
+  });
+
+  describe("ruling 7: no typed budget or tax name reaches an anonymised token", () => {
+    const SENTINELS = [
+      "Barclays Joint 4471",
+      "Mum's loan",
+      "Marc Gallagher ISA",
+      "Jane's nursery fund",
+      "Housing 7",
+      "Custom category 9",
+      "Flat 2 Example Road",
+      "tenant Q Zebedee",
+    ];
+    const entry = (id: string, category: string, name: string, amount: number, notes?: string) => ({
+      id,
+      category,
+      name,
+      amount,
+      frequency: "monthly",
+      isIncome: false,
+      isEssential: true,
+      notes: notes ?? null,
+    });
+    const record = (id: string, category: string, name: string, amount: number, notes: string) => ({
+      id,
+      type: "income" as const,
+      source: "rental" as const,
+      category,
+      name,
+      amount,
+      frequency: "one-off" as const,
+      date: "2026-05-01",
+      endDate: null,
+      notes,
+    });
+    const sentinelRaw: BuildContextPackInput = {
+      ...raw,
+      accounts: [{ ...raw.accounts?.[0], name: "Barclays Joint 4471" }],
+      budgetEntries: [
+        entry("b1", "bills", "Barclays Joint 4471", 120, "Mum's loan"),
+        entry("b2", "bills", "Housing 7", 80),
+        entry("b3", "bills", "Barclays Joint 4471", 30),
+        entry("b4", "Marc Gallagher ISA", "Mum's loan", 200, "Jane's nursery fund"),
+        entry("b5", "Custom category 9", "Jane's nursery fund", 150),
+      ],
+      taxRecords: [
+        record("t1", "rental_income", "Flat 2 Example Road", 900, "tenant Q Zebedee"),
+        record("t2", "Custom category 9", "Mum's loan", 120, "Marc Gallagher ISA"),
+      ],
+    };
+
+    it("replaces every typed name with a neutral label and keeps every amount", () => {
+      const wire = toMcpInputWire(sentinelRaw, true);
+      const text = JSON.stringify(wire);
+      for (const sentinel of SENTINELS) expect(text, sentinel).not.toContain(sentinel);
+      expect(wire.budgetEntries.map((e) => [e.name, e.category, e.amount])).toEqual([
+        ["Bills 1", "bills", 120],
+        ["Bills 2", "bills", 80],
+        ["Bills 1", "bills", 30],
+        ["Entry 1", "Custom category 1", 200],
+        ["Entry 2", "Custom category 2", 150],
+      ]);
+      expect(wire.taxRecords.map((t) => [t.name, t.category, t.amount, t.notes])).toEqual([
+        ["Rental 1", "rental_income", 900, null],
+        ["Rental 2", "Custom category 1", 120, null],
+      ]);
+      const parsed = McpInputResponse.safeParse({
+        token: { id: TOKEN_ID, scopes: ["mcp:read:anonymized"], anonymizeInstitutions: true },
+        input: JSON.parse(text),
+      });
+      expect(parsed.success, JSON.stringify(parsed.error?.issues)).toBe(true);
+    });
+
+    it("a full-read token still gets the real names", () => {
+      const text = JSON.stringify(toMcpInputWire(sentinelRaw, false));
+      for (const sentinel of SENTINELS) expect(text, sentinel).toContain(sentinel);
+    });
+  });
+
+  it("anonymised: a legacy free-text account type becomes a fixed word, never the stored text", () => {
+    const legacy: BuildContextPackInput = {
+      ...raw,
+      accounts: [
+        { ...raw.accounts?.[0], id: "acc-1", type: "Jane's ISA 4471" },
+        { ...raw.accounts?.[0], id: "acc-2", type: " credit card " },
+      ],
+    };
+    const wire = toMcpInputWire(legacy, true);
+    const text = JSON.stringify(wire);
+    for (const hidden of ["Jane", "4471"]) expect(text, hidden).not.toContain(hidden);
+    expect(wire.accounts.map((a) => [a.name, a.type])).toEqual([
+      ["Other Account #1", "Other"],
+      ["Credit Card Account #1", "Credit Card"],
+    ]);
+    // A full-read token gets the stored type as it is.
+    expect(toMcpInputWire(legacy, false).accounts[0]?.type).toBe("Jane's ISA 4471");
   });
 
   it("a full-read token keeps names and notes", () => {
@@ -173,6 +275,19 @@ describe("toMcpInputToken", () => {
       anonymizeInstitutions: true,
     });
     expect(JSON.stringify(token)).not.toContain("user_real");
+  });
+
+  it("reports a legacy row (flag off, no full-read scope) as anonymised", () => {
+    const token = (scopes: McpScope[]) =>
+      toMcpInputToken({
+        userId: "user_real",
+        tokenId: TOKEN_ID,
+        scopes,
+        anonymizeInstitutions: false,
+        type: "pat",
+      });
+    expect(token(["mcp:read:anonymized"]).anonymizeInstitutions).toBe(true);
+    expect(token(["mcp:read:full"]).anonymizeInstitutions).toBe(false);
   });
 });
 

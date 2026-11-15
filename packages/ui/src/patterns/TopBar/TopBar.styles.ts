@@ -57,7 +57,9 @@ export const topBarList = cva({
   base: {
     display: "flex",
     alignItems: "center",
-    gap: "1",
+    // Tablets get tighter spacing so the five section names, "Debt and borrowing" included, fit
+    // beside the bar's controls at 768px without shortening a label.
+    gap: { base: "1", _navInline: "0.5", _navWide: "1" },
     flexWrap: "nowrap",
     listStyle: "none",
     padding: "0",
@@ -80,7 +82,7 @@ export const topBarLink = cva({
     alignItems: "center",
     gap: "2",
     minH: "8",
-    px: { base: "3", _navInline: "2.5" },
+    px: { base: "3", _navInline: "1.5", _navWide: "2.5" },
     borderRadius: "full",
     // Text-only links at every width, on both sites: icons pushed the web bar past 1024px and
     // added nothing the words do not say (the drawer and bottom bar keep their icons).

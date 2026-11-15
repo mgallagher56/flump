@@ -55,7 +55,7 @@ export const APP_PAGES: Record<AppPageKey, AppPageConfig> = {
   },
   debt: {
     key: "debt",
-    label: "Debt",
+    label: "Debt and borrowing",
     route: "/app/debt",
     description: "What you owe, when it would be paid off and when a 0% deal ends",
     category: "core",

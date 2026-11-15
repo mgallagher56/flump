@@ -15,7 +15,6 @@ import {
   Money,
   ProjectionNotice,
   ScenarioZone,
-  StatusBadge,
   Tabs,
   TaxRatesStatusBanner,
 } from "@repo/ui";
@@ -71,8 +70,10 @@ export interface TakeHomeCalculatorProps {
 }
 
 /**
- * Take-home page body: saved salary as the hero, the take-home estimate as the first KPI,
- * every part of the pay behind one quiet "Show details",
+ * Take-home page body: the estimated monthly take-home pay as the hero, labelled "Unverified
+ * estimate" inside it (owner ruling 2026-11-15: a calculator-style page leads with the answer it
+ * exists to give), the saved pay before tax and what comes off it in the strip, every part of the
+ * pay behind one quiet "Show details",
  * then one ScenarioZone holding the what-ifs ("A pay rise", "The next £1,000").
  */
 export const TakeHomeCalculator: FC<TakeHomeCalculatorProps> = ({
@@ -150,46 +151,47 @@ export const TakeHomeCalculator: FC<TakeHomeCalculatorProps> = ({
       </a>
     );
 
-  // The hero is the saved fact alone (D2). No monthly sub-line: the strip below splits the monthly
-  // pay, and a fifth figure would push the first view over the number budget (P1).
-  const salaryHero = (
-    <HeroFigure
-      emptyAction={profileLink("Add salary", "primary")}
-      emptyPrompt="Add your salary before tax to see an estimate of your take-home pay."
+  const heroLabel = "Monthly take-home pay";
+  const salaryCard = (
+    <KpiCard
+      key="salary"
       label="Salary before tax"
-      value={savedSalary > 0 ? savedSalary : undefined}
+      subtext="A year"
+      value={savedSalary > 0 ? savedSalary : null}
       valueFormat={{ fractionDigits: 0 }}
     />
   );
-  const estimateBadge = <StatusBadge variant="neutral">Estimate</StatusBadge>;
 
   if (!isFigureKnown(saved)) {
-    // The hero holds the saved fact; with no salary it is the page's one setup prompt. With a
-    // salary but other facts missing, the estimate card says what to add. No breakdown, no zone,
-    // never a £0 figure (P3, P12.2).
+    // No estimate can be worked out, so the hero is the page's one setup prompt: with no salary it
+    // asks for one; with a salary but other facts missing it says what to add, and the saved
+    // salary shows beneath. No breakdown, no zone, never a £0 figure (P3, P12.2).
     if (saved.missing.includes("annualSalary")) {
-      return <div className={calculatorRoot()}>{salaryHero}</div>;
+      return (
+        <div className={calculatorRoot()}>
+          <HeroFigure
+            emptyAction={profileLink("Add salary", "primary")}
+            emptyPrompt="Add your salary before tax to see an estimate of your take-home pay."
+            label={heroLabel}
+            value={undefined}
+          />
+        </div>
+      );
     }
     const others = listWords(saved.missing.flatMap((key) => MISSING_LABELS[key] ?? []));
     return (
       <div className={calculatorRoot()}>
-        {salaryHero}
-        <KpiStrip
-          emptyPrompt={{
-            title: others
-              ? `Add your ${others} to see an estimate of your take-home pay`
-              : "Take-home pay cannot be worked out for this tax year yet",
-            action: others ? profileLink("Add your details", "link") : undefined,
-          }}
-          items={[
-            <KpiCard
-              key="take-home"
-              action={estimateBadge}
-              label="Monthly take-home pay"
-              value={null}
-            />,
-          ]}
+        <HeroFigure
+          emptyAction={others ? profileLink("Add your details", "primary") : undefined}
+          emptyPrompt={
+            others
+              ? `Add your ${others} to see an estimate of your take-home pay.`
+              : "Take-home pay cannot be worked out for this tax year yet."
+          }
+          label={heroLabel}
+          value={undefined}
         />
+        <KpiStrip items={[salaryCard]} />
       </div>
     );
   }
@@ -208,19 +210,28 @@ export const TakeHomeCalculator: FC<TakeHomeCalculatorProps> = ({
   });
   const pensionAndLoan = parts.pension + parts.studentLoan;
 
-  // Take-home, then what comes off in two cards, so the three add up to the monthly pay before
-  // tax. With no pension or student loan the second and third are Income Tax and National
-  // Insurance, so the strip stays three cards; a part that is nothing reads "None", never £0.
-  // The Estimate badge marks the answer; the other two cards are named by their labels alone,
-  // and only the answer carries an explanation (one InfoTip in the strip).
-  const takeHomeCard = (
-    <KpiCard
-      key="take-home"
-      action={estimateBadge}
-      subtext="After tax and deductions"
+  // The hero is the answer: the estimated monthly take-home pay, marked as an estimate inside the
+  // hero. The strip is the saved pay before tax, a month, then what comes off in two cards, so
+  // the strip's first card less the other two is the hero (to within the pound or two of rounding
+  // that `monthlyPayParts` moves into the largest part). With no pension or student loan the
+  // second and third are Income Tax and National Insurance, so the strip stays three cards; a
+  // part that is nothing reads "None", never £0.
+  const takeHomeHero = (
+    <HeroFigure
+      estimateLabel={DELTA_PANEL_COPY.unverifiedBadge}
       explain={`Your saved salary before tax, less Income Tax, National Insurance, pension and student loan, at ${taxYear} rates.`}
-      label="Monthly take-home pay"
+      label={heroLabel}
+      subline="After tax and deductions"
       value={parts.takeHome}
+      valueFormat={{ fractionDigits: 0 }}
+    />
+  );
+  const payBeforeTaxCard = (
+    <KpiCard
+      key="pay-before-tax"
+      label="Monthly pay before tax"
+      subtext="Your saved salary, a month"
+      value={Math.round(salary / 12)}
       valueFormat={{ fractionDigits: 0 }}
     />
   );
@@ -297,11 +308,11 @@ export const TakeHomeCalculator: FC<TakeHomeCalculatorProps> = ({
     <div className={calculatorRoot()}>
       <TaxRatesStatusBanner {...ratesContext} />
 
-      {salaryHero}
+      {takeHomeHero}
 
-      {/* The estimate is the first KPI, never the hero (D2). The three cards add up to the monthly
-          pay before tax, so the strip explains itself. */}
-      <KpiStrip className={payStrip()} items={[takeHomeCard, secondCard, thirdCard]} />
+      {/* Pay before tax, then the two parts that come off it: the first card less the other two is
+          the hero, so the strip explains itself. */}
+      <KpiStrip className={payStrip()} items={[payBeforeTaxCard, secondCard, thirdCard]} />
 
       <TakeHomeBreakdown
         details={details}

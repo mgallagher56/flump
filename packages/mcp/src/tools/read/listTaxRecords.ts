@@ -1,4 +1,4 @@
-import { MCP_NOTICE } from "@flump/finance-engine";
+import { createTaxRecordAnonymiser, MCP_NOTICE } from "@flump/finance-engine";
 import { z } from "zod";
 import { effectiveAnonymize } from "../../auth/scopes.js";
 import { defineFlumpTool } from "../../define-tool.js";
@@ -50,7 +50,7 @@ const result = z.object({
       amountGbp: z.number(),
       /** What the record adds up to inside this tax year. */
       inYearGbp: z.number(),
-      /** Full-access tokens only, sanitised. */
+      /** The record name, sanitised; a neutral label by source ("Rental 1") for an anonymised token. */
       name: z.string().optional(),
     }),
   ),
@@ -65,7 +65,7 @@ export const listTaxRecords = defineFlumpTool({
   name: "list_tax_records",
   title: "Tax records",
   description:
-    "The income and expense records the user keeps for a UK tax year (PAYE, self-employment, rental and savings), with totals by source and either a month-by-month or a per-category breakdown, plus the records themselves (up to 25, or 100 in detailed format). Amounts are what each record adds up to inside the tax year. Record names appear only with full read access; notes and receipts never do.",
+    "The income and expense records the user keeps for a UK tax year (PAYE, self-employment, rental and savings), with totals by source and either a month-by-month or a per-category breakdown, plus the records themselves (up to 25, or 100 in detailed format). Amounts are what each record adds up to inside the tax year. Record names appear only with full read access, otherwise a neutral label by source such as Rental 1; notes and receipts never do.",
   input: {
     taxYear: taxYearInput,
     category: z
@@ -106,6 +106,7 @@ export const listTaxRecords = defineFlumpTool({
     let income = 0;
     let expenses = 0;
     const rows: z.infer<typeof result>["rows"] = [];
+    const recordLabel = createTaxRecordAnonymiser();
 
     for (const r of records) {
       const category = safeCategory(r.category);
@@ -150,7 +151,8 @@ export const listTaxRecords = defineFlumpTool({
         endDate: r.endDate ?? null,
         amountGbp: round2(Number(r.amount) || 0),
         inYearGbp: round2(inYear),
-        ...(anonymise ? {} : { name: sanitiseText(r.name ?? "") }),
+        // Ruling 7: anonymised, the typed name becomes a neutral label by source ("Rental 1").
+        name: anonymise ? recordLabel({ name: r.name, source }) : sanitiseText(r.name ?? ""),
       });
     }
 
