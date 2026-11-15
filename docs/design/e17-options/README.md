@@ -14,8 +14,20 @@
 
 ## Owner rulings made after the page
 
-1. "Months of cover" is renamed **"Breathing room"**, with a short, warm description. The page's "If your income stopped" label is superseded.
+1. "Months of cover" is renamed **"Breathing room"**. The page's "If your income stopped" label is superseded. The wording is fixed:
+
+   | Part           | Wording                                           |
+   | -------------- | ------------------------------------------------- |
+   | Label          | Breathing room                                    |
+   | Description    | How long your savings would cover the essentials. |
+   | Value          | About 1.5 months                                  |
+   | Dashboard line | Breathing room: about 1.5 months                  |
+
+   The info tip says what "savings" means here (the accounts you can draw on) and what "the essentials" covers (essential spending and minimum debt payments). That detail stays out of the description.
+
 2. That result moves **out of** the "Model a change to your budget" zone into **its own section** on the Budget page. The zone keeps its inputs and its illustration.
+
+The standing rules for all five areas are in `docs/ux/STYLE-GUIDE.md` (sections 2.6, 8.1, 8.2, 11.1, 12.4 to 12.6 and the dated entry in section 14), with behaviour in `docs/ux/UX-GUIDELINES.md` (O4, S10, M5, M7).
 
 ## Token names (PR 1, stable for the follow-on PRs)
 
