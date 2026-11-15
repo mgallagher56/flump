@@ -198,7 +198,7 @@ describe("buildFlumpAiContextPack budget summary comes from the financial pictur
     expect(pack.budgetSummary.essentialBillsMonthly).toBeNull();
     expect(pack.budgetSummary.safeToSpend).toBeNull();
     expect(pack.budgetSummary.emergencyRunwayMonths).toBeNull();
-    expect(formatAiContextPackMarkdown(pack)).toContain("**Months of cover:** Not set");
+    expect(formatAiContextPackMarkdown(pack)).toContain("**Breathing room:** Not set");
     expect(pack.observations).toEqual([]);
   });
 

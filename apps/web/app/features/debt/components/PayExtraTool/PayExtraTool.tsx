@@ -5,6 +5,7 @@ import {
   ChartLegend,
   chartColor,
   formatMonthTick,
+  ResultBlock,
   SimulatorSplitLayout,
   SliderField,
   Table,
@@ -47,11 +48,6 @@ import {
   mutedNote,
   noteLink,
   orderHint,
-  outcome,
-  outcomePrompt,
-  outcomeSupport,
-  outcomeSupportItem,
-  outcomeValue,
 } from "./PayExtraTool.styles";
 
 export type PayoffOrder = "avalanche" | "snowball";
@@ -264,28 +260,27 @@ export const PayExtraTool: FC<PayExtraToolProps> = ({
   // change alters it. Whole pounds, the next 12 months of each schedule.
   const interestYearMinimum = Math.round(interestInFirstYear(baseline.monthlySchedule));
   const interestYearScenario = Math.round(interestInFirstYear(active.monthlySchedule));
-  const interestYear = interestKnown ? (
-    <div className={outcomeSupportItem} data-testid="interest-this-year" id="interest-this-year">
-      {/* One figure (S6: at most two supporting): the minimum-payment figure shows at £0, so
-          moving the slider shows how the change alters it. */}
-      <dt>
-        {showBaseline
+  // One supporting row: the minimum-payment figure shows at £0, so moving the slider shows how
+  // the change alters it.
+  const interestYear = interestKnown
+    ? {
+        label: showBaseline
           ? "Interest this year, with the extra payment"
-          : "Interest this year, at minimum payments"}
-      </dt>
-      <dd>{formatCurrency(showBaseline ? interestYearScenario : interestYearMinimum)}</dd>
-    </div>
-  ) : null;
+          : "Interest this year, at minimum payments",
+        value: formatCurrency(showBaseline ? interestYearScenario : interestYearMinimum),
+        id: "interest-this-year",
+      }
+    : null;
 
   // At £0 there is no change to state: the debt-free date is in the KPI strip above, so the zone
   // shows a prompt instead of repeating it. Above £0 the outcome is only the change.
-  const outcomeText = !paidOff
-    ? "Not paid off in this estimate"
+  const outcomeFigure: { leadIn?: string; figure: string } = !paidOff
+    ? { figure: "Not paid off in this estimate" }
     : !achievable(baseline)
-      ? `Paid off in ${formatPayoffDuration(active.months)}`
+      ? { leadIn: "Paid off in", figure: formatPayoffDuration(active.months) }
       : monthsSooner > 0
-        ? `Debt-free ${formatPayoffDuration(monthsSooner)} sooner`
-        : "The same debt-free date";
+        ? { leadIn: "Debt-free", figure: `${formatPayoffDuration(monthsSooner)} sooner` }
+        : { figure: "The same debt-free date" };
 
   const rows = useMemo<ChartRow[]>(() => {
     const lastScenario = paidOff ? active.months : active.monthlySchedule.length;
@@ -363,31 +358,22 @@ export const PayExtraTool: FC<PayExtraToolProps> = ({
         {sameResult ? "Both orders give the same result for your debts." : activeOrder.hint}
       </p>
 
-      <div className={outcome} data-testid="scenario-outcome" id="scenario-outcome">
-        {showBaseline ? (
-          <>
-            <p className={outcomeValue}>{outcomeText}</p>
-            {paidOff || interestYear ? (
-              <dl className={outcomeSupport}>
-                {paidOff ? (
-                  <div className={outcomeSupportItem}>
-                    <dt>Interest compared with minimum payments only</dt>
-                    <dd>
-                      {interestLess > 0 ? `${formatCurrency(interestLess)} less` : "No change"}
-                    </dd>
-                  </div>
-                ) : null}
-                {interestYear}
-              </dl>
-            ) : null}
-          </>
-        ) : (
-          <>
-            <p className={outcomePrompt}>Move the slider to see what changes</p>
-            {interestYear ? <dl className={outcomeSupport}>{interestYear}</dl> : null}
-          </>
-        )}
-      </div>
+      {/* The zone's one result card (E17 5A): the change, one sentence and one supporting row. */}
+      <ResultBlock
+        emptyPrompt="Move the slider to see what changes"
+        figure={showBaseline ? outcomeFigure.figure : null}
+        id="scenario-outcome"
+        label={showBaseline ? "With the extra payment" : "At minimum payments"}
+        leadIn={outcomeFigure.leadIn}
+        note={
+          showBaseline && paidOff
+            ? `Interest compared with minimum payments only: ${
+                interestLess > 0 ? `${formatCurrency(interestLess)} less` : "no change"
+              }.`
+            : undefined
+        }
+        row={interestYear ?? undefined}
+      />
 
       <ChartFigure
         dataTable={

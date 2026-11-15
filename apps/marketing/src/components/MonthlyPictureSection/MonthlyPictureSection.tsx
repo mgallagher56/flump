@@ -28,7 +28,7 @@ export const MONTHLY_PICTURE_ITEMS: MonthlyPictureItem[] = [
   {
     id: "each-month",
     title: "Where you stand each month",
-    body: "Your months of cover and what is left over each month, from a few rough figures, whether you rent or pay a mortgage.",
+    body: "Your breathing room and what is left over each month, from a few rough figures, whether you rent or pay a mortgage.",
     icon: CalendarCheck,
     domain: "savings",
   },

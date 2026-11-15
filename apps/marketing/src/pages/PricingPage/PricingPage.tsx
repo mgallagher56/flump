@@ -32,7 +32,7 @@ export const BETA_STATEMENT = "One plan you can use today.";
 
 /** What the beta includes: three things that exist today (E7, copy guide 7.4). */
 export const BETA_FEATURES = [
-  "The Flump app: months of cover, what is left over and what a change would do",
+  "The Flump app: breathing room, what is left over and what a change would do",
   "Every calculator on the tools page",
   "Your own figures, typed in. No bank login is needed",
 ] as const;

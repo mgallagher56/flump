@@ -122,7 +122,7 @@ const STEP_TITLES: Record<WizardStep, string> = {
 };
 
 const STEP_DESCRIPTIONS: Record<WizardStep, string> = {
-  welcome: "Set up your monthly budget to see where your money goes and your months of cover.",
+  welcome: "Set up your monthly budget to see where your money goes and your breathing room.",
   defaults: "Start from common entries, or from a blank budget.",
   income: "Enter your take-home pay and any other income sources.",
   housing: "Rent, mortgage, insurance and other home costs.",
@@ -144,7 +144,7 @@ const WELCOME_POINTS = [
   "Enter your income and monthly spending",
   "Fill in the amounts for any common entries you add",
   "See what is left over each month",
-  "See your months of cover",
+  "See your breathing room",
 ];
 
 type NewEntry = Omit<BudgetEntry, "id" | "userId" | "createdAt" | "updatedAt">;

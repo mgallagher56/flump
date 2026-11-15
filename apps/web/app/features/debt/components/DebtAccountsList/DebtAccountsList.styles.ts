@@ -15,12 +15,6 @@ export const listCard = cva({
   },
 });
 
-export const listHeading = css({
-  margin: 0,
-  textStyle: "heading.md",
-  color: "text.primary",
-});
-
 export const listSubtitle = css({
   margin: 0,
   marginTop: "2px",

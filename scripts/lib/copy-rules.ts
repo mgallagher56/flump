@@ -153,7 +153,8 @@ export const COPY_RULES: CopyRule[] = [
   banned("weighted", "6.2", "weighted (?:by|average)", "average rate"),
   banned("discretionary", "6.2", "discretionary", "flexible spending"),
   banned("liquid", "6.2", "liquid(?:ity)?", "cash you can get at quickly"),
-  banned("runway", "6.2", "runway", "months of cover"),
+  banned("runway", "6.2", "runway", "breathing room"),
+  banned("months of cover", "6.2", "months of cover", "breathing room"),
   banned("waterfall", "6.2", "waterfall", "where your pay goes"),
   banned(
     "engine",

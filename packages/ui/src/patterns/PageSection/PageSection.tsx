@@ -10,6 +10,11 @@ export interface PageSectionProps
   > {
   /** The section's content: a card, a list, a `ResultBlock`. */
   children?: ReactNode;
+  /**
+   * Id for the heading, when something needs to move focus to it (the heading is always
+   * focusable from script). Generated when not given.
+   */
+  headingId?: string;
   /** Id for the section element (also data-testid). The header takes `{id}-header`. */
   id?: string;
   className?: string;
@@ -24,10 +29,12 @@ export interface PageSectionProps
 export const PageSection: FC<PageSectionProps> = ({
   children,
   id = "page-section",
+  headingId: headingIdProp,
   className,
   ...header
 }) => {
-  const headingId = useId();
+  const generatedId = useId();
+  const headingId = headingIdProp ?? generatedId;
   const slots = pageSection();
   return (
     <section

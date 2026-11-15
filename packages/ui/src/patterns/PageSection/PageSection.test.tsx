@@ -42,4 +42,12 @@ describe("PageSection", () => {
     expect(screen.getByRole("heading", { level: 3, name: "Your details" })).toBeDefined();
     expect(screen.getByRole("button", { name: "Edit" })).toBeDefined();
   });
+
+  it("takes a heading id, and the heading can take focus from script", () => {
+    render(<PageSection headingId="debts-heading" icon={LifeBuoy} title="Your debts" />);
+    const heading = screen.getByRole("heading", { name: "Your debts" });
+    expect(heading.id).toBe("debts-heading");
+    expect(heading.getAttribute("tabindex")).toBe("-1");
+    expect(screen.getByRole("region", { name: "Your debts" })).toBeDefined();
+  });
 });

@@ -64,7 +64,7 @@ export const buildSteps = (props: SetupChecklistProps): ChecklistStep[] => [
     key: "budget",
     label: "Add your monthly spending",
     description:
-      "Split your spending into housing, bills, living costs and extras to see your months of cover.",
+      "Split your spending into housing, bills, living costs and extras to see your breathing room.",
     isComplete: props.hasBudget || props.completedSteps.includes("budget"),
     actionLabel: "Add spending",
     href: "/app/budget",

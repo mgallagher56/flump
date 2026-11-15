@@ -49,7 +49,7 @@ export const APP_PAGES: Record<AppPageKey, AppPageConfig> = {
     key: "budget",
     label: "Budget",
     route: "/app/budget",
-    description: "Income, spending, what is left over each month and months of cover",
+    description: "Income, spending, what is left over each month and breathing room",
     category: "core",
     badgeColor: "var(--colors-chart-warning)",
   },

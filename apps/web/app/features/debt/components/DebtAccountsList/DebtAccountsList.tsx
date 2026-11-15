@@ -1,7 +1,6 @@
 import type { DebtItem } from "@flump/finance-engine";
-import { CollapsibleDrawer, Icon, IconButton } from "@repo/ui";
-import { cx } from "@repo/ui/styled-system/css";
-import { Pencil } from "lucide-react";
+import { CollapsibleDrawer, Icon, IconButton, PageSection } from "@repo/ui";
+import { CreditCard, Pencil } from "lucide-react";
 import { type FC, useState } from "react";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import { AddDebtDialog } from "../AddDebtDialog";
@@ -9,7 +8,6 @@ import {
   balanceFigure,
   drawerWrap,
   listCard,
-  listHeading,
   listReset,
   listSubtitle,
   rowDetail,
@@ -109,36 +107,37 @@ export const DebtAccountsList: FC<DebtAccountsListProps> = ({
   const rest = debts.slice(VISIBLE_ROWS);
 
   return (
-    <section aria-labelledby="debt-accounts-heading" className={cx(listCard(), className)}>
-      <div>
-        <h2 className={listHeading} id="debt-accounts-heading" tabIndex={-1}>
-          Your debts
-        </h2>
-        <p className={listSubtitle}>
-          Select edit on a debt to see or change its rate and minimum payment.
-        </p>
+    <PageSection
+      className={className}
+      description="Select edit on a debt to see or change its rate and minimum payment."
+      domain="debt"
+      headingId="debt-accounts-heading"
+      icon={CreditCard}
+      id="debt-accounts"
+      title="Your debts"
+    >
+      <div className={listCard()}>
+        {debts.length === 0 ? (
+          <p className={listSubtitle}>No debts added</p>
+        ) : (
+          <>
+            {renderRows(visible, "Your debts")}
+            {rest.length > 0 ? (
+              <div className={drawerWrap}>
+                <CollapsibleDrawer
+                  closedLabel="Show all debts"
+                  itemCount={rest.length}
+                  itemNoun={{ one: "more debt", other: "more debts" }}
+                  openLabel="Hide the rest"
+                  title="More debts"
+                >
+                  {renderRows(rest, "More debts")}
+                </CollapsibleDrawer>
+              </div>
+            ) : null}
+          </>
+        )}
       </div>
-
-      {debts.length === 0 ? (
-        <p className={listSubtitle}>No debts added</p>
-      ) : (
-        <>
-          {renderRows(visible, "Your debts")}
-          {rest.length > 0 ? (
-            <div className={drawerWrap}>
-              <CollapsibleDrawer
-                closedLabel="Show all debts"
-                itemCount={rest.length}
-                itemNoun={{ one: "more debt", other: "more debts" }}
-                openLabel="Hide the rest"
-                title="More debts"
-              >
-                {renderRows(rest, "More debts")}
-              </CollapsibleDrawer>
-            </div>
-          ) : null}
-        </>
-      )}
 
       {editingDebt ? (
         <AddDebtDialog
@@ -151,7 +150,7 @@ export const DebtAccountsList: FC<DebtAccountsListProps> = ({
           onEditDebt={onUpdateDebt}
         />
       ) : null}
-    </section>
+    </PageSection>
   );
 };
 

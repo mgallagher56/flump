@@ -59,7 +59,7 @@ export const BaselineSnapshotPreview: FC = () => (
         />
         <KpiCard
           key="cover"
-          label="Months of cover"
+          label="Breathing room"
           value={
             <span className={previewFigure()}>
               {months.format(PREVIEW_EXAMPLE.monthsOfCover)} months
