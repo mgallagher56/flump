@@ -70,7 +70,24 @@ export const toastIconRecipe = cva({
     tone: {
       neutral: { color: "status.neutral.text" },
       info: { color: "status.info.text" },
-      positive: { color: "status.positive.text" },
+      positive: {
+        color: "status.positive.text",
+        "& svg path, & svg polyline": {
+          strokeDasharray: "24",
+          strokeDashoffset: "24",
+          _motionSafe: {
+            animationName: "tick",
+            animationDuration: "base",
+            animationTimingFunction: "standard",
+            animationDelay: "fast",
+            animationFillMode: "forwards",
+          },
+          _motionReduce: {
+            animation: "none",
+            strokeDashoffset: "0",
+          },
+        },
+      },
       warning: { color: "status.warning.text" },
       danger: { color: "status.danger.text" },
     },

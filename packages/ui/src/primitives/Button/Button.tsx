@@ -4,7 +4,9 @@ import { cx, type RecipeVariantProps } from "../../../styled-system/css";
 import {
   buttonContentRecipe,
   buttonRecipe,
+  buttonSavedContentRecipe,
   buttonSpinnerRecipe,
+  buttonTickIconRecipe,
   iconButtonRecipe,
 } from "./Button.styles";
 
@@ -22,6 +24,13 @@ export type ButtonProps = ComponentProps<"button"> &
      * state and the click guard apply.
      */
     pending?: boolean;
+    /**
+     * E17 Demo 5: Shows save confirmation feedback ("Saved" with a tick drawing in).
+     * Disables clicks while active.
+     */
+    saved?: boolean;
+    /** Label shown during save confirmation. Defaults to "Saved". */
+    savedLabel?: string;
   };
 
 /**
@@ -34,6 +43,8 @@ export const Button = ({
   variant,
   size,
   pending = false,
+  saved = false,
+  savedLabel = "Saved",
   children,
   onClick,
   ...props
@@ -41,7 +52,7 @@ export const Button = ({
   const classes = cx(buttonRecipe({ variant, size }), className);
   const busy = pending ? ({ "aria-busy": true, "aria-disabled": true } as const) : {};
   const handleClick = (event: MouseEvent<HTMLButtonElement>) => {
-    if (pending) {
+    if (pending || saved) {
       event.preventDefault();
       return;
     }
@@ -52,6 +63,7 @@ export const Button = ({
     return (
       <Slot
         className={classes}
+        data-saved={saved ? "true" : undefined}
         data-variant={variant ?? "primary"}
         {...busy}
         onClick={handleClick}
@@ -64,13 +76,37 @@ export const Button = ({
   return (
     <button
       className={classes}
+      data-saved={saved ? "true" : undefined}
       data-variant={variant ?? "primary"}
       {...busy}
       onClick={handleClick}
       {...props}
     >
-      {pending ? <span className={buttonContentRecipe({ pending })}>{children}</span> : children}
-      {pending ? <span aria-hidden="true" className={buttonSpinnerRecipe()} /> : null}
+      {saved ? (
+        <>
+          <span aria-hidden="true" className={buttonTickIconRecipe()}>
+            <svg
+              aria-hidden="true"
+              fill="none"
+              stroke="currentColor"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="3"
+              viewBox="0 0 24 24"
+            >
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
+          </span>
+          <span className={buttonSavedContentRecipe()}>{savedLabel}</span>
+        </>
+      ) : pending ? (
+        <>
+          <span className={buttonContentRecipe({ pending })}>{children}</span>
+          <span aria-hidden="true" className={buttonSpinnerRecipe()} />
+        </>
+      ) : (
+        children
+      )}
     </button>
   );
 };

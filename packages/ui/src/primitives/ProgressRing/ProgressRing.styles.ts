@@ -26,7 +26,12 @@ export const progressRingRecipe = sva({
       strokeWidth: "3.5",
       strokeLinecap: "round",
       _motionSafe: {
-        transition: "stroke-dashoffset token(durations.reveal) token(easings.enter)",
+        transitionProperty: "stroke-dashoffset",
+        transitionDuration: "slow",
+        transitionTimingFunction: "standard",
+      },
+      _motionReduce: {
+        transition: "none",
       },
     },
     count: {

@@ -258,14 +258,21 @@ describe("E15 motion", () => {
     expect(Object.keys(easings).sort()).toEqual(["enter", "exit", "settle", "standard"]);
   });
 
-  it("defines the six keyframes", () => {
+  it("defines the motion keyframes", () => {
     expect(Object.keys(motionKeyframes).sort()).toEqual([
       "fadeIn",
       "pulse",
       "scaleIn",
+      "sceneGrow",
+      "sceneRise",
       "shimmer",
+      "slideInLeft",
       "slideInRight",
+      "slideOutLeft",
+      "slideOutRight",
       "slideUp",
+      "tick",
+      "wash",
     ]);
   });
 });

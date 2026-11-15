@@ -53,7 +53,7 @@ describe("native.generated.ts", () => {
       "surface.canvas",
       "chart.band",
     ]) {
-      expect(native.light.colors).toHaveProperty(key);
+      expect(native.light.colors).toHaveProperty([key]);
     }
     expect(colorKeys.some((k) => k.includes("DEFAULT"))).toBe(false);
   });

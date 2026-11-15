@@ -7,6 +7,8 @@ export type ProgressRingVariants = NonNullable<RecipeVariantProps<typeof progres
 export interface ProgressRingProps {
   /** Completed count or current progress value. */
   value: number;
+  /** Optional animated stroke value (e.g. from useSetupProgressOnce) while keeping ARIA/label immediate. */
+  animatedValue?: number;
   /** Maximum count or goal (defaults to 100 when non-positive). */
   max?: number;
   /** Accessible name announced for `role="progressbar"`. */
@@ -30,6 +32,7 @@ const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
  */
 export const ProgressRing: FC<ProgressRingProps> = ({
   value,
+  animatedValue,
   max = 100,
   label = "Progress",
   countLabel,
@@ -39,7 +42,8 @@ export const ProgressRing: FC<ProgressRingProps> = ({
 }) => {
   const safeMax = max > 0 ? max : 100;
   const clamped = Math.max(0, Math.min(value, safeMax));
-  const ratio = clamped / safeMax;
+  const arcValue = Math.max(0, Math.min(animatedValue ?? value, safeMax));
+  const ratio = arcValue / safeMax;
   const dashOffset = CIRCUMFERENCE * (1 - ratio);
   const styles = progressRingRecipe({ size });
   const centerText = countLabel ?? `${clamped}/${safeMax}`;

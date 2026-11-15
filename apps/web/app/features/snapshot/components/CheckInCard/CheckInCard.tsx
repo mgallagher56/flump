@@ -1,4 +1,4 @@
-import { Button, InlineAlert } from "@repo/ui";
+import { Button, InlineAlert, useStepTransition } from "@repo/ui";
 import { type FC, type KeyboardEvent, useEffect } from "react";
 import type { CheckInAnswer, CheckInStep as CheckInStepModel } from "../../checkInModel";
 import { CHECK_IN_COPY, checkInProgress } from "../../snapshotCopy";
@@ -27,18 +27,19 @@ export interface CheckInCardProps {
 export const CheckInCard: FC<CheckInCardProps> = ({ checkIn }) => {
   const { steps, index, setIndex } = checkIn;
   const step = steps[Math.min(index, steps.length - 1)];
+  const { displayedStep, animationState } = useStepTransition(step, index);
+
   // Each account opens with its balance field focused, the first one too (the sheet keeps focus
   // that is already inside it). A done account (reached with Back, or with "Change a balance" from
   // the summary) focuses its name instead. Only
   // when the account changes: a save on the same account must not move focus.
-  // biome-ignore lint/correctness/useExhaustiveDependencies: keyed on the account alone
   useEffect(() => {
-    if (!step) return;
-    if (!checkIn.isDone(step.accountId)) focusCheckInStep(step.accountId);
-    else document.getElementById(checkInHeadingId(step.accountId))?.focus();
-  }, [step?.accountId]);
+    if (!displayedStep) return;
+    if (!checkIn.isDone(displayedStep.accountId)) focusCheckInStep(displayedStep.accountId);
+    else document.getElementById(checkInHeadingId(displayedStep.accountId))?.focus();
+  }, [displayedStep?.accountId, checkIn]);
 
-  if (!step) return null;
+  if (!step || !displayedStep) return null;
   const position = steps.indexOf(step) + 1;
   const done = checkIn.isDone(step.accountId);
   const anyOpen = steps.some((s) => !checkIn.isDone(s.accountId));
@@ -71,15 +72,19 @@ export const CheckInCard: FC<CheckInCardProps> = ({ checkIn }) => {
         {checkInProgress(position, steps.length)}
       </p>
       <div className={cardBody()}>
-        <section aria-labelledby={checkInHeadingId(step.accountId)} className={cardSurface()}>
+        <section
+          aria-labelledby={checkInHeadingId(displayedStep.accountId)}
+          className={cardSurface({ motion: animationState })}
+          data-animation={animationState}
+        >
           <CheckInStep
             checkIn={checkIn}
-            key={step.accountId}
+            key={displayedStep.accountId}
             layout="card"
             onAnswer={answer}
             onFieldKeyDown={onFieldKeyDown}
             onRetry={retry}
-            step={step}
+            step={displayedStep}
           />
         </section>
         <div className={cardNav()}>

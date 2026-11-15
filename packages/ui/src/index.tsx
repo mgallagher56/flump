@@ -69,6 +69,7 @@ export * from "./primitives/Popover";
 export * from "./primitives/ProgressBar";
 export * from "./primitives/ProgressRing";
 export * from "./primitives/RadioCardGroup";
+export * from "./primitives/SavedFigure";
 export * from "./primitives/Select";
 export * from "./primitives/Sheet";
 export * from "./primitives/Skeleton";

@@ -145,6 +145,7 @@ describe("Architecture & Design System Laws", () => {
         "PercentInput",
         "Popover",
         "RadioCardGroup",
+        "SavedFigure",
         "Select",
         "Switch",
         "Tabs",
